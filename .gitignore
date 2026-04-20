@@ -141,6 +141,8 @@ vite.config.ts.timestamp-*
 # Pipeline artifacts
 pipeline/cache/
 pipeline/spots_seed.json
+pipeline/spots_enriched.json
+pipeline/geodata/
 
 # Python
 __pycache__/

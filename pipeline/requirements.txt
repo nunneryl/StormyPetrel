@@ -3,3 +3,12 @@ rapidfuzz>=3.6,<4
 tenacity>=8.2,<9
 tqdm>=4.66,<5
 reverse_geocoder>=1.5.1,<2
+
+# Enrichment (Phase 0B) — geospatial stack
+shapely>=2.0,<3
+pyproj>=3.6,<4
+fiona>=1.9,<2
+geopandas>=0.14,<2
+rtree>=1.1,<2
+scipy>=1.11,<2
+numpy>=1.26,<3

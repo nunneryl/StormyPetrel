@@ -32,3 +32,40 @@ GAPFILL_DATA_FILE = Path(__file__).resolve().parent / "data" / "llm_spots.json"
 PIPELINE_DIR = Path(__file__).resolve().parent
 CACHE_DIR = PIPELINE_DIR / "cache"
 DEFAULT_OUTPUT = PIPELINE_DIR / "spots_seed.json"
+
+# ---------------------------------------------------------------------------
+# Enrichment (Phase 0B)
+# ---------------------------------------------------------------------------
+GEODATA_DIR = PIPELINE_DIR / "geodata"
+GSHHG_L1_SHP = GEODATA_DIR / "GSHHS_f_L1.shp"
+CUSP_DIR = GEODATA_DIR  # CUSP shoreline files (optional; falls back to GSHHG)
+NDBC_STATIONS_XML = GEODATA_DIR / "ndbc_stations.xml"
+NDBC_LATEST_OBS_TXT = GEODATA_DIR / "ndbc_latest_obs.txt"
+TIDE_STATIONS_JSON = GEODATA_DIR / "tide_stations.json"
+
+DEFAULT_ENRICHED_OUTPUT = PIPELINE_DIR / "spots_enriched.json"
+
+# Swell window ray-casting
+SWELL_RAY_STEP_DEG = 2
+SWELL_RAY_RANGE_KM_DEFAULT = 12_000
+SWELL_RAY_RANGE_KM_HAWAII = 15_000
+SWELL_ARC_SHRINK_DEG = 5  # conservative shrink on each end of merged open arcs
+
+# Buoy regional distance caps (km). Matched against region_hint / lat+lng heuristics.
+BUOY_CAP_KM = {
+    "California": 150,
+    "Oregon": 200,
+    "Washington": 200,
+    "Hawaii": 150,
+    "Puerto Rico": 250,
+    "Texas": 350,
+    "Louisiana": 350,
+    "Mississippi": 350,
+    "Alabama": 350,
+    "Great Lakes": 100,  # virtual region resolved by state
+}
+BUOY_CAP_GULF_FLORIDA = 350  # applied when FL spot's lng < -83
+BUOY_CAP_DEFAULT_EAST = 150
+BUOY_CAP_DEFAULT = 150
+
+TIDE_STATION_MAX_DIST_KM = 50
