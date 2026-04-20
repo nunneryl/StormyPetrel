@@ -23,7 +23,11 @@ WIKIPEDIA_MIN_INTERVAL_S = 0.2  # ~5 req/s
 DEDUPE_DISTANCE_M = 500.0
 DEDUPE_NAME_SCORE = 85
 
-SOURCE_PRIORITY = ("wikidata", "wikipedia", "osm")
+SOURCE_PRIORITY = ("wikidata", "wikipedia", "osm", "gapfill")
+
+NOMINATIM_ENDPOINT = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_MIN_INTERVAL_S = 1.0  # Nominatim usage policy: max 1 req/s
+GAPFILL_DATA_FILE = Path(__file__).resolve().parent / "data" / "llm_spots.json"
 
 PIPELINE_DIR = Path(__file__).resolve().parent
 CACHE_DIR = PIPELINE_DIR / "cache"

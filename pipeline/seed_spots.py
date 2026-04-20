@@ -1,4 +1,4 @@
-"""Seed surf spots from OSM, Wikidata, and Wikipedia. CLI entrypoint."""
+"""Seed surf spots from OSM, Wikidata, Wikipedia, and the gapfill list. CLI entrypoint."""
 from __future__ import annotations
 
 import argparse
@@ -11,14 +11,17 @@ from pathlib import Path
 from .config import DEFAULT_OUTPUT
 from .dedupe import DedupeStats, merge
 from .geo import fill_region_hint
-from .sources import osm, wikidata, wikipedia
+from .sources import gapfill, osm, wikidata, wikipedia
 
 log = logging.getLogger("pipeline.seed_spots")
 
+# Insertion order matters: gapfill runs last so dedupe can collapse anything
+# it adds that OSM/Wikidata/Wikipedia already found.
 SOURCES = {
     "osm": osm.fetch,
     "wikidata": wikidata.fetch,
     "wikipedia": wikipedia.fetch,
+    "gapfill": gapfill.fetch,
 }
 
 
@@ -32,7 +35,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--skip",
         default="",
-        help="Comma-separated list of sources to skip: osm, wikidata, wikipedia.",
+        help="Comma-separated list of sources to skip: osm, wikidata, wikipedia, gapfill.",
     )
     parser.add_argument(
         "--output",
