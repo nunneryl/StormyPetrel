@@ -1,0 +1,5 @@
+requests>=2.31,<3
+rapidfuzz>=3.6,<4
+tenacity>=8.2,<9
+tqdm>=4.66,<5
+reverse_geocoder>=1.5.1,<2

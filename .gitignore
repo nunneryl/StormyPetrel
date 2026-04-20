@@ -137,3 +137,13 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Pipeline artifacts
+pipeline/cache/
+pipeline/spots_seed.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
