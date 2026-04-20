@@ -86,9 +86,13 @@ def _crawl_categories(roots: tuple[str, ...], pacer: _Pacer) -> tuple[list[dict]
             members = data.get("query", {}).get("categorymembers", []) or []
             cat_member_count += len(members)
             for m in members:
-                if m.get("type") == "subcat" and depth < WIKIPEDIA_MAX_CATEGORY_DEPTH:
+                # ns is always present in the response; type requires cmprop=type,
+                # which isn't set by default. ns=14 is the Category namespace;
+                # ns=0 is the main (article) namespace.
+                ns = m.get("ns")
+                if ns == 14 and depth < WIKIPEDIA_MAX_CATEGORY_DEPTH:
                     queue.append((m["title"], depth + 1))
-                elif m.get("type") == "page":
+                elif ns == 0:
                     pid = m["pageid"]
                     pages.setdefault(pid, {"pageid": pid, "title": m["title"]})
                     parents.setdefault(pid, set()).add(cat)

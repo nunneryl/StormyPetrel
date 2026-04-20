@@ -97,5 +97,12 @@ def fetch(use_cache: bool = True) -> list[dict]:
             by_qid[qid] = rec
         elif not existing.get("region_hint") and rec.get("region_hint"):
             existing["region_hint"] = rec["region_hint"]
-    log.info("Wikidata: parsed %d unique surf breaks", len(by_qid))
+    if not by_qid:
+        log.warning(
+            "Wikidata: returned 0 surf breaks. US surf spots are sparsely tagged on "
+            "Wikidata (P31=Q1066670 or subclasses) — this is expected; continuing "
+            "with the other sources.",
+        )
+    else:
+        log.info("Wikidata: parsed %d unique surf breaks", len(by_qid))
     return list(by_qid.values())
