@@ -11,7 +11,11 @@ OVERPASS_ENDPOINTS = [
 WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 WIKIPEDIA_API_ENDPOINT = "https://en.wikipedia.org/w/api.php"
-WIKIPEDIA_ROOT_CATEGORY = "Category:Surfing_locations_in_the_United_States"
+WIKIPEDIA_ROOT_CATEGORIES = (
+    "Category:Surfing_locations_in_the_United_States",
+    "Category:Surfing_venues_in_the_United_States",
+    "Category:Surfing_in_the_United_States",
+)
 WIKIPEDIA_MAX_CATEGORY_DEPTH = 4
 WIKIPEDIA_PAGES_PER_BATCH = 50
 WIKIPEDIA_MIN_INTERVAL_S = 0.2  # ~5 req/s

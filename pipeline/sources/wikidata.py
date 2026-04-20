@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 _CACHE_FILE = CACHE_DIR / "wikidata_raw.json"
 
 _SPARQL = """
-SELECT ?item ?itemLabel ?coord ?stateLabel WHERE {
-  ?item wdt:P31 wd:Q1066670 ;
-        wdt:P17 wd:Q30 ;
+SELECT DISTINCT ?item ?itemLabel ?coord ?stateLabel WHERE {
+  ?item wdt:P31/wdt:P279* wd:Q1066670 ;
         wdt:P625 ?coord .
+  { ?item wdt:P17 wd:Q30 }
+  UNION
+  { ?item wdt:P131+ ?container . ?container wdt:P17 wd:Q30 . }
   OPTIONAL { ?item wdt:P131 ?state . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }

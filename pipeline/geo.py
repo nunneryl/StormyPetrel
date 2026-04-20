@@ -1,4 +1,4 @@
-"""Geo utilities: Haversine distance + offline state reverse geocoding."""
+"""Geo utilities: Haversine distance + offline state reverse geocoding + state normalization."""
 from __future__ import annotations
 
 import logging
@@ -9,9 +9,7 @@ log = logging.getLogger(__name__)
 
 EARTH_RADIUS_M = 6_371_000.0
 
-# Maps US Census / ISO state codes used by reverse_geocoder's admin1 field to full names.
-# reverse_geocoder returns the state name directly for the US, so this is a safety net
-# for the rare cases where it returns a code.
+# US state / territory two-letter codes → canonical full names.
 _STATE_CODE_TO_NAME = {
     "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
     "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
@@ -30,6 +28,44 @@ _STATE_CODE_TO_NAME = {
     "MP": "Northern Mariana Islands",
 }
 
+_FULL_NAMES = {v.lower(): v for v in _STATE_CODE_TO_NAME.values()}
+
+# Landlocked / non-coastal US states. A surf spot resolving here is almost always
+# a reverse-geocoding miss (coord on a lake/river snapped to an inland city) — we
+# warn loudly when this happens so the user can audit.
+LANDLOCKED_STATES = frozenset({
+    "Arizona", "Arkansas", "Colorado", "Idaho", "Illinois", "Indiana", "Iowa",
+    "Kansas", "Kentucky", "Minnesota", "Missouri", "Montana", "Nebraska",
+    "Nevada", "New Mexico", "North Dakota", "Ohio", "Oklahoma", "South Dakota",
+    "Tennessee", "Utah", "Vermont", "West Virginia", "Wisconsin", "Wyoming",
+    "District of Columbia",
+})
+
+
+def normalize_state(value: str | None) -> str | None:
+    """Return the canonical full US-state name for *value*, or None if unrecognized.
+
+    Accepts two-letter codes (CA, hi), full names ("California", "california"),
+    and common parenthetical suffixes ("California (state)").
+    """
+    if not value:
+        return None
+    v = str(value).strip()
+    if not v:
+        return None
+    # Drop parenthetical suffixes commonly used in Wikipedia/Wikidata labels.
+    paren = v.find("(")
+    if paren > 0:
+        v = v[:paren].strip()
+    # Drop trailing ", United States" etc.
+    for suffix in (", United States", ", USA", ", US"):
+        if v.endswith(suffix):
+            v = v[: -len(suffix)].strip()
+    upper = v.upper()
+    if len(upper) == 2 and upper in _STATE_CODE_TO_NAME:
+        return _STATE_CODE_TO_NAME[upper]
+    return _FULL_NAMES.get(v.lower())
+
 
 def haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Great-circle distance between two lat/lng points, in metres."""
@@ -41,8 +77,13 @@ def haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 def fill_region_hint(records: list[dict]) -> None:
-    """For records missing region_hint, fill it via offline reverse geocoding. Mutates in place."""
-    missing = [(i, r) for i, r in enumerate(records) if not r.get("region_hint")]
+    """Normalize every region_hint; reverse-geocode records missing one. Mutates in place."""
+    # First pass: normalize anything that's already set.
+    for r in records:
+        if r.get("region_hint"):
+            r["region_hint"] = normalize_state(r["region_hint"]) or r["region_hint"]
+
+    missing = [(i, r) for i, r in enumerate(records) if not normalize_state(r.get("region_hint"))]
     if not missing:
         return
     try:
@@ -54,11 +95,25 @@ def fill_region_hint(records: list[dict]) -> None:
     coords = [(r["lat"], r["lng"]) for _, r in missing]
     # mode=1 → single-threaded; friendlier in small scripts / sandboxes.
     results = rg.search(coords, mode=1)
-    for (idx, record), result in zip(missing, results):
+    landlocked_hits: list[tuple[str, float, float, str]] = []
+    for (_idx, record), result in zip(missing, results):
         if result.get("cc") != "US":
             continue
         admin1 = result.get("admin1") or ""
-        record["region_hint"] = _STATE_CODE_TO_NAME.get(admin1, admin1) or None
+        canonical = normalize_state(admin1)
+        if not canonical:
+            record["region_hint"] = admin1 or None
+            continue
+        record["region_hint"] = canonical
+        if canonical in LANDLOCKED_STATES:
+            landlocked_hits.append(
+                (record.get("name") or "(unnamed)", record["lat"], record["lng"], canonical)
+            )
+    for name, lat, lng, state in landlocked_hits:
+        log.warning(
+            "region_hint: %r @ (%.4f, %.4f) resolved to landlocked state %s — audit suggested",
+            name, lat, lng, state,
+        )
 
 
 def ensure_iter_records(records: Iterable[dict]) -> list[dict]:
