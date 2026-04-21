@@ -11,7 +11,8 @@ from __future__ import annotations
 import logging
 
 from pyproj import Geod
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
+from shapely.ops import nearest_points
 
 from ..config import (
     SWELL_ARC_SHRINK_DEG,
@@ -70,6 +71,30 @@ def _bearing_is_open(ray: LineString, land) -> bool:
         if ray.intersects(poly):
             return False
     return True
+
+
+def _first_land_hit_km(ray: LineString, land, spot_ll: Point) -> float | None:
+    """Return geodesic km from spot to the nearest land intersection along the
+    ray, or None if the ray is clear. Used for diagnostic logging only.
+    """
+    try:
+        candidates = land.polygon_tree.query(ray)
+    except Exception:
+        return None
+    best_km: float | None = None
+    for c in candidates:
+        poly = land.polygons[int(c)] if hasattr(c, "__index__") else c
+        if not ray.intersects(poly):
+            continue
+        inter = ray.intersection(poly)
+        if inter.is_empty:
+            continue
+        closest_on_inter, _ = nearest_points(inter, spot_ll)
+        _, _, dist_m = _GEOD.inv(spot_ll.x, spot_ll.y, closest_on_inter.x, closest_on_inter.y)
+        dist_km = dist_m / 1000.0
+        if best_km is None or dist_km < best_km:
+            best_km = dist_km
+    return best_km
 
 
 def _merge_open_arcs(open_bearings: list[int], step_deg: int) -> list[dict]:
@@ -141,11 +166,28 @@ def compute_swell_window(spot: dict) -> dict:
     lat = spot.get("_algo_lat", spot["lat"])
     lng = spot.get("_algo_lng", spot["lng"])
     max_range_km = _max_range_km(spot.get("region_hint"))
+    debug_on = log.isEnabledFor(logging.DEBUG)
+    if debug_on:
+        log.debug(
+            "swell_window: spot=%r algo=(%.4f, %.4f) range=%dkm local_exclusion=%dkm step=%d°",
+            spot.get("name"), lat, lng, max_range_km, SWELL_LOCAL_COAST_EXCLUSION_KM, SWELL_RAY_STEP_DEG,
+        )
+    spot_ll = Point(lng, lat)
     open_bearings: list[int] = []
+    # Log every 10th ray (i.e. every 20° with step=2°) for diagnostics.
+    log_every = 10 * SWELL_RAY_STEP_DEG
     for bearing in range(0, 360, SWELL_RAY_STEP_DEG):
         ray = _ray_linestring(lat, lng, float(bearing), max_range_km)
-        if _bearing_is_open(ray, land):
+        is_open = _bearing_is_open(ray, land)
+        if is_open:
             open_bearings.append(bearing)
+        if debug_on and bearing % log_every == 0:
+            first_km = None if is_open else _first_land_hit_km(ray, land, spot_ll)
+            first_str = "none" if first_km is None else f"{first_km:.0f}km"
+            log.debug(
+                "  ray %03d°: %s first_hit=%s",
+                bearing, "CLEAR  " if is_open else "BLOCKED", first_str,
+            )
 
     arcs = _merge_open_arcs(open_bearings, SWELL_RAY_STEP_DEG)
     optimal = _widest_arc_center(arcs)
