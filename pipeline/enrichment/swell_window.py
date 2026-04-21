@@ -127,10 +127,12 @@ def compute_swell_window(spot: dict) -> dict:
             "swell_window_confidence": 0.0,
         }
 
+    lat = spot.get("_algo_lat", spot["lat"])
+    lng = spot.get("_algo_lng", spot["lng"])
     max_range_km = _max_range_km(spot.get("region_hint"))
     open_bearings: list[int] = []
     for bearing in range(0, 360, SWELL_RAY_STEP_DEG):
-        ray = _ray_linestring(spot["lat"], spot["lng"], float(bearing), max_range_km)
+        ray = _ray_linestring(lat, lng, float(bearing), max_range_km)
         if _bearing_is_open(ray, land):
             open_bearings.append(bearing)
 

@@ -76,7 +76,9 @@ def _geodesic_line(lat1: float, lng1: float, lat2: float, lng2: float, n_interme
 
 
 def _los_clear(spot: dict, station: dict, land) -> bool:
-    line = _geodesic_line(spot["lat"], spot["lng"], station["lat"], station["lng"])
+    lat = spot.get("_algo_lat", spot["lat"])
+    lng = spot.get("_algo_lng", spot["lng"])
+    line = _geodesic_line(lat, lng, station["lat"], station["lng"])
     try:
         candidates = land.polygon_tree.query(line)
     except Exception:
@@ -99,8 +101,10 @@ def compute_nearest_buoy(spot: dict, k_candidates: int = 10) -> dict:
             "buoy_confidence": 0.0,
         }
 
+    algo_lat = spot.get("_algo_lat", spot["lat"])
+    algo_lng = spot.get("_algo_lng", spot["lng"])
     cap_km = _regional_cap_km(spot)
-    xyz = _latlng_to_unit_xyz(spot["lat"], spot["lng"])
+    xyz = _latlng_to_unit_xyz(algo_lat, algo_lng)
     k = min(k_candidates, len(stations))
     _, idx = tree.query(xyz, k=k)
     if isinstance(idx, int):
@@ -111,7 +115,7 @@ def compute_nearest_buoy(spot: dict, k_candidates: int = 10) -> dict:
     passing: list[tuple[str, float]] = []
     for i in idx:
         s = stations[i]
-        dist_m = haversine_m(spot["lat"], spot["lng"], s["lat"], s["lng"])
+        dist_m = haversine_m(algo_lat, algo_lng, s["lat"], s["lng"])
         dist_km = dist_m / 1000.0
         if dist_km > cap_km:
             continue

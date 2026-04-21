@@ -64,8 +64,8 @@ def compute_break_type(spot: dict) -> dict:
     if not land or not coastlines:
         return dict(_DEFAULT)
 
-    lat = spot["lat"]
-    lng = spot["lng"]
+    lat = spot.get("_algo_lat", spot["lat"])
+    lng = spot.get("_algo_lng", spot["lng"])
     epsg = utm_epsg(lat, lng)
     spot_ll = Point(lng, lat)
 

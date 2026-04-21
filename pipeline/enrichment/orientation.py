@@ -125,8 +125,8 @@ def compute_orientation(spot: dict) -> dict:
             "orientation_confidence": 0.0,
         }
 
-    lat = spot["lat"]
-    lng = spot["lng"]
+    lat = spot.get("_algo_lat", spot["lat"])
+    lng = spot.get("_algo_lng", spot["lng"])
     epsg = utm_epsg(lat, lng)
     spot_utm = to_utm_point(lat, lng, epsg)
 

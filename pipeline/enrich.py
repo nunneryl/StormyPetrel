@@ -15,8 +15,10 @@ import sys
 from pathlib import Path
 
 from .config import DEFAULT_ENRICHED_OUTPUT, DEFAULT_OUTPUT
+from .enrichment.adjust import seaward_adjust
 from .enrichment.break_type import compute_break_type
 from .enrichment.buoys import compute_nearest_buoy
+from .enrichment.geodata import load_land_index
 from .enrichment.orientation import compute_orientation
 from .enrichment.swell_window import compute_swell_window
 from .enrichment.tides import compute_nearest_tide_station
@@ -40,17 +42,33 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
     """Run all algorithms on one spot; return the enriched record."""
+    # Seaward-adjust spots that sit inside a GSHHG polygon. The output record
+    # keeps the original lat/lng; algorithms receive a copy with the adjusted
+    # coordinates so their LOS / perpendicular / curvature checks run from a
+    # point that's actually in the water.
+    land = load_land_index()
+    adj_lat, adj_lng, was_adjusted = (spot["lat"], spot["lng"], False)
+    if land is not None:
+        adj_lat, adj_lng, was_adjusted = seaward_adjust(spot["lat"], spot["lng"], land)
+        if was_adjusted:
+            log.info(
+                "%s @ (%.4f, %.4f): coord inside land, adjusted seaward to (%.4f, %.4f)",
+                spot.get("name") or "(unnamed)", spot["lat"], spot["lng"], adj_lat, adj_lng,
+            )
+    spot_for_algo = {**spot, "_algo_lat": adj_lat, "_algo_lng": adj_lng}
+
     enriched = {
         "name": spot.get("name"),
         "lat": spot["lat"],
         "lng": spot["lng"],
         "region_hint": spot.get("region_hint"),
+        "coord_adjusted": was_adjusted,
     }
     confidence: dict = {}
 
     # Algo 1 — orientation
     try:
-        r = compute_orientation(spot)
+        r = compute_orientation(spot_for_algo)
         enriched.update(r)
         confidence["orientation"] = r.pop("orientation_confidence", 0.0)
         enriched.pop("orientation_confidence", None)
@@ -65,7 +83,7 @@ def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
         confidence["swell_window"] = 0.0
     else:
         try:
-            r = compute_swell_window(spot)
+            r = compute_swell_window(spot_for_algo)
             enriched["swell_window_arcs"] = r["swell_window_arcs"]
             enriched["optimal_swell_dir"] = r["optimal_swell_dir"]
             confidence["swell_window"] = r["swell_window_confidence"]
@@ -76,7 +94,7 @@ def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
 
     # Algo 3 — break type
     try:
-        r = compute_break_type(spot)
+        r = compute_break_type(spot_for_algo)
         enriched["break_type"] = r["break_type"]
         enriched["break_type_confidence"] = r["break_type_confidence"]
         confidence["break_type"] = r["break_type_confidence"]
@@ -87,7 +105,7 @@ def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
 
     # Algo 4 — nearest buoy
     try:
-        r = compute_nearest_buoy(spot)
+        r = compute_nearest_buoy(spot_for_algo)
         enriched["nearest_buoy_id"] = r["nearest_buoy_id"]
         enriched["nearest_buoy_dist_km"] = r["nearest_buoy_dist_km"]
         enriched["fallback_buoy_ids"] = r["fallback_buoy_ids"]
