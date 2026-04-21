@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 _DEFAULT = {"break_type": "beach", "break_type_confidence": 0.5}
 
 # Curvature thresholds (1/metres). 1e-3 = radius 1 km; 5e-3 = radius 200 m.
-_CURV_POINT_STRONG = 5e-3
+_CURV_POINT_STRONG = float("inf")  # disabled — coastline curvature from coarse GSHHG is unreliable; break_type set manually in the review UI
 _CURV_POINT_WEAK = float("inf")  # disabled — coarse GSHHG vertices spike curvature falsely; require strong signal
 
 
