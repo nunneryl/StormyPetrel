@@ -47,10 +47,9 @@ DEFAULT_ENRICHED_OUTPUT = PIPELINE_DIR / "spots_enriched.json"
 
 # Swell window ray-casting
 SWELL_RAY_STEP_DEG = 2
-SWELL_RAY_RANGE_KM_DEFAULT = 12_000
-SWELL_RAY_RANGE_KM_HAWAII = 15_000
 SWELL_ARC_SHRINK_DEG = 5  # conservative shrink on each end of merged open arcs
 SWELL_LOCAL_COAST_EXCLUSION_KM = 2  # ignore land within this distance of the spot; local coast isn't a swell blocker
+SWELL_MIN_FETCH_KM = 3_000  # a bearing is "open" iff the first land hit is beyond this distance (long-period swell fetch)
 
 # Buoy regional distance caps (km). Matched against region_hint / lat+lng heuristics.
 BUOY_CAP_KM = {
