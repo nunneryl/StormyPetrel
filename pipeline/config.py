@@ -73,6 +73,6 @@ TIDE_STATION_MAX_DIST_KM = 50
 # ---------------------------------------------------------------------------
 # Tide preference classification (Phase 0C)
 # ---------------------------------------------------------------------------
-TIDE_CLASSIFY_MODEL = "claude-sonnet-4-20250514"
+TIDE_CLASSIFY_MODEL = "claude-sonnet-4-6"
 TIDE_CLASSIFY_BATCH_SIZE = 10
 TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
