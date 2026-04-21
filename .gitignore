@@ -143,6 +143,7 @@ pipeline/cache/
 pipeline/spots_seed.json
 pipeline/spots_enriched.json
 pipeline/geodata/
+pipeline/forecast_data/
 
 # Python
 __pycache__/

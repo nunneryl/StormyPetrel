@@ -76,3 +76,18 @@ TIDE_STATION_MAX_DIST_KM = 50
 TIDE_CLASSIFY_MODEL = "claude-sonnet-4-6"
 TIDE_CLASSIFY_BATCH_SIZE = 10
 TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
+
+# ---------------------------------------------------------------------------
+# Forecast fetching (Phase 1)
+# ---------------------------------------------------------------------------
+NOAA_COOPS_ENDPOINT = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+NOAA_COOPS_MIN_INTERVAL_S = 1.0  # polite pace for the public CO-OPS API
+NDBC_REALTIME2_BASE = "https://www.ndbc.noaa.gov/data/realtime2"
+
+FORECAST_DATA_DIR = PIPELINE_DIR / "forecast_data"
+TIDES_CACHE_DIR = CACHE_DIR / "tides"
+BUOYS_CACHE_DIR = CACHE_DIR / "buoys"
+TIDES_FORECAST_FILE = FORECAST_DATA_DIR / "tides.json"
+BUOYS_FORECAST_FILE = FORECAST_DATA_DIR / "buoys.json"
+
+TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days
