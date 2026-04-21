@@ -19,6 +19,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from ..config import (
+    NOAA_COOPS_DATUMS,
     NOAA_COOPS_ENDPOINT,
     NOAA_COOPS_MIN_INTERVAL_S,
     TIDES_CACHE_DIR,
@@ -28,6 +29,10 @@ from ..config import (
 from ..http import get
 
 log = logging.getLogger(__name__)
+
+# Stations we've already observed to have no predictions under any datum are
+# persisted here so subsequent runs skip them without hitting the API.
+_NO_PREDICTIONS_FILE = TIDES_CACHE_DIR / "_no_predictions.json"
 
 
 class _Pacer:
@@ -48,8 +53,26 @@ def _cache_path(station_id: str, today_yyyymmdd: str, interval: str) -> Path:
     return TIDES_CACHE_DIR / f"{station_id}_{today_yyyymmdd}_{interval}.json"
 
 
+def _load_no_predictions() -> set[str]:
+    if not _NO_PREDICTIONS_FILE.exists():
+        return set()
+    try:
+        return set(json.loads(_NO_PREDICTIONS_FILE.read_text()))
+    except (json.JSONDecodeError, TypeError):
+        return set()
+
+
+def _save_no_predictions(known: set[str]) -> None:
+    TIDES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _NO_PREDICTIONS_FILE.write_text(json.dumps(sorted(known)))
+
+
 def _fetch_interval(station_id: str, interval: str, pacer: _Pacer, use_cache: bool) -> dict | None:
-    """Fetch one predictions interval (hilo or h); return the parsed JSON body."""
+    """Fetch predictions for one interval, cascading through NOAA_COOPS_DATUMS.
+
+    Returns the parsed JSON body of the first datum that yields predictions,
+    or None if every datum returns an error / non-JSON / HTTP failure.
+    """
     today = date.today().strftime("%Y%m%d")
     cache_file = _cache_path(station_id, today, interval)
     if use_cache and cache_file.exists():
@@ -58,39 +81,44 @@ def _fetch_interval(station_id: str, interval: str, pacer: _Pacer, use_cache: bo
         except json.JSONDecodeError:
             log.warning("tides cache %s corrupt; refetching", cache_file)
 
-    pacer.wait()
-    params = {
-        "station": station_id,
-        "product": "predictions",
-        "datum": "MLLW",
-        "units": "english",
-        "time_zone": "lst_ldt",
-        "interval": interval,
-        "begin_date": today,
-        "range": TIDE_PREDICTION_RANGE_HOURS,
-        "format": "json",
-    }
-    try:
-        resp = get(NOAA_COOPS_ENDPOINT, params=params)
-    except Exception as e:  # noqa: BLE001
-        log.warning("tides: station %s interval %s HTTP failed: %s", station_id, interval, e)
-        return None
+    for datum in NOAA_COOPS_DATUMS:
+        pacer.wait()
+        params = {
+            "station": station_id,
+            "product": "predictions",
+            "datum": datum,
+            "units": "english",
+            "time_zone": "lst_ldt",
+            "interval": interval,
+            "begin_date": today,
+            "range": TIDE_PREDICTION_RANGE_HOURS,
+            "format": "json",
+        }
+        try:
+            resp = get(NOAA_COOPS_ENDPOINT, params=params)
+        except Exception as e:  # noqa: BLE001
+            log.debug("tides: %s %s datum=%s HTTP failed: %s", station_id, interval, datum, e)
+            continue
 
-    try:
-        data = resp.json()
-    except ValueError as e:
-        log.warning("tides: station %s interval %s non-JSON response: %s", station_id, interval, e)
-        return None
+        try:
+            data = resp.json()
+        except ValueError as e:
+            log.debug("tides: %s %s datum=%s non-JSON response: %s", station_id, interval, datum, e)
+            continue
 
-    # CO-OPS returns 200 with {"error": {"message": "..."}} on bad stations / dates.
-    if "error" in data:
-        log.warning("tides: station %s interval %s returned error: %s",
-                    station_id, interval, data["error"].get("message"))
-        return None
+        # CO-OPS returns 200 with {"error": {"message": "..."}} when predictions are
+        # unavailable for the given (station, datum, date range).
+        if "error" in data:
+            log.debug("tides: %s %s datum=%s error: %s",
+                      station_id, interval, datum, data["error"].get("message"))
+            continue
 
-    TIDES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_file.write_text(json.dumps(data))
-    return data
+        # Success — cache and return. First successful datum wins.
+        TIDES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(json.dumps(data))
+        return data
+
+    return None
 
 
 def _unique_station_ids(spots: list[dict]) -> list[str]:
@@ -110,18 +138,25 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
     Returns a dict keyed by station_id. Also writes TIDES_FORECAST_FILE.
     """
     station_ids = _unique_station_ids(spots)
-    log.info("tides: %d unique stations to fetch", len(station_ids))
+    known_bad = _load_no_predictions() if use_cache else set()
+    active_ids = [sid for sid in station_ids if sid not in known_bad]
+    skipped_known = len(station_ids) - len(active_ids)
+    log.info(
+        "tides: %d unique stations (%d active, %d skipped as known-no-predictions)",
+        len(station_ids), len(active_ids), skipped_known,
+    )
 
     pacer = _Pacer(NOAA_COOPS_MIN_INTERVAL_S)
     out: dict[str, dict] = {}
     successes = 0
     failures = 0
+    new_bad: list[str] = []
 
     try:
         from tqdm import tqdm
-        iterator = tqdm(station_ids, desc="tides", unit="station")
+        iterator = tqdm(active_ids, desc="tides", unit="station")
     except ImportError:
-        iterator = station_ids
+        iterator = active_ids
 
     for sid in iterator:
         hilo = _fetch_interval(sid, "hilo", pacer, use_cache)
@@ -132,7 +167,8 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
 
         if not hilo_predictions and not hourly_predictions:
             failures += 1
-            log.warning("tides: station %s returned no usable data", sid)
+            new_bad.append(sid)
+            log.info("tides: %s has no predictions in any datum — marking as bad", sid)
             continue
         successes += 1
 
@@ -143,10 +179,14 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
             "hourly": hourly_predictions,
         }
 
+    # Persist the no-predictions markers so subsequent runs don't re-probe them.
+    if new_bad:
+        _save_no_predictions(known_bad | set(new_bad))
+
     TIDES_FORECAST_FILE.parent.mkdir(parents=True, exist_ok=True)
     TIDES_FORECAST_FILE.write_text(json.dumps(out, indent=2, ensure_ascii=False))
     log.info(
-        "tides: wrote %d stations to %s (%d successes, %d failures)",
-        len(out), TIDES_FORECAST_FILE, successes, failures,
+        "tides: wrote %d stations to %s (successes=%d, failures=%d, skipped_known=%d)",
+        len(out), TIDES_FORECAST_FILE, successes, failures, skipped_known,
     )
     return out

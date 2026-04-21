@@ -82,6 +82,9 @@ TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
 # ---------------------------------------------------------------------------
 NOAA_COOPS_ENDPOINT = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
 NOAA_COOPS_MIN_INTERVAL_S = 1.0  # polite pace for the public CO-OPS API
+# Datum cascade: many subordinate and regional stations only publish one of
+# these; try them in order and take the first that returns predictions.
+NOAA_COOPS_DATUMS = ("MLLW", "STND", "MSL")
 NDBC_REALTIME2_BASE = "https://www.ndbc.noaa.gov/data/realtime2"
 
 FORECAST_DATA_DIR = PIPELINE_DIR / "forecast_data"
