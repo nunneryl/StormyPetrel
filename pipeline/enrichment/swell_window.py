@@ -15,6 +15,7 @@ from shapely.geometry import LineString
 
 from ..config import (
     SWELL_ARC_SHRINK_DEG,
+    SWELL_LOCAL_COAST_EXCLUSION_KM,
     SWELL_RAY_RANGE_KM_DEFAULT,
     SWELL_RAY_RANGE_KM_HAWAII,
     SWELL_RAY_STEP_DEG,
@@ -33,17 +34,27 @@ def _max_range_km(region_hint: str | None) -> int:
 
 
 def _ray_linestring(lat: float, lng: float, bearing_deg: float, max_range_km: int) -> LineString:
-    """Densified geodesic LineString from (lat, lng) at bearing for max_range_km."""
+    """Densified geodesic LineString from (lat, lng) at bearing for max_range_km.
+
+    The ray actually *starts* SWELL_LOCAL_COAST_EXCLUSION_KM away from the spot
+    so local coastline doesn't count as a swell blocker — the spot is only
+    ~30 m offshore after seaward adjustment, and any ray with a landward
+    tangent component would otherwise re-enter land within a few hundred
+    metres. Only islands / landmasses beyond the exclusion radius matter.
+    """
+    skip_m = SWELL_LOCAL_COAST_EXCLUSION_KM * 1000.0
     total_m = max_range_km * 1000.0
+    if total_m <= skip_m:
+        # Degenerate — shouldn't happen for real ranges; return a near-empty line.
+        return LineString([(lng, lat), (lng, lat)])
+    start_lon, start_lat, _ = _GEOD.fwd(lng, lat, bearing_deg, skip_m)
+    end_lon, end_lat, _ = _GEOD.fwd(lng, lat, bearing_deg, total_m)
     # One vertex per ~100 km keeps each ray light-weight while preserving great-circle shape.
     step_m = 100_000.0
-    n = max(3, int(total_m // step_m))
-    pts = [(lng, lat)]
-    lon_i, lat_i, _ = _GEOD.fwd(lng, lat, bearing_deg, step_m * 1)
-    # fwd_intermediate is cleaner but npts gives us intermediate points directly.
-    intermediate = _GEOD.npts(lng, lat, *_GEOD.fwd(lng, lat, bearing_deg, total_m)[:2], n - 1)
+    n = max(3, int((total_m - skip_m) // step_m))
+    pts = [(start_lon, start_lat)]
+    intermediate = _GEOD.npts(start_lon, start_lat, end_lon, end_lat, n - 1)
     pts.extend((lon, la) for lon, la in intermediate)
-    end_lon, end_lat, _ = _GEOD.fwd(lng, lat, bearing_deg, total_m)
     pts.append((end_lon, end_lat))
     return LineString(pts)
 

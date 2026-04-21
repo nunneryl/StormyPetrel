@@ -50,6 +50,7 @@ SWELL_RAY_STEP_DEG = 2
 SWELL_RAY_RANGE_KM_DEFAULT = 12_000
 SWELL_RAY_RANGE_KM_HAWAII = 15_000
 SWELL_ARC_SHRINK_DEG = 5  # conservative shrink on each end of merged open arcs
+SWELL_LOCAL_COAST_EXCLUSION_KM = 2  # ignore land within this distance of the spot; local coast isn't a swell blocker
 
 # Buoy regional distance caps (km). Matched against region_hint / lat+lng heuristics.
 BUOY_CAP_KM = {
