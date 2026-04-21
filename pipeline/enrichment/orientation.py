@@ -137,6 +137,10 @@ def compute_orientation(spot: dict) -> dict:
     tree = land.coastline_tree if coastlines is land.coastlines else STRtree(coastlines)
     nearest_ll = _nearest_coast_line(coastlines, tree, Point(lng, lat))
     if nearest_ll is None:
+        log.info(
+            "%s @ (%.4f, %.4f): no nearest coastline (STRtree returned nothing) — %d coastlines loaded",
+            spot.get("name") or "(unnamed)", lat, lng, len(coastlines),
+        )
         return {
             "orientation_deg": None,
             "orientation_50m": None,
@@ -147,11 +151,36 @@ def compute_orientation(spot: dict) -> dict:
 
     coast_utm = project_linestring_to_utm(nearest_ll, epsg)
 
+    # Diagnostic: distance from spot to nearest coastline, and whether the spot
+    # sits inside any land polygon. Either >0m distance with inside_land=True or
+    # a large distance points to an OSM/GSHHG coord mismatch.
+    dist_m = float(coast_utm.distance(spot_utm))
+    spot_ll = Point(lng, lat)
+    inside_land = False
+    try:
+        candidates = land.polygon_tree.query(spot_ll)
+        for c in candidates:
+            poly = land.polygons[int(c)] if hasattr(c, "__index__") else c
+            if poly.contains(spot_ll):
+                inside_land = True
+                break
+    except Exception:
+        pass
+    log.info(
+        "%s @ (%.4f, %.4f): dist_to_coast=%.1fm inside_land=%s coast_len=%.0fm",
+        spot.get("name") or "(unnamed)", lat, lng, dist_m, inside_land, coast_utm.length,
+    )
+
     results = {}
     for key, half in (("orientation_50m", 50.0), ("orientation_deg", 100.0), ("orientation_200m", 200.0)):
         results[key] = _orientation_at_window(coast_utm, spot_utm, half, land, epsg)
 
     primary = results["orientation_deg"]
+    if primary is None:
+        log.debug(
+            "%s: orientation unresolved at 100m window (per-window=%s) — likely both test points on land (inside_land=%s)",
+            spot.get("name"), results, inside_land,
+        )
     offshore = ((primary + 180) % 360) if primary is not None else None
     return {
         **results,
