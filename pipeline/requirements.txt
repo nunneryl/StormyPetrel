@@ -4,6 +4,9 @@ tenacity>=8.2,<9
 tqdm>=4.66,<5
 reverse_geocoder>=1.5.1,<2
 
+# Phase 0C — LLM tide classification
+anthropic>=0.40,<1
+
 # Enrichment (Phase 0B) — geospatial stack
 shapely>=2.0,<3
 pyproj>=3.6,<4
