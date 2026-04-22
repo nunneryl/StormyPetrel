@@ -423,7 +423,13 @@ def _normalize_longitude(ds, lng: float) -> float:
 
 
 def _extract_time_series(merged, lat: float, lng: float) -> list[dict]:
-    """Nearest-grid-point time series for a single spot."""
+    """Nearest-grid-point time series for a single spot.
+
+    Normalizes the time axis and every variable array to 1-D so a dataset with
+    a single forecast step (which yields a 0-d numpy scalar from `.values` and
+    a scalar pd.Timestamp from pd.to_datetime) iterates the same way as a full
+    144-step forecast.
+    """
     import numpy as np
     import pandas as pd
 
@@ -434,36 +440,52 @@ def _extract_time_series(merged, lat: float, lng: float) -> list[dict]:
         log.warning("nwps: .sel failed for (%.4f, %.4f): %s", lat, lng, e)
         return []
 
-    # Forecast time axis — try valid_time, else time, else time + step
+    # Resolve the time axis. NWPS GRIBs expose `time` as the forecast reference
+    # (cycle run) and `step` as offsets; cfgrib also derives `valid_time` as a
+    # coordinate. Any of the three can arrive as a 0-d scalar when there's a
+    # single step.
     if "valid_time" in point.coords:
-        times = pd.to_datetime(point["valid_time"].values, utc=True)
+        vt = np.asarray(point["valid_time"].values)
     elif "step" in point.coords and "time" in point.coords:
-        base = pd.to_datetime(np.array([point["time"].values]), utc=True)[0]
-        times = base + pd.to_timedelta(point["step"].values)
+        base = np.asarray(point["time"].values)
+        step = np.asarray(point["step"].values)
+        if base.ndim == 0:
+            vt = base + np.atleast_1d(step)
+        else:
+            vt = (base.reshape(-1, 1) + step.reshape(1, -1)).ravel()
     elif "time" in point.coords:
-        times = pd.to_datetime(point["time"].values, utc=True)
+        vt = np.asarray(point["time"].values)
     else:
         log.warning("nwps: no time coordinate found in merged dataset")
         return []
 
-    # Per-timestep record.
-    results: list[dict] = []
-    # Build per-variable arrays in advance.
+    vt = np.atleast_1d(vt).ravel()
+    if vt.size == 0:
+        return []
+    # DatetimeIndex guarantees `enumerate()` works even when vt has length 1.
+    times = pd.DatetimeIndex(pd.to_datetime(vt, utc=True))
+
+    # Build per-variable arrays. ravel() makes every source align to the time
+    # axis regardless of trailing spatial dims (sel should have dropped them,
+    # but cfgrib sometimes keeps a size-1 lat/lng dim).
     arrays: dict[str, list] = {}
     for var_name in point.data_vars:
         out_key = _VAR_MAP.get(str(var_name).lower())
         if out_key is None:
             continue
-        vals = np.asarray(point[var_name].values)
+        vals = np.atleast_1d(np.asarray(point[var_name].values)).ravel()
         arrays.setdefault(out_key, []).append(vals)
 
+    results: list[dict] = []
     for i, t in enumerate(times):
         entry: dict = {"valid_time": t.isoformat().replace("+00:00", "Z")}
         for out_key, sources in arrays.items():
             for vals in sources:
+                if i >= len(vals):
+                    continue
                 try:
                     val = float(vals[i])
-                except (IndexError, TypeError, ValueError):
+                except (TypeError, ValueError):
                     continue
                 if math.isnan(val):
                     continue
