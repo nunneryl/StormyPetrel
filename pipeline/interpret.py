@@ -207,44 +207,106 @@ def _parse_coops_time(t: str) -> datetime | None:
         return None
 
 
-def build_tide_series(station_block: dict) -> tuple[float, float, list[tuple[datetime, float]]] | None:
-    """Return (min_v, max_v, [(naive_local_dt, v)]) for a station, or None."""
-    hourly = station_block.get("hourly") or []
-    points: list[tuple[datetime, float]] = []
-    for row in hourly:
-        t = _parse_coops_time(row.get("t"))
-        if t is None:
-            continue
-        try:
-            v = float(row.get("v"))
-        except (TypeError, ValueError):
-            continue
-        points.append((t, v))
+def _cosine_interp(v1: float, v2: float, progress: float) -> float:
+    """Cosine easing between two extremes — matches real tide-curve shape
+    (zero slope at H/L, max slope in between) far better than linear interp.
+    """
+    return v1 + (v2 - v1) * (1.0 - math.cos(progress * math.pi)) / 2.0
+
+
+def _sample_points(
+    points: list[tuple[datetime, float]],
+    target: datetime,
+    max_gap_hours: float,
+) -> float | None:
+    """Return interpolated v at *target*.
+
+    When *target* falls strictly between two points, cosine-interpolate.
+    When it falls before/after the series, return the endpoint iff it is
+    within *max_gap_hours*. Returns None when out of range.
+    """
+    from bisect import bisect_left
+
     if not points:
         return None
-    points.sort(key=lambda p: p[0])
-    vs = [v for _, v in points]
-    return min(vs), max(vs), points
+    times = [p[0] for p in points]
+    i = bisect_left(times, target)
+
+    if i == 0:
+        gap_h = (times[0] - target).total_seconds() / 3600.0
+        return points[0][1] if gap_h <= max_gap_hours else None
+    if i == len(points):
+        gap_h = (target - times[-1]).total_seconds() / 3600.0
+        return points[-1][1] if gap_h <= max_gap_hours else None
+
+    t1, v1 = points[i - 1]
+    t2, v2 = points[i]
+    span_s = (t2 - t1).total_seconds()
+    if span_s <= 0:
+        return v1
+    progress = (target - t1).total_seconds() / span_s
+    return _cosine_interp(v1, v2, progress)
+
+
+def build_tide_series(station_block: dict) -> dict | None:
+    """Return a tide series built from the station's hourly predictions when
+    available, or interpolated from hilo extremes as a fallback.
+
+    CO-OPS subordinate stations publish hilo-only predictions — ~275 spots
+    in our data were losing tide multipliers because `hourly` was empty.
+    hilo is ~4 samples/day; cosine interpolation between bracketing H/L
+    points recovers a usable tide curve.
+
+    Returns {"min", "max", "points": [(dt, v)], "source": "hourly"|"hilo"}
+    or None when neither source has parseable predictions.
+    """
+    for source in ("hourly", "hilo"):
+        rows = station_block.get(source) or []
+        points: list[tuple[datetime, float]] = []
+        for row in rows:
+            t = _parse_coops_time(row.get("t"))
+            if t is None:
+                continue
+            try:
+                v = float(row.get("v"))
+            except (TypeError, ValueError):
+                continue
+            points.append((t, v))
+        if not points:
+            continue
+        points.sort(key=lambda p: p[0])
+        vs = [v for _, v in points]
+        # Min/max from hilo is actually more accurate than hourly (hilo hits
+        # the true extremes; hourly samples may miss peak/trough by up to 30m).
+        return {
+            "min": min(vs),
+            "max": max(vs),
+            "points": points,
+            "source": source,
+        }
+    return None
 
 
 def lookup_tide_norm(
-    series: tuple[float, float, list[tuple[datetime, float]]],
+    series: dict,
     valid_time_utc: datetime,
     lng: float,
 ) -> tuple[float | None, float | None]:
     """Return (raw_tide_ft, tide_norm in 0-1) for *valid_time_utc*."""
-    min_v, max_v, points = series
+    min_v = series["min"]
+    max_v = series["max"]
     if max_v - min_v < 1e-9:
         return None, None
 
     local = valid_time_utc + timedelta(hours=_tz_offset_hours(lng))
     local_naive = local.replace(tzinfo=None)
 
-    # Nearest-by-time lookup. Linear scan; series is ~168 entries.
-    nearest = min(points, key=lambda p: abs((p[0] - local_naive).total_seconds()))
-    if abs((nearest[0] - local_naive).total_seconds()) > 3 * 3600:
-        return None, None  # > 3h gap — predictions don't cover this hour
-    v = nearest[1]
+    # Hilo points are ~6h apart — a hourly forecast will always be strictly
+    # bracketed, so allow a 6h gap on the endpoints. Hourly stays tight.
+    max_gap_h = 6.0 if series["source"] == "hilo" else 3.0
+    v = _sample_points(series["points"], local_naive, max_gap_h)
+    if v is None:
+        return None, None
     norm = (v - min_v) / (max_v - min_v)
     return round(v, 3), round(norm, 3)
 
@@ -256,7 +318,7 @@ def lookup_tide_norm(
 def rate_spot(
     spot: dict,
     forecast: list[dict],
-    tide_series: tuple[float, float, list[tuple[datetime, float]]] | None,
+    tide_series: dict | None,
 ) -> list[dict]:
     orientation = spot.get("orientation_deg")
     offshore = spot.get("offshore_wind_deg")
@@ -330,12 +392,13 @@ def compute_ratings(
 ) -> dict[str, list[dict]]:
     """Rate every spot that has NWPS forecast data.
 
-    Splits "no tide data" into three distinct failure modes in the log so
-    it's obvious which one dominates:
+    Buckets every spot by how its tide source resolved so the dominant
+    failure mode is visible in the log:
+      - tide_hourly:     primary path — hourly predictions present
+      - tide_hilo:       fallback path — hilo extremes interpolated
       - no_station:      spot has no `nearest_tide_station_id` at all
       - station_missing: station_id is set but not a key in tides.json
-      - no_hourly:       station is in tides.json but its hourly series
-                         has no parseable predictions
+      - no_tide_data:    station in tides.json has neither hourly nor hilo
     """
     spot_by_name = {s.get("name"): s for s in spots if s.get("name")}
     results: dict[str, list[dict]] = {}
@@ -343,7 +406,9 @@ def compute_ratings(
     no_spot = 0
     no_station = 0
     station_missing = 0
-    no_hourly = 0
+    no_tide_data = 0
+    tide_hourly = 0
+    tide_hilo = 0
     missing_examples: list[str] = []
 
     for name, forecast in nwps.items():
@@ -366,7 +431,11 @@ def compute_ratings(
             else:
                 tide_series = build_tide_series(station_block)
                 if tide_series is None:
-                    no_hourly += 1
+                    no_tide_data += 1
+                elif tide_series.get("source") == "hilo":
+                    tide_hilo += 1
+                else:
+                    tide_hourly += 1
 
         series = rate_spot(spot, forecast, tide_series)
         if series:
@@ -374,8 +443,10 @@ def compute_ratings(
             rated += 1
 
     log.info(
-        "interpret: rated %d spots (no_spot=%d, no_station=%d, station_missing=%d, no_hourly=%d)",
-        rated, no_spot, no_station, station_missing, no_hourly,
+        "interpret: rated %d spots (no_spot=%d, no_station=%d, "
+        "station_missing=%d, no_tide_data=%d, tide_hourly=%d, tide_hilo=%d)",
+        rated, no_spot, no_station, station_missing, no_tide_data,
+        tide_hourly, tide_hilo,
     )
     if missing_examples:
         log.info("interpret: station_missing sample: %s", ", ".join(missing_examples))
@@ -390,7 +461,47 @@ def _star_histogram(ratings: dict[str, list[dict]]) -> Counter:
     return c
 
 
-def _print_summary(ratings: dict[str, list[dict]], sample_name: str | None = None) -> None:
+def _zero_star_breakdown(
+    ratings: dict[str, list[dict]],
+    spots: list[dict],
+) -> tuple[int, int, int]:
+    """Split 0-star spot-hours into three buckets:
+
+    - null_orientation: spot has orientation_deg == None → dir_gain is
+      always 0 by design, so every hour is 0 stars regardless of swell.
+    - null_arcs: orientation resolved but no arcs (shouldn't happen
+      post-fallback, but counted for completeness).
+    - flat_conditions: orientation AND arcs resolved — the hour is 0 star
+      because swell/size genuinely don't meet the threshold. This is the
+      actionable number.
+    """
+    orient_by_name = {
+        s.get("name"): s for s in spots if s.get("name")
+    }
+    null_orient = 0
+    null_arcs = 0
+    flat = 0
+    for name, series in ratings.items():
+        spot = orient_by_name.get(name) or {}
+        has_orient = spot.get("orientation_deg") is not None
+        has_arcs = bool(spot.get("swell_window_arcs"))
+        for entry in series:
+            if entry.get("stars", 0.0) != 0.0:
+                continue
+            if not has_orient:
+                null_orient += 1
+            elif not has_arcs:
+                null_arcs += 1
+            else:
+                flat += 1
+    return null_orient, null_arcs, flat
+
+
+def _print_summary(
+    ratings: dict[str, list[dict]],
+    spots: list[dict],
+    sample_name: str | None = None,
+) -> None:
     print()
     print("=" * 60)
     print("Interpretation summary")
@@ -405,6 +516,15 @@ def _print_summary(ratings: dict[str, list[dict]], sample_name: str | None = Non
     for stars in sorted(hist.keys()):
         bar = "█" * min(50, int(hist[stars] / max(1, total_hours) * 200))
         print(f"    {stars:>3.1f} stars: {hist[stars]:>6d}  {bar}")
+
+    zero_hours = hist.get(0.0, 0)
+    if zero_hours:
+        null_orient, null_arcs, flat = _zero_star_breakdown(ratings, spots)
+        print(f"  0-star breakdown ({zero_hours} hours):")
+        print(f"    null-orientation spots (can't score):  {null_orient}")
+        if null_arcs:
+            print(f"    null-arcs spots:                       {null_arcs}")
+        print(f"    orientation + arcs OK, just flat:      {flat}")
 
     peaks = sorted(
         (
@@ -489,7 +609,7 @@ def main(argv: list[str] | None = None) -> int:
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
     log.info("interpret: wrote %d spots to %s", len(ratings), args.output)
 
-    _print_summary(ratings, sample_name=args.sample)
+    _print_summary(ratings, spots, sample_name=args.sample)
     return 0 if ratings else 2
 
 
