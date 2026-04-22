@@ -41,8 +41,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
-    """Run all algorithms on one spot; return the enriched record."""
+def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) -> dict:
+    """Run all algorithms on one spot; return the enriched record.
+
+    If *skip_raycast* is True and *prior_arcs* contains a matching entry for
+    this spot, carry its raycast arcs forward instead of blanking them — this
+    lets dev iterations (`--skip-raycast`) reuse a prior full run's swell
+    windows without re-running the 30+ min ray-cast.
+    """
     # Seaward-adjust spots that sit inside a GSHHG polygon. The output record
     # keeps the original lat/lng; algorithms receive a copy with the adjusted
     # coordinates so their LOS / perpendicular / curvature checks run from a
@@ -80,8 +86,16 @@ def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
 
     # Algo 2 — swell window (optional)
     if skip_raycast:
-        enriched.update(swell_window_arcs=[], optimal_swell_dir=None)
-        confidence["swell_window"] = 0.0
+        prior = (prior_arcs or {}).get(spot.get("name")) if prior_arcs else None
+        if prior and prior.get("swell_window_arcs"):
+            enriched["swell_window_arcs"] = prior["swell_window_arcs"]
+            enriched["optimal_swell_dir"] = prior.get("optimal_swell_dir")
+            if prior.get("swell_window_source"):
+                enriched["swell_window_source"] = prior["swell_window_source"]
+            confidence["swell_window"] = prior.get("swell_window_confidence", 0.0)
+        else:
+            enriched.update(swell_window_arcs=[], optimal_swell_dir=None)
+            confidence["swell_window"] = 0.0
     else:
         try:
             r = compute_swell_window(spot_for_algo)
@@ -93,7 +107,8 @@ def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
             enriched.update(swell_window_arcs=[], optimal_swell_dir=None)
             confidence["swell_window"] = 0.0
 
-    # Algo 2b — orientation-derived fallback for spots with empty arcs.
+    # Algo 2b — orientation-derived fallback for spots whose arcs are still
+    # empty. Already-populated arcs (raycast or carried-forward) are a no-op.
     fallback = compute_swell_window_fallback(enriched)
     if fallback:
         enriched.update(fallback)
@@ -172,13 +187,38 @@ def main(argv: list[str] | None = None) -> int:
         spots = spots[: args.limit]
     log.info("Enriching %d spots from %s", len(spots), args.input)
 
+    # When --skip-raycast is set, preserve arcs from a prior full run so
+    # dev iteration doesn't wipe 30+ min of ray-cast work.
+    prior_arcs: dict[str, dict] = {}
+    if args.skip_raycast and args.output.exists():
+        try:
+            prior = json.loads(args.output.read_text())
+            for rec in prior:
+                name = rec.get("name")
+                if name:
+                    prior_arcs[name] = {
+                        "swell_window_arcs": rec.get("swell_window_arcs") or [],
+                        "optimal_swell_dir": rec.get("optimal_swell_dir"),
+                        "swell_window_source": rec.get("swell_window_source"),
+                        "swell_window_confidence": (
+                            (rec.get("enrichment_confidence") or {}).get("swell_window", 0.0)
+                        ),
+                    }
+            carried = sum(1 for v in prior_arcs.values() if v["swell_window_arcs"])
+            log.info(
+                "enrich: --skip-raycast; carrying %d prior arc sets from %s",
+                carried, args.output,
+            )
+        except (json.JSONDecodeError, OSError) as e:
+            log.warning("enrich: could not load prior arcs from %s: %s", args.output, e)
+
     try:
         from tqdm import tqdm
         iterator = tqdm(spots, desc="enrich", unit="spot")
     except ImportError:
         iterator = spots
 
-    enriched = [_enrich_one(spot, args.skip_raycast) for spot in iterator]
+    enriched = [_enrich_one(spot, args.skip_raycast, prior_arcs) for spot in iterator]
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(enriched, indent=2, ensure_ascii=False))

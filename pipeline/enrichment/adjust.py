@@ -31,11 +31,18 @@ def seaward_adjust(
     lng: float,
     land: LandIndex,
     offset_m: float = 30.0,
+    max_adjust_m: float = 2000.0,
 ) -> tuple[float, float, bool]:
     """Return (lat, lng, was_adjusted). If the input point is inside any GSHHG
     polygon, project it to the nearest polygon-edge point and step ``offset_m``
     further in the same direction (away from the spot → through the edge →
     into open water).
+
+    If the nearest polygon edge is farther than ``max_adjust_m`` (default 2 km)
+    the input is returned unchanged. GSHHG L1 treats the Great Lakes as part of
+    the North America land polygon, so a naive nearest-edge query for a
+    lake-shore spot teleports it to Hudson Bay. Any honest "spot inside land"
+    case we care about is within a few tens of metres of the shoreline.
     """
     spot_ll = Point(lng, lat)
     container_poly = None
@@ -62,6 +69,13 @@ def seaward_adjust(
     dy = near_utm.y - spot_utm.y
     norm = math.hypot(dx, dy)
     if norm < 1e-6:
+        return lat, lng, False
+    if norm > max_adjust_m:
+        log.info(
+            "seaward_adjust: (%.4f, %.4f) is %.0fm from nearest polygon edge "
+            "(> %.0fm cap); leaving coords unchanged",
+            lat, lng, norm, max_adjust_m,
+        )
         return lat, lng, False
     ux, uy = dx / norm, dy / norm
 
