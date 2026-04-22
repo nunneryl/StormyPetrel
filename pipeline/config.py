@@ -97,6 +97,28 @@ TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days
 
 # NWPS — Nearshore Wave Prediction System forecasts
 NWPS_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod"
+NWPS_GRIB_FILTER_BASE = "https://nomads.ncep.noaa.gov/cgi-bin"
 NWPS_CACHE_DIR = CACHE_DIR / "nwps"
 NWPS_FORECAST_FILE = FORECAST_DATA_DIR / "nwps.json"
 NWPS_CYCLE_LOOKBACK = 4  # number of (day, cycle) candidates to try, newest first
+# Variables we pull through the NOMADS grib_filter for subsetting. Keeping the
+# list tight drops per-WFO download from ~100–300 MB to ~30–50 MB.
+NWPS_GRIB_VARS = ("HTSGW", "PERPW", "DIRPW", "SWELL", "SWPER", "SWDIR", "WIND", "WDIR")
+# NWPS runs are published under a per-NWS-region tree (er/sr/wr/pr/ar), not a
+# flat nwps.YYYYMMDD directory — every WFO belongs to exactly one region.
+WFO_TO_REGION = {
+    # Eastern Region
+    "box": "er", "okx": "er", "phi": "er", "akq": "er",
+    "mhx": "er", "ilm": "er", "chs": "er", "car": "er", "gyx": "er",
+    # Southern Region (incl. Gulf + Puerto Rico + tropical CONUS)
+    "bro": "sr", "crp": "sr", "hgx": "sr", "jax": "sr", "mlb": "sr",
+    "mfl": "sr", "tbw": "sr", "key": "sr", "sju": "sr",
+    "mob": "sr", "tae": "sr", "lch": "sr", "lix": "sr",
+    # Western Region
+    "sgx": "wr", "lox": "wr", "mtr": "wr", "eka": "wr",
+    "mfr": "wr", "pqr": "wr", "sew": "wr",
+    # Pacific Region
+    "hfo": "pr", "gum": "pr",
+    # Alaska Region
+    "afc": "ar", "ajk": "ar", "alu": "ar",
+}

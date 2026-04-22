@@ -1,35 +1,48 @@
 """NWPS (Nearshore Wave Prediction System) forecast fetcher.
 
-NOAA's operational SWAN wave model produces forecaster-triggered runs
-at each coastal Weather Forecast Office (WFO). For every spot we:
+NOAA's operational SWAN wave model produces forecaster-triggered runs at each
+coastal Weather Forecast Office (WFO). WFOs are grouped under an NWS region
+(er/sr/wr/pr/ar) on NOMADS, so the download path is
+``{region}.{YYYYMMDD}/{wfo}/{HH}/CG1/<wfo>_nwps_CG1_{YYYYMMDD}_{HH}00.grib2``.
+
+Downloads flow through NOMADS's grib_filter CGI (``filter_{region}nwps.pl``)
+so we pull only a handful of variables — HTSGW, PERPW, DIRPW, SWELL, SWPER,
+SWDIR, WIND, WDIR — which shrinks a per-WFO run from 100–300 MB to 30–50 MB.
+
+For every spot we:
 
 1. Resolve the WFO by state + lat/lng and persist ``nwps_wfo`` to
    spots_enriched.json.
-2. Group spots by WFO, download the latest CG1 GRIB2 (trying the most
-   recent cycles in reverse until one exists on NOMADS), cache it.
-3. Open the GRIB2 with xarray + cfgrib, merge all param groups, and
-   extract the nearest grid point's full time series per spot.
-4. Write pipeline/forecast_data/nwps.json keyed by spot name.
+2. Group spots by WFO, fetch the region's grib_filter listing once, take the
+   newest (date, HH) tuple that lists this WFO, download the subsetted GRIB,
+   and cache it.
+3. Open the GRIB2 with xarray + cfgrib, merge all param groups, and extract
+   the nearest grid point's full time series per spot.
+4. Write ``pipeline/forecast_data/nwps.json`` keyed by spot name.
 
-GRIB2 files are ~100–300 MB per WFO. Use ``--wfo`` to limit scope when
-iterating. Requires the eccodes system lib (``apt install libeccodes0``
-on Debian/Ubuntu; ``brew install eccodes`` on macOS).
+Requires the eccodes system lib (``apt install libeccodes0`` on Debian/Ubuntu;
+``brew install eccodes`` on macOS).
 """
 from __future__ import annotations
 
 import json
 import logging
 import math
+import re
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from pathlib import Path
 
 from ..config import (
     NWPS_CACHE_DIR,
     NWPS_CYCLE_LOOKBACK,
     NWPS_FORECAST_FILE,
+    NWPS_GRIB_FILTER_BASE,
+    NWPS_GRIB_VARS,
     NWPS_NOMADS_BASE,
+    WFO_TO_REGION,
 )
-from ..http import get, request, session
+from ..http import session
 
 log = logging.getLogger(__name__)
 
@@ -159,100 +172,131 @@ def apply_wfos(spots: list[dict]) -> dict[str, int]:
 # Cycle selection + GRIB download
 # ---------------------------------------------------------------------------
 
-def candidate_cycles(n: int = NWPS_CYCLE_LOOKBACK) -> list[tuple[str, str]]:
-    """Return up to *n* (YYYYMMDD, HH) tuples, newest-first.
-
-    Per user spec: today's 12Z → 06Z → 00Z → yesterday's 18Z.
-    Beyond that falls back through yesterday's 12/06/00Z.
-    """
-    now = datetime.now(tz=timezone.utc)
-    today = now.date()
-    yesterday = today - timedelta(days=1)
-    cycles: list[tuple[str, str]] = []
-    # Today: 12Z, 06Z, 00Z (skip today's 18Z — usually not yet posted)
-    for hh in ("12", "06", "00"):
-        cycles.append((today.strftime("%Y%m%d"), hh))
-    # Fallback to yesterday in reverse
-    for hh in ("18", "12", "06", "00"):
-        cycles.append((yesterday.strftime("%Y%m%d"), hh))
-    return cycles[:n]
+def _grib_filename(wfo: str, date_ymd: str, hh: str) -> str:
+    return f"{wfo}_nwps_CG1_{date_ymd}_{hh}00.grib2"
 
 
-def _grib_url(wfo: str, date_ymd: str, hh: str) -> str:
-    return (
-        f"{NWPS_NOMADS_BASE}/nwps.{date_ymd}/{wfo}/{hh}/CG1/"
-        f"{wfo}_nwps_CG1_{date_ymd}_{hh}00.grib2"
-    )
+def _grib_dir_path(region: str, wfo: str, date_ymd: str, hh: str) -> str:
+    """The ``dir`` query-param value the grib_filter CGI expects."""
+    return f"/{region}.{date_ymd}/{wfo}/{hh}/CG1"
 
 
 def _grib_path(wfo: str, date_ymd: str, hh: str) -> Path:
     return NWPS_CACHE_DIR / f"{wfo}_{date_ymd}_{hh}.grib2"
 
 
-def _probe_exists(url: str) -> tuple[bool, int | str]:
-    """Check whether a GRIB exists at *url*.
+def _direct_grib_url(region: str, wfo: str, date_ymd: str, hh: str) -> str:
+    """Full-file URL on NOMADS (useful for manual verification / debugging)."""
+    return (
+        f"{NWPS_NOMADS_BASE}/{region}.{date_ymd}/{wfo}/{hh}/CG1/"
+        f"{_grib_filename(wfo, date_ymd, hh)}"
+    )
 
-    Tries HEAD first (cheap). If HEAD returns 405 / 403 (server doesn't
-    allow HEAD for static files, which some NOMADS mirrors enforce),
-    falls back to a ranged GET asking for just the first byte.
 
-    Returns (exists, status_code_or_error).
+def _filter_url(region: str) -> str:
+    return f"{NWPS_GRIB_FILTER_BASE}/filter_{region}nwps.pl"
+
+
+def _filter_download_params(region: str, wfo: str, date_ymd: str, hh: str) -> dict:
+    """Query params for the grib_filter download with variable + level subsetting."""
+    params = {
+        "file": _grib_filename(wfo, date_ymd, hh),
+        "dir": _grib_dir_path(region, wfo, date_ymd, hh),
+    }
+    for var in NWPS_GRIB_VARS:
+        params[f"var_{var}"] = "on"
+    # NWPS wave/wind variables live at surface.
+    params["lev_surface"] = "on"
+    return params
+
+
+# ---------------------------------------------------------------------------
+# Cycle discovery via the grib_filter listing
+# ---------------------------------------------------------------------------
+
+# A dir value in the listing looks like:  /er.20260422/box/00/CG1
+_DIR_RE = re.compile(
+    r"/(?P<region>[a-z]{2})\.(?P<date>\d{8})/(?P<wfo>[a-z]{3,4})/"
+    r"(?P<hh>\d{2})/CG1"
+)
+
+
+@lru_cache(maxsize=None)
+def _list_region_cycles(region: str) -> list[tuple[str, str, str]]:
+    """Scrape the region's grib_filter page; return available (date, wfo, hh)
+    tuples sorted newest-first.
+
+    One HTTP GET per region per process — memoized. An empty list means the
+    region has no cycles currently posted (or we couldn't reach NOMADS).
     """
-    s = session()
-
-    # HEAD first.
+    url = _filter_url(region)
     try:
-        resp = s.head(url, timeout=30, allow_redirects=True)
-        if 200 <= resp.status_code < 300:
-            return True, resp.status_code
-        # HEAD disallowed → fall through to ranged GET.
-        if resp.status_code in (403, 405):
-            log.debug("nwps: HEAD not allowed for %s (status %d) — trying GET Range", url, resp.status_code)
-        else:
-            log.debug("nwps: HEAD %s → %d", url, resp.status_code)
-            if resp.status_code == 404:
-                return False, 404
+        resp = session().get(url, timeout=60, allow_redirects=True)
     except Exception as e:  # noqa: BLE001
-        log.debug("nwps: HEAD %s raised %s — trying GET Range", url, e)
+        log.warning("nwps: could not load %s grib_filter page: %s", region, e)
+        return []
+    if resp.status_code != 200:
+        log.warning("nwps: %s grib_filter returned %d", region, resp.status_code)
+        return []
 
-    # Ranged GET for the first byte — confirms existence without downloading the full file.
+    seen: set[tuple[str, str, str]] = set()
+    for m in _DIR_RE.finditer(resp.text):
+        if m.group("region") != region:
+            continue
+        seen.add((m.group("date"), m.group("wfo"), m.group("hh")))
+    # Sort newest first by (date desc, HH desc).
+    cycles = sorted(seen, key=lambda t: (t[0], t[2]), reverse=True)
+    log.info("nwps: %s grib_filter lists %d cycles across %d WFOs",
+             region, len(cycles), len({c[1] for c in cycles}))
+    return cycles
+
+
+def candidate_cycles(wfo: str) -> list[tuple[str, str]]:
+    """Return up to NWPS_CYCLE_LOOKBACK (date, HH) candidates for *wfo*,
+    newest-first, based on what the region's grib_filter page currently lists.
+    """
+    region = WFO_TO_REGION.get(wfo)
+    if region is None:
+        return []
+    listed = _list_region_cycles(region)
+    mine = [(d, h) for d, w, h in listed if w == wfo]
+    return mine[:NWPS_CYCLE_LOOKBACK]
+
+
+def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path) -> bool:
+    """Stream-download the subsetted GRIB via grib_filter to *dest*."""
+    url = _filter_url(region)
+    params = _filter_download_params(region, wfo, date_ymd, hh)
     try:
-        resp = s.get(url, headers={"Range": "bytes=0-0"}, timeout=30, allow_redirects=True)
-        # 206 = partial content served; 200 = server ignored Range and served full (also OK);
-        # 404 = definitely not there.
-        if resp.status_code in (200, 206):
-            return True, resp.status_code
-        log.debug("nwps: GET Range %s → %d", url, resp.status_code)
-        return False, resp.status_code
-    except Exception as e:  # noqa: BLE001
-        log.debug("nwps: GET Range %s raised %s", url, e)
-        return False, str(e)
-
-
-def _head_exists(url: str) -> bool:
-    exists, _ = _probe_exists(url)
-    return exists
-
-
-def _download(url: str, dest: Path) -> bool:
-    """Stream-download to *dest*. Returns True on success."""
-    try:
-        # Use the shared session but stream to avoid loading 100-300MB into memory.
         s = session()
-        with s.get(url, stream=True, timeout=300) as resp:
+        with s.get(url, params=params, stream=True, timeout=300) as resp:
             if resp.status_code != 200:
-                log.warning("nwps: GET %s returned %d", url, resp.status_code)
+                log.warning(
+                    "nwps: grib_filter %s/%s/%s%sZ returned %d",
+                    region, wfo, date_ymd, hh, resp.status_code,
+                )
                 return False
             dest.parent.mkdir(parents=True, exist_ok=True)
             tmp = dest.with_suffix(dest.suffix + ".partial")
+            bytes_written = 0
             with tmp.open("wb") as f:
                 for chunk in resp.iter_content(chunk_size=1 << 20):
                     if chunk:
                         f.write(chunk)
+                        bytes_written += len(chunk)
+            if bytes_written < 1024:
+                # A 0-variable filter or an error-page render returns a tiny body.
+                log.warning(
+                    "nwps: grib_filter returned suspiciously small body (%d bytes) for %s/%s/%s%sZ — discarding",
+                    bytes_written, region, wfo, date_ymd, hh,
+                )
+                tmp.unlink(missing_ok=True)
+                return False
             tmp.replace(dest)
         return True
     except Exception as e:  # noqa: BLE001
-        log.warning("nwps: download %s failed: %s", url, e)
+        log.warning("nwps: grib_filter download %s/%s/%s%sZ failed: %s",
+                    region, wfo, date_ymd, hh, e)
         return False
 
 
@@ -261,31 +305,40 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
 
     Returns (local_path, date_ymd, hh) or None if no cycle is available.
     """
-    # Prefer any cached file for today first; otherwise HEAD candidate cycles.
-    for date_ymd, hh in candidate_cycles():
+    region = WFO_TO_REGION.get(wfo)
+    if region is None:
+        log.warning("nwps: WFO %s has no region mapping", wfo)
+        return None
+
+    cycles = candidate_cycles(wfo)
+    if not cycles:
+        log.info(
+            "nwps: %s — no cycles listed in %s grib_filter page. "
+            "Listing URL: %s",
+            wfo, region, _filter_url(region),
+        )
+        return None
+
+    # Cache-first check against every candidate.
+    for date_ymd, hh in cycles:
         path = _grib_path(wfo, date_ymd, hh)
-        if path.exists() and path.stat().st_size > 0:
-            if use_cache:
-                log.info("nwps: %s/%s %sZ — cache hit (%s)", wfo, date_ymd, hh, path.name)
-                return path, date_ymd, hh
+        if path.exists() and path.stat().st_size > 0 and use_cache:
+            log.info("nwps: %s/%s %sZ — cache hit (%s)", wfo, date_ymd, hh, path.name)
+            return path, date_ymd, hh
 
     # Download the newest cycle that exists.
-    probe_results: list[str] = []
-    for date_ymd, hh in candidate_cycles():
-        url = _grib_url(wfo, date_ymd, hh)
-        exists, status = _probe_exists(url)
-        probe_results.append(f"{date_ymd}/{hh}Z→{status}")
-        if not exists:
-            continue
+    for date_ymd, hh in cycles:
         path = _grib_path(wfo, date_ymd, hh)
-        log.info("nwps: %s/%s %sZ — downloading from NOMADS", wfo, date_ymd, hh)
-        if _download(url, path):
+        log.info(
+            "nwps: %s/%s %sZ — downloading subset (%s) via %s",
+            wfo, date_ymd, hh, ",".join(NWPS_GRIB_VARS), _filter_url(region),
+        )
+        if _download_filtered(region, wfo, date_ymd, hh, path):
             return path, date_ymd, hh
-    # Emit a single INFO summary showing exactly what we probed + got, so the
-    # user can see whether URLs are wrong vs. actually missing.
+
     log.info(
-        "nwps: %s — no cycle found. Probes: %s. Sample URL: %s",
-        wfo, ", ".join(probe_results), _grib_url(wfo, *candidate_cycles()[0]),
+        "nwps: %s — %d cycles listed but none downloaded successfully. Sample file URL: %s",
+        wfo, len(cycles), _direct_grib_url(region, wfo, *cycles[0]),
     )
     return None
 
