@@ -189,14 +189,49 @@ def _grib_path(wfo: str, date_ymd: str, hh: str) -> Path:
     return NWPS_CACHE_DIR / f"{wfo}_{date_ymd}_{hh}.grib2"
 
 
-def _head_exists(url: str) -> bool:
-    """HEAD the URL; return True on 200, False on 404 / other errors."""
+def _probe_exists(url: str) -> tuple[bool, int | str]:
+    """Check whether a GRIB exists at *url*.
+
+    Tries HEAD first (cheap). If HEAD returns 405 / 403 (server doesn't
+    allow HEAD for static files, which some NOMADS mirrors enforce),
+    falls back to a ranged GET asking for just the first byte.
+
+    Returns (exists, status_code_or_error).
+    """
+    s = session()
+
+    # HEAD first.
     try:
-        resp = request("HEAD", url, timeout=30)
+        resp = s.head(url, timeout=30, allow_redirects=True)
+        if 200 <= resp.status_code < 300:
+            return True, resp.status_code
+        # HEAD disallowed → fall through to ranged GET.
+        if resp.status_code in (403, 405):
+            log.debug("nwps: HEAD not allowed for %s (status %d) — trying GET Range", url, resp.status_code)
+        else:
+            log.debug("nwps: HEAD %s → %d", url, resp.status_code)
+            if resp.status_code == 404:
+                return False, 404
     except Exception as e:  # noqa: BLE001
-        log.debug("nwps: HEAD %s failed: %s", url, e)
-        return False
-    return 200 <= resp.status_code < 300
+        log.debug("nwps: HEAD %s raised %s — trying GET Range", url, e)
+
+    # Ranged GET for the first byte — confirms existence without downloading the full file.
+    try:
+        resp = s.get(url, headers={"Range": "bytes=0-0"}, timeout=30, allow_redirects=True)
+        # 206 = partial content served; 200 = server ignored Range and served full (also OK);
+        # 404 = definitely not there.
+        if resp.status_code in (200, 206):
+            return True, resp.status_code
+        log.debug("nwps: GET Range %s → %d", url, resp.status_code)
+        return False, resp.status_code
+    except Exception as e:  # noqa: BLE001
+        log.debug("nwps: GET Range %s raised %s", url, e)
+        return False, str(e)
+
+
+def _head_exists(url: str) -> bool:
+    exists, _ = _probe_exists(url)
+    return exists
 
 
 def _download(url: str, dest: Path) -> bool:
@@ -235,15 +270,23 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
                 return path, date_ymd, hh
 
     # Download the newest cycle that exists.
+    probe_results: list[str] = []
     for date_ymd, hh in candidate_cycles():
         url = _grib_url(wfo, date_ymd, hh)
-        if not _head_exists(url):
-            log.debug("nwps: %s not posted", url)
+        exists, status = _probe_exists(url)
+        probe_results.append(f"{date_ymd}/{hh}Z→{status}")
+        if not exists:
             continue
         path = _grib_path(wfo, date_ymd, hh)
         log.info("nwps: %s/%s %sZ — downloading from NOMADS", wfo, date_ymd, hh)
         if _download(url, path):
             return path, date_ymd, hh
+    # Emit a single INFO summary showing exactly what we probed + got, so the
+    # user can see whether URLs are wrong vs. actually missing.
+    log.info(
+        "nwps: %s — no cycle found. Probes: %s. Sample URL: %s",
+        wfo, ", ".join(probe_results), _grib_url(wfo, *candidate_cycles()[0]),
+    )
     return None
 
 
