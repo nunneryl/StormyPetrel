@@ -211,56 +211,88 @@ def _filter_download_params(region: str, wfo: str, date_ymd: str, hh: str) -> di
 
 
 # ---------------------------------------------------------------------------
-# Cycle discovery via the grib_filter listing
+# Cycle discovery via the NOMADS Apache directory listing
 # ---------------------------------------------------------------------------
+#
+# The grib_filter CGI page is populated by JavaScript (its initial HTML
+# doesn't contain the directory options), so scraping it returns nothing.
+# The /pub/data/nccf/com/nwps/prod/ tree, by contrast, is a plain Apache
+# autoindex — the HTML has <a href="name/"> links we can parse with a regex.
 
-# A dir value in the listing looks like:  /er.20260422/box/00/CG1
-_DIR_RE = re.compile(
-    r"/(?P<region>[a-z]{2})\.(?P<date>\d{8})/(?P<wfo>[a-z]{3,4})/"
-    r"(?P<hh>\d{2})/CG1"
-)
+_DATE_HREF_RE = re.compile(r'href="([a-z]{2})\.(\d{8})/"', re.IGNORECASE)
+_HH_HREF_RE = re.compile(r'href="(\d{2})/"')
 
 
-@lru_cache(maxsize=None)
-def _list_region_cycles(region: str) -> list[tuple[str, str, str]]:
-    """Scrape the region's grib_filter page; return available (date, wfo, hh)
-    tuples sorted newest-first.
-
-    One HTTP GET per region per process — memoized. An empty list means the
-    region has no cycles currently posted (or we couldn't reach NOMADS).
-    """
-    url = _filter_url(region)
+def _get_text(url: str) -> str | None:
+    """GET a URL via the shared session; return body text, or None on failure."""
     try:
         resp = session().get(url, timeout=60, allow_redirects=True)
     except Exception as e:  # noqa: BLE001
-        log.warning("nwps: could not load %s grib_filter page: %s", region, e)
-        return []
+        log.warning("nwps: GET %s failed: %s", url, e)
+        return None
     if resp.status_code != 200:
-        log.warning("nwps: %s grib_filter returned %d", region, resp.status_code)
-        return []
+        log.warning("nwps: GET %s → %d", url, resp.status_code)
+        return None
+    return resp.text
 
-    seen: set[tuple[str, str, str]] = set()
-    for m in _DIR_RE.finditer(resp.text):
-        if m.group("region") != region:
-            continue
-        seen.add((m.group("date"), m.group("wfo"), m.group("hh")))
-    # Sort newest first by (date desc, HH desc).
-    cycles = sorted(seen, key=lambda t: (t[0], t[2]), reverse=True)
-    log.info("nwps: %s grib_filter lists %d cycles across %d WFOs",
-             region, len(cycles), len({c[1] for c in cycles}))
-    return cycles
+
+@lru_cache(maxsize=1)
+def _list_root_dates() -> dict[str, list[str]]:
+    """Return {region_code: [YYYYMMDD newest-first]} from the NOMADS root
+    index at /pub/data/nccf/com/nwps/prod/. Memoized once per process.
+    """
+    html = _get_text(f"{NWPS_NOMADS_BASE}/")
+    if html is None:
+        return {}
+    out: dict[str, list[str]] = {}
+    for region, date in _DATE_HREF_RE.findall(html):
+        out.setdefault(region.lower(), []).append(date)
+    for dates in out.values():
+        dates.sort(reverse=True)  # newest first
+    log.info(
+        "nwps: NOMADS root lists dates for %d regions — %s",
+        len(out), ", ".join(f"{r}:{len(d)}" for r, d in sorted(out.items())),
+    )
+    if not out:
+        snippet = html[:400].replace("\n", " ")
+        log.info("nwps: root listing yielded nothing; first 400 chars: %s", snippet)
+    return out
+
+
+@lru_cache(maxsize=None)
+def _list_wfo_cycles(region: str, date_ymd: str, wfo: str) -> list[str]:
+    """Return [HH newest-first] for the given {region}.{date}/{wfo}/ dir.
+
+    Each NWPS WFO run has its cycle as a numeric subdirectory (e.g. 00/, 06/,
+    12/, 18/). Empty list means the WFO hasn't run on this date yet.
+    """
+    url = f"{NWPS_NOMADS_BASE}/{region}.{date_ymd}/{wfo}/"
+    html = _get_text(url)
+    if html is None:
+        return []
+    hhs = sorted(set(_HH_HREF_RE.findall(html)), reverse=True)
+    return hhs
 
 
 def candidate_cycles(wfo: str) -> list[tuple[str, str]]:
-    """Return up to NWPS_CYCLE_LOOKBACK (date, HH) candidates for *wfo*,
-    newest-first, based on what the region's grib_filter page currently lists.
+    """Up to NWPS_CYCLE_LOOKBACK (date, HH) candidates for *wfo*, newest-first,
+    from the NOMADS directory listing.
     """
     region = WFO_TO_REGION.get(wfo)
     if region is None:
         return []
-    listed = _list_region_cycles(region)
-    mine = [(d, h) for d, w, h in listed if w == wfo]
-    return mine[:NWPS_CYCLE_LOOKBACK]
+    dates = _list_root_dates().get(region, [])
+    if not dates:
+        return []
+    result: list[tuple[str, str]] = []
+    # Only the three most recent date dirs — cycles don't persist longer than
+    # that on NOMADS, and each date lookup is one extra HTTP request per WFO.
+    for date_ymd in dates[:3]:
+        for hh in _list_wfo_cycles(region, date_ymd, wfo):
+            result.append((date_ymd, hh))
+            if len(result) >= NWPS_CYCLE_LOOKBACK:
+                return result
+    return result
 
 
 def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path) -> bool:
@@ -312,10 +344,14 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
 
     cycles = candidate_cycles(wfo)
     if not cycles:
+        dates = _list_root_dates().get(region, [])
+        latest_dir = (
+            f"{NWPS_NOMADS_BASE}/{region}.{dates[0]}/{wfo}/"
+            if dates else f"{NWPS_NOMADS_BASE}/"
+        )
         log.info(
-            "nwps: %s — no cycles listed in %s grib_filter page. "
-            "Listing URL: %s",
-            wfo, region, _filter_url(region),
+            "nwps: %s — no cycles listed in NOMADS index. Check: %s",
+            wfo, latest_dir,
         )
         return None
 
