@@ -187,26 +187,33 @@ def main(argv: list[str] | None = None) -> int:
         spots = spots[: args.limit]
     log.info("Enriching %d spots from %s", len(spots), args.input)
 
-    # When --skip-raycast is set, preserve arcs from a prior full run so
-    # dev iteration doesn't wipe 30+ min of ray-cast work.
+    # When --skip-raycast is set, carry forward arcs from a prior full run
+    # so dev iteration doesn't wipe 30+ min of ray-cast work. We explicitly
+    # *skip* orientation-derived arcs — those are cheap to recompute from
+    # the fallback, and carrying them forward would persist stale arcs
+    # whenever orientation changes (e.g. the hemisphere flip correcting a
+    # barrier-island spot that geocoded to the bay side).
     prior_arcs: dict[str, dict] = {}
     if args.skip_raycast and args.output.exists():
         try:
             prior = json.loads(args.output.read_text())
             for rec in prior:
                 name = rec.get("name")
-                if name:
-                    prior_arcs[name] = {
-                        "swell_window_arcs": rec.get("swell_window_arcs") or [],
-                        "optimal_swell_dir": rec.get("optimal_swell_dir"),
-                        "swell_window_source": rec.get("swell_window_source"),
-                        "swell_window_confidence": (
-                            (rec.get("enrichment_confidence") or {}).get("swell_window", 0.0)
-                        ),
-                    }
+                if not name:
+                    continue
+                if rec.get("swell_window_source") == "orientation_derived":
+                    continue  # recompute from (possibly-corrected) orientation
+                prior_arcs[name] = {
+                    "swell_window_arcs": rec.get("swell_window_arcs") or [],
+                    "optimal_swell_dir": rec.get("optimal_swell_dir"),
+                    "swell_window_source": rec.get("swell_window_source"),
+                    "swell_window_confidence": (
+                        (rec.get("enrichment_confidence") or {}).get("swell_window", 0.0)
+                    ),
+                }
             carried = sum(1 for v in prior_arcs.values() if v["swell_window_arcs"])
             log.info(
-                "enrich: --skip-raycast; carrying %d prior arc sets from %s",
+                "enrich: --skip-raycast; carrying %d ray-cast arc sets from %s",
                 carried, args.output,
             )
         except (json.JSONDecodeError, OSError) as e:

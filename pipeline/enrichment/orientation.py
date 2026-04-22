@@ -22,6 +22,45 @@ from .projection import (
 log = logging.getLogger(__name__)
 
 
+# Expected seaward-bearing "center" per region. Used to detect and flip
+# orientations that point inland (the classic failure mode is a barrier-island
+# spot whose Nominatim town-fallback coord sat on the bay side — the nearest
+# coastline is then the bayward shore and orientation comes back 180° off).
+#
+# If the computed orientation differs from this expected center by more than
+# 90° (i.e. sits in the wrong half of the compass), we flip it by 180°. Island
+# and Great-Lakes regions aren't listed — their coasts can face any bearing.
+_EXPECTED_CENTER_BEARING = {
+    # Atlantic — ocean to the east, seaward bearing ≈ 90°
+    "Maine": 90, "New Hampshire": 90, "Massachusetts": 90, "Rhode Island": 90,
+    "Connecticut": 90, "New York": 90, "New Jersey": 90, "Delaware": 90,
+    "Maryland": 90, "Virginia": 90, "North Carolina": 90, "South Carolina": 90,
+    "Georgia": 90,
+    # Gulf — ocean to the south, seaward bearing ≈ 180°
+    "Alabama": 180, "Mississippi": 180, "Louisiana": 180, "Texas": 180,
+    # Pacific — ocean to the west, seaward bearing ≈ 270°
+    "California": 270, "Oregon": 270, "Washington": 270,
+}
+
+
+def _expected_center_bearing(region_hint: str | None, lat: float, lng: float) -> int | None:
+    """Expected seaward-bearing center for a spot, or None when ambiguous.
+
+    Florida spans three coasts, so it's resolved by lat/lng: Keys (lat<25.5)
+    and Gulf (lng<-82) face south; everything else faces east.
+    """
+    if region_hint == "Florida":
+        if lat < 25.5 or lng < -82:
+            return 180
+        return 90
+    return _EXPECTED_CENTER_BEARING.get(region_hint or "")
+
+
+def _angular_distance(a: float, b: float) -> float:
+    d = abs(a - b) % 360.0
+    return min(d, 360.0 - d)
+
+
 def _bearing_deg(dx_east: float, dy_north: float) -> float:
     """Bearing in degrees (0=N, 90=E) from a UTM tangent vector."""
     return (math.degrees(math.atan2(dx_east, dy_north)) + 360) % 360
@@ -181,9 +220,35 @@ def compute_orientation(spot: dict) -> dict:
             "%s: orientation unresolved at 100m window (per-window=%s) — likely both test points on land (inside_land=%s)",
             spot.get("name"), results, inside_land,
         )
+
+    # Region hemisphere check: flip if the primary points into the wrong half
+    # of the compass for this region. Applies to all three window bearings so
+    # they stay consistent with the primary.
+    flipped = False
+    expected = _expected_center_bearing(
+        spot.get("region_hint"), spot["lat"], spot["lng"]
+    )
+    if primary is not None and expected is not None:
+        if _angular_distance(primary, expected) > 90.0:
+            flipped = True
+            log.info(
+                "%s @ (%.4f, %.4f): orientation %.0f° inland for %s (expected ~%d°); flipping 180°",
+                spot.get("name") or "(unnamed)", lat, lng, primary,
+                spot.get("region_hint"), expected,
+            )
+            for k in ("orientation_deg", "orientation_50m", "orientation_200m"):
+                if results[k] is not None:
+                    results[k] = (results[k] + 180.0) % 360.0
+            primary = results["orientation_deg"]
+
     offshore = ((primary + 180) % 360) if primary is not None else None
     return {
         **results,
         "offshore_wind_deg": offshore,
-        "orientation_confidence": 1.0 if primary is not None else 0.0,
+        "orientation_flipped": flipped,
+        # Flipping is an override; knock confidence down so downstream knows
+        # the underlying geocoded coord is probably on the wrong side of land.
+        "orientation_confidence": (
+            0.0 if primary is None else (0.7 if flipped else 1.0)
+        ),
     }
