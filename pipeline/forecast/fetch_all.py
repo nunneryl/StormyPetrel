@@ -79,13 +79,26 @@ def _summarize(source: str, result: dict) -> None:
             print(f"  spots with forecast: {len(result)}")
             print(f"  hours per spot (min/med/max): "
                   f"{hours[0]}/{hours[len(hours)//2]}/{hours[-1]}")
-            # Peak from the first spot's latest entry as a sanity sample
-            sample_name = next(iter(result))
-            sample = result[sample_name][0] if result[sample_name] else {}
-            if sample:
-                keys = [k for k in ("hs", "tp", "dp", "swell_hs", "wind_speed") if k in sample]
+            # Pick the first (spot, entry) pair that actually has wave/wind
+            # values populated — the first entry of an arbitrary spot is often
+            # sparse (swell/wind groups can start a few hours in).
+            sample_keys = ("hs", "tp", "dp", "swell_hs", "swell_tp", "swell_dp", "wind_speed", "wind_dir")
+            sample_name = None
+            sample = None
+            for name, series in result.items():
+                for entry in series:
+                    if any(k in entry for k in sample_keys):
+                        sample_name = name
+                        sample = entry
+                        break
+                if sample is not None:
+                    break
+            if sample is not None:
+                keys = [k for k in sample_keys if k in sample]
                 bits = ", ".join(f"{k}={sample[k]}" for k in keys)
                 print(f"  sample ({sample_name} @ {sample['valid_time']}): {bits}")
+            else:
+                print("  sample: (no entries have wave/wind values)")
         else:
             print("  no NWPS data produced")
 

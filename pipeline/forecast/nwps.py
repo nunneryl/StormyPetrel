@@ -422,97 +422,84 @@ def _normalize_longitude(ds, lng: float) -> float:
     return lng
 
 
-def _extract_time_series(merged, lat: float, lng: float) -> list[dict]:
-    """Nearest-grid-point time series for a single spot.
+def _describe_dataset(ds, idx: int) -> str:
+    """One-line summary of an xarray Dataset for diagnostic logging."""
+    dims = dict(ds.dims)
+    coords = list(ds.coords)
+    vars_ = list(ds.data_vars)
+    return f"ds[{idx}] dims={dims} coords={coords} vars={vars_}"
 
-    Normalizes the time axis and every variable array to 1-D so a dataset with
-    a single forecast step (which yields a 0-d numpy scalar from `.values` and
-    a scalar pd.Timestamp from pd.to_datetime) iterates the same way as a full
-    144-step forecast.
+
+def _resolve_time_axis(obj):
+    """Return a 1-D numpy array of valid_time values for *obj* (Dataset or DataArray).
+
+    NWPS GRIBs expose `time` as the forecast reference (cycle run) and `step`
+    as offsets; cfgrib also derives `valid_time` as a coordinate. Any of the
+    three can arrive as a 0-d scalar when there's a single step.
     """
     import numpy as np
-    import pandas as pd
 
-    lng_adj = _normalize_longitude(merged, lng)
-    try:
-        point = merged.sel(latitude=lat, longitude=lng_adj, method="nearest")
-    except Exception as e:  # noqa: BLE001
-        log.warning("nwps: .sel failed for (%.4f, %.4f): %s", lat, lng, e)
-        return []
-
-    # Resolve the time axis. NWPS GRIBs expose `time` as the forecast reference
-    # (cycle run) and `step` as offsets; cfgrib also derives `valid_time` as a
-    # coordinate. Any of the three can arrive as a 0-d scalar when there's a
-    # single step.
-    if "valid_time" in point.coords:
-        vt = np.asarray(point["valid_time"].values)
-    elif "step" in point.coords and "time" in point.coords:
-        base = np.asarray(point["time"].values)
-        step = np.asarray(point["step"].values)
+    if "valid_time" in obj.coords:
+        vt = np.asarray(obj["valid_time"].values)
+    elif "step" in obj.coords and "time" in obj.coords:
+        base = np.asarray(obj["time"].values)
+        step = np.asarray(obj["step"].values)
         if base.ndim == 0:
             vt = base + np.atleast_1d(step)
         else:
             vt = (base.reshape(-1, 1) + step.reshape(1, -1)).ravel()
-    elif "time" in point.coords:
-        vt = np.asarray(point["time"].values)
+    elif "time" in obj.coords:
+        vt = np.asarray(obj["time"].values)
     else:
-        log.warning("nwps: no time coordinate found in merged dataset")
-        return []
+        return None
+    return np.atleast_1d(vt).ravel()
 
-    vt = np.atleast_1d(vt).ravel()
-    if vt.size == 0:
-        return []
-    # DatetimeIndex guarantees `enumerate()` works even when vt has length 1.
-    times = pd.DatetimeIndex(pd.to_datetime(vt, utc=True))
 
-    # Build per-variable arrays. ravel() makes every source align to the time
-    # axis regardless of trailing spatial dims (sel should have dropped them,
-    # but cfgrib sometimes keeps a size-1 lat/lng dim).
-    arrays: dict[str, list] = {}
-    for var_name in point.data_vars:
-        out_key = _VAR_MAP.get(str(var_name).lower())
-        if out_key is None:
+def _extract_time_series_from_datasets(datasets: list, lat: float, lng: float) -> list[dict]:
+    """Nearest-grid-point time series, combined across cfgrib param groups.
+
+    NWPS GRIBs are opened by cfgrib as multiple datasets (one per param group:
+    wave surface, wind at 10m, swell components, ...), each with its own
+    `step` grid. Merging them collapses the time dimension when step grids
+    differ, so we extract per-dataset and union records by valid_time.
+    """
+    import numpy as np
+    import pandas as pd
+
+    records: dict[str, dict] = {}
+
+    for ds in datasets:
+        lng_adj = _normalize_longitude(ds, lng)
+        try:
+            point = ds.sel(latitude=lat, longitude=lng_adj, method="nearest")
+        except Exception as e:  # noqa: BLE001
+            log.debug("nwps: .sel failed on a dataset for (%.4f, %.4f): %s", lat, lng, e)
             continue
-        vals = np.atleast_1d(np.asarray(point[var_name].values)).ravel()
-        arrays.setdefault(out_key, []).append(vals)
 
-    results: list[dict] = []
-    for i, t in enumerate(times):
-        entry: dict = {"valid_time": t.isoformat().replace("+00:00", "Z")}
-        for out_key, sources in arrays.items():
-            for vals in sources:
-                if i >= len(vals):
-                    continue
+        vt = _resolve_time_axis(point)
+        if vt is None or vt.size == 0:
+            continue
+        times = pd.DatetimeIndex(pd.to_datetime(vt, utc=True))
+
+        for var_name in point.data_vars:
+            out_key = _VAR_MAP.get(str(var_name).lower())
+            if out_key is None:
+                continue
+            vals = np.atleast_1d(np.asarray(point[var_name].values)).ravel()
+            n = min(len(times), len(vals))
+            for i in range(n):
                 try:
                     val = float(vals[i])
                 except (TypeError, ValueError):
                     continue
                 if math.isnan(val):
                     continue
-                # First non-NaN wins (respecting _VAR_MAP priority order).
+                t_iso = times[i].isoformat().replace("+00:00", "Z")
+                entry = records.setdefault(t_iso, {"valid_time": t_iso})
+                # First source wins per output key (respects _VAR_MAP priority).
                 entry.setdefault(out_key, round(val, 3))
-                break
-        results.append(entry)
-    return results
 
-
-def _merge_datasets(datasets: list):
-    """Merge cfgrib param groups into a single Dataset, dropping conflicts."""
-    import xarray as xr
-    if not datasets:
-        return None
-    # cfgrib separates surface/ocean-layer variables into different groups;
-    # they share latitude/longitude/step but may have distinct `level` coords.
-    # Drop level coords to allow safe xr.merge.
-    cleaned = []
-    for ds in datasets:
-        drop = [c for c in ("level", "heightAboveGround", "heightAboveSea", "surface") if c in ds.coords]
-        cleaned.append(ds.drop_vars(drop, errors="ignore"))
-    try:
-        return xr.merge(cleaned, compat="override", join="override")
-    except Exception as e:  # noqa: BLE001
-        log.warning("nwps: xr.merge failed (%s); falling back to first dataset only", e)
-        return cleaned[0]
+    return [records[t] for t in sorted(records.keys())]
 
 
 # ---------------------------------------------------------------------------
@@ -583,22 +570,28 @@ def fetch(
 
         try:
             datasets = _open_grib_datasets(grib_path)
-            merged = _merge_datasets(datasets)
         except Exception as e:  # noqa: BLE001
             wfos_parse_failed += 1
             log.exception("nwps: GRIB parse failed for %s (%s): %s", wfo, grib_path, e)
             continue
-        if merged is None:
+        if not datasets:
             wfos_parse_failed += 1
-            log.warning("nwps: merged dataset empty for %s", wfo)
+            log.warning("nwps: cfgrib produced no datasets for %s", wfo)
             continue
+
+        # Log dims/coords/vars for each cfgrib-grouped dataset — essential for
+        # diagnosing step-axis or variable-name mismatches.
+        for i, ds in enumerate(datasets):
+            log.info("nwps: %s %s", wfo, _describe_dataset(ds, i))
 
         wfos_ok += 1
         wfo_spots = [s for s in spots if s.get("nwps_wfo") == wfo]
         log.info("nwps: %s (%sZ %s) — extracting %d spots from %s",
                  wfo, cycle_hh, cycle_date, len(wfo_spots), grib_path.name)
         for spot in wfo_spots:
-            series = _extract_time_series(merged, float(spot["lat"]), float(spot["lng"]))
+            series = _extract_time_series_from_datasets(
+                datasets, float(spot["lat"]), float(spot["lng"])
+            )
             if series:
                 out[spot["name"]] = series
                 spots_with_data += 1
