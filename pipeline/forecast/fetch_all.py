@@ -79,26 +79,40 @@ def _summarize(source: str, result: dict) -> None:
             print(f"  spots with forecast: {len(result)}")
             print(f"  hours per spot (min/med/max): "
                   f"{hours[0]}/{hours[len(hours)//2]}/{hours[-1]}")
-            # Pick the first (spot, entry) pair that actually has wave/wind
-            # values populated — the first entry of an arbitrary spot is often
-            # sparse (swell/wind groups can start a few hours in).
-            sample_keys = ("hs", "tp", "dp", "swell_hs", "swell_tp", "swell_dp", "wind_speed", "wind_dir")
+            # Union of every key seen across all entries (sans valid_time) —
+            # tells the truth about what _VAR_MAP produced.
+            all_keys: set[str] = set()
+            for series in result.values():
+                for entry in series:
+                    all_keys.update(entry.keys())
+            all_keys.discard("valid_time")
+            print(f"  variables present: {sorted(all_keys)}")
+
+            # Prefer an entry with wave data (hs/tp/dp); fall back to any
+            # entry that has more than just valid_time.
+            wave_keys = ("hs", "tp", "dp", "swell_hs", "swell_tp", "swell_dp")
             sample_name = None
             sample = None
+            fallback: tuple[str, dict] | None = None
             for name, series in result.items():
                 for entry in series:
-                    if any(k in entry for k in sample_keys):
+                    if any(k in entry for k in wave_keys):
                         sample_name = name
                         sample = entry
                         break
+                    if fallback is None and len(entry) > 1:
+                        fallback = (name, entry)
                 if sample is not None:
                     break
+            if sample is None and fallback is not None:
+                sample_name, sample = fallback
             if sample is not None:
-                keys = [k for k in sample_keys if k in sample]
-                bits = ", ".join(f"{k}={sample[k]}" for k in keys)
+                bits = ", ".join(
+                    f"{k}={sample[k]}" for k in sample if k != "valid_time"
+                )
                 print(f"  sample ({sample_name} @ {sample['valid_time']}): {bits}")
             else:
-                print("  sample: (no entries have wave/wind values)")
+                print("  sample: (no entries have any values)")
         else:
             print("  no NWPS data produced")
 
