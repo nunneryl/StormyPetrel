@@ -21,6 +21,7 @@ from .enrichment.buoys import compute_nearest_buoy
 from .enrichment.geodata import load_land_index
 from .enrichment.orientation import compute_orientation
 from .enrichment.swell_window import compute_swell_window
+from .enrichment.swell_window_fallback import compute_swell_window_fallback
 from .enrichment.tides import compute_nearest_tide_station
 
 log = logging.getLogger("pipeline.enrich")
@@ -92,6 +93,11 @@ def _enrich_one(spot: dict, skip_raycast: bool) -> dict:
             enriched.update(swell_window_arcs=[], optimal_swell_dir=None)
             confidence["swell_window"] = 0.0
 
+    # Algo 2b — orientation-derived fallback for spots with empty arcs.
+    fallback = compute_swell_window_fallback(enriched)
+    if fallback:
+        enriched.update(fallback)
+
     # Algo 3 — break type
     try:
         r = compute_break_type(spot_for_algo)
@@ -142,6 +148,8 @@ def _summarize(records: list[dict]) -> None:
         return f"{100 * sum(1 for r in records if f(r)) / max(n, 1):.0f}%"
     print(f"  orientation resolved:       {pct(lambda r: r.get('orientation_deg') is not None)}")
     print(f"  swell window resolved:      {pct(lambda r: r.get('optimal_swell_dir') is not None)}")
+    print(f"    raycast-resolved:         {pct(lambda r: r.get('optimal_swell_dir') is not None and r.get('swell_window_source') != 'orientation_derived')}")
+    print(f"    orientation-derived:      {pct(lambda r: r.get('swell_window_source') == 'orientation_derived')}")
     print(f"  break type = point:         {pct(lambda r: r.get('break_type') == 'point')}")
     print(f"  nearest buoy assigned:      {pct(lambda r: r.get('nearest_buoy_id'))}")
     print(f"  nearest tide station ≤50km: {pct(lambda r: r.get('nearest_tide_station_id'))}")

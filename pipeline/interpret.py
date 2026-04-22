@@ -62,15 +62,19 @@ def face_ft(hs_m: float, tp_s: float) -> float:
 
 
 def _in_any_arc(dp: float, arcs: list[dict]) -> bool:
-    # swell_window_arcs are already normalized to non-wrapping [min, max]
-    # bearing ranges by pipeline/enrichment/swell_window.py.
+    # swell_window.py may emit an arc that wraps through 0° as {min: 340,
+    # max: 20} (hi < lo). The fallback splits such arcs, but be defensive.
     for arc in arcs:
         try:
             lo, hi = arc["min"], arc["max"]
         except (KeyError, TypeError):
             continue
-        if lo <= dp <= hi:
-            return True
+        if lo <= hi:
+            if lo <= dp <= hi:
+                return True
+        else:
+            if dp >= lo or dp <= hi:
+                return True
     return False
 
 
@@ -324,23 +328,45 @@ def compute_ratings(
     nwps: dict[str, list[dict]],
     tides: dict[str, dict],
 ) -> dict[str, list[dict]]:
-    """Rate every spot that has NWPS forecast data."""
+    """Rate every spot that has NWPS forecast data.
+
+    Splits "no tide data" into three distinct failure modes in the log so
+    it's obvious which one dominates:
+      - no_station:      spot has no `nearest_tide_station_id` at all
+      - station_missing: station_id is set but not a key in tides.json
+      - no_hourly:       station is in tides.json but its hourly series
+                         has no parseable predictions
+    """
     spot_by_name = {s.get("name"): s for s in spots if s.get("name")}
     results: dict[str, list[dict]] = {}
     rated = 0
     no_spot = 0
-    no_tide = 0
+    no_station = 0
+    station_missing = 0
+    no_hourly = 0
+    missing_examples: list[str] = []
 
     for name, forecast in nwps.items():
         spot = spot_by_name.get(name)
         if spot is None:
             no_spot += 1
             continue
+
         station_id = spot.get("nearest_tide_station_id")
-        station_block = tides.get(station_id) if station_id else None
-        tide_series = build_tide_series(station_block) if station_block else None
-        if tide_series is None:
-            no_tide += 1
+        tide_series = None
+        if not station_id:
+            no_station += 1
+        else:
+            # Defensive string-cast — some legacy writers stored ints.
+            station_block = tides.get(str(station_id))
+            if station_block is None:
+                station_missing += 1
+                if len(missing_examples) < 5:
+                    missing_examples.append(f"{name}→{station_id}")
+            else:
+                tide_series = build_tide_series(station_block)
+                if tide_series is None:
+                    no_hourly += 1
 
         series = rate_spot(spot, forecast, tide_series)
         if series:
@@ -348,9 +374,11 @@ def compute_ratings(
             rated += 1
 
     log.info(
-        "interpret: rated %d spots (no_spot=%d, no_tide=%d of %d)",
-        rated, no_spot, no_tide, rated,
+        "interpret: rated %d spots (no_spot=%d, no_station=%d, station_missing=%d, no_hourly=%d)",
+        rated, no_spot, no_station, station_missing, no_hourly,
     )
+    if missing_examples:
+        log.info("interpret: station_missing sample: %s", ", ".join(missing_examples))
     return results
 
 
