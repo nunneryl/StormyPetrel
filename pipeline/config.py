@@ -94,3 +94,9 @@ TIDES_FORECAST_FILE = FORECAST_DATA_DIR / "tides.json"
 BUOYS_FORECAST_FILE = FORECAST_DATA_DIR / "buoys.json"
 
 TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days
+
+# NWPS — Nearshore Wave Prediction System forecasts
+NWPS_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod"
+NWPS_CACHE_DIR = CACHE_DIR / "nwps"
+NWPS_FORECAST_FILE = FORECAST_DATA_DIR / "nwps.json"
+NWPS_CYCLE_LOOKBACK = 4  # number of (day, cycle) candidates to try, newest first

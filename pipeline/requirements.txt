@@ -7,6 +7,13 @@ reverse_geocoder>=1.5.1,<2
 # Phase 0C — LLM tide classification
 anthropic>=0.40,<1
 
+# Phase 1 — NWPS GRIB2 wave forecasts
+# cfgrib requires the eccodes system library:
+#   Debian/Ubuntu: apt install libeccodes0
+#   macOS:         brew install eccodes
+xarray>=2024.1
+cfgrib>=0.9.14
+
 # Enrichment (Phase 0B) — geospatial stack
 shapely>=2.0,<3
 pyproj>=3.6,<4

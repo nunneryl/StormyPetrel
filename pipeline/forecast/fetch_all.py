@@ -17,6 +17,7 @@ from pathlib import Path
 
 from ..config import DEFAULT_ENRICHED_OUTPUT
 from . import buoys as buoys_mod
+from . import nwps as nwps_mod
 from . import tides as tides_mod
 
 log = logging.getLogger("pipeline.forecast.fetch_all")
@@ -24,6 +25,7 @@ log = logging.getLogger("pipeline.forecast.fetch_all")
 SOURCES = {
     "tides": tides_mod.fetch,
     "buoys": buoys_mod.fetch,
+    "nwps": nwps_mod.fetch,
 }
 
 
@@ -35,6 +37,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Run a single fetcher instead of all")
     p.add_argument("--no-cache", action="store_true",
                    help="Ignore cached responses and refetch from live APIs")
+    p.add_argument("--wfo", default=None,
+                   help="Comma-separated WFO codes to limit NWPS fetch to (e.g. box,sgx,mhx). "
+                        "Ignored by other sources.")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
 
@@ -67,6 +72,23 @@ def _summarize(source: str, result: dict) -> None:
             print(f"  hourly points/station (min/med/max): "
                   f"{min(hourly_counts)}/{sorted(hourly_counts)[len(hourly_counts)//2]}/{max(hourly_counts)}")
 
+    elif source == "nwps":
+        if result:
+            hours = [len(series) for series in result.values()]
+            hours.sort()
+            print(f"  spots with forecast: {len(result)}")
+            print(f"  hours per spot (min/med/max): "
+                  f"{hours[0]}/{hours[len(hours)//2]}/{hours[-1]}")
+            # Peak from the first spot's latest entry as a sanity sample
+            sample_name = next(iter(result))
+            sample = result[sample_name][0] if result[sample_name] else {}
+            if sample:
+                keys = [k for k in ("hs", "tp", "dp", "swell_hs", "wind_speed") if k in sample]
+                bits = ", ".join(f"{k}={sample[k]}" for k in keys)
+                print(f"  sample ({sample_name} @ {sample['valid_time']}): {bits}")
+        else:
+            print("  no NWPS data produced")
+
     elif source == "buoys":
         fresh = [_freshness_minutes(r.get("latest", {}).get("time")) for r in result.values()]
         fresh_min = [int(f.rstrip("m ago")) for f in fresh if f.endswith("m ago")]
@@ -97,11 +119,21 @@ def main(argv: list[str] | None = None) -> int:
     log.info("Loaded %d enriched spots from %s", len(spots), args.input)
 
     sources_to_run = {args.only: SOURCES[args.only]} if args.only else SOURCES
+    wfo_filter = [w.strip().lower() for w in args.wfo.split(",")] if args.wfo else None
+
     any_data = False
     for name, fn in sources_to_run.items():
         log.info("=== running %s ===", name)
         try:
-            result = fn(spots, use_cache=not args.no_cache)
+            if name == "nwps":
+                result = fn(
+                    spots,
+                    use_cache=not args.no_cache,
+                    wfo_filter=wfo_filter,
+                    input_path=args.input,
+                )
+            else:
+                result = fn(spots, use_cache=not args.no_cache)
         except Exception as e:  # noqa: BLE001
             log.exception("%s: fetch failed: %s", name, e)
             continue
