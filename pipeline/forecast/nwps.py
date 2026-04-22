@@ -392,11 +392,13 @@ _VAR_MAP = {
     "mwp":   "tp",           # NWPS sometimes publishes mean period
     "mwd":   "dp",
     "shww":  "swell_hs",
+    "shts":  "swell_hs",         # significant height of total swell (NWPS)
     "swell": "swell_hs",
     "swh_swell": "swell_hs",
     "swper": "swell_tp",
     "swdir": "swell_dp",
     "si10":  "wind_speed",
+    "ws":    "wind_speed",       # NWPS GRIB uses `ws`
     "wind":  "wind_speed",
     "10u":   "wind_u_ms",
     "10v":   "wind_v_ms",
@@ -424,7 +426,7 @@ def _normalize_longitude(ds, lng: float) -> float:
 
 def _describe_dataset(ds, idx: int) -> str:
     """One-line summary of an xarray Dataset for diagnostic logging."""
-    dims = dict(ds.dims)
+    dims = dict(ds.sizes)
     coords = list(ds.coords)
     vars_ = list(ds.data_vars)
     return f"ds[{idx}] dims={dims} coords={coords} vars={vars_}"
