@@ -122,3 +122,8 @@ WFO_TO_REGION = {
     # Alaska Region
     "afc": "ar", "ajk": "ar", "alu": "ar",
 }
+
+# ---------------------------------------------------------------------------
+# Interpretation (Phase 2) — surf rating composite
+# ---------------------------------------------------------------------------
+RATINGS_FILE = FORECAST_DATA_DIR / "ratings.json"
