@@ -29,7 +29,11 @@ log = logging.getLogger("pipeline.enrich")
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Enrich seed spots with forecast-grade metadata.")
-    p.add_argument("--input", type=Path, default=DEFAULT_OUTPUT, help="Input spots_seed.json")
+    p.add_argument(
+        "--input", type=Path, default=None,
+        help="Input file. Defaults to spots_enriched.json when it exists (so "
+             "re-runs respect cleanup and verification), otherwise spots_seed.json.",
+    )
     p.add_argument("--output", type=Path, default=DEFAULT_ENRICHED_OUTPUT, help="Output spots_enriched.json")
     p.add_argument(
         "--skip-raycast",
@@ -39,6 +43,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--limit", type=int, default=None, help="Only enrich the first N spots (dev).")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
+
+
+# Fields the LLM verification pass claims authority over. For any spot with a
+# high/medium-confidence verification record, the enrichment algorithms must
+# NOT overwrite these — the LLM's answer is the source of truth.
+_VERIFIED_FIELDS = frozenset({
+    "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
+    "break_type", "tide_preference",
+})
+
+
+def _is_verified(spot: dict) -> bool:
+    """True when the LLM verification pass has claimed this spot's derived
+    metadata (high or medium confidence).
+    """
+    return spot.get("verification_confidence") in ("high", "medium")
 
 
 def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) -> dict:
@@ -75,64 +95,94 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
             )
     spot_for_algo = {**spot, "_algo_lat": adj_lat, "_algo_lng": adj_lng}
 
-    enriched = {
-        "name": spot.get("name"),
-        "lat": spot["lat"],
-        "lng": spot["lng"],
-        "region_hint": spot.get("region_hint"),
-        "coord_adjusted": was_adjusted,
-    }
-    confidence: dict = {}
+    # Start from a copy of the input — this carries through any fields the
+    # upstream passes already set (verification_confidence, crowd_factor,
+    # hazards, tide_preference, tags, sources, ...). Algos overlay their
+    # computed fields on top, skipping _VERIFIED_FIELDS for verified spots.
+    enriched = dict(spot)
+    enriched["coord_adjusted"] = was_adjusted
+
+    verified = _is_verified(spot)
+    if verified:
+        log.debug(
+            "%s: verification_confidence=%s — preserving LLM-set fields %s",
+            spot.get("name"), spot.get("verification_confidence"),
+            sorted(_VERIFIED_FIELDS),
+        )
+
+    def _set(key: str, value) -> None:
+        """Write to enriched unless the LLM verification owns that field."""
+        if verified and key in _VERIFIED_FIELDS:
+            return
+        enriched[key] = value
+
+    confidence: dict = dict(enriched.get("enrichment_confidence") or {})
 
     # Algo 1 — orientation
     try:
         r = compute_orientation(spot_for_algo)
-        enriched.update(r)
-        confidence["orientation"] = r.pop("orientation_confidence", 0.0)
-        enriched.pop("orientation_confidence", None)
+        for k, v in r.items():
+            if k == "orientation_confidence":
+                continue
+            _set(k, v)
+        confidence["orientation"] = r.get("orientation_confidence", 0.0)
     except Exception as e:  # noqa: BLE001
         log.warning("%s: orientation failed: %s", spot.get("name"), e)
-        enriched.update(orientation_deg=None, orientation_50m=None, orientation_200m=None, offshore_wind_deg=None)
+        for k in ("orientation_deg", "orientation_50m", "orientation_200m", "offshore_wind_deg"):
+            _set(k, None)
         confidence["orientation"] = 0.0
 
-    # Algo 2 — swell window (optional)
+    # Algo 2 — swell window (optional). Skip the expensive ray-cast entirely
+    # for verified spots whose optimal_swell_dir is set by the LLM — we still
+    # need arcs, though, so the fallback runs after.
     if skip_raycast:
         prior = (prior_arcs or {}).get(spot.get("name")) if prior_arcs else None
         if prior and prior.get("swell_window_arcs"):
             enriched["swell_window_arcs"] = prior["swell_window_arcs"]
-            enriched["optimal_swell_dir"] = prior.get("optimal_swell_dir")
+            _set("optimal_swell_dir", prior.get("optimal_swell_dir"))
             if prior.get("swell_window_source"):
                 enriched["swell_window_source"] = prior["swell_window_source"]
             confidence["swell_window"] = prior.get("swell_window_confidence", 0.0)
         else:
-            enriched.update(swell_window_arcs=[], optimal_swell_dir=None)
+            enriched["swell_window_arcs"] = enriched.get("swell_window_arcs") or []
+            if not verified:
+                enriched["optimal_swell_dir"] = None
             confidence["swell_window"] = 0.0
     else:
         try:
             r = compute_swell_window(spot_for_algo)
             enriched["swell_window_arcs"] = r["swell_window_arcs"]
-            enriched["optimal_swell_dir"] = r["optimal_swell_dir"]
+            _set("optimal_swell_dir", r["optimal_swell_dir"])
             confidence["swell_window"] = r["swell_window_confidence"]
         except Exception as e:  # noqa: BLE001
             log.warning("%s: swell window failed: %s", spot.get("name"), e)
-            enriched.update(swell_window_arcs=[], optimal_swell_dir=None)
+            enriched["swell_window_arcs"] = []
+            _set("optimal_swell_dir", None)
             confidence["swell_window"] = 0.0
 
     # Algo 2b — orientation-derived fallback for spots whose arcs are still
     # empty. Already-populated arcs (raycast or carried-forward) are a no-op.
     fallback = compute_swell_window_fallback(enriched)
     if fallback:
-        enriched.update(fallback)
+        # The fallback produces arcs + optimal_swell_dir + swell_window_source.
+        # For verified spots, keep the LLM's optimal_swell_dir; adopt the arcs.
+        if "swell_window_arcs" in fallback:
+            enriched["swell_window_arcs"] = fallback["swell_window_arcs"]
+        if "swell_window_source" in fallback:
+            enriched["swell_window_source"] = fallback["swell_window_source"]
+        if "optimal_swell_dir" in fallback:
+            _set("optimal_swell_dir", fallback["optimal_swell_dir"])
 
     # Algo 3 — break type
     try:
         r = compute_break_type(spot_for_algo)
-        enriched["break_type"] = r["break_type"]
+        _set("break_type", r["break_type"])
         enriched["break_type_confidence"] = r["break_type_confidence"]
         confidence["break_type"] = r["break_type_confidence"]
     except Exception as e:  # noqa: BLE001
         log.warning("%s: break_type failed: %s", spot.get("name"), e)
-        enriched.update(break_type="beach", break_type_confidence=0.5)
+        _set("break_type", "beach")
+        enriched["break_type_confidence"] = 0.5
         confidence["break_type"] = 0.5
 
     # Algo 4 — nearest buoy
@@ -194,14 +244,31 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
+    # Default: re-enrich the existing spots_enriched.json when it exists so
+    # that cleanup_spots and verify_spots results carry through. Otherwise
+    # bootstrap from spots_seed.json.
+    if args.input is None:
+        if DEFAULT_ENRICHED_OUTPUT.exists():
+            args.input = DEFAULT_ENRICHED_OUTPUT
+            log.info("enrich: resuming from existing enriched file %s", args.input)
+        elif DEFAULT_OUTPUT.exists():
+            args.input = DEFAULT_OUTPUT
+            log.info("enrich: bootstrapping from seed file %s", args.input)
+        else:
+            log.error("Neither %s nor %s exists. Run `python -m pipeline.seed_spots` first.",
+                      DEFAULT_ENRICHED_OUTPUT, DEFAULT_OUTPUT)
+            return 1
+
     if not args.input.exists():
-        log.error("Input file %s does not exist. Run `python -m pipeline.seed_spots` first.", args.input)
+        log.error("Input file %s does not exist.", args.input)
         return 1
 
     spots = json.loads(args.input.read_text())
     if args.limit:
         spots = spots[: args.limit]
-    log.info("Enriching %d spots from %s", len(spots), args.input)
+    verified_n = sum(1 for s in spots if _is_verified(s))
+    log.info("Enriching %d spots from %s (%d LLM-verified, will preserve %s)",
+             len(spots), args.input, verified_n, sorted(_VERIFIED_FIELDS))
 
     # When --skip-raycast is set, carry forward arcs from a prior full run
     # so dev iteration doesn't wipe 30+ min of ray-cast work. We explicitly

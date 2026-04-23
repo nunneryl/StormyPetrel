@@ -42,12 +42,37 @@ from .config import (
 log = logging.getLogger("pipeline.verify_spots")
 
 
-# Long, stable system prompt — designed to (a) elicit consistent JSON
-# and (b) clear the 2048-token Sonnet 4.6 prompt-cache threshold so
-# every batch after the first reads instead of writes.
+# Long, stable system prompt — designed to (a) elicit consistent JSON,
+# (b) direct the model to search surf-forecast.com / Surfline for exact
+# facing-direction / optimal-swell values rather than guessing from
+# training data, and (c) clear the 2048-token Sonnet 4.6 prompt-cache
+# threshold so every batch after the first reads instead of writes.
 _SYSTEM_PROMPT = """You are a surf forecasting expert with deep knowledge of US surf spots,
 including those documented on Surfline, surf-forecast.com, MagicSeaweed
 (historical), Wannasurf, regional guidebooks, and local surf-club pages.
+
+SEARCH FIRST, ANSWER FROM SOURCES
+=================================
+
+You have access to the web_search tool. For each spot in the user's
+batch, search surf-forecast.com first to find the exact offshore wind
+direction and ideal swell direction published for that break. Use the
+precise degree values from the source — do NOT round to the nearest
+cardinal, and do NOT estimate from memory when a documented value
+exists. A typical query is:
+
+    "<spot name>" <state> surf-forecast.com
+
+If you cannot find the spot on surf-forecast.com, try Surfline, then
+Wannasurf or regional surf-guide sites. Record the sourced values in
+your JSON output at full precision (integer degrees). If no source
+returns a usable match after reasonable searching, fall back to your
+training-data knowledge and lower confidence to "medium" or "low".
+
+Search efficiently — a spot often needs one or two searches, not a
+deep dive. Prioritize the five fields below; don't search for peripheral
+details you can reasonably infer (break_type, hazards, crowd_factor).
+
 
 For each candidate surf spot the user describes, return a structured
 verification record. The user is building an open-source surf forecast
@@ -165,6 +190,50 @@ GUIDELINES
     coordinates (< 1 km apart), mark the second one invalid_reason=
     "duplicate" with confidence="high".
 
+REGIONAL REFERENCE
+==================
+
+These rules of thumb help sanity-check values from surf-forecast.com
+and catch obvious transcription errors:
+
+  - Outer Banks NC (MHX / ILM): facing 90-120°, offshore winds from
+    W/SW (~270-240°). Most beach breaks; Hatteras peaks are the
+    named reef-like sections.
+  - Virginia Beach / OBX north (AKQ): facing ~90°, classic
+    Mid-Atlantic beach-break profile; light-wind summer, heavier
+    winter swell from hurricanes and nor'easters.
+  - Jersey Shore (PHI): facing 90-110° depending on inlet proximity;
+    Manasquan Inlet, Belmar, and Ocean City (NJ) are the named
+    reference breaks.
+  - Long Island (OKX): south shore faces ~180°; Montauk faces closer
+    to 135-170° around its points.
+  - Southern California (SGX / LOX): mostly W-to-SW facing
+    (225-270°); Trestles, Swamis, Malibu, and Rincon are canonical.
+  - Central California (MTR): heavy W/NW swell exposure, facing
+    250-290°; Steamer Lane, Mavericks, Ocean Beach SF, Pleasure Pt.
+  - Pacific Northwest (PQR / SEW): facing 270°, cold-water beach and
+    cobble reef breaks; Westport, Seaside Cove.
+  - Hawaii — north shore Oahu: facing 310-20° (winter); south shore
+    Oahu: ~170-200° (summer); east shore / windward: 60-90° (trade
+    swell); west shore: 240-270° (Makaha).
+  - Great Lakes: open-lake facing varies; Sheboygan/Port Washington
+    face NE (~45°), Milwaukee faces ENE (~60°).
+
+COMMON SURF-FORECAST.COM QUIRKS
+===============================
+
+  - The site sometimes uses regional alias names (e.g. "Rincon"
+    redirects to the PR vs CA page depending on the search context).
+    Always verify by cross-referencing the coordinates in your query.
+  - surf-forecast.com lists "ideal swell direction" and "ideal wind
+    direction" on each spot's detail page. The ideal wind direction
+    IS the offshore_wind_deg. The ideal swell direction IS the
+    optimal_swell_dir. Do not confuse the two.
+  - Some spots list a range (e.g. "270-295°"). Use the midpoint.
+  - If the site only shows a cardinal (e.g. "W", "SW"), convert:
+    N=0, NNE=22, NE=45, ENE=67, E=90, ESE=112, SE=135, SSE=157,
+    S=180, SSW=202, SW=225, WSW=247, W=270, WNW=292, NW=315, NNW=337.
+
 Return JSON only.
 """
 
@@ -248,24 +317,86 @@ def _parse_json_response(text: str) -> list[dict]:
         raise
 
 
-def _verify_batch(client, spots: list[dict]) -> tuple[list[dict], object]:
+class _UsageTotal:
+    """Accumulator matching the subset of usage fields we record in stats.
+
+    Mirrors the `message.usage` attributes we consume downstream so the
+    caller can treat this like a single-request usage object regardless of
+    how many pause_turn resumes it took to complete.
+    """
+
+    __slots__ = (
+        "input_tokens", "output_tokens",
+        "cache_creation_input_tokens", "cache_read_input_tokens",
+    )
+
+    def __init__(self) -> None:
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self.cache_creation_input_tokens = 0
+        self.cache_read_input_tokens = 0
+
+    def add(self, usage) -> None:
+        self.input_tokens += getattr(usage, "input_tokens", 0) or 0
+        self.output_tokens += getattr(usage, "output_tokens", 0) or 0
+        self.cache_creation_input_tokens += getattr(usage, "cache_creation_input_tokens", 0) or 0
+        self.cache_read_input_tokens += getattr(usage, "cache_read_input_tokens", 0) or 0
+
+
+# Server-side web_search runs up to ~10 tool calls per response and then
+# returns `stop_reason: "pause_turn"` if the model wants more. We resume
+# by echoing the assistant turn back in messages and calling again. Cap
+# the total resumes so a runaway search loop can't burn the whole budget.
+_MAX_PAUSE_RESUMES = 5
+
+
+def _verify_batch(client, spots: list[dict]) -> tuple[list[dict], _UsageTotal]:
     prompt = _build_user_prompt(spots)
     # System prompt as a list-of-blocks with cache_control so every batch
     # after the first reads the cache (~0.1× input cost) instead of
-    # paying full price for the long instructions.
-    message = client.messages.create(
-        model=SPOT_VERIFY_MODEL,
-        max_tokens=4096,
-        system=[
-            {
-                "type": "text",
-                "text": _SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = next((b.text for b in message.content if b.type == "text"), "")
+    # paying full price for the long instructions. Tools render before
+    # system in the prefix, so the tool definition is part of the cache.
+    system = [
+        {
+            "type": "text",
+            "text": _SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+    tools = [{"type": "web_search_20250305", "name": "web_search"}]
+    messages: list[dict] = [{"role": "user", "content": prompt}]
+
+    usage_total = _UsageTotal()
+    message = None
+    for resume in range(_MAX_PAUSE_RESUMES + 1):
+        message = client.messages.create(
+            model=SPOT_VERIFY_MODEL,
+            max_tokens=8192,
+            system=system,
+            tools=tools,
+            messages=messages,
+        )
+        usage_total.add(message.usage)
+        if message.stop_reason != "pause_turn":
+            break
+        # Resume: keep the user prompt + append the assistant turn (including
+        # server_tool_use blocks) and let the model continue its search loop.
+        messages.append({"role": "assistant", "content": message.content})
+    else:
+        log.warning(
+            "verify: batch of %d spots exhausted %d pause_turn resumes — "
+            "using whatever the last response produced",
+            len(spots), _MAX_PAUSE_RESUMES,
+        )
+
+    # The model's JSON answer lives in the final text block of the last
+    # response. Prior text blocks may describe its search reasoning — skip
+    # those by taking the last text block only.
+    text_blocks = [b.text for b in message.content if b.type == "text"]
+    text = text_blocks[-1] if text_blocks else ""
+    if not text:
+        raise ValueError("no text block in final response")
+
     try:
         parsed = _parse_json_response(text)
     except json.JSONDecodeError as e:
@@ -274,7 +405,7 @@ def _verify_batch(client, spots: list[dict]) -> tuple[list[dict], object]:
         raise
     if not isinstance(parsed, list):
         raise ValueError(f"Expected JSON array, got {type(parsed).__name__}")
-    return parsed, message.usage
+    return parsed, usage_total
 
 
 _VALID_INVALID_REASONS = {"surf_shop", "river", "lake", "duplicate", "non_surfable", "unknown"}
