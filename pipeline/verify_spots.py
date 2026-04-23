@@ -249,7 +249,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--limit", type=int, default=None,
                    help="Verify only the first N pending spots (dev).")
     p.add_argument("--no-cache", action="store_true",
-                   help="Ignore existing verification file and reverify every spot.")
+                   help="Ignore existing verification records in memory and "
+                        "reverify every spot. The on-disk file is overwritten "
+                        "progressively as batches complete (crash = partial "
+                        "overwrite). Use --force for a safer rename-then-rerun.")
+    p.add_argument("--force", action="store_true",
+                   help="Archive the existing verification file to "
+                        "<name>.<timestamp>.bak and re-verify every spot "
+                        "from scratch. Use this after a prompt or tooling "
+                        "change invalidates prior results (e.g. switching "
+                        "to a web-search-enabled flow).")
     p.add_argument("--no-merge", action="store_true",
                    help="Skip the merge step; only write the verification file.")
     p.add_argument("--show-low-confidence", action="store_true",
@@ -782,10 +791,22 @@ def main(argv: list[str] | None = None) -> int:
     spots = json.loads(args.input.read_text())
     log.info("Loaded %d enriched spots from %s", len(spots), args.input)
 
+    # --force: move the existing verification file aside so (a) the next
+    # verify_all starts from an empty cache, and (b) if the re-run crashes
+    # mid-way the user can recover the prior results from the .bak file.
+    if args.force and args.verification_file.exists():
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup = args.verification_file.with_suffix(
+            args.verification_file.suffix + f".{timestamp}.bak"
+        )
+        args.verification_file.rename(backup)
+        log.info("--force: archived previous verification file to %s", backup)
+
     verifications, api_stats = verify_all(
         spots,
         verification_path=args.verification_file,
-        use_cache=not args.no_cache,
+        use_cache=not (args.no_cache or args.force),
         limit=args.limit,
     )
 
