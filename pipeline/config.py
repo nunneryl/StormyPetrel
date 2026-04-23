@@ -127,3 +127,10 @@ WFO_TO_REGION = {
 # Interpretation (Phase 2) — surf rating composite
 # ---------------------------------------------------------------------------
 RATINGS_FILE = FORECAST_DATA_DIR / "ratings.json"
+
+# ---------------------------------------------------------------------------
+# Spot verification (Phase 2B) — LLM cross-check of metadata
+# ---------------------------------------------------------------------------
+SPOT_VERIFY_MODEL = "claude-sonnet-4-6"
+SPOT_VERIFY_BATCH_SIZE = 5
+SPOT_VERIFICATION_FILE = PIPELINE_DIR / "data" / "spot_verification.json"
