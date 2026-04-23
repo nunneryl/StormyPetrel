@@ -132,7 +132,19 @@ RATINGS_FILE = FORECAST_DATA_DIR / "ratings.json"
 # Spot verification (Phase 2B) — LLM cross-check of metadata
 # ---------------------------------------------------------------------------
 SPOT_VERIFY_MODEL = "claude-sonnet-4-6"
-SPOT_VERIFY_BATCH_SIZE = 5
+# With web_search enabled each request carries search-result context, which
+# is charged as input tokens and inflates requests past the 30K input-token
+# per-minute rate limit at batch size 5. Batch of 2 keeps each request
+# smaller and lets the inter-batch sleep keep us under the TPM ceiling.
+SPOT_VERIFY_BATCH_SIZE = 2
+# Seconds to sleep between batches. 15s × 30 RPM-equivalent = 2 req/m →
+# well under the input-TPM cap even with large search-result payloads.
+# Raise to 30s if you still see 429s.
+SPOT_VERIFY_INTER_BATCH_SECONDS = 15.0
+# On a 429 (rate-limit) response, wait this long and retry the same batch
+# rather than skipping it. Retries capped at SPOT_VERIFY_MAX_RETRIES.
+SPOT_VERIFY_RETRY_BACKOFF_SECONDS = 60.0
+SPOT_VERIFY_MAX_RETRIES = 3
 SPOT_VERIFICATION_FILE = PIPELINE_DIR / "data" / "spot_verification.json"
 
 # Manually-curated data files that carry cleanup decisions across runs. The

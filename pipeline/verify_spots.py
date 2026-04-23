@@ -36,7 +36,10 @@ from .config import (
     DEFAULT_ENRICHED_OUTPUT,
     SPOT_VERIFICATION_FILE,
     SPOT_VERIFY_BATCH_SIZE,
+    SPOT_VERIFY_INTER_BATCH_SECONDS,
+    SPOT_VERIFY_MAX_RETRIES,
     SPOT_VERIFY_MODEL,
+    SPOT_VERIFY_RETRY_BACKOFF_SECONDS,
 )
 
 log = logging.getLogger("pipeline.verify_spots")
@@ -248,6 +251,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Where to read/write per-spot verification records.")
     p.add_argument("--limit", type=int, default=None,
                    help="Verify only the first N pending spots (dev).")
+    p.add_argument("--batch-size", type=int, default=SPOT_VERIFY_BATCH_SIZE,
+                   help=f"Spots per API call (default {SPOT_VERIFY_BATCH_SIZE}). "
+                        "Smaller batch = smaller per-request prompt, safer under "
+                        "TPM rate limits.")
+    p.add_argument("--inter-batch-seconds", type=float,
+                   default=SPOT_VERIFY_INTER_BATCH_SECONDS,
+                   help=f"Seconds to sleep between batches (default "
+                        f"{SPOT_VERIFY_INTER_BATCH_SECONDS}). Raise to 30+ if you "
+                        "see 429s. Ignored on the final batch.")
     p.add_argument("--no-cache", action="store_true",
                    help="Ignore existing verification records in memory and "
                         "reverify every spot. The on-disk file is overwritten "
@@ -476,22 +488,74 @@ def _normalize_record(entry: dict) -> dict | None:
     }
 
 
+def _verify_batch_with_retry(
+    client,
+    spots: list[dict],
+    max_retries: int,
+    backoff_seconds: float,
+) -> tuple[list[dict], _UsageTotal]:
+    """Call _verify_batch, retrying on 429 rate-limit errors.
+
+    Uses the Anthropic SDK's typed RateLimitError and honors the server's
+    ``retry-after`` header when present; otherwise falls back to the
+    configured backoff. Non-rate-limit exceptions are raised to the caller
+    so the existing batch-failed log path handles them.
+    """
+    import anthropic
+    import time
+
+    for attempt in range(max_retries + 1):
+        try:
+            return _verify_batch(client, spots)
+        except anthropic.RateLimitError as e:
+            if attempt >= max_retries:
+                raise
+            wait_s = backoff_seconds
+            # Server-provided retry-after wins when present, capped at 120s
+            # so a pathological header can't park us forever.
+            try:
+                ra = e.response.headers.get("retry-after") if e.response is not None else None
+                if ra is not None:
+                    wait_s = min(120.0, max(wait_s, float(ra)))
+            except (ValueError, AttributeError):
+                pass
+            log.warning(
+                "verify: 429 rate-limited on %d-spot batch (attempt %d/%d); "
+                "sleeping %.1fs before retry",
+                len(spots), attempt + 1, max_retries, wait_s,
+            )
+            time.sleep(wait_s)
+    # Unreachable — the final iteration either returns or raises.
+    raise RuntimeError("unreachable")
+
+
 def verify_all(
     spots: list[dict],
     verification_path: Path,
     use_cache: bool = True,
     limit: int | None = None,
+    batch_size: int = SPOT_VERIFY_BATCH_SIZE,
+    inter_batch_seconds: float = SPOT_VERIFY_INTER_BATCH_SECONDS,
+    max_retries: int = SPOT_VERIFY_MAX_RETRIES,
+    retry_backoff_seconds: float = SPOT_VERIFY_RETRY_BACKOFF_SECONDS,
 ) -> tuple[dict[str, dict], dict]:
-    """Return (name -> verification record, stats). Persists to *verification_path*."""
+    """Return (name -> verification record, stats). Persists to *verification_path*.
+
+    Paces itself for the 30K input-TPM rate limit: small batches + a sleep
+    between calls + bounded retry on 429.
+    """
     import anthropic
+    import time
 
     cache = _load_verifications(verification_path) if use_cache else {}
     pending = [s for s in spots if s["name"] not in cache]
     if limit is not None:
         pending = pending[:limit]
     log.info(
-        "verify: %d spots total, %d cached, %d to verify",
+        "verify: %d spots total, %d cached, %d to verify "
+        "(batch_size=%d, inter_batch=%.1fs, retries=%d)",
         len(spots), len(spots) - len(pending), len(pending),
+        batch_size, inter_batch_seconds, max_retries,
     )
 
     stats = {
@@ -501,6 +565,7 @@ def verify_all(
         "cache_read_input_tokens": 0,
         "batches": 0,
         "parse_errors": 0,
+        "rate_limit_retries": 0,
         "missing_from_response": 0,
     }
     if not pending:
@@ -509,8 +574,8 @@ def verify_all(
     client = anthropic.Anthropic()
 
     batches = [
-        pending[i : i + SPOT_VERIFY_BATCH_SIZE]
-        for i in range(0, len(pending), SPOT_VERIFY_BATCH_SIZE)
+        pending[i : i + batch_size]
+        for i in range(0, len(pending), batch_size)
     ]
     try:
         from tqdm import tqdm
@@ -518,9 +583,19 @@ def verify_all(
     except ImportError:
         iterator = batches
 
-    for batch in iterator:
+    for batch_idx, batch in enumerate(iterator):
         try:
-            parsed, usage = _verify_batch(client, batch)
+            parsed, usage = _verify_batch_with_retry(
+                client, batch, max_retries, retry_backoff_seconds,
+            )
+        except anthropic.RateLimitError as e:
+            log.error(
+                "verify: batch of %d spots exhausted %d rate-limit retries: %s",
+                len(batch), max_retries, e,
+            )
+            stats["parse_errors"] += 1
+            stats["rate_limit_retries"] += max_retries
+            continue
         except Exception as e:  # noqa: BLE001
             log.warning("batch failed (%d spots): %s", len(batch), e)
             stats["parse_errors"] += 1
@@ -529,8 +604,8 @@ def verify_all(
         stats["batches"] += 1
         stats["input_tokens"] += usage.input_tokens
         stats["output_tokens"] += usage.output_tokens
-        stats["cache_creation_input_tokens"] += getattr(usage, "cache_creation_input_tokens", 0) or 0
-        stats["cache_read_input_tokens"] += getattr(usage, "cache_read_input_tokens", 0) or 0
+        stats["cache_creation_input_tokens"] += usage.cache_creation_input_tokens
+        stats["cache_read_input_tokens"] += usage.cache_read_input_tokens
 
         by_name = {e.get("name"): e for e in parsed if isinstance(e, dict)}
         for spot in batch:
@@ -548,6 +623,11 @@ def verify_all(
 
         # Persist after every batch so a crash doesn't lose progress.
         _save_verifications(verification_path, cache)
+
+        # Pace under the input-TPM rate limit. Skip the sleep on the last
+        # batch so the run ends promptly.
+        if inter_batch_seconds > 0 and batch_idx < len(batches) - 1:
+            time.sleep(inter_batch_seconds)
 
     return cache, stats
 
@@ -697,6 +777,8 @@ def _summarize(
           f"cache_w ${cost_cache_write:.4f} + cache_r ${cost_cache_read:.4f})")
     if api_stats["parse_errors"]:
         print(f"  batch errors:         {api_stats['parse_errors']}")
+    if api_stats.get("rate_limit_retries"):
+        print(f"  rate-limit retries:   {api_stats['rate_limit_retries']}")
     if api_stats["missing_from_response"]:
         print(f"  missing/invalid:      {api_stats['missing_from_response']}")
 
@@ -808,6 +890,8 @@ def main(argv: list[str] | None = None) -> int:
         verification_path=args.verification_file,
         use_cache=not (args.no_cache or args.force),
         limit=args.limit,
+        batch_size=args.batch_size,
+        inter_batch_seconds=args.inter_batch_seconds,
     )
 
     merge_stats: dict | None = None
