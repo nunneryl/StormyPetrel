@@ -8,6 +8,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from .cleanup_spots import load_excluded_names
 from .config import DEFAULT_OUTPUT
 from .dedupe import DedupeStats, merge
 from .geo import fill_region_hint
@@ -113,6 +114,29 @@ def main(argv: list[str] | None = None) -> int:
 
     records, stats = merge(candidates)
     fill_region_hint(records)
+
+    # Filter against the curated exclusion list so manually-removed spots
+    # (surf shops, duplicates, mis-geocoded junk) don't creep back on
+    # re-seed. Match by exact name.
+    excluded = load_excluded_names()
+    if excluded:
+        before = len(records)
+        dropped_by_reason: dict[str, int] = {}
+        kept: list[dict] = []
+        for rec in records:
+            reason = excluded.get(rec.get("name") or "")
+            if reason is not None:
+                dropped_by_reason[reason] = dropped_by_reason.get(reason, 0) + 1
+                continue
+            kept.append(rec)
+        records = kept
+        if dropped_by_reason:
+            log.info(
+                "seed: dropped %d/%d records against exclusion list (%s)",
+                before - len(records), before,
+                ", ".join(f"{r}={n}" for r, n in sorted(dropped_by_reason.items())),
+            )
+
     records.sort(key=lambda r: ((r.get("region_hint") or "zzz"), r.get("name") or ""))
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

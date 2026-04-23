@@ -1,0 +1,26 @@
+{
+  "_comment": "Manual coordinate overrides for spots whose seed-time geocoding put them in the wrong place. Applied by pipeline/cleanup_spots.py. Each entry is matched by exact name.",
+  "_schema_version": 1,
+  "fixes": {
+    "Aviones": {
+      "lat": 18.4518,
+      "lng": -65.9595,
+      "note": "Known Isla Verde beach break; seed coords placed it in Chihuahua, Mexico."
+    },
+    "Antonio's Rincon": {
+      "lat": 18.374658,
+      "lng": -67.244588,
+      "note": "Puerto Rico point break near Rincon; seed coords placed it off Venezuela."
+    },
+    "Mondos": {
+      "lat": 34.320870,
+      "lng": -119.375587,
+      "note": "Ventura-county beach break; seed coords placed it in inland Northern California."
+    },
+    "Rockpile": {
+      "lat": 34.420317,
+      "lng": -119.900217,
+      "note": "Santa Barbara-area reef; seed coords placed it in the Coachella Valley."
+    }
+  }
+}

@@ -134,3 +134,9 @@ RATINGS_FILE = FORECAST_DATA_DIR / "ratings.json"
 SPOT_VERIFY_MODEL = "claude-sonnet-4-6"
 SPOT_VERIFY_BATCH_SIZE = 5
 SPOT_VERIFICATION_FILE = PIPELINE_DIR / "data" / "spot_verification.json"
+
+# Manually-curated data files that carry cleanup decisions across runs. The
+# exclusion list is consulted at seed time so removed spots don't come back
+# on subsequent crawls.
+EXCLUDED_SPOTS_FILE = PIPELINE_DIR / "data" / "excluded_spots.json"
+SPOT_COORD_FIXES_FILE = PIPELINE_DIR / "data" / "spot_coord_fixes.json"
