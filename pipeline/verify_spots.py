@@ -183,6 +183,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Ignore existing verification file and reverify every spot.")
     p.add_argument("--no-merge", action="store_true",
                    help="Skip the merge step; only write the verification file.")
+    p.add_argument("--show-low-confidence", action="store_true",
+                   help="Print every low-confidence verification and exit (no API calls).")
+    p.add_argument("--show-invalid", action="store_true",
+                   help="Print every spot flagged is_valid_surf_spot=false and exit (no API calls).")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
 
@@ -581,12 +585,59 @@ def _summarize(
     print("=" * 60)
 
 
+def _print_low_confidence(verifications: dict[str, dict]) -> None:
+    low = [rec for rec in verifications.values() if rec.get("confidence") == "low"]
+    low.sort(key=lambda r: r.get("name") or "")
+    print(f"Low-confidence spots ({len(low)}):")
+    print("-" * 60)
+    for rec in low:
+        name = rec.get("name") or "?"
+        notes = (rec.get("notes") or "").strip() or "(no notes)"
+        print(f"  {name}")
+        print(f"      notes: {notes}")
+
+
+def _print_invalid(verifications: dict[str, dict]) -> None:
+    invalid = [rec for rec in verifications.values() if not rec.get("is_valid_surf_spot", True)]
+    invalid.sort(key=lambda r: (r.get("invalid_reason") or "", r.get("name") or ""))
+    print(f"Invalid spots ({len(invalid)}):")
+    print("-" * 60)
+    current_reason = None
+    for rec in invalid:
+        reason = rec.get("invalid_reason") or "?"
+        if reason != current_reason:
+            print(f"\n[{reason}]")
+            current_reason = reason
+        name = rec.get("name") or "?"
+        notes = (rec.get("notes") or "").strip()
+        if notes:
+            print(f"  {name}  —  {notes}")
+        else:
+            print(f"  {name}")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+
+    # Display-only flags — read the verification file and exit. No API
+    # calls, no merge, no ANTHROPIC_API_KEY requirement.
+    if args.show_low_confidence or args.show_invalid:
+        if not args.verification_file.exists():
+            log.error("Verification file %s does not exist. Run verify_spots without "
+                      "--show-* flags first.", args.verification_file)
+            return 1
+        verifications = _load_verifications(args.verification_file)
+        if args.show_low_confidence:
+            _print_low_confidence(verifications)
+        if args.show_invalid:
+            if args.show_low_confidence:
+                print()
+            _print_invalid(verifications)
+        return 0
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         log.error("ANTHROPIC_API_KEY is not set. Export it before running.")

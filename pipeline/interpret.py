@@ -404,6 +404,7 @@ def compute_ratings(
     results: dict[str, list[dict]] = {}
     rated = 0
     no_spot = 0
+    filtered_invalid = 0
     no_station = 0
     station_missing = 0
     no_tide_data = 0
@@ -415,6 +416,12 @@ def compute_ratings(
         spot = spot_by_name.get(name)
         if spot is None:
             no_spot += 1
+            continue
+
+        # Skip spots the verification pass flagged as not-really-surf-spots
+        # (surf shops, duplicates, lakes, rivers, etc.).
+        if spot.get("is_valid_surf_spot") is False:
+            filtered_invalid += 1
             continue
 
         station_id = spot.get("nearest_tide_station_id")
@@ -443,10 +450,11 @@ def compute_ratings(
             rated += 1
 
     log.info(
-        "interpret: rated %d spots (no_spot=%d, no_station=%d, "
-        "station_missing=%d, no_tide_data=%d, tide_hourly=%d, tide_hilo=%d)",
-        rated, no_spot, no_station, station_missing, no_tide_data,
-        tide_hourly, tide_hilo,
+        "interpret: rated %d spots (no_spot=%d, filtered_invalid=%d, "
+        "no_station=%d, station_missing=%d, no_tide_data=%d, "
+        "tide_hourly=%d, tide_hilo=%d)",
+        rated, no_spot, filtered_invalid, no_station, station_missing,
+        no_tide_data, tide_hourly, tide_hilo,
     )
     if missing_examples:
         log.info("interpret: station_missing sample: %s", ", ".join(missing_examples))
@@ -506,7 +514,10 @@ def _print_summary(
     print("=" * 60)
     print("Interpretation summary")
     print("=" * 60)
+    filtered_invalid = sum(1 for s in spots if s.get("is_valid_surf_spot") is False)
     print(f"  spots rated: {len(ratings)}")
+    if filtered_invalid:
+        print(f"  spots filtered (is_valid_surf_spot=false): {filtered_invalid}")
 
     total_hours = sum(len(s) for s in ratings.values())
     print(f"  total spot-hours: {total_hours}")

@@ -48,7 +48,18 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
     this spot, carry its raycast arcs forward instead of blanking them — this
     lets dev iterations (`--skip-raycast`) reuse a prior full run's swell
     windows without re-running the 30+ min ray-cast.
+
+    Spots already flagged `is_valid_surf_spot: false` by the verification
+    pass (surf shops, duplicates, non-surfable rivers/lakes) are passed
+    through unchanged — there's no point running orientation / raycast /
+    buoy / tide algorithms on them.
     """
+    if spot.get("is_valid_surf_spot") is False:
+        log.debug(
+            "%s: is_valid_surf_spot=false (%s) — skipping enrichment",
+            spot.get("name"), spot.get("invalid_reason"),
+        )
+        return dict(spot)
     # Seaward-adjust spots that sit inside a GSHHG polygon. The output record
     # keeps the original lat/lng; algorithms receive a copy with the adjusted
     # coordinates so their LOS / perpendicular / curvature checks run from a
@@ -155,12 +166,17 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
 
 def _summarize(records: list[dict]) -> None:
     n = len(records)
+    invalid = sum(1 for r in records if r.get("is_valid_surf_spot") is False)
+    valid_n = n - invalid
     print()
     print("=" * 60)
-    print(f"Enrichment summary ({n} spots)")
+    print(f"Enrichment summary ({n} spots; {valid_n} valid, {invalid} flagged invalid)")
     print("=" * 60)
     def pct(f):
-        return f"{100 * sum(1 for r in records if f(r)) / max(n, 1):.0f}%"
+        # Percentages are computed over valid spots only — counting invalid
+        # spots as "unresolved" would distort the numbers.
+        valid = [r for r in records if r.get("is_valid_surf_spot") is not False]
+        return f"{100 * sum(1 for r in valid if f(r)) / max(len(valid), 1):.0f}%"
     print(f"  orientation resolved:       {pct(lambda r: r.get('orientation_deg') is not None)}")
     print(f"  swell window resolved:      {pct(lambda r: r.get('optimal_swell_dir') is not None)}")
     print(f"    raycast-resolved:         {pct(lambda r: r.get('optimal_swell_dir') is not None and r.get('swell_window_source') != 'orientation_derived')}")
