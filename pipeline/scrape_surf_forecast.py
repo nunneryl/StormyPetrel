@@ -929,13 +929,14 @@ def main(argv: list[str] | None = None) -> int:
     spots = json.loads(args.input.read_text())
     log.info("Loaded %d spots from %s", len(spots), args.input)
 
-    # Directory: build on demand, reuse otherwise. Skipped entirely in
-    # --merge-only (the merge doesn't fetch anything) and when the user
-    # passes --no-directory.
+    # Directory: build on demand, reuse otherwise. --build-directory and
+    # --rebuild-directory always run (even alongside --merge-only), since
+    # the build is itself an HTTP-only operation separate from the scrape.
+    # --no-directory disables both use and build.
     directory: dict | None = None
-    if not args.merge_only and not args.no_directory:
+    if not args.no_directory:
         need_build = args.build_directory or args.rebuild_directory or (
-            not args.directory_file.exists()
+            not args.merge_only and not args.directory_file.exists()
         )
         if need_build:
             if args.rebuild_directory or not args.directory_file.exists():
