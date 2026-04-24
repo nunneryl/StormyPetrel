@@ -138,14 +138,46 @@ def _find_geo_coords(obj) -> tuple[float, float] | None:
 def extract_page_coords(html: str) -> tuple[float, float] | None:
     """Return (lat, lng) if surf-forecast.com published them on this page.
 
-    Tries three strategies in order of reliability: OpenGraph /
-    place-location meta tags, JSON-LD Place/GeoCoordinates, and a generic
-    regex over the page source. Returns None if none match.
+    surf-forecast.com emits two coord formats on every spot page — prefer
+    the embedded JS widget (4-decimal precision) over the JSON-LD block
+    (2-decimal precision). Falls back to OG meta tags and a generic
+    regex. Returns None only when the page genuinely has no coord
+    (index / search / 404 stubs).
     """
     from bs4 import BeautifulSoup
 
+    # 1. Embedded spot-locator JS widget: "lat":36.6289,"lng":-121.9412
+    #    (appears on every spot page with ~10m precision.)
+    m = re.search(
+        r'"lat"\s*:\s*(-?\d+\.\d+)\s*,\s*"lng"\s*:\s*(-?\d+\.\d+)',
+        html,
+    )
+    if m:
+        try:
+            return float(m.group(1)), float(m.group(2))
+        except ValueError:
+            pass
+
     soup = BeautifulSoup(html, "html.parser")
 
+    # 2. JSON-LD Place / GeoCoordinates — reliable schema.org markup.
+    #    Use script.get_text() rather than script.string; .string returns
+    #    None whenever the <script> has mixed/fragmented content, which
+    #    was silently skipping almost every page in practice.
+    for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
+        content = (script.get_text() or "").strip()
+        if not content:
+            continue
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError:
+            continue
+        coords = _find_geo_coords(data)
+        if coords:
+            return coords
+
+    # 3. OG / place:location meta tags (unused by surf-forecast.com but
+    #    handy for future sources).
     lat_tag = soup.find("meta", attrs={"property": re.compile(r"(?:og|place:location):latitude")})
     lng_tag = soup.find("meta", attrs={"property": re.compile(r"(?:og|place:location):longitude")})
     if lat_tag and lng_tag:
@@ -154,19 +186,10 @@ def extract_page_coords(html: str) -> tuple[float, float] | None:
         except (KeyError, ValueError, TypeError):
             pass
 
-    for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
-        try:
-            data = json.loads(script.string or "")
-        except (json.JSONDecodeError, AttributeError, TypeError):
-            continue
-        coords = _find_geo_coords(data)
-        if coords:
-            return coords
-
-    # Generic fallback — look for "latitude": <num>, "longitude": <num>
-    # in JS initializers or microdata.
-    m_lat = re.search(r'["\']?latitude["\']?\s*[:=]\s*(-?\d+\.\d+)', html)
-    m_lng = re.search(r'["\']?longitude["\']?\s*[:=]\s*(-?\d+\.\d+)', html)
+    # 4. Generic fallback — matches both unquoted ("lat": 36.6) and
+    #    quoted ("latitude":"36.63") forms. Requires both sides to parse.
+    m_lat = re.search(r'["\']?lat(?:itude)?["\']?\s*[:=]\s*["\']?(-?\d+\.\d+)', html)
+    m_lng = re.search(r'["\']?l(?:ng|ongitude|on)["\']?\s*[:=]\s*["\']?(-?\d+\.\d+)', html)
     if m_lat and m_lng:
         try:
             return float(m_lat.group(1)), float(m_lng.group(1))
