@@ -152,3 +152,12 @@ SPOT_VERIFICATION_FILE = PIPELINE_DIR / "data" / "spot_verification.json"
 # on subsequent crawls.
 EXCLUDED_SPOTS_FILE = PIPELINE_DIR / "data" / "excluded_spots.json"
 SPOT_COORD_FIXES_FILE = PIPELINE_DIR / "data" / "spot_coord_fixes.json"
+
+# ---------------------------------------------------------------------------
+# surf-forecast.com scrape (Phase 2C) — direct HTML extraction
+# ---------------------------------------------------------------------------
+SURF_FORECAST_BASE = "https://www.surf-forecast.com"
+# surf-forecast.com doesn't publish an explicit crawl rate, so pace politely
+# at 1 request / 2 s. Mirrors the NOAA CO-OPS pacing pattern.
+SURF_FORECAST_MIN_INTERVAL_S = 2.0
+SURF_FORECAST_CACHE_FILE = PIPELINE_DIR / "data" / "surf_forecast_scrape.json"
