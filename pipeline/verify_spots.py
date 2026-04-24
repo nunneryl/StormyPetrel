@@ -273,6 +273,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         "to a web-search-enabled flow).")
     p.add_argument("--no-merge", action="store_true",
                    help="Skip the merge step; only write the verification file.")
+    p.add_argument("--merge-only", action="store_true",
+                   help="Skip the API-verification step and only apply the "
+                        "existing verification file to spots_enriched.json. "
+                        "Does not require ANTHROPIC_API_KEY.")
     p.add_argument("--show-low-confidence", action="store_true",
                    help="Print every low-confidence verification and exit (no API calls).")
     p.add_argument("--show-invalid", action="store_true",
@@ -861,10 +865,6 @@ def main(argv: list[str] | None = None) -> int:
             _print_invalid(verifications)
         return 0
 
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        log.error("ANTHROPIC_API_KEY is not set. Export it before running.")
-        return 1
-
     if not args.input.exists():
         log.error("Input file %s does not exist. Run `python -m pipeline.enrich` first.",
                   args.input)
@@ -873,26 +873,44 @@ def main(argv: list[str] | None = None) -> int:
     spots = json.loads(args.input.read_text())
     log.info("Loaded %d enriched spots from %s", len(spots), args.input)
 
-    # --force: move the existing verification file aside so (a) the next
-    # verify_all starts from an empty cache, and (b) if the re-run crashes
-    # mid-way the user can recover the prior results from the .bak file.
-    if args.force and args.verification_file.exists():
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup = args.verification_file.with_suffix(
-            args.verification_file.suffix + f".{timestamp}.bak"
-        )
-        args.verification_file.rename(backup)
-        log.info("--force: archived previous verification file to %s", backup)
+    # --merge-only: skip the API step and go straight to merging the
+    # existing verification file into spots_enriched.json. No API key
+    # required.
+    if args.merge_only:
+        verifications = _load_verifications(args.verification_file)
+        log.info("--merge-only: %d verification records from %s",
+                 len(verifications), args.verification_file)
+        api_stats = {
+            "input_tokens": 0, "output_tokens": 0,
+            "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0,
+            "batches": 0, "parse_errors": 0, "rate_limit_retries": 0,
+            "missing_from_response": 0,
+        }
+    else:
+        if not os.getenv("ANTHROPIC_API_KEY"):
+            log.error("ANTHROPIC_API_KEY is not set. Export it before running.")
+            return 1
 
-    verifications, api_stats = verify_all(
-        spots,
-        verification_path=args.verification_file,
-        use_cache=not (args.no_cache or args.force),
-        limit=args.limit,
-        batch_size=args.batch_size,
-        inter_batch_seconds=args.inter_batch_seconds,
-    )
+        # --force: move the existing verification file aside so (a) the next
+        # verify_all starts from an empty cache, and (b) if the re-run crashes
+        # mid-way the user can recover the prior results from the .bak file.
+        if args.force and args.verification_file.exists():
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup = args.verification_file.with_suffix(
+                args.verification_file.suffix + f".{timestamp}.bak"
+            )
+            args.verification_file.rename(backup)
+            log.info("--force: archived previous verification file to %s", backup)
+
+        verifications, api_stats = verify_all(
+            spots,
+            verification_path=args.verification_file,
+            use_cache=not (args.no_cache or args.force),
+            limit=args.limit,
+            batch_size=args.batch_size,
+            inter_batch_seconds=args.inter_batch_seconds,
+        )
 
     merge_stats: dict | None = None
     if not args.no_merge:
