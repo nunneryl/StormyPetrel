@@ -340,13 +340,25 @@ def fetch_spot(
 # spots where our naive hyphen-join-the-name guesses all 404.
 # ---------------------------------------------------------------------------
 
-# Starting points for the directory crawl. Empirically these pages exist on
-# surf-forecast.com and together list the vast majority of US breaks; the
-# extractor follows every ``/breaks/<slug>`` link it finds on any page.
-_DEFAULT_CRAWL_SEEDS = (
-    f"{SURF_FORECAST_BASE}/countries/USA",
-    f"{SURF_FORECAST_BASE}/countries/USA/surf-breaks",
-    f"{SURF_FORECAST_BASE}/sitemap.xml",
+# Starting points for the directory crawl. surf-forecast.com groups US
+# breaks under /provinces/<State>-USA/breaks — not /countries/USA/... as
+# a reasonable person would guess. Each state's /breaks page lists every
+# break in that state; the crawler follows secondary /provinces/ and
+# /countries/ links for territories and edge cases. Territories
+# (Puerto Rico, Guam) are provinces too. Homepage is a fallback for
+# stragglers.
+_US_STATE_SLUGS = (
+    "Alabama", "Alaska", "California", "Connecticut", "Delaware", "Florida",
+    "Georgia", "Guam", "Hawaii", "Illinois", "Indiana", "Louisiana", "Maine",
+    "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
+    "New-Hampshire", "New-Jersey", "New-York", "North-Carolina", "Ohio",
+    "Oregon", "Pennsylvania", "Puerto-Rico", "Rhode-Island", "South-Carolina",
+    "Texas", "Virginia", "Washington", "Wisconsin",
+)
+
+_DEFAULT_CRAWL_SEEDS = tuple(
+    [f"{SURF_FORECAST_BASE}/provinces/{s}-USA/breaks" for s in _US_STATE_SLUGS]
+    + [f"{SURF_FORECAST_BASE}/countries", f"{SURF_FORECAST_BASE}/"]
 )
 
 _BREAK_HREF_RE = re.compile(r'/breaks/([^/"\?#\s]+)')
@@ -384,7 +396,7 @@ def _extract_break_slugs(html: str) -> set[str]:
 def build_directory(
     session,
     seed_urls: list[str] | None = None,
-    max_pages: int = 200,
+    max_pages: int = 500,
 ) -> dict:
     """Crawl surf-forecast.com listing pages and return a directory of every
     ``/breaks/<slug>`` link we find.
@@ -439,7 +451,7 @@ def build_directory(
             absolute = urljoin(url, href)
             if urlparse(absolute).netloc and urlparse(absolute).netloc != urlparse(SURF_FORECAST_BASE).netloc:
                 continue
-            if "/countries/" in absolute or "/regions/" in absolute or "sitemap" in absolute:
+            if "/countries/" in absolute or "/regions/" in absolute or "/provinces/" in absolute or "sitemap" in absolute:
                 if absolute not in visited and absolute not in to_visit:
                     to_visit.append(absolute)
 
