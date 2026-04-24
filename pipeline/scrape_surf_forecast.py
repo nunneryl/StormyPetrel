@@ -586,10 +586,46 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
     return stats
 
 
+def unmerge_stale_matches(spots: list[dict], cache: dict[str, dict]) -> dict:
+    """Revert scrape-derived fields for spots whose match was dropped by
+    revalidation.
+
+    Identifies spots where the cache entry has ``previously_matched_url``
+    but no current ``source_url`` — the revalidation pass dropped a bad
+    match, but the earlier merge already wrote its orientation / swell /
+    break-type / tide values into spots_enriched.json. Clear those five
+    fields (plus ``surf_forecast_url``) so the next enrich / verify pass
+    can recompute them from scratch.
+    """
+    stats = {
+        "unmerged": 0,
+        "cleared_fields": {f: 0 for f in _MERGE_FIELDS},
+    }
+    for spot in spots:
+        rec = cache.get(spot.get("name"))
+        if rec is None:
+            continue
+        # A dropped match is a cache entry with previously_matched_url and
+        # no current source_url. Skip entries that are still matched (the
+        # merge step handles those) and entries that were never a match.
+        if not rec.get("previously_matched_url"):
+            continue
+        if rec.get("source_url"):
+            continue
+        stats["unmerged"] += 1
+        for f in _MERGE_FIELDS:
+            if spot.get(f) is not None:
+                spot[f] = None
+                stats["cleared_fields"][f] += 1
+        spot.pop("surf_forecast_url", None)
+    return stats
+
+
 def _summarize(
     scrape_stats: dict | None,
     merge_stats: dict,
     revalidate_stats: dict | None = None,
+    unmerge_stats: dict | None = None,
 ) -> None:
     print()
     print("=" * 60)
@@ -609,6 +645,13 @@ def _summarize(
         print(f"  missed this run:     {scrape_stats['missed']}")
         if scrape_stats["errors"]:
             print(f"  errors this run:     {scrape_stats['errors']}")
+    if unmerge_stats is not None and unmerge_stats.get("unmerged"):
+        print()
+        print("  reverted dropped-match writes:")
+        print(f"    spots reverted:      {unmerge_stats['unmerged']}")
+        for field, n in unmerge_stats["cleared_fields"].items():
+            if n:
+                print(f"      {field:<22} cleared on {n}")
     print()
     print("  merge into spots_enriched.json:")
     print(f"    total matched in cache:    {merge_stats['matched']}")
@@ -688,13 +731,17 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     merge_stats = merge_into_spots(spots, cache)
+    # Revert scrape-derived writes for matches that revalidation dropped.
+    # Runs after merge so a spot that's both (previously matched elsewhere
+    # AND newly matched again this run) keeps the fresh write.
+    unmerge_stats = unmerge_stale_matches(spots, cache)
 
     output_path = args.output or args.input
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(spots, indent=2, ensure_ascii=False))
     log.info("Wrote %d spots back to %s", len(spots), output_path)
 
-    _summarize(scrape_stats, merge_stats, revalidate_stats)
+    _summarize(scrape_stats, merge_stats, revalidate_stats, unmerge_stats)
     return 0
 
 
