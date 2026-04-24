@@ -166,3 +166,12 @@ SURF_FORECAST_BASE = "https://www.surf-forecast.com"
 # at 1 request / 2 s. Mirrors the NOAA CO-OPS pacing pattern.
 SURF_FORECAST_MIN_INTERVAL_S = 2.0
 SURF_FORECAST_CACHE_FILE = PIPELINE_DIR / "data" / "surf_forecast_scrape.json"
+# Crawled directory of every /breaks/<slug> link surf-forecast.com publishes.
+# Built once via `scrape_surf_forecast --build-directory` and reused across
+# every subsequent scrape run to catch spots whose naive slug candidates
+# would 404 (e.g. "Ocean Beach San Diego" → /breaks/Ocean-Beach-San-Diego).
+SURF_FORECAST_DIRECTORY_FILE = CACHE_DIR / "surf_forecast_directory.json"
+# rapidfuzz token_set_ratio threshold for directory lookups. 85 is strict
+# enough to reject "Rincon" ↔ "Rincon Point" differences (they'd score
+# around 80) while still catching "Pipeline" ↔ "Banzai Pipeline".
+SURF_FORECAST_FUZZY_THRESHOLD = 85

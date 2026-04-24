@@ -31,6 +31,8 @@ from .config import (
     DEFAULT_ENRICHED_OUTPUT,
     SURF_FORECAST_BASE,
     SURF_FORECAST_CACHE_FILE,
+    SURF_FORECAST_DIRECTORY_FILE,
+    SURF_FORECAST_FUZZY_THRESHOLD,
     SURF_FORECAST_MIN_INTERVAL_S,
 )
 from .geo import haversine_m
@@ -275,6 +277,7 @@ def fetch_spot(
     session,
     expected_coord: tuple[float, float] | None = None,
     max_distance_km: float = _DEFAULT_MAX_DISTANCE_KM,
+    directory: dict | None = None,
 ) -> dict | None:
     """Try each slug candidate; return the first page that parses to a
     useful record. A 200 without offshore_wind_deg OR break_type is
@@ -285,8 +288,22 @@ def fetch_spot(
     misses — this rejects the "Pillar Point" → wrong-break-same-name
     class of slug collision. Pages that publish no coord fall through
     the check unchanged (trust the slug).
+
+    When *directory* is supplied (from build_directory), the best fuzzy
+    name match is prepended to the slug-candidate list — so spots whose
+    naive hyphen-join slugs 404 still get a chance via the canonical
+    slug surf-forecast.com actually uses.
     """
-    for slug in slug_candidates(name, state):
+    candidates: list[str] = []
+    if directory is not None:
+        dir_slug = match_directory(name, directory)
+        if dir_slug:
+            candidates.append(dir_slug)
+    for c in slug_candidates(name, state):
+        if c not in candidates:
+            candidates.append(c)
+
+    for slug in candidates:
         url = f"{SURF_FORECAST_BASE}/breaks/{slug}"
         try:
             resp = session.get(url, timeout=30, allow_redirects=True)
@@ -315,6 +332,171 @@ def fetch_spot(
         fields["matched_slug"] = slug
         return fields
     return None
+
+
+# ---------------------------------------------------------------------------
+# Directory — crawl surf-forecast.com's listing pages to build a canonical
+# {name: slug} index, then fuzzy-match spots against it. Lets us catch
+# spots where our naive hyphen-join-the-name guesses all 404.
+# ---------------------------------------------------------------------------
+
+# Starting points for the directory crawl. Empirically these pages exist on
+# surf-forecast.com and together list the vast majority of US breaks; the
+# extractor follows every ``/breaks/<slug>`` link it finds on any page.
+_DEFAULT_CRAWL_SEEDS = (
+    f"{SURF_FORECAST_BASE}/countries/USA",
+    f"{SURF_FORECAST_BASE}/countries/USA/surf-breaks",
+    f"{SURF_FORECAST_BASE}/sitemap.xml",
+)
+
+_BREAK_HREF_RE = re.compile(r'/breaks/([^/"\?#\s]+)')
+
+
+def _normalize_for_match(name: str | None) -> str:
+    """Lower-case + strip common noise words so fuzzy matches are robust to
+    phrasing differences ("State Beach" / "Beach Park" / "Point" suffixes).
+    """
+    if not name:
+        return ""
+    # Fold the same Unicode apostrophe variants we normalize elsewhere.
+    from .cleanup_spots import normalize_name
+    name = normalize_name(name).lower()
+    # Drop a handful of low-signal suffix words that otherwise suppress
+    # token_set_ratio when the directory uses a shorter form.
+    name = re.sub(r"\b(state|beach|park|point|surf|break|breaks)\b", " ", name)
+    return re.sub(r"\s+", " ", name).strip()
+
+
+def _extract_break_slugs(html: str) -> set[str]:
+    """Scan a page body for every unique ``/breaks/<slug>`` reference."""
+    slugs: set[str] = set()
+    for m in _BREAK_HREF_RE.finditer(html):
+        slug = m.group(1)
+        # Skip obvious non-break resources (forecasts, photos, reviews).
+        if slug in {"forecasts", "photos", "reviews", "tides", "metars", "buoys",
+                    "webcams", "seatemp", "alert_conditions"}:
+            continue
+        # Skip suffix paths like "breaks/Pipeline/forecasts" — we want root slugs.
+        slugs.add(slug)
+    return slugs
+
+
+def build_directory(
+    session,
+    seed_urls: list[str] | None = None,
+    max_pages: int = 200,
+) -> dict:
+    """Crawl surf-forecast.com listing pages and return a directory of every
+    ``/breaks/<slug>`` link we find.
+
+    Breadth-first; each fetched page contributes both new break slugs (saved
+    into the directory) and new crawl candidates (other country/region index
+    pages) up to *max_pages* total fetches. The caller supplies the session
+    so rate-limiting works.
+    """
+    from urllib.parse import urljoin, urlparse
+
+    seeds = list(seed_urls or _DEFAULT_CRAWL_SEEDS)
+    visited: set[str] = set()
+    to_visit: list[str] = list(seeds)
+    entries: dict[str, dict] = {}  # slug → {slug, url, display}
+
+    while to_visit and len(visited) < max_pages:
+        url = to_visit.pop(0)
+        if url in visited:
+            continue
+        visited.add(url)
+        try:
+            resp = session.get(url, timeout=30, allow_redirects=True)
+        except Exception as e:  # noqa: BLE001
+            log.debug("directory: fetch %s failed: %s", url, e)
+            continue
+        if resp.status_code != 200 or not resp.text:
+            log.debug("directory: %s → %d", url, resp.status_code)
+            continue
+
+        for slug in _extract_break_slugs(resp.text):
+            if slug in entries:
+                continue
+            # Replace hyphens with spaces for display; URL slug is the truth.
+            display = slug.replace("-", " ")
+            entries[slug] = {
+                "slug": slug,
+                "url": f"{SURF_FORECAST_BASE}/breaks/{slug}",
+                "display": display,
+                "normalized": _normalize_for_match(display),
+            }
+
+        # Follow any country/region index links we see on this page, up to
+        # the page cap. Conservative: only follow in-site links under
+        # /countries/ or /regions/, not every href.
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for a in soup.find_all("a", href=True):
+            href = a["href"]
+            if not href or href.startswith("#"):
+                continue
+            absolute = urljoin(url, href)
+            if urlparse(absolute).netloc and urlparse(absolute).netloc != urlparse(SURF_FORECAST_BASE).netloc:
+                continue
+            if "/countries/" in absolute or "/regions/" in absolute or "sitemap" in absolute:
+                if absolute not in visited and absolute not in to_visit:
+                    to_visit.append(absolute)
+
+    log.info(
+        "directory: crawled %d pages, collected %d break entries",
+        len(visited), len(entries),
+    )
+    return {
+        "crawled_at": datetime.now(tz=timezone.utc).isoformat(),
+        "source_urls": seeds,
+        "pages_crawled": len(visited),
+        "entries": list(entries.values()),
+    }
+
+
+def save_directory(path: Path, directory: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(directory, indent=2, ensure_ascii=False, sort_keys=True))
+
+
+def load_directory(path: Path = SURF_FORECAST_DIRECTORY_FILE) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("directory %s corrupt (%s); ignoring", path, e)
+        return None
+
+
+def match_directory(
+    name: str,
+    directory: dict,
+    threshold: int = SURF_FORECAST_FUZZY_THRESHOLD,
+) -> str | None:
+    """Return the best-matching slug from *directory*, or None below threshold.
+
+    Uses rapidfuzz token_set_ratio so ordering differences ("Ocean Beach" ↔
+    "Beach at Ocean") don't kill the match. Suffix noise like "State Beach"
+    is stripped by _normalize_for_match on both sides.
+    """
+    entries = directory.get("entries") or []
+    if not entries:
+        return None
+    from rapidfuzz import fuzz, process
+    target = _normalize_for_match(name)
+    if not target:
+        return None
+    choices = [e["normalized"] for e in entries]
+    best = process.extractOne(target, choices, scorer=fuzz.token_set_ratio)
+    if not best:
+        return None
+    score = best[1]
+    idx = best[2]
+    if score < threshold:
+        return None
+    return entries[idx]["slug"]
 
 
 # ---------------------------------------------------------------------------
@@ -369,6 +551,7 @@ def scrape_all(
     min_interval_s: float = SURF_FORECAST_MIN_INTERVAL_S,
     user_agent: str = _USER_AGENT,
     max_distance_km: float = _DEFAULT_MAX_DISTANCE_KM,
+    directory: dict | None = None,
 ) -> tuple[dict[str, dict], dict]:
     """Scrape each spot not already in the cache; persist after every spot.
 
@@ -377,6 +560,10 @@ def scrape_all(
     Each fetch is validated against the spot's lat/lng — matches whose
     surf-forecast.com page coord is more than ``max_distance_km`` away
     are rejected.
+
+    When *directory* is supplied, every fetch_spot call gets a fuzzy-
+    matched canonical slug prepended to its candidate list — catching
+    spots whose naive hyphen-join slugs 404.
     """
     cache = _load_cache(cache_path) if use_cache else {}
     pending = [s for s in spots if _is_scrapable(s) and s["name"] not in cache]
@@ -410,6 +597,7 @@ def scrape_all(
             result = fetch_spot(
                 name, spot.get("region_hint"), session,
                 expected_coord=expected, max_distance_km=max_distance_km,
+                directory=directory,
             )
         except Exception as e:  # noqa: BLE001
             log.warning("scrape: %r raised %s; recording as error", name, e)
@@ -697,6 +885,20 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    default=SURF_FORECAST_MIN_INTERVAL_S,
                    help=f"Minimum seconds between HTTP requests (default "
                         f"{SURF_FORECAST_MIN_INTERVAL_S}).")
+    p.add_argument("--build-directory", action="store_true",
+                   help="Crawl surf-forecast.com's country/region index pages "
+                        "to build a canonical {name: slug} directory, then "
+                        "proceed with the rest of the pipeline. The directory "
+                        "is cached — subsequent runs reuse it unless rebuilt.")
+    p.add_argument("--rebuild-directory", action="store_true",
+                   help="Like --build-directory but forces a fresh crawl even "
+                        "if the cached directory exists.")
+    p.add_argument("--directory-file", type=Path,
+                   default=SURF_FORECAST_DIRECTORY_FILE,
+                   help="Path to the cached directory JSON.")
+    p.add_argument("--no-directory", action="store_true",
+                   help="Ignore the cached directory even when present (e.g. "
+                        "to A/B-test naive slug matching).")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
 
@@ -714,6 +916,30 @@ def main(argv: list[str] | None = None) -> int:
 
     spots = json.loads(args.input.read_text())
     log.info("Loaded %d spots from %s", len(spots), args.input)
+
+    # Directory: build on demand, reuse otherwise. Skipped entirely in
+    # --merge-only (the merge doesn't fetch anything) and when the user
+    # passes --no-directory.
+    directory: dict | None = None
+    if not args.merge_only and not args.no_directory:
+        need_build = args.build_directory or args.rebuild_directory or (
+            not args.directory_file.exists()
+        )
+        if need_build:
+            if args.rebuild_directory or not args.directory_file.exists():
+                log.info("directory: building (this will take a few minutes)…")
+                session = _PacedSession(args.min_interval_seconds, _USER_AGENT)
+                directory = build_directory(session)
+                save_directory(args.directory_file, directory)
+                log.info("directory: saved %d entries to %s",
+                         len(directory.get("entries", [])), args.directory_file)
+            else:
+                directory = load_directory(args.directory_file)
+        else:
+            directory = load_directory(args.directory_file)
+            if directory:
+                log.info("directory: loaded %d entries from %s",
+                         len(directory.get("entries", [])), args.directory_file)
 
     scrape_stats: dict | None = None
     revalidate_stats: dict | None = None
@@ -734,6 +960,7 @@ def main(argv: list[str] | None = None) -> int:
             use_cache=not args.no_cache,
             min_interval_s=args.min_interval_seconds,
             max_distance_km=args.max_distance_km,
+            directory=directory,
         )
 
     merge_stats = merge_into_spots(spots, cache)
