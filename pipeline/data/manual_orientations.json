@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-curated orientations for spots where the geometric algorithm cannot resolve the seaward bearing. Applied by pipeline/enrich.py between Algorithm 1 (orientation) and Algorithm 2 (swell window), so the orientation-derived fallback builds arcs against the correct value. Treated as authoritative — overrides both the algorithmic result and LLM verification. Match by exact spot name.\n\nWHEN TO ADD AN ENTRY:\n- Great Lakes spots (GSHHG L1 lumps the lakes with land — orientation returns null)\n- Complex harbors, jetties, rivermouths where the coastline normal misrepresents the actual break geometry\n- Barrier-island spots whose Nominatim geocode landed on the bay side and whose automatic 180° hemisphere flip didn't cover it\n- Spots in Alaska / Guam / territories not covered by the region hemisphere table\n\nFIELDS:\n- orientation_deg (required, 0-359): the seaward-facing bearing. 0=N, 90=E, 180=S, 270=W. This is the direction the rider looks when facing the incoming swell.\n- source (optional): short attribution — 'local knowledge', 'surf-forecast.com manual check', 'OSM way heading', etc.\n- notes (optional): any disambiguation that matters (e.g. 'Pier points straight offshore', 'Break faces the reef pass rather than the beach').",
+  "_comment": "Hand-curated orientations for spots where the geometric algorithm cannot resolve the seaward bearing. Applied by pipeline/enrich.py between Algorithm 1 (orientation) and Algorithm 2 (swell window), so the orientation-derived fallback builds arcs against the correct value. Treated as authoritative — overrides both the algorithmic result and LLM verification. Match by exact spot name.\n\nWHEN TO ADD AN ENTRY:\n- Great Lakes spots (GSHHG L1 lumps the lakes with land — orientation returns null)\n- Complex harbors, jetties, rivermouths where the coastline normal misrepresents the actual break geometry\n- Barrier-island spots whose Nominatim geocode landed on the bay side and whose automatic 180° hemisphere flip didn't cover it\n- Spots in Alaska / Guam / territories not covered by the region hemisphere table\n\nFIELDS:\n- orientation_deg (required, 0-359): the seaward-facing bearing. 0=N, 90=E, 180=S, 270=W. This is the direction the rider looks when facing the incoming swell.\n- source (optional): short attribution — 'local knowledge', 'surf-forecast.com manual check', 'OSM way heading', etc.\n- notes (optional): any disambiguation that matters (e.g. 'Pier points straight offshore', 'Break faces the reef pass rather than the beach', or flagging that the spot's coord looks wrong and needs a fix in spot_coord_fixes.json).",
   "_schema_version": 1,
   "orientations": {
     "Grand Haven South Pier": {
@@ -21,10 +21,74 @@
       "source": "Lake Michigan east shore",
       "notes": "Point Betsie area; open lake due west"
     },
+    "Silver Beach": {
+      "orientation_deg": 270,
+      "source": "Lake Michigan east shore (St. Joseph, MI)"
+    },
+    "Sleeping Bear Dunes": {
+      "orientation_deg": 270,
+      "source": "Lake Michigan east shore (Leelanau Peninsula)"
+    },
     "Whihala Beach": {
       "orientation_deg": 0,
       "source": "Lake Michigan south shore (Whiting, IN)",
       "notes": "At the south tip of the lake; open water due north"
+    },
+    "Atwater Beach": {
+      "orientation_deg": 90,
+      "source": "Lake Michigan west shore (Milwaukee, WI)"
+    },
+    "Deland Park": {
+      "orientation_deg": 90,
+      "source": "Lake Michigan west shore (Sheboygan, WI)"
+    },
+    "North Point Sheboygan": {
+      "orientation_deg": 90,
+      "source": "Lake Michigan west shore (Sheboygan, WI)"
+    },
+    "Sheboygan, Wisconsin": {
+      "orientation_deg": 90,
+      "source": "Lake Michigan west shore"
+    },
+    "Whitefish Bay WI": {
+      "orientation_deg": 90,
+      "source": "Lake Michigan west shore (Milwaukee area)"
+    },
+    "Duluth Park Point": {
+      "orientation_deg": 100,
+      "source": "Lake Superior (Duluth, MN)",
+      "notes": "Park Point is a sandspit extending SE from Duluth; outside beach faces ESE into the open lake"
+    },
+    "Stoney Point MN": {
+      "orientation_deg": 160,
+      "source": "Lake Superior north shore (Two Harbors area, MN)",
+      "notes": "Point break facing SSE into the lake"
+    },
+    "Hamlin Beach": {
+      "orientation_deg": 0,
+      "source": "Lake Ontario south shore (Hamlin, NY)"
+    },
+    "Ontario Beach": {
+      "orientation_deg": 0,
+      "source": "Lake Ontario south shore (Rochester, NY)"
+    },
+    "Woodlawn Beach": {
+      "orientation_deg": 270,
+      "source": "Lake Erie east end (Woodlawn Beach State Park, NY south of Buffalo)",
+      "notes": "Open Lake Erie due west"
+    },
+    "Edgewater Beach Cleveland": {
+      "orientation_deg": 0,
+      "source": "Lake Erie south shore (Cleveland, OH)"
+    },
+    "Lakeview Park Lorain": {
+      "orientation_deg": 0,
+      "source": "Lake Erie south shore (Lorain, OH)"
+    },
+    "Presque Isle Beach": {
+      "orientation_deg": 30,
+      "source": "Lake Erie south shore (Presque Isle State Park, PA)",
+      "notes": "Peninsula curves N/NE; popular surf beaches face NNE"
     },
     "Peahi Jaws": {
       "orientation_deg": 355,
@@ -50,6 +114,114 @@
       "orientation_deg": 140,
       "source": "Kennebunk, ME",
       "notes": "Atlantic-facing beach with a SE bend toward Wells Bay"
+    },
+    "The Wall Hampton": {
+      "orientation_deg": 90,
+      "source": "Hampton Beach, NH",
+      "notes": "Seawall section; Atlantic due east"
+    },
+    "Avalon NJ": {
+      "orientation_deg": 90,
+      "source": "Jersey Shore barrier island",
+      "notes": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG — (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide."
+    },
+    "Mecox Beach": {
+      "orientation_deg": 180,
+      "source": "Long Island south shore (Bridgehampton, NY)",
+      "notes": "South-facing barrier beach"
+    },
+    "Ocean Isle Beach": {
+      "orientation_deg": 175,
+      "source": "Brunswick County, NC barrier island",
+      "notes": "Island runs E-W; faces south into Long Bay"
+    },
+    "Sunset Beach NC": {
+      "orientation_deg": 175,
+      "source": "Brunswick County, NC (adjacent to Ocean Isle)"
+    },
+    "Florence South Jetty": {
+      "orientation_deg": 270,
+      "source": "Oregon coast at the Siuslaw River mouth",
+      "notes": "Jetty faces west into the open Pacific"
+    },
+    "Charlestown Town Beach": {
+      "orientation_deg": 190,
+      "source": "South Rhode Island coast / Block Island Sound"
+    },
+    "Moonstone Beach RI": {
+      "orientation_deg": 190,
+      "source": "South Rhode Island coast (Matunuck area)"
+    },
+    "Hilton Head Island": {
+      "orientation_deg": 110,
+      "source": "South Carolina barrier island",
+      "notes": "Ocean beach faces ESE"
+    },
+    "Dogmans Rincon": {
+      "orientation_deg": 270,
+      "source": "Rincon, PR west coast"
+    },
+    "Indicators Rincon": {
+      "orientation_deg": 285,
+      "source": "Rincon, PR west coast",
+      "notes": "Just N of Domes; faces WNW"
+    },
+    "Marias Rincon": {
+      "orientation_deg": 285,
+      "source": "Rincon, PR west coast",
+      "notes": "Maria's faces slightly N of W"
+    },
+    "Rincon Domes": {
+      "orientation_deg": 270,
+      "source": "Rincon, PR (Domes Beach)"
+    },
+    "Domes Beach Aguadilla": {
+      "orientation_deg": 315,
+      "source": "NW Puerto Rico (Aguadilla area)",
+      "notes": "Aguadilla coast curves from W-facing (Rincon) to N-facing; Domes here faces NW"
+    },
+    "Gas Chambers Aguadilla": {
+      "orientation_deg": 320,
+      "source": "Aguadilla, PR (Ramey Air Force Base reef)",
+      "notes": "Reef faces NNW"
+    },
+    "Surfers Beach Aguadilla": {
+      "orientation_deg": 315,
+      "source": "Aguadilla, PR"
+    },
+    "Table Tops Aguadilla": {
+      "orientation_deg": 315,
+      "source": "Aguadilla, PR",
+      "notes": "Shallow reef ledge facing NW"
+    },
+    "La Ocho": {
+      "orientation_deg": 0,
+      "source": "North coast of Puerto Rico (Arecibo / Manatí area)"
+    },
+    "Middles Isabela": {
+      "orientation_deg": 0,
+      "source": "Isabela, PR — north coast"
+    },
+    "Playa Guajataca": {
+      "orientation_deg": 0,
+      "source": "Quebradillas / Isabela, PR — north coast"
+    },
+    "Playa Kikita": {
+      "orientation_deg": 0,
+      "source": "North coast of Puerto Rico (Manatí area)"
+    },
+    "Shacks Beach": {
+      "orientation_deg": 0,
+      "source": "Isabela, PR — north coast"
+    },
+    "Kamea Meha": {
+      "orientation_deg": 0,
+      "source": "North coast of Puerto Rico (San Juan area)",
+      "notes": "Coord near San Juan's Condado/Isla Verde; faces N"
+    },
+    "The Room": {
+      "orientation_deg": 0,
+      "source": "North coast of Puerto Rico (Isabela area)"
     }
   }
 }
