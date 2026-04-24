@@ -1,22 +1,40 @@
-"""Core scraping primitives for surf-forecast.com spot pages.
+"""Scrape surf-forecast.com spot pages for verified metadata.
 
-Three pure(ish) building blocks the full scrape CLI (step 2) will
-compose into a rate-limited, cached pipeline:
+Three primitives (slug_candidates / parse_spot_page / fetch_spot) compose
+into a rate-limited, cached pipeline driven by the CLI below. The CLI:
 
-  slug_candidates(name, state)     — URL slug variants
-  parse_spot_page(html)            — regex-extract fields from HTML
-  fetch_spot(name, state, session) — try candidates, first hit wins
+  - loads spots_enriched.json
+  - looks up each valid spot on surf-forecast.com, pacing at
+    SURF_FORECAST_MIN_INTERVAL_S between every HTTP request
+  - writes results progressively to SURF_FORECAST_CACHE_FILE so a crash
+    doesn't lose work; re-runs skip spots already in the cache
+  - merges matched results back into spots_enriched.json
+    (orientation_deg / offshore_wind_deg / optimal_swell_dir /
+    break_type / tide_preference)
 
-The caller is responsible for configuring `session.headers["User-Agent"]`
-to identify the project and for pacing requests (surf-forecast.com
-min_interval is 2 s).
+CLI:
+    python -m pipeline.scrape_surf_forecast
+    python -m pipeline.scrape_surf_forecast --merge-only   # skip HTTP
 """
 from __future__ import annotations
 
+import argparse
+import json
 import logging
 import re
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 
-from .config import SURF_FORECAST_BASE
+from .config import (
+    DEFAULT_ENRICHED_OUTPUT,
+    SURF_FORECAST_BASE,
+    SURF_FORECAST_CACHE_FILE,
+    SURF_FORECAST_MIN_INTERVAL_S,
+)
+
+_USER_AGENT = "StormyPetrel/0.1 (surf forecast project)"
 
 log = logging.getLogger(__name__)
 
@@ -171,3 +189,256 @@ def fetch_spot(name: str, state: str | None, session) -> dict | None:
         fields["matched_slug"] = slug
         return fields
     return None
+
+
+# ---------------------------------------------------------------------------
+# CLI — rate-limited batch scrape + merge into spots_enriched.json
+# ---------------------------------------------------------------------------
+
+class _PacedSession:
+    """Requests-session wrapper that enforces a minimum interval between
+    every GET — so fetch_spot's internal candidate loop still respects
+    the rate limit without needing to know about it.
+    """
+
+    def __init__(self, min_interval_s: float, user_agent: str) -> None:
+        import requests  # lazy — keeps the module importable without requests
+        self._session = requests.Session()
+        self._session.headers["User-Agent"] = user_agent
+        self._min_interval = min_interval_s
+        self._last = 0.0
+
+    def get(self, url: str, **kwargs):
+        delta = time.monotonic() - self._last
+        if delta < self._min_interval:
+            time.sleep(self._min_interval - delta)
+        self._last = time.monotonic()
+        return self._session.get(url, **kwargs)
+
+
+def _load_cache(path: Path) -> dict[str, dict]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("cache %s corrupt (%s); starting fresh", path, e)
+        return {}
+
+
+def _save_cache(path: Path, cache: dict[str, dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cache, indent=2, ensure_ascii=False, sort_keys=True))
+
+
+def _is_scrapable(spot: dict) -> bool:
+    """Skip unnamed and is_valid_surf_spot=false entries."""
+    return bool(spot.get("name")) and spot.get("is_valid_surf_spot") is not False
+
+
+def scrape_all(
+    spots: list[dict],
+    cache_path: Path,
+    use_cache: bool = True,
+    min_interval_s: float = SURF_FORECAST_MIN_INTERVAL_S,
+    user_agent: str = _USER_AGENT,
+) -> tuple[dict[str, dict], dict]:
+    """Scrape each spot not already in the cache; persist after every spot.
+
+    Misses are cached with ``source_url: None`` so subsequent runs don't
+    re-probe them. Pass ``use_cache=False`` to force a full rescrape.
+    """
+    cache = _load_cache(cache_path) if use_cache else {}
+    pending = [s for s in spots if _is_scrapable(s) and s["name"] not in cache]
+    skipped_invalid = sum(1 for s in spots if not _is_scrapable(s))
+    log.info(
+        "scrape: %d spots total, %d cached, %d pending, %d skipped (invalid/unnamed)",
+        len(spots), len(spots) - len(pending) - skipped_invalid, len(pending),
+        skipped_invalid,
+    )
+
+    stats = {"matched": 0, "missed": 0, "errors": 0, "requests": 0}
+    if not pending:
+        return cache, stats
+
+    session = _PacedSession(min_interval_s, user_agent)
+
+    try:
+        from tqdm import tqdm
+        iterator = tqdm(pending, desc="scrape surf-forecast", unit="spot")
+    except ImportError:
+        iterator = pending
+
+    now = lambda: datetime.now(tz=timezone.utc).isoformat()
+
+    for spot in iterator:
+        name = spot["name"]
+        try:
+            result = fetch_spot(name, spot.get("region_hint"), session)
+        except Exception as e:  # noqa: BLE001
+            log.warning("scrape: %r raised %s; recording as error", name, e)
+            cache[name] = {"name": name, "source_url": None, "error": str(e)[:200],
+                           "scraped_at": now()}
+            stats["errors"] += 1
+            _save_cache(cache_path, cache)
+            continue
+
+        if result is None:
+            cache[name] = {"name": name, "source_url": None, "scraped_at": now()}
+            stats["missed"] += 1
+        else:
+            cache[name] = {"name": name, "scraped_at": now(), **result}
+            stats["matched"] += 1
+
+        _save_cache(cache_path, cache)
+
+    return cache, stats
+
+
+# Fields the scrape authoritatively overwrites on matched spots. Order
+# matters for the summary print only.
+_MERGE_FIELDS = (
+    "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
+    "break_type", "tide_preference",
+)
+
+
+def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
+    """Apply matched scrape records to *spots* in place.
+
+    For every spot with a cache entry containing source_url, overwrites
+    the five fields above. orientation_deg is derived from
+    offshore_wind_deg + 180° (mod 360).
+    """
+    stats = {
+        "matched": 0,
+        "no_match": 0,
+        "no_cache_entry": 0,
+        "field_changes": {f: 0 for f in _MERGE_FIELDS},
+    }
+
+    for spot in spots:
+        rec = cache.get(spot.get("name"))
+        if rec is None:
+            stats["no_cache_entry"] += 1
+            continue
+        if not rec.get("source_url"):
+            stats["no_match"] += 1
+            continue
+
+        stats["matched"] += 1
+        spot["surf_forecast_url"] = rec["source_url"]
+
+        ow = rec.get("offshore_wind_deg")
+        if ow is not None:
+            new_ow = int(ow) % 360
+            if new_ow != spot.get("offshore_wind_deg"):
+                spot["offshore_wind_deg"] = new_ow
+                stats["field_changes"]["offshore_wind_deg"] += 1
+            new_orient = (new_ow + 180) % 360
+            if new_orient != spot.get("orientation_deg"):
+                spot["orientation_deg"] = new_orient
+                stats["field_changes"]["orientation_deg"] += 1
+
+        osd = rec.get("optimal_swell_dir")
+        if osd is not None:
+            new_osd = int(osd) % 360
+            if new_osd != spot.get("optimal_swell_dir"):
+                spot["optimal_swell_dir"] = new_osd
+                stats["field_changes"]["optimal_swell_dir"] += 1
+
+        bt = rec.get("break_type")
+        if bt and bt != spot.get("break_type"):
+            spot["break_type"] = bt
+            stats["field_changes"]["break_type"] += 1
+
+        tp = rec.get("tide_preference")
+        if tp and tp != spot.get("tide_preference"):
+            spot["tide_preference"] = tp
+            stats["field_changes"]["tide_preference"] += 1
+
+    return stats
+
+
+def _summarize(scrape_stats: dict | None, merge_stats: dict) -> None:
+    print()
+    print("=" * 60)
+    print("surf-forecast.com scrape summary")
+    print("=" * 60)
+    if scrape_stats is not None:
+        print(f"  matched this run:    {scrape_stats['matched']}")
+        print(f"  missed this run:     {scrape_stats['missed']}")
+        if scrape_stats["errors"]:
+            print(f"  errors this run:     {scrape_stats['errors']}")
+    print()
+    print("  merge into spots_enriched.json:")
+    print(f"    total matched in cache:    {merge_stats['matched']}")
+    print(f"    no match for spot:         {merge_stats['no_match']}")
+    print(f"    no cache entry (unscraped):{merge_stats['no_cache_entry']}")
+    print("    field overwrites:")
+    for field in _MERGE_FIELDS:
+        print(f"      {field:<22} {merge_stats['field_changes'][field]}")
+    print("=" * 60)
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Scrape surf-forecast.com for verified spot metadata.")
+    p.add_argument("--input", type=Path, default=DEFAULT_ENRICHED_OUTPUT,
+                   help="Input/output spots_enriched.json (updated in place).")
+    p.add_argument("--output", type=Path, default=None,
+                   help="Output path (defaults to --input).")
+    p.add_argument("--cache-file", type=Path, default=SURF_FORECAST_CACHE_FILE,
+                   help="Where to read/write per-spot scrape records.")
+    p.add_argument("--no-cache", action="store_true",
+                   help="Ignore the existing cache and re-scrape every spot "
+                        "(still writes to the same cache file).")
+    p.add_argument("--merge-only", action="store_true",
+                   help="Skip the HTTP scrape and only apply the existing "
+                        "cache file to spots_enriched.json.")
+    p.add_argument("--min-interval-seconds", type=float,
+                   default=SURF_FORECAST_MIN_INTERVAL_S,
+                   help=f"Minimum seconds between HTTP requests (default "
+                        f"{SURF_FORECAST_MIN_INTERVAL_S}).")
+    p.add_argument("-v", "--verbose", action="store_true")
+    return p.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+    if not args.input.exists():
+        log.error("Input file %s does not exist.", args.input)
+        return 1
+
+    spots = json.loads(args.input.read_text())
+    log.info("Loaded %d spots from %s", len(spots), args.input)
+
+    scrape_stats: dict | None = None
+    if args.merge_only:
+        cache = _load_cache(args.cache_file)
+        log.info("--merge-only: %d cache entries from %s", len(cache), args.cache_file)
+    else:
+        cache, scrape_stats = scrape_all(
+            spots,
+            cache_path=args.cache_file,
+            use_cache=not args.no_cache,
+            min_interval_s=args.min_interval_seconds,
+        )
+
+    merge_stats = merge_into_spots(spots, cache)
+
+    output_path = args.output or args.input
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(spots, indent=2, ensure_ascii=False))
+    log.info("Wrote %d spots back to %s", len(spots), output_path)
+
+    _summarize(scrape_stats, merge_stats)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
