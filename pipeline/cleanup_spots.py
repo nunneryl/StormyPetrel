@@ -43,12 +43,37 @@ log = logging.getLogger("pipeline.cleanup_spots")
 _RESERVED_KEYS = {"_comment", "_schema_version"}
 
 
+def normalize_name(name: str | None) -> str:
+    """Canonicalize a spot name for exclusion matching.
+
+    OSM / Wikipedia sources use a mix of Unicode punctuation that all
+    render the same visually but collate differently:
+      - ASCII apostrophe U+0027  '
+      - RIGHT SINGLE QUOTATION MARK U+2019  ’   (iOS autocorrects to this)
+      - LEFT SINGLE QUOTATION MARK U+2018  ‘
+      - MODIFIER LETTER TURNED COMMA (ʻokina) U+02BB  ʻ  (Hawaiian names)
+      - MODIFIER LETTER APOSTROPHE U+02BC  ʼ
+    Without normalization, "Jack's Surfboards" in excluded_spots.json
+    fails to match "Jack's Surfboards" in spots_enriched.json. Fold them
+    all to ASCII apostrophe for comparison. Leaves the stored spot name
+    untouched — only the comparison key is normalized.
+    """
+    if not name:
+        return ""
+    for variant in ("’", "‘", "ʻ", "ʼ"):
+        name = name.replace(variant, "'")
+    for variant in ("“", "”"):
+        name = name.replace(variant, '"')
+    return name
+
+
 def load_excluded_names(path: Path = EXCLUDED_SPOTS_FILE) -> dict[str, str]:
-    """Return {spot_name: reason} from the exclusion file.
+    """Return {normalized_spot_name: reason} from the exclusion file.
 
     Reserved keys (``_comment``, ``_schema_version``) are ignored. Every
     other top-level key is treated as a reason whose value is a list of
-    spot names.
+    spot names. Keys are stored normalized (ASCII apostrophes) so the
+    matcher is robust to curly-quote variants in the source data.
     """
     if not path.exists():
         return {}
@@ -61,7 +86,7 @@ def load_excluded_names(path: Path = EXCLUDED_SPOTS_FILE) -> dict[str, str]:
             continue
         for name in names:
             if isinstance(name, str):
-                out[name] = reason
+                out[normalize_name(name)] = reason
     return out
 
 
@@ -167,25 +192,28 @@ def apply_cleanup(
         if name not in names_seen:
             stats["not_found_fixed"].append(name)
 
-    # Remove excluded spots.
+    # Remove excluded spots. Normalize spot names before matching so
+    # curly-apostrophe / ʻokina variants collide with their ASCII
+    # equivalents in excluded_spots.json.
     cleaned: list[dict] = []
     excluded_seen: set[str] = set()
     for spot in spots:
         name = spot.get("name")
-        if name and name in excluded:
-            reason = excluded[name]
+        normalized = normalize_name(name)
+        if name and normalized in excluded:
+            reason = excluded[normalized]
             stats["removed"] += 1
             stats["removed_by_reason"][reason] = stats["removed_by_reason"].get(reason, 0) + 1
-            excluded_seen.add(name)
+            excluded_seen.add(normalized)
             # Also purge from verifications — the spot no longer exists.
             if verifications is not None and name in verifications:
                 del verifications[name]
             continue
         cleaned.append(spot)
 
-    for name in excluded:
-        if name not in excluded_seen:
-            stats["not_found_excluded"].append(name)
+    for normalized_name in excluded:
+        if normalized_name not in excluded_seen:
+            stats["not_found_excluded"].append(normalized_name)
 
     stats["after"] = len(cleaned)
     return cleaned, stats

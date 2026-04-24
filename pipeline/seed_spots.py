@@ -8,7 +8,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from .cleanup_spots import load_excluded_names
+from .cleanup_spots import load_excluded_names, normalize_name
 from .config import DEFAULT_OUTPUT
 from .dedupe import DedupeStats, merge
 from .geo import fill_region_hint
@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
         dropped_by_reason: dict[str, int] = {}
         kept: list[dict] = []
         for rec in records:
-            reason = excluded.get(rec.get("name") or "")
+            reason = excluded.get(normalize_name(rec.get("name")))
             if reason is not None:
                 dropped_by_reason[reason] = dropped_by_reason.get(reason, 0) + 1
                 continue
