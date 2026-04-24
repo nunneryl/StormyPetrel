@@ -33,8 +33,16 @@ from .config import (
     SURF_FORECAST_CACHE_FILE,
     SURF_FORECAST_MIN_INTERVAL_S,
 )
+from .geo import haversine_m
 
 _USER_AGENT = "StormyPetrel/0.1 (surf forecast project)"
+
+# Default radius within which a surf-forecast.com page's own lat/lng must
+# fall for its match to be trusted. Generous because some pages publish
+# the nearest-town coord rather than the break itself, but tight enough
+# to reject the "Pillar Point" → different state / different break
+# class of false positive that the previous slug-only matcher produced.
+_DEFAULT_MAX_DISTANCE_KM = 20.0
 
 log = logging.getLogger(__name__)
 
@@ -105,13 +113,78 @@ def slug_candidates(name: str, state: str | None = None) -> list[str]:
     return out
 
 
+def _find_geo_coords(obj) -> tuple[float, float] | None:
+    """Walk a JSON-LD node recursively for {"latitude": ..., "longitude": ...}."""
+    if isinstance(obj, dict):
+        lat = obj.get("latitude")
+        lng = obj.get("longitude")
+        if lat is not None and lng is not None:
+            try:
+                return float(lat), float(lng)
+            except (ValueError, TypeError):
+                pass
+        for v in obj.values():
+            r = _find_geo_coords(v)
+            if r:
+                return r
+    elif isinstance(obj, list):
+        for item in obj:
+            r = _find_geo_coords(item)
+            if r:
+                return r
+    return None
+
+
+def extract_page_coords(html: str) -> tuple[float, float] | None:
+    """Return (lat, lng) if surf-forecast.com published them on this page.
+
+    Tries three strategies in order of reliability: OpenGraph /
+    place-location meta tags, JSON-LD Place/GeoCoordinates, and a generic
+    regex over the page source. Returns None if none match.
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    lat_tag = soup.find("meta", attrs={"property": re.compile(r"(?:og|place:location):latitude")})
+    lng_tag = soup.find("meta", attrs={"property": re.compile(r"(?:og|place:location):longitude")})
+    if lat_tag and lng_tag:
+        try:
+            return float(lat_tag["content"]), float(lng_tag["content"])
+        except (KeyError, ValueError, TypeError):
+            pass
+
+    for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
+        try:
+            data = json.loads(script.string or "")
+        except (json.JSONDecodeError, AttributeError, TypeError):
+            continue
+        coords = _find_geo_coords(data)
+        if coords:
+            return coords
+
+    # Generic fallback — look for "latitude": <num>, "longitude": <num>
+    # in JS initializers or microdata.
+    m_lat = re.search(r'["\']?latitude["\']?\s*[:=]\s*(-?\d+\.\d+)', html)
+    m_lng = re.search(r'["\']?longitude["\']?\s*[:=]\s*(-?\d+\.\d+)', html)
+    if m_lat and m_lng:
+        try:
+            return float(m_lat.group(1)), float(m_lng.group(1))
+        except ValueError:
+            pass
+
+    return None
+
+
 def parse_spot_page(html: str) -> dict:
     """Extract surf metadata from a surf-forecast.com spot page.
 
-    Returns a dict with six keys; any extractor that can't find its
+    Returns a dict with seven keys; any extractor that can't find its
     pattern leaves the value None (empty string for free-form crowd /
     hazards). The caller decides whether a sparse result counts as a
-    successful match.
+    successful match. ``page_lat`` / ``page_lng`` are the coordinates
+    surf-forecast.com publishes for the break, used downstream to
+    reject slug matches that point at the wrong spot.
     """
     from bs4 import BeautifulSoup
 
@@ -126,7 +199,12 @@ def parse_spot_page(html: str) -> dict:
         "tide_preference": None,
         "crowd": None,
         "hazards": None,
+        "page_lat": None,
+        "page_lng": None,
     }
+    coords = extract_page_coords(html)
+    if coords:
+        fields["page_lat"], fields["page_lng"] = coords
 
     m = re.search(
         r"offshore winds?\s+(?:blow|are|come)\s+from\s+the\s+([\w\s-]+?)(?=[\.,;]|\s+and\s)",
@@ -168,10 +246,22 @@ def parse_spot_page(html: str) -> dict:
     return fields
 
 
-def fetch_spot(name: str, state: str | None, session) -> dict | None:
+def fetch_spot(
+    name: str,
+    state: str | None,
+    session,
+    expected_coord: tuple[float, float] | None = None,
+    max_distance_km: float = _DEFAULT_MAX_DISTANCE_KM,
+) -> dict | None:
     """Try each slug candidate; return the first page that parses to a
     useful record. A 200 without offshore_wind_deg OR break_type is
     treated as a miss (disambiguation / error / unrelated page).
+
+    When ``expected_coord`` is supplied, pages whose published lat/lng
+    sit more than ``max_distance_km`` from it are also treated as
+    misses — this rejects the "Pillar Point" → wrong-break-same-name
+    class of slug collision. Pages that publish no coord fall through
+    the check unchanged (trust the slug).
     """
     for slug in slug_candidates(name, state):
         url = f"{SURF_FORECAST_BASE}/breaks/{slug}"
@@ -185,6 +275,19 @@ def fetch_spot(name: str, state: str | None, session) -> dict | None:
         fields = parse_spot_page(resp.text)
         if fields.get("offshore_wind_deg") is None and fields.get("break_type") is None:
             continue
+
+        if expected_coord is not None and fields.get("page_lat") is not None:
+            plat, plng = fields["page_lat"], fields["page_lng"]
+            elat, elng = expected_coord
+            dist_km = haversine_m(elat, elng, plat, plng) / 1000.0
+            if dist_km > max_distance_km:
+                log.info(
+                    "%s: %s matched but coords %.1f km apart (> %.1f cap) — skipping",
+                    name, url, dist_km, max_distance_km,
+                )
+                continue
+            fields["match_distance_km"] = round(dist_km, 3)
+
         fields["source_url"] = resp.url
         fields["matched_slug"] = slug
         return fields
@@ -242,11 +345,15 @@ def scrape_all(
     use_cache: bool = True,
     min_interval_s: float = SURF_FORECAST_MIN_INTERVAL_S,
     user_agent: str = _USER_AGENT,
+    max_distance_km: float = _DEFAULT_MAX_DISTANCE_KM,
 ) -> tuple[dict[str, dict], dict]:
     """Scrape each spot not already in the cache; persist after every spot.
 
     Misses are cached with ``source_url: None`` so subsequent runs don't
     re-probe them. Pass ``use_cache=False`` to force a full rescrape.
+    Each fetch is validated against the spot's lat/lng — matches whose
+    surf-forecast.com page coord is more than ``max_distance_km`` away
+    are rejected.
     """
     cache = _load_cache(cache_path) if use_cache else {}
     pending = [s for s in spots if _is_scrapable(s) and s["name"] not in cache]
@@ -273,8 +380,14 @@ def scrape_all(
 
     for spot in iterator:
         name = spot["name"]
+        expected = None
+        if spot.get("lat") is not None and spot.get("lng") is not None:
+            expected = (float(spot["lat"]), float(spot["lng"]))
         try:
-            result = fetch_spot(name, spot.get("region_hint"), session)
+            result = fetch_spot(
+                name, spot.get("region_hint"), session,
+                expected_coord=expected, max_distance_km=max_distance_km,
+            )
         except Exception as e:  # noqa: BLE001
             log.warning("scrape: %r raised %s; recording as error", name, e)
             cache[name] = {"name": name, "source_url": None, "error": str(e)[:200],
@@ -293,6 +406,96 @@ def scrape_all(
         _save_cache(cache_path, cache)
 
     return cache, stats
+
+
+def revalidate_cached_matches(
+    spots: list[dict],
+    cache: dict[str, dict],
+    cache_path: Path,
+    max_distance_km: float = _DEFAULT_MAX_DISTANCE_KM,
+    min_interval_s: float = SURF_FORECAST_MIN_INTERVAL_S,
+    user_agent: str = _USER_AGENT,
+) -> dict:
+    """Re-fetch every matched cache entry and drop matches whose page
+    coordinates fall more than ``max_distance_km`` from the spot.
+
+    Useful after enabling coord validation: existing cache entries were
+    written before the check existed, and the audit shows ~30 %
+    disagreement between scraped and computed orientations driven by
+    wrong-slug matches. Non-matched entries (``source_url: None``) are
+    left alone; pages that publish no coord are trusted as before.
+    """
+    spot_coords = {
+        s["name"]: (float(s["lat"]), float(s["lng"]))
+        for s in spots
+        if s.get("name") and s.get("lat") is not None and s.get("lng") is not None
+    }
+    to_check = [(name, rec) for name, rec in cache.items() if rec.get("source_url")]
+    log.info("revalidate: %d matched entries to re-fetch", len(to_check))
+
+    stats = {"rechecked": 0, "dropped": 0, "kept": 0, "unknown_coord": 0, "errors": 0}
+    if not to_check:
+        return stats
+
+    session = _PacedSession(min_interval_s, user_agent)
+    try:
+        from tqdm import tqdm
+        iterator = tqdm(to_check, desc="revalidate", unit="spot")
+    except ImportError:
+        iterator = to_check
+
+    for name, rec in iterator:
+        expected = spot_coords.get(name)
+        if expected is None:
+            stats["unknown_coord"] += 1
+            continue
+        url = rec["source_url"]
+        try:
+            resp = session.get(url, timeout=30)
+        except Exception as e:  # noqa: BLE001
+            log.warning("revalidate %s: GET failed: %s", name, e)
+            stats["errors"] += 1
+            continue
+        stats["rechecked"] += 1
+        if resp.status_code != 200:
+            cache[name] = {
+                "name": name, "source_url": None,
+                "scraped_at": rec.get("scraped_at"),
+                "previously_matched_url": url,
+                "revalidation_status": resp.status_code,
+            }
+            stats["dropped"] += 1
+            _save_cache(cache_path, cache)
+            continue
+        coords = extract_page_coords(resp.text)
+        if coords is None:
+            # No coord published — can't validate. Preserve the existing match
+            # but stamp page_lat/lng=None so later runs still see the attempt.
+            rec["page_lat"] = None
+            rec["page_lng"] = None
+            rec["match_distance_km"] = None
+            stats["kept"] += 1
+            _save_cache(cache_path, cache)
+            continue
+        plat, plng = coords
+        dist_km = haversine_m(expected[0], expected[1], plat, plng) / 1000.0
+        if dist_km > max_distance_km:
+            log.info("revalidate %s: %.1f km from spot — dropping match", name, dist_km)
+            cache[name] = {
+                "name": name, "source_url": None,
+                "scraped_at": rec.get("scraped_at"),
+                "previously_matched_url": url,
+                "previously_matched_distance_km": round(dist_km, 2),
+            }
+            stats["dropped"] += 1
+        else:
+            rec["page_lat"] = plat
+            rec["page_lng"] = plng
+            rec["match_distance_km"] = round(dist_km, 3)
+            stats["kept"] += 1
+        _save_cache(cache_path, cache)
+
+    return stats
 
 
 # Fields the scrape authoritatively overwrites on matched spots. Order
@@ -360,11 +563,24 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
     return stats
 
 
-def _summarize(scrape_stats: dict | None, merge_stats: dict) -> None:
+def _summarize(
+    scrape_stats: dict | None,
+    merge_stats: dict,
+    revalidate_stats: dict | None = None,
+) -> None:
     print()
     print("=" * 60)
     print("surf-forecast.com scrape summary")
     print("=" * 60)
+    if revalidate_stats is not None:
+        print("  coord revalidation:")
+        print(f"    rechecked:           {revalidate_stats['rechecked']}")
+        print(f"    kept (coord OK):     {revalidate_stats['kept']}")
+        print(f"    dropped (too far):   {revalidate_stats['dropped']}")
+        if revalidate_stats.get("unknown_coord"):
+            print(f"    spot coord unknown:  {revalidate_stats['unknown_coord']}")
+        if revalidate_stats.get("errors"):
+            print(f"    fetch errors:        {revalidate_stats['errors']}")
     if scrape_stats is not None:
         print(f"  matched this run:    {scrape_stats['matched']}")
         print(f"  missed this run:     {scrape_stats['missed']}")
@@ -395,6 +611,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--merge-only", action="store_true",
                    help="Skip the HTTP scrape and only apply the existing "
                         "cache file to spots_enriched.json.")
+    p.add_argument("--validate-cache", action="store_true",
+                   help="Re-fetch every matched cache entry and drop matches "
+                        "whose page coord is more than --max-distance-km from "
+                        "the spot. Runs before scrape_all so the new scrape "
+                        "can fill the newly-opened slots.")
+    p.add_argument("--max-distance-km", type=float,
+                   default=_DEFAULT_MAX_DISTANCE_KM,
+                   help=f"Reject scrape matches whose page coord is farther "
+                        f"than this from the spot (default "
+                        f"{_DEFAULT_MAX_DISTANCE_KM}).")
     p.add_argument("--min-interval-seconds", type=float,
                    default=SURF_FORECAST_MIN_INTERVAL_S,
                    help=f"Minimum seconds between HTTP requests (default "
@@ -418,15 +644,24 @@ def main(argv: list[str] | None = None) -> int:
     log.info("Loaded %d spots from %s", len(spots), args.input)
 
     scrape_stats: dict | None = None
+    revalidate_stats: dict | None = None
     if args.merge_only:
         cache = _load_cache(args.cache_file)
         log.info("--merge-only: %d cache entries from %s", len(cache), args.cache_file)
     else:
+        cache = _load_cache(args.cache_file) if not args.no_cache else {}
+        if args.validate_cache and cache:
+            revalidate_stats = revalidate_cached_matches(
+                spots, cache, args.cache_file,
+                max_distance_km=args.max_distance_km,
+                min_interval_s=args.min_interval_seconds,
+            )
         cache, scrape_stats = scrape_all(
             spots,
             cache_path=args.cache_file,
             use_cache=not args.no_cache,
             min_interval_s=args.min_interval_seconds,
+            max_distance_km=args.max_distance_km,
         )
 
     merge_stats = merge_into_spots(spots, cache)
@@ -436,7 +671,7 @@ def main(argv: list[str] | None = None) -> int:
     output_path.write_text(json.dumps(spots, indent=2, ensure_ascii=False))
     log.info("Wrote %d spots back to %s", len(spots), output_path)
 
-    _summarize(scrape_stats, merge_stats)
+    _summarize(scrape_stats, merge_stats, revalidate_stats)
     return 0
 
 
