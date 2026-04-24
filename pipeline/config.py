@@ -152,6 +152,11 @@ SPOT_VERIFICATION_FILE = PIPELINE_DIR / "data" / "spot_verification.json"
 # on subsequent crawls.
 EXCLUDED_SPOTS_FILE = PIPELINE_DIR / "data" / "excluded_spots.json"
 SPOT_COORD_FIXES_FILE = PIPELINE_DIR / "data" / "spot_coord_fixes.json"
+# Hand-curated orientations for spots where the geometric algorithm fails
+# (Great Lakes — GSHHG L1 treats lakes as land; complex harbors; jetties;
+# barrier islands that geocoded to the bay side). Applied by enrich.py and
+# treated as authoritative — overrides algorithm and LLM verification.
+MANUAL_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "manual_orientations.json"
 
 # ---------------------------------------------------------------------------
 # surf-forecast.com scrape (Phase 2C) — direct HTML extraction

@@ -555,8 +555,14 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
         stats["matched"] += 1
         spot["surf_forecast_url"] = rec["source_url"]
 
+        # Manual orientation overrides: hand-curated values in
+        # data/manual_orientations.json are marked with
+        # orientation_source="manual" and are never overwritten by a
+        # scrape — the human review is the ground truth.
+        orient_locked = spot.get("orientation_source") == "manual"
+
         ow = rec.get("offshore_wind_deg")
-        if ow is not None:
+        if ow is not None and not orient_locked:
             new_ow = int(ow) % 360
             if new_ow != spot.get("offshore_wind_deg"):
                 spot["offshore_wind_deg"] = new_ow

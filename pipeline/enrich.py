@@ -14,7 +14,11 @@ import logging
 import sys
 from pathlib import Path
 
-from .config import DEFAULT_ENRICHED_OUTPUT, DEFAULT_OUTPUT
+from .config import (
+    DEFAULT_ENRICHED_OUTPUT,
+    DEFAULT_OUTPUT,
+    MANUAL_ORIENTATIONS_FILE,
+)
 from .enrichment.adjust import seaward_adjust
 from .enrichment.break_type import compute_break_type
 from .enrichment.buoys import compute_nearest_buoy
@@ -25,6 +29,41 @@ from .enrichment.swell_window_fallback import compute_swell_window_fallback
 from .enrichment.tides import compute_nearest_tide_station
 
 log = logging.getLogger("pipeline.enrich")
+
+
+def _load_manual_orientations() -> dict[str, dict]:
+    """Return {spot_name: {orientation_deg, source?, notes?}} from the
+    curated data file. Entries beat the algorithm AND LLM verification —
+    they're the escape hatch for spots where both fail (Great Lakes,
+    complex harbors, jetties, bay-side geocodes).
+    """
+    path = MANUAL_ORIENTATIONS_FILE
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("manual orientations file %s corrupt (%s); ignoring", path, e)
+        return {}
+    entries = data.get("orientations") or {}
+    out: dict[str, dict] = {}
+    for name, rec in entries.items():
+        if not isinstance(rec, dict):
+            continue
+        try:
+            deg = float(rec["orientation_deg"]) % 360.0
+        except (KeyError, TypeError, ValueError):
+            log.warning("manual orientation for %r missing or invalid; skipping", name)
+            continue
+        out[name] = {
+            "orientation_deg": deg,
+            "source": rec.get("source", ""),
+            "notes": rec.get("notes", ""),
+        }
+    return out
+
+
+_MANUAL_ORIENTATIONS = _load_manual_orientations()
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -132,6 +171,25 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
             _set(k, None)
         confidence["orientation"] = 0.0
 
+    # Algo 1b — manual orientation override. The curated data file is the
+    # escape hatch for spots where the geometric algorithm can't find a
+    # coastline (Great Lakes), or the nearest-edge perpendicular lies 180°
+    # from the actual break (barrier islands whose Nominatim fallback
+    # landed on the bay side). Overrides algorithm AND verification —
+    # a hand-reviewed value wins over both. Stamped with
+    # orientation_source="manual" so downstream scrape/verify merges can
+    # recognize and preserve it (see merge_into_spots rules).
+    manual = _MANUAL_ORIENTATIONS.get(spot.get("name"))
+    if manual is not None:
+        deg = manual["orientation_deg"]
+        enriched["orientation_deg"] = deg
+        enriched["offshore_wind_deg"] = (deg + 180.0) % 360.0
+        enriched["orientation_source"] = "manual"
+        if manual.get("notes"):
+            enriched["orientation_note"] = manual["notes"]
+        confidence["orientation"] = 1.0
+        log.debug("%s: manual orientation %.0f° applied", spot.get("name"), deg)
+
     # Algo 2 — swell window (optional). Skip the expensive ray-cast entirely
     # for verified spots whose optimal_swell_dir is set by the LLM — we still
     # need arcs, though, so the fallback runs after.
@@ -234,6 +292,11 @@ def _summarize(records: list[dict]) -> None:
         valid = [r for r in records if r.get("is_valid_surf_spot") is not False]
         return f"{100 * sum(1 for r in valid if f(r)) / max(len(valid), 1):.0f}%"
     print(f"  orientation resolved:       {pct(lambda r: r.get('orientation_deg') is not None)}")
+    manual_n = sum(1 for r in records
+                   if r.get("is_valid_surf_spot") is not False
+                   and r.get("orientation_source") == "manual")
+    if manual_n:
+        print(f"    manual overrides:         {manual_n}")
     print(f"  swell window resolved:      {pct(lambda r: r.get('optimal_swell_dir') is not None)}")
     print(f"    raycast-resolved:         {pct(lambda r: r.get('optimal_swell_dir') is not None and r.get('swell_window_source') != 'orientation_derived')}")
     print(f"    orientation-derived:      {pct(lambda r: r.get('swell_window_source') == 'orientation_derived')}")

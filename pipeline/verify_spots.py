@@ -694,11 +694,15 @@ def merge_into_spots(
             stats["medium_applied"] += 1
 
         # Apply field-level overrides where the LLM returned a usable value.
+        # Manual-orientation spots (orientation_source=="manual") keep their
+        # hand-curated bearing — the LLM doesn't beat human review.
         # If orientation changes, also clear orientation-derived swell-window
         # arcs so a subsequent `enrich --skip-raycast` rebuilds them from
         # the corrected orientation.
+        orient_locked = spot.get("orientation_source") == "manual"
+
         new_orient = rec.get("facing_direction_deg")
-        if new_orient is not None and new_orient != spot.get("orientation_deg"):
+        if new_orient is not None and not orient_locked and new_orient != spot.get("orientation_deg"):
             spot["orientation_deg"] = new_orient
             stats["field_changes"]["orientation_deg"] += 1
             if spot.get("swell_window_source") == "orientation_derived":
@@ -707,7 +711,7 @@ def merge_into_spots(
                 spot.pop("swell_window_source", None)
 
         new_offshore = rec.get("offshore_wind_deg")
-        if new_offshore is not None and new_offshore != spot.get("offshore_wind_deg"):
+        if new_offshore is not None and not orient_locked and new_offshore != spot.get("offshore_wind_deg"):
             spot["offshore_wind_deg"] = new_offshore
             stats["field_changes"]["offshore_wind_deg"] += 1
 
