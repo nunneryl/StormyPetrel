@@ -144,7 +144,13 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
                 enriched["swell_window_source"] = prior["swell_window_source"]
             confidence["swell_window"] = prior.get("swell_window_confidence", 0.0)
         else:
-            enriched["swell_window_arcs"] = enriched.get("swell_window_arcs") or []
+            # Blank arcs so the orientation-derived fallback below actually
+            # rebuilds them against the current orientation. Preserving the
+            # stale arcs from a prior run would short-circuit the fallback
+            # (it no-ops when arcs already exist) and leave optimal_swell_dir
+            # permanently None for unverified spots — the exact regression
+            # we saw post-unmerge.
+            enriched["swell_window_arcs"] = []
             if not verified:
                 enriched["optimal_swell_dir"] = None
             confidence["swell_window"] = 0.0
