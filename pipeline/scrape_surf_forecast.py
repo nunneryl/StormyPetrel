@@ -347,17 +347,27 @@ def fetch_spot(
 # /countries/ links for territories and edge cases. Territories
 # (Puerto Rico, Guam) are provinces too. Homepage is a fallback for
 # stragglers.
+# US state slugs on surf-forecast.com — plain state name under /provinces/,
+# no "-USA" suffix. Georgia is the one exception: it collides with the
+# country Georgia, so its provinces page is /provinces/Georgia-USA/breaks.
+# Guam / Puerto Rico are surf-forecast.com countries, not provinces.
 _US_STATE_SLUGS = (
     "Alabama", "Alaska", "California", "Connecticut", "Delaware", "Florida",
-    "Georgia", "Guam", "Hawaii", "Illinois", "Indiana", "Louisiana", "Maine",
+    "Georgia-USA", "Hawaii", "Illinois", "Indiana", "Louisiana", "Maine",
     "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
     "New-Hampshire", "New-Jersey", "New-York", "North-Carolina", "Ohio",
-    "Oregon", "Pennsylvania", "Puerto-Rico", "Rhode-Island", "South-Carolina",
+    "Oregon", "Pennsylvania", "Rhode-Island", "South-Carolina",
     "Texas", "Virginia", "Washington", "Wisconsin",
 )
 
+_US_TERRITORY_COUNTRY_SLUGS = ("Puerto-Rico", "Guam", "American-Samoa")
+
 _DEFAULT_CRAWL_SEEDS = tuple(
-    [f"{SURF_FORECAST_BASE}/provinces/{s}-USA/breaks" for s in _US_STATE_SLUGS]
+    # Top-level USA index first — likely links to every state's province page
+    # so the BFS can enumerate them without us having to.
+    [f"{SURF_FORECAST_BASE}/countries/United-States/breaks"]
+    + [f"{SURF_FORECAST_BASE}/provinces/{s}/breaks" for s in _US_STATE_SLUGS]
+    + [f"{SURF_FORECAST_BASE}/countries/{t}/breaks" for t in _US_TERRITORY_COUNTRY_SLUGS]
     + [f"{SURF_FORECAST_BASE}/countries", f"{SURF_FORECAST_BASE}/"]
 )
 
