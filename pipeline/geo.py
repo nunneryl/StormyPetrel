@@ -95,9 +95,23 @@ def fill_region_hint(records: list[dict]) -> None:
     coords = [(r["lat"], r["lng"]) for _, r in missing]
     # mode=1 → single-threaded; friendlier in small scripts / sandboxes.
     results = rg.search(coords, mode=1)
+    # Territories surface as their own ISO country code in reverse_geocoder
+    # rather than as a US admin1 — promote them to a region_hint directly so
+    # downstream filters (manual orientation, hemisphere check, audit) see
+    # them as PR / Guam / AS / VI rather than null.
+    _TERRITORY_REGIONS = {
+        "PR": "Puerto Rico",
+        "GU": "Guam",
+        "AS": "American Samoa",
+        "VI": "U.S. Virgin Islands",
+    }
     landlocked_hits: list[tuple[str, float, float, str]] = []
     for (_idx, record), result in zip(missing, results):
-        if result.get("cc") != "US":
+        cc = result.get("cc")
+        if cc in _TERRITORY_REGIONS:
+            record["region_hint"] = _TERRITORY_REGIONS[cc]
+            continue
+        if cc != "US":
             continue
         admin1 = result.get("admin1") or ""
         canonical = normalize_state(admin1)
