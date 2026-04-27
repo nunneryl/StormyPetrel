@@ -129,6 +129,25 @@ def _dedupe_by_slug(records: list[dict]) -> tuple[list[dict], list[tuple[str, st
     return list(seen.values()), collisions
 
 
+def _dedupe_by_keys(records: list[dict], keys: tuple[str, ...]) -> tuple[list[dict], int]:
+    """Drop records whose composite key tuple repeats; keep the first.
+    Returns ``(unique, dropped_count)``. Same Postgres "21000 ON CONFLICT
+    can't affect a row twice" failure mode as _dedupe_by_slug, just for
+    multi-column unique constraints (forecasts, buoys, tides).
+    """
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    dropped = 0
+    for r in records:
+        k = tuple(r.get(k_) for k_ in keys)
+        if k in seen:
+            dropped += 1
+            continue
+        seen.add(k)
+        out.append(r)
+    return out, dropped
+
+
 def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
                  batch_size: int = _DEFAULT_BATCH) -> int:
     """Upsert valid spots from the enriched JSON. Skips invalid + unnamed."""
@@ -231,9 +250,10 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
                 "source": "nwps",
             })
 
+    records, deduped = _dedupe_by_keys(records, ("spot_id", "valid_time", "source"))
     log.info(
-        "forecasts: upserting %d rows (%d spots in ratings.json had no spots-table row)",
-        len(records), skipped_unknown,
+        "forecasts: upserting %d rows (%d spots in ratings.json had no spots-table row, %d intra-batch duplicates dropped)",
+        len(records), skipped_unknown, deduped,
     )
     written = 0
     for i in range(0, len(records), batch_size):
@@ -280,8 +300,15 @@ def import_buoys(client, buoys_path: Path = BUOYS_FORECAST_FILE,
             if rec is not None:
                 records.append(rec)
 
-    log.info("buoy_observations: upserting %d rows across %d buoys",
-             len(records), len(buoys))
+    # NDBC's "latest" entry is often also the most recent row in
+    # history_24h, so the same (buoy_id, observed_at) pair appears twice
+    # within a single buoy. Postgres rejects that with code 21000 unless
+    # we collapse them first.
+    records, deduped = _dedupe_by_keys(records, ("buoy_id", "observed_at"))
+    log.info(
+        "buoy_observations: upserting %d rows across %d buoys (%d intra-batch duplicates dropped)",
+        len(records), len(buoys), deduped,
+    )
     written = 0
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
