@@ -107,6 +107,28 @@ def _spot_record(spot: dict) -> dict:
     }
 
 
+def _dedupe_by_slug(records: list[dict]) -> tuple[list[dict], list[tuple[str, str]]]:
+    """Drop slug-duplicates from *records* (keeping the first occurrence) and
+    return ``(unique, collisions)``. Two spot names can produce the same slug
+    when they differ only in characters _slugify strips (Unicode apostrophes,
+    diacritics, punctuation). Without this dedup, supabase-py upserts a batch
+    with two rows that share the unique-key value and Postgres rejects the
+    whole batch with ``21000 ON CONFLICT DO UPDATE command cannot affect row
+    a second time``.
+    """
+    seen: dict[str, dict] = {}
+    collisions: list[tuple[str, str]] = []
+    for r in records:
+        slug = r.get("slug")
+        if not slug:
+            continue
+        if slug in seen:
+            collisions.append((slug, r.get("name") or "(unnamed)"))
+        else:
+            seen[slug] = r
+    return list(seen.values()), collisions
+
+
 def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
                  batch_size: int = _DEFAULT_BATCH) -> int:
     """Upsert valid spots from the enriched JSON. Skips invalid + unnamed."""
@@ -119,8 +141,18 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
         and s.get("is_valid_surf_spot") is not False
     ]
     records = [_spot_record(s) for s in valid]
-    log.info("spots: upserting %d records (skipped %d invalid/unnamed)",
-             len(records), len(spots) - len(records))
+    records, collisions = _dedupe_by_slug(records)
+    if collisions:
+        log.warning(
+            "spots: %d slug collision(s) — keeping the first occurrence in each:",
+            len(collisions),
+        )
+        for slug, name in collisions:
+            log.warning("  slug=%r duplicated by %r — dropped", slug, name)
+    log.info(
+        "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions)",
+        len(records), len(spots) - len(valid), len(collisions),
+    )
 
     written = 0
     for i in range(0, len(records), batch_size):
