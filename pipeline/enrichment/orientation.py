@@ -215,11 +215,46 @@ def compute_orientation(spot: dict) -> dict:
         results[key] = _orientation_at_window(coast_utm, spot_utm, half, land, epsg)
 
     primary = results["orientation_deg"]
+    primary_source = "100m"
     if primary is None:
-        log.debug(
-            "%s: orientation unresolved at 100m window (per-window=%s) — likely both test points on land (inside_land=%s)",
-            spot.get("name"), results, inside_land,
-        )
+        # The 100m window can fail in isolation when one of its two test
+        # points lands on a small inland feature (a building, rock, jetty)
+        # while the 50m and 200m windows step over it. Fall back to the
+        # adjacent windows when available — averaging both when they agree
+        # within ~30°, otherwise preferring 200m as the more stable read.
+        o50 = results.get("orientation_50m")
+        o200 = results.get("orientation_200m")
+        if o50 is not None and o200 is not None:
+            d = abs(o50 - o200) % 360.0
+            d = min(d, 360.0 - d)
+            if d <= 30.0:
+                # Circular mean to handle wraparound near 0°/360°.
+                import math as _math
+                rad = [_math.radians(o50), _math.radians(o200)]
+                x = sum(_math.cos(r) for r in rad) / 2
+                y = sum(_math.sin(r) for r in rad) / 2
+                primary = (_math.degrees(_math.atan2(y, x)) + 360.0) % 360.0
+                primary_source = "50m+200m mean"
+            else:
+                primary = o200
+                primary_source = "200m fallback"
+        elif o200 is not None:
+            primary = o200
+            primary_source = "200m fallback"
+        elif o50 is not None:
+            primary = o50
+            primary_source = "50m fallback"
+        if primary is not None:
+            results["orientation_deg"] = primary
+            log.info(
+                "%s: 100m orientation window failed; using %s = %.0f°",
+                spot.get("name") or "(unnamed)", primary_source, primary,
+            )
+        else:
+            log.debug(
+                "%s: orientation unresolved at every window (per-window=%s) — likely both test points on land (inside_land=%s)",
+                spot.get("name"), results, inside_land,
+            )
 
     # Region hemisphere check: flip if the primary points into the wrong half
     # of the compass for this region. Applies to all three window bearings so
