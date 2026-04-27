@@ -340,14 +340,29 @@ def rate_spot(
             vt = vt.replace(tzinfo=timezone.utc)
 
         hs = entry.get("hs")
+        swell_hs = entry.get("swell_hs")
         tp = entry.get("tp")
+        swell_tp = entry.get("swell_tp")
         dp = entry.get("dp")
         wspd = entry.get("wind_speed")
         wdir = entry.get("wind_dir")
 
-        # Face height + directional gain require wave data.
-        if hs is not None and tp is not None:
-            fft = face_ft(float(hs), float(tp))
+        # Face height: NWPS publishes both total significant wave height
+        # (HTSGW = swell + wind sea) and swell-only height (SHTS / SWELL).
+        # Surfable face comes from the swell components only — wind sea
+        # adds chop/texture, not breaking waves on-axis. Real-world example:
+        # Pipeline 2026-04-27 17:00 UTC had hs=1.89 m total but
+        # swell_hs=0.91 m (the rest was 5ft NE trade chop). Using hs gave
+        # face=10.3 ft / 5★ (matching Surfline's "POOR / 3-4 ft" only by
+        # coincidence of magnitude); using swell_hs gives face=5.0 ft, the
+        # right answer.
+        #
+        # Prefer swell-only Hs/Tp; fall back to total when swell_hs is
+        # missing or zero (rare — happens when there's no organized swell).
+        size_hs = swell_hs if (swell_hs is not None and swell_hs > 0) else hs
+        size_tp = swell_tp if (swell_tp is not None and swell_tp > 0) else tp
+        if size_hs is not None and size_tp is not None:
+            fft = face_ft(float(size_hs), float(size_tp))
         else:
             fft = None
         dg = directional_gain(float(dp), arcs, optimal, orientation) if dp is not None else 0.0
