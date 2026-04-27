@@ -114,9 +114,12 @@ def wind_multiplier(
     wind_dir: float,
     wind_speed_ms: float,
     offshore_wind_deg: float | None,
+    chop_ratio_val: float = 0.0,
 ) -> float:
     """0.4–1.2 based on offset from the spot's offshore bearing, blended
-    toward neutral 1.0 when winds are light (< 5 m/s).
+    toward neutral 1.0 when winds are light (< 5 m/s). Adjusted downward
+    when chop is heavy (the swell isn't clean even if local wind looks
+    offshore) and when the wind is too strong to paddle into.
     """
     if offshore_wind_deg is None:
         return 1.0
@@ -133,9 +136,28 @@ def wind_multiplier(
     else:
         base = 0.4
 
+    # Light wind blends toward 1.0 — direction matters less when calm.
     if wind_speed_ms < 5.0:
         blend = max(0.0, wind_speed_ms) / 5.0
         base = 1.0 * (1.0 - blend) + base * blend
+
+    # Strong offshore can't be paddled into. Cap the bonus at 1.0 once
+    # the wind exceeds 15 m/s (~30 kt) regardless of direction.
+    if wind_speed_ms > 15.0 and base > 1.0:
+        base = 1.0
+
+    # Heavy chop overrides the "offshore is clean" assumption — when the
+    # wind sea is half the total energy, the lineup is junked even with
+    # offshore wind. Cap the offshore bonus at 0.8.
+    if chop_ratio_val > 0.4 and base > 1.0:
+        log.debug("wind: chop_ratio %.2f > 0.4 with offshore wind; capping wind_mult at 0.8",
+                  chop_ratio_val)
+        base = min(base, 0.8)
+
+    # Gale: blanket multiplicative penalty regardless of direction.
+    if wind_speed_ms > 20.0:
+        base *= 0.8
+
     return base
 
 
@@ -162,30 +184,98 @@ def tide_multiplier(tide_norm: float | None, preference: str | None) -> float:
     return 1.0
 
 
-# Piecewise size_score anchors (face_ft → stars contribution before mults).
-_SIZE_POINTS = [(0.0, 0.0), (2.0, 2.5), (4.0, 3.5), (6.0, 4.5), (8.0, 5.0)]
+def _interp(x: float, points: list[tuple[float, float]]) -> float:
+    """Piecewise-linear interpolation through *points* (sorted by x).
+    Clamps at endpoints — values outside the table take the boundary y.
+    """
+    if not points:
+        return 0.0
+    if x <= points[0][0]:
+        return points[0][1]
+    if x >= points[-1][0]:
+        return points[-1][1]
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        if x0 <= x <= x1:
+            if x1 == x0:
+                return y0
+            return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
+    return points[-1][1]
+
+
+# Recalibrated size_score: 1ft beats 0★, 5★ requires legitimate 10ft+ face.
+# The old table capped at 8ft → 5★ which over-rewarded any spot that hit
+# total-Hs amplification; the new table delays the 5★ ceiling and gives
+# more granularity in the head-high to overhead range surfers actually care
+# about.
+_SIZE_POINTS = [
+    (0.0, 0.0), (1.0, 1.0), (2.0, 2.0), (3.0, 2.5), (4.0, 3.0),
+    (5.0, 3.5), (6.0, 4.0), (8.0, 4.5), (10.0, 5.0), (50.0, 5.0),
+]
 
 
 def size_score(effective_face_ft: float) -> float:
-    if effective_face_ft <= 0.0:
+    return _interp(effective_face_ft, _SIZE_POINTS)
+
+
+# Chop penalty — the more of total Hs that's wind sea (vs swell), the more
+# textured / less clean the lineup, regardless of size.
+#   chop_ratio = (hs_total - swell_hs) / hs_total
+_CHOP_POINTS = [
+    (0.0, 1.0), (0.2, 1.0), (0.4, 0.85), (0.6, 0.65), (0.8, 0.45), (1.0, 0.3),
+]
+
+
+def chop_ratio(hs: float | None, swell_hs: float | None) -> float:
+    """Fraction of total wave height that's wind sea (0 = pure swell, 1 = pure chop)."""
+    if hs is None or hs <= 0:
         return 0.0
-    if effective_face_ft >= 8.0:
-        return 5.0
-    for (x0, y0), (x1, y1) in zip(_SIZE_POINTS, _SIZE_POINTS[1:]):
-        if x0 <= effective_face_ft <= x1:
-            return y0 + (effective_face_ft - x0) / (x1 - x0) * (y1 - y0)
-    return 5.0
+    if swell_hs is None:
+        return 0.0
+    return max(0.0, min(1.0, (hs - swell_hs) / hs))
+
+
+def chop_multiplier(chop_ratio_val: float) -> float:
+    return _interp(chop_ratio_val, _CHOP_POINTS)
+
+
+# Period quality — short-period (wind) waves are low-quality even when on-axis;
+# long-period groundswells are clean.
+_PERIOD_QUALITY_POINTS = [
+    (0.0, 0.5), (6.0, 0.5), (7.0, 0.6), (8.0, 0.7), (9.0, 0.8),
+    (10.0, 0.85), (11.0, 0.9), (12.0, 0.95), (13.0, 1.0),
+    (16.0, 1.05), (99.0, 1.05),
+]
+
+
+def period_quality(tp_s: float) -> float:
+    return _interp(tp_s, _PERIOD_QUALITY_POINTS)
 
 
 def composite_stars(
     effective_face_ft: float,
     wind_mult: float,
     tide_mult: float,
+    chop_mult: float = 1.0,
+    period_q: float = 1.0,
 ) -> float:
-    """0 if flat (< 0.5ft effective), else 1–5 in 0.5 increments."""
+    """0 if flat (< 0.5 ft effective), else 1–5 in 0.5 increments.
+
+    raw = size_score(effective_size) × wind_mult × tide_mult
+        × chop_mult × period_quality
+
+    The chop and period-quality multipliers were added after a real-world
+    verification at Pipeline 2026-04-27 17:00 UTC: total Hs was 1.89 m but
+    swell-only Hs was 0.91 m (the rest was 5 ft NE 8 s trade chop).
+    Surfline rated it "POOR" / 3-4 ft. The pre-multiplier formula gave 4★;
+    with chop_mult ≈ 0.53 and period_quality ≈ 0.91 the rating drops to
+    1.5★, matching ground truth.
+    """
     if effective_face_ft < 0.5:
         return 0.0
-    raw = size_score(effective_face_ft) * wind_mult * tide_mult
+    raw = (
+        size_score(effective_face_ft)
+        * wind_mult * tide_mult * chop_mult * period_q
+    )
     stars = round(raw * 2.0) / 2.0
     return max(1.0, min(5.0, stars))
 
@@ -367,8 +457,18 @@ def rate_spot(
             fft = None
         dg = directional_gain(float(dp), arcs, optimal, orientation) if dp is not None else 0.0
 
+        # Chop ratio + multiplier — degrades the rating when total Hs
+        # exceeds swell-only Hs (i.e. wind sea adds energy that shows on
+        # buoys but textures the lineup rather than producing rideable face).
+        cr = chop_ratio(hs, swell_hs)
+        cm = chop_multiplier(cr)
+
+        # Period quality — short-period (8-9 s) waves are low-quality even
+        # when on-axis; long-period (13 s+) groundswells are clean.
+        pq = period_quality(float(size_tp)) if size_tp is not None else 1.0
+
         wm = (
-            wind_multiplier(float(wdir), float(wspd), offshore)
+            wind_multiplier(float(wdir), float(wspd), offshore, cr)
             if wdir is not None and wspd is not None
             else 1.0
         )
@@ -379,13 +479,18 @@ def rate_spot(
         tm = tide_multiplier(tide_norm, preference)
 
         effective = (fft or 0.0) * dg
-        stars = composite_stars(effective, wm, tm) if fft is not None else 0.0
+        stars = (
+            composite_stars(effective, wm, tm, cm, pq) if fft is not None else 0.0
+        )
 
         rated = dict(entry)
         rated.update({
             "face_ft": round(fft, 2) if fft is not None else None,
             "dir_gain": round(dg, 3),
             "wind_mult": round(wm, 3),
+            "chop_ratio": round(cr, 3),
+            "chop_mult": round(cm, 3),
+            "period_quality": round(pq, 3),
             "tide_level_ft": tide_raw,
             "tide_norm": tide_norm,
             "tide_mult": round(tm, 3),
