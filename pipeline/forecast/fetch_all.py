@@ -40,6 +40,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--wfo", default=None,
                    help="Comma-separated WFO codes to limit NWPS fetch to (e.g. box,sgx,mhx). "
                         "Ignored by other sources.")
+    p.add_argument("--push-to-db", action="store_true",
+                   help="After fetching + interpreting, push results to Supabase via "
+                        "pipeline.db_import. Requires SUPABASE_URL and "
+                        "SUPABASE_SERVICE_KEY in the environment.")
+    p.add_argument("--interpret", action="store_true",
+                   help="Run pipeline.interpret after fetching so ratings.json is "
+                        "regenerated before --push-to-db. Implied by --push-to-db.")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
 
@@ -166,6 +173,26 @@ def main(argv: list[str] | None = None) -> int:
             continue
         _summarize(name, result)
         any_data = any_data or bool(result)
+
+    # Optional post-fetch steps: regenerate ratings.json then push everything
+    # to Supabase. Both require the spots_enriched + forecast_data files we
+    # just produced, so they only make sense after a successful fetch run.
+    if args.interpret or args.push_to_db:
+        log.info("=== running interpret ===")
+        from .. import interpret as interpret_mod
+        rc = interpret_mod.main([])
+        if rc != 0:
+            log.warning("interpret returned %d; continuing", rc)
+
+    if args.push_to_db:
+        log.info("=== pushing to Supabase ===")
+        from .. import db_import as db_import_mod
+        try:
+            stats = db_import_mod.run_all(spots=True, forecasts=True)
+            db_import_mod._print_summary(stats)
+        except RuntimeError as e:
+            log.error("db_import failed: %s", e)
+            return 3
 
     return 0 if any_data else 2
 

@@ -10,6 +10,12 @@ anthropic>=0.40,<1
 # Phase 2C — direct scrape of surf-forecast.com
 beautifulsoup4>=4.12,<5
 
+# Phase 3 — Supabase integration. supabase-py for the import script;
+# psycopg2-binary kept available for migration tooling and future direct-SQL
+# operations (e.g. bulk COPY) where the REST client is too slow.
+supabase>=2.0,<3
+psycopg2-binary>=2.9,<3
+
 # Phase 1 — NWPS GRIB2 wave forecasts
 # cfgrib requires the eccodes system library:
 #   Debian/Ubuntu: apt install libeccodes0
