@@ -157,6 +157,10 @@ SPOT_COORD_FIXES_FILE = PIPELINE_DIR / "data" / "spot_coord_fixes.json"
 # barrier islands that geocoded to the bay side). Applied by enrich.py and
 # treated as authoritative — overrides algorithm and LLM verification.
 MANUAL_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "manual_orientations.json"
+# Persistent review queue — list of spots whose orientation/scrape/verification
+# state suggests they should get a manual eyeball at some point. Survives
+# regeneration: spots marked `reviewed: true` keep that flag.
+REVIEW_QUEUE_FILE = PIPELINE_DIR / "data" / "review_queue.json"
 
 # ---------------------------------------------------------------------------
 # surf-forecast.com scrape (Phase 2C) — direct HTML extraction
