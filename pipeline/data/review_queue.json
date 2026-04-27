@@ -1,0 +1,5513 @@
+{
+  "_comment": "Pending spots ranked for manual orientation review. Mark items as reviewed by setting reviewed: true and (optionally) writing in reviewer_notes. Re-run audit_review_queue to refresh and preserve your annotations.",
+  "_generated_at": "2026-04-27T13:49:09.659823+00:00",
+  "summary": {
+    "total": 273,
+    "reviewed": 0,
+    "pending": {
+      "high": 13,
+      "medium": 176,
+      "low": 84
+    }
+  },
+  "items": [
+    {
+      "name": "Bombora",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_144deg",
+        "llm_medium_confidence"
+      ],
+      "lat": 36.9713534,
+      "lng": -121.9439789,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 310.9434467986164,
+      "orientation_200m": 323.74579492727617,
+      "offshore_wind_deg": 0,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 143.7,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Diamond Head Cliffs",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_33deg",
+        "algorithm_only"
+      ],
+      "lat": 21.304547,
+      "lng": -157.855676,
+      "region_hint": "Hawaii",
+      "orientation_deg": 247.35130820635618,
+      "orientation_50m": 244.57037128409866,
+      "orientation_200m": 214.35328066528177,
+      "offshore_wind_deg": 67.35130820635618,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 33.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Horseneck Beach",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_47deg",
+        "algorithm_only"
+      ],
+      "lat": 41.5112151,
+      "lng": -71.0828197,
+      "region_hint": "Massachusetts",
+      "orientation_deg": 65.061243435498,
+      "orientation_50m": 92.14765750025151,
+      "orientation_200m": 45.3636172913906,
+      "offshore_wind_deg": 245.061243435498,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 46.8,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Jenner Beach",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_55deg",
+        "llm_medium_confidence"
+      ],
+      "lat": 38.4530599,
+      "lng": -123.1322767,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 215.36775728432917,
+      "orientation_200m": 223.44228770826885,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 54.6,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kiahuna Beach",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_30deg",
+        "algorithm_only"
+      ],
+      "lat": 21.8754304,
+      "lng": -159.4588293,
+      "region_hint": "Hawaii",
+      "orientation_deg": 211.64767994587544,
+      "orientation_50m": 232.38100688651082,
+      "orientation_200m": 202.01578812874084,
+      "offshore_wind_deg": 31.64767994587544,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 30.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Little Wind-an-Sea",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_46deg",
+        "llm_medium_confidence"
+      ],
+      "lat": 36.9540996,
+      "lng": -121.9767453,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 178.6433164912446,
+      "orientation_200m": 190.7252452995475,
+      "offshore_wind_deg": 45,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 46.4,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "New Brighton Reef",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_124deg",
+        "llm_medium_confidence"
+      ],
+      "lat": 36.9755268,
+      "lng": -121.940728,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 313.7016283830893,
+      "orientation_200m": 324.31678586295953,
+      "offshore_wind_deg": 20,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 124.3,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ocean Shores",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_40deg",
+        "algorithm_only"
+      ],
+      "lat": 46.9995932,
+      "lng": -124.1433868,
+      "region_hint": "Washington",
+      "orientation_deg": 251.10162747285403,
+      "orientation_50m": 272.706011677784,
+      "orientation_200m": 232.56147626939764,
+      "offshore_wind_deg": 71.10162747285403,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 40.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sandy Beach Oahu",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_33deg",
+        "algorithm_only"
+      ],
+      "lat": 21.304547,
+      "lng": -157.855676,
+      "region_hint": "Hawaii",
+      "orientation_deg": 247.35130820635618,
+      "orientation_50m": 244.57037128409866,
+      "orientation_200m": 214.35328066528177,
+      "offshore_wind_deg": 67.35130820635618,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 33.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sebastian Inlet",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_162deg",
+        "algorithm_only"
+      ],
+      "lat": 27.8557604,
+      "lng": -80.4535013,
+      "region_hint": "Florida",
+      "orientation_deg": 0.45873048901466973,
+      "orientation_50m": 0.45873048888074663,
+      "orientation_200m": 161.96854361252804,
+      "offshore_wind_deg": 180.45873048901467,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 161.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Second Bay",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_37deg",
+        "algorithm_only"
+      ],
+      "lat": 19.4561463,
+      "lng": -154.8436925,
+      "region_hint": "Hawaii",
+      "orientation_deg": 291.74048415011873,
+      "orientation_50m": 272.149784947494,
+      "orientation_200m": 309.0260921603892,
+      "offshore_wind_deg": 111.74048415011873,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 36.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "South Beach Newport",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_42deg",
+        "algorithm_only"
+      ],
+      "lat": 44.6123305,
+      "lng": -124.0487436,
+      "region_hint": "Oregon",
+      "orientation_deg": 221.68131438013143,
+      "orientation_50m": 201.76174472351238,
+      "orientation_200m": 243.50703345780857,
+      "offshore_wind_deg": 41.681314380131425,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 41.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Toes Over",
+      "priority": "high",
+      "concerns": [
+        "window_disagreement_135deg",
+        "llm_medium_confidence"
+      ],
+      "lat": 36.9710845,
+      "lng": -121.9486795,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 335.22366086912035,
+      "orientation_200m": 329.86723929500846,
+      "offshore_wind_deg": 20,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 135.2,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "38th",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_142deg"
+      ],
+      "lat": 36.9574939,
+      "lng": -121.9677716,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 311.5149106509866,
+      "orientation_200m": 321.9241766693336,
+      "offshore_wind_deg": 0,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 141.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "38th Avenue",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_78deg"
+      ],
+      "lat": 36.9719607,
+      "lng": -121.9674092,
+      "region_hint": "California",
+      "orientation_deg": 230,
+      "orientation_50m": 308.1213268227259,
+      "orientation_200m": 308.12132682269964,
+      "offshore_wind_deg": 50,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 78.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Anahola Bay",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 22.1502463,
+      "lng": -159.3033474,
+      "region_hint": "Hawaii",
+      "orientation_deg": 180.11406710356914,
+      "orientation_50m": 180.11406710343567,
+      "orientation_200m": 183.02060020813826,
+      "offshore_wind_deg": 0.11406710356914118,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 2.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Andrew Molera State Park",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_34deg"
+      ],
+      "lat": 36.28333333,
+      "lng": -121.83333333,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 254.90365668235142,
+      "orientation_200m": 236.0611286274633,
+      "offshore_wind_deg": 45,
+      "break_type": "rivermouth",
+      "max_window_disagreement_deg": 33.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Andrew-Molera-State-Park",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Antonio's Rincon",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 18.374658,
+      "lng": -67.244588,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 178.9380499035807,
+      "orientation_50m": 178.93804990358132,
+      "orientation_200m": 172.25067598400244,
+      "offshore_wind_deg": 358.9380499035807,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Atlantic City",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_21deg",
+        "algorithm_only"
+      ],
+      "lat": 39.3629978,
+      "lng": -74.4404394,
+      "region_hint": "New Jersey",
+      "orientation_deg": 79.8111646220134,
+      "orientation_50m": 69.04704568168461,
+      "orientation_200m": 90.00573159762655,
+      "offshore_wind_deg": 259.8111646220134,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Avalon Pier",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_37deg"
+      ],
+      "lat": 36.0442279,
+      "lng": -75.6745478,
+      "region_hint": "North Carolina",
+      "orientation_deg": 40.79177112892984,
+      "orientation_50m": 17.958168901580393,
+      "orientation_200m": 55.19370117549795,
+      "offshore_wind_deg": 220.79177112892984,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 37.2,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Avalon-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Avon-by-the-Sea",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.1874536,
+      "lng": -74.0232883,
+      "region_hint": "New Jersey",
+      "orientation_deg": 121.32074519664582,
+      "orientation_50m": 110.65267328431185,
+      "orientation_200m": 124.07067032232942,
+      "offshore_wind_deg": 301.3207451966458,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 13.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Backdoor Pipeline",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_23deg",
+        "algorithm_only"
+      ],
+      "lat": 21.5876272,
+      "lng": -158.1035648,
+      "region_hint": "Hawaii",
+      "orientation_deg": 295.65749426509035,
+      "orientation_50m": 281.2881998956757,
+      "orientation_200m": 303.90750434263254,
+      "offshore_wind_deg": 115.65749426509035,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Banzai Pipeline",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 21.664,
+      "lng": -158.054,
+      "region_hint": "Hawaii",
+      "orientation_deg": 312.7220980369182,
+      "orientation_50m": 312.7220980370087,
+      "orientation_200m": 312.7220980369182,
+      "offshore_wind_deg": 132.72209803691823,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Barnegat Light",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.7600038,
+      "lng": -74.1053004,
+      "region_hint": "New Jersey",
+      "orientation_deg": 89.17781107278165,
+      "orientation_50m": 89.17781107281883,
+      "orientation_200m": 87.73692111254422,
+      "offshore_wind_deg": 269.17781107278165,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 1.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Bird Rock",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_56deg"
+      ],
+      "lat": 32.8711081,
+      "lng": -117.2341773,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 278.7024571896204,
+      "orientation_200m": 280.7284873682668,
+      "offshore_wind_deg": 45,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 55.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/South-Bird-Rock",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Blackies",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_39deg"
+      ],
+      "lat": 33.6170092,
+      "lng": -117.9294401,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 233.32071943085793,
+      "orientation_200m": 231.05748750823773,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 38.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Blackies",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Bolinas",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_143deg"
+      ],
+      "lat": 37.9093463,
+      "lng": -122.6864826,
+      "region_hint": "California",
+      "orientation_deg": 202,
+      "orientation_50m": 344.7013895195553,
+      "orientation_200m": 329.2167348306964,
+      "offshore_wind_deg": 22,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 142.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Bolinas",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Boynton Beach Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_86deg"
+      ],
+      "lat": 26.5289139,
+      "lng": -80.058141,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 154.18054597341825,
+      "orientation_200m": 175.99095250050595,
+      "offshore_wind_deg": 270,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 86.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Boynton-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Brigantine",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.4111157,
+      "lng": -74.3664218,
+      "region_hint": "New Jersey",
+      "orientation_deg": 123.4989772686298,
+      "orientation_50m": 127.31353459942733,
+      "orientation_200m": 114.11016719413686,
+      "offshore_wind_deg": 303.4989772686298,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 13.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Brookings Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_46deg"
+      ],
+      "lat": 42.0521298,
+      "lng": -124.2832868,
+      "region_hint": "Oregon",
+      "orientation_deg": 181.96718992016167,
+      "orientation_50m": 171.9488195012883,
+      "orientation_200m": 217.84579102920839,
+      "offshore_wind_deg": 1.9671899201616725,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 45.9,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Brookings",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Brooks Street",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_64deg"
+      ],
+      "lat": 33.5090714,
+      "lng": -117.7489594,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 240.2213083837653,
+      "orientation_200m": 244.19208381521503,
+      "offshore_wind_deg": 0,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 64.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/T-Street",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cape Disappointment",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 46.2900762,
+      "lng": -124.0681588,
+      "region_hint": "Washington",
+      "orientation_deg": 280.4683658698361,
+      "orientation_50m": 282.7191357923609,
+      "orientation_200m": 278.05974810365905,
+      "offshore_wind_deg": 100.46836586983608,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cape Hatteras Lighthouse",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 35.2505369,
+      "lng": -75.5288155,
+      "region_hint": "North Carolina",
+      "orientation_deg": 110.75986156135718,
+      "orientation_50m": 111.60898762819863,
+      "orientation_200m": 102.16336884489994,
+      "offshore_wind_deg": 290.7598615613572,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 9.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cape Kiwanda",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 45.2157651,
+      "lng": -123.9710391,
+      "region_hint": "Oregon",
+      "orientation_deg": 250.40843475776535,
+      "orientation_50m": 251.90139739360768,
+      "orientation_200m": 246.81838889533242,
+      "offshore_wind_deg": 70.40843475776535,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 5.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cape May",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 38.933431,
+      "lng": -74.9214226,
+      "region_hint": "New Jersey",
+      "orientation_deg": 178.43650954893246,
+      "orientation_50m": 179.94870090542713,
+      "orientation_200m": 166.77730778595253,
+      "offshore_wind_deg": 358.43650954893246,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 13.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Carlsbad State Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_41deg"
+      ],
+      "lat": 33.1507749,
+      "lng": -117.3484893,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 228.64403833324207,
+      "orientation_200m": 237.33766897006308,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 41.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Carlsbad-City-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Carolina Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 34.043277,
+      "lng": -77.9123132,
+      "region_hint": "North Carolina",
+      "orientation_deg": 4.703131045973976,
+      "orientation_50m": 4.966719513664202,
+      "orientation_200m": 356.2326415544551,
+      "offshore_wind_deg": 184.70313104597398,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 8.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cayucos Pier",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_62deg"
+      ],
+      "lat": 35.4479115,
+      "lng": -120.9068349,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 216.72042515950557,
+      "orientation_200m": 207.86502252725995,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 62.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Cayucos-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cisco Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 41.2517996,
+      "lng": -70.1524095,
+      "region_hint": "Massachusetts",
+      "orientation_deg": 179.77757072698614,
+      "orientation_50m": 179.77757072698614,
+      "orientation_200m": 184.32751465655076,
+      "offshore_wind_deg": 359.77757072698614,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Coast Guard Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 41.8450596,
+      "lng": -69.947164,
+      "region_hint": "Massachusetts",
+      "orientation_deg": 68.38088296012177,
+      "orientation_50m": 68.3808829596901,
+      "orientation_200m": 72.97838364533015,
+      "offshore_wind_deg": 248.38088296012177,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Conant Ave",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 41.3693213,
+      "lng": -71.4849864,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 92.62435181689091,
+      "orientation_50m": 92.62435181691535,
+      "orientation_200m": 97.5497244216483,
+      "offshore_wind_deg": 272.6243518168909,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cowell's Beach Children's Surfing Area",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_113deg"
+      ],
+      "lat": 36.9605191,
+      "lng": -122.0240332,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 311.18502357039165,
+      "orientation_200m": 312.84646619598834,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 112.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Crescent City Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_78deg"
+      ],
+      "lat": 41.7522404,
+      "lng": -124.1978539,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 324.93613659436267,
+      "orientation_200m": 307.79991480109106,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 77.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "D Street Encinitas",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_32deg"
+      ],
+      "lat": 33.0458961,
+      "lng": -117.2948077,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 257.2073402795804,
+      "orientation_200m": 254.13199967988623,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 32.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/D-Street",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Dana Point, California",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_96deg"
+      ],
+      "lat": 33.46722222,
+      "lng": -117.69805556,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 321.35581552537576,
+      "orientation_200m": 343.06442540378566,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 96.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Dana-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Devereux",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_39deg"
+      ],
+      "lat": 34.4215188,
+      "lng": -119.8846166,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 211.25769789111268,
+      "orientation_200m": 219.0989506885096,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 39.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Devereux",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Dillon Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_66deg"
+      ],
+      "lat": 38.2426456,
+      "lng": -122.9699301,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 335.73794164998145,
+      "orientation_200m": 303.4831161061825,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 65.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Dillon-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Doheny State Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_33deg"
+      ],
+      "lat": 33.4601551,
+      "lng": -117.6768198,
+      "region_hint": "California",
+      "orientation_deg": 202,
+      "orientation_50m": 235.37853396482126,
+      "orientation_200m": 224.0921046268693,
+      "offshore_wind_deg": 22,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 33.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Doheney-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Doran Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_43deg"
+      ],
+      "lat": 38.3099263,
+      "lng": -123.0236792,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 222.06227162553932,
+      "orientation_200m": 222.80703908113037,
+      "offshore_wind_deg": 0,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 42.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Doran-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Duck Pier",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 36.1829196,
+      "lng": -75.7481164,
+      "region_hint": "North Carolina",
+      "orientation_deg": 62.23906591889852,
+      "orientation_50m": 56.55100305494949,
+      "orientation_200m": 65.82956633690821,
+      "offshore_wind_deg": 242.23906591889852,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 9.3,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Electric Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 21.3598762,
+      "lng": -158.1316872,
+      "region_hint": "Hawaii",
+      "orientation_deg": 255.99711940508905,
+      "orientation_50m": 254.6078195425216,
+      "orientation_200m": 258.16826272494984,
+      "offshore_wind_deg": 75.99711940508905,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 3.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Elevators",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_23deg",
+        "algorithm_only"
+      ],
+      "lat": 19.4569031,
+      "lng": -154.8421938,
+      "region_hint": "Hawaii",
+      "orientation_deg": 166.7848254402104,
+      "orientation_50m": 176.34442407890197,
+      "orientation_200m": 153.72031492416977,
+      "offshore_wind_deg": 346.7848254402104,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Emerald Isle",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 34.6595807,
+      "lng": -77.0560129,
+      "region_hint": "North Carolina",
+      "orientation_deg": 161.1649198474213,
+      "orientation_50m": 162.58915865000665,
+      "orientation_200m": 165.1840889415471,
+      "offshore_wind_deg": 341.1649198474213,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Fire Island",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_29deg",
+        "algorithm_only"
+      ],
+      "lat": 40.6253044,
+      "lng": -73.2580351,
+      "region_hint": "New York",
+      "orientation_deg": 23.204135495422463,
+      "orientation_50m": 31.308561221876005,
+      "orientation_200m": 2.273279694459518,
+      "offshore_wind_deg": 203.20413549542246,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 29.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "First Bay",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_23deg",
+        "algorithm_only"
+      ],
+      "lat": 19.4573008,
+      "lng": -154.8430865,
+      "region_hint": "Hawaii",
+      "orientation_deg": 169.18966791618334,
+      "orientation_50m": 176.60852624811287,
+      "orientation_200m": 153.1714310551788,
+      "offshore_wind_deg": 349.18966791618334,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 23.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "First Peak",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_108deg"
+      ],
+      "lat": 36.9545866,
+      "lng": -121.9709742,
+      "region_hint": "California",
+      "orientation_deg": 210,
+      "orientation_50m": 307.04197442143175,
+      "orientation_200m": 318.041685122531,
+      "offshore_wind_deg": 30,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 108.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pleasure-Point-First-Peak",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Flying Point Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.8842482,
+      "lng": -72.3897131,
+      "region_hint": "New York",
+      "orientation_deg": 148.32853487760235,
+      "orientation_50m": 143.43465448566735,
+      "orientation_200m": 157.297666965218,
+      "offshore_wind_deg": 328.32853487760235,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 13.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Fort Pierce Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_48deg"
+      ],
+      "lat": 27.4669594,
+      "lng": -80.3048551,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 130.94196196108726,
+      "orientation_200m": 137.75557499850862,
+      "offshore_wind_deg": 270,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 47.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Fort Point",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_53deg"
+      ],
+      "lat": 37.8104864,
+      "lng": -122.476882,
+      "region_hint": "California",
+      "orientation_deg": 45,
+      "orientation_50m": 359.44214103209964,
+      "orientation_200m": 351.50776752857087,
+      "offshore_wind_deg": 225,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 53.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Fort-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Garbage Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_61deg"
+      ],
+      "lat": 32.7174202,
+      "lng": -117.162772,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 216.35830871351698,
+      "orientation_200m": 208.8484222004347,
+      "offshore_wind_deg": 90,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 61.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Garbage",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Georgica Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_18deg",
+        "algorithm_only"
+      ],
+      "lat": 40.9633868,
+      "lng": -72.1847598,
+      "region_hint": "New York",
+      "orientation_deg": 147.02829968308083,
+      "orientation_50m": 140.5500288989175,
+      "orientation_200m": 158.6187393115058,
+      "offshore_wind_deg": 327.02829968308083,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Haleiwa Ali'i Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_23deg",
+        "algorithm_only"
+      ],
+      "lat": 21.5876272,
+      "lng": -158.1035648,
+      "region_hint": "Hawaii",
+      "orientation_deg": 295.65749426509035,
+      "orientation_50m": 281.2881998956757,
+      "orientation_200m": 303.90750434263254,
+      "offshore_wind_deg": 115.65749426509035,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Half Moon Bay Jetty",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_33deg"
+      ],
+      "lat": 37.4635519,
+      "lng": -122.428586,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 255.87364060047537,
+      "orientation_200m": 258.1204545374653,
+      "offshore_wind_deg": 45,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 33.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Hampton Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_43deg"
+      ],
+      "lat": 42.9120205,
+      "lng": -70.8174205,
+      "region_hint": "New Hampshire",
+      "orientation_deg": 87.9801067632975,
+      "orientation_50m": 103.56345457740639,
+      "orientation_200m": 61.00322424137357,
+      "offshore_wind_deg": 267.9801067632975,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 42.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hampton-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Hubbard Creek",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 42.7378451,
+      "lng": -124.4765213,
+      "region_hint": "Oregon",
+      "orientation_deg": 225.69227729370482,
+      "orientation_50m": 223.72280052006295,
+      "orientation_200m": 227.28691350840518,
+      "offshore_wind_deg": 45.69227729370482,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 3.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Indian River Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_143deg"
+      ],
+      "lat": 38.6099251,
+      "lng": -75.0681777,
+      "region_hint": "Delaware",
+      "orientation_deg": 157,
+      "orientation_50m": 31.154968759810686,
+      "orientation_200m": 13.962201652014414,
+      "offshore_wind_deg": 270,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 143.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Indian Rocks Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_137deg"
+      ],
+      "lat": 27.8841458,
+      "lng": -82.8470248,
+      "region_hint": "Florida",
+      "orientation_deg": 270,
+      "orientation_50m": 132.8722866484576,
+      "orientation_200m": 132.87228664851517,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 137.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Indian-Rocks-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Isla Blanca Park",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_19deg",
+        "algorithm_only"
+      ],
+      "lat": 26.0713946,
+      "lng": -97.1586918,
+      "region_hint": "Texas",
+      "orientation_deg": 247.24124085889116,
+      "orientation_50m": 255.98144550476593,
+      "orientation_200m": 237.07775753497316,
+      "offshore_wind_deg": 67.24124085889116,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Isle of Palms",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 32.8031264,
+      "lng": -79.7977592,
+      "region_hint": "South Carolina",
+      "orientation_deg": 75.92182742685804,
+      "orientation_50m": 74.9494173945294,
+      "orientation_200m": 82.02410584516815,
+      "offshore_wind_deg": 255.92182742685804,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 7.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "JP Luby Surf Park",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 27.7635302,
+      "lng": -97.4033191,
+      "region_hint": "Texas",
+      "orientation_deg": 227.5994170837812,
+      "orientation_50m": 227.59941708384656,
+      "orientation_200m": 218.30556077324064,
+      "offshore_wind_deg": 47.59941708378119,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 9.3,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Jetty Park Cocoa Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_41deg"
+      ],
+      "lat": 28.4513556,
+      "lng": -80.5283059,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 131.24603712194732,
+      "orientation_200m": 122.38143771430242,
+      "offshore_wind_deg": 270,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 41.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Jetty-Park",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Jupiter Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_94deg"
+      ],
+      "lat": 26.9486083,
+      "lng": -80.0820361,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 160.785443180858,
+      "orientation_200m": 183.7373879816621,
+      "offshore_wind_deg": 270,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 93.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Jupiter-Inlet-North-South-Side",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kaisers",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_33deg"
+      ],
+      "lat": 21.304547,
+      "lng": -157.855676,
+      "region_hint": "Hawaii",
+      "orientation_deg": 247.35130820635618,
+      "orientation_50m": 244.57037128409866,
+      "orientation_200m": 214.35328066528177,
+      "offshore_wind_deg": 67.35130820635618,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 33.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Kaisers",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kalaloch Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_16deg",
+        "algorithm_only"
+      ],
+      "lat": 47.5897279,
+      "lng": -124.3683486,
+      "region_hint": "Washington",
+      "orientation_deg": 260.22769409453394,
+      "orientation_50m": 244.81293411676427,
+      "orientation_200m": 261.1953475941476,
+      "offshore_wind_deg": 80.22769409453394,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kiawah Island Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 32.5964675,
+      "lng": -80.1275096,
+      "region_hint": "South Carolina",
+      "orientation_deg": 142.3059472006301,
+      "orientation_50m": 136.5059903233116,
+      "orientation_200m": 150.8741837241285,
+      "offshore_wind_deg": 322.3059472006301,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 14.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kill Devil Hills",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 36.0168342,
+      "lng": -75.666287,
+      "region_hint": "North Carolina",
+      "orientation_deg": 68.3242113206486,
+      "orientation_50m": 69.18173619306481,
+      "orientation_200m": 60.486193910371185,
+      "offshore_wind_deg": 248.3242113206486,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 8.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kokomo",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_26deg",
+        "algorithm_only"
+      ],
+      "lat": 18.1417763,
+      "lng": -65.8095298,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 74.33960483656188,
+      "orientation_50m": 60.58917545441227,
+      "orientation_200m": 86.15292542351176,
+      "offshore_wind_deg": 254.33960483656188,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 25.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Kure Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_22deg",
+        "algorithm_only"
+      ],
+      "lat": 33.9853035,
+      "lng": -77.9099273,
+      "region_hint": "North Carolina",
+      "orientation_deg": 118.82167572053532,
+      "orientation_50m": 130.30010436884362,
+      "orientation_200m": 107.86303617133024,
+      "offshore_wind_deg": 298.8216757205353,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Laniakea",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 19.6473494,
+      "lng": -156.0102262,
+      "region_hint": "Hawaii",
+      "orientation_deg": 209.73563277729897,
+      "orientation_50m": 213.79848953506803,
+      "orientation_200m": 216.29175729596204,
+      "offshore_wind_deg": 29.735632777298974,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Launiupoko",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 20.8430428,
+      "lng": -156.648821,
+      "region_hint": "Hawaii",
+      "orientation_deg": 222.55792315132976,
+      "orientation_50m": 222.55792315135227,
+      "orientation_200m": 223.58248063127917,
+      "offshore_wind_deg": 42.55792315132976,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 1.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Leadbetter Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_50deg"
+      ],
+      "lat": 34.4009409,
+      "lng": -119.7006062,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 310.73837327990896,
+      "orientation_200m": 319.9834413023847,
+      "offshore_wind_deg": 0,
+      "break_type": "point",
+      "max_window_disagreement_deg": 50.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Leadbetter",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Leo Carrillo State Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_158deg"
+      ],
+      "lat": 34.0441745,
+      "lng": -118.939262,
+      "region_hint": "California",
+      "orientation_deg": 202,
+      "orientation_50m": 0.24000861560330122,
+      "orientation_200m": 358.17789136852514,
+      "offshore_wind_deg": 0,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 158.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Long Beach Island",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.6348655,
+      "lng": -74.1855757,
+      "region_hint": "New Jersey",
+      "orientation_deg": 126.87974173495445,
+      "orientation_50m": 126.87974173511452,
+      "orientation_200m": 122.36600350297886,
+      "offshore_wind_deg": 306.87974173495445,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Long Beach NY",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.5891999,
+      "lng": -73.6648081,
+      "region_hint": "New York",
+      "orientation_deg": 167.78040712956988,
+      "orientation_50m": 167.61469404429522,
+      "orientation_200m": 167.86326488517102,
+      "offshore_wind_deg": 347.7804071295699,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Long Beach WA",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 46.3426111,
+      "lng": -124.0545169,
+      "region_hint": "Washington",
+      "orientation_deg": 271.5809620385102,
+      "orientation_50m": 271.5809620385195,
+      "orientation_200m": 272.4528122433109,
+      "offshore_wind_deg": 91.58096203851022,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Long Branch",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.2964006,
+      "lng": -73.988155,
+      "region_hint": "New Jersey",
+      "orientation_deg": 110.53631950146473,
+      "orientation_50m": 112.5319950927099,
+      "orientation_200m": 100.14386383311262,
+      "offshore_wind_deg": 290.53631950146473,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 12.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Lovers Point",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_54deg"
+      ],
+      "lat": 36.6233941,
+      "lng": -121.9066666,
+      "region_hint": "California",
+      "orientation_deg": 315,
+      "orientation_50m": 358.0598809985562,
+      "orientation_200m": 8.798700085568214,
+      "offshore_wind_deg": 180,
+      "break_type": "point",
+      "max_window_disagreement_deg": 53.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lovers-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Lunada Bay",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_53deg"
+      ],
+      "lat": 33.7700158,
+      "lng": -118.4250738,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 299.8265872576635,
+      "orientation_200m": 286.0045620645846,
+      "offshore_wind_deg": 67,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 52.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lunada-Bay",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Main Beach East Hampton",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_18deg",
+        "algorithm_only"
+      ],
+      "lat": 40.9633868,
+      "lng": -72.1847598,
+      "region_hint": "New York",
+      "orientation_deg": 147.02829968308083,
+      "orientation_50m": 140.5500288989175,
+      "orientation_200m": 158.6187393115058,
+      "offshore_wind_deg": 327.02829968308083,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Makapuu Beach Park",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_31deg"
+      ],
+      "lat": 21.3112096,
+      "lng": -157.6599131,
+      "region_hint": "Hawaii",
+      "orientation_deg": 54.03897850538897,
+      "orientation_50m": 76.65859176250342,
+      "orientation_200m": 45.82563098467449,
+      "offshore_wind_deg": 234.03897850538897,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 30.8,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Makapu",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Manasquan Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_30deg"
+      ],
+      "lat": 40.1026203,
+      "lng": -74.0344852,
+      "region_hint": "New Jersey",
+      "orientation_deg": 66.49804137970864,
+      "orientation_50m": 96.71687294612371,
+      "orientation_200m": 66.76936141994202,
+      "offshore_wind_deg": 246.49804137970864,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 30.2,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Manasquan-Inlet",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Marineland",
+      "priority": "medium",
+      "concerns": [
+        "llm_medium_confidence"
+      ],
+      "lat": 29.6701075,
+      "lng": -81.2133056,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 76.2992823948058,
+      "orientation_200m": 75.50044013445176,
+      "offshore_wind_deg": 270,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 14.5,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Marys",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 41.4840358,
+      "lng": -71.3126137,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 89.27835530782113,
+      "orientation_50m": 85.73860206264771,
+      "orientation_200m": 96.08062185507185,
+      "offshore_wind_deg": 269.27835530782113,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 10.3,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Matanzas Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_30deg"
+      ],
+      "lat": 29.7062124,
+      "lng": -81.2257139,
+      "region_hint": "Florida",
+      "orientation_deg": 45,
+      "orientation_50m": 24.113695670140203,
+      "orientation_200m": 14.675386115686251,
+      "offshore_wind_deg": 225,
+      "break_type": "rivermouth",
+      "max_window_disagreement_deg": 30.3,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Mexico Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_23deg",
+        "llm_medium_confidence"
+      ],
+      "lat": 29.9493829,
+      "lng": -85.4226649,
+      "region_hint": "Florida",
+      "orientation_deg": 180,
+      "orientation_50m": 194.6213680628673,
+      "orientation_200m": 202.63331828195544,
+      "offshore_wind_deg": 0,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Morro Rock",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_55deg"
+      ],
+      "lat": 35.369669,
+      "lng": -120.8676994,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 325.40713336171456,
+      "orientation_200m": 323.4974485402787,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 55.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Morro-Rock",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Moss Landing",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_35deg"
+      ],
+      "lat": 36.8050169,
+      "lng": -121.7795876,
+      "region_hint": "California",
+      "orientation_deg": 292,
+      "orientation_50m": 270.5552071976915,
+      "orientation_200m": 257.22702382257376,
+      "offshore_wind_deg": 112,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 34.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Moss-Landing",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Mustang Island",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 27.8356784,
+      "lng": -97.0610054,
+      "region_hint": "Texas",
+      "orientation_deg": 152.39219778910876,
+      "orientation_50m": 148.97209648499603,
+      "orientation_200m": 162.43907014017827,
+      "offshore_wind_deg": 332.39219778910876,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 13.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Nantucket Surf",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 41.3157314,
+      "lng": -70.0090141,
+      "region_hint": "Massachusetts",
+      "orientation_deg": 152.88405829581984,
+      "orientation_50m": 148.7592279741669,
+      "orientation_200m": 154.96554551964346,
+      "offshore_wind_deg": 332.88405829581984,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Naples Pier",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_172deg"
+      ],
+      "lat": 26.1315525,
+      "lng": -81.8077312,
+      "region_hint": "Florida",
+      "orientation_deg": 247,
+      "orientation_50m": 77.00114539016522,
+      "orientation_200m": 74.5767733683333,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 172.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Naples-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Natural Bridges",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_135deg"
+      ],
+      "lat": 36.9502191,
+      "lng": -122.056953,
+      "region_hint": "California",
+      "orientation_deg": 315,
+      "orientation_50m": 180.35810756464082,
+      "orientation_200m": 201.58799997256813,
+      "offshore_wind_deg": 45,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 134.6,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Natural-Bridges-State-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Newport Point",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_43deg"
+      ],
+      "lat": 33.5874342,
+      "lng": -117.8552862,
+      "region_hint": "California",
+      "orientation_deg": 170,
+      "orientation_50m": 191.2764596105318,
+      "orientation_200m": 212.52129379825328,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 42.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Newport-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "North Beach Rye",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_20deg",
+        "algorithm_only"
+      ],
+      "lat": 42.9727136,
+      "lng": -70.7664995,
+      "region_hint": "New Hampshire",
+      "orientation_deg": 148.67540074083627,
+      "orientation_50m": 164.41850643165265,
+      "orientation_200m": 144.611014140061,
+      "offshore_wind_deg": 328.67540074083627,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.8,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "North Jetty",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_66deg"
+      ],
+      "lat": 27.8623099,
+      "lng": -80.4465025,
+      "region_hint": "Florida",
+      "orientation_deg": 45,
+      "orientation_50m": 111.07575578179956,
+      "orientation_200m": 111.07575578172259,
+      "offshore_wind_deg": 225,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 66.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Nye Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 44.6414602,
+      "lng": -124.05913,
+      "region_hint": "Oregon",
+      "orientation_deg": 269.92181529494496,
+      "orientation_50m": 269.9218152949287,
+      "orientation_200m": 269.92181529493655,
+      "offshore_wind_deg": 89.92181529494496,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ocean Beach Pier SD",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_61deg"
+      ],
+      "lat": 32.7174202,
+      "lng": -117.162772,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 216.35830871351698,
+      "orientation_200m": 208.8484222004347,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 61.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ocean City NJ",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.3039612,
+      "lng": -74.5947321,
+      "region_hint": "New Jersey",
+      "orientation_deg": 116.87307250455706,
+      "orientation_50m": 124.94919234576582,
+      "orientation_200m": 120.07347484567583,
+      "offshore_wind_deg": 296.87307250455706,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 8.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ocracoke Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 35.1090866,
+      "lng": -75.9753468,
+      "region_hint": "North Carolina",
+      "orientation_deg": 19.453840837888436,
+      "orientation_50m": 16.639601042821027,
+      "orientation_200m": 31.058499911464594,
+      "offshore_wind_deg": 199.45384083788844,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 14.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Off The Wall",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 21.6633644,
+      "lng": -158.0530774,
+      "region_hint": "Hawaii",
+      "orientation_deg": 312.7220980369182,
+      "orientation_50m": 312.72209803682773,
+      "orientation_200m": 312.7220980369182,
+      "offshore_wind_deg": 132.72209803691823,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Oregon Inlet",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 35.9090441,
+      "lng": -75.5971243,
+      "region_hint": "North Carolina",
+      "orientation_deg": 66.75634291454287,
+      "orientation_50m": 77.24510493167077,
+      "orientation_200m": 64.49100427582323,
+      "offshore_wind_deg": 246.75634291454287,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 12.8,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "P.B. Boys Club",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 26.7047231,
+      "lng": -80.0362909,
+      "region_hint": "Florida",
+      "orientation_deg": 74.93824476057705,
+      "orientation_50m": 77.0146144902186,
+      "orientation_200m": 79.10802174508513,
+      "offshore_wind_deg": 254.93824476057705,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pacific Beach WA",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 47.2150235,
+      "lng": -124.2015572,
+      "region_hint": "Washington",
+      "orientation_deg": 253.089144464416,
+      "orientation_50m": 249.4896590826752,
+      "orientation_200m": 261.5949432370503,
+      "offshore_wind_deg": 73.089144464416,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 12.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pacific City Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 44.980886,
+      "lng": -123.9989681,
+      "region_hint": "Oregon",
+      "orientation_deg": 286.7596890884235,
+      "orientation_50m": 284.67727021431193,
+      "orientation_200m": 282.4370618720258,
+      "offshore_wind_deg": 106.7596890884235,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.3,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pacifica Linda Mar",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_45deg"
+      ],
+      "lat": 37.6041149,
+      "lng": -122.4984376,
+      "region_hint": "California",
+      "orientation_deg": 292,
+      "orientation_50m": 247.14969488101747,
+      "orientation_200m": 249.62072616814874,
+      "offshore_wind_deg": 112,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 44.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Linda-Mar-1",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pawleys Island",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 33.4233313,
+      "lng": -79.1243865,
+      "region_hint": "South Carolina",
+      "orientation_deg": 112.20973398939628,
+      "orientation_50m": 110.24138112415483,
+      "orientation_200m": 112.07188688651439,
+      "offshore_wind_deg": 292.2097339893963,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 2.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pier Village",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.3018426,
+      "lng": -73.979685,
+      "region_hint": "New Jersey",
+      "orientation_deg": 104.40896050250382,
+      "orientation_50m": 100.9881948304211,
+      "orientation_200m": 100.38117060736681,
+      "offshore_wind_deg": 284.4089605025038,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pillar Point",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 37.5011797,
+      "lng": -122.4747571,
+      "region_hint": "California",
+      "orientation_deg": 213.57518010971512,
+      "orientation_50m": 221.63629893972552,
+      "orientation_200m": 209.39370956825974,
+      "offshore_wind_deg": 33.57518010971512,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 12.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pine Grove Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 18.4447567,
+      "lng": -66.0137079,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 202.2205557548658,
+      "orientation_50m": 202.2205557547597,
+      "orientation_200m": 196.08061405865124,
+      "offshore_wind_deg": 22.220555754865813,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Playa Manati",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_22deg",
+        "algorithm_only"
+      ],
+      "lat": 18.483806,
+      "lng": -66.5260256,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 201.2724265950141,
+      "orientation_50m": 203.31604315348733,
+      "orientation_200m": 181.703447998096,
+      "offshore_wind_deg": 21.27242659501411,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Playalinda Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 28.6773237,
+      "lng": -80.6472179,
+      "region_hint": "Florida",
+      "orientation_deg": 69.72589221528733,
+      "orientation_50m": 75.78443466772853,
+      "orientation_200m": 65.89606173266941,
+      "offshore_wind_deg": 249.72589221528733,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 9.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pleasure Point",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_83deg"
+      ],
+      "lat": 36.96569,
+      "lng": -121.9649818,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 308.1213268227259,
+      "orientation_200m": 308.12132682269964,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 83.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pleasure-Point-First-Peak",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Point Judith",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_21deg",
+        "algorithm_only"
+      ],
+      "lat": 41.3653803,
+      "lng": -71.4867226,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 40.165915496213756,
+      "orientation_50m": 30.18155857168881,
+      "orientation_200m": 51.14546627506775,
+      "offshore_wind_deg": 220.16591549621376,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Point Lookout",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.5898775,
+      "lng": -73.5793876,
+      "region_hint": "New York",
+      "orientation_deg": 102.43481170278892,
+      "orientation_50m": 101.51547037586187,
+      "orientation_200m": 102.17840911613729,
+      "offshore_wind_deg": 282.4348117027889,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pompano Beach Pier",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 26.2351753,
+      "lng": -80.0872598,
+      "region_hint": "Florida",
+      "orientation_deg": 100.91578813259298,
+      "orientation_50m": 96.88957537144631,
+      "orientation_200m": 101.42524508391466,
+      "offshore_wind_deg": 280.915788132593,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pools Rincon",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 18.3692575,
+      "lng": -67.26248,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 157.2917178593077,
+      "orientation_50m": 157.29171785937461,
+      "orientation_200m": 162.6256322208908,
+      "offshore_wind_deg": 337.2917178593077,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 5.3,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Port A Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 27.8292162,
+      "lng": -97.0690027,
+      "region_hint": "Texas",
+      "orientation_deg": 106.06152237113645,
+      "orientation_50m": 103.22197056818464,
+      "orientation_200m": 104.63222225394173,
+      "offshore_wind_deg": 286.06152237113645,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 2.8,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Publics Waikiki",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_33deg"
+      ],
+      "lat": 21.304547,
+      "lng": -157.855676,
+      "region_hint": "Hawaii",
+      "orientation_deg": 247.35130820635618,
+      "orientation_50m": 244.57037128409866,
+      "orientation_200m": 214.35328066528177,
+      "offshore_wind_deg": 67.35130820635618,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 33.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Publics",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pūpūkea, Hawaii",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 21.66972222,
+      "lng": -158.04944444,
+      "region_hint": "Hawaii",
+      "orientation_deg": 312.72209803682773,
+      "orientation_50m": 312.72209803682773,
+      "orientation_200m": 312.7220980369182,
+      "offshore_wind_deg": 132.72209803682773,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Queens Waikiki",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 21.2759199,
+      "lng": -157.8252003,
+      "region_hint": "Hawaii",
+      "orientation_deg": 228.50821614618405,
+      "orientation_50m": 228.50821614612062,
+      "orientation_200m": 231.4918612111917,
+      "offshore_wind_deg": 48.508216146184054,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 3.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Refugio State Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_142deg"
+      ],
+      "lat": 34.4624286,
+      "lng": -120.0479924,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 341.797788333825,
+      "orientation_200m": 341.0870126527194,
+      "offshore_wind_deg": 22,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 141.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Refugio-State-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rialto Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 47.9289102,
+      "lng": -124.6410791,
+      "region_hint": "Washington",
+      "orientation_deg": 251.98316635601816,
+      "orientation_50m": 257.7892264720804,
+      "orientation_200m": 251.54196560308617,
+      "offshore_wind_deg": 71.98316635601816,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Richardson Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 19.7355916,
+      "lng": -155.0133866,
+      "region_hint": "Hawaii",
+      "orientation_deg": 26.145398297263398,
+      "orientation_50m": 29.268856155937158,
+      "orientation_200m": 24.575457121874138,
+      "offshore_wind_deg": 206.1453982972634,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rincon",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_50deg"
+      ],
+      "lat": 34.3837761,
+      "lng": -119.4846102,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 221.22926363236934,
+      "orientation_200m": 220.49493332740713,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 49.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Rincon-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rockaway 67th Street",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_20deg",
+        "algorithm_only"
+      ],
+      "lat": 40.5907486,
+      "lng": -73.7955476,
+      "region_hint": "New York",
+      "orientation_deg": 148.67979176224458,
+      "orientation_50m": 144.11804018591494,
+      "orientation_200m": 164.3027020659947,
+      "offshore_wind_deg": 328.6797917622446,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 20.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rockaway 90th Street",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.5809824,
+      "lng": -73.8229247,
+      "region_hint": "New York",
+      "orientation_deg": 163.32764316124735,
+      "orientation_50m": 172.7443463491494,
+      "orientation_200m": 161.58867924523213,
+      "offshore_wind_deg": 343.32764316124735,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 11.2,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rockaway Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_28deg",
+        "algorithm_only"
+      ],
+      "lat": 40.5871424,
+      "lng": -73.813727,
+      "region_hint": "New York",
+      "orientation_deg": 147.92844702292246,
+      "orientation_50m": 136.76457469035654,
+      "orientation_200m": 164.83420403904324,
+      "offshore_wind_deg": 327.92844702292246,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 28.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rockaway Beach Pacifica",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_70deg"
+      ],
+      "lat": 37.609096,
+      "lng": -122.4948565,
+      "region_hint": "California",
+      "orientation_deg": 315,
+      "orientation_50m": 245.3791085946457,
+      "orientation_200m": 257.4237135413241,
+      "offshore_wind_deg": 135,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 69.6,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Rockaway",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Rockpile",
+      "priority": "medium",
+      "concerns": [
+        "llm_medium_confidence"
+      ],
+      "lat": 34.420317,
+      "lng": -119.900217,
+      "region_hint": "California",
+      "orientation_deg": null,
+      "orientation_50m": 226.4692340643071,
+      "orientation_200m": 195.47063963022174,
+      "offshore_wind_deg": null,
+      "break_type": "reef",
+      "max_window_disagreement_deg": null,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Salmon Creek Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_33deg"
+      ],
+      "lat": 38.3387284,
+      "lng": -123.0681497,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 279.639017415041,
+      "orientation_200m": 280.45240344275726,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 33.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Salmon-Creek",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Salvo",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 35.534562,
+      "lng": -75.4754139,
+      "region_hint": "North Carolina",
+      "orientation_deg": 101.4314829916674,
+      "orientation_50m": 100.04579385558304,
+      "orientation_200m": 98.41779198962661,
+      "offshore_wind_deg": 281.4314829916674,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 3.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "San Diego Blacks Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_43deg"
+      ],
+      "lat": 32.8458529,
+      "lng": -117.2575702,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 311.0303362164538,
+      "orientation_200m": 312.73089667645587,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 42.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Blacks-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "San Simeon",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_34deg"
+      ],
+      "lat": 35.617547,
+      "lng": -121.1404719,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 248.00216639527434,
+      "orientation_200m": 235.72002596707807,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 34.3,
+      "verification_confidence": "medium",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/San-Simeon-Creek",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sandbridge Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_16deg",
+        "algorithm_only"
+      ],
+      "lat": 36.745984,
+      "lng": -75.9440944,
+      "region_hint": "Virginia",
+      "orientation_deg": 84.6272692184408,
+      "orientation_50m": 90.56438431722125,
+      "orientation_200m": 74.88767243101881,
+      "offshore_wind_deg": 264.6272692184408,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sandspit",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_166deg"
+      ],
+      "lat": 34.4173428,
+      "lng": -119.8304088,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 340.40064393700186,
+      "orientation_200m": 345.7952413653413,
+      "offshore_wind_deg": 0,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 165.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Sandspit_1",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sandy Beach Rincon",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 18.3711208,
+      "lng": -67.2553932,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 178.95984983774633,
+      "orientation_50m": 178.95984983768028,
+      "orientation_200m": 172.0884308799283,
+      "offshore_wind_deg": 358.95984983774633,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sea Bright",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.3795802,
+      "lng": -73.9745461,
+      "region_hint": "New Jersey",
+      "orientation_deg": 89.62276151400488,
+      "orientation_50m": 89.6227615140715,
+      "orientation_200m": 84.12013633553806,
+      "offshore_wind_deg": 269.6227615140049,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 5.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sea Isle City",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.1533917,
+      "lng": -74.6910795,
+      "region_hint": "New Jersey",
+      "orientation_deg": 118.3788591609603,
+      "orientation_50m": 127.3551163304785,
+      "orientation_200m": 119.67154858026436,
+      "offshore_wind_deg": 298.3788591609603,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 9.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Second Beach Newport",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_25deg",
+        "algorithm_only"
+      ],
+      "lat": 41.486499,
+      "lng": -71.2538518,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 31.16053483728581,
+      "orientation_50m": 18.97196614010727,
+      "orientation_200m": 43.84623953272853,
+      "offshore_wind_deg": 211.1605348372858,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 24.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Second Peak",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_88deg"
+      ],
+      "lat": 36.9555205,
+      "lng": -121.9702184,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 307.04197442143175,
+      "orientation_200m": 312.64190139872926,
+      "offshore_wind_deg": 315,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 87.6,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pleasure-Point-Second-Peak",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sewer Peak",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_127deg"
+      ],
+      "lat": 36.9535308,
+      "lng": -121.9728983,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 352.09702026608227,
+      "orientation_200m": 338.74965448140676,
+      "offshore_wind_deg": 315,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 127.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pleasure-Point-Sewer-Peak",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Shark's Cove",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_106deg"
+      ],
+      "lat": 36.9609104,
+      "lng": -121.9624799,
+      "region_hint": "California",
+      "orientation_deg": 202,
+      "orientation_50m": 308.1213268226734,
+      "orientation_200m": 308.12132682269964,
+      "offshore_wind_deg": 22,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 106.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Shelter Cove",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_31deg"
+      ],
+      "lat": 40.0380195,
+      "lng": -124.0557453,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 214.0466522862664,
+      "orientation_200m": 194.1991891953959,
+      "offshore_wind_deg": 45,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 30.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Shi Shi Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 48.2620891,
+      "lng": -124.6817603,
+      "region_hint": "Washington",
+      "orientation_deg": 282.0352324249439,
+      "orientation_50m": 275.5023079309274,
+      "orientation_200m": 281.10222628170965,
+      "offshore_wind_deg": 102.0352324249439,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Shinnecock Inlet",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_17deg",
+        "algorithm_only"
+      ],
+      "lat": 40.8421432,
+      "lng": -72.4764319,
+      "region_hint": "New York",
+      "orientation_deg": 80.54860276905856,
+      "orientation_50m": 89.79968854619688,
+      "orientation_200m": 73.1037164013452,
+      "offshore_wind_deg": 260.54860276905856,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ship Bottom",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_19deg",
+        "algorithm_only"
+      ],
+      "lat": 39.6503874,
+      "lng": -74.1764537,
+      "region_hint": "New Jersey",
+      "orientation_deg": 145.94639529690517,
+      "orientation_50m": 144.443847665539,
+      "orientation_200m": 127.25087140850485,
+      "offshore_wind_deg": 325.94639529690517,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Short Sands Beach York",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_19deg",
+        "algorithm_only"
+      ],
+      "lat": 43.1747268,
+      "lng": -70.6080713,
+      "region_hint": "Maine",
+      "orientation_deg": 61.704425730810385,
+      "orientation_50m": 75.51878752913308,
+      "orientation_200m": 56.53003108900322,
+      "offshore_wind_deg": 241.70442573081039,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Smith Point Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_22deg",
+        "algorithm_only"
+      ],
+      "lat": 40.7412177,
+      "lng": -72.8688265,
+      "region_hint": "New York",
+      "orientation_deg": 133.54293149844193,
+      "orientation_50m": 126.32446947654478,
+      "orientation_200m": 148.38886379178405,
+      "offshore_wind_deg": 313.54293149844193,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "South Beach Miami",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 25.7744291,
+      "lng": -80.1332415,
+      "region_hint": "Florida",
+      "orientation_deg": 106.69179004929151,
+      "orientation_50m": 101.9844264758234,
+      "orientation_200m": 102.73793433204662,
+      "offshore_wind_deg": 286.6917900492915,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Spring Lake",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 40.1505167,
+      "lng": -74.0352666,
+      "region_hint": "New Jersey",
+      "orientation_deg": 103.78708529266913,
+      "orientation_50m": 103.03179087524302,
+      "orientation_200m": 100.64561870717966,
+      "offshore_wind_deg": 283.78708529266913,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 3.1,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "St. Pete Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 27.7093204,
+      "lng": -82.726646,
+      "region_hint": "Florida",
+      "orientation_deg": 206.2825798596465,
+      "orientation_50m": 204.72443888886136,
+      "orientation_200m": 204.39587502687937,
+      "offshore_wind_deg": 26.28257985964649,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 1.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Steamer Lane",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_122deg"
+      ],
+      "lat": 36.951248,
+      "lng": -122.0245267,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 289.0147049383258,
+      "orientation_200m": 301.7187381916902,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 121.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Steamer-Lane-Middle-Peak",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Steps Beach Rincon",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 18.348926,
+      "lng": -67.2636183,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 225.4524145867382,
+      "orientation_50m": 225.45241458685553,
+      "orientation_200m": 229.50076315322644,
+      "offshore_wind_deg": 45.4524145867382,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Stone Harbor",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.0509467,
+      "lng": -74.7659978,
+      "region_hint": "New Jersey",
+      "orientation_deg": 115.05860088130686,
+      "orientation_50m": 115.09152918487752,
+      "orientation_200m": 115.05913476119707,
+      "offshore_wind_deg": 295.05860088130686,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Stone Steps",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_36deg"
+      ],
+      "lat": 33.0369867,
+      "lng": -117.2919818,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 234.03566518291484,
+      "orientation_200m": 235.4703367740026,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 36.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Stone-Steps",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Suicide's",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_179deg"
+      ],
+      "lat": 36.9539085,
+      "lng": -121.9748546,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 358.7522690026133,
+      "orientation_200m": 358.1612077443757,
+      "offshore_wind_deg": 0,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 178.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sunset Beach Hawaii",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 21.6633126,
+      "lng": -158.0499454,
+      "region_hint": "Hawaii",
+      "orientation_deg": 312.7220980369182,
+      "orientation_50m": 312.7220980370087,
+      "orientation_200m": 312.7220980369182,
+      "offshore_wind_deg": 132.72209803691823,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Surf City NC",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 34.4354535,
+      "lng": -77.5532254,
+      "region_hint": "North Carolina",
+      "orientation_deg": 146.88301130275545,
+      "orientation_50m": 143.06205672007866,
+      "orientation_200m": 146.59794217099102,
+      "offshore_wind_deg": 326.88301130275545,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 3.8,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Surf City NJ",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 39.6578294,
+      "lng": -74.1694508,
+      "region_hint": "New Jersey",
+      "orientation_deg": 127.3729243109915,
+      "orientation_50m": 127.37292431101798,
+      "orientation_200m": 127.37292431116668,
+      "offshore_wind_deg": 307.3729243109915,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Surfside Beach SC",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 33.6048076,
+      "lng": -78.9715304,
+      "region_hint": "South Carolina",
+      "orientation_deg": 129.07509374135293,
+      "orientation_50m": 129.07509374135293,
+      "orientation_200m": 129.07509374135293,
+      "offshore_wind_deg": 309.07509374135293,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 0.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Surfside Beach TX",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 28.9561768,
+      "lng": -95.2932107,
+      "region_hint": "Texas",
+      "orientation_deg": 121.39558357842623,
+      "orientation_50m": 119.47953150199925,
+      "orientation_200m": 122.35549230134814,
+      "offshore_wind_deg": 301.3955835784262,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 2.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Surfside, California",
+      "priority": "medium",
+      "concerns": [
+        "llm_medium_confidence"
+      ],
+      "lat": 33.72888889,
+      "lng": -118.08388889,
+      "region_hint": "California",
+      "orientation_deg": 231,
+      "orientation_50m": 230.53054512102517,
+      "orientation_200m": 222.69849224259428,
+      "offshore_wind_deg": 51,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 8.3,
+      "verification_confidence": "medium",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Tamarack",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_41deg"
+      ],
+      "lat": 33.1507749,
+      "lng": -117.3484893,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 228.64403833324207,
+      "orientation_200m": 237.33766897006308,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 41.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Tamarack-st",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Thalia Street",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_49deg"
+      ],
+      "lat": 33.5362122,
+      "lng": -117.777872,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 248.69778804618932,
+      "orientation_200m": 239.2202875298508,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 48.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/T-Street",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "The Hook",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_116deg"
+      ],
+      "lat": 36.9593054,
+      "lng": -121.9643858,
+      "region_hint": "California",
+      "orientation_deg": 202,
+      "orientation_50m": 309.42658322334273,
+      "orientation_200m": 318.061676103954,
+      "offshore_wind_deg": 315,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 116.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "The Point Buxton",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 35.2676776,
+      "lng": -75.5423746,
+      "region_hint": "North Carolina",
+      "orientation_deg": 162.46202933704024,
+      "orientation_50m": 160.09717769092856,
+      "orientation_200m": 167.03838322651836,
+      "offshore_wind_deg": 342.46202933704024,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 6.9,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Third Beach Newport",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 41.4900083,
+      "lng": -71.2478243,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 85.68441278586533,
+      "orientation_50m": 84.66797744111534,
+      "orientation_200m": 85.53822384860757,
+      "offshore_wind_deg": 265.68441278586533,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 1.0,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Thousand Peaks Maui",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 20.7476261,
+      "lng": -156.4549898,
+      "region_hint": "Hawaii",
+      "orientation_deg": 269.5424582729602,
+      "orientation_50m": 271.6300974233083,
+      "orientation_200m": 260.79225221672505,
+      "offshore_wind_deg": 89.54245827296018,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 10.8,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Tokeland",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 46.709018,
+      "lng": -123.9863262,
+      "region_hint": "Washington",
+      "orientation_deg": 180.71849973267013,
+      "orientation_50m": 180.71849973240342,
+      "orientation_200m": 185.4168442753953,
+      "offshore_wind_deg": 0.718499732670125,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.7,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Topanga Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_76deg"
+      ],
+      "lat": 34.0388176,
+      "lng": -118.582489,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 328.8314462414891,
+      "orientation_200m": 346.3769690745893,
+      "offshore_wind_deg": 90,
+      "break_type": "point",
+      "max_window_disagreement_deg": 76.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Topanga-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Torrance Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_82deg"
+      ],
+      "lat": 33.809746,
+      "lng": -118.3924835,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 270.77615053385045,
+      "orientation_200m": 282.15600147438687,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 82.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Torrance-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Treasure Island FL",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 27.7620473,
+      "lng": -82.7664378,
+      "region_hint": "Florida",
+      "orientation_deg": 229.17911698987893,
+      "orientation_50m": 229.17911698987893,
+      "orientation_200m": 231.55825762319319,
+      "offshore_wind_deg": 49.179116989878935,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 2.4,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Trees",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_118deg"
+      ],
+      "lat": 36.9669527,
+      "lng": -121.956576,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 283.4864372748656,
+      "orientation_200m": 298.1714725885427,
+      "offshore_wind_deg": 0,
+      "break_type": "point",
+      "max_window_disagreement_deg": 118.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Upper Trestles",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_40deg"
+      ],
+      "lat": 33.4270275,
+      "lng": -117.6124179,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 230.21013193188276,
+      "orientation_200m": 231.22648555960166,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 39.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Trestles_Uppers",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Venice Beach FL",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 27.0999943,
+      "lng": -82.4594485,
+      "region_hint": "Florida",
+      "orientation_deg": 253.61658816843192,
+      "orientation_50m": 256.70288941617696,
+      "orientation_200m": 258.2422905282692,
+      "offshore_wind_deg": 73.61658816843192,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 4.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Waddell Creek",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_34deg"
+      ],
+      "lat": 37.1117608,
+      "lng": -122.274008,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 259.42339166485215,
+      "orientation_200m": 239.82846289840006,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 34.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Waddell-Creek",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Westport Jetty",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_15deg",
+        "algorithm_only"
+      ],
+      "lat": 46.8968953,
+      "lng": -124.1293294,
+      "region_hint": "Washington",
+      "orientation_deg": 253.2037404977891,
+      "orientation_50m": 259.39385862321024,
+      "orientation_200m": 243.91008298751137,
+      "offshore_wind_deg": 73.20374049778911,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.5,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Westport Light State Park",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 46.8957374,
+      "lng": -124.1224926,
+      "region_hint": "Washington",
+      "orientation_deg": 256.57997281277926,
+      "orientation_50m": 256.5799728128412,
+      "orientation_200m": 251.3176751630283,
+      "offshore_wind_deg": 76.57997281277926,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 5.3,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Whiskey Run Beach",
+      "priority": "medium",
+      "concerns": [
+        "algorithm_only"
+      ],
+      "lat": 43.2103872,
+      "lng": -124.3942832,
+      "region_hint": "Oregon",
+      "orientation_deg": 302.0246688289713,
+      "orientation_50m": 302.02466882895715,
+      "orientation_200m": 291.41152438509886,
+      "offshore_wind_deg": 122.0246688289713,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 10.6,
+      "verification_confidence": null,
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Wrightsville Beach",
+      "priority": "medium",
+      "concerns": [
+        "window_disagreement_32deg"
+      ],
+      "lat": 34.2146083,
+      "lng": -77.8038367,
+      "region_hint": "North Carolina",
+      "orientation_deg": 123.7120949616762,
+      "orientation_50m": 106.00900183303906,
+      "orientation_200m": 137.5360296095888,
+      "offshore_wind_deg": 303.7120949616762,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 31.5,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Wrightsville-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "56th Street",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 33.6239434,
+      "lng": -117.9459121,
+      "region_hint": "California",
+      "orientation_deg": 202,
+      "orientation_50m": 221.63030282458624,
+      "orientation_200m": 220.01229225788734,
+      "offshore_wind_deg": 22,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 19.6,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "61st Street Galveston",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 29.2860894,
+      "lng": -94.8366973,
+      "region_hint": "Texas",
+      "orientation_deg": 155.27304190276402,
+      "orientation_50m": 149.45741371096608,
+      "orientation_200m": 165.23862972688028,
+      "offshore_wind_deg": 335.273041902764,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.8,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Galveston",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Agate Beach Newport",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_19deg"
+      ],
+      "lat": 44.6773386,
+      "lng": -124.0617836,
+      "region_hint": "Oregon",
+      "orientation_deg": 210.16467401436103,
+      "orientation_50m": 220.70597862701038,
+      "orientation_200m": 201.39483219767726,
+      "offshore_wind_deg": 30.164674014361026,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Agate-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Avon Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 35.3472947,
+      "lng": -75.4996156,
+      "region_hint": "North Carolina",
+      "orientation_deg": 112.47958497827148,
+      "orientation_50m": 123.72185408205678,
+      "orientation_200m": 103.26301707829396,
+      "offshore_wind_deg": 292.4795849782715,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 20.5,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Avon-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Bellows Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 21.3453025,
+      "lng": -157.7214218,
+      "region_hint": "Hawaii",
+      "orientation_deg": 57.50055634632349,
+      "orientation_50m": 49.78733679740077,
+      "orientation_200m": 65.4326007634927,
+      "offshore_wind_deg": 237.5005563463235,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Bellows",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Belmar",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_17deg"
+      ],
+      "lat": 40.1802517,
+      "lng": -74.0272188,
+      "region_hint": "New Jersey",
+      "orientation_deg": 140.44330889865074,
+      "orientation_50m": 144.21956001082356,
+      "orientation_200m": 127.28370112353986,
+      "offshore_wind_deg": 320.44330889865074,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.9,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Belmar",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Carpinteria State Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_21deg"
+      ],
+      "lat": 34.3913252,
+      "lng": -119.5214731,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 216.81432383188326,
+      "orientation_200m": 221.41843747402424,
+      "offshore_wind_deg": 20,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Chuns Reef",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_28deg"
+      ],
+      "lat": 21.6232931,
+      "lng": -158.0812175,
+      "region_hint": "Hawaii",
+      "orientation_deg": 310.9156483962058,
+      "orientation_50m": 298.1244711252898,
+      "orientation_200m": 326.00272984427437,
+      "offshore_wind_deg": 130.91564839620582,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 27.9,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Chuns-Reef",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Coronado Shores",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 32.6764413,
+      "lng": -117.1744776,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 210.75418519146592,
+      "orientation_200m": 222.50755857129366,
+      "offshore_wind_deg": 20,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Crash Boat Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 18.4577617,
+      "lng": -67.1635616,
+      "region_hint": "Puerto Rico",
+      "orientation_deg": 246.5711081458512,
+      "orientation_50m": 256.26592122964826,
+      "orientation_200m": 235.90459191011576,
+      "offshore_wind_deg": 66.57110814585121,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 20.4,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Crash-Boat",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Cupsogue Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 40.7701471,
+      "lng": -72.7357772,
+      "region_hint": "New York",
+      "orientation_deg": 147.62346657197577,
+      "orientation_50m": 140.26259629494183,
+      "orientation_200m": 163.53999439090762,
+      "offshore_wind_deg": 327.62346657197577,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 23.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Cupsogue",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Deal",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_28deg"
+      ],
+      "lat": 40.2348581,
+      "lng": -74.0092478,
+      "region_hint": "New Jersey",
+      "orientation_deg": 81.3267671885717,
+      "orientation_50m": 72.4456931988766,
+      "orientation_200m": 100.0716759468329,
+      "offshore_wind_deg": 261.3267671885717,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 27.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Ocean-Lane-Deal",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Destin Jetty",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_28deg"
+      ],
+      "lat": 30.3935337,
+      "lng": -86.4957834,
+      "region_hint": "Florida",
+      "orientation_deg": 180,
+      "orientation_50m": 151.8605912882614,
+      "orientation_200m": 163.3174606072821,
+      "offshore_wind_deg": 0,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 28.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Destin",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Dewey Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_24deg"
+      ],
+      "lat": 38.6852536,
+      "lng": -75.0733945,
+      "region_hint": "Delaware",
+      "orientation_deg": 90,
+      "orientation_50m": 66.12773383757019,
+      "orientation_200m": 78.89895715735861,
+      "offshore_wind_deg": 270,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 23.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Dewey-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ditch Plains",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_17deg"
+      ],
+      "lat": 41.0406577,
+      "lng": -71.9178462,
+      "region_hint": "New York",
+      "orientation_deg": 153.328931797226,
+      "orientation_50m": 148.76030305642746,
+      "orientation_200m": 166.05942257256925,
+      "offshore_wind_deg": 333.328931797226,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 17.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Ditch-Plains",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "El Capitan State Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 34.4612139,
+      "lng": -120.0135337,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 195.8254097265143,
+      "orientation_200m": 202.04204186638935,
+      "offshore_wind_deg": 0,
+      "break_type": "point",
+      "max_window_disagreement_deg": 22.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/El-Capitan",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "El Porto",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 33.9024109,
+      "lng": -118.4190401,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 259.4529311516883,
+      "orientation_200m": 247.19722232896856,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/El-Porto-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Flagler Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 29.4801631,
+      "lng": -81.1255704,
+      "region_hint": "Florida",
+      "orientation_deg": 45,
+      "orientation_50m": 57.03697187543656,
+      "orientation_200m": 67.29656054978591,
+      "offshore_wind_deg": 225,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.3,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Flagler",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Folly Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 32.6549715,
+      "lng": -79.9396423,
+      "region_hint": "South Carolina",
+      "orientation_deg": 147.94344624676626,
+      "orientation_50m": 127.80414533654829,
+      "orientation_200m": 149.3371115568487,
+      "offshore_wind_deg": 327.94344624676626,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.5,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Folly-Beach-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Hapuna Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_21deg"
+      ],
+      "lat": 19.9922472,
+      "lng": -155.8257564,
+      "region_hint": "Hawaii",
+      "orientation_deg": 297.5295630008242,
+      "orientation_50m": 303.3538643419239,
+      "orientation_200m": 282.05003992653053,
+      "offshore_wind_deg": 117.52956300082423,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hapuna",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Harvey Cedars",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 39.7042905,
+      "lng": -74.1372713,
+      "region_hint": "New Jersey",
+      "orientation_deg": 110.07591634319817,
+      "orientation_50m": 100.69878162597263,
+      "orientation_200m": 119.036182443102,
+      "offshore_wind_deg": 290.0759163431982,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Harvey-Cedars",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Haulover Inlet",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 25.9044872,
+      "lng": -80.1262043,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 91.43768658265776,
+      "orientation_200m": 116.36251936509643,
+      "offshore_wind_deg": 270,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 26.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Haulover",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Higgins Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_25deg"
+      ],
+      "lat": 43.5612902,
+      "lng": -70.2728779,
+      "region_hint": "Maine",
+      "orientation_deg": 150.0929345799683,
+      "orientation_50m": 156.81993147314654,
+      "orientation_200m": 132.12291651297608,
+      "offshore_wind_deg": 330.0929345799683,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 24.7,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Higgins-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Hobuck Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_28deg"
+      ],
+      "lat": 48.3360358,
+      "lng": -124.664067,
+      "region_hint": "Washington",
+      "orientation_deg": 220.18139776591738,
+      "orientation_50m": 203.41479558761876,
+      "orientation_200m": 231.4043669570085,
+      "offshore_wind_deg": 40.18139776591738,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 28.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hobuck",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Honolua Bay",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 21.0146954,
+      "lng": -156.6394964,
+      "region_hint": "Hawaii",
+      "orientation_deg": 259.32172798621104,
+      "orientation_50m": 243.88832576058837,
+      "orientation_200m": 269.92265787779115,
+      "offshore_wind_deg": 79.32172798621104,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 26.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Honolua-Bay",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Horace Caldwell Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 27.8270339,
+      "lng": -97.0520151,
+      "region_hint": "Texas",
+      "orientation_deg": 119.04232651581924,
+      "orientation_50m": 109.9099823431664,
+      "orientation_200m": 135.9862833311193,
+      "offshore_wind_deg": 299.04232651581924,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 26.1,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Horace-Caldwell-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Hoʻokipa",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 20.933214,
+      "lng": -156.357524,
+      "region_hint": "Hawaii",
+      "orientation_deg": 318.61248727256907,
+      "orientation_50m": 312.18704066203753,
+      "orientation_200m": 328.17842077306335,
+      "offshore_wind_deg": 138.61248727256907,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hookipa",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Huntington Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_30deg"
+      ],
+      "lat": 33.6546016,
+      "lng": -118.0046529,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 232.03800516140996,
+      "orientation_200m": 217.33556985451622,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 29.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Huntington-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Jacksonville Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 30.2935679,
+      "lng": -81.3877064,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 69.96660735178705,
+      "orientation_200m": 73.49846889252046,
+      "offshore_wind_deg": 225,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 20.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Jalama Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 34.5067612,
+      "lng": -120.5001931,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 231.02753804084432,
+      "orientation_200m": 248.17991678769909,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 23.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Jalama",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "La Jolla Shores",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 32.8549836,
+      "lng": -117.258111,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 288.10607935344314,
+      "orientation_200m": 291.69655679980247,
+      "offshore_wind_deg": 112,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/La-Jolla-Shores",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Leucadia",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_28deg"
+      ],
+      "lat": 33.0692223,
+      "lng": -117.302681,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 248.97253501110947,
+      "orientation_200m": 242.1776323499688,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 27.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Leucadia",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Log Cabins",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 21.5876272,
+      "lng": -158.1035648,
+      "region_hint": "Hawaii",
+      "orientation_deg": 295.65749426509035,
+      "orientation_50m": 281.2881998956757,
+      "orientation_200m": 303.90750434263254,
+      "offshore_wind_deg": 115.65749426509035,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Log-Cabins",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Lori Wilson Park",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 28.3365822,
+      "lng": -80.6085123,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 106.07614844431225,
+      "orientation_200m": 103.13806154834185,
+      "offshore_wind_deg": 270,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lori-Wilson-Park",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Makaha",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 21.4545441,
+      "lng": -158.1975056,
+      "region_hint": "Hawaii",
+      "orientation_deg": 206.20483682932888,
+      "orientation_50m": 193.2592000222454,
+      "orientation_200m": 216.13873350749873,
+      "offshore_wind_deg": 26.204836829328883,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.9,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Makaha",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Malibu Surfrider Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 34.035591,
+      "lng": -118.689423,
+      "region_hint": "California",
+      "orientation_deg": 180,
+      "orientation_50m": 195.69423233044358,
+      "orientation_200m": 193.91667616741324,
+      "offshore_wind_deg": 0,
+      "break_type": "point",
+      "max_window_disagreement_deg": 15.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Manhattan Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 33.8838683,
+      "lng": -118.4132392,
+      "region_hint": "California",
+      "orientation_deg": 248,
+      "orientation_50m": 264.0945854676694,
+      "orientation_200m": 246.21917576707438,
+      "offshore_wind_deg": 68,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 17.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Manhattan-Beach-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Manresa State Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 36.922146,
+      "lng": -121.8487421,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 246.05145750019017,
+      "orientation_200m": 244.46256730662276,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 25.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Manresa-State-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Margate",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 39.3279557,
+      "lng": -74.5143663,
+      "region_hint": "New Jersey",
+      "orientation_deg": 148.13461760429612,
+      "orientation_50m": 138.31041100315633,
+      "orientation_200m": 164.53747485646136,
+      "offshore_wind_deg": 328.1346176042961,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 26.2,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Margate-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Matunuck",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 41.3784352,
+      "lng": -71.5458919,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 33.0010561631982,
+      "orientation_50m": 38.96298340047929,
+      "orientation_200m": 16.685482866718644,
+      "offshore_wind_deg": 213.0010561631982,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Matunuck",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Mavericks, California",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 37.49149,
+      "lng": -122.508338,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 248.67430695019095,
+      "orientation_200m": 243.50451343548002,
+      "offshore_wind_deg": 90,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 26.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Mavericks",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Mission Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_17deg"
+      ],
+      "lat": 32.7825908,
+      "lng": -117.2524943,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 270.53480860683624,
+      "orientation_200m": 253.70169813651705,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.8,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Mission-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Mondos",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_25deg"
+      ],
+      "lat": 34.32087,
+      "lng": -119.375587,
+      "region_hint": "California",
+      "orientation_deg": 157,
+      "orientation_50m": 181.86821353355936,
+      "orientation_200m": 181.86821353335938,
+      "offshore_wind_deg": 337,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 24.9,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Mondos",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Monster Hole",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_26deg"
+      ],
+      "lat": 28.0684067,
+      "lng": -80.5607951,
+      "region_hint": "Florida",
+      "orientation_deg": 90,
+      "orientation_50m": 76.86239172276976,
+      "orientation_200m": 63.819270083106176,
+      "offshore_wind_deg": 270,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 26.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Moonlight Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 33.0482991,
+      "lng": -117.2951295,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 265.26683721536847,
+      "orientation_200m": 251.61602554498086,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Moonlight-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Moonstone Beach Humboldt",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 41.028877,
+      "lng": -124.110425,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 248.04359496687744,
+      "orientation_200m": 253.94918481508614,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Moonstone-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Nags Head Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 35.973589,
+      "lng": -75.6304192,
+      "region_hint": "North Carolina",
+      "orientation_deg": 73.21863268603204,
+      "orientation_50m": 86.29936898607093,
+      "orientation_200m": 66.6357724039276,
+      "offshore_wind_deg": 253.21863268603204,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.7,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Nags-Head-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Nahant Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_15deg"
+      ],
+      "lat": 42.4456439,
+      "lng": -70.9384788,
+      "region_hint": "Massachusetts",
+      "orientation_deg": 95.44507995146171,
+      "orientation_50m": 88.43890846187651,
+      "orientation_200m": 103.70211399006814,
+      "offshore_wind_deg": 275.4450799514617,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.3,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Nahant-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Narragansett Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 41.4377843,
+      "lng": -71.4563324,
+      "region_hint": "Rhode Island",
+      "orientation_deg": 148.91060328704793,
+      "orientation_50m": 160.396346977328,
+      "orientation_200m": 138.7078148717702,
+      "offshore_wind_deg": 328.91060328704793,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.7,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/North-Pierat-Narragansett",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Navarre Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 30.3793662,
+      "lng": -86.862182,
+      "region_hint": "Florida",
+      "orientation_deg": 157,
+      "orientation_50m": 179.32918238755474,
+      "orientation_200m": 170.59334070736804,
+      "offshore_wind_deg": 337,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.3,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Oceanside Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_21deg"
+      ],
+      "lat": 33.1941658,
+      "lng": -117.3846346,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 226.29529708033385,
+      "orientation_200m": 229.27631652190144,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 20.7,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Oceanside-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Old Orchard Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_27deg"
+      ],
+      "lat": 43.5143834,
+      "lng": -70.376045,
+      "region_hint": "Maine",
+      "orientation_deg": 125.78748658183974,
+      "orientation_50m": 139.45657182589093,
+      "orientation_200m": 112.65313773206793,
+      "offshore_wind_deg": 305.78748658183974,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 26.8,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Old-Orchard-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Otter Rock",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 44.7481741,
+      "lng": -124.0540892,
+      "region_hint": "Oregon",
+      "orientation_deg": 250.86707458794172,
+      "orientation_50m": 259.1800839183171,
+      "orientation_200m": 243.4191694403969,
+      "offshore_wind_deg": 70.86707458794172,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.8,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Otter-Rock",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pacific Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_19deg"
+      ],
+      "lat": 32.7978268,
+      "lng": -117.2403183,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 232.12226171610882,
+      "orientation_200m": 251.16438833217808,
+      "offshore_wind_deg": 67,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Palos Verdes Cove",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 33.8005556,
+      "lng": -118.3883333,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 283.24277393797144,
+      "orientation_200m": 293.00175690416955,
+      "offshore_wind_deg": 90,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 23.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Panama City Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 30.2178578,
+      "lng": -85.8724948,
+      "region_hint": "Florida",
+      "orientation_deg": 208.538119970352,
+      "orientation_50m": 196.86017458806032,
+      "orientation_200m": 218.8782209766839,
+      "offshore_wind_deg": 28.538119970352,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Panama-City-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Patrick Air Force Base Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_19deg"
+      ],
+      "lat": 28.2422228,
+      "lng": -80.6091074,
+      "region_hint": "Florida",
+      "orientation_deg": 72.69185835204826,
+      "orientation_50m": 79.28341230140848,
+      "orientation_200m": 60.06373037480921,
+      "offshore_wind_deg": 252.69185835204826,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.2,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Patrick-Air-Force-Base",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pensacola Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 30.3353365,
+      "lng": -87.1287061,
+      "region_hint": "Florida",
+      "orientation_deg": 154.90682398125887,
+      "orientation_50m": 149.14884260380882,
+      "orientation_200m": 166.6793419231176,
+      "offshore_wind_deg": 334.90682398125887,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 17.5,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pensacola-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Phantoms",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 21.5876272,
+      "lng": -158.1035648,
+      "region_hint": "Hawaii",
+      "orientation_deg": 295.65749426509035,
+      "orientation_50m": 281.2881998956757,
+      "orientation_200m": 303.90750434263254,
+      "offshore_wind_deg": 115.65749426509035,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Phantoms",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pine Trees Hawaii",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 19.6950942,
+      "lng": -156.0446542,
+      "region_hint": "Hawaii",
+      "orientation_deg": 179.00332144241474,
+      "orientation_50m": 179.00332144228082,
+      "orientation_200m": 195.0026536246753,
+      "offshore_wind_deg": 359.00332144241474,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pine-Trees",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Pismo Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_17deg"
+      ],
+      "lat": 35.138311,
+      "lng": -120.644601,
+      "region_hint": "California",
+      "orientation_deg": 246.75048094636537,
+      "orientation_50m": 237.5862494292562,
+      "orientation_200m": 254.7510926268821,
+      "offshore_wind_deg": 66.75048094636537,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 17.2,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pismo-Beach-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ponquogue Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_22deg"
+      ],
+      "lat": 40.8369051,
+      "lng": -72.4953997,
+      "region_hint": "New York",
+      "orientation_deg": 148.31391749391173,
+      "orientation_50m": 143.00977773922068,
+      "orientation_200m": 164.58272997822814,
+      "offshore_wind_deg": 328.31391749391173,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Outside-Ponquogue",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Ponte Vedra Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_15deg"
+      ],
+      "lat": 30.2396865,
+      "lng": -81.3856384,
+      "region_hint": "Florida",
+      "orientation_deg": 66.65597952651615,
+      "orientation_50m": 59.942226759089294,
+      "orientation_200m": 75.10618364147217,
+      "offshore_wind_deg": 246.65597952651615,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 15.2,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Ponte-Vedra",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Port Aransas Jetty",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_17deg"
+      ],
+      "lat": 27.8332175,
+      "lng": -97.0618324,
+      "region_hint": "Texas",
+      "orientation_deg": 150.60545962492068,
+      "orientation_50m": 147.0473713584583,
+      "orientation_200m": 164.01671624213918,
+      "offshore_wind_deg": 330.6054596249207,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 17.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Port-Aransas",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Puaena Point",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_25deg"
+      ],
+      "lat": 21.6028867,
+      "lng": -158.107407,
+      "region_hint": "Hawaii",
+      "orientation_deg": 233.89115984816135,
+      "orientation_50m": 255.6350975955014,
+      "orientation_200m": 230.73933076824994,
+      "offshore_wind_deg": 53.89115984816135,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 24.9,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Puaena-Point",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Sand Dollar Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_24deg"
+      ],
+      "lat": 35.9238729,
+      "lng": -121.4683507,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 294.1662988056008,
+      "orientation_200m": 284.24532719968647,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 24.2,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Sand-Dollar-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Santa Monica Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_25deg"
+      ],
+      "lat": 34.0171018,
+      "lng": -118.5061976,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 225.37136323656534,
+      "orientation_200m": 222.02375831116615,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 25.0,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Santa-Monica-Samo-20",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Seal Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_27deg"
+      ],
+      "lat": 33.7375357,
+      "lng": -118.1076233,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 217.79976282345768,
+      "orientation_200m": 197.88186409486053,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 27.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Seal-Beach-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Seaside Cove",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_19deg"
+      ],
+      "lat": 45.9759114,
+      "lng": -123.9392675,
+      "region_hint": "Oregon",
+      "orientation_deg": 311.13476038288474,
+      "orientation_50m": 323.94362262984515,
+      "orientation_200m": 304.59051190859014,
+      "offshore_wind_deg": 131.13476038288474,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.4,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Seaside-Cove",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Seaside Heights",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 39.9463216,
+      "lng": -74.0788709,
+      "region_hint": "New Jersey",
+      "orientation_deg": 57.35175395428632,
+      "orientation_50m": 53.258289701712556,
+      "orientation_200m": 76.33033348571848,
+      "offshore_wind_deg": 237.35175395428632,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 23.1,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Seaside-Heights",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Shell Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 35.1640177,
+      "lng": -120.6871714,
+      "region_hint": "California",
+      "orientation_deg": 247,
+      "orientation_50m": 228.64912316528512,
+      "orientation_200m": 229.01347523504683,
+      "offshore_wind_deg": 67,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 18.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Short Sands Beach Oswald West",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 45.718616,
+      "lng": -123.9350384,
+      "region_hint": "Oregon",
+      "orientation_deg": 250.1841251310725,
+      "orientation_50m": 243.1803325195865,
+      "orientation_200m": 261.67006330840275,
+      "offshore_wind_deg": 70.1841251310725,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.5,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Oswald-West-State-Park",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "St. Augustine Beach Pier",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_25deg"
+      ],
+      "lat": 29.8571962,
+      "lng": -81.2654467,
+      "region_hint": "Florida",
+      "orientation_deg": 66.53011613982744,
+      "orientation_50m": 53.90458114891504,
+      "orientation_200m": 78.5881559548119,
+      "offshore_wind_deg": 246.53011613982744,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 24.7,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/St-Augustine-Beach-Pier",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Strands Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 33.4679135,
+      "lng": -117.7172796,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 241.48557026792798,
+      "orientation_200m": 239.96639047428096,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 16.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Surfside Jetty",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_29deg"
+      ],
+      "lat": 33.7423967,
+      "lng": -118.1055926,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 212.75354810619524,
+      "orientation_200m": 195.62249185131714,
+      "offshore_wind_deg": 45,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 29.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Surfside-Jetty",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Swamis",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_27deg"
+      ],
+      "lat": 33.0350202,
+      "lng": -117.2918754,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 248.3291964474804,
+      "orientation_200m": 242.57522261968847,
+      "offshore_wind_deg": 90,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 27.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Swamis",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "The Wedge (surfing)",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_16deg"
+      ],
+      "lat": 33.5925,
+      "lng": -117.88222222,
+      "region_hint": "California",
+      "orientation_deg": 200,
+      "orientation_50m": 213.77843251585153,
+      "orientation_200m": 197.70621140926448,
+      "offshore_wind_deg": 20,
+      "break_type": "jetty",
+      "max_window_disagreement_deg": 16.1,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Topsail Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_21deg"
+      ],
+      "lat": 34.3586241,
+      "lng": -77.6383448,
+      "region_hint": "North Carolina",
+      "orientation_deg": 101.76462102582093,
+      "orientation_50m": 96.2038986876995,
+      "orientation_200m": 117.1983645186184,
+      "offshore_wind_deg": 281.76462102582093,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 21.0,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Topsail-Island",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Torrey Pines State Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_17deg"
+      ],
+      "lat": 32.93138889,
+      "lng": -117.26027778,
+      "region_hint": "California",
+      "orientation_deg": 270,
+      "orientation_50m": 252.62449620958614,
+      "orientation_200m": 255.55614192044493,
+      "offshore_wind_deg": 90,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 17.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Torrey-Pines-State-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Trestles",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 33.3883865,
+      "lng": -117.5945414,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 205.3669990064784,
+      "orientation_200m": 218.79686401247204,
+      "offshore_wind_deg": 45,
+      "break_type": "point",
+      "max_window_disagreement_deg": 19.6,
+      "verification_confidence": "high",
+      "surf_forecast_url": null,
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Velzyland",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_23deg"
+      ],
+      "lat": 21.5876272,
+      "lng": -158.1035648,
+      "region_hint": "Hawaii",
+      "orientation_deg": 295.65749426509035,
+      "orientation_50m": 281.2881998956757,
+      "orientation_200m": 303.90750434263254,
+      "offshore_wind_deg": 115.65749426509035,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 22.6,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Velzy-Land",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Windansea Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_29deg"
+      ],
+      "lat": 32.83111111,
+      "lng": -117.28111111,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 254.4196509018068,
+      "orientation_200m": 252.43850544405086,
+      "offshore_wind_deg": 45,
+      "break_type": "reef",
+      "max_window_disagreement_deg": 29.4,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Windansea",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Yokohama Bay",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_18deg"
+      ],
+      "lat": 21.5558347,
+      "lng": -158.2506413,
+      "region_hint": "Hawaii",
+      "orientation_deg": 35.996256635860846,
+      "orientation_50m": 28.593502452961616,
+      "orientation_200m": 46.68264565375375,
+      "offshore_wind_deg": 215.99625663586085,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 18.1,
+      "verification_confidence": null,
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Yokohama-Bay",
+      "reviewed": false,
+      "reviewer_notes": ""
+    },
+    {
+      "name": "Zuma Beach",
+      "priority": "low",
+      "concerns": [
+        "window_disagreement_20deg"
+      ],
+      "lat": 34.0214393,
+      "lng": -118.8310349,
+      "region_hint": "California",
+      "orientation_deg": 225,
+      "orientation_50m": 205.4843566015537,
+      "orientation_200m": 221.97542676106332,
+      "offshore_wind_deg": 45,
+      "break_type": "beach",
+      "max_window_disagreement_deg": 19.5,
+      "verification_confidence": "high",
+      "surf_forecast_url": "https://www.surf-forecast.com/breaks/Zuma-Beach",
+      "reviewed": false,
+      "reviewer_notes": ""
+    }
+  ]
+}
