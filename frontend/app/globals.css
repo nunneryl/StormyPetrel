@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: #04080f;
+  color: #e5edf5;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Leaflet attribution + tile container styling for dark mode. */
+.leaflet-container {
+  background: #0a1220;
+}
+
+.leaflet-control-attribution {
+  background: rgba(4, 8, 15, 0.7) !important;
+  color: #8aa3c0 !important;
+}
+
+.leaflet-control-attribution a {
+  color: #c2d4e8 !important;
+}
