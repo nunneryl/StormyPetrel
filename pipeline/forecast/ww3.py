@@ -54,15 +54,12 @@ from functools import lru_cache
 from pathlib import Path
 
 from ..config import (
-    WW3_BBOX,
     WW3_CACHE_DIR,
     WW3_CYCLE_LOOKBACK,
     WW3_CYCLE_SUBPATH,
     WW3_DATE_PREFIX,
     WW3_FILE_PREFIX,
     WW3_FORECAST_FILE,
-    WW3_GRIB_FILTER_BASE,
-    WW3_GRIB_VARS,
     WW3_GRID,
     WW3_NOMADS_BASE,
     WW3_STEP_HOURS,
@@ -138,37 +135,20 @@ def _step_filename(hh: str, fhour: int) -> str:
     return f"{WW3_FILE_PREFIX}.t{hh}z.{WW3_GRID}.f{fhour:03d}.grib2"
 
 
-def _grib_dir_path(date_ymd: str, hh: str) -> str:
-    return f"/{WW3_DATE_PREFIX}.{date_ymd}/{hh}/{WW3_CYCLE_SUBPATH}"
+def _step_direct_url(date_ymd: str, hh: str, fhour: int) -> str:
+    """Full NOMADS URL of a single forecast-step GRIB.
 
-
-def _filter_url() -> str:
-    return f"{WW3_GRIB_FILTER_BASE}/filter_{WW3_FILE_PREFIX}.pl"
-
-
-def _filter_params(date_ymd: str, hh: str, fhour: int) -> dict:
-    params = {
-        "file": _step_filename(hh, fhour),
-        "dir": _grib_dir_path(date_ymd, hh),
-        "lev_surface": "on",
-    }
-    for var in WW3_GRIB_VARS:
-        params[f"var_{var}"] = "on"
-    lat_min, lat_max, lon_min, lon_max = WW3_BBOX
-    # gfswave global runs on a 0–360 lon grid. Convert -180/180 → 0–360 for
-    # the filter; the grib2 stays in 0–360 internally, we re-wrap on read.
-    if lon_min < 0:
-        lon_min += 360
-    if lon_max < 0:
-        lon_max += 360
-    params.update({
-        "subregion": "",
-        "leftlon": f"{lon_min:.2f}",
-        "rightlon": f"{lon_max:.2f}",
-        "toplat": f"{lat_max:.2f}",
-        "bottomlat": f"{lat_min:.2f}",
-    })
-    return params
+    The legacy filter_gfswave.pl CGI was set up against the old
+    /com/wave/prod/gfswave.YYYYMMDD/ tree and silently rejects requests
+    for the new /com/gfs/prod/gfs.YYYYMMDD/HH/wave/gridded/ layout, so we
+    download the per-step file directly. Each file is ~12 MB; ~640 MB
+    total for a 168 h cycle at 3 h spacing. Cached under WW3_CACHE_DIR
+    so subsequent runs hit disk only.
+    """
+    return (
+        f"{WW3_NOMADS_BASE}/{WW3_DATE_PREFIX}.{date_ymd}/{hh}/"
+        f"{WW3_CYCLE_SUBPATH}/{_step_filename(hh, fhour)}"
+    )
 
 
 def _step_cache_path(date_ymd: str, hh: str, fhour: int) -> Path:
@@ -176,13 +156,12 @@ def _step_cache_path(date_ymd: str, hh: str, fhour: int) -> Path:
 
 
 def _download_step(date_ymd: str, hh: str, fhour: int, dest: Path) -> bool:
-    url = _filter_url()
-    params = _filter_params(date_ymd, hh, fhour)
+    url = _step_direct_url(date_ymd, hh, fhour)
     try:
-        with session().get(url, params=params, stream=True, timeout=180) as resp:
+        with session().get(url, stream=True, timeout=180) as resp:
             if resp.status_code != 200:
                 log.debug(
-                    "ww3: filter %s/%sZ f%03d → %d", date_ymd, hh, fhour, resp.status_code,
+                    "ww3: GET %s → %d", url, resp.status_code,
                 )
                 return False
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -193,14 +172,15 @@ def _download_step(date_ymd: str, hh: str, fhour: int, dest: Path) -> bool:
                     if chunk:
                         f.write(chunk)
                         written += len(chunk)
-            if written < 200:
-                # An empty filter response is a tiny HTML error page.
+            # A truncated download (NOMADS 502 gateway HTML page, etc.) is
+            # smaller than any real grib2 file. Real cycle files are >5 MB.
+            if written < 100_000:
                 tmp.unlink(missing_ok=True)
                 return False
             tmp.replace(dest)
         return True
     except Exception as e:  # noqa: BLE001
-        log.debug("ww3: filter %s/%sZ f%03d failed: %s", date_ymd, hh, fhour, e)
+        log.debug("ww3: GET %s failed: %s", url, e)
         return False
 
 
