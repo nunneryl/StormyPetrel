@@ -124,6 +124,46 @@ WFO_TO_REGION = {
 }
 
 # ---------------------------------------------------------------------------
+# WAVEWATCH III (NCEP gfswave) — global wave model with full directional
+# spectra. Unlike NWPS (which only publishes total + 1 swell magnitude),
+# gfswave publishes 3 swell partitions (height + period + direction) plus
+# wind sea — exactly what surfers see when Surfline / MagicSeaweed list
+# multiple swell components. We use it as the source of truth for swell
+# direction / period; NWPS still drives nearshore Hs because its coastal
+# refraction is finer-grained than gfswave's 0.25° global grid.
+# ---------------------------------------------------------------------------
+
+WW3_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod"
+WW3_GRIB_FILTER_BASE = "https://nomads.ncep.noaa.gov/cgi-bin"
+WW3_CACHE_DIR = CACHE_DIR / "ww3"
+WW3_FORECAST_FILE = FORECAST_DATA_DIR / "ww3.json"
+WW3_CYCLE_LOOKBACK = 4
+# Forecast horizon to bother extracting — gfswave publishes out to 384h
+# but we never display past 168h, so the extra 200h is wasted IO.
+WW3_MAX_FORECAST_HOURS = 168
+# gfswave per-step file naming. Steps are every 1h for f000–f120 then every
+# 3h thereafter. We sample every 3h (matches our display granularity and
+# keeps the per-cycle download under ~50 MB after variable subset).
+WW3_STEP_HOURS = tuple(range(0, WW3_MAX_FORECAST_HOURS + 1, 3))
+WW3_GRID = "global.0p25"  # global 0.25° — single grid covers HI + PR + CONUS
+WW3_PRODUCT = "gfswave"
+# Each gfswave file ships every wave variable; the grib_filter subsets to a
+# small set so a 30 MB file becomes ~100 KB. Names use the GRIB shortName /
+# gfswave naming (cfgrib's shortName comes from these).
+WW3_GRIB_VARS = (
+    "HTSGW", "PERPW", "DIRPW",
+    "WVHGT", "WVPER", "WVDIR",
+    "SWELL_1", "SWPER_1", "SWDIR_1",
+    "SWELL_2", "SWPER_2", "SWDIR_2",
+    "SWELL_3", "SWPER_3", "SWDIR_3",
+)
+# US-spanning bbox so the filter clips a tiny window of each global file.
+# (lat_min, lat_max, lon_min, lon_max). Hawaii pushes lon_min west;
+# Caribbean / PR pushes lon_max east. Latitudes cover South Texas to
+# Aleutians.
+WW3_BBOX = (15.0, 60.0, -170.0, -60.0)
+
+# ---------------------------------------------------------------------------
 # Interpretation (Phase 2) — surf rating composite
 # ---------------------------------------------------------------------------
 RATINGS_FILE = FORECAST_DATA_DIR / "ratings.json"

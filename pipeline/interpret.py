@@ -37,6 +37,7 @@ from .config import (
     NWPS_FORECAST_FILE,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
+    WW3_FORECAST_FILE,
 )
 
 log = logging.getLogger("pipeline.interpret")
@@ -405,6 +406,106 @@ def lookup_tide_norm(
 # Per-spot rating
 # ---------------------------------------------------------------------------
 
+# WW3 partitions in priority order — gfswave numbers them by descending
+# energy at the grid cell, so swell_1 is usually the dominant feature.
+_WW3_PARTITION_PREFIXES = ("swell_1", "swell_2", "swell_3", "wind_wave")
+
+
+def _ww3_index(series: list[dict] | None) -> list[tuple[datetime, dict]]:
+    """Pre-sort a WW3 series for bisect-based closest-time lookup."""
+    if not series:
+        return []
+    out: list[tuple[datetime, dict]] = []
+    for entry in series:
+        vt_iso = entry.get("valid_time")
+        if not vt_iso:
+            continue
+        try:
+            vt = datetime.fromisoformat(vt_iso.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if vt.tzinfo is None:
+            vt = vt.replace(tzinfo=timezone.utc)
+        out.append((vt, entry))
+    out.sort(key=lambda x: x[0])
+    return out
+
+
+def _ww3_at(
+    index: list[tuple[datetime, dict]],
+    target: datetime,
+    max_gap_min: int = 90,
+) -> dict | None:
+    """Closest WW3 entry to *target*, within ±max_gap_min minutes."""
+    if not index:
+        return None
+    import bisect
+    times = [t for t, _ in index]
+    pos = bisect.bisect_left(times, target)
+    best: dict | None = None
+    best_diff: float | None = None
+    for cand_pos in (pos, pos - 1):
+        if 0 <= cand_pos < len(index):
+            vt, entry = index[cand_pos]
+            diff = abs((vt - target).total_seconds())
+            if diff > max_gap_min * 60:
+                continue
+            if best_diff is None or diff < best_diff:
+                best = entry
+                best_diff = diff
+    return best
+
+
+def best_in_window_partition(
+    ww3_entry: dict | None,
+    arcs: list,
+    optimal: float | None,
+    orientation: float | None,
+) -> dict | None:
+    """Pick the WW3 swell partition with the highest in-window face energy.
+
+    For each of swell_1 / swell_2 / swell_3 / wind_wave, compute its
+    directional gain against the spot's swell window. Score every
+    in-window partition by face_ft × dir_gain (a proxy for how much
+    rideable energy it contributes) and return the winner. If every
+    partition is outside the window, returns None — the rater will set
+    dir_gain = 0 and call the spot flat regardless of total energy.
+
+    Returns ``{partition, hs, tp, dp, dir_gain, score}`` or None.
+    """
+    if not ww3_entry:
+        return None
+    best: dict | None = None
+    for prefix in _WW3_PARTITION_PREFIXES:
+        hs = ww3_entry.get(f"{prefix}_hs")
+        tp = ww3_entry.get(f"{prefix}_tp")
+        dp = ww3_entry.get(f"{prefix}_dp")
+        if hs is None or tp is None or dp is None:
+            continue
+        try:
+            hs_f = float(hs)
+            tp_f = float(tp)
+            dp_f = float(dp)
+        except (TypeError, ValueError):
+            continue
+        if hs_f <= 0 or tp_f <= 0:
+            continue
+        dg = directional_gain(dp_f, arcs, optimal, orientation)
+        if dg <= 0:
+            continue
+        score = face_ft(hs_f, tp_f) * dg
+        if best is None or score > best["score"]:
+            best = {
+                "partition": prefix,
+                "hs": hs_f,
+                "tp": tp_f,
+                "dp": dp_f,
+                "dir_gain": dg,
+                "score": score,
+            }
+    return best
+
+
 def latest_buoy_swell(buoy_block: dict | None) -> dict | None:
     """Return the most recent NDBC .spec observation that has both a swell
     direction (degrees) and a swell period, or None.
@@ -451,14 +552,21 @@ def rate_spot(
     forecast: list[dict],
     tide_series: dict | None,
     buoy_swell: dict | None = None,
+    ww3_series: list[dict] | None = None,
 ) -> list[dict]:
     """Rate a single spot's hourly forecast.
 
-    *buoy_swell* is an optional snapshot from latest_buoy_swell() with keys
-    swell_dp, swell_tp (degrees / seconds). It's the observational fallback
-    for spots whose NWPS GRIB doesn't carry SWDIR / SWPER — without it the
-    rater falls back to total DIRPW which gets dragged off-axis by wind sea
-    and FLAT-rates trade-wind-season Hawaii / SoCal spots.
+    Direction / period resolution chain (highest priority first):
+      1. WAVEWATCH III best in-window swell partition (proper spectral
+         decomposition: 3 swell partitions + wind sea per cell per hour).
+      2. NWPS swell_dp / swell_tp (rare — most WFOs don't publish SWDIR/SWPER).
+      3. NDBC buoy spectral SWDIR / SwP from *buoy_swell* (observational, held
+         constant across the 7-day horizon).
+      4. NWPS total DIRPW / PERPW (last resort — gets dragged by wind sea).
+
+    Size (face_ft) keeps using NWPS swell_hs because NWPS resolves
+    nearshore refraction at much higher resolution than gfswave's 0.25°
+    global grid.
     """
     orientation = spot.get("orientation_deg")
     offshore = spot.get("offshore_wind_deg")
@@ -468,6 +576,7 @@ def rate_spot(
     lng = float(spot.get("lng") or 0.0)
     buoy_swell_dp = buoy_swell["swell_dp"] if buoy_swell else None
     buoy_swell_tp = buoy_swell["swell_tp"] if buoy_swell else None
+    ww3_idx = _ww3_index(ww3_series)
 
     out: list[dict] = []
     for entry in forecast:
@@ -519,15 +628,35 @@ def rate_spot(
         else:
             fft = None
 
-        # Direction: same logic. NWPS DIRPW is the peak direction of the
-        # *total* spectrum, which gets dragged toward the wind-sea direction
-        # whenever wind sea exceeds the background swell. SWDIR is the
-        # swell-only peak direction. For a north-shore Hawaii spot under
-        # trade-wind sea, DIRPW reads E while SWDIR reads NNW — using DIRPW
-        # rules the swell out of the spot's window and sinks the rating to
-        # FLAT even when the actual NNW swell is on-axis.
-        size_dp = swell_dp if swell_dp is not None else dp
-        dg = directional_gain(float(size_dp), arcs, optimal, orientation) if size_dp is not None else 0.0
+        # Direction: WAVEWATCH III spectral partitions are the source of
+        # truth — for each forecast hour, gfswave publishes 3 swell
+        # partitions (height + period + direction). Pick the partition with
+        # the highest in-window face energy and rate against it. If WW3
+        # has no entry near this hour, fall back to NWPS swell_dp → buoy
+        # SWDIR → NWPS total DIRPW (the order each option goes from "real
+        # spectral data" to "wind-sea-contaminated proxy").
+        ww3_entry = _ww3_at(ww3_idx, vt) if ww3_idx else None
+        ww3_best = best_in_window_partition(ww3_entry, arcs, optimal, orientation)
+        if ww3_best is not None:
+            size_dp = ww3_best["dp"]
+            size_tp_eff = ww3_best["tp"]
+            dg = ww3_best["dir_gain"]
+            # Override the period used for face / period_quality with the
+            # in-window partition's tp — a 4ft 7s wind sea on top of a
+            # 1ft 15s long-period swell should rate as the 15s long-period
+            # for the partition that's actually in window.
+            size_tp = size_tp_eff
+            if size_hs is not None:
+                fft = face_ft(float(size_hs), float(size_tp_eff))
+        elif ww3_entry is not None:
+            # WW3 covered this hour but every partition was out of window —
+            # the spot really has no swell to ride right now.
+            size_dp = None
+            dg = 0.0
+        else:
+            # No WW3 coverage — use the swell_dp resolution chain.
+            size_dp = swell_dp if swell_dp is not None else dp
+            dg = directional_gain(float(size_dp), arcs, optimal, orientation) if size_dp is not None else 0.0
 
         # Chop ratio + multiplier — degrades the rating when total Hs
         # exceeds swell-only Hs (i.e. wind sea adds energy that shows on
@@ -555,6 +684,15 @@ def rate_spot(
             composite_stars(effective, wm, tm, cm, pq) if fft is not None else 0.0
         )
 
+        # Resolved swell direction / period — what the rater actually used.
+        # Priority: WW3 winning partition → NWPS swell_dp/tp → buoy → null.
+        if ww3_best is not None:
+            resolved_swell_dp = ww3_best["dp"]
+            resolved_swell_tp = ww3_best["tp"]
+        else:
+            resolved_swell_dp = swell_dp
+            resolved_swell_tp = swell_tp
+
         rated = dict(entry)
         rated.update({
             "face_ft": round(fft, 2) if fft is not None else None,
@@ -568,12 +706,29 @@ def rate_spot(
             "tide_mult": round(tm, 3),
             "effective_size_ft": round(effective, 2),
             "stars": stars,
-            # Persist the resolved swell direction / period (NWPS first,
-            # buoy fallback) so downstream consumers — db_import and the
-            # frontend grid — read the same value the rater used.
-            "swell_dp": round(float(swell_dp), 3) if swell_dp is not None else None,
-            "swell_tp": round(float(swell_tp), 3) if swell_tp is not None else None,
+            # Persist the resolved swell direction / period — db_import and
+            # the frontend grid read the same value the rater used.
+            "swell_dp": round(float(resolved_swell_dp), 3) if resolved_swell_dp is not None else None,
+            "swell_tp": round(float(resolved_swell_tp), 3) if resolved_swell_tp is not None else None,
+            # Provenance of the swell direction so downstream views can
+            # distinguish "spectral truth" from "buoy persistence" from
+            # "DIRPW last-resort". One of: ww3 / nwps_swell / buoy / nwps_total / none.
+            "swell_source": (
+                "ww3" if ww3_best is not None
+                else ("nwps_swell" if entry.get("swell_dp") is not None
+                      else ("buoy" if buoy_swell_dp is not None
+                            else ("nwps_total" if dp is not None else "none")))
+            ),
         })
+        # Carry the WW3 partitions through to the DB / frontend so we can
+        # render Surfline-style multi-component readouts. ww3_entry might
+        # be None if WW3 has no near-time match — leave the keys absent.
+        if ww3_entry is not None:
+            for prefix in _WW3_PARTITION_PREFIXES:
+                for field in ("hs", "tp", "dp"):
+                    key = f"{prefix}_{field}"
+                    if key in ww3_entry:
+                        rated[key] = ww3_entry[key]
         out.append(rated)
     return out
 
@@ -587,6 +742,7 @@ def compute_ratings(
     nwps: dict[str, list[dict]],
     tides: dict[str, dict],
     buoys: dict[str, dict] | None = None,
+    ww3: dict[str, list[dict]] | None = None,
 ) -> dict[str, list[dict]]:
     """Rate every spot that has NWPS forecast data.
 
@@ -604,6 +760,7 @@ def compute_ratings(
     """
     spot_by_name = {s.get("name"): s for s in spots if s.get("name")}
     buoys = buoys or {}
+    ww3 = ww3 or {}
     # Memoize the latest spec snapshot per buoy so we don't rescan its 24h
     # spec history once per spot.
     buoy_swell_cache: dict[str, dict | None] = {}
@@ -616,6 +773,7 @@ def compute_ratings(
     no_tide_data = 0
     tide_hourly = 0
     tide_hilo = 0
+    swell_from_ww3 = 0
     swell_from_buoy = 0
     swell_no_source = 0
     missing_examples: list[str] = []
@@ -653,25 +811,31 @@ def compute_ratings(
                     tide_hourly += 1
 
         # Resolve a swell-direction/period snapshot from the spot's nearest
-        # buoy. interpret only consults this when the per-hour NWPS entry
-        # has no swell_dp/swell_tp of its own (most WFOs).
+        # buoy. interpret only consults this when WW3 has no near-time
+        # entry AND the NWPS hour has no swell_dp.
         buoy_id = spot.get("nearest_buoy_id")
         buoy_snapshot: dict | None = None
         if buoy_id:
             if buoy_id not in buoy_swell_cache:
                 buoy_swell_cache[buoy_id] = latest_buoy_swell(buoys.get(buoy_id))
             buoy_snapshot = buoy_swell_cache[buoy_id]
-        # Track whether this spot will end up scoring direction off NWPS,
-        # off the buoy, or off nothing at all (which means dir_gain falls
-        # back to total DIRPW and we're back to the original bug).
-        nwps_has_swell_dp = any(e.get("swell_dp") is not None for e in forecast)
-        if not nwps_has_swell_dp:
-            if buoy_snapshot is not None:
-                swell_from_buoy += 1
-            else:
-                swell_no_source += 1
 
-        series = rate_spot(spot, forecast, tide_series, buoy_snapshot)
+        ww3_series = ww3.get(name)
+        # Bucket each spot by which source ended up driving its swell
+        # direction. WW3 is the proper spectral path; the others are
+        # fallbacks that get progressively worse — the fallback_to_total_dp
+        # bucket is the same FLAT-rating bug we started with.
+        nwps_has_swell_dp = any(e.get("swell_dp") is not None for e in forecast)
+        if ww3_series:
+            swell_from_ww3 += 1
+        elif nwps_has_swell_dp:
+            pass  # nwps_swell counted implicitly: rated - ww3 - buoy - none
+        elif buoy_snapshot is not None:
+            swell_from_buoy += 1
+        else:
+            swell_no_source += 1
+
+        series = rate_spot(spot, forecast, tide_series, buoy_snapshot, ww3_series)
         if series:
             results[name] = series
             rated += 1
@@ -684,9 +848,10 @@ def compute_ratings(
         no_tide_data, tide_hourly, tide_hilo,
     )
     log.info(
-        "interpret: swell-direction sourcing — nwps_swell_dp=%d, buoy_swell_dp=%d, "
-        "fallback_to_total_dp=%d (out of %d rated spots)",
-        rated - swell_from_buoy - swell_no_source,
+        "interpret: swell-direction sourcing — ww3_partition=%d, nwps_swell_dp=%d, "
+        "buoy_swell_dp=%d, fallback_to_total_dp=%d (out of %d rated spots)",
+        swell_from_ww3,
+        rated - swell_from_ww3 - swell_from_buoy - swell_no_source,
         swell_from_buoy,
         swell_no_source,
         rated,
@@ -830,6 +995,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="NDBC buoy observations. Used as the swell direction / "
                         "period source for any spot whose NWPS GRIB doesn't carry "
                         "SWDIR / SWPER (most WFOs).")
+    p.add_argument("--ww3", type=Path, default=WW3_FORECAST_FILE,
+                   help="WAVEWATCH III (gfswave) per-spot partition forecasts. "
+                        "Drives swell direction / period for the rating when "
+                        "available; falls back to NWPS / buoy when not.")
     p.add_argument("--output", type=Path, default=RATINGS_FILE)
     p.add_argument("--sample", type=str, default=None,
                    help="Spot name to print as the 24h sample (defaults to top peak)")
@@ -856,12 +1025,24 @@ def main(argv: list[str] | None = None) -> int:
             buoys = loaded
     else:
         log.warning("interpret: %s missing — swell direction will fall back to NWPS DIRPW", args.buoys)
+    # WW3 is optional too — when present it's the primary swell-direction
+    # source; when absent we fall back to the NWPS / buoy chain.
+    ww3: dict = {}
+    if args.ww3.exists():
+        loaded = json.loads(args.ww3.read_text())
+        if isinstance(loaded, dict):
+            ww3 = loaded
+    else:
+        log.warning(
+            "interpret: %s missing — swell partitions disabled, falling back to NWPS / buoy",
+            args.ww3,
+        )
     log.info(
-        "interpret: loaded %d spots, %d nwps series, %d tide stations, %d buoys",
-        len(spots), len(nwps), len(tides), len(buoys),
+        "interpret: loaded %d spots, %d nwps series, %d tide stations, %d buoys, %d ww3 series",
+        len(spots), len(nwps), len(tides), len(buoys), len(ww3),
     )
 
-    ratings = compute_ratings(spots, nwps, tides, buoys)
+    ratings = compute_ratings(spots, nwps, tides, buoys, ww3)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
     log.info("interpret: wrote %d spots to %s", len(ratings), args.output)

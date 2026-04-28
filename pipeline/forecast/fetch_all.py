@@ -19,6 +19,7 @@ from ..config import DEFAULT_ENRICHED_OUTPUT
 from . import buoys as buoys_mod
 from . import nwps as nwps_mod
 from . import tides as tides_mod
+from . import ww3 as ww3_mod
 
 log = logging.getLogger("pipeline.forecast.fetch_all")
 
@@ -26,6 +27,7 @@ SOURCES = {
     "tides": tides_mod.fetch,
     "buoys": buoys_mod.fetch,
     "nwps": nwps_mod.fetch,
+    "ww3": ww3_mod.fetch,
 }
 
 
@@ -134,6 +136,30 @@ def _summarize(source: str, result: dict) -> None:
         with_spec = sum(1 for r in result.values() if r.get("spec_history_24h"))
         print(f"  buoys reporting waves (WVHT): {with_waves}/{len(result)}")
         print(f"  buoys with spectral data:     {with_spec}/{len(result)}")
+
+    elif source == "ww3":
+        if not result:
+            print("  no WW3 data produced")
+            return
+        hours = sorted(len(s) for s in result.values())
+        print(f"  spots with forecast:         {len(result)}")
+        print(f"  hours per spot (min/med/max): {hours[0]}/{hours[len(hours)//2]}/{hours[-1]}")
+        # Coverage by partition — null partitions mean gfswave didn't resolve
+        # one at this grid cell (e.g. only swell_1 active).
+        with_p1 = sum(1 for s in result.values() for e in s if e.get("swell_1_dp") is not None)
+        with_p2 = sum(1 for s in result.values() for e in s if e.get("swell_2_dp") is not None)
+        with_p3 = sum(1 for s in result.values() for e in s if e.get("swell_3_dp") is not None)
+        with_ws = sum(1 for s in result.values() for e in s if e.get("wind_wave_dp") is not None)
+        total_entries = sum(len(s) for s in result.values())
+        print(f"  partition coverage of {total_entries} entries:")
+        print(f"    swell_1: {with_p1}    swell_2: {with_p2}    swell_3: {with_p3}    wind_wave: {with_ws}")
+        # Sample one spot's first row so we can eyeball partition values.
+        for name, series in result.items():
+            if series:
+                sample = series[0]
+                bits = ", ".join(f"{k}={sample[k]}" for k in sample if k != "valid_time")
+                print(f"  sample ({name} @ {sample['valid_time']}): {bits}")
+                break
 
     print("=" * 60)
 
