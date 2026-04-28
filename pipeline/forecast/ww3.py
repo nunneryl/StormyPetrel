@@ -8,12 +8,14 @@ SWELL_2/.../SWDIR_2, SWELL_3/.../SWDIR_3, plus wind-sea. That's the same
 data Surfline / MagicSeaweed quote when they show "2ft 10s NNW + 0.4ft
 15s NW + 0.4ft 11s WSW".
 
-Cycle structure on NOMADS::
+Cycle structure on NOMADS (gfswave is nested inside the GFS cycle tree as
+of the 2022 NCEP unification — the legacy /com/wave/prod/ path now only
+serves NFCENS files)::
 
-    /pub/data/nccf/com/wave/prod/
-        gfswave.YYYYMMDD/
+    /pub/data/nccf/com/gfs/prod/
+        gfs.YYYYMMDD/
             HH/                       # cycle hour (00, 06, 12, 18Z)
-                wave_grid/
+                wave/gridded/
                     gfswave.t{HH}z.{grid}.f{FFF}.grib2
 
 For our use case the *global.0p25* grid covers everything we care about
@@ -55,12 +57,14 @@ from ..config import (
     WW3_BBOX,
     WW3_CACHE_DIR,
     WW3_CYCLE_LOOKBACK,
+    WW3_CYCLE_SUBPATH,
+    WW3_DATE_PREFIX,
+    WW3_FILE_PREFIX,
     WW3_FORECAST_FILE,
     WW3_GRIB_FILTER_BASE,
     WW3_GRIB_VARS,
     WW3_GRID,
     WW3_NOMADS_BASE,
-    WW3_PRODUCT,
     WW3_STEP_HOURS,
 )
 from ..http import session
@@ -72,7 +76,7 @@ log = logging.getLogger(__name__)
 # Cycle discovery
 # ---------------------------------------------------------------------------
 
-_DATE_HREF_RE = re.compile(r'href="' + re.escape(WW3_PRODUCT) + r'\.(\d{8})/"')
+_DATE_HREF_RE = re.compile(r'href="' + re.escape(WW3_DATE_PREFIX) + r'\.(\d{8})/"')
 _HH_HREF_RE = re.compile(r'href="(\d{2})/"')
 
 
@@ -96,17 +100,20 @@ def _list_dates() -> list[str]:
         return []
     dates = sorted({m for m in _DATE_HREF_RE.findall(html)}, reverse=True)
     log.info("ww3: NOMADS lists %d %s.* date dirs (newest=%s)",
-             len(dates), WW3_PRODUCT, dates[0] if dates else "—")
+             len(dates), WW3_DATE_PREFIX, dates[0] if dates else "—")
     return dates
 
 
 @lru_cache(maxsize=None)
 def _list_cycles_on_date(date_ymd: str) -> list[str]:
-    """Return [HH newest-first] cycle dirs under gfswave.{date}/."""
-    url = f"{WW3_NOMADS_BASE}/{WW3_PRODUCT}.{date_ymd}/"
+    """Return [HH newest-first] cycle dirs under gfs.{date}/."""
+    url = f"{WW3_NOMADS_BASE}/{WW3_DATE_PREFIX}.{date_ymd}/"
     html = _get_text(url)
     if html is None:
         return []
+    # Cycle dirs (00/06/12/18/) live alongside non-numeric subdirs we don't
+    # care about (atmos/, chem/, wave/), so the regex's \d{2} pattern is
+    # already restrictive enough.
     return sorted(set(_HH_HREF_RE.findall(html)), reverse=True)
 
 
@@ -126,15 +133,17 @@ def candidate_cycles() -> list[tuple[str, str]]:
 # ---------------------------------------------------------------------------
 
 def _step_filename(hh: str, fhour: int) -> str:
-    return f"{WW3_PRODUCT}.t{hh}z.{WW3_GRID}.f{fhour:03d}.grib2"
+    # Filenames inside the cycle still start with `gfswave.` even though the
+    # parent directory is named `gfs.YYYYMMDD/...`.
+    return f"{WW3_FILE_PREFIX}.t{hh}z.{WW3_GRID}.f{fhour:03d}.grib2"
 
 
 def _grib_dir_path(date_ymd: str, hh: str) -> str:
-    return f"/{WW3_PRODUCT}.{date_ymd}/{hh}/wave_grid"
+    return f"/{WW3_DATE_PREFIX}.{date_ymd}/{hh}/{WW3_CYCLE_SUBPATH}"
 
 
 def _filter_url() -> str:
-    return f"{WW3_GRIB_FILTER_BASE}/filter_{WW3_PRODUCT}.pl"
+    return f"{WW3_GRIB_FILTER_BASE}/filter_{WW3_FILE_PREFIX}.pl"
 
 
 def _filter_params(date_ymd: str, hh: str, fhour: int) -> dict:

@@ -133,7 +133,11 @@ WFO_TO_REGION = {
 # refraction is finer-grained than gfswave's 0.25° global grid.
 # ---------------------------------------------------------------------------
 
-WW3_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod"
+# NCEP nests gfswave inside the GFS cycle tree as of 2022:
+#   /pub/data/nccf/com/gfs/prod/gfs.YYYYMMDD/HH/wave/gridded/gfswave.t{HH}z....grib2
+# So the date directories we scan are gfs.YYYYMMDD/ (NOT gfswave.YYYYMMDD/),
+# but the filenames inside still start with gfswave.
+WW3_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
 WW3_GRIB_FILTER_BASE = "https://nomads.ncep.noaa.gov/cgi-bin"
 WW3_CACHE_DIR = CACHE_DIR / "ww3"
 WW3_FORECAST_FILE = FORECAST_DATA_DIR / "ww3.json"
@@ -146,7 +150,9 @@ WW3_MAX_FORECAST_HOURS = 168
 # keeps the per-cycle download under ~50 MB after variable subset).
 WW3_STEP_HOURS = tuple(range(0, WW3_MAX_FORECAST_HOURS + 1, 3))
 WW3_GRID = "global.0p25"  # global 0.25° — single grid covers HI + PR + CONUS
-WW3_PRODUCT = "gfswave"
+WW3_DATE_PREFIX = "gfs"          # date directories are gfs.YYYYMMDD/
+WW3_FILE_PREFIX = "gfswave"      # filenames still gfswave.tHHz....
+WW3_CYCLE_SUBPATH = "wave/gridded"  # under {date}/{HH}/...
 # Each gfswave file ships every wave variable; the grib_filter subsets to a
 # small set so a 30 MB file becomes ~100 KB. Names use the GRIB shortName /
 # gfswave naming (cfgrib's shortName comes from these).
