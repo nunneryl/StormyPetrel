@@ -7,6 +7,7 @@ import {
   fmtMph,
   fmtSec,
   fmtShortTime,
+  pickSwell,
 } from '@/lib/formatting';
 import { CompassArrow } from './CompassArrow';
 
@@ -62,6 +63,8 @@ export function ForecastGrid({ forecasts }: { forecasts: Forecast[] }) {
           </div>
           {rows.map((r) => {
             const tier = tierFromStars(r.stars);
+            const dp = pickSwell(r.swell_dp, r.dp);
+            const tp = pickSwell(r.swell_tp, r.tp);
             return (
               <div
                 key={r.valid_time}
@@ -81,10 +84,10 @@ export function ForecastGrid({ forecasts }: { forecasts: Forecast[] }) {
                   {fmtFt(r.face_ft)}
                 </div>
                 <div className="md:text-right text-slate-300 tabular-nums">
-                  {fmtSec(r.tp)}
+                  {fmtSec(tp)}
                 </div>
                 <div>
-                  <CompassArrow deg={r.dp} size={14} color="#3da9d7" />
+                  <CompassArrow deg={dp} size={14} color="#3da9d7" />
                 </div>
                 <div className="flex items-center gap-2">
                   <CompassArrow deg={r.wind_dir} size={14} color="#9bbf3e" showLabel={false} />

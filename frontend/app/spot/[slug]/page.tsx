@@ -13,6 +13,7 @@ import {
   fmtFt,
   fmtMph,
   fmtSec,
+  pickSwell,
 } from '@/lib/formatting';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,7 @@ async function loadForecasts(spotId: number): Promise<Forecast[]> {
   const { data, error } = await supabase
     .from('forecasts')
     .select(
-      'spot_id, valid_time, hs, swell_hs, tp, dp, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
+      'spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
     )
     .eq('spot_id', spotId)
     .gte('valid_time', nowIso)
@@ -140,13 +141,21 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
       </div>
 
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Face" value={fmtFt(current?.face_ft)} hint={current?.tp ? `${fmtSec(current.tp)} period` : null} />
-        <Stat
-          label="Swell"
-          value={degToCardinal(current?.dp)}
-          hint={current?.dp ? `${current.dp.toFixed(0)}°` : null}
-          icon={<CompassArrow deg={current?.dp ?? null} size={18} color="#3da9d7" showLabel={false} />}
-        />
+        {(() => {
+          const tp = pickSwell(current?.swell_tp ?? null, current?.tp ?? null);
+          const dp = pickSwell(current?.swell_dp ?? null, current?.dp ?? null);
+          return (
+            <>
+              <Stat label="Face" value={fmtFt(current?.face_ft)} hint={tp ? `${fmtSec(tp)} period` : null} />
+              <Stat
+                label="Swell"
+                value={degToCardinal(dp)}
+                hint={dp !== null ? `${dp.toFixed(0)}°` : null}
+                icon={<CompassArrow deg={dp} size={18} color="#3da9d7" showLabel={false} />}
+              />
+            </>
+          );
+        })()}
         <Stat
           label="Wind"
           value={fmtMph(current?.wind_speed)}

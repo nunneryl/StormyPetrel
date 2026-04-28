@@ -434,6 +434,7 @@ def rate_spot(
         tp = entry.get("tp")
         swell_tp = entry.get("swell_tp")
         dp = entry.get("dp")
+        swell_dp = entry.get("swell_dp")
         wspd = entry.get("wind_speed")
         wdir = entry.get("wind_dir")
 
@@ -455,7 +456,16 @@ def rate_spot(
             fft = face_ft(float(size_hs), float(size_tp))
         else:
             fft = None
-        dg = directional_gain(float(dp), arcs, optimal, orientation) if dp is not None else 0.0
+
+        # Direction: same logic. NWPS DIRPW is the peak direction of the
+        # *total* spectrum, which gets dragged toward the wind-sea direction
+        # whenever wind sea exceeds the background swell. SWDIR is the
+        # swell-only peak direction. For a north-shore Hawaii spot under
+        # trade-wind sea, DIRPW reads E while SWDIR reads NNW — using DIRPW
+        # rules the swell out of the spot's window and sinks the rating to
+        # FLAT even when the actual NNW swell is on-axis.
+        size_dp = swell_dp if swell_dp is not None else dp
+        dg = directional_gain(float(size_dp), arcs, optimal, orientation) if size_dp is not None else 0.0
 
         # Chop ratio + multiplier — degrades the rating when total Hs
         # exceeds swell-only Hs (i.e. wind sea adds energy that shows on

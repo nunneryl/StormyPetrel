@@ -4,7 +4,7 @@ import { fetchSpotsWithLatest, fetchSparklineData } from '@/lib/queries';
 import { RatingBadge } from '@/components/RatingBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { Sparkline } from '@/components/Sparkline';
-import { fmtFt, fmtMph, fmtSec } from '@/lib/formatting';
+import { fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -54,8 +54,8 @@ export default async function RegionPage({ params }: { params: Promise<Params> }
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-slate-300 flex-wrap">
                   <span className="font-bold text-slate-100">{fmtFt(f?.face_ft ?? null)}</span>
-                  <span className="text-slate-400">{fmtSec(f?.tp ?? null)}</span>
-                  <CompassArrow deg={f?.dp ?? null} size={12} color="#3da9d7" />
+                  <span className="text-slate-400">{fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}</span>
+                  <CompassArrow deg={pickSwell(f?.swell_dp ?? null, f?.dp ?? null)} size={12} color="#3da9d7" />
                   <span className="flex items-center gap-1 text-slate-400">
                     <CompassArrow deg={f?.wind_dir ?? null} size={12} color="#9bbf3e" showLabel={false} />
                     {fmtMph(f?.wind_speed ?? null)}

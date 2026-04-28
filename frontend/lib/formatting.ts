@@ -1,3 +1,13 @@
+/**
+ * Pick the swell-only value (period or direction) when NWPS published it,
+ * else fall back to the total-spectrum value. Mirrors the rater logic in
+ * pipeline/interpret.py — keeps the UI honest about what the rating saw.
+ */
+export function pickSwell<T extends number | null | undefined>(swell: T, total: T): T {
+  if (swell !== null && swell !== undefined) return swell;
+  return total;
+}
+
 const CARDINAL_16 = [
   'N', 'NNE', 'NE', 'ENE',
   'E', 'ESE', 'SE', 'SSE',

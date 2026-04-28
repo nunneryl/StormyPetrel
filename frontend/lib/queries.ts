@@ -40,7 +40,7 @@ export async function fetchLatestForecastPerSpot(): Promise<Map<number, Forecast
     const { data, error } = await supabase
       .from('forecasts')
       .select(
-        'spot_id, valid_time, hs, swell_hs, tp, dp, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
+        'spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
       )
       .gte('valid_time', nowIso)
       .lte('valid_time', sixHoursLater)

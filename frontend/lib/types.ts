@@ -25,6 +25,8 @@ export type Forecast = {
   swell_hs: number | null;
   tp: number | null;
   dp: number | null;
+  swell_tp: number | null;
+  swell_dp: number | null;
   wind_speed: number | null;
   wind_dir: number | null;
   face_ft: number | null;
