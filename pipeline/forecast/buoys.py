@@ -59,6 +59,26 @@ _SPEC_FIELDS = {
 }
 
 
+# NDBC publishes swell + wind-wave directions as 16-point cardinal strings
+# (e.g. "NNW") rather than degrees, so we map back to a numeric bearing.
+# Anything we can't parse (NNW vs ENE typo, missing) returns None.
+_CARDINAL_TO_DEG = {
+    "N":   0.0,   "NNE": 22.5,  "NE":  45.0,  "ENE": 67.5,
+    "E":   90.0,  "ESE": 112.5, "SE":  135.0, "SSE": 157.5,
+    "S":   180.0, "SSW": 202.5, "SW":  225.0, "WSW": 247.5,
+    "W":   270.0, "WNW": 292.5, "NW":  315.0, "NNW": 337.5,
+}
+
+
+def _cardinal_to_deg(value) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    s = str(value).strip().upper()
+    return _CARDINAL_TO_DEG.get(s)
+
+
 def _parse_realtime2(text: str, field_map: dict) -> list[dict]:
     """Parse the NDBC realtime2 text format into a list of observations (most recent first)."""
     lines = text.strip().split("\n")
@@ -97,6 +117,13 @@ def _parse_realtime2(text: str, field_map: dict) -> list[dict]:
                 obs[dst] = conv(v)
             except (TypeError, ValueError):
                 obs[dst] = None
+        # NDBC SwD / WWD ship as cardinal strings ("NNW"). Mirror them as
+        # numeric degrees so downstream consumers don't have to know the
+        # convention. The string forms are kept for human-friendly display.
+        if obs.get("swell_dir") is not None:
+            obs["swell_dir_deg"] = _cardinal_to_deg(obs["swell_dir"])
+        if obs.get("wind_wave_dir") is not None:
+            obs["wind_wave_dir_deg"] = _cardinal_to_deg(obs["wind_wave_dir"])
         observations.append(obs)
     return observations
 

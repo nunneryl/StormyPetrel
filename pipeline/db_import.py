@@ -278,12 +278,20 @@ def _buoy_obs_record(buoy_id: str, obs: dict) -> dict | None:
     t = obs.get("time")
     if not t:
         return None
+    # The fetcher merges std + spec fields into the `latest` dict and into
+    # any observation we hand here, so a single record can carry both the
+    # combined wave (wave_height_m / dominant_period_s / mean_wave_dir_deg)
+    # AND the swell-only partition (swell_height_m / swell_period_s /
+    # swell_dir_deg). Either side may be null on a given timestamp.
     return {
         "buoy_id": buoy_id,
         "observed_at": t,
         "hs": obs.get("wave_height_m"),
         "tp": obs.get("dominant_period_s"),
         "dp": obs.get("mean_wave_dir_deg"),
+        "swell_hs": obs.get("swell_height_m"),
+        "swell_tp": obs.get("swell_period_s"),
+        "swell_dp": obs.get("swell_dir_deg"),
         "wind_speed": obs.get("wind_speed_ms"),
         "wind_dir": obs.get("wind_dir_deg"),
         "water_temp": obs.get("water_temp_c"),
@@ -292,15 +300,43 @@ def _buoy_obs_record(buoy_id: str, obs: dict) -> dict | None:
 
 def import_buoys(client, buoys_path: Path = BUOYS_FORECAST_FILE,
                  batch_size: int = _DEFAULT_BATCH * 5) -> int:
-    """Upsert NDBC buoy observations from buoys.json (latest + 24h history)."""
+    """Upsert NDBC buoy observations from buoys.json (latest + 24h history).
+
+    Merges the .std and .spec histories by observed_at so the swell-only
+    partition (swell_height_m / swell_period_s / swell_dir_deg) gets
+    persisted alongside the combined-wave (.std) values when both are
+    reported for the same timestamp.
+    """
     buoys = json.loads(Path(buoys_path).read_text())
     records: list[dict] = []
     for buoy_id, data in buoys.items():
+        merged: dict[str, dict] = {}
+
+        # Latest is already a std + spec union from the fetcher; treat it
+        # as the canonical entry for its timestamp.
         latest = data.get("latest") or {}
-        rec = _buoy_obs_record(buoy_id, latest)
-        if rec is not None:
-            records.append(rec)
+        if latest.get("time"):
+            merged[latest["time"]] = dict(latest)
+
         for obs in data.get("history_24h") or []:
+            t = obs.get("time")
+            if not t:
+                continue
+            merged.setdefault(t, {}).update(obs)
+
+        # Spec entries fill in swell_* fields without clobbering anything
+        # the std side already populated.
+        for obs in data.get("spec_history_24h") or []:
+            t = obs.get("time")
+            if not t:
+                continue
+            target = merged.setdefault(t, {"time": t})
+            for k, v in obs.items():
+                if v is None:
+                    continue
+                target.setdefault(k, v)
+
+        for obs in merged.values():
             rec = _buoy_obs_record(buoy_id, obs)
             if rec is not None:
                 records.append(rec)

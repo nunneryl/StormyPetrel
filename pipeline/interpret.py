@@ -405,17 +405,69 @@ def lookup_tide_norm(
 # Per-spot rating
 # ---------------------------------------------------------------------------
 
+def latest_buoy_swell(buoy_block: dict | None) -> dict | None:
+    """Return the most recent NDBC .spec observation that has both a swell
+    direction (degrees) and a swell period, or None.
+
+    This is what we feed into rate_spot when the NWPS GRIB doesn't carry
+    SWDIR / SWPER (which is most WFOs — only SHTS swell-height comes through).
+    The buoy is observational, so this stays "now" — for the multi-day
+    forecast horizon we persist the same snapshot, which is honest given
+    we have no model output that decomposes future swell direction.
+    """
+    if not buoy_block:
+        return None
+    spec_history = buoy_block.get("spec_history_24h") or []
+    # spec_history is most-recent-first as parsed; scan to skip any leading
+    # rows whose swell fields are masked-out.
+    for obs in spec_history:
+        sdp = obs.get("swell_dir_deg")
+        stp = obs.get("swell_period_s")
+        if sdp is not None and stp is not None and stp > 0:
+            return {
+                "swell_dp": float(sdp),
+                "swell_tp": float(stp),
+                "swell_hs": obs.get("swell_height_m"),
+                "observed_at": obs.get("time"),
+            }
+    # As a last resort, the merged `latest` field may have spec values
+    # even when spec_history is empty (some buoys publish spec only as the
+    # standalone latest line).
+    latest = buoy_block.get("latest") or {}
+    sdp = latest.get("swell_dir_deg")
+    stp = latest.get("swell_period_s")
+    if sdp is not None and stp is not None and stp > 0:
+        return {
+            "swell_dp": float(sdp),
+            "swell_tp": float(stp),
+            "swell_hs": latest.get("swell_height_m"),
+            "observed_at": latest.get("time"),
+        }
+    return None
+
+
 def rate_spot(
     spot: dict,
     forecast: list[dict],
     tide_series: dict | None,
+    buoy_swell: dict | None = None,
 ) -> list[dict]:
+    """Rate a single spot's hourly forecast.
+
+    *buoy_swell* is an optional snapshot from latest_buoy_swell() with keys
+    swell_dp, swell_tp (degrees / seconds). It's the observational fallback
+    for spots whose NWPS GRIB doesn't carry SWDIR / SWPER — without it the
+    rater falls back to total DIRPW which gets dragged off-axis by wind sea
+    and FLAT-rates trade-wind-season Hawaii / SoCal spots.
+    """
     orientation = spot.get("orientation_deg")
     offshore = spot.get("offshore_wind_deg")
     arcs = spot.get("swell_window_arcs") or []
     optimal = spot.get("optimal_swell_dir")
     preference = spot.get("tide_preference")
     lng = float(spot.get("lng") or 0.0)
+    buoy_swell_dp = buoy_swell["swell_dp"] if buoy_swell else None
+    buoy_swell_tp = buoy_swell["swell_tp"] if buoy_swell else None
 
     out: list[dict] = []
     for entry in forecast:
@@ -432,9 +484,19 @@ def rate_spot(
         hs = entry.get("hs")
         swell_hs = entry.get("swell_hs")
         tp = entry.get("tp")
+        # Prefer the per-hour swell period in the NWPS entry; if that's
+        # missing (most WFOs), fall back to the buoy's observed swell
+        # period (held constant across the forecast horizon).
         swell_tp = entry.get("swell_tp")
+        if swell_tp is None:
+            swell_tp = buoy_swell_tp
         dp = entry.get("dp")
+        # Same logic for swell direction. NWPS rarely provides SWDIR; the
+        # buoy's spectral SWDIR is the only ground truth we have for which
+        # way the swell is actually heading.
         swell_dp = entry.get("swell_dp")
+        if swell_dp is None:
+            swell_dp = buoy_swell_dp
         wspd = entry.get("wind_speed")
         wdir = entry.get("wind_dir")
 
@@ -506,6 +568,11 @@ def rate_spot(
             "tide_mult": round(tm, 3),
             "effective_size_ft": round(effective, 2),
             "stars": stars,
+            # Persist the resolved swell direction / period (NWPS first,
+            # buoy fallback) so downstream consumers — db_import and the
+            # frontend grid — read the same value the rater used.
+            "swell_dp": round(float(swell_dp), 3) if swell_dp is not None else None,
+            "swell_tp": round(float(swell_tp), 3) if swell_tp is not None else None,
         })
         out.append(rated)
     return out
@@ -519,6 +586,7 @@ def compute_ratings(
     spots: list[dict],
     nwps: dict[str, list[dict]],
     tides: dict[str, dict],
+    buoys: dict[str, dict] | None = None,
 ) -> dict[str, list[dict]]:
     """Rate every spot that has NWPS forecast data.
 
@@ -529,8 +597,16 @@ def compute_ratings(
       - no_station:      spot has no `nearest_tide_station_id` at all
       - station_missing: station_id is set but not a key in tides.json
       - no_tide_data:    station in tides.json has neither hourly nor hilo
+
+    *buoys* is the buoys.json mapping (buoy_id → buoy block). When the NWPS
+    GRIB doesn't carry SWDIR / SWPER (most WFOs), each spot's nearest buoy
+    is used to source observed swell direction / period.
     """
     spot_by_name = {s.get("name"): s for s in spots if s.get("name")}
+    buoys = buoys or {}
+    # Memoize the latest spec snapshot per buoy so we don't rescan its 24h
+    # spec history once per spot.
+    buoy_swell_cache: dict[str, dict | None] = {}
     results: dict[str, list[dict]] = {}
     rated = 0
     no_spot = 0
@@ -540,6 +616,8 @@ def compute_ratings(
     no_tide_data = 0
     tide_hourly = 0
     tide_hilo = 0
+    swell_from_buoy = 0
+    swell_no_source = 0
     missing_examples: list[str] = []
 
     for name, forecast in nwps.items():
@@ -574,7 +652,26 @@ def compute_ratings(
                 else:
                     tide_hourly += 1
 
-        series = rate_spot(spot, forecast, tide_series)
+        # Resolve a swell-direction/period snapshot from the spot's nearest
+        # buoy. interpret only consults this when the per-hour NWPS entry
+        # has no swell_dp/swell_tp of its own (most WFOs).
+        buoy_id = spot.get("nearest_buoy_id")
+        buoy_snapshot: dict | None = None
+        if buoy_id:
+            if buoy_id not in buoy_swell_cache:
+                buoy_swell_cache[buoy_id] = latest_buoy_swell(buoys.get(buoy_id))
+            buoy_snapshot = buoy_swell_cache[buoy_id]
+        # Track whether this spot will end up scoring direction off NWPS,
+        # off the buoy, or off nothing at all (which means dir_gain falls
+        # back to total DIRPW and we're back to the original bug).
+        nwps_has_swell_dp = any(e.get("swell_dp") is not None for e in forecast)
+        if not nwps_has_swell_dp:
+            if buoy_snapshot is not None:
+                swell_from_buoy += 1
+            else:
+                swell_no_source += 1
+
+        series = rate_spot(spot, forecast, tide_series, buoy_snapshot)
         if series:
             results[name] = series
             rated += 1
@@ -585,6 +682,14 @@ def compute_ratings(
         "tide_hourly=%d, tide_hilo=%d)",
         rated, no_spot, filtered_invalid, no_station, station_missing,
         no_tide_data, tide_hourly, tide_hilo,
+    )
+    log.info(
+        "interpret: swell-direction sourcing — nwps_swell_dp=%d, buoy_swell_dp=%d, "
+        "fallback_to_total_dp=%d (out of %d rated spots)",
+        rated - swell_from_buoy - swell_no_source,
+        swell_from_buoy,
+        swell_no_source,
+        rated,
     )
     if missing_examples:
         log.info("interpret: station_missing sample: %s", ", ".join(missing_examples))
@@ -722,7 +827,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--nwps", type=Path, default=NWPS_FORECAST_FILE)
     p.add_argument("--tides", type=Path, default=TIDES_FORECAST_FILE)
     p.add_argument("--buoys", type=Path, default=BUOYS_FORECAST_FILE,
-                   help="Currently informational; buoys aren't used in the v1 rating.")
+                   help="NDBC buoy observations. Used as the swell direction / "
+                        "period source for any spot whose NWPS GRIB doesn't carry "
+                        "SWDIR / SWPER (most WFOs).")
     p.add_argument("--output", type=Path, default=RATINGS_FILE)
     p.add_argument("--sample", type=str, default=None,
                    help="Spot name to print as the 24h sample (defaults to top peak)")
@@ -740,12 +847,21 @@ def main(argv: list[str] | None = None) -> int:
     spots = _load_json(args.spots, "spots_enriched.json")
     nwps = _load_json(args.nwps, "nwps.json")
     tides = _load_json(args.tides, "tides.json")
+    # Buoys are optional — interpret degrades to "fallback_to_total_dp" if
+    # the file is missing or empty, with a log line counting affected spots.
+    buoys: dict = {}
+    if args.buoys.exists():
+        loaded = json.loads(args.buoys.read_text())
+        if isinstance(loaded, dict):
+            buoys = loaded
+    else:
+        log.warning("interpret: %s missing — swell direction will fall back to NWPS DIRPW", args.buoys)
     log.info(
-        "interpret: loaded %d spots, %d nwps series, %d tide stations",
-        len(spots), len(nwps), len(tides),
+        "interpret: loaded %d spots, %d nwps series, %d tide stations, %d buoys",
+        len(spots), len(nwps), len(tides), len(buoys),
     )
 
-    ratings = compute_ratings(spots, nwps, tides)
+    ratings = compute_ratings(spots, nwps, tides, buoys)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
     log.info("interpret: wrote %d spots to %s", len(ratings), args.output)
