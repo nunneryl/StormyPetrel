@@ -504,6 +504,98 @@ def _extract_time_series_from_datasets(datasets: list, lat: float, lng: float) -
     return [records[t] for t in sorted(records.keys())]
 
 
+# Wave variables we test against to detect a land cell. NWPS land cells return
+# all-NaN for every wave field, so any of these going non-NaN means we hit
+# water. Order doesn't matter — we use the first one that exists in a dataset.
+_WAVE_VARS_FOR_LAND_CHECK = ("swh", "htsgw", "shts", "shww", "swell")
+
+# How far from the nominal nearest-cell to search before giving up. 5 cells on
+# the NWPS CG1 grid is roughly 2–3 km — enough to walk past most jetties /
+# breakwaters / barrier islands without straying into a different surf zone.
+_LAND_SEARCH_MAX_RADIUS = 5
+
+
+def _find_wave_dataset(datasets: list):
+    """Return (dataset, var_name) of the first wave-bearing dataset, else (None, None)."""
+    for ds in datasets:
+        for v in ds.data_vars:
+            if str(v).lower() in _WAVE_VARS_FOR_LAND_CHECK:
+                return ds, str(v)
+    return None, None
+
+
+def _find_offshore_point(
+    datasets: list,
+    lat: float,
+    lng: float,
+    max_radius: int = _LAND_SEARCH_MAX_RADIUS,
+) -> tuple[float, float, int] | None:
+    """Find the nearest ocean grid cell to (lat, lng).
+
+    The NWPS wave model masks land cells as NaN. For spots tucked behind
+    jetties, sand spits, or whose lat/lng resolves to a coastline cell on
+    the model grid, the naive "nearest neighbor" lookup lands on land and
+    every wave variable comes back null.
+
+    This walks outward in expanding rings (1, 2, 3, ... cells) and returns
+    the first cell whose wave data is non-NaN. Returns
+    ``(corrected_lat, corrected_lng, fallback_cells)`` — fallback_cells=0 if
+    the nominal nearest cell was already water. Returns ``None`` if every
+    cell within *max_radius* is land.
+    """
+    import numpy as np
+
+    wave_ds, wave_var = _find_wave_dataset(datasets)
+    if wave_ds is None:
+        # No wave variable in this run — can't tell land from water; trust
+        # the input. (Wind-only runs etc.)
+        return lat, lng, 0
+
+    lng_adj = _normalize_longitude(wave_ds, lng)
+    lats = np.asarray(wave_ds["latitude"].values)
+    lngs = np.asarray(wave_ds["longitude"].values)
+
+    lat_idx = int(np.argmin(np.abs(lats - lat)))
+    lng_idx = int(np.argmin(np.abs(lngs - lng_adj)))
+
+    def _is_water(li: int, lj: int) -> bool:
+        try:
+            sample = wave_ds[wave_var].isel(latitude=li, longitude=lj)
+            arr = np.atleast_1d(np.asarray(sample.values)).ravel()
+            return not np.all(np.isnan(arr))
+        except Exception:  # noqa: BLE001
+            return False
+
+    def _to_input_convention(ds_lng: float) -> float:
+        # Reverse _normalize_longitude: if the dataset uses 0–360 and the
+        # input was a negative (-180/180) lng, return to the negative form.
+        if lng < 0 and ds_lng > 180:
+            return ds_lng - 360.0
+        return ds_lng
+
+    if _is_water(lat_idx, lng_idx):
+        return float(lats[lat_idx]), _to_input_convention(float(lngs[lng_idx])), 0
+
+    n_lat = len(lats)
+    n_lng = len(lngs)
+    for radius in range(1, max_radius + 1):
+        for di in range(-radius, radius + 1):
+            for dj in range(-radius, radius + 1):
+                # Only walk the outer ring at this radius — the interior was
+                # checked on previous iterations.
+                if max(abs(di), abs(dj)) != radius:
+                    continue
+                ni = lat_idx + di
+                nj = lng_idx + dj
+                if 0 <= ni < n_lat and 0 <= nj < n_lng and _is_water(ni, nj):
+                    return (
+                        float(lats[ni]),
+                        _to_input_convention(float(lngs[nj])),
+                        radius,
+                    )
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Public entrypoint
 # ---------------------------------------------------------------------------
@@ -555,6 +647,9 @@ def fetch(
     wfos_missing = 0
     wfos_parse_failed = 0
     spots_with_data = 0
+    spots_offshore_ok = 0      # nominal nearest cell was already water
+    spots_fallback = 0         # found water within search radius
+    spots_skipped_land = 0     # no water cell within search radius
 
     try:
         from tqdm import tqdm
@@ -591,9 +686,26 @@ def fetch(
         log.info("nwps: %s (%sZ %s) — extracting %d spots from %s",
                  wfo, cycle_hh, cycle_date, len(wfo_spots), grib_path.name)
         for spot in wfo_spots:
-            series = _extract_time_series_from_datasets(
-                datasets, float(spot["lat"]), float(spot["lng"])
-            )
+            spot_lat = float(spot["lat"])
+            spot_lng = float(spot["lng"])
+            found = _find_offshore_point(datasets, spot_lat, spot_lng)
+            if found is None:
+                spots_skipped_land += 1
+                log.warning(
+                    "nwps: %s — no ocean grid cell within %d cells of (%.4f, %.4f); skipping",
+                    spot["name"], _LAND_SEARCH_MAX_RADIUS, spot_lat, spot_lng,
+                )
+                continue
+            corr_lat, corr_lng, fallback_cells = found
+            if fallback_cells > 0:
+                spots_fallback += 1
+                log.info(
+                    "nwps: %s: nearest grid (%.4f, %.4f) was land, fell back to (%.4f, %.4f) at %d cells away",
+                    spot["name"], spot_lat, spot_lng, corr_lat, corr_lng, fallback_cells,
+                )
+            else:
+                spots_offshore_ok += 1
+            series = _extract_time_series_from_datasets(datasets, corr_lat, corr_lng)
             if series:
                 out[spot["name"]] = series
                 spots_with_data += 1
@@ -603,5 +715,9 @@ def fetch(
     log.info(
         "nwps: wrote %d spots to %s (WFOs ok=%d, missing=%d, parse_failed=%d)",
         spots_with_data, NWPS_FORECAST_FILE, wfos_ok, wfos_missing, wfos_parse_failed,
+    )
+    log.info(
+        "nwps: land-fallback summary — nearest-water=%d, fell-back=%d, no-water-within-%d-cells=%d",
+        spots_offshore_ok, spots_fallback, _LAND_SEARCH_MAX_RADIUS, spots_skipped_land,
     )
     return out
