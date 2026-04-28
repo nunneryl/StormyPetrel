@@ -228,6 +228,13 @@ def _locate_cycle(use_cache: bool) -> tuple[str, str, list[Path]] | None:
 # cfgrib shortName → (output prefix, field) for each thing we care about. The
 # prefixes mirror the JSON layout: swell_{n}_{hs|tp|dp}, wind_wave_{hs|tp|dp},
 # total_{hs|tp|dp}.
+#
+# gfswave global.0p25 publishes ONE combined swell aggregate (shts / mpts /
+# swdir) plus wind sea (shww / mpww / wvdir) plus combined total (swh /
+# perpw / dirpw). It does NOT publish per-partition (1/2/3) breakdowns —
+# those come from the ww3-multi regional products (atlocn / epacif / wcoast)
+# at higher resolution. We map the single swell aggregate to swell_1 here;
+# swell_2 / swell_3 stay null until we add those products.
 _PARTITION_MAP: dict[str, tuple[str, str]] = {
     # Total (combined) — useful as a ground-truth cross-check.
     "swh":   ("total", "hs"),
@@ -241,12 +248,17 @@ _PARTITION_MAP: dict[str, tuple[str, str]] = {
     "shww":  ("wind_wave", "hs"),
     "mpww":  ("wind_wave", "tp"),
     "mdww":  ("wind_wave", "dp"),
-    # Swell partitions. cfgrib maps NCEP's _1/_2/_3 partition variables to
-    # different shortNames depending on the table version; cover both
-    # documented spellings.
+    # Combined swell (the "1 partition" gfswave global.0p25 actually ships).
+    # cfgrib renames the GRIB names a few different ways depending on which
+    # parameter table the producer used; cover every spelling we've seen.
+    "shts":  ("swell_1", "hs"),   # significant height of total swell
+    "mpts":  ("swell_1", "tp"),   # mean period of total swell
+    "swdir": ("swell_1", "dp"),   # direction of total swell
     "swell": ("swell_1", "hs"),
     "swper": ("swell_1", "tp"),
-    "swdir": ("swell_1", "dp"),
+    # Per-partition variables (only present in higher-res products like
+    # ww3-multi atlocn / epacif). Kept here so the same parser handles
+    # partitioned output if/when we add those sources.
     "swell_1": ("swell_1", "hs"),
     "swper_1": ("swell_1", "tp"),
     "swdir_1": ("swell_1", "dp"),
@@ -256,10 +268,6 @@ _PARTITION_MAP: dict[str, tuple[str, str]] = {
     "swell_3": ("swell_3", "hs"),
     "swper_3": ("swell_3", "tp"),
     "swdir_3": ("swell_3", "dp"),
-    # cfgrib also surfaces partitions through these alt keys in some setups.
-    "shps":  ("swell_1", "hs"),
-    "mpps":  ("swell_1", "tp"),
-    "mdps":  ("swell_1", "dp"),
 }
 
 
