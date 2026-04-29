@@ -303,38 +303,47 @@ def _extract_step_vectorized(
     spot_names: list[str],
     spot_lats: "np.ndarray",
     spot_lngs: "np.ndarray",
+    debug_first: bool = False,
 ) -> tuple[str | None, dict[str, dict]]:
     """Extract every spot's value from one step file in a single pass.
 
-    Loads each variable's full grid into a numpy array once, computes the
-    nearest grid-cell index for every spot in one vectorized argmin, then
-    fancy-indexes the result. ~50000× faster than 489 separate ds.sel()
-    calls because the per-spot work becomes a single array lookup instead
-    of a fresh xarray indexing path through the eccodes byte ranges.
+    For each dataset in the step file, compute the nearest grid-cell index
+    for every spot in one vectorized argmin, then isel-by-DataArray to
+    pull all spot values at once. ~50000× faster than 489 separate
+    ds.sel() calls and dim-order-agnostic so it works whether cfgrib
+    serves the partition group as (latitude, longitude) or
+    (step, latitude, longitude) or any other ordering.
 
     Returns (valid_time_iso, {spot_name: partial entry dict}).
     """
     import numpy as np
+    import xarray as xr
 
     valid_time: str | None = None
     out: dict[str, dict] = {}
 
-    for ds in datasets:
-        # All datasets in a single step file share the same valid_time; grab
-        # the first one we can resolve.
+    for di, ds in enumerate(datasets):
         if valid_time is None:
             vt = _resolve_valid_time(ds)
             if vt is not None:
                 valid_time = vt.isoformat().replace("+00:00", "Z")
 
+        # Coordinate names vary across cfgrib outputs: usually
+        # latitude/longitude, occasionally lat/lon or y/x.
+        lat_name = next((n for n in ("latitude", "lat", "y") if n in ds.coords), None)
+        lng_name = next((n for n in ("longitude", "lon", "x") if n in ds.coords), None)
+        if lat_name is None or lng_name is None:
+            if debug_first:
+                log.info("ww3: ds[%d] no lat/lng coords (coords=%s)", di, list(ds.coords))
+            continue
+
         try:
-            lat_grid = np.asarray(ds["latitude"].values, dtype=float)
-            lng_grid = np.asarray(ds["longitude"].values, dtype=float)
+            lat_grid = np.asarray(ds[lat_name].values, dtype=float)
+            lng_grid = np.asarray(ds[lng_name].values, dtype=float)
         except (KeyError, ValueError):
             continue
 
-        # gfswave global runs on a 0–360 lon grid; -180..180 spot lngs need
-        # to be wrapped before nearest-neighbor lookup.
+        # gfswave global lon grid is 0–360; -180..180 spot lngs need wrapping.
         if lng_grid.min() >= 0:
             lngs_for_ds = np.where(spot_lngs < 0, spot_lngs + 360.0, spot_lngs)
         else:
@@ -342,21 +351,57 @@ def _extract_step_vectorized(
 
         lat_idx = np.argmin(np.abs(lat_grid[:, None] - spot_lats[None, :]), axis=0)
         lng_idx = np.argmin(np.abs(lng_grid[:, None] - lngs_for_ds[None, :]), axis=0)
+        lat_da = xr.DataArray(lat_idx, dims="spot")
+        lng_da = xr.DataArray(lng_idx, dims="spot")
 
         for var_name in ds.data_vars:
             mapping = _PARTITION_MAP.get(str(var_name).lower())
             if mapping is None:
                 continue
             prefix, field = mapping
+            da = ds[var_name]
+
+            if debug_first:
+                log.info(
+                    "ww3: ds[%d] %s dims=%s shape=%s -> %s_%s",
+                    di, var_name, da.dims, da.shape, prefix, field,
+                )
+
+            if lat_name not in da.dims or lng_name not in da.dims:
+                if debug_first:
+                    log.info("ww3:   skipping %s (no %s/%s in dims)",
+                             var_name, lat_name, lng_name)
+                continue
+
             try:
-                arr = np.asarray(ds[var_name].values)
-            except Exception:  # noqa: BLE001
+                point = da.isel({lat_name: lat_da, lng_name: lng_da})
+                # Squeeze any leftover step / time / surface singleton dims.
+                point = point.squeeze(drop=True)
+                # If isel still left a non-spot dim (e.g. step > 1 in a
+                # multi-step grouping), pick the first slice so we have
+                # one value per spot.
+                while point.ndim > 1:
+                    extra = next((d for d in point.dims if d != "spot"), None)
+                    if extra is None:
+                        break
+                    point = point.isel({extra: 0})
+                vals = np.asarray(point.values, dtype=float)
+            except Exception as e:  # noqa: BLE001
+                if debug_first:
+                    log.info("ww3:   isel failed for %s: %s", var_name, e)
                 continue
-            arr = np.squeeze(arr)
-            if arr.ndim != 2 or arr.shape != (lat_grid.size, lng_grid.size):
-                # Unexpected dim ordering — skip rather than mis-index.
+
+            if vals.shape != (len(spot_names),):
+                if debug_first:
+                    log.info("ww3:   %s vals shape %s != expected (%d,)",
+                             var_name, vals.shape, len(spot_names))
                 continue
-            vals = arr[lat_idx, lng_idx]
+
+            non_nan = int(np.isfinite(vals).sum())
+            if debug_first:
+                log.info("ww3:   %s non-nan values: %d / %d",
+                         var_name, non_nan, len(spot_names))
+
             for i, name in enumerate(spot_names):
                 v = vals[i]
                 if not np.isfinite(v):
@@ -453,6 +498,7 @@ def fetch(
 
             valid_time, step_entries = _extract_step_vectorized(
                 datasets, spot_names, spot_lats_arr, spot_lngs_arr,
+                debug_first=(path == paths[0]),
             )
         finally:
             _close_datasets(datasets)
