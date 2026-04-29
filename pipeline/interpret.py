@@ -166,7 +166,7 @@ def directional_gain(
             return 0.0
         offset = _min_offset_from_arcs(dp, swell_window_arcs)
         if offset < 45.0:
-            return 0.30
+            return 0.40
         if offset < 90.0:
             return 0.15
         return 0.0
@@ -178,7 +178,7 @@ def directional_gain(
     # Smallest signed angular difference in (-180, 180].
     diff = ((dp - target + 540.0) % 360.0) - 180.0
     gain = math.cos(math.radians(diff)) ** 2
-    return max(0.1, gain)
+    return max(0.25, gain)
 
 
 def wind_multiplier(
@@ -205,7 +205,7 @@ def wind_multiplier(
     elif ang < 150.0:
         base = 0.6
     else:
-        base = 0.4
+        base = 0.55
 
     # Light wind blends toward 1.0 — direction matters less when calm.
     if wind_speed_ms < 5.0:
