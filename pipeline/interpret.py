@@ -50,17 +50,37 @@ M_TO_FT = 3.281
 # Scoring components
 # ---------------------------------------------------------------------------
 
-def period_factor(tp: float) -> float:
-    """Linear from 1.3 at Tp=6s to 2.0 at Tp=16s, clamped at both ends."""
-    if tp <= 6.0:
-        return 1.3
-    if tp >= 16.0:
-        return 2.0
-    return 1.3 + (tp - 6.0) / 10.0 * (2.0 - 1.3)
+# Period factor — converts an offshore Hs to an "at the break" face height.
+# Two calibration tables because the input Hs comes from very different
+# physical references depending on source:
+#
+#   - NWPS swell_hs (SHTS) is *nearshore* significant height. The wave has
+#     already partially shoaled, so the remaining deep→break amplification
+#     is moderate (1.2–1.6×).
+#   - WW3 swell_n_hs is the *deep-ocean* partition height before any
+#     coastal shoaling. Beach-break shoaling typically multiplies that by
+#     1.0–1.3× depending on bathymetry and period.
+#
+# Mis-applying the NWPS curve to WW3 was over-amplifying long-period swells
+# by ~30% (Pipeline showing 3.5 ft when Surfline reads 1–2 ft); split here.
+_PERIOD_FACTOR_NWPS = [
+    (0.0, 1.2), (6.0, 1.2), (8.0, 1.3), (10.0, 1.4),
+    (12.0, 1.5), (14.0, 1.55), (16.0, 1.6), (99.0, 1.6),
+]
+_PERIOD_FACTOR_WW3 = [
+    (0.0, 1.0), (6.0, 1.0), (8.0, 1.05), (10.0, 1.1),
+    (12.0, 1.15), (14.0, 1.2), (16.0, 1.25), (99.0, 1.3),
+]
 
 
-def face_ft(hs_m: float, tp_s: float) -> float:
-    return hs_m * period_factor(tp_s) * M_TO_FT
+def period_factor(tp: float, source: str = "nwps") -> float:
+    """Hs → face amplification factor. *source* is "nwps" or "ww3"."""
+    points = _PERIOD_FACTOR_WW3 if source == "ww3" else _PERIOD_FACTOR_NWPS
+    return _interp(tp, points)
+
+
+def face_ft(hs_m: float, tp_s: float, source: str = "nwps") -> float:
+    return hs_m * period_factor(tp_s, source) * M_TO_FT
 
 
 def _in_any_arc(dp: float, arcs: list[dict]) -> bool:
@@ -80,20 +100,75 @@ def _in_any_arc(dp: float, arcs: list[dict]) -> bool:
     return False
 
 
+def _angle_off(a: float, b: float) -> float:
+    """Smallest positive angle between two bearings, in [0, 180]."""
+    d = abs(a - b) % 360.0
+    return min(d, 360.0 - d)
+
+
+def _min_offset_from_arcs(dp: float, arcs: list[dict]) -> float:
+    """Smallest angular distance from *dp* to the nearest swell-window arc edge.
+
+    Returns 0 when *dp* is inside any arc. Used to grade refracted-swell
+    penalties: a swell coming from 30° outside the window can still wrap
+    into the break, but one coming from 120° outside is physically
+    blocked by the coastline and won't.
+    """
+    if _in_any_arc(dp, arcs):
+        return 0.0
+    min_off = 360.0
+    for arc in arcs:
+        try:
+            lo, hi = arc["min"], arc["max"]
+        except (KeyError, TypeError):
+            continue
+        min_off = min(min_off, _angle_off(dp, lo), _angle_off(dp, hi))
+    return min_off
+
+
 def directional_gain(
     dp: float,
     swell_window_arcs: list[dict] | None,
     optimal_swell_dir: float | None,
     orientation_deg: float | None,
+    *,
+    soft_outside: bool = True,
 ) -> float:
-    """0.0 if dp is outside every arc; cos²(offset) inside, floor 0.1.
+    """Directional gain for a swell with bearing *dp* against the spot's window.
 
-    Falls back to *orientation_deg* when *optimal_swell_dir* is missing,
-    so spots with no resolved fetch still get a meaningful gain.
+    Inside the window:
+      cos²(offset_from_optimal), floored at 0.1 — direct on-axis swells
+      score 1.0, oblique on-axis ones taper smoothly.
+
+    Outside the window (*soft_outside* path, default on):
+      The wave model already accounts for refraction / diffraction at
+      grid resolution, so "outside the window" doesn't mean "no swell" —
+      it means "swell wraps in via coastal geometry." Graduated by how
+      far outside:
+        <45° off:    gain = 0.30  (refracted swell, real but reduced)
+        45–90° off:  gain = 0.15  (heavily refracted, fringe)
+        >90° off:    gain = 0.0   (physically blocked by the headland)
+
+      Without this, spots like Steamer Lane (south-facing) zero-out under
+      Surfline's listed NW swells even though refraction around the
+      headland is precisely how those swells reach the lineup.
+
+    Setting *soft_outside=False* restores the legacy hard-zero behavior
+    (kept for any out-of-rater diagnostic that wants the raw "is the
+    swell physically aligned" signal).
     """
     if not swell_window_arcs:
         return 0.0
-    if not _in_any_arc(dp, swell_window_arcs):
+
+    in_window = _in_any_arc(dp, swell_window_arcs)
+    if not in_window:
+        if not soft_outside:
+            return 0.0
+        offset = _min_offset_from_arcs(dp, swell_window_arcs)
+        if offset < 45.0:
+            return 0.30
+        if offset < 90.0:
+            return 0.15
         return 0.0
 
     target = optimal_swell_dir if optimal_swell_dir is not None else orientation_deg
@@ -104,12 +179,6 @@ def directional_gain(
     diff = ((dp - target + 540.0) % 360.0) - 180.0
     gain = math.cos(math.radians(diff)) ** 2
     return max(0.1, gain)
-
-
-def _angle_off(a: float, b: float) -> float:
-    """Smallest positive angle between two bearings, in [0, 180]."""
-    d = abs(a - b) % 360.0
-    return min(d, 360.0 - d)
 
 
 def wind_multiplier(
@@ -457,54 +526,82 @@ def _ww3_at(
     return best
 
 
-def best_in_window_partition(
+def combine_ww3_partitions(
     ww3_entry: dict | None,
     arcs: list,
     optimal: float | None,
     orientation: float | None,
 ) -> dict | None:
-    """Pick the WW3 swell partition with the highest in-window face energy.
+    """RMS-combine all WW3 swell partitions that contribute energy to the break.
 
-    For each of swell_1 / swell_2 / swell_3 / wind_wave, compute its
-    directional gain against the spot's swell window. Score every
-    in-window partition by face_ft × dir_gain (a proxy for how much
-    rideable energy it contributes) and return the winner. If every
-    partition is outside the window, returns None — the rater will set
-    dir_gain = 0 and call the spot flat regardless of total energy.
+    Significant wave height adds in quadrature for combined sea states —
+    a 0.5 m and 0.3 m swell from different directions don't sum linearly
+    to 0.8 m, they combine to sqrt(0.5² + 0.3²) ≈ 0.58 m. Weighting each
+    partition's energy by its directional gain gives the at-the-break
+    combined Hs:
 
-    Returns ``{partition, hs, tp, dp, dir_gain, score}`` or None.
+        combined_hs = sqrt(sum(p_hs² * p_gain) for each partition)
+
+    The dominant partition (highest gain-weighted energy) supplies tp / dp
+    for display and downstream period_quality / chop calcs.
+
+    Returns ``{hs, tp, dp, dominant_partition, dir_gain, contributions}``
+    or None when no swell partition contributes any energy (every
+    partition is >90° outside the window — physically blocked).
+
+    The previous "pick a single best partition" logic dropped 60–80% of
+    the rideable energy at a multi-component spot like Huntington Beach,
+    where a small mid-period south swell layered on a small short-period
+    west swell — both in window, neither winning the "single best" race.
     """
     if not ww3_entry:
         return None
-    best: dict | None = None
+    contributions: list[dict] = []
     for prefix in _WW3_PARTITION_PREFIXES:
+        # wind_wave is treated as a separate channel (already used for
+        # chop_ratio); only swell_1/2/3 enter the combined Hs sum.
+        if prefix == "wind_wave":
+            continue
         hs = ww3_entry.get(f"{prefix}_hs")
         tp = ww3_entry.get(f"{prefix}_tp")
         dp = ww3_entry.get(f"{prefix}_dp")
         if hs is None or tp is None or dp is None:
             continue
         try:
-            hs_f = float(hs)
-            tp_f = float(tp)
-            dp_f = float(dp)
+            hs_f, tp_f, dp_f = float(hs), float(tp), float(dp)
         except (TypeError, ValueError):
             continue
         if hs_f <= 0 or tp_f <= 0:
             continue
-        dg = directional_gain(dp_f, arcs, optimal, orientation)
-        if dg <= 0:
+        gain = directional_gain(dp_f, arcs, optimal, orientation)
+        if gain <= 0:
             continue
-        score = face_ft(hs_f, tp_f) * dg
-        if best is None or score > best["score"]:
-            best = {
-                "partition": prefix,
-                "hs": hs_f,
-                "tp": tp_f,
-                "dp": dp_f,
-                "dir_gain": dg,
-                "score": score,
-            }
-    return best
+        contributions.append({
+            "partition": prefix,
+            "hs": hs_f,
+            "tp": tp_f,
+            "dp": dp_f,
+            "gain": gain,
+            # Energy-proxy used to pick the "dominant" partition for tp/dp.
+            "energy": hs_f * hs_f * gain,
+        })
+    if not contributions:
+        return None
+    combined_hs_sq = sum(c["energy"] for c in contributions)
+    combined_hs = math.sqrt(combined_hs_sq)
+    dominant = max(contributions, key=lambda c: c["energy"])
+    return {
+        "hs": combined_hs,
+        "tp": dominant["tp"],
+        "dp": dominant["dp"],
+        "dir_gain": dominant["gain"],
+        "dominant_partition": dominant["partition"],
+        "contributions": contributions,
+    }
+
+
+# Back-compat alias — older callers may still import the legacy name.
+best_in_window_partition = combine_ww3_partitions
 
 
 def latest_buoy_swell(buoy_block: dict | None) -> dict | None:
@@ -610,54 +707,63 @@ def rate_spot(
         wspd = entry.get("wind_speed")
         wdir = entry.get("wind_dir")
 
-        # Face height: NWPS publishes both total significant wave height
-        # (HTSGW = swell + wind sea) and swell-only height (SHTS / SWELL).
-        # Surfable face comes from the swell components only — wind sea
-        # adds chop/texture, not breaking waves on-axis. Real-world example:
-        # Pipeline 2026-04-27 17:00 UTC had hs=1.89 m total but
-        # swell_hs=0.91 m (the rest was 5ft NE trade chop). Using hs gave
-        # face=10.3 ft / 5★ (matching Surfline's "POOR / 3-4 ft" only by
-        # coincidence of magnitude); using swell_hs gives face=5.0 ft, the
-        # right answer.
+        # Size + direction. Three layered priorities, each higher one
+        # supersedes the lower:
         #
-        # Prefer swell-only Hs/Tp; fall back to total when swell_hs is
-        # missing or zero (rare — happens when there's no organized swell).
-        size_hs = swell_hs if (swell_hs is not None and swell_hs > 0) else hs
-        size_tp = swell_tp if (swell_tp is not None and swell_tp > 0) else tp
-        if size_hs is not None and size_tp is not None:
-            fft = face_ft(float(size_hs), float(size_tp))
-        else:
-            fft = None
-
-        # Direction: WAVEWATCH III spectral partitions are the source of
-        # truth — for each forecast hour, gfswave publishes 3 swell
-        # partitions (height + period + direction). Pick the partition with
-        # the highest in-window face energy and rate against it. If WW3
-        # has no entry near this hour, fall back to NWPS swell_dp → buoy
-        # SWDIR → NWPS total DIRPW (the order each option goes from "real
-        # spectral data" to "wind-sea-contaminated proxy").
+        #   1. WW3 partitions (gfswave) — RMS-combine all in-window swell
+        #      partitions weighted by directional gain (incl. refracted
+        #      ones). face uses WW3's deep-water shoaling factor.
+        #   2. NWPS swell_hs — already nearshore, use the heavier shoaling
+        #      factor. Direction comes from NWPS swell_dp → buoy → NWPS dp.
+        #   3. NWPS total hs — last resort, same direction chain.
+        #
+        # Pipeline / Steamer Lane / Huntington under (1) ratings finally
+        # match Surfline because:
+        #   - Steamer Lane gets refracted-NW gain instead of zero (Bug 1)
+        #   - Huntington's W + S swells RMS-combine instead of dropping
+        #     all but one (Bug 3)
+        #   - WW3 deep-ocean Hs gets a 1.0–1.3× factor instead of NWPS's
+        #     1.2–1.6× (Bug 4) — Pipeline drops from over-rated 3.5 ft
+        #     toward Surfline's 1–2 ft surf
         ww3_entry = _ww3_at(ww3_idx, vt) if ww3_idx else None
-        ww3_best = best_in_window_partition(ww3_entry, arcs, optimal, orientation)
-        if ww3_best is not None:
-            size_dp = ww3_best["dp"]
-            size_tp_eff = ww3_best["tp"]
-            dg = ww3_best["dir_gain"]
-            # Override the period used for face / period_quality with the
-            # in-window partition's tp — a 4ft 7s wind sea on top of a
-            # 1ft 15s long-period swell should rate as the 15s long-period
-            # for the partition that's actually in window.
-            size_tp = size_tp_eff
-            if size_hs is not None:
-                fft = face_ft(float(size_hs), float(size_tp_eff))
-        elif ww3_entry is not None:
-            # WW3 covered this hour but every partition was out of window —
-            # the spot really has no swell to ride right now.
-            size_dp = None
-            dg = 0.0
+        ww3_combined = combine_ww3_partitions(ww3_entry, arcs, optimal, orientation)
+
+        size_dp: float | None = None
+        size_tp_eff: float | None = None
+        face_source: str = "nwps"
+
+        if ww3_combined is not None:
+            # WW3 combined partition path (preferred).
+            combined_hs = ww3_combined["hs"]
+            size_dp = ww3_combined["dp"]
+            size_tp_eff = ww3_combined["tp"]
+            dg = ww3_combined["dir_gain"]
+            face_source = "ww3"
+            fft = face_ft(combined_hs, size_tp_eff, source="ww3")
+            size_tp = size_tp_eff  # for period_quality below
         else:
-            # No WW3 coverage — use the swell_dp resolution chain.
-            size_dp = swell_dp if swell_dp is not None else dp
-            dg = directional_gain(float(size_dp), arcs, optimal, orientation) if size_dp is not None else 0.0
+            # Fall back to NWPS-derived size + direction.
+            size_hs = swell_hs if (swell_hs is not None and swell_hs > 0) else hs
+            size_tp_eff = swell_tp if (swell_tp is not None and swell_tp > 0) else tp
+            size_tp = size_tp_eff
+            if size_hs is not None and size_tp_eff is not None:
+                fft = face_ft(float(size_hs), float(size_tp_eff), source="nwps")
+            else:
+                fft = None
+
+            if ww3_entry is not None:
+                # WW3 covered this hour but every partition is >90° outside
+                # the window — physically blocked, no rideable swell.
+                size_dp = None
+                dg = 0.0
+            else:
+                # No WW3 coverage at all — use the swell_dp resolution
+                # chain. Direction comes from NWPS swell_dp → buoy → NWPS dp.
+                size_dp = swell_dp if swell_dp is not None else dp
+                dg = (
+                    directional_gain(float(size_dp), arcs, optimal, orientation)
+                    if size_dp is not None else 0.0
+                )
 
         # Chop ratio + multiplier — degrades the rating when total Hs
         # exceeds swell-only Hs (i.e. wind sea adds energy that shows on
@@ -680,16 +786,23 @@ def rate_spot(
         )
         tm = tide_multiplier(tide_norm, preference)
 
-        effective = (fft or 0.0) * dg
+        # When the WW3 combiner ran the gain weighting INSIDE the RMS sum,
+        # combined_hs already represents at-the-break energy — multiplying
+        # by dir_gain again would double-count. NWPS path keeps the
+        # face × dir_gain form because there gain is computed only once.
+        if face_source == "ww3":
+            effective = fft or 0.0
+        else:
+            effective = (fft or 0.0) * dg
         stars = (
             composite_stars(effective, wm, tm, cm, pq) if fft is not None else 0.0
         )
 
         # Resolved swell direction / period — what the rater actually used.
-        # Priority: WW3 winning partition → NWPS swell_dp/tp → buoy → null.
-        if ww3_best is not None:
-            resolved_swell_dp = ww3_best["dp"]
-            resolved_swell_tp = ww3_best["tp"]
+        # Priority: WW3 dominant partition → NWPS swell_dp/tp → buoy → null.
+        if ww3_combined is not None:
+            resolved_swell_dp = ww3_combined["dp"]
+            resolved_swell_tp = ww3_combined["tp"]
         else:
             resolved_swell_dp = swell_dp
             resolved_swell_tp = swell_tp
@@ -715,7 +828,7 @@ def rate_spot(
             # distinguish "spectral truth" from "buoy persistence" from
             # "DIRPW last-resort". One of: ww3 / nwps_swell / buoy / nwps_total / none.
             "swell_source": (
-                "ww3" if ww3_best is not None
+                "ww3" if ww3_combined is not None
                 else ("nwps_swell" if entry.get("swell_dp") is not None
                       else ("buoy" if buoy_swell_dp is not None
                             else ("nwps_total" if dp is not None else "none")))
