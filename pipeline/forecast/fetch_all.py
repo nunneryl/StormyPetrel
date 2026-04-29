@@ -17,6 +17,7 @@ from pathlib import Path
 
 from ..config import DEFAULT_ENRICHED_OUTPUT
 from . import buoys as buoys_mod
+from . import hrrr as hrrr_mod
 from . import nwps as nwps_mod
 from . import tides as tides_mod
 from . import ww3 as ww3_mod
@@ -28,6 +29,7 @@ SOURCES = {
     "buoys": buoys_mod.fetch,
     "nwps": nwps_mod.fetch,
     "ww3": ww3_mod.fetch,
+    "hrrr": hrrr_mod.fetch,
 }
 
 
@@ -136,6 +138,22 @@ def _summarize(source: str, result: dict) -> None:
         with_spec = sum(1 for r in result.values() if r.get("spec_history_24h"))
         print(f"  buoys reporting waves (WVHT): {with_waves}/{len(result)}")
         print(f"  buoys with spectral data:     {with_spec}/{len(result)}")
+
+    elif source == "hrrr":
+        if not result:
+            print("  no HRRR data produced (CONUS-only — non-CONUS spots are expected to skip)")
+            return
+        hours = sorted(len(s) for s in result.values())
+        print(f"  CONUS spots with wind:        {len(result)}")
+        print(f"  hours per spot (min/med/max): {hours[0]}/{hours[len(hours)//2]}/{hours[-1]}")
+        sample_name, sample_series = next(iter(result.items()))
+        if sample_series:
+            s0 = sample_series[0]
+            speed_mph = (s0.get("wind_speed") or 0) * 2.23694
+            print(f"  sample ({sample_name} @ {s0['valid_time']}): "
+                  f"wind_speed={s0.get('wind_speed')} m/s ({speed_mph:.1f} mph), "
+                  f"wind_dir={s0.get('wind_dir')}°")
+        return
 
     elif source == "ww3":
         if not result:

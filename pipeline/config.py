@@ -170,6 +170,39 @@ WW3_GRIB_VARS = (
 WW3_BBOX = (15.0, 60.0, -170.0, -60.0)
 
 # ---------------------------------------------------------------------------
+# HRRR — High-Resolution Rapid Refresh (NCEP). 3 km Lambert-conformal grid
+# over CONUS, run every hour. Replaces NWPS / GFS-derived wind for the
+# rating because (a) 3 km resolves coastal sea breezes and topographic
+# effects properly, (b) hourly cycles vs every-6 h, (c) NWPS wind
+# disagreements with reality were the most reported "this rating is
+# wrong" failure mode (backlog FV-1).
+#
+# HRRR is CONUS only — no Hawaii / Puerto Rico / Alaska. Those regions
+# fall back to NWPS wind in interpret.py.
+# ---------------------------------------------------------------------------
+
+HRRR_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/hrrr/prod"
+HRRR_GRIB_FILTER_URL = "https://nomads.ncep.noaa.gov/cgi-bin/filter_hrrr_2d.pl"
+HRRR_CACHE_DIR = CACHE_DIR / "hrrr"
+HRRR_FORECAST_FILE = FORECAST_DATA_DIR / "hrrr.json"
+HRRR_CYCLE_LOOKBACK = 4
+# HRRR cycles 00 / 06 / 12 / 18 Z run out to 48 forecast hours; off-cycle
+# hours only go to 18 h. We always pick from the long-horizon set so the
+# fetched window covers the next two days end-to-end.
+HRRR_LONG_CYCLES = ("00", "06", "12", "18")
+HRRR_MAX_FORECAST_HOURS = 48
+HRRR_STEP_HOURS = tuple(range(0, HRRR_MAX_FORECAST_HOURS + 1))
+# Variables: 10 m above-ground U/V wind components. We post-process to
+# speed + meteorological direction; the rater never sees the raw U/V.
+HRRR_GRIB_VARS = ("UGRD", "VGRD")
+HRRR_GRIB_LEVEL = "lev_10_m_above_ground"
+# CONUS bbox used to skip non-CONUS spots at extract time. The HRRR
+# Lambert grid extends further (roughly 21–53 N, –134 to –60 W) but we
+# clip to the conservative interior so spots near the edge don't pick
+# spurious cells.
+HRRR_CONUS_BBOX = (22.0, 50.0, -130.0, -65.0)
+
+# ---------------------------------------------------------------------------
 # Interpretation (Phase 2) — surf rating composite
 # ---------------------------------------------------------------------------
 RATINGS_FILE = FORECAST_DATA_DIR / "ratings.json"

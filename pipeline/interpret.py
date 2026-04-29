@@ -34,6 +34,7 @@ from pathlib import Path
 from .config import (
     BUOYS_FORECAST_FILE,
     DEFAULT_ENRICHED_OUTPUT,
+    HRRR_FORECAST_FILE,
     NWPS_FORECAST_FILE,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
@@ -979,6 +980,50 @@ def _print_summary(
     print("=" * 60)
 
 
+def _merge_hrrr_into_nwps(
+    nwps: dict[str, list[dict]],
+    hrrr: dict[str, list[dict]],
+) -> tuple[int, int]:
+    """Overwrite NWPS wind with HRRR wind in place where the two align.
+
+    HRRR is the higher-resolution, hourly-cycled wind source for CONUS.
+    Every NWPS entry whose valid_time matches an HRRR entry for the same
+    spot gets its wind_speed / wind_dir replaced; both branches set
+    wind_source ("hrrr" or "nwps") for downstream provenance.
+
+    Spots not present in *hrrr* (Hawaii / Puerto Rico / Alaska, plus any
+    CONUS spots HRRR's KDTree couldn't resolve) keep NWPS wind on every
+    hour. NWPS hours past HRRR's 48 h horizon keep NWPS wind too.
+
+    Returns (n_hours_overwritten, n_hours_kept_on_nwps) for logging.
+    """
+    overwritten = 0
+    kept = 0
+    for spot_name, nwps_series in nwps.items():
+        hrrr_series = hrrr.get(spot_name) or []
+        hrrr_by_vt = {
+            e["valid_time"]: e
+            for e in hrrr_series
+            if e.get("valid_time") is not None
+        }
+        for entry in nwps_series:
+            vt = entry.get("valid_time")
+            hrrr_entry = hrrr_by_vt.get(vt) if vt else None
+            if (
+                hrrr_entry is not None
+                and hrrr_entry.get("wind_speed") is not None
+                and hrrr_entry.get("wind_dir") is not None
+            ):
+                entry["wind_speed"] = hrrr_entry["wind_speed"]
+                entry["wind_dir"] = hrrr_entry["wind_dir"]
+                entry["wind_source"] = "hrrr"
+                overwritten += 1
+            else:
+                entry.setdefault("wind_source", "nwps")
+                kept += 1
+    return overwritten, kept
+
+
 def _load_json(path: Path, label: str) -> dict | list:
     if not path.exists():
         log.error("interpret: %s not found at %s", label, path)
@@ -999,6 +1044,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="WAVEWATCH III (gfswave) per-spot partition forecasts. "
                         "Drives swell direction / period for the rating when "
                         "available; falls back to NWPS / buoy when not.")
+    p.add_argument("--hrrr", type=Path, default=HRRR_FORECAST_FILE,
+                   help="HRRR (3 km CONUS) hourly wind forecast. When present, "
+                        "overrides NWPS wind for any spot-hour HRRR resolved. "
+                        "Non-CONUS spots and hours past HRRR's 48 h horizon "
+                        "keep using NWPS wind.")
     p.add_argument("--output", type=Path, default=RATINGS_FILE)
     p.add_argument("--sample", type=str, default=None,
                    help="Spot name to print as the 24h sample (defaults to top peak)")
@@ -1037,10 +1087,30 @@ def main(argv: list[str] | None = None) -> int:
             "interpret: %s missing — swell partitions disabled, falling back to NWPS / buoy",
             args.ww3,
         )
+    # HRRR (CONUS-only, hourly 3 km wind). When present, every NWPS forecast
+    # entry whose valid_time matches an HRRR hour gets its wind_speed /
+    # wind_dir overwritten in-place and tagged wind_source="hrrr"; entries
+    # with no HRRR match keep NWPS wind and get tagged wind_source="nwps".
+    hrrr: dict = {}
+    if args.hrrr.exists():
+        loaded = json.loads(args.hrrr.read_text())
+        if isinstance(loaded, dict):
+            hrrr = loaded
+    else:
+        log.warning(
+            "interpret: %s missing — HRRR wind override disabled, using NWPS wind everywhere",
+            args.hrrr,
+        )
     log.info(
-        "interpret: loaded %d spots, %d nwps series, %d tide stations, %d buoys, %d ww3 series",
-        len(spots), len(nwps), len(tides), len(buoys), len(ww3),
+        "interpret: loaded %d spots, %d nwps series, %d tide stations, %d buoys, %d ww3 series, %d hrrr series",
+        len(spots), len(nwps), len(tides), len(buoys), len(ww3), len(hrrr),
     )
+    if hrrr:
+        n_hours_overwritten, n_hours_kept = _merge_hrrr_into_nwps(nwps, hrrr)
+        log.info(
+            "interpret: HRRR override — %d hours used HRRR wind, %d hours kept NWPS wind",
+            n_hours_overwritten, n_hours_kept,
+        )
 
     ratings = compute_ratings(spots, nwps, tides, buoys, ww3)
     args.output.parent.mkdir(parents=True, exist_ok=True)
