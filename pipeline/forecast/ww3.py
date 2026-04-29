@@ -225,50 +225,34 @@ def _locate_cycle(use_cache: bool) -> tuple[str, str, list[Path]] | None:
 # GRIB parsing — partition extraction
 # ---------------------------------------------------------------------------
 
-# cfgrib shortName → (output prefix, field) for each thing we care about. The
-# prefixes mirror the JSON layout: swell_{n}_{hs|tp|dp}, wind_wave_{hs|tp|dp},
-# total_{hs|tp|dp}.
-#
-# gfswave global.0p25 publishes ONE combined swell aggregate (shts / mpts /
-# swdir) plus wind sea (shww / mpww / wvdir) plus combined total (swh /
-# perpw / dirpw). It does NOT publish per-partition (1/2/3) breakdowns —
-# those come from the ww3-multi regional products (atlocn / epacif / wcoast)
-# at higher resolution. We map the single swell aggregate to swell_1 here;
-# swell_2 / swell_3 stay null until we add those products.
-_PARTITION_MAP: dict[str, tuple[str, str]] = {
+# Variable name → (base_prefix, field). Variables tagged "swell" carry an
+# extra leading "partition" dimension of size 3 — gfswave packs the 3
+# swell partitions (primary, secondary, tertiary) into a single grib
+# variable. The extractor splits that dim and emits one set of fields per
+# partition: swell_1_hs / swell_1_tp / swell_1_dp, swell_2_*, swell_3_*.
+# Variables tagged with any other prefix are 2D (lat, lng) — single value
+# per cell.
+_VAR_MAP: dict[str, tuple[str, str]] = {
     # Total (combined) — useful as a ground-truth cross-check.
     "swh":   ("total", "hs"),
     "htsgw": ("total", "hs"),
     "perpw": ("total", "tp"),
     "dirpw": ("total", "dp"),
-    # Wind sea
+    # Wind sea (single 2D field per variable).
     "wvhgt": ("wind_wave", "hs"),
     "wvper": ("wind_wave", "tp"),
     "wvdir": ("wind_wave", "dp"),
     "shww":  ("wind_wave", "hs"),
     "mpww":  ("wind_wave", "tp"),
     "mdww":  ("wind_wave", "dp"),
-    # Combined swell (the "1 partition" gfswave global.0p25 actually ships).
-    # cfgrib renames the GRIB names a few different ways depending on which
-    # parameter table the producer used; cover every spelling we've seen.
-    "shts":  ("swell_1", "hs"),   # significant height of total swell
-    "mpts":  ("swell_1", "tp"),   # mean period of total swell
-    "swdir": ("swell_1", "dp"),   # direction of total swell
-    "swell": ("swell_1", "hs"),
-    "swper": ("swell_1", "tp"),
-    # Per-partition variables (only present in higher-res products like
-    # ww3-multi atlocn / epacif). Kept here so the same parser handles
-    # partitioned output if/when we add those sources.
-    "swell_1": ("swell_1", "hs"),
-    "swper_1": ("swell_1", "tp"),
-    "swdir_1": ("swell_1", "dp"),
-    "swell_2": ("swell_2", "hs"),
-    "swper_2": ("swell_2", "tp"),
-    "swdir_2": ("swell_2", "dp"),
-    "swell_3": ("swell_3", "hs"),
-    "swper_3": ("swell_3", "tp"),
-    "swdir_3": ("swell_3", "dp"),
+    # Swell partitions — 3D (partition, lat, lng) in gfswave. The "swell"
+    # prefix triggers the per-partition split in the extractor.
+    "shts":  ("swell", "hs"),
+    "mpts":  ("swell", "tp"),
+    "swdir": ("swell", "dp"),
 }
+# Kept as an alias so any external imports of the old name still work.
+_PARTITION_MAP = _VAR_MAP
 
 
 def _open_grib_datasets(path: Path) -> list:
@@ -308,14 +292,12 @@ def _resolve_offshore_indices(
 ) -> tuple["np.ndarray", "np.ndarray", int]:
     """Per-spot (lat_idx, lng_idx) into *ds*'s grid, with land fallback.
 
-    Mirrors the NWPS offshore-search: gfswave masks land cells as NaN, so
-    a coastal spot whose nominal 0.25° cell falls inland returns NaN for
-    every wave variable. We walk outward in expanding rings of grid cells
-    against a wave sentinel variable in this dataset until we hit a cell
-    with finite data. For gfswave global.0p25, 1 cell ≈ 28 km; max_radius
-    of 10 ≈ 280 km — wide enough to reach the deep-ocean cells where
-    NCEP's partitioner actually runs (the partition group ds[0] has much
-    sparser global coverage than the combined-wave group ds[1]).
+    Walks outward in expanding rings against a wave-sentinel variable
+    until each spot finds a cell with finite data. For sentinel variables
+    that carry a partition dim (gfswave's shts / mpts / swdir are
+    (3, lat, lng)) we treat "water" as "any partition has data here", so
+    the search lands on cells where at least one swell partition is
+    resolved — even if partition 0 happens to be null at that cell.
 
     Returns (lat_idx, lng_idx, n_fallback). Spots that never found water
     keep their nominal index (every variable they extract will be NaN).
@@ -331,7 +313,6 @@ def _resolve_offshore_indices(
         np.abs(lng_grid[:, None] - spot_lngs_for_ds[None, :]), axis=0,
     )
 
-    # Pick a wave variable in this dataset as the land/water sentinel.
     sentinel_name = None
     for v in ds.data_vars:
         if str(v).lower() in ("shts", "swh", "shww", "swell", "htsgw"):
@@ -344,20 +325,24 @@ def _resolve_offshore_indices(
     if lat_name not in da.dims or lng_name not in da.dims:
         return nominal_lat, nominal_lng, 0
 
-    # Materialize sentinel as a 2D (lat, lng) numpy array.
-    arr = np.squeeze(np.asarray(da.values, dtype=float))
-    if arr.ndim != 2:
-        return nominal_lat, nominal_lng, 0
-    # Match shape to (n_lat, n_lng); transpose if needed.
+    # Reduce the variable to a 2D (lat, lng) "any partition has data" mask.
+    extra_dims = tuple(d for d in da.dims if d not in (lat_name, lng_name))
+    finite = np.isfinite(np.asarray(da.values, dtype=float))
+    if extra_dims:
+        # Collapse partition / step / etc. axes — water if any partition
+        # has data.
+        axis_indices = tuple(da.dims.index(d) for d in extra_dims)
+        finite = finite.any(axis=axis_indices)
+
     n_lat, n_lng = lat_grid.size, lng_grid.size
-    if arr.shape == (n_lng, n_lat):
-        arr = arr.T
-    if arr.shape != (n_lat, n_lng):
+    if finite.shape == (n_lng, n_lat):
+        finite = finite.T
+    if finite.shape != (n_lat, n_lng):
         return nominal_lat, nominal_lng, 0
 
     lat_idx = nominal_lat.copy()
     lng_idx = nominal_lng.copy()
-    resolved = np.isfinite(arr[lat_idx, lng_idx])
+    resolved = finite[lat_idx, lng_idx]
 
     for radius in range(1, max_radius + 1):
         if np.all(resolved):
@@ -368,8 +353,8 @@ def _resolve_offshore_indices(
                     continue
                 ni = np.clip(nominal_lat + di, 0, n_lat - 1)
                 nj = np.clip(nominal_lng + dj, 0, n_lng - 1)
-                test = arr[ni, nj]
-                update = ~resolved & np.isfinite(test)
+                test = finite[ni, nj]
+                update = ~resolved & test
                 if not update.any():
                     continue
                 lat_idx = np.where(update, ni, lat_idx)
@@ -442,7 +427,7 @@ def _extract_step_vectorized(
         lng_da = xr.DataArray(lng_idx, dims="spot")
 
         for var_name in ds.data_vars:
-            mapping = _PARTITION_MAP.get(str(var_name).lower())
+            mapping = _VAR_MAP.get(str(var_name).lower())
             if mapping is None:
                 continue
             prefix, field = mapping
@@ -462,40 +447,59 @@ def _extract_step_vectorized(
 
             try:
                 point = da.isel({lat_name: lat_da, lng_name: lng_da})
-                # Squeeze any leftover step / time / surface singleton dims.
+                # Drop singleton step / time / surface dims; keep spot +
+                # any partition dim.
                 point = point.squeeze(drop=True)
-                # If isel still left a non-spot dim (e.g. step > 1 in a
-                # multi-step grouping), pick the first slice so we have
-                # one value per spot.
-                while point.ndim > 1:
-                    extra = next((d for d in point.dims if d != "spot"), None)
-                    if extra is None:
-                        break
-                    point = point.isel({extra: 0})
-                vals = np.asarray(point.values, dtype=float)
             except Exception as e:  # noqa: BLE001
                 if debug_first:
                     log.info("ww3:   isel failed for %s: %s", var_name, e)
                 continue
 
-            if vals.shape != (len(spot_names),):
-                if debug_first:
-                    log.info("ww3:   %s vals shape %s != expected (%d,)",
-                             var_name, vals.shape, len(spot_names))
-                continue
+            extra_dims = [d for d in point.dims if d != "spot"]
+            n_parts = 1
+            if extra_dims:
+                # gfswave's swell variables ship with a 3-element partition
+                # dim. The combined / wind-sea variables don't.
+                n_parts = point.sizes[extra_dims[0]]
 
-            non_nan = int(np.isfinite(vals).sum())
-            if debug_first:
-                log.info("ww3:   %s non-nan values: %d / %d",
-                         var_name, non_nan, len(spot_names))
-
-            for i, name in enumerate(spot_names):
-                v = vals[i]
-                if not np.isfinite(v):
+            for p in range(n_parts):
+                if extra_dims:
+                    sliced = point.isel({extra_dims[0]: p})
+                else:
+                    sliced = point
+                vals = np.asarray(sliced.values, dtype=float)
+                if vals.shape != (len(spot_names),):
+                    if debug_first:
+                        log.info(
+                            "ww3:   %s p%d vals shape %s != expected (%d,)",
+                            var_name, p, vals.shape, len(spot_names),
+                        )
                     continue
-                key = f"{prefix}_{field}"
-                entry = out.setdefault(name, {})
-                entry.setdefault(key, round(float(v), 3))
+
+                # Per-partition output keys for the swell prefix:
+                # swell_1_*, swell_2_*, swell_3_*. Other prefixes stay
+                # flat (total_hs, wind_wave_dp, etc.) and only the first
+                # partition is consumed.
+                if prefix == "swell":
+                    out_key = f"swell_{p + 1}_{field}"
+                else:
+                    if p > 0:
+                        break
+                    out_key = f"{prefix}_{field}"
+
+                if debug_first:
+                    non_nan = int(np.isfinite(vals).sum())
+                    log.info(
+                        "ww3:   %s p%d -> %s : non-nan %d / %d",
+                        var_name, p, out_key, non_nan, len(spot_names),
+                    )
+
+                for i, name in enumerate(spot_names):
+                    v = vals[i]
+                    if not np.isfinite(v):
+                        continue
+                    entry = out.setdefault(name, {})
+                    entry.setdefault(out_key, round(float(v), 3))
 
     return valid_time, out
 
