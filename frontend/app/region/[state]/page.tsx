@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { fetchSpotsWithLatest, fetchSparklineData } from '@/lib/queries';
@@ -10,6 +11,24 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 600;
 
 type Params = { state: string };
+
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+  const { state } = await params;
+  const decoded = decodeURIComponent(state);
+  const pretty = decoded
+    .split(/[\s-]+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : ''))
+    .join(' ');
+  const title = `${pretty} surf forecasts`;
+  const description = `Live surf conditions and 7-day forecasts for every spot in ${pretty}. Sorted by current rating. Free, no paywall.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/region/${encodeURIComponent(decoded.toLowerCase())}` },
+    openGraph: { title, description, type: 'website' },
+    twitter: { card: 'summary_large_image', title, description },
+  };
+}
 
 export default async function RegionPage({ params }: { params: Promise<Params> }) {
   const { state } = await params;

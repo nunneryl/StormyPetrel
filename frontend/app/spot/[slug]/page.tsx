@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +22,27 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 600; // 10 minutes — forecasts update hourly upstream.
 
 type Params = { slug: string };
+
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+  const { slug } = await params;
+  const spot = await loadSpot(slug);
+  if (!spot) {
+    return { title: 'Spot not found' };
+  }
+  const region = [spot.state, spot.region].filter(Boolean).join(' · ');
+  const title = `${spot.name} surf forecast`;
+  const description =
+    `Free 7-day surf forecast for ${spot.name}` +
+    (region ? `, ${region}` : '') +
+    `. Wave height, swell direction, wind, and tide — built on NOAA NWPS, gfswave (WAVEWATCH III), HRRR and NDBC data.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/spot/${spot.slug}` },
+    openGraph: { title, description, type: 'website' },
+    twitter: { card: 'summary_large_image', title, description },
+  };
+}
 
 async function loadSpot(slug: string): Promise<Spot | null> {
   const { data, error } = await supabase
