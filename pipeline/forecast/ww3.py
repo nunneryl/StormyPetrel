@@ -298,6 +298,87 @@ def _resolve_valid_time(ds) -> datetime | None:
     return pd.to_datetime(vt[0], utc=True).to_pydatetime()
 
 
+def _resolve_offshore_indices(
+    ds,
+    lat_name: str,
+    lng_name: str,
+    spot_lats: "np.ndarray",
+    spot_lngs_for_ds: "np.ndarray",
+    max_radius: int = 4,
+) -> tuple["np.ndarray", "np.ndarray", int]:
+    """Per-spot (lat_idx, lng_idx) into *ds*'s grid, with land fallback.
+
+    Mirrors the NWPS offshore-search: gfswave masks land cells as NaN, so
+    a coastal spot whose nominal 0.25° cell falls inland returns NaN for
+    every wave variable. We walk outward in expanding rings of grid cells
+    against a wave sentinel variable in this dataset until we hit a cell
+    with finite data. For gfswave global.0p25, 1 cell ≈ 28 km; max_radius
+    of 4 ≈ 112 km — enough for spots tucked behind reefs / barrier islands
+    without straying into a different wave-climate region.
+
+    Returns (lat_idx, lng_idx, n_fallback). Spots that never found water
+    keep their nominal index (every variable they extract will be NaN).
+    """
+    import numpy as np
+
+    lat_grid = np.asarray(ds[lat_name].values, dtype=float)
+    lng_grid = np.asarray(ds[lng_name].values, dtype=float)
+    nominal_lat = np.argmin(
+        np.abs(lat_grid[:, None] - spot_lats[None, :]), axis=0,
+    )
+    nominal_lng = np.argmin(
+        np.abs(lng_grid[:, None] - spot_lngs_for_ds[None, :]), axis=0,
+    )
+
+    # Pick a wave variable in this dataset as the land/water sentinel.
+    sentinel_name = None
+    for v in ds.data_vars:
+        if str(v).lower() in ("shts", "swh", "shww", "swell", "htsgw"):
+            sentinel_name = v
+            break
+    if sentinel_name is None:
+        return nominal_lat, nominal_lng, 0
+
+    da = ds[sentinel_name]
+    if lat_name not in da.dims or lng_name not in da.dims:
+        return nominal_lat, nominal_lng, 0
+
+    # Materialize sentinel as a 2D (lat, lng) numpy array.
+    arr = np.squeeze(np.asarray(da.values, dtype=float))
+    if arr.ndim != 2:
+        return nominal_lat, nominal_lng, 0
+    # Match shape to (n_lat, n_lng); transpose if needed.
+    n_lat, n_lng = lat_grid.size, lng_grid.size
+    if arr.shape == (n_lng, n_lat):
+        arr = arr.T
+    if arr.shape != (n_lat, n_lng):
+        return nominal_lat, nominal_lng, 0
+
+    lat_idx = nominal_lat.copy()
+    lng_idx = nominal_lng.copy()
+    resolved = np.isfinite(arr[lat_idx, lng_idx])
+
+    for radius in range(1, max_radius + 1):
+        if np.all(resolved):
+            break
+        for di in range(-radius, radius + 1):
+            for dj in range(-radius, radius + 1):
+                if max(abs(di), abs(dj)) != radius:
+                    continue
+                ni = np.clip(nominal_lat + di, 0, n_lat - 1)
+                nj = np.clip(nominal_lng + dj, 0, n_lng - 1)
+                test = arr[ni, nj]
+                update = ~resolved & np.isfinite(test)
+                if not update.any():
+                    continue
+                lat_idx = np.where(update, ni, lat_idx)
+                lng_idx = np.where(update, nj, lng_idx)
+                resolved = resolved | update
+
+    n_fallback = int(np.sum(resolved & ((lat_idx != nominal_lat) | (lng_idx != nominal_lng))))
+    return lat_idx, lng_idx, n_fallback
+
+
 def _extract_step_vectorized(
     datasets: list,
     spot_names: list[str],
@@ -338,7 +419,6 @@ def _extract_step_vectorized(
             continue
 
         try:
-            lat_grid = np.asarray(ds[lat_name].values, dtype=float)
             lng_grid = np.asarray(ds[lng_name].values, dtype=float)
         except (KeyError, ValueError):
             continue
@@ -349,8 +429,14 @@ def _extract_step_vectorized(
         else:
             lngs_for_ds = spot_lngs
 
-        lat_idx = np.argmin(np.abs(lat_grid[:, None] - spot_lats[None, :]), axis=0)
-        lng_idx = np.argmin(np.abs(lng_grid[:, None] - lngs_for_ds[None, :]), axis=0)
+        lat_idx, lng_idx, n_fallback = _resolve_offshore_indices(
+            ds, lat_name, lng_name, spot_lats, lngs_for_ds,
+        )
+        if debug_first:
+            log.info(
+                "ww3: ds[%d] offshore-search promoted %d / %d spots to a non-land cell",
+                di, n_fallback, len(spot_names),
+            )
         lat_da = xr.DataArray(lat_idx, dims="spot")
         lng_da = xr.DataArray(lng_idx, dims="spot")
 
