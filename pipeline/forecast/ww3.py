@@ -304,7 +304,7 @@ def _resolve_offshore_indices(
     lng_name: str,
     spot_lats: "np.ndarray",
     spot_lngs_for_ds: "np.ndarray",
-    max_radius: int = 4,
+    max_radius: int = 10,
 ) -> tuple["np.ndarray", "np.ndarray", int]:
     """Per-spot (lat_idx, lng_idx) into *ds*'s grid, with land fallback.
 
@@ -313,8 +313,9 @@ def _resolve_offshore_indices(
     every wave variable. We walk outward in expanding rings of grid cells
     against a wave sentinel variable in this dataset until we hit a cell
     with finite data. For gfswave global.0p25, 1 cell ≈ 28 km; max_radius
-    of 4 ≈ 112 km — enough for spots tucked behind reefs / barrier islands
-    without straying into a different wave-climate region.
+    of 10 ≈ 280 km — wide enough to reach the deep-ocean cells where
+    NCEP's partitioner actually runs (the partition group ds[0] has much
+    sparser global coverage than the combined-wave group ds[1]).
 
     Returns (lat_idx, lng_idx, n_fallback). Spots that never found water
     keep their nominal index (every variable they extract will be NaN).
