@@ -30,6 +30,13 @@ on:
     # :15 catches both half-hour cycles within an hour at most.
     - cron: '15 * * * *'
 
+# Opt JavaScript-based actions (checkout, setup-python, github-script,
+# cache) onto the Node.js 24 runner. Node 20 is deprecated and gets
+# removed from GitHub-hosted runners 2026-09-16; flipping this now
+# silences the deprecation warning and tracks the new default.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 # Limit concurrency per logical job — if a previous run is still going,
 # the new schedule trigger waits or replaces it (cancel-in-progress=false
 # avoids killing a healthy run mid-upload).
