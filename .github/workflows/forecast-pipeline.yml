@@ -52,6 +52,13 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline')
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # The default GITHUB_TOKEN is read-only on Issues; the failure
+    # notification step needs `issues: write` to call POST /issues.
+    # contents:read is required for the checkout action under the
+    # restrictive default token policy.
+    permissions:
+      contents: read
+      issues: write
     env:
       # supabase-py reads SUPABASE_URL / SUPABASE_SERVICE_KEY; mirror to
       # NEXT_PUBLIC_SUPABASE_URL too so any code that reads either works.
