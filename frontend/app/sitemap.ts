@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { fetchAllSpots } from '@/lib/queries';
 import { siteUrl } from '@/lib/site-url';
+import { listPosts } from '@/lib/blog';
 
 const SITE_URL = siteUrl();
 
@@ -15,7 +16,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE_URL, lastModified: now, changeFrequency: 'hourly', priority: 1.0 },
     { url: `${SITE_URL}/map`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
     { url: `${SITE_URL}/regions`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+    { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
   ];
+
+  const blogEntries: MetadataRoute.Sitemap = listPosts().map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.date),
+    changeFrequency: 'monthly',
+    priority: 0.5,
+  }));
 
   let spots: Awaited<ReturnType<typeof fetchAllSpots>> = [];
   try {
@@ -44,5 +53,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...stateEntries, ...spotEntries];
+  return [...staticEntries, ...blogEntries, ...stateEntries, ...spotEntries];
 }
