@@ -1,9 +1,9 @@
 'use client';
 
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ReferenceDot,
   ResponsiveContainer,
   Tooltip,
@@ -35,13 +35,11 @@ export function TideChart({
   const data = buildSeries(forecasts);
   if (data.length === 0) {
     return (
-      <div className="h-44 w-full flex items-center justify-center text-slate-500 text-sm">
+      <div className="h-48 w-full flex items-center justify-center text-text-muted text-sm">
         No tide data for this spot.
       </div>
     );
   }
-  // Window the hilo events to the chart's time range so reference dots
-  // don't try to render off-screen.
   const tMin = data[0].t;
   const tMax = data[data.length - 1].t;
   const events = hilo
@@ -56,43 +54,54 @@ export function TideChart({
     }));
 
   return (
-    <div className="h-44 w-full">
+    <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeDasharray="2 4" stroke="#1f3151" />
+        <AreaChart data={data} margin={{ top: 16, right: 12, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id="tide-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="#14B8A6" stopOpacity={0.04} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="2 4" stroke="#1E3048" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
             tickFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
-            stroke="#5a6a7a"
-            tick={{ fill: '#8aa3c0', fontSize: 11 }}
+            stroke="#64748B"
+            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
           />
           <YAxis
-            stroke="#5a6a7a"
-            tick={{ fill: '#8aa3c0', fontSize: 11 }}
+            stroke="#64748B"
+            tick={{ fill: '#94A3B8', fontSize: 10 }}
             tickFormatter={(v) => `${v}ft`}
             width={42}
+            axisLine={false}
+            tickLine={false}
           />
           <Tooltip
             contentStyle={{
-              background: '#0a1220',
-              border: '1px solid #1f3151',
-              borderRadius: 6,
+              background: '#0B1426',
+              border: '1px solid #1E3048',
+              borderRadius: 8,
               fontSize: 12,
+              color: '#F1F5F9',
             }}
             labelFormatter={(v) =>
               `${fmtDay(new Date(v as number).toISOString())} ${fmtShortTime(new Date(v as number).toISOString())}`
             }
             formatter={(value) => [`${(value as number).toFixed(1)} ft`, 'Tide']}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey="level"
-            stroke="#1ea098"
+            stroke="#14B8A6"
             strokeWidth={2}
-            dot={false}
+            fill="url(#tide-fill)"
             isAnimationActive={false}
           />
           {events.map((e) => (
@@ -100,18 +109,19 @@ export function TideChart({
               key={`${e.t}-${e.type}`}
               x={e.t}
               y={e.level}
-              r={4}
-              fill={e.type === 'H' ? '#9bbf3e' : '#d97a2b'}
-              stroke="#04080f"
+              r={3.5}
+              fill={e.type === 'H' ? '#84CC16' : '#F97316'}
+              stroke="#0B1426"
+              strokeWidth={1.5}
               label={{
                 value: e.type ?? '',
-                fill: '#cbd5e1',
+                fill: '#94A3B8',
                 fontSize: 10,
                 position: 'top',
               }}
             />
           ))}
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
