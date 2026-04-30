@@ -4,24 +4,96 @@
 
 :root {
   color-scheme: dark;
+  --bg: #0B1426;
+  --surface: #111B2E;
+  --surface-2: #162034;
+  --border: #1E3048;
+  --text: #F1F5F9;
+  --text-2: #94A3B8;
+  --text-muted: #64748B;
+  --accent: #00B4D8;
+  --swell: #38BDF8;
+  --wind: #A3E635;
 }
 
 html, body {
-  background: #04080f;
-  color: #e5edf5;
-  font-feature-settings: "tnum" 1;
+  background: var(--bg);
+  color: var(--text);
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Inter via the system stack — no webfont download. Falls back to
+   system-ui everywhere Inter isn't installed. */
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Hide scrollbar but keep scrolling working — used by horizontal
+   "best now" card scroller and the mobile forecast grid. */
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Loading shimmer pattern for skeleton placeholders. */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 6px;
 }
 
 /* Leaflet attribution + tile container styling for dark mode. */
 .leaflet-container {
-  background: #0a1220;
+  background: #0B1426;
 }
-
 .leaflet-control-attribution {
-  background: rgba(4, 8, 15, 0.7) !important;
-  color: #8aa3c0 !important;
+  background: rgba(11, 20, 38, 0.78) !important;
+  color: #94A3B8 !important;
+  font-size: 11px;
+}
+.leaflet-control-attribution a {
+  color: #38BDF8 !important;
+}
+.leaflet-control-zoom a {
+  background-color: #162034 !important;
+  color: #F1F5F9 !important;
+  border-color: #1E3048 !important;
+}
+.leaflet-control-zoom a:hover {
+  background-color: #1C2840 !important;
 }
 
-.leaflet-control-attribution a {
-  color: #c2d4e8 !important;
+/* Marker popup theme override so popups don't ship the white default. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #162034 !important;
+  color: #F1F5F9 !important;
+  border: 1px solid #1E3048 !important;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Selection: brand cyan instead of browser default blue. */
+::selection {
+  background: rgba(0, 180, 216, 0.25);
+  color: #F1F5F9;
+}
+
+/* Focus ring — only on keyboard nav, not on click. */
+*:focus-visible {
+  outline: 2px solid #00B4D8;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
