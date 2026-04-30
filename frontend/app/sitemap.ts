@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { fetchAllSpots } from '@/lib/queries';
+import { siteUrl } from '@/lib/site-url';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://stormypetrel.surf';
+const SITE_URL = siteUrl();
 
 // Regenerate every hour. Forecast pages themselves are force-dynamic, so
 // the sitemap doesn't need to update faster than spot inventory changes.

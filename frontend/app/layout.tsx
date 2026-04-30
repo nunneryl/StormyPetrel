@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Link from 'next/link';
+import { siteUrl } from '@/lib/site-url';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://stormypetrel.surf';
+const SITE_URL = siteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
