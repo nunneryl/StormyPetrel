@@ -3,6 +3,7 @@ title: 'How our forecasts work'
 description: 'The four-source data pipeline + the rating formula, explained without the jargon.'
 date: '2026-04-29'
 author: 'Stormy Petrel'
+tag: 'methodology'
 ---
 
 ## TL;DR

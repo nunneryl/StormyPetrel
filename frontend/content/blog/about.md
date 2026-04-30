@@ -3,6 +3,7 @@ title: 'About Stormy Petrel'
 description: 'Why a free, open surf forecast site exists in 2026 — and what happened to MagicSeaweed.'
 date: '2026-04-30'
 author: 'Stormy Petrel'
+tag: 'updates'
 ---
 
 ## What is Stormy Petrel?

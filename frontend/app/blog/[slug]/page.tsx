@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getPost, listPosts } from '@/lib/blog';
+import { adjacentPosts, getPost, listPosts } from '@/lib/blog';
 
 type Params = { slug: string };
 
@@ -44,15 +44,34 @@ export default async function BlogPostPage({
   const post = await getPost(slug);
   if (!post) notFound();
 
+  const { prev, next } = adjacentPosts(slug);
+
   return (
     <article className="mx-auto max-w-3xl px-4 sm:px-6 py-7 space-y-5">
+      <Link
+        href="/blog"
+        className="inline-flex items-center text-sm text-text-secondary hover:text-cyan-600"
+      >
+        ← Back to blog
+      </Link>
+
       <header>
-        <div className="text-[11px] uppercase tracking-widest2 text-text-muted">
-          {new Date(post.date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest2 text-text-muted">
+          <time>
+            {new Date(post.date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </time>
+          <span>·</span>
+          <span>{post.readingMinutes} min read</span>
+          {post.tag && (
+            <>
+              <span>·</span>
+              <span className="capitalize text-text-secondary">{post.tag}</span>
+            </>
+          )}
         </div>
         <h1 className="mt-1 text-3xl sm:text-4xl font-bold tracking-tightish text-text-primary">
           {post.title}
@@ -64,11 +83,41 @@ export default async function BlogPostPage({
         <div dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
       </div>
 
-      <div className="pt-6 border-t border-ink-600 text-sm">
-        <Link href="/blog" className="text-text-secondary hover:text-cyan-400">
-          ← Back to all posts
-        </Link>
-      </div>
+      {/* Prev / next nav */}
+      {(prev || next) && (
+        <nav className="pt-6 border-t border-ink-600 grid gap-3 sm:grid-cols-2">
+          {prev ? (
+            <Link
+              href={`/blog/${prev.slug}`}
+              className="rounded-xl border border-ink-600 bg-white shadow-card p-4 hover:bg-ink-800 transition group"
+            >
+              <div className="text-[10px] uppercase tracking-widest2 text-text-muted">
+                ← Newer post
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-text-primary group-hover:text-cyan-600">
+                {prev.title}
+              </div>
+            </Link>
+          ) : (
+            <span />
+          )}
+          {next ? (
+            <Link
+              href={`/blog/${next.slug}`}
+              className="rounded-xl border border-ink-600 bg-white shadow-card p-4 hover:bg-ink-800 transition group sm:text-right"
+            >
+              <div className="text-[10px] uppercase tracking-widest2 text-text-muted">
+                Older post →
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-text-primary group-hover:text-cyan-600">
+                {next.title}
+              </div>
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
     </article>
   );
 }

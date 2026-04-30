@@ -3,6 +3,7 @@ title: 'Understanding surf forecasts'
 description: 'A short primer on swell period, direction, wind, and tide for surfers who haven''t spent years staring at MagicSeaweed.'
 date: '2026-04-28'
 author: 'Stormy Petrel'
+tag: 'forecasts'
 ---
 
 If you're newer to surfing and the forecast page looks like alphabet soup, this is for you. Five things to know.
