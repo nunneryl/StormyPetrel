@@ -142,7 +142,10 @@ vite.config.ts.timestamp-*
 # Pipeline artifacts
 pipeline/cache/
 pipeline/spots_seed.json
-pipeline/spots_enriched.json
+# spots_enriched.json IS tracked — it's the input contract for the
+# forecast pipeline (every cron run reads it to know which spots to
+# fetch). Re-runs of pipeline.enrich regenerate it locally; commit the
+# new version when adding/editing spots.
 pipeline/geodata/
 pipeline/forecast_data/
 

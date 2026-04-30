@@ -1,0 +1,161 @@
+name: forecast-pipeline
+
+# Two scheduled jobs in one workflow:
+#   - full-pipeline   every 6h, 90 min after each model cycle (00/06/12/18 Z),
+#                     fetches NWPS + WW3 + HRRR + buoys + tides, runs interpret,
+#                     pushes everything to Supabase.
+#   - buoy-update     hourly at :15, refreshes only NDBC observations so the
+#                     "now" reading on each spot page never goes stale beyond
+#                     ~60 min, without paying for the heavy GRIB downloads.
+#
+# Manual trigger via the Actions tab — pick which job to run from the
+# `job` input dropdown. Both jobs gate themselves with an `if:` so a
+# scheduled trigger only fires the matching job.
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which job to run (manual trigger only)
+        required: true
+        default: full-pipeline
+        type: choice
+        options:
+          - full-pipeline
+          - buoy-update
+  schedule:
+    # 90 min after model cycles. NCEP usually finishes uploading by then.
+    - cron: '30 1,7,13,19 * * *'
+    # Hourly buoy refresh. NDBC publishes new observations every ~30 min;
+    # :15 catches both half-hour cycles within an hour at most.
+    - cron: '15 * * * *'
+
+# Limit concurrency per logical job — if a previous run is still going,
+# the new schedule trigger waits or replaces it (cancel-in-progress=false
+# avoids killing a healthy run mid-upload).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.schedule || inputs.job }}
+  cancel-in-progress: false
+
+jobs:
+  full-pipeline:
+    name: full-pipeline (NWPS + WW3 + HRRR + buoys + tides)
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '30 1,7,13,19 * * *') ||
+      (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      # supabase-py reads SUPABASE_URL / SUPABASE_SERVICE_KEY; mirror to
+      # NEXT_PUBLIC_SUPABASE_URL too so any code that reads either works.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # Don't buffer Python output — make logs visible in real time so a
+      # stuck step is debuggable from the live Actions tail.
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install eccodes (cfgrib's GRIB-2 backend)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libeccodes0 unzip
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Restore geodata cache
+        id: geodata-cache
+        uses: actions/cache@v4
+        with:
+          path: pipeline/geodata
+          # Keyed on the script content — bump key automatically when the
+          # download list changes.
+          key: geodata-v1-${{ hashFiles('pipeline/download_geodata.sh') }}
+
+      - name: Download geodata (only if cache missed)
+        if: steps.geodata-cache.outputs.cache-hit != 'true'
+        run: bash pipeline/download_geodata.sh
+
+      - name: Create runtime directories
+        run: mkdir -p pipeline/cache pipeline/forecast_data
+
+      - name: Fetch all forecast / observation sources
+        run: python -m pipeline.forecast.fetch_all
+
+      - name: Interpret (compute ratings)
+        run: python -m pipeline.interpret
+
+      - name: Push to Supabase (spots + forecasts + buoys + tides)
+        run: python -m pipeline.db_import --all
+
+      - name: Open issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[cron] full-pipeline failed (run ${context.runNumber})`,
+              body: [
+                `The scheduled forecast pipeline failed at \`${new Date().toISOString()}\`.`,
+                ``,
+                `**Run logs:** ${runUrl}`,
+                ``,
+                `Common causes:`,
+                `- NOMADS rate-limit / missing cycle (will self-resolve next run)`,
+                `- Supabase TLS hiccup mid-upsert (re-run is idempotent)`,
+                `- New cfgrib variable name in a GRIB (check the first-step diagnostic in the log)`,
+              ].join('\n'),
+              labels: ['cron-failure', 'forecast-pipeline'],
+            });
+
+  buoy-update:
+    name: buoy-update (hourly NDBC refresh)
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '15 * * * *') ||
+      (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Create runtime directories
+        run: mkdir -p pipeline/cache pipeline/forecast_data
+
+      - name: Fetch buoy observations
+        run: python -m pipeline.forecast.fetch_all --only buoys --no-cache
+
+      - name: Push buoy_observations to Supabase
+        run: python -m pipeline.db_import --buoys-only

@@ -440,15 +440,27 @@ def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
 # Orchestration
 # ---------------------------------------------------------------------------
 
-def run_all(spots: bool = True, forecasts: bool = True) -> dict[str, int]:
-    """Library entry point — used by fetch_all.py via --push-to-db."""
+def run_all(
+    spots: bool = True,
+    forecasts: bool = True,
+    buoys: bool = True,
+    tides: bool = True,
+) -> dict[str, int]:
+    """Library entry point — used by fetch_all.py via --push-to-db.
+
+    Each table is gated independently so the hourly buoy-only cron job
+    can call this with just buoys=True, while the every-6h full pipeline
+    leaves all four enabled.
+    """
     client = get_client()
     stats: dict[str, int] = {}
     if spots:
         stats["spots"] = import_spots(client)
     if forecasts:
         stats["forecasts"] = import_forecasts(client)
+    if buoys:
         stats["buoy_observations"] = import_buoys(client)
+    if tides:
         stats["tide_predictions"] = import_tides(client)
     return stats
 
@@ -467,9 +479,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__ and __doc__.splitlines()[0])
     g = p.add_mutually_exclusive_group()
     g.add_argument("--spots-only", action="store_true",
-                   help="Push only the spots table (skip forecasts/buoys/tides).")
+                   help="Push only the spots table.")
     g.add_argument("--forecasts-only", action="store_true",
-                   help="Push only forecasts/buoys/tides (skip spots).")
+                   help="Push forecasts + buoys + tides (skip spots).")
+    g.add_argument("--buoys-only", action="store_true",
+                   help="Push only the buoy_observations table — used by the "
+                        "hourly cron that only refreshes buoy data.")
+    g.add_argument("--tides-only", action="store_true",
+                   help="Push only the tide_predictions table.")
     g.add_argument("--all", action="store_true", default=True,
                    help="Push every table (default).")
     p.add_argument("-v", "--verbose", action="store_true")
@@ -483,11 +500,19 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    do_spots = args.spots_only or (not args.forecasts_only)
-    do_forecasts = args.forecasts_only or (not args.spots_only)
+    if args.spots_only:
+        kwargs = dict(spots=True, forecasts=False, buoys=False, tides=False)
+    elif args.forecasts_only:
+        kwargs = dict(spots=False, forecasts=True, buoys=True, tides=True)
+    elif args.buoys_only:
+        kwargs = dict(spots=False, forecasts=False, buoys=True, tides=False)
+    elif args.tides_only:
+        kwargs = dict(spots=False, forecasts=False, buoys=False, tides=True)
+    else:  # --all (default)
+        kwargs = dict(spots=True, forecasts=True, buoys=True, tides=True)
 
     try:
-        stats = run_all(spots=do_spots, forecasts=do_forecasts)
+        stats = run_all(**kwargs)
     except RuntimeError as e:
         log.error("%s", e)
         return 1
