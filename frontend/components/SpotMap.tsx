@@ -42,7 +42,10 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
       mapRef.current = map;
 
       L.tileLayer(
-        'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{r}.png',
+        // Voyager: CARTO's neutral basemap — readable land/water contrast
+        // for marker dots without competing with their colors. Switching
+        // away from dark_all so the map reads on the new white page.
+        'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}{r}.png',
         {
           attribution:
             '&copy; OpenStreetMap &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -62,9 +65,9 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
               position:absolute; inset:0; border-radius:50%;
               background:${tier.hex};
               box-shadow:
-                0 0 0 2px #0B1426,
+                0 0 0 2px #FFFFFF,
                 0 0 0 3px ${tier.hex}66,
-                0 0 8px ${tier.glow};
+                0 0 6px ${tier.glow};
             "></div>
           </div>`;
         const icon = L.divIcon({
@@ -75,23 +78,24 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
         });
         const m = L.marker([s.lat, s.lng], { icon }).addTo(map);
         const f = s.latest;
+        const fg = tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD' ? '#0F172A' : '#FFFFFF';
         const popupHtml = `
-          <div style="font-family:Inter,system-ui,sans-serif;color:#F1F5F9;min-width:200px;">
-            <div style="font-weight:700;font-size:14px;color:#F1F5F9;margin-bottom:2px;">
+          <div style="font-family:Inter,system-ui,sans-serif;color:#0F172A;min-width:200px;">
+            <div style="font-weight:700;font-size:14px;color:#0F172A;margin-bottom:2px;">
               ${escapeHtml(s.name)}
             </div>
-            <div style="font-size:11px;color:#94A3B8;margin-bottom:8px;">
+            <div style="font-size:11px;color:#475569;margin-bottom:8px;">
               ${escapeHtml(s.state ?? '')}${s.break_type ? ' · ' + escapeHtml(s.break_type) : ''}
             </div>
-            <div style="display:inline-block;background:${tier.hex};color:#0B1426;font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;padding:3px 8px;border-radius:4px;">
+            <div style="display:inline-block;background:${tier.hex};color:${fg};font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;padding:3px 8px;border-radius:4px;">
               ${tier.label}
             </div>
-            <div style="font-size:12px;color:#94A3B8;margin-top:8px;display:flex;gap:8px;font-variant-numeric:tabular-nums;">
-              <span style="color:#F1F5F9;font-weight:700;">${escapeHtml(fmtFt(f?.face_ft ?? null))}</span>
+            <div style="font-size:12px;color:#475569;margin-top:8px;display:flex;gap:8px;font-variant-numeric:tabular-nums;">
+              <span style="color:#0F172A;font-weight:700;">${escapeHtml(fmtFt(f?.face_ft ?? null))}</span>
               <span>${escapeHtml(fmtSec(f?.tp ?? null))}</span>
               <span>${escapeHtml(fmtMph(f?.wind_speed ?? null))}</span>
             </div>
-            <a href="/spot/${encodeURIComponent(s.slug)}" style="display:inline-block;margin-top:8px;color:#38BDF8;font-size:12px;font-weight:600;text-decoration:none;">
+            <a href="/spot/${encodeURIComponent(s.slug)}" style="display:inline-block;margin-top:8px;color:#0284C7;font-size:12px;font-weight:600;text-decoration:none;">
               View forecast →
             </a>
           </div>

@@ -63,21 +63,21 @@ export function TideChart({
               <stop offset="100%" stopColor="#14B8A6" stopOpacity={0.04} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="2 4" stroke="#1E3048" vertical={false} />
+          <CartesianGrid strokeDasharray="2 4" stroke="#E2E8F0" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
             tickFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
-            stroke="#64748B"
-            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            stroke="#94A3B8"
+            tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            stroke="#64748B"
-            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            stroke="#94A3B8"
+            tick={{ fill: '#475569', fontSize: 10 }}
             tickFormatter={(v) => `${v}ft`}
             width={42}
             axisLine={false}
@@ -85,11 +85,12 @@ export function TideChart({
           />
           <Tooltip
             contentStyle={{
-              background: '#0B1426',
-              border: '1px solid #1E3048',
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
               borderRadius: 8,
               fontSize: 12,
-              color: '#F1F5F9',
+              color: '#0F172A',
+              boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
             labelFormatter={(v) =>
               `${fmtDay(new Date(v as number).toISOString())} ${fmtShortTime(new Date(v as number).toISOString())}`
@@ -110,12 +111,12 @@ export function TideChart({
               x={e.t}
               y={e.level}
               r={3.5}
-              fill={e.type === 'H' ? '#84CC16' : '#F97316'}
-              stroke="#0B1426"
+              fill={e.type === 'H' ? '#22C55E' : '#F97316'}
+              stroke="#FFFFFF"
               strokeWidth={1.5}
               label={{
                 value: e.type ?? '',
-                fill: '#94A3B8',
+                fill: '#475569',
                 fontSize: 10,
                 position: 'top',
               }}

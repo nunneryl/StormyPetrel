@@ -3,7 +3,6 @@ import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from 
 import {
   dayKey,
   fmtDay,
-  fmtFt,
   fmtSec,
   fmtShortTime,
   msToMph,
@@ -27,6 +26,25 @@ function groupByDay(rows: Forecast[]): Array<{ day: string; rows: Forecast[] }> 
   return Array.from(groups.entries()).map(([day, rs]) => ({ day, rows: rs }));
 }
 
+/**
+ * "Best window" detector — flags any 3-hour block whose rating is
+ * 2+ stars higher than the average of the surrounding two blocks
+ * (one before, one after). Used to draw a subtle left-border accent
+ * on the row so the eye lands on the best surf time of each day.
+ */
+function isBestWindow(rows: Forecast[], idx: number): boolean {
+  const cur = rows[idx]?.stars ?? 0;
+  if (cur < 2) return false;
+  const prev = rows[idx - 1]?.stars;
+  const next = rows[idx + 1]?.stars;
+  const neighbors: number[] = [];
+  if (typeof prev === 'number') neighbors.push(prev);
+  if (typeof next === 'number') neighbors.push(next);
+  if (neighbors.length === 0) return false;
+  const avg = neighbors.reduce((a, b) => a + b, 0) / neighbors.length;
+  return cur - avg >= 2;
+}
+
 export function ForecastGrid({
   forecasts,
   offshoreDeg,
@@ -39,31 +57,23 @@ export function ForecastGrid({
 
   if (days.length === 0) {
     return (
-      <div className="rounded-xl border border-ink-600 bg-ink-800 p-6 text-text-muted">
+      <div className="rounded-xl border border-ink-600 bg-ink-900 p-6 text-text-muted">
         No forecast data in the next 7 days.
       </div>
     );
   }
 
-  // Largest face_ft across the whole window — used to scale the wave-bar
-  // widths so a 6 ft cell is visibly wider than a 2 ft cell.
-  const maxFace = Math.max(
-    ...sampled.map((r) => r.face_ft ?? 0),
-    1, // floor at 1 ft so a quiet week doesn't blow out the bars
-  );
+  // Largest face_ft across the whole window — used to scale wave-bar widths.
+  const maxFace = Math.max(...sampled.map((r) => r.face_ft ?? 0), 1);
 
   return (
-    <div className="rounded-xl border border-ink-600 bg-ink-800/60 overflow-hidden">
-      {/* Wrapping div is the horizontal scroll container on small screens.
-          The first two columns (TIME + RATING) stick to the left so the
-          eye anchors on time/rating while the user scrolls right to read
-          face / period / swell / wind / tide. */}
+    <div className="rounded-xl border border-ink-600 bg-white overflow-hidden shadow-card">
       <div className="overflow-x-auto scrollbar-hidden">
-        <div className="min-w-[800px]">
+        <div className="min-w-[820px]">
           {/* Header row */}
-          <div className="grid grid-cols-[80px_140px_140px_64px_120px_140px_72px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900/60">
-            <div className="sticky left-0 z-10 bg-ink-900/95 -ml-3 pl-3">Time</div>
-            <div className="sticky left-[80px] z-10 bg-ink-900/95">Rating</div>
+          <div className="grid grid-cols-[80px_140px_140px_64px_120px_140px_72px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
+            <div className="sticky left-0 z-10 bg-ink-900 -ml-3 pl-3">Time</div>
+            <div className="sticky left-[80px] z-10 bg-ink-900">Rating</div>
             <div>Face</div>
             <div className="text-right">Period</div>
             <div>Swell</div>
@@ -73,7 +83,7 @@ export function ForecastGrid({
 
           {days.map(({ day, rows }) => (
             <div key={day}>
-              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest2 text-text-secondary bg-ink-900/40 border-b border-ink-600 sticky top-0 z-[5]">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest2 text-text-secondary bg-ink-800 border-b border-ink-600 sticky top-0 z-[5]">
                 {fmtDay(rows[0].valid_time)}
               </div>
               {rows.map((r, idx) => {
@@ -95,24 +105,42 @@ export function ForecastGrid({
                         : 'flat'
                     : null;
                 const faceFraction = (r.face_ft ?? 0) / maxFace;
+                const tierFg =
+                  tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD'
+                    ? 'text-ink-950 [color:#0F172A]'
+                    : 'text-white';
+
+                const best = isBestWindow(rows, idx);
+
+                // Row stripe — alternating zebra, MSW-style. White rows
+                // and #F8FAFC (ink-900 in the new palette) every other row.
+                const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-ink-900';
 
                 return (
                   <div
                     key={r.valid_time}
-                    className="grid grid-cols-[80px_140px_140px_64px_120px_140px_72px] gap-2 px-3 py-1.5 border-b border-ink-700/50 text-sm hover:bg-ink-700/40 transition-colors odd:bg-ink-800/30"
+                    className={`relative grid grid-cols-[80px_140px_140px_64px_120px_140px_72px] gap-2 px-3 py-1.5 border-b border-ink-600 text-sm ${rowBg} hover:bg-ink-800 transition-colors`}
+                    style={
+                      best
+                        ? {
+                            boxShadow: `inset 3px 0 0 ${tier.hex}`,
+                          }
+                        : undefined
+                    }
                   >
-                    <div className="sticky left-0 z-10 bg-ink-800/95 -ml-3 pl-3 text-text-secondary font-mono">
+                    <div className={`sticky left-0 z-10 ${rowBg} -ml-3 pl-3 text-text-secondary font-mono`}>
                       {fmtShortTime(r.valid_time)}
                     </div>
-                    <div className="sticky left-[80px] z-10 bg-ink-800/95">
+                    <div className={`sticky left-[80px] z-10 ${rowBg}`}>
                       <span
-                        className={`flex items-center justify-center w-full h-7 rounded text-[10px] font-bold uppercase tracking-widest2 ${tier.bg} ${tier.fg}`}
+                        className={`flex items-center justify-center w-full h-7 rounded text-[10px] font-bold uppercase tracking-widest2 ${tierFg}`}
+                        style={{ background: tier.hex }}
                       >
                         {tier.label}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="relative flex-1 h-3 rounded bg-ink-700/60 overflow-hidden">
+                      <div className="relative flex-1 h-3 rounded bg-ink-800 overflow-hidden">
                         <div
                           className="absolute inset-y-0 left-0 rounded"
                           style={{
@@ -155,8 +183,8 @@ export function ForecastGrid({
                       {r.tide_level_ft !== null && r.tide_level_ft !== undefined
                         ? `${r.tide_level_ft.toFixed(1)}ft`
                         : '—'}
-                      {tideTrend === 'up' && <span className="text-cyan-400">↑</span>}
-                      {tideTrend === 'down' && <span className="text-cyan-400">↓</span>}
+                      {tideTrend === 'up' && <span className="text-cyan-500">↑</span>}
+                      {tideTrend === 'down' && <span className="text-cyan-500">↓</span>}
                     </div>
                   </div>
                 );

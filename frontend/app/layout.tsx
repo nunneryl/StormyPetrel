@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { siteUrl } from '@/lib/site-url';
-import { SiteNav } from '@/components/SiteNav';
+import { SiteNav, type SpotSearchItem } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { fetchAllSpots } from '@/lib/queries';
 
 const SITE_URL = siteUrl();
 
@@ -50,16 +51,31 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0B1426',
+  themeColor: '#0B1426', // matches the dark nav bar; iOS Safari paints
   width: 'device-width',
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Fetch spot list once for the nav search dropdown. Failure is silent
+  // (Vercel preview / build env may not have DB access) — the nav just
+  // renders without the search box in that case.
+  let searchSpots: SpotSearchItem[] = [];
+  try {
+    const all = await fetchAllSpots();
+    searchSpots = all.map((s) => ({ slug: s.slug, name: s.name, state: s.state }));
+  } catch {
+    // ignore — nav handles empty list
+  }
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-ink-950 text-text-primary antialiased flex flex-col">
-        <SiteNav />
+        <SiteNav searchSpots={searchSpots} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>

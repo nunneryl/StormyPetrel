@@ -135,7 +135,13 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-widest2 text-text-secondary">
-            {spot.state ?? ''}{spot.region ? ` · ${spot.region}` : ''}
+            {(() => {
+              const s = (spot.state ?? '').trim();
+              const r = (spot.region ?? '').trim();
+              if (!s && !r) return '';
+              if (!r || r.toLowerCase() === s.toLowerCase()) return s;
+              return `${s} · ${r}`;
+            })()}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tightish text-text-primary">
             {spot.name}

@@ -24,11 +24,11 @@ type Pt = {
 };
 
 const COLOR = {
-  p1:   '#0EA5E9',
-  p2:   '#38BDF8',
-  p3:   '#7DD3FC',
-  ws:   '#94A3B8',
-  face: '#00B4D8',
+  p1:   '#0369A1', // dark ocean blue (primary swell)
+  p2:   '#0284C7', // mid blue
+  p3:   '#38BDF8', // lighter blue
+  ws:   '#94A3B8', // gray (wind sea)
+  face: '#0284C7', // brand accent line on top
 };
 
 function buildSeries(rows: Forecast[]): Pt[] {
@@ -63,21 +63,21 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               <stop offset="100%" stopColor={COLOR.face} stopOpacity={0.03} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="2 4" stroke="#1E3048" vertical={false} />
+          <CartesianGrid strokeDasharray="2 4" stroke="#E2E8F0" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
             tickFormatter={tickLabel}
-            stroke="#64748B"
-            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            stroke="#94A3B8"
+            tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            stroke="#64748B"
-            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            stroke="#94A3B8"
+            tick={{ fill: '#475569', fontSize: 10 }}
             tickFormatter={(v) => `${v}ft`}
             width={42}
             axisLine={false}
@@ -85,13 +85,14 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
           />
           <Tooltip
             contentStyle={{
-              background: '#0B1426',
-              border: '1px solid #1E3048',
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
               borderRadius: 8,
               fontSize: 12,
-              color: '#F1F5F9',
+              color: '#0F172A',
+              boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
-            labelStyle={{ color: '#94A3B8', fontWeight: 600 }}
+            labelStyle={{ color: '#475569', fontWeight: 600 }}
             labelFormatter={(v) =>
               `${fmtDay(new Date(v as number).toISOString())} ${tickLabel(v as number)}`
             }
@@ -157,7 +158,7 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
             height={20}
             iconType="rect"
             iconSize={10}
-            wrapperStyle={{ fontSize: 11, color: '#94A3B8' }}
+            wrapperStyle={{ fontSize: 11, color: '#475569' }}
           />
         </AreaChart>
       </ResponsiveContainer>
