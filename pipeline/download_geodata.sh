@@ -78,13 +78,27 @@ if [[ ! -s "$GSHHG_SHP" ]]; then
     done
 
     if [[ "$GSHHG_OK" == "1" ]]; then
-        (
-            cd "$GEODATA_DIR"
-            unzip -q -o "gshhg-shp-${GSHHG_VER}.zip" \
-                "gshhg-shp-${GSHHG_VER}/GSHHS_shp/f/GSHHS_f_L1.*"
-            cp -f "gshhg-shp-${GSHHG_VER}/GSHHS_shp/f/GSHHS_f_L1."* .
-            rm -rf "gshhg-shp-${GSHHG_VER}" "gshhg-shp-${GSHHG_VER}.zip"
-        )
+        # Different mirrors use different zip layouts: NGDC nests under
+        # "gshhg-shp-<ver>/GSHHS_shp/f/", SOEST uses "GSHHS_shp/f/" with
+        # no version prefix. Extract to a temp dir and use `find` to
+        # locate the L1 files regardless of structure.
+        EXTRACT_DIR="$(mktemp -d)"
+        if unzip -q -o "$GSHHG_ZIP" -d "$EXTRACT_DIR"; then
+            FOUND=0
+            while IFS= read -r -d '' f; do
+                cp -f "$f" "$GEODATA_DIR/"
+                FOUND=1
+            done < <(find "$EXTRACT_DIR" -type f -name 'GSHHS_f_L1.*' -print0)
+            if [[ "$FOUND" == "1" ]]; then
+                echo "[ok  ] extracted GSHHS_f_L1.* to $GEODATA_DIR"
+            else
+                echo "WARNING: zip extracted but GSHHS_f_L1.* not found inside —"
+                echo "         layout may have changed again. Continuing without it."
+            fi
+        else
+            echo "WARNING: unzip failed on $GSHHG_ZIP. Continuing without GSHHG."
+        fi
+        rm -rf "$EXTRACT_DIR" "$GSHHG_ZIP"
     else
         echo "WARNING: every GSHHG mirror failed. Skipping — the forecast"
         echo "         pipeline doesn't consume this file, only enrichment"
