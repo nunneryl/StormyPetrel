@@ -31,28 +31,24 @@ export function SiteNav({
   }, [pathname]);
 
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (mobileOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-30 bg-deep-950 border-b border-deep-600/60">
+    <header className="sticky top-0 z-30 bg-white border-b border-ink-600">
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="flex items-center text-text_inv-primary shrink-0"
+          className="flex items-center text-text-primary shrink-0"
           aria-label="Stormy Petrel home"
         >
-          <Logo dark />
+          <Logo size={32} />
         </Link>
 
-        {/* Search — center, fills available space, hidden on small screens */}
         <div className="hidden md:flex flex-1 justify-center max-w-xl">
           {searchSpots.length > 0 && <NavSearch spots={searchSpots} />}
         </div>
@@ -70,17 +66,17 @@ export function SiteNav({
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((v) => !v)}
-          className="sm:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 rounded-md text-text_inv-primary hover:bg-deep-800"
+          className="sm:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 rounded-md text-text-primary hover:bg-ink-800"
         >
           {mobileOpen ? <CloseIcon /> : <BurgerIcon />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="sm:hidden border-t border-deep-600/60 bg-deep-900">
+        <div className="sm:hidden border-t border-ink-600 bg-white">
           {searchSpots.length > 0 && (
-            <div className="px-4 py-3 border-b border-deep-600/60">
-              <NavSearch spots={searchSpots} />
+            <div className="px-4 py-3 border-b border-ink-600">
+              <NavSearch spots={searchSpots} light />
             </div>
           )}
           <nav className="px-4 py-2 flex flex-col">
@@ -90,8 +86,8 @@ export function SiteNav({
                 href={l.href}
                 className={`px-2 py-3 text-base rounded-md ${
                   pathname === l.href || pathname?.startsWith(`${l.href}/`)
-                    ? 'text-cyan-400 bg-deep-800'
-                    : 'text-text_inv-primary hover:bg-deep-800'
+                    ? 'text-cyan-600 bg-ink-800'
+                    : 'text-text-primary hover:bg-ink-800'
                 }`}
               >
                 {l.label}
@@ -119,8 +115,8 @@ function NavLink({
       href={href}
       className={`px-3 py-1.5 rounded-md transition ${
         active
-          ? 'text-cyan-400'
-          : 'text-text_inv-secondary hover:text-text_inv-primary hover:bg-deep-800'
+          ? 'text-cyan-600'
+          : 'text-text-secondary hover:text-text-primary hover:bg-ink-800'
       }`}
     >
       {children}

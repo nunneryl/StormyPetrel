@@ -4,7 +4,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { SpotSearchItem } from './SiteNav';
 
-export function NavSearch({ spots }: { spots: SpotSearchItem[] }) {
+export function NavSearch({
+  spots,
+  light = true,
+}: {
+  spots: SpotSearchItem[];
+  /** Light variant — input on white nav. Kept for symmetry with a future
+   *  inverse usage. Currently always light since the nav is white. */
+  light?: boolean;
+}) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -42,10 +50,15 @@ export function NavSearch({ spots }: { spots: SpotSearchItem[] }) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  // Light input on white nav; placeholder stays muted.
+  const inputClass = light
+    ? 'w-full h-9 pl-10 pr-14 text-sm rounded-md bg-ink-900 border border-ink-600 text-text-primary placeholder:text-text-muted focus:border-cyan-500 focus:outline-none transition'
+    : 'w-full h-9 pl-10 pr-14 text-sm rounded-md bg-deep-800/80 border border-deep-600 text-text_inv-primary placeholder:text-text_inv-muted focus:border-cyan-500 focus:outline-none transition';
+
   return (
     <div ref={ref} className="relative w-full">
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text_inv-muted">
+        <span className={`absolute left-3 top-1/2 -translate-y-1/2 ${light ? 'text-text-muted' : 'text-text_inv-muted'}`}>
           <SearchIcon />
         </span>
         <input
@@ -72,9 +85,9 @@ export function NavSearch({ spots }: { spots: SpotSearchItem[] }) {
             }
           }}
           placeholder="Search spots..."
-          className="w-full h-9 pl-10 pr-14 text-sm rounded-md bg-deep-800/80 border border-deep-600 text-text_inv-primary placeholder:text-text_inv-muted focus:border-cyan-500 focus:outline-none transition"
+          className={inputClass}
         />
-        <kbd className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center px-1.5 py-0.5 text-[10px] font-mono text-text_inv-muted border border-deep-600 rounded">
+        <kbd className={`hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center px-1.5 py-0.5 text-[10px] font-mono rounded ${light ? 'text-text-muted border border-ink-600' : 'text-text_inv-muted border border-deep-600'}`}>
           ⌘K
         </kbd>
       </div>
