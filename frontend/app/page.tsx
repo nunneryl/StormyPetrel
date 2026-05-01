@@ -1,7 +1,7 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
-import { Logo } from '@/components/Logo';
 import { RatingBadge } from '@/components/RatingBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -56,7 +56,23 @@ export default async function HomePage() {
           above-the-fold is this section: a surfer lands, types a name,
           and is on the forecast page in two seconds. */}
       <section className="pt-10 sm:pt-14 pb-8 sm:pb-10 flex flex-col items-center text-center gap-5">
-        <Logo size={80} withText={false} />
+        <div className="flex items-center justify-center gap-4 sm:gap-6">
+          <Image
+            src="/logo.png"
+            alt="Stormy Petrel"
+            width={150}
+            height={150}
+            priority
+            unoptimized
+            className="h-[120px] w-auto sm:h-[150px]"
+          />
+          <h1
+            className="font-bold tracking-tightish text-4xl sm:text-5xl lg:text-6xl"
+            style={{ color: '#0F172A' }}
+          >
+            Stormy Petrel
+          </h1>
+        </div>
 
         <div className="w-full max-w-2xl">
           <HeroSearch spots={searchItems} />

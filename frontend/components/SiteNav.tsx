@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Logo } from './Logo';
 import { NavSearch } from './NavSearch';
 
 const NAV_LINKS = [
@@ -43,10 +42,10 @@ export function SiteNav({
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="flex items-center text-text-primary shrink-0"
+          className="flex items-center text-text-primary shrink-0 font-bold tracking-tightish text-base sm:text-lg"
           aria-label="Stormy Petrel home"
         >
-          <Logo size={32} />
+          Stormy Petrel
         </Link>
 
         <div className="hidden md:flex flex-1 justify-center max-w-xl">

@@ -4,6 +4,10 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './content/**/*.{md,mdx}',
+    // lib/ratings.ts holds the bg-rating-*, text-* class strings used
+    // by the RatingBadge tier map. Without this path tailwind never
+    // sees those classes and badges render with no background.
+    './lib/**/*.{js,ts}',
   ],
   theme: {
     extend: {

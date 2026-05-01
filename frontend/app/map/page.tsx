@@ -20,15 +20,16 @@ export default async function MapPage() {
   const spots = await fetchSpotsWithLatest();
   return (
     <div className="relative">
-      {/* Top-left: spot count chip */}
-      <div className="absolute z-10 top-3 left-3 rounded-md border border-ink-600 bg-white/90 backdrop-blur-sm px-2.5 py-1.5 shadow-card">
+      {/* Top-left: spot count chip. z-[1100] keeps it above Leaflet's
+          internal panes (which max out around z-index 1000). */}
+      <div className="absolute z-[1100] top-3 left-3 rounded-md border border-ink-600 bg-white/90 backdrop-blur-sm px-2.5 py-1.5 shadow-card">
         <span className="text-[11px] uppercase tracking-widest2 text-text-secondary tabular-nums">
           {spots.length} spots
         </span>
       </div>
 
       {/* Bottom-right: permanent rating legend, 5 pills + dots, single row */}
-      <div className="absolute z-10 bottom-4 right-4 sm:right-16 rounded-lg border border-ink-600 bg-white/90 backdrop-blur-sm px-3 py-2 shadow-card">
+      <div className="absolute z-[1100] bottom-4 right-4 sm:right-16 rounded-lg border border-ink-600 bg-white/95 backdrop-blur-sm px-3 py-2 shadow-card">
         <div className="flex items-center gap-3 sm:gap-4">
           {LEGEND.map((l) => {
             const tier = tierFromStars(l.stars);
