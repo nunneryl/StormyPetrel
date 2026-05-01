@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import type { SpotWithLatest } from '@/lib/types';
-import { tierFromStars } from '@/lib/ratings';
-import { fmtFt, fmtMph, fmtSec } from '@/lib/formatting';
+import { classifyWind, tierFromStars, windQualityLabel } from '@/lib/ratings';
+import {
+  degToCardinal,
+  fmtFt,
+  fmtSec,
+  msToMph,
+  pickSwell,
+} from '@/lib/formatting';
 
 type LeafletMod = typeof import('leaflet');
 
@@ -140,19 +146,24 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
       for (const s of data) {
         if (s.lat === null || s.lng === null) continue;
         const tier = tierFromStars(s.latest?.stars ?? 0);
+        // 8px filled radius (16px diameter) with a 2px white ring
+        // around it for contrast against both light land and water
+        // basemaps; box-sizing:border-box keeps the colored fill at
+        // exactly 16px regardless of the border.
         const html = `
           <div style="
-            width:16px; height:16px; border-radius:50%;
+            width:20px; height:20px; border-radius:50%;
             background:${tier.hex};
-            border: 2px solid #0F172A;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.4);
+            border: 2px solid #FFFFFF;
+            box-sizing: border-box;
+            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35), 0 1px 3px rgba(15, 23, 42, 0.35);
           "></div>
         `;
         const icon = L.divIcon({
           className: '',
           html,
-          iconSize: [16, 16],
-          iconAnchor: [8, 8],
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
         });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const m = L.marker([s.lat, s.lng], {
@@ -161,33 +172,7 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
-        const f = s.latest;
-        const fg =
-          tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD'
-            ? '#0F172A'
-            : '#FFFFFF';
-        const popupHtml = `
-          <div style="font-family:Inter,system-ui,sans-serif;color:#0F172A;min-width:200px;">
-            <div style="font-weight:700;font-size:14px;color:#0F172A;margin-bottom:2px;">
-              ${escapeHtml(s.name)}
-            </div>
-            <div style="font-size:11px;color:#475569;margin-bottom:8px;">
-              ${escapeHtml(s.state ?? '')}${s.break_type ? ' · ' + escapeHtml(s.break_type) : ''}
-            </div>
-            <div style="display:inline-block;background:${tier.hex};color:${fg};font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;padding:3px 8px;border-radius:4px;">
-              ${tier.label}
-            </div>
-            <div style="font-size:12px;color:#475569;margin-top:8px;display:flex;gap:8px;font-variant-numeric:tabular-nums;">
-              <span style="color:#0F172A;font-weight:700;">${escapeHtml(fmtFt(f?.face_ft ?? null))}</span>
-              <span>${escapeHtml(fmtSec(f?.tp ?? null))}</span>
-              <span>${escapeHtml(fmtMph(f?.wind_speed ?? null))}</span>
-            </div>
-            <a href="/spot/${encodeURIComponent(s.slug)}" style="display:inline-block;margin-top:8px;color:#0284C7;font-size:12px;font-weight:600;text-decoration:none;">
-              View forecast →
-            </a>
-          </div>
-        `;
-        m.bindPopup(popupHtml, { className: 'sp-popup' });
+        m.bindPopup(buildPopupHtml(s), { className: 'sp-popup' });
 
         if (clusterGroup) {
           clusterGroup.addLayer(m);
@@ -228,7 +213,45 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
     };
   }, [data]);
 
-  return <div ref={containerRef} className="h-[calc(100vh-3.5rem)] w-full" />;
+  return (
+    <div className="relative h-[calc(100vh-3.5rem)] w-full">
+      <div ref={containerRef} className="h-full w-full" />
+
+      {/* Jump-to controls. Top-right, just under the nav. These regions
+          are always off-screen in the default CONUS view, so a one-tap
+          fly-to keeps them discoverable. */}
+      <div className="absolute z-[1100] top-3 right-3 flex flex-col gap-1.5 items-end">
+        {JUMP_TARGETS.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            onClick={() => flyToTarget(mapRef.current, t)}
+            className="px-2.5 py-1.5 rounded-md border border-ink-600 bg-white/95 backdrop-blur-sm shadow-card text-[11px] font-bold uppercase tracking-widest2 text-text-primary hover:text-cyan-600 hover:border-cyan-500 transition"
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Region presets — center + zoom tuned so all the spots in each archipelago
+// fit comfortably in the viewport on a typical laptop screen.
+type JumpTarget = { label: string; lat: number; lng: number; zoom: number };
+const JUMP_TARGETS: JumpTarget[] = [
+  { label: 'Hawaii',      lat: 20.7,  lng: -157.0, zoom: 7 },
+  { label: 'Puerto Rico', lat: 18.22, lng:  -66.4, zoom: 9 },
+];
+
+function flyToTarget(map: unknown, t: JumpTarget): void {
+  // The map ref is `unknown` to avoid pulling Leaflet's types into the
+  // component signature; narrow it before calling flyTo.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const m = map as any;
+  if (m && typeof m.flyTo === 'function') {
+    m.flyTo([t.lat, t.lng], t.zoom, { duration: 1.0 });
+  }
 }
 
 function escapeHtml(s: string): string {
@@ -238,4 +261,99 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// Inline SVG arrow rotated to a meteorological direction. Mirrors the
+// CompassArrow React component but emits raw HTML so it can be embedded
+// in a Leaflet popup. `deg` is the FROM bearing (NWS convention); the
+// arrow points the way the energy travels (deg + 180).
+function arrowSvg(deg: number, color: string, size = 11): string {
+  const rotated = (deg + 180) % 360;
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24"
+      style="transform: rotate(${rotated}deg); display:inline-block; vertical-align:-1px; color:${color};">
+      <path d="M12 3 L18 18 L12 14 L6 18 Z" fill="currentColor" stroke="currentColor"
+        stroke-width="0.6" stroke-linejoin="round" />
+    </svg>`;
+}
+
+function buildPopupHtml(s: SpotWithLatest): string {
+  const f = s.latest;
+  const tier = tierFromStars(f?.stars ?? 0);
+  const fg =
+    tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD' ? '#0F172A' : '#FFFFFF';
+
+  const swellDir = pickSwell(f?.swell_dp ?? null, f?.dp ?? null);
+  const swellPeriod = pickSwell(f?.swell_tp ?? null, f?.tp ?? null);
+  const swellArrow =
+    swellDir !== null && swellDir !== undefined
+      ? `${arrowSvg(swellDir, '#0369A1')}&nbsp;${escapeHtml(degToCardinal(swellDir))}`
+      : '';
+
+  const windMph = msToMph(f?.wind_speed ?? null);
+  const windDir = f?.wind_dir ?? null;
+  const windQ = classifyWind(windDir, s.offshore_wind_deg);
+  const windQLabel = windQualityLabel(windQ);
+  const windParts: string[] = [];
+  if (windDir !== null && windDir !== undefined) {
+    windParts.push(`${arrowSvg(windDir, '#15803D')}`);
+  }
+  if (windMph !== null) {
+    windParts.push(`${windMph.toFixed(0)} mph`);
+  }
+
+  const tideArrow =
+    s.tide_trend === 'rising' ? '↑' : s.tide_trend === 'falling' ? '↓' : '';
+  const tideLevel = f?.tide_level_ft;
+
+  const subtitleParts: string[] = [];
+  if (s.state) subtitleParts.push(escapeHtml(s.state));
+  if (s.break_type) subtitleParts.push(escapeHtml(s.break_type));
+
+  const conditionsLine = `
+    <div style="font-size:12px;color:#0F172A;margin-top:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-variant-numeric:tabular-nums;">
+      <span style="font-weight:700;">${escapeHtml(fmtFt(f?.face_ft ?? null))}</span>
+      <span style="color:#475569;">${escapeHtml(fmtSec(swellPeriod))}</span>
+      ${swellArrow ? `<span style="color:#0369A1;display:inline-flex;align-items:center;gap:3px;">${swellArrow}</span>` : ''}
+    </div>
+  `;
+
+  const windLine =
+    windParts.length === 0 && !windQLabel
+      ? ''
+      : `
+    <div style="font-size:12px;color:#475569;margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-variant-numeric:tabular-nums;">
+      <span style="color:#15803D;display:inline-flex;align-items:center;gap:3px;">${windParts.join(' ')}</span>
+      ${windQLabel ? `<span>· ${escapeHtml(windQLabel)}</span>` : ''}
+    </div>
+  `;
+
+  const tideLine =
+    tideLevel === null || tideLevel === undefined
+      ? ''
+      : `
+    <div style="font-size:12px;color:#475569;margin-top:4px;font-variant-numeric:tabular-nums;">
+      Tide: <span style="color:#0F172A;font-weight:600;">${tideLevel.toFixed(1)}ft</span>${tideArrow ? ` <span style="color:#0F172A;">${tideArrow}</span>` : ''}
+    </div>
+  `;
+
+  return `
+    <div style="font-family:Inter,system-ui,sans-serif;color:#0F172A;min-width:220px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">
+        ${escapeHtml(s.name)}
+      </div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;">
+        ${subtitleParts.join(' · ')}
+      </div>
+      <div style="display:inline-block;background:${tier.hex};color:${fg};font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;padding:3px 8px;border-radius:4px;">
+        ${tier.label}
+      </div>
+      ${conditionsLine}
+      ${windLine}
+      ${tideLine}
+      <a href="/spot/${encodeURIComponent(s.slug)}" style="display:inline-block;margin-top:10px;color:#0284C7;font-size:12px;font-weight:600;text-decoration:none;">
+        View forecast →
+      </a>
+    </div>
+  `;
 }

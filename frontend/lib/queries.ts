@@ -24,16 +24,21 @@ export async function fetchAllSpots(): Promise<Spot[]> {
 }
 
 /**
- * For each spot, the soonest forecast row with valid_time >= now().
+ * For each spot, the soonest forecast row with valid_time >= now() AND
+ * the next subsequent row (used to derive tide trend).
  *
- * We do this with one query (sorted ascending) and pick the first row per
- * spot in JS — Supabase REST has no DISTINCT ON. With ~500 spots and a 6h
- * window the result set is small and easy to dedupe client-side.
+ * One query (sorted ascending) — we keep up to 2 rows per spot in JS;
+ * Supabase REST has no DISTINCT ON. With ~500 spots and a 6h window
+ * the result set is small.
  */
-export async function fetchLatestForecastPerSpot(): Promise<Map<number, Forecast>> {
+export async function fetchLatestForecastPerSpot(): Promise<{
+  latest: Map<number, Forecast>;
+  next: Map<number, Forecast>;
+}> {
   const nowIso = new Date().toISOString();
   const sixHoursLater = new Date(Date.now() + 6 * 3600_000).toISOString();
-  const result = new Map<number, Forecast>();
+  const latest = new Map<number, Forecast>();
+  const next = new Map<number, Forecast>();
   const page = 1000;
   let from = 0;
   while (true) {
@@ -49,20 +54,40 @@ export async function fetchLatestForecastPerSpot(): Promise<Map<number, Forecast
     if (error) throw error;
     if (!data || data.length === 0) break;
     for (const row of data as Forecast[]) {
-      if (!result.has(row.spot_id)) result.set(row.spot_id, row);
+      if (!latest.has(row.spot_id)) {
+        latest.set(row.spot_id, row);
+      } else if (!next.has(row.spot_id)) {
+        next.set(row.spot_id, row);
+      }
     }
     if (data.length < page) break;
     from += page;
   }
-  return result;
+  return { latest, next };
+}
+
+function tideTrend(
+  latest: Forecast | null,
+  next: Forecast | null,
+): 'rising' | 'falling' | null {
+  const a = latest?.tide_level_ft;
+  const b = next?.tide_level_ft;
+  if (a === null || a === undefined || b === null || b === undefined) return null;
+  const delta = b - a;
+  if (Math.abs(delta) < 0.05) return null; // ~slack tide; no clear direction
+  return delta > 0 ? 'rising' : 'falling';
 }
 
 export async function fetchSpotsWithLatest(): Promise<SpotWithLatest[]> {
-  const [spots, latest] = await Promise.all([
+  const [spots, byTime] = await Promise.all([
     fetchAllSpots(),
     fetchLatestForecastPerSpot(),
   ]);
-  return spots.map((s) => ({ ...s, latest: latest.get(s.id) ?? null }));
+  return spots.map((s) => {
+    const latest = byTime.latest.get(s.id) ?? null;
+    const next = byTime.next.get(s.id) ?? null;
+    return { ...s, latest, tide_trend: tideTrend(latest, next) };
+  });
 }
 
 /**
