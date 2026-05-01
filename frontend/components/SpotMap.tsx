@@ -6,10 +6,7 @@ import { tierFromStars } from '@/lib/ratings';
 import { fmtFt, fmtMph, fmtSec } from '@/lib/formatting';
 
 type LeafletMod = typeof import('leaflet');
-type ClusterMod = typeof import('leaflet.markercluster');
 
-// Stylesheet IDs so we only inject the Leaflet CSS bundles once across
-// the whole app — repeated route mounts wouldn't add duplicate <link>s.
 const LEAFLET_CSS_ID = 'leaflet-css';
 const LEAFLET_CLUSTER_CSS_ID = 'leaflet-markercluster-css';
 const LEAFLET_CLUSTER_DEFAULT_CSS_ID = 'leaflet-markercluster-default-css';
@@ -36,21 +33,31 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
     let cancelled = false;
 
     (async () => {
+      // Step 1 — load Leaflet + CSS. Inject CSS BEFORE creating the map
+      // so the tile pane has correct positioning from the first paint.
       const L = (await import('leaflet')) as unknown as LeafletMod;
-      // markercluster augments L on import (it ships as a Leaflet plugin
-      // that mutates the L global). Importing it for its side effects
-      // is enough — we don't reference the module's exports directly.
-      await import('leaflet.markercluster');
-
       ensureCss(LEAFLET_CSS_ID, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-      ensureCss(
-        LEAFLET_CLUSTER_CSS_ID,
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
-      );
-      ensureCss(
-        LEAFLET_CLUSTER_DEFAULT_CSS_ID,
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
-      );
+
+      // Step 2 — load the markercluster plugin. Wrapped in try/catch
+      // so a CDN / network hiccup with the plugin doesn't kill markers.
+      // The plugin mutates the global L by attaching `markerClusterGroup`.
+      let clusterAvailable = false;
+      try {
+        await import('leaflet.markercluster');
+        ensureCss(
+          LEAFLET_CLUSTER_CSS_ID,
+          'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+        );
+        ensureCss(
+          LEAFLET_CLUSTER_DEFAULT_CSS_ID,
+          'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
+        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        clusterAvailable = typeof (L as any).markerClusterGroup === 'function';
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('SpotMap: markercluster plugin failed to load; rendering plain markers', err);
+      }
 
       if (cancelled || !containerRef.current) return;
 
@@ -63,8 +70,6 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       mapRef.current = map;
 
-      // CartoDB Positron — clean light theme, more readable than the
-      // generic 'voyager' tiles for our colored markers.
       L.tileLayer(
         'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
         {
@@ -75,83 +80,92 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
         },
       ).addTo(map);
 
-      // Cluster group — at low zoom, nearby spots collapse into a
-      // numbered circle colored by the *best* (highest-rating) spot in
-      // the cluster, so the eye finds active regions immediately.
-      type LWithCluster = typeof L & {
-        markerClusterGroup: (opts?: unknown) => unknown;
-      };
-      const clusterGroup = (L as LWithCluster).markerClusterGroup({
-        showCoverageOnHover: false,
-        spiderfyOnMaxZoom: true,
-        disableClusteringAtZoom: 9,
-        maxClusterRadius: 50,
-        iconCreateFunction: (cluster: { getAllChildMarkers: () => Array<{ options: { spotStars?: number } }> }) => {
-          const children = cluster.getAllChildMarkers();
-          const bestStars = children.reduce(
-            (m, c) => Math.max(m, c.options.spotStars ?? 0),
-            0,
-          );
-          const tier = tierFromStars(bestStars);
-          const count = children.length;
-          const size =
-            count < 10 ? 32 : count < 50 ? 38 : count < 200 ? 44 : 50;
-          const html = `
-            <div style="
-              width:${size}px;height:${size}px;border-radius:50%;
-              background:${tier.hex};
-              color:${tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD' ? '#0F172A' : '#FFFFFF'};
-              display:flex; align-items:center; justify-content:center;
-              font-weight:800; font-size:${size <= 32 ? 12 : 13}px;
-              box-shadow:
-                0 0 0 2px #FFFFFF,
-                0 0 0 3px ${tier.hex}66,
-                0 6px 14px -4px rgba(15,23,42,0.25);
-              font-family: Inter, system-ui, sans-serif;
-              font-variant-numeric: tabular-nums;
-            ">${count}</div>
-          `;
-          return L.divIcon({
-            html,
-            className: 'sp-cluster',
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
-          });
-        },
-      }) as unknown as {
-        addLayer: (m: unknown) => void;
-        addTo: (m: unknown) => unknown;
-      };
-
-      // Per-spot markers
+      // Cluster group (optional — falls back to plain markers if the
+      // plugin didn't load). The cluster's own CSS mistakenly hides
+      // children that aren't real Leaflet objects, so we ALWAYS create
+      // markers as real L.marker instances and either add to cluster
+      // or directly to the map.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      type LMarkerWithStars = any;
+      const clusterGroup: any = clusterAvailable
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (L as any).markerClusterGroup({
+            showCoverageOnHover: false,
+            spiderfyOnMaxZoom: true,
+            disableClusteringAtZoom: 9,
+            maxClusterRadius: 50,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            iconCreateFunction: (cluster: any) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const children: any[] = cluster.getAllChildMarkers();
+              const bestStars = children.reduce(
+                (m, c) => Math.max(m, (c.options?.spotStars as number) ?? 0),
+                0,
+              );
+              const tier = tierFromStars(bestStars);
+              const count = children.length;
+              const size =
+                count < 10 ? 32 : count < 50 ? 38 : count < 200 ? 44 : 50;
+              const fg =
+                tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD'
+                  ? '#0F172A'
+                  : '#FFFFFF';
+              const html = `
+                <div style="
+                  width:${size}px;height:${size}px;border-radius:50%;
+                  background:${tier.hex};
+                  color:${fg};
+                  display:flex; align-items:center; justify-content:center;
+                  font-weight:800; font-size:${size <= 32 ? 12 : 13}px;
+                  border: 2px solid #FFFFFF;
+                  box-shadow:
+                    0 0 0 1px rgba(15,23,42,0.18),
+                    0 6px 14px -4px rgba(15,23,42,0.25);
+                  font-family: Inter, system-ui, sans-serif;
+                  font-variant-numeric: tabular-nums;
+                ">${count}</div>
+              `;
+              return L.divIcon({
+                html,
+                className: 'sp-cluster',
+                iconSize: [size, size],
+                iconAnchor: [size / 2, size / 2],
+              });
+            },
+          })
+        : null;
+
+      // Per-spot markers. Always real L.marker instances — added either
+      // to the cluster (if available) or directly to the map.
+      let markersAdded = 0;
       for (const s of data) {
         if (s.lat === null || s.lng === null) continue;
         const tier = tierFromStars(s.latest?.stars ?? 0);
         const html = `
-          <div class="sp-marker" style="position:relative; width:18px; height:18px;">
-            <div style="
-              position:absolute; inset:0; border-radius:50%;
-              background:${tier.hex};
-              border: 2px solid #0F172A;
-              box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
-            "></div>
-          </div>`;
+          <div style="
+            width:16px; height:16px; border-radius:50%;
+            background:${tier.hex};
+            border: 2px solid #0F172A;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.4);
+          "></div>
+        `;
         const icon = L.divIcon({
           className: '',
           html,
-          iconSize: [18, 18],
-          iconAnchor: [9, 9],
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const m = L.marker([s.lat, s.lng], {
           icon,
-          // Custom property the cluster uses to find the best rating.
-          // Cast keeps TS happy — Leaflet doesn't type custom options.
           spotStars: s.latest?.stars ?? 0,
-        } as LMarkerWithStars);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
+
         const f = s.latest;
-        const fg = tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD' ? '#0F172A' : '#FFFFFF';
+        const fg =
+          tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD'
+            ? '#0F172A'
+            : '#FFFFFF';
         const popupHtml = `
           <div style="font-family:Inter,system-ui,sans-serif;color:#0F172A;min-width:200px;">
             <div style="font-weight:700;font-size:14px;color:#0F172A;margin-bottom:2px;">
@@ -174,13 +188,21 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
           </div>
         `;
         m.bindPopup(popupHtml, { className: 'sp-popup' });
-        clusterGroup.addLayer(m);
-      }
-      clusterGroup.addTo(map);
 
-      // Best-effort geolocation — pan to the user's nearest coast at
-      // zoom 8 (close enough to read individual spots, wide enough to
-      // see the regional clustering). Silent failure on deny / timeout.
+        if (clusterGroup) {
+          clusterGroup.addLayer(m);
+        } else {
+          m.addTo(map);
+        }
+        markersAdded += 1;
+      }
+      if (clusterGroup) {
+        clusterGroup.addTo(map);
+      }
+      // eslint-disable-next-line no-console
+      console.info(`SpotMap: rendered ${markersAdded} spots (clustered=${!!clusterGroup})`);
+
+      // Geolocation pan — best-effort, silent on deny / timeout.
       if (typeof navigator !== 'undefined' && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -206,8 +228,6 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
     };
   }, [data]);
 
-  // Edge-to-edge: fill the viewport below the 3.5rem nav bar. No
-  // page-level padding wrapping the map.
   return <div ref={containerRef} className="h-[calc(100vh-3.5rem)] w-full" />;
 }
 

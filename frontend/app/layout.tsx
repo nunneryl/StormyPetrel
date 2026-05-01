@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0B1426', // matches the dark nav bar; iOS Safari paints
+  themeColor: '#FFFFFF', // matches the new white nav bar
   width: 'device-width',
   initialScale: 1,
 };
