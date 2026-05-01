@@ -3,8 +3,8 @@ import { degToCardinal } from '@/lib/formatting';
 type Variant = 'swell' | 'wind' | 'neutral';
 
 const COLOR: Record<Variant, string> = {
-  swell:   '#38BDF8',
-  wind:    '#A3E635',
+  swell:   '#0369A1',
+  wind:    '#15803D',
   neutral: '#94A3B8',
 };
 

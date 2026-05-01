@@ -1,12 +1,22 @@
-// Stormy Petrel wordmark — a small wave glyph + the project name in a
-// bold tightly-tracked Inter cap. Renders as inline SVG so it shows up
-// before any web fonts load and stays crisp at any zoom level.
+// Stormy Petrel wordmark — wave glyph + project name. The `dark` prop
+// flips the text color to white so the same component reads on the
+// dark nav bar AND on light page surfaces.
 
-export function Logo({ className = '' }: { className?: string }) {
+export function Logo({
+  className = '',
+  dark = false,
+}: {
+  className?: string;
+  dark?: boolean;
+}) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <WaveGlyph className="text-cyan-500" />
-      <span className="font-bold tracking-tightish text-text-primary">
+      <WaveGlyph className={dark ? 'text-cyan-400' : 'text-cyan-500'} />
+      <span
+        className={`font-bold tracking-tightish ${
+          dark ? 'text-text_inv-primary' : 'text-text-primary'
+        }`}
+      >
         Stormy Petrel
       </span>
     </span>
@@ -20,8 +30,6 @@ export function WaveGlyph({
   className?: string;
   size?: number;
 }) {
-  // Two stacked wave curves — quick to read at favicon size, holds up
-  // at hero size. Stroke is currentColor so callers can recolor easily.
   return (
     <svg
       width={size}

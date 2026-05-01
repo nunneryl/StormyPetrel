@@ -77,21 +77,21 @@ export function WindChart({
               <stop offset="100%" stopColor={FILL.onshore} stopOpacity={0.04} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="2 4" stroke="#1E3048" vertical={false} />
+          <CartesianGrid strokeDasharray="2 4" stroke="#E2E8F0" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
             tickFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
-            stroke="#64748B"
-            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            stroke="#94A3B8"
+            tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            stroke="#64748B"
-            tick={{ fill: '#94A3B8', fontSize: 10 }}
+            stroke="#94A3B8"
+            tick={{ fill: '#475569', fontSize: 10 }}
             tickFormatter={(v) => `${v}`}
             width={32}
             axisLine={false}
@@ -99,11 +99,12 @@ export function WindChart({
           />
           <Tooltip
             contentStyle={{
-              background: '#0B1426',
-              border: '1px solid #1E3048',
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
               borderRadius: 8,
               fontSize: 12,
-              color: '#F1F5F9',
+              color: '#0F172A',
+              boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
             labelFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
             formatter={(value, _key, item) => {
@@ -114,7 +115,7 @@ export function WindChart({
           <Area
             type="monotone"
             dataKey="mph"
-            stroke="#A3E635"
+            stroke="#15803D"
             strokeWidth={1.5}
             fillOpacity={1}
             fill={(() => {
