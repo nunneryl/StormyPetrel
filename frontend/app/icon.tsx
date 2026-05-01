@@ -1,8 +1,11 @@
 import { ImageResponse } from 'next/og';
 
-// Stormy Petrel favicon — two stacked wave curves in cyan on the
-// brand-dark background. 32×32 PNG produced at request time by
-// next/og's edge runtime; cached aggressively by browsers + CDNs.
+// Stormy Petrel favicon — stylized petrel silhouette in the brand
+// navy on a light background. Programmatic so we don't have to bundle
+// a binary PNG. To swap in a hand-drawn cropped version of the actual
+// logo, drop a PNG at app/icon.png — Next.js auto-prefers static
+// icon files over the programmatic icon.tsx.
+
 export const size = { width: 32, height: 32 };
 export const contentType = 'image/png';
 
@@ -16,22 +19,18 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#0B1426',
+          background: '#FFFFFF',
           borderRadius: 6,
         }}
       >
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#00B4D8"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M2 12 C 5 8, 8 8, 12 12 S 19 16, 22 12" />
-          <path d="M2 17 C 5 13, 8 13, 12 17 S 19 21, 22 17" opacity="0.55" />
+        {/* Compact petrel silhouette — body + outstretched wing — in the
+            same navy color as the wordmark. */}
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+          <path
+            d="M3 19 C 7 14, 13 11, 18 14 L 22 9 L 23 16 L 28 18 C 24 20, 17 22, 13 21 L 9 24 Z"
+            fill="#0F172A"
+          />
+          <circle cx="14" cy="16.5" r="1.2" fill="#FFFFFF" />
         </svg>
       </div>
     ),

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
+import { Logo } from '@/components/Logo';
 import { RatingBadge } from '@/components/RatingBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -51,16 +52,11 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6">
-      {/* HERO — search-first. Single line of context, big input,
-          quick-region pills underneath. The whole above-the-fold is
-          this section: a surfer can search → rate → click → forecast
-          page in two seconds. */}
-      <section className="pt-10 sm:pt-16 pb-8 sm:pb-10 flex flex-col items-center text-center gap-5">
-        <p className="text-sm sm:text-base text-text-secondary">
-          Surf forecasts for{' '}
-          <span className="font-bold text-text-primary tabular-nums">{spots.length}</span>{' '}
-          US spots. Free, updated every 6 hours.
-        </p>
+      {/* HERO — search-first. Logo overhead, big input below. The whole
+          above-the-fold is this section: a surfer lands, types a name,
+          and is on the forecast page in two seconds. */}
+      <section className="pt-8 sm:pt-12 pb-8 sm:pb-10 flex flex-col items-center text-center gap-6">
+        <Logo size={120} withText={false} />
 
         <div className="w-full max-w-2xl">
           <HeroSearch spots={searchItems} />

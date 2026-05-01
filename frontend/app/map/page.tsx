@@ -1,36 +1,53 @@
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { SpotMap } from '@/components/SpotMap';
-import { RATING_TIERS } from '@/lib/ratings';
+import { tierFromStars } from '@/lib/ratings';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
+
+// Compact legend — five canonical tier labels (the in-between ones
+// like "POOR TO FAIR" stay in the data but aren't repeated as legend
+// pills since the visual scale is obvious from the surrounding hues).
+const LEGEND = [
+  { label: 'EPIC', stars: 5 },
+  { label: 'GOOD', stars: 4 },
+  { label: 'FAIR', stars: 3 },
+  { label: 'POOR', stars: 1 },
+  { label: 'FLAT', stars: 0 },
+];
 
 export default async function MapPage() {
   const spots = await fetchSpotsWithLatest();
   return (
     <div className="relative">
-      {/* Top-left: small spot count chip — un-obtrusive */}
+      {/* Top-left: spot count chip */}
       <div className="absolute z-10 top-3 left-3 rounded-md border border-ink-600 bg-white/90 backdrop-blur-sm px-2.5 py-1.5 shadow-card">
         <span className="text-[11px] uppercase tracking-widest2 text-text-secondary tabular-nums">
           {spots.length} spots
         </span>
       </div>
 
-      {/* Bottom-right: permanent rating legend, single horizontal row */}
-      <div className="absolute z-10 bottom-4 right-4 sm:right-16 rounded-md border border-ink-600 bg-white/90 backdrop-blur-sm px-3 py-2 shadow-card">
-        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-          {RATING_TIERS.map((t) => (
-            <span
-              key={t.label}
-              className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest2 text-text-secondary whitespace-nowrap"
-            >
+      {/* Bottom-right: permanent rating legend, 5 pills + dots, single row */}
+      <div className="absolute z-10 bottom-4 right-4 sm:right-16 rounded-lg border border-ink-600 bg-white/90 backdrop-blur-sm px-3 py-2 shadow-card">
+        <div className="flex items-center gap-3 sm:gap-4">
+          {LEGEND.map((l) => {
+            const tier = tierFromStars(l.stars);
+            return (
               <span
-                className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ background: t.hex, boxShadow: `0 0 4px ${t.glow}` }}
-              />
-              {t.label}
-            </span>
-          ))}
+                key={l.label}
+                className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest2 text-text-secondary whitespace-nowrap"
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{
+                    background: tier.hex,
+                    border: '1px solid #0F172A',
+                  }}
+                />
+                {l.label}
+              </span>
+            );
+          })}
         </div>
       </div>
 
