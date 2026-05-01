@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { NavSearch } from './NavSearch';
@@ -42,10 +43,18 @@ export function SiteNav({
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="flex items-center text-text-primary shrink-0 font-bold tracking-tightish text-base sm:text-lg"
+          className="flex items-center shrink-0"
           aria-label="Stormy Petrel home"
         >
-          Stormy Petrel
+          <Image
+            src="/brand/sp-initials.png"
+            alt="Stormy Petrel"
+            width={32}
+            height={32}
+            priority
+            unoptimized
+            style={{ height: 32, width: 'auto' }}
+          />
         </Link>
 
         <div className="hidden md:flex flex-1 justify-center max-w-xl">
