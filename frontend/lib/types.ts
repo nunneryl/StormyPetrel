@@ -74,4 +74,8 @@ export type TidePrediction = {
 
 export type SpotWithLatest = Spot & {
   latest: Forecast | null;
+  /** Direction the tide is moving at the latest forecast time. Computed
+   *  by comparing the latest tide_level_ft to the next forecast row's
+   *  reading; null when we don't have two adjacent samples. */
+  tide_trend: 'rising' | 'falling' | null;
 };
