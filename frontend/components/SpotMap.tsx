@@ -96,9 +96,15 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
         ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (L as any).markerClusterGroup({
             showCoverageOnHover: false,
-            spiderfyOnMaxZoom: true,
-            disableClusteringAtZoom: 9,
-            maxClusterRadius: 50,
+            // No spider fan-out — clicking a leaf cluster should always
+            // just zoom further in, never explode into lines + markers.
+            spiderfyOnMaxZoom: false,
+            zoomToBoundsOnClick: true,
+            // Smaller cluster radius (default 80) so groups break apart
+            // sooner as you zoom in. Pair with disableClusteringAtZoom=13
+            // so by typical neighborhood-zoom every spot is its own dot.
+            maxClusterRadius: 40,
+            disableClusteringAtZoom: 13,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             iconCreateFunction: (cluster: any) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -213,45 +219,7 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
     };
   }, [data]);
 
-  return (
-    <div className="relative h-[calc(100vh-3.5rem)] w-full">
-      <div ref={containerRef} className="h-full w-full" />
-
-      {/* Jump-to controls. Top-right, just under the nav. These regions
-          are always off-screen in the default CONUS view, so a one-tap
-          fly-to keeps them discoverable. */}
-      <div className="absolute z-[1100] top-3 right-3 flex flex-col gap-1.5 items-end">
-        {JUMP_TARGETS.map((t) => (
-          <button
-            key={t.label}
-            type="button"
-            onClick={() => flyToTarget(mapRef.current, t)}
-            className="px-2.5 py-1.5 rounded-md border border-ink-600 bg-white/95 backdrop-blur-sm shadow-card text-[11px] font-bold uppercase tracking-widest2 text-text-primary hover:text-cyan-600 hover:border-cyan-500 transition"
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Region presets — center + zoom tuned so all the spots in each archipelago
-// fit comfortably in the viewport on a typical laptop screen.
-type JumpTarget = { label: string; lat: number; lng: number; zoom: number };
-const JUMP_TARGETS: JumpTarget[] = [
-  { label: 'Hawaii',      lat: 20.7,  lng: -157.0, zoom: 7 },
-  { label: 'Puerto Rico', lat: 18.22, lng:  -66.4, zoom: 9 },
-];
-
-function flyToTarget(map: unknown, t: JumpTarget): void {
-  // The map ref is `unknown` to avoid pulling Leaflet's types into the
-  // component signature; narrow it before calling flyTo.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const m = map as any;
-  if (m && typeof m.flyTo === 'function') {
-    m.flyTo([t.lat, t.lng], t.zoom, { duration: 1.0 });
-  }
+  return <div ref={containerRef} className="h-[calc(100vh-3.5rem)] w-full" />;
 }
 
 function escapeHtml(s: string): string {
