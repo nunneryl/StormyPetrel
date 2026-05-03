@@ -11,8 +11,6 @@ import {
   pickSwell,
 } from '@/lib/formatting';
 
-type LeafletMod = typeof import('leaflet');
-
 const LEAFLET_CSS_ID = 'leaflet-css';
 const LEAFLET_CLUSTER_CSS_ID = 'leaflet-markercluster-css';
 const LEAFLET_CLUSTER_DEFAULT_CSS_ID = 'leaflet-markercluster-default-css';
@@ -41,12 +39,25 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
     (async () => {
       // Step 1 — load Leaflet + CSS. Inject CSS BEFORE creating the map
       // so the tile pane has correct positioning from the first paint.
-      const L = (await import('leaflet')) as unknown as LeafletMod;
+      //
+      // Webpack wraps CJS modules in an ES namespace with the actual
+      // exports under `.default`. The leaflet.markercluster plugin
+      // mutates whatever `require('leaflet')` returns (the inner CJS
+      // exports), which is the SAME object as `.default` on our
+      // namespace — but NOT the same as the namespace itself. So we
+      // must hold the .default reference, otherwise on a cold first
+      // load `L.markerClusterGroup` reads as undefined and we silently
+      // fall back to plain markers. On warm reloads webpack's cache
+      // happens to surface the patched property on the namespace too,
+      // which is why the bug only appeared on the very first visit.
+      const leafletNs = await import('leaflet');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const L: any = (leafletNs as any).default ?? leafletNs;
       ensureCss(LEAFLET_CSS_ID, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 
-      // Step 2 — load the markercluster plugin. Wrapped in try/catch
+      // Step 2 — load the markercluster plugin AND wait for the side
+      // effect to land on L before continuing. Wrapped in try/catch
       // so a CDN / network hiccup with the plugin doesn't kill markers.
-      // The plugin mutates the global L by attaching `markerClusterGroup`.
       let clusterAvailable = false;
       try {
         await import('leaflet.markercluster');
@@ -58,8 +69,22 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
           LEAFLET_CLUSTER_DEFAULT_CSS_ID,
           'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
         );
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        clusterAvailable = typeof (L as any).markerClusterGroup === 'function';
+        // Belt-and-suspenders: if for some reason the plugin patched a
+        // different L (older webpack interop, transitive dep dedup, etc.)
+        // try lifting it off window.L before giving up.
+        if (typeof L.markerClusterGroup !== 'function') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const winL = (typeof window !== 'undefined' ? (window as any).L : null);
+          if (winL && typeof winL.markerClusterGroup === 'function') {
+            L.markerClusterGroup = winL.markerClusterGroup;
+            L.MarkerClusterGroup = winL.MarkerClusterGroup;
+          }
+        }
+        clusterAvailable = typeof L.markerClusterGroup === 'function';
+        if (!clusterAvailable) {
+          // eslint-disable-next-line no-console
+          console.warn('SpotMap: markercluster module loaded but markerClusterGroup is missing on L');
+        }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.warn('SpotMap: markercluster plugin failed to load; rendering plain markers', err);
@@ -93,8 +118,7 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
       // or directly to the map.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const clusterGroup: any = clusterAvailable
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (L as any).markerClusterGroup({
+        ? L.markerClusterGroup({
             showCoverageOnHover: false,
             // No spider fan-out — clicking a leaf cluster should always
             // just zoom further in, never explode into lines + markers.
