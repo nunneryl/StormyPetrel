@@ -55,7 +55,7 @@ export default async function HomePage() {
       {/* HERO — search-first. Logo overhead, big input below. The whole
           above-the-fold is this section: a surfer lands, types a name,
           and is on the forecast page in two seconds. */}
-      <section className="pt-10 sm:pt-14 pb-8 sm:pb-10 flex flex-col items-center text-center gap-5">
+      <section className="pt-5 sm:pt-14 pb-4 sm:pb-10 flex flex-col items-center text-center gap-2.5 sm:gap-5">
         <Image
           src="/logo.png"
           alt="Stormy Petrel"
@@ -63,10 +63,10 @@ export default async function HomePage() {
           height={120}
           priority
           unoptimized
-          style={{ height: 120, width: 'auto' }}
+          className="h-[60px] sm:h-[120px] w-auto"
         />
         <h1
-          className="font-bold tracking-tightish text-4xl"
+          className="font-bold tracking-tightish text-2xl sm:text-4xl"
           style={{ color: '#0F172A' }}
         >
           Stormy Petrel

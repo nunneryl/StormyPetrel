@@ -92,9 +92,15 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
 
       if (cancelled || !containerRef.current) return;
 
+      // Default view tuned for the viewport. On a narrow phone the
+      // CONUS-only zoom 4 cuts the west coast off the right edge, so
+      // we zoom out one step and shift the center slightly north so
+      // both coasts plus Hawaii / Puerto Rico fit comfortably.
+      const isNarrow =
+        typeof window !== 'undefined' && window.innerWidth < 640;
       const map = L.map(containerRef.current, {
-        center: [37.5, -98],
-        zoom: 4,
+        center: isNarrow ? [38, -98] : [37.5, -98],
+        zoom: isNarrow ? 3 : 4,
         worldCopyJump: true,
         zoomControl: false,
       });
