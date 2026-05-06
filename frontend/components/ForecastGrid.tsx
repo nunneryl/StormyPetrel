@@ -2,6 +2,7 @@ import type { Forecast } from '@/lib/types';
 import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from '@/lib/ratings';
 import {
   dayKey,
+  degToCardinal,
   fmtDay,
   fmtSec,
   fmtShortTime,
@@ -9,6 +10,8 @@ import {
   pickSwell,
 } from '@/lib/formatting';
 import { CompassArrow } from './CompassArrow';
+import { StarRating, ratingCellBg } from './StarRating';
+import { SwellCompass } from './SwellCompass';
 
 // 3-hour buckets matching MSW's row density. interpret writes hourly
 // rows; sample every 3rd so the grid is scannable, not overwhelming.
@@ -105,10 +108,6 @@ export function ForecastGrid({
                         : 'flat'
                     : null;
                 const faceFraction = (r.face_ft ?? 0) / maxFace;
-                const tierFg =
-                  tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD'
-                    ? 'text-ink-950 [color:#0F172A]'
-                    : 'text-white';
 
                 const best = isBestWindow(rows, idx);
 
@@ -133,10 +132,10 @@ export function ForecastGrid({
                     </div>
                     <div className={`sticky left-[80px] z-10 ${rowBg}`}>
                       <span
-                        className={`flex items-center justify-center w-full h-7 rounded text-[10px] font-bold uppercase tracking-widest2 ${tierFg}`}
-                        style={{ background: tier.hex }}
+                        className="flex items-center justify-center w-full h-7 rounded"
+                        style={{ background: ratingCellBg(r.stars) }}
                       >
-                        {tier.label}
+                        <StarRating score={r.stars} size="md" />
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -160,11 +159,14 @@ export function ForecastGrid({
                       {fmtSec(tp)}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <CompassArrow deg={dp} size={14} variant="swell" showLabel={false} />
-                      <span className="text-xs text-text-secondary tabular-nums">
+                      <SwellCompass deg={dp} size={24} />
+                      <span className="text-xs text-text-primary tabular-nums">
+                        {degToCardinal(dp)}
+                      </span>
+                      <span className="text-[11px] text-text-muted tabular-nums">
                         {dp !== null && dp !== undefined
                           ? `${dp.toFixed(0)}°`
-                          : '—'}
+                          : ''}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs">

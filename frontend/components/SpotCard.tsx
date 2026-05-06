@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { SpotWithLatest } from '@/lib/types';
-import { RatingBadge } from './RatingBadge';
+import { StarRating } from './StarRating';
 import { CompassArrow } from './CompassArrow';
+import { SwellCompass } from './SwellCompass';
 import { fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { tierFromStars } from '@/lib/ratings';
 
@@ -44,7 +45,7 @@ export function SpotCard({
             {spot.break_type ? ` · ${spot.break_type}` : ''}
           </div>
         </div>
-        <RatingBadge stars={f?.stars ?? 0} size="sm" />
+        <StarRating score={f?.stars ?? 0} size="sm" />
       </div>
       <div className="mt-2.5 flex items-center gap-3 text-xs text-text-secondary">
         <span className="font-bold text-text-primary text-base tabular-nums">
@@ -53,11 +54,9 @@ export function SpotCard({
         <span className="text-text-muted tabular-nums">
           {fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}
         </span>
-        <CompassArrow
+        <SwellCompass
           deg={pickSwell(f?.swell_dp ?? null, f?.dp ?? null)}
-          size={12}
-          variant="swell"
-          showLabel={false}
+          size={16}
         />
         <span className="ml-auto flex items-center gap-1 text-text-muted">
           <CompassArrow deg={f?.wind_dir ?? null} size={12} variant="wind" showLabel={false} />

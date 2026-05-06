@@ -1,4 +1,4 @@
-import { CompassArrow } from './CompassArrow';
+import { SwellCompass } from './SwellCompass';
 import { degToCardinal, fmtSec, metersToFeet } from '@/lib/formatting';
 import type { Forecast } from '@/lib/types';
 
@@ -77,11 +77,10 @@ export function SwellPartitions({ forecast }: { forecast: Forecast }) {
             >
               <div className="text-xs text-text-secondary truncate">{c.label}</div>
               <div className="flex items-center gap-1.5">
-                <CompassArrow
+                <SwellCompass
                   deg={c.dp}
-                  size={14}
-                  variant={c.windSea ? 'neutral' : 'swell'}
-                  showLabel={false}
+                  size={24}
+                  color={c.windSea ? '#94A3B8' : '#0369A1'}
                 />
                 <span className="text-xs text-text-secondary tabular-nums">
                   {c.dp !== null && c.dp !== undefined ? degToCardinal(c.dp) : '—'}

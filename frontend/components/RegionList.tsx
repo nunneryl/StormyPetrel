@@ -3,10 +3,11 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { SpotWithLatest } from '@/lib/types';
-import { RatingBadge } from './RatingBadge';
+import { StarRating } from './StarRating';
 import { CompassArrow } from './CompassArrow';
+import { SwellCompass } from './SwellCompass';
 import { Sparkline } from './Sparkline';
-import { fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
+import { degToCardinal, fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { tierFromStars } from '@/lib/ratings';
 
 type Filter = 'all' | 'fair' | 'good';
@@ -78,7 +79,7 @@ export function RegionList({
                     <span className="font-bold text-text-primary group-hover:text-cyan-400 transition-colors">
                       {s.name}
                     </span>
-                    <RatingBadge stars={f?.stars ?? 0} size="sm" />
+                    <StarRating score={f?.stars ?? 0} size="sm" />
                     {s.break_type && (
                       <span className="text-xs text-text-muted">{s.break_type}</span>
                     )}
@@ -90,11 +91,15 @@ export function RegionList({
                     <span className="tabular-nums">
                       {fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}
                     </span>
-                    <CompassArrow
-                      deg={pickSwell(f?.swell_dp ?? null, f?.dp ?? null)}
-                      size={12}
-                      variant="swell"
-                    />
+                    <span className="inline-flex items-center gap-1">
+                      <SwellCompass
+                        deg={pickSwell(f?.swell_dp ?? null, f?.dp ?? null)}
+                        size={16}
+                      />
+                      <span className="font-mono text-[11px] text-text-secondary tabular-nums">
+                        {degToCardinal(pickSwell(f?.swell_dp ?? null, f?.dp ?? null))}
+                      </span>
+                    </span>
                     <span className="flex items-center gap-1 text-text-muted">
                       <CompassArrow
                         deg={f?.wind_dir ?? null}

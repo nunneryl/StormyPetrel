@@ -275,11 +275,44 @@ function arrowSvg(deg: number, color: string, size = 11): string {
     </svg>`;
 }
 
+// Inline star SVG — gold filled, gray empty, half via clip-path. Mirrors
+// the React StarRating component's rendering so the popup uses the same
+// visual language as the rest of the site.
+const STAR_PATH =
+  'M12 2 L14.6 8.6 L21.6 9.2 L16.3 13.8 L18 20.6 L12 16.9 L6 20.6 L7.7 13.8 L2.4 9.2 L9.4 8.6 Z';
+const STAR_FILL = '#F59E0B';
+const STAR_EMPTY = '#D1D5DB';
+
+function starSvg(color: string, size: number): string {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;"><path d="${STAR_PATH}" fill="${color}"/></svg>`;
+}
+
+function starsHtml(score: number | null | undefined, size = 14): string {
+  const s = score ?? 0;
+  if (s <= 0) {
+    return `<span style="font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#94A3B8;">FLAT</span>`;
+  }
+  const rounded = Math.round(s * 2) / 2;
+  const parts: string[] = [];
+  for (let i = 0; i < 5; i += 1) {
+    const fill = Math.max(0, Math.min(1, rounded - i));
+    if (fill >= 1) {
+      parts.push(starSvg(STAR_FILL, size));
+    } else if (fill === 0.5) {
+      parts.push(`
+        <span style="position:relative;display:inline-block;width:${size}px;height:${size}px;line-height:0;vertical-align:middle;">
+          <span style="position:absolute;inset:0;">${starSvg(STAR_EMPTY, size)}</span>
+          <span style="position:absolute;inset:0;clip-path:inset(0 50% 0 0);">${starSvg(STAR_FILL, size)}</span>
+        </span>`);
+    } else {
+      parts.push(starSvg(STAR_EMPTY, size));
+    }
+  }
+  return `<span style="display:inline-flex;align-items:center;gap:1px;">${parts.join('')}</span>`;
+}
+
 function buildPopupHtml(s: SpotWithLatest): string {
   const f = s.latest;
-  const tier = tierFromStars(f?.stars ?? 0);
-  const fg =
-    tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD' ? '#0F172A' : '#FFFFFF';
 
   const swellDir = pickSwell(f?.swell_dp ?? null, f?.dp ?? null);
   const swellPeriod = pickSwell(f?.swell_tp ?? null, f?.tp ?? null);
@@ -343,8 +376,8 @@ function buildPopupHtml(s: SpotWithLatest): string {
       <div style="font-size:11px;color:#475569;margin-bottom:8px;">
         ${subtitleParts.join(' · ')}
       </div>
-      <div style="display:inline-block;background:${tier.hex};color:${fg};font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;padding:3px 8px;border-radius:4px;">
-        ${tier.label}
+      <div style="display:inline-block;">
+        ${starsHtml(f?.stars ?? 0, 14)}
       </div>
       ${conditionsLine}
       ${windLine}

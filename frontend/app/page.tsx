@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
-import { RatingBadge } from '@/components/RatingBadge';
+import { StarRating } from '@/components/StarRating';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { fmtFt, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
@@ -143,7 +143,7 @@ export default async function HomePage() {
                   {s.state ?? ''}
                 </div>
                 <div className="hidden md:flex items-center">
-                  <RatingBadge stars={f?.stars ?? 0} size="sm" />
+                  <StarRating score={f?.stars ?? 0} size="sm" />
                 </div>
                 <div className="hidden md:flex items-center justify-end font-bold tabular-nums text-text-primary">
                   {fmtFt(f?.face_ft ?? null)}
@@ -162,7 +162,7 @@ export default async function HomePage() {
                   <span className="font-bold tabular-nums text-text-primary">
                     {fmtFt(f?.face_ft ?? null)}
                   </span>
-                  <RatingBadge stars={f?.stars ?? 0} size="sm" />
+                  <StarRating score={f?.stars ?? 0} size="sm" />
                 </div>
               </Link>
             );
@@ -196,7 +196,7 @@ export default async function HomePage() {
                   {info.count} spot{info.count === 1 ? '' : 's'}
                 </div>
               </div>
-              <RatingBadge stars={info.best} size="sm" className="shrink-0" />
+              <StarRating score={info.best} size="sm" className="shrink-0" />
             </Link>
           ))}
         </div>
