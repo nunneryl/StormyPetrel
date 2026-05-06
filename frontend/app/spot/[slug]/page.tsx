@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Forecast, Spot, BuoyObservation, TidePrediction } from '@/lib/types';
-import { RatingBadge } from '@/components/RatingBadge';
+import { StarRating } from '@/components/StarRating';
 import { ForecastGrid } from '@/components/ForecastGrid';
 import { SwellChart } from '@/components/SwellChart';
 import { WindChart } from '@/components/WindChart';
@@ -157,7 +157,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          <RatingBadge stars={current?.stars ?? 0} size="xl" glow />
+          <StarRating score={current?.stars ?? 0} size="xl" showScore />
           <span className="text-[10px] uppercase tracking-widest2 text-text-muted">
             {freshnessLabel(current)}
           </span>

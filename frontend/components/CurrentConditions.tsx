@@ -1,4 +1,5 @@
 import { CompassArrow } from './CompassArrow';
+import { SwellCompass } from './SwellCompass';
 import type { Forecast } from '@/lib/types';
 import {
   classifyChop, chopBadgeClass, chopLabel,
@@ -56,7 +57,7 @@ export function CurrentConditions({
         label="Swell"
         value={degToCardinal(dp)}
         hint={dp !== null && dp !== undefined ? `${dp.toFixed(0)}°` : null}
-        icon={<CompassArrow deg={dp} size={22} variant="swell" showLabel={false} />}
+        icon={<SwellCompass deg={dp} size={40} />}
       />
       <BigTile
         label="Wind"
