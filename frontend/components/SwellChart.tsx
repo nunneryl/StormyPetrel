@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { Forecast } from '@/lib/types';
-import { fmtDay, fmtShortTime, metersToFeet } from '@/lib/formatting';
+import { fmtDay, fmtDayTimeTick, fmtShortTime, metersToFeet } from '@/lib/formatting';
 
 type Pt = {
   t: number;
@@ -43,7 +43,7 @@ function buildSeries(rows: Forecast[]): Pt[] {
   }));
 }
 
-const tickLabel = (ms: number) => fmtShortTime(new Date(ms).toISOString());
+const tickLabel = (ms: number) => fmtDayTimeTick(new Date(ms).toISOString());
 
 export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
   const data = buildSeries(forecasts);
@@ -74,6 +74,7 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
             tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
+            minTickGap={48}
           />
           <YAxis
             stroke="#94A3B8"
@@ -93,9 +94,7 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
             labelStyle={{ color: '#475569', fontWeight: 600 }}
-            labelFormatter={(v) =>
-              `${fmtDay(new Date(v as number).toISOString())} ${tickLabel(v as number)}`
-            }
+            labelFormatter={(v) => tickLabel(v as number)}
             formatter={(value, key) => {
               if (typeof value !== 'number') return [value, key];
               const v = `${value.toFixed(1)} ft`;

@@ -84,6 +84,20 @@ export function fmtShortTime(iso: string): string {
   return SHORT_TIME_FMT.format(new Date(iso)).replace(' ', '').toLowerCase();
 }
 
+const DAY_SHORT_FMT = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  timeZone: 'America/Los_Angeles',
+});
+
+/** Combined "Wed 9am"-style tick label. Used by the 48h chart x-axis so
+ *  each tick communicates BOTH the day and the time of day. */
+export function fmtDayTimeTick(iso: string): string {
+  const d = new Date(iso);
+  const day = DAY_SHORT_FMT.format(d);
+  const time = SHORT_TIME_FMT.format(d).replace(' ', '').toLowerCase();
+  return `${day} ${time}`;
+}
+
 export function dayKey(iso: string): string {
   // YYYY-MM-DD bucket using local Pacific date so day boundaries feel right
   // for the largest segment of US users; can be overridden per-spot later.

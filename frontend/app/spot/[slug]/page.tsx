@@ -10,7 +10,7 @@ import { WindChart } from '@/components/WindChart';
 import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
-import { ConditionsMatch } from '@/components/ConditionsMatch';
+import { OptimalConditions } from '@/components/OptimalConditions';
 import { SectionHeader } from '@/components/SectionHeader';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 
@@ -128,6 +128,12 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   ]);
 
   const current = forecasts[0] ?? null;
+  // Charts get a 48h slice — the full 7-day window made the curves
+  // too compressed to read. The grid below still shows everything.
+  const cutoff = Date.now() + 48 * 3600_000;
+  const chartForecasts = forecasts.filter(
+    (r) => new Date(r.valid_time).getTime() <= cutoff,
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 sm:py-7 space-y-6">
@@ -174,16 +180,16 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
       {/* Spectral swell components */}
       {current && <SwellPartitions forecast={current} />}
 
-      {/* Charts */}
+      {/* Charts — next 48h only so curves stay legible */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <ChartCard title="Swell components (ft)">
-          <SwellChart forecasts={forecasts} />
+        <ChartCard title="Swell components (ft) · next 48h">
+          <SwellChart forecasts={chartForecasts} />
         </ChartCard>
-        <ChartCard title="Wind speed (mph)">
-          <WindChart forecasts={forecasts} offshoreDeg={spot.offshore_wind_deg} />
+        <ChartCard title="Wind speed (mph) · next 48h">
+          <WindChart forecasts={chartForecasts} offshoreDeg={spot.offshore_wind_deg} />
         </ChartCard>
-        <ChartCard title="Tide (ft)">
-          <TideChart forecasts={forecasts} hilo={hilo} />
+        <ChartCard title="Tide (ft) · next 48h">
+          <TideChart forecasts={chartForecasts} hilo={hilo} />
         </ChartCard>
       </section>
 
@@ -203,11 +209,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           />
         </InfoBlock>
 
-        <ConditionsMatch
-          spot={spot}
-          current={current}
-          next={forecasts[1] ?? null}
-        />
+        <OptimalConditions spot={spot} />
 
         <InfoBlock title="Nearest buoy">
           {buoy ? (
