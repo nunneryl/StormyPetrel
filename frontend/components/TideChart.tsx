@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { Forecast, TidePrediction } from '@/lib/types';
-import { fmtDay, fmtShortTime } from '@/lib/formatting';
+import { fmtDayTimeTick, fmtDay, fmtShortTime } from '@/lib/formatting';
 
 type Pt = { t: number; iso: string; level: number | null };
 
@@ -69,11 +69,12 @@ export function TideChart({
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
-            tickFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
+            tickFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString())}
             stroke="#94A3B8"
             tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
+            minTickGap={48}
           />
           <YAxis
             stroke="#94A3B8"

@@ -10,7 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { Forecast } from '@/lib/types';
-import { degToCardinal, fmtShortTime, msToMph } from '@/lib/formatting';
+import { degToCardinal, fmtDayTimeTick, msToMph } from '@/lib/formatting';
 import { classifyWind } from '@/lib/ratings';
 
 type Pt = {
@@ -83,11 +83,12 @@ export function WindChart({
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
-            tickFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
+            tickFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString())}
             stroke="#94A3B8"
             tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
+            minTickGap={48}
           />
           <YAxis
             stroke="#94A3B8"
@@ -106,7 +107,7 @@ export function WindChart({
               color: '#0F172A',
               boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
-            labelFormatter={(v) => fmtShortTime(new Date(v as number).toISOString())}
+            labelFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString())}
             formatter={(value, _key, item) => {
               const dir = (item?.payload as Pt | undefined)?.dir;
               return [`${(value as number).toFixed(0)} mph ${degToCardinal(dir)}`, 'Wind'];
