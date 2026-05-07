@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { Forecast } from '@/lib/types';
 import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from '@/lib/ratings';
 import {
@@ -48,6 +51,10 @@ function isBestWindow(rows: Forecast[], idx: number): boolean {
   return cur - avg >= 2;
 }
 
+// Default forecast window when collapsed — about 48h of 3-hour blocks.
+// Show-full reveals the rest out to ~7 days.
+const COLLAPSED_HOURS = 48;
+
 export function ForecastGrid({
   forecasts,
   offshoreDeg,
@@ -55,8 +62,17 @@ export function ForecastGrid({
   forecasts: Forecast[];
   offshoreDeg: number | null | undefined;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   const sampled = bucket3hr(forecasts);
-  const days = groupByDay(sampled).slice(0, 7);
+  const fullDays = groupByDay(sampled).slice(0, 7);
+  const visibleSampled = expanded
+    ? sampled
+    : sampled.filter((r) => {
+        const dt = new Date(r.valid_time).getTime() - Date.now();
+        return dt <= COLLAPSED_HOURS * 3600_000;
+      });
+  const days = expanded ? fullDays : groupByDay(visibleSampled);
 
   if (days.length === 0) {
     return (
@@ -66,18 +82,15 @@ export function ForecastGrid({
     );
   }
 
-  // Largest face_ft across the whole window — used to scale wave-bar widths.
-  const maxFace = Math.max(...sampled.map((r) => r.face_ft ?? 0), 1);
-
   return (
     <div className="rounded-xl border border-ink-600 bg-white overflow-hidden shadow-card">
       <div className="overflow-x-auto scrollbar-hidden">
-        <div className="min-w-[820px]">
+        <div className="min-w-[760px]">
           {/* Header row */}
-          <div className="grid grid-cols-[80px_140px_140px_64px_120px_140px_72px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
+          <div className="grid grid-cols-[80px_140px_64px_64px_120px_140px_72px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
             <div className="sticky left-0 z-10 bg-ink-900 -ml-3 pl-3">Time</div>
             <div className="sticky left-[80px] z-10 bg-ink-900">Rating</div>
-            <div>Face</div>
+            <div className="text-right">Face</div>
             <div className="text-right">Period</div>
             <div>Swell</div>
             <div>Wind</div>
@@ -107,7 +120,6 @@ export function ForecastGrid({
                         ? 'down'
                         : 'flat'
                     : null;
-                const faceFraction = (r.face_ft ?? 0) / maxFace;
 
                 const best = isBestWindow(rows, idx);
 
@@ -118,7 +130,7 @@ export function ForecastGrid({
                 return (
                   <div
                     key={r.valid_time}
-                    className={`relative grid grid-cols-[80px_140px_140px_64px_120px_140px_72px] gap-2 px-3 py-1.5 border-b border-ink-600 text-sm ${rowBg} hover:bg-ink-800 transition-colors`}
+                    className={`relative grid grid-cols-[80px_140px_64px_64px_120px_140px_72px] gap-2 px-3 py-1.5 border-b border-ink-600 text-sm ${rowBg} hover:bg-ink-800 transition-colors`}
                     style={
                       best
                         ? {
@@ -138,22 +150,10 @@ export function ForecastGrid({
                         <StarRating score={r.stars} size="md" />
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1 h-3 rounded bg-ink-800 overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 rounded"
-                          style={{
-                            width: `${Math.max(4, faceFraction * 100)}%`,
-                            background: tier.hex,
-                            opacity: 0.85,
-                          }}
-                        />
-                      </div>
-                      <span className="font-bold tabular-nums text-text-primary w-11 text-right">
-                        {r.face_ft !== null && r.face_ft !== undefined
-                          ? `${r.face_ft.toFixed(1)}`
-                          : '—'}
-                      </span>
+                    <div className="text-right font-bold tabular-nums text-text-primary">
+                      {r.face_ft !== null && r.face_ft !== undefined
+                        ? `${r.face_ft.toFixed(1)}`
+                        : '—'}
                     </div>
                     <div className="text-right text-text-secondary tabular-nums">
                       {fmtSec(tp)}
@@ -195,6 +195,27 @@ export function ForecastGrid({
           ))}
         </div>
       </div>
+
+      {/* Show-full toggle. Hidden when there's no extra data beyond the
+          collapsed window (e.g. data feed shorter than 48h). */}
+      {fullDays.length > days.length && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="w-full px-4 py-3 text-sm font-bold text-cyan-600 hover:bg-ink-800 border-t border-ink-600 transition"
+        >
+          Show full 7-day forecast →
+        </button>
+      )}
+      {expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="w-full px-4 py-3 text-sm font-bold text-text-secondary hover:bg-ink-800 hover:text-cyan-600 border-t border-ink-600 transition"
+        >
+          Show only next 48 hours
+        </button>
+      )}
     </div>
   );
 }

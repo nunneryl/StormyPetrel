@@ -174,19 +174,6 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
       {/* Spectral swell components */}
       {current && <SwellPartitions forecast={current} />}
 
-      {/* 7-day grid */}
-      <section>
-        <SectionHeader
-          title="7-day forecast"
-          right={
-            <span className="text-[10px] uppercase tracking-widest2 text-text-muted hidden sm:inline">
-              3-hour blocks · scroll right for more →
-            </span>
-          }
-        />
-        <ForecastGrid forecasts={forecasts} offshoreDeg={spot.offshore_wind_deg} />
-      </section>
-
       {/* Charts */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartCard title="Swell components (ft)">
@@ -272,6 +259,14 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
             <div className="text-text-muted text-sm">No buoy linked.</div>
           )}
         </InfoBlock>
+      </section>
+
+      {/* 7-day grid — moved to the bottom as the detailed reference
+          view; the charts above carry the at-a-glance trend. Defaults
+          to the next 48 hours with an in-grid expand button. */}
+      <section>
+        <SectionHeader title="7-day forecast" />
+        <ForecastGrid forecasts={forecasts} offshoreDeg={spot.offshore_wind_deg} />
       </section>
 
       {/* Footer breadcrumbs */}
