@@ -8,9 +8,9 @@ import { ForecastGrid } from '@/components/ForecastGrid';
 import { SwellChart } from '@/components/SwellChart';
 import { WindChart } from '@/components/WindChart';
 import { TideChart } from '@/components/TideChart';
-import { CompassArrow } from '@/components/CompassArrow';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
+import { ConditionsMatch } from '@/components/ConditionsMatch';
 import { SectionHeader } from '@/components/SectionHeader';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 
@@ -187,48 +187,27 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </ChartCard>
       </section>
 
-      {/* Spot info / orientation / buoy */}
+      {/* Spot info / conditions match / buoy */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <InfoBlock title="Spot info">
           <Row k="Break" v={spot.break_type ?? '—'} />
           <Row k="Tide preference" v={spot.tide_preference ?? '—'} />
           <Row k="Crowd" v={spot.crowd_factor ?? '—'} />
-          <Row k="Hazards" v={spot.hazards?.length ? spot.hazards.join(', ') : '—'} />
+          <Row
+            k="Hazards"
+            v={
+              spot.hazards?.length
+                ? spot.hazards.map((h) => h.replace(/_/g, ' ')).join(', ')
+                : '—'
+            }
+          />
         </InfoBlock>
 
-        <InfoBlock title="Orientation">
-          {spot.orientation_deg !== null && (
-            <CompassDiagram
-              orientation={spot.orientation_deg}
-              optimal={spot.optimal_swell_dir}
-              offshore={spot.offshore_wind_deg}
-            />
-          )}
-          <Row
-            k="Beach faces"
-            v={
-              spot.orientation_deg !== null
-                ? `${degToCardinal(spot.orientation_deg)} (${spot.orientation_deg.toFixed(0)}°)`
-                : '—'
-            }
-          />
-          <Row
-            k="Optimal swell"
-            v={
-              spot.optimal_swell_dir !== null
-                ? `${degToCardinal(spot.optimal_swell_dir)} (${spot.optimal_swell_dir.toFixed(0)}°)`
-                : '—'
-            }
-          />
-          <Row
-            k="Offshore wind"
-            v={
-              spot.offshore_wind_deg !== null
-                ? `${degToCardinal(spot.offshore_wind_deg)} (${spot.offshore_wind_deg.toFixed(0)}°)`
-                : '—'
-            }
-          />
-        </InfoBlock>
+        <ConditionsMatch
+          spot={spot}
+          current={current}
+          next={forecasts[1] ?? null}
+        />
 
         <InfoBlock title="Nearest buoy">
           {buoy ? (
@@ -256,7 +235,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
               </a>
             </>
           ) : (
-            <div className="text-text-muted text-sm">No buoy linked.</div>
+            <div className="text-text-muted text-sm">No nearby buoy.</div>
           )}
         </InfoBlock>
       </section>
@@ -328,50 +307,3 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
-/** Tiny SVG compass — orientation arrow points off the beach toward open
- *  water, optimal-swell arrow points where the best swell comes from,
- *  offshore-wind arrow shows the offshore bearing (a glanceable summary
- *  of the spot's geometry). */
-function CompassDiagram({
-  orientation,
-  optimal,
-  offshore,
-}: {
-  orientation: number;
-  optimal: number | null;
-  offshore: number | null;
-}) {
-  const size = 120;
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size / 2 - 14;
-  function endpoint(deg: number, len = r) {
-    const rad = ((deg - 90) * Math.PI) / 180;
-    return { x: cx + Math.cos(rad) * len, y: cy + Math.sin(rad) * len };
-  }
-  const orientEnd = endpoint(orientation);
-  return (
-    <div className="flex justify-center mb-3">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={cx} cy={cy} r={r} stroke="#1E3048" fill="#0B1426" strokeWidth="1" />
-        <text x={cx} y={cy - r - 2} textAnchor="middle" fill="#94A3B8" fontSize="9">N</text>
-        <text x={cx + r + 6} y={cy + 3} textAnchor="middle" fill="#94A3B8" fontSize="9">E</text>
-        <text x={cx} y={cy + r + 9} textAnchor="middle" fill="#94A3B8" fontSize="9">S</text>
-        <text x={cx - r - 6} y={cy + 3} textAnchor="middle" fill="#94A3B8" fontSize="9">W</text>
-        {/* Beach orientation (where the spot faces) */}
-        <line x1={cx} y1={cy} x2={orientEnd.x} y2={orientEnd.y} stroke="#F1F5F9" strokeWidth="2" />
-        <circle cx={orientEnd.x} cy={orientEnd.y} r={3} fill="#F1F5F9" />
-        {/* Optimal swell arrow (incoming, so 180-deg flipped) */}
-        {optimal !== null && (() => {
-          const e = endpoint((optimal + 180) % 360, r - 6);
-          return <line x1={cx} y1={cy} x2={e.x} y2={e.y} stroke="#38BDF8" strokeWidth="2" strokeDasharray="3 2" />;
-        })()}
-        {/* Offshore wind direction (outgoing) */}
-        {offshore !== null && (() => {
-          const e = endpoint((offshore + 180) % 360, r - 12);
-          return <line x1={cx} y1={cy} x2={e.x} y2={e.y} stroke="#A3E635" strokeWidth="1.5" strokeDasharray="2 2" />;
-        })()}
-      </svg>
-    </div>
-  );
-}

@@ -9,6 +9,9 @@ export type Spot = {
   orientation_deg: number | null;
   offshore_wind_deg: number | null;
   optimal_swell_dir: number | null;
+  /** Inclusive bearing arcs (0..360) where this break still works.
+   *  An arc wraps when min > max (e.g. {min: 350, max: 30}). */
+  swell_window_arcs: { min: number; max: number; span?: number }[] | null;
   break_type: string | null;
   tide_preference: string | null;
   crowd_factor: string | null;
