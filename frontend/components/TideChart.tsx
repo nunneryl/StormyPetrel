@@ -25,6 +25,23 @@ function buildSeries(rows: Forecast[]): Pt[] {
     }));
 }
 
+/** Splice the H/L predictions into the forecast curve so the AreaChart
+ *  actually passes through the predicted peak/trough levels. Without
+ *  this the curve interpolates between hourly samples and the H/L
+ *  markers float off the line. */
+function mergeHilo(
+  base: Pt[],
+  events: { t: number; level: number }[],
+): Pt[] {
+  if (events.length === 0) return base;
+  const merged: Pt[] = [...base];
+  for (const e of events) {
+    merged.push({ t: e.t, iso: new Date(e.t).toISOString(), level: e.level });
+  }
+  merged.sort((a, b) => a.t - b.t);
+  return merged;
+}
+
 export function TideChart({
   forecasts,
   hilo,
@@ -32,16 +49,16 @@ export function TideChart({
   forecasts: Forecast[];
   hilo: TidePrediction[];
 }) {
-  const data = buildSeries(forecasts);
-  if (data.length === 0) {
+  const base = buildSeries(forecasts);
+  if (base.length === 0) {
     return (
       <div className="h-48 w-full flex items-center justify-center text-text-muted text-sm">
         No tide data for this spot.
       </div>
     );
   }
-  const tMin = data[0].t;
-  const tMax = data[data.length - 1].t;
+  const tMin = base[0].t;
+  const tMax = base[base.length - 1].t;
   const events = hilo
     .filter((h) => {
       const t = new Date(h.predicted_at).getTime();
@@ -52,6 +69,7 @@ export function TideChart({
       level: h.level_ft,
       type: h.type,
     }));
+  const data = mergeHilo(base, events);
 
   return (
     <div className="h-48 w-full">
@@ -106,20 +124,24 @@ export function TideChart({
             fill="url(#tide-fill)"
             isAnimationActive={false}
           />
+          {/* H/L peak/trough markers. The dot itself is invisible —
+              we only want the letter label sitting on the curve. The
+              curve passes through (e.t, e.level) because mergeHilo
+              splices those points into the data array. */}
           {events.map((e) => (
             <ReferenceDot
               key={`${e.t}-${e.type}`}
               x={e.t}
               y={e.level}
-              r={3.5}
-              fill={e.type === 'H' ? '#22C55E' : '#F97316'}
-              stroke="#FFFFFF"
-              strokeWidth={1.5}
+              r={0}
+              fill="transparent"
+              stroke="transparent"
               label={{
                 value: e.type ?? '',
-                fill: '#475569',
-                fontSize: 10,
-                position: 'top',
+                fill: '#0F172A',
+                fontSize: 11,
+                fontWeight: 700,
+                position: e.type === 'H' ? 'top' : 'bottom',
               }}
             />
           ))}
