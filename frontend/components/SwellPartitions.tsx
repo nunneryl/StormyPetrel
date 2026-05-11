@@ -73,38 +73,50 @@ export function SwellPartitions({ forecast }: { forecast: Forecast }) {
           return (
             <div
               key={c.label}
-              className={`grid grid-cols-[110px_72px_64px_88px_minmax(0,1fr)_56px] sm:grid-cols-[140px_84px_72px_104px_minmax(0,1fr)_64px] items-center gap-3 py-2 ${c.windSea ? 'opacity-60' : ''}`}
+              className={`grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:grid-cols-[140px_84px_72px_104px_minmax(0,1fr)_64px] items-center gap-2 sm:gap-3 py-2 ${c.windSea ? 'opacity-60' : ''}`}
             >
               <div className="text-xs text-text-secondary truncate">{c.label}</div>
               <div className="flex items-center gap-1.5">
                 <SwellCompass
                   deg={c.dp}
-                  size={24}
+                  size={20}
                   color={c.windSea ? '#94A3B8' : '#0369A1'}
                 />
                 <span className="text-xs text-text-secondary tabular-nums">
                   {c.dp !== null && c.dp !== undefined ? degToCardinal(c.dp) : '—'}
                 </span>
               </div>
-              <div className="text-right font-bold tabular-nums text-text-primary">
+              <div className="text-right font-bold tabular-nums text-text-primary text-sm">
                 {ft !== null ? `${ft.toFixed(1)}ft` : '—'}
               </div>
-              <div className="text-right text-text-secondary tabular-nums">{fmtSec(c.tp)}</div>
-              {c.windSea ? (
-                <div className="text-text-muted text-xs italic">not surfable</div>
-              ) : (
-                <div className="relative h-2 rounded-full bg-ink-800 overflow-hidden">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full"
-                    style={{
-                      width: `${Math.max(4, fraction * 100)}%`,
-                      background: barColor,
-                    }}
-                  />
-                </div>
-              )}
-              <div className="text-right text-xs text-text-muted tabular-nums">
-                {c.windSea ? '' : `${(fraction * 100).toFixed(0)}%`}
+              <div className="text-right text-xs text-text-secondary tabular-nums">{fmtSec(c.tp)}</div>
+              {/* Energy bar / "not surfable" filler — desktop only. On
+                  mobile we hide this cell entirely so the grid collapses
+                  to 5 columns and the row fits a phone width. */}
+              <div className="hidden sm:block">
+                {c.windSea ? (
+                  <div className="text-text-muted text-xs italic">not surfable</div>
+                ) : (
+                  <div className="relative h-2 rounded-full bg-ink-800 overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full"
+                      style={{
+                        width: `${Math.max(4, fraction * 100)}%`,
+                        background: barColor,
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="text-right text-xs text-text-muted tabular-nums whitespace-nowrap">
+                {c.windSea ? (
+                  // Mobile rolls "not surfable" into this cell since the
+                  // bar slot is hidden; desktop already labels it there
+                  // so this cell stays empty above sm.
+                  <span className="italic sm:hidden">not surfable</span>
+                ) : (
+                  `${(fraction * 100).toFixed(0)}%`
+                )}
               </div>
             </div>
           );
