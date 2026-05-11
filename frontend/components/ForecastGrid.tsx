@@ -130,7 +130,7 @@ export function ForecastGrid({
                 return (
                   <div
                     key={r.valid_time}
-                    className={`relative grid grid-cols-[80px_140px_64px_64px_120px_140px_72px] gap-2 px-3 py-1.5 border-b border-ink-600 text-sm ${rowBg} hover:bg-ink-800 transition-colors`}
+                    className={`relative grid grid-cols-[80px_140px_64px_64px_120px_140px_72px] gap-2 px-3 py-1 border-b border-ink-600 text-xs leading-tight ${rowBg} hover:bg-ink-800 transition-colors`}
                     style={
                       best
                         ? {
@@ -139,28 +139,28 @@ export function ForecastGrid({
                         : undefined
                     }
                   >
-                    <div className={`sticky left-0 z-10 ${rowBg} -ml-3 pl-3 text-text-secondary font-mono`}>
+                    <div className={`sticky left-0 z-10 ${rowBg} -ml-3 pl-3 text-text-secondary font-mono flex items-center`}>
                       {fmtShortTime(r.valid_time)}
                     </div>
-                    <div className={`sticky left-[80px] z-10 ${rowBg}`}>
+                    <div className={`sticky left-[80px] z-10 ${rowBg} flex items-center`}>
                       <span
-                        className="flex items-center justify-center w-full h-7 rounded"
+                        className="flex items-center justify-center w-full h-5 rounded"
                         style={{ background: ratingCellBg(r.stars) }}
                       >
-                        <StarRating score={r.stars} size="md" />
+                        <StarRating score={r.stars} size="sm" />
                       </span>
                     </div>
-                    <div className="text-right font-bold tabular-nums text-text-primary">
+                    <div className="text-right font-bold tabular-nums text-text-primary flex items-center justify-end">
                       {r.face_ft !== null && r.face_ft !== undefined
                         ? `${r.face_ft.toFixed(1)}`
                         : '—'}
                     </div>
-                    <div className="text-right text-text-secondary tabular-nums">
+                    <div className="text-right text-text-secondary tabular-nums flex items-center justify-end">
                       {fmtSec(tp)}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <SwellCompass deg={dp} size={24} />
-                      <span className="text-xs text-text-primary tabular-nums">
+                      <SwellCompass deg={dp} size={20} />
+                      <span className="text-text-primary tabular-nums">
                         {degToCardinal(dp)}
                       </span>
                       <span className="text-[11px] text-text-muted tabular-nums">
@@ -169,14 +169,14 @@ export function ForecastGrid({
                           : ''}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <CompassArrow deg={r.wind_dir} size={14} variant="wind" showLabel={false} />
+                    <div className="flex items-center gap-1.5">
+                      <CompassArrow deg={r.wind_dir} size={12} variant="wind" showLabel={false} />
                       <span className="font-bold tabular-nums text-text-primary">
                         {wMph !== null ? `${wMph.toFixed(0)}` : '—'}
                       </span>
                       <span className="text-text-muted">mph</span>
                       {wQ !== 'unknown' && (
-                        <span className={`px-1 py-0.5 rounded text-[9px] font-medium uppercase tracking-wider ${windQualityClass(wQ)}`}>
+                        <span className={`px-1 rounded text-[9px] font-medium uppercase tracking-wider ${windQualityClass(wQ)}`}>
                           {windQualityLabel(wQ)}
                         </span>
                       )}
