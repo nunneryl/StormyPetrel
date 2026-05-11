@@ -159,7 +159,6 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
               </span>
             )}
             {spot.tide_preference && <span>tide: {spot.tide_preference}</span>}
-            {spot.crowd_factor && <span>· crowd: {spot.crowd_factor}</span>}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
