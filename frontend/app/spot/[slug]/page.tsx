@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Forecast, Spot, BuoyObservation, TidePrediction } from '@/lib/types';
+import type { Forecast, Spot, BuoyObservation } from '@/lib/types';
 import { StarRating } from '@/components/StarRating';
 import { ForecastGrid } from '@/components/ForecastGrid';
 import { SwellChart } from '@/components/SwellChart';
@@ -85,24 +85,6 @@ async function loadLatestBuoy(buoyId: string | null): Promise<BuoyObservation | 
   return data as BuoyObservation | null;
 }
 
-async function loadHilo(stationId: string | null): Promise<TidePrediction[]> {
-  if (!stationId) return [];
-  const nowIso = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('tide_predictions')
-    .select('*')
-    .eq('station_id', stationId)
-    .in('type', ['H', 'L'])
-    .gte('predicted_at', nowIso)
-    .order('predicted_at', { ascending: true })
-    .limit(28);
-  if (error) {
-    console.error('loadHilo', error);
-    return [];
-  }
-  return (data ?? []) as TidePrediction[];
-}
-
 function freshnessLabel(latest: Forecast | null): string {
   if (!latest) return '—';
   // The most recent forecast row is always current-or-future hour. The
@@ -121,10 +103,9 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   const spot = await loadSpot(slug);
   if (!spot) notFound();
 
-  const [forecasts, buoy, hilo] = await Promise.all([
+  const [forecasts, buoy] = await Promise.all([
     loadForecasts(spot.id),
     loadLatestBuoy(spot.nearest_buoy_id),
-    loadHilo(spot.nearest_tide_station_id),
   ]);
 
   const current = forecasts[0] ?? null;
@@ -188,7 +169,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           <WindChart forecasts={chartForecasts} offshoreDeg={spot.offshore_wind_deg} />
         </ChartCard>
         <ChartCard title="Tide (ft) · next 48h">
-          <TideChart forecasts={chartForecasts} hilo={hilo} />
+          <TideChart forecasts={chartForecasts} />
         </ChartCard>
       </section>
 

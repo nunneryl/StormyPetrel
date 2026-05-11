@@ -9,66 +9,44 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { Forecast, TidePrediction } from '@/lib/types';
+import type { Forecast } from '@/lib/types';
 import { fmtDayTimeTick, fmtDay, fmtShortTime } from '@/lib/formatting';
 
 type Pt = { t: number; iso: string; level: number | null };
 
+/** Build the tide curve from hourly forecast samples only. The
+ *  tide_predictions H/L events used to be spliced in too, but they
+ *  occur off-hour with their own interpolated levels that didn't
+ *  match the forecast hourly values — so the merged series had near-
+ *  duplicate timestamps with conflicting levels, which the monotone
+ *  AreaChart rendered as sharp drop-and-recover spikes. Forecast
+ *  hourlies are smooth on their own. */
 function buildSeries(rows: Forecast[]): Pt[] {
-  return rows
-    .filter((r) => r.tide_level_ft !== null && r.tide_level_ft !== undefined)
-    .map((r) => ({
-      t: new Date(r.valid_time).getTime(),
-      iso: r.valid_time,
-      level: r.tide_level_ft,
-    }));
-}
-
-/** Splice the H/L predictions into the forecast curve so the AreaChart
- *  actually passes through the predicted peak/trough levels. Without
- *  this the curve interpolates between hourly samples and the H/L
- *  markers float off the line. */
-function mergeHilo(
-  base: Pt[],
-  events: { t: number; level: number }[],
-): Pt[] {
-  if (events.length === 0) return base;
-  const merged: Pt[] = [...base];
-  for (const e of events) {
-    merged.push({ t: e.t, iso: new Date(e.t).toISOString(), level: e.level });
+  const out: Pt[] = [];
+  const seen = new Set<number>();
+  for (const r of rows) {
+    if (r.tide_level_ft === null || r.tide_level_ft === undefined) continue;
+    const t = new Date(r.valid_time).getTime();
+    // Belt-and-suspenders dedupe: if two forecast rows ever land on
+    // the same minute, keep the first and drop the second so we never
+    // end up with two y values at one x.
+    if (seen.has(t)) continue;
+    seen.add(t);
+    out.push({ t, iso: r.valid_time, level: r.tide_level_ft });
   }
-  merged.sort((a, b) => a.t - b.t);
-  return merged;
+  out.sort((a, b) => a.t - b.t);
+  return out;
 }
 
-export function TideChart({
-  forecasts,
-  hilo,
-}: {
-  forecasts: Forecast[];
-  hilo: TidePrediction[];
-}) {
-  const base = buildSeries(forecasts);
-  if (base.length === 0) {
+export function TideChart({ forecasts }: { forecasts: Forecast[] }) {
+  const data = buildSeries(forecasts);
+  if (data.length === 0) {
     return (
       <div className="h-48 w-full flex items-center justify-center text-text-muted text-sm">
         No tide data for this spot.
       </div>
     );
   }
-  const tMin = base[0].t;
-  const tMax = base[base.length - 1].t;
-  const events = hilo
-    .filter((h) => {
-      const t = new Date(h.predicted_at).getTime();
-      return t >= tMin && t <= tMax;
-    })
-    .map((h) => ({
-      t: new Date(h.predicted_at).getTime(),
-      level: h.level_ft,
-      type: h.type,
-    }));
-  const data = mergeHilo(base, events);
 
   return (
     <div className="h-48 w-full">
