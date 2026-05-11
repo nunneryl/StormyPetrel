@@ -85,9 +85,9 @@ export function ForecastGrid({
   return (
     <div className="rounded-xl border border-ink-600 bg-white overflow-hidden shadow-card">
       <div className="overflow-x-auto scrollbar-hidden">
-        <div className="min-w-[760px]">
+        <div className="min-w-[760px] w-full">
           {/* Header row */}
-          <div className="grid grid-cols-[80px_140px_64px_64px_120px_140px_72px] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
+          <div className="grid grid-cols-[80px_120px_minmax(56px,1fr)_minmax(56px,1fr)_minmax(140px,2.2fr)_minmax(160px,2.8fr)_minmax(80px,1.2fr)] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
             <div className="sticky left-0 z-10 bg-ink-900 -ml-3 pl-3">Time</div>
             <div className="sticky left-[80px] z-10 bg-ink-900">Rating</div>
             <div className="text-right">Face</div>
@@ -130,7 +130,7 @@ export function ForecastGrid({
                 return (
                   <div
                     key={r.valid_time}
-                    className={`relative grid grid-cols-[80px_140px_64px_64px_120px_140px_72px] gap-2 px-3 py-1 border-b border-ink-600 text-xs leading-tight ${rowBg} hover:bg-ink-800 transition-colors`}
+                    className={`relative grid grid-cols-[80px_120px_minmax(56px,1fr)_minmax(56px,1fr)_minmax(140px,2.2fr)_minmax(160px,2.8fr)_minmax(80px,1.2fr)] gap-2 px-3 py-1 border-b border-ink-600 text-xs leading-tight ${rowBg} hover:bg-ink-800 transition-colors`}
                     style={
                       best
                         ? {

@@ -4,7 +4,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -124,27 +123,6 @@ export function TideChart({
             fill="url(#tide-fill)"
             isAnimationActive={false}
           />
-          {/* H/L peak/trough markers. The dot itself is invisible —
-              we only want the letter label sitting on the curve. The
-              curve passes through (e.t, e.level) because mergeHilo
-              splices those points into the data array. */}
-          {events.map((e) => (
-            <ReferenceDot
-              key={`${e.t}-${e.type}`}
-              x={e.t}
-              y={e.level}
-              r={0}
-              fill="transparent"
-              stroke="transparent"
-              label={{
-                value: e.type ?? '',
-                fill: '#0F172A',
-                fontSize: 11,
-                fontWeight: 700,
-                position: e.type === 'H' ? 'top' : 'bottom',
-              }}
-            />
-          ))}
         </AreaChart>
       </ResponsiveContainer>
     </div>
