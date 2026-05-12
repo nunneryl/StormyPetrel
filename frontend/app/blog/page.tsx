@@ -3,10 +3,16 @@ import { allTags, listPosts } from '@/lib/blog';
 import { BlogIndex } from '@/components/BlogIndex';
 
 export const metadata: Metadata = {
-  title: 'Blog',
+  title: { absolute: 'Blog — Surf Forecasting & Methodology | Stormy Petrel' },
   description:
-    'Posts on surf forecasting methodology, our open data sources, and how Stormy Petrel rates conditions.',
+    'Articles about surf forecasting methodology, understanding swell and wind, and how Stormy Petrel works.',
   alternates: { canonical: '/blog' },
+  openGraph: {
+    title: 'Blog — Surf Forecasting & Methodology | Stormy Petrel',
+    description:
+      'Articles about surf forecasting methodology, understanding swell and wind, and how Stormy Petrel works.',
+    type: 'website',
+  },
 };
 
 export default function BlogIndexPage() {

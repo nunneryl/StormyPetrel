@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
 import { StarRating } from '@/components/StarRating';
@@ -10,6 +11,21 @@ import type { SpotWithLatest } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
+
+export const metadata: Metadata = {
+  title: {
+    absolute: 'Stormy Petrel — Free Surf Forecasts for 484 US Spots',
+  },
+  description:
+    'Free surf forecasts with wave height, swell direction, wind, and tide. No paywall. Built on NOAA NWPS, WAVEWATCH III, and HRRR data.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Stormy Petrel — Free Surf Forecasts for 484 US Spots',
+    description:
+      'Free surf forecasts with wave height, swell direction, wind, and tide. No paywall. Built on NOAA NWPS, WAVEWATCH III, and HRRR data.',
+    type: 'website',
+  },
+};
 
 // Quick-access regions surfaced as pills under the hero search. Order
 // matters: California / Hawaii first because they're the search bait.
