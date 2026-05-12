@@ -113,3 +113,26 @@ function isoDateOffset(dayOffset: number): string {
 export function todayIso(): string {
   return isoDateOffset(0);
 }
+
+/** Add `n` days (positive or negative) to a YYYY-MM-DD string. */
+export function addDays(iso: string, n: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+export function isAfterToday(iso: string): boolean {
+  return iso > todayIso();
+}
+
+/** Long date label like "Wednesday, May 12, 2026" for headings. */
+export function prettyDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(d);
+}
