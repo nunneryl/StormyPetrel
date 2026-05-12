@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { siteUrl } from '@/lib/site-url';
 import { SiteNav, type SpotSearchItem } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { fetchAllSpots } from '@/lib/queries';
+
+const GA_ID = 'G-S7Y5BXQ125';
 
 const SITE_URL = siteUrl();
 
@@ -78,6 +81,21 @@ export default async function RootLayout({
         <SiteNav searchSpots={searchSpots} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+
+        {/* Google Analytics (gtag.js). afterInteractive defers injection
+            until hydration finishes so it never blocks first paint. */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
       </body>
     </html>
   );
