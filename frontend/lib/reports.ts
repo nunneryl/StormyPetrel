@@ -85,6 +85,55 @@ export async function fetchReportsForDate(date: string): Promise<DailyReport[]> 
   return sortByRegion((data ?? []) as DailyReport[]);
 }
 
+/** Lightweight index of every published report — for sitemap building.
+ *  Only returns (region, report_date) so the sitemap doesn't pull
+ *  summary text it isn't going to render. */
+export async function fetchReportIndex(): Promise<
+  Array<{ region: string; report_date: string; generated_at: string }>
+> {
+  const { data, error } = await supabase
+    .from('daily_reports')
+    .select('region, report_date, generated_at')
+    .order('report_date', { ascending: false })
+    .limit(5000);
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('fetchReportIndex', error);
+    return [];
+  }
+  return (data ?? []) as Array<{
+    region: string;
+    report_date: string;
+    generated_at: string;
+  }>;
+}
+
+/** Region-aware title prefix tuned for SEO targeting. Drives both the
+ *  per-report page title and the share-sheet title. */
+export const REGION_TITLE_PREFIX: Record<string, string> = {
+  northeast:         'ME, NH, MA, RI Surf Report',
+  mid_atlantic:      'NY, NJ, DE, MD, VA Surf Report',
+  southeast:         'NC, SC Surf Report',
+  florida:           'Florida Surf Report',
+  gulf:              'Texas Gulf Surf Report',
+  socal:             'Southern California Surf Report',
+  norcal:            'Northern California & Oregon Surf Report',
+  pacific_northwest: 'Washington Surf Report',
+  hawaii:            'Hawaii Surf Report',
+  puerto_rico:       'Puerto Rico Surf Report',
+};
+
+/** Trim a long string to roughly `max` chars, breaking on the nearest
+ *  word boundary so meta descriptions don't end mid-word. */
+export function truncateAt(text: string, max = 150): string {
+  const collapsed = text.replace(/\s+/g, ' ').trim();
+  if (collapsed.length <= max) return collapsed;
+  const slice = collapsed.slice(0, max);
+  const lastSpace = slice.lastIndexOf(' ');
+  const cut = lastSpace > max - 30 ? slice.slice(0, lastSpace) : slice;
+  return cut.replace(/[,;:.\-–—]+$/, '') + '…';
+}
+
 export async function fetchReport(
   date: string,
   region: string,
