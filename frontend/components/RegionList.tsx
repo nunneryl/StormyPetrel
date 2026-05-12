@@ -6,6 +6,7 @@ import type { SpotWithLatest } from '@/lib/types';
 import { StarRating } from './StarRating';
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
+import { CamBadge } from './CamBadge';
 import { Sparkline } from './Sparkline';
 import { degToCardinal, fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { tierFromStars } from '@/lib/ratings';
@@ -21,10 +22,16 @@ const FILTERS: { id: Filter; label: string; min: number }[] = [
 export function RegionList({
   spots,
   sparks,
+  camSlugs = [],
 }: {
   spots: SpotWithLatest[];
   sparks: Record<number, number[]>;
+  /** Slugs of spots that have an active cam — drives the cam glyph
+   *  next to the spot name. Array because Sets don't cross the
+   *  server/client boundary as plain props. */
+  camSlugs?: string[];
 }) {
+  const camSet = useMemo(() => new Set(camSlugs), [camSlugs]);
   const [filter, setFilter] = useState<Filter>('all');
 
   const filtered = useMemo(() => {
@@ -76,8 +83,9 @@ export function RegionList({
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-text-primary group-hover:text-cyan-400 transition-colors">
+                    <span className="font-bold text-text-primary group-hover:text-cyan-400 transition-colors inline-flex items-center gap-1.5">
                       {s.name}
+                      <CamBadge hasCam={camSet.has(s.slug)} size={12} />
                     </span>
                     <StarRating score={f?.stars ?? 0} size="sm" />
                     {s.break_type && (

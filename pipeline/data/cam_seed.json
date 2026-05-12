@@ -1,0 +1,213 @@
+{
+  "_comment": "Confirmed surf cams seeded into the `cams` table by pipeline.seed_cams. YouTube rows are resolved to a live video by pipeline.resolve_cams every 4h; surfchex/explore rows are static (their `embed_url` is set directly to `iframe_url` at seed time).",
+  "cams": [
+    {
+      "spot_slug": "daytona-beach",
+      "cam_name": "Daytona Beach Live",
+      "provider": "youtube",
+      "channel_id": "UCjYc5xAEWCYIcqG1-KC9nZQ",
+      "attribution": "Volusia County Beach Safety",
+      "attribution_url": "https://www.volusia.org/services/public-protection/beach-safety/"
+    },
+    {
+      "spot_slug": "new-smyrna-beach-inlet",
+      "cam_name": "New Smyrna Beach Live",
+      "provider": "youtube",
+      "channel_id": "UCjYc5xAEWCYIcqG1-KC9nZQ",
+      "attribution": "Volusia County Beach Safety",
+      "attribution_url": "https://www.volusia.org/services/public-protection/beach-safety/"
+    },
+    {
+      "spot_slug": "ponce-inlet",
+      "cam_name": "Ponce Inlet Live",
+      "provider": "youtube",
+      "channel_id": "UCjYc5xAEWCYIcqG1-KC9nZQ",
+      "attribution": "Volusia County Beach Safety",
+      "attribution_url": "https://www.volusia.org/services/public-protection/beach-safety/"
+    },
+    {
+      "spot_slug": "cocoa-beach-pier",
+      "cam_name": "Cocoa Beach Pier Live",
+      "provider": "youtube",
+      "channel_id": "UCyWjXpiOpxjTxdpqrmY9CPQ",
+      "attribution": "Cocoa Beach Pier",
+      "attribution_url": "https://www.cocoabeachpier.com"
+    },
+    {
+      "spot_slug": "south-padre-island",
+      "cam_name": "South Padre Live Cam",
+      "provider": "youtube",
+      "channel_id": "UCmzUpAX4rT3xjQ_AxYfXkkg",
+      "attribution": "South Padre Live Cams",
+      "attribution_url": "https://www.youtube.com/@Southpadrelive"
+    },
+    {
+      "spot_slug": "isla-blanca-park",
+      "cam_name": "Isla Blanca Live Cam",
+      "provider": "youtube",
+      "channel_id": "UCmzUpAX4rT3xjQ_AxYfXkkg",
+      "attribution": "South Padre Live Cams",
+      "attribution_url": "https://www.youtube.com/@Southpadrelive"
+    },
+    {
+      "spot_slug": "banzai-pipeline",
+      "cam_name": "Pipeline Cam",
+      "provider": "explore",
+      "iframe_url": "https://www.youtube.com/embed/y04xG7qCEh0",
+      "attribution": "Explore.org",
+      "attribution_url": "https://explore.org/livecams/hawaii/hawaii-pipeline-cam"
+    },
+    {
+      "spot_slug": "waimea-bay",
+      "cam_name": "Waimea Bay Cam",
+      "provider": "explore",
+      "iframe_url": "https://www.youtube.com/embed/LQ5VLKTNXXY",
+      "attribution": "Explore.org",
+      "attribution_url": "https://explore.org/livecams/hawaii/hawaii-waimea-bay-cam"
+    },
+    {
+      "spot_slug": "wrightsville-beach",
+      "cam_name": "Wrightsville Beach",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/wrightsville-beach/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "jennettes-pier",
+      "cam_name": "Jennette's Pier",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/jennettes-pier/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "nags-head-pier",
+      "cam_name": "Nags Head",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/nags-head/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "kitty-hawk-pier",
+      "cam_name": "Kitty Hawk",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/kitty-hawk/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "rodanthe",
+      "cam_name": "Rodanthe",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/rodanthe/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "ocracoke-beach",
+      "cam_name": "Ocracoke",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/ocracoke/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "cape-hatteras-lighthouse",
+      "cam_name": "Hatteras",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/hatteras/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "avon-pier",
+      "cam_name": "Avon Pier",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/avon-pier/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "carolina-beach",
+      "cam_name": "Carolina Beach",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/carolina-beach/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "kure-beach",
+      "cam_name": "Kure Beach",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/kure-beach/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "surf-city-nc",
+      "cam_name": "Surf City Pier North",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/surf-city-pier-north/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "topsail-beach",
+      "cam_name": "Topsail Beach",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/topsail-beach/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "ocean-isle-beach",
+      "cam_name": "Oak Island",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/oak-island/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "sunset-beach-nc",
+      "cam_name": "Sunset Beach",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/sunset-beach/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "folly-beach-washout",
+      "cam_name": "Folly Beach",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/folly-beach/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "manasquan-inlet",
+      "cam_name": "Manasquan NJ",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/manasquan-nj/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "bandon-beach",
+      "cam_name": "Bandon",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/bandon/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "gold-beach",
+      "cam_name": "Pistol River",
+      "provider": "surfchex",
+      "iframe_url": "https://www.surfchex.com/cams/pistol-river/",
+      "attribution": "SurfChex",
+      "attribution_url": "https://www.surfchex.com"
+    }
+  ]
+}

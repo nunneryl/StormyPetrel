@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
+import { fetchCamSlugSet } from '@/lib/cams';
 import { SpotMap } from '@/components/SpotMap';
 import { tierFromStars } from '@/lib/ratings';
 
@@ -31,7 +32,11 @@ const LEGEND = [
 ];
 
 export default async function MapPage() {
-  const spots = await fetchSpotsWithLatest();
+  const [spots, camSlugs] = await Promise.all([
+    fetchSpotsWithLatest(),
+    fetchCamSlugSet(),
+  ]);
+  const camSlugArr = Array.from(camSlugs);
   return (
     <div className="relative">
       {/* Top-left: spot count chip. z-[1100] keeps it above Leaflet's
@@ -66,7 +71,7 @@ export default async function MapPage() {
         </div>
       </div>
 
-      <SpotMap spots={spots} />
+      <SpotMap spots={spots} camSlugs={camSlugArr} />
     </div>
   );
 }

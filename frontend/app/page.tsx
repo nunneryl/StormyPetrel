@@ -5,11 +5,13 @@ import { fetchSpotsWithLatest } from '@/lib/queries';
 import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
 import { StarRating } from '@/components/StarRating';
 import { ReportCard } from '@/components/ReportCard';
+import { CamBadge } from '@/components/CamBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { fmtFt, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
 import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
+import { fetchCamSlugSet } from '@/lib/cams';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -34,9 +36,10 @@ export const metadata: Metadata = {
 const QUICK_REGIONS = ['California', 'Hawaii', 'New Jersey', 'New York'];
 
 export default async function HomePage() {
-  const [spots, reports] = await Promise.all([
+  const [spots, reports, camSlugs] = await Promise.all([
     fetchSpotsWithLatest(),
     fetchLatestReports(),
+    fetchCamSlugSet(),
   ]);
 
   // Top 10 ranked — even if they're all FAIR / POOR, we show them.
@@ -152,8 +155,9 @@ export default async function HomePage() {
                 className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_64px_72px_120px] gap-3 px-4 py-2.5 border-b border-ink-600 last:border-b-0 hover:bg-ink-800 transition group"
               >
                 <div className="min-w-0">
-                  <div className="font-bold text-text-primary group-hover:text-cyan-600 truncate">
-                    {s.name}
+                  <div className="font-bold text-text-primary group-hover:text-cyan-600 truncate flex items-center gap-1.5">
+                    <span className="truncate">{s.name}</span>
+                    <CamBadge hasCam={camSlugs.has(s.slug)} size={12} />
                   </div>
                   {/* On mobile, state goes under the name */}
                   <div className="md:hidden text-xs text-text-secondary truncate">

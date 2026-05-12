@@ -10,6 +10,7 @@ import {
   msToMph,
   pickSwell,
 } from '@/lib/formatting';
+import { camBadgeHtml } from './CamBadge';
 
 const LEAFLET_CSS_ID = 'leaflet-css';
 const LEAFLET_CLUSTER_CSS_ID = 'leaflet-markercluster-css';
@@ -25,10 +26,20 @@ function ensureCss(id: string, href: string) {
   document.head.appendChild(link);
 }
 
-export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
+export function SpotMap({
+  spots,
+  camSlugs = [],
+}: {
+  spots: SpotWithLatest[];
+  /** Slugs of spots with an active cam — drives the cam glyph in
+   *  each spot's popup. Sets don't survive the server/client boundary,
+   *  so callers pass a plain string array. */
+  camSlugs?: string[];
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<unknown>(null);
   const data = useMemo(() => spots, [spots]);
+  const camSet = useMemo(() => new Set(camSlugs), [camSlugs]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -208,7 +219,7 @@ export function SpotMap({ spots }: { spots: SpotWithLatest[] }) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
-        m.bindPopup(buildPopupHtml(s), { className: 'sp-popup' });
+        m.bindPopup(buildPopupHtml(s, camSet.has(s.slug)), { className: 'sp-popup' });
 
         if (clusterGroup) {
           clusterGroup.addLayer(m);
@@ -311,7 +322,7 @@ function starsHtml(score: number | null | undefined, size = 14): string {
   return `<span style="display:inline-flex;align-items:center;gap:1px;">${parts.join('')}</span>`;
 }
 
-function buildPopupHtml(s: SpotWithLatest): string {
+function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
   const f = s.latest;
 
   const swellDir = pickSwell(f?.swell_dp ?? null, f?.dp ?? null);
@@ -370,8 +381,9 @@ function buildPopupHtml(s: SpotWithLatest): string {
 
   return `
     <div style="font-family:Inter,system-ui,sans-serif;color:#0F172A;min-width:220px;">
-      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">
-        ${escapeHtml(s.name)}
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px;display:inline-flex;align-items:center;gap:6px;">
+        <span>${escapeHtml(s.name)}</span>
+        ${hasCam ? camBadgeHtml(13) : ''}
       </div>
       <div style="font-size:11px;color:#475569;margin-bottom:8px;">
         ${subtitleParts.join(' · ')}

@@ -8,6 +8,7 @@ import { NavSearch } from './NavSearch';
 
 const NAV_LINKS = [
   { href: '/map', label: 'Map' },
+  { href: '/cams', label: 'Cams' },
   { href: '/reports', label: 'Reports' },
   { href: '/regions', label: 'Regions' },
   { href: '/blog', label: 'Blog' },
