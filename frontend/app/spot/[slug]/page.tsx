@@ -11,8 +11,10 @@ import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
 import { OptimalConditions } from '@/components/OptimalConditions';
+import { CamEmbed } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
+import { fetchCamsForSpot } from '@/lib/cams';
 import { siteUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
@@ -103,10 +105,14 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   const spot = await loadSpot(slug);
   if (!spot) notFound();
 
-  const [forecasts, buoy] = await Promise.all([
+  const [forecasts, buoy, cams] = await Promise.all([
     loadForecasts(spot.id),
     loadLatestBuoy(spot.nearest_buoy_id),
+    fetchCamsForSpot(spot.slug),
   ]);
+  // One cam per spot for now — pick the first row (oldest by id), so
+  // re-runs of the seed don't shuffle which cam is "primary".
+  const primaryCam = cams[0] ?? null;
 
   const current = forecasts[0] ?? null;
   // Charts get a 48h slice — the full 7-day window made the curves
@@ -173,6 +179,12 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           </span>
         </div>
       </header>
+
+      {/* Live cam — top of page when one's registered for this spot.
+          CamEmbed handles the offline state inline. */}
+      {primaryCam && (
+        <CamEmbed cam={primaryCam} lat={spot.lat} lng={spot.lng} />
+      )}
 
       {/* Hero tiles */}
       <CurrentConditions

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchAllSpots, fetchSpotsWithLatest, fetchSparklineData } from '@/lib/queries';
+import { fetchCamSlugSet } from '@/lib/cams';
 import { RegionList } from '@/components/RegionList';
 
 export const dynamic = 'force-dynamic';
@@ -45,9 +46,10 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 export default async function RegionPage({ params }: { params: Promise<Params> }) {
   const { state } = await params;
   const decoded = decodeURIComponent(state).toLowerCase();
-  const [spots, sparksMap] = await Promise.all([
+  const [spots, sparksMap, camSlugs] = await Promise.all([
     fetchSpotsWithLatest(),
     fetchSparklineData(),
+    fetchCamSlugSet(),
   ]);
   const inState = spots.filter((s) => (s.state ?? '').toLowerCase() === decoded);
   if (inState.length === 0) notFound();
@@ -55,10 +57,11 @@ export default async function RegionPage({ params }: { params: Promise<Params> }
   inState.sort((a, b) => (b.latest?.stars ?? -1) - (a.latest?.stars ?? -1));
   const stateLabel = inState[0].state ?? decoded;
 
-  // RegionList is a client component — convert the Map to a plain object
-  // so it can cross the server / client boundary.
+  // RegionList is a client component — convert collections to plain
+  // structures so they cross the server / client boundary.
   const sparks: Record<number, number[]> = {};
   sparksMap.forEach((v, k) => { sparks[k] = v; });
+  const camSlugArr = Array.from(camSlugs);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-7 space-y-6">
@@ -72,7 +75,7 @@ export default async function RegionPage({ params }: { params: Promise<Params> }
         </p>
       </header>
 
-      <RegionList spots={inState} sparks={sparks} />
+      <RegionList spots={inState} sparks={sparks} camSlugs={camSlugArr} />
     </div>
   );
 }
