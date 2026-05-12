@@ -6,7 +6,9 @@ import {
   fetchReport,
   isAfterToday,
   prettyDate,
+  REGION_TITLE_PREFIX,
   todayIso,
+  truncateAt,
 } from '@/lib/reports';
 import { StarRating } from '@/components/StarRating';
 import { StarText } from '@/components/StarText';
@@ -33,8 +35,15 @@ export async function generateMetadata({
   const report = await fetchReport(date, region);
   if (!report) return { title: 'Report not found' };
   const dateLabel = prettyDate(report.report_date);
-  const title = `${report.region_label} Surf Report — ${dateLabel} | Stormy Petrel`;
-  const description = report.summary.slice(0, 160);
+  // Region-aware title prefix so listings target "NY, NJ, DE, MD, VA
+  // surf report" and similar long-tail queries instead of the generic
+  // region label. Falls back to the human-readable region_label when
+  // we don't have an explicit prefix mapped.
+  const prefix =
+    REGION_TITLE_PREFIX[report.region] ??
+    `${report.region_label} Surf Report`;
+  const title = `${prefix} — ${dateLabel} | Stormy Petrel`;
+  const description = truncateAt(report.summary, 150);
   return {
     title: { absolute: title },
     description,
@@ -57,6 +66,9 @@ export default async function ReportPage({
   const dateLabel = prettyDate(report.report_date);
   const base = siteUrl();
   const shareHref = `/reports/${report.report_date}/${report.region}`;
+  const titlePrefix =
+    REGION_TITLE_PREFIX[report.region] ??
+    `${report.region_label} Surf Report`;
 
   // Day-to-day navigation within the same region. "Next day" hides
   // when we'd be pointing past today; if it equals today, point at
@@ -71,7 +83,7 @@ export default async function ReportPage({
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${report.region_label} Surf Report — ${dateLabel}`,
+    headline: `${titlePrefix} — ${dateLabel}`,
     datePublished: report.generated_at,
     dateModified: report.generated_at,
     description: report.summary,
@@ -89,7 +101,7 @@ export default async function ReportPage({
     },
   };
 
-  const shareTitle = `${report.region_label} Surf Report — ${dateLabel}`;
+  const shareTitle = `${titlePrefix} — ${dateLabel}`;
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-7 space-y-6">
