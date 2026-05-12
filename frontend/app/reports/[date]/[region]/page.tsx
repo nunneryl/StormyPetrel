@@ -1,8 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { fetchReport } from '@/lib/reports';
+import {
+  addDays,
+  fetchReport,
+  isAfterToday,
+  prettyDate,
+  todayIso,
+} from '@/lib/reports';
 import { StarRating } from '@/components/StarRating';
+import { StarText } from '@/components/StarText';
+import { ShareButton } from '@/components/ShareButton';
 import { siteUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
@@ -15,17 +23,6 @@ const TREND_GLYPH: Record<string, { glyph: string; color: string; label: string 
   steady:   { glyph: '→', color: '#475569', label: 'steady' },
   fading:   { glyph: '↓', color: '#B91C1C', label: 'fading' },
 };
-
-function prettyDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(d);
-}
 
 export async function generateMetadata({
   params,
@@ -59,6 +56,15 @@ export default async function ReportPage({
   const trend = TREND_GLYPH[report.trend] ?? TREND_GLYPH.steady;
   const dateLabel = prettyDate(report.report_date);
   const base = siteUrl();
+  const shareHref = `/reports/${report.report_date}/${report.region}`;
+
+  // Day-to-day navigation within the same region. "Next day" hides
+  // when we'd be pointing past today; if it equals today, point at
+  // /reports/[today]/[region] still (which is the canonical URL for
+  // today's report — the /reports list isn't region-specific).
+  const prevDate = addDays(report.report_date, -1);
+  const nextDate = addDays(report.report_date, 1);
+  const nextIsAhead = isAfterToday(nextDate);
 
   // Structured data — Article schema, so Google can surface this as a
   // news-style result for "east coast surf report today" etc.
@@ -69,7 +75,7 @@ export default async function ReportPage({
     datePublished: report.generated_at,
     dateModified: report.generated_at,
     description: report.summary,
-    url: `${base}/reports/${report.report_date}/${report.region}`,
+    url: `${base}${shareHref}`,
     isPartOf: {
       '@type': 'WebSite',
       name: 'Stormy Petrel',
@@ -82,6 +88,8 @@ export default async function ReportPage({
       url: base,
     },
   };
+
+  const shareTitle = `${report.region_label} Surf Report — ${dateLabel}`;
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-7 space-y-6">
@@ -97,21 +105,45 @@ export default async function ReportPage({
         </Link>
       </nav>
 
-      <header>
+      <header className="relative">
         <div className="text-[11px] uppercase tracking-widest2 text-text-secondary">
           {dateLabel}
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tightish text-text-primary">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tightish text-text-primary pr-10">
           {report.region_label} surf report
         </h1>
-        <div className="mt-2 inline-flex items-center gap-1 text-[11px] uppercase tracking-widest2 font-bold"
-             style={{ color: trend.color }}>
+        <div
+          className="mt-2 inline-flex items-center gap-1 text-[11px] uppercase tracking-widest2 font-bold"
+          style={{ color: trend.color }}
+        >
           {trend.label} {trend.glyph}
         </div>
+        <span className="absolute top-0 right-0">
+          <ShareButton url={shareHref} title={shareTitle} text={report.summary} />
+        </span>
       </header>
 
+      <nav className="flex items-center justify-between gap-3 text-sm border-y border-ink-600 py-2">
+        <Link
+          href={`/reports/${prevDate}/${report.region}`}
+          className="text-text-secondary hover:text-cyan-600 transition"
+        >
+          ← Previous day
+        </Link>
+        {nextIsAhead ? (
+          <span className="text-text-muted">Next day →</span>
+        ) : (
+          <Link
+            href={`/reports/${nextDate}/${report.region}`}
+            className="text-text-secondary hover:text-cyan-600 transition"
+          >
+            Next day →
+          </Link>
+        )}
+      </nav>
+
       <p className="text-base text-text-primary leading-relaxed">
-        {report.summary}
+        <StarText text={report.summary} />
       </p>
 
       <section>

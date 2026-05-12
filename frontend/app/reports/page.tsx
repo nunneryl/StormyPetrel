@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ReportCard } from '@/components/ReportCard';
-import { fetchLatestReports } from '@/lib/reports';
+import { addDays, fetchLatestReports, todayIso } from '@/lib/reports';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 
 export default async function ReportsPage() {
   const reports = await fetchLatestReports();
+  const yesterday = addDays(todayIso(), -1);
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-7 space-y-6">
@@ -38,6 +39,17 @@ export default async function ReportsPage() {
         </p>
       </header>
 
+      <nav className="flex items-center gap-3 text-sm border-y border-ink-600 py-2">
+        <Link
+          href={`/reports/${yesterday}`}
+          className="text-text-secondary hover:text-cyan-600 transition"
+        >
+          ← Yesterday
+        </Link>
+        <span className="text-text-muted">|</span>
+        <span className="text-text-primary font-bold">Today</span>
+      </nav>
+
       {reports.length === 0 ? (
         <div className="rounded-xl border border-ink-600 bg-white p-8 text-center text-text-muted text-sm">
           No reports yet. Check back after the morning batch lands (around 11:00 UTC / 7am ET).
@@ -51,7 +63,11 @@ export default async function ReportsPage() {
       )}
 
       <div className="pt-2 text-xs text-text-muted">
-        Want a different region or coverage gap? <Link href="/blog" className="text-cyan-600 hover:underline">Read about how the reports are written</Link>.
+        Want a different region or coverage gap?{' '}
+        <Link href="/blog" className="text-cyan-600 hover:underline">
+          Read about how the reports are written
+        </Link>
+        .
       </div>
     </div>
   );
