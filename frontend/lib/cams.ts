@@ -1,6 +1,12 @@
 import { supabase } from './supabase';
 
-export type CamProvider = 'youtube' | 'surfchex' | 'explore' | 'hdontap' | 'nysea';
+export type CamProvider =
+  | 'youtube'
+  | 'surfchex'
+  | 'explore'
+  | 'hdontap'
+  | 'nysea'
+  | 'webcam';
 export type CamStatus = 'active' | 'offline' | 'pending';
 export type CamDisplayMode = 'embed' | 'link';
 
@@ -86,6 +92,7 @@ const PROVIDER_LABEL: Record<CamProvider, string> = {
   explore:  'Explore.org',
   hdontap:  'HDOnTap',
   nysea:    'Skudin Surf',
+  webcam:   'Live Cam',
 };
 export function providerLabel(p: CamProvider): string {
   return PROVIDER_LABEL[p] ?? p;
