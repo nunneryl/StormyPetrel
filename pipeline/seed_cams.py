@@ -54,7 +54,12 @@ def _build_row(entry: dict) -> dict:
     # Static providers can ship with embed_url ready from seed time;
     # YouTube rows wait for the resolver.
     embed_url = iframe_url if provider in {"surfchex", "explore"} else None
-    status = "active" if embed_url else "pending"
+    # Only `explore` rows are auto-active at seed time. `surfchex` cams
+    # stay `pending` because some surfchex pages block iframing via
+    # X-Frame-Options and need manual verification before we surface
+    # them to visitors; flipping to 'active' is an explicit decision.
+    # YouTube rows are also pending until the resolver fills embed_url.
+    status = "active" if (embed_url and provider == "explore") else "pending"
     return {
         "spot_slug": entry["spot_slug"],
         "cam_name": entry["cam_name"],

@@ -22,14 +22,16 @@ export type Cam = {
 const _SELECT =
   'id, spot_slug, cam_name, provider, channel_id, iframe_url, resolved_video_id, embed_url, attribution, attribution_url, status, last_resolved_at, last_checked_at';
 
-/** All cams (any status) for one spot, oldest first. The spot page
- *  shows the first one; the multi-cam case is rare so we don't bother
- *  with a picker yet. */
+/** Active cams for one spot, oldest first. The spot page renders the
+ *  first one; we filter on status='active' here so pending/offline
+ *  rows don't trigger an "offline" pane on a spot whose cam hasn't
+ *  been verified yet — same gate the badge + /cams page use. */
 export async function fetchCamsForSpot(spotSlug: string): Promise<Cam[]> {
   const { data, error } = await supabase
     .from('cams')
     .select(_SELECT)
     .eq('spot_slug', spotSlug)
+    .eq('status', 'active')
     .order('id');
   if (error) {
     // eslint-disable-next-line no-console
