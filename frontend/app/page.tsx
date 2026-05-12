@@ -4,10 +4,12 @@ import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
 import { StarRating } from '@/components/StarRating';
+import { ReportCard } from '@/components/ReportCard';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { fmtFt, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
 import type { SpotWithLatest } from '@/lib/types';
+import { fetchLatestReports } from '@/lib/reports';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -32,7 +34,10 @@ export const metadata: Metadata = {
 const QUICK_REGIONS = ['California', 'Hawaii', 'New Jersey', 'New York'];
 
 export default async function HomePage() {
-  const spots = await fetchSpotsWithLatest();
+  const [spots, reports] = await Promise.all([
+    fetchSpotsWithLatest(),
+    fetchLatestReports(),
+  ]);
 
   // Top 10 ranked — even if they're all FAIR / POOR, we show them.
   const top10: SpotWithLatest[] = [...spots]
@@ -185,6 +190,29 @@ export default async function HomePage() {
           })}
         </div>
       </section>
+
+      {/* Today's surf reports — horizontal-scroll rail on mobile,
+          fixed grid on desktop. Each card links to the full report
+          page. Hidden when the morning batch hasn't landed yet. */}
+      {reports.length > 0 && (
+        <section className="mb-10">
+          <SectionHeader
+            title="Today's surf reports"
+            right={
+              <Link href="/reports" className="text-xs text-text-secondary hover:text-cyan-600">
+                All reports →
+              </Link>
+            }
+          />
+          <div className="-mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="flex gap-3 overflow-x-auto pb-2 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-3 scrollbar-hidden">
+              {reports.map((r) => (
+                <ReportCard key={r.region} report={r} variant="rail" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Browse by region — simple grid, no per-card hex dots / face
           height. Just state name + count + best-rating badge. */}
