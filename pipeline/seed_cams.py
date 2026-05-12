@@ -38,28 +38,53 @@ def _validate(entry: dict) -> str | None:
     for f in REQUIRED_FIELDS:
         if not entry.get(f):
             return f"missing required field {f!r}"
-    if entry["provider"] not in {"youtube", "surfchex", "explore"}:
-        return f"unknown provider {entry['provider']!r}"
-    if entry["provider"] == "youtube" and not entry.get("channel_id"):
+    provider = entry["provider"]
+    if provider == "youtube" and not entry.get("channel_id"):
         return "youtube provider requires channel_id"
-    if entry["provider"] in {"surfchex", "explore"} and not entry.get("iframe_url"):
-        return f"{entry['provider']} provider requires iframe_url"
+    display_mode = entry.get("display_mode") or _default_display_mode(provider)
+    if display_mode == "embed":
+        # Embed-mode entries need something to render — either an
+        # iframe_url at seed time (surfchex / explore) or a
+        # channel_id the resolver can chase (youtube).
+        if not entry.get("iframe_url") and not entry.get("channel_id"):
+            return "embed display_mode requires iframe_url or channel_id"
+    elif display_mode == "link":
+        # Link-mode entries need somewhere to point the user.
+        if not entry.get("attribution_url"):
+            return "link display_mode requires attribution_url"
+    else:
+        return f"unknown display_mode {display_mode!r}"
     return None
+
+
+def _default_display_mode(provider: str) -> str:
+    """Providers that render well in an iframe get embed mode; everyone
+    else defaults to a link-out banner. Overridable per-entry."""
+    return "embed" if provider in {"youtube", "explore"} else "link"
 
 
 def _build_row(entry: dict) -> dict:
     """Translate one seed entry into the DB row shape."""
     provider = entry["provider"]
     iframe_url = entry.get("iframe_url")
-    # Static providers can ship with embed_url ready from seed time;
-    # YouTube rows wait for the resolver.
-    embed_url = iframe_url if provider in {"surfchex", "explore"} else None
-    # Only `explore` rows are auto-active at seed time. `surfchex` cams
-    # stay `pending` because some surfchex pages block iframing via
-    # X-Frame-Options and need manual verification before we surface
-    # them to visitors; flipping to 'active' is an explicit decision.
-    # YouTube rows are also pending until the resolver fills embed_url.
-    status = "active" if (embed_url and provider == "explore") else "pending"
+    display_mode = entry.get("display_mode") or _default_display_mode(provider)
+    # Static providers ship with embed_url ready from seed time.
+    # YouTube rows wait for the resolver. For link-mode cams the
+    # frontend won't render the iframe — embed_url is just kept
+    # around in case we want to flip the same cam back to embed
+    # mode later.
+    embed_url = iframe_url if iframe_url else None
+    # Status policy:
+    #   - explore / link-mode rows: active at seed time (the link
+    #     itself is always there even if the upstream feed isn't).
+    #   - youtube embed rows: pending until the resolver fills
+    #     embed_url with a live video ID.
+    if display_mode == "link":
+        status = "active"
+    elif provider == "explore":
+        status = "active"
+    else:
+        status = "pending"
     return {
         "spot_slug": entry["spot_slug"],
         "cam_name": entry["cam_name"],
@@ -69,8 +94,9 @@ def _build_row(entry: dict) -> dict:
         "embed_url": embed_url,
         "attribution": entry.get("attribution"),
         "attribution_url": entry.get("attribution_url"),
+        "display_mode": display_mode,
         "status": status,
-        "last_checked_at": datetime.now(timezone.utc).isoformat() if embed_url else None,
+        "last_checked_at": datetime.now(timezone.utc).isoformat(),
     }
 
 

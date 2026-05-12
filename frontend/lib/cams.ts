@@ -1,7 +1,8 @@
 import { supabase } from './supabase';
 
-export type CamProvider = 'youtube' | 'surfchex' | 'explore';
+export type CamProvider = 'youtube' | 'surfchex' | 'explore' | 'hdontap' | 'nysea';
 export type CamStatus = 'active' | 'offline' | 'pending';
+export type CamDisplayMode = 'embed' | 'link';
 
 export type Cam = {
   id: number;
@@ -14,13 +15,14 @@ export type Cam = {
   embed_url: string | null;
   attribution: string | null;
   attribution_url: string | null;
+  display_mode: CamDisplayMode;
   status: CamStatus;
   last_resolved_at: string | null;
   last_checked_at: string | null;
 };
 
 const _SELECT =
-  'id, spot_slug, cam_name, provider, channel_id, iframe_url, resolved_video_id, embed_url, attribution, attribution_url, status, last_resolved_at, last_checked_at';
+  'id, spot_slug, cam_name, provider, channel_id, iframe_url, resolved_video_id, embed_url, attribution, attribution_url, display_mode, status, last_resolved_at, last_checked_at';
 
 /** Active cams for one spot, oldest first. The spot page renders the
  *  first one; we filter on status='active' here so pending/offline
@@ -82,9 +84,20 @@ const PROVIDER_LABEL: Record<CamProvider, string> = {
   youtube:  'YouTube',
   surfchex: 'SurfChex',
   explore:  'Explore.org',
+  hdontap:  'HDOnTap',
+  nysea:    'Skudin Surf',
 };
 export function providerLabel(p: CamProvider): string {
   return PROVIDER_LABEL[p] ?? p;
+}
+
+/** External URL to point a "Watch live on X" link at. For surfchex
+ *  the iframe_url IS the cam's first-party page (better target than
+ *  the generic surfchex.com root in attribution_url); everyone else
+ *  uses attribution_url directly. */
+export function camWatchUrl(cam: Cam): string | null {
+  if (cam.provider === 'surfchex' && cam.iframe_url) return cam.iframe_url;
+  return cam.attribution_url ?? cam.iframe_url ?? null;
 }
 
 /**

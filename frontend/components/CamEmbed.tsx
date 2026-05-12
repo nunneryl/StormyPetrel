@@ -1,13 +1,38 @@
 import type { Cam } from '@/lib/cams';
-import { camDarkness, providerLabel } from '@/lib/cams';
+import { camDarkness, camWatchUrl, providerLabel } from '@/lib/cams';
 
-// 16:9 responsive iframe pinned to the top of the spot page. The
-// component is a server component — it runs at request time so the
-// dark-hours hint reflects "now" for that visitor without needing
-// client JS. (Force-dynamic on the spot page makes the surrounding
-// render server-time too.)
+// Renders ALL active cams attached to a spot. Embed-mode cams (one
+// or more) go up top as a 16:9 iframe each; link-mode cams render
+// below as compact banner cards with a "Watch live on …" button.
+//
+// Server component. Computes the dark-hours hint at request time so
+// the visitor sees fresh "sunrise at …" copy without a hydration shim.
 
-export function CamEmbed({
+export function CamSection({
+  cams,
+  lat,
+  lng,
+}: {
+  cams: Cam[];
+  lat: number | null;
+  lng: number | null;
+}) {
+  if (cams.length === 0) return null;
+  const embeds = cams.filter((c) => c.display_mode === 'embed');
+  const links = cams.filter((c) => c.display_mode === 'link');
+  return (
+    <section className="space-y-3">
+      {embeds.map((c) => (
+        <CamEmbedCard key={c.id} cam={c} lat={lat} lng={lng} />
+      ))}
+      {links.map((c) => (
+        <CamLinkCard key={c.id} cam={c} />
+      ))}
+    </section>
+  );
+}
+
+function CamEmbedCard({
   cam,
   lat,
   lng,
@@ -18,9 +43,8 @@ export function CamEmbed({
 }) {
   const offline = cam.status !== 'active' || !cam.embed_url;
   const { isDark, sunriseLabel } = camDarkness(lat, lng);
-
   return (
-    <section className="rounded-xl overflow-hidden border border-ink-600 bg-black shadow-card">
+    <div className="rounded-xl overflow-hidden border border-ink-600 bg-black shadow-card">
       {offline ? (
         <OfflinePane providerName={providerLabel(cam.provider)} />
       ) : (
@@ -65,7 +89,58 @@ export function CamEmbed({
           </span>
         )}
       </footer>
-    </section>
+    </div>
+  );
+}
+
+function CamLinkCard({ cam }: { cam: Cam }) {
+  const watchUrl = camWatchUrl(cam);
+  const provider = providerLabel(cam.provider);
+  const thumb =
+    cam.provider === 'youtube' && cam.resolved_video_id
+      ? `https://img.youtube.com/vi/${cam.resolved_video_id}/hqdefault.jpg`
+      : null;
+  return (
+    <a
+      href={watchUrl ?? '#'}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-stretch rounded-xl border border-ink-600 bg-white shadow-card hover:border-cyan-500 transition overflow-hidden group"
+    >
+      <div className="relative w-32 sm:w-44 shrink-0 bg-ink-800 flex items-center justify-center">
+        {thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumb}
+            alt={cam.cam_name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <CameraIcon size={28} className="text-text-muted" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0 px-3.5 py-3 flex flex-col justify-between gap-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-text-primary truncate">
+              {cam.cam_name}
+            </span>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 bg-ink-800 text-text-secondary">
+              {provider}
+            </span>
+          </div>
+          {cam.attribution && (
+            <div className="text-xs text-text-muted truncate mt-0.5">
+              Cam by {cam.attribution}
+            </div>
+          )}
+        </div>
+        <span className="text-xs font-bold text-cyan-600 group-hover:underline">
+          Watch live on {provider} →
+        </span>
+      </div>
+    </a>
   );
 }
 
@@ -85,11 +160,17 @@ function OfflinePane({ providerName }: { providerName: string }) {
   );
 }
 
-function CameraIcon({ className = '' }: { className?: string }) {
+function CameraIcon({
+  className = '',
+  size = 13,
+}: {
+  className?: string;
+  size?: number;
+}) {
   return (
     <svg
-      width="13"
-      height="13"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
