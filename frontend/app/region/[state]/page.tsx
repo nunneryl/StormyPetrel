@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchSpotsWithLatest, fetchSparklineData } from '@/lib/queries';
+import { fetchAllSpots, fetchSpotsWithLatest, fetchSparklineData } from '@/lib/queries';
 import { RegionList } from '@/components/RegionList';
 
 export const dynamic = 'force-dynamic';
@@ -15,10 +15,26 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     .split(/[\s-]+/)
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : ''))
     .join(' ');
-  const title = `${pretty} surf forecasts`;
-  const description = `Live surf conditions and 7-day forecasts for every spot in ${pretty}. Sorted by current rating. Free, no paywall.`;
+
+  // Count spots in this state so the title carries the precise N.
+  // Failures fall back to a generic count-less description so the
+  // page still ships valid metadata.
+  let count = 0;
+  try {
+    const spots = await fetchAllSpots();
+    count = spots.filter(
+      (s) => (s.state ?? '').toLowerCase() === decoded.toLowerCase(),
+    ).length;
+  } catch {
+    // ignore — leave count at 0; description below handles 0 gracefully
+  }
+
+  const title = `${pretty} Surf Forecast${count ? ` — ${count} Spots` : ''} | Stormy Petrel`;
+  const description = count
+    ? `Free surf forecasts for ${count} spots in ${pretty}. Wave height, swell, wind, and tide for every break.`
+    : `Free surf forecasts for ${pretty}. Wave height, swell, wind, and tide for every break.`;
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `/region/${encodeURIComponent(decoded.toLowerCase())}` },
     openGraph: { title, description, type: 'website' },

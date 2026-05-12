@@ -1,8 +1,22 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { fetchAllSpots } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: { absolute: 'Browse Surf Forecasts by Region | Stormy Petrel' },
+  description:
+    'Surf forecasts organized by state. Find spots in California, Hawaii, Florida, New Jersey, and 20+ more states.',
+  alternates: { canonical: '/regions' },
+  openGraph: {
+    title: 'Browse Surf Forecasts by Region | Stormy Petrel',
+    description:
+      'Surf forecasts organized by state. Find spots in California, Hawaii, Florida, New Jersey, and 20+ more states.',
+    type: 'website',
+  },
+};
 
 export default async function RegionsIndex() {
   const spots = await fetchAllSpots();

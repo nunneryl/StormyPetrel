@@ -1,9 +1,23 @@
+import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { SpotMap } from '@/components/SpotMap';
 import { tierFromStars } from '@/lib/ratings';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
+
+export const metadata: Metadata = {
+  title: { absolute: 'Surf Spot Map — 484 US Spots | Stormy Petrel' },
+  description:
+    'Interactive map of 484 US surf spots with live ratings, wave height, and conditions. Find the best surf near you.',
+  alternates: { canonical: '/map' },
+  openGraph: {
+    title: 'Surf Spot Map — 484 US Spots | Stormy Petrel',
+    description:
+      'Interactive map of 484 US surf spots with live ratings, wave height, and conditions. Find the best surf near you.',
+    type: 'website',
+  },
+};
 
 // Compact legend — five canonical tier labels (the in-between ones
 // like "POOR TO FAIR" stay in the data but aren't repeated as legend

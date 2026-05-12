@@ -13,6 +13,7 @@ import { CurrentConditions } from '@/components/CurrentConditions';
 import { OptimalConditions } from '@/components/OptimalConditions';
 import { SectionHeader } from '@/components/SectionHeader';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
+import { siteUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -23,14 +24,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { slug } = await params;
   const spot = await loadSpot(slug);
   if (!spot) return { title: 'Spot not found' };
-  const region = [spot.state, spot.region].filter(Boolean).join(' · ');
-  const title = `${spot.name} surf forecast`;
+  const title = `${spot.name} Surf Forecast — Wave Height, Swell & Wind | Stormy Petrel`;
   const description =
     `Free 7-day surf forecast for ${spot.name}` +
-    (region ? `, ${region}` : '') +
-    `. Wave height, swell direction, wind, and tide — built on NOAA NWPS, gfswave (WAVEWATCH III), HRRR and NDBC data.`;
+    (spot.state ? `, ${spot.state}` : '') +
+    `. Wave height, swell direction, period, wind, and tide — updated every 6 hours.`;
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `/spot/${spot.slug}` },
     openGraph: { title, description, type: 'website' },
@@ -116,8 +116,32 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
     (r) => new Date(r.valid_time).getTime() <= cutoff,
   );
 
+  // Structured data for rich search results. Kept inline so the JSON-LD
+  // ships in the initial HTML payload that crawlers parse — Next.js'
+  // <Script> wrapper would defer it past Googlebot's render budget.
+  const base = siteUrl();
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${spot.name} Surf Forecast`,
+    description: `Free 7-day surf forecast for ${spot.name}${
+      spot.state ? `, ${spot.state}` : ''
+    }. Wave height, swell direction, period, wind, and tide — updated every 6 hours.`,
+    url: `${base}/spot/${spot.slug}`,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Stormy Petrel',
+      url: base,
+    },
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 sm:py-7 space-y-6">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header */}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
