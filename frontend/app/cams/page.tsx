@@ -26,6 +26,8 @@ const PROVIDER_BG: Record<string, string> = {
   youtube:  'bg-red-100 text-red-700',
   surfchex: 'bg-cyan-100 text-cyan-700',
   explore:  'bg-emerald-100 text-emerald-700',
+  hdontap:  'bg-violet-100 text-violet-700',
+  nysea:    'bg-amber-100 text-amber-700',
 };
 
 export default async function CamsPage() {

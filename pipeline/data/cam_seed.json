@@ -208,6 +208,70 @@
       "iframe_url": "https://www.surfchex.com/cams/pistol-river/",
       "attribution": "SurfChex",
       "attribution_url": "https://www.surfchex.com"
+    },
+    {
+      "spot_slug": "hermosa-beach-california",
+      "cam_name": "Hermosa Beach South",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/417105/"
+    },
+    {
+      "spot_slug": "manhattan-beach-pier",
+      "cam_name": "Manhattan Beach Pier",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/417105/"
+    },
+    {
+      "spot_slug": "la-jolla-shores",
+      "cam_name": "La Jolla Shores",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/532541/"
+    },
+    {
+      "spot_slug": "pacific-beach",
+      "cam_name": "Pacific Beach",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/186699/"
+    },
+    {
+      "spot_slug": "del-mar-beach",
+      "cam_name": "Del Mar Beach",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/399483/"
+    },
+    {
+      "spot_slug": "carlsbad-state-beach",
+      "cam_name": "Carlsbad Beach",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/155380/"
+    },
+    {
+      "spot_slug": "coronado-shores",
+      "cam_name": "Coronado",
+      "provider": "hdontap",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/stream/coronado/"
+    },
+    {
+      "spot_slug": "long-beach-ny",
+      "cam_name": "Skudin Surf Cam",
+      "provider": "nysea",
+      "display_mode": "link",
+      "attribution": "Skudin Surf",
+      "attribution_url": "https://skudinsurf.com/surf-cam"
     }
   ]
 }

@@ -11,7 +11,7 @@ import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
 import { OptimalConditions } from '@/components/OptimalConditions';
-import { CamEmbed } from '@/components/CamEmbed';
+import { CamSection } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { fetchCamsForSpot } from '@/lib/cams';
@@ -110,9 +110,6 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
     loadLatestBuoy(spot.nearest_buoy_id),
     fetchCamsForSpot(spot.slug),
   ]);
-  // One cam per spot for now — pick the first row (oldest by id), so
-  // re-runs of the seed don't shuffle which cam is "primary".
-  const primaryCam = cams[0] ?? null;
 
   const current = forecasts[0] ?? null;
   // Charts get a 48h slice — the full 7-day window made the curves
@@ -180,11 +177,11 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </div>
       </header>
 
-      {/* Live cam — top of page when one's registered for this spot.
-          CamEmbed handles the offline state inline. */}
-      {primaryCam && (
-        <CamEmbed cam={primaryCam} lat={spot.lat} lng={spot.lng} />
-      )}
+      {/* Live cams — every active cam for this spot. Embed-mode rows
+          render an iframe each; link-mode rows render a banner card
+          with a Watch-live button. CamSection no-ops when cams is
+          empty so the section disappears cleanly. */}
+      <CamSection cams={cams} lat={spot.lat} lng={spot.lng} />
 
       {/* Hero tiles */}
       <CurrentConditions
