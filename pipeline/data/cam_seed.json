@@ -268,10 +268,362 @@
     {
       "spot_slug": "long-beach-ny",
       "cam_name": "Skudin Surf Cam",
-      "provider": "nysea",
+      "provider": "webcam",
       "display_mode": "link",
       "attribution": "Skudin Surf",
       "attribution_url": "https://skudinsurf.com/surf-cam"
+    },
+    {
+      "spot_slug": "narragansett-beach",
+      "cam_name": "Narragansett Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Northeast Surfing",
+      "attribution_url": "https://www.northeastsurfing.com/narragansett-cam/"
+    },
+    {
+      "spot_slug": "monahans",
+      "cam_name": "Narragansett Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Northeast Surfing",
+      "attribution_url": "https://www.northeastsurfing.com/narragansett-cam/"
+    },
+    {
+      "spot_slug": "matunuck",
+      "cam_name": "Matunuck Point",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Ocean Mist",
+      "attribution_url": "https://www.oceanmist.net/"
+    },
+    {
+      "spot_slug": "east-matunuck-state-beach",
+      "cam_name": "Matunuck Point",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Ocean Mist",
+      "attribution_url": "https://www.oceanmist.net/"
+    },
+    {
+      "spot_slug": "marys",
+      "cam_name": "Newport Easton Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Northeast Surfing",
+      "attribution_url": "https://www.northeastsurfing.com/newportcam-one/"
+    },
+    {
+      "spot_slug": "misquamicut-state-beach",
+      "cam_name": "Misquamicut",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Andrea Seaside",
+      "attribution_url": "http://www.andreaseaside.com/AndreaCamera.php"
+    },
+    {
+      "spot_slug": "cowell-s-beach-children-s-surfing-area",
+      "cam_name": "Main Beach CoastCam",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "USGS CoastCam",
+      "attribution_url": "https://cmgp-coastcam.s3-us-west-2.amazonaws.com/cameras/dreaminn/latest/c1_snap.jpg"
+    },
+    {
+      "spot_slug": "steamer-lane",
+      "cam_name": "Cowell Beach CoastCam",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "USGS CoastCam",
+      "attribution_url": "https://cmgp-coastcam.s3-us-west-2.amazonaws.com/cameras/dreaminn/latest/c2_snap.jpg"
+    },
+    {
+      "spot_slug": "pillar-point",
+      "cam_name": "Sam's Chowder House",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Sam's Chowder House",
+      "attribution_url": "https://cams.samschowderhouse.com/south.jpg"
+    },
+    {
+      "spot_slug": "sharp-park",
+      "cam_name": "Pacifica Pier",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "MixDivr",
+      "attribution_url": "http://www.mixdivr.org/livecam/pacificaPier.php"
+    },
+    {
+      "spot_slug": "pacifica-linda-mar",
+      "cam_name": "Pacifica Mori Point",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "MixDivr",
+      "attribution_url": "http://www.mixdivr.org/livecam/pacificaMori.php"
+    },
+    {
+      "spot_slug": "sunset-cliffs",
+      "cam_name": "OB Beach Cam",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Ocean Beach San Diego",
+      "attribution_url": "https://oceanbeachsandiego.com/media/ob-beach-cam"
+    },
+    {
+      "spot_slug": "santa-monica-beach",
+      "cam_name": "Santa Monica Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Explore.org",
+      "attribution_url": "https://explore.org/livecams/currently-live/santa-monica-beach-cam"
+    },
+    {
+      "spot_slug": "venice-beach-breakwater",
+      "cam_name": "Venice Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Westland.net",
+      "attribution_url": "https://www.westland.net/beachcam/"
+    },
+    {
+      "spot_slug": "redondo-breakwater",
+      "cam_name": "Topaz Jetty",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Luvin Life",
+      "attribution_url": "https://www.luvinlife.me/Beach_Cam.html"
+    },
+    {
+      "spot_slug": "dana-point-california",
+      "cam_name": "Ocean Institute",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "HDOnTap",
+      "attribution_url": "https://hdontap.com/index.php/video/stream/dana-point-harbor-live-cam"
+    },
+    {
+      "spot_slug": "jacksonville-beach-pier",
+      "cam_name": "Jax Pier Cam",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Jax Pier Cam",
+      "attribution_url": "https://jaxpiercam.com/live-beach-cams/"
+    },
+    {
+      "spot_slug": "flagler-beach-pier",
+      "cam_name": "Flagler Beach Pier",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "IPCamLive",
+      "attribution_url": "https://www.ipcamlive.com/573b679f95383"
+    },
+    {
+      "spot_slug": "sebastian-inlet",
+      "cam_name": "Sebastian Inlet",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "SurfGuru",
+      "attribution_url": "https://www.surfguru.com/sebastian-inlet-surf-report"
+    },
+    {
+      "spot_slug": "navarre-beach",
+      "cam_name": "Navarre Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Navarre Beach Life",
+      "attribution_url": "https://www.navarrebeachlife.com/"
+    },
+    {
+      "spot_slug": "south-beach-miami",
+      "cam_name": "South Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Miami and Beaches",
+      "attribution_url": "https://www.miamiandbeaches.com/plan-your-trip/miami-webcams"
+    },
+    {
+      "spot_slug": "destin-jetty",
+      "cam_name": "Destin Harbor",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Emerald Grande",
+      "attribution_url": "https://www.emeraldgrande.com/harborwalk-village/harbor-cams"
+    },
+    {
+      "spot_slug": "lori-wilson-park",
+      "cam_name": "Cocoa Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Two Palms",
+      "attribution_url": "https://www.twopalms.com/"
+    },
+    {
+      "spot_slug": "canoes-waikiki",
+      "cam_name": "Waikiki Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Marriott Hawaii",
+      "attribution_url": "https://www.marriotthawaii.com/webcams/"
+    },
+    {
+      "spot_slug": "queens-waikiki",
+      "cam_name": "Waikiki Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Marriott Hawaii",
+      "attribution_url": "https://www.marriotthawaii.com/webcams/"
+    },
+    {
+      "spot_slug": "diamond-head-cliffs",
+      "cam_name": "Waikiki Times",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Waikiki Times",
+      "attribution_url": "http://live.waikikitimes.com/"
+    },
+    {
+      "spot_slug": "ala-moana-bowls",
+      "cam_name": "Ala Moana Beach Park",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Ward Village",
+      "attribution_url": "https://www.wardvillage.com/en/marketing/61"
+    },
+    {
+      "spot_slug": "kiahuna-beach",
+      "cam_name": "Brennecke's Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Brennecke's Beach Cottage",
+      "attribution_url": "https://brenneckes-beach-cottage.click2stream.com/"
+    },
+    {
+      "spot_slug": "flemings-beach",
+      "cam_name": "Napili Sunset",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Napili Sunset",
+      "attribution_url": "https://www.napilisunset.com/live-webcam"
+    },
+    {
+      "spot_slug": "lahaina-breakwall",
+      "cam_name": "Royal Lahaina",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "World Webcams",
+      "attribution_url": "https://www.worldwebcams.info/2025/03/royal-lahaina-live-webcam-maui.html"
+    },
+    {
+      "spot_slug": "asbury-park",
+      "cam_name": "Asbury Park Surfcam",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Click2Stream",
+      "attribution_url": "https://surfcam.click2stream.com/"
+    },
+    {
+      "spot_slug": "deal",
+      "cam_name": "Asbury Park Surfcam",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Click2Stream",
+      "attribution_url": "https://surfcam.click2stream.com/"
+    },
+    {
+      "spot_slug": "ocean-city-md-28th-street",
+      "cam_name": "Ocean City Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Ocean 1 Hotel",
+      "attribution_url": "https://www.worldwebcams.info/2026/01/ocean-1-hotel-live-webcam-ocean-city.html"
+    },
+    {
+      "spot_slug": "ocean-city-md-inlet",
+      "cam_name": "Ocean City Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Ocean 1 Hotel",
+      "attribution_url": "https://www.worldwebcams.info/2026/01/ocean-1-hotel-live-webcam-ocean-city.html"
+    },
+    {
+      "spot_slug": "old-orchard-beach",
+      "cam_name": "Old Orchard Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Maine Webcams",
+      "attribution_url": "https://maine-webcams.com/old-orchard-beach-webcam/"
+    },
+    {
+      "spot_slug": "first-street-jetty-vb",
+      "cam_name": "Virginia Beach Boardwalk",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "VB Bound",
+      "attribution_url": "https://www.vbbound.com/live-webcam-of-virginia-beach-boardwalk"
+    },
+    {
+      "spot_slug": "bob-hall-pier",
+      "cam_name": "Corpus Christi Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Visit Corpus Christi",
+      "attribution_url": "https://www.visitcorpuschristi.com/beaches/beach-cameras/"
+    },
+    {
+      "spot_slug": "port-aransas-jetty",
+      "cam_name": "Dolphin Docks",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Dolphin Docks",
+      "attribution_url": "https://dolphindocks.com/webcam/"
+    },
+    {
+      "spot_slug": "mustang-island",
+      "cam_name": "Dolphin Docks",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Dolphin Docks",
+      "attribution_url": "https://dolphindocks.com/webcam/"
+    },
+    {
+      "spot_slug": "westport-jetty",
+      "cam_name": "Westport",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Experience Westport",
+      "attribution_url": "https://www.experiencewestport.com/live-westport-webcam"
+    },
+    {
+      "spot_slug": "westport-light-state-park",
+      "cam_name": "Westport",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Experience Westport",
+      "attribution_url": "https://www.experiencewestport.com/live-westport-webcam"
+    },
+    {
+      "spot_slug": "rehoboth-beach",
+      "cam_name": "Rehoboth Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Rehoboth Beach Cam",
+      "attribution_url": "http://www.rehobothbeachcam.com/"
+    },
+    {
+      "spot_slug": "frankfort-beach",
+      "cam_name": "Frankfort Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "Pixelcaster",
+      "attribution_url": "https://pixelcaster.com/live/gotks/frankfort2/"
+    },
+    {
+      "spot_slug": "edgewater-beach-cleveland",
+      "cam_name": "Edgewater Beach",
+      "provider": "webcam",
+      "display_mode": "link",
+      "attribution": "AngelCam",
+      "attribution_url": "https://v.angelcam.com/iframe?v=91yx8ek0ro"
     }
   ]
 }

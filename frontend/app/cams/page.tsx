@@ -28,6 +28,7 @@ const PROVIDER_BG: Record<string, string> = {
   explore:  'bg-emerald-100 text-emerald-700',
   hdontap:  'bg-violet-100 text-violet-700',
   nysea:    'bg-amber-100 text-amber-700',
+  webcam:   'bg-slate-100 text-slate-700',
 };
 
 export default async function CamsPage() {
