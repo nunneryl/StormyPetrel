@@ -2,8 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { Cam } from '@/lib/cams';
-import { camWatchUrl, providerLabel } from '@/lib/cams';
+// IMPORTANT: this is a client component, so it must NOT import from
+// '@/lib/cams' — that file pulls in the Supabase client and would
+// drag the server SDK into the browser bundle. Import pure types +
+// helpers from '@/lib/cam-utils' instead.
+import type { Cam } from '@/lib/cam-utils';
+import { camWatchUrl, providerLabel } from '@/lib/cam-utils';
 import { StarRating } from './StarRating';
 
 const PROVIDER_BG: Record<string, string> = {
