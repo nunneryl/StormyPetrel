@@ -1,5 +1,5 @@
-import type { Cam } from '@/lib/cams';
-import { camDarkness, camWatchUrl, providerLabel } from '@/lib/cams';
+import type { Cam } from '@/lib/cam-utils';
+import { camDarkness, camWatchUrl, providerLabel } from '@/lib/cam-utils';
 
 // Renders ALL active cams attached to a spot. Embed-mode cams (one
 // or more) go up top as a 16:9 iframe each; link-mode cams render
