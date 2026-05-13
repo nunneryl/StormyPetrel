@@ -59,32 +59,32 @@ function CamEmbedCard({
           />
         </div>
       )}
-      <footer className="flex items-center justify-between gap-3 px-3.5 py-2 text-[11px] bg-white">
-        <div className="flex items-center gap-2 min-w-0">
-          <CameraIcon className="text-cyan-600 shrink-0" />
-          <span className="text-text-secondary truncate">
-            {cam.cam_name}
-            {cam.attribution && (
-              <>
-                {' '}— Cam by{' '}
-                {cam.attribution_url ? (
-                  <a
-                    href={cam.attribution_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-600 hover:underline"
-                  >
-                    {cam.attribution}
-                  </a>
-                ) : (
-                  <span className="text-text-primary">{cam.attribution}</span>
-                )}
-              </>
-            )}
+      <footer className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-sm bg-white">
+        <div className="flex items-center gap-3 min-w-0 flex-wrap">
+          {/* One line: cam name + source + Watch-live link. The
+              attribution is the operator's preferred byline (e.g.
+              "USGS CoastCam", "SurfChex"), so we use it directly
+              rather than the generic provider label — falls back to
+              the provider label when attribution is missing. */}
+          <span className="font-bold text-text-primary truncate min-w-0">
+            📹 {cam.cam_name}
+            <span className="font-normal text-text-secondary">
+              {' '}— via {cam.attribution ?? providerLabel(cam.provider)}
+            </span>
           </span>
+          {cam.attribution_url && (
+            <a
+              href={cam.attribution_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-cyan-600 hover:underline whitespace-nowrap"
+            >
+              Watch live →
+            </a>
+          )}
         </div>
         {isDark && sunriseLabel && (
-          <span className="text-text-muted whitespace-nowrap">
+          <span className="text-[11px] text-text-muted whitespace-nowrap">
             ☾ may be dark — sunrise at {sunriseLabel}
           </span>
         )}
@@ -95,7 +95,10 @@ function CamEmbedCard({
 
 function CamLinkCard({ cam }: { cam: Cam }) {
   const watchUrl = camWatchUrl(cam);
-  const provider = providerLabel(cam.provider);
+  // Source byline — operator's preferred attribution where available
+  // (e.g. "USGS CoastCam", "SurfChex"), provider label otherwise so
+  // the line still reads "via Live Cam" instead of "via undefined".
+  const source = cam.attribution ?? providerLabel(cam.provider);
   const thumb =
     cam.provider === 'youtube' && cam.resolved_video_id
       ? `https://img.youtube.com/vi/${cam.resolved_video_id}/hqdefault.jpg`
@@ -120,24 +123,15 @@ function CamLinkCard({ cam }: { cam: Cam }) {
           <CameraIcon size={28} className="text-text-muted" />
         )}
       </div>
-      <div className="flex-1 min-w-0 px-3.5 py-3 flex flex-col justify-between gap-1">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-text-primary truncate">
-              {cam.cam_name}
-            </span>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 bg-ink-800 text-text-secondary">
-              {provider}
-            </span>
-          </div>
-          {cam.attribution && (
-            <div className="text-xs text-text-muted truncate mt-0.5">
-              Cam by {cam.attribution}
-            </div>
-          )}
+      <div className="flex-1 min-w-0 px-3.5 py-3 flex flex-col justify-center gap-1">
+        <div className="font-bold text-text-primary truncate">
+          📹 {cam.cam_name}
+          <span className="font-normal text-text-secondary">
+            {' '}— via {source}
+          </span>
         </div>
         <span className="text-xs font-bold text-cyan-600 group-hover:underline">
-          Watch live on {provider} →
+          Watch live →
         </span>
       </div>
     </a>
