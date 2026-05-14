@@ -202,24 +202,8 @@
       "attribution_url": "https://www.surfchex.com"
     },
     {
-      "spot_slug": "gold-beach",
-      "cam_name": "Pistol River",
-      "provider": "surfchex",
-      "iframe_url": "https://www.surfchex.com/cams/pistol-river/",
-      "attribution": "SurfChex",
-      "attribution_url": "https://www.surfchex.com"
-    },
-    {
       "spot_slug": "hermosa-beach-california",
       "cam_name": "Hermosa Beach South",
-      "provider": "hdontap",
-      "display_mode": "link",
-      "attribution": "HDOnTap",
-      "attribution_url": "https://hdontap.com/stream/417105/"
-    },
-    {
-      "spot_slug": "manhattan-beach-pier",
-      "cam_name": "Manhattan Beach Pier",
       "provider": "hdontap",
       "display_mode": "link",
       "attribution": "HDOnTap",
@@ -283,7 +267,7 @@
     },
     {
       "spot_slug": "monahans",
-      "cam_name": "Narragansett Beach",
+      "cam_name": "Narragansett Beach (nearby)",
       "provider": "webcam",
       "display_mode": "link",
       "attribution": "Northeast Surfing",
@@ -394,14 +378,6 @@
       "attribution_url": "https://www.luvinlife.me/Beach_Cam.html"
     },
     {
-      "spot_slug": "dana-point-california",
-      "cam_name": "Ocean Institute",
-      "provider": "webcam",
-      "display_mode": "link",
-      "attribution": "HDOnTap",
-      "attribution_url": "https://hdontap.com/index.php/video/stream/dana-point-harbor-live-cam"
-    },
-    {
       "spot_slug": "jacksonville-beach-pier",
       "cam_name": "Jax Pier Cam",
       "provider": "webcam",
@@ -440,14 +416,6 @@
       "display_mode": "link",
       "attribution": "Miami and Beaches",
       "attribution_url": "https://www.miamiandbeaches.com/plan-your-trip/miami-webcams"
-    },
-    {
-      "spot_slug": "destin-jetty",
-      "cam_name": "Destin Harbor",
-      "provider": "webcam",
-      "display_mode": "link",
-      "attribution": "Emerald Grande",
-      "attribution_url": "https://www.emeraldgrande.com/harborwalk-village/harbor-cams"
     },
     {
       "spot_slug": "lori-wilson-park",
@@ -498,14 +466,6 @@
       "attribution_url": "https://brenneckes-beach-cottage.click2stream.com/"
     },
     {
-      "spot_slug": "flemings-beach",
-      "cam_name": "Napili Sunset",
-      "provider": "webcam",
-      "display_mode": "link",
-      "attribution": "Napili Sunset",
-      "attribution_url": "https://www.napilisunset.com/live-webcam"
-    },
-    {
       "spot_slug": "lahaina-breakwall",
       "cam_name": "Royal Lahaina",
       "provider": "webcam",
@@ -515,14 +475,6 @@
     },
     {
       "spot_slug": "asbury-park",
-      "cam_name": "Asbury Park Surfcam",
-      "provider": "webcam",
-      "display_mode": "link",
-      "attribution": "Click2Stream",
-      "attribution_url": "https://surfcam.click2stream.com/"
-    },
-    {
-      "spot_slug": "deal",
       "cam_name": "Asbury Park Surfcam",
       "provider": "webcam",
       "display_mode": "link",
