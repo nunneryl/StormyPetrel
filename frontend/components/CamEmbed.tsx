@@ -1,5 +1,11 @@
 import type { Cam } from '@/lib/cam-utils';
-import { camDarkness, camWatchUrl, providerLabel } from '@/lib/cam-utils';
+import {
+  camDarkness,
+  camWatchUrl,
+  isCamLive,
+  providerLabel,
+  youtubeChannelUrl,
+} from '@/lib/cam-utils';
 
 // Renders ALL active cams attached to a spot. Embed-mode cams (one
 // or more) go up top as a 16:9 iframe each; link-mode cams render
@@ -41,13 +47,15 @@ function CamEmbedCard({
   lat: number | null;
   lng: number | null;
 }) {
-  const offline = cam.status !== 'active' || !cam.embed_url;
+  // YouTube cams stay status='active' even when the channel isn't
+  // broadcasting; isCamLive() reads resolved_video_id for those, and
+  // status + embed_url for everyone else.
+  const live = isCamLive(cam);
+  const channelUrl = youtubeChannelUrl(cam);
   const { isDark, sunriseLabel } = camDarkness(lat, lng);
   return (
     <div className="rounded-xl overflow-hidden border border-ink-600 bg-black shadow-card">
-      {offline ? (
-        <OfflinePane providerName={providerLabel(cam.provider)} />
-      ) : (
+      {live ? (
         <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
           <iframe
             src={cam.embed_url ?? undefined}
@@ -58,6 +66,14 @@ function CamEmbedCard({
             className="absolute inset-0 w-full h-full"
           />
         </div>
+      ) : (
+        <OfflinePane
+          providerName={providerLabel(cam.provider)}
+          // For YouTube cams we know the channel URL — surface it so
+          // the visitor can check upstream themselves. Falls through
+          // to the generic "isn't broadcasting" message otherwise.
+          channelUrl={channelUrl}
+        />
       )}
       <footer className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-sm bg-white">
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
@@ -138,17 +154,33 @@ function CamLinkCard({ cam }: { cam: Cam }) {
   );
 }
 
-function OfflinePane({ providerName }: { providerName: string }) {
+function OfflinePane({
+  providerName,
+  channelUrl,
+}: {
+  providerName: string;
+  channelUrl: string | null;
+}) {
   return (
     <div className="relative w-full bg-ink-900" style={{ paddingTop: '56.25%' }}>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
         <OfflineIcon className="text-text-muted mb-2" />
         <div className="text-sm font-bold text-text-secondary">
-          Cam currently offline
+          Stream offline right now
         </div>
         <div className="text-xs text-text-muted">
-          {providerName} stream isn&rsquo;t broadcasting right now. Check back later.
+          {providerName} isn&rsquo;t broadcasting at the moment.
         </div>
+        {channelUrl && (
+          <a
+            href={channelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-xs font-bold text-cyan-400 hover:underline"
+          >
+            Check the {providerName} channel →
+          </a>
+        )}
       </div>
     </div>
   );
