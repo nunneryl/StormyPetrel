@@ -147,15 +147,22 @@ def main(argv: list[str] | None = None) -> int:
                     "last_checked_at": now_iso,
                 })
         else:
-            log.info("channel %s offline (no live video) — %d row(s) marked offline",
+            # No live stream right now. We DON'T flip status to
+            # 'offline' anymore — YouTube cams stay status='active'
+            # always so the registry keeps surfacing them on /cams
+            # and the spot page. Null out resolved_video_id so the
+            # frontend can tell the stream is currently dark and
+            # render the "Stream offline right now" affordance with
+            # a link to the channel. embed_url is left untouched so
+            # the last known iframe target stays in the row for
+            # forensics / fallback.
+            log.info("channel %s offline (no live video) — %d row(s) cleared resolved_video_id",
                      channel_id, len(ids))
             offline_count += len(ids)
             if not args.dry_run:
-                # Keep embed_url so the frontend can still render a
-                # "currently offline" preview against the last known
-                # stream if it wants to.
                 update_rows(client, ids, {
-                    "status": "offline",
+                    "resolved_video_id": None,
+                    "status": "active",
                     "last_checked_at": now_iso,
                 })
 

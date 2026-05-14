@@ -55,6 +55,32 @@ export function camWatchUrl(cam: Cam): string | null {
   return cam.attribution_url ?? cam.iframe_url ?? null;
 }
 
+/** Direct URL to the cam's source YouTube channel, used as the
+ *  fallback link when a YouTube stream is currently offline. */
+export function youtubeChannelUrl(cam: Cam): string | null {
+  if (cam.provider !== 'youtube' || !cam.channel_id) return null;
+  return `https://www.youtube.com/channel/${cam.channel_id}`;
+}
+
+/**
+ * Is this cam currently broadcasting? YouTube cams are gated on
+ * `resolved_video_id` (the resolver nulls it out when no live stream
+ * is found), so a row stays in the registry as status='active' even
+ * while the channel is dark. Non-YouTube cams use the original
+ * status + embed_url check.
+ */
+export function isCamLive(cam: Cam): boolean {
+  if (cam.provider === 'youtube') {
+    return Boolean(cam.resolved_video_id);
+  }
+  if (cam.display_mode === 'link') {
+    // Link-mode rows don't iframe anything — being "active" is the
+    // signal that the external page is worth pointing visitors at.
+    return cam.status === 'active';
+  }
+  return cam.status === 'active' && Boolean(cam.embed_url);
+}
+
 /**
  * Rough sunrise / sunset (UTC) using a NOAA-style approximation. Good
  * to ~5 minutes at temperate latitudes, which is plenty for "cam may

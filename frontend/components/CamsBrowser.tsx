@@ -7,7 +7,12 @@ import Link from 'next/link';
 // drag the server SDK into the browser bundle. Import pure types +
 // helpers from '@/lib/cam-utils' instead.
 import type { Cam } from '@/lib/cam-utils';
-import { camWatchUrl, providerLabel } from '@/lib/cam-utils';
+import {
+  camWatchUrl,
+  isCamLive,
+  providerLabel,
+  youtubeChannelUrl,
+} from '@/lib/cam-utils';
 import { StarRating } from './StarRating';
 
 const PROVIDER_BG: Record<string, string> = {
@@ -143,6 +148,8 @@ export function CamsBrowser({ rows, totalCount }: { rows: CamRow[]; totalCount: 
 function EmbedCard({ row }: { row: CamRow }) {
   const { cam, spot } = row;
   const providerCls = PROVIDER_BG[cam.provider] ?? 'bg-ink-800 text-text-secondary';
+  const live = isCamLive(cam);
+  const channelUrl = youtubeChannelUrl(cam);
   const thumb =
     cam.provider === 'youtube' && cam.resolved_video_id
       ? `https://img.youtube.com/vi/${cam.resolved_video_id}/hqdefault.jpg`
@@ -154,17 +161,30 @@ function EmbedCard({ row }: { row: CamRow }) {
     >
       <div className="relative w-full bg-ink-900" style={{ paddingTop: '56.25%' }}>
         {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumb}
-            alt={cam.cam_name}
-            className="absolute inset-0 w-full h-full object-cover"
-            loading="lazy"
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumb}
+              alt={cam.cam_name}
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
+            {!live && (
+              // Dim the stale thumbnail when the stream has gone
+              // dark since the last resolver tick so it doesn't
+              // misrepresent live conditions.
+              <div className="absolute inset-0 bg-black/55" aria-hidden />
+            )}
+          </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-text-muted">
             <CameraIcon size={32} />
           </div>
+        )}
+        {!live && (
+          <span className="absolute top-2 left-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 bg-white/90 text-text-secondary shadow-card">
+            Currently offline
+          </span>
         )}
       </div>
       <div className="p-4 space-y-2 grow">
