@@ -69,22 +69,19 @@ def _build_row(entry: dict) -> dict:
     iframe_url = entry.get("iframe_url")
     display_mode = entry.get("display_mode") or _default_display_mode(provider)
     # Static providers ship with embed_url ready from seed time.
-    # YouTube rows wait for the resolver. For link-mode cams the
-    # frontend won't render the iframe — embed_url is just kept
-    # around in case we want to flip the same cam back to embed
-    # mode later.
+    # YouTube rows wait for the resolver to fill embed_url with the
+    # live video ID; the frontend renders an "offline" pane in the
+    # meantime so the cam stays visible in /cams + the badge query.
     embed_url = iframe_url if iframe_url else None
-    # Status policy:
-    #   - explore / link-mode rows: active at seed time (the link
-    #     itself is always there even if the upstream feed isn't).
-    #   - youtube embed rows: pending until the resolver fills
-    #     embed_url with a live video ID.
-    if display_mode == "link":
-        status = "active"
-    elif provider == "explore":
-        status = "active"
-    else:
-        status = "pending"
+    # Every cam seeds as 'active' now. The resolver and the
+    # check_cams health script flip individual rows to 'offline'
+    # when a stream actually goes dark — there's no need for a
+    # separate 'pending' state because the spot page already
+    # degrades gracefully when status='active' but embed_url is
+    # missing (renders the offline pane until the resolver lands a
+    # live video). Keeping rows visible on /cams + the cam badge
+    # at all times matches what visitors expect.
+    status = "active"
     return {
         "spot_slug": entry["spot_slug"],
         "cam_name": entry["cam_name"],
