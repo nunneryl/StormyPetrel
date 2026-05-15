@@ -15,8 +15,7 @@ import { StarText } from '@/components/StarText';
 import { ShareButton } from '@/components/ShareButton';
 import { siteUrl } from '@/lib/site-url';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 1800;
 
 type Params = { date: string; region: string };
 

@@ -9,8 +9,7 @@ import {
   todayIso,
 } from '@/lib/reports';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 3600;
+export const revalidate = 1800;
 
 type Params = { date: string };
 

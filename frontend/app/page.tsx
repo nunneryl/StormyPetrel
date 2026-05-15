@@ -13,8 +13,7 @@ import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
 import { fetchCamSlugSet } from '@/lib/cams';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: {

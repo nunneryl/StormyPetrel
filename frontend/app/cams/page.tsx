@@ -3,8 +3,7 @@ import { fetchAllActiveCams } from '@/lib/cams';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { CamsBrowser, type CamRow } from '@/components/CamsBrowser';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 900;
 
 export const metadata: Metadata = {
   title: {
