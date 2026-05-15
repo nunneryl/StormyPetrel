@@ -11,7 +11,6 @@ import {
   camWatchUrl,
   isCamLive,
   providerLabel,
-  youtubeChannelUrl,
 } from '@/lib/cam-utils';
 import { StarRating } from './StarRating';
 
@@ -128,119 +127,83 @@ export function CamsBrowser({ rows, totalCount }: { rows: CamRow[]; totalCount: 
           No cams match your filter.
         </div>
       ) : (
-        // Single grid with mixed heights — embed cards are taller
-        // because of the thumbnail; align-items:start prevents the
-        // shorter link cards from stretching to fill the row.
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-          {filtered.map((r) =>
-            r.cam.display_mode === 'embed' ? (
-              <EmbedCard key={r.cam.id} row={r} />
-            ) : (
-              <LinkCard key={r.cam.id} row={r} />
-            ),
-          )}
+        // Uniform compact cards — same layout for every provider so the
+        // grid stays a tidy matrix instead of mixed-height tiles. The
+        // full iframe player still lives on the per-spot page.
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((r) => (
+            <CamCard key={r.cam.id} row={r} />
+          ))}
         </div>
       )}
     </>
   );
 }
 
-function EmbedCard({ row }: { row: CamRow }) {
+function CamCard({ row }: { row: CamRow }) {
   const { cam, spot } = row;
   const providerCls = PROVIDER_BG[cam.provider] ?? 'bg-ink-800 text-text-secondary';
   const live = isCamLive(cam);
-  const channelUrl = youtubeChannelUrl(cam);
-  const thumb =
-    cam.provider === 'youtube' && cam.resolved_video_id
-      ? `https://img.youtube.com/vi/${cam.resolved_video_id}/hqdefault.jpg`
-      : null;
-  return (
-    <Link
-      href={spot ? `/spot/${spot.slug}` : '/cams'}
-      className="group rounded-xl border border-ink-600 bg-white shadow-card hover:border-cyan-500 transition overflow-hidden flex flex-col"
-    >
-      <div className="relative w-full bg-ink-900" style={{ paddingTop: '56.25%' }}>
-        {thumb ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={thumb}
-              alt={cam.cam_name}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-            />
-            {!live && (
-              // Dim the stale thumbnail when the stream has gone
-              // dark since the last resolver tick so it doesn't
-              // misrepresent live conditions.
-              <div className="absolute inset-0 bg-black/55" aria-hidden />
-            )}
-          </>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-text-muted">
-            <CameraIcon size={32} />
-          </div>
-        )}
-        {!live && (
-          <span className="absolute top-2 left-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 bg-white/90 text-text-secondary shadow-card">
-            Currently offline
-          </span>
-        )}
-      </div>
-      <div className="p-4 space-y-2 grow">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="font-bold text-text-primary group-hover:text-cyan-600 truncate">
-              {spot?.name ?? cam.spot_slug}
-            </div>
-            <div className="text-xs text-text-secondary truncate">{cam.cam_name}</div>
-          </div>
-          <span
-            className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 ${providerCls}`}
-          >
-            {providerLabel(cam.provider)}
-          </span>
-        </div>
-        <RatingFaceRow stars={spot?.stars ?? null} faceFt={spot?.face_ft ?? null} />
-        <span className="block text-xs font-bold text-cyan-600 group-hover:underline">
-          Watch live →
-        </span>
-      </div>
-    </Link>
-  );
-}
+  // Embed-mode cams (YouTube / Explore) play inside the spot page, so
+  // "Watch live" links there. Link-mode cams have nowhere to watch
+  // *on* our site, so we point the watch link at the external
+  // provider page directly.
+  const isLinkMode = cam.display_mode === 'link';
+  const externalUrl = isLinkMode ? camWatchUrl(cam) : null;
+  const internalUrl = spot ? `/spot/${spot.slug}` : null;
 
-function LinkCard({ row }: { row: CamRow }) {
-  const { cam, spot } = row;
-  const providerCls = PROVIDER_BG[cam.provider] ?? 'bg-ink-800 text-text-secondary';
-  const watchUrl = camWatchUrl(cam);
   return (
-    <article className="rounded-xl border border-ink-600 bg-white shadow-card hover:border-cyan-500 transition p-3.5 space-y-2">
+    <article className="flex h-full flex-col gap-2 rounded-xl border border-ink-600 bg-white shadow-card p-3.5 hover:border-cyan-500 transition">
       <div className="flex items-start justify-between gap-2">
-        <Link
-          href={spot ? `/spot/${spot.slug}` : '/cams'}
-          className="font-bold text-text-primary hover:text-cyan-600 truncate min-w-0"
-        >
-          {spot?.name ?? cam.spot_slug}
-        </Link>
+        {internalUrl ? (
+          <Link
+            href={internalUrl}
+            className="font-bold text-text-primary hover:text-cyan-600 truncate min-w-0"
+          >
+            {spot?.name ?? cam.spot_slug}
+          </Link>
+        ) : (
+          <span className="font-bold text-text-primary truncate min-w-0">
+            {spot?.name ?? cam.spot_slug}
+          </span>
+        )}
         <span
           className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 ${providerCls}`}
         >
           {providerLabel(cam.provider)}
         </span>
       </div>
-      <div className="text-xs text-text-secondary truncate">{cam.cam_name}</div>
+
+      <div className="flex items-center gap-2 text-xs text-text-secondary min-w-0">
+        <span className="truncate">{cam.cam_name}</span>
+        {!live && (
+          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 bg-ink-800 text-text-muted">
+            Offline
+          </span>
+        )}
+      </div>
+
       <RatingFaceRow stars={spot?.stars ?? null} faceFt={spot?.face_ft ?? null} />
-      {watchUrl && (
-        <a
-          href={watchUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block text-xs font-bold text-cyan-600 hover:underline"
-        >
-          Watch live →
-        </a>
-      )}
+
+      <div className="mt-auto pt-1">
+        {externalUrl ? (
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-xs font-bold text-cyan-600 hover:underline"
+          >
+            Watch live →
+          </a>
+        ) : internalUrl ? (
+          <Link
+            href={internalUrl}
+            className="inline-block text-xs font-bold text-cyan-600 hover:underline"
+          >
+            Watch live →
+          </Link>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -314,25 +277,6 @@ function SearchIcon({ className = '' }: { className?: string }) {
     >
       <circle cx="11" cy="11" r="7" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function CameraIcon({ size = 13 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M23 7l-7 5 7 5V7z" />
-      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
     </svg>
   );
 }
