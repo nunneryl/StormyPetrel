@@ -19,6 +19,9 @@ export type Spot = {
   nearest_buoy_id: string | null;
   nearest_buoy_dist_km: number | null;
   nearest_tide_station_id: string | null;
+  /** 2-3 sentence factual blurb seeded by generate_descriptions and
+   *  edited manually thereafter. Null until generation runs. */
+  description: string | null;
 };
 
 export type Forecast = {

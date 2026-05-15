@@ -177,6 +177,15 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </div>
       </header>
 
+      {/* Factual blurb from pipeline.generate_descriptions. Renders
+          nothing (no placeholder) when the column is still null so
+          unprocessed spots don't show a gap. */}
+      {spot.description && (
+        <p className="text-text-secondary text-base leading-relaxed">
+          {spot.description}
+        </p>
+      )}
+
       {/* Live cams — every active cam for this spot. Embed-mode rows
           render an iframe each; link-mode rows render a banner card
           with a Watch-live button. CamSection no-ops when cams is
