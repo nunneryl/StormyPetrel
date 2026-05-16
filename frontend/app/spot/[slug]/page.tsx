@@ -17,8 +17,7 @@ import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { siteUrl } from '@/lib/site-url';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 900;
 
 type Params = { slug: string };
 

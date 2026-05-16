@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { ReportCard } from '@/components/ReportCard';
 import { addDays, fetchLatestReports, todayIso } from '@/lib/reports';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 1800;
 
 export const metadata: Metadata = {
   title: {

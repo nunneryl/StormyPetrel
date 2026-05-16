@@ -4,8 +4,7 @@ import { fetchCamSlugSet } from '@/lib/cams';
 import { SpotMap } from '@/components/SpotMap';
 import { tierFromStars } from '@/lib/ratings';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 900;
 
 export const metadata: Metadata = {
   title: { absolute: 'Surf Spot Map — 484 US Spots | Stormy Petrel' },

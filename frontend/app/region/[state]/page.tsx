@@ -4,8 +4,7 @@ import { fetchAllSpots, fetchSpotsWithLatest, fetchSparklineData } from '@/lib/q
 import { fetchCamSlugSet } from '@/lib/cams';
 import { RegionList } from '@/components/RegionList';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600;
+export const revalidate = 900;
 
 type Params = { state: string };
 
