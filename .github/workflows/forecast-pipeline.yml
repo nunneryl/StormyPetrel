@@ -1,12 +1,15 @@
 name: forecast-pipeline
 
 # Two scheduled jobs in one workflow:
-#   - full-pipeline   every 6h, 90 min after each model cycle (00/06/12/18 Z),
-#                     fetches NWPS + WW3 + HRRR + buoys + tides, runs interpret,
-#                     pushes everything to Supabase.
-#   - buoy-update     hourly at :15, refreshes only NDBC observations so the
-#                     "now" reading on each spot page never goes stale beyond
-#                     ~60 min, without paying for the heavy GRIB downloads.
+#   - full-pipeline   every 8h (03:30 / 11:30 / 19:30 UTC), runs the full
+#                     NWPS + WW3 + HRRR + buoys + tides fetch + interpret +
+#                     Supabase push. 8-hour cadence is enough freshness
+#                     for surf-forecast use while cutting Actions minutes
+#                     by a third vs. the prior every-6h schedule.
+#   - buoy-update     every 3h on the hour. NDBC publishes obs ~every 30
+#                     min, so the displayed "now" reading averages
+#                     ~1.5h staleness — fine for the spot page without
+#                     paying for the heavy GRIB downloads each cycle.
 #
 # Manual trigger via the Actions tab — pick which job to run from the
 # `job` input dropdown. Both jobs gate themselves with an `if:` so a
@@ -24,11 +27,16 @@ on:
           - full-pipeline
           - buoy-update
   schedule:
-    # 90 min after model cycles. NCEP usually finishes uploading by then.
-    - cron: '30 1,7,13,19 * * *'
-    # Hourly buoy refresh. NDBC publishes new observations every ~30 min;
-    # :15 catches both half-hour cycles within an hour at most.
-    - cron: '15 * * * *'
+    # Forecast pipeline runs every 8h. Lines up with NCEP's 00/06/12/18Z
+    # model cycles plus ~90 min for uploads — picks 00Z+3h30, 06Z+5h30,
+    # 12Z+7h30 in practice but the spacing is what matters: an 8-hour
+    # cadence is enough freshness for the surf use case at lower runner
+    # cost than every-6h.
+    - cron: '30 3,11,19 * * *'
+    # Buoy refresh every 3 hours. NDBC publishes ~every 30 min but the
+    # forecast page reads buoys as a "now" reference — 3-hour cadence
+    # keeps the displayed reading under ~1.5h average staleness.
+    - cron: '0 */3 * * *'
 
 # Opt JavaScript-based actions (checkout, setup-python, github-script,
 # cache) onto the Node.js 24 runner. Node 20 is deprecated and gets
@@ -48,7 +56,7 @@ jobs:
   full-pipeline:
     name: full-pipeline (NWPS + WW3 + HRRR + buoys + tides)
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '30 1,7,13,19 * * *') ||
+      (github.event_name == 'schedule' && github.event.schedule == '30 3,11,19 * * *') ||
       (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline')
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -139,9 +147,9 @@ jobs:
             });
 
   buoy-update:
-    name: buoy-update (hourly NDBC refresh)
+    name: buoy-update (3-hourly NDBC refresh)
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '15 * * * *') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 */3 * * *') ||
       (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update')
     runs-on: ubuntu-latest
     timeout-minutes: 10
