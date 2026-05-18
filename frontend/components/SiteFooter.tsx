@@ -87,7 +87,7 @@ export function SiteFooter() {
           </div>
           <ul className="space-y-1.5">
             <li>
-              <Link href="/blog/about" className="text-text-secondary hover:text-cyan-600">
+              <Link href="/about" className="text-text-secondary hover:text-cyan-600">
                 About
               </Link>
             </li>

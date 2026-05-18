@@ -11,6 +11,14 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // 308 permanent redirect from the old /blog/about post URL to the
+  // standalone /about page so external links + already-indexed
+  // search results stay live.
+  async redirects() {
+    return [
+      { source: '/blog/about', destination: '/about', permanent: true },
+    ];
+  },
 };
 
 module.exports = nextConfig;
