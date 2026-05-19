@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SwellDirectionMap } from '@/components/learn/SwellDirectionMap';
+import { SwellDirectionMap, type SwellPreset } from '@/components/learn/SwellDirectionMap';
 import { PointVsBay } from '@/components/learn/PointVsBay';
+import { fetchSpotsBySlug } from '@/lib/queries';
 
 export const revalidate = 86400;
 
@@ -18,7 +19,52 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SwellDirectionArticle() {
+// Curated preset slugs for the SwellDirectionMap embed. We pull each
+// spot's real orientation_deg + swell_window_arcs + optimal_swell_dir
+// from Supabase so the article visualizes the same numbers the
+// forecast pipeline uses — not hand-typed approximations.
+const PRESET_SLUGS = [
+  'banzai-pipeline',
+  'huntington-beach-pier',
+  'narragansett-beach',
+  'sebastian-inlet',
+  'rincon',
+  'cape-hatteras-lighthouse',
+];
+
+// Friendly display labels — independent of whatever name the spots
+// table happens to carry (e.g. "Banzai Pipeline" -> "Pipeline, HI").
+const PRESET_LABEL: Record<string, string> = {
+  'banzai-pipeline': 'Pipeline, HI',
+  'huntington-beach-pier': 'Huntington Beach, CA',
+  'narragansett-beach': 'Narragansett, RI',
+  'sebastian-inlet': 'Sebastian Inlet, FL',
+  'rincon': 'Rincon, CA',
+  'cape-hatteras-lighthouse': 'Cape Hatteras, NC',
+};
+
+export default async function SwellDirectionArticle() {
+  // Fetch in the server component, pass plain JSON props down to the
+  // client SwellDirectionMap. Falls back to an empty array if the
+  // table read fails — the component renders a neutral message
+  // instead of crashing the whole article.
+  const spots = await fetchSpotsBySlug(PRESET_SLUGS).catch(() => []);
+  const presets: SwellPreset[] = spots
+    .filter((s) => s.lat !== null && s.lng !== null)
+    .map((s) => ({
+      slug: s.slug,
+      label: PRESET_LABEL[s.slug] ?? s.name,
+      lat: s.lat,
+      lng: s.lng,
+      orientationDeg: s.orientation_deg,
+      optimalSwellDir: s.optimal_swell_dir,
+      windowArcs:
+        (s.swell_window_arcs ?? []).map((arc) => ({
+          min: arc.min,
+          max: arc.max,
+        })),
+    }));
+
   return (
     <article className="mx-auto max-w-[720px] px-4 sm:px-6 py-10 sm:py-14">
       <nav className="mb-4 text-xs text-text-muted">
@@ -102,7 +148,7 @@ export default function SwellDirectionArticle() {
           Swell direction calculator — pick a spot and adjust the incoming
           swell to see energy delivery
         </ComponentLabel>
-        <SwellDirectionMap />
+        <SwellDirectionMap presets={presets} />
 
         <SectionHeading>The swell window</SectionHeading>
 
