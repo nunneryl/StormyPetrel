@@ -62,6 +62,29 @@ function arcRing(
   return pts;
 }
 
+/**
+ * Join arcs that are stored as two halves split at 0°/360°. The
+ * enrichment pipeline splits a wrapping window into [{233,359},
+ * {0,33}] so each entry stays within JSON math; without merging
+ * them back here the map renders two polygons with a visible
+ * straight-line seam at north. Detect the touching pair and emit a
+ * single arc whose `min > max` — arcRing already handles that
+ * direction reversal as one continuous clockwise sweep.
+ */
+function mergeWrappingArcs(
+  arcs: SwellPreset['windowArcs'],
+): SwellPreset['windowArcs'] {
+  if (arcs.length < 2) return arcs;
+  // Allow a 1° tolerance on the seam in case a future entry uses
+  // 358/2 instead of 359/0.
+  const endsAtNorth = arcs.find((a) => a.max >= 358);
+  const startsAtNorth = arcs.find((a) => a.min <= 1 && a !== endsAtNorth);
+  if (!endsAtNorth || !startsAtNorth) return arcs;
+  const merged = { min: endsAtNorth.min, max: startsAtNorth.max };
+  const others = arcs.filter((a) => a !== endsAtNorth && a !== startsAtNorth);
+  return [merged, ...others];
+}
+
 function offAxisDeg(swellDir: number, orientationDeg: number): number {
   const diff = Math.abs(((swellDir - orientationDeg) % 360) + 360) % 360;
   return Math.min(diff, 360 - diff);
@@ -79,7 +102,10 @@ function isInsideAnyArc(
 ): boolean {
   if (arcs.length === 0) return true; // unknown window — don't penalise
   const dir = ((swellDir % 360) + 360) % 360;
-  return arcs.some((arc) =>
+  // Merge wrapping halves first so a dir of 359 isn't incorrectly
+  // counted as inside a [0,33] arc when it actually sits on the
+  // continuous [233,33] window's 0° seam.
+  return mergeWrappingArcs(arcs).some((arc) =>
     arc.min <= arc.max
       ? dir >= arc.min && dir <= arc.max
       : dir >= arc.min || dir <= arc.max,
@@ -118,10 +144,20 @@ function ensureCss(id: string, href: string) {
 }
 
 function defaultSwellDir(p: SwellPreset): number {
-  // Pick optimal_swell_dir when known so the slider lands on the
-  // spot's best-case angle; fall back to orientation (the direction
-  // the spot faces) when optimal is missing.
-  return p.optimalSwellDir ?? p.orientationDeg ?? 0;
+  // optimal_swell_dir from the spots table is the primary signal —
+  // it's the recorded best-case angle for the break. When it isn't
+  // set, fall back to the midpoint of the spot's swell window so
+  // the slider still lands somewhere realistic (inside the arc).
+  // Last resort: spot orientation, then due north.
+  if (p.optimalSwellDir !== null) return Math.round(p.optimalSwellDir);
+  const merged = mergeWrappingArcs(p.windowArcs);
+  if (merged.length > 0) {
+    const arc = merged[0];
+    const span = (arc.max - arc.min + 360) % 360 || 360;
+    return Math.round((arc.min + span / 2) % 360);
+  }
+  if (p.orientationDeg !== null) return Math.round(p.orientationDeg);
+  return 0;
 }
 
 export function SwellDirectionMap({ presets }: { presets: SwellPreset[] }) {
@@ -203,7 +239,7 @@ export function SwellDirectionMap({ presets }: { presets: SwellPreset[] }) {
         fillOpacity: 1,
       }).addTo(map);
 
-      arcLayersRef.current = preset.windowArcs.map((arc) =>
+      arcLayersRef.current = mergeWrappingArcs(preset.windowArcs).map((arc) =>
         L.polygon(arcRing(preset.lat, preset.lng, arc.min, arc.max), {
           color: '#0369A1',
           weight: 1,
@@ -254,10 +290,11 @@ export function SwellDirectionMap({ presets }: { presets: SwellPreset[] }) {
     map.setView([preset.lat, preset.lng], 11, { animate: true });
     markerRef.current?.setLatLng([preset.lat, preset.lng]);
 
-    // Tear down old arcs and rebuild from the new preset (count can
-    // differ — Pipeline might have 1 arc, Hatteras might have 2).
+    // Tear down old arcs and rebuild from the new preset's merged
+    // arc list (count can differ — Pipeline collapses two halves
+    // into one, Hatteras stays as one, etc.).
     for (const layer of arcLayersRef.current) layer.remove();
-    arcLayersRef.current = preset.windowArcs.map((arc) =>
+    arcLayersRef.current = mergeWrappingArcs(preset.windowArcs).map((arc) =>
       L.polygon(arcRing(preset.lat, preset.lng, arc.min, arc.max), {
         color: '#0369A1',
         weight: 1,
