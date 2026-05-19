@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/map', label: 'Map' },
   { href: '/cams', label: 'Cams' },
   { href: '/reports', label: 'Reports' },
+  { href: '/learn', label: 'Learn' },
   { href: '/regions', label: 'Regions' },
   { href: '/blog', label: 'Blog' },
   { href: '/about', label: 'About' },
