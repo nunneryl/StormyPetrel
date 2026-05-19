@@ -19,6 +19,13 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       'Why the number labeled Tp on a buoy report matters more than wave height — and how to read it like a local.',
     readTime: '8 min read',
   },
+  {
+    slug: 'swell-direction',
+    title: 'Why swell direction matters',
+    description:
+      'The reason two spots ten miles apart get completely different waves. Interactive maps show how spot orientation and the swell window decide what your beach receives.',
+    readTime: '7 min read',
+  },
 ];
 
 export function getLearnArticle(slug: string): LearnArticle | null {
