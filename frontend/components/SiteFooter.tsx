@@ -116,7 +116,7 @@ export function SiteFooter() {
             </li>
           </ul>
           <p className="mt-3 text-text-muted text-xs">
-            Forecasts refresh every 6 h · buoys hourly
+            Forecasts refresh every 8 h · buoys every 3 h
           </p>
         </div>
       </div>
