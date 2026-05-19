@@ -224,9 +224,14 @@
       "source": "North coast of Puerto Rico (Isabela area)"
     },
     "Sebastian Inlet": {
-      "orientation_deg": 45,
-      "source": "surf-forecast.com verified \u2014 optimal NE swell, SW offshore",
-      "notes": "Jetty break faces NE into Atlantic"
+      "orientation_deg": 80,
+      "source": "Map verified \u2014 east-facing barrier island beach",
+      "notes": "Optimal swell from NE (45\u00b0) but beach faces E"
+    },
+    "Rincon": {
+      "orientation_deg": 210,
+      "source": "Map verified \u2014 south-facing point break",
+      "notes": "Optimal swell from WNW (290\u00b0) wraps around point. Cove faces SSW."
     }
   }
 }
