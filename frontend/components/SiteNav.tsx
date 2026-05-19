@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: '/reports', label: 'Reports' },
   { href: '/regions', label: 'Regions' },
   { href: '/blog', label: 'Blog' },
+  { href: '/about', label: 'About' },
 ];
 
 export type SpotSearchItem = {
