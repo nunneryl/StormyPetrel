@@ -2,31 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-// Interactive "what's the angle?" map. Pick a preset spot, then drag
-// the swell-direction slider and watch the energy delivery + verdict
-// update. Map = Leaflet (same dynamic-import pattern as the main
-// /map page so this doesn't drag the bundle into SSR).
+// Interactive "what's the angle?" map. The preset spots + their
+// geometry come in as a prop from the server component on the
+// article page, sourced from Supabase. The client component just
+// renders Leaflet layers and the slider/stats math.
 
-type Preset = {
-  key: string;
+export type SwellPreset = {
+  slug: string;
   label: string;
   lat: number;
   lng: number;
   /** Compass bearing the spot faces — direction of open ocean. */
-  orientationDeg: number;
-  /** Swell-window arc (degrees the spot can see). Wraps when min > max. */
-  windowMin: number;
-  windowMax: number;
+  orientationDeg: number | null;
+  /** Optimal swell-FROM bearing. */
+  optimalSwellDir: number | null;
+  /** Inclusive bearing arcs (degrees, 0..360). Multi-arc spots get
+   *  multiple shaded polygons. Arcs wrap when arc.min > arc.max. */
+  windowArcs: Array<{ min: number; max: number }>;
 };
-
-const PRESETS: Preset[] = [
-  { key: 'pipeline',  label: 'Pipeline, HI',        lat: 21.6651, lng: -158.0539, orientationDeg: 340, windowMin: 280, windowMax: 20 },
-  { key: 'huntington', label: 'Huntington Beach, CA', lat: 33.6553, lng: -117.9988, orientationDeg: 210, windowMin: 180, windowMax: 280 },
-  { key: 'narragansett', label: 'Narragansett, RI',  lat: 41.4490, lng:  -71.4545, orientationDeg: 180, windowMin: 100, windowMax: 220 },
-  { key: 'sebastian',  label: 'Sebastian Inlet, FL', lat: 27.8576, lng:  -80.4487, orientationDeg:  80, windowMin:  20, windowMax: 160 },
-  { key: 'rincon',     label: 'Rincon, CA',          lat: 34.3731, lng: -119.4782, orientationDeg: 200, windowMin: 180, windowMax: 280 },
-  { key: 'hatteras',   label: 'Cape Hatteras, NC',   lat: 35.2228, lng:  -75.5356, orientationDeg: 120, windowMin:  20, windowMax: 200 },
-];
 
 const LEAFLET_CSS_ID = 'leaflet-css';
 const RADIUS_KM = 8;
@@ -49,17 +42,23 @@ function destination(lat: number, lng: number, bearingDeg: number, distKm: numbe
   return [φ2 / D2R, λ2 / D2R];
 }
 
-function wedgeRing(p: Preset): Array<[number, number]> {
-  // Polygon ring traced from the spot, around the arc from windowMin
-  // to windowMax going clockwise (handles wrap-around), and back.
-  const span = (p.windowMax - p.windowMin + 360) % 360 || 360;
+function arcRing(
+  lat: number,
+  lng: number,
+  minDeg: number,
+  maxDeg: number,
+): Array<[number, number]> {
+  // Polygon ring traced from the spot, around the arc from min to
+  // max going clockwise (handles wrap), and back. Used per-arc so a
+  // spot with two windows renders as two distinct polygons.
+  const span = (maxDeg - minDeg + 360) % 360 || 360;
   const stepCount = Math.max(8, Math.round(span / 5));
-  const pts: Array<[number, number]> = [[p.lat, p.lng]];
+  const pts: Array<[number, number]> = [[lat, lng]];
   for (let i = 0; i <= stepCount; i += 1) {
-    const bearing = (p.windowMin + (span * i) / stepCount) % 360;
-    pts.push(destination(p.lat, p.lng, bearing, RADIUS_KM));
+    const bearing = (minDeg + (span * i) / stepCount) % 360;
+    pts.push(destination(lat, lng, bearing, RADIUS_KM));
   }
-  pts.push([p.lat, p.lng]);
+  pts.push([lat, lng]);
   return pts;
 }
 
@@ -74,30 +73,32 @@ function energyFromOffAxis(off: number): number {
   return c * c;
 }
 
-function isInsideWindow(swellDir: number, p: Preset): boolean {
+function isInsideAnyArc(
+  swellDir: number,
+  arcs: SwellPreset['windowArcs'],
+): boolean {
+  if (arcs.length === 0) return true; // unknown window — don't penalise
   const dir = ((swellDir % 360) + 360) % 360;
-  if (p.windowMin <= p.windowMax) {
-    return dir >= p.windowMin && dir <= p.windowMax;
-  }
-  return dir >= p.windowMin || dir <= p.windowMax;
+  return arcs.some((arc) =>
+    arc.min <= arc.max
+      ? dir >= arc.min && dir <= arc.max
+      : dir >= arc.min || dir <= arc.max,
+  );
 }
 
-type Verdict = {
-  label: string;
-  bg: string;
-  fg: string;
-};
+type Verdict = { label: string; bg: string; fg: string };
 
 function verdictFor(off: number, inside: boolean): Verdict {
   if (!inside) return { label: 'Outside window', bg: 'bg-slate-200', fg: 'text-slate-800' };
-  if (off >= 90) return { label: 'Parallel',      bg: 'bg-red-100',   fg: 'text-red-800' };
-  if (off >= 70) return { label: 'Scraps',         bg: 'bg-red-100',   fg: 'text-red-800' };
-  if (off >= 45) return { label: 'Reduced',        bg: 'bg-amber-100', fg: 'text-amber-800' };
-  if (off >= 20) return { label: 'Good',           bg: 'bg-emerald-100', fg: 'text-emerald-800' };
-  return            { label: 'Prime',           bg: 'bg-sky-100',   fg: 'text-sky-800' };
+  if (off >= 90) return { label: 'Parallel', bg: 'bg-red-100', fg: 'text-red-800' };
+  if (off >= 70) return { label: 'Scraps', bg: 'bg-red-100', fg: 'text-red-800' };
+  if (off >= 45) return { label: 'Reduced', bg: 'bg-amber-100', fg: 'text-amber-800' };
+  if (off >= 20) return { label: 'Good', bg: 'bg-emerald-100', fg: 'text-emerald-800' };
+  return { label: 'Prime', bg: 'bg-sky-100', fg: 'text-sky-800' };
 }
 
-function cardinal16(deg: number): string {
+function cardinal16(deg: number | null | undefined): string {
+  if (deg === null || deg === undefined || Number.isNaN(deg)) return '—';
   const CARDINALS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
                      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   const n = ((deg % 360) + 360) % 360;
@@ -116,19 +117,39 @@ function ensureCss(id: string, href: string) {
   document.head.appendChild(link);
 }
 
-export function SwellDirectionMap() {
-  const [preset, setPreset] = useState<Preset>(PRESETS[0]);
-  const [swellDir, setSwellDir] = useState<number>(preset.orientationDeg);
+function defaultSwellDir(p: SwellPreset): number {
+  // Pick optimal_swell_dir when known so the slider lands on the
+  // spot's best-case angle; fall back to orientation (the direction
+  // the spot faces) when optimal is missing.
+  return p.optimalSwellDir ?? p.orientationDeg ?? 0;
+}
 
-  // Reset swell direction to the spot's orientation whenever the user
-  // picks a new preset, so the visualization starts in a "prime"
-  // state rather than a stale angle that may now be off-window.
+export function SwellDirectionMap({ presets }: { presets: SwellPreset[] }) {
+  // Guard against an empty payload (shouldn't happen — the server
+  // wrapper looks up six known slugs — but the type leaves room).
+  const [preset, setPreset] = useState<SwellPreset | null>(presets[0] ?? null);
+  const [swellDir, setSwellDir] = useState<number>(
+    preset ? defaultSwellDir(preset) : 0,
+  );
+
+  // When the user picks a different preset, snap the slider back to
+  // the new spot's optimal direction so the visualization opens at
+  // a "prime" angle instead of carrying over the previous one.
   useEffect(() => {
-    setSwellDir(preset.orientationDeg);
+    if (preset) setSwellDir(defaultSwellDir(preset));
   }, [preset]);
 
-  const off = useMemo(() => offAxisDeg(swellDir, preset.orientationDeg), [swellDir, preset.orientationDeg]);
-  const inside = useMemo(() => isInsideWindow(swellDir, preset), [swellDir, preset]);
+  const orientation = preset?.orientationDeg ?? 0;
+  const off = useMemo(
+    () => (preset?.orientationDeg !== null && preset?.orientationDeg !== undefined
+      ? offAxisDeg(swellDir, preset.orientationDeg)
+      : 0),
+    [swellDir, preset?.orientationDeg],
+  );
+  const inside = useMemo(
+    () => (preset ? isInsideAnyArc(swellDir, preset.windowArcs) : false),
+    [swellDir, preset],
+  );
   const energy = inside ? energyFromOffAxis(off) : 0;
   const verdict = verdictFor(off, inside);
 
@@ -137,15 +158,26 @@ export function SwellDirectionMap() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const layersRef = useRef<{ marker: any; window: any; orientation: any; swell: any } | null>(null);
+  const markerRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orientationRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const swellRef = useRef<any>(null);
+  // Multiple arcs per spot → an array of polygon layers we rebuild
+  // from scratch on preset change.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arcLayersRef = useRef<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const LRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    if (!containerRef.current || mapRef.current || !preset) return;
     let cancelled = false;
     (async () => {
       const leafletNs = await import('leaflet');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const L: any = (leafletNs as any).default ?? leafletNs;
+      LRef.current = L;
       ensureCss(LEAFLET_CSS_ID, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
       if (cancelled || !containerRef.current) return;
 
@@ -154,7 +186,7 @@ export function SwellDirectionMap() {
         zoom: 11,
         zoomControl: false,
         attributionControl: false,
-        scrollWheelZoom: false, // keeps article scroll usable
+        scrollWheelZoom: false,
       });
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       L.tileLayer('https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -163,7 +195,7 @@ export function SwellDirectionMap() {
       }).addTo(map);
       mapRef.current = map;
 
-      const marker = L.circleMarker([preset.lat, preset.lng], {
+      markerRef.current = L.circleMarker([preset.lat, preset.lng], {
         radius: 7,
         color: '#0F172A',
         weight: 2,
@@ -171,24 +203,32 @@ export function SwellDirectionMap() {
         fillOpacity: 1,
       }).addTo(map);
 
-      const wedge = L.polygon(wedgeRing(preset), {
-        color: '#0369A1',
-        weight: 1,
-        fillColor: '#0369A1',
-        fillOpacity: 0.15,
-      }).addTo(map);
+      arcLayersRef.current = preset.windowArcs.map((arc) =>
+        L.polygon(arcRing(preset.lat, preset.lng, arc.min, arc.max), {
+          color: '#0369A1',
+          weight: 1,
+          fillColor: '#0369A1',
+          fillOpacity: 0.15,
+        }).addTo(map),
+      );
 
-      const orientation = L.polyline(
-        [[preset.lat, preset.lng], destination(preset.lat, preset.lng, preset.orientationDeg, RADIUS_KM * 0.8)],
+      orientationRef.current = L.polyline(
+        preset.orientationDeg !== null
+          ? [
+              [preset.lat, preset.lng],
+              destination(preset.lat, preset.lng, preset.orientationDeg, RADIUS_KM * 0.8),
+            ]
+          : [[preset.lat, preset.lng], [preset.lat, preset.lng]],
         { color: '#0369A1', weight: 3 },
       ).addTo(map);
 
-      const swell = L.polyline(
-        [[preset.lat, preset.lng], destination(preset.lat, preset.lng, swellDir, RADIUS_KM * 0.8)],
+      swellRef.current = L.polyline(
+        [
+          [preset.lat, preset.lng],
+          destination(preset.lat, preset.lng, swellDir, RADIUS_KM * 0.8),
+        ],
         { color: '#F97316', weight: 3, dashArray: '6 4' },
       ).addTo(map);
-
-      layersRef.current = { marker, window: wedge, orientation, swell };
     })();
     return () => {
       cancelled = true;
@@ -196,35 +236,62 @@ export function SwellDirectionMap() {
         mapRef.current.remove();
         mapRef.current = null;
       }
-      layersRef.current = null;
+      markerRef.current = null;
+      orientationRef.current = null;
+      swellRef.current = null;
+      arcLayersRef.current = [];
     };
-    // The init effect runs ONCE — preset/swellDir changes update layers
-    // via the next two effects without rebuilding the whole map.
+    // Init runs ONCE — subsequent preset / slider changes go through
+    // the two effects below and just touch the existing layers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update layers when the preset changes.
+  // Rebind layers when the preset changes.
   useEffect(() => {
-    if (!mapRef.current || !layersRef.current) return;
-    const m = mapRef.current;
-    const L = layersRef.current;
-    m.setView([preset.lat, preset.lng], 11, { animate: true });
-    L.marker.setLatLng([preset.lat, preset.lng]);
-    L.window.setLatLngs(wedgeRing(preset));
-    L.orientation.setLatLngs([
-      [preset.lat, preset.lng],
-      destination(preset.lat, preset.lng, preset.orientationDeg, RADIUS_KM * 0.8),
-    ]);
+    if (!mapRef.current || !preset || !LRef.current) return;
+    const map = mapRef.current;
+    const L = LRef.current;
+    map.setView([preset.lat, preset.lng], 11, { animate: true });
+    markerRef.current?.setLatLng([preset.lat, preset.lng]);
+
+    // Tear down old arcs and rebuild from the new preset (count can
+    // differ — Pipeline might have 1 arc, Hatteras might have 2).
+    for (const layer of arcLayersRef.current) layer.remove();
+    arcLayersRef.current = preset.windowArcs.map((arc) =>
+      L.polygon(arcRing(preset.lat, preset.lng, arc.min, arc.max), {
+        color: '#0369A1',
+        weight: 1,
+        fillColor: '#0369A1',
+        fillOpacity: 0.15,
+      }).addTo(map),
+    );
+
+    if (preset.orientationDeg !== null) {
+      orientationRef.current?.setLatLngs([
+        [preset.lat, preset.lng],
+        destination(preset.lat, preset.lng, preset.orientationDeg, RADIUS_KM * 0.8),
+      ]);
+    } else {
+      orientationRef.current?.setLatLngs([[preset.lat, preset.lng], [preset.lat, preset.lng]]);
+    }
   }, [preset]);
 
-  // Update the swell-direction line whenever the slider moves.
+  // Slider movement updates only the swell-direction polyline.
   useEffect(() => {
-    if (!layersRef.current) return;
-    layersRef.current.swell.setLatLngs([
+    if (!swellRef.current || !preset) return;
+    swellRef.current.setLatLngs([
       [preset.lat, preset.lng],
       destination(preset.lat, preset.lng, swellDir, RADIUS_KM * 0.8),
     ]);
   }, [swellDir, preset]);
+
+  if (!preset) {
+    return (
+      <div className="rounded-xl border border-ink-600 bg-white shadow-card p-4 sm:p-5 my-6 text-sm text-text-muted">
+        Preset data unavailable.
+      </div>
+    );
+  }
 
   // --- render -----------------------------------------------------------
   return (
@@ -233,11 +300,11 @@ export function SwellDirectionMap() {
         <span className="text-[11px] uppercase tracking-widest2 font-bold text-text-secondary mr-2">
           Spot
         </span>
-        {PRESETS.map((p) => {
-          const active = p.key === preset.key;
+        {presets.map((p) => {
+          const active = p.slug === preset.slug;
           return (
             <button
-              key={p.key}
+              key={p.slug}
               type="button"
               onClick={() => setPreset(p)}
               className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition ${
@@ -291,14 +358,16 @@ export function SwellDirectionMap() {
           <StatCard
             label="Angle off-axis"
             value={`${off.toFixed(0)}°`}
-            sub={`Spot faces ${preset.orientationDeg}° (${cardinal16(preset.orientationDeg)})`}
+            sub={
+              preset.orientationDeg !== null
+                ? `Spot faces ${Math.round(orientation)}° (${cardinal16(orientation)})`
+                : 'Spot orientation not recorded'
+            }
           />
           <StatCard
             label="Energy delivered"
             value={`${(energy * 100).toFixed(0)}%`}
-            sub={
-              <EnergyBar value={energy} />
-            }
+            sub={<EnergyBar value={energy} />}
           />
           <div className={`rounded-lg border border-ink-600 p-3 ${verdict.bg}`}>
             <div className="text-[10px] uppercase tracking-widest2 font-bold text-text-secondary">
@@ -331,8 +400,6 @@ function StatCard({
 
 function EnergyBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
-  // Color the bar by the same buckets as the verdict for visual
-  // continuity.
   const color =
     value >= 0.85 ? '#0EA5E9' :
     value >= 0.5  ? '#22C55E' :

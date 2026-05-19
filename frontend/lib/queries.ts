@@ -2,6 +2,30 @@ import { supabase } from './supabase';
 import type { Forecast, Spot, SpotWithLatest } from './types';
 
 /**
+ * Targeted lookup for a handful of spots by slug. Used by content
+ * pages (e.g. /learn/swell-direction) that want real spot geometry —
+ * orientation, optimal swell dir, swell-window arcs — for a curated
+ * set of examples without dragging the entire 500-row spots table
+ * into the page payload.
+ *
+ * Returns spots in the requested order; missing slugs are dropped.
+ */
+export async function fetchSpotsBySlug(slugs: string[]): Promise<Spot[]> {
+  if (slugs.length === 0) return [];
+  const { data, error } = await supabase
+    .from('spots')
+    .select('*')
+    .in('slug', slugs);
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('fetchSpotsBySlug', error);
+    return [];
+  }
+  const bySlug = new Map((data ?? []).map((s) => [(s as Spot).slug, s as Spot]));
+  return slugs.map((s) => bySlug.get(s)).filter((s): s is Spot => Boolean(s));
+}
+
+/**
  * Fetch every spot, paginated past Supabase's default 1000-row REST cap.
  */
 export async function fetchAllSpots(): Promise<Spot[]> {
