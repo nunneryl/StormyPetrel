@@ -95,7 +95,10 @@ export function SpectrumViewer() {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={spectrum}
-            margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
+            // Generous top margin so the DPD reference-line label
+            // sits in clear space above the curve peak instead of
+            // getting clipped by the chart's top edge.
+            margin={{ top: 28, right: 12, bottom: 0, left: 0 }}
           >
             <defs>
               <linearGradient id="spectrum-fill" x1="0" y1="0" x2="0" y2="1">
@@ -147,7 +150,18 @@ export function SpectrumViewer() {
               x={dpd}
               stroke="#0F172A"
               strokeDasharray="3 3"
-              label={{ value: 'DPD', fill: '#0F172A', fontSize: 10, position: 'top' }}
+              // `insideTop` keeps the label rendered inside the
+              // chart's plot area at the top; combined with the
+              // bumped margin.top above this lands the label
+              // squarely in the padding strip we just opened up.
+              label={{
+                value: 'DPD',
+                fill: '#0F172A',
+                fontSize: 11,
+                fontWeight: 700,
+                position: 'insideTop',
+                offset: -16,
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>
