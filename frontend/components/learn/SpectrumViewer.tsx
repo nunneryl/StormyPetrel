@@ -85,10 +85,10 @@ export function SpectrumViewer() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
         <MetricCard label="DPD" value={`${dpd.toFixed(0)}s`} />
         <MetricCard label="APD" value={`${apd.toFixed(0)}s`} />
-        <MetricCard label="Verdict" value={verdict} small />
+        <MetricCard label="Verdict" value={verdict} variant="text" />
       </div>
 
       <div className="h-56 w-full">
@@ -163,21 +163,25 @@ export function SpectrumViewer() {
 function MetricCard({
   label,
   value,
-  small,
+  variant = 'number',
 }: {
   label: string;
   value: string;
-  small?: boolean;
+  /** 'number' = big tabular metric; 'text' = wraps for prose values
+   *  like "Bumpy, mixed" so the verdict card doesn't truncate. */
+  variant?: 'number' | 'text';
 }) {
   return (
-    <div className="rounded-lg border border-ink-600 bg-ink-900/60 p-3">
+    <div className="rounded-lg border border-ink-600 bg-ink-900/60 p-3 min-w-0">
       <div className="text-[10px] uppercase tracking-widest2 text-text-secondary">
         {label}
       </div>
       <div
-        className={`mt-1 font-bold tabular-nums text-text-primary ${
-          small ? 'text-sm' : 'text-2xl'
-        }`}
+        className={
+          variant === 'text'
+            ? 'mt-1 text-sm font-bold text-text-primary leading-snug break-words'
+            : 'mt-1 text-2xl font-bold tabular-nums text-text-primary'
+        }
       >
         {value}
       </div>
