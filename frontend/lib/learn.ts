@@ -26,6 +26,13 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       'The reason two spots ten miles apart get completely different waves. Interactive maps show how spot orientation and the swell window decide what your beach receives.',
     readTime: '7 min read',
   },
+  {
+    slug: 'wind',
+    title: 'How Wind Makes or Breaks a Surf Session',
+    description:
+      'Why offshore wind makes good waves and onshore ruins them, the daily sea breeze cycle, regional winds like Santa Anas and trades, and how to read a wind forecast.',
+    readTime: '9 min read',
+  },
 ];
 
 export function getLearnArticle(slug: string): LearnArticle | null {
