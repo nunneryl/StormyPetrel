@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { WindOnWave } from '@/components/learn/WindOnWave';
-import { WindCompass } from '@/components/learn/WindCompass';
+import { WindDirectionMap } from '@/components/learn/WindDirectionMap';
 import { SeaBreezeCycle } from '@/components/learn/SeaBreezeCycle';
 import { siteUrl } from '@/lib/site-url';
 
@@ -197,7 +197,7 @@ export default function WindArticle() {
           falls apart at 4 knots.
         </p>
 
-        <WindCompass />
+        <WindDirectionMap />
 
         <SectionHeading>Why dawn patrol works</SectionHeading>
 

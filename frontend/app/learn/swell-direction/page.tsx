@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SwellDirectionMap, type SwellPreset } from '@/components/learn/SwellDirectionMap';
 import { PointVsBay } from '@/components/learn/PointVsBay';
+import { LEARN_SPOT_PRESETS } from '@/lib/learn-spots';
 
 export const revalidate = 86400;
 
@@ -18,71 +19,32 @@ export const metadata: Metadata = {
   },
 };
 
+// Swell-specific extras keyed by slug. Core fields (lat/lng/label/
+// orientation) live in lib/learn-spots so /learn/wind can share the
+// same six spots without duplicating any of that data.
+const SWELL_EXTRAS: Record<string, { optimalSwellDir: number; windowArcs: { min: number; max: number }[] }> = {
+  'banzai-pipeline':          { optimalSwellDir: 310, windowArcs: [{ min: 270, max: 360 }, { min: 0, max: 30 }] },
+  'huntington-beach-pier':    { optimalSwellDir: 245, windowArcs: [{ min: 180, max: 300 }] },
+  'narragansett-beach':       { optimalSwellDir: 150, windowArcs: [{ min: 100, max: 220 }] },
+  'sebastian-inlet':          { optimalSwellDir:  55, windowArcs: [{ min:  20, max: 160 }] },
+  'rincon':                   { optimalSwellDir: 290, windowArcs: [{ min: 180, max: 300 }] },
+  'cape-hatteras-lighthouse': { optimalSwellDir: 110, windowArcs: [{ min:  30, max: 200 }] },
+};
+
 // Hand-curated preset geometry for the SwellDirectionMap embed.
 // We deliberately don't pull these from the spots table — the rest
 // of the site uses DB values, but a teaching diagram needs every
 // preset's orientation, window, and optimal direction to point at
 // open ocean every time, regardless of any pipeline regression that
 // might leave one of these spots temporarily wrong in the DB.
-//
-// Each verified by map: the "spot faces" line and the window wedge
-// both point over water, never over land.
-const PRESETS: SwellPreset[] = [
-  {
-    slug: 'banzai-pipeline',
-    label: 'Pipeline, HI',
-    lat: 21.6651,
-    lng: -158.0539,
-    orientationDeg: 315,
-    optimalSwellDir: 310,
-    windowArcs: [{ min: 270, max: 360 }, { min: 0, max: 30 }],
-  },
-  {
-    slug: 'huntington-beach-pier',
-    label: 'Huntington Beach, CA',
-    lat: 33.6553,
-    lng: -117.9988,
-    orientationDeg: 220,
-    optimalSwellDir: 245,
-    windowArcs: [{ min: 180, max: 300 }],
-  },
-  {
-    slug: 'narragansett-beach',
-    label: 'Narragansett, RI',
-    lat: 41.4490,
-    lng: -71.4545,
-    orientationDeg: 170,
-    optimalSwellDir: 150,
-    windowArcs: [{ min: 100, max: 220 }],
-  },
-  {
-    slug: 'sebastian-inlet',
-    label: 'Sebastian Inlet, FL',
-    lat: 27.8576,
-    lng: -80.4487,
-    orientationDeg: 80,
-    optimalSwellDir: 55,
-    windowArcs: [{ min: 20, max: 160 }],
-  },
-  {
-    slug: 'rincon',
-    label: 'Rincon, CA',
-    lat: 34.3731,
-    lng: -119.4782,
-    orientationDeg: 210,
-    optimalSwellDir: 290,
-    windowArcs: [{ min: 180, max: 300 }],
-  },
-  {
-    slug: 'cape-hatteras-lighthouse',
-    label: 'Cape Hatteras, NC',
-    lat: 35.2228,
-    lng: -75.5356,
-    orientationDeg: 110,
-    optimalSwellDir: 110,
-    windowArcs: [{ min: 30, max: 200 }],
-  },
-];
+const PRESETS: SwellPreset[] = LEARN_SPOT_PRESETS.map((s) => ({
+  slug: s.slug,
+  label: s.label,
+  lat: s.lat,
+  lng: s.lng,
+  orientationDeg: s.orientationDeg,
+  ...SWELL_EXTRAS[s.slug],
+}));
 
 export default function SwellDirectionArticle() {
   return (

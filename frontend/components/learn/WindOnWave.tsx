@@ -3,6 +3,11 @@
 // tablet+ and stacks on mobile. Wave/foam colors are intentionally
 // constant (this is a physical-color illustration); only the panel
 // background tracks the rest of the site's chrome.
+//
+// Each wave is layered: a paler back-shading polygon (#A8D0E8), the
+// main wave body (#5DA8E0), and a separate lip-detail path so the
+// curl behavior reads clearly without depending on the body path
+// for shape definition.
 
 export function WindOnWave() {
   return (
@@ -18,22 +23,23 @@ export function WindOnWave() {
           windLabel="Wind direction"
           windDirection="ltr"
         >
-          {/* Crumbling wave — short, foamy crest collapsing landward */}
-          <path
-            d="M 5 140 Q 40 138 75 130 Q 105 115 120 110 Q 132 108 140 116 Q 145 124 142 132 L 165 138 L 175 140 L 175 170 L 5 170 Z"
-            fill="#5DA8E0"
-          />
-          <circle cx="150" cy="121" r="2" fill="#FFFFFF" />
-          <circle cx="156" cy="128" r="2" fill="#FFFFFF" />
-          <circle cx="164" cy="133" r="1.5" fill="#FFFFFF" />
+          {/* Onshore — short crumbling crest with foam tumbling forward */}
+          <path d="M 5 148 C 30 144 55 138 75 130 C 92 122 105 116 112 116 L 112 148 Z" fill="#A8D0E8" />
+          <path d="M 5 148 C 30 146 55 142 75 135 C 95 128 108 122 118 122 C 128 124 134 130 136 136 C 136 142 130 144 124 142 L 158 148 L 175 148 L 175 180 L 5 180 Z" fill="#5DA8E0" />
+          <path d="M 116 122 C 126 118 136 122 138 130 C 138 138 132 142 126 140 C 121 138 119 132 122 128 Z" fill="#5DA8E0" />
+          <circle cx="146" cy="135" r="2.5" fill="#FFFFFF" />
+          <circle cx="154" cy="141" r="2" fill="#FFFFFF" />
+          <circle cx="162" cy="138" r="1.5" fill="#FFFFFF" />
+          <circle cx="142" cy="143" r="1.8" fill="#FFFFFF" opacity="0.8" />
         </Panel>
 
         <Panel title="Calm" caption="Standard plunging break" windLabel="No wind">
-          {/* Cleanly tossed lip, mid-pitch */}
-          <path
-            d="M 5 140 Q 35 138 60 130 Q 80 115 95 90 Q 110 80 125 90 Q 138 105 135 122 Q 128 130 120 126 Q 115 120 122 113 Q 130 110 135 118 L 145 130 Q 162 138 175 140 L 175 170 L 5 170 Z"
-            fill="#5DA8E0"
-          />
+          {/* Calm — clean plunger, mid-pitch */}
+          <path d="M 5 148 C 30 144 55 136 75 122 C 90 108 100 95 110 90 L 110 148 Z" fill="#A8D0E8" />
+          <path d="M 5 148 C 30 146 55 140 75 130 C 92 118 105 100 115 92 C 125 86 134 90 138 100 C 142 112 140 124 132 130 C 124 134 116 132 114 126 C 113 120 118 116 124 117 C 130 119 132 124 130 128 L 152 142 L 175 148 L 175 180 L 5 180 Z" fill="#5DA8E0" />
+          <path d="M 125 92 C 138 90 144 100 142 112 C 138 122 130 124 126 120 C 124 114 128 108 132 108 Z" fill="#5DA8E0" />
+          <circle cx="122" cy="128" r="1.5" fill="#FFFFFF" opacity="0.8" />
+          <circle cx="128" cy="132" r="1" fill="#FFFFFF" opacity="0.6" />
         </Panel>
 
         <Panel
@@ -42,15 +48,15 @@ export function WindOnWave() {
           windLabel="Wind direction"
           windDirection="rtl"
         >
-          {/* Hollow lip thrown forward with spray feathering off the top */}
-          <path
-            d="M 5 140 Q 30 138 55 130 Q 70 118 85 95 Q 95 75 110 70 Q 125 75 132 95 Q 130 115 118 115 Q 108 110 112 100 Q 122 98 130 105 L 142 122 Q 160 137 175 140 L 175 170 L 5 170 Z"
-            fill="#5DA8E0"
-          />
-          <circle cx="100" cy="68" r="1.5" fill="#FFFFFF" />
-          <circle cx="90" cy="65" r="1.5" fill="#FFFFFF" />
-          <circle cx="80" cy="67" r="1" fill="#FFFFFF" />
-          <circle cx="70" cy="70" r="0.8" fill="#FFFFFF" />
+          {/* Offshore — tall held-up lip with spray feathering off the top */}
+          <path d="M 5 148 C 25 144 45 134 65 120 C 80 100 92 75 102 65 L 102 148 Z" fill="#A8D0E8" />
+          <path d="M 5 148 C 25 146 45 140 65 130 C 82 118 92 100 100 80 C 106 65 115 60 122 62 C 130 66 136 80 138 100 C 140 118 136 132 128 138 C 120 142 114 138 114 130 C 115 124 122 122 126 126 C 128 130 126 134 124 134 L 148 144 L 175 148 L 175 180 L 5 180 Z" fill="#5DA8E0" />
+          <path d="M 118 62 C 130 60 138 72 140 88 C 140 98 134 102 130 100 C 126 96 124 88 126 78 C 128 70 124 66 120 68 Z" fill="#5DA8E0" />
+          <circle cx="110" cy="58" r="2" fill="#FFFFFF" />
+          <circle cx="100" cy="55" r="1.8" fill="#FFFFFF" />
+          <circle cx="90" cy="56" r="1.4" fill="#FFFFFF" opacity="0.9" />
+          <circle cx="80" cy="60" r="1.1" fill="#FFFFFF" opacity="0.7" />
+          <circle cx="70" cy="64" r="0.9" fill="#FFFFFF" opacity="0.5" />
         </Panel>
       </div>
     </div>
@@ -75,7 +81,7 @@ function Panel({
   return (
     <div className="rounded-lg bg-ink-900/60 border border-ink-600 px-3 pt-3 pb-3.5">
       <svg
-        viewBox="0 0 180 170"
+        viewBox="0 0 180 180"
         className="block w-full h-auto"
         aria-hidden
       >
@@ -101,7 +107,7 @@ function Panel({
         </defs>
         <text
           x="90"
-          y={windDirection ? 22 : 42}
+          y={windDirection ? 22 : 48}
           textAnchor="middle"
           fontSize="11"
           fill="#94A3B8"
@@ -110,14 +116,14 @@ function Panel({
         </text>
         {windDirection === 'ltr' && (
           <>
-            <line x1="35" y1="40" x2="105" y2="40" stroke="#94A3B8" strokeWidth="1" markerEnd="url(#wow-arrow-ltr)" />
-            <line x1="55" y1="55" x2="125" y2="55" stroke="#94A3B8" strokeWidth="1" markerEnd="url(#wow-arrow-ltr)" />
+            <line x1="38" y1="40" x2="102" y2="40" stroke="#94A3B8" strokeWidth="1.2" markerEnd="url(#wow-arrow-ltr)" />
+            <line x1="55" y1="55" x2="128" y2="55" stroke="#94A3B8" strokeWidth="1.2" markerEnd="url(#wow-arrow-ltr)" />
           </>
         )}
         {windDirection === 'rtl' && (
           <>
-            <line x1="145" y1="40" x2="75" y2="40" stroke="#94A3B8" strokeWidth="1" markerEnd="url(#wow-arrow-rtl)" />
-            <line x1="125" y1="55" x2="55" y2="55" stroke="#94A3B8" strokeWidth="1" markerEnd="url(#wow-arrow-rtl)" />
+            <line x1="142" y1="40" x2="78" y2="40" stroke="#94A3B8" strokeWidth="1.2" markerEnd="url(#wow-arrow-rtl)" />
+            <line x1="125" y1="55" x2="52" y2="55" stroke="#94A3B8" strokeWidth="1.2" markerEnd="url(#wow-arrow-rtl)" />
           </>
         )}
         {children}
