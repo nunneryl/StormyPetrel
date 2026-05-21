@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { WindOnWave } from '@/components/learn/WindOnWave';
 import { WindDirectionMap } from '@/components/learn/WindDirectionMap';
 import { SeaBreezeCycle } from '@/components/learn/SeaBreezeCycle';
 import { siteUrl } from '@/lib/site-url';
@@ -125,8 +124,6 @@ export default function WindArticle() {
           breaks under more than about 10 knots onshore stop producing
           peelers and start producing closeouts.
         </p>
-
-        <WindOnWave />
 
         <SectionHeading>Wind sea: the second problem</SectionHeading>
 
