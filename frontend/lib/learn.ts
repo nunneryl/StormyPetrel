@@ -33,6 +33,13 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       'Why offshore wind makes good waves and onshore ruins them, the daily sea breeze cycle, regional winds like Santa Anas and trades, and how to read a wind forecast.',
     readTime: '9 min read',
   },
+  {
+    slug: 'tides',
+    title: 'Tides and Surfing: Why Depth Changes Everything',
+    description:
+      'How tide moves the depth at your break — and why a foot of swing reshapes the wave. Why reefs like mid tide, points are forgiving, beach breaks want incoming mid, and shorebreaks need low.',
+    readTime: '8 min read',
+  },
 ];
 
 export function getLearnArticle(slug: string): LearnArticle | null {
