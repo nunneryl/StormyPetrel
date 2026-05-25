@@ -40,6 +40,13 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       'How tide moves the depth at your break — and why a foot of swing reshapes the wave. Why reefs like mid tide, points are forgiving, beach breaks want incoming mid, and shorebreaks need low.',
     readTime: '8 min read',
   },
+  {
+    slug: 'buoys',
+    title: 'How to Read a Buoy Report',
+    description:
+      'What WVHT, DPD, APD, and MWD actually mean, why the gap between DPD and APD is the most useful single diagnostic, why you should read two buoys, and how to calculate lead time from a deep-water station.',
+    readTime: '10 min read',
+  },
 ];
 
 export function getLearnArticle(slug: string): LearnArticle | null {
