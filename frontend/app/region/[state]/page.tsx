@@ -4,9 +4,21 @@ import { fetchAllSpots, fetchSpotsWithLatest, fetchSparklineData } from '@/lib/q
 import { fetchCamSlugSet } from '@/lib/cams';
 import { RegionList } from '@/components/RegionList';
 
-export const revalidate = 900;
+export const revalidate = 3600;
 
 type Params = { state: string };
+
+// Pre-build a /region/<state> page for every distinct state that has
+// at least one spot. The /regions index derives its list the same way,
+// so this stays in sync with that page automatically.
+export async function generateStaticParams() {
+  const spots = await fetchAllSpots();
+  const states = new Set<string>();
+  for (const s of spots) {
+    if (s.state) states.add(s.state.toLowerCase());
+  }
+  return Array.from(states).map((state) => ({ state }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { state } = await params;
