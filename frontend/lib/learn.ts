@@ -47,6 +47,13 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       'What WVHT, DPD, APD, and MWD actually mean, why the gap between DPD and APD is the most useful single diagnostic, why you should read two buoys, and how to calculate lead time from a deep-water station.',
     readTime: '10 min read',
   },
+  {
+    slug: 'forecasts',
+    title: 'How a Surf Forecast Actually Works',
+    description:
+      'A surf forecast is a stack of nested models: weather → global wave → nearshore transformation → wind and tide blend → human overlay → star rating. How each layer works and why accuracy drops off after three days.',
+    readTime: '11 min read',
+  },
 ];
 
 export function getLearnArticle(slug: string): LearnArticle | null {
