@@ -33,6 +33,8 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      REVALIDATE_URL: https://stormypetrel.surf/api/revalidate
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
       PYTHONUNBUFFERED: '1'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
@@ -51,3 +53,6 @@ jobs:
 
       - name: Generate daily reports
         run: python -m pipeline.daily_report --verbose
+
+      - name: Revalidate ISR cache (home + /reports + today's date page)
+        run: python -m pipeline.revalidate --scope daily

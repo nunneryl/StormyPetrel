@@ -75,6 +75,8 @@ jobs:
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      REVALIDATE_URL: https://stormypetrel.surf/api/revalidate
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
       # Don't buffer Python output — make logs visible in real time so a
       # stuck step is debuggable from the live Actions tail.
       PYTHONUNBUFFERED: '1'
@@ -123,6 +125,9 @@ jobs:
       - name: Push to Supabase (spots + forecasts + buoys + tides)
         run: python -m pipeline.db_import --all
 
+      - name: Revalidate ISR cache (home + map + regions + spot pages)
+        run: python -m pipeline.revalidate --scope full
+
       - name: Open issue on failure
         if: failure()
         uses: actions/github-script@v7
@@ -157,6 +162,8 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      REVALIDATE_URL: https://stormypetrel.surf/api/revalidate
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
       PYTHONUNBUFFERED: '1'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
@@ -181,3 +188,6 @@ jobs:
 
       - name: Push buoy_observations to Supabase
         run: python -m pipeline.db_import --buoys-only
+
+      - name: Revalidate ISR cache (home + map)
+        run: python -m pipeline.revalidate --scope buoys
