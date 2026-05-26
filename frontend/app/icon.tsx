@@ -12,6 +12,7 @@ import { join } from 'path';
 // + favicon route never 500.
 
 export const runtime = 'nodejs';
+export const revalidate = 86400;
 export const size = { width: 32, height: 32 };
 export const contentType = 'image/png';
 
