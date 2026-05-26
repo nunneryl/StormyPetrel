@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Forecast, Spot, BuoyObservation } from '@/lib/types';
+import { fetchAllSpots, fetchSpotBySlug } from '@/lib/queries';
+import type { Forecast, BuoyObservation } from '@/lib/types';
 import { StarRating } from '@/components/StarRating';
 import { ForecastGrid } from '@/components/ForecastGrid';
 import { SwellChart } from '@/components/SwellChart';
@@ -17,13 +18,22 @@ import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { siteUrl } from '@/lib/site-url';
 
-export const revalidate = 900;
+export const revalidate = 3600;
 
 type Params = { slug: string };
 
+// Pre-build all known spot pages at deploy time. Stale routes still
+// regenerate on demand after ISR expiry, and any new spot added to
+// the DB between deploys is built on first request. ~484 spots ⇒
+// ~484 prerendered HTML files per deploy.
+export async function generateStaticParams() {
+  const spots = await fetchAllSpots();
+  return spots.map((s) => ({ slug: s.slug }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
-  const spot = await loadSpot(slug);
+  const spot = await fetchSpotBySlug(slug);
   if (!spot) return { title: 'Spot not found' };
   const title = `${spot.name} Surf Forecast — Wave Height, Swell & Wind | Stormy Petrel`;
   const description =
@@ -37,19 +47,6 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     openGraph: { title, description, type: 'website' },
     twitter: { card: 'summary_large_image', title, description },
   };
-}
-
-async function loadSpot(slug: string): Promise<Spot | null> {
-  const { data, error } = await supabase
-    .from('spots')
-    .select('*')
-    .eq('slug', slug)
-    .maybeSingle();
-  if (error) {
-    console.error('loadSpot', error);
-    return null;
-  }
-  return data as Spot | null;
 }
 
 async function loadForecasts(spotId: number): Promise<Forecast[]> {
@@ -101,7 +98,7 @@ function freshnessLabel(latest: Forecast | null): string {
 
 export default async function SpotPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const spot = await loadSpot(slug);
+  const spot = await fetchSpotBySlug(slug);
   if (!spot) notFound();
 
   const [forecasts, buoy, cams] = await Promise.all([

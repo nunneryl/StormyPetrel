@@ -2,6 +2,25 @@ import { supabase } from './supabase';
 import type { Forecast, Spot, SpotWithLatest } from './types';
 
 /**
+ * Single-spot lookup by slug. Used by /spot/[slug] for both the page
+ * body and generateMetadata — calling it twice per render is fine
+ * because both call sites land inside the same RSC and Next dedupes.
+ */
+export async function fetchSpotBySlug(slug: string): Promise<Spot | null> {
+  const { data, error } = await supabase
+    .from('spots')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('fetchSpotBySlug', error);
+    return null;
+  }
+  return data as Spot | null;
+}
+
+/**
  * Targeted lookup for a handful of spots by slug. Used by content
  * pages (e.g. /learn/swell-direction) that want real spot geometry —
  * orientation, optimal swell dir, swell-window arcs — for a curated
