@@ -46,11 +46,14 @@ from pathlib import Path
 
 log = logging.getLogger("revalidate")
 
-# A spot is considered "changed" if its current-hour star rating
-# changed at all (stars come in 0.5 increments) OR if its current-hour
-# breaker face moved by more than this many feet. Anything tighter
-# would catch model jitter that doesn't change what users see.
+# A spot is considered "changed" if its current-hour breaker face moves
+# by more than FACE_FT_TOLERANCE feet OR if its star rating moves by at
+# least STARS_TOLERANCE. Stars are emitted in 0.5 increments by the
+# interpret stage, so anything below 0.5 is below the resolution of the
+# rating system itself; bumping to 0.5 also guards against any future
+# change that lets stars take finer values without us re-tuning here.
 FACE_FT_TOLERANCE = 0.3
+STARS_TOLERANCE = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -144,18 +147,27 @@ def fetch_current_hour_ratings(client) -> dict[int, dict]:
 # ---------------------------------------------------------------------------
 
 def _rating_changed(old: dict | None, new: dict) -> bool:
-    """True if stars moved at all OR face_ft moved more than the tolerance.
+    """True if stars moved by >= STARS_TOLERANCE OR face_ft moved by > FACE_FT_TOLERANCE.
 
-    Treat missing-then-present (or vice versa) as a change too — the
-    spot card looks different when face_ft transitions from null to a
-    value.
+    A null-to-value transition on either field counts as a change too —
+    the spot card visibly looks different when stars or face_ft flip
+    between "—" and a number.
     """
     if old is None:
         return True
-    if (old.get("stars") is None) != (new.get("stars") is None):
+
+    o_stars = old.get("stars")
+    n_stars = new.get("stars")
+    if (o_stars is None) != (n_stars is None):
         return True
-    if old.get("stars") != new.get("stars"):
-        return True
+    if o_stars is not None and n_stars is not None:
+        try:
+            if abs(float(n_stars) - float(o_stars)) >= STARS_TOLERANCE:
+                return True
+        except (TypeError, ValueError):
+            if o_stars != n_stars:
+                return True
+
     o_fft = old.get("face_ft")
     n_fft = new.get("face_ft")
     if (o_fft is None) != (n_fft is None):
