@@ -122,11 +122,14 @@ jobs:
       - name: Interpret (compute ratings)
         run: python -m pipeline.interpret
 
+      - name: Snapshot pre-write spot ratings (for diff in revalidate step)
+        run: python -m pipeline.revalidate --snapshot pipeline/forecast_data/ratings_snapshot.json
+
       - name: Push to Supabase (spots + forecasts + buoys + tides)
         run: python -m pipeline.db_import --all
 
-      - name: Revalidate ISR cache (home + map + regions + spot pages)
-        run: python -m pipeline.revalidate --scope full
+      - name: Revalidate ISR cache (home + map + regions + CHANGED spot pages only)
+        run: python -m pipeline.revalidate --scope full --diff-from pipeline/forecast_data/ratings_snapshot.json
 
       - name: Open issue on failure
         if: failure()
