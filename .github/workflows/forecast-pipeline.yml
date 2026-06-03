@@ -6,10 +6,12 @@ name: forecast-pipeline
 #                     Supabase push. 8-hour cadence is enough freshness
 #                     for surf-forecast use while cutting Actions minutes
 #                     by a third vs. the prior every-6h schedule.
-#   - buoy-update     every 3h on the hour. NDBC publishes obs ~every 30
-#                     min, so the displayed "now" reading averages
-#                     ~1.5h staleness — fine for the spot page without
-#                     paying for the heavy GRIB downloads each cycle.
+#   - buoy-update     every 1h on the hour. NDBC publishes obs every
+#                     30–60 min, so a 1-hour cadence keeps the "now"
+#                     reading near-real-time. Vercel Pro removed the
+#                     ISR Write cap that previously made the 3-hour
+#                     cadence the right tradeoff; only / and /map are
+#                     revalidated so spot pages aren't touched.
 #
 # Manual trigger via the Actions tab — pick which job to run from the
 # `job` input dropdown. Both jobs gate themselves with an `if:` so a
@@ -33,10 +35,11 @@ on:
     # cadence is enough freshness for the surf use case at lower runner
     # cost than every-6h.
     - cron: '30 3,11,19 * * *'
-    # Buoy refresh every 3 hours. NDBC publishes ~every 30 min but the
-    # forecast page reads buoys as a "now" reference — 3-hour cadence
-    # keeps the displayed reading under ~1.5h average staleness.
-    - cron: '0 */3 * * *'
+    # Buoy refresh hourly. NDBC publishes ~every 30 min, so this keeps
+    # the "now" reading inside the 30-min freshness window most of the
+    # time. Only revalidates / and /map (not spot pages) so the higher
+    # cadence doesn't fan out into per-spot ISR Writes.
+    - cron: '0 * * * *'
 
 # Opt JavaScript-based actions (checkout, setup-python, github-script,
 # cache) onto the Node.js 24 runner. Node 20 is deprecated and gets
@@ -155,9 +158,9 @@ jobs:
             });
 
   buoy-update:
-    name: buoy-update (3-hourly NDBC refresh)
+    name: buoy-update (hourly NDBC refresh)
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '0 */3 * * *') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 * * * *') ||
       (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update')
     runs-on: ubuntu-latest
     timeout-minutes: 10
