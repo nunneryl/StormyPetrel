@@ -23,6 +23,11 @@ psycopg2-binary>=2.9,<3
 xarray>=2024.1
 cfgrib>=0.9.14
 
+# ECMWF HRES-WAM ingestion (pipeline/ecmwf_wam.py) — open-data client for
+# the AWS mirror. Reuses the cfgrib/xarray/scipy stack above for decode +
+# interpolation. Isolated second wave model; does not touch NWPS.
+ecmwf-opendata>=0.3,<1
+
 # Enrichment (Phase 0B) — geospatial stack
 shapely>=2.0,<3
 pyproj>=3.6,<4
