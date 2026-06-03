@@ -195,10 +195,12 @@ def interpolate_to_spots(ds, spots: list[dict]):
     Returns (records, counts) where records are ready-to-upsert dicts and
     counts is {exact, nearest_ocean, no_data}.
 
-    NOTE: mean wave direction (mwd) is bilinearly interpolated like the
-    scalars per the task spec. Bilinear averaging of a circular quantity
-    is imperfect across the 0/360 seam; nearest-ocean fallback spots take
-    the exact cell value and are unaffected.
+    NOTE: mean wave direction (mwd) is a circular quantity, so the
+    exact-bilinear path interpolates its sin/cos components separately
+    and recombines with atan2 — plain bilinear averaging would turn e.g.
+    350° + 10° into 180°. swh and pp1d use plain bilinear. Nearest-ocean
+    fallback spots copy a single grid cell, so they're unaffected either
+    way.
     """
     import numpy as np
     import xarray as xr
@@ -221,6 +223,12 @@ def interpolate_to_spots(ds, spots: list[dict]):
     ocean_pts = np.column_stack([lat_vals[ii], lon_vals[jj]])
     tree = cKDTree(ocean_pts) if ocean_pts.shape[0] else None
 
+    # Decompose direction into unit-vector components so the bilinear
+    # interpolation below averages headings correctly across the 0/360
+    # seam. atan2(sin, cos) after interpolation recovers the angle.
+    mwd_rad = np.deg2rad(ds["mwd"])
+    ds = ds.assign(_mwd_sin=np.sin(mwd_rad), _mwd_cos=np.cos(mwd_rad))
+
     # Vectorised bilinear interpolation for all spots at once.
     spot_lats = np.array([float(s["lat"]) for s in spots])
     spot_lons = np.array([float(s["lng"]) for s in spots])
@@ -228,7 +236,19 @@ def interpolate_to_spots(ds, spots: list[dict]):
     lon_da = xr.DataArray(spot_lons, dims="spot")
     interp = ds.interp(latitude=lat_da, longitude=lon_da, method="linear")
     interp = interp.transpose("spot", "step")
-    bil = {p: np.asarray(interp[p].values, dtype=float) for p in WAVE_PARAMS}  # (nspot, nstep)
+
+    # swh / pp1d: plain bilinear. mwd: recombine interpolated sin/cos.
+    bil = {
+        "swh": np.asarray(interp["swh"].values, dtype=float),
+        "pp1d": np.asarray(interp["pp1d"].values, dtype=float),
+    }
+    mwd_deg = np.rad2deg(
+        np.arctan2(
+            np.asarray(interp["_mwd_sin"].values, dtype=float),
+            np.asarray(interp["_mwd_cos"].values, dtype=float),
+        )
+    )
+    bil["mwd"] = np.where(mwd_deg < 0, mwd_deg + 360.0, mwd_deg)  # (nspot, nstep)
 
     records: list[dict] = []
     counts = {"exact": 0, "nearest_ocean": 0, "no_data": 0}
