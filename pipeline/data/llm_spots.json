@@ -8,551 +8,3059 @@
     "southern_california": {
       "state": "California",
       "spots": [
-        {"name": "Trestles", "nearest_town": "San Clemente, CA"},
-        {"name": "Lower Trestles", "nearest_town": "San Clemente, CA"},
-        {"name": "Upper Trestles", "nearest_town": "San Clemente, CA"},
-        {"name": "Cottons", "nearest_town": "San Clemente, CA"},
-        {"name": "T Street", "nearest_town": "San Clemente, CA"},
-        {"name": "San Onofre", "nearest_town": "San Clemente, CA"},
-        {"name": "Trails", "nearest_town": "San Clemente, CA"},
-        {"name": "Church", "nearest_town": "San Clemente, CA"},
-        {"name": "Doheny State Beach", "nearest_town": "Dana Point, CA"},
-        {"name": "Salt Creek", "nearest_town": "Dana Point, CA"},
-        {"name": "Strands Beach", "nearest_town": "Dana Point, CA"},
-        {"name": "Brooks Street", "nearest_town": "Laguna Beach, CA"},
-        {"name": "Thalia Street", "nearest_town": "Laguna Beach, CA"},
-        {"name": "Rockpile", "nearest_town": "Laguna Beach, CA"},
-        {"name": "The Wedge", "nearest_town": "Newport Beach, CA"},
-        {"name": "Newport Point", "nearest_town": "Newport Beach, CA"},
-        {"name": "Blackies", "nearest_town": "Newport Beach, CA"},
-        {"name": "56th Street", "nearest_town": "Newport Beach, CA"},
-        {"name": "River Jetties", "nearest_town": "Newport Beach, CA"},
-        {"name": "Huntington Beach Pier", "nearest_town": "Huntington Beach, CA"},
-        {"name": "Huntington Cliffs", "nearest_town": "Huntington Beach, CA"},
-        {"name": "Bolsa Chica State Beach", "nearest_town": "Huntington Beach, CA"},
-        {"name": "Seal Beach Pier", "nearest_town": "Seal Beach, CA"},
-        {"name": "Surfside Jetty", "nearest_town": "Seal Beach, CA"},
-        {"name": "El Porto", "nearest_town": "Manhattan Beach, CA"},
-        {"name": "Manhattan Beach Pier", "nearest_town": "Manhattan Beach, CA"},
-        {"name": "Hermosa Beach Pier", "nearest_town": "Hermosa Beach, CA"},
-        {"name": "Redondo Breakwater", "nearest_town": "Redondo Beach, CA"},
-        {"name": "Torrance Beach", "nearest_town": "Torrance, CA"},
-        {"name": "Palos Verdes Cove", "nearest_town": "Palos Verdes Estates, CA"},
-        {"name": "Lunada Bay", "nearest_town": "Palos Verdes Estates, CA"},
-        {"name": "Venice Beach Breakwater", "nearest_town": "Venice, CA"},
-        {"name": "Santa Monica Beach", "nearest_town": "Santa Monica, CA"},
-        {"name": "Sunset Point", "nearest_town": "Pacific Palisades, CA"},
-        {"name": "Topanga Beach", "nearest_town": "Malibu, CA"},
-        {"name": "Malibu Surfrider Beach", "nearest_town": "Malibu, CA"},
-        {"name": "Malibu Point", "nearest_town": "Malibu, CA"},
-        {"name": "Zuma Beach", "nearest_town": "Malibu, CA"},
-        {"name": "Leo Carrillo State Beach", "nearest_town": "Malibu, CA"},
-        {"name": "County Line", "nearest_town": "Malibu, CA"},
-        {"name": "C Street Ventura", "nearest_town": "Ventura, CA"},
-        {"name": "Ventura Overhead", "nearest_town": "Ventura, CA"},
-        {"name": "Ventura Point", "nearest_town": "Ventura, CA"},
-        {"name": "Mondos", "nearest_town": "Ventura, CA"},
-        {"name": "Emma Wood State Beach", "nearest_town": "Ventura, CA"},
-        {"name": "Rincon", "nearest_town": "Carpinteria, CA"},
-        {"name": "Rincon Point", "nearest_town": "Carpinteria, CA"},
-        {"name": "Carpinteria State Beach", "nearest_town": "Carpinteria, CA"},
-        {"name": "Hammonds", "nearest_town": "Santa Barbara, CA"},
-        {"name": "Leadbetter Beach", "nearest_town": "Santa Barbara, CA"},
-        {"name": "Sandspit", "nearest_town": "Santa Barbara, CA"},
-        {"name": "Campus Point UCSB", "nearest_town": "Goleta, CA"},
-        {"name": "Devereux", "nearest_town": "Goleta, CA"},
-        {"name": "El Capitan State Beach", "nearest_town": "Goleta, CA"},
-        {"name": "Refugio State Beach", "nearest_town": "Goleta, CA"},
-        {"name": "Jalama Beach", "nearest_town": "Lompoc, CA"},
-        {"name": "Surf Beach Vandenberg", "nearest_town": "Lompoc, CA"},
-        {"name": "San Diego Blacks Beach", "nearest_town": "La Jolla, CA"},
-        {"name": "Windansea", "nearest_town": "La Jolla, CA"},
-        {"name": "La Jolla Shores", "nearest_town": "La Jolla, CA"},
-        {"name": "Bird Rock", "nearest_town": "La Jolla, CA"},
-        {"name": "Tourmaline", "nearest_town": "San Diego, CA"},
-        {"name": "Pacific Beach", "nearest_town": "San Diego, CA"},
-        {"name": "Mission Beach", "nearest_town": "San Diego, CA"},
-        {"name": "Ocean Beach Pier SD", "nearest_town": "San Diego, CA"},
-        {"name": "Sunset Cliffs", "nearest_town": "San Diego, CA"},
-        {"name": "Garbage Beach", "nearest_town": "San Diego, CA"},
-        {"name": "Coronado Shores", "nearest_town": "Coronado, CA"},
-        {"name": "Imperial Beach Pier", "nearest_town": "Imperial Beach, CA"},
-        {"name": "IB Jetty", "nearest_town": "Imperial Beach, CA"},
-        {"name": "Del Mar Beach", "nearest_town": "Del Mar, CA"},
-        {"name": "15th Street Del Mar", "nearest_town": "Del Mar, CA"},
-        {"name": "Solana Beach", "nearest_town": "Solana Beach, CA"},
-        {"name": "Cardiff Reef", "nearest_town": "Cardiff-by-the-Sea, CA"},
-        {"name": "San Elijo State Beach", "nearest_town": "Cardiff-by-the-Sea, CA"},
-        {"name": "Swamis", "nearest_town": "Encinitas, CA"},
-        {"name": "D Street Encinitas", "nearest_town": "Encinitas, CA"},
-        {"name": "Moonlight Beach", "nearest_town": "Encinitas, CA"},
-        {"name": "Stone Steps", "nearest_town": "Encinitas, CA"},
-        {"name": "Leucadia", "nearest_town": "Encinitas, CA"},
-        {"name": "Carlsbad State Beach", "nearest_town": "Carlsbad, CA"},
-        {"name": "Tamarack", "nearest_town": "Carlsbad, CA"},
-        {"name": "Oceanside Pier", "nearest_town": "Oceanside, CA"},
-        {"name": "Oceanside Harbor", "nearest_town": "Oceanside, CA"},
-        {"name": "Ponto Beach", "nearest_town": "Carlsbad, CA"}
+        {
+          "name": "Trestles",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "Lower Trestles",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "Upper Trestles",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "Cottons",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "T Street",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "San Onofre",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "Trails",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "Church",
+          "nearest_town": "San Clemente, CA"
+        },
+        {
+          "name": "Doheny State Beach",
+          "nearest_town": "Dana Point, CA"
+        },
+        {
+          "name": "Salt Creek",
+          "nearest_town": "Dana Point, CA"
+        },
+        {
+          "name": "Strands Beach",
+          "nearest_town": "Dana Point, CA"
+        },
+        {
+          "name": "Brooks Street",
+          "nearest_town": "Laguna Beach, CA"
+        },
+        {
+          "name": "Thalia Street",
+          "nearest_town": "Laguna Beach, CA"
+        },
+        {
+          "name": "Rockpile",
+          "nearest_town": "Laguna Beach, CA"
+        },
+        {
+          "name": "The Wedge",
+          "nearest_town": "Newport Beach, CA"
+        },
+        {
+          "name": "Newport Point",
+          "nearest_town": "Newport Beach, CA"
+        },
+        {
+          "name": "Blackies",
+          "nearest_town": "Newport Beach, CA"
+        },
+        {
+          "name": "56th Street",
+          "nearest_town": "Newport Beach, CA"
+        },
+        {
+          "name": "River Jetties",
+          "nearest_town": "Newport Beach, CA"
+        },
+        {
+          "name": "Huntington Beach Pier",
+          "nearest_town": "Huntington Beach, CA"
+        },
+        {
+          "name": "Huntington Cliffs",
+          "nearest_town": "Huntington Beach, CA"
+        },
+        {
+          "name": "Bolsa Chica State Beach",
+          "nearest_town": "Huntington Beach, CA"
+        },
+        {
+          "name": "Seal Beach Pier",
+          "nearest_town": "Seal Beach, CA"
+        },
+        {
+          "name": "Surfside Jetty",
+          "nearest_town": "Seal Beach, CA"
+        },
+        {
+          "name": "El Porto",
+          "nearest_town": "Manhattan Beach, CA"
+        },
+        {
+          "name": "Manhattan Beach Pier",
+          "nearest_town": "Manhattan Beach, CA"
+        },
+        {
+          "name": "Hermosa Beach Pier",
+          "nearest_town": "Hermosa Beach, CA"
+        },
+        {
+          "name": "Redondo Breakwater",
+          "nearest_town": "Redondo Beach, CA"
+        },
+        {
+          "name": "Torrance Beach",
+          "nearest_town": "Torrance, CA"
+        },
+        {
+          "name": "Palos Verdes Cove",
+          "nearest_town": "Palos Verdes Estates, CA"
+        },
+        {
+          "name": "Lunada Bay",
+          "nearest_town": "Palos Verdes Estates, CA"
+        },
+        {
+          "name": "Venice Beach Breakwater",
+          "nearest_town": "Venice, CA"
+        },
+        {
+          "name": "Santa Monica Beach",
+          "nearest_town": "Santa Monica, CA"
+        },
+        {
+          "name": "Sunset Point",
+          "nearest_town": "Pacific Palisades, CA"
+        },
+        {
+          "name": "Topanga Beach",
+          "nearest_town": "Malibu, CA"
+        },
+        {
+          "name": "Malibu Surfrider Beach",
+          "nearest_town": "Malibu, CA"
+        },
+        {
+          "name": "Malibu Point",
+          "nearest_town": "Malibu, CA"
+        },
+        {
+          "name": "Zuma Beach",
+          "nearest_town": "Malibu, CA"
+        },
+        {
+          "name": "Leo Carrillo State Beach",
+          "nearest_town": "Malibu, CA"
+        },
+        {
+          "name": "County Line",
+          "nearest_town": "Malibu, CA"
+        },
+        {
+          "name": "C Street Ventura",
+          "nearest_town": "Ventura, CA"
+        },
+        {
+          "name": "Ventura Point",
+          "nearest_town": "Ventura, CA"
+        },
+        {
+          "name": "Mondos",
+          "nearest_town": "Ventura, CA"
+        },
+        {
+          "name": "Emma Wood State Beach",
+          "nearest_town": "Ventura, CA"
+        },
+        {
+          "name": "Rincon",
+          "nearest_town": "Carpinteria, CA"
+        },
+        {
+          "name": "Rincon Point",
+          "nearest_town": "Carpinteria, CA"
+        },
+        {
+          "name": "Carpinteria State Beach",
+          "nearest_town": "Carpinteria, CA"
+        },
+        {
+          "name": "Hammonds",
+          "nearest_town": "Santa Barbara, CA"
+        },
+        {
+          "name": "Leadbetter Beach",
+          "nearest_town": "Santa Barbara, CA"
+        },
+        {
+          "name": "Sandspit",
+          "nearest_town": "Santa Barbara, CA"
+        },
+        {
+          "name": "Campus Point UCSB",
+          "nearest_town": "Goleta, CA"
+        },
+        {
+          "name": "Devereux",
+          "nearest_town": "Goleta, CA"
+        },
+        {
+          "name": "El Capitan State Beach",
+          "nearest_town": "Goleta, CA"
+        },
+        {
+          "name": "Refugio State Beach",
+          "nearest_town": "Goleta, CA"
+        },
+        {
+          "name": "Jalama Beach",
+          "nearest_town": "Lompoc, CA"
+        },
+        {
+          "name": "Surf Beach Vandenberg",
+          "nearest_town": "Lompoc, CA"
+        },
+        {
+          "name": "San Diego Blacks Beach",
+          "nearest_town": "La Jolla, CA"
+        },
+        {
+          "name": "Windansea",
+          "nearest_town": "La Jolla, CA"
+        },
+        {
+          "name": "La Jolla Shores",
+          "nearest_town": "La Jolla, CA"
+        },
+        {
+          "name": "Bird Rock",
+          "nearest_town": "La Jolla, CA"
+        },
+        {
+          "name": "Tourmaline",
+          "nearest_town": "San Diego, CA"
+        },
+        {
+          "name": "Pacific Beach",
+          "nearest_town": "San Diego, CA"
+        },
+        {
+          "name": "Mission Beach",
+          "nearest_town": "San Diego, CA"
+        },
+        {
+          "name": "Ocean Beach Pier SD",
+          "nearest_town": "San Diego, CA"
+        },
+        {
+          "name": "Sunset Cliffs",
+          "nearest_town": "San Diego, CA"
+        },
+        {
+          "name": "Garbage Beach",
+          "nearest_town": "San Diego, CA"
+        },
+        {
+          "name": "Coronado Shores",
+          "nearest_town": "Coronado, CA"
+        },
+        {
+          "name": "Imperial Beach Pier",
+          "nearest_town": "Imperial Beach, CA"
+        },
+        {
+          "name": "Del Mar Beach",
+          "nearest_town": "Del Mar, CA"
+        },
+        {
+          "name": "15th Street Del Mar",
+          "nearest_town": "Del Mar, CA"
+        },
+        {
+          "name": "Solana Beach",
+          "nearest_town": "Solana Beach, CA"
+        },
+        {
+          "name": "Cardiff Reef",
+          "nearest_town": "Cardiff-by-the-Sea, CA"
+        },
+        {
+          "name": "San Elijo State Beach",
+          "nearest_town": "Cardiff-by-the-Sea, CA"
+        },
+        {
+          "name": "Swamis",
+          "nearest_town": "Encinitas, CA"
+        },
+        {
+          "name": "D Street Encinitas",
+          "nearest_town": "Encinitas, CA"
+        },
+        {
+          "name": "Moonlight Beach",
+          "nearest_town": "Encinitas, CA"
+        },
+        {
+          "name": "Stone Steps",
+          "nearest_town": "Encinitas, CA"
+        },
+        {
+          "name": "Leucadia",
+          "nearest_town": "Encinitas, CA"
+        },
+        {
+          "name": "Carlsbad State Beach",
+          "nearest_town": "Carlsbad, CA"
+        },
+        {
+          "name": "Tamarack",
+          "nearest_town": "Carlsbad, CA"
+        },
+        {
+          "name": "Oceanside Pier",
+          "nearest_town": "Oceanside, CA"
+        },
+        {
+          "name": "Oceanside Harbor",
+          "nearest_town": "Oceanside, CA"
+        },
+        {
+          "name": "Ponto Beach",
+          "nearest_town": "Carlsbad, CA"
+        },
+        {
+          "name": "Tijuana Slough",
+          "lat": 32.558497,
+          "lng": -117.132583
+        },
+        {
+          "name": "Avalanches",
+          "lat": 32.75155,
+          "lng": -117.254248
+        },
+        {
+          "name": "PB Point",
+          "lat": 32.807296,
+          "lng": -117.268066
+        },
+        {
+          "name": "Law Street",
+          "lat": 32.801777,
+          "lng": -117.261393
+        },
+        {
+          "name": "Scripps Pier",
+          "lat": 32.866467,
+          "lng": -117.255342
+        },
+        {
+          "name": "Seaside Reef",
+          "lat": 32.998694,
+          "lng": -117.279654
+        },
+        {
+          "name": "Pipes",
+          "lat": 33.02626,
+          "lng": -117.288752
+        },
+        {
+          "name": "Trails",
+          "lat": 33.362363,
+          "lng": -117.548904
+        },
+        {
+          "name": "San Clemente Beach",
+          "lat": 33.40257,
+          "lng": -117.606411
+        },
+        {
+          "name": "Middles",
+          "lat": 33.380104,
+          "lng": -117.583323
+        },
+        {
+          "name": "Rockpile",
+          "lat": 33.541395,
+          "lng": -117.791805
+        },
+        {
+          "name": "Crystal Cove",
+          "lat": 33.557418,
+          "lng": -117.822018
+        },
+        {
+          "name": "Corona Del Mar",
+          "lat": 33.588454,
+          "lng": -117.875576
+        },
+        {
+          "name": "Newport Jetties",
+          "lat": 33.617907,
+          "lng": -117.941494
+        },
+        {
+          "name": "Seal Beach Jetty",
+          "lat": 33.739258,
+          "lng": -118.116503
+        },
+        {
+          "name": "Cabrillo Beach",
+          "lat": 33.703492,
+          "lng": -118.288937
+        },
+        {
+          "name": "White Point",
+          "lat": 33.704581,
+          "lng": -118.295074
+        },
+        {
+          "name": "Haggarty's",
+          "lat": 33.802401,
+          "lng": -118.402576
+        },
+        {
+          "name": "Rat Beach",
+          "lat": 33.804291,
+          "lng": -118.395817
+        },
+        {
+          "name": "Bruce's Beach",
+          "lat": 33.89368,
+          "lng": -118.418927
+        },
+        {
+          "name": "Shitpipe",
+          "lat": 33.922957,
+          "lng": -118.434548
+        },
+        {
+          "name": "Dockweiler Beach",
+          "lat": 33.941758,
+          "lng": -118.444848
+        },
+        {
+          "name": "Venice Beach Pier",
+          "lat": 33.977246,
+          "lng": -118.469782
+        },
+        {
+          "name": "Santa Monica Pier",
+          "lat": 34.007704,
+          "lng": -118.499908
+        },
+        {
+          "name": "Will Rogers",
+          "lat": 34.035164,
+          "lng": -118.539476
+        },
+        {
+          "name": "Sunset Point",
+          "lat": 34.03744,
+          "lng": -118.553617
+        },
+        {
+          "name": "Chart House",
+          "lat": 34.039076,
+          "lng": -118.575418
+        },
+        {
+          "name": "Malibu Point",
+          "lat": 34.032408,
+          "lng": -118.678608
+        },
+        {
+          "name": "Point Dume",
+          "lat": 33.998241,
+          "lng": -118.805895
+        },
+        {
+          "name": "Port Hueneme",
+          "lat": 34.138414,
+          "lng": -119.194794
+        },
+        {
+          "name": "Silver Strand",
+          "lat": 34.150063,
+          "lng": -119.221058
+        },
+        {
+          "name": "Oxnard Beach",
+          "lat": 34.178045,
+          "lng": -119.240241
+        },
+        {
+          "name": "Ventura Harbor",
+          "lat": 34.244943,
+          "lng": -119.27011
+        },
+        {
+          "name": "Pitas Point",
+          "lat": 34.316218,
+          "lng": -119.389114
+        },
+        {
+          "name": "Faria Beach",
+          "lat": 34.333549,
+          "lng": -119.408684
+        },
+        {
+          "name": "Mussel Shoals",
+          "lat": 34.35488,
+          "lng": -119.441943
+        },
+        {
+          "name": "Tarpits",
+          "lat": 34.383467,
+          "lng": -119.501681
+        },
+        {
+          "name": "Miramar",
+          "lat": 34.417673,
+          "lng": -119.627295
+        },
+        {
+          "name": "Mesa Lane",
+          "lat": 34.394977,
+          "lng": -119.727244
+        }
       ]
     },
     "northern_california": {
       "state": "California",
       "spots": [
-        {"name": "Pismo Beach Pier", "nearest_town": "Pismo Beach, CA"},
-        {"name": "Shell Beach", "nearest_town": "Shell Beach, CA"},
-        {"name": "Morro Rock", "nearest_town": "Morro Bay, CA"},
-        {"name": "Cayucos Pier", "nearest_town": "Cayucos, CA"},
-        {"name": "San Simeon", "nearest_town": "San Simeon, CA"},
-        {"name": "Sand Dollar Beach", "nearest_town": "Big Sur, CA"},
-        {"name": "Andrew Molera State Park", "nearest_town": "Big Sur, CA"},
-        {"name": "Carmel Beach", "nearest_town": "Carmel-by-the-Sea, CA"},
-        {"name": "Asilomar State Beach", "nearest_town": "Pacific Grove, CA"},
-        {"name": "Lovers Point", "nearest_town": "Pacific Grove, CA"},
-        {"name": "Marina State Beach", "nearest_town": "Marina, CA"},
-        {"name": "Moss Landing", "nearest_town": "Moss Landing, CA"},
-        {"name": "Manresa State Beach", "nearest_town": "Watsonville, CA"},
-        {"name": "The Hook", "nearest_town": "Santa Cruz, CA"},
-        {"name": "Pleasure Point", "nearest_town": "Santa Cruz, CA"},
-        {"name": "38th Avenue", "nearest_town": "Santa Cruz, CA"},
-        {"name": "Steamer Lane", "nearest_town": "Santa Cruz, CA"},
-        {"name": "Cowell Beach", "nearest_town": "Santa Cruz, CA"},
-        {"name": "The Lane", "nearest_town": "Santa Cruz, CA"},
-        {"name": "Natural Bridges", "nearest_town": "Santa Cruz, CA"},
-        {"name": "Waddell Creek", "nearest_town": "Davenport, CA"},
-        {"name": "Scotts Creek", "nearest_town": "Davenport, CA"},
-        {"name": "Davenport Landing", "nearest_town": "Davenport, CA"},
-        {"name": "Mavericks", "nearest_town": "Half Moon Bay, CA"},
-        {"name": "Pillar Point", "nearest_town": "Half Moon Bay, CA"},
-        {"name": "Half Moon Bay Jetty", "nearest_town": "Half Moon Bay, CA"},
-        {"name": "Montara State Beach", "nearest_town": "Montara, CA"},
-        {"name": "Pacifica Linda Mar", "nearest_town": "Pacifica, CA"},
-        {"name": "Rockaway Beach Pacifica", "nearest_town": "Pacifica, CA"},
-        {"name": "Sharp Park", "nearest_town": "Pacifica, CA"},
-        {"name": "Ocean Beach SF", "nearest_town": "San Francisco, CA"},
-        {"name": "Fort Point", "nearest_town": "San Francisco, CA"},
-        {"name": "Bolinas", "nearest_town": "Bolinas, CA"},
-        {"name": "Stinson Beach", "nearest_town": "Stinson Beach, CA"},
-        {"name": "Dillon Beach", "nearest_town": "Dillon Beach, CA"},
-        {"name": "Salmon Creek Beach", "nearest_town": "Bodega Bay, CA"},
-        {"name": "Doran Beach", "nearest_town": "Bodega Bay, CA"},
-        {"name": "Jenner Beach", "nearest_town": "Jenner, CA"},
-        {"name": "Point Arena", "nearest_town": "Point Arena, CA"},
-        {"name": "Shelter Cove", "nearest_town": "Shelter Cove, CA"},
-        {"name": "Humboldt Bay Jetty", "nearest_town": "Eureka, CA"},
-        {"name": "Moonstone Beach Humboldt", "nearest_town": "Trinidad, CA"},
-        {"name": "Trinidad State Beach", "nearest_town": "Trinidad, CA"},
-        {"name": "Crescent City Beach", "nearest_town": "Crescent City, CA"}
+        {
+          "name": "Pismo Beach Pier",
+          "nearest_town": "Pismo Beach, CA"
+        },
+        {
+          "name": "Shell Beach",
+          "nearest_town": "Shell Beach, CA"
+        },
+        {
+          "name": "Morro Rock",
+          "nearest_town": "Morro Bay, CA"
+        },
+        {
+          "name": "Cayucos Pier",
+          "nearest_town": "Cayucos, CA"
+        },
+        {
+          "name": "San Simeon",
+          "nearest_town": "San Simeon, CA"
+        },
+        {
+          "name": "Sand Dollar Beach",
+          "nearest_town": "Big Sur, CA"
+        },
+        {
+          "name": "Andrew Molera State Park",
+          "nearest_town": "Big Sur, CA"
+        },
+        {
+          "name": "Carmel Beach",
+          "nearest_town": "Carmel-by-the-Sea, CA"
+        },
+        {
+          "name": "Asilomar State Beach",
+          "nearest_town": "Pacific Grove, CA"
+        },
+        {
+          "name": "Lovers Point",
+          "nearest_town": "Pacific Grove, CA"
+        },
+        {
+          "name": "Marina State Beach",
+          "nearest_town": "Marina, CA"
+        },
+        {
+          "name": "Moss Landing",
+          "nearest_town": "Moss Landing, CA"
+        },
+        {
+          "name": "Manresa State Beach",
+          "nearest_town": "Watsonville, CA"
+        },
+        {
+          "name": "The Hook",
+          "nearest_town": "Santa Cruz, CA"
+        },
+        {
+          "name": "Pleasure Point",
+          "nearest_town": "Santa Cruz, CA"
+        },
+        {
+          "name": "38th Avenue",
+          "nearest_town": "Santa Cruz, CA"
+        },
+        {
+          "name": "Steamer Lane",
+          "nearest_town": "Santa Cruz, CA"
+        },
+        {
+          "name": "Cowell Beach",
+          "nearest_town": "Santa Cruz, CA"
+        },
+        {
+          "name": "Natural Bridges",
+          "nearest_town": "Santa Cruz, CA"
+        },
+        {
+          "name": "Waddell Creek",
+          "nearest_town": "Davenport, CA"
+        },
+        {
+          "name": "Scotts Creek",
+          "nearest_town": "Davenport, CA"
+        },
+        {
+          "name": "Davenport Landing",
+          "nearest_town": "Davenport, CA"
+        },
+        {
+          "name": "Mavericks",
+          "nearest_town": "Half Moon Bay, CA"
+        },
+        {
+          "name": "Half Moon Bay Jetty",
+          "nearest_town": "Half Moon Bay, CA"
+        },
+        {
+          "name": "Montara State Beach",
+          "nearest_town": "Montara, CA"
+        },
+        {
+          "name": "Pacifica Linda Mar",
+          "nearest_town": "Pacifica, CA"
+        },
+        {
+          "name": "Rockaway Beach Pacifica",
+          "nearest_town": "Pacifica, CA"
+        },
+        {
+          "name": "Sharp Park",
+          "nearest_town": "Pacifica, CA"
+        },
+        {
+          "name": "Ocean Beach SF",
+          "nearest_town": "San Francisco, CA"
+        },
+        {
+          "name": "Fort Point",
+          "nearest_town": "San Francisco, CA"
+        },
+        {
+          "name": "Bolinas",
+          "nearest_town": "Bolinas, CA"
+        },
+        {
+          "name": "Stinson Beach",
+          "nearest_town": "Stinson Beach, CA"
+        },
+        {
+          "name": "Dillon Beach",
+          "nearest_town": "Dillon Beach, CA"
+        },
+        {
+          "name": "Salmon Creek Beach",
+          "nearest_town": "Bodega Bay, CA"
+        },
+        {
+          "name": "Doran Beach",
+          "nearest_town": "Bodega Bay, CA"
+        },
+        {
+          "name": "Jenner Beach",
+          "nearest_town": "Jenner, CA"
+        },
+        {
+          "name": "Point Arena",
+          "nearest_town": "Point Arena, CA"
+        },
+        {
+          "name": "Shelter Cove",
+          "nearest_town": "Shelter Cove, CA"
+        },
+        {
+          "name": "Humboldt Bay Jetty",
+          "nearest_town": "Eureka, CA"
+        },
+        {
+          "name": "Moonstone Beach Humboldt",
+          "nearest_town": "Trinidad, CA"
+        },
+        {
+          "name": "Trinidad State Beach",
+          "nearest_town": "Trinidad, CA"
+        },
+        {
+          "name": "Crescent City Beach",
+          "nearest_town": "Crescent City, CA"
+        },
+        {
+          "name": "Avila Beach",
+          "lat": 35.176895,
+          "lng": -120.732472
+        },
+        {
+          "name": "Grover Beach",
+          "lat": 35.12047,
+          "lng": -120.637221
+        },
+        {
+          "name": "Shell Beach",
+          "lat": 35.163249,
+          "lng": -120.691767
+        },
+        {
+          "name": "Cable Landing",
+          "lat": 35.307841,
+          "lng": -120.876474
+        },
+        {
+          "name": "Piedras Blancas",
+          "lat": 35.663712,
+          "lng": -121.288719
+        },
+        {
+          "name": "Mole Point",
+          "lat": 36.610429,
+          "lng": -121.959357
+        },
+        {
+          "name": "Boneyard",
+          "lat": 36.639292,
+          "lng": -121.931419
+        },
+        {
+          "name": "Monterey Beach",
+          "lat": 36.603298,
+          "lng": -121.881423
+        },
+        {
+          "name": "Mitchell's Cove",
+          "lat": 36.951401,
+          "lng": -122.039309
+        },
+        {
+          "name": "4 Mile",
+          "lat": 36.965581,
+          "lng": -122.122629
+        },
+        {
+          "name": "Pigeon Point",
+          "lat": 37.180766,
+          "lng": -122.39439
+        },
+        {
+          "name": "Pescadero",
+          "lat": 37.264763,
+          "lng": -122.414174
+        },
+        {
+          "name": "Half Moon Bay",
+          "lat": 37.476357,
+          "lng": -122.454815
+        },
+        {
+          "name": "Pedro Point",
+          "lat": 37.599816,
+          "lng": -122.516785
+        },
+        {
+          "name": "South Ocean Beach",
+          "lat": 37.736105,
+          "lng": -122.510262
+        },
+        {
+          "name": "North Ocean Beach",
+          "lat": 37.775735,
+          "lng": -122.515197
+        },
+        {
+          "name": "Cronkhite",
+          "lat": 37.828768,
+          "lng": -122.537899
+        },
+        {
+          "name": "Point Reyes North",
+          "lat": 38.08377,
+          "lng": -122.981644
+        },
+        {
+          "name": "Mendocino",
+          "lat": 39.301063,
+          "lng": -123.798966
+        },
+        {
+          "name": "Caspar",
+          "lat": 39.361146,
+          "lng": -123.819094
+        },
+        {
+          "name": "Jug Handle",
+          "lat": 39.376755,
+          "lng": -123.8186
+        },
+        {
+          "name": "Mackerricher",
+          "lat": 39.490927,
+          "lng": -123.798494
+        },
+        {
+          "name": "Ten Mile Beach",
+          "lat": 39.538337,
+          "lng": -123.773775
+        },
+        {
+          "name": "Westport",
+          "lat": 39.63924,
+          "lng": -123.788581
+        },
+        {
+          "name": "Agate Beach",
+          "lat": 41.148026,
+          "lng": -124.144478
+        }
       ]
     },
     "hawaii": {
       "state": "Hawaii",
       "spots": [
-        {"name": "Pipeline", "nearest_town": "Haleiwa, HI"},
-        {"name": "Backdoor Pipeline", "nearest_town": "Haleiwa, HI"},
-        {"name": "Off The Wall", "nearest_town": "Haleiwa, HI"},
-        {"name": "Rocky Point", "nearest_town": "Haleiwa, HI"},
-        {"name": "Log Cabins", "nearest_town": "Haleiwa, HI"},
-        {"name": "Sunset Beach Hawaii", "nearest_town": "Haleiwa, HI"},
-        {"name": "Velzyland", "nearest_town": "Haleiwa, HI"},
-        {"name": "Waimea Bay", "nearest_town": "Haleiwa, HI"},
-        {"name": "Laniakea", "nearest_town": "Haleiwa, HI"},
-        {"name": "Chuns Reef", "nearest_town": "Haleiwa, HI"},
-        {"name": "Haleiwa Ali'i Beach", "nearest_town": "Haleiwa, HI"},
-        {"name": "Puaena Point", "nearest_town": "Haleiwa, HI"},
-        {"name": "Turtle Bay", "nearest_town": "Kahuku, HI"},
-        {"name": "Ehukai Beach Park", "nearest_town": "Haleiwa, HI"},
-        {"name": "V-Land", "nearest_town": "Haleiwa, HI"},
-        {"name": "Phantoms", "nearest_town": "Haleiwa, HI"},
-        {"name": "Ala Moana Bowls", "nearest_town": "Honolulu, HI"},
-        {"name": "Kaisers", "nearest_town": "Honolulu, HI"},
-        {"name": "Queens Waikiki", "nearest_town": "Honolulu, HI"},
-        {"name": "Canoes Waikiki", "nearest_town": "Honolulu, HI"},
-        {"name": "Publics Waikiki", "nearest_town": "Honolulu, HI"},
-        {"name": "Diamond Head Cliffs", "nearest_town": "Honolulu, HI"},
-        {"name": "Sandy Beach Oahu", "nearest_town": "Honolulu, HI"},
-        {"name": "Makapuu", "nearest_town": "Waimanalo, HI"},
-        {"name": "Bellows Beach", "nearest_town": "Waimanalo, HI"},
-        {"name": "Kailua Beach Oahu", "nearest_town": "Kailua, HI"},
-        {"name": "North Shore Oahu", "nearest_town": "Haleiwa, HI"},
-        {"name": "Makaha", "nearest_town": "Waianae, HI"},
-        {"name": "Yokohama Bay", "nearest_town": "Waianae, HI"},
-        {"name": "Electric Beach", "nearest_town": "Kapolei, HI"},
-        {"name": "Barbers Point", "nearest_town": "Kapolei, HI"},
-        {"name": "White Plains Beach", "nearest_town": "Ewa Beach, HI"},
-        {"name": "Hookipa", "nearest_town": "Paia, HI"},
-        {"name": "Kanaha Beach", "nearest_town": "Kahului, HI"},
-        {"name": "Peahi Jaws", "nearest_town": "Haiku, HI"},
-        {"name": "Honolua Bay", "nearest_town": "Kapalua, HI"},
-        {"name": "Flemings Beach", "nearest_town": "Kapalua, HI"},
-        {"name": "Lahaina Breakwall", "nearest_town": "Lahaina, HI"},
-        {"name": "Launiupoko", "nearest_town": "Lahaina, HI"},
-        {"name": "Thousand Peaks Maui", "nearest_town": "Kihei, HI"},
-        {"name": "Big Beach Makena", "nearest_town": "Wailea, HI"},
-        {"name": "Hanalei Bay", "nearest_town": "Hanalei, HI"},
-        {"name": "Tunnels Beach", "nearest_town": "Haena, HI"},
-        {"name": "Cannons Kauai", "nearest_town": "Haena, HI"},
-        {"name": "Anahola Bay", "nearest_town": "Anahola, HI"},
-        {"name": "Kiahuna Beach", "nearest_town": "Poipu, HI"},
-        {"name": "Poipu Beach", "nearest_town": "Poipu, HI"},
-        {"name": "Polihale Beach", "nearest_town": "Waimea, HI"},
-        {"name": "Pakala", "nearest_town": "Waimea, HI"},
-        {"name": "Hapuna Beach", "nearest_town": "Puako, HI"},
-        {"name": "Banyans", "nearest_town": "Kailua-Kona, HI"},
-        {"name": "Lymans", "nearest_town": "Kailua-Kona, HI"},
-        {"name": "Pine Trees Hawaii", "nearest_town": "Kailua-Kona, HI"},
-        {"name": "Honolii Beach Park", "nearest_town": "Hilo, HI"},
-        {"name": "Richardson Beach", "nearest_town": "Hilo, HI"},
-        {"name": "Kolekole Beach Park", "nearest_town": "Honomu, HI"}
+        {
+          "name": "Pipeline",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Backdoor Pipeline",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Off The Wall",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Rocky Point",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Log Cabins",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Sunset Beach Hawaii",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Velzyland",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Waimea Bay",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Laniakea",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Chuns Reef",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Haleiwa Ali'i Beach",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Puaena Point",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Turtle Bay",
+          "nearest_town": "Kahuku, HI"
+        },
+        {
+          "name": "Ehukai Beach Park",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "V-Land",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Ala Moana Bowls",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Kaisers",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Queens Waikiki",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Canoes Waikiki",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Publics Waikiki",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Diamond Head Cliffs",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Sandy Beach Oahu",
+          "nearest_town": "Honolulu, HI"
+        },
+        {
+          "name": "Makapuu",
+          "nearest_town": "Waimanalo, HI"
+        },
+        {
+          "name": "Bellows Beach",
+          "nearest_town": "Waimanalo, HI"
+        },
+        {
+          "name": "Kailua Beach Oahu",
+          "nearest_town": "Kailua, HI"
+        },
+        {
+          "name": "North Shore Oahu",
+          "nearest_town": "Haleiwa, HI"
+        },
+        {
+          "name": "Makaha",
+          "nearest_town": "Waianae, HI"
+        },
+        {
+          "name": "Yokohama Bay",
+          "nearest_town": "Waianae, HI"
+        },
+        {
+          "name": "Electric Beach",
+          "nearest_town": "Kapolei, HI"
+        },
+        {
+          "name": "Barbers Point",
+          "nearest_town": "Kapolei, HI"
+        },
+        {
+          "name": "White Plains Beach",
+          "nearest_town": "Ewa Beach, HI"
+        },
+        {
+          "name": "Hookipa",
+          "nearest_town": "Paia, HI"
+        },
+        {
+          "name": "Kanaha Beach",
+          "nearest_town": "Kahului, HI"
+        },
+        {
+          "name": "Peahi Jaws",
+          "nearest_town": "Haiku, HI"
+        },
+        {
+          "name": "Honolua Bay",
+          "nearest_town": "Kapalua, HI"
+        },
+        {
+          "name": "Flemings Beach",
+          "nearest_town": "Kapalua, HI"
+        },
+        {
+          "name": "Lahaina Breakwall",
+          "nearest_town": "Lahaina, HI"
+        },
+        {
+          "name": "Launiupoko",
+          "nearest_town": "Lahaina, HI"
+        },
+        {
+          "name": "Thousand Peaks Maui",
+          "nearest_town": "Kihei, HI"
+        },
+        {
+          "name": "Big Beach Makena",
+          "nearest_town": "Wailea, HI"
+        },
+        {
+          "name": "Hanalei Bay",
+          "nearest_town": "Hanalei, HI"
+        },
+        {
+          "name": "Tunnels Beach",
+          "nearest_town": "Haena, HI"
+        },
+        {
+          "name": "Anahola Bay",
+          "nearest_town": "Anahola, HI"
+        },
+        {
+          "name": "Kiahuna Beach",
+          "nearest_town": "Poipu, HI"
+        },
+        {
+          "name": "Poipu Beach",
+          "nearest_town": "Poipu, HI"
+        },
+        {
+          "name": "Polihale Beach",
+          "nearest_town": "Waimea, HI"
+        },
+        {
+          "name": "Pakala",
+          "nearest_town": "Waimea, HI"
+        },
+        {
+          "name": "Hapuna Beach",
+          "nearest_town": "Puako, HI"
+        },
+        {
+          "name": "Banyans",
+          "nearest_town": "Kailua-Kona, HI"
+        },
+        {
+          "name": "Lymans",
+          "nearest_town": "Kailua-Kona, HI"
+        },
+        {
+          "name": "Pine Trees Hawaii",
+          "nearest_town": "Kailua-Kona, HI"
+        },
+        {
+          "name": "Honolii Beach Park",
+          "nearest_town": "Hilo, HI"
+        },
+        {
+          "name": "Richardson Beach",
+          "nearest_town": "Hilo, HI"
+        },
+        {
+          "name": "Kolekole Beach Park",
+          "nearest_town": "Honomu, HI"
+        }
       ]
     },
     "florida_atlantic": {
       "state": "Florida",
       "spots": [
-        {"name": "Sebastian Inlet", "nearest_town": "Melbourne Beach, FL"},
-        {"name": "Spanish House", "nearest_town": "Melbourne Beach, FL"},
-        {"name": "Monster Hole", "nearest_town": "Melbourne Beach, FL"},
-        {"name": "Satellite Beach", "nearest_town": "Satellite Beach, FL"},
-        {"name": "Patrick Air Force Base Beach", "nearest_town": "Patrick AFB, FL"},
-        {"name": "Cocoa Beach Pier", "nearest_town": "Cocoa Beach, FL"},
-        {"name": "Lori Wilson Park", "nearest_town": "Cocoa Beach, FL"},
-        {"name": "Jetty Park Cocoa Beach", "nearest_town": "Cape Canaveral, FL"},
-        {"name": "Playalinda Beach", "nearest_town": "Titusville, FL"},
-        {"name": "New Smyrna Beach Inlet", "nearest_town": "New Smyrna Beach, FL"},
-        {"name": "New Smyrna Beach Jetty", "nearest_town": "New Smyrna Beach, FL"},
-        {"name": "Ponce Inlet", "nearest_town": "Ponce Inlet, FL"},
-        {"name": "Daytona Beach", "nearest_town": "Daytona Beach, FL"},
-        {"name": "Flagler Beach Pier", "nearest_town": "Flagler Beach, FL"},
-        {"name": "Marineland", "nearest_town": "Marineland, FL"},
-        {"name": "Matanzas Inlet", "nearest_town": "St. Augustine, FL"},
-        {"name": "St. Augustine Beach Pier", "nearest_town": "St. Augustine, FL"},
-        {"name": "Vilano Beach", "nearest_town": "Vilano Beach, FL"},
-        {"name": "Jacksonville Beach Pier", "nearest_town": "Jacksonville Beach, FL"},
-        {"name": "Atlantic Beach", "nearest_town": "Atlantic Beach, FL"},
-        {"name": "Mayport Poles", "nearest_town": "Atlantic Beach, FL"},
-        {"name": "Ponte Vedra Beach", "nearest_town": "Ponte Vedra Beach, FL"},
-        {"name": "Amelia Island", "nearest_town": "Fernandina Beach, FL"},
-        {"name": "Fort Pierce Inlet", "nearest_town": "Fort Pierce, FL"},
-        {"name": "Bathtub Beach", "nearest_town": "Stuart, FL"},
-        {"name": "Jupiter Inlet", "nearest_town": "Jupiter, FL"},
-        {"name": "Juno Beach Pier", "nearest_town": "Juno Beach, FL"},
-        {"name": "Palm Beach Midtown", "nearest_town": "Palm Beach, FL"},
-        {"name": "Lake Worth Pier", "nearest_town": "Lake Worth, FL"},
-        {"name": "Boynton Beach Inlet", "nearest_town": "Boynton Beach, FL"},
-        {"name": "Delray Beach", "nearest_town": "Delray Beach, FL"},
-        {"name": "Boca Raton Inlet", "nearest_town": "Boca Raton, FL"},
-        {"name": "Deerfield Beach Pier", "nearest_town": "Deerfield Beach, FL"},
-        {"name": "Pompano Beach Pier", "nearest_town": "Pompano Beach, FL"},
-        {"name": "Fort Lauderdale Beach", "nearest_town": "Fort Lauderdale, FL"},
-        {"name": "Dania Beach Pier", "nearest_town": "Dania Beach, FL"},
-        {"name": "South Beach Miami", "nearest_town": "Miami Beach, FL"},
-        {"name": "Haulover Inlet", "nearest_town": "Miami Beach, FL"}
+        {
+          "name": "Sebastian Inlet",
+          "nearest_town": "Melbourne Beach, FL"
+        },
+        {
+          "name": "Spanish House",
+          "nearest_town": "Melbourne Beach, FL"
+        },
+        {
+          "name": "Monster Hole",
+          "nearest_town": "Melbourne Beach, FL"
+        },
+        {
+          "name": "Satellite Beach",
+          "nearest_town": "Satellite Beach, FL"
+        },
+        {
+          "name": "Patrick Air Force Base Beach",
+          "nearest_town": "Patrick AFB, FL"
+        },
+        {
+          "name": "Cocoa Beach Pier",
+          "nearest_town": "Cocoa Beach, FL"
+        },
+        {
+          "name": "Lori Wilson Park",
+          "nearest_town": "Cocoa Beach, FL"
+        },
+        {
+          "name": "Jetty Park Cocoa Beach",
+          "nearest_town": "Cape Canaveral, FL"
+        },
+        {
+          "name": "Playalinda Beach",
+          "nearest_town": "Titusville, FL"
+        },
+        {
+          "name": "New Smyrna Beach Inlet",
+          "nearest_town": "New Smyrna Beach, FL"
+        },
+        {
+          "name": "New Smyrna Beach Jetty",
+          "nearest_town": "New Smyrna Beach, FL"
+        },
+        {
+          "name": "Ponce Inlet",
+          "nearest_town": "Ponce Inlet, FL"
+        },
+        {
+          "name": "Daytona Beach",
+          "nearest_town": "Daytona Beach, FL"
+        },
+        {
+          "name": "Flagler Beach Pier",
+          "nearest_town": "Flagler Beach, FL"
+        },
+        {
+          "name": "Marineland",
+          "nearest_town": "Marineland, FL"
+        },
+        {
+          "name": "Matanzas Inlet",
+          "nearest_town": "St. Augustine, FL"
+        },
+        {
+          "name": "St. Augustine Beach Pier",
+          "nearest_town": "St. Augustine, FL"
+        },
+        {
+          "name": "Vilano Beach",
+          "nearest_town": "Vilano Beach, FL"
+        },
+        {
+          "name": "Jacksonville Beach Pier",
+          "nearest_town": "Jacksonville Beach, FL"
+        },
+        {
+          "name": "Atlantic Beach",
+          "nearest_town": "Atlantic Beach, FL"
+        },
+        {
+          "name": "Mayport Poles",
+          "nearest_town": "Atlantic Beach, FL"
+        },
+        {
+          "name": "Ponte Vedra Beach",
+          "nearest_town": "Ponte Vedra Beach, FL"
+        },
+        {
+          "name": "Amelia Island",
+          "nearest_town": "Fernandina Beach, FL"
+        },
+        {
+          "name": "Fort Pierce Inlet",
+          "nearest_town": "Fort Pierce, FL"
+        },
+        {
+          "name": "Bathtub Beach",
+          "nearest_town": "Stuart, FL"
+        },
+        {
+          "name": "Jupiter Inlet",
+          "nearest_town": "Jupiter, FL"
+        },
+        {
+          "name": "Juno Beach Pier",
+          "nearest_town": "Juno Beach, FL"
+        },
+        {
+          "name": "Lake Worth Pier",
+          "nearest_town": "Lake Worth, FL"
+        },
+        {
+          "name": "Boynton Beach Inlet",
+          "nearest_town": "Boynton Beach, FL"
+        },
+        {
+          "name": "Delray Beach",
+          "nearest_town": "Delray Beach, FL"
+        },
+        {
+          "name": "Boca Raton Inlet",
+          "nearest_town": "Boca Raton, FL"
+        },
+        {
+          "name": "Deerfield Beach Pier",
+          "nearest_town": "Deerfield Beach, FL"
+        },
+        {
+          "name": "Pompano Beach Pier",
+          "nearest_town": "Pompano Beach, FL"
+        },
+        {
+          "name": "Fort Lauderdale Beach",
+          "nearest_town": "Fort Lauderdale, FL"
+        },
+        {
+          "name": "Dania Beach Pier",
+          "nearest_town": "Dania Beach, FL"
+        },
+        {
+          "name": "South Beach Miami",
+          "nearest_town": "Miami Beach, FL"
+        },
+        {
+          "name": "Haulover Inlet",
+          "nearest_town": "Miami Beach, FL"
+        },
+        {
+          "name": "Key West",
+          "lat": 24.548236,
+          "lng": -81.778107
+        },
+        {
+          "name": "Sunny Isles",
+          "lat": 25.935508,
+          "lng": -80.118442
+        },
+        {
+          "name": "Spoils",
+          "lat": 26.095638,
+          "lng": -80.103893
+        },
+        {
+          "name": "Commercial Pier",
+          "lat": 26.189389,
+          "lng": -80.094087
+        },
+        {
+          "name": "Hillsboro Inlet",
+          "lat": 26.257118,
+          "lng": -80.081524
+        },
+        {
+          "name": "Hillsboro Beach",
+          "lat": 26.305226,
+          "lng": -80.076084
+        },
+        {
+          "name": "Palmetto Pavilion",
+          "lat": 26.349364,
+          "lng": -80.069293
+        },
+        {
+          "name": "Boyton Bech Inlet",
+          "lat": 26.54474,
+          "lng": -80.04232
+        },
+        {
+          "name": "Ocean Reef Park",
+          "lat": 26.785001,
+          "lng": -80.031109
+        },
+        {
+          "name": "Hobe Beach",
+          "lat": 27.028242,
+          "lng": -80.096769
+        },
+        {
+          "name": "Jensen Beach",
+          "lat": 27.278128,
+          "lng": -80.206547
+        },
+        {
+          "name": "Vero Pier",
+          "lat": 27.670435,
+          "lng": -80.359776
+        },
+        {
+          "name": "Spessard",
+          "lat": 28.044751,
+          "lng": -80.545621
+        },
+        {
+          "name": "Ocean Ave",
+          "lat": 28.068629,
+          "lng": -80.555899
+        },
+        {
+          "name": "Indiatlantic",
+          "lat": 28.090382,
+          "lng": -80.564139
+        },
+        {
+          "name": "Canova Beach Park",
+          "lat": 28.137772,
+          "lng": -80.579503
+        },
+        {
+          "name": "Pelican Beach",
+          "lat": 28.168024,
+          "lng": -80.587313
+        },
+        {
+          "name": "16th Street South",
+          "lat": 28.295196,
+          "lng": -80.606812
+        },
+        {
+          "name": "Flagler Ave",
+          "lat": 29.038574,
+          "lng": -80.895209
+        },
+        {
+          "name": "Wilbur by the Sea",
+          "lat": 29.133195,
+          "lng": -80.958037
+        },
+        {
+          "name": "A Street",
+          "lat": 29.844478,
+          "lng": -81.265054
+        },
+        {
+          "name": "Atlantic Blvd",
+          "lat": 30.307726,
+          "lng": -81.390753
+        },
+        {
+          "name": "Fort Clinch",
+          "lat": 30.698966,
+          "lng": -81.426115
+        }
       ]
     },
     "florida_gulf": {
       "state": "Florida",
       "spots": [
-        {"name": "Pensacola Beach", "nearest_town": "Pensacola Beach, FL"},
-        {"name": "Navarre Beach", "nearest_town": "Navarre, FL"},
-        {"name": "Okaloosa Island Pier", "nearest_town": "Fort Walton Beach, FL"},
-        {"name": "Destin Jetty", "nearest_town": "Destin, FL"},
-        {"name": "Panama City Beach Pier", "nearest_town": "Panama City Beach, FL"},
-        {"name": "Mexico Beach", "nearest_town": "Mexico Beach, FL"},
-        {"name": "St. George Island", "nearest_town": "St. George Island, FL"},
-        {"name": "Cedar Key", "nearest_town": "Cedar Key, FL"},
-        {"name": "Clearwater Beach", "nearest_town": "Clearwater, FL"},
-        {"name": "Indian Rocks Beach", "nearest_town": "Indian Rocks Beach, FL"},
-        {"name": "Treasure Island FL", "nearest_town": "Treasure Island, FL"},
-        {"name": "St. Pete Beach", "nearest_town": "St. Pete Beach, FL"},
-        {"name": "Longboat Key", "nearest_town": "Longboat Key, FL"},
-        {"name": "Venice Beach FL", "nearest_town": "Venice, FL"},
-        {"name": "Naples Pier", "nearest_town": "Naples, FL"}
+        {
+          "name": "Pensacola Beach",
+          "nearest_town": "Pensacola Beach, FL"
+        },
+        {
+          "name": "Navarre Beach",
+          "nearest_town": "Navarre, FL"
+        },
+        {
+          "name": "Okaloosa Island Pier",
+          "nearest_town": "Fort Walton Beach, FL"
+        },
+        {
+          "name": "Destin Jetty",
+          "nearest_town": "Destin, FL"
+        },
+        {
+          "name": "Panama City Beach Pier",
+          "nearest_town": "Panama City Beach, FL"
+        },
+        {
+          "name": "Mexico Beach",
+          "nearest_town": "Mexico Beach, FL"
+        },
+        {
+          "name": "St. George Island",
+          "nearest_town": "St. George Island, FL"
+        },
+        {
+          "name": "Cedar Key",
+          "nearest_town": "Cedar Key, FL"
+        },
+        {
+          "name": "Clearwater Beach",
+          "nearest_town": "Clearwater, FL"
+        },
+        {
+          "name": "Indian Rocks Beach",
+          "nearest_town": "Indian Rocks Beach, FL"
+        },
+        {
+          "name": "Treasure Island FL",
+          "nearest_town": "Treasure Island, FL"
+        },
+        {
+          "name": "St. Pete Beach",
+          "nearest_town": "St. Pete Beach, FL"
+        },
+        {
+          "name": "Longboat Key",
+          "nearest_town": "Longboat Key, FL"
+        },
+        {
+          "name": "Venice Beach FL",
+          "nearest_town": "Venice, FL"
+        },
+        {
+          "name": "Naples Pier",
+          "nearest_town": "Naples, FL"
+        },
+        {
+          "name": "St Andews Park",
+          "lat": 30.122784,
+          "lng": -85.736275
+        },
+        {
+          "name": "Cape San B liss",
+          "lat": 29.672542,
+          "lng": -85.369606
+        },
+        {
+          "name": "Redington Pier",
+          "lat": 27.81211,
+          "lng": -82.819169
+        },
+        {
+          "name": "Madeira Beach",
+          "lat": 27.80188,
+          "lng": -82.8052
+        },
+        {
+          "name": "Spring Ave",
+          "lat": 27.525094,
+          "lng": -82.737522
+        },
+        {
+          "name": "Twin Piers",
+          "lat": 27.460891,
+          "lng": -82.698748
+        },
+        {
+          "name": "Whitney Beach",
+          "lat": 27.431471,
+          "lng": -82.687011
+        },
+        {
+          "name": "Coolidge",
+          "lat": 27.308753,
+          "lng": -82.57586
+        },
+        {
+          "name": "Siesta Key",
+          "lat": 27.263442,
+          "lng": -82.552965
+        },
+        {
+          "name": "Englewood",
+          "lat": 26.947322,
+          "lng": -82.37669
+        },
+        {
+          "name": "Gasparilla",
+          "lat": 26.802546,
+          "lng": -82.282491
+        },
+        {
+          "name": "Captiva",
+          "lat": 26.51747,
+          "lng": -82.192926
+        }
       ]
     },
     "outer_banks_north_carolina": {
       "state": "North Carolina",
       "spots": [
-        {"name": "Corolla Beach", "nearest_town": "Corolla, NC"},
-        {"name": "Duck Pier", "nearest_town": "Duck, NC"},
-        {"name": "Kitty Hawk Pier", "nearest_town": "Kitty Hawk, NC"},
-        {"name": "Avalon Pier", "nearest_town": "Kill Devil Hills, NC"},
-        {"name": "Kill Devil Hills", "nearest_town": "Kill Devil Hills, NC"},
-        {"name": "Nags Head Pier", "nearest_town": "Nags Head, NC"},
-        {"name": "Jennettes Pier", "nearest_town": "Nags Head, NC"},
-        {"name": "Oregon Inlet", "nearest_town": "Nags Head, NC"},
-        {"name": "Rodanthe", "nearest_town": "Rodanthe, NC"},
-        {"name": "Salvo", "nearest_town": "Salvo, NC"},
-        {"name": "Avon Pier", "nearest_town": "Avon, NC"},
-        {"name": "Cape Hatteras Lighthouse", "nearest_town": "Buxton, NC"},
-        {"name": "The Point Buxton", "nearest_town": "Buxton, NC"},
-        {"name": "Frisco Pier", "nearest_town": "Frisco, NC"},
-        {"name": "Ocracoke Beach", "nearest_town": "Ocracoke, NC"},
-        {"name": "Emerald Isle", "nearest_town": "Emerald Isle, NC"},
-        {"name": "Atlantic Beach NC", "nearest_town": "Atlantic Beach, NC"},
-        {"name": "Wrightsville Beach", "nearest_town": "Wrightsville Beach, NC"},
-        {"name": "Carolina Beach", "nearest_town": "Carolina Beach, NC"},
-        {"name": "Kure Beach", "nearest_town": "Kure Beach, NC"},
-        {"name": "Surf City NC", "nearest_town": "Surf City, NC"},
-        {"name": "Topsail Beach", "nearest_town": "Topsail Beach, NC"},
-        {"name": "Holden Beach", "nearest_town": "Holden Beach, NC"},
-        {"name": "Ocean Isle Beach", "nearest_town": "Ocean Isle Beach, NC"},
-        {"name": "Sunset Beach NC", "nearest_town": "Sunset Beach, NC"}
+        {
+          "name": "Corolla Beach",
+          "nearest_town": "Corolla, NC"
+        },
+        {
+          "name": "Duck Pier",
+          "nearest_town": "Duck, NC"
+        },
+        {
+          "name": "Kitty Hawk Pier",
+          "nearest_town": "Kitty Hawk, NC"
+        },
+        {
+          "name": "Avalon Pier",
+          "nearest_town": "Kill Devil Hills, NC"
+        },
+        {
+          "name": "Kill Devil Hills",
+          "nearest_town": "Kill Devil Hills, NC"
+        },
+        {
+          "name": "Nags Head Pier",
+          "nearest_town": "Nags Head, NC"
+        },
+        {
+          "name": "Jennettes Pier",
+          "nearest_town": "Nags Head, NC"
+        },
+        {
+          "name": "Oregon Inlet",
+          "nearest_town": "Nags Head, NC"
+        },
+        {
+          "name": "Rodanthe",
+          "nearest_town": "Rodanthe, NC"
+        },
+        {
+          "name": "Salvo",
+          "nearest_town": "Salvo, NC"
+        },
+        {
+          "name": "Avon Pier",
+          "nearest_town": "Avon, NC"
+        },
+        {
+          "name": "Cape Hatteras Lighthouse",
+          "nearest_town": "Buxton, NC"
+        },
+        {
+          "name": "The Point Buxton",
+          "nearest_town": "Buxton, NC"
+        },
+        {
+          "name": "Frisco Pier",
+          "nearest_town": "Frisco, NC"
+        },
+        {
+          "name": "Ocracoke Beach",
+          "nearest_town": "Ocracoke, NC"
+        },
+        {
+          "name": "Emerald Isle",
+          "nearest_town": "Emerald Isle, NC"
+        },
+        {
+          "name": "Atlantic Beach NC",
+          "nearest_town": "Atlantic Beach, NC"
+        },
+        {
+          "name": "Wrightsville Beach",
+          "nearest_town": "Wrightsville Beach, NC"
+        },
+        {
+          "name": "Carolina Beach",
+          "nearest_town": "Carolina Beach, NC"
+        },
+        {
+          "name": "Kure Beach",
+          "nearest_town": "Kure Beach, NC"
+        },
+        {
+          "name": "Surf City NC",
+          "nearest_town": "Surf City, NC"
+        },
+        {
+          "name": "Topsail Beach",
+          "nearest_town": "Topsail Beach, NC"
+        },
+        {
+          "name": "Holden Beach",
+          "nearest_town": "Holden Beach, NC"
+        },
+        {
+          "name": "Ocean Isle Beach",
+          "nearest_town": "Ocean Isle Beach, NC"
+        },
+        {
+          "name": "Sunset Beach NC",
+          "nearest_town": "Sunset Beach, NC"
+        },
+        {
+          "name": "Oak Island Pier",
+          "lat": 33.903031,
+          "lng": -78.082216
+        },
+        {
+          "name": "Fort Fisher",
+          "lat": 33.969168,
+          "lng": -77.917099
+        },
+        {
+          "name": "Carolina Beach Pier",
+          "lat": 34.056891,
+          "lng": -77.881093
+        },
+        {
+          "name": "Wrightsville Beach South",
+          "lat": 34.189121,
+          "lng": -77.807279
+        },
+        {
+          "name": "Jolly Roger Pier",
+          "lat": 34.364694,
+          "lng": -77.627335
+        },
+        {
+          "name": "Seaview Pier",
+          "lat": 34.502631,
+          "lng": -77.3963
+        },
+        {
+          "name": "Hatteras Ferry Docks",
+          "lat": 35.205549,
+          "lng": -75.7002
+        },
+        {
+          "name": "North Buxton",
+          "lat": 35.263737,
+          "lng": -75.518603
+        },
+        {
+          "name": "S-Turns",
+          "lat": 35.607662,
+          "lng": -75.46483
+        },
+        {
+          "name": "North Pea Island",
+          "lat": 35.760025,
+          "lng": -75.513496
+        },
+        {
+          "name": "Outer Banks Fishing Pier",
+          "lat": 35.885469,
+          "lng": -75.581667
+        },
+        {
+          "name": "Abalone Street",
+          "lat": 35.987265,
+          "lng": -75.639474
+        },
+        {
+          "name": "Bath House",
+          "lat": 36.015609,
+          "lng": -75.655428
+        },
+        {
+          "name": "Black Pelican",
+          "lat": 36.063792,
+          "lng": -75.687518
+        }
       ]
     },
     "south_carolina": {
       "state": "South Carolina",
       "spots": [
-        {"name": "Cherry Grove Pier", "nearest_town": "North Myrtle Beach, SC"},
-        {"name": "Myrtle Beach State Park", "nearest_town": "Myrtle Beach, SC"},
-        {"name": "Surfside Beach SC", "nearest_town": "Surfside Beach, SC"},
-        {"name": "Garden City Pier", "nearest_town": "Garden City Beach, SC"},
-        {"name": "Pawleys Island", "nearest_town": "Pawleys Island, SC"},
-        {"name": "Isle of Palms", "nearest_town": "Isle of Palms, SC"},
-        {"name": "Folly Beach Pier", "nearest_town": "Folly Beach, SC"},
-        {"name": "Folly Beach Washout", "nearest_town": "Folly Beach, SC"},
-        {"name": "Kiawah Island Beach", "nearest_town": "Kiawah Island, SC"},
-        {"name": "Edisto Beach", "nearest_town": "Edisto Beach, SC"},
-        {"name": "Hunting Island", "nearest_town": "Hunting Island, SC"},
-        {"name": "Hilton Head Island", "nearest_town": "Hilton Head Island, SC"}
+        {
+          "name": "Cherry Grove Pier",
+          "nearest_town": "North Myrtle Beach, SC"
+        },
+        {
+          "name": "Myrtle Beach State Park",
+          "nearest_town": "Myrtle Beach, SC"
+        },
+        {
+          "name": "Surfside Beach SC",
+          "nearest_town": "Surfside Beach, SC"
+        },
+        {
+          "name": "Garden City Pier",
+          "nearest_town": "Garden City Beach, SC"
+        },
+        {
+          "name": "Pawleys Island",
+          "nearest_town": "Pawleys Island, SC"
+        },
+        {
+          "name": "Isle of Palms",
+          "nearest_town": "Isle of Palms, SC"
+        },
+        {
+          "name": "Folly Beach Pier",
+          "nearest_town": "Folly Beach, SC"
+        },
+        {
+          "name": "Folly Beach Washout",
+          "nearest_town": "Folly Beach, SC"
+        },
+        {
+          "name": "Kiawah Island Beach",
+          "nearest_town": "Kiawah Island, SC"
+        },
+        {
+          "name": "Edisto Beach",
+          "nearest_town": "Edisto Beach, SC"
+        },
+        {
+          "name": "Hunting Island",
+          "nearest_town": "Hunting Island, SC"
+        },
+        {
+          "name": "Hilton Head Island",
+          "nearest_town": "Hilton Head Island, SC"
+        },
+        {
+          "name": "Fripp Island",
+          "lat": 32.311509,
+          "lng": -80.481033
+        },
+        {
+          "name": "Berts Bar",
+          "lat": 32.757505,
+          "lng": -79.835029
+        },
+        {
+          "name": "Windjammer",
+          "lat": 32.784731,
+          "lng": -79.785526
+        },
+        {
+          "name": "Wild Dunes",
+          "lat": 32.797412,
+          "lng": -79.747267
+        },
+        {
+          "name": "Dewees Island",
+          "lat": 32.834056,
+          "lng": -79.708428
+        },
+        {
+          "name": "South Island",
+          "lat": 33.1502,
+          "lng": -79.221725
+        }
       ]
     },
     "new_jersey": {
       "state": "New Jersey",
       "spots": [
-        {"name": "Sandy Hook", "nearest_town": "Sandy Hook, NJ"},
-        {"name": "Sea Bright", "nearest_town": "Sea Bright, NJ"},
-        {"name": "Long Branch", "nearest_town": "Long Branch, NJ"},
-        {"name": "Pier Village", "nearest_town": "Long Branch, NJ"},
-        {"name": "Deal", "nearest_town": "Deal, NJ"},
-        {"name": "Asbury Park", "nearest_town": "Asbury Park, NJ"},
-        {"name": "Bradley Beach", "nearest_town": "Bradley Beach, NJ"},
-        {"name": "Avon-by-the-Sea", "nearest_town": "Avon-by-the-Sea, NJ"},
-        {"name": "Belmar", "nearest_town": "Belmar, NJ"},
-        {"name": "Spring Lake", "nearest_town": "Spring Lake, NJ"},
-        {"name": "Manasquan Inlet", "nearest_town": "Manasquan, NJ"},
-        {"name": "Point Pleasant Beach", "nearest_town": "Point Pleasant Beach, NJ"},
-        {"name": "Bay Head", "nearest_town": "Bay Head, NJ"},
-        {"name": "Seaside Heights", "nearest_town": "Seaside Heights, NJ"},
-        {"name": "Seaside Park", "nearest_town": "Seaside Park, NJ"},
-        {"name": "Island Beach State Park", "nearest_town": "Seaside Park, NJ"},
-        {"name": "Long Beach Island", "nearest_town": "Long Beach Township, NJ"},
-        {"name": "Ship Bottom", "nearest_town": "Ship Bottom, NJ"},
-        {"name": "Surf City NJ", "nearest_town": "Surf City, NJ"},
-        {"name": "Harvey Cedars", "nearest_town": "Harvey Cedars, NJ"},
-        {"name": "Barnegat Light", "nearest_town": "Barnegat Light, NJ"},
-        {"name": "Brigantine", "nearest_town": "Brigantine, NJ"},
-        {"name": "Atlantic City", "nearest_town": "Atlantic City, NJ"},
-        {"name": "Margate", "nearest_town": "Margate City, NJ"},
-        {"name": "Ocean City NJ", "nearest_town": "Ocean City, NJ"},
-        {"name": "Strathmere", "nearest_town": "Strathmere, NJ"},
-        {"name": "Sea Isle City", "nearest_town": "Sea Isle City, NJ"},
-        {"name": "Avalon NJ", "nearest_town": "Avalon, NJ"},
-        {"name": "Stone Harbor", "nearest_town": "Stone Harbor, NJ"},
-        {"name": "Wildwood", "nearest_town": "Wildwood, NJ"},
-        {"name": "Cape May", "nearest_town": "Cape May, NJ"}
+        {
+          "name": "Sandy Hook",
+          "nearest_town": "Sandy Hook, NJ"
+        },
+        {
+          "name": "Sea Bright",
+          "nearest_town": "Sea Bright, NJ"
+        },
+        {
+          "name": "Long Branch",
+          "nearest_town": "Long Branch, NJ"
+        },
+        {
+          "name": "Pier Village",
+          "nearest_town": "Long Branch, NJ"
+        },
+        {
+          "name": "Deal",
+          "nearest_town": "Deal, NJ"
+        },
+        {
+          "name": "Asbury Park",
+          "nearest_town": "Asbury Park, NJ"
+        },
+        {
+          "name": "Bradley Beach",
+          "nearest_town": "Bradley Beach, NJ"
+        },
+        {
+          "name": "Avon-by-the-Sea",
+          "nearest_town": "Avon-by-the-Sea, NJ"
+        },
+        {
+          "name": "Belmar",
+          "nearest_town": "Belmar, NJ"
+        },
+        {
+          "name": "Spring Lake",
+          "nearest_town": "Spring Lake, NJ"
+        },
+        {
+          "name": "Manasquan Inlet",
+          "nearest_town": "Manasquan, NJ"
+        },
+        {
+          "name": "Point Pleasant Beach",
+          "nearest_town": "Point Pleasant Beach, NJ"
+        },
+        {
+          "name": "Bay Head",
+          "nearest_town": "Bay Head, NJ"
+        },
+        {
+          "name": "Seaside Heights",
+          "nearest_town": "Seaside Heights, NJ"
+        },
+        {
+          "name": "Seaside Park",
+          "nearest_town": "Seaside Park, NJ"
+        },
+        {
+          "name": "Island Beach State Park",
+          "nearest_town": "Seaside Park, NJ"
+        },
+        {
+          "name": "Long Beach Island",
+          "nearest_town": "Long Beach Township, NJ"
+        },
+        {
+          "name": "Ship Bottom",
+          "nearest_town": "Ship Bottom, NJ"
+        },
+        {
+          "name": "Surf City NJ",
+          "nearest_town": "Surf City, NJ"
+        },
+        {
+          "name": "Harvey Cedars",
+          "nearest_town": "Harvey Cedars, NJ"
+        },
+        {
+          "name": "Barnegat Light",
+          "nearest_town": "Barnegat Light, NJ"
+        },
+        {
+          "name": "Brigantine",
+          "nearest_town": "Brigantine, NJ"
+        },
+        {
+          "name": "Atlantic City",
+          "nearest_town": "Atlantic City, NJ"
+        },
+        {
+          "name": "Margate",
+          "nearest_town": "Margate City, NJ"
+        },
+        {
+          "name": "Ocean City NJ",
+          "nearest_town": "Ocean City, NJ"
+        },
+        {
+          "name": "Strathmere",
+          "nearest_town": "Strathmere, NJ"
+        },
+        {
+          "name": "Sea Isle City",
+          "nearest_town": "Sea Isle City, NJ"
+        },
+        {
+          "name": "Avalon NJ",
+          "nearest_town": "Avalon, NJ"
+        },
+        {
+          "name": "Stone Harbor",
+          "nearest_town": "Stone Harbor, NJ"
+        },
+        {
+          "name": "Wildwood",
+          "nearest_town": "Wildwood, NJ"
+        },
+        {
+          "name": "The Cove",
+          "lat": 38.929836,
+          "lng": -74.937315
+        },
+        {
+          "name": "Broadway Beach",
+          "lat": 38.928952,
+          "lng": -74.928024
+        },
+        {
+          "name": "Grant Street",
+          "lat": 38.928334,
+          "lng": -74.920814
+        },
+        {
+          "name": "Queen Street",
+          "lat": 38.929502,
+          "lng": -74.913926
+        },
+        {
+          "name": "Poverty Beach",
+          "lat": 38.942321,
+          "lng": -74.877234
+        },
+        {
+          "name": "The Rocks",
+          "lat": 38.942104,
+          "lng": -74.861956
+        },
+        {
+          "name": "Diamond Beach",
+          "lat": 38.952968,
+          "lng": -74.849725
+        },
+        {
+          "name": "North Wildwood",
+          "lat": 39.00176,
+          "lng": -74.785759
+        },
+        {
+          "name": "30th Street Pier",
+          "lat": 39.091383,
+          "lng": -74.716977
+        },
+        {
+          "name": "Avalon Jetty",
+          "lat": 39.106554,
+          "lng": -74.703716
+        },
+        {
+          "name": "South End",
+          "lat": 39.220152,
+          "lng": -74.635406
+        },
+        {
+          "name": "32nd Street",
+          "lat": 39.313117,
+          "lng": -74.519835
+        },
+        {
+          "name": "Quincy Ave",
+          "lat": 39.316338,
+          "lng": -74.514663
+        },
+        {
+          "name": "Margate Pier",
+          "lat": 39.326862,
+          "lng": -74.494643
+        },
+        {
+          "name": "Ventor Pier",
+          "lat": 39.33536,
+          "lng": -74.476876
+        },
+        {
+          "name": "Caesars Pier",
+          "lat": 39.352618,
+          "lng": -74.433274
+        },
+        {
+          "name": "Brigantine Jetty",
+          "lat": 39.372575,
+          "lng": -74.403856
+        },
+        {
+          "name": "Seaside Road",
+          "lat": 39.376042,
+          "lng": -74.396539
+        },
+        {
+          "name": "Wooden Jetty",
+          "lat": 39.53084,
+          "lng": -74.262203
+        },
+        {
+          "name": "Holyoke",
+          "lat": 39.548894,
+          "lng": -74.247537
+        },
+        {
+          "name": "Beach Haven",
+          "lat": 39.561633,
+          "lng": -74.235263
+        },
+        {
+          "name": "Long Beach Township",
+          "lat": 39.61597,
+          "lng": -74.195652
+        },
+        {
+          "name": "Mantoloking",
+          "lat": 40.038852,
+          "lng": -74.04871
+        },
+        {
+          "name": "Sea Girt",
+          "lat": 40.132888,
+          "lng": -74.026136
+        },
+        {
+          "name": "Ocean Grove",
+          "lat": 40.210065,
+          "lng": -74.002318
+        },
+        {
+          "name": "Monmouth",
+          "lat": 40.337549,
+          "lng": -73.972535
+        }
       ]
     },
     "new_york": {
       "state": "New York",
       "spots": [
-        {"name": "Rockaway Beach", "nearest_town": "Rockaway Beach, NY"},
-        {"name": "Rockaway 67th Street", "nearest_town": "Rockaway Beach, NY"},
-        {"name": "Rockaway 90th Street", "nearest_town": "Rockaway Beach, NY"},
-        {"name": "Long Beach NY", "nearest_town": "Long Beach, NY"},
-        {"name": "Lido Beach", "nearest_town": "Lido Beach, NY"},
-        {"name": "Point Lookout", "nearest_town": "Point Lookout, NY"},
-        {"name": "Jones Beach", "nearest_town": "Wantagh, NY"},
-        {"name": "Gilgo Beach", "nearest_town": "Babylon, NY"},
-        {"name": "Robert Moses State Park", "nearest_town": "Babylon, NY"},
-        {"name": "Fire Island", "nearest_town": "Fire Island, NY"},
-        {"name": "Smith Point Beach", "nearest_town": "Shirley, NY"},
-        {"name": "Cupsogue Beach", "nearest_town": "Westhampton Beach, NY"},
-        {"name": "Ponquogue Beach", "nearest_town": "Hampton Bays, NY"},
-        {"name": "Shinnecock Inlet", "nearest_town": "Hampton Bays, NY"},
-        {"name": "Flying Point Beach", "nearest_town": "Southampton, NY"},
-        {"name": "Mecox Beach", "nearest_town": "Bridgehampton, NY"},
-        {"name": "Georgica Beach", "nearest_town": "East Hampton, NY"},
-        {"name": "Main Beach East Hampton", "nearest_town": "East Hampton, NY"},
-        {"name": "Ditch Plains", "nearest_town": "Montauk, NY"},
-        {"name": "Montauk Point", "nearest_town": "Montauk, NY"},
-        {"name": "Turtle Cove Montauk", "nearest_town": "Montauk, NY"}
+        {
+          "name": "Rockaway Beach",
+          "nearest_town": "Rockaway Beach, NY"
+        },
+        {
+          "name": "Rockaway 67th Street",
+          "nearest_town": "Rockaway Beach, NY"
+        },
+        {
+          "name": "Rockaway 90th Street",
+          "nearest_town": "Rockaway Beach, NY"
+        },
+        {
+          "name": "Long Beach NY",
+          "nearest_town": "Long Beach, NY"
+        },
+        {
+          "name": "Lido Beach",
+          "nearest_town": "Lido Beach, NY"
+        },
+        {
+          "name": "Point Lookout",
+          "nearest_town": "Point Lookout, NY"
+        },
+        {
+          "name": "Jones Beach",
+          "nearest_town": "Wantagh, NY"
+        },
+        {
+          "name": "Gilgo Beach",
+          "nearest_town": "Babylon, NY"
+        },
+        {
+          "name": "Robert Moses State Park",
+          "nearest_town": "Babylon, NY"
+        },
+        {
+          "name": "Fire Island",
+          "nearest_town": "Fire Island, NY"
+        },
+        {
+          "name": "Smith Point Beach",
+          "nearest_town": "Shirley, NY"
+        },
+        {
+          "name": "Cupsogue Beach",
+          "nearest_town": "Westhampton Beach, NY"
+        },
+        {
+          "name": "Ponquogue Beach",
+          "nearest_town": "Hampton Bays, NY"
+        },
+        {
+          "name": "Shinnecock Inlet",
+          "nearest_town": "Hampton Bays, NY"
+        },
+        {
+          "name": "Flying Point Beach",
+          "nearest_town": "Southampton, NY"
+        },
+        {
+          "name": "Mecox Beach",
+          "nearest_town": "Bridgehampton, NY"
+        },
+        {
+          "name": "Georgica Beach",
+          "nearest_town": "East Hampton, NY"
+        },
+        {
+          "name": "Main Beach East Hampton",
+          "nearest_town": "East Hampton, NY"
+        },
+        {
+          "name": "Ditch Plains",
+          "nearest_town": "Montauk, NY"
+        },
+        {
+          "name": "Montauk Point",
+          "nearest_town": "Montauk, NY"
+        },
+        {
+          "name": "Turtle Cove Montauk",
+          "nearest_town": "Montauk, NY"
+        },
+        {
+          "name": "Breezy Point",
+          "lat": 40.542178,
+          "lng": -73.937902
+        },
+        {
+          "name": "West End Long Beach",
+          "lat": 40.584626,
+          "lng": -73.738861
+        },
+        {
+          "name": "Saltaire",
+          "lat": 40.63545,
+          "lng": -73.18903
+        },
+        {
+          "name": "Ocean Bay Park",
+          "lat": 40.646392,
+          "lng": -73.139462
+        },
+        {
+          "name": "Davis Park",
+          "lat": 40.682997,
+          "lng": -73.002863
+        },
+        {
+          "name": "Hither Hills",
+          "lat": 41.001019,
+          "lng": -72.025809
+        },
+        {
+          "name": "Terrace",
+          "lat": 41.033107,
+          "lng": -71.937532
+        },
+        {
+          "name": "Poles",
+          "lat": 41.037947,
+          "lng": -71.921031
+        },
+        {
+          "name": "Radars",
+          "lat": 41.058579,
+          "lng": -71.867409
+        }
       ]
     },
     "new_england": {
       "state_varies": true,
       "spots": [
-        {"name": "Narragansett Beach", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "Point Judith", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "Matunuck", "nearest_town": "South Kingstown, RI", "state": "Rhode Island"},
-        {"name": "East Matunuck State Beach", "nearest_town": "South Kingstown, RI", "state": "Rhode Island"},
-        {"name": "Moonstone Beach RI", "nearest_town": "South Kingstown, RI", "state": "Rhode Island"},
-        {"name": "Charlestown Town Beach", "nearest_town": "Charlestown, RI", "state": "Rhode Island"},
-        {"name": "Misquamicut State Beach", "nearest_town": "Westerly, RI", "state": "Rhode Island"},
-        {"name": "Second Beach Newport", "nearest_town": "Middletown, RI", "state": "Rhode Island"},
-        {"name": "Third Beach Newport", "nearest_town": "Middletown, RI", "state": "Rhode Island"},
-        {"name": "Ruggles", "nearest_town": "Newport, RI", "state": "Rhode Island"},
-        {"name": "Block Island", "nearest_town": "New Shoreham, RI", "state": "Rhode Island"},
-        {"name": "Marys", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "K38", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "K39", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "Monahans", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "Conant Ave", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "Pilgrim Ave", "nearest_town": "Narragansett, RI", "state": "Rhode Island"},
-        {"name": "Westport Beach", "nearest_town": "Westport, MA", "state": "Massachusetts"},
-        {"name": "Horseneck Beach", "nearest_town": "Westport, MA", "state": "Massachusetts"},
-        {"name": "Nantucket Surf", "nearest_town": "Nantucket, MA", "state": "Massachusetts"},
-        {"name": "Cisco Beach", "nearest_town": "Nantucket, MA", "state": "Massachusetts"},
-        {"name": "Coast Guard Beach", "nearest_town": "Eastham, MA", "state": "Massachusetts"},
-        {"name": "Nauset Beach", "nearest_town": "Orleans, MA", "state": "Massachusetts"},
-        {"name": "Marconi Beach", "nearest_town": "Wellfleet, MA", "state": "Massachusetts"},
-        {"name": "Nantasket Beach", "nearest_town": "Hull, MA", "state": "Massachusetts"},
-        {"name": "Nahant Beach", "nearest_town": "Nahant, MA", "state": "Massachusetts"},
-        {"name": "Good Harbor Beach", "nearest_town": "Gloucester, MA", "state": "Massachusetts"},
-        {"name": "Plum Island", "nearest_town": "Newburyport, MA", "state": "Massachusetts"},
-        {"name": "Hampton Beach", "nearest_town": "Hampton, NH", "state": "New Hampshire"},
-        {"name": "Jenness Beach", "nearest_town": "Rye, NH", "state": "New Hampshire"},
-        {"name": "North Beach Rye", "nearest_town": "Rye, NH", "state": "New Hampshire"},
-        {"name": "The Wall Hampton", "nearest_town": "Hampton, NH", "state": "New Hampshire"},
-        {"name": "Gooch's Beach", "nearest_town": "Kennebunk, ME", "state": "Maine"},
-        {"name": "Fortunes Rocks", "nearest_town": "Biddeford, ME", "state": "Maine"},
-        {"name": "Higgins Beach", "nearest_town": "Scarborough, ME", "state": "Maine"},
-        {"name": "Scarborough Beach", "nearest_town": "Scarborough, ME", "state": "Maine"},
-        {"name": "Old Orchard Beach", "nearest_town": "Old Orchard Beach, ME", "state": "Maine"},
-        {"name": "Long Sands Beach", "nearest_town": "York, ME", "state": "Maine"},
-        {"name": "Short Sands Beach York", "nearest_town": "York, ME", "state": "Maine"}
+        {
+          "name": "Narragansett Beach",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Point Judith",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Matunuck",
+          "nearest_town": "South Kingstown, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "East Matunuck State Beach",
+          "nearest_town": "South Kingstown, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Moonstone Beach RI",
+          "nearest_town": "South Kingstown, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Charlestown Town Beach",
+          "nearest_town": "Charlestown, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Misquamicut State Beach",
+          "nearest_town": "Westerly, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Second Beach Newport",
+          "nearest_town": "Middletown, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Third Beach Newport",
+          "nearest_town": "Middletown, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Ruggles",
+          "nearest_town": "Newport, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Block Island",
+          "nearest_town": "New Shoreham, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Marys",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "K38",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "K39",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Monahans",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Conant Ave",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Pilgrim Ave",
+          "nearest_town": "Narragansett, RI",
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Westport Beach",
+          "nearest_town": "Westport, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Horseneck Beach",
+          "nearest_town": "Westport, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Nantucket Surf",
+          "nearest_town": "Nantucket, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Cisco Beach",
+          "nearest_town": "Nantucket, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Coast Guard Beach",
+          "nearest_town": "Eastham, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Nauset Beach",
+          "nearest_town": "Orleans, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Marconi Beach",
+          "nearest_town": "Wellfleet, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Nantasket Beach",
+          "nearest_town": "Hull, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Nahant Beach",
+          "nearest_town": "Nahant, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Good Harbor Beach",
+          "nearest_town": "Gloucester, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Plum Island",
+          "nearest_town": "Newburyport, MA",
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Hampton Beach",
+          "nearest_town": "Hampton, NH",
+          "state": "New Hampshire"
+        },
+        {
+          "name": "Jenness Beach",
+          "nearest_town": "Rye, NH",
+          "state": "New Hampshire"
+        },
+        {
+          "name": "North Beach Rye",
+          "nearest_town": "Rye, NH",
+          "state": "New Hampshire"
+        },
+        {
+          "name": "The Wall Hampton",
+          "nearest_town": "Hampton, NH",
+          "state": "New Hampshire"
+        },
+        {
+          "name": "Gooch's Beach",
+          "nearest_town": "Kennebunk, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Fortunes Rocks",
+          "nearest_town": "Biddeford, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Higgins Beach",
+          "nearest_town": "Scarborough, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Scarborough Beach",
+          "nearest_town": "Scarborough, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Old Orchard Beach",
+          "nearest_town": "Old Orchard Beach, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Long Sands Beach",
+          "nearest_town": "York, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Short Sands Beach York",
+          "nearest_town": "York, ME",
+          "state": "Maine"
+        },
+        {
+          "name": "Black Rock Point",
+          "lat": 41.146151,
+          "lng": -71.592708,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Dunes Park",
+          "lat": 41.328728,
+          "lng": -71.765378,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Weekapaug",
+          "lat": 41.328366,
+          "lng": -71.760979,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "East Beach",
+          "lat": 41.353441,
+          "lng": -71.6506,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Breachway",
+          "lat": 41.354698,
+          "lng": -71.639163,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Deep Hole",
+          "lat": 41.37259,
+          "lng": -71.536499,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Salty Brine",
+          "lat": 41.374909,
+          "lng": -71.512413,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "The K's",
+          "lat": 41.368661,
+          "lng": -71.496105,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Point Judith South",
+          "lat": 41.360399,
+          "lng": -71.482093,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Scarborough",
+          "lat": 41.385954,
+          "lng": -71.474476,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Narrow River",
+          "lat": 41.440273,
+          "lng": -71.442171,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Baileys Beach",
+          "lat": 41.455786,
+          "lng": -71.313243,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "First Beach",
+          "lat": 41.487042,
+          "lng": -71.290798,
+          "state": "Rhode Island"
+        },
+        {
+          "name": "Squibnocket",
+          "lat": 41.315014,
+          "lng": -70.765064,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Lucy Vincent",
+          "lat": 41.339797,
+          "lng": -70.722041,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Long Point",
+          "lat": 41.348142,
+          "lng": -70.630245,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "South Beach State Park",
+          "lat": 41.349108,
+          "lng": -70.532398,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Madaket",
+          "lat": 41.271453,
+          "lng": -70.205598,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Miacomet",
+          "lat": 41.242626,
+          "lng": -70.118265,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Nobadeer",
+          "lat": 41.244208,
+          "lng": -70.069363,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Keyes Beach",
+          "lat": 41.635091,
+          "lng": -70.290506,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Green Harbor",
+          "lat": 42.078986,
+          "lng": -70.642176,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Scituate",
+          "lat": 42.187893,
+          "lng": -70.718951,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Winthrop Jetty",
+          "lat": 42.364823,
+          "lng": -70.963397,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Revere Beach",
+          "lat": 42.4191,
+          "lng": -70.985713,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Lynn Beach",
+          "lat": 42.465307,
+          "lng": -70.920975,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Devereaux",
+          "lat": 42.491198,
+          "lng": -70.851624,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Salisbury",
+          "lat": 42.841234,
+          "lng": -70.815575,
+          "state": "Massachusetts"
+        },
+        {
+          "name": "Costellos",
+          "lat": 42.956894,
+          "lng": -70.775299,
+          "state": "New Hampshire"
+        },
+        {
+          "name": "Fox Hill",
+          "lat": 42.963787,
+          "lng": -70.76766,
+          "state": "New Hampshire"
+        },
+        {
+          "name": "Straws Point",
+          "lat": 42.990931,
+          "lng": -70.749872,
+          "state": "New Hampshire"
+        },
+        {
+          "name": "Pirates Cove",
+          "lat": 43.0236,
+          "lng": -70.729916,
+          "state": "New Hampshire"
+        },
+        {
+          "name": "Harbor Beach",
+          "lat": 43.132294,
+          "lng": -70.637498,
+          "state": "Maine"
+        },
+        {
+          "name": "Ogunquit",
+          "lat": 43.253267,
+          "lng": -70.590162,
+          "state": "Maine"
+        },
+        {
+          "name": "Moody Point",
+          "lat": 43.28475,
+          "lng": -70.570056,
+          "state": "Maine"
+        },
+        {
+          "name": "Crescent Beach",
+          "lat": 43.298221,
+          "lng": -70.567503,
+          "state": "Maine"
+        },
+        {
+          "name": "Wells Beach",
+          "lat": 43.313173,
+          "lng": -70.559038,
+          "state": "Maine"
+        },
+        {
+          "name": "Drakes Island",
+          "lat": 43.322805,
+          "lng": -70.550637,
+          "state": "Maine"
+        },
+        {
+          "name": "Pine Point Beach",
+          "lat": 43.540258,
+          "lng": -70.334966,
+          "state": "Maine"
+        },
+        {
+          "name": "Reid State Park",
+          "lat": 43.776951,
+          "lng": -69.72898,
+          "state": "Maine"
+        },
+        {
+          "name": "Deep Cove",
+          "lat": 44.61497,
+          "lng": -66.87571,
+          "state": "Maine"
+        }
       ]
     },
     "oregon": {
       "state": "Oregon",
       "spots": [
-        {"name": "Seaside Cove", "nearest_town": "Seaside, OR"},
-        {"name": "Short Sands Beach Oswald West", "nearest_town": "Manzanita, OR"},
-        {"name": "Cannon Beach", "nearest_town": "Cannon Beach, OR"},
-        {"name": "Indian Beach Ecola", "nearest_town": "Cannon Beach, OR"},
-        {"name": "Cape Kiwanda", "nearest_town": "Pacific City, OR"},
-        {"name": "Pacific City Beach", "nearest_town": "Pacific City, OR"},
-        {"name": "Lincoln City Beach", "nearest_town": "Lincoln City, OR"},
-        {"name": "Roads End", "nearest_town": "Lincoln City, OR"},
-        {"name": "Otter Rock", "nearest_town": "Otter Rock, OR"},
-        {"name": "Agate Beach Newport", "nearest_town": "Newport, OR"},
-        {"name": "South Beach Newport", "nearest_town": "Newport, OR"},
-        {"name": "Nye Beach", "nearest_town": "Newport, OR"},
-        {"name": "Florence South Jetty", "nearest_town": "Florence, OR"},
-        {"name": "Bastendorff Beach", "nearest_town": "Charleston, OR"},
-        {"name": "Whiskey Run Beach", "nearest_town": "Bandon, OR"},
-        {"name": "Bandon Beach", "nearest_town": "Bandon, OR"},
-        {"name": "Gold Beach", "nearest_town": "Gold Beach, OR"},
-        {"name": "Brookings Beach", "nearest_town": "Brookings, OR"},
-        {"name": "Nelscott Reef", "nearest_town": "Lincoln City, OR"},
-        {"name": "Hubbard Creek", "nearest_town": "Port Orford, OR"}
+        {
+          "name": "Seaside Cove",
+          "nearest_town": "Seaside, OR"
+        },
+        {
+          "name": "Short Sands Beach Oswald West",
+          "nearest_town": "Manzanita, OR"
+        },
+        {
+          "name": "Cannon Beach",
+          "nearest_town": "Cannon Beach, OR"
+        },
+        {
+          "name": "Indian Beach Ecola",
+          "nearest_town": "Cannon Beach, OR"
+        },
+        {
+          "name": "Cape Kiwanda",
+          "nearest_town": "Pacific City, OR"
+        },
+        {
+          "name": "Pacific City Beach",
+          "nearest_town": "Pacific City, OR"
+        },
+        {
+          "name": "Lincoln City Beach",
+          "nearest_town": "Lincoln City, OR"
+        },
+        {
+          "name": "Roads End",
+          "nearest_town": "Lincoln City, OR"
+        },
+        {
+          "name": "Otter Rock",
+          "nearest_town": "Otter Rock, OR"
+        },
+        {
+          "name": "Agate Beach Newport",
+          "nearest_town": "Newport, OR"
+        },
+        {
+          "name": "South Beach Newport",
+          "nearest_town": "Newport, OR"
+        },
+        {
+          "name": "Nye Beach",
+          "nearest_town": "Newport, OR"
+        },
+        {
+          "name": "Florence South Jetty",
+          "nearest_town": "Florence, OR"
+        },
+        {
+          "name": "Bastendorff Beach",
+          "nearest_town": "Charleston, OR"
+        },
+        {
+          "name": "Whiskey Run Beach",
+          "nearest_town": "Bandon, OR"
+        },
+        {
+          "name": "Bandon Beach",
+          "nearest_town": "Bandon, OR"
+        },
+        {
+          "name": "Gold Beach",
+          "nearest_town": "Gold Beach, OR"
+        },
+        {
+          "name": "Brookings Beach",
+          "nearest_town": "Brookings, OR"
+        },
+        {
+          "name": "Nelscott Reef",
+          "nearest_town": "Lincoln City, OR"
+        },
+        {
+          "name": "Hubbard Creek",
+          "nearest_town": "Port Orford, OR"
+        }
       ]
     },
     "washington": {
       "state": "Washington",
       "spots": [
-        {"name": "Westport Jetty", "nearest_town": "Westport, WA"},
-        {"name": "Westhaven State Park", "nearest_town": "Westport, WA"},
-        {"name": "Westport Light State Park", "nearest_town": "Westport, WA"},
-        {"name": "Long Beach WA", "nearest_town": "Long Beach, WA"},
-        {"name": "La Push First Beach", "nearest_town": "La Push, WA"},
-        {"name": "La Push Second Beach", "nearest_town": "La Push, WA"},
-        {"name": "La Push Third Beach", "nearest_town": "La Push, WA"},
-        {"name": "Rialto Beach", "nearest_town": "Forks, WA"},
-        {"name": "Kalaloch Beach", "nearest_town": "Forks, WA"},
-        {"name": "Pacific Beach WA", "nearest_town": "Pacific Beach, WA"},
-        {"name": "Ocean Shores", "nearest_town": "Ocean Shores, WA"},
-        {"name": "Tokeland", "nearest_town": "Tokeland, WA"},
-        {"name": "Cape Disappointment", "nearest_town": "Ilwaco, WA"},
-        {"name": "Hobuck Beach", "nearest_town": "Neah Bay, WA"},
-        {"name": "Shi Shi Beach", "nearest_town": "Neah Bay, WA"}
+        {
+          "name": "Westport Jetty",
+          "nearest_town": "Westport, WA"
+        },
+        {
+          "name": "Westhaven State Park",
+          "nearest_town": "Westport, WA"
+        },
+        {
+          "name": "Westport Light State Park",
+          "nearest_town": "Westport, WA"
+        },
+        {
+          "name": "Long Beach WA",
+          "nearest_town": "Long Beach, WA"
+        },
+        {
+          "name": "La Push First Beach",
+          "nearest_town": "La Push, WA"
+        },
+        {
+          "name": "La Push Second Beach",
+          "nearest_town": "La Push, WA"
+        },
+        {
+          "name": "La Push Third Beach",
+          "nearest_town": "La Push, WA"
+        },
+        {
+          "name": "Rialto Beach",
+          "nearest_town": "Forks, WA"
+        },
+        {
+          "name": "Kalaloch Beach",
+          "nearest_town": "Forks, WA"
+        },
+        {
+          "name": "Pacific Beach WA",
+          "nearest_town": "Pacific Beach, WA"
+        },
+        {
+          "name": "Ocean Shores",
+          "nearest_town": "Ocean Shores, WA"
+        },
+        {
+          "name": "Tokeland",
+          "nearest_town": "Tokeland, WA"
+        },
+        {
+          "name": "Cape Disappointment",
+          "nearest_town": "Ilwaco, WA"
+        },
+        {
+          "name": "Hobuck Beach",
+          "nearest_town": "Neah Bay, WA"
+        },
+        {
+          "name": "Shi Shi Beach",
+          "nearest_town": "Neah Bay, WA"
+        }
       ]
     },
     "texas_gulf": {
       "state": "Texas",
       "spots": [
-        {"name": "South Padre Island", "nearest_town": "South Padre Island, TX"},
-        {"name": "Isla Blanca Park", "nearest_town": "South Padre Island, TX"},
-        {"name": "Port Aransas Jetty", "nearest_town": "Port Aransas, TX"},
-        {"name": "Horace Caldwell Pier", "nearest_town": "Port Aransas, TX"},
-        {"name": "JP Luby Surf Park", "nearest_town": "Corpus Christi, TX"},
-        {"name": "Bob Hall Pier", "nearest_town": "Corpus Christi, TX"},
-        {"name": "Mustang Island", "nearest_town": "Port Aransas, TX"},
-        {"name": "Galveston Seawall", "nearest_town": "Galveston, TX"},
-        {"name": "61st Street Galveston", "nearest_town": "Galveston, TX"},
-        {"name": "Surfside Beach TX", "nearest_town": "Surfside Beach, TX"},
-        {"name": "Matagorda Beach", "nearest_town": "Matagorda, TX"},
-        {"name": "Port A Beach", "nearest_town": "Port Aransas, TX"}
+        {
+          "name": "South Padre Island",
+          "nearest_town": "South Padre Island, TX"
+        },
+        {
+          "name": "Isla Blanca Park",
+          "nearest_town": "South Padre Island, TX"
+        },
+        {
+          "name": "Port Aransas Jetty",
+          "nearest_town": "Port Aransas, TX"
+        },
+        {
+          "name": "Horace Caldwell Pier",
+          "nearest_town": "Port Aransas, TX"
+        },
+        {
+          "name": "JP Luby Surf Park",
+          "nearest_town": "Corpus Christi, TX"
+        },
+        {
+          "name": "Bob Hall Pier",
+          "nearest_town": "Corpus Christi, TX"
+        },
+        {
+          "name": "Mustang Island",
+          "nearest_town": "Port Aransas, TX"
+        },
+        {
+          "name": "Galveston Seawall",
+          "nearest_town": "Galveston, TX"
+        },
+        {
+          "name": "61st Street Galveston",
+          "nearest_town": "Galveston, TX"
+        },
+        {
+          "name": "Surfside Beach TX",
+          "nearest_town": "Surfside Beach, TX"
+        },
+        {
+          "name": "Matagorda Beach",
+          "nearest_town": "Matagorda, TX"
+        },
+        {
+          "name": "Port A Beach",
+          "nearest_town": "Port Aransas, TX"
+        }
       ]
     },
     "puerto_rico": {
       "state": "Puerto Rico",
       "spots": [
-        {"name": "Rincon Domes", "nearest_town": "Rincon, PR"},
-        {"name": "Marias Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Indicators Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Tres Palmas", "nearest_town": "Rincon, PR"},
-        {"name": "Steps Beach Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Sandy Beach Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Pools Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Antonio's Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Dogmans Rincon", "nearest_town": "Rincon, PR"},
-        {"name": "Jobos Beach Isabela", "nearest_town": "Isabela, PR"},
-        {"name": "Middles Isabela", "nearest_town": "Isabela, PR"},
-        {"name": "Shacks Beach", "nearest_town": "Isabela, PR"},
-        {"name": "Surfers Beach Aguadilla", "nearest_town": "Aguadilla, PR"},
-        {"name": "Wilderness Aguadilla", "nearest_town": "Aguadilla, PR"},
-        {"name": "Crash Boat Beach", "nearest_town": "Aguadilla, PR"},
-        {"name": "Gas Chambers Aguadilla", "nearest_town": "Aguadilla, PR"},
-        {"name": "Table Tops Aguadilla", "nearest_town": "Aguadilla, PR"},
-        {"name": "Domes Beach Aguadilla", "nearest_town": "Aguadilla, PR"},
-        {"name": "Playa Guajataca", "nearest_town": "Quebradillas, PR"},
-        {"name": "Playa Kikita", "nearest_town": "Dorado, PR"},
-        {"name": "Pine Grove Beach", "nearest_town": "Carolina, PR"},
-        {"name": "La Pared Luquillo", "nearest_town": "Luquillo, PR"},
-        {"name": "Aviones", "nearest_town": "Pinones, PR"},
-        {"name": "La Ocho", "nearest_town": "Arecibo, PR"},
-        {"name": "Playa Manati", "nearest_town": "Manati, PR"}
+        {
+          "name": "Rincon Domes",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Maria's",
+          "nearest_town": "Rincon, PR",
+          "lat": 18.358212,
+          "lng": -67.270296
+        },
+        {
+          "name": "Indicators",
+          "nearest_town": "Rincon, PR",
+          "lat": 18.360472,
+          "lng": -67.271433
+        },
+        {
+          "name": "Tres Palmas",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Steps Beach Rincon",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Sandy Beach",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Pools",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Antonio's",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Dogmans Rincon",
+          "nearest_town": "Rincon, PR"
+        },
+        {
+          "name": "Jobos Beach Isabela",
+          "nearest_town": "Isabela, PR"
+        },
+        {
+          "name": "Middles Isabela",
+          "nearest_town": "Isabela, PR"
+        },
+        {
+          "name": "Shacks Beach",
+          "nearest_town": "Isabela, PR"
+        },
+        {
+          "name": "Surfers Beach Aguadilla",
+          "nearest_town": "Aguadilla, PR"
+        },
+        {
+          "name": "Wilderness Aguadilla",
+          "nearest_town": "Aguadilla, PR"
+        },
+        {
+          "name": "Crash Boat Beach",
+          "nearest_town": "Aguadilla, PR"
+        },
+        {
+          "name": "Gas Chambers Aguadilla",
+          "nearest_town": "Aguadilla, PR"
+        },
+        {
+          "name": "Table Tops Aguadilla",
+          "nearest_town": "Aguadilla, PR"
+        },
+        {
+          "name": "Playa Guajataca",
+          "nearest_town": "Quebradillas, PR"
+        },
+        {
+          "name": "Playa Kikita",
+          "nearest_town": "Dorado, PR"
+        },
+        {
+          "name": "Pine Grove Beach",
+          "nearest_town": "Carolina, PR"
+        },
+        {
+          "name": "La Pared Luquillo",
+          "nearest_town": "Luquillo, PR"
+        },
+        {
+          "name": "Aviones",
+          "nearest_town": "Pinones, PR"
+        },
+        {
+          "name": "La Ocho",
+          "nearest_town": "Arecibo, PR"
+        },
+        {
+          "name": "Playa Manati",
+          "nearest_town": "Manati, PR"
+        }
       ]
     },
     "virginia_maryland_delaware": {
       "state_varies": true,
       "spots": [
-        {"name": "Virginia Beach Oceanfront", "nearest_town": "Virginia Beach, VA", "state": "Virginia"},
-        {"name": "Sandbridge Beach", "nearest_town": "Virginia Beach, VA", "state": "Virginia"},
-        {"name": "Chincoteague Beach", "nearest_town": "Chincoteague, VA", "state": "Virginia"},
-        {"name": "First Street Jetty VB", "nearest_town": "Virginia Beach, VA", "state": "Virginia"},
-        {"name": "Croatan Beach", "nearest_town": "Virginia Beach, VA", "state": "Virginia"},
-        {"name": "Ocean City MD Inlet", "nearest_town": "Ocean City, MD", "state": "Maryland"},
-        {"name": "Ocean City MD 28th Street", "nearest_town": "Ocean City, MD", "state": "Maryland"},
-        {"name": "Assateague Island MD", "nearest_town": "Berlin, MD", "state": "Maryland"},
-        {"name": "Rehoboth Beach", "nearest_town": "Rehoboth Beach, DE", "state": "Delaware"},
-        {"name": "Dewey Beach", "nearest_town": "Dewey Beach, DE", "state": "Delaware"},
-        {"name": "Bethany Beach", "nearest_town": "Bethany Beach, DE", "state": "Delaware"},
-        {"name": "Indian River Inlet", "nearest_town": "Rehoboth Beach, DE", "state": "Delaware"}
+        {
+          "name": "Virginia Beach Oceanfront",
+          "nearest_town": "Virginia Beach, VA",
+          "state": "Virginia"
+        },
+        {
+          "name": "Sandbridge Beach",
+          "nearest_town": "Virginia Beach, VA",
+          "state": "Virginia"
+        },
+        {
+          "name": "First Street Jetty VB",
+          "nearest_town": "Virginia Beach, VA",
+          "state": "Virginia"
+        },
+        {
+          "name": "Croatan Beach",
+          "nearest_town": "Virginia Beach, VA",
+          "state": "Virginia"
+        },
+        {
+          "name": "Ocean City MD Inlet",
+          "nearest_town": "Ocean City, MD",
+          "state": "Maryland"
+        },
+        {
+          "name": "Ocean City MD 28th Street",
+          "nearest_town": "Ocean City, MD",
+          "state": "Maryland"
+        },
+        {
+          "name": "Assateague Island MD",
+          "nearest_town": "Berlin, MD",
+          "state": "Maryland"
+        },
+        {
+          "name": "Rehoboth Beach",
+          "nearest_town": "Rehoboth Beach, DE",
+          "state": "Delaware"
+        },
+        {
+          "name": "Dewey Beach",
+          "nearest_town": "Dewey Beach, DE",
+          "state": "Delaware"
+        },
+        {
+          "name": "Bethany Beach",
+          "nearest_town": "Bethany Beach, DE",
+          "state": "Delaware"
+        },
+        {
+          "name": "Indian River Inlet",
+          "nearest_town": "Rehoboth Beach, DE",
+          "state": "Delaware"
+        },
+        {
+          "name": "North End Virginia Beach",
+          "lat": 36.906598,
+          "lng": -75.987668,
+          "state": "Virginia"
+        },
+        {
+          "name": "Fenwick Island",
+          "lat": 38.457487,
+          "lng": -75.048466,
+          "state": "Delaware"
+        },
+        {
+          "name": "Gordon Pond",
+          "lat": 38.751138,
+          "lng": -75.080481,
+          "state": "Delaware"
+        }
       ]
     },
     "great_lakes": {
       "state_varies": true,
       "spots": [
-        {"name": "Sheboygan Elbow", "nearest_town": "Sheboygan, WI", "state": "Wisconsin"},
-        {"name": "North Point Sheboygan", "nearest_town": "Sheboygan, WI", "state": "Wisconsin"},
-        {"name": "Deland Park", "nearest_town": "Sheboygan, WI", "state": "Wisconsin"},
-        {"name": "Whitefish Bay WI", "nearest_town": "Milwaukee, WI", "state": "Wisconsin"},
-        {"name": "Atwater Beach", "nearest_town": "Milwaukee, WI", "state": "Wisconsin"},
-        {"name": "Grand Haven State Park", "nearest_town": "Grand Haven, MI", "state": "Michigan"},
-        {"name": "Grand Haven South Pier", "nearest_town": "Grand Haven, MI", "state": "Michigan"},
-        {"name": "Muskegon South Pier", "nearest_town": "Muskegon, MI", "state": "Michigan"},
-        {"name": "Silver Beach", "nearest_town": "St. Joseph, MI", "state": "Michigan"},
-        {"name": "Sleeping Bear Dunes", "nearest_town": "Empire, MI", "state": "Michigan"},
-        {"name": "Frankfort Beach", "nearest_town": "Frankfort, MI", "state": "Michigan"},
-        {"name": "Presque Isle Beach", "nearest_town": "Erie, PA", "state": "Pennsylvania"},
-        {"name": "Edgewater Beach Cleveland", "nearest_town": "Cleveland, OH", "state": "Ohio"},
-        {"name": "Lakeview Park Lorain", "nearest_town": "Lorain, OH", "state": "Ohio"},
-        {"name": "Hamlin Beach", "nearest_town": "Hamlin, NY", "state": "New York"},
-        {"name": "Ontario Beach", "nearest_town": "Rochester, NY", "state": "New York"},
-        {"name": "Woodlawn Beach", "nearest_town": "Hamburg, NY", "state": "New York"},
-        {"name": "Duluth Park Point", "nearest_town": "Duluth, MN", "state": "Minnesota"},
-        {"name": "Stoney Point MN", "nearest_town": "Duluth, MN", "state": "Minnesota"},
-        {"name": "Whihala Beach", "nearest_town": "Whiting, IN", "state": "Indiana"}
+        {
+          "name": "Sheboygan Elbow",
+          "nearest_town": "Sheboygan, WI",
+          "state": "Wisconsin"
+        },
+        {
+          "name": "North Point Sheboygan",
+          "nearest_town": "Sheboygan, WI",
+          "state": "Wisconsin"
+        },
+        {
+          "name": "Deland Park",
+          "nearest_town": "Sheboygan, WI",
+          "state": "Wisconsin"
+        },
+        {
+          "name": "Whitefish Bay WI",
+          "nearest_town": "Milwaukee, WI",
+          "state": "Wisconsin"
+        },
+        {
+          "name": "Grand Haven State Park",
+          "nearest_town": "Grand Haven, MI",
+          "state": "Michigan"
+        },
+        {
+          "name": "Grand Haven South Pier",
+          "nearest_town": "Grand Haven, MI",
+          "state": "Michigan"
+        },
+        {
+          "name": "Muskegon South Pier",
+          "nearest_town": "Muskegon, MI",
+          "state": "Michigan"
+        },
+        {
+          "name": "Silver Beach",
+          "nearest_town": "St. Joseph, MI",
+          "state": "Michigan"
+        },
+        {
+          "name": "Sleeping Bear Dunes",
+          "nearest_town": "Empire, MI",
+          "state": "Michigan"
+        },
+        {
+          "name": "Frankfort Beach",
+          "nearest_town": "Frankfort, MI",
+          "state": "Michigan"
+        },
+        {
+          "name": "Presque Isle Beach",
+          "nearest_town": "Erie, PA",
+          "state": "Pennsylvania"
+        },
+        {
+          "name": "Edgewater Beach Cleveland",
+          "nearest_town": "Cleveland, OH",
+          "state": "Ohio"
+        },
+        {
+          "name": "Lakeview Park Lorain",
+          "nearest_town": "Lorain, OH",
+          "state": "Ohio"
+        },
+        {
+          "name": "Hamlin Beach",
+          "nearest_town": "Hamlin, NY",
+          "state": "New York"
+        },
+        {
+          "name": "Ontario Beach",
+          "nearest_town": "Rochester, NY",
+          "state": "New York"
+        },
+        {
+          "name": "Woodlawn Beach",
+          "nearest_town": "Hamburg, NY",
+          "state": "New York"
+        },
+        {
+          "name": "Duluth Park Point",
+          "nearest_town": "Duluth, MN",
+          "state": "Minnesota"
+        },
+        {
+          "name": "Stoney Point MN",
+          "nearest_town": "Duluth, MN",
+          "state": "Minnesota"
+        },
+        {
+          "name": "Whihala Beach",
+          "nearest_town": "Whiting, IN",
+          "state": "Indiana"
+        }
+      ]
+    },
+    "georgia": {
+      "state_varies": false,
+      "spots": [
+        {
+          "name": "Jekyll Island",
+          "lat": 31.057401,
+          "lng": -81.40573
+        },
+        {
+          "name": "St Simons Island",
+          "lat": 31.135326,
+          "lng": -81.383028
+        },
+        {
+          "name": "Sea Island",
+          "lat": 31.204139,
+          "lng": -81.320844
+        },
+        {
+          "name": "Blackbeard Island",
+          "lat": 31.500995,
+          "lng": -81.191025
+        },
+        {
+          "name": "St. Catherines Island",
+          "lat": 31.617647,
+          "lng": -81.138067
+        },
+        {
+          "name": "Tybee Island",
+          "lat": 32.008731,
+          "lng": -80.839462
+        }
       ]
     }
   }

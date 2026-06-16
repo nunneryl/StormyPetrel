@@ -1,0 +1,68 @@
+-- spot_cleanup_manifest_2 — DELETE orphaned spot rows.
+-- Generated 2026-06-16. Forecasts FK cascades, so forecast rows clear automatically.
+-- Total: 29 slugs = 21 deletions + 8 slug-changing renames.
+BEGIN;
+DELETE FROM spots WHERE slug IN (
+  '38th',
+  'antonio-s-rincon',
+  'atwater-beach',
+  'cannons-kauai',
+  'cape-may',
+  'chincoteague-beach',
+  'domes-beach-aguadilla',
+  'elevators',
+  'first-bay',
+  'ib-jetty',
+  'indicators-rincon',
+  'kamea-meha',
+  'kokomo',
+  'little-wind-an-sea',
+  'marias-rincon',
+  'p-b-boys-club',
+  'palm-beach-midtown',
+  'phantoms',
+  'pillar-point',
+  'pools-rincon',
+  'sandy-beach-rincon',
+  'second-bay',
+  'shark-s-cove',
+  'sheboygan-wisconsin',
+  'the-lane',
+  'the-room',
+  'the-wedge-surfing',
+  'trees',
+  'ventura-overhead'
+);
+-- Sanity: confirm 0 rows now match before committing.
+SELECT slug FROM spots WHERE slug IN (
+  '38th',
+  'antonio-s-rincon',
+  'atwater-beach',
+  'cannons-kauai',
+  'cape-may',
+  'chincoteague-beach',
+  'domes-beach-aguadilla',
+  'elevators',
+  'first-bay',
+  'ib-jetty',
+  'indicators-rincon',
+  'kamea-meha',
+  'kokomo',
+  'little-wind-an-sea',
+  'marias-rincon',
+  'p-b-boys-club',
+  'palm-beach-midtown',
+  'phantoms',
+  'pillar-point',
+  'pools-rincon',
+  'sandy-beach-rincon',
+  'second-bay',
+  'shark-s-cove',
+  'sheboygan-wisconsin',
+  'the-lane',
+  'the-room',
+  'the-wedge-surfing',
+  'trees',
+  'ventura-overhead'
+);
+COMMIT;
