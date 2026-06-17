@@ -8,14 +8,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "3 Mile": {
-      "lat": 36.96135,
-      "lng": -122.11454,
-      "note": "Rename + position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 36.961277,
+      "lng": -122.112973,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "38th Avenue": {
-      "lat": 36.958294,
-      "lng": -121.966031,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 36.9588,
+      "lng": -121.966363,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "56th Street": {
       "lat": 39.141578,
@@ -23,14 +23,24 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "61st Street Galveston": {
-      "lat": 29.258098,
-      "lng": -94.833126,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 29.259839,
+      "lng": -94.834778,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "A Street": {
+      "lat": 29.844478,
+      "lng": -81.263251,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Agate Beach": {
+      "lat": 41.147379,
+      "lng": -124.143105,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Agate Beach Newport": {
-      "lat": 44.672193,
-      "lng": -124.06811,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 44.66905,
+      "lng": -124.065557,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ala Moana Bowls": {
       "lat": 21.280877,
@@ -38,14 +48,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Amelia Island": {
-      "lat": 30.621368,
-      "lng": -81.434097,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 30.621239,
+      "lng": -81.43693,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Anahola Bay": {
-      "lat": 22.149073,
-      "lng": -159.302595,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 22.148258,
+      "lng": -159.303668,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Andrew Molera State Park": {
       "lat": 36.272857,
@@ -61,6 +71,11 @@
       "lat": 36.623743,
       "lng": -121.94262,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Assateague Island MD": {
+      "lat": 38.20669,
+      "lng": -75.148973,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Atlantic Beach": {
       "lat": 30.334361,
@@ -102,20 +117,30 @@
       "lng": -158.054423,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Baileys Beach": {
+      "lat": 41.455674,
+      "lng": -71.312964,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Banyans": {
       "lat": 19.606617,
       "lng": -155.977111,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Barnegat Light": {
-      "lat": 39.755851,
-      "lng": -74.097912,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 39.756577,
+      "lng": -74.098427,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Bastendorff Beach": {
       "lat": 43.34709,
       "lng": -124.352789,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Bath House": {
+      "lat": 36.015869,
+      "lng": -75.655417,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Bathtub Beach": {
       "lat": 27.185937,
@@ -126,6 +151,11 @@
       "lat": 40.076807,
       "lng": -74.038904,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Beach Haven": {
+      "lat": 39.561451,
+      "lng": -74.234898,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Bellows Beach": {
       "lat": 21.359854,
@@ -143,9 +173,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Blackies": {
-      "lat": 33.608258,
-      "lng": -117.933426,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.608883,
+      "lng": -117.931881,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Bob Hall Pier": {
       "lat": 27.582299,
@@ -158,9 +188,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Bolinas": {
-      "lat": 37.903997,
-      "lng": -122.68394,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 37.90437,
+      "lng": -122.683961,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Bolsa Chica State Beach": {
       "lat": 33.698208,
@@ -198,14 +228,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "C Street Ventura": {
-      "lat": 34.274418,
-      "lng": -119.294186,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.275216,
+      "lng": -119.293349,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Cabrillo Beach": {
+      "lat": 33.704849,
+      "lng": -118.288915,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Campus Point UCSB": {
-      "lat": 34.406485,
-      "lng": -119.8423,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.406582,
+      "lng": -119.842912,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Canoes Waikiki": {
       "lat": 21.274499,
@@ -213,9 +248,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Cape Disappointment": {
-      "lat": 46.277207,
-      "lng": -124.083538,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 46.277385,
+      "lng": -124.078989,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Cape Hatteras Lighthouse": {
       "lat": 35.22592,
@@ -226,6 +261,11 @@
       "lat": 45.220803,
       "lng": -123.980799,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Cape San B liss": {
+      "lat": 29.675973,
+      "lng": -85.365272,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Cardiff Reef": {
       "lat": 33.015159,
@@ -238,9 +278,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Carmel Beach": {
-      "lat": 36.550948,
-      "lng": -121.931334,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 36.550828,
+      "lng": -121.93099,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Carolina Beach": {
       "lat": 34.035039,
@@ -252,10 +292,15 @@
       "lng": -119.522302,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Caspar": {
+      "lat": 39.361079,
+      "lng": -123.817785,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Charlestown Town Beach": {
-      "lat": 41.357484,
-      "lng": -71.633048,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 41.357629,
+      "lng": -71.634057,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Chuns Reef": {
       "lat": 21.624199,
@@ -287,6 +332,11 @@
       "lng": -75.82459,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Corona Del Mar": {
+      "lat": 33.592351,
+      "lng": -117.875082,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Coronado Shores": {
       "lat": 32.682008,
       "lng": -117.187386,
@@ -302,20 +352,35 @@
       "lng": -118.961055,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Cowell's Beach Children's Surfing Area": {
+      "lat": 36.960403,
+      "lng": -122.024224,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Crash Boat Beach": {
       "lat": 18.457303,
       "lng": -67.163758,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Crescent City Beach": {
-      "lat": 41.740066,
-      "lng": -124.171429,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 41.740546,
+      "lng": -124.171107,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Croatan Beach": {
       "lat": 36.823096,
       "lng": -75.96724,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Crystal Cove": {
+      "lat": 33.559188,
+      "lng": -117.821352,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Cupsogue Beach": {
+      "lat": 40.768907,
+      "lng": -72.735243,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "D Street Encinitas": {
       "lat": 33.045557,
@@ -323,14 +388,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Dana Point, California": {
-      "lat": 33.462684,
-      "lng": -117.716897,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.463329,
+      "lng": -117.716231,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Davenport Landing": {
-      "lat": 37.009921,
-      "lng": -122.199619,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 37.010709,
+      "lng": -122.198911,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Daytona Beach": {
       "lat": 29.172248,
@@ -348,19 +413,24 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Deland Park": {
-      "lat": 43.755442,
-      "lng": -87.700875,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.756527,
+      "lng": -87.702248,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Delray Beach": {
       "lat": 26.459739,
-      "lng": -80.056901,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lng": -80.05733,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Destin Jetty": {
+      "lat": 30.381169,
+      "lng": -86.50609,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Devereux": {
-      "lat": 34.407653,
-      "lng": -119.874573,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.408308,
+      "lng": -119.87453,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Dewey Beach": {
       "lat": 38.697903,
@@ -373,29 +443,34 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Dillon Beach": {
-      "lat": 38.250752,
-      "lng": -122.969241,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 38.250263,
+      "lng": -122.968919,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ditch Plains": {
       "lat": 41.038675,
       "lng": -71.914465,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Dockweiler Beach": {
+      "lat": 33.941936,
+      "lng": -118.443882,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Dogmans Rincon": {
-      "lat": 18.341409,
-      "lng": -67.258172,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 18.341511,
+      "lng": -67.257485,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Doheny State Beach": {
-      "lat": 33.460088,
-      "lng": -117.684774,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.461145,
+      "lng": -117.685869,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Doran Beach": {
-      "lat": 38.311383,
-      "lng": -123.044815,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 38.311895,
+      "lng": -123.046103,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Duluth Park Point": {
       "lat": 46.712973,
@@ -408,14 +483,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Edgewater Beach Cleveland": {
-      "lat": 41.489485,
-      "lng": -81.740706,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 41.489324,
+      "lng": -81.740513,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Edisto Beach": {
-      "lat": 32.500288,
-      "lng": -80.298761,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 32.500469,
+      "lng": -80.299008,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ehukai Beach Park": {
       "lat": 21.666043,
@@ -423,19 +498,34 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "El Capitan State Beach": {
-      "lat": 34.458128,
-      "lng": -120.025871,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.45834,
+      "lng": -120.025603,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "El Porto": {
       "lat": 33.903761,
       "lng": -118.424613,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Electric Beach": {
+      "lat": 21.359744,
+      "lng": -158.132089,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Emerald Isle": {
       "lat": 34.659581,
       "lng": -77.033772,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Englewood": {
+      "lat": 26.947551,
+      "lng": -82.376078,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Faria Beach": {
+      "lat": 34.33448,
+      "lng": -119.407375,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Fire Island": {
       "lat": 40.624311,
@@ -453,14 +543,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Florence South Jetty": {
-      "lat": 44.015534,
-      "lng": -124.14465,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 44.014916,
+      "lng": -124.139929,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Flying Point Beach": {
-      "lat": 40.869651,
-      "lng": -72.38308,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 40.870073,
+      "lng": -72.383487,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Folly Beach Pier": {
       "lat": 32.65354,
@@ -478,9 +568,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Fort Point": {
-      "lat": 37.810988,
-      "lng": -122.476058,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 37.811106,
+      "lng": -122.475736,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Fortunes Rocks": {
       "lat": 43.424032,
@@ -488,19 +578,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Frisco Pier": {
-      "lat": 35.227883,
-      "lng": -75.623875,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 35.228181,
+      "lng": -75.623896,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Galveston Seawall": {
-      "lat": 29.284228,
-      "lng": -94.792528,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 29.284396,
+      "lng": -94.792893,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Garbage Beach": {
-      "lat": 32.683489,
-      "lng": -117.251909,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 32.683597,
+      "lng": -117.250664,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Gas Chambers Aguadilla": {
       "lat": 18.461088,
@@ -517,10 +607,15 @@
       "lng": -73.395259,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Gold Beach": {
+      "lat": 42.415061,
+      "lng": -124.428148,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Gooch's Beach": {
-      "lat": 43.34631,
-      "lng": -70.480385,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.346481,
+      "lng": -70.480664,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Good Harbor Beach": {
       "lat": 42.618897,
@@ -528,19 +623,24 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Grand Haven South Pier": {
-      "lat": 43.056566,
-      "lng": -86.251516,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.05633,
+      "lng": -86.250551,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Grand Haven State Park": {
-      "lat": 43.062617,
-      "lng": -86.252117,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.06257,
+      "lng": -86.251452,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Haleiwa Ali'i Beach": {
       "lat": 21.594774,
       "lng": -158.108432,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Half Moon Bay": {
+      "lat": 37.477038,
+      "lng": -122.451661,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Half Moon Bay Jetty": {
       "lat": 37.498133,
@@ -563,9 +663,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Hanalei Bay": {
-      "lat": 22.209617,
-      "lng": -159.507451,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 22.20761,
+      "lng": -159.506164,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Hapuna Beach": {
       "lat": 19.992244,
@@ -583,14 +683,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Hermosa Beach, California": {
-      "lat": 33.869204,
-      "lng": -118.408027,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.869311,
+      "lng": -118.407662,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Higgins Beach": {
-      "lat": 43.558594,
-      "lng": -70.277867,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.559278,
+      "lng": -70.277996,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Hillsboro Inlet": {
+      "lat": 26.2573,
+      "lng": -80.082307,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Hilton Head Island": {
       "lat": 32.150473,
@@ -598,9 +703,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Hobuck Beach": {
-      "lat": 48.334343,
-      "lng": -124.668732,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 48.335042,
+      "lng": -124.666092,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Holden Beach": {
       "lat": 33.90832,
@@ -608,19 +713,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Honoli‘i": {
-      "lat": 19.75596,
-      "lng": -155.090132,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 19.756102,
+      "lng": -155.090861,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Honolua Bay": {
-      "lat": 21.015131,
-      "lng": -156.640019,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 21.015862,
+      "lng": -156.639102,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Horseneck Beach": {
-      "lat": 41.499334,
-      "lng": -71.052575,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 41.503789,
+      "lng": -71.054249,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Hoʻokipa": {
       "lat": 20.933945,
@@ -633,9 +738,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Humboldt Bay Jetty": {
-      "lat": 40.770402,
-      "lng": -124.235115,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 40.768565,
+      "lng": -124.231575,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Hunting Island": {
       "lat": 32.368581,
@@ -657,20 +762,25 @@
       "lng": -117.13387,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Indian Beach Ecola": {
+      "lat": 45.890172,
+      "lng": -123.966122,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Indian River Inlet": {
       "lat": 38.608873,
       "lng": -75.059345,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Indian Rocks Beach": {
-      "lat": 27.902052,
-      "lng": -82.851162,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 27.901654,
+      "lng": -82.850325,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Indicators": {
-      "lat": 18.360472,
-      "lng": -67.271433,
-      "note": "Rename + position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 18.360452,
+      "lng": -67.271132,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Isla Blanca Park": {
       "lat": 26.07201,
@@ -683,24 +793,29 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Isle of Palms": {
-      "lat": 32.786697,
-      "lng": -79.777565,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 32.787491,
+      "lng": -79.777672,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "JP Luby Surf Park": {
-      "lat": 27.642173,
-      "lng": -97.180252,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 27.643029,
+      "lng": -97.183514,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Jalama Beach": {
+      "lat": 34.506504,
+      "lng": -120.501094,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Jenner Beach": {
-      "lat": 38.448346,
-      "lng": -123.130989,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 38.448514,
+      "lng": -123.129487,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Jenness Beach": {
-      "lat": 42.984464,
-      "lng": -70.759614,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 42.984684,
+      "lng": -70.760171,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Jennettes Pier": {
       "lat": 35.91036,
@@ -718,9 +833,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Jones Beach": {
-      "lat": 40.58606,
-      "lng": -73.526173,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 40.586598,
+      "lng": -73.526731,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Jupiter Inlet": {
       "lat": 26.946059,
@@ -733,9 +848,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Kanaha Beach": {
-      "lat": 20.900814,
+      "lat": 20.900553,
       "lng": -156.442587,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Key West": {
+      "lat": 24.549095,
+      "lng": -81.778278,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Kiawah Island Beach": {
       "lat": 32.590485,
@@ -762,15 +882,25 @@
       "lng": -117.258346,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
-    "La Ocho": {
-      "lat": 18.467154,
-      "lng": -66.098385,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
-    },
     "La Pared Luquillo": {
       "lat": 18.377477,
       "lng": -65.714765,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "La Push First Beach": {
+      "lat": 47.906734,
+      "lng": -124.638584,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "La Push Second Beach": {
+      "lat": 47.884406,
+      "lng": -124.622126,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "La Push Third Beach": {
+      "lat": 47.877383,
+      "lng": -124.589424,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Lahaina Breakwall": {
       "lat": 20.872927,
@@ -837,6 +967,11 @@
       "lng": -73.976355,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Long Sands Beach": {
+      "lat": 43.163291,
+      "lng": -70.616233,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Lori Wilson Park": {
       "lat": 28.334906,
       "lng": -80.605123,
@@ -848,14 +983,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Lower Trestles": {
-      "lat": 33.381286,
-      "lng": -117.58579,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.381465,
+      "lng": -117.585897,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Lunada Bay": {
+      "lat": 33.770586,
+      "lng": -118.423862,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Lymans": {
-      "lat": 19.602837,
-      "lng": -155.976312,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 19.602832,
+      "lng": -155.976012,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Main Beach East Hampton": {
       "lat": 40.949534,
@@ -873,9 +1013,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Malibu Surfrider Beach": {
-      "lat": 34.031305,
-      "lng": -118.689315,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.03143,
+      "lng": -118.688865,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Manasquan Inlet": {
       "lat": 40.10258,
@@ -938,14 +1078,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Mayport Poles": {
-      "lat": 30.38276,
-      "lng": -81.392212,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 30.382853,
+      "lng": -81.39528,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Mecox Beach": {
       "lat": 40.893143,
       "lng": -72.32008,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Mendocino": {
+      "lat": 39.301843,
+      "lng": -123.797593,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Mexico Beach": {
       "lat": 29.930837,
@@ -1002,6 +1147,11 @@
       "lng": -71.568868,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Morro Rock": {
+      "lat": 35.372045,
+      "lng": -120.865982,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Moss Landing": {
       "lat": 36.804165,
       "lng": -121.790957,
@@ -1028,9 +1178,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Nantasket Beach": {
-      "lat": 42.269831,
-      "lng": -70.854263,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 42.270561,
+      "lng": -70.852997,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Nantucket Surf": {
       "lat": 41.319462,
@@ -1062,20 +1212,35 @@
       "lng": -86.861762,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Nelscott Reef": {
+      "lat": 44.958102,
+      "lng": -124.025023,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "New Brighton Reef": {
+      "lat": 36.978095,
+      "lng": -121.937149,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "New Smyrna Beach Inlet": {
       "lat": 29.070124,
       "lng": -80.907011,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Newport Beach, California": {
-      "lat": 33.601681,
-      "lng": -117.91626,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.602789,
+      "lng": -117.915487,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Newport Jetties": {
+      "lat": 33.618229,
+      "lng": -117.94085,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Newport Point": {
-      "lat": 33.603682,
-      "lng": -117.928877,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.604773,
+      "lng": -117.928576,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "North Beach Rye": {
       "lat": 42.977934,
@@ -1143,9 +1308,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Ocracoke Beach": {
-      "lat": 35.09428,
-      "lng": -75.967283,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 35.094999,
+      "lng": -75.967605,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Off The Wall": {
       "lat": 21.662593,
@@ -1153,9 +1318,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Old Orchard Beach": {
-      "lat": 43.513203,
-      "lng": -70.372453,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.513514,
+      "lng": -70.37241,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ontario Beach": {
       "lat": 43.261347,
@@ -1163,14 +1328,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Oregon Inlet": {
-      "lat": 35.788159,
-      "lng": -75.533066,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 35.787915,
+      "lng": -75.535748,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Otter Rock": {
-      "lat": 44.800352,
-      "lng": -124.07753,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 44.799271,
+      "lng": -124.074547,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Pacific Beach": {
       "lat": 32.796474,
@@ -1193,9 +1358,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Pakala": {
-      "lat": 21.93385,
-      "lng": -159.651003,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 21.933969,
+      "lng": -159.650359,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Palm Beach": {
       "lat": 26.703063,
@@ -1207,6 +1372,11 @@
       "lng": -118.408413,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Panama City Beach Pier": {
+      "lat": 30.214761,
+      "lng": -85.877852,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Patrick Air Force Base Beach": {
       "lat": 28.258744,
       "lng": -80.603833,
@@ -1216,6 +1386,11 @@
       "lat": 20.951821,
       "lng": -156.282234,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Pedro Point": {
+      "lat": 37.59917,
+      "lng": -122.516077,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Pensacola Beach": {
       "lat": 30.328731,
@@ -1236,6 +1411,11 @@
       "lat": 19.695092,
       "lng": -156.04517,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Pitas Point": {
+      "lat": 34.316715,
+      "lng": -119.388793,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Playa Guajataca": {
       "lat": 18.489703,
@@ -1268,9 +1448,14 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Point Arena": {
-      "lat": 38.901587,
-      "lng": -123.704853,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 38.901855,
+      "lng": -123.703823,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Point Dume": {
+      "lat": 33.999184,
+      "lng": -118.805938,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Point Judith": {
       "lat": 41.362541,
@@ -1287,6 +1472,11 @@
       "lng": -74.036028,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Point Reyes North": {
+      "lat": 38.082082,
+      "lng": -122.976558,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Polihale Beach": {
       "lat": 22.088066,
       "lng": -159.757218,
@@ -1296,6 +1486,11 @@
       "lat": 29.118949,
       "lng": -80.948124,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Ponquogue Beach": {
+      "lat": 40.835275,
+      "lng": -72.495754,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ponte Vedra Beach": {
       "lat": 30.235786,
@@ -1328,9 +1523,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Publics Waikiki": {
-      "lat": 21.26574,
-      "lng": -157.824354,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 21.266,
+      "lng": -157.824075,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Pūpūkea, Hawaii": {
       "lat": 21.667818,
@@ -1363,9 +1558,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Rialto Beach": {
-      "lat": 47.917032,
-      "lng": -124.641781,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 47.91663,
+      "lng": -124.640021,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Richardson Beach": {
       "lat": 19.736047,
@@ -1438,9 +1633,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Salmon Creek Beach": {
-      "lat": 38.340108,
-      "lng": -123.070908,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 38.339889,
+      "lng": -123.069706,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Salt Creek": {
       "lat": 33.47601,
@@ -1451,6 +1646,11 @@
       "lat": 35.536277,
       "lng": -75.46586,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "San Clemente Beach": {
+      "lat": 33.402641,
+      "lng": -117.605939,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "San Diego Blacks Beach": {
       "lat": 32.879677,
@@ -1463,9 +1663,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "San Onofre": {
-      "lat": 33.372282,
-      "lng": -117.56606,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.372398,
+      "lng": -117.565856,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "San Simeon": {
       "lat": 35.613104,
@@ -1473,9 +1673,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Sand Dollar Beach": {
-      "lat": 35.923515,
-      "lng": -121.471882,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 35.923793,
+      "lng": -121.470423,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Sandbridge Beach": {
       "lat": 36.746433,
@@ -1488,14 +1688,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Sandy Beach Oahu": {
-      "lat": 21.284296,
-      "lng": -157.672305,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 21.285116,
+      "lng": -157.672091,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Sandy Hook": {
       "lat": 40.449037,
       "lng": -73.982449,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Santa Monica Beach": {
+      "lat": 34.016402,
+      "lng": -118.507204,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Satellite Beach": {
       "lat": 28.173415,
@@ -1542,6 +1747,11 @@
       "lng": -80.446508,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Second Beach Newport": {
+      "lat": 41.48582,
+      "lng": -71.254406,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Shacks Beach": {
       "lat": 18.513226,
       "lng": -67.104321,
@@ -1558,14 +1768,19 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Shelter Cove": {
-      "lat": 40.022422,
-      "lng": -124.060965,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 40.024147,
+      "lng": -124.060836,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Shi Shi Beach": {
       "lat": 48.262084,
       "lng": -124.683409,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Shinnecock Inlet": {
+      "lat": 40.837808,
+      "lng": -72.475519,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ship Bottom": {
       "lat": 39.64998,
@@ -1577,10 +1792,15 @@
       "lng": -123.968439,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Short Sands Beach York": {
+      "lat": 43.174685,
+      "lng": -70.606234,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Silver Beach": {
-      "lat": 42.110799,
-      "lng": -86.490169,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 42.110815,
+      "lng": -86.489632,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Sleeping Bear Dunes": {
       "lat": 44.890235,
@@ -1638,9 +1858,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Stinson Beach": {
-      "lat": 37.897005,
-      "lng": -122.650766,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 37.898715,
+      "lng": -122.649672,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Stone Harbor": {
       "lat": 39.04192,
@@ -1678,9 +1898,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Surf Beach Vandenberg": {
-      "lat": 34.68644,
-      "lng": -120.611858,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.684746,
+      "lng": -120.60791,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Surf City NC": {
       "lat": 34.423939,
@@ -1708,9 +1928,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Surfside Jetty": {
-      "lat": 33.726767,
-      "lng": -118.093071,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.72873,
+      "lng": -118.089273,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Surfside, California": {
       "lat": 33.726731,
@@ -1743,34 +1963,44 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "The Pier Beach": {
-      "lat": 33.419702,
-      "lng": -117.621442,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.419246,
+      "lng": -117.620637,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "The Point Buxton": {
-      "lat": 35.225849,
-      "lng": -75.520105,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 35.226586,
+      "lng": -75.522251,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "The Wall Hampton": {
-      "lat": 42.916584,
-      "lng": -70.79916,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 42.916709,
+      "lng": -70.800276,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "The Wedge": {
-      "lat": 33.593084,
-      "lng": -117.883322,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 33.593584,
+      "lng": -117.883193,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
+    "Third Beach Newport": {
+      "lat": 41.489694,
+      "lng": -71.247046,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Thousand Peaks Maui": {
       "lat": 20.801374,
       "lng": -156.599293,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
+    "Toes Over": {
+      "lat": 36.971718,
+      "lng": -121.949036,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
+    },
     "Tokeland": {
-      "lat": 46.711737,
-      "lng": -124.024143,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 46.711958,
+      "lng": -124.022233,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Topanga Beach": {
       "lat": 34.037262,
@@ -1818,9 +2048,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Turtle Bay": {
-      "lat": 21.704346,
-      "lng": -158.00005,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 21.703529,
+      "lng": -157.999492,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Turtle Cove Montauk": {
       "lat": 41.061864,
@@ -1846,6 +2076,11 @@
       "lat": 27.099056,
       "lng": -82.461019,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Ventura Harbor": {
+      "lat": 34.244961,
+      "lng": -119.268737,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Ventura Point": {
       "lat": 34.272006,
@@ -1898,9 +2133,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Whitefish Bay WI": {
-      "lat": 43.116053,
-      "lng": -87.890496,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 43.114957,
+      "lng": -87.890625,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Wilderness": {
       "lat": 18.485714,
@@ -1911,6 +2146,11 @@
       "lat": 38.978561,
       "lng": -74.811981,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+    },
+    "Windansea Beach": {
+      "lat": 32.831054,
+      "lng": -117.281767,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     },
     "Woodlawn Beach": {
       "lat": 42.790346,
@@ -1928,9 +2168,9 @@
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
     "Zuma Beach": {
-      "lat": 34.009065,
-      "lng": -118.820029,
-      "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
+      "lat": 34.010328,
+      "lng": -118.818437,
+      "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
     }
   }
 }

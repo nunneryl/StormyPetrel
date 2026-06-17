@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-curated orientations for spots where the geometric algorithm cannot resolve the seaward bearing. Applied by pipeline/enrich.py between Algorithm 1 (orientation) and Algorithm 2 (swell window), so the orientation-derived fallback builds arcs against the correct value. Treated as authoritative \u2014 overrides both the algorithmic result and LLM verification. Match by exact spot name.\n\nWHEN TO ADD AN ENTRY:\n- Great Lakes spots (GSHHG L1 lumps the lakes with land \u2014 orientation returns null)\n- Complex harbors, jetties, rivermouths where the coastline normal misrepresents the actual break geometry\n- Barrier-island spots whose Nominatim geocode landed on the bay side and whose automatic 180\u00b0 hemisphere flip didn't cover it\n- Spots in Alaska / Guam / territories not covered by the region hemisphere table\n\nFIELDS:\n- orientation_deg (required, 0-359): the seaward-facing bearing. 0=N, 90=E, 180=S, 270=W. This is the direction the rider looks when facing the incoming swell.\n- source (optional): short attribution \u2014 'local knowledge', 'surf-forecast.com manual check', 'OSM way heading', etc.\n- notes (optional): any disambiguation that matters (e.g. 'Pier points straight offshore', 'Break faces the reef pass rather than the beach', or flagging that the spot's coord looks wrong and needs a fix in spot_coord_fixes.json).",
+  "_comment": "Hand-curated orientations for spots where the geometric algorithm cannot resolve the seaward bearing. Applied by pipeline/enrich.py between Algorithm 1 (orientation) and Algorithm 2 (swell window), so the orientation-derived fallback builds arcs against the correct value. Treated as authoritative — overrides both the algorithmic result and LLM verification. Match by exact spot name.\n\nWHEN TO ADD AN ENTRY:\n- Great Lakes spots (GSHHG L1 lumps the lakes with land — orientation returns null)\n- Complex harbors, jetties, rivermouths where the coastline normal misrepresents the actual break geometry\n- Barrier-island spots whose Nominatim geocode landed on the bay side and whose automatic 180° hemisphere flip didn't cover it\n- Spots in Alaska / Guam / territories not covered by the region hemisphere table\n\nFIELDS:\n- orientation_deg (required, 0-359): the seaward-facing bearing. 0=N, 90=E, 180=S, 270=W. This is the direction the rider looks when facing the incoming swell.\n- source (optional): short attribution — 'local knowledge', 'surf-forecast.com manual check', 'OSM way heading', etc.\n- notes (optional): any disambiguation that matters (e.g. 'Pier points straight offshore', 'Break faces the reef pass rather than the beach', or flagging that the spot's coord looks wrong and needs a fix in spot_coord_fixes.json).",
   "_schema_version": 1,
   "orientations": {
     "Grand Haven South Pier": {
@@ -107,7 +107,7 @@
     },
     "IB Jetty": {
       "orientation_deg": 225,
-      "source": "Imperial Beach, CA \u2014 south jetty at the border",
+      "source": "Imperial Beach, CA — south jetty at the border",
       "notes": "Jetty points SW into the Pacific"
     },
     "Gooch's Beach": {
@@ -123,7 +123,7 @@
     "Avalon NJ": {
       "orientation_deg": 90,
       "source": "Jersey Shore barrier island",
-      "notes": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG \u2014 (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide."
+      "notes": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG — (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide."
     },
     "Mecox Beach": {
       "orientation_deg": 180,
@@ -194,25 +194,21 @@
       "source": "Aguadilla, PR",
       "notes": "Shallow reef ledge facing NW"
     },
-    "La Ocho": {
-      "orientation_deg": 0,
-      "source": "North coast of Puerto Rico (Arecibo / Manat\u00ed area)"
-    },
     "Middles Isabela": {
       "orientation_deg": 0,
-      "source": "Isabela, PR \u2014 north coast"
+      "source": "Isabela, PR — north coast"
     },
     "Playa Guajataca": {
       "orientation_deg": 0,
-      "source": "Quebradillas / Isabela, PR \u2014 north coast"
+      "source": "Quebradillas / Isabela, PR — north coast"
     },
     "Playa Kikita": {
       "orientation_deg": 0,
-      "source": "North coast of Puerto Rico (Manat\u00ed area)"
+      "source": "North coast of Puerto Rico (Manatí area)"
     },
     "Shacks Beach": {
       "orientation_deg": 0,
-      "source": "Isabela, PR \u2014 north coast"
+      "source": "Isabela, PR — north coast"
     },
     "Kamea Meha": {
       "orientation_deg": 0,
@@ -225,13 +221,13 @@
     },
     "Sebastian Inlet": {
       "orientation_deg": 80,
-      "source": "Map verified \u2014 east-facing barrier island beach",
-      "notes": "Optimal swell from NE (45\u00b0) but beach faces E"
+      "source": "Map verified — east-facing barrier island beach",
+      "notes": "Optimal swell from NE (45°) but beach faces E"
     },
     "Rincon": {
       "orientation_deg": 210,
-      "source": "Map verified \u2014 south-facing point break",
-      "notes": "Optimal swell from WNW (290\u00b0) wraps around point. Cove faces SSW."
+      "source": "Map verified — south-facing point break",
+      "notes": "Optimal swell from WNW (290°) wraps around point. Cove faces SSW."
     }
   }
 }
