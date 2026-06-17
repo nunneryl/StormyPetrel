@@ -1,0 +1,3326 @@
+{
+  "_comment": "Hand-curated seaward orientation (true-north degrees) for every kept surf spot. Applied by pipeline/enrich.py as Algorithm 1c, AFTER the geometric Algorithm 1 and AFTER the name-keyed manual_orientations.json (Algorithm 1b) — so a slug match here is authoritative over every other source. Slug derivation mirrors pipeline/db_import._slugify so re-enrich looks up by the same key that lands in the spots table. Stored alongside spot_coord_fixes.json: the durable, re-enrich-survivable override mechanism for orientation_deg.",
+  "_schema_version": 1,
+  "orientations": {
+    "15th-street-del-mar": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "15th Street Del Mar"
+    },
+    "16th-street-south": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "16th Street South"
+    },
+    "3-mile": {
+      "orientation_deg": 229.0,
+      "cardinal": "SW",
+      "name": "3 Mile"
+    },
+    "30th-street-pier": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "30th Street Pier"
+    },
+    "32nd-street": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "32nd Street"
+    },
+    "38th-avenue": {
+      "orientation_deg": 139.0,
+      "cardinal": "SE",
+      "name": "38th Avenue"
+    },
+    "4-mile": {
+      "orientation_deg": 205.0,
+      "cardinal": "SSW",
+      "name": "4 Mile"
+    },
+    "56th-street": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "56th Street"
+    },
+    "61st-street-galveston": {
+      "orientation_deg": 145.0,
+      "cardinal": "SE",
+      "name": "61st Street Galveston"
+    },
+    "a-street": {
+      "orientation_deg": 89.0,
+      "cardinal": "E",
+      "name": "A Street"
+    },
+    "abalone-street": {
+      "orientation_deg": 62.0,
+      "cardinal": "ENE",
+      "name": "Abalone Street"
+    },
+    "agate-beach": {
+      "orientation_deg": 302.0,
+      "cardinal": "WNW",
+      "name": "Agate Beach"
+    },
+    "agate-beach-newport": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Agate Beach Newport"
+    },
+    "ala-moana-bowls": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Ala Moana Bowls"
+    },
+    "amelia-island": {
+      "orientation_deg": 98.0,
+      "cardinal": "E",
+      "name": "Amelia Island"
+    },
+    "anahola-bay": {
+      "orientation_deg": 48.0,
+      "cardinal": "NE",
+      "name": "Anahola Bay"
+    },
+    "andrew-molera-state-park": {
+      "orientation_deg": 235.0,
+      "cardinal": "SW",
+      "name": "Andrew Molera State Park"
+    },
+    "antonio-s": {
+      "orientation_deg": 341.0,
+      "cardinal": "NNW",
+      "name": "Antonio's"
+    },
+    "asbury-park": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Asbury Park"
+    },
+    "asilomar-state-beach": {
+      "orientation_deg": 304.0,
+      "cardinal": "NW",
+      "name": "Asilomar State Beach"
+    },
+    "assateague-island-md": {
+      "orientation_deg": 106.0,
+      "cardinal": "ESE",
+      "name": "Assateague Island MD"
+    },
+    "atlantic-beach": {
+      "orientation_deg": 87.0,
+      "cardinal": "E",
+      "name": "Atlantic Beach"
+    },
+    "atlantic-beach-nc": {
+      "orientation_deg": 185.0,
+      "cardinal": "S",
+      "name": "Atlantic Beach NC"
+    },
+    "atlantic-blvd": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "Atlantic Blvd"
+    },
+    "atlantic-city": {
+      "orientation_deg": 141.0,
+      "cardinal": "SE",
+      "name": "Atlantic City"
+    },
+    "avalanches": {
+      "orientation_deg": 274.0,
+      "cardinal": "W",
+      "name": "Avalanches"
+    },
+    "avalon-jetty": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Avalon Jetty"
+    },
+    "avalon-nj": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Avalon NJ"
+    },
+    "avalon-pier": {
+      "orientation_deg": 63.0,
+      "cardinal": "ENE",
+      "name": "Avalon Pier"
+    },
+    "avila-beach": {
+      "orientation_deg": 207.0,
+      "cardinal": "SSW",
+      "name": "Avila Beach"
+    },
+    "aviones": {
+      "orientation_deg": 19.0,
+      "cardinal": "NNE",
+      "name": "Aviones"
+    },
+    "avon-by-the-sea": {
+      "orientation_deg": 99.0,
+      "cardinal": "E",
+      "name": "Avon-by-the-Sea"
+    },
+    "avon-pier": {
+      "orientation_deg": 97.0,
+      "cardinal": "E",
+      "name": "Avon Pier"
+    },
+    "backdoor-pipeline": {
+      "orientation_deg": 311.0,
+      "cardinal": "NW",
+      "name": "Backdoor Pipeline"
+    },
+    "baileys-beach": {
+      "orientation_deg": 208.0,
+      "cardinal": "SSW",
+      "name": "Baileys Beach"
+    },
+    "bandon-beach": {
+      "orientation_deg": 279.0,
+      "cardinal": "W",
+      "name": "Bandon Beach"
+    },
+    "banyans": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Banyans"
+    },
+    "banzai-pipeline": {
+      "orientation_deg": 315.0,
+      "cardinal": "NW",
+      "name": "Banzai Pipeline"
+    },
+    "barbers-point": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Barbers Point"
+    },
+    "barnegat-light": {
+      "orientation_deg": 129.0,
+      "cardinal": "SE",
+      "name": "Barnegat Light"
+    },
+    "bastendorff-beach": {
+      "orientation_deg": 305.0,
+      "cardinal": "NW",
+      "name": "Bastendorff Beach"
+    },
+    "bath-house": {
+      "orientation_deg": 60.0,
+      "cardinal": "ENE",
+      "name": "Bath House"
+    },
+    "bathtub-beach": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Bathtub Beach"
+    },
+    "bay-head": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Bay Head"
+    },
+    "beach-haven": {
+      "orientation_deg": 122.0,
+      "cardinal": "ESE",
+      "name": "Beach Haven"
+    },
+    "bellows-beach": {
+      "orientation_deg": 72.0,
+      "cardinal": "ENE",
+      "name": "Bellows Beach"
+    },
+    "belmar": {
+      "orientation_deg": 104.0,
+      "cardinal": "ESE",
+      "name": "Belmar"
+    },
+    "berts-bar": {
+      "orientation_deg": 151.0,
+      "cardinal": "SSE",
+      "name": "Berts Bar"
+    },
+    "bethany-beach": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Bethany Beach"
+    },
+    "big-beach-makena": {
+      "orientation_deg": 236.0,
+      "cardinal": "SW",
+      "name": "Big Beach Makena"
+    },
+    "bird-rock": {
+      "orientation_deg": 238.0,
+      "cardinal": "WSW",
+      "name": "Bird Rock"
+    },
+    "black-pelican": {
+      "orientation_deg": 64.0,
+      "cardinal": "ENE",
+      "name": "Black Pelican"
+    },
+    "black-rock-point": {
+      "orientation_deg": 179.0,
+      "cardinal": "S",
+      "name": "Black Rock Point"
+    },
+    "blackbeard-island": {
+      "orientation_deg": 110.0,
+      "cardinal": "ESE",
+      "name": "Blackbeard Island"
+    },
+    "blackies": {
+      "orientation_deg": 238.0,
+      "cardinal": "WSW",
+      "name": "Blackies"
+    },
+    "bob-hall-pier": {
+      "orientation_deg": 113.0,
+      "cardinal": "ESE",
+      "name": "Bob Hall Pier"
+    },
+    "boca-raton-inlet": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Boca Raton Inlet"
+    },
+    "bolinas": {
+      "orientation_deg": 159.0,
+      "cardinal": "SSE",
+      "name": "Bolinas"
+    },
+    "bolsa-chica-state-beach": {
+      "orientation_deg": 232.0,
+      "cardinal": "SW",
+      "name": "Bolsa Chica State Beach"
+    },
+    "bombora": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Bombora"
+    },
+    "boneyard": {
+      "orientation_deg": 333.0,
+      "cardinal": "NNW",
+      "name": "Boneyard"
+    },
+    "boynton-beach-inlet": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Boynton Beach Inlet"
+    },
+    "boyton-bech-inlet": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Boyton Bech Inlet"
+    },
+    "bradley-beach": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Bradley Beach"
+    },
+    "breachway": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Breachway"
+    },
+    "breezy-point": {
+      "orientation_deg": 178.0,
+      "cardinal": "S",
+      "name": "Breezy Point"
+    },
+    "brigantine": {
+      "orientation_deg": 132.0,
+      "cardinal": "SE",
+      "name": "Brigantine"
+    },
+    "brigantine-jetty": {
+      "orientation_deg": 142.0,
+      "cardinal": "SE",
+      "name": "Brigantine Jetty"
+    },
+    "broadway-beach": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Broadway Beach"
+    },
+    "brookings-beach": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "Brookings Beach"
+    },
+    "brooks-street": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Brooks Street"
+    },
+    "bruce-s-beach": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Bruce's Beach"
+    },
+    "c-street-ventura": {
+      "orientation_deg": 213.0,
+      "cardinal": "SSW",
+      "name": "C Street Ventura"
+    },
+    "cable-landing": {
+      "orientation_deg": 287.0,
+      "cardinal": "WNW",
+      "name": "Cable Landing"
+    },
+    "cabrillo-beach": {
+      "orientation_deg": 164.0,
+      "cardinal": "SSE",
+      "name": "Cabrillo Beach"
+    },
+    "caesars-pier": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Caesars Pier"
+    },
+    "campus-point-ucsb": {
+      "orientation_deg": 148.0,
+      "cardinal": "SSE",
+      "name": "Campus Point UCSB"
+    },
+    "cannon-beach": {
+      "orientation_deg": 272.0,
+      "cardinal": "W",
+      "name": "Cannon Beach"
+    },
+    "canoes-waikiki": {
+      "orientation_deg": 205.0,
+      "cardinal": "SSW",
+      "name": "Canoes Waikiki"
+    },
+    "canova-beach-park": {
+      "orientation_deg": 80.0,
+      "cardinal": "E",
+      "name": "Canova Beach Park"
+    },
+    "cape-disappointment": {
+      "orientation_deg": 249.0,
+      "cardinal": "WSW",
+      "name": "Cape Disappointment"
+    },
+    "cape-hatteras-lighthouse": {
+      "orientation_deg": 161.0,
+      "cardinal": "SSE",
+      "name": "Cape Hatteras Lighthouse"
+    },
+    "cape-kiwanda": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Cape Kiwanda"
+    },
+    "cape-san-b-liss": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Cape San B liss"
+    },
+    "captiva": {
+      "orientation_deg": 258.0,
+      "cardinal": "WSW",
+      "name": "Captiva"
+    },
+    "cardiff-reef": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Cardiff Reef"
+    },
+    "carlsbad-state-beach": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Carlsbad State Beach"
+    },
+    "carmel-beach": {
+      "orientation_deg": 266.0,
+      "cardinal": "W",
+      "name": "Carmel Beach"
+    },
+    "carolina-beach": {
+      "orientation_deg": 110.0,
+      "cardinal": "ESE",
+      "name": "Carolina Beach"
+    },
+    "carolina-beach-pier": {
+      "orientation_deg": 110.0,
+      "cardinal": "ESE",
+      "name": "Carolina Beach Pier"
+    },
+    "carpinteria-state-beach": {
+      "orientation_deg": 214.0,
+      "cardinal": "SW",
+      "name": "Carpinteria State Beach"
+    },
+    "caspar": {
+      "orientation_deg": 298.0,
+      "cardinal": "WNW",
+      "name": "Caspar"
+    },
+    "cayucos-pier": {
+      "orientation_deg": 207.0,
+      "cardinal": "SSW",
+      "name": "Cayucos Pier"
+    },
+    "charlestown-town-beach": {
+      "orientation_deg": 146.0,
+      "cardinal": "SE",
+      "name": "Charlestown Town Beach"
+    },
+    "chart-house": {
+      "orientation_deg": 174.0,
+      "cardinal": "S",
+      "name": "Chart House"
+    },
+    "cherry-grove-pier": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Cherry Grove Pier"
+    },
+    "chuns-reef": {
+      "orientation_deg": 320.0,
+      "cardinal": "NW",
+      "name": "Chuns Reef"
+    },
+    "church": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Church"
+    },
+    "cisco-beach": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "Cisco Beach"
+    },
+    "coast-guard-beach": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "Coast Guard Beach"
+    },
+    "cocoa-beach-pier": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Cocoa Beach Pier"
+    },
+    "commercial-pier": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Commercial Pier"
+    },
+    "conant-ave": {
+      "orientation_deg": 92.0,
+      "cardinal": "E",
+      "name": "Conant Ave"
+    },
+    "coolidge": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Coolidge"
+    },
+    "corolla-beach": {
+      "orientation_deg": 77.0,
+      "cardinal": "ENE",
+      "name": "Corolla Beach"
+    },
+    "corona-del-mar": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Corona Del Mar"
+    },
+    "coronado-shores": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Coronado Shores"
+    },
+    "costellos": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Costellos"
+    },
+    "cottons": {
+      "orientation_deg": 234.0,
+      "cardinal": "SW",
+      "name": "Cottons"
+    },
+    "county-line": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "County Line"
+    },
+    "cowell-s-beach-children-s-surfing-area": {
+      "orientation_deg": 142.0,
+      "cardinal": "SE",
+      "name": "Cowell's Beach Children's Surfing Area"
+    },
+    "crash-boat-beach": {
+      "orientation_deg": 254.0,
+      "cardinal": "WSW",
+      "name": "Crash Boat Beach"
+    },
+    "crescent-beach": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Crescent Beach"
+    },
+    "crescent-city-beach": {
+      "orientation_deg": 221.0,
+      "cardinal": "SW",
+      "name": "Crescent City Beach"
+    },
+    "croatan-beach": {
+      "orientation_deg": 80.0,
+      "cardinal": "E",
+      "name": "Croatan Beach"
+    },
+    "cronkhite": {
+      "orientation_deg": 231.0,
+      "cardinal": "SW",
+      "name": "Cronkhite"
+    },
+    "crystal-cove": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Crystal Cove"
+    },
+    "cupsogue-beach": {
+      "orientation_deg": 160.0,
+      "cardinal": "SSE",
+      "name": "Cupsogue Beach"
+    },
+    "d-street-encinitas": {
+      "orientation_deg": 258.0,
+      "cardinal": "WSW",
+      "name": "D Street Encinitas"
+    },
+    "dana-point-california": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Dana Point, California"
+    },
+    "dania-beach-pier": {
+      "orientation_deg": 98.0,
+      "cardinal": "E",
+      "name": "Dania Beach Pier"
+    },
+    "davenport-landing": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Davenport Landing"
+    },
+    "davis-park": {
+      "orientation_deg": 161.0,
+      "cardinal": "SSE",
+      "name": "Davis Park"
+    },
+    "daytona-beach": {
+      "orientation_deg": 65.0,
+      "cardinal": "ENE",
+      "name": "Daytona Beach"
+    },
+    "deal": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Deal"
+    },
+    "deep-cove": {
+      "orientation_deg": 144.0,
+      "cardinal": "SE",
+      "name": "Deep Cove"
+    },
+    "deep-hole": {
+      "orientation_deg": 162.0,
+      "cardinal": "SSE",
+      "name": "Deep Hole"
+    },
+    "deerfield-beach-pier": {
+      "orientation_deg": 89.0,
+      "cardinal": "E",
+      "name": "Deerfield Beach Pier"
+    },
+    "del-mar-beach": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Del Mar Beach"
+    },
+    "deland-park": {
+      "orientation_deg": 94.0,
+      "cardinal": "E",
+      "name": "Deland Park"
+    },
+    "delray-beach": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Delray Beach"
+    },
+    "destin-jetty": {
+      "orientation_deg": 184.0,
+      "cardinal": "S",
+      "name": "Destin Jetty"
+    },
+    "devereaux": {
+      "orientation_deg": 166.0,
+      "cardinal": "SSE",
+      "name": "Devereaux"
+    },
+    "devereux": {
+      "orientation_deg": 168.0,
+      "cardinal": "SSE",
+      "name": "Devereux"
+    },
+    "dewees-island": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Dewees Island"
+    },
+    "dewey-beach": {
+      "orientation_deg": 84.0,
+      "cardinal": "E",
+      "name": "Dewey Beach"
+    },
+    "diamond-beach": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "Diamond Beach"
+    },
+    "diamond-head-cliffs": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Diamond Head Cliffs"
+    },
+    "dillon-beach": {
+      "orientation_deg": 276.0,
+      "cardinal": "W",
+      "name": "Dillon Beach"
+    },
+    "ditch-plains": {
+      "orientation_deg": 160.0,
+      "cardinal": "SSE",
+      "name": "Ditch Plains"
+    },
+    "dockweiler-beach": {
+      "orientation_deg": 251.0,
+      "cardinal": "WSW",
+      "name": "Dockweiler Beach"
+    },
+    "dogmans-rincon": {
+      "orientation_deg": 251.0,
+      "cardinal": "WSW",
+      "name": "Dogmans Rincon"
+    },
+    "doheny-state-beach": {
+      "orientation_deg": 190.0,
+      "cardinal": "S",
+      "name": "Doheny State Beach"
+    },
+    "doran-beach": {
+      "orientation_deg": 152.0,
+      "cardinal": "SSE",
+      "name": "Doran Beach"
+    },
+    "drakes-island": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Drakes Island"
+    },
+    "duck-pier": {
+      "orientation_deg": 72.0,
+      "cardinal": "ENE",
+      "name": "Duck Pier"
+    },
+    "duluth-park-point": {
+      "orientation_deg": 51.0,
+      "cardinal": "NE",
+      "name": "Duluth Park Point"
+    },
+    "dunes-park": {
+      "orientation_deg": 174.0,
+      "cardinal": "S",
+      "name": "Dunes Park"
+    },
+    "east-beach": {
+      "orientation_deg": 166.0,
+      "cardinal": "SSE",
+      "name": "East Beach"
+    },
+    "east-matunuck-state-beach": {
+      "orientation_deg": 178.0,
+      "cardinal": "S",
+      "name": "East Matunuck State Beach"
+    },
+    "edgewater-beach-cleveland": {
+      "orientation_deg": 335.0,
+      "cardinal": "NNW",
+      "name": "Edgewater Beach Cleveland"
+    },
+    "edisto-beach": {
+      "orientation_deg": 138.0,
+      "cardinal": "SE",
+      "name": "Edisto Beach"
+    },
+    "ehukai-beach-park": {
+      "orientation_deg": 315.0,
+      "cardinal": "NW",
+      "name": "Ehukai Beach Park"
+    },
+    "el-capitan-state-beach": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "El Capitan State Beach"
+    },
+    "el-porto": {
+      "orientation_deg": 255.0,
+      "cardinal": "WSW",
+      "name": "El Porto"
+    },
+    "electric-beach": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Electric Beach"
+    },
+    "emerald-isle": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Emerald Isle"
+    },
+    "emma-wood-state-beach": {
+      "orientation_deg": 214.0,
+      "cardinal": "SW",
+      "name": "Emma Wood State Beach"
+    },
+    "englewood": {
+      "orientation_deg": 246.0,
+      "cardinal": "WSW",
+      "name": "Englewood"
+    },
+    "faria-beach": {
+      "orientation_deg": 215.0,
+      "cardinal": "SW",
+      "name": "Faria Beach"
+    },
+    "fenwick-island": {
+      "orientation_deg": 94.0,
+      "cardinal": "E",
+      "name": "Fenwick Island"
+    },
+    "fiji": {
+      "orientation_deg": 0.0,
+      "cardinal": "N",
+      "name": "Fiji"
+    },
+    "fire-island": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Fire Island"
+    },
+    "first-beach": {
+      "orientation_deg": 165.0,
+      "cardinal": "SSE",
+      "name": "First Beach"
+    },
+    "first-peak": {
+      "orientation_deg": 154.0,
+      "cardinal": "SSE",
+      "name": "First Peak"
+    },
+    "first-street-jetty-vb": {
+      "orientation_deg": 81.0,
+      "cardinal": "E",
+      "name": "First Street Jetty VB"
+    },
+    "flagler-ave": {
+      "orientation_deg": 65.0,
+      "cardinal": "ENE",
+      "name": "Flagler Ave"
+    },
+    "flagler-beach-pier": {
+      "orientation_deg": 65.0,
+      "cardinal": "ENE",
+      "name": "Flagler Beach Pier"
+    },
+    "flemings-beach": {
+      "orientation_deg": 348.0,
+      "cardinal": "NNW",
+      "name": "Flemings Beach"
+    },
+    "florence-south-jetty": {
+      "orientation_deg": 268.0,
+      "cardinal": "W",
+      "name": "Florence South Jetty"
+    },
+    "flying-point-beach": {
+      "orientation_deg": 152.0,
+      "cardinal": "SSE",
+      "name": "Flying Point Beach"
+    },
+    "folly-beach-pier": {
+      "orientation_deg": 154.0,
+      "cardinal": "SSE",
+      "name": "Folly Beach Pier"
+    },
+    "folly-beach-washout": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Folly Beach Washout"
+    },
+    "fort-clinch": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "Fort Clinch"
+    },
+    "fort-fisher": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Fort Fisher"
+    },
+    "fort-lauderdale-beach": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Fort Lauderdale Beach"
+    },
+    "fort-pierce-inlet": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Fort Pierce Inlet"
+    },
+    "fort-point": {
+      "orientation_deg": 324.0,
+      "cardinal": "NW",
+      "name": "Fort Point"
+    },
+    "fortunes-rocks": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Fortunes Rocks"
+    },
+    "fox-hill": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Fox Hill"
+    },
+    "frankfort-beach": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "Frankfort Beach"
+    },
+    "fripp-island": {
+      "orientation_deg": 156.0,
+      "cardinal": "SSE",
+      "name": "Fripp Island"
+    },
+    "frisco-pier": {
+      "orientation_deg": 163.0,
+      "cardinal": "SSE",
+      "name": "Frisco Pier"
+    },
+    "galveston-seawall": {
+      "orientation_deg": 137.0,
+      "cardinal": "SE",
+      "name": "Galveston Seawall"
+    },
+    "garbage-beach": {
+      "orientation_deg": 257.0,
+      "cardinal": "WSW",
+      "name": "Garbage Beach"
+    },
+    "garden-city-pier": {
+      "orientation_deg": 125.0,
+      "cardinal": "SE",
+      "name": "Garden City Pier"
+    },
+    "gas-chambers-aguadilla": {
+      "orientation_deg": 262.0,
+      "cardinal": "W",
+      "name": "Gas Chambers Aguadilla"
+    },
+    "gasparilla": {
+      "orientation_deg": 231.0,
+      "cardinal": "SW",
+      "name": "Gasparilla"
+    },
+    "georgica-beach": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Georgica Beach"
+    },
+    "gilgo-beach": {
+      "orientation_deg": 159.0,
+      "cardinal": "SSE",
+      "name": "Gilgo Beach"
+    },
+    "gold-beach": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Gold Beach"
+    },
+    "gooch-s-beach": {
+      "orientation_deg": 167.0,
+      "cardinal": "SSE",
+      "name": "Gooch's Beach"
+    },
+    "good-harbor-beach": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Good Harbor Beach"
+    },
+    "gordon-pond": {
+      "orientation_deg": 88.0,
+      "cardinal": "E",
+      "name": "Gordon Pond"
+    },
+    "grand-haven-south-pier": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Grand Haven South Pier"
+    },
+    "grand-haven-state-park": {
+      "orientation_deg": 268.0,
+      "cardinal": "W",
+      "name": "Grand Haven State Park"
+    },
+    "grant-street": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Grant Street"
+    },
+    "green-harbor": {
+      "orientation_deg": 153.0,
+      "cardinal": "SSE",
+      "name": "Green Harbor"
+    },
+    "grover-beach": {
+      "orientation_deg": 263.0,
+      "cardinal": "W",
+      "name": "Grover Beach"
+    },
+    "haggarty-s": {
+      "orientation_deg": 322.0,
+      "cardinal": "NW",
+      "name": "Haggarty's"
+    },
+    "haleiwa-ali-i-beach": {
+      "orientation_deg": 330.0,
+      "cardinal": "NNW",
+      "name": "Haleiwa Ali'i Beach"
+    },
+    "half-moon-bay": {
+      "orientation_deg": 251.0,
+      "cardinal": "WSW",
+      "name": "Half Moon Bay"
+    },
+    "half-moon-bay-jetty": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "Half Moon Bay Jetty"
+    },
+    "hamlin-beach": {
+      "orientation_deg": 15.0,
+      "cardinal": "NNE",
+      "name": "Hamlin Beach"
+    },
+    "hammonds": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Hammonds"
+    },
+    "hampton-beach": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Hampton Beach"
+    },
+    "hanalei-bay": {
+      "orientation_deg": 348.0,
+      "cardinal": "NNW",
+      "name": "Hanalei Bay"
+    },
+    "hapuna-beach": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Hapuna Beach"
+    },
+    "harbor-beach": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Harbor Beach"
+    },
+    "harvey-cedars": {
+      "orientation_deg": 104.0,
+      "cardinal": "ESE",
+      "name": "Harvey Cedars"
+    },
+    "hatteras-ferry-docks": {
+      "orientation_deg": 153.0,
+      "cardinal": "SSE",
+      "name": "Hatteras Ferry Docks"
+    },
+    "haulover-inlet": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Haulover Inlet"
+    },
+    "hermosa-beach-california": {
+      "orientation_deg": 252.0,
+      "cardinal": "WSW",
+      "name": "Hermosa Beach, California"
+    },
+    "hermosa-beach-pier": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Hermosa Beach Pier"
+    },
+    "higgins-beach": {
+      "orientation_deg": 164.0,
+      "cardinal": "SSE",
+      "name": "Higgins Beach"
+    },
+    "hillsboro-beach": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Hillsboro Beach"
+    },
+    "hillsboro-inlet": {
+      "orientation_deg": 104.0,
+      "cardinal": "ESE",
+      "name": "Hillsboro Inlet"
+    },
+    "hilton-head-island": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "Hilton Head Island"
+    },
+    "hither-hills": {
+      "orientation_deg": 160.0,
+      "cardinal": "SSE",
+      "name": "Hither Hills"
+    },
+    "ho-okipa": {
+      "orientation_deg": 340.0,
+      "cardinal": "NNW",
+      "name": "Hoʻokipa"
+    },
+    "hobe-beach": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Hobe Beach"
+    },
+    "hobuck-beach": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Hobuck Beach"
+    },
+    "holden-beach": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Holden Beach"
+    },
+    "holyoke": {
+      "orientation_deg": 137.0,
+      "cardinal": "SE",
+      "name": "Holyoke"
+    },
+    "honoli-i": {
+      "orientation_deg": 94.0,
+      "cardinal": "E",
+      "name": "Honoli‘i"
+    },
+    "honolua-bay": {
+      "orientation_deg": 278.0,
+      "cardinal": "W",
+      "name": "Honolua Bay"
+    },
+    "horace-caldwell-pier": {
+      "orientation_deg": 137.0,
+      "cardinal": "SE",
+      "name": "Horace Caldwell Pier"
+    },
+    "horseneck-beach": {
+      "orientation_deg": 206.0,
+      "cardinal": "SSW",
+      "name": "Horseneck Beach"
+    },
+    "hubbard-creek": {
+      "orientation_deg": 235.0,
+      "cardinal": "SW",
+      "name": "Hubbard Creek"
+    },
+    "humboldt-bay-jetty": {
+      "orientation_deg": 308.0,
+      "cardinal": "NW",
+      "name": "Humboldt Bay Jetty"
+    },
+    "hunting-island": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Hunting Island"
+    },
+    "huntington-beach-california": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Huntington Beach, California"
+    },
+    "huntington-beach-pier": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Huntington Beach Pier"
+    },
+    "huntington-cliffs": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Huntington Cliffs"
+    },
+    "imperial-beach-california": {
+      "orientation_deg": 270.0,
+      "cardinal": "W",
+      "name": "Imperial Beach, California"
+    },
+    "imperial-beach-pier": {
+      "orientation_deg": 272.0,
+      "cardinal": "W",
+      "name": "Imperial Beach Pier"
+    },
+    "indian-beach-ecola": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Indian Beach Ecola"
+    },
+    "indian-river-inlet": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "Indian River Inlet"
+    },
+    "indian-rocks-beach": {
+      "orientation_deg": 278.0,
+      "cardinal": "W",
+      "name": "Indian Rocks Beach"
+    },
+    "indiatlantic": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Indiatlantic"
+    },
+    "indicators": {
+      "orientation_deg": 272.0,
+      "cardinal": "W",
+      "name": "Indicators"
+    },
+    "isla-blanca-park": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Isla Blanca Park"
+    },
+    "island-beach-state-park": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Island Beach State Park"
+    },
+    "isle-of-palms": {
+      "orientation_deg": 154.0,
+      "cardinal": "SSE",
+      "name": "Isle of Palms"
+    },
+    "jacksonville-beach-pier": {
+      "orientation_deg": 80.0,
+      "cardinal": "E",
+      "name": "Jacksonville Beach Pier"
+    },
+    "jalama-beach": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Jalama Beach"
+    },
+    "jekyll-island": {
+      "orientation_deg": 110.0,
+      "cardinal": "ESE",
+      "name": "Jekyll Island"
+    },
+    "jenner-beach": {
+      "orientation_deg": 239.0,
+      "cardinal": "WSW",
+      "name": "Jenner Beach"
+    },
+    "jenness-beach": {
+      "orientation_deg": 121.0,
+      "cardinal": "ESE",
+      "name": "Jenness Beach"
+    },
+    "jennettes-pier": {
+      "orientation_deg": 65.0,
+      "cardinal": "ENE",
+      "name": "Jennettes Pier"
+    },
+    "jensen-beach": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Jensen Beach"
+    },
+    "jetty-park-cocoa-beach": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Jetty Park Cocoa Beach"
+    },
+    "jobos-beach-isabela": {
+      "orientation_deg": 5.0,
+      "cardinal": "N",
+      "name": "Jobos Beach Isabela"
+    },
+    "jolly-roger-pier": {
+      "orientation_deg": 133.0,
+      "cardinal": "SE",
+      "name": "Jolly Roger Pier"
+    },
+    "jones-beach": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Jones Beach"
+    },
+    "jp-luby-surf-park": {
+      "orientation_deg": 107.0,
+      "cardinal": "ESE",
+      "name": "JP Luby Surf Park"
+    },
+    "jug-handle": {
+      "orientation_deg": 284.0,
+      "cardinal": "WNW",
+      "name": "Jug Handle"
+    },
+    "juno-beach-pier": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Juno Beach Pier"
+    },
+    "jupiter-inlet": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Jupiter Inlet"
+    },
+    "kaisers": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Kaisers"
+    },
+    "kalaloch-beach": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Kalaloch Beach"
+    },
+    "kanaha-beach": {
+      "orientation_deg": 337.0,
+      "cardinal": "NNW",
+      "name": "Kanaha Beach"
+    },
+    "keaau-beach": {
+      "orientation_deg": 266.0,
+      "cardinal": "W",
+      "name": "Keaau Beach"
+    },
+    "key-west": {
+      "orientation_deg": 152.0,
+      "cardinal": "SSE",
+      "name": "Key West"
+    },
+    "keyes-beach": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Keyes Beach"
+    },
+    "kiahuna-beach": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Kiahuna Beach"
+    },
+    "kiawah-island-beach": {
+      "orientation_deg": 160.0,
+      "cardinal": "SSE",
+      "name": "Kiawah Island Beach"
+    },
+    "kill-devil-hills": {
+      "orientation_deg": 62.0,
+      "cardinal": "ENE",
+      "name": "Kill Devil Hills"
+    },
+    "kitty-hawk-pier": {
+      "orientation_deg": 69.0,
+      "cardinal": "ENE",
+      "name": "Kitty Hawk Pier"
+    },
+    "kolekole-beach-park": {
+      "orientation_deg": 50.0,
+      "cardinal": "NE",
+      "name": "Kolekole Beach Park"
+    },
+    "kure-beach": {
+      "orientation_deg": 108.0,
+      "cardinal": "ESE",
+      "name": "Kure Beach"
+    },
+    "la-jolla-shores": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "La Jolla Shores"
+    },
+    "la-pared-luquillo": {
+      "orientation_deg": 44.0,
+      "cardinal": "NE",
+      "name": "La Pared Luquillo"
+    },
+    "la-push-first-beach": {
+      "orientation_deg": 197.0,
+      "cardinal": "SSW",
+      "name": "La Push First Beach"
+    },
+    "la-push-second-beach": {
+      "orientation_deg": 228.0,
+      "cardinal": "SW",
+      "name": "La Push Second Beach"
+    },
+    "la-push-third-beach": {
+      "orientation_deg": 192.0,
+      "cardinal": "SSW",
+      "name": "La Push Third Beach"
+    },
+    "lahaina-breakwall": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Lahaina Breakwall"
+    },
+    "lake-worth-pier": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Lake Worth Pier"
+    },
+    "lakeview-park-lorain": {
+      "orientation_deg": 329.0,
+      "cardinal": "NNW",
+      "name": "Lakeview Park Lorain"
+    },
+    "laniakea": {
+      "orientation_deg": 325.0,
+      "cardinal": "NW",
+      "name": "Laniakea"
+    },
+    "launiupoko": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "Launiupoko"
+    },
+    "law-street": {
+      "orientation_deg": 255.0,
+      "cardinal": "WSW",
+      "name": "Law Street"
+    },
+    "leadbetter-beach": {
+      "orientation_deg": 144.0,
+      "cardinal": "SE",
+      "name": "Leadbetter Beach"
+    },
+    "leo-carrillo-state-beach": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "Leo Carrillo State Beach"
+    },
+    "leucadia": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Leucadia"
+    },
+    "lido-beach": {
+      "orientation_deg": 182.0,
+      "cardinal": "S",
+      "name": "Lido Beach"
+    },
+    "lincoln-city-beach": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Lincoln City Beach"
+    },
+    "log-cabins": {
+      "orientation_deg": 302.0,
+      "cardinal": "WNW",
+      "name": "Log Cabins"
+    },
+    "long-beach-island": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Long Beach Island"
+    },
+    "long-beach-ny": {
+      "orientation_deg": 181.0,
+      "cardinal": "S",
+      "name": "Long Beach NY"
+    },
+    "long-beach-township": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Long Beach Township"
+    },
+    "long-beach-wa": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Long Beach WA"
+    },
+    "long-branch": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Long Branch"
+    },
+    "long-point": {
+      "orientation_deg": 184.0,
+      "cardinal": "S",
+      "name": "Long Point"
+    },
+    "long-sands-beach": {
+      "orientation_deg": 124.0,
+      "cardinal": "SE",
+      "name": "Long Sands Beach"
+    },
+    "lori-wilson-park": {
+      "orientation_deg": 101.0,
+      "cardinal": "E",
+      "name": "Lori Wilson Park"
+    },
+    "lovers-point": {
+      "orientation_deg": 29.0,
+      "cardinal": "NNE",
+      "name": "Lovers Point"
+    },
+    "lower-trestles": {
+      "orientation_deg": 205.0,
+      "cardinal": "SSW",
+      "name": "Lower Trestles"
+    },
+    "lucy-vincent": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Lucy Vincent"
+    },
+    "lunada-bay": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Lunada Bay"
+    },
+    "lymans": {
+      "orientation_deg": 254.0,
+      "cardinal": "WSW",
+      "name": "Lymans"
+    },
+    "lynn-beach": {
+      "orientation_deg": 137.0,
+      "cardinal": "SE",
+      "name": "Lynn Beach"
+    },
+    "mackerricher": {
+      "orientation_deg": 309.0,
+      "cardinal": "NW",
+      "name": "Mackerricher"
+    },
+    "madaket": {
+      "orientation_deg": 235.0,
+      "cardinal": "SW",
+      "name": "Madaket"
+    },
+    "madeira-beach": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Madeira Beach"
+    },
+    "main-beach-east-hampton": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Main Beach East Hampton"
+    },
+    "makaha": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Makaha"
+    },
+    "makapuu-beach-park": {
+      "orientation_deg": 60.0,
+      "cardinal": "ENE",
+      "name": "Makapuu Beach Park"
+    },
+    "malibu-point": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Malibu Point"
+    },
+    "malibu-surfrider-beach": {
+      "orientation_deg": 184.0,
+      "cardinal": "S",
+      "name": "Malibu Surfrider Beach"
+    },
+    "manasquan-inlet": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Manasquan Inlet"
+    },
+    "manhattan-beach-pier": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Manhattan Beach Pier"
+    },
+    "manresa-state-beach": {
+      "orientation_deg": 243.0,
+      "cardinal": "WSW",
+      "name": "Manresa State Beach"
+    },
+    "mantoloking": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Mantoloking"
+    },
+    "marconi-beach": {
+      "orientation_deg": 73.0,
+      "cardinal": "ENE",
+      "name": "Marconi Beach"
+    },
+    "margate": {
+      "orientation_deg": 145.0,
+      "cardinal": "SE",
+      "name": "Margate"
+    },
+    "margate-pier": {
+      "orientation_deg": 150.0,
+      "cardinal": "SSE",
+      "name": "Margate Pier"
+    },
+    "maria-s": {
+      "orientation_deg": 256.0,
+      "cardinal": "WSW",
+      "name": "Maria's"
+    },
+    "marina-state-beach": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Marina State Beach"
+    },
+    "marineland": {
+      "orientation_deg": 79.0,
+      "cardinal": "E",
+      "name": "Marineland"
+    },
+    "marys": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Marys"
+    },
+    "matagorda-beach": {
+      "orientation_deg": 156.0,
+      "cardinal": "SSE",
+      "name": "Matagorda Beach"
+    },
+    "matanzas-inlet": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Matanzas Inlet"
+    },
+    "matunuck": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Matunuck"
+    },
+    "mavericks-california": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Mavericks, California"
+    },
+    "mayport-poles": {
+      "orientation_deg": 96.0,
+      "cardinal": "E",
+      "name": "Mayport Poles"
+    },
+    "mecox-beach": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Mecox Beach"
+    },
+    "mendocino": {
+      "orientation_deg": 227.0,
+      "cardinal": "SW",
+      "name": "Mendocino"
+    },
+    "mesa-lane": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Mesa Lane"
+    },
+    "mexico-beach": {
+      "orientation_deg": 224.0,
+      "cardinal": "SW",
+      "name": "Mexico Beach"
+    },
+    "miacomet": {
+      "orientation_deg": 195.0,
+      "cardinal": "SSW",
+      "name": "Miacomet"
+    },
+    "middles": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Middles"
+    },
+    "middles-isabela": {
+      "orientation_deg": 10.0,
+      "cardinal": "N",
+      "name": "Middles Isabela"
+    },
+    "miramar": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Miramar"
+    },
+    "misquamicut-state-beach": {
+      "orientation_deg": 160.0,
+      "cardinal": "SSE",
+      "name": "Misquamicut State Beach"
+    },
+    "mission-beach": {
+      "orientation_deg": 270.0,
+      "cardinal": "W",
+      "name": "Mission Beach"
+    },
+    "mitchell-s-cove": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Mitchell's Cove"
+    },
+    "mole-point": {
+      "orientation_deg": 322.0,
+      "cardinal": "NW",
+      "name": "Mole Point"
+    },
+    "monahans": {
+      "orientation_deg": 102.0,
+      "cardinal": "ESE",
+      "name": "Monahans"
+    },
+    "mondos": {
+      "orientation_deg": 197.0,
+      "cardinal": "SSW",
+      "name": "Mondos"
+    },
+    "monmouth": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Monmouth"
+    },
+    "monster-hole": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Monster Hole"
+    },
+    "montara-state-beach": {
+      "orientation_deg": 276.0,
+      "cardinal": "W",
+      "name": "Montara State Beach"
+    },
+    "montauk-point": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Montauk Point"
+    },
+    "monterey-beach": {
+      "orientation_deg": 350.0,
+      "cardinal": "N",
+      "name": "Monterey Beach"
+    },
+    "moody-point": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Moody Point"
+    },
+    "moonlight-beach": {
+      "orientation_deg": 258.0,
+      "cardinal": "WSW",
+      "name": "Moonlight Beach"
+    },
+    "moonstone-beach-humboldt": {
+      "orientation_deg": 255.0,
+      "cardinal": "WSW",
+      "name": "Moonstone Beach Humboldt"
+    },
+    "moonstone-beach-ri": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Moonstone Beach RI"
+    },
+    "morro-rock": {
+      "orientation_deg": 296.0,
+      "cardinal": "WNW",
+      "name": "Morro Rock"
+    },
+    "moss-landing": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "Moss Landing"
+    },
+    "muskegon-south-pier": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Muskegon South Pier"
+    },
+    "mussel-shoals": {
+      "orientation_deg": 184.0,
+      "cardinal": "S",
+      "name": "Mussel Shoals"
+    },
+    "mustang-island": {
+      "orientation_deg": 114.0,
+      "cardinal": "ESE",
+      "name": "Mustang Island"
+    },
+    "myrtle-beach-state-park": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Myrtle Beach State Park"
+    },
+    "nags-head-pier": {
+      "orientation_deg": 66.0,
+      "cardinal": "ENE",
+      "name": "Nags Head Pier"
+    },
+    "nahant-beach": {
+      "orientation_deg": 96.0,
+      "cardinal": "E",
+      "name": "Nahant Beach"
+    },
+    "nantasket-beach": {
+      "orientation_deg": 48.0,
+      "cardinal": "NE",
+      "name": "Nantasket Beach"
+    },
+    "nantucket-surf": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Nantucket Surf"
+    },
+    "naples-pier": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "Naples Pier"
+    },
+    "narragansett-beach": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Narragansett Beach"
+    },
+    "narrow-river": {
+      "orientation_deg": 145.0,
+      "cardinal": "SE",
+      "name": "Narrow River"
+    },
+    "natural-bridges": {
+      "orientation_deg": 185.0,
+      "cardinal": "S",
+      "name": "Natural Bridges"
+    },
+    "nauset-beach": {
+      "orientation_deg": 92.0,
+      "cardinal": "E",
+      "name": "Nauset Beach"
+    },
+    "navarre-beach": {
+      "orientation_deg": 172.0,
+      "cardinal": "S",
+      "name": "Navarre Beach"
+    },
+    "nelscott-reef": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Nelscott Reef"
+    },
+    "new-brighton-reef": {
+      "orientation_deg": 185.0,
+      "cardinal": "S",
+      "name": "New Brighton Reef"
+    },
+    "new-smyrna-beach-inlet": {
+      "orientation_deg": 67.0,
+      "cardinal": "ENE",
+      "name": "New Smyrna Beach Inlet"
+    },
+    "newport-beach-california": {
+      "orientation_deg": 206.0,
+      "cardinal": "SSW",
+      "name": "Newport Beach, California"
+    },
+    "newport-jetties": {
+      "orientation_deg": 228.0,
+      "cardinal": "SW",
+      "name": "Newport Jetties"
+    },
+    "newport-point": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Newport Point"
+    },
+    "nobadeer": {
+      "orientation_deg": 185.0,
+      "cardinal": "S",
+      "name": "Nobadeer"
+    },
+    "north-beach-rye": {
+      "orientation_deg": 99.0,
+      "cardinal": "E",
+      "name": "North Beach Rye"
+    },
+    "north-buxton": {
+      "orientation_deg": 98.0,
+      "cardinal": "E",
+      "name": "North Buxton"
+    },
+    "north-end-virginia-beach": {
+      "orientation_deg": 74.0,
+      "cardinal": "ENE",
+      "name": "North End Virginia Beach"
+    },
+    "north-jetty": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "North Jetty"
+    },
+    "north-ocean-beach": {
+      "orientation_deg": 268.0,
+      "cardinal": "W",
+      "name": "North Ocean Beach"
+    },
+    "north-pea-island": {
+      "orientation_deg": 64.0,
+      "cardinal": "ENE",
+      "name": "North Pea Island"
+    },
+    "north-point-sheboygan": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "North Point Sheboygan"
+    },
+    "north-wildwood": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "North Wildwood"
+    },
+    "nye-beach": {
+      "orientation_deg": 270.0,
+      "cardinal": "W",
+      "name": "Nye Beach"
+    },
+    "oak-island-pier": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "Oak Island Pier"
+    },
+    "ocean-ave": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Ocean Ave"
+    },
+    "ocean-bay-park": {
+      "orientation_deg": 165.0,
+      "cardinal": "SSE",
+      "name": "Ocean Bay Park"
+    },
+    "ocean-beach-pier-sd": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "Ocean Beach Pier SD"
+    },
+    "ocean-beach-sf": {
+      "orientation_deg": 259.0,
+      "cardinal": "W",
+      "name": "Ocean Beach SF"
+    },
+    "ocean-city-md-28th-street": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Ocean City MD 28th Street"
+    },
+    "ocean-city-md-inlet": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Ocean City MD Inlet"
+    },
+    "ocean-city-nj": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "Ocean City NJ"
+    },
+    "ocean-grove": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Ocean Grove"
+    },
+    "ocean-isle-beach": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Ocean Isle Beach"
+    },
+    "ocean-reef-park": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "Ocean Reef Park"
+    },
+    "ocean-shores": {
+      "orientation_deg": 263.0,
+      "cardinal": "W",
+      "name": "Ocean Shores"
+    },
+    "oceanside-harbor": {
+      "orientation_deg": 235.0,
+      "cardinal": "SW",
+      "name": "Oceanside Harbor"
+    },
+    "oceanside-pier": {
+      "orientation_deg": 235.0,
+      "cardinal": "SW",
+      "name": "Oceanside Pier"
+    },
+    "ocracoke-beach": {
+      "orientation_deg": 141.0,
+      "cardinal": "SE",
+      "name": "Ocracoke Beach"
+    },
+    "off-the-wall": {
+      "orientation_deg": 315.0,
+      "cardinal": "NW",
+      "name": "Off The Wall"
+    },
+    "ogunquit": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Ogunquit"
+    },
+    "okaloosa-island-pier": {
+      "orientation_deg": 188.0,
+      "cardinal": "S",
+      "name": "Okaloosa Island Pier"
+    },
+    "old-orchard-beach": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Old Orchard Beach"
+    },
+    "ontario-beach": {
+      "orientation_deg": 20.0,
+      "cardinal": "NNE",
+      "name": "Ontario Beach"
+    },
+    "oregon-inlet": {
+      "orientation_deg": 82.0,
+      "cardinal": "E",
+      "name": "Oregon Inlet"
+    },
+    "otter-rock": {
+      "orientation_deg": 295.0,
+      "cardinal": "WNW",
+      "name": "Otter Rock"
+    },
+    "outer-banks-fishing-pier": {
+      "orientation_deg": 66.0,
+      "cardinal": "ENE",
+      "name": "Outer Banks Fishing Pier"
+    },
+    "oxnard-beach": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Oxnard Beach"
+    },
+    "p-p-kea-hawaii": {
+      "orientation_deg": 315.0,
+      "cardinal": "NW",
+      "name": "Pūpūkea, Hawaii"
+    },
+    "pacific-beach": {
+      "orientation_deg": 257.0,
+      "cardinal": "WSW",
+      "name": "Pacific Beach"
+    },
+    "pacific-beach-wa": {
+      "orientation_deg": 257.0,
+      "cardinal": "WSW",
+      "name": "Pacific Beach WA"
+    },
+    "pacific-city-beach": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Pacific City Beach"
+    },
+    "pacifica-linda-mar": {
+      "orientation_deg": 295.0,
+      "cardinal": "WNW",
+      "name": "Pacifica Linda Mar"
+    },
+    "pakala": {
+      "orientation_deg": 234.0,
+      "cardinal": "SW",
+      "name": "Pakala"
+    },
+    "palm-beach": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Palm Beach"
+    },
+    "palmetto-pavilion": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Palmetto Pavilion"
+    },
+    "palos-verdes-cove": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Palos Verdes Cove"
+    },
+    "panama-city-beach-pier": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Panama City Beach Pier"
+    },
+    "patrick-air-force-base-beach": {
+      "orientation_deg": 81.0,
+      "cardinal": "E",
+      "name": "Patrick Air Force Base Beach"
+    },
+    "pawleys-island": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Pawleys Island"
+    },
+    "pb-point": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "PB Point"
+    },
+    "peahi-jaws": {
+      "orientation_deg": 10.0,
+      "cardinal": "N",
+      "name": "Peahi Jaws"
+    },
+    "pedro-point": {
+      "orientation_deg": 298.0,
+      "cardinal": "WNW",
+      "name": "Pedro Point"
+    },
+    "pelican-beach": {
+      "orientation_deg": 80.0,
+      "cardinal": "E",
+      "name": "Pelican Beach"
+    },
+    "pensacola-beach": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Pensacola Beach"
+    },
+    "pescadero": {
+      "orientation_deg": 270.0,
+      "cardinal": "W",
+      "name": "Pescadero"
+    },
+    "piedras-blancas": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Piedras Blancas"
+    },
+    "pier-village": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Pier Village"
+    },
+    "pigeon-point": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Pigeon Point"
+    },
+    "pilgrim-ave": {
+      "orientation_deg": 92.0,
+      "cardinal": "E",
+      "name": "Pilgrim Ave"
+    },
+    "pine-grove-beach": {
+      "orientation_deg": 4.0,
+      "cardinal": "N",
+      "name": "Pine Grove Beach"
+    },
+    "pine-point-beach": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Pine Point Beach"
+    },
+    "pine-trees-hawaii": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Pine Trees Hawaii"
+    },
+    "pipes": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Pipes"
+    },
+    "pirates-cove": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Pirates Cove"
+    },
+    "pismo-beach-pier": {
+      "orientation_deg": 248.0,
+      "cardinal": "WSW",
+      "name": "Pismo Beach Pier"
+    },
+    "pitas-point": {
+      "orientation_deg": 215.0,
+      "cardinal": "SW",
+      "name": "Pitas Point"
+    },
+    "playa-guajataca": {
+      "orientation_deg": 5.0,
+      "cardinal": "N",
+      "name": "Playa Guajataca"
+    },
+    "playa-kikita": {
+      "orientation_deg": 5.0,
+      "cardinal": "N",
+      "name": "Playa Kikita"
+    },
+    "playa-manati": {
+      "orientation_deg": 22.0,
+      "cardinal": "NNE",
+      "name": "Playa Manati"
+    },
+    "playalinda-beach": {
+      "orientation_deg": 55.0,
+      "cardinal": "NE",
+      "name": "Playalinda Beach"
+    },
+    "pleasure-point": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "Pleasure Point"
+    },
+    "plum-island": {
+      "orientation_deg": 85.0,
+      "cardinal": "E",
+      "name": "Plum Island"
+    },
+    "point-arena": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Point Arena"
+    },
+    "point-dume": {
+      "orientation_deg": 176.0,
+      "cardinal": "S",
+      "name": "Point Dume"
+    },
+    "point-judith": {
+      "orientation_deg": 121.0,
+      "cardinal": "ESE",
+      "name": "Point Judith"
+    },
+    "point-judith-south": {
+      "orientation_deg": 152.0,
+      "cardinal": "SSE",
+      "name": "Point Judith South"
+    },
+    "point-lookout": {
+      "orientation_deg": 196.0,
+      "cardinal": "SSW",
+      "name": "Point Lookout"
+    },
+    "point-pleasant-beach": {
+      "orientation_deg": 105.0,
+      "cardinal": "ESE",
+      "name": "Point Pleasant Beach"
+    },
+    "point-reyes-north": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Point Reyes North"
+    },
+    "poipu-beach": {
+      "orientation_deg": 189.0,
+      "cardinal": "S",
+      "name": "Poipu Beach"
+    },
+    "poles": {
+      "orientation_deg": 162.0,
+      "cardinal": "SSE",
+      "name": "Poles"
+    },
+    "polihale-beach": {
+      "orientation_deg": 305.0,
+      "cardinal": "NW",
+      "name": "Polihale Beach"
+    },
+    "pompano-beach-pier": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Pompano Beach Pier"
+    },
+    "ponce-inlet": {
+      "orientation_deg": 55.0,
+      "cardinal": "NE",
+      "name": "Ponce Inlet"
+    },
+    "ponquogue-beach": {
+      "orientation_deg": 169.0,
+      "cardinal": "S",
+      "name": "Ponquogue Beach"
+    },
+    "ponte-vedra-beach": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Ponte Vedra Beach"
+    },
+    "ponto-beach": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Ponto Beach"
+    },
+    "pools": {
+      "orientation_deg": 328.0,
+      "cardinal": "NNW",
+      "name": "Pools"
+    },
+    "port-a-beach": {
+      "orientation_deg": 125.0,
+      "cardinal": "SE",
+      "name": "Port A Beach"
+    },
+    "port-aransas-jetty": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Port Aransas Jetty"
+    },
+    "port-hueneme": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Port Hueneme"
+    },
+    "poverty-beach": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Poverty Beach"
+    },
+    "presque-isle-beach": {
+      "orientation_deg": 302.0,
+      "cardinal": "WNW",
+      "name": "Presque Isle Beach"
+    },
+    "puaena-point": {
+      "orientation_deg": 335.0,
+      "cardinal": "NNW",
+      "name": "Puaena Point"
+    },
+    "publics-waikiki": {
+      "orientation_deg": 232.0,
+      "cardinal": "SW",
+      "name": "Publics Waikiki"
+    },
+    "queen-street": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Queen Street"
+    },
+    "queens-waikiki": {
+      "orientation_deg": 214.0,
+      "cardinal": "SW",
+      "name": "Queens Waikiki"
+    },
+    "quincy-ave": {
+      "orientation_deg": 150.0,
+      "cardinal": "SSE",
+      "name": "Quincy Ave"
+    },
+    "radars": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Radars"
+    },
+    "rat-beach": {
+      "orientation_deg": 296.0,
+      "cardinal": "WNW",
+      "name": "Rat Beach"
+    },
+    "redington-pier": {
+      "orientation_deg": 235.0,
+      "cardinal": "SW",
+      "name": "Redington Pier"
+    },
+    "redondo-beach-california": {
+      "orientation_deg": 262.0,
+      "cardinal": "W",
+      "name": "Redondo Beach, California"
+    },
+    "redondo-breakwater": {
+      "orientation_deg": 253.0,
+      "cardinal": "WSW",
+      "name": "Redondo Breakwater"
+    },
+    "refugio-state-beach": {
+      "orientation_deg": 180.0,
+      "cardinal": "S",
+      "name": "Refugio State Beach"
+    },
+    "rehoboth-beach": {
+      "orientation_deg": 87.0,
+      "cardinal": "E",
+      "name": "Rehoboth Beach"
+    },
+    "reid-state-park": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "Reid State Park"
+    },
+    "revere-beach": {
+      "orientation_deg": 111.0,
+      "cardinal": "ESE",
+      "name": "Revere Beach"
+    },
+    "rialto-beach": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Rialto Beach"
+    },
+    "richardson-beach": {
+      "orientation_deg": 345.0,
+      "cardinal": "NNW",
+      "name": "Richardson Beach"
+    },
+    "rincon": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Rincon"
+    },
+    "rincon-domes": {
+      "orientation_deg": 290.0,
+      "cardinal": "WNW",
+      "name": "Rincon Domes"
+    },
+    "river-jetties": {
+      "orientation_deg": 215.0,
+      "cardinal": "SW",
+      "name": "River Jetties"
+    },
+    "roads-end": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Roads End"
+    },
+    "robert-moses-state-park": {
+      "orientation_deg": 174.0,
+      "cardinal": "S",
+      "name": "Robert Moses State Park"
+    },
+    "rockaway-67th-street": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Rockaway 67th Street"
+    },
+    "rockaway-90th-street": {
+      "orientation_deg": 165.0,
+      "cardinal": "SSE",
+      "name": "Rockaway 90th Street"
+    },
+    "rockaway-beach": {
+      "orientation_deg": 161.0,
+      "cardinal": "SSE",
+      "name": "Rockaway Beach"
+    },
+    "rockaway-beach-pacifica": {
+      "orientation_deg": 289.0,
+      "cardinal": "WNW",
+      "name": "Rockaway Beach Pacifica"
+    },
+    "rockpile": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "Rockpile"
+    },
+    "rocky-point": {
+      "orientation_deg": 310.0,
+      "cardinal": "NW",
+      "name": "Rocky Point"
+    },
+    "rodanthe": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Rodanthe"
+    },
+    "ruggles": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Ruggles"
+    },
+    "s-turns": {
+      "orientation_deg": 78.0,
+      "cardinal": "ENE",
+      "name": "S-Turns"
+    },
+    "salisbury": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Salisbury"
+    },
+    "salmon-creek-beach": {
+      "orientation_deg": 278.0,
+      "cardinal": "W",
+      "name": "Salmon Creek Beach"
+    },
+    "salt-creek": {
+      "orientation_deg": 236.0,
+      "cardinal": "SW",
+      "name": "Salt Creek"
+    },
+    "saltaire": {
+      "orientation_deg": 160.0,
+      "cardinal": "SSE",
+      "name": "Saltaire"
+    },
+    "salty-brine": {
+      "orientation_deg": 170.0,
+      "cardinal": "S",
+      "name": "Salty Brine"
+    },
+    "salvo": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Salvo"
+    },
+    "san-clemente-beach": {
+      "orientation_deg": 231.0,
+      "cardinal": "SW",
+      "name": "San Clemente Beach"
+    },
+    "san-diego-blacks-beach": {
+      "orientation_deg": 263.0,
+      "cardinal": "W",
+      "name": "San Diego Blacks Beach"
+    },
+    "san-elijo-state-beach": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "San Elijo State Beach"
+    },
+    "san-onofre": {
+      "orientation_deg": 211.0,
+      "cardinal": "SSW",
+      "name": "San Onofre"
+    },
+    "san-simeon": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "San Simeon"
+    },
+    "sand-dollar-beach": {
+      "orientation_deg": 276.0,
+      "cardinal": "W",
+      "name": "Sand Dollar Beach"
+    },
+    "sandbridge-beach": {
+      "orientation_deg": 77.0,
+      "cardinal": "ENE",
+      "name": "Sandbridge Beach"
+    },
+    "sandspit": {
+      "orientation_deg": 98.0,
+      "cardinal": "E",
+      "name": "Sandspit"
+    },
+    "sandy-beach": {
+      "orientation_deg": 342.0,
+      "cardinal": "NNW",
+      "name": "Sandy Beach"
+    },
+    "sandy-beach-oahu": {
+      "orientation_deg": 169.0,
+      "cardinal": "S",
+      "name": "Sandy Beach Oahu"
+    },
+    "sandy-hook": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Sandy Hook"
+    },
+    "santa-monica-beach": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Santa Monica Beach"
+    },
+    "santa-monica-pier": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Santa Monica Pier"
+    },
+    "satellite-beach": {
+      "orientation_deg": 80.0,
+      "cardinal": "E",
+      "name": "Satellite Beach"
+    },
+    "scarborough": {
+      "orientation_deg": 127.0,
+      "cardinal": "SE",
+      "name": "Scarborough"
+    },
+    "scarborough-beach": {
+      "orientation_deg": 121.0,
+      "cardinal": "ESE",
+      "name": "Scarborough Beach"
+    },
+    "scituate": {
+      "orientation_deg": 96.0,
+      "cardinal": "E",
+      "name": "Scituate"
+    },
+    "scotts-creek": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Scotts Creek"
+    },
+    "scripps-pier": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Scripps Pier"
+    },
+    "sea-bright": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Sea Bright"
+    },
+    "sea-girt": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Sea Girt"
+    },
+    "sea-island": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Sea Island"
+    },
+    "sea-isle-city": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Sea Isle City"
+    },
+    "seal-beach-jetty": {
+      "orientation_deg": 205.0,
+      "cardinal": "SSW",
+      "name": "Seal Beach Jetty"
+    },
+    "seal-beach-pier": {
+      "orientation_deg": 212.0,
+      "cardinal": "SSW",
+      "name": "Seal Beach Pier"
+    },
+    "seaside-cove": {
+      "orientation_deg": 295.0,
+      "cardinal": "WNW",
+      "name": "Seaside Cove"
+    },
+    "seaside-heights": {
+      "orientation_deg": 97.0,
+      "cardinal": "E",
+      "name": "Seaside Heights"
+    },
+    "seaside-park": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Seaside Park"
+    },
+    "seaside-reef": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Seaside Reef"
+    },
+    "seaside-road": {
+      "orientation_deg": 131.0,
+      "cardinal": "SE",
+      "name": "Seaside Road"
+    },
+    "seaview-pier": {
+      "orientation_deg": 150.0,
+      "cardinal": "SSE",
+      "name": "Seaview Pier"
+    },
+    "sebastian-inlet": {
+      "orientation_deg": 80.0,
+      "cardinal": "E",
+      "name": "Sebastian Inlet"
+    },
+    "second-beach-newport": {
+      "orientation_deg": 209.0,
+      "cardinal": "SSW",
+      "name": "Second Beach Newport"
+    },
+    "second-peak": {
+      "orientation_deg": 153.0,
+      "cardinal": "SSE",
+      "name": "Second Peak"
+    },
+    "sewer-peak": {
+      "orientation_deg": 186.0,
+      "cardinal": "S",
+      "name": "Sewer Peak"
+    },
+    "shacks-beach": {
+      "orientation_deg": 350.0,
+      "cardinal": "N",
+      "name": "Shacks Beach"
+    },
+    "sharp-park": {
+      "orientation_deg": 269.0,
+      "cardinal": "W",
+      "name": "Sharp Park"
+    },
+    "shell-beach": {
+      "orientation_deg": 193.0,
+      "cardinal": "SSW",
+      "name": "Shell Beach"
+    },
+    "shelter-cove": {
+      "orientation_deg": 184.0,
+      "cardinal": "S",
+      "name": "Shelter Cove"
+    },
+    "shi-shi-beach": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Shi Shi Beach"
+    },
+    "shinnecock-inlet": {
+      "orientation_deg": 176.0,
+      "cardinal": "S",
+      "name": "Shinnecock Inlet"
+    },
+    "ship-bottom": {
+      "orientation_deg": 119.0,
+      "cardinal": "ESE",
+      "name": "Ship Bottom"
+    },
+    "shitpipe": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Shitpipe"
+    },
+    "short-sands-beach-oswald-west": {
+      "orientation_deg": 241.0,
+      "cardinal": "WSW",
+      "name": "Short Sands Beach Oswald West"
+    },
+    "short-sands-beach-york": {
+      "orientation_deg": 56.0,
+      "cardinal": "NE",
+      "name": "Short Sands Beach York"
+    },
+    "siesta-key": {
+      "orientation_deg": 222.0,
+      "cardinal": "SW",
+      "name": "Siesta Key"
+    },
+    "silver-beach": {
+      "orientation_deg": 286.0,
+      "cardinal": "WNW",
+      "name": "Silver Beach"
+    },
+    "silver-strand": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "Silver Strand"
+    },
+    "sleeping-bear-dunes": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Sleeping Bear Dunes"
+    },
+    "smith-point-beach": {
+      "orientation_deg": 156.0,
+      "cardinal": "SSE",
+      "name": "Smith Point Beach"
+    },
+    "solana-beach": {
+      "orientation_deg": 255.0,
+      "cardinal": "WSW",
+      "name": "Solana Beach"
+    },
+    "south-beach-miami": {
+      "orientation_deg": 114.0,
+      "cardinal": "ESE",
+      "name": "South Beach Miami"
+    },
+    "south-beach-newport": {
+      "orientation_deg": 270.0,
+      "cardinal": "W",
+      "name": "South Beach Newport"
+    },
+    "south-beach-state-park": {
+      "orientation_deg": 178.0,
+      "cardinal": "S",
+      "name": "South Beach State Park"
+    },
+    "south-end": {
+      "orientation_deg": 125.0,
+      "cardinal": "SE",
+      "name": "South End"
+    },
+    "south-island": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "South Island"
+    },
+    "south-ocean-beach": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "South Ocean Beach"
+    },
+    "south-padre-island": {
+      "orientation_deg": 78.0,
+      "cardinal": "ENE",
+      "name": "South Padre Island"
+    },
+    "spessard": {
+      "orientation_deg": 65.0,
+      "cardinal": "ENE",
+      "name": "Spessard"
+    },
+    "spoils": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Spoils"
+    },
+    "spring-ave": {
+      "orientation_deg": 239.0,
+      "cardinal": "WSW",
+      "name": "Spring Ave"
+    },
+    "spring-lake": {
+      "orientation_deg": 100.0,
+      "cardinal": "E",
+      "name": "Spring Lake"
+    },
+    "squibnocket": {
+      "orientation_deg": 127.0,
+      "cardinal": "SE",
+      "name": "Squibnocket"
+    },
+    "st-andews-park": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "St Andews Park"
+    },
+    "st-augustine-beach-pier": {
+      "orientation_deg": 87.0,
+      "cardinal": "E",
+      "name": "St. Augustine Beach Pier"
+    },
+    "st-catherines-island": {
+      "orientation_deg": 119.0,
+      "cardinal": "ESE",
+      "name": "St. Catherines Island"
+    },
+    "st-pete-beach": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "St. Pete Beach"
+    },
+    "st-simons-island": {
+      "orientation_deg": 157.0,
+      "cardinal": "SSE",
+      "name": "St Simons Island"
+    },
+    "steamer-lane": {
+      "orientation_deg": 165.0,
+      "cardinal": "SSE",
+      "name": "Steamer Lane"
+    },
+    "steps-beach-rincon": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Steps Beach Rincon"
+    },
+    "stinson-beach": {
+      "orientation_deg": 213.0,
+      "cardinal": "SSW",
+      "name": "Stinson Beach"
+    },
+    "stone-harbor": {
+      "orientation_deg": 125.0,
+      "cardinal": "SE",
+      "name": "Stone Harbor"
+    },
+    "stone-steps": {
+      "orientation_deg": 249.0,
+      "cardinal": "WSW",
+      "name": "Stone Steps"
+    },
+    "stoney-point-mn": {
+      "orientation_deg": 199.0,
+      "cardinal": "SSW",
+      "name": "Stoney Point MN"
+    },
+    "strands-beach": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Strands Beach"
+    },
+    "strathmere": {
+      "orientation_deg": 125.0,
+      "cardinal": "SE",
+      "name": "Strathmere"
+    },
+    "straws-point": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Straws Point"
+    },
+    "suicide-s": {
+      "orientation_deg": 309.0,
+      "cardinal": "NW",
+      "name": "Suicide's"
+    },
+    "sunny-isles": {
+      "orientation_deg": 95.0,
+      "cardinal": "E",
+      "name": "Sunny Isles"
+    },
+    "sunset-beach-hawaii": {
+      "orientation_deg": 315.0,
+      "cardinal": "NW",
+      "name": "Sunset Beach Hawaii"
+    },
+    "sunset-beach-nc": {
+      "orientation_deg": 155.0,
+      "cardinal": "SSE",
+      "name": "Sunset Beach NC"
+    },
+    "sunset-cliffs": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Sunset Cliffs"
+    },
+    "sunset-point": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "Sunset Point"
+    },
+    "surf-beach-vandenberg": {
+      "orientation_deg": 282.0,
+      "cardinal": "WNW",
+      "name": "Surf Beach Vandenberg"
+    },
+    "surf-city-nc": {
+      "orientation_deg": 145.0,
+      "cardinal": "SE",
+      "name": "Surf City NC"
+    },
+    "surf-city-nj": {
+      "orientation_deg": 119.0,
+      "cardinal": "ESE",
+      "name": "Surf City NJ"
+    },
+    "surfers-beach-aguadilla": {
+      "orientation_deg": 335.0,
+      "cardinal": "NNW",
+      "name": "Surfers Beach Aguadilla"
+    },
+    "surfside-beach-sc": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Surfside Beach SC"
+    },
+    "surfside-beach-tx": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "Surfside Beach TX"
+    },
+    "surfside-california": {
+      "orientation_deg": 223.0,
+      "cardinal": "SW",
+      "name": "Surfside, California"
+    },
+    "surfside-jetty": {
+      "orientation_deg": 226.0,
+      "cardinal": "SW",
+      "name": "Surfside Jetty"
+    },
+    "swamis": {
+      "orientation_deg": 250.0,
+      "cardinal": "WSW",
+      "name": "Swamis"
+    },
+    "t-street-beach": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "T Street Beach"
+    },
+    "table-tops-aguadilla": {
+      "orientation_deg": 282.0,
+      "cardinal": "WNW",
+      "name": "Table Tops Aguadilla"
+    },
+    "tamarack": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Tamarack"
+    },
+    "tarpits": {
+      "orientation_deg": 205.0,
+      "cardinal": "SSW",
+      "name": "Tarpits"
+    },
+    "ten-mile-beach": {
+      "orientation_deg": 280.0,
+      "cardinal": "W",
+      "name": "Ten Mile Beach"
+    },
+    "terrace": {
+      "orientation_deg": 162.0,
+      "cardinal": "SSE",
+      "name": "Terrace"
+    },
+    "thalia-street": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Thalia Street"
+    },
+    "the-cove": {
+      "orientation_deg": 200.0,
+      "cardinal": "SSW",
+      "name": "The Cove"
+    },
+    "the-hook": {
+      "orientation_deg": 149.0,
+      "cardinal": "SSE",
+      "name": "The Hook"
+    },
+    "the-k-s": {
+      "orientation_deg": 179.0,
+      "cardinal": "S",
+      "name": "The K's"
+    },
+    "the-pier-beach": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "The Pier Beach"
+    },
+    "the-point-buxton": {
+      "orientation_deg": 92.0,
+      "cardinal": "E",
+      "name": "The Point Buxton"
+    },
+    "the-rocks": {
+      "orientation_deg": 150.0,
+      "cardinal": "SSE",
+      "name": "The Rocks"
+    },
+    "the-wall-hampton": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "The Wall Hampton"
+    },
+    "the-wedge": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "The Wedge"
+    },
+    "third-beach-newport": {
+      "orientation_deg": 90.0,
+      "cardinal": "E",
+      "name": "Third Beach Newport"
+    },
+    "thousand-peaks-maui": {
+      "orientation_deg": 210.0,
+      "cardinal": "SSW",
+      "name": "Thousand Peaks Maui"
+    },
+    "tijuana-slough": {
+      "orientation_deg": 260.0,
+      "cardinal": "W",
+      "name": "Tijuana Slough"
+    },
+    "toes-over": {
+      "orientation_deg": 162.0,
+      "cardinal": "SSE",
+      "name": "Toes Over"
+    },
+    "tokeland": {
+      "orientation_deg": 237.0,
+      "cardinal": "WSW",
+      "name": "Tokeland"
+    },
+    "topanga-beach": {
+      "orientation_deg": 195.0,
+      "cardinal": "SSW",
+      "name": "Topanga Beach"
+    },
+    "topsail-beach": {
+      "orientation_deg": 140.0,
+      "cardinal": "SE",
+      "name": "Topsail Beach"
+    },
+    "torrance-beach": {
+      "orientation_deg": 285.0,
+      "cardinal": "WNW",
+      "name": "Torrance Beach"
+    },
+    "torrey-pines-state-beach": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "Torrey Pines State Beach"
+    },
+    "tourmaline": {
+      "orientation_deg": 255.0,
+      "cardinal": "WSW",
+      "name": "Tourmaline"
+    },
+    "trails": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Trails"
+    },
+    "treasure-island-fl": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "Treasure Island FL"
+    },
+    "tres-palmas": {
+      "orientation_deg": 275.0,
+      "cardinal": "W",
+      "name": "Tres Palmas"
+    },
+    "trestles": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Trestles"
+    },
+    "trinidad-state-beach": {
+      "orientation_deg": 298.0,
+      "cardinal": "WNW",
+      "name": "Trinidad State Beach"
+    },
+    "tunnels-beach": {
+      "orientation_deg": 319.0,
+      "cardinal": "NW",
+      "name": "Tunnels Beach"
+    },
+    "turtle-bay": {
+      "orientation_deg": 307.0,
+      "cardinal": "NW",
+      "name": "Turtle Bay"
+    },
+    "turtle-cove-montauk": {
+      "orientation_deg": 121.0,
+      "cardinal": "ESE",
+      "name": "Turtle Cove Montauk"
+    },
+    "twin-piers": {
+      "orientation_deg": 254.0,
+      "cardinal": "WSW",
+      "name": "Twin Piers"
+    },
+    "tybee-island": {
+      "orientation_deg": 93.0,
+      "cardinal": "E",
+      "name": "Tybee Island"
+    },
+    "upper-trestles": {
+      "orientation_deg": 220.0,
+      "cardinal": "SW",
+      "name": "Upper Trestles"
+    },
+    "velzyland": {
+      "orientation_deg": 320.0,
+      "cardinal": "NW",
+      "name": "Velzyland"
+    },
+    "venice-beach-breakwater": {
+      "orientation_deg": 230.0,
+      "cardinal": "SW",
+      "name": "Venice Beach Breakwater"
+    },
+    "venice-beach-fl": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Venice Beach FL"
+    },
+    "venice-beach-pier": {
+      "orientation_deg": 236.0,
+      "cardinal": "SW",
+      "name": "Venice Beach Pier"
+    },
+    "ventor-pier": {
+      "orientation_deg": 145.0,
+      "cardinal": "SE",
+      "name": "Ventor Pier"
+    },
+    "ventura-harbor": {
+      "orientation_deg": 252.0,
+      "cardinal": "WSW",
+      "name": "Ventura Harbor"
+    },
+    "ventura-point": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Ventura Point"
+    },
+    "vero-pier": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Vero Pier"
+    },
+    "vilano-beach": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Vilano Beach"
+    },
+    "virginia-beach-oceanfront": {
+      "orientation_deg": 75.0,
+      "cardinal": "ENE",
+      "name": "Virginia Beach Oceanfront"
+    },
+    "waddell-creek": {
+      "orientation_deg": 225.0,
+      "cardinal": "SW",
+      "name": "Waddell Creek"
+    },
+    "waimea-bay": {
+      "orientation_deg": 300.0,
+      "cardinal": "WNW",
+      "name": "Waimea Bay"
+    },
+    "weekapaug": {
+      "orientation_deg": 188.0,
+      "cardinal": "S",
+      "name": "Weekapaug"
+    },
+    "wells-beach": {
+      "orientation_deg": 130.0,
+      "cardinal": "SE",
+      "name": "Wells Beach"
+    },
+    "west-end-long-beach": {
+      "orientation_deg": 175.0,
+      "cardinal": "S",
+      "name": "West End Long Beach"
+    },
+    "westport": {
+      "orientation_deg": 277.0,
+      "cardinal": "W",
+      "name": "Westport"
+    },
+    "westport-jetty": {
+      "orientation_deg": 268.0,
+      "cardinal": "W",
+      "name": "Westport Jetty"
+    },
+    "westport-light-state-park": {
+      "orientation_deg": 262.0,
+      "cardinal": "W",
+      "name": "Westport Light State Park"
+    },
+    "whihala-beach": {
+      "orientation_deg": 35.0,
+      "cardinal": "NE",
+      "name": "Whihala Beach"
+    },
+    "whiskey-run-beach": {
+      "orientation_deg": 280.0,
+      "cardinal": "W",
+      "name": "Whiskey Run Beach"
+    },
+    "white-plains-beach": {
+      "orientation_deg": 164.0,
+      "cardinal": "SSE",
+      "name": "White Plains Beach"
+    },
+    "white-point": {
+      "orientation_deg": 217.0,
+      "cardinal": "SW",
+      "name": "White Point"
+    },
+    "whitefish-bay-wi": {
+      "orientation_deg": 63.0,
+      "cardinal": "ENE",
+      "name": "Whitefish Bay WI"
+    },
+    "whitney-beach": {
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "Whitney Beach"
+    },
+    "wilbur-by-the-sea": {
+      "orientation_deg": 70.0,
+      "cardinal": "ENE",
+      "name": "Wilbur by the Sea"
+    },
+    "wild-dunes": {
+      "orientation_deg": 157.0,
+      "cardinal": "SSE",
+      "name": "Wild Dunes"
+    },
+    "wilderness": {
+      "orientation_deg": 305.0,
+      "cardinal": "NW",
+      "name": "Wilderness"
+    },
+    "wildwood": {
+      "orientation_deg": 135.0,
+      "cardinal": "SE",
+      "name": "Wildwood"
+    },
+    "will-rogers": {
+      "orientation_deg": 205.0,
+      "cardinal": "SSW",
+      "name": "Will Rogers"
+    },
+    "wind-and-sea": {
+      "orientation_deg": 190.0,
+      "cardinal": "S",
+      "name": "Wind and Sea"
+    },
+    "windansea-beach": {
+      "orientation_deg": 265.0,
+      "cardinal": "W",
+      "name": "Windansea Beach"
+    },
+    "windjammer": {
+      "orientation_deg": 145.0,
+      "cardinal": "SE",
+      "name": "Windjammer"
+    },
+    "winthrop-jetty": {
+      "orientation_deg": 96.0,
+      "cardinal": "E",
+      "name": "Winthrop Jetty"
+    },
+    "wooden-jetty": {
+      "orientation_deg": 120.0,
+      "cardinal": "ESE",
+      "name": "Wooden Jetty"
+    },
+    "woodlawn-beach": {
+      "orientation_deg": 290.0,
+      "cardinal": "WNW",
+      "name": "Woodlawn Beach"
+    },
+    "wrightsville-beach": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Wrightsville Beach"
+    },
+    "wrightsville-beach-south": {
+      "orientation_deg": 115.0,
+      "cardinal": "ESE",
+      "name": "Wrightsville Beach South"
+    },
+    "yokohama-bay": {
+      "orientation_deg": 245.0,
+      "cardinal": "WSW",
+      "name": "Yokohama Bay"
+    },
+    "zuma-beach": {
+      "orientation_deg": 238.0,
+      "cardinal": "WSW",
+      "name": "Zuma Beach"
+    }
+  }
+}

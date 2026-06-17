@@ -236,6 +236,12 @@ SPOT_COORD_FIXES_FILE = PIPELINE_DIR / "data" / "spot_coord_fixes.json"
 # barrier islands that geocoded to the bay side). Applied by enrich.py and
 # treated as authoritative — overrides algorithm and LLM verification.
 MANUAL_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "manual_orientations.json"
+# Slug-keyed orientation overrides — the comprehensive human review pass.
+# Applied by enrich.py AFTER MANUAL_ORIENTATIONS_FILE, so a slug match here
+# is authoritative over both the geometric algorithm and the name-keyed
+# legacy file. Same role for orientation that SPOT_COORD_FIXES_FILE plays
+# for lat/lng: a committed override that survives re-enrich.
+SPOT_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "spot_orientations.json"
 # Persistent review queue — list of spots whose orientation/scrape/verification
 # state suggests they should get a manual eyeball at some point. Survives
 # regeneration: spots marked `reviewed: true` keep that flag.

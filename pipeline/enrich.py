@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from .config import (
     DEFAULT_ENRICHED_OUTPUT,
     DEFAULT_OUTPUT,
     MANUAL_ORIENTATIONS_FILE,
+    SPOT_ORIENTATIONS_FILE,
 )
 from .enrichment.adjust import seaward_adjust
 from .enrichment.break_type import compute_break_type
@@ -64,6 +66,51 @@ def _load_manual_orientations() -> dict[str, dict]:
 
 
 _MANUAL_ORIENTATIONS = _load_manual_orientations()
+
+
+# Mirror db_import._slugify so override lookups use the same key as the row
+# that lands in the spots table. Inlined (rather than imported) so enrich
+# stays usable in environments without the supabase dependency.
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slug_for(name: str | None) -> str:
+    if not name:
+        return ""
+    s = _SLUG_RE.sub("-", name.lower())
+    return s.strip("-")
+
+
+def _load_spot_orientations() -> dict[str, float]:
+    """Return {slug: orientation_deg} from the slug-keyed override file.
+
+    This is the comprehensive human-review override — same role for
+    orientation that ``spot_coord_fixes.json`` plays for lat/lng. Applied
+    by ``_enrich_one`` AFTER the geometric Algorithm 1 *and* AFTER the
+    name-keyed manual_orientations.json fallback, so a slug match here
+    beats every other source.
+    """
+    path = SPOT_ORIENTATIONS_FILE
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("spot orientations file %s corrupt (%s); ignoring", path, e)
+        return {}
+    entries = data.get("orientations") or {}
+    out: dict[str, float] = {}
+    for slug, rec in entries.items():
+        if not isinstance(rec, dict):
+            continue
+        try:
+            out[slug] = float(rec["orientation_deg"]) % 360.0
+        except (KeyError, TypeError, ValueError):
+            log.warning("spot orientation for slug %r missing or invalid; skipping", slug)
+    return out
+
+
+_SPOT_ORIENTATIONS = _load_spot_orientations()
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -189,6 +236,26 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
             enriched["orientation_note"] = manual["notes"]
         confidence["orientation"] = 1.0
         log.debug("%s: manual orientation %.0f° applied", spot.get("name"), deg)
+
+    # Algo 1c — slug-keyed orientation override. This is the comprehensive
+    # human-review file (spot_orientations.json) — same durable-override
+    # role for orientation that spot_coord_fixes.json plays for lat/lng.
+    # Runs AFTER the name-keyed Algo 1b so a slug match here is the final
+    # word. db_import upserts orientation_deg into the spots table, and
+    # interpret.directional_gain reads it as the "target" for inside-window
+    # cos² gain (and offshore_wind_deg drives wind_multiplier), so writing
+    # it here is what makes the human value reach the live rating.
+    slug = _slug_for(spot.get("name"))
+    override_deg = _SPOT_ORIENTATIONS.get(slug)
+    if override_deg is not None:
+        enriched["orientation_deg"] = override_deg
+        enriched["offshore_wind_deg"] = (override_deg + 180.0) % 360.0
+        enriched["orientation_source"] = "manual"
+        confidence["orientation"] = 1.0
+        log.debug(
+            "%s (%s): spot_orientations override %.0f° applied",
+            spot.get("name"), slug, override_deg,
+        )
 
     # Algo 2 — swell window (optional). Skip the expensive ray-cast entirely
     # for verified spots whose optimal_swell_dir is set by the LLM — we still
