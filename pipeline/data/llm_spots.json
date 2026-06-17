@@ -61,10 +61,6 @@
           "nearest_town": "Laguna Beach, CA"
         },
         {
-          "name": "Rockpile",
-          "nearest_town": "Laguna Beach, CA"
-        },
-        {
           "name": "The Wedge",
           "nearest_town": "Newport Beach, CA"
         },
@@ -391,7 +387,7 @@
           "lng": -117.583323
         },
         {
-          "name": "Rockpile",
+          "name": "Rockpile (Laguna)",
           "lat": 33.541395,
           "lng": -117.791805
         },
@@ -719,7 +715,7 @@
           "lng": -120.637221
         },
         {
-          "name": "Shell Beach",
+          "name": "Shell Beach (North)",
           "lat": 35.163249,
           "lng": -120.691767
         },

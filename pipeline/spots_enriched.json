@@ -5122,100 +5122,6 @@
     "orientation_source": "manual"
   },
   {
-    "name": "Spyder",
-    "lat": 33.8845869,
-    "lng": -118.4104358,
-    "region_hint": "California",
-    "coord_adjusted": true,
-    "orientation_50m": 243.34551261410945,
-    "orientation_deg": 249,
-    "orientation_200m": 249.2628279477549,
-    "offshore_wind_deg": 69,
-    "orientation_flipped": false,
-    "swell_window_arcs": [],
-    "optimal_swell_dir": 249,
-    "break_type": "beach",
-    "break_type_confidence": 0.5,
-    "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 21.2,
-    "fallback_buoy_ids": [
-      "46268",
-      "46251"
-    ],
-    "nearest_tide_station_id": "9410777",
-    "nearest_tide_station_dist_km": 3.36,
-    "sources": {
-      "osm_id": "node/9773757139",
-      "wikidata_id": null,
-      "wikipedia_url": null
-    },
-    "tags": {
-      "sport": "surfing"
-    },
-    "enrichment_confidence": {
-      "orientation": 1.0,
-      "swell_window": 0.0,
-      "break_type": 0.5,
-      "nearest_buoy": 1.0,
-      "nearest_tide_station": 1.0
-    },
-    "verification_confidence": "high",
-    "verification_notes": "'Spyder' at coords (33.8623, -118.4007) resolves unambiguously to Spyder Surf / Spyder Surfboards, a well-known surf retail chain with three South Bay locations (Hermosa Beach PCH, Hermosa Beach Pier Plaza, Manhattan Beach). No surf break by this name is documented at these coordinates. Marked invalid as surf_shop.",
-    "is_valid_surf_spot": false,
-    "invalid_reason": "surf_shop",
-    "tide_preference": "mid",
-    "crowd_factor": "moderate",
-    "tide_preference_confidence": 0.5,
-    "nwps_wfo": "lox"
-  },
-  {
-    "name": "Spyder",
-    "lat": 33.8623083,
-    "lng": -118.4006673,
-    "region_hint": "California",
-    "coord_adjusted": true,
-    "orientation_50m": 246.95236688232887,
-    "orientation_deg": 249,
-    "orientation_200m": 259.4856529798018,
-    "offshore_wind_deg": 69,
-    "orientation_flipped": false,
-    "swell_window_arcs": [],
-    "optimal_swell_dir": 249,
-    "break_type": "beach",
-    "break_type_confidence": 0.5,
-    "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 21.8,
-    "fallback_buoy_ids": [
-      "46268",
-      "46251"
-    ],
-    "nearest_tide_station_id": "9410738",
-    "nearest_tide_station_dist_km": 1.75,
-    "sources": {
-      "osm_id": "node/12349687627",
-      "wikidata_id": null,
-      "wikipedia_url": null
-    },
-    "tags": {
-      "sport": "surfing"
-    },
-    "enrichment_confidence": {
-      "orientation": 1.0,
-      "swell_window": 0.0,
-      "break_type": 0.5,
-      "nearest_buoy": 1.0,
-      "nearest_tide_station": 1.0
-    },
-    "verification_confidence": "high",
-    "verification_notes": "'Spyder' at coords (33.8623, -118.4007) resolves unambiguously to Spyder Surf / Spyder Surfboards, a well-known surf retail chain with three South Bay locations (Hermosa Beach PCH, Hermosa Beach Pier Plaza, Manhattan Beach). No surf break by this name is documented at these coordinates. Marked invalid as surf_shop.",
-    "is_valid_surf_spot": false,
-    "invalid_reason": "surf_shop",
-    "tide_preference": "mid",
-    "crowd_factor": "moderate",
-    "tide_preference_confidence": 0.5,
-    "nwps_wfo": "lox"
-  },
-  {
     "name": "Steamer Lane",
     "lat": 36.951506,
     "lng": -122.025611,
@@ -18882,7 +18788,7 @@
     "orientation_source": "manual"
   },
   {
-    "name": "Rockpile",
+    "name": "Rockpile (Laguna)",
     "lat": 33.541395,
     "lng": -117.791805,
     "region_hint": "California",
@@ -18893,9 +18799,8 @@
     ],
     "coord_fix_applied": true,
     "coord_fix_note": "Addition from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 200.0,
-    "offshore_wind_deg": 20.0,
-    "orientation_source": "manual"
+    "disambiguated_from": "rockpile",
+    "disambiguated_at": "2026-06-17"
   },
   {
     "name": "Crystal Cove",
@@ -19378,7 +19283,7 @@
     "orientation_source": "manual"
   },
   {
-    "name": "Shell Beach",
+    "name": "Shell Beach (North)",
     "lat": 35.163249,
     "lng": -120.691767,
     "region_hint": "California",
@@ -19389,9 +19294,8 @@
     ],
     "coord_fix_applied": true,
     "coord_fix_note": "Addition from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 193.0,
-    "offshore_wind_deg": 13.0,
-    "orientation_source": "manual"
+    "disambiguated_from": "shell-beach",
+    "disambiguated_at": "2026-06-17"
   },
   {
     "name": "Cable Landing",
