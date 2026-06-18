@@ -41,6 +41,14 @@ WHERE tc.table_name = 'cams'
 -- 2) Drop the old FK and re-add it with ON DELETE SET NULL.
 ALTER TABLE cams DROP CONSTRAINT cams_spot_slug_fkey;
 
+-- 2a) Allow NULLs in spot_slug. Without this, ON DELETE SET NULL would
+--     fail at delete-time with a NOT NULL violation as soon as the first
+--     cam tries to orphan. The column was declared without NOT NULL in
+--     007_cams.sql but a later migration / manual ALTER may have added
+--     it; this DROP NOT NULL is idempotent if the column was already
+--     nullable.
+ALTER TABLE cams ALTER COLUMN spot_slug DROP NOT NULL;
+
 ALTER TABLE cams
   ADD CONSTRAINT cams_spot_slug_fkey
   FOREIGN KEY (spot_slug)

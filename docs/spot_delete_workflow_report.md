@@ -112,48 +112,34 @@ needed.
 **Intentionally NO SQL delete for Deep Cove.** Per the task spec, the
 whole point is that Change 2 handles it on the next pipeline run.
 
-## ⚠ Pre-merge decision — three latent collisions
+## Latent-collision review — resolved
 
-Running `_excluded_slugs()` against the current `pipeline/spots_enriched.json`
-surfaces **four** rows whose slug is in the exclusion list:
+The first pre-merge pass surfaced four slug matches between
+`spots_enriched.json` and the exclusion list. After review (per
+follow-up commit) the verdicts are:
 
-| Slug | Excluded reason | Enriched row coords | Likely truth |
-| --- | --- | --- | --- |
-| `deep-cove` | `manual_removal` (added on this branch) | 44.61497, -66.87571 | **Delete.** That's the test case. |
-| `malibu-point` | `duplicates` | 34.0324, -118.6786 | **Delete.** Genuine duplicate of `Malibu Surfrider Beach` (34.0314, -118.6889) — same break. |
-| `sunset-point` | `unknown` | 34.0374, -118.5536 | **Probably keep** — Pacific Palisades / Will Rogers area, real break. `unknown` looks like an old "is this a real spot?" parking entry from before manifest 2 vetted it. |
-| `trails` | `non_surfable` | 33.3624, -117.5489 | **Probably keep** — San Onofre Trails. The `non_surfable` flag is stale; manifest 2 added it back at the right coords. |
+| Slug | Excluded reason | Verdict |
+| --- | --- | --- |
+| `deep-cove` | `manual_removal` | **Delete.** Test case. |
+| `malibu-point` | (removed) | **Keep the row.** ~950 m from Malibu Surfrider — adjacent break, not a true duplicate. Pulled from `duplicates`. |
+| `sunset-point` | (removed) | **Keep the row.** Pacific Palisades, real break. Pulled from `unknown`. |
+| `trails` | (removed) | **Keep the row.** San Onofre Trails, real break. Pulled from `non_surfable`. |
 
-All three legacy entries (Malibu Point, Sunset Point, Trails) were added as
-`source: "manifest_addition"` by manifest 2 *after* they were already in the
-exclusion list. `cleanup_spots.apply_cleanup` doesn't run on the
-`manifest_addition` path so they slipped through, and `db_import` had no
-delete pass to catch them.
+After the follow-up edit, `excluded_spots.json` no longer references
+those three names. Confirmed by re-running `_excluded_slugs()` against
+the current `spots_enriched.json`: **only `deep-cove` matches.** The
+first pipeline run after merge will log exactly one removal line.
 
-The new code WILL delete all four on the next pipeline run (the safety cap
-is 10, well above). That's correct for `deep-cove` and `malibu-point`; it's
-**probably wrong** for `sunset-point` and `trails`.
+### Why all three slipped through historically
 
-### Recommendation before you merge
-
-Open `pipeline/data/excluded_spots.json` and pick one of these per row:
-
-1. **`sunset-point` / `trails` are real → remove them from exclusion.** Drop
-   `"Trails"` from the `non_surfable` list and `"Sunset Point"` from
-   `unknown` *in the same PR or in a follow-up commit on this branch* so
-   the next pipeline run keeps both rows. (Confirms manifest 2's
-   re-introduction.)
-2. **`sunset-point` / `trails` are NOT real → let them delete.** Leave the
-   exclusion list as-is, accept the four-row delete, and remove the
-   `manifest_addition` rows from `llm_spots.json` so they can't re-seed.
-
-I haven't edited the exclusion list for these two — that's a product call,
-not a refactor — but flagging here so the first deletion log doesn't
-surprise you. The cap of 10 means even a worst-case "all four" delete is
-contained; if you change your mind after the fact, restore the rows in
-`spots_enriched.json` and re-run.
-
-`malibu-point` should delete regardless — it's a true duplicate.
+The three legacy entries were added as `source: "manifest_addition"` by
+manifest 2 *after* they were already in the exclusion list.
+`cleanup_spots.apply_cleanup` runs on the seeded/scraped path but
+doesn't enforce against `manifest_addition` rows, so they landed in
+`spots_enriched.json` and got upserted into the DB. Without a deletion
+pass, `db_import` never reconciled them. With the new logic plus this
+exclusion-list cleanup, the roster and the exclusion list are now
+internally consistent.
 
 ## Files changed
 
@@ -169,7 +155,10 @@ contained; if you change your mind after the fact, restore the rows in
 
 1. **One time:** run `docs/spot_delete_workflow.sql` in Supabase.
    Verify the first SELECT shows `delete_rule = 'NO ACTION'` before
-   the ALTER and the second shows `'SET NULL'` after. COMMIT.
+   the ALTER and the second shows `'SET NULL'` after. The script also
+   does `ALTER TABLE cams ALTER COLUMN spot_slug DROP NOT NULL;` so a
+   later `SET NULL` doesn't trip a NOT NULL violation; that ALTER is
+   idempotent if the column was already nullable. COMMIT.
 
 2. Merge the branch via the GitHub UI.
 
