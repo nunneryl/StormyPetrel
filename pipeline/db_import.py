@@ -26,6 +26,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .cleanup_spots import load_excluded_names
 from .config import (
     BUOYS_FORECAST_FILE,
     DEFAULT_ENRICHED_OUTPUT,
@@ -37,6 +38,13 @@ log = logging.getLogger("pipeline.db_import")
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 _DEFAULT_BATCH = 200
+
+# Safety cap on per-run spot deletions driven by excluded_spots.json. A run
+# that would delete more than this many rows almost certainly means the
+# exclusion file is truncated, swapped, or corrupted — so we refuse rather
+# than wipe the roster. Routine deletes are 1-2 at a time; bump only with a
+# deliberate reason.
+SAFETY_DELETE_CAP = 10
 
 
 def _slugify(name: str) -> str:
@@ -148,9 +156,48 @@ def _dedupe_by_keys(records: list[dict], keys: tuple[str, ...]) -> tuple[list[di
     return out, dropped
 
 
+def _excluded_slugs() -> set[str]:
+    """Slugs derived from `excluded_spots.json` names.
+
+    The same `_slugify` rule that maps a record's name to its DB slug also
+    maps an excluded entry to the slug we want to skip / delete. Curly
+    quotes etc. are already folded by `load_excluded_names` via
+    `normalize_name`. Empty results (file missing, empty file) are fine
+    — the caller short-circuits to a no-op.
+    """
+    excluded = load_excluded_names()
+    return {_slugify(name) for name in excluded if name}
+
+
+def _find_excluded_in_db(client, excluded_slugs: set[str]) -> list[dict]:
+    """Return rows in `spots` whose slug appears in the exclusion list.
+
+    Used pre-flight by `import_spots` to (a) enforce the safety cap before
+    we touch anything and (b) drive the deletion + log lines after the
+    upsert.
+    """
+    if not excluded_slugs:
+        return []
+    result = (
+        client.table("spots")
+        .select("slug,name")
+        .in_("slug", sorted(excluded_slugs))
+        .execute()
+    )
+    return result.data or []
+
+
 def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
                  batch_size: int = _DEFAULT_BATCH) -> int:
-    """Upsert valid spots from the enriched JSON. Skips invalid + unnamed."""
+    """Upsert valid spots from the enriched JSON, then delete any DB rows
+    whose slug appears in `excluded_spots.json`.
+
+    Excluded slugs are filtered out of the upsert pass too, so a stale
+    `spots_enriched.json` that still contains an excluded entry can't
+    resurrect a row that the deletion pass is about to remove. Skips
+    invalid + unnamed records as before. Aborts before any write if the
+    pre-flight delete count exceeds `SAFETY_DELETE_CAP`.
+    """
     spots = json.loads(Path(spots_path).read_text())
     valid = [
         s for s in spots
@@ -168,9 +215,32 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
         )
         for slug, name in collisions:
             log.warning("  slug=%r duplicated by %r — dropped", slug, name)
+
+    excluded_slugs = _excluded_slugs()
+
+    # Pre-flight: check the deletion count BEFORE we upsert anything so a
+    # corrupted exclusion file aborts the whole spot pass instead of
+    # leaving a half-applied state.
+    to_delete = _find_excluded_in_db(client, excluded_slugs)
+    if len(to_delete) > SAFETY_DELETE_CAP:
+        raise RuntimeError(
+            f"spots: refusing to delete {len(to_delete)} rows in one run "
+            f"(cap is {SAFETY_DELETE_CAP}). This usually means "
+            f"excluded_spots.json is truncated, swapped, or corrupted. "
+            f"Inspect the file and retry; raise SAFETY_DELETE_CAP only with a "
+            f"deliberate reason. Excluded slugs targeted: "
+            f"{[r['slug'] for r in to_delete]}"
+        )
+
+    # Drop excluded rows from the upsert so a stale `spots_enriched.json`
+    # doesn't refill what we're about to delete.
+    pre_excl = len(records)
+    records = [r for r in records if r["slug"] not in excluded_slugs]
+    skipped_excluded = pre_excl - len(records)
+
     log.info(
-        "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions)",
-        len(records), len(spots) - len(valid), len(collisions),
+        "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions, %d excluded)",
+        len(records), len(spots) - len(valid), len(collisions), skipped_excluded,
     )
 
     written = 0
@@ -178,6 +248,18 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
         chunk = records[i:i + batch_size]
         client.table("spots").upsert(chunk, on_conflict="slug").execute()
         written += len(chunk)
+
+    # Deletion pass — DB rows matching an excluded entry. The cams FK is
+    # `ON DELETE SET NULL` (per docs/spot_delete_workflow.sql) so any cam
+    # that still references the slug just gets unassigned, and forecasts
+    # CASCADE off automatically.
+    if to_delete:
+        for row in to_delete:
+            log.warning("removing spot: %s (%s)", row["slug"], row.get("name") or "(unnamed)")
+        client.table("spots").delete().in_(
+            "slug", [row["slug"] for row in to_delete]
+        ).execute()
+
     return written
 
 
