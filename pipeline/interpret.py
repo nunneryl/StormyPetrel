@@ -156,9 +156,28 @@ def directional_gain(
     Setting *soft_outside=False* restores the legacy hard-zero behavior
     (kept for any out-of-rater diagnostic that wants the raw "is the
     swell physically aligned" signal).
+
+    Empty `swell_window_arcs` falls back to a plain cos² peak about
+    `optimal_swell_dir` (or `orientation_deg` if optimal is null) with
+    the same 0.25 floor as the in-window path. This is the SW-1 Phase
+    0 invariant: a spot with an orientation can never silently flatline
+    to 0 stars just because its SW-2 fallback hasn't been re-derived
+    yet (e.g. a freshly-added spot between an orientation override and
+    the next enrich). Only returns 0.0 when neither arcs nor any
+    target direction are available — the spot truly has no signal to
+    rate against.
     """
     if not swell_window_arcs:
-        return 0.0
+        target = optimal_swell_dir if optimal_swell_dir is not None else orientation_deg
+        if target is None:
+            return 0.0
+        diff = ((dp - target + 540.0) % 360.0) - 180.0
+        # cos²(diff/2) is the proper unidirectional response: peak at 0
+        # (head-on), zero at ±180° (from behind). cos²(diff) would have a
+        # spurious second peak at ±180°; that's safe inside an arc
+        # (arcs bound diff to ~±80°) but here diff is unbounded.
+        gain = math.cos(math.radians(diff / 2.0)) ** 2
+        return max(0.25, gain)
 
     in_window = _in_any_arc(dp, swell_window_arcs)
     if not in_window:
@@ -751,19 +770,21 @@ def rate_spot(
             else:
                 fft = None
 
-            if ww3_entry is not None:
-                # WW3 covered this hour but every partition is >90° outside
-                # the window — physically blocked, no rideable swell.
-                size_dp = None
-                dg = 0.0
-            else:
-                # No WW3 coverage at all — use the swell_dp resolution
-                # chain. Direction comes from NWPS swell_dp → buoy → NWPS dp.
-                size_dp = swell_dp if swell_dp is not None else dp
-                dg = (
-                    directional_gain(float(size_dp), arcs, optimal, orientation)
-                    if size_dp is not None else 0.0
-                )
+            # Direction comes from NWPS swell_dp → buoy → NWPS dp. This
+            # branch runs both when WW3 had no near-time coverage AND
+            # when WW3 covered the hour but every partition's gain
+            # against the configured arcs was zero (combine returned
+            # None). In the latter case we used to hard-zero dg here,
+            # which silently flatlined an orientation-bearing spot
+            # whenever WW3's partitions all landed >90° off arc edges.
+            # Falling through to directional_gain on the NWPS dp lets
+            # the empty-arcs / orientation-fallback guard inside
+            # directional_gain produce a real gain instead.
+            size_dp = swell_dp if swell_dp is not None else dp
+            dg = (
+                directional_gain(float(size_dp), arcs, optimal, orientation)
+                if size_dp is not None else 0.0
+            )
 
         # Chop ratio + multiplier — degrades the rating when total Hs
         # exceeds swell-only Hs (i.e. wind sea adds energy that shows on
