@@ -77,8 +77,21 @@ def get_client():
 # ---------------------------------------------------------------------------
 
 def _spot_record(spot: dict) -> dict:
-    """Map a spots_enriched.json entry to a spots-table row."""
-    return {
+    """Map a spots_enriched.json entry to a spots-table row.
+
+    Returns a *partial* record — only includes keys whose source-of-truth is
+    present in *spot*. The caller (`import_spots`) merges these partials
+    with the current DB row so an absent key leaves the existing DB
+    value untouched. Without this, db_import was silently NULLing every
+    DB-managed column whose source key wasn't carried in
+    spots_enriched.json — see docs/tide_mapping_rebuild_report.md for
+    the at-risk-column list.
+
+    Always-written keys (the upsert key, geometric anchors, and fields
+    that are derived fresh every pipeline run): slug, name, lat, lng,
+    state, region, swell_window_arcs, data_sources, review_status.
+    """
+    rec = {
         "slug": _slugify(spot.get("name") or ""),
         "name": spot.get("name"),
         "lat": spot.get("lat"),
@@ -87,22 +100,10 @@ def _spot_record(spot: dict) -> dict:
         # until we have a multi-name source.
         "state": spot.get("region_hint"),
         "region": spot.get("region_hint"),
-        "orientation_deg": spot.get("orientation_deg"),
-        "offshore_wind_deg": spot.get("offshore_wind_deg"),
-        "optimal_swell_dir": spot.get("optimal_swell_dir"),
         "swell_window_arcs": spot.get("swell_window_arcs") or [],
-        "break_type": spot.get("break_type"),
-        "break_type_confidence": spot.get("break_type_confidence"),
-        "tide_preference": spot.get("tide_preference"),
-        "crowd_factor": spot.get("crowd_factor"),
-        "hazards": spot.get("hazards") or [],
-        "nearest_buoy_id": spot.get("nearest_buoy_id"),
-        "nearest_buoy_dist_km": spot.get("nearest_buoy_dist_km"),
-        "nearest_tide_station_id": spot.get("nearest_tide_station_id"),
-        "nearest_tide_station_dist_km": spot.get("nearest_tide_station_dist_km"),
-        "nwps_wfo": spot.get("nwps_wfo"),
         # Provenance — what source produced each authoritative field. Lets
         # the frontend show "scrape from surf-forecast.com" or "manual".
+        # Rebuilt fresh each pipeline run (always written).
         "data_sources": {
             "orientation_source": spot.get("orientation_source"),
             "verification_confidence": spot.get("verification_confidence"),
@@ -113,6 +114,66 @@ def _spot_record(spot: dict) -> dict:
         },
         "review_status": "auto",
     }
+    # Optional columns — written only when the key is present in *spot*. An
+    # absent key falls through to the existing DB value via the SELECT-
+    # then-merge step in import_spots. This is what prevents a partial
+    # enriched record (which doesn't carry every spots-table field) from
+    # NULLing all the missing columns on every upsert.
+    for k in (
+        "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
+        "break_type", "break_type_confidence",
+        "tide_preference", "crowd_factor", "hazards",
+        "nearest_buoy_id", "nearest_buoy_dist_km",
+        "nearest_tide_station_id", "nearest_tide_station_dist_km",
+        "nwps_wfo",
+    ):
+        if k in spot:
+            rec[k] = spot[k]
+    return rec
+
+
+# Columns that get filled from the current DB row when absent from the
+# enriched source. Anything in this list will survive an upsert even if
+# the source dict doesn't carry the key. Keep this in sync with the
+# optional-column block in _spot_record.
+_PRESERVE_COLUMNS = (
+    "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
+    "break_type", "break_type_confidence",
+    "tide_preference", "crowd_factor", "hazards",
+    "nearest_buoy_id", "nearest_buoy_dist_km",
+    "nearest_tide_station_id", "nearest_tide_station_dist_km",
+    "nwps_wfo",
+)
+
+
+def _fetch_existing_spots(client) -> dict[str, dict]:
+    """Return ``{slug: {col: value}}`` for the at-risk columns.
+
+    Pulled once per import_spots call so the per-row merge can fill any
+    columns absent from the enriched source without NULLing them. Pages
+    through Supabase's default 1000-row cap defensively (the roster is
+    ~668 today but a future expansion shouldn't silently truncate).
+    """
+    out: dict[str, dict] = {}
+    page = 1000
+    offset = 0
+    cols = "slug," + ",".join(_PRESERVE_COLUMNS)
+    while True:
+        rows = (
+            client.table("spots")
+            .select(cols)
+            .range(offset, offset + page - 1)
+            .execute()
+        )
+        data = rows.data or []
+        for r in data:
+            slug = r.pop("slug", None)
+            if slug:
+                out[slug] = r
+        if len(data) < page:
+            break
+        offset += page
+    return out
 
 
 def _dedupe_by_slug(records: list[dict]) -> tuple[list[dict], list[tuple[str, str]]]:
@@ -238,9 +299,26 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     records = [r for r in records if r["slug"] not in excluded_slugs]
     skipped_excluded = pre_excl - len(records)
 
+    # SELECT-then-merge: fill in any at-risk column absent from the partial
+    # record with the current DB value. PostgREST bulk-upsert NULLs any key
+    # missing from a row, so without this merge any column not carried in
+    # every spots_enriched.json entry would silently NULL across the roster
+    # — the exact bug that mass-NULLed nearest_tide_station_id (see
+    # docs/tide_mapping_rebuild_report.md).
+    existing = _fetch_existing_spots(client)
+    filled_any = 0
+    for rec in records:
+        base = existing.get(rec["slug"])
+        if not base:
+            continue
+        for k, v in base.items():
+            if k not in rec:
+                rec[k] = v
+                filled_any += 1
+
     log.info(
-        "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions, %d excluded)",
-        len(records), len(spots) - len(valid), len(collisions), skipped_excluded,
+        "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions, %d excluded, %d cols filled from DB)",
+        len(records), len(spots) - len(valid), len(collisions), skipped_excluded, filled_any,
     )
 
     written = 0
