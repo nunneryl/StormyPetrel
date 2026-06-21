@@ -79,17 +79,25 @@ def get_client():
 def _spot_record(spot: dict) -> dict:
     """Map a spots_enriched.json entry to a spots-table row.
 
-    Returns a *partial* record — only includes keys whose source-of-truth is
-    present in *spot*. The caller (`import_spots`) merges these partials
-    with the current DB row so an absent key leaves the existing DB
-    value untouched. Without this, db_import was silently NULLing every
-    DB-managed column whose source key wasn't carried in
-    spots_enriched.json — see docs/tide_mapping_rebuild_report.md for
-    the at-risk-column list.
+    Returns a *partial* record — only includes keys whose source-of-truth
+    is present in *spot*. The caller (`import_spots`) merges these
+    partials with the current DB row so an absent key leaves the
+    existing DB value untouched.
+
+    Two distinct concerns are blended in this function:
+
+    1. Source → DB column mapping. The block below lists every
+       enriched-JSON key whose name matches a spots-table column.
+       Adding a new source key (e.g. a future ``swell_window_confidence``)
+       requires adding it here so it actually gets written from source.
+    2. Preserve safety net. Handled in import_spots via SELECT * and a
+       per-record merge — completely schema-wide, no list to maintain.
+       So a column we DON'T add to this list is still safe from
+       silent NULL: it'll just keep its existing DB value.
 
     Always-written keys (the upsert key, geometric anchors, and fields
-    that are derived fresh every pipeline run): slug, name, lat, lng,
-    state, region, swell_window_arcs, data_sources, review_status.
+    derived fresh every pipeline run): slug, name, lat, lng, state,
+    region, swell_window_arcs, data_sources, review_status.
     """
     rec = {
         "slug": _slugify(spot.get("name") or ""),
@@ -114,11 +122,11 @@ def _spot_record(spot: dict) -> dict:
         },
         "review_status": "auto",
     }
-    # Optional columns — written only when the key is present in *spot*. An
-    # absent key falls through to the existing DB value via the SELECT-
-    # then-merge step in import_spots. This is what prevents a partial
-    # enriched record (which doesn't carry every spots-table field) from
-    # NULLing all the missing columns on every upsert.
+    # Source-to-DB column mapping: any enriched-JSON key in this list whose
+    # name matches a spots-table column gets written through. Keys absent
+    # from *spot* are not written; the preserve safety net in import_spots
+    # fills them from the existing DB row at merge time. Concern (1)
+    # from the docstring; concern (2) is import_spots' responsibility.
     for k in (
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
         "break_type", "break_type_confidence",
@@ -132,44 +140,52 @@ def _spot_record(spot: dict) -> dict:
     return rec
 
 
-# Columns that get filled from the current DB row when absent from the
-# enriched source. Anything in this list will survive an upsert even if
-# the source dict doesn't carry the key. Keep this in sync with the
-# optional-column block in _spot_record.
-_PRESERVE_COLUMNS = (
-    "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
-    "break_type", "break_type_confidence",
-    "tide_preference", "crowd_factor", "hazards",
-    "nearest_buoy_id", "nearest_buoy_dist_km",
-    "nearest_tide_station_id", "nearest_tide_station_dist_km",
-    "nwps_wfo",
-)
+# Columns that are DB-managed and must never be sent back through the
+# upsert: the auto-incrementing PK, the trigger-derived PostGIS geometry,
+# and the timestamp columns. Anything else in the spots table is treated
+# as preserve-by-default: an absent key in the source dict gets filled
+# from the current DB row at merge time. That's the schema-wide
+# generic rule — adding a new column to the schema can't reopen the
+# silent-NULL bug class because the preserve happens by SELECT *,
+# not by name list.
+_DB_MANAGED_COLUMNS = frozenset({"id", "geom", "created_at", "updated_at"})
 
 
 def _fetch_existing_spots(client) -> dict[str, dict]:
-    """Return ``{slug: {col: value}}`` for the at-risk columns.
+    """Return ``{slug: {col: value}}`` for every existing spot, stripped of
+    DB-managed columns.
 
-    Pulled once per import_spots call so the per-row merge can fill any
-    columns absent from the enriched source without NULLing them. Pages
-    through Supabase's default 1000-row cap defensively (the roster is
-    ~668 today but a future expansion shouldn't silently truncate).
+    Pulled once per import_spots call. The per-row merge then fills any
+    column absent from the partial source-derived record with the existing
+    DB value, so a column the source doesn't carry is never NULLed by the
+    upsert. Pages through Supabase's default 1000-row cap defensively
+    (the roster is ~668 today but a future expansion shouldn't silently
+    truncate).
+
+    Uses ``select("*")`` deliberately: any column added to the spots
+    schema later is automatically preserved here without touching this
+    function or maintaining a separate at-risk list. The 13-column
+    hardcoded list this replaces could go stale with every schema
+    migration; ``*`` can't.
     """
     out: dict[str, dict] = {}
     page = 1000
     offset = 0
-    cols = "slug," + ",".join(_PRESERVE_COLUMNS)
     while True:
         rows = (
             client.table("spots")
-            .select(cols)
+            .select("*")
             .range(offset, offset + page - 1)
             .execute()
         )
         data = rows.data or []
         for r in data:
             slug = r.pop("slug", None)
-            if slug:
-                out[slug] = r
+            if not slug:
+                continue
+            for k in _DB_MANAGED_COLUMNS:
+                r.pop(k, None)
+            out[slug] = r
         if len(data) < page:
             break
         offset += page
