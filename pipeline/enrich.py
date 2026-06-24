@@ -285,6 +285,11 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
             enriched["swell_window_arcs"] = r["swell_window_arcs"]
             _set("optimal_swell_dir", r["optimal_swell_dir"])
             confidence["swell_window"] = r["swell_window_confidence"]
+            # The raycast stamps swell_window_source="raycast" only when it
+            # genuinely opened a window. When it comes back empty we leave the
+            # source unset so the orientation-derived fallback below owns it.
+            if r.get("swell_window_source"):
+                enriched["swell_window_source"] = r["swell_window_source"]
         except Exception as e:  # noqa: BLE001
             log.warning("%s: swell window failed: %s", spot.get("name"), e)
             enriched["swell_window_arcs"] = []

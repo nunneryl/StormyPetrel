@@ -51,6 +51,38 @@ SWELL_ARC_SHRINK_DEG = 5  # conservative shrink on each end of merged open arcs
 SWELL_LOCAL_COAST_EXCLUSION_KM = 2  # ignore land within this distance of the spot; local coast isn't a swell blocker
 SWELL_MIN_FETCH_KM = 3_000  # a bearing is "open" iff the first land hit is beyond this distance (long-period swell fetch)
 
+# --- Blocker geometry (SW-1) -------------------------------------------------
+# The original ray-cast treated *any* land polygon crossing a ray as a total
+# blocker. That walls off swell behind small islands (Catalina, San Clemente,
+# Anacapa, …) that physically diffract / refract around them — collapsing
+# open-coast California windows to ~50°. The rules below replace the binary
+# total-block with area-, distance-, and angular-width-aware partial blocking.
+#
+# A bearing is hard-blocked (the swell genuinely can't get there) iff a ray
+# hits either (a) a landmass at or above SWELL_BLOCKER_AREA_KM2 — continents,
+# big islands — or (b) ANY land within SWELL_LOCAL_LANDMASS_KM, which is the
+# coast / headland the spot itself sits on (this must keep blocking even when
+# the local landmass is a small island, e.g. Aquidneck Is. for Newport RI).
+SWELL_BLOCKER_AREA_KM2 = 500.0   # land below this is a partial blocker, not a wall
+SWELL_LOCAL_LANDMASS_KM = 30.0   # any land nearer than this always hard-blocks (local coast)
+# Sub-threshold islands cast a *partial* shadow. Adjacent island shadows
+# separated by a gap narrower than the bridge merge into one "chain" (swell
+# can't squeeze a useful amount of energy through a narrow slot between
+# islands), and the merged shadow is trimmed inward by a diffraction wrap-in
+# on each edge. A lone small island (free water on both edges) wraps away to
+# nothing; a long chain keeps its interior blocked. The wrap-in grows with
+# obstacle distance (more room for energy to diffract back in behind a far
+# island), making the block distance-aware.
+SWELL_MIN_SHADOW_DEG = 5.0          # ignore any obstacle subtending less than this
+# Extra gap-bridging is OFF by default: true island chains already merge because
+# their per-bearing shadows are contiguous, while the open slots between a
+# spread chain (e.g. the gaps between the northern Channel Islands as seen from
+# Rincon) genuinely pass swell and should stay open. Raise this only if a finer
+# land mask (GSHHG full-res, Phase 1) leaves spurious 1-step holes in a wall.
+SWELL_ISLAND_GAP_BRIDGE_DEG = 0.0
+SWELL_DIFFRACTION_WRAP_DEG = 16.0   # per-edge wrap-in trimmed off a small-island shadow
+SWELL_DIFFRACTION_WRAP_PER_100KM = 8.0  # extra per-edge wrap-in per 100 km of obstacle distance
+
 # Buoy regional distance caps (km). Matched against region_hint / lat+lng heuristics.
 BUOY_CAP_KM = {
     "California": 150,
