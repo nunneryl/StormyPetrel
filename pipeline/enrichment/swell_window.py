@@ -37,8 +37,10 @@ import logging
 import math
 
 from pyproj import Geod
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, box
 from shapely.ops import nearest_points
+from shapely.prepared import prep
+from shapely.strtree import STRtree
 
 from ..config import (
     SWELL_ARC_SHRINK_DEG,
@@ -52,16 +54,18 @@ from ..config import (
     SWELL_MIN_SHADOW_DEG,
     SWELL_RAY_STEP_DEG,
 )
-from .geodata import load_land_index
+from .geodata import LandIndex, load_land_index
 
 log = logging.getLogger(__name__)
 
 _GEOD = Geod(ellps="WGS84")
 
-# Geodesic polygon areas (km²) are expensive and spot-independent, so cache
-# them per (land-index identity, polygon index). load_land_index is itself
-# lru_cached, so id(land) is stable for the life of the process.
-_AREA_CACHE: dict[tuple[int, int], float] = {}
+# Geodesic polygon areas (km²) and prepared geometries are expensive and
+# spot-independent, so cache them per polygon *identity*. The global land index
+# is held for the process lifetime (lru_cached) and local sub-indexes reference
+# the same polygon objects, so id(poly) is stable and shared across both.
+_AREA_CACHE: dict[int, float] = {}
+_PREPARED_CACHE: dict[int, object] = {}
 
 
 def _ray_linestring(lat: float, lng: float, bearing_deg: float) -> LineString:
@@ -83,35 +87,46 @@ def _ray_linestring(lat: float, lng: float, bearing_deg: float) -> LineString:
     return LineString(pts)
 
 
-def _poly_area_km2(land, idx: int) -> float:
-    """Geodesic area of land polygon *idx* in km², cached."""
-    key = (id(land), idx)
-    a = _AREA_CACHE.get(key)
+def _poly_area_km2(poly) -> float:
+    """Geodesic area of a land polygon in km², cached by polygon identity."""
+    pid = id(poly)
+    a = _AREA_CACHE.get(pid)
     if a is None:
-        area_m2, _ = _GEOD.geometry_area_perimeter(land.polygons[idx])
+        area_m2, _ = _GEOD.geometry_area_perimeter(poly)
         a = abs(area_m2) / 1e6
-        _AREA_CACHE[key] = a
+        _AREA_CACHE[pid] = a
     return a
 
 
-def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[int, float]]:
-    """Return [(polygon_index, nearest_hit_km), …] for land the ray crosses."""
+def _prepared(poly):
+    """Prepared geometry for *poly*, cached. Prepared intersects() builds an
+    internal segment index once, so the 90 per-spot ray tests against the
+    huge continental polygon are far cheaper than a raw intersects()."""
+    pid = id(poly)
+    p = _PREPARED_CACHE.get(pid)
+    if p is None:
+        p = prep(poly)
+        _PREPARED_CACHE[pid] = p
+    return p
+
+
+def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float]]:
+    """Return [(polygon, nearest_hit_km), …] for land the ray crosses."""
     try:
         candidates = land.polygon_tree.query(ray)
     except Exception:
         return []
-    hits: list[tuple[int, float]] = []
+    hits: list[tuple[object, float]] = []
     for c in candidates:
-        idx = int(c)
-        poly = land.polygons[idx]
-        if not ray.intersects(poly):
+        poly = land.polygons[int(c)]
+        if not _prepared(poly).intersects(ray):
             continue
         inter = ray.intersection(poly)
         if inter.is_empty:
             continue
         closest_on_inter, _ = nearest_points(inter, spot_ll)
         _, _, dist_m = _GEOD.inv(spot_ll.x, spot_ll.y, closest_on_inter.x, closest_on_inter.y)
-        hits.append((idx, dist_m / 1000.0))
+        hits.append((poly, dist_m / 1000.0))
     return hits
 
 
@@ -164,6 +179,63 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int) -> set[int]:
             blocked.add(b % 360)
             b += step_deg
     return blocked
+
+
+def local_land_index(global_land: LandIndex, lat: float, lng: float) -> LandIndex:
+    """Subset *global_land* to polygons within one fetch radius of the spot.
+
+    Perf optimisation for the full roster: each ray then queries a tiny local
+    STRtree instead of the global one. The subset references the SAME polygon
+    objects, so the area / prepared-geometry caches stay shared. Falls back to
+    the global index near the antimeridian (where a lon/lat box would split).
+    """
+    if global_land is None or not global_land.polygons:
+        return global_land
+    reach_deg = (SWELL_MIN_FETCH_KM + SWELL_LOCAL_COAST_EXCLUSION_KM) / 111.0 + 1.0
+    dlng = reach_deg / max(0.15, math.cos(math.radians(lat)))
+    if lng - dlng < -180.0 or lng + dlng > 180.0:
+        return global_land  # antimeridian: keep the global index (correct, just slower)
+    window = box(lng - dlng, lat - reach_deg, lng + dlng, lat + reach_deg)
+    try:
+        idxs = global_land.polygon_tree.query(window)
+    except Exception:
+        return global_land
+    polys = [global_land.polygons[int(c)] for c in idxs
+             if global_land.polygons[int(c)].intersects(window)]
+    return LandIndex(
+        polygons=polys,
+        polygon_tree=STRtree(polys),
+        coastlines=[],
+        coastline_tree=None,
+    )
+
+
+def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int):
+    """Pass 1 — for every bearing return (hard_blocked set, small_hit_dist map).
+
+    A bearing is hard-blocked by a landmass ≥ SWELL_BLOCKER_AREA_KM2 or any land
+    within SWELL_LOCAL_LANDMASS_KM; otherwise the nearest small-island hit (if
+    any) is recorded for the partial-shadow pass. Shared by compute_swell_window
+    and the validate harness (which also reads `hard_blocked` for the ceiling).
+    """
+    spot_ll = Point(lng, lat)
+    hard_blocked: set[int] = set()
+    small_hit_dist: dict[int, float] = {}
+    for bearing in range(0, 360, step_deg):
+        ray = _ray_linestring(lat, lng, float(bearing))
+        is_hard = False
+        nearest_small: float | None = None
+        for poly, dist_km in _ray_hits(ray, land, spot_ll):
+            if dist_km <= SWELL_LOCAL_LANDMASS_KM or _poly_area_km2(poly) >= SWELL_BLOCKER_AREA_KM2:
+                is_hard = True
+                break
+            if nearest_small is None or dist_km < nearest_small:
+                nearest_small = dist_km
+        if is_hard:
+            hard_blocked.add(bearing)
+        elif nearest_small is not None:
+            small_hit_dist[bearing] = nearest_small
+    return hard_blocked, small_hit_dist
 
 
 def _merge_open_arcs(open_bearings: list[int], step_deg: int) -> list[dict]:
@@ -232,16 +304,21 @@ def _open_window_center(open_bearings: list[int]) -> int | None:
     return min(open_bearings, key=lambda b: abs(((b - mean + 180.0) % 360.0) - 180.0)) % 360
 
 
-def compute_swell_window(spot: dict) -> dict:
+def compute_swell_window(spot: dict, land: LandIndex | None = None,
+                         ray_step: int | None = None) -> dict:
     """Return {swell_window_arcs, optimal_swell_dir, swell_window_confidence,
     [swell_window_source]}.
 
-    swell_window_source = "raycast" is set only when the cast genuinely
-    succeeds (≥1 open arc). When every bearing is blocked the arcs come back
-    empty with no source, so the caller's orientation-derived fallback owns
-    the result (sheltered bays, Great Lakes, fully-enclosed water).
+    *land* may be an injected (e.g. spot-local, pre-clipped) index; when None the
+    global GSHHG index is loaded. *ray_step* overrides the angular step in
+    degrees (the production roster run uses 4° / 90 rays for speed; defaults to
+    SWELL_RAY_STEP_DEG). swell_window_source = "raycast" is set only when the
+    cast genuinely succeeds (≥1 open arc). When every bearing is blocked the arcs
+    come back empty with no source, so the caller's orientation-derived fallback
+    owns the result (sheltered bays, Great Lakes, fully-enclosed water).
     """
-    land = load_land_index()
+    if land is None:
+        land = load_land_index()
     if land is None:
         return {
             "swell_window_arcs": [],
@@ -251,40 +328,15 @@ def compute_swell_window(spot: dict) -> dict:
 
     lat = spot.get("_algo_lat", spot["lat"])
     lng = spot.get("_algo_lng", spot["lng"])
-    debug_on = log.isEnabledFor(logging.DEBUG)
-    if debug_on:
+    step = ray_step if ray_step is not None else SWELL_RAY_STEP_DEG
+    if log.isEnabledFor(logging.DEBUG):
         log.debug(
             "swell_window: spot=%r algo=(%.4f, %.4f) fetch=%dkm local_exclusion=%dkm step=%d°",
-            spot.get("name"), lat, lng, SWELL_MIN_FETCH_KM, SWELL_LOCAL_COAST_EXCLUSION_KM, SWELL_RAY_STEP_DEG,
+            spot.get("name"), lat, lng, SWELL_MIN_FETCH_KM, SWELL_LOCAL_COAST_EXCLUSION_KM, step,
         )
-    spot_ll = Point(lng, lat)
-    step = SWELL_RAY_STEP_DEG
 
-    # Pass 1 — classify each bearing as hard-blocked, partially shadowed by a
-    # small island, or open.
-    hard_blocked: set[int] = set()
-    small_hit_dist: dict[int, float] = {}  # bearing -> nearest small-island hit (km)
-    log_every = 10 * step
-    for bearing in range(0, 360, step):
-        ray = _ray_linestring(lat, lng, float(bearing))
-        hits = _ray_hits(ray, land, spot_ll)
-        is_hard = False
-        nearest_small: float | None = None
-        for idx, dist_km in hits:
-            if dist_km <= SWELL_LOCAL_LANDMASS_KM or _poly_area_km2(land, idx) >= SWELL_BLOCKER_AREA_KM2:
-                is_hard = True
-                break
-            if nearest_small is None or dist_km < nearest_small:
-                nearest_small = dist_km
-        if is_hard:
-            hard_blocked.add(bearing)
-        elif nearest_small is not None:
-            small_hit_dist[bearing] = nearest_small
-        if debug_on and bearing % log_every == 0:
-            state = "HARD" if is_hard else ("ISLAND" if nearest_small is not None else "CLEAR")
-            log.debug("  ray %03d°: %-6s nearest_small=%s", bearing, state,
-                      "none" if nearest_small is None else f"{nearest_small:.0f}km")
-
+    # Pass 1 — hard-block vs small-island shadow vs open.
+    hard_blocked, small_hit_dist = _classify_bearings(lat, lng, land, step)
     # Pass 2 — small-island chains, wrap-trimmed.
     small_blocked = _island_shadow(small_hit_dist, step)
 
