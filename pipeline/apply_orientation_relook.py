@@ -27,12 +27,25 @@ new, Δ (circular, worst-first), a count, and two flags:
 Apply (``--apply``) merges each matched entry into spot_orientations.json
 (``orientation_deg`` + ``cardinal`` + ``name`` + ``source="manual_relook"``),
 preserving every other entry and the file envelope, so the next
-``enrich``/full-pipeline run picks them up. It does **not** write
-spots_enriched.json (the next enrich run regenerates it) and does **not** touch
-Supabase (the next ``db_import`` propagates the file to the live table).
+``enrich``/full-pipeline run picks them up. By default it does **not** write
+spots_enriched.json and does **not** touch Supabase.
+
+``--also-patch-enriched`` (with ``--apply``) additionally patches
+spots_enriched.json **in place, orientation-only**, for the export slugs:
+``orientation_deg`` = the new value, ``offshore_wind_deg`` = ``(deg+180)%360``,
+``orientation_source`` = ``"manual"``. Nothing else on those spots is touched
+(``optimal_swell_dir`` / ``swell_window_arcs`` stay as-is) and no other spot is
+touched. This is the surgical alternative to a full ``enrich`` — it propagates
+the corrected orientations into the file ``db_import`` actually reads, with zero
+collateral on the other ~628 spots, and needs no GSHHG/geodata. It deliberately
+does NOT reshift orientation-derived swell-window arcs; run a full ``enrich``
+later if you want those recomputed. Without ``--apply`` it prints the enriched
+diff too (dry-run parity). Matches by slug exactly; never creates new entries.
 
     python -m pipeline.apply_orientation_relook --input EXPORT.json            # dry run (default)
-    python -m pipeline.apply_orientation_relook --input EXPORT.json --apply    # write the override
+    python -m pipeline.apply_orientation_relook --input EXPORT.json --apply    # write the override only
+    python -m pipeline.apply_orientation_relook --input EXPORT.json --apply --also-patch-enriched
+        # write the override AND surgically patch spots_enriched.json (orientation-only)
 """
 from __future__ import annotations
 
@@ -210,12 +223,134 @@ def apply(p: dict) -> dict:
             "skipped_unmatched": len(p["unmatched"]), "skipped_bad": len(p["bad"])}
 
 
+# ---------------------------------------------------------------------------
+# --also-patch-enriched: surgical orientation-only patch of spots_enriched.json
+# ---------------------------------------------------------------------------
+
+def _load_enriched_list() -> tuple[list | None, bool]:
+    """Return (spots_list, original_had_trailing_newline). (None, True) if the
+    file is missing/unreadable/not a list."""
+    if not ENRICHED_PATH.exists():
+        return None, True
+    raw = ENRICHED_PATH.read_text()
+    try:
+        spots = json.loads(raw)
+    except json.JSONDecodeError:
+        return None, True
+    if not isinstance(spots, list):
+        return None, True
+    return spots, raw.endswith("\n")
+
+
+def enriched_plan(export: dict[str, dict], enriched_spots: list) -> dict:
+    """Plan an orientation-only in-place patch of spots_enriched.json for the
+    export slugs. Computed against the CURRENT enriched value (independent of
+    spot_orientations.json), so it stays correct even after the override file is
+    already merged. Matches by slug exactly; never creates new entries."""
+    by_slug: dict[str, list[int]] = {}
+    for i, s in enumerate(enriched_spots):
+        sl = _slug_for(s.get("name"))
+        if sl:
+            by_slug.setdefault(sl, []).append(i)
+    changes, noops, unmatched = [], [], []
+    for slug, entry in export.items():
+        new_deg = _validate_deg(slug, entry)
+        if new_deg is None:
+            continue  # malformed already surfaced by the orientation plan
+        idxs = by_slug.get(slug)
+        if not idxs:
+            unmatched.append({"slug": slug, "new": new_deg})
+            continue
+        old = enriched_spots[idxs[0]].get("orientation_deg")
+        old_deg = float(old) % 360.0 if isinstance(old, (int, float)) else None
+        delta = _circular_delta(old_deg, new_deg) if old_deg is not None else None
+        rec = {"slug": slug, "old": old_deg, "new": new_deg, "delta": delta,
+               "idxs": idxs, "swing": delta is not None and delta > 90.0}
+        if delta is not None and round(delta, 1) == 0.0:
+            noops.append(rec)
+        else:
+            changes.append(rec)
+    changes.sort(key=lambda r: (r["delta"] is None, -(r["delta"] or 0)))
+    return {"changes": changes, "noops": noops, "unmatched": unmatched,
+            "n_enriched": len(enriched_spots)}
+
+
+def reconcile_enriched(ep: dict, override: dict[str, dict]) -> dict:
+    """Cross-check each enriched change against the spot_orientations.json
+    override (safety req): confirm the patched value matches the merged
+    override, so the two files end up consistent. Returns matches + any gap."""
+    matches, gap = 0, []
+    for r in ep["changes"]:
+        ov = override.get(r["slug"])
+        ovd = ov.get("orientation_deg") if isinstance(ov, dict) else None
+        if isinstance(ovd, (int, float)) and _circular_delta(float(ovd) % 360.0, r["new"]) < 0.6:
+            matches += 1
+        else:
+            gap.append((r["slug"], ovd))
+    return {"matches": matches, "gap": gap}
+
+
+def print_enriched_dry_run(ep: dict, rc: dict) -> None:
+    ch, noops, un = ep["changes"], ep["noops"], ep["unmatched"]
+    print("ENRICHED PATCH (--also-patch-enriched) — orientation-only, in place → spots_enriched.json")
+    print(f"  will patch: {len(ch)}   already in sync: {len(noops)}   "
+          f"unmatched (skip, no entry created): {len(un)}\n")
+    if ch:
+        print(f"  {'slug':30} {'old(enr)':>9}  {'new':>6}  {'Δ':>5}   flag")
+        print(f"  {'-'*30} {'-'*9}  {'-'*6}  {'-'*5}")
+        for r in ch:
+            old = f"{r['old']:.0f}" if r["old"] is not None else "—"
+            dlt = f"{r['delta']:.0f}" if r["delta"] is not None else "—"
+            flag = "⚠ SWING >90°" if r["swing"] else ""
+            print(f"  {r['slug']:30} {old:>8}° {r['new']:>5.0f}°  {dlt:>4}°   {flag}")
+        print(f"\n  ({len(ch)} entries would get orientation_deg + offshore_wind_deg patched, "
+              f"orientation_source→'manual'; nothing else touched)")
+    if un:
+        print(f"\n  ⚠ {len(un)} not found in spots_enriched.json (SKIPPED, no entry created):")
+        for u in un:
+            print(f"      {u['slug']:30} (new {u['new']:.0f}°)")
+    if noops:
+        print(f"\n  {len(noops)} already in sync (enriched == new): "
+              + ", ".join(r["slug"] for r in noops[:12]) + (" …" if len(noops) > 12 else ""))
+    gap = rc["gap"]
+    print(f"\n  cross-check vs spot_orientations.json: {rc['matches']}/{len(ch)} patches match the override"
+          + ("  (consistent)" if not gap else
+             "  ·  ⚠ " + str(len(gap)) + " gap: " + ", ".join(f"{s}(override={o})" for s, o in gap[:6])))
+    print()
+
+
+def patch_enriched(ep: dict, enriched_spots: list, had_trailing_nl: bool) -> dict:
+    """Patch spots_enriched.json IN PLACE for the changed slugs only:
+    orientation_deg, offshore_wind_deg, orientation_source. No other field on
+    those spots, and no other spot, is touched. Serialized exactly like
+    enrich.py (indent=2, ensure_ascii=False) for a minimal diff."""
+    patched = 0
+    for r in ep["changes"]:
+        deg = round(r["new"], 1)
+        off = round((deg + 180.0) % 360.0, 1)
+        for i in r["idxs"]:
+            s = enriched_spots[i]
+            s["orientation_deg"] = deg
+            s["offshore_wind_deg"] = off
+            s["orientation_source"] = "manual"
+            patched += 1
+    text = json.dumps(enriched_spots, indent=2, ensure_ascii=False)
+    if had_trailing_nl:
+        text += "\n"
+    ENRICHED_PATH.write_text(text)
+    return {"patched": patched, "unmatched": len(ep["unmatched"]), "noops": len(ep["noops"])}
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--input", type=Path, required=True,
                     help="orientation_relook_export.json (slug-keyed)")
     ap.add_argument("--apply", action="store_true",
                     help="Write the merge into spot_orientations.json. Omit for a dry run.")
+    ap.add_argument("--also-patch-enriched", action="store_true",
+                    help="With --apply, ALSO patch spots_enriched.json in place (orientation-only) "
+                         "for the export slugs so db_import sees the new orientations without a full "
+                         "enrich. Without --apply, additionally shows the enriched diff.")
     return ap.parse_args(argv)
 
 
@@ -230,11 +365,24 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: could not parse {args.input}: {e}", file=sys.stderr)
         return 2
 
-    p = plan(export, _load_current(), _enriched_orientations())
+    override = _load_current()
+    p = plan(export, override, _enriched_orientations())
     print_dry_run(p)
 
+    # Optional enriched-patch plan (dry-run parity even without --apply).
+    ep = enriched_spots = None
+    had_nl = True
+    if args.also_patch_enriched:
+        enriched_spots, had_nl = _load_enriched_list()
+        if enriched_spots is None:
+            print(f"⚠ --also-patch-enriched: {ENRICHED_PATH} missing/unreadable — cannot patch enriched.\n")
+        else:
+            ep = enriched_plan(export, enriched_spots)
+            print_enriched_dry_run(ep, reconcile_enriched(ep, override))
+
     if not args.apply:
-        print("dry run only — nothing written. Re-run with --apply to write spot_orientations.json.")
+        tail = "spot_orientations.json" + ("  +  spots_enriched.json" if ep is not None else "")
+        print(f"dry run only — nothing written. Re-run with --apply to write {tail}.")
         return 0
 
     res = apply(p)
@@ -242,8 +390,20 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  {res['added']} added · {res['replaced']} replaced · {res['total']} total entries")
     if res["skipped_unmatched"] or res["skipped_bad"]:
         print(f"  skipped {res['skipped_unmatched']} unmatched + {res['skipped_bad']} malformed (not written)")
-    print("  spots_enriched.json NOT written; Supabase NOT touched — "
-          "run enrich (then db_import) to propagate.")
+
+    if ep is not None:
+        pres = patch_enriched(ep, enriched_spots, had_nl)
+        print(f"ENRICHED PATCHED → {ENRICHED_PATH}")
+        print(f"  {pres['patched']} entries patched (orientation_deg + offshore_wind_deg + "
+              f"orientation_source='manual'); {pres['noops']} already in sync; "
+              f"{pres['unmatched']} unmatched skipped")
+        print("  NOTE: swell-window arcs NOT reshifted for these spots — optimal_swell_dir and "
+              "swell_window_arcs left exactly as-is.")
+        print("        Run a full `python -m pipeline.enrich` later to recompute their "
+              "orientation-derived arcs.")
+    elif not args.also_patch_enriched:
+        print("  spots_enriched.json NOT written; Supabase NOT touched — "
+              "run enrich (then db_import) to propagate.")
     return 0
 
 
