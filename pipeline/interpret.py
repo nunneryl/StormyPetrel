@@ -1247,6 +1247,21 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     ratings = compute_ratings(spots, nwps, tides, buoys, ww3)
+
+    # CDIP MOP integration (Stage 2) — additive + reversible. For spots tagged
+    # swell_window_source="cdip_mop", override the swell rating with their MOP
+    # nowcast (nearshore frame), keeping each hour's wind/tide. No-op until a spot
+    # carries the tag; any failure leaves that spot's orientation-path rating
+    # intact. Wrapped so MOP can never break the pipeline.
+    try:
+        from .forecast.mop import apply_mop_overrides
+        mop_stats = apply_mop_overrides(ratings, spots)
+        if mop_stats["fed"] or mop_stats["fell_back"] or mop_stats["errored"]:
+            log.info("interpret: MOP — %d spots MOP-fed, %d fell back, %d errored",
+                     mop_stats["fed"], mop_stats["fell_back"], mop_stats["errored"])
+    except Exception:  # noqa: BLE001
+        log.exception("interpret: MOP override step failed — keeping orientation-path ratings")
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
     log.info("interpret: wrote %d spots to %s", len(ratings), args.output)
