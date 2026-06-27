@@ -21,9 +21,13 @@ Design guarantees (additive + reversible):
   * Reuses the proven hour-bucket join + _norm_epoch fill-rejection so a stale
     window or fill tail can't corrupt the rating.
 
-Standalone batch validation (Part C — does NOT write prod):
-    python -m pipeline.forecast.mop --validate            # ~12 spots across zones
+Standalone batch validation (Part C — self-contained, does NOT write prod):
+Fetches each batch spot's MOP nowcast AND a minimal NWPS+tides fallback for the
+SAME spots (no prior pipeline run / no forecast_data needed), then prints
+MOP→stars vs fallback→stars per overlapping hour + a forced-empty fallback test.
+    python -m pipeline.forecast.mop --validate            # ~12 spots across zones (side-by-side)
     python -m pipeline.forecast.mop --validate --batch slug1,slug2,...
+    python -m pipeline.forecast.mop --validate --mop-only # skip NWPS fetch (MOP sanity only, fast)
 """
 from __future__ import annotations
 
@@ -55,7 +59,6 @@ _HERE = Path(__file__).resolve()
 _ROOT = _HERE.parents[2]
 SCRIPTS_DIR = _ROOT / "scripts"
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
-RATINGS = _ROOT / "pipeline" / "forecast_data" / "ratings.json"
 
 
 def _slug(name):
@@ -241,11 +244,12 @@ def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_
 # Part C — batch validation (dry/staging; prints MOP vs fallback, no prod write)#
 # --------------------------------------------------------------------------- #
 def _load_consume_spots():
-    """Build cdip_mop 'spots' from the rollout verdicts + mop_points cache so the
-    batch can be validated BEFORE the enrichment patch is applied."""
+    """FULL enriched spot dicts for every CONSUME spot (so the fallback rater has
+    nwps_wfo / arcs / optimal / tide-station), with the MOP fields injected so the
+    batch is validated WITHOUT applying Part A first. Carries _zone for display."""
     vpath, mpath = SCRIPTS_DIR / "mop_ca_verdicts.json", SCRIPTS_DIR / "mop_points.json"
     if not vpath.exists() or not mpath.exists():
-        return None, f"need {vpath.name} + {mpath.name} in scripts/ (Mac artifacts)"
+        return None, f"need {vpath.name} + {mpath.name} in scripts/ (Mac artifacts from the rollout)"
     verdicts = json.loads(vpath.read_text()).get("spots", [])
     points = json.loads(mpath.read_text())
     roster = {_slug(s["name"]): s for s in json.loads(ENRICHED.read_text())}
@@ -255,92 +259,150 @@ def _load_consume_spots():
             continue
         rs = roster.get(r["slug"])
         pt = points.get(str(r.get("mop_point")))
-        if not rs or not pt:
+        if not rs or not pt or not nowcast_url(pt.get("url")):
             continue
-        out.append({
-            "name": rs["name"], "orientation_deg": rs.get("orientation_deg"),
-            "zone": r.get("zone"), "swell_window_source": "cdip_mop",
-            "mop_point_id": r.get("mop_point"), "mop_shore_normal": r.get("shore_normal"),
-            "mop_nowcast_url": nowcast_url(pt.get("url")),
-        })
+        s = dict(rs)  # full enriched spot (nwps_wfo, arcs, optimal, tide station, …)
+        s.update(swell_window_source="cdip_mop", mop_point_id=r.get("mop_point"),
+                 mop_shore_normal=r.get("shore_normal"),
+                 mop_nowcast_url=nowcast_url(pt.get("url")), _zone=r.get("zone"))
+        out.append(s)
     return out, None
 
 
-def validate_batch(batch=None, n_per_zone=3):
-    if not RATINGS.exists():
-        print(f"need {RATINGS} (run pipeline.interpret first) to compare against fallback", flush=True)
-        return 2
+def _fetch_fallback(chosen):
+    """Fallback baseline = NWPS + tides for ONLY these spots' WFOs (WW3/buoys
+    skipped → interpret's NWPS path). Lazy import (needs cfgrib); input_path stays
+    None so spots_enriched.json is NOT written. Returns ratings dict or None."""
+    from ..interpret import compute_ratings
+    from . import nwps as nwps_mod, tides as tides_mod
+    wfos = sorted({s.get("nwps_wfo") for s in chosen if s.get("nwps_wfo")})
+    print(f"fetching NWPS ({len(wfos)} WFOs: {','.join(wfos) or '—'}) + tides for the batch "
+          f"(fallback baseline; writes only transient forecast_data/, not prod)…", flush=True)
+    nwps = nwps_mod.fetch(chosen)        # input_path=None → no spots_enriched.json write
+    tides = tides_mod.fetch(chosen)
+    fb = compute_ratings(chosen, nwps, tides, {}, {})
+    print(f"  fallback ready: {len(fb)} spots rated via the NWPS path\n", flush=True)
+    return fb
+
+
+def _overlap_hours(mop, entries):
+    """(first (t, mop_tuple, entry) that overlaps, total overlap count)."""
+    first, n = None, 0
+    for e in entries:
+        t = _norm_epoch(_iso_to_epoch(e.get("valid_time")))
+        if t is None:
+            continue
+        k = int(t // 3600)
+        m = mop.get(k) or mop.get(k - 1) or mop.get(k + 1)
+        if m:
+            n += 1
+            if first is None:
+                first = (t, m, e)
+    return first, n
+
+
+def validate_batch(batch=None, n_per_zone=3, with_fallback=True):
+    """Part C — self-contained batch validation. Fetches each spot's MOP nowcast
+    and (unless --mop-only) a minimal NWPS+tides fallback for the SAME spots, then
+    prints MOP→stars vs fallback→stars per overlapping hour, plus a forced-empty
+    fallback test. No prior pipeline run, no prod write."""
     spots, err = _load_consume_spots()
     if spots is None:
         print(err)
         return 3
-    ratings = json.loads(RATINGS.read_text())
-
     if batch:
         want = set(batch)
         chosen = [s for s in spots if _slug(s["name"]) in want]
-    else:  # ~n_per_zone across zones
+    else:
         chosen, seen = [], {}
-        for s in sorted(spots, key=lambda s: (s.get("zone") or "Z", _slug(s["name"]))):
-            z = s.get("zone") or "UNKNOWN"
+        for s in sorted(spots, key=lambda s: (s.get("_zone") or "Z", _slug(s["name"]))):
+            z = s.get("_zone") or "UNKNOWN"
             if seen.get(z, 0) < n_per_zone:
                 chosen.append(s); seen[z] = seen.get(z, 0) + 1
-    print(f"Part C batch validation — {len(chosen)} cdip_mop spots (no prod write)\n")
-    print(f"  {'slug':26}{'zone':8}{'pt':>7}  {'when (UTC)':16}{'Hs':>5}{'Tp':>4}{'Dp':>5}"
-          f"{'MOP★':>6}{'fb★':>6}  note")
+    if not chosen:
+        print("no matching CONSUME spots in mop_ca_verdicts.json")
+        return 2
+    print(f"Part C batch validation — {len(chosen)} cdip_mop spots, self-contained (no prior run, no prod write)\n")
+
+    mop_maps = {}
+    for s in chosen:
+        try:
+            mop_maps[s["name"]] = mop_swell_by_hour(s)
+        except (HTTPError, URLError, OSError) as e:
+            mop_maps[s["name"]] = None
+            print(f"  {_slug(s['name'])}: MOP fetch error {type(e).__name__}", flush=True)
+
+    fb = None
+    if with_fallback:
+        try:
+            fb = _fetch_fallback(chosen)
+        except Exception as e:  # noqa: BLE001  cfgrib/NOMADS/etc → degrade to MOP-only
+            print(f"  ⚠ fallback fetch unavailable ({type(e).__name__}: {e}) — "
+                  f"MOP-only sanity; the side-by-side comparison needs a CI run.\n")
+    else:
+        print("(--mop-only: skipping the NWPS fetch — MOP sanity only)\n")
+
+    if fb is not None:
+        print(f"  {'slug':24}{'zone':8}{'pt':>6}  {'when (UTC)':16}{'Hs':>5}{'Tp':>4}{'Dp':>5}"
+              f"{'MOP★':>6}{'fb★':>6}{'ovlp':>5}  note")
+    else:
+        print(f"  {'slug':24}{'zone':8}{'pt':>6}  {'when (UTC)':16}{'Hs':>5}{'Tp':>4}{'Dp':>5}"
+              f"{'MOP★':>6}{'★range':>10}  sanity")
 
     fed = fell = 0
     for s in chosen:
-        name, slug = s["name"], _slug(s["name"])
-        base = ratings.get(name) or []
-        try:
-            mop = mop_swell_by_hour(s)
-        except (HTTPError, URLError, OSError) as e:
-            print(f"  {slug:26}{s.get('zone') or '—':8}{str(s['mop_point_id']):>7}  "
-                  f"{'':16}{'':5}{'':4}{'':5}{'':6}{'':6}  MOP fetch error: {type(e).__name__} → fallback")
-            fell += 1
-            continue
+        name, slug, zone, pid = s["name"], _slug(s["name"]), (s.get("_zone") or "—"), s.get("mop_point_id")
+        sn = s.get("mop_shore_normal") if s.get("mop_shore_normal") is not None else s.get("orientation_deg")
+        mop = mop_maps.get(name)
+        blank = f"{'':16}{'':5}{'':4}{'':5}{'':6}"
         if not mop:
-            print(f"  {slug:26}{s.get('zone') or '—':8}{str(s['mop_point_id']):>7}  "
-                  f"{'':16}{'':5}{'':4}{'':5}{'':6}{'':6}  no MOP overlap → fallback")
+            extra = f"{'':6}{'':5}  no MOP this cycle → fallback" if fb is not None else f"{'':10}  no MOP this cycle"
+            print(f"  {slug:24}{zone:8}{str(pid):>6}  {blank}{extra}")
             fell += 1
             continue
-        # pick the first base hour MOP covers
-        shown = False
-        for e in base:
-            t = _norm_epoch(_iso_to_epoch(e.get("valid_time")))
-            if t is None:
-                continue
-            m = mop.get(int(t // 3600)) or mop.get(int(t // 3600) - 1) or mop.get(int(t // 3600) + 1)
-            if not m:
-                continue
-            hs, tp, dp, swh = m
-            sn = s.get("mop_shore_normal") if s.get("mop_shore_normal") is not None else s.get("orientation_deg")
-            st, *_ = mop_stars(hs, tp, dp, swh, sn, e.get("wind_mult", 1.0), e.get("tide_mult", 1.0))
-            when = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d %H:%M")
-            print(f"  {slug:26}{s.get('zone') or '—':8}{str(s['mop_point_id']):>7}  {when:16}"
-                  f"{hs:5.2f}{tp:4.0f}{dp:5.0f}{st:6.1f}{e.get('stars', 0):6.1f}  "
-                  f"MOP-fed ({len([1 for x in base if (lambda tt: tt is not None and (int(tt//3600) in mop or int(tt//3600)-1 in mop or int(tt//3600)+1 in mop))(_norm_epoch(_iso_to_epoch(x.get('valid_time'))))])} hrs overlap)")
-            shown = True
+        if fb is not None:
+            first, n_ovlp = _overlap_hours(mop, fb.get(name) or [])
+            if first:
+                t, (hs, tp, dp, swh), e = first
+                st, *_ = mop_stars(hs, tp, dp, swh, sn, e.get("wind_mult", 1.0), e.get("tide_mult", 1.0))
+                when = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d %H:%M")
+                print(f"  {slug:24}{zone:8}{str(pid):>6}  {when:16}{hs:5.2f}{tp:4.0f}{dp:5.0f}"
+                      f"{st:6.1f}{e.get('stars', 0):6.1f}{n_ovlp:5d}  MOP-fed")
+                fed += 1
+            else:
+                k = max(mop); hs, tp, dp, swh = mop[k]
+                st, *_ = mop_stars(hs, tp, dp, swh, sn)
+                when = datetime.datetime.utcfromtimestamp(k * 3600).strftime("%Y-%m-%d %H:%M")
+                print(f"  {slug:24}{zone:8}{str(pid):>6}  {when:16}{hs:5.2f}{tp:4.0f}{dp:5.0f}"
+                      f"{st:6.1f}{'   -- ':>6}{0:5d}  MOP data but no forecast-hour overlap (horizon) → fallback")
+                fell += 1
+        else:
+            vals = list(mop.values())
+            stars = [x for x in (mop_stars(h, tp, dp, swh, sn)[0] for (h, tp, dp, swh) in vals) if x is not None]
+            k = max(mop); hs, tp, dp, swh = mop[k]
+            st0 = mop_stars(hs, tp, dp, swh, sn)[0]
+            phys = (all(0 <= h <= 12 for h, _, _, _ in vals) and all(2 <= tp <= 30 for _, tp, _, _ in vals)
+                    and all(0 <= dp <= 360 for _, _, dp, _ in vals) and all(1 <= x <= 5 for x in stars))
+            when = datetime.datetime.utcfromtimestamp(k * 3600).strftime("%Y-%m-%d %H:%M")
+            rng = f"{min(stars):.1f}-{max(stars):.1f}" if stars else "n/a"
+            print(f"  {slug:24}{zone:8}{str(pid):>6}  {when:16}{hs:5.2f}{tp:4.0f}{dp:5.0f}"
+                  f"{st0 if st0 is not None else 0:6.1f}{rng:>10}  {'OK' if phys else '⚠ non-physical'}")
             fed += 1
-            break
-        if not shown:
-            print(f"  {slug:26}{s.get('zone') or '—':8}{str(s['mop_point_id']):>7}  "
-                  f"{'':16}{'':5}{'':4}{'':5}{'':6}{'':6}  MOP data but no base-hour overlap → fallback")
-            fell += 1
 
-    # forced-empty test: prove the fallback path is clean (no error, no blanking)
-    print("\nforced-empty MOP test (fallback must engage, no error):")
-    test_ratings = {chosen[0]["name"]: [dict(valid_time="2026-06-27T12:00:00Z", stars=2.5,
-                                             wind_mult=1.0, tide_mult=1.0)]} if chosen else {}
-    st = apply_mop_overrides(test_ratings, chosen[:1], _fetch=lambda _s: None)
-    ok = (st["fed"] == 0 and st["fell_back"] == 1 and st["errored"] == 0
-          and test_ratings[chosen[0]["name"]][0]["stars"] == 2.5) if chosen else True
+    # forced-empty test — the per-cycle fallback must engage, never error or blank
+    print("\nforced-empty MOP test (fallback must engage, no error/blank):")
+    tname = chosen[0]["name"]
+    test = {tname: [dict(valid_time="2026-06-27T12:00:00Z", stars=2.5, wind_mult=1.0, tide_mult=1.0)]}
+    st = apply_mop_overrides(test, [dict(chosen[0], swell_window_source="cdip_mop")], _fetch=lambda _s: None)
+    ok = st["fell_back"] == 1 and st["errored"] == 0 and test[tname][0]["stars"] == 2.5
     print(f"  empty MOP → fed={st['fed']} fell_back={st['fell_back']} errored={st['errored']}; "
           f"base stars preserved: {'YES' if ok else 'NO'}")
 
-    print(f"\nbatch: {fed} would be MOP-fed, {fell} fall back. "
-          f"Review these before flipping all {sum(1 for s in spots)} CONSUME spots. No prod written.")
+    note = "" if fb is not None else "  (side-by-side fallback needs a CI run — NWPS not fetchable here)"
+    print(f"\nbatch: {fed} MOP-fed/sane, {fell} fall back, of {len(chosen)} shown "
+          f"(total CONSUME: {sum(1 for s in spots)}). Review before flipping. No prod written.{note}")
+    print("note: MOP nowcast covers recent→now, so side-by-side overlap is the near-now hours; the "
+          "forecast horizon stays NWPS/WW3. mop_stars monotonicity is proven in --selftest.")
     return 0
 
 
@@ -398,11 +460,13 @@ def main(argv=None):
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--validate", action="store_true", help="Part C batch validation (no prod write)")
     ap.add_argument("--batch", default=None, help="comma-separated slugs to validate (default: ~3/zone)")
+    ap.add_argument("--mop-only", action="store_true",
+                    help="skip the NWPS fallback fetch — MOP sanity only (fast; no side-by-side)")
     a = ap.parse_args(argv)
     if a.selftest:
         return _selftest()
     if a.validate:
-        return validate_batch(a.batch.split(",") if a.batch else None)
+        return validate_batch(a.batch.split(",") if a.batch else None, with_fallback=not a.mop_only)
     ap.print_help()
     return 0
 
