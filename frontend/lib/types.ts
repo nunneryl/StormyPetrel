@@ -22,6 +22,9 @@ export type Spot = {
   /** 2-3 sentence factual blurb seeded by generate_descriptions and
    *  edited manually thereafter. Null until generation runs. */
   description: string | null;
+  /** Swell-source provenance: "cdip_mop" for spots fed by the CDIP MOP
+   *  nearshore model (drives the CDIP attribution credit), else null. */
+  swell_window_source: string | null;
 };
 
 export type Forecast = {
