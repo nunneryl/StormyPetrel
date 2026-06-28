@@ -49,11 +49,16 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 10.34,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 0.83
+    "nearest_buoy_dist_km": 0.83,
+    "mop_point_id": "D0619",
+    "mop_shore_normal": 264.5299987792969,
+    "mop_match_distance_m": 621,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0619_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "38th Avenue",
@@ -284,11 +289,16 @@
       }
     ],
     "optimal_swell_dir": 304,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9413450",
     "nearest_tide_station_dist_km": 4.66,
     "nearest_buoy_id": "46012",
-    "nearest_buoy_dist_km": 116.37
+    "nearest_buoy_dist_km": 116.37,
+    "mop_point_id": "MO720",
+    "mop_shore_normal": 286.4800109863281,
+    "mop_match_distance_m": 452,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MO720_nowcast.nc",
+    "mop_buoy_id": "46012"
   },
   {
     "name": "Bird Rock",
@@ -622,11 +632,16 @@
       }
     ],
     "optimal_swell_dir": 225,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 16.01,
     "nearest_buoy_id": "46277",
-    "nearest_buoy_dist_km": 20.93
+    "nearest_buoy_dist_km": 20.93,
+    "mop_point_id": "OC256",
+    "mop_shore_normal": 238.41000366210938,
+    "mop_match_distance_m": 408,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC256_nowcast.nc",
+    "mop_buoy_id": "46277"
   },
   {
     "name": "C Street Ventura",
@@ -790,9 +805,14 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
-    "nearest_tide_station_dist_km": 16.67
+    "nearest_tide_station_dist_km": 16.67,
+    "mop_point_id": "D0685",
+    "mop_shore_normal": 238.52999877929688,
+    "mop_match_distance_m": 558,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0685_nowcast.nc",
+    "mop_buoy_id": "46274"
   },
   {
     "name": "Carlsbad State Beach",
@@ -1069,11 +1089,16 @@
       }
     ],
     "optimal_swell_dir": 225,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 5.49,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 4.16
+    "nearest_buoy_dist_km": 4.16,
+    "mop_point_id": "D1194",
+    "mop_shore_normal": 196.97000122070312,
+    "mop_match_distance_m": 842,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1194_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Coronado Shores",
@@ -1407,11 +1432,16 @@
       }
     ],
     "optimal_swell_dir": 258,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 20.21,
     "nearest_buoy_id": "46274",
-    "nearest_buoy_dist_km": 2.17
+    "nearest_buoy_dist_km": 2.17,
+    "mop_point_id": "D0719",
+    "mop_shore_normal": 262.5,
+    "mop_match_distance_m": 593,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0719_nowcast.nc",
+    "mop_buoy_id": "46274"
   },
   {
     "name": "Dana Point, California",
@@ -1576,11 +1606,16 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 11.87,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 1.85
+    "nearest_buoy_dist_km": 1.85,
+    "mop_point_id": "D0633",
+    "mop_shore_normal": 262.0299987792969,
+    "mop_match_distance_m": 721,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0633_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "Devereux",
@@ -1746,11 +1781,16 @@
       }
     ],
     "optimal_swell_dir": 190,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 7.38,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 1.36
+    "nearest_buoy_dist_km": 1.36,
+    "mop_point_id": "OC131",
+    "mop_shore_normal": 170.02000427246094,
+    "mop_match_distance_m": 1155,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC131_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Doran Beach",
@@ -2449,9 +2489,14 @@
       }
     ],
     "optimal_swell_dir": 308,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9418801",
-    "nearest_tide_station_dist_km": 6.32
+    "nearest_tide_station_dist_km": 6.32,
+    "mop_point_id": "HU541",
+    "mop_shore_normal": 284.7900085449219,
+    "mop_match_distance_m": 858,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/HU541_nowcast.nc",
+    "mop_buoy_id": "46244"
   },
   {
     "name": "Huntington Beach Pier",
@@ -2910,11 +2955,16 @@
       }
     ],
     "optimal_swell_dir": 285,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 1.33,
     "nearest_buoy_id": "ljpc1",
-    "nearest_buoy_dist_km": 1.19
+    "nearest_buoy_dist_km": 1.19,
+    "mop_point_id": "D0504",
+    "mop_shore_normal": 293.9700012207031,
+    "mop_match_distance_m": 342,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0504_nowcast.nc",
+    "mop_buoy_id": "ljpc1"
   },
   {
     "name": "Leadbetter Beach",
@@ -3088,11 +3138,16 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 22.9,
     "nearest_buoy_id": "46274",
-    "nearest_buoy_dist_km": 0.63
+    "nearest_buoy_dist_km": 0.63,
+    "mop_point_id": "D0749",
+    "mop_shore_normal": 250.5500030517578,
+    "mop_match_distance_m": 528,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0749_nowcast.nc",
+    "mop_buoy_id": "46274"
   },
   {
     "name": "Wind and Sea",
@@ -3268,11 +3323,16 @@
       }
     ],
     "optimal_swell_dir": 205,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 4.85,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 6.18
+    "nearest_buoy_dist_km": 6.18,
+    "mop_point_id": "D1201",
+    "mop_shore_normal": 196.50999450683594,
+    "mop_match_distance_m": 883,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1201_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Lunada Bay",
@@ -3326,11 +3386,16 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 8.89,
     "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 22.32
+    "nearest_buoy_dist_km": 22.32,
+    "mop_point_id": "L0395",
+    "mop_shore_normal": 283.9700012207031,
+    "mop_match_distance_m": 511,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0395_nowcast.nc",
+    "mop_buoy_id": "46221"
   },
   {
     "name": "Malibu Surfrider Beach",
@@ -3438,11 +3503,16 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410777",
     "nearest_tide_station_dist_km": 3.27,
     "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 21.19
+    "nearest_buoy_dist_km": 21.19,
+    "mop_point_id": "L0553",
+    "mop_shore_normal": 245.52000427246094,
+    "mop_match_distance_m": 442,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0553_nowcast.nc",
+    "mop_buoy_id": "46221"
   },
   {
     "name": "Manresa State Beach",
@@ -3620,9 +3690,14 @@
     "tide_preference_confidence": 0.8,
     "nwps_wfo": "mtr",
     "orientation_source": "manual",
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414131",
-    "nearest_tide_station_dist_km": 2.61
+    "nearest_tide_station_dist_km": 2.61,
+    "mop_point_id": "SM305",
+    "mop_shore_normal": 221.00999450683594,
+    "mop_match_distance_m": 287,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SM305_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "Mission Beach",
@@ -3792,11 +3867,16 @@
       }
     ],
     "optimal_swell_dir": 276,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414131",
     "nearest_tide_station_dist_km": 6.03,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 28.25
+    "nearest_buoy_dist_km": 28.25,
+    "mop_point_id": "SM341",
+    "mop_shore_normal": 275.94000244140625,
+    "mop_match_distance_m": 453,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SM341_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "Moonlight Beach",
@@ -3848,11 +3928,16 @@
       }
     ],
     "optimal_swell_dir": 258,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 20.48,
     "nearest_buoy_id": "46274",
-    "nearest_buoy_dist_km": 2.18
+    "nearest_buoy_dist_km": 2.18,
+    "mop_point_id": "D0724",
+    "mop_shore_normal": 251.00999450683594,
+    "mop_match_distance_m": 576,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0724_nowcast.nc",
+    "mop_buoy_id": "46274"
   },
   {
     "name": "Moonstone Beach Humboldt",
@@ -4310,9 +4395,14 @@
       }
     ],
     "optimal_swell_dir": 265,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410166",
-    "nearest_tide_station_dist_km": 1.93
+    "nearest_tide_station_dist_km": 1.93,
+    "mop_point_id": "D0347",
+    "mop_shore_normal": 281.4700012207031,
+    "mop_match_distance_m": 834,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0347_nowcast.nc",
+    "mop_buoy_id": "ljpc1"
   },
   {
     "name": "Ocean Beach SF",
@@ -4366,11 +4456,16 @@
       }
     ],
     "optimal_swell_dir": 259,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414275",
     "nearest_tide_station_dist_km": 2.11,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 11.25
+    "nearest_buoy_dist_km": 11.25,
+    "mop_point_id": "SF026",
+    "mop_shore_normal": 261.4800109863281,
+    "mop_match_distance_m": 695,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SF026_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "Oceanside Harbor",
@@ -4480,11 +4575,16 @@
       }
     ],
     "optimal_swell_dir": 235,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 32.82,
     "nearest_buoy_id": "46224",
-    "nearest_buoy_dist_km": 8.13
+    "nearest_buoy_dist_km": 8.13,
+    "mop_point_id": "D0903",
+    "mop_shore_normal": 231.02000427246094,
+    "mop_match_distance_m": 773,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0903_nowcast.nc",
+    "mop_buoy_id": "46224"
   },
   {
     "name": "Pacific Beach",
@@ -5413,9 +5513,14 @@
       }
     ],
     "optimal_swell_dir": 236,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
-    "nearest_tide_station_dist_km": 12.84
+    "nearest_tide_station_dist_km": 12.84,
+    "mop_point_id": "OC172",
+    "mop_shore_normal": 248.5,
+    "mop_match_distance_m": 486,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC172_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "San Diego Blacks Beach",
@@ -5527,11 +5632,16 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 17.35,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 7.1
+    "nearest_buoy_dist_km": 7.1,
+    "mop_point_id": "D0690",
+    "mop_shore_normal": 242.52000427246094,
+    "mop_match_distance_m": 616,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0690_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "San Onofre",
@@ -6335,11 +6445,16 @@
       }
     ],
     "optimal_swell_dir": 255,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 14.11,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 4.0
+    "nearest_buoy_dist_km": 4.0,
+    "mop_point_id": "D0652",
+    "mop_shore_normal": 257.010009765625,
+    "mop_match_distance_m": 663,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0652_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "Steamer Lane",
@@ -6450,11 +6565,16 @@
       }
     ],
     "optimal_swell_dir": 213,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414958",
     "nearest_tide_station_dist_km": 3.6,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 11.84
+    "nearest_buoy_dist_km": 11.84,
+    "mop_point_id": "MA124",
+    "mop_shore_normal": 214.5,
+    "mop_match_distance_m": 1012,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MA124_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "Stone Steps",
@@ -6687,11 +6807,16 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410166",
     "nearest_tide_station_dist_km": 3.47,
     "nearest_buoy_id": "46258",
-    "nearest_buoy_dist_km": 22.88
+    "nearest_buoy_dist_km": 22.88,
+    "mop_point_id": "D0317",
+    "mop_shore_normal": 264.4700012207031,
+    "mop_match_distance_m": 800,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0317_nowcast.nc",
+    "mop_buoy_id": "46258"
   },
   {
     "name": "Surf Beach Vandenberg",
@@ -6915,11 +7040,16 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 18.97,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 8.61
+    "nearest_buoy_dist_km": 8.61,
+    "mop_point_id": "D0708",
+    "mop_shore_normal": 219.50999450683594,
+    "mop_match_distance_m": 602,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0708_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "T Street Beach",
@@ -6973,11 +7103,16 @@
       }
     ],
     "optimal_swell_dir": 225,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 0.09,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 6.63
+    "nearest_buoy_dist_km": 6.63,
+    "mop_point_id": "OC040",
+    "mop_shore_normal": 232.0,
+    "mop_match_distance_m": 758,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC040_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Tamarack",
@@ -7086,11 +7221,16 @@
       }
     ],
     "optimal_swell_dir": 225,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 12.27,
     "nearest_buoy_id": "46277",
-    "nearest_buoy_dist_km": 24.83
+    "nearest_buoy_dist_km": 24.83,
+    "mop_point_id": "OC259",
+    "mop_shore_normal": 237.9499969482422,
+    "mop_match_distance_m": 386,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC259_nowcast.nc",
+    "mop_buoy_id": "46277"
   },
   {
     "name": "The Hook",
@@ -7205,11 +7345,16 @@
       }
     ],
     "optimal_swell_dir": 240,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 0.53,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 6.09
+    "nearest_buoy_dist_km": 6.09,
+    "mop_point_id": "OC043",
+    "mop_shore_normal": 235.97999572753906,
+    "mop_match_distance_m": 839,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC043_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "The Wedge",
@@ -7264,9 +7409,14 @@
       }
     ],
     "optimal_swell_dir": 210,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
-    "nearest_tide_station_dist_km": 1.01
+    "nearest_tide_station_dist_km": 1.01,
+    "mop_point_id": "OC381",
+    "mop_shore_normal": 196.02999877929688,
+    "mop_match_distance_m": 355,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC381_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Toes Over",
@@ -7434,11 +7584,16 @@
       }
     ],
     "optimal_swell_dir": 285,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 4.14,
     "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 23.4
+    "nearest_buoy_dist_km": 23.4,
+    "mop_point_id": "L0465",
+    "mop_shore_normal": 281.0400085449219,
+    "mop_match_distance_m": 321,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0465_nowcast.nc",
+    "mop_buoy_id": "46221"
   },
   {
     "name": "Torrey Pines State Beach",
@@ -7487,11 +7642,16 @@
       }
     ],
     "optimal_swell_dir": 265,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 7.18,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 3.23
+    "nearest_buoy_dist_km": 3.23,
+    "mop_point_id": "D0585",
+    "mop_shore_normal": 262.0,
+    "mop_match_distance_m": 463,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0585_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "Tourmaline",
@@ -7651,11 +7811,16 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 3.76,
     "nearest_buoy_id": "46277",
-    "nearest_buoy_dist_km": 7.74
+    "nearest_buoy_dist_km": 7.74,
+    "mop_point_id": "D1203",
+    "mop_shore_normal": 220.00999450683594,
+    "mop_match_distance_m": 739,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1203_nowcast.nc",
+    "mop_buoy_id": "46277"
   },
   {
     "name": "Trinidad State Beach",
@@ -7770,11 +7935,16 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 1.22,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 6.18
+    "nearest_buoy_dist_km": 6.18,
+    "mop_point_id": "D1208",
+    "mop_shore_normal": 218.50999450683594,
+    "mop_match_distance_m": 627,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1208_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Venice Beach Breakwater",
@@ -24033,12 +24203,17 @@
       }
     ],
     "optimal_swell_dir": 274,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410166",
     "nearest_tide_station_dist_km": 2.34,
     "nearest_buoy_id": "ljpc1",
     "nearest_buoy_dist_km": 11.86,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "D0348",
+    "mop_shore_normal": 296.9700012207031,
+    "mop_match_distance_m": 884,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0348_nowcast.nc",
+    "mop_buoy_id": "ljpc1"
   },
   {
     "name": "PB Point",
@@ -24128,12 +24303,17 @@
       }
     ],
     "optimal_swell_dir": 285,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 0.17,
     "nearest_buoy_id": "ljpc1",
     "nearest_buoy_dist_km": 1.75,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "D0515",
+    "mop_shore_normal": 281.0299987792969,
+    "mop_match_distance_m": 347,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0515_nowcast.nc",
+    "mop_buoy_id": "ljpc1"
   },
   {
     "name": "Seaside Reef",
@@ -24158,12 +24338,17 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 14.81,
     "nearest_buoy_id": "46266",
     "nearest_buoy_dist_km": 4.63,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "D0665",
+    "mop_shore_normal": 254.02999877929688,
+    "mop_match_distance_m": 510,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0665_nowcast.nc",
+    "mop_buoy_id": "46266"
   },
   {
     "name": "Pipes",
@@ -24188,12 +24373,17 @@
       }
     ],
     "optimal_swell_dir": 250,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 17.97,
     "nearest_buoy_id": "46274",
     "nearest_buoy_dist_km": 4.61,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "D0695",
+    "mop_shore_normal": 248.0,
+    "mop_match_distance_m": 520,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0695_nowcast.nc",
+    "mop_buoy_id": "46274"
   },
   {
     "name": "Trails",
@@ -24218,12 +24408,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 8.72,
     "nearest_buoy_id": "46277",
     "nearest_buoy_dist_km": 8.63,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "D1156",
+    "mop_shore_normal": 217.50999450683594,
+    "mop_match_distance_m": 1184,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1156_nowcast.nc",
+    "mop_buoy_id": "46277"
   },
   {
     "name": "San Clemente Beach",
@@ -24248,12 +24443,17 @@
       }
     ],
     "optimal_swell_dir": 231,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 1.85,
     "nearest_buoy_id": "46277",
     "nearest_buoy_dist_km": 7.52,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "OC022",
+    "mop_shore_normal": 234.02000427246094,
+    "mop_match_distance_m": 655,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC022_nowcast.nc",
+    "mop_buoy_id": "46277"
   },
   {
     "name": "Middles",
@@ -24278,12 +24478,17 @@
       }
     ],
     "optimal_swell_dir": 225,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 5.11,
     "nearest_buoy_id": "46277",
     "nearest_buoy_dist_km": 7.82,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "mop_point_id": "D1197",
+    "mop_shore_normal": 192.08999633789062,
+    "mop_match_distance_m": 846,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1197_nowcast.nc",
+    "mop_buoy_id": "46277"
   },
   {
     "name": "Rockpile (Laguna)",
@@ -24330,12 +24535,17 @@
       }
     ],
     "optimal_swell_dir": 225,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 7.34,
     "nearest_buoy_id": "46285",
     "nearest_buoy_dist_km": 18.21,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "mop_point_id": "OC310",
+    "mop_shore_normal": 228.0500030517578,
+    "mop_match_distance_m": 313,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC310_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Corona Del Mar",
@@ -24360,12 +24570,17 @@
       }
     ],
     "optimal_swell_dir": 175,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 1.64,
     "nearest_buoy_id": "46285",
     "nearest_buoy_dist_km": 24.38,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "mop_point_id": "OC375",
+    "mop_shore_normal": 189.0500030517578,
+    "mop_match_distance_m": 427,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC375_nowcast.nc",
+    "mop_buoy_id": "46285"
   },
   {
     "name": "Newport Jetties",
@@ -25332,12 +25547,17 @@
       }
     ],
     "optimal_swell_dir": 322,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9413450",
     "nearest_tide_station_dist_km": 6.06,
     "nearest_buoy_id": "46240",
     "nearest_buoy_dist_km": 5.18,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "mop_point_id": "MO707",
+    "mop_shore_normal": 343.5400085449219,
+    "mop_match_distance_m": 363,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MO707_nowcast.nc",
+    "mop_buoy_id": "46236"
   },
   {
     "name": "Boneyard",
@@ -25522,12 +25742,17 @@
       }
     ],
     "optimal_swell_dir": 270,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 18.66,
     "nearest_buoy_id": "46012",
     "nearest_buoy_dist_km": 54.91,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "mop_point_id": "SM141",
+    "mop_shore_normal": 282.5,
+    "mop_match_distance_m": 507,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SM141_nowcast.nc",
+    "mop_buoy_id": "46012"
   },
   {
     "name": "Half Moon Bay",
@@ -25587,12 +25812,17 @@
       }
     ],
     "optimal_swell_dir": 298,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 10.11,
     "nearest_buoy_id": "46237",
     "nearest_buoy_dist_km": 23.44,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "mop_point_id": "SM375",
+    "mop_shore_normal": 319.9700012207031,
+    "mop_match_distance_m": 75,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SM375_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "South Ocean Beach",
@@ -25617,12 +25847,17 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414275",
     "nearest_tide_station_dist_km": 2.23,
     "nearest_buoy_id": "46237",
     "nearest_buoy_dist_km": 12.22,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "mop_point_id": "SF016",
+    "mop_shore_normal": 266.5,
+    "mop_match_distance_m": 566,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SF016_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "North Ocean Beach",
@@ -25647,12 +25882,17 @@
       }
     ],
     "optimal_swell_dir": 268,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414275",
     "nearest_tide_station_dist_km": 2.22,
     "nearest_buoy_id": "46237",
     "nearest_buoy_dist_km": 10.38,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "mop_point_id": "SF040",
+    "mop_shore_normal": 255.4600067138672,
+    "mop_match_distance_m": 616,
+    "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SF040_nowcast.nc",
+    "mop_buoy_id": "46237"
   },
   {
     "name": "Cronkhite",
