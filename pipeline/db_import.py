@@ -137,6 +137,12 @@ def _spot_record(spot: dict) -> dict:
     ):
         if k in spot:
             rec[k] = spot[k]
+    # Swell-source provenance as a top-level flag for the frontend's CDIP
+    # attribution. Only the non-default source is persisted; orientation-derived
+    # (the default) stays NULL per migration 010. Full verbatim provenance for
+    # every spot still lives in data_sources.swell_window_source above.
+    _sws = spot.get("swell_window_source")
+    rec["swell_window_source"] = _sws if _sws and _sws != "orientation_derived" else None
     return rec
 
 
