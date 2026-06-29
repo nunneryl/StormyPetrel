@@ -121,7 +121,7 @@
     "name": "56th Street",
     "lat": 39.141578,
     "lng": -74.696774,
-    "region_hint": "California",
+    "region_hint": "New Jersey",
     "break_type": "jetty",
     "break_type_confidence": 0.5,
     "sources": {
@@ -530,7 +530,7 @@
     "name": "Bombora",
     "lat": 21.282756,
     "lng": -157.84873,
-    "region_hint": "California",
+    "region_hint": "Hawaii",
     "break_type": "beach",
     "break_type_confidence": 0.5,
     "sources": {
@@ -6695,7 +6695,7 @@
     "name": "Suicide's",
     "lat": 19.951335,
     "lng": -155.863826,
-    "region_hint": "California",
+    "region_hint": "Hawaii",
     "break_type": "reef",
     "break_type_confidence": 0.5,
     "sources": {
