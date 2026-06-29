@@ -292,6 +292,24 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           Report incorrect data
         </a>
       </div>
+
+      {/* CDIP attribution — required wherever the nearshore forecast is fed by
+          the CDIP MOP model (swell_window_source = 'cdip_mop'). Link must point
+          to the CDIP homepage per their data license. */}
+      {spot.swell_window_source === 'cdip_mop' && (
+        <p className="pt-1 text-xs text-text-muted">
+          Nearshore forecast from CDIP MOP — data courtesy of{' '}
+          <a
+            href="https://cdip.ucsd.edu"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-cyan-400"
+          >
+            CDIP, Scripps Institution of Oceanography
+          </a>
+          .
+        </p>
+      )}
     </div>
   );
 }
