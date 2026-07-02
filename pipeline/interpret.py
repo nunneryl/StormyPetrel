@@ -1262,6 +1262,19 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:  # noqa: BLE001
         log.exception("interpret: MOP override step failed — keeping orientation-path ratings")
 
+    # NWPS nearshore integration (Stage 2, OKX pilot) — same additive + reversible
+    # contract as MOP, for spots tagged swell_window_source="nwps". Unlike MOP it
+    # feeds the full f000..f144 horizon, falling back per-hour only beyond it.
+    # No-op until a spot carries the tag; wrapped so NWPS can never break the run.
+    try:
+        from .forecast.nwps_nearshore import apply_nwps_overrides
+        nwps_stats = apply_nwps_overrides(ratings, spots)
+        if nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]:
+            log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored",
+                     nwps_stats["fed"], nwps_stats["fell_back"], nwps_stats["errored"])
+    except Exception:  # noqa: BLE001
+        log.exception("interpret: NWPS override step failed — keeping orientation-path ratings")
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
     log.info("interpret: wrote %d spots to %s", len(ratings), args.output)
