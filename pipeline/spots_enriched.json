@@ -15301,11 +15301,16 @@
       }
     ],
     "optimal_swell_dir": 105,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532322",
     "nearest_tide_station_dist_km": 3.4,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 52.81
+    "nearest_buoy_dist_km": 52.81,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.22377,
+    "nwps_node_lng": -73.9854,
+    "nwps_node_distance_m": 1329,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Atlantic City",
@@ -15723,9 +15728,14 @@
       }
     ],
     "optimal_swell_dir": 105,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532322",
-    "nearest_tide_station_dist_km": 5.4
+    "nearest_tide_station_dist_km": 5.4,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.22377,
+    "nwps_node_lng": -73.9854,
+    "nwps_node_distance_m": 892,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Harvey Cedars",
@@ -15909,11 +15919,16 @@
       }
     ],
     "optimal_swell_dir": 95,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8531991",
     "nearest_tide_station_dist_km": 1.24,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 60.75
+    "nearest_buoy_dist_km": 60.75,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.30546,
+    "nwps_node_lng": -73.96429,
+    "nwps_node_distance_m": 1123,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Manasquan Inlet",
@@ -16093,11 +16108,16 @@
       }
     ],
     "optimal_swell_dir": 95,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8531991",
     "nearest_tide_station_dist_km": 0.3,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 61.4
+    "nearest_buoy_dist_km": 61.4,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.30546,
+    "nwps_node_lng": -73.96429,
+    "nwps_node_distance_m": 1074,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Point Pleasant Beach",
@@ -16194,9 +16214,14 @@
       }
     ],
     "optimal_swell_dir": 70,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8531680",
-    "nearest_tide_station_dist_km": 2.2
+    "nearest_tide_station_dist_km": 2.2,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.45249,
+    "nwps_node_lng": -73.96429,
+    "nwps_node_distance_m": 1584,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Sea Bright",
@@ -16239,11 +16264,16 @@
       }
     ],
     "optimal_swell_dir": 90,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8531804",
     "nearest_tide_station_dist_km": 1.62,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 69.74
+    "nearest_buoy_dist_km": 69.74,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.35447,
+    "nwps_node_lng": -73.96429,
+    "nwps_node_distance_m": 911,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Sea Isle City",
@@ -16713,7 +16743,7 @@
     "nearest_tide_station_dist_km": 1.82,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.76289,
-    "nwps_node_lng": 287.26056,
+    "nwps_node_lng": -72.73944,
     "nwps_node_distance_m": 756,
     "nwps_buoy_id": "44025"
   },
@@ -16766,7 +16796,7 @@
     "nearest_buoy_dist_km": 67.02,
     "nwps_grid": "CG1",
     "nwps_node_lat": 41.02429,
-    "nwps_node_lng": 288.08416,
+    "nwps_node_lng": -71.91584,
     "nwps_node_distance_m": 1604,
     "nwps_buoy_id": "44025"
   },
@@ -16816,7 +16846,7 @@
     "nearest_tide_station_dist_km": 0.23,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.61586,
-    "nwps_node_lng": 286.75373,
+    "nwps_node_lng": -73.24627,
     "nwps_node_distance_m": 1061,
     "nwps_buoy_id": "44025"
   },
@@ -16866,7 +16896,7 @@
     "nearest_tide_station_dist_km": 9.25,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.86092,
-    "nwps_node_lng": 287.61957,
+    "nwps_node_lng": -72.38043,
     "nwps_node_distance_m": 1050,
     "nwps_buoy_id": "44025"
   },
@@ -16918,7 +16948,7 @@
     "nearest_buoy_dist_km": 88.63,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.92626,
-    "nwps_node_lng": 287.78851,
+    "nwps_node_lng": -72.21149,
     "nwps_node_distance_m": 944,
     "nwps_buoy_id": "44025"
   },
@@ -16971,7 +17001,7 @@
     "nearest_buoy_dist_km": 99.06,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.61586,
-    "nwps_node_lng": 286.62702,
+    "nwps_node_lng": -73.37298,
     "nwps_node_distance_m": 1883,
     "nwps_buoy_id": "44025"
   },
@@ -17070,7 +17100,7 @@
     "nearest_tide_station_dist_km": 1.9,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.58319,
-    "nwps_node_lng": 286.47919,
+    "nwps_node_lng": -73.52081,
     "nwps_node_distance_m": 628,
     "nwps_buoy_id": "44025"
   },
@@ -17123,7 +17153,7 @@
     "nearest_buoy_dist_km": 91.59,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.58319,
-    "nwps_node_lng": 286.39472,
+    "nwps_node_lng": -73.60528,
     "nwps_node_distance_m": 137,
     "nwps_buoy_id": "44025"
   },
@@ -17173,7 +17203,7 @@
     "nearest_tide_station_dist_km": 1.14,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.56685,
-    "nwps_node_lng": 286.33137,
+    "nwps_node_lng": -73.66863,
     "nwps_node_distance_m": 1682,
     "nwps_buoy_id": "44025"
   },
@@ -17225,7 +17255,7 @@
     "nearest_buoy_dist_km": 88.63,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.9426,
-    "nwps_node_lng": 287.83075,
+    "nwps_node_lng": -72.16925,
     "nwps_node_distance_m": 806,
     "nwps_buoy_id": "44025"
   },
@@ -17276,7 +17306,7 @@
     "nearest_tide_station_dist_km": 7.31,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.87725,
-    "nwps_node_lng": 287.68292,
+    "nwps_node_lng": -72.31708,
     "nwps_node_distance_m": 1785,
     "nwps_buoy_id": "44025"
   },
@@ -17329,7 +17359,7 @@
     "nearest_buoy_dist_km": 72.78,
     "nwps_grid": "CG1",
     "nwps_node_lat": 41.0733,
-    "nwps_node_lng": 288.14752,
+    "nwps_node_lng": -71.85248,
     "nwps_node_distance_m": 338,
     "nwps_buoy_id": "44025"
   },
@@ -17430,7 +17460,7 @@
     "nearest_buoy_dist_km": 92.23,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.58319,
-    "nwps_node_lng": 286.41584,
+    "nwps_node_lng": -73.58416,
     "nwps_node_distance_m": 392,
     "nwps_buoy_id": "44025"
   },
@@ -17481,7 +17511,7 @@
     "nearest_tide_station_dist_km": 1.3,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.82824,
-    "nwps_node_lng": 287.51398,
+    "nwps_node_lng": -72.48602,
     "nwps_node_distance_m": 1132,
     "nwps_buoy_id": "44025"
   },
@@ -17532,7 +17562,7 @@
     "nearest_tide_station_dist_km": 1.32,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.61586,
-    "nwps_node_lng": 286.71149,
+    "nwps_node_lng": -73.28851,
     "nwps_node_distance_m": 881,
     "nwps_buoy_id": "44025"
   },
@@ -17584,7 +17614,7 @@
     "nearest_buoy_dist_km": 90.72,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.58319,
-    "nwps_node_lng": 286.20466,
+    "nwps_node_lng": -73.79534,
     "nwps_node_distance_m": 271,
     "nwps_buoy_id": "44025"
   },
@@ -17636,7 +17666,7 @@
     "nearest_buoy_dist_km": 90.07,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.56685,
-    "nwps_node_lng": 286.18354,
+    "nwps_node_lng": -73.81646,
     "nwps_node_distance_m": 1528,
     "nwps_buoy_id": "44025"
   },
@@ -17688,7 +17718,7 @@
     "nearest_buoy_dist_km": 90.31,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.58319,
-    "nwps_node_lng": 286.20466,
+    "nwps_node_lng": -73.79534,
     "nwps_node_distance_m": 975,
     "nwps_buoy_id": "44025"
   },
@@ -17738,7 +17768,7 @@
     "nearest_tide_station_dist_km": 0.68,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.82824,
-    "nwps_node_lng": 287.51398,
+    "nwps_node_lng": -72.48602,
     "nwps_node_distance_m": 1383,
     "nwps_buoy_id": "44025"
   },
@@ -17788,7 +17818,7 @@
     "nearest_tide_station_dist_km": 0.33,
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.73022,
-    "nwps_node_lng": 287.15497,
+    "nwps_node_lng": -72.84503,
     "nwps_node_distance_m": 1638,
     "nwps_buoy_id": "44025"
   },
@@ -17840,8 +17870,8 @@
     "nearest_buoy_id": "44097",
     "nearest_buoy_dist_km": 68.86,
     "nwps_grid": "CG1",
-    "nwps_node_lat": 41.05696,
-    "nwps_node_lng": 288.14752,
+    "nwps_node_lat": 41.05699,
+    "nwps_node_lng": -71.85254,
     "nwps_node_distance_m": 1137,
     "nwps_buoy_id": "44025"
   },
@@ -29015,12 +29045,17 @@
       }
     ],
     "optimal_swell_dir": 105,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532339",
     "nearest_tide_station_dist_km": 3.32,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 52.12,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.20744,
+    "nwps_node_lng": -73.9854,
+    "nwps_node_distance_m": 1466,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Monmouth",
@@ -29045,12 +29080,17 @@
       }
     ],
     "optimal_swell_dir": 95,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8531991",
     "nearest_tide_station_dist_km": 3.8,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 64.76,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.33813,
+    "nwps_node_lng": -73.96429,
+    "nwps_node_distance_m": 702,
+    "nwps_buoy_id": "44065"
   },
   {
     "name": "Breezy Point",
@@ -29083,7 +29123,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.53418,
-    "nwps_node_lng": 286.05683,
+    "nwps_node_lng": -73.94317,
     "nwps_node_distance_m": 995,
     "nwps_buoy_id": "44025"
   },
@@ -29118,7 +29158,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.58319,
-    "nwps_node_lng": 286.26801,
+    "nwps_node_lng": -73.73199,
     "nwps_node_distance_m": 602,
     "nwps_buoy_id": "44025"
   },
@@ -29153,7 +29193,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.6322,
-    "nwps_node_lng": 286.81708,
+    "nwps_node_lng": -73.18292,
     "nwps_node_distance_m": 630,
     "nwps_buoy_id": "44025"
   },
@@ -29188,7 +29228,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.6322,
-    "nwps_node_lng": 286.85932,
+    "nwps_node_lng": -73.14068,
     "nwps_node_distance_m": 1582,
     "nwps_buoy_id": "44025"
   },
@@ -29223,7 +29263,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.68121,
-    "nwps_node_lng": 287.00714,
+    "nwps_node_lng": -72.99286,
     "nwps_node_distance_m": 867,
     "nwps_buoy_id": "44025"
   },
@@ -29258,7 +29298,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 40.99161,
-    "nwps_node_lng": 287.97857,
+    "nwps_node_lng": -72.02143,
     "nwps_node_distance_m": 1109,
     "nwps_buoy_id": "44025"
   },
@@ -29293,7 +29333,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 41.02429,
-    "nwps_node_lng": 288.06304,
+    "nwps_node_lng": -71.93696,
     "nwps_node_distance_m": 982,
     "nwps_buoy_id": "44025"
   },
@@ -29328,7 +29368,7 @@
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
     "nwps_node_lat": 41.02429,
-    "nwps_node_lng": 288.08416,
+    "nwps_node_lng": -71.91584,
     "nwps_node_distance_m": 1580,
     "nwps_buoy_id": "44025"
   },
@@ -29362,8 +29402,8 @@
     "nearest_buoy_dist_km": 62.9,
     "nwps_wfo": "okx",
     "nwps_grid": "CG1",
-    "nwps_node_lat": 41.05696,
-    "nwps_node_lng": 288.14752,
+    "nwps_node_lat": 41.05699,
+    "nwps_node_lng": -71.85254,
     "nwps_node_distance_m": 1264,
     "nwps_buoy_id": "44025"
   },

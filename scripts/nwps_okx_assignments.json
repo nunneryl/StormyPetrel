@@ -300,9 +300,7 @@
       "nwps_node_lng": -71.85254,
       "nwps_node_distance_m": 1137,
       "nwps_buoy_id": "44025"
-    }
-  ],
-  "held": [
+    },
     {
       "slug": "ocean-grove",
       "name": "Ocean Grove",
@@ -311,7 +309,7 @@
       "nwps_node_lat": 40.20744,
       "nwps_node_lng": -73.9854,
       "nwps_node_distance_m": 1466,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "asbury-park",
@@ -321,7 +319,7 @@
       "nwps_node_lat": 40.22377,
       "nwps_node_lng": -73.9854,
       "nwps_node_distance_m": 1329,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "deal",
@@ -331,7 +329,7 @@
       "nwps_node_lat": 40.22377,
       "nwps_node_lng": -73.9854,
       "nwps_node_distance_m": 892,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "long-branch",
@@ -341,7 +339,7 @@
       "nwps_node_lat": 40.30546,
       "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1123,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "pier-village",
@@ -351,7 +349,7 @@
       "nwps_node_lat": 40.30546,
       "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1074,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "monmouth",
@@ -361,7 +359,7 @@
       "nwps_node_lat": 40.33813,
       "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 702,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "sea-bright",
@@ -371,7 +369,7 @@
       "nwps_node_lat": 40.35447,
       "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 911,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     },
     {
       "slug": "sandy-hook",
@@ -381,10 +379,11 @@
       "nwps_node_lat": 40.45249,
       "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1584,
-      "nwps_buoy_id": null
+      "nwps_buoy_id": "44065"
     }
   ],
+  "held": [],
   "trust": "PASS",
-  "trust_buoy": "44025",
-  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail)."
+  "trust_buoy": "44025+44065",
+  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43."
 }
