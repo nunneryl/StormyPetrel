@@ -73,7 +73,7 @@ _HERE = Path(__file__).resolve()
 _ROOT = _HERE.parents[2]
 SCRIPTS_DIR = _ROOT / "scripts"
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
-ASSIGNMENTS = SCRIPTS_DIR / "nwps_okx_assignments.json"   # Mac artifact from --validate
+VALIDATE_OUT = SCRIPTS_DIR / "nwps_okx_validate_out.json"   # --validate diagnostic dump (NOT the apply input)
 
 
 def _slug(name):
@@ -216,7 +216,8 @@ def load_cycle(wfo, cycle=None):
     NaN footprint of swh@f000 and `_wet_nodes` still selects on ``not mask``.
     Holds only the 4 wave fields × 145 steps in memory (≈tens of MB per WFO nest).
     Raises on fetch/parse failure (callers catch)."""
-    import cfgrib   # lazy: --selftest never calls load_cycle, so needs no eccodes
+    import cfgrib    # lazy: --selftest never calls load_cycle, so needs no eccodes
+    import warnings  # to scope the cfgrib/xarray merge FutureWarning below
     if cycle is None:
         cycle = find_latest_cycle(wfo)
         if not cycle:
@@ -228,7 +229,16 @@ def load_cycle(wfo, cycle=None):
         raise OSError(f"not GRIB: {url}")
     with open(path, "wb") as f:
         f.write(body)
-    datasets = cfgrib.open_datasets(path)
+    with warnings.catch_warnings():
+        # cfgrib.open_datasets merges each param group internally with xarray's
+        # default `compat`, emitting one FutureWarning per group ("the default
+        # value for compat will change ... set compat explicitly"). We can't thread
+        # compat into cfgrib's internal merge, and these groups carry no conflicting
+        # duplicate variables (the current default and the future "override" give
+        # identical values), so silence just that warning — the merged
+        # swh/shts/perpw/dirpw values are unchanged.
+        warnings.filterwarnings("ignore", category=FutureWarning, message=".*compat.*")
+        datasets = cfgrib.open_datasets(path)
     if not datasets:
         raise OSError(f"cfgrib produced no datasets: {url}")
 
@@ -570,9 +580,10 @@ def _load_pilot_spots():
 def validate_batch(batch=None):
     """Part C — fetch one OKX cycle, place each pilot spot's seaward node, sample
     its f000 swh/perpw/dirpw, print placement verdict + NWPS★ vs the orientation
-    fallback★, plus a forced-empty test. Writes scripts/nwps_okx_assignments.json
-    (placement results) for apply_nwps_assignments. Mac-only (NOMADS); degrades
-    to a clear message offline."""
+    fallback★, plus a forced-empty test. Writes the placement results to
+    scripts/nwps_okx_validate_out.json — a DIAGNOSTIC dump only; it does NOT touch
+    the curated apply input scripts/nwps_okx_assignments.json (promote by hand
+    after review). Mac-only (NOMADS); degrades to a clear message offline."""
     spots, note = _load_pilot_spots()
     if note:
         print(note)
@@ -635,10 +646,12 @@ def validate_batch(batch=None):
         print(f"\nforced-empty test: fed={st['fed']} fell_back={st['fell_back']} errored={st['errored']}; "
               f"base preserved: {'YES' if test[tname][0]['stars'] == 2.5 else 'NO'}")
     if placed:
-        ASSIGNMENTS.write_text(json.dumps({"_comment": "OKX placement results (OK spots). "
-                                           "Trust-check the WFO before --apply.", "spots": placed}, indent=2))
-        print(f"\nwrote {ASSIGNMENTS} ({len(placed)} placed-OK spots). Run --trustcheck, then "
-              "apply_nwps_assignments --apply once the buoy gate PASSES.")
+        VALIDATE_OUT.write_text(json.dumps({"_comment": "OKX --validate diagnostic (placement results for "
+                                            "OK spots). NOT the apply input — review, then promote into "
+                                            "scripts/nwps_okx_assignments.json by hand.", "spots": placed}, indent=2))
+        print(f"\nwrote {VALIDATE_OUT} ({len(placed)} placed-OK spots) — diagnostic only. The apply input "
+              "scripts/nwps_okx_assignments.json is left untouched; review + promote into it, then --trustcheck "
+              "and apply_nwps_assignments --apply once the buoy gate PASSES.")
     print("\nfb★ = the orientation-path baseline (interpret.compute_ratings via the existing NWPS "
           "fetcher) at the same f000 hour, when NWPS+tides fetch succeeds — NWPS★ should be sane "
           "next to it. Trust the WFO (--trustcheck) before apply_nwps_assignments --apply.")

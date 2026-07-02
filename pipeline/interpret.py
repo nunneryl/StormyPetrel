@@ -983,8 +983,10 @@ def compute_ratings(
         no_tide_data, tide_hourly, tide_hilo,
     )
     log.info(
-        "interpret: swell-direction sourcing — ww3_partition=%d, nwps_swell_dp=%d, "
-        "buoy_swell_dp=%d, fallback_to_total_dp=%d (out of %d rated spots)",
+        "interpret: swell-direction sourcing (compute_ratings, pre-override) — "
+        "ww3_partition=%d, nwps_grib_swdir=%d, buoy_swell_dp=%d, fallback_to_total_dp=%d "
+        "(out of %d rated spots); nwps_grib_swdir = spots whose swell dir came from the "
+        "NWPS GRIB SWDIR field, NOT the nearshore override (see 'NWPS — N spots NWPS-fed').",
         swell_from_ww3,
         rated - swell_from_ww3 - swell_from_buoy - swell_no_source,
         swell_from_buoy,
