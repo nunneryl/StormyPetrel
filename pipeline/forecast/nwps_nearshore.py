@@ -62,7 +62,7 @@ TRUST_CIRC_MAX = 25.0
 TRUST_BUOY_RANGE_MIN_M = 0.5  # below this Hs span the window is flat → INCONCLUSIVE
 TRUST_MIN_PAIRS = 6
 
-# eccodes/pygrib short names (NOT NCEP abbreviations):
+# eccodes short names (NOT NCEP abbreviations):
 #   swh   = sig height of combined wind waves + swell (headline Hs)
 #   shts  = sig height of total swell (swell only) — the windsea split for chop
 #   perpw = primary wave period   dirpw = primary wave direction (deg, FROM)
@@ -188,20 +188,35 @@ def recent_cycles(wfo, n, region="er"):
 
 
 # --------------------------------------------------------------------------- #
-# GRIB load + node sampling (pygrib; lazy so --selftest needs no eccodes)      #
+# GRIB load + node sampling (cfgrib; lazy so --selftest needs no eccodes)      #
 # --------------------------------------------------------------------------- #
 def _cycle_dt(date, cc):
     return datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), int(cc),
                              tzinfo=datetime.timezone.utc)
 
 
+def _step_hours(da):
+    """Forecast hours aligned to a DataArray's step axis (list), or [0] when the
+    run carries a single scalar step. NWPS steps are timedelta64 offsets."""
+    if "step" not in da.coords:
+        return [0]
+    steps = np.atleast_1d(np.asarray(da["step"].values))
+    return [int(round(float(s / np.timedelta64(1, "h")))) for s in steps]
+
+
 def load_cycle(wfo, cycle=None):
     """Fetch + parse the latest (or given) CG1 cycle. Returns a dict:
       {lats, lons, mask, cycle_dt, steps, fields:{(short,fh): float32 grid}}
-    Holds only the 4 wave fields × 145 steps in memory (≈tens of MB for a single
-    WFO nest — fine for the pilot; batch by-WFO + free for a full rollout).
+    Read with xarray + cfgrib, mirroring the sibling fetcher pipeline/forecast/
+    nwps.py — the pipeline runner ships cfgrib/eccodes, not pygrib. cfgrib opens
+    an NWPS GRIB as MULTIPLE datasets (one per param group), so the 4 wave fields
+    can span datasets; we union them keyed by (shortName, forecast hour), the way
+    nwps._extract_time_series_from_datasets unions by valid_time. Land cells read
+    back NaN under cfgrib (they were masked arrays under pygrib), so `mask` is the
+    NaN footprint of swh@f000 and `_wet_nodes` still selects on ``not mask``.
+    Holds only the 4 wave fields × 145 steps in memory (≈tens of MB per WFO nest).
     Raises on fetch/parse failure (callers catch)."""
-    import pygrib
+    import cfgrib   # lazy: --selftest never calls load_cycle, so needs no eccodes
     if cycle is None:
         cycle = find_latest_cycle(wfo)
         if not cycle:
@@ -213,24 +228,47 @@ def load_cycle(wfo, cycle=None):
         raise OSError(f"not GRIB: {url}")
     with open(path, "wb") as f:
         f.write(body)
-    grbs = pygrib.open(path)
-    try:
-        g0 = next(g for g in grbs if g.shortName == "swh" and g.forecastTime == 0)
-        lats, lons = g0.latlons()
-        v0 = g0.values
-        mask = np.ma.getmaskarray(v0) if np.ma.isMaskedArray(v0) else np.zeros(v0.shape, bool)
-        fields, steps = {}, set()
-        grbs.seek(0)
-        for g in grbs:
-            if g.shortName in _SHORTS and g.forecastTime <= HORIZON_MAX_FH:
-                arr = np.ma.filled(g.values.astype("float32"), np.nan) \
-                    if np.ma.isMaskedArray(g.values) else g.values.astype("float32")
-                fields[(g.shortName, int(g.forecastTime))] = arr
-                steps.add(int(g.forecastTime))
-        return {"lats": lats, "lons": lons, "mask": mask, "cycle_dt": _cycle_dt(date, cc),
-                "steps": sorted(steps), "fields": fields}
-    finally:
-        grbs.close()
+    datasets = cfgrib.open_datasets(path)
+    if not datasets:
+        raise OSError(f"cfgrib produced no datasets: {url}")
+
+    # NWPS CG1 is a regular lat/lon nest — take the 1-D axes from the first
+    # wave-bearing dataset and mesh them into the 2-D (lat, lng) frame the
+    # seaward-node selector expects. Longitude → the app's -180/180 convention.
+    lat1d = lng1d = None
+    fields, steps = {}, set()
+    for ds in datasets:
+        if lat1d is None and "latitude" in ds.coords and "longitude" in ds.coords:
+            lat1d = np.asarray(ds["latitude"].values, dtype="float64").ravel()
+            raw = np.asarray(ds["longitude"].values, dtype="float64").ravel()
+            lng1d = ((raw + 180.0) % 360.0) - 180.0
+        for var in ds.data_vars:
+            short = str(var).lower()
+            if short not in _SHORTS:
+                continue
+            da = ds[var]
+            for si, fh in enumerate(_step_hours(da)):
+                if fh > HORIZON_MAX_FH:
+                    continue
+                slab = da.isel(step=si) if "step" in da.dims else da
+                try:
+                    slab = slab.transpose("latitude", "longitude")
+                except ValueError:
+                    continue   # not a plain lat/lon slab (e.g. wave partitions) — skip
+                fields[(short, fh)] = np.asarray(slab.values, dtype="float32")
+                steps.add(fh)
+    if lat1d is None:
+        raise OSError(f"cfgrib datasets carry no lat/lon grid: {url}")
+    swh0 = fields.get(("swh", 0))
+    if swh0 is None:   # mirror pygrib's swh@f000 anchor; else the earliest swh step
+        swh_fhs = sorted(fh for (s, fh) in fields if s == "swh")
+        if not swh_fhs:
+            raise OSError(f"no swh field in cycle: {url}")
+        swh0 = fields[("swh", swh_fhs[0])]
+    lats, lons = np.meshgrid(lat1d, lng1d, indexing="ij")
+    mask = np.isnan(swh0)   # land = NaN wave cell (was a masked array under pygrib)
+    return {"lats": lats, "lons": lons, "mask": mask, "cycle_dt": _cycle_dt(date, cc),
+            "steps": sorted(steps), "fields": fields}
 
 
 def _wet_nodes(lats, lons, mask):
@@ -544,9 +582,9 @@ def validate_batch(batch=None):
     print(f"NWPS OKX validate — {len(spots)} pilot spots\n")
     try:
         cycle = load_cycle("okx")
-    except Exception as e:  # noqa: BLE001  NOMADS/pygrib unavailable here
+    except Exception as e:  # noqa: BLE001  NOMADS/cfgrib unavailable here
         print(f"⚠ could not load an OKX cycle ({type(e).__name__}: {e}). "
-              "Live NOMADS + pygrib needed — run on the Mac. Offline logic is covered by --selftest.")
+              "Live NOMADS + cfgrib/eccodes needed — run on the Mac. Offline logic is covered by --selftest.")
         return 0
     print(f"cycle {cycle['cycle_dt']:%Y-%m-%d %HZ}  ·  {len(cycle['steps'])} steps  ·  grid {cycle['lats'].shape}\n")
 
@@ -625,6 +663,19 @@ def _selftest():
     check("verdict OFFWIN", placement_verdict(1.0, 10, 300, [{"min": 90, "max": 230}]) == "OFFWIN")
     check("verdict OK", placement_verdict(1.0, 10, 150, [{"min": 90, "max": 230}]) == "OK")
 
+    # cfgrib land semantics: mask = np.isnan(swh) must drive wet-cell selection
+    # (was a masked-array test under pygrib). Load-bearing for the seaward snap.
+    la = np.array([[40.0, 40.0], [41.0, 41.0]])
+    lo = np.array([[-74.0, -73.0], [-74.0, -73.0]])
+    swh_grid = np.array([[1.2, np.nan], [np.nan, 0.8]])   # only (0,0) and (1,1) wet
+    wet = _wet_nodes(la, lo, np.isnan(swh_grid))
+    check("NaN land mask → only wet cells", sorted((i, j) for _, _, i, j in wet) == [(0, 0), (1, 1)])
+    row_lat = np.array([[40.0, 40.0, 40.0]]); row_lng = np.array([[-73.02, -73.01, -73.00]])
+    only_east = {"lats": row_lat, "lons": row_lng, "mask": np.isnan(np.array([[np.nan, np.nan, 1.5]]))}
+    sel = select_node(only_east, 40.0, -73.0, None)
+    check("select_node snaps past NaN land to the wet cell",
+          sel is not None and (sel[0], sel[1]) == (0, 2))
+
     # nwps_stars mirrors mop_stars
     st, face, dg, cm, pq = nwps_stars(2.0, 12, 160, 1.9, 160, 1.0, 1.0)
     st_off, *_ = nwps_stars(2.0, 12, 70, 1.9, 160, 1.0, 1.0)   # 90° off-axis
@@ -696,7 +747,7 @@ def main(argv=None):
                    "FAIL": "Hold consume; investigate before tagging.",
                    "INCONCLUSIVE": "Flat/short window — rerun after a real swell (>0.5 m Hs range)."}.get(v, ""))
         except Exception as e:  # noqa: BLE001
-            print(f"⚠ trust check needs live NOMADS+NDBC+pygrib ({type(e).__name__}: {e}) — run on the Mac.")
+            print(f"⚠ trust check needs live NOMADS+NDBC+cfgrib/eccodes ({type(e).__name__}: {e}) — run on the Mac.")
         return 0
     ap.print_help()
     return 0
