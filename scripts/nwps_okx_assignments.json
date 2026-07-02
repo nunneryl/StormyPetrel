@@ -1,0 +1,390 @@
+{
+  "_comment": "OKX placement results (OK spots). Trust-check the WFO before --apply.",
+  "spots": [
+    {
+      "slug": "breezy-point",
+      "name": "Breezy Point",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.53418,
+      "nwps_node_lng": 286.05683,
+      "nwps_node_distance_m": 995,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "rockaway-90th-street",
+      "name": "Rockaway 90th Street",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.56685,
+      "nwps_node_lng": 286.18354,
+      "nwps_node_distance_m": 1528,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "long-beach-ny",
+      "name": "Long Beach NY",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.56685,
+      "nwps_node_lng": 286.33137,
+      "nwps_node_distance_m": 1682,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "rockaway-beach",
+      "name": "Rockaway Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.58319,
+      "nwps_node_lng": 286.20466,
+      "nwps_node_distance_m": 975,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "lido-beach",
+      "name": "Lido Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.58319,
+      "nwps_node_lng": 286.39472,
+      "nwps_node_distance_m": 137,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "west-end-long-beach",
+      "name": "West End Long Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.58319,
+      "nwps_node_lng": 286.26801,
+      "nwps_node_distance_m": 602,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "point-lookout",
+      "name": "Point Lookout",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.58319,
+      "nwps_node_lng": 286.41584,
+      "nwps_node_distance_m": 392,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "rockaway-67th-street",
+      "name": "Rockaway 67th Street",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.58319,
+      "nwps_node_lng": 286.20466,
+      "nwps_node_distance_m": 271,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "jones-beach",
+      "name": "Jones Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.58319,
+      "nwps_node_lng": 286.47919,
+      "nwps_node_distance_m": 628,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "gilgo-beach",
+      "name": "Gilgo Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.61586,
+      "nwps_node_lng": 286.62702,
+      "nwps_node_distance_m": 1883,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "robert-moses-state-park",
+      "name": "Robert Moses State Park",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.61586,
+      "nwps_node_lng": 286.71149,
+      "nwps_node_distance_m": 881,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "fire-island",
+      "name": "Fire Island",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.61586,
+      "nwps_node_lng": 286.75373,
+      "nwps_node_distance_m": 1061,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "saltaire",
+      "name": "Saltaire",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.6322,
+      "nwps_node_lng": 286.81708,
+      "nwps_node_distance_m": 630,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "ocean-bay-park",
+      "name": "Ocean Bay Park",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.6322,
+      "nwps_node_lng": 286.85932,
+      "nwps_node_distance_m": 1582,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "davis-park",
+      "name": "Davis Park",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.68121,
+      "nwps_node_lng": 287.00714,
+      "nwps_node_distance_m": 867,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "smith-point-beach",
+      "name": "Smith Point Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.73022,
+      "nwps_node_lng": 287.15497,
+      "nwps_node_distance_m": 1638,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "cupsogue-beach",
+      "name": "Cupsogue Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.76289,
+      "nwps_node_lng": 287.26056,
+      "nwps_node_distance_m": 756,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "ponquogue-beach",
+      "name": "Ponquogue Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.82824,
+      "nwps_node_lng": 287.51398,
+      "nwps_node_distance_m": 1132,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "shinnecock-inlet",
+      "name": "Shinnecock Inlet",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.82824,
+      "nwps_node_lng": 287.51398,
+      "nwps_node_distance_m": 1383,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "flying-point-beach",
+      "name": "Flying Point Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.86092,
+      "nwps_node_lng": 287.61957,
+      "nwps_node_distance_m": 1050,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "mecox-beach",
+      "name": "Mecox Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.87725,
+      "nwps_node_lng": 287.68292,
+      "nwps_node_distance_m": 1785,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "georgica-beach",
+      "name": "Georgica Beach",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.92626,
+      "nwps_node_lng": 287.78851,
+      "nwps_node_distance_m": 944,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "main-beach-east-hampton",
+      "name": "Main Beach East Hampton",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.9426,
+      "nwps_node_lng": 287.83075,
+      "nwps_node_distance_m": 806,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "hither-hills",
+      "name": "Hither Hills",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.99161,
+      "nwps_node_lng": 287.97857,
+      "nwps_node_distance_m": 1109,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "terrace",
+      "name": "Terrace",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.02429,
+      "nwps_node_lng": 288.06304,
+      "nwps_node_distance_m": 982,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "poles",
+      "name": "Poles",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.02429,
+      "nwps_node_lng": 288.08416,
+      "nwps_node_distance_m": 1580,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "ditch-plains",
+      "name": "Ditch Plains",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.02429,
+      "nwps_node_lng": 288.08416,
+      "nwps_node_distance_m": 1604,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "radars",
+      "name": "Radars",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.05696,
+      "nwps_node_lng": 288.14752,
+      "nwps_node_distance_m": 1264,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "turtle-cove-montauk",
+      "name": "Turtle Cove Montauk",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.05696,
+      "nwps_node_lng": 288.14752,
+      "nwps_node_distance_m": 1137,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "montauk-point",
+      "name": "Montauk Point",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.0733,
+      "nwps_node_lng": 288.14752,
+      "nwps_node_distance_m": 338,
+      "nwps_buoy_id": "44025"
+    }
+  ],
+  "held": [
+    {
+      "slug": "ocean-grove",
+      "name": "Ocean Grove",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.20744,
+      "nwps_node_lng": 286.0146,
+      "nwps_node_distance_m": 1466,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "asbury-park",
+      "name": "Asbury Park",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.22377,
+      "nwps_node_lng": 286.0146,
+      "nwps_node_distance_m": 1329,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "deal",
+      "name": "Deal",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.22377,
+      "nwps_node_lng": 286.0146,
+      "nwps_node_distance_m": 892,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "long-branch",
+      "name": "Long Branch",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.30546,
+      "nwps_node_lng": 286.03571,
+      "nwps_node_distance_m": 1123,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pier-village",
+      "name": "Pier Village",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.30546,
+      "nwps_node_lng": 286.03571,
+      "nwps_node_distance_m": 1074,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "monmouth",
+      "name": "Monmouth",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.33813,
+      "nwps_node_lng": 286.03571,
+      "nwps_node_distance_m": 702,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sea-bright",
+      "name": "Sea Bright",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.35447,
+      "nwps_node_lng": 286.03571,
+      "nwps_node_distance_m": 911,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sandy-hook",
+      "name": "Sandy Hook",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.45249,
+      "nwps_node_lng": 286.03571,
+      "nwps_node_distance_m": 1584,
+      "nwps_buoy_id": null
+    }
+  ],
+  "trust": "PASS",
+  "trust_buoy": "44025",
+  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; covers OKX south-shore only. phi/NJ held for 44065."
+}
