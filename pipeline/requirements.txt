@@ -23,6 +23,11 @@ psycopg2-binary>=2.9,<3
 xarray>=2024.1
 cfgrib>=0.9.14
 
+# MOP (CDIP nearshore assimilation) — pipeline/forecast/mop.py reads CDIP MOP
+# nowcast/forecast NetCDF (not GRIB), so it needs the netCDF4 reader. The PyPI
+# wheels bundle libnetcdf/libhdf5, so no extra system library is required.
+netCDF4>=1.6,<2
+
 # ECMWF HRES-WAM ingestion (pipeline/ecmwf_wam.py) — open-data client for
 # the AWS mirror. Reuses the cfgrib/xarray/scipy stack above for decode +
 # interpolation. Isolated second wave model; does not touch NWPS.

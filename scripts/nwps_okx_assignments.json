@@ -1,5 +1,5 @@
 {
-  "_comment": "OKX placement results (OK spots). Trust-check the WFO before --apply.",
+  "_comment": "OKX go-live artifact. Regenerated after --validate overwrote it. OKX=tagged (44025 PASS); phi=held for 44065. Do not let --validate clobber.",
   "spots": [
     {
       "slug": "breezy-point",
@@ -7,7 +7,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.53418,
-      "nwps_node_lng": 286.05683,
+      "nwps_node_lng": -73.94317,
       "nwps_node_distance_m": 995,
       "nwps_buoy_id": "44025"
     },
@@ -17,7 +17,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.56685,
-      "nwps_node_lng": 286.18354,
+      "nwps_node_lng": -73.81646,
       "nwps_node_distance_m": 1528,
       "nwps_buoy_id": "44025"
     },
@@ -27,7 +27,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.56685,
-      "nwps_node_lng": 286.33137,
+      "nwps_node_lng": -73.66863,
       "nwps_node_distance_m": 1682,
       "nwps_buoy_id": "44025"
     },
@@ -37,7 +37,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.58319,
-      "nwps_node_lng": 286.20466,
+      "nwps_node_lng": -73.79534,
       "nwps_node_distance_m": 975,
       "nwps_buoy_id": "44025"
     },
@@ -47,7 +47,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.58319,
-      "nwps_node_lng": 286.39472,
+      "nwps_node_lng": -73.60528,
       "nwps_node_distance_m": 137,
       "nwps_buoy_id": "44025"
     },
@@ -57,7 +57,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.58319,
-      "nwps_node_lng": 286.26801,
+      "nwps_node_lng": -73.73199,
       "nwps_node_distance_m": 602,
       "nwps_buoy_id": "44025"
     },
@@ -67,7 +67,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.58319,
-      "nwps_node_lng": 286.41584,
+      "nwps_node_lng": -73.58416,
       "nwps_node_distance_m": 392,
       "nwps_buoy_id": "44025"
     },
@@ -77,7 +77,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.58319,
-      "nwps_node_lng": 286.20466,
+      "nwps_node_lng": -73.79534,
       "nwps_node_distance_m": 271,
       "nwps_buoy_id": "44025"
     },
@@ -87,7 +87,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.58319,
-      "nwps_node_lng": 286.47919,
+      "nwps_node_lng": -73.52081,
       "nwps_node_distance_m": 628,
       "nwps_buoy_id": "44025"
     },
@@ -97,7 +97,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.61586,
-      "nwps_node_lng": 286.62702,
+      "nwps_node_lng": -73.37298,
       "nwps_node_distance_m": 1883,
       "nwps_buoy_id": "44025"
     },
@@ -107,7 +107,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.61586,
-      "nwps_node_lng": 286.71149,
+      "nwps_node_lng": -73.28851,
       "nwps_node_distance_m": 881,
       "nwps_buoy_id": "44025"
     },
@@ -117,7 +117,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.61586,
-      "nwps_node_lng": 286.75373,
+      "nwps_node_lng": -73.24627,
       "nwps_node_distance_m": 1061,
       "nwps_buoy_id": "44025"
     },
@@ -127,7 +127,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.6322,
-      "nwps_node_lng": 286.81708,
+      "nwps_node_lng": -73.18292,
       "nwps_node_distance_m": 630,
       "nwps_buoy_id": "44025"
     },
@@ -137,7 +137,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.6322,
-      "nwps_node_lng": 286.85932,
+      "nwps_node_lng": -73.14068,
       "nwps_node_distance_m": 1582,
       "nwps_buoy_id": "44025"
     },
@@ -147,7 +147,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.68121,
-      "nwps_node_lng": 287.00714,
+      "nwps_node_lng": -72.99286,
       "nwps_node_distance_m": 867,
       "nwps_buoy_id": "44025"
     },
@@ -157,7 +157,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.73022,
-      "nwps_node_lng": 287.15497,
+      "nwps_node_lng": -72.84503,
       "nwps_node_distance_m": 1638,
       "nwps_buoy_id": "44025"
     },
@@ -167,7 +167,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.76289,
-      "nwps_node_lng": 287.26056,
+      "nwps_node_lng": -72.73944,
       "nwps_node_distance_m": 756,
       "nwps_buoy_id": "44025"
     },
@@ -177,7 +177,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.82824,
-      "nwps_node_lng": 287.51398,
+      "nwps_node_lng": -72.48602,
       "nwps_node_distance_m": 1132,
       "nwps_buoy_id": "44025"
     },
@@ -187,7 +187,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.82824,
-      "nwps_node_lng": 287.51398,
+      "nwps_node_lng": -72.48602,
       "nwps_node_distance_m": 1383,
       "nwps_buoy_id": "44025"
     },
@@ -197,7 +197,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.86092,
-      "nwps_node_lng": 287.61957,
+      "nwps_node_lng": -72.38043,
       "nwps_node_distance_m": 1050,
       "nwps_buoy_id": "44025"
     },
@@ -207,7 +207,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.87725,
-      "nwps_node_lng": 287.68292,
+      "nwps_node_lng": -72.31708,
       "nwps_node_distance_m": 1785,
       "nwps_buoy_id": "44025"
     },
@@ -217,7 +217,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.92626,
-      "nwps_node_lng": 287.78851,
+      "nwps_node_lng": -72.21149,
       "nwps_node_distance_m": 944,
       "nwps_buoy_id": "44025"
     },
@@ -227,7 +227,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.9426,
-      "nwps_node_lng": 287.83075,
+      "nwps_node_lng": -72.16925,
       "nwps_node_distance_m": 806,
       "nwps_buoy_id": "44025"
     },
@@ -237,7 +237,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.99161,
-      "nwps_node_lng": 287.97857,
+      "nwps_node_lng": -72.02143,
       "nwps_node_distance_m": 1109,
       "nwps_buoy_id": "44025"
     },
@@ -247,7 +247,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 41.02429,
-      "nwps_node_lng": 288.06304,
+      "nwps_node_lng": -71.93696,
       "nwps_node_distance_m": 982,
       "nwps_buoy_id": "44025"
     },
@@ -257,7 +257,7 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 41.02429,
-      "nwps_node_lng": 288.08416,
+      "nwps_node_lng": -71.91584,
       "nwps_node_distance_m": 1580,
       "nwps_buoy_id": "44025"
     },
@@ -267,28 +267,8 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 41.02429,
-      "nwps_node_lng": 288.08416,
+      "nwps_node_lng": -71.91584,
       "nwps_node_distance_m": 1604,
-      "nwps_buoy_id": "44025"
-    },
-    {
-      "slug": "radars",
-      "name": "Radars",
-      "nwps_wfo": "okx",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 41.05696,
-      "nwps_node_lng": 288.14752,
-      "nwps_node_distance_m": 1264,
-      "nwps_buoy_id": "44025"
-    },
-    {
-      "slug": "turtle-cove-montauk",
-      "name": "Turtle Cove Montauk",
-      "nwps_wfo": "okx",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 41.05696,
-      "nwps_node_lng": 288.14752,
-      "nwps_node_distance_m": 1137,
       "nwps_buoy_id": "44025"
     },
     {
@@ -297,8 +277,28 @@
       "nwps_wfo": "okx",
       "nwps_grid": "CG1",
       "nwps_node_lat": 41.0733,
-      "nwps_node_lng": 288.14752,
+      "nwps_node_lng": -71.85248,
       "nwps_node_distance_m": 338,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "radars",
+      "name": "Radars",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.05699,
+      "nwps_node_lng": -71.85254,
+      "nwps_node_distance_m": 1264,
+      "nwps_buoy_id": "44025"
+    },
+    {
+      "slug": "turtle-cove-montauk",
+      "name": "Turtle Cove Montauk",
+      "nwps_wfo": "okx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.05699,
+      "nwps_node_lng": -71.85254,
+      "nwps_node_distance_m": 1137,
       "nwps_buoy_id": "44025"
     }
   ],
@@ -309,7 +309,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.20744,
-      "nwps_node_lng": 286.0146,
+      "nwps_node_lng": -73.9854,
       "nwps_node_distance_m": 1466,
       "nwps_buoy_id": null
     },
@@ -319,7 +319,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.22377,
-      "nwps_node_lng": 286.0146,
+      "nwps_node_lng": -73.9854,
       "nwps_node_distance_m": 1329,
       "nwps_buoy_id": null
     },
@@ -329,7 +329,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.22377,
-      "nwps_node_lng": 286.0146,
+      "nwps_node_lng": -73.9854,
       "nwps_node_distance_m": 892,
       "nwps_buoy_id": null
     },
@@ -339,7 +339,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.30546,
-      "nwps_node_lng": 286.03571,
+      "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1123,
       "nwps_buoy_id": null
     },
@@ -349,7 +349,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.30546,
-      "nwps_node_lng": 286.03571,
+      "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1074,
       "nwps_buoy_id": null
     },
@@ -359,7 +359,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.33813,
-      "nwps_node_lng": 286.03571,
+      "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 702,
       "nwps_buoy_id": null
     },
@@ -369,7 +369,7 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.35447,
-      "nwps_node_lng": 286.03571,
+      "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 911,
       "nwps_buoy_id": null
     },
@@ -379,12 +379,12 @@
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 40.45249,
-      "nwps_node_lng": 286.03571,
+      "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1584,
       "nwps_buoy_id": null
     }
   ],
   "trust": "PASS",
   "trust_buoy": "44025",
-  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; covers OKX south-shore only. phi/NJ held for 44065."
+  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail)."
 }
