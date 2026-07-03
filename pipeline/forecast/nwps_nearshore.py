@@ -130,6 +130,15 @@ def placement_verdict(dist_km, per, dirpw, arcs):
     return "OK"
 
 
+def _is_domain_miss(outcome):
+    """Explicit rollup of the placement outcome: True when the spot fell OUTSIDE
+    this WFO's grid domain — FAR (nearest wet cell beyond FAR_CAP_KM) or NO_WET_CELL
+    (no water in the grid at all) — so the grid-edge mop-up should retry it on
+    another WFO. False for in-domain disqualifiers (DEAD / OFFWIN) and OK. Purely
+    derived — it does NOT change how the outcomes themselves are computed."""
+    return outcome in ("FAR", "NO_WET_CELL")
+
+
 # --------------------------------------------------------------------------- #
 # NOMADS discovery (ported from the probe / buoycheck)                         #
 # --------------------------------------------------------------------------- #
@@ -674,7 +683,8 @@ def validate_batch(batch=None, wfo="okx"):
             # "retry against another WFO grid", not "genuinely off-window".
             print(f"  {slug:22}{'—':>8}  NO_WET_CELL  (no water in {wfo} grid — outside its marine domain)")
             outcomes.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag,
-                             "grid_wfo": wfo, "outcome": "NO_WET_CELL"})
+                             "grid_wfo": wfo, "outcome": "NO_WET_CELL",
+                             "domain_miss": _is_domain_miss("NO_WET_CELL")})
             continue
         i, j, nlat, nlng, dkm, moved = sel
         swh = _node_value(cycle, "swh", 0, i, j); per = _node_value(cycle, "perpw", 0, i, j)
@@ -692,13 +702,15 @@ def validate_batch(batch=None, wfo="okx"):
         st, *_ = nwps_stars(swh, per, dpw, shts, s.get("orientation_deg"), wm, tm)
         sval = f"{st:.1f}" if st is not None else "—"
         fval = f"{fbstar:.1f}" if fbstar is not None else "—"
+        dm = _is_domain_miss(v)
         print(f"  {slug:22}{dkm:8.2f}{(swh or 0):6.1f}{(per or 0):6.1f}{(dpw or 0):6.0f}"
-              f"  {v:8}{sval:>6}{fval:>6}{'  *' if moved else ''}")
+              f"  {v:8}{sval:>6}{fval:>6}{'  *' if moved else ''}{'  domain-miss' if dm else ''}")
         # FAR = nearest seaward wet cell beyond FAR_CAP_KM (spot outside this WFO's
         # nearshore nest — a domain miss, like NO_WET_CELL); DEAD = period floor;
         # OFFWIN = swell direction outside the spot's window (in-domain, not a miss).
+        # domain_miss is the explicit rollup the grid-edge mop-up filters on.
         outcomes.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag, "grid_wfo": wfo,
-                         "outcome": v, "nwps_node_distance_m": round(dkm * 1000),
+                         "outcome": v, "domain_miss": dm, "nwps_node_distance_m": round(dkm * 1000),
                          "nwps_node_lat": round(nlat, 5), "nwps_node_lng": round(nlng, 5)})
         if v == "OK":
             placed.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag,
@@ -744,6 +756,8 @@ def _selftest():
     check("verdict DEAD (period floor)", placement_verdict(1.0, 2.0, 150, []) == "DEAD")
     check("verdict OFFWIN", placement_verdict(1.0, 10, 300, [{"min": 90, "max": 230}]) == "OFFWIN")
     check("verdict OK", placement_verdict(1.0, 10, 150, [{"min": 90, "max": 230}]) == "OK")
+    check("domain_miss rollup", _is_domain_miss("FAR") and _is_domain_miss("NO_WET_CELL")
+          and not _is_domain_miss("OFFWIN") and not _is_domain_miss("DEAD") and not _is_domain_miss("OK"))
 
     # cfgrib land semantics: mask = np.isnan(swh) must drive wet-cell selection
     # (was a masked-array test under pygrib). Load-bearing for the seaward snap.
