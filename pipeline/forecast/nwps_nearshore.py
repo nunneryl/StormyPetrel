@@ -577,24 +577,68 @@ def _load_pilot_spots():
         "okx_pilot.json not found — 3-spot fallback"
 
 
-def validate_batch(batch=None):
-    """Part C — fetch one OKX cycle, place each pilot spot's seaward node, sample
-    its f000 swh/perpw/dirpw, print placement verdict + NWPS★ vs the orientation
-    fallback★, plus a forced-empty test. Writes the placement results to
-    scripts/nwps_okx_validate_out.json — a DIAGNOSTIC dump only; it does NOT touch
-    the curated apply input scripts/nwps_okx_assignments.json (promote by hand
-    after review). Mac-only (NOMADS); degrades to a clear message offline."""
-    spots, note = _load_pilot_spots()
-    if note:
-        print(note)
+def _load_roster_spots(slugs):
+    """Load specific spots straight from spots_enriched.json by slug (read-only),
+    independent of the pilot file. Each record keeps its real fields — lat/lng,
+    orientation_deg, swell_window_arcs and its OWN nwps_wfo tag (nothing is
+    force-stamped). Raises ValueError naming any slug not in the roster, so a
+    typo / absent spot is loud instead of silently dropped."""
+    if not ENRICHED.exists():
+        raise FileNotFoundError(f"--batch needs {ENRICHED}; not found")
+    roster = {}
+    for s in json.loads(ENRICHED.read_text()):
+        roster.setdefault(_slug(s.get("name")), s)
+    out, missing = [], []
+    for raw in slugs:
+        sl = raw.strip()
+        if not sl:
+            continue
+        s = roster.get(sl)
+        if s is None:
+            missing.append(sl)
+        else:
+            out.append(s)
+    if missing:
+        raise ValueError(f"--batch: slug(s) not found in spots_enriched.json: {', '.join(missing)}")
+    return out
+
+
+def _buoy_latlng(buoy_id):
+    """(lat, lng) for an NDBC buoy id from the pipeline's wave-station roster
+    (enrichment.geodata.load_ndbc_wave_stations — the same loader the buoy/MOP
+    rollout uses; it returns {'id','lat','lng','name'} dicts with id lowercased).
+    Raises if the id isn't in the roster — no fallback to typed coordinates."""
+    from ..enrichment.geodata import load_ndbc_wave_stations
+    roster = {st["id"]: st for st in load_ndbc_wave_stations()}
+    st = roster.get(str(buoy_id).lower())
+    if st is None:
+        raise KeyError(f"buoy {buoy_id!r} not in the NDBC wave-station roster "
+                       "(load_ndbc_wave_stations) — cannot resolve its lat/lng")
+    return st["lat"], st["lng"]
+
+
+def validate_batch(batch=None, wfo="okx"):
+    """Part C — fetch one *wfo* cycle (default okx), place each spot's seaward node,
+    sample its f000 swh/perpw/dirpw, print placement verdict + NWPS★ vs the
+    orientation fallback★, plus a forced-empty test. Spots come from --batch (loaded
+    from spots_enriched.json by slug, keeping each spot's real nwps_wfo tag) or, with
+    no batch, the okx_pilot.json pilot set. Writes the placement results to
+    scripts/nwps_okx_validate_out.json — a DIAGNOSTIC dump only (records every spot's
+    outcome: OK / FAR / DEAD / OFFWIN / NO_WET_CELL); it does NOT touch the curated
+    apply input scripts/nwps_okx_assignments.json (promote by hand after review).
+    Mac-only (NOMADS); degrades to a clear message offline."""
     if batch:
-        want = set(batch.split(",") if isinstance(batch, str) else batch)
-        spots = [s for s in spots if _slug(s["name"]) in want]
-    print(f"NWPS OKX validate — {len(spots)} pilot spots\n")
+        want = batch.split(",") if isinstance(batch, str) else list(batch)
+        spots = _load_roster_spots(want)   # from spots_enriched.json, real tags, raise on missing slug
+    else:
+        spots, note = _load_pilot_spots()
+        if note:
+            print(note)
+    print(f"NWPS {wfo.upper()} validate — {len(spots)} spots\n")
     try:
-        cycle = load_cycle("okx")
+        cycle = load_cycle(wfo)
     except Exception as e:  # noqa: BLE001  NOMADS/cfgrib unavailable here
-        print(f"⚠ could not load an OKX cycle ({type(e).__name__}: {e}). "
+        print(f"⚠ could not load a {wfo.upper()} cycle ({type(e).__name__}: {e}). "
               "Live NOMADS + cfgrib/eccodes needed — run on the Mac. Offline logic is covered by --selftest.")
         return 0
     print(f"cycle {cycle['cycle_dt']:%Y-%m-%d %HZ}  ·  {len(cycle['steps'])} steps  ·  grid {cycle['lats'].shape}\n")
@@ -606,16 +650,32 @@ def validate_batch(batch=None):
     try:
         from ..interpret import compute_ratings
         from . import nwps as nwps_mod, tides as tides_mod
-        fb = compute_ratings(spots, nwps_mod.fetch(spots), tides_mod.fetch(spots), {}, {})
+        # Redirect the fetchers' diagnostic writes to scratch files so a Mac
+        # --validate can never clobber the real forecast_data/{nwps,tides}.json.
+        _saved = (nwps_mod.NWPS_FORECAST_FILE, tides_mod.TIDES_FORECAST_FILE)
+        nwps_mod.NWPS_FORECAST_FILE = _saved[0].parent / "nwps_validate_scratch.json"
+        tides_mod.TIDES_FORECAST_FILE = _saved[1].parent / "tides_validate_scratch.json"
+        try:
+            fb = compute_ratings(spots, nwps_mod.fetch(spots), tides_mod.fetch(spots), {}, {})
+        finally:
+            nwps_mod.NWPS_FORECAST_FILE, tides_mod.TIDES_FORECAST_FILE = _saved
     except Exception as e:  # noqa: BLE001
         print(f"(fallback baseline unavailable — {type(e).__name__}; showing NWPS sanity only)\n")
 
     print(f"  {'slug':22}{'node_km':>8}{'swh':>6}{'per':>6}{'dir':>6}  verdict   NWPS★   fb★")
-    placed = []
+    placed, outcomes = [], []
     for s in spots:
+        slug = _slug(s["name"]); wfo_tag = s.get("nwps_wfo", wfo)
         sel = select_node(cycle, s["lat"], s["lng"], s.get("orientation_deg"))
         if sel is None:
-            print(f"  {_slug(s['name']):22}{'—':>8}  no wet cell"); continue
+            # No water anywhere in the fetched grid near this spot: the spot is
+            # OUTSIDE this WFO's marine domain. A DISTINCT outcome from FAR/DEAD/
+            # OFFWIN (those found a cell but disqualified it) — NO_WET_CELL means
+            # "retry against another WFO grid", not "genuinely off-window".
+            print(f"  {slug:22}{'—':>8}  NO_WET_CELL  (no water in {wfo} grid — outside its marine domain)")
+            outcomes.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag,
+                             "grid_wfo": wfo, "outcome": "NO_WET_CELL"})
+            continue
         i, j, nlat, nlng, dkm, moved = sel
         swh = _node_value(cycle, "swh", 0, i, j); per = _node_value(cycle, "perpw", 0, i, j)
         dpw = _node_value(cycle, "dirpw", 0, i, j); shts = _node_value(cycle, "shts", 0, i, j)
@@ -632,10 +692,16 @@ def validate_batch(batch=None):
         st, *_ = nwps_stars(swh, per, dpw, shts, s.get("orientation_deg"), wm, tm)
         sval = f"{st:.1f}" if st is not None else "—"
         fval = f"{fbstar:.1f}" if fbstar is not None else "—"
-        print(f"  {_slug(s['name']):22}{dkm:8.2f}{(swh or 0):6.1f}{(per or 0):6.1f}{(dpw or 0):6.0f}"
+        print(f"  {slug:22}{dkm:8.2f}{(swh or 0):6.1f}{(per or 0):6.1f}{(dpw or 0):6.0f}"
               f"  {v:8}{sval:>6}{fval:>6}{'  *' if moved else ''}")
+        # FAR = nearest seaward wet cell beyond FAR_CAP_KM (spot outside this WFO's
+        # nearshore nest — a domain miss, like NO_WET_CELL); DEAD = period floor;
+        # OFFWIN = swell direction outside the spot's window (in-domain, not a miss).
+        outcomes.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag, "grid_wfo": wfo,
+                         "outcome": v, "nwps_node_distance_m": round(dkm * 1000),
+                         "nwps_node_lat": round(nlat, 5), "nwps_node_lng": round(nlng, 5)})
         if v == "OK":
-            placed.append({"slug": _slug(s["name"]), "name": s["name"], "nwps_wfo": s.get("nwps_wfo", "okx"),
+            placed.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag,
                            "nwps_grid": "CG1", "nwps_node_lat": round(nlat, 5), "nwps_node_lng": round(nlng, 5),
                            "nwps_node_distance_m": round(dkm * 1000), "nwps_buoy_id": s.get("nwps_buoy_id")})
     # forced-empty test — fallback must engage cleanly
@@ -645,13 +711,16 @@ def validate_batch(batch=None):
         st = apply_nwps_overrides(test, [dict(spots[0], swell_window_source="nwps")], _fetch=lambda _s: None)
         print(f"\nforced-empty test: fed={st['fed']} fell_back={st['fell_back']} errored={st['errored']}; "
               f"base preserved: {'YES' if test[tname][0]['stars'] == 2.5 else 'NO'}")
-    if placed:
-        VALIDATE_OUT.write_text(json.dumps({"_comment": "OKX --validate diagnostic (placement results for "
-                                            "OK spots). NOT the apply input — review, then promote into "
-                                            "scripts/nwps_okx_assignments.json by hand.", "spots": placed}, indent=2))
-        print(f"\nwrote {VALIDATE_OUT} ({len(placed)} placed-OK spots) — diagnostic only. The apply input "
-              "scripts/nwps_okx_assignments.json is left untouched; review + promote into it, then --trustcheck "
-              "and apply_nwps_assignments --apply once the buoy gate PASSES.")
+    if outcomes:
+        VALIDATE_OUT.write_text(json.dumps(
+            {"_comment": f"{wfo} --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every "
+             "spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input — review, then "
+             "promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+             "grid_wfo": wfo, "spots": placed, "outcomes": outcomes}, indent=2))
+        n_ok = len(placed); n_other = len(outcomes) - n_ok
+        print(f"\nwrote {VALIDATE_OUT} ({n_ok} placed-OK, {n_other} other outcomes on the {wfo} grid) — "
+              "diagnostic only. The apply input scripts/nwps_okx_assignments.json is left untouched; review + "
+              "promote OK spots into it, then --trustcheck and apply_nwps_assignments --apply once the gate PASSES.")
     print("\nfb★ = the orientation-path baseline (interpret.compute_ratings via the existing NWPS "
           "fetcher) at the same f000 hour, when NWPS+tides fetch succeeds — NWPS★ should be sane "
           "next to it. Trust the WFO (--trustcheck) before apply_nwps_assignments --apply.")
@@ -742,21 +811,25 @@ def _selftest():
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--selftest", action="store_true")
-    ap.add_argument("--validate", action="store_true", help="fetch one OKX cycle, place + sample (Mac)")
-    ap.add_argument("--trustcheck", action="store_true", help="NWPS-vs-buoy 44025 trust gate (Mac)")
-    ap.add_argument("--batch", default=None, help="comma-separated slugs to validate")
+    ap.add_argument("--validate", action="store_true", help="fetch one WFO cycle, place + sample (Mac)")
+    ap.add_argument("--trustcheck", action="store_true", help="NWPS-vs-buoy trust gate (Mac)")
+    ap.add_argument("--wfo", default="okx", help="NWPS WFO grid to fetch (default okx)")
+    ap.add_argument("--batch", default=None,
+                    help="comma-separated slugs to validate, loaded from spots_enriched.json "
+                         "(each spot keeps its own nwps_wfo tag); default = the okx_pilot.json set")
     ap.add_argument("--buoy", default="44025", help="trust-check buoy id (default 44025)")
     a = ap.parse_args(argv)
     if a.selftest:
         return _selftest()
     if a.validate:
-        return validate_batch(a.batch)
+        return validate_batch(a.batch, a.wfo)
     if a.trustcheck:
-        print("=== NWPS OKX trust check vs NDBC (Mac; needs NOMADS+NDBC) ===")
+        blat, blng = _buoy_latlng(a.buoy)   # real coords from the NDBC roster; raises if unknown (no fallback)
+        print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Mac; needs NOMADS+NDBC) ===")
         try:
-            v, r, cs, n = trust_check("okx", a.buoy, 40.251, -73.164)
+            v, r, cs, n = trust_check(a.wfo, a.buoy, blat, blng)
             print(f"buoy {a.buoy}: verdict {v}  r={r:.3f}  circ_std={cs:.1f}°  pairs={n}")
-            print({"PASS": "Regional trust supports consuming the placed OKX spots.",
+            print({"PASS": f"Regional trust supports consuming the placed {a.wfo.upper()} spots.",
                    "FAIL": "Hold consume; investigate before tagging.",
                    "INCONCLUSIVE": "Flat/short window — rerun after a real swell (>0.5 m Hs range)."}.get(v, ""))
         except Exception as e:  # noqa: BLE001
