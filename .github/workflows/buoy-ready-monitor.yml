@@ -96,13 +96,13 @@ jobs:
             const marker = s => `<!-- buoy-ready-set:${s} -->`;
             const buildBody = () => {
               const items = ready.map(r =>
-                `- **${r.id}** — ${r.zone} — current Hs ${r.hs == null ? 'n/a' : r.hs + ' m'}`);
+                `- **${r.id}** [${r.wfo}] — ${r.zone} — current Hs ${r.hs == null ? 'n/a' : r.hs + ' m'}`);
               const cmds = ready.map(r =>
                 '```\n'
-                + `python3 -m pipeline.forecast.nwps_nearshore --trustcheck --wfo phi --buoy ${r.id}`
+                + `python3 -m pipeline.forecast.nwps_nearshore --trustcheck --wfo ${r.wfo} --buoy ${r.id}`
                 + '\n```');
               return [
-                `These phi trust-check zone(s) are **testable right now** — buoy UP **and** 24h Hs `
+                `These trust-check zone(s) are **testable right now** — buoy UP **and** 24h Hs `
                   + `range ≥ ${thr} m, so the trust gate can return PASS/FAIL instead of INCONCLUSIVE:`,
                 '',
                 items.join('\n'),
