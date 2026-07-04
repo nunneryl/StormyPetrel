@@ -56,11 +56,19 @@ WINDOW_H = 24            # look back ~24h for the Hs range
 # Watch list — add buoys / a future box region by editing this ONE list.      #
 # --------------------------------------------------------------------------- #
 WATCH = [
-    {"id": "44025", "zone": "Monmouth"},
-    {"id": "44065", "zone": "Monmouth"},
-    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)"},
-    {"id": "44009", "zone": "Absecon->Cape May"},
-    {"id": "44084", "zone": "Delaware"},
+    # phi — Mid-Atlantic / NJ
+    {"id": "44025", "zone": "Monmouth", "wfo": "phi"},
+    {"id": "44065", "zone": "Monmouth", "wfo": "phi"},
+    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
+    {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi"},
+    {"id": "44084", "zone": "Delaware", "wfo": "phi"},
+    # box — Southern New England. 44098 and 44018 are UNCONFIRMED candidates:
+    # validate them with the first box --trustcheck (they may be offline or sited
+    # too far offshore to track the surf zones listed).
+    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box"},
+    {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box"},
+    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box"},
+    {"id": "44018", "zone": "Outer Cape + Islands — candidate, may be offline", "wfo": "box"},
 ]
 
 _REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
@@ -109,7 +117,7 @@ def evaluate(watch, up_set, fetch_obs, now=None):
         if up:
             current_hs, hs_range = _hs_stats(fetch_obs(bid) or [], now=now)
         ready = bool(up and hs_range is not None and hs_range >= READY_HS_RANGE_M)
-        results.append({"id": bid, "zone": b["zone"], "up": up,
+        results.append({"id": bid, "zone": b["zone"], "wfo": b.get("wfo"), "up": up,
                         "current_hs": current_hs, "hs_range_24h": hs_range, "ready": ready})
     return results
 
@@ -150,11 +158,11 @@ def _live_fetch_obs(buoy_id):
 # --------------------------------------------------------------------------- #
 def _print_summary(results):
     print(f"=== buoy-ready monitor — READY = UP and 24h Hs range >= {READY_HS_RANGE_M} m ===")
-    print(f"  {'buoy':7}{'zone':38}{'state':6}{'Hs(m)':>7}{'24h rng':>9}  ready")
+    print(f"  {'buoy':7}{'wfo':5}{'zone':38}{'state':6}{'Hs(m)':>7}{'24h rng':>9}  ready")
     for r in results:
         hs = f"{r['current_hs']:.2f}" if r["current_hs"] is not None else "—"
         rng = f"{r['hs_range_24h']:.2f}" if r["hs_range_24h"] is not None else "—"
-        print(f"  {r['id']:7}{r['zone']:38}{('UP' if r['up'] else 'DOWN'):6}"
+        print(f"  {r['id']:7}{(r.get('wfo') or '—'):5}{r['zone']:38}{('UP' if r['up'] else 'DOWN'):6}"
               f"{hs:>7}{rng:>9}  {'READY' if r['ready'] else '—'}")
     ready = [r for r in results if r["ready"]]
     if ready:
@@ -167,7 +175,7 @@ def _print_summary(results):
 def _emit_github_output(results):
     """Write any_ready / ready_json / ready_hs_range to $GITHUB_OUTPUT (single JSON
     line). Returns the ready list (also handy for tests)."""
-    ready = [{"id": r["id"], "zone": r["zone"],
+    ready = [{"id": r["id"], "zone": r["zone"], "wfo": r.get("wfo"),
               "hs": round(r["current_hs"], 2) if r["current_hs"] is not None else None}
              for r in results if r["ready"]]
     path = os.environ.get("GITHUB_OUTPUT")
@@ -203,13 +211,17 @@ def _selftest():
     now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)   # fixed 'now' for determinism
     rising = [round(0.2 + (0.9 - 0.2) * i / 23, 3) for i in range(24)]   # 0.2 -> 0.9 (range 0.7)
     flat = [round(0.3 + (0.4 - 0.3) * i / 23, 3) for i in range(24)]     # 0.3 -> 0.4 (range 0.1)
-    fixtures = {"44025": _mk_obs(rising, now), "44065": _mk_obs(flat, now)}   # 44091 absent -> DOWN
-    up_set = {"44025", "44065"}
-    watch = [{"id": "44025", "zone": "Monmouth"},
-             {"id": "44065", "zone": "Monmouth"},
-             {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)"}]
+    fixtures = {"44025": _mk_obs(rising, now),   # phi, UP, rising -> READY
+                "44065": _mk_obs(flat, now),     # phi, UP, flat   -> NOT ready
+                "44097": _mk_obs(rising, now)}   # box, UP, rising -> READY  (44091 absent -> DOWN)
+    up_set = {"44025", "44065", "44097"}
+    watch = [{"id": "44025", "zone": "Monmouth", "wfo": "phi"},
+             {"id": "44065", "zone": "Monmouth", "wfo": "phi"},
+             {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
+             {"id": "44097", "zone": "RI south coast", "wfo": "box"}]
     res = evaluate(watch, up_set, lambda bid: fixtures.get(bid, []), now=now)
     by = {r["id"]: r for r in res}
+    ready_by = {r["id"]: r for r in res if r["ready"]}   # exactly what ready_json is built from
 
     ok = True
 
@@ -225,6 +237,10 @@ def _selftest():
     check("down buoy reads NOT ready", by["44091"]["ready"] is False and by["44091"]["up"] is False)
     check("UP alone never triggers (flat buoy is UP but NOT ready)",
           by["44065"]["up"] is True and by["44065"]["ready"] is False)
+    check("ready box buoy carries wfo 'box' into the ready list",
+          "44097" in ready_by and ready_by["44097"]["wfo"] == "box")
+    check("ready phi buoy carries wfo 'phi' into the ready list",
+          "44025" in ready_by and ready_by["44025"]["wfo"] == "phi")
 
     print("\nself-test:",
           f"ALL PASS — ready = UP and 24h Hs range >= {READY_HS_RANGE_M} m; UP alone never triggers."
