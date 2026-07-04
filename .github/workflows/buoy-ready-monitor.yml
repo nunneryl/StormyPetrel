@@ -1,0 +1,160 @@
+name: buoy-ready-monitor
+
+# Scheduled, READ-ONLY monitor. Notifies (via a GitHub Issue -> email) when a phi
+# trust-check zone becomes actually testable: a watched NDBC buoy is UP *and* its
+# 24h Hs range >= 0.5 m (so the trust gate returns PASS/FAIL, not INCONCLUSIVE).
+# Guardrails: no Supabase, no prod, no NOMADS, no secrets beyond GITHUB_TOKEN.
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'   # every 3 hours
+  workflow_dispatch: {}       # manual run for testing
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: buoy-ready-monitor
+  cancel-in-progress: false
+
+jobs:
+  buoy-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install minimal deps (read-only NDBC fetch + parse)
+        run: python -m pip install --upgrade pip requests tenacity
+
+      - name: Download public NDBC station roster (read-only, no secrets)
+        run: |
+          python - <<'PY'
+          import urllib.request
+          from pipeline.config import NDBC_STATIONS_XML, NDBC_LATEST_OBS_TXT
+          NDBC_STATIONS_XML.parent.mkdir(parents=True, exist_ok=True)
+          targets = [
+              ("https://www.ndbc.noaa.gov/activestations.xml", NDBC_STATIONS_XML),
+              ("https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt", NDBC_LATEST_OBS_TXT),
+          ]
+          for url, dest in targets:
+              req = urllib.request.Request(
+                  url, headers={"User-Agent": "StormyPetrel-buoy-ready-monitor (+https://stormypetrel.surf)"})
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  body = r.read()
+              dest.write_bytes(body)
+              print(f"downloaded {url} -> {dest} ({len(body)} bytes)")
+          PY
+
+      - name: Run buoy-ready monitor
+        id: monitor
+        run: python3 scripts/buoy_ready_monitor.py
+
+      - name: Manage 'buoy-ready' issue
+        uses: actions/github-script@v7
+        env:
+          ANY_READY: ${{ steps.monitor.outputs.any_ready }}
+          READY_JSON: ${{ steps.monitor.outputs.ready_json }}
+          READY_HS_RANGE: ${{ steps.monitor.outputs.ready_hs_range }}
+        with:
+          script: |
+            const LABEL = 'buoy-ready';
+            const ASSIGNEE = 'nunneryl';
+            const { owner, repo } = context.repo;
+            const anyReady = process.env.ANY_READY === 'true';
+            const ready = JSON.parse(process.env.READY_JSON || '[]');
+            const thr = process.env.READY_HS_RANGE || '0.5';
+
+            // 1. Ensure the label exists (create on first run).
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: LABEL });
+            } catch (e) {
+              if (e.status === 404) {
+                await github.rest.issues.createLabel({
+                  owner, repo, name: LABEL, color: '1d76db',
+                  description: 'At least one phi trust-check zone is testable right now',
+                });
+                core.info(`created label '${LABEL}'`);
+              } else {
+                throw e;
+              }
+            }
+
+            // 2. Find an existing OPEN issue carrying the label.
+            const found = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: LABEL, per_page: 20 });
+            const existing = found.data.find(i => !i.pull_request);
+
+            // ready-set key, hidden marker, and body builder.
+            const setKey = ready.map(r => r.id).sort().join(',');
+            const marker = s => `<!-- buoy-ready-set:${s} -->`;
+            const buildBody = () => {
+              const items = ready.map(r =>
+                `- **${r.id}** — ${r.zone} — current Hs ${r.hs == null ? 'n/a' : r.hs + ' m'}`);
+              const cmds = ready.map(r =>
+                '```\n'
+                + `python3 -m pipeline.forecast.nwps_nearshore --trustcheck --wfo phi --buoy ${r.id}`
+                + '\n```');
+              return [
+                `These phi trust-check zone(s) are **testable right now** — buoy UP **and** 24h Hs `
+                  + `range ≥ ${thr} m, so the trust gate can return PASS/FAIL instead of INCONCLUSIVE:`,
+                '',
+                items.join('\n'),
+                '',
+                '### Trust-check commands',
+                cmds.join('\n'),
+                '',
+                'Read-only monitor; this issue auto-closes when every watched zone drops back below '
+                  + `${thr} m 24h Hs range.`,
+                '',
+                marker(setKey),
+              ].join('\n');
+            };
+
+            const prevMatch = existing && (existing.body || '').match(/<!-- buoy-ready-set:([^>]*) -->/);
+            const prevSet = prevMatch ? prevMatch[1].split(',').filter(Boolean) : [];
+
+            if (anyReady && !existing) {
+              // First ready zone(s): open ONE issue (don't wait for all zones).
+              const zones = [...new Set(ready.map(r => r.zone))].join(', ');
+              const issue = await github.rest.issues.create({
+                owner, repo,
+                title: `Buoy-ready: ${zones} testable now`,
+                body: buildBody(),
+                labels: [LABEL],
+                assignees: [ASSIGNEE],
+              });
+              core.info(`created buoy-ready issue #${issue.data.number} (set=${setKey})`);
+            } else if (anyReady && existing) {
+              // An issue is open. Re-notify ONLY if a NEW zone became ready.
+              const newly = ready.filter(r => !prevSet.includes(r.id));
+              if (newly.length > 0) {
+                await github.rest.issues.update({
+                  owner, repo, issue_number: existing.number, body: buildBody() });
+                const nz = [...new Set(newly.map(r => r.zone))].join(', ');
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: existing.number,
+                  body: `New zone(s) now testable: **${nz}** (${newly.map(r => r.id).join(', ')}). `
+                    + `Ready-set is now \`${setKey}\`.` });
+                core.info(`ready-set grew -> ${setKey}; re-notified`);
+              } else {
+                core.info(`ready-set unchanged (${setKey}); no duplicate notification`);
+              }
+            } else if (!anyReady && existing) {
+              // Nothing ready anymore: close so the next swell re-triggers a fresh email.
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: existing.number,
+                body: `All watched zones dropped below the readiness threshold (24h Hs range < ${thr} m). `
+                  + `Closing — the next swell will open a fresh alert.` });
+              await github.rest.issues.update({
+                owner, repo, issue_number: existing.number, state: 'closed' });
+              core.info('closed buoy-ready issue (no zones ready)');
+            } else {
+              core.info('no zones ready and no open issue; nothing to do');
+            }
