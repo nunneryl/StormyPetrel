@@ -91,8 +91,10 @@ jobs:
               owner, repo, state: 'open', labels: LABEL, per_page: 20 });
             const existing = found.data.find(i => !i.pull_request);
 
-            // ready-set key, hidden marker, and body builder.
-            const setKey = ready.map(r => r.id).sort().join(',');
+            // ready-set key, hidden marker, and body builder. Key on id:wfo (NOT id
+            // alone) so a buoy shared across regions — e.g. 44098 under both box and
+            // gyx — is two distinct members and can't collide or be dropped.
+            const setKey = ready.map(r => `${r.id}:${r.wfo}`).sort().join(',');
             const marker = s => `<!-- buoy-ready-set:${s} -->`;
             const buildBody = () => {
               const items = ready.map(r =>
@@ -133,7 +135,7 @@ jobs:
               core.info(`created buoy-ready issue #${issue.data.number} (set=${setKey})`);
             } else if (anyReady && existing) {
               // An issue is open. Re-notify ONLY if a NEW zone became ready.
-              const newly = ready.filter(r => !prevSet.includes(r.id));
+              const newly = ready.filter(r => !prevSet.includes(`${r.id}:${r.wfo}`));
               if (newly.length > 0) {
                 await github.rest.issues.update({
                   owner, repo, issue_number: existing.number, body: buildBody() });

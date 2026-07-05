@@ -62,13 +62,18 @@ WATCH = [
     {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
     {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi"},
     {"id": "44084", "zone": "Delaware", "wfo": "phi"},
-    # box — Southern New England. 44098 and 44018 are UNCONFIRMED candidates:
-    # validate them with the first box --trustcheck (they may be offline or sited
-    # too far offshore to track the surf zones listed).
+    # box — Southern New England. 44098 (North Shore) and 44008 (far offshore SE
+    # Nantucket) are the weakest-fit box entries — validate with the first box
+    # --trustcheck. (44018 retired: it read DOWN; 44008 is the open-ocean match.)
     {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box"},
     {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box"},
     {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box"},
-    {"id": "44018", "zone": "Outer Cape + Islands — candidate, may be offline", "wfo": "box"},
+    {"id": "44008", "zone": "Outer Cape + Islands (offshore SE Nantucket; far offshore, weakest-fit zone)", "wfo": "box"},
+    # gyx — Southern Maine / New Hampshire. 44098 intentionally appears again here:
+    # the same buoy serves box's North Shore end AND the NH / s-Maine coast, so it is
+    # listed under both wfo values and the monitor reports it for both regions.
+    {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx"},
+    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx"},
 ]
 
 _REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
@@ -213,15 +218,21 @@ def _selftest():
     flat = [round(0.3 + (0.4 - 0.3) * i / 23, 3) for i in range(24)]     # 0.3 -> 0.4 (range 0.1)
     fixtures = {"44025": _mk_obs(rising, now),   # phi, UP, rising -> READY
                 "44065": _mk_obs(flat, now),     # phi, UP, flat   -> NOT ready
-                "44097": _mk_obs(rising, now)}   # box, UP, rising -> READY  (44091 absent -> DOWN)
-    up_set = {"44025", "44065", "44097"}
+                "44097": _mk_obs(rising, now),   # box, UP, rising -> READY
+                "44007": _mk_obs(rising, now),   # gyx, UP, rising -> READY
+                "44098": _mk_obs(rising, now)}   # box+gyx repeated id, UP, rising -> READY  (44091 absent -> DOWN)
+    up_set = {"44025", "44065", "44097", "44007", "44098"}
     watch = [{"id": "44025", "zone": "Monmouth", "wfo": "phi"},
              {"id": "44065", "zone": "Monmouth", "wfo": "phi"},
              {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
-             {"id": "44097", "zone": "RI south coast", "wfo": "box"}]
+             {"id": "44097", "zone": "RI south coast", "wfo": "box"},
+             {"id": "44007", "zone": "Southern Maine", "wfo": "gyx"},
+             {"id": "44098", "zone": "North Shore (box)", "wfo": "box"},      # same id, two wfos:
+             {"id": "44098", "zone": "NH coast (gyx)", "wfo": "gyx"}]         # must reach ready_json twice
     res = evaluate(watch, up_set, lambda bid: fixtures.get(bid, []), now=now)
     by = {r["id"]: r for r in res}
-    ready_by = {r["id"]: r for r in res if r["ready"]}   # exactly what ready_json is built from
+    ready_list = [r for r in res if r["ready"]]           # exactly what ready_json is built from
+    ready_by = {r["id"]: r for r in ready_list}           # id-keyed convenience (collapses the repeated 44098)
 
     ok = True
 
@@ -241,6 +252,10 @@ def _selftest():
           "44097" in ready_by and ready_by["44097"]["wfo"] == "box")
     check("ready phi buoy carries wfo 'phi' into the ready list",
           "44025" in ready_by and ready_by["44025"]["wfo"] == "phi")
+    check("ready gyx buoy carries wfo 'gyx' into the ready list",
+          "44007" in ready_by and ready_by["44007"]["wfo"] == "gyx")
+    check("repeated id 44098 reaches the ready list for BOTH regions (neither dropped)",
+          sorted(r["wfo"] for r in ready_list if r["id"] == "44098") == ["box", "gyx"])
 
     print("\nself-test:",
           f"ALL PASS — ready = UP and 24h Hs range >= {READY_HS_RANGE_M} m; UP alone never triggers."
