@@ -132,8 +132,11 @@ def assign_wfo(state: str | None, lat: float, lng: float) -> str | None:
     if s in ("New York", "Connecticut"):
         return "okx"
 
-    if s in ("Rhode Island", "Massachusetts", "New Hampshire"):
+    if s in ("Rhode Island", "Massachusetts"):
         return "box"
+
+    if s == "New Hampshire":
+        return "gyx"   # Gray/Portland ME WFO covers the NH coast
 
     if s == "Maine":
         # GYX: southern Maine. CAR: Caribou / far northern Maine (rare for surf).
