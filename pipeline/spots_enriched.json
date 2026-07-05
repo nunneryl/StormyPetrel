@@ -15098,7 +15098,7 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hampton-Beach",
     "tide_preference": "mid",
     "tide_preference_confidence": 0.7,
-    "nwps_wfo": "box",
+    "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -15144,7 +15144,7 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Jenness-Beach",
     "tide_preference": "mid",
     "tide_preference_confidence": 0.7,
-    "nwps_wfo": "box",
+    "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position refinement from orientation_apply_manifest (2026-06-16).",
@@ -15191,7 +15191,7 @@
     },
     "tide_preference": "mid",
     "tide_preference_confidence": 0.7,
-    "nwps_wfo": "box",
+    "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -15241,7 +15241,7 @@
     "tide_preference": "mid",
     "tide_preference_confidence": 0.75,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hampton-Beach",
-    "nwps_wfo": "box",
+    "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position refinement from orientation_apply_manifest (2026-06-16).",
@@ -30275,7 +30275,7 @@
     "nearest_tide_station_dist_km": 3.5,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 52.32,
-    "nwps_wfo": "box"
+    "nwps_wfo": "gyx"
   },
   {
     "name": "Fox Hill",
@@ -30305,7 +30305,7 @@
     "nearest_tide_station_dist_km": 2.59,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 51.99,
-    "nwps_wfo": "box"
+    "nwps_wfo": "gyx"
   },
   {
     "name": "Straws Point",
@@ -30335,7 +30335,7 @@
     "nearest_tide_station_dist_km": 1.01,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 51.79,
-    "nwps_wfo": "box"
+    "nwps_wfo": "gyx"
   },
   {
     "name": "Pirates Cove",
@@ -30365,7 +30365,7 @@
     "nearest_tide_station_dist_km": 4.83,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 51.94,
-    "nwps_wfo": "box"
+    "nwps_wfo": "gyx"
   },
   {
     "name": "Harbor Beach",
