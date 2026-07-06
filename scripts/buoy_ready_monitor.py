@@ -74,6 +74,12 @@ WATCH = [
     # listed under both wfo values and the monitor reports it for both regions.
     {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx"},
     {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx"},
+    # akq — Wakefield VA (Delmarva / Virginia Beach). 44084 intentionally appears
+    # again here: it already serves phi's Delaware zone above, and now also anchors
+    # akq's Delmarva end — the same shared-buoy double-region pattern as 44098
+    # (box+gyx), so it is listed under both wfo values and reported for both regions.
+    {"id": "44099", "zone": "Virginia Beach (North End / Oceanfront / Sandbridge)", "wfo": "akq"},
+    {"id": "44084", "zone": "Delmarva / Ocean City MD + Assateague", "wfo": "akq"},
 ]
 
 _REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
@@ -220,19 +226,24 @@ def _selftest():
                 "44065": _mk_obs(flat, now),     # phi, UP, flat   -> NOT ready
                 "44097": _mk_obs(rising, now),   # box, UP, rising -> READY
                 "44007": _mk_obs(rising, now),   # gyx, UP, rising -> READY
-                "44098": _mk_obs(rising, now)}   # box+gyx repeated id, UP, rising -> READY  (44091 absent -> DOWN)
-    up_set = {"44025", "44065", "44097", "44007", "44098"}
+                "44098": _mk_obs(rising, now),   # box+gyx repeated id, UP, rising -> READY
+                "44099": _mk_obs(rising, now),   # akq, UP, rising -> READY
+                "44084": _mk_obs(rising, now)}   # phi+akq repeated id, UP, rising -> READY  (44091 absent -> DOWN)
+    up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084"}
     watch = [{"id": "44025", "zone": "Monmouth", "wfo": "phi"},
              {"id": "44065", "zone": "Monmouth", "wfo": "phi"},
              {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
              {"id": "44097", "zone": "RI south coast", "wfo": "box"},
              {"id": "44007", "zone": "Southern Maine", "wfo": "gyx"},
              {"id": "44098", "zone": "North Shore (box)", "wfo": "box"},      # same id, two wfos:
-             {"id": "44098", "zone": "NH coast (gyx)", "wfo": "gyx"}]         # must reach ready_json twice
+             {"id": "44098", "zone": "NH coast (gyx)", "wfo": "gyx"},         # must reach ready_json twice
+             {"id": "44099", "zone": "Virginia Beach", "wfo": "akq"},
+             {"id": "44084", "zone": "Delaware (phi)", "wfo": "phi"},         # same id, two wfos:
+             {"id": "44084", "zone": "Delmarva (akq)", "wfo": "akq"}]         # must reach ready_json twice
     res = evaluate(watch, up_set, lambda bid: fixtures.get(bid, []), now=now)
     by = {r["id"]: r for r in res}
     ready_list = [r for r in res if r["ready"]]           # exactly what ready_json is built from
-    ready_by = {r["id"]: r for r in ready_list}           # id-keyed convenience (collapses the repeated 44098)
+    ready_by = {r["id"]: r for r in ready_list}           # id-keyed convenience (collapses repeated ids 44098, 44084)
 
     ok = True
 
@@ -256,6 +267,10 @@ def _selftest():
           "44007" in ready_by and ready_by["44007"]["wfo"] == "gyx")
     check("repeated id 44098 reaches the ready list for BOTH regions (neither dropped)",
           sorted(r["wfo"] for r in ready_list if r["id"] == "44098") == ["box", "gyx"])
+    check("ready akq buoy carries wfo 'akq' into the ready list",
+          "44099" in ready_by and ready_by["44099"]["wfo"] == "akq")
+    check("repeated id 44084 reaches the ready list for BOTH regions (neither dropped)",
+          sorted(r["wfo"] for r in ready_list if r["id"] == "44084") == ["akq", "phi"])
 
     print("\nself-test:",
           f"ALL PASS — ready = UP and 24h Hs range >= {READY_HS_RANGE_M} m; UP alone never triggers."
