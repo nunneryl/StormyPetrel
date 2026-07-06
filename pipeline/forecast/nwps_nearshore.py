@@ -613,17 +613,49 @@ def _load_roster_spots(slugs):
     return out
 
 
-def _buoy_latlng(buoy_id):
-    """(lat, lng) for an NDBC buoy id from the pipeline's wave-station roster
-    (enrichment.geodata.load_ndbc_wave_stations — the same loader the buoy/MOP
-    rollout uses; it returns {'id','lat','lng','name'} dicts with id lowercased).
-    Raises if the id isn't in the roster — no fallback to typed coordinates."""
-    from ..enrichment.geodata import load_ndbc_wave_stations
-    roster = {st["id"]: st for st in load_ndbc_wave_stations()}
-    st = roster.get(str(buoy_id).lower())
+def _warn_if_roster_stale(max_age_days=2):
+    """Non-blocking: warn once if the local NDBC roster files are older than
+    *max_age_days*. Never fails — a missing / unstat-able file is just skipped."""
+    import time
+    from ..config import NDBC_STATIONS_XML, NDBC_LATEST_OBS_TXT
+    now = time.time()
+    stale = []
+    for p in (NDBC_STATIONS_XML, NDBC_LATEST_OBS_TXT):
+        try:
+            age = (now - p.stat().st_mtime) / 86400.0
+        except OSError:
+            continue
+        if age > max_age_days:
+            stale.append((p.name, age))
+    if stale:
+        name, age = max(stale, key=lambda x: x[1])
+        print(f"warning: NDBC roster is stale — {name} is {age:.1f} days old; refresh "
+              "activestations.xml / latest_obs.txt for current station metadata.")
+
+
+def _buoy_latlng(buoy_id, *, _active=None, _reporting=None):
+    """(lat, lng) for an NDBC buoy id, resolved from the FULL active-station metadata
+    (enrichment.geodata.load_ndbc_active_stations — every active station with
+    coordinates), NOT the wave-reporting-only subset. Coordinates are static metadata
+    and must not depend on a momentary WVHT reading, so a real buoy that isn't
+    transmitting a wave height right now still resolves and the trust check can
+    proceed. Raises KeyError only if the id is absent from the full active list
+    (genuinely unknown) — never falls back to typed coordinates. Prints a
+    non-blocking note if the buoy resolves but isn't in the wave-reporting subset.
+    *_active* / *_reporting* are injectable station lists for offline tests."""
+    from ..enrichment.geodata import load_ndbc_active_stations, load_ndbc_wave_stations
+    if _active is None:
+        _warn_if_roster_stale()
+    bid = str(buoy_id).lower()
+    active = {s["id"]: s for s in (_active if _active is not None else load_ndbc_active_stations())}
+    st = active.get(bid)
     if st is None:
-        raise KeyError(f"buoy {buoy_id!r} not in the NDBC wave-station roster "
-                       "(load_ndbc_wave_stations) — cannot resolve its lat/lng")
+        raise KeyError(f"buoy {buoy_id!r} not in the NDBC active-station list "
+                       "(activestations.xml) — genuinely unknown; cannot resolve its lat/lng")
+    reporting = {s["id"] for s in (_reporting if _reporting is not None else load_ndbc_wave_stations())}
+    if reporting and bid not in reporting:
+        print(f"note: {buoy_id} resolved from station metadata but isn't currently reporting "
+              "waves; trust check may return INCONCLUSIVE.")
     return st["lat"], st["lng"]
 
 
@@ -819,6 +851,21 @@ def _selftest():
                [(0.8, 2.2, 10), (1.4, 0.6, 200), (2.1, 1.5, 95), (1.7, 2.4, 300), (1.0, 0.7, 20), (2.4, 1.1, 170)]]
     check("trust FAIL on scatter", trust_verdict(scatter)[0] == "FAIL")
 
+    # _buoy_latlng: coordinates resolve from the FULL active-station metadata, not the
+    # wave-reporting subset; an unknown id raises; there is never a hardcoded fallback.
+    active_fx = [{"id": "44065", "lat": 40.369, "lng": -73.703, "name": "Long Island Sound"}]
+    reporting_fx = [{"id": "44025", "lat": 0.0, "lng": 0.0, "name": ""}]   # 44065 present but NOT reporting waves
+    check("buoy resolves from metadata even when NOT wave-reporting",
+          _buoy_latlng("44065", _active=active_fx, _reporting=reporting_fx) == (40.369, -73.703))
+
+    def _raises(bid, act):
+        try:
+            _buoy_latlng(bid, _active=act, _reporting=[]); return False
+        except KeyError:
+            return True
+    check("unknown buoy (absent from metadata) raises", _raises("99999", active_fx))
+    check("empty metadata raises — never returns typed/hardcoded coords", _raises("44065", []))
+
     print("\nself-test:", "ALL PASS — NWPS placement, rating, override (full horizon), trust gate sound."
           if ok else "FAILURES")
     return 0 if ok else 1
@@ -840,7 +887,7 @@ def main(argv=None):
     if a.validate:
         return validate_batch(a.batch, a.wfo)
     if a.trustcheck:
-        blat, blng = _buoy_latlng(a.buoy)   # real coords from the NDBC roster; raises if unknown (no fallback)
+        blat, blng = _buoy_latlng(a.buoy)   # coords from NDBC active-station metadata; raises if unknown (no fallback)
         print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Mac; needs NOMADS+NDBC) ===")
         try:
             v, r, cs, n = trust_check(a.wfo, a.buoy, blat, blng)
