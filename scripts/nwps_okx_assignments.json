@@ -380,12 +380,63 @@
       "nwps_node_lng": -73.96429,
       "nwps_node_distance_m": 1584,
       "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "north-end-virginia-beach",
+      "name": "North End Virginia Beach",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.9035,
+      "nwps_node_lng": -75.97566,
+      "nwps_node_distance_m": 1122,
+      "nwps_buoy_id": "44099"
+    },
+    {
+      "slug": "virginia-beach-oceanfront",
+      "name": "Virginia Beach Oceanfront",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.83859,
+      "nwps_node_lng": -75.95559,
+      "nwps_node_distance_m": 1439,
+      "nwps_buoy_id": "44099"
+    },
+    {
+      "slug": "first-street-jetty-vb",
+      "name": "First Street Jetty VB",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.83859,
+      "nwps_node_lng": -75.95559,
+      "nwps_node_distance_m": 1376,
+      "nwps_buoy_id": "44099"
+    },
+    {
+      "slug": "croatan-beach",
+      "name": "Croatan Beach",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.82236,
+      "nwps_node_lng": -75.95559,
+      "nwps_node_distance_m": 1040,
+      "nwps_buoy_id": "44099"
+    },
+    {
+      "slug": "sandbridge-beach",
+      "name": "Sandbridge Beach",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.74122,
+      "nwps_node_lng": -75.93553,
+      "nwps_node_distance_m": 866,
+      "nwps_buoy_id": "44099"
     }
   ],
   "held": [],
   "trust_by_buoy": {
     "44025": "PASS",
-    "44065": "PASS"
+    "44065": "PASS",
+    "44099": "PASS"
   },
   "trust_buoy": "44025+44065",
   "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43."
