@@ -56,30 +56,34 @@ WINDOW_H = 24            # look back ~24h for the Hs range
 # Watch list — add buoys / a future box region by editing this ONE list.      #
 # --------------------------------------------------------------------------- #
 WATCH = [
-    # phi — Mid-Atlantic / NJ
-    {"id": "44025", "zone": "Monmouth", "wfo": "phi"},
-    {"id": "44065", "zone": "Monmouth", "wfo": "phi"},
-    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
-    {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi"},
-    {"id": "44084", "zone": "Delaware", "wfo": "phi"},
+    # Each entry carries "status": "pending" (still needs action -> alerts fire) or
+    # "tagged" (already live on the site -> evaluated for the log, but NEVER alerts).
+    # Only (44025,phi), (44065,phi), (44099,akq) are tagged today; everything else
+    # is pending.
+    # phi — Mid-Atlantic / NJ. 44025 & 44065 (Monmouth) are live -> tagged.
+    {"id": "44025", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
+    {"id": "44065", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
+    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi", "status": "pending"},
+    {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi", "status": "pending"},
+    {"id": "44084", "zone": "Delaware", "wfo": "phi", "status": "pending"},
     # box — Southern New England. 44098 (North Shore) and 44008 (far offshore SE
     # Nantucket) are the weakest-fit box entries — validate with the first box
     # --trustcheck. (44018 retired: it read DOWN; 44008 is the open-ocean match.)
-    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box"},
-    {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box"},
-    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box"},
-    {"id": "44008", "zone": "Outer Cape + Islands (offshore SE Nantucket; far offshore, weakest-fit zone)", "wfo": "box"},
+    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box", "status": "pending"},
+    {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box", "status": "pending"},
+    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box", "status": "pending"},
+    {"id": "44008", "zone": "Outer Cape + Islands (offshore SE Nantucket; far offshore, weakest-fit zone)", "wfo": "box", "status": "pending"},
     # gyx — Southern Maine / New Hampshire. 44098 intentionally appears again here:
     # the same buoy serves box's North Shore end AND the NH / s-Maine coast, so it is
     # listed under both wfo values and the monitor reports it for both regions.
-    {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx"},
-    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx"},
-    # akq — Wakefield VA (Delmarva / Virginia Beach). 44084 intentionally appears
-    # again here: it already serves phi's Delaware zone above, and now also anchors
-    # akq's Delmarva end — the same shared-buoy double-region pattern as 44098
-    # (box+gyx), so it is listed under both wfo values and reported for both regions.
-    {"id": "44099", "zone": "Virginia Beach (North End / Oceanfront / Sandbridge)", "wfo": "akq"},
-    {"id": "44084", "zone": "Delmarva / Ocean City MD + Assateague", "wfo": "akq"},
+    {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx", "status": "pending"},
+    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx", "status": "pending"},
+    # akq — Wakefield VA (Delmarva / Virginia Beach). 44099 (Virginia Beach) is live
+    # -> tagged. 44084 intentionally appears again here: it already serves phi's
+    # Delaware zone above, and now also anchors akq's Delmarva end — the same
+    # shared-buoy double-region pattern as 44098 (box+gyx).
+    {"id": "44099", "zone": "Virginia Beach (North End / Oceanfront / Sandbridge)", "wfo": "akq", "status": "tagged"},
+    {"id": "44084", "zone": "Delmarva / Ocean City MD + Assateague", "wfo": "akq", "status": "pending"},
 ]
 
 _REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
@@ -128,7 +132,8 @@ def evaluate(watch, up_set, fetch_obs, now=None):
         if up:
             current_hs, hs_range = _hs_stats(fetch_obs(bid) or [], now=now)
         ready = bool(up and hs_range is not None and hs_range >= READY_HS_RANGE_M)
-        results.append({"id": bid, "zone": b["zone"], "wfo": b.get("wfo"), "up": up,
+        results.append({"id": bid, "zone": b["zone"], "wfo": b.get("wfo"),
+                        "status": b.get("status", "pending"), "up": up,
                         "current_hs": current_hs, "hs_range_24h": hs_range, "ready": ready})
     return results
 
@@ -167,35 +172,55 @@ def _live_fetch_obs(buoy_id):
 # --------------------------------------------------------------------------- #
 # Output                                                                      #
 # --------------------------------------------------------------------------- #
+def _ready_entry(r):
+    """Compact {id, zone, wfo, hs} shape used in ready_json + the issue body."""
+    return {"id": r["id"], "zone": r["zone"], "wfo": r.get("wfo"),
+            "hs": round(r["current_hs"], 2) if r["current_hs"] is not None else None}
+
+
+def _split_ready(results):
+    """Split the ready buoys into (ready_pending, ready_tagged), each a list of
+    _ready_entry dicts. ONLY ready_pending drives alerts (issue / email / dedup
+    set-key); ready_tagged is re-verification-only — shown in the log, never alerts."""
+    ready = [r for r in results if r["ready"]]
+    pending = [_ready_entry(r) for r in ready if r.get("status", "pending") != "tagged"]
+    tagged = [_ready_entry(r) for r in ready if r.get("status", "pending") == "tagged"]
+    return pending, tagged
+
+
 def _print_summary(results):
     print(f"=== buoy-ready monitor — READY = UP and 24h Hs range >= {READY_HS_RANGE_M} m ===")
-    print(f"  {'buoy':7}{'wfo':5}{'zone':38}{'state':6}{'Hs(m)':>7}{'24h rng':>9}  ready")
+    print(f"  {'buoy':7}{'wfo':5}{'status':8}{'zone':38}{'state':6}{'Hs(m)':>7}{'24h rng':>9}  ready")
     for r in results:
         hs = f"{r['current_hs']:.2f}" if r["current_hs"] is not None else "—"
         rng = f"{r['hs_range_24h']:.2f}" if r["hs_range_24h"] is not None else "—"
-        print(f"  {r['id']:7}{(r.get('wfo') or '—'):5}{r['zone']:38}{('UP' if r['up'] else 'DOWN'):6}"
-              f"{hs:>7}{rng:>9}  {'READY' if r['ready'] else '—'}")
-    ready = [r for r in results if r["ready"]]
-    if ready:
-        zones = ", ".join(sorted({r["zone"] for r in ready}))
-        print(f"\n{len(ready)} buoy(s) READY across zone(s): {zones}")
+        print(f"  {r['id']:7}{(r.get('wfo') or '—'):5}{r.get('status', 'pending'):8}{r['zone']:38}"
+              f"{('UP' if r['up'] else 'DOWN'):6}{hs:>7}{rng:>9}  {'READY' if r['ready'] else '—'}")
+    ready_pending, ready_tagged = _split_ready(results)
+    if ready_pending:
+        zones = ", ".join(sorted({r["zone"] for r in ready_pending}))
+        print(f"\n{len(ready_pending)} PENDING zone(s) READY → alert: {zones}")
     else:
-        print("\nno zones ready")
+        print("\nno pending zones ready → no alert")
+    if ready_tagged:
+        zones = ", ".join(sorted({r["zone"] for r in ready_tagged}))
+        print(f"tagged (re-verify only, no alert): {len(ready_tagged)} ready → {zones}")
 
 
 def _emit_github_output(results):
-    """Write any_ready / ready_json / ready_hs_range to $GITHUB_OUTPUT (single JSON
-    line). Returns the ready list (also handy for tests)."""
-    ready = [{"id": r["id"], "zone": r["zone"], "wfo": r.get("wfo"),
-              "hs": round(r["current_hs"], 2) if r["current_hs"] is not None else None}
-             for r in results if r["ready"]]
+    """Write any_ready / ready_json / ready_hs_range to $GITHUB_OUTPUT. The issue /
+    email logic is driven by PENDING-and-ready zones ONLY — tagged zones are
+    re-verification-only and must never (re)trigger an alert — so any_ready and
+    ready_json carry ready_pending only. (The workflow builds its dedup set-key from
+    ready_json, so that too becomes pending-only automatically.) Returns ready_pending."""
+    ready_pending, _ = _split_ready(results)
     path = os.environ.get("GITHUB_OUTPUT")
     if path:
         with open(path, "a", encoding="utf-8") as f:
-            f.write(f"any_ready={'true' if ready else 'false'}\n")
-            f.write("ready_json=" + json.dumps(ready, separators=(",", ":"), ensure_ascii=False) + "\n")
+            f.write(f"any_ready={'true' if ready_pending else 'false'}\n")
+            f.write("ready_json=" + json.dumps(ready_pending, separators=(",", ":"), ensure_ascii=False) + "\n")
             f.write(f"ready_hs_range={READY_HS_RANGE_M}\n")
-    return ready
+    return ready_pending
 
 
 def run():
@@ -222,16 +247,19 @@ def _selftest():
     now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)   # fixed 'now' for determinism
     rising = [round(0.2 + (0.9 - 0.2) * i / 23, 3) for i in range(24)]   # 0.2 -> 0.9 (range 0.7)
     flat = [round(0.3 + (0.4 - 0.3) * i / 23, 3) for i in range(24)]     # 0.3 -> 0.4 (range 0.1)
-    fixtures = {"44025": _mk_obs(rising, now),   # phi, UP, rising -> READY
-                "44065": _mk_obs(flat, now),     # phi, UP, flat   -> NOT ready
+    fixtures = {"44025": _mk_obs(rising, now),   # phi, UP, rising -> READY but TAGGED (re-verify only)
+                "44065": _mk_obs(flat, now),     # phi, UP, flat   -> NOT ready (also tagged)
                 "44097": _mk_obs(rising, now),   # box, UP, rising -> READY
                 "44007": _mk_obs(rising, now),   # gyx, UP, rising -> READY
                 "44098": _mk_obs(rising, now),   # box+gyx repeated id, UP, rising -> READY
                 "44099": _mk_obs(rising, now),   # akq, UP, rising -> READY
                 "44084": _mk_obs(rising, now)}   # phi+akq repeated id, UP, rising -> READY  (44091 absent -> DOWN)
     up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084"}
-    watch = [{"id": "44025", "zone": "Monmouth", "wfo": "phi"},
-             {"id": "44065", "zone": "Monmouth", "wfo": "phi"},
+    # Monmouth (44025/44065) is TAGGED — already live, re-verify only, must NOT alert.
+    # Every other entry omits "status" -> defaults to "pending" (so we also prove the
+    # default is alert-eligible). 44025 is the tagged-UP+rising case (b); 44097 the pending one (a).
+    watch = [{"id": "44025", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
+             {"id": "44065", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
              {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
              {"id": "44097", "zone": "RI south coast", "wfo": "box"},
              {"id": "44007", "zone": "Southern Maine", "wfo": "gyx"},
@@ -271,6 +299,18 @@ def _selftest():
           "44099" in ready_by and ready_by["44099"]["wfo"] == "akq")
     check("repeated id 44084 reaches the ready list for BOTH regions (neither dropped)",
           sorted(r["wfo"] for r in ready_list if r["id"] == "44084") == ["akq", "phi"])
+
+    # status split: PENDING-and-ready drives alerts; TAGGED-and-ready is re-verify-only
+    # and must be EXCLUDED from ready_pending / ready_json / the dedup set-key.
+    pend, tag = _split_ready(res)
+    pend_keys = {f'{r["id"]}:{r["wfo"]}' for r in pend}   # exactly the workflow's set-key members
+    tag_keys = {f'{r["id"]}:{r["wfo"]}' for r in tag}
+    check("pending buoy (44097 box) UP+rising appears in ready_pending (would alert)",
+          "44097:box" in pend_keys)
+    check("tagged buoy (44025 phi) UP+rising appears in ready_tagged (re-verify only)",
+          "44025:phi" in tag_keys)
+    check("tagged buoy (44025 phi) EXCLUDED from ready_pending / ready_json / set-key",
+          "44025:phi" not in pend_keys)
 
     print("\nself-test:",
           f"ALL PASS — ready = UP and 24h Hs range >= {READY_HS_RANGE_M} m; UP alone never triggers."
