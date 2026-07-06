@@ -430,6 +430,66 @@
       "nwps_node_lng": -75.93553,
       "nwps_node_distance_m": 866,
       "nwps_buoy_id": "44099"
+    },
+    {
+      "slug": "bradley-beach",
+      "name": "Bradley Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.19457,
+      "nwps_node_lng": -73.99138,
+      "nwps_node_distance_m": 1301,
+      "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "avon-by-the-sea",
+      "name": "Avon-by-the-Sea",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.19457,
+      "nwps_node_lng": -73.99138,
+      "nwps_node_distance_m": 1457,
+      "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "belmar",
+      "name": "Belmar",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.17835,
+      "nwps_node_lng": -73.99138,
+      "nwps_node_distance_m": 1552,
+      "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "spring-lake",
+      "name": "Spring Lake",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.14592,
+      "nwps_node_lng": -74.01207,
+      "nwps_node_distance_m": 816,
+      "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "sea-girt",
+      "name": "Sea Girt",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.1297,
+      "nwps_node_lng": -74.01207,
+      "nwps_node_distance_m": 1247,
+      "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "manasquan-inlet",
+      "name": "Manasquan Inlet",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.11349,
+      "nwps_node_lng": -74.03276,
+      "nwps_node_distance_m": 1213,
+      "nwps_buoy_id": "44065"
     }
   ],
   "held": [],
