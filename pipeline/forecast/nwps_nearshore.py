@@ -73,7 +73,8 @@ _HERE = Path(__file__).resolve()
 _ROOT = _HERE.parents[2]
 SCRIPTS_DIR = _ROOT / "scripts"
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
-VALIDATE_OUT = SCRIPTS_DIR / "nwps_okx_validate_out.json"   # --validate diagnostic dump (NOT the apply input)
+# --validate writes a per-region diagnostic dump, scripts/nwps_{wfo}_validate_out.json
+# (computed per run in validate_batch) — NOT the apply input.
 
 
 def _slug(name):
@@ -632,7 +633,7 @@ def validate_batch(batch=None, wfo="okx"):
     orientation fallback★, plus a forced-empty test. Spots come from --batch (loaded
     from spots_enriched.json by slug, keeping each spot's real nwps_wfo tag) or, with
     no batch, the okx_pilot.json pilot set. Writes the placement results to
-    scripts/nwps_okx_validate_out.json — a DIAGNOSTIC dump only (records every spot's
+    scripts/nwps_{wfo}_validate_out.json — a DIAGNOSTIC dump only (records every spot's
     outcome: OK / FAR / DEAD / OFFWIN / NO_WET_CELL); it does NOT touch the curated
     apply input scripts/nwps_okx_assignments.json (promote by hand after review).
     Mac-only (NOMADS); degrades to a clear message offline."""
@@ -724,13 +725,14 @@ def validate_batch(batch=None, wfo="okx"):
         print(f"\nforced-empty test: fed={st['fed']} fell_back={st['fell_back']} errored={st['errored']}; "
               f"base preserved: {'YES' if test[tname][0]['stars'] == 2.5 else 'NO'}")
     if outcomes:
-        VALIDATE_OUT.write_text(json.dumps(
+        validate_out = SCRIPTS_DIR / f"nwps_{wfo}_validate_out.json"   # per-region; no cross-region clobber
+        validate_out.write_text(json.dumps(
             {"_comment": f"{wfo} --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every "
              "spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input — review, then "
              "promote OK spots into scripts/nwps_okx_assignments.json by hand.",
              "grid_wfo": wfo, "spots": placed, "outcomes": outcomes}, indent=2))
         n_ok = len(placed); n_other = len(outcomes) - n_ok
-        print(f"\nwrote {VALIDATE_OUT} ({n_ok} placed-OK, {n_other} other outcomes on the {wfo} grid) — "
+        print(f"\nwrote {validate_out} ({n_ok} placed-OK, {n_other} other outcomes on the {wfo} grid) — "
               "diagnostic only. The apply input scripts/nwps_okx_assignments.json is left untouched; review + "
               "promote OK spots into it, then --trustcheck and apply_nwps_assignments --apply once the gate PASSES.")
     print("\nfb★ = the orientation-path baseline (interpret.compute_ratings via the existing NWPS "
