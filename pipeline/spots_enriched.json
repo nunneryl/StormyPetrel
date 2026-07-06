@@ -23283,11 +23283,16 @@
       }
     ],
     "optimal_swell_dir": 80,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639214",
     "nearest_tide_station_dist_km": 0.52,
     "nearest_buoy_id": "44099",
-    "nearest_buoy_dist_km": 24.25
+    "nearest_buoy_dist_km": 24.25,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 36.82236,
+    "nwps_node_lng": -75.95559,
+    "nwps_node_distance_m": 1040,
+    "nwps_buoy_id": "44099"
   },
   {
     "name": "First Street Jetty VB",
@@ -23331,11 +23336,16 @@
       }
     ],
     "optimal_swell_dir": 81,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639168",
     "nearest_tide_station_dist_km": 0.81,
     "nearest_buoy_id": "44099",
-    "nearest_buoy_dist_km": 23.54
+    "nearest_buoy_dist_km": 23.54,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 36.83859,
+    "nwps_node_lng": -75.95559,
+    "nwps_node_distance_m": 1376,
+    "nwps_buoy_id": "44099"
   },
   {
     "name": "Sandbridge Beach",
@@ -23383,11 +23393,16 @@
       }
     ],
     "optimal_swell_dir": 77,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639428",
     "nearest_tide_station_dist_km": 6.41,
     "nearest_buoy_id": "44099",
-    "nearest_buoy_dist_km": 27.2
+    "nearest_buoy_dist_km": 27.2,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 36.74122,
+    "nwps_node_lng": -75.93553,
+    "nwps_node_distance_m": 866,
+    "nwps_buoy_id": "44099"
   },
   {
     "name": "Virginia Beach Oceanfront",
@@ -23436,11 +23451,16 @@
       }
     ],
     "optimal_swell_dir": 75,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639168",
     "nearest_tide_station_dist_km": 0.23,
     "nearest_buoy_id": "44099",
-    "nearest_buoy_dist_km": 23.65
+    "nearest_buoy_dist_km": 23.65,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 36.83859,
+    "nwps_node_lng": -75.95559,
+    "nwps_node_distance_m": 1439,
+    "nwps_buoy_id": "44099"
   },
   {
     "name": "Cape Disappointment",
@@ -28235,12 +28255,17 @@
       }
     ],
     "optimal_swell_dir": 74,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639168",
     "nearest_tide_station_dist_km": 7.22,
     "nearest_buoy_id": "44099",
     "nearest_buoy_dist_km": 23.36,
-    "nwps_wfo": "akq"
+    "nwps_wfo": "akq",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 36.9035,
+    "nwps_node_lng": -75.97566,
+    "nwps_node_distance_m": 1122,
+    "nwps_buoy_id": "44099"
   },
   {
     "name": "Fenwick Island",
