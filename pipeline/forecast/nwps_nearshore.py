@@ -529,15 +529,67 @@ def _buoy_hourly(buoy_id):
     return out or None
 
 
+def _node_diag(cyc, blat, blng, i, j, dist_km, radius_km=5.0):
+    """DIAGNOSTIC ONLY — surface WHERE trust_check sampled; does NOT change what it
+    samples, the correlated variables, or any verdict math. Given the plain-nearest
+    wet cell (i, j) trust_check picked and its distance from the buoy, report that
+    node's lat/lng and compare it to a SEAWARD-aware pick from the SAME wet-node set.
+    'Seaward' is inferred from the grid mask alone (no coastline needed): the shoreward
+    bearing points at the nearest LAND (masked) cell, so the seaward half-plane is the
+    opposite ±90° — reusing select_node's half-plane idea against the buoy point. Also
+    counts wet cells within *radius_km* of the buoy (a cluttered / landmask-adjacent
+    indicator). Pure and read-only; returns a plain dict for the CLI to print."""
+    lats, lons, mask = cyc["lats"], cyc["lons"], cyc["mask"]
+    node_lat, node_lng = float(lats[i, j]), float(lons[i, j])
+    wet = _wet_nodes(lats, lons, mask)
+
+    def _d(lat, lng):
+        return _haversine_km(blat, blng, lat, lng)
+
+    diag = {"lat": node_lat, "lng": node_lng, "dist_km": dist_km, "radius_km": radius_km,
+            "n_within_radius": sum(1 for w in wet if _d(w[0], w[1]) <= radius_km),
+            "sampled_is_seaward": None, "seaward_differs": None,
+            "seaward_nearest_lat": None, "seaward_nearest_lng": None,
+            "seaward_nearest_dist_km": None, "shore_bearing": None,
+            "seaward_bearing": None, "land_dist_km": None, "reason": None}
+    land = [(float(lats[a, b]), float(lons[a, b]))
+            for a in range(lats.shape[0]) for b in range(lats.shape[1]) if mask[a, b]]
+    if not land:
+        diag["reason"] = "no land/masked cells in grid — seaward direction undefined"
+        return diag
+    lnd = min(land, key=lambda p: _d(p[0], p[1]))
+    shore_brg = _bearing(blat, blng, lnd[0], lnd[1])
+    sea_brg = (shore_brg + 180.0) % 360.0
+    sea = [w for w in wet if _ang_within(_bearing(blat, blng, w[0], w[1]), sea_brg, 90)]
+    sea_nearest = min(sea, key=lambda w: _d(w[0], w[1])) if sea else None
+    diag.update({
+        "shore_bearing": shore_brg, "seaward_bearing": sea_brg, "land_dist_km": _d(lnd[0], lnd[1]),
+        "sampled_is_seaward": _ang_within(_bearing(blat, blng, node_lat, node_lng), sea_brg, 90),
+        "seaward_nearest_lat": (sea_nearest[0] if sea_nearest else None),
+        "seaward_nearest_lng": (sea_nearest[1] if sea_nearest else None),
+        "seaward_nearest_dist_km": (_d(sea_nearest[0], sea_nearest[1]) if sea_nearest else None),
+        "seaward_differs": (bool(sea_nearest) and (sea_nearest[2], sea_nearest[3]) != (i, j)),
+    })
+    return diag
+
+
 def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
     """Live NWPS-vs-buoy trust gate (Mac). Assembles NWPS Hs/dir at the buoy's node
-    from recent cycles' elapsed forecast hours (shortest lead per valid hour),
-    joins to the buoy's hourly obs, returns trust_verdict(...). Needs NOMADS+NDBC."""
+    from recent cycles' elapsed forecast hours (shortest lead per valid hour), joins to
+    the buoy's hourly obs, and returns trust_verdict(...) plus read-only DIAGNOSTICS so
+    a bad/shadowed node is visible on the Mac. The diagnostics never affect the sampled
+    node, the correlated variables (swh/dirpw vs WVHT/MWD), the thresholds, or the
+    verdict math. Needs NOMADS+NDBC. Returns a dict:
+        {"verdict", "r", "circ_std", "n",            # exactly the old 4-tuple's contents
+         "node":    _node_diag(...) or None,          # sampled node lat/lng + dist + seaward cmp
+         "samples": [(valid_hour, nwps_swh, buoy_wvht, nwps_dirpw, buoy_mwd), ...]}"""
     buoy = _buoy_hourly(buoy_id)
     if not buoy:
-        return "INCONCLUSIVE", float("nan"), float("nan"), 0
+        return {"verdict": "INCONCLUSIVE", "r": float("nan"), "circ_std": float("nan"),
+                "n": 0, "node": None, "samples": []}
     now = datetime.datetime.now(datetime.timezone.utc)
     series = {}   # valid_hour -> (nwps_hs, nwps_dir, lead)
+    node = None   # DIAGNOSTIC: captured once — static grid/mask → same node every cycle
     for date, cc, url in recent_cycles(wfo, n_cycles):
         cyc = load_cycle(wfo, (date, cc, url))
         elapsed = int((now - cyc["cycle_dt"]).total_seconds() // 3600)
@@ -547,6 +599,8 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
         if cell is None:
             continue
         i, j = cell[0], cell[1]
+        if node is None:
+            node = _node_diag(cyc, blat, blng, i, j, cell[2])   # read-only; sampling unchanged
         for fh in cyc["steps"]:
             if fh > elapsed:
                 continue
@@ -557,9 +611,11 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
             if valid in series and series[valid][2] <= fh:
                 continue
             series[valid] = (hs, _node_value(cyc, "dirpw", fh, i, j), fh)
-    pairs = [(series[t][0], buoy[t][0], series[t][1], buoy[t][1])
-             for t in sorted(series) if t in buoy]
-    return trust_verdict(pairs)
+    samples = [(t, series[t][0], buoy[t][0], series[t][1], buoy[t][1])
+               for t in sorted(series) if t in buoy]
+    pairs = [(s[1], s[2], s[3], s[4]) for s in samples]   # identical to the old pairs → verdict unchanged
+    v, r, cs, n = trust_verdict(pairs)
+    return {"verdict": v, "r": r, "circ_std": cs, "n": n, "node": node, "samples": samples}
 
 
 # --------------------------------------------------------------------------- #
@@ -851,6 +907,30 @@ def _selftest():
                [(0.8, 2.2, 10), (1.4, 0.6, 200), (2.1, 1.5, 95), (1.7, 2.4, 300), (1.0, 0.7, 20), (2.4, 1.1, 170)]]
     check("trust FAIL on scatter", trust_verdict(scatter)[0] == "FAIL")
 
+    # DIAGNOSTIC visibility (added; does NOT touch trust math): _node_diag surfaces
+    # WHERE trust_check sampled. Synthetic grid — land to the NORTH, a shadowed wet
+    # cell just north of the buoy (the plain-nearest → exactly what trust_check
+    # samples), seaward wet cells to the south. Proves the new fields populate and that
+    # a shoreward / landmask-shadowed sample is flagged with a differing seaward pick.
+    dlat = np.array([[40.030], [40.008], [39.980], [39.960]])
+    dlng = np.array([[-73.000], [-73.000], [-73.000], [-73.000]])
+    dmask = np.array([[True], [False], [False], [False]])       # north row is land
+    dcyc = {"lats": dlat, "lons": dlng, "mask": dmask}
+    dblat, dblng = 40.000, -73.000
+    dcell = _nearest_cell(dcyc, dblat, dblng)                   # exactly what trust_check picks
+    dnode = _node_diag(dcyc, dblat, dblng, dcell[0], dcell[1], dcell[2])
+    check("node_diag: sampled node lat/lng = the plain-nearest wet cell",
+          abs(dnode["lat"] - 40.008) < 1e-9 and abs(dnode["lng"] + 73.000) < 1e-9)
+    check(f"node_diag: distance-from-buoy populated ({dnode['dist_km']:.2f} km)",
+          0.5 < dnode["dist_km"] < 1.5)
+    check("node_diag: counts wet cells within radius (3 within 5 km)",
+          dnode["n_within_radius"] == 3)
+    check("node_diag: flags sampled node SHOREWARD (landmask-shadow signal)",
+          dnode["sampled_is_seaward"] is False)
+    check("node_diag: seaward-aware pick DIFFERS and is farther than the sampled cell",
+          dnode["seaward_differs"] is True
+          and dnode["seaward_nearest_dist_km"] > dnode["dist_km"])
+
     # _buoy_latlng: coordinates resolve from the FULL active-station metadata, not the
     # wave-reporting subset; an unknown id raises; there is never a hardcoded fallback.
     active_fx = [{"id": "44065", "lat": 40.369, "lng": -73.703, "name": "Long Island Sound"}]
@@ -869,6 +949,47 @@ def _selftest():
     print("\nself-test:", "ALL PASS — NWPS placement, rating, override (full horizon), trust gate sound."
           if ok else "FAILURES")
     return 0 if ok else 1
+
+
+def _print_trust_diag(buoy_id, blat, blng, res):
+    """DIAGNOSTIC ONLY — print WHERE trust_check sampled and the joined per-hour
+    samples, so a bad/shadowed node behind any verdict is visible on the Mac. Reads
+    only what trust_check already returned; computes nothing about the verdict."""
+    nd = res.get("node")
+    print(f"  buoy point: {blat:.4f},{blng:.4f}")
+    if not nd:
+        print("  ↳ [diag] no node captured (no usable cycle / no wet cell this run)")
+    else:
+        print(f"  ↳ [diag] sampled node (plain-nearest wet cell — what trust_check correlates): "
+              f"{nd['lat']:.4f},{nd['lng']:.4f}  dist_from_buoy={nd['dist_km']:.2f} km  "
+              f"({nd['n_within_radius']} wet cells ≤{nd['radius_km']:.0f} km of buoy)")
+        if nd.get("reason"):
+            print(f"  ↳ [diag] seaward check: {nd['reason']}")
+        else:
+            side = "SEAWARD" if nd["sampled_is_seaward"] else "SHOREWARD — possible landmask shadow"
+            if nd["seaward_differs"]:
+                comp = (f"DIFFERS → nearest seaward wet cell {nd['seaward_nearest_lat']:.4f},"
+                        f"{nd['seaward_nearest_lng']:.4f} @ {nd['seaward_nearest_dist_km']:.2f} km")
+            else:
+                comp = "same cell as plain-nearest"
+            print(f"  ↳ [diag] seaward check: sampled node is {side} of the buoy "
+                  f"(nearest land @ {nd['land_dist_km']:.2f} km, shore brg {nd['shore_bearing']:.0f}°, "
+                  f"seaward brg {nd['seaward_bearing']:.0f}°); seaward pick {comp}")
+    samples = res.get("samples") or []
+    if not samples:
+        print("  ↳ [diag] no paired samples (no overlapping model/buoy hours)")
+        return
+    print("  ↳ [diag] up to 8 paired samples — dir: model dirpw vs buoy MWD → diff · Hs: model swh vs buoy WVHT")
+    for t, nhs, bhs, ndir, bdir in samples[:8]:
+        ts = datetime.datetime.fromtimestamp(t * 3600, datetime.timezone.utc).strftime("%m-%d %HZ")
+        nd_s = f"{ndir:.0f}°" if (ndir is not None and ndir == ndir) else "—"
+        bd_s = f"{bdir:.0f}°" if bdir is not None else "—"
+        if ndir is not None and ndir == ndir and bdir is not None:
+            dd = ((ndir - bdir + 180) % 360) - 180
+            dd_s = f"{dd:+.0f}°"
+        else:
+            dd_s = "—"
+        print(f"      {ts}  dir {nd_s:>5} vs {bd_s:>5} → {dd_s:>5}   Hs {nhs:.2f} vs {bhs:.2f} m")
 
 
 def main(argv=None):
@@ -890,11 +1011,13 @@ def main(argv=None):
         blat, blng = _buoy_latlng(a.buoy)   # coords from NDBC active-station metadata; raises if unknown (no fallback)
         print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Mac; needs NOMADS+NDBC) ===")
         try:
-            v, r, cs, n = trust_check(a.wfo, a.buoy, blat, blng)
+            res = trust_check(a.wfo, a.buoy, blat, blng)
+            v, r, cs, n = res["verdict"], res["r"], res["circ_std"], res["n"]
             print(f"buoy {a.buoy}: verdict {v}  r={r:.3f}  circ_std={cs:.1f}°  pairs={n}")
             print({"PASS": f"Regional trust supports consuming the placed {a.wfo.upper()} spots.",
                    "FAIL": "Hold consume; investigate before tagging.",
                    "INCONCLUSIVE": "Flat/short window — rerun after a real swell (>0.5 m Hs range)."}.get(v, ""))
+            _print_trust_diag(a.buoy, blat, blng, res)   # DIAGNOSTIC: where it sampled + samples
         except Exception as e:  # noqa: BLE001
             print(f"⚠ trust check needs live NOMADS+NDBC+cfgrib/eccodes ({type(e).__name__}: {e}) — run on the Mac.")
         return 0
