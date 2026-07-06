@@ -170,6 +170,44 @@ def load_ndbc_wave_stations() -> list[dict]:
     return stations
 
 
+def load_ndbc_active_stations() -> list[dict]:
+    """Parse NDBC activestations.xml into the FULL active-station list — every
+    station with valid coordinates, REGARDLESS of whether it is currently reporting
+    a wave height. Sibling of load_ndbc_wave_stations (which filters to the
+    wave-reporting subset via latest_obs.txt); use this when you need a station's
+    static coordinate metadata, not its momentary WVHT status. Returns a list of
+    {"id", "lat", "lng", "name"}; [] if the XML is missing / unparseable.
+    """
+    if not NDBC_STATIONS_XML.exists():
+        log.warning("NDBC stations XML missing (%s) — active-station metadata unavailable",
+                    NDBC_STATIONS_XML)
+        return []
+    import xml.etree.ElementTree as ET
+    try:
+        tree = ET.parse(NDBC_STATIONS_XML)
+    except ET.ParseError as e:
+        log.warning("NDBC stations XML parse failed: %s", e)
+        return []
+    stations: list[dict] = []
+    for el in tree.getroot().iter("station"):
+        stn_id = (el.get("id") or "").lower()
+        if not stn_id:
+            continue
+        try:
+            lat = float(el.get("lat"))
+            lng = float(el.get("lon"))
+        except (TypeError, ValueError):
+            continue
+        stations.append({
+            "id": stn_id,
+            "lat": lat,
+            "lng": lng,
+            "name": el.get("name") or "",
+        })
+    log.info("NDBC: %d active stations (full metadata list)", len(stations))
+    return stations
+
+
 @lru_cache(maxsize=1)
 def load_tide_stations() -> list[dict]:
     """Parse tide_stations.json from NOAA CO-OPS. Returns [] if missing."""
