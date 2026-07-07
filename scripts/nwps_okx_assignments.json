@@ -490,13 +490,164 @@
       "nwps_node_lng": -74.03276,
       "nwps_node_distance_m": 1213,
       "nwps_buoy_id": "44065"
+    },
+    {
+      "slug": "point-pleasant-beach",
+      "name": "Point Pleasant Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.08106,
+      "nwps_node_lng": -74.03276,
+      "nwps_node_distance_m": 755,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "bay-head",
+      "name": "Bay Head",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.08106,
+      "nwps_node_lng": -74.03276,
+      "nwps_node_distance_m": 705,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "mantoloking",
+      "name": "Mantoloking",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 40.03241,
+      "nwps_node_lng": -74.03276,
+      "nwps_node_distance_m": 1535,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "seaside-heights",
+      "name": "Seaside Heights",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.95133,
+      "nwps_node_lng": -74.05345,
+      "nwps_node_distance_m": 1467,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "seaside-park",
+      "name": "Seaside Park",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.93511,
+      "nwps_node_lng": -74.05345,
+      "nwps_node_distance_m": 1441,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "island-beach-state-park",
+      "name": "Island Beach State Park",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.90268,
+      "nwps_node_lng": -74.07414,
+      "nwps_node_distance_m": 251,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "barnegat-light",
+      "name": "Barnegat Light",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.75674,
+      "nwps_node_lng": -74.09483,
+      "nwps_node_distance_m": 308,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "harvey-cedars",
+      "name": "Harvey Cedars",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.70809,
+      "nwps_node_lng": -74.11552,
+      "nwps_node_distance_m": 1487,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "surf-city-nj",
+      "name": "Surf City NJ",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.65944,
+      "nwps_node_lng": -74.1569,
+      "nwps_node_distance_m": 525,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "ship-bottom",
+      "name": "Ship Bottom",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.64322,
+      "nwps_node_lng": -74.1569,
+      "nwps_node_distance_m": 1345,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "long-beach-island",
+      "name": "Long Beach Island",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.62701,
+      "nwps_node_lng": -74.17759,
+      "nwps_node_distance_m": 925,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "long-beach-township",
+      "name": "Long Beach Township",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.61079,
+      "nwps_node_lng": -74.19828,
+      "nwps_node_distance_m": 618,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "beach-haven",
+      "name": "Beach Haven",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.56214,
+      "nwps_node_lng": -74.21897,
+      "nwps_node_distance_m": 1368,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "holyoke",
+      "name": "Holyoke",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.54593,
+      "nwps_node_lng": -74.23966,
+      "nwps_node_distance_m": 752,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "wooden-jetty",
+      "name": "Wooden Jetty",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.52971,
+      "nwps_node_lng": -74.26034,
+      "nwps_node_distance_m": 203,
+      "nwps_buoy_id": "44091"
     }
   ],
   "held": [],
   "trust_by_buoy": {
     "44025": "PASS",
     "44065": "PASS",
-    "44099": "PASS"
+    "44099": "PASS",
+    "44091": "PASS"
   },
   "trust_buoy": "44025+44065",
   "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43."
