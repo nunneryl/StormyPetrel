@@ -84,6 +84,10 @@ WATCH = [
     # shared-buoy double-region pattern as 44098 (box+gyx).
     {"id": "44099", "zone": "Virginia Beach (North End / Oceanfront / Sandbridge)", "wfo": "akq", "status": "tagged"},
     {"id": "44084", "zone": "Delmarva / Ocean City MD + Assateague", "wfo": "akq", "status": "pending"},
+    # mhx — Newport/Morehead City NC (Outer Banks / Cape Hatteras). Both buoy ids are
+    # new and used only here (no shared-id / double-region handling needed); both pending.
+    {"id": "44095", "zone": "Northern Outer Banks (Corolla / Nags Head / Rodanthe)", "wfo": "mhx", "status": "pending"},
+    {"id": "41025", "zone": "Cape Hatteras + south (Avon / Buxton / Hatteras / Ocracoke) — Diamond Shoals, prone to going adrift", "wfo": "mhx", "status": "pending"},
 ]
 
 _REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
@@ -253,8 +257,9 @@ def _selftest():
                 "44007": _mk_obs(rising, now),   # gyx, UP, rising -> READY
                 "44098": _mk_obs(rising, now),   # box+gyx repeated id, UP, rising -> READY
                 "44099": _mk_obs(rising, now),   # akq, UP, rising -> READY
-                "44084": _mk_obs(rising, now)}   # phi+akq repeated id, UP, rising -> READY  (44091 absent -> DOWN)
-    up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084"}
+                "44084": _mk_obs(rising, now),   # phi+akq repeated id, UP, rising -> READY  (44091 absent -> DOWN)
+                "44095": _mk_obs(rising, now)}   # mhx, UP, rising -> READY
+    up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084", "44095"}
     # Monmouth (44025/44065) is TAGGED — already live, re-verify only, must NOT alert.
     # Every other entry omits "status" -> defaults to "pending" (so we also prove the
     # default is alert-eligible). 44025 is the tagged-UP+rising case (b); 44097 the pending one (a).
@@ -267,7 +272,8 @@ def _selftest():
              {"id": "44098", "zone": "NH coast (gyx)", "wfo": "gyx"},         # must reach ready_json twice
              {"id": "44099", "zone": "Virginia Beach", "wfo": "akq"},
              {"id": "44084", "zone": "Delaware (phi)", "wfo": "phi"},         # same id, two wfos:
-             {"id": "44084", "zone": "Delmarva (akq)", "wfo": "akq"}]         # must reach ready_json twice
+             {"id": "44084", "zone": "Delmarva (akq)", "wfo": "akq"},         # must reach ready_json twice
+             {"id": "44095", "zone": "Northern Outer Banks", "wfo": "mhx"}]   # new mhx region, pending
     res = evaluate(watch, up_set, lambda bid: fixtures.get(bid, []), now=now)
     by = {r["id"]: r for r in res}
     ready_list = [r for r in res if r["ready"]]           # exactly what ready_json is built from
@@ -299,6 +305,8 @@ def _selftest():
           "44099" in ready_by and ready_by["44099"]["wfo"] == "akq")
     check("repeated id 44084 reaches the ready list for BOTH regions (neither dropped)",
           sorted(r["wfo"] for r in ready_list if r["id"] == "44084") == ["akq", "phi"])
+    check("ready mhx buoy carries wfo 'mhx' into the ready list",
+          "44095" in ready_by and ready_by["44095"]["wfo"] == "mhx")
 
     # status split: PENDING-and-ready drives alerts; TAGGED-and-ready is re-verify-only
     # and must be EXCLUDED from ready_pending / ready_json / the dedup set-key.
