@@ -15496,11 +15496,16 @@
       }
     ],
     "optimal_swell_dir": 129,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533615",
     "nearest_tide_station_dist_km": 0.58,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 28.62
+    "nearest_buoy_dist_km": 28.62,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.75674,
+    "nwps_node_lng": -74.09483,
+    "nwps_node_distance_m": 308,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Bay Head",
@@ -15544,11 +15549,16 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532715",
     "nearest_tide_station_dist_km": 2.18,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 40.95
+    "nearest_buoy_dist_km": 40.95,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.08106,
+    "nwps_node_lng": -74.03276,
+    "nwps_node_distance_m": 705,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Belmar",
@@ -15794,9 +15804,14 @@
       }
     ],
     "optimal_swell_dir": 104,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533738",
-    "nearest_tide_station_dist_km": 2.3
+    "nearest_tide_station_dist_km": 2.3,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.70809,
+    "nwps_node_lng": -74.11552,
+    "nwps_node_distance_m": 1487,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Island Beach State Park",
@@ -15840,11 +15855,16 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533135",
     "nearest_tide_station_dist_km": 1.96,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 30.23
+    "nearest_buoy_dist_km": 30.23,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.90268,
+    "nwps_node_lng": -74.07414,
+    "nwps_node_distance_m": 251,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Long Beach Island",
@@ -15887,11 +15907,16 @@
       }
     ],
     "optimal_swell_dir": 130,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 2.05,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 38.74
+    "nearest_buoy_dist_km": 38.74,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.62701,
+    "nwps_node_lng": -74.17759,
+    "nwps_node_distance_m": 925,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Long Branch",
@@ -16181,11 +16206,16 @@
       }
     ],
     "optimal_swell_dir": 105,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532585",
     "nearest_tide_station_dist_km": 1.47,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 42.25
+    "nearest_buoy_dist_km": 42.25,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.08106,
+    "nwps_node_lng": -74.03276,
+    "nwps_node_distance_m": 755,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Sandy Hook",
@@ -16384,9 +16414,14 @@
       }
     ],
     "optimal_swell_dir": 97,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533135",
-    "nearest_tide_station_dist_km": 2.76
+    "nearest_tide_station_dist_km": 2.76,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.95133,
+    "nwps_node_lng": -74.05345,
+    "nwps_node_distance_m": 1467,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Seaside Park",
@@ -16430,9 +16465,14 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533135",
-    "nearest_tide_station_dist_km": 1.82
+    "nearest_tide_station_dist_km": 1.82,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.93511,
+    "nwps_node_lng": -74.05345,
+    "nwps_node_distance_m": 1441,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Ship Bottom",
@@ -16475,11 +16515,16 @@
       }
     ],
     "optimal_swell_dir": 119,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 0.8,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 37.37
+    "nearest_buoy_dist_km": 37.37,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.64322,
+    "nwps_node_lng": -74.1569,
+    "nwps_node_distance_m": 1345,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Spring Lake",
@@ -16667,11 +16712,16 @@
       }
     ],
     "optimal_swell_dir": 119,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 1.42,
     "nearest_buoy_id": "44091",
-    "nearest_buoy_dist_km": 36.47
+    "nearest_buoy_dist_km": 36.47,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.65944,
+    "nwps_node_lng": -74.1569,
+    "nwps_node_distance_m": 525,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Wildwood",
@@ -28915,12 +28965,17 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 15.15,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 49.96,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.52971,
+    "nwps_node_lng": -74.26034,
+    "nwps_node_distance_m": 203,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Holyoke",
@@ -28945,12 +29000,17 @@
       }
     ],
     "optimal_swell_dir": 137,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 12.78,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 47.82,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.54593,
+    "nwps_node_lng": -74.23966,
+    "nwps_node_distance_m": 752,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Beach Haven",
@@ -28975,12 +29035,17 @@
       }
     ],
     "optimal_swell_dir": 122,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 11.03,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 46.16,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.56214,
+    "nwps_node_lng": -74.21897,
+    "nwps_node_distance_m": 1368,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Long Beach Township",
@@ -29005,12 +29070,17 @@
       }
     ],
     "optimal_swell_dir": 130,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8533935",
     "nearest_tide_station_dist_km": 4.11,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 40.29,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.61079,
+    "nwps_node_lng": -74.19828,
+    "nwps_node_distance_m": 618,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Mantoloking",
@@ -29035,12 +29105,17 @@
       }
     ],
     "optimal_swell_dir": 105,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532715",
     "nearest_tide_station_dist_km": 4.27,
     "nearest_buoy_id": "44091",
     "nearest_buoy_dist_km": 37.56,
-    "nwps_wfo": "phi"
+    "nwps_wfo": "phi",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 40.03241,
+    "nwps_node_lng": -74.03276,
+    "nwps_node_distance_m": 1535,
+    "nwps_buoy_id": "44091"
   },
   {
     "name": "Sea Girt",
