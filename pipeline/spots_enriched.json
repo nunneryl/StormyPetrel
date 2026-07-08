@@ -13935,11 +13935,16 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8419399",
     "nearest_tide_station_dist_km": 2.05,
     "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 54.55
+    "nearest_buoy_dist_km": 54.55,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.14412,
+    "nwps_node_lng": -70.62266,
+    "nwps_node_distance_m": 2195,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Old Orchard Beach",
@@ -14363,9 +14368,14 @@
       }
     ],
     "optimal_swell_dir": 135,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8441841",
-    "nearest_tide_station_dist_km": 2.57
+    "nearest_tide_station_dist_km": 2.57,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.6178,
+    "nwps_node_lng": -70.6276,
+    "nwps_node_distance_m": 222,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Horseneck Beach",
@@ -14704,9 +14714,14 @@
       }
     ],
     "optimal_swell_dir": 85,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8441241",
-    "nearest_tide_station_dist_km": 5.57
+    "nearest_tide_station_dist_km": 5.57,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.79845,
+    "nwps_node_lng": -70.79351,
+    "nwps_node_distance_m": 1128,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Frankfort Beach",
@@ -15113,9 +15128,14 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8429489",
-    "nearest_tide_station_dist_km": 1.89
+    "nearest_tide_station_dist_km": 1.89,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.89608,
+    "nwps_node_lng": -70.80547,
+    "nwps_node_distance_m": 1191,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Jenness Beach",
@@ -15159,11 +15179,16 @@
       }
     ],
     "optimal_swell_dir": 121,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8424601",
     "nearest_tide_station_dist_km": 8.71,
     "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 52.37
+    "nearest_buoy_dist_km": 52.37,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.98627,
+    "nwps_node_lng": -70.74453,
+    "nwps_node_distance_m": 1284,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "North Beach Rye",
@@ -15206,11 +15231,16 @@
       }
     ],
     "optimal_swell_dir": 99,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8429489",
     "nearest_tide_station_dist_km": 9.56,
     "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 52.27
+    "nearest_buoy_dist_km": 52.27,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.98627,
+    "nwps_node_lng": -70.74453,
+    "nwps_node_distance_m": 1838,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "The Wall Hampton",
@@ -15255,9 +15285,14 @@
       }
     ],
     "optimal_swell_dir": 115,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8429489",
-    "nearest_tide_station_dist_km": 2.76
+    "nearest_tide_station_dist_km": 2.76,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.91863,
+    "nwps_node_lng": -70.775,
+    "nwps_node_distance_m": 2069,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Asbury Park",
@@ -21549,9 +21584,14 @@
       }
     ],
     "optimal_swell_dir": 146,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
-    "nearest_tide_station_dist_km": 11.73
+    "nearest_tide_station_dist_km": 11.73,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.62305,
+    "nwps_node_distance_m": 1040,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Conant Ave",
@@ -21594,11 +21634,16 @@
       }
     ],
     "optimal_swell_dir": 92,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 0.79,
     "nearest_buoy_id": "44085",
-    "nearest_buoy_dist_km": 37.59
+    "nearest_buoy_dist_km": 37.59,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.48084,
+    "nwps_node_distance_m": 1791,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "East Matunuck State Beach",
@@ -21642,11 +21687,16 @@
       }
     ],
     "optimal_swell_dir": 178,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 2.63,
     "nearest_buoy_id": "44097",
-    "nearest_buoy_dist_km": 55.91
+    "nearest_buoy_dist_km": 55.91,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.52825,
+    "nwps_node_distance_m": 2590,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Marys",
@@ -21689,9 +21739,14 @@
       }
     ],
     "optimal_swell_dir": 180,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
-    "nearest_tide_station_dist_km": 4.75
+    "nearest_tide_station_dist_km": 4.75,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.55195,
+    "nwps_node_distance_m": 2348,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Matunuck",
@@ -21735,11 +21790,16 @@
       }
     ],
     "optimal_swell_dir": 175,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 4.96,
     "nearest_buoy_id": "44097",
-    "nearest_buoy_dist_km": 57.16
+    "nearest_buoy_dist_km": 57.16,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.52825,
+    "nwps_node_distance_m": 2294,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Misquamicut State Beach",
@@ -21783,9 +21843,14 @@
       }
     ],
     "optimal_swell_dir": 160,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
-    "nearest_tide_station_dist_km": 3.48
+    "nearest_tide_station_dist_km": 3.48,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.31712,
+    "nwps_node_lng": -71.78896,
+    "nwps_node_distance_m": 876,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Monahans",
@@ -21829,11 +21894,16 @@
       }
     ],
     "optimal_swell_dir": 102,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8454658",
     "nearest_tide_station_dist_km": 1.23,
     "nearest_buoy_id": "44085",
-    "nearest_buoy_dist_km": 35.53
+    "nearest_buoy_dist_km": 35.53,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.42551,
+    "nwps_node_lng": -71.43344,
+    "nwps_node_distance_m": 1868,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Moonstone Beach RI",
@@ -21876,9 +21946,14 @@
       }
     ],
     "optimal_swell_dir": 170,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
-    "nearest_tide_station_dist_km": 8.19
+    "nearest_tide_station_dist_km": 8.19,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.57565,
+    "nwps_node_distance_m": 2024,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Narragansett Beach",
@@ -21922,11 +21997,16 @@
       }
     ],
     "optimal_swell_dir": 130,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8454658",
     "nearest_tide_station_dist_km": 1.79,
     "nearest_buoy_id": "44085",
-    "nearest_buoy_dist_km": 35.43
+    "nearest_buoy_dist_km": 35.43,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.42551,
+    "nwps_node_lng": -71.43344,
+    "nwps_node_distance_m": 1950,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Pilgrim Ave",
@@ -21970,11 +22050,16 @@
       }
     ],
     "optimal_swell_dir": 92,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 0.51,
     "nearest_buoy_id": "44085",
-    "nearest_buoy_dist_km": 37.62
+    "nearest_buoy_dist_km": 37.62,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.48084,
+    "nwps_node_distance_m": 1391,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Point Judith",
@@ -22017,9 +22102,14 @@
       }
     ],
     "optimal_swell_dir": 121,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
-    "nearest_tide_station_dist_km": 0.36
+    "nearest_tide_station_dist_km": 0.36,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.48084,
+    "nwps_node_distance_m": 1035,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Ruggles",
@@ -22063,11 +22153,16 @@
       }
     ],
     "optimal_swell_dir": 135,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8452660",
     "nearest_tide_station_dist_km": 4.43,
     "nearest_buoy_id": "44085",
-    "nearest_buoy_dist_km": 24.17
+    "nearest_buoy_dist_km": 24.17,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.46164,
+    "nwps_node_lng": -71.29123,
+    "nwps_node_distance_m": 766,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Second Beach Newport",
@@ -22110,11 +22205,16 @@
       }
     ],
     "optimal_swell_dir": 209,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8451351",
     "nearest_tide_station_dist_km": 1.3,
     "nearest_buoy_id": "44097",
-    "nearest_buoy_dist_km": 58.73
+    "nearest_buoy_dist_km": 58.73,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.46164,
+    "nwps_node_lng": -71.24383,
+    "nwps_node_distance_m": 2829,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Third Beach Newport",
@@ -22157,9 +22257,14 @@
       }
     ],
     "optimal_swell_dir": 90,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8451351",
-    "nearest_tide_station_dist_km": 0.87
+    "nearest_tide_station_dist_km": 0.87,
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.49777,
+    "nwps_node_lng": -71.22013,
+    "nwps_node_distance_m": 2415,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Cherry Grove Pier",
@@ -29560,12 +29665,17 @@
       }
     ],
     "optimal_swell_dir": 179,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 24.68,
     "nearest_buoy_id": "44097",
     "nearest_buoy_dist_km": 43.72,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.13647,
+    "nwps_node_lng": -71.57565,
+    "nwps_node_distance_m": 1789,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Dunes Park",
@@ -29590,12 +29700,17 @@
       }
     ],
     "optimal_swell_dir": 174,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 0.32,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 61.26,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.31712,
+    "nwps_node_lng": -71.76526,
+    "nwps_node_distance_m": 1291,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Weekapaug",
@@ -29620,12 +29735,17 @@
       }
     ],
     "optimal_swell_dir": 188,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 0.06,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 60.9,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.31712,
+    "nwps_node_lng": -71.76526,
+    "nwps_node_distance_m": 1301,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "East Beach",
@@ -29650,12 +29770,17 @@
       }
     ],
     "optimal_swell_dir": 166,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 9.69,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 51.46,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.33519,
+    "nwps_node_lng": -71.64675,
+    "nwps_node_distance_m": 2055,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Breachway",
@@ -29680,12 +29805,17 @@
       }
     ],
     "optimal_swell_dir": 170,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 10.64,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 50.5,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.62305,
+    "nwps_node_distance_m": 1354,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Deep Hole",
@@ -29710,12 +29840,17 @@
       }
     ],
     "optimal_swell_dir": 162,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 4.01,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 41.83,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.52825,
+    "nwps_node_distance_m": 2258,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Salty Brine",
@@ -29740,12 +29875,17 @@
       }
     ],
     "optimal_swell_dir": 170,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 2.27,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 39.81,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.50455,
+    "nwps_node_distance_m": 2496,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "The K's",
@@ -29770,12 +29910,17 @@
       }
     ],
     "optimal_swell_dir": 179,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 0.78,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 38.48,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.50455,
+    "nwps_node_distance_m": 1853,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Point Judith South",
@@ -29800,12 +29945,17 @@
       }
     ],
     "optimal_swell_dir": 152,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 0.74,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 37.38,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.35325,
+    "nwps_node_lng": -71.48084,
+    "nwps_node_distance_m": 802,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Scarborough",
@@ -29830,12 +29980,17 @@
       }
     ],
     "optimal_swell_dir": 127,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 2.83,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 36.62,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.38938,
+    "nwps_node_lng": -71.45714,
+    "nwps_node_distance_m": 1495,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Narrow River",
@@ -29860,12 +30015,17 @@
       }
     ],
     "optimal_swell_dir": 145,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8454658",
     "nearest_tide_station_dist_km": 2.77,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 34.42,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.42551,
+    "nwps_node_lng": -71.43344,
+    "nwps_node_distance_m": 1796,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Baileys Beach",
@@ -29890,12 +30050,17 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8452660",
     "nearest_tide_station_dist_km": 5.55,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 24.36,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.44358,
+    "nwps_node_lng": -71.31494,
+    "nwps_node_distance_m": 1355,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "First Beach",
@@ -29920,12 +30085,17 @@
       }
     ],
     "optimal_swell_dir": 165,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8452660",
     "nearest_tide_station_dist_km": 3.46,
     "nearest_buoy_id": "44085",
     "nearest_buoy_dist_km": 24.01,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.46164,
+    "nwps_node_lng": -71.29123,
+    "nwps_node_distance_m": 2825,
+    "nwps_buoy_id": "44097"
   },
   {
     "name": "Squibnocket",
@@ -30370,12 +30540,17 @@
       }
     ],
     "optimal_swell_dir": 90,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8429489",
     "nearest_tide_station_dist_km": 5.98,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 52.85,
-    "nwps_wfo": "box"
+    "nwps_wfo": "box",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.83458,
+    "nwps_node_lng": -70.79351,
+    "nwps_node_distance_m": 1946,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Costellos",
@@ -30400,12 +30575,17 @@
       }
     ],
     "optimal_swell_dir": 115,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8424601",
     "nearest_tide_station_dist_km": 3.5,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 52.32,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.94118,
+    "nwps_node_lng": -70.775,
+    "nwps_node_distance_m": 1748,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Fox Hill",
@@ -30430,12 +30610,17 @@
       }
     ],
     "optimal_swell_dir": 115,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8424601",
     "nearest_tide_station_dist_km": 2.59,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 51.99,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.96372,
+    "nwps_node_lng": -70.74453,
+    "nwps_node_distance_m": 1882,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Straws Point",
@@ -30460,12 +30645,17 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8424601",
     "nearest_tide_station_dist_km": 1.01,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 51.79,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.98627,
+    "nwps_node_lng": -70.74453,
+    "nwps_node_distance_m": 676,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Pirates Cove",
@@ -30490,12 +30680,17 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8424601",
     "nearest_tide_station_dist_km": 4.83,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 51.94,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.03137,
+    "nwps_node_lng": -70.71406,
+    "nwps_node_distance_m": 1552,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Harbor Beach",
@@ -30520,12 +30715,17 @@
       }
     ],
     "optimal_swell_dir": 115,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8419399",
     "nearest_tide_station_dist_km": 5.24,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 53.04,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.12157,
+    "nwps_node_lng": -70.62266,
+    "nwps_node_distance_m": 1695,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Ogunquit",
@@ -30550,12 +30750,17 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8419399",
     "nearest_tide_station_dist_km": 9.63,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 60.89,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.25686,
+    "nwps_node_lng": -70.56172,
+    "nwps_node_distance_m": 2338,
+    "nwps_buoy_id": "44098"
   },
   {
     "name": "Moody Point",
