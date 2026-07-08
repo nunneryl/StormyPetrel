@@ -640,6 +640,416 @@
       "nwps_node_lng": -74.26034,
       "nwps_node_distance_m": 203,
       "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "third-beach-newport",
+      "name": "Third Beach Newport",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.49777,
+      "nwps_node_lng": -71.22013,
+      "nwps_node_distance_m": 2415,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "first-beach",
+      "name": "First Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.46164,
+      "nwps_node_lng": -71.29123,
+      "nwps_node_distance_m": 2825,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "second-beach-newport",
+      "name": "Second Beach Newport",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.46164,
+      "nwps_node_lng": -71.24383,
+      "nwps_node_distance_m": 2829,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "ruggles",
+      "name": "Ruggles",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.46164,
+      "nwps_node_lng": -71.29123,
+      "nwps_node_distance_m": 766,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "baileys-beach",
+      "name": "Baileys Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.44358,
+      "nwps_node_lng": -71.31494,
+      "nwps_node_distance_m": 1355,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "narrow-river",
+      "name": "Narrow River",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.42551,
+      "nwps_node_lng": -71.43344,
+      "nwps_node_distance_m": 1796,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "narragansett-beach",
+      "name": "Narragansett Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.42551,
+      "nwps_node_lng": -71.43344,
+      "nwps_node_distance_m": 1950,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "monahans",
+      "name": "Monahans",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.42551,
+      "nwps_node_lng": -71.43344,
+      "nwps_node_distance_m": 1868,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "scarborough",
+      "name": "Scarborough",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.38938,
+      "nwps_node_lng": -71.45714,
+      "nwps_node_distance_m": 1495,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "east-matunuck-state-beach",
+      "name": "East Matunuck State Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.52825,
+      "nwps_node_distance_m": 2590,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "salty-brine",
+      "name": "Salty Brine",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.50455,
+      "nwps_node_distance_m": 2496,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "marys",
+      "name": "Marys",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.55195,
+      "nwps_node_distance_m": 2348,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "matunuck",
+      "name": "Matunuck",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.52825,
+      "nwps_node_distance_m": 2294,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "deep-hole",
+      "name": "Deep Hole",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.52825,
+      "nwps_node_distance_m": 2258,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "moonstone-beach-ri",
+      "name": "Moonstone Beach RI",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.57565,
+      "nwps_node_distance_m": 2024,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "conant-ave",
+      "name": "Conant Ave",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.48084,
+      "nwps_node_distance_m": 1791,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "the-k-s",
+      "name": "The K's",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.50455,
+      "nwps_node_distance_m": 1853,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "pilgrim-ave",
+      "name": "Pilgrim Ave",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.48084,
+      "nwps_node_distance_m": 1391,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "point-judith",
+      "name": "Point Judith",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.48084,
+      "nwps_node_distance_m": 1035,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "point-judith-south",
+      "name": "Point Judith South",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.48084,
+      "nwps_node_distance_m": 802,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "charlestown-town-beach",
+      "name": "Charlestown Town Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.62305,
+      "nwps_node_distance_m": 1040,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "breachway",
+      "name": "Breachway",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.35325,
+      "nwps_node_lng": -71.62305,
+      "nwps_node_distance_m": 1354,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "east-beach",
+      "name": "East Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.33519,
+      "nwps_node_lng": -71.64675,
+      "nwps_node_distance_m": 2055,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "dunes-park",
+      "name": "Dunes Park",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.31712,
+      "nwps_node_lng": -71.76526,
+      "nwps_node_distance_m": 1291,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "weekapaug",
+      "name": "Weekapaug",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.31712,
+      "nwps_node_lng": -71.76526,
+      "nwps_node_distance_m": 1301,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "misquamicut-state-beach",
+      "name": "Misquamicut State Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.31712,
+      "nwps_node_lng": -71.78896,
+      "nwps_node_distance_m": 876,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "black-rock-point",
+      "name": "Black Rock Point",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.13647,
+      "nwps_node_lng": -71.57565,
+      "nwps_node_distance_m": 1789,
+      "nwps_buoy_id": "44097"
+    },
+    {
+      "slug": "salisbury",
+      "name": "Salisbury",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.83458,
+      "nwps_node_lng": -70.79351,
+      "nwps_node_distance_m": 1946,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "plum-island",
+      "name": "Plum Island",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.79845,
+      "nwps_node_lng": -70.79351,
+      "nwps_node_distance_m": 1128,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "good-harbor-beach",
+      "name": "Good Harbor Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.6178,
+      "nwps_node_lng": -70.6276,
+      "nwps_node_distance_m": 222,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "pirates-cove",
+      "name": "Pirates Cove",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.03137,
+      "nwps_node_lng": -70.71406,
+      "nwps_node_distance_m": 1552,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "straws-point",
+      "name": "Straws Point",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 676,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "jenness-beach",
+      "name": "Jenness Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 1284,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "north-beach-rye",
+      "name": "North Beach Rye",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 1838,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "fox-hill",
+      "name": "Fox Hill",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.96372,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 1882,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "costellos",
+      "name": "Costellos",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.94118,
+      "nwps_node_lng": -70.775,
+      "nwps_node_distance_m": 1748,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "the-wall-hampton",
+      "name": "The Wall Hampton",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.91863,
+      "nwps_node_lng": -70.775,
+      "nwps_node_distance_m": 2069,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "hampton-beach",
+      "name": "Hampton Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.89608,
+      "nwps_node_lng": -70.80547,
+      "nwps_node_distance_m": 1191,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "harbor-beach",
+      "name": "Harbor Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.12157,
+      "nwps_node_lng": -70.62266,
+      "nwps_node_distance_m": 1695,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "long-sands-beach",
+      "name": "Long Sands Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.14412,
+      "nwps_node_lng": -70.62266,
+      "nwps_node_distance_m": 2195,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "ogunquit",
+      "name": "Ogunquit",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.25686,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 2338,
+      "nwps_buoy_id": "44098"
     }
   ],
   "held": [],
@@ -647,7 +1057,9 @@
     "44025": "PASS",
     "44065": "PASS",
     "44099": "PASS",
-    "44091": "PASS"
+    "44091": "PASS",
+    "44097": "PASS",
+    "44098": "PASS"
   },
   "trust_buoy": "44025+44065",
   "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43."
