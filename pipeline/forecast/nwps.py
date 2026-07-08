@@ -394,10 +394,14 @@ _VAR_MAP = {
     "dirpw": "dp",
     "mwp":   "tp",           # NWPS sometimes publishes mean period
     "mwd":   "dp",
-    "shww":  "swell_hs",
-    "shts":  "swell_hs",         # significant height of total swell (NWPS)
-    "swell": "swell_hs",
-    "swh_swell": "swell_hs",
+    # swell_hs comes ONLY from shts ("Significant height of total swell") so it is
+    # deterministic. shww is "Significant height of WIND WAVES" (windsea) — NOT swell —
+    # so it maps to its own key and must never land in swell_hs. `swell`/`swh_swell`
+    # were nondeterministic substitutes for shts (first-wins on cfgrib dataset order)
+    # and are DROPPED: if a grid lacks shts, swell_hs stays None rather than silently
+    # borrowing a different field.
+    "shts":  "swell_hs",         # eccodes "Significant height of total swell"
+    "shww":  "windsea_hs",       # eccodes "Significant height of wind waves" (windsea, not swell)
     "swper": "swell_tp",
     "swdir": "swell_dp",
     "si10":  "wind_speed",
