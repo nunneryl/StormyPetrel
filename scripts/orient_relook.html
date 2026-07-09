@@ -1,0 +1,173 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Orientation relook</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html,body{margin:0;height:100%;font:14px/1.4 system-ui,sans-serif;background:#111;color:#eee}
+  #wrap{display:flex;height:100%}
+  #map{flex:1;height:100%}
+  #side{width:360px;padding:14px;box-sizing:border-box;background:#181a1f;overflow:auto}
+  h2{margin:.2em 0;font-size:18px} .sub{color:#9aa;font-size:12px}
+  .pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;margin-right:4px}
+  .HIGH{background:#1d5e2a}.MEDIUM{background:#6b5d12}.HARD{background:#7a2222}.UNKNOWN{background:#444}.null{background:#444}
+  #banner{padding:9px 11px;border-radius:7px;margin:8px 0;font-size:13px;font-weight:600;line-height:1.35}
+  .b-MOP_MISMATCH{background:#16413f;border:1px solid #2a8f86}
+  .b-SEED_DISAGREE{background:#5a4710;border:1px solid #c79a1e}
+  .b-BOTH{background:#5e1d1d;border:1px solid #c14a4a}
+  .b-MOP_ONLY,.b-REVIEW{background:#1d3a5e;border:1px solid #3a6fc1}
+  #action{color:#ffd479;font-weight:700;margin:6px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0}
+  td{padding:2px 4px} .num{font-variant-numeric:tabular-nums;text-align:right}
+  .cur{color:#7fd1ff;font-weight:700}.seed{color:#9ad29a}.mop{color:#e29ad2}.mop.suspect{color:#7d5e74;text-decoration:line-through}
+  #rose{display:block;margin:8px auto;touch-action:none;cursor:grab}
+  .btn{background:#2a2f3a;border:1px solid #3a4150;color:#eee;border-radius:6px;padding:6px 10px;cursor:pointer}
+  .btn:hover{background:#333a47}
+  #prog{margin:6px 0;color:#9aa} kbd{background:#2a2f3a;border:1px solid #3a4150;border-radius:4px;padding:0 5px}
+  #done{color:#9ad29a;font-weight:700} label.flt{display:block;margin:8px 0;color:#cdd}
+</style></head>
+<body><div id="wrap">
+  <div id="map"></div>
+  <div id="side">
+    <div id="prog"></div>
+    <h2 id="name"></h2><div class="sub" id="coords"></div>
+    <div><span id="zone"></span><span class="sub" id="mopmeta"></span></div>
+    <div id="banner"></div>
+    <div id="action"></div>
+    <svg id="rose" width="280" height="280" viewBox="-150 -150 300 300"></svg>
+    <table>
+      <tr><td class="cur">your orientation (blue)</td><td class="num cur" id="vcur"></td></tr>
+      <tr><td class="seed">geometry seed (green)</td><td class="num seed" id="vseed"></td></tr>
+      <tr><td class="mop" id="lmop">MOP shore-normal (magenta)</td><td class="num mop" id="vmop"></td></tr>
+    </table>
+    <div style="margin:8px 0">
+      <button class="btn" onclick="prev()">&larr; prev</button>
+      <button class="btn" onclick="confirmAdvance()">confirm + next &crarr;</button>
+      <button class="btn" onclick="next()">skip &rarr;</button>
+    </div>
+    <label class="flt"><input type="checkbox" id="realonly" onchange="toggleFilter()">
+      show real disagreements only (hide MOP-mismatch "already correct" spots)</label>
+    <div class="sub">drag the blue arrow; <kbd>Enter</kbd> confirm+next,
+      <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> nav, <kbd>r</kbd> reset to green seed.</div>
+    <div id="prog2" class="sub" style="margin-top:6px"></div>
+    <button class="btn" style="margin-top:10px;width:100%" onclick="exportJSON()">export confirmed &darr;</button>
+    <div id="done"></div>
+  </div>
+</div>
+<script>
+const SPOTS = [{"slug": "tres-palmas", "name": "Tres Palmas", "lat": 18.3478636, "lon": -67.2645872, "orientation_deg": 275.0, "seed_normal": 227.8, "seed_source": "stored_50_200", "seed_delta": 47.2, "mop_point": null, "mop_shore_normal": null, "mop_delta": null, "mop_match_m": null, "zone": null, "score": 47.2, "reason": "seed \u039447\u00b0", "folded_seed_delta": 47.2, "seed_display": 227.8, "seed_unreliable": false, "guidance": {"case": "SEED_DISAGREE", "is_case1": false, "mop_suspect": false, "banner": "REAL DISAGREEMENT vs coastline geometry (\u039447\u00b0). Reconcile your blue arrow against the green geometry reference.", "action": "Reorient toward green, then Enter"}}, {"slug": "fiji", "name": "Fiji", "lat": 18.4692495, "lon": -66.0897865, "orientation_deg": 0.0, "seed_normal": 220.2, "seed_source": "stored_50_200", "seed_delta": 139.8, "mop_point": null, "mop_shore_normal": null, "mop_delta": null, "mop_match_m": null, "zone": null, "score": 40.2, "reason": "seed \u039440\u00b0", "folded_seed_delta": 40.2, "seed_display": 40.2, "seed_unreliable": false, "guidance": {"case": "SEED_DISAGREE", "is_case1": false, "mop_suspect": false, "banner": "REAL DISAGREEMENT vs coastline geometry (\u039440\u00b0). Reconcile your blue arrow against the green geometry reference.", "action": "Reorient toward green, then Enter"}}, {"slug": "kiahuna-beach", "name": "Kiahuna Beach", "lat": 21.8754304, "lon": -159.4588293, "orientation_deg": 180.0, "seed_normal": 217.2, "seed_source": "stored_50_200", "seed_delta": 37.2, "mop_point": null, "mop_shore_normal": null, "mop_delta": null, "mop_match_m": null, "zone": null, "score": 37.2, "reason": "seed \u039437\u00b0", "folded_seed_delta": 37.2, "seed_display": 217.2, "seed_unreliable": false, "guidance": {"case": "SEED_DISAGREE", "is_case1": false, "mop_suspect": false, "banner": "REAL DISAGREEMENT vs coastline geometry (\u039437\u00b0). Reconcile your blue arrow against the green geometry reference.", "action": "Reorient toward green, then Enter"}}];
+const GENERATED = "folded_seed; MOP-preferred";
+const CARD = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+function cardinal(d){return CARD[Math.round(((d%360)/22.5))%16];}
+let i = 0, realOnly = false;
+const result = {};
+function curVal(s){ return (result[s.slug] && result[s.slug].orientation_deg!=null)
+  ? result[s.slug].orientation_deg : s.orientation_deg; }
+function isVisible(j){ return !realOnly || !SPOTS[j].guidance.is_case1; }
+
+const map = L.map('map',{zoomControl:true}).setView([34,-119],13);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  {maxZoom:19,attribution:'Esri'}).addTo(map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+  {maxZoom:19,opacity:0.9}).addTo(map);
+let marker=null, sightline=null;
+
+const rose = document.getElementById('rose');
+const SVGNS="http://www.w3.org/2000/svg";
+function pt(b,r){const a=(b-90)*Math.PI/180; return [r*Math.cos(a), r*Math.sin(a)];}
+function arrow(b,r,color,w,dash,op){const [x,y]=pt(b,r); const l=document.createElementNS(SVGNS,'line');
+  l.setAttribute('x1',0);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',y);
+  l.setAttribute('stroke',color);l.setAttribute('stroke-width',w);if(dash)l.setAttribute('stroke-dasharray',dash);
+  if(op!=null)l.setAttribute('opacity',op);l.setAttribute('stroke-linecap','round');return l;}
+function label(b,txt,color){const [x,y]=pt(b,118);const t=document.createElementNS(SVGNS,'text');
+  t.setAttribute('x',x);t.setAttribute('y',y+4);t.setAttribute('fill',color);t.setAttribute('font-size','12');
+  t.setAttribute('text-anchor','middle');t.textContent=txt;return t;}
+function drawRose(){
+  const s=SPOTS[i], g=s.guidance; rose.innerHTML='';
+  const c=document.createElementNS(SVGNS,'circle');c.setAttribute('r',130);c.setAttribute('fill','#0d0f13');
+  c.setAttribute('stroke','#333');rose.appendChild(c);
+  for(const [b,txt] of [[0,'N'],[90,'E'],[180,'S'],[270,'W']]) rose.appendChild(label(b,txt,'#778'));
+  const seedDisp=(s.seed_display!=null?s.seed_display:s.seed_normal);
+  if(seedDisp!=null) rose.appendChild(arrow(seedDisp,112,'#9ad29a',3,'5 5'));         // geometry seed
+  if(s.mop_shore_normal!=null){                                                        // MOP (faint if suspect)
+    rose.appendChild(arrow(s.mop_shore_normal,112,'#e29ad2', g.mop_suspect?2:3,'5 5', g.mop_suspect?0.35:1));
+    if(g.mop_suspect){const [x,y]=pt(s.mop_shore_normal,96);const t=document.createElementNS(SVGNS,'text');
+      t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('fill','#7d5e74');t.setAttribute('font-size','10');
+      t.setAttribute('text-anchor','middle');t.textContent='MOP suspect';rose.appendChild(t);}
+  }
+  rose.appendChild(arrow(curVal(s),120,'#7fd1ff',6));                                   // your orientation
+  const hub=document.createElementNS(SVGNS,'circle');hub.setAttribute('r',6);hub.setAttribute('fill','#7fd1ff');rose.appendChild(hub);
+}
+function bearingFromEvent(ev){const r=rose.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  return ((Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI)+90+360)%360;}
+let dragging=false;
+rose.addEventListener('pointerdown',e=>{dragging=true;rose.setPointerCapture(e.pointerId);setCur(Math.round(bearingFromEvent(e)));});
+rose.addEventListener('pointermove',e=>{if(dragging)setCur(Math.round(bearingFromEvent(e)));});
+rose.addEventListener('pointerup',()=>{dragging=false;});
+function setCur(deg){const s=SPOTS[i];result[s.slug]=result[s.slug]||{name:s.name};
+  result[s.slug].orientation_deg=((deg%360)+360)%360;render();}
+
+function render(){
+  const s=SPOTS[i], g=s.guidance, cur=curVal(s);
+  const vis=SPOTS.filter((_,j)=>isVisible(j)).length;
+  document.getElementById('prog').textContent=`spot ${i+1} / ${SPOTS.length}`
+    +(realOnly?`  ·  ${vis} real (MOP-mismatch hidden)`:'')+`  ·  worst-first`;
+  document.getElementById('name').textContent=s.name;
+  document.getElementById('coords').textContent=`${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}  ·  ${s.slug}`;
+  document.getElementById('zone').innerHTML=`<span class="pill ${s.zone||'null'}">${s.zone||'—'}</span>`;
+  document.getElementById('mopmeta').textContent = s.mop_point
+    ? `MOP ${s.mop_point} @ ${s.mop_match_m} m`+(s.zone==='HARD'?' (low-skill zone)':'') : 'no MOP match';
+  const ban=document.getElementById('banner'); ban.textContent=g.banner; ban.className='b-'+g.case;
+  document.getElementById('action').textContent='→ '+g.action;
+  document.getElementById('vcur').textContent=`${cur.toFixed(0)}° ${cardinal(cur)}`
+    +(result[s.slug]&&result[s.slug].confirmed?'  ✓':'');
+  const sd=(s.seed_display!=null?s.seed_display:s.seed_normal), fsd=(s.folded_seed_delta!=null?s.folded_seed_delta:s.seed_delta);
+  document.getElementById('vseed').textContent=sd!=null?`${sd.toFixed(0)}° ${cardinal(sd)}  (folded Δ${fsd?.toFixed(0)}°)`:'—';
+  const lmop=document.getElementById('lmop'), vmop=document.getElementById('vmop');
+  lmop.className='mop'+(g.mop_suspect?' suspect':'');
+  vmop.className='num mop'+(g.mop_suspect?' suspect':'');
+  vmop.textContent=s.mop_shore_normal!=null
+    ?`${s.mop_shore_normal.toFixed(0)}° ${cardinal(s.mop_shore_normal)}  (MOP Δ${s.mop_delta?.toFixed(0)}°`
+       +(g.mop_suspect?', suspect':'')+`)`:'—';
+  const nconf=Object.values(result).filter(r=>r.confirmed).length;
+  document.getElementById('prog2').textContent=`${nconf} confirmed · ${SPOTS.length-nconf} left`;
+  drawRose();
+  if(!marker){marker=L.marker([s.lat,s.lon]).addTo(map);} else marker.setLatLng([s.lat,s.lon]);
+  marker.bindTooltip(s.name,{permanent:false});
+  map.setView([s.lat,s.lon],16);
+  if(sightline)map.removeLayer(sightline);
+  const dlat=0.006*Math.cos(cur*Math.PI/180), dlon=0.006*Math.sin(cur*Math.PI/180)/Math.cos(s.lat*Math.PI/180);
+  sightline=L.polyline([[s.lat,s.lon],[s.lat+dlat,s.lon+dlon]],{color:'#7fd1ff',weight:3}).addTo(map);
+}
+function stepTo(start,dir){let j=start;for(let k=0;k<SPOTS.length;k++){j=(j+dir+SPOTS.length)%SPOTS.length;if(isVisible(j))return j;}return start;}
+function next(){i=stepTo(i,1);render();}
+function prev(){i=stepTo(i,-1);render();}
+function confirmAdvance(){const s=SPOTS[i];result[s.slug]=result[s.slug]||{name:s.name,orientation_deg:s.orientation_deg};
+  result[s.slug].orientation_deg=curVal(s);result[s.slug].confirmed=true;
+  let n=i;for(let k=1;k<=SPOTS.length;k++){const j=(i+k)%SPOTS.length;
+    if(isVisible(j)&&!(result[SPOTS[j].slug]&&result[SPOTS[j].slug].confirmed)){n=j;break;}}
+  i=n;render();
+  if(Object.values(result).filter(r=>r.confirmed).length===SPOTS.length)
+    document.getElementById('done').textContent='all spots confirmed — export below.';
+}
+function toggleFilter(){realOnly=document.getElementById('realonly').checked;
+  if(!isVisible(i))i=stepTo(i,1);render();}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter')confirmAdvance(); else if(e.key==='ArrowRight')next();
+  else if(e.key==='ArrowLeft')prev();
+  else if(e.key==='r'){const s=SPOTS[i];const sd=(s.seed_display!=null?s.seed_display:s.seed_normal);if(sd!=null)setCur(Math.round(sd));}
+});
+function exportJSON(){
+  const out={_comment:`orientation relook export ${GENERATED}; apply via apply_orientation_fixes`,
+             _schema_version:1, orientations:{}};
+  for(const [slug,r] of Object.entries(result)){ if(!r.confirmed)continue;
+    out.orientations[slug]={orientation_deg:Math.round(r.orientation_deg),
+      cardinal:cardinal(r.orientation_deg), name:r.name, source:"manual_relook"}; }
+  const n=Object.keys(out.orientations).length;
+  if(!n){alert('nothing confirmed yet');return;}
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='orientation_relook_export.json';a.click();
+}
+render();
+</script></body></html>

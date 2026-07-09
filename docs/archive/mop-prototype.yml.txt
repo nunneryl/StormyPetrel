@@ -1,0 +1,57 @@
+name: mop-prototype
+
+# Manually-triggered feasibility spike: run scripts/mop_prototype.py on a
+# GitHub-hosted runner (open egress) to pull the REAL CDIP MOP nearshore output
+# for the 4 CA spots that failed the GSHHG raycast gate, and print:
+#   - the live NetCDF variable dump from one matched MOP point,
+#   - the 4-spot table (nearest MOP point, match distance, derived swell window,
+#     derived optimal direction) vs the failed-raycast numbers and targets,
+#   - the explicit Rincon WNW-wrap check (raycast gave 196 / S lobe).
+#
+# CDIP THREDDS (thredds.cdip.ucsd.edu) is egress-blocked from the dev sandbox
+# (403), so this is the only place the live numbers can be produced. The script
+# exits loudly if THREDDS is unreachable — a red run that says so is the correct
+# outcome, NOT invented numbers.
+#
+# Read-only. Touches no prod path: not spots_enriched.json, not the rating
+# pipeline. MOP is OPeNDAP server-side subsetting, so there is no large download
+# and no geodata cache — this job is lighter than sw1-raycast.
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: mop-prototype
+  cancel-in-progress: false
+
+jobs:
+  mop:
+    name: MOP prototype (4 CA gate spots)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read   # read-only; the deliverable is the job log, nothing is written
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install netCDF stack + cdippy (PyPI; netCDF4 reads OPeNDAP)
+        run: pip install numpy scipy netCDF4 cdippy
+
+      - name: Run MOP prototype against live THREDDS (4-spot table + variable dump)
+        run: python scripts/mop_prototype.py
+
+      - name: Offline derivation self-test (math proof, same run)
+        if: always()   # run even if the live step went red, so both sit in one run
+        run: python scripts/mop_prototype.py --selftest
