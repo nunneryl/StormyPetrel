@@ -155,3 +155,10 @@ __pycache__/
 .venv/
 venv/
 scripts/*.grib2
+
+# CDIP MOP derived data artifacts — large / Mac-local, rebuilt via scripts/mop_*.py
+# (see scripts/MOP_README.md). Bare names (no leading slash) match at the repo root
+# AND in scripts/, so these can't be accidentally committed from either location.
+mop_points.json
+mop_ca_verdicts.json
+mop_ca_buoy_recovery.json
