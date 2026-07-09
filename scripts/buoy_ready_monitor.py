@@ -58,26 +58,26 @@ WINDOW_H = 24            # look back ~24h for the Hs range
 WATCH = [
     # Each entry carries "status": "pending" (still needs action -> alerts fire) or
     # "tagged" (already live on the site -> evaluated for the log, but NEVER alerts).
-    # Only (44025,phi), (44065,phi), (44099,akq) are tagged today; everything else
-    # is pending.
+    # Tagged (live) today: (44025,phi), (44065,phi), (44091,phi), (44099,akq),
+    # (44097,box), (44098,box), (44098,gyx). Everything else is pending.
     # phi — Mid-Atlantic / NJ. 44025 & 44065 (Monmouth) are live -> tagged.
     {"id": "44025", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
     {"id": "44065", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
-    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi", "status": "pending"},
+    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi", "status": "tagged"},
     {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi", "status": "pending"},
     {"id": "44084", "zone": "Delaware", "wfo": "phi", "status": "pending"},
     # box — Southern New England. 44098 (North Shore) and 44008 (far offshore SE
     # Nantucket) are the weakest-fit box entries — validate with the first box
     # --trustcheck. (44018 retired: it read DOWN; 44008 is the open-ocean match.)
-    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box", "status": "pending"},
+    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box", "status": "tagged"},
     {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box", "status": "pending"},
-    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box", "status": "pending"},
+    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box", "status": "tagged"},
     {"id": "44008", "zone": "Outer Cape + Islands (offshore SE Nantucket; far offshore, weakest-fit zone)", "wfo": "box", "status": "pending"},
     # gyx — Southern Maine / New Hampshire. 44098 intentionally appears again here:
     # the same buoy serves box's North Shore end AND the NH / s-Maine coast, so it is
     # listed under both wfo values and the monitor reports it for both regions.
     {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx", "status": "pending"},
-    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx", "status": "pending"},
+    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx", "status": "tagged"},
     # akq — Wakefield VA (Delmarva / Virginia Beach). 44099 (Virginia Beach) is live
     # -> tagged. 44084 intentionally appears again here: it already serves phi's
     # Delaware zone above, and now also anchors akq's Delmarva end — the same
