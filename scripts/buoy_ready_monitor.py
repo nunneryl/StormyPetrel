@@ -93,6 +93,16 @@ WATCH = [
     {"id": "41110", "zone": "Northern ilm — Wrightsville / Carolina Beach / Topsail (Masonboro nearshore)", "wfo": "ilm", "status": "pending"},
     {"id": "41013", "zone": "Cape Fear / Brunswick Islands — offshore (Frying Pan Shoals)", "wfo": "ilm", "status": "pending"},
     {"id": "41108", "zone": "Brunswick Islands — Holden/Ocean Isle/Sunset (Wilmington Harbor nearshore, southern-fit candidate)", "wfo": "ilm", "status": "pending"},
+    # sgx — San Diego CA (West Coast; CDIP 462xx nearshore buoys). San Diego is PLACED
+    # but NOT yet tagged, so all four are pending -> they fire alerts. Only 46254 is
+    # confirmed to resolve in load_ndbc_wave_stations so far; the other three are
+    # candidates to be verified on the monitor's first run — if one doesn't report we'll
+    # swap it, same as the East Coast candidate buoys. All four ids are new and used only
+    # here (no shared-id / double-region handling needed).
+    {"id": "46254", "zone": "Central San Diego — La Jolla / PB / Blacks (Scripps Nearshore)", "wfo": "sgx", "status": "pending"},
+    {"id": "46266", "zone": "North County — Carlsbad / Encinitas / Ponto (Del Mar Nearshore) — candidate", "wfo": "sgx", "status": "pending"},
+    {"id": "46235", "zone": "South SD — Coronado / Imperial Beach / Tijuana Slough (Imperial Beach Nearshore) — candidate", "wfo": "sgx", "status": "pending"},
+    {"id": "46242", "zone": "Far North SD — San Onofre / Cottons / Dana Point (Camp Pendleton Nearshore) — candidate", "wfo": "sgx", "status": "pending"},
 ]
 
 _REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
@@ -264,8 +274,9 @@ def _selftest():
                 "44099": _mk_obs(rising, now),   # akq, UP, rising -> READY
                 "44084": _mk_obs(rising, now),   # phi+akq repeated id, UP, rising -> READY  (44091 absent -> DOWN)
                 "44095": _mk_obs(rising, now),   # mhx, UP, rising -> READY
-                "41110": _mk_obs(rising, now)}   # ilm, UP, rising -> READY
-    up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084", "44095", "41110"}
+                "41110": _mk_obs(rising, now),   # ilm, UP, rising -> READY
+                "46254": _mk_obs(rising, now)}   # sgx, UP, rising -> READY
+    up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084", "44095", "41110", "46254"}
     # Monmouth (44025/44065) is TAGGED — already live, re-verify only, must NOT alert.
     # Every other entry omits "status" -> defaults to "pending" (so we also prove the
     # default is alert-eligible). 44025 is the tagged-UP+rising case (b); 44097 the pending one (a).
@@ -280,7 +291,8 @@ def _selftest():
              {"id": "44084", "zone": "Delaware (phi)", "wfo": "phi"},         # same id, two wfos:
              {"id": "44084", "zone": "Delmarva (akq)", "wfo": "akq"},         # must reach ready_json twice
              {"id": "44095", "zone": "Northern Outer Banks", "wfo": "mhx"},   # new mhx region, pending
-             {"id": "41110", "zone": "Wrightsville / Masonboro", "wfo": "ilm"}]  # new ilm region, pending
+             {"id": "41110", "zone": "Wrightsville / Masonboro", "wfo": "ilm"},  # new ilm region, pending
+             {"id": "46254", "zone": "Central San Diego (Scripps Nearshore)", "wfo": "sgx", "status": "pending"}]  # new sgx/West-Coast region, pending
     res = evaluate(watch, up_set, lambda bid: fixtures.get(bid, []), now=now)
     by = {r["id"]: r for r in res}
     ready_list = [r for r in res if r["ready"]]           # exactly what ready_json is built from
@@ -316,6 +328,8 @@ def _selftest():
           "44095" in ready_by and ready_by["44095"]["wfo"] == "mhx")
     check("ready ilm buoy carries wfo 'ilm' into the ready list",
           "41110" in ready_by and ready_by["41110"]["wfo"] == "ilm")
+    check("ready sgx buoy carries wfo 'sgx' into the ready list",
+          "46254" in ready_by and ready_by["46254"]["wfo"] == "sgx")
 
     # status split: PENDING-and-ready drives alerts; TAGGED-and-ready is re-verify-only
     # and must be EXCLUDED from ready_pending / ready_json / the dedup set-key.
