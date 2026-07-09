@@ -47,6 +47,7 @@ from ..interpret import (
     chop_multiplier, chop_ratio, composite_stars, directional_gain, face_ft,
     period_quality,
 )
+from ..config import WFO_TO_REGION
 from urllib.error import HTTPError, URLError
 
 log = logging.getLogger("pipeline.forecast.nwps_nearshore")
@@ -158,6 +159,18 @@ def _listdir(url):
     return re.findall(r'href="([^"?][^"]*)"', html)
 
 
+def _region_for(wfo):
+    """NWS region root (er/sr/wr/pr/ar) for *wfo*'s NWPS tree, from
+    pipeline.config.WFO_TO_REGION — so cycle discovery scrapes the WFO's real
+    region dir (sgx → wr.<date>/…) instead of the hardcoded Eastern 'er.' default.
+    An unmapped WFO falls back to 'er' with a one-line warning (never crashes)."""
+    region = WFO_TO_REGION.get((wfo or "").lower())
+    if region is None:
+        print(f"⚠ nwps_nearshore: WFO {wfo!r} not in WFO_TO_REGION — defaulting region to 'er'")
+        return "er"
+    return region
+
+
 def _cycle_files(wfo, date, cc, region="er"):
     cg1 = f"{NOMADS}{region}.{date}/{wfo}/{cc}/CG1/"
     files = [n for n in _listdir(cg1)
@@ -229,7 +242,7 @@ def load_cycle(wfo, cycle=None):
     import cfgrib    # lazy: --selftest never calls load_cycle, so needs no eccodes
     import warnings  # to scope the cfgrib/xarray merge FutureWarning below
     if cycle is None:
-        cycle = find_latest_cycle(wfo)
+        cycle = find_latest_cycle(wfo, _region_for(wfo))
         if not cycle:
             raise OSError(f"no recent CG1 cycle for {wfo}")
     date, cc, url = cycle
@@ -655,7 +668,7 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
     now = datetime.datetime.now(datetime.timezone.utc)
     series = {}   # valid_hour -> {"hs","dir","shts","lead"}
     node = None   # DIAGNOSTIC: captured once — static grid/mask → same node every cycle
-    for date, cc, url in recent_cycles(wfo, n_cycles):
+    for date, cc, url in recent_cycles(wfo, n_cycles, _region_for(wfo)):
         cyc = load_cycle(wfo, (date, cc, url))
         elapsed = int((now - cyc["cycle_dt"]).total_seconds() // 3600)
         if elapsed < 0:
@@ -1060,6 +1073,26 @@ def _selftest():
             return True
     check("unknown buoy (absent from metadata) raises", _raises("99999", active_fx))
     check("empty metadata raises — never returns typed/hardcoded coords", _raises("44065", []))
+
+    # region-root resolution — the --validate/--trustcheck cycle path must build the
+    # NOMADS URL under each WFO's NWS region (er/sr/wr/pr/ar) via WFO_TO_REGION, NOT a
+    # hardcoded 'er'. Pure: no network (proves the sgx/West-Coast fix by string alone).
+    # NB: chs (Charleston SC) is NWS Eastern Region — the Carolina coast (mhx/ilm/chs)
+    # is 'er'; Southern starts at Florida/Gulf (jax/mfl/tbw…). Assert the real map.
+    for _w, _exp in [("box", "er"), ("okx", "er"), ("phi", "er"), ("chs", "er"),
+                     ("sgx", "wr"), ("lox", "wr"), ("mtr", "wr"), ("eka", "wr"),
+                     ("jax", "sr"), ("mfl", "sr"), ("tbw", "sr"), ("hfo", "pr")]:
+        check(f"region {_w} -> {_exp}", _region_for(_w) == _exp)
+    check("region resolution is case-insensitive (SGX -> wr)", _region_for("SGX") == "wr")
+    check("unmapped WFO falls back to 'er' (no crash)", _region_for("zzq") == "er")
+    # constructed CG1 cycle-directory URL carries the WFO's region root — sgx under
+    # wr., not er. (mirrors _cycle_files: f"{NOMADS}{region}.{date}/{wfo}/{cc}/CG1/").
+    _sgx_dir = f"{NOMADS}{_region_for('sgx')}.20260709/sgx/12/CG1/"
+    _okx_dir = f"{NOMADS}{_region_for('okx')}.20260709/okx/12/CG1/"
+    check(f"sgx cycle dir under wr., not er. ({_sgx_dir})",
+          "/wr.20260709/sgx/12/CG1/" in _sgx_dir and "/er." not in _sgx_dir)
+    check("okx cycle dir still under er. — Eastern byte-identical",
+          "/er.20260709/okx/12/CG1/" in _okx_dir)
 
     print("\nself-test:", "ALL PASS — NWPS placement, rating, override (full horizon), trust gate sound."
           if ok else "FAILURES")
