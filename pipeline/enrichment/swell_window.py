@@ -118,21 +118,76 @@ def _prepared(poly):
     return p
 
 
+def _first_seaward_entry(ray: LineString, inter, origin: Point):
+    """For a ray whose ORIGIN sits inside a land polygon (the spot's own coast),
+    return the Point at which the ray next runs INTO that polygon — i.e. re-enters
+    it after crossing open water (a coast across a bay/strait), or *origin* itself
+    when the ray never exits the polygon within the fetch (the bearing faces into
+    the landmass). Return None when the ray leaves the polygon and never returns:
+    open water lies seaward, so the polygon does not block this bearing.
+
+    Planar arc-length along the densified ray orders the crossings (it is monotone
+    along a simple outbound ray); the blocking distance itself is measured
+    geodesically by the caller from the returned Point.
+    """
+    intervals: list[tuple[float, float]] = []
+    for g in getattr(inter, "geoms", [inter]):
+        for part in getattr(g, "geoms", [g]):
+            if getattr(part, "geom_type", "") != "LineString" or part.is_empty:
+                continue  # a tangential point touch is not a crossing
+            ts = [ray.project(Point(xy)) for xy in part.coords]
+            intervals.append((min(ts), max(ts)))
+    if not intervals:
+        return None
+    intervals.sort()
+    reentries = [a for a, _ in intervals[1:]]   # entries after the own-coast segment
+    if reentries:
+        return ray.interpolate(min(reentries))
+    if intervals[0][1] >= ray.length - 1e-9:    # never exits → faces into the landmass
+        return origin
+    return None                                 # exits to open water, never returns → open
+
+
 def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float]]:
-    """Return [(polygon, nearest_hit_km), …] for land the ray crosses."""
+    """Return [(polygon, nearest_seaward_hit_km), …] for land the outbound ray runs
+    INTO from open water.
+
+    The ray starts SWELL_LOCAL_COAST_EXCLUSION_KM offshore, but for a spot sitting on
+    (or just inland of) the GSHHG coastline that start can still be INSIDE the spot's
+    own landmass. Counting that near-field own-coast as a hit hard-blocks even seaward
+    bearings, since the ray exits to open ocean a few km out (the too-narrow-window
+    bug). So a polygon the ray STARTS inside blocks the bearing only if the ray
+    re-enters it after reaching open water (a coast across a bay/strait) or never
+    exits within the fetch (faces into the landmass); a ray that exits to open water
+    and never returns is open. Polygons the ray enters from open water (islands, the
+    far continent) are hits at the true water→land crossing, as before.
+    """
     try:
         candidates = land.polygon_tree.query(ray)
     except Exception:
         return []
+    origin = Point(ray.coords[0])
     hits: list[tuple[object, float]] = []
     for c in candidates:
         poly = land.polygons[int(c)]
-        if not _prepared(poly).intersects(ray):
+        prepared = _prepared(poly)
+        if not prepared.intersects(ray):
             continue
         inter = ray.intersection(poly)
         if inter.is_empty:
             continue
-        closest_on_inter, _ = nearest_points(inter, spot_ll)
+        if prepared.contains(origin):
+            # Ray starts inside this polygon = the spot's own landmass: skip the
+            # own-coast near field; block only on a genuine seaward re-entry (or a
+            # bearing that never escapes the landmass).
+            blocker = _first_seaward_entry(ray, inter, origin)
+            if blocker is None:
+                continue  # exits to open water → open along this bearing
+            closest_on_inter = blocker
+        else:
+            # Spot is seaward of this polygon: the nearest intersection point is the
+            # real water→land coastline crossing.
+            closest_on_inter, _ = nearest_points(inter, spot_ll)
         _, _, dist_m = _GEOD.inv(spot_ll.x, spot_ll.y, closest_on_inter.x, closest_on_inter.y)
         hits.append((poly, dist_m / 1000.0))
     return hits
