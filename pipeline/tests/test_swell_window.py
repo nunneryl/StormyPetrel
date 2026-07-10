@@ -98,6 +98,47 @@ def test_chain_keeps_interior_blocked():
     assert r["swell_window_arcs"], "the rest of the compass is still open"
 
 
+def _debug_cast(polys, step=None):
+    """Run the two classifier passes with debug collectors attached — mirrors the
+    validate harness's --debug-blockers path. Returns (debug_rays, debug_chains,
+    hard, small_blocked) for a spot at (0,0)."""
+    step = step or sw.SWELL_RAY_STEP_DEG
+    land = _index(polys)
+    sw._AREA_CACHE.clear()
+    debug_rays: dict = {}
+    hard, small = sw._classify_bearings(0.0, 0.0, land, step, debug=debug_rays)
+    debug_chains: list = []
+    small_blocked = sw._island_shadow(small, step, debug=debug_chains)
+    return debug_rays, debug_chains, hard, small_blocked
+
+
+def test_debug_blockers_attribution():
+    # area filter: a ≥500 km² island at 45 km along bearing 90 → hard by AREA;
+    # the opposite bearing (no hits) is recorded OPEN.
+    dr, _, hard, _ = _debug_cast([_square(600, 45, 90)])
+    assert dr[90]["result"] == "hard" and dr[90]["rule"] == "area_filter_500km2"
+    assert dr[90]["area_km2"] >= sw.SWELL_BLOCKER_AREA_KM2 and len(dr[90]["centroid"]) == 2
+    assert 90 in hard and dr[270]["result"] == "open"
+
+    # local-coast guard: a sub-threshold island AT the spot (≈8 km) → hard by the
+    # 30 km LOCAL rule, not area.
+    dr2, _, _, _ = _debug_cast([_square(108, 8, 90)])
+    assert dr2[90]["result"] == "hard" and dr2[90]["rule"] == "local_coast_30km"
+    assert dr2[90]["dist_km"] <= sw.SWELL_LOCAL_LANDMASS_KM
+
+    # island chain: three abutting 300 km² islands → a BLOCKED-core chain record
+    # (wrap-distance rule), matching test_chain_keeps_interior_blocked.
+    _, dcc, _, sb_chain = _debug_cast([_square(300, 45, b) for b in (74, 90, 106)])
+    assert any(c["decision"] == "blocked_core" for c in dcc), "chain interior stays blocked"
+    assert sb_chain, "the chain contributes blocked bearings"
+
+    # far small island: 108 km² at 80 km wraps clean → an OPEN chain record, no block
+    # (matches test_distance_aware_partial_block).
+    _, dcf, _, sb_far = _debug_cast([_square(108, 80, 90)])
+    assert dcf and all(c["decision"].startswith("open") for c in dcf)
+    assert not sb_far
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

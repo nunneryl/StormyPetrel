@@ -98,6 +98,14 @@ def _poly_area_km2(poly) -> float:
     return a
 
 
+def _poly_centroid(poly) -> tuple[float, float]:
+    """(lat, lng) of a polygon's centroid — a stable fingerprint for a blocker,
+    since GSHHG L1 polygons carry no id/name. Diagnostic use only (never on the
+    production path)."""
+    c = poly.centroid
+    return round(c.y, 3), round(c.x, 3)
+
+
 def _prepared(poly):
     """Prepared geometry for *poly*, cached. Prepared intersects() builds an
     internal segment index once, so the 90 per-spot ray tests against the
@@ -158,12 +166,23 @@ def _merge_runs(blocked: list[int], step_deg: int, gap_bridge_deg: float) -> lis
     return intervals
 
 
-def _island_shadow(small_hit_dist: dict[int, float], step_deg: int) -> set[int]:
-    """Bearings that stay blocked after small-island chains are wrap-trimmed."""
+def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) -> set[int]:
+    """Bearings that stay blocked after small-island chains are wrap-trimmed.
+
+    *debug* (diagnostic only; None on the production/full path, so behaviour and
+    cost are unchanged): a list appended with one record per merged chain —
+    {"lo","hi","width","dmin_km","wrap_deg","decision","reason","core"} — so the
+    validate harness's --debug-blockers dump can show WHY each chain stayed
+    blocked (wrap-distance) or opened (subtend cutoff / fully wrapped).
+    """
     blocked: set[int] = set()
     for lo, hi in _merge_runs(sorted(small_hit_dist), step_deg, SWELL_ISLAND_GAP_BRIDGE_DEG):
         width = hi - lo + step_deg
         if width < SWELL_MIN_SHADOW_DEG:
+            if debug is not None:
+                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
+                              "decision": "open_subtend",
+                              "reason": f"width {width}° < {SWELL_MIN_SHADOW_DEG:.0f}° subtend cutoff"})
             continue  # subtends < ~5°: swell wraps clean around it
         dmin = min(
             small_hit_dist[b % 360]
@@ -172,12 +191,23 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int) -> set[int]:
         )
         wrap = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (dmin / 100.0)
         if 2 * wrap >= width:
+            if debug is not None:
+                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
+                              "dmin_km": dmin, "wrap_deg": wrap, "decision": "open_wrapped",
+                              "reason": f"2·wrap {2 * wrap:.0f}° ≥ width {width}° — fully wrapped"})
             continue  # fully wrapped — the whole shadow fills back in
         core_lo, core_hi = lo + wrap, hi - wrap
         b = math.ceil(core_lo / step_deg) * step_deg
         while b <= core_hi:
             blocked.add(b % 360)
             b += step_deg
+        if debug is not None:
+            first_core = math.ceil(core_lo / step_deg) * step_deg
+            last_core = math.floor(core_hi / step_deg) * step_deg
+            debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
+                          "dmin_km": dmin, "wrap_deg": wrap, "decision": "blocked_core",
+                          "core": [first_core % 360, last_core % 360] if first_core <= last_core else [],
+                          "reason": f"2·wrap {2 * wrap:.0f}° < width {width}° — core stays blocked (wrap-distance)"})
     return blocked
 
 
@@ -210,13 +240,18 @@ def local_land_index(global_land: LandIndex, lat: float, lng: float) -> LandInde
     )
 
 
-def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int):
+def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, debug=None):
     """Pass 1 — for every bearing return (hard_blocked set, small_hit_dist map).
 
     A bearing is hard-blocked by a landmass ≥ SWELL_BLOCKER_AREA_KM2 or any land
     within SWELL_LOCAL_LANDMASS_KM; otherwise the nearest small-island hit (if
     any) is recorded for the partial-shadow pass. Shared by compute_swell_window
     and the validate harness (which also reads `hard_blocked` for the ceiling).
+
+    *debug* (diagnostic only; None on the production/full path, so behaviour and
+    cost are unchanged): a dict filled per bearing with the block decision —
+    {bearing: {"result": "hard"|"small"|"open", ["rule","area_km2","dist_km",
+    "centroid"]}} — for the validate harness's --debug-blockers culprit dump.
     """
     spot_ll = Point(lng, lat)
     hard_blocked: set[int] = set()
@@ -225,16 +260,30 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int):
         ray = _ray_linestring(lat, lng, float(bearing))
         is_hard = False
         nearest_small: float | None = None
+        nearest_small_poly = None
         for poly, dist_km in _ray_hits(ray, land, spot_ll):
             if dist_km <= SWELL_LOCAL_LANDMASS_KM or _poly_area_km2(poly) >= SWELL_BLOCKER_AREA_KM2:
                 is_hard = True
+                if debug is not None:
+                    rule = ("local_coast_30km" if dist_km <= SWELL_LOCAL_LANDMASS_KM
+                            else "area_filter_500km2")
+                    debug[bearing] = {"result": "hard", "rule": rule,
+                                      "area_km2": _poly_area_km2(poly), "dist_km": dist_km,
+                                      "centroid": _poly_centroid(poly)}
                 break
             if nearest_small is None or dist_km < nearest_small:
                 nearest_small = dist_km
+                nearest_small_poly = poly
         if is_hard:
             hard_blocked.add(bearing)
         elif nearest_small is not None:
             small_hit_dist[bearing] = nearest_small
+            if debug is not None:
+                debug[bearing] = {"result": "small", "dist_km": nearest_small,
+                                  "area_km2": _poly_area_km2(nearest_small_poly),
+                                  "centroid": _poly_centroid(nearest_small_poly)}
+        elif debug is not None:
+            debug[bearing] = {"result": "open"}
     return hard_blocked, small_hit_dist
 
 
