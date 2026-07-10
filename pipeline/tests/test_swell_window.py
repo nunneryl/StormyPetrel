@@ -40,6 +40,7 @@ def _open(polys):
     """Open-bearing set for a spot at (0,0) given these island polygons."""
     land = _index(polys)
     sw._AREA_CACHE.clear()
+    sw._PREPARED_CACHE.clear()
     orig = sw.load_land_index
     sw.load_land_index = lambda: land
     try:
@@ -105,6 +106,7 @@ def _debug_cast(polys, step=None):
     step = step or sw.SWELL_RAY_STEP_DEG
     land = _index(polys)
     sw._AREA_CACHE.clear()
+    sw._PREPARED_CACHE.clear()
     debug_rays: dict = {}
     hard, small = sw._classify_bearings(0.0, 0.0, land, step, debug=debug_rays)
     debug_chains: list = []
@@ -137,6 +139,47 @@ def test_debug_blockers_attribution():
     _, dcf, _, sb_far = _debug_cast([_square(108, 80, 90)])
     assert dcf and all(c["decision"].startswith("open") for c in dcf)
     assert not sb_far
+
+
+def test_open_ocean_window_survives_own_coast():
+    # The exact failing case: a spot sitting ~5.5 km INLAND of a large landmass's west
+    # coast, open ocean to the WEST. Before the fix, the ray's 2 km start sat inside the
+    # continent and hard-blocked EVERY bearing (seaward included) at ~2 km. The seaward
+    # half must be OPEN; only the landward half BLOCKED. Continent = everything east of
+    # lng=-0.05 (west coast there); the spot at (0,0) is ~5.5 km inside it, and it is far
+    # larger than SWELL_BLOCKER_AREA_KM2 so it is a genuine wall.
+    continent = Polygon([(-0.05, -40), (40, -40), (40, 40), (-0.05, 40)])
+    _, r = _open([continent])
+    arcs = r["swell_window_arcs"]
+    assert arcs, "a west-facing coastal spot must have an open window"
+
+    def _in_open_arc(b):
+        for a in arcs:
+            lo, hi = a["min"], a["max"]
+            if (lo <= hi and lo <= b <= hi) or (lo > hi and (b >= lo or b <= hi)):
+                return True
+        return False
+
+    for seaward in (225, 250, 270, 290, 315):
+        assert _in_open_arc(seaward), f"seaward bearing {seaward}° (open ocean) must be OPEN"
+    for landward in (45, 90, 135):
+        assert not _in_open_arc(landward), f"landward bearing {landward}° (into the continent) must be BLOCKED"
+    span = sum(a["span"] for a in arcs)
+    assert 120 < span < 260, f"window should be ~the seaward semicircle, not all/none (got {span}°)"
+
+
+def test_own_coast_skipped_but_offshore_reentry_still_blocks():
+    # Guard against over-opening: a spot ~3.3 km inland of a west coast, with a SECOND
+    # coast ~28 km offshore to the west (across a strait). The own coast must NOT block
+    # the west bearing, but the ray re-entering the offshore land MUST — and at the real
+    # ~28 km crossing, not the 2 km own-coast start.
+    mainland = Polygon([(-0.03, -40), (40, -40), (40, 40), (-0.03, 40)])       # spot ~3.3 km inland
+    offshore = Polygon([(-0.30, -40), (-0.25, -40), (-0.25, 40), (-0.30, 40)])  # wall ~28 km west
+    dr, _, hard, _ = _debug_cast([mainland, offshore])
+    assert 270 in hard, "west bearing must still be blocked by the offshore coast across the strait"
+    assert dr[270]["result"] == "hard"
+    assert dr[270]["dist_km"] > 20, \
+        f"blocked at the real offshore crossing, not the 2 km own coast (got {dr[270]['dist_km']:.1f} km)"
 
 
 def _run_all():
