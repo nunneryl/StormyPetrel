@@ -32,6 +32,11 @@ on:
         required: false
         default: '4'
         type: string
+      debug_blockers:
+        description: (validate only) dump the per-ray blocker/culprit breakdown to the log
+        required: false
+        default: true
+        type: boolean
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -95,7 +100,7 @@ jobs:
 
       - name: Validate — 5-spot gate against GSHHG (no writes)
         if: ${{ inputs.mode == 'validate' }}
-        run: python -m pipeline.sw1_raycast --mode validate
+        run: python -m pipeline.sw1_raycast --mode validate ${{ inputs.debug_blockers && '--debug-blockers' || '' }}
 
       - name: Full — raycast the whole roster
         if: ${{ inputs.mode == 'full' }}

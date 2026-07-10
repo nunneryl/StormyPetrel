@@ -60,21 +60,64 @@ def _fmt_arcs(arcs: list[dict]) -> str:
     return ", ".join(f"{a['min']}–{a['max']}({a['span']})" for a in arcs) or "(none)"
 
 
-def run_validate() -> int:
-    """Cast the 5 gate spots against GSHHG and print diagnostics. No writes."""
+def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug_chains, step) -> None:
+    """Per-spot culprit dump for --debug-blockers. Reads only what the classifier
+    already recorded; writes nothing, changes no threshold. HARD rays explain the
+    ceiling; ISLAND chains explain any mid-window split."""
+    print(f"\n── blockers: {name} ({lat:.4f},{lng:.4f})  normal={normal}°  step={step}° ──")
+    print(f"   thresholds: local-coast ≤{sw.SWELL_LOCAL_LANDMASS_KM:.0f}km · area ≥{sw.SWELL_BLOCKER_AREA_KM2:.0f}km²"
+          f" · subtend ≥{sw.SWELL_MIN_SHADOW_DEG:.0f}° · wrap {sw.SWELL_DIFFRACTION_WRAP_DEG:.0f}°"
+          f"+{sw.SWELL_DIFFRACTION_WRAP_PER_100KM:.0f}°/100km")
+    n_local = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "local_coast_30km")
+    n_area = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "area_filter_500km2")
+    ceil = (360 // step - len(hard_sorted)) * step
+    print(f"   HARD-blocked {len(hard_sorted)} rays → ceiling {ceil}°  (local-coast {n_local}, "
+          f"area-filter {n_area})  — bearing / rule / area / dist / centroid:")
+    for b in hard_sorted:
+        r = debug_rays[b]
+        print(f"     b={b:3d}  {r['rule']:18} area≈{r['area_km2']:>11.0f} km²  dist={r['dist_km']:6.1f} km  "
+              f"centroid({r['centroid'][0]:.3f},{r['centroid'][1]:.3f})")
+    if debug_chains:
+        print(f"   ISLAND chains {len(debug_chains)} — subtend / nearest dist / wrap-in / decision:")
+        for c in debug_chains:
+            if c["decision"] == "open_subtend":
+                print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  → OPEN      [{c['reason']}]")
+            else:
+                tail = "" if c["decision"] == "open_wrapped" else \
+                    f" core {'–'.join(map(str, c['core'])) if c.get('core') else '(none)'}"
+                verb = "OPEN" if c["decision"] == "open_wrapped" else "BLOCKED"
+                print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  dmin={c['dmin_km']:5.0f}km  "
+                      f"wrap={c['wrap_deg']:4.1f}°  → {verb}{tail}   [{c['reason']}]")
+    else:
+        print("   ISLAND chains 0 — no sub-threshold island shadows (every non-hard bearing is fully open).")
+
+
+def run_validate(debug_blockers: bool = False) -> int:
+    """Cast the 5 gate spots against GSHHG and print diagnostics. No writes.
+
+    *debug_blockers* (validate-only): after the summary table, dump the per-ray
+    culprit list for each spot — for every hard-blocked bearing the rule
+    (local-coast 30 km / area filter 500 km²) plus the blocking polygon's area,
+    distance and centroid; and for every small-island chain the subtend, nearest
+    distance, wrap-in and whether it stayed BLOCKED (wrap-distance) or opened
+    (subtend cutoff / fully wrapped). Read-only: writes nothing, tunes nothing."""
     land = load_land_index()
     if land is None:
         log.error("GSHHG land index unavailable — cannot validate. Did download_geodata.sh run?")
         return 1
-    log.info("GSHHG loaded: %d polygons. Casting 5 gate spots at %d° (%d rays).",
-             len(land.polygons), RUN_STEP_DEG, 360 // RUN_STEP_DEG)
+    log.info("GSHHG loaded: %d polygons. Casting 5 gate spots at %d° (%d rays).%s",
+             len(land.polygons), RUN_STEP_DEG, 360 // RUN_STEP_DEG,
+             "  [--debug-blockers ON]" if debug_blockers else "")
 
     print(f"\n{'spot':20}{'width':>6}{'ceil':>6}{'target':>9}{'opt':>5}{'nrm':>5}  source    arcs")
     print("-" * 96)
+    detail: list[tuple] = []
     for name, lat, lng, normal, tlo, thi, note in VALIDATION_SPOTS:
         local = sw.local_land_index(land, lat, lng)
-        hard, small = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG)
-        small_blocked = sw._island_shadow(small, RUN_STEP_DEG)
+        debug_rays = {} if debug_blockers else None
+        debug_chains: list | None = [] if debug_blockers else None
+        hard, small = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, debug=debug_rays)
+        small_blocked = sw._island_shadow(small, RUN_STEP_DEG, debug=debug_chains)
         open_b = [b for b in range(0, 360, RUN_STEP_DEG)
                   if b not in hard and b not in small_blocked]
         ceil_b = [b for b in range(0, 360, RUN_STEP_DEG) if b not in hard]
@@ -85,10 +128,15 @@ def run_validate() -> int:
         source = "raycast" if arcs else "(empty→fallback)"
         tgt = f"{tlo}-{'+' if thi is None else thi}"
         print(f"{name:20}{width:6d}{ceil:6d}{tgt:>9}{str(optimal):>5}{normal:>5}  {source:9} [{_fmt_arcs(arcs)}]")
+        if debug_blockers:
+            detail.append((name, lat, lng, normal, sorted(hard), debug_rays, debug_chains))
     print("-" * 96)
     print("width = open window (sum of arc spans); ceil = all-islands-removed ceiling.")
     print("If a number is off, tune the §3 thresholds against GSHHG and re-run validate —")
     print("do NOT loosen the 30 km local-coast guard (Second Beach RI must stay bounded).")
+    if debug_blockers:
+        for d in detail:
+            _print_blocker_detail(*d, step=RUN_STEP_DEG)
     return 0
 
 
@@ -197,10 +245,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--input", type=Path, default=DEFAULT_ENRICHED_OUTPUT)
     p.add_argument("--output", type=Path, default=DEFAULT_ENRICHED_OUTPUT)
     p.add_argument("--workers", type=int, default=min(os.cpu_count() or 2, 4))
+    p.add_argument("--debug-blockers", action="store_true",
+                   help="(validate only) after the table, dump the per-ray blocker culprit "
+                        "breakdown — the rule (local-coast / area filter / subtend / wrap), the "
+                        "polygon area / distance / centroid, and chain subtend that killed each "
+                        "bearing. Read-only: writes nothing, tunes nothing.")
     args = p.parse_args(argv)
 
     if args.mode == "validate":
-        return run_validate()
+        return run_validate(debug_blockers=args.debug_blockers)
+    if args.debug_blockers:
+        log.warning("--debug-blockers is validate-only; ignoring it for --mode full.")
     return run_full(args.input, args.output, max(1, args.workers))
 
 
