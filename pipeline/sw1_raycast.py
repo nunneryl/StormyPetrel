@@ -60,6 +60,13 @@ def _fmt_arcs(arcs: list[dict]) -> str:
     return ", ".join(f"{a['min']}–{a['max']}({a['span']})" for a in arcs) or "(none)"
 
 
+def _chain_member_bearings(lo, hi, step):
+    """Bearings that make up a chain [lo, hi] (handles the 0/360 wrap)."""
+    if lo <= hi:
+        return list(range(lo, hi + 1, step))
+    return list(range(lo, 360, step)) + list(range(0, hi + 1, step))
+
+
 def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug_chains, step) -> None:
     """Per-spot culprit dump for --debug-blockers. Reads only what the classifier
     already recorded; writes nothing, changes no threshold. HARD rays explain the
@@ -69,10 +76,10 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
           f" · subtend ≥{sw.SWELL_MIN_SHADOW_DEG:.0f}° · wrap {sw.SWELL_DIFFRACTION_WRAP_DEG:.0f}°"
           f"+{sw.SWELL_DIFFRACTION_WRAP_PER_100KM:.0f}°/100km")
     n_local = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "local_coast_30km")
-    n_area = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "area_filter_500km2")
+    n_solid = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "mainland_solid")
     ceil = (360 // step - len(hard_sorted)) * step
     print(f"   HARD-blocked {len(hard_sorted)} rays → ceiling {ceil}°  (local-coast {n_local}, "
-          f"area-filter {n_area})  — bearing / rule / area / dist / centroid:")
+          f"mainland-solid {n_solid})  — bearing / rule / area / dist / centroid:")
     for b in hard_sorted:
         r = debug_rays[b]
         print(f"     b={b:3d}  {r['rule']:18} area≈{r['area_km2']:>11.0f} km²  dist={r['dist_km']:6.1f} km  "
@@ -82,12 +89,25 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
         for c in debug_chains:
             if c["decision"] == "open_subtend":
                 print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  → OPEN      [{c['reason']}]")
-            else:
-                tail = "" if c["decision"] == "open_wrapped" else \
-                    f" core {'–'.join(map(str, c['core'])) if c.get('core') else '(none)'}"
-                verb = "OPEN" if c["decision"] == "open_wrapped" else "BLOCKED"
-                print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  dmin={c['dmin_km']:5.0f}km  "
-                      f"wrap={c['wrap_deg']:4.1f}°  → {verb}{tail}   [{c['reason']}]")
+                continue
+            tail = "" if c["decision"] == "open_wrapped" else \
+                f" core {'–'.join(map(str, c['core'])) if c.get('core') else '(none)'}"
+            verb = "OPEN" if c["decision"] == "open_wrapped" else "BLOCKED"
+            print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  dmin={c['dmin_km']:5.0f}km  "
+                  f"wrap={c['wrap_deg']:4.1f}°  → {verb}{tail}   [{c['reason']}]")
+            # member composition: is this ONE landmass or near+far fused across a bay mouth?
+            # Reads the per-bearing 'small' records — area/centroid identify mainland vs island.
+            members = [debug_rays[b] for b in _chain_member_bearings(c["lo"], c["hi"], step)
+                       if debug_rays.get(b, {}).get("result") == "small"]
+            if members:
+                dists = [m["dist_km"] for m in members]
+                near = min(members, key=lambda m: m["dist_km"])
+                far = max(members, key=lambda m: m["dist_km"])
+                fused = "  ← NEAR+FAR fused (one wrap from dmin over both)" \
+                    if max(dists) > 3 * max(1.0, min(dists)) else ""
+                print(f"        members {len(members)}: dist {min(dists):.0f}–{max(dists):.0f}km · "
+                      f"near {near['area_km2']:.0f}km²@({near['centroid'][0]:.1f},{near['centroid'][1]:.1f}) · "
+                      f"far {far['area_km2']:.0f}km²@({far['centroid'][0]:.1f},{far['centroid'][1]:.1f}){fused}")
     else:
         print("   ISLAND chains 0 — no sub-threshold island shadows (every non-hard bearing is fully open).")
 
@@ -210,6 +230,48 @@ def run_validate(debug_blockers: bool = False) -> int:
     return 0
 
 
+def run_sweep_mainland_solid(values) -> int:
+    """Sweep SWELL_MAINLAND_SOLID_KM over *values* (km) and print the open-window WIDTH per
+    gate spot in ONE run — a sensitivity table for picking the value. Read-only: each value
+    is passed per call to _classify_bearings, so the committed default is never mutated and
+    spots_enriched.json is never written."""
+    land = load_land_index()
+    if land is None:
+        log.error("GSHHG land index unavailable — cannot sweep. Did download_geodata.sh run?")
+        return 1
+    default = sw.SWELL_MAINLAND_SOLID_KM
+    log.info("GSHHG loaded: %d polygons. Sweeping SWELL_MAINLAND_SOLID_KM over %s km (committed default %g).",
+             len(land.polygons), ",".join(f"{v:g}" for v in values), default)
+
+    labels = ["Hunt", "Malibu", "Rincon", "Blacks", "RI"]   # aligned to VALIDATION_SPOTS order
+    cols = []   # (lat, lng, header) per spot
+    for (name, lat, lng, normal, tlo, thi, note), lbl in zip(VALIDATION_SPOTS, labels):
+        cols.append((lat, lng, f"{lbl}({tlo}-{'+' if thi is None else thi})"))
+
+    # width[value][spot] — cast each spot once per value (local index reused across values;
+    # only the hard/small split depends on the swept SWELL_MAINLAND_SOLID_KM).
+    matrix: dict[float, list[int]] = {v: [] for v in values}
+    for lat, lng, _lbl in cols:
+        local = sw.local_land_index(land, lat, lng)
+        for v in values:
+            hard, small = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, mainland_solid_km=v)
+            small_blocked = sw._island_shadow(small, RUN_STEP_DEG)
+            open_b = [b for b in range(0, 360, RUN_STEP_DEG) if b not in hard and b not in small_blocked]
+            matrix[v].append(sum(a["span"] for a in sw._merge_open_arcs(open_b, RUN_STEP_DEG)))
+
+    print("\nSWELL_MAINLAND_SOLID_KM sweep — open-window width per spot (°)")
+    print(f"committed default = {default:g} km; this run changes nothing (per-call override, read-only).")
+    header = f"{'km':>5}   " + "  ".join(f"{c[2]:>15}" for c in cols)
+    print(header)
+    print("-" * len(header))
+    for v in values:
+        mark = " *" if v == default else ""
+        print(f"{v:>5g}   " + "  ".join(f"{w:>15d}" for w in matrix[v]) + mark)
+    print("-" * len(header))
+    print("* = committed default.  width = sum of open-arc spans (same metric as the gate table).")
+    return 0
+
+
 # ---- full roster (multiprocessing) -----------------------------------------
 
 def _raycast_worker(item: tuple[int, str, float, float]) -> tuple[int, dict | None]:
@@ -317,15 +379,28 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--workers", type=int, default=min(os.cpu_count() or 2, 4))
     p.add_argument("--debug-blockers", action="store_true",
                    help="(validate only) after the table, dump the per-ray blocker culprit "
-                        "breakdown — the rule (local-coast / area filter / subtend / wrap), the "
+                        "breakdown — the rule (local-coast / mainland-solid / subtend / wrap), the "
                         "polygon area / distance / centroid, and chain subtend that killed each "
                         "bearing. Read-only: writes nothing, tunes nothing.")
+    p.add_argument("--sweep-mainland-solid", nargs="?", const="60,80,100,120,150", default=None,
+                   metavar="KM_CSV",
+                   help="(validate only) sweep SWELL_MAINLAND_SOLID_KM over these comma-separated km "
+                        "values (bare flag = 60,80,100,120,150) and print open-window width per gate "
+                        "spot. Read-only: does not change the committed default or write spots_enriched.json.")
     args = p.parse_args(argv)
 
     if args.mode == "validate":
+        if args.sweep_mainland_solid is not None:
+            try:
+                values = [float(x) for x in args.sweep_mainland_solid.split(",") if x.strip()]
+            except ValueError:
+                log.error("--sweep-mainland-solid expects comma-separated km numbers, got %r",
+                          args.sweep_mainland_solid)
+                return 2
+            return run_sweep_mainland_solid(values)
         return run_validate(debug_blockers=args.debug_blockers)
-    if args.debug_blockers:
-        log.warning("--debug-blockers is validate-only; ignoring it for --mode full.")
+    if args.debug_blockers or args.sweep_mainland_solid is not None:
+        log.warning("--debug-blockers / --sweep-mainland-solid are validate-only; ignoring for --mode full.")
     return run_full(args.input, args.output, max(1, args.workers))
 
 

@@ -300,7 +300,8 @@ def local_land_index(global_land: LandIndex, lat: float, lng: float) -> LandInde
     )
 
 
-def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, debug=None):
+def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, debug=None,
+                       mainland_solid_km=None):
     """Pass 1 — for every bearing return (hard_blocked set, small_hit_dist map).
 
     A bearing is hard-blocked by a landmass ≥ SWELL_BLOCKER_AREA_KM2 or any land
@@ -315,8 +316,13 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     ``own`` (hard blocks) reuses the own-coast test: True when the ray origin sits
     inside the blocking polygon (the landmass the spot is on), letting the harness
     separate own-coast near field from distant-mainland min-fetch clipping.
+
+    *mainland_solid_km* overrides SWELL_MAINLAND_SOLID_KM (the distance within which a
+    large landmass hard-blocks) for this call only — used by the validate harness's
+    --sweep-mainland-solid sensitivity sweep; None keeps the committed default.
     """
     spot_ll = Point(lng, lat)
+    solid_km = SWELL_MAINLAND_SOLID_KM if mainland_solid_km is None else mainland_solid_km
     hard_blocked: set[int] = set()
     small_hit_dist: dict[int, float] = {}
     for bearing in range(0, 360, step_deg):
@@ -332,7 +338,7 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
             # while a near coast / bay-strait crossing still hard-blocks).
             if dist_km <= SWELL_LOCAL_LANDMASS_KM or (
                     _poly_area_km2(poly) >= SWELL_BLOCKER_AREA_KM2
-                    and dist_km <= SWELL_MAINLAND_SOLID_KM):
+                    and dist_km <= solid_km):
                 is_hard = True
                 if debug is not None:
                     rule = ("local_coast_30km" if dist_km <= SWELL_LOCAL_LANDMASS_KM
