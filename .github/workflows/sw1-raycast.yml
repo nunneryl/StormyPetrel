@@ -37,6 +37,11 @@ on:
         required: false
         default: true
         type: boolean
+      sweep_mainland_solid:
+        description: (validate only) sweep SWELL_MAINLAND_SOLID_KM (60/80/100/120/150 km) and print width-per-spot
+        required: false
+        default: false
+        type: boolean
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -100,7 +105,7 @@ jobs:
 
       - name: Validate — 5-spot gate against GSHHG (no writes)
         if: ${{ inputs.mode == 'validate' }}
-        run: python -m pipeline.sw1_raycast --mode validate ${{ inputs.debug_blockers && '--debug-blockers' || '' }}
+        run: python -m pipeline.sw1_raycast --mode validate ${{ inputs.debug_blockers && '--debug-blockers' || '' }} ${{ inputs.sweep_mainland_solid && '--sweep-mainland-solid' || '' }}
 
       - name: Full — raycast the whole roster
         if: ${{ inputs.mode == 'full' }}

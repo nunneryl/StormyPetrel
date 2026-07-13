@@ -224,6 +224,23 @@ def test_island_spot_with_mainland_behind_stays_bounded():
     assert sum(a["span"] for a in arcs) < 300, "a spot with a mainland close behind must stay bounded, not ~360°"
 
 
+def test_mainland_solid_km_override_sweeps():
+    # The --sweep-mainland-solid path passes SWELL_MAINLAND_SOLID_KM per call. A ≥500 km²
+    # wall at ~128 km is SOLID (hard) when the override is 150 km but DEMOTED when it is
+    # 100 km — and the None default matches passing the committed constant.
+    idx = _index([_square(600, 140)])   # nearest edge ~128 km
+    sw._AREA_CACHE.clear()
+    sw._PREPARED_CACHE.clear()
+    hard_hi, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG, mainland_solid_km=150.0)
+    hard_lo, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG, mainland_solid_km=100.0)
+    assert 90 in hard_hi, "≥500 km² wall at ~128 km is SOLID when the solid range is 150 km"
+    assert 90 not in hard_lo, "the same wall is DEMOTED (not hard) when the solid range is 100 km"
+    hard_def, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG)
+    hard_committed, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG,
+                                              mainland_solid_km=sw.SWELL_MAINLAND_SOLID_KM)
+    assert hard_def == hard_committed, "None override == passing the committed SWELL_MAINLAND_SOLID_KM"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
