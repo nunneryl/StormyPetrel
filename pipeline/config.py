@@ -58,13 +58,28 @@ SWELL_MIN_FETCH_KM = 3_000  # a bearing is "open" iff the first land hit is beyo
 # open-coast California windows to ~50°. The rules below replace the binary
 # total-block with area-, distance-, and angular-width-aware partial blocking.
 #
-# A bearing is hard-blocked (the swell genuinely can't get there) iff a ray
-# hits either (a) a landmass at or above SWELL_BLOCKER_AREA_KM2 — continents,
-# big islands — or (b) ANY land within SWELL_LOCAL_LANDMASS_KM, which is the
-# coast / headland the spot itself sits on (this must keep blocking even when
-# the local landmass is a small island, e.g. Aquidneck Is. for Newport RI).
+# A bearing is hard-blocked (the swell genuinely can't get there) iff a ray hits
+# either (a) a landmass at or above SWELL_BLOCKER_AREA_KM2 *within* the near/mid
+# field (SWELL_MAINLAND_SOLID_KM) — continents / big islands the swell can't get
+# around — or (b) ANY land within SWELL_LOCAL_LANDMASS_KM, which is the coast /
+# headland the spot itself sits on (this must keep blocking even when the local
+# landmass is a small island, e.g. Aquidneck Is. for Newport RI). A large landmass
+# hit BEYOND SWELL_MAINLAND_SOLID_KM is a distance-graduated partial blocker, not a
+# wall — it wraps open by distance through the diffraction machinery below.
 SWELL_BLOCKER_AREA_KM2 = 500.0   # land below this is a partial blocker, not a wall
 SWELL_LOCAL_LANDMASS_KM = 30.0   # any land nearer than this always hard-blocks (local coast)
+# A large (>= SWELL_BLOCKER_AREA_KM2) landmass hard-blocks only within this range;
+# beyond it, it is demoted to a partial blocker and fed through the same distance-aware
+# diffraction-wrap machinery a sub-threshold island already gets. This fixes the
+# "3000 km min-fetch too aggressive" SW-1 backlog item: a coast merely grazed hundreds
+# or thousands of km downrange under SWELL_MIN_FETCH_KM no longer walls off an open-ocean
+# bearing (it diffracts around), while a genuine obstruction still blocks. 100 km is the
+# bucket-B diagnostic boundary from the validate run: coasts within it — the spot's own
+# shore, a coast across a bay/strait, Point Conception ~92 km off Rincon — stay solid and
+# keep the gate spots bounded; the distant-mainland grazes (Baja/Mexico at 250-2900 km)
+# that dominated the too-narrow windows wrap open instead. The wrap machinery graduates
+# the demoted set further by distance + subtend, so a broad near-ish coast keeps its core.
+SWELL_MAINLAND_SOLID_KM = 100.0
 # Sub-threshold islands cast a *partial* shadow. Adjacent island shadows
 # separated by a gap narrower than the bridge merge into one "chain" (swell
 # can't squeeze a useful amount of energy through a narrow slot between

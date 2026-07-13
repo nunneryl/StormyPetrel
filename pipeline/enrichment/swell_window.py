@@ -8,14 +8,18 @@ far away the hit is.
 A bearing is *hard-blocked* (swell genuinely can't reach it) iff a ray hits
 either:
 
-  * a landmass at or above SWELL_BLOCKER_AREA_KM2 — continents and big
-    islands are walls; or
+  * a landmass at or above SWELL_BLOCKER_AREA_KM2 *within* SWELL_MAINLAND_SOLID_KM
+    — continents and big islands in the near-to-mid field are walls; or
   * ANY land within SWELL_LOCAL_LANDMASS_KM — the coast / headland the spot
     sits on. This stays a blocker even when the local landmass is itself a
     small island (e.g. Aquidneck Is. for a Newport RI spot), which is why the
     area filter alone can't own the "is this blocked" decision.
 
-Sub-threshold islands beyond the local landmass are *partial* blockers. Their
+A large landmass hit BEYOND SWELL_MAINLAND_SOLID_KM is NOT a wall — a coast merely
+grazed far downrange under the SWELL_MIN_FETCH_KM fetch diffracts around, so it is
+demoted to a *partial* blocker and wraps open by distance the same way a distant
+island does (below). Sub-threshold islands beyond the local landmass are *partial*
+blockers. Their
 per-bearing shadows are unioned, adjacent shadows separated by less than
 SWELL_ISLAND_GAP_BRIDGE_DEG are merged into a "chain", and each chain is
 trimmed inward on both edges by a distance-aware diffraction wrap-in
@@ -50,6 +54,7 @@ from ..config import (
     SWELL_ISLAND_GAP_BRIDGE_DEG,
     SWELL_LOCAL_COAST_EXCLUSION_KM,
     SWELL_LOCAL_LANDMASS_KM,
+    SWELL_MAINLAND_SOLID_KM,
     SWELL_MIN_FETCH_KM,
     SWELL_MIN_SHADOW_DEG,
     SWELL_RAY_STEP_DEG,
@@ -320,11 +325,18 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
         nearest_small: float | None = None
         nearest_small_poly = None
         for poly, dist_km in _ray_hits(ray, land, spot_ll):
-            if dist_km <= SWELL_LOCAL_LANDMASS_KM or _poly_area_km2(poly) >= SWELL_BLOCKER_AREA_KM2:
+            # A large landmass is SOLID only in the near/mid field; BEYOND
+            # SWELL_MAINLAND_SOLID_KM it falls through to the small-shadow pass, so the
+            # distance-aware diffraction wrap graduates it (a coast grazed far downrange
+            # under SWELL_MIN_FETCH_KM diffracts around instead of walling off the bearing,
+            # while a near coast / bay-strait crossing still hard-blocks).
+            if dist_km <= SWELL_LOCAL_LANDMASS_KM or (
+                    _poly_area_km2(poly) >= SWELL_BLOCKER_AREA_KM2
+                    and dist_km <= SWELL_MAINLAND_SOLID_KM):
                 is_hard = True
                 if debug is not None:
                     rule = ("local_coast_30km" if dist_km <= SWELL_LOCAL_LANDMASS_KM
-                            else "area_filter_500km2")
+                            else "mainland_solid")
                     debug[bearing] = {"result": "hard", "rule": rule,
                                       "area_km2": _poly_area_km2(poly), "dist_km": dist_km,
                                       "centroid": _poly_centroid(poly),
