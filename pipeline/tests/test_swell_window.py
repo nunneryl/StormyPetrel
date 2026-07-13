@@ -115,10 +115,12 @@ def _debug_cast(polys, step=None):
 
 
 def test_debug_blockers_attribution():
-    # area filter: a ≥500 km² island at 45 km along bearing 90 → hard by AREA;
-    # the opposite bearing (no hits) is recorded OPEN.
+    # large landmass within the solid range: a ≥500 km² wall at ~33 km (>30 km local
+    # guard, ≤100 km SWELL_MAINLAND_SOLID_KM) → hard by the mainland-solid rule; the
+    # opposite bearing (no hits) is recorded OPEN.
     dr, _, hard, _ = _debug_cast([_square(600, 45, 90)])
-    assert dr[90]["result"] == "hard" and dr[90]["rule"] == "area_filter_500km2"
+    assert dr[90]["result"] == "hard" and dr[90]["rule"] == "mainland_solid"
+    assert sw.SWELL_LOCAL_LANDMASS_KM < dr[90]["dist_km"] <= sw.SWELL_MAINLAND_SOLID_KM
     assert dr[90]["area_km2"] >= sw.SWELL_BLOCKER_AREA_KM2 and len(dr[90]["centroid"]) == 2
     assert 90 in hard and dr[270]["result"] == "open"
 
@@ -180,6 +182,46 @@ def test_own_coast_skipped_but_offshore_reentry_still_blocks():
     assert dr[270]["result"] == "hard"
     assert dr[270]["dist_km"] > 20, \
         f"blocked at the real offshore crossing, not the 2 km own coast (got {dr[270]['dist_km']:.1f} km)"
+
+
+def test_distant_large_landmass_wraps_open():
+    # The min-fetch relaxation: a ≥500 km² landmass at 45 km is a solid wall (within
+    # SWELL_MAINLAND_SOLID_KM); the SAME compact landmass BEYOND that distance is demoted
+    # to a partial blocker and wraps clean open instead of hard-blocking downrange.
+    near, _ = _open([_square(600, 45)])          # ~33 km — inside the solid range
+    assert _blocked_near(near, 90), "≥500 km² wall within SWELL_MAINLAND_SOLID_KM still hard-blocks"
+    far, _ = _open([_square(600, 200)])          # ~188 km — beyond the 100 km default
+    assert 90 in far, "the same wall beyond SWELL_MAINLAND_SOLID_KM must wrap open, not hard-block"
+
+
+def test_near_mainland_across_strait_still_blocks():
+    # A large landmass across a strait — beyond the 30 km local guard but WITHIN
+    # SWELL_MAINLAND_SOLID_KM — is still a solid wall; only DISTANT mainland is relaxed.
+    dr, _, hard, _ = _debug_cast([_square(600, 60)])   # ~48 km: >30 km guard, <100 km solid
+    assert 90 in hard, "≥500 km² landmass within SWELL_MAINLAND_SOLID_KM must still hard-block"
+    assert dr[90]["rule"] == "mainland_solid"
+    assert sw.SWELL_LOCAL_LANDMASS_KM < dr[90]["dist_km"] <= sw.SWELL_MAINLAND_SOLID_KM
+
+
+def test_island_spot_with_mainland_behind_stays_bounded():
+    # RI case: a spot on a small island (<500 km²) with a large MAINLAND close behind it
+    # (within SWELL_MAINLAND_SOLID_KM) and only DISTANT land seaward. The min-fetch
+    # relaxation must not blow it open to 360° — the near mainland still bounds the
+    # landward side; only the distant seaward landmass is relaxed (wraps open).
+    island = Polygon([(-0.06, -0.04), (0.06, -0.04), (0.06, 0.06), (-0.06, 0.06)])  # spot inside, ~148 km²
+    mainland = Polygon([(-40, 0.45), (40, 0.45), (40, 40), (-40, 40)])              # large; south coast ~50 km N
+    distant = _square(600, 250, 180)                                                # ≥500 km², ~240 km S -> relaxed
+    _, r = _open([island, mainland, distant])
+    arcs = r["swell_window_arcs"]
+    assert arcs, "the seaward (south) side must be open"
+
+    def _in(b):
+        return any((a["min"] <= b <= a["max"]) if a["min"] <= a["max"]
+                   else (b >= a["min"] or b <= a["max"]) for a in arcs)
+
+    assert _in(180), "due south (open ocean) must be OPEN"
+    assert not _in(0), "due north (large mainland close behind, within the solid range) must stay BLOCKED"
+    assert sum(a["span"] for a in arcs) < 300, "a spot with a mainland close behind must stay bounded, not ~360°"
 
 
 def _run_all():
