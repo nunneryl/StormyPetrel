@@ -92,6 +92,72 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
         print("   ISLAND chains 0 — no sub-threshold island shadows (every non-hard bearing is fully open).")
 
 
+# Diagnostic bucketing distance cutoff for the A/B/C split — a REPORTING boundary
+# only, NOT a model threshold (it changes nothing the raycast computes).
+_DISTANT_MAINLAND_KM = 100.0
+
+
+def _classify_hard(rec) -> str:
+    """Bucket one HARD-blocked bearing: A) own-coast near field (the spot's own
+    landmass within the local-coast guard), B) distant-mainland (a ≥SWELL_BLOCKER_AREA_KM2
+    polygon hit beyond _DISTANT_MAINLAND_KM — the SWELL_MIN_FETCH_KM downrange clip),
+    C) island / other."""
+    dist = rec.get("dist_km", 0.0)
+    if rec.get("own") and dist <= sw.SWELL_LOCAL_LANDMASS_KM:
+        return "A"
+    if rec.get("area_km2", 0.0) >= sw.SWELL_BLOCKER_AREA_KM2 and dist > _DISTANT_MAINLAND_KM:
+        return "B"
+    return "C"
+
+
+def _fmt_ranges(bearings, step) -> str:
+    """Collapse bearings into compact contiguous 'lo-hi' ranges."""
+    bs = sorted(bearings)
+    if not bs:
+        return "—"
+    out, lo, prev = [], bs[0], bs[0]
+    for b in bs[1:]:
+        if b - prev == step:
+            prev = b
+        else:
+            out.append(f"{lo}-{prev}" if lo != prev else f"{lo}")
+            lo = prev = b
+    out.append(f"{lo}-{prev}" if lo != prev else f"{lo}")
+    return ",".join(out)
+
+
+def _print_bucket_summary(name, debug_rays, small_blocked_sorted, open_b, step) -> None:
+    """Classify every BLOCKED bearing into A) own-coast near field, B) distant-mainland
+    min-fetch clip, C) island/other, and print per-spot counts / ranges / degrees, plus a
+    read-only what-if window width if bucket B were treated as open. Changes no threshold,
+    writes nothing (it only re-reads what the classifier already recorded)."""
+    buckets: dict[str, list[int]] = {"A": [], "B": [], "C": []}
+    for b in sorted(debug_rays):
+        if debug_rays[b].get("result") == "hard":
+            buckets[_classify_hard(debug_rays[b])].append(b)
+    buckets["C"] = sorted(set(buckets["C"]) | set(small_blocked_sorted))  # island-chain shadows → C
+
+    labels = {
+        "A": f"own-coast near field  (≤{sw.SWELL_LOCAL_LANDMASS_KM:.0f}km, spot's own landmass)",
+        "B": f"distant-mainland      (≥{sw.SWELL_BLOCKER_AREA_KM2:.0f}km², >{_DISTANT_MAINLAND_KM:.0f}km · min-fetch clip)",
+        "C": "island / other",
+    }
+    print(f"   ── A/B/C blocker buckets — {name} ──")
+    for k in ("A", "B", "C"):
+        n = len(buckets[k])
+        print(f"     {k}) {labels[k]:52} {n:3d} rays · {n * step:3d}° blocked  [{_fmt_ranges(buckets[k], step)}]")
+
+    # read-only what-if: window width if bucket B (distant-mainland min-fetch) were open
+    cur_arcs = sw._merge_open_arcs(sorted(open_b), step)
+    cur_w = sum(a["span"] for a in cur_arcs)
+    wif_arcs = sw._merge_open_arcs(sorted(set(open_b) | set(buckets["B"])), step)
+    wif_w = sum(a["span"] for a in wif_arcs)
+    print(f"     what-if: width {cur_w}° → {wif_w}°  (+{wif_w - cur_w}°) if bucket B were open "
+          f"— SWELL_MIN_FETCH_KM unchanged, read-only estimate")
+    print(f"        current arcs: [{_fmt_arcs(cur_arcs)}]")
+    print(f"        B-open  arcs: [{_fmt_arcs(wif_arcs)}]")
+
+
 def run_validate(debug_blockers: bool = False) -> int:
     """Cast the 5 gate spots against GSHHG and print diagnostics. No writes.
 
@@ -100,7 +166,9 @@ def run_validate(debug_blockers: bool = False) -> int:
     (local-coast 30 km / area filter 500 km²) plus the blocking polygon's area,
     distance and centroid; and for every small-island chain the subtend, nearest
     distance, wrap-in and whether it stayed BLOCKED (wrap-distance) or opened
-    (subtend cutoff / fully wrapped). Read-only: writes nothing, tunes nothing."""
+    (subtend cutoff / fully wrapped). Then an A/B/C blocker-bucket summary per spot
+    (own-coast near field / distant-mainland min-fetch clip / island-other) with a
+    read-only what-if window width if bucket B were open. Writes nothing, tunes nothing."""
     land = load_land_index()
     if land is None:
         log.error("GSHHG land index unavailable — cannot validate. Did download_geodata.sh run?")
@@ -129,14 +197,16 @@ def run_validate(debug_blockers: bool = False) -> int:
         tgt = f"{tlo}-{'+' if thi is None else thi}"
         print(f"{name:20}{width:6d}{ceil:6d}{tgt:>9}{str(optimal):>5}{normal:>5}  {source:9} [{_fmt_arcs(arcs)}]")
         if debug_blockers:
-            detail.append((name, lat, lng, normal, sorted(hard), debug_rays, debug_chains))
+            detail.append((name, lat, lng, normal, sorted(hard), debug_rays, debug_chains,
+                           sorted(small_blocked), open_b))
     print("-" * 96)
     print("width = open window (sum of arc spans); ceil = all-islands-removed ceiling.")
     print("If a number is off, tune the §3 thresholds against GSHHG and re-run validate —")
     print("do NOT loosen the 30 km local-coast guard (Second Beach RI must stay bounded).")
     if debug_blockers:
-        for d in detail:
-            _print_blocker_detail(*d, step=RUN_STEP_DEG)
+        for name, lat, lng, normal, hard_sorted, dbg_rays, dbg_chains, sb_sorted, ob in detail:
+            _print_blocker_detail(name, lat, lng, normal, hard_sorted, dbg_rays, dbg_chains, RUN_STEP_DEG)
+            _print_bucket_summary(name, dbg_rays, sb_sorted, ob, RUN_STEP_DEG)
     return 0
 
 

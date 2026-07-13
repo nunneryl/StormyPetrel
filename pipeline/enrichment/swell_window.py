@@ -306,7 +306,10 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     *debug* (diagnostic only; None on the production/full path, so behaviour and
     cost are unchanged): a dict filled per bearing with the block decision —
     {bearing: {"result": "hard"|"small"|"open", ["rule","area_km2","dist_km",
-    "centroid"]}} — for the validate harness's --debug-blockers culprit dump.
+    "centroid","own"]}} — for the validate harness's --debug-blockers culprit dump.
+    ``own`` (hard blocks) reuses the own-coast test: True when the ray origin sits
+    inside the blocking polygon (the landmass the spot is on), letting the harness
+    separate own-coast near field from distant-mainland min-fetch clipping.
     """
     spot_ll = Point(lng, lat)
     hard_blocked: set[int] = set()
@@ -324,7 +327,8 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
                             else "area_filter_500km2")
                     debug[bearing] = {"result": "hard", "rule": rule,
                                       "area_km2": _poly_area_km2(poly), "dist_km": dist_km,
-                                      "centroid": _poly_centroid(poly)}
+                                      "centroid": _poly_centroid(poly),
+                                      "own": _prepared(poly).contains(Point(ray.coords[0]))}
                 break
             if nearest_small is None or dist_km < nearest_small:
                 nearest_small = dist_km
