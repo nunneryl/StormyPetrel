@@ -241,6 +241,55 @@ def test_mainland_solid_km_override_sweeps():
     assert hard_def == hard_committed, "None override == passing the committed SWELL_MAINLAND_SOLID_KM"
 
 
+def test_chain_per_member_far_core_opens_near_core_stays():
+    # (a) A chain fusing a NEAR broad section (100-140 @ 40 km) with a FAR section
+    # (142-200 @ 2000 km). Per-member wrap must OPEN the far members (own wrap ~176° >>
+    # the run) while the near section keeps its interior core. Under the OLD single-dmin
+    # wrap the far members were wrongly held in the core (dmin 40 km → wrap 19° → core).
+    step = sw.SWELL_RAY_STEP_DEG
+    shd = {}
+    for b in range(100, 141, step):
+        shd[b] = 40.0
+    for b in range(142, 201, step):
+        shd[b] = 2000.0
+    blocked = sw._island_shadow(shd, step)
+    assert all(b not in blocked for b in range(142, 201, step)), \
+        "far members (2000 km) wrap open on their OWN distance, not the chain-wide dmin"
+    assert 150 not in blocked, "a mid-run far member is open"
+    assert any(b in blocked for b in range(100, 141, step)), \
+        "the near broad section still keeps its interior core"
+
+
+def test_chain_per_member_all_near_broad_keeps_core():
+    # (b) An all-near broad chain (100-200 @ 40 km, ~100° wide) must still keep its core —
+    # the per-member rule reduces to the old single-wrap core when distances are uniform.
+    step = sw.SWELL_RAY_STEP_DEG
+    blocked = sw._island_shadow({b: 40.0 for b in range(100, 201, step)}, step)
+    assert 150 in blocked, "an all-near broad chain keeps its interior core"
+    assert 100 not in blocked and 200 not in blocked, "the edges wrap open"
+
+
+def test_ri_island_spot_stays_bounded_far_seaward_opens():
+    # (c) Second Beach RI shape: a spot on a small island (~110 km²) with a large MAINLAND
+    # close behind (within SWELL_MAINLAND_SOLID_KM — bounds the landward side) and only
+    # DISTANT land seaward. The distant seaward land wraps open on its own distance, yet
+    # the spot stays bounded — nowhere near 360°.
+    island = Polygon([(-0.05, -0.04), (0.05, -0.04), (0.05, 0.05), (-0.05, 0.05)])  # spot inside, ~110 km²
+    mainland = Polygon([(-40, 0.40), (40, 0.40), (40, 40), (-40, 40)])              # ~44 km N, bounds landward
+    distant = Polygon([(-40, -20), (40, -20), (40, -16), (-40, -16)])               # wide, ~1800 km S (far)
+    _, r = _open([island, mainland, distant])
+    arcs = r["swell_window_arcs"]
+    assert arcs, "the seaward side must be open"
+
+    def _in(b):
+        return any((a["min"] <= b <= a["max"]) if a["min"] <= a["max"]
+                   else (b >= a["min"] or b <= a["max"]) for a in arcs)
+
+    assert _in(180), "distant seaward land (~1800 km) wraps open by its own distance"
+    assert not _in(0), "the mainland ~44 km behind stays BLOCKED"
+    assert sum(a["span"] for a in arcs) < 300, "a spot on a small island stays bounded, not ~360°"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
