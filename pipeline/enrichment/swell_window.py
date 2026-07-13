@@ -229,11 +229,18 @@ def _merge_runs(blocked: list[int], step_deg: int, gap_bridge_deg: float) -> lis
 def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) -> set[int]:
     """Bearings that stay blocked after small-island chains are wrap-trimmed.
 
-    *debug* (diagnostic only; None on the production/full path, so behaviour and
-    cost are unchanged): a list appended with one record per merged chain —
-    {"lo","hi","width","dmin_km","wrap_deg","decision","reason","core"} — so the
-    validate harness's --debug-blockers dump can show WHY each chain stayed
-    blocked (wrap-distance) or opened (subtend cutoff / fully wrapped).
+    Each chain member's diffraction wrap-in is governed by ITS OWN obstacle distance,
+    not one chain-wide nearest distance: a member stays blocked only if it lies deeper
+    than wrap(its distance) inside BOTH open edges of the run. So a near member persists
+    in the interior while a distant (near-transparent) member wraps open on its own large
+    wrap even mid-run — a chain that fuses a near headland with distant mainland no longer
+    keeps the far core wrongly blocked. This reduces EXACTLY to the old single-wrap core
+    when a run's members are all at one distance.
+
+    *debug* (diagnostic only; None on the production/full path, so behaviour and cost are
+    unchanged): a list appended with one record per merged chain —
+    {"lo","hi","width","dmin_km","wrap_deg","decision","reason","core"} — so the validate
+    harness's --debug-blockers dump can show WHY each chain opened or kept a core.
     """
     blocked: set[int] = set()
     for lo, hi in _merge_runs(sorted(small_hit_dist), step_deg, SWELL_ISLAND_GAP_BRIDGE_DEG):
@@ -244,30 +251,38 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) 
                               "decision": "open_subtend",
                               "reason": f"width {width}° < {SWELL_MIN_SHADOW_DEG:.0f}° subtend cutoff"})
             continue  # subtends < ~5°: swell wraps clean around it
-        dmin = min(
-            small_hit_dist[b % 360]
-            for b in range(lo, hi + 1, step_deg)
-            if (b % 360) in small_hit_dist
-        )
-        wrap = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (dmin / 100.0)
-        if 2 * wrap >= width:
-            if debug is not None:
-                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
-                              "dmin_km": dmin, "wrap_deg": wrap, "decision": "open_wrapped",
-                              "reason": f"2·wrap {2 * wrap:.0f}° ≥ width {width}° — fully wrapped"})
-            continue  # fully wrapped — the whole shadow fills back in
-        core_lo, core_hi = lo + wrap, hi - wrap
-        b = math.ceil(core_lo / step_deg) * step_deg
-        while b <= core_hi:
-            blocked.add(b % 360)
-            b += step_deg
+        # Per-member wrap: a member at (bearing b, distance d) stays blocked only if it
+        # sits ≥ wrap(d) inside BOTH open edges of the run. wrap grows with the member's
+        # OWN distance, so a far member (huge wrap) wraps open even mid-run while a near
+        # member persists. Uniform-distance runs give the same core as the old single wrap.
+        core_lo = core_hi = None
+        n_core = 0
+        for b in range(lo, hi + 1, step_deg):
+            d = small_hit_dist.get(b % 360)
+            if d is None:
+                continue
+            wrap_b = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (d / 100.0)
+            if (b - lo) >= wrap_b and (hi - b) >= wrap_b:
+                blocked.add(b % 360)
+                core_lo = b if core_lo is None else core_lo
+                core_hi = b
+                n_core += 1
         if debug is not None:
-            first_core = math.ceil(core_lo / step_deg) * step_deg
-            last_core = math.floor(core_hi / step_deg) * step_deg
-            debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
-                          "dmin_km": dmin, "wrap_deg": wrap, "decision": "blocked_core",
-                          "core": [first_core % 360, last_core % 360] if first_core <= last_core else [],
-                          "reason": f"2·wrap {2 * wrap:.0f}° < width {width}° — core stays blocked (wrap-distance)"})
+            dmin = min(small_hit_dist[b % 360] for b in range(lo, hi + 1, step_deg)
+                       if (b % 360) in small_hit_dist)
+            wnear = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (dmin / 100.0)
+            if core_lo is None:
+                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
+                              "dmin_km": dmin, "wrap_deg": wnear, "decision": "open_wrapped",
+                              "reason": f"per-member wrap: every member wraps open on its own "
+                                        f"distance (nearest {dmin:.0f}km → {wnear:.0f}°)"})
+            else:
+                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
+                              "dmin_km": dmin, "wrap_deg": wnear, "decision": "blocked_core",
+                              "core": [core_lo % 360, core_hi % 360],
+                              "reason": f"per-member wrap: {n_core} near-member ray(s) "
+                                        f"{core_lo % 360}–{core_hi % 360}° stay blocked (nearest "
+                                        f"{dmin:.0f}km → {wnear:.0f}°); far members wrap open on own distance"})
     return blocked
 
 
