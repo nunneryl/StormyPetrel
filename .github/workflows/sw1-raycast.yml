@@ -42,6 +42,11 @@ on:
         required: false
         default: false
         type: boolean
+      spots:
+        description: (validate only) comma-separated spot slugs to debug instead of the 5-spot gate (e.g. sunset-cliffs,ocracoke-beach)
+        required: false
+        default: ''
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -105,7 +110,15 @@ jobs:
 
       - name: Validate — 5-spot gate against GSHHG (no writes)
         if: ${{ inputs.mode == 'validate' }}
-        run: python -m pipeline.sw1_raycast --mode validate ${{ inputs.debug_blockers && '--debug-blockers' || '' }} ${{ inputs.sweep_mainland_solid && '--sweep-mainland-solid' || '' }}
+        env:
+          # Pass the free-text slug list through the environment (never interpolated into
+          # the shell command) so an arbitrary --spots value can't inject shell.
+          SW1_SPOTS: ${{ inputs.spots }}
+        run: |
+          python -m pipeline.sw1_raycast --mode validate \
+            ${{ inputs.debug_blockers && '--debug-blockers' || '' }} \
+            ${{ inputs.sweep_mainland_solid && '--sweep-mainland-solid' || '' }} \
+            ${{ inputs.spots != '' && '--spots "$SW1_SPOTS"' || '' }}
 
       - name: Full — raycast the whole roster
         if: ${{ inputs.mode == 'full' }}
