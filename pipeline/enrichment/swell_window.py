@@ -379,17 +379,36 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     return hard_blocked, small_hit_dist
 
 
+def _implied_span(lo: int, hi: int, step_deg: int) -> int:
+    """Span implied by an arc's min (*lo*) / max (*hi*), wrap-aware — the single source of
+    truth for how a (min, max) pair reads. interpret._in_any_arc treats min>max as a 0/360
+    wraparound, so an emitted arc's ``span`` MUST equal this or a small arc can be misread
+    as a ~358° wrap (the degenerate {min:165, max:163, span:2} bug)."""
+    return (hi - lo + step_deg) if lo <= hi else (hi + 360 - lo + step_deg)
+
+
+def _make_arc(lo: int, hi: int, step_deg: int) -> dict:
+    """A {min, max, span} arc whose span is DERIVED from the same endpoints (span =
+    hi - lo + step over the UNWRAPPED endpoints), so it is always consistent with the
+    wrap-aware min/max reading. *hi* may exceed 360 for a wrapped run."""
+    return {"min": lo % 360, "max": hi % 360, "span": hi - lo + step_deg}
+
+
 def _merge_open_arcs(open_bearings: list[int], step_deg: int) -> list[dict]:
     """Collapse a sorted list of open bearings into [min, max, span] arcs.
 
-    Handles wraparound: if 358 and 0 are both open, they belong to the same arc.
+    Handles wraparound: if 358 and 0 are both open they belong to the same arc. Each arc is
+    shrunk SWELL_ARC_SHRINK_DEG inward on both ends for diffraction; a run that shrinks to
+    <= one ray step is noise (not a window) and is DROPPED — this is what stops the old
+    degenerate sub-step arc (e.g. a 12° run shrinking to {min:165, max:163, span:2}, which
+    interpret._in_any_arc mis-read as a ~358° wraparound). Every emitted arc's span agrees
+    with its min/max by construction (see _make_arc / _implied_span).
     """
     if not open_bearings:
         return []
     s = set(open_bearings)
-    all_open = len(s) * step_deg >= 360
-    if all_open:
-        return [{"min": 0, "max": 358, "span": 360}]
+    if len(s) * step_deg >= 360:
+        return [_make_arc(0, 360 - step_deg, step_deg)]  # fully open (span 360, consistent)
 
     sorted_b = sorted(s)
     arcs: list[tuple[int, int]] = []
@@ -402,25 +421,28 @@ def _merge_open_arcs(open_bearings: list[int], step_deg: int) -> list[dict]:
             start = prev = b
     arcs.append((start, prev))
 
-    # Wraparound merge: if the first arc starts at 0 and the last ends at 360 - step,
-    # splice them.
+    # Wraparound merge: if the first arc starts at 0 and the last ends at 360 - step, splice
+    # them into one arc going from last_s (e.g. 340) to first_e (e.g. 20) + 360.
     if len(arcs) >= 2 and arcs[0][0] == 0 and arcs[-1][1] == 360 - step_deg:
         first_s, first_e = arcs[0]
         last_s, last_e = arcs[-1]
-        # Represent the wrapped arc as going from last_s (e.g. 340) to first_e (e.g. 20) + 360
         arcs = arcs[1:-1] + [(last_s, first_e + 360)]
 
     out: list[dict] = []
     for lo, hi in arcs:
-        span = hi - lo + step_deg
-        shrink = SWELL_ARC_SHRINK_DEG
-        if span <= 2 * shrink:
-            continue  # too narrow to survive diffraction shrink
-        lo_s = lo + shrink
-        hi_s = hi - shrink
-        span_s = hi_s - lo_s + step_deg
-        out.append({"min": lo_s % 360, "max": hi_s % 360, "span": span_s})
-    return out
+        lo_s = lo + SWELL_ARC_SHRINK_DEG
+        hi_s = hi - SWELL_ARC_SHRINK_DEG
+        if hi_s - lo_s + step_deg <= step_deg:
+            continue  # <= one ray step after diffraction shrink → noise, not a window
+        out.append(_make_arc(lo_s, hi_s, step_deg))
+
+    # Defensive guard: never return an arc whose span disagrees with what its min/max imply
+    # (wrap-aware). _make_arc guarantees this, so a drop here would signal a regression.
+    good = [a for a in out if a["span"] == _implied_span(a["min"], a["max"], step_deg)]
+    if len(good) != len(out):
+        log.warning("swell arc(s) dropped for inconsistent span: %s",
+                    [a for a in out if a["span"] != _implied_span(a["min"], a["max"], step_deg)])
+    return good
 
 
 def _open_window_center(open_bearings: list[int]) -> int | None:

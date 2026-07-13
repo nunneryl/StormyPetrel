@@ -29,6 +29,7 @@ import json
 import logging
 import multiprocessing as mp
 import os
+import re
 import statistics
 import time
 from pathlib import Path
@@ -58,6 +59,42 @@ VALIDATION_SPOTS = [
 
 def _fmt_arcs(arcs: list[dict]) -> str:
     return ", ".join(f"{a['min']}–{a['max']}({a['span']})" for a in arcs) or "(none)"
+
+
+def _short_label(name):
+    """Short column label from a spot name (for --spots sweep headers)."""
+    return (name or "?").split(" (")[0].split(",")[0][:12]
+
+
+def _load_spots_by_slug(slugs):
+    """VALIDATION_SPOTS-shaped tuples for *slugs*, loaded from spots_enriched.json with their
+    EXACT prod lat/lng/orientation — so `--spots` debugs the real reported spots against GSHHG.
+    Returns (name, lat, lng, orientation, None, None, note) per resolved slug. Read-only."""
+    try:
+        roster = json.loads(DEFAULT_ENRICHED_OUTPUT.read_text())
+    except Exception as e:  # noqa: BLE001
+        log.error("--spots: cannot read %s (%s)", DEFAULT_ENRICHED_OUTPUT, e)
+        return []
+
+    def _slug(n):
+        return re.sub(r"[^a-z0-9]+", "-", (n or "").lower()).strip("-")
+
+    by = {_slug(s.get("name")): s for s in roster}
+    out, missing = [], []
+    for sl in slugs:
+        s = by.get(sl)
+        lat = s.get("_algo_lat", s.get("lat")) if s else None
+        lng = s.get("_algo_lng", s.get("lng")) if s else None
+        if s is None or lat is None or lng is None:
+            missing.append(sl)
+            continue
+        note = f"src={s.get('swell_window_source')} region={s.get('region_hint')}"
+        out.append((s.get("name") or sl, float(lat), float(lng),
+                    int(round(s.get("orientation_deg") or 0)), None, None, note))
+    if missing:
+        log.warning("--spots: %d slug(s) not resolved in spots_enriched.json: %s",
+                    len(missing), ", ".join(missing))
+    return out
 
 
 def _chain_member_bearings(lo, hi, step):
@@ -178,8 +215,8 @@ def _print_bucket_summary(name, debug_rays, small_blocked_sorted, open_b, step) 
     print(f"        B-open  arcs: [{_fmt_arcs(wif_arcs)}]")
 
 
-def run_validate(debug_blockers: bool = False) -> int:
-    """Cast the 5 gate spots against GSHHG and print diagnostics. No writes.
+def run_validate(debug_blockers: bool = False, spots=None) -> int:
+    """Cast the gate spots (or the --spots set) against GSHHG and print diagnostics. No writes.
 
     *debug_blockers* (validate-only): after the summary table, dump the per-ray
     culprit list for each spot — for every hard-blocked bearing the rule
@@ -193,14 +230,15 @@ def run_validate(debug_blockers: bool = False) -> int:
     if land is None:
         log.error("GSHHG land index unavailable — cannot validate. Did download_geodata.sh run?")
         return 1
-    log.info("GSHHG loaded: %d polygons. Casting 5 gate spots at %d° (%d rays).%s",
-             len(land.polygons), RUN_STEP_DEG, 360 // RUN_STEP_DEG,
+    src = spots if spots is not None else VALIDATION_SPOTS
+    log.info("GSHHG loaded: %d polygons. Casting %d spot(s) at %d° (%d rays).%s",
+             len(land.polygons), len(src), RUN_STEP_DEG, 360 // RUN_STEP_DEG,
              "  [--debug-blockers ON]" if debug_blockers else "")
 
     print(f"\n{'spot':20}{'width':>6}{'ceil':>6}{'target':>9}{'opt':>5}{'nrm':>5}  source    arcs")
     print("-" * 96)
     detail: list[tuple] = []
-    for name, lat, lng, normal, tlo, thi, note in VALIDATION_SPOTS:
+    for name, lat, lng, normal, tlo, thi, note in src:
         local = sw.local_land_index(land, lat, lng)
         debug_rays = {} if debug_blockers else None
         debug_chains: list | None = [] if debug_blockers else None
@@ -214,8 +252,8 @@ def run_validate(debug_blockers: bool = False) -> int:
         width = sum(a["span"] for a in arcs)
         ceil = len(ceil_b) * RUN_STEP_DEG
         source = "raycast" if arcs else "(empty→fallback)"
-        tgt = f"{tlo}-{'+' if thi is None else thi}"
-        print(f"{name:20}{width:6d}{ceil:6d}{tgt:>9}{str(optimal):>5}{normal:>5}  {source:9} [{_fmt_arcs(arcs)}]")
+        tgt = f"{tlo}-{'+' if thi is None else thi}" if tlo is not None else "—"
+        print(f"{name[:20]:20}{width:6d}{ceil:6d}{tgt:>9}{str(optimal):>5}{normal:>5}  {source:9} [{_fmt_arcs(arcs)}]")
         if debug_blockers:
             detail.append((name, lat, lng, normal, sorted(hard), debug_rays, debug_chains,
                            sorted(small_blocked), open_b))
@@ -230,11 +268,11 @@ def run_validate(debug_blockers: bool = False) -> int:
     return 0
 
 
-def run_sweep_mainland_solid(values) -> int:
+def run_sweep_mainland_solid(values, spots=None) -> int:
     """Sweep SWELL_MAINLAND_SOLID_KM over *values* (km) and print the open-window WIDTH per
-    gate spot in ONE run — a sensitivity table for picking the value. Read-only: each value
-    is passed per call to _classify_bearings, so the committed default is never mutated and
-    spots_enriched.json is never written."""
+    gate spot (or the --spots set) in ONE run — a sensitivity table for picking the value.
+    Read-only: each value is passed per call to _classify_bearings, so the committed default
+    is never mutated and spots_enriched.json is never written."""
     land = load_land_index()
     if land is None:
         log.error("GSHHG land index unavailable — cannot sweep. Did download_geodata.sh run?")
@@ -243,10 +281,13 @@ def run_sweep_mainland_solid(values) -> int:
     log.info("GSHHG loaded: %d polygons. Sweeping SWELL_MAINLAND_SOLID_KM over %s km (committed default %g).",
              len(land.polygons), ",".join(f"{v:g}" for v in values), default)
 
-    labels = ["Hunt", "Malibu", "Rincon", "Blacks", "RI"]   # aligned to VALIDATION_SPOTS order
+    src = spots if spots is not None else VALIDATION_SPOTS
+    labels = (["Hunt", "Malibu", "Rincon", "Blacks", "RI"]
+              if spots is None else [_short_label(s[0]) for s in src])
     cols = []   # (lat, lng, header) per spot
-    for (name, lat, lng, normal, tlo, thi, note), lbl in zip(VALIDATION_SPOTS, labels):
-        cols.append((lat, lng, f"{lbl}({tlo}-{'+' if thi is None else thi})"))
+    for (name, lat, lng, normal, tlo, thi, note), lbl in zip(src, labels):
+        tgt = f"({tlo}-{'+' if thi is None else thi})" if tlo is not None else ""
+        cols.append((lat, lng, f"{lbl}{tgt}"))
 
     # width[value][spot] — cast each spot once per value (local index reused across values;
     # only the hard/small split depends on the swept SWELL_MAINLAND_SOLID_KM).
@@ -294,6 +335,40 @@ def _arc_width(arcs: list[dict]) -> int:
     return sum(a.get("span", 0) for a in arcs)
 
 
+# Tiers the raycast must never overwrite — NWPS / MOP are real nearshore wave models,
+# a strictly better swell source than the geometry-derived window.
+_PRESERVE_SOURCES = ("nwps", "cdip_mop")
+
+
+def _apply_raycast_result(spot: dict, r: dict | None) -> str:
+    """Write a raycast result onto *spot* IN PLACE and return a category tag for the summary.
+
+    swell_window_arcs / optimal_swell_dir are refreshed from the raycast (better geometry,
+    useful as a dormant fallback), but a spot already on the better 'nwps'/'cdip_mop' tier
+    KEEPS its swell_window_source — the raycast never demotes it. A better-tier spot the
+    raycast can't solve is left entirely untouched (never downgraded to an orientation
+    fallback). Every other spot follows the prior behaviour: 'raycast' on a solve, the
+    orientation-derived fallback otherwise (orientation_deg is read, never written)."""
+    preserve = spot.get("swell_window_source") in _PRESERVE_SOURCES
+    if r and r.get("swell_window_arcs"):
+        spot["swell_window_arcs"] = r["swell_window_arcs"]
+        spot["optimal_swell_dir"] = r["optimal_swell_dir"]
+        if not preserve:
+            spot["swell_window_source"] = "raycast"
+        return "raycast"
+    if preserve:
+        return "preserved"  # NWPS/MOP spot the raycast couldn't solve → leave arcs/source as-is
+    spot["swell_window_arcs"] = []
+    fb = compute_swell_window_fallback(spot)
+    if fb:
+        spot["swell_window_arcs"] = fb["swell_window_arcs"]
+        spot["optimal_swell_dir"] = fb["optimal_swell_dir"]
+        spot["swell_window_source"] = fb["swell_window_source"]
+        return "fallback"
+    spot["optimal_swell_dir"] = None
+    return "empty"
+
+
 def run_full(input_path: Path, output_path: Path, workers: int) -> int:
     spots = json.loads(input_path.read_text())
     land = load_land_index()  # load in the PARENT so forked workers inherit it
@@ -322,35 +397,26 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
         results = [_raycast_worker(it) for it in items]
     elapsed = time.time() - t0
 
-    raycast_n = fallback_n = empty_n = 0
+    raycast_n = fallback_n = empty_n = preserved_n = 0
     ca_widths: list[int] = []
     ri_widths: list[int] = []
     for idx, r in results:
         s = spots[idx]
         region = s.get("region_hint") or ""
-        if r and r.get("swell_window_arcs"):
-            s["swell_window_arcs"] = r["swell_window_arcs"]
-            s["optimal_swell_dir"] = r["optimal_swell_dir"]
-            s["swell_window_source"] = "raycast"
+        cat = _apply_raycast_result(s, r)   # preserves NWPS/MOP source; never demotes a better tier
+        if cat == "raycast":
             raycast_n += 1
-            w = _arc_width(r["swell_window_arcs"])
+            w = _arc_width(s["swell_window_arcs"])
             if region == "California":
                 ca_widths.append(w)
             elif region == "Rhode Island":
                 ri_widths.append(w)
+        elif cat == "preserved":
+            preserved_n += 1
+        elif cat == "fallback":
+            fallback_n += 1
         else:
-            # Raycast found no open arc → keep the orientation-derived fallback.
-            # orientation_deg is read, never written.
-            s["swell_window_arcs"] = []
-            fb = compute_swell_window_fallback(s)
-            if fb:
-                s["swell_window_arcs"] = fb["swell_window_arcs"]
-                s["optimal_swell_dir"] = fb["optimal_swell_dir"]
-                s["swell_window_source"] = fb["swell_window_source"]
-                fallback_n += 1
-            else:
-                s["optimal_swell_dir"] = None
-                empty_n += 1
+            empty_n += 1
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(spots, indent=2, ensure_ascii=False) + "\n")
@@ -359,6 +425,7 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
     print("\n==== SW-1 full roster raycast — summary ====")
     print(f"  spots cast:            {len(items)}")
     print(f"  source=raycast:        {raycast_n}")
+    print(f"  source=nwps/cdip_mop:  {preserved_n}  (better tier preserved; arcs refreshed if solved)")
     print(f"  source=orientation:    {fallback_n}  (no open arc; fallback kept)")
     print(f"  unresolved (no arcs):  {empty_n}")
     if ca_widths:
@@ -387,9 +454,19 @@ def main(argv: list[str] | None = None) -> int:
                    help="(validate only) sweep SWELL_MAINLAND_SOLID_KM over these comma-separated km "
                         "values (bare flag = 60,80,100,120,150) and print open-window width per gate "
                         "spot. Read-only: does not change the committed default or write spots_enriched.json.")
+    p.add_argument("--spots", default=None, metavar="SLUGS",
+                   help="(validate only) comma-separated spot slugs to cast INSTEAD of the 5-spot gate, "
+                        "loaded from spots_enriched.json with their exact lat/lng/orientation. Combine with "
+                        "--debug-blockers to dump per-ray blockers + A/B/C buckets for reported spots. Read-only.")
     args = p.parse_args(argv)
 
     if args.mode == "validate":
+        spots = None
+        if args.spots:
+            spots = _load_spots_by_slug([x.strip() for x in args.spots.split(",") if x.strip()])
+            if not spots:
+                log.error("--spots: no valid spots resolved; nothing to cast.")
+                return 2
         if args.sweep_mainland_solid is not None:
             try:
                 values = [float(x) for x in args.sweep_mainland_solid.split(",") if x.strip()]
@@ -397,10 +474,10 @@ def main(argv: list[str] | None = None) -> int:
                 log.error("--sweep-mainland-solid expects comma-separated km numbers, got %r",
                           args.sweep_mainland_solid)
                 return 2
-            return run_sweep_mainland_solid(values)
-        return run_validate(debug_blockers=args.debug_blockers)
-    if args.debug_blockers or args.sweep_mainland_solid is not None:
-        log.warning("--debug-blockers / --sweep-mainland-solid are validate-only; ignoring for --mode full.")
+            return run_sweep_mainland_solid(values, spots=spots)
+        return run_validate(debug_blockers=args.debug_blockers, spots=spots)
+    if args.debug_blockers or args.sweep_mainland_solid is not None or args.spots:
+        log.warning("--debug-blockers / --sweep-mainland-solid / --spots are validate-only; ignoring for --mode full.")
     return run_full(args.input, args.output, max(1, args.workers))
 
 
