@@ -513,11 +513,6 @@
         "span": 118
       },
       {
-        "min": 317,
-        "max": 315,
-        "span": 2
-      },
-      {
         "min": 333,
         "max": 355,
         "span": 26
@@ -1071,11 +1066,6 @@
         "min": 225,
         "max": 287,
         "span": 66
-      },
-      {
-        "min": 325,
-        "max": 323,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 220,
@@ -1170,11 +1160,6 @@
         "min": 97,
         "max": 111,
         "span": 18
-      },
-      {
-        "min": 129,
-        "max": 127,
-        "span": 2
       },
       {
         "min": 185,
@@ -1601,11 +1586,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 111,
-        "span": 2
-      },
-      {
         "min": 189,
         "max": 275,
         "span": 90
@@ -1802,11 +1782,6 @@
         "min": 169,
         "max": 295,
         "span": 130
-      },
-      {
-        "min": 329,
-        "max": 327,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 240,
@@ -1997,11 +1972,6 @@
         "min": 161,
         "max": 163,
         "span": 6
-      },
-      {
-        "min": 197,
-        "max": 195,
-        "span": 2
       },
       {
         "min": 253,
@@ -2390,11 +2360,6 @@
         "span": 70
       },
       {
-        "min": 293,
-        "max": 291,
-        "span": 2
-      },
-      {
         "min": 313,
         "max": 315,
         "span": 6
@@ -2497,11 +2462,6 @@
         "min": 165,
         "max": 179,
         "span": 18
-      },
-      {
-        "min": 197,
-        "max": 195,
-        "span": 2
       },
       {
         "min": 233,
@@ -2628,11 +2588,6 @@
         "span": 10
       },
       {
-        "min": 133,
-        "max": 131,
-        "span": 2
-      },
-      {
         "min": 177,
         "max": 251,
         "span": 78
@@ -2731,11 +2686,6 @@
         "span": 14
       },
       {
-        "min": 153,
-        "max": 151,
-        "span": 2
-      },
-      {
         "min": 201,
         "max": 283,
         "span": 86
@@ -2828,11 +2778,6 @@
         "min": 97,
         "max": 111,
         "span": 18
-      },
-      {
-        "min": 153,
-        "max": 151,
-        "span": 2
       },
       {
         "min": 197,
@@ -3147,19 +3092,9 @@
         "span": 58
       },
       {
-        "min": 165,
-        "max": 163,
-        "span": 2
-      },
-      {
         "min": 181,
         "max": 199,
         "span": 22
-      },
-      {
-        "min": 217,
-        "max": 215,
-        "span": 2
       },
       {
         "min": 233,
@@ -3255,11 +3190,6 @@
         "min": 93,
         "max": 147,
         "span": 58
-      },
-      {
-        "min": 165,
-        "max": 163,
-        "span": 2
       },
       {
         "min": 181,
@@ -3794,11 +3724,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 143,
-        "span": 2
-      },
-      {
         "min": 165,
         "max": 175,
         "span": 14
@@ -3807,11 +3732,6 @@
         "min": 213,
         "max": 219,
         "span": 10
-      },
-      {
-        "min": 237,
-        "max": 235,
-        "span": 2
       },
       {
         "min": 253,
@@ -4017,11 +3937,6 @@
         "span": 102
       },
       {
-        "min": 289,
-        "max": 287,
-        "span": 2
-      },
-      {
         "min": 305,
         "max": 343,
         "span": 42
@@ -4160,11 +4075,6 @@
         "min": 205,
         "max": 271,
         "span": 70
-      },
-      {
-        "min": 353,
-        "max": 351,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 204,
@@ -4491,21 +4401,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 111,
-        "span": 2
-      },
-      {
-        "min": 133,
-        "max": 131,
-        "span": 2
-      },
-      {
-        "min": 181,
-        "max": 179,
-        "span": 2
-      },
-      {
         "min": 197,
         "max": 311,
         "span": 118
@@ -4794,11 +4689,6 @@
         "min": 221,
         "max": 295,
         "span": 78
-      },
-      {
-        "min": 353,
-        "max": 351,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 216,
@@ -4858,11 +4748,6 @@
         "min": 177,
         "max": 279,
         "span": 106
-      },
-      {
-        "min": 321,
-        "max": 319,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 244,
@@ -4915,19 +4800,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 103,
-        "span": 2
-      },
-      {
         "min": 193,
         "max": 223,
         "span": 34
-      },
-      {
-        "min": 245,
-        "max": 243,
-        "span": 2
       },
       {
         "min": 265,
@@ -6333,11 +6208,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 103,
-        "span": 2
-      },
-      {
         "min": 181,
         "max": 311,
         "span": 134
@@ -6733,11 +6603,6 @@
         "min": 101,
         "max": 111,
         "span": 14
-      },
-      {
-        "min": 129,
-        "max": 127,
-        "span": 2
       },
       {
         "min": 157,
@@ -7411,11 +7276,6 @@
         "span": 138
       },
       {
-        "min": 345,
-        "max": 343,
-        "span": 2
-      },
-      {
         "min": 1,
         "max": 3,
         "span": 6
@@ -7540,11 +7400,6 @@
         "min": 181,
         "max": 251,
         "span": 74
-      },
-      {
-        "min": 273,
-        "max": 271,
-        "span": 2
       },
       {
         "min": 317,
@@ -7880,11 +7735,6 @@
     "offshore_wind_deg": 70.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 165,
-        "max": 163,
-        "span": 2
-      },
       {
         "min": 181,
         "max": 327,
@@ -8783,11 +8633,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
-      {
         "min": 141,
         "max": 159,
         "span": 22
@@ -9303,11 +9148,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
-      {
         "min": 157,
         "max": 183,
         "span": 30
@@ -9533,11 +9373,6 @@
         "min": 37,
         "max": 163,
         "span": 130
-      },
-      {
-        "min": 265,
-        "max": 263,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 112,
@@ -10034,11 +9869,6 @@
         "span": 18
       },
       {
-        "min": 265,
-        "max": 263,
-        "span": 2
-      },
-      {
         "min": 293,
         "max": 315,
         "span": 26
@@ -10107,11 +9937,6 @@
         "min": 197,
         "max": 215,
         "span": 22
-      },
-      {
-        "min": 261,
-        "max": 259,
-        "span": 2
       },
       {
         "min": 289,
@@ -10349,11 +10174,6 @@
         "min": 293,
         "max": 315,
         "span": 26
-      },
-      {
-        "min": 349,
-        "max": 347,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 100,
@@ -10453,11 +10273,6 @@
         "min": 201,
         "max": 219,
         "span": 22
-      },
-      {
-        "min": 261,
-        "max": 259,
-        "span": 2
       },
       {
         "min": 289,
@@ -10627,19 +10442,9 @@
         "span": 18
       },
       {
-        "min": 273,
-        "max": 271,
-        "span": 2
-      },
-      {
         "min": 297,
         "max": 315,
         "span": 22
-      },
-      {
-        "min": 353,
-        "max": 351,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 56,
@@ -10798,11 +10603,6 @@
         "min": 289,
         "max": 303,
         "span": 18
-      },
-      {
-        "min": 353,
-        "max": 351,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 56,
@@ -11133,11 +10933,6 @@
         "min": 241,
         "max": 259,
         "span": 22
-      },
-      {
-        "min": 309,
-        "max": 307,
-        "span": 2
       },
       {
         "min": 353,
@@ -11520,11 +11315,6 @@
         "span": 42
       },
       {
-        "min": 121,
-        "max": 119,
-        "span": 2
-      },
-      {
         "min": 197,
         "max": 287,
         "span": 94
@@ -11825,11 +11615,6 @@
         "min": 93,
         "max": 107,
         "span": 18
-      },
-      {
-        "min": 177,
-        "max": 175,
-        "span": 2
       },
       {
         "min": 193,
@@ -12180,11 +11965,6 @@
         "span": 18
       },
       {
-        "min": 269,
-        "max": 267,
-        "span": 2
-      },
-      {
         "min": 293,
         "max": 315,
         "span": 26
@@ -12265,11 +12045,6 @@
         "min": 177,
         "max": 203,
         "span": 30
-      },
-      {
-        "min": 249,
-        "max": 247,
-        "span": 2
       },
       {
         "min": 265,
@@ -12836,19 +12611,9 @@
         "span": 30
       },
       {
-        "min": 281,
-        "max": 279,
-        "span": 2
-      },
-      {
         "min": 297,
         "max": 307,
         "span": 14
-      },
-      {
-        "min": 325,
-        "max": 323,
-        "span": 2
       },
       {
         "min": 353,
@@ -13165,11 +12930,6 @@
         "span": 74
       },
       {
-        "min": 165,
-        "max": 163,
-        "span": 2
-      },
-      {
         "min": 181,
         "max": 183,
         "span": 6
@@ -13183,11 +12943,6 @@
         "min": 285,
         "max": 299,
         "span": 18
-      },
-      {
-        "min": 1,
-        "max": 359,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 100,
@@ -13218,11 +12973,6 @@
         "min": 101,
         "max": 107,
         "span": 10
-      },
-      {
-        "min": 153,
-        "max": 151,
-        "span": 2
       },
       {
         "min": 189,
@@ -13625,11 +13375,6 @@
         "span": 18
       },
       {
-        "min": 137,
-        "max": 135,
-        "span": 2
-      },
-      {
         "min": 161,
         "max": 199,
         "span": 42
@@ -13903,11 +13648,6 @@
         "span": 6
       },
       {
-        "min": 301,
-        "max": 299,
-        "span": 2
-      },
-      {
         "min": 325,
         "max": 339,
         "span": 18
@@ -13959,11 +13699,6 @@
         "min": 77,
         "max": 91,
         "span": 18
-      },
-      {
-        "min": 141,
-        "max": 139,
-        "span": 2
       },
       {
         "min": 161,
@@ -14022,11 +13757,6 @@
     "offshore_wind_deg": 160.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 69,
-        "max": 67,
-        "span": 2
-      },
       {
         "min": 121,
         "max": 135,
@@ -14200,11 +13930,6 @@
         "min": 57,
         "max": 87,
         "span": 34
-      },
-      {
-        "min": 109,
-        "max": 107,
-        "span": 2
       },
       {
         "min": 133,
@@ -14734,16 +14459,6 @@
         "min": 49,
         "max": 67,
         "span": 22
-      },
-      {
-        "min": 85,
-        "max": 83,
-        "span": 2
-      },
-      {
-        "min": 105,
-        "max": 103,
-        "span": 2
       },
       {
         "min": 129,
@@ -15441,11 +15156,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 5,
-        "max": 3,
-        "span": 2
-      },
-      {
         "min": 53,
         "max": 63,
         "span": 14
@@ -15639,11 +15349,6 @@
         "min": 125,
         "max": 219,
         "span": 98
-      },
-      {
-        "min": 249,
-        "max": 247,
-        "span": 2
       },
       {
         "min": 297,
@@ -16011,16 +15716,6 @@
         "min": 49,
         "max": 67,
         "span": 22
-      },
-      {
-        "min": 89,
-        "max": 87,
-        "span": 2
-      },
-      {
-        "min": 105,
-        "max": 103,
-        "span": 2
       },
       {
         "min": 137,
@@ -16701,11 +16396,6 @@
         "min": 29,
         "max": 195,
         "span": 170
-      },
-      {
-        "min": 305,
-        "max": 303,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 112,
@@ -16952,11 +16642,6 @@
     "offshore_wind_deg": 253.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 193,
-        "max": 191,
-        "span": 2
-      },
       {
         "min": 349,
         "max": 159,
@@ -17307,11 +16992,6 @@
         "span": 30
       },
       {
-        "min": 293,
-        "max": 291,
-        "span": 2
-      },
-      {
         "min": 353,
         "max": 207,
         "span": 218
@@ -17359,11 +17039,6 @@
         "min": 229,
         "max": 255,
         "span": 30
-      },
-      {
-        "min": 293,
-        "max": 291,
-        "span": 2
       },
       {
         "min": 353,
@@ -17414,11 +17089,6 @@
         "span": 30
       },
       {
-        "min": 293,
-        "max": 291,
-        "span": 2
-      },
-      {
         "min": 353,
         "max": 207,
         "span": 218
@@ -17465,11 +17135,6 @@
         "min": 229,
         "max": 259,
         "span": 34
-      },
-      {
-        "min": 297,
-        "max": 295,
-        "span": 2
       },
       {
         "min": 353,
@@ -21055,11 +20720,6 @@
         "span": 26
       },
       {
-        "min": 73,
-        "max": 71,
-        "span": 2
-      },
-      {
         "min": 109,
         "max": 223,
         "span": 118
@@ -21428,11 +21088,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 33,
-        "max": 31,
-        "span": 2
-      },
-      {
         "min": 69,
         "max": 219,
         "span": 154
@@ -21596,11 +21251,6 @@
         "min": 205,
         "max": 207,
         "span": 6
-      },
-      {
-        "min": 245,
-        "max": 243,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 108,
@@ -21964,11 +21614,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 17,
-        "max": 15,
-        "span": 2
-      },
-      {
         "min": 37,
         "max": 47,
         "span": 14
@@ -22147,19 +21792,9 @@
         "span": 6
       },
       {
-        "min": 113,
-        "max": 111,
-        "span": 2
-      },
-      {
         "min": 185,
         "max": 279,
         "span": 98
-      },
-      {
-        "min": 297,
-        "max": 295,
-        "span": 2
       },
       {
         "min": 321,
@@ -22278,11 +21913,6 @@
         "span": 14
       },
       {
-        "min": 149,
-        "max": 147,
-        "span": 2
-      },
-      {
         "min": 197,
         "max": 343,
         "span": 150
@@ -22387,11 +22017,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 41,
-        "max": 39,
-        "span": 2
-      },
-      {
         "min": 141,
         "max": 151,
         "span": 14
@@ -22443,16 +22068,6 @@
     "offshore_wind_deg": 55.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 41,
-        "max": 39,
-        "span": 2
-      },
-      {
-        "min": 145,
-        "max": 143,
-        "span": 2
-      },
       {
         "min": 181,
         "max": 263,
@@ -22622,11 +22237,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 21,
-        "max": 19,
-        "span": 2
-      },
-      {
         "min": 37,
         "max": 47,
         "span": 14
@@ -22794,11 +22404,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 21,
-        "max": 19,
-        "span": 2
-      },
-      {
         "min": 37,
         "max": 47,
         "span": 14
@@ -22856,11 +22461,6 @@
     "offshore_wind_deg": 95.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 21,
-        "max": 19,
-        "span": 2
-      },
       {
         "min": 37,
         "max": 47,
@@ -23244,11 +22844,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 115,
-        "span": 2
-      },
-      {
         "min": 137,
         "max": 179,
         "span": 46
@@ -23564,11 +23159,6 @@
         "span": 34
       },
       {
-        "min": 173,
-        "max": 171,
-        "span": 2
-      },
-      {
         "min": 201,
         "max": 207,
         "span": 10
@@ -23627,11 +23217,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 175,
-        "span": 2
-      },
-      {
         "min": 205,
         "max": 227,
         "span": 26
@@ -23688,11 +23273,6 @@
     "orientation_deg": 256.0,
     "offshore_wind_deg": 76.0,
     "swell_window_arcs": [
-      {
-        "min": 73,
-        "max": 71,
-        "span": 2
-      },
       {
         "min": 89,
         "max": 107,
@@ -23767,11 +23347,6 @@
         "span": 26
       },
       {
-        "min": 185,
-        "max": 183,
-        "span": 2
-      },
-      {
         "min": 221,
         "max": 235,
         "span": 18
@@ -23804,11 +23379,6 @@
     "offshore_wind_deg": 184.0,
     "orientation_flipped": false,
     "swell_window_arcs": [
-      {
-        "min": 113,
-        "max": 111,
-        "span": 2
-      },
       {
         "min": 133,
         "max": 151,
@@ -23977,16 +23547,6 @@
         "span": 22
       },
       {
-        "min": 181,
-        "max": 179,
-        "span": 2
-      },
-      {
-        "min": 201,
-        "max": 199,
-        "span": 2
-      },
-      {
         "min": 217,
         "max": 231,
         "span": 18
@@ -24040,11 +23600,6 @@
         "min": 133,
         "max": 139,
         "span": 10
-      },
-      {
-        "min": 157,
-        "max": 155,
-        "span": 2
       },
       {
         "min": 173,
@@ -24422,11 +23977,6 @@
         "span": 38
       },
       {
-        "min": 177,
-        "max": 175,
-        "span": 2
-      },
-      {
         "min": 241,
         "max": 255,
         "span": 18
@@ -24488,11 +24038,6 @@
         "span": 26
       },
       {
-        "min": 165,
-        "max": 163,
-        "span": 2
-      },
-      {
         "min": 245,
         "max": 251,
         "span": 10
@@ -24525,11 +24070,6 @@
     "offshore_wind_deg": 50.0,
     "orientation_flipped": false,
     "swell_window_arcs": [
-      {
-        "min": 65,
-        "max": 63,
-        "span": 2
-      },
       {
         "min": 89,
         "max": 127,
@@ -24624,11 +24164,6 @@
         "min": 85,
         "max": 143,
         "span": 62
-      },
-      {
-        "min": 165,
-        "max": 163,
-        "span": 2
       },
       {
         "min": 225,
@@ -24756,11 +24291,6 @@
         "min": 217,
         "max": 235,
         "span": 22
-      },
-      {
-        "min": 357,
-        "max": 355,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 156,
@@ -25202,11 +24732,6 @@
         "min": 217,
         "max": 235,
         "span": 22
-      },
-      {
-        "min": 357,
-        "max": 355,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 156,
@@ -27107,11 +26632,6 @@
         "min": 177,
         "max": 299,
         "span": 126
-      },
-      {
-        "min": 317,
-        "max": 315,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 224,
@@ -27518,11 +27038,6 @@
     "offshore_wind_deg": 57.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 37,
-        "max": 35,
-        "span": 2
-      },
       {
         "min": 209,
         "max": 275,
@@ -28561,11 +28076,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
-      {
         "min": 141,
         "max": 215,
         "span": 78
@@ -28600,11 +28110,6 @@
     "offshore_wind_deg": 116.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
       {
         "min": 133,
         "max": 219,
@@ -28941,11 +28446,6 @@
         "span": 102
       },
       {
-        "min": 289,
-        "max": 287,
-        "span": 2
-      },
-      {
         "min": 305,
         "max": 343,
         "span": 42
@@ -29011,11 +28511,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
-      {
         "min": 129,
         "max": 223,
         "span": 98
@@ -29056,11 +28551,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
-      {
         "min": 133,
         "max": 215,
         "span": 86
@@ -29095,11 +28585,6 @@
     "offshore_wind_deg": 60.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 97,
-        "max": 95,
-        "span": 2
-      },
       {
         "min": 141,
         "max": 143,
@@ -29159,11 +28644,6 @@
         "min": 221,
         "max": 279,
         "span": 62
-      },
-      {
-        "min": 345,
-        "max": 343,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 196,
@@ -29451,11 +28931,6 @@
         "span": 42
       },
       {
-        "min": 273,
-        "max": 271,
-        "span": 2
-      },
-      {
         "min": 289,
         "max": 291,
         "span": 6
@@ -29509,11 +28984,6 @@
         "min": 193,
         "max": 283,
         "span": 94
-      },
-      {
-        "min": 349,
-        "max": 347,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 200,
@@ -29700,11 +29170,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 143,
-        "span": 2
-      },
-      {
         "min": 161,
         "max": 167,
         "span": 10
@@ -29833,11 +29298,6 @@
         "min": 173,
         "max": 287,
         "span": 118
-      },
-      {
-        "min": 325,
-        "max": 323,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 244,
@@ -29864,11 +29324,6 @@
     "offshore_wind_deg": 23.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 105,
-        "max": 103,
-        "span": 2
-      },
       {
         "min": 161,
         "max": 331,
@@ -29903,11 +29358,6 @@
         "min": 105,
         "max": 111,
         "span": 10
-      },
-      {
-        "min": 169,
-        "max": 167,
-        "span": 2
       },
       {
         "min": 185,
@@ -29950,11 +29400,6 @@
         "span": 10
       },
       {
-        "min": 133,
-        "max": 131,
-        "span": 2
-      },
-      {
         "min": 181,
         "max": 287,
         "span": 110
@@ -29988,11 +29433,6 @@
         "min": 133,
         "max": 151,
         "span": 22
-      },
-      {
-        "min": 173,
-        "max": 171,
-        "span": 2
       },
       {
         "min": 197,
@@ -30148,11 +29588,6 @@
         "min": 157,
         "max": 167,
         "span": 14
-      },
-      {
-        "min": 193,
-        "max": 191,
-        "span": 2
       },
       {
         "min": 213,
@@ -30550,11 +29985,6 @@
         "min": 177,
         "max": 299,
         "span": 126
-      },
-      {
-        "min": 317,
-        "max": 315,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 244,
@@ -30848,11 +30278,6 @@
         "min": 245,
         "max": 255,
         "span": 14
-      },
-      {
-        "min": 349,
-        "max": 347,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 208,
@@ -30888,19 +30313,9 @@
         "span": 18
       },
       {
-        "min": 281,
-        "max": 279,
-        "span": 2
-      },
-      {
         "min": 301,
         "max": 319,
         "span": 22
-      },
-      {
-        "min": 353,
-        "max": 351,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 72,
@@ -30951,11 +30366,6 @@
         "min": 297,
         "max": 315,
         "span": 22
-      },
-      {
-        "min": 353,
-        "max": 351,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 292,
@@ -30996,11 +30406,6 @@
         "min": 205,
         "max": 219,
         "span": 18
-      },
-      {
-        "min": 273,
-        "max": 271,
-        "span": 2
       },
       {
         "min": 297,
@@ -31053,19 +30458,9 @@
         "span": 22
       },
       {
-        "min": 269,
-        "max": 267,
-        "span": 2
-      },
-      {
         "min": 293,
         "max": 315,
         "span": 26
-      },
-      {
-        "min": 349,
-        "max": 347,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 96,
@@ -31111,11 +30506,6 @@
         "min": 293,
         "max": 315,
         "span": 26
-      },
-      {
-        "min": 349,
-        "max": 347,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 104,
@@ -31156,11 +30546,6 @@
         "min": 205,
         "max": 219,
         "span": 18
-      },
-      {
-        "min": 265,
-        "max": 263,
-        "span": 2
       },
       {
         "min": 289,
@@ -31886,11 +31271,6 @@
         "min": 57,
         "max": 183,
         "span": 130
-      },
-      {
-        "min": 265,
-        "max": 263,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 124,
@@ -31917,11 +31297,6 @@
     "offshore_wind_deg": 336.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 61,
-        "max": 59,
-        "span": 2
-      },
       {
         "min": 81,
         "max": 215,
@@ -32107,11 +31482,6 @@
     "offshore_wind_deg": 20.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 13,
-        "max": 11,
-        "span": 2
-      },
       {
         "min": 133,
         "max": 239,
@@ -32368,19 +31738,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 181,
-        "max": 179,
-        "span": 2
-      },
-      {
         "min": 209,
         "max": 219,
         "span": 14
-      },
-      {
-        "min": 237,
-        "max": 235,
-        "span": 2
       },
       {
         "min": 1,
@@ -32581,11 +31941,6 @@
         "min": 217,
         "max": 239,
         "span": 26
-      },
-      {
-        "min": 349,
-        "max": 347,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 100,
@@ -32787,11 +32142,6 @@
     "offshore_wind_deg": 350.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 13,
-        "max": 11,
-        "span": 2
-      },
       {
         "min": 81,
         "max": 183,
@@ -33496,11 +32846,6 @@
         "min": 69,
         "max": 179,
         "span": 114
-      },
-      {
-        "min": 213,
-        "max": 211,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 132,
@@ -33742,11 +33087,6 @@
     "offshore_wind_deg": 342.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 65,
-        "max": 63,
-        "span": 2
-      },
       {
         "min": 89,
         "max": 235,
@@ -34201,11 +33541,6 @@
         "min": 217,
         "max": 235,
         "span": 22
-      },
-      {
-        "min": 357,
-        "max": 355,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 152,
@@ -34286,11 +33621,6 @@
         "min": 93,
         "max": 187,
         "span": 98
-      },
-      {
-        "min": 213,
-        "max": 211,
-        "span": 2
       },
       {
         "min": 333,
@@ -34641,11 +33971,6 @@
         "min": 193,
         "max": 199,
         "span": 10
-      },
-      {
-        "min": 221,
-        "max": 219,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 188,
@@ -35279,11 +34604,6 @@
         "min": 153,
         "max": 215,
         "span": 66
-      },
-      {
-        "min": 245,
-        "max": 243,
-        "span": 2
       }
     ],
     "optimal_swell_dir": 196,
