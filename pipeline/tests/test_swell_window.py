@@ -18,6 +18,7 @@ from shapely.strtree import STRtree
 
 from pipeline.enrichment import swell_window as sw
 from pipeline.enrichment.geodata import LandIndex
+from pipeline.interpret import _in_any_arc
 
 KM_PER_DEG = 111.32  # at the equator, where we place the test spot
 
@@ -288,6 +289,78 @@ def test_ri_island_spot_stays_bounded_far_seaward_opens():
     assert _in(180), "distant seaward land (~1800 km) wraps open by its own distance"
     assert not _in(0), "the mainland ~44 km behind stays BLOCKED"
     assert sum(a["span"] for a in arcs) < 300, "a spot on a small island stays bounded, not ~360°"
+
+
+def test_merge_arcs_drops_degenerate_substep_sliver():
+    # BUG 1(a): a 3-bearing open run (160,164,168 = 12° wide) shrinks to 2° and must be
+    # DROPPED — never emitted as the degenerate {min:165, max:163, span:2} that
+    # interpret._in_any_arc mis-read as a ~358° wrap. Check straight and wrapped slivers.
+    step = 4
+    assert sw._merge_open_arcs([160, 164, 168], step) == [], "12° run → 2° shrunk → dropped"
+    for open_b in ([100, 104, 108], [0, 4, 8], [356, 0, 4], [352, 356, 0]):
+        for a in sw._merge_open_arcs(open_b, step):
+            assert not (a["min"] > a["max"] and a["span"] <= step), f"degenerate arc emitted: {a}"
+
+
+def test_merge_arcs_keeps_legit_wraparound():
+    # BUG 1(b): a genuine ~44° window straddling North (340..356, 0..20) must survive as a
+    # wraparound arc (~34° after shrink) and read as ~40°, NOT be dropped or misread as 358°.
+    step = 4
+    arcs = sw._merge_open_arcs(list(range(340, 360, step)) + list(range(0, 24, step)), step)
+    assert len(arcs) == 1, f"one wraparound arc expected, got {arcs}"
+    a = arcs[0]
+    assert a["min"] > a["max"], "a genuine wrap has min>max"
+    assert a["span"] == (a["max"] + 360 - a["min"] + step), "span consistent with the wrap"
+    assert 20 < a["span"] < 60, f"a ~40° window, not ~358° or dropped (got {a['span']})"
+    assert _in_any_arc(0.0, arcs) and _in_any_arc(350.0, arcs) and _in_any_arc(10.0, arcs)
+    assert not _in_any_arc(180.0, arcs), "a swell from the opposite side is OUTSIDE the wrap"
+
+
+def test_emitted_arcs_span_consistent_with_minmax():
+    # BUG 1(c): for EVERY arc the raycast can emit, span must equal what min/max imply
+    # (wrap-aware) and never be sub-step — so _in_any_arc and the span field always agree.
+    step = 4
+
+    def implied(a):
+        return (a["max"] - a["min"] + step) if a["min"] <= a["max"] else (a["max"] + 360 - a["min"] + step)
+
+    patterns = [
+        list(range(0, 360, step)),                                    # fully open
+        list(range(100, 200, step)),                                  # one mid run
+        [160, 164, 168],                                              # sub-step sliver (dropped)
+        list(range(340, 360, step)) + list(range(0, 24, step)),       # wraparound
+        list(range(0, 40, step)) + list(range(200, 300, step)),       # two runs
+        list(range(0, 16, step)),                                     # 4-bearing run (16° → 6° arc)
+        [0, 4, 8, 340, 344, 348, 352, 356],                          # wrap + short leading run
+    ]
+    saw_wrap = False
+    for open_b in patterns:
+        for a in sw._merge_open_arcs(open_b, step):
+            assert a["span"] == implied(a), f"span disagrees with min/max: {a}"
+            assert a["span"] > step, f"sub-step arc emitted: {a}"
+            saw_wrap = saw_wrap or a["min"] > a["max"]
+    assert saw_wrap, "a wraparound pattern should still produce a (consistent) min>max arc"
+
+
+def test_full_cast_preserves_nwps_mop_source():
+    # BUG 2: run_full must NOT demote NWPS/MOP spots to raycast. Test the pure per-spot
+    # writer used by run_full.
+    from pipeline.sw1_raycast import _apply_raycast_result
+    r = {"swell_window_arcs": [{"min": 180, "max": 260, "span": 84}], "optimal_swell_dir": 220}
+    for src in ("nwps", "cdip_mop"):
+        spot = {"swell_window_source": src, "swell_window_arcs": [], "optimal_swell_dir": None}
+        assert _apply_raycast_result(spot, r) == "raycast"
+        assert spot["swell_window_source"] == src, f"{src} must be PRESERVED, not demoted to raycast"
+        assert spot["swell_window_arcs"] == r["swell_window_arcs"], "arcs still refreshed (dormant fallback)"
+    # a non-better-tier spot IS tagged raycast on a solve
+    spot = {"swell_window_source": "orientation_derived"}
+    _apply_raycast_result(spot, r)
+    assert spot["swell_window_source"] == "raycast"
+    # a better-tier spot the raycast can't solve is left untouched (arcs + source)
+    keep = [{"min": 1, "max": 2, "span": 5}]
+    spot = {"swell_window_source": "nwps", "swell_window_arcs": keep, "optimal_swell_dir": 90}
+    assert _apply_raycast_result(spot, None) == "preserved"
+    assert spot["swell_window_source"] == "nwps" and spot["swell_window_arcs"] == keep
 
 
 def _run_all():
