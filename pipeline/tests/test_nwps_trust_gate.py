@@ -22,11 +22,13 @@ def _sys(hs, direction, system=1, tp=10.0):
     return {"system": system, "hs": hs, "tp": tp, "dir": direction}
 
 
-def _sample(t, systems, buoy_swd, hs_swell, frac, *, swh=None, wvht=None):
-    # default heights correlate (rising sea) so the height check is satisfied unless overridden
+def _sample(t, systems, buoy_swd, hs_swell, frac, *, swh=None, wvht=None, ws=5.0, wdir=270.0):
+    # default heights correlate (rising sea) so the height check is satisfied unless overridden;
+    # a light 5 m/s wind + tp=10 s systems (c=15.6 m/s) classify as SWELL by wave-age.
     swh = 1.0 + 0.08 * t if swh is None else swh
     wvht = (swh * 1.05) if wvht is None else wvht
     return {"t": t, "model_systems": systems, "model_swh": swh, "buoy_wvht": wvht,
+            "model_ws": ws, "model_wdir": wdir,
             "buoy_swell_dir": buoy_swd, "buoy_hs_swell": hs_swell, "buoy_frac": frac,
             "dirpw": None, "buoy_mwd": None}
 
@@ -39,14 +41,36 @@ def _batch(n, model_dir_fn, buoy_swd=90.0, hs_swell=1.1, frac=0.79, systems_fn=N
     return out
 
 
-def test_matching_rule_is_highest_energy_not_sys1_not_direction():
-    # two systems: sys1 is a small 200° swell, sys2 is the dominant 90° swell.
-    systems = [_sys(0.4, 200.0, system=1), _sys(1.4, 90.0, system=2)]
-    m = nn._match_swell_system(systems)
-    assert m["system"] == 2 and m["dir"] == 90.0, "dominant (highest hs), not sys1"
-    assert nn._match_swell_system([]) is None
-    # match must NOT depend on the buoy direction (no circular reasoning) — same result
-    # regardless of what the buoy says; the function doesn't even take the buoy dir.
+def test_matching_is_highest_energy_among_swell():
+    # two long-period swell systems under a light 5 m/s wind (both swell): pick the dominant.
+    systems = [_sys(0.4, 200.0, system=1, tp=11.0), _sys(1.4, 90.0, system=2, tp=12.0)]
+    m = nn._match_swell_system(systems, 5.0, 270.0)
+    assert m["system"] == 2 and m["dir"] == 90.0, "dominant swell (highest hs), not sys1"
+    assert nn._match_swell_system([], 5.0, 270.0) is None
+    # match doesn't depend on the buoy direction (no circular reasoning) — it isn't passed one.
+
+
+def test_windsea_system_is_excluded_even_when_biggest():
+    # THE fix: a BIG wind-sea (short 5 s period, aligned with a 12 m/s wind) + a smaller
+    # long-period swell. Old rule took the biggest (wind-sea); new rule must pick the swell.
+    windsea = _sys(1.8, 270.0, system=1, tp=5.0)    # c=7.8 m/s < 1.2·12·cos0=14.4 → wind-sea
+    swell = _sys(0.7, 120.0, system=2, tp=12.0)     # c=18.7 m/s > 14.4 → swell
+    m = nn._match_swell_system([windsea, swell], 12.0, 270.0)
+    assert m is not None and m["system"] == 2 and m["dir"] == 120.0, "the SWELL, not the bigger wind-sea"
+    assert nn._system_is_swell(windsea, 12.0, 270.0) is False
+    assert nn._system_is_swell(swell, 12.0, 270.0) is True
+    # a swell OPPOSING the wind stays swell regardless of period
+    assert nn._system_is_swell(_sys(1.0, 90.0, tp=6.0), 12.0, 270.0) is True
+
+
+def test_hour_with_only_windsea_is_not_comparable():
+    # buoy has swell every hour, but the ONLY model system is a wind-sea → those hours are
+    # excluded from the direction stat (validity), and n_model_no_swell counts them.
+    windsea = lambda: [_sys(1.6, 270.0, system=1, tp=4.5)]   # short + aligned with a 12 m/s wind
+    samples = [_sample(t, windsea(), 120.0, 1.1, 0.79, ws=12.0, wdir=270.0) for t in range(10)]
+    res = nn.swell_trust_verdict(samples)
+    assert res["verdict"] == "INCONCLUSIVE" and res["n_qualifying"] == 0
+    assert res["n_model_no_swell"] == 10, "buoy had swell but the model had only wind-sea"
 
 
 def test_precondition_excludes_no_swell_hours():

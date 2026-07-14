@@ -83,6 +83,13 @@ SWELL_HS_FLOOR_M = 0.5          # buoy spectral Hs_swell floor — below this th
 SWELL_FRAC_FLOOR = 0.3          # buoy swell-fraction floor — below this the sea is chop-dominated
                                 #   and "swell direction" is a minor, low-signal component
 SWELL_MIN_QUALIFYING = 6        # < this many qualifying (swell-present) hours → INCONCLUSIVE
+# Model-system wind-sea/swell split. NWPS's watershed partitioning (Hanson & Phillips 2001,
+# as in SWAN/WW3) partitions the WHOLE 2-D spectrum, so the tracked "systems" INCLUDE the
+# local WIND-SEA — the biggest system on a windy day. We classify each model system with the
+# SAME wave-age criterion ndbc_spectral applies to the buoy spectrum, and exclude wind-sea
+# before matching, so we never compare the model's wind-sea against the buoy's swell.
+_WAVE_AGE_FACTOR = 1.2          # MUST match ndbc_spectral.WAVE_AGE_FACTOR (one criterion, both sides)
+_G_MS2 = 9.80665               # gravity; deep-water phase speed c = g·tp/(2π)
 
 # eccodes short names (NOT NCEP abbreviations):
 #   swh   = sig height of combined wind waves + swell (headline Hs)
@@ -624,19 +631,38 @@ def _circ_mean(diffs):
     return math.degrees(math.atan2(s, c))
 
 
-def _match_swell_system(systems):
-    """The model tracked swell system to compare against the buoy's swell — the
-    HIGHEST-ENERGY (largest hs) system, or None if none are tracked this hour.
+def _system_is_swell(system, wind_speed, wind_dir):
+    """True iff a tracked model system is SWELL (not wind-sea) by the wave-age criterion —
+    the SAME test ndbc_spectral applies to the buoy spectrum: a component is WIND-SEA while
+    its deep-water phase speed c = g·tp/(2π) is below 1.2·U·cos(δ) and it is aligned with the
+    wind (δ = system dir − wind dir, both 'from'); once it outruns/opposes the wind it is
+    swell. Needs the system PERIOD and the model wind at the node; returns False (NOT a swell
+    candidate) when it can't classify, so an unclassifiable/wind-sea system is never mistaken
+    for the swell."""
+    tp, d = system.get("tp"), system.get("dir")
+    if (tp is None or tp <= 0 or d is None
+            or wind_speed is None or wind_dir is None or wind_speed <= 0):
+        return False
+    c = _G_MS2 * tp / (2.0 * math.pi)                       # phase speed from the system period
+    cosd = math.cos(math.radians(((d - wind_dir + 180) % 360) - 180))
+    windsea = cosd > 0.0 and c < _WAVE_AGE_FACTOR * wind_speed * cosd
+    return not windsea
 
-    Why highest-energy and not sys1 or a direction match: (1) the buoy's spectral
-    swell-band mean direction is energy-weighted, so it is dominated by the largest
-    swell — the model's largest system is the like-for-like counterpart; (2) it is
-    INDEPENDENT of direction, so picking it can't rig the direction residual (matching on
-    direction would be circular reasoning / cheating); (3) it needs no buoy swell period.
-    The system index is returned too so the diag can show which system matched each hour —
-    a match that flips between systems hour-to-hour (a bimodal sea) is then visible."""
-    real = [s for s in (systems or []) if s.get("hs") is not None and s.get("dir") is not None]
-    return max(real, key=lambda s: s["hs"]) if real else None
+
+def _match_swell_system(systems, wind_speed, wind_dir):
+    """The model tracked SWELL system to compare against the buoy's swell. NWPS's watershed
+    partitioning (Hanson & Phillips 2001, as in SWAN/WW3) partitions the WHOLE spectrum, so
+    the tracked systems INCLUDE the local WIND-SEA — on a windy day it is the biggest system,
+    and matching it against the buoy's swell is the dirpw-vs-MWD category error one level
+    deeper. So we FIRST drop wind-sea systems (wave-age, model wind at the node), THEN take
+    the highest-energy remaining SWELL system. Highest-energy (not sys1, not a direction
+    match): the buoy's swell-band mean is energy-weighted → its counterpart is the dominant
+    swell, and it is independent of direction so it can't rig the residual. None when no
+    system qualifies as swell → that hour is not comparable (validity, same as the buoy
+    precondition: we exclude hours where the quantity — a model swell — does not exist)."""
+    swell = [s for s in (systems or [])
+             if s.get("hs") is not None and _system_is_swell(s, wind_speed, wind_dir)]
+    return max(swell, key=lambda s: s["hs"]) if swell else None
 
 
 def _swell_precondition(hs_swell, frac):
@@ -650,11 +676,12 @@ def _swell_precondition(hs_swell, frac):
 
 def swell_trust_verdict(samples):
     """The rebuilt gate. *samples* = per-valid-hour dicts:
-        {t, model_systems:[{system,hs,tp,dir},…], model_swh, buoy_wvht,
-         buoy_swell_dir, buoy_hs_swell, buoy_frac}
+        {t, model_systems:[{system,hs,tp,dir},…], model_ws, model_wdir, model_swh,
+         buoy_wvht, buoy_swell_dir, buoy_hs_swell, buoy_frac}
     DIRECTION (primary): over hours passing _swell_precondition, match the highest-energy
-    model swell system and compare its dir to the buoy spectral swell_dir — residual SPREAD
-    (circ_std) AND BIAS (circ_mean), both must be within threshold. HEIGHT (secondary,
+    model SWELL system (its WIND-SEA partition excluded by the wave-age criterion, using the
+    model wind at the node) and compare its dir to the buoy spectral swell_dir — residual
+    SPREAD (circ_std) AND BIAS (circ_mean), both must be within threshold. HEIGHT (secondary,
     unchanged): Pearson r of model swh vs buoy WVHT over ALL overlapping hours. Verdict:
     INCONCLUSIVE if too few qualifying swell hours; else PASS iff direction spread+bias are
     within threshold and height r (when assessable) ≥ TRUST_R_MIN; else FAIL. Pure/offline.
@@ -669,13 +696,17 @@ def swell_trust_verdict(samples):
         if max(bwv) - min(bwv) >= TRUST_BUOY_RANGE_MIN_M:   # not a flat spell
             height_r = _pearson([m for m, _ in h], bwv)
 
-    # DIRECTION — only qualifying (swell-present) hours; matched highest-energy system.
-    per_hour, resid, swell_hs_absdiff = [], [], []
+    # DIRECTION — only comparable hours: the buoy has swell (precondition) AND the model has a
+    # SWELL system (its wind-sea partition excluded by wave-age, using the model wind at the node).
+    per_hour, resid, swell_hs_absdiff, n_model_no_swell = [], [], [], 0
     for s in samples:
         qual = _swell_precondition(s.get("buoy_hs_swell"), s.get("buoy_frac"))
-        matched = _match_swell_system(s.get("model_systems")) if qual else None
+        mws, mwd = s.get("model_ws"), s.get("model_wdir")
+        matched = _match_swell_system(s.get("model_systems"), mws, mwd) if qual else None
         bdir = s.get("buoy_swell_dir")
         d = None
+        if qual and matched is None and (s.get("model_systems")):
+            n_model_no_swell += 1   # buoy had swell but every model system classified wind-sea
         if matched and bdir is not None:
             d = ((matched["dir"] - bdir + 180.0) % 360.0) - 180.0
             resid.append(d)
@@ -684,14 +715,17 @@ def swell_trust_verdict(samples):
         per_hour.append({"t": s.get("t"), "qualifying": qual,
                          "matched_system": (matched["system"] if matched else None),
                          "model_dir": (matched["dir"] if matched else None),
+                         "matched_tp": (matched.get("tp") if matched else None),
                          "buoy_swell_dir": bdir, "delta": d,
-                         "buoy_hs_swell": s.get("buoy_hs_swell"), "buoy_frac": s.get("buoy_frac")})
+                         "buoy_hs_swell": s.get("buoy_hs_swell"), "buoy_frac": s.get("buoy_frac"),
+                         "all_systems": s.get("model_systems") or [], "model_ws": mws, "model_wdir": mwd})
 
     dir_n = len(resid)
     dir_circ_std = _circ_std(resid) if resid else float("nan")
     dir_bias = _circ_mean(resid) if resid else float("nan")
 
     base = {"dir_circ_std": dir_circ_std, "dir_bias": dir_bias, "n_qualifying": dir_n,
+            "n_model_no_swell": n_model_no_swell,
             "height_r": height_r, "height_n": height_n, "per_hour": per_hour,
             # swell-Hs like-for-like (model matched-system hs vs buoy Hs_swell): REPORTED as a
             # refinement/cross-check (task 3), NOT gated — total-Hs r is the proven skill metric.
@@ -932,6 +966,7 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4, **kw):
         b, spx = buoy[v], spectral.get(v)
         samples.append({
             "t": v, "model_systems": s["systems"], "model_swh": s["swh"], "model_shts": s["shts"],
+            "model_ws": s["ws"], "model_wdir": s["wdir"],   # for the model-system wave-age split
             "buoy_wvht": b["hs"],
             "buoy_swell_dir": (spx["swell_dir"] if spx else None),
             "buoy_hs_swell": (spx["hs_swell"] if spx else None),
@@ -1372,19 +1407,26 @@ def _print_trust_diag(buoy_id, blat, blng, res):
     print(f"  ↳ [diag] HEIGHT: total-Hs r={_g(hr, '%.3f')} (gate) · swell-Hs mean|Δ| "
           f"{_g(shm, '%.2f m')} (like-for-like cross-check, not gated)")
     nq = sum(1 for p in ph if p["qualifying"])
-    print(f"  ↳ [diag] DIRECTION: model dominant swell-system dir vs buoy spectral swell_dir "
-          f"(both 'from', both swell); {nq} swell-present hour(s) of {len(ph)}")
-    print(f"      {'hour':>9} {'qual':>4} {'sys':>3} {'mdlDir':>6} {'buoySwD':>7} {'Δ':>6} "
-          f"{'Hs_sw':>5} {'frac':>4}   (qual = Hs≥{SWELL_HS_FLOOR_M} & frac≥{SWELL_FRAC_FLOOR})")
+    nmns = res.get("n_model_no_swell", 0)
+    print(f"  ↳ [diag] DIRECTION: model matched-SWELL-system dir vs buoy spectral swell_dir "
+          f"(wind-sea systems excluded by wave-age); {nq} swell-hr, {res.get('n_qualifying',0)} comparable"
+          + (f", {nmns} hr had swell but NO model swell system (all wind-sea)" if nmns else ""))
+    print(f"      {'hour':>9} {'q':>1} {'match sys/tp/dir':>16} {'buoySwD':>7} {'Δ':>6} "
+          f"{'wind U/dir':>10}  ALL systems [sys:hs/tp/dir]")
     for p in ph[:16]:
         ts = datetime.datetime.fromtimestamp(p["t"] * 3600, datetime.timezone.utc).strftime("%m-%d %HZ")
-        md = f"{p['model_dir']:.0f}" if p["model_dir"] is not None else "—"
         bd = f"{p['buoy_swell_dir']:.0f}" if p["buoy_swell_dir"] is not None else "—"
         dl = f"{p['delta']:+.0f}°" if p["delta"] is not None else "—"
-        hs = f"{p['buoy_hs_swell']:.2f}" if p["buoy_hs_swell"] is not None else "—"
-        fr = f"{p['buoy_frac']:.2f}" if p["buoy_frac"] is not None else "—"
-        sy = str(p["matched_system"]) if p["matched_system"] is not None else "—"
-        print(f"      {ts:>9} {('Y' if p['qualifying'] else 'n'):>4} {sy:>3} {md:>6} {bd:>7} {dl:>6} {hs:>5} {fr:>4}")
+        tp = f"{p['matched_tp']:.1f}s" if p.get("matched_tp") is not None else "—"
+        matched = (f"{p['matched_system']}/{tp}/{p['model_dir']:.0f}°"
+                   if p["matched_system"] is not None else "— (none: all wind-sea)")
+        wind = (f"{p['model_ws']:.0f}/{p['model_wdir']:.0f}"
+                if p.get("model_ws") is not None and p.get("model_wdir") is not None else "—")
+        allsys = " ".join(
+            f"{s['system']}:{s['hs']:.2f}/{('%.0fs' % s['tp']) if s.get('tp') is not None else '—'}/{s['dir']:.0f}"
+            for s in (p.get("all_systems") or []) if s.get("hs") is not None) or "—"
+        print(f"      {ts:>9} {('Y' if p['qualifying'] else 'n'):>1} {matched:>16} {bd:>7} {dl:>6} "
+              f"{wind:>10}  {allsys}")
     samples = res.get("samples") or []
     old = [(((s["dirpw"] - s["buoy_mwd"] + 180) % 360) - 180) for s in samples
            if s.get("dirpw") is not None and s["dirpw"] == s["dirpw"] and s.get("buoy_mwd") is not None]
