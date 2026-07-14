@@ -126,16 +126,38 @@ def test_mask_marks_cells_with_no_tracked_swell():
 def test_node_reconciliation_same_vs_different_grid():
     cyc = _fixture()
     lats, lons = _lat_lon()
-    cg1_same = {"shape": (4, 4), "lats": lats, "lons": lons,
-                "mask": np.zeros((4, 4), bool), "cycle_dt": _CDT}
+    # CG1 dicts here carry NO 'shape' key — exactly like nwps_nearshore.load_cycle's
+    # real output. (Regression: reading cg1['shape'] raised KeyError('shape') on the Mac.)
+    cg1_same = {"lats": lats, "lons": lons, "mask": np.zeros((4, 4), bool), "cycle_dt": _CDT}
     assert trk._grids_coincident(cyc, cg1_same)
     ti, tj, why = trk.trkng_node(cyc, cg1_same, 40.06, -73.00)
     assert (ti, tj) == (0, 0) and "same grid" in why.lower(), "coincident → index reused"
-    # a genuinely different grid must be remapped EXPLICITLY, never silently
-    cg1_diff = {"shape": (1, 1), "lats": np.array([[40.06]]), "lons": np.array([[-73.0]]),
+    # a different-resolution grid must be remapped EXPLICITLY (by coords), never silently
+    cg1_diff = {"lats": np.array([[40.06]]), "lons": np.array([[-73.0]]),
                 "mask": np.zeros((1, 1), bool), "cycle_dt": _CDT}
     _, _, why2 = trk.trkng_node(cyc, cg1_diff, 40.06, -73.00)
-    assert "differs" in why2.lower() and "remap" in why2.lower()
+    assert "cg1 node" in why2.lower() and ("footprint" in why2.lower() or "domain" in why2.lower())
+
+
+def test_latlon_axes_matches_real_mhx_grid_keys():
+    """The eccodes seam's geolocation, against the verified mhx grid definition:
+    Ni=61, Nj=62, first=(33.85, 282.0), di=0.054167, dj=0.045082, scanningMode=64."""
+    lat2d, lon2d = trk._latlon_axes(61, 62, 33.85, 282.0, 0.054167, 0.045082, 64)
+    assert lat2d.shape == (62, 61)
+    # scanningMode=64 → j south→north: row 0 is the SOUTH edge, latitude ASCENDING
+    assert abs(lat2d[0, 0] - 33.85) < 1e-6
+    assert abs(lat2d[-1, 0] - 36.6) < 1e-3 and lat2d[-1, 0] > lat2d[0, 0]
+    # lon 0/360 → −180/180: 282→−78.0, 285.25→−74.75
+    assert abs(lon2d[0, 0] + 78.0) < 1e-6 and abs(lon2d[0, -1] + 74.75) < 1e-3
+
+
+def test_latlon_axes_rejects_column_major_layout():
+    try:
+        trk._latlon_axes(61, 62, 33.85, 282.0, 0.054167, 0.045082, 64 | 0x20)
+        raised = False
+    except NotImplementedError:
+        raised = True
+    assert raised, "jPointsAreConsecutive must raise, not silently transpose the grid"
 
 
 def test_missing_value_key_masks_in_addition_to_9999():

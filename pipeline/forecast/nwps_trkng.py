@@ -115,11 +115,17 @@ def _read_trkng_messages(path):
                     missing = codes_get_double(gid, "missingValue")
                 except Exception:  # noqa: BLE001
                     missing = TRKNG_SENTINEL
-                ni = codes_get_long(gid, "Ni")
-                nj = codes_get_long(gid, "Nj")
+                ni = codes_get_long(gid, "Ni")     # points along a parallel (lon)
+                nj = codes_get_long(gid, "Nj")     # points along a meridian (lat)
+                if lats is None:                   # geolocate once (all messages share the grid)
+                    lats, lons = _latlon_axes(
+                        ni, nj,
+                        codes_get_double(gid, "latitudeOfFirstGridPointInDegrees"),
+                        codes_get_double(gid, "longitudeOfFirstGridPointInDegrees"),
+                        codes_get_double(gid, "iDirectionIncrementInDegrees"),
+                        codes_get_double(gid, "jDirectionIncrementInDegrees"),
+                        codes_get_long(gid, "scanningMode"))
                 vals = np.asarray(codes_get_values(gid), dtype="float64").reshape(nj, ni)
-                if lats is None:
-                    lats, lons = _latlon_axes(gid, ni, nj, codes_get_double, codes_get_long)
                 records.append((short, system, fh, vals, missing))
             finally:
                 codes_release(gid)
@@ -128,15 +134,24 @@ def _read_trkng_messages(path):
     return lats, lons, records
 
 
-def _latlon_axes(gid, ni, nj, get_double, get_long):
-    """2-D (lat, lon) meshes for a regular_ll message, honouring scan flags.
-    lon → the app's -180/180 convention (matches load_cycle)."""
-    la1 = get_double(gid, "latitudeOfFirstGridPointInDegrees")
-    lo1 = get_double(gid, "longitudeOfFirstGridPointInDegrees")
-    di = get_double(gid, "iDirectionIncrementInDegrees")
-    dj = get_double(gid, "jDirectionIncrementInDegrees")
-    i_neg = get_long(gid, "iScansNegatively")
-    j_pos = get_long(gid, "jScansPositively")
+def _latlon_axes(ni, nj, la1, lo1, di, dj, scanning_mode):
+    """2-D (lat, lon) meshes for a regular_ll grid, from its GRIB grid-definition
+    values. scanningMode is decoded EXPLICITLY (GRIB2 flag table 3.4) rather than
+    assuming an order — getting it wrong silently flips the grid N–S:
+        bit 0x80 iScansNegatively   (i runs east→west)
+        bit 0x40 jScansPositively   (j runs south→north)
+        bit 0x20 jPointsAreConsecutive (column-major storage)
+    NWPS Trkng is scanningMode=64 → j south→north (lat ascending from
+    latitudeOfFirstGridPoint, e.g. 33.85→36.6), i west→east, i fastest. The
+    (unexpected) j-consecutive layout would break the reshape(nj, ni) in the caller,
+    so we fail loudly instead of mis-ordering. lon → the app's -180/180 convention
+    (matches load_cycle). Pure/offline — unit-tested against the real mhx keys."""
+    if scanning_mode & 0x20:
+        raise NotImplementedError(
+            f"scanningMode={scanning_mode}: jPointsAreConsecutive (column-major) — the "
+            "value reshape(nj, ni) assumes i-fastest. Add a transpose if NWPS ships this.")
+    i_neg = bool(scanning_mode & 0x80)
+    j_pos = bool(scanning_mode & 0x40)
     lon_axis = lo1 + (-di if i_neg else di) * np.arange(ni, dtype="float64")
     lat_axis = la1 + (dj if j_pos else -dj) * np.arange(nj, dtype="float64")
     lat2d, lon2d = np.meshgrid(lat_axis, lon_axis, indexing="ij")
@@ -209,33 +224,54 @@ def trkng_systems_at(cycle, i, j, fh):
 # --------------------------------------------------------------------------- #
 # Node reconciliation (task 3): Trkng grid vs CG1 grid                          #
 # --------------------------------------------------------------------------- #
+def _shape(cycle):
+    """Grid shape from the lat array — robust to cycle dicts that carry no 'shape' key
+    (nwps_nearshore.load_cycle's CG1 dict does not)."""
+    return np.asarray(cycle["lats"]).shape
+
+
 def _grids_coincident(a, b, *, tol=1e-4):
     """True when two cycle dicts share the SAME lat/lon grid (identical shape and
-    coincident coordinates within *tol*°). Only then does a CG1 (i,j) index the Trkng
-    grid directly; otherwise we must remap geographically."""
-    if a["shape"] != b["shape"]:
+    coincident coordinates within *tol*°). Shape is read from the lat array, not a
+    'shape' key. Only then does a CG1 (i,j) index the Trkng grid directly."""
+    if _shape(a) != _shape(b):
         return False
     return bool(np.nanmax(np.abs(a["lats"] - b["lats"])) < tol
                 and np.nanmax(np.abs(a["lons"] - b["lons"])) < tol)
 
 
+def _same_domain(a, b, *, tol=0.02):
+    """True when two grids cover the SAME geographic footprint (coincident bounding
+    boxes) even at different resolution — the verified CG0-vs-CG1 case (identical
+    origin/extent, CG0 ~2.77× coarser)."""
+    return bool(abs(np.nanmin(a["lats"]) - np.nanmin(b["lats"])) < tol
+                and abs(np.nanmax(a["lats"]) - np.nanmax(b["lats"])) < tol
+                and abs(np.nanmin(a["lons"]) - np.nanmin(b["lons"])) < tol
+                and abs(np.nanmax(a["lons"]) - np.nanmax(b["lons"])) < tol)
+
+
 def trkng_node(trkng_cycle, cg1_cycle, node_lat, node_lng):
     """(i, j, why) into the TRKNG grid for a spot whose CG1 node sits at
-    (node_lat, node_lng). Same grid → reuse the index (partition + height are the SAME
-    cell). Different grid → EXPLICIT nearest tracked-data cell remap, with the crossing
-    distance surfaced in *why*. Never silently nearest-neighbours across mismatched
-    grids. Returns (None, None, why) if the Trkng grid carries no tracked swell at all."""
+    (node_lat, node_lng). Same grid → reuse the index. Different resolution → an
+    EXPLICIT nearest-cell remap computed FROM COORDINATES (never an index ratio — the
+    CG0:CG1 ratio ~2.77 is not integer), with the crossing distance surfaced in *why*.
+    For the verified CG0/CG1 pair this is a within-domain resolution offset (≤ ~half a
+    CG0 cell, ~2.5 km), NOT a domain mismatch. Returns (None, None, why) if the Trkng
+    grid carries no tracked swell at all."""
     if _grids_coincident(trkng_cycle, cg1_cycle):
         cell = nn._nearest_cell(cg1_cycle, node_lat, node_lng)
         if cell is None:
             return None, None, "same grid as CG1, but no cell found"
         return cell[0], cell[1], "same grid as CG1 (index reused; identical cell)"
-    cell = nn._nearest_cell(trkng_cycle, node_lat, node_lng)   # snaps to nearest DATA cell
+    cell = nn._nearest_cell(trkng_cycle, node_lat, node_lng)   # nearest tracked cell BY COORDS
     if cell is None:
-        return None, None, "Trkng grid differs from CG1 and carries no tracked swell"
+        return None, None, "Trkng grid has no tracked swell to sample"
+    frame = ("SAME domain as CG1, coarser resolution — a within-domain resolution step"
+             if _same_domain(trkng_cycle, cg1_cycle)
+             else "DIFFERENT footprint from CG1 — verify the domain before trusting")
     return (cell[0], cell[1],
-            f"Trkng grid DIFFERS from CG1 ({trkng_cycle['shape']} vs {cg1_cycle['shape']}); "
-            f"remapped to nearest tracked cell {cell[2]:.2f} km from the CG1 node")
+            f"Trkng grid {_shape(trkng_cycle)} vs CG1 {_shape(cg1_cycle)}: {frame}; "
+            f"tracked cell {cell[2]:.2f} km from the CG1 node")
 
 
 # --------------------------------------------------------------------------- #
@@ -326,11 +362,12 @@ def _sys_str(systems, idx):
     return "   —   "
 
 
-def diag_compare(wfo, buoy_id, max_rows=48):
+def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
     """Hour-by-hour: CG1 dirpw | Trkng sys1 (hs/tp/dir) | Trkng sys2 | buoy MWD |
     buoy SwH/SwP/SwD. Samples CG1 dirpw and the tracked systems at the SAME geographic
-    node (the buoy's CG1 nearest cell, remapped into the Trkng grid). Read-only."""
-    blat, blng = nn._buoy_latlng(buoy_id)
+    node (the buoy's CG1 nearest cell, remapped into the Trkng grid). Read-only. The
+    buoy is pre-resolved to (blat, blng) by the caller so an unknown-buoy KeyError can't
+    be confused with a code bug in here."""
     cyc = nn.find_latest_cycle(wfo, nn._region_for(wfo))
     if not cyc:
         print(f"no recent cycle for {wfo}")
@@ -343,7 +380,7 @@ def diag_compare(wfo, buoy_id, max_rows=48):
     ti, tj, why = trkng_node(trk, cg1, node_lat, node_lng)
 
     print(f"=== NWPS CG0_Trkng vs CG1 dirpw vs buoy {buoy_id} ({wfo}) ===")
-    print(f"cycle {cyc[0]} {cyc[1]}Z | CG1 grid {cg1['shape']} | Trkng grid {trk['shape']} "
+    print(f"cycle {cyc[0]} {cyc[1]}Z | CG1 grid {_shape(cg1)} | Trkng grid {_shape(trk)} "
           f"| systems tracked: {trk['systems']}")
     print(f"node reconciliation: {why}")
     if ti is None:
@@ -446,18 +483,31 @@ def _selftest():
     check("mask: True where no tracked swell ever (cell (1,0) never has data)",
           cyc["mask"][1, 0] and not cyc["mask"][0, 0])
 
-    # node reconciliation
-    cg1_same = {"shape": (2, 2), "lats": lats, "lons": lons,
-                "mask": np.zeros((2, 2), bool), "cycle_dt": cdt}
-    check("coincident grids detected", _grids_coincident(cyc, cg1_same))
+    # _latlon_axes against the REAL mhx grid keys (closes the eccodes seam offline):
+    # scanningMode=64 → lat ASCENDING 33.85→36.6; lon 282→285.25 → −78.0→−74.75.
+    la, lo = _latlon_axes(61, 62, 33.85, 282.0, 0.054167, 0.045082, 64)
+    check("axes: shape (Nj,Ni)=(62,61)", la.shape == (62, 61))
+    check("axes: lat row 0 is the SOUTH edge 33.85 (scanningMode=64 → ascending)",
+          abs(la[0, 0] - 33.85) < 1e-6 and la[-1, 0] > la[0, 0])
+    check("axes: lat last row ≈ 36.6 (33.85 + 61·0.045082)", abs(la[-1, 0] - 36.6) < 1e-3)
+    check("axes: lon 282→−78 … 285.25→−74.75 (0/360 → −180/180)",
+          abs(lo[0, 0] + 78.0) < 1e-6 and abs(lo[0, -1] + 74.75) < 1e-3)
+    check("axes: jPointsAreConsecutive (bit 0x20) fails loudly, not silently",
+          _raises_notimpl(lambda: _latlon_axes(61, 62, 33.85, 282.0, 0.054, 0.045, 64 | 0x20)))
+
+    # node reconciliation — CG1 dicts here carry NO 'shape' key, exactly like the real
+    # nwps_nearshore.load_cycle output (regression for the KeyError('shape') bug).
+    cg1_same = {"lats": lats, "lons": lons, "mask": np.zeros((2, 2), bool), "cycle_dt": cdt}
+    check("coincident grids detected (shape read from lats, no 'shape' key)",
+          _grids_coincident(cyc, cg1_same))
     ti, tj, why = trkng_node(cyc, cg1_same, 40.0, -73.0)
     check("same-grid node reuses index (0,0) and says so",
           (ti, tj) == (0, 0) and "same grid" in why.lower())
-    cg1_diff = {"shape": (1, 1), "lats": np.array([[40.0]]), "lons": np.array([[-73.0]]),
+    cg1_diff = {"lats": np.array([[40.0]]), "lons": np.array([[-73.0]]),
                 "mask": np.zeros((1, 1), bool), "cycle_dt": cdt}
     _, _, why2 = trkng_node(cyc, cg1_diff, 40.0, -73.0)
-    check("different-grid remap is flagged explicitly (not silent)",
-          "differs" in why2.lower() and "remap" in why2.lower())
+    check("different-resolution remap flagged explicitly (not silent), by coords",
+          "cg1 node" in why2.lower() and ("footprint" in why2.lower() or "domain" in why2.lower()))
 
     # per-spot exposure honours a baked seaward node + omits empty hours
     spot = {"lat": 40.0, "lng": -73.0, "nwps_node_lat": 40.0, "nwps_node_lng": -73.0}
@@ -475,6 +525,14 @@ def _at(shape, cell, val, fill=TRKNG_SENTINEL):
     return a
 
 
+def _raises_notimpl(fn):
+    try:
+        fn()
+        return False
+    except NotImplementedError:
+        return True
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -487,10 +545,22 @@ def main(argv=None):
     if a.selftest:
         return _selftest()
     if a.diag:
+        from urllib.error import HTTPError, URLError
+        # Resolve the buoy first: its KeyError ("unknown station") is distinct from a
+        # code-bug KeyError, so handle it on its own and with a truthful message.
         try:
-            return diag_compare(a.wfo, a.buoy, max_rows=a.rows)
-        except Exception as e:  # noqa: BLE001
-            print(f"⚠ --diag needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
+            blat, blng = nn._buoy_latlng(a.buoy)
+        except (KeyError, HTTPError, URLError, OSError) as e:
+            print(f"⚠ buoy {a.buoy} not resolvable ({type(e).__name__}: {e}) — needs NDBC "
+                  "station metadata present (run on the Mac).")
+            return 0
+        # ONLY genuine environment failures (no NOMADS egress, no eccodes, missing file)
+        # get the "run on the Mac" message. Any OTHER exception propagates as a real
+        # traceback — a code bug must never masquerade as an environment problem.
+        try:
+            return diag_compare(a.wfo, a.buoy, blat, blng, max_rows=a.rows)
+        except (HTTPError, URLError, OSError, ImportError) as e:
+            print(f"⚠ --diag needs live NOMADS + eccodes ({type(e).__name__}: {e}) — run on the Mac.")
             return 0
     ap.print_help()
     return 0
