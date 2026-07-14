@@ -405,6 +405,7 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
     # paired series for the comparisons (task 3), over hours both sides cover
     old_m, old_b, new_m, new_b, ctl_m, ctl_b, ref_m, ref_b, fracs = ([] for _ in range(9))
     hs_sp, hs_ref = [], []   # spectral Hs_swell vs the buoy's own .spec SwH (band-split sanity, task 2)
+    methods = set()          # which band split fired (ndbc_sep_freq / wave_age / fixed_cutoff)
     shown = 0
     for fh in cg1["steps"]:
         if shown >= max_rows:
@@ -423,6 +424,7 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
             spec_col = (f"{_n(spx['hs_swell'],'{:.2f}')}/{_n(spx['swell_dir'])}/"
                         f"{_n(spx['swell_frac'],'{:.2f}')}/{_n(spx['total_mean_dir'])}")
             fracs.append(spx.get("swell_frac"))
+            methods.add(spx.get("split_method"))
         else:
             spec_col = "          —          "
         # accumulate the three paired comparisons (only where both sides are present)
@@ -456,7 +458,8 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
     if hs_sp:
         d = [abs(a - b) for a, b in zip(hs_sp, hs_ref)]
         verdict = "band split looks right" if (sum(d) / len(d)) <= 0.25 else "BAND SPLIT SUSPECT — investigate"
-        print(f"\n  band-split check: mean Hs_swell(spectral) {sum(hs_sp)/len(hs_sp):.2f} m vs "
+        meth = "/".join(sorted(m for m in methods if m)) or "—"
+        print(f"\n  band-split [{meth}] check: mean Hs_swell(spectral) {sum(hs_sp)/len(hs_sp):.2f} m vs "
               f".spec SwH {sum(hs_ref)/len(hs_ref):.2f} m, mean|Δ| {sum(d)/len(d):.2f} m → {verdict}")
     fr = [f for f in fracs if isinstance(f, (int, float)) and f == f]
     if fr:

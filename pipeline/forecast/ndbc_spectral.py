@@ -29,13 +29,19 @@ convention as the buoy MWD/SwD and the NWPS model swell direction, so NO 180° f
 applied; our output inherits alpha1's convention directly. The --diag is itself a check:
 if spectral swell_dir came out ~180° from the buoy SwD, the convention would be wrong.
 
-BAND SPLIT (task 2): we use NDBC's OWN per-record separation frequency (the Sep_Freq
-column of .data_spec) as the wind-sea/swell boundary — swell = f < Sep_Freq, wind-sea =
-f ≥ Sep_Freq. That is defensible because it is computed by NDBC from the actual spectrum
-each hour (sea-state adaptive, not a magic constant) AND it is the same boundary NDBC
-uses for its published SwH/WWH, so our Hs_swell should match the buoy's SwH by
-construction (the diag prints that comparison). When Sep_Freq is missing we fall back to
-SWELL_WINDSEA_CUTOFF_HZ (0.10 Hz ≈ 10 s), the common oceanographic swell threshold.
+BAND SPLIT (task 2): PRIMARY is NDBC's OWN per-record separation frequency (the Sep_Freq
+column of .data_spec), but ONLY when it is a real frequency — 9.999 / 999 / 9999 / MM are
+MISSING sentinels (station 44095 publishes 9.999), so a valid Sep_Freq must fall in
+0.03–0.40 Hz. When it is missing we do NOT trust a fixed cutoff: a single number can't
+separate a 7.5 s (0.133 Hz) swell from wind-chop without misclassifying one or the other
+(0.10 Hz put 44095's real swell in the wind-sea band → the spurious "wind-sea-dominated"
+label). Instead we compute a per-band WAVE-AGE split from the local NDBC wind (Hanson &
+Phillips 2001; the criterion WW3 partitioning uses): a band is wind-sea while its phase
+speed c=g/(2πf) is below 1.2·U projected on the wind, swell once it has outrun the wind.
+Only if BOTH Sep_Freq and wind are unavailable do we fall back to a fixed
+SWELL_WINDSEA_CUTOFF_HZ (0.125 Hz ≈ 8 s), documented as unable to capture sub-8 s swell.
+ACCEPTANCE TEST: whatever split is used, Hs_swell must reproduce NDBC's published .spec
+SwH — the --diag prints mean|Δ| and flags the split SUSPECT if it doesn't.
 
 READER + DIAGNOSTIC ONLY: changes nothing in the rating, trust gate, interpret.py, or
 spots_enriched.json. GUARDRAIL: this is a CORRECT reference, not a way to flatter the
@@ -50,8 +56,23 @@ import argparse
 import datetime
 import math
 
-# Fixed fallback ONLY (primary split is NDBC's per-record Sep_Freq). ~10 s period.
-SWELL_WINDSEA_CUTOFF_HZ = 0.10
+# ── Band split (wind-sea vs swell) ──────────────────────────────────────────
+# PRIMARY: NDBC's OWN per-record separation frequency (the Sep_Freq column of
+# .data_spec) — but ONLY when it is a real frequency. 9.999 / 999 / 9999 / MM are
+# MISSING sentinels, not frequencies (the 44095 trap). A real Sep_Freq lives here:
+_SEP_FREQ_MIN_HZ, _SEP_FREQ_MAX_HZ = 0.03, 0.40
+# FALLBACK when Sep_Freq is missing: a per-band WAVE-AGE split from the LOCAL WIND
+# (Hanson & Phillips 2001; the wind-sea/swell criterion WW3's partitioning uses).
+# A component is wind-sea while its phase speed is below 1.2·U projected on the wind;
+# once it outruns the wind it is swell. This is wind-adaptive on purpose: NO single
+# fixed cutoff can separate a 7.5 s (0.133 Hz) swell from wind-chop without breaking
+# on other seas — the whole reason 0.10 Hz failed at 44095.
+WAVE_AGE_FACTOR = 1.2          # Hanson & Phillips (2001) wind-sea/swell wave-age threshold
+_G = 9.80665                   # gravity (m/s²); deep-water phase speed c = g/(2πf)
+# LAST RESORT only (no valid Sep_Freq AND no wind): a fixed cutoff. 0.125 Hz = 8 s, the
+# common "swell = period > 8 s" threshold. Documented limitation: it CANNOT capture a
+# sub-8 s swell (like 44095's 7.5 s) — so it is used only when wave-age is impossible.
+SWELL_WINDSEA_CUTOFF_HZ = 0.125
 
 # NDBC realtime2 missing sentinels: 999.0 for per-band direction, 9999.0 elsewhere; "MM"
 # in text. A direction is valid only in [0, 360); energy must be finite and ≥ 0.
@@ -180,23 +201,66 @@ def _hs_from_energy(energies):
     return 4.0 * math.sqrt(tot) if tot > 0 else 0.0
 
 
-def spectral_metrics(spec, dirs, *, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
+def _valid_sep_freq(sep):
+    """A published Sep_Freq is usable only inside a sane band — 9.999 / 999 / 9999 / MM
+    (None) are MISSING sentinels, NOT frequencies (task 1, the 44095 trap)."""
+    return sep is not None and math.isfinite(sep) and _SEP_FREQ_MIN_HZ <= sep <= _SEP_FREQ_MAX_HZ
+
+
+def _wrap180(a):
+    return ((a + 180.0) % 360.0) - 180.0
+
+
+def classify_bands(freqs, dirs, *, sep_freq=None, wind_speed=None, wind_dir=None,
+                   cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
+    """Per-band wind-sea/swell split → (is_swell[bool per band], method, sep_repr_hz).
+
+    Priority: (1) a VALID published Sep_Freq → scalar split f < sep. (2) else a per-band
+    WAVE-AGE split from the local wind — a band is wind-sea iff its deep-water phase speed
+    c = g/(2πf) is below WAVE_AGE_FACTOR·U·cos(Δ), where Δ is the angle between the band's
+    direction and the wind. Both alpha1 and NDBC WDIR are 'from' bearings, so the +180°
+    propagation offset cancels and Δ = alpha1 − WDIR; a band opposing the wind (cosΔ ≤ 0)
+    can't be wind-driven → swell. (3) last resort, no wind → the fixed cutoff. Pure."""
+    if _valid_sep_freq(sep_freq):
+        return [f < sep_freq for f in freqs], "ndbc_sep_freq", sep_freq
+    if wind_speed is not None and math.isfinite(wind_speed) and wind_speed > 0:
+        is_swell = []
+        for f in freqs:
+            if f <= 0:
+                is_swell.append(True)
+                continue
+            c = _G / (2.0 * math.pi * f)                 # deep-water phase speed (m/s)
+            a1 = dirs.get(f)
+            if a1 is not None and 0.0 <= a1 < 360.0 and wind_dir is not None:
+                cosd = math.cos(math.radians(_wrap180(a1 - wind_dir)))
+            else:
+                cosd = 1.0                               # direction unknown → treat as along-wind
+            windsea = cosd > 0.0 and c < WAVE_AGE_FACTOR * wind_speed * cosd
+            is_swell.append(not windsea)
+        sep_repr = _G / (2.0 * math.pi * WAVE_AGE_FACTOR * wind_speed)   # omni f_sep, for display
+        return is_swell, "wave_age", sep_repr
+    return [f < cutoff_hz for f in freqs], "fixed_cutoff", cutoff_hz
+
+
+def spectral_metrics(spec, dirs, *, wind_speed=None, wind_dir=None,
+                     cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
     """Per-hour swell/wind-sea/total statistics from one hour's parsed spectrum + directions.
-    *spec* = {"sep_freq", "freqs", "c11"}; *dirs* = {freq: alpha1_deg}. Band split uses
-    spec['sep_freq'] (NDBC's own) when present, else *cutoff_hz*. Returns a dict:
+    *spec* = {"sep_freq", "freqs", "c11"}; *dirs* = {freq: alpha1_deg}; *wind_speed*/*wind_dir*
+    = local NDBC wind for the wave-age split when Sep_Freq is missing. Returns a dict:
       {hs_total, hs_swell, hs_windsea, swell_dir, windsea_dir, total_mean_dir,
-       swell_frac, sep_freq_used, n_bands}
+       swell_frac, sep_freq_used, split_method, n_bands}
     Directions are energy-weighted circular means of alpha1 (degrees FROM, true North).
-    Energy for a band uses C11·df so it matches the Hs integral. Pure."""
+    Energy per band uses C11·df so it matches the Hs integral. Pure."""
     freqs = spec.get("freqs") or []
     c11 = spec.get("c11") or []
-    sep = spec.get("sep_freq")
-    sep_used = sep if (sep is not None and 0.0 < sep < 1.0) else cutoff_hz
+    is_swell, method, sep_repr = classify_bands(
+        freqs, dirs, sep_freq=spec.get("sep_freq"),
+        wind_speed=wind_speed, wind_dir=wind_dir, cutoff_hz=cutoff_hz)
     df = _bin_widths(freqs)
 
     tot_e, sw_e, ws_e = [], [], []              # per-bin energy (C11·df), by band
     tot_d, tot_w, sw_d, sw_w, ws_d, ws_w = [], [], [], [], [], []
-    for f, e, d_f in zip(freqs, c11, df):
+    for f, e, d_f, swell in zip(freqs, c11, df, is_swell):
         if e is None or not math.isfinite(e) or e < 0 or e >= _ENERGY_MISSING:
             continue
         energy = e * d_f
@@ -204,7 +268,7 @@ def spectral_metrics(spec, dirs, *, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
         if a1 is not None and a1 >= _DIR_MISSING:
             a1 = None                            # 999.0 missing-direction sentinel
         tot_e.append(energy); tot_d.append(a1); tot_w.append(energy)
-        if f < sep_used:                         # swell = lower frequency (longer period)
+        if swell:
             sw_e.append(energy); sw_d.append(a1); sw_w.append(energy)
         else:
             ws_e.append(energy); ws_d.append(a1); ws_w.append(energy)
@@ -218,18 +282,47 @@ def spectral_metrics(spec, dirs, *, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
         "windsea_dir": vector_mean_dir(ws_d, ws_w),
         "total_mean_dir": vector_mean_dir(tot_d, tot_w),
         "swell_frac": (hs_swell / hs_total) if hs_total > 0 else None,
-        "sep_freq_used": sep_used, "n_bands": len(freqs),
+        "sep_freq_used": sep_repr, "split_method": method, "n_bands": len(freqs),
     }
 
 
-def compute(data_spec_text, swdir_text, *, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
-    """{epoch_hour: spectral_metrics} from raw .data_spec + .swdir text. Pure/offline —
-    this is the whole reader minus the fetch, so it's fully unit-testable."""
+def _iso_epoch_hour(iso):
+    try:
+        return int(datetime.datetime.fromisoformat(
+            str(iso).replace("Z", "+00:00")).timestamp() // 3600)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_std_wind(text):
+    """{epoch_hour: (wind_speed_ms, wind_dir_deg)} from the .txt std feed — the local wind
+    the wave-age split needs. Reuses the buoys realtime2 parser. None-safe; {} on failure."""
+    if not text:
+        return {}
+    try:
+        from .buoys import _parse_realtime2, _STD_FIELDS
+    except Exception:  # noqa: BLE001
+        return {}
+    out = {}
+    for o in _parse_realtime2(text, _STD_FIELDS):
+        eh = _iso_epoch_hour(o.get("time"))
+        if eh is None:
+            continue
+        out[eh] = (o.get("wind_speed_ms"), o.get("wind_dir_deg"))
+    return out
+
+
+def compute(data_spec_text, swdir_text, std_text=None, *, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
+    """{epoch_hour: spectral_metrics} from raw .data_spec + .swdir (+ optional .txt std for
+    the wave-age wind). Pure/offline — the whole reader minus the fetch, fully unit-testable."""
     spec_by_hour = parse_data_spec(data_spec_text)
     dir_by_hour = parse_swdir(swdir_text)
+    wind_by_hour = parse_std_wind(std_text)
     out = {}
     for eh, spec in spec_by_hour.items():
-        out[eh] = spectral_metrics(spec, dir_by_hour.get(eh, {}), cutoff_hz=cutoff_hz)
+        u, wd = wind_by_hour.get(eh, (None, None))
+        out[eh] = spectral_metrics(spec, dir_by_hour.get(eh, {}),
+                                   wind_speed=u, wind_dir=wd, cutoff_hz=cutoff_hz)
     return out
 
 
@@ -261,7 +354,8 @@ def delta_stats(model_dirs, buoy_dirs):
 def by_hour(buoy_id, *, use_cache=False, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
     """{epoch_hour: spectral_metrics} for a live station, or {} if the spectra are
     unavailable. Reuses pipeline.forecast.buoys._fetch_text (its cache + polite fetch) —
-    no parallel fetch path. Fetches only .data_spec + .swdir (the two the math needs)."""
+    no parallel fetch path. Fetches .data_spec + .swdir (the spectrum) and the .txt std
+    feed (local wind for the wave-age split when Sep_Freq is a sentinel)."""
     from .buoys import _fetch_text
     from ..config import NDBC_REALTIME2_BASE
     up = buoy_id.upper()
@@ -269,7 +363,8 @@ def by_hour(buoy_id, *, use_cache=False, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
     sd = _fetch_text(f"{NDBC_REALTIME2_BASE}/{up}.swdir", buoy_id, "swdir", use_cache)
     if not ds or not sd:
         return {}
-    return compute(ds, sd, cutoff_hz=cutoff_hz)
+    std = _fetch_text(f"{NDBC_REALTIME2_BASE}/{up}.txt", buoy_id, "std", use_cache)  # wind
+    return compute(ds, sd, std, cutoff_hz=cutoff_hz)
 
 
 # --------------------------------------------------------------------------- #
@@ -331,12 +426,32 @@ def _selftest():
     check("metrics: wind-sea dir ~ 250–260° (both wind-sea bins have dir+energy)",
           250.0 <= m["windsea_dir"] <= 260.0)
 
-    # band split fallback when Sep_Freq missing
-    rec2 = {"sep_freq": None, "freqs": [0.05, 0.15], "c11": [5.0, 5.0]}
-    m2 = spectral_metrics(rec2, {0.05: 100.0, 0.15: 200.0})
-    check("band split: missing Sep_Freq falls back to 0.10 Hz",
-          abs(m2["sep_freq_used"] - SWELL_WINDSEA_CUTOFF_HZ) < 1e-9
-          and abs(m2["swell_dir"] - 100.0) < 1e-6 and abs(m2["windsea_dir"] - 200.0) < 1e-6)
+    # task 1 — Sep_Freq sentinel masking (the 44095 trap: 9.999 is MISSING, not a cutoff)
+    check("sep sentinel: 9.999 / 999 / None are NOT valid separation frequencies",
+          not _valid_sep_freq(9.999) and not _valid_sep_freq(999.0) and not _valid_sep_freq(None))
+    check("sep valid band: 0.08 accepted; 0.02 & 0.45 rejected as out-of-band",
+          _valid_sep_freq(0.08) and not _valid_sep_freq(0.02) and not _valid_sep_freq(0.45))
+
+    # task 2 — wave-age split captures a 7.5 s swell that any 0.10/0.125 Hz cutoff misses
+    fq = [0.08, 0.133, 0.20, 0.25]                 # 0.133 Hz = 7.5 s (44095's real swell)
+    isw, method, _ = classify_bands(fq, {0.133: 90.0, 0.20: 90.0, 0.25: 90.0},
+                                    sep_freq=9.999, wind_speed=8.0, wind_dir=90.0)
+    check("wave-age fires when Sep_Freq is the 9.999 sentinel (not coerced)", method == "wave_age")
+    check("wave-age: 7.5 s (0.133 Hz) swell → SWELL under 8 m/s wind", isw[1] is True)
+    check("wave-age: 4 s (0.25 Hz) chop → WIND-SEA", isw[3] is False)
+    isw_fix, mfix, _ = classify_bands(fq, {}, sep_freq=None, wind_speed=None)
+    check("contrast: a FIXED 0.125 Hz cutoff WRONGLY calls the 7.5 s swell wind-sea",
+          mfix == "fixed_cutoff" and isw_fix[1] is False)
+    isw_opp, _, _ = classify_bands([0.30], {0.30: 270.0}, wind_speed=12.0, wind_dir=90.0)
+    check("wave-age: a band opposing the wind (cosΔ≤0) is swell, not wind-sea", isw_opp[0] is True)
+
+    # task 5 — with the correct split, a 44095-like sea is SWELL-DOMINATED, not wind-sea
+    spec = {"sep_freq": 9.999, "freqs": [0.10, 0.133, 0.20, 0.28], "c11": [2.0, 12.0, 1.0, 0.5]}
+    m2 = spectral_metrics(spec, {0.10: 92.0, 0.133: 90.0, 0.20: 88.0, 0.28: 90.0},
+                          wind_speed=8.0, wind_dir=90.0)
+    check("wave-age: 44095-like sea comes out SWELL-DOMINATED (frac > 0.6)",
+          m2["split_method"] == "wave_age" and m2["swell_frac"] is not None and m2["swell_frac"] > 0.6)
+    check("wave-age: swell_dir ≈ 90° (the dominant 7.5 s system)", abs(m2["swell_dir"] - 90.0) < 3.0)
 
     # missing-data: an all-missing hour yields zero/None, not a crash
     m3 = spectral_metrics({"sep_freq": 0.1, "freqs": [0.05], "c11": [None]}, {})

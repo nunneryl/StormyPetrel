@@ -47,13 +47,49 @@ def test_parse_realtime2_layout():
 
 
 def test_band_split_uses_ndbc_sep_freq_and_boundary_is_windsea():
-    # sep_freq 0.10: 0.06 & 0.09 are swell (<0.10); a bin AT 0.10 and 0.12/0.16 are wind-sea.
+    # a VALID sep_freq (0.10 ∈ 0.03–0.40): 0.06 & 0.09 swell; a bin AT 0.10 and 0.12 wind-sea.
     spec = {"sep_freq": 0.10, "freqs": [0.06, 0.09, 0.10, 0.12], "c11": [1.0, 1.0, 1.0, 1.0]}
     dirs = {0.06: 100.0, 0.09: 100.0, 0.10: 260.0, 0.12: 260.0}
     m = sp.spectral_metrics(spec, dirs)
-    assert abs(m["sep_freq_used"] - 0.10) < 1e-9
+    assert m["split_method"] == "ndbc_sep_freq" and abs(m["sep_freq_used"] - 0.10) < 1e-9
     assert abs(m["swell_dir"] - 100.0) < 1e-6, "only f<0.10 in swell"
     assert abs(m["windsea_dir"] - 260.0) < 1e-6, "the f==Sep_Freq bin is wind-sea, not swell"
+
+
+def test_sep_freq_sentinel_is_rejected_not_coerced():
+    # the 44095 trap: Sep_Freq = 9.999 is a MISSING sentinel, never a 9.999 Hz cutoff.
+    assert not sp._valid_sep_freq(9.999) and not sp._valid_sep_freq(999.0)
+    assert not sp._valid_sep_freq(None) and not sp._valid_sep_freq(0.0)
+    assert sp._valid_sep_freq(0.08) and not sp._valid_sep_freq(0.45), "valid band 0.03–0.40 Hz"
+    # with 9.999 + wind present, the split must be wave-age, NOT a coerced 9.999 cutoff
+    _, method, sep = sp.classify_bands([0.08, 0.15], {}, sep_freq=9.999, wind_speed=8.0, wind_dir=90.0)
+    assert method == "wave_age" and sep < 1.0
+
+
+def test_wave_age_split_captures_short_period_swell_and_is_direction_aware():
+    # 0.133 Hz = 7.5 s: the real 44095 swell that a 0.10/0.125 Hz cutoff misclassifies.
+    fq = [0.08, 0.133, 0.20, 0.25]
+    isw, method, _ = sp.classify_bands(fq, {0.133: 90.0, 0.20: 90.0, 0.25: 90.0},
+                                       sep_freq=None, wind_speed=8.0, wind_dir=90.0)
+    assert method == "wave_age"
+    assert isw[1] is True, "7.5 s swell (c=11.7 m/s) has outrun an 8 m/s wind → swell"
+    assert isw[3] is False, "4 s chop is slower than 1.2·U → wind-sea"
+    # a FIXED cutoff (no wind) gets the 7.5 s swell wrong — this is why wave-age is primary
+    isw_fixed, mfix, _ = sp.classify_bands(fq, {}, sep_freq=None, wind_speed=None)
+    assert mfix == "fixed_cutoff" and isw_fixed[1] is False
+    # direction-aware: a fast-enough band OPPOSING the wind is swell (wind can't drive it)
+    isw_opp, _, _ = sp.classify_bands([0.28], {0.28: 270.0}, wind_speed=12.0, wind_dir=90.0)
+    assert isw_opp[0] is True
+
+
+def test_wave_age_restores_swell_dominated_label():
+    # a two-peak 44095-like sea (dominant 7.5 s swell + wind chop) must read SWELL-DOMINATED
+    spec = {"sep_freq": 9.999, "freqs": [0.10, 0.133, 0.20, 0.28], "c11": [2.0, 12.0, 1.0, 0.5]}
+    dirs = {0.10: 92.0, 0.133: 90.0, 0.20: 88.0, 0.28: 90.0}
+    m = sp.spectral_metrics(spec, dirs, wind_speed=8.0, wind_dir=90.0)
+    assert m["split_method"] == "wave_age"
+    assert m["swell_frac"] is not None and m["swell_frac"] > 0.6, "not wind-sea-dominated"
+    assert m["hs_swell"] > m["hs_windsea"]
 
 
 def test_hs_swell_matches_energy_integral_and_frac():
