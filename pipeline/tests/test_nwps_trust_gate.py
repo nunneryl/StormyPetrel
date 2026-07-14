@@ -1,13 +1,14 @@
-"""Checks for the rebuilt, partition-matched NWPS trust gate (swell_trust_verdict).
+"""Checks for the Stage-1 NWPS trust gate — height-primary, energy-weighted, spot-tiered, rolling.
 
-Synthetic per-hour samples (model tracked systems + buoy spectral swell) exercise the
-four required behaviours plus the two subtle guards:
+Synthetic per-hour samples (model tracked systems + buoy spectral swell) exercise the rebuild:
   * the swell-energy PRECONDITION excludes no-swell hours (validity, not outlier rejection);
-  * a swell-dominated zone with good direction agreement PASSes;
-  * a zone with genuinely bad direction FAILs — on SPREAD or on a constant BIAS;
-  * too few qualifying (swell-present) hours → INCONCLUSIVE;
-  * the system match is highest-ENERGY (independent of direction — no rigging);
-  * height still gates (anti-correlated Hs FAILs).
+  * the system match is highest-ENERGY among SWELL systems (wind-sea excluded by wave-age);
+  * HEIGHT is the PRIMARY window verdict (anti-correlated Hs FAILs; direction never blocks a window);
+  * DIRECTION is an ENERGY-WEIGHTED residual — tiny slivers stop dominating the spread (THE fix);
+  * a spot's TIER comes from the raycast window width refined by break_type;
+  * bad direction (spread OR constant bias) drops the dir_flag but does not block the window;
+  * independent-EVENT counting + the Rayleigh coherence guard behave;
+  * the ROLLING accumulator stays ACCUMULATING until enough events, then PASS / FAIL / INCOHERENT.
 
 Run: python -m pipeline.tests.test_nwps_trust_gate   (or pytest)
 """
@@ -41,6 +42,17 @@ def _batch(n, model_dir_fn, buoy_swd=90.0, hs_swell=1.1, frac=0.79, systems_fn=N
     return out
 
 
+def _records(residuals, weights=None, *, gap=24):
+    # one record per residual, spaced `gap` (≥ TRUST_EVENT_GAP_HOURS) apart so each residual is its
+    # own INDEPENDENT swell event — the effective N the rolling verdict counts.
+    weights = [1.0] * len(residuals) if weights is None else weights
+    return [{"t": i * gap, "residual": r, "weight": w}
+            for i, (r, w) in enumerate(zip(residuals, weights))]
+
+
+# --------------------------------------------------------------------------- #
+# System matching — highest-energy SWELL, wind-sea excluded (unchanged rule)   #
+# --------------------------------------------------------------------------- #
 def test_matching_is_highest_energy_among_swell():
     # two long-period swell systems under a light 5 m/s wind (both swell): pick the dominant.
     systems = [_sys(0.4, 200.0, system=1, tp=11.0), _sys(1.4, 90.0, system=2, tp=12.0)]
@@ -61,16 +73,9 @@ def test_windsea_system_is_excluded_even_when_biggest():
     assert nn._system_is_swell(swell, 12.0, 270.0) is True
     # a swell OPPOSING the wind stays swell regardless of period
     assert nn._system_is_swell(_sys(1.0, 90.0, tp=6.0), 12.0, 270.0) is True
-
-
-def test_hour_with_only_windsea_is_not_comparable():
-    # buoy has swell every hour, but the ONLY model system is a wind-sea → those hours are
-    # excluded from the direction stat (validity), and n_model_no_swell counts them.
-    windsea = lambda: [_sys(1.6, 270.0, system=1, tp=4.5)]   # short + aligned with a 12 m/s wind
-    samples = [_sample(t, windsea(), 120.0, 1.1, 0.79, ws=12.0, wdir=270.0) for t in range(10)]
-    res = nn.swell_trust_verdict(samples)
-    assert res["verdict"] == "INCONCLUSIVE" and res["n_qualifying"] == 0
-    assert res["n_model_no_swell"] == 10, "buoy had swell but the model had only wind-sea"
+    # the diag also surfaces the dominant WIND-SEA partition (chop that rotates with the wind)
+    w = nn._match_windsea_system([windsea, swell], 12.0, 270.0)
+    assert w is not None and w["system"] == 1 and w["dir"] == 270.0
 
 
 def test_precondition_excludes_no_swell_hours():
@@ -87,34 +92,16 @@ def test_precondition_excludes_no_swell_hours():
     assert sum(1 for p in res["per_hour"] if not p["qualifying"]) == 6
 
 
-def test_swell_dominated_good_agreement_passes():
-    res = nn.swell_trust_verdict(_batch(12, lambda t: 90.0 + (4 if t % 2 else -4)))
-    assert res["verdict"] == "PASS", res.get("reason")
-    assert res["dir_circ_std"] <= nn.SWELL_DIR_CIRC_MAX_DEG
-    assert abs(res["dir_bias"]) <= nn.SWELL_DIR_BIAS_MAX_DEG
-    assert res["comparison"] == "model swell-system dir vs buoy spectral swell_dir"
-
-
-def test_bad_direction_spread_fails():
-    # model swings ±40° about the buoy swell dir → circ_std far over the ceiling
-    res = nn.swell_trust_verdict(_batch(12, lambda t: 90.0 + (40 if t % 2 else -40)))
-    assert res["verdict"] == "FAIL" and res["dir_circ_std"] > nn.SWELL_DIR_CIRC_MAX_DEG
-
-
-def test_constant_bias_fails_even_with_tight_spread():
-    # a CONSTANT +40° offset: circ_std ≈ 0 (would pass on spread alone) but bias > ceiling.
-    # This is the trap the old gate had — the bias guard must catch it.
-    res = nn.swell_trust_verdict(_batch(12, lambda t: 130.0))   # buoy swd 90 → constant +40
-    assert res["dir_circ_std"] < 2.0, "spread is tiny (constant offset)"
-    assert res["verdict"] == "FAIL" and abs(res["dir_bias"]) > nn.SWELL_DIR_BIAS_MAX_DEG
-
-
-def test_too_few_qualifying_hours_is_inconclusive():
-    # 4 qualifying + 10 no-swell → below SWELL_MIN_QUALIFYING → INCONCLUSIVE (not FAIL/PASS)
-    good = _batch(4, lambda t: 90.0)
-    noswell = [_sample(50 + t, [_sys(0.2, 90.0)], 90.0, 0.1, 0.1) for t in range(10)]
-    res = nn.swell_trust_verdict(good + noswell)
-    assert res["verdict"] == "INCONCLUSIVE" and res["n_qualifying"] == 4
+# --------------------------------------------------------------------------- #
+# HEIGHT is the primary window verdict; DIRECTION is a flag, not a block       #
+# --------------------------------------------------------------------------- #
+def test_swell_dominated_good_agreement_is_flagged_ok_and_passes_height():
+    res = nn.swell_trust_verdict(_batch(12, lambda t: 90.0 + (4 if t % 2 else -4)), tier="point")
+    assert res["verdict"] == "PASS", res.get("reason")          # HEIGHT (primary) — co-moving Hs
+    assert res["dir_circ_std_w"] <= nn.SWELL_DIR_TIERS["point"]["circ_std"]
+    assert abs(res["dir_bias_w"]) <= nn.SWELL_DIR_TIERS["point"]["bias"]
+    assert res["dir_flag"] is True, "energy-weighted residual clears the point-tier bar"
+    assert res["comparison"] == "energy-weighted model-swell-dir vs buoy-spectral-swell-dir"
 
 
 def test_height_still_gates_even_with_good_direction():
@@ -125,8 +112,202 @@ def test_height_still_gates_even_with_good_direction():
         samples.append(s)
     res = nn.swell_trust_verdict(samples)
     assert res["verdict"] == "FAIL" and res["height_r"] < nn.TRUST_R_MIN
+    assert res["gate"] == "height (primary)"
 
 
+def test_bad_direction_spread_is_flagged_not_blocked():
+    # model swings ±40° about the buoy swell dir → circ_std far over the point bar → dir_flag OFF,
+    # but the WINDOW verdict is height-driven (PASS): a bad-direction window FLAGS, it doesn't block.
+    res = nn.swell_trust_verdict(_batch(12, lambda t: 90.0 + (40 if t % 2 else -40)), tier="point")
+    assert res["dir_circ_std_w"] > nn.SWELL_DIR_TIERS["point"]["circ_std"]
+    assert res["dir_flag"] is False
+    assert res["verdict"] == "PASS", "height gates the window; bad direction is a rolling flag"
+
+
+def test_constant_bias_is_flagged_even_with_tight_spread():
+    # a CONSTANT +40° offset: circ_std ≈ 0 (would pass on spread alone) but bias > the bar.
+    # The bias guard must still drop the flag — the trap the old spread-only gate had.
+    res = nn.swell_trust_verdict(_batch(12, lambda t: 130.0), tier="point")   # buoy 90 → +40
+    assert res["dir_circ_std_w"] < 2.0, "spread is tiny (constant offset)"
+    assert abs(res["dir_bias_w"]) > nn.SWELL_DIR_TIERS["point"]["bias"]
+    assert res["dir_flag"] is False
+
+
+def test_hour_with_only_windsea_is_not_comparable():
+    # buoy has swell every hour, but the ONLY model system is a wind-sea → those hours are
+    # excluded from the DIRECTION stat (validity) and counted in n_model_no_swell. Height still
+    # gates the window; direction simply has nothing comparable, so it can't be flagged on.
+    windsea = lambda: [_sys(1.6, 270.0, system=1, tp=4.5)]   # short + aligned with a 12 m/s wind
+    samples = [_sample(t, windsea(), 120.0, 1.1, 0.79, ws=12.0, wdir=270.0) for t in range(10)]
+    res = nn.swell_trust_verdict(samples)
+    assert res["n_qualifying"] == 0, "buoy swell present, but no model SWELL system to compare"
+    assert res["n_model_no_swell"] == 10, "buoy had swell but the model had only wind-sea"
+    assert res["dir_flag"] is False and res["dir_circ_std_w"] != res["dir_circ_std_w"]  # NaN
+    assert res["verdict"] == "PASS", "height still gates the window (co-moving Hs)"
+
+
+# --------------------------------------------------------------------------- #
+# ENERGY-WEIGHTING — the highest-impact fix (slivers stop dominating)          #
+# --------------------------------------------------------------------------- #
+def test_energy_weighting_downweights_slivers():
+    # 12 hours of energetic swell in tight agreement + 3 sliver hours (0.5 m) pointing 120° wrong.
+    # UNWEIGHTED the slivers explode the spread (a "spread-explosion" zone); energy-weighting
+    # (w=min(Hs)² shrinks a 0.5 m sliver ~1/64 vs a 2 m swell) recovers it under the point bar.
+    energetic = [_sample(t, [_sys(2.0, 90.0 + (3 if t % 2 else -3))], 90.0, 2.0, 0.8)
+                 for t in range(12)]
+    slivers = [_sample(50 + t, [_sys(0.5, 210.0)], 90.0, 0.5, 0.5) for t in range(3)]
+    res = nn.swell_trust_verdict(energetic + slivers, tier="point")
+    assert res["n_qualifying"] == 15, "the slivers DO qualify — they are just down-weighted"
+    assert res["dir_circ_std_u"] > 30.0, "unweighted: the slivers blow the spread up"
+    assert res["dir_circ_std_w"] < res["dir_circ_std_u"]
+    assert res["dir_circ_std_w"] <= nn.SWELL_DIR_TIERS["point"]["circ_std"], "weighted recovers"
+    assert abs(res["dir_bias_w"]) < abs(res["dir_bias_u"]), "the sliver bias is down-weighted too"
+    assert res["dir_flag"] is True, "the energy-weighted residual clears the point-tier bar"
+
+
+def test_hour_weight_uses_the_smaller_side_squared():
+    assert nn._hour_weight(2.0, 0.5) == 0.25, "min(2.0,0.5)² — the buoy sliver caps it"
+    assert nn._hour_weight(0.5, 2.0) == 0.25, "symmetric — the model sliver caps it too"
+    assert nn._hour_weight(2.0, 2.0) == 4.0
+    assert nn._hour_weight(None, 2.0) == 0.0 and nn._hour_weight(2.0, None) == 0.0
+
+
+def test_weighted_circ_stats_basic_and_degenerate_guard():
+    # equal weights, symmetric ±10 → bias ~0, finite std, weight/n reported
+    bias, cs, rbar, sw, n = nn._weighted_circ_stats([10.0, -10.0], [1.0, 1.0])
+    assert abs(bias) < 1e-6 and 0 < cs < 20 and n == 2 and abs(sw - 2.0) < 1e-9
+    # weighting (not arithmetic): a 9× heavier 0° and a light 80° → bias near 0, not the 40° midpoint
+    b2, _, _, _, _ = nn._weighted_circ_stats([0.0, 80.0], [9.0, 1.0])
+    assert 0.0 <= b2 < 15.0, "heavy 0° dominates; light 80° barely tugs it"
+    # DEGENERATE guard the research flags: fully opposed, equal weight → Rbar≈0 → circ_std = inf
+    _, cs3, rbar3, _, _ = nn._weighted_circ_stats([0.0, 180.0], [1.0, 1.0])
+    assert rbar3 < 1e-6 and cs3 == float("inf"), "no resultant → std diverges, never a bogus finite"
+    # no usable data → NaN bias/std, zero weight/n (never a spurious value)
+    bn, csn, _, sw0, n0 = nn._weighted_circ_stats([None, 10.0], [None, 0.0])
+    assert bn != bn and csn != csn and sw0 == 0.0 and n0 == 0
+
+
+# --------------------------------------------------------------------------- #
+# SPOT TIERS — from raycast window width, refined by break_type                #
+# --------------------------------------------------------------------------- #
+def test_spot_tier_from_window_width_and_break_type():
+    wide = {"swell_window_arcs": [{"min": 0, "max": 200, "span": 200}], "break_type": "beach break"}
+    narrow = {"swell_window_arcs": [{"min": 100, "max": 160, "span": 60}], "break_type": "reef"}
+    mid = {"swell_window_arcs": [{"min": 90, "max": 210, "span": 120}], "break_type": "sandbar"}
+    assert nn._spot_tier(wide) == "exposed"
+    assert nn._spot_tier(narrow) == "sheltered"
+    assert nn._spot_tier(mid) == "point"
+    # break_type refines: a wide window at a named POINT is not treated as a fully exposed beach
+    pt = {"swell_window_arcs": [{"min": 0, "max": 220, "span": 220}], "break_type": "point break"}
+    assert nn._spot_tier(pt) == "point", "a named point never counts as fully exposed"
+    # width sums across multiple arcs; no arcs → width 0 → sheltered (conservative — the tight bar)
+    two = {"swell_window_arcs": [{"span": 100}, {"span": 100}], "break_type": ""}
+    assert nn._spot_tier(two) == "exposed"
+    assert nn._spot_tier({"swell_window_arcs": []}) == "sheltered"
+    # _arc_total_width falls back to (max−min) when an arc carries only min/max (pilot fixtures)
+    assert nn._arc_total_width([{"min": 90, "max": 230}]) == 140
+    assert nn._arc_total_width([{"min": 350, "max": 30}]) == 40, "wrap-aware"
+
+
+# --------------------------------------------------------------------------- #
+# Independent EVENTS + Rayleigh coherence — the rolling accumulator's guards    #
+# --------------------------------------------------------------------------- #
+def test_independent_event_counting():
+    # hours within TRUST_EVENT_GAP_HOURS are ONE episode; a ≥gap jump starts a new event
+    assert nn._count_independent_events([]) == 0
+    assert nn._count_independent_events([100]) == 1
+    assert nn._count_independent_events([100, 101, 102, 103]) == 1, "one continuous episode"
+    # two episodes 48 h apart, each a few hours long → 2 independent events
+    assert nn._count_independent_events([100, 101, 102, 148, 149, 150]) == 2
+    # exactly at the gap boundary counts as a NEW event (the ≥ boundary)
+    g = nn.TRUST_EVENT_GAP_HOURS
+    assert nn._count_independent_events([0, g]) == 2
+    assert nn._count_independent_events([0, g - 1]) == 1
+
+
+def test_rayleigh_coherence():
+    # tightly clustered residuals (Rbar≈1) over many samples → tiny p (coherent, bias meaningful)
+    assert nn._rayleigh_p(0.98, 20) < 0.01
+    # Rbar≈0 (scattered) → p≈1 (incoherent; the "bias" is noise, circ_std diverges)
+    assert nn._rayleigh_p(0.02, 20) > 0.9
+    assert nn._rayleigh_p(0.0, 0) == 1.0, "no data → not coherent"
+    # p falls with more independent samples at the same Rbar
+    assert nn._rayleigh_p(0.5, 40) < nn._rayleigh_p(0.5, 5)
+
+
+def test_short_window_reports_one_event_for_the_accumulator():
+    # 4 qualifying swell hours in ONE consecutive episode + 10 no-swell hours: the gate reports
+    # n_qualifying=4 but only 1 independent EVENT — a single flat window can never mint a
+    # direction PASS/FAIL; the rolling accumulator (not this one window) decides trust.
+    good = _batch(4, lambda t: 90.0)                        # t = 0,1,2,3 → one episode
+    noswell = [_sample(50 + t, [_sys(0.2, 90.0)], 90.0, 0.2, 0.1) for t in range(10)]
+    res = nn.swell_trust_verdict(good + noswell)
+    assert res["n_qualifying"] == 4 and res["n_events"] == 1
+    assert res["n_model_no_swell"] == 0, "the no-swell hours fail the buoy precondition, not the match"
+
+
+# --------------------------------------------------------------------------- #
+# ROLLING accumulator — ACCUMULATING → PASS / FAIL / INCOHERENT                #
+# --------------------------------------------------------------------------- #
+def test_rolling_accumulates_until_enough_events():
+    # 4 clean events (bias ~0) — below TRUST_MIN_EVENTS → ACCUMULATING, not a premature PASS,
+    # even though the numbers look great. Hours are autocorrelated; events are the effective N.
+    v = nn.rolling_trust_verdict(_records([2.0, -2.0, 1.0, -1.0]), tier="point")
+    assert v["verdict"] == "ACCUMULATING" and v["n_events"] == 4
+    assert v["dir_circ_std_w"] < 5.0, "the fit is tight — but we still wait for enough events"
+
+
+def test_rolling_pass_on_enough_coherent_low_error_events():
+    v = nn.rolling_trust_verdict(_records([3.0, -3.0, 2.0, -2.0, 1.0, -1.0]), tier="point")
+    assert v["n_events"] == 6 and v["verdict"] == "PASS", v.get("reason")
+    assert v["dir_circ_std_w"] <= nn.SWELL_DIR_TIERS["point"]["circ_std"]
+    assert v["dir_rayleigh_p"] <= nn.TRUST_RAYLEIGH_P and v["ci_lo"] < v["ci_hi"]
+
+
+def test_rolling_fail_on_coherent_but_biased_events():
+    # 6 events, a COHERENT ~+30° offset (tight spread) → over the point ±15° bias bar → FAIL,
+    # not INCOHERENT — the bias is real and stable, it is just too large.
+    v = nn.rolling_trust_verdict(_records([28.0, 30.0, 32.0, 29.0, 31.0, 30.0]), tier="point")
+    assert v["n_events"] == 6 and v["verdict"] == "FAIL"
+    assert abs(v["dir_bias_w"]) > nn.SWELL_DIR_TIERS["point"]["bias"]
+    assert v["dir_rayleigh_p"] <= nn.TRUST_RAYLEIGH_P, "a stable bias is coherent, just too big"
+
+
+def test_rolling_incoherent_when_residuals_scatter():
+    # 6 events spread around the whole circle → Rbar≈0, Rayleigh p high → INCOHERENT (no bias),
+    # NOT a FAIL: there is no stable direction to fail against, and circ_std would diverge.
+    v = nn.rolling_trust_verdict(_records([0.0, 60.0, 120.0, 180.0, 240.0, 300.0]), tier="point")
+    assert v["n_events"] == 6 and v["verdict"] == "INCOHERENT"
+    assert v["dir_rayleigh_p"] > nn.TRUST_RAYLEIGH_P
+
+
+def test_rolling_tier_makes_the_bar():
+    # the SAME ~22° coherent bias PASSes an exposed beach (±25°) but FAILs a point (±15°): the
+    # tier — not a tuned global constant — sets the bar (tiers come from directional sensitivity).
+    recs = _records([20.0, 22.0, 24.0, 21.0, 23.0, 22.0])
+    assert nn.rolling_trust_verdict(recs, tier="exposed")["verdict"] == "PASS"
+    assert nn.rolling_trust_verdict(recs, tier="point")["verdict"] == "FAIL"
+
+
+# --------------------------------------------------------------------------- #
+# History log round-trip — append-only, de-duped, never touches prod data      #
+# --------------------------------------------------------------------------- #
+def test_history_append_is_deduped_and_windowed(tmp_path, monkeypatch):
+    monkeypatch.setattr(nn, "TRUST_HISTORY_DIR", tmp_path / "hist")
+    recs = _records([1.0, 2.0, 3.0])                        # t = 0, 24, 48
+    assert nn.append_trust_history("okx", "44025", recs) == 3
+    assert nn.append_trust_history("okx", "44025", recs) == 0, "same timestamps de-duped"
+    assert nn.append_trust_history("okx", "44025", _records([9.0], gap=1)[:0]) == 0  # empty is a no-op
+    loaded = nn.load_trust_history("okx", "44025")
+    assert len(loaded) == 3 and [r["t"] for r in loaded] == [0, 24, 48]
+    # day-windowing keeps only recent records relative to a supplied "now"
+    recent = nn.load_trust_history("okx", "44025", days=1, now_epoch_hour=48)
+    assert [r["t"] for r in recent] == [24, 48], "last 24 h (t ≥ 48−24) only"
+
+
+# --------------------------------------------------------------------------- #
+# Node selectors (unchanged) — the depth-experiment geometry                   #
+# --------------------------------------------------------------------------- #
 def test_depth_matched_node_selectors():
     # land to the NORTH (row 0); the plain-nearest wet cell (row 1) is just north of the buoy
     # = SHOREWARD/shallow; the seaward (open/deep) cells are to the south (rows 2-3).
@@ -155,12 +336,43 @@ def test_depth_matched_node_selectors():
     assert nd["sampled_is_seaward"] is False and nd["seaward_differs"] is True
 
 
+# --------------------------------------------------------------------------- #
+# Pairing audit — structural validity of the buoy as a directional reference   #
+# --------------------------------------------------------------------------- #
+def test_pairing_audit_scoring_offline():
+    # a DEEP bank/ledge buoy paired to a shallow nearshore node is STRUCTURALLY INVALID
+    inv, reasons = nn._score_pairing({"payload": None, "depth_m": 76.0, "note": "deep ledge"})
+    assert inv == "STRUCTURALLY INVALID" and any("DEEP" in r for r in reasons)
+    # a foam SCOOP discus is MARGINAL (noisier direction for low-energy swell)
+    marg, _ = nn._score_pairing({"payload": "3-m foam SCOOP discus", "depth_m": None, "note": None})
+    assert marg == "MARGINAL"
+    # a Datawell Waverider with no red flags is a VALID REFERENCE
+    val, vr = nn._score_pairing({"payload": "Datawell Waverider", "depth_m": None, "note": None})
+    assert val == "VALID REFERENCE" and any("high-quality" in r for r in vr)
+    # MODALITY: a complex / multi-directional approach is a MARGINAL reference (ambiguous mean dir)
+    cx, _ = nn._score_pairing({"payload": None, "depth_m": None,
+                               "note": "Chesapeake mouth — complex, multi-directional approaches"})
+    assert cx == "MARGINAL"
+    # known metadata drives it offline — 44098 deep, 44091 Waverider, 44025 discus, 44099 complex
+    assert nn._score_pairing(nn._ndbc_station_meta("44098"))[0] == "STRUCTURALLY INVALID"
+    assert nn._score_pairing(nn._ndbc_station_meta("44091"))[0] == "VALID REFERENCE"
+    assert nn._score_pairing(nn._ndbc_station_meta("44025"))[0] == "MARGINAL"
+    assert nn._score_pairing(nn._ndbc_station_meta("44099"))[0] == "MARGINAL"
+
+
 def _run_all():
+    import inspect
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
+    passed = 0
     for fn in fns:
+        params = inspect.signature(fn).parameters
+        if params:                       # pytest-fixture tests (tmp_path/monkeypatch) — pytest only
+            print(f"  SKIP  {fn.__name__} (needs pytest fixtures)")
+            continue
         fn()
+        passed += 1
         print(f"  PASS  {fn.__name__}")
-    print(f"{len(fns)} trust-gate checks passed")
+    print(f"{passed} trust-gate checks passed")
 
 
 if __name__ == "__main__":

@@ -91,6 +91,33 @@ SWELL_MIN_QUALIFYING = 6        # < this many qualifying (swell-present) hours �
 _WAVE_AGE_FACTOR = 1.2          # MUST match ndbc_spectral.WAVE_AGE_FACTOR (one criterion, both sides)
 _G_MS2 = 9.80665               # gravity; deep-water phase speed c = g·tp/(2π)
 
+# ── Stage-1 rebuild (energy-weighted, spot-tiered, rolling) ──────────────────
+# ENERGY-WEIGHTING: weight each hour's directional residual by the matched swell energy,
+# w = min(model_swell_Hs, buoy_Hs_swell)² (energy ∝ Hs²; the min stops either side inflating
+# it). A 100° miss on a 0.1 m sliver then counts ~1/400 of a 20° miss on a 2 m swell. This is
+# the ECMWF/Bidlot & NDBC WavEval convention and is the single highest-impact fix.
+
+# SPOT DIRECTIONAL-SENSITIVITY TIERS — from the product's cos²-gain analysis (~15° error is
+# invisible on an open beach, decisive at a window edge), NOT fitted to make zones pass.
+SWELL_DIR_TIERS = {
+    "exposed":   {"circ_std": 30.0, "bias": 25.0},   # wide window / beach break
+    "point":     {"circ_std": 15.0, "bias": 15.0},   # points, groins, partial windows
+    "sheltered": {"circ_std": 10.0, "bias": 10.0},   # narrow window / sheltered / window-edge
+}
+# A spot's tier is read from the raycast window width (sum of swell_window_arcs spans — the
+# DIRECT measure of directional exposure) refined by break_type.
+SWELL_TIER_EXPOSED_ARC_DEG = 180.0    # ≥ this total open window ⇒ exposed
+SWELL_TIER_SHELTERED_ARC_DEG = 90.0   # ≤ this ⇒ sheltered; between ⇒ point
+
+# ROLLING ACCUMULATION — continuous skill monitoring, never a one-shot verdict on 40
+# autocorrelated hours.
+TRUST_ROLLING_DAYS = (30, 90)         # report both windows
+TRUST_EVENT_GAP_HOURS = 12            # qualifying hours split into distinct swell EVENTS at ≥ this gap
+TRUST_MIN_EVENTS = 5                  # < this many independent events ⇒ ACCUMULATING (not PASS/FAIL)
+TRUST_RAYLEIGH_P = 0.05               # Rayleigh test: p > this ⇒ residuals directionally incoherent
+                                      #   (R̄≈0) ⇒ the "bias" is meaningless and circ_std diverges — guard it
+TRUST_HISTORY_DIR = Path(__file__).resolve().parents[2] / "pipeline" / "forecast_data" / "nwps_trust_history"
+
 # eccodes short names (NOT NCEP abbreviations):
 #   swh   = sig height of combined wind waves + swell (headline Hs)
 #   shts  = sig height of total swell (swell only) — the windsea split for chop
@@ -665,6 +692,102 @@ def _match_swell_system(systems, wind_speed, wind_dir):
     return max(swell, key=lambda s: s["hs"]) if swell else None
 
 
+def _match_windsea_system(systems, wind_speed, wind_dir):
+    """The model's dominant WIND-SEA partition (highest-energy system classified wind-sea),
+    for the side-by-side diagnostic — so the chop rotating with the wind is visible next to
+    the steady swell. None if no wind-sea system."""
+    ws = [s for s in (systems or [])
+          if s.get("hs") is not None and not _system_is_swell(s, wind_speed, wind_dir)
+          and s.get("tp") is not None and s.get("dir") is not None]
+    return max(ws, key=lambda s: s["hs"]) if ws else None
+
+
+def _weighted_circ_stats(deltas_deg, weights):
+    """ENERGY-WEIGHTED circular residual stats → (bias_deg, circ_std_deg, Rbar, sum_w, n).
+    bias = atan2(Σ w·sinΔ, Σ w·cosΔ); Rbar = |Σ w·e^{iΔ}| / Σw; circ_std = sqrt(−2·ln Rbar).
+    Rbar guards the degenerate case the research flags: Rbar≈0 (directionally incoherent) →
+    circ_std = inf and the bias is meaningless (see the Rayleigh test in rolling stats)."""
+    pairs = [(d, w) for d, w in zip(deltas_deg, weights)
+             if d is not None and w is not None and w > 0]
+    sw = sum(w for _, w in pairs)
+    if sw <= 0:
+        return float("nan"), float("nan"), 0.0, 0.0, 0
+    sx = sum(w * math.cos(math.radians(d)) for d, w in pairs)
+    sy = sum(w * math.sin(math.radians(d)) for d, w in pairs)
+    rbar = min(1.0, math.hypot(sx / sw, sy / sw))
+    bias = math.degrees(math.atan2(sy, sx))
+    circ_std = math.degrees(math.sqrt(-2.0 * math.log(rbar))) if rbar > 1e-9 else float("inf")
+    return bias, circ_std, rbar, sw, len(pairs)
+
+
+def _hour_weight(model_hs, buoy_hs):
+    """w = min(model_swell_Hs, buoy_Hs_swell)² — energy of the SMALLER side, so neither a
+    model sliver nor a buoy sliver can inflate a noisy hour's weight."""
+    if model_hs is None or buoy_hs is None:
+        return 0.0
+    return min(model_hs, buoy_hs) ** 2
+
+
+def _arc_total_width(arcs):
+    """Total open swell-window width (°) — sum of the raycast arc spans; 0 if none. Falls back
+    to a wrap-aware (max − min) when an arc carries only min/max (e.g. the pilot fixtures);
+    live spots_enriched.json arcs always carry an explicit span, so they are byte-identical."""
+    total = 0.0
+    for a in (arcs or []):
+        if not isinstance(a, dict):
+            continue
+        span = a.get("span")
+        if span is not None:
+            total += span
+        elif a.get("min") is not None and a.get("max") is not None:
+            total += (a["max"] - a["min"]) % 360.0
+    return total
+
+
+def _spot_tier(spot):
+    """'exposed' | 'point' | 'sheltered' — directional-sensitivity tier from the raycast
+    window WIDTH (the direct measure: a wide open window means many directions reach the
+    spot, so a directional error stays inside a broad acceptance and is invisible; a narrow
+    window means a small directional error pushes you off it and is decisive), refined by
+    break_type. Width is primary because it is measured, not labelled."""
+    width = _arc_total_width(spot.get("swell_window_arcs"))
+    bt = (spot.get("break_type") or "").lower()
+    if width >= SWELL_TIER_EXPOSED_ARC_DEG:
+        tier = "exposed"
+    elif width <= SWELL_TIER_SHELTERED_ARC_DEG:
+        tier = "sheltered"
+    else:
+        tier = "point"
+    # a named point/reef/jetty/sheltered break is never treated as a fully exposed beach
+    if tier == "exposed" and any(k in bt for k in ("point", "reef", "jetty", "groin", "cove",
+                                                   "harbor", "harbour", "sheltered", "sound")):
+        tier = "point"
+    return tier
+
+
+def _count_independent_events(hours_sorted, gap_hours=TRUST_EVENT_GAP_HOURS):
+    """Number of INDEPENDENT swell events among qualifying-hour timestamps (epoch-hours,
+    sorted): a new event starts whenever the gap to the previous qualifying hour is ≥
+    *gap_hours*. Hourly residuals within one swell episode are autocorrelated (the same
+    swell), so one episode ≈ one independent sample — the effective N the verdict counts."""
+    if not hours_sorted:
+        return 0
+    events = 1
+    for a, b in zip(hours_sorted, hours_sorted[1:]):
+        if b - a >= gap_hours:
+            events += 1
+    return events
+
+
+def _rayleigh_p(rbar, n):
+    """Rayleigh test p-value for directional coherence of the residuals. Small p ⇒ the
+    residuals cluster around a real mean direction (bias meaningful). Large p ⇒ R̄≈0,
+    incoherent — the bias is noise and circ_std diverges. Approx p = exp(−n·R̄²)."""
+    if n <= 0:
+        return 1.0
+    return math.exp(-n * rbar * rbar)
+
+
 def _swell_precondition(hs_swell, frac):
     """True when there is enough swell to MEANINGFULLY judge its direction. This is a
     VALIDITY precondition, NOT outlier rejection: it excludes hours by the QUANTITY BEING
@@ -674,78 +797,183 @@ def _swell_precondition(hs_swell, frac):
             and hs_swell >= SWELL_HS_FLOOR_M and frac >= SWELL_FRAC_FLOOR)
 
 
-def swell_trust_verdict(samples):
-    """The rebuilt gate. *samples* = per-valid-hour dicts:
-        {t, model_systems:[{system,hs,tp,dir},…], model_ws, model_wdir, model_swh,
-         buoy_wvht, buoy_swell_dir, buoy_hs_swell, buoy_frac}
-    DIRECTION (primary): over hours passing _swell_precondition, match the highest-energy
-    model SWELL system (its WIND-SEA partition excluded by the wave-age criterion, using the
-    model wind at the node) and compare its dir to the buoy spectral swell_dir — residual
-    SPREAD (circ_std) AND BIAS (circ_mean), both must be within threshold. HEIGHT (secondary,
-    unchanged): Pearson r of model swh vs buoy WVHT over ALL overlapping hours. Verdict:
-    INCONCLUSIVE if too few qualifying swell hours; else PASS iff direction spread+bias are
-    within threshold and height r (when assessable) ≥ TRUST_R_MIN; else FAIL. Pure/offline.
-    Returns a dict with the verdict, both direction stats, height, counts, the matched
-    system per hour, and a per-hour breakdown so every verdict is auditable."""
-    # HEIGHT — all overlapping hours (like-for-like on the TOTAL sea, the proven skill).
+def swell_trust_verdict(samples, tier="point"):
+    """The rebuilt gate (Stage 1). HEIGHT is the PRIMARY gate — the skill the field actually
+    verifies (JCOMM/ECMWF/NCEP score SWH & period, not buoy direction). DIRECTION is an
+    ENERGY-WEIGHTED, spot-TIERED FLAG (not a hard block on one window): each hour's residual
+    is weighted by min(model_swell_Hs, buoy_Hs_swell)² so a 100° miss on a 0.1 m sliver counts
+    ~1/400 of a 20° miss on a 2 m swell. Model wind-sea systems are excluded (wave-age); the
+    matched model SWELL is compared to the buoy spectral swell_dir over comparable hours only.
+    Returns weighted AND unweighted stats, per-hour records (incl. the wind-sea partition, for
+    the side-by-side diag), independent-event count + Rayleigh coherence, and 'records' for the
+    rolling accumulator. Pure/offline."""
+    th = SWELL_DIR_TIERS.get(tier, SWELL_DIR_TIERS["point"])
+    # HEIGHT — the PRIMARY gate: model swh vs buoy WVHT over all overlapping hours.
     h = [(s["model_swh"], s["buoy_wvht"]) for s in samples
          if s.get("model_swh") is not None and s.get("buoy_wvht") is not None]
     height_r, height_n = float("nan"), len(h)
     if height_n >= TRUST_MIN_PAIRS:
         bwv = [b for _, b in h]
-        if max(bwv) - min(bwv) >= TRUST_BUOY_RANGE_MIN_M:   # not a flat spell
+        if max(bwv) - min(bwv) >= TRUST_BUOY_RANGE_MIN_M:
             height_r = _pearson([m for m, _ in h], bwv)
 
-    # DIRECTION — only comparable hours: the buoy has swell (precondition) AND the model has a
-    # SWELL system (its wind-sea partition excluded by wave-age, using the model wind at the node).
-    per_hour, resid, swell_hs_absdiff, n_model_no_swell = [], [], [], 0
+    # DIRECTION — comparable hours only (buoy swell present AND a model SWELL system exists).
+    per_hour, resid, weights, comp_hours, records, n_model_no_swell = [], [], [], [], [], 0
     for s in samples:
         qual = _swell_precondition(s.get("buoy_hs_swell"), s.get("buoy_frac"))
         mws, mwd = s.get("model_ws"), s.get("model_wdir")
         matched = _match_swell_system(s.get("model_systems"), mws, mwd) if qual else None
-        bdir = s.get("buoy_swell_dir")
-        d = None
-        if qual and matched is None and (s.get("model_systems")):
-            n_model_no_swell += 1   # buoy had swell but every model system classified wind-sea
+        wsea = _match_windsea_system(s.get("model_systems"), mws, mwd)   # for the side-by-side diag
+        bdir, bhs = s.get("buoy_swell_dir"), s.get("buoy_hs_swell")
+        d = w = None
+        if qual and matched is None and s.get("model_systems"):
+            n_model_no_swell += 1
         if matched and bdir is not None:
             d = ((matched["dir"] - bdir + 180.0) % 360.0) - 180.0
-            resid.append(d)
-            if s.get("buoy_hs_swell") is not None:   # like-for-like on swell height (reported, not gating)
-                swell_hs_absdiff.append(abs(matched["hs"] - s["buoy_hs_swell"]))
+            w = _hour_weight(matched.get("hs"), bhs)
+            resid.append(d); weights.append(w); comp_hours.append(s.get("t"))
+            records.append({"t": s.get("t"), "model_hs": matched.get("hs"), "model_tp": matched.get("tp"),
+                            "model_dir": matched.get("dir"), "buoy_hs": bhs, "buoy_dir": bdir,
+                            "residual": d, "weight": w})
         per_hour.append({"t": s.get("t"), "qualifying": qual,
                          "matched_system": (matched["system"] if matched else None),
                          "model_dir": (matched["dir"] if matched else None),
                          "matched_tp": (matched.get("tp") if matched else None),
-                         "buoy_swell_dir": bdir, "delta": d,
-                         "buoy_hs_swell": s.get("buoy_hs_swell"), "buoy_frac": s.get("buoy_frac"),
+                         "matched_hs": (matched.get("hs") if matched else None),
+                         "windsea": wsea, "delta": d, "weight": w,
+                         "buoy_swell_dir": bdir, "buoy_hs_swell": bhs, "buoy_frac": s.get("buoy_frac"),
+                         "buoy_windsea_dir": s.get("buoy_windsea_dir"), "buoy_hs_windsea": s.get("buoy_hs_windsea"),
                          "all_systems": s.get("model_systems") or [], "model_ws": mws, "model_wdir": mwd})
 
     dir_n = len(resid)
-    dir_circ_std = _circ_std(resid) if resid else float("nan")
-    dir_bias = _circ_mean(resid) if resid else float("nan")
+    w_bias, w_cs, rbar, _sumw, _ = _weighted_circ_stats(resid, weights)
+    u_cs = _circ_std(resid) if resid else float("nan")
+    u_bias = _circ_mean(resid) if resid else float("nan")
+    n_events = _count_independent_events(sorted(comp_hours))
+    rayleigh = _rayleigh_p(rbar, dir_n)
+    coherent = rayleigh <= TRUST_RAYLEIGH_P
+    dir_flag = bool(coherent and w_cs == w_cs and w_cs <= th["circ_std"] and abs(w_bias) <= th["bias"])
 
-    base = {"dir_circ_std": dir_circ_std, "dir_bias": dir_bias, "n_qualifying": dir_n,
-            "n_model_no_swell": n_model_no_swell,
-            "height_r": height_r, "height_n": height_n, "per_hour": per_hour,
-            # swell-Hs like-for-like (model matched-system hs vs buoy Hs_swell): REPORTED as a
-            # refinement/cross-check (task 3), NOT gated — total-Hs r is the proven skill metric.
-            "swell_hs_mad": (sum(swell_hs_absdiff) / len(swell_hs_absdiff)) if swell_hs_absdiff else float("nan"),
-            "comparison": "model swell-system dir vs buoy spectral swell_dir"}
-    if dir_n < SWELL_MIN_QUALIFYING:
-        return {**base, "verdict": "INCONCLUSIVE",
-                "reason": f"only {dir_n} swell-present hour(s) (need {SWELL_MIN_QUALIFYING}) — "
-                          "rerun on a real swell"}
-    dir_ok = dir_circ_std <= SWELL_DIR_CIRC_MAX_DEG and abs(dir_bias) <= SWELL_DIR_BIAS_MAX_DEG
-    height_ok = (height_r != height_r) or (height_r >= TRUST_R_MIN)   # NaN (not assessable) never blocks
-    reason = None
-    if not dir_ok:
-        reason = (f"direction off: circ_std {dir_circ_std:.1f}° (≤{SWELL_DIR_CIRC_MAX_DEG}) / "
-                  f"bias {dir_bias:+.1f}° (≤±{SWELL_DIR_BIAS_MAX_DEG})")
-    elif not height_ok:
-        reason = f"height r {height_r:.3f} < {TRUST_R_MIN}"
-    elif height_r != height_r:
-        reason = "direction PASS; height not assessable this window (flat/short)"
-    return {**base, "verdict": ("PASS" if (dir_ok and height_ok) else "FAIL"), "reason": reason}
+    # HEIGHT-PRIMARY verdict for THIS window (direction is a flag, not a one-window block).
+    if height_n < TRUST_MIN_PAIRS or height_r != height_r:
+        verdict, hreason = "INCONCLUSIVE", "height not assessable this window (flat / too short)"
+    elif height_r >= TRUST_R_MIN:
+        verdict, hreason = "PASS", None
+    else:
+        verdict, hreason = "FAIL", f"height r {height_r:.3f} < {TRUST_R_MIN}"
+
+    return {
+        "verdict": verdict, "reason": hreason, "gate": "height (primary)",
+        "height_r": height_r, "height_n": height_n,
+        "dir_bias_w": w_bias, "dir_circ_std_w": w_cs, "dir_bias_u": u_bias, "dir_circ_std_u": u_cs,
+        "dir_rbar": rbar, "dir_rayleigh_p": rayleigh, "dir_coherent": coherent,
+        "n_qualifying": dir_n, "n_events": n_events, "n_model_no_swell": n_model_no_swell,
+        "tier": tier, "tier_thresholds": th, "dir_flag": dir_flag,
+        "per_hour": per_hour, "records": records,
+        "comparison": "energy-weighted model-swell-dir vs buoy-spectral-swell-dir",
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Rolling accumulation — continuous skill monitoring (not a one-shot verdict)  #
+# --------------------------------------------------------------------------- #
+def _history_path(wfo, buoy):
+    return TRUST_HISTORY_DIR / f"{wfo}_{buoy}.jsonl"
+
+
+def append_trust_history(wfo, buoy, records):
+    """Append per-hour qualifying records (swell_trust_verdict['records']) to an append-only
+    JSONL monitoring log, de-duped by timestamp. This is a NEW diagnostic artifact under
+    forecast_data/ — never spots_enriched.json / the rating. Returns #records added."""
+    if not records:
+        return 0
+    TRUST_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    path = _history_path(wfo, buoy)
+    seen = set()
+    if path.exists():
+        for line in path.read_text().splitlines():
+            try:
+                seen.add(json.loads(line).get("t"))
+            except (ValueError, TypeError):
+                pass
+    added = 0
+    with path.open("a") as f:
+        for r in records:
+            if r.get("t") in seen:
+                continue
+            f.write(json.dumps(r) + "\n")
+            seen.add(r.get("t"))
+            added += 1
+    return added
+
+
+def load_trust_history(wfo, buoy, days=None, now_epoch_hour=None):
+    """[records] from the history log, optionally the last *days* (needs now_epoch_hour)."""
+    path = _history_path(wfo, buoy)
+    if not path.exists():
+        return []
+    out = []
+    for line in path.read_text().splitlines():
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            pass
+    if days is not None and now_epoch_hour is not None:
+        cut = now_epoch_hour - days * 24
+        out = [r for r in out if r.get("t") is not None and r["t"] >= cut]
+    return out
+
+
+def _bootstrap_ci_circular(deltas, weights, *, n_boot=1000, alpha=0.05, seed=12345):
+    """Percentile CI (lo, hi °) on the WEIGHTED circular mean bias, resampling comparable
+    hours with replacement. Deterministic with *seed*; NaN if < 3 points. (Hours within an
+    episode are autocorrelated, so this CI is optimistic — read it alongside n_events.)"""
+    import random
+    pts = [(d, w) for d, w in zip(deltas, weights) if d is not None and w and w > 0]
+    if len(pts) < 3:
+        return float("nan"), float("nan")
+    center = _weighted_circ_stats([d for d, _ in pts], [w for _, w in pts])[0]
+    rng = random.Random(seed)
+    n = len(pts)
+    unwrapped = []
+    for _ in range(n_boot):
+        samp = [pts[rng.randrange(n)] for _ in range(n)]
+        b = _weighted_circ_stats([d for d, _ in samp], [w for _, w in samp])[0]
+        unwrapped.append(((b - center + 180) % 360) - 180)
+    unwrapped.sort()
+    lo = unwrapped[int(alpha / 2 * n_boot)]
+    hi = unwrapped[min(n_boot - 1, int((1 - alpha / 2) * n_boot))]
+    return center + lo, center + hi
+
+
+def rolling_trust_verdict(records, tier="point"):
+    """DIRECTION trust from ACCUMULATED history: energy-weighted circular bias + circ_std over
+    the records, independent-EVENT count, Rayleigh coherence, and a bootstrap CI on the bias.
+    Verdict: ACCUMULATING if < TRUST_MIN_EVENTS independent events (hours are autocorrelated —
+    events are the effective N); INCOHERENT if the residuals have no stable direction (Rayleigh
+    p > TRUST_RAYLEIGH_P → R̄≈0, bias meaningless); else a spot-tier threshold on the weighted
+    circ_std + |bias|. Pure."""
+    th = SWELL_DIR_TIERS.get(tier, SWELL_DIR_TIERS["point"])
+    deltas = [r.get("residual") for r in records]
+    weights = [r.get("weight") for r in records]
+    hours = sorted(r["t"] for r in records if r.get("t") is not None)
+    events = _count_independent_events(hours)
+    bias, cs, rbar, _sumw, npts = _weighted_circ_stats(deltas, weights)
+    rp = _rayleigh_p(rbar, npts)
+    ci_lo, ci_hi = _bootstrap_ci_circular(deltas, weights)
+    base = {"n_hours": npts, "n_events": events, "dir_bias_w": bias, "dir_circ_std_w": cs,
+            "dir_rbar": rbar, "dir_rayleigh_p": rp, "ci_lo": ci_lo, "ci_hi": ci_hi,
+            "tier": tier, "tier_thresholds": th}
+    if events < TRUST_MIN_EVENTS:
+        return {**base, "verdict": "ACCUMULATING",
+                "reason": f"{events} independent swell event(s) — need {TRUST_MIN_EVENTS}"}
+    if rp > TRUST_RAYLEIGH_P:
+        return {**base, "verdict": "INCOHERENT",
+                "reason": f"residuals directionally incoherent (Rayleigh p={rp:.2f}); no stable bias"}
+    ok = cs <= th["circ_std"] and abs(bias) <= th["bias"]
+    return {**base, "verdict": ("PASS" if ok else "FAIL"),
+            "reason": None if ok else (f"weighted circ_std {cs:.1f}° / bias {bias:+.1f}° vs tier "
+                                       f"{tier} (≤{th['circ_std']}° / ±{th['bias']}°)")}
 
 
 def trust_verdict(samples):
@@ -909,6 +1137,7 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4, **kw):
     from . import ndbc_spectral as _spec
     node_select = kw.get("node_select", "nearest")   # READ-ONLY variant for the depth experiment
     node_radius_km = kw.get("node_radius_km", 6.0)
+    tier = kw.get("tier", "point")                    # spot directional-sensitivity tier
     buoy = _buoy_hourly(buoy_id)
     if not buoy:
         return {"verdict": "INCONCLUSIVE", "reason": "buoy feed unavailable", "n_qualifying": 0,
@@ -971,10 +1200,12 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4, **kw):
             "buoy_swell_dir": (spx["swell_dir"] if spx else None),
             "buoy_hs_swell": (spx["hs_swell"] if spx else None),
             "buoy_frac": (spx["swell_frac"] if spx else None),
+            "buoy_windsea_dir": (spx["windsea_dir"] if spx else None),   # side-by-side diag
+            "buoy_hs_windsea": (spx["hs_windsea"] if spx else None),
             "wind_used": (spx.get("wind_used") if spx else None),
             "dirpw": s["dirpw"], "buoy_mwd": b.get("mwd"),   # OLD metric, kept for the reverify side-by-side
             "buoy_coarse_swd": b.get("swell_dir")})           # coarse .spec SwD — for the buoy-side sanity check
-    res = swell_trust_verdict(samples)
+    res = swell_trust_verdict(samples, tier=tier)
     res.update({"node": node, "trkng_why": trkng_why, "samples": samples})
     return res
 
@@ -1402,31 +1633,38 @@ def _print_trust_diag(buoy_id, blat, blng, res):
     if not ph:
         print("  ↳ [diag] no paired model/buoy hours")
         return
-    hr, shm = res.get("height_r"), res.get("swell_hs_mad")
     _g = lambda x, s: (s % x) if isinstance(x, (int, float)) and x == x else "—"
-    print(f"  ↳ [diag] HEIGHT: total-Hs r={_g(hr, '%.3f')} (gate) · swell-Hs mean|Δ| "
-          f"{_g(shm, '%.2f m')} (like-for-like cross-check, not gated)")
-    nq = sum(1 for p in ph if p["qualifying"])
+    print(f"  ↳ [diag] HEIGHT (primary gate): total-Hs r={_g(res.get('height_r'), '%.3f')}")
     nmns = res.get("n_model_no_swell", 0)
-    print(f"  ↳ [diag] DIRECTION: model matched-SWELL-system dir vs buoy spectral swell_dir "
-          f"(wind-sea systems excluded by wave-age); {nq} swell-hr, {res.get('n_qualifying',0)} comparable"
-          + (f", {nmns} hr had swell but NO model swell system (all wind-sea)" if nmns else ""))
-    print(f"      {'hour':>9} {'q':>1} {'match sys/tp/dir':>16} {'buoySwD':>7} {'Δ':>6} "
-          f"{'wind U/dir':>10}  ALL systems [sys:hs/tp/dir]")
+    print(f"  ↳ [diag] DIRECTION (energy-weighted, tier={res.get('tier')}): "
+          f"circ_std {_g(res.get('dir_circ_std_w'), '%.0f')}° / bias {_g(res.get('dir_bias_w'), '%+.0f')}° "
+          f"[unweighted {_g(res.get('dir_circ_std_u'), '%.0f')}°/{_g(res.get('dir_bias_u'), '%+.0f')}°]; "
+          f"{res.get('n_qualifying', 0)} comparable hr / {res.get('n_events', 0)} events; "
+          f"Rayleigh p={_g(res.get('dir_rayleigh_p'), '%.2f')}"
+          + (f"; {nmns} hr had swell but only wind-sea in the model" if nmns else ""))
+    print("  ↳ [diag] per hour — model SWELL vs WIND-SEA vs buoy (watch the chop rotate with the wind "
+          "while the groundswell holds):")
+    print(f"      {'hour':>9} {'q':>1} {'M-swell hs/tp/dir':>18} {'M-windsea hs/tp/dir':>19} "
+          f"{'wind':>7} | {'B-swell hs/dir':>14} {'B-wsea dir':>10} {'Δ':>5} {'wt':>5}")
     for p in ph[:16]:
         ts = datetime.datetime.fromtimestamp(p["t"] * 3600, datetime.timezone.utc).strftime("%m-%d %HZ")
-        bd = f"{p['buoy_swell_dir']:.0f}" if p["buoy_swell_dir"] is not None else "—"
-        dl = f"{p['delta']:+.0f}°" if p["delta"] is not None else "—"
-        tp = f"{p['matched_tp']:.1f}s" if p.get("matched_tp") is not None else "—"
-        matched = (f"{p['matched_system']}/{tp}/{p['model_dir']:.0f}°"
-                   if p["matched_system"] is not None else "— (none: all wind-sea)")
+
+        def _sys(hs, tp, d):
+            if hs is None or d is None:
+                return "—"
+            return f"{hs:.2f}/{('%.0fs' % tp) if tp is not None else '—'}/{d:.0f}°"
+        msw = _sys(p.get("matched_hs"), p.get("matched_tp"), p.get("model_dir"))
+        ws = p.get("windsea") or {}
+        mws = _sys(ws.get("hs"), ws.get("tp"), ws.get("dir"))
         wind = (f"{p['model_ws']:.0f}/{p['model_wdir']:.0f}"
                 if p.get("model_ws") is not None and p.get("model_wdir") is not None else "—")
-        allsys = " ".join(
-            f"{s['system']}:{s['hs']:.2f}/{('%.0fs' % s['tp']) if s.get('tp') is not None else '—'}/{s['dir']:.0f}"
-            for s in (p.get("all_systems") or []) if s.get("hs") is not None) or "—"
-        print(f"      {ts:>9} {('Y' if p['qualifying'] else 'n'):>1} {matched:>16} {bd:>7} {dl:>6} "
-              f"{wind:>10}  {allsys}")
+        bsw = (f"{p['buoy_hs_swell']:.2f}/{p['buoy_swell_dir']:.0f}°"
+               if p.get("buoy_hs_swell") is not None and p.get("buoy_swell_dir") is not None else "—")
+        bws = f"{p['buoy_windsea_dir']:.0f}°" if p.get("buoy_windsea_dir") is not None else "—"
+        dl = f"{p['delta']:+.0f}°" if p.get("delta") is not None else "—"
+        wt = f"{p['weight']:.2f}" if p.get("weight") is not None else "—"
+        print(f"      {ts:>9} {('Y' if p['qualifying'] else 'n'):>1} {msw:>18} {mws:>19} {wind:>7} | "
+              f"{bsw:>14} {bws:>10} {dl:>5} {wt:>5}")
     samples = res.get("samples") or []
     old = [(((s["dirpw"] - s["buoy_mwd"] + 180) % 360) - 180) for s in samples
            if s.get("dirpw") is not None and s["dirpw"] == s["dirpw"] and s.get("buoy_mwd") is not None]
@@ -1457,42 +1695,71 @@ def _tagged_nwps_zones():
             sorted(counts.items(), key=lambda kv: (kv[0][0] or "", kv[0][1] or ""))]
 
 
+def _zone_tiers(wfo, buoy):
+    """({tier: count}, strictest_tier) for a (wfo, buoy) zone's spots. Strictest = the tightest
+    tier present, so a zone feeding any sheltered/window-edge spot is held to that spot's bar."""
+    counts = {}
+    if ENRICHED.exists():
+        for s in json.loads(ENRICHED.read_text()):
+            if (s.get("swell_window_source") == "nwps" and s.get("nwps_wfo") == wfo
+                    and s.get("nwps_buoy_id") == buoy):
+                t = _spot_tier(s)
+                counts[t] = counts.get(t, 0) + 1
+    strictest = next((t for t in ("sheltered", "point", "exposed") if counts.get(t)), "point")
+    return counts, strictest
+
+
 def reverify_tagged(n_cycles=4):
-    """READ-ONLY migration report (task 5) — re-run the REBUILT gate against every currently
-    tagged nwps zone and print the new verdict beside the old ('PASS', since they are tagged),
-    so a human can decide whether any live zone needs re-verification or untagging. Tags
-    NOTHING, writes NOTHING. Mac-only (NOMADS+NDBC+eccodes)."""
+    """READ-ONLY (deliverable) — re-run the Stage-1 gate against every tagged nwps zone:
+    HEIGHT verdict (the PRIMARY gate), the ENERGY-WEIGHTED direction stats (unweighted shown
+    alongside), the zone's strictest spot TIER + whether this window's direction clears it,
+    and the ROLLING accumulated direction verdict (this window's records are appended to the
+    history log first). Tags/writes no prod data (only the monitoring log). Mac-only."""
     zones = _tagged_nwps_zones()
     if not zones:
         print("no tagged nwps zones found in spots_enriched.json.")
         return 0
-    print("=== RE-VERIFY tagged nwps zones under the REBUILT gate (READ-ONLY; tags nothing) ===")
-    print(f"  {'wfo/buoy':<12} {'spots':>5}  {'OLD':>4} → {'NEW':<12} {'dir_cs':>7} {'bias':>7} {'qual':>4}  reason")
-    changed = []
+    print("=== RE-VERIFY tagged nwps zones — Stage 1: height-primary, energy-weighted, tiered, rolling ===")
+    print("  HEIGHT is the gate; DIRECTION is an energy-weighted, spot-tiered, ROLLING flag.\n")
+    print(f"  {'wfo/buoy':<11} {'sp':>3} {'tier':<9} {'HEIGHT':<11} {'dirW cs/bias':>14} "
+          f"{'(unwtd)':>12} {'ev':>3} {'ROLLING':<13}")
+    flagged = []
     for wfo, buoy, nspots in zones:
         tag = f"{wfo}/{buoy}"
+        counts, tier = _zone_tiers(wfo, buoy)
+        tier_s = tier + (f"×{counts.get(tier)}" if len(counts) > 1 else "")
         try:
             blat, blng = _buoy_latlng(buoy)
-            res = trust_check(wfo, buoy, blat, blng, n_cycles=n_cycles)
+            res = trust_check(wfo, buoy, blat, blng, n_cycles=n_cycles, tier=tier)
         except Exception as e:  # noqa: BLE001
-            print(f"  {tag:<12} {nspots:>5}  PASS → {'SKIP':<12} {'—':>7} {'—':>7} {'—':>4}  "
-                  f"({type(e).__name__}) run on the Mac")
+            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {'SKIP':<11} ({type(e).__name__}) — run on the Mac")
             continue
-        v = res["verdict"]
-        cs, bs, nq = res.get("dir_circ_std"), res.get("dir_bias"), res.get("n_qualifying", 0)
-        cs_s = f"{cs:.1f}°" if isinstance(cs, (int, float)) and cs == cs else "—"
-        bs_s = f"{bs:+.1f}°" if isinstance(bs, (int, float)) and bs == bs else "—"
-        print(f"  {tag:<12} {nspots:>5}  PASS → {v:<12} {cs_s:>7} {bs_s:>7} {nq:>4}  {res.get('reason') or ''}")
-        if v != "PASS":
-            changed.append(f"{tag} ({nspots} spots): {v}")
+        append_trust_history(wfo, buoy, res.get("records") or [])
+        roll = rolling_trust_verdict(load_trust_history(wfo, buoy, days=TRUST_ROLLING_DAYS[0]), tier=tier)
+
+        def _f(x, s):
+            return (s % x) if isinstance(x, (int, float)) and x == x else "—"
+        hv = res["verdict"] + (f"(r={res['height_r']:.2f})" if res.get("height_r") == res.get("height_r") else "")
+        dw = f"{_f(res.get('dir_circ_std_w'), '%.0f')}/{_f(res.get('dir_bias_w'), '%+.0f')}"
+        du = f"{_f(res.get('dir_circ_std_u'), '%.0f')}/{_f(res.get('dir_bias_u'), '%+.0f')}"
+        flag = "" if res.get("dir_flag") else " ⚑"   # this window fails the tier's direction bar
+        print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {hv:<11} {dw:>14} {du:>12} "
+              f"{res.get('n_events', 0):>3} {roll['verdict']:<13}{flag}")
+        if res["verdict"] == "FAIL" or roll["verdict"] == "FAIL":
+            flagged.append(f"{tag} ({nspots} sp): height {res['verdict']}, dir(rolling) {roll['verdict']} — {roll.get('reason') or res.get('reason') or ''}")
     print("\n==== summary ====")
-    if changed:
-        print("  zones whose REBUILT verdict is no longer PASS (candidates for re-verify / untag — YOUR call):")
-        for c in changed:
+    print("  HEIGHT is the primary gate (the skill the field verifies). Direction ⚑ = this window's")
+    print("  energy-weighted residual exceeds the zone's strictest-spot tier; ROLLING is the verdict")
+    print("  that matters — it needs TRUST_MIN_EVENTS independent swell events before PASS/FAIL.")
+    if flagged:
+        print("  zones failing HEIGHT or the ROLLING direction gate (re-verify / untag candidates — YOUR call):")
+        for c in flagged:
             print(f"    • {c}")
     else:
-        print("  all tagged zones still PASS under the rebuilt gate.")
-    print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched.)")
+        print("  no zone fails the height gate or the rolling direction gate (most will read ACCUMULATING")
+        print("  until enough events log — that is expected, not a pass).")
+    print("  Also run --pairing-audit: a STRUCTURALLY INVALID buoy can't be fixed by any metric.")
+    print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched; only the monitoring log grows.)")
     return 0
 
 
@@ -1549,6 +1816,104 @@ def depth_experiment(n_cycles=4, radius_km=6.0):
     return 0
 
 
+# ── Buoy pairing audit (task 3): is this buoy a VALID directional reference? ──
+# Structural facts from the research report (authoritative); the live NDBC station-page fetch
+# augments these on the Mac. Geometry, not season, separates the passing from the failing zones.
+_KNOWN_BUOY_META = {
+    "44025": {"payload": "3-m foam SCOOP discus", "depth_m": None,
+              "note": "foam discus — noisier direction for LOW-energy swell"},
+    "44065": {"payload": "3-m foam SCOOP discus", "depth_m": None,
+              "note": "foam discus — noisier direction for LOW-energy swell"},
+    "44091": {"payload": "Datawell Waverider", "depth_m": None,
+              "note": "Waverider — high-quality directional reference (prefer)"},
+    "44095": {"payload": "Datawell Waverider", "depth_m": None,
+              "note": "Waverider — high-quality directional reference (prefer)"},
+    "44097": {"payload": None, "depth_m": None, "note": None},
+    "44098": {"payload": None, "depth_m": 76.0,
+              "note": "DEEP bank/ledge (~76 m) paired to a shallow nearshore SWAN node — "
+                      "different wave regime (refraction/shoaling): structural depth mismatch"},
+    "44099": {"payload": None, "depth_m": None,
+              "note": "Chesapeake mouth — complex, multi-directional approaches"},
+}
+
+
+def _ndbc_station_meta(buoy):
+    """{payload, depth_m, note} — the report's KNOWN facts, augmented on the Mac by scraping the
+    NDBC station page ('Water depth: X m' + payload). Fetch failures are silent; the known
+    table is the reliable floor."""
+    meta = dict(_KNOWN_BUOY_META.get(str(buoy).lower(), {"payload": None, "depth_m": None, "note": None}))
+    if meta.get("depth_m") is not None and meta.get("payload") is not None:
+        return meta   # known metadata is complete — no fetch needed
+    try:  # single-attempt fetch (no retry/backoff) — fast-fails offline, augments on the Mac
+        html = _http_get(f"https://www.ndbc.noaa.gov/station_page.php?station={buoy}",
+                         timeout=15).decode("utf-8", "replace")
+        m = re.search(r"[Ww]ater depth:\s*([\d.]+)\s*m", html)
+        if m and meta.get("depth_m") is None:
+            meta["depth_m"] = float(m.group(1))
+        pm = re.search(r"(Waverider|SCOOP|3-m foam|[Dd]iscus)", html)
+        if pm and not meta.get("payload"):
+            meta["payload"] = pm.group(1)
+    except Exception:  # noqa: BLE001
+        pass
+    return meta
+
+
+def _score_pairing(meta):
+    """(verdict, reasons) from the report's checklist. STRUCTURALLY INVALID on a deep-water
+    depth mismatch (≥50 m vs a shallow nearshore node); MARGINAL on a foam-discus payload or a
+    flagged complex approach; VALID otherwise (Waverider / no red flags)."""
+    reasons, flags = [], 0
+    payload = meta.get("payload")
+    if payload and "waverider" in payload.lower():
+        reasons.append(f"payload {payload} — high-quality directional ✓")
+    elif payload and any(k in payload.lower() for k in ("scoop", "discus", "foam")):
+        reasons.append(f"payload {payload} — noisier direction for low-energy swell")
+        flags += 1
+    elif payload:
+        reasons.append(f"payload {payload}")
+    depth = meta.get("depth_m")
+    if depth is not None:
+        if depth >= 50:
+            reasons.append(f"buoy depth {depth:.0f} m = DEEP water; a nearshore SWAN node is a "
+                           "different wave regime → structural DEPTH MISMATCH")
+            flags += 2
+        else:
+            reasons.append(f"buoy depth {depth:.0f} m (shallow — closer to a nearshore node)")
+    note = meta.get("note") or ""
+    # MODALITY (checklist item): a complex / multi-directional approach makes the buoy's mean
+    # swell direction ambiguous as a single nearshore reference → MARGINAL (not a hard depth veto).
+    if any(k in note.lower() for k in ("complex", "multi-directional", "multidirectional")):
+        flags += 1
+    if note and note not in " ".join(reasons):
+        reasons.append(note)
+    verdict = "VALID REFERENCE" if flags == 0 else ("STRUCTURALLY INVALID" if flags >= 2 else "MARGINAL")
+    return verdict, reasons
+
+
+def pairing_audit():
+    """READ-ONLY (task 3) — score each tagged zone's buoy as a directional REFERENCE against
+    the report's checklist (payload, depth match, complexity) and print VALID / MARGINAL /
+    STRUCTURALLY INVALID with reasons. Uses the report's known metadata + (Mac) the NDBC
+    station page. Tags/writes NOTHING; the human decides what to re-verify or untag."""
+    zones = _tagged_nwps_zones()
+    if not zones:
+        print("no tagged nwps zones found in spots_enriched.json.")
+        return 0
+    print("=== BUOY PAIRING AUDIT — is each zone's buoy a valid directional reference? (READ-ONLY) ===")
+    for wfo, buoy, nspots in zones:
+        meta = _ndbc_station_meta(buoy)
+        verdict, reasons = _score_pairing(meta)
+        print(f"\n  {wfo}/{buoy} ({nspots} spots): {verdict}")
+        for r in reasons:
+            print(f"      · {r}")
+        if not reasons:
+            print("      · no structural red flags in the known metadata (confirm payload/depth on the Mac)")
+    print("\n  STRUCTURALLY INVALID = the buoy cannot serve as a directional reference for a nearshore "
+          "node regardless of the metric; those zones' direction trust is unresolvable from this buoy.")
+    print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched.)")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--selftest", action="store_true")
@@ -1558,6 +1923,8 @@ def main(argv=None):
                     help="re-run the rebuilt gate against all tagged nwps zones (read-only report; Mac)")
     ap.add_argument("--depth-experiment", dest="depth_experiment", action="store_true",
                     help="re-run the gate at NEAREST vs SEAWARD node per tagged zone (read-only; Mac)")
+    ap.add_argument("--pairing-audit", dest="pairing_audit", action="store_true",
+                    help="score each tagged zone's buoy as a directional reference (read-only; known+Mac)")
     ap.add_argument("--radius-km", type=float, default=6.0, help="seaward re-pick radius (depth experiment)")
     ap.add_argument("--wfo", default="okx", help="NWPS WFO grid to fetch (default okx)")
     ap.add_argument("--batch", default=None,
@@ -1582,8 +1949,11 @@ def main(argv=None):
         except Exception as e:  # noqa: BLE001
             print(f"⚠ depth experiment needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
             return 0
+    if a.pairing_audit:
+        return pairing_audit()
     if a.trustcheck:
-        print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (partition-matched; Mac) ===")
+        print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Stage 1: height-primary, "
+              "energy-weighted, tiered; Mac) ===")
         try:
             blat, blng = _buoy_latlng(a.buoy)   # NDBC active-station metadata; raises if unknown
             res = trust_check(a.wfo, a.buoy, blat, blng, n_cycles=a.cycles)
@@ -1591,13 +1961,15 @@ def main(argv=None):
 
             def _f(x, s):
                 return s.format(x) if isinstance(x, (int, float)) and x == x else "—"
-            print(f"buoy {a.buoy}: {v}  dir circ_std={_f(res.get('dir_circ_std'), '{:.1f}°')} "
-                  f"bias={_f(res.get('dir_bias'), '{:+.1f}°')} over {res.get('n_qualifying', 0)} swell-hr · "
-                  f"height r={_f(res.get('height_r'), '{:.3f}')}"
-                  + (f"  ({res['reason']})" if res.get("reason") else ""))
-            print({"PASS": f"Regional trust supports consuming the placed {a.wfo.upper()} spots.",
-                   "FAIL": "Hold consume; investigate before tagging.",
-                   "INCONCLUSIVE": "Not assessable this window — see reason above; rerun on a real swell."}.get(v, ""))
+            print(f"buoy {a.buoy}: HEIGHT {v} (r={_f(res.get('height_r'), '{:.3f}')}) — the primary gate.")
+            print(f"  direction (energy-weighted): circ_std={_f(res.get('dir_circ_std_w'), '{:.0f}°')} "
+                  f"bias={_f(res.get('dir_bias_w'), '{:+.0f}°')}  [unweighted "
+                  f"{_f(res.get('dir_circ_std_u'), '{:.0f}°')}/{_f(res.get('dir_bias_u'), '{:+.0f}°')}]  "
+                  f"tier={res.get('tier')} → {'clears tier' if res.get('dir_flag') else 'FLAGGED (over tier)'}; "
+                  f"{res.get('n_qualifying', 0)} comparable hr / {res.get('n_events', 0)} events "
+                  f"(Rayleigh p={_f(res.get('dir_rayleigh_p'), '{:.2f}')})")
+            print("  direction is a rolling, energy-weighted flag — it does not block a region on one window; "
+                  "accumulate via --reverify-tagged and check --pairing-audit.")
             _print_trust_diag(a.buoy, blat, blng, res)
         except Exception as e:  # noqa: BLE001
             print(f"⚠ trust check needs live NOMADS+NDBC+cfgrib/eccodes ({type(e).__name__}: {e}) — run on the Mac.")
