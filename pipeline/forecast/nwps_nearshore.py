@@ -57,11 +57,32 @@ NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/"
 PER_FLOOR_S = 3.0              # period below this = dead/sheltered (back-bay) cell
 FAR_CAP_KM = 3.0              # nearest seaward wet cell beyond this (~2× the 1.82 km spacing) → unplaced
 HORIZON_MAX_FH = 144          # CG1 carries f000..f144 hourly (145 steps)
-# Trust-gate thresholds — identical to the MOP rollout (scripts/nwps_okx_buoycheck.py).
+# Trust-gate thresholds.
+# HEIGHT (unchanged — total-Hs skill is already excellent, r≈0.984 measured): model swh
+# vs buoy WVHT, Pearson r ≥ TRUST_R_MIN over all overlapping hours.
 TRUST_R_MIN = 0.80
-TRUST_CIRC_MAX = 25.0
-TRUST_BUOY_RANGE_MIN_M = 0.5  # below this Hs span the window is flat → INCONCLUSIVE
+TRUST_BUOY_RANGE_MIN_M = 0.5  # below this Hs span the window is flat → height not assessable
 TRUST_MIN_PAIRS = 6
+TRUST_CIRC_MAX = 25.0         # LEGACY: the old dirpw-vs-MWD ceiling (superseded; see below)
+# DIRECTION (rebuilt — partition-matched, energy-preconditioned). The old dirpw-vs-MWD
+# comparison was a category error (whole-spectrum peak vs single-dominant-bin mean) and
+# its 25° ceiling is meaningless for the new comparison. We now compare the model's
+# tracked SWELL SYSTEM direction (CG0_Trkng) against the buoy's SPECTRAL swell-band mean
+# direction (degree-valued alpha1/C11) — both swell, both "from". Measured circ_std on a
+# good day is 4.5°, so:
+SWELL_DIR_CIRC_MAX_DEG = 12.0   # residual SPREAD ceiling (~2.7× the 4.5° good day — margin
+                                #   for sea-state/cycle variation, well under the model's real error)
+SWELL_DIR_BIAS_MAX_DEG = 20.0   # residual MEAN (bias) ceiling — REQUIRED because circ_std of the
+                                #   residual ignores a constant offset: a model 90° off has circ_std≈0
+                                #   and would pass on spread alone. A large systematic offset must FAIL.
+# PRECONDITION (validity, NOT outlier rejection): only judge direction where swell actually
+# exists to judge. Excludes no-swell hours by the QUANTITY BEING COMPARED, never by whether
+# it agrees with the model.
+SWELL_HS_FLOOR_M = 0.5          # buoy spectral Hs_swell floor — below this the swell-band mean
+                                #   direction is energy-starved/noisy and not surf-relevant
+SWELL_FRAC_FLOOR = 0.3          # buoy swell-fraction floor — below this the sea is chop-dominated
+                                #   and "swell direction" is a minor, low-signal component
+SWELL_MIN_QUALIFYING = 6        # < this many qualifying (swell-present) hours → INCONCLUSIVE
 
 # eccodes short names (NOT NCEP abbreviations):
 #   swh   = sig height of combined wind waves + swell (headline Hs)
@@ -509,8 +530,111 @@ def _circ_std(diffs):
     return math.degrees(math.sqrt(max(0.0, -2 * math.log(rbar))))
 
 
+def _circ_mean(diffs):
+    """Circular mean of angular residuals (degrees, −180..180). NaN if empty."""
+    n = len(diffs)
+    if n == 0:
+        return float("nan")
+    s = sum(math.sin(math.radians(d)) for d in diffs) / n
+    c = sum(math.cos(math.radians(d)) for d in diffs) / n
+    return math.degrees(math.atan2(s, c))
+
+
+def _match_swell_system(systems):
+    """The model tracked swell system to compare against the buoy's swell — the
+    HIGHEST-ENERGY (largest hs) system, or None if none are tracked this hour.
+
+    Why highest-energy and not sys1 or a direction match: (1) the buoy's spectral
+    swell-band mean direction is energy-weighted, so it is dominated by the largest
+    swell — the model's largest system is the like-for-like counterpart; (2) it is
+    INDEPENDENT of direction, so picking it can't rig the direction residual (matching on
+    direction would be circular reasoning / cheating); (3) it needs no buoy swell period.
+    The system index is returned too so the diag can show which system matched each hour —
+    a match that flips between systems hour-to-hour (a bimodal sea) is then visible."""
+    real = [s for s in (systems or []) if s.get("hs") is not None and s.get("dir") is not None]
+    return max(real, key=lambda s: s["hs"]) if real else None
+
+
+def _swell_precondition(hs_swell, frac):
+    """True when there is enough swell to MEANINGFULLY judge its direction. This is a
+    VALIDITY precondition, NOT outlier rejection: it excludes hours by the QUANTITY BEING
+    COMPARED (is there swell at all?), never by whether the model agrees. You cannot
+    validate swell direction in a sea with no swell."""
+    return (hs_swell is not None and frac is not None
+            and hs_swell >= SWELL_HS_FLOOR_M and frac >= SWELL_FRAC_FLOOR)
+
+
+def swell_trust_verdict(samples):
+    """The rebuilt gate. *samples* = per-valid-hour dicts:
+        {t, model_systems:[{system,hs,tp,dir},…], model_swh, buoy_wvht,
+         buoy_swell_dir, buoy_hs_swell, buoy_frac}
+    DIRECTION (primary): over hours passing _swell_precondition, match the highest-energy
+    model swell system and compare its dir to the buoy spectral swell_dir — residual SPREAD
+    (circ_std) AND BIAS (circ_mean), both must be within threshold. HEIGHT (secondary,
+    unchanged): Pearson r of model swh vs buoy WVHT over ALL overlapping hours. Verdict:
+    INCONCLUSIVE if too few qualifying swell hours; else PASS iff direction spread+bias are
+    within threshold and height r (when assessable) ≥ TRUST_R_MIN; else FAIL. Pure/offline.
+    Returns a dict with the verdict, both direction stats, height, counts, the matched
+    system per hour, and a per-hour breakdown so every verdict is auditable."""
+    # HEIGHT — all overlapping hours (like-for-like on the TOTAL sea, the proven skill).
+    h = [(s["model_swh"], s["buoy_wvht"]) for s in samples
+         if s.get("model_swh") is not None and s.get("buoy_wvht") is not None]
+    height_r, height_n = float("nan"), len(h)
+    if height_n >= TRUST_MIN_PAIRS:
+        bwv = [b for _, b in h]
+        if max(bwv) - min(bwv) >= TRUST_BUOY_RANGE_MIN_M:   # not a flat spell
+            height_r = _pearson([m for m, _ in h], bwv)
+
+    # DIRECTION — only qualifying (swell-present) hours; matched highest-energy system.
+    per_hour, resid, swell_hs_absdiff = [], [], []
+    for s in samples:
+        qual = _swell_precondition(s.get("buoy_hs_swell"), s.get("buoy_frac"))
+        matched = _match_swell_system(s.get("model_systems")) if qual else None
+        bdir = s.get("buoy_swell_dir")
+        d = None
+        if matched and bdir is not None:
+            d = ((matched["dir"] - bdir + 180.0) % 360.0) - 180.0
+            resid.append(d)
+            if s.get("buoy_hs_swell") is not None:   # like-for-like on swell height (reported, not gating)
+                swell_hs_absdiff.append(abs(matched["hs"] - s["buoy_hs_swell"]))
+        per_hour.append({"t": s.get("t"), "qualifying": qual,
+                         "matched_system": (matched["system"] if matched else None),
+                         "model_dir": (matched["dir"] if matched else None),
+                         "buoy_swell_dir": bdir, "delta": d,
+                         "buoy_hs_swell": s.get("buoy_hs_swell"), "buoy_frac": s.get("buoy_frac")})
+
+    dir_n = len(resid)
+    dir_circ_std = _circ_std(resid) if resid else float("nan")
+    dir_bias = _circ_mean(resid) if resid else float("nan")
+
+    base = {"dir_circ_std": dir_circ_std, "dir_bias": dir_bias, "n_qualifying": dir_n,
+            "height_r": height_r, "height_n": height_n, "per_hour": per_hour,
+            # swell-Hs like-for-like (model matched-system hs vs buoy Hs_swell): REPORTED as a
+            # refinement/cross-check (task 3), NOT gated — total-Hs r is the proven skill metric.
+            "swell_hs_mad": (sum(swell_hs_absdiff) / len(swell_hs_absdiff)) if swell_hs_absdiff else float("nan"),
+            "comparison": "model swell-system dir vs buoy spectral swell_dir"}
+    if dir_n < SWELL_MIN_QUALIFYING:
+        return {**base, "verdict": "INCONCLUSIVE",
+                "reason": f"only {dir_n} swell-present hour(s) (need {SWELL_MIN_QUALIFYING}) — "
+                          "rerun on a real swell"}
+    dir_ok = dir_circ_std <= SWELL_DIR_CIRC_MAX_DEG and abs(dir_bias) <= SWELL_DIR_BIAS_MAX_DEG
+    height_ok = (height_r != height_r) or (height_r >= TRUST_R_MIN)   # NaN (not assessable) never blocks
+    reason = None
+    if not dir_ok:
+        reason = (f"direction off: circ_std {dir_circ_std:.1f}° (≤{SWELL_DIR_CIRC_MAX_DEG}) / "
+                  f"bias {dir_bias:+.1f}° (≤±{SWELL_DIR_BIAS_MAX_DEG})")
+    elif not height_ok:
+        reason = f"height r {height_r:.3f} < {TRUST_R_MIN}"
+    elif height_r != height_r:
+        reason = "direction PASS; height not assessable this window (flat/short)"
+    return {**base, "verdict": ("PASS" if (dir_ok and height_ok) else "FAIL"), "reason": reason}
+
+
 def trust_verdict(samples):
-    """samples = _pair_samples(...) output. Returns (verdict, r, circ_std, n, reason).
+    """SUPERSEDED by swell_trust_verdict (the live gate is now partition-matched). Retained
+    for the offline selftest + reference only — trust_check no longer calls it.
+
+    samples = _pair_samples(...) output. Returns (verdict, r, circ_std, n, reason).
     HEIGHT correlation r over all overlapping hours; DIRECTION circ_std over model dirpw
     vs buoy MWD for every hour that carries both. INCONCLUSIVE (never PASS/FAIL) on too
     few overlapping hours or a flat buoy Hs spell (reason says which). Thresholds
@@ -652,25 +776,26 @@ def _pair_samples(series, buoy):
 
 
 def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
-    """Live NWPS-vs-buoy trust gate (Mac). Assembles NWPS Hs/dir at the buoy's node
-    from recent cycles' elapsed forecast hours (shortest lead per valid hour), joins to
-    the buoy's hourly obs, and returns trust_verdict(...) plus read-only DIAGNOSTICS so
-    a bad/shadowed node is visible on the Mac. Direction is compared LIKE-FOR-LIKE —
-    model dirpw (peak of the TOTAL spectrum; the GRIB carries no swell dir) vs the buoy
-    MWD (mean of the TOTAL spectrum), NOT the buoy swell partition (see trust_verdict).
-    The buoy swell_dir/swell_hs and the model swell height (shts) are fetched + shown in
-    the diagnostic for context only. Height (swh vs WVHT), thresholds, and verdict math
-    are unchanged. Needs NOMADS+NDBC. Returns a dict:
-        {"verdict", "r", "circ_std", "n", "reason",   # reason: why INCONCLUSIVE (or None)
-         "node":    _node_diag(...) or None,          # sampled node lat/lng + dist + seaward cmp
-         "samples": _pair_samples(...) per-hour dicts (dirpw/MWD/swell_dir/shts/…)}"""
+    """Live NWPS-vs-buoy trust gate (Mac), rebuilt PARTITION-MATCHED + energy-preconditioned.
+    Assembles at the buoy's node across recent cycles (shortest lead per valid hour): the
+    CG1 total height (swh) + 10 m wind (ws/wdir), and the CG0_Trkng per-system swell
+    (hs/tp/dir). Fetches the buoy's SPECTRAL swell (degree-valued swell_dir + Hs_swell +
+    swell fraction; wave-age split on the buoy's wind, else the model wind just assembled)
+    and its WVHT, then judges via swell_trust_verdict: DIRECTION = the model's dominant
+    swell system vs the buoy spectral swell_dir over swell-present hours; HEIGHT = model swh
+    vs buoy WVHT. Needs NOMADS+NDBC+eccodes. Returns swell_trust_verdict(...) plus read-only
+    node diagnostics ('node', 'trkng_why', 'per_hour', 'samples')."""
+    from . import nwps_trkng as _trk     # lazy: avoids an import cycle; keeps --selftest light
+    from . import ndbc_spectral as _spec
     buoy = _buoy_hourly(buoy_id)
     if not buoy:
-        return {"verdict": "INCONCLUSIVE", "r": float("nan"), "circ_std": float("nan"),
-                "n": 0, "reason": "buoy feed unavailable", "node": None, "samples": []}
+        return {"verdict": "INCONCLUSIVE", "reason": "buoy feed unavailable", "n_qualifying": 0,
+                "dir_circ_std": float("nan"), "dir_bias": float("nan"), "height_r": float("nan"),
+                "node": None, "trkng_why": None, "per_hour": [], "samples": []}
     now = datetime.datetime.now(datetime.timezone.utc)
-    series = {}   # valid_hour -> {"hs","dir","shts","lead"}
+    series = {}   # valid_hour -> {swh, dirpw, shts, ws, wdir, systems, lead}
     node = None   # DIAGNOSTIC: captured once — static grid/mask → same node every cycle
+    trkng_why = None
     for date, cc, url in recent_cycles(wfo, n_cycles, _region_for(wfo)):
         cyc = load_cycle(wfo, (date, cc, url))
         elapsed = int((now - cyc["cycle_dt"]).total_seconds() // 3600)
@@ -680,23 +805,55 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
         if cell is None:
             continue
         i, j = cell[0], cell[1]
+        nlat, nlng = float(cyc["lats"][i, j]), float(cyc["lons"][i, j])
         if node is None:
             node = _node_diag(cyc, blat, blng, i, j, cell[2])   # read-only; sampling unchanged
+        # CG0_Trkng per-system swell at the SAME node (remapped into the coarser grid). If the
+        # Trkng file is missing for a cycle, height still works and those hours just carry no
+        # systems (they won't qualify for the direction stat).
+        trk = ti = tj = None
+        try:
+            trk = _trk.load_trkng_cycle(wfo, (date, cc, url))
+            ti, tj, why = _trk.trkng_node(trk, cyc, nlat, nlng)
+            trkng_why = trkng_why or why
+        except Exception as e:  # noqa: BLE001
+            trkng_why = trkng_why or f"Trkng unavailable ({type(e).__name__})"
         for fh in cyc["steps"]:
             if fh > elapsed:
                 continue
-            hs = _node_value(cyc, "swh", fh, i, j)
-            if hs is None:
+            swh = _node_value(cyc, "swh", fh, i, j)
+            if swh is None:
                 continue
             valid = int((cyc["cycle_dt"] + datetime.timedelta(hours=fh)).timestamp() // 3600)
             if valid in series and series[valid]["lead"] <= fh:
                 continue
-            series[valid] = {"hs": hs, "dir": _node_value(cyc, "dirpw", fh, i, j),
-                             "shts": _node_value(cyc, "shts", fh, i, j), "lead": fh}
-    samples = _pair_samples(series, buoy)   # direction pairs dirpw vs buoy MWD (see trust_verdict)
-    v, r, cs, n, reason = trust_verdict(samples)
-    return {"verdict": v, "r": r, "circ_std": cs, "n": n, "reason": reason,
-            "node": node, "samples": samples}
+            systems = _trk.trkng_systems_at(trk, ti, tj, fh) if (trk is not None and ti is not None) else []
+            series[valid] = {
+                "swh": swh, "dirpw": _node_value(cyc, "dirpw", fh, i, j),
+                "shts": _node_value(cyc, "shts", fh, i, j),
+                "ws": _node_value(cyc, "ws", fh, i, j), "wdir": _node_value(cyc, "wdir", fh, i, j),
+                "systems": systems, "lead": fh}
+    # Buoy spectral swell: wave-age split on the buoy's own wind, else the MODEL wind at the
+    # node just assembled (wave-only buoys like 44095 report MM wind).
+    model_wind = {v: (s["ws"], s["wdir"]) for v, s in series.items()
+                  if s["ws"] is not None and s["wdir"] is not None}
+    spectral = _spec.by_hour(buoy_id, model_wind=model_wind)
+    samples = []
+    for v, s in series.items():
+        if v not in buoy:
+            continue
+        b, spx = buoy[v], spectral.get(v)
+        samples.append({
+            "t": v, "model_systems": s["systems"], "model_swh": s["swh"], "model_shts": s["shts"],
+            "buoy_wvht": b["hs"],
+            "buoy_swell_dir": (spx["swell_dir"] if spx else None),
+            "buoy_hs_swell": (spx["hs_swell"] if spx else None),
+            "buoy_frac": (spx["swell_frac"] if spx else None),
+            "wind_used": (spx.get("wind_used") if spx else None),
+            "dirpw": s["dirpw"], "buoy_mwd": b.get("mwd")})   # OLD metric, kept for the reverify side-by-side
+    res = swell_trust_verdict(samples)
+    res.update({"node": node, "trkng_why": trkng_why, "samples": samples})
+    return res
 
 
 # --------------------------------------------------------------------------- #
@@ -1103,56 +1260,102 @@ def _selftest():
 
 
 def _print_trust_diag(buoy_id, blat, blng, res):
-    """DIAGNOSTIC ONLY — print WHERE trust_check sampled and the joined per-hour
-    samples, so a bad/shadowed node behind any verdict is visible on the Mac. Reads
-    only what trust_check already returned; computes nothing about the verdict."""
+    """DIAGNOSTIC ONLY — print the node + the per-hour DIRECTION breakdown behind the
+    verdict (matched system, precondition pass/fail, Δ), so every PASS/FAIL/INCONCLUSIVE is
+    auditable, plus the OLD dirpw-vs-MWD metric for reference. Reads only what trust_check
+    returned; computes nothing new about the verdict."""
     nd = res.get("node")
     print(f"  buoy point: {blat:.4f},{blng:.4f}")
-    if not nd:
-        print("  ↳ [diag] no node captured (no usable cycle / no wet cell this run)")
+    if nd:
+        print(f"  ↳ [diag] CG1 node {nd['lat']:.4f},{nd['lng']:.4f}  dist_from_buoy={nd['dist_km']:.2f} km"
+              f"  ({nd['n_within_radius']} wet cells ≤{nd['radius_km']:.0f} km)")
     else:
-        print(f"  ↳ [diag] sampled node (plain-nearest wet cell — what trust_check correlates): "
-              f"{nd['lat']:.4f},{nd['lng']:.4f}  dist_from_buoy={nd['dist_km']:.2f} km  "
-              f"({nd['n_within_radius']} wet cells ≤{nd['radius_km']:.0f} km of buoy)")
-        if nd.get("reason"):
-            print(f"  ↳ [diag] seaward check: {nd['reason']}")
-        else:
-            side = "SEAWARD" if nd["sampled_is_seaward"] else "SHOREWARD — possible landmask shadow"
-            if nd["seaward_differs"]:
-                comp = (f"DIFFERS → nearest seaward wet cell {nd['seaward_nearest_lat']:.4f},"
-                        f"{nd['seaward_nearest_lng']:.4f} @ {nd['seaward_nearest_dist_km']:.2f} km")
-            else:
-                comp = "same cell as plain-nearest"
-            print(f"  ↳ [diag] seaward check: sampled node is {side} of the buoy "
-                  f"(nearest land @ {nd['land_dist_km']:.2f} km, shore brg {nd['shore_bearing']:.0f}°, "
-                  f"seaward brg {nd['seaward_bearing']:.0f}°); seaward pick {comp}")
+        print("  ↳ [diag] no node captured (no usable cycle / no wet cell this run)")
+    if res.get("trkng_why"):
+        print(f"  ↳ [diag] Trkng node: {res['trkng_why']}")
     if res.get("reason"):
         print(f"  ↳ [diag] verdict reason: {res['reason']}")
-    samples = res.get("samples") or []
-    if not samples:
-        print("  ↳ [diag] no paired samples (no overlapping model/buoy hours)")
+    ph = res.get("per_hour") or []
+    if not ph:
+        print("  ↳ [diag] no paired model/buoy hours")
         return
-    n_dir = sum(1 for s in samples if s["buoy_mwd"] is not None
-                and s["nwps_dir"] is not None and s["nwps_dir"] == s["nwps_dir"])
-    print("  ↳ [diag] direction: model dirpw (total-spectrum peak) vs buoy MWD "
-          "(total-spectrum mean); swell_dir/shts shown for context only")
-    print(f"  ↳ [diag] circ_std over {n_dir} hour(s) carrying both dirpw & MWD; up to 12 samples — "
-          "Hs: model swh/shts vs buoy WVHT/swellHs · dir: dirpw vs MWD (Δ) · buoy swell_dir (context)")
-    for s in samples[:12]:
-        ts = datetime.datetime.fromtimestamp(s["t"] * 3600, datetime.timezone.utc).strftime("%m-%d %HZ")
-        ndir, mwd = s["nwps_dir"], s["buoy_mwd"]
-        nd_s = f"{ndir:.0f}" if (ndir is not None and ndir == ndir) else "—"
-        mwd_s = f"{mwd:.0f}" if mwd is not None else "—"
-        if ndir is not None and ndir == ndir and mwd is not None:
-            dd = ((ndir - mwd + 180) % 360) - 180
-            dd_s = f"{dd:+.0f}°"
-        else:
-            dd_s = "  —"
-        shts = f"{s['model_shts']:.2f}" if s["model_shts"] is not None else "  — "
-        bswh = f"{s['buoy_swell_hs']:.2f}" if s["buoy_swell_hs"] is not None else "  — "
-        swd = f"{s['buoy_swell_dir']:.0f}°" if s["buoy_swell_dir"] is not None else "—"
-        print(f"      {ts}  Hs m(swh {s['nwps_hs']:.2f}/shts {shts}) b(wvht {s['buoy_hs']:.2f}/swH {bswh})  "
-              f"dir dirpw {nd_s:>3}° vs MWD {mwd_s:>3}° {dd_s:>5}  (buoy swell_dir {swd})")
+    hr, shm = res.get("height_r"), res.get("swell_hs_mad")
+    _g = lambda x, s: (s % x) if isinstance(x, (int, float)) and x == x else "—"
+    print(f"  ↳ [diag] HEIGHT: total-Hs r={_g(hr, '%.3f')} (gate) · swell-Hs mean|Δ| "
+          f"{_g(shm, '%.2f m')} (like-for-like cross-check, not gated)")
+    nq = sum(1 for p in ph if p["qualifying"])
+    print(f"  ↳ [diag] DIRECTION: model dominant swell-system dir vs buoy spectral swell_dir "
+          f"(both 'from', both swell); {nq} swell-present hour(s) of {len(ph)}")
+    print(f"      {'hour':>9} {'qual':>4} {'sys':>3} {'mdlDir':>6} {'buoySwD':>7} {'Δ':>6} "
+          f"{'Hs_sw':>5} {'frac':>4}   (qual = Hs≥{SWELL_HS_FLOOR_M} & frac≥{SWELL_FRAC_FLOOR})")
+    for p in ph[:16]:
+        ts = datetime.datetime.fromtimestamp(p["t"] * 3600, datetime.timezone.utc).strftime("%m-%d %HZ")
+        md = f"{p['model_dir']:.0f}" if p["model_dir"] is not None else "—"
+        bd = f"{p['buoy_swell_dir']:.0f}" if p["buoy_swell_dir"] is not None else "—"
+        dl = f"{p['delta']:+.0f}°" if p["delta"] is not None else "—"
+        hs = f"{p['buoy_hs_swell']:.2f}" if p["buoy_hs_swell"] is not None else "—"
+        fr = f"{p['buoy_frac']:.2f}" if p["buoy_frac"] is not None else "—"
+        sy = str(p["matched_system"]) if p["matched_system"] is not None else "—"
+        print(f"      {ts:>9} {('Y' if p['qualifying'] else 'n'):>4} {sy:>3} {md:>6} {bd:>7} {dl:>6} {hs:>5} {fr:>4}")
+    samples = res.get("samples") or []
+    old = [(((s["dirpw"] - s["buoy_mwd"] + 180) % 360) - 180) for s in samples
+           if s.get("dirpw") is not None and s["dirpw"] == s["dirpw"] and s.get("buoy_mwd") is not None]
+    if old:
+        print(f"  ↳ [diag] OLD dirpw-vs-MWD for reference: circ_std {_circ_std(old):.1f}° "
+              f"bias {_circ_mean(old):+.1f}° over {len(old)} hr — the category error this gate replaced")
+
+
+def _tagged_nwps_zones():
+    """[(wfo, buoy, spot_count)] — the distinct nwps (wfo, buoy) pairs currently TAGGED LIVE
+    in spots_enriched.json (the zones whose PASS came from the OLD gate)."""
+    if not ENRICHED.exists():
+        return []
+    import collections
+    counts = collections.Counter()
+    for s in json.loads(ENRICHED.read_text()):
+        if s.get("swell_window_source") == "nwps":
+            counts[(s.get("nwps_wfo"), s.get("nwps_buoy_id"))] += 1
+    return [(w, b, n) for (w, b), n in
+            sorted(counts.items(), key=lambda kv: (kv[0][0] or "", kv[0][1] or ""))]
+
+
+def reverify_tagged(n_cycles=4):
+    """READ-ONLY migration report (task 5) — re-run the REBUILT gate against every currently
+    tagged nwps zone and print the new verdict beside the old ('PASS', since they are tagged),
+    so a human can decide whether any live zone needs re-verification or untagging. Tags
+    NOTHING, writes NOTHING. Mac-only (NOMADS+NDBC+eccodes)."""
+    zones = _tagged_nwps_zones()
+    if not zones:
+        print("no tagged nwps zones found in spots_enriched.json.")
+        return 0
+    print("=== RE-VERIFY tagged nwps zones under the REBUILT gate (READ-ONLY; tags nothing) ===")
+    print(f"  {'wfo/buoy':<12} {'spots':>5}  {'OLD':>4} → {'NEW':<12} {'dir_cs':>7} {'bias':>7} {'qual':>4}  reason")
+    changed = []
+    for wfo, buoy, nspots in zones:
+        tag = f"{wfo}/{buoy}"
+        try:
+            blat, blng = _buoy_latlng(buoy)
+            res = trust_check(wfo, buoy, blat, blng, n_cycles=n_cycles)
+        except Exception as e:  # noqa: BLE001
+            print(f"  {tag:<12} {nspots:>5}  PASS → {'SKIP':<12} {'—':>7} {'—':>7} {'—':>4}  "
+                  f"({type(e).__name__}) run on the Mac")
+            continue
+        v = res["verdict"]
+        cs, bs, nq = res.get("dir_circ_std"), res.get("dir_bias"), res.get("n_qualifying", 0)
+        cs_s = f"{cs:.1f}°" if isinstance(cs, (int, float)) and cs == cs else "—"
+        bs_s = f"{bs:+.1f}°" if isinstance(bs, (int, float)) and bs == bs else "—"
+        print(f"  {tag:<12} {nspots:>5}  PASS → {v:<12} {cs_s:>7} {bs_s:>7} {nq:>4}  {res.get('reason') or ''}")
+        if v != "PASS":
+            changed.append(f"{tag} ({nspots} spots): {v}")
+    print("\n==== summary ====")
+    if changed:
+        print("  zones whose REBUILT verdict is no longer PASS (candidates for re-verify / untag — YOUR call):")
+        for c in changed:
+            print(f"    • {c}")
+    else:
+        print("  all tagged zones still PASS under the rebuilt gate.")
+    print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched.)")
+    return 0
 
 
 def main(argv=None):
@@ -1160,28 +1363,42 @@ def main(argv=None):
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--validate", action="store_true", help="fetch one WFO cycle, place + sample (Mac)")
     ap.add_argument("--trustcheck", action="store_true", help="NWPS-vs-buoy trust gate (Mac)")
+    ap.add_argument("--reverify-tagged", dest="reverify_tagged", action="store_true",
+                    help="re-run the rebuilt gate against all tagged nwps zones (read-only report; Mac)")
     ap.add_argument("--wfo", default="okx", help="NWPS WFO grid to fetch (default okx)")
     ap.add_argument("--batch", default=None,
                     help="comma-separated slugs to validate, loaded from spots_enriched.json "
                          "(each spot keeps its own nwps_wfo tag); default = the okx_pilot.json set")
     ap.add_argument("--buoy", default="44025", help="trust-check buoy id (default 44025)")
+    ap.add_argument("--cycles", type=int, default=4, help="recent NWPS cycles to assemble (default 4)")
     a = ap.parse_args(argv)
     if a.selftest:
         return _selftest()
     if a.validate:
         return validate_batch(a.batch, a.wfo)
-    if a.trustcheck:
-        blat, blng = _buoy_latlng(a.buoy)   # coords from NDBC active-station metadata; raises if unknown (no fallback)
-        print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Mac; needs NOMADS+NDBC) ===")
+    if a.reverify_tagged:
         try:
-            res = trust_check(a.wfo, a.buoy, blat, blng)
-            v, r, cs, n = res["verdict"], res["r"], res["circ_std"], res["n"]
-            print(f"buoy {a.buoy}: verdict {v}  r={r:.3f}  circ_std={cs:.1f}°  pairs={n}"
+            return reverify_tagged(n_cycles=a.cycles)
+        except Exception as e:  # noqa: BLE001
+            print(f"⚠ reverify needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
+            return 0
+    if a.trustcheck:
+        print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (partition-matched; Mac) ===")
+        try:
+            blat, blng = _buoy_latlng(a.buoy)   # NDBC active-station metadata; raises if unknown
+            res = trust_check(a.wfo, a.buoy, blat, blng, n_cycles=a.cycles)
+            v = res["verdict"]
+
+            def _f(x, s):
+                return s.format(x) if isinstance(x, (int, float)) and x == x else "—"
+            print(f"buoy {a.buoy}: {v}  dir circ_std={_f(res.get('dir_circ_std'), '{:.1f}°')} "
+                  f"bias={_f(res.get('dir_bias'), '{:+.1f}°')} over {res.get('n_qualifying', 0)} swell-hr · "
+                  f"height r={_f(res.get('height_r'), '{:.3f}')}"
                   + (f"  ({res['reason']})" if res.get("reason") else ""))
             print({"PASS": f"Regional trust supports consuming the placed {a.wfo.upper()} spots.",
                    "FAIL": "Hold consume; investigate before tagging.",
                    "INCONCLUSIVE": "Not assessable this window — see reason above; rerun on a real swell."}.get(v, ""))
-            _print_trust_diag(a.buoy, blat, blng, res)   # DIAGNOSTIC: where it sampled + samples
+            _print_trust_diag(a.buoy, blat, blng, res)
         except Exception as e:  # noqa: BLE001
             print(f"⚠ trust check needs live NOMADS+NDBC+cfgrib/eccodes ({type(e).__name__}: {e}) — run on the Mac.")
         return 0
