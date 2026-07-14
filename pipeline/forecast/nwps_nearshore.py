@@ -67,7 +67,10 @@ TRUST_MIN_PAIRS = 6
 #   swh   = sig height of combined wind waves + swell (headline Hs)
 #   shts  = sig height of total swell (swell only) — the windsea split for chop
 #   perpw = primary wave period   dirpw = primary wave direction (deg, FROM)
-_SHORTS = ("swh", "shts", "perpw", "dirpw")
+#   ws / wdir = 10 m wind speed (m/s) / direction (deg, FROM) — additive, for the NDBC
+#     spectral wave-age split at wave-only buoys; existing consumers read fields BY NAME
+#     (swh/shts/perpw/dirpw), so carrying wind is inert for the trust gate and the rating.
+_SHORTS = ("swh", "shts", "perpw", "dirpw", "ws", "wdir")
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 _HERE = Path(__file__).resolve()

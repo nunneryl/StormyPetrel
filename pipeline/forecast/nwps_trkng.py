@@ -392,20 +392,33 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
     std = nn._buoy_hourly(buoy_id) or {}
     spec = _spec_by_hour(buoy_id)
     from . import ndbc_spectral as ndbc_spec
-    spectral = ndbc_spec.by_hour(buoy_id)   # {epoch_hour: metrics} — degree-valued swell dir
+    # MODEL wind at the node (CG1 ws/wdir), keyed by valid hour — the wave-age fallback for
+    # wave-only buoys that report MM wind (e.g. 44095). Buoy wind still takes priority.
+    model_wind = {}
+    for fh in cg1["steps"]:
+        mws = nn._node_value(cg1, "ws", fh, ci, cj)
+        mwd_ = nn._node_value(cg1, "wdir", fh, ci, cj)
+        if mws is not None and mwd_ is not None:
+            v = int((cg1["cycle_dt"] + datetime.timedelta(hours=fh)).timestamp() // 3600)
+            model_wind[v] = (mws, mwd_)
+    spectral = ndbc_spec.by_hour(buoy_id, model_wind=model_wind)   # degree-valued swell dir
     if not spectral:
         print("note: no directional spectra (.data_spec/.swdir) for this buoy — the NEW/CONTROL "
               "spectral columns are blank (station may not report directional waves).")
+    if model_wind:
+        print(f"note: model wind available at the node for {len(model_wind)} hours "
+              "(fallback when the buoy reports MM wind).")
 
     def _n(v, s="{:.0f}"):
         return s.format(v) if isinstance(v, (int, float)) and v == v else "—"
 
     print(f"  {'valid(fh)':>11} {'dirpw':>5} {'sys1 hs/tp/dir':>14} {'sys2 hs/tp/dir':>14} "
-          f"{'MWD':>4} {'.spec H/P/D':>13} {'SPECTRAL Hsw/dir/frac/totdir':>28}")
+          f"{'MWD':>4} {'.spec H/P/D':>13} {'SPECTRAL Hsw/dir/frac/totdir':>28} {'wind U/dir(src)':>15}")
     # paired series for the comparisons (task 3), over hours both sides cover
     old_m, old_b, new_m, new_b, ctl_m, ctl_b, ref_m, ref_b, fracs = ([] for _ in range(9))
     hs_sp, hs_ref = [], []   # spectral Hs_swell vs the buoy's own .spec SwH (band-split sanity, task 2)
     methods = set()          # which band split fired (ndbc_sep_freq / wave_age / fixed_cutoff)
+    wind_srcs = set()        # which wind drove wave-age (buoy / model / none)
     shown = 0
     for fh in cg1["steps"]:
         if shown >= max_rows:
@@ -420,11 +433,18 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         mwd = b.get("mwd") if b else None
         buoy_sw = (f"{_n(sp.get('swh'),'{:.2f}')}/{_n(sp.get('swp'),'{:.1f}')}/{_n(sp.get('swd'))}"
                    if sp else "     —     ")
+        wind_col = "      —      "
         if spx:
             spec_col = (f"{_n(spx['hs_swell'],'{:.2f}')}/{_n(spx['swell_dir'])}/"
                         f"{_n(spx['swell_frac'],'{:.2f}')}/{_n(spx['total_mean_dir'])}")
             fracs.append(spx.get("swell_frac"))
             methods.add(spx.get("split_method"))
+            wu = spx.get("wind_used")   # (u, wd, source) — the wind that drove the split
+            if wu:
+                u, wd_, src = wu
+                wind_srcs.add(src)
+                wind_col = (f"{_n(u,'{:.0f}')}/{_n(wd_,'{:.0f}')}({src})" if src != "none"
+                            else "none→fallback")
         else:
             spec_col = "          —          "
         # accumulate the three paired comparisons (only where both sides are present)
@@ -439,7 +459,7 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         if spx and sp and sp.get("swh") is not None:
             hs_sp.append(spx["hs_swell"]); hs_ref.append(sp["swh"])
         print(f"  {valid:>7}({fh:>3}) {_n(dirpw):>5} {_sys_str(systems,0):>14} "
-              f"{_sys_str(systems,1):>14} {_n(mwd):>4} {buoy_sw:>13} {spec_col:>28}")
+              f"{_sys_str(systems,1):>14} {_n(mwd):>4} {buoy_sw:>13} {spec_col:>28} {wind_col:>15}")
         shown += 1
 
     # THE EXPERIMENT (task 3): is the partition-matched, degree-valued comparison tighter?
@@ -459,8 +479,10 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         d = [abs(a - b) for a, b in zip(hs_sp, hs_ref)]
         verdict = "band split looks right" if (sum(d) / len(d)) <= 0.25 else "BAND SPLIT SUSPECT — investigate"
         meth = "/".join(sorted(m for m in methods if m)) or "—"
-        print(f"\n  band-split [{meth}] check: mean Hs_swell(spectral) {sum(hs_sp)/len(hs_sp):.2f} m vs "
-              f".spec SwH {sum(hs_ref)/len(hs_ref):.2f} m, mean|Δ| {sum(d)/len(d):.2f} m → {verdict}")
+        wsrc = "/".join(sorted(s for s in wind_srcs if s)) or "—"
+        print(f"\n  band-split [{meth}, wind={wsrc}] check: mean Hs_swell(spectral) "
+              f"{sum(hs_sp)/len(hs_sp):.2f} m vs .spec SwH {sum(hs_ref)/len(hs_ref):.2f} m, "
+              f"mean|Δ| {sum(d)/len(d):.2f} m → {verdict}")
     fr = [f for f in fracs if isinstance(f, (int, float)) and f == f]
     if fr:
         avg = sum(fr) / len(fr)

@@ -312,17 +312,36 @@ def parse_std_wind(text):
     return out
 
 
-def compute(data_spec_text, swdir_text, std_text=None, *, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
+def _resolve_wind(buoy_uw, model_uw):
+    """(u, wd, source): prefer COMPLETE buoy wind, else COMPLETE model wind, else none.
+    Wave-age needs BOTH speed and direction, so a partial reading counts as unusable —
+    a wave-only station like 44095 (WSPD/WDIR = MM) falls through to the model wind."""
+    bu, bwd = buoy_uw
+    if bu is not None and bwd is not None:
+        return bu, bwd, "buoy"
+    if model_uw is not None:
+        mu, mwd = model_uw
+        if mu is not None and mwd is not None:
+            return mu, mwd, "model"
+    return None, None, "none"
+
+
+def compute(data_spec_text, swdir_text, std_text=None, *, model_wind=None,
+            cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
     """{epoch_hour: spectral_metrics} from raw .data_spec + .swdir (+ optional .txt std for
-    the wave-age wind). Pure/offline — the whole reader minus the fetch, fully unit-testable."""
+    BUOY wind, + optional *model_wind* {epoch_hour: (ws, wdir)} used when the buoy reports no
+    wind — a wave-only station like 44095). Each result carries 'wind_used' = (u, wd, source)
+    so the diag can show which wind drove the wave-age split. Pure/offline."""
     spec_by_hour = parse_data_spec(data_spec_text)
     dir_by_hour = parse_swdir(swdir_text)
-    wind_by_hour = parse_std_wind(std_text)
+    buoy_wind = parse_std_wind(std_text)
     out = {}
     for eh, spec in spec_by_hour.items():
-        u, wd = wind_by_hour.get(eh, (None, None))
-        out[eh] = spectral_metrics(spec, dir_by_hour.get(eh, {}),
-                                   wind_speed=u, wind_dir=wd, cutoff_hz=cutoff_hz)
+        u, wd, src = _resolve_wind(buoy_wind.get(eh, (None, None)), (model_wind or {}).get(eh))
+        m = spectral_metrics(spec, dir_by_hour.get(eh, {}),
+                             wind_speed=u, wind_dir=wd, cutoff_hz=cutoff_hz)
+        m["wind_used"] = (u, wd, src)
+        out[eh] = m
     return out
 
 
@@ -351,11 +370,12 @@ def delta_stats(model_dirs, buoy_dirs):
 # --------------------------------------------------------------------------- #
 # Live fetch (reuses the existing NDBC realtime2 fetch/cache layer)             #
 # --------------------------------------------------------------------------- #
-def by_hour(buoy_id, *, use_cache=False, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
+def by_hour(buoy_id, *, model_wind=None, use_cache=False, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
     """{epoch_hour: spectral_metrics} for a live station, or {} if the spectra are
     unavailable. Reuses pipeline.forecast.buoys._fetch_text (its cache + polite fetch) —
     no parallel fetch path. Fetches .data_spec + .swdir (the spectrum) and the .txt std
-    feed (local wind for the wave-age split when Sep_Freq is a sentinel)."""
+    feed (BUOY wind for the wave-age split); *model_wind* {epoch_hour: (ws, wdir)} is used
+    for hours the buoy reports no wind (wave-only stations)."""
     from .buoys import _fetch_text
     from ..config import NDBC_REALTIME2_BASE
     up = buoy_id.upper()
@@ -363,8 +383,8 @@ def by_hour(buoy_id, *, use_cache=False, cutoff_hz=SWELL_WINDSEA_CUTOFF_HZ):
     sd = _fetch_text(f"{NDBC_REALTIME2_BASE}/{up}.swdir", buoy_id, "swdir", use_cache)
     if not ds or not sd:
         return {}
-    std = _fetch_text(f"{NDBC_REALTIME2_BASE}/{up}.txt", buoy_id, "std", use_cache)  # wind
-    return compute(ds, sd, std, cutoff_hz=cutoff_hz)
+    std = _fetch_text(f"{NDBC_REALTIME2_BASE}/{up}.txt", buoy_id, "std", use_cache)  # buoy wind
+    return compute(ds, sd, std, model_wind=model_wind, cutoff_hz=cutoff_hz)
 
 
 # --------------------------------------------------------------------------- #
@@ -452,6 +472,22 @@ def _selftest():
     check("wave-age: 44095-like sea comes out SWELL-DOMINATED (frac > 0.6)",
           m2["split_method"] == "wave_age" and m2["swell_frac"] is not None and m2["swell_frac"] > 0.6)
     check("wave-age: swell_dir ≈ 90° (the dominant 7.5 s system)", abs(m2["swell_dir"] - 90.0) < 3.0)
+
+    # BUG-1 fix — a wave-only buoy (MM wind) uses MODEL node wind; buoy wind still wins
+    ds_mm = "#h\n2026 07 14 15 00 9.999 1.0 (0.08) 8.0 (0.133) 1.0 (0.25)\n"
+    sd_mm = "#h\n2026 07 14 15 00 90 (0.08) 90 (0.133) 90 (0.25)\n"
+    ehk = _epoch_hour("2026", "07", "14", "15", "00")
+    r_model = compute(ds_mm, sd_mm, std_text=None, model_wind={ehk: (8.0, 90.0)})
+    check("no buoy wind → MODEL node wind drives wave_age (not fixed_cutoff)",
+          r_model[ehk]["split_method"] == "wave_age" and r_model[ehk]["wind_used"][2] == "model")
+    r_none = compute(ds_mm, sd_mm, std_text=None, model_wind=None)
+    check("no wind anywhere → fixed_cutoff last resort, source 'none'",
+          r_none[ehk]["split_method"] == "fixed_cutoff" and r_none[ehk]["wind_used"][2] == "none")
+    # buoy wind present (at :50, different minute offset) → BUOY wins over model, hours match
+    std_buoy = "#YY MM DD hh mm WDIR WSPD\n#deg m/s\n2026 07 14 15 50 80 9.0\n"
+    r_buoy = compute(ds_mm, sd_mm, std_text=std_buoy, model_wind={ehk: (8.0, 90.0)})
+    check("buoy wind (:50) matches spectral (:00) by hour AND wins over model",
+          r_buoy[ehk]["wind_used"][2] == "buoy" and abs(r_buoy[ehk]["wind_used"][0] - 9.0) < 1e-9)
 
     # missing-data: an all-missing hour yields zero/None, not a crash
     m3 = spectral_metrics({"sep_freq": 0.1, "freqs": [0.05], "c11": [None]}, {})

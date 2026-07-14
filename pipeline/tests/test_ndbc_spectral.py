@@ -121,6 +121,25 @@ def test_missing_data_and_mm_handling():
     assert m0["hs_total"] == 0 and m0["swell_dir"] is None and m0["swell_frac"] is None
 
 
+def test_model_wind_fallback_for_wave_only_buoy():
+    # 44095 reports MM wind → wave-age must use the MODEL node wind, not fall to fixed_cutoff.
+    ds = "#h\n2026 07 14 15 00 9.999 1.0 (0.08) 8.0 (0.133) 1.0 (0.25)\n"
+    sd = "#h\n2026 07 14 15 00 90 (0.08) 90 (0.133) 90 (0.25)\n"
+    ehk = sp._epoch_hour("2026", "07", "14", "15", "00")
+    # no buoy wind (std_text None), model wind supplied → wave_age via model
+    r = sp.compute(ds, sd, std_text=None, model_wind={ehk: (8.0, 90.0)})
+    assert r[ehk]["split_method"] == "wave_age"
+    assert r[ehk]["wind_used"] == (8.0, 90.0, "model")
+    assert r[ehk]["swell_frac"] > 0.6, "with model wind, the 7.5 s sea reads swell-dominated"
+    # neither buoy nor model wind → fixed_cutoff, source 'none' (honest last resort)
+    r0 = sp.compute(ds, sd, std_text=None, model_wind=None)
+    assert r0[ehk]["split_method"] == "fixed_cutoff" and r0[ehk]["wind_used"][2] == "none"
+    # buoy wind at :50 matches spectral at :00 (hour floor) AND takes priority over model
+    std_buoy = "#YY MM DD hh mm WDIR WSPD\n#deg m/s\n2026 07 14 15 50 80 9.0\n"
+    rb = sp.compute(ds, sd, std_text=std_buoy, model_wind={ehk: (8.0, 90.0)})
+    assert rb[ehk]["wind_used"] == (9.0, 80.0, "buoy"), "buoy wins; :50/:00 minute offset matches"
+
+
 def test_delta_stats_circular():
     # signed deltas +5 and −5 → circular mean ~0, std ~5 (not an arithmetic 0/large)
     n, mean, std = sp.delta_stats([5.0, 355.0], [0.0, 0.0])
