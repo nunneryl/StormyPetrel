@@ -13,6 +13,8 @@ Run: python -m pipeline.tests.test_nwps_trust_gate   (or pytest)
 """
 from __future__ import annotations
 
+import numpy as np
+
 from pipeline.forecast import nwps_nearshore as nn
 
 
@@ -99,6 +101,34 @@ def test_height_still_gates_even_with_good_direction():
         samples.append(s)
     res = nn.swell_trust_verdict(samples)
     assert res["verdict"] == "FAIL" and res["height_r"] < nn.TRUST_R_MIN
+
+
+def test_depth_matched_node_selectors():
+    # land to the NORTH (row 0); the plain-nearest wet cell (row 1) is just north of the buoy
+    # = SHOREWARD/shallow; the seaward (open/deep) cells are to the south (rows 2-3).
+    lat = np.array([[40.030], [40.008], [39.980], [39.960]])
+    lon = np.array([[-73.0], [-73.0], [-73.0], [-73.0]])
+    mask = np.array([[True], [False], [False], [False]])
+    cyc = {"lats": lat, "lons": lon, "mask": mask}
+    blat, blng = 40.000, -73.000
+    # nearest = the shoreward shadow cell (row 1)
+    assert nn._nearest_cell(cyc, blat, blng)[0] == 1
+    # seaward = nearest cell in the seaward (south) half-plane (row 2, not the shoreward row 1)
+    sc = nn._seaward_cell(cyc, blat, blng)
+    assert sc is not None and sc[0] == 2, "seaward pick moves OFF the shoreward cell"
+    # deepest w/o bathy = most-seaward (furthest offshore) within radius → row 3
+    dc = nn._deepest_cell(cyc, blat, blng, radius_km=8.0)
+    assert dc[0] == 3 and dc[5] is None
+    # deepest WITH a bathymetry sampler favouring row 2 → row 2 (depth_fn overrides geometry)
+    depth_fn = lambda la, lo: 100.0 if abs(la - 39.980) < 1e-6 else 20.0
+    assert nn._deepest_cell(cyc, blat, blng, radius_km=8.0, depth_fn=depth_fn)[0] == 2
+    # _pick_cell dispatch, and it falls back to nearest for an unknown / seaward-less grid
+    assert nn._pick_cell(cyc, blat, blng, "nearest")[0] == 1
+    assert nn._pick_cell(cyc, blat, blng, "seaward")[0] == 2
+    assert nn._pick_cell(cyc, blat, blng, "deepest")[0] == 3
+    # the sampled nearest node IS flagged shoreward by _node_diag (the refraction signal)
+    nd = nn._node_diag(cyc, blat, blng, 1, 0, nn._haversine_km(blat, blng, 40.008, -73.0))
+    assert nd["sampled_is_seaward"] is False and nd["seaward_differs"] is True
 
 
 def _run_all():

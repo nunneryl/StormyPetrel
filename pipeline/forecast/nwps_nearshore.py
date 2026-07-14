@@ -361,6 +361,90 @@ def _nearest_cell(cycle, lat, lng):
     return best[2], best[3], _haversine_km(lat, lng, best[0], best[1])   # (i, j, dist_km)
 
 
+# --------------------------------------------------------------------------- #
+# Depth-diagnostic node selectors (READ-ONLY — for the refraction/node experiment).       #
+# The gate's default sampling is _nearest_cell; these are alternates the depth experiment  #
+# re-runs the gate at, to test whether a shoreward/shallow node explains a direction bias. #
+# --------------------------------------------------------------------------- #
+def _shore_seaward_bearings(cyc, blat, blng):
+    """(shore_brg, sea_brg, land_dist_km) inferred from the grid MASK alone: the shore
+    bearing points at the nearest LAND (masked) cell, seaward is the opposite. None if the
+    grid carries no land. Mirrors _node_diag so 'seaward' means the same everywhere."""
+    lats, lons, mask = cyc["lats"], cyc["lons"], cyc["mask"]
+    land = [(float(lats[a, b]), float(lons[a, b]))
+            for a in range(lats.shape[0]) for b in range(lats.shape[1]) if mask[a, b]]
+    if not land:
+        return None
+    ld = min(land, key=lambda p: _haversine_km(blat, blng, p[0], p[1]))
+    shore = _bearing(blat, blng, ld[0], ld[1])
+    return shore, (shore + 180.0) % 360.0, _haversine_km(blat, blng, ld[0], ld[1])
+
+
+def _seaward_cell(cyc, blat, blng):
+    """(i, j, lat, lng, dist_km) of the nearest wet cell in the SEAWARD half-plane (±90° of
+    the mask-inferred seaward bearing) — the depth-matched pick when the plain-nearest cell
+    is a shoreward/shallow shadow. None if no land (seaward undefined) or no seaward wet
+    cell. Pure."""
+    wet = _wet_nodes(cyc["lats"], cyc["lons"], cyc["mask"])
+    sb = _shore_seaward_bearings(cyc, blat, blng)
+    if not wet or sb is None:
+        return None
+    sea_brg = sb[1]
+    sea = [w for w in wet if _ang_within(_bearing(blat, blng, w[0], w[1]), sea_brg, 90)]
+    if not sea:
+        return None
+    b = min(sea, key=lambda w: _haversine_km(blat, blng, w[0], w[1]))
+    return b[2], b[3], b[0], b[1], _haversine_km(blat, blng, b[0], b[1])
+
+
+def _deepest_cell(cyc, blat, blng, radius_km=6.0, depth_fn=None):
+    """(i, j, lat, lng, dist_km, depth_m|None) of the DEEPEST wet cell within *radius_km* of
+    the buoy — depth-matched to the buoy's open-water regime. With *depth_fn* (a bathymetry
+    sampler) it is the deepest by true depth; without it, the MOST-SEAWARD cell in the
+    neighbourhood (largest projection onto the seaward bearing = furthest offshore), a
+    landmask proxy for 'deepest'. None if no wet cell in radius / seaward undefined. Pure
+    (depth_fn injectable for tests)."""
+    wet = [w for w in _wet_nodes(cyc["lats"], cyc["lons"], cyc["mask"])
+           if _haversine_km(blat, blng, w[0], w[1]) <= radius_km]
+    if not wet:
+        return None
+    if depth_fn is not None:
+        scored = [(depth_fn(w[0], w[1]), w) for w in wet]
+        scored = [(d, w) for d, w in scored if d is not None]
+        if scored:
+            d, b = max(scored, key=lambda dw: dw[0])
+            return b[2], b[3], b[0], b[1], _haversine_km(blat, blng, b[0], b[1]), d
+    sb = _shore_seaward_bearings(cyc, blat, blng)
+    if sb is None:
+        return None
+    sea_brg = sb[1]
+
+    def seaward_projection(w):
+        dist = _haversine_km(blat, blng, w[0], w[1])
+        ang = math.radians(((_bearing(blat, blng, w[0], w[1]) - sea_brg + 180) % 360) - 180)
+        return dist * math.cos(ang)   # + offshore, − shoreward
+    b = max(wet, key=seaward_projection)
+    return b[2], b[3], b[0], b[1], _haversine_km(blat, blng, b[0], b[1]), None
+
+
+def _pick_cell(cyc, blat, blng, node_select="nearest", radius_km=6.0, depth_fn=None):
+    """(i, j, lat, lng, dist_km) for the requested node-selection mode, falling back to the
+    production NEAREST cell when a seaward/deep alternate can't be found. Read-only."""
+    if node_select == "seaward":
+        c = _seaward_cell(cyc, blat, blng)
+        if c:
+            return c
+    elif node_select == "deepest":
+        c = _deepest_cell(cyc, blat, blng, radius_km, depth_fn)
+        if c:
+            return c[:5]
+    c = _nearest_cell(cyc, blat, blng)
+    if c is None:
+        return None
+    i, j = c[0], c[1]
+    return i, j, float(cyc["lats"][i, j]), float(cyc["lons"][i, j]), c[2]
+
+
 def _node_value(cycle, short, fh, i, j):
     arr = cycle["fields"].get((short, fh))
     if arr is None:
@@ -775,8 +859,10 @@ def _pair_samples(series, buoy):
     return samples
 
 
-def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
+def trust_check(wfo, buoy_id, blat, blng, n_cycles=4, **kw):
     """Live NWPS-vs-buoy trust gate (Mac), rebuilt PARTITION-MATCHED + energy-preconditioned.
+    kw: node_select ('nearest' default | 'seaward' | 'deepest') + node_radius_km — READ-ONLY
+    node variants for the depth experiment; the production gate always uses 'nearest'.
     Assembles at the buoy's node across recent cycles (shortest lead per valid hour): the
     CG1 total height (swh) + 10 m wind (ws/wdir), and the CG0_Trkng per-system swell
     (hs/tp/dir). Fetches the buoy's SPECTRAL swell (degree-valued swell_dir + Hs_swell +
@@ -787,6 +873,8 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
     node diagnostics ('node', 'trkng_why', 'per_hour', 'samples')."""
     from . import nwps_trkng as _trk     # lazy: avoids an import cycle; keeps --selftest light
     from . import ndbc_spectral as _spec
+    node_select = kw.get("node_select", "nearest")   # READ-ONLY variant for the depth experiment
+    node_radius_km = kw.get("node_radius_km", 6.0)
     buoy = _buoy_hourly(buoy_id)
     if not buoy:
         return {"verdict": "INCONCLUSIVE", "reason": "buoy feed unavailable", "n_qualifying": 0,
@@ -801,13 +889,12 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
         elapsed = int((now - cyc["cycle_dt"]).total_seconds() // 3600)
         if elapsed < 0:
             continue
-        cell = _nearest_cell(cyc, blat, blng)
-        if cell is None:
+        picked = _pick_cell(cyc, blat, blng, node_select, node_radius_km)
+        if picked is None:
             continue
-        i, j = cell[0], cell[1]
-        nlat, nlng = float(cyc["lats"][i, j]), float(cyc["lons"][i, j])
+        i, j, nlat, nlng, pdist = picked
         if node is None:
-            node = _node_diag(cyc, blat, blng, i, j, cell[2])   # read-only; sampling unchanged
+            node = _node_diag(cyc, blat, blng, i, j, pdist)   # read-only; reflects the sampled node
         # CG0_Trkng per-system swell at the SAME node (remapped into the coarser grid). If the
         # Trkng file is missing for a cycle, height still works and those hours just carry no
         # systems (they won't qualify for the direction stat).
@@ -850,7 +937,8 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4):
             "buoy_hs_swell": (spx["hs_swell"] if spx else None),
             "buoy_frac": (spx["swell_frac"] if spx else None),
             "wind_used": (spx.get("wind_used") if spx else None),
-            "dirpw": s["dirpw"], "buoy_mwd": b.get("mwd")})   # OLD metric, kept for the reverify side-by-side
+            "dirpw": s["dirpw"], "buoy_mwd": b.get("mwd"),   # OLD metric, kept for the reverify side-by-side
+            "buoy_coarse_swd": b.get("swell_dir")})           # coarse .spec SwD — for the buoy-side sanity check
     res = swell_trust_verdict(samples)
     res.update({"node": node, "trkng_why": trkng_why, "samples": samples})
     return res
@@ -1303,6 +1391,14 @@ def _print_trust_diag(buoy_id, blat, blng, res):
     if old:
         print(f"  ↳ [diag] OLD dirpw-vs-MWD for reference: circ_std {_circ_std(old):.1f}° "
               f"bias {_circ_mean(old):+.1f}° over {len(old)} hr — the category error this gate replaced")
+    # BUOY-SIDE SANITY (task 5): our degree-valued spectral swell_dir must agree with the buoy's
+    # own coarse .spec SwD (22.5°-quantized, but not 50° off). A big gap ⇒ OUR reader is wrong.
+    sw = [(((s["buoy_swell_dir"] - s["buoy_coarse_swd"] + 180) % 360) - 180) for s in samples
+          if s.get("buoy_swell_dir") is not None and s.get("buoy_coarse_swd") is not None]
+    if sw:
+        print(f"  ↳ [diag] buoy-side sanity: spectral swell_dir vs coarse .spec SwD — mean|Δ| "
+              f"{sum(abs(x) for x in sw)/len(sw):.1f}° over {len(sw)} hr (expect ≲15°; a big gap "
+              "means the SPECTRAL READER is wrong, not the model)")
 
 
 def _tagged_nwps_zones():
@@ -1358,6 +1454,59 @@ def reverify_tagged(n_cycles=4):
     return 0
 
 
+def depth_experiment(n_cycles=4, radius_km=6.0):
+    """READ-ONLY (tasks 1-3) — re-run the rebuilt gate at the production NEAREST node and at
+    the depth-matched SEAWARD node for every tagged nwps zone, reporting before/after
+    circ_std + bias plus the node geometry (dist / bearing / shoreward|seaward) the
+    refraction hypothesis predicts. If moving the sample SEAWARD (deeper/open) collapses the
+    bias toward 0, the failures are node selection / refraction — fix the node, NOT the tags.
+    buoy 44098 appears twice (box + gyx): same buoy, two model nodes = the controlled test.
+    Tags/writes NOTHING. Mac-only (NOMADS+NDBC+eccodes)."""
+    zones = _tagged_nwps_zones()
+    if not zones:
+        print("no tagged nwps zones found in spots_enriched.json.")
+        return 0
+    print("=== DEPTH / NODE experiment — gate at NEAREST vs SEAWARD node (READ-ONLY) ===")
+    print(f"  seaward re-pick radius {radius_km} km · buoy 44098 (box+gyx) = the same-buoy control\n")
+    hdr = (f"  {'wfo/buoy':<11} {'node':<8} {'node lat,lng':<18} {'d_km':>5} {'brg':>4} {'side':>9} "
+           f"{'circ_std':>8} {'bias':>7} {'qual':>4}  verdict")
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+
+    def _f(x, s):
+        return (s % x) if isinstance(x, (int, float)) and x == x else "—"
+
+    for wfo, buoy, nspots in zones:
+        try:
+            blat, blng = _buoy_latlng(buoy)
+        except Exception as e:  # noqa: BLE001
+            print(f"  {wfo}/{buoy:<6} SKIP ({type(e).__name__}) — run on the Mac")
+            continue
+        for sel in ("nearest", "seaward"):
+            try:
+                res = trust_check(wfo, buoy, blat, blng, n_cycles=n_cycles,
+                                  node_select=sel, node_radius_km=radius_km)
+            except Exception as e:  # noqa: BLE001
+                print(f"  {wfo}/{buoy:<6} {sel:<8} SKIP ({type(e).__name__})")
+                continue
+            nd = res.get("node") or {}
+            if nd:
+                latlng = f"{nd['lat']:.3f},{nd['lng']:.3f}"
+                dkm, brg = f"{nd['dist_km']:.2f}", f"{_bearing(blat, blng, nd['lat'], nd['lng']):.0f}"
+                side = "seaward" if nd.get("sampled_is_seaward") else "SHOREWARD"
+            else:
+                latlng, dkm, brg, side = "—", "—", "—", "—"
+            print(f"  {wfo}/{buoy:<6} {sel:<8} {latlng:<18} {dkm:>5} {brg:>4} {side:>9} "
+                  f"{_f(res.get('dir_circ_std'), '%.1f°'):>8} {_f(res.get('dir_bias'), '%+.1f°'):>7} "
+                  f"{res.get('n_qualifying', 0):>4}  {res['verdict']}")
+    print("\n  → per zone, compare its two rows: if bias shrinks toward 0 (and the node flips")
+    print("    SHOREWARD→seaward) from nearest→seaward, refraction/node-selection is the cause —")
+    print("    the fix is depth-matched node selection, NOT untagging. If the bias persists at the")
+    print("    seaward node, the pairing may genuinely be bad (untag is then on the table).")
+    print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched.)")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--selftest", action="store_true")
@@ -1365,6 +1514,9 @@ def main(argv=None):
     ap.add_argument("--trustcheck", action="store_true", help="NWPS-vs-buoy trust gate (Mac)")
     ap.add_argument("--reverify-tagged", dest="reverify_tagged", action="store_true",
                     help="re-run the rebuilt gate against all tagged nwps zones (read-only report; Mac)")
+    ap.add_argument("--depth-experiment", dest="depth_experiment", action="store_true",
+                    help="re-run the gate at NEAREST vs SEAWARD node per tagged zone (read-only; Mac)")
+    ap.add_argument("--radius-km", type=float, default=6.0, help="seaward re-pick radius (depth experiment)")
     ap.add_argument("--wfo", default="okx", help="NWPS WFO grid to fetch (default okx)")
     ap.add_argument("--batch", default=None,
                     help="comma-separated slugs to validate, loaded from spots_enriched.json "
@@ -1381,6 +1533,12 @@ def main(argv=None):
             return reverify_tagged(n_cycles=a.cycles)
         except Exception as e:  # noqa: BLE001
             print(f"⚠ reverify needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
+            return 0
+    if a.depth_experiment:
+        try:
+            return depth_experiment(n_cycles=a.cycles, radius_km=a.radius_km)
+        except Exception as e:  # noqa: BLE001
+            print(f"⚠ depth experiment needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
             return 0
     if a.trustcheck:
         print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (partition-matched; Mac) ===")
