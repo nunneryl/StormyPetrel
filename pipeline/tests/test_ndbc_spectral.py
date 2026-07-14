@@ -1,0 +1,106 @@
+"""Fixture checks for the NDBC directional-spectrum reader (pipeline.forecast.ndbc_spectral).
+
+Covers the four behaviours the task calls out, with no network:
+  * vector-mean correctness, incl. the wraparound (350° & 10° → 0°, not 180°);
+  * band-split boundary (f < Sep_Freq is swell, f == Sep_Freq is wind-sea);
+  * missing-data / MM / 999-direction handling (no leak, no crash);
+  * a fixture-based parse of the realtime2 .data_spec + .swdir row layout.
+
+Run: python -m pipeline.tests.test_ndbc_spectral   (or pytest)
+"""
+from __future__ import annotations
+
+import math
+
+from pipeline.forecast import ndbc_spectral as sp
+
+# realtime2 sample rows (one timestamp). .data_spec: date, Sep_Freq, then energy (freq)
+# pairs. .swdir: date, then direction (freq) pairs on the SAME frequency grid.
+_DATA_SPEC = (
+    "#YY  MM DD hh mm  Sep_Freq  Spectrum (m*m/Hz)\n"
+    "2026 07 13 12 40  0.100  0.500 (0.060)  9.000 (0.090)  2.000 (0.120)  1.000 (0.160)\n"
+)
+_SWDIR = (
+    "#YY  MM DD hh mm  Direction (deg)\n"
+    "2026 07 13 12 40  120.0 (0.060)  118.0 (0.090)  250.0 (0.120)  255.0 (0.160)\n"
+)
+
+
+def test_vector_mean_wraparound_and_weighting():
+    assert abs(sp.vector_mean_dir([350.0, 10.0], [1.0, 1.0]) % 360.0) < 1e-6, "350&10 → 0, not 180"
+    assert abs(sp.vector_mean_dir([10.0, 20.0], [1.0, 1.0]) - 15.0) < 1e-6
+    # energy weighting, not arithmetic: a 10× heavier 90° pulls the mean off 270°
+    assert abs(sp.vector_mean_dir([90.0, 270.0], [10.0, 1.0]) - 90.0) < 1e-6
+    # fully opposed / no valid data → undefined (None), never a spurious 90°
+    assert sp.vector_mean_dir([0.0, 180.0], [1.0, 1.0]) is None
+    assert sp.vector_mean_dir([999.0, None], [1.0, 1.0]) is None
+
+
+def test_parse_realtime2_layout():
+    ds = sp.parse_data_spec(_DATA_SPEC)
+    sd = sp.parse_swdir(_SWDIR)
+    (eh, rec), = ds.items()
+    assert abs(rec["sep_freq"] - 0.100) < 1e-9, "Sep_Freq is the lone 6th column"
+    assert rec["freqs"] == [0.06, 0.09, 0.12, 0.16], "energy(freq) pairs, sorted by freq"
+    assert rec["c11"] == [0.5, 9.0, 2.0, 1.0]
+    assert sd[eh] == {0.06: 120.0, 0.09: 118.0, 0.12: 250.0, 0.16: 255.0}
+
+
+def test_band_split_uses_ndbc_sep_freq_and_boundary_is_windsea():
+    # sep_freq 0.10: 0.06 & 0.09 are swell (<0.10); a bin AT 0.10 and 0.12/0.16 are wind-sea.
+    spec = {"sep_freq": 0.10, "freqs": [0.06, 0.09, 0.10, 0.12], "c11": [1.0, 1.0, 1.0, 1.0]}
+    dirs = {0.06: 100.0, 0.09: 100.0, 0.10: 260.0, 0.12: 260.0}
+    m = sp.spectral_metrics(spec, dirs)
+    assert abs(m["sep_freq_used"] - 0.10) < 1e-9
+    assert abs(m["swell_dir"] - 100.0) < 1e-6, "only f<0.10 in swell"
+    assert abs(m["windsea_dir"] - 260.0) < 1e-6, "the f==Sep_Freq bin is wind-sea, not swell"
+
+
+def test_hs_swell_matches_energy_integral_and_frac():
+    ds = sp.parse_data_spec(_DATA_SPEC)
+    sd = sp.parse_swdir(_SWDIR)
+    (eh, _), = ds.items()
+    m = sp.spectral_metrics(ds[eh], sd[eh])
+    # swell band (<0.10): freqs 0.06, 0.09. df: [0.03, 0.045, 0.035, 0.04] (central diffs).
+    df = sp._bin_widths([0.06, 0.09, 0.12, 0.16])
+    e_swell = 0.5 * df[0] + 9.0 * df[1]
+    assert abs(m["hs_swell"] - 4.0 * math.sqrt(e_swell)) < 1e-9
+    assert m["hs_total"] > m["hs_swell"] and 0.0 < m["swell_frac"] <= 1.0
+    # swell direction is energy-weighted toward the dominant 0.09 bin (118°), near 118–120
+    assert 117.0 <= m["swell_dir"] <= 121.0
+    # total mean direction (the dirpw partner) mixes swell + wind-sea by energy
+    assert m["total_mean_dir"] is not None
+
+
+def test_missing_data_and_mm_handling():
+    # an energy value of "MM" (→ None) and a 999.0 direction sentinel are both dropped
+    ds = sp.parse_data_spec(
+        "#h\n2026 07 13 12 40  0.100  MM (0.060)  4.000 (0.090)  0.000 (0.120)\n")
+    sd = sp.parse_swdir("#h\n2026 07 13 12 40  999.0 (0.060)  95.0 (0.090)  999.0 (0.120)\n")
+    (eh, _), = ds.items()
+    m = sp.spectral_metrics(ds[eh], sd[eh])
+    assert m["swell_dir"] is not None and abs(m["swell_dir"] - 95.0) < 1e-6, "only the valid 0.09 bin"
+    # an entirely-missing hour is zero/None, never a crash or a fabricated value
+    m0 = sp.spectral_metrics({"sep_freq": 0.1, "freqs": [0.06, 0.12], "c11": [None, None]}, {})
+    assert m0["hs_total"] == 0 and m0["swell_dir"] is None and m0["swell_frac"] is None
+
+
+def test_delta_stats_circular():
+    # signed deltas +5 and −5 → circular mean ~0, std ~5 (not an arithmetic 0/large)
+    n, mean, std = sp.delta_stats([5.0, 355.0], [0.0, 0.0])
+    assert n == 2 and abs(mean) < 1e-6 and abs(std - 5.0) < 0.5
+    # wrap-correct: model 5° vs buoy 355° is a +10° delta, not −350°
+    n2, mean2, _ = sp.delta_stats([5.0], [355.0])
+    assert n2 == 1 and abs(mean2 - 10.0) < 1e-6
+
+
+def _run_all():
+    fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
+    for fn in fns:
+        fn()
+        print(f"  PASS  {fn.__name__}")
+    print(f"{len(fns)} NDBC-spectral checks passed")
+
+
+if __name__ == "__main__":
+    _run_all()

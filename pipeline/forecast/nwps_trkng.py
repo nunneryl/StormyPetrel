@@ -391,30 +391,80 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
 
     std = nn._buoy_hourly(buoy_id) or {}
     spec = _spec_by_hour(buoy_id)
-    print(f"  {'valid(fh)':>12} {'CG1 dirpw':>9} {'sys1 hs/tp/dir':>15} {'sys2 hs/tp/dir':>15} "
-          f"{'buoyMWD':>7} {'buoy SwH/SwP/SwD':>16}")
+    from . import ndbc_spectral as ndbc_spec
+    spectral = ndbc_spec.by_hour(buoy_id)   # {epoch_hour: metrics} — degree-valued swell dir
+    if not spectral:
+        print("note: no directional spectra (.data_spec/.swdir) for this buoy — the NEW/CONTROL "
+              "spectral columns are blank (station may not report directional waves).")
+
+    def _n(v, s="{:.0f}"):
+        return s.format(v) if isinstance(v, (int, float)) and v == v else "—"
+
+    print(f"  {'valid(fh)':>11} {'dirpw':>5} {'sys1 hs/tp/dir':>14} {'sys2 hs/tp/dir':>14} "
+          f"{'MWD':>4} {'.spec H/P/D':>13} {'SPECTRAL Hsw/dir/frac/totdir':>28}")
+    # paired series for the comparisons (task 3), over hours both sides cover
+    old_m, old_b, new_m, new_b, ctl_m, ctl_b, ref_m, ref_b, fracs = ([] for _ in range(9))
+    hs_sp, hs_ref = [], []   # spectral Hs_swell vs the buoy's own .spec SwH (band-split sanity, task 2)
     shown = 0
     for fh in cg1["steps"]:
         if shown >= max_rows:
             print(f"  … ({max_rows} rows shown; rerun with a larger --rows for more)")
             break
         dirpw = nn._node_value(cg1, "dirpw", fh, ci, cj)
+        dirpw = dirpw if (dirpw is not None and dirpw == dirpw) else None
         systems = trkng_systems_at(trk, ti, tj, fh)
+        sys1_dir = systems[0]["dir"] if systems else None
         valid = int((cg1["cycle_dt"] + datetime.timedelta(hours=fh)).timestamp() // 3600)
-        b, sp = std.get(valid), spec.get(valid)
-        # only print hours the buoy also covers (the comparison rows) once we're past nowcast
-        mwd = f"{b['mwd']:.0f}" if b and b.get("mwd") is not None else "—"
-        if sp:
-            swd = f"{sp['swd']:.0f}" if sp.get("swd") is not None else "—"
-            swh = f"{sp['swh']:.2f}" if sp.get("swh") is not None else "—"
-            swp = f"{sp['swp']:.1f}" if sp.get("swp") is not None else "—"
-            buoy_sw = f"{swh}/{swp}/{swd}"
+        b, sp, spx = std.get(valid), spec.get(valid), spectral.get(valid)
+        mwd = b.get("mwd") if b else None
+        buoy_sw = (f"{_n(sp.get('swh'),'{:.2f}')}/{_n(sp.get('swp'),'{:.1f}')}/{_n(sp.get('swd'))}"
+                   if sp else "     —     ")
+        if spx:
+            spec_col = (f"{_n(spx['hs_swell'],'{:.2f}')}/{_n(spx['swell_dir'])}/"
+                        f"{_n(spx['swell_frac'],'{:.2f}')}/{_n(spx['total_mean_dir'])}")
+            fracs.append(spx.get("swell_frac"))
         else:
-            buoy_sw = "   —   "
-        dp = f"{dirpw:.0f}" if dirpw is not None and dirpw == dirpw else "—"
-        print(f"  {valid:>8}({fh:>3}) {dp:>9} {_sys_str(systems,0):>15} {_sys_str(systems,1):>15} "
-              f"{mwd:>7} {buoy_sw:>16}")
+            spec_col = "          —          "
+        # accumulate the three paired comparisons (only where both sides are present)
+        if dirpw is not None and mwd is not None:
+            old_m.append(dirpw); old_b.append(mwd)
+        if sys1_dir is not None and spx and spx.get("swell_dir") is not None:
+            new_m.append(sys1_dir); new_b.append(spx["swell_dir"])
+        if dirpw is not None and spx and spx.get("total_mean_dir") is not None:
+            ctl_m.append(dirpw); ctl_b.append(spx["total_mean_dir"])
+        if sys1_dir is not None and sp and sp.get("swd") is not None:
+            ref_m.append(sys1_dir); ref_b.append(sp["swd"])   # vs the coarse 22.5°-binned SwD
+        if spx and sp and sp.get("swh") is not None:
+            hs_sp.append(spx["hs_swell"]); hs_ref.append(sp["swh"])
+        print(f"  {valid:>7}({fh:>3}) {_n(dirpw):>5} {_sys_str(systems,0):>14} "
+              f"{_sys_str(systems,1):>14} {_n(mwd):>4} {buoy_sw:>13} {spec_col:>28}")
         shown += 1
+
+    # THE EXPERIMENT (task 3): is the partition-matched, degree-valued comparison tighter?
+    print("\n==== the experiment — paired-hour direction agreement (lower circ_std = tighter) ====")
+
+    def _cmp(label, m, b):
+        n, md, cs = ndbc_spec.delta_stats(m, b)
+        print(f"  {label:<50} n={n:>3}  meanΔ {(_n(md,'{:+.1f}')):>6}°  circ_std {(_n(cs,'{:.1f}')):>5}°")
+
+    _cmp("OLD   model dirpw    vs buoy MWD  (today's gate)", old_m, old_b)
+    _cmp("NEW   model sys1 dir vs buoy spectral swell_dir", new_m, new_b)
+    _cmp("REF   model sys1 dir vs buoy coarse .spec SwD", ref_m, ref_b)   # NEW vs REF = quantization gain
+    _cmp("CTRL  model dirpw    vs buoy spectral total dir", ctl_m, ctl_b)
+    # band-split sanity (task 2): our Hs_swell must track the buoy's OWN .spec SwH, else
+    # the split is wrong. (Both use NDBC's separation frequency, so they should match.)
+    if hs_sp:
+        d = [abs(a - b) for a, b in zip(hs_sp, hs_ref)]
+        verdict = "band split looks right" if (sum(d) / len(d)) <= 0.25 else "BAND SPLIT SUSPECT — investigate"
+        print(f"\n  band-split check: mean Hs_swell(spectral) {sum(hs_sp)/len(hs_sp):.2f} m vs "
+              f".spec SwH {sum(hs_ref)/len(hs_ref):.2f} m, mean|Δ| {sum(d)/len(d):.2f} m → {verdict}")
+    fr = [f for f in fracs if isinstance(f, (int, float)) and f == f]
+    if fr:
+        avg = sum(fr) / len(fr)
+        state = ("SWELL-DOMINATED — thesis won't bite here; need a mixed sea" if avg >= 0.6
+                 else "MIXED — the discriminating case" if avg >= 0.4
+                 else "WIND-SEA-DOMINATED — the discriminating case")
+        print(f"  mean swell fraction ≈ {avg:.2f} over shown hours → {state}.")
     print("\n(Read-only: rating, trust gate, interpret.py, spots_enriched.json all untouched.)")
     return 0
 
