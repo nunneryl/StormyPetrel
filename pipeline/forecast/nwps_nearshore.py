@@ -1819,6 +1819,12 @@ def depth_experiment(n_cycles=4, radius_km=6.0):
 # ── Buoy pairing audit (task 3): is this buoy a VALID directional reference? ──
 # Structural facts from the research report (authoritative); the live NDBC station-page fetch
 # augments these on the Mac. Geometry, not season, separates the passing from the failing zones.
+# Buoy-as-directional-reference scoring thresholds (the report's checklist, shared by
+# --pairing-audit and --find-buoy).
+PAIRING_DEEP_DEPTH_M = 50.0   # buoy depth ≥ this vs a shallow nearshore SWAN node = a different wave
+                              #   regime (offshore/bank vs coastal shoaling) → a STRUCTURAL disqualifier
+PAIRING_FAR_KM = 100.0        # beyond this the exposure/refraction differ enough to weaken the proxy (soft)
+
 _KNOWN_BUOY_META = {
     "44025": {"payload": "3-m foam SCOOP discus", "depth_m": None,
               "note": "foam discus — noisier direction for LOW-energy swell"},
@@ -1834,6 +1840,34 @@ _KNOWN_BUOY_META = {
                       "different wave regime (refraction/shoaling): structural depth mismatch"},
     "44099": {"payload": None, "depth_m": None,
               "note": "Chesapeake mouth — complex, multi-directional approaches"},
+    # Gulf-of-Maine 44098 re-pairing candidates — real NDBC/NERACOOS station metadata (the OFFLINE
+    # floor; the Mac's live station-page fetch confirms/supersedes). Depths in metres, from the NDBC
+    # station pages / NERACOOS. These ids are NOT tagged zones, so --pairing-audit is unaffected.
+    "44005": {"payload": "3-m discus", "depth_m": None,
+              "note": "central Gulf of Maine — deep, far offshore (depth via Mac fetch)"},
+    "44007": {"payload": "3-m discus", "depth_m": 49.0,
+              "note": "Portland ME, ~12 NM offshore — 3-m discus"},
+    "44013": {"payload": "2.1-m ionomer foam", "depth_m": 64.6,
+              "note": "Boston, 16 NM E — deep shelf, foam hull"},
+    "44018": {"payload": None, "depth_m": None,
+              "note": "SE of Cape Cod — different (Cape/Georges Bank) exposure; depth via Mac fetch"},
+    "44030": {"payload": None, "depth_m": 62.0,
+              "note": "Western Maine Shelf (NERACOOS B01) — 62 m open-shelf platform"},
+    "44090": {"payload": "Datawell Waverider", "depth_m": 25.9,
+              "note": "Cape Cod Bay (CDIP/NERACOOS Waverider) — shallow + good payload, but a SHELTERED "
+                      "Cape Cod Bay exposure, not the open Gulf-of-Maine coast these spots face"},
+}
+
+# Cited NDBC/NERACOOS coordinates for the Gulf-of-Maine re-pairing search — the OFFLINE floor for
+# --find-buoy when activestations.xml is unavailable (sandbox). id -> (lat, lng, short name). The
+# Mac's live active-station list enumerates ALL stations and supersedes this short seed.
+_FIND_BUOY_COORD_SEED = {
+    "44098": (42.800, -70.169, "Jeffreys Ledge, NH"),
+    "44030": (43.179, -70.426, "Western Maine Shelf B01"),
+    "44007": (43.525, -70.140, "Portland, ME"),
+    "44013": (42.346, -70.651, "Boston, MA"),
+    "44090": (41.840, -70.329, "Cape Cod Bay"),
+    "44018": (42.203, -70.154, "SE of Cape Cod"),
 }
 
 
@@ -1859,34 +1893,48 @@ def _ndbc_station_meta(buoy):
 
 
 def _score_pairing(meta):
-    """(verdict, reasons) from the report's checklist. STRUCTURALLY INVALID on a deep-water
-    depth mismatch (≥50 m vs a shallow nearshore node); MARGINAL on a foam-discus payload or a
-    flagged complex approach; VALID otherwise (Waverider / no red flags)."""
-    reasons, flags = [], 0
+    """(verdict, reasons) for a buoy as a nearshore directional REFERENCE — the SINGLE source of
+    truth shared by --pairing-audit and --find-buoy. One STRUCTURAL disqualifier → STRUCTURALLY
+    INVALID no matter what else: a deep-water DEPTH MISMATCH (the buoy sits in a different wave
+    regime than a shallow nearshore SWAN node). SOFT concerns each make it MARGINAL but never sum
+    into 'invalid': a foam/discus payload, a far distance, or a sheltered/complex exposure. No
+    concern → VALID REFERENCE. Distance + exposure are scored only when the caller supplies them
+    (find-buoy sets meta['distance_km']), so --pairing-audit's output is unchanged."""
+    reasons, soft, structural = [], 0, False
     payload = meta.get("payload")
     if payload and "waverider" in payload.lower():
         reasons.append(f"payload {payload} — high-quality directional ✓")
     elif payload and any(k in payload.lower() for k in ("scoop", "discus", "foam")):
         reasons.append(f"payload {payload} — noisier direction for low-energy swell")
-        flags += 1
+        soft += 1
     elif payload:
         reasons.append(f"payload {payload}")
     depth = meta.get("depth_m")
     if depth is not None:
-        if depth >= 50:
+        if depth >= PAIRING_DEEP_DEPTH_M:
             reasons.append(f"buoy depth {depth:.0f} m = DEEP water; a nearshore SWAN node is a "
                            "different wave regime → structural DEPTH MISMATCH")
-            flags += 2
+            structural = True
         else:
             reasons.append(f"buoy depth {depth:.0f} m (shallow — closer to a nearshore node)")
+    dist = meta.get("distance_km")
+    if dist is not None:
+        if dist > PAIRING_FAR_KM:
+            reasons.append(f"{dist:.0f} km from target — far enough that exposure/refraction differ "
+                           "(weaker directional proxy)")
+            soft += 1
+        else:
+            reasons.append(f"{dist:.0f} km from target")
     note = meta.get("note") or ""
-    # MODALITY (checklist item): a complex / multi-directional approach makes the buoy's mean
-    # swell direction ambiguous as a single nearshore reference → MARGINAL (not a hard depth veto).
-    if any(k in note.lower() for k in ("complex", "multi-directional", "multidirectional")):
-        flags += 1
+    # MODALITY / EXPOSURE (checklist item): a complex, multi-directional, or sheltered/bay approach
+    # makes the buoy's mean swell direction a poor single nearshore proxy → MARGINAL (not a depth veto).
+    if any(k in note.lower() for k in ("complex", "multi-directional", "multidirectional",
+                                       "sheltered", "shadowed", " bay", "estuary")):
+        soft += 1
     if note and note not in " ".join(reasons):
         reasons.append(note)
-    verdict = "VALID REFERENCE" if flags == 0 else ("STRUCTURALLY INVALID" if flags >= 2 else "MARGINAL")
+    verdict = ("STRUCTURALLY INVALID" if structural else
+               ("MARGINAL" if soft > 0 else "VALID REFERENCE"))
     return verdict, reasons
 
 
@@ -1914,6 +1962,180 @@ def pairing_audit():
     return 0
 
 
+# --------------------------------------------------------------------------- #
+# --find-buoy — find the best VALID directional reference near a target        #
+# (generalizes --pairing-audit from "score the pairing" to "find a pairing")   #
+# --------------------------------------------------------------------------- #
+def _buoy_publishes_spectral(buoy):
+    """True / False / None — does this buoy publish the realtime2 .data_spec + .swdir files our
+    degree-valued swell-direction reader needs? (A buoy without them can't give us degree-valued
+    swell direction, so it is unusable as a reference no matter how good its placement.) A single
+    cached probe per file — polite; None when it can't be checked (offline / fetch layer absent)."""
+    try:
+        from .buoys import _fetch_text
+    except Exception:  # noqa: BLE001
+        return None
+    b = str(buoy).upper()
+    base = "https://www.ndbc.noaa.gov/data/realtime2"
+    try:  # use_cache=True: probe each file at most once and reuse it (don't hammer NDBC per run)
+        ds = _fetch_text(f"{base}/{b}.data_spec", str(buoy), "data_spec", True)
+        sw = _fetch_text(f"{base}/{b}.swdir", str(buoy), "swdir", True)
+    except Exception:  # noqa: BLE001
+        return None
+    if ds is None and sw is None:
+        return None            # both unreachable → unknown, not a definite "absent"
+    return bool(ds and sw)
+
+
+_PAIRING_RANK = {"VALID REFERENCE": 0, "MARGINAL": 1, "STRUCTURALLY INVALID": 2}
+
+
+def _rank_candidates(tlat, tlng, stations, radius_km, *, meta_fn=_ndbc_station_meta, spectral_fn=None):
+    """PURE ranking core of --find-buoy (offline-testable). Score every station within *radius_km*
+    of the target with the SHARED _score_pairing (distance folded into the meta), then order
+    best-first: usable VALID, then MARGINAL, then STRUCTURALLY INVALID, then metadata-incomplete,
+    then no-spectral (unusable by our reader); nearest first within a class. *meta_fn* / *spectral_fn*
+    are injectable for tests. Returns a list of row dicts; scores nothing it has no data for."""
+    rows = []
+    for s in stations:
+        d = _haversine_km(tlat, tlng, s["lat"], s["lng"])
+        if d > radius_km:
+            continue
+        meta = dict(meta_fn(s["id"]))
+        meta["distance_km"] = d
+        verdict, reasons = _score_pairing(meta)
+        rows.append({"d": d, "id": s["id"], "name": s.get("name", ""),
+                     "depth": meta.get("depth_m"), "payload": meta.get("payload"),
+                     "spectral": (spectral_fn(s["id"]) if spectral_fn else None),
+                     "verdict": verdict, "complete": meta.get("depth_m") is not None,
+                     "reasons": reasons})
+
+    def _key(r):
+        base = _PAIRING_RANK.get(r["verdict"], 3)
+        if not r["complete"]:      # unknown metadata must not outrank a known verdict / read as valid
+            base = max(base, 3)
+        if r["spectral"] is False:  # no .data_spec/.swdir → unusable by our reader, rank last
+            base = 4
+        return (base, r["d"])
+    rows.sort(key=_key)
+    return rows
+
+
+def _best_valid(rows):
+    """The best USABLE reference (complete metadata, VALID REFERENCE, spectral not known-absent),
+    or None — the honest 'none qualifies' signal. Never returns a least-bad MARGINAL/INVALID."""
+    return next((r for r in rows if r["complete"] and r["verdict"] == "VALID REFERENCE"
+                 and r["spectral"] is not False), None)
+
+
+def _resolve_find_target(spot, near, near_buoy):
+    """((lat, lng), label) for --find-buoy from --near 'lat,lng' | --spot name | --near-buoy id.
+    Read-only. Raises ValueError with a clear message when it cannot resolve."""
+    if near:
+        p = [x for x in near.replace(" ", "").split(",") if x]
+        if len(p) != 2:
+            raise ValueError("--near expects 'lat,lng'")
+        return (float(p[0]), float(p[1])), f"{float(p[0]):.3f},{float(p[1]):.3f}"
+    if spot:
+        for s in (json.loads(ENRICHED.read_text()) if ENRICHED.exists() else []):
+            if _slug(s.get("name", "")) == _slug(spot):
+                la, ln = s.get("lat"), s.get("lng")
+                if la is not None and ln is not None:
+                    return (float(la), float(ln)), f"{s.get('name', spot)}"
+        raise ValueError(f"spot '{spot}' not found in spots_enriched.json")
+    if near_buoy:
+        bid = str(near_buoy).lower()
+        try:
+            from ..enrichment.geodata import load_ndbc_active_stations
+            for s in load_ndbc_active_stations():
+                if s["id"] == bid:
+                    return (s["lat"], s["lng"]), f"buoy {near_buoy} ({s.get('name', '')})"
+        except Exception:  # noqa: BLE001
+            pass
+        seed = _FIND_BUOY_COORD_SEED.get(bid)
+        if seed:
+            return (seed[0], seed[1]), f"buoy {near_buoy} ({seed[2]}) [cited seed — Mac confirms]"
+        raise ValueError(f"buoy '{near_buoy}' not in the active list or the cited seed — run on the Mac")
+    raise ValueError("give one of --spot NAME, --near lat,lng, or --near-buoy ID")
+
+
+def find_buoy(wfo, target, radius_km=150.0, *, label=""):
+    """READ-ONLY — rank NDBC buoys near *target* (lat,lng) as candidate nearshore directional
+    references, reusing the --pairing-audit scorer (single source of truth). Enumerates the live
+    NDBC active-station list (Mac) and probes each candidate's spectral-file availability; offline
+    it falls back to a small CITED Gulf-of-Maine seed and says so. Changes NO assignment, tags
+    nothing — it only reports which buoy we SHOULD use (or that none qualifies). Returns 0."""
+    tlat, tlng = target
+    try:
+        from ..enrichment.geodata import load_ndbc_active_stations
+        stations = load_ndbc_active_stations()
+    except Exception:  # noqa: BLE001
+        stations = []
+    offline = not stations
+    if offline:
+        stations = [{"id": i, "lat": la, "lng": ln, "name": nm}
+                    for i, (la, ln, nm) in _FIND_BUOY_COORD_SEED.items()]
+
+    print(f"=== FIND BUOY — best VALID directional reference near {label or f'{tlat:.3f},{tlng:.3f}'} "
+          f"(wfo {wfo}, ≤{radius_km:.0f} km) — READ-ONLY ===")
+    if offline:
+        print("  ⚠ live NDBC activestations.xml unavailable (sandbox): showing the CITED Gulf-of-Maine")
+        print("    candidate seed only. The FULL active-station enumeration + station-page depth/payload")
+        print("    + .data_spec/.swdir probe runs on the Mac and supersedes this offline floor.\n")
+
+    # spectral probes are polite (cached, one per file) and only run live; cap them and SAY if capped.
+    PROBE_CAP = 30
+    within = [s for s in stations if _haversine_km(tlat, tlng, s["lat"], s["lng"]) <= radius_km]
+    probed = {"n": 0}
+
+    def _spec(bid):
+        if offline or probed["n"] >= PROBE_CAP:
+            return None
+        probed["n"] += 1
+        return _buoy_publishes_spectral(bid)
+
+    rows = _rank_candidates(tlat, tlng, stations, radius_km, spectral_fn=_spec)
+    if not rows:
+        print(f"  no active NDBC stations within {radius_km:.0f} km.")
+        return 0
+    if not offline and len(within) > PROBE_CAP:
+        print(f"  (spectral-availability probed for the {PROBE_CAP} nearest of {len(within)} candidates "
+              "to stay polite; narrow --radius-km to probe the rest.)\n")
+
+    print(f"  {'#':>2} {'buoy':>6} {'dist':>6} {'depth':>7} {'payload':<22} {'spec':>4} verdict")
+    for i, r in enumerate(rows, 1):
+        dep = f"{r['depth']:.0f} m" if r["depth"] is not None else "  —"
+        pay = (r["payload"] or "unknown")[:22]
+        sp = {True: "yes", False: "NO", None: "—"}[r["spectral"]]
+        vd = r["verdict"]
+        if not r["complete"]:
+            vd = "UNKNOWN (metadata → Mac)"
+        elif r["spectral"] is False:
+            vd = "NO SPECTRAL FILES (unusable)"
+        print(f"  {i:>2} {r['id']:>6} {r['d']:>5.0f}k {dep:>7} {pay:<22} {sp:>4} {vd}  {r['name'][:22]}")
+        for rs in r["reasons"]:
+            print(f"        · {rs}")
+
+    best = _best_valid(rows)
+    print("\n  ── recommendation ──")
+    if best:
+        print(f"  ✓ USE {best['id']} ({best['name']}) — a VALID nearshore directional reference: "
+              f"{best['d']:.0f} km, depth {best['depth']:.0f} m, {best['payload']}.")
+    else:
+        print("  ✗ NO VALID nearshore directional reference within radius. Every candidate is a deep/")
+        print("    offshore platform (structural regime mismatch), differently exposed, or a marginal")
+        print("    payload — none is a valid shallow-coast directional proxy. These spots CANNOT be")
+        print("    direction-trust-gated from NDBC: they stay on the HEIGHT gate + the raycast/WW3")
+        print("    swell-window tier. That is the architecture-correct answer, NOT a failure.")
+        marg = next((r for r in rows if r["complete"] and r["verdict"] == "MARGINAL"
+                     and r["spectral"] is not False), None)
+        if marg:
+            print(f"  (least-bad — still only MARGINAL, do NOT treat as valid: {marg['id']} "
+                  f"{marg['name']}, {marg['d']:.0f} km, depth {marg['depth']:.0f} m, {marg['payload']}.)")
+    print("\n  (READ-ONLY: no assignment changed, nothing tagged/untagged, spots_enriched.json untouched.)")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--selftest", action="store_true")
@@ -1925,7 +2147,15 @@ def main(argv=None):
                     help="re-run the gate at NEAREST vs SEAWARD node per tagged zone (read-only; Mac)")
     ap.add_argument("--pairing-audit", dest="pairing_audit", action="store_true",
                     help="score each tagged zone's buoy as a directional reference (read-only; known+Mac)")
-    ap.add_argument("--radius-km", type=float, default=6.0, help="seaward re-pick radius (depth experiment)")
+    ap.add_argument("--find-buoy", dest="find_buoy", action="store_true",
+                    help="rank NDBC buoys near a target as candidate directional references (read-only)")
+    ap.add_argument("--spot", default=None, help="--find-buoy target: a spot name from spots_enriched.json")
+    ap.add_argument("--near", default=None, help="--find-buoy target: 'lat,lng'")
+    ap.add_argument("--near-buoy", dest="near_buoy", default=None,
+                    help="--find-buoy target: search near an existing buoy id")
+    ap.add_argument("--radius-km", type=float, default=None,
+                    help="radius (km): --depth-experiment seaward re-pick (default 6), "
+                         "--find-buoy candidate search (default 150)")
     ap.add_argument("--wfo", default="okx", help="NWPS WFO grid to fetch (default okx)")
     ap.add_argument("--batch", default=None,
                     help="comma-separated slugs to validate, loaded from spots_enriched.json "
@@ -1945,12 +2175,19 @@ def main(argv=None):
             return 0
     if a.depth_experiment:
         try:
-            return depth_experiment(n_cycles=a.cycles, radius_km=a.radius_km)
+            return depth_experiment(n_cycles=a.cycles, radius_km=(a.radius_km or 6.0))
         except Exception as e:  # noqa: BLE001
             print(f"⚠ depth experiment needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
             return 0
     if a.pairing_audit:
         return pairing_audit()
+    if a.find_buoy:
+        try:
+            target, label = _resolve_find_target(a.spot, a.near, a.near_buoy)
+        except Exception as e:  # noqa: BLE001
+            print(f"⚠ --find-buoy: {type(e).__name__}: {e}")
+            return 0
+        return find_buoy(a.wfo, target, radius_km=(a.radius_km or 150.0), label=label)
     if a.trustcheck:
         print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Stage 1: height-primary, "
               "energy-weighted, tiered; Mac) ===")

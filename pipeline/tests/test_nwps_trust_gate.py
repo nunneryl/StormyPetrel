@@ -360,6 +360,106 @@ def test_pairing_audit_scoring_offline():
     assert nn._score_pairing(nn._ndbc_station_meta("44099"))[0] == "MARGINAL"
 
 
+# --------------------------------------------------------------------------- #
+# --find-buoy — search for the best VALID directional reference (read-only)     #
+# --------------------------------------------------------------------------- #
+def test_score_pairing_structural_vs_soft():
+    # a DEEP-water depth mismatch is STRUCTURAL — invalid no matter how good everything else is
+    v, _ = nn._score_pairing({"payload": "Datawell Waverider", "depth_m": 76.0, "distance_km": 5.0})
+    assert v == "STRUCTURALLY INVALID", "a good Waverider on a deep bank is still the wrong regime"
+    # SOFT concerns never SUM into structural: a foam discus + a far distance = MARGINAL, not invalid
+    v2, r2 = nn._score_pairing({"payload": "3-m foam discus", "depth_m": 20.0, "distance_km": 130.0})
+    assert v2 == "MARGINAL"
+    assert any("far" in x for x in r2) and any("noisier" in x for x in r2)
+    # a shallow Waverider, close, open exposure → VALID REFERENCE
+    v3, _ = nn._score_pairing({"payload": "Datawell Waverider", "depth_m": 18.0, "distance_km": 15.0})
+    assert v3 == "VALID REFERENCE"
+    # distance is scored ONLY when supplied → --pairing-audit (no distance_km) is byte-unchanged
+    base, rb = nn._score_pairing({"payload": "Datawell Waverider", "depth_m": 18.0})
+    assert base == "VALID REFERENCE" and not any("km from target" in x for x in rb)
+    # a sheltered / bay exposure note is a soft MARGINAL (a poor single-direction proxy)
+    v4, _ = nn._score_pairing({"payload": "Datawell Waverider", "depth_m": 20.0,
+                               "note": "Cape Cod Bay — SHELTERED, not the open coast"})
+    assert v4 == "MARGINAL"
+
+
+def test_find_buoy_ranking_best_first():
+    target = (43.0, -70.7)
+    stations = [
+        {"id": "deep1", "lat": 43.00, "lng": -70.6, "name": "deep bank"},     # ~8 km, deep → invalid
+        {"id": "good",  "lat": 43.05, "lng": -70.7, "name": "nearshore WR"},  # ~6 km, shallow → valid
+        {"id": "marg",  "lat": 43.20, "lng": -70.7, "name": "discus"},        # ~22 km → marginal
+        {"id": "far",   "lat": 45.00, "lng": -70.7, "name": "too far"},       # >150 km → excluded
+    ]
+    meta = {"deep1": {"payload": "Datawell Waverider", "depth_m": 70.0},
+            "good":  {"payload": "Datawell Waverider", "depth_m": 18.0},
+            "marg":  {"payload": "3-m foam discus", "depth_m": 22.0},
+            "far":   {"payload": "Datawell Waverider", "depth_m": 15.0}}
+    rows = nn._rank_candidates(*target, stations, 150.0, meta_fn=lambda i: meta[i])
+    ids = [r["id"] for r in rows]
+    assert "far" not in ids, "beyond radius is excluded"
+    assert ids[0] == "good", "the VALID nearshore Waverider ranks first"
+    assert ids.index("marg") < ids.index("deep1"), "MARGINAL outranks STRUCTURALLY INVALID"
+    best = nn._best_valid(rows)
+    assert best is not None and best["id"] == "good"
+
+
+def test_find_buoy_none_qualifies_is_honest():
+    # a Gulf-of-Maine-like set: every candidate is deep or sheltered → NO valid reference. The
+    # search must return None, not dress up a least-bad option as valid (the whole point of task 4).
+    target = (43.0, -70.7)
+    stations = [
+        {"id": "d62", "lat": 43.1, "lng": -70.7, "name": "shelf 62 m"},
+        {"id": "d76", "lat": 42.8, "lng": -70.2, "name": "bank 76 m"},
+        {"id": "bay", "lat": 41.9, "lng": -70.3, "name": "sheltered bay WR"},
+    ]
+    meta = {"d62": {"payload": None, "depth_m": 62.0},
+            "d76": {"payload": "Datawell Waverider", "depth_m": 76.0},
+            "bay": {"payload": "Datawell Waverider", "depth_m": 25.0,
+                    "note": "SHELTERED bay, not the open coast"}}
+    rows = nn._rank_candidates(*target, stations, 150.0, meta_fn=lambda i: meta[i])
+    assert nn._best_valid(rows) is None, "no VALID reference — must not return a least-bad option"
+    by = {r["id"]: r["verdict"] for r in rows}
+    assert by["bay"] == "MARGINAL", "shallow WR but sheltered exposure → soft, not valid"
+    assert by["d62"] == "STRUCTURALLY INVALID" and by["d76"] == "STRUCTURALLY INVALID"
+
+
+def test_find_buoy_demotes_no_spectral_and_unknown_metadata():
+    target = (43.0, -70.7)
+    stations = [
+        {"id": "wr",  "lat": 43.02, "lng": -70.7, "name": "waverider, no spec files"},
+        {"id": "wr2", "lat": 43.04, "lng": -70.7, "name": "waverider, spec ok"},
+        {"id": "unk", "lat": 43.01, "lng": -70.7, "name": "unknown depth"},
+    ]
+    meta = {"wr":  {"payload": "Datawell Waverider", "depth_m": 18.0},
+            "wr2": {"payload": "Datawell Waverider", "depth_m": 18.0},
+            "unk": {"payload": None, "depth_m": None}}
+    spec = {"wr": False, "wr2": True, "unk": None}   # wr publishes no .data_spec/.swdir → unusable
+    rows = nn._rank_candidates(*target, stations, 150.0, meta_fn=lambda i: meta[i],
+                               spectral_fn=lambda i: spec[i])
+    ids = [r["id"] for r in rows]
+    assert ids[0] == "wr2", "the usable Waverider (spectral present) ranks first"
+    assert ids[-1] == "wr", "a Waverider with NO spectral files is unusable → ranks last"
+    best = nn._best_valid(rows)
+    assert best["id"] == "wr2", "unknown-depth / no-spectral candidates are never the recommendation"
+
+
+def test_resolve_find_target():
+    (la, ln), lab = nn._resolve_find_target(None, "42.8,-70.17", None)
+    assert abs(la - 42.8) < 1e-9 and abs(ln + 70.17) < 1e-9 and "42.8" in lab
+    # --near-buoy resolves via the live active list, or the cited seed offline — either gives 44098's
+    # coordinates (tolerance covers both paths); no hardcoded guess for an unknown id.
+    (bla, bln), blab = nn._resolve_find_target(None, None, "44098")
+    assert abs(bla - 42.800) < 0.05 and abs(bln + 70.169) < 0.05 and "44098" in blab
+    for args in [(None, None, "99999"), (None, None, None)]:
+        try:
+            nn._resolve_find_target(*args)
+            raised = False
+        except ValueError:
+            raised = True
+        assert raised, f"expected ValueError (honest, not a guess) for {args}"
+
+
 def _run_all():
     import inspect
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
