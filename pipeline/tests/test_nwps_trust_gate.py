@@ -446,6 +446,53 @@ def test_find_buoy_demotes_no_spectral_and_unknown_metadata():
     assert best["id"] == "wr2", "unknown-depth / no-spectral candidates are never the recommendation"
 
 
+def test_water_depth_parse_tolerates_html_tags():
+    import re
+    # NDBC renders depth as '<b>Water depth:</b> 20.45 m<br>' — the parser must skip the </b> tag.
+    assert nn._parse_water_depth("<b>Water depth:</b> 20.45 m<br>") == 20.45
+    assert nn._parse_water_depth("<b>Water depth:</b> 60 m<br>") == 60.0
+    # the OLD pattern (no tag tolerance) FAILED these — the exact bug this fixes (regression guard)
+    old = re.compile(r"[Ww]ater depth:\s*([\d.]+)\s*m")
+    assert old.search("<b>Water depth:</b> 20.45 m<br>") is None
+    assert old.search("<b>Water depth:</b> 60 m<br>") is None
+    # plain text (no tags) still works; absent / implausible → None (sanity-bounded, never poisons)
+    assert nn._parse_water_depth("Water depth: 12.5 m") == 12.5
+    assert nn._parse_water_depth("no depth listed here") is None
+    assert nn._parse_water_depth("<b>Water depth:</b> 999999 m") is None   # > 12000 m sanity bound
+    assert nn._parse_water_depth("") is None
+
+
+def test_find_buoy_depth_unconfirmed_waverider_fallback():
+    def _row(**kw):
+        base = {"d": 10.0, "id": "x", "name": "", "depth": None, "payload": None,
+                "spectral": None, "verdict": "VALID REFERENCE", "complete": False, "reasons": []}
+        base.update(kw)
+        return base
+    # a CLOSE Waverider whose depth didn't resolve (None) IS accepted VALID on payload+distance
+    wr = _row(id="46268", name="Topanga Nearshore", payload="Datawell Waverider", d=10.0)
+    assert nn._depth_unconfirmed_valid(wr) is True
+    assert nn._best_valid([wr])["id"] == "46268"
+    # a CDIP 'Nearshore' station with no payload string still qualifies on the name signal
+    assert nn._depth_unconfirmed_valid(_row(name="Del Mar Nearshore", d=12.0)) is True
+    # too far (> FIND_BUOY_FALLBACK_KM) → NOT accepted on the fallback
+    assert nn._depth_unconfirmed_valid(_row(payload="Datawell Waverider", d=55.0)) is False
+    assert nn._best_valid([_row(payload="Datawell Waverider", d=55.0)]) is None
+    # a known-DEEP buoy (resolved depth ≥ threshold) scores INVALID → fallback can NEVER touch it
+    deep = _row(id="44098", depth=76.0, payload="Datawell Waverider", d=5.0,
+                verdict="STRUCTURALLY INVALID", complete=True)
+    assert nn._depth_unconfirmed_valid(deep) is False and nn._best_valid([deep]) is None
+    # depth-None but NOT a Waverider / not a Nearshore name (e.g. a discus) → not fallback-eligible
+    assert nn._depth_unconfirmed_valid(_row(name="Offshore", payload="3-m discus",
+                                            verdict="MARGINAL")) is False
+    # a no-spectral Waverider is unusable even close-in
+    assert nn._depth_unconfirmed_valid(_row(payload="Datawell Waverider", spectral=False)) is False
+    # a depth-RESOLVED VALID Waverider is still recommended the normal (confirmed) way, and PREFERRED
+    ok = _row(id="y", name="Nearshore", depth=18.0, payload="Datawell Waverider", complete=True)
+    assert nn._best_valid([ok])["id"] == "y" and nn._best_valid([ok])["complete"] is True
+    # ranking preference: a confirmed VALID outranks an unconfirmed fallback (rows already sorted)
+    assert nn._best_valid([ok, wr])["id"] == "y", "confirmed depth beats depth-unconfirmed fallback"
+
+
 def test_resolve_find_target():
     (la, ln), lab = nn._resolve_find_target(None, "42.8,-70.17", None)
     assert abs(la - 42.8) < 1e-9 and abs(ln + 70.17) < 1e-9 and "42.8" in lab

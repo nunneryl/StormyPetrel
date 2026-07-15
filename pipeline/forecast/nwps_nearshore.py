@@ -1861,6 +1861,9 @@ PAIRING_DEEP_DEPTH_M = 50.0   # buoy depth ≥ this vs a shallow nearshore SWAN 
                               #   regime (offshore/bank vs coastal shoaling) → a STRUCTURAL disqualifier
 PAIRING_FAR_KM = 100.0        # beyond this the exposure/refraction differ enough to weaken the proxy (soft)
 
+# depth_m: a verified metres value where known; None means "resolve live" — _ndbc_station_meta now
+# scrapes it from the station page (<b>Water depth:</b> N m<br>) on the Mac. Do NOT invent depths;
+# leave None rather than guess, and the live scrape fills it in at runtime.
 _KNOWN_BUOY_META = {
     "44025": {"payload": "3-m foam SCOOP discus", "depth_m": None,
               "note": "foam discus — noisier direction for LOW-energy swell"},
@@ -1907,9 +1910,31 @@ _FIND_BUOY_COORD_SEED = {
 }
 
 
+# NDBC station pages render depth as: <b>Water depth:</b> 20.45 m<br> — an HTML tag (and any
+# whitespace) sits between the label and the number, so after the colon we skip zero-or-more tags
+# before the float. The old `Water depth:\s*([\d.]+)` missed the </b> and returned None for EVERY
+# buoy, which made --find-buoy's validity gate unsatisfiable. Verified live: 46268 = 20.45 m,
+# 46027 = 60 m. Keep this pattern tag-tolerant so it is not "fixed" back later.
+_WATER_DEPTH_RE = re.compile(r"[Ww]ater depth:\s*(?:</?[a-zA-Z][^>]*>\s*)*([\d.]+)\s*m")
+
+
+def _parse_water_depth(html):
+    """Water depth in metres from an NDBC station-page HTML string, tolerant of the
+    <b>Water depth:</b> N m<br> tag layout; None when absent or implausible. Sanity-bounded to a
+    positive float below 12000 m (deepest ocean ≈ 11 km) so a stray capture never poisons depth."""
+    m = _WATER_DEPTH_RE.search(html or "")
+    if not m:
+        return None
+    try:
+        d = float(m.group(1))
+    except ValueError:
+        return None
+    return d if 0.0 < d < 12000.0 else None
+
+
 def _ndbc_station_meta(buoy):
     """{payload, depth_m, note} — the report's KNOWN facts, augmented on the Mac by scraping the
-    NDBC station page ('Water depth: X m' + payload). Fetch failures are silent; the known
+    NDBC station page (depth via _parse_water_depth + payload). Fetch failures are silent; the known
     table is the reliable floor."""
     meta = dict(_KNOWN_BUOY_META.get(str(buoy).lower(), {"payload": None, "depth_m": None, "note": None}))
     if meta.get("depth_m") is not None and meta.get("payload") is not None:
@@ -1917,9 +1942,8 @@ def _ndbc_station_meta(buoy):
     try:  # single-attempt fetch (no retry/backoff) — fast-fails offline, augments on the Mac
         html = _http_get(f"https://www.ndbc.noaa.gov/station_page.php?station={buoy}",
                          timeout=15).decode("utf-8", "replace")
-        m = re.search(r"[Ww]ater depth:\s*([\d.]+)\s*m", html)
-        if m and meta.get("depth_m") is None:
-            meta["depth_m"] = float(m.group(1))
+        if meta.get("depth_m") is None:   # <b>Water depth:</b> N m<br> — tag-tolerant parse + sanity bound
+            meta["depth_m"] = _parse_water_depth(html)
         pm = re.search(r"(Waverider|SCOOP|3-m foam|[Dd]iscus)", html)
         if pm and not meta.get("payload"):
             meta["payload"] = pm.group(1)
@@ -2079,11 +2103,34 @@ def _rank_candidates(tlat, tlng, stations, radius_km, *, meta_fn=_ndbc_station_m
     return rows
 
 
+FIND_BUOY_FALLBACK_KM = 40.0   # depth-unconfirmed acceptance only within this range (Option-2 net)
+
+
+def _depth_unconfirmed_valid(r):
+    """Option-2 fallback — fires ONLY when depth didn't resolve. A candidate with NO depth may still
+    be accepted as VALID on payload + distance + exposure iff it is a Waverider (or a CDIP
+    'Nearshore' station), within FIND_BUOY_FALLBACK_KM, publishes spectra (not known-absent), and
+    _score_pairing already rated it VALID REFERENCE (which already means no sheltered/complex/
+    structural flag). It can NEVER fire for a known-deep buoy: that scores STRUCTURALLY INVALID (not
+    VALID) and carries a resolved depth, so the 44098-class depth veto is preserved."""
+    if r.get("depth") is not None or r.get("verdict") != "VALID REFERENCE" or r.get("spectral") is False:
+        return False
+    if r.get("d", 1e9) > FIND_BUOY_FALLBACK_KM:
+        return False
+    payload = (r.get("payload") or "").lower()
+    name = (r.get("name") or "").lower()
+    return ("waverider" in payload) or ("nearshore" in name) or ("cdip" in name)
+
+
 def _best_valid(rows):
-    """The best USABLE reference (complete metadata, VALID REFERENCE, spectral not known-absent),
-    or None — the honest 'none qualifies' signal. Never returns a least-bad MARGINAL/INVALID."""
-    return next((r for r in rows if r["complete"] and r["verdict"] == "VALID REFERENCE"
-                 and r["spectral"] is not False), None)
+    """The best USABLE reference: a depth-resolved VALID REFERENCE (spectra not known-absent) or —
+    only when depth is unavailable — a close Waverider / CDIP-nearshore accepted on payload+distance
+    (_depth_unconfirmed_valid). Never a MARGINAL/INVALID, never a known-deep buoy. Rows are ranked
+    depth-resolved-first, so a confirmed VALID is always preferred over a fallback. None = the honest
+    'none qualifies' signal."""
+    return next((r for r in rows
+                 if r["verdict"] == "VALID REFERENCE" and r["spectral"] is not False
+                 and (r["complete"] or _depth_unconfirmed_valid(r))), None)
 
 
 def _resolve_find_target(spot, near, near_buoy):
@@ -2166,30 +2213,35 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
         pay = (r["payload"] or "unknown")[:22]
         sp = {True: "yes", False: "NO", None: "—"}[r["spectral"]]
         vd = r["verdict"]
-        if not r["complete"]:
-            vd = "UNKNOWN (metadata → Mac)"
-        elif r["spectral"] is False:
+        if r["spectral"] is False:            # no spectra → unusable by our reader, whatever the depth
             vd = "NO SPECTRAL FILES (unusable)"
+        elif not r["complete"]:               # depth didn't resolve: fallback-accepted, or truly unknown
+            vd = (f"{r['verdict']} (depth unconfirmed — accepted on payload+distance)"
+                  if _depth_unconfirmed_valid(r) else "UNKNOWN (metadata → Mac)")
         print(f"  {i:>2} {r['id']:>6} {r['d']:>5.0f}k {dep:>7} {pay:<22} {sp:>4} {vd}  {r['name'][:22]}")
         for rs in r["reasons"]:
             print(f"        · {rs}")
 
     best = _best_valid(rows)
     print("\n  ── recommendation ──")
-    if best:
+    if best and best["complete"]:
         print(f"  ✓ USE {best['id']} ({best['name']}) — a VALID nearshore directional reference: "
               f"{best['d']:.0f} km, depth {best['depth']:.0f} m, {best['payload']}.")
+    elif best:   # Option-2 fallback: depth didn't resolve, accepted on payload+distance
+        print(f"  ✓ USE {best['id']} ({best['name']}) — VALID (depth unconfirmed — accepted on "
+              f"payload+distance): {best['d']:.0f} km, {best['payload'] or 'Waverider/CDIP nearshore'}. "
+              "Confirm depth on the Mac.")
     else:
         print("  ✗ NO VALID nearshore directional reference within radius. Every candidate is a deep/")
         print("    offshore platform (structural regime mismatch), differently exposed, or a marginal")
         print("    payload — none is a valid shallow-coast directional proxy. These spots CANNOT be")
         print("    direction-trust-gated from NDBC: they stay on the HEIGHT gate + the raycast/WW3")
         print("    swell-window tier. That is the architecture-correct answer, NOT a failure.")
-        marg = next((r for r in rows if r["complete"] and r["verdict"] == "MARGINAL"
-                     and r["spectral"] is not False), None)
+        marg = next((r for r in rows if r["verdict"] == "MARGINAL" and r["spectral"] is not False), None)
         if marg:
+            mdep = f"depth {marg['depth']:.0f} m" if marg["depth"] is not None else "depth unconfirmed"
             print(f"  (least-bad — still only MARGINAL, do NOT treat as valid: {marg['id']} "
-                  f"{marg['name']}, {marg['d']:.0f} km, depth {marg['depth']:.0f} m, {marg['payload']}.)")
+                  f"{marg['name']}, {marg['d']:.0f} km, {mdep}, {marg['payload'] or 'unknown'}.)")
     print("\n  (READ-ONLY: no assignment changed, nothing tagged/untagged, spots_enriched.json untouched.)")
     return 0
 
