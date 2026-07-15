@@ -1,9 +1,12 @@
 name: buoy-ready-monitor
 
-# Scheduled, READ-ONLY monitor. Notifies (via a GitHub Issue -> email) when a phi
-# trust-check zone becomes actually testable: a watched NDBC buoy is UP *and* its
-# 24h Hs range >= 0.5 m (so the trust gate returns PASS/FAIL, not INCONCLUSIVE).
-# Guardrails: no Supabase, no prod, no NOMADS, no secrets beyond GITHUB_TOKEN.
+# Scheduled, READ-ONLY monitor. Notifies (via a GitHub Issue -> email) when a
+# trust-check zone has a qualifying SWELL EVENT to check: a watched NDBC buoy is UP,
+# a USABLE reference (VALID/MARGINAL — invalid/retired buoys like 44098 are never
+# flagged), showing real swell (gate precondition, sustained), and the zone's rolling
+# DIRECTION verdict is still ACCUMULATING. Running --trustcheck adds ONE event toward
+# that verdict (not a one-shot pass). NOT triggered by wave-height range anymore.
+# Guardrails: no Supabase, no prod, no NOMADS, no secrets beyond GITHUB_TOKEN; read-only.
 
 on:
   schedule:
@@ -30,8 +33,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install minimal deps (read-only NDBC fetch + parse)
-        run: python -m pip install --upgrade pip requests tenacity
+      - name: Install minimal deps (read-only NDBC fetch + parse; numpy for the gate reuse)
+        # numpy: the monitor now reuses the trust gate's precondition / pairing scorer / rolling
+        # history from pipeline.forecast.nwps_nearshore (which imports numpy). cfgrib is NOT needed
+        # (it is lazy — the monitor never loads a NOMADS grid). ndbc_spectral (swell) is pure-python.
+        run: python -m pip install --upgrade pip requests tenacity numpy
 
       - name: Download public NDBC station roster (read-only, no secrets)
         run: |
@@ -59,17 +65,17 @@ jobs:
       - name: Manage 'buoy-ready' issue
         uses: actions/github-script@v7
         env:
-          ANY_READY: ${{ steps.monitor.outputs.any_ready }}
-          READY_JSON: ${{ steps.monitor.outputs.ready_json }}
-          READY_HS_RANGE: ${{ steps.monitor.outputs.ready_hs_range }}
+          ANY_FLAGGED: ${{ steps.monitor.outputs.any_flagged }}
+          FLAGGED_JSON: ${{ steps.monitor.outputs.flagged_json }}
+          MIN_EVENTS: ${{ steps.monitor.outputs.min_events }}
         with:
           script: |
             const LABEL = 'buoy-ready';
             const ASSIGNEE = 'nunneryl';
             const { owner, repo } = context.repo;
-            const anyReady = process.env.ANY_READY === 'true';
-            const ready = JSON.parse(process.env.READY_JSON || '[]');
-            const thr = process.env.READY_HS_RANGE || '0.5';
+            const anyFlagged = process.env.ANY_FLAGGED === 'true';
+            const flagged = JSON.parse(process.env.FLAGGED_JSON || '[]');
+            const minEvents = process.env.MIN_EVENTS || '5';
 
             // 1. Ensure the label exists (create on first run).
             try {
@@ -78,7 +84,7 @@ jobs:
               if (e.status === 404) {
                 await github.rest.issues.createLabel({
                   owner, repo, name: LABEL, color: '1d76db',
-                  description: 'At least one phi trust-check zone is testable right now',
+                  description: 'A trust-check zone has a qualifying swell event to accumulate',
                 });
                 core.info(`created label '${LABEL}'`);
               } else {
@@ -91,29 +97,36 @@ jobs:
               owner, repo, state: 'open', labels: LABEL, per_page: 20 });
             const existing = found.data.find(i => !i.pull_request);
 
-            // ready-set key, hidden marker, and body builder. Key on id:wfo (NOT id
-            // alone) so a buoy shared across regions — e.g. 44098 under both box and
-            // gyx — is two distinct members and can't collide or be dropped.
-            const setKey = ready.map(r => `${r.id}:${r.wfo}`).sort().join(',');
+            // flagged-set key, hidden marker, and body builder. Key on id:wfo (NOT id
+            // alone) so a buoy shared across regions — e.g. a shared buoy under two wfos —
+            // is two distinct members and can't collide or be dropped. Dedup is on this
+            // set: an open issue is NOT re-notified while the same zones stay flagged.
+            const setKey = flagged.map(r => `${r.id}:${r.wfo}`).sort().join(',');
             const marker = s => `<!-- buoy-ready-set:${s} -->`;
             const buildBody = () => {
-              const items = ready.map(r =>
-                `- **${r.id}** [${r.wfo}] — ${r.zone} — current Hs ${r.hs == null ? 'n/a' : r.hs + ' m'}`);
-              const cmds = ready.map(r =>
+              const items = flagged.map(r =>
+                `- **${r.id}** [${r.wfo}] — ${r.zone} — swell Hs `
+                + `${r.swell_hs == null ? 'n/a' : r.swell_hs + ' m'}, ${r.qual_hours} qualifying hr; `
+                + `rolling **${r.rolling}** (${r.n_events}/${minEvents} events)`);
+              const cmds = flagged.map(r =>
                 '```\n'
                 + `python3 -m pipeline.forecast.nwps_nearshore --trustcheck --wfo ${r.wfo} --buoy ${r.id}`
                 + '\n```');
               return [
-                `These trust-check zone(s) are **testable right now** — buoy UP **and** 24h Hs `
-                  + `range ≥ ${thr} m, so the trust gate can return PASS/FAIL instead of INCONCLUSIVE:`,
+                `These zone(s) have a **qualifying swell event right now** — a usable buoy `
+                  + `(VALID/MARGINAL) is showing real swell, and the zone's rolling DIRECTION verdict `
+                  + `is still ACCUMULATING toward ${minEvents} independent events:`,
                 '',
                 items.join('\n'),
                 '',
-                '### Trust-check commands',
+                '### Add a swell event (run the trust check)',
+                `Each run CONTRIBUTES ONE event toward the zone's rolling verdict — it is NOT a `
+                  + `one-shot PASS/FAIL. The gate settles only after ${minEvents} independent swell events.`,
                 cmds.join('\n'),
                 '',
-                'Read-only monitor; this issue auto-closes when every watched zone drops back below '
-                  + `${thr} m 24h Hs range.`,
+                'Read-only monitor. Structurally-invalid / retired buoys (e.g. 44098) are never listed '
+                  + '— there is no valid reference to test against. This issue auto-closes when no '
+                  + 'watched zone has a qualifying swell event.',
                 '',
                 marker(setKey),
               ].join('\n');
@@ -122,41 +135,42 @@ jobs:
             const prevMatch = existing && (existing.body || '').match(/<!-- buoy-ready-set:([^>]*) -->/);
             const prevSet = prevMatch ? prevMatch[1].split(',').filter(Boolean) : [];
 
-            if (anyReady && !existing) {
-              // First ready zone(s): open ONE issue (don't wait for all zones).
-              const zones = [...new Set(ready.map(r => r.zone))].join(', ');
+            if (anyFlagged && !existing) {
+              // First flagged zone(s): open ONE issue (don't wait for all zones).
+              const zones = [...new Set(flagged.map(r => r.zone))].join(', ');
               const issue = await github.rest.issues.create({
                 owner, repo,
-                title: `Buoy-ready: ${zones} testable now`,
+                title: `Buoy-ready: swell event to check — ${zones}`,
                 body: buildBody(),
                 labels: [LABEL],
                 assignees: [ASSIGNEE],
               });
               core.info(`created buoy-ready issue #${issue.data.number} (set=${setKey})`);
-            } else if (anyReady && existing) {
-              // An issue is open. Re-notify ONLY if a NEW zone became ready.
-              const newly = ready.filter(r => !prevSet.includes(`${r.id}:${r.wfo}`));
+            } else if (anyFlagged && existing) {
+              // An issue is open. Re-notify ONLY if a NEW zone gained a swell event (dedup on set).
+              const newly = flagged.filter(r => !prevSet.includes(`${r.id}:${r.wfo}`));
               if (newly.length > 0) {
                 await github.rest.issues.update({
                   owner, repo, issue_number: existing.number, body: buildBody() });
                 const nz = [...new Set(newly.map(r => r.zone))].join(', ');
                 await github.rest.issues.createComment({
                   owner, repo, issue_number: existing.number,
-                  body: `New zone(s) now testable: **${nz}** (${newly.map(r => r.id).join(', ')}). `
-                    + `Ready-set is now \`${setKey}\`.` });
-                core.info(`ready-set grew -> ${setKey}; re-notified`);
+                  body: `New zone(s) with a swell event to check: **${nz}** (${newly.map(r => r.id).join(', ')}). `
+                    + `Flagged-set is now \`${setKey}\`. Each --trustcheck run adds one event toward the `
+                    + `zone's rolling verdict.` });
+                core.info(`flagged-set grew -> ${setKey}; re-notified`);
               } else {
-                core.info(`ready-set unchanged (${setKey}); no duplicate notification`);
+                core.info(`flagged-set unchanged (${setKey}); no duplicate notification`);
               }
-            } else if (!anyReady && existing) {
-              // Nothing ready anymore: close so the next swell re-triggers a fresh email.
+            } else if (!anyFlagged && existing) {
+              // No swell event anymore: close so the next swell re-triggers a fresh email.
               await github.rest.issues.createComment({
                 owner, repo, issue_number: existing.number,
-                body: `All watched zones dropped below the readiness threshold (24h Hs range < ${thr} m). `
-                  + `Closing — the next swell will open a fresh alert.` });
+                body: `No watched zone has a qualifying swell event anymore. Closing — the next swell `
+                  + `event will open a fresh alert.` });
               await github.rest.issues.update({
                 owner, repo, issue_number: existing.number, state: 'closed' });
-              core.info('closed buoy-ready issue (no zones ready)');
+              core.info('closed buoy-ready issue (no swell events)');
             } else {
-              core.info('no zones ready and no open issue; nothing to do');
+              core.info('no swell events and no open issue; nothing to do');
             }

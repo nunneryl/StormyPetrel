@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
-"""Scheduled buoy-readiness monitor (READ-ONLY on public NDBC data).
+"""Scheduled buoy-readiness monitor (READ-ONLY on public NDBC data) — rewired for the rebuilt
+trust gate (height-primary; direction = energy-weighted, spot-tiered, ROLLING).
 
-Watches a small set of NDBC buoys and reports which phi trust-check ZONES are
-actually testable right now. "Testable" means the buoy is UP *and* its
-significant-wave-height (Hs) has moved enough over the last ~24h that the NWPS
-trust gate (``pipeline.forecast.nwps_nearshore --trustcheck``) can return
-PASS/FAIL instead of just INCONCLUSIVE. UP alone never counts.
+A zone is "worth checking now" (the alert trigger) only when a watched NDBC buoy shows a genuine
+SWELL EVENT — not merely a wave-height range that a ramping wind-chop produces with no real swell.
+Concretely, all of:
 
-Guardrails (by construction):
-  * READ-ONLY on public NDBC data. No Supabase, no prod DB, no NOMADS, no secrets.
-  * UP/down reuses ``pipeline.enrichment.geodata.load_ndbc_wave_stations`` — a buoy
-    is UP iff it is present in that wave-station roster.
-  * Hs observations reuse the SAME NDBC realtime2 fetch+parse stack that
-    ``trust_check`` -> ``_buoy_hourly`` uses: ``pipeline.forecast.buoys._fetch_text``
-    + ``_parse_realtime2`` + ``_STD_FIELDS``. (We call the buoys helpers directly
-    rather than ``nwps_nearshore._buoy_hourly`` so the monitor doesn't drag in the
-    interpret/numpy import chain — identical parsing, smaller dependency surface.)
+  * SWELL, reusing the trust gate's OWN per-hour precondition (nwps_nearshore._swell_precondition,
+    swell-band Hs >= SWELL_HS_FLOOR_M AND swell fraction >= SWELL_FRAC_FLOOR — imported, one source
+    of truth), SUSTAINED: >= MONITOR_MIN_QUALIFYING_HOURS such hours in the last
+    MONITOR_SWELL_WINDOW_H (a real event, not a one-hour blip);
+  * a USABLE buoy reference: VALID or MARGINAL per the --pairing-audit scorer. A STRUCTURALLY
+    INVALID or RETIRED buoy (e.g. 44098's box/gyx zones — a 76 m offshore bank) is NEVER flagged:
+    there is no valid instrument to test against, so an alert would be pure noise;
+  * a zone whose ROLLING direction verdict is still ACCUMULATING. A settled PASS (or FAIL /
+    INCOHERENT) needs no more events — don't nag.
 
-"READY" (the alert trigger, NOT mere UP):
-  UP and (24h Hs range >= READY_HS_RANGE_M). READY_HS_RANGE_M mirrors the trust
-  gate's own TRUST_BUOY_RANGE_MIN_M, so "ready" means the gate won't just report
-  INCONCLUSIVE.
+Running the emitted `--trustcheck` on a flagged zone CONTRIBUTES ONE swell EVENT toward that zone's
+rolling verdict — it is NOT a one-shot PASS/FAIL anymore. The gate needs TRUST_MIN_EVENTS
+independent events before it settles.
 
-Outputs:
-  * a human-readable summary to stdout (for the Actions log), and
-  * ``any_ready`` + ``ready_json`` (id/zone/current-Hs) + ``ready_hs_range`` to
-    ``$GITHUB_OUTPUT`` for the workflow's issue logic.
+Why the old trigger was wrong: it fired on 24h Hs RANGE, which a wind-chop ramp produces with no
+real swell — it flagged mhx/44095, mhx/41025, ilm/41108, ilm/41110 (issue #58), all of which then
+FAILED on 0.1-0.2 m of actual swell under a bigger chop. Hs range is retired; swell energy is the
+trigger, and the monitor now only ever wakes us for a genuine, direction-checkable swell.
+
+Guardrails (by construction): READ-ONLY on public NDBC data. No Supabase / prod DB / NOMADS /
+secrets; no --apply; no tagging or untagging; no spots_enriched.json or rating writes. Reuses the
+gate's precondition, pairing scorer, retirement registry, and rolling history verbatim (single
+source of truth); the swell reader is pipeline.forecast.ndbc_spectral (pure). Live imports are lazy
+so --selftest needs no third-party deps.
 
     python3 scripts/buoy_ready_monitor.py             # live (needs public NDBC egress)
-    python3 scripts/buoy_ready_monitor.py --selftest   # offline fixture test (no network)
+    python3 scripts/buoy_ready_monitor.py --selftest   # offline fixture test (no third-party deps)
 """
 from __future__ import annotations
 
@@ -46,115 +50,159 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 # --------------------------------------------------------------------------- #
-# Readiness constants                                                         #
+# Trigger constants — the SWELL-EVENT shape (the per-hour swell FLOORS are the  #
+# gate's, imported live; the monitor only defines what makes an EVENT).        #
 # --------------------------------------------------------------------------- #
-READY_HS_RANGE_M = 0.5   # mirror nwps_nearshore.TRUST_BUOY_RANGE_MIN_M — below this
-                         # Hs span the trust gate reports INCONCLUSIVE (not testable)
-WINDOW_H = 24            # look back ~24h for the Hs range
+MONITOR_SWELL_WINDOW_H = 12        # look back this many hours for a swell event
+MONITOR_MIN_QUALIFYING_HOURS = 3   # >= this many qualifying (swell-present) hours in the window = a
+                                   #   SUSTAINED event. Hourly obs; a swell train persists for many
+                                   #   hours, so requiring >=3 filters one-hour spikes / chop noise.
+                                   #   This is NOT a total-Hs range check — that was the #58 bug.
+_USABLE_PAIRINGS = ("VALID REFERENCE", "MARGINAL")   # STRUCTURALLY INVALID / RETIRED are excluded
 
 # --------------------------------------------------------------------------- #
-# Watch list — add buoys / a future box region by editing this ONE list.      #
+# Watch list — add buoys / a future region by editing this ONE list.          #
+# "status" is now informational only (live vs candidate); alert gating is by   #
+# computed swell event + pairing + rolling verdict, NOT by this field.         #
 # --------------------------------------------------------------------------- #
 WATCH = [
-    # Each entry carries "status": "pending" (still needs action -> alerts fire) or
-    # "tagged" (already live on the site -> evaluated for the log, but NEVER alerts).
-    # Tagged (live) today: (44025,phi), (44065,phi), (44091,phi), (44099,akq),
-    # (44097,box), (44098,box), (44098,gyx). Everything else is pending.
-    # phi — Mid-Atlantic / NJ. 44025 & 44065 (Monmouth) are live -> tagged.
-    {"id": "44025", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
-    {"id": "44065", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
-    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi", "status": "tagged"},
-    {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi", "status": "pending"},
-    {"id": "44084", "zone": "Delaware", "wfo": "phi", "status": "pending"},
-    # box — Southern New England. 44098 (North Shore) and 44008 (far offshore SE
-    # Nantucket) are the weakest-fit box entries — validate with the first box
-    # --trustcheck. (44018 retired: it read DOWN; 44008 is the open-ocean match.)
-    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box", "status": "tagged"},
-    {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box", "status": "pending"},
-    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester) — candidate", "wfo": "box", "status": "tagged"},
-    {"id": "44008", "zone": "Outer Cape + Islands (offshore SE Nantucket; far offshore, weakest-fit zone)", "wfo": "box", "status": "pending"},
-    # gyx — Southern Maine / New Hampshire. 44098 intentionally appears again here:
-    # the same buoy serves box's North Shore end AND the NH / s-Maine coast, so it is
-    # listed under both wfo values and the monitor reports it for both regions.
-    {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx", "status": "pending"},
-    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx", "status": "tagged"},
-    # akq — Wakefield VA (Delmarva / Virginia Beach). 44099 (Virginia Beach) is live
-    # -> tagged. 44084 intentionally appears again here: it already serves phi's
-    # Delaware zone above, and now also anchors akq's Delmarva end — the same
-    # shared-buoy double-region pattern as 44098 (box+gyx).
-    {"id": "44099", "zone": "Virginia Beach (North End / Oceanfront / Sandbridge)", "wfo": "akq", "status": "tagged"},
-    {"id": "44084", "zone": "Delmarva / Ocean City MD + Assateague", "wfo": "akq", "status": "pending"},
-    # mhx — Newport/Morehead City NC (Outer Banks / Cape Hatteras). Both buoy ids are
-    # new and used only here (no shared-id / double-region handling needed); both pending.
-    {"id": "44095", "zone": "Northern Outer Banks (Corolla / Nags Head / Rodanthe)", "wfo": "mhx", "status": "pending"},
-    {"id": "41025", "zone": "Cape Hatteras + south (Avon / Buxton / Hatteras / Ocracoke) — Diamond Shoals, prone to going adrift", "wfo": "mhx", "status": "pending"},
-    # ilm — Wilmington NC (Cape Fear / Brunswick Islands). All three buoy ids are new
-    # and used only here (no shared-id / double-region handling needed); all pending.
-    {"id": "41110", "zone": "Northern ilm — Wrightsville / Carolina Beach / Topsail (Masonboro nearshore)", "wfo": "ilm", "status": "pending"},
-    {"id": "41013", "zone": "Cape Fear / Brunswick Islands — offshore (Frying Pan Shoals)", "wfo": "ilm", "status": "pending"},
-    {"id": "41108", "zone": "Brunswick Islands — Holden/Ocean Isle/Sunset (Wilmington Harbor nearshore, southern-fit candidate)", "wfo": "ilm", "status": "pending"},
-    # sgx — San Diego CA (West Coast; CDIP 462xx nearshore buoys). San Diego is PLACED
-    # but NOT yet tagged, so all four are pending -> they fire alerts. Only 46254 is
-    # confirmed to resolve in load_ndbc_wave_stations so far; the other three are
-    # candidates to be verified on the monitor's first run — if one doesn't report we'll
-    # swap it, same as the East Coast candidate buoys. All four ids are new and used only
-    # here (no shared-id / double-region handling needed).
-    {"id": "46254", "zone": "Central San Diego — La Jolla / PB / Blacks (Scripps Nearshore)", "wfo": "sgx", "status": "pending"},
-    {"id": "46266", "zone": "North County — Carlsbad / Encinitas / Ponto (Del Mar Nearshore) — candidate", "wfo": "sgx", "status": "pending"},
-    {"id": "46235", "zone": "South SD — Coronado / Imperial Beach / Tijuana Slough (Imperial Beach Nearshore) — candidate", "wfo": "sgx", "status": "pending"},
-    {"id": "46242", "zone": "Far North SD — San Onofre / Cottons / Dana Point (Camp Pendleton Nearshore) — candidate", "wfo": "sgx", "status": "pending"},
+    # phi — Mid-Atlantic / NJ.
+    {"id": "44025", "zone": "Monmouth", "wfo": "phi", "status": "live"},
+    {"id": "44065", "zone": "Monmouth", "wfo": "phi", "status": "live"},
+    {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi", "status": "live"},
+    {"id": "44009", "zone": "Absecon->Cape May", "wfo": "phi", "status": "candidate"},
+    {"id": "44084", "zone": "Delaware", "wfo": "phi", "status": "candidate"},
+    # box — Southern New England. 44098 is RETIRED both axes (deep bank) — never flagged.
+    {"id": "44097", "zone": "RI south coast (Point Judith to Misquamicut, Newport, Block Island)", "wfo": "box", "status": "live"},
+    {"id": "44013", "zone": "Massachusetts Bay (Boston / inner North Shore)", "wfo": "box", "status": "candidate"},
+    {"id": "44098", "zone": "North of Boston (Salisbury / Plum Island / Gloucester)", "wfo": "box", "status": "live"},
+    {"id": "44008", "zone": "Outer Cape + Islands (offshore SE Nantucket; far offshore, weakest-fit zone)", "wfo": "box", "status": "candidate"},
+    # gyx — Southern Maine / New Hampshire. 44098 appears again (shared buoy) — also RETIRED.
+    {"id": "44007", "zone": "Southern Maine (Portland / Old Orchard / Higgins)", "wfo": "gyx", "status": "candidate"},
+    {"id": "44098", "zone": "NH coast + far southern Maine (Hampton / York / Ogunquit)", "wfo": "gyx", "status": "live"},
+    # akq — Wakefield VA (Delmarva / Virginia Beach). 44084 shared with phi's Delaware zone.
+    {"id": "44099", "zone": "Virginia Beach (North End / Oceanfront / Sandbridge)", "wfo": "akq", "status": "live"},
+    {"id": "44084", "zone": "Delmarva / Ocean City MD + Assateague", "wfo": "akq", "status": "candidate"},
+    # mhx — Newport/Morehead City NC (Outer Banks). The #58 pair — swell-poor high-chop seas.
+    {"id": "44095", "zone": "Northern Outer Banks (Corolla / Nags Head / Rodanthe)", "wfo": "mhx", "status": "candidate"},
+    {"id": "41025", "zone": "Cape Hatteras + south (Avon / Buxton / Hatteras / Ocracoke) — Diamond Shoals, prone to going adrift", "wfo": "mhx", "status": "candidate"},
+    # ilm — Wilmington NC (Cape Fear / Brunswick Islands). The other #58 pair.
+    {"id": "41110", "zone": "Northern ilm — Wrightsville / Carolina Beach / Topsail (Masonboro nearshore)", "wfo": "ilm", "status": "candidate"},
+    {"id": "41013", "zone": "Cape Fear / Brunswick Islands — offshore (Frying Pan Shoals)", "wfo": "ilm", "status": "candidate"},
+    {"id": "41108", "zone": "Brunswick Islands — Holden/Ocean Isle/Sunset (Wilmington Harbor nearshore, southern-fit candidate)", "wfo": "ilm", "status": "candidate"},
+    # sgx — San Diego CA (West Coast; CDIP 462xx nearshore buoys).
+    {"id": "46254", "zone": "Central San Diego — La Jolla / PB / Blacks (Scripps Nearshore)", "wfo": "sgx", "status": "candidate"},
+    {"id": "46266", "zone": "North County — Carlsbad / Encinitas / Ponto (Del Mar Nearshore) — candidate", "wfo": "sgx", "status": "candidate"},
+    {"id": "46235", "zone": "South SD — Coronado / Imperial Beach / Tijuana Slough (Imperial Beach Nearshore) — candidate", "wfo": "sgx", "status": "candidate"},
+    {"id": "46242", "zone": "Far North SD — San Onofre / Cottons / Dana Point (Camp Pendleton Nearshore) — candidate", "wfo": "sgx", "status": "candidate"},
 ]
 
-_REALTIME2 = "https://www.ndbc.noaa.gov/data/realtime2"   # public NDBC, read-only
-
 
 # --------------------------------------------------------------------------- #
-# Pure readiness logic (no network / no third-party deps — used by --selftest) #
+# Pure decision logic (no network / no third-party deps — used by --selftest)  #
 # --------------------------------------------------------------------------- #
-def _hs_stats(obs, now=None):
-    """(current_hs, hs_range_24h) from a realtime2 observation list (newest-first,
-    the shape ``pipeline.forecast.buoys._parse_realtime2`` returns). current = the
-    newest non-null wave_height_m; range = max-min of wave_height_m over the last
-    WINDOW_H hours. Returns (None, None) when there are no wave heights."""
-    if not obs:
-        return None, None
-    if now is None:
-        now = datetime.now(timezone.utc)
-    cutoff = now - timedelta(hours=WINDOW_H)
-    hs_recent = []
-    for o in obs:
-        hs = o.get("wave_height_m")
-        if hs is None:
-            continue
-        try:
-            t = datetime.fromisoformat(o["time"])
-        except (KeyError, ValueError):
-            continue
-        if t >= cutoff:
-            hs_recent.append(hs)
-    current = next((o.get("wave_height_m") for o in obs
-                    if o.get("wave_height_m") is not None), None)
-    hs_range = (max(hs_recent) - min(hs_recent)) if hs_recent else None
-    return current, hs_range
-
-
-def evaluate(watch, up_set, fetch_obs, now=None):
-    """Readiness per watched buoy. *up_set* = lowercased UP buoy ids; *fetch_obs(id)*
-    -> realtime2 obs list (or None). READY = UP and 24h Hs range >= READY_HS_RANGE_M
-    — UP alone never yields ready. Pure: inject *up_set* / *fetch_obs* / *now* for
-    offline testing."""
+def evaluate(watch, up_set, swell_fn, pairing_fn, rolling_fn, retired_set, now=None):
+    """Per watched (buoy, zone), decide whether it has a qualifying swell EVENT worth a trust check
+    now. FLAG iff: UP; a sustained swell event exists (swell_fn.has_event); the buoy is a USABLE
+    reference (pairing_fn in VALID/MARGINAL) and NOT retired (retired_set); and the zone's rolling
+    DIRECTION verdict is still ACCUMULATING (rolling_fn). Live calls are made lazily — swell_fn only
+    for UP buoys, pairing_fn/rolling_fn only once a swell event exists — so a quiet ocean costs
+    almost no NDBC fetches. Pure: inject the four callables + up_set + now for offline testing."""
     results = []
     for b in watch:
-        bid = b["id"]
+        bid, wfo = b["id"], b.get("wfo")
         up = bid.lower() in up_set
-        current_hs = hs_range = None
-        if up:
-            current_hs, hs_range = _hs_stats(fetch_obs(bid) or [], now=now)
-        ready = bool(up and hs_range is not None and hs_range >= READY_HS_RANGE_M)
-        results.append({"id": bid, "zone": b["zone"], "wfo": b.get("wfo"),
-                        "status": b.get("status", "pending"), "up": up,
-                        "current_hs": current_hs, "hs_range_24h": hs_range, "ready": ready})
+        swell = (swell_fn(bid) if up else
+                 {"n_qualifying": 0, "current_swell_hs": None, "current_frac": None, "has_event": False})
+        has_event = bool(swell.get("has_event"))
+        retired = (wfo, str(bid)) in retired_set
+        pairing = pairing_fn(bid) if (up and has_event and not retired) else None
+        usable = pairing in _USABLE_PAIRINGS
+        rolling = rolling_fn(wfo, bid) if (up and has_event and not retired and usable) else None
+        verdict = (rolling or {}).get("verdict")
+        flag = bool(up and has_event and not retired and usable and verdict == "ACCUMULATING")
+        results.append({"id": bid, "zone": b["zone"], "wfo": wfo, "status": b.get("status"),
+                        "up": up, "retired": retired, "pairing": pairing, "usable": usable,
+                        "swell": swell, "rolling": rolling, "flag": flag,
+                        "why": _state_label(up, has_event, retired, usable, verdict, flag)})
     return results
+
+
+def _state_label(up, has_event, retired, usable, verdict, flag):
+    """Short, legible reason a zone is / isn't flagged — so nothing is silently dropped."""
+    if flag:
+        return f"FLAG — swell event; rolling {verdict}"
+    if not up:
+        return "down"
+    if retired:
+        return "retired (both axes) — not monitorable"
+    if not has_event:
+        return "no swell event (chop / calm)"
+    if not usable:
+        return "buoy STRUCTURALLY INVALID — not monitorable"
+    if verdict and verdict != "ACCUMULATING":
+        return f"rolling {verdict} — settled, no more events needed"
+    return "not flagged"
+
+
+# --------------------------------------------------------------------------- #
+# Output                                                                       #
+# --------------------------------------------------------------------------- #
+def _flag_entry(r):
+    """Compact shape used in flagged_json + the issue body — carries the rolling-event context."""
+    sw, roll = r["swell"], (r["rolling"] or {})
+    hs = sw.get("current_swell_hs")
+    return {"id": r["id"], "zone": r["zone"], "wfo": r["wfo"],
+            "swell_hs": round(hs, 2) if hs is not None else None,
+            "qual_hours": sw.get("n_qualifying"),
+            "n_events": roll.get("n_events", 0),
+            "rolling": roll.get("verdict", "ACCUMULATING")}
+
+
+def _flagged(results):
+    return [_flag_entry(r) for r in results if r["flag"]]
+
+
+def _print_summary(results, min_events):
+    print("=== buoy-ready monitor — FLAG = sustained SWELL event + USABLE buoy + rolling ACCUMULATING ===")
+    print(f"    (swell precondition = the gate's; event = >= {MONITOR_MIN_QUALIFYING_HOURS} qualifying "
+          f"hrs / last {MONITOR_SWELL_WINDOW_H} h. NOT a wave-height range.)")
+    print(f"  {'buoy':7}{'wfo':5}{'up':4}{'swellHs':>8}{'qHrs':>5}{'pairing':>13}{'roll':>13}  state")
+    for r in results:
+        sw = r["swell"]
+        hs = f"{sw['current_swell_hs']:.2f}" if sw.get("current_swell_hs") is not None else "—"
+        q = sw.get("n_qualifying")
+        qs = str(q) if q is not None else "—"
+        pr = (r["pairing"] or "—").replace(" REFERENCE", "")[:12]
+        roll = r["rolling"] or {}
+        rl = f"{roll.get('n_events', 0)}/{min_events} {roll.get('verdict', '')}".strip() if roll else "—"
+        print(f"  {r['id']:7}{(r['wfo'] or '—'):5}{('UP' if r['up'] else 'DN'):4}{hs:>8}{qs:>5}"
+              f"{pr:>13}{rl:>13}  {r['why']}")
+    flagged = _flagged(results)
+    not_mon = [r for r in results if (r["retired"] or (r["up"] and r["swell"].get("has_event")
+               and not r["usable"] and r["pairing"]))]
+    if flagged:
+        zones = ", ".join(sorted({f"{f['wfo']}/{f['id']}" for f in flagged}))
+        print(f"\n{len(flagged)} zone(s) with a swell EVENT to check → alert: {zones}")
+        print("  (each --trustcheck run adds ONE event toward the zone's rolling verdict — not a one-shot pass.)")
+    else:
+        print("\nno zone has a qualifying swell event with a usable, still-accumulating buoy → no alert")
+    if not_mon:
+        zs = ", ".join(sorted({f"{r['wfo']}/{r['id']}" for r in not_mon}))
+        print(f"not monitorable (no valid buoy reference — never flagged, by design): {zs}")
+
+
+def _emit_github_output(results, min_events):
+    """Write any_flagged / flagged_json / min_events to $GITHUB_OUTPUT for the issue logic.
+    flagged_json carries only zones with a real swell event + usable buoy + ACCUMULATING rolling."""
+    flagged = _flagged(results)
+    path = os.environ.get("GITHUB_OUTPUT")
+    if path:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"any_flagged={'true' if flagged else 'false'}\n")
+            f.write("flagged_json=" + json.dumps(flagged, separators=(",", ":"), ensure_ascii=False) + "\n")
+            f.write(f"min_events={min_events}\n")
+    return flagged
 
 
 # --------------------------------------------------------------------------- #
@@ -172,131 +220,128 @@ def _live_up_set():
         return set()
 
 
-def _live_fetch_obs(buoy_id):
-    """Reuse the NDBC realtime2 fetch+parse stack trust_check -> _buoy_hourly uses
-    (pipeline.forecast.buoys). Returns a newest-first obs list, or [] on failure."""
+def _live_swell_fn(now=None):
+    """SWELL-event probe per buoy, reusing the pure spectral reader (ndbc_spectral.by_hour →
+    .data_spec/.swdir) + the gate's per-hour precondition (nwps_nearshore._swell_precondition).
+    Returns {n_qualifying, current_swell_hs, current_frac, has_event} over the recent window.
+    A quiet/absent spectrum → has_event False (never a fabricated event)."""
+    from pipeline.forecast import ndbc_spectral as sp
+    from pipeline.forecast.nwps_nearshore import _swell_precondition
+    now = now or datetime.now(timezone.utc)
+    now_eh = int(now.timestamp() // 3600)
+
+    def fn(buoy_id):
+        try:
+            metrics = sp.by_hour(buoy_id)   # {epoch_hour: {hs_swell, swell_frac, ...}} or {}
+        except Exception as e:  # noqa: BLE001
+            print(f"warn: buoy {buoy_id} spectra unavailable ({type(e).__name__}: {e})", file=sys.stderr)
+            metrics = {}
+        recent = sorted(((eh, m) for eh, m in metrics.items() if 0 <= now_eh - eh < MONITOR_SWELL_WINDOW_H),
+                        reverse=True)
+        qual = [m for _, m in recent if _swell_precondition(m.get("hs_swell"), m.get("swell_frac"))]
+        cur = recent[0][1] if recent else {}
+        return {"n_qualifying": len(qual), "current_swell_hs": cur.get("hs_swell"),
+                "current_frac": cur.get("swell_frac"),
+                "has_event": len(qual) >= MONITOR_MIN_QUALIFYING_HOURS}
+    return fn
+
+
+def _live_pairing_fn():
+    """Buoy pairing verdict, reusing the --pairing-audit scorer verbatim (single source of truth)."""
+    from pipeline.forecast.nwps_nearshore import _score_pairing, _ndbc_station_meta
+
+    def fn(buoy_id):
+        try:
+            return _score_pairing(_ndbc_station_meta(buoy_id))[0]
+        except Exception:  # noqa: BLE001
+            return "VALID REFERENCE"   # unknown metadata → don't block the heads-up; the gate decides
+    return fn
+
+
+def _live_rolling_fn(now=None):
+    """Rolling DIRECTION verdict per zone from the gate's accumulated history (the JSONL under
+    pipeline/forecast_data/). Reuses load_trust_history + rolling_trust_verdict + the zone's tier.
+    When no history is present in this env (the log is Mac-side / gitignored) every zone reads
+    0/N ACCUMULATING — the honest default (it needs its first events)."""
+    from pipeline.forecast.nwps_nearshore import (
+        load_trust_history, rolling_trust_verdict, _zone_tiers, TRUST_ROLLING_DAYS)
+    now = now or datetime.now(timezone.utc)
+    now_eh = int(now.timestamp() // 3600)
+
+    def fn(wfo, buoy):
+        try:
+            _, tier = _zone_tiers(wfo, buoy)
+        except Exception:  # noqa: BLE001
+            tier = "point"
+        recs = load_trust_history(wfo, buoy, days=TRUST_ROLLING_DAYS[0], now_epoch_hour=now_eh)
+        v = rolling_trust_verdict(recs, tier=tier)
+        return {"n_events": v.get("n_events", 0), "verdict": v.get("verdict", "ACCUMULATING")}
+    return fn
+
+
+def _live_retired_set():
+    """{(wfo, buoy)} whose buoy is RETIRED as a reference (both axes) — read from the assignment
+    file's buoy_reference.retired (44098's box/gyx zones). Never flagged."""
     try:
-        from pipeline.forecast.buoys import _fetch_text, _parse_realtime2, _STD_FIELDS
-    except Exception as e:  # noqa: BLE001
-        print(f"warn: buoys parser unavailable ({type(e).__name__}: {e})", file=sys.stderr)
-        return []
+        from pipeline.forecast.nwps_nearshore import _retired_reference_zones
+        return set(_retired_reference_zones().keys())
+    except Exception:  # noqa: BLE001
+        return set()
+
+
+def _min_events():
     try:
-        txt = _fetch_text(f"{_REALTIME2}/{buoy_id.upper()}.txt", buoy_id, "std", use_cache=False)
-    except Exception as e:  # noqa: BLE001
-        print(f"warn: buoy {buoy_id} fetch failed ({type(e).__name__}: {e})", file=sys.stderr)
-        return []
-    return _parse_realtime2(txt, _STD_FIELDS) if txt else []
-
-
-# --------------------------------------------------------------------------- #
-# Output                                                                      #
-# --------------------------------------------------------------------------- #
-def _ready_entry(r):
-    """Compact {id, zone, wfo, hs} shape used in ready_json + the issue body."""
-    return {"id": r["id"], "zone": r["zone"], "wfo": r.get("wfo"),
-            "hs": round(r["current_hs"], 2) if r["current_hs"] is not None else None}
-
-
-def _split_ready(results):
-    """Split the ready buoys into (ready_pending, ready_tagged), each a list of
-    _ready_entry dicts. ONLY ready_pending drives alerts (issue / email / dedup
-    set-key); ready_tagged is re-verification-only — shown in the log, never alerts."""
-    ready = [r for r in results if r["ready"]]
-    pending = [_ready_entry(r) for r in ready if r.get("status", "pending") != "tagged"]
-    tagged = [_ready_entry(r) for r in ready if r.get("status", "pending") == "tagged"]
-    return pending, tagged
-
-
-def _print_summary(results):
-    print(f"=== buoy-ready monitor — READY = UP and 24h Hs range >= {READY_HS_RANGE_M} m ===")
-    print(f"  {'buoy':7}{'wfo':5}{'status':8}{'zone':38}{'state':6}{'Hs(m)':>7}{'24h rng':>9}  ready")
-    for r in results:
-        hs = f"{r['current_hs']:.2f}" if r["current_hs"] is not None else "—"
-        rng = f"{r['hs_range_24h']:.2f}" if r["hs_range_24h"] is not None else "—"
-        print(f"  {r['id']:7}{(r.get('wfo') or '—'):5}{r.get('status', 'pending'):8}{r['zone']:38}"
-              f"{('UP' if r['up'] else 'DOWN'):6}{hs:>7}{rng:>9}  {'READY' if r['ready'] else '—'}")
-    ready_pending, ready_tagged = _split_ready(results)
-    if ready_pending:
-        zones = ", ".join(sorted({r["zone"] for r in ready_pending}))
-        print(f"\n{len(ready_pending)} PENDING zone(s) READY → alert: {zones}")
-    else:
-        print("\nno pending zones ready → no alert")
-    if ready_tagged:
-        zones = ", ".join(sorted({r["zone"] for r in ready_tagged}))
-        print(f"tagged (re-verify only, no alert): {len(ready_tagged)} ready → {zones}")
-
-
-def _emit_github_output(results):
-    """Write any_ready / ready_json / ready_hs_range to $GITHUB_OUTPUT. The issue /
-    email logic is driven by PENDING-and-ready zones ONLY — tagged zones are
-    re-verification-only and must never (re)trigger an alert — so any_ready and
-    ready_json carry ready_pending only. (The workflow builds its dedup set-key from
-    ready_json, so that too becomes pending-only automatically.) Returns ready_pending."""
-    ready_pending, _ = _split_ready(results)
-    path = os.environ.get("GITHUB_OUTPUT")
-    if path:
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(f"any_ready={'true' if ready_pending else 'false'}\n")
-            f.write("ready_json=" + json.dumps(ready_pending, separators=(",", ":"), ensure_ascii=False) + "\n")
-            f.write(f"ready_hs_range={READY_HS_RANGE_M}\n")
-    return ready_pending
+        from pipeline.forecast.nwps_nearshore import TRUST_MIN_EVENTS
+        return TRUST_MIN_EVENTS
+    except Exception:  # noqa: BLE001
+        return 5
 
 
 def run():
     up_set = _live_up_set()
-    results = evaluate(WATCH, up_set, _live_fetch_obs)
-    _print_summary(results)
-    _emit_github_output(results)
+    results = evaluate(WATCH, up_set, _live_swell_fn(), _live_pairing_fn(),
+                       _live_rolling_fn(), _live_retired_set())
+    me = _min_events()
+    _print_summary(results, me)
+    _emit_github_output(results, me)
     return 0
 
 
 # --------------------------------------------------------------------------- #
-# Offline selftest (canned obs; no network)                                   #
+# Offline selftest (injected stubs; no network / no third-party deps)          #
 # --------------------------------------------------------------------------- #
-def _mk_obs(hs_oldest_to_newest, now):
-    """Build a realtime2-style obs list (newest-first) from hourly Hs values."""
-    n = len(hs_oldest_to_newest)
-    rows = [{"time": (now - timedelta(hours=(n - 1 - i))).isoformat(), "wave_height_m": hs}
-            for i, hs in enumerate(hs_oldest_to_newest)]
-    rows.sort(key=lambda r: r["time"], reverse=True)
-    return rows
-
-
 def _selftest():
-    now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)   # fixed 'now' for determinism
-    rising = [round(0.2 + (0.9 - 0.2) * i / 23, 3) for i in range(24)]   # 0.2 -> 0.9 (range 0.7)
-    flat = [round(0.3 + (0.4 - 0.3) * i / 23, 3) for i in range(24)]     # 0.3 -> 0.4 (range 0.1)
-    fixtures = {"44025": _mk_obs(rising, now),   # phi, UP, rising -> READY but TAGGED (re-verify only)
-                "44065": _mk_obs(flat, now),     # phi, UP, flat   -> NOT ready (also tagged)
-                "44097": _mk_obs(rising, now),   # box, UP, rising -> READY
-                "44007": _mk_obs(rising, now),   # gyx, UP, rising -> READY
-                "44098": _mk_obs(rising, now),   # box+gyx repeated id, UP, rising -> READY
-                "44099": _mk_obs(rising, now),   # akq, UP, rising -> READY
-                "44084": _mk_obs(rising, now),   # phi+akq repeated id, UP, rising -> READY  (44091 absent -> DOWN)
-                "44095": _mk_obs(rising, now),   # mhx, UP, rising -> READY
-                "41110": _mk_obs(rising, now),   # ilm, UP, rising -> READY
-                "46254": _mk_obs(rising, now)}   # sgx, UP, rising -> READY
-    up_set = {"44025", "44065", "44097", "44007", "44098", "44099", "44084", "44095", "41110", "46254"}
-    # Monmouth (44025/44065) is TAGGED — already live, re-verify only, must NOT alert.
-    # Every other entry omits "status" -> defaults to "pending" (so we also prove the
-    # default is alert-eligible). 44025 is the tagged-UP+rising case (b); 44097 the pending one (a).
-    watch = [{"id": "44025", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
-             {"id": "44065", "zone": "Monmouth", "wfo": "phi", "status": "tagged"},
-             {"id": "44091", "zone": "Ocean County + LBI (interim Absecon)", "wfo": "phi"},
-             {"id": "44097", "zone": "RI south coast", "wfo": "box"},
-             {"id": "44007", "zone": "Southern Maine", "wfo": "gyx"},
-             {"id": "44098", "zone": "North Shore (box)", "wfo": "box"},      # same id, two wfos:
-             {"id": "44098", "zone": "NH coast (gyx)", "wfo": "gyx"},         # must reach ready_json twice
-             {"id": "44099", "zone": "Virginia Beach", "wfo": "akq"},
-             {"id": "44084", "zone": "Delaware (phi)", "wfo": "phi"},         # same id, two wfos:
-             {"id": "44084", "zone": "Delmarva (akq)", "wfo": "akq"},         # must reach ready_json twice
-             {"id": "44095", "zone": "Northern Outer Banks", "wfo": "mhx"},   # new mhx region, pending
-             {"id": "41110", "zone": "Wrightsville / Masonboro", "wfo": "ilm"},  # new ilm region, pending
-             {"id": "46254", "zone": "Central San Diego (Scripps Nearshore)", "wfo": "sgx", "status": "pending"}]  # new sgx/West-Coast region, pending
-    res = evaluate(watch, up_set, lambda bid: fixtures.get(bid, []), now=now)
-    by = {r["id"]: r for r in res}
-    ready_list = [r for r in res if r["ready"]]           # exactly what ready_json is built from
-    ready_by = {r["id"]: r for r in ready_list}           # id-keyed convenience (collapses repeated ids 44098, 44084)
+    # A genuine swell EVENT vs the issue-#58 shape (a swell-POOR sea under a big wind-chop:
+    # high total-Hs range but only ~0.15 m of swell → NOT an event under the new precondition).
+    EVENT = {"n_qualifying": 5, "current_swell_hs": 1.4, "current_frac": 0.72, "has_event": True}
+    CHOP = {"n_qualifying": 0, "current_swell_hs": 0.15, "current_frac": 0.12, "has_event": False}
+    swell = {"44097": EVENT, "44025": EVENT, "44091": EVENT, "44013": EVENT,
+             "44098": EVENT,  # even WITH a real swell, retired 44098 must never flag
+             "44095": CHOP, "41025": CHOP, "41108": CHOP, "41110": CHOP}  # the four #58 zones
+    pairing = {"44097": "VALID REFERENCE", "44091": "VALID REFERENCE", "44025": "MARGINAL",
+               "44013": "STRUCTURALLY INVALID"}   # 44098 is retired (excluded before pairing)
+    rolling = {"44091": {"n_events": 6, "verdict": "PASS"}}   # settled PASS → don't nag
+    retired = {("box", "44098"), ("gyx", "44098")}
+    swell_fn = lambda bid: swell.get(bid, CHOP)
+    pairing_fn = lambda bid: pairing.get(bid, "VALID REFERENCE")
+    rolling_fn = lambda wfo, bid: rolling.get(bid, {"n_events": 1, "verdict": "ACCUMULATING"})
+    watch = [
+        {"id": "44097", "zone": "RI south coast", "wfo": "box"},          # VALID + event + ACCUM → FLAG
+        {"id": "44025", "zone": "Monmouth", "wfo": "phi"},                # MARGINAL + event + ACCUM → FLAG
+        {"id": "44091", "zone": "Ocean County", "wfo": "phi"},            # VALID + event but rolling PASS → no
+        {"id": "44013", "zone": "Mass Bay", "wfo": "box"},                # STRUCTURALLY INVALID → no
+        {"id": "44098", "zone": "North Shore", "wfo": "box"},             # retired (both axes) → no
+        {"id": "44098", "zone": "NH coast", "wfo": "gyx"},               # retired (shared id, other wfo) → no
+        {"id": "44095", "zone": "Northern OBX", "wfo": "mhx"},            # #58 chop → no
+        {"id": "41025", "zone": "Cape Hatteras", "wfo": "mhx"},           # #58 chop → no
+        {"id": "41108", "zone": "Brunswick Is", "wfo": "ilm"},           # #58 chop → no
+        {"id": "41110", "zone": "Wrightsville", "wfo": "ilm"},           # #58 chop → no
+        {"id": "44009", "zone": "Absecon", "wfo": "phi"},                # DOWN (absent from up_set) → no
+    ]
+    up = {"44097", "44025", "44091", "44013", "44098", "44095", "41025", "41108", "41110"}  # 44009 DOWN
+    res = evaluate(watch, up, swell_fn, pairing_fn, rolling_fn, retired, now=datetime(2026, 7, 3, tzinfo=timezone.utc))
+    by = {(r["id"], r["wfo"]): r for r in res}
+    flagged = {f'{f["wfo"]}/{f["id"]}' for f in _flagged(res)}
 
     ok = True
 
@@ -305,53 +350,36 @@ def _selftest():
         ok = ok and bool(cond)
         print(f"  {'PASS' if cond else 'FAIL'}  {name}")
 
-    check(f"rising 0.2->0.9m reads READY (24h range {by['44025']['hs_range_24h']:.2f} m)",
-          by["44025"]["ready"] is True)
-    check(f"flat 0.3->0.4m reads NOT ready (24h range {by['44065']['hs_range_24h']:.2f} m)",
-          by["44065"]["ready"] is False)
-    check("down buoy reads NOT ready", by["44091"]["ready"] is False and by["44091"]["up"] is False)
-    check("UP alone never triggers (flat buoy is UP but NOT ready)",
-          by["44065"]["up"] is True and by["44065"]["ready"] is False)
-    check("ready box buoy carries wfo 'box' into the ready list",
-          "44097" in ready_by and ready_by["44097"]["wfo"] == "box")
-    check("ready phi buoy carries wfo 'phi' into the ready list",
-          "44025" in ready_by and ready_by["44025"]["wfo"] == "phi")
-    check("ready gyx buoy carries wfo 'gyx' into the ready list",
-          "44007" in ready_by and ready_by["44007"]["wfo"] == "gyx")
-    check("repeated id 44098 reaches the ready list for BOTH regions (neither dropped)",
-          sorted(r["wfo"] for r in ready_list if r["id"] == "44098") == ["box", "gyx"])
-    check("ready akq buoy carries wfo 'akq' into the ready list",
-          "44099" in ready_by and ready_by["44099"]["wfo"] == "akq")
-    check("repeated id 44084 reaches the ready list for BOTH regions (neither dropped)",
-          sorted(r["wfo"] for r in ready_list if r["id"] == "44084") == ["akq", "phi"])
-    check("ready mhx buoy carries wfo 'mhx' into the ready list",
-          "44095" in ready_by and ready_by["44095"]["wfo"] == "mhx")
-    check("ready ilm buoy carries wfo 'ilm' into the ready list",
-          "41110" in ready_by and ready_by["41110"]["wfo"] == "ilm")
-    check("ready sgx buoy carries wfo 'sgx' into the ready list",
-          "46254" in ready_by and ready_by["46254"]["wfo"] == "sgx")
-
-    # status split: PENDING-and-ready drives alerts; TAGGED-and-ready is re-verify-only
-    # and must be EXCLUDED from ready_pending / ready_json / the dedup set-key.
-    pend, tag = _split_ready(res)
-    pend_keys = {f'{r["id"]}:{r["wfo"]}' for r in pend}   # exactly the workflow's set-key members
-    tag_keys = {f'{r["id"]}:{r["wfo"]}' for r in tag}
-    check("pending buoy (44097 box) UP+rising appears in ready_pending (would alert)",
-          "44097:box" in pend_keys)
-    check("tagged buoy (44025 phi) UP+rising appears in ready_tagged (re-verify only)",
-          "44025:phi" in tag_keys)
-    check("tagged buoy (44025 phi) EXCLUDED from ready_pending / ready_json / set-key",
-          "44025:phi" not in pend_keys)
+    check("VALID buoy + swell event + ACCUMULATING → FLAGGED (box/44097)", by[("44097", "box")]["flag"] is True)
+    check("MARGINAL buoy + swell event + ACCUMULATING → FLAGGED (phi/44025)", by[("44025", "phi")]["flag"] is True)
+    # THE issue-#58 fix: high-range but swell-POOR seas do NOT flag anymore
+    for bid, wfo in [("44095", "mhx"), ("41025", "mhx"), ("41108", "ilm"), ("41110", "ilm")]:
+        check(f"#58 swell-poor chop NOT flagged ({wfo}/{bid})", by[(bid, wfo)]["flag"] is False)
+    check("RETIRED buoy 44098 NEVER flagged even with a real swell (box)", by[("44098", "box")]["flag"] is False)
+    check("RETIRED buoy 44098 NEVER flagged even with a real swell (gyx)", by[("44098", "gyx")]["flag"] is False)
+    check("STRUCTURALLY INVALID buoy NOT flagged (box/44013)", by[("44013", "box")]["flag"] is False)
+    check("settled rolling PASS NOT nagged (phi/44091 has event but PASS)", by[("44091", "phi")]["flag"] is False)
+    check("DOWN buoy NOT flagged (phi/44009)", by[("44009", "phi")]["flag"] is False and by[("44009", "phi")]["up"] is False)
+    check("exactly the two usable+ACCUMULATING zones are flagged", flagged == {"box/44097", "phi/44025"})
+    # retired / invalid never leak into flagged_json (the issue set-key)
+    check("retired + invalid excluded from flagged_json", not (flagged & {"box/44098", "gyx/44098", "box/44013"}))
+    # lazy fetch discipline: pairing/rolling are only consulted once a swell event exists (cost control)
+    calls = {"pair": 0, "roll": 0}
+    def _p(bid): calls["pair"] += 1; return pairing.get(bid, "VALID REFERENCE")
+    def _r(wfo, bid): calls["roll"] += 1; return rolling.get(bid, {"n_events": 1, "verdict": "ACCUMULATING"})
+    evaluate(watch, up, swell_fn, _p, _r, retired, now=datetime(2026, 7, 3, tzinfo=timezone.utc))
+    check("pairing_fn called only for UP+event+not-retired buoys (no wasted fetches)", calls["pair"] == 4)
+    check("rolling_fn called only after a usable pairing (no wasted fetches)", calls["roll"] == 3)
 
     print("\nself-test:",
-          f"ALL PASS — ready = UP and 24h Hs range >= {READY_HS_RANGE_M} m; UP alone never triggers."
+          "ALL PASS — swell-event trigger; #58 chop excluded; invalid/retired never flag; PASS not nagged."
           if ok else "FAILURES")
     return 0 if ok else 1
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
-    ap.add_argument("--selftest", action="store_true", help="offline fixture test (no network)")
+    ap.add_argument("--selftest", action="store_true", help="offline fixture test (no third-party deps)")
     a = ap.parse_args(argv)
     return _selftest() if a.selftest else run()
 
