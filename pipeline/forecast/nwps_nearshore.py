@@ -132,10 +132,11 @@ _HERE = Path(__file__).resolve()
 _ROOT = _HERE.parents[2]
 SCRIPTS_DIR = _ROOT / "scripts"
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
-# The NWPS assignment records apply_nwps_assignments reads: trust_by_buoy (the HEIGHT gate that
-# controls tagging) + spots + direction_reference (the DIRECTION trust-reference disposition, incl.
-# zones whose direction pairing has been RETIRED to the height+raycast tier). The gate reads
-# direction_reference to report a retired zone as retired-by-design, not a failure. Read-only here.
+# The NWPS assignment records apply_nwps_assignments reads: trust_by_buoy (the HEIGHT-tagging gate
+# that controls whether a spot consumes NWPS) + spots + buoy_reference (the BUOY trust-CHECK
+# disposition, incl. zones whose buoy has been RETIRED as a reference — for 44098, on BOTH axes,
+# because it is structurally invalid). The gate reads buoy_reference to report a retired zone as
+# retired-by-design and to run NO buoy comparison against an invalid reference. Read-only here.
 NWPS_ASSIGNMENTS = SCRIPTS_DIR / "nwps_okx_assignments.json"
 # --validate writes a per-region diagnostic dump, scripts/nwps_{wfo}_validate_out.json
 # (computed per run in validate_batch) — NOT the apply input.
@@ -1686,17 +1687,19 @@ def _print_trust_diag(buoy_id, blat, blng, res):
               "means the SPECTRAL READER is wrong, not the model)")
 
 
-def _retired_direction_zones():
-    """{(wfo, buoy): record} for zones whose DIRECTION trust-reference has been RETIRED by design —
-    read from the assignment file's direction_reference.retired (NOT spots_enriched.json). These
-    keep NWPS height + raycast direction; the gate reports them as retired-by-design, not a failure
-    or a forgotten assignment. Read-only; {} if the file / section is absent or unparseable."""
+def _retired_reference_zones():
+    """{(wfo, buoy): record} for zones whose BUOY trust-CHECK has been RETIRED by design — read
+    from the assignment file's buoy_reference.retired (NOT spots_enriched.json). The record's
+    'axes' lists which axes are retired (['height', 'direction'] for a structurally-invalid
+    reference like 44098). These zones KEEP consuming NWPS height + raycast direction; the gate
+    reports them as retired-by-design and runs NO buoy comparison against an invalid reference.
+    Read-only; {} if the file / section is absent or unparseable."""
     try:
         doc = json.loads(NWPS_ASSIGNMENTS.read_text())
     except (OSError, ValueError):
         return {}
     out = {}
-    for r in ((doc.get("direction_reference") or {}).get("retired") or []):
+    for r in ((doc.get("buoy_reference") or {}).get("retired") or []):
         if r.get("wfo") and r.get("buoy") is not None:
             out[(r["wfo"], str(r["buoy"]))] = r
     return out
@@ -1745,28 +1748,27 @@ def reverify_tagged(n_cycles=4):
     print(f"  {'wfo/buoy':<11} {'sp':>3} {'tier':<9} {'HEIGHT':<11} {'dirW cs/bias':>14} "
           f"{'(unwtd)':>12} {'ev':>3} {'ROLLING':<13}")
     flagged = []
-    retired = _retired_direction_zones()
+    retired = _retired_reference_zones()
     for wfo, buoy, nspots in zones:
         tag = f"{wfo}/{buoy}"
         counts, tier = _zone_tiers(wfo, buoy)
         tier_s = tier + (f"×{counts.get(tier)}" if len(counts) > 1 else "")
-        rec = retired.get((wfo, str(buoy)))   # DIRECTION retired by design → report, don't flag
+        if (wfo, str(buoy)) in retired:
+            # BUOY retired on both axes — do NOT run ANY comparison against an invalid reference
+            # (no height r, no direction verdict); these spots ride NWPS height + raycast, unverified.
+            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} RETIRED BOTH AXES — no valid buoy; "
+                  "rides NWPS height + raycast direction (unverified)")
+            continue
         try:
             blat, blng = _buoy_latlng(buoy)
             res = trust_check(wfo, buoy, blat, blng, n_cycles=n_cycles, tier=tier)
         except Exception as e:  # noqa: BLE001
-            note = "DIRECTION retired → height+raycast (by design)" if rec else "run on the Mac"
-            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {'SKIP':<11} — {note} ({type(e).__name__})")
+            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {'SKIP':<11} — run on the Mac ({type(e).__name__})")
             continue
 
         def _f(x, s):
             return (s % x) if isinstance(x, (int, float)) and x == x else "—"
         hv = res["verdict"] + (f"(r={res['height_r']:.2f})" if res.get("height_r") == res.get("height_r") else "")
-        if rec:   # HEIGHT still gates + shown; DIRECTION is retired by design — no dir flag / rolling
-            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {hv:<11} DIRECTION retired → height+raycast (by design)")
-            if res["verdict"] == "FAIL":   # retirement is direction-only; a HEIGHT failure still matters
-                flagged.append(f"{tag} ({nspots} sp): HEIGHT {res['verdict']} — {res.get('reason') or ''} (direction retired by design)")
-            continue
         append_trust_history(wfo, buoy, res.get("records") or [])
         roll = rolling_trust_verdict(load_trust_history(wfo, buoy, days=TRUST_ROLLING_DAYS[0]), tier=tier)
         dw = f"{_f(res.get('dir_circ_std_w'), '%.0f')}/{_f(res.get('dir_bias_w'), '%+.0f')}"
@@ -1781,7 +1783,8 @@ def reverify_tagged(n_cycles=4):
     print("  energy-weighted residual exceeds the zone's strictest-spot tier; ROLLING is the verdict")
     print("  that matters — it needs TRUST_MIN_EVENTS independent swell events before PASS/FAIL.")
     if retired:
-        print("  DIRECTION-retired zones (no valid reference → height+raycast tier BY DESIGN, not a failure):")
+        print("  RETIRED-BY-DESIGN zones (buoy invalid on BOTH axes → no buoy check; ride NWPS height +")
+        print("  raycast direction, unverified — NOT a failure, and NOT in the failing-zones list below):")
         for (w, b), r in sorted(retired.items()):
             print(f"    • {w}/{b} ({r.get('spots','?')} sp): {r.get('reason', '')}")
     if flagged:
@@ -1981,13 +1984,15 @@ def pairing_audit():
         print("no tagged nwps zones found in spots_enriched.json.")
         return 0
     print("=== BUOY PAIRING AUDIT — is each zone's buoy a valid directional reference? (READ-ONLY) ===")
-    retired = _retired_direction_zones()
+    retired = _retired_reference_zones()
+    latent = []   # task-4 guard: STRUCTURALLY INVALID buoys still trust-gated (not retired)
     for wfo, buoy, nspots in zones:
         rec = retired.get((wfo, str(buoy)))
         if rec:   # disposition recorded in the assignment file → report it as deliberate, not a failure
-            print(f"\n  {wfo}/{buoy} ({nspots} spots): DIRECTION — no valid reference → height+raycast tier (BY DESIGN)")
+            axes = "+".join(rec.get("axes") or ["direction"])
+            print(f"\n  {wfo}/{buoy} ({nspots} spots): RETIRED BY DESIGN (both axes: {axes}) — no valid buoy reference")
             print(f"      · {rec.get('reason')}")
-            print("      · HEIGHT stays NWPS; only the swell-DIRECTION trust-reference is retired (deliberate, not a bug)")
+            print("      · rides NWPS height + raycast direction, UNVERIFIED by a buoy; no comparison is run against 44098")
             continue
         meta = _ndbc_station_meta(buoy)
         verdict, reasons = _score_pairing(meta)
@@ -1996,9 +2001,21 @@ def pairing_audit():
             print(f"      · {r}")
         if not reasons:
             print("      · no structural red flags in the known metadata (confirm payload/depth on the Mac)")
-    print("\n  RETIRED BY DESIGN = the buoy is structurally invalid as a directional reference AND no valid")
-    print("  nearshore alternative exists (--find-buoy); the zone deliberately stays on height+raycast.")
-    print("  STRUCTURALLY INVALID (not yet retired) = same instrument problem, disposition not yet recorded.")
+        if verdict == "STRUCTURALLY INVALID":
+            latent.append(f"{wfo}/{buoy} ({nspots} sp)")
+    # GUARD (task 4): a STRUCTURALLY INVALID buoy that is NOT retired is still being trust-gated against
+    # an invalid reference — the exact inconsistency the 44098 retirement removed. Surface any second copy.
+    if latent:
+        print("\n  ⚠ INCONSISTENCY — these zones' buoy scores STRUCTURALLY INVALID but is NOT retired (still")
+        print("    trust-gated against an invalid reference). Retire them both-axes like 44098:")
+        for z in latent:
+            print(f"      • {z}")
+    else:
+        print("\n  ✓ consistency: every tagged zone either has a usable (VALID/MARGINAL) buoy or is RETIRED —")
+        print("    no zone is trust-gated against a STRUCTURALLY INVALID buoy (44098 was the only one; both")
+        print("    its zones are retired on both axes).")
+    print("\n  RETIRED BY DESIGN = the buoy is structurally invalid as a reference on BOTH axes AND no valid")
+    print("  nearshore alternative exists (--find-buoy); the zone rides NWPS height + raycast, unverified.")
     print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched.)")
     return 0
 
