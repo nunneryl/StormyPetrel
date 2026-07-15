@@ -163,7 +163,7 @@
       "localism"
     ],
     "tide_preference_confidence": 0.65,
-    "nwps_wfo": "lox",
+    "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -629,7 +629,7 @@
       "sharks"
     ],
     "tide_preference_confidence": 0.65,
-    "nwps_wfo": "mtr",
+    "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -2639,7 +2639,7 @@
       "reef"
     ],
     "tide_preference_confidence": 0.5,
-    "nwps_wfo": "mtr",
+    "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -6800,7 +6800,7 @@
       "cold_water"
     ],
     "tide_preference_confidence": 0.5,
-    "nwps_wfo": "eka",
+    "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -7652,7 +7652,7 @@
       "localism"
     ],
     "tide_preference_confidence": 0.6,
-    "nwps_wfo": "mtr",
+    "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
