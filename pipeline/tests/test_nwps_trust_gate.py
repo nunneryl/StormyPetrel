@@ -14,6 +14,8 @@ Run: python -m pipeline.tests.test_nwps_trust_gate   (or pytest)
 """
 from __future__ import annotations
 
+import json
+
 import numpy as np
 
 from pipeline.forecast import nwps_nearshore as nn
@@ -458,6 +460,29 @@ def test_resolve_find_target():
         except ValueError:
             raised = True
         assert raised, f"expected ValueError (honest, not a guess) for {args}"
+
+
+def test_retired_direction_zones_parsing(tmp_path, monkeypatch):
+    f = tmp_path / "assign.json"
+    f.write_text(json.dumps({
+        "trust_by_buoy": {"44098": "PASS"},   # HEIGHT gate stays PASS — retirement is direction-only
+        "spots": [],
+        "direction_reference": {"retired": [
+            {"zone": "box/44098", "wfo": "box", "buoy": "44098", "spots": 3,
+             "direction_tier": "height+raycast", "reason": "deep bank; no valid nearshore buoy"},
+            {"zone": "gyx/44098", "wfo": "gyx", "buoy": "44098", "spots": 11, "reason": "same geography"},
+        ]},
+    }))
+    monkeypatch.setattr(nn, "NWPS_ASSIGNMENTS", f)
+    r = nn._retired_direction_zones()
+    assert set(r.keys()) == {("box", "44098"), ("gyx", "44098")}
+    assert r[("box", "44098")]["spots"] == 3 and "deep bank" in r[("box", "44098")]["reason"]
+    # a missing file / missing section → {} (never raises; a zone is simply "not retired")
+    monkeypatch.setattr(nn, "NWPS_ASSIGNMENTS", tmp_path / "does_not_exist.json")
+    assert nn._retired_direction_zones() == {}
+    f.write_text(json.dumps({"trust_by_buoy": {}, "spots": []}))   # no direction_reference section
+    monkeypatch.setattr(nn, "NWPS_ASSIGNMENTS", f)
+    assert nn._retired_direction_zones() == {}
 
 
 def _run_all():

@@ -1062,5 +1062,28 @@
     "44098": "PASS"
   },
   "trust_buoy": "44025+44065",
-  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43."
+  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43. | trust_by_buoy is the HEIGHT gate (controls tagging); DIRECTION trust-reference is governed by direction_reference below. box/44098 (3) + gyx/44098 (11): DIRECTION pairing RETIRED — 44098 structurally invalid (76 m offshore bank vs shallow nearshore node), no valid nearshore directional buoy within 150 km (GoM shelf deep to the coast); height stays NWPS, direction from raycast.",
+  "direction_reference": {
+    "_comment": "DIRECTION trust-reference disposition, SEPARATE from trust_by_buoy (the HEIGHT gate apply_nwps_assignments reads to decide tagging). A zone under 'retired' KEEPS its NWPS height (its buoy stays PASS in trust_by_buoy) and its raycast swell-window geometry; it simply has NO NWPS swell-DIRECTION trust-tag because no valid nearshore directional buoy exists to earn one. This block is inert to apply_nwps_assignments (which reads only trust_by_buoy + spots), so recording a retirement here changes NO tagging.",
+    "retired": [
+      {
+        "zone": "box/44098",
+        "wfo": "box",
+        "buoy": "44098",
+        "spots": 3,
+        "direction_tier": "height+raycast",
+        "reason": "44098 STRUCTURALLY INVALID — 76 m offshore bank vs shallow nearshore node; no valid nearshore directional buoy within 150 km (Gulf of Maine shelf is deep to the coast — a permanent geographic fact, not a transient outage). Height stays NWPS (r≈0.87); direction from raycast.",
+        "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore directional reference (least-bad 44007 Portland 49 m 3-m discus — MARGINAL, not used)."
+      },
+      {
+        "zone": "gyx/44098",
+        "wfo": "gyx",
+        "buoy": "44098",
+        "spots": 11,
+        "direction_tier": "height+raycast",
+        "reason": "44098 STRUCTURALLY INVALID — 76 m offshore bank vs shallow nearshore node; no valid nearshore directional buoy within 150 km (Gulf of Maine shelf is deep to the coast — a permanent geographic fact, not a transient outage). Height stays NWPS (r≈0.87); direction from raycast.",
+        "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore directional reference (least-bad 44007 Portland 49 m 3-m discus — MARGINAL, not used)."
+      }
+    ]
+  }
 }
