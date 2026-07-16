@@ -1,0 +1,462 @@
+{
+  "_comment": "mtr --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "mtr",
+  "spots": [
+    {
+      "slug": "davenport-landing",
+      "name": "Davenport Landing",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.00829,
+      "nwps_node_lng": -122.225,
+      "nwps_node_distance_m": 2332,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "new-brighton-reef",
+      "name": "New Brighton Reef",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 2016,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "toes-over",
+      "name": "Toes Over",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 956,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "cowell-s-beach-children-s-surfing-area",
+      "name": "Cowell's Beach Children's Surfing Area",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325,
+      "nwps_node_distance_m": 2323,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "the-hook",
+      "name": "The Hook",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 1348,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "38th-avenue",
+      "name": "38th Avenue",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 1532,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "second-peak",
+      "name": "Second Peak",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1782,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "first-peak",
+      "name": "First Peak",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1661,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "wind-and-sea",
+      "name": "Wind and Sea",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1504,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pleasure-point",
+      "name": "Pleasure Point",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1582,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sewer-peak",
+      "name": "Sewer Peak",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1496,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "steamer-lane",
+      "name": "Steamer Lane",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325,
+      "nwps_node_distance_m": 1359,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mitchell-s-cove",
+      "name": "Mitchell's Cove",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325,
+      "nwps_node_distance_m": 1346,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "natural-bridges",
+      "name": "Natural Bridges",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.06,
+      "nwps_node_distance_m": 894,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "manresa-state-beach",
+      "name": "Manresa State Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.91803,
+      "nwps_node_lng": -121.8675,
+      "nwps_node_distance_m": 1059,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "moss-landing",
+      "name": "Moss Landing",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.8052,
+      "nwps_node_lng": -121.8125,
+      "nwps_node_distance_m": 1921,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "marina-state-beach",
+      "name": "Marina State Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.71494,
+      "nwps_node_lng": -121.8125,
+      "nwps_node_distance_m": 1767,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "boneyard",
+      "name": "Boneyard",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.64725,
+      "nwps_node_lng": -121.9225,
+      "nwps_node_distance_m": 1190,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "lovers-point",
+      "name": "Lovers Point",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.62468,
+      "nwps_node_lng": -121.895,
+      "nwps_node_distance_m": 1785,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "waddell-creek",
+      "name": "Waddell Creek",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2297,
+      "nwps_node_lat": 37.07598,
+      "nwps_node_lng": -122.28
+    },
+    {
+      "slug": "davenport-landing",
+      "name": "Davenport Landing",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2332,
+      "nwps_node_lat": 37.00829,
+      "nwps_node_lng": -122.225
+    },
+    {
+      "slug": "new-brighton-reef",
+      "name": "New Brighton Reef",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2016,
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95
+    },
+    {
+      "slug": "toes-over",
+      "name": "Toes Over",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 956,
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95
+    },
+    {
+      "slug": "4-mile",
+      "name": "4 Mile",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1786,
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -122.1425
+    },
+    {
+      "slug": "3-mile",
+      "name": "3 Mile",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2307,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.115
+    },
+    {
+      "slug": "cowell-s-beach-children-s-surfing-area",
+      "name": "Cowell's Beach Children's Surfing Area",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2323,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325
+    },
+    {
+      "slug": "the-hook",
+      "name": "The Hook",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1348,
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95
+    },
+    {
+      "slug": "38th-avenue",
+      "name": "38th Avenue",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1532,
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95
+    },
+    {
+      "slug": "second-peak",
+      "name": "Second Peak",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1782,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775
+    },
+    {
+      "slug": "first-peak",
+      "name": "First Peak",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1661,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775
+    },
+    {
+      "slug": "wind-and-sea",
+      "name": "Wind and Sea",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1504,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775
+    },
+    {
+      "slug": "pleasure-point",
+      "name": "Pleasure Point",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1582,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775
+    },
+    {
+      "slug": "sewer-peak",
+      "name": "Sewer Peak",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1496,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775
+    },
+    {
+      "slug": "steamer-lane",
+      "name": "Steamer Lane",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1359,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325
+    },
+    {
+      "slug": "mitchell-s-cove",
+      "name": "Mitchell's Cove",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1346,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325
+    },
+    {
+      "slug": "natural-bridges",
+      "name": "Natural Bridges",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 894,
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.06
+    },
+    {
+      "slug": "manresa-state-beach",
+      "name": "Manresa State Beach",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1059,
+      "nwps_node_lat": 36.91803,
+      "nwps_node_lng": -121.8675
+    },
+    {
+      "slug": "moss-landing",
+      "name": "Moss Landing",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1921,
+      "nwps_node_lat": 36.8052,
+      "nwps_node_lng": -121.8125
+    },
+    {
+      "slug": "marina-state-beach",
+      "name": "Marina State Beach",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1767,
+      "nwps_node_lat": 36.71494,
+      "nwps_node_lng": -121.8125
+    },
+    {
+      "slug": "boneyard",
+      "name": "Boneyard",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1190,
+      "nwps_node_lat": 36.64725,
+      "nwps_node_lng": -121.9225
+    },
+    {
+      "slug": "lovers-point",
+      "name": "Lovers Point",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1785,
+      "nwps_node_lat": 36.62468,
+      "nwps_node_lng": -121.895
+    },
+    {
+      "slug": "monterey-beach",
+      "name": "Monterey Beach",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2669,
+      "nwps_node_lat": 36.62468,
+      "nwps_node_lng": -121.895
+    },
+    {
+      "slug": "carmel-beach",
+      "name": "Carmel Beach",
+      "nwps_wfo": "mtr",
+      "grid_wfo": "mtr",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1831,
+      "nwps_node_lat": 36.55699,
+      "nwps_node_lng": -121.95
+    }
+  ]
+}

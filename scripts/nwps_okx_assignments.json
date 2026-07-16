@@ -1050,6 +1050,246 @@
       "nwps_node_lng": -70.56172,
       "nwps_node_distance_m": 2338,
       "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "waddell-creek",
+      "name": "Waddell Creek",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.07598,
+      "nwps_node_lng": -122.28,
+      "nwps_node_distance_m": 2297,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "davenport-landing",
+      "name": "Davenport Landing",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.00829,
+      "nwps_node_lng": -122.225,
+      "nwps_node_distance_m": 2332,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "new-brighton-reef",
+      "name": "New Brighton Reef",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 2016,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "toes-over",
+      "name": "Toes Over",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 956,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "4-mile",
+      "name": "4 Mile",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -122.1425,
+      "nwps_node_distance_m": 1786,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "3-mile",
+      "name": "3 Mile",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.115,
+      "nwps_node_distance_m": 2307,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "cowell-s-beach-children-s-surfing-area",
+      "name": "Cowell's Beach Children's Surfing Area",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325,
+      "nwps_node_distance_m": 2323,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "the-hook",
+      "name": "The Hook",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 1348,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "38th-avenue",
+      "name": "38th Avenue",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.96316,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 1532,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "second-peak",
+      "name": "Second Peak",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1782,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "first-peak",
+      "name": "First Peak",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1661,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "wind-and-sea",
+      "name": "Wind and Sea",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1504,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "pleasure-point",
+      "name": "Pleasure Point",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1582,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "sewer-peak",
+      "name": "Sewer Peak",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -121.9775,
+      "nwps_node_distance_m": 1496,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "steamer-lane",
+      "name": "Steamer Lane",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325,
+      "nwps_node_distance_m": 1359,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "mitchell-s-cove",
+      "name": "Mitchell's Cove",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.0325,
+      "nwps_node_distance_m": 1346,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "natural-bridges",
+      "name": "Natural Bridges",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.94059,
+      "nwps_node_lng": -122.06,
+      "nwps_node_distance_m": 894,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "manresa-state-beach",
+      "name": "Manresa State Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.91803,
+      "nwps_node_lng": -121.8675,
+      "nwps_node_distance_m": 1059,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "moss-landing",
+      "name": "Moss Landing",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.8052,
+      "nwps_node_lng": -121.8125,
+      "nwps_node_distance_m": 1921,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "marina-state-beach",
+      "name": "Marina State Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.71494,
+      "nwps_node_lng": -121.8125,
+      "nwps_node_distance_m": 1767,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "boneyard",
+      "name": "Boneyard",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.64725,
+      "nwps_node_lng": -121.9225,
+      "nwps_node_distance_m": 1190,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "lovers-point",
+      "name": "Lovers Point",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.62468,
+      "nwps_node_lng": -121.895,
+      "nwps_node_distance_m": 1785,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "monterey-beach",
+      "name": "Monterey Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.62468,
+      "nwps_node_lng": -121.895,
+      "nwps_node_distance_m": 2669,
+      "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "carmel-beach",
+      "name": "Carmel Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.55699,
+      "nwps_node_lng": -121.95,
+      "nwps_node_distance_m": 1831,
+      "nwps_buoy_id": "46240"
     }
   ],
   "held": [],
@@ -1071,7 +1311,10 @@
         "wfo": "box",
         "buoy": "44098",
         "spots": 3,
-        "axes": ["height", "direction"],
+        "axes": [
+          "height",
+          "direction"
+        ],
         "tier": "NWPS height + raycast direction (unverified by buoy)",
         "reason": "44098 STRUCTURALLY INVALID as a buoy reference on BOTH axes — 76 m offshore bank vs shallow nearshore node; regime mismatch (shoaling/breaking/sheltering) makes both height AND direction comparison invalid; no valid nearshore reference within 150 km (GoM shelf deep to coast — permanent). These spots ride NWPS height skill + raycast direction, UNVERIFIED by an independent buoy — same disposition as any spot with no nearby buoy.",
         "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore reference on either axis (least-bad 44007 Portland 49 m 3-m discus — MARGINAL). Live height r against 44098 swung 0.87/INCONCLUSIVE/0.52 across windows — the deep-bank-vs-nearshore regime mismatch, not NWPS error."
@@ -1081,7 +1324,10 @@
         "wfo": "gyx",
         "buoy": "44098",
         "spots": 11,
-        "axes": ["height", "direction"],
+        "axes": [
+          "height",
+          "direction"
+        ],
         "tier": "NWPS height + raycast direction (unverified by buoy)",
         "reason": "44098 STRUCTURALLY INVALID as a buoy reference on BOTH axes — 76 m offshore bank vs shallow nearshore node; regime mismatch (shoaling/breaking/sheltering) makes both height AND direction comparison invalid; no valid nearshore reference within 150 km (GoM shelf deep to coast — permanent). These spots ride NWPS height skill + raycast direction, UNVERIFIED by an independent buoy — same disposition as any spot with no nearby buoy.",
         "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore reference on either axis (least-bad 44007 Portland 49 m 3-m discus — MARGINAL). Live height r against 44098 swung 0.87/INCONCLUSIVE/0.52 across windows — the deep-bank-vs-nearshore regime mismatch, not NWPS error."
@@ -1093,15 +1339,36 @@
         "wfo": "mtr",
         "buoy": "46240",
         "reference": "46240 — Cabrillo Point nearshore Waverider (18 m); a VALID nearshore directional reference",
-        "axes_pending": ["direction"],
+        "axes_pending": [
+          "direction"
+        ],
         "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46240 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists (distinct from the 44098 both-axes retirement).",
         "spots": 24,
         "slugs": [
-          "waddell-creek", "davenport-landing", "new-brighton-reef", "toes-over", "4-mile", "3-mile",
-          "cowell-s-beach-children-s-surfing-area", "the-hook", "38th-avenue", "second-peak", "first-peak",
-          "wind-and-sea", "pleasure-point", "sewer-peak", "steamer-lane", "mitchell-s-cove",
-          "natural-bridges", "manresa-state-beach", "moss-landing", "marina-state-beach", "boneyard",
-          "lovers-point", "monterey-beach", "carmel-beach"
+          "waddell-creek",
+          "davenport-landing",
+          "new-brighton-reef",
+          "toes-over",
+          "4-mile",
+          "3-mile",
+          "cowell-s-beach-children-s-surfing-area",
+          "the-hook",
+          "38th-avenue",
+          "second-peak",
+          "first-peak",
+          "wind-and-sea",
+          "pleasure-point",
+          "sewer-peak",
+          "steamer-lane",
+          "mitchell-s-cove",
+          "natural-bridges",
+          "manresa-state-beach",
+          "moss-landing",
+          "marina-state-beach",
+          "boneyard",
+          "lovers-point",
+          "monterey-beach",
+          "carmel-beach"
         ],
         "to_place": "This record alone tags NOTHING. To place these on NWPS height: (1) run `--validate --wfo mtr` on the Mac to compute each spot's nwps_node_lat/lng/distance, (2) promote them into 'spots' with nwps_buoy_id 46240, (3) set trust_by_buoy['46240']='PASS' (the HEIGHT-tagging gate apply_nwps_assignments requires — with 46240 absent from trust_by_buoy the 24 are HELD, not placed). Direction remains pending here until --trustcheck settles the rolling verdict to PASS."
       }
