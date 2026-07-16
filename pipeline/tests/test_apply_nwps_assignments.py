@@ -140,6 +140,40 @@ def test_promotion_includes_ok_and_offwin_and_end_to_end_pending():
     assert all(r["direction_status"] == "pending" for r in rows), "promoted spots place via the pending path"
 
 
+def test_promotion_two_pass_merge_does_not_clobber():
+    # deliverable (b): two sequential promote runs (46284 batch, then 46237 batch) MERGE — the
+    # second run adds its slugs and never overwrites the first run's, and --slugs restricts a run
+    # to its own batch even if the validate-out contains extras.
+    pv = _load_promote()
+    vout1 = {"grid_wfo": "mtr", "spots": [], "outcomes": [
+        {"slug": "pigeon-point", "name": "Pigeon Point", "outcome": "OK",
+         "nwps_node_lat": 37.18, "nwps_node_lng": -122.39, "nwps_node_distance_m": 900},
+        {"slug": "scotts-creek", "name": "Scotts Creek", "outcome": "OFFWIN",
+         "nwps_node_lat": 37.04, "nwps_node_lng": -122.23, "nwps_node_distance_m": 1000},
+        {"slug": "some-other", "name": "Other", "outcome": "OK",   # extra in the file → excluded by --slugs
+         "nwps_node_lat": 36.0, "nwps_node_lng": -121.0, "nwps_node_distance_m": 500}]}
+    doc = _doc(spots=[], pending=[{"wfo": "mtr", "buoy": "46284"}, {"wfo": "mtr", "buoy": "46237"}])
+    p1, _ = pv.build_promotions(vout1, "46284", only_slugs={"pigeon-point", "scotts-creek"})
+    a1, r1 = pv.merge_into_assignments(doc, p1)
+    assert a1 == 2 and r1 == 0 and {s["slug"] for s in doc["spots"]} == {"pigeon-point", "scotts-creek"}
+    assert all(s["nwps_buoy_id"] == "46284" for s in doc["spots"]), "--slugs kept only the 46284 batch"
+    # run 2: file re-validated for the 46237 batch (different slugs) → merge ADDS, no clobber
+    vout2 = {"grid_wfo": "mtr", "spots": [], "outcomes": [
+        {"slug": "jenner-beach", "name": "Jenner Beach", "outcome": "OK",
+         "nwps_node_lat": 38.45, "nwps_node_lng": -123.13, "nwps_node_distance_m": 2090},
+        {"slug": "half-moon-bay", "name": "Half Moon Bay", "outcome": "OFFWIN",
+         "nwps_node_lat": 37.50, "nwps_node_lng": -122.48, "nwps_node_distance_m": 1920}]}
+    p2, _ = pv.build_promotions(vout2, "46237")
+    a2, r2 = pv.merge_into_assignments(doc, p2)
+    assert a2 == 2 and r2 == 0, "run 2 MERGES (adds) — does not overwrite run 1"
+    buoy = {s["slug"]: s["nwps_buoy_id"] for s in doc["spots"]}
+    assert set(buoy) == {"pigeon-point", "scotts-creek", "jenner-beach", "half-moon-bay"}
+    assert buoy["pigeon-point"] == "46284" and buoy["jenner-beach"] == "46237", "each batch kept its buoy"
+    # idempotent: re-promoting an existing slug REPLACES, never duplicates
+    a3, r3 = pv.merge_into_assignments(doc, p1)
+    assert a3 == 0 and r3 == 2 and len(doc["spots"]) == 4
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

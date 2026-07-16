@@ -89,14 +89,18 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--validate-out", required=True, help="scripts/nwps_{wfo}_validate_out.json")
     ap.add_argument("--buoy", required=True, help="reference buoy id (nwps_buoy_id) for these spots")
+    ap.add_argument("--slugs", default=None,
+                    help="comma-separated slugs to restrict this run to (so one --buoy batch never "
+                         "picks up other spots that happen to be in the validate-out). Default: all placeable.")
     ap.add_argument("--apply", action="store_true", help="write the assignments JSON (default: dry run)")
     a = ap.parse_args(argv)
     if not os.path.exists(a.validate_out):
         print(f"error: missing {a.validate_out} — run `nwps_nearshore --validate --wfo <wfo>` on the "
               "Mac and commit the output first", file=sys.stderr)
         return 2
+    only_slugs = {s.strip() for s in a.slugs.split(",") if s.strip()} if a.slugs else None
     validate_out = json.loads(open(a.validate_out).read())
-    proms, skipped = build_promotions(validate_out, a.buoy)
+    proms, skipped = build_promotions(validate_out, a.buoy, only_slugs=only_slugs)
 
     raw = open(ASSIGNMENTS).read()
     doc = json.loads(raw)
