@@ -16306,7 +16306,7 @@
     "nwps_node_lng": -70.62266,
     "nwps_node_distance_m": 2195,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Old Orchard Beach",
@@ -16743,7 +16743,7 @@
     "nwps_node_lng": -70.6276,
     "nwps_node_distance_m": 222,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Horseneck Beach",
@@ -17090,7 +17090,7 @@
     "nwps_node_lng": -70.79351,
     "nwps_node_distance_m": 1128,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Frankfort Beach",
@@ -17540,7 +17540,7 @@
     "nwps_node_lng": -70.80547,
     "nwps_node_distance_m": 1191,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Jenness Beach",
@@ -17594,7 +17594,7 @@
     "nwps_node_lng": -70.74453,
     "nwps_node_distance_m": 1284,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "North Beach Rye",
@@ -17647,7 +17647,7 @@
     "nwps_node_lng": -70.74453,
     "nwps_node_distance_m": 1838,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "The Wall Hampton",
@@ -17700,7 +17700,7 @@
     "nwps_node_lng": -70.775,
     "nwps_node_distance_m": 2069,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Asbury Park",
@@ -34527,7 +34527,7 @@
     "nwps_node_lng": -70.79351,
     "nwps_node_distance_m": 1946,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Costellos",
@@ -34563,7 +34563,7 @@
     "nwps_node_lng": -70.775,
     "nwps_node_distance_m": 1748,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Fox Hill",
@@ -34599,7 +34599,7 @@
     "nwps_node_lng": -70.74453,
     "nwps_node_distance_m": 1882,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Straws Point",
@@ -34635,7 +34635,7 @@
     "nwps_node_lng": -70.74453,
     "nwps_node_distance_m": 676,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Pirates Cove",
@@ -34671,7 +34671,7 @@
     "nwps_node_lng": -70.71406,
     "nwps_node_distance_m": 1552,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Harbor Beach",
@@ -34707,7 +34707,7 @@
     "nwps_node_lng": -70.62266,
     "nwps_node_distance_m": 1695,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Ogunquit",
@@ -34743,7 +34743,7 @@
     "nwps_node_lng": -70.56172,
     "nwps_node_distance_m": 2338,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "unverifiable"
   },
   {
     "name": "Moody Point",
