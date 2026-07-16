@@ -300,6 +300,53 @@ def test_promotion_no_buoy_sets_null_buoy_id_and_places_unverifiable():
     assert rows[0]["direction_status"] == "unverifiable" and rows[0]["fields"]["nwps_buoy_id"] is None
 
 
+def test_promotion_wfo_override_keeps_grid_crossing_label():
+    # --wfo override: a spot validated on the lox grid (grid_wfo=lox) but promoted with wfo_override=
+    # "mtr" keeps nwps_wfo="mtr" (the grid-crossing SLO/Pismo case) while taking the lox-grid node.
+    pv = _load_promote()
+    vout_lox = {"grid_wfo": "lox", "spots": [], "outcomes": [
+        {"slug": "pismo-beach-pier", "name": "Pismo Beach Pier", "outcome": "OK",
+         "nwps_node_lat": 35.14, "nwps_node_lng": -120.64, "nwps_node_distance_m": 900}]}
+    proms, _ = pv.build_promotions(vout_lox, "46215", wfo_override="mtr")
+    assert proms[0]["nwps_wfo"] == "mtr", "wfo override keeps the mtr label"
+    assert proms[0]["nwps_buoy_id"] == "46215" and proms[0]["nwps_node_lat"] == 35.14, "lox-grid node kept"
+    # default (no override) still uses grid_wfo
+    proms2, _ = pv.build_promotions(vout_lox, "46215")
+    assert proms2[0]["nwps_wfo"] == "lox", "without override, nwps_wfo = grid_wfo (unchanged default)"
+
+
+def test_promotion_two_source_files_one_buoy_46215_grid_crossing():
+    # deliverable (b): the 12 SLO spots split across TWO validate-out files but land under ONE buoy
+    # (46215) via merge-by-slug — 8 from mtr validate-out, 4 from lox validate-out (--wfo mtr). All 12
+    # keep nwps_wfo="mtr", so the single (mtr, 46215) pending key places them all as 'pending'.
+    pv = _load_promote()
+    vout_mtr = {"grid_wfo": "mtr", "spots": [], "outcomes": [
+        {"slug": "avila-beach", "name": "Avila Beach", "outcome": "OK",
+         "nwps_node_lat": 35.18, "nwps_node_lng": -120.73, "nwps_node_distance_m": 800},
+        {"slug": "morro-rock", "name": "Morro Rock", "outcome": "OFFWIN",
+         "nwps_node_lat": 35.37, "nwps_node_lng": -120.87, "nwps_node_distance_m": 1100}]}
+    vout_lox = {"grid_wfo": "lox", "spots": [], "outcomes": [
+        {"slug": "shell-beach", "name": "Shell Beach", "outcome": "OK",
+         "nwps_node_lat": 35.15, "nwps_node_lng": -120.67, "nwps_node_distance_m": 950},
+        {"slug": "grover-beach", "name": "Grover Beach", "outcome": "OK",
+         "nwps_node_lat": 35.12, "nwps_node_lng": -120.63, "nwps_node_distance_m": 700}]}
+    doc = _doc(spots=[], pending=[{"zone": "mtr/46215", "wfo": "mtr", "buoy": "46215"}])
+    # pass 1: the mtr-grid batch (grid_wfo=mtr, no override)
+    p1, _ = pv.build_promotions(vout_mtr, "46215")
+    a1, r1 = pv.merge_into_assignments(doc, p1)
+    # pass 2: the lox-grid batch, SAME buoy 46215, --wfo mtr → keeps the mtr label
+    p2, _ = pv.build_promotions(vout_lox, "46215", wfo_override="mtr")
+    a2, r2 = pv.merge_into_assignments(doc, p2)
+    assert (a1, r1, a2, r2) == (2, 0, 2, 0), "two source files MERGE (add), never clobber"
+    assert {s["slug"] for s in doc["spots"]} == {"avila-beach", "morro-rock", "shell-beach", "grover-beach"}
+    assert all(s["nwps_buoy_id"] == "46215" for s in doc["spots"]), "all four land under buoy 46215"
+    assert all(s["nwps_wfo"] == "mtr" for s in doc["spots"]), "all keep nwps_wfo=mtr (label not relabeled to lox)"
+    # the single (mtr, 46215) pending key places all four as 'pending'
+    enr = [{"name": "Avila Beach"}, {"name": "Morro Rock"}, {"name": "Shell Beach"}, {"name": "Grover Beach"}]
+    rows, _, held, *_ = ap.build_plan(doc=doc, enriched=enr)
+    assert len(rows) == 4 and held == [] and all(r["direction_status"] == "pending" for r in rows)
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
