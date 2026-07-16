@@ -117,6 +117,9 @@ def _spot_record(spot: dict) -> dict:
             "verification_confidence": spot.get("verification_confidence"),
             "surf_forecast_url": spot.get("surf_forecast_url"),
             "swell_window_source": spot.get("swell_window_source"),
+            # NWPS swell-DIRECTION provenance: "verified" (buoy trust PASS) vs "pending" (placed on
+            # NWPS height, direction not yet buoy-verified — option B). Absent/None for non-nwps spots.
+            "nwps_direction_status": spot.get("nwps_direction_status"),
             "coord_fix_applied": spot.get("coord_fix_applied", False),
             "sources": spot.get("sources") or {},
         },
