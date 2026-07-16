@@ -55,7 +55,18 @@ log = logging.getLogger("pipeline.forecast.nwps_nearshore")
 RATING_SOURCE = "ww3"          # face_ft shoaling factor — same as the validated chain
 NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/"
 PER_FLOOR_S = 3.0              # period below this = dead/sheltered (back-bay) cell
-FAR_CAP_KM = 3.0              # nearest seaward wet cell beyond this (~2× the 1.82 km spacing) → unplaced
+# FAR placement cap — the max spot→nearest-seaward-wet-cell distance that still counts as
+# in-domain. GRID-AWARE (was a hardcoded 3.0 tuned to okx's 1.82 km grid): per-grid it is
+# max(FAR_CAP_FLOOR_KM, FAR_CAP_MULT × grid node spacing) — see grid_far_cap_km(). The 3.0 floor
+# is the legacy okx cap, so every grid at/finer than ~2 km spacing (okx 1.8, box 2.0, phi, akq)
+# keeps EXACTLY 3.0 (no fine-grid zone changes). Coarser grids (mtr/gyx ≈2.5 km, lox ≈3+ km) get a
+# proportionally wider cap so a legitimate coarse-grid nearshore node isn't rejected as a domain
+# miss. 1.5× is the multiplier the legacy 3.0 already encodes for a ~2 km grid AND the largest that
+# still floors every current fine grid at 3.0 (a literal 2× would widen even okx's 1.8 km grid to
+# 3.6 km — a fine-grid change). A real domain gap (tens of km) stays FAR on every grid.
+FAR_CAP_FLOOR_KM = 3.0        # legacy okx cap = the floor of the grid-aware cap
+FAR_CAP_MULT = 1.5            # cap = max(floor, MULT × grid node spacing)
+FAR_CAP_KM = FAR_CAP_FLOOR_KM  # back-compat: the default cap (fine-grid / no-grid callers + selftest)
 HORIZON_MAX_FH = 144          # CG1 carries f000..f144 hourly (145 steps)
 # Trust-gate thresholds.
 # HEIGHT (unchanged — total-Hs skill is already excellent, r≈0.984 measured): model swh
@@ -183,11 +194,12 @@ def _in_arcs(deg, arcs):
     return False
 
 
-def placement_verdict(dist_km, per, dirpw, arcs):
+def placement_verdict(dist_km, per, dirpw, arcs, far_cap_km=FAR_CAP_FLOOR_KM):
     """OK / FAR / DEAD / OFFWIN for a placed node — the clause-1 replacement.
-    FAR = no seaward wet cell within FAR_CAP_KM; DEAD = period below floor
-    (sheltered); OFFWIN = direction outside the spot's swell window."""
-    if dist_km is None or dist_km > FAR_CAP_KM:
+    FAR = no seaward wet cell within *far_cap_km* (the grid-aware cap from grid_far_cap_km();
+    defaults to the legacy FAR_CAP_FLOOR_KM for fine-grid / no-grid callers + tests); DEAD =
+    period below floor (sheltered); OFFWIN = direction outside the spot's swell window."""
+    if dist_km is None or dist_km > far_cap_km:
         return "FAR"
     if per is None or per != per or per < PER_FLOOR_S:
         return "DEAD"
@@ -198,11 +210,45 @@ def placement_verdict(dist_km, per, dirpw, arcs):
 
 def _is_domain_miss(outcome):
     """Explicit rollup of the placement outcome: True when the spot fell OUTSIDE
-    this WFO's grid domain — FAR (nearest wet cell beyond FAR_CAP_KM) or NO_WET_CELL
+    this WFO's grid domain — FAR (nearest wet cell beyond the grid's far cap) or NO_WET_CELL
     (no water in the grid at all) — so the grid-edge mop-up should retry it on
     another WFO. False for in-domain disqualifiers (DEAD / OFFWIN) and OK. Purely
     derived — it does NOT change how the outcomes themselves are computed."""
     return outcome in ("FAR", "NO_WET_CELL")
+
+
+def grid_spacing_km(cycle):
+    """Nominal node spacing (km) of THIS grid — the mean of the per-axis MEDIAN adjacent-node
+    great-circle distances, taken from the grid's own lat/lon coordinate vectors. NWPS CG1 grids
+    are regular lat/lon, so this is the grid's real resolution (measured: okx≈1.80, box≈1.99,
+    phi≈1.0, akq≈1.80, mtr≈2.48, gyx≈2.49 km; lox is coarser still). Returns 0.0 for a degenerate
+    grid. Pure — reads only cycle['lats']/'lons' (the meshgrid from load_cycle)."""
+    lats = np.asarray(cycle["lats"]); lons = np.asarray(cycle["lons"])
+    if lats.ndim != 2 or lons.ndim != 2:
+        return 0.0
+    lat1d = lats[:, 0]      # meshgrid(indexing="ij"): column 0 varies with i → the latitudes
+    lng1d = lons[0, :]      # row 0 varies with j → the longitudes
+    mid_lat = float(np.median(lat1d)) if lat1d.size else 0.0
+    steps = []
+    if lat1d.size > 1:
+        dlat = float(np.median(np.abs(np.diff(lat1d))))
+        if dlat > 0:
+            steps.append(_haversine_km(mid_lat, 0.0, mid_lat + dlat, 0.0))
+    if lng1d.size > 1:
+        dlng = float(np.median(np.abs(np.diff(lng1d))))
+        if dlng > 0:
+            steps.append(_haversine_km(mid_lat, 0.0, mid_lat, dlng))
+    return sum(steps) / len(steps) if steps else 0.0
+
+
+def grid_far_cap_km(cycle):
+    """Per-grid FAR placement cap = max(FAR_CAP_FLOOR_KM, FAR_CAP_MULT × grid_spacing_km(cycle)).
+    Fine grids (spacing ≤ FAR_CAP_FLOOR_KM/FAR_CAP_MULT = 2.0 km: okx, box, phi, akq) floor to the
+    legacy 3.0 km; coarser grids widen proportionally (mtr/gyx ≈2.5 km → ≈3.7; lox ≈3+ km → ≈4.5+)
+    so a valid coarse-grid nearshore node is not mis-flagged FAR. A real domain gap (tens of km)
+    stays FAR on every grid. Falls back to the floor for a degenerate grid."""
+    sp = grid_spacing_km(cycle)
+    return max(FAR_CAP_FLOOR_KM, FAR_CAP_MULT * sp) if sp > 0 else FAR_CAP_FLOOR_KM
 
 
 # --------------------------------------------------------------------------- #
@@ -1337,7 +1383,12 @@ def validate_batch(batch=None, wfo="okx"):
         print(f"⚠ could not load a {wfo.upper()} cycle ({type(e).__name__}: {e}). "
               "Live NOMADS + cfgrib/eccodes needed — run on the Mac. Offline logic is covered by --selftest.")
         return 0
-    print(f"cycle {cycle['cycle_dt']:%Y-%m-%d %HZ}  ·  {len(cycle['steps'])} steps  ·  grid {cycle['lats'].shape}\n")
+    print(f"cycle {cycle['cycle_dt']:%Y-%m-%d %HZ}  ·  {len(cycle['steps'])} steps  ·  grid {cycle['lats'].shape}")
+    spacing = grid_spacing_km(cycle)
+    far_cap = grid_far_cap_km(cycle)
+    floored = far_cap <= FAR_CAP_FLOOR_KM + 1e-9
+    print(f"grid node spacing ≈ {spacing:.2f} km  →  FAR placement cap = {far_cap:.2f} km  "
+          f"({'legacy 3.0 floor (fine grid — unchanged)' if floored else f'grid-aware = {FAR_CAP_MULT}× spacing'})\n")
 
     # Real fallback baseline = the orientation path via the EXISTING NWPS fetcher
     # (interpret.compute_ratings), so NWPS★ (nearshore node) is asserted against
@@ -1376,7 +1427,7 @@ def validate_batch(batch=None, wfo="okx"):
         i, j, nlat, nlng, dkm, moved = sel
         swh = _node_value(cycle, "swh", 0, i, j); per = _node_value(cycle, "perpw", 0, i, j)
         dpw = _node_value(cycle, "dirpw", 0, i, j); shts = _node_value(cycle, "shts", 0, i, j)
-        v = placement_verdict(dkm, per, dpw, s.get("swell_window_arcs", []))
+        v = placement_verdict(dkm, per, dpw, s.get("swell_window_arcs", []), far_cap_km=far_cap)
         # match the fallback's f000 valid hour for a same-hour comparison
         wm = tm = 1.0; fbstar = None
         ents = (fb or {}).get(s["name"]) or []
@@ -1392,7 +1443,7 @@ def validate_batch(batch=None, wfo="okx"):
         dm = _is_domain_miss(v)
         print(f"  {slug:22}{dkm:8.2f}{(swh or 0):6.1f}{(per or 0):6.1f}{(dpw or 0):6.0f}"
               f"  {v:8}{sval:>6}{fval:>6}{'  *' if moved else ''}{'  domain-miss' if dm else ''}")
-        # FAR = nearest seaward wet cell beyond FAR_CAP_KM (spot outside this WFO's
+        # FAR = nearest seaward wet cell beyond the grid's far cap (spot outside this WFO's
         # nearshore nest — a domain miss, like NO_WET_CELL); DEAD = period floor;
         # OFFWIN = swell direction outside the spot's window (in-domain, not a miss).
         # domain_miss is the explicit rollup the grid-edge mop-up filters on.
@@ -1446,6 +1497,41 @@ def _selftest():
     check("verdict OK", placement_verdict(1.0, 10, 150, [{"min": 90, "max": 230}]) == "OK")
     check("domain_miss rollup", _is_domain_miss("FAR") and _is_domain_miss("NO_WET_CELL")
           and not _is_domain_miss("OFFWIN") and not _is_domain_miss("DEAD") and not _is_domain_miss("OK"))
+
+    # grid-aware FAR cap — placement_verdict takes a per-grid cap (default = legacy 3.0 floor).
+    check("default cap = legacy 3.0 (back-compat, fine grid)",
+          placement_verdict(3.35, 10, 150, []) == "FAR" and placement_verdict(5.0, 10, 150, []) == "FAR")
+    check("fine grid (cap 3.0): 3.35 km still FAR", placement_verdict(3.35, 10, 150, [], far_cap_km=3.0) == "FAR")
+    check("coarse grid (cap 5.0): 3.35 km now OK", placement_verdict(3.35, 10, 150, [], far_cap_km=5.0) == "OK")
+    check("coarse grid (cap 5.0): 4.08 km now OK (santa-monica-pier case)",
+          placement_verdict(4.08, 10, 150, [], far_cap_km=5.0) == "OK")
+    check("real gap 37–59 km FAR on any grid",
+          placement_verdict(37.0, 10, 150, [], far_cap_km=6.0) == "FAR"
+          and placement_verdict(59.0, 10, 150, [], far_cap_km=5.0) == "FAR")
+    check("widening the cap never flips OK→FAR (monotone): 1.71 km OK on every grid",
+          placement_verdict(1.71, 10, 150, [], far_cap_km=3.0) == "OK"
+          and placement_verdict(1.71, 10, 150, [], far_cap_km=5.0) == "OK")
+
+    # grid_spacing_km + grid_far_cap_km from a grid's own coordinate vectors (regular lat/lon).
+    def _mkgrid(lat0, dlat, lng0, dlng, n=6):
+        lat1d = np.array([lat0 + k * dlat for k in range(n)])
+        lng1d = np.array([lng0 + k * dlng for k in range(n)])
+        la, lo = np.meshgrid(lat1d, lng1d, indexing="ij")
+        return {"lats": la, "lons": lo}
+
+    fine = _mkgrid(40.55, 0.01631, -73.95, 0.02112)     # okx-like ≈1.8 km
+    check("grid_spacing okx-like ≈1.8 km", 1.7 <= grid_spacing_km(fine) <= 1.9)
+    check("far cap fine grid → floored 3.0", abs(grid_far_cap_km(fine) - 3.0) < 1e-6)
+    box = _mkgrid(41.4, 0.01806, -70.6, 0.02370)        # box-like ≈2.0 km (still floors)
+    check("far cap box-like (≈2.0 km) → floored 3.0", abs(grid_far_cap_km(box) - 3.0) < 1e-6)
+    coarse = _mkgrid(37.0, 0.02256, -122.5, 0.02750)    # mtr-like ≈2.48 km
+    check("grid_spacing mtr-like ≈2.5 km", 2.35 <= grid_spacing_km(coarse) <= 2.6)
+    check("far cap mtr-like → widened ≈3.7", 3.5 <= grid_far_cap_km(coarse) <= 3.9)
+    lox = _mkgrid(34.0, 0.02710, -119.5, 0.03250)       # lox-like ≈3.0 km
+    cap_lox = grid_far_cap_km(lox)
+    check("grid_spacing lox-like ≈3.0 km", 2.8 <= grid_spacing_km(lox) <= 3.3)
+    check("far cap lox → ≈4–6 km and places the 4.08 km FAR", 4.0 <= cap_lox <= 6.0 and cap_lox > 4.08)
+    check("degenerate grid → floor 3.0", grid_far_cap_km({"lats": np.array([[40.0]]), "lons": np.array([[-73.0]])}) == 3.0)
 
     # cfgrib land semantics: mask = np.isnan(swh) must drive wet-cell selection
     # (was a masked-array test under pygrib). Load-bearing for the seaward snap.
