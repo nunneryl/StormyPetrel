@@ -1371,6 +1371,49 @@
           "carmel-beach"
         ],
         "to_place": "This record alone tags NOTHING. To place these on NWPS height: (1) run `--validate --wfo mtr` on the Mac to compute each spot's nwps_node_lat/lng/distance, (2) promote them into 'spots' with nwps_buoy_id 46240, (3) set trust_by_buoy['46240']='PASS' (the HEIGHT-tagging gate apply_nwps_assignments requires — with 46240 absent from trust_by_buoy the 24 are HELD, not placed). Direction remains pending here until --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "mtr/46237",
+        "wfo": "mtr",
+        "buoy": "46237",
+        "reference": "46237 — San Francisco Bar nearshore Waverider (17 m); a VALID nearshore directional reference (--find-buoy)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46237 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "spots": 13,
+        "slugs": [
+          "jenner-beach",
+          "salmon-creek-beach",
+          "doran-beach",
+          "dillon-beach",
+          "point-reyes-north",
+          "bolinas",
+          "cronkhite",
+          "fort-point",
+          "sharp-park",
+          "rockaway-beach-pacifica",
+          "pacifica-linda-mar",
+          "half-moon-bay-jetty",
+          "half-moon-bay"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng must be REGENERATED (only node_km was captured before): on the Mac run `--validate --wfo mtr --batch <these 13 slugs>` to rewrite nwps_mtr_validate_out.json with their node lat/lng, then `promote_nwps_validate --buoy 46237 --slugs <these 13>` merges them into 'spots'. Placement then via the pending path; 46237 stays OUT of trust_by_buoy (no PASS)."
+      },
+      {
+        "zone": "mtr/46284",
+        "wfo": "mtr",
+        "buoy": "46284",
+        "reference": "46284 — Soquel Cove South nearshore Waverider (24 m); a VALID nearshore directional reference (--find-buoy)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46284 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "spots": 2,
+        "slugs": [
+          "pigeon-point",
+          "scotts-creek"
+        ],
+        "to_place": "This record alone tags NOTHING. Node coords for these 2 are in the current (Mac) nwps_mtr_validate_out.json; `promote_nwps_validate --buoy 46284 --slugs pigeon-point,scotts-creek` merges them into 'spots'. Do this BEFORE re-validating the 46237 batch (which overwrites the validate-out). Placement via the pending path; 46284 stays OUT of trust_by_buoy (no PASS)."
       }
     ]
   }

@@ -101,6 +101,13 @@ WATCH = [
     # (rolling ACCUMULATING until it settles). NOT retired → the monitor watches it normally; being
     # live-on-height + direction-pending does NOT exclude it (gating is pairing + event + rolling).
     {"id": "46240", "zone": "Monterey Bay + Santa Cruz (Steamer Lane / Pleasure Point / Capitola / Manresa)", "wfo": "mtr", "status": "candidate"},
+    # mtr — SF / Point Reyes. 46237 (San Francisco Bar Waverider, 17 m, VALID) anchors 13 spots
+    # (Bodega → Half Moon Bay) and 46284 (Soquel Cove South Waverider, 24 m, VALID) anchors 2
+    # (Pigeon Point + Scotts Creek). Both placed on NWPS HEIGHT with direction PENDING (option B):
+    # no swell has verified direction yet, so no trust PASS. Watch both for a swell to accumulate
+    # direction events (rolling ACCUMULATING). NOT retired → watched normally.
+    {"id": "46237", "zone": "SF / Point Reyes (Bodega / Salmon Creek / Bolinas / Ocean Beach / Pacifica / Half Moon Bay)", "wfo": "mtr", "status": "candidate"},
+    {"id": "46284", "zone": "San Mateo south coast (Pigeon Point + Scotts Creek)", "wfo": "mtr", "status": "candidate"},
 ]
 
 
