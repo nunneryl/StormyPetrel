@@ -95,6 +95,12 @@ WATCH = [
     {"id": "46266", "zone": "North County — Carlsbad / Encinitas / Ponto (Del Mar Nearshore) — candidate", "wfo": "sgx", "status": "candidate"},
     {"id": "46235", "zone": "South SD — Coronado / Imperial Beach / Tijuana Slough (Imperial Beach Nearshore) — candidate", "wfo": "sgx", "status": "candidate"},
     {"id": "46242", "zone": "Far North SD — San Onofre / Cottons / Dana Point (Camp Pendleton Nearshore) — candidate", "wfo": "sgx", "status": "candidate"},
+    # mtr — Monterey Bay / Santa Cruz. 46240 (Cabrillo Point nearshore Waverider, 18 m, VALID) anchors
+    # 24 spots placed on NWPS HEIGHT with direction PENDING (option B): no swell has verified direction
+    # yet, so no trust PASS. Watch it so a swell event flags the zone to accumulate direction events
+    # (rolling ACCUMULATING until it settles). NOT retired → the monitor watches it normally; being
+    # live-on-height + direction-pending does NOT exclude it (gating is pairing + event + rolling).
+    {"id": "46240", "zone": "Monterey Bay + Santa Cruz (Steamer Lane / Pleasure Point / Capitola / Manresa)", "wfo": "mtr", "status": "candidate"},
 ]
 
 
