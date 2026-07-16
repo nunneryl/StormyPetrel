@@ -1290,6 +1290,156 @@
       "nwps_node_lng": -121.95,
       "nwps_node_distance_m": 1831,
       "nwps_buoy_id": "46240"
+    },
+    {
+      "slug": "pigeon-point",
+      "name": "Pigeon Point",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.16624,
+      "nwps_node_lng": -122.39,
+      "nwps_node_distance_m": 1661,
+      "nwps_buoy_id": "46284"
+    },
+    {
+      "slug": "scotts-creek",
+      "name": "Scotts Creek",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.03085,
+      "nwps_node_lng": -122.2525,
+      "nwps_node_distance_m": 2048,
+      "nwps_buoy_id": "46284"
+    },
+    {
+      "slug": "jenner-beach",
+      "name": "Jenner Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.42988,
+      "nwps_node_lng": -123.1325,
+      "nwps_node_distance_m": 2089,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "salmon-creek-beach",
+      "name": "Salmon Creek Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.33962,
+      "nwps_node_lng": -123.0775,
+      "nwps_node_distance_m": 680,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "doran-beach",
+      "name": "Doran Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.29449,
+      "nwps_node_lng": -123.05,
+      "nwps_node_distance_m": 1965,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "dillon-beach",
+      "name": "Dillon Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.24936,
+      "nwps_node_lng": -122.995,
+      "nwps_node_distance_m": 2280,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "point-reyes-north",
+      "name": "Point Reyes North",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.09141,
+      "nwps_node_lng": -122.995,
+      "nwps_node_distance_m": 1918,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "bolinas",
+      "name": "Bolinas",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.88832,
+      "nwps_node_lng": -122.665,
+      "nwps_node_distance_m": 2440,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "cronkhite",
+      "name": "Cronkhite",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.82063,
+      "nwps_node_lng": -122.555,
+      "nwps_node_distance_m": 1754,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "fort-point",
+      "name": "Fort Point",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.82063,
+      "nwps_node_lng": -122.4725,
+      "nwps_node_distance_m": 1096,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "sharp-park",
+      "name": "Sharp Park",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.64011,
+      "nwps_node_lng": -122.5,
+      "nwps_node_distance_m": 902,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "rockaway-beach-pacifica",
+      "name": "Rockaway Beach Pacifica",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.61754,
+      "nwps_node_lng": -122.5,
+      "nwps_node_distance_m": 877,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "pacifica-linda-mar",
+      "name": "Pacifica Linda Mar",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.61754,
+      "nwps_node_lng": -122.5,
+      "nwps_node_distance_m": 1740,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "half-moon-bay-jetty",
+      "name": "Half Moon Bay Jetty",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.48215,
+      "nwps_node_lng": -122.4725,
+      "nwps_node_distance_m": 1779,
+      "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "half-moon-bay",
+      "name": "Half Moon Bay",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 37.48215,
+      "nwps_node_lng": -122.4725,
+      "nwps_node_distance_m": 1925,
+      "nwps_buoy_id": "46237"
     }
   ],
   "held": [],

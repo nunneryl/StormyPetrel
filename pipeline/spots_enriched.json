@@ -525,11 +525,17 @@
       }
     ],
     "optimal_swell_dir": 252,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414958",
     "nearest_tide_station_dist_km": 0.72,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 13.93
+    "nearest_buoy_dist_km": 13.93,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.88832,
+    "nwps_node_lng": -122.665,
+    "nwps_node_distance_m": 2440,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Bolsa Chica State Beach",
@@ -2009,11 +2015,17 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415469",
     "nearest_tide_station_dist_km": 1.71,
     "nearest_buoy_id": "46013",
-    "nearest_buoy_dist_km": 30.13
+    "nearest_buoy_dist_km": 30.13,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.24936,
+    "nwps_node_lng": -122.995,
+    "nwps_node_distance_m": 2280,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Doheny State Beach",
@@ -2151,11 +2163,17 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415625",
     "nearest_tide_station_dist_km": 2.74,
     "nearest_buoy_id": "46214",
-    "nearest_buoy_dist_km": 55.96
+    "nearest_buoy_dist_km": 55.96,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.29449,
+    "nwps_node_lng": -123.05,
+    "nwps_node_distance_m": 1965,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "El Capitan State Beach",
@@ -2500,11 +2518,17 @@
       }
     ],
     "optimal_swell_dir": 228,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414290",
     "nearest_tide_station_dist_km": 1.07,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 14.03
+    "nearest_buoy_dist_km": 14.03,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.82063,
+    "nwps_node_lng": -122.4725,
+    "nwps_node_distance_m": 1096,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Garbage Beach",
@@ -2629,11 +2653,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414131",
     "nearest_tide_station_dist_km": 1.06,
     "nearest_buoy_id": "46012",
-    "nearest_buoy_dist_km": 40.04
+    "nearest_buoy_dist_km": 40.04,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.48215,
+    "nwps_node_lng": -122.4725,
+    "nwps_node_distance_m": 1779,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Hammonds",
@@ -3363,11 +3393,17 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9416024",
     "nearest_tide_station_dist_km": 11.88,
     "nearest_buoy_id": "46013",
-    "nearest_buoy_dist_km": 29.06
+    "nearest_buoy_dist_km": 29.06,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.42988,
+    "nwps_node_lng": -123.1325,
+    "nwps_node_distance_m": 2089,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "La Jolla Shores",
@@ -5410,11 +5446,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 10.79,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 23.61
+    "nearest_buoy_dist_km": 23.61,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.61754,
+    "nwps_node_lng": -122.5,
+    "nwps_node_distance_m": 1740,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Palos Verdes Cove",
@@ -6160,11 +6202,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 10.32,
     "nearest_buoy_id": "46012",
-    "nearest_buoy_dist_km": 44.09
+    "nearest_buoy_dist_km": 44.09,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.61754,
+    "nwps_node_lng": -122.5,
+    "nwps_node_distance_m": 877,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Rockpile",
@@ -6292,11 +6340,17 @@
       }
     ],
     "optimal_swell_dir": 244,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415625",
     "nearest_tide_station_dist_km": 3.57,
     "nearest_buoy_id": "46013",
-    "nearest_buoy_dist_km": 24.48
+    "nearest_buoy_dist_km": 24.48,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.33962,
+    "nwps_node_lng": -123.0775,
+    "nwps_node_distance_m": 680,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Salt Creek",
@@ -6893,9 +6947,15 @@
       }
     ],
     "optimal_swell_dir": 236,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
-    "nearest_tide_station_dist_km": 11.92
+    "nearest_tide_station_dist_km": 11.92,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.03085,
+    "nwps_node_lng": -122.2525,
+    "nwps_node_distance_m": 2048,
+    "nwps_buoy_id": "46284"
   },
   {
     "name": "Seal Beach Pier",
@@ -7237,11 +7297,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 9.25,
     "nearest_buoy_id": "46237",
-    "nearest_buoy_dist_km": 21.08
+    "nearest_buoy_dist_km": 21.08,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.64011,
+    "nwps_node_lng": -122.5,
+    "nwps_node_distance_m": 902,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Shell Beach",
@@ -29542,12 +29608,18 @@
       }
     ],
     "optimal_swell_dir": 240,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 9.48,
     "nearest_buoy_id": "46236",
     "nearest_buoy_dist_km": 61.65,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.16624,
+    "nwps_node_lng": -122.39,
+    "nwps_node_distance_m": 1661,
+    "nwps_buoy_id": "46284"
   },
   {
     "name": "Pescadero",
@@ -29617,12 +29689,18 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414131",
     "nearest_tide_station_dist_km": 3.91,
     "nearest_buoy_id": "46237",
     "nearest_buoy_dist_km": 38.15,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.48215,
+    "nwps_node_lng": -122.4725,
+    "nwps_node_distance_m": 1925,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Pedro Point",
@@ -29772,12 +29850,18 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414290",
     "nearest_tide_station_dist_km": 5.73,
     "nearest_buoy_id": "46237",
     "nearest_buoy_dist_km": 9.39,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 37.82063,
+    "nwps_node_lng": -122.555,
+    "nwps_node_distance_m": 1754,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Point Reyes North",
@@ -29807,12 +29891,18 @@
       }
     ],
     "optimal_swell_dir": 248,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415469",
     "nearest_tide_station_dist_km": 17.86,
     "nearest_buoy_id": "46214",
     "nearest_buoy_dist_km": 25.67,
-    "nwps_wfo": "mtr"
+    "nwps_wfo": "mtr",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.09141,
+    "nwps_node_lng": -122.995,
+    "nwps_node_distance_m": 1918,
+    "nwps_buoy_id": "46237"
   },
   {
     "name": "Mendocino",
