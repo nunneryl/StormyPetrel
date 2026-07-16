@@ -12,10 +12,14 @@ skipped. Dedupes by slug (an existing entry is replaced).
 This ONLY supplies the node coords the apply gate requires. It does NOT touch trust_by_buoy or
 buoy_reference — placement of these spots relies on the pending / height-only path
 (apply_nwps_assignments: buoy listed in buoy_reference.pending[] -> direction_status 'pending').
+With --no-buoy the spots are promoted with nwps_buoy_id=null for the buoy_reference.unverifiable[]
+path (island-shadowed spots whose direction is never buoy-verifiable; their slugs get listed under
+buoy_reference.unverifiable[] separately, which is what makes apply place them 'unverifiable').
 It sets NO trust PASS.
 
     python3 scripts/promote_nwps_validate.py --validate-out scripts/nwps_mtr_validate_out.json --buoy 46240
     python3 scripts/promote_nwps_validate.py --validate-out scripts/nwps_mtr_validate_out.json --buoy 46240 --apply
+    python3 scripts/promote_nwps_validate.py --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs jalama
 """
 from __future__ import annotations
 
@@ -36,8 +40,9 @@ def build_promotions(validate_out, buoy, *, only_slugs=None):
     """[assignment spot entries] from a --validate output doc. Uses the diagnostic 'outcomes'
     (every spot: outcome + node lat/lng/dist) for coverage, preferring the richer 'spots' (OK-only,
     full fields) entry when present. Includes OK + OFFWIN with a valid node; sets nwps_buoy_id=*buoy*
-    and nwps_grid='CG1'. Skips FAR / DEAD / NO_WET_CELL (no valid node) and anything not in
-    *only_slugs* (when given). Pure/offline — invents no coordinates, only relays --validate's."""
+    (or null when *buoy* is None — the --no-buoy / unverifiable[] path) and nwps_grid='CG1'. Skips
+    FAR / DEAD / NO_WET_CELL (no valid node) and anything not in *only_slugs* (when given).
+    Pure/offline — invents no coordinates, only relays --validate's."""
     wfo = validate_out.get("grid_wfo")
     ok = {s.get("slug"): s for s in (validate_out.get("spots") or []) if s.get("slug")}
     out, seen, skipped = [], set(), []
@@ -60,7 +65,7 @@ def build_promotions(validate_out, buoy, *, only_slugs=None):
             "nwps_wfo": wfo, "nwps_grid": src.get("nwps_grid") or "CG1",
             "nwps_node_lat": src.get("nwps_node_lat"), "nwps_node_lng": src.get("nwps_node_lng"),
             "nwps_node_distance_m": src.get("nwps_node_distance_m"),
-            "nwps_buoy_id": str(buoy),
+            "nwps_buoy_id": None if buoy is None else str(buoy),
             "_outcome": outcome,   # informational for the dry-run; stripped before writing
         })
         seen.add(slug)
@@ -88,36 +93,49 @@ def merge_into_assignments(doc, promotions):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--validate-out", required=True, help="scripts/nwps_{wfo}_validate_out.json")
-    ap.add_argument("--buoy", required=True, help="reference buoy id (nwps_buoy_id) for these spots")
+    ap.add_argument("--buoy", default=None,
+                    help="reference buoy id (nwps_buoy_id) for these spots. Omit and pass --no-buoy "
+                         "for buoy_reference.unverifiable[] (island-shadowed) spots.")
+    ap.add_argument("--no-buoy", action="store_true",
+                    help="promote with NO buoy id (nwps_buoy_id=null) — for unverifiable[] spots whose "
+                         "direction is never buoy-verifiable. Mutually exclusive with --buoy.")
     ap.add_argument("--slugs", default=None,
                     help="comma-separated slugs to restrict this run to (so one --buoy batch never "
                          "picks up other spots that happen to be in the validate-out). Default: all placeable.")
     ap.add_argument("--apply", action="store_true", help="write the assignments JSON (default: dry run)")
     a = ap.parse_args(argv)
+    if a.no_buoy and a.buoy:
+        print("error: pass EITHER --buoy <id> OR --no-buoy, not both", file=sys.stderr)
+        return 2
+    if not a.no_buoy and not a.buoy:
+        print("error: pass --buoy <id> (or --no-buoy for buoy_reference.unverifiable[] spots)", file=sys.stderr)
+        return 2
+    buoy = None if a.no_buoy else a.buoy
     if not os.path.exists(a.validate_out):
         print(f"error: missing {a.validate_out} — run `nwps_nearshore --validate --wfo <wfo>` on the "
               "Mac and commit the output first", file=sys.stderr)
         return 2
     only_slugs = {s.strip() for s in a.slugs.split(",") if s.strip()} if a.slugs else None
     validate_out = json.loads(open(a.validate_out).read())
-    proms, skipped = build_promotions(validate_out, a.buoy, only_slugs=only_slugs)
+    proms, skipped = build_promotions(validate_out, buoy, only_slugs=only_slugs)
 
     raw = open(ASSIGNMENTS).read()
     doc = json.loads(raw)
     existing = {s.get("slug") for s in doc.get("spots", [])}
 
     print(f"\n{'DRY RUN' if not a.apply else 'APPLY'} — promote {a.validate_out} → assignments 'spots' "
-          f"(buoy {a.buoy}, wfo {validate_out.get('grid_wfo')})\n")
+          f"(buoy {buoy or 'none (unverifiable[])'}, wfo {validate_out.get('grid_wfo')})\n")
     print(f"  {'slug':30}{'outcome':9}{'node lat,lng':22}{'dist_m':>7}{'buoy':>8}  new/replace")
     for p in proms:
         node = f"{p['nwps_node_lat']},{p['nwps_node_lng']}"
         print(f"  {p['slug']:30}{p['_outcome']:9}{node:22}{(p['nwps_node_distance_m'] or 0):>7}"
-              f"{p['nwps_buoy_id']:>8}  {'replace' if p['slug'] in existing else 'new'}")
+              f"{str(p['nwps_buoy_id'] or 'none'):>8}  {'replace' if p['slug'] in existing else 'new'}")
     if skipped:
         print(f"\n  skipped {len(skipped)} (no valid node / not placeable): "
               + ", ".join(f"{s}({o})" for s, o in skipped))
+    path = "buoy_reference.unverifiable[]" if buoy is None else "buoy_reference.pending[]"
     print(f"\n  {len(proms)} placeable spot(s). This sets NO trust PASS and does not touch "
-          "trust_by_buoy / buoy_reference. Placement then relies on the buoy_reference.pending[] path.")
+          f"trust_by_buoy / buoy_reference. Placement then relies on the {path} path.")
 
     if not a.apply:
         print("\ndry run only — nothing written. Re-run with --apply to merge into the assignments JSON.")
