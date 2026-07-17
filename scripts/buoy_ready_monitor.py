@@ -108,6 +108,17 @@ WATCH = [
     # direction events (rolling ACCUMULATING). NOT retired → watched normally.
     {"id": "46237", "zone": "SF / Point Reyes (Bodega / Salmon Creek / Bolinas / Ocean Beach / Pacifica / Half Moon Bay)", "wfo": "mtr", "status": "candidate"},
     {"id": "46284", "zone": "San Mateo south coast (Pigeon Point + Scotts Creek)", "wfo": "mtr", "status": "candidate"},
+    # lox — Malibu / Santa Monica Bay. 46268 (Topanga Nearshore Waverider, 20 m, VALID) anchors 18
+    # spots (County Line → Bruce's Beach) placed on NWPS HEIGHT with direction PENDING (option B):
+    # no swell has verified direction yet, so no trust PASS. Watch for a swell to accumulate direction
+    # events (rolling ACCUMULATING). NOT retired → watched normally.
+    {"id": "46268", "zone": "Malibu + Santa Monica Bay (County Line / Surfrider / Santa Monica / Venice / El Porto)", "wfo": "lox", "status": "candidate"},
+    # mtr — SLO / Diablo Canyon. 46215 (Diablo Canyon Nearshore Waverider, 27 m, VALID) anchors 12
+    # spots (Big Sur → Grover) placed on NWPS HEIGHT with direction PENDING (option B); no trust PASS.
+    # Grid-crossing: 8 take height from the mtr grid, 4 (Shell Beach → Grover) from the lox grid, but
+    # all 12 keep nwps_wfo='mtr' and buoy 46215 — so the monitor watches ONE (mtr, 46215) zone for all
+    # 12 (the far lox nodes don't change where the buoy's direction is verified). NOT retired → watched.
+    {"id": "46215", "zone": "SLO / Diablo Canyon (Big Sur / San Simeon / Cayucos / Morro / Avila / Pismo / Grover)", "wfo": "mtr", "status": "candidate"},
 ]
 
 

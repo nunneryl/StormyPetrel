@@ -36,14 +36,17 @@ _ENTRY_FIELDS = ("slug", "name", "nwps_wfo", "nwps_grid", "nwps_node_lat", "nwps
                  "nwps_node_distance_m", "nwps_buoy_id")
 
 
-def build_promotions(validate_out, buoy, *, only_slugs=None):
+def build_promotions(validate_out, buoy, *, only_slugs=None, wfo_override=None):
     """[assignment spot entries] from a --validate output doc. Uses the diagnostic 'outcomes'
     (every spot: outcome + node lat/lng/dist) for coverage, preferring the richer 'spots' (OK-only,
     full fields) entry when present. Includes OK + OFFWIN with a valid node; sets nwps_buoy_id=*buoy*
-    (or null when *buoy* is None — the --no-buoy / unverifiable[] path) and nwps_grid='CG1'. Skips
+    (or null when *buoy* is None — the --no-buoy / unverifiable[] path) and nwps_grid='CG1'. Sets
+    nwps_wfo to *wfo_override* when given, else the validate-out's grid_wfo — the override keeps a
+    grid-CROSSING spot's region label when its HEIGHT is supplied by a different grid (e.g. the SLO
+    Pismo spots whose nodes come from the lox grid but whose nwps_wfo must stay 'mtr'). Skips
     FAR / DEAD / NO_WET_CELL (no valid node) and anything not in *only_slugs* (when given).
     Pure/offline — invents no coordinates, only relays --validate's."""
-    wfo = validate_out.get("grid_wfo")
+    wfo = wfo_override or validate_out.get("grid_wfo")
     ok = {s.get("slug"): s for s in (validate_out.get("spots") or []) if s.get("slug")}
     out, seen, skipped = [], set(), []
     for o in (validate_out.get("outcomes") or []):
@@ -102,6 +105,11 @@ def main(argv=None):
     ap.add_argument("--slugs", default=None,
                     help="comma-separated slugs to restrict this run to (so one --buoy batch never "
                          "picks up other spots that happen to be in the validate-out). Default: all placeable.")
+    ap.add_argument("--wfo", default=None,
+                    help="override nwps_wfo for the promoted spots (default: the validate-out's grid_wfo). "
+                         "For grid-CROSSING spots whose HEIGHT comes from one grid but whose region label "
+                         "must stay another — e.g. the SLO Pismo spots validated on the lox grid but kept "
+                         "as nwps_wfo=mtr (`--buoy 46215 --wfo mtr` on the lox validate-out).")
     ap.add_argument("--apply", action="store_true", help="write the assignments JSON (default: dry run)")
     a = ap.parse_args(argv)
     if a.no_buoy and a.buoy:
@@ -117,14 +125,16 @@ def main(argv=None):
         return 2
     only_slugs = {s.strip() for s in a.slugs.split(",") if s.strip()} if a.slugs else None
     validate_out = json.loads(open(a.validate_out).read())
-    proms, skipped = build_promotions(validate_out, buoy, only_slugs=only_slugs)
+    proms, skipped = build_promotions(validate_out, buoy, only_slugs=only_slugs, wfo_override=a.wfo)
 
     raw = open(ASSIGNMENTS).read()
     doc = json.loads(raw)
     existing = {s.get("slug") for s in doc.get("spots", [])}
 
+    eff_wfo = a.wfo or validate_out.get("grid_wfo")
+    wfo_note = f"{eff_wfo} (override; grid {validate_out.get('grid_wfo')})" if a.wfo else eff_wfo
     print(f"\n{'DRY RUN' if not a.apply else 'APPLY'} — promote {a.validate_out} → assignments 'spots' "
-          f"(buoy {buoy or 'none (unverifiable[])'}, wfo {validate_out.get('grid_wfo')})\n")
+          f"(buoy {buoy or 'none (unverifiable[])'}, wfo {wfo_note})\n")
     print(f"  {'slug':30}{'outcome':9}{'node lat,lng':22}{'dist_m':>7}{'buoy':>8}  new/replace")
     for p in proms:
         node = f"{p['nwps_node_lat']},{p['nwps_node_lng']}"
