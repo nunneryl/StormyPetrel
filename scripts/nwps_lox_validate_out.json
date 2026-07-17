@@ -1,0 +1,366 @@
+{
+  "_comment": "lox --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "lox",
+  "spots": [
+    {
+      "slug": "chart-house",
+      "name": "Chart House",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.58936,
+      "nwps_node_distance_m": 3766,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sunset-point",
+      "name": "Sunset Point",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638,
+      "nwps_node_distance_m": 3424,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "topanga-beach",
+      "name": "Topanga Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.58936,
+      "nwps_node_distance_m": 3402,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "will-rogers",
+      "name": "Will Rogers",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638,
+      "nwps_node_distance_m": 3170,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "malibu-point",
+      "name": "Malibu Point",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.67532,
+      "nwps_node_distance_m": 2815,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "malibu-surfrider-beach",
+      "name": "Malibu Surfrider Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.67532,
+      "nwps_node_distance_m": 2966,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "santa-monica-beach",
+      "name": "Santa Monica Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638,
+      "nwps_node_distance_m": 3752,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "zuma-beach",
+      "name": "Zuma Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.84723,
+      "nwps_node_distance_m": 2677,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "santa-monica-pier",
+      "name": "Santa Monica Pier",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034,
+      "nwps_node_distance_m": 4077,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "point-dume",
+      "name": "Point Dume",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.80426,
+      "nwps_node_distance_m": 3121,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "venice-beach-breakwater",
+      "name": "Venice Beach Breakwater",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034,
+      "nwps_node_distance_m": 2873,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "venice-beach-pier",
+      "name": "Venice Beach Pier",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034,
+      "nwps_node_distance_m": 3174,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "dockweiler-beach",
+      "name": "Dockweiler Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.93507,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 1706,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "shitpipe",
+      "name": "Shitpipe",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.93507,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 2741,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "el-porto",
+      "name": "El Porto",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.89899,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 3348,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "bruce-s-beach",
+      "name": "Bruce's Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.89899,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 3875,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "county-line",
+      "name": "County Line",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 5127,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.97617
+    },
+    {
+      "slug": "leo-carrillo-state-beach",
+      "name": "Leo Carrillo State Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OFFWIN",
+      "domain_miss": false,
+      "nwps_node_distance_m": 4145,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.93319
+    },
+    {
+      "slug": "chart-house",
+      "name": "Chart House",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3766,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.58936
+    },
+    {
+      "slug": "sunset-point",
+      "name": "Sunset Point",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3424,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638
+    },
+    {
+      "slug": "topanga-beach",
+      "name": "Topanga Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3402,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.58936
+    },
+    {
+      "slug": "will-rogers",
+      "name": "Will Rogers",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3170,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638
+    },
+    {
+      "slug": "malibu-point",
+      "name": "Malibu Point",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2815,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.67532
+    },
+    {
+      "slug": "malibu-surfrider-beach",
+      "name": "Malibu Surfrider Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2966,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.67532
+    },
+    {
+      "slug": "santa-monica-beach",
+      "name": "Santa Monica Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3752,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638
+    },
+    {
+      "slug": "zuma-beach",
+      "name": "Zuma Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2677,
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.84723
+    },
+    {
+      "slug": "santa-monica-pier",
+      "name": "Santa Monica Pier",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 4077,
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034
+    },
+    {
+      "slug": "point-dume",
+      "name": "Point Dume",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3121,
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.80426
+    },
+    {
+      "slug": "venice-beach-breakwater",
+      "name": "Venice Beach Breakwater",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2873,
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034
+    },
+    {
+      "slug": "venice-beach-pier",
+      "name": "Venice Beach Pier",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3174,
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034
+    },
+    {
+      "slug": "dockweiler-beach",
+      "name": "Dockweiler Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1706,
+      "nwps_node_lat": 33.93507,
+      "nwps_node_lng": -118.46043
+    },
+    {
+      "slug": "shitpipe",
+      "name": "Shitpipe",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2741,
+      "nwps_node_lat": 33.93507,
+      "nwps_node_lng": -118.46043
+    },
+    {
+      "slug": "el-porto",
+      "name": "El Porto",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3348,
+      "nwps_node_lat": 33.89899,
+      "nwps_node_lng": -118.46043
+    },
+    {
+      "slug": "bruce-s-beach",
+      "name": "Bruce's Beach",
+      "nwps_wfo": "lox",
+      "grid_wfo": "lox",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3875,
+      "nwps_node_lat": 33.89899,
+      "nwps_node_lng": -118.46043
+    }
+  ]
+}

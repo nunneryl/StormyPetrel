@@ -1440,6 +1440,306 @@
       "nwps_node_lng": -122.4725,
       "nwps_node_distance_m": 1925,
       "nwps_buoy_id": "46237"
+    },
+    {
+      "slug": "shell-beach-north",
+      "name": "Shell Beach (North)",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.12581,
+      "nwps_node_lng": -120.69532,
+      "nwps_node_distance_m": 4176,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "shell-beach",
+      "name": "Shell Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.12581,
+      "nwps_node_lng": -120.69532,
+      "nwps_node_distance_m": 3843,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "pismo-beach-pier",
+      "name": "Pismo Beach Pier",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.12581,
+      "nwps_node_lng": -120.69532,
+      "nwps_node_distance_m": 4817,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "grover-beach",
+      "name": "Grover Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.08973,
+      "nwps_node_lng": -120.65234,
+      "nwps_node_distance_m": 3685,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "county-line",
+      "name": "County Line",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.97617,
+      "nwps_node_distance_m": 5127,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "leo-carrillo-state-beach",
+      "name": "Leo Carrillo State Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.93319,
+      "nwps_node_distance_m": 4145,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "chart-house",
+      "name": "Chart House",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.58936,
+      "nwps_node_distance_m": 3766,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "sunset-point",
+      "name": "Sunset Point",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638,
+      "nwps_node_distance_m": 3424,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "topanga-beach",
+      "name": "Topanga Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.58936,
+      "nwps_node_distance_m": 3402,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "will-rogers",
+      "name": "Will Rogers",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638,
+      "nwps_node_distance_m": 3170,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "malibu-point",
+      "name": "Malibu Point",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.67532,
+      "nwps_node_distance_m": 2815,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "malibu-surfrider-beach",
+      "name": "Malibu Surfrider Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.67532,
+      "nwps_node_distance_m": 2966,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "santa-monica-beach",
+      "name": "Santa Monica Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.54638,
+      "nwps_node_distance_m": 3752,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "zuma-beach",
+      "name": "Zuma Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.00724,
+      "nwps_node_lng": -118.84723,
+      "nwps_node_distance_m": 2677,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "santa-monica-pier",
+      "name": "Santa Monica Pier",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034,
+      "nwps_node_distance_m": 4077,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "point-dume",
+      "name": "Point Dume",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.80426,
+      "nwps_node_distance_m": 3121,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "venice-beach-breakwater",
+      "name": "Venice Beach Breakwater",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034,
+      "nwps_node_distance_m": 2873,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "venice-beach-pier",
+      "name": "Venice Beach Pier",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.97115,
+      "nwps_node_lng": -118.5034,
+      "nwps_node_distance_m": 3174,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "dockweiler-beach",
+      "name": "Dockweiler Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.93507,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 1706,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "shitpipe",
+      "name": "Shitpipe",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.93507,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 2741,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "el-porto",
+      "name": "El Porto",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.89899,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 3348,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "bruce-s-beach",
+      "name": "Bruce's Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.89899,
+      "nwps_node_lng": -118.46043,
+      "nwps_node_distance_m": 3875,
+      "nwps_buoy_id": "46268"
+    },
+    {
+      "slug": "andrew-molera-state-park",
+      "name": "Andrew Molera State Park",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.26364,
+      "nwps_node_lng": -121.8675,
+      "nwps_node_distance_m": 1932,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "sand-dollar-beach",
+      "name": "Sand Dollar Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.92517,
+      "nwps_node_lng": -121.4825,
+      "nwps_node_distance_m": 1098,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "piedras-blancas",
+      "name": "Piedras Blancas",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.65439,
+      "nwps_node_lng": -121.29,
+      "nwps_node_distance_m": 1044,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "san-simeon",
+      "name": "San Simeon",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.60926,
+      "nwps_node_lng": -121.1525,
+      "nwps_node_distance_m": 562,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "cayucos-pier",
+      "name": "Cayucos Pier",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.42874,
+      "nwps_node_lng": -120.905,
+      "nwps_node_distance_m": 2139,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "morro-rock",
+      "name": "Morro Rock",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.36104,
+      "nwps_node_lng": -120.8775,
+      "nwps_node_distance_m": 1609,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "cable-landing",
+      "name": "Cable Landing",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.31591,
+      "nwps_node_lng": -120.8775,
+      "nwps_node_distance_m": 902,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "avila-beach",
+      "name": "Avila Beach",
+      "nwps_wfo": "mtr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.15796,
+      "nwps_node_lng": -120.74,
+      "nwps_node_distance_m": 2214,
+      "nwps_buoy_id": "46215"
     }
   ],
   "held": [],
