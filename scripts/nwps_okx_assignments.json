@@ -1444,7 +1444,7 @@
     {
       "slug": "shell-beach-north",
       "name": "Shell Beach (North)",
-      "nwps_wfo": "lox",
+      "nwps_wfo": "mtr",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.12581,
       "nwps_node_lng": -120.69532,
@@ -1454,7 +1454,7 @@
     {
       "slug": "shell-beach",
       "name": "Shell Beach",
-      "nwps_wfo": "lox",
+      "nwps_wfo": "mtr",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.12581,
       "nwps_node_lng": -120.69532,
@@ -1464,7 +1464,7 @@
     {
       "slug": "pismo-beach-pier",
       "name": "Pismo Beach Pier",
-      "nwps_wfo": "lox",
+      "nwps_wfo": "mtr",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.12581,
       "nwps_node_lng": -120.69532,
@@ -1474,7 +1474,7 @@
     {
       "slug": "grover-beach",
       "name": "Grover Beach",
-      "nwps_wfo": "lox",
+      "nwps_wfo": "mtr",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.08973,
       "nwps_node_lng": -120.65234,
@@ -1752,9 +1752,9 @@
     "44098": "PASS"
   },
   "trust_buoy": "44025+44065",
-  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43. | trust_by_buoy is the HEIGHT-tagging gate (controls whether a spot consumes NWPS); the BUOY-CHECK disposition is governed by buoy_reference below. box/44098 (3) + gyx/44098 (11): buoy 44098 RETIRED as a reference on BOTH axes — structurally invalid 76 m offshore bank vs shallow nearshore node, no valid nearshore reference within 150 km (GoM shelf deep to the coast). These spots KEEP consuming NWPS height + raycast direction; only the buoy trust-CHECK is retired (no valid buoy to run it against), so nothing is height- or direction-gated against 44098 anymore.",
+  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43. | trust_by_buoy is the HEIGHT-tagging gate (controls whether a spot consumes NWPS); the BUOY-CHECK disposition is governed by buoy_reference below. box/44098 (3) + gyx/44098 (11): buoy 44098 RETIRED as a reference on BOTH axes \u2014 structurally invalid 76 m offshore bank vs shallow nearshore node, no valid nearshore reference within 150 km (GoM shelf deep to the coast). These spots KEEP consuming NWPS height + raycast direction; only the buoy trust-CHECK is retired (no valid buoy to run it against), so nothing is height- or direction-gated against 44098 anymore.",
   "buoy_reference": {
-    "_comment": "BUOY trust-CHECK disposition. apply_nwps_assignments READS this block (pending[]/retired[]/unverifiable[]) alongside trust_by_buoy to set each placed spot's nwps_direction_status — it is NOT inert. trust_by_buoy stays the HEIGHT-tagging gate (whether a spot consumes NWPS). THREE states: (1) 'pending' — a VALID reference buoy exists; the spots are placed on NWPS HEIGHT now but direction is NOT yet buoy-verified (no swell has run --trustcheck), so the buoy is NOT PASS in trust_by_buoy; the buoy-ready monitor WATCHES it and a qualifying swell accumulates a --trustcheck; direction is confirmed when the rolling verdict settles PASS. (2) 'retired' — NO valid nearshore reference buoy exists (e.g. 44098: a structurally-invalid 76 m offshore bank vs shallow nearshore nodes); the spots KEEP NWPS height + raycast direction on the listed 'axes'; the monitor EXCLUDES the buoy (never flagged). 'axes' is load-bearing: a record whose axes include 'direction' makes apply label those spots nwps_direction_status='unverifiable' (never 'verified') even when the buoy is PASS — that PASS is a HEIGHT verification only. (3) 'unverifiable' — a spot placed on NWPS HEIGHT (like pending, but with NO trust PASS and NO valid buoy on the row) whose direction can NEVER be buoy-verified: island-shadowed geometry where the nearest valid buoy is around a headland in different exposure. Keyed by SLUG; the row's nwps_buoy_id is null; the far 'nearest_candidate' is AUDIT-ONLY and is never used for placement or verification. apply checks unverifiable BEFORE the PASS branch, so these can never be relabeled 'verified'; the monitor NEVER watches them (no WATCH entry) and no far-buoy trust-check ever runs. Distinctions: pending = valid nearby buoy, awaiting a swell; retired = a buoy is nearby but structurally invalid; unverifiable = a valid buoy exists elsewhere but is geometrically wrong for these spots.",
+    "_comment": "BUOY trust-CHECK disposition. apply_nwps_assignments READS this block (pending[]/retired[]/unverifiable[]) alongside trust_by_buoy to set each placed spot's nwps_direction_status \u2014 it is NOT inert. trust_by_buoy stays the HEIGHT-tagging gate (whether a spot consumes NWPS). THREE states: (1) 'pending' \u2014 a VALID reference buoy exists; the spots are placed on NWPS HEIGHT now but direction is NOT yet buoy-verified (no swell has run --trustcheck), so the buoy is NOT PASS in trust_by_buoy; the buoy-ready monitor WATCHES it and a qualifying swell accumulates a --trustcheck; direction is confirmed when the rolling verdict settles PASS. (2) 'retired' \u2014 NO valid nearshore reference buoy exists (e.g. 44098: a structurally-invalid 76 m offshore bank vs shallow nearshore nodes); the spots KEEP NWPS height + raycast direction on the listed 'axes'; the monitor EXCLUDES the buoy (never flagged). 'axes' is load-bearing: a record whose axes include 'direction' makes apply label those spots nwps_direction_status='unverifiable' (never 'verified') even when the buoy is PASS \u2014 that PASS is a HEIGHT verification only. (3) 'unverifiable' \u2014 a spot placed on NWPS HEIGHT (like pending, but with NO trust PASS and NO valid buoy on the row) whose direction can NEVER be buoy-verified: island-shadowed geometry where the nearest valid buoy is around a headland in different exposure. Keyed by SLUG; the row's nwps_buoy_id is null; the far 'nearest_candidate' is AUDIT-ONLY and is never used for placement or verification. apply checks unverifiable BEFORE the PASS branch, so these can never be relabeled 'verified'; the monitor NEVER watches them (no WATCH entry) and no far-buoy trust-check ever runs. Distinctions: pending = valid nearby buoy, awaiting a swell; retired = a buoy is nearby but structurally invalid; unverifiable = a valid buoy exists elsewhere but is geometrically wrong for these spots.",
     "retired": [
       {
         "zone": "box/44098",
@@ -1766,8 +1766,8 @@
           "direction"
         ],
         "tier": "NWPS height + raycast direction (unverified by buoy)",
-        "reason": "44098 STRUCTURALLY INVALID as a buoy reference on BOTH axes — 76 m offshore bank vs shallow nearshore node; regime mismatch (shoaling/breaking/sheltering) makes both height AND direction comparison invalid; no valid nearshore reference within 150 km (GoM shelf deep to coast — permanent). These spots ride NWPS height skill + raycast direction, UNVERIFIED by an independent buoy — same disposition as any spot with no nearby buoy.",
-        "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore reference on either axis (least-bad 44007 Portland 49 m 3-m discus — MARGINAL). Live height r against 44098 swung 0.87/INCONCLUSIVE/0.52 across windows — the deep-bank-vs-nearshore regime mismatch, not NWPS error."
+        "reason": "44098 STRUCTURALLY INVALID as a buoy reference on BOTH axes \u2014 76 m offshore bank vs shallow nearshore node; regime mismatch (shoaling/breaking/sheltering) makes both height AND direction comparison invalid; no valid nearshore reference within 150 km (GoM shelf deep to coast \u2014 permanent). These spots ride NWPS height skill + raycast direction, UNVERIFIED by an independent buoy \u2014 same disposition as any spot with no nearby buoy.",
+        "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore reference on either axis (least-bad 44007 Portland 49 m 3-m discus \u2014 MARGINAL). Live height r against 44098 swung 0.87/INCONCLUSIVE/0.52 across windows \u2014 the deep-bank-vs-nearshore regime mismatch, not NWPS error."
       },
       {
         "zone": "gyx/44098",
@@ -1779,8 +1779,8 @@
           "direction"
         ],
         "tier": "NWPS height + raycast direction (unverified by buoy)",
-        "reason": "44098 STRUCTURALLY INVALID as a buoy reference on BOTH axes — 76 m offshore bank vs shallow nearshore node; regime mismatch (shoaling/breaking/sheltering) makes both height AND direction comparison invalid; no valid nearshore reference within 150 km (GoM shelf deep to coast — permanent). These spots ride NWPS height skill + raycast direction, UNVERIFIED by an independent buoy — same disposition as any spot with no nearby buoy.",
-        "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore reference on either axis (least-bad 44007 Portland 49 m 3-m discus — MARGINAL). Live height r against 44098 swung 0.87/INCONCLUSIVE/0.52 across windows — the deep-bank-vs-nearshore regime mismatch, not NWPS error."
+        "reason": "44098 STRUCTURALLY INVALID as a buoy reference on BOTH axes \u2014 76 m offshore bank vs shallow nearshore node; regime mismatch (shoaling/breaking/sheltering) makes both height AND direction comparison invalid; no valid nearshore reference within 150 km (GoM shelf deep to coast \u2014 permanent). These spots ride NWPS height skill + raycast direction, UNVERIFIED by an independent buoy \u2014 same disposition as any spot with no nearby buoy.",
+        "verified": "--find-buoy live on the Mac: 33 candidates within 150 km of 44098, none a valid nearshore reference on either axis (least-bad 44007 Portland 49 m 3-m discus \u2014 MARGINAL). Live height r against 44098 swung 0.87/INCONCLUSIVE/0.52 across windows \u2014 the deep-bank-vs-nearshore regime mismatch, not NWPS error."
       }
     ],
     "pending": [
@@ -1788,11 +1788,11 @@
         "zone": "mtr/46240",
         "wfo": "mtr",
         "buoy": "46240",
-        "reference": "46240 — Cabrillo Point nearshore Waverider (18 m); a VALID nearshore directional reference",
+        "reference": "46240 \u2014 Cabrillo Point nearshore Waverider (18 m); a VALID nearshore directional reference",
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46240 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists (distinct from the 44098 both-axes retirement).",
+        "state": "OPTION B \u2014 place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46240 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired \u2014 a valid buoy exists (distinct from the 44098 both-axes retirement).",
         "spots": 24,
         "slugs": [
           "waddell-creek",
@@ -1820,17 +1820,17 @@
           "monterey-beach",
           "carmel-beach"
         ],
-        "to_place": "This record alone tags NOTHING. To place these on NWPS height: (1) run `--validate --wfo mtr` on the Mac to compute each spot's nwps_node_lat/lng/distance, (2) promote them into 'spots' with nwps_buoy_id 46240, (3) set trust_by_buoy['46240']='PASS' (the HEIGHT-tagging gate apply_nwps_assignments requires — with 46240 absent from trust_by_buoy the 24 are HELD, not placed). Direction remains pending here until --trustcheck settles the rolling verdict to PASS."
+        "to_place": "This record alone tags NOTHING. To place these on NWPS height: (1) run `--validate --wfo mtr` on the Mac to compute each spot's nwps_node_lat/lng/distance, (2) promote them into 'spots' with nwps_buoy_id 46240, (3) set trust_by_buoy['46240']='PASS' (the HEIGHT-tagging gate apply_nwps_assignments requires \u2014 with 46240 absent from trust_by_buoy the 24 are HELD, not placed). Direction remains pending here until --trustcheck settles the rolling verdict to PASS."
       },
       {
         "zone": "mtr/46237",
         "wfo": "mtr",
         "buoy": "46237",
-        "reference": "46237 — San Francisco Bar nearshore Waverider (17 m); a VALID nearshore directional reference (--find-buoy)",
+        "reference": "46237 \u2014 San Francisco Bar nearshore Waverider (17 m); a VALID nearshore directional reference (--find-buoy)",
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46237 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "state": "OPTION B \u2014 place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46237 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired \u2014 a valid buoy exists.",
         "spots": 13,
         "slugs": [
           "jenner-beach",
@@ -1853,11 +1853,11 @@
         "zone": "mtr/46284",
         "wfo": "mtr",
         "buoy": "46284",
-        "reference": "46284 — Soquel Cove South nearshore Waverider (24 m); a VALID nearshore directional reference (--find-buoy)",
+        "reference": "46284 \u2014 Soquel Cove South nearshore Waverider (24 m); a VALID nearshore directional reference (--find-buoy)",
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46284 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "state": "OPTION B \u2014 place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46284 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired \u2014 a valid buoy exists.",
         "spots": 2,
         "slugs": [
           "pigeon-point",
@@ -1869,11 +1869,11 @@
         "zone": "lox/46268",
         "wfo": "lox",
         "buoy": "46268",
-        "reference": "46268 — Topanga Nearshore Waverider (20 m); a VALID nearshore directional reference (--find-buoy)",
+        "reference": "46268 \u2014 Topanga Nearshore Waverider (20 m); a VALID nearshore directional reference (--find-buoy)",
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46268 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "state": "OPTION B \u2014 place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46268 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired \u2014 a valid buoy exists.",
         "spots": 18,
         "slugs": [
           "county-line",
@@ -1901,13 +1901,13 @@
         "zone": "mtr/46215",
         "wfo": "mtr",
         "buoy": "46215",
-        "reference": "46215 — Diablo Canyon Nearshore Waverider (27 m); a VALID nearshore directional reference (--find-buoy)",
+        "reference": "46215 \u2014 Diablo Canyon Nearshore Waverider (27 m); a VALID nearshore directional reference (--find-buoy)",
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46215 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "state": "OPTION B \u2014 place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46215 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired \u2014 a valid buoy exists.",
         "spots": 12,
-        "grid_crossing": "All 12 SLO spots carry nwps_wfo='mtr' and nwps_buoy_id='46215', but HEIGHT is supplied by TWO NWPS grids: 8 (andrew-molera-state-park, sand-dollar-beach, piedras-blancas, san-simeon, cayucos-pier, morro-rock, cable-landing, avila-beach — Big Sur→Avila) place on the mtr grid; 4 (shell-beach-north, shell-beach, pismo-beach-pier, grover-beach — Shell Beach→Grover) place on the LOX grid, because the mtr/lox marine-forecast boundary runs through Pismo and those 4 have a valid nearshore node only on the lox nest. Their nwps_wfo label stays 'mtr' (NOT relabeled to lox) — buoy 46215 is the valid direction reference for all 12 regardless of which grid supplies height. Keeping nwps_wfo='mtr' lets the single (mtr, 46215) pending key cover all 12. Promote the 4 lox-grid spots with `--buoy 46215 --wfo mtr` on the lox validate-out: the --wfo override takes the lox-grid node coords while keeping the label mtr.",
+        "grid_crossing": "All 12 SLO spots carry nwps_wfo='mtr' and nwps_buoy_id='46215', but HEIGHT is supplied by TWO NWPS grids: 8 (andrew-molera-state-park, sand-dollar-beach, piedras-blancas, san-simeon, cayucos-pier, morro-rock, cable-landing, avila-beach \u2014 Big Sur\u2192Avila) place on the mtr grid; 4 (shell-beach-north, shell-beach, pismo-beach-pier, grover-beach \u2014 Shell Beach\u2192Grover) place on the LOX grid, because the mtr/lox marine-forecast boundary runs through Pismo and those 4 have a valid nearshore node only on the lox nest. Their nwps_wfo label stays 'mtr' (NOT relabeled to lox) \u2014 buoy 46215 is the valid direction reference for all 12 regardless of which grid supplies height. Keeping nwps_wfo='mtr' lets the single (mtr, 46215) pending key cover all 12. Promote the 4 lox-grid spots with `--buoy 46215 --wfo mtr` on the lox validate-out: the --wfo override takes the lox-grid node coords while keeping the label mtr.",
         "slugs": [
           "andrew-molera-state-park",
           "sand-dollar-beach",
@@ -1922,17 +1922,17 @@
           "pismo-beach-pier",
           "grover-beach"
         ],
-        "to_place": "This record alone tags NOTHING. Two-pass promote, BOTH under buoy 46215 (merge-by-slug accumulates across the two source files): (1) the 8 mtr-grid spots from nwps_mtr_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --buoy 46215 --slugs andrew-molera-state-park,sand-dollar-beach,piedras-blancas,san-simeon,cayucos-pier,morro-rock,cable-landing,avila-beach --apply`; (2) the 4 lox-grid Pismo spots from nwps_lox_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --wfo mtr --slugs shell-beach-north,shell-beach,pismo-beach-pier,grover-beach --apply` (the --wfo mtr override keeps the label mtr while taking the lox-grid nodes). Do pass (2) BEFORE re-validating the lox grid for anything else (it overwrites nwps_lox_validate_out.json). Placement via the pending path; 46215 stays OUT of trust_by_buoy (no PASS)."
+        "to_place": "This record alone tags NOTHING. Two-pass promote, BOTH under buoy 46215 (merge-by-slug accumulates across the two source files): (1) the 8 mtr-grid spots from nwps_mtr_validate_out.json \u2014 `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --buoy 46215 --slugs andrew-molera-state-park,sand-dollar-beach,piedras-blancas,san-simeon,cayucos-pier,morro-rock,cable-landing,avila-beach --apply`; (2) the 4 lox-grid Pismo spots from nwps_lox_validate_out.json \u2014 `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --wfo mtr --slugs shell-beach-north,shell-beach,pismo-beach-pier,grover-beach --apply` (the --wfo mtr override keeps the label mtr while taking the lox-grid nodes). Do pass (2) BEFORE re-validating the lox grid for anything else (it overwrites nwps_lox_validate_out.json). Placement via the pending path; 46215 stays OUT of trust_by_buoy (no PASS)."
       }
     ],
     "unverifiable": [
       {
         "zone": "lox/santa-barbara-channel",
         "wfo": "lox",
-        "reason": "ISLAND-SHADOWED — Santa Barbara Channel (Point Conception → Point Dume: jalama, Santa Barbara, Carpinteria, Ventura, Oxnard, etc.). The Channel Islands block the dominant swell window, so the nearest VALID nearshore directional reference is 72–96 km away around Point Conception, in a different wave-exposure regime — not a usable direction reference for these spots. They ride NWPS HEIGHT skill + raycast direction, with direction PERMANENTLY not buoy-verifiable. Distinct from 'pending' (there a valid nearby buoy exists and we await a swell to verify) and from 'retired' (there a buoy is nearby but structurally invalid on both axes): here the only usable buoy is geometrically wrong for these spots (far, around a headland, different exposure), so direction can NEVER be buoy-verified.",
+        "reason": "ISLAND-SHADOWED \u2014 Santa Barbara Channel (Point Conception \u2192 Point Dume: jalama, Santa Barbara, Carpinteria, Ventura, Oxnard, etc.). The Channel Islands block the dominant swell window, so the nearest VALID nearshore directional reference is 72\u201396 km away around Point Conception, in a different wave-exposure regime \u2014 not a usable direction reference for these spots. They ride NWPS HEIGHT skill + raycast direction, with direction PERMANENTLY not buoy-verifiable. Distinct from 'pending' (there a valid nearby buoy exists and we await a swell to verify) and from 'retired' (there a buoy is nearby but structurally invalid on both axes): here the only usable buoy is geometrically wrong for these spots (far, around a headland, different exposure), so direction can NEVER be buoy-verified.",
         "nearest_candidate": null,
         "slugs": [],
-        "to_place": "STAGING ONLY — this record tags NOTHING while 'slugs' is empty. On the Mac: (1) `--find-buoy` the shadowed spots to record the far nearest_candidate (AUDIT-ONLY — never used for placement or verification); (2) `--validate --wfo lox` to capture their node lat/lng into scripts/nwps_lox_validate_out.json; (3) `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs <shadowed slugs>` to merge them into 'spots' with nwps_buoy_id=null; (4) add those same slugs to 'slugs' here. apply then places them height-live with nwps_direction_status='unverifiable' (checked BEFORE the PASS branch, so never relabeled 'verified'). The far buoy is NEVER put in trust_by_buoy or pending[], and these spots get NO WATCH entry (the monitor never flags them)."
+        "to_place": "STAGING ONLY \u2014 this record tags NOTHING while 'slugs' is empty. On the Mac: (1) `--find-buoy` the shadowed spots to record the far nearest_candidate (AUDIT-ONLY \u2014 never used for placement or verification); (2) `--validate --wfo lox` to capture their node lat/lng into scripts/nwps_lox_validate_out.json; (3) `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs <shadowed slugs>` to merge them into 'spots' with nwps_buoy_id=null; (4) add those same slugs to 'slugs' here. apply then places them height-live with nwps_direction_status='unverifiable' (checked BEFORE the PASS branch, so never relabeled 'verified'). The far buoy is NEVER put in trust_by_buoy or pending[], and these spots get NO WATCH entry (the monitor never flags them)."
       }
     ]
   }
