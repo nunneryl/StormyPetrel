@@ -1864,6 +1864,65 @@
           "scotts-creek"
         ],
         "to_place": "This record alone tags NOTHING. Node coords for these 2 are in the current (Mac) nwps_mtr_validate_out.json; `promote_nwps_validate --buoy 46284 --slugs pigeon-point,scotts-creek` merges them into 'spots'. Do this BEFORE re-validating the 46237 batch (which overwrites the validate-out). Placement via the pending path; 46284 stays OUT of trust_by_buoy (no PASS)."
+      },
+      {
+        "zone": "lox/46268",
+        "wfo": "lox",
+        "buoy": "46268",
+        "reference": "46268 — Topanga Nearshore Waverider (20 m); a VALID nearshore directional reference (--find-buoy)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46268 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "spots": 18,
+        "slugs": [
+          "county-line",
+          "leo-carrillo-state-beach",
+          "chart-house",
+          "sunset-point",
+          "topanga-beach",
+          "will-rogers",
+          "malibu-point",
+          "malibu-surfrider-beach",
+          "santa-monica-beach",
+          "zuma-beach",
+          "santa-monica-pier",
+          "point-dume",
+          "venice-beach-breakwater",
+          "venice-beach-pier",
+          "dockweiler-beach",
+          "shitpipe",
+          "el-porto",
+          "bruce-s-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. On the Mac: `--validate --wfo lox --batch <these 18 slugs>` to (re)compute each spot's nwps_node_lat/lng into nwps_lox_validate_out.json, then `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46268 --slugs <these 18> --apply` merges them into 'spots'. Placement via the pending path; 46268 stays OUT of trust_by_buoy (no PASS)."
+      },
+      {
+        "zone": "mtr/46215",
+        "wfo": "mtr",
+        "buoy": "46215",
+        "reference": "46215 — Diablo Canyon Nearshore Waverider (27 m); a VALID nearshore directional reference (--find-buoy)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46215 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
+        "spots": 12,
+        "grid_crossing": "All 12 SLO spots carry nwps_wfo='mtr' and nwps_buoy_id='46215', but HEIGHT is supplied by TWO NWPS grids: 8 (andrew-molera-state-park, sand-dollar-beach, piedras-blancas, san-simeon, cayucos-pier, morro-rock, cable-landing, avila-beach — Big Sur→Avila) place on the mtr grid; 4 (shell-beach-north, shell-beach, pismo-beach-pier, grover-beach — Shell Beach→Grover) place on the LOX grid, because the mtr/lox marine-forecast boundary runs through Pismo and those 4 have a valid nearshore node only on the lox nest. Their nwps_wfo label stays 'mtr' (NOT relabeled to lox) — buoy 46215 is the valid direction reference for all 12 regardless of which grid supplies height. Keeping nwps_wfo='mtr' lets the single (mtr, 46215) pending key cover all 12. Promote the 4 lox-grid spots with `--buoy 46215 --wfo mtr` on the lox validate-out: the --wfo override takes the lox-grid node coords while keeping the label mtr.",
+        "slugs": [
+          "andrew-molera-state-park",
+          "sand-dollar-beach",
+          "piedras-blancas",
+          "san-simeon",
+          "cayucos-pier",
+          "morro-rock",
+          "cable-landing",
+          "avila-beach",
+          "shell-beach-north",
+          "shell-beach",
+          "pismo-beach-pier",
+          "grover-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. Two-pass promote, BOTH under buoy 46215 (merge-by-slug accumulates across the two source files): (1) the 8 mtr-grid spots from nwps_mtr_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --buoy 46215 --slugs andrew-molera-state-park,sand-dollar-beach,piedras-blancas,san-simeon,cayucos-pier,morro-rock,cable-landing,avila-beach --apply`; (2) the 4 lox-grid Pismo spots from nwps_lox_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --wfo mtr --slugs shell-beach-north,shell-beach,pismo-beach-pier,grover-beach --apply` (the --wfo mtr override keeps the label mtr while taking the lox-grid nodes). Do pass (2) BEFORE re-validating the lox grid for anything else (it overwrites nwps_lox_validate_out.json). Placement via the pending path; 46215 stays OUT of trust_by_buoy (no PASS)."
       }
     ],
     "unverifiable": [
