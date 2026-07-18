@@ -469,11 +469,17 @@
       }
     ],
     "optimal_swell_dir": 216,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
     "nearest_tide_station_dist_km": 3.01,
     "nearest_buoy_id": "46253",
-    "nearest_buoy_dist_km": 23.14
+    "nearest_buoy_dist_km": 23.14,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.57424,
+    "nwps_node_lng": -117.94468,
+    "nwps_node_distance_m": 4030,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Bolinas",
@@ -608,11 +614,17 @@
       }
     ],
     "optimal_swell_dir": 188,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 2.03,
     "nearest_buoy_id": "46256",
-    "nearest_buoy_dist_km": 13.8
+    "nearest_buoy_dist_km": 13.8,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.68249,
+    "nwps_node_lng": -118.07362,
+    "nwps_node_distance_m": 2668,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Bombora",
@@ -2814,9 +2826,15 @@
     "tide_preference_confidence": 0.75,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
-    "nearest_tide_station_dist_km": 1.73
+    "nearest_tide_station_dist_km": 1.73,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 4067,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Hermosa Beach, California",
@@ -2870,11 +2888,17 @@
       }
     ],
     "optimal_swell_dir": 216,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 2.2,
     "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 21.73
+    "nearest_buoy_dist_km": 21.73,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 4810,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Humboldt Bay Jetty",
@@ -3017,9 +3041,15 @@
     "tide_preference_confidence": 0.8,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
-    "nearest_tide_station_dist_km": 5.11
+    "nearest_tide_station_dist_km": 5.11,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.64641,
+    "nwps_node_lng": -118.03064,
+    "nwps_node_distance_m": 2572,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Huntington Beach, California",
@@ -3084,9 +3114,15 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
-    "nearest_tide_station_dist_km": 2.87
+    "nearest_tide_station_dist_km": 2.87,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.61032,
+    "nwps_node_lng": -117.98766,
+    "nwps_node_distance_m": 3373,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Huntington Cliffs",
@@ -3154,9 +3190,15 @@
       }
     ],
     "optimal_swell_dir": 192,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
-    "nearest_tide_station_dist_km": 6.29
+    "nearest_tide_station_dist_km": 6.29,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.64641,
+    "nwps_node_lng": -118.03064,
+    "nwps_node_distance_m": 2345,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Imperial Beach Pier",
@@ -5023,11 +5065,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410583",
     "nearest_tide_station_dist_km": 1.87,
     "nearest_buoy_id": "46253",
-    "nearest_buoy_dist_km": 25.82
+    "nearest_buoy_dist_km": 25.82,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.57424,
+    "nwps_node_lng": -117.9017,
+    "nwps_node_distance_m": 3422,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Newport Point",
@@ -5094,11 +5142,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410583",
     "nearest_tide_station_dist_km": 3.17,
     "nearest_buoy_id": "46253",
-    "nearest_buoy_dist_km": 29.99
+    "nearest_buoy_dist_km": 29.99,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.57424,
+    "nwps_node_lng": -117.94468,
+    "nwps_node_distance_m": 3708,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Ocean Beach Pier SD",
@@ -5557,11 +5611,17 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 5.21,
     "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 23.42
+    "nearest_buoy_dist_km": 23.42,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 3885,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Pismo Beach Pier",
@@ -5902,9 +5962,15 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
-    "nearest_tide_station_dist_km": 2.17
+    "nearest_tide_station_dist_km": 2.17,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 2658,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Redondo Breakwater",
@@ -5968,11 +6034,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 1.45,
     "nearest_buoy_id": "46221",
-    "nearest_buoy_dist_km": 22.99
+    "nearest_buoy_dist_km": 22.99,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 2426,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Refugio State Beach",
@@ -6182,11 +6254,17 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
     "nearest_tide_station_dist_km": 3.01,
     "nearest_buoy_id": "46253",
-    "nearest_buoy_dist_km": 23.14
+    "nearest_buoy_dist_km": 23.14,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.61032,
+    "nwps_node_lng": -117.98766,
+    "nwps_node_distance_m": 3292,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Rockaway Beach Pacifica",
@@ -7096,9 +7174,15 @@
     "tide_preference_confidence": 0.75,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
-    "nearest_tide_station_dist_km": 5.81
+    "nearest_tide_station_dist_km": 5.81,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.71857,
+    "nwps_node_lng": -118.1166,
+    "nwps_node_distance_m": 2266,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Seal Beach, California",
@@ -8123,11 +8207,17 @@
       }
     ],
     "optimal_swell_dir": 192,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 5.88,
     "nearest_buoy_id": "46256",
-    "nearest_buoy_dist_km": 9.63
+    "nearest_buoy_dist_km": 9.63,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.71857,
+    "nwps_node_lng": -118.1166,
+    "nwps_node_distance_m": 2768,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Surfside, California",
@@ -8192,11 +8282,17 @@
       }
     ],
     "optimal_swell_dir": 192,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 3.42,
     "nearest_buoy_id": "46256",
-    "nearest_buoy_dist_km": 11.05
+    "nearest_buoy_dist_km": 11.05,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.71857,
+    "nwps_node_lng": -118.1166,
+    "nwps_node_distance_m": 3075,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Swamis",
@@ -28275,12 +28371,18 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
     "nearest_tide_station_dist_km": 2.06,
     "nearest_buoy_id": "46253",
     "nearest_buoy_dist_km": 22.4,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.61032,
+    "nwps_node_lng": -117.98766,
+    "nwps_node_distance_m": 4423,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Seal Beach Jetty",
@@ -28315,12 +28417,18 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 6.64,
     "nearest_buoy_id": "46256",
     "nearest_buoy_dist_km": 8.72,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.71857,
+    "nwps_node_lng": -118.1166,
+    "nwps_node_distance_m": 2300,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Cabrillo Beach",
@@ -28355,12 +28463,18 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 18.72,
     "nearest_buoy_id": "46256",
     "nearest_buoy_dist_km": 8.23,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.68249,
+    "nwps_node_lng": -118.28851,
+    "nwps_node_distance_m": 2486,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "White Point",
@@ -28395,12 +28509,18 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 18.44,
     "nearest_buoy_id": "46256",
     "nearest_buoy_dist_km": 8.8,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.68249,
+    "nwps_node_lng": -118.28851,
+    "nwps_node_distance_m": 2530,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Haggarty's",
@@ -28430,12 +28550,18 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 4.94,
     "nearest_buoy_id": "46256",
     "nearest_buoy_dist_km": 21.76,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 3043,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Rat Beach",
@@ -28465,12 +28591,18 @@
       }
     ],
     "optimal_swell_dir": 204,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 4.72,
     "nearest_buoy_id": "46256",
     "nearest_buoy_dist_km": 21.34,
-    "nwps_wfo": "lox"
+    "nwps_wfo": "lox",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.82682,
+    "nwps_node_lng": -118.41745,
+    "nwps_node_distance_m": 3205,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Bruce's Beach",
