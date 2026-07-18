@@ -186,16 +186,40 @@ def test_44098_retired_direction_flips_verified_to_unverifiable_live():
 
 
 def test_full_dryrun_direction_status_breakdown_live():
-    # LIVE dry-run math: 91 verified + 39 pending + 14 unverifiable = 144 placed (see task).
+    # LIVE consistency check: derive the expected verified/pending/unverifiable split from the
+    # assignments doc itself, then assert build_plan agrees — no hardcoded totals, so it stays
+    # correct as new pending zones are promoted into spots[]. The 44098 retired-direction spots
+    # remain the 'unverifiable' set today (14).
     doc, enriched = _real_doc(), _real_enriched()
+    ref, trust = doc["buoy_reference"], doc["trust_by_buoy"]
+
+    def keyset(records):
+        return {(r["wfo"], str(r["buoy"])) for r in records if r.get("wfo") and r.get("buoy") is not None}
+
+    pending_keys = keyset(ref.get("pending", []))
+    retired_keys = keyset(ref.get("retired", []))
+    retired_dir = keyset([r for r in ref.get("retired", []) if "direction" in (r.get("axes") or [])])
+    unver_slugs = {s for u in ref.get("unverifiable", []) for s in (u.get("slugs") or [])}
+    exp = {}
+    for a in doc["spots"]:
+        buoy = a.get("nwps_buoy_id")
+        key = (a.get("nwps_wfo"), str(buoy))
+        if a.get("slug") in unver_slugs:
+            label = "unverifiable"
+        elif trust.get(str(buoy)) == "PASS":
+            label = "unverifiable" if key in retired_dir else "verified"
+        elif key in pending_keys and key not in retired_keys:
+            label = "pending"
+        else:
+            continue   # held — not placed
+        exp[label] = exp.get(label, 0) + 1
     rows, problems, held, *_ = ap.build_plan(doc=doc, enriched=enriched)
-    counts = {}
+    got = {}
     for r in rows:
-        counts[r["direction_status"]] = counts.get(r["direction_status"], 0) + 1
-    assert counts.get("unverifiable") == 14, f"want 14 unverifiable (the 44098 spots), got {counts}"
-    assert counts.get("pending") == 39, f"want 39 pending (46240+46237+46284), got {counts}"
-    assert counts.get("verified") == 91, f"want 91 verified (105 − 14 flipped), got {counts}"
-    assert len(rows) == 144 and not problems, f"144 placed, no problems (problems={problems})"
+        got[r["direction_status"]] = got.get(r["direction_status"], 0) + 1
+    assert not problems, f"every assignment spot should match enriched + have a node (problems={problems})"
+    assert got == exp, f"build_plan split {got} != doc-derived {exp}"
+    assert got.get("unverifiable") == 14, f"the 14 retired-direction 44098 spots are the unverifiable set, got {got}"
 
 
 def test_force_places_a_held_spot():

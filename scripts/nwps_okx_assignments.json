@@ -1923,6 +1923,42 @@
           "grover-beach"
         ],
         "to_place": "This record alone tags NOTHING. Two-pass promote, BOTH under buoy 46215 (merge-by-slug accumulates across the two source files): (1) the 8 mtr-grid spots from nwps_mtr_validate_out.json \u2014 `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --buoy 46215 --slugs andrew-molera-state-park,sand-dollar-beach,piedras-blancas,san-simeon,cayucos-pier,morro-rock,cable-landing,avila-beach --apply`; (2) the 4 lox-grid Pismo spots from nwps_lox_validate_out.json \u2014 `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --wfo mtr --slugs shell-beach-north,shell-beach,pismo-beach-pier,grover-beach --apply` (the --wfo mtr override keeps the label mtr while taking the lox-grid nodes). Do pass (2) BEFORE re-validating the lox grid for anything else (it overwrites nwps_lox_validate_out.json). Placement via the pending path; 46215 stays OUT of trust_by_buoy (no PASS)."
+      },
+      {
+        "zone": "lox/46256",
+        "wfo": "lox",
+        "buoy": "46256",
+        "reference": "46256 \u2014 Long Beach Channel Nearshore Waverider (23 m); a VALID nearshore directional reference (--find-buoy: 22 km from palos-verdes-cove, 26 km from newport-jetties; the closer deep buoys 46253/46221 were correctly rejected as STRUCTURALLY INVALID)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B \u2014 place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46256 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired \u2014 a valid buoy exists.",
+        "spots": 22,
+        "slugs": [
+          "hermosa-beach-california",
+          "hermosa-beach-pier",
+          "redondo-breakwater",
+          "redondo-beach-california",
+          "rat-beach",
+          "haggarty-s",
+          "palos-verdes-cove",
+          "seal-beach-jetty",
+          "seal-beach-pier",
+          "surfside-jetty",
+          "surfside-california",
+          "cabrillo-beach",
+          "white-point",
+          "bolsa-chica-state-beach",
+          "huntington-cliffs",
+          "huntington-beach-pier",
+          "huntington-beach-california",
+          "river-jetties",
+          "newport-jetties",
+          "blackies",
+          "newport-point",
+          "newport-beach-california"
+        ],
+        "to_place": "This record alone tags NOTHING. Node coords for these 22 are in the current (Mac) nwps_lox_validate_out.json (freshly written by `--validate --wfo lox --batch <these 22 slugs>`); `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46256 --slugs <these 22> --apply` merges them into 'spots'. Placement via the pending path; 46256 stays OUT of trust_by_buoy (no PASS)."
       }
     ],
     "unverifiable": [
