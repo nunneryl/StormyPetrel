@@ -119,6 +119,11 @@ WATCH = [
     # all 12 keep nwps_wfo='mtr' and buoy 46215 — so the monitor watches ONE (mtr, 46215) zone for all
     # 12 (the far lox nodes don't change where the buoy's direction is verified). NOT retired → watched.
     {"id": "46215", "zone": "SLO / Diablo Canyon (Big Sur / San Simeon / Cayucos / Morro / Avila / Pismo / Grover)", "wfo": "mtr", "status": "candidate"},
+    # lox — South Bay / Palos Verdes / Orange County. 46256 (Long Beach Channel Nearshore Waverider,
+    # 23 m, VALID) anchors 22 spots (Hermosa → Newport) placed on NWPS HEIGHT with direction PENDING
+    # (option B): no swell has verified direction yet, so no trust PASS. Watch for a swell to accumulate
+    # direction events (rolling ACCUMULATING). NOT retired → watched normally.
+    {"id": "46256", "zone": "South Bay + Palos Verdes + Orange County (Hermosa / Redondo / PV Cove / Seal Beach / Huntington / Newport)", "wfo": "lox", "status": "candidate"},
 ]
 
 
