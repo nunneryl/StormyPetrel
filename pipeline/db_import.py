@@ -287,6 +287,24 @@ def _find_excluded_in_db(client, excluded_slugs: set[str]) -> list[dict]:
     return result.data or []
 
 
+def _read_forecast_json(path: Path, label: str):
+    """Load a forecast JSON file, or return None (logged) when it is ABSENT — so db_import ships the
+    tables it CAN (spots + whatever was fetched) instead of crashing if a fetch step was cut short
+    (e.g. the fetch_all STEP timed out mid-fetcher and left a forecast file unwritten, then db_import
+    ran via `if: !cancelled()`). A present-but-EMPTY file loads normally and imports 0 rows — sane,
+    never bad rows. Spots (the committed enriched input) are NOT routed through this — a missing spots
+    file is a real error worth failing on."""
+    if not Path(path).exists():
+        log.warning("db_import: %s file missing (%s) — skipping that table (fetch likely cut short)",
+                    label, path)
+        return None
+    try:
+        return json.loads(Path(path).read_text())
+    except (OSError, json.JSONDecodeError) as e:
+        log.warning("db_import: %s file unreadable (%s: %s) — skipping that table", label, path, e)
+        return None
+
+
 def _load_tide_freshness(tides_path: Path = TIDES_FORECAST_FILE) -> dict[str, dict]:
     """{station_id: {"asof", "stale"}} from tides.json, for the data_sources freshness marker.
     Empty when tides.json is absent/unreadable — then every spot with a tide station reads
@@ -428,7 +446,9 @@ def _spot_id_map(client) -> dict[str, int]:
 def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
                      batch_size: int = _DEFAULT_BATCH * 5) -> int:
     """Upsert per-spot hourly forecasts from ratings.json."""
-    ratings = json.loads(Path(ratings_path).read_text())
+    ratings = _read_forecast_json(ratings_path, "ratings")
+    if ratings is None:
+        return 0
     by_name = _spot_id_map(client)
 
     records: list[dict] = []
@@ -532,7 +552,9 @@ def import_buoys(client, buoys_path: Path = BUOYS_FORECAST_FILE,
     persisted alongside the combined-wave (.std) values when both are
     reported for the same timestamp.
     """
-    buoys = json.loads(Path(buoys_path).read_text())
+    buoys = _read_forecast_json(buoys_path, "buoys")
+    if buoys is None:
+        return 0
     records: list[dict] = []
     for buoy_id, data in buoys.items():
         merged: dict[str, dict] = {}
@@ -607,7 +629,9 @@ def _parse_coops_time(t_str: str) -> str | None:
 def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
                  batch_size: int = _DEFAULT_BATCH * 5) -> int:
     """Upsert CO-OPS tide predictions from tides.json (hilo + hourly)."""
-    tides = json.loads(Path(tides_path).read_text())
+    tides = _read_forecast_json(tides_path, "tides")
+    if tides is None:
+        return 0
     records: list[dict] = []
     seen: set[tuple[str, str]] = set()  # de-dupe within a station
 
