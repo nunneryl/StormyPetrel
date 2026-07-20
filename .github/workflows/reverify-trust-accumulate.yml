@@ -1,0 +1,162 @@
+name: reverify-trust-accumulate
+
+# Scheduled accumulator for the NWPS direction trust gate. Runs `--reverify-tagged`
+# so each height-ASSESSABLE swell window's direction residuals are appended to the
+# rolling history and zones accumulate toward their TRUST_MIN_EVENTS verdict on their
+# own. This is the automation half of the threshold/banking fix (#86): banking is now
+# guarded on height assessability, so an INCONCLUSIVE (flat / too-short) window banks
+# nothing — automated accumulation can't settle a zone on noise.
+#
+# HARD BOUNDARIES (READ-ONLY on prod, by construction):
+#   * NEVER writes trust_by_buoy, NEVER sets PASS, NEVER runs apply_nwps_assignments,
+#     NEVER touches spots_enriched.json or the DB. It only appends to the append-only
+#     rolling trust-history log (pipeline/forecast_data/, gitignored) and reports.
+#   * Tagging stays MANUAL: when a zone's rolling verdict SETTLES (reaches the event
+#     threshold) it opens/updates a GitHub issue for review — a human makes the call.
+#
+# Persistence (the load-bearing design choice): the history log is gitignored, so on a
+# CI runner it is ephemeral and would be discarded — scheduling would accumulate NOTHING.
+# It is carried across runs via actions/cache (a fresh immutable key per run, restored
+# from the latest prior). This keeps history OUT of the repo: no commits, no divergence
+# with ad-hoc Mac `--reverify-tagged` runs (which keep their own separate local log). The
+# tradeoff is cache eviction (GitHub drops caches idle > 7 days or under the 10 GB repo
+# cap) — a frequent schedule keeps it warm, and a loss only DELAYS a settle (never a wrong
+# verdict, since tagging is manual anyway). Committing the log back was rejected: it is
+# gitignored, and two writers (CI + Mac) appending to one JSONL conflict in git even though
+# append_trust_history de-dupes by timestamp.
+#
+# Frequency — twice daily (05:00 / 17:00 UTC, a few hours after the 00Z/12Z NWPS cycles):
+# `--reverify-tagged` assembles n_cycles=4 (~24 h of model x buoy), so a 12 h cadence sees
+# every window ~2x. append_trust_history DE-DUPES by timestamp, so those repeats are
+# idempotent (this is what makes a frequent schedule safe) — 2x gives redundancy against a
+# single failed/outage run, stays well inside NOMADS' ~5-day retention, and costs half of
+# every-6h. The buoy-ready monitor (cron 0 */3) is a SEPARATE, lighter job (NDBC-only, no
+# NOMADS/eccodes) — this one needs GRIBs, so it is its own workflow rather than bolted on.
+#
+# Graceful degradation (re: the tides outage that blew the full-pipeline hour cap):
+# trust_check's NOMADS/NDBC fetches are SINGLE-ATTEMPT (urlopen with a timeout, no backoff
+# loop), and reverify wraps every zone in try/except — an outage yields quick per-zone SKIP
+# lines and exit 0, never a retry storm. timeout-minutes is the hard backstop.
+
+on:
+  schedule:
+    - cron: '0 5,17 * * *'    # 05:00 & 17:00 UTC
+  workflow_dispatch: {}       # manual run for testing
+
+env:
+  # Opt JS actions (checkout / setup-python / cache / github-script) onto Node 24,
+  # matching forecast-pipeline.yml (Node 20 is being removed from runners).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+# One run at a time; don't cancel a healthy run mid-fetch.
+concurrency:
+  group: reverify-trust-accumulate
+  cancel-in-progress: false
+
+permissions:
+  contents: read              # checkout
+  issues: write               # open/update the settled-zones review issue
+
+jobs:
+  reverify:
+    name: reverify-tagged (accumulate direction events)
+    runs-on: ubuntu-latest
+    # Estimate ~15-30 min: ~11 real-buoy zones x n_cycles=4 => ~44 CG1 GRIB fetches over
+    # NOMADS + NDBC spectra. Hard cap well under an hour so a slow NOMADS can't run away.
+    timeout-minutes: 40
+    env:
+      PYTHONUNBUFFERED: '1'          # live logs so a stuck fetch is visible in the tail
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install eccodes (cfgrib's GRIB-2 backend for the NWPS cycles)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libeccodes0
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Fetch NDBC station roster (buoy lat/lng metadata for _buoy_latlng)
+        # Bounded (single small file, at most 3 retries) — not a storm. If it fails the
+        # zones just SKIP (no metadata) and the history is left unchanged; not fatal.
+        run: |
+          mkdir -p pipeline/geodata pipeline/forecast_data/nwps_trust_history
+          curl -fsSL --retry 3 --retry-delay 5 \
+            https://www.ndbc.noaa.gov/activestations.xml \
+            -o pipeline/geodata/ndbc_stations.xml \
+            || echo "::warning::NDBC roster fetch failed — zones will SKIP; rolling history unchanged"
+
+      - name: Restore rolling trust history (accumulated across prior runs)
+        uses: actions/cache/restore@v4
+        with:
+          path: pipeline/forecast_data/nwps_trust_history
+          key: nwps-trust-history-${{ github.run_id }}
+          restore-keys: |
+            nwps-trust-history-
+
+      - name: Reverify tagged + pending zones (append height-assessable events only)
+        id: reverify
+        # READ-ONLY on prod: appends to the rolling history log only. Never tags, never
+        # sets PASS, never runs apply, never touches spots_enriched.json or the DB. Exits
+        # 0 on an outage (per-zone SKIPs are logged); the per-zone banked/skip lines are
+        # the audit trail.
+        run: python3 -m pipeline.forecast.nwps_nearshore --reverify-tagged
+
+      - name: Save rolling trust history
+        # always(): persist even if reverify partially degraded, so no accumulated events
+        # are dropped. A fresh key per run (caches are immutable); restore-keys above pulls
+        # the newest on the next run.
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: pipeline/forecast_data/nwps_trust_history
+          key: nwps-trust-history-${{ github.run_id }}
+
+      - name: Open/update issue for SETTLED zones (manual tagging — never auto-applied)
+        if: steps.reverify.outputs.any_settled == 'true'
+        uses: actions/github-script@v7
+        env:
+          SETTLED_JSON: ${{ steps.reverify.outputs.settled_json }}   # via env (no template injection)
+        with:
+          script: |
+            const settled = JSON.parse(process.env.SETTLED_JSON || '[]');
+            const LABEL = 'nwps-trust-settled';
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const line = s => `- **${s.zone}** (${s.spots} sp): rolling **${s.verdict}** on `
+              + `${s.n_events} events` + (s.reason ? ` — ${s.reason}` : '');
+            const pass = settled.filter(s => s.verdict === 'PASS');
+            const other = settled.filter(s => s.verdict !== 'PASS');
+            const body = [
+              'These zones have ACCUMULATED enough independent swell events for their rolling',
+              'DIRECTION verdict to SETTLE. Heads-up for **manual** review only — this accumulator',
+              'never tags, never sets PASS, and never applies anything.',
+              '',
+              ...(pass.length ? ['### Settled PASS — candidates for manual tagging', ...pass.map(line), '']
+                              : []),
+              ...(other.length ? ['### Settled FAIL / INCOHERENT — review (likely do NOT tag)',
+                                  ...other.map(line), ''] : []),
+              'To tag a PASS zone: set its buoy PASS in scripts/nwps_okx_assignments.json `trust_by_buoy`,',
+              'then run `apply_nwps_assignments --apply` — YOUR call, not this job\'s.',
+            ].join('\n');
+            const found = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: LABEL, per_page: 20 });
+            const existing = found.data.find(i => !i.pull_request);
+            if (existing) {
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, body });
+              core.info(`updated settled-zones issue #${existing.number}`);
+            } else {
+              const issue = await github.rest.issues.create({
+                owner, repo, title: 'NWPS trust: zone(s) settled — ready for manual tagging',
+                body, labels: [LABEL] });
+              core.info(`opened settled-zones issue #${issue.data.number}`);
+            }

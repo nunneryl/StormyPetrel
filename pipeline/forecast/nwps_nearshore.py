@@ -1850,8 +1850,13 @@ def reverify_tagged(n_cycles=4):
     """READ-ONLY (deliverable) — re-run the Stage-1 gate against every tagged nwps zone:
     HEIGHT verdict (the PRIMARY gate), the ENERGY-WEIGHTED direction stats (unweighted shown
     alongside), the zone's strictest spot TIER + whether this window's direction clears it,
-    and the ROLLING accumulated direction verdict (this window's records are appended to the
-    history log first). Tags/writes no prod data (only the monitoring log). Mac-only."""
+    and the ROLLING accumulated direction verdict (this window's height-ASSESSABLE records are
+    appended to the history log first; INCONCLUSIVE windows bank nothing). Covers every NWPS-placed
+    zone — PASS/verified AND pending (46240/46237/46284/46268/46215/46256) — since it keys on
+    swell_window_source, not on trust_by_buoy. Tags/writes NO prod data (only the append-only
+    monitoring log). Runs on the Mac OR on a schedule (buoy events accumulate automatically); when
+    GITHUB_OUTPUT is set it emits the zones whose rolling verdict has SETTLED, for a workflow to
+    surface for MANUAL tagging — it never tags anything itself."""
     zones = _tagged_nwps_zones()
     if not zones:
         print("no tagged nwps zones found in spots_enriched.json.")
@@ -1860,7 +1865,7 @@ def reverify_tagged(n_cycles=4):
     print("  HEIGHT is the gate; DIRECTION is an energy-weighted, spot-tiered, ROLLING flag.\n")
     print(f"  {'wfo/buoy':<11} {'sp':>3} {'tier':<9} {'HEIGHT':<11} {'dirW cs/bias':>14} "
           f"{'(unwtd)':>12} {'ev':>3} {'ROLLING':<13}")
-    flagged = []
+    flagged, settled = [], []
     retired = _retired_reference_zones()
     for wfo, buoy, nspots in zones:
         tag = f"{wfo}/{buoy}"
@@ -1871,6 +1876,13 @@ def reverify_tagged(n_cycles=4):
             # (no height r, no direction verdict); these spots ride NWPS height + raycast, unverified.
             print(f"  {tag:<11} {nspots:>3} {tier_s:<9} RETIRED BOTH AXES — no valid buoy; "
                   "rides NWPS height + raycast direction (unverified)")
+            continue
+        if buoy is None:
+            # UNVERIFIABLE zone (buoy_reference.unverifiable[]: island-shadowed / no valid buoy) —
+            # nwps_buoy_id is null by design, so there is nothing to trust-check. Rides NWPS height +
+            # raycast direction, unverified. Skip cleanly (not an error, not a "run on the Mac" skip).
+            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} UNVERIFIABLE — no buoy on the row "
+                  "(buoy_reference.unverifiable[]); rides NWPS height + raycast direction")
             continue
         try:
             blat, blng = _buoy_latlng(buoy)
@@ -1894,6 +1906,10 @@ def reverify_tagged(n_cycles=4):
                   "(height not assessable → its direction residual is not trusted)")
         if res["verdict"] == "FAIL" or roll["verdict"] == "FAIL":
             flagged.append(f"{tag} ({nspots} sp): height {res['verdict']}, dir(rolling) {roll['verdict']} — {roll.get('reason') or res.get('reason') or ''}")
+        if roll["verdict"] != "ACCUMULATING":   # reached TRUST_MIN_EVENTS → SETTLED, ready for MANUAL review
+            settled.append({"zone": tag, "wfo": wfo, "buoy": str(buoy), "spots": nspots,
+                            "verdict": roll["verdict"], "n_events": roll.get("n_events", 0),
+                            "reason": roll.get("reason")})
     print("\n==== summary ====")
     print("  HEIGHT is the primary gate (the skill the field verifies). Direction ⚑ = this window's")
     print("  energy-weighted residual exceeds the zone's strictest-spot tier; ROLLING is the verdict")
@@ -1911,8 +1927,29 @@ def reverify_tagged(n_cycles=4):
         print("  no zone fails the height gate or the rolling direction gate (most will read ACCUMULATING")
         print("  until enough events log — that is expected, not a pass).")
     print("  Also run --pairing-audit: a STRUCTURALLY INVALID buoy can't be fixed by any metric.")
+    if settled:
+        print("\n  SETTLED zones (rolling verdict reached TRUST_MIN_EVENTS — ready for MANUAL review/tagging;")
+        print("  this job NEVER tags them itself):")
+        for s in settled:
+            print(f"    • {s['zone']} ({s['spots']} sp): rolling {s['verdict']} on {s['n_events']} events"
+                  + (f" — {s['reason']}" if s.get("reason") else ""))
     print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched; only the monitoring log grows.)")
+    _emit_reverify_output(settled)
     return 0
+
+
+def _emit_reverify_output(settled):
+    """Write any_settled / settled_json to $GITHUB_OUTPUT (only when the env var is set — i.e. under
+    a scheduling workflow; a no-op on the Mac). Lets the workflow open/update an issue for zones whose
+    ROLLING verdict has SETTLED (reached TRUST_MIN_EVENTS → PASS / FAIL / INCOHERENT) and are ready for
+    MANUAL review/tagging. This function NEVER tags anything — it only reports. Mirrors the buoy-ready
+    monitor's _emit_github_output pattern."""
+    path = os.environ.get("GITHUB_OUTPUT")
+    if not path:
+        return
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(f"any_settled={'true' if settled else 'false'}\n")
+        f.write("settled_json=" + json.dumps(settled, separators=(",", ":"), ensure_ascii=False) + "\n")
 
 
 def depth_experiment(n_cycles=4, radius_km=6.0):
