@@ -2454,6 +2454,36 @@
           "port-hueneme"
         ],
         "to_place": "24 island-shadowed spots (20 OK + 4 OFFWIN: rockpile, sandspit, leadbetter-beach, ventura-harbor — off-window for today's swell angle, still placeable). Node coords are in the current (Mac) nwps_lox_validate_out.json (freshly written by `--validate --wfo lox --batch <these 24 slugs>`; nodes 0.60–4.67 km, within the grid-aware cap). Promote with NO buoy: `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs <these 24> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS branch, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and these spots get NO WATCH entry (the monitor never flags them)."
+      },
+      {
+        "zone": "eka/north-coast",
+        "wfo": "eka",
+        "reason": "NO valid nearshore directional buoy EXISTS on the far NorCal coast (Crescent City → Mendocino). Every --find-buoy candidate within range is a deep-water offshore platform (46027 60 m, 46244 117 m, 46213 346 m) or a NOS tide gauge (not a wave buoy) — none is a shallow-coast directional proxy. This is PERMANENT geography: there is simply no buoy to ever verify against — the retire-BOTH-axes case, same category as 44098's Gulf of Maine. DISTINCT from lox/santa-barbara-channel (which HAS valid buoys that are geometrically shadowed): here no valid buoy exists at all, so there is nothing to shadow. NOT a pending state. These spots ride NWPS HEIGHT (eka grid) + raycast direction, with direction PERMANENTLY not buoy-verifiable.",
+        "nearest_candidate": "none valid (46027 / 46244 / 46213 all deep-water STRUCTURALLY INVALID — AUDIT ONLY, never used for placement or verification)",
+        "slugs": [
+          "crescent-city-beach",
+          "agate-beach",
+          "trinidad-state-beach",
+          "moonstone-beach-humboldt",
+          "shelter-cove",
+          "westport",
+          "ten-mile-beach",
+          "mackerricher",
+          "jug-handle",
+          "caspar",
+          "mendocino"
+        ],
+        "to_place": "11 far-NorCal spots — the FIRST eka placement. Node coords are in the (Mac) nwps_eka_validate_out.json (a NEW file, written by `--validate --wfo eka --batch <these 11 slugs>`). Promote with NO buoy: `promote_nwps_validate --validate-out scripts/nwps_eka_validate_out.json --no-buoy --slugs <these 11> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the slug branch is checked BEFORE the PASS branch, so never relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and these spots get NO WATCH entry (the monitor never flags them)."
+      },
+      {
+        "zone": "mtr/north-pocket",
+        "wfo": "mtr",
+        "reason": "NO valid nearshore directional buoy on the north Sonoma / Mendocino coast at Point Arena. The nearest candidates are deep-water (46014, 335 m — STRUCTURALLY INVALID); no shallow-coast Waverider exists. The 46237 (SF Bar) pending zone begins to the SOUTH at Jenner, so this lone north pocket has no buoy of its own. PERMANENT geography — no buoy to ever verify against, the retire-BOTH-axes case (same category as 44098's Gulf of Maine). DISTINCT from lox/santa-barbara-channel (valid-but-shadowed buoys): here no valid buoy exists at all. NWPS HEIGHT (mtr grid) + raycast direction; direction PERMANENTLY not buoy-verifiable.",
+        "nearest_candidate": "none valid (46014 deep-water STRUCTURALLY INVALID — AUDIT ONLY, never used for placement or verification)",
+        "slugs": [
+          "point-arena"
+        ],
+        "to_place": "1 spot (Point Arena) — the north pocket above the 46237 SF-Bar pending zone. Node coords are in the (Mac) nwps_mtr_validate_out.json. Promote with NO buoy: `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --no-buoy --slugs point-arena --apply` merges it into 'spots' with nwps_buoy_id=null. apply then places it height-live with nwps_direction_status='unverifiable'. No buoy is added to trust_by_buoy or pending[], and it gets NO WATCH entry (the monitor never flags it)."
       }
     ]
   }

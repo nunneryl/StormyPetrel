@@ -219,37 +219,67 @@ def test_full_dryrun_direction_status_breakdown_live():
         got[r["direction_status"]] = got.get(r["direction_status"], 0) + 1
     assert not problems, f"every assignment spot should match enriched + have a node (problems={problems})"
     assert got == exp, f"build_plan split {got} != doc-derived {exp}"
-    assert got.get("unverifiable") == 14, f"the 14 retired-direction 44098 spots are the unverifiable set, got {got}"
+    assert got.get("unverifiable", 0) >= 14, f"at least the 14 retired-direction 44098 spots are unverifiable, got {got}"
 
 
-def test_santa_barbara_channel_unverifiable_places_38_total_after_apply():
-    # FIRST real use of unverifiable[]: the 24 Santa Barbara Channel slugs. Simulate the --no-buoy
-    # promote (append 24 null-buoy spot rows) and confirm build_plan places all 24 as 'unverifiable'
-    # with nwps_buoy_id=null, while the 14 existing 44098 unverifiable spots are unaffected → 38 total.
+def _assert_unverifiable_record(zone, n_slugs, wfo):
+    """Apply-state-agnostic check for a buoy_reference.unverifiable[] record: every slug places as
+    direction_status='unverifiable' with a null buoy (B2), verified/pending are untouched, and the
+    unverifiable count grows by exactly the number of its slugs NOT already promoted into spots[].
+    Works whether or not the zone has been applied yet (only the not-yet-applied slugs are appended),
+    so it never goes stale as zones are promoted."""
     doc, enriched = _real_doc(), _real_enriched()
-    sbc = [r for r in doc["buoy_reference"]["unverifiable"] if r["zone"] == "lox/santa-barbara-channel"][0]
-    slugs = sbc["slugs"]
-    assert len(slugs) == 24 and "buoy" not in sbc, "24 slug-keyed spots, no buoy on the record (B2)"
+    rec = next(r for r in doc["buoy_reference"]["unverifiable"] if r["zone"] == zone)
+    slugs = rec["slugs"]
+    assert len(slugs) == n_slugs and rec["wfo"] == wfo, f"{zone}: {len(slugs)} slugs, wfo {rec['wfo']}"
+    assert "buoy" not in rec, f"{zone}: no buoy on the record (B2, slug-keyed)"
     pend_slugs = {s for p in doc["buoy_reference"]["pending"] for s in p.get("slugs", [])}
-    assert not (set(slugs) & pend_slugs), "SBC spots are unverifiable-only, never pending"
-    assert not (set(slugs) & set(doc["trust_by_buoy"])), "no SBC slug collides with a trust buoy"
-    # emulate `promote_nwps_validate --no-buoy`: node coords + nwps_buoy_id=null, matched by slug/name
-    for sl in slugs:
+    assert not (set(slugs) & pend_slugs), f"{zone}: unverifiable-only, never pending"
+    assert not (set(slugs) & set(doc["trust_by_buoy"])), f"{zone}: no slug collides with a trust buoy"
+
+    def split(d, e):
+        rows, problems, *_ = ap.build_plan(doc=d, enriched=e)
+        c = {}
+        for r in rows:
+            c[r["direction_status"]] = c.get(r["direction_status"], 0) + 1
+        return c, rows, problems
+
+    base, _, base_problems = split(doc, enriched)
+    assert not base_problems
+    applied = {s.get("slug") for s in doc["spots"]}
+    to_add = [s for s in slugs if s not in applied]
+    for sl in to_add:      # emulate `promote_nwps_validate --no-buoy` for the not-yet-placed slugs
         name = sl.replace("-", " ").title()
-        doc["spots"].append({"slug": sl, "name": name, "nwps_wfo": "lox", "nwps_grid": "CG1",
-                             "nwps_node_lat": 34.4, "nwps_node_lng": -119.7,
-                             "nwps_node_distance_m": 1500, "nwps_buoy_id": None})
+        doc["spots"].append({"slug": sl, "name": name, "nwps_wfo": wfo, "nwps_grid": "CG1",
+                             "nwps_node_lat": 40.0, "nwps_node_lng": -124.0,
+                             "nwps_node_distance_m": 1200, "nwps_buoy_id": None})
         enriched.append({"name": name})
-    rows, problems, held, *_ = ap.build_plan(doc=doc, enriched=enriched)
+    got, rows, problems = split(doc, enriched)
     by_slug = {r["slug"]: r for r in rows}
-    for sl in slugs:
+    for sl in slugs:       # every record slug — applied or just-appended — places unverifiable + null buoy
         r = by_slug[sl]
         assert r["direction_status"] == "unverifiable", f"{sl}: {r['direction_status']} (want unverifiable)"
-        assert r["fields"]["nwps_buoy_id"] is None, f"{sl} places with null buoy (B2)"
+        assert r["fields"]["nwps_buoy_id"] is None, f"{sl}: null buoy on the row (B2)"
         assert r["fields"]["nwps_direction_status"] == "unverifiable"
-        assert r["fields"]["swell_window_source"] == "nwps", f"{sl} is height-live via NWPS"
-    n_unver = sum(1 for r in rows if r["direction_status"] == "unverifiable")
-    assert n_unver == 38, f"14 (44098) + 24 (Santa Barbara Channel) = 38 unverifiable, got {n_unver}"
+        assert r["fields"]["swell_window_source"] == "nwps", f"{sl}: height-live via NWPS"
+    assert got.get("verified") == base.get("verified"), f"{zone}: verified unchanged"
+    assert got.get("pending") == base.get("pending"), f"{zone}: pending unchanged"
+    assert got.get("unverifiable") == base.get("unverifiable") + len(to_add), \
+        f"{zone}: unverifiable grew by exactly the {len(to_add)} not-yet-applied slugs"
+    assert not problems
+
+
+def test_santa_barbara_channel_unverifiable_record():
+    # lox/santa-barbara-channel: 24 island-shadowed spots (valid buoys, geometrically shadowed).
+    _assert_unverifiable_record("lox/santa-barbara-channel", 24, "lox")
+
+
+def test_california_closeout_eka_and_point_arena_unverifiable():
+    # Closing out CA — the "no valid buoy exists at all" case (retire both axes), distinct from the
+    # valid-but-shadowed Santa Barbara Channel. Both records place height-live, direction unverifiable,
+    # null buoy; verified/pending untouched.
+    _assert_unverifiable_record("eka/north-coast", 11, "eka")     # far NorCal — FIRST eka placement
+    _assert_unverifiable_record("mtr/north-pocket", 1, "mtr")     # Point Arena, above the 46237 zone
 
 
 def test_force_places_a_held_spot():
