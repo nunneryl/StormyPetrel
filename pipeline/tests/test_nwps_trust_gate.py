@@ -570,6 +570,45 @@ def test_variance_floor_075_makes_marginal_range_inconclusive():
         "0.9 m span ≥ 0.75 → assessable; a tracking model → r≈1 PASS"
 
 
+def test_reverify_covers_pending_zones_not_just_pass():
+    # Part 1(d): _tagged_nwps_zones keys on swell_window_source=='nwps', so it returns EVERY placed
+    # zone — the PASS/verified ones AND the PENDING ones — so scheduling reverify accumulates for the
+    # six CA pending zones we care about (the stale docstring's "PASS from the OLD gate" notwithstanding).
+    zones = {(w, b) for w, b, _ in nn._tagged_nwps_zones()}
+    pending = {("mtr", "46240"), ("mtr", "46237"), ("mtr", "46284"),
+               ("lox", "46268"), ("mtr", "46215"), ("lox", "46256")}
+    missing = pending - zones
+    assert not missing, f"reverify must cover the pending zones; missing {missing}"
+
+
+def test_reverify_emit_settled_to_github_output():
+    # the accumulator emits SETTLED zones to $GITHUB_OUTPUT (for the workflow's manual-tagging issue);
+    # a no-op when the env var is unset (Mac runs). Never tags anything — this is report-only.
+    import os
+    import tempfile
+    settled = [{"zone": "mtr/46237", "wfo": "mtr", "buoy": "46237", "spots": 13,
+                "verdict": "PASS", "n_events": 5, "reason": None}]
+    orig = os.environ.get("GITHUB_OUTPUT")
+    fd, path = tempfile.mkstemp()
+    os.close(fd)
+    try:
+        os.environ["GITHUB_OUTPUT"] = path
+        nn._emit_reverify_output(settled)
+        nn._emit_reverify_output([])          # second call: nothing settled
+        text = open(path).read()
+        assert "any_settled=true" in text and '"zone":"mtr/46237"' in text and '"verdict":"PASS"' in text
+        assert "any_settled=false" in text     # the empty call
+        os.environ.pop("GITHUB_OUTPUT", None)
+        nn._emit_reverify_output(settled)       # no env → silent no-op (must not raise, writes nothing)
+        assert open(path).read() == text
+    finally:
+        if orig is not None:
+            os.environ["GITHUB_OUTPUT"] = orig
+        else:
+            os.environ.pop("GITHUB_OUTPUT", None)
+        os.unlink(path)
+
+
 def _run_all():
     import inspect
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
