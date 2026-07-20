@@ -120,16 +120,30 @@ jobs:
         run: mkdir -p pipeline/cache/tides pipeline/forecast_data
 
       # Tide cache persists across runs. Harmonic predictions are DETERMINISTIC, so a warm 30-day
-      # cache means a run refetches only the ~10 stations whose horizon is expiring — not all ~230
-      # (on a cold CI runner every run is a full 230-station refetch, since pipeline/cache is
-      # gitignored + ephemeral). Same pattern as reverify-trust-accumulate.yml: a fresh immutable
-      # per-run key + a prefix restore-keys to pull the newest prior cache. Cache contents are NOT
-      # committed to the repo.
+      # cache means a run refetches only the handful of stations whose horizon is expiring — not all
+      # ~230 (on a cold CI runner every run is a full 232-station refetch, since pipeline/cache is
+      # gitignored + ephemeral). Same restore/save shape as reverify-trust-accumulate.yml.
+      #
+      # KEY IS PER-DATE, NOT PER-RUN. A per-run key (github.run_id) minted a fresh ~8 MiB cache entry
+      # on EVERY run — 3 full-pipeline runs/day, forever. Those entries compete under GitHub's 10 GB
+      # per-repo LRU cap with the nwps-trust-history cache, and trust history is IRREPLACEABLE (NOMADS
+      # retains ~5 days; a lost direction event cannot be backfilled) while this tide cache is fully
+      # regenerable — so we must not churn disposable entries that could evict the irreplaceable one.
+      # A per-UTC-date key mints at most ONE entry/day: the 2nd/3rd run that day restores it on an
+      # exact-key hit and its save no-ops ("cache already exists"). Freezing the day's entry at the
+      # first run's state is harmless — the 30-day horizon only needs a refetch ~every 23 days per
+      # station, so a few un-persisted intra-day refreshes cost only repeat fetches, never correctness.
+      # (The GITHUB_OUTPUT step exists because the Actions expression language has no date function.)
+      # Cache contents are NOT committed to the repo.
+      - name: Compute tide cache key (per UTC date)
+        id: tide-cache-key
+        run: echo "key=tide-cache-$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
       - name: Restore tide prediction cache
         uses: actions/cache/restore@v4
         with:
           path: pipeline/cache/tides
-          key: tide-cache-${{ github.run_id }}
+          key: ${{ steps.tide-cache-key.outputs.key }}
           restore-keys: |
             tide-cache-
 
@@ -146,7 +160,10 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: pipeline/cache/tides
-          key: tide-cache-${{ github.run_id }}
+          # Per-date key: the first run of the day creates it; a 2nd/3rd run the same day hits the
+          # exact key on restore and this save is a harmless no-op ("cache already exists", not a
+          # failure — so if: always() stays green).
+          key: ${{ steps.tide-cache-key.outputs.key }}
 
       - name: Interpret (compute ratings)
         if: ${{ !cancelled() }}   # run even if a fetcher failed — ship ratings from whatever we have
