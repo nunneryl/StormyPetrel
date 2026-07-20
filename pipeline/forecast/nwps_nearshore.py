@@ -48,7 +48,8 @@ from ..interpret import (
     period_quality,
 )
 from ..config import WFO_TO_REGION
-from urllib.error import HTTPError, URLError
+from http.client import HTTPException      # base of IncompleteRead — a truncated NOMADS read raises
+from urllib.error import HTTPError, URLError   #   http.client.IncompleteRead, which is NOT an OSError
 
 log = logging.getLogger("pipeline.forecast.nwps_nearshore")
 
@@ -270,7 +271,9 @@ def _http_get(url, timeout=180):
 def _listdir(url):
     try:
         html = _http_get(url, 60).decode("utf-8", "replace")
-    except (HTTPError, URLError, OSError):
+    except (HTTPError, URLError, OSError, HTTPException):
+        # HTTPException covers http.client.IncompleteRead — a truncated directory listing must yield
+        # [] (so find_latest_cycle falls back to an older cycle), never escape.
         return []
     return re.findall(r'href="([^"?][^"]*)"', html)
 
@@ -594,18 +597,41 @@ def nwps_stars(hs, per, dirpw, swell_hs, orientation, wind_mult=1.0, tide_mult=1
     return stars, face, dg, cm, pq
 
 
+class _WfoUnavailable(Exception):
+    """A WFO's CG1 cycle could not be downloaded/parsed this run (download truncation, HTTP error,
+    missing cycle, bad GRIB). Raised per-spot but attributable to the WHOLE WFO, so apply_nwps_overrides
+    can isolate the failure to that WFO's spots and count it distinctly from an ordinary per-hour
+    fallback. Carries the WFO id and a short reason for the run summary."""
+    def __init__(self, wfo, reason):
+        super().__init__(f"{wfo}: {reason}")
+        self.wfo = wfo
+        self.reason = reason
+
+
 def _make_default_fetch():
-    """Per-WFO cycle cache so all OKX spots share one fetch+parse. Returns a
-    fetch(spot) → series-by-hour closure for apply_nwps_overrides."""
-    cache = {}
+    """Per-WFO cycle cache so all spots of a WFO share one fetch+parse. A WFO whose cycle fails to
+    download/parse is cached as a FAILURE (a _WfoUnavailable) — it is NOT re-attempted for every one of
+    its spots, and the failure is isolated to that WFO. Returns a fetch(spot) → series-by-hour closure.
+    Broad on purpose: load_cycle reaches NOMADS over urllib, whose read() can raise http.client
+    IncompleteRead (HTTPException) — NOT an OSError — so a narrow (HTTPError, URLError, OSError) catch
+    would let a truncated GRIB escape and abort the entire override step (all WFOs)."""
+    cache = {}   # wfo -> loaded cycle dict, OR a _WfoUnavailable (cached failure)
 
     def fetch(spot):
         wfo = spot.get("nwps_wfo")
         if not wfo:
             return None
         if wfo not in cache:
-            cache[wfo] = load_cycle(wfo)   # may raise — caught per spot by the caller
-        return nwps_series_by_hour(spot, cache[wfo])
+            try:
+                cache[wfo] = load_cycle(wfo)
+            except (HTTPError, URLError, OSError, HTTPException, KeyError, ValueError, ImportError) as e:
+                cache[wfo] = _WfoUnavailable(wfo, f"{type(e).__name__}: {e}")
+                log.warning("nwps: WFO %s cycle unavailable (%s) — its spots fall back to the "
+                            "orientation path this run; other WFOs unaffected", wfo, type(e).__name__)
+        cached = cache[wfo]
+        if isinstance(cached, _WfoUnavailable):
+            raise cached
+        return nwps_series_by_hour(spot, cached)
     return fetch
 
 
@@ -613,12 +639,16 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
     """Override the swell rating of every swell_window_source=="nwps" spot with its
     NWPS node series, keeping each hour's wind/tide. Mutates *ratings* in place
     unless dry_run. *only* = slugs to restrict to. *_fetch* injectable for tests.
-    Returns stats {fed, fell_back, errored, details}. Mirrors apply_mop_overrides;
-    the one difference is HORIZON — NWPS covers the full f000..f144, so every
-    overlapping valid hour is fed (not just near-now), and only hours beyond the
-    cycle's coverage fall back to the orientation/WW3 path."""
+    Returns stats {fed, fell_back, errored, wfo_unavailable, details}, where
+    wfo_unavailable maps each WFO whose whole cycle failed to download/parse to a
+    reason — a distinct, VISIBLE signal so a mass fall-back to the orientation path
+    can't ship silently (one WFO's GRIB failure is isolated to its spots; every
+    other WFO still applies). Mirrors apply_mop_overrides; the one difference is
+    HORIZON — NWPS covers the full f000..f144, so every overlapping valid hour is
+    fed (not just near-now), and only hours beyond coverage fall back."""
     fetch = _fetch or _make_default_fetch()
     fed = fell_back = errored = 0
+    wfo_unavailable = {}   # wfo -> reason: a whole-WFO download/parse outage (NOT a per-hour fallback)
     details = []
     for s in spots:
         if s.get("swell_window_source") != "nwps":
@@ -634,7 +664,14 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
         orient = s.get("orientation_deg")
         try:
             series = fetch(s)
-        except (HTTPError, URLError, OSError, KeyError, ValueError, ImportError) as e:
+        except _WfoUnavailable as e:
+            # WHOLE WFO down — isolate to its spots and record it as a distinct, visible outage so a
+            # mass fall-back to the orientation path can never ship silently. Other WFOs keep going.
+            errored += 1
+            wfo_unavailable[e.wfo] = e.reason
+            details.append((slug, f"WFO {e.wfo} unavailable → fallback", 0))
+            continue
+        except (HTTPError, URLError, OSError, HTTPException, KeyError, ValueError, ImportError) as e:
             errored += 1
             details.append((slug, f"error: {type(e).__name__} → fallback", 0))
             continue
@@ -671,7 +708,8 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
         else:
             fell_back += 1
             details.append((slug, "NWPS had no overlapping hour → fallback", 0))
-    return {"fed": fed, "fell_back": fell_back, "errored": errored, "details": details}
+    return {"fed": fed, "fell_back": fell_back, "errored": errored,
+            "wfo_unavailable": wfo_unavailable, "details": details}
 
 
 def _iso_to_epoch(iso):
@@ -1606,6 +1644,38 @@ def _selftest():
                                  [{"name": "P", "swell_window_source": "orientation_derived"}],
                                  _fetch=lambda _s: series)
     check("non-nwps spot ignored", plain["fed"] == 0 and plain["fell_back"] == 0)
+
+    # WFO-LEVEL ISOLATION — one WFO's truncated GRIB download (http.client.IncompleteRead, which is NOT
+    # an OSError/URLError and used to escape the per-spot except and abort ALL 232 spots) must cost only
+    # that WFO's spots. Every other WFO still applies; the failed cycle is fetched ONCE (failure cached);
+    # the outage is reported distinctly in wfo_unavailable. Drives the REAL _make_default_fetch by
+    # patching the module-global load_cycle / nwps_series_by_hour.
+    import http.client as _httpclient
+    _saved_load, _saved_sbh = load_cycle, nwps_series_by_hour
+    _load_calls = {}
+    def _fake_load(wfo, cycle=None):
+        _load_calls[wfo] = _load_calls.get(wfo, 0) + 1
+        if wfo == "gyx":
+            raise _httpclient.IncompleteRead(b"partial", 500)   # truncated NOMADS read
+        return {"wfo": wfo}
+    globals()["load_cycle"] = _fake_load
+    globals()["nwps_series_by_hour"] = lambda _spot, _cyc: {int(base // 3600): (2.0, 14, 160, 1.9)}
+    try:
+        wspots = [
+            {"name": "OK", "swell_window_source": "nwps", "orientation_deg": 160, "nwps_wfo": "okx"},
+            {"name": "B1", "swell_window_source": "nwps", "orientation_deg": 160, "nwps_wfo": "gyx"},
+            {"name": "B2", "swell_window_source": "nwps", "orientation_deg": 160, "nwps_wfo": "gyx"},
+        ]
+        wr = {n: [{"valid_time": "2026-01-01T00:00:00Z", "stars": 1.0,
+                   "wind_mult": 1.0, "tide_mult": 1.0}] for n in ("OK", "B1", "B2")}
+        wst = apply_nwps_overrides(wr, wspots)   # default fetch → _make_default_fetch → _fake_load
+        check("WFO isolation: healthy WFO fed while another WFO is down", wst["fed"] == 1)
+        check("WFO isolation: only the down WFO's 2 spots errored", wst["errored"] == 2)
+        check("WFO isolation: IncompleteRead reported in wfo_unavailable", "gyx" in wst["wfo_unavailable"])
+        check("WFO isolation: down cycle fetched ONCE (failure cached)", _load_calls.get("gyx") == 1)
+        check("WFO isolation: healthy spot kept its NWPS override", wr["OK"][0]["swell_source"] == "nwps")
+    finally:
+        globals()["load_cycle"], globals()["nwps_series_by_hour"] = _saved_load, _saved_sbh
 
     # trust gate — DIRECTION is model dirpw vs buoy MWD (both total-spectrum), NOT the
     # buoy swell partition (see trust_verdict). _sb builds (series, buoy) dicts from
