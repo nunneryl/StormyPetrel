@@ -140,7 +140,32 @@ BUOYS_CACHE_DIR = CACHE_DIR / "buoys"
 TIDES_FORECAST_FILE = FORECAST_DATA_DIR / "tides.json"
 BUOYS_FORECAST_FILE = FORECAST_DATA_DIR / "buoys.json"
 
-TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days
+TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days — the OUTPUT window (what interpret sees; unchanged so
+                                   #   tide_norm/ratings are identical). The cache below is longer.
+
+# Tide-stage resilience — a dead CO-OPS backend must never block db_import (tides are a rating
+# MODIFIER, not a blocker). See pipeline/forecast/tides.py.
+NOAA_COOPS_TIMEOUT_S = 6.0             # per-request socket timeout; SINGLE attempt, no backoff (Fix C).
+                                       #   The old path was http.get: 4 attempts x wait_exponential
+                                       #   (2+4+8s backoff) x 180s timeout x 3 datums x 2 intervals =
+                                       #   ~118 s/station against a dead backend.
+TIDE_FETCH_MAX_CONSECUTIVE_FAILURES = 8   # circuit breaker: after this many station failures IN A ROW,
+                                       #   stop contacting NOAA for the rest of the run (Fix D).
+TIDE_STAGE_DEADLINE_S = 1200.0         # whole-stage wall-clock budget (20 min); on expiry, bail with
+                                       #   what we have and mark the rest stale (Fix E). Only binds on a
+                                       #   slow-but-ALIVE backend — a true outage trips the breaker in
+                                       #   ~48s (8 failures x 6s). A cold start (all ~230 stations, ~2
+                                       #   requests each) legitimately needs > 10 min; 20 min still sits
+                                       #   well inside the 35-min fetch step + 60-min job timeouts.
+# Long cache (Fix B) — harmonic predictions are DETERMINISTIC, so cache a wide horizon and reuse it:
+TIDE_CACHE_HORIZON_HOURS = 720         # MAX fetch/cache horizon per station (30 days), persisted
+TIDE_CACHE_HORIZON_MIN_HOURS = 600     # MIN horizon (25 days). Each station's ACTUAL horizon is a
+                                       #   deterministic hash of its id in [MIN, MAX] (see
+                                       #   tides._station_horizon_hours). Without it, all stations
+                                       #   cold-started together expire on the SAME day (~day 23) and
+                                       #   refetch in one thundering-herd run; the jitter spreads the
+                                       #   refetch day across a ~5-6 day window (~40 stations/day).
+TIDE_CACHE_REFETCH_WITHIN_HOURS = 168  # only refetch a station when < 7 days of its cache remain
 
 # NWPS — Nearshore Wave Prediction System forecasts
 NWPS_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod"
