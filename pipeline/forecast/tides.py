@@ -42,6 +42,7 @@ import requests
 from ..config import (
     NOAA_COOPS_DATUMS,
     NOAA_COOPS_ENDPOINT,
+    NOAA_COOPS_MIN_INTERVAL_S,
     NOAA_COOPS_TIMEOUT_S,
     TIDE_CACHE_HORIZON_HOURS,
     TIDE_CACHE_HORIZON_MIN_HOURS,
@@ -69,20 +70,86 @@ class _TideOutage(Exception):
 
 
 # --------------------------------------------------------------------------- #
-# no-predictions markers                                                        #
+# request pacing (restore the incidental pacing the outage-proofing rewrite dropped)#
 # --------------------------------------------------------------------------- #
+class _Pacer:
+    """Minimum-interval throttle for the public CO-OPS API. The pre-rewrite fetcher paced every request
+    at NOAA_COOPS_MIN_INTERVAL_S via this same pattern; the single-attempt rewrite dropped it, so ~460
+    back-to-back requests tripped CO-OPS rate-limiting mid-run. Restored here — one pacer per fetch()
+    run, shared across all stations/datums/intervals."""
+    def __init__(self, min_interval_s: float) -> None:
+        self.min_interval_s = min_interval_s
+        self._last = 0.0
+
+    def wait(self) -> None:
+        if self.min_interval_s <= 0:
+            return
+        delta = time.monotonic() - self._last
+        if delta < self.min_interval_s:
+            time.sleep(self.min_interval_s - delta)
+        self._last = time.monotonic()
+
+
+# --------------------------------------------------------------------------- #
+# no-predictions markers (station CONFIRMED to have no predictions under any datum) #
+# --------------------------------------------------------------------------- #
+# Bump when the classifier's MEANING changes so older files are discarded, not trusted. v2 is the
+# genuine-'No Predictions data was found'-only classifier; a v1/list-format file predates it and may
+# have been poisoned by throttle responses mislabelled as no-data, so it is thrown away on load.
+_NO_PREDICTIONS_VERSION = 2
+
+
 def _load_no_predictions() -> set[str]:
     if not _NO_PREDICTIONS_FILE.exists():
         return set()
     try:
-        return set(json.loads(_NO_PREDICTIONS_FILE.read_text()))
+        blob = json.loads(_NO_PREDICTIONS_FILE.read_text())
     except (json.JSONDecodeError, TypeError, OSError):
         return set()
+    if isinstance(blob, dict) and blob.get("version") == _NO_PREDICTIONS_VERSION:
+        return set(blob.get("stations") or [])
+    # Old/unversioned (list) format — could have been poisoned by the pre-fix classifier. DISCARD it so
+    # every listed station is re-verified this run rather than silently skipped forever.
+    log.warning("tides: discarding pre-fix/unversioned known-bad list (%s) — its stations will be "
+                "re-verified this run (a single bad run must not permanently poison the roster)",
+                _NO_PREDICTIONS_FILE)
+    return set()
 
 
 def _save_no_predictions(known: set[str]) -> None:
     TIDES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    _NO_PREDICTIONS_FILE.write_text(json.dumps(sorted(known)))
+    _NO_PREDICTIONS_FILE.write_text(
+        json.dumps({"version": _NO_PREDICTIONS_VERSION, "stations": sorted(known)}))
+
+
+def clear_known_bad() -> int:
+    """Invalidate the persisted known-bad list. A single bad run can add entries (and the list lives in
+    the persisted cache), so it must be clearable. Counts RAW entries (any format) then removes the
+    file. Returns the number cleared; safe when the file is absent."""
+    n = 0
+    if _NO_PREDICTIONS_FILE.exists():
+        try:
+            blob = json.loads(_NO_PREDICTIONS_FILE.read_text())
+            n = len(blob.get("stations", []) if isinstance(blob, dict) else blob)
+        except (json.JSONDecodeError, TypeError, OSError):
+            n = 0
+        _NO_PREDICTIONS_FILE.unlink(missing_ok=True)
+    return n
+
+
+def _coops_error_message(data: dict) -> str:
+    """The message string from a CO-OPS ``{"error": {...}}`` body (or a bare error), else ''."""
+    err = data.get("error")
+    if isinstance(err, dict):
+        return str(err.get("message") or err)
+    return str(err or "")
+
+
+def _is_genuine_no_predictions(data: dict) -> bool:
+    """True ONLY for CO-OPS's genuine 'No Predictions data was found ...' answer. A throttle /
+    rate-limit / any other error message returns False, so it can never mark a station known-bad —
+    a transient failure must never be recorded as the permanent fact 'this station has no tides'."""
+    return "no predictions" in _coops_error_message(data).lower()
 
 
 # --------------------------------------------------------------------------- #
@@ -235,11 +302,23 @@ def _coverage_from_series(hilo: list, hourly: list, today: date,
 # single-attempt fetch (no retry / no backoff)                                  #
 # --------------------------------------------------------------------------- #
 def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str,
-                         horizon_hours: int) -> list | None:
+                         horizon_hours: int, pacer: "_Pacer | None" = None) -> list | None:
     """One interval's predictions over the station's (jittered) horizon, SINGLE attempt per datum.
-    Cascades NOAA_COOPS_DATUMS on a DATA-level error (that datum has none for this station) but raises
-    _TideOutage on any transport failure / 5xx (backend down — don't waste the other datums).
-    Returns the predictions list, or None if every datum returns a data-level error."""
+
+    Known-bad is a PERMANENT fact, so it must require a GENUINE, well-formed CO-OPS 'no predictions'
+    answer. ONLY that (HTTP 200 + JSON + an error message containing 'no predictions') cascades to the
+    next datum and can ultimately mark a station known-bad. Every other condition is TRANSIENT and
+    raises _TideOutage (trips the breaker, serves stale, never poisons known-bad):
+      * a transport failure (connection/timeout/other);
+      * ANY non-200 (429/5xx AND 4xx alike — a 403/400 throttle is not a data answer);
+      * a 200 whose body is not JSON (an HTML/interstitial throttle page);
+      * a 200 error body that is NOT 'no predictions' (a rate-limit/quota/anything-else message).
+    This is the exact bug from run 20:30Z: a throttle (200-error-body / non-429) was mis-read as
+    'no predictions' and 175 stations were written to the permanent known-bad list.
+    Returns the predictions list, or None only when EVERY datum returned a genuine no-predictions
+    answer. `pacer.wait()` (when given) throttles each request to NOAA_COOPS_MIN_INTERVAL_S."""
+    last_status: int | None = None
+    last_msg = ""
     for datum in NOAA_COOPS_DATUMS:
         params = {
             "station": station_id,
@@ -252,30 +331,46 @@ def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str,
             "range": horizon_hours,
             "format": "json",
         }
+        if pacer is not None:
+            pacer.wait()
         try:
             resp = get_once(NOAA_COOPS_ENDPOINT, params=params, timeout=NOAA_COOPS_TIMEOUT_S)
         except (requests.ConnectionError, requests.Timeout) as e:
             raise _TideOutage(f"{station_id} {interval}: {type(e).__name__}") from e
         except requests.RequestException as e:  # any other transport failure = outage for our purpose
             raise _TideOutage(f"{station_id} {interval}: {type(e).__name__}") from e
-        if resp.status_code == 429 or resp.status_code >= 500:
-            raise _TideOutage(f"{station_id} {interval}: HTTP {resp.status_code}")
+        last_status = resp.status_code
+        # ANY non-200 is a transport/throttle condition, NEVER a data answer — trips the breaker via
+        # _TideOutage and must never poison known-bad. Log the status + body so we are not blind.
+        if resp.status_code != 200:
+            raise _TideOutage(f"{station_id} {interval} datum={datum}: HTTP {resp.status_code}: "
+                              f"{resp.text[:200]!r}")
         try:
             data = resp.json()
         except ValueError:
-            continue                          # non-JSON from THIS datum — try the next
+            raise _TideOutage(f"{station_id} {interval} datum={datum}: HTTP 200 non-JSON: "
+                              f"{resp.text[:200]!r}")
         if "error" in data:
-            continue                          # this datum has no predictions — try the next
+            last_msg = _coops_error_message(data)
+            if _is_genuine_no_predictions(data):
+                continue                       # this datum genuinely has none — try the next datum
+            # An error body that is NOT 'no predictions' (throttle / quota / unexpected) — TRANSIENT.
+            raise _TideOutage(f"{station_id} {interval} datum={datum}: CO-OPS error (not "
+                              f"no-predictions), HTTP 200: {last_msg[:200]!r}")
         return data.get("predictions") or []
-    return None                               # all datums returned a data-level error
+    # Every datum returned a genuine 'no predictions' answer → the station legitimately has none.
+    log.info("tides: %s %s — genuine 'no predictions' on all %d datums (HTTP %s: %s)",
+             station_id, interval, len(NOAA_COOPS_DATUMS), last_status, last_msg[:200])
+    return None
 
 
-def _fetch_station_30d(station_id: str, begin_yyyymmdd: str, horizon_hours: int) -> tuple[list, list]:
+def _fetch_station_30d(station_id: str, begin_yyyymmdd: str, horizon_hours: int,
+                       pacer: "_Pacer | None" = None) -> tuple[list, list]:
     """Both intervals for a station in one bounded pass over its (jittered) horizon. Raises _TideOutage
     on a transport failure (the breaker signal); hilo is tried first, so an outage costs ONE timeout,
-    not two."""
-    hilo = _fetch_interval_once(station_id, "hilo", begin_yyyymmdd, horizon_hours)
-    hourly = _fetch_interval_once(station_id, "h", begin_yyyymmdd, horizon_hours)
+    not two. `pacer` throttles each request to NOAA_COOPS_MIN_INTERVAL_S."""
+    hilo = _fetch_interval_once(station_id, "hilo", begin_yyyymmdd, horizon_hours, pacer)
+    hourly = _fetch_interval_once(station_id, "h", begin_yyyymmdd, horizon_hours, pacer)
     return (hilo or []), (hourly or [])
 
 
@@ -309,6 +404,7 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
     # of horizon from today — i.e. covers_until >= this date.
     refetch_until = today + timedelta(hours=TIDE_CACHE_REFETCH_WITHIN_HOURS)
     deadline = time.monotonic() + TIDE_STAGE_DEADLINE_S
+    pacer = _Pacer(NOAA_COOPS_MIN_INTERVAL_S)   # throttle CO-OPS to avoid the rate-limit collapse
 
     out: dict[str, dict] = {}
     new_bad: list[str] = []
@@ -357,7 +453,7 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
             # on one day — the covers_until below inherits it.
             horizon_h = _station_horizon_hours(sid)
             try:
-                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd, horizon_h)  # (C) single attempt, short timeout
+                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd, horizon_h, pacer)  # (C) single attempt, paced
             except _TideOutage as e:
                 consecutive_failures += 1
                 log.debug("tides: %s unreachable (%s) [%d in a row]", sid, e, consecutive_failures)
@@ -373,9 +469,12 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
 
             consecutive_failures = 0
             if not hilo and not hourly:
-                # genuine no-predictions (a DATA error on every datum) — permanent skip, NOT stale.
+                # Reached only when BOTH intervals returned a GENUINE 'no predictions' answer on every
+                # datum (a throttle/non-200/non-JSON would have raised _TideOutage above, not landed
+                # here). Only then is a permanent known-bad mark warranted.
                 new_bad.append(sid)
-                log.info("tides: %s has no predictions in any datum — marking known-bad", sid)
+                log.info("tides: %s — genuine no-predictions on both hilo+hourly, all datums — "
+                         "marking known-bad", sid)
                 continue
 
             # covers_until MUST be data-derived (see _coverage_from_series): a station returning fewer
@@ -422,3 +521,28 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
              "breaker=%s)", len(out), TIDES_FORECAST_FILE, n_live, n_cache, n_stale, len(new_bad),
              "OPEN" if breaker_open else "closed")
     return out
+
+
+# --------------------------------------------------------------------------- #
+# maintenance CLI                                                               #
+# --------------------------------------------------------------------------- #
+def _main(argv: list[str] | None = None) -> int:
+    import argparse
+    p = argparse.ArgumentParser(description="Tide stage maintenance (the fetch itself runs via "
+                                            "pipeline.forecast.fetch_all).")
+    p.add_argument("--clear-known-bad", action="store_true",
+                   help="Invalidate the persisted no-predictions (known-bad) station list so every "
+                        "station is re-verified on the next run. Use after a throttle/outage run.")
+    args = p.parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    if args.clear_known_bad:
+        n = clear_known_bad()
+        log.info("tides: cleared %d known-bad station(s) from %s", n, _NO_PREDICTIONS_FILE)
+        return 0
+    p.print_help()
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(_main())

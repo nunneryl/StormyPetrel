@@ -28,16 +28,20 @@ from pipeline.forecast import tides
 
 
 def _redirect(tmp: Path):
-    """Point the tide stage at temp paths; return the saved originals for restore."""
-    saved = (tides.TIDES_CACHE_DIR, tides.TIDES_FORECAST_FILE, tides._NO_PREDICTIONS_FILE, tides.get_once)
+    """Point the tide stage at temp paths (and disable request pacing so tests don't sleep); return
+    the saved originals for restore."""
+    saved = (tides.TIDES_CACHE_DIR, tides.TIDES_FORECAST_FILE, tides._NO_PREDICTIONS_FILE,
+             tides.get_once, tides.NOAA_COOPS_MIN_INTERVAL_S)
     tides.TIDES_CACHE_DIR = tmp / "cache"
     tides.TIDES_FORECAST_FILE = tmp / "tides.json"
     tides._NO_PREDICTIONS_FILE = tmp / "cache" / "_no_predictions.json"
+    tides.NOAA_COOPS_MIN_INTERVAL_S = 0.0     # no real throttle sleep under test
     return saved
 
 
 def _restore(saved):
-    (tides.TIDES_CACHE_DIR, tides.TIDES_FORECAST_FILE, tides._NO_PREDICTIONS_FILE, tides.get_once) = saved
+    (tides.TIDES_CACHE_DIR, tides.TIDES_FORECAST_FILE, tides._NO_PREDICTIONS_FILE,
+     tides.get_once, tides.NOAA_COOPS_MIN_INTERVAL_S) = saved
 
 
 def test_total_outage_is_bounded_marks_all_stale_and_writes_output():
@@ -135,7 +139,7 @@ def test_data_error_marks_known_bad_not_stale():
         out = tides.fetch([{"name": "S", "nearest_tide_station_id": "8mystery"}], use_cache=True)
         assert out == {}, "no-predictions station is not written to the output"
         assert tides._NO_PREDICTIONS_FILE.exists(), "it IS recorded as permanently known-bad"
-        assert "8mystery" in json.loads(tides._NO_PREDICTIONS_FILE.read_text())
+        assert "8mystery" in tides._load_no_predictions(), "recorded as known-bad (v2 versioned format)"
     finally:
         _restore(saved)
         shutil.rmtree(tmp, ignore_errors=True)
@@ -214,6 +218,62 @@ def test_covers_until_is_data_derived_clamped_and_short_triggers_refetch():
     beyond = (today + timedelta(days=60)).isoformat()
     covers_x, _, _ = tides._coverage_from_series(series(beyond), series(beyond), today, horizon_h)
     assert covers_x == old_formula, f"covers_until must clamp to the requested horizon, got {covers_x!r}"
+
+
+def test_throttle_and_http_error_never_poison_known_bad():
+    # The run-20:30Z bug: a THROTTLE — a 200 with a non-'no predictions' error body, or a non-429 4xx —
+    # was mis-read as 'no predictions' and written to the PERMANENT known-bad list (175 stations). It
+    # must instead be a transient outage: served stale, NEVER known-bad.
+    class _Resp:
+        def __init__(self, status, payload=None, text=""):
+            self.status_code = status
+            self._payload = payload
+            self.text = text
+        def json(self):
+            if self._payload is None:
+                raise ValueError("not json")
+            return self._payload
+
+    cases = {
+        "200 throttle error-body": _Resp(200, {"error": {"message": "Request limit exceeded. Retry later."}},
+                                         text='{"error":{"message":"Request limit exceeded"}}'),
+        "403 forbidden (non-JSON)": _Resp(403, None, text="<html>403 Forbidden</html>"),
+        "400 bad request": _Resp(400, {"error": {"message": "Bad Request"}}, text='{"error":...}'),
+    }
+    for label, resp in cases.items():
+        tmp = Path(tempfile.mkdtemp())
+        saved = _redirect(tmp)
+        try:
+            tides.get_once = lambda url, _r=resp, **kw: _r
+            out = tides.fetch([{"name": "S", "nearest_tide_station_id": "8sta"}], use_cache=True)
+            assert out["8sta"]["stale"] is True, f"{label}: a throttled station is served stale"
+            assert "8sta" not in tides._load_no_predictions(), \
+                f"{label}: a throttle / HTTP error must NEVER poison the permanent known-bad list"
+        finally:
+            _restore(saved)
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_clear_known_bad_and_legacy_list_is_discarded():
+    tmp = Path(tempfile.mkdtemp())
+    saved = _redirect(tmp)
+    try:
+        (tmp / "cache").mkdir(parents=True)
+        # A legacy (pre-fix) LIST-format file — possibly throttle-poisoned — is DISCARDED on load so its
+        # stations are re-verified this run, not skipped forever. (Auto-heals the 175 from run 20:30Z.)
+        tides._NO_PREDICTIONS_FILE.write_text(json.dumps(["poison1", "poison2", "poison3"]))
+        assert tides._load_no_predictions() == set(), "legacy list-format known-bad is discarded on load"
+        # clear_known_bad() counts RAW entries (any format) and removes the file; idempotent when absent.
+        assert tides.clear_known_bad() == 3
+        assert not tides._NO_PREDICTIONS_FILE.exists()
+        assert tides.clear_known_bad() == 0
+        # A v2 file round-trips — genuinely-bad stations still persist and are honoured.
+        tides._save_no_predictions({"realbad"})
+        assert tides._load_no_predictions() == {"realbad"}
+        assert tides.clear_known_bad() == 1
+    finally:
+        _restore(saved)
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def _run_all():

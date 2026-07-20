@@ -1274,6 +1274,14 @@ def main(argv: list[str] | None = None) -> int:
         if nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]:
             log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored",
                      nwps_stats["fed"], nwps_stats["fell_back"], nwps_stats["errored"])
+        # VISIBILITY: a whole-WFO download/parse outage degrades every one of that WFO's spots to the
+        # coarse orientation path. That must never ship silently — log it LOUDLY (WARNING, named WFOs +
+        # affected-spot count) so it is greppable/alertable, distinct from a benign per-hour fallback.
+        wfo_down = nwps_stats.get("wfo_unavailable") or {}
+        if wfo_down:
+            log.warning("interpret: NWPS WFO(s) UNAVAILABLE this run — %d spot(s) shipped orientation-"
+                        "path ratings instead of NWPS: %s", nwps_stats["errored"],
+                        ", ".join(f"{w} ({r})" for w, r in sorted(wfo_down.items())))
     except Exception:  # noqa: BLE001
         log.exception("interpret: NWPS override step failed — keeping orientation-path ratings")
 
