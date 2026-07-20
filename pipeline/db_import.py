@@ -76,7 +76,7 @@ def get_client():
 # Spots
 # ---------------------------------------------------------------------------
 
-def _spot_record(spot: dict) -> dict:
+def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
     """Map a spots_enriched.json entry to a spots-table row.
 
     Returns a *partial* record — only includes keys whose source-of-truth
@@ -99,6 +99,18 @@ def _spot_record(spot: dict) -> dict:
     derived fresh every pipeline run): slug, name, lat, lng, state,
     region, swell_window_arcs, data_sources, review_status.
     """
+    # Tide freshness for THIS spot's station (honesty marker — never present old tides as current):
+    #   tide_asof  = when the station's predictions were fetched (ISO), or None
+    #   tide_stale = the data is aging/absent and could not be refreshed this run
+    # None/None when the spot has no tide station; True when its station is missing from tides.json.
+    _sid = spot.get("nearest_tide_station_id")
+    _tf = (tide_freshness or {}).get(_sid) if _sid else None
+    if not _sid:
+        _tide_asof, _tide_stale = None, None
+    elif _tf is None:
+        _tide_asof, _tide_stale = None, True
+    else:
+        _tide_asof, _tide_stale = _tf.get("asof"), bool(_tf.get("stale"))
     rec = {
         "slug": _slugify(spot.get("name") or ""),
         "name": spot.get("name"),
@@ -120,6 +132,8 @@ def _spot_record(spot: dict) -> dict:
             # NWPS swell-DIRECTION provenance: "verified" (buoy trust PASS) vs "pending" (placed on
             # NWPS height, direction not yet buoy-verified — option B). Absent/None for non-nwps spots.
             "nwps_direction_status": spot.get("nwps_direction_status"),
+            "tide_asof": _tide_asof,
+            "tide_stale": _tide_stale,
             "coord_fix_applied": spot.get("coord_fix_applied", False),
             "sources": spot.get("sources") or {},
         },
@@ -273,6 +287,18 @@ def _find_excluded_in_db(client, excluded_slugs: set[str]) -> list[dict]:
     return result.data or []
 
 
+def _load_tide_freshness(tides_path: Path = TIDES_FORECAST_FILE) -> dict[str, dict]:
+    """{station_id: {"asof", "stale"}} from tides.json, for the data_sources freshness marker.
+    Empty when tides.json is absent/unreadable — then every spot with a tide station reads
+    tide_stale=True (honest: the tide fetch produced nothing this run)."""
+    try:
+        tides = json.loads(Path(tides_path).read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {sid: {"asof": d.get("asof") or d.get("fetched_at"), "stale": bool(d.get("stale"))}
+            for sid, d in tides.items() if isinstance(d, dict)}
+
+
 def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
                  batch_size: int = _DEFAULT_BATCH) -> int:
     """Upsert valid spots from the enriched JSON, then delete any DB rows
@@ -285,6 +311,7 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     pre-flight delete count exceeds `SAFETY_DELETE_CAP`.
     """
     spots = json.loads(Path(spots_path).read_text())
+    tide_freshness = _load_tide_freshness()
     valid = [
         s for s in spots
         if s.get("name")
@@ -292,7 +319,7 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
         and s.get("lng") is not None
         and s.get("is_valid_surf_spot") is not False
     ]
-    records = [_spot_record(s) for s in valid]
+    records = [_spot_record(s, tide_freshness) for s in valid]
     records, collisions = _dedupe_by_slug(records)
     if collisions:
         log.warning(

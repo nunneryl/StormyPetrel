@@ -57,5 +57,16 @@ def get(url: str, **kwargs: Any) -> requests.Response:
     return request("GET", url, **kwargs)
 
 
+def get_once(url: str, **kwargs: Any) -> requests.Response:
+    """SINGLE-attempt GET — no retry, no backoff (bypasses _RETRY). For endpoints where a slow or
+    dead upstream must fast-fail on an explicit short timeout instead of stalling through the
+    4x-exponential-backoff path (e.g. the tide stage's per-station cap — see forecast/tides.py, and
+    the pattern documented in .github/workflows/reverify-trust-accumulate.yml). Caller SHOULD pass a
+    short `timeout`. Does not raise on 4xx/5xx (returns the Response so the caller can classify a 5xx
+    as an outage vs a 4xx as a data error); raises requests transport exceptions directly."""
+    kwargs.setdefault("timeout", 30)
+    return session().request("GET", url, **kwargs)
+
+
 def post(url: str, **kwargs: Any) -> requests.Response:
     return request("POST", url, **kwargs)

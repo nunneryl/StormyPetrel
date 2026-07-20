@@ -140,7 +140,22 @@ BUOYS_CACHE_DIR = CACHE_DIR / "buoys"
 TIDES_FORECAST_FILE = FORECAST_DATA_DIR / "tides.json"
 BUOYS_FORECAST_FILE = FORECAST_DATA_DIR / "buoys.json"
 
-TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days
+TIDE_PREDICTION_RANGE_HOURS = 168  # 7 days — the OUTPUT window (what interpret sees; unchanged so
+                                   #   tide_norm/ratings are identical). The cache below is longer.
+
+# Tide-stage resilience — a dead CO-OPS backend must never block db_import (tides are a rating
+# MODIFIER, not a blocker). See pipeline/forecast/tides.py.
+NOAA_COOPS_TIMEOUT_S = 6.0             # per-request socket timeout; SINGLE attempt, no backoff (Fix C).
+                                       #   The old path was http.get: 4 attempts x wait_exponential
+                                       #   (2+4+8s backoff) x 180s timeout x 3 datums x 2 intervals =
+                                       #   ~118 s/station against a dead backend.
+TIDE_FETCH_MAX_CONSECUTIVE_FAILURES = 8   # circuit breaker: after this many station failures IN A ROW,
+                                       #   stop contacting NOAA for the rest of the run (Fix D).
+TIDE_STAGE_DEADLINE_S = 600.0          # whole-stage wall-clock budget (10 min); on expiry, bail with
+                                       #   what we have and mark the rest stale (Fix E).
+# Long cache (Fix B) — harmonic predictions are DETERMINISTIC, so cache a wide horizon and reuse it:
+TIDE_CACHE_HORIZON_HOURS = 720         # fetch a 30-day window per station and persist it
+TIDE_CACHE_REFETCH_WITHIN_HOURS = 168  # only refetch a station when < 7 days of its cache remain
 
 # NWPS — Nearshore Wave Prediction System forecasts
 NWPS_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod"
