@@ -72,7 +72,13 @@ HORIZON_MAX_FH = 144          # CG1 carries f000..f144 hourly (145 steps)
 # HEIGHT (unchanged — total-Hs skill is already excellent, r≈0.984 measured): model swh
 # vs buoy WVHT, Pearson r ≥ TRUST_R_MIN over all overlapping hours.
 TRUST_R_MIN = 0.80
-TRUST_BUOY_RANGE_MIN_M = 0.5  # below this Hs span the window is flat → height not assessable
+TRUST_BUOY_RANGE_MIN_M = 0.75 # buoy TOTAL-Hs span below this ⇒ the window is flat ⇒ height not
+                              #   assessable (Pearson r would be computed on noise, not signal).
+                              #   Raised 0.5→0.75: 46268 (r=-0.545) and 46256 (r=-0.724) produced bogus
+                              #   NEGATIVE correlations from ~0.3 m of noise that barely cleared the old
+                              #   0.5 floor; 0.75 makes those windows INCONCLUSIVE (and, via the banking
+                              #   guard in reverify_tagged, they then bank nothing). The monitor mirrors
+                              #   this same constant (buoy_ready_monitor imports it — one source of truth).
 TRUST_MIN_PAIRS = 6
 TRUST_CIRC_MAX = 25.0         # LEGACY: the old dirpw-vs-MWD ceiling (superseded; see below)
 # DIRECTION (rebuilt — partition-matched, energy-preconditioned). The old dirpw-vs-MWD
@@ -876,6 +882,14 @@ def swell_trust_verdict(samples, tier="point"):
         mws, mwd = s.get("model_ws"), s.get("model_wdir")
         matched = _match_swell_system(s.get("model_systems"), mws, mwd) if qual else None
         wsea = _match_windsea_system(s.get("model_systems"), mws, mwd)   # for the side-by-side diag
+        # KNOWN CONTAMINATION (option-c guard DEFERRED — needs calibration vs a known-good mixed-sea
+        # event before shipping): in light wind the model can emit NO wind-sea system (wsea is None),
+        # so local chop folds into the single tracked system, `matched` classifies it as swell by
+        # wave-age, and its direction rotates WITH the wind (observed +23° at 46237, +31° at 46215
+        # while the buoy swell held steady). A per-hour guard would skip matching when wsea is None
+        # yet wind speed / sea-state indicate chop is present. Not implemented here — do not add it
+        # without calibration. The banking guard + variance floor already stop these low-energy
+        # windows from accumulating; this note is the pointer for the eventual per-hour fix.
         bdir, bhs = s.get("buoy_swell_dir"), s.get("buoy_hs_swell")
         d = w = None
         if qual and matched is None and s.get("model_systems"):
@@ -957,6 +971,19 @@ def append_trust_history(wfo, buoy, records):
             seen.add(r.get("t"))
             added += 1
     return added
+
+
+def _bank_records(wfo, buoy, res):
+    """Bank this window's direction records toward the rolling verdict — UNLESS the height gate could
+    not assess the window (verdict INCONCLUSIVE = 'height not assessable this window (flat / too
+    short)'). Option (b): banking a direction event on a window the height gate can't verify lets
+    low-energy, partition-contaminated seas accumulate toward a settled verdict on noise (the
+    monitor/gate mismatch this fixes). Returns (n_added, skip_reason): skip_reason is None when the
+    records were banked, else the height reason string (nothing written). append_trust_history does
+    the de-duped disk write; this wrapper is the single guarded banking seam (and is unit-testable)."""
+    if res.get("verdict") == "INCONCLUSIVE":
+        return 0, res.get("reason") or "height not assessable this window (flat / too short)"
+    return append_trust_history(wfo, buoy, res.get("records") or []), None
 
 
 def load_trust_history(wfo, buoy, days=None, now_epoch_hour=None):
@@ -1855,13 +1882,16 @@ def reverify_tagged(n_cycles=4):
         def _f(x, s):
             return (s % x) if isinstance(x, (int, float)) and x == x else "—"
         hv = res["verdict"] + (f"(r={res['height_r']:.2f})" if res.get("height_r") == res.get("height_r") else "")
-        append_trust_history(wfo, buoy, res.get("records") or [])
+        banked, skip_reason = _bank_records(wfo, buoy, res)   # option (b): bank nothing on INCONCLUSIVE
         roll = rolling_trust_verdict(load_trust_history(wfo, buoy, days=TRUST_ROLLING_DAYS[0]), tier=tier)
         dw = f"{_f(res.get('dir_circ_std_w'), '%.0f')}/{_f(res.get('dir_bias_w'), '%+.0f')}"
         du = f"{_f(res.get('dir_circ_std_u'), '%.0f')}/{_f(res.get('dir_bias_u'), '%+.0f')}"
         flag = "" if res.get("dir_flag") else " ⚑"   # this window fails the tier's direction bar
         print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {hv:<11} {dw:>14} {du:>12} "
               f"{res.get('n_events', 0):>3} {roll['verdict']:<13}{flag}")
+        if skip_reason:
+            print(f"      ↳ banked 0 events — {skip_reason}; this window does NOT accumulate "
+                  "(height not assessable → its direction residual is not trusted)")
         if res["verdict"] == "FAIL" or roll["verdict"] == "FAIL":
             flagged.append(f"{tag} ({nspots} sp): height {res['verdict']}, dir(rolling) {roll['verdict']} — {roll.get('reason') or res.get('reason') or ''}")
     print("\n==== summary ====")

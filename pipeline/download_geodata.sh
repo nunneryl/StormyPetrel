@@ -17,6 +17,17 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 GEODATA_DIR="${GEODATA_DIR:-$SCRIPT_DIR/geodata}"
 mkdir -p "$GEODATA_DIR"
 
+# --refresh-roster (a.k.a. --force-roster): dl_if_missing SKIPS a file that already exists, so a
+# stale ndbc_stations.xml / latest_obs.txt never updates on a plain re-run (the roster ages out and
+# the trust gate warns it's N days old). This flag force-refetches JUST the two NDBC metadata files;
+# every other download keeps its idempotent skip-if-present behavior.
+REFRESH_ROSTER=0
+for _arg in "$@"; do
+    case "$_arg" in
+        --refresh-roster|--force-roster) REFRESH_ROSTER=1 ;;
+    esac
+done
+
 dl_if_missing() {
     local url="$1"
     local dest="$2"
@@ -29,7 +40,22 @@ dl_if_missing() {
     curl -fsSL --retry 4 --retry-delay 5 -o "$dest" "$url"
 }
 
+dl_force() {   # unconditional fetch — used only by --refresh-roster for the NDBC roster metadata
+    local url="$1"
+    local dest="$2"
+    echo "[get!] $url (force refresh)"
+    echo "       -> $dest"
+    curl -fsSL --retry 4 --retry-delay 5 -o "$dest" "$url"
+}
+
 # --- NDBC station metadata + latest observations ---------------------------
+# With --refresh-roster, force-refetch these two first; the dl_if_missing calls below then skip
+# them (now present & fresh). Without the flag, behavior is unchanged (fetch only if missing).
+if [[ "$REFRESH_ROSTER" == "1" ]]; then
+    dl_force "https://www.ndbc.noaa.gov/activestations.xml"             "$GEODATA_DIR/ndbc_stations.xml"
+    dl_force "https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt" "$GEODATA_DIR/ndbc_latest_obs.txt"
+fi
+
 dl_if_missing \
     "https://www.ndbc.noaa.gov/activestations.xml" \
     "$GEODATA_DIR/ndbc_stations.xml"
