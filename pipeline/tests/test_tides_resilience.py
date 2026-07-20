@@ -163,6 +163,59 @@ def test_cache_horizon_jitter_is_deterministic_ranged_and_desynced():
     assert len(covers_until_days) >= 4, f"expected a multi-day spread, got {len(covers_until_days)}"
 
 
+def test_covers_until_is_data_derived_clamped_and_short_triggers_refetch():
+    # BUG being fixed: covers_until was computed from the REQUESTED horizon, so a station returning
+    # fewer days than asked for still claimed full coverage — _cache_covers then skipped the refetch
+    # and the 7-day output slice silently truncated (uncovered hours -> tide_norm None -> tide_mult 1.0,
+    # scoring as if the tide were perfect). covers_until must instead come from the DATA.
+    today = date(2026, 7, 20)
+    horizon_h = 720  # request 30 days
+
+    def series(last_ymd, n=4, hh="12:00"):
+        base = date.fromisoformat(last_ymd)
+        return [{"t": (base - timedelta(days=k)).strftime("%Y-%m-%d ") + hh, "v": f"{2.0 + k:.1f}"}
+                for k in range(n)]
+
+    old_formula = (today + timedelta(hours=horizon_h)).isoformat()   # what the buggy code stored
+
+    # (c) FULL fetch — both series reach the requested horizon -> covers_until UNCHANGED from before,
+    # and no materially-short warning.
+    covers, shortfall, _ = tides._coverage_from_series(series(old_formula), series(old_formula),
+                                                       today, horizon_h)
+    assert covers == old_formula, f"full fetch must be unchanged: {covers!r} != {old_formula!r}"
+    assert shortfall <= 24, f"full fetch must not look short, got {shortfall}h"
+
+    # (a) SHORT fetch INSIDE the 7-day window — records the real (short) end, and _cache_covers then
+    # sees it as needing a refetch, where the OLD lying value would have been served as fresh.
+    refetch_until = today + timedelta(hours=config.TIDE_CACHE_REFETCH_WITHIN_HOURS)   # today + 7d
+    five = (today + timedelta(days=5)).isoformat()
+    covers5, shortfall5, _ = tides._coverage_from_series(series(five), series(five), today, horizon_h)
+    assert covers5 == five, f"short fetch must record its real end, got {covers5!r}"
+    assert shortfall5 > 24, "a 25-day shortfall must exceed the 24h warn threshold"
+    assert tides._cache_covers({"covers_until": covers5}, refetch_until) is False, \
+        "data-derived short covers_until must trigger a refetch"
+    assert tides._cache_covers({"covers_until": old_formula}, refetch_until) is True, \
+        "(demonstrates the old silent-optimism: the requested-horizon value looked fresh)"
+
+    # (b) hilo ends before hourly -> coverage is HILO-governed (the output needs both series; an hourly
+    # grid running longer than hilo is not real coverage).
+    hilo_end = (today + timedelta(days=12)).isoformat()
+    hourly_end = (today + timedelta(days=28)).isoformat()
+    covers_b, _, governing_b = tides._coverage_from_series(series(hilo_end), series(hourly_end),
+                                                           today, horizon_h)
+    assert covers_b == hilo_end, f"expected hilo-governed {hilo_end!r}, got {covers_b!r}"
+    assert governing_b == "hilo"
+
+    # (4) an incomplete pair (EITHER series empty) is not cacheable coverage.
+    assert tides._coverage_from_series([], series(old_formula), today, horizon_h) is None
+    assert tides._coverage_from_series(series(old_formula), [], today, horizon_h) is None
+
+    # (3) clamp — data claiming to run past the requested horizon can't inflate covers_until.
+    beyond = (today + timedelta(days=60)).isoformat()
+    covers_x, _, _ = tides._coverage_from_series(series(beyond), series(beyond), today, horizon_h)
+    assert covers_x == old_formula, f"covers_until must clamp to the requested horizon, got {covers_x!r}"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
