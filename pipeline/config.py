@@ -151,6 +151,10 @@ NOAA_COOPS_TIMEOUT_S = 6.0             # per-request socket timeout; SINGLE atte
                                        #   ~118 s/station against a dead backend.
 TIDE_FETCH_MAX_CONSECUTIVE_FAILURES = 8   # circuit breaker: after this many station failures IN A ROW,
                                        #   stop contacting NOAA for the rest of the run (Fix D).
+TIDE_KNOWN_BAD_TTL_DAYS = 30           # a station CONFIRMED to have no predictions is skipped for this
+                                       #   long, then re-verified — so one that comes back online (or was
+                                       #   wrongly classified) recovers on its own, no CLI needed. The
+                                       #   permanent verdict must not rest solely on our classification.
 TIDE_STAGE_DEADLINE_S = 1200.0         # whole-stage wall-clock budget (20 min); on expiry, bail with
                                        #   what we have and mark the rest stale (Fix E). Only binds on a
                                        #   slow-but-ALIVE backend — a true outage trips the breaker in

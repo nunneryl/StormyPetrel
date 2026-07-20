@@ -254,23 +254,30 @@ def test_throttle_and_http_error_never_poison_known_bad():
             shutil.rmtree(tmp, ignore_errors=True)
 
 
-def test_clear_known_bad_and_legacy_list_is_discarded():
+def test_known_bad_ttl_clear_and_legacy_discard():
     tmp = Path(tempfile.mkdtemp())
     saved = _redirect(tmp)
     try:
         (tmp / "cache").mkdir(parents=True)
-        # A legacy (pre-fix) LIST-format file — possibly throttle-poisoned — is DISCARDED on load so its
-        # stations are re-verified this run, not skipped forever. (Auto-heals the 175 from run 20:30Z.)
+        today = date.today()
+        # Legacy LIST-format and prior v2 files (no per-entry timestamp, possibly throttle-poisoned) are
+        # DISCARDED on load so their stations are re-verified, not skipped forever (heals run 20:30Z).
         tides._NO_PREDICTIONS_FILE.write_text(json.dumps(["poison1", "poison2", "poison3"]))
         assert tides._load_no_predictions() == set(), "legacy list-format known-bad is discarded on load"
+        tides._NO_PREDICTIONS_FILE.write_text(json.dumps({"version": 2, "stations": ["v2bad"]}))
+        assert tides._load_no_predictions() == set(), "prior v2 (untimestamped) known-bad is discarded"
         # clear_known_bad() counts RAW entries (any format) and removes the file; idempotent when absent.
-        assert tides.clear_known_bad() == 3
+        assert tides.clear_known_bad() == 1
         assert not tides._NO_PREDICTIONS_FILE.exists()
         assert tides.clear_known_bad() == 0
-        # A v2 file round-trips — genuinely-bad stations still persist and are honoured.
-        tides._save_no_predictions({"realbad"})
-        assert tides._load_no_predictions() == {"realbad"}
-        assert tides.clear_known_bad() == 1
+        # TTL: a station confirmed past the TTL re-verifies (dropped) so it recovers on its own; a recent
+        # one is still skipped, and its ORIGINAL first_seen is preserved (TTL runs from first confirmation).
+        old = (today - timedelta(days=config.TIDE_KNOWN_BAD_TTL_DAYS + 10)).isoformat()
+        recent = today.isoformat()
+        tides._save_no_predictions({"stale_bad": old, "fresh_bad": recent})
+        assert tides._load_no_predictions() == {"fresh_bad"}, "expired known-bad re-verifies (TTL)"
+        assert tides._load_no_predictions_map() == {"fresh_bad": recent}, "surviving entry keeps first_seen"
+        assert tides.clear_known_bad() == 2   # both raw entries counted
     finally:
         _restore(saved)
         shutil.rmtree(tmp, ignore_errors=True)
