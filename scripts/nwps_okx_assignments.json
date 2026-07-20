@@ -1960,6 +1960,246 @@
       "nwps_node_lng": -117.9017,
       "nwps_node_distance_m": 3422,
       "nwps_buoy_id": "46256"
+    },
+    {
+      "slug": "refugio-state-beach",
+      "name": "Refugio State Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.44023,
+      "nwps_node_lng": -120.05064,
+      "nwps_node_distance_m": 2404,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "el-capitan-state-beach",
+      "name": "El Capitan State Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.44023,
+      "nwps_node_lng": -120.00766,
+      "nwps_node_distance_m": 2600,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rockpile",
+      "name": "Rockpile",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.40415,
+      "nwps_node_lng": -119.9217,
+      "nwps_node_distance_m": 2668,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "miramar",
+      "name": "Miramar",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.40415,
+      "nwps_node_lng": -119.62085,
+      "nwps_node_distance_m": 1616,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hammonds",
+      "name": "Hammonds",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.40415,
+      "nwps_node_lng": -119.62085,
+      "nwps_node_distance_m": 1944,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "devereux",
+      "name": "Devereux",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.40415,
+      "nwps_node_lng": -119.87872,
+      "nwps_node_distance_m": 601,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "campus-point-ucsb",
+      "name": "Campus Point UCSB",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.40415,
+      "nwps_node_lng": -119.83574,
+      "nwps_node_distance_m": 711,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sandspit",
+      "name": "Sandspit",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.36807,
+      "nwps_node_lng": -119.66383,
+      "nwps_node_distance_m": 4675,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "leadbetter-beach",
+      "name": "Leadbetter Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.36807,
+      "nwps_node_lng": -119.70681,
+      "nwps_node_distance_m": 3699,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mesa-lane",
+      "name": "Mesa Lane",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.36807,
+      "nwps_node_lng": -119.70681,
+      "nwps_node_distance_m": 3531,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "carpinteria-state-beach",
+      "name": "Carpinteria State Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.36807,
+      "nwps_node_lng": -119.53489,
+      "nwps_node_distance_m": 2756,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "tarpits",
+      "name": "Tarpits",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.36807,
+      "nwps_node_lng": -119.49191,
+      "nwps_node_distance_m": 1933,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rincon",
+      "name": "Rincon",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.36807,
+      "nwps_node_lng": -119.49191,
+      "nwps_node_distance_m": 1299,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mussel-shoals",
+      "name": "Mussel Shoals",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.33198,
+      "nwps_node_lng": -119.44894,
+      "nwps_node_distance_m": 2626,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "faria-beach",
+      "name": "Faria Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.33198,
+      "nwps_node_lng": -119.44894,
+      "nwps_node_distance_m": 3826,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mondos",
+      "name": "Mondos",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.2959,
+      "nwps_node_lng": -119.40596,
+      "nwps_node_distance_m": 3936,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pitas-point",
+      "name": "Pitas Point",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.2959,
+      "nwps_node_lng": -119.40596,
+      "nwps_node_distance_m": 2800,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "emma-wood-state-beach",
+      "name": "Emma Wood State Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.25982,
+      "nwps_node_lng": -119.32,
+      "nwps_node_distance_m": 2722,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "c-street-ventura",
+      "name": "C Street Ventura",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.25982,
+      "nwps_node_lng": -119.32,
+      "nwps_node_distance_m": 2988,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ventura-point",
+      "name": "Ventura Point",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.25982,
+      "nwps_node_lng": -119.32,
+      "nwps_node_distance_m": 1950,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ventura-harbor",
+      "name": "Ventura Harbor",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.22373,
+      "nwps_node_lng": -119.27702,
+      "nwps_node_distance_m": 2480,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "oxnard-beach",
+      "name": "Oxnard Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.15157,
+      "nwps_node_lng": -119.23404,
+      "nwps_node_distance_m": 2999,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "silver-strand",
+      "name": "Silver Strand",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.15157,
+      "nwps_node_lng": -119.23404,
+      "nwps_node_distance_m": 1207,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "port-hueneme",
+      "name": "Port Hueneme",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.11549,
+      "nwps_node_lng": -119.19106,
+      "nwps_node_distance_m": 2572,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
