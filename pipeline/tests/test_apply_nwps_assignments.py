@@ -222,6 +222,36 @@ def test_full_dryrun_direction_status_breakdown_live():
     assert got.get("unverifiable") == 14, f"the 14 retired-direction 44098 spots are the unverifiable set, got {got}"
 
 
+def test_santa_barbara_channel_unverifiable_places_38_total_after_apply():
+    # FIRST real use of unverifiable[]: the 24 Santa Barbara Channel slugs. Simulate the --no-buoy
+    # promote (append 24 null-buoy spot rows) and confirm build_plan places all 24 as 'unverifiable'
+    # with nwps_buoy_id=null, while the 14 existing 44098 unverifiable spots are unaffected → 38 total.
+    doc, enriched = _real_doc(), _real_enriched()
+    sbc = [r for r in doc["buoy_reference"]["unverifiable"] if r["zone"] == "lox/santa-barbara-channel"][0]
+    slugs = sbc["slugs"]
+    assert len(slugs) == 24 and "buoy" not in sbc, "24 slug-keyed spots, no buoy on the record (B2)"
+    pend_slugs = {s for p in doc["buoy_reference"]["pending"] for s in p.get("slugs", [])}
+    assert not (set(slugs) & pend_slugs), "SBC spots are unverifiable-only, never pending"
+    assert not (set(slugs) & set(doc["trust_by_buoy"])), "no SBC slug collides with a trust buoy"
+    # emulate `promote_nwps_validate --no-buoy`: node coords + nwps_buoy_id=null, matched by slug/name
+    for sl in slugs:
+        name = sl.replace("-", " ").title()
+        doc["spots"].append({"slug": sl, "name": name, "nwps_wfo": "lox", "nwps_grid": "CG1",
+                             "nwps_node_lat": 34.4, "nwps_node_lng": -119.7,
+                             "nwps_node_distance_m": 1500, "nwps_buoy_id": None})
+        enriched.append({"name": name})
+    rows, problems, held, *_ = ap.build_plan(doc=doc, enriched=enriched)
+    by_slug = {r["slug"]: r for r in rows}
+    for sl in slugs:
+        r = by_slug[sl]
+        assert r["direction_status"] == "unverifiable", f"{sl}: {r['direction_status']} (want unverifiable)"
+        assert r["fields"]["nwps_buoy_id"] is None, f"{sl} places with null buoy (B2)"
+        assert r["fields"]["nwps_direction_status"] == "unverifiable"
+        assert r["fields"]["swell_window_source"] == "nwps", f"{sl} is height-live via NWPS"
+    n_unver = sum(1 for r in rows if r["direction_status"] == "unverifiable")
+    assert n_unver == 38, f"14 (44098) + 24 (Santa Barbara Channel) = 38 unverifiable, got {n_unver}"
+
+
 def test_force_places_a_held_spot():
     doc = _doc(spots=[dict(_node(), slug="pleasure-point", name="Pleasure Point", nwps_wfo="mtr", nwps_buoy_id="46240")])
     rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED, force=True)

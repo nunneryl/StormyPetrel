@@ -2185,10 +2185,35 @@
       {
         "zone": "lox/santa-barbara-channel",
         "wfo": "lox",
-        "reason": "ISLAND-SHADOWED — Santa Barbara Channel (Point Conception → Point Dume: jalama, Santa Barbara, Carpinteria, Ventura, Oxnard, etc.). The Channel Islands block the dominant swell window, so the nearest VALID nearshore directional reference is 72–96 km away around Point Conception, in a different wave-exposure regime — not a usable direction reference for these spots. They ride NWPS HEIGHT skill + raycast direction, with direction PERMANENTLY not buoy-verifiable. Distinct from 'pending' (there a valid nearby buoy exists and we await a swell to verify) and from 'retired' (there a buoy is nearby but structurally invalid on both axes): here the only usable buoy is geometrically wrong for these spots (far, around a headland, different exposure), so direction can NEVER be buoy-verified.",
-        "nearest_candidate": null,
-        "slugs": [],
-        "to_place": "STAGING ONLY — this record tags NOTHING while 'slugs' is empty. On the Mac: (1) `--find-buoy` the shadowed spots to record the far nearest_candidate (AUDIT-ONLY — never used for placement or verification); (2) `--validate --wfo lox` to capture their node lat/lng into scripts/nwps_lox_validate_out.json; (3) `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs <shadowed slugs>` to merge them into 'spots' with nwps_buoy_id=null; (4) add those same slugs to 'slugs' here. apply then places them height-live with nwps_direction_status='unverifiable' (checked BEFORE the PASS branch, so never relabeled 'verified'). The far buoy is NEVER put in trust_by_buoy or pending[], and these spots get NO WATCH entry (the monitor never flags them)."
+        "reason": "ISLAND-SHADOWED — Santa Barbara Channel (Point Conception → Point Dume: Refugio / El Capitan → Santa Barbara / Carpinteria → Ventura → Oxnard / Port Hueneme). The Channel Islands block the dominant swell window. --find-buoy returns VALID nearshore references only at 72–96 km around Point Conception, in a different wave-exposure regime (46268 / 46215); every CLOSE Channel buoy (46053, 46054, 46221) is deep-water and was correctly rejected as STRUCTURALLY INVALID. Direction is PERMANENTLY not buoy-verifiable here — we do NOT trust-verify against a far buoy (that would manufacture unreliable verdicts). These spots ride NWPS HEIGHT skill + raycast direction; raycast handles the island-shadow geometry. Distinct from 'pending' (a valid nearby buoy exists, awaiting a swell to verify) and from 'retired' (a nearby buoy is structurally invalid on both axes): here the only usable buoy is geometrically wrong for these spots (far, around a headland, different exposure), so direction can NEVER be buoy-verified.",
+        "nearest_candidate": "46268 / 46215 (AUDIT ONLY — never used for placement or verification)",
+        "slugs": [
+          "refugio-state-beach",
+          "el-capitan-state-beach",
+          "rockpile",
+          "miramar",
+          "hammonds",
+          "devereux",
+          "campus-point-ucsb",
+          "sandspit",
+          "leadbetter-beach",
+          "mesa-lane",
+          "carpinteria-state-beach",
+          "tarpits",
+          "rincon",
+          "mussel-shoals",
+          "faria-beach",
+          "mondos",
+          "pitas-point",
+          "emma-wood-state-beach",
+          "c-street-ventura",
+          "ventura-point",
+          "ventura-harbor",
+          "oxnard-beach",
+          "silver-strand",
+          "port-hueneme"
+        ],
+        "to_place": "24 island-shadowed spots (20 OK + 4 OFFWIN: rockpile, sandspit, leadbetter-beach, ventura-harbor — off-window for today's swell angle, still placeable). Node coords are in the current (Mac) nwps_lox_validate_out.json (freshly written by `--validate --wfo lox --batch <these 24 slugs>`; nodes 0.60–4.67 km, within the grid-aware cap). Promote with NO buoy: `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs <these 24> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS branch, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and these spots get NO WATCH entry (the monitor never flags them)."
       }
     ]
   }
