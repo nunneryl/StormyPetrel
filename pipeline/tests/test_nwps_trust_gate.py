@@ -534,6 +534,42 @@ def test_retired_reference_zones_parsing(tmp_path, monkeypatch):
     assert nn._retired_reference_zones() == {}
 
 
+def test_banking_guard_skips_inconclusive_but_banks_pass_and_fail():
+    # option (b): _bank_records must NOT call append_trust_history on an INCONCLUSIVE (height not
+    # assessable) window; PASS and FAIL still bank (height WAS assessable). Verified via a spy so no
+    # disk is touched.
+    calls = []
+    orig = nn.append_trust_history
+    nn.append_trust_history = lambda wfo, buoy, records: (calls.append((wfo, buoy, list(records))), len(records))[1]
+    try:
+        recs = [{"t": 0, "residual": 5.0, "weight": 1.0}]
+        added, skip = nn._bank_records("mtr", "46237", {"verdict": "INCONCLUSIVE", "reason": "flat", "records": recs})
+        assert added == 0 and skip and not calls, "INCONCLUSIVE banks nothing; append_trust_history NOT called"
+        added, skip = nn._bank_records("box", "44097", {"verdict": "PASS", "records": recs})
+        assert added == 1 and skip is None and len(calls) == 1, "PASS banks"
+        added, skip = nn._bank_records("phi", "44025", {"verdict": "FAIL", "records": recs})
+        assert added == 1 and skip is None and len(calls) == 2, "FAIL still banks (height was assessable)"
+    finally:
+        nn.append_trust_history = orig
+
+
+def test_variance_floor_075_makes_marginal_range_inconclusive():
+    # option (a): TRUST_BUOY_RANGE_MIN_M raised 0.5→0.75 — a buoy total-Hs span of 0.6 m now returns
+    # INCONCLUSIVE (was assessable at the old 0.5 floor); a 0.9 m span still assesses (r computed).
+    assert nn.TRUST_BUOY_RANGE_MIN_M == 0.75, "variance floor is 0.75 m"
+
+    def samples(span, n=8):   # model_swh tracks buoy_wvht (r≈1 when assessable); buoy WVHT spans `span`
+        return [{"t": i, "model_swh": 1.0 + span * i / (n - 1), "buoy_wvht": 1.0 + span * i / (n - 1)}
+                for i in range(n)]
+
+    r06 = nn.swell_trust_verdict(samples(0.6))
+    assert r06["verdict"] == "INCONCLUSIVE" and "flat" in (r06["reason"] or ""), \
+        "0.6 m total-Hs span < 0.75 floor → height not assessable (was assessable at 0.5)"
+    r09 = nn.swell_trust_verdict(samples(0.9))
+    assert r09["verdict"] == "PASS" and r09["height_r"] == r09["height_r"] and r09["height_r"] >= 0.80, \
+        "0.9 m span ≥ 0.75 → assessable; a tracking model → r≈1 PASS"
+
+
 def _run_all():
     import inspect
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]

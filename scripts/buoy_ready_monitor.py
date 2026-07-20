@@ -9,16 +9,23 @@ Concretely, all of:
   * SWELL, reusing the trust gate's OWN per-hour precondition (nwps_nearshore._swell_precondition,
     swell-band Hs >= SWELL_HS_FLOOR_M AND swell fraction >= SWELL_FRAC_FLOOR — imported, one source
     of truth), SUSTAINED: >= MONITOR_MIN_QUALIFYING_HOURS such hours in the last
-    MONITOR_SWELL_WINDOW_H (a real event, not a one-hour blip);
+    MONITOR_SWELL_WINDOW_H (a real event, not a one-hour blip); AND enough VARIANCE to be
+    height-assessable — buoy TOTAL-Hs span >= TRUST_BUOY_RANGE_MIN_M over the window (imported, the
+    SAME floor the gate uses), so the monitor stops alerting on flat-but-present windows the gate
+    would call INCONCLUSIVE (height not assessable);
   * a USABLE buoy reference: VALID or MARGINAL per the --pairing-audit scorer. A STRUCTURALLY
     INVALID or RETIRED buoy (e.g. 44098's box/gyx zones — a 76 m offshore bank) is NEVER flagged:
     there is no valid instrument to test against, so an alert would be pure noise;
   * a zone whose ROLLING direction verdict is still ACCUMULATING. A settled PASS (or FAIL /
     INCOHERENT) needs no more events — don't nag.
 
-Running the emitted `--trustcheck` on a flagged zone CONTRIBUTES ONE swell EVENT toward that zone's
-rolling verdict — it is NOT a one-shot PASS/FAIL anymore. The gate needs TRUST_MIN_EVENTS
-independent events before it settles.
+The emitted `--trustcheck` command is READ-ONLY inspection of the current window — it prints the
+height/direction verdict and banks NOTHING. Accumulation toward the rolling verdict happens ONLY via
+`--reverify-tagged`, which loops the tagged zones and appends each height-ASSESSABLE window's
+direction records to the history log. That command is NOT on any schedule (this monitor only flags),
+so it must be run (Mac; live NOMADS+NDBC) to accumulate. A window the height gate can't assess
+(INCONCLUSIVE — flat / too short) banks nothing, so noise never settles a zone. The gate needs
+TRUST_MIN_EVENTS independent events before it settles.
 
 Why the old trigger was wrong: it fired on 24h Hs RANGE, which a wind-chop ramp produces with no
 real swell — it flagged mhx/44095, mhx/41025, ilm/41108, ilm/41110 (issue #58), all of which then
@@ -130,6 +137,26 @@ WATCH = [
 # --------------------------------------------------------------------------- #
 # Pure decision logic (no network / no third-party deps — used by --selftest)  #
 # --------------------------------------------------------------------------- #
+def _swell_event(recent, precond, min_range_m):
+    """Pure: does this window hold a qualifying SWELL EVENT? *recent* = per-hour buoy metric dicts
+    (each carrying hs_swell / swell_frac / hs_total), *precond* = the gate's
+    _swell_precondition(hs_swell, frac), *min_range_m* = the gate's TRUST_BUOY_RANGE_MIN_M. Requires
+    BOTH, matching the gate:
+      (1) PRESENCE  — >= MONITOR_MIN_QUALIFYING_HOURS hours pass *precond* (sustained swell), AND
+      (2) VARIANCE  — buoy TOTAL-Hs (hs_total) span over the window >= *min_range_m*, mirroring the
+          gate's height-assessability floor so a flat-but-present window (the 46237/46215/46266/44091
+          shape — swell present, total Hs barely moving) no longer alerts (the gate calls it
+          INCONCLUSIVE and banks nothing, so an alert there is noise).
+    Returns {n_qualifying, current_swell_hs, current_frac, has_event}. Quiet/absent → has_event False."""
+    qual = [m for m in recent if precond(m.get("hs_swell"), m.get("swell_frac"))]
+    totals = [m.get("hs_total") for m in recent if m.get("hs_total") is not None]
+    dynamic = len(totals) >= 2 and (max(totals) - min(totals)) >= min_range_m
+    cur = recent[0] if recent else {}
+    return {"n_qualifying": len(qual), "current_swell_hs": cur.get("hs_swell"),
+            "current_frac": cur.get("swell_frac"),
+            "has_event": len(qual) >= MONITOR_MIN_QUALIFYING_HOURS and dynamic}
+
+
 def evaluate(watch, up_set, swell_fn, pairing_fn, rolling_fn, retired_set, now=None):
     """Per watched (buoy, zone), decide whether it has a qualifying swell EVENT worth a trust check
     now. FLAG iff: UP; a sustained swell event exists (swell_fn.has_event); the buoy is a USABLE
@@ -251,27 +278,25 @@ def _live_up_set():
 
 def _live_swell_fn(now=None):
     """SWELL-event probe per buoy, reusing the pure spectral reader (ndbc_spectral.by_hour →
-    .data_spec/.swdir) + the gate's per-hour precondition (nwps_nearshore._swell_precondition).
-    Returns {n_qualifying, current_swell_hs, current_frac, has_event} over the recent window.
-    A quiet/absent spectrum → has_event False (never a fabricated event)."""
+    .data_spec/.swdir) + the gate's per-hour precondition (nwps_nearshore._swell_precondition) and
+    its total-Hs VARIANCE floor (nwps_nearshore.TRUST_BUOY_RANGE_MIN_M — both imported, one source of
+    truth). Returns {n_qualifying, current_swell_hs, current_frac, has_event} over the recent window;
+    an event needs sustained swell PRESENCE *and* enough total-Hs variance to be height-assessable
+    (see _swell_event). A quiet/absent spectrum → has_event False (never a fabricated event)."""
     from pipeline.forecast import ndbc_spectral as sp
-    from pipeline.forecast.nwps_nearshore import _swell_precondition
+    from pipeline.forecast.nwps_nearshore import _swell_precondition, TRUST_BUOY_RANGE_MIN_M
     now = now or datetime.now(timezone.utc)
     now_eh = int(now.timestamp() // 3600)
 
     def fn(buoy_id):
         try:
-            metrics = sp.by_hour(buoy_id)   # {epoch_hour: {hs_swell, swell_frac, ...}} or {}
+            metrics = sp.by_hour(buoy_id)   # {epoch_hour: {hs_total, hs_swell, swell_frac, ...}} or {}
         except Exception as e:  # noqa: BLE001
             print(f"warn: buoy {buoy_id} spectra unavailable ({type(e).__name__}: {e})", file=sys.stderr)
             metrics = {}
-        recent = sorted(((eh, m) for eh, m in metrics.items() if 0 <= now_eh - eh < MONITOR_SWELL_WINDOW_H),
-                        reverse=True)
-        qual = [m for _, m in recent if _swell_precondition(m.get("hs_swell"), m.get("swell_frac"))]
-        cur = recent[0][1] if recent else {}
-        return {"n_qualifying": len(qual), "current_swell_hs": cur.get("hs_swell"),
-                "current_frac": cur.get("swell_frac"),
-                "has_event": len(qual) >= MONITOR_MIN_QUALIFYING_HOURS}
+        recent = [m for _, m in sorted(((eh, m) for eh, m in metrics.items()
+                                        if 0 <= now_eh - eh < MONITOR_SWELL_WINDOW_H), reverse=True)]
+        return _swell_event(recent, _swell_precondition, TRUST_BUOY_RANGE_MIN_M)
     return fn
 
 
@@ -392,6 +417,17 @@ def _selftest():
     check("exactly the two usable+ACCUMULATING zones are flagged", flagged == {"box/44097", "phi/44025"})
     # retired / invalid never leak into flagged_json (the issue set-key)
     check("retired + invalid excluded from flagged_json", not (flagged & {"box/44098", "gyx/44098", "box/44013"}))
+    # variance mirror (option a): has_event now needs PRESENCE *and* total-Hs variance — a
+    # flat-but-present window (>=3 qualifying hours but a tiny total-Hs span) no longer flags.
+    _pc = lambda hs, fr: hs is not None and fr is not None and hs >= 0.5 and fr >= 0.3
+    _flat = [{"hs_swell": 0.6, "swell_frac": 0.5, "hs_total": 0.85} for _ in range(6)]           # present, flat
+    _dyn = [{"hs_swell": 0.6, "swell_frac": 0.5, "hs_total": 0.4 + 0.16 * k} for k in range(6)]  # present, span 0.80
+    check("flat-but-present window → NO event (variance mirror: total-Hs span 0 < 0.75 floor)",
+          _swell_event(_flat, _pc, 0.75)["has_event"] is False)
+    check("dynamic present window → event (total-Hs span 0.80 ≥ 0.75, ≥3 qualifying hrs)",
+          _swell_event(_dyn, _pc, 0.75)["has_event"] is True)
+    check("present but no total-Hs data → no event (safe default when variance can't be assessed)",
+          _swell_event([{"hs_swell": 0.6, "swell_frac": 0.5} for _ in range(6)], _pc, 0.75)["has_event"] is False)
     # lazy fetch discipline: pairing/rolling are only consulted once a swell event exists (cost control)
     calls = {"pair": 0, "roll": 0}
     def _p(bid): calls["pair"] += 1; return pairing.get(bid, "VALID REFERENCE")

@@ -3,9 +3,10 @@ name: buoy-ready-monitor
 # Scheduled, READ-ONLY monitor. Notifies (via a GitHub Issue -> email) when a
 # trust-check zone has a qualifying SWELL EVENT to check: a watched NDBC buoy is UP,
 # a USABLE reference (VALID/MARGINAL — invalid/retired buoys like 44098 are never
-# flagged), showing real swell (gate precondition, sustained), and the zone's rolling
-# DIRECTION verdict is still ACCUMULATING. Running --trustcheck adds ONE event toward
-# that verdict (not a one-shot pass). NOT triggered by wave-height range anymore.
+# flagged), showing real swell (gate precondition, sustained + height-assessable variance),
+# and the zone's rolling DIRECTION verdict is still ACCUMULATING. This monitor only FLAGS;
+# --trustcheck (in the issue) inspects a window read-only and banks nothing, while events are
+# banked only by --reverify-tagged (not scheduled — run on the Mac). NOT triggered by Hs range.
 # Guardrails: no Supabase, no prod, no NOMADS, no secrets beyond GITHUB_TOKEN; read-only.
 
 on:
@@ -119,10 +120,18 @@ jobs:
                 '',
                 items.join('\n'),
                 '',
-                '### Add a swell event (run the trust check)',
-                `Each run CONTRIBUTES ONE event toward the zone's rolling verdict — it is NOT a `
-                  + `one-shot PASS/FAIL. The gate settles only after ${minEvents} independent swell events.`,
+                '### Inspect this window (read-only — banks NOTHING)',
+                `\`--trustcheck\` prints the height/direction verdict for one buoy's current window. `
+                  + `It is a diagnostic only: it does **not** add an event or change any rolling verdict.`,
                 cmds.join('\n'),
+                '',
+                '### Accumulate toward the verdict (this is what banks events)',
+                `Only \`--reverify-tagged\` appends events to the rolling history. It loops **all** tagged `
+                  + `zones and banks each window whose HEIGHT is assessable (a flat / too-short window is `
+                  + `INCONCLUSIVE and banks nothing, so noise can't settle a zone). It is **not scheduled** `
+                  + `— run it (Mac; live NOMADS+NDBC) to accumulate. The verdict settles only after `
+                  + `${minEvents} independent swell events:`,
+                '```\npython3 -m pipeline.forecast.nwps_nearshore --reverify-tagged\n```',
                 '',
                 'Read-only monitor. Structurally-invalid / retired buoys (e.g. 44098) are never listed '
                   + '— there is no valid reference to test against. This issue auto-closes when no '
@@ -156,8 +165,8 @@ jobs:
                 await github.rest.issues.createComment({
                   owner, repo, issue_number: existing.number,
                   body: `New zone(s) with a swell event to check: **${nz}** (${newly.map(r => r.id).join(', ')}). `
-                    + `Flagged-set is now \`${setKey}\`. Each --trustcheck run adds one event toward the `
-                    + `zone's rolling verdict.` });
+                    + `Flagged-set is now \`${setKey}\`. Run \`--reverify-tagged\` (Mac) to bank an event `
+                    + `toward each zone's rolling verdict; \`--trustcheck\` only inspects a window (banks nothing).` });
                 core.info(`flagged-set grew -> ${setKey}; re-notified`);
               } else {
                 core.info(`flagged-set unchanged (${setKey}); no duplicate notification`);
