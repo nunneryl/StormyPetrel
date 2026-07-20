@@ -3,198 +3,27 @@
   "grid_wfo": "mtr",
   "spots": [
     {
-      "slug": "andrew-molera-state-park",
-      "name": "Andrew Molera State Park",
+      "slug": "point-arena",
+      "name": "Point Arena",
       "nwps_wfo": "mtr",
       "nwps_grid": "CG1",
-      "nwps_node_lat": 36.26364,
-      "nwps_node_lng": -121.8675,
-      "nwps_node_distance_m": 1932,
-      "nwps_buoy_id": null
-    },
-    {
-      "slug": "sand-dollar-beach",
-      "name": "Sand Dollar Beach",
-      "nwps_wfo": "mtr",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 35.92517,
-      "nwps_node_lng": -121.4825,
-      "nwps_node_distance_m": 1098,
-      "nwps_buoy_id": null
-    },
-    {
-      "slug": "piedras-blancas",
-      "name": "Piedras Blancas",
-      "nwps_wfo": "mtr",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 35.65439,
-      "nwps_node_lng": -121.29,
-      "nwps_node_distance_m": 1044,
-      "nwps_buoy_id": null
-    },
-    {
-      "slug": "san-simeon",
-      "name": "San Simeon",
-      "nwps_wfo": "mtr",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 35.60926,
-      "nwps_node_lng": -121.1525,
-      "nwps_node_distance_m": 562,
-      "nwps_buoy_id": null
-    },
-    {
-      "slug": "morro-rock",
-      "name": "Morro Rock",
-      "nwps_wfo": "mtr",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 35.36104,
-      "nwps_node_lng": -120.8775,
-      "nwps_node_distance_m": 1609,
-      "nwps_buoy_id": null
-    },
-    {
-      "slug": "cable-landing",
-      "name": "Cable Landing",
-      "nwps_wfo": "mtr",
-      "nwps_grid": "CG1",
-      "nwps_node_lat": 35.31591,
-      "nwps_node_lng": -120.8775,
-      "nwps_node_distance_m": 902,
+      "nwps_node_lat": 38.90375,
+      "nwps_node_lng": -123.71,
+      "nwps_node_distance_m": 574,
       "nwps_buoy_id": null
     }
   ],
   "outcomes": [
     {
-      "slug": "andrew-molera-state-park",
-      "name": "Andrew Molera State Park",
+      "slug": "point-arena",
+      "name": "Point Arena",
       "nwps_wfo": "mtr",
       "grid_wfo": "mtr",
       "outcome": "OK",
       "domain_miss": false,
-      "nwps_node_distance_m": 1932,
-      "nwps_node_lat": 36.26364,
-      "nwps_node_lng": -121.8675
-    },
-    {
-      "slug": "sand-dollar-beach",
-      "name": "Sand Dollar Beach",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OK",
-      "domain_miss": false,
-      "nwps_node_distance_m": 1098,
-      "nwps_node_lat": 35.92517,
-      "nwps_node_lng": -121.4825
-    },
-    {
-      "slug": "piedras-blancas",
-      "name": "Piedras Blancas",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OK",
-      "domain_miss": false,
-      "nwps_node_distance_m": 1044,
-      "nwps_node_lat": 35.65439,
-      "nwps_node_lng": -121.29
-    },
-    {
-      "slug": "san-simeon",
-      "name": "San Simeon",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OK",
-      "domain_miss": false,
-      "nwps_node_distance_m": 562,
-      "nwps_node_lat": 35.60926,
-      "nwps_node_lng": -121.1525
-    },
-    {
-      "slug": "cayucos-pier",
-      "name": "Cayucos Pier",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OFFWIN",
-      "domain_miss": false,
-      "nwps_node_distance_m": 2139,
-      "nwps_node_lat": 35.42874,
-      "nwps_node_lng": -120.905
-    },
-    {
-      "slug": "morro-rock",
-      "name": "Morro Rock",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OK",
-      "domain_miss": false,
-      "nwps_node_distance_m": 1609,
-      "nwps_node_lat": 35.36104,
-      "nwps_node_lng": -120.8775
-    },
-    {
-      "slug": "cable-landing",
-      "name": "Cable Landing",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OK",
-      "domain_miss": false,
-      "nwps_node_distance_m": 902,
-      "nwps_node_lat": 35.31591,
-      "nwps_node_lng": -120.8775
-    },
-    {
-      "slug": "avila-beach",
-      "name": "Avila Beach",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "OFFWIN",
-      "domain_miss": false,
-      "nwps_node_distance_m": 2214,
-      "nwps_node_lat": 35.15796,
-      "nwps_node_lng": -120.74
-    },
-    {
-      "slug": "shell-beach-north",
-      "name": "Shell Beach (North)",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "FAR",
-      "domain_miss": true,
-      "nwps_node_distance_m": 4424,
-      "nwps_node_lat": 35.15796,
-      "nwps_node_lng": -120.74
-    },
-    {
-      "slug": "shell-beach",
-      "name": "Shell Beach",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "FAR",
-      "domain_miss": true,
-      "nwps_node_distance_m": 6671,
-      "nwps_node_lat": 35.15796,
-      "nwps_node_lng": -120.74
-    },
-    {
-      "slug": "pismo-beach-pier",
-      "name": "Pismo Beach Pier",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "FAR",
-      "domain_miss": true,
-      "nwps_node_distance_m": 8681,
-      "nwps_node_lat": 35.13539,
-      "nwps_node_lng": -120.74
-    },
-    {
-      "slug": "grover-beach",
-      "name": "Grover Beach",
-      "nwps_wfo": "mtr",
-      "grid_wfo": "mtr",
-      "outcome": "FAR",
-      "domain_miss": true,
-      "nwps_node_distance_m": 9387,
-      "nwps_node_lat": 35.11283,
-      "nwps_node_lng": -120.74
+      "nwps_node_distance_m": 574,
+      "nwps_node_lat": 38.90375,
+      "nwps_node_lng": -123.71
     }
   ]
 }

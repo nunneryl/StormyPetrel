@@ -1,0 +1,239 @@
+{
+  "_comment": "eka --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "eka",
+  "spots": [
+    {
+      "slug": "crescent-city-beach",
+      "name": "Crescent City Beach",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.72957,
+      "nwps_node_lng": -124.18429,
+      "nwps_node_distance_m": 1639,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "agate-beach",
+      "name": "Agate Beach",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.15052,
+      "nwps_node_lng": -124.18429,
+      "nwps_node_distance_m": 3466,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "trinidad-state-beach",
+      "name": "Trinidad State Beach",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.04194,
+      "nwps_node_lng": -124.18429,
+      "nwps_node_distance_m": 3355,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "moonstone-beach-humboldt",
+      "name": "Moonstone Beach Humboldt",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.04194,
+      "nwps_node_lng": -124.13794,
+      "nwps_node_distance_m": 2727,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "shelter-cove",
+      "name": "Shelter Cove",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.9924,
+      "nwps_node_lng": -124.04524,
+      "nwps_node_distance_m": 3771,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "westport",
+      "name": "Westport",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.63049,
+      "nwps_node_lng": -123.81349,
+      "nwps_node_distance_m": 2344,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ten-mile-beach",
+      "name": "Ten Mile Beach",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.52192,
+      "nwps_node_lng": -123.81349,
+      "nwps_node_distance_m": 3865,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mackerricher",
+      "name": "Mackerricher",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.48573,
+      "nwps_node_lng": -123.81349,
+      "nwps_node_distance_m": 1411,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jug-handle",
+      "name": "Jug Handle",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.37716,
+      "nwps_node_lng": -123.85984,
+      "nwps_node_distance_m": 3545,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "caspar",
+      "name": "Caspar",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.37716,
+      "nwps_node_lng": -123.85984,
+      "nwps_node_distance_m": 4033,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mendocino",
+      "name": "Mendocino",
+      "nwps_wfo": "eka",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.30478,
+      "nwps_node_lng": -123.81349,
+      "nwps_node_distance_m": 1406,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "crescent-city-beach",
+      "name": "Crescent City Beach",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1639,
+      "nwps_node_lat": 41.72957,
+      "nwps_node_lng": -124.18429
+    },
+    {
+      "slug": "agate-beach",
+      "name": "Agate Beach",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3466,
+      "nwps_node_lat": 41.15052,
+      "nwps_node_lng": -124.18429
+    },
+    {
+      "slug": "trinidad-state-beach",
+      "name": "Trinidad State Beach",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3355,
+      "nwps_node_lat": 41.04194,
+      "nwps_node_lng": -124.18429
+    },
+    {
+      "slug": "moonstone-beach-humboldt",
+      "name": "Moonstone Beach Humboldt",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2727,
+      "nwps_node_lat": 41.04194,
+      "nwps_node_lng": -124.13794
+    },
+    {
+      "slug": "shelter-cove",
+      "name": "Shelter Cove",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3771,
+      "nwps_node_lat": 39.9924,
+      "nwps_node_lng": -124.04524
+    },
+    {
+      "slug": "westport",
+      "name": "Westport",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2344,
+      "nwps_node_lat": 39.63049,
+      "nwps_node_lng": -123.81349
+    },
+    {
+      "slug": "ten-mile-beach",
+      "name": "Ten Mile Beach",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3865,
+      "nwps_node_lat": 39.52192,
+      "nwps_node_lng": -123.81349
+    },
+    {
+      "slug": "mackerricher",
+      "name": "Mackerricher",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1411,
+      "nwps_node_lat": 39.48573,
+      "nwps_node_lng": -123.81349
+    },
+    {
+      "slug": "jug-handle",
+      "name": "Jug Handle",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3545,
+      "nwps_node_lat": 39.37716,
+      "nwps_node_lng": -123.85984
+    },
+    {
+      "slug": "caspar",
+      "name": "Caspar",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 4033,
+      "nwps_node_lat": 39.37716,
+      "nwps_node_lng": -123.85984
+    },
+    {
+      "slug": "mendocino",
+      "name": "Mendocino",
+      "nwps_wfo": "eka",
+      "grid_wfo": "eka",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1406,
+      "nwps_node_lat": 39.30478,
+      "nwps_node_lng": -123.81349
+    }
+  ]
+}

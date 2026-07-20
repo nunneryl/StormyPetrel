@@ -1674,9 +1674,15 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9419750",
-    "nearest_tide_station_dist_km": 1.34
+    "nearest_tide_station_dist_km": 1.34,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.72957,
+    "nwps_node_lng": -124.18429,
+    "nwps_node_distance_m": 1639,
+    "nwps_buoy_id": null
   },
   {
     "name": "D Street Encinitas",
@@ -4774,9 +4780,15 @@
     "tide_preference_confidence": 0.65,
     "nwps_wfo": "eka",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9419059",
-    "nearest_tide_station_dist_km": 4.36
+    "nearest_tide_station_dist_km": 4.36,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.04194,
+    "nwps_node_lng": -124.13794,
+    "nwps_node_distance_m": 2727,
+    "nwps_buoy_id": null
   },
   {
     "name": "Morro Rock",
@@ -5886,11 +5898,17 @@
       }
     ],
     "optimal_swell_dir": 228,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9416841",
     "nearest_tide_station_dist_km": 1.84,
     "nearest_buoy_id": "46013",
-    "nearest_buoy_dist_km": 80.86
+    "nearest_buoy_dist_km": 80.86,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.90375,
+    "nwps_node_lng": -123.71,
+    "nwps_node_distance_m": 574,
+    "nwps_buoy_id": null
   },
   {
     "name": "Ponto Beach",
@@ -7672,9 +7690,15 @@
       }
     ],
     "optimal_swell_dir": 248,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9418024",
-    "nearest_tide_station_dist_km": 1.46
+    "nearest_tide_station_dist_km": 1.46,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.9924,
+    "nwps_node_lng": -124.04524,
+    "nwps_node_distance_m": 3771,
+    "nwps_buoy_id": null
   },
   {
     "name": "Solana Beach",
@@ -9394,11 +9418,17 @@
       }
     ],
     "optimal_swell_dir": 276,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9419059",
     "nearest_tide_station_dist_km": 0.99,
     "nearest_buoy_id": "46244",
-    "nearest_buoy_dist_km": 25.47
+    "nearest_buoy_dist_km": 25.47,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.04194,
+    "nwps_node_lng": -124.18429,
+    "nwps_node_distance_m": 3355,
+    "nwps_buoy_id": null
   },
   {
     "name": "Upper Trestles",
@@ -30393,12 +30423,18 @@
       }
     ],
     "optimal_swell_dir": 228,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9416841",
     "nearest_tide_station_dist_km": 44.88,
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 125.32,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.30478,
+    "nwps_node_lng": -123.81349,
+    "nwps_node_distance_m": 1406,
+    "nwps_buoy_id": null
   },
   {
     "name": "Caspar",
@@ -30433,10 +30469,16 @@
       }
     ],
     "optimal_swell_dir": 236,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 132.11,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.37716,
+    "nwps_node_lng": -123.85984,
+    "nwps_node_distance_m": 4033,
+    "nwps_buoy_id": null
   },
   {
     "name": "Jug Handle",
@@ -30471,10 +30513,16 @@
       }
     ],
     "optimal_swell_dir": 244,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 133.78,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.37716,
+    "nwps_node_lng": -123.85984,
+    "nwps_node_distance_m": 3545,
+    "nwps_buoy_id": null
   },
   {
     "name": "Mackerricher",
@@ -30509,10 +30557,16 @@
       }
     ],
     "optimal_swell_dir": 236,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 145.33,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.48573,
+    "nwps_node_lng": -123.81349,
+    "nwps_node_distance_m": 1411,
+    "nwps_buoy_id": null
   },
   {
     "name": "Ten Mile Beach",
@@ -30547,10 +30601,16 @@
       }
     ],
     "optimal_swell_dir": 228,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 149.81,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.52192,
+    "nwps_node_lng": -123.81349,
+    "nwps_node_distance_m": 3865,
+    "nwps_buoy_id": null
   },
   {
     "name": "Westport",
@@ -30585,12 +30645,18 @@
       }
     ],
     "optimal_swell_dir": 232,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9418024",
     "nearest_tide_station_dist_km": 49.87,
     "nearest_buoy_id": "46244",
     "nearest_buoy_dist_km": 145.93,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 39.63049,
+    "nwps_node_lng": -123.81349,
+    "nwps_node_distance_m": 2344,
+    "nwps_buoy_id": null
   },
   {
     "name": "Agate Beach",
@@ -30620,12 +30686,18 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9419059",
     "nearest_tide_station_dist_km": 10.09,
     "nearest_buoy_id": "46244",
     "nearest_buoy_dist_km": 32.62,
-    "nwps_wfo": "eka"
+    "nwps_wfo": "eka",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 41.15052,
+    "nwps_node_lng": -124.18429,
+    "nwps_node_distance_m": 3466,
+    "nwps_buoy_id": null
   },
   {
     "name": "St Andews Park",
