@@ -141,6 +141,28 @@ def test_data_error_marks_known_bad_not_stale():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_cache_horizon_jitter_is_deterministic_ranged_and_desynced():
+    # De-synchronize cache expiry: every station cold-starts on the same run, so a FIXED horizon would
+    # lapse the whole fleet on one day (~day 23) = a thundering-herd refetch. A deterministic per-station
+    # jitter of the horizon spreads covers_until (hence the refetch day) across a multi-day window.
+    #
+    # DETERMINISTIC: golden values pin the exact algorithm. It MUST be stable across processes/runs, so
+    # it uses hashlib — NOT the builtin hash(), which is salted per process (PYTHONHASHSEED). A switch to
+    # hash() would still pass a single-process equality check but break these goldens.
+    assert tides._station_horizon_hours("9410170") == 669
+    assert tides._station_horizon_hours("8443970") == 621
+    assert tides._station_horizon_hours("9410170") == tides._station_horizon_hours("9410170")
+    # BOUNDED to the [MIN, MAX] = 25-30 day band.
+    ids = [f"90{n:05d}" for n in range(300)]
+    hs = [tides._station_horizon_hours(s) for s in ids]
+    assert all(config.TIDE_CACHE_HORIZON_MIN_HOURS <= h <= config.TIDE_CACHE_HORIZON_HOURS for h in hs)
+    # DESYNCED: a common cold start lands covers_until on several distinct days, so no single run
+    # refetches the whole fleet. (Pre-jitter every horizon was identical => one day => the herd.)
+    today = date.today()
+    covers_until_days = {(today + timedelta(hours=h)).toordinal() for h in hs}
+    assert len(covers_until_days) >= 4, f"expected a multi-day spread, got {len(covers_until_days)}"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

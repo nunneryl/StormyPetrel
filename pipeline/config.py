@@ -151,10 +151,20 @@ NOAA_COOPS_TIMEOUT_S = 6.0             # per-request socket timeout; SINGLE atte
                                        #   ~118 s/station against a dead backend.
 TIDE_FETCH_MAX_CONSECUTIVE_FAILURES = 8   # circuit breaker: after this many station failures IN A ROW,
                                        #   stop contacting NOAA for the rest of the run (Fix D).
-TIDE_STAGE_DEADLINE_S = 600.0          # whole-stage wall-clock budget (10 min); on expiry, bail with
-                                       #   what we have and mark the rest stale (Fix E).
+TIDE_STAGE_DEADLINE_S = 1200.0         # whole-stage wall-clock budget (20 min); on expiry, bail with
+                                       #   what we have and mark the rest stale (Fix E). Only binds on a
+                                       #   slow-but-ALIVE backend — a true outage trips the breaker in
+                                       #   ~48s (8 failures x 6s). A cold start (all ~230 stations, ~2
+                                       #   requests each) legitimately needs > 10 min; 20 min still sits
+                                       #   well inside the 35-min fetch step + 60-min job timeouts.
 # Long cache (Fix B) — harmonic predictions are DETERMINISTIC, so cache a wide horizon and reuse it:
-TIDE_CACHE_HORIZON_HOURS = 720         # fetch a 30-day window per station and persist it
+TIDE_CACHE_HORIZON_HOURS = 720         # MAX fetch/cache horizon per station (30 days), persisted
+TIDE_CACHE_HORIZON_MIN_HOURS = 600     # MIN horizon (25 days). Each station's ACTUAL horizon is a
+                                       #   deterministic hash of its id in [MIN, MAX] (see
+                                       #   tides._station_horizon_hours). Without it, all stations
+                                       #   cold-started together expire on the SAME day (~day 23) and
+                                       #   refetch in one thundering-herd run; the jitter spreads the
+                                       #   refetch day across a ~5-6 day window (~40 stations/day).
 TIDE_CACHE_REFETCH_WITHIN_HOURS = 168  # only refetch a station when < 7 days of its cache remain
 
 # NWPS — Nearshore Wave Prediction System forecasts

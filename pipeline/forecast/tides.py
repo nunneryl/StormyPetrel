@@ -8,10 +8,12 @@ keyed by station_id, and each station entry carries a freshness marker (`asof` +
 Tides are a rating MODIFIER, not a blocker: no failure or slowness in this stage may stop the
 pipeline from reaching db_import. That is enforced by four mechanisms:
 
-  * LONG CACHE (predictions are DETERMINISTIC): fetch a 30-day horizon per station
-    (TIDE_CACHE_HORIZON_HOURS) and persist it to pipeline/cache/tides/<station>.json. A station
-    is only refetched when < 7 days of its cached horizon remain (TIDE_CACHE_REFETCH_WITHIN_HOURS),
-    so a typical run touches NOAA for only a handful of stations (steady state ~10/day of ~230).
+  * LONG CACHE (predictions are DETERMINISTIC): fetch a ~25-30 day horizon per station (a deterministic
+    per-station jitter of TIDE_CACHE_HORIZON_HOURS — see _station_horizon_hours) and persist it to
+    pipeline/cache/tides/<station>.json. A station is only refetched when < 7 days of its cached horizon
+    remain (TIDE_CACHE_REFETCH_WITHIN_HOURS), so a typical run touches NOAA for only a handful of
+    stations. The jitter staggers those refetches across a multi-day window so a cold-started fleet
+    doesn't all lapse on the same day (steady state a few dozen/day of ~230, not all at once on ~day 23).
   * PER-STATION CAP: a SINGLE attempt with an explicit short socket timeout (NOAA_COOPS_TIMEOUT_S),
     no retry/backoff loop (http.get_once). A connection error / timeout / 5xx ABORTS the station
     immediately (an outage will fail every datum identically — don't burn 3 datums x timeout).
@@ -28,6 +30,7 @@ as current.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
@@ -41,6 +44,7 @@ from ..config import (
     NOAA_COOPS_ENDPOINT,
     NOAA_COOPS_TIMEOUT_S,
     TIDE_CACHE_HORIZON_HOURS,
+    TIDE_CACHE_HORIZON_MIN_HOURS,
     TIDE_CACHE_REFETCH_WITHIN_HOURS,
     TIDE_FETCH_MAX_CONSECUTIVE_FAILURES,
     TIDE_PREDICTION_RANGE_HOURS,
@@ -103,6 +107,24 @@ def _save_cache(station_id: str, entry: dict) -> None:
     _station_cache_path(station_id).write_text(json.dumps(entry))
 
 
+def _station_horizon_hours(station_id: str) -> int:
+    """Deterministic per-station cache horizon in [TIDE_CACHE_HORIZON_MIN_HOURS, TIDE_CACHE_HORIZON_HOURS].
+
+    Every station cold-starts on the same run with the same horizon, so without jitter they'd all lapse
+    on the SAME day (~day 23) and refetch in one thundering-herd run — ~230 stations at once instead of
+    a handful. A stable hash of the station id shaves 0..(MAX-MIN) hours off the max horizon, spreading
+    each station's covers_until — hence its refetch day — across a ~5-6 day window. Deterministic by
+    construction (hashlib, NOT the salted builtin hash() which varies per process) so every run agrees
+    on a station's horizon and the persisted cache stays coherent. Predictions are deterministic and the
+    OUTPUT is sliced to the 7-day window regardless, so a shorter horizon changes nothing the pipeline
+    or ratings see — it only moves WHEN a station's cache lapses."""
+    span = TIDE_CACHE_HORIZON_HOURS - TIDE_CACHE_HORIZON_MIN_HOURS
+    if span <= 0:
+        return TIDE_CACHE_HORIZON_HOURS
+    jitter = int.from_bytes(hashlib.sha1(station_id.encode("utf-8")).digest()[:4], "big") % (span + 1)
+    return TIDE_CACHE_HORIZON_HOURS - jitter
+
+
 def _cache_covers(cache: dict | None, end_date: date) -> bool:
     """True when the cache still covers the full OUTPUT window (covers_until >= end_date) — i.e.
     it has >= TIDE_CACHE_REFETCH_WITHIN_HOURS of horizon left and needs no refetch."""
@@ -162,9 +184,10 @@ def _stale_entry(station_id: str, cache: dict | None, start_date: date, end_date
 # --------------------------------------------------------------------------- #
 # single-attempt fetch (no retry / no backoff)                                  #
 # --------------------------------------------------------------------------- #
-def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str) -> list | None:
-    """One interval's predictions over the 30-day horizon, SINGLE attempt per datum. Cascades
-    NOAA_COOPS_DATUMS on a DATA-level error (that datum has none for this station) but raises
+def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str,
+                         horizon_hours: int) -> list | None:
+    """One interval's predictions over the station's (jittered) horizon, SINGLE attempt per datum.
+    Cascades NOAA_COOPS_DATUMS on a DATA-level error (that datum has none for this station) but raises
     _TideOutage on any transport failure / 5xx (backend down — don't waste the other datums).
     Returns the predictions list, or None if every datum returns a data-level error."""
     for datum in NOAA_COOPS_DATUMS:
@@ -176,7 +199,7 @@ def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str) ->
             "time_zone": "lst_ldt",
             "interval": interval,
             "begin_date": begin_yyyymmdd,
-            "range": TIDE_CACHE_HORIZON_HOURS,
+            "range": horizon_hours,
             "format": "json",
         }
         try:
@@ -197,11 +220,12 @@ def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str) ->
     return None                               # all datums returned a data-level error
 
 
-def _fetch_station_30d(station_id: str, begin_yyyymmdd: str) -> tuple[list, list]:
-    """Both intervals for a station in one bounded pass. Raises _TideOutage on a transport failure
-    (the breaker signal); hilo is tried first, so an outage costs ONE timeout, not two."""
-    hilo = _fetch_interval_once(station_id, "hilo", begin_yyyymmdd)
-    hourly = _fetch_interval_once(station_id, "h", begin_yyyymmdd)
+def _fetch_station_30d(station_id: str, begin_yyyymmdd: str, horizon_hours: int) -> tuple[list, list]:
+    """Both intervals for a station in one bounded pass over its (jittered) horizon. Raises _TideOutage
+    on a transport failure (the breaker signal); hilo is tried first, so an outage costs ONE timeout,
+    not two."""
+    hilo = _fetch_interval_once(station_id, "hilo", begin_yyyymmdd, horizon_hours)
+    hourly = _fetch_interval_once(station_id, "h", begin_yyyymmdd, horizon_hours)
     return (hilo or []), (hourly or [])
 
 
@@ -278,9 +302,12 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
                 n_stale += 1
                 continue
 
-            # need a live refetch (no cache / cache expiring within the window)
+            # need a live refetch (no cache / cache expiring within the window). Horizon is a
+            # deterministic per-station jitter (25-30 days) so a cold-started fleet doesn't all expire
+            # on one day — the covers_until below inherits it.
+            horizon_h = _station_horizon_hours(sid)
             try:
-                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd)     # (C) single attempt, short timeout
+                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd, horizon_h)  # (C) single attempt, short timeout
             except _TideOutage as e:
                 consecutive_failures += 1
                 log.debug("tides: %s unreachable (%s) [%d in a row]", sid, e, consecutive_failures)
@@ -306,7 +333,7 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
                 "station_id": sid,
                 "fetched_at": now_iso,
                 "covers_from": today.isoformat(),
-                "covers_until": (today + timedelta(hours=TIDE_CACHE_HORIZON_HOURS)).isoformat(),
+                "covers_until": (today + timedelta(hours=horizon_h)).isoformat(),
                 "hilo": hilo,
                 "hourly": hourly,
             }
