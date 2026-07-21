@@ -1901,8 +1901,8 @@
       "name": "North End Virginia Beach"
     },
     "north-jetty": {
-      "orientation_deg": 265.0,
-      "cardinal": "W",
+      "orientation_deg": 45.0,
+      "cardinal": "NE",
       "name": "North Jetty"
     },
     "north-ocean-beach": {

@@ -12094,8 +12094,6 @@
     "tide_preference_confidence": 0.65,
     "nwps_wfo": null,
     "is_valid_surf_spot": true,
-    "coord_fix_applied": true,
-    "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
     "orientation_deg": null,
     "offshore_wind_deg": 85.0,
     "orientation_source": "manual",
