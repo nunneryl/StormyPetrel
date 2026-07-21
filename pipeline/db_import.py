@@ -18,6 +18,7 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -29,6 +30,7 @@ from pathlib import Path
 from .cleanup_spots import load_excluded_names
 from .config import (
     BUOYS_FORECAST_FILE,
+    COORD_DERIVED_DIST_TOLERANCE_KM,
     DEFAULT_ENRICHED_OUTPUT,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
@@ -172,6 +174,124 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
 # silent-NULL bug class because the preserve happens by SELECT *,
 # not by name list.
 _DB_MANAGED_COLUMNS = frozenset({"id", "geom", "created_at", "updated_at"})
+
+# Coordinate-DERIVED fields: their value is only meaningful for the coords they were computed from.
+# The preserve-merge must NOT resurrect them from the DB when a spot's coordinates have changed, or a
+# stale value silently rides the new location — how a Newport-Beach buoy stayed on a spot moved to New
+# Jersey, and how North Jetty kept nwps_wfo=mlb at San Diego coords. On a coord change these are left
+# absent (→ NULLed) so the next enrich recomputes them: a transient null beats a confidently-wrong value.
+_COORD_DERIVED_FIELDS = frozenset({
+    "nearest_buoy_id", "nearest_buoy_dist_km", "fallback_buoy_ids",
+    "nearest_tide_station_id", "nearest_tide_station_dist_km", "nwps_wfo",
+})
+# Above this many degrees of lat/lng movement we consider the coordinates "changed" — comfortably over
+# DB numeric round-trip (~1e-6) and well under any move that could change the nearest buoy/tide (~1e-3).
+_COORD_CHANGE_EPS = 1e-4
+
+
+def _coords_changed(rec: dict, base: dict) -> bool:
+    """True when rec's lat/lng differ materially from the stored DB row's — i.e. the spot moved and its
+    coord-derived fields can no longer be trusted. False (conservative: preserve) if either is missing."""
+    try:
+        return (abs(float(rec["lat"]) - float(base["lat"])) > _COORD_CHANGE_EPS
+                or abs(float(rec["lng"]) - float(base["lng"])) > _COORD_CHANGE_EPS)
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def description_signature(lat, lng, state, orientation_deg) -> str:
+    """Short stable hash of the fields a spot description ASSERTS — coordinates, state, and orientation.
+    A description is written once (generate_descriptions is a manual step, NOT in the pipeline) so a
+    later change to any of these silently strands the text ("in California" for a spot moved to New
+    Jersey; "faces south (202°)" when orientation is now 115). db_import blanks a description whose
+    signature no longer matches; generate_descriptions regenerates and re-stamps it. Rounded (~100 m,
+    1 deg) so trivial noise doesn't churn. Kept in one place so both writers agree byte-for-byte."""
+    def _n(v, nd):
+        try:
+            return f"{round(float(v), nd)}"
+        except (TypeError, ValueError):
+            return ""
+    parts = (_n(lat, 3), _n(lng, 3), (state or "").strip().lower(), _n(orientation_deg, 0))
+    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def _description_signature(rec: dict) -> str:
+    return description_signature(rec.get("lat"), rec.get("lng"), rec.get("state"),
+                                 rec.get("orientation_deg"))
+
+
+# Coarse global backstop for GROSS corruption (the ~3800-4000 km fabrications), deliberately NOT
+# regional. The precise per-spot detector is the tolerance check below (recompute vs stored, 5 km): it
+# catches a fabricated 22 km next to a 4000 km truth regardless of magnitude. This cap only needs to sit
+# comfortably above the farthest LEGITIMATE pairing and far below the fabrications. The farthest legit
+# pairing today is Siesta Key ↔ buoy 42039 at 381 km (sparse SW-Florida Gulf coverage), so 400 left only
+# 19 km of headroom — one snapshot-coordinate wobble from false-flagging a real spot. 500 keeps ~120 km
+# of headroom over the farthest legit spot while still catching the 3800 km+ corruption by a >7x margin.
+# A REGIONAL cap (matching BUOY_CAP_KM) was rejected: all 8 spots that sit >300 km from their buoy have a
+# 150 km regional cap, so a regional backstop would NULL every one of them — including the legit Siesta
+# Key ↔ 42039 pairing — while adding nothing the tolerance check doesn't already do. (Those 8 already sit
+# ABOVE their 150 km ASSIGNMENT cap, a stale-assignment symptom to fix by re-running enrichment / widening
+# the SW-Florida Gulf cap — see _regional_cap_km's lng<-83 gate — not by conflating policy with corruption.)
+_COORD_DERIVED_SANE_CAP_KM = 500.0
+
+
+def _validate_coord_derived(records: list[dict]) -> int:
+    """Item 4 — the check whose absence let a fabricated 22 km persist next to a 4000 km truth.
+
+    For every record with a nearest buoy / tide station, recompute the great-circle distance to the
+    station's ACTUAL coordinates (from the committed buoy snapshot / tide-station metadata) and NULL the
+    pairing when the stored distance disagrees by more than COORD_DERIVED_DIST_TOLERANCE_KM, or the true
+    distance exceeds _COORD_DERIVED_SANE_CAP_KM. NULL (not keep) so the next enrich reassigns from the
+    correct location. Degrades to a no-op when the snapshot / tide metadata are absent (logged), so it
+    can't fail a CI run that lacks them. Returns the number of pairings NULLed."""
+    from .geo import haversine_m
+    from .enrichment.geodata import load_buoy_snapshot, load_tide_stations
+
+    buoys = load_buoy_snapshot()
+    tides = {str(s["id"]).lower(): s for s in load_tide_stations()}
+    if not buoys and not tides:
+        log.info("db_import: coord-derived validation skipped — no buoy snapshot or tide-station "
+                 "metadata present (run pipeline.snapshot_buoys / download geodata to enable)")
+        return 0
+
+    tol = COORD_DERIVED_DIST_TOLERANCE_KM
+    flagged = 0
+
+    def _check(rec, station, id_field, dist_field, extra_null=()):
+        lat, lng = rec.get("lat"), rec.get("lng")
+        if lat is None or lng is None or station is None:
+            return False   # can't compute → don't touch (conservative; incomplete metadata is not proof)
+        gc = haversine_m(lat, lng, station["lat"], station["lng"]) / 1000.0
+        stored = rec.get(dist_field)
+        reason = None
+        if gc > _COORD_DERIVED_SANE_CAP_KM:
+            reason = f"great-circle {gc:.0f} km exceeds {_COORD_DERIVED_SANE_CAP_KM:.0f} km"
+        elif stored is not None and abs(gc - stored) > tol:
+            reason = f"stored {stored:.1f} km vs great-circle {gc:.1f} km"
+        if reason:
+            log.warning("db_import: spot %r %s=%s inconsistent (%s) — NULLing the stale pairing",
+                        rec.get("name"), id_field, rec.get(id_field), reason)
+            rec[id_field] = None
+            rec[dist_field] = None
+            for k in extra_null:
+                rec[k] = [] if k == "fallback_buoy_ids" else None
+            return True
+        return False
+
+    for rec in records:
+        bid = rec.get("nearest_buoy_id")
+        if bid and buoys and _check(rec, buoys.get(str(bid).lower()), "nearest_buoy_id",
+                                    "nearest_buoy_dist_km", extra_null=("fallback_buoy_ids",)):
+            flagged += 1
+        tid = rec.get("nearest_tide_station_id")
+        if tid and tides and _check(rec, tides.get(str(tid).lower()), "nearest_tide_station_id",
+                                    "nearest_tide_station_dist_km"):
+            flagged += 1
+
+    if flagged:
+        log.warning("db_import: NULLed %d inconsistent coord-derived pairing(s) at import — their "
+                    "stored distance did not match the station's actual location", flagged)
+    return flagged
 
 
 def _fetch_existing_spots(client) -> dict[str, dict]:
@@ -377,14 +497,47 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     # docs/tide_mapping_rebuild_report.md).
     existing = _fetch_existing_spots(client)
     filled_any = 0
+    coord_moved = 0
+    desc_nulled = 0
     for rec in records:
         base = existing.get(rec["slug"])
         if not base:
             continue
+        moved = _coords_changed(rec, base)
+        if moved:
+            coord_moved += 1
         for k, v in base.items():
             if k not in rec:
+                # Never resurrect a coord-derived value onto a spot whose coordinates have moved —
+                # leave it absent so the upsert NULLs it and the next enrich recomputes it.
+                if moved and k in _COORD_DERIVED_FIELDS:
+                    continue
                 rec[k] = v
                 filled_any += 1
+
+        # Description staleness enforcement: descriptions are write-once (generate_descriptions is a
+        # manual step, not wired into the pipeline), so a coord/state/orientation change strands the
+        # text. Blank a description whose stored signature no longer matches the record so it can't keep
+        # contradicting the live site ("in California" for a New Jersey spot); the offline generator
+        # backfills it. Always re-stamp the signature to current. First-seen (no stored signature) just
+        # backfills without blanking — the known-stale set is handled by a one-time regeneration.
+        cur_sig = _description_signature(rec)
+        if base.get("description_signature") and base["description_signature"] != cur_sig:
+            rec["description"] = None
+            desc_nulled += 1
+        rec["description_signature"] = cur_sig
+
+    if coord_moved:
+        log.info("spots: %d record(s) moved coordinates — their absent coord-derived fields "
+                 "(buoy/tide/nwps_wfo) were left NULL to force a recompute, not preserved", coord_moved)
+    if desc_nulled:
+        log.warning("spots: blanked %d description(s) whose signature no longer matches their record "
+                    "(coords/state/orientation changed) — run pipeline.generate_descriptions to backfill",
+                    desc_nulled)
+
+    # Item 4: reject any stored buoy/tide pairing whose distance can't be reproduced from the station's
+    # actual coordinates, before it reaches the DB.
+    _validate_coord_derived(records)
 
     log.info(
         "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions, %d excluded, %d cols filled from DB)",
@@ -673,6 +826,30 @@ def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
 
 
 # ---------------------------------------------------------------------------
+# Buoy coordinate snapshot (durable id -> lat/lng, for SQL audit + import validation)
+# ---------------------------------------------------------------------------
+
+def import_buoy_snapshot(client, batch_size: int = _DEFAULT_BATCH * 5) -> int:
+    """Mirror the committed NDBC buoy snapshot (pipeline.snapshot_buoys) into the `buoys` table so
+    assignments can be audited/validated in SQL without a live NDBC fetch. No-op (0) when the snapshot
+    file is absent, so a run without it doesn't wipe the table."""
+    from .enrichment.geodata import load_buoy_snapshot
+    snap = load_buoy_snapshot()
+    if not snap:
+        log.info("buoys: no coordinate snapshot present — skipping buoys-table refresh")
+        return 0
+    rows = [{"id": bid, "lat": v["lat"], "lng": v["lng"], "name": v.get("name") or None}
+            for bid, v in snap.items()]
+    written = 0
+    for i in range(0, len(rows), batch_size):
+        chunk = rows[i:i + batch_size]
+        client.table("buoys").upsert(chunk, on_conflict="id").execute()
+        written += len(chunk)
+    log.info("buoys: upserted %d buoy-coordinate rows", written)
+    return written
+
+
+# ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
 
@@ -691,6 +868,9 @@ def run_all(
     client = get_client()
     stats: dict[str, int] = {}
     if spots:
+        # Refresh the buoy-coordinate snapshot table first so it's current for auditing; import_spots
+        # then validates each spot's stored buoy/tide distance against the station's real coordinates.
+        stats["buoys_meta"] = import_buoy_snapshot(client)
         stats["spots"] = import_spots(client)
     if forecasts:
         stats["forecasts"] = import_forecasts(client)
