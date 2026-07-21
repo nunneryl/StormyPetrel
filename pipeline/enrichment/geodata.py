@@ -12,6 +12,7 @@ from functools import lru_cache
 from ..config import (
     CUSP_DIR,
     GSHHG_L1_SHP,
+    NDBC_BUOY_SNAPSHOT_FILE,
     NDBC_LATEST_OBS_TXT,
     NDBC_STATIONS_XML,
     TIDE_STATIONS_JSON,
@@ -206,6 +207,32 @@ def load_ndbc_active_stations() -> list[dict]:
         })
     log.info("NDBC: %d active stations (full metadata list)", len(stations))
     return stations
+
+
+@lru_cache(maxsize=1)
+def load_buoy_snapshot() -> dict[str, dict]:
+    """Committed NDBC buoy id -> {lat, lng, name} snapshot (see pipeline.snapshot_buoys). Ids are
+    lower-cased for lookup, matching how buoy ids are stored. Returns {} if the snapshot is absent so
+    validation degrades to a no-op rather than failing."""
+    if not NDBC_BUOY_SNAPSHOT_FILE.exists():
+        log.warning("buoy snapshot missing at %s — coord-derived buoy validation will be skipped "
+                    "(run `python -m pipeline.snapshot_buoys` on a host with the NDBC XML)",
+                    NDBC_BUOY_SNAPSHOT_FILE)
+        return {}
+    import json
+    try:
+        raw = json.loads(NDBC_BUOY_SNAPSHOT_FILE.read_text())
+    except (OSError, json.JSONDecodeError) as e:
+        log.warning("buoy snapshot unreadable (%s) — skipping buoy validation", e)
+        return {}
+    out: dict[str, dict] = {}
+    for bid, v in (raw.items() if isinstance(raw, dict) else []):
+        try:
+            out[str(bid).lower()] = {"lat": float(v["lat"]), "lng": float(v["lng"]),
+                                     "name": v.get("name", "")}
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
 
 
 @lru_cache(maxsize=1)
