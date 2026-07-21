@@ -243,6 +243,9 @@ def apply_cleanup(
             "swell_window_arcs", "optimal_swell_dir", "swell_window_source",
             "nearest_buoy_id", "nearest_buoy_dist_km", "fallback_buoy_ids",
             "nearest_tide_station_id", "nearest_tide_station_dist_km",
+            # nwps_wfo is coordinate-derived too: North Jetty kept wfo=mlb at San Diego coords and
+            # pulled its forecast from a garbage FL-domain grid point. Clear it so it re-derives.
+            "nwps_wfo",
         ):
             if k in spot:
                 spot.pop(k, None)

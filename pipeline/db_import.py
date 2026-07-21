@@ -173,6 +173,29 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
 # not by name list.
 _DB_MANAGED_COLUMNS = frozenset({"id", "geom", "created_at", "updated_at"})
 
+# Coordinate-DERIVED fields: their value is only meaningful for the coords they were computed from.
+# The preserve-merge must NOT resurrect them from the DB when a spot's coordinates have changed, or a
+# stale value silently rides the new location — how a Newport-Beach buoy stayed on a spot moved to New
+# Jersey, and how North Jetty kept nwps_wfo=mlb at San Diego coords. On a coord change these are left
+# absent (→ NULLed) so the next enrich recomputes them: a transient null beats a confidently-wrong value.
+_COORD_DERIVED_FIELDS = frozenset({
+    "nearest_buoy_id", "nearest_buoy_dist_km", "fallback_buoy_ids",
+    "nearest_tide_station_id", "nearest_tide_station_dist_km", "nwps_wfo",
+})
+# Above this many degrees of lat/lng movement we consider the coordinates "changed" — comfortably over
+# DB numeric round-trip (~1e-6) and well under any move that could change the nearest buoy/tide (~1e-3).
+_COORD_CHANGE_EPS = 1e-4
+
+
+def _coords_changed(rec: dict, base: dict) -> bool:
+    """True when rec's lat/lng differ materially from the stored DB row's — i.e. the spot moved and its
+    coord-derived fields can no longer be trusted. False (conservative: preserve) if either is missing."""
+    try:
+        return (abs(float(rec["lat"]) - float(base["lat"])) > _COORD_CHANGE_EPS
+                or abs(float(rec["lng"]) - float(base["lng"])) > _COORD_CHANGE_EPS)
+    except (KeyError, TypeError, ValueError):
+        return False
+
 
 def _fetch_existing_spots(client) -> dict[str, dict]:
     """Return ``{slug: {col: value}}`` for every existing spot, stripped of
@@ -377,14 +400,26 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     # docs/tide_mapping_rebuild_report.md).
     existing = _fetch_existing_spots(client)
     filled_any = 0
+    coord_moved = 0
     for rec in records:
         base = existing.get(rec["slug"])
         if not base:
             continue
+        moved = _coords_changed(rec, base)
+        if moved:
+            coord_moved += 1
         for k, v in base.items():
             if k not in rec:
+                # Never resurrect a coord-derived value onto a spot whose coordinates have moved —
+                # leave it absent so the upsert NULLs it and the next enrich recomputes it.
+                if moved and k in _COORD_DERIVED_FIELDS:
+                    continue
                 rec[k] = v
                 filled_any += 1
+
+    if coord_moved:
+        log.info("spots: %d record(s) moved coordinates — their absent coord-derived fields "
+                 "(buoy/tide/nwps_wfo) were left NULL to force a recompute, not preserved", coord_moved)
 
     log.info(
         "spots: upserting %d records (skipped %d invalid/unnamed, %d slug collisions, %d excluded, %d cols filled from DB)",
