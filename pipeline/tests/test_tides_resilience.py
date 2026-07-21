@@ -210,9 +210,13 @@ def test_covers_until_is_data_derived_clamped_and_short_triggers_refetch():
     assert covers_b == hilo_end, f"expected hilo-governed {hilo_end!r}, got {covers_b!r}"
     assert governing_b == "hilo"
 
-    # (4) an incomplete pair (EITHER series empty) is not cacheable coverage.
-    assert tides._coverage_from_series([], series(old_formula), today, horizon_h) is None
-    assert tides._coverage_from_series(series(old_formula), [], today, horizon_h) is None
+    # (4) coverage is governed by whichever PRESENT series ends first; a hilo-ONLY subordinate station
+    # is VALID coverage (not an incomplete fetch). Only BOTH-empty is uncacheable.
+    assert tides._coverage_from_series([], [], today, horizon_h) is None, "both empty -> uncacheable"
+    ho = tides._coverage_from_series(series(old_formula), [], today, horizon_h)
+    assert ho is not None and ho[2] == "hilo", "hilo-only is valid coverage, governed by hilo"
+    hy = tides._coverage_from_series([], series(old_formula), today, horizon_h)
+    assert hy is not None and hy[2] == "hourly", "hourly-only is valid coverage, governed by hourly"
 
     # (3) clamp — data claiming to run past the requested horizon can't inflate covers_until.
     beyond = (today + timedelta(days=60)).isoformat()
@@ -278,6 +282,55 @@ def test_known_bad_ttl_clear_and_legacy_discard():
         assert tides._load_no_predictions() == {"fresh_bad"}, "expired known-bad re-verifies (TTL)"
         assert tides._load_no_predictions_map() == {"fresh_bad": recent}, "surviving entry keeps first_seen"
         assert tides.clear_known_bad() == 2   # both raw entries counted
+    finally:
+        _restore(saved)
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_hilo_only_subordinate_is_cached_and_skips_hourly_on_refetch():
+    # REGRESSION: a CO-OPS SUBORDINATE station publishes high/low predictions ONLY and structurally
+    # never an hourly harmonic curve. It must be cached as VALID coverage (not rejected as "incomplete"
+    # / served stale), flagged hilo_only, and on the next refetch the always-empty hourly interval must
+    # be SKIPPED so a subordinate station doesn't burn 3 wasted paced requests every refetch.
+    today = date.today()
+    hilo_rows = [{"t": (today + timedelta(days=k)).strftime("%Y-%m-%d 06:00"), "v": "2.5", "type": "H"}
+                 for k in range(32)]        # spans past any jittered horizon → covers_until clamps, no shortfall
+
+    class _Resp:
+        def __init__(self, status, payload):
+            self.status_code = status; self._p = payload; self.text = ""
+        def json(self): return self._p
+
+    calls = {"hilo": 0, "h": 0}
+    def _fake(url, params=None, **kw):
+        calls[params["interval"]] += 1
+        if params["interval"] == "hilo":
+            return _Resp(200, {"predictions": hilo_rows})
+        return _Resp(200, {"error": {"message": "No Predictions data was found"}})   # genuine, per datum
+
+    tmp = Path(tempfile.mkdtemp())
+    saved = _redirect(tmp)
+    try:
+        tides.get_once = _fake
+        spot = {"name": "Sub", "nearest_tide_station_id": "8sub"}
+
+        out = tides.fetch([spot], use_cache=True)
+        assert out["8sub"]["stale"] is False, "hilo-only subordinate is VALID coverage, not stale"
+        assert out["8sub"]["hilo"] and not out["8sub"]["hourly"], "serves hilo, no hourly"
+        assert "8sub" not in tides._load_no_predictions(), "a subordinate station is NOT known-bad"
+        # cold fetch DOES probe hourly once (all 3 datums) to discover it's hilo-only.
+        assert calls["hilo"] == 1 and calls["h"] == 3, f"cold discovery request count: {calls}"
+        cached = tides._load_cache("8sub")
+        assert cached["hilo_only"] is True, "cache records the hilo_only flag"
+
+        # REFETCH: force the cache expired but keep the flag; the hourly interval must now be SKIPPED.
+        cached["covers_until"] = (today - timedelta(days=1)).isoformat()
+        tides._save_cache("8sub", cached)
+        calls["hilo"] = calls["h"] = 0
+        out2 = tides.fetch([spot], use_cache=True)
+        assert out2["8sub"]["stale"] is False and out2["8sub"]["hilo"], "still served hilo-only on refetch"
+        assert calls["h"] == 0, f"known hilo-only refetch must SKIP the hourly interval, got {calls}"
+        assert calls["hilo"] == 1
     finally:
         _restore(saved)
         shutil.rmtree(tmp, ignore_errors=True)

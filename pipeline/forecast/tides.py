@@ -313,21 +313,22 @@ def _coverage_from_series(hilo: list, hourly: list, today: date,
     _cache_covers skip the refetch and let the 7-day output slice silently truncate, scoring the
     uncovered hours as if the tide were perfect).
 
-    Returns (covers_until, shortfall_hours, governing_series), or None when EITHER series has no
-    parseable timestamp — an incomplete pair the caller must NOT cache as covering anything, because
-    the output window needs BOTH series. covers_until is the DATE of the EARLIER of the two series'
-    last timestamps (coverage is governed by whichever series ends first), CLAMPED so it can never
-    exceed the requested horizon (today + horizon_hours). It is a 'YYYY-MM-DD' string so its first 10
-    chars stay compatible with _cache_covers' date.fromisoformat(cu[:10]). shortfall_hours is how far
-    that governing timestamp falls short of the requested horizon; governing_series is 'hilo'/'hourly'."""
-    hilo_last = _last_dt(hilo)
-    hourly_last = _last_dt(hourly)
-    if hilo_last is None or hourly_last is None:
-        return None
-    governing_dt = min(hilo_last, hourly_last)
-    governing = "hilo" if hilo_last <= hourly_last else "hourly"
+    Returns (covers_until, shortfall_hours, governing_series), or None only when BOTH series are empty/
+    unparseable (the caller has already routed genuine both-empty to known-bad, so None here means a rows-
+    present-but-unparseable anomaly). Coverage is governed by whichever PRESENT series ends first: a
+    CO-OPS SUBORDINATE station publishes high/low predictions ONLY and structurally never an hourly
+    harmonic curve, so hilo-only is VALID coverage (interpret.build_tide_series already falls back to
+    hilo), not an incomplete fetch — it is governed by hilo alone. covers_until is that governing DATE,
+    CLAMPED so it can never exceed the requested horizon (today + horizon_hours); it is a 'YYYY-MM-DD'
+    string so its first 10 chars stay compatible with _cache_covers' date.fromisoformat(cu[:10]).
+    shortfall_hours is how far that governing timestamp falls short of the requested horizon."""
+    lasts = [(name, dt) for name, dt in (("hilo", _last_dt(hilo)), ("hourly", _last_dt(hourly)))
+             if dt is not None]
+    if not lasts:
+        return None                                          # both empty/unparseable — nothing to cache
+    governing, governing_dt = min(lasts, key=lambda nd: nd[1])   # the present series that ends FIRST
     cap_dt = datetime.combine(today, datetime.min.time()) + timedelta(hours=horizon_hours)
-    covers_dt = min(governing_dt, cap_dt)                     # clamp: never beyond what we requested
+    covers_dt = min(governing_dt, cap_dt)                    # clamp: never beyond what we requested
     shortfall_h = max(0.0, (cap_dt - covers_dt).total_seconds() / 3600.0)
     return covers_dt.date().isoformat(), shortfall_h, governing
 
@@ -399,12 +400,15 @@ def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str,
 
 
 def _fetch_station_30d(station_id: str, begin_yyyymmdd: str, horizon_hours: int,
-                       pacer: "_Pacer | None" = None) -> tuple[list, list]:
+                       pacer: "_Pacer | None" = None, skip_hourly: bool = False) -> tuple[list, list]:
     """Both intervals for a station in one bounded pass over its (jittered) horizon. Raises _TideOutage
     on a transport failure (the breaker signal); hilo is tried first, so an outage costs ONE timeout,
-    not two. `pacer` throttles each request to NOAA_COOPS_MIN_INTERVAL_S."""
+    not two. `pacer` throttles each request to NOAA_COOPS_MIN_INTERVAL_S. `skip_hourly` omits the hourly
+    interval for a station already KNOWN to be hilo-only (subordinate) — a subordinate station returns a
+    genuine no-predictions on the hourly interval for every datum, so the attempt is 3 wasted paced
+    requests each refetch; once discovered (cached hilo_only) we don't repeat it."""
     hilo = _fetch_interval_once(station_id, "hilo", begin_yyyymmdd, horizon_hours, pacer)
-    hourly = _fetch_interval_once(station_id, "h", begin_yyyymmdd, horizon_hours, pacer)
+    hourly = [] if skip_hourly else _fetch_interval_once(station_id, "h", begin_yyyymmdd, horizon_hours, pacer)
     return (hilo or []), (hourly or [])
 
 
@@ -445,7 +449,7 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
     new_bad: list[str] = []
     consecutive_failures = 0
     breaker_open = False
-    n_live = n_cache = n_stale = 0
+    n_live = n_cache = n_stale = n_hilo_only = 0
 
     try:
         from tqdm import tqdm
@@ -487,8 +491,9 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
             # deterministic per-station jitter (25-30 days) so a cold-started fleet doesn't all expire
             # on one day — the covers_until below inherits it.
             horizon_h = _station_horizon_hours(sid)
+            skip_hourly = bool(cache and cache.get("hilo_only"))   # subordinate: skip the always-empty hourly
             try:
-                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd, horizon_h, pacer)  # (C) single attempt, paced
+                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd, horizon_h, pacer, skip_hourly)  # (C) single attempt, paced
             except _TideOutage as e:
                 consecutive_failures += 1
                 log.debug("tides: %s unreachable (%s) [%d in a row]", sid, e, consecutive_failures)
@@ -513,12 +518,12 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
                 continue
 
             # covers_until MUST be data-derived (see _coverage_from_series): a station returning fewer
-            # days than requested must not be cached as fully covered. None => an incomplete pair (a
-            # series empty / unparseable) — don't persist a coverage-claiming entry; route it through
-            # the stale/short handling so it serves best-effort now and refetches next run.
+            # days than requested must not be cached as fully covered. coverage is None ONLY when both
+            # series are empty/unparseable despite passing the both-empty check above — a genuine
+            # (rows-present-but-garbled) anomaly → don't persist; serve stale/empty and retry next run.
             coverage = _coverage_from_series(hilo, hourly, today, horizon_h)
             if coverage is None:
-                log.warning("tides: %s returned an incomplete series (hilo=%d rows, hourly=%d rows) — "
+                log.warning("tides: %s returned rows with no parseable timestamp (hilo=%d, hourly=%d) — "
                             "not caching; serving stale/empty, will retry next run",
                             sid, len(hilo), len(hourly))
                 out[sid] = _stale_entry(sid, cache, win_start, win_end)
@@ -532,12 +537,23 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
                             "horizon (governed by the %s series); it will refetch every run until it "
                             "can cover the window", sid, covers_until, shortfall_h, horizon_h, governing)
 
+            # A CO-OPS SUBORDINATE station publishes hilo only (no hourly harmonic curve). That is NORMAL
+            # coverage — interpret.build_tide_series falls back to hilo — NOT a failed fetch, so it is
+            # cached like any other and logged at DEBUG (never WARNING). The persisted hilo_only flag lets
+            # the next refetch skip the always-empty hourly interval (3 fewer paced requests/refetch).
+            hilo_only = not hourly
+            if hilo_only:
+                n_hilo_only += 1
+                log.debug("tides: %s is hilo-only (subordinate) — %d hilo rows, no hourly curve",
+                          sid, len(hilo))
+
             now_iso = datetime.now(tz=timezone.utc).isoformat()
             entry = {
                 "station_id": sid,
                 "fetched_at": now_iso,
                 "covers_from": today.isoformat(),
                 "covers_until": covers_until,
+                "hilo_only": hilo_only,
                 "hilo": hilo,
                 "hourly": hourly,
             }
@@ -560,8 +576,8 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
         TIDES_FORECAST_FILE.write_text(json.dumps(out, indent=2, ensure_ascii=False))
 
     log.info("tides: wrote %d stations to %s (live=%d, cached=%d, stale/missing=%d, known-bad-new=%d, "
-             "breaker=%s)", len(out), TIDES_FORECAST_FILE, n_live, n_cache, n_stale, len(new_bad),
-             "OPEN" if breaker_open else "closed")
+             "hilo-only=%d, breaker=%s)", len(out), TIDES_FORECAST_FILE, n_live, n_cache, n_stale,
+             len(new_bad), n_hilo_only, "OPEN" if breaker_open else "closed")
     return out
 
 
