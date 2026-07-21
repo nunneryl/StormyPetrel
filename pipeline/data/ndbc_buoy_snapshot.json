@@ -1,0 +1,6797 @@
+{
+  "13001": {
+    "lat": 12.0,
+    "lng": -23.0,
+    "name": "NE Extension"
+  },
+  "13002": {
+    "lat": 21.0,
+    "lng": -23.0,
+    "name": "NE Extension"
+  },
+  "13008": {
+    "lat": 15.0,
+    "lng": -38.0,
+    "name": "Reggae"
+  },
+  "13009": {
+    "lat": 8.0,
+    "lng": -38.0,
+    "name": "Lambada"
+  },
+  "14041": {
+    "lat": -8.0,
+    "lng": 55.0,
+    "name": ""
+  },
+  "14047": {
+    "lat": -4.0,
+    "lng": 57.0,
+    "name": ""
+  },
+  "14048": {
+    "lat": -8.0,
+    "lng": 65.0,
+    "name": ""
+  },
+  "14049": {
+    "lat": -12.0,
+    "lng": 65.0,
+    "name": ""
+  },
+  "15001": {
+    "lat": -10.0,
+    "lng": -10.0,
+    "name": "Gavotte"
+  },
+  "15002": {
+    "lat": 0.0,
+    "lng": -10.0,
+    "name": "Java"
+  },
+  "15006": {
+    "lat": -6.0,
+    "lng": -10.0,
+    "name": "Valse"
+  },
+  "15008": {
+    "lat": -20.0,
+    "lng": -10.0,
+    "name": ""
+  },
+  "15009": {
+    "lat": 0.0,
+    "lng": -3.051,
+    "name": ""
+  },
+  "1801589": {
+    "lat": 37.356,
+    "lng": -122.881,
+    "name": "SD 1073 - 24 NM SSW of San Francisco, CA (Site of 46012)"
+  },
+  "18ci3": {
+    "lat": 41.73,
+    "lng": -86.91,
+    "name": "Michigan City CG Station, IN"
+  },
+  "20cm4": {
+    "lat": 42.09,
+    "lng": -86.49,
+    "name": "St. Joseph CG Station, MI"
+  },
+  "21413": {
+    "lat": 30.487,
+    "lng": 152.124,
+    "name": "SOUTHEAST TOKYO - 700NM ESE of Tokyo, JP"
+  },
+  "21414": {
+    "lat": 48.977,
+    "lng": 178.199,
+    "name": " AMCHITKA - 170 NM South of Amchitka, AK"
+  },
+  "21415": {
+    "lat": 50.12,
+    "lng": 171.867,
+    "name": "ATTU - 175 NM South of Attu, AK"
+  },
+  "21416": {
+    "lat": 48.126,
+    "lng": 163.355,
+    "name": "KAMCHATKA PENINSULA - 240NM SE of Kamchatka Peninsula, RU "
+  },
+  "21418": {
+    "lat": 38.84,
+    "lng": 148.753,
+    "name": "NORTHEAST TOKYO - 450 NM NE of Tokyo, JP"
+  },
+  "21419": {
+    "lat": 44.401,
+    "lng": 155.653,
+    "name": "KURIL ISLANDS - 209NM SE of Kuril Is. "
+  },
+  "21420": {
+    "lat": 28.98,
+    "lng": 134.973,
+    "name": "SOUTHEAST MIYAZAKI - 260NM Southeast of Miyazaki"
+  },
+  "22101": {
+    "lat": 37.23,
+    "lng": 126.02,
+    "name": ""
+  },
+  "22102": {
+    "lat": 34.8,
+    "lng": 125.77,
+    "name": ""
+  },
+  "22103": {
+    "lat": 34.0,
+    "lng": 127.5,
+    "name": ""
+  },
+  "22104": {
+    "lat": 34.77,
+    "lng": 128.9,
+    "name": ""
+  },
+  "22105": {
+    "lat": 37.53,
+    "lng": 130.0,
+    "name": ""
+  },
+  "22106": {
+    "lat": 36.35,
+    "lng": 129.78,
+    "name": ""
+  },
+  "22107": {
+    "lat": 33.08,
+    "lng": 126.03,
+    "name": ""
+  },
+  "22108": {
+    "lat": 36.25,
+    "lng": 125.75,
+    "name": ""
+  },
+  "23001": {
+    "lat": 0.0,
+    "lng": 81.0,
+    "name": ""
+  },
+  "23003": {
+    "lat": -2.0,
+    "lng": 81.0,
+    "name": ""
+  },
+  "23004": {
+    "lat": 0.0,
+    "lng": 90.0,
+    "name": ""
+  },
+  "23006": {
+    "lat": 4.0,
+    "lng": 90.0,
+    "name": ""
+  },
+  "23007": {
+    "lat": 8.0,
+    "lng": 90.0,
+    "name": ""
+  },
+  "23008": {
+    "lat": 12.0,
+    "lng": 90.0,
+    "name": ""
+  },
+  "23009": {
+    "lat": 15.0,
+    "lng": 90.0,
+    "name": ""
+  },
+  "23010": {
+    "lat": -4.0,
+    "lng": 81.0,
+    "name": ""
+  },
+  "23011": {
+    "lat": 15.0,
+    "lng": 65.0,
+    "name": ""
+  },
+  "23012": {
+    "lat": 8.0,
+    "lng": 67.0,
+    "name": ""
+  },
+  "23013": {
+    "lat": 4.0,
+    "lng": 67.0,
+    "name": ""
+  },
+  "23014": {
+    "lat": 2.0,
+    "lng": 67.0,
+    "name": ""
+  },
+  "23015": {
+    "lat": 0.0,
+    "lng": 67.0,
+    "name": ""
+  },
+  "23016": {
+    "lat": -2.0,
+    "lng": 67.0,
+    "name": ""
+  },
+  "23019": {
+    "lat": -4.0,
+    "lng": 65.0,
+    "name": ""
+  },
+  "23217": {
+    "lat": 3.798,
+    "lng": 91.701,
+    "name": "Bay of Bengal IN3"
+  },
+  "23218": {
+    "lat": 10.165,
+    "lng": 88.5,
+    "name": "Bay of Bengal IN4"
+  },
+  "23219": {
+    "lat": 13.472,
+    "lng": 88.998,
+    "name": "Bay of Bengal"
+  },
+  "23223": {
+    "lat": 17.333,
+    "lng": 89.483,
+    "name": "Bay of Bengal"
+  },
+  "23226": {
+    "lat": 20.2,
+    "lng": 67.333,
+    "name": "Arabian Sea"
+  },
+  "23227": {
+    "lat": 6.265,
+    "lng": 88.653,
+    "name": "Bay of Bengal"
+  },
+  "23228": {
+    "lat": 20.764,
+    "lng": 65.284,
+    "name": "Arabian Sea"
+  },
+  "23401": {
+    "lat": 8.86,
+    "lng": 88.55,
+    "name": "BAY OF BENGAL - 600 NM WNW of Phuket, Thailand"
+  },
+  "23461": {
+    "lat": 9.534,
+    "lng": 95.669,
+    "name": "ANDAMAN SEA - 180 NM NW of Phuket, Thailand"
+  },
+  "28401": {
+    "lat": 32.384,
+    "lng": 144.54,
+    "name": "Kuroshio Extension Observatory (KEO)"
+  },
+  "31001": {
+    "lat": 0.0,
+    "lng": -35.0,
+    "name": "Samba"
+  },
+  "31002": {
+    "lat": 4.0,
+    "lng": -38.0,
+    "name": "Frevo"
+  },
+  "31003": {
+    "lat": -8.0,
+    "lng": -30.0,
+    "name": "Para?ba"
+  },
+  "31004": {
+    "lat": -14.0,
+    "lng": -32.0,
+    "name": "Salvador"
+  },
+  "31005": {
+    "lat": -19.0,
+    "lng": -34.0,
+    "name": "Espirito Santo"
+  },
+  "31006": {
+    "lat": 4.0,
+    "lng": -23.0,
+    "name": "NE Extension"
+  },
+  "31007": {
+    "lat": 0.0,
+    "lng": -23.0,
+    "name": "Jazz"
+  },
+  "3202520": {
+    "lat": -4.148,
+    "lng": -89.008,
+    "name": "San Cristobal - Galapagos (B1-S)"
+  },
+  "3202521": {
+    "lat": -0.525,
+    "lng": -81.386,
+    "name": "Isabela - Galapagos (B2-W)"
+  },
+  "32068": {
+    "lat": -0.891,
+    "lng": -81.637,
+    "name": "Manta - 58 NM West of Manta, Ecuador"
+  },
+  "32069": {
+    "lat": 0.278,
+    "lng": -81.185,
+    "name": "Esmeraldas - 71 NM West of Pedernales, Ecuador   "
+  },
+  "32303": {
+    "lat": 5.0,
+    "lng": -95.0,
+    "name": "5N 95W"
+  },
+  "32304": {
+    "lat": -5.0,
+    "lng": -95.0,
+    "name": "5S 95W"
+  },
+  "32305": {
+    "lat": -8.0,
+    "lng": -95.0,
+    "name": "8S 95W"
+  },
+  "32315": {
+    "lat": 5.0,
+    "lng": -110.0,
+    "name": "5N 110W"
+  },
+  "32316": {
+    "lat": 2.0,
+    "lng": -110.0,
+    "name": "2N 110W"
+  },
+  "32317": {
+    "lat": -2.0,
+    "lng": -110.0,
+    "name": "2S 110W"
+  },
+  "32318": {
+    "lat": -5.0,
+    "lng": -110.0,
+    "name": "5S 110W"
+  },
+  "32319": {
+    "lat": -8.0,
+    "lng": -110.0,
+    "name": "8S 110W"
+  },
+  "32320": {
+    "lat": 2.0,
+    "lng": -95.0,
+    "name": "2N 95W"
+  },
+  "32321": {
+    "lat": 0.0,
+    "lng": -95.0,
+    "name": "0 95W"
+  },
+  "32322": {
+    "lat": -2.0,
+    "lng": -95.0,
+    "name": "2S 95W"
+  },
+  "32323": {
+    "lat": 0.0,
+    "lng": -110.0,
+    "name": "0 110W"
+  },
+  "32401": {
+    "lat": -20.611,
+    "lng": -73.394,
+    "name": "180 NM West of Iquique, Chile"
+  },
+  "32402": {
+    "lat": -26.743,
+    "lng": -73.983,
+    "name": "180 NM  West of Caldera, Chile"
+  },
+  "32403": {
+    "lat": -23.163,
+    "lng": -72.037,
+    "name": "91NM West of Antofagasta, Chile"
+  },
+  "32404": {
+    "lat": -32.13,
+    "lng": -73.797,
+    "name": "120 NM NW of Valparaiso"
+  },
+  "32411": {
+    "lat": 4.979,
+    "lng": -90.793,
+    "name": "WEST PANAMA - 710 NM WSW of Panama City, Panama"
+  },
+  "32413": {
+    "lat": -7.432,
+    "lng": -93.464,
+    "name": "NORTHWEST LIMA - 1000 NM WNW of Lima, Peru"
+  },
+  "32489": {
+    "lat": 2.998,
+    "lng": -79.101,
+    "name": "Colombia   121NM SW of Buenaventura, Colombia"
+  },
+  "32st0": {
+    "lat": -22.0,
+    "lng": -85.0,
+    "name": "Stratus"
+  },
+  "34420": {
+    "lat": -35.758,
+    "lng": -75.243,
+    "name": "119NM NW of Concepcion, Chile"
+  },
+  "41001": {
+    "lat": 34.791,
+    "lng": -72.42,
+    "name": "EAST HATTERAS - 150 NM East of Cape Hatteras"
+  },
+  "41002": {
+    "lat": 31.743,
+    "lng": -74.955,
+    "name": "SOUTH HATTERAS - 225 NM South of Cape Hatteras"
+  },
+  "41004": {
+    "lat": 32.502,
+    "lng": -79.099,
+    "name": "EDISTO - 41 NM Southeast of Charleston, SC"
+  },
+  "41008": {
+    "lat": 31.4,
+    "lng": -80.866,
+    "name": "GRAYS REEF - 40 NM Southeast of Savannah, GA"
+  },
+  "41009": {
+    "lat": 28.508,
+    "lng": -80.185,
+    "name": "CANAVERAL 20 NM East of Cape Canaveral, FL"
+  },
+  "41010": {
+    "lat": 28.86,
+    "lng": -78.478,
+    "name": "CANAVERAL EAST - 120NM East of Cape Canaveral"
+  },
+  "41013": {
+    "lat": 33.436,
+    "lng": -77.764,
+    "name": "Frying Pan Shoals, NC"
+  },
+  "41024": {
+    "lat": 33.837,
+    "lng": -78.477,
+    "name": "Sunset Nearshore, NC (SUN2)"
+  },
+  "41025": {
+    "lat": 35.026,
+    "lng": -75.38,
+    "name": "Diamond Shoals, NC"
+  },
+  "41026": {
+    "lat": 12.0,
+    "lng": -38.0,
+    "name": "Forro"
+  },
+  "41029": {
+    "lat": 32.803,
+    "lng": -79.624,
+    "name": "Capers Nearshore, SC (CAP2)"
+  },
+  "41033": {
+    "lat": 32.279,
+    "lng": -80.406,
+    "name": "Fripp Nearshore, SC (FRP2)"
+  },
+  "41037": {
+    "lat": 33.988,
+    "lng": -77.362,
+    "name": "Wrightsville Beach Offshore, NC (ILM3)"
+  },
+  "41038": {
+    "lat": 34.141,
+    "lng": -77.715,
+    "name": "Wrightsville Beach Nearshore, NC (ILM2)"
+  },
+  "41040": {
+    "lat": 14.568,
+    "lng": -53.037,
+    "name": "NORTH EQUATORIAL ONE- 470 NM East of Martinique"
+  },
+  "41041": {
+    "lat": 14.259,
+    "lng": -46.052,
+    "name": "NORTH EQUATORIAL TWO - 890 NM East of Martinique "
+  },
+  "41043": {
+    "lat": 21.09,
+    "lng": -64.864,
+    "name": "NE PUERTO RICO - 170 NM NNE of San Juan, PR"
+  },
+  "41044": {
+    "lat": 21.582,
+    "lng": -58.63,
+    "name": "NE ST MARTIN - 330 NM NE St Martin Is"
+  },
+  "41046": {
+    "lat": 23.84,
+    "lng": -68.34,
+    "name": "EAST BAHAMAS - 335 NM East of San Salvador Is,  Bahamas "
+  },
+  "41047": {
+    "lat": 27.557,
+    "lng": -71.48,
+    "name": "NE BAHAMAS - 350 NM ENE of Nassau, Bahamas"
+  },
+  "41048": {
+    "lat": 31.89,
+    "lng": -69.708,
+    "name": "WEST BERMUDA - 240 NM West of Bermuda"
+  },
+  "41049": {
+    "lat": 27.505,
+    "lng": -62.271,
+    "name": "SOUTH BERMUDA - 300 NM SSE of Bermuda"
+  },
+  "41052": {
+    "lat": 18.249,
+    "lng": -64.763,
+    "name": "South of St. John, VI"
+  },
+  "41053": {
+    "lat": 18.474,
+    "lng": -66.099,
+    "name": "San Juan, PR"
+  },
+  "41056": {
+    "lat": 18.261,
+    "lng": -65.464,
+    "name": "Vieques Island, PR"
+  },
+  "41058": {
+    "lat": 18.476,
+    "lng": -65.157,
+    "name": "North of St. Thomas, VI"
+  },
+  "41064": {
+    "lat": 34.207,
+    "lng": -76.949,
+    "name": "Onslow Bay Outer, NC (LEJ3)"
+  },
+  "41065": {
+    "lat": 32.802,
+    "lng": -79.619,
+    "name": "Capers Nearshore Waves (CAP2WAVE)"
+  },
+  "41066": {
+    "lat": 32.536,
+    "lng": -79.656,
+    "name": "CHR60"
+  },
+  "41067": {
+    "lat": 32.276,
+    "lng": -80.406,
+    "name": "FRP2WAVE"
+  },
+  "41068": {
+    "lat": 27.593,
+    "lng": -80.189,
+    "name": "Fort Pierce, FL (FTP)"
+  },
+  "41069": {
+    "lat": 29.289,
+    "lng": -80.803,
+    "name": "Ponce de Leon Inlet, FL (PNC)"
+  },
+  "41070": {
+    "lat": 29.289,
+    "lng": -80.803,
+    "name": "Ponce de Leon Inlet Waves (PNCWAVE)"
+  },
+  "41076": {
+    "lat": 32.536,
+    "lng": -79.659,
+    "name": "CHR60WAVE"
+  },
+  "41082": {
+    "lat": 35.95,
+    "lng": -75.125,
+    "name": "OOI Pioneer - Mid-Atlantic Bight Central Surface Mooring"
+  },
+  "41083": {
+    "lat": 35.725,
+    "lng": -74.853,
+    "name": "OOI Pioneer - Mid-Atlantic Bight Southern Surface Mooring"
+  },
+  "41108": {
+    "lat": 33.719,
+    "lng": -78.016,
+    "name": "Wilmington Harbor, NC - (200)"
+  },
+  "41110": {
+    "lat": 34.144,
+    "lng": -77.715,
+    "name": "Masonboro Inlet, ILM2, NC (150)"
+  },
+  "41112": {
+    "lat": 30.709,
+    "lng": -81.292,
+    "name": "Offshore Fernandina Beach, FL (132)"
+  },
+  "41113": {
+    "lat": 28.4,
+    "lng": -80.533,
+    "name": "Cape Canaveral Nearshore, FL (143)"
+  },
+  "41114": {
+    "lat": 27.552,
+    "lng": -80.216,
+    "name": "Fort Pierce, FL (134)"
+  },
+  "41115": {
+    "lat": 18.376,
+    "lng": -67.28,
+    "name": "Rincon, Puerto Rico (181)"
+  },
+  "41117": {
+    "lat": 29.999,
+    "lng": -81.079,
+    "name": "St. Augustine, FL (194)"
+  },
+  "41120": {
+    "lat": 35.258,
+    "lng": -75.285,
+    "name": "Cape Hatteras East, NC (250)"
+  },
+  "41121": {
+    "lat": 18.491,
+    "lng": -66.701,
+    "name": "Arecibo, Puerto Rico (249)"
+  },
+  "41122": {
+    "lat": 26.001,
+    "lng": -80.096,
+    "name": "Hollywood Beach, FL (265)"
+  },
+  "41139": {
+    "lat": 20.0,
+    "lng": -38.0,
+    "name": ""
+  },
+  "41159": {
+    "lat": 34.211,
+    "lng": -76.944,
+    "name": "Onslow Bay Outer, NC (217)"
+  },
+  "41300": {
+    "lat": 15.85,
+    "lng": -57.467,
+    "name": "West Indies"
+  },
+  "41420": {
+    "lat": 23.433,
+    "lng": -67.386,
+    "name": "NORTH SANTO DOMINGO - 328NM NNE of Santo Domingo, DO"
+  },
+  "41421": {
+    "lat": 23.44,
+    "lng": -63.834,
+    "name": "NORTH ST THOMAS - 300 NM North of St Thomas, Virgin Is"
+  },
+  "41425": {
+    "lat": 28.639,
+    "lng": -65.774,
+    "name": "SOUTHWEST BERMUDA - 200 NM SSW of Hamilton, Bermuda"
+  },
+  "42001": {
+    "lat": 25.922,
+    "lng": -89.638,
+    "name": "MID GULF - 180 nm South of Southwest Pass, LA"
+  },
+  "42002": {
+    "lat": 25.95,
+    "lng": -93.78,
+    "name": "WEST GULF - 207 NM East of Brownsville, TX"
+  },
+  "42003": {
+    "lat": 25.925,
+    "lng": -85.616,
+    "name": "East GULF - 208 NM West of Naples, FL"
+  },
+  "42012": {
+    "lat": 30.061,
+    "lng": -87.547,
+    "name": "ORANGE BEACH - 44 NM SE of Mobile, AL"
+  },
+  "42013": {
+    "lat": 27.173,
+    "lng": -82.924,
+    "name": "C10 - WFS Central Buoy, 25m Isobath"
+  },
+  "42019": {
+    "lat": 27.908,
+    "lng": -95.343,
+    "name": "FREEPORT, TX - 60 NM South of Freeport, TX"
+  },
+  "42020": {
+    "lat": 26.97,
+    "lng": -96.679,
+    "name": "CORPUS CHRISTI, TX - 60NM SSE of Corpus Christi, TX"
+  },
+  "42022": {
+    "lat": 27.505,
+    "lng": -83.741,
+    "name": "C12 - WFS Central Buoy, 50m Isobath"
+  },
+  "42023": {
+    "lat": 26.01,
+    "lng": -83.086,
+    "name": "C13 - WFS South Buoy, 50m Isobath"
+  },
+  "42026": {
+    "lat": 25.171,
+    "lng": -83.475,
+    "name": "C22 - Loop Current Pressure Point Buoy, 70m Isobath"
+  },
+  "42027": {
+    "lat": 29.045,
+    "lng": -85.305,
+    "name": "C23 - FLRACEP nWFS Buoy, 45m isobath"
+  },
+  "42028": {
+    "lat": 29.745,
+    "lng": -86.227,
+    "name": "C24 - FLRACEP nWFS Buoy, 58m isobath"
+  },
+  "42031": {
+    "lat": 30.09,
+    "lng": -88.212,
+    "name": "West End CP, AL"
+  },
+  "42035": {
+    "lat": 29.235,
+    "lng": -94.41,
+    "name": "GALVESTON,TX -  22 NM East of Galveston, TX"
+  },
+  "42036": {
+    "lat": 28.5,
+    "lng": -84.505,
+    "name": "WEST TAMPA  - 112 NM WNW of Tampa, FL"
+  },
+  "42039": {
+    "lat": 28.768,
+    "lng": -86.024,
+    "name": "PENSACOLA - 115NM SSE of Pensacola, FL"
+  },
+  "42040": {
+    "lat": 29.207,
+    "lng": -88.237,
+    "name": "LUKE OFFSHORE TEST PLATFORM - 63 NM South of Dauphin Island, AL"
+  },
+  "42043": {
+    "lat": 28.982,
+    "lng": -94.899,
+    "name": "TGLO TABS Buoy B"
+  },
+  "42044": {
+    "lat": 26.191,
+    "lng": -97.051,
+    "name": "TGLO TABS Buoy J"
+  },
+  "42045": {
+    "lat": 26.217,
+    "lng": -96.5,
+    "name": "TGLO TABS Buoy K"
+  },
+  "42048": {
+    "lat": 27.939,
+    "lng": -96.843,
+    "name": "TABS D"
+  },
+  "42049": {
+    "lat": 28.351,
+    "lng": -96.006,
+    "name": "TABS W"
+  },
+  "42050": {
+    "lat": 28.842,
+    "lng": -94.242,
+    "name": "TABS F"
+  },
+  "42051": {
+    "lat": 29.635,
+    "lng": -93.642,
+    "name": "TABS R"
+  },
+  "42055": {
+    "lat": 22.14,
+    "lng": -94.112,
+    "name": "BAY OF CAMPECHE - 214 NM NE of Veracruz, MX"
+  },
+  "42056": {
+    "lat": 19.82,
+    "lng": -84.98,
+    "name": " Yucatan Basin - 120 NM ESE of Cozumel, MX"
+  },
+  "42057": {
+    "lat": 16.975,
+    "lng": -81.578,
+    "name": "Western Caribbean - 195 NM WSW of Negril, Jamaica"
+  },
+  "42058": {
+    "lat": 14.114,
+    "lng": -75.949,
+    "name": "Central Caribbean - 210 NM SSE of Kingston, Jamaica"
+  },
+  "42059": {
+    "lat": 15.255,
+    "lng": -67.621,
+    "name": "Eastern Caribbean Sea - 180 NM SSW of Ponce, PR"
+  },
+  "42060": {
+    "lat": 16.428,
+    "lng": -63.21,
+    "name": "Caribbean Valley - 63 NM WSW of Montserrat"
+  },
+  "42066": {
+    "lat": 30.216,
+    "lng": -89.183,
+    "name": "USM-R2"
+  },
+  "42067": {
+    "lat": 30.05,
+    "lng": -88.583,
+    "name": "USM-R1"
+  },
+  "42084": {
+    "lat": 28.988,
+    "lng": -89.649,
+    "name": "Southwest Pass Entrance W, LA (256)"
+  },
+  "42085": {
+    "lat": 17.87,
+    "lng": -66.537,
+    "name": "Southeast of Ponce, PR"
+  },
+  "42091": {
+    "lat": 29.088,
+    "lng": -92.505,
+    "name": "Trinity Shoal, LA (255)"
+  },
+  "42092": {
+    "lat": 27.639,
+    "lng": -97.012,
+    "name": "Aransas Pass Channel Entrance S, TX (252)"
+  },
+  "42095": {
+    "lat": 24.407,
+    "lng": -81.968,
+    "name": "Satan Shoal, FL (244)"
+  },
+  "42097": {
+    "lat": 25.704,
+    "lng": -83.654,
+    "name": "Pulley Ridge, FL (226)"
+  },
+  "42098": {
+    "lat": 27.59,
+    "lng": -82.931,
+    "name": "Egmont Channel Entrance, FL (214)"
+  },
+  "42099": {
+    "lat": 27.352,
+    "lng": -84.275,
+    "name": "Offshore St. Petersburg, FL (144)"
+  },
+  "42354": {
+    "lat": 29.579,
+    "lng": -88.643,
+    "name": "Chandeleur Island SE, LA (279)"
+  },
+  "42357": {
+    "lat": 30.092,
+    "lng": -88.212,
+    "name": "DISL Sofar Spotter"
+  },
+  "42358": {
+    "lat": 27.874,
+    "lng": -93.815,
+    "name": "FGBNMS Sofar Spotter"
+  },
+  "42407": {
+    "lat": 15.276,
+    "lng": -68.191,
+    "name": "SOUTH PUERTO RICO - 230 NM Southwest of San Juan, PR"
+  },
+  "42409": {
+    "lat": 25.797,
+    "lng": -89.288,
+    "name": "GULF OF AMERICA - 247 NM South of New Orleans, LA"
+  },
+  "43001": {
+    "lat": 8.0,
+    "lng": -110.0,
+    "name": "8N 110W"
+  },
+  "43013": {
+    "lat": 10.0,
+    "lng": -110.0,
+    "name": "10N 110W"
+  },
+  "43301": {
+    "lat": 8.0,
+    "lng": -95.0,
+    "name": "8N 95W"
+  },
+  "43412": {
+    "lat": 13.7057,
+    "lng": -104.191,
+    "name": "SOUTHWEST MANZANILLO - 240 NM SW of Manzanillo, MX"
+  },
+  "43413": {
+    "lat": 10.927,
+    "lng": -100.012,
+    "name": "SOUTH ACAPULCO - 360NM South of Acapulco, MX"
+  },
+  "44005": {
+    "lat": 43.201,
+    "lng": -69.127,
+    "name": "GULF OF MAINE - 78 NM East of Portsmouth, NH"
+  },
+  "44007": {
+    "lat": 43.525,
+    "lng": -70.14,
+    "name": "PORTLAND - 12 NM Southeast of Portland,ME"
+  },
+  "44008": {
+    "lat": 40.5,
+    "lng": -69.254,
+    "name": "NANTUCKET 54 NM Southeast of Nantucket"
+  },
+  "44009": {
+    "lat": 38.46,
+    "lng": -74.692,
+    "name": "DELAWARE BAY 26 NM Southeast of Cape May, NJ"
+  },
+  "44011": {
+    "lat": 41.088,
+    "lng": -66.546,
+    "name": "GEORGES BANK 170 NM East of Hyannis, MA"
+  },
+  "44013": {
+    "lat": 42.346,
+    "lng": -70.651,
+    "name": "BOSTON 16 NM East of Boston, MA"
+  },
+  "44014": {
+    "lat": 36.603,
+    "lng": -74.837,
+    "name": "VIRGINIA BEACH 64 NM East of Virginia Beach, VA"
+  },
+  "44017": {
+    "lat": 40.693,
+    "lng": -72.049,
+    "name": "MONTAUK POINT - 23 NM SSW of Montauk Point, NY"
+  },
+  "44018": {
+    "lat": 42.203,
+    "lng": -70.154,
+    "name": "CAPE COD - 9 NM North of Provincetown, MA"
+  },
+  "44020": {
+    "lat": 41.497,
+    "lng": -70.283,
+    "name": "NANTUCKET SOUND"
+  },
+  "44022": {
+    "lat": 40.883,
+    "lng": -73.728,
+    "name": "Execution Rocks"
+  },
+  "44024": {
+    "lat": 42.325,
+    "lng": -65.909,
+    "name": "Buoy N01 - Northeast Channel"
+  },
+  "44025": {
+    "lat": 40.258,
+    "lng": -73.175,
+    "name": "LONG ISLAND - 30 NM South of Islip, NY"
+  },
+  "44027": {
+    "lat": 44.284,
+    "lng": -67.301,
+    "name": "Jonesport, ME - 20 NM SE of Jonesport, ME"
+  },
+  "44029": {
+    "lat": 42.523,
+    "lng": -70.566,
+    "name": "Buoy A01 - Massachusetts Bay"
+  },
+  "44030": {
+    "lat": 43.179,
+    "lng": -70.426,
+    "name": "Buoy B01 - Western Maine Shelf"
+  },
+  "44032": {
+    "lat": 43.715,
+    "lng": -69.355,
+    "name": "Buoy E01 - Central Maine Shelf"
+  },
+  "44033": {
+    "lat": 44.055,
+    "lng": -68.996,
+    "name": "Buoy F01 - Penobscot Bay"
+  },
+  "44034": {
+    "lat": 44.103,
+    "lng": -68.112,
+    "name": "Buoy I01 - Eastern Maine Shelf"
+  },
+  "4403585": {
+    "lat": 42.132,
+    "lng": -80.27,
+    "name": "Walnut Creek Buoy"
+  },
+  "4403586": {
+    "lat": 42.847,
+    "lng": -78.904,
+    "name": "Buffalo Buoy"
+  },
+  "44037": {
+    "lat": 43.497,
+    "lng": -67.876,
+    "name": "Buoy M01 - Jordan Basin"
+  },
+  "44039": {
+    "lat": 41.138,
+    "lng": -72.655,
+    "name": "Central Long Island Sound"
+  },
+  "44040": {
+    "lat": 40.956,
+    "lng": -73.58,
+    "name": "Western Long Island Sound"
+  },
+  "44042": {
+    "lat": 38.033,
+    "lng": -76.335,
+    "name": "Potomac, MD"
+  },
+  "44056": {
+    "lat": 36.2,
+    "lng": -75.714,
+    "name": "Duck FRF, NC"
+  },
+  "44058": {
+    "lat": 37.567,
+    "lng": -76.257,
+    "name": "Stingray Point, VA"
+  },
+  "44062": {
+    "lat": 38.556,
+    "lng": -76.415,
+    "name": "Gooses Reef, MD"
+  },
+  "44063": {
+    "lat": 38.963,
+    "lng": -76.448,
+    "name": "Annapolis, MD"
+  },
+  "44064": {
+    "lat": 36.998,
+    "lng": -76.087,
+    "name": "First Landing, VA"
+  },
+  "44065": {
+    "lat": 40.368,
+    "lng": -73.701,
+    "name": "New York Harbor Entrance - 15 NM SE of Breezy Point , NY"
+  },
+  "44066": {
+    "lat": 39.618,
+    "lng": -72.644,
+    "name": "Texas Tower #4 - 75 NM East of Long Beach, NJ"
+  },
+  "44069": {
+    "lat": 40.699,
+    "lng": -73.087,
+    "name": "Great South Bay"
+  },
+  "44072": {
+    "lat": 37.201,
+    "lng": -76.266,
+    "name": "York Spit, VA   "
+  },
+  "44073": {
+    "lat": 43.02,
+    "lng": -70.54,
+    "name": "CO2 Gulf of Maine Buoy"
+  },
+  "44074": {
+    "lat": 43.071,
+    "lng": -70.868,
+    "name": "Great Bay Buoy"
+  },
+  "44078": {
+    "lat": 59.94,
+    "lng": -39.52,
+    "name": "OOI Irminger Sea Surface Mooring"
+  },
+  "44079": {
+    "lat": 36.175,
+    "lng": -74.827,
+    "name": "OOI Pioneer - Mid-Atlantic Bight Northern Surface Mooring"
+  },
+  "44080": {
+    "lat": 39.223,
+    "lng": -76.528,
+    "name": "Baltimore"
+  },
+  "44084": {
+    "lat": 38.537,
+    "lng": -75.044,
+    "name": "Bethany Beach, DE (263)"
+  },
+  "44085": {
+    "lat": 41.387,
+    "lng": -71.032,
+    "name": "Buzzards Bay, MA (260)"
+  },
+  "44086": {
+    "lat": 36.001,
+    "lng": -75.421,
+    "name": "Nags Head, NC (243)"
+  },
+  "44087": {
+    "lat": 37.043,
+    "lng": -76.129,
+    "name": "Thimble Shoal, VA (240)"
+  },
+  "44088": {
+    "lat": 36.612,
+    "lng": -74.839,
+    "name": "Virginia Beach Offshore, VA (171)"
+  },
+  "44089": {
+    "lat": 37.756,
+    "lng": -75.325,
+    "name": "Wallops Island, VA (224)"
+  },
+  "44090": {
+    "lat": 41.84,
+    "lng": -70.329,
+    "name": "Cape Cod Bay, MA (221)"
+  },
+  "44091": {
+    "lat": 39.772,
+    "lng": -73.769,
+    "name": "Barnegat, NJ (209)"
+  },
+  "44095": {
+    "lat": 35.75,
+    "lng": -75.33,
+    "name": "Oregon Inlet, NC (192)"
+  },
+  "44097": {
+    "lat": 40.967,
+    "lng": -71.124,
+    "name": "Block Island, RI  (154)"
+  },
+  "44098": {
+    "lat": 42.8,
+    "lng": -70.169,
+    "name": "Jeffrey's Ledge, NH (160)"
+  },
+  "44099": {
+    "lat": 36.915,
+    "lng": -75.722,
+    "name": "Cape Henry, VA (147)"
+  },
+  "44100": {
+    "lat": 36.257,
+    "lng": -75.593,
+    "name": "Duck FRF 26m, NC (430)"
+  },
+  "44137": {
+    "lat": 42.26,
+    "lng": -62.03,
+    "name": "East Scotia Slope"
+  },
+  "44139": {
+    "lat": 44.24,
+    "lng": -57.1,
+    "name": "Banqureau Banks"
+  },
+  "44150": {
+    "lat": 42.5,
+    "lng": -64.02,
+    "name": "La Have Bank"
+  },
+  "44258": {
+    "lat": 44.5,
+    "lng": -63.4,
+    "name": "Halifax Harbour"
+  },
+  "44402": {
+    "lat": 39.314,
+    "lng": -70.717,
+    "name": "SOUTHEAST BLOCK CANYON - 130 NM SE of Fire Island, NY"
+  },
+  "44403": {
+    "lat": 41.928,
+    "lng": -61.664,
+    "name": "SABLE ISLAND BANK - 437 NM E of Boston, MA"
+  },
+  "44488": {
+    "lat": 45.44,
+    "lng": -60.95,
+    "name": "East of Chedabucto Bay"
+  },
+  "44489": {
+    "lat": 45.49,
+    "lng": -61.14,
+    "name": "West Chedabucto Bay"
+  },
+  "44490": {
+    "lat": 44.66,
+    "lng": -66.37,
+    "name": "West Bay of Fundy"
+  },
+  "45001": {
+    "lat": 48.061,
+    "lng": -87.793,
+    "name": "MID SUPERIOR- 60 NM North Northeast Hancock, MI"
+  },
+  "45002": {
+    "lat": 45.344,
+    "lng": -86.411,
+    "name": "NORTH MICHIGAN- Halfway between North Manitou and Washington Islands."
+  },
+  "45003": {
+    "lat": 45.351,
+    "lng": -82.84,
+    "name": "NORTH HURON - 32NM Northeast of Alpena, MI"
+  },
+  "45004": {
+    "lat": 47.583,
+    "lng": -86.586,
+    "name": "EAST SUPERIOR -70 NM NE Marquette, MI"
+  },
+  "45005": {
+    "lat": 41.677,
+    "lng": -82.398,
+    "name": "WEST ERIE - 16 NM NW of Lorain, OH"
+  },
+  "45006": {
+    "lat": 47.335,
+    "lng": -89.793,
+    "name": "WEST SUPERIOR - 30NM NE of Outer Island, WI"
+  },
+  "45007": {
+    "lat": 42.674,
+    "lng": -87.026,
+    "name": "SOUTH MICHIGAN - 43NM East Southeast of Milwaukee, WI"
+  },
+  "45008": {
+    "lat": 44.283,
+    "lng": -82.416,
+    "name": "SOUTH HURON - 43NM East of Oscoda, MI"
+  },
+  "45012": {
+    "lat": 43.621,
+    "lng": -77.401,
+    "name": "EAST Lake Ontario  - 20NM North Northeast of Rochester, NY"
+  },
+  "45013": {
+    "lat": 43.098,
+    "lng": -87.85,
+    "name": "ATW20 - Atwater Park, WI"
+  },
+  "45014": {
+    "lat": 44.794,
+    "lng": -87.758,
+    "name": "GB17 - South Green Bay, WI"
+  },
+  "45022": {
+    "lat": 45.404,
+    "lng": -85.088,
+    "name": "Little Traverse Bay Buoy, MI"
+  },
+  "45023": {
+    "lat": 47.27,
+    "lng": -88.607,
+    "name": "North Entry Buoy, North Keweenaw Peninsula, MI"
+  },
+  "45024": {
+    "lat": 43.98,
+    "lng": -86.56,
+    "name": "Ludington Buoy, MI"
+  },
+  "45025": {
+    "lat": 46.969,
+    "lng": -88.398,
+    "name": "South Entry Buoy, South Keweenaw Peninsula, MI"
+  },
+  "45026": {
+    "lat": 41.982,
+    "lng": -86.619,
+    "name": "Cook Nuclear Plant Buoy, Stevensville, MI"
+  },
+  "45027": {
+    "lat": 46.86,
+    "lng": -91.93,
+    "name": "McQuade Harbor Nearshore, MN"
+  },
+  "45028": {
+    "lat": 46.814,
+    "lng": -91.829,
+    "name": "Western Lake Superior"
+  },
+  "45029": {
+    "lat": 42.9,
+    "lng": -86.272,
+    "name": "Holland Buoy, MI"
+  },
+  "45132": {
+    "lat": 42.46,
+    "lng": -81.22,
+    "name": "Port Stanley"
+  },
+  "45135": {
+    "lat": 43.78,
+    "lng": -76.87,
+    "name": "Prince Edward Pt"
+  },
+  "45136": {
+    "lat": 48.54,
+    "lng": -86.95,
+    "name": "Slate Island"
+  },
+  "45137": {
+    "lat": 45.54,
+    "lng": -81.02,
+    "name": "Georgian Bay"
+  },
+  "45139": {
+    "lat": 43.25,
+    "lng": -79.53,
+    "name": "West Lake Ontario - Grimsby"
+  },
+  "45140": {
+    "lat": 50.8,
+    "lng": -96.73,
+    "name": "Lake Winnipeg S. Basin"
+  },
+  "45141": {
+    "lat": 61.18,
+    "lng": -115.31,
+    "name": "Great Slave Lake"
+  },
+  "45142": {
+    "lat": 42.74,
+    "lng": -79.29,
+    "name": "Port Colborne"
+  },
+  "45143": {
+    "lat": 44.94,
+    "lng": -80.627,
+    "name": "South Georgian Bay"
+  },
+  "45144": {
+    "lat": 53.23,
+    "lng": -98.29,
+    "name": "Lake Winnipeg North"
+  },
+  "45145": {
+    "lat": 51.87,
+    "lng": -96.97,
+    "name": "Lake Winnipeg Narrows"
+  },
+  "45147": {
+    "lat": 42.43,
+    "lng": -82.68,
+    "name": "Lake St Clair"
+  },
+  "45148": {
+    "lat": 49.65,
+    "lng": -94.5,
+    "name": "Lake of the Woods"
+  },
+  "45149": {
+    "lat": 43.54,
+    "lng": -82.08,
+    "name": "Southern Lake Huron"
+  },
+  "45150": {
+    "lat": 61.98,
+    "lng": -114.13,
+    "name": "Great Slave Lake, North Arm"
+  },
+  "45151": {
+    "lat": 44.5,
+    "lng": -79.37,
+    "name": "Lake Simcoe"
+  },
+  "45152": {
+    "lat": 46.23,
+    "lng": -79.72,
+    "name": "Lake Nipissing"
+  },
+  "45154": {
+    "lat": 46.05,
+    "lng": -82.64,
+    "name": "North Channel East"
+  },
+  "45159": {
+    "lat": 43.77,
+    "lng": -78.98,
+    "name": "NW Lake Ontario Ajax"
+  },
+  "45161": {
+    "lat": 43.185,
+    "lng": -86.354,
+    "name": "Muskegon Buoy, MI"
+  },
+  "45162": {
+    "lat": 44.988,
+    "lng": -83.269,
+    "name": "Thunder Bay Buoy, Alpena, MI"
+  },
+  "45163": {
+    "lat": 43.983,
+    "lng": -83.6,
+    "name": "Saginaw Bay Buoy, MI"
+  },
+  "45164": {
+    "lat": 41.748,
+    "lng": -81.698,
+    "name": "Cleveland Buoy, OH"
+  },
+  "45165": {
+    "lat": 41.704,
+    "lng": -83.264,
+    "name": "Toledo Water Intake Buoy, Oregon, OH"
+  },
+  "45166": {
+    "lat": 44.785,
+    "lng": -73.258,
+    "name": "Lake Champlain - Inland Sea"
+  },
+  "45167": {
+    "lat": 42.185,
+    "lng": -80.135,
+    "name": "Erie Nearshore Buoy, Erie, PA"
+  },
+  "45168": {
+    "lat": 42.397,
+    "lng": -86.331,
+    "name": "South Haven Buoy, MI"
+  },
+  "45170": {
+    "lat": 41.755,
+    "lng": -86.968,
+    "name": "Michigan City Buoy, IN"
+  },
+  "45171": {
+    "lat": 46.724,
+    "lng": -87.411,
+    "name": "Granite Island Buoy, Granite Island, MI"
+  },
+  "45172": {
+    "lat": 46.74,
+    "lng": -85.98,
+    "name": "Grand Marais Buoy, Grand Marais, MI"
+  },
+  "45173": {
+    "lat": 46.573,
+    "lng": -86.572,
+    "name": "Munising Buoy, Munising, MI"
+  },
+  "45174": {
+    "lat": 42.135,
+    "lng": -87.655,
+    "name": "Wilmette Buoy, IL"
+  },
+  "45175": {
+    "lat": 45.825,
+    "lng": -84.772,
+    "name": "Mackinac Straits West, Mackinaw City, MI "
+  },
+  "45176": {
+    "lat": 41.55,
+    "lng": -81.765,
+    "name": "Cleveland Intake Crib Buoy, OH"
+  },
+  "45177": {
+    "lat": 41.894,
+    "lng": -87.613,
+    "name": "Ohio St. Beach, Chicago, IL"
+  },
+  "45178": {
+    "lat": 44.603,
+    "lng": -73.394,
+    "name": "1 NM SE of Valcour Island, NY"
+  },
+  "45183": {
+    "lat": 44.982,
+    "lng": -85.831,
+    "name": "Sleeping Bear Dunes"
+  },
+  "45184": {
+    "lat": 44.55,
+    "lng": -87.959,
+    "name": "Green Bay East Buoy"
+  },
+  "45185": {
+    "lat": 44.577,
+    "lng": -87.987,
+    "name": "Green Bay West Buoy"
+  },
+  "45186": {
+    "lat": 42.368,
+    "lng": -87.795,
+    "name": "Waukegan Buoy, IL"
+  },
+  "45187": {
+    "lat": 42.491,
+    "lng": -87.779,
+    "name": "Winthrop Harbor Buoy, IL"
+  },
+  "45188": {
+    "lat": 44.094,
+    "lng": -73.423,
+    "name": "Champlain Bridge Buoy"
+  },
+  "45190": {
+    "lat": 43.282,
+    "lng": -76.961,
+    "name": "Sodus Point, NY"
+  },
+  "45191": {
+    "lat": 43.388,
+    "lng": -78.192,
+    "name": "Oak Orchard, NY"
+  },
+  "45194": {
+    "lat": 45.803,
+    "lng": -84.792,
+    "name": "McGulpin Point North, MI (253)"
+  },
+  "45196": {
+    "lat": 41.521,
+    "lng": -81.88,
+    "name": "Rocky River, OH"
+  },
+  "45197": {
+    "lat": 41.619,
+    "lng": -81.617,
+    "name": "Euclid, OH"
+  },
+  "45198": {
+    "lat": 41.892,
+    "lng": -87.563,
+    "name": "Chicago Buoy"
+  },
+  "45199": {
+    "lat": 42.702,
+    "lng": -87.647,
+    "name": "Salmon Unlimited Wisconsin"
+  },
+  "45200": {
+    "lat": 41.724,
+    "lng": -83.37,
+    "name": "Maumee Bay Buoy"
+  },
+  "45201": {
+    "lat": 41.601,
+    "lng": -82.781,
+    "name": "Erie Islands Buoy"
+  },
+  "45202": {
+    "lat": 41.532,
+    "lng": -82.941,
+    "name": "Port Clinton Buoy"
+  },
+  "45203": {
+    "lat": 41.393,
+    "lng": -82.512,
+    "name": "Huron Buoy"
+  },
+  "45204": {
+    "lat": 41.508,
+    "lng": -82.115,
+    "name": "Sheffield Buoy"
+  },
+  "45205": {
+    "lat": 41.501,
+    "lng": -81.748,
+    "name": "Edgewater Beach Buoy"
+  },
+  "45206": {
+    "lat": 41.585,
+    "lng": -81.583,
+    "name": "Euclid Beach Buoy"
+  },
+  "45207": {
+    "lat": 41.731,
+    "lng": -81.367,
+    "name": "Mentor Harbor Buoy"
+  },
+  "45208": {
+    "lat": 41.913,
+    "lng": -80.807,
+    "name": "Ashtabula Buoy"
+  },
+  "45209": {
+    "lat": 43.129,
+    "lng": -82.391,
+    "name": "Lakeport Buoy, MI"
+  },
+  "45210": {
+    "lat": 44.055,
+    "lng": -87.05,
+    "name": "Rawley Point East, WI (269)"
+  },
+  "45211": {
+    "lat": 46.973,
+    "lng": -86.568,
+    "name": "Grand Island North, MI (268)"
+  },
+  "45212": {
+    "lat": 45.351,
+    "lng": -82.84,
+    "name": "North Huron Spotter"
+  },
+  "45213": {
+    "lat": 47.588,
+    "lng": -86.588,
+    "name": "East Superior Spotter"
+  },
+  "45214": {
+    "lat": 42.674,
+    "lng": -87.026,
+    "name": "South Michigan Spotter"
+  },
+  "45215": {
+    "lat": 43.501,
+    "lng": -76.539,
+    "name": "Oswego, NY (274)"
+  },
+  "45216": {
+    "lat": 46.907,
+    "lng": -89.354,
+    "name": "Ontonagon, MI"
+  },
+  "45217": {
+    "lat": 46.708,
+    "lng": -92.0,
+    "name": "Wisconsin Point"
+  },
+  "45218": {
+    "lat": 43.731,
+    "lng": -87.624,
+    "name": "Wisconsin Shipwreck Coast NMS / Sheboygan, WI"
+  },
+  "45219": {
+    "lat": 47.021,
+    "lng": -91.625,
+    "name": "Two Harbors Nearshore Buoy"
+  },
+  "45220": {
+    "lat": 42.561,
+    "lng": -79.432,
+    "name": "Dunkirk Buoy"
+  },
+  "45221": {
+    "lat": 44.756,
+    "lng": -73.355,
+    "name": "North Lake Champlain"
+  },
+  "45222": {
+    "lat": 42.126,
+    "lng": -80.148,
+    "name": "Beach 2 Buoy"
+  },
+  "45223": {
+    "lat": 42.144,
+    "lng": -80.139,
+    "name": "Beach 6 Buoy"
+  },
+  "46001": {
+    "lat": 56.296,
+    "lng": -148.027,
+    "name": "WESTERN GULF OF ALASKA  - 175NM SE of Kodiak, AK"
+  },
+  "46002": {
+    "lat": 42.56,
+    "lng": -130.523,
+    "name": "WEST OREGON - 275NM West of Coos Bay, OR"
+  },
+  "46004": {
+    "lat": 50.93,
+    "lng": -136.1,
+    "name": "Middle Nomad"
+  },
+  "46005": {
+    "lat": 46.147,
+    "lng": -131.077,
+    "name": "WEST WASHINGTON - 300NM West of Aberdeen, WA"
+  },
+  "46006": {
+    "lat": 40.73,
+    "lng": -137.42,
+    "name": "SOUTHEAST PAPA - 600NM West of Eureka, CA"
+  },
+  "46011": {
+    "lat": 34.937,
+    "lng": -120.999,
+    "name": "SANTA MARIA - 21NM NW of Point Arguello, CA"
+  },
+  "46012": {
+    "lat": 37.356,
+    "lng": -122.881,
+    "name": "HALF MOON BAY - 24NM SSW of San Francisco, CA"
+  },
+  "46013": {
+    "lat": 38.235,
+    "lng": -123.317,
+    "name": "BODEGA BAY - 48NM NW of San Francisco, CA"
+  },
+  "46014": {
+    "lat": 39.225,
+    "lng": -123.98,
+    "name": "PT ARENA - 19NM North of Point Arena, CA"
+  },
+  "46015": {
+    "lat": 42.754,
+    "lng": -124.839,
+    "name": "PORT ORFORD - 15 NM West of Port Orford, OR"
+  },
+  "46022": {
+    "lat": 40.716,
+    "lng": -124.54,
+    "name": "EEL RIVER - 17NM WSW of Eureka, CA"
+  },
+  "46025": {
+    "lat": 33.765,
+    "lng": -119.077,
+    "name": "Santa Monica Basin - 33NM WSW of Santa Monica, CA"
+  },
+  "46026": {
+    "lat": 37.75,
+    "lng": -122.838,
+    "name": "SAN FRANCISCO - 18NM West of San Francisco, CA"
+  },
+  "46027": {
+    "lat": 41.84,
+    "lng": -124.382,
+    "name": "ST GEORGES - 8 NM NW of Crescent City, CA"
+  },
+  "46028": {
+    "lat": 35.763,
+    "lng": -121.9,
+    "name": "CAPE SAN MARTIN - 55NM West NW of Morro Bay, CA"
+  },
+  "46029": {
+    "lat": 46.148,
+    "lng": -124.508,
+    "name": "COLUMBIA RIVER BAR - 20NM West of Columbia River Mouth"
+  },
+  "46035": {
+    "lat": 57.034,
+    "lng": -177.468,
+    "name": "CENTRAL BERING SEA - 310 NM North of Adak, AK"
+  },
+  "46036": {
+    "lat": 48.36,
+    "lng": -133.94,
+    "name": "South Nomad"
+  },
+  "46041": {
+    "lat": 47.352,
+    "lng": -124.739,
+    "name": "CAPE ELIZABETH - 45NM NW of Aberdeen, WA"
+  },
+  "46042": {
+    "lat": 36.787,
+    "lng": -122.408,
+    "name": "MONTEREY - 27NM WNW of Monterey, CA"
+  },
+  "46047": {
+    "lat": 32.418,
+    "lng": -119.535,
+    "name": "TANNER BANK - 121 NM West of San Diego, CA"
+  },
+  "46050": {
+    "lat": 44.679,
+    "lng": -124.535,
+    "name": "STONEWALL BANK - 20NM West of Newport, OR"
+  },
+  "46053": {
+    "lat": 34.246,
+    "lng": -119.842,
+    "name": "EAST SANTA BARBARA  - 12NM Southwest of Santa Barbara, CA"
+  },
+  "46054": {
+    "lat": 34.274,
+    "lng": -120.468,
+    "name": "WEST SANTA BARBARA  38 NM West of Santa Barbara, CA"
+  },
+  "46059": {
+    "lat": 38.067,
+    "lng": -129.895,
+    "name": "WEST CALIFORNIA - 357NM West of San Francisco, CA"
+  },
+  "46060": {
+    "lat": 60.571,
+    "lng": -146.795,
+    "name": "WEST ORCA BAY - 8NM NW of Hinchinbrook Is., AK"
+  },
+  "46061": {
+    "lat": 60.23,
+    "lng": -146.837,
+    "name": "Seal Rocks - Between Montague and Hinchinbrook Islands, AK"
+  },
+  "46066": {
+    "lat": 52.776,
+    "lng": -154.992,
+    "name": "SOUTH KODIAK - 310NM SSW of Kodiak, AK"
+  },
+  "46069": {
+    "lat": 33.657,
+    "lng": -120.227,
+    "name": "SOUTH SANTA ROSA - 14 NM SW of Santa Rosa Island, CA"
+  },
+  "46070": {
+    "lat": 55.048,
+    "lng": 175.246,
+    "name": "SOUTHWEST BERING SEA - 142NM NNE OF ATTU IS, AK"
+  },
+  "46071": {
+    "lat": 51.035,
+    "lng": 179.808,
+    "name": "WESTERN ALEUTIANS - 14NM SOUTH OF AMCHITKA IS, AK "
+  },
+  "46072": {
+    "lat": 51.645,
+    "lng": -172.145,
+    "name": "CENTRAL ALEUTIANS 230 NM SW Dutch Harbor"
+  },
+  "46073": {
+    "lat": 54.985,
+    "lng": -171.874,
+    "name": "SOUTHEAST BERING SEA - 205 NM WNW of Dutch Harbor, AK"
+  },
+  "46075": {
+    "lat": 53.938,
+    "lng": -160.735,
+    "name": "SHUMAGIN ISLANDS - 85NM South of Sand Point, AK"
+  },
+  "46076": {
+    "lat": 59.508,
+    "lng": -148.005,
+    "name": "CAPE CLEARE - 17 NM South of Montague Is,  AK"
+  },
+  "46077": {
+    "lat": 57.869,
+    "lng": -154.211,
+    "name": "SHELIKOF STRAIT, AK"
+  },
+  "46078": {
+    "lat": 55.561,
+    "lng": -152.599,
+    "name": "ALBATROSS BANK - 104NM South of Kodiak Is., AK"
+  },
+  "46080": {
+    "lat": 57.91,
+    "lng": -150.129,
+    "name": "PORTLOCK BANK - 76 NM ENE of Kodiak, AK"
+  },
+  "46081": {
+    "lat": 60.802,
+    "lng": -148.283,
+    "name": "Western Prince William Sound"
+  },
+  "46082": {
+    "lat": 59.67,
+    "lng": -143.353,
+    "name": "Cape Suckling - 35 NM SE of Kayak Is, AK"
+  },
+  "46083": {
+    "lat": 58.276,
+    "lng": -138.024,
+    "name": "FAIRWEATHER GROUND - 105 NM West  of Juneau, AK"
+  },
+  "46084": {
+    "lat": 56.614,
+    "lng": -136.04,
+    "name": "CAPE EDGECUMBE - 25NM SSW of Cape Edgecumbe, AK"
+  },
+  "46085": {
+    "lat": 55.84,
+    "lng": -142.895,
+    "name": "CENTRAL GULF OF ALASKA -  265NM West of Cape Ommaney, AK"
+  },
+  "46086": {
+    "lat": 32.504,
+    "lng": -118.029,
+    "name": "SAN CLEMENTE BASIN - 27NM SE Of San Clemente Is, CA"
+  },
+  "46087": {
+    "lat": 48.493,
+    "lng": -124.727,
+    "name": "Neah Bay - 6 NM North of Cape Flattery, WA (Traffic Separation Lighted Buoy)"
+  },
+  "46088": {
+    "lat": 48.332,
+    "lng": -123.179,
+    "name": "NEW DUNGENESS - 17 NM NE of Port Angeles, WA"
+  },
+  "46089": {
+    "lat": 45.928,
+    "lng": -125.815,
+    "name": "TILLAMOOK, OR - 85 NM WNW of Tillamook, OR"
+  },
+  "46092": {
+    "lat": 36.751,
+    "lng": -122.029,
+    "name": "MBM1"
+  },
+  "46096": {
+    "lat": 46.173,
+    "lng": -124.127,
+    "name": "Columbia River Entrance - SATURN Station #02 Offshore"
+  },
+  "46097": {
+    "lat": 44.639,
+    "lng": -124.304,
+    "name": "OOI Newport Shelf"
+  },
+  "46098": {
+    "lat": 44.378,
+    "lng": -124.947,
+    "name": "OOI Waldport Offshore"
+  },
+  "46099": {
+    "lat": 46.988,
+    "lng": -124.567,
+    "name": "OOI Westport Shelf"
+  },
+  "46100": {
+    "lat": 46.851,
+    "lng": -124.964,
+    "name": "OOI Westport Offshore"
+  },
+  "46108": {
+    "lat": 59.598,
+    "lng": -151.828,
+    "name": "Lower Cook Inlet (204)"
+  },
+  "46116": {
+    "lat": 46.287,
+    "lng": -124.016,
+    "name": "SATURN Estuary Station #07, Baker Bay, WA"
+  },
+  "46117": {
+    "lat": 46.176,
+    "lng": -123.869,
+    "name": "SATURN Estuary Station #09, Youngs Bay, OR"
+  },
+  "46118": {
+    "lat": 48.724,
+    "lng": -122.576,
+    "name": "Se'lhaem Bellingham Bay"
+  },
+  "46119": {
+    "lat": 47.967,
+    "lng": -124.95,
+    "name": "Cha'Ba La Push"
+  },
+  "46120": {
+    "lat": 47.761,
+    "lng": -122.397,
+    "name": "Pt Wells, WA (U of Wash)"
+  },
+  "46121": {
+    "lat": 47.28,
+    "lng": -122.73,
+    "name": "Carr Inlet, WA (U of Wash) "
+  },
+  "46122": {
+    "lat": 47.803,
+    "lng": -122.803,
+    "name": "Dabob Bay, WA (U of Wash)"
+  },
+  "46123": {
+    "lat": 47.375,
+    "lng": -123.008,
+    "name": "Twanoh - Hood Canal, WA (U of Wash)"
+  },
+  "46124": {
+    "lat": 47.422,
+    "lng": -123.113,
+    "name": "Hoodsport - Hood Canal, WA (U of Wash)"
+  },
+  "46125": {
+    "lat": 47.907,
+    "lng": -122.627,
+    "name": "Hansville - Hood Canal, WA"
+  },
+  "46128": {
+    "lat": 43.292,
+    "lng": -124.538,
+    "name": "Buoy CB-06 - West of Coos Bay, OR"
+  },
+  "46131": {
+    "lat": 49.91,
+    "lng": -124.98,
+    "name": "Sentry Shoal"
+  },
+  "46132": {
+    "lat": 49.78,
+    "lng": -127.89,
+    "name": "South Brooks"
+  },
+  "46145": {
+    "lat": 54.37,
+    "lng": -132.42,
+    "name": "Central Dixon Entrance Buoy"
+  },
+  "46146": {
+    "lat": 49.34,
+    "lng": -123.73,
+    "name": "Halibut Bank"
+  },
+  "46147": {
+    "lat": 51.83,
+    "lng": -131.22,
+    "name": "South Moresby"
+  },
+  "46181": {
+    "lat": 53.83,
+    "lng": -128.83,
+    "name": "Nanakwa Shoal"
+  },
+  "46183": {
+    "lat": 53.62,
+    "lng": -131.1,
+    "name": "North Hecate Strait"
+  },
+  "46184": {
+    "lat": 53.92,
+    "lng": -138.85,
+    "name": "North Nomad"
+  },
+  "46185": {
+    "lat": 52.42,
+    "lng": -129.79,
+    "name": "South Hecate Strait"
+  },
+  "46204": {
+    "lat": 51.38,
+    "lng": -128.77,
+    "name": "West Sea Otter"
+  },
+  "46205": {
+    "lat": 54.18,
+    "lng": -134.32,
+    "name": "West Dixon Entrance"
+  },
+  "46206": {
+    "lat": 48.84,
+    "lng": -126.0,
+    "name": "La Perouse Bank"
+  },
+  "46207": {
+    "lat": 50.87,
+    "lng": -129.92,
+    "name": "East Dellwood"
+  },
+  "46208": {
+    "lat": 52.52,
+    "lng": -132.69,
+    "name": "West Moresby"
+  },
+  "46211": {
+    "lat": 46.857,
+    "lng": -124.243,
+    "name": "Grays Harbor, WA (036)"
+  },
+  "46213": {
+    "lat": 40.291,
+    "lng": -124.748,
+    "name": "Cape Mendocino, CA (094)"
+  },
+  "46214": {
+    "lat": 37.944,
+    "lng": -123.466,
+    "name": "Point Reyes, CA (029)"
+  },
+  "46215": {
+    "lat": 35.204,
+    "lng": -120.859,
+    "name": "Diablo Canyon, CA (076)"
+  },
+  "46218": {
+    "lat": 34.452,
+    "lng": -120.78,
+    "name": "Harvest, CA (071)"
+  },
+  "46219": {
+    "lat": 33.226,
+    "lng": -119.891,
+    "name": "San Nicolas Island, CA (067)"
+  },
+  "46221": {
+    "lat": 33.86,
+    "lng": -118.641,
+    "name": "Santa Monica Bay, CA (028)"
+  },
+  "46222": {
+    "lat": 33.614,
+    "lng": -118.314,
+    "name": "San Pedro, CA (092)"
+  },
+  "46224": {
+    "lat": 33.178,
+    "lng": -117.472,
+    "name": "Oceanside Offshore, CA (045)"
+  },
+  "46225": {
+    "lat": 32.933,
+    "lng": -117.391,
+    "name": "Torrey Pines Outer, CA (100)"
+  },
+  "46229": {
+    "lat": 43.772,
+    "lng": -124.549,
+    "name": "UMPQUA OFFSHORE, OR (139)"
+  },
+  "46232": {
+    "lat": 32.517,
+    "lng": -117.425,
+    "name": "Point Loma South, CA  (191)"
+  },
+  "46235": {
+    "lat": 32.57,
+    "lng": -117.169,
+    "name": "Imperial Beach Nearshore, CA (155)"
+  },
+  "46236": {
+    "lat": 36.759,
+    "lng": -121.95,
+    "name": "Monterey Canyon Outer, CA  (156)"
+  },
+  "46237": {
+    "lat": 37.788,
+    "lng": -122.634,
+    "name": "San Francisco Bar, CA  (142)"
+  },
+  "46239": {
+    "lat": 36.342,
+    "lng": -122.11,
+    "name": "Point Sur, CA (157)"
+  },
+  "46240": {
+    "lat": 36.626,
+    "lng": -121.907,
+    "name": "Cabrillo Point, Monterey Bay, CA  (158)"
+  },
+  "46243": {
+    "lat": 46.215,
+    "lng": -124.129,
+    "name": "Clatsop Spit, OR (162)"
+  },
+  "46244": {
+    "lat": 40.896,
+    "lng": -124.358,
+    "name": "Humboldt Bay, North Spit, CA (168)"
+  },
+  "46246": {
+    "lat": 49.903,
+    "lng": -145.246,
+    "name": "Ocean Station PAPA  (166)"
+  },
+  "46248": {
+    "lat": 46.133,
+    "lng": -124.64,
+    "name": "Astoria Canyon, OR  (179)"
+  },
+  "46251": {
+    "lat": 33.769,
+    "lng": -119.565,
+    "name": "Santa Cruz Basin, CA (203)"
+  },
+  "46253": {
+    "lat": 33.576,
+    "lng": -118.182,
+    "name": "San Pedro South, CA (213)"
+  },
+  "46254": {
+    "lat": 32.868,
+    "lng": -117.267,
+    "name": "SCRIPPS Nearshore, CA (201)"
+  },
+  "46256": {
+    "lat": 33.7,
+    "lng": -118.201,
+    "name": "Long Beach Channel, CA (215)"
+  },
+  "46258": {
+    "lat": 32.749,
+    "lng": -117.502,
+    "name": "Mission Bay West, CA (220)"
+  },
+  "46259": {
+    "lat": 34.774,
+    "lng": -121.491,
+    "name": "Santa Lucia Escarpment, CA (222)"
+  },
+  "46265": {
+    "lat": 64.474,
+    "lng": -165.479,
+    "name": "Nome, AK (241)"
+  },
+  "46266": {
+    "lat": 32.957,
+    "lng": -117.279,
+    "name": "Del Mar Nearshore, CA (153)"
+  },
+  "46267": {
+    "lat": 48.171,
+    "lng": -123.6,
+    "name": "Angeles Point, WA (248)"
+  },
+  "46268": {
+    "lat": 34.022,
+    "lng": -118.578,
+    "name": "Topanga Nearshore, CA (103)"
+  },
+  "46273": {
+    "lat": 32.93,
+    "lng": -117.274,
+    "name": "Torrey Pines Inner, CA (101)"
+  },
+  "46274": {
+    "lat": 33.062,
+    "lng": -117.314,
+    "name": "Leucadia Nearshore, CA (262)"
+  },
+  "46275": {
+    "lat": 33.291,
+    "lng": -117.501,
+    "name": "Red Beach Nearshore, CA (264)"
+  },
+  "46276": {
+    "lat": 36.845,
+    "lng": -121.825,
+    "name": "Pajaro Beach, CA (266)"
+  },
+  "46277": {
+    "lat": 33.336,
+    "lng": -117.659,
+    "name": "Green Beach Offshore, CA (271)"
+  },
+  "46278": {
+    "lat": 45.559,
+    "lng": -123.991,
+    "name": "Tillamook Bay South Jetty, OR (270)"
+  },
+  "46279": {
+    "lat": 36.838,
+    "lng": -121.82,
+    "name": "Pajaro Beach South, CA (267)"
+  },
+  "46280": {
+    "lat": 44.575,
+    "lng": -124.234,
+    "name": "Newport PWS North (277)"
+  },
+  "46281": {
+    "lat": 44.559,
+    "lng": -124.233,
+    "name": "Newport PWS South, OR (278)"
+  },
+  "46283": {
+    "lat": 44.567,
+    "lng": -124.237,
+    "name": "Yaquina Channel SW, OR (280)"
+  },
+  "46284": {
+    "lat": 36.93,
+    "lng": -121.934,
+    "name": "Soquel Cove South, CA (281)"
+  },
+  "46285": {
+    "lat": 33.445,
+    "lng": -117.68,
+    "name": "Capistrano Beach Nearshore, CA (284)"
+  },
+  "46303": {
+    "lat": 49.02,
+    "lng": -123.43,
+    "name": "Southern Georgia Strait"
+  },
+  "46304": {
+    "lat": 49.3,
+    "lng": -123.36,
+    "name": "Entrance To English Bay"
+  },
+  "46402": {
+    "lat": 50.913,
+    "lng": -164.147,
+    "name": " South Dutch Harbor - 220 NM SSE of Dutch Harbor, AK"
+  },
+  "46403": {
+    "lat": 52.7,
+    "lng": -156.983,
+    "name": "SOUTHEAST SHUMAGIN ISLAND - 186 NM SE of Shumagin Is, AK"
+  },
+  "46404": {
+    "lat": 45.852,
+    "lng": -128.745,
+    "name": "WEST ASTORIA - 230 NM West of Astoria, OR"
+  },
+  "46407": {
+    "lat": 42.704,
+    "lng": -128.895,
+    "name": "NEWPORT - 210NM West of Coos Bay, OR"
+  },
+  "46408": {
+    "lat": 49.677,
+    "lng": -169.825,
+    "name": " NIKOLSKI - 212 NM South of Umnak Is, AK"
+  },
+  "46409": {
+    "lat": 55.338,
+    "lng": -148.575,
+    "name": "SOUTHEAST KODIAK - 210 NM SE of Kodiak, AK"
+  },
+  "46410": {
+    "lat": 57.641,
+    "lng": -143.771,
+    "name": "SOUTH CORDOVA - 188 NM SSE of Cordova, AK"
+  },
+  "46411": {
+    "lat": 39.337,
+    "lng": -127.04,
+    "name": "Mendocino - 150 NM West of  Mendocino Bay, CA"
+  },
+  "46413": {
+    "lat": 48.031,
+    "lng": -173.766,
+    "name": "SOUTH-SOUTHEAST ADAK - 243 NM SSE of Adak Island, AK"
+  },
+  "46414": {
+    "lat": 53.756,
+    "lng": -152.456,
+    "name": "SOUTHEAST CHIRIKOF - 165 NM SE of Chirikof Island, AK"
+  },
+  "46415": {
+    "lat": 53.029,
+    "lng": -139.889,
+    "name": "SOUTHWEST JUNEAU - 370 NM SW of Juneau, AK"
+  },
+  "46416": {
+    "lat": 49.939,
+    "lng": -134.427,
+    "name": "WEST VANCOUVER - 442NM West of Vancouver, BC, Canada"
+  },
+  "46419": {
+    "lat": 48.816,
+    "lng": -129.614,
+    "name": "NORTHWEST SEATTLE - 300 NM WNW of Seattle, WA"
+  },
+  "46453": {
+    "lat": 47.45,
+    "lng": -124.43,
+    "name": "Backyard Buoys - Quinault North"
+  },
+  "48400": {
+    "lat": 50.055,
+    "lng": -144.873,
+    "name": "Ocean Climate Station Papa"
+  },
+  "51000": {
+    "lat": 23.534,
+    "lng": -153.752,
+    "name": "NORTHERN HAWAII ONE - 245NM NE of Honolulu HI"
+  },
+  "51001": {
+    "lat": 24.475,
+    "lng": -162.03,
+    "name": "NORTHWESTERN HAWAII ONE - 188 NM NW of Kauai Island, HI"
+  },
+  "51002": {
+    "lat": 17.07,
+    "lng": -157.755,
+    "name": "SOUTHWEST HAWAII - 215NM SSW of Hilo, HI"
+  },
+  "51003": {
+    "lat": 19.143,
+    "lng": -160.645,
+    "name": "WESTERN  HAWAII - 205 NM SW of Honolulu, HI"
+  },
+  "51004": {
+    "lat": 17.504,
+    "lng": -152.197,
+    "name": "SOUTHEAST HAWAII - 205 NM Southeast of Hilo, HI"
+  },
+  "51006": {
+    "lat": 9.0,
+    "lng": -140.0,
+    "name": "9N 140W"
+  },
+  "51007": {
+    "lat": 5.0,
+    "lng": -140.0,
+    "name": "5N 140W"
+  },
+  "51008": {
+    "lat": 2.0,
+    "lng": -140.0,
+    "name": "2N 140W"
+  },
+  "51009": {
+    "lat": -2.0,
+    "lng": -140.0,
+    "name": "2S 140W"
+  },
+  "51010": {
+    "lat": 0.0,
+    "lng": -170.0,
+    "name": "0 170W"
+  },
+  "51011": {
+    "lat": 0.0,
+    "lng": -125.0,
+    "name": "0 125W"
+  },
+  "51014": {
+    "lat": -5.0,
+    "lng": -140.0,
+    "name": "5S 140W"
+  },
+  "51016": {
+    "lat": 2.0,
+    "lng": -125.0,
+    "name": "2N 125W"
+  },
+  "51017": {
+    "lat": -2.0,
+    "lng": -125.0,
+    "name": "2S 125W"
+  },
+  "51021": {
+    "lat": 2.0,
+    "lng": -155.0,
+    "name": "2N 155W"
+  },
+  "51022": {
+    "lat": -2.0,
+    "lng": -155.0,
+    "name": "2S 155W"
+  },
+  "51023": {
+    "lat": 0.0,
+    "lng": -155.0,
+    "name": "0 155W"
+  },
+  "51024": {
+    "lat": 1.0,
+    "lng": -140.0,
+    "name": "1N 140W"
+  },
+  "51025": {
+    "lat": -1.0,
+    "lng": -140.0,
+    "name": "1S 140W"
+  },
+  "51045": {
+    "lat": 19.734,
+    "lng": -155.082,
+    "name": "Hilo Bay, HI"
+  },
+  "51046": {
+    "lat": 20.024,
+    "lng": -155.828,
+    "name": "Kawaihai, HI"
+  },
+  "51101": {
+    "lat": 24.359,
+    "lng": -162.081,
+    "name": "NORTHWESTERN HAWAII TWO - 186 NM NW of Kauai Is., HI   "
+  },
+  "51111": {
+    "lat": -14.245,
+    "lng": -169.509,
+    "name": "Backyard Buoys - Tau Faga Cove"
+  },
+  "51201": {
+    "lat": 21.671,
+    "lng": -158.118,
+    "name": "Waimea Bay, HI (106)"
+  },
+  "51202": {
+    "lat": 21.414,
+    "lng": -157.681,
+    "name": "Mokapu Point, HI (098)"
+  },
+  "51205": {
+    "lat": 21.018,
+    "lng": -156.421,
+    "name": "Pauwela, Maui, HI (187)"
+  },
+  "51206": {
+    "lat": 19.779,
+    "lng": -154.97,
+    "name": "Hilo, Hawaii, HI (188)"
+  },
+  "51207": {
+    "lat": 21.477,
+    "lng": -157.752,
+    "name": "Kaneohe Bay, HI (198)"
+  },
+  "51208": {
+    "lat": 22.285,
+    "lng": -159.574,
+    "name": "Hanalei, Kauai, HI (202)"
+  },
+  "51209": {
+    "lat": -14.273,
+    "lng": -170.501,
+    "name": "Aunuu, American Samoa (189)"
+  },
+  "51210": {
+    "lat": 21.477,
+    "lng": -157.757,
+    "name": "Kaneohe Bay, WETS, HI (225)"
+  },
+  "51211": {
+    "lat": 21.297,
+    "lng": -157.959,
+    "name": "Pearl Harbor Entrance, HI (233)"
+  },
+  "51212": {
+    "lat": 21.323,
+    "lng": -158.149,
+    "name": "Barbers Point, Kalaeloa, HI (238)"
+  },
+  "51213": {
+    "lat": 20.75,
+    "lng": -157.002,
+    "name": "Kaumalapau Southwest, Lanai, HI (239)"
+  },
+  "51214": {
+    "lat": -14.296,
+    "lng": -170.875,
+    "name": "King-Poloa, American Samoa (273)"
+  },
+  "51303": {
+    "lat": 5.0,
+    "lng": -170.0,
+    "name": "5N 170W"
+  },
+  "51304": {
+    "lat": -5.0,
+    "lng": -170.0,
+    "name": "5S 170W"
+  },
+  "51305": {
+    "lat": 2.0,
+    "lng": -170.0,
+    "name": "2N 170W"
+  },
+  "51306": {
+    "lat": -2.0,
+    "lng": -170.0,
+    "name": "2S 170W"
+  },
+  "51309": {
+    "lat": 8.0,
+    "lng": -170.0,
+    "name": "8N 170W"
+  },
+  "51310": {
+    "lat": -8.0,
+    "lng": -170.0,
+    "name": "8S 170W"
+  },
+  "51311": {
+    "lat": 0.0,
+    "lng": -140.0,
+    "name": "0 140W"
+  },
+  "51312": {
+    "lat": 10.0,
+    "lng": -170.0,
+    "name": "10N 170W"
+  },
+  "51407": {
+    "lat": 19.53,
+    "lng": -156.601,
+    "name": "HAWAII - 34NM West of Kailua-Kona, HI"
+  },
+  "51425": {
+    "lat": -9.511,
+    "lng": -176.258,
+    "name": "NORTHWEST APIA - 370 NM NW of Apia, Samoa"
+  },
+  "51wh0": {
+    "lat": 22.0,
+    "lng": -157.0,
+    "name": "WHOTS - Woods Hole Ocean Time-series"
+  },
+  "52001": {
+    "lat": 2.0,
+    "lng": 165.0,
+    "name": "2N 165E"
+  },
+  "52002": {
+    "lat": -2.0,
+    "lng": 165.0,
+    "name": "2S 165E"
+  },
+  "52003": {
+    "lat": 5.0,
+    "lng": 165.0,
+    "name": "5N 165E"
+  },
+  "52004": {
+    "lat": -5.0,
+    "lng": 165.0,
+    "name": "5S 165E"
+  },
+  "52006": {
+    "lat": 8.0,
+    "lng": 165.0,
+    "name": "8N 165E"
+  },
+  "52007": {
+    "lat": -8.0,
+    "lng": 165.0,
+    "name": "8S 165E"
+  },
+  "52013": {
+    "lat": 10.0,
+    "lng": 165.0,
+    "name": "10N 165E"
+  },
+  "52162": {
+    "lat": 15.15,
+    "lng": 145.694,
+    "name": "Backyard Buoys - Saipan Sugar Dock"
+  },
+  "52200": {
+    "lat": 13.354,
+    "lng": 144.788,
+    "name": "Ipan, Guam (121)"
+  },
+  "52201": {
+    "lat": 7.078,
+    "lng": 171.384,
+    "name": "Kalo, Majuro, Marshall Islands (163)"
+  },
+  "52202": {
+    "lat": 13.682,
+    "lng": 144.811,
+    "name": "Ritidian Point, Guam (196)"
+  },
+  "52211": {
+    "lat": 15.269,
+    "lng": 145.664,
+    "name": "Tanapag, Saipan, NMI (197)"
+  },
+  "52212": {
+    "lat": 7.63,
+    "lng": 134.671,
+    "name": "Ngaraard, Babeldaob, Palau (219)"
+  },
+  "52213": {
+    "lat": 7.081,
+    "lng": 158.244,
+    "name": "North Point, Pohnpei, Micronesia (178)"
+  },
+  "52214": {
+    "lat": 9.678,
+    "lng": 138.176,
+    "name": "Rumung, Yap, Micronesia (272)"
+  },
+  "52215": {
+    "lat": 5.241,
+    "lng": 163.001,
+    "name": "UTWE, KOSRAE, MICRONESIA (276)"
+  },
+  "52216": {
+    "lat": 7.323,
+    "lng": 171.641,
+    "name": "Pikareej, Arno, Marshall Islands (282)"
+  },
+  "52310": {
+    "lat": 2.0,
+    "lng": 180.0,
+    "name": "2N 180W"
+  },
+  "52311": {
+    "lat": 0.0,
+    "lng": 180.0,
+    "name": "0 180W"
+  },
+  "52312": {
+    "lat": -2.0,
+    "lng": 180.0,
+    "name": "2S 180W"
+  },
+  "52321": {
+    "lat": 0.0,
+    "lng": 165.0,
+    "name": "0 165E"
+  },
+  "52401": {
+    "lat": 19.285,
+    "lng": 155.739,
+    "name": "NORTHEAST SAIPAN - 610 NM ENE of Saipan"
+  },
+  "52402": {
+    "lat": 11.928,
+    "lng": 153.876,
+    "name": "SOUTHEAST SAIPAN - 540NM ESE of Saipan"
+  },
+  "52403": {
+    "lat": 4.018,
+    "lng": 145.628,
+    "name": "NORTH MANUS - 345NM North of Manus Is , New Guinea"
+  },
+  "52404": {
+    "lat": 20.625,
+    "lng": 132.228,
+    "name": "NORTH PHILIPPINE SEA - 750 NM NE of Manila, Philippines"
+  },
+  "52405": {
+    "lat": 12.992,
+    "lng": 132.232,
+    "name": "SOUTH PHILIPPINE SEA -725 NM West of Agana, Guam"
+  },
+  "52406": {
+    "lat": -5.374,
+    "lng": 164.99,
+    "name": "NORTHEAST SOLOMON - 370NM NE of Guadalcanal"
+  },
+  "53005": {
+    "lat": -8.0,
+    "lng": 81.0,
+    "name": ""
+  },
+  "53006": {
+    "lat": -12.0,
+    "lng": 81.0,
+    "name": ""
+  },
+  "53009": {
+    "lat": -12.0,
+    "lng": 93.0,
+    "name": ""
+  },
+  "53040": {
+    "lat": -8.0,
+    "lng": 95.0,
+    "name": ""
+  },
+  "53056": {
+    "lat": -5.0,
+    "lng": 95.0,
+    "name": ""
+  },
+  "5401000": {
+    "lat": -38.2,
+    "lng": -179.797,
+    "name": "NZC - Offshore Gisborne Hikurangi"
+  },
+  "5401001": {
+    "lat": -36.049,
+    "lng": -177.708,
+    "name": "NZE - Offshore East Cape Kermadec"
+  },
+  "5401002": {
+    "lat": -29.683,
+    "lng": -175.012,
+    "name": "NZF - Offshore Raoul Island Kermadec"
+  },
+  "5401003": {
+    "lat": -23.352,
+    "lng": -173.402,
+    "name": "NZG - Offshore Tongatapu Tonga"
+  },
+  "5401004": {
+    "lat": -20.088,
+    "lng": -171.863,
+    "name": "NZH - Offshore Niue Tonga"
+  },
+  "5401005": {
+    "lat": -16.889,
+    "lng": -171.191,
+    "name": "NZI - Offshore Samoa Tonga"
+  },
+  "5501002": {
+    "lat": -42.371,
+    "lng": 176.911,
+    "name": "NZA - Offshore Wellington Hikurangi"
+  },
+  "5501003": {
+    "lat": -40.599,
+    "lng": 179.096,
+    "name": "NZB - Offshore Hawke's Bay Hikurangi"
+  },
+  "5501004": {
+    "lat": -36.1,
+    "lng": 178.604,
+    "name": "NZD - Offshore Bay of Plenty Kermadec"
+  },
+  "5501005": {
+    "lat": -26.667,
+    "lng": 163.955,
+    "name": "NZJ - Offshore Norfolk Island New Hebrides"
+  },
+  "5501006": {
+    "lat": -24.309,
+    "lng": 169.499,
+    "name": "NZK - Offshore New Caledonia New Hebrides"
+  },
+  "5501007": {
+    "lat": -19.31,
+    "lng": 166.782,
+    "name": "NZL - Offshore Vanuatu New Hebrides"
+  },
+  "55012": {
+    "lat": -15.664,
+    "lng": 158.453,
+    "name": "Coral Sea 1     -     1285km ENE of Townsville"
+  },
+  "55015": {
+    "lat": -46.956,
+    "lng": 160.343,
+    "name": "TASMAN SEA 1     -     1110km ESE of Hobart"
+  },
+  "55023": {
+    "lat": -14.715,
+    "lng": 153.537,
+    "name": "Coral Sea 2     -     870km NE of Townsville"
+  },
+  "55042": {
+    "lat": -44.79,
+    "lng": 161.7,
+    "name": "Tasman Sea 2     -     1175km ESE of Hobart"
+  },
+  "56001": {
+    "lat": -14.046,
+    "lng": 110.028,
+    "name": "Indian Ocean 1     -      1025km NW of Dampier"
+  },
+  "56003": {
+    "lat": -15.019,
+    "lng": 118.073,
+    "name": "Indian Ocean 2     -     630km NNE of Dampier"
+  },
+  "61001": {
+    "lat": 43.4,
+    "lng": 7.8,
+    "name": "Nice Buoy"
+  },
+  "61002": {
+    "lat": 42.102,
+    "lng": 4.703,
+    "name": "Lion Buoy"
+  },
+  "62001": {
+    "lat": 45.23,
+    "lng": -5.0,
+    "name": "Gascogne Buoy"
+  },
+  "62027": {
+    "lat": 49.082,
+    "lng": -2.218,
+    "name": "Jersey Buoy, English Channel - 5 nm south of Jersey, UK"
+  },
+  "62029": {
+    "lat": 48.72,
+    "lng": -12.43,
+    "name": "K1 Buoy"
+  },
+  "62030": {
+    "lat": 50.25,
+    "lng": -4.217,
+    "name": "L4 Buoy"
+  },
+  "62050": {
+    "lat": 50.0,
+    "lng": -4.4,
+    "name": "E1"
+  },
+  "62081": {
+    "lat": 51.0,
+    "lng": -13.55,
+    "name": "K2 Buoy"
+  },
+  "62095": {
+    "lat": 53.04,
+    "lng": -15.53,
+    "name": "M6 - West Coast"
+  },
+  "62103": {
+    "lat": 49.9,
+    "lng": -2.9,
+    "name": "Channel Lightship"
+  },
+  "62105": {
+    "lat": 55.41,
+    "lng": -11.81,
+    "name": "K4 Buoy"
+  },
+  "62107": {
+    "lat": 50.102,
+    "lng": -6.1,
+    "name": "Sevenstones Lightship"
+  },
+  "62114": {
+    "lat": 58.3,
+    "lng": 0.0,
+    "name": "Tartan \"A\" AWS"
+  },
+  "62121": {
+    "lat": 53.5,
+    "lng": 2.7,
+    "name": "Carrack AWS"
+  },
+  "62124": {
+    "lat": 53.6,
+    "lng": -3.6,
+    "name": "Conwy"
+  },
+  "62127": {
+    "lat": 54.0,
+    "lng": 0.7,
+    "name": "Cleeton AWS"
+  },
+  "62130": {
+    "lat": 58.7,
+    "lng": 1.3,
+    "name": "Brae A"
+  },
+  "62135": {
+    "lat": 54.2,
+    "lng": 1.6,
+    "name": "Trent"
+  },
+  "62142": {
+    "lat": 53.0,
+    "lng": 2.101,
+    "name": "North Sea"
+  },
+  "62144": {
+    "lat": 53.4,
+    "lng": 1.7,
+    "name": "Clipper AWS"
+  },
+  "62145": {
+    "lat": 53.102,
+    "lng": 2.8,
+    "name": "North Sea"
+  },
+  "62146": {
+    "lat": 57.2,
+    "lng": 2.1,
+    "name": "Lomond AWS"
+  },
+  "62147": {
+    "lat": 55.7,
+    "lng": 4.7,
+    "name": "Galaxy 111"
+  },
+  "62148": {
+    "lat": 53.6,
+    "lng": 1.5,
+    "name": "Barque AWS"
+  },
+  "62149": {
+    "lat": 53.7,
+    "lng": 1.1,
+    "name": "West Sole \"A\" AWS"
+  },
+  "62150": {
+    "lat": 53.6,
+    "lng": 0.7,
+    "name": "Amethyst AWS"
+  },
+  "62163": {
+    "lat": 47.55,
+    "lng": -8.47,
+    "name": "Brittany Buoy"
+  },
+  "62164": {
+    "lat": 57.2,
+    "lng": 0.8,
+    "name": "Anasuria AWS"
+  },
+  "62165": {
+    "lat": 54.0,
+    "lng": 1.1,
+    "name": "Ravenspurn North AWS"
+  },
+  "62166": {
+    "lat": 53.0,
+    "lng": 2.5,
+    "name": "Thames"
+  },
+  "62170": {
+    "lat": 51.24,
+    "lng": 2.0,
+    "name": "F3 Light Vessel"
+  },
+  "62304": {
+    "lat": 51.102,
+    "lng": 1.8,
+    "name": "Sandettie Lightship"
+  },
+  "62305": {
+    "lat": 50.4,
+    "lng": 0.0,
+    "name": "Greenwich Lightship"
+  },
+  "62442": {
+    "lat": 49.0,
+    "lng": -16.5,
+    "name": "Pap"
+  },
+  "63105": {
+    "lat": 61.0,
+    "lng": 1.692,
+    "name": "Brent \"B\" AWS"
+  },
+  "63110": {
+    "lat": 59.5,
+    "lng": 1.5,
+    "name": "Beryl A AWS"
+  },
+  "63112": {
+    "lat": 61.1,
+    "lng": 1.0,
+    "name": "Cormorant AWS"
+  },
+  "63113": {
+    "lat": 61.0,
+    "lng": 1.708,
+    "name": "Brent \"A\" AWS"
+  },
+  "63115": {
+    "lat": 61.6,
+    "lng": 1.3,
+    "name": "Magnus AWS"
+  },
+  "63117": {
+    "lat": 61.4,
+    "lng": 1.1,
+    "name": "Eider AWS"
+  },
+  "64045": {
+    "lat": 59.15,
+    "lng": -11.79,
+    "name": "K5 Buoy"
+  },
+  "64046": {
+    "lat": 60.483,
+    "lng": -4.167,
+    "name": "K7 Buoy"
+  },
+  "aamc1": {
+    "lat": 37.772,
+    "lng": -122.3,
+    "name": "9414750 - Alameda, CA"
+  },
+  "abya2": {
+    "lat": 58.381,
+    "lng": -134.646,
+    "name": "Auke Bay Lab Dock, AK"
+  },
+  "acfs1": {
+    "lat": 32.664,
+    "lng": -80.413,
+    "name": "Grove Plantation, ACE Basin Reserve, SC"
+  },
+  "acqs1": {
+    "lat": 32.523,
+    "lng": -80.357,
+    "name": "St. Pierre, ACE Basin Reserve, SC"
+  },
+  "acxs1": {
+    "lat": 32.559,
+    "lng": -80.454,
+    "name": "Bennett's Point, ACE Basin Reserve, SC"
+  },
+  "acyn4": {
+    "lat": 39.357,
+    "lng": -74.418,
+    "name": "8534720 - Atlantic City, NJ"
+  },
+  "adbf1": {
+    "lat": 29.675,
+    "lng": -85.058,
+    "name": "Dry Bar, Apalachicola Reserve, FL"
+  },
+  "adka2": {
+    "lat": 51.861,
+    "lng": -176.637,
+    "name": "9461380 - Adak Island, AK"
+  },
+  "agcm4": {
+    "lat": 42.621,
+    "lng": -82.527,
+    "name": "9014070 - Algonac, MI"
+  },
+  "agxc1": {
+    "lat": 33.716,
+    "lng": -118.246,
+    "name": "9410647 - Angels Gate, CA"
+  },
+  "ajxa2": {
+    "lat": 58.287,
+    "lng": -134.398,
+    "name": "Juneau AJ Dock, AK"
+  },
+  "akxa2": {
+    "lat": 54.132,
+    "lng": -165.782,
+    "name": "Akutan, AK"
+  },
+  "alia2": {
+    "lat": 56.898,
+    "lng": -154.247,
+    "name": "9457804 - Alitak, AK"
+  },
+  "alxn6": {
+    "lat": 44.331,
+    "lng": -75.934,
+    "name": "8311062 - Alexandria Bay, NY"
+  },
+  "amaa2": {
+    "lat": 58.916,
+    "lng": -151.952,
+    "name": "East Amatuli Island Light, AK"
+  },
+  "amrl1": {
+    "lat": 29.45,
+    "lng": -91.338,
+    "name": "8764227 - LAWMA, Amerada Pass, LA"
+  },
+  "anmn6": {
+    "lat": 42.018,
+    "lng": -73.917,
+    "name": "Field Station, Hudson River Reserve, NY"
+  },
+  "anpt2": {
+    "lat": 27.837,
+    "lng": -97.039,
+    "name": "8775241 - Aransas, Aransas Pass, TX"
+  },
+  "anrn6": {
+    "lat": 42.027,
+    "lng": -73.926,
+    "name": "Tivoli South Bay, Hudson River Reserve, NY"
+  },
+  "anta2": {
+    "lat": 61.238,
+    "lng": -149.89,
+    "name": "9455920 - Anchorage, AK"
+  },
+  "anvc1": {
+    "lat": 38.915,
+    "lng": -123.711,
+    "name": "9416841 - Arena Cove, CA"
+  },
+  "apam2": {
+    "lat": 38.983,
+    "lng": -76.479,
+    "name": "8575512 - Annapolis, MD"
+  },
+  "apcf1": {
+    "lat": 29.724,
+    "lng": -84.98,
+    "name": "8728690 - Apalachicola, FL"
+  },
+  "apma2": {
+    "lat": 61.238,
+    "lng": -149.887,
+    "name": "Anchorage Port, AK"
+  },
+  "apnm4": {
+    "lat": 45.06,
+    "lng": -83.424,
+    "name": "Alpena Harbor Light, Alpena, MI"
+  },
+  "apqf1": {
+    "lat": 29.786,
+    "lng": -84.875,
+    "name": "East Bay Bottom, Apalachicola Reserve, FL"
+  },
+  "aprp7": {
+    "lat": 13.444,
+    "lng": 144.657,
+    "name": "1630000 - Apra Harbor, Guam"
+  },
+  "apxa2": {
+    "lat": 59.77,
+    "lng": -151.868,
+    "name": "Anchor Point, Kachemak Bay Reserve, AK"
+  },
+  "apxf1": {
+    "lat": 29.769,
+    "lng": -84.881,
+    "name": "East Bay, Apalachicola Reserve, FL"
+  },
+  "arop4": {
+    "lat": 18.48,
+    "lng": -66.702,
+    "name": "9757809 - Arecibo, PR"
+  },
+  "arpf1": {
+    "lat": 28.433,
+    "lng": -82.667,
+    "name": "APK - Aripeka, FL"
+  },
+  "asbo1": {
+    "lat": 41.918,
+    "lng": -80.796,
+    "name": "Ashtabula Lighthouse"
+  },
+  "asto3": {
+    "lat": 46.207,
+    "lng": -123.768,
+    "name": "9439040 - Astoria, OR"
+  },
+  "atgm1": {
+    "lat": 44.392,
+    "lng": -68.204,
+    "name": "8413320 - Bar Harbor, ME"
+  },
+  "atka2": {
+    "lat": 52.232,
+    "lng": -174.173,
+    "name": "9461710 - Atka, AK"
+  },
+  "auga2": {
+    "lat": 59.378,
+    "lng": -153.348,
+    "name": "Augustine Island, AK"
+  },
+  "awrt2": {
+    "lat": 28.227,
+    "lng": -96.796,
+    "name": "8774230 - Aransas Wildlife Refuge, TX"
+  },
+  "babt2": {
+    "lat": 27.297,
+    "lng": -97.405,
+    "name": "8776604 - Baffin Bay, TX"
+  },
+  "barn6": {
+    "lat": 42.345,
+    "lng": -79.595,
+    "name": "Barcelona Harbor, NY"
+  },
+  "batn6": {
+    "lat": 40.701,
+    "lng": -74.014,
+    "name": "8518750 - The Battery, NY"
+  },
+  "baxc1": {
+    "lat": 33.766,
+    "lng": -118.24,
+    "name": "9410691 - Los Angeles Badger Avenue Bridge"
+  },
+  "bcfm2": {
+    "lat": 39.205,
+    "lng": -76.524,
+    "name": "Brewerton Channel Range Front Light (8574831)"
+  },
+  "bctp1": {
+    "lat": 42.153,
+    "lng": -80.131,
+    "name": "Beach 2 Tower"
+  },
+  "bdrn4": {
+    "lat": 40.082,
+    "lng": -74.87,
+    "name": "8539094 - Burlington, Delaware River, NJ"
+  },
+  "bdsp1": {
+    "lat": 39.98,
+    "lng": -75.079,
+    "name": "8546252 - Bridesburg, PA"
+  },
+  "bdvf1": {
+    "lat": 25.478,
+    "lng": -80.989,
+    "name": "Broad River, FL"
+  },
+  "bdxc1": {
+    "lat": 38.317,
+    "lng": -123.071,
+    "name": "Bodega, CA"
+  },
+  "beis1": {
+    "lat": 32.504,
+    "lng": -80.325,
+    "name": "Edisto Island, ACE Basin Reserve, SC"
+  },
+  "bepb6": {
+    "lat": 32.374,
+    "lng": -64.701,
+    "name": "2695540 - Bermuda, St. Georges Island, BM"
+  },
+  "bexa2": {
+    "lat": 60.791,
+    "lng": -161.749,
+    "name": "Bethel, AK"
+  },
+  "bftn7": {
+    "lat": 34.717,
+    "lng": -76.671,
+    "name": "8656483 - Beaufort, NC"
+  },
+  "bgxn3": {
+    "lat": 43.059,
+    "lng": -70.83,
+    "name": "Greenland, Great Bay Reserve, NH"
+  },
+  "bhbm3": {
+    "lat": 42.355,
+    "lng": -71.05,
+    "name": "8443970 - Boston, MA"
+  },
+  "bhri3": {
+    "lat": 41.646,
+    "lng": -87.147,
+    "name": "Burns Harbor, IN"
+  },
+  "bigm4": {
+    "lat": 46.827,
+    "lng": -87.727,
+    "name": "Big Bay, MI"
+  },
+  "bilw3": {
+    "lat": 46.722,
+    "lng": -92.064,
+    "name": "Barker's Island, Lake Superior Reserve, WI"
+  },
+  "bism2": {
+    "lat": 38.22,
+    "lng": -76.039,
+    "name": "8571421 - Bishops Head, MD"
+  },
+  "bkbf1": {
+    "lat": 30.192,
+    "lng": -81.692,
+    "name": "8720357 -  I-295 Buckman Bridge, St Johns River, FL"
+  },
+  "bktl1": {
+    "lat": 30.19,
+    "lng": -93.301,
+    "name": "8767961 - Lake Charles Bulk Terminal, LA"
+  },
+  "bkyf1": {
+    "lat": 25.119,
+    "lng": -80.834,
+    "name": "Buoy Key, FL"
+  },
+  "blia2": {
+    "lat": 60.839,
+    "lng": -146.884,
+    "name": "Bligh Reef Light, AK"
+  },
+  "blif1": {
+    "lat": 30.393,
+    "lng": -81.523,
+    "name": "8720233 - Blount Island Command, St Johns River, FL"
+  },
+  "blta2": {
+    "lat": 58.455,
+    "lng": -135.889,
+    "name": "Bartlett Cove AK"
+  },
+  "bltm2": {
+    "lat": 39.267,
+    "lng": -76.579,
+    "name": "8574680 - Baltimore, MD"
+  },
+  "bltm3": {
+    "lat": 41.704,
+    "lng": -71.174,
+    "name": "8447387 - Borden Flats Light at Fall River, MA"
+  },
+  "bmtw1": {
+    "lat": 47.562,
+    "lng": -122.626,
+    "name": "9445958 - Bremerton, WA"
+  },
+  "bnkf1": {
+    "lat": 25.087,
+    "lng": -80.519,
+    "name": "Butternut Key, FL"
+  },
+  "bobf1": {
+    "lat": 25.027,
+    "lng": -80.681,
+    "name": "Bob Allen, FL"
+  },
+  "brhc3": {
+    "lat": 41.174,
+    "lng": -73.181,
+    "name": "8467150 - Bridgeport, CT"
+  },
+  "brim2": {
+    "lat": 38.781,
+    "lng": -76.714,
+    "name": "Railroad, Chesapeake Bay Reserve, MD"
+  },
+  "brnd1": {
+    "lat": 38.987,
+    "lng": -75.113,
+    "name": "8555889 - Brandywine Shoal Light, DE"
+  },
+  "bsbm4": {
+    "lat": 44.055,
+    "lng": -86.514,
+    "name": "Big Sable Point, MI"
+  },
+  "bsca1": {
+    "lat": 30.329,
+    "lng": -87.829,
+    "name": "Bon Secour, AL"
+  },
+  "bskf1": {
+    "lat": 25.266,
+    "lng": -81.162,
+    "name": "Big Sable Creek, FL"
+  },
+  "bslm2": {
+    "lat": 38.781,
+    "lng": -76.708,
+    "name": "Jug Bay, Chesapeake Bay Reserve, MD"
+  },
+  "bthd1": {
+    "lat": 38.537,
+    "lng": -75.046,
+    "name": "Bethany Beach, DE"
+  },
+  "bufn6": {
+    "lat": 42.878,
+    "lng": -78.89,
+    "name": "9063020 - Buffalo, NY"
+  },
+  "burl1": {
+    "lat": 28.906,
+    "lng": -89.429,
+    "name": "Southwest Pass, LA"
+  },
+  "buzm3": {
+    "lat": 41.397,
+    "lng": -71.033,
+    "name": "Buzzards Bay, MA"
+  },
+  "bvqw1": {
+    "lat": 48.496,
+    "lng": -122.501,
+    "name": "Bayview Channel, Padilla Bay Reserve, WA"
+  },
+  "bwsf1": {
+    "lat": 25.178,
+    "lng": -80.438,
+    "name": "Blackwater Sound, FL"
+  },
+  "bygl1": {
+    "lat": 29.789,
+    "lng": -90.42,
+    "name": "8762482 - West Bank 1, Bayou Gauche, LA"
+  },
+  "bzbm3": {
+    "lat": 41.524,
+    "lng": -70.671,
+    "name": "8447930 - Woods Hole, MA"
+  },
+  "bzst2": {
+    "lat": 26.067,
+    "lng": -97.155,
+    "name": "8779749 - SPI Brazos Santiago, TX "
+  },
+  "camm2": {
+    "lat": 38.574,
+    "lng": -76.069,
+    "name": "8571892 - Cambridge, MD"
+  },
+  "canf1": {
+    "lat": 25.422,
+    "lng": -80.942,
+    "name": "Cane Patch, FL"
+  },
+  "capl1": {
+    "lat": 29.768,
+    "lng": -93.343,
+    "name": "8768094 - Calcasieu Pass, LA"
+  },
+  "carl1": {
+    "lat": 29.933,
+    "lng": -90.135,
+    "name": "8761955 - Carrollton, LA "
+  },
+  "casm1": {
+    "lat": 43.656,
+    "lng": -70.246,
+    "name": "8418150 - Portland, ME"
+  },
+  "cavn6": {
+    "lat": 44.13,
+    "lng": -76.333,
+    "name": "9052000 - Cape Vincent, NY"
+  },
+  "cblo1": {
+    "lat": 41.981,
+    "lng": -80.556,
+    "name": "Conneaut Breakwater Light, OH"
+  },
+  "cbrw3": {
+    "lat": 45.198,
+    "lng": -87.36,
+    "name": "Chambers Island, WI"
+  },
+  "cdcf1": {
+    "lat": 27.754,
+    "lng": -82.514,
+    "name": "8726504 - Cut D Channel Inbound Rear Range"
+  },
+  "cdea2": {
+    "lat": 56.001,
+    "lng": -134.136,
+    "name": "Cape Decision, AK"
+  },
+  "cdrf1": {
+    "lat": 29.136,
+    "lng": -83.029,
+    "name": "Cedar Key, FL"
+  },
+  "cdxa2": {
+    "lat": 56.001,
+    "lng": -134.136,
+    "name": "Cape Decision MXAK, AK"
+  },
+  "cecc1": {
+    "lat": 41.746,
+    "lng": -124.184,
+    "name": "9419750 - Crescent City, CA"
+  },
+  "cfwm1": {
+    "lat": 44.657,
+    "lng": -67.205,
+    "name": " 8411060 - Cutler Farris Wharf, ME"
+  },
+  "cgcl1": {
+    "lat": 28.791,
+    "lng": -89.056,
+    "name": "Cognac"
+  },
+  "chao3": {
+    "lat": 43.351,
+    "lng": -124.337,
+    "name": "9432780 - Charleston, OR"
+  },
+  "chav3": {
+    "lat": 18.335,
+    "lng": -64.92,
+    "name": "9751639 - Charlotte Amalie, VI"
+  },
+  "chbv2": {
+    "lat": 37.032,
+    "lng": -76.083,
+    "name": "8638901 - Chesapeake Bay Bridge Tunnel, VA"
+  },
+  "chcm2": {
+    "lat": 39.527,
+    "lng": -75.81,
+    "name": "8573927 - Chesapeake City, MD"
+  },
+  "chds1": {
+    "lat": 33.661,
+    "lng": -82.199,
+    "name": "Strom Thurmond Dam, SC"
+  },
+  "chii2": {
+    "lat": 41.916,
+    "lng": -87.572,
+    "name": "Harrison-Dever Crib, Chicago, IL"
+  },
+  "chqo3": {
+    "lat": 43.282,
+    "lng": -124.32,
+    "name": "Winchester Arm, South Slough Reserve, OR"
+  },
+  "chsv3": {
+    "lat": 17.748,
+    "lng": -64.699,
+    "name": "9751364 - Christiansted Harbor, St. Croix, VI"
+  },
+  "chtm3": {
+    "lat": 41.688,
+    "lng": -69.95,
+    "name": "8447435 - Chatham, MA"
+  },
+  "chts1": {
+    "lat": 32.781,
+    "lng": -79.924,
+    "name": "8665530 - Charleston, Cooper River Entrance, SC"
+  },
+  "chyv2": {
+    "lat": 36.926,
+    "lng": -76.007,
+    "name": "8638999 - Cape Henry, VA"
+  },
+  "chyw1": {
+    "lat": 48.863,
+    "lng": -122.759,
+    "name": "9449424 - Cherry Point, WA"
+  },
+  "ckyf1": {
+    "lat": 29.134,
+    "lng": -83.031,
+    "name": "8727520 - Cedar Key, FL"
+  },
+  "clbp4": {
+    "lat": 18.301,
+    "lng": -65.302,
+    "name": "9752235 - Culebra, PR"
+  },
+  "clkn7": {
+    "lat": 34.611,
+    "lng": -76.528,
+    "name": "Cape Lookout, NC"
+  },
+  "clsm4": {
+    "lat": 42.471,
+    "lng": -82.877,
+    "name": "St. Clair Shores, MI"
+  },
+  "cman4": {
+    "lat": 38.968,
+    "lng": -74.96,
+    "name": "8536110 - Cape May, NJ"
+  },
+  "cmln3": {
+    "lat": 43.07,
+    "lng": -70.7,
+    "name": "Coastal Marine Lab, New Castle, NH"
+  },
+  "cmpo1": {
+    "lat": 41.547,
+    "lng": -83.015,
+    "name": "Camp Perry, OH"
+  },
+  "cmti2": {
+    "lat": 41.73,
+    "lng": -87.538,
+    "name": "9087044 - Calumet Harbor, IL"
+  },
+  "cnbf1": {
+    "lat": 25.702,
+    "lng": -81.186,
+    "name": "Cannon Bay, FL"
+  },
+  "cndo1": {
+    "lat": 41.542,
+    "lng": -81.637,
+    "name": "9063063 - Cleveland, OH"
+  },
+  "cnii2": {
+    "lat": 41.856,
+    "lng": -87.609,
+    "name": "Northerly Isle, IL"
+  },
+  "covm2": {
+    "lat": 38.402,
+    "lng": -76.385,
+    "name": "8577018 - Cove Point LNG Pier, MD"
+  },
+  "coxa2": {
+    "lat": 60.542,
+    "lng": -145.766,
+    "name": "Cordova, AK"
+  },
+  "cpmw1": {
+    "lat": 48.86,
+    "lng": -122.756,
+    "name": "9449419 - Cherry Point South Dock Met, WA"
+  },
+  "cpnw1": {
+    "lat": 48.863,
+    "lng": -122.758,
+    "name": "9449427 - Cherry Point North Dock Met"
+  },
+  "cpsa2": {
+    "lat": 56.397,
+    "lng": -160.142,
+    "name": "Cape Seniavin, AK"
+  },
+  "cptr1": {
+    "lat": 41.717,
+    "lng": -71.345,
+    "name": "8452944 - Conimicut Light, RI"
+  },
+  "cpvm2": {
+    "lat": 38.995,
+    "lng": -76.388,
+    "name": "8575437 - Chesapeake Bay Bridge Visibility, MD"
+  },
+  "cpxa2": {
+    "lat": 53.843,
+    "lng": -166.583,
+    "name": "Captains Bay"
+  },
+  "cpxc1": {
+    "lat": 35.17,
+    "lng": -120.741,
+    "name": "Cal Poly Pier, CA"
+  },
+  "cquc1": {
+    "lat": 38.066,
+    "lng": -122.23,
+    "name": "Carquinez, CA"
+  },
+  "crga2": {
+    "lat": 55.474,
+    "lng": -133.136,
+    "name": "Craig, AK"
+  },
+  "crta1": {
+    "lat": 30.308,
+    "lng": -88.14,
+    "name": "Cedar Point, AL"
+  },
+  "crva2": {
+    "lat": 60.558,
+    "lng": -145.752,
+    "name": "9454050 - Cordova, AK"
+  },
+  "cryv2": {
+    "lat": 36.888,
+    "lng": -76.338,
+    "name": "8638595 - South Craney Island, VA"
+  },
+  "csim3": {
+    "lat": 42.341,
+    "lng": -71.012,
+    "name": "Castle Island (NOS) 8444069"
+  },
+  "cspa2": {
+    "lat": 58.199,
+    "lng": -136.64,
+    "name": "Cape Spencer, AK"
+  },
+  "csxa2": {
+    "lat": 58.199,
+    "lng": -136.641,
+    "name": "Cape Spencer WX"
+  },
+  "cvqv2": {
+    "lat": 37.571,
+    "lng": -76.884,
+    "name": "Sweethall Pier, Chesapeake Bay Reserve, VA"
+  },
+  "cwaf1": {
+    "lat": 25.297,
+    "lng": -81.013,
+    "name": "Clear Water Pass, FL "
+  },
+  "cwbf1": {
+    "lat": 27.978,
+    "lng": -82.832,
+    "name": "8726724 - Clearwater Beach, FL"
+  },
+  "cwci": {
+    "lat": 47.334,
+    "lng": -85.833,
+    "name": "Caribou Island"
+  },
+  "cwqo3": {
+    "lat": 43.338,
+    "lng": -124.321,
+    "name": "Charleston Bridge, South Slough Reserve, OR"
+  },
+  "cwqt2": {
+    "lat": 28.132,
+    "lng": -97.034,
+    "name": "Copano Bay East, Mission-Aransas Reserve, TX"
+  },
+  "cwwt2": {
+    "lat": 28.084,
+    "lng": -97.201,
+    "name": "Copano Bay West, Mission-Aransas Reserve, TX"
+  },
+  "cxhn6": {
+    "lat": 42.353,
+    "lng": -73.795,
+    "name": "Coxsackie, Hudson River (8518979)"
+  },
+  "cxlm2": {
+    "lat": 38.679,
+    "lng": -76.174,
+    "name": "Cooperative Oxford Laboratory"
+  },
+  "cygm4": {
+    "lat": 45.658,
+    "lng": -84.464,
+    "name": "Cheboygan Marina, MI"
+  },
+  "dbln6": {
+    "lat": 42.493,
+    "lng": -79.353,
+    "name": "Dunkirk, NY"
+  },
+  "dbqs1": {
+    "lat": 33.36,
+    "lng": -79.167,
+    "name": "Debidue Creek, North Inlet-Winyah Bay, SC"
+  },
+  "dcxa2": {
+    "lat": 58.351,
+    "lng": -154.127,
+    "name": "Devils Cove"
+  },
+  "deld1": {
+    "lat": 39.582,
+    "lng": -75.589,
+    "name": "8551762 - Delaware City, DE"
+  },
+  "desw1": {
+    "lat": 47.675,
+    "lng": -124.485,
+    "name": "Destruction Island, WA"
+  },
+  "dhxa2": {
+    "lat": 70.222,
+    "lng": -148.419,
+    "name": "Deadhorse, AK"
+  },
+  "dila1": {
+    "lat": 30.25,
+    "lng": -88.075,
+    "name": "8735180 - Dauphin Island, AL "
+  },
+  "disw3": {
+    "lat": 47.079,
+    "lng": -90.728,
+    "name": "Devils Island, WI"
+  },
+  "dkkf1": {
+    "lat": 25.18,
+    "lng": -80.49,
+    "name": "Duck Key, FL"
+  },
+  "dmsf1": {
+    "lat": 30.387,
+    "lng": -81.559,
+    "name": "8720219 - Dames Point, FL"
+  },
+  "domv2": {
+    "lat": 36.962,
+    "lng": -76.424,
+    "name": "8638511 - Dominion Terminal Associates, VA"
+  },
+  "dpha1": {
+    "lat": 30.251,
+    "lng": -88.078,
+    "name": "Dauphin Island Sea Lab, AL"
+  },
+  "dpla2": {
+    "lat": 53.884,
+    "lng": -166.531,
+    "name": "Dutch Harbor APL, AK"
+  },
+  "dpoa2": {
+    "lat": 53.903,
+    "lng": -166.528,
+    "name": "Dutch Harbor Port Office, AK"
+  },
+  "dpxa2": {
+    "lat": 53.889,
+    "lng": -166.542,
+    "name": "Dutch Harbor Pilot Station, AK"
+  },
+  "dpxc1": {
+    "lat": 38.056,
+    "lng": -122.264,
+    "name": "9415141 - Davis Point, San Pablo Bay, CA"
+  },
+  "drsd1": {
+    "lat": 39.089,
+    "lng": -75.437,
+    "name": "Saint Jones River, Delaware Reserve, DE"
+  },
+  "dtlm4": {
+    "lat": 45.993,
+    "lng": -83.898,
+    "name": "9075099 - De Tour Village, MI"
+  },
+  "dukn7": {
+    "lat": 36.184,
+    "lng": -75.746,
+    "name": " 8651370 - Duck Pier, NC "
+  },
+  "dulm5": {
+    "lat": 46.776,
+    "lng": -92.092,
+    "name": "9099064 - Duluth, MN"
+  },
+  "eazc1": {
+    "lat": 36.846,
+    "lng": -121.754,
+    "name": "Azevedo Pond, Elkhorn Slough Reserve, CA"
+  },
+  "ebef1": {
+    "lat": 27.923,
+    "lng": -82.421,
+    "name": "8726674 - East Bay, FL"
+  },
+  "ebsw1": {
+    "lat": 47.602,
+    "lng": -122.338,
+    "name": "9447130 - Seattle, WA"
+  },
+  "efla1": {
+    "lat": 30.429,
+    "lng": -88.01,
+    "name": "8734536 - E Range Front Light Visibility, AL"
+  },
+  "ehsc1": {
+    "lat": 36.835,
+    "lng": -121.738,
+    "name": "North Marsh, Elkhorn Slough Reserve, CA"
+  },
+  "einl1": {
+    "lat": 29.373,
+    "lng": -91.384,
+    "name": "8764314 - North of Eugene Island, LA"
+  },
+  "elfa2": {
+    "lat": 58.193,
+    "lng": -136.347,
+    "name": "9452634 - Elfin Cove, AK"
+  },
+  "elqc1": {
+    "lat": 36.818,
+    "lng": -121.739,
+    "name": "South Marsh, Elkhorn Slough Reserve, CA"
+  },
+  "elxa2": {
+    "lat": 59.798,
+    "lng": -144.6,
+    "name": "Cape St. Elias"
+  },
+  "elxc1": {
+    "lat": 36.815,
+    "lng": -121.738,
+    "name": "Caspian Weather Station, Elkhorn Slough Reserve, CA"
+  },
+  "emat2": {
+    "lat": 28.71,
+    "lng": -95.914,
+    "name": "8773146 - Matagorda City, TX"
+  },
+  "eptt2": {
+    "lat": 29.481,
+    "lng": -94.917,
+    "name": "8771013 - Eagle Point, TX"
+  },
+  "erep1": {
+    "lat": 42.172,
+    "lng": -80.098,
+    "name": "9063038 - Erie"
+  },
+  "eroa2": {
+    "lat": 58.971,
+    "lng": -135.221,
+    "name": "Eldred Rock, AK"
+  },
+  "erxa2": {
+    "lat": 58.971,
+    "lng": -135.221,
+    "name": "Eldred Rock MXAK, AK"
+  },
+  "espp4": {
+    "lat": 18.094,
+    "lng": -65.471,
+    "name": "9752695 - Esperanza, Viequez Island, PR"
+  },
+  "evmc1": {
+    "lat": 36.811,
+    "lng": -121.779,
+    "name": "Vierra Mouth, Elkhorn Slough Reserve, CA"
+  },
+  "faio1": {
+    "lat": 41.764,
+    "lng": -81.281,
+    "name": "9063053 - Fairport, OH"
+  },
+  "fbis1": {
+    "lat": 32.684,
+    "lng": -79.887,
+    "name": "Folly Island, SC"
+  },
+  "fffc1": {
+    "lat": 38.195,
+    "lng": -122.033,
+    "name": "First Mallard, San Francisco Bay Reserve, CA"
+  },
+  "ffia2": {
+    "lat": 57.27,
+    "lng": -133.631,
+    "name": "Five Fingers, AK"
+  },
+  "fila2": {
+    "lat": 59.331,
+    "lng": -151.995,
+    "name": "Flat Island Light, AK"
+  },
+  "flqn6": {
+    "lat": 42.354,
+    "lng": -73.789,
+    "name": "Ferry Landing, Hudson River Reserve, NY"
+  },
+  "fmns1": {
+    "lat": 32.753,
+    "lng": -79.899,
+    "name": "Fort Johnson, ACE Basin Reserve, SC"
+  },
+  "fmrf1": {
+    "lat": 26.647,
+    "lng": -81.871,
+    "name": "8725520 - Fort Myers, FL"
+  },
+  "foxr1": {
+    "lat": 41.807,
+    "lng": -71.401,
+    "name": "8454000 - Providence, RI"
+  },
+  "fpkg1": {
+    "lat": 32.035,
+    "lng": -80.903,
+    "name": "8670870 - Fort Pulaski, GA"
+  },
+  "fpst2": {
+    "lat": 28.936,
+    "lng": -95.294,
+    "name": "8772471 - Freeport SPIP, TX"
+  },
+  "fptm4": {
+    "lat": 45.619,
+    "lng": -86.66,
+    "name": "Fairport, MI"
+  },
+  "fpxc1": {
+    "lat": 37.807,
+    "lng": -122.466,
+    "name": "Fort Point, CA"
+  },
+  "frcb6": {
+    "lat": 32.37,
+    "lng": -64.695,
+    "name": "2695535 - Bermuda, Ferry Reach Channel, BM"
+  },
+  "frdf1": {
+    "lat": 30.675,
+    "lng": -81.465,
+    "name": "8720030 - Fernandina Beach, FL"
+  },
+  "frdp4": {
+    "lat": 18.335,
+    "lng": -65.631,
+    "name": "9753216 - Fajardo, PR"
+  },
+  "frdw1": {
+    "lat": 48.545,
+    "lng": -123.012,
+    "name": "9449880 - Friday Harbor, WA"
+  },
+  "frfn7": {
+    "lat": 36.19,
+    "lng": -75.739,
+    "name": "USACE-CHL Field Research Facility, Duck, NC"
+  },
+  "frma1": {
+    "lat": 30.234,
+    "lng": -87.994,
+    "name": "8734383 - Fort Morgan, AL"
+  },
+  "frvm3": {
+    "lat": 41.704,
+    "lng": -71.164,
+    "name": "8447386 - Fall River, MA"
+  },
+  "frwl1": {
+    "lat": 29.552,
+    "lng": -92.305,
+    "name": "8766072 - Freshwater Canal Locks, LA"
+  },
+  "frxm3": {
+    "lat": 41.696,
+    "lng": -71.18,
+    "name": "8447412 - Fall River Visibility, MA"
+  },
+  "fskm2": {
+    "lat": 39.219,
+    "lng": -76.528,
+    "name": "8574728 - Francis Scott Key Bridge, MD"
+  },
+  "fsti2": {
+    "lat": 41.976,
+    "lng": -87.648,
+    "name": "Foster Ave., Chicago, IL"
+  },
+  "ftgm4": {
+    "lat": 43.007,
+    "lng": -82.422,
+    "name": "9014098 - Fort Gratiot, MI"
+  },
+  "ftpc1": {
+    "lat": 37.806,
+    "lng": -122.466,
+    "name": "9414290 - San Francisco, CA"
+  },
+  "fwyf1": {
+    "lat": 25.591,
+    "lng": -80.097,
+    "name": "Fowey Rock, FL"
+  },
+  "gbcm6": {
+    "lat": 30.384,
+    "lng": -88.436,
+    "name": "Bayou Cumbest, Grand Bay Reserve, MS"
+  },
+  "gbhm6": {
+    "lat": 30.418,
+    "lng": -88.405,
+    "name": "Bayou Heron, Grand Bay Reserve, MS"
+  },
+  "gbif1": {
+    "lat": 25.378,
+    "lng": -81.029,
+    "name": "Gunboat Island, FL"
+  },
+  "gbqn3": {
+    "lat": 43.08,
+    "lng": -70.934,
+    "name": "Lamprey River, Great Bay Reserve, NH"
+  },
+  "gbtf1": {
+    "lat": 25.167,
+    "lng": -80.801,
+    "name": "Garfield Bight, FL"
+  },
+  "gbww3": {
+    "lat": 44.538,
+    "lng": -88.003,
+    "name": "9087077 - Green Bay West, WI"
+  },
+  "gbxa2": {
+    "lat": 63.777,
+    "lng": -171.715,
+    "name": "Gambell, AK"
+  },
+  "gdmm5": {
+    "lat": 47.749,
+    "lng": -90.341,
+    "name": "9099090 - Grand Marais, MN"
+  },
+  "gdqm6": {
+    "lat": 30.357,
+    "lng": -88.463,
+    "name": "Bangs Lake, Grand Bay Reserve, MS"
+  },
+  "gdxm6": {
+    "lat": 30.359,
+    "lng": -88.42,
+    "name": "Crooked Bayou, Grand Bay Reserve, MS"
+  },
+  "gelo1": {
+    "lat": 41.859,
+    "lng": -80.975,
+    "name": "Geneva on the Lake Light, OH"
+  },
+  "gexa2": {
+    "lat": 58.213,
+    "lng": -136.381,
+    "name": "George Island, Alaska"
+  },
+  "gggc1": {
+    "lat": 38.016,
+    "lng": -122.509,
+    "name": "Gallinas Creek, San Francisco Bay Reserve, CA"
+  },
+  "gisl1": {
+    "lat": 29.265,
+    "lng": -89.958,
+    "name": "8761724 - Grand Isle, LA"
+  },
+  "gixa2": {
+    "lat": 55.446,
+    "lng": -131.881,
+    "name": "Guard Island, AK"
+  },
+  "gnjt2": {
+    "lat": 29.357,
+    "lng": -94.725,
+    "name": "8771341 - Galveston Bay Entrance (North Jetty), TX"
+  },
+  "gpxa2": {
+    "lat": 58.062,
+    "lng": -134.051,
+    "name": "Grave Point, AK"
+  },
+  "grbl1": {
+    "lat": 29.101,
+    "lng": -89.978,
+    "name": "Grand Isle Blocks, LA / CSI09"
+  },
+  "grcm4": {
+    "lat": 47.121,
+    "lng": -88.545,
+    "name": "GLRC Observatory"
+  },
+  "grim4": {
+    "lat": 46.721,
+    "lng": -87.412,
+    "name": "Granite Island, MI"
+  },
+  "grmm4": {
+    "lat": 46.684,
+    "lng": -85.972,
+    "name": "Grand Marais, MI"
+  },
+  "grrt2": {
+    "lat": 29.302,
+    "lng": -94.896,
+    "name": "8771486 - Galveston RR Bridge, TX"
+  },
+  "gslm4": {
+    "lat": 44.018,
+    "lng": -83.537,
+    "name": "Gravelly Shoal Light, MI"
+  },
+  "gtlm4": {
+    "lat": 45.211,
+    "lng": -85.55,
+    "name": "Grand Traverse Light, MI"
+  },
+  "gtot2": {
+    "lat": 29.311,
+    "lng": -94.792,
+    "name": "8771450 - Galveston Pier 21, TX"
+  },
+  "gtqf1": {
+    "lat": 29.667,
+    "lng": -81.257,
+    "name": "Pellicer Creek, Guan Tolomato Matanzas Reserve, FL"
+  },
+  "gtrm4": {
+    "lat": 47.179,
+    "lng": -88.241,
+    "name": "Superior Grand Traverse Bay, MI"
+  },
+  "gtxf1": {
+    "lat": 29.658,
+    "lng": -81.233,
+    "name": "Pellicer Creek, Guana Tolomato Matanzas Reserve, FL"
+  },
+  "guxa2": {
+    "lat": 58.408,
+    "lng": -135.726,
+    "name": "Gustavus Dock, AK"
+  },
+  "haxa2": {
+    "lat": 59.234,
+    "lng": -135.442,
+    "name": "Haines Harbor, AK"
+  },
+  "hbmn6": {
+    "lat": 41.314,
+    "lng": -73.985,
+    "name": "Bear Mountain, Hudson River Reserve, NY"
+  },
+  "hbxc1": {
+    "lat": 40.777,
+    "lng": -124.197,
+    "name": "Humboldt, CA"
+  },
+  "hbyc1": {
+    "lat": 40.767,
+    "lng": -124.217,
+    "name": "9418767 - North Spit, CA"
+  },
+  "hcef1": {
+    "lat": 25.254,
+    "lng": -80.444,
+    "name": "Highway Creek, FL"
+  },
+  "hcgn7": {
+    "lat": 35.209,
+    "lng": -75.704,
+    "name": "8654467 - USCG Station Hatteras, NC"
+  },
+  "hhlo1": {
+    "lat": 41.401,
+    "lng": -82.545,
+    "name": "Huron Harbor Light, OH"
+  },
+  "hist2": {
+    "lat": 29.595,
+    "lng": -94.39,
+    "name": "8770808 - High Island, TX"
+  },
+  "hivt2": {
+    "lat": 27.844,
+    "lng": -97.07,
+    "name": "8775223 - Harbor Island Visibility, TX"
+  },
+  "hlnm4": {
+    "lat": 42.773,
+    "lng": -86.213,
+    "name": "9087031 - Holland, MI"
+  },
+  "hmra2": {
+    "lat": 59.601,
+    "lng": -151.41,
+    "name": "Homer, Kachemak Bay Reserve, AK"
+  },
+  "hmsa2": {
+    "lat": 59.602,
+    "lng": -151.417,
+    "name": "Homer Spit, AK"
+  },
+  "hrbm4": {
+    "lat": 43.846,
+    "lng": -82.643,
+    "name": "9075014 - Harbor Beach, MI"
+  },
+  "href1": {
+    "lat": 25.424,
+    "lng": -81.06,
+    "name": "Harney River, FL"
+  },
+  "hrrh1": {
+    "lat": 21.431,
+    "lng": -157.815,
+    "name": "Lono Circle, He'eia Reserve, HI"
+  },
+  "huqn6": {
+    "lat": 42.036,
+    "lng": -73.925,
+    "name": "Tivoli North, Hudson River Reserve, NY"
+  },
+  "hwwh1": {
+    "lat": 21.438,
+    "lng": -157.811,
+    "name": "Wai 2, He'eia Reserve, HI"
+  },
+  "icac1": {
+    "lat": 34.008,
+    "lng": -118.5,
+    "name": "9410840 - Santa Monica Pier"
+  },
+  "icya2": {
+    "lat": 59.923,
+    "lng": -141.359,
+    "name": "Icy Bay, AK"
+  },
+  "iloh1": {
+    "lat": 19.73,
+    "lng": -155.056,
+    "name": "1617760 - Hilo, HI"
+  },
+  "iosn3": {
+    "lat": 42.967,
+    "lng": -70.623,
+    "name": "Isle of Shoals, NH"
+  },
+  "irdt2": {
+    "lat": 27.48,
+    "lng": -97.322,
+    "name": "8776139 - South Bird Island, TX"
+  },
+  "itka2": {
+    "lat": 57.052,
+    "lng": -135.342,
+    "name": "9451600 - Sitka, AK"
+  },
+  "jaki2": {
+    "lat": 41.781,
+    "lng": -87.573,
+    "name": "63rd St., Chicago, IL"
+  },
+  "jbyf1": {
+    "lat": 25.224,
+    "lng": -80.541,
+    "name": "Joe Bay, FL"
+  },
+  "jcqn4": {
+    "lat": 39.548,
+    "lng": -74.461,
+    "name": "Chestnut Neck, Jacques Cousteau Reserve, NJ"
+  },
+  "jcrn4": {
+    "lat": 39.535,
+    "lng": -74.464,
+    "name": "Nacote Creek, Jacques Cousteau Reserve, NJ"
+  },
+  "jctn4": {
+    "lat": 39.508,
+    "lng": -74.338,
+    "name": "Buoy 126, Jacques Cousteau Reserve, NJ"
+  },
+  "jkyf1": {
+    "lat": 25.053,
+    "lng": -80.904,
+    "name": "Johnson Key, FL"
+  },
+  "jlxa2": {
+    "lat": 58.298,
+    "lng": -134.405,
+    "name": "Juneau Library, AK"
+  },
+  "jmla2": {
+    "lat": 58.286,
+    "lng": -134.39,
+    "name": "Juneau AML Dock"
+  },
+  "jmpn7": {
+    "lat": 34.213,
+    "lng": -77.786,
+    "name": "8658163 - Wrightsville Beach, NC"
+  },
+  "jnea2": {
+    "lat": 58.298,
+    "lng": -134.411,
+    "name": "9452210 - Juneau, AK"
+  },
+  "jnga2": {
+    "lat": 58.291,
+    "lng": -134.394,
+    "name": "Juneau ANG Dock, AK"
+  },
+  "jobp4": {
+    "lat": 17.944,
+    "lng": -66.238,
+    "name": "Station 9, Jobos Bay Reserve, PR"
+  },
+  "joqp4": {
+    "lat": 17.93,
+    "lng": -66.211,
+    "name": "Station 20, Jobos Bay Reserve, PR"
+  },
+  "joxp4": {
+    "lat": 17.956,
+    "lng": -66.223,
+    "name": "Jobos Bay Weather, Jobos Bay Reserve, PR"
+  },
+  "jxuf1": {
+    "lat": 30.354,
+    "lng": -81.612,
+    "name": "8720245 - Jacksonville University, FL"
+  },
+  "kata1": {
+    "lat": 30.258,
+    "lng": -88.213,
+    "name": "Katrina Cut, AL"
+  },
+  "katp": {
+    "lat": 27.195,
+    "lng": -90.027,
+    "name": "Green Canyon 787 / Atlantis (BP)"
+  },
+  "kbbf": {
+    "lat": 28.058,
+    "lng": -95.872,
+    "name": "Brazos 133B (Apache Corp)"
+  },
+  "kbmg1": {
+    "lat": 30.777,
+    "lng": -81.487,
+    "name": "8679598 - Kings Bay MSF Pier, GA"
+  },
+  "kbqx": {
+    "lat": 28.314,
+    "lng": -95.62,
+    "name": "Brazos 538 (Transco)"
+  },
+  "kcha2": {
+    "lat": 59.602,
+    "lng": -151.409,
+    "name": "Homer Dolphin Deep, Kachemak Bay Reserve, AK"
+  },
+  "kcvw": {
+    "lat": 29.784,
+    "lng": -93.3,
+    "name": "Cameron, LA (PHI)"
+  },
+  "kcxa2": {
+    "lat": 55.057,
+    "lng": -162.326,
+    "name": "King Cove"
+  },
+  "kdaa2": {
+    "lat": 57.731,
+    "lng": -152.511,
+    "name": "9457292 - Kodiak Island, AK"
+  },
+  "kdlp": {
+    "lat": 29.121,
+    "lng": -89.547,
+    "name": "West Delta 27A (AngloSuisse Offshore Partners)"
+  },
+  "keca2": {
+    "lat": 55.331,
+    "lng": -131.625,
+    "name": "9450460 - Ketchikan, AK"
+  },
+  "kehc": {
+    "lat": 28.429,
+    "lng": -92.878,
+    "name": "East Cameron 278B (Apache Corp)"
+  },
+  "keir": {
+    "lat": 28.634,
+    "lng": -91.489,
+    "name": "Eugene Island 215 (McMoRan Oil & Gas)"
+  },
+  "kemk": {
+    "lat": 27.819,
+    "lng": -94.323,
+    "name": "East Breaks 165 (SandRidge Energy)"
+  },
+  "kexa2": {
+    "lat": 55.352,
+    "lng": -131.684,
+    "name": "Ketchikan Harbor, AK"
+  },
+  "kgbk": {
+    "lat": 27.204,
+    "lng": -92.203,
+    "name": "Garden Banks 783 / Magnolia TLP (W&T Offshore)"
+  },
+  "kgca2": {
+    "lat": 55.062,
+    "lng": -162.327,
+    "name": "9459881 - King Cove, AK"
+  },
+  "kghb": {
+    "lat": 27.84,
+    "lng": -91.988,
+    "name": "Garden Banks 172 / Salsa (Shell E & P)"
+  },
+  "kgna": {
+    "lat": 47.745,
+    "lng": -90.346,
+    "name": "Bay of Grand Marais, MN"
+  },
+  "kgry": {
+    "lat": 27.625,
+    "lng": -90.441,
+    "name": "Green Canyon 338 / Front Runner (Murphy E&P)"
+  },
+  "kgul": {
+    "lat": 27.304,
+    "lng": -93.538,
+    "name": "Garden Banks 668 / Gunnison Spar (Anadarko)"
+  },
+  "kgvw": {
+    "lat": 29.13,
+    "lng": -94.55,
+    "name": "Galveston 209A (Arena Offshore)"
+  },
+  "kgvx": {
+    "lat": 28.577,
+    "lng": -94.976,
+    "name": "Galveston 424C (Nippon Oil Exploration)"
+  },
+  "kgxa2": {
+    "lat": 57.777,
+    "lng": -152.425,
+    "name": "Kodiak Gull Island, AK"
+  },
+  "khhv": {
+    "lat": 26.939,
+    "lng": -94.689,
+    "name": "Alaminos Canyon 25 / Hoover-Diana (ExxonMobile Corp)"
+  },
+  "khqi": {
+    "lat": 27.934,
+    "lng": -93.669,
+    "name": "High Island 376B (Apache)"
+  },
+  "kikt": {
+    "lat": 28.521,
+    "lng": -88.289,
+    "name": "Mississippi Canyon 474 / Na Kika FPU (BP)"
+  },
+  "kipn": {
+    "lat": 28.085,
+    "lng": -87.986,
+    "name": "Mississippi Canyon 920 / Independence Hub (Anadarko / Enterprise)"
+  },
+  "klih1": {
+    "lat": 20.895,
+    "lng": -156.469,
+    "name": "1615680 - Kahului, Kahului Harbor, HI"
+  },
+  "klmw1": {
+    "lat": 45.983,
+    "lng": -122.835,
+    "name": "9440357 - TEMCO Kalama Terminal, WA"
+  },
+  "kmdj": {
+    "lat": 28.643,
+    "lng": -89.794,
+    "name": "Mississippi Canyon 311A (Apache Corp)"
+  },
+  "kmis": {
+    "lat": 29.296,
+    "lng": -88.842,
+    "name": "MP 140B  AWOS (Apache Corp)"
+  },
+  "kmxa2": {
+    "lat": 57.782,
+    "lng": -152.439,
+    "name": "Kodiak Matson Crane, AK"
+  },
+  "kmzg": {
+    "lat": 27.727,
+    "lng": -96.191,
+    "name": "Mustang Island A85A (Apache Corp)"
+  },
+  "knsw3": {
+    "lat": 42.589,
+    "lng": -87.809,
+    "name": "Kenosha Light, Kenosha, WI"
+  },
+  "knxa2": {
+    "lat": 60.552,
+    "lng": -151.274,
+    "name": "Kenai, AK"
+  },
+  "koza2": {
+    "lat": 66.901,
+    "lng": -162.589,
+    "name": "KOTZEBUE MXAK, AK"
+  },
+  "kp53": {
+    "lat": 46.417,
+    "lng": -86.65,
+    "name": "Munising Lake Shore, MI"
+  },
+  "kp58": {
+    "lat": 44.017,
+    "lng": -82.8,
+    "name": "Port Hope, MI"
+  },
+  "kp59": {
+    "lat": 47.467,
+    "lng": -87.883,
+    "name": "Copper Harbor, MI"
+  },
+  "kptn6": {
+    "lat": 40.811,
+    "lng": -73.765,
+    "name": "8516945 - Kings Point, NY"
+  },
+  "kptv2": {
+    "lat": 37.165,
+    "lng": -75.988,
+    "name": "8632200 - Kiptopeke, VA"
+  },
+  "kscf": {
+    "lat": 29.116,
+    "lng": -91.871,
+    "name": "South Marsh 268A (Apache Corp)"
+  },
+  "kspr": {
+    "lat": 28.599,
+    "lng": -91.206,
+    "name": "Ship Shoal 178 (Apache Corp)"
+  },
+  "ksqe": {
+    "lat": 28.083,
+    "lng": -90.819,
+    "name": "Ship Shoal 354 (Fieldwood Energy)"
+  },
+  "ktnf1": {
+    "lat": 29.819,
+    "lng": -83.593,
+    "name": "Keaton Beach, FL"
+  },
+  "kvaf": {
+    "lat": 27.354,
+    "lng": -94.625,
+    "name": "East Breaks 643 / Boomvang Spar (Anadarko)"
+  },
+  "kvbs": {
+    "lat": 29.478,
+    "lng": -93.638,
+    "name": "Sabine Pass 13B (Nippon Oil Exploration)"
+  },
+  "kvky": {
+    "lat": 29.248,
+    "lng": -88.441,
+    "name": "Main Pass 289C (Apache Corp.)"
+  },
+  "kvoa": {
+    "lat": 29.229,
+    "lng": -87.781,
+    "name": "Viosca Knoll 786 / Petronius (Chevron)"
+  },
+  "kvqt": {
+    "lat": 28.27,
+    "lng": -92.264,
+    "name": "Vermillon 331A  (ERT / Helix)"
+  },
+  "kwhh1": {
+    "lat": 20.037,
+    "lng": -155.829,
+    "name": "1617433 - Kawaihae, HI"
+  },
+  "kwjp8": {
+    "lat": 8.732,
+    "lng": 167.734,
+    "name": "1820000 - Kwajalein, Marshall Islands"
+  },
+  "kwnw3": {
+    "lat": 44.465,
+    "lng": -87.496,
+    "name": "9087069 - Kewaunee MET, WI"
+  },
+  "kxih": {
+    "lat": 29.18,
+    "lng": -94.521,
+    "name": "High Island 179A AWOS (Apache Corp)"
+  },
+  "kxpy": {
+    "lat": 29.123,
+    "lng": -90.202,
+    "name": "Port Fourchon Heliport (Era Helicopters)"
+  },
+  "kywf1": {
+    "lat": 24.556,
+    "lng": -81.808,
+    "name": "8724580 - Key West, FL"
+  },
+  "lamv3": {
+    "lat": 18.318,
+    "lng": -64.724,
+    "name": "9751381 - Lameshur Bay, St John, VI"
+  },
+  "lapw1": {
+    "lat": 47.913,
+    "lng": -124.637,
+    "name": "9442396 - La Push, WA"
+  },
+  "lbsf1": {
+    "lat": 25.214,
+    "lng": -80.432,
+    "name": "Little Blackwater, FL"
+  },
+  "lcll1": {
+    "lat": 30.224,
+    "lng": -93.222,
+    "name": "8767816 - Lake Charles, LA"
+  },
+  "lcna2": {
+    "lat": 56.058,
+    "lng": -132.69,
+    "name": "Lincoln Island, AK"
+  },
+  "ldlc3": {
+    "lat": 41.306,
+    "lng": -72.077,
+    "name": "New London Ledge Light, New London Harbor, CT"
+  },
+  "ldtm4": {
+    "lat": 43.947,
+    "lng": -86.441,
+    "name": "9087023 - Ludington, MI"
+  },
+  "lixa2": {
+    "lat": 58.54,
+    "lng": -135.047,
+    "name": "Little Island, AK"
+  },
+  "ljac1": {
+    "lat": 32.867,
+    "lng": -117.257,
+    "name": "9410230 - La Jolla, CA"
+  },
+  "ljpc1": {
+    "lat": 32.867,
+    "lng": -117.257,
+    "name": "La Jolla, CA (073)"
+  },
+  "lkwf1": {
+    "lat": 26.613,
+    "lng": -80.034,
+    "name": "8722670 - Lake Worth Pier, FL"
+  },
+  "lmbv4": {
+    "lat": 19.594,
+    "lng": -96.379,
+    "name": "La Mancha Beach, Mexico"
+  },
+  "lmdf1": {
+    "lat": 25.176,
+    "lng": -80.633,
+    "name": "Little Madeira, FL"
+  },
+  "lmfs1": {
+    "lat": 34.107,
+    "lng": -81.271,
+    "name": "Lake Murray SC"
+  },
+  "lmrf1": {
+    "lat": 25.556,
+    "lng": -81.169,
+    "name": "Lostmans River, FL"
+  },
+  "lmss1": {
+    "lat": 33.552,
+    "lng": -80.501,
+    "name": "Lake Marion, SC"
+  },
+  "lndc1": {
+    "lat": 37.795,
+    "lng": -122.281,
+    "name": "9414763 - Oakland Berth 67, CA"
+  },
+  "lonf1": {
+    "lat": 24.844,
+    "lng": -80.864,
+    "name": "Long Key, FL"
+  },
+  "lopl1": {
+    "lat": 28.885,
+    "lng": -90.025,
+    "name": "Louisiana Offshore Oil Port, LA"
+  },
+  "lopw1": {
+    "lat": 46.106,
+    "lng": -122.954,
+    "name": "9440422 - Longview, WA"
+  },
+  "loro1": {
+    "lat": 41.481,
+    "lng": -82.195,
+    "name": "Lorain Harbor, OH"
+  },
+  "lpnm4": {
+    "lat": 45.063,
+    "lng": -83.429,
+    "name": "9075065 - Alpena, MI "
+  },
+  "lpwa2": {
+    "lat": 56.388,
+    "lng": -134.637,
+    "name": "Little Port Walter, AK"
+  },
+  "lqat2": {
+    "lat": 27.881,
+    "lng": -97.285,
+    "name": "La Quinta, TX  MET (8775132)"
+  },
+  "lrif1": {
+    "lat": 25.284,
+    "lng": -80.894,
+    "name": "Lane River, FL "
+  },
+  "lrkf1": {
+    "lat": 24.982,
+    "lng": -80.826,
+    "name": "Little Rabbit Key, FL"
+  },
+  "lsnf1": {
+    "lat": 25.235,
+    "lng": -80.457,
+    "name": "Long Sound, FL"
+  },
+  "ltbv3": {
+    "lat": 17.695,
+    "lng": -64.754,
+    "name": "9751401 - Lime Tree Bay, St. Croix, VI"
+  },
+  "ltjf1": {
+    "lat": 30.379,
+    "lng": -81.446,
+    "name": "8720228 - Little Jetties, St. Johns River, FL"
+  },
+  "ltqm2": {
+    "lat": 39.451,
+    "lng": -76.275,
+    "name": "Otter Point Creek, Chesapeake Bay Reserve, MD"
+  },
+  "ltrm4": {
+    "lat": 46.486,
+    "lng": -84.302,
+    "name": "9076033 - Little Rapids, MI"
+  },
+  "luit2": {
+    "lat": 29.076,
+    "lng": -95.122,
+    "name": "8771972 - San Luis Pass, TX"
+  },
+  "luml1": {
+    "lat": 29.255,
+    "lng": -90.664,
+    "name": "LUMCON Marine Center, LA"
+  },
+  "lwsd1": {
+    "lat": 38.783,
+    "lng": -75.119,
+    "name": "8557380 - Lewes, DE"
+  },
+  "lwtv2": {
+    "lat": 37.995,
+    "lng": -76.465,
+    "name": "8635750 - Lewisetta, VA"
+  },
+  "macm4": {
+    "lat": 45.777,
+    "lng": -84.721,
+    "name": "9075080 - Mackinaw City, MI"
+  },
+  "maqt2": {
+    "lat": 27.98,
+    "lng": -97.029,
+    "name": "Aransas Bay, Mission-Aransas Reserve, TX"
+  },
+  "maxt2": {
+    "lat": 28.132,
+    "lng": -97.034,
+    "name": "Copano East, Mission-Aransas Reserve, TX"
+  },
+  "mbet2": {
+    "lat": 28.422,
+    "lng": -96.327,
+    "name": "8773767 - Matagorda Bay Entrance Channel, TX"
+  },
+  "mbin7": {
+    "lat": 34.091,
+    "lng": -77.868,
+    "name": "Masonboro Island, NC (MSNB_S)"
+  },
+  "mbla1": {
+    "lat": 30.437,
+    "lng": -88.011,
+    "name": "Middle Bay Lighthouse, AL"
+  },
+  "mbnn7": {
+    "lat": 34.171,
+    "lng": -77.824,
+    "name": "Masonboro Island, NC (MSNB_N)"
+  },
+  "mbpa1": {
+    "lat": 30.527,
+    "lng": -88.086,
+    "name": "8736163 - Middle Bay Port, Mobile Bay, AL"
+  },
+  "mbrm4": {
+    "lat": 42.975,
+    "lng": -82.419,
+    "name": "9014090 - Mouth of the Black River, MI "
+  },
+  "mbxc1": {
+    "lat": 35.371,
+    "lng": -120.859,
+    "name": "Morro Bay - BM1 T-Pier, CA"
+  },
+  "mcga1": {
+    "lat": 30.649,
+    "lng": -88.058,
+    "name": "8736897 - Coast Guard Sector Mobile, AL"
+  },
+  "mcgm4": {
+    "lat": 46.546,
+    "lng": -87.379,
+    "name": "9099018 - Marquette C.G., MI"
+  },
+  "mcyi3": {
+    "lat": 41.729,
+    "lng": -86.912,
+    "name": "Michigan City Harbor Entrance Light, Michigan City, IN"
+  },
+  "mdkf1": {
+    "lat": 25.289,
+    "lng": -80.396,
+    "name": "Middle Key, FL"
+  },
+  "mdrm1": {
+    "lat": 43.969,
+    "lng": -68.128,
+    "name": "Mt. Desert Rock, ME"
+  },
+  "mdxa2": {
+    "lat": 59.438,
+    "lng": -146.327,
+    "name": "Middleton Island, AK"
+  },
+  "meem4": {
+    "lat": 44.251,
+    "lng": -86.342,
+    "name": "Manistee Harbor, MI"
+  },
+  "meyc1": {
+    "lat": 36.605,
+    "lng": -121.889,
+    "name": "9413450 - Monterey, CA"
+  },
+  "mgip4": {
+    "lat": 17.97,
+    "lng": -67.046,
+    "name": "9759110 - Magueyes Islands, PR"
+  },
+  "mgpt2": {
+    "lat": 29.682,
+    "lng": -94.985,
+    "name": "8770613 - Morgans Point, TX"
+  },
+  "mgzp4": {
+    "lat": 18.218,
+    "lng": -67.159,
+    "name": "9759394 - Mayaguez, PR"
+  },
+  "mhbt2": {
+    "lat": 27.828,
+    "lng": -97.201,
+    "name": "8775283 - Enbridge, Ingleside, TX"
+  },
+  "mhpa1": {
+    "lat": 30.667,
+    "lng": -87.936,
+    "name": "Meaher Park, AL"
+  },
+  "mhrn6": {
+    "lat": 40.641,
+    "lng": -74.162,
+    "name": "8519532 - Mariners Harbor, NY"
+  },
+  "mism1": {
+    "lat": 43.784,
+    "lng": -68.855,
+    "name": "Matinicus Rock, ME"
+  },
+  "misp4": {
+    "lat": 18.09,
+    "lng": -67.939,
+    "name": "9759938 - Mona Island, PR"
+  },
+  "mist2": {
+    "lat": 27.838,
+    "lng": -97.05,
+    "name": "Ship Channel, Mission-Aransas Reserve, TX"
+  },
+  "mixa2": {
+    "lat": 57.837,
+    "lng": -133.814,
+    "name": "Midway Island, AK"
+  },
+  "mkgm4": {
+    "lat": 43.228,
+    "lng": -86.339,
+    "name": "Muskegon CG Station, Muskegon, MI"
+  },
+  "mlsc1": {
+    "lat": 36.802,
+    "lng": -121.791,
+    "name": "Moss Landing, South Harbor, CA"
+  },
+  "mlww3": {
+    "lat": 43.005,
+    "lng": -87.884,
+    "name": "Port of Milwaukee"
+  },
+  "mnbf1": {
+    "lat": 25.239,
+    "lng": -80.422,
+    "name": "Manatee Bay, FL"
+  },
+  "mnmm4": {
+    "lat": 45.096,
+    "lng": -87.59,
+    "name": "9087088 - Menominee, MI"
+  },
+  "mnpv2": {
+    "lat": 36.778,
+    "lng": -76.302,
+    "name": "8639348 - Money Point, VA"
+  },
+  "mokh1": {
+    "lat": 21.433,
+    "lng": -157.79,
+    "name": "1612480 - Mokuoloe, HI"
+  },
+  "mqmt2": {
+    "lat": 28.138,
+    "lng": -96.829,
+    "name": "Mesquite Bay, Mission-Aransas Reserve, TX"
+  },
+  "mrcp1": {
+    "lat": 39.809,
+    "lng": -75.415,
+    "name": "8540433 - Marcus Hook, PA"
+  },
+  "mrho1": {
+    "lat": 41.544,
+    "lng": -82.731,
+    "name": "9063079 - Marblehead, OH"
+  },
+  "mrka2": {
+    "lat": 61.081,
+    "lng": -146.653,
+    "name": "Middle Rock Light, AK"
+  },
+  "mrna2": {
+    "lat": 58.198,
+    "lng": -134.257,
+    "name": "Marmion Island, AK"
+  },
+  "mros1": {
+    "lat": 33.656,
+    "lng": -78.916,
+    "name": "8661070 - Springmaid Pier, SC"
+  },
+  "mrsl1": {
+    "lat": 29.441,
+    "lng": -92.061,
+    "name": "Marsh Island, LA / CSI03"
+  },
+  "mrya2": {
+    "lat": 55.099,
+    "lng": -131.182,
+    "name": "Mary Island, AK"
+  },
+  "mtbf1": {
+    "lat": 27.661,
+    "lng": -82.594,
+    "name": "8726412 - Middle Tampa Bay, FL"
+  },
+  "mtkn6": {
+    "lat": 41.048,
+    "lng": -71.959,
+    "name": "8510560 - Montauk, NY"
+  },
+  "mukf1": {
+    "lat": 25.106,
+    "lng": -80.942,
+    "name": "Murray Key, FL"
+  },
+  "mvxa2": {
+    "lat": 58.364,
+    "lng": -134.606,
+    "name": "Mendenhall Valley, AK"
+  },
+  "mwqt2": {
+    "lat": 27.838,
+    "lng": -97.05,
+    "name": "Ship Channel, Mission-Aransas Reserve, TX"
+  },
+  "mxxa2": {
+    "lat": 58.301,
+    "lng": -134.425,
+    "name": "MXAK Office, AK"
+  },
+  "mypf1": {
+    "lat": 30.398,
+    "lng": -81.428,
+    "name": "8720218 - Mayport (Bar Pilots Dock), FL"
+  },
+  "myxc1": {
+    "lat": 36.605,
+    "lng": -121.889,
+    "name": "Monterrey, CA"
+  },
+  "mzxc1": {
+    "lat": 38.035,
+    "lng": -122.125,
+    "name": "9415102 - Martinez-Amorco Pier, CA"
+  },
+  "nabm4": {
+    "lat": 46.087,
+    "lng": -85.444,
+    "name": "Naubinway, MI"
+  },
+  "naqr1": {
+    "lat": 41.578,
+    "lng": -71.321,
+    "name": "T-Wharf Bottom, Narragansett Bay Reserve, RI"
+  },
+  "naxr1": {
+    "lat": 41.637,
+    "lng": -71.339,
+    "name": "Potters Cove, Narragansett Bay Reserve, RI"
+  },
+  "nbgm3": {
+    "lat": 41.624,
+    "lng": -70.906,
+    "name": "8447627 - New Bedford, Barrier Gate, MA"
+  },
+  "nblp1": {
+    "lat": 40.137,
+    "lng": -74.752,
+    "name": "8548989 - Newbold, PA"
+  },
+  "ncdv2": {
+    "lat": 38.32,
+    "lng": -77.037,
+    "name": "8635027 - Dahlgren, VA"
+  },
+  "ncht2": {
+    "lat": 29.726,
+    "lng": -95.266,
+    "name": "8770777 - Manchester, TX "
+  },
+  "neaw1": {
+    "lat": 48.367,
+    "lng": -124.614,
+    "name": "9443090 - Neah Bay, WA"
+  },
+  "nfdf1": {
+    "lat": 30.4,
+    "lng": -81.627,
+    "name": "8720215 - Navy Fuel Depot, St Johns River, FL"
+  },
+  "nian6": {
+    "lat": 43.077,
+    "lng": -79.014,
+    "name": "9063012 - Niagara Intake, NY"
+  },
+  "niqs1": {
+    "lat": 33.349,
+    "lng": -79.189,
+    "name": "Oyster Landing, North Inlet-Winyah Bay Reserve, SC"
+  },
+  "niws1": {
+    "lat": 33.349,
+    "lng": -79.189,
+    "name": "Oyster Landing, North Inlet-Winyah Bay Reserve, SC"
+  },
+  "njlc1": {
+    "lat": 40.769,
+    "lng": -124.239,
+    "name": "9418768 - North Jetty Landing, CA"
+  },
+  "nkla2": {
+    "lat": 52.972,
+    "lng": -168.855,
+    "name": "Nikolski White Alice"
+  },
+  "nkta2": {
+    "lat": 60.683,
+    "lng": -151.399,
+    "name": "9455760 - Nikiski, AK"
+  },
+  "nkxa2": {
+    "lat": 58.255,
+    "lng": -134.945,
+    "name": "Naked Island, AK"
+  },
+  "nlhc3": {
+    "lat": 41.372,
+    "lng": -72.096,
+    "name": "8461490 - New London, CT"
+  },
+  "nlnc3": {
+    "lat": 41.361,
+    "lng": -72.09,
+    "name": "8461490 - New London, CT"
+  },
+  "nlxa2": {
+    "lat": 56.005,
+    "lng": -161.177,
+    "name": "Nelson Lagoon, AK"
+  },
+  "nmta2": {
+    "lat": 64.5,
+    "lng": -165.43,
+    "name": "9468756 - Nome, Norton Sound, AK"
+  },
+  "nmxa2": {
+    "lat": 64.494,
+    "lng": -165.44,
+    "name": "Nome, AK"
+  },
+  "noqn7": {
+    "lat": 34.156,
+    "lng": -77.85,
+    "name": "Research Creek, North Carolina Reserve, NC"
+  },
+  "noxn7": {
+    "lat": 34.155,
+    "lng": -77.851,
+    "name": "Research Creek, North Carolina Reserve, NC"
+  },
+  "npdw3": {
+    "lat": 45.291,
+    "lng": -86.977,
+    "name": "Northport Pier at Death's Door, WI"
+  },
+  "npqc1": {
+    "lat": 32.601,
+    "lng": -117.116,
+    "name": "South Bay, Tijuana River Reserve, CA"
+  },
+  "npqn6": {
+    "lat": 41.832,
+    "lng": -73.942,
+    "name": "Norrie Point, Hudson River Reserve, NY"
+  },
+  "npxn6": {
+    "lat": 41.831,
+    "lng": -73.942,
+    "name": "Norrie Point, Hudson River Reserve, NY"
+  },
+  "nrep1": {
+    "lat": 42.258,
+    "lng": -79.792,
+    "name": "Northeast Marina, PA"
+  },
+  "nrrf1": {
+    "lat": 25.338,
+    "lng": -80.911,
+    "name": "North River, FL"
+  },
+  "nstp6": {
+    "lat": -14.28,
+    "lng": -170.688,
+    "name": "1770000 - Pago Pago, American Samoa"
+  },
+  "nsxa2": {
+    "lat": 60.74,
+    "lng": -151.311,
+    "name": "Nikiski, AK"
+  },
+  "ntbc1": {
+    "lat": 34.405,
+    "lng": -119.692,
+    "name": "9411340 - Santa Barbara, CA "
+  },
+  "ntkm3": {
+    "lat": 41.285,
+    "lng": -70.096,
+    "name": "8449130 - Nantucket Island, MA"
+  },
+  "nwcl1": {
+    "lat": 30.027,
+    "lng": -90.113,
+    "name": "8761927 - New Canal Station, LA"
+  },
+  "nwhc3": {
+    "lat": 41.283,
+    "lng": -72.908,
+    "name": "8465705 - New Haven, CT"
+  },
+  "nwpo3": {
+    "lat": 44.613,
+    "lng": -124.067,
+    "name": "Newport, OR"
+  },
+  "nwpr1": {
+    "lat": 41.504,
+    "lng": -71.326,
+    "name": "8452660 - Newport, RI"
+  },
+  "nwwh1": {
+    "lat": 21.954,
+    "lng": -159.353,
+    "name": "1611400 - Nawiliwili, HI"
+  },
+  "obgn6": {
+    "lat": 44.702,
+    "lng": -75.494,
+    "name": "8311030 - Ogdensburg, NY"
+  },
+  "obla1": {
+    "lat": 30.705,
+    "lng": -88.04,
+    "name": "8737048 - Mobile State Docks, AL"
+  },
+  "obxc1": {
+    "lat": 37.804,
+    "lng": -122.341,
+    "name": "9414797 - Oakland Berth 38, CA"
+  },
+  "ocim2": {
+    "lat": 38.328,
+    "lng": -75.091,
+    "name": "8570283 - Ocean City Inlet, MD"
+  },
+  "ocsm2": {
+    "lat": 38.338,
+    "lng": -75.07,
+    "name": "Ocean City, MD"
+  },
+  "ohbc1": {
+    "lat": 33.72,
+    "lng": -118.273,
+    "name": "9410660 - Los Angeles, CA"
+  },
+  "oksi2": {
+    "lat": 41.912,
+    "lng": -87.624,
+    "name": "Oak St., Chicago, IL"
+  },
+  "okxc1": {
+    "lat": 37.811,
+    "lng": -122.333,
+    "name": "9414776 - Oakland Berth 34, CA"
+  },
+  "olcn6": {
+    "lat": 43.341,
+    "lng": -78.719,
+    "name": "Olcott Harbor, NY"
+  },
+  "olsa2": {
+    "lat": 52.94,
+    "lng": -168.87,
+    "name": "9462450 - Nikolski, AK"
+  },
+  "omhc1": {
+    "lat": 37.801,
+    "lng": -122.33,
+    "name": "9414769 - Oakland Middle Harbor Met, CA"
+  },
+  "oouh1": {
+    "lat": 21.303,
+    "lng": -157.865,
+    "name": "1612340 - Honolulu, HI"
+  },
+  "optf1": {
+    "lat": 27.858,
+    "lng": -82.553,
+    "name": "8726607 - Old Port Tampa, FL"
+  },
+  "orin7": {
+    "lat": 35.796,
+    "lng": -75.548,
+    "name": "8652587 - Oregon Inlet Marina, NC"
+  },
+  "osgn6": {
+    "lat": 43.464,
+    "lng": -76.511,
+    "name": "9052030 - Oswego, NY"
+  },
+  "otnm4": {
+    "lat": 46.87,
+    "lng": -89.33,
+    "name": "Ontonagon, MI"
+  },
+  "ovia2": {
+    "lat": 59.44,
+    "lng": -151.72,
+    "name": "9455500 - Seldovia, AK"
+  },
+  "owdo1": {
+    "lat": 41.365,
+    "lng": -82.505,
+    "name": "Darrow Road, Old Woman Creek Reserve, OH"
+  },
+  "owmo1": {
+    "lat": 41.247,
+    "lng": -82.454,
+    "name": "Western Reserve, Old Woman Creek Reserve, OH"
+  },
+  "owqo1": {
+    "lat": 41.382,
+    "lng": -82.514,
+    "name": "Lower Estuary, Old Woman Creek Reserve, OH"
+  },
+  "owso1": {
+    "lat": 41.383,
+    "lng": -82.514,
+    "name": "State Road 6, Old Woman Creek Reserve, OH"
+  },
+  "owwo1": {
+    "lat": 41.373,
+    "lng": -82.513,
+    "name": "Railroad, Old Woman Creek Reserve, OH"
+  },
+  "owxo1": {
+    "lat": 41.378,
+    "lng": -82.508,
+    "name": "Old Woman Creek, Old Woman Creek Reserve, OH"
+  },
+  "pacf1": {
+    "lat": 30.15,
+    "lng": -85.664,
+    "name": "8729108 - Panama City, FL"
+  },
+  "pact2": {
+    "lat": 27.634,
+    "lng": -97.237,
+    "name": "8775792 - Packery Channel, TX"
+  },
+  "paua2": {
+    "lat": 57.124,
+    "lng": -170.271,
+    "name": "ST PAUL MXAK, AK"
+  },
+  "paxa2": {
+    "lat": 58.159,
+    "lng": -134.178,
+    "name": "Point Arden, AK"
+  },
+  "pbfw1": {
+    "lat": 48.464,
+    "lng": -122.469,
+    "name": "Padilla Bay Farm, Padilla Bay Reserve, WA"
+  },
+  "pbjw1": {
+    "lat": 48.518,
+    "lng": -122.474,
+    "name": "Joe Leary Tidegate, Padilla Bay Reserve, WA"
+  },
+  "pblw1": {
+    "lat": 48.556,
+    "lng": -122.53,
+    "name": "Ploeg Channel, Padilla Bay Reserve, WA"
+  },
+  "pbpa2": {
+    "lat": 58.203,
+    "lng": -134.148,
+    "name": "Point Bishop, AK"
+  },
+  "pcbf1": {
+    "lat": 30.213,
+    "lng": -85.88,
+    "name": "8729210 - Panama City Beach, FL"
+  },
+  "pcgt2": {
+    "lat": 26.072,
+    "lng": -97.167,
+    "name": "8779748 - South Padre Island CGS, TX "
+  },
+  "pclf1": {
+    "lat": 30.404,
+    "lng": -87.211,
+    "name": "8729840 - Pensacola, FL"
+  },
+  "pclm4": {
+    "lat": 47.276,
+    "lng": -88.528,
+    "name": "Portage Canal, MI"
+  },
+  "pcnt2": {
+    "lat": 28.446,
+    "lng": -96.396,
+    "name": "8773701 - Port O'Connor, Matagorda Bay, TX"
+  },
+  "pcoc1": {
+    "lat": 38.056,
+    "lng": -122.039,
+    "name": "9415144 - Port Chicago, CA"
+  },
+  "pcxa2": {
+    "lat": 57.463,
+    "lng": -134.867,
+    "name": "Point Craven MXAK, AK"
+  },
+  "pdvr1": {
+    "lat": 41.611,
+    "lng": -71.41,
+    "name": "8454123 - Port of Davisville, RI"
+  },
+  "pegf1": {
+    "lat": 26.086,
+    "lng": -80.116,
+    "name": "8722956 - Port Everglades, FL"
+  },
+  "pexa2": {
+    "lat": 57.958,
+    "lng": -136.227,
+    "name": "Pelican MXAK, AK"
+  },
+  "pfdc1": {
+    "lat": 33.735,
+    "lng": -118.241,
+    "name": "9410666 - Los Angeles Pier 400, CA"
+  },
+  "pfxc1": {
+    "lat": 33.747,
+    "lng": -118.215,
+    "name": "9410670 - Los Angeles Pier F, CA"
+  },
+  "pgbp7": {
+    "lat": 13.428,
+    "lng": 144.796,
+    "name": "1631428 - Pago Bay, Guam"
+  },
+  "pgxa2": {
+    "lat": 57.016,
+    "lng": -134.618,
+    "name": "Point Gardner"
+  },
+  "phbp1": {
+    "lat": 39.933,
+    "lng": -75.142,
+    "name": "8545240 - Philadelphia, PA"
+  },
+  "pila2": {
+    "lat": 59.742,
+    "lng": -149.47,
+    "name": "Pilot Rock, AK"
+  },
+  "pill1": {
+    "lat": 29.179,
+    "lng": -89.259,
+    "name": "8760721 - Pilottown, LA"
+  },
+  "pilm4": {
+    "lat": 48.223,
+    "lng": -88.366,
+    "name": "Passage Island, MI"
+  },
+  "pkbw3": {
+    "lat": 46.672,
+    "lng": -92.136,
+    "name": "Pokegama Bay, Lake Superior Reserve, WI"
+  },
+  "pkyf1": {
+    "lat": 24.918,
+    "lng": -80.747,
+    "name": "Peterson Key, FL"
+  },
+  "plxa2": {
+    "lat": 56.247,
+    "lng": -134.647,
+    "name": "9451054 - Port Alexander, AK"
+  },
+  "pmaf1": {
+    "lat": 27.638,
+    "lng": -82.562,
+    "name": "8726384 - Port Manatee, FL"
+  },
+  "pmnt2": {
+    "lat": 26.559,
+    "lng": -97.424,
+    "name": "8778490 - Port Mansfield, TX"
+  },
+  "pngw3": {
+    "lat": 46.792,
+    "lng": -91.386,
+    "name": "Port Wing, WI"
+  },
+  "pnlm4": {
+    "lat": 45.968,
+    "lng": -85.869,
+    "name": "9087096 - Port Inland, MI"
+  },
+  "pnlm6": {
+    "lat": 30.368,
+    "lng": -88.563,
+    "name": "8741533 - Pascagoula NOAA Lab, MS"
+  },
+  "poro3": {
+    "lat": 42.739,
+    "lng": -124.498,
+    "name": "9431647 - Port Orford, OR"
+  },
+  "port2": {
+    "lat": 29.867,
+    "lng": -93.931,
+    "name": "8770475 - Port Arthur, TX"
+  },
+  "pota2": {
+    "lat": 61.056,
+    "lng": -146.697,
+    "name": "Potato Point, AK"
+  },
+  "pphh1": {
+    "lat": 21.409,
+    "lng": -157.823,
+    "name": "Papahana, He'eia Reserve, HI"
+  },
+  "ppta1": {
+    "lat": 30.279,
+    "lng": -87.556,
+    "name": "Perdido Pass, AL"
+  },
+  "pptm2": {
+    "lat": 38.134,
+    "lng": -76.533,
+    "name": "8578240 - Piney Point, MD"
+  },
+  "ppxa2": {
+    "lat": 60.801,
+    "lng": -148.357,
+    "name": "Point Pigot"
+  },
+  "ppxc1": {
+    "lat": 37.906,
+    "lng": -122.365,
+    "name": "9414847 - Point Potrero, Richmond, CA"
+  },
+  "prda2": {
+    "lat": 70.4,
+    "lng": -148.527,
+    "name": "9497645 - Prudhoe Bay, AK"
+  },
+  "prhh1": {
+    "lat": 21.367,
+    "lng": -157.964,
+    "name": "1612401 - Pearl Harbor, HI"
+  },
+  "prim4": {
+    "lat": 45.357,
+    "lng": -83.492,
+    "name": "Presque Isle Light, MI"
+  },
+  "prjc1": {
+    "lat": 33.733,
+    "lng": -118.186,
+    "name": "9410665 - Los Angeles Pier J, CA"
+  },
+  "prta2": {
+    "lat": 58.411,
+    "lng": -134.955,
+    "name": "Point Retreat, AK"
+  },
+  "prur1": {
+    "lat": 41.605,
+    "lng": -71.304,
+    "name": "8452314 - Sandy Point, Prudence Island, RI"
+  },
+  "pryc1": {
+    "lat": 37.996,
+    "lng": -122.977,
+    "name": "9415020 - Point Reyes, CA"
+  },
+  "psbc1": {
+    "lat": 38.04,
+    "lng": -121.887,
+    "name": "9415115 - Pittsburg (Suisun Bay), CA"
+  },
+  "psbm1": {
+    "lat": 44.905,
+    "lng": -66.983,
+    "name": "8410140 - Eastport, ME"
+  },
+  "pscm4": {
+    "lat": 43.42,
+    "lng": -82.54,
+    "name": "Port Sanilac, MI"
+  },
+  "pslc1": {
+    "lat": 35.169,
+    "lng": -120.754,
+    "name": "9412110 - Port San Luis, CA"
+  },
+  "pstl1": {
+    "lat": 28.932,
+    "lng": -89.407,
+    "name": "8760922 - Pilot's Station East, SW Pass, LA"
+  },
+  "pstn6": {
+    "lat": 42.691,
+    "lng": -79.048,
+    "name": "9063028 - Sturgeon Point, NY"
+  },
+  "psxc1": {
+    "lat": 33.768,
+    "lng": -118.226,
+    "name": "9410692 - Los Angeles Pier S"
+  },
+  "ptat2": {
+    "lat": 27.826,
+    "lng": -97.051,
+    "name": "Port Aransas, TX"
+  },
+  "ptaw1": {
+    "lat": 48.125,
+    "lng": -123.441,
+    "name": "9444090 - Port Angeles, WA"
+  },
+  "ptbm6": {
+    "lat": 30.213,
+    "lng": -88.505,
+    "name": "8741003 - Petit Bois Island, Port of Pascagoula, MS"
+  },
+  "ptcr1": {
+    "lat": 41.638,
+    "lng": -71.34,
+    "name": "8452951 - Potter Cove, Prudence Island, RI"
+  },
+  "ptfl1": {
+    "lat": 29.114,
+    "lng": -90.199,
+    "name": "8762075 - Port Fourchon, LA"
+  },
+  "ptgc1": {
+    "lat": 34.577,
+    "lng": -120.648,
+    "name": "Point Arguello, CA"
+  },
+  "ptim4": {
+    "lat": 46.485,
+    "lng": -84.631,
+    "name": "9099004 - Point Iroquois, MI"
+  },
+  "ptit2": {
+    "lat": 26.061,
+    "lng": -97.215,
+    "name": "8779770 - Port Isabel, TX"
+  },
+  "ptla2": {
+    "lat": 58.346,
+    "lng": -134.752,
+    "name": "Portland Island, AK"
+  },
+  "ptoa1": {
+    "lat": 30.671,
+    "lng": -88.031,
+    "name": "8737005 - Pinto Island, AL"
+  },
+  "ptrp4": {
+    "lat": 18.367,
+    "lng": -67.251,
+    "name": "Puntas Rincon, PR"
+  },
+  "ptww1": {
+    "lat": 48.111,
+    "lng": -122.76,
+    "name": "9444900 - Port Townsend, WA"
+  },
+  "pvdr1": {
+    "lat": 41.786,
+    "lng": -71.383,
+    "name": "8453662 - Providence Visibility, RI"
+  },
+  "pwaw3": {
+    "lat": 43.388,
+    "lng": -87.867,
+    "name": "Port Washington, WI"
+  },
+  "pxac1": {
+    "lat": 33.764,
+    "lng": -118.265,
+    "name": "9410690 - Los Angeles Berth 161, CA"
+  },
+  "pxoc1": {
+    "lat": 37.798,
+    "lng": -122.393,
+    "name": "9414311 - San Francisco Pier 1, CA"
+  },
+  "pxsc1": {
+    "lat": 37.803,
+    "lng": -122.397,
+    "name": "9414296 - Pier 17, San Francisco Bay, CA"
+  },
+  "qptr1": {
+    "lat": 41.586,
+    "lng": -71.407,
+    "name": "8454049 - Quonset Point, RI"
+  },
+  "rckm4": {
+    "lat": 46.264,
+    "lng": -84.191,
+    "name": "9076024 - Rock Cut, MI"
+  },
+  "rcmc1": {
+    "lat": 37.923,
+    "lng": -122.41,
+    "name": "9414863 - Richmond, CA"
+  },
+  "rcpt2": {
+    "lat": 28.024,
+    "lng": -97.048,
+    "name": "8774770 - Rockport, TX"
+  },
+  "rcrn6": {
+    "lat": 43.269,
+    "lng": -77.626,
+    "name": "9052058 - Rochester, NY"
+  },
+  "rdda2": {
+    "lat": 67.575,
+    "lng": -164.067,
+    "name": "9491094 - Red Dog Dock, AK"
+  },
+  "rdyd1": {
+    "lat": 39.558,
+    "lng": -75.572,
+    "name": "8551910 - Reedy Point, DE"
+  },
+  "rixa2": {
+    "lat": 58.177,
+    "lng": -135.052,
+    "name": "Rocky Island, AK"
+  },
+  "rkqf1": {
+    "lat": 26.027,
+    "lng": -81.734,
+    "name": "Lower Henderson Creek, Rookery Bay Reserve, FL"
+  },
+  "rkxf1": {
+    "lat": 26.05,
+    "lng": -81.701,
+    "name": "Upper Henderson Creek, Rookery Bay Reserve, FL"
+  },
+  "rlit2": {
+    "lat": 26.262,
+    "lng": -97.285,
+    "name": "8779280 - Realitos Peninsula, TX"
+  },
+  "rlot2": {
+    "lat": 29.515,
+    "lng": -94.513,
+    "name": "8770971 - Rollover Pass, TX"
+  },
+  "roam4": {
+    "lat": 47.867,
+    "lng": -89.315,
+    "name": "Rock of Ages, MI"
+  },
+  "robn4": {
+    "lat": 40.657,
+    "lng": -74.065,
+    "name": "8530973 - Robbins Reef, NJ"
+  },
+  "rplv2": {
+    "lat": 37.538,
+    "lng": -76.014,
+    "name": "8632837 - Rappahannock Light, VA"
+  },
+  "rprn6": {
+    "lat": 43.263,
+    "lng": -77.598,
+    "name": "Rochester Coast Guard, NY"
+  },
+  "rsjt2": {
+    "lat": 26.801,
+    "lng": -97.471,
+    "name": "8777812 - Rincon del San Jose, TX"
+  },
+  "rtat2": {
+    "lat": 27.84,
+    "lng": -97.072,
+    "name": "8775237 - Port Aransas, TX"
+  },
+  "rtyc1": {
+    "lat": 37.507,
+    "lng": -122.212,
+    "name": "9414523 - Redwood City, CA"
+  },
+  "ryec1": {
+    "lat": 38.184,
+    "lng": -122.014,
+    "name": "Second Mallard, San Francisco Bay Reserve, CA"
+  },
+  "sacv4": {
+    "lat": 19.174,
+    "lng": -96.093,
+    "name": "Sacrifice Island, Mexico"
+  },
+  "sanf1": {
+    "lat": 24.456,
+    "lng": -81.877,
+    "name": "Sand Key, FL"
+  },
+  "sapf1": {
+    "lat": 27.761,
+    "lng": -82.627,
+    "name": "8726520 - St. Petersburg, Tampa Bay, FL"
+  },
+  "saqg1": {
+    "lat": 31.418,
+    "lng": -81.296,
+    "name": "Lower Duplin, Sapelo Island Reserve, GA"
+  },
+  "sauf1": {
+    "lat": 29.857,
+    "lng": -81.264,
+    "name": "St. Augustine, FL"
+  },
+  "saxg1": {
+    "lat": 31.418,
+    "lng": -81.296,
+    "name": "Marsh Island, Sapelo Island Reserve, GA"
+  },
+  "sbeo3": {
+    "lat": 44.625,
+    "lng": -124.045,
+    "name": "9435380 - South Beach, OR"
+  },
+  "sbio1": {
+    "lat": 41.629,
+    "lng": -82.841,
+    "name": "South Bass Island, OH"
+  },
+  "sblm4": {
+    "lat": 43.81,
+    "lng": -83.72,
+    "name": "Saginaw Bay Light #1, MI"
+  },
+  "scld1": {
+    "lat": 39.085,
+    "lng": -75.461,
+    "name": "Scotton Landing, Delaware Reserve, DE"
+  },
+  "scqc1": {
+    "lat": 38.001,
+    "lng": -122.46,
+    "name": "China Camp, San Francisco Bay Reserve, CA"
+  },
+  "scxa2": {
+    "lat": 58.205,
+    "lng": -134.646,
+    "name": "Scull Island, AK"
+  },
+  "sdbc1": {
+    "lat": 32.714,
+    "lng": -117.174,
+    "name": "9410170 - San Diego, CA"
+  },
+  "sdhn4": {
+    "lat": 40.467,
+    "lng": -74.009,
+    "name": "8531680 - Sandy Hook, NJ"
+  },
+  "sdia2": {
+    "lat": 58.277,
+    "lng": -134.389,
+    "name": "South Douglas, AK"
+  },
+  "sdrt2": {
+    "lat": 28.407,
+    "lng": -96.712,
+    "name": "8773037 - Seadrift, TX"
+  },
+  "sefo3": {
+    "lat": 46.204,
+    "lng": -123.759,
+    "name": "SATURN Estuary Station #04 at Mott Basin"
+  },
+  "seim1": {
+    "lat": 43.08,
+    "lng": -70.742,
+    "name": "8419870 - Seavey Island, ME"
+  },
+  "seqa2": {
+    "lat": 59.441,
+    "lng": -151.721,
+    "name": "Seldovia Deep, Katchemak Bay Reserve, AK"
+  },
+  "seto3": {
+    "lat": 46.2,
+    "lng": -123.941,
+    "name": "SATURN Estuary Station #03"
+  },
+  "sfxc1": {
+    "lat": 38.2,
+    "lng": -122.026,
+    "name": "Rush Ranch, San Francisco Bay Reserve, CA"
+  },
+  "sgnt2": {
+    "lat": 28.771,
+    "lng": -95.617,
+    "name": "8772985 - Sargent, TX"
+  },
+  "sgnw3": {
+    "lat": 43.749,
+    "lng": -87.693,
+    "name": "Sheboygan, WI"
+  },
+  "sgof1": {
+    "lat": 29.408,
+    "lng": -84.858,
+    "name": "Tyndall AFB Tower C (N4), FL"
+  },
+  "sgxa2": {
+    "lat": 56.599,
+    "lng": -169.542,
+    "name": "ST GEORGE MXAK"
+  },
+  "shbl1": {
+    "lat": 29.868,
+    "lng": -89.673,
+    "name": "8761305 - Shell Beach, LA"
+  },
+  "shxa2": {
+    "lat": 57.055,
+    "lng": -135.349,
+    "name": "Sitka Harbor, AK"
+  },
+  "sipf1": {
+    "lat": 27.862,
+    "lng": -80.445,
+    "name": "Sebastian Inlet State Park North Jetty, FL"
+  },
+  "sisa2": {
+    "lat": 58.177,
+    "lng": -135.259,
+    "name": "Sisters Island, AK"
+  },
+  "sisw1": {
+    "lat": 48.321,
+    "lng": -122.831,
+    "name": "Smith Island, WA"
+  },
+  "sjnp4": {
+    "lat": 18.459,
+    "lng": -66.116,
+    "name": "9755371 - San Juan, La Puntilla, San Juan Bay, PR"
+  },
+  "sjom4": {
+    "lat": 42.098,
+    "lng": -86.494,
+    "name": "St. Joseph, MI"
+  },
+  "sjsn4": {
+    "lat": 39.305,
+    "lng": -75.377,
+    "name": "8537121 - Ship John Shoal, NJ"
+  },
+  "skcf1": {
+    "lat": 27.921,
+    "lng": -82.445,
+    "name": "8726671 - Sparkman Channel Entrance, FL"
+  },
+  "skda2": {
+    "lat": 59.449,
+    "lng": -135.331,
+    "name": "Skagway Ore Dock"
+  },
+  "skta2": {
+    "lat": 59.45,
+    "lng": -135.327,
+    "name": "9452400 - Skagway, AK"
+  },
+  "skxa2": {
+    "lat": 59.448,
+    "lng": -135.326,
+    "name": "Skagway MXAK, AK"
+  },
+  "slim2": {
+    "lat": 38.321,
+    "lng": -76.452,
+    "name": "8577330 - Solomons Island, MD"
+  },
+  "sloo3": {
+    "lat": 43.296,
+    "lng": -124.311,
+    "name": "Elliot Creek - South Slough Reserve, OR"
+  },
+  "slvm5": {
+    "lat": 47.278,
+    "lng": -91.27,
+    "name": "Silver Bay, MN"
+  },
+  "slxa2": {
+    "lat": 55.34,
+    "lng": -131.644,
+    "name": "Salmon Landing, AK"
+  },
+  "smkf1": {
+    "lat": 24.628,
+    "lng": -81.109,
+    "name": "Sombrero Key, FL"
+  },
+  "snda2": {
+    "lat": 55.336,
+    "lng": -160.502,
+    "name": "9459450 - Sand Point, AK"
+  },
+  "sndp5": {
+    "lat": 28.215,
+    "lng": -177.361,
+    "name": "1619910 - Sand Island, Midway Islands"
+  },
+  "snto3": {
+    "lat": 43.279,
+    "lng": -124.318,
+    "name": "Tom's Creek, South Slough Reserve, OR"
+  },
+  "soqo3": {
+    "lat": 43.317,
+    "lng": -124.322,
+    "name": "Valino Island, South Slough Reserve, OR"
+  },
+  "spgf1": {
+    "lat": 26.704,
+    "lng": -78.995,
+    "name": "Settlement Point, GBI, Bahamas"
+  },
+  "spll1": {
+    "lat": 28.867,
+    "lng": -90.483,
+    "name": "South Timbalier Block 52, LA / CSI06"
+  },
+  "sptm4": {
+    "lat": 44.713,
+    "lng": -83.273,
+    "name": "Sturgeon Point Light, MI"
+  },
+  "spxa2": {
+    "lat": 55.599,
+    "lng": -132.203,
+    "name": "Ship Island, AK"
+  },
+  "sraw1": {
+    "lat": 45.572,
+    "lng": -122.379,
+    "name": "SATURN River Station #08, Camas, WA"
+  },
+  "sref1": {
+    "lat": 25.352,
+    "lng": -81.1,
+    "name": "Shark River, FL"
+  },
+  "srfw1": {
+    "lat": 46.185,
+    "lng": -123.188,
+    "name": "SATURN River Station #05"
+  },
+  "srlm4": {
+    "lat": 45.773,
+    "lng": -84.137,
+    "name": "Spectacle Reef Light, MI"
+  },
+  "srst2": {
+    "lat": 29.683,
+    "lng": -94.033,
+    "name": "Sabine Pass, TX"
+  },
+  "srxa2": {
+    "lat": 58.383,
+    "lng": -134.652,
+    "name": "Statter Harbor MXAK, AK"
+  },
+  "ssbn7": {
+    "lat": 33.838,
+    "lng": -78.484,
+    "name": "Sunset Beach Nearshore Waves (SUN2WAVE)"
+  },
+  "stdm4": {
+    "lat": 47.184,
+    "lng": -87.225,
+    "name": "Stannard Rock, MI"
+  },
+  "stxa2": {
+    "lat": 57.116,
+    "lng": -135.391,
+    "name": "Sitka AML, AK"
+  },
+  "svnm4": {
+    "lat": 42.401,
+    "lng": -86.288,
+    "name": "South Haven Light, South Haven, MI"
+  },
+  "svxa2": {
+    "lat": 63.693,
+    "lng": -170.492,
+    "name": "Savoonga, AK"
+  },
+  "swla2": {
+    "lat": 60.12,
+    "lng": -149.427,
+    "name": "9455090 - Seward, AK"
+  },
+  "swpm4": {
+    "lat": 46.501,
+    "lng": -84.372,
+    "name": "9076070 - S.W. Pier, MI"
+  },
+  "swpv2": {
+    "lat": 36.943,
+    "lng": -76.329,
+    "name": "8638610 - Sewells Point, VA"
+  },
+  "swxa2": {
+    "lat": 60.116,
+    "lng": -149.434,
+    "name": "Seward Harbor, AK"
+  },
+  "sxhw3": {
+    "lat": 46.563,
+    "lng": -90.437,
+    "name": "Saxon Harbor, WI"
+  },
+  "sxxa2": {
+    "lat": 55.315,
+    "lng": -131.596,
+    "name": "Saxman Landing, AK"
+  },
+  "taqt2": {
+    "lat": 27.815,
+    "lng": -97.389,
+    "name": "8775296 - USS Lexington, TX"
+  },
+  "tawm4": {
+    "lat": 44.254,
+    "lng": -83.449,
+    "name": "Tawas Point, MI"
+  },
+  "tbim4": {
+    "lat": 45.035,
+    "lng": -83.194,
+    "name": "Thunder Bay Island, MI"
+  },
+  "tbyf1": {
+    "lat": 25.155,
+    "lng": -80.722,
+    "name": "Terrapin Bay, FL"
+  },
+  "tcbm2": {
+    "lat": 39.213,
+    "lng": -76.244,
+    "name": "8573364 - Tolchester Beach, MD"
+  },
+  "tcmw1": {
+    "lat": 47.276,
+    "lng": -122.418,
+    "name": "9446482 - Tacoma Met, WA"
+  },
+  "tcnw1": {
+    "lat": 47.267,
+    "lng": -122.413,
+    "name": "9446484 - Tacoma, WA"
+  },
+  "tcsv2": {
+    "lat": 37.415,
+    "lng": -76.714,
+    "name": "Taskinas Creek, Chesapeake Bay Reserve, VA"
+  },
+  "tcvf1": {
+    "lat": 25.213,
+    "lng": -80.533,
+    "name": "Trout Cove, FL"
+  },
+  "tdpc1": {
+    "lat": 41.055,
+    "lng": -124.147,
+    "name": "Trinidad Pier Trinidad, CA"
+  },
+  "tesl1": {
+    "lat": 29.668,
+    "lng": -91.237,
+    "name": "8764044 - Tesoro Marine Terminal, Berwick, Atchafalaya River, LA"
+  },
+  "tfblk": {
+    "lat": 65.698,
+    "lng": -24.778,
+    "name": "10.0 nm WNW on Blakknes, Iceland"
+  },
+  "tgxa2": {
+    "lat": 59.055,
+    "lng": -160.334,
+    "name": "Togiak, Alaska"
+  },
+  "thlo1": {
+    "lat": 41.826,
+    "lng": -83.194,
+    "name": "Toledo Light No. 2 OH"
+  },
+  "thrf1": {
+    "lat": 25.203,
+    "lng": -80.372,
+    "name": "Thursday Point, FL"
+  },
+  "thro1": {
+    "lat": 41.694,
+    "lng": -83.473,
+    "name": "9063085 - Toledo, OH"
+  },
+  "tibc1": {
+    "lat": 37.892,
+    "lng": -122.447,
+    "name": "Tiburon Pier, San Francisco Bay, CA"
+  },
+  "tiqc1": {
+    "lat": 32.568,
+    "lng": -117.131,
+    "name": "Oneonta Slough, Tijuana River Reserve, CA"
+  },
+  "tixc1": {
+    "lat": 32.575,
+    "lng": -117.127,
+    "name": "Tidal Linkage, Tijuana River Reserve, CA"
+  },
+  "tkea2": {
+    "lat": 57.779,
+    "lng": -135.219,
+    "name": "Tenakee Springs, AK"
+  },
+  "tkpn6": {
+    "lat": 42.014,
+    "lng": -73.939,
+    "name": "Turkey Point Hudson River NERRS, NY (NOS 8518962)"
+  },
+  "tlbo3": {
+    "lat": 45.555,
+    "lng": -123.919,
+    "name": "9437540 - Garibaldi, Tillamook Bay, OR"
+  },
+  "tlvt2": {
+    "lat": 27.819,
+    "lng": -97.454,
+    "name": "8775285 - Tule Lake Visibility, TX"
+  },
+  "tokw1": {
+    "lat": 46.707,
+    "lng": -123.967,
+    "name": "9440910 - Toke Point, WA"
+  },
+  "tpaf1": {
+    "lat": 27.933,
+    "lng": -82.433,
+    "name": "8726694 - TPA Cruise Terminal 2, Tampa, FL"
+  },
+  "tpef1": {
+    "lat": 25.41,
+    "lng": -80.964,
+    "name": "Tarpon Bay East, FL"
+  },
+  "tplm2": {
+    "lat": 38.899,
+    "lng": -76.436,
+    "name": "Thomas Point, MD"
+  },
+  "tpxa2": {
+    "lat": 54.802,
+    "lng": -130.934,
+    "name": "Tree Point, AK"
+  },
+  "trbl1": {
+    "lat": 29.187,
+    "lng": -90.608,
+    "name": "Terrebonne Bay, LA"
+  },
+  "trdf1": {
+    "lat": 28.416,
+    "lng": -80.593,
+    "name": "8721604 - Trident Pier, FL"
+  },
+  "trrf1": {
+    "lat": 25.217,
+    "lng": -80.65,
+    "name": "Taylor River, FL"
+  },
+  "trtp1": {
+    "lat": 42.11,
+    "lng": -80.154,
+    "name": "TREC Tower"
+  },
+  "tshf1": {
+    "lat": 27.929,
+    "lng": -82.426,
+    "name": "8726679  - East Bay Causeway, FL"
+  },
+  "twco1": {
+    "lat": 41.699,
+    "lng": -83.259,
+    "name": "Toledo Crib, OH"
+  },
+  "txpt2": {
+    "lat": 29.689,
+    "lng": -93.842,
+    "name": "8770822 - Texas Point, Sabine Pass, TX "
+  },
+  "txvt2": {
+    "lat": 27.813,
+    "lng": -97.389,
+    "name": "8775302 - TX State Aquarium Visibility, TX"
+  },
+  "ulra2": {
+    "lat": 63.872,
+    "lng": -160.784,
+    "name": "9468333 - Unalakleet, Unalakleet River, AK"
+  },
+  "unla2": {
+    "lat": 53.88,
+    "lng": -166.537,
+    "name": "9462620 - Unalaska, AK"
+  },
+  "upbc1": {
+    "lat": 38.038,
+    "lng": -122.121,
+    "name": "9415118 - Union Pacific Rail Road Bridge, Martinez, CA"
+  },
+  "uqxa2": {
+    "lat": 71.315,
+    "lng": -156.722,
+    "name": "Utqiagvik, AK"
+  },
+  "utvt2": {
+    "lat": 27.838,
+    "lng": -97.052,
+    "name": "8775236 - UTMSI Visibility, TX"
+  },
+  "vakf1": {
+    "lat": 25.731,
+    "lng": -80.162,
+    "name": "8723214 - Virginia Key, FL"
+  },
+  "vcaf1": {
+    "lat": 24.711,
+    "lng": -81.107,
+    "name": "8723970 - Vaca Key, FL"
+  },
+  "vcat2": {
+    "lat": 28.64,
+    "lng": -96.609,
+    "name": "8773259 - Port Lavaca, TX "
+  },
+  "vcva2": {
+    "lat": 57.125,
+    "lng": -170.285,
+    "name": "9464212 - Village Cove, St. Paul Island, AK"
+  },
+  "vdxa2": {
+    "lat": 61.127,
+    "lng": -146.344,
+    "name": "Valdez, AK"
+  },
+  "vdza2": {
+    "lat": 61.125,
+    "lng": -146.361,
+    "name": "9454240 - Valdez, AK"
+  },
+  "venf1": {
+    "lat": 27.072,
+    "lng": -82.453,
+    "name": "Venice, FL"
+  },
+  "verv4": {
+    "lat": 19.204,
+    "lng": -96.113,
+    "name": "Veracruz Harbor, MX"
+  },
+  "vqsp4": {
+    "lat": 18.153,
+    "lng": -65.444,
+    "name": "9752619 - Isabel Segunda, Vieques Island, PR"
+  },
+  "vrmo1": {
+    "lat": 41.428,
+    "lng": -82.364,
+    "name": "Vermilion River at Lake Erie, OH"
+  },
+  "vtbt2": {
+    "lat": 27.841,
+    "lng": -97.52,
+    "name": "8775222 - Viola Turning Basin, TX"
+  },
+  "wahv2": {
+    "lat": 37.608,
+    "lng": -75.686,
+    "name": "8631044 - Wachapreague, VA"
+  },
+  "wakp8": {
+    "lat": 19.291,
+    "lng": 166.618,
+    "name": "1890000 - Wake Island"
+  },
+  "waqm3": {
+    "lat": 41.552,
+    "lng": -70.549,
+    "name": "Menauhant, Waquoit Bay Reserve, MA"
+  },
+  "wasd2": {
+    "lat": 38.873,
+    "lng": -77.021,
+    "name": "8594900 - Washington, DC"
+  },
+  "wats1": {
+    "lat": 34.335,
+    "lng": -80.702,
+    "name": "Lake Wateree, SC"
+  },
+  "waxm3": {
+    "lat": 41.582,
+    "lng": -70.525,
+    "name": "Carriage House, Waquoit Bay Reserve, MA"
+  },
+  "wbxa2": {
+    "lat": 57.729,
+    "lng": -152.516,
+    "name": "Womens Bay Cargo Pier"
+  },
+  "wcrp1": {
+    "lat": 42.077,
+    "lng": -80.24,
+    "name": "Walnut Creek Marina, PA"
+  },
+  "wcxa2": {
+    "lat": 55.402,
+    "lng": -131.729,
+    "name": "Ward Cove, AK"
+  },
+  "wdel1": {
+    "lat": 28.662,
+    "lng": -89.551,
+    "name": "Shell West Delta 143"
+  },
+  "wdsv2": {
+    "lat": 36.977,
+    "lng": -76.315,
+    "name": "8638614 - Willoughby Deguassing Station, VA"
+  },
+  "webm1": {
+    "lat": 43.32,
+    "lng": -70.563,
+    "name": "Webhannett River Inlet, Wells Reserve, ME"
+  },
+  "weqm1": {
+    "lat": 43.345,
+    "lng": -70.549,
+    "name": "Skinner Mill, Wells Reserve, ME"
+  },
+  "wexm1": {
+    "lat": 43.337,
+    "lng": -70.549,
+    "name": "Laudholm Farm, Wells Reserve, ME"
+  },
+  "wfpm4": {
+    "lat": 46.76,
+    "lng": -84.97,
+    "name": "Whitefish Point, MI"
+  },
+  "wfxa2": {
+    "lat": 57.726,
+    "lng": -152.519,
+    "name": "Womens Bay Fuel Pier"
+  },
+  "wgxa2": {
+    "lat": 56.467,
+    "lng": -132.382,
+    "name": "Wrangell Harbor"
+  },
+  "whri2": {
+    "lat": 42.361,
+    "lng": -87.813,
+    "name": "Waukegan Harbor, IL"
+  },
+  "wiwf1": {
+    "lat": 25.587,
+    "lng": -81.044,
+    "name": "Willy Willy, FL"
+  },
+  "wixa2": {
+    "lat": 60.777,
+    "lng": -148.682,
+    "name": "Whittier AMHS, AK"
+  },
+  "wkqa1": {
+    "lat": 30.417,
+    "lng": -87.823,
+    "name": "Fish River, Weeks Bay Reserve, AL"
+  },
+  "wkxa1": {
+    "lat": 30.421,
+    "lng": -87.828,
+    "name": "Safe Harbor Met Station, Weeks Bay Reserve, AL"
+  },
+  "wlon7": {
+    "lat": 34.228,
+    "lng": -77.954,
+    "name": "8658120 - Wilmington, NC"
+  },
+  "wlxa2": {
+    "lat": 65.616,
+    "lng": -168.094,
+    "name": "Wales, AK"
+  },
+  "wnem4": {
+    "lat": 46.285,
+    "lng": -84.21,
+    "name": "9076027 - West Neebish Island, MI"
+  },
+  "wplf1": {
+    "lat": 25.71,
+    "lng": -81.249,
+    "name": "Watson Place, FL"
+  },
+  "wpow1": {
+    "lat": 47.662,
+    "lng": -122.435,
+    "name": "West Point, WA"
+  },
+  "wptw1": {
+    "lat": 46.904,
+    "lng": -124.105,
+    "name": "9441102 - Westport, WA"
+  },
+  "wqqm1": {
+    "lat": 43.298,
+    "lng": -70.587,
+    "name": "Head of Tide, Wells Reserve, ME"
+  },
+  "wrbf1": {
+    "lat": 25.072,
+    "lng": -80.735,
+    "name": "Whipray Basin, FL"
+  },
+  "wrxa2": {
+    "lat": 70.636,
+    "lng": -160.034,
+    "name": "Wainwright, AK"
+  },
+  "wslm4": {
+    "lat": 45.842,
+    "lng": -85.135,
+    "name": "White Shoal Light, MI"
+  },
+  "wwef1": {
+    "lat": 25.232,
+    "lng": -80.938,
+    "name": "Whitewater Bay-East, FL"
+  },
+  "wybs1": {
+    "lat": 33.309,
+    "lng": -79.289,
+    "name": "Winyah Bay Bottom, North Inlet-Winyah Bay Reserve, SC"
+  },
+  "wycm6": {
+    "lat": 30.326,
+    "lng": -89.326,
+    "name": "8747437 - Bay Waveland Yacht Club, MS"
+  },
+  "wyss1": {
+    "lat": 33.309,
+    "lng": -79.289,
+    "name": "Winyah Bay Surface, North Inlet-Winyah Bay Reserve, SC"
+  },
+  "yabp4": {
+    "lat": 18.055,
+    "lng": -65.833,
+    "name": "9754228 - Yabucoa Harbor, PR"
+  },
+  "yata2": {
+    "lat": 59.548,
+    "lng": -139.733,
+    "name": "9453220 - Yakutat, Yakutat Bay, AK"
+  },
+  "ygnn6": {
+    "lat": 43.262,
+    "lng": -79.064,
+    "name": "Niagara Coast Guard Station, NY"
+  },
+  "yktv2": {
+    "lat": 37.227,
+    "lng": -76.479,
+    "name": "8637689 - Yorktown USCG Training Center, VA"
+  },
+  "yrsv2": {
+    "lat": 37.414,
+    "lng": -76.712,
+    "name": "Taskinas Creek, Chesapeake Bay Reserve, VA"
+  },
+  "zbqn7": {
+    "lat": 33.955,
+    "lng": -77.935,
+    "name": "Zeke's Basin, North Carolina"
+  }
+}
