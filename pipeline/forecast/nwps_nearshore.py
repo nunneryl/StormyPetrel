@@ -39,6 +39,7 @@ import logging
 import math
 import os
 import re
+import time
 from pathlib import Path
 
 import numpy as np
@@ -261,11 +262,30 @@ def grid_far_cap_km(cycle):
 # --------------------------------------------------------------------------- #
 # NOMADS discovery (ported from the probe / buoycheck)                         #
 # --------------------------------------------------------------------------- #
-def _http_get(url, timeout=180):
+def _http_get(url, timeout=180, retries=1, retry_delay=1.0):
+    """GET *url*. Retries ONCE on a transient truncation/network error — http.client.IncompleteRead
+    (a partial body, e.g. 10 MB of a 35 MB GRIB: a dropped connection, NOT a corrupt file), or a
+    URLError/OSError — after a short delay, before giving up. A definitive HTTP 4xx is not retried.
+    Only when the retry ALSO fails does the caller treat it as fatal (load_cycle → cached
+    _WfoUnavailable; _listdir → []). One retry keeps a single flaky download from downing a whole WFO."""
     import urllib.request
     req = urllib.request.Request(url, headers={"User-Agent": "stormy-petrel-nwps"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except HTTPError as e:
+            # A definitive 4xx won't be fixed by retrying; give up immediately. 5xx falls through.
+            if 400 <= e.code < 500 or attempt >= retries:
+                raise
+            log.warning("nwps: %s → HTTP %s — retrying once in %.1fs", url, e.code, retry_delay)
+            time.sleep(retry_delay)
+        except (HTTPException, URLError, OSError) as e:
+            if attempt >= retries:
+                raise
+            log.warning("nwps: download of %s interrupted (%s) — retrying once in %.1fs",
+                        url, type(e).__name__, retry_delay)
+            time.sleep(retry_delay)
 
 
 def _listdir(url):
@@ -1676,6 +1696,40 @@ def _selftest():
         check("WFO isolation: healthy spot kept its NWPS override", wr["OK"][0]["swell_source"] == "nwps")
     finally:
         globals()["load_cycle"], globals()["nwps_series_by_hour"] = _saved_load, _saved_sbh
+
+    # DOWNLOAD RETRY — a truncated read (IncompleteRead) is a transient network drop, not a corrupt
+    # file, so _http_get retries once before giving up: a single truncation must NOT down the WFO.
+    import urllib.request as _urlreq
+    _saved_urlopen = _urlreq.urlopen
+    _tries = {"n": 0}
+    class _FakeResp:
+        def __init__(self, body): self._body = body
+        def read(self): return self._body
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+    def _flaky(req, timeout=None):
+        _tries["n"] += 1
+        if _tries["n"] == 1:
+            raise _httpclient.IncompleteRead(b"partial", 999)   # first attempt truncates
+        return _FakeResp(b"GRIB....ok")
+    _urlreq.urlopen = _flaky
+    try:
+        body = _http_get("http://x/cg1.grib2", timeout=5, retry_delay=0)
+        check("download retry: one truncation then success", body == b"GRIB....ok" and _tries["n"] == 2)
+        _tries["n"] = 0
+        def _always_truncate(req, timeout=None):
+            _tries["n"] += 1
+            raise _httpclient.IncompleteRead(b"partial", 999)
+        _urlreq.urlopen = _always_truncate
+        gave_up = False
+        try:
+            _http_get("http://x/cg1.grib2", timeout=5, retry_delay=0)
+        except _httpclient.IncompleteRead:
+            gave_up = True
+        check("download retry: gives up after the retry (2 attempts) → WFO cached unavailable",
+              gave_up and _tries["n"] == 2)
+    finally:
+        _urlreq.urlopen = _saved_urlopen
 
     # trust gate — DIRECTION is model dirpw vs buoy MWD (both total-spectrum), NOT the
     # buoy swell partition (see trust_verdict). _sb builds (series, buoy) dicts from

@@ -48,6 +48,7 @@ from ..config import (
     TIDE_CACHE_HORIZON_MIN_HOURS,
     TIDE_CACHE_REFETCH_WITHIN_HOURS,
     TIDE_FETCH_MAX_CONSECUTIVE_FAILURES,
+    TIDE_KNOWN_BAD_TTL_DAYS,
     TIDE_PREDICTION_RANGE_HOURS,
     TIDE_STAGE_DEADLINE_S,
     TIDES_CACHE_DIR,
@@ -93,39 +94,72 @@ class _Pacer:
 # --------------------------------------------------------------------------- #
 # no-predictions markers (station CONFIRMED to have no predictions under any datum) #
 # --------------------------------------------------------------------------- #
-# Bump when the classifier's MEANING changes so older files are discarded, not trusted. v2 is the
-# genuine-'No Predictions data was found'-only classifier; a v1/list-format file predates it and may
-# have been poisoned by throttle responses mislabelled as no-data, so it is thrown away on load.
-_NO_PREDICTIONS_VERSION = 2
+# Bump when the classifier's MEANING or FORMAT changes so older files are discarded, not trusted. v3
+# is the genuine-'No Predictions data was found'-only classifier with a per-entry FIRST-SEEN timestamp
+# for TTL re-verification; a v2/v1/list-format file predates the timestamp (and may have been poisoned
+# by throttle responses mislabelled as no-data), so it is thrown away on load.
+_NO_PREDICTIONS_VERSION = 3
 
 
-def _load_no_predictions() -> set[str]:
+def _load_no_predictions_map() -> dict[str, str]:
+    """{station_id: first_seen_iso} for stations CONFIRMED to have no predictions, with entries past the
+    TIDE_KNOWN_BAD_TTL_DAYS TTL DROPPED — so a station that comes back online recovers on its own (it is
+    re-verified after the TTL) without anyone running --clear-known-bad. A permanent verdict resting
+    only on our classification being correct is the assumption that failed once; the TTL bounds it. An
+    old/unversioned/pre-TTL file (no per-entry timestamp, possibly throttle-poisoned) is discarded."""
     if not _NO_PREDICTIONS_FILE.exists():
-        return set()
+        return {}
     try:
         blob = json.loads(_NO_PREDICTIONS_FILE.read_text())
     except (json.JSONDecodeError, TypeError, OSError):
-        return set()
-    if isinstance(blob, dict) and blob.get("version") == _NO_PREDICTIONS_VERSION:
-        return set(blob.get("stations") or [])
-    # Old/unversioned (list) format — could have been poisoned by the pre-fix classifier. DISCARD it so
-    # every listed station is re-verified this run rather than silently skipped forever.
-    log.warning("tides: discarding pre-fix/unversioned known-bad list (%s) — its stations will be "
-                "re-verified this run (a single bad run must not permanently poison the roster)",
-                _NO_PREDICTIONS_FILE)
-    return set()
+        return {}
+    if not (isinstance(blob, dict) and blob.get("version") == _NO_PREDICTIONS_VERSION):
+        log.warning("tides: discarding pre-TTL/unversioned known-bad list (%s) — its stations will be "
+                    "re-verified this run (a single bad run must not permanently poison the roster)",
+                    _NO_PREDICTIONS_FILE)
+        return {}
+    stations = blob.get("stations")
+    if not isinstance(stations, dict):
+        return {}
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=TIDE_KNOWN_BAD_TTL_DAYS)
+    live: dict[str, str] = {}
+    expired = 0
+    for sid, seen in stations.items():
+        try:
+            ts = datetime.fromisoformat(str(seen))
+        except (TypeError, ValueError):
+            expired += 1
+            continue                          # garbled/absent timestamp → re-verify
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        if ts >= cutoff:
+            live[sid] = seen
+        else:
+            expired += 1
+    if expired:
+        log.info("tides: %d known-bad station(s) past the %d-day TTL — re-verifying this run",
+                 expired, TIDE_KNOWN_BAD_TTL_DAYS)
+    return live
 
 
-def _save_no_predictions(known: set[str]) -> None:
+def _load_no_predictions() -> set[str]:
+    """The set of stations to SKIP this run (non-expired known-bad). See _load_no_predictions_map."""
+    return set(_load_no_predictions_map())
+
+
+def _save_no_predictions(stations_map: dict[str, str]) -> None:
+    """Persist {station_id: first_seen_iso}. The caller passes a MERGED map that PRESERVES each still-
+    valid entry's original first_seen, so a station's TTL is measured from FIRST confirmation and is not
+    refreshed every run (which would make a persistently-bad station never re-verify)."""
     TIDES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     _NO_PREDICTIONS_FILE.write_text(
-        json.dumps({"version": _NO_PREDICTIONS_VERSION, "stations": sorted(known)}))
+        json.dumps({"version": _NO_PREDICTIONS_VERSION, "stations": dict(stations_map)}))
 
 
 def clear_known_bad() -> int:
-    """Invalidate the persisted known-bad list. A single bad run can add entries (and the list lives in
-    the persisted cache), so it must be clearable. Counts RAW entries (any format) then removes the
-    file. Returns the number cleared; safe when the file is absent."""
+    """Invalidate the persisted known-bad list. TTL re-verification recovers a recovered station on its
+    own; this is the manual override — counts RAW entries (any format) then removes the file. Returns
+    the number cleared; safe when the file is absent."""
     n = 0
     if _NO_PREDICTIONS_FILE.exists():
         try:
@@ -393,7 +427,8 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
     in wall-clock (cap + breaker + deadline) so a dead CO-OPS backend cannot block the pipeline.
     Returns a dict keyed by station_id (each with `asof`/`stale`) and writes TIDES_FORECAST_FILE."""
     station_ids = _unique_station_ids(spots)
-    known_bad = _load_no_predictions() if use_cache else set()
+    known_bad_map = _load_no_predictions_map() if use_cache else {}   # {sid: first_seen_iso}, TTL-pruned
+    known_bad = set(known_bad_map)
     active_ids = [sid for sid in station_ids if sid not in known_bad]
     skipped_known = len(station_ids) - len(active_ids)
 
@@ -513,7 +548,14 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
         # STAGE ISOLATION (A): always persist what we have + the no-pred markers, no matter how we
         # exit (success, break, or an unexpected error) — so db_import always has a tides.json.
         if new_bad:
-            _save_no_predictions(known_bad | set(new_bad))
+            # Merge: keep each still-valid entry's ORIGINAL first_seen (TTL measured from first
+            # confirmation, not refreshed every run) and stamp the newly-confirmed with now. This also
+            # prunes TTL-expired entries, since known_bad_map is already TTL-filtered.
+            stamp = datetime.now(tz=timezone.utc).isoformat()
+            merged = dict(known_bad_map)
+            for sid in new_bad:
+                merged[sid] = stamp
+            _save_no_predictions(merged)
         TIDES_FORECAST_FILE.parent.mkdir(parents=True, exist_ok=True)
         TIDES_FORECAST_FILE.write_text(json.dumps(out, indent=2, ensure_ascii=False))
 
