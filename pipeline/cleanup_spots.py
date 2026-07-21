@@ -28,19 +28,60 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
 from .config import (
+    COORD_FIX_MAX_MOVE_KM,
     DEFAULT_ENRICHED_OUTPUT,
     EXCLUDED_SPOTS_FILE,
     SPOT_COORD_FIXES_FILE,
     SPOT_VERIFICATION_FILE,
 )
+from .geo import haversine_m
 
 log = logging.getLogger("pipeline.cleanup_spots")
 
 _RESERVED_KEYS = {"_comment", "_schema_version"}
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slugify(name: str | None) -> str:
+    """Lowercase, hyphen-join, drop non-[a-z0-9]. Mirrors db_import._slugify so slug-keyed coord
+    fixes match the same slug the DB upserts on."""
+    return _SLUG_RE.sub("-", (name or "").lower()).strip("-")
+
+
+# Coastal-state bounding boxes (lat_min, lat_max, lng_min, lng_max) for the plausibility guard's
+# "moved into a different state" check. Coarse on purpose — it only needs to catch gross cross-state
+# teleports (a Florida spot landing in California), not adjacent-border nuance.
+_STATE_BBOX = {
+    "California": (32.3, 42.1, -124.6, -114.0), "Oregon": (41.9, 46.4, -124.7, -116.3),
+    "Washington": (45.4, 49.1, -124.9, -116.8), "Hawaii": (18.8, 22.4, -160.4, -154.7),
+    "Texas": (25.7, 36.6, -106.8, -93.4), "Louisiana": (28.8, 33.1, -94.2, -88.7),
+    "Mississippi": (30.0, 35.1, -91.8, -88.0), "Alabama": (30.0, 35.1, -88.6, -84.8),
+    "Florida": (24.3, 31.1, -87.8, -79.8), "Georgia": (30.2, 35.1, -85.8, -80.7),
+    "South Carolina": (31.9, 35.4, -83.6, -78.4), "North Carolina": (33.7, 36.7, -84.5, -75.3),
+    "Virginia": (36.4, 39.6, -83.8, -75.1), "Maryland": (37.8, 39.9, -79.6, -74.9),
+    "Delaware": (38.3, 40.0, -75.9, -74.9), "New Jersey": (38.8, 41.5, -75.7, -73.8),
+    "New York": (40.4, 45.1, -79.9, -71.7), "Connecticut": (40.8, 42.2, -73.8, -71.7),
+    "Rhode Island": (41.0, 42.1, -72.0, -71.0), "Massachusetts": (41.1, 43.0, -73.6, -69.8),
+    "New Hampshire": (42.6, 45.4, -72.7, -70.5), "Maine": (42.9, 47.6, -71.2, -66.8),
+    "Puerto Rico": (17.8, 18.7, -67.4, -65.1),
+}
+
+
+def _state_of(lat, lng) -> str | None:
+    """Coarse reverse-geocode a coordinate to a coastal state via bounding box, or None if outside all
+    boxes / coords missing. Overlaps are possible near borders; used only for the guard's cross-state
+    flag, which is one of two independent triggers (the other is raw distance)."""
+    if lat is None or lng is None:
+        return None
+    for st, (a, b, c, d) in _STATE_BBOX.items():
+        if a <= lat <= b and c <= lng <= d:
+            return st
+    return None
 
 
 def normalize_name(name: str | None) -> str:
@@ -106,7 +147,9 @@ def load_coord_fixes(path: Path = SPOT_COORD_FIXES_FILE) -> dict[str, dict]:
         except (KeyError, TypeError, ValueError):
             log.warning("coord fix for %r missing or invalid lat/lng; skipping", name)
             continue
-        out[name] = {"lat": lat, "lng": lng, "note": patch.get("note", "")}
+        # `force` bypasses the plausibility guard for a deliberately large/cross-state correction.
+        out[name] = {"lat": lat, "lng": lng, "note": patch.get("note", ""),
+                     "force": bool(patch.get("force", False))}
     return out
 
 
@@ -138,7 +181,12 @@ def apply_cleanup(
         "not_found_fixed": [],
         "removed_by_reason": {},
         "fixed_details": [],
+        "rejected_fixes": [],
     }
+
+    # Slug index so a patch keyed by slug (the disambiguation-friendly key going forward) matches the
+    # same spot db_import upserts on; bare-name keys still match via coord_fixes.get(name) below.
+    by_slug = {_slugify(k): v for k, v in coord_fixes.items()}
 
     # Apply coord fixes first so a name that appears in both lists (shouldn't
     # happen, but be defensive) gets fixed and then removed rather than
@@ -149,11 +197,41 @@ def apply_cleanup(
         if not name:
             continue
         names_seen.add(name)
-        patch = coord_fixes.get(name)
+        patch = coord_fixes.get(name) or by_slug.get(_slugify(name))
         if patch is None:
             continue
         old_lat = spot.get("lat")
         old_lng = spot.get("lng")
+
+        # PLAUSIBILITY GUARD (mode-a fix): the coord-fix map is name-keyed, and generic names collide
+        # across states — a San-Diego "North Jetty" patch silently teleported the Florida one ~3500 km,
+        # and every coordinate-derived field (orientation, tide, buoy, wfo) was then recomputed from the
+        # wrong point. Reject a patch that moves a spot more than COORD_FIX_MAX_MOVE_KM, or into a
+        # different state, unless it carries "force": true. Idempotent re-runs pass (current == patch →
+        # 0 km); the guard bites only when a patch would actually relocate the spot.
+        move_km = (haversine_m(old_lat, old_lng, patch["lat"], patch["lng"]) / 1000.0
+                   if old_lat is not None and old_lng is not None else None)
+        old_state, new_state = _state_of(old_lat, old_lng), _state_of(patch["lat"], patch["lng"])
+        crossed_state = old_state is not None and new_state is not None and old_state != new_state
+        too_far = move_km is not None and move_km > COORD_FIX_MAX_MOVE_KM
+        if not patch.get("force") and (too_far or crossed_state):
+            log.warning(
+                "cleanup: REJECTED coord fix for %r — would move it %.0f km%s, from (%.4f,%.4f) to "
+                "(%.4f,%.4f); exceeds the %.0f km plausibility guard. Likely a name collision (a patch "
+                "authored for a different same-named spot). Add \"force\": true to the patch to override.",
+                name, move_km if move_km is not None else -1.0,
+                f" and CROSSES STATE {old_state}->{new_state}" if crossed_state else "",
+                old_lat, old_lng, patch["lat"], patch["lng"], COORD_FIX_MAX_MOVE_KM,
+            )
+            stats["rejected_fixes"].append({
+                "name": name, "slug": _slugify(name),
+                "old_lat": old_lat, "old_lng": old_lng,
+                "new_lat": patch["lat"], "new_lng": patch["lng"],
+                "move_km": round(move_km, 1) if move_km is not None else None,
+                "old_state": old_state, "new_state": new_state,
+            })
+            continue
+
         spot["lat"] = patch["lat"]
         spot["lng"] = patch["lng"]
         # Clear stale algorithmic outputs that depend on coordinates — next
@@ -253,6 +331,12 @@ def _summarize(stats: dict) -> None:
         )
         if f["note"]:
             print(f"      note: {f['note']}")
+    if stats.get("rejected_fixes"):
+        print(f"  coord-fixes REJECTED by plausibility guard: {len(stats['rejected_fixes'])}")
+        for r in stats["rejected_fixes"]:
+            xs = f" [{r['old_state']}→{r['new_state']}]" if r.get("old_state") != r.get("new_state") else ""
+            print(f"    {r['name']} [{r['slug']}]: ({r['old_lat']}, {r['old_lng']}) → "
+                  f"({r['new_lat']}, {r['new_lng']})  moved {r['move_km']} km{xs}  — add force:true to override")
     if stats["not_found_excluded"]:
         print(f"  excluded names not present in input ({len(stats['not_found_excluded'])}):")
         for name in stats["not_found_excluded"]:

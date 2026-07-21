@@ -307,6 +307,11 @@ SPOT_VERIFICATION_FILE = PIPELINE_DIR / "data" / "spot_verification.json"
 # on subsequent crawls.
 EXCLUDED_SPOTS_FILE = PIPELINE_DIR / "data" / "excluded_spots.json"
 SPOT_COORD_FIXES_FILE = PIPELINE_DIR / "data" / "spot_coord_fixes.json"
+# Plausibility guard on coord fixes: a patch that moves a spot more than this many km, or into a
+# different state, is REJECTED unless the patch carries "force": true. The coord-fix map is keyed by
+# spot name, and generic names ("North Jetty", "56th Street") collide across states — a San-Diego
+# "North Jetty" patch teleported the Florida one ~3500 km. See cleanup_spots.apply_cleanup.
+COORD_FIX_MAX_MOVE_KM = 25.0
 # Hand-curated orientations for spots where the geometric algorithm fails
 # (Great Lakes — GSHHG L1 treats lakes as land; complex harbors; jetties;
 # barrier islands that geocoded to the bay side). Applied by enrich.py and
