@@ -187,8 +187,9 @@
     "swell_window_source": "raycast",
     "nearest_tide_station_id": "8535221",
     "nearest_tide_station_dist_km": 1.4,
-    "nearest_buoy_id": "46253",
-    "nearest_buoy_dist_km": 22.26
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
+    "fallback_buoy_ids": null
   },
   {
     "name": "Andrew Molera State Park",
@@ -692,8 +693,9 @@
     "swell_window_source": "raycast",
     "nearest_tide_station_id": "1612340",
     "nearest_tide_station_dist_km": 2.81,
-    "nearest_buoy_id": "46236",
-    "nearest_buoy_dist_km": 23.62
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
+    "fallback_buoy_ids": null
   },
   {
     "name": "Brooks Street",
@@ -8105,8 +8107,9 @@
     "swell_window_source": "raycast",
     "nearest_tide_station_id": "1617433",
     "nearest_tide_station_dist_km": 6.04,
-    "nearest_buoy_id": "46236",
-    "nearest_buoy_dist_km": 21.79
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
+    "fallback_buoy_ids": null
   },
   {
     "name": "Sunset Cliffs",
@@ -12055,8 +12058,8 @@
   },
   {
     "name": "North Jetty",
-    "lat": 32.754509,
-    "lng": -117.25502,
+    "lat": 27.8623099,
+    "lng": -80.4465025,
     "region_hint": "Florida",
     "break_type": "jetty",
     "break_type_confidence": 0.5,
@@ -12089,31 +12092,20 @@
       "localism"
     ],
     "tide_preference_confidence": 0.65,
-    "nwps_wfo": "mlb",
+    "nwps_wfo": null,
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 265.0,
+    "orientation_deg": null,
     "offshore_wind_deg": 85.0,
     "orientation_source": "manual",
-    "swell_window_arcs": [
-      {
-        "min": 93,
-        "max": 107,
-        "span": 18
-      },
-      {
-        "min": 193,
-        "max": 323,
-        "span": 134
-      }
-    ],
-    "optimal_swell_dir": 240,
-    "swell_window_source": "raycast",
-    "nearest_tide_station_id": "9410166",
-    "nearest_tide_station_dist_km": 2.68,
-    "nearest_buoy_id": "41114",
-    "nearest_buoy_dist_km": 41.3
+    "swell_window_arcs": null,
+    "optimal_swell_dir": null,
+    "swell_window_source": null,
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null
   },
   {
     "name": "Okaloosa Island Pier",
