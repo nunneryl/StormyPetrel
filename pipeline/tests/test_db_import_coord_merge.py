@@ -92,6 +92,39 @@ def test_unmoved_spot_still_preserves_absent_fields():
     assert up.get("nwps_wfo") == "mtr"
 
 
+def test_description_signature_unit():
+    s1 = db_import.description_signature(39.14, -74.70, "New Jersey", 115)
+    assert s1 == db_import.description_signature(39.1401, -74.6999, "new jersey", 115.0), \
+        "rounded coords / case-folded state / int-vs-float orientation are stable"
+    assert s1 != db_import.description_signature(33.62, -117.95, "California", 115), "coords+state change"
+    assert s1 != db_import.description_signature(39.14, -74.70, "New Jersey", 202), "orientation change"
+
+
+def test_stale_description_is_blanked_on_signature_mismatch():
+    # DB description was written against California metadata; the spot is now New Jersey -> the
+    # description ("in California") contradicts the record and must be blanked so it can't persist.
+    ca_sig = db_import.description_signature(33.6239, -117.9459, "California", 115)
+    existing = [{"slug": "56th-street", "name": "56th Street", "lat": 33.6239, "lng": -117.9459,
+                 "state": "California", "orientation_deg": 115,
+                 "description": "A fun California beach break.", "description_signature": ca_sig}]
+    enriched = [{"name": "56th Street", "lat": 39.1416, "lng": -74.6968, "region_hint": "New Jersey",
+                 "orientation_deg": 115, "is_valid_surf_spot": True}]
+    up = _run_import(existing, enriched)["56th-street"]
+    assert up["description"] is None, "a description that no longer matches its record must be blanked"
+    assert up["description_signature"] == db_import.description_signature(39.1416, -74.6968, "New Jersey", 115)
+
+
+def test_matching_signature_preserves_description():
+    sig = db_import.description_signature(36.9513, -122.0266, "California", 128)
+    existing = [{"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
+                 "state": "California", "orientation_deg": 128,
+                 "description": "World-class right at Santa Cruz.", "description_signature": sig}]
+    enriched = [{"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
+                 "orientation_deg": 128, "is_valid_surf_spot": True}]
+    up = _run_import(existing, enriched)["steamer-lane"]
+    assert up.get("description") == "World-class right at Santa Cruz.", "matching signature keeps the text"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

@@ -18,6 +18,7 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -196,6 +197,27 @@ def _coords_changed(rec: dict, base: dict) -> bool:
                 or abs(float(rec["lng"]) - float(base["lng"])) > _COORD_CHANGE_EPS)
     except (KeyError, TypeError, ValueError):
         return False
+
+
+def description_signature(lat, lng, state, orientation_deg) -> str:
+    """Short stable hash of the fields a spot description ASSERTS — coordinates, state, and orientation.
+    A description is written once (generate_descriptions is a manual step, NOT in the pipeline) so a
+    later change to any of these silently strands the text ("in California" for a spot moved to New
+    Jersey; "faces south (202°)" when orientation is now 115). db_import blanks a description whose
+    signature no longer matches; generate_descriptions regenerates and re-stamps it. Rounded (~100 m,
+    1 deg) so trivial noise doesn't churn. Kept in one place so both writers agree byte-for-byte."""
+    def _n(v, nd):
+        try:
+            return f"{round(float(v), nd)}"
+        except (TypeError, ValueError):
+            return ""
+    parts = (_n(lat, 3), _n(lng, 3), (state or "").strip().lower(), _n(orientation_deg, 0))
+    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def _description_signature(rec: dict) -> str:
+    return description_signature(rec.get("lat"), rec.get("lng"), rec.get("state"),
+                                 rec.get("orientation_deg"))
 
 
 # A US coastal spot is never legitimately farther than this from its nearest buoy or tide station
@@ -466,6 +488,7 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     existing = _fetch_existing_spots(client)
     filled_any = 0
     coord_moved = 0
+    desc_nulled = 0
     for rec in records:
         base = existing.get(rec["slug"])
         if not base:
@@ -482,9 +505,25 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
                 rec[k] = v
                 filled_any += 1
 
+        # Description staleness enforcement: descriptions are write-once (generate_descriptions is a
+        # manual step, not wired into the pipeline), so a coord/state/orientation change strands the
+        # text. Blank a description whose stored signature no longer matches the record so it can't keep
+        # contradicting the live site ("in California" for a New Jersey spot); the offline generator
+        # backfills it. Always re-stamp the signature to current. First-seen (no stored signature) just
+        # backfills without blanking — the known-stale set is handled by a one-time regeneration.
+        cur_sig = _description_signature(rec)
+        if base.get("description_signature") and base["description_signature"] != cur_sig:
+            rec["description"] = None
+            desc_nulled += 1
+        rec["description_signature"] = cur_sig
+
     if coord_moved:
         log.info("spots: %d record(s) moved coordinates — their absent coord-derived fields "
                  "(buoy/tide/nwps_wfo) were left NULL to force a recompute, not preserved", coord_moved)
+    if desc_nulled:
+        log.warning("spots: blanked %d description(s) whose signature no longer matches their record "
+                    "(coords/state/orientation changed) — run pipeline.generate_descriptions to backfill",
+                    desc_nulled)
 
     # Item 4: reject any stored buoy/tide pairing whose distance can't be reproduced from the station's
     # actual coordinates, before it reaches the DB.

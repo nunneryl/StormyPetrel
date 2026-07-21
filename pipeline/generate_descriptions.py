@@ -32,7 +32,7 @@ from pathlib import Path
 import anthropic
 
 from .config import DEFAULT_ENRICHED_OUTPUT
-from .db_import import _slugify, get_client
+from .db_import import _slugify, description_signature, get_client
 
 log = logging.getLogger("pipeline.generate_descriptions")
 
@@ -137,15 +137,21 @@ def _generate_one(client: anthropic.Anthropic, spot: dict) -> str:
     return cleaned
 
 
-def _upsert_descriptions(client, descriptions: dict[str, str]) -> int:
-    """Push descriptions to Supabase keyed on slug. Returns count
-    updated. We do one update per spot because Supabase REST upsert
-    needs the full row schema; updating a single column on existing
-    rows is simpler with .update().eq()."""
+def _upsert_descriptions(client, descriptions: dict) -> int:
+    """Push descriptions (and their staleness signature) to Supabase keyed on slug. Returns count
+    updated. One update per spot (updating a couple of columns on existing rows is simpler with
+    .update().eq() than a full-schema upsert). Accepts the new {slug: {description, signature}} entries
+    or legacy {slug: text}. Writing the signature is what lets db_import stop re-blanking the row."""
     written = 0
-    for slug, desc in descriptions.items():
+    for slug, entry in descriptions.items():
+        if isinstance(entry, dict):
+            payload = {"description": entry.get("description")}
+            if entry.get("signature"):
+                payload["description_signature"] = entry["signature"]
+        else:
+            payload = {"description": entry}
         try:
-            client.table("spots").update({"description": desc}).eq("slug", slug).execute()
+            client.table("spots").update(payload).eq("slug", slug).execute()
             written += 1
         except Exception:  # noqa: BLE001
             log.exception("DB update failed for %s", slug)
@@ -201,7 +207,14 @@ def main(argv: list[str] | None = None) -> int:
         slug = _slugify(name)
         if not slug:
             continue
-        if slug in cache and not args.no_cache:
+        # Signature of the fields the description asserts (coords/state/orientation). Regenerate when it
+        # differs from the cached one — that is the "trigger": a spot whose coordinates, state, or
+        # orientation changed gets a fresh description instead of being skipped as already-cached.
+        sig = description_signature(spot.get("lat"), spot.get("lng"),
+                                    spot.get("region_hint"), spot.get("orientation_deg"))
+        cached = cache.get(slug)
+        cached_sig = cached.get("signature") if isinstance(cached, dict) else None
+        if cached is not None and cached_sig == sig and not args.no_cache:
             skipped += 1
             continue
         if args.limit is not None and generated >= args.limit:
@@ -214,8 +227,9 @@ def main(argv: list[str] | None = None) -> int:
             failed += 1
             continue
 
-        cache[slug] = desc
-        new_entries[slug] = desc
+        entry = {"description": desc, "signature": sig}
+        cache[slug] = entry
+        new_entries[slug] = entry
         generated += 1
         log.info("%s: %s", slug, desc[:80] + ("…" if len(desc) > 80 else ""))
 
