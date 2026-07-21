@@ -220,9 +220,19 @@ def _description_signature(rec: dict) -> str:
                                  rec.get("orientation_deg"))
 
 
-# A US coastal spot is never legitimately farther than this from its nearest buoy or tide station
-# (the largest regional buoy cap is 350 km) — a stored pairing implying more is corrupt, full stop.
-_COORD_DERIVED_SANE_CAP_KM = 400.0
+# Coarse global backstop for GROSS corruption (the ~3800-4000 km fabrications), deliberately NOT
+# regional. The precise per-spot detector is the tolerance check below (recompute vs stored, 5 km): it
+# catches a fabricated 22 km next to a 4000 km truth regardless of magnitude. This cap only needs to sit
+# comfortably above the farthest LEGITIMATE pairing and far below the fabrications. The farthest legit
+# pairing today is Siesta Key ↔ buoy 42039 at 381 km (sparse SW-Florida Gulf coverage), so 400 left only
+# 19 km of headroom — one snapshot-coordinate wobble from false-flagging a real spot. 500 keeps ~120 km
+# of headroom over the farthest legit spot while still catching the 3800 km+ corruption by a >7x margin.
+# A REGIONAL cap (matching BUOY_CAP_KM) was rejected: all 8 spots that sit >300 km from their buoy have a
+# 150 km regional cap, so a regional backstop would NULL every one of them — including the legit Siesta
+# Key ↔ 42039 pairing — while adding nothing the tolerance check doesn't already do. (Those 8 already sit
+# ABOVE their 150 km ASSIGNMENT cap, a stale-assignment symptom to fix by re-running enrichment / widening
+# the SW-Florida Gulf cap — see _regional_cap_km's lng<-83 gate — not by conflating policy with corruption.)
+_COORD_DERIVED_SANE_CAP_KM = 500.0
 
 
 def _validate_coord_derived(records: list[dict]) -> int:

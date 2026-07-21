@@ -125,6 +125,30 @@ def test_matching_signature_preserves_description():
     assert up.get("description") == "World-class right at Santa Cruz.", "matching signature keeps the text"
 
 
+def test_null_stored_signature_does_not_blank_and_backfills():
+    # First run after migration 012 adds description_signature: it is NULL for all 668 existing rows. A
+    # NULL stored signature means "not yet tracked", NOT "mismatch" — so it must NOT blank the (correct)
+    # description. If it did, every description would blank in one run and stay blank (the offline
+    # generator isn't in the pipeline). The guard is `base.get("description_signature") and ...`: a NULL
+    # (or absent) stored signature is falsy and short-circuits the blank. The signature is still stamped,
+    # giving every subsequent run a baseline to compare against.
+    #   case "null"   -> column present, value None (the realistic production first-run for all 668 rows)
+    #   case "absent" -> column entirely missing from the row (defensive: same falsy path)
+    for case in ("null", "absent"):
+        base = {"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
+                "state": "California", "orientation_deg": 128,
+                "description": "World-class right at Santa Cruz."}
+        if case == "null":
+            base["description_signature"] = None
+        enriched = [{"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
+                     "orientation_deg": 128, "is_valid_surf_spot": True}]
+        up = _run_import([base], enriched)["steamer-lane"]
+        assert up.get("description") == "World-class right at Santa Cruz.", \
+            f"a {case} stored signature is 'not yet tracked', not a mismatch — the description must survive"
+        assert up["description_signature"] == db_import.description_signature(36.9513, -122.0266, "California", 128), \
+            f"the signature must be backfilled ({case} case) so the next run has a baseline"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
