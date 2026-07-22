@@ -11261,7 +11261,7 @@
     },
     "enrichment_confidence": {
       "orientation": 1.0,
-      "swell_window": 0.0,
+      "swell_window": 0.34444444444444444,
       "break_type": 0.5,
       "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
@@ -11282,27 +11282,33 @@
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 115.0,
-    "offshore_wind_deg": 295.0,
+    "orientation_deg": 90.0,
+    "offshore_wind_deg": 270.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 9,
-        "max": 23,
-        "span": 18
+        "min": 7,
+        "max": 25,
+        "span": 20
       },
       {
         "min": 57,
         "max": 159,
-        "span": 106
+        "span": 104
       }
     ],
     "optimal_swell_dir": 92,
     "swell_window_source": "raycast",
-    "nearest_tide_station_id": "TEC3693",
-    "nearest_tide_station_dist_km": 3.62,
+    "nearest_tide_station_id": "8721604",
+    "nearest_tide_station_dist_km": 1.02,
     "nearest_buoy_id": "41113",
-    "nearest_buoy_dist_km": 5.66
+    "nearest_buoy_dist_km": 5.53,
+    "coord_adjusted": false,
+    "orientation_50m": 75.5687895852202,
+    "orientation_200m": 85.07069853187204,
+    "orientation_flipped": true,
+    "orientation_note": "South side of Port Canaveral inlet jetty. Coastline-polygon computation gives 131 deg (SE); human structural observation of the jetty wall, promoted from spot_orientations.json bulk cache.",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Juno Beach Pier",
