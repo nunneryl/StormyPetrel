@@ -156,6 +156,13 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
     ):
         if k in spot:
             rec[k] = spot[k]
+    # fallback_buoy_ids — the secondary NDBC buoy list (pipeline/enrichment/buoys.py). Mapped from
+    # source like nearest_buoy_id above so the real list reaches the DB instead of the column only ever
+    # being [] (from validation) or preserved-from-DB. Coerced to [] (never NULL) so a spot with no
+    # fallbacks matches migration 013's DEFAULT '{}'. Only an absent key falls through to the
+    # preserve/coord-derived-exclude path, exactly as nearest_buoy_id does.
+    if "fallback_buoy_ids" in spot:
+        rec["fallback_buoy_ids"] = spot["fallback_buoy_ids"] or []
     # Swell-source provenance as a top-level flag for the frontend's CDIP
     # attribution. Only the non-default source is persisted; orientation-derived
     # (the default) stays NULL per migration 010. Full verbatim provenance for

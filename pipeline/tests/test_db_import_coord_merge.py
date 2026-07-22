@@ -149,6 +149,22 @@ def test_null_stored_signature_does_not_blank_and_backfills():
             f"the signature must be backfilled ({case} case) so the next run has a baseline"
 
 
+def test_fallback_buoy_ids_maps_from_source_defaulting_to_empty():
+    # Migration 013 adds the column; db_import must now write the REAL fallback list from source (not
+    # only [] from validation / preserved-from-DB), and [] — never null — when there is none, matching
+    # the migration's DEFAULT '{}'. Same coords => no move, no validation snapshot => the mapped value
+    # survives untouched to the upsert.
+    for label, val, want in (("real list", ["46012", "46026"], ["46012", "46026"]),
+                             ("empty", [], []),
+                             ("null coerced", None, [])):
+        existing = [{"slug": "x", "name": "X", "lat": 1.0, "lng": 2.0}]
+        enriched = [{"name": "X", "lat": 1.0, "lng": 2.0, "region_hint": "California",
+                     "fallback_buoy_ids": val, "is_valid_surf_spot": True}]
+        up = _run_import(existing, enriched)["x"]
+        assert up.get("fallback_buoy_ids") == want, f"{label}: got {up.get('fallback_buoy_ids')!r}"
+        assert up["fallback_buoy_ids"] is not None, f"{label}: must be [] not null (matches DEFAULT '{{}}')"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
