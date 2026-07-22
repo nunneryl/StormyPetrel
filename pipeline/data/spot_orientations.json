@@ -1270,11 +1270,6 @@
       "cardinal": "ENE",
       "name": "Jensen Beach"
     },
-    "jetty-park-cocoa-beach": {
-      "orientation_deg": 115.0,
-      "cardinal": "ESE",
-      "name": "Jetty Park Cocoa Beach"
-    },
     "jobos-beach-isabela": {
       "orientation_deg": 5.0,
       "cardinal": "N",
@@ -1899,11 +1894,6 @@
       "orientation_deg": 74.0,
       "cardinal": "ENE",
       "name": "North End Virginia Beach"
-    },
-    "north-jetty": {
-      "orientation_deg": 265.0,
-      "cardinal": "W",
-      "name": "North Jetty"
     },
     "north-ocean-beach": {
       "orientation_deg": 268.0,

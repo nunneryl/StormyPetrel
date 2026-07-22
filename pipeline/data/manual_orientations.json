@@ -228,6 +228,16 @@
       "orientation_deg": 210,
       "source": "Map verified — south-facing point break",
       "notes": "Optimal swell from WNW (290°) wraps around point. Cove faces SSW."
+    },
+    "North Jetty": {
+      "orientation_deg": 45,
+      "source": "Sebastian Inlet, FL — north jetty (human-verified)",
+      "notes": "Human-verified NE facing into the jetty pocket at Sebastian Inlet. Geometric computation yields ~111 deg because raycast sees the open beach ~72 m away, not the pocket. Promoted from spot_orientations.json (bulk cache) so a re-seed cannot overwrite it."
+    },
+    "Jetty Park Cocoa Beach": {
+      "orientation_deg": 90,
+      "source": "verification_notes: 'the actual wave-facing direction at the south jetty wall is closer to true east (~90 deg)'",
+      "notes": "South side of Port Canaveral inlet jetty. Coastline-polygon computation gives 131 deg (SE); human structural observation of the jetty wall, promoted from spot_orientations.json bulk cache."
     }
   }
 }
