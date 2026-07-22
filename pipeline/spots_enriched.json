@@ -152,9 +152,9 @@
     },
     "enrichment_confidence": {
       "orientation": 1.0,
-      "swell_window": 0.0,
+      "swell_window": 0.38333333333333336,
       "break_type": 0.5,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -178,18 +178,22 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 53,
+        "min": 51,
         "max": 187,
         "span": 138
       }
     ],
     "optimal_swell_dir": 116,
     "swell_window_source": "raycast",
-    "nearest_tide_station_id": "8535221",
-    "nearest_tide_station_dist_km": 1.4,
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
-    "fallback_buoy_ids": null
+    "nearest_tide_station_id": "8535375",
+    "nearest_tide_station_dist_km": 2.8,
+    "nearest_buoy_id": "44091",
+    "nearest_buoy_dist_km": 106.11,
+    "fallback_buoy_ids": [],
+    "coord_adjusted": false,
+    "orientation_50m": 108.74736154137133,
+    "orientation_200m": 110.74845904276827,
+    "orientation_flipped": true
   },
   {
     "name": "Andrew Molera State Park",
@@ -645,7 +649,7 @@
     },
     "enrichment_confidence": {
       "orientation": 1.0,
-      "swell_window": 0.0,
+      "swell_window": 0.42777777777777776,
       "break_type": 0.5,
       "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
@@ -669,23 +673,23 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 41,
-        "max": 43,
-        "span": 6
+        "min": 59,
+        "max": 67,
+        "span": 10
       },
       {
-        "min": 61,
+        "min": 81,
         "max": 83,
-        "span": 26
+        "span": 4
       },
       {
-        "min": 141,
+        "min": 139,
         "max": 267,
         "span": 130
       },
       {
         "min": 333,
-        "max": 339,
+        "max": 341,
         "span": 10
       }
     ],
@@ -693,9 +697,13 @@
     "swell_window_source": "raycast",
     "nearest_tide_station_id": "1612340",
     "nearest_tide_station_dist_km": 2.81,
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
-    "fallback_buoy_ids": null
+    "nearest_buoy_id": "51211",
+    "nearest_buoy_dist_km": 11.53,
+    "fallback_buoy_ids": [],
+    "coord_adjusted": false,
+    "orientation_50m": 0.7769945376875853,
+    "orientation_200m": 355.83858059511624,
+    "orientation_flipped": false
   },
   {
     "name": "Brooks Street",
@@ -8056,9 +8064,9 @@
     },
     "enrichment_confidence": {
       "orientation": 1.0,
-      "swell_window": 0.0,
+      "swell_window": 0.45555555555555555,
       "break_type": 0.5,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -8083,22 +8091,22 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 53,
-        "max": 183,
-        "span": 134
+        "min": 65,
+        "max": 99,
+        "span": 36
       },
       {
-        "min": 201,
-        "max": 203,
-        "span": 6
+        "min": 113,
+        "max": 175,
+        "span": 64
       },
       {
-        "min": 245,
-        "max": 263,
-        "span": 22
+        "min": 237,
+        "max": 265,
+        "span": 30
       },
       {
-        "min": 285,
+        "min": 283,
         "max": 315,
         "span": 34
       }
@@ -8106,10 +8114,14 @@
     "optimal_swell_dir": 160,
     "swell_window_source": "raycast",
     "nearest_tide_station_id": "1617433",
-    "nearest_tide_station_dist_km": 6.04,
+    "nearest_tide_station_dist_km": 10.14,
     "nearest_buoy_id": null,
     "nearest_buoy_dist_km": null,
-    "fallback_buoy_ids": null
+    "fallback_buoy_ids": [],
+    "coord_adjusted": true,
+    "orientation_50m": 325.6292395154186,
+    "orientation_200m": 324.92797833336294,
+    "orientation_flipped": false
   },
   {
     "name": "Sunset Cliffs",
@@ -12074,7 +12086,7 @@
     },
     "enrichment_confidence": {
       "orientation": 1.0,
-      "swell_window": 0.0,
+      "swell_window": 0.4222222222222222,
       "break_type": 0.5,
       "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
@@ -12094,16 +12106,28 @@
     "tide_preference_confidence": 0.65,
     "nwps_wfo": null,
     "is_valid_surf_spot": true,
-    "orientation_deg": null,
-    "offshore_wind_deg": 85.0,
+    "orientation_deg": 45.0,
+    "offshore_wind_deg": 225.0,
     "orientation_source": "manual",
-    "swell_window_arcs": null,
+    "swell_window_arcs": [
+      {
+        "min": 359,
+        "max": 149,
+        "span": 152
+      }
+    ],
     "optimal_swell_dir": null,
-    "swell_window_source": null,
-    "nearest_tide_station_id": null,
-    "nearest_tide_station_dist_km": null,
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null
+    "swell_window_source": "raycast",
+    "nearest_tide_station_id": "8722004",
+    "nearest_tide_station_dist_km": 0.31,
+    "nearest_buoy_id": "41113",
+    "nearest_buoy_dist_km": 60.39,
+    "coord_adjusted": false,
+    "orientation_50m": 111.07575578179956,
+    "orientation_200m": 111.07575578172259,
+    "orientation_flipped": true,
+    "orientation_note": "Human-verified NE facing into the jetty pocket at Sebastian Inlet. Geometric computation yields ~111 deg because raycast sees the open beach ~72 m away, not the pocket. Promoted from spot_orientations.json (bulk cache) so a re-seed cannot overwrite it.",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Okaloosa Island Pier",
