@@ -10306,9 +10306,15 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722366",
-    "nearest_tide_station_dist_km": 0.37
+    "nearest_tide_station_dist_km": 0.37,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.19677,
+    "nwps_node_lng": -80.16403,
+    "nwps_node_distance_m": 1273,
+    "nwps_buoy_id": null
   },
   {
     "name": "Boca Raton Inlet",
@@ -10500,11 +10506,17 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721649",
     "nearest_tide_station_dist_km": 0.19,
     "nearest_buoy_id": "41113",
-    "nearest_buoy_dist_km": 7.55
+    "nearest_buoy_dist_km": 7.55,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.36346,
+    "nwps_node_lng": -80.60025,
+    "nwps_node_distance_m": 461,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Dania Beach Pier",
@@ -11039,9 +11051,15 @@
       }
     ],
     "optimal_swell_dir": 68,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722213",
-    "nearest_tide_station_dist_km": 0.5
+    "nearest_tide_station_dist_km": 0.5,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.47224,
+    "nwps_node_lng": -80.27308,
+    "nwps_node_distance_m": 1576,
+    "nwps_buoy_id": null
   },
   {
     "name": "Haulover Inlet",
@@ -11298,7 +11316,7 @@
       }
     ],
     "optimal_swell_dir": 92,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721604",
     "nearest_tide_station_dist_km": 1.02,
     "nearest_buoy_id": "41113",
@@ -11308,7 +11326,13 @@
     "orientation_200m": 85.07069853187204,
     "orientation_flipped": true,
     "orientation_note": "South side of Port Canaveral inlet jetty. Coastline-polygon computation gives 131 deg (SE); human structural observation of the jetty wall, promoted from spot_orientations.json bulk cache.",
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.41207,
+    "nwps_node_lng": -80.58208,
+    "nwps_node_distance_m": 854,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Juno Beach Pier",
@@ -11572,11 +11596,17 @@
       }
     ],
     "optimal_swell_dir": 96,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721649",
     "nearest_tide_station_dist_km": 3.62,
     "nearest_buoy_id": "41113",
-    "nearest_buoy_dist_km": 10.11
+    "nearest_buoy_dist_km": 10.11,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.33105,
+    "nwps_node_lng": -80.60025,
+    "nwps_node_distance_m": 641,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Marineland",
@@ -11886,11 +11916,17 @@
       }
     ],
     "optimal_swell_dir": 76,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722004",
     "nearest_tide_station_dist_km": 0.78,
     "nearest_buoy_id": "41113",
-    "nearest_buoy_dist_km": 36.56
+    "nearest_buoy_dist_km": 36.56,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.86114,
+    "nwps_node_lng": -80.43667,
+    "nwps_node_distance_m": 1274,
+    "nwps_buoy_id": null
   },
   {
     "name": "Naples Pier",
@@ -12110,7 +12146,7 @@
       "localism"
     ],
     "tide_preference_confidence": 0.65,
-    "nwps_wfo": null,
+    "nwps_wfo": "mlb",
     "is_valid_surf_spot": true,
     "orientation_deg": 45.0,
     "offshore_wind_deg": 225.0,
@@ -12123,7 +12159,7 @@
       }
     ],
     "optimal_swell_dir": null,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722004",
     "nearest_tide_station_dist_km": 0.31,
     "nearest_buoy_id": "41113",
@@ -12133,7 +12169,13 @@
     "orientation_200m": 111.07575578172259,
     "orientation_flipped": true,
     "orientation_note": "Human-verified NE facing into the jetty pocket at Sebastian Inlet. Geometric computation yields ~111 deg because raycast sees the open beach ~72 m away, not the pocket. Promoted from spot_orientations.json (bulk cache) so a re-seed cannot overwrite it.",
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [],
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.86114,
+    "nwps_node_lng": -80.43667,
+    "nwps_node_distance_m": 976,
+    "nwps_buoy_id": null
   },
   {
     "name": "Okaloosa Island Pier",
@@ -12334,9 +12376,15 @@
       }
     ],
     "optimal_swell_dir": 88,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721727",
-    "nearest_tide_station_dist_km": 0.94
+    "nearest_tide_station_dist_km": 0.94,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.26624,
+    "nwps_node_lng": -80.60025,
+    "nwps_node_distance_m": 904,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Pensacola Beach",
@@ -12437,11 +12485,17 @@
       }
     ],
     "optimal_swell_dir": 48,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC3693",
     "nearest_tide_station_dist_km": 36.49,
     "nearest_buoy_id": "41070",
-    "nearest_buoy_dist_km": 69.59
+    "nearest_buoy_dist_km": 69.59,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.75236,
+    "nwps_node_lng": -80.69113,
+    "nwps_node_distance_m": 1270,
+    "nwps_buoy_id": null
   },
   {
     "name": "Pompano Beach Pier",
@@ -12668,9 +12722,15 @@
       }
     ],
     "optimal_swell_dir": 84,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721804",
-    "nearest_tide_station_dist_km": 4.87
+    "nearest_tide_station_dist_km": 4.87,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.16901,
+    "nwps_node_lng": -80.58208,
+    "nwps_node_distance_m": 708,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Sebastian Inlet",
@@ -12713,9 +12773,15 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722004",
-    "nearest_tide_station_dist_km": 0.7
+    "nearest_tide_station_dist_km": 0.7,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.86114,
+    "nwps_node_lng": -80.43667,
+    "nwps_node_distance_m": 989,
+    "nwps_buoy_id": null
   },
   {
     "name": "South Beach Miami",
@@ -31563,12 +31629,18 @@
       }
     ],
     "optimal_swell_dir": 64,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722366",
     "nearest_tide_station_dist_km": 11.21,
     "nearest_buoy_id": "41114",
     "nearest_buoy_dist_km": 30.67,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.27779,
+    "nwps_node_lng": -80.20038,
+    "nwps_node_distance_m": 611,
+    "nwps_buoy_id": null
   },
   {
     "name": "Vero Pier",
@@ -31593,12 +31665,18 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722004",
     "nearest_tide_station_dist_km": 22.91,
     "nearest_buoy_id": "41114",
     "nearest_buoy_dist_km": 20.14,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 27.66669,
+    "nwps_node_lng": -80.34579,
+    "nwps_node_distance_m": 1439,
+    "nwps_buoy_id": null
   },
   {
     "name": "Spessard",
@@ -31623,12 +31701,18 @@
       }
     ],
     "optimal_swell_dir": 76,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721843",
     "nearest_tide_station_dist_km": 3.02,
     "nearest_buoy_id": "41113",
     "nearest_buoy_dist_km": 39.35,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.05558,
+    "nwps_node_lng": -80.54572,
+    "nwps_node_distance_m": 1205,
+    "nwps_buoy_id": null
   },
   {
     "name": "Ocean Ave",
@@ -31653,12 +31737,18 @@
       }
     ],
     "optimal_swell_dir": 80,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721843",
     "nearest_tide_station_dist_km": 0.48,
     "nearest_buoy_id": "41113",
     "nearest_buoy_dist_km": 36.74,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.07179,
+    "nwps_node_lng": -80.54572,
+    "nwps_node_distance_m": 1058,
+    "nwps_buoy_id": null
   },
   {
     "name": "Indiatlantic",
@@ -31683,12 +31773,18 @@
       }
     ],
     "optimal_swell_dir": 80,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721843",
     "nearest_tide_station_dist_km": 2.47,
     "nearest_buoy_id": "41113",
     "nearest_buoy_dist_km": 34.39,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.1042,
+    "nwps_node_lng": -80.5639,
+    "nwps_node_distance_m": 1536,
+    "nwps_buoy_id": null
   },
   {
     "name": "Canova Beach Park",
@@ -31713,12 +31809,18 @@
       }
     ],
     "optimal_swell_dir": 84,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721804",
     "nearest_tide_station_dist_km": 4.85,
     "nearest_buoy_id": "41113",
     "nearest_buoy_dist_km": 29.34,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.1366,
+    "nwps_node_lng": -80.5639,
+    "nwps_node_distance_m": 1536,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Pelican Beach",
@@ -31743,12 +31845,18 @@
       }
     ],
     "optimal_swell_dir": 84,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721804",
     "nearest_tide_station_dist_km": 1.97,
     "nearest_buoy_id": "41113",
     "nearest_buoy_dist_km": 26.17,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.16901,
+    "nwps_node_lng": -80.58208,
+    "nwps_node_distance_m": 525,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "16th Street South",
@@ -31773,12 +31881,18 @@
       }
     ],
     "optimal_swell_dir": 92,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721727",
     "nearest_tide_station_dist_km": 5.89,
     "nearest_buoy_id": "41113",
     "nearest_buoy_dist_km": 13.57,
-    "nwps_wfo": "mlb"
+    "nwps_wfo": "mlb",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 28.29864,
+    "nwps_node_lng": -80.60025,
+    "nwps_node_distance_m": 748,
+    "nwps_buoy_id": "41113"
   },
   {
     "name": "Flagler Ave",
