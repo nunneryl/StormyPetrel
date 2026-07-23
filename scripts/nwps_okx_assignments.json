@@ -2729,6 +2729,28 @@
           "newport-beach-california"
         ],
         "to_place": "This record alone tags NOTHING. Node coords for these 22 are in the current (Mac) nwps_lox_validate_out.json (freshly written by `--validate --wfo lox --batch <these 22 slugs>`); `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46256 --slugs <these 22> --apply` merges them into 'spots'. Placement via the pending path; 46256 stays OUT of trust_by_buoy (no PASS)."
+      },
+      {
+        "zone": "mlb/41113",
+        "wfo": "mlb",
+        "buoy": "41113",
+        "reference": "41113 - Cape Canaveral Nearshore, FL (CDIP 143) Waverider (10 m); spectral CONFIRMED (.data_spec and .swdir both HTTP 200); a VALID nearshore directional reference (--find-buoy)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B - place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41113 yet, so NO trust PASS. It is July and flat (seas 0.3-0.5 m); trustcheck's floors (TRUST_BUOY_RANGE_MIN_M=0.75, SWELL_HS_FLOOR_M=0.5) both bind, so a PASS cannot legitimately occur until real swell arrives. NOT retired - a valid buoy exists.",
+        "spots": 8,
+        "slugs": [
+          "cocoa-beach-pier",
+          "jetty-park-cocoa-beach",
+          "lori-wilson-park",
+          "patrick-air-force-base-beach",
+          "satellite-beach",
+          "canova-beach-park",
+          "pelican-beach",
+          "16th-street-south"
+        ],
+        "to_place": "Placement via the pending path: on the (mlb, 41113) match in pending[], apply_nwps_assignments places them height-live with nwps_direction_status='pending' - 41113 stays OUT of trust_by_buoy (no PASS). Direction is confirmed only when --trustcheck settles the rolling verdict to PASS on a qualifying swell."
       }
     ],
     "unverifiable": [
@@ -2794,6 +2816,35 @@
           "point-arena"
         ],
         "to_place": "1 spot (Point Arena) — the north pocket above the 46237 SF-Bar pending zone. Node coords are in the (Mac) nwps_mtr_validate_out.json. Promote with NO buoy: `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --no-buoy --slugs point-arena --apply` merges it into 'spots' with nwps_buoy_id=null. apply then places it height-live with nwps_direction_status='unverifiable'. No buoy is added to trust_by_buoy or pending[], and it gets NO WATCH entry (the monitor never flags it)."
+      },
+      {
+        "zone": "mlb/indian-river-lagoon-coast",
+        "wfo": "mlb",
+        "reason": "NO valid nearshore directional buoy exists in range. --find-buoy recommended sipf1 / 41114 / 41068, but ALL THREE return HTTP 404 for both .data_spec and .swdir (verified by direct probe), so none can ever yield a degree-valued swell direction. sipf1 is a NOS/CO-OPS coastal station (water level + met, not NDBC realtime2 spectra); 41068 (FTP feed) and 41114 (CDIP 134) likewise return no spectral files. These were SELECTED by --find-buoy only because _best_valid's gate is 'spectral is not False', which accepts unknown as selectable - a real gap worth logging. These spots ride NWPS HEIGHT (mlb grid) + raycast direction, with direction PERMANENTLY not buoy-verifiable. Same category as eka/north-coast (no valid buoy exists at all), DISTINCT from mlb/north-of-canaveral (a valid buoy exists but is geometrically wrong).",
+        "nearest_candidate": "sipf1 / 41114 / 41068 (all HTTP 404 for .data_spec and .swdir - no directional spectra; AUDIT ONLY, never used for placement or verification)",
+        "slugs": [
+          "bathtub-beach",
+          "fort-pierce-inlet",
+          "jensen-beach",
+          "vero-pier",
+          "indiatlantic",
+          "monster-hole",
+          "ocean-ave",
+          "sebastian-inlet",
+          "spessard",
+          "north-jetty"
+        ],
+        "to_place": "10 spots - promoted with NO buoy; apply places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS branch, so never relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and these spots get NO WATCH entry."
+      },
+      {
+        "zone": "mlb/north-of-canaveral",
+        "wfo": "mlb",
+        "reason": "VALID BUOY EXISTS BUT GEOMETRICALLY WRONG - Cape Canaveral separates two swell-exposure regimes. --find-buoy recommended 41113 purely on distance (41 km) with no cape-side awareness, but 41113 sits SOUTH of Cape Canaveral while playalinda is NORTH; a direction PASS against 41113 would certify playalinda using a buoy in a different swell window (false confidence, the Point Conception failure mode). 41009 is on the correct north side with confirmed spectra, but --find-buoy rates it MARGINAL (offshore discus, 42 m, noisy direction for low-energy swell) and _best_valid never selects MARGINAL. So direction is not honestly buoy-verifiable here. Same category as lox/santa-barbara-channel (a valid buoy exists but is geometrically wrong), DISTINCT from mlb/indian-river-lagoon-coast (no valid buoy exists at all).",
+        "nearest_candidate": "41009 (north side, MARGINAL discus) / 41113 (wrong side of cape) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "playalinda-beach"
+        ],
+        "to_place": "1 spot (playalinda-beach) - promoted with NO buoy; apply places it height-live with nwps_direction_status='unverifiable'. No buoy is added to trust_by_buoy or pending[], and it gets NO WATCH entry."
       }
     ]
   }
