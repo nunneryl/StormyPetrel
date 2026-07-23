@@ -1,29 +1,44 @@
-name: buoy-ready-monitor
+name: buoy-liveness-monitor
 
-# Scheduled, READ-ONLY monitor. Notifies (via a GitHub Issue -> email) when a
-# trust-check zone has a qualifying SWELL EVENT to check: a watched NDBC buoy is UP,
-# a USABLE reference (VALID/MARGINAL — invalid/retired buoys like 44098 are never
-# flagged), showing real swell (gate precondition, sustained + height-assessable variance),
-# and the zone's rolling DIRECTION verdict is still ACCUMULATING. This monitor only FLAGS;
-# --trustcheck (in the issue) inspects a window read-only and banks nothing, while events are
-# banked only by --reverify-tagged (not scheduled — run on the Mac). NOT triggered by Hs range.
-# Guardrails: no Supabase, no prod, no NOMADS, no secrets beyond GITHUB_TOKEN; read-only.
+# Scheduled, READ-ONLY buoy-LIVENESS monitor. Detects when a reference buoy that anchors one
+# or more NWPS-placed surf zones has stopped producing wave observations — the quiet failure
+# that went unnoticed for ~6 weeks when 46240 (Cabrillo Point) and 46284 (Soquel Cove) went
+# silent in June 2026. Liveness = time since the buoy's last ACTUAL wave observation (newest
+# hour in ndbc_spectral.by_hour), NOT roster membership: < 7 days = healthy, 7-30 days = a
+# printed note, > 30 days = open a GitHub issue proposing MANUAL retirement. A buoy dropped
+# from activestations.xml entirely is a louder, secondary signal (issue regardless of age).
+#
+# DETECT AND REPORT ONLY — this workflow NEVER retires a buoy, never sets/edits trust_by_buoy
+# or buoy_reference, never touches spots_enriched.json or the DB. It opens/updates/closes a
+# per-buoy issue and a human decides (trust-loop pattern). The watched roster is DERIVED from
+# the live assignments, so a new Southeast-rollout zone is covered without editing anything.
+#
+# Direction-event ACCUMULATION is a separate job and IS scheduled: reverify-trust-accumulate
+# runs `--reverify-tagged` twice daily (cron 0 5,17). This monitor no longer flags swell
+# events for a manual run — that job is redundant now that accumulation is automated.
+#
+# Guardrails: no Supabase, no prod DB, no NOMADS, no secrets beyond GITHUB_TOKEN; read-only.
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # every 3 hours
+    # Daily at 13:00 UTC. Liveness is a DAY-scale signal (a buoy silent for weeks needs
+    # catching within a day, not every 3 h), so once daily is ample — and a daily cadence
+    # keeps the per-buoy issue dedupe trivial (at most one refresh per issue per day). 13:00
+    # UTC sits after NDBC's ~12Z realtime refresh and is offset from reverify's 05/17 UTC runs
+    # so the two NDBC-fetching jobs don't overlap.
+    - cron: '0 13 * * *'
   workflow_dispatch: {}       # manual run for testing
 
 permissions:
-  issues: write
-  contents: read
+  issues: write               # open/update/close the per-buoy liveness issue
+  contents: read              # checkout
 
 concurrency:
-  group: buoy-ready-monitor
+  group: buoy-liveness-monitor
   cancel-in-progress: false
 
 jobs:
-  buoy-ready:
+  buoy-liveness:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,48 +50,54 @@ jobs:
           python-version: '3.12'
 
       - name: Install minimal deps (read-only NDBC fetch + parse; numpy for the gate reuse)
-        # numpy: the monitor now reuses the trust gate's precondition / pairing scorer / rolling
-        # history from pipeline.forecast.nwps_nearshore (which imports numpy). cfgrib is NOT needed
-        # (it is lazy — the monitor never loads a NOMADS grid). ndbc_spectral (swell) is pure-python.
+        # numpy: the monitor derives its roster from pipeline.forecast.nwps_nearshore
+        # (_tagged_nwps_zones / _retired_reference_zones), which imports numpy. requests +
+        # tenacity: ndbc_spectral.by_hour's polite fetch layer. cfgrib is NOT needed (lazy —
+        # the monitor never loads a NOMADS grid).
         run: python -m pip install --upgrade pip requests tenacity numpy
 
-      - name: Download public NDBC station roster (read-only, no secrets)
+      - name: Download NDBC station roster (read-only, no secrets)
+        # Only activestations.xml is needed — it is the roster used for DROPPED detection.
+        # Per-buoy wave observations come from ndbc_spectral.by_hour, which fetches the
+        # realtime spectral files directly (no latest_obs.txt needed here). If this download
+        # fails the monitor degrades to age-only detection and raises NO false 'dropped'
+        # alerts (it cannot assess membership from a missing roster).
         run: |
           python - <<'PY'
           import urllib.request
-          from pipeline.config import NDBC_STATIONS_XML, NDBC_LATEST_OBS_TXT
+          from pipeline.config import NDBC_STATIONS_XML
           NDBC_STATIONS_XML.parent.mkdir(parents=True, exist_ok=True)
-          targets = [
-              ("https://www.ndbc.noaa.gov/activestations.xml", NDBC_STATIONS_XML),
-              ("https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt", NDBC_LATEST_OBS_TXT),
-          ]
-          for url, dest in targets:
-              req = urllib.request.Request(
-                  url, headers={"User-Agent": "StormyPetrel-buoy-ready-monitor (+https://stormypetrel.surf)"})
-              with urllib.request.urlopen(req, timeout=60) as r:
-                  body = r.read()
-              dest.write_bytes(body)
-              print(f"downloaded {url} -> {dest} ({len(body)} bytes)")
+          url = "https://www.ndbc.noaa.gov/activestations.xml"
+          req = urllib.request.Request(
+              url, headers={"User-Agent": "StormyPetrel-buoy-liveness-monitor (+https://stormypetrel.surf)"})
+          with urllib.request.urlopen(req, timeout=60) as r:
+              body = r.read()
+          NDBC_STATIONS_XML.write_bytes(body)
+          print(f"downloaded {url} -> {NDBC_STATIONS_XML} ({len(body)} bytes)")
           PY
 
-      - name: Run buoy-ready monitor
+      - name: Run buoy-liveness monitor
         id: monitor
         run: python3 scripts/buoy_ready_monitor.py
 
-      - name: Manage 'buoy-ready' issue
+      - name: Manage 'buoy-liveness' issues (per buoy — detect & report only)
+        # Guard: only manage issues when the monitor emitted a health line (i.e. it ran to
+        # completion). If the monitor crashed there is no output and we skip entirely — a
+        # failed run must never be read as "every buoy resolved" and close all open issues.
+        if: steps.monitor.outputs.health_line != ''
         uses: actions/github-script@v7
         env:
-          ANY_FLAGGED: ${{ steps.monitor.outputs.any_flagged }}
-          FLAGGED_JSON: ${{ steps.monitor.outputs.flagged_json }}
-          MIN_EVENTS: ${{ steps.monitor.outputs.min_events }}
+          ANY_ALERT: ${{ steps.monitor.outputs.any_alert }}
+          ALERT_JSON: ${{ steps.monitor.outputs.alert_json }}      # via env (no template injection)
+          HEALTH_LINE: ${{ steps.monitor.outputs.health_line }}
         with:
           script: |
-            const LABEL = 'buoy-ready';
+            const LABEL = 'buoy-liveness';
             const ASSIGNEE = 'nunneryl';
             const { owner, repo } = context.repo;
-            const anyFlagged = process.env.ANY_FLAGGED === 'true';
-            const flagged = JSON.parse(process.env.FLAGGED_JSON || '[]');
-            const minEvents = process.env.MIN_EVENTS || '5';
+            const alerts = JSON.parse(process.env.ALERT_JSON || '[]');   // >30d / no-data / dropped buoys
+            const health = process.env.HEALTH_LINE || '';
+            core.info(health);
 
             // 1. Ensure the label exists (create on first run).
             try {
@@ -84,8 +105,8 @@ jobs:
             } catch (e) {
               if (e.status === 404) {
                 await github.rest.issues.createLabel({
-                  owner, repo, name: LABEL, color: '1d76db',
-                  description: 'A trust-check zone has a qualifying swell event to accumulate',
+                  owner, repo, name: LABEL, color: 'b60205',
+                  description: 'A reference buoy has stopped reporting waves (liveness)',
                 });
                 core.info(`created label '${LABEL}'`);
               } else {
@@ -93,93 +114,82 @@ jobs:
               }
             }
 
-            // 2. Find an existing OPEN issue carrying the label.
+            // 2. Existing OPEN liveness issues, keyed by a hidden per-buoy marker so a buoy
+            //    shared across wfos is two distinct issues and can't collide.
             const found = await github.rest.issues.listForRepo({
-              owner, repo, state: 'open', labels: LABEL, per_page: 20 });
-            const existing = found.data.find(i => !i.pull_request);
+              owner, repo, state: 'open', labels: LABEL, per_page: 100 });
+            const open = found.data.filter(i => !i.pull_request);
+            const markerRe = /<!-- buoy-liveness:([^\s]+) -->/;
+            const keyOf = i => { const m = (i.body || '').match(markerRe); return m ? m[1] : null; };
+            const marker = key => `<!-- buoy-liveness:${key} -->`;
 
-            // flagged-set key, hidden marker, and body builder. Key on id:wfo (NOT id
-            // alone) so a buoy shared across regions — e.g. a shared buoy under two wfos —
-            // is two distinct members and can't collide or be dropped. Dedup is on this
-            // set: an open issue is NOT re-notified while the same zones stay flagged.
-            const setKey = flagged.map(r => `${r.id}:${r.wfo}`).sort().join(',');
-            const marker = s => `<!-- buoy-ready-set:${s} -->`;
-            const buildBody = () => {
-              const items = flagged.map(r =>
-                `- **${r.id}** [${r.wfo}] — ${r.zone} — swell Hs `
-                + `${r.swell_hs == null ? 'n/a' : r.swell_hs + ' m'}, ${r.qual_hours} qualifying hr; `
-                + `rolling **${r.rolling}** (${r.n_events}/${minEvents} events)`);
-              const cmds = flagged.map(r =>
-                '```\n'
-                + `python3 -m pipeline.forecast.nwps_nearshore --trustcheck --wfo ${r.wfo} --buoy ${r.id}`
-                + '\n```');
+            const titleFor = r => r.dropped
+              ? `Buoy liveness: ${r.id} (${r.wfo}) dropped from NDBC roster — review`
+              : `Buoy liveness: ${r.id} (${r.wfo}) silent ${r.age_days}d — review`;
+            const bodyFor = r => {
+              const why = r.dropped
+                ? `has been **removed from NDBC's activestations.xml** (dropped from the roster)`
+                : `has not produced a wave observation in **${r.age_days} days**`;
+              const spots = (r.spots == null) ? 'the spot(s)' : `**${r.spots} spot(s)**`;
               return [
-                `These zone(s) have a **qualifying swell event right now** — a usable buoy `
-                  + `(VALID/MARGINAL) is showing real swell, and the zone's rolling DIRECTION verdict `
-                  + `is still ACCUMULATING toward ${minEvents} independent events:`,
-                '',
-                items.join('\n'),
-                '',
-                '### Inspect this window (read-only — banks NOTHING)',
-                `\`--trustcheck\` prints the height/direction verdict for one buoy's current window. `
-                  + `It is a diagnostic only: it does **not** add an event or change any rolling verdict.`,
-                cmds.join('\n'),
-                '',
-                '### Accumulate toward the verdict (this is what banks events)',
-                `Only \`--reverify-tagged\` appends events to the rolling history. It loops **all** tagged `
-                  + `zones and banks each window whose HEIGHT is assessable (a flat / too-short window is `
-                  + `INCONCLUSIVE and banks nothing, so noise can't settle a zone). It is **not scheduled** `
-                  + `— run it (Mac; live NOMADS+NDBC) to accumulate. The verdict settles only after `
-                  + `${minEvents} independent swell events:`,
-                '```\npython3 -m pipeline.forecast.nwps_nearshore --reverify-tagged\n```',
-                '',
-                'Read-only monitor. Structurally-invalid / retired buoys (e.g. 44098) are never listed '
-                  + '— there is no valid reference to test against. This issue auto-closes when no '
-                  + 'watched zone has a qualifying swell event.',
-                '',
-                marker(setKey),
+                `Reference buoy **${r.id}** (\`${r.wfo}\`) — ${r.zone || 'zone'} — ${why}.`,
+                ``,
+                `${spots} in this zone ride NWPS height with **${r.id}** as their DIRECTION `
+                  + `reference. While it is silent, no direction events accumulate for the zone — `
+                  + `this exact situation (46240 / 46284) went unnoticed for ~6 weeks in June 2026.`,
+                ``,
+                `### Heads-up only — nothing has been changed`,
+                `This monitor **detects and reports only**. It has NOT retired the buoy, changed `
+                  + `\`trust_by_buoy\`, edited \`buoy_reference\`, or touched \`spots_enriched.json\` `
+                  + `or the DB. Buoys often come back after servicing, and an upstream NDBC outage `
+                  + `must not rewrite trust state unattended.`,
+                ``,
+                `### If you judge the buoy genuinely gone (your call)`,
+                `Move \`${r.wfo}/${r.id}\` into \`buoy_reference.retired\` in `
+                  + `\`scripts/nwps_okx_assignments.json\` (or drop it from \`pending[]\`), then re-apply:`,
+                '```',
+                'python3 -m pipeline.apply_nwps_assignments --apply',
+                '```',
+                `The zone's spots keep their NWPS height and ride raycast direction (unverified) — `
+                  + `the same disposition as any spot with no nearby buoy. If the buoy resumes `
+                  + `reporting, this issue auto-closes.`,
+                ``,
+                `<sub>${health}</sub>`,
+                marker(`${r.wfo}/${r.id}`),
               ].join('\n');
             };
 
-            const prevMatch = existing && (existing.body || '').match(/<!-- buoy-ready-set:([^>]*) -->/);
-            const prevSet = prevMatch ? prevMatch[1].split(',').filter(Boolean) : [];
+            const alertKeys = new Set(alerts.map(r => `${r.wfo}/${r.id}`));
 
-            if (anyFlagged && !existing) {
-              // First flagged zone(s): open ONE issue (don't wait for all zones).
-              const zones = [...new Set(flagged.map(r => r.zone))].join(', ');
-              const issue = await github.rest.issues.create({
-                owner, repo,
-                title: `Buoy-ready: swell event to check — ${zones}`,
-                body: buildBody(),
-                labels: [LABEL],
-                assignees: [ASSIGNEE],
-              });
-              core.info(`created buoy-ready issue #${issue.data.number} (set=${setKey})`);
-            } else if (anyFlagged && existing) {
-              // An issue is open. Re-notify ONLY if a NEW zone gained a swell event (dedup on set).
-              const newly = flagged.filter(r => !prevSet.includes(`${r.id}:${r.wfo}`));
-              if (newly.length > 0) {
-                await github.rest.issues.update({
-                  owner, repo, issue_number: existing.number, body: buildBody() });
-                const nz = [...new Set(newly.map(r => r.zone))].join(', ');
-                await github.rest.issues.createComment({
-                  owner, repo, issue_number: existing.number,
-                  body: `New zone(s) with a swell event to check: **${nz}** (${newly.map(r => r.id).join(', ')}). `
-                    + `Flagged-set is now \`${setKey}\`. Run \`--reverify-tagged\` (Mac) to bank an event `
-                    + `toward each zone's rolling verdict; \`--trustcheck\` only inspects a window (banks nothing).` });
-                core.info(`flagged-set grew -> ${setKey}; re-notified`);
+            // 3. Open a NEW issue for a newly-silent buoy; UPDATE the existing issue in place
+            //    (no comment, no re-notify) for a buoy that is still silent — so a persistent
+            //    outage does not open a fresh issue or email every single day.
+            for (const r of alerts) {
+              const key = `${r.wfo}/${r.id}`;
+              const existing = open.find(i => keyOf(i) === key);
+              if (!existing) {
+                const issue = await github.rest.issues.create({
+                  owner, repo, title: titleFor(r), body: bodyFor(r),
+                  labels: [LABEL], assignees: [ASSIGNEE] });
+                core.info(`opened buoy-liveness issue #${issue.data.number} (${key})`);
               } else {
-                core.info(`flagged-set unchanged (${setKey}); no duplicate notification`);
+                await github.rest.issues.update({
+                  owner, repo, issue_number: existing.number, title: titleFor(r), body: bodyFor(r) });
+                core.info(`refreshed buoy-liveness issue #${existing.number} (${key})`);
               }
-            } else if (!anyFlagged && existing) {
-              // No swell event anymore: close so the next swell re-triggers a fresh email.
-              await github.rest.issues.createComment({
-                owner, repo, issue_number: existing.number,
-                body: `No watched zone has a qualifying swell event anymore. Closing — the next swell `
-                  + `event will open a fresh alert.` });
-              await github.rest.issues.update({
-                owner, repo, issue_number: existing.number, state: 'closed' });
-              core.info('closed buoy-ready issue (no swell events)');
-            } else {
-              core.info('no swell events and no open issue; nothing to do');
+            }
+
+            // 4. Close any open liveness issue whose buoy is no longer alerting (resumed
+            //    reporting) so the next outage re-opens a fresh one.
+            for (const i of open) {
+              const k = keyOf(i);
+              if (k && !alertKeys.has(k)) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: i.number,
+                  body: `✅ **${k}** is reporting again (or is no longer flagged). Closing — the `
+                    + `monitor reopens automatically if it goes silent again.` });
+                await github.rest.issues.update({
+                  owner, repo, issue_number: i.number, state: 'closed' });
+                core.info(`closed buoy-liveness issue #${i.number} (${k} resolved)`);
+              }
             }
