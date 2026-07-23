@@ -2555,44 +2555,6 @@
     ],
     "pending": [
       {
-        "zone": "mtr/46240",
-        "wfo": "mtr",
-        "buoy": "46240",
-        "reference": "46240 — Cabrillo Point nearshore Waverider (18 m); a VALID nearshore directional reference",
-        "axes_pending": [
-          "direction"
-        ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46240 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists (distinct from the 44098 both-axes retirement).",
-        "spots": 24,
-        "slugs": [
-          "waddell-creek",
-          "davenport-landing",
-          "new-brighton-reef",
-          "toes-over",
-          "4-mile",
-          "3-mile",
-          "cowell-s-beach-children-s-surfing-area",
-          "the-hook",
-          "38th-avenue",
-          "second-peak",
-          "first-peak",
-          "wind-and-sea",
-          "pleasure-point",
-          "sewer-peak",
-          "steamer-lane",
-          "mitchell-s-cove",
-          "natural-bridges",
-          "manresa-state-beach",
-          "moss-landing",
-          "marina-state-beach",
-          "boneyard",
-          "lovers-point",
-          "monterey-beach",
-          "carmel-beach"
-        ],
-        "to_place": "This record alone tags NOTHING. To place these on NWPS height: (1) run `--validate --wfo mtr` on the Mac to compute each spot's nwps_node_lat/lng/distance, (2) promote them into 'spots' with nwps_buoy_id 46240, (3) set trust_by_buoy['46240']='PASS' (the HEIGHT-tagging gate apply_nwps_assignments requires — with 46240 absent from trust_by_buoy the 24 are HELD, not placed). Direction remains pending here until --trustcheck settles the rolling verdict to PASS."
-      },
-      {
         "zone": "mtr/46237",
         "wfo": "mtr",
         "buoy": "46237",
@@ -2618,22 +2580,6 @@
           "half-moon-bay"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng must be REGENERATED (only node_km was captured before): on the Mac run `--validate --wfo mtr --batch <these 13 slugs>` to rewrite nwps_mtr_validate_out.json with their node lat/lng, then `promote_nwps_validate --buoy 46237 --slugs <these 13>` merges them into 'spots'. Placement then via the pending path; 46237 stays OUT of trust_by_buoy (no PASS)."
-      },
-      {
-        "zone": "mtr/46284",
-        "wfo": "mtr",
-        "buoy": "46284",
-        "reference": "46284 — Soquel Cove South nearshore Waverider (24 m); a VALID nearshore directional reference (--find-buoy)",
-        "axes_pending": [
-          "direction"
-        ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46284 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
-        "spots": 2,
-        "slugs": [
-          "pigeon-point",
-          "scotts-creek"
-        ],
-        "to_place": "This record alone tags NOTHING. Node coords for these 2 are in the current (Mac) nwps_mtr_validate_out.json; `promote_nwps_validate --buoy 46284 --slugs pigeon-point,scotts-creek` merges them into 'spots'. Do this BEFORE re-validating the 46237 batch (which overwrites the validate-out). Placement via the pending path; 46284 stays OUT of trust_by_buoy (no PASS)."
       },
       {
         "zone": "lox/46268",
@@ -2845,6 +2791,50 @@
           "playalinda-beach"
         ],
         "to_place": "1 spot (playalinda-beach) - promoted with NO buoy; apply places it height-live with nwps_direction_status='unverifiable'. No buoy is added to trust_by_buoy or pending[], and it gets NO WATCH entry."
+      },
+      {
+        "zone": "mtr/monterey-bay-santa-cruz",
+        "wfo": "mtr",
+        "reason": "REFERENCE OFFLINE — Monterey Bay + Santa Cruz (Waddell Creek → Carmel: Steamer Lane / Pleasure Point / Capitola / Manresa / Monterey / Carmel). 46240 (Cabrillo Point nearshore Waverider, 18 m) — the VALID nearshore directional reference these 24 spots were placed on (pending direction) — went dark ~2026-06-08 and has since been REMOVED from NDBC activestations.xml (silent + off-roster; NDBC reports no data in the last 45 days). Every other nearshore Waverider in the bay is dark too: 46284 Soquel Cove South (24 m, silent + removed from roster), 46269 Point Santa Cruz (20 m, still in roster but 404 on realtime spectra), 46276 Pajaro Beach (15 m, 404) and 46279 Pajaro Beach South (15 m, 404). No live substitute exists: every live buoy within 150 km is deep water and correctly depth-vetoed by --find-buoy — 46236 (133 m), 46012 (209 m), 46239 (366 m), 46092 (1000 m), 46028 (1136 m), 46042 (1710 m). The nearest live shallow reference is 46237 (SF Bar, 17 m) at ~107 km — MARGINAL, a different exposure regime, and already the SF/Point Reyes reference; verifying these Monterey spots against a far, headland-separated buoy would manufacture unreliable verdicts, so it is NOT used. These spots ride NWPS HEIGHT skill + raycast direction, direction unverified, until a bay Waverider returns. CRITICAL — this is REFERENCE OFFLINE, NOT a geometry limit: unlike eka/north-coast or the box/gyx 44098 Gulf-of-Maine cases (where no valid nearshore buoy can EVER exist), Monterey Bay had five good nearshore Waveriders until June 2026, so this disposition is EXPECTED TO BE REVISITABLE. RE-CHECK — do not treat as settled: when any of 46240 / 46284 / 46269 / 46276 / 46279 resumes reporting, re-run --find-buoy and restore this zone to pending[] on the recovered buoy.",
+        "nearest_candidate": "46237 SF Bar (17 m, ~107 km) MARGINAL — wrong exposure, already the SF/Point Reyes reference; all closer live buoys deep-water (46236 133 m / 46012 209 m / 46239 366 m / 46092 1000 m / 46028 1136 m / 46042 1710 m). AUDIT ONLY — never used for placement or verification.",
+        "slugs": [
+          "waddell-creek",
+          "davenport-landing",
+          "new-brighton-reef",
+          "toes-over",
+          "4-mile",
+          "3-mile",
+          "cowell-s-beach-children-s-surfing-area",
+          "the-hook",
+          "38th-avenue",
+          "second-peak",
+          "first-peak",
+          "wind-and-sea",
+          "pleasure-point",
+          "sewer-peak",
+          "steamer-lane",
+          "mitchell-s-cove",
+          "natural-bridges",
+          "manresa-state-beach",
+          "moss-landing",
+          "marina-state-beach",
+          "boneyard",
+          "lovers-point",
+          "monterey-beach",
+          "carmel-beach"
+        ],
+        "to_place": "These 24 spots are ALREADY placed in 'spots' on NWPS HEIGHT with nwps_buoy_id=46240 (they were the mtr/46240 pending zone). This record RE-DISPOSITIONS them to unverifiable; no re-validation is needed — their existing NWPS height nodes are kept. On the next `apply_nwps_assignments --apply`, the unverifiable[] slug branch (checked BEFORE the pending/PASS branches) sets nwps_direction_status='unverifiable' and NULLS nwps_buoy_id on the OUTPUT row (B2 — the dead 46240 id is stripped from spots_enriched/DB, even though the 'spots' input row still carries it as the restore pairing), leaving them height-live with direction unverified. No buoy is added to trust_by_buoy or pending[], and these spots get NO liveness/monitor entry. To restore when 46240 (or another bay Waverider) returns: move this record back to pending[] keyed (mtr, <buoy>) — the 'spots' entries still hold their node coords, so apply re-tags them 'pending' with no re-validation."
+      },
+      {
+        "zone": "mtr/san-mateo-south-coast",
+        "wfo": "mtr",
+        "reason": "REFERENCE OFFLINE — San Mateo south coast (Pigeon Point + Scotts Creek). 46284 (Soquel Cove South nearshore Waverider, 24 m) — the VALID nearshore directional reference these 2 spots were placed on (pending direction) — went dark ~2026-06-08 and has since been REMOVED from NDBC activestations.xml (silent + off-roster; NDBC reports no data in the last 45 days). Every other nearshore Waverider in Monterey Bay is dark too: 46240 Cabrillo Point (18 m, silent + removed from roster), 46269 Point Santa Cruz (20 m, still in roster but 404 on realtime spectra), 46276 Pajaro Beach (15 m, 404) and 46279 Pajaro Beach South (15 m, 404). No live substitute exists: every live buoy within 150 km is deep water and correctly depth-vetoed by --find-buoy — 46236 (133 m), 46012 (209 m), 46239 (366 m), 46092 (1000 m), 46028 (1136 m), 46042 (1710 m). The nearest live shallow reference is 46237 (SF Bar, 17 m) at ~107 km — MARGINAL, a different exposure regime, and already the SF/Point Reyes reference; verifying these Monterey spots against a far, headland-separated buoy would manufacture unreliable verdicts, so it is NOT used. These spots ride NWPS HEIGHT skill + raycast direction, direction unverified, until a bay Waverider returns. CRITICAL — this is REFERENCE OFFLINE, NOT a geometry limit: unlike eka/north-coast or the box/gyx 44098 Gulf-of-Maine cases (where no valid nearshore buoy can EVER exist), Monterey Bay had five good nearshore Waveriders until June 2026, so this disposition is EXPECTED TO BE REVISITABLE. RE-CHECK — do not treat as settled: when any of 46240 / 46284 / 46269 / 46276 / 46279 resumes reporting, re-run --find-buoy and restore this zone to pending[] on the recovered buoy.",
+        "nearest_candidate": "46237 SF Bar (17 m, ~107 km) MARGINAL — wrong exposure, already the SF/Point Reyes reference; all closer live buoys deep-water (46236 133 m / 46012 209 m / 46239 366 m / 46092 1000 m / 46028 1136 m / 46042 1710 m). AUDIT ONLY — never used for placement or verification.",
+        "slugs": [
+          "pigeon-point",
+          "scotts-creek"
+        ],
+        "to_place": "These 2 spots are ALREADY placed in 'spots' on NWPS HEIGHT with nwps_buoy_id=46284 (they were the mtr/46284 pending zone). This record RE-DISPOSITIONS them to unverifiable; no re-validation is needed — their existing NWPS height nodes are kept. On the next `apply_nwps_assignments --apply`, the unverifiable[] slug branch (checked BEFORE the pending/PASS branches) sets nwps_direction_status='unverifiable' and NULLS nwps_buoy_id on the OUTPUT row (B2 — the dead 46284 id is stripped from spots_enriched/DB, even though the 'spots' input row still carries it as the restore pairing), leaving them height-live with direction unverified. No buoy is added to trust_by_buoy or pending[], and these spots get NO liveness/monitor entry. To restore when 46284 (or another bay Waverider) returns: move this record back to pending[] keyed (mtr, <buoy>) — the 'spots' entries still hold their node coords, so apply re-tags them 'pending' with no re-validation."
       }
     ]
   }
