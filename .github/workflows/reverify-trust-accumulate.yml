@@ -87,14 +87,24 @@ jobs:
         run: pip install -r pipeline/requirements.txt
 
       - name: Fetch NDBC station roster (buoy lat/lng metadata for _buoy_latlng)
-        # Bounded (single small file, at most 3 retries) — not a storm. If it fails the
-        # zones just SKIP (no metadata) and the history is left unchanged; not fatal.
+        # Bounded (two small files, at most 3 retries each) — not a storm. activestations.xml is
+        # the roster _buoy_latlng resolves coordinates from; if it fails the zones just SKIP (no
+        # metadata) and the history is left unchanged — not fatal. latest_obs.txt is the roster's
+        # companion file: load_ndbc_wave_stations() requires BOTH or it logs "NDBC files missing"
+        # and returns [] — fetching it silences that warning and restores _buoy_latlng's
+        # "not currently reporting waves" note. NOTE: latest_obs.txt does NOT resolve buoy
+        # coordinates (those come from activestations.xml alone), so it cannot fix a zone whose
+        # buoy is absent from the XML — that SKIPs with a KeyError regardless of this file.
         run: |
           mkdir -p pipeline/geodata pipeline/forecast_data/nwps_trust_history
           curl -fsSL --retry 3 --retry-delay 5 \
             https://www.ndbc.noaa.gov/activestations.xml \
             -o pipeline/geodata/ndbc_stations.xml \
             || echo "::warning::NDBC roster fetch failed — zones will SKIP; rolling history unchanged"
+          curl -fsSL --retry 3 --retry-delay 5 \
+            https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt \
+            -o pipeline/geodata/ndbc_latest_obs.txt \
+            || echo "::warning::NDBC latest_obs fetch failed — load_ndbc_wave_stations() will log NDBC files missing"
 
       - name: Restore rolling trust history (accumulated across prior runs)
         uses: actions/cache/restore@v4
