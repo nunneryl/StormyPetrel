@@ -127,6 +127,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Skip Algorithm 2 (swell window ray-casting) — much faster for dev iteration.",
     )
     p.add_argument("--limit", type=int, default=None, help="Only enrich the first N spots (dev).")
+    p.add_argument(
+        "--allow-tier-demotion",
+        action="store_true",
+        help="Allow a recompute to demote a spot's swell_window_source from the better "
+             "nwps/cdip_mop tier back to raycast/orientation_derived. WITHOUT this flag "
+             "demotion is impossible (not merely warned): the NWPS/MOP overlay is applied by "
+             "a separate step, so a plain enrich would otherwise silently flatten the tier.",
+    )
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
 
@@ -147,7 +155,51 @@ def _is_verified(spot: dict) -> bool:
     return spot.get("verification_confidence") in ("high", "medium")
 
 
-def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) -> dict:
+# The two "better" swell-window tiers. They are overlaid by apply_nwps_assignments /
+# apply_mop_assignments AFTER enrich — enrich never recomputes them — so a plain enrich, which
+# recomputes the raycast/orientation window, would silently DEMOTE a spot already on one of
+# these tiers back to 'raycast'/'orientation_derived' (it flattened nwps 232->0, cdip_mop 48->0
+# last session). The preserve-guard below stops that. Mirrors sw1_raycast._PRESERVE_SOURCES.
+_PRESERVE_TIERS = ("nwps", "cdip_mop")
+
+
+def _apply_tier_guard(spot: dict, enriched: dict, confidence: dict,
+                      allow_tier_demotion: bool) -> bool:
+    """Preserve-guard for the swell-window tier. If *spot* was on a preserve tier
+    (nwps/cdip_mop) and the recompute demoted it, restore the tier and the swell-window
+    fields that belong to it on *enriched*, and return True (rescued). Returns False (no-op)
+    when demotion is allowed, the spot was not on a tier, or it was not demoted.
+
+    Scope is deliberately narrow — the four fields that ARE the swell window (its provenance,
+    arcs, optimal direction, and confidence), the same set --skip-raycast carries forward and
+    sw1_raycast preserves. It does NOT touch nwps_*/mop_* fields (enrich never computes them,
+    so they carry through untouched) and it does NOT touch nearest_buoy_id (the recomputable
+    user-facing display buoy — deliberately left free so a dead display buoy can fall out)."""
+    orig = spot.get("swell_window_source")
+    if allow_tier_demotion or orig not in _PRESERVE_TIERS:
+        return False
+    if enriched.get("swell_window_source") in _PRESERVE_TIERS:
+        return False  # not demoted — nothing to restore
+    enriched["swell_window_source"] = orig
+    enriched["swell_window_arcs"] = spot.get("swell_window_arcs") or []
+    enriched["optimal_swell_dir"] = spot.get("optimal_swell_dir")
+    confidence["swell_window"] = (spot.get("enrichment_confidence") or {}).get("swell_window", 0.0)
+    return True
+
+
+def _strip_preserve_markers(records: list[dict]) -> int:
+    """Count and REMOVE the transient `_tier_preserved` markers _enrich_one stamps, so the
+    marker never leaks into the written spots_enriched.json. Returns how many spots the
+    preserve-guard rescued (would have been demoted to raycast)."""
+    n = 0
+    for r in records:
+        if r.pop("_tier_preserved", False):
+            n += 1
+    return n
+
+
+def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
+                allow_tier_demotion: bool = False) -> dict:
     """Run all algorithms on one spot; return the enriched record.
 
     If *skip_raycast* is True and *prior_arcs* contains a matching entry for
@@ -309,6 +361,14 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None) 
         if "optimal_swell_dir" in fallback:
             _set("optimal_swell_dir", fallback["optimal_swell_dir"])
 
+    # Algo 2c — preserve-guard: never let a full enrich SILENTLY demote a spot already on the
+    # better nwps/cdip_mop tier back to raycast/orientation_derived. The NWPS/MOP overlay is
+    # applied by a separate step (apply_nwps_assignments / apply_mop_assignments), so a plain
+    # re-enrich would otherwise flatten the tier. `_tier_preserved` is a transient marker main
+    # counts then strips before writing.
+    if _apply_tier_guard(spot, enriched, confidence, allow_tier_demotion):
+        enriched["_tier_preserved"] = True
+
     # Algo 3 — break type
     try:
         r = compute_break_type(spot_for_algo)
@@ -449,12 +509,25 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError:
         iterator = spots
 
-    enriched = [_enrich_one(spot, args.skip_raycast, prior_arcs) for spot in iterator]
+    enriched = [_enrich_one(spot, args.skip_raycast, prior_arcs, args.allow_tier_demotion)
+                for spot in iterator]
+
+    # Count + strip the transient preserve-guard markers before writing.
+    preserved_n = _strip_preserve_markers(enriched)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(enriched, indent=2, ensure_ascii=False))
     log.info("Wrote %d enriched spots to %s", len(enriched), args.output)
     _summarize(enriched)
+    if args.allow_tier_demotion:
+        demoted_n = sum(1 for s, r in zip(spots, enriched)
+                        if s.get("swell_window_source") in _PRESERVE_TIERS
+                        and r.get("swell_window_source") not in _PRESERVE_TIERS)
+        print(f"--allow-tier-demotion: DEMOTED {demoted_n} spots off the nwps/cdip_mop tiers "
+              "to raycast/orientation_derived (guard bypassed)")
+    else:
+        print(f"preserved {preserved_n} spots on nwps/cdip_mop tiers "
+              "(would have been demoted to raycast)")
     return 0
 
 

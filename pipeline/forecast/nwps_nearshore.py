@@ -1398,6 +1398,35 @@ def _load_roster_spots(slugs):
     return out
 
 
+def _load_wfo_spots(wfo):
+    """Every spot in spots_enriched.json tagged nwps_wfo == *wfo* (read-only), each keeping its
+    real fields. This is the --validate roster when --wfo is given WITHOUT --batch, so a run can
+    never silently validate a different region's spots against this grid (the old default was the
+    okx_pilot.json 38-spot set regardless of --wfo). Empty list if no spot carries the tag."""
+    if not ENRICHED.exists():
+        raise FileNotFoundError(f"--validate --wfo {wfo} needs {ENRICHED}; not found")
+    return [s for s in json.loads(ENRICHED.read_text()) if s.get("nwps_wfo") == wfo]
+
+
+def _validate_roster(batch, wfo):
+    """Resolve the --validate roster AND the grid to fetch, returning
+    (spots, roster_source_label, grid_wfo). Precedence: --batch wins (slugs from
+    spots_enriched.json); else --wfo selects every nwps_wfo==wfo spot; else (no --wfo at all)
+    the okx_pilot.json set. The label is printed at the top of the run so it is impossible to
+    validate and not know which spots were in it. Pure/offline (reads local files only)."""
+    if batch:
+        want = batch.split(",") if isinstance(batch, str) else list(batch)
+        spots = _load_roster_spots(want)
+        return spots, f"--batch ({len(spots)} spots)", (wfo or "okx")
+    if wfo:
+        spots = _load_wfo_spots(wfo)
+        return spots, f"nwps_wfo == '{wfo}' ({len(spots)} spots)", wfo
+    spots, note = _load_pilot_spots()
+    if note:
+        print(note)
+    return spots, f"scripts/okx_pilot.json ({len(spots)} spots)", "okx"
+
+
 def _warn_if_roster_stale(max_age_days=2):
     """Non-blocking: warn once if the local NDBC roster files are older than
     *max_age_days*. Never fails — a missing / unstat-able file is just skipped."""
@@ -1444,23 +1473,19 @@ def _buoy_latlng(buoy_id, *, _active=None, _reporting=None):
     return st["lat"], st["lng"]
 
 
-def validate_batch(batch=None, wfo="okx"):
-    """Part C — fetch one *wfo* cycle (default okx), place each spot's seaward node,
-    sample its f000 swh/perpw/dirpw, print placement verdict + NWPS★ vs the
-    orientation fallback★, plus a forced-empty test. Spots come from --batch (loaded
-    from spots_enriched.json by slug, keeping each spot's real nwps_wfo tag) or, with
-    no batch, the okx_pilot.json pilot set. Writes the placement results to
-    scripts/nwps_{wfo}_validate_out.json — a DIAGNOSTIC dump only (records every spot's
-    outcome: OK / FAR / DEAD / OFFWIN / NO_WET_CELL); it does NOT touch the curated
-    apply input scripts/nwps_okx_assignments.json (promote by hand after review).
-    Mac-only (NOMADS); degrades to a clear message offline."""
-    if batch:
-        want = batch.split(",") if isinstance(batch, str) else list(batch)
-        spots = _load_roster_spots(want)   # from spots_enriched.json, real tags, raise on missing slug
-    else:
-        spots, note = _load_pilot_spots()
-        if note:
-            print(note)
+def validate_batch(batch=None, wfo=None):
+    """Part C — fetch one *wfo* cycle, place each spot's seaward node, sample its f000
+    swh/perpw/dirpw, print placement verdict + NWPS★ vs the orientation fallback★, plus a
+    forced-empty test. The ROSTER of spots (see _validate_roster) is: --batch slugs if given;
+    else, if *wfo* is given, every nwps_wfo==wfo spot in spots_enriched.json; else the
+    okx_pilot.json set (only when --wfo is absent entirely). The roster source + count is
+    printed at the top so a run can never silently validate the wrong region's spots against a
+    grid. Writes scripts/nwps_{wfo}_validate_out.json — a DIAGNOSTIC dump only (records every
+    spot's outcome: OK / FAR / DEAD / OFFWIN / NO_WET_CELL); it does NOT touch the curated apply
+    input scripts/nwps_okx_assignments.json (promote by hand after review). Mac-only (NOMADS);
+    degrades to a clear message offline."""
+    spots, roster_src, wfo = _validate_roster(batch, wfo)
+    print(f"roster: {roster_src}")
     print(f"NWPS {wfo.upper()} validate — {len(spots)} spots\n")
     try:
         cycle = load_cycle(wfo)
@@ -2543,10 +2568,14 @@ def main(argv=None):
     ap.add_argument("--radius-km", type=float, default=None,
                     help="radius (km): --depth-experiment seaward re-pick (default 6), "
                          "--find-buoy candidate search (default 150)")
-    ap.add_argument("--wfo", default="okx", help="NWPS WFO grid to fetch (default okx)")
+    ap.add_argument("--wfo", default=None,
+                    help="NWPS WFO grid to fetch. For --validate it is ALSO the roster default "
+                         "when --batch is absent (every nwps_wfo==WFO spot); omit --wfo entirely "
+                         "to fall back to the okx_pilot.json set. --find-buoy / --trustcheck "
+                         "default to okx when --wfo is omitted.")
     ap.add_argument("--batch", default=None,
                     help="comma-separated slugs to validate, loaded from spots_enriched.json "
-                         "(each spot keeps its own nwps_wfo tag); default = the okx_pilot.json set")
+                         "(each spot keeps its own nwps_wfo tag); overrides the --wfo roster default")
     ap.add_argument("--buoy", default="44025", help="trust-check buoy id (default 44025)")
     ap.add_argument("--cycles", type=int, default=4, help="recent NWPS cycles to assemble (default 4)")
     a = ap.parse_args(argv)
@@ -2574,13 +2603,14 @@ def main(argv=None):
         except Exception as e:  # noqa: BLE001
             print(f"⚠ --find-buoy: {type(e).__name__}: {e}")
             return 0
-        return find_buoy(a.wfo, target, radius_km=(a.radius_km or 150.0), label=label)
+        return find_buoy(a.wfo or "okx", target, radius_km=(a.radius_km or 150.0), label=label)
     if a.trustcheck:
-        print(f"=== NWPS {a.wfo.upper()} trust check vs NDBC {a.buoy} (Stage 1: height-primary, "
+        wfo = a.wfo or "okx"   # --wfo default is now None (for --validate); okx here as before
+        print(f"=== NWPS {wfo.upper()} trust check vs NDBC {a.buoy} (Stage 1: height-primary, "
               "energy-weighted, tiered; Mac) ===")
         try:
             blat, blng = _buoy_latlng(a.buoy)   # NDBC active-station metadata; raises if unknown
-            res = trust_check(a.wfo, a.buoy, blat, blng, n_cycles=a.cycles)
+            res = trust_check(wfo, a.buoy, blat, blng, n_cycles=a.cycles)
             v = res["verdict"]
 
             def _f(x, s):
