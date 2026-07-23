@@ -2320,6 +2320,196 @@
       "nwps_node_lng": -123.71,
       "nwps_node_distance_m": 574,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "16th-street-south",
+      "name": "16th Street South",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.29864,
+      "nwps_node_lng": -80.60025,
+      "nwps_node_distance_m": 748,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "canova-beach-park",
+      "name": "Canova Beach Park",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.1366,
+      "nwps_node_lng": -80.5639,
+      "nwps_node_distance_m": 1536,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "cocoa-beach-pier",
+      "name": "Cocoa Beach Pier",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.36346,
+      "nwps_node_lng": -80.60025,
+      "nwps_node_distance_m": 461,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "jetty-park-cocoa-beach",
+      "name": "Jetty Park Cocoa Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.41207,
+      "nwps_node_lng": -80.58208,
+      "nwps_node_distance_m": 854,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "lori-wilson-park",
+      "name": "Lori Wilson Park",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.33105,
+      "nwps_node_lng": -80.60025,
+      "nwps_node_distance_m": 641,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "patrick-air-force-base-beach",
+      "name": "Patrick Air Force Base Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.26624,
+      "nwps_node_lng": -80.60025,
+      "nwps_node_distance_m": 904,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "pelican-beach",
+      "name": "Pelican Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.16901,
+      "nwps_node_lng": -80.58208,
+      "nwps_node_distance_m": 525,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "satellite-beach",
+      "name": "Satellite Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.16901,
+      "nwps_node_lng": -80.58208,
+      "nwps_node_distance_m": 708,
+      "nwps_buoy_id": "41113"
+    },
+    {
+      "slug": "bathtub-beach",
+      "name": "Bathtub Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.19677,
+      "nwps_node_lng": -80.16403,
+      "nwps_node_distance_m": 1273,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "fort-pierce-inlet",
+      "name": "Fort Pierce Inlet",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.47224,
+      "nwps_node_lng": -80.27308,
+      "nwps_node_distance_m": 1576,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jensen-beach",
+      "name": "Jensen Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.27779,
+      "nwps_node_lng": -80.20038,
+      "nwps_node_distance_m": 611,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "vero-pier",
+      "name": "Vero Pier",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.66669,
+      "nwps_node_lng": -80.34579,
+      "nwps_node_distance_m": 1439,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "indiatlantic",
+      "name": "Indiatlantic",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.1042,
+      "nwps_node_lng": -80.5639,
+      "nwps_node_distance_m": 1536,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "monster-hole",
+      "name": "Monster Hole",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.86114,
+      "nwps_node_lng": -80.43667,
+      "nwps_node_distance_m": 1274,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ocean-ave",
+      "name": "Ocean Ave",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.07179,
+      "nwps_node_lng": -80.54572,
+      "nwps_node_distance_m": 1058,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sebastian-inlet",
+      "name": "Sebastian Inlet",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.86114,
+      "nwps_node_lng": -80.43667,
+      "nwps_node_distance_m": 989,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "spessard",
+      "name": "Spessard",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.05558,
+      "nwps_node_lng": -80.54572,
+      "nwps_node_distance_m": 1205,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "north-jetty",
+      "name": "North Jetty",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.86114,
+      "nwps_node_lng": -80.43667,
+      "nwps_node_distance_m": 976,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "playalinda-beach",
+      "name": "Playalinda Beach",
+      "nwps_wfo": "mlb",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.75236,
+      "nwps_node_lng": -80.69113,
+      "nwps_node_distance_m": 1270,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
