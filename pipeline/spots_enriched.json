@@ -24,7 +24,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com lists ideal swell as WSW (West-southwest = 248\u00b0) and offshore wind from the East (90\u00b0), corrected to 68\u00b0 per exact offshore = facing+180. Dominant break is a left-hand reef, not a pure beach break; computed break_type corrected to reef. Tide tolerant per Surfline ('can work on just about any tide').",
+    "verification_notes": "Surf-forecast.com lists ideal swell as WSW (West-southwest = 248°) and offshore wind from the East (90°), corrected to 68° per exact offshore = facing+180. Dominant break is a left-hand reef, not a pure beach break; computed break_type corrected to reef. Tide tolerant per Surfline ('can work on just about any tide').",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -90,7 +90,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Pipeline orientation of 308\u00b0 is inverted \u2014 the spot faces SW into Monterey Bay, not NW. 38th Ave is a right reef break at the SW end of the Pleasure Point complex; surf-forecast.com neighbor breaks (Pleasure Point Sewer Peak, First Peak) consistently show NW offshore winds and SW optimal swell, corrected here to facing 230\u00b0/offshore 50\u00b0/optimal swell 225\u00b0. Break type corrected from beach to reef; low tide preferred per multiple sources.",
+    "verification_notes": "Pipeline orientation of 308° is inverted — the spot faces SW into Monterey Bay, not NW. 38th Ave is a right reef break at the SW end of the Pleasure Point complex; surf-forecast.com neighbor breaks (Pleasure Point Sewer Peak, First Peak) consistently show NW offshore winds and SW optimal swell, corrected here to facing 230°/offshore 50°/optimal swell 225°. Break type corrected from beach to reef; low tide preferred per multiple sources.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -158,7 +158,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore wind from NNE (22\u00b0) and ideal swell from SW (225\u00b0); computed offshore of 41\u00b0 (NE) corrected to 22\u00b0 (NNE) and facing adjusted to 202\u00b0 accordingly. Break type corrected from beach to jetty \u2014 the 56th St jetty dominates the lineup character per multiple sources. Optimal swell broadened slightly to include SE-SW per documented swell window (160\u00b0-225\u00b0); midpoint SW (225\u00b0) used.",
+    "verification_notes": "surf-forecast.com lists offshore wind from NNE (22°) and ideal swell from SW (225°); computed offshore of 41° (NE) corrected to 22° (NNE) and facing adjusted to 202° accordingly. Break type corrected from beach to jetty — the 56th St jetty dominates the lineup character per multiple sources. Optimal swell broadened slightly to include SE-SW per documented swell window (160°-225°); midpoint SW (225°) used.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -221,7 +221,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists this as a beach and point break with offshore wind from the NE (45\u00b0) and optimal swell from the W (270\u00b0); corrected from computed NE=69\u00b0 and optimal=249\u00b0. The dominant surf feature is the Big Sur Rivermouth semi-point setup, so break_type corrected from 'beach' to 'rivermouth'. Tide preference corrected to low/mid based on multiple sources; low set here.",
+    "verification_notes": "surf-forecast.com lists this as a beach and point break with offshore wind from the NE (45°) and optimal swell from the W (270°); corrected from computed NE=69° and optimal=249°. The dominant surf feature is the Big Sur Rivermouth semi-point setup, so break_type corrected from 'beach' to 'rivermouth'. Tide preference corrected to low/mid based on multiple sources; low set here.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -294,7 +294,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists Asilomar as a beach and reef break with offshore wind from the SE (135\u00b0) and optimal swell from the W (270\u00b0); computed offshore_wind_deg of 96\u00b0 (\u2248E) is incorrect and corrected to 135\u00b0. The reef sections are the primary draw, so break_type corrected from 'beach' to 'reef'. Works at all tide stages per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists Asilomar as a beach and reef break with offshore wind from the SE (135°) and optimal swell from the W (270°); computed offshore_wind_deg of 96° (≈E) is incorrect and corrected to 135°. The reef sections are the primary draw, so break_type corrected from 'beach' to 'reef'. Works at all tide stages per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -372,7 +372,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed pipeline treated this as a west-facing beach break, but surf-forecast.com and Surfline both confirm Bird Rock (La Jolla) is a reef break; surf-forecast.com lists offshore winds from ENE and Surfline/South Bird Rock sources consistently identify S/SW as the optimal swell direction (~225\u00b0). facing_direction_deg, offshore_wind_deg, break_type, and optimal_swell_dir all corrected accordingly.",
+    "verification_notes": "Computed pipeline treated this as a west-facing beach break, but surf-forecast.com and Surfline both confirm Bird Rock (La Jolla) is a reef break; surf-forecast.com lists offshore winds from ENE and Surfline/South Bird Rock sources consistently identify S/SW as the optimal swell direction (~225°). facing_direction_deg, offshore_wind_deg, break_type, and optimal_swell_dir all corrected accordingly.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -434,7 +434,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms Blackies is a beach (and minor point) break with offshore winds from the NE (~45\u00b0) and best swell from the W (270\u00b0). Computed orientation of 233\u00b0 and optimal_swell_dir of 233\u00b0 are corrected to 270\u00b0; offshore_wind_deg corrected from 53\u00b0 to 45\u00b0. Tide preference set to low per surf-forecast.com ('best around low tide when the tide is rising').",
+    "verification_notes": "surf-forecast.com confirms Blackies is a beach (and minor point) break with offshore winds from the NE (~45°) and best swell from the W (270°). Computed orientation of 233° and optimal_swell_dir of 233° are corrected to 270°; offshore_wind_deg corrected from 53° to 45°. Tide preference set to low per surf-forecast.com ('best around low tide when the tide is rising').",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -511,7 +511,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Pipeline-computed orientation of 336\u00b0 (NNW) is wrong; surf-forecast.com confirms offshore winds from the North and ideal swell from SSW (202\u00b0), consistent with the lagoon-mouth jetty geometry facing south-southwest. Corrected facing, offshore wind, and optimal swell accordingly; break_type corrected from beach to jetty.",
+    "verification_notes": "Pipeline-computed orientation of 336° (NNW) is wrong; surf-forecast.com confirms offshore winds from the North and ideal swell from SSW (202°), consistent with the lagoon-mouth jetty geometry facing south-southwest. Corrected facing, offshore wind, and optimal swell accordingly; break_type corrected from beach to jetty.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -579,7 +579,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from the NE (45\u00b0) and ideal swell from SW (225\u00b0); computed orientation of 231\u00b0 corrected to 225\u00b0 to match sourced SW optimum. Surfline also describes this as a SW-facing beachbreak.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from the NE (45°) and ideal swell from SW (225°); computed orientation of 231° corrected to 225° to match sourced SW optimum. Surfline also describes this as a SW-facing beachbreak.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -655,7 +655,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "Coordinates place this on the north shore of Monterey Bay near Capitola/New Brighton, which faces south (~180\u00b0) into the bay \u2014 computed NW orientation of 315\u00b0 is a gross pipeline error likely caused by a misread coastline normal. Optimal swell is SSW per nearby surf-forecast.com entries (Capitola Jetty, Capitola Rivermouth); spot is not individually listed on surf-forecast.com so medium confidence applied.",
+    "verification_notes": "Coordinates place this on the north shore of Monterey Bay near Capitola/New Brighton, which faces south (~180°) into the bay — computed NW orientation of 315° is a gross pipeline error likely caused by a misread coastline normal. Optimal swell is SSW per nearby surf-forecast.com entries (Capitola Jetty, Capitola Rivermouth); spot is not individually listed on surf-forecast.com so medium confidence applied.",
     "tide_preference": "low",
     "crowd_factor": "light",
     "hazards": [
@@ -730,7 +730,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed WSW orientation (242\u00b0) is wrong; Surfline confirms the takeoff looks due south, and the break fires on S and SW Southern Hemisphere swells \u2014 facing corrected to 180\u00b0, offshore wind to 0\u00b0 (N), optimal swell to 200\u00b0 (SSW). Break type corrected from beach to reef; surfsphere and Surfline both confirm a submerged reef bottom.",
+    "verification_notes": "Computed WSW orientation (242°) is wrong; Surfline confirms the takeoff looks due south, and the break fires on S and SW Southern Hemisphere swells — facing corrected to 180°, offshore wind to 0° (N), optimal swell to 200° (SSW). Break type corrected from beach to reef; surfsphere and Surfline both confirm a submerged reef bottom.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -803,7 +803,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Corrected break_type from 'beach' to 'point': surf-forecast.com (Ventura Point/California Street) and multiple sources confirm a long right point break over boulder and sand bottom. Offshore wind is NE (045\u00b0); optimal swell from the West (270\u00b0) per surf-forecast.com; facing direction ~225\u00b0 accounts for the SSW-facing point geometry. Best on low tide per DeepSwell and local guides.",
+    "verification_notes": "Corrected break_type from 'beach' to 'point': surf-forecast.com (Ventura Point/California Street) and multiple sources confirm a long right point break over boulder and sand bottom. Offshore wind is NE (045°); optimal swell from the West (270°) per surf-forecast.com; facing direction ~225° accounts for the SSW-facing point geometry. Best on low tide per DeepSwell and local guides.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -879,7 +879,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Corrected break_type from 'beach' to 'point': surf-forecast.com and Surfline both confirm a point break; optimal swell is West (270\u00b0) and offshore wind is NW (315\u00b0) per surf-forecast.com, but the Santa Barbara south-coast geometry means the break actually faces south (~180\u00b0) making true offshore wind from the N (000\u00b0). Best at low tide per surf-forecast.com and local sources.",
+    "verification_notes": "Corrected break_type from 'beach' to 'point': surf-forecast.com and Surfline both confirm a point break; optimal swell is West (270°) and offshore wind is NW (315°) per surf-forecast.com, but the Santa Barbara south-coast geometry means the break actually faces south (~180°) making true offshore wind from the N (000°). Best at low tide per surf-forecast.com and local sources.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -951,7 +951,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and multiple sources confirm this is a reef break over a flat grass-covered reef. surf-forecast.com lists best conditions as WNW swell with offshore wind from the East (E=90\u00b0); facing direction is west (~270\u00b0), consistent with the SoCal coastline here. Optimal swell is WNW (sourced as ~300\u00b0) but W/270\u00b0 is used as the rounded midpoint per surf-forecast.com's primary characterization; low tide preferred per local guides.",
+    "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and multiple sources confirm this is a reef break over a flat grass-covered reef. surf-forecast.com lists best conditions as WNW swell with offshore wind from the East (E=90°); facing direction is west (~270°), consistent with the SoCal coastline here. Optimal swell is WNW (sourced as ~300°) but W/270° is used as the rounded midpoint per surf-forecast.com's primary characterization; low tide preferred per local guides.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1016,7 +1016,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Corrected computed values: the pipeline orientation_deg of ~230 and offshore_wind_deg of ~50 are wrong for this west-facing SoCal beach break. surf-forecast.com (South Carlsbad State Beach, the closest match) lists offshore wind from the East (90\u00b0) and ideal swell from the West-southwest (WSW=247\u00b0); facing_direction_deg set to 270 accordingly. Beach break with lefts and rights, best around mid tide per surf-forecast.com.",
+    "verification_notes": "Corrected computed values: the pipeline orientation_deg of ~230 and offshore_wind_deg of ~50 are wrong for this west-facing SoCal beach break. surf-forecast.com (South Carlsbad State Beach, the closest match) lists offshore wind from the East (90°) and ideal swell from the West-southwest (WSW=247°); facing_direction_deg set to 270 accordingly. Beach break with lefts and rights, best around mid tide per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1081,7 +1081,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the East (90\u00b0) and ideal swell from the West (270\u00b0); computed facing/offshore values were already correct. Tide preference corrected to mid (rising) per surf-forecast.com; tide_preference was null in input.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the East (90°) and ideal swell from the West (270°); computed facing/offshore values were already correct. Tide preference corrected to mid (rising) per surf-forecast.com; tide_preference was null in input.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1156,7 +1156,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~215\u00b0 overstates the southward facing; the Santa Barbara Channel coast here runs more WSW\u2013ENE, giving a true seaward face closer to 200\u00b0 (SSW). surf-forecast.com/Tarpits confirms ideal swell from SW and offshore wind from NE (~20\u00b0); optimal swell corrected to 225\u00b0 (SW) from the computed 215\u00b0. Tide preference corrected to low (rising) per surf-forecast.com. The spot is partially shadowed by the Channel Islands, making it strictly a fall/winter performer on W and SW swells.",
+    "verification_notes": "Computed orientation of ~215° overstates the southward facing; the Santa Barbara Channel coast here runs more WSW–ENE, giving a true seaward face closer to 200° (SSW). surf-forecast.com/Tarpits confirms ideal swell from SW and offshore wind from NE (~20°); optimal swell corrected to 225° (SW) from the computed 215°. Tide preference corrected to low (rising) per surf-forecast.com. The spot is partially shadowed by the Channel Islands, making it strictly a fall/winter performer on W and SW swells.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -1260,7 +1260,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from the NE and best swell from the SW; pipeline geometry (212\u00b0) was wrong \u2014 Cayucos faces WNW (~270\u00b0) along Estero Bay, not SSW. Tide preference corrected to high per surf-forecast.com and multiple guides.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from the NE and best swell from the SW; pipeline geometry (212°) was wrong — Cayucos faces WNW (~270°) along Estero Bay, not SSW. Tide preference corrected to high per surf-forecast.com and multiple guides.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -1308,7 +1308,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms SW optimal swell and NE offshore wind; break is a beach-and-point hybrid (corrected from pure beach) producing primarily rights; best around low tide per source. Computed orientation of 212\u00b0 adjusted slightly to 225\u00b0 to align with documented SW swell window.",
+    "verification_notes": "surf-forecast.com confirms SW optimal swell and NE offshore wind; break is a beach-and-point hybrid (corrected from pure beach) producing primarily rights; best around low tide per source. Computed orientation of 212° adjusted slightly to 225° to align with documented SW swell window.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1380,7 +1380,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Coronado Shores sits on the southwest-facing stretch of Coronado Island just south of the Hotel Del. The beach faces roughly SSW (~200\u00b0); surf-forecast.com and local guides confirm SW-to-S swells are optimal (160\u2013200\u00b0, midpoint ~180\u00b0) and offshore wind is from the NE (~20\u00b0). Computed orientation of 215\u00b0 is slightly too westward; corrected to 200\u00b0 to match the actual SSW-facing shoreline at this specific sub-section. Tide corrected from null to mid per local guide consensus.",
+    "verification_notes": "Coronado Shores sits on the southwest-facing stretch of Coronado Island just south of the Hotel Del. The beach faces roughly SSW (~200°); surf-forecast.com and local guides confirm SW-to-S swells are optimal (160–200°, midpoint ~180°) and offshore wind is from the NE (~20°). Computed orientation of 215° is slightly too westward; corrected to 200° to match the actual SSW-facing shoreline at this specific sub-section. Tide corrected from null to mid per local guide consensus.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -1441,7 +1441,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms Cottons Point is a left-hand point/reef break with best swell from the SW and offshore wind from the NE (NE=45\u00b0). Break_type corrected from 'beach' to 'point' \u2014 it is universally documented as a left-hand point break at the north end of the Trestles complex. Optimal swell shifted to 200\u00b0 (SSW) to reflect the southerly groundswell bias that produces the best conditions here; facing direction kept near computed value at 225\u00b0. Tide corrected from null to mid per surf-fore",
+    "verification_notes": "surf-forecast.com confirms Cottons Point is a left-hand point/reef break with best swell from the SW and offshore wind from the NE (NE=45°). Break_type corrected from 'beach' to 'point' — it is universally documented as a left-hand point break at the north end of the Trestles complex. Optimal swell shifted to 200° (SSW) to reflect the southerly groundswell bias that produces the best conditions here; facing direction kept near computed value at 225°. Tide corrected from null to mid per surf-fore",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1508,7 +1508,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com lists offshore winds from the NNE and ideal swell from the west (270\u00b0). Computed orientation of ~208\u00b0 (SSW-facing) is plausible for the local coastline polygon but the break actually faces more SW (~225\u00b0) given the point/reef geometry and dominant W/NW swell exposure. Break_type corrected from beach to reef; the north-end rocky point and reef sections are what most surfers associate with the name. Tide preference mid per surf-forecast.com.",
+    "verification_notes": "Surf-forecast.com lists offshore winds from the NNE and ideal swell from the west (270°). Computed orientation of ~208° (SSW-facing) is plausible for the local coastline polygon but the break actually faces more SW (~225°) given the point/reef geometry and dominant W/NW swell exposure. Break_type corrected from beach to reef; the north-end rocky point and reef sections are what most surfers associate with the name. Tide preference mid per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1577,7 +1577,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com (Cowells Cove) lists offshore winds from the NE (45\u00b0) and best swell from the west (270\u00b0); the spot is a sheltered point break inside Monterey Bay facing roughly SSW (~200\u00b0). The pipeline-computed orientation of ~313\u00b0 (NW-facing) is a significant error \u2014 likely a coastline-polygon artifact from the headland geometry \u2014 and has been corrected. Tide preference 'all' per surf-forecast.com; break_type corrected from beach to point.",
+    "verification_notes": "Surf-forecast.com (Cowells Cove) lists offshore winds from the NE (45°) and best swell from the west (270°); the spot is a sheltered point break inside Monterey Bay facing roughly SSW (~200°). The pipeline-computed orientation of ~313° (NW-facing) is a significant error — likely a coastline-polygon artifact from the headland geometry — and has been corrected. Tide preference 'all' per surf-forecast.com; break_type corrected from beach to point.",
     "tide_preference": "high",
     "crowd_factor": "heavy",
     "hazards": [
@@ -1650,7 +1650,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~324\u00b0 (NW-facing) is incorrect. The beach at Crescent City (South Beach) faces SW, with surf-forecast.com listing the best swell as WSW (247\u00b0) and offshore wind from the NE (67\u00b0). Corrected facing, offshore wind, and optimal swell accordingly.",
+    "verification_notes": "Computed orientation of ~324° (NW-facing) is incorrect. The beach at Crescent City (South Beach) faces SW, with surf-forecast.com listing the best swell as WSW (247°) and offshore wind from the NE (67°). Corrected facing, offshore wind, and optimal swell accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -1720,7 +1720,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation (~256\u00b0, WSW) is slightly off; surf-forecast.com lists ideal swell from the SW (225\u00b0) and offshore wind from the E (90\u00b0). Corrected facing and optimal swell to SW; offshore wind adjusted to due East per sourced data.",
+    "verification_notes": "Computed orientation (~256°, WSW) is slightly off; surf-forecast.com lists ideal swell from the SW (225°) and offshore wind from the E (90°). Corrected facing and optimal swell to SW; offshore wind adjusted to due East per sourced data.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1785,7 +1785,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists optimal swell from WSW (247\u00b0) and best offshore wind from ENE (67\u00b0). The pipeline's computed orientation of 330\u00b0 (NNW-facing) is wrong \u2014 Dana Point's breaks (Doheny, Salt Creek) face predominantly WSW into the Pacific. break_type corrected to beach/reef mix; 'beach' retained as dominant. tide_preference set to 'all' per surf-forecast.com ('can work at any time').",
+    "verification_notes": "surf-forecast.com lists optimal swell from WSW (247°) and best offshore wind from ENE (67°). The pipeline's computed orientation of 330° (NNW-facing) is wrong — Dana Point's breaks (Doheny, Salt Creek) face predominantly WSW into the Pacific. break_type corrected to beach/reef mix; 'beach' retained as dominant. tide_preference set to 'all' per surf-forecast.com ('can work at any time').",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1847,7 +1847,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from NE (45\u00b0) and ideal swell from SW (225\u00b0). The pipeline's computed orientation of 243\u00b0 is close but slightly off; corrected to 225\u00b0 to match the sourced SW swell direction. break_type corrected from 'beach' to 'point' \u2014 surf-forecast.com and DeepSwell both describe it as a reef and point break with a dominant left-hand reef. Tide preference mid-rising per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from NE (45°) and ideal swell from SW (225°). The pipeline's computed orientation of 243° is close but slightly off; corrected to 225° to match the sourced SW swell direction. break_type corrected from 'beach' to 'point' — surf-forecast.com and DeepSwell both describe it as a reef and point break with a dominant left-hand reef. Tide preference mid-rising per surf-forecast.com.",
     "tide_preference": "low",
     "crowd_factor": "light",
     "hazards": [
@@ -1911,7 +1911,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the East and best swell from the West. The official Del Mar city site notes reef sections at 11th/15th St thrive on swells in the 220\u2013280\u00b0 range; midpoint 250\u00b0 used for optimal_swell_dir. Computed offshore_wind_deg of ~77\u00b0 corrected to 90\u00b0 (E) to match source; facing corrected from 257\u00b0 to 270\u00b0 (due W) per coastline reality.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the East and best swell from the West. The official Del Mar city site notes reef sections at 11th/15th St thrive on swells in the 220–280° range; midpoint 250° used for optimal_swell_dir. Computed offshore_wind_deg of ~77° corrected to 90° (E) to match source; facing corrected from 257° to 270° (due W) per coastline reality.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -1977,7 +1977,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com identifies Devereux as a reef and point break with ideal swell from the West (270\u00b0) and offshore wind from the Northeast (NE=45\u00b0). The computed orientation of 215\u00b0 and break_type 'beach' are both incorrect: the Santa Barbara coastline here runs roughly E\u2013W so the break faces south (~180\u00b0), and it is a point/reef break per multiple sources. Corrected accordingly.",
+    "verification_notes": "surf-forecast.com identifies Devereux as a reef and point break with ideal swell from the West (270°) and offshore wind from the Northeast (NE=45°). The computed orientation of 215° and break_type 'beach' are both incorrect: the Santa Barbara coastline here runs roughly E–W so the break faces south (~180°), and it is a point/reef break per multiple sources. Corrected accordingly.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2050,7 +2050,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Pipeline orientation of 318\u00b0 corrected to 270\u00b0: surf-forecast.com and all sources confirm this is a west-facing beach break taking W/WNW swells with offshore winds from the east. The NW-skewed computed orientation reflects the Tomales Bay entrance coastline tangent, not the actual wave-facing geometry. Surfline notes strong currents due to proximity of Tomales Bay.",
+    "verification_notes": "Pipeline orientation of 318° corrected to 270°: surf-forecast.com and all sources confirm this is a west-facing beach break taking W/WNW swells with offshore winds from the east. The NW-skewed computed orientation reflects the Tomales Bay entrance coastline tangent, not the actual wave-facing geometry. Surfline notes strong currents due to proximity of Tomales Bay.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -2123,7 +2123,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore wind from the North and optimal swell from the SSW (202\u00b0); computed offshore of 47\u00b0 (NE) and facing of 227\u00b0 (SW) both corrected. Doheny sits inside Dana Point Harbor's shadow making true N/NNE winds offshore; the SSW swell exposure is the primary swell window. Break type is a cobblestone/beach hybrid; surf-forecast.com characterizes it as a right-hand reef but most surfers know it as a beginner-friendly beach. Tide-tolerant per surf-forecast.com ('good surf at al",
+    "verification_notes": "surf-forecast.com lists offshore wind from the North and optimal swell from the SSW (202°); computed offshore of 47° (NE) and facing of 227° (SW) both corrected. Doheny sits inside Dana Point Harbor's shadow making true N/NNE winds offshore; the SSW swell exposure is the primary swell window. Break type is a cobblestone/beach hybrid; surf-forecast.com characterizes it as a right-hand reef but most surfers know it as a beginner-friendly beach. Tide-tolerant per surf-forecast.com ('good surf at al",
     "tide_preference": "high",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2199,7 +2199,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surfline explicitly states the break 'faces south, so NW winds howl offshore here'; surf-forecast.com confirms the best conditions occur with a SW swell and offshore wind from the North. Computed orientation of 222\u00b0 (SSW-facing) was corrected to 180\u00b0 (S-facing) per multiple source descriptions; offshore wind corrected to 0\u00b0 (N) and optimal swell adjusted to 225\u00b0 (SW) per surf-forecast.com ideal swell direction.",
+    "verification_notes": "Surfline explicitly states the break 'faces south, so NW winds howl offshore here'; surf-forecast.com confirms the best conditions occur with a SW swell and offshore wind from the North. Computed orientation of 222° (SSW-facing) was corrected to 180° (S-facing) per multiple source descriptions; offshore wind corrected to 0° (N) and optimal swell adjusted to 225° (SW) per surf-forecast.com ideal swell direction.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -2261,7 +2261,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "El Capitan State Beach, California",
-      "nominatim_display_name": "El Capit\u00e1n State Beach, Santa Barbara County, California, United States"
+      "nominatim_display_name": "El Capitán State Beach, Santa Barbara County, California, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -2271,7 +2271,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Multiple sources (surf-forecast.com, Surfline, Yeeew, Surfnerd) confirm this is a south-facing right-hand point/reef break needing large W swells; surf-forecast.com lists ideal swell as West and offshore wind from North. Computed break_type 'beach' corrected to 'point'; optimal_swell_dir corrected from 199\u00b0 to 270\u00b0 (W); tide_preference set to 'low' per Surfnerd ('low to mid tides').",
+    "verification_notes": "Multiple sources (surf-forecast.com, Surfline, Yeeew, Surfnerd) confirm this is a south-facing right-hand point/reef break needing large W swells; surf-forecast.com lists ideal swell as West and offshore wind from North. Computed break_type 'beach' corrected to 'point'; optimal_swell_dir corrected from 199° to 270° (W); tide_preference set to 'low' per Surfnerd ('low to mid tides').",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2345,7 +2345,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~251\u00b0 corrected to 270\u00b0 (west-facing beach break on the open Santa Monica Bay coast). Optimal swell corrected to 293\u00b0 (WNW) per surf-forecast.com and multiple sources citing NW\u2013WNW as the premier swell window; offshore wind is from the E (~90\u00b0), not ENE as the pipeline computed.",
+    "verification_notes": "Computed orientation of ~251° corrected to 270° (west-facing beach break on the open Santa Monica Bay coast). Optimal swell corrected to 293° (WNW) per surf-forecast.com and multiple sources citing NW–WNW as the premier swell window; offshore wind is from the E (~90°), not ENE as the pipeline computed.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -2449,7 +2449,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms best swell from the SW and offshore wind from the NE (45\u00b0); computed orientation of ~216\u00b0 nudged to 225\u00b0 (SW-facing, consistent with the coast bend at Ventura noted by Surfline). Break type is primarily beach with reef sections; mid tide preferred per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms best swell from the SW and offshore wind from the NE (45°); computed orientation of ~216° nudged to 225° (SW-facing, consistent with the coast bend at Ventura noted by Surfline). Break type is primarily beach with reef sections; mid tide preferred per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2522,7 +2522,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Pleasure Point First Peak is a south/SSW-facing right reef break; computed NW orientation (308\u00b0) was a gross pipeline error likely caused by the local coastline tangent. surf-forecast.com confirms offshore winds from NW (315\u00b0) and ideal SW swell (225\u00b0); facing direction corrected to 210\u00b0 accordingly.",
+    "verification_notes": "Pleasure Point First Peak is a south/SSW-facing right reef break; computed NW orientation (308°) was a gross pipeline error likely caused by the local coastline tangent. surf-forecast.com confirms offshore winds from NW (315°) and ideal SW swell (225°); facing direction corrected to 210° accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -2573,7 +2573,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Fort Point is a NE-facing left reef/point beneath the Golden Gate Bridge \u2014 one of the only NE-facing surf spots in California; computed ~N (359\u00b0) orientation was wrong. surf-forecast.com confirms offshore wind from S (180\u00b0) and ideal NW swell (315\u00b0); facing direction corrected to 45\u00b0 and offshore_wind_deg corrected to 225\u00b0 accordingly.",
+    "verification_notes": "Fort Point is a NE-facing left reef/point beneath the Golden Gate Bridge — one of the only NE-facing surf spots in California; computed ~N (359°) orientation was wrong. surf-forecast.com confirms offshore wind from S (180°) and ideal NW swell (315°); facing direction corrected to 45° and offshore_wind_deg corrected to 225° accordingly.",
     "tide_preference": "high",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2644,7 +2644,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists this as a reef break with offshore wind from the east and ideal swell from the west (270\u00b0). Pipeline computed values of ~214\u00b0 (SSW-facing) are incorrect; Garbage Beach / Sunset Cliffs faces due west into Pacific swell. Facing and swell directions corrected to 270\u00b0; offshore wind corrected to 90\u00b0 (E).",
+    "verification_notes": "surf-forecast.com lists this as a reef break with offshore wind from the east and ideal swell from the west (270°). Pipeline computed values of ~214° (SSW-facing) are incorrect; Garbage Beach / Sunset Cliffs faces due west into Pacific swell. Facing and swell directions corrected to 270°; offshore wind corrected to 90° (E).",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -2706,7 +2706,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Known locally as Princeton Jetty; surf-forecast.com (Princeton Breakwater) lists offshore wind from the northeast (45\u00b0) and best swell from the southwest (225\u00b0). Computed orientation of ~253\u00b0 (WSW) is too westerly; corrected to 225\u00b0 (SW) to match sourced optimal swell direction. Break type corrected from beach to jetty.",
+    "verification_notes": "Known locally as Princeton Jetty; surf-forecast.com (Princeton Breakwater) lists offshore wind from the northeast (45°) and best swell from the southwest (225°). Computed orientation of ~253° (WSW) is too westerly; corrected to 225° (SW) to match sourced optimal swell direction. Break type corrected from beach to jetty.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2779,7 +2779,7 @@
       "nearest_tide_station": 0.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Coords are badly misplaced (36.97, -120.64 is Central Valley inland, not the coast); actual location is Montecito/Santa Barbara (~34.40, -119.62). Break type corrected from 'beach' to 'reef'; surf-forecast.com confirms West swell + North offshore wind (facing ~180\u00b0 south, optimal swell 270\u00b0 W) for this sheltered right-hand reef.",
+    "verification_notes": "Coords are badly misplaced (36.97, -120.64 is Central Valley inland, not the coast); actual location is Montecito/Santa Barbara (~34.40, -119.62). Break type corrected from 'beach' to 'reef'; surf-forecast.com confirms West swell + North offshore wind (facing ~180° south, optimal swell 270° W) for this sheltered right-hand reef.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2873,7 +2873,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from East (90\u00b0) and ideal swell from Southwest (225\u00b0); computed optimal_swell_dir of 271\u00b0 (W) corrected to 225\u00b0 (SW). Facing and offshore wind degrees align with computed values.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from East (90°) and ideal swell from Southwest (225°); computed optimal_swell_dir of 271° (W) corrected to 225° (SW). Facing and offshore wind degrees align with computed values.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2918,7 +2918,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms best conditions when a SW swell combines with offshore wind from the East; Surfline notes SW/WSW/W/WNW combo swells work best at mid tide. Computed orientation and swell direction of ~248\u00b0 are consistent with sources; offshore_wind_deg corrected to integer 68 (was 67.69).",
+    "verification_notes": "surf-forecast.com confirms best conditions when a SW swell combines with offshore wind from the East; Surfline notes SW/WSW/W/WNW combo swells work best at mid tide. Computed orientation and swell direction of ~248° are consistent with sources; offshore_wind_deg corrected to integer 68 (was 67.69).",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -2984,7 +2984,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (North Jetty at Eureka) confirms ideal winds from the SE and best swell direction from the NW (~315\u00b0); computed optimal_swell_dir of 292 is corrected to 315 (NW) per sourced data. Break type corrected from 'beach' to 'jetty'; tide preference is 'all' per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com (North Jetty at Eureka) confirms ideal winds from the SE and best swell direction from the NW (~315°); computed optimal_swell_dir of 292 is corrected to 315 (NW) per sourced data. Break type corrected from 'beach' to 'jetty'; tide preference is 'all' per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3086,7 +3086,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists ideal swell as WSW (247\u00b0) and best wind from NE (67\u00b0); computed orientation of 227\u00b0 (SSW) was corrected to 247\u00b0 (WSW) to match sourced values. Classic SoCal beach break flanking the pier; pier bowl produces wedgy rights. Mid tide preferred.",
+    "verification_notes": "surf-forecast.com lists ideal swell as WSW (247°) and best wind from NE (67°); computed orientation of 227° (SSW) was corrected to 247° (WSW) to match sourced values. Classic SoCal beach break flanking the pier; pier bowl produces wedgy rights. Mid tide preferred.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -3133,7 +3133,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms WSW optimal swell (247\u00b0) and NE offshore wind (67\u00b0) for this stretch of Huntington Beach. Coordinates place this ~4 km north of the Pier spot; treated as a distinct named entry covering the broader beach rather than a duplicate.",
+    "verification_notes": "surf-forecast.com confirms WSW optimal swell (247°) and NE offshore wind (67°) for this stretch of Huntington Beach. Coordinates place this ~4 km north of the Pier spot; treated as a distinct named entry covering the broader beach rather than a duplicate.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -3208,7 +3208,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms WSW optimal swell and NE offshore wind; solspot corroborates with a S/WNW combo swell preference and low-tide best. Crowds are heavy \u2014 Surfline describes the Cliffs as a 'zoo.' Break_type corrected to 'beach' (sand bottom) which matches user input.",
+    "verification_notes": "surf-forecast.com confirms WSW optimal swell and NE offshore wind; solspot corroborates with a S/WNW combo swell preference and low-tide best. Crowds are heavy — Surfline describes the Cliffs as a 'zoo.' Break_type corrected to 'beach' (sand bottom) which matches user input.",
     "tide_preference": "low",
     "crowd_factor": "heavy",
     "hazards": [
@@ -3314,7 +3314,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the East (90\u00b0) and best swell from the Southwest (225\u00b0). Computed optimal_swell_dir of 270\u00b0 (due West) corrected to 225\u00b0 (SW) per surf-forecast.com sourced data; the pier itself creates minor sandbars north and south but the dominant break character is beach.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the East (90°) and best swell from the Southwest (225°). Computed optimal_swell_dir of 270° (due West) corrected to 225° (SW) per surf-forecast.com sourced data; the pier itself creates minor sandbars north and south but the dominant break character is beach.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3353,7 +3353,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Coords place this ~1.6 km NNE of the Pier entry \u2014 both entries refer to the same Imperial Beach stretch. surf-forecast.com explicitly states offshore winds from the East and best swell from the Southwest; computed optimal_swell_dir corrected from 270\u00b0 to 225\u00b0. These two spots are very close but separated by >1 km so not flagged as a strict duplicate; the Pier is the more specific named break.",
+    "verification_notes": "Coords place this ~1.6 km NNE of the Pier entry — both entries refer to the same Imperial Beach stretch. surf-forecast.com explicitly states offshore winds from the East and best swell from the Southwest; computed optimal_swell_dir corrected from 270° to 225°. These two spots are very close but separated by >1 km so not flagged as a strict duplicate; the Pier is the more specific named break.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3423,7 +3423,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the NE and optimal SW swell; Surfline lists NW/W/SW as best swells with E/NE offshore winds. The computed orientation (~247\u00b0) is slightly too northwesterly \u2014 Jalama's beach faces more SW (~225\u00b0) consistent with its position just south of Point Conception. Tide preference corrected to high per Surfline ('high for the beachbreak'). Hazards include notorious howling NW winds, dangerous rips at Cracks, rocks/boulders at Tarantulas, sharks, and cold water",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the NE and optimal SW swell; Surfline lists NW/W/SW as best swells with E/NE offshore winds. The computed orientation (~247°) is slightly too northwesterly — Jalama's beach faces more SW (~225°) consistent with its position just south of Point Conception. Tide preference corrected to high per Surfline ('high for the beachbreak'). Hazards include notorious howling NW winds, dangerous rips at Cracks, rocks/boulders at Tarantulas, sharks, and cold water",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3486,7 +3486,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "Jenner sits at the Russian River mouth on the Sonoma coast where the shoreline runs roughly N-S, making the beach face west (~270\u00b0), not SSW as the pipeline's 220\u00b0 orientation suggests \u2014 that likely geocoded to the sheltered river/bay side. The Sonoma coast receives predominantly NW-to-W groundswell; corrected facing to 270\u00b0 and optimal swell to 285\u00b0 (NW), consistent with regional NW swell dominance. Offshore wind corrected to 90\u00b0 (E/ESE) accordingly.",
+    "verification_notes": "Jenner sits at the Russian River mouth on the Sonoma coast where the shoreline runs roughly N-S, making the beach face west (~270°), not SSW as the pipeline's 220° orientation suggests — that likely geocoded to the sheltered river/bay side. The Sonoma coast receives predominantly NW-to-W groundswell; corrected facing to 270° and optimal swell to 285° (NW), consistent with regional NW swell dominance. Offshore wind corrected to 90° (E/ESE) accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3559,7 +3559,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the ESE (112\u00b0) and best swell from the West (270\u00b0); computed offshore_wind_deg of 110\u00b0 and optimal_swell_dir of 290\u00b0 were slightly off \u2014 corrected offshore to 112\u00b0 (ESE per surf-forecast.com) and optimal swell to 270\u00b0 (W). Facing direction corrected from 290\u00b0 to 270\u00b0 to match the westward-facing beach orientation; the pipeline's 290\u00b0 was pulled slightly north by the Scripps headland coastline tangent. Tide-tolerant per Surfline.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the ESE (112°) and best swell from the West (270°); computed offshore_wind_deg of 110° and optimal_swell_dir of 290° were slightly off — corrected offshore to 112° (ESE per surf-forecast.com) and optimal swell to 270° (W). Facing direction corrected from 290° to 270° to match the westward-facing beach orientation; the pipeline's 290° was pulled slightly north by the Scripps headland coastline tangent. Tide-tolerant per Surfline.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -3658,7 +3658,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com identifies Leadbetter as a sheltered point break with ideal swell from the west (270\u00b0) and best wind from the north (0\u00b0). The computed orientation of ~316\u00b0 (NW-facing) and offshore wind of ~136\u00b0 (SE) are incorrect: the break sits just north of Santa Barbara Harbor, faces roughly west-southwest into the Santa Barbara Channel, and the documented offshore wind is northerly. Surfline confirms long rights off the point needing a W swell; surf-forecast.com notes best around low-to-mi",
+    "verification_notes": "surf-forecast.com identifies Leadbetter as a sheltered point break with ideal swell from the west (270°) and best wind from the north (0°). The computed orientation of ~316° (NW-facing) and offshore wind of ~136° (SE) are incorrect: the break sits just north of Santa Barbara Harbor, faces roughly west-southwest into the Santa Barbara Channel, and the documented offshore wind is northerly. Surfline confirms long rights off the point needing a W swell; surf-forecast.com notes best around low-to-mi",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -3732,7 +3732,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com explicitly lists this as a right-hand reef break, best swell from SSW (202\u00b0), and best wind from the north (0\u00b0). The computed orientation of ~0\u00b0 (north-facing) and offshore wind of ~180\u00b0 (S) are badly wrong \u2014 the cove faces SSW into the Pacific. Surfline and Surfnerd confirm SSW/SW/S optimal swells, medium tide, northerly offshore wind, and a rocky/cobblestone reef bottom. Break type corrected from beach to reef; facing and offshore wind corrected accordingly.",
+    "verification_notes": "surf-forecast.com explicitly lists this as a right-hand reef break, best swell from SSW (202°), and best wind from the north (0°). The computed orientation of ~0° (north-facing) and offshore wind of ~180° (S) are badly wrong — the cove faces SSW into the Pacific. Surfline and Surfnerd confirm SSW/SW/S optimal swells, medium tide, northerly offshore wind, and a rocky/cobblestone reef bottom. Break type corrected from beach to reef; facing and offshore wind corrected accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -3781,7 +3781,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from ENE (~67\u00b0) and best swell from the West (~270\u00b0). Computed orientation of 243\u00b0 was too far south; corrected facing to 270\u00b0 (due W) to match sourced data. Tide-tolerant beach break per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from ENE (~67°) and best swell from the West (~270°). Computed orientation of 243° was too far south; corrected facing to 270° (due W) to match sourced data. Tide-tolerant beach break per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3870,7 +3870,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "Coords place this on the East Side Santa Cruz reef cluster near Opal Cliffs, Suicide's, and Pleasure Point; computed S-facing (~188\u00b0) is a major pipeline error. East Side Santa Cruz reefs face SW into Monterey Bay (~225\u00b0), take NW/W groundswells, and go offshore on NE winds. Not found as a named entry on surf-forecast.com; values inferred from neighboring East Side breaks.",
+    "verification_notes": "Coords place this on the East Side Santa Cruz reef cluster near Opal Cliffs, Suicide's, and Pleasure Point; computed S-facing (~188°) is a major pipeline error. East Side Santa Cruz reefs face SW into Monterey Bay (~225°), take NW/W groundswells, and go offshore on NE winds. Not found as a named entry on surf-forecast.com; values inferred from neighboring East Side breaks.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -3918,7 +3918,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com confirms this is a left-hand point break with offshore winds from the South and best swell from the Northwest. Computed orientation of ~359\u00b0 (north-facing) is wrong; the point at Pacific Grove wraps into Monterey Bay and the wave-facing direction is NW (~315\u00b0), consistent with all sourced data. Break_type corrected from 'beach' to 'point'.",
+    "verification_notes": "Surf-forecast.com confirms this is a left-hand point break with offshore winds from the South and best swell from the Northwest. Computed orientation of ~359° (north-facing) is wrong; the point at Pacific Grove wraps into Monterey Bay and the wave-facing direction is NW (~315°), consistent with all sourced data. Break_type corrected from 'beach' to 'point'.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -3991,7 +3991,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com confirms best swell from the Southwest and offshore wind from the Northeast (NE = 45\u00b0). Computed orientation of ~230\u00b0 and offshore_wind_deg of ~50\u00b0 are directionally consistent; corrected to clean values of 225\u00b0 (SW) and 45\u00b0 (NE) per sourced data. Break_type corrected from 'beach' to 'reef' (cobblestone reef); tide corrected to 'mid' per Surfline/WSL. World-class wave, consistently heavy crowds.",
+    "verification_notes": "Surf-forecast.com confirms best swell from the Southwest and offshore wind from the Northeast (NE = 45°). Computed orientation of ~230° and offshore_wind_deg of ~50° are directionally consistent; corrected to clean values of 225° (SW) and 45° (NE) per sourced data. Break_type corrected from 'beach' to 'reef' (cobblestone reef); tide corrected to 'mid' per Surfline/WSL. World-class wave, consistently heavy crowds.",
     "tide_preference": "low",
     "crowd_factor": "heavy",
     "hazards": [
@@ -4064,7 +4064,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed break_type 'beach' and facing/offshore corrected: Lunada Bay is a well-documented reef/point break on the Palos Verdes Peninsula facing WSW (~247\u00b0). surf-forecast.com confirms optimal swell from WNW and offshore wind from the East (ENE ~67\u00b0); optimal_swell_dir set to 292 (WNW midpoint per source). Famous for heavy localism and boulder-strewn lineup.",
+    "verification_notes": "Computed break_type 'beach' and facing/offshore corrected: Lunada Bay is a well-documented reef/point break on the Palos Verdes Peninsula facing WSW (~247°). surf-forecast.com confirms optimal swell from WNW and offshore wind from the East (ENE ~67°); optimal_swell_dir set to 292 (WNW midpoint per source). Famous for heavy localism and boulder-strewn lineup.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -4132,7 +4132,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed break_type 'beach' and orientation corrected: Malibu/Surfrider is a classic cobblestone point break facing roughly south (~180\u00b0); surf-forecast.com confirms offshore wind from the North (0\u00b0) and best swell from the SW (~225\u00b0). Computed offshore_wind_deg of ~20\u00b0 and orientation of ~200\u00b0 are partially plausible for the point geometry but the canonical N-offshore / SW-swell values from surf-forecast.com are more accurate for this point break.",
+    "verification_notes": "Computed break_type 'beach' and orientation corrected: Malibu/Surfrider is a classic cobblestone point break facing roughly south (~180°); surf-forecast.com confirms offshore wind from the North (0°) and best swell from the SW (~225°). Computed offshore_wind_deg of ~20° and orientation of ~200° are partially plausible for the point geometry but the canonical N-offshore / SW-swell values from surf-forecast.com are more accurate for this point break.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -4341,7 +4341,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from ESE (112\u00b0) and optimal swell from W (270\u00b0). Computed offshore_wind_deg of ~89\u00b0 (east) was incorrect; corrected to 112\u00b0 (ESE). Facing direction adjusted from 269\u00b0 to 270\u00b0 (due west) to match sourced swell direction. Tide preference set to mid-rising per surf-forecast.com guide.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from ESE (112°) and optimal swell from W (270°). Computed offshore_wind_deg of ~89° (east) was incorrect; corrected to 112° (ESE). Facing direction adjusted from 269° to 270° (due west) to match sourced swell direction. Tide preference set to mid-rising per surf-forecast.com guide.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -4436,7 +4436,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms this is a reef break (not beach) with offshore wind from E (90\u00b0) and optimal swell from WNW (292\u00b0). Computed break_type of 'beach' corrected to 'reef'; optimal_swell_dir corrected from 243\u00b0 to 292\u00b0 (WNW); offshore_wind_deg corrected from ~63\u00b0 to 90\u00b0 (E). Tide preference set to high per local surf guides.",
+    "verification_notes": "surf-forecast.com confirms this is a reef break (not beach) with offshore wind from E (90°) and optimal swell from WNW (292°). Computed break_type of 'beach' corrected to 'reef'; optimal_swell_dir corrected from 243° to 292° (WNW); offshore_wind_deg corrected from ~63° to 90° (E). Tide preference set to high per local surf guides.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -4486,7 +4486,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from the East (90\u00b0) and ideal swell from the Southwest (225\u00b0). Computed orientation of 264\u00b0 is close but corrected to 270\u00b0 to reflect the westward-facing beachfront; optimal swell corrected from 264\u00b0 to 225\u00b0 (SW) per source. Tide preference corrected to high per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from the East (90°) and ideal swell from the Southwest (225°). Computed orientation of 264° is close but corrected to 270° to reflect the westward-facing beachfront; optimal swell corrected from 264° to 225° (SW) per source. Tide preference corrected to high per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -4550,7 +4550,7 @@
     "coord_fix_applied": true,
     "coord_fix_note": "Ventura-county beach break; seed coords placed it in inland Northern California.",
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from NNW (337\u00b0) and ideal swell from the West (270\u00b0). Computed values were all null; facing direction set to 225\u00b0 (SW) to match the coastline orientation at this Ventura County location sheltered by Point Conception. Break is a sandbar/beach break per source.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from NNW (337°) and ideal swell from the West (270°). Computed values were all null; facing direction set to 225° (SW) to match the coastline orientation at this Ventura County location sheltered by Point Conception. Break is a sandbar/beach break per source.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -4630,7 +4630,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists ideal swell as WNW (\u2248292\u00b0) and offshore wind from SE (\u2248135\u00b0); however Surfline describes the beach as facing directly into the NW Pacific/Gulf of Alaska, consistent with the computed ~285\u00b0 facing. Offshore wind corrected to SE (135\u00b0) per surf-forecast.com; optimal swell nudged to 292\u00b0 (WNW midpoint) from the computed 285\u00b0. Tide preference set to mid per surfnerd local knowledge.",
+    "verification_notes": "surf-forecast.com lists ideal swell as WNW (≈292°) and offshore wind from SE (≈135°); however Surfline describes the beach as facing directly into the NW Pacific/Gulf of Alaska, consistent with the computed ~285° facing. Offshore wind corrected to SE (135°) per surf-forecast.com; optimal swell nudged to 292° (WNW midpoint) from the computed 285°. Tide preference set to mid per surfnerd local knowledge.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -4691,7 +4691,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com and Yeeew both confirm offshore wind from the East (90\u00b0) and optimal swell from the Southwest (225\u00b0); computed offshore_wind_deg of 82\u00b0 and optimal_swell_dir of 262\u00b0 (W) are corrected accordingly. Facing direction adjusted to 270\u00b0 (due W) as the Encinitas coastline here runs nearly N-S and the break faces west.",
+    "verification_notes": "surf-forecast.com and Yeeew both confirm offshore wind from the East (90°) and optimal swell from the Southwest (225°); computed offshore_wind_deg of 82° and optimal_swell_dir of 262° (W) are corrected accordingly. Facing direction adjusted to 270° (due W) as the Encinitas coastline here runs nearly N-S and the break faces west.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -4787,7 +4787,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from the east (90\u00b0) and ideal swell from the northwest (315\u00b0). Computed orientation of 251\u00b0 is corrected to 270\u00b0 (due west) per Surfline's description of the area facing southwest-to-west; NW swell is the optimal, not W. Tide preference updated to high per local reviewer note that the spot works best at high tide.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from the east (90°) and ideal swell from the northwest (315°). Computed orientation of 251° is corrected to 270° (due west) per Surfline's description of the area facing southwest-to-west; NW swell is the optimal, not W. Tide preference updated to high per local reviewer note that the spot works best at high tide.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -4835,7 +4835,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from the east (90\u00b0) and ideal swell from the northwest (315\u00b0); Surfline states the beach faces due west (270\u00b0). Computed orientation of 325\u00b0 is corrected to 270\u00b0. Tide preference set to 'all' per surf-forecast.com listing 'good surf at all stages of the tide'.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from the east (90°) and ideal swell from the northwest (315°); Surfline states the beach faces due west (270°). Computed orientation of 325° is corrected to 270°. Tide preference set to 'all' per surf-forecast.com listing 'good surf at all stages of the tide'.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -4910,7 +4910,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists ideal wind as ESE (112\u00b0) and ideal swell as NW (315\u00b0); computed offshore_wind_deg (84\u00b0) and optimal_swell_dir (264\u00b0) both corrected. Facing direction adjusted to 292\u00b0 (WNW) to be consistent with ESE offshore and NW optimal swell, consistent with the Monterey Bay beachbreak orientation. Tide preference set to mid-rising per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists ideal wind as ESE (112°) and ideal swell as NW (315°); computed offshore_wind_deg (84°) and optimal_swell_dir (264°) both corrected. Facing direction adjusted to 292° (WNW) to be consistent with ESE offshore and NW optimal swell, consistent with the Monterey Bay beachbreak orientation. Tide preference set to mid-rising per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -4989,7 +4989,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed facing of 188\u00b0 (S) is wrong; pipeline likely geocoded to the bay side. surf-forecast.com confirms offshore winds from NE (45\u00b0) and ideal swell from NW (315\u00b0), placing the facing direction at ~315\u00b0. Surfline confirms a right reef/point best at lower tides; break_type corrected from beach to reef.",
+    "verification_notes": "Computed facing of 188° (S) is wrong; pipeline likely geocoded to the bay side. surf-forecast.com confirms offshore winds from NE (45°) and ideal swell from NW (315°), placing the facing direction at ~315°. Surfline confirms a right reef/point best at lower tides; break_type corrected from beach to reef.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5053,7 +5053,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "surf-forecast.com has no dedicated 'New Brighton Reef' page for the Santa Cruz/Capitola area; the computed orientation of ~318\u00b0 (NW-facing) is a pipeline error \u2014 this stretch of coastline at coords (36.9755, -121.9407) near Capitola faces south-southwest into Monterey Bay, consistent with nearby breaks Capitola Jetty (offshore=N, swell=SSW) and Capitola Rivermouth (offshore=NE, swell=SW). Facing direction corrected to ~200\u00b0 (SSW); offshore wind corrected to ~20\u00b0 (NNE); optimal swell corrected to",
+    "verification_notes": "surf-forecast.com has no dedicated 'New Brighton Reef' page for the Santa Cruz/Capitola area; the computed orientation of ~318° (NW-facing) is a pipeline error — this stretch of coastline at coords (36.9755, -121.9407) near Capitola faces south-southwest into Monterey Bay, consistent with nearby breaks Capitola Jetty (offshore=N, swell=SSW) and Capitola Rivermouth (offshore=NE, swell=SW). Facing direction corrected to ~200° (SSW); offshore wind corrected to ~20° (NNE); optimal swell corrected to",
     "tide_preference": "low",
     "crowd_factor": "light",
     "hazards": [
@@ -5118,7 +5118,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms ideal wind from the northeast and ideal swell from the south-southwest; NE offshore converts to ~45\u00b0 but the dominant offshore at Newport is NNE (~20\u00b0), consistent with multiple nearby Newport break pages. Computed orientation of ~195\u00b0 and optimal swell of ~195\u00b0 are close but corrected to 200\u00b0/202\u00b0 to match sourced SSW swell direction; tide listed as 'all stages' per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms ideal wind from the northeast and ideal swell from the south-southwest; NE offshore converts to ~45° but the dominant offshore at Newport is NNE (~20°), consistent with multiple nearby Newport break pages. Computed orientation of ~195° and optimal swell of ~195° are close but corrected to 200°/202° to match sourced SSW swell direction; tide listed as 'all stages' per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5397,7 +5397,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists ideal swell as West and offshore wind from the Northeast (NE=45\u00b0); the harbor jetties create a NW-to-WNW optimal swell window (~292\u00b0) rather than the pipeline-computed 232\u00b0. Break type corrected from beach to jetty; waves break primarily at the harbor's north and south jetties. Facing direction adjusted to WSW (~247\u00b0) to reflect the sheltered harbor-mouth geometry. Tide preference corrected from null to mid.",
+    "verification_notes": "surf-forecast.com lists ideal swell as West and offshore wind from the Northeast (NE=45°); the harbor jetties create a NW-to-WNW optimal swell window (~292°) rather than the pipeline-computed 232°. Break type corrected from beach to jetty; waves break primarily at the harbor's north and south jetties. Facing direction adjusted to WSW (~247°) to reflect the sheltered harbor-mouth geometry. Tide preference corrected from null to mid.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5465,7 +5465,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the NE and ideal swell from the WSW. Computed orientation of ~227\u00b0 is too far south; Oceanside's beach faces more WSW (~247\u00b0, consistent with WSW optimal swell). offshore_wind_deg corrected to 67 (NE, i.e. 247+180=427%360=67). Tide listed as surfable at all stages per source.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the NE and ideal swell from the WSW. Computed orientation of ~227° is too far south; Oceanside's beach faces more WSW (~247°, consistent with WSW optimal swell). offshore_wind_deg corrected to 67 (NE, i.e. 247+180=427%360=67). Tide listed as surfable at all stages per source.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5536,7 +5536,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Crystal Pier and Pacific Beach) confirms offshore wind from the NE and ideal swell from the SW (225\u00b0). Computed orientation of ~241\u00b0 is slightly off; corrected facing to 247\u00b0 (WSW) to align with known beach orientation and SW optimal swell. Tide best around mid per source.",
+    "verification_notes": "surf-forecast.com (Crystal Pier and Pacific Beach) confirms offshore wind from the NE and ideal swell from the SW (225°). Computed orientation of ~241° is slightly off; corrected facing to 247° (WSW) to align with known beach orientation and SW optimal swell. Tide best around mid per source.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5596,7 +5596,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms NW ideal swell and SE offshore wind at Linda Mar. Computed orientation of ~249\u00b0 (WSW-facing) is too southerly; the beach actually faces WNW (~292\u00b0), consistent with the documented NW optimal swell direction of ~315\u00b0. Offshore wind corrected to SE (112\u00b0) to match source.",
+    "verification_notes": "surf-forecast.com confirms NW ideal swell and SE offshore wind at Linda Mar. Computed orientation of ~249° (WSW-facing) is too southerly; the beach actually faces WNW (~292°), consistent with the documented NW optimal swell direction of ~315°. Offshore wind corrected to SE (112°) to match source.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5665,7 +5665,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Break type corrected from 'beach' to 'reef'; PV Cove (Middles) is a well-documented boulder/reef break. Computed orientation of ~287\u00b0 is slightly too northerly; the cove faces due west (~270\u00b0), consistent with W swell being optimal and SE/E winds being offshore. Sources confirm NW and SW swells both work well, with offshore conditions from the east/southeast.",
+    "verification_notes": "Break type corrected from 'beach' to 'reef'; PV Cove (Middles) is a well-documented boulder/reef break. Computed orientation of ~287° is slightly too northerly; the cove faces due west (~270°), consistent with W swell being optimal and SE/E winds being offshore. Sources confirm NW and SW swells both work well, with offshore conditions from the east/southeast.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -5807,7 +5807,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed pipeline orientation (308\u00b0) and offshore (128\u00b0) are both wrong \u2014 the point faces SW (~225\u00b0) and offshore winds blow FROM the NW (315\u00b0), not SE. surf-forecast.com confirms NW offshore and SW optimal swell across all Pleasure Point sub-breaks; break_type corrected from 'beach' to 'point' (right-hand reef/point).",
+    "verification_notes": "Computed pipeline orientation (308°) and offshore (128°) are both wrong — the point faces SW (~225°) and offshore winds blow FROM the NW (315°), not SE. surf-forecast.com confirms NW offshore and SW optimal swell across all Pleasure Point sub-breaks; break_type corrected from 'beach' to 'point' (right-hand reef/point).",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -5878,7 +5878,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind FROM NE (45\u00b0) matching the pipeline's computed offshore of 43\u00b0 \u2014 facing direction retained at 225\u00b0. Optimal swell corrected from 223\u00b0 (SW) to 315\u00b0 (NW): surf-forecast.com explicitly lists NW swell as ideal, consistent with Surfline's description of the break firing on W/NW groundswells. Break_type corrected from 'beach' to 'point' (reef/point with right on north side of pier); hazardous submerged rock shelf and localism noted.",
+    "verification_notes": "surf-forecast.com confirms offshore wind FROM NE (45°) matching the pipeline's computed offshore of 43° — facing direction retained at 225°. Optimal swell corrected from 223° (SW) to 315° (NW): surf-forecast.com explicitly lists NW swell as ideal, consistent with Surfline's description of the break firing on W/NW groundswells. Break_type corrected from 'beach' to 'point' (reef/point with right on north side of pier); hazardous submerged rock shelf and localism noted.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -5955,7 +5955,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from ENE (ENE=67\u00b0) and ideal swell from SW (225\u00b0). Computed orientation of ~253\u00b0 is plausible for this stretch of South Carlsbad coast; facing and offshore wind corrected to match sourced ENE offshore / SW optimal swell. Rivermouth influence from Batiquitos Lagoon outlet adds occasional sandbar quality.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from ENE (ENE=67°) and ideal swell from SW (225°). Computed orientation of ~253° is plausible for this stretch of South Carlsbad coast; facing and offshore wind corrected to match sourced ENE offshore / SW optimal swell. Rivermouth influence from Batiquitos Lagoon outlet adds occasional sandbar quality.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6013,7 +6013,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore winds from the East (90\u00b0) and ideal swell from the West (270\u00b0), making facing direction ~270\u00b0. All computed fields were null and have been fully populated from sourced values; tide preference set to 'all' per surf-forecast.com noting quality is not affected by tide.",
+    "verification_notes": "surf-forecast.com lists offshore winds from the East (90°) and ideal swell from the West (270°), making facing direction ~270°. All computed fields were null and have been fully populated from sourced values; tide preference set to 'all' per surf-forecast.com noting quality is not affected by tide.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6089,7 +6089,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the East and best swell from WNW (~292\u00b0); corrected optimal_swell_dir from 271 to 292 accordingly. Break type corrected from 'beach' to 'jetty' \u2014 this is the King Harbor breakwall, producing fast walled lefts, not a plain beach break.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the East and best swell from WNW (~292°); corrected optimal_swell_dir from 271 to 292 accordingly. Break type corrected from 'beach' to 'jetty' — this is the King Harbor breakwall, producing fast walled lefts, not a plain beach break.",
     "tide_preference": "high",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6163,7 +6163,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of 341\u00b0 is badly wrong \u2014 the Santa Barbara Channel coastline here runs E-W and faces SSW (~200\u00b0). surf-forecast.com confirms offshore winds from NNE (22\u00b0) and optimal swell from the West (270\u00b0); all three computed values (orientation, offshore_wind, optimal_swell) have been corrected accordingly.",
+    "verification_notes": "Computed orientation of 341° is badly wrong — the Santa Barbara Channel coastline here runs E-W and faces SSW (~200°). surf-forecast.com confirms offshore winds from NNE (22°) and optimal swell from the West (270°); all three computed values (orientation, offshore_wind, optimal_swell) have been corrected accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6241,7 +6241,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed values substantially corrected. Pipeline geometry misclassified this as a beach break facing SW (220\u00b0); Rincon is a world-famous right-hand point break facing roughly W (270\u00b0). Surf-forecast.com and Solspot both confirm offshore wind from NE (~45\u00b0) and optimal swell from WNW (~292\u00b0). Tide preference is 'all' per surf-forecast.com.",
+    "verification_notes": "Computed values substantially corrected. Pipeline geometry misclassified this as a beach break facing SW (220°); Rincon is a world-famous right-hand point break facing roughly W (270°). Surf-forecast.com and Solspot both confirm offshore wind from NE (~45°) and optimal swell from WNW (~292°). Tide preference is 'all' per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -6314,7 +6314,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation (233\u00b0) and offshore wind (53\u00b0) are directionally plausible but imprecise. Surf-forecast.com confirms offshore winds from NE (~45\u00b0) and ideal swell from SW (225\u00b0); corrected break_type from 'beach' to 'jetty' and tide_preference to 'low' per surf-forecast.com. Pollution is a significant hazard especially after rain.",
+    "verification_notes": "Computed orientation (233°) and offshore wind (53°) are directionally plausible but imprecise. Surf-forecast.com confirms offshore winds from NE (~45°) and ideal swell from SW (225°); corrected break_type from 'beach' to 'jetty' and tide_preference to 'low' per surf-forecast.com. Pollution is a significant hazard especially after rain.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6395,7 +6395,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~257\u00b0 (WSW) was wrong; surf-forecast.com documents offshore wind from SE (135\u00b0) and ideal swell from NW (315\u00b0), indicating a NW-facing cove. Break type corrected from beach to reef to reflect the dominant right reef section well-known at this spot.",
+    "verification_notes": "Computed orientation of ~257° (WSW) was wrong; surf-forecast.com documents offshore wind from SE (135°) and ideal swell from NW (315°), indicating a NW-facing cove. Break type corrected from beach to reef to reflect the dominant right reef section well-known at this spot.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6549,7 +6549,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore wind as ESE (112\u2192 corrected to source-stated ESE=112) and best swell from WSW (247). Computed orientation of 281 (near-W) is too far north; the beach here runs NW-SE and the break faces WSW, consistent with WSW optimal swell. facing_direction_deg corrected to 247 (WSW) and offshore_wind_deg corrected to 67 (ENE) per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists offshore wind as ESE (112→ corrected to source-stated ESE=112) and best swell from WSW (247). Computed orientation of 281 (near-W) is too far north; the beach here runs NW-SE and the break faces WSW, consistent with WSW optimal swell. facing_direction_deg corrected to 247 (WSW) and offshore_wind_deg corrected to 67 (ENE) per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6685,7 +6685,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Pipeline geometry produced a NW-facing orientation (312\u00b0) which is incorrect. Blacks Beach faces almost due west (~270\u00b0). surf-forecast.com lists offshore wind from the East (90\u00b0) and optimal swell from WNW; best swell documented as 280-290\u00b0 WNW, midpoint used as 285. Tide corrected to low/mid per Surfline and local guides; low tide preferred for barrels.",
+    "verification_notes": "Pipeline geometry produced a NW-facing orientation (312°) which is incorrect. Blacks Beach faces almost due west (~270°). surf-forecast.com lists offshore wind from the East (90°) and optimal swell from WNW; best swell documented as 280-290° WNW, midpoint used as 285. Tide corrected to low/mid per Surfline and local guides; low tide preferred for barrels.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -6748,7 +6748,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Pipes/San Elijo) lists offshore wind from ENE (67\u00b0) and ideal swell from WSW (247\u00b0); computed offshore_wind_deg (62\u00b0) and optimal_swell_dir (242\u00b0) are close but corrected to ENE=67 and WSW=247 per source. Break type corrected from beach to reef \u2014 surf-forecast.com and Surfline both describe erratic reef and sand bottom; mid tide preferred per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com (Pipes/San Elijo) lists offshore wind from ENE (67°) and ideal swell from WSW (247°); computed offshore_wind_deg (62°) and optimal_swell_dir (242°) are close but corrected to ENE=67 and WSW=247 per source. Break type corrected from beach to reef — surf-forecast.com and Surfline both describe erratic reef and sand bottom; mid tide preferred per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -6954,7 +6954,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the East and ideal swell from the West (270\u00b0); computed orientation of ~284\u00b0 was slightly off. Tide preference corrected to high: surf-forecast.com explicitly states 'best around high tide when the tide is rising.' Faces directly west into open Pacific NW/W groundswell exposure.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the East and ideal swell from the West (270°); computed orientation of ~284° was slightly off. Tide preference corrected to high: surf-forecast.com explicitly states 'best around high tide when the tide is rising.' Faces directly west into open Pacific NW/W groundswell exposure.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -7032,7 +7032,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation (~338\u00b0, NNW-facing) is wrong. Sandspit is the only north-facing beach in Santa Barbara, sitting at the end of the harbor breakwater; it faces south (~180\u00b0) into the Santa Barbara Channel. surf-forecast.com confirms offshore winds from the North (0\u00b0) and optimal swell from the West (270\u00b0) \u2014 a W swell wraps around the breakwater tip to produce the famous hollow right. Break type corrected from 'beach' to 'jetty' (breakwater/groyne); tide preference confirmed as low.",
+    "verification_notes": "Computed orientation (~338°, NNW-facing) is wrong. Sandspit is the only north-facing beach in Santa Barbara, sitting at the end of the harbor breakwater; it faces south (~180°) into the Santa Barbara Channel. surf-forecast.com confirms offshore winds from the North (0°) and optimal swell from the West (270°) — a W swell wraps around the breakwater tip to produce the famous hollow right. Break type corrected from 'beach' to 'jetty' (breakwater/groyne); tide preference confirmed as low.",
     "tide_preference": "low",
     "crowd_factor": "heavy",
     "hazards": [
@@ -7110,7 +7110,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~220\u00b0 is close but surf-forecast.com consistently lists offshore winds from the NE (45\u00b0) and optimal swell from the SW (225\u00b0) for all named Santa Monica beach sections (Pier, Ocean Park, Samo 20). Facing direction corrected to 247\u00b0 (WSW) to match the NE offshore wind; computed 220\u00b0 was slightly too southerly for this stretch of Santa Monica Bay which faces more WSW.",
+    "verification_notes": "Computed orientation of ~220° is close but surf-forecast.com consistently lists offshore winds from the NE (45°) and optimal swell from the SW (225°) for all named Santa Monica beach sections (Pier, Ocean Park, Samo 20). Facing direction corrected to 247° (WSW) to match the NE offshore wind; computed 220° was slightly too southerly for this stretch of Santa Monica Bay which faces more WSW.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7181,7 +7181,7 @@
       "nearest_tide_station": 0.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists Scott Creek-Reef (the dominant attraction) with offshore winds from the East (90\u00b0) and ideal NW swell (315\u00b0); the beach section lists WSW swell but the reef/point on the north end is the named break per Surfline. Break type corrected from beach to reef; all computed fields (None) populated from sourced data.",
+    "verification_notes": "surf-forecast.com lists Scott Creek-Reef (the dominant attraction) with offshore winds from the East (90°) and ideal NW swell (315°); the beach section lists WSW swell but the reef/point on the north end is the named break per Surfline. Break type corrected from beach to reef; all computed fields (None) populated from sourced data.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -7278,7 +7278,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms SW swell (225\u00b0) and NE offshore wind (45\u00b0). Computed orientation of ~212\u00b0 and offshore of ~32\u00b0 were corrected to match sourced values; the beach faces SW and is sheltered enough to work at all tide stages.",
+    "verification_notes": "surf-forecast.com confirms SW swell (225°) and NE offshore wind (45°). Computed orientation of ~212° and offshore of ~32° were corrected to match sourced values; the beach faces SW and is sheltered enough to work at all tide stages.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7405,7 +7405,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists this as a reef break (not beach) with NW offshore winds and SW optimal swell. Computed orientation of ~307\u00b0 was wrong \u2014 Pleasure Point faces SW (~225\u00b0). Break type corrected from beach to reef; facing/offshore/swell dirs all corrected accordingly.",
+    "verification_notes": "surf-forecast.com lists this as a reef break (not beach) with NW offshore winds and SW optimal swell. Computed orientation of ~307° was wrong — Pleasure Point faces SW (~225°). Break type corrected from beach to reef; facing/offshore/swell dirs all corrected accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7477,7 +7477,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms reef break with NW offshore and SW optimal swell. Computed orientation of ~344\u00b0 was badly wrong \u2014 Sewer Peak is at the top of Pleasure Point and faces SW (~225\u00b0). Break type corrected from beach to reef; all directional values corrected. Surfline notes this is the most competitive section of Pleasure Point.",
+    "verification_notes": "surf-forecast.com confirms reef break with NW offshore and SW optimal swell. Computed orientation of ~344° was badly wrong — Sewer Peak is at the top of Pleasure Point and faces SW (~225°). Break type corrected from beach to reef; all directional values corrected. Surfline notes this is the most competitive section of Pleasure Point.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -7526,7 +7526,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed optimal_swell_dir of 253\u00b0 corrected to 270\u00b0 (W) and offshore_wind_deg corrected to 90\u00b0 (E) per surf-forecast.com, which states best swell is from the west with offshore wind from the east. Tide preference set to low per surf-forecast.com. Break type beach confirmed.",
+    "verification_notes": "Computed optimal_swell_dir of 253° corrected to 270° (W) and offshore_wind_deg corrected to 90° (E) per surf-forecast.com, which states best swell is from the west with offshore wind from the east. Tide preference set to low per surf-forecast.com. Break type beach confirmed.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7600,7 +7600,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surfline and Yeeew confirm Shell Beach (San Luis Obispo) is a reef break with two boulder peaks, not a pure beach break as computed. Facing direction corrected from ~229\u00b0 (SSW) to ~247\u00b0 (WSW) to reflect the actual WNW/SW swell exposure documented in multiple sources; offshore wind corrected accordingly to NE (~67\u00b0). Optimal swell is NW (315\u00b0) per Surfline ('solid NW or SW swell') with NW being the dominant groundswell window; tide preference is low-to-mid per Yeeew, defaulted to 'low'.",
+    "verification_notes": "Surfline and Yeeew confirm Shell Beach (San Luis Obispo) is a reef break with two boulder peaks, not a pure beach break as computed. Facing direction corrected from ~229° (SSW) to ~247° (WSW) to reflect the actual WNW/SW swell exposure documented in multiple sources; offshore wind corrected accordingly to NE (~67°). Optimal swell is NW (315°) per Surfline ('solid NW or SW swell') with NW being the dominant groundswell window; tide preference is low-to-mid per Yeeew, defaulted to 'low'.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7673,7 +7673,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Multiple sources (Surfline, sheltercovecalifornia.com, swell-intel.com) confirm Shelter Cove is SW-facing with SW optimal swell and NE offshore winds. Break type corrected from 'beach' to 'reef' (Deadman's and associated breaks are reef). Computed facing (~204\u00b0) was too southerly; corrected to 225\u00b0 (SW) to match documented SW-facing orientation. Offshore wind corrected from ~24\u00b0 (NNE) to 45\u00b0 (NE) per Surf Captain and swell-intel data. Tide preference set to 'low' as Third Reef explicitly require",
+    "verification_notes": "Multiple sources (Surfline, sheltercovecalifornia.com, swell-intel.com) confirm Shelter Cove is SW-facing with SW optimal swell and NE offshore winds. Break type corrected from 'beach' to 'reef' (Deadman's and associated breaks are reef). Computed facing (~204°) was too southerly; corrected to 225° (SW) to match documented SW-facing orientation. Offshore wind corrected from ~24° (NNE) to 45° (NE) per Surf Captain and swell-intel data. Tide preference set to 'low' as Third Reef explicitly require",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -7745,7 +7745,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Solana Beach (Fletcher Cove / Pillbox area) is a west-facing beach break. Surf-forecast.com nearby breaks confirm offshore wind from the east and ideal swell from the southwest (~225\u00b0); corrected optimal_swell_dir from 261\u00b0 to 225\u00b0. Facing direction and offshore wind from pipeline are consistent and retained.",
+    "verification_notes": "Solana Beach (Fletcher Cove / Pillbox area) is a west-facing beach break. Surf-forecast.com nearby breaks confirm offshore wind from the east and ideal swell from the southwest (~225°); corrected optimal_swell_dir from 261° to 225°. Facing direction and offshore wind from pipeline are consistent and retained.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7810,7 +7810,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation (293\u00b0) and break_type ('beach') are both wrong. surf-forecast.com documents Steamer Lane as a south-facing reef/point complex offshore in NE winds; worldbeachguide confirms it 'faces due south' and is offshore in prevailing NW winds. The dominant section (The Point) is best on SW swell (225\u00b0); offshore wind is NE (~45\u00b0). Break type corrected to 'point' (right-hand reef-point complex). Tide corrected to 'mid' (rising mid-tide per surf-forecast.com).",
+    "verification_notes": "Computed orientation (293°) and break_type ('beach') are both wrong. surf-forecast.com documents Steamer Lane as a south-facing reef/point complex offshore in NE winds; worldbeachguide confirms it 'faces due south' and is offshore in prevailing NW winds. The dominant section (The Point) is best on SW swell (225°); offshore wind is NE (~45°). Break type corrected to 'point' (right-hand reef-point complex). Tide corrected to 'mid' (rising mid-tide per surf-forecast.com).",
     "tide_preference": "all",
     "crowd_factor": "heavy",
     "hazards": [
@@ -7879,7 +7879,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms best swell from SW and offshore winds from NE. Computed orientation of 214\u00b0 was slightly off; corrected facing to 225\u00b0 (SW) to align with sourced SW swell optimum and DeepSwell's 'faces southwest' description. Tide preference corrected to high per surf-forecast.com guide ('best around high tide'). Sharks noted from documented attack history.",
+    "verification_notes": "surf-forecast.com confirms best swell from SW and offshore winds from NE. Computed orientation of 214° was slightly off; corrected facing to 225° (SW) to align with sourced SW swell optimum and DeepSwell's 'faces southwest' description. Tide preference corrected to high per surf-forecast.com guide ('best around high tide'). Sharks noted from documented attack history.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -7951,7 +7951,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com explicitly lists ideal swell from the West (270\u00b0) and ideal wind from the East (90\u00b0); computed orientation of 232\u00b0 was incorrect. Facing corrected to 270\u00b0 and offshore_wind_deg corrected to 90\u00b0 to match sourced values. Rock and sand bottom confirmed; uncrowded spot per multiple local guides.",
+    "verification_notes": "surf-forecast.com explicitly lists ideal swell from the West (270°) and ideal wind from the East (90°); computed orientation of 232° was incorrect. Facing corrected to 270° and offshore_wind_deg corrected to 90° to match sourced values. Rock and sand bottom confirmed; uncrowded spot per multiple local guides.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -8042,7 +8042,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists Dana Point (the nearest named break) with best wind from ENE and optimal swell from WSW (225\u00b0). Surfline spot guide confirms Strands is a beachbreak best on S and short-period W-WNW swells and medium tide. Computed orientation of 243\u00b0 is plausible for this cove but the dominant offshore is ENE (45\u00b0) not the computed 63\u00b0; facing corrected to 225\u00b0 (WSW) to match sourced optimal swell and offshore wind relationship.",
+    "verification_notes": "surf-forecast.com lists Dana Point (the nearest named break) with best wind from ENE and optimal swell from WSW (225°). Surfline spot guide confirms Strands is a beachbreak best on S and short-period W-WNW swells and medium tide. Computed orientation of 243° is plausible for this cove but the dominant offshore is ENE (45°) not the computed 63°; facing corrected to 225° (WSW) to match sourced optimal swell and offshore wind relationship.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8080,7 +8080,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Suicides is a right-hand reef at the outer edge of Pleasure Point; the computed orientation of ~359\u00b0 (north-facing) is a serious pipeline error \u2014 Pleasure Point's east-side reefs face south/southwest into Monterey Bay. Corrected to 180\u00b0 facing with NNE offshore wind (0\u00b0) and optimal SSW swell (225\u00b0), consistent with nearby Pleasure Point First Peak and Rockview Street sourced values. Break type corrected from beach to reef.",
+    "verification_notes": "Suicides is a right-hand reef at the outer edge of Pleasure Point; the computed orientation of ~359° (north-facing) is a serious pipeline error — Pleasure Point's east-side reefs face south/southwest into Monterey Bay. Corrected to 180° facing with NNE offshore wind (0°) and optimal SSW swell (225°), consistent with nearby Pleasure Point First Peak and Rockview Street sourced values. Break type corrected from beach to reef.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8158,7 +8158,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and Surfline both document this as a collection of reef breaks along the sandstone cliffs. Facing direction adjusted to 270\u00b0 (due west) per surf-forecast.com's documented ideal swell from the west and offshore wind from the east; computed orientation of 281\u00b0 is reasonable but 270\u00b0 better matches the west-facing reef exposure. Offshore wind is from the east (90\u00b0), confirming (facing+180)%360.",
+    "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and Surfline both document this as a collection of reef breaks along the sandstone cliffs. Facing direction adjusted to 270° (due west) per surf-forecast.com's documented ideal swell from the west and offshore wind from the east; computed orientation of 281° is reasonable but 270° better matches the west-facing reef exposure. Offshore wind is from the east (90°), confirming (facing+180)%360.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8223,7 +8223,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists ideal swell from the Northwest and offshore wind from the Southeast for this spot (SE \u2248 135\u00b0). The coastline here runs roughly NW\u2013SE placing the beach face west-to-southwest, but the beach is oriented slightly south-of-west so NW swells hit at a productive angle. Shark attacks have been documented here. Access is restricted during Snowy Plover nesting season (March\u2013September).",
+    "verification_notes": "surf-forecast.com lists ideal swell from the Northwest and offshore wind from the Southeast for this spot (SE ≈ 135°). The coastline here runs roughly NW–SE placing the beach face west-to-southwest, but the beach is oriented slightly south-of-west so NW swells hit at a productive angle. Shark attacks have been documented here. Access is restricted during Snowy Plover nesting season (March–September).",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -8292,7 +8292,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms optimal swell from the West (270\u00b0) and offshore wind from the Northeast (45\u00b0). Computed orientation of 209\u00b0 was too southerly; corrected facing to 225\u00b0 (SW) to align with NE offshore and W optimal swell. The jetty deflects west swell into powerful wedges; break type changed from beach to jetty per sourced descriptions.",
+    "verification_notes": "surf-forecast.com confirms optimal swell from the West (270°) and offshore wind from the Northeast (45°). Computed orientation of 209° was too southerly; corrected facing to 225° (SW) to align with NE offshore and W optimal swell. The jetty deflects west swell into powerful wedges; break type changed from beach to jetty per sourced descriptions.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8369,7 +8369,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "The beach section of the gated Surfside colony south of Seal Beach; a distinct spot ~2 km from Surfside Jetty. Computed orientation of 230\u00b0 is consistent with regional SoCal SW-facing beach break geometry. Optimal swell corrected to 270\u00b0 (West) to match the regional pattern confirmed at Surfside Jetty; the slightly angled SW face means west groundswells produce the best surf.",
+    "verification_notes": "The beach section of the gated Surfside colony south of Seal Beach; a distinct spot ~2 km from Surfside Jetty. Computed orientation of 230° is consistent with regional SoCal SW-facing beach break geometry. Optimal swell corrected to 270° (West) to match the regional pattern confirmed at Surfside Jetty; the slightly angled SW face means west groundswells produce the best surf.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8446,7 +8446,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and multiple sources confirm this is a reef (point) break, not a beach break. Offshore wind is from the East (90\u00b0) per surf-forecast.com; facing/swell direction corrected to 270\u00b0 (due West) per surf-forecast.com's ideal swell of West. Tide preference corrected to low/mid \u2014 sources indicate low-to-mid tide is best.",
+    "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and multiple sources confirm this is a reef (point) break, not a beach break. Offshore wind is from the East (90°) per surf-forecast.com; facing/swell direction corrected to 270° (due West) per surf-forecast.com's ideal swell of West. Tide preference corrected to low/mid — sources indicate low-to-mid tide is best.",
     "tide_preference": "low",
     "crowd_factor": "heavy",
     "hazards": [
@@ -8515,7 +8515,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore winds from the northeast (NE=45\u00b0) and ideal swell from the southwest (SW=225\u00b0), aligning with computed values. Break type 'beach' confirmed by multiple sources. Tide preference updated to high/mid per surfsphere.com; surf-forecast.com lists this as a beach and reef break but beach is the dominant association.",
+    "verification_notes": "surf-forecast.com confirms offshore winds from the northeast (NE=45°) and ideal swell from the southwest (SW=225°), aligning with computed values. Break type 'beach' confirmed by multiple sources. Tide preference updated to high/mid per surfsphere.com; surf-forecast.com lists this as a beach and reef break but beach is the dominant association.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8586,7 +8586,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms best swell from the West (270\u00b0) and offshore wind from the Northeast (NE=45\u00b0). Computed orientation of 230\u00b0 was too southerly; corrected facing to 270\u00b0 (due West) to match documented swell exposure. This is a beach/jetty break at Tamarack Ave in Carlsbad; tide preference corrected to low-rising per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms best swell from the West (270°) and offshore wind from the Northeast (NE=45°). Computed orientation of 230° was too southerly; corrected facing to 270° (due West) to match documented swell exposure. This is a beach/jetty break at Tamarack Ave in Carlsbad; tide preference corrected to low-rising per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -8653,7 +8653,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Multiple sources confirm this Laguna Beach spot is primarily a S/SSW swell receiver with offshore winds from the NE (\u224845\u00b0). Computed orientation of 248\u00b0 (WSW-facing) is too westerly; corrected to 200\u00b0 (SSW-facing) to reflect the south-facing cove geometry and dominant S/SSW swell window. Tide preference set to mid per Surfnerd and Surfline guidance on rocks at low and bogging at high.",
+    "verification_notes": "Multiple sources confirm this Laguna Beach spot is primarily a S/SSW swell receiver with offshore winds from the NE (≈45°). Computed orientation of 248° (WSW-facing) is too westerly; corrected to 200° (SSW-facing) to reflect the south-facing cove geometry and dominant S/SSW swell window. Tide preference set to mid per Surfnerd and Surfline guidance on rocks at low and bogging at high.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8751,7 +8751,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of 317\u00b0 (NW) is badly wrong; surf-forecast.com confirms this East Cliff reef faces SSW (~202\u00b0) into Monterey Bay with offshore winds from the NW (315\u00b0). Pipeline coastal-polygon likely snapped to the wrong coastline segment. Break type corrected from beach to reef.",
+    "verification_notes": "Computed orientation of 317° (NW) is badly wrong; surf-forecast.com confirms this East Cliff reef faces SSW (~202°) into Monterey Bay with offshore winds from the NW (315°). Pipeline coastal-polygon likely snapped to the wrong coastline segment. Break type corrected from beach to reef.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -8869,7 +8869,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Provided coordinates (35.6742, -120.7335) place this near Cambria/Paso Robles on the Central Coast \u2014 a clear geocoding error; the famous The Wedge is at Newport Beach (33.5935, -117.8821). All metadata corrected to the Newport Beach Wedge: wave reflects off the West Jetty to face ~S (180\u00b0), offshore wind from N (0\u00b0), optimal swell from SSW (202\u00b0) per surf-forecast.com.",
+    "verification_notes": "Provided coordinates (35.6742, -120.7335) place this near Cambria/Paso Robles on the Central Coast — a clear geocoding error; the famous The Wedge is at Newport Beach (33.5935, -117.8821). All metadata corrected to the Newport Beach Wedge: wave reflects off the West Jetty to face ~S (180°), offshore wind from N (0°), optimal swell from SSW (202°) per surf-forecast.com.",
     "tide_preference": "high",
     "crowd_factor": "heavy",
     "hazards": [
@@ -8945,7 +8945,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "Computed orientation (~325\u00b0, NW-facing) and offshore wind (~145\u00b0, SE) are inverted errors \u2014 this Capitola-area reef faces south/SSW like all neighboring Santa Cruz east-bay breaks. Corrected to facing ~200\u00b0, offshore from N (~20\u00b0), optimal swell SSW (~202\u00b0). Break_type corrected from 'beach' to 'reef'; tide corrected to 'low' (needs minus low tide to break per local guides).",
+    "verification_notes": "Computed orientation (~325°, NW-facing) and offshore wind (~145°, SE) are inverted errors — this Capitola-area reef faces south/SSW like all neighboring Santa Cruz east-bay breaks. Corrected to facing ~200°, offshore from N (~20°), optimal swell SSW (~202°). Break_type corrected from 'beach' to 'reef'; tide corrected to 'low' (needs minus low tide to break per local guides).",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -9022,7 +9022,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Pipeline-computed orientation of 333\u00b0 (NNW-facing) is wrong \u2014 Topanga sits at the base of Topanga Canyon and is a right-hand point break facing due west (~270\u00b0). surf-forecast.com lists the spot as 'Topanga Point', an exposed point break whose best swell is from the West and best wind is from the North (offshore = ~0\u00b0, i.e. wind FROM north blowing seaward). Corrected facing to 270\u00b0, offshore_wind to 90\u00b0 (east, i.e. from the land side given the southerly-trending coast here \u2014 but per surf-forecas",
+    "verification_notes": "Pipeline-computed orientation of 333° (NNW-facing) is wrong — Topanga sits at the base of Topanga Canyon and is a right-hand point break facing due west (~270°). surf-forecast.com lists the spot as 'Topanga Point', an exposed point break whose best swell is from the West and best wind is from the North (offshore = ~0°, i.e. wind FROM north blowing seaward). Corrected facing to 270°, offshore_wind to 90° (east, i.e. from the land side given the southerly-trending coast here — but per surf-forecas",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9089,7 +9089,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists this spot as 'Torrance Beach/Burn Out' with best swell from the West-northwest and offshore wind from the East. Pipeline computed orientation of 277\u00b0 is geometrically plausible for the local coast tangent, but Torrance Beach faces roughly SSW (~200\u00b0) due to the Palos Verdes Peninsula curving the shoreline southward. Optimal swell corrected to WNW (292\u00b0) per surf-forecast.com; offshore_wind corrected to E (90\u00b0) per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists this spot as 'Torrance Beach/Burn Out' with best swell from the West-northwest and offshore wind from the East. Pipeline computed orientation of 277° is geometrically plausible for the local coast tangent, but Torrance Beach faces roughly SSW (~200°) due to the Palos Verdes Peninsula curving the shoreline southward. Optimal swell corrected to WNW (292°) per surf-forecast.com; offshore_wind corrected to E (90°) per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9158,7 +9158,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore winds from the East (90\u00b0) and ideal swell from the West-Northwest (WNW=292\u00b0). Computed orientation of ~254\u00b0 and offshore of ~74\u00b0 are corrected: this beach faces due West (~270\u00b0), offshore is East (~90\u00b0), and optimal swell is WNW (~292\u00b0). Tide preference corrected from null to high per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists offshore winds from the East (90°) and ideal swell from the West-Northwest (WNW=292°). Computed orientation of ~254° and offshore of ~74° are corrected: this beach faces due West (~270°), offshore is East (~90°), and optimal swell is WNW (~292°). Tide preference corrected from null to high per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9223,7 +9223,7 @@
       "nearest_tide_station": 0.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore winds from the Northeast (NE=45\u00b0) and ideal swell from the Southwest (SW=225\u00b0). However, Tourmaline Surf Park is a Pacific Beach-facing break (facing ~270\u00b0, offshore ~90\u00b0); the NE offshore wind from surf-forecast.com is inconsistent with the beach geometry and likely a site quirk \u2014 East (90\u00b0) is the correct offshore for this westward-facing beach. Optimal swell corrected to SW (225\u00b0) per surf-forecast.com. Tide preference set to mid per local guides (high tide mu",
+    "verification_notes": "surf-forecast.com lists offshore winds from the Northeast (NE=45°) and ideal swell from the Southwest (SW=225°). However, Tourmaline Surf Park is a Pacific Beach-facing break (facing ~270°, offshore ~90°); the NE offshore wind from surf-forecast.com is inconsistent with the beach geometry and likely a site quirk — East (90°) is the correct offshore for this westward-facing beach. Optimal swell corrected to SW (225°) per surf-forecast.com. Tide preference set to mid per local guides (high tide mu",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9279,7 +9279,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Trees is a section of the Pleasure Point reef/point complex on Monterey Bay's south-facing shore; computed orientation of 288\u00b0 is wrong (pipeline artifact from Pacific-coast normal). Corrected to ~180\u00b0 facing south into the bay with SSW optimal swell and N offshore wind. Break type corrected from beach to point.",
+    "verification_notes": "Trees is a section of the Pleasure Point reef/point complex on Monterey Bay's south-facing shore; computed orientation of 288° is wrong (pipeline artifact from Pacific-coast normal). Corrected to ~180° facing south into the bay with SSW optimal swell and N offshore wind. Break type corrected from beach to point.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9418,7 +9418,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists ideal swell as WSW (247\u00b0) and offshore wind from the East (90\u00b0); computed offshore_wind_deg of 71\u00b0 corrected to 90\u00b0. Tide-tolerant per multiple sources. Mixed beach-and-reef bottom but beach character dominates the named break.",
+    "verification_notes": "surf-forecast.com lists ideal swell as WSW (247°) and offshore wind from the East (90°); computed offshore_wind_deg of 71° corrected to 90°. Tide-tolerant per multiple sources. Mixed beach-and-reef bottom but beach character dominates the named break.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -9480,7 +9480,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists best swell as W (270\u00b0) and offshore wind from NE (45\u00b0); computed orientation of 230\u00b0 and break_type 'beach' both corrected \u2014 Uppers is a cobblestone right-hand point/reef break facing W, best around low tide per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists best swell as W (270°) and offshore wind from NE (45°); computed orientation of 230° and break_type 'beach' both corrected — Uppers is a cobblestone right-hand point/reef break facing W, best around low tide per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9553,7 +9553,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists best swell as WNW (292\u00b0) and offshore wind from NE (45\u00b0); computed offshore_wind_deg of 75\u00b0 (ENE) and optimal_swell_dir of 255\u00b0 (WSW) are both corrected. Facing direction ~255\u00b0 (WSW) is consistent with the Santa Monica Bay coastline orientation and is retained.",
+    "verification_notes": "surf-forecast.com lists best swell as WNW (292°) and offshore wind from NE (45°); computed offshore_wind_deg of 75° (ENE) and optimal_swell_dir of 255° (WSW) are both corrected. Facing direction ~255° (WSW) is consistent with the Santa Monica Bay coastline orientation and is retained.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9620,7 +9620,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms best swell from the west and offshore wind from the northeast (NE=45\u00b0). Corrected break_type from 'beach' to 'point': this is the well-known California Street / Surfer's Point multi-section point break. Tide preference set to 'all' per surf-forecast.com ('Good surf at all stages of the tide').",
+    "verification_notes": "surf-forecast.com confirms best swell from the west and offshore wind from the northeast (NE=45°). Corrected break_type from 'beach' to 'point': this is the well-known California Street / Surfer's Point multi-section point break. Tide preference set to 'all' per surf-forecast.com ('Good surf at all stages of the tide').",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -9692,7 +9692,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the northeast (NE=45\u00b0) and ideal swell from the southwest (SW=225\u00b0). Computed optimal_swell_dir of 249\u00b0 is corrected to 225\u00b0 (SW) per sourced data; offshore_wind_deg corrected from 69\u00b0 to 45\u00b0 (NE). Surfline notes a preference for incoming-to-high tides; spot also frequented by windsurfers and kitesurfers.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the northeast (NE=45°) and ideal swell from the southwest (SW=225°). Computed optimal_swell_dir of 249° is corrected to 225° (SW) per sourced data; offshore_wind_deg corrected from 69° to 45° (NE). Surfline notes a preference for incoming-to-high tides; spot also frequented by windsurfers and kitesurfers.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9763,7 +9763,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms SW swell and offshore E wind; break_type corrected from 'beach' to 'reef' (shallow rock reef break). Computed orientation of 251\u00b0 is close but facing_direction_deg adjusted to 225 (SW) to match sourced optimal swell direction. offshore_wind_deg corrected accordingly to 45 (NE/E); tide listed as 'all' per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com confirms SW swell and offshore E wind; break_type corrected from 'beach' to 'reef' (shallow rock reef break). Computed orientation of 251° is close but facing_direction_deg adjusted to 225 (SW) to match sourced optimal swell direction. offshore_wind_deg corrected accordingly to 45 (NE/E); tide listed as 'all' per surf-forecast.com.",
     "tide_preference": "low",
     "crowd_factor": "heavy",
     "hazards": [
@@ -9827,7 +9827,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms SW swell and offshore NE wind; computed orientation of 212\u00b0 corrected to 225 (SW) to align with sourced SW optimal swell direction, offshore_wind_deg corrected to 45 (NE). surf-forecast.com explicitly notes best around mid tide and rarely crowded.",
+    "verification_notes": "surf-forecast.com confirms SW swell and offshore NE wind; computed orientation of 212° corrected to 225 (SW) to align with sourced SW optimal swell direction, offshore_wind_deg corrected to 45 (NE). surf-forecast.com explicitly notes best around mid tide and rarely crowded.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -9910,7 +9910,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists best conditions as an ENE swell (ENE=67\u00b0) with offshore wind from the SW (225\u00b0); however the spot's Atlantic-facing geometry is squarely east (~90\u00b0) and the SW offshore is consistent with facing_direction_deg=90. Corrected optimal_swell_dir from computed 90 to 67 (ENE per surf-forecast.com); offshore_wind_deg retained at 270 (W) as the dominant clean-wind direction for a due-east-facing beach. Tide preference set to mid-rising per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists best conditions as an ENE swell (ENE=67°) with offshore wind from the SW (225°); however the spot's Atlantic-facing geometry is squarely east (~90°) and the SW offshore is consistent with facing_direction_deg=90. Corrected optimal_swell_dir from computed 90 to 67 (ENE per surf-forecast.com); offshore_wind_deg retained at 270 (W) as the dominant clean-wind direction for a due-east-facing beach. Tide preference set to mid-rising per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -9951,7 +9951,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the West (270\u00b0) and ideal swell from the ESE (ESE=112\u00b0); corrected computed orientation from 69\u00b0 to 90\u00b0 (the beach faces due east like the rest of the Delaware coast) and corrected optimal_swell_dir from 69 to 112 to match the ESE ideal swell per surf-forecast.com. Spot is described as rarely crowded.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the West (270°) and ideal swell from the ESE (ESE=112°); corrected computed orientation from 69° to 90° (the beach faces due east like the rest of the Delaware coast) and corrected optimal_swell_dir from 69 to 112 to match the ESE ideal swell per surf-forecast.com. Spot is described as rarely crowded.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -10004,7 +10004,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~28\u00b0 (NNE-facing) is wrong \u2014 this is a jetty/inlet break on Delaware's south-facing Atlantic coast. Surf-forecast.com lists both the Northside and Southside as beach/jetty breaks with offshore winds from the West (270\u00b0) and ideal swell from the SSE (~157\u00b0), consistent with Surfline and SurfBagel guides. Facing direction corrected to SSE (~157\u00b0); the pipeline-derived value geocoded to the inlet channel rather than the ocean-facing wave zone.",
+    "verification_notes": "Computed orientation of ~28° (NNE-facing) is wrong — this is a jetty/inlet break on Delaware's south-facing Atlantic coast. Surf-forecast.com lists both the Northside and Southside as beach/jetty breaks with offshore winds from the West (270°) and ideal swell from the SSE (~157°), consistent with Surfline and SurfBagel guides. Facing direction corrected to SSE (~157°); the pipeline-derived value geocoded to the inlet channel rather than the ocean-facing wave zone.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10113,7 +10113,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Rehoboth Main) confirms best conditions with an East swell and offshore wind from the West (270\u00b0). Computed orientation of ~74\u00b0 was slightly off; corrected to 90\u00b0 to match the documented E-facing beach and sourced ideal swell/wind directions.",
+    "verification_notes": "surf-forecast.com (Rehoboth Main) confirms best conditions with an East swell and offshore wind from the West (270°). Computed orientation of ~74° was slightly off; corrected to 90° to match the documented E-facing beach and sourced ideal swell/wind directions.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10171,7 +10171,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Fernandina Beach Pier, the primary named break on Amelia Island) lists offshore wind from the West (270\u00b0) and ideal swell from the Northeast (45\u00b0); computed optimal_swell_dir of 90\u00b0 corrected to 45\u00b0 per sourced data. Tide listed as good at all stages.",
+    "verification_notes": "surf-forecast.com (Fernandina Beach Pier, the primary named break on Amelia Island) lists offshore wind from the West (270°) and ideal swell from the Northeast (45°); computed optimal_swell_dir of 90° corrected to 45° per sourced data. Tide listed as good at all stages.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10195,11 +10195,17 @@
       }
     ],
     "optimal_swell_dir": 98,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720086",
     "nearest_tide_station_dist_km": 2.36,
     "nearest_buoy_id": "41112",
-    "nearest_buoy_dist_km": 18.19
+    "nearest_buoy_dist_km": 18.19,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.61821,
+    "nwps_node_lng": -81.42308,
+    "nwps_node_distance_m": 1368,
+    "nwps_buoy_id": "41112"
   },
   {
     "name": "Atlantic Beach",
@@ -10226,7 +10232,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "East-facing Atlantic beach break in the Jacksonville area. Computed orientation was null; set to 90\u00b0 (due east) per standard NE Florida coastline geometry. Optimal swell is from the SE (~135\u00b0) per multiple sources, as the beach responds best to SE/NE angled swell rather than a dead-east shot. Offshore wind is W (270\u00b0). Best winds noted as westerly; crowds heavy as this is a well-known Jax-area break.",
+    "verification_notes": "East-facing Atlantic beach break in the Jacksonville area. Computed orientation was null; set to 90° (due east) per standard NE Florida coastline geometry. Optimal swell is from the SE (~135°) per multiple sources, as the beach responds best to SE/NE angled swell rather than a dead-east shot. Offshore wind is W (270°). Best winds noted as westerly; crowds heavy as this is a well-known Jax-area break.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -10260,9 +10266,15 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720267",
-    "nearest_tide_station_dist_km": 1.8
+    "nearest_tide_station_dist_km": 1.8,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.34186,
+    "nwps_node_lng": -81.38615,
+    "nwps_node_distance_m": 1092,
+    "nwps_buoy_id": "41112"
   },
   {
     "name": "Bathtub Beach",
@@ -10289,7 +10301,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Reef break at Stuart (Hutchinson Island, Martin County) fronted by a rare Sabellariid worm-rock reef system. Computed break_type corrected from 'beach' to 'reef' per multiple sources. Optimal swell corrected from 90\u00b0 (due east) to NE (~45\u00b0) per surf-forecast.com nearest proxy (Stuart Public Beach) which lists best swell from the northeast; tide preference set to low/rising per DeepSwell surf guide. Offshore wind is from the west (270\u00b0); facing direction confirmed ~90\u00b0.",
+    "verification_notes": "Reef break at Stuart (Hutchinson Island, Martin County) fronted by a rare Sabellariid worm-rock reef system. Computed break_type corrected from 'beach' to 'reef' per multiple sources. Optimal swell corrected from 90° (due east) to NE (~45°) per surf-forecast.com nearest proxy (Stuart Public Beach) which lists best swell from the northeast; tide preference set to low/rising per DeepSwell surf guide. Offshore wind is from the west (270°); facing direction confirmed ~90°.",
     "tide_preference": "high",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10351,7 +10363,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms offshore wind from the West (270\u00b0) and ideal swell from the Northeast (45\u00b0). Computed optimal_swell_dir of 90\u00b0 (E) corrected to 45\u00b0 (NE) per sourced data. Break type updated from 'beach' to 'jetty' as surf-forecast.com classifies it as a beach/jetty break and the jetty structure is the defining feature. Tide preference confirmed all-stages per source.",
+    "verification_notes": "surf-forecast.com confirms offshore wind from the West (270°) and ideal swell from the Northeast (45°). Computed optimal_swell_dir of 90° (E) corrected to 45° (NE) per sourced data. Break type updated from 'beach' to 'jetty' as surf-forecast.com classifies it as a beach/jetty break and the jetty structure is the defining feature. Tide preference confirmed all-stages per source.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10421,7 +10433,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of 167\u00b0 and offshore wind of 347\u00b0 are incorrect \u2014 this is a standard east-facing South Florida inlet. surf-forecast.com (Boynton Inlet) confirms offshore winds from the West (270\u00b0) and best swell from the Northeast (45\u00b0). DeepSwell local guide notes the spot works best at low tide. Break type corrected from 'beach' to 'jetty'; facing and offshore directions corrected accordingly.",
+    "verification_notes": "Computed orientation of 167° and offshore wind of 347° are incorrect — this is a standard east-facing South Florida inlet. surf-forecast.com (Boynton Inlet) confirms offshore winds from the West (270°) and best swell from the Northeast (45°). DeepSwell local guide notes the spot works best at low tide. Break type corrected from 'beach' to 'jetty'; facing and offshore directions corrected accordingly.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -10491,7 +10503,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists best swell direction as southeast (corrected from computed 97\u00b0 east to 135\u00b0 SE) and offshore winds from the west (270\u00b0, consistent with computed 277\u00b0). Tide preference corrected to high per surf-forecast.com and Surfline.",
+    "verification_notes": "surf-forecast.com lists best swell direction as southeast (corrected from computed 97° east to 135° SE) and offshore winds from the west (270°, consistent with computed 277°). Tide preference corrected to high per surf-forecast.com and Surfline.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10585,7 +10597,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Dominant break type corrected from beach to reef \u2014 a coral reef runs outside the pier producing powerful lefts on winter/hurricane swells. Offshore wind from west (270\u00b0) and optimal E swell (90\u00b0) confirmed by multiple sources; computed values align well.",
+    "verification_notes": "Dominant break type corrected from beach to reef — a coral reef runs outside the pier producing powerful lefts on winter/hurricane swells. Offshore wind from west (270°) and optimal E swell (90°) confirmed by multiple sources; computed values align well.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -10662,9 +10674,15 @@
       }
     ],
     "optimal_swell_dir": 84,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721120",
-    "nearest_tide_station_dist_km": 6.38
+    "nearest_tide_station_dist_km": 6.38,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.17142,
+    "nwps_node_lng": -80.96154,
+    "nwps_node_distance_m": 1717,
+    "nwps_buoy_id": null
   },
   {
     "name": "Deerfield Beach Pier",
@@ -10723,7 +10741,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com specifies offshore winds from WNW (292\u00b0) and best swell from the E (90\u00b0); corrected offshore_wind from computed 277\u00b0 to 292\u00b0 and facing from 97\u00b0 to 112\u00b0 to match the sourced WNW offshore bearing.",
+    "verification_notes": "Surf-forecast.com specifies offshore winds from WNW (292°) and best swell from the E (90°); corrected offshore_wind from computed 277° to 292° and facing from 97° to 112° to match the sourced WNW offshore bearing.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10765,7 +10783,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore winds from the West (270\u00b0) and ideal swell from the Northeast (NE=45\u00b0). The beach faces roughly ENE (~67\u00b0); the computed orientation fields were null and have been populated from source data. Tide preference confirmed as mid/falling by surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists offshore winds from the West (270°) and ideal swell from the Northeast (NE=45°). The beach faces roughly ENE (~67°); the computed orientation fields were null and have been populated from source data. Tide preference confirmed as mid/falling by surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10833,7 +10851,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Destin) lists offshore wind from North (0\u00b0) and best swell from South-southeast (SSE=157\u00b0). The computed orientation_deg of ~153\u00b0 and offshore_wind_deg of ~333\u00b0 are wrong \u2014 the Panhandle coast here faces due south (180\u00b0), making true offshore wind from the North (0\u00b0/360\u00b0). break_type corrected from 'beach' to 'jetty' per the East Pass jetty structure; Surfline confirms NW winds (post-cold-front) as the prime offshore condition, consistent with a south-facing break.",
+    "verification_notes": "surf-forecast.com (Destin) lists offshore wind from North (0°) and best swell from South-southeast (SSE=157°). The computed orientation_deg of ~153° and offshore_wind_deg of ~333° are wrong — the Panhandle coast here faces due south (180°), making true offshore wind from the North (0°/360°). break_type corrected from 'beach' to 'jetty' per the East Pass jetty structure; Surfline confirms NW winds (post-cold-front) as the prime offshore condition, consistent with a south-facing break.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -10920,7 +10938,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Flagler-Pier) lists ideal swell from the NE (=45\u00b0) and offshore winds from the SW (=225\u00b0). Computed orientation of 64\u00b0 and offshore of 244\u00b0 are corrected to NE/SW values per source. Tide preference corrected to low per surf-forecast.com ('best around low tide when the tide is rising').",
+    "verification_notes": "surf-forecast.com (Flagler-Pier) lists ideal swell from the NE (=45°) and offshore winds from the SW (=225°). Computed orientation of 64° and offshore of 244° are corrected to NE/SW values per source. Tide preference corrected to low per surf-forecast.com ('best around low tide when the tide is rising').",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -10933,9 +10951,15 @@
     "tide_preference_confidence": 0.75,
     "nwps_wfo": "jax",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720833",
-    "nearest_tide_station_dist_km": 1.1
+    "nearest_tide_station_dist_km": 1.1,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.48029,
+    "nwps_node_lng": -81.10923,
+    "nwps_node_distance_m": 1582,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Fort Lauderdale Beach",
@@ -10994,7 +11018,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Fort-Lauderdale-14th-Street) lists ideal swell from the E (=90\u00b0) and offshore winds from the WNW (=292\u00b0). Computed orientation and optimal swell of 90\u00b0 match the sourced E swell direction; offshore wind corrected from computed 270\u00b0 (W) to 292\u00b0 (WNW) per surf-forecast.com. Tide preference set to 'all' per surf-forecast.com ('surfable at all stages of the tide').",
+    "verification_notes": "surf-forecast.com (Fort-Lauderdale-14th-Street) lists ideal swell from the E (=90°) and offshore winds from the WNW (=292°). Computed orientation and optimal swell of 90° match the sourced E swell direction; offshore wind corrected from computed 270° (W) to 292° (WNW) per surf-forecast.com. Tide preference set to 'all' per surf-forecast.com ('surfable at all stages of the tide').",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11035,7 +11059,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~131\u00b0 and swell of 131\u00b0 corrected: surf-forecast.com and Surfline both confirm best swell is from the NE (~45\u00b0) and offshore wind is from the W (270\u00b0). The beach faces essentially east (~90\u00b0). Surfline notes the spot works best at high tide, contrary to the computed null. Break type corrected to jetty (North Jetty is the primary surf structure).",
+    "verification_notes": "Computed orientation of ~131° and swell of 131° corrected: surf-forecast.com and Surfline both confirm best swell is from the NE (~45°) and offshore wind is from the W (270°). The beach faces essentially east (~90°). Surfline notes the spot works best at high tide, contrary to the computed null. Break type corrected to jetty (North Jetty is the primary surf structure).",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11096,7 +11120,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation ~112\u00b0 and swell 112\u00b0 corrected: surf-forecast.com confirms ideal wind is from the west (270\u00b0) and best swell direction is from the NNE (~22\u00b0). The coastline here faces nearly due east (~90\u00b0). Tide preference corrected to low (surf-forecast.com states 'best around low tide when the tide is rising'). Break type corrected to jetty; the main surf is shaped by the inlet jetties and tidal sandbars.",
+    "verification_notes": "Computed orientation ~112° and swell 112° corrected: surf-forecast.com confirms ideal wind is from the west (270°) and best swell direction is from the NNE (~22°). The coastline here faces nearly due east (~90°). Tide preference corrected to low (surf-forecast.com states 'best around low tide when the tide is rising'). Break type corrected to jetty; the main surf is shaped by the inlet jetties and tidal sandbars.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11164,7 +11188,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~133\u00b0 (SE-facing) is wrong \u2014 this is a Gulf Coast barrier-island beach that faces due West (~270\u00b0). Surf-forecast.com confirms offshore wind from the East (90\u00b0) and ideal swell from the Northwest (315\u00b0); SurfCaptain also labels it a west-facing beach. All three computed values (orientation, offshore_wind, optimal_swell) have been corrected.",
+    "verification_notes": "Computed orientation of ~133° (SE-facing) is wrong — this is a Gulf Coast barrier-island beach that faces due West (~270°). Surf-forecast.com confirms offshore wind from the East (90°) and ideal swell from the Northwest (315°); SurfCaptain also labels it a west-facing beach. All three computed values (orientation, offshore_wind, optimal_swell) have been corrected.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -11253,7 +11277,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of ~70\u00b0 (ENE-facing) overstates the northward tilt; coastline here runs nearly N-S so true facing is ~90\u00b0. Surf-forecast.com (Jax Beach Pier) confirms offshore winds from the SW (225\u00b0) and ideal swell from the NNE (22\u00b0); tide preference corrected to high per surf-forecast.com. Break type updated to jetty to reflect the pier structure that defines the spot.",
+    "verification_notes": "Computed orientation of ~70° (ENE-facing) overstates the northward tilt; coastline here runs nearly N-S so true facing is ~90°. Surf-forecast.com (Jax Beach Pier) confirms offshore winds from the SW (225°) and ideal swell from the NNE (22°); tide preference corrected to high per surf-forecast.com. Break type updated to jetty to reflect the pier structure that defines the spot.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11266,9 +11290,15 @@
     "tide_preference_confidence": 0.75,
     "nwps_wfo": "jax",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720291",
-    "nearest_tide_station_dist_km": 1.15
+    "nearest_tide_station_dist_km": 1.15,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.29309,
+    "nwps_node_lng": -81.38615,
+    "nwps_node_distance_m": 158,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Jetty Park Cocoa Beach",
@@ -11295,7 +11325,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists best swell from SSE (157\u00b0) and offshore wind from W (270\u00b0). Computed orientation of 131\u00b0 is plausible for the coastline polygon but the actual wave-facing direction at the south jetty wall is closer to true east (~90\u00b0); optimal swell is SSE per source. Break type corrected from 'beach' to 'jetty' \u2014 the south side of Port Canaveral inlet jetty is the defining feature. Offshore wind corrected to 270\u00b0 (W) per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com lists best swell from SSE (157°) and offshore wind from W (270°). Computed orientation of 131° is plausible for the coastline polygon but the actual wave-facing direction at the south jetty wall is closer to true east (~90°); optimal swell is SSE per source. Break type corrected from 'beach' to 'jetty' — the south side of Port Canaveral inlet jetty is the defining feature. Offshore wind corrected to 270° (W) per surf-forecast.com.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11396,7 +11426,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com and Surfline confirm offshore wind from W (270\u00b0) and best swell from NE (045\u00b0). Computed orientation of 61\u00b0 is reasonable for ENE-facing Juno Beach; adjusted optimal swell to 45\u00b0 (NE) per surf-forecast.com. Tide preference set to mid/incoming per Surfline; pier is the most consistent spot in north Palm Beach County with heavy weekend crowds.",
+    "verification_notes": "surf-forecast.com and Surfline confirm offshore wind from W (270°) and best swell from NE (045°). Computed orientation of 61° is reasonable for ENE-facing Juno Beach; adjusted optimal swell to 45° (NE) per surf-forecast.com. Tide preference set to mid/incoming per Surfline; pier is the most consistent spot in north Palm Beach County with heavy weekend crowds.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -11439,7 +11469,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of 171\u00b0 (south-facing) is wrong \u2014 this is a well-documented east-facing Atlantic beach/jetty break. The south jetty produces the best-known waves; surf-forecast.com confirms offshore winds from the West (270\u00b0) and optimal NE swell (~45\u00b0). Break_type corrected from 'beach' to 'jetty'; tide_preference corrected to 'low' per surf-forecast.com.",
+    "verification_notes": "Computed orientation of 171° (south-facing) is wrong — this is a well-documented east-facing Atlantic beach/jetty break. The south jetty produces the best-known waves; surf-forecast.com confirms offshore winds from the West (270°) and optimal NE swell (~45°). Break_type corrected from 'beach' to 'jetty'; tide_preference corrected to 'low' per surf-forecast.com.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11511,7 +11541,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of 89\u00b0 is consistent with east-facing Atlantic exposure \u2014 facing_direction_deg retained at 90. Surf-forecast.com confirms offshore winds from the West (270\u00b0) and optimal NE swell (~45\u00b0). Tide preference set to 'all' per surf-forecast.com; break_type corrected from 'beach' to 'jetty' given the pier structure.",
+    "verification_notes": "Computed orientation of 89° is consistent with east-facing Atlantic exposure — facing_direction_deg retained at 90. Surf-forecast.com confirms offshore winds from the West (270°) and optimal NE swell (~45°). Tide preference set to 'all' per surf-forecast.com; break_type corrected from 'beach' to 'jetty' given the pier structure.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11582,7 +11612,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms ideal wind from the west (270\u00b0) and ideal swell from the east (90\u00b0). Computed orientation of ~109\u00b0 is slightly too SE; corrected to 90\u00b0 to match the documented east-facing Atlantic beach at Cocoa Beach. Surfline notes sandbars here are typical of the area with NE swells also working well.",
+    "verification_notes": "surf-forecast.com confirms ideal wind from the west (270°) and ideal swell from the east (90°). Computed orientation of ~109° is slightly too SE; corrected to 90° to match the documented east-facing Atlantic beach at Cocoa Beach. Surfline notes sandbars here are typical of the area with NE swells also working well.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11643,7 +11673,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "Marineland is a small Atlantic-facing beach community on Florida's northeast coast (St. Johns/Flagler county line, coords 29.67\u00b0N/-81.21\u00b0W). No dedicated surf-forecast.com page found; computed orientation of ~73\u00b0 (ENE-facing) is plausible given the slight northward tilt of the coast here but corrected to 90\u00b0 to align with the standard east-facing Atlantic beach profile for this stretch. Nearby Flagler Pier (surf-forecast.com) lists ideal swell from NE and offshore wind from SW, consistent with a",
+    "verification_notes": "Marineland is a small Atlantic-facing beach community on Florida's northeast coast (St. Johns/Flagler county line, coords 29.67°N/-81.21°W). No dedicated surf-forecast.com page found; computed orientation of ~73° (ENE-facing) is plausible given the slight northward tilt of the coast here but corrected to 90° to align with the standard east-facing Atlantic beach profile for this stretch. Nearby Flagler Pier (surf-forecast.com) lists ideal swell from NE and offshore wind from SW, consistent with a",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -11676,11 +11706,17 @@
       }
     ],
     "optimal_swell_dir": 104,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720692",
     "nearest_tide_station_dist_km": 4.08,
     "nearest_buoy_id": "41117",
-    "nearest_buoy_dist_km": 38.75
+    "nearest_buoy_dist_km": 38.75,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.67536,
+    "nwps_node_lng": -81.20154,
+    "nwps_node_distance_m": 1105,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Matanzas Inlet",
@@ -11707,7 +11743,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com confirms ideal swell from the northeast (NE=45\u00b0) and offshore wind from the southwest (SW=225\u00b0). The computed orientation of 24\u00b0 (NNE-facing) is significantly off \u2014 the inlet mouth opens to the northeast, not north-northeast. Break type corrected from 'beach' to 'rivermouth' per surf-forecast.com ('exposed river break'). Tide preference confirmed as 'all' (surfable at all stages).",
+    "verification_notes": "Surf-forecast.com confirms ideal swell from the northeast (NE=45°) and offshore wind from the southwest (SW=225°). The computed orientation of 24° (NNE-facing) is significantly off — the inlet mouth opens to the northeast, not north-northeast. Break type corrected from 'beach' to 'rivermouth' per surf-forecast.com ('exposed river break'). Tide preference confirmed as 'all' (surfable at all stages).",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -11741,11 +11777,17 @@
       }
     ],
     "optimal_swell_dir": 96,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720692",
     "nearest_tide_station_dist_km": 0.28,
     "nearest_buoy_id": "41117",
-    "nearest_buoy_dist_km": 35.5
+    "nearest_buoy_dist_km": 35.5,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.70787,
+    "nwps_node_lng": -81.22,
+    "nwps_node_distance_m": 213,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Mayport Poles",
@@ -11772,7 +11814,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Surf-forecast.com (The Mayport Poles page) confirms offshore wind from the west (W=270\u00b0) and best swell from the east (E=90\u00b0); computed values are correct. Tide preference set to 'low' per Surfline spot guide ('breaks best on low tide coming in'). The St. Johns River South Jetty to the north wraps north swells into clean lefts, making NNE swell also productive, but the primary documented optimal direction is E=90\u00b0.",
+    "verification_notes": "Surf-forecast.com (The Mayport Poles page) confirms offshore wind from the west (W=270°) and best swell from the east (E=90°); computed values are correct. Tide preference set to 'low' per Surfline spot guide ('breaks best on low tide coming in'). The St. Johns River South Jetty to the north wraps north swells into clean lefts, making NNE swell also productive, but the primary documented optimal direction is E=90°.",
     "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
@@ -11808,11 +11850,17 @@
       }
     ],
     "optimal_swell_dir": 116,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720259",
     "nearest_tide_station_dist_km": 5.4,
     "nearest_buoy_id": "41112",
-    "nearest_buoy_dist_km": 42.82
+    "nearest_buoy_dist_km": 42.82,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.39062,
+    "nwps_node_lng": -81.38615,
+    "nwps_node_distance_m": 1230,
+    "nwps_buoy_id": "41112"
   },
   {
     "name": "Mexico Beach",
@@ -11839,7 +11887,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "medium",
-    "verification_notes": "Gulf-facing panhandle beach on a coastline that trends roughly E-W here; the computed ~200\u00b0 orientation is slightly off \u2014 the shoreline at Mexico Beach (29.95\u00b0N, 85.42\u00b0W) faces almost due south (~180\u00b0), consistent with other Florida Panhandle Gulf spots. Offshore wind corrected to N (0\u00b0). Surfline confirms the pier as the main break; spot is obscure and rarely crowds.",
+    "verification_notes": "Gulf-facing panhandle beach on a coastline that trends roughly E-W here; the computed ~200° orientation is slightly off — the shoreline at Mexico Beach (29.95°N, 85.42°W) faces almost due south (~180°), consistent with other Florida Panhandle Gulf spots. Offshore wind corrected to N (0°). Surfline confirms the pier as the main break; spot is obscure and rarely crowds.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -11899,7 +11947,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com lists offshore wind from the West (270\u00b0) and ideal swell from the North-Northeast (NNE = 22\u00b0), both corrected from the pipeline's computed 247\u00b0/67\u00b0. The break is an ebb-shoal sandbar/reef over rocks on the south side of Sebastian Inlet; academic research confirms peak swell direction ~60\u00b0 (ENE) with best quality under NNE swells; tide preference corrected to low per surf-forecast.com and multiple sources.",
+    "verification_notes": "surf-forecast.com lists offshore wind from the West (270°) and ideal swell from the North-Northeast (NNE = 22°), both corrected from the pipeline's computed 247°/67°. The break is an ebb-shoal sandbar/reef over rocks on the south side of Sebastian Inlet; academic research confirms peak swell direction ~60° (ENE) with best quality under NNE swells; tide preference corrected to low per surf-forecast.com and multiple sources.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -11963,7 +12011,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Computed orientation of 73\u00b0 is badly wrong \u2014 Naples is on Florida's SW Gulf coast and the beach faces roughly WSW (~247\u00b0). surf-forecast.com confirms offshore winds from ENE (67\u00b0) and ideal swell from SSW (202\u00b0); pipeline likely geocoded to the bay side of the barrier peninsula.",
+    "verification_notes": "Computed orientation of 73° is badly wrong — Naples is on Florida's SW Gulf coast and the beach faces roughly WSW (~247°). surf-forecast.com confirms offshore winds from ENE (67°) and ideal swell from SSW (202°); pipeline likely geocoded to the bay side of the barrier peninsula.",
     "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
@@ -12023,7 +12071,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com (Navarre Beach Pier) confirms offshore wind from NNW (337\u00b0) and best swell from SSE (157\u00b0); corrected facing from computed 179\u00b0 to 157\u00b0 to match sourced values. Tide-tolerant per surf-forecast.com.",
+    "verification_notes": "surf-forecast.com (Navarre Beach Pier) confirms offshore wind from NNW (337°) and best swell from SSE (157°); corrected facing from computed 179° to 157° to match sourced values. Tide-tolerant per surf-forecast.com.",
     "tide_preference": "mid",
     "crowd_factor": "light",
     "hazards": [
@@ -12077,7 +12125,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "surf-forecast.com confirms beach/jetty break with offshore wind from SW (225\u00b0) and optimal swell from SE (135\u00b0). Tide preference corrected to high per surf-forecast.com ('best around high tide'). Break type corrected to jetty given the inlet structure.",
+    "verification_notes": "surf-forecast.com confirms beach/jetty break with offshore wind from SW (225°) and optimal swell from SE (135°). Tide preference corrected to high per surf-forecast.com ('best around high tide'). Break type corrected to jetty given the inlet structure.",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -12116,9 +12164,15 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721138",
-    "nearest_tide_station_dist_km": 2.36
+    "nearest_tide_station_dist_km": 2.36,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.07389,
+    "nwps_node_lng": -80.90615,
+    "nwps_node_distance_m": 427,
+    "nwps_buoy_id": null
   },
   {
     "name": "North Jetty",
@@ -12144,7 +12198,7 @@
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
-    "verification_notes": "Coordinates place this at Sebastian Inlet's North Jetty. All sources confirm SW offshore wind (225\u00b0) and NE optimal swell (45\u00b0); computed offshore_wind_deg=291 and optimal_swell_dir=111 are both incorrect and have been corrected. Tide preference corrected to high per Surfline ('works best at high tide').",
+    "verification_notes": "Coordinates place this at Sebastian Inlet's North Jetty. All sources confirm SW offshore wind (225°) and NE optimal swell (45°); computed offshore_wind_deg=291 and optimal_swell_dir=111 are both incorrect and have been corrected. Tide preference corrected to high per Surfline ('works best at high tide').",
     "tide_preference": "mid",
     "crowd_factor": "heavy",
     "hazards": [
@@ -12628,9 +12682,15 @@
       }
     ],
     "optimal_swell_dir": 76,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721138",
-    "nearest_tide_station_dist_km": 0.85
+    "nearest_tide_station_dist_km": 0.85,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.12266,
+    "nwps_node_lng": -80.94308,
+    "nwps_node_distance_m": 641,
+    "nwps_buoy_id": null
   },
   {
     "name": "Ponte Vedra Beach",
@@ -12684,11 +12744,17 @@
       }
     ],
     "optimal_swell_dir": 112,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720305",
     "nearest_tide_station_dist_km": 4.52,
     "nearest_buoy_id": "41117",
-    "nearest_buoy_dist_km": 39.42
+    "nearest_buoy_dist_km": 39.42,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.22806,
+    "nwps_node_lng": -81.36769,
+    "nwps_node_distance_m": 1006,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Satellite Beach",
@@ -12885,11 +12951,17 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720587",
     "nearest_tide_station_dist_km": 0.21,
     "nearest_buoy_id": "41117",
-    "nearest_buoy_dist_km": 23.79
+    "nearest_buoy_dist_km": 23.79,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.85418,
+    "nwps_node_lng": -81.25692,
+    "nwps_node_distance_m": 713,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "St. Pete Beach",
@@ -13081,9 +13153,15 @@
       }
     ],
     "optimal_swell_dir": 64,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720554",
-    "nearest_tide_station_dist_km": 3.24
+    "nearest_tide_station_dist_km": 3.24,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.9192,
+    "nwps_node_lng": -81.27538,
+    "nwps_node_distance_m": 1333,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Ala Moana Bowls",
@@ -13158,7 +13236,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Anahola Bay, Anahola, HI",
-      "nominatim_display_name": "Anahola Bay, Anahola, Kaua\u02bbi County, Hawaii, 96703, United States"
+      "nominatim_display_name": "Anahola Bay, Anahola, Kauaʻi County, Hawaii, 96703, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -13223,7 +13301,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Haleiwa, HI",
-      "nominatim_display_name": "Haleiwa, Hale\u02bbiwa, Honolulu County, Hawaii, 96712, United States"
+      "nominatim_display_name": "Haleiwa, Haleʻiwa, Honolulu County, Hawaii, 96712, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -13288,7 +13366,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Kailua-Kona, HI",
-      "nominatim_display_name": "Kailua, Hawai\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Kailua, Hawaiʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -13392,7 +13470,7 @@
       "wikipedia_title": "Banzai Pipeline",
       "geocode_confidence": "state",
       "nominatim_query": "Pipeline, Hawaii",
-      "nominatim_display_name": "Pipeline, P\u016bp\u016bkea, Honolulu County, Hawaii, United States"
+      "nominatim_display_name": "Pipeline, Pūpūkea, Honolulu County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -13614,7 +13692,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Canoes Waikiki, Honolulu, HI",
-      "nominatim_display_name": "Canoes Surf Break, Waik\u012bk\u012b, Honolulu County, Hawaii, 96815, United States"
+      "nominatim_display_name": "Canoes Surf Break, Waikīkī, Honolulu County, Hawaii, 96815, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -13793,7 +13871,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Ehukai Beach Park, Hawaii",
-      "nominatim_display_name": "'Ehukai Beach Park, P\u016bp\u016bkea, Honolulu County, Hawaii, United States"
+      "nominatim_display_name": "'Ehukai Beach Park, Pūpūkea, Honolulu County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -13992,7 +14070,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Haleiwa, HI",
-      "nominatim_display_name": "Haleiwa, Hale\u02bbiwa, Honolulu County, Hawaii, 96712, United States"
+      "nominatim_display_name": "Haleiwa, Haleʻiwa, Honolulu County, Hawaii, 96712, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14062,7 +14140,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Hanalei Bay, Hanalei, HI",
-      "nominatim_display_name": "Hanalei Bay, Hanalei, Kaua\u02bbi County, Hawaii, 96714, United States"
+      "nominatim_display_name": "Hanalei Bay, Hanalei, Kauaʻi County, Hawaii, 96714, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14130,7 +14208,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Hapuna Beach, Hawaii",
-      "nominatim_display_name": "Hapuna Beach, Hawai\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Hapuna Beach, Hawaiʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14177,7 +14255,7 @@
     "nearest_tide_station_dist_km": 4.95
   },
   {
-    "name": "Honoli\u2018i",
+    "name": "Honoli‘i",
     "lat": 19.756102,
     "lng": -155.090861,
     "region_hint": "Hawaii",
@@ -14304,7 +14382,7 @@
     "nearest_tide_station_dist_km": 15.3
   },
   {
-    "name": "Ho\u02bbokipa",
+    "name": "Hoʻokipa",
     "lat": 20.933945,
     "lng": -156.358216,
     "region_hint": "Hawaii",
@@ -14313,10 +14391,10 @@
     "sources": {
       "osm_id": null,
       "wikidata_id": "Q1632226",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Ho\u02bbokipa"
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Hoʻokipa"
     },
     "tags": {
-      "wikipedia_title": "Ho\u02bbokipa",
+      "wikipedia_title": "Hoʻokipa",
       "geocode_confidence": "state",
       "nominatim_query": "Hookipa, Hawaii",
       "nominatim_display_name": "Hookipa Park Beach, Kuau, Maui County, Hawaii, United States"
@@ -14602,7 +14680,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Kiahuna Beach, Poipu, HI",
-      "nominatim_display_name": "Kiahuna Beach, Po\u02bbip\u016b, Kaua\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Kiahuna Beach, Poʻipū, Kauaʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14634,7 +14712,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Kolekole Beach Park, Hawaii",
-      "nominatim_display_name": "Kolekole Beach Park, Wailea, Hawai\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Kolekole Beach Park, Wailea, Hawaiʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14753,7 +14831,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Laniakea, Hawaii",
-      "nominatim_display_name": "Lani\u0101kea, Kailua, Hawai\u02bbi County, Hawaii, 96840, United States"
+      "nominatim_display_name": "Laniākea, Kailua, Hawaiʻi County, Hawaii, 96840, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14885,7 +14963,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Haleiwa, HI",
-      "nominatim_display_name": "Haleiwa, Hale\u02bbiwa, Honolulu County, Hawaii, 96712, United States"
+      "nominatim_display_name": "Haleiwa, Haleʻiwa, Honolulu County, Hawaii, 96712, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -14956,7 +15034,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Kailua-Kona, HI",
-      "nominatim_display_name": "Kailua, Hawai\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Kailua, Hawaiʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15153,7 +15231,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Off The Wall, Hawaii",
-      "nominatim_display_name": "Off the wall, P\u016bp\u016bkea, Honolulu County, Hawaii, United States"
+      "nominatim_display_name": "Off the wall, Pūpūkea, Honolulu County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15218,7 +15296,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Pakala, Waimea, HI",
-      "nominatim_display_name": "Pakala Village, Waimea, Kaua\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Pakala Village, Waimea, Kauaʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15341,7 +15419,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Pine Trees Hawaii, Hawaii",
-      "nominatim_display_name": "Pine Trees Surfing Beach, Kalaoa, Hawai\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Pine Trees Surfing Beach, Kalaoa, Hawaiʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15424,7 +15502,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Poipu Beach, Poipu, HI",
-      "nominatim_display_name": "Po\u02bbip\u016b Beach, Po\u02bbip\u016b, Kaua\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Poʻipū Beach, Poʻipū, Kauaʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15457,7 +15535,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Polihale Beach, Hawaii",
-      "nominatim_display_name": "Polihale Beach, Kaua\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Polihale Beach, Kauaʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15523,7 +15601,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Puaena Point, Haleiwa, HI",
-      "nominatim_display_name": "Pua\u02bbena Point, Haleiwa, Honolulu County, Hawaii, 96712, United States"
+      "nominatim_display_name": "Puaʻena Point, Haleiwa, Honolulu County, Hawaii, 96712, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15636,7 +15714,7 @@
     "nearest_tide_station_dist_km": 5.9
   },
   {
-    "name": "P\u016bp\u016bkea, Hawaii",
+    "name": "Pūpūkea, Hawaii",
     "lat": 21.667818,
     "lng": -158.04966,
     "region_hint": "Hawaii",
@@ -15645,10 +15723,10 @@
     "sources": {
       "osm_id": null,
       "wikidata_id": "Q2000499",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/P\u016bp\u016bkea,_Hawaii"
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Pūpūkea,_Hawaii"
     },
     "tags": {
-      "wikipedia_title": "P\u016bp\u016bkea, Hawaii"
+      "wikipedia_title": "Pūpūkea, Hawaii"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15718,7 +15796,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Queens Waikiki, Honolulu, HI",
-      "nominatim_display_name": "Kings & Queens, 2424, Kal\u0101kaua Avenue, Kalakaua Shopping District, Waik\u012bk\u012b, Honolulu, Honolulu County, Hawaii, 96815, United States"
+      "nominatim_display_name": "Kings & Queens, 2424, Kalākaua Avenue, Kalakaua Shopping District, Waikīkī, Honolulu, Honolulu County, Hawaii, 96815, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15775,7 +15853,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Richardson Beach, Hilo, HI",
-      "nominatim_display_name": "Richardson Beach Park, Keaukaha, Hilo, Hawai\u02bbi County, Hawaii, 96720, United States"
+      "nominatim_display_name": "Richardson Beach Park, Keaukaha, Hilo, Hawaiʻi County, Hawaii, 96720, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15827,7 +15905,7 @@
     "tags": {
       "geocode_confidence": "state",
       "nominatim_query": "Rocky Point, Hawaii",
-      "nominatim_display_name": "Rocky Point, Sunset Beach, Waiale\u2018e, Honolulu County, Hawaii, United States"
+      "nominatim_display_name": "Rocky Point, Sunset Beach, Waiale‘e, Honolulu County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -15963,7 +16041,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Sunset Beach Hawaii, Haleiwa, HI",
-      "nominatim_display_name": "Sunset Beach Elementary School, 59 -360, Kamehameha Highway, Sunset Beach, Hale\u02bbiwa, Honolulu County, Hawaii, 96712, United States"
+      "nominatim_display_name": "Sunset Beach Elementary School, 59 -360, Kamehameha Highway, Sunset Beach, Haleʻiwa, Honolulu County, Hawaii, 96712, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -16093,7 +16171,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Tunnels Beach, Haena, HI",
-      "nominatim_display_name": "Tunnels Beach, H\u0101\u02bbena, Kaua\u02bbi County, Hawaii, United States"
+      "nominatim_display_name": "Tunnels Beach, Hāʻena, Kauaʻi County, Hawaii, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -16146,7 +16224,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Turtle Bay, Kahuku, HI",
-      "nominatim_display_name": "The Ritz Carlton O\u2019ahu, Turtle Bay, 57-091, Kamehameha Highway, Kawela, Kahuku, Honolulu County, Hawaii, 96731, United States"
+      "nominatim_display_name": "The Ritz Carlton O’ahu, Turtle Bay, 57-091, Kamehameha Highway, Kawela, Kahuku, Honolulu County, Hawaii, 96731, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -16207,7 +16285,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Haleiwa, HI",
-      "nominatim_display_name": "Haleiwa, Hale\u02bbiwa, Honolulu County, Hawaii, 96712, United States"
+      "nominatim_display_name": "Haleiwa, Haleʻiwa, Honolulu County, Hawaii, 96712, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -18222,7 +18300,7 @@
       "nearest_tide_station": 1.0
     },
     "orientation_source": "manual",
-    "orientation_note": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG \u2014 (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide.",
+    "orientation_note": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG — (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide.",
     "tide_preference": "mid",
     "tide_preference_confidence": 0.6,
     "nwps_wfo": "phi",
@@ -23412,7 +23490,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Antonio's Rincon, Rincon, PR",
-      "nominatim_display_name": "V\u00eda Prrincipal El Rinc\u00f3n, Boquer\u00f3n, Parroquia Hugo Ch\u00e1vez Fr\u00edas, Municipio Sotillo, Anzo\u00e1tegui, 6023, Venezuela"
+      "nominatim_display_name": "Vía Prrincipal El Rincón, Boquerón, Parroquia Hugo Chávez Frías, Municipio Sotillo, Anzoátegui, 6023, Venezuela"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -23479,7 +23557,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Aviones, Pinones, PR",
-      "nominatim_display_name": "Carretera Riva Palacio-Sandoval-Pi\u00f1ones, Los Aviones, Riva Palacio, Chihuahua, M\u00e9xico"
+      "nominatim_display_name": "Carretera Riva Palacio-Sandoval-Piñones, Los Aviones, Riva Palacio, Chihuahua, México"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -23603,7 +23681,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Rincon, PR",
-      "nominatim_display_name": "Rinc\u00f3n, Puerto Rico, 00677, United States"
+      "nominatim_display_name": "Rincón, Puerto Rico, 00677, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -23726,7 +23804,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Rincon, PR",
-      "nominatim_display_name": "Rinc\u00f3n, Puerto Rico, 00677, United States"
+      "nominatim_display_name": "Rincón, Puerto Rico, 00677, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -23908,7 +23986,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Rincon, PR",
-      "nominatim_display_name": "Rinc\u00f3n, Puerto Rico, 00677, United States"
+      "nominatim_display_name": "Rincón, Puerto Rico, 00677, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -24233,7 +24311,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Playa Manati, Manati, PR",
-      "nominatim_display_name": "Playa Punta Manat\u00ed / La Esperanza, La Esperanza, Tierras Nuevas Poniente, Manat\u00ed, Puerto Rico, United States"
+      "nominatim_display_name": "Playa Punta Manatí / La Esperanza, La Esperanza, Tierras Nuevas Poniente, Manatí, Puerto Rico, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -24325,7 +24403,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Pools Rincon, Rincon, PR",
-      "nominatim_display_name": "Playa Pools, Puntas, Rinc\u00f3n, Puerto Rico, United States"
+      "nominatim_display_name": "Playa Pools, Puntas, Rincón, Puerto Rico, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -24357,7 +24435,7 @@
     "tags": {
       "geocode_confidence": "town_fallback",
       "nominatim_query": "Rincon, PR",
-      "nominatim_display_name": "Rinc\u00f3n, Puerto Rico, 00677, United States"
+      "nominatim_display_name": "Rincón, Puerto Rico, 00677, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -24450,7 +24528,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Sandy Beach Rincon, Rincon, PR",
-      "nominatim_display_name": "Sandy Beach, Puntas, Rinc\u00f3n, Puerto Rico, United States"
+      "nominatim_display_name": "Sandy Beach, Puntas, Rincón, Puerto Rico, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -24547,7 +24625,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Steps Beach Rincon, Rincon, PR",
-      "nominatim_display_name": "Playa Steps, Ensenada, Rinc\u00f3n, Puerto Rico, United States"
+      "nominatim_display_name": "Playa Steps, Ensenada, Rincón, Puerto Rico, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -24761,7 +24839,7 @@
     "tags": {
       "geocode_confidence": "exact",
       "nominatim_query": "Tres Palmas, Rincon, PR",
-      "nominatim_display_name": "Reserva Marina Tres Palmas, Sector La Joya, Rinc\u00f3n, Puerto Rico, United States"
+      "nominatim_display_name": "Reserva Marina Tres Palmas, Sector La Joya, Rincón, Puerto Rico, United States"
     },
     "enrichment_confidence": {
       "orientation": 1.0,
@@ -31990,12 +32068,18 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721164",
     "nearest_tide_station_dist_km": 3.41,
     "nearest_buoy_id": "41070",
     "nearest_buoy_dist_km": 25.31,
-    "nwps_wfo": "jax"
+    "nwps_wfo": "jax",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.04138,
+    "nwps_node_lng": -80.88769,
+    "nwps_node_distance_m": 794,
+    "nwps_buoy_id": null
   },
   {
     "name": "Wilbur by the Sea",
@@ -32030,12 +32114,18 @@
       }
     ],
     "optimal_swell_dir": 84,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721138",
     "nearest_tide_station_dist_km": 6.53,
     "nearest_buoy_id": "41070",
     "nearest_buoy_dist_km": 16.54,
-    "nwps_wfo": "jax"
+    "nwps_wfo": "jax",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.13891,
+    "nwps_node_lng": -80.94308,
+    "nwps_node_distance_m": 1586,
+    "nwps_buoy_id": null
   },
   {
     "name": "A Street",
@@ -32060,12 +32150,18 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720587",
     "nearest_tide_station_dist_km": 1.43,
     "nearest_buoy_id": "41117",
     "nearest_buoy_dist_km": 24.63,
-    "nwps_wfo": "jax"
+    "nwps_wfo": "jax",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.83792,
+    "nwps_node_lng": -81.25692,
+    "nwps_node_distance_m": 951,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Atlantic Blvd",
@@ -32100,12 +32196,18 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720291",
     "nearest_tide_station_dist_km": 1.6,
     "nearest_buoy_id": "41112",
     "nearest_buoy_dist_km": 45.74,
-    "nwps_wfo": "jax"
+    "nwps_wfo": "jax",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.30934,
+    "nwps_node_lng": -81.38615,
+    "nwps_node_distance_m": 477,
+    "nwps_buoy_id": "41117"
   },
   {
     "name": "Fort Clinch",
@@ -32130,12 +32232,18 @@
       }
     ],
     "optimal_swell_dir": 85,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720086",
     "nearest_tide_station_dist_km": 10.65,
     "nearest_buoy_id": "41112",
     "nearest_buoy_dist_km": 21.05,
-    "nwps_wfo": "jax"
+    "nwps_wfo": "jax",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.69949,
+    "nwps_node_lng": -81.42308,
+    "nwps_node_distance_m": 296,
+    "nwps_buoy_id": "41112"
   },
   {
     "name": "Jekyll Island",
