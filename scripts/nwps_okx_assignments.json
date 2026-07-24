@@ -2697,6 +2697,47 @@
           "16th-street-south"
         ],
         "to_place": "Placement via the pending path: on the (mlb, 41113) match in pending[], apply_nwps_assignments places them height-live with nwps_direction_status='pending' - 41113 stays OUT of trust_by_buoy (no PASS). Direction is confirmed only when --trustcheck settles the rolling verdict to PASS on a qualifying swell."
+      },
+      {
+        "zone": "jax/41112",
+        "wfo": "jax",
+        "buoy": "41112",
+        "reference": "41112 — Offshore Fernandina Beach, FL nearshore Waverider (CDIP 132, 15 m); a VALID nearshore directional reference (--find-buoy: alive, .data_spec present)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41112 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists.",
+        "spots": 4,
+        "slugs": [
+          "fort-clinch",
+          "amelia-island",
+          "mayport-poles",
+          "atlantic-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo jax --batch <these 4 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41112 --slugs <these 4>` merges them into 'spots'. Placement is via the pending path; 41112 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "jax/41117",
+        "wfo": "jax",
+        "buoy": "41117",
+        "reference": "41117 — St. Augustine, FL nearshore Waverider (CDIP 194, 23 m); a VALID nearshore directional reference (--find-buoy: alive, .data_spec present)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41117 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists.",
+        "spots": 9,
+        "slugs": [
+          "vilano-beach",
+          "st-augustine-beach-pier",
+          "a-street",
+          "matanzas-inlet",
+          "marineland",
+          "ponte-vedra-beach",
+          "jacksonville-beach-pier",
+          "atlantic-blvd",
+          "flagler-beach-pier"
+        ],
+        "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo jax --batch <these 9 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41117 --slugs <these 9>` merges them into 'spots'. Placement is via the pending path; 41117 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -2835,6 +2876,20 @@
           "scotts-creek"
         ],
         "to_place": "These 2 spots are ALREADY placed in 'spots' on NWPS HEIGHT with nwps_buoy_id=46284 (they were the mtr/46284 pending zone). This record RE-DISPOSITIONS them to unverifiable; no re-validation is needed — their existing NWPS height nodes are kept. On the next `apply_nwps_assignments --apply`, the unverifiable[] slug branch (checked BEFORE the pending/PASS branches) sets nwps_direction_status='unverifiable' and NULLS nwps_buoy_id on the OUTPUT row (B2 — the dead 46284 id is stripped from spots_enriched/DB, even though the 'spots' input row still carries it as the restore pairing), leaving them height-live with direction unverified. No buoy is added to trust_by_buoy or pending[], and these spots get NO liveness/monitor entry. To restore when 46284 (or another bay Waverider) returns: move this record back to pending[] keyed (mtr, <buoy>) — the 'spots' entries still hold their node coords, so apply re-tags them 'pending' with no re-validation."
+      },
+      {
+        "zone": "jax/volusia-north-of-canaveral",
+        "wfo": "jax",
+        "reason": "NO LIVE DIRECTIONAL BUOY on the NORTH side of Cape Canaveral within useful range — a headland AND directional-file outages together, distinct from every other unverifiable disposition. (1) 41113 (Cape Canaveral Nearshore, 10 m, alive) is 79-91 km away but sits SOUTH of the cape tip; these five spots are all NORTH of it. Cape Canaveral removes whole swell windows, so the buoy and the spots see systematically different seas on BOTH NE and SE events — a direction PASS against 41113 would certify them from a different swell regime (false confidence). This is the same error that put playalinda-beach on the wrong side of Canaveral in the mlb batch, here at 5x the scale (5 spots, not 1). --find-buoy recommended 41113 for all five purely on distance; it is REJECTED deliberately on headland grounds, which --find-buoy cannot yet detect. (2) 41069 and 41070 (Ponce de Leon Inlet, 24 m, 21-29 km, SAME side of the cape) are geographically ideal AND reporting — .txt returns 200 — but every directional file 404s (.data_spec, .swdir, .swr1 all verified 404 on 2026-07-24), so they are HEIGHT-ONLY and unusable as direction references. (3) 41117 (St. Augustine) DOES reach these spots at 92-108 km along unbroken coast (3 VALID, 2 MARGINAL) and was considered, but REJECTED: the trust gate is keyed per (wfo, buoy) and emits ONE verdict for the whole zone, so folding five spots at 92-108 km into the nine at 22-58 km risks the distant spots' larger direction residuals dragging all fourteen to FAIL — retiring nine excellent references to test five marginal ones. Protecting the clean 41117 zone is worth more than a speculative reading. These five ride NWPS HEIGHT + raycast direction, direction unverified. RE-CHECK TRIGGER: if 41069 or 41070 ever begins publishing .data_spec, these five spots get a ~25 km SAME-SIDE reference and become the best-placed zone in Florida — exactly what the BU-6 monthly re-sweep is for. DISTINCT from mtr Monterey Bay (reference OFFLINE — five dead buoys, expected revisitable) and from gyx/box 44098 (permanent shelf geometry — no valid buoy can ever exist): here live buoys exist nearby but publish no directional axis, PLUS a headland blocks the one that does.",
+        "nearest_candidate": "41069 / 41070 Ponce de Leon Inlet (24 m, 21-29 km, correct north side — but .data_spec / .swdir / .swr1 all 404 on 2026-07-24, height-only) / 41113 Cape Canaveral Nearshore (10 m, alive, but SOUTH of the cape) / 41117 St. Augustine (92-108 km, zone-dilution risk) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "daytona-beach",
+          "wilbur-by-the-sea",
+          "ponce-inlet",
+          "new-smyrna-beach-inlet",
+          "flagler-ave"
+        ],
+        "to_place": "5 spots - promoted with NO buoy. On the Mac run `--validate --wfo jax --batch <these 5 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 5> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
