@@ -2528,17 +2528,108 @@ def _not_dead(r):
     return age is None or age <= FIND_BUOY_LIVENESS_MAX_AGE_H
 
 
+# --------------------------------------------------------------------------- #
+# --find-buoy WRONG-SIDE-OF-HEADLAND gate.                                      #
+# A headland between the spot and a candidate buoy means the buoy measures a    #
+# different sea than the spot receives (a cape removes whole swell windows), so #
+# a direction PASS against it would be false confidence. Validated 2026-07-24   #
+# against 27 real pairings: on the Cape Canaveral set this cleanly separated 6  #
+# wrong pairings (mid-path land crossings 4.8–13.7 km through Merritt Island /  #
+# Canaveral) from 21 correct ones (nearest approach ~2.6 km), and the split held #
+# at EVERY area threshold 100–5000 km² — the boundary is physical, not tuned.   #
+#                                                                               #
+# SCOPE LIMIT (do not mistake its reach): this detects WRONG-SIDE pairing across #
+# RESOLVED LAND only (GSHHG full-res). It does NOT detect window-shadowing by    #
+# SHOALS (e.g. Cape Fear / Frying Pan Shoals shadowing the Grand Strand from the #
+# north): shoals are bathymetry, absent from GSHHG at any resolution, and remain #
+# a MANUAL call.                                                                 #
+# --------------------------------------------------------------------------- #
+FIND_BUOY_HEADLAND_AREA_KM2 = 500.0      # a crossed land polygon must exceed this to be a "headland"
+                                          #   (500 sits mid-band of the 100–5000 km² clean range → drift-tolerant)
+FIND_BUOY_HEADLAND_MID_START_KM = 3.0    # trim the spot's own shore / barrier off the near end
+FIND_BUOY_HEADLAND_END_TRIM_KM = 2.0     # trim the near-buoy end
+FIND_BUOY_HEADLAND_DENSIFY_M = 200.0     # geodesic vertex spacing (fine enough not to skip a barrier)
+# Distance ceiling: apply the wrong-side REJECTION only within this range. The 6 validated true
+# positives were all nearshore (spot→buoy 41–96 km); 110 km catches them with margin yet stays
+# inside the 150 km search radius. Beyond it, diffraction/refraction wrap swell into a headland's lee
+# and a distant wrong-side buoy can still track the spot's sea — so above the ceiling we DOWNGRADE to
+# a logged note rather than hard-reject (a safeguard against over-rejecting a buoy wrapping saves).
+FIND_BUOY_HEADLAND_MAX_KM = 110.0
+
+
+def _headland_land_chord_km(spot, buoy, land):
+    """Geodesic length (km) of the LONGEST mid-path land crossing between *spot* and *buoy*, or 0.0
+    if the mid-path geodesic crosses no land polygon larger than FIND_BUOY_HEADLAND_AREA_KM2. *spot*
+    and *buoy* are (lat, lng); *land* is a geodata.LandIndex (its .polygons list + .polygon_tree
+    STRtree — the SAME GSHHG full-res index the enrich raycast loads; no second loader). Ports the
+    validated harness verbatim: densify to ~FIND_BUOY_HEADLAND_DENSIFY_M, then drop the first
+    FIND_BUOY_HEADLAND_MID_START_KM (the spot's own shore/barrier) and the last
+    FIND_BUOY_HEADLAND_END_TRIM_KM (near the buoy). land None → 0.0 (offline / no GSHHG: not checked).
+    NOT _ray_linestring — that casts a fixed-length ray along a BEARING; here we need the actual
+    spot→buoy SEGMENT — but it reuses the same pyproj.Geod densify + shapely-intersection primitives."""
+    if land is None:
+        return 0.0
+    from pyproj import Geod
+    from shapely.geometry import LineString
+    geod = Geod(ellps="WGS84")
+    (sla, sln), (bla, bln) = spot, buoy
+    _, _, dist_m = geod.inv(sln, sla, bln, bla)
+    total_km = dist_m / 1000.0
+    if total_km <= FIND_BUOY_HEADLAND_MID_START_KM + FIND_BUOY_HEADLAND_END_TRIM_KM:
+        return 0.0                                             # nothing left after trimming both ends
+    n = max(4, int(dist_m / FIND_BUOY_HEADLAND_DENSIFY_M))
+    pts = [(sln, sla)] + [(lo, la) for lo, la in geod.npts(sln, sla, bln, bla, n - 1)] + [(bln, bla)]
+    cum, acc = [0.0], 0.0
+    for (l1, a1), (l2, a2) in zip(pts[:-1], pts[1:]):
+        _, _, d = geod.inv(l1, a1, l2, a2); acc += d / 1000.0; cum.append(acc)
+    lo_km, hi_km = FIND_BUOY_HEADLAND_MID_START_KM, total_km - FIND_BUOY_HEADLAND_END_TRIM_KM
+    mid = [p for p, c in zip(pts, cum) if lo_km <= c <= hi_km]
+    if len(mid) < 2:
+        return 0.0
+    line = LineString(mid)
+    best = 0.0
+    for idx in land.polygon_tree.query(line):                 # same STRtree query as _ray_hits
+        poly = land.polygons[int(idx)]
+        area_m2, _ = geod.geometry_area_perimeter(poly)
+        if abs(area_m2) / 1e6 <= FIND_BUOY_HEADLAND_AREA_KM2:  # a barrier island / inlet bank, not a headland
+            continue
+        inter = line.intersection(poly)
+        for g in getattr(inter, "geoms", [inter]):
+            if getattr(g, "geom_type", "") != "LineString" or g.is_empty:
+                continue                                       # a tangential point touch is not a crossing
+            cs = list(g.coords)
+            chord = 0.0
+            for (l1, a1), (l2, a2) in zip(cs[:-1], cs[1:]):
+                _, _, d = geod.inv(l1, a1, l2, a2); chord += d / 1000.0
+            best = max(best, chord)
+    return best
+
+
+def _headland_verdict(spot, buoy, land):
+    """{"chord_km", "dist_km", "reject", "note"} for the wrong-side-of-headland check between *spot*
+    and *buoy* (both (lat, lng)). reject = a headland crosses the mid-path AND the buoy is within
+    FIND_BUOY_HEADLAND_MAX_KM. note = it crosses but the buoy is beyond the ceiling (wrapping may
+    save it — surfaced, not rejected). land None → never rejects (offline / no GSHHG: not checked)."""
+    dist_km = _haversine_km(spot[0], spot[1], buoy[0], buoy[1])
+    chord = _headland_land_chord_km(spot, buoy, land)
+    crosses = chord > 0.0
+    within = dist_km < FIND_BUOY_HEADLAND_MAX_KM
+    return {"chord_km": chord, "dist_km": dist_km,
+            "reject": crosses and within, "note": crosses and not within}
+
+
 def _best_valid(rows):
     """The best USABLE reference: a depth-resolved VALID REFERENCE that is publishing spectra
-    (spectral not known-absent → a 404 is now 'False' and rejected) AND is not KNOWN-dead
-    (recent observation) — or, only when depth is unavailable, a close Waverider / CDIP-nearshore
-    accepted on payload+distance (_depth_unconfirmed_valid). Never a MARGINAL/INVALID, never a
-    known-deep buoy, never a buoy with no directional axis, never a buoy silent past the liveness
-    bar. Rows are ranked depth-resolved-first, so a confirmed VALID is always preferred over a
+    (spectral not known-absent → a 404 is now 'False' and rejected), is not KNOWN-dead (recent
+    observation), and is not on the WRONG SIDE of a headland (headland_reject) — or, only when depth
+    is unavailable, a close Waverider / CDIP-nearshore accepted on payload+distance
+    (_depth_unconfirmed_valid). Never a MARGINAL/INVALID, never a known-deep buoy, never a buoy with
+    no directional axis, never a buoy silent past the liveness bar, never a buoy a headland sits
+    between. Rows are ranked depth-resolved-first, so a confirmed VALID is always preferred over a
     fallback. None = the honest 'none qualifies' signal."""
     return next((r for r in rows
                  if r["verdict"] == "VALID REFERENCE" and r["spectral"] is not False
-                 and _not_dead(r)
+                 and _not_dead(r) and not r.get("headland_reject")
                  and (r["complete"] or _depth_unconfirmed_valid(r))), None)
 
 
@@ -2634,6 +2725,29 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
         print(f"  (.data_spec availability + liveness probed for the {PROBE_CAP} nearest of "
               f"{len(within)} candidates to stay polite; narrow --radius-km to probe the rest.)\n")
 
+    # GATE ORDER (unchanged): depth veto (_score_pairing verdict) → liveness (_not_dead) → spectral
+    # (_probe_direction_axis) → THEN wrong-side-of-headland, evaluated here ONLY for candidates that
+    # already passed the first three (already shallow, live, publishing a directional axis). This
+    # reuses the SAME GSHHG full-res index the enrich raycast loads (load_land_index → .polygons /
+    # .polygon_tree); None offline / without GSHHG → headland is a no-op and NEVER rejects.
+    land = None
+    if not offline:
+        try:
+            from ..enrichment.geodata import load_land_index
+            land = load_land_index()
+        except Exception:  # noqa: BLE001
+            land = None
+    station_ll = {s["id"]: (s["lat"], s["lng"]) for s in stations}
+    for r in rows:
+        if not (r["verdict"] == "VALID REFERENCE" and r["spectral"] is not False and _not_dead(r)):
+            continue                                  # depth / liveness / spectral already excluded it
+        bll = station_ll.get(r["id"])
+        if bll is None:
+            continue
+        r["headland"] = _headland_verdict(target, bll, land)
+        if r["headland"]["reject"]:
+            r["headland_reject"] = True
+
     print(f"  {'#':>2} {'buoy':>6} {'dist':>6} {'depth':>7} {'payload':<20} {'spec':>4} {'age':>6} verdict")
     for i, r in enumerate(rows, 1):
         dep = f"{r['depth']:.0f} m" if r["depth"] is not None else "  —"
@@ -2655,6 +2769,16 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
             vd = r["verdict"]
         if r["spectral"] is not False and live_status != "dead":   # append the liveness evidence
             vd = f"{vd} · {live_text}"
+        # Wrong-side-of-headland is its OWN verdict (never collapsed into a generic INVALID), and it
+        # carries its evidence — the crossed-land chord + the buoy distance — so a rejection is never
+        # invisible. Above the ceiling it downgrades to a kept note instead.
+        hv = r.get("headland")
+        if r.get("headland_reject"):
+            vd = (f"WRONG SIDE OF HEADLAND — crosses {hv['chord_km']:.1f} km land, "
+                  f"buoy {hv['dist_km']:.0f} km")
+        elif hv and hv.get("note"):
+            vd = (f"{vd} · headland note: crosses {hv['chord_km']:.1f} km land but buoy "
+                  f"{hv['dist_km']:.0f} km > {FIND_BUOY_HEADLAND_MAX_KM:.0f} km ceiling — kept (wrap may save)")
         print(f"  {i:>2} {r['id']:>6} {r['d']:>5.0f}k {dep:>7} {pay:<20} {sp:>4} {age_s:>6} {vd}  "
               f"{r['name'][:20]}")
         for rs in r["reasons"]:
@@ -2678,12 +2802,13 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
     else:
         print("  ✗ NO VALID + LIVE nearshore directional reference within radius. Every candidate is a")
         print("    deep/offshore platform (structural regime mismatch), differently exposed, a marginal")
-        print("    payload, DEAD (not currently reporting), or without a directional axis (.data_spec")
-        print("    404) — none is a valid, live shallow-coast directional proxy. These spots CANNOT be")
-        print("    direction-trust-gated from NDBC: they stay on the HEIGHT gate + the raycast/WW3")
-        print("    swell-window tier. That is the architecture-correct answer, NOT a failure.")
+        print("    payload, DEAD (not currently reporting), without a directional axis (.data_spec 404),")
+        print("    or on the WRONG SIDE of a headland — none is a valid, live shallow-coast directional")
+        print("    proxy. These spots CANNOT be direction-trust-gated from NDBC: they stay on the HEIGHT")
+        print("    gate + the raycast/WW3 swell-window tier. That is the architecture-correct answer,")
+        print("    NOT a failure.")
         marg = next((r for r in rows if r["verdict"] == "MARGINAL" and r["spectral"] is not False
-                     and _not_dead(r)), None)
+                     and _not_dead(r) and not r.get("headland_reject")), None)
         if marg:
             mdep = f"depth {marg['depth']:.0f} m" if marg["depth"] is not None else "depth unconfirmed"
             print(f"  (least-bad — still only MARGINAL, do NOT treat as valid: {marg['id']} "

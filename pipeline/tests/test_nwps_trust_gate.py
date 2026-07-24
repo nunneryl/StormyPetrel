@@ -702,6 +702,113 @@ def test_find_buoy_live_good_buoy_still_recommended():
     assert nn._best_valid([_fb_row(id="46268", spectral=None, age_h=None)])["id"] == "46268"
 
 
+# --------------------------------------------------------------------------- #
+# --find-buoy WRONG-SIDE-OF-HEADLAND gate                                       #
+# --------------------------------------------------------------------------- #
+def _fake_land(polys):
+    """A minimal geodata.LandIndex stand-in (.polygons + .polygon_tree) over synthetic polygons,
+    so the headland geometry is testable offline without the real GSHHG shapefile."""
+    from shapely.strtree import STRtree
+    class _L:
+        pass
+    L = _L(); L.polygons = list(polys); L.polygon_tree = STRtree(L.polygons)
+    return L
+
+
+def _synthetic_cape():
+    from shapely.geometry import box
+    # ~34 x 39 km east-jutting block ~ 1300 km^2 (well over the 500 km^2 headland floor)
+    return box(-80.75, 28.35, -80.40, 28.70)
+
+
+def test_headland_flags_wrong_side_crossing():
+    # a spot NORTH of a cape paired with a buoy SOUTH of it (the Canaveral/41113 shape) is rejected,
+    # with the crossed-land chord as its evidence.
+    land = _fake_land([_synthetic_cape()])
+    v = nn._headland_verdict((28.75, -80.70), (28.30, -80.45), land)
+    assert v["reject"] is True
+    assert v["chord_km"] > 5.0
+    assert v["dist_km"] < nn.FIND_BUOY_HEADLAND_MAX_KM
+    # and _best_valid drops any row carrying headland_reject (the gate is wired in)
+    assert nn._best_valid([_fb_row(id="X", headland_reject=True)]) is None
+    assert nn._best_valid([_fb_row(id="X")])["id"] == "X"     # same row, no headland flag -> selected
+
+
+def test_headland_clears_open_coast_and_trims_own_shore():
+    from shapely.geometry import box
+    land = _fake_land([_synthetic_cape()])
+    # buoy due east offshore, line stays north of the cape -> no crossing (no-regression)
+    v = nn._headland_verdict((28.75, -80.70), (28.75, -80.40), land)
+    assert v["reject"] is False and v["chord_km"] == 0.0
+    # a spot ~0.5 km inside a big landmass edge with an offshore buoy must NOT flag on its OWN shore
+    # (the first MID_START_KM is trimmed) — this is what keeps barrier-coast pairings clean.
+    mainland = box(-82.0, 28.0, -80.71, 29.5)
+    v2 = nn._headland_verdict((28.75, -80.715), (28.75, -80.40), _fake_land([mainland]))
+    assert v2["reject"] is False and v2["chord_km"] == 0.0
+
+
+def test_headland_distance_ceiling_downgrades_to_note():
+    land = _fake_land([_synthetic_cape()])
+    near = nn._headland_verdict((28.75, -80.70), (28.30, -80.45), land)   # crosses, ~55 km
+    far = nn._headland_verdict((28.75, -80.70), (27.00, -80.45), land)    # crosses, ~195 km
+    assert near["reject"] is True
+    assert far["reject"] is False and far["note"] is True                 # beyond ceiling -> kept, noted
+    assert far["chord_km"] > 0.0 and far["dist_km"] > nn.FIND_BUOY_HEADLAND_MAX_KM
+
+
+def test_headland_area_floor_ignores_small_land():
+    from shapely.geometry import box
+    # a ~2x2 km island (< 500 km^2) sitting ON the path is a barrier/inlet bank, not a headland
+    small = box(-80.57, 28.50, -80.55, 28.52)
+    v = nn._headland_verdict((28.75, -80.70), (28.30, -80.45), _fake_land([small]))
+    assert v["reject"] is False and v["chord_km"] == 0.0
+    # confirm the fixture really is on the path AND really is sub-floor (guards the test itself)
+    from pyproj import Geod
+    assert abs(Geod(ellps="WGS84").geometry_area_perimeter(small)[0]) / 1e6 < nn.FIND_BUOY_HEADLAND_AREA_KM2
+
+
+def test_headland_offline_never_rejects():
+    # land None (offline / no GSHHG) must never reject — the gate is a no-op without coastline data
+    v = nn._headland_verdict((28.75, -80.70), (28.30, -80.45), None)
+    assert v["reject"] is False and v["note"] is False and v["chord_km"] == 0.0
+
+
+def test_headland_27_pair_regression():
+    """ACCEPTANCE BAR — real GSHHG. Must FLAG exactly the 6 wrong-side pairings and CLEAR the 21
+    correct ones. Skips when the GSHHG shapefile is absent (this sandbox); run on the Mac."""
+    from pipeline.enrichment.geodata import load_land_index
+    land = load_land_index()
+    if land is None:
+        print("    SKIP test_headland_27_pair_regression — GSHHG shapefile absent (run on the Mac).")
+        return
+    import json, re
+    from pathlib import Path
+    repo = Path(__file__).resolve().parents[2]
+    E = json.loads((repo / "pipeline/spots_enriched.json").read_text())
+    slug = lambda n: re.sub(r"[^a-z0-9]+", "-", (n or "").lower()).strip("-")
+    coord = {slug(s.get("name")): (s.get("lat"), s.get("lng")) for s in E if s.get("lat") is not None}
+    snap = json.loads((repo / "pipeline/data/ndbc_buoy_snapshot.json").read_text())
+    bll = {b: (snap[b]["lat"], snap[b]["lng"]) for b in ("41113", "41112", "41117")}
+    MUST_FLAG = {s: "41113" for s in ("playalinda-beach", "daytona-beach", "wilbur-by-the-sea",
+                 "ponce-inlet", "new-smyrna-beach-inlet", "flagler-ave")}
+    MUST_CLEAR = {**{s: "41113" for s in ("jetty-park-cocoa-beach", "cocoa-beach-pier",
+                  "lori-wilson-park", "16th-street-south", "patrick-air-force-base-beach",
+                  "satellite-beach", "pelican-beach", "canova-beach-park")},
+                  **{s: "41112" for s in ("fort-clinch", "amelia-island", "mayport-poles", "atlantic-beach")},
+                  **{s: "41117" for s in ("vilano-beach", "st-augustine-beach-pier", "a-street",
+                     "matanzas-inlet", "marineland", "ponte-vedra-beach", "jacksonville-beach-pier",
+                     "atlantic-blvd", "flagler-beach-pier")}}
+    print("    27-pair headland regression (real GSHHG):")
+    flagged = set()
+    for sl, b in {**MUST_FLAG, **MUST_CLEAR}.items():
+        v = nn._headland_verdict(coord[sl], bll[b], land)
+        print(f"      {'FLAG ' if v['reject'] else 'clear'} {sl:30} {b}  "
+              f"chord={v['chord_km']:5.1f} km  dist={v['dist_km']:5.0f} km")
+        if v["reject"]:
+            flagged.add(sl)
+    assert flagged == set(MUST_FLAG), f"expected exactly the 6 wrong flagged; got {sorted(flagged)}"
+
+
 def _run_all():
     import inspect
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
