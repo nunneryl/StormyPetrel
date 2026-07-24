@@ -387,6 +387,24 @@ def by_hour(buoy_id, *, model_wind=None, use_cache=False, cutoff_hz=SWELL_WINDSE
     return compute(ds, sd, std, model_wind=model_wind, cutoff_hz=cutoff_hz)
 
 
+def hours_since_last_obs(buoy_id, *, now_epoch_hour=None):
+    """Hours since *buoy_id*'s NEWEST actual wave observation — the newest epoch-hour in by_hour(),
+    fetched LIVE (by_hour does not use the cache), or None when the buoy publishes no realtime
+    spectra at all (removed from the roster / 404 / offline). This is the ONE 'how long since this
+    buoy last reported' implementation, shared by the buoy-liveness monitor
+    (scripts/buoy_ready_monitor.py) and --find-buoy so the two notions of 'alive' cannot drift
+    apart. *now_epoch_hour* is injectable for tests (else the current UTC epoch-hour)."""
+    try:
+        metrics = by_hour(buoy_id)
+    except Exception:  # noqa: BLE001
+        return None
+    if not metrics:
+        return None
+    if now_epoch_hour is None:
+        now_epoch_hour = int(datetime.datetime.now(datetime.timezone.utc).timestamp() // 3600)
+    return max(0, now_epoch_hour - max(metrics.keys()))
+
+
 # --------------------------------------------------------------------------- #
 # Offline selftest                                                             #
 # --------------------------------------------------------------------------- #

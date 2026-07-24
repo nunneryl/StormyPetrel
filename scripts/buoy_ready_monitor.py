@@ -278,24 +278,15 @@ def _live_roster_ids():
 
 
 def _live_lastobs_fn(now=None):
-    """buoy_id -> hours since its last ACTUAL wave observation, from ndbc_spectral.by_hour
-    (the SAME spectral source the trust gate reads — reused verbatim, not re-implemented; its
-    keys are epoch-hours). None when there are no realtime spectra (dropped, or silent beyond
-    the realtime window) — never a fabricated age. Live fetch is lazy, one buoy at a time."""
-    from pipeline.forecast import ndbc_spectral as sp
+    """buoy_id -> hours since its last ACTUAL wave observation. Thin wrapper over the ONE shared
+    implementation (pipeline.forecast.ndbc_spectral.hours_since_last_obs — newest epoch-hour from
+    by_hour, the SAME spectral source the trust gate and --find-buoy read), so the monitor and
+    find-buoy can never disagree on 'alive'. None when there are no realtime spectra (dropped, or
+    silent beyond the realtime window) — never a fabricated age."""
+    from pipeline.forecast.ndbc_spectral import hours_since_last_obs
     now = now or datetime.now(timezone.utc)
     now_eh = int(now.timestamp() // 3600)
-
-    def fn(buoy_id):
-        try:
-            metrics = sp.by_hour(buoy_id)   # {epoch_hour: {...}} or {}
-        except Exception as e:  # noqa: BLE001
-            print(f"warn: buoy {buoy_id} spectra unavailable ({type(e).__name__}: {e})", file=sys.stderr)
-            return None
-        if not metrics:
-            return None
-        return max(0, now_eh - max(metrics.keys()))
-    return fn
+    return lambda buoy_id: hours_since_last_obs(buoy_id, now_epoch_hour=now_eh)
 
 
 def _derive_watch_zones():

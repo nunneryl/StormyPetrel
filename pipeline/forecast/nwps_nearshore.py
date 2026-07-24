@@ -2350,25 +2350,121 @@ def pairing_audit():
 # --find-buoy — find the best VALID directional reference near a target        #
 # (generalizes --pairing-audit from "score the pairing" to "find a pairing")   #
 # --------------------------------------------------------------------------- #
-def _buoy_publishes_spectral(buoy):
-    """True / False / None — does this buoy publish the realtime2 .data_spec + .swdir files our
-    degree-valued swell-direction reader needs? (A buoy without them can't give us degree-valued
-    swell direction, so it is unusable as a reference no matter how good its placement.) A single
-    cached probe per file — polite; None when it can't be checked (offline / fetch layer absent)."""
+# --------------------------------------------------------------------------- #
+# --find-buoy validity: LIVENESS + directional-axis availability.              #
+# Depth/payload metadata renders perfectly for a buoy dead for months, so it is #
+# not enough on its own — a candidate must ALSO be currently reporting and       #
+# publish the directional-spectrum files our reader needs.                       #
+# --------------------------------------------------------------------------- #
+# 12 h justification: NDBC directional buoys post .data_spec ~hourly, so a healthy buoy's newest
+# observation is <~2 h old. Real transient gaps (a missed GOES DCS slot, a brief comms dropout) are
+# a few hours and self-recover, so 12 h (~2x the normal worst-case gap) does NOT reject a good buoy;
+# yet >12 h is a dozen consecutive missed hourly reports — well outside a normal gap — and an unsafe
+# pick for a multi-month directional commitment. It catches every decay we observed: 46453 at 26 h,
+# 46283 at 13 d, and any 404 / removed buoy (age-unknown → not 'available'). It is deliberately
+# STRICTER than the BU-5 monitor's >30 d RETIRE alert because the decisions differ: SELECTING a NEW
+# reference must demand active reporting (a false-alive is 26 spots placed on a dead buoy, undetected
+# for weeks — the exact bug), while RETIRING an existing one is lenient (buoys come back after
+# servicing). The shared piece is the age COMPUTATION (ndbc_spectral.hours_since_last_obs), not the
+# threshold — different bars for different decisions is correct, not drift.
+FIND_BUOY_LIVENESS_MAX_AGE_H = 12   # silent longer than this → NOT selectable as a new reference
+FIND_BUOY_ROSTER_MAX_AGE_H = 12     # activestations.xml older than this → refetch before selecting
+
+
+def _probe_direction_axis(buoy, *, _get=None):
+    """Status-aware probe of a buoy's realtime .data_spec — the file the degree-valued swell-
+    direction reader needs. Distinguishes PERMANENT absence from a TRANSIENT blip:
+      ("available",   None)               200 with data — the directional axis is usable
+      ("unavailable", ".data_spec 404")   404/410 — PERMANENT: no directional axis (not selectable
+                                          as a DIRECTION reference; may still be a HEIGHT reference)
+      ("unknown",     ".data_spec <why>") timeout / 5xx after ONE retry — transient: UNKNOWN, never
+                                          silently selectable and never permanently blacklisted
+    Uses http.get_once (single attempt; returns the Response for 4xx/5xx so we read the status) and
+    retries ONCE on a transient failure, so a network blip cannot blacklist a good buoy. *_get*
+    injects the fetcher for tests."""
+    from ..config import NDBC_REALTIME2_BASE
+    if _get is not None:
+        get_fn = _get
+    else:
+        from ..http import get_once as get_fn
+    url = f"{NDBC_REALTIME2_BASE}/{str(buoy).upper()}.data_spec"
+    detail = ".data_spec unreachable"
+    for _attempt in (1, 2):
+        try:
+            resp = get_fn(url, timeout=15)
+        except Exception as e:  # noqa: BLE001  transport error (Timeout / ConnectionError) — transient
+            detail = f".data_spec {type(e).__name__}"
+            continue            # retry once, then fall through to UNKNOWN
+        code = getattr(resp, "status_code", None)
+        if code in (404, 410):
+            return ("unavailable", f".data_spec {code}")
+        if code == 200:
+            text = (getattr(resp, "text", "") or "").strip()
+            if text and not text.startswith("<"):
+                return ("available", None)
+            return ("unavailable", ".data_spec empty")   # 200 but no / HTML body → treat as absent
+        if code is not None and 500 <= code < 600:
+            detail = f".data_spec {code}"
+            continue            # retry once on 5xx
+        detail = f".data_spec HTTP {code}"
+        break                   # any other status → UNKNOWN (don't select, don't blacklist)
+    return ("unknown", detail)
+
+
+def _liveness_verdict(age_h, *, roster_stale=False):
+    """(status, text) for a candidate's liveness — status in {'alive','dead','unknown'}, text with
+    the number. A stale, unrefreshable roster forces UNKNOWN (we must not report data we know is old
+    as 'alive'). An unknown age (offline / not probed) is UNKNOWN. age > FIND_BUOY_LIVENESS_MAX_AGE_H
+    is DEAD, stated with the elapsed span."""
+    if roster_stale:
+        return ("unknown", "LIVENESS UNKNOWN — roster stale, could not refresh (data not current)")
+    if age_h is None:
+        return ("unknown", "liveness not probed (offline)")
+    if age_h > FIND_BUOY_LIVENESS_MAX_AGE_H:
+        span = f"{age_h} h" if age_h < 48 else f"{age_h // 24} days"
+        return ("dead", f"DEAD — no observation in {span}")
+    return ("alive", f"alive — last obs {age_h} h ago")
+
+
+def _activestations_age_h():
+    """Age (hours) of the local activestations.xml find-buoy's candidate list comes from, or None
+    if it is absent / unstat-able."""
+    import time
+    from ..config import NDBC_STATIONS_XML
     try:
-        from .buoys import _fetch_text
-    except Exception:  # noqa: BLE001
+        return (time.time() - NDBC_STATIONS_XML.stat().st_mtime) / 3600.0
+    except OSError:
         return None
-    b = str(buoy).upper()
-    base = "https://www.ndbc.noaa.gov/data/realtime2"
-    try:  # use_cache=True: probe each file at most once and reuse it (don't hammer NDBC per run)
-        ds = _fetch_text(f"{base}/{b}.data_spec", str(buoy), "data_spec", True)
-        sw = _fetch_text(f"{base}/{b}.swdir", str(buoy), "swdir", True)
+
+
+def _refresh_activestations():
+    """Best-effort single refetch of activestations.xml (the candidate roster + station metadata
+    source). Returns True on success. Never raises."""
+    from ..config import NDBC_STATIONS_XML
+    try:
+        from ..http import get_once
+        resp = get_once("https://www.ndbc.noaa.gov/activestations.xml", timeout=30)
+        text = (getattr(resp, "text", "") or "").strip()
+        if getattr(resp, "status_code", None) == 200 and text.startswith("<"):
+            NDBC_STATIONS_XML.parent.mkdir(parents=True, exist_ok=True)
+            NDBC_STATIONS_XML.write_text(text)
+            return True
     except Exception:  # noqa: BLE001
-        return None
-    if ds is None and sw is None:
-        return None            # both unreachable → unknown, not a definite "absent"
-    return bool(ds and sw)
+        pass
+    return False
+
+
+def _find_buoy_roster_freshness(*, _age_fn=None, _refresh_fn=None):
+    """(age_h, refreshed, stale_unrefreshable) for the activestations.xml candidate roster. Do NOT
+    trust a cached roster: if it is older than FIND_BUOY_ROSTER_MAX_AGE_H, attempt ONE refetch (a
+    days-stale roster kept a removed buoy listed). If the refetch fails, flag it so liveness is
+    reported UNKNOWN rather than silently as current. Injectable for tests."""
+    age = (_age_fn or _activestations_age_h)()
+    if age is None or age <= FIND_BUOY_ROSTER_MAX_AGE_H:
+        return (age, False, False)
+    if (_refresh_fn or _refresh_activestations)():
+        return (0.0, True, False)
+    return (age, False, True)
 
 
 _PAIRING_RANK = {"VALID REFERENCE": 0, "MARGINAL": 1, "STRUCTURALLY INVALID": 2}
@@ -2424,14 +2520,25 @@ def _depth_unconfirmed_valid(r):
     return ("waverider" in payload) or ("nearshore" in name) or ("cdip" in name)
 
 
+def _not_dead(r):
+    """A row is not KNOWN-dead if its age is unknown (None — offline / not probed, metadata
+    fallback still allowed) or within FIND_BUOY_LIVENESS_MAX_AGE_H. A KNOWN-old observation
+    (age > threshold) blocks selection — a live-metadata / dead-buoy candidate is not usable."""
+    age = r.get("age_h")
+    return age is None or age <= FIND_BUOY_LIVENESS_MAX_AGE_H
+
+
 def _best_valid(rows):
-    """The best USABLE reference: a depth-resolved VALID REFERENCE (spectra not known-absent) or —
-    only when depth is unavailable — a close Waverider / CDIP-nearshore accepted on payload+distance
-    (_depth_unconfirmed_valid). Never a MARGINAL/INVALID, never a known-deep buoy. Rows are ranked
-    depth-resolved-first, so a confirmed VALID is always preferred over a fallback. None = the honest
-    'none qualifies' signal."""
+    """The best USABLE reference: a depth-resolved VALID REFERENCE that is publishing spectra
+    (spectral not known-absent → a 404 is now 'False' and rejected) AND is not KNOWN-dead
+    (recent observation) — or, only when depth is unavailable, a close Waverider / CDIP-nearshore
+    accepted on payload+distance (_depth_unconfirmed_valid). Never a MARGINAL/INVALID, never a
+    known-deep buoy, never a buoy with no directional axis, never a buoy silent past the liveness
+    bar. Rows are ranked depth-resolved-first, so a confirmed VALID is always preferred over a
+    fallback. None = the honest 'none qualifies' signal."""
     return next((r for r in rows
                  if r["verdict"] == "VALID REFERENCE" and r["spectral"] is not False
+                 and _not_dead(r)
                  and (r["complete"] or _depth_unconfirmed_valid(r))), None)
 
 
@@ -2473,8 +2580,12 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
     it falls back to a small CITED Gulf-of-Maine seed and says so. Changes NO assignment, tags
     nothing — it only reports which buoy we SHOULD use (or that none qualifies). Returns 0."""
     tlat, tlng = target
+    # Do NOT trust a cached roster: refetch activestations.xml if it is stale BEFORE enumerating
+    # candidates (a days-stale roster is exactly how a removed buoy stayed a listed candidate).
+    roster_age, roster_refreshed, roster_stale = None, False, False
     try:
         from ..enrichment.geodata import load_ndbc_active_stations
+        roster_age, roster_refreshed, roster_stale = _find_buoy_roster_freshness()
         stations = load_ndbc_active_stations()
     except Exception:  # noqa: BLE001
         stations = []
@@ -2483,63 +2594,96 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
         stations = [{"id": i, "lat": la, "lng": ln, "name": nm}
                     for i, (la, ln, nm) in _FIND_BUOY_COORD_SEED.items()]
 
-    print(f"=== FIND BUOY — best VALID directional reference near {label or f'{tlat:.3f},{tlng:.3f}'} "
-          f"(wfo {wfo}, ≤{radius_km:.0f} km) — READ-ONLY ===")
+    print(f"=== FIND BUOY — best VALID + LIVE directional reference near "
+          f"{label or f'{tlat:.3f},{tlng:.3f}'} (wfo {wfo}, ≤{radius_km:.0f} km) — READ-ONLY ===")
     if offline:
         print("  ⚠ live NDBC activestations.xml unavailable (sandbox): showing the CITED Gulf-of-Maine")
-        print("    candidate seed only. The FULL active-station enumeration + station-page depth/payload")
-        print("    + .data_spec/.swdir probe runs on the Mac and supersedes this offline floor.\n")
+        print("    candidate seed only. The FULL enumeration + station-page depth/payload + .data_spec")
+        print("    availability + liveness probe runs on the Mac and supersedes this offline floor.\n")
+    elif roster_refreshed:
+        print(f"  roster: refetched activestations.xml (was {roster_age:.0f} h stale).")
+    elif roster_stale:
+        print(f"  ⚠ activestations.xml is {roster_age:.0f} h stale and could NOT be refreshed — the "
+              "candidate list may be outdated and LIVENESS below is UNKNOWN, not current.\n")
 
-    # spectral probes are polite (cached, one per file) and only run live; cap them and SAY if capped.
+    # Live probes are single-attempt per buoy and only run live; cap them and SAY if capped.
+    from .ndbc_spectral import hours_since_last_obs
     PROBE_CAP = 30
     within = [s for s in stations if _haversine_km(tlat, tlng, s["lat"], s["lng"]) <= radius_km]
     probed = {"n": 0}
+    assess = {}   # bid -> {"spectral": True/False/None, "detail": str|None, "age_h": int|None}
 
     def _spec(bid):
         if offline or probed["n"] >= PROBE_CAP:
+            assess[bid] = {"spectral": None, "detail": "not probed (offline/cap)", "age_h": None}
             return None
         probed["n"] += 1
-        return _buoy_publishes_spectral(bid)
+        state, detail = _probe_direction_axis(bid)          # .data_spec: available / 404 / timeout
+        age = hours_since_last_obs(bid) if state == "available" else None   # liveness only if publishing
+        spectral = {"available": True, "unavailable": False, "unknown": None}[state]
+        assess[bid] = {"spectral": spectral, "detail": detail, "age_h": age}
+        return spectral
 
     rows = _rank_candidates(tlat, tlng, stations, radius_km, spectral_fn=_spec)
     if not rows:
         print(f"  no active NDBC stations within {radius_km:.0f} km.")
         return 0
+    for r in rows:                                          # fold liveness + probe detail onto each row
+        r.update(assess.get(r["id"], {"spectral": r.get("spectral"), "detail": None, "age_h": None}))
     if not offline and len(within) > PROBE_CAP:
-        print(f"  (spectral-availability probed for the {PROBE_CAP} nearest of {len(within)} candidates "
-              "to stay polite; narrow --radius-km to probe the rest.)\n")
+        print(f"  (.data_spec availability + liveness probed for the {PROBE_CAP} nearest of "
+              f"{len(within)} candidates to stay polite; narrow --radius-km to probe the rest.)\n")
 
-    print(f"  {'#':>2} {'buoy':>6} {'dist':>6} {'depth':>7} {'payload':<22} {'spec':>4} verdict")
+    print(f"  {'#':>2} {'buoy':>6} {'dist':>6} {'depth':>7} {'payload':<20} {'spec':>4} {'age':>6} verdict")
     for i, r in enumerate(rows, 1):
         dep = f"{r['depth']:.0f} m" if r["depth"] is not None else "  —"
-        pay = (r["payload"] or "unknown")[:22]
+        pay = (r["payload"] or "unknown")[:20]
         sp = {True: "yes", False: "NO", None: "—"}[r["spectral"]]
-        vd = r["verdict"]
-        if r["spectral"] is False:            # no spectra → unusable by our reader, whatever the depth
-            vd = "NO SPECTRAL FILES (unusable)"
+        age_h = r.get("age_h")
+        age_s = "—" if age_h is None else (f"{age_h}h" if age_h < 48 else f"{age_h // 24}d")
+        live_status, live_text = _liveness_verdict(age_h, roster_stale=bool(roster_stale))
+        if r["spectral"] is False:            # 404/410 (or empty) — PERMANENT: no directional axis
+            vd = f"DIRECTION UNAVAILABLE — {r.get('detail') or '.data_spec absent'} (height ref only)"
+        elif live_status == "dead":           # known-old newest observation
+            vd = live_text
+        elif r["spectral"] is None and not offline and not roster_stale:
+            vd = f"DIRECTION UNKNOWN — {r.get('detail') or 'probe failed'} (transient; retry / Mac)"
         elif not r["complete"]:               # depth didn't resolve: fallback-accepted, or truly unknown
             vd = (f"{r['verdict']} (depth unconfirmed — accepted on payload+distance)"
                   if _depth_unconfirmed_valid(r) else "UNKNOWN (metadata → Mac)")
-        print(f"  {i:>2} {r['id']:>6} {r['d']:>5.0f}k {dep:>7} {pay:<22} {sp:>4} {vd}  {r['name'][:22]}")
+        else:
+            vd = r["verdict"]
+        if r["spectral"] is not False and live_status != "dead":   # append the liveness evidence
+            vd = f"{vd} · {live_text}"
+        print(f"  {i:>2} {r['id']:>6} {r['d']:>5.0f}k {dep:>7} {pay:<20} {sp:>4} {age_s:>6} {vd}  "
+              f"{r['name'][:20]}")
         for rs in r["reasons"]:
             print(f"        · {rs}")
 
     best = _best_valid(rows)
     print("\n  ── recommendation ──")
-    if best and best["complete"]:
+    if best and roster_stale:
+        print(f"  ⚠ best on metadata is {best['id']} ({best['name']}, {best['d']:.0f} km) — but the "
+              "roster is stale/unrefreshable so LIVENESS is UNKNOWN. Do NOT commit until a fresh run "
+              "confirms it is currently reporting.")
+    elif best and best["complete"]:
+        _, lt = _liveness_verdict(best.get("age_h"), roster_stale=bool(roster_stale))
         print(f"  ✓ USE {best['id']} ({best['name']}) — a VALID nearshore directional reference: "
-              f"{best['d']:.0f} km, depth {best['depth']:.0f} m, {best['payload']}.")
+              f"{best['d']:.0f} km, depth {best['depth']:.0f} m, {best['payload']}; {lt}.")
     elif best:   # Option-2 fallback: depth didn't resolve, accepted on payload+distance
+        _, lt = _liveness_verdict(best.get("age_h"), roster_stale=bool(roster_stale))
         print(f"  ✓ USE {best['id']} ({best['name']}) — VALID (depth unconfirmed — accepted on "
-              f"payload+distance): {best['d']:.0f} km, {best['payload'] or 'Waverider/CDIP nearshore'}. "
-              "Confirm depth on the Mac.")
+              f"payload+distance): {best['d']:.0f} km, {best['payload'] or 'Waverider/CDIP nearshore'}; "
+              f"{lt}. Confirm depth on the Mac.")
     else:
-        print("  ✗ NO VALID nearshore directional reference within radius. Every candidate is a deep/")
-        print("    offshore platform (structural regime mismatch), differently exposed, or a marginal")
-        print("    payload — none is a valid shallow-coast directional proxy. These spots CANNOT be")
+        print("  ✗ NO VALID + LIVE nearshore directional reference within radius. Every candidate is a")
+        print("    deep/offshore platform (structural regime mismatch), differently exposed, a marginal")
+        print("    payload, DEAD (not currently reporting), or without a directional axis (.data_spec")
+        print("    404) — none is a valid, live shallow-coast directional proxy. These spots CANNOT be")
         print("    direction-trust-gated from NDBC: they stay on the HEIGHT gate + the raycast/WW3")
         print("    swell-window tier. That is the architecture-correct answer, NOT a failure.")
-        marg = next((r for r in rows if r["verdict"] == "MARGINAL" and r["spectral"] is not False), None)
+        marg = next((r for r in rows if r["verdict"] == "MARGINAL" and r["spectral"] is not False
+                     and _not_dead(r)), None)
         if marg:
             mdep = f"depth {marg['depth']:.0f} m" if marg["depth"] is not None else "depth unconfirmed"
             print(f"  (least-bad — still only MARGINAL, do NOT treat as valid: {marg['id']} "

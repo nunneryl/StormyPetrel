@@ -573,10 +573,17 @@ def test_variance_floor_075_makes_marginal_range_inconclusive():
 def test_reverify_covers_pending_zones_not_just_pass():
     # Part 1(d): _tagged_nwps_zones keys on swell_window_source=='nwps', so it returns EVERY placed
     # zone — the PASS/verified ones AND the PENDING ones — so scheduling reverify accumulates for the
-    # six CA pending zones we care about (the stale docstring's "PASS from the OLD gate" notwithstanding).
+    # pending zones we care about (the stale docstring's "PASS from the OLD gate" notwithstanding).
+    # The expected pending set is READ from the assignments file so it can't go stale: 46240/46284
+    # were moved to unverifiable[] in the Monterey-Bay reference-offline change and are correctly NO
+    # LONGER pending, and any future pending edits are picked up automatically.
+    import json
+    from pipeline.forecast.nwps_nearshore import NWPS_ASSIGNMENTS
     zones = {(w, b) for w, b, _ in nn._tagged_nwps_zones()}
-    pending = {("mtr", "46240"), ("mtr", "46237"), ("mtr", "46284"),
-               ("lox", "46268"), ("mtr", "46215"), ("lox", "46256")}
+    doc = json.loads(NWPS_ASSIGNMENTS.read_text())
+    pending = {(r["wfo"], str(r["buoy"])) for r in (doc.get("buoy_reference") or {}).get("pending") or []
+               if r.get("wfo") and r.get("buoy") is not None}
+    assert pending, "expected at least one placed pending zone in the assignments file"
     missing = pending - zones
     assert not missing, f"reverify must cover the pending zones; missing {missing}"
 
@@ -607,6 +614,92 @@ def test_reverify_emit_settled_to_github_output():
         else:
             os.environ.pop("GITHUB_OUTPUT", None)
         os.unlink(path)
+
+
+# --------------------------------------------------------------------------- #
+# --find-buoy validity gaps: LIVENESS + directional-axis availability          #
+# (the gate must not accept "not confirmed broken" as "confirmed good")        #
+# --------------------------------------------------------------------------- #
+class _FakeResp:
+    """Minimal stand-in for a requests.Response (status_code + text) for probe tests."""
+    def __init__(self, status_code, text="data"):
+        self.status_code = status_code
+        self.text = text
+
+
+def _fb_row(**kw):
+    base = {"d": 6.0, "id": "x", "name": "", "depth": 18.0, "payload": "Datawell Waverider",
+            "spectral": True, "verdict": "VALID REFERENCE", "complete": True, "reasons": [],
+            "age_h": None}
+    base.update(kw)
+    return base
+
+
+def test_find_buoy_dead_buoy_not_recommended():
+    # (1) a buoy with valid metadata but no recent observation is NOT recommended.
+    live = _fb_row(id="live", age_h=2)
+    dead = _fb_row(id="dead", age_h=43 * 24)            # 43 days silent (the 46284 case)
+    assert nn._best_valid([live])["id"] == "live"       # a live VALID reference IS recommended
+    assert nn._best_valid([dead]) is None               # DEAD (no recent obs) is NOT, despite metadata
+    assert nn._best_valid([dead, live])["id"] == "live"  # dead skipped, live chosen
+    # the verdict states WHY, with the number
+    assert nn._liveness_verdict(43 * 24)[0] == "dead" and "43 days" in nn._liveness_verdict(43 * 24)[1]
+    assert nn._liveness_verdict(26)[0] == "dead" and "26 h" in nn._liveness_verdict(26)[1]
+    assert nn._liveness_verdict(2)[0] == "alive"
+
+
+def test_find_buoy_404_makes_direction_unavailable():
+    # (2) a 404 on .data_spec makes a buoy unselectable as a directional reference.
+    resp404 = lambda url, timeout=None: _FakeResp(404, "<html>404</html>")
+    assert nn._probe_direction_axis("sipf1", _get=resp404) == ("unavailable", ".data_spec 404")
+    # 404 -> spectral False -> _best_valid rejects it even with otherwise-perfect metadata
+    row = _fb_row(id="sipf1", spectral=False)
+    assert nn._best_valid([row]) is None
+    # 410 (Gone) is also permanent
+    assert nn._probe_direction_axis("x", _get=lambda url, timeout=None: _FakeResp(410, ""))[0] == "unavailable"
+
+
+def test_find_buoy_timeout_is_unknown_not_permanent():
+    # (3) a simulated timeout yields UNKNOWN — not VALID and not permanently invalid.
+    import requests
+
+    def persistent(url, timeout=None):
+        raise requests.Timeout("simulated")
+
+    state, detail = nn._probe_direction_axis("x", _get=persistent)
+    assert state == "unknown" and "Timeout" in detail             # surfaced with the reason
+    spectral = {"available": True, "unavailable": False, "unknown": None}[state]
+    assert spectral is None                                        # None: not VALID (True), not blacklisted (False)
+    # a network blip that recovers on the retry must NOT blacklist a good buoy
+    calls = {"n": 0}
+
+    def flaky(url, timeout=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise requests.ConnectionError("blip")
+        return _FakeResp(200, "2026 07 24 12 00  0.100  8.0 (0.08)")
+
+    assert nn._probe_direction_axis("x", _get=flaky) == ("available", None)
+
+
+def test_find_buoy_stale_roster_does_not_report_alive():
+    # (4) a stale cached roster does not produce a false 'alive' verdict.
+    age, refreshed, stale = nn._find_buoy_roster_freshness(_age_fn=lambda: 72.0, _refresh_fn=lambda: False)
+    assert (age, refreshed, stale) == (72.0, False, True)          # stale + unrefreshable is flagged
+    # that flag forces liveness UNKNOWN even for an age that would otherwise read 'alive'
+    assert nn._liveness_verdict(3, roster_stale=True)[0] == "unknown"
+    assert nn._liveness_verdict(3, roster_stale=False)[0] == "alive"   # same age, fresh roster -> alive
+    # a young roster is not refetched; a stale-but-refreshable roster refreshes (not stale)
+    assert nn._find_buoy_roster_freshness(_age_fn=lambda: 2.0) == (2.0, False, False)
+    assert nn._find_buoy_roster_freshness(_age_fn=lambda: 72.0, _refresh_fn=lambda: True) == (0.0, True, False)
+
+
+def test_find_buoy_live_good_buoy_still_recommended():
+    # (5) a live buoy with good spectra is still recommended exactly as before — no regression.
+    live = _fb_row(id="46268", name="Topanga Nearshore", depth=20.0, spectral=True, age_h=2)
+    assert nn._best_valid([live])["id"] == "46268"
+    # and the offline / not-probed path (spectral None, age None) still recommends on metadata
+    assert nn._best_valid([_fb_row(id="46268", spectral=None, age_h=None)])["id"] == "46268"
 
 
 def _run_all():
