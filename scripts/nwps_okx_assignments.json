@@ -2510,6 +2510,186 @@
       "nwps_node_lng": -80.69113,
       "nwps_node_distance_m": 1270,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "amelia-island",
+      "name": "Amelia Island",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.61821,
+      "nwps_node_lng": -81.42308,
+      "nwps_node_distance_m": 1368,
+      "nwps_buoy_id": "41112"
+    },
+    {
+      "slug": "atlantic-beach",
+      "name": "Atlantic Beach",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.34186,
+      "nwps_node_lng": -81.38615,
+      "nwps_node_distance_m": 1092,
+      "nwps_buoy_id": "41112"
+    },
+    {
+      "slug": "mayport-poles",
+      "name": "Mayport Poles",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.39062,
+      "nwps_node_lng": -81.38615,
+      "nwps_node_distance_m": 1230,
+      "nwps_buoy_id": "41112"
+    },
+    {
+      "slug": "fort-clinch",
+      "name": "Fort Clinch",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.69949,
+      "nwps_node_lng": -81.42308,
+      "nwps_node_distance_m": 296,
+      "nwps_buoy_id": "41112"
+    },
+    {
+      "slug": "flagler-beach-pier",
+      "name": "Flagler Beach Pier",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.48029,
+      "nwps_node_lng": -81.10923,
+      "nwps_node_distance_m": 1582,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "jacksonville-beach-pier",
+      "name": "Jacksonville Beach Pier",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.29309,
+      "nwps_node_lng": -81.38615,
+      "nwps_node_distance_m": 158,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "marineland",
+      "name": "Marineland",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.67536,
+      "nwps_node_lng": -81.20154,
+      "nwps_node_distance_m": 1105,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "matanzas-inlet",
+      "name": "Matanzas Inlet",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.70787,
+      "nwps_node_lng": -81.22,
+      "nwps_node_distance_m": 213,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "ponte-vedra-beach",
+      "name": "Ponte Vedra Beach",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.22806,
+      "nwps_node_lng": -81.36769,
+      "nwps_node_distance_m": 1006,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "st-augustine-beach-pier",
+      "name": "St. Augustine Beach Pier",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.85418,
+      "nwps_node_lng": -81.25692,
+      "nwps_node_distance_m": 713,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "vilano-beach",
+      "name": "Vilano Beach",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.9192,
+      "nwps_node_lng": -81.27538,
+      "nwps_node_distance_m": 1333,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "a-street",
+      "name": "A Street",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.83792,
+      "nwps_node_lng": -81.25692,
+      "nwps_node_distance_m": 951,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "atlantic-blvd",
+      "name": "Atlantic Blvd",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.30934,
+      "nwps_node_lng": -81.38615,
+      "nwps_node_distance_m": 477,
+      "nwps_buoy_id": "41117"
+    },
+    {
+      "slug": "daytona-beach",
+      "name": "Daytona Beach",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.17142,
+      "nwps_node_lng": -80.96154,
+      "nwps_node_distance_m": 1717,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "new-smyrna-beach-inlet",
+      "name": "New Smyrna Beach Inlet",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.07389,
+      "nwps_node_lng": -80.90615,
+      "nwps_node_distance_m": 427,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ponce-inlet",
+      "name": "Ponce Inlet",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.12266,
+      "nwps_node_lng": -80.94308,
+      "nwps_node_distance_m": 641,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "flagler-ave",
+      "name": "Flagler Ave",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.04138,
+      "nwps_node_lng": -80.88769,
+      "nwps_node_distance_m": 794,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "wilbur-by-the-sea",
+      "name": "Wilbur by the Sea",
+      "nwps_wfo": "jax",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.13891,
+      "nwps_node_lng": -80.94308,
+      "nwps_node_distance_m": 1586,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
