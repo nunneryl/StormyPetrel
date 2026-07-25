@@ -25813,11 +25813,17 @@
       }
     ],
     "optimal_swell_dir": 132,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8667630",
     "nearest_tide_station_dist_km": 0.76,
     "nearest_buoy_id": "41067",
-    "nearest_buoy_dist_km": 26.38
+    "nearest_buoy_dist_km": 26.38,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.49078,
+    "nwps_node_lng": -80.30524,
+    "nwps_node_distance_m": 1225,
+    "nwps_buoy_id": null
   },
   {
     "name": "Folly Beach Pier",
@@ -25861,11 +25867,17 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC3127",
     "nearest_tide_station_dist_km": 0.81,
     "nearest_buoy_id": "41076",
-    "nearest_buoy_dist_km": 29.4
+    "nearest_buoy_dist_km": 29.4,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.65335,
+    "nwps_node_lng": -79.92827,
+    "nwps_node_distance_m": 990,
+    "nwps_buoy_id": null
   },
   {
     "name": "Folly Beach Washout",
@@ -25909,11 +25921,17 @@
       }
     ],
     "optimal_swell_dir": 144,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8666652",
     "nearest_tide_station_dist_km": 0.8,
     "nearest_buoy_id": "41076",
-    "nearest_buoy_dist_km": 29.49
+    "nearest_buoy_dist_km": 29.49,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.66961,
+    "nwps_node_lng": -79.89058,
+    "nwps_node_distance_m": 1551,
+    "nwps_buoy_id": null
   },
   {
     "name": "Garden City Pier",
@@ -25978,9 +25996,15 @@
     "tide_preference_confidence": 0.65,
     "nwps_wfo": "chs",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8661437",
-    "nearest_tide_station_dist_km": 0.14
+    "nearest_tide_station_dist_km": 0.14,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.58,
+    "nwps_node_lng": -78.98586,
+    "nwps_node_distance_m": 1154,
+    "nwps_buoy_id": null
   },
   {
     "name": "Hilton Head Island",
@@ -26024,9 +26048,15 @@
       }
     ],
     "optimal_swell_dir": 132,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8669338",
-    "nearest_tide_station_dist_km": 1.73
+    "nearest_tide_station_dist_km": 1.73,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.14939,
+    "nwps_node_lng": -80.7199,
+    "nwps_node_distance_m": 954,
+    "nwps_buoy_id": null
   },
   {
     "name": "Hunting Island",
@@ -26070,11 +26100,17 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8668227",
     "nearest_tide_station_dist_km": 2.58,
     "nearest_buoy_id": "41067",
-    "nearest_buoy_dist_km": 10.45
+    "nearest_buoy_dist_km": 10.45,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.36073,
+    "nwps_node_lng": -80.43717,
+    "nwps_node_distance_m": 889,
+    "nwps_buoy_id": null
   },
   {
     "name": "Isle of Palms",
@@ -26117,9 +26153,15 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
-    "nearest_tide_station_dist_km": 1.91
+    "nearest_tide_station_dist_km": 1.91,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.78341,
+    "nwps_node_lng": -79.77749,
+    "nwps_node_distance_m": 454,
+    "nwps_buoy_id": null
   },
   {
     "name": "Kiawah Island Beach",
@@ -26167,11 +26209,17 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8667062",
     "nearest_tide_station_dist_km": 0.86,
     "nearest_buoy_id": "41067",
-    "nearest_buoy_dist_km": 43.72
+    "nearest_buoy_dist_km": 43.72,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.58833,
+    "nwps_node_lng": -80.11675,
+    "nwps_node_distance_m": 351,
+    "nwps_buoy_id": null
   },
   {
     "name": "Myrtle Beach State Park",
@@ -26298,9 +26346,15 @@
     "tide_preference_confidence": 0.6,
     "nwps_wfo": "chs",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8662006",
-    "nearest_tide_station_dist_km": 1.17
+    "nearest_tide_station_dist_km": 1.17,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.41743,
+    "nwps_node_lng": -79.1178,
+    "nwps_node_distance_m": 896,
+    "nwps_buoy_id": null
   },
   {
     "name": "Surfside Beach SC",
@@ -26358,11 +26412,17 @@
       }
     ],
     "optimal_swell_dir": 132,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8661437",
     "nearest_tide_station_dist_km": 4.05,
     "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 52.0
+    "nearest_buoy_dist_km": 52.0,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.58,
+    "nwps_node_lng": -78.96702,
+    "nwps_node_distance_m": 2738,
+    "nwps_buoy_id": null
   },
   {
     "name": "61st Street Galveston",
@@ -32268,10 +32328,16 @@
       }
     ],
     "optimal_swell_dir": 104,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "41112",
     "nearest_buoy_dist_km": 49.77,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 31.06017,
+    "nwps_node_lng": -81.39843,
+    "nwps_node_distance_m": 760,
+    "nwps_buoy_id": null
   },
   {
     "name": "St Simons Island",
@@ -32296,10 +32362,16 @@
       }
     ],
     "optimal_swell_dir": 108,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "41112",
     "nearest_buoy_dist_km": 58.51,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 31.1252,
+    "nwps_node_lng": -81.37958,
+    "nwps_node_distance_m": 1173,
+    "nwps_buoy_id": null
   },
   {
     "name": "Sea Island",
@@ -32324,10 +32396,16 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "41112",
     "nearest_buoy_dist_km": 67.98,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 31.19022,
+    "nwps_node_lng": -81.32304,
+    "nwps_node_distance_m": 1561,
+    "nwps_buoy_id": null
   },
   {
     "name": "Blackbeard Island",
@@ -32352,10 +32430,16 @@
       }
     ],
     "optimal_swell_dir": 112,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "41112",
     "nearest_buoy_dist_km": 103.07,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 31.49911,
+    "nwps_node_lng": -81.1911,
+    "nwps_node_distance_m": 210,
+    "nwps_buoy_id": null
   },
   {
     "name": "St. Catherines Island",
@@ -32380,10 +32464,16 @@
       }
     ],
     "optimal_swell_dir": 116,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "41067",
     "nearest_buoy_dist_km": 100.9,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 31.61291,
+    "nwps_node_lng": -81.13455,
+    "nwps_node_distance_m": 623,
+    "nwps_buoy_id": null
   },
   {
     "name": "Tybee Island",
@@ -32408,12 +32498,18 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8669338",
     "nearest_tide_station_dist_km": 22.68,
     "nearest_buoy_id": "41067",
     "nearest_buoy_dist_km": 50.67,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.00307,
+    "nwps_node_lng": -80.83298,
+    "nwps_node_distance_m": 877,
+    "nwps_buoy_id": null
   },
   {
     "name": "Fripp Island",
@@ -32438,12 +32534,18 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8668227",
     "nearest_tide_station_dist_km": 7.29,
     "nearest_buoy_id": "41067",
     "nearest_buoy_dist_km": 7.83,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.31196,
+    "nwps_node_lng": -80.47487,
+    "nwps_node_distance_m": 581,
+    "nwps_buoy_id": null
   },
   {
     "name": "Berts Bar",
@@ -32473,12 +32575,18 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
     "nearest_tide_station_dist_km": 6.15,
     "nearest_buoy_id": "41076",
     "nearest_buoy_dist_km": 19.28,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.7509,
+    "nwps_node_lng": -79.83403,
+    "nwps_node_distance_m": 741,
+    "nwps_buoy_id": null
   },
   {
     "name": "Windjammer",
@@ -32503,12 +32611,18 @@
       }
     ],
     "optimal_swell_dir": 144,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
     "nearest_tide_station_dist_km": 2.34,
     "nearest_buoy_id": "41076",
     "nearest_buoy_dist_km": 15.99,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.78341,
+    "nwps_node_lng": -79.77749,
+    "nwps_node_distance_m": 766,
+    "nwps_buoy_id": null
   },
   {
     "name": "Wild Dunes",
@@ -32533,12 +32647,18 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
     "nearest_tide_station_dist_km": 4.76,
     "nearest_buoy_id": "41076",
     "nearest_buoy_dist_km": 13.8,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.78341,
+    "nwps_node_lng": -79.73979,
+    "nwps_node_distance_m": 1707,
+    "nwps_buoy_id": null
   },
   {
     "name": "Dewees Island",
@@ -32563,12 +32683,18 @@
       }
     ],
     "optimal_swell_dir": 132,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
     "nearest_tide_station_dist_km": 9.03,
     "nearest_buoy_id": "41076",
     "nearest_buoy_dist_km": 14.69,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.83218,
+    "nwps_node_lng": -79.70209,
+    "nwps_node_distance_m": 627,
+    "nwps_buoy_id": null
   },
   {
     "name": "South Island",
@@ -32593,12 +32719,18 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8662006",
     "nearest_tide_station_dist_km": 31.69,
     "nearest_buoy_id": "41076",
     "nearest_buoy_dist_km": 61.63,
-    "nwps_wfo": "chs"
+    "nwps_wfo": "chs",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.14106,
+    "nwps_node_lng": -79.23089,
+    "nwps_node_distance_m": 1327,
+    "nwps_buoy_id": null
   },
   {
     "name": "Oak Island Pier",
