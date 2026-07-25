@@ -2910,6 +2910,26 @@
       "nwps_node_lng": -79.23089,
       "nwps_node_distance_m": 1327,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "cherry-grove-pier",
+      "name": "Cherry Grove Pier",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.83039,
+      "nwps_node_lng": -78.61027,
+      "nwps_node_distance_m": 2077,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "myrtle-beach-state-park",
+      "name": "Myrtle Beach State Park",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.65,
+      "nwps_node_lng": -78.90411,
+      "nwps_node_distance_m": 2212,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
