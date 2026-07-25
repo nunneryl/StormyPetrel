@@ -25762,9 +25762,15 @@
     "tide_preference_confidence": 0.65,
     "nwps_wfo": "chs",
     "orientation_source": "manual",
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8660265",
-    "nearest_tide_station_dist_km": 0.7
+    "nearest_tide_station_dist_km": 0.7,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.83039,
+    "nwps_node_lng": -78.61027,
+    "nwps_node_distance_m": 2077,
+    "nwps_buoy_id": null
   },
   {
     "name": "Edisto Beach",
@@ -26278,11 +26284,17 @@
       }
     ],
     "optimal_swell_dir": 132,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8661070",
     "nearest_tide_station_dist_km": 1.29,
     "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 46.36
+    "nearest_buoy_dist_km": 46.36,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.65,
+    "nwps_node_lng": -78.90411,
+    "nwps_node_distance_m": 2212,
+    "nwps_buoy_id": null
   },
   {
     "name": "Pawleys Island",
