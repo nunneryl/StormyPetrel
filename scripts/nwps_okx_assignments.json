@@ -3070,6 +3070,48 @@
           "flagler-ave"
         ],
         "to_place": "5 spots - promoted with NO buoy. On the Mac run `--validate --wfo jax --batch <these 5 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 5> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "chs/sc-ga-bight-no-reference",
+        "wfo": "chs",
+        "reason": "NO VALID + LIVE nearshore directional buoy within 150 km — the South Atlantic Bight is buoy-poor. --find-buoy independently returned NO VALID for these spots (verified 2026-07-24, within 150 km): every candidate is either deep water (41004 Edisto, 35 m SCOOP, 68-131 km), a discus poor for low-energy direction (41008 Grays Reef 16 m; 41013 Frying Pan Shoals 31 m), or sits across Cape Fear (41110 Masonboro Waverider, 125-134 km). All returned MARGINAL, none VALID. This is the bight being buoy-poor, NOT a pairing error. These spots ride NWPS HEIGHT skill + raycast direction, direction unverified. DISTINCT from 'pending' (a valid nearby buoy exists, awaiting a swell), from 'retired' (a nearby buoy is structurally invalid on both axes), and from chs/georgia-sounds-shadowed (a valid buoy exists but is geometrically wrong): here NO valid reference exists in range at all. RE-CHECK TRIGGER: any new nearshore directional Waverider deployed in the SC/GA bight — a BU-6 monthly re-sweep would catch it.",
+        "nearest_candidate": "41004 Edisto (35 m SCOOP, 68-131 km) / 41008 Grays Reef (16 m discus) / 41013 Frying Pan Shoals (31 m discus) / 41110 Masonboro Waverider (across Cape Fear, 125-134 km) — all MARGINAL, none VALID. AUDIT ONLY, never used for placement or verification.",
+        "slugs": [
+          "cherry-grove-pier",
+          "myrtle-beach-state-park",
+          "surfside-beach-sc",
+          "garden-city-pier",
+          "pawleys-island",
+          "south-island",
+          "dewees-island",
+          "wild-dunes",
+          "isle-of-palms",
+          "windjammer",
+          "berts-bar",
+          "folly-beach-washout",
+          "folly-beach-pier",
+          "kiawah-island-beach",
+          "edisto-beach",
+          "hunting-island",
+          "fripp-island",
+          "hilton-head-island",
+          "tybee-island",
+          "st-catherines-island",
+          "jekyll-island"
+        ],
+        "to_place": "21 spots - promoted with NO buoy. On the Mac run `--validate --wfo chs --batch <these 21 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 21> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "chs/georgia-sounds-shadowed",
+        "wfo": "chs",
+        "reason": "VALID BUOY BUT GEOMETRICALLY WRONG — 41112 (Offshore Fernandina Beach, FL; 15 m Waverider, alive) is a VALID reference in isolation and --find-buoy recommended it at 48-89 km, BUT it sits at the FL-GA line and these three spots are 48-89 km NORTH of it across the Altamaha / Doboy / St Simons sound complex — a different exposure regime. Valid buoy, wrong place; a direction PASS against it would certify these spots from seas they do not receive (false confidence). Same disposition as lox/santa-barbara-channel (a valid reference exists but is geometrically wrong), DISTINCT from chs/sc-ga-bight-no-reference (no valid buoy in range at all). NOT placed pending: the pairing is expected to FAIL and the trust gate emits ONE verdict per (wfo, buoy) zone. These spots ride NWPS HEIGHT skill + raycast direction, direction unverified. NOTE: the wrong-side-of-headland detector did NOT reject this pairing — the intervening land is low marsh + barrier islands below the 500 km^2 area floor (the same Cape Romain blind spot). That is a KNOWN limitation of the detector (resolved land only, not marsh/shoals), not a detector failure. RE-CHECK TRIGGER: reconsider only if someone decides the 48 km St Simons pairing is worth testing despite the sounds.",
+        "nearest_candidate": "41112 Offshore Fernandina Beach (15 m Waverider, alive; VALID in isolation, but 48-89 km north across the Altamaha/Doboy/St Simons sounds — wrong exposure regime) — AUDIT ONLY, never used for placement or verification.",
+        "slugs": [
+          "st-simons-island",
+          "sea-island",
+          "blackbeard-island"
+        ],
+        "to_place": "3 spots - promoted with NO buoy (41112 is NOT used). On the Mac run `--validate --wfo chs --batch <these 3 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 3> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so never relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
