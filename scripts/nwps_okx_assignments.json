@@ -2930,6 +2930,26 @@
       "nwps_node_lng": -78.90411,
       "nwps_node_distance_m": 2212,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "atlantic-beach-nc",
+      "name": "Atlantic Beach NC",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.68725,
+      "nwps_node_lng": -76.74041,
+      "nwps_node_distance_m": 964,
+      "nwps_buoy_id": "41159"
+    },
+    {
+      "slug": "emerald-isle",
+      "name": "Emerald Isle",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.64215,
+      "nwps_node_lng": -77.03425,
+      "nwps_node_distance_m": 1938,
+      "nwps_buoy_id": "41159"
     }
   ],
   "held": [],
