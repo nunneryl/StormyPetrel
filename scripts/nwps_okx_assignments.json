@@ -2950,6 +2950,146 @@
       "nwps_node_lng": -77.03425,
       "nwps_node_distance_m": 1938,
       "nwps_buoy_id": "41159"
+    },
+    {
+      "slug": "carolina-beach",
+      "name": "Carolina Beach",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.03333,
+      "nwps_node_lng": -77.88904,
+      "nwps_node_distance_m": 193,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "kure-beach",
+      "name": "Kure Beach",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.98823,
+      "nwps_node_lng": -77.88904,
+      "nwps_node_distance_m": 1863,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "surf-city-nc",
+      "name": "Surf City NC",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.41666,
+      "nwps_node_lng": -77.54178,
+      "nwps_node_distance_m": 847,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "topsail-beach",
+      "name": "Topsail Beach",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.34902,
+      "nwps_node_lng": -77.62192,
+      "nwps_node_distance_m": 1616,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "wrightsville-beach",
+      "name": "Wrightsville Beach",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.21372,
+      "nwps_node_lng": -77.78219,
+      "nwps_node_distance_m": 1163,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "fort-fisher",
+      "name": "Fort Fisher",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.96568,
+      "nwps_node_lng": -77.91575,
+      "nwps_node_distance_m": 407,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "carolina-beach-pier",
+      "name": "Carolina Beach Pier",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.05588,
+      "nwps_node_lng": -77.86233,
+      "nwps_node_distance_m": 1732,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "wrightsville-beach-south",
+      "name": "Wrightsville Beach South",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.16863,
+      "nwps_node_lng": -77.8089,
+      "nwps_node_distance_m": 2284,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "jolly-roger-pier",
+      "name": "Jolly Roger Pier",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.34902,
+      "nwps_node_lng": -77.62192,
+      "nwps_node_distance_m": 1813,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "seaview-pier",
+      "name": "Seaview Pier",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.50686,
+      "nwps_node_lng": -77.38151,
+      "nwps_node_distance_m": 1435,
+      "nwps_buoy_id": "41110"
+    },
+    {
+      "slug": "holden-beach",
+      "name": "Holden Beach",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.89804,
+      "nwps_node_lng": -78.31644,
+      "nwps_node_distance_m": 1249,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ocean-isle-beach",
+      "name": "Ocean Isle Beach",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.87549,
+      "nwps_node_lng": -78.42329,
+      "nwps_node_distance_m": 1554,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sunset-beach-nc",
+      "name": "Sunset Beach NC",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.85294,
+      "nwps_node_lng": -78.50342,
+      "nwps_node_distance_m": 1241,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "oak-island-pier",
+      "name": "Oak Island Pier",
+      "nwps_wfo": "ilm",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.89804,
+      "nwps_node_lng": -78.07603,
+      "nwps_node_distance_m": 797,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
