@@ -3158,6 +3158,46 @@
           "flagler-beach-pier"
         ],
         "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo jax --batch <these 9 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41117 --slugs <these 9>` merges them into 'spots'. Placement is via the pending path; 41117 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "ilm/41110",
+        "wfo": "ilm",
+        "buoy": "41110",
+        "reference": "41110 — Masonboro Inlet, ILM2 (CDIP 150), NC nearshore Waverider (17 m); a VALID nearshore directional reference (--find-buoy: alive, .data_spec present)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41110 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. These 10 spots are all NORTH/EAST of Cape Fear, the same side as 41110, at 10-49 km along unbroken coast. Verified 2026-07-25 by --find-buoy across all 16 ilm spots. This SUPERSEDES the July-9 ilm plan: 41108 is DEAD (no observation in 6 days) and the wrong-side-of-headland gate now rejects 41110 for the four Brunswick spots south of the cape (see unverifiable ilm/brunswick-south-of-cape-fear), so 41110's zone is this northern group only.",
+        "spots": 10,
+        "slugs": [
+          "wrightsville-beach",
+          "wrightsville-beach-south",
+          "carolina-beach-pier",
+          "carolina-beach",
+          "kure-beach",
+          "topsail-beach",
+          "jolly-roger-pier",
+          "fort-fisher",
+          "surf-city-nc",
+          "seaview-pier"
+        ],
+        "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo ilm --batch <these 10 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41110 --slugs <these 10>` merges them into 'spots'. Placement is via the pending path; 41110 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "ilm/41159",
+        "wfo": "ilm",
+        "buoy": "41159",
+        "reference": "41159 — Onslow Bay Outer, NC (CDIP 217) Waverider (30 m); a VALID directional reference (--find-buoy: alive, .data_spec present)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41159 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. 41159 was in NO prior ilm plan; it was surfaced by the 2026-07-25 --find-buoy sweep. Kept as its own zone rather than folded into ilm/41110: at Emerald Isle the 41110 pairing degrades to MARGINAL at 138 km, so Onslow Bay / Bogue Banks is a genuinely different exposure regime, NOT a distance tiebreak between two references to the same seas. The trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so separating them keeps a 138 km marginal pairing from diluting the clean 10-49 km 41110 zone.",
+        "spots": 2,
+        "slugs": [
+          "emerald-isle",
+          "atlantic-beach-nc"
+        ],
+        "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo ilm --batch <these 2 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41159 --slugs <these 2>` merges them into 'spots'. Placement is via the pending path; 41159 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -3352,6 +3392,19 @@
           "blackbeard-island"
         ],
         "to_place": "3 spots - promoted with NO buoy (41112 is NOT used). On the Mac run `--validate --wfo chs --batch <these 3 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 3> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so never relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "ilm/brunswick-south-of-cape-fear",
+        "wfo": "ilm",
+        "reason": "NO USABLE DIRECTIONAL REFERENCE on the SOUTH side of Cape Fear — a headland rejection, a dead buoy, and two directional-file outages stacked on one four-spot stretch. Verified 2026-07-25 by --find-buoy across all 16 ilm spots. (1) 41110 (Masonboro Inlet, ILM2, 17 m) is the ONLY live nearshore Waverider in range, but the wrong-side-of-headland detector REJECTED it for all four spots: WRONG SIDE OF HEADLAND, with mid-path crossings of the Cape Fear landmass of 43.9 km (sunset-beach-nc), 43.6 km (ocean-isle-beach), 35.9 km (holden-beach) and 11.7 km (oak-island-pier). This is the FIRST PRODUCTION USE of that detector — the same physics as jax/volusia-north-of-canaveral, on the opposite side of its cape: there the spots sit north of the headland and the buoy south, here the spots sit south and the buoy north. A direction PASS against 41110 would certify these spots from seas the cape removes. (2) 41108 (Wilmington Harbor, 13 m Waverider) sits on the SAME side and would be the natural reference, but it is DEAD — no observation in 6 days as of 2026-07-25. It is not wrong, merely dark. (3) 41024 and ssbn7 (Sunset Nearshore, 10 m) are 3-4 km away and perfectly placed, but publish NO directional data (.data_spec 404) — height-only, unusable as a direction reference. Same shape as 41069 / 41070 at Ponce de Leon Inlet in the jax batch. (4) 41013 (Frying Pan Shoals, discus) is MARGINAL only, sits on the shoal complex itself rather than seaward of it, and carries FAIL-on-small-seas history. These four ride NWPS HEIGHT skill + raycast direction, direction unverified. DISTINCT from ilm/41110 and ilm/41159 (valid live references, direction merely pending) — here every candidate is rejected, dead, or height-only. RE-CHECK TRIGGERS: (a) 41108 resuming observations — it is the natural same-side reference and is merely dead, not wrong, so a BU-5 liveness issue would show the recovery and these four could be promoted to a pending zone; (b) 41024 or ssbn7 ever publishing .data_spec, which would put a 3-4 km directional reference on the doorstep — exactly what the BU-6 monthly re-sweep is for.",
+        "nearest_candidate": "41110 Masonboro Inlet (17 m Waverider, alive — REJECTED by the headland gate, 11.7-43.9 km of Cape Fear landmass on the mid-path) / 41108 Wilmington Harbor (13 m Waverider, correct side — DEAD, no obs in 6 days as of 2026-07-25) / 41024 + ssbn7 Sunset Nearshore (10 m, 3-4 km, ideal placement — .data_spec 404, height-only) / 41013 Frying Pan Shoals (discus, MARGINAL, on the shoal complex, FAIL-on-small-seas history) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "sunset-beach-nc",
+          "ocean-isle-beach",
+          "holden-beach",
+          "oak-island-pier"
+        ],
+        "to_place": "4 spots - promoted with NO buoy. On the Mac run `--validate --wfo ilm --batch <these 4 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 4> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
