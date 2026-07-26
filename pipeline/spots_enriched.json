@@ -20990,11 +20990,17 @@
       }
     ],
     "optimal_swell_dir": 184,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8656590",
     "nearest_tide_station_dist_km": 1.0,
     "nearest_buoy_id": "41159",
-    "nearest_buoy_dist_km": 57.72
+    "nearest_buoy_dist_km": 57.72,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.68725,
+    "nwps_node_lng": -76.74041,
+    "nwps_node_distance_m": 964,
+    "nwps_buoy_id": "41159"
   },
   {
     "name": "Avalon Pier",
@@ -21326,11 +21332,17 @@
       }
     ],
     "optimal_swell_dir": 156,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC2837",
     "nearest_tide_station_dist_km": 4.16,
     "nearest_buoy_id": "41159",
-    "nearest_buoy_dist_km": 50.45
+    "nearest_buoy_dist_km": 50.45,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.64215,
+    "nwps_node_lng": -77.03425,
+    "nwps_node_distance_m": 1938,
+    "nwps_buoy_id": "41159"
   },
   {
     "name": "Frisco Pier",
