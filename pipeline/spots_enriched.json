@@ -21186,9 +21186,15 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658559",
-    "nearest_tide_station_dist_km": 2.17
+    "nearest_tide_station_dist_km": 2.17,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.03333,
+    "nwps_node_lng": -77.88904,
+    "nwps_node_distance_m": 193,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Corolla Beach",
@@ -21452,11 +21458,17 @@
       }
     ],
     "optimal_swell_dir": 132,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8659665",
     "nearest_tide_station_dist_km": 6.66,
     "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 18.64
+    "nearest_buoy_dist_km": 18.64,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.89804,
+    "nwps_node_lng": -78.31644,
+    "nwps_node_distance_m": 1249,
+    "nwps_buoy_id": null
   },
   {
     "name": "Jennettes Pier",
@@ -21653,11 +21665,17 @@
       }
     ],
     "optimal_swell_dir": 116,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658715",
     "nearest_tide_station_dist_km": 3.82,
     "nearest_buoy_id": "41110",
-    "nearest_buoy_dist_km": 25.18
+    "nearest_buoy_dist_km": 25.18,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.98823,
+    "nwps_node_lng": -77.88904,
+    "nwps_node_distance_m": 1863,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Nags Head Pier",
@@ -21770,9 +21788,15 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8659665",
-    "nearest_tide_station_dist_km": 6.64
+    "nearest_tide_station_dist_km": 6.64,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.87549,
+    "nwps_node_lng": -78.42329,
+    "nwps_node_distance_m": 1554,
+    "nwps_buoy_id": null
   },
   {
     "name": "Ocracoke Beach",
@@ -22020,9 +22044,15 @@
       }
     ],
     "optimal_swell_dir": 155,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8659899",
-    "nearest_tide_station_dist_km": 0.82
+    "nearest_tide_station_dist_km": 0.82,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.85294,
+    "nwps_node_lng": -78.50342,
+    "nwps_node_distance_m": 1241,
+    "nwps_buoy_id": null
   },
   {
     "name": "Surf City NC",
@@ -22070,9 +22100,15 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8657419",
-    "nearest_tide_station_dist_km": 5.64
+    "nearest_tide_station_dist_km": 5.64,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.41666,
+    "nwps_node_lng": -77.54178,
+    "nwps_node_distance_m": 847,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "The Point Buxton",
@@ -22161,11 +22197,17 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8657813",
     "nearest_tide_station_dist_km": 6.57,
     "nearest_buoy_id": "41159",
-    "nearest_buoy_dist_km": 65.58
+    "nearest_buoy_dist_km": 65.58,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.34902,
+    "nwps_node_lng": -77.62192,
+    "nwps_node_distance_m": 1616,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Wrightsville Beach",
@@ -22209,9 +22251,15 @@
       }
     ],
     "optimal_swell_dir": 128,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658145",
-    "nearest_tide_station_dist_km": 0.86
+    "nearest_tide_station_dist_km": 0.86,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.21372,
+    "nwps_node_lng": -77.78219,
+    "nwps_node_distance_m": 1163,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Edgewater Beach Cleveland",
@@ -32784,12 +32832,18 @@
       }
     ],
     "optimal_swell_dir": 188,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658715",
     "nearest_tide_station_dist_km": 18.34,
     "nearest_buoy_id": "41110",
     "nearest_buoy_dist_km": 18.34,
-    "nwps_wfo": "ilm"
+    "nwps_wfo": "ilm",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.89804,
+    "nwps_node_lng": -78.07603,
+    "nwps_node_distance_m": 797,
+    "nwps_buoy_id": null
   },
   {
     "name": "Fort Fisher",
@@ -32814,12 +32868,18 @@
       }
     ],
     "optimal_swell_dir": 116,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658715",
     "nearest_tide_station_dist_km": 1.91,
     "nearest_buoy_id": "41110",
     "nearest_buoy_dist_km": 1.91,
-    "nwps_wfo": "ilm"
+    "nwps_wfo": "ilm",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.96568,
+    "nwps_node_lng": -77.91575,
+    "nwps_node_distance_m": 407,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Carolina Beach Pier",
@@ -32844,12 +32904,18 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658559",
     "nearest_tide_station_dist_km": 3.25,
     "nearest_buoy_id": "41110",
     "nearest_buoy_dist_km": 8.39,
-    "nwps_wfo": "ilm"
+    "nwps_wfo": "ilm",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.05588,
+    "nwps_node_lng": -77.86233,
+    "nwps_node_distance_m": 1732,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Wrightsville Beach South",
@@ -32874,12 +32940,18 @@
       }
     ],
     "optimal_swell_dir": 128,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658145",
     "nearest_tide_station_dist_km": 2.85,
     "nearest_buoy_id": "41110",
     "nearest_buoy_dist_km": 24.56,
-    "nwps_wfo": "ilm"
+    "nwps_wfo": "ilm",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.16863,
+    "nwps_node_lng": -77.8089,
+    "nwps_node_distance_m": 2284,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Jolly Roger Pier",
@@ -32904,12 +32976,18 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8657813",
     "nearest_tide_station_dist_km": 1.22,
     "nearest_buoy_id": "41110",
     "nearest_buoy_dist_km": 49.55,
-    "nwps_wfo": "ilm"
+    "nwps_wfo": "ilm",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.34902,
+    "nwps_node_lng": -77.62192,
+    "nwps_node_distance_m": 1813,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Seaview Pier",
@@ -32939,12 +33017,18 @@
       }
     ],
     "optimal_swell_dir": 144,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8657419",
     "nearest_tide_station_dist_km": 16.21,
     "nearest_buoy_id": "41159",
     "nearest_buoy_dist_km": 52.26,
-    "nwps_wfo": "ilm"
+    "nwps_wfo": "ilm",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.50686,
+    "nwps_node_lng": -77.38151,
+    "nwps_node_distance_m": 1435,
+    "nwps_buoy_id": "41110"
   },
   {
     "name": "Hatteras Ferry Docks",
