@@ -3358,6 +3358,35 @@
           "atlantic-beach-nc"
         ],
         "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo ilm --batch <these 2 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41159 --slugs <these 2>` merges them into 'spots'. Placement is via the pending path; 41159 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "mfl/41122",
+        "wfo": "mfl",
+        "buoy": "41122",
+        "reference": "41122 — Hollywood Beach, FL nearshore Waverider (CDIP 265, 16 m); a VALID nearshore directional reference (--find-buoy: alive, .data_spec present)",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41122 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. 41122 is the ONLY live nearshore directional buoy in southeast Florida: every other candidate 404s on .data_spec, including the whole Everglades / Florida Bay f1 network and the dead 41114 / 41068 at Fort Pierce. Verified 2026-07-27 by --find-buoy across all mfl spots. These 15 are the TIGHT-RANGE CORE, 7-59 km along one unbroken beach, all returned USE. The zone is deliberately capped there: the 68-99 km long tail is held in unverifiable mfl/no-valid-reference so its larger direction residuals cannot drag this core to FAIL (the gate emits ONE verdict per (wfo, buoy) zone). NOTE: hillsboro-beach (34 km) and south-beach-miami (26 km) returned USE only AFTER the 2026-07-27 headland own-landmass fix; pre-fix they were FALSE-REJECTED on the buoy's own continuous coastline, which the geodesic clips when it runs parallel to a straight shore. They are legitimate pairings, not overrides.",
+        "spots": 15,
+        "slugs": [
+          "boca-raton-inlet",
+          "boynton-beach-inlet",
+          "delray-beach",
+          "palmetto-pavilion",
+          "deerfield-beach-pier",
+          "pompano-beach-pier",
+          "commercial-pier",
+          "hillsboro-inlet",
+          "hillsboro-beach",
+          "fort-lauderdale-beach",
+          "spoils",
+          "dania-beach-pier",
+          "sunny-isles",
+          "haulover-inlet",
+          "south-beach-miami"
+        ],
+        "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo mfl --batch <these 15 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41122 --slugs <these 15>` merges them into 'spots'. Placement is via the pending path; 41122 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -3565,6 +3594,22 @@
           "oak-island-pier"
         ],
         "to_place": "4 spots - promoted with NO buoy. On the Mac run `--validate --wfo ilm --batch <these 4 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 4> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "mfl/no-valid-reference",
+        "wfo": "mfl",
+        "reason": "NO USABLE DIRECTIONAL REFERENCE for these 7, for THREE distinct reasons — southeast Florida has exactly ONE live nearshore directional buoy (41122 Hollywood Beach, CDIP 265, 16 m) and every other candidate 404s on .data_spec, including the whole Everglades / Florida Bay f1 network and the dead 41114 / 41068 at Fort Pierce. Verified 2026-07-27 by --find-buoy across all mfl spots. (1) TOO FAR (2 spots): hobe-beach (114 km) and jupiter-inlet (105 km) — 41122 is MARGINAL at this range and nothing nearer publishes a direction axis. (2) LONG TAIL, PROTECTING THE CORE (4 spots): lake-worth-pier (68 km), palm-beach (78 km), ocean-reef-park (87 km) and juno-beach-pier (99 km). 41122 returns per-spot VALID for these post-headland-fix, so this is NOT a per-spot rejection — it is a ZONE decision. The trust gate is keyed per (wfo, buoy) and emits ONE verdict for the whole zone, so folding 68-99 km spots on the Bahamas-shadowed coast in with the 7-34 km core risks their larger direction residuals dragging all 15 core spots to FAIL: retiring an excellent zone to test a marginal tail. Same disposition logic as jax/volusia-north-of-canaveral, and consistent with the direction-research finding that window-edge Bahamas-shadowed spots (narrow, direction-critical windows south of Palm Beach) need a precision a 99 km buoy cannot give. (3) DIFFERENT OCEAN (1 spot): key-west (24.5N, Straits of Florida) — its nearest candidate is a Florida Bay station 114 km away with no direction axis, and no Atlantic nearshore reference exists; a different wave regime entirely. All 7 ride NWPS HEIGHT skill + raycast direction, direction unverified. DISTINCT from mfl/41122 (a valid live reference, direction merely pending). RE-CHECK TRIGGER: if a nearshore directional Waverider is ever deployed north of Palm Beach the long-tail 4 (and possibly the 2 too-far spots) get a real reference — exactly what the BU-6 monthly re-sweep is for.",
+        "nearest_candidate": "41122 Hollywood Beach (CDIP 265, 16 m Waverider, alive — MARGINAL at 105-114 km for hobe / jupiter; per-spot VALID at 68-99 km for the long tail but EXCLUDED to protect the mfl/41122 zone verdict; 234 km from key-west) / Everglades + Florida Bay f1 network and 41114 / 41068 Fort Pierce (no .data_spec / dead) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "hobe-beach",
+          "jupiter-inlet",
+          "lake-worth-pier",
+          "palm-beach",
+          "ocean-reef-park",
+          "juno-beach-pier",
+          "key-west"
+        ],
+        "to_place": "7 spots - promoted with NO buoy. On the Mac run `--validate --wfo mfl --batch <these 7 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 7> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
