@@ -2543,12 +2543,40 @@ def _not_dead(r):
 # SHOALS (e.g. Cape Fear / Frying Pan Shoals shadowing the Grand Strand from the #
 # north): shoals are bathymetry, absent from GSHHG at any resolution, and remain #
 # a MANUAL call.                                                                 #
+#                                                                               #
+# OWN-LANDMASS EXCLUSION (fixed 2026-07-27, mfl batch). A nearshore buoy sits    #
+# AGAINST land by definition, so a spot-to-buoy geodesic that runs ROUGHLY       #
+# PARALLEL to a straight coast clips the very landmass BOTH ends hang off. That  #
+# clipped shoreline grew with along-coast distance and nothing else, so 41122    #
+# (Hollywood Beach, ~200 m off the beach) was rejecting spots on the SAME        #
+# unbroken Atlantic beach — hillsboro 1.6 km of "crossing" at 34 km, juno 63.1   #
+# km at 99 km — while spots a few km away (dania, sunny-isles) cleared purely    #
+# because their shorter path accumulated less clipped shore. Scaling with        #
+# distance rather than with any cape is the signature of the bug.                #
+#                                                                               #
+# Only land that genuinely SEPARATES spot from buoy may count, so the landmass   #
+# the buoy itself sits against is excluded — but ONLY when the path merely       #
+# GRAZES it. Two cases keep counting it, which is what preserves the real        #
+# rejections: (1) the buoy is INSIDE the polygon (a station in the marsh is by   #
+# definition behind that land), and (2) the path TRAVERSES the polygon rather    #
+# than grazing its shoreline — the buoy sits on the far side. Traverse vs graze  #
+# is measured as how far INLAND the crossing gets from the shoreline, which      #
+# unlike chord length does not grow with along-coast distance: a chord across a  #
+# gently convex coast stays within a few km of the beach however long it is,     #
+# while crossing the Florida peninsula to the Everglades f1 stations penetrates  #
+# tens of km. A crossing of any OTHER polygon is untouched by all of this.       #
 # --------------------------------------------------------------------------- #
 FIND_BUOY_HEADLAND_AREA_KM2 = 500.0      # a crossed land polygon must exceed this to be a "headland"
                                           #   (500 sits mid-band of the 100–5000 km² clean range → drift-tolerant)
 FIND_BUOY_HEADLAND_MID_START_KM = 3.0    # trim the spot's own shore / barrier off the near end
 FIND_BUOY_HEADLAND_END_TRIM_KM = 2.0     # trim the near-buoy end
 FIND_BUOY_HEADLAND_DENSIFY_M = 200.0     # geodesic vertex spacing (fine enough not to skip a barrier)
+# Graze ceiling for the buoy's OWN landmass only (see OWN-LANDMASS EXCLUSION above): a crossing that
+# never gets further than this from that polygon's shoreline is a coast-parallel clip, not a headland
+# the path must round. Sits an order of magnitude below a peninsula traverse (the 11–94 km Everglades
+# f1 crossings run tens of km inland) and above the few-km inland reach of a long coastal chord.
+FIND_BUOY_HEADLAND_OWN_GRAZE_KM = 8.0
+FIND_BUOY_HEADLAND_GRAZE_SAMPLES = 25    # penetration is smooth along the path; ~25 samples finds its max
 # Distance ceiling: apply the wrong-side REJECTION only within this range. The 6 validated true
 # positives were all nearshore (spot→buoy 41–96 km); 110 km catches them with margin yet stays
 # inside the 150 km search radius. Beyond it, diffraction/refraction wrap swell into a headland's lee
@@ -2557,7 +2585,56 @@ FIND_BUOY_HEADLAND_DENSIFY_M = 200.0     # geodesic vertex spacing (fine enough 
 FIND_BUOY_HEADLAND_MAX_KM = 110.0
 
 
-def _headland_land_chord_km(spot, buoy, land):
+def _tree_idx(item, geom_list):
+    """STRtree results are indices on shapely 2 and geometries on shapely 1 — normalise to an index
+    into *geom_list* (identity match, never geometry equality). Same shim as orientation._as_geom,
+    resolved the other way round because the crossing loop compares indices."""
+    if hasattr(item, "__index__"):
+        return int(item)
+    return next((i for i, g in enumerate(geom_list) if g is item), None)
+
+
+def _headland_own_landmass(buoy, land):
+    """(polygon_index, contains) for the landmass the BUOY sits against — the polygon containing it
+    if it is inside one (a marsh/bay station: that land is behind it by definition), else the polygon
+    NEAREST to it (a nearshore buoy hangs ~200 m off its own coast). Reuses land.polygon_tree, the
+    same STRtree the raycast queries; no second index and no coastline_tree dependency, so the
+    synthetic LandIndex stand-ins in the tests exercise this path too. (None, False) when it cannot
+    be resolved — the caller then counts every crossing, i.e. falls back to the old behaviour."""
+    from shapely.geometry import Point
+    p = Point(buoy[1], buoy[0])
+    try:
+        for c in land.polygon_tree.query(p):
+            i = _tree_idx(c, land.polygons)
+            if i is not None and land.polygons[i].intersects(p):
+                return i, True                     # buoy is ON/INSIDE this land — never excluded
+    except Exception:
+        pass
+    try:
+        return _tree_idx(land.polygon_tree.nearest(p), land.polygons), False
+    except Exception:
+        return None, False
+
+
+def _headland_inland_penetration_km(cross, poly, geod):
+    """Deepest the crossing *cross* (a LineString inside *poly*) gets from *poly*'s shoreline, in km.
+    This is the traverse-vs-graze measure: a coast-parallel chord stays within a few km of the beach
+    no matter how long it is, while a path across a peninsula runs tens of km inland. Sampled at
+    FIND_BUOY_HEADLAND_GRAZE_SAMPLES points (penetration varies smoothly, so the max is not missed)."""
+    from shapely.geometry import Point
+    from shapely.ops import nearest_points
+    shore = poly.exterior
+    cs = list(cross.coords)
+    stride = max(1, len(cs) // FIND_BUOY_HEADLAND_GRAZE_SAMPLES)
+    worst = 0.0
+    for lo, la in cs[::stride]:
+        a, b = nearest_points(Point(lo, la), shore)
+        _, _, d = geod.inv(a.x, a.y, b.x, b.y)
+        worst = max(worst, d / 1000.0)
+    return worst
+
+
+def _headland_land_chord_km(spot, buoy, land, detail=None):
     """Geodesic length (km) of the LONGEST mid-path land crossing between *spot* and *buoy*, or 0.0
     if the mid-path geodesic crosses no land polygon larger than FIND_BUOY_HEADLAND_AREA_KM2. *spot*
     and *buoy* are (lat, lng); *land* is a geodata.LandIndex (its .polygons list + .polygon_tree
@@ -2566,7 +2643,12 @@ def _headland_land_chord_km(spot, buoy, land):
     FIND_BUOY_HEADLAND_MID_START_KM (the spot's own shore/barrier) and the last
     FIND_BUOY_HEADLAND_END_TRIM_KM (near the buoy). land None → 0.0 (offline / no GSHHG: not checked).
     NOT _ray_linestring — that casts a fixed-length ray along a BEARING; here we need the actual
-    spot→buoy SEGMENT — but it reuses the same pyproj.Geod densify + shapely-intersection primitives."""
+    spot→buoy SEGMENT — but it reuses the same pyproj.Geod densify + shapely-intersection primitives.
+
+    The landmass the buoy sits against is skipped when the path only GRAZES its shoreline (see
+    OWN-LANDMASS EXCLUSION above) — that is the along-coast false positive. *detail*, if a dict is
+    passed, is filled with {own_idx, own_contains, own_chord_km, own_penetration_km, own_excluded}
+    for the caller to surface; it is an out-param so the return type stays a bare float."""
     if land is None:
         return 0.0
     from pyproj import Geod
@@ -2587,13 +2669,21 @@ def _headland_land_chord_km(spot, buoy, land):
     if len(mid) < 2:
         return 0.0
     line = LineString(mid)
+    own_idx, own_contains = _headland_own_landmass(buoy, land)
+    if detail is not None:
+        detail.update(own_idx=own_idx, own_contains=own_contains,
+                      own_chord_km=0.0, own_penetration_km=None, own_excluded=False)
     best = 0.0
     for idx in land.polygon_tree.query(line):                 # same STRtree query as _ray_hits
-        poly = land.polygons[int(idx)]
+        i = _tree_idx(idx, land.polygons)
+        if i is None:
+            continue
+        poly = land.polygons[i]
         area_m2, _ = geod.geometry_area_perimeter(poly)
         if abs(area_m2) / 1e6 <= FIND_BUOY_HEADLAND_AREA_KM2:  # a barrier island / inlet bank, not a headland
             continue
         inter = line.intersection(poly)
+        crossings = []
         for g in getattr(inter, "geoms", [inter]):
             if getattr(g, "geom_type", "") != "LineString" or g.is_empty:
                 continue                                       # a tangential point touch is not a crossing
@@ -2601,7 +2691,21 @@ def _headland_land_chord_km(spot, buoy, land):
             chord = 0.0
             for (l1, a1), (l2, a2) in zip(cs[:-1], cs[1:]):
                 _, _, d = geod.inv(l1, a1, l2, a2); chord += d / 1000.0
-            best = max(best, chord)
+            crossings.append((chord, g))
+        if not crossings:
+            continue
+        longest = max(c for c, _ in crossings)
+        # The buoy's OWN landmass: a coast-parallel GRAZE of the shore both ends hang off does not
+        # separate them, so it is not a headland. It still counts when the buoy is INSIDE this land,
+        # or when the path TRAVERSES it (the buoy is on the far side) — the two real-rejection cases.
+        if i == own_idx and not own_contains:
+            pen = max(_headland_inland_penetration_km(g, poly, geod) for _, g in crossings)
+            grazes = pen <= FIND_BUOY_HEADLAND_OWN_GRAZE_KM
+            if detail is not None:
+                detail.update(own_chord_km=longest, own_penetration_km=pen, own_excluded=grazes)
+            if grazes:
+                continue
+        best = max(best, longest)
     return best
 
 
@@ -2609,13 +2713,20 @@ def _headland_verdict(spot, buoy, land):
     """{"chord_km", "dist_km", "reject", "note"} for the wrong-side-of-headland check between *spot*
     and *buoy* (both (lat, lng)). reject = a headland crosses the mid-path AND the buoy is within
     FIND_BUOY_HEADLAND_MAX_KM. note = it crosses but the buoy is beyond the ceiling (wrapping may
-    save it — surfaced, not rejected). land None → never rejects (offline / no GSHHG: not checked)."""
+    save it — surfaced, not rejected). land None → never rejects (offline / no GSHHG: not checked).
+    Also carries own_* diagnostics: when the buoy's own landmass was crossed but EXCLUDED as a
+    coast-parallel graze, own_excluded is True and own_chord_km / own_penetration_km say what was
+    skipped and why — so a cleared along-coast pairing is auditable, not silent."""
     dist_km = _haversine_km(spot[0], spot[1], buoy[0], buoy[1])
-    chord = _headland_land_chord_km(spot, buoy, land)
+    detail = {}
+    chord = _headland_land_chord_km(spot, buoy, land, detail=detail)
     crosses = chord > 0.0
     within = dist_km < FIND_BUOY_HEADLAND_MAX_KM
     return {"chord_km": chord, "dist_km": dist_km,
-            "reject": crosses and within, "note": crosses and not within}
+            "reject": crosses and within, "note": crosses and not within,
+            "own_excluded": bool(detail.get("own_excluded")),
+            "own_chord_km": detail.get("own_chord_km") or 0.0,
+            "own_penetration_km": detail.get("own_penetration_km")}
 
 
 def _best_valid(rows):
@@ -2779,6 +2890,11 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
         elif hv and hv.get("note"):
             vd = (f"{vd} · headland note: crosses {hv['chord_km']:.1f} km land but buoy "
                   f"{hv['dist_km']:.0f} km > {FIND_BUOY_HEADLAND_MAX_KM:.0f} km ceiling — kept (wrap may save)")
+        if hv and hv.get("own_excluded"):
+            # the along-coast case: say so out loud, so a cleared pairing is auditable rather than silent
+            vd = (f"{vd} · along-coast: {hv['own_chord_km']:.1f} km clipped off the buoy's OWN landmass "
+                  f"ignored (reaches only {hv['own_penetration_km']:.1f} km inland ≤ "
+                  f"{FIND_BUOY_HEADLAND_OWN_GRAZE_KM:.0f} km — a graze, not a headland)")
         print(f"  {i:>2} {r['id']:>6} {r['d']:>5.0f}k {dep:>7} {pay:<20} {sp:>4} {age_s:>6} {vd}  "
               f"{r['name'][:20]}")
         for rs in r["reasons"]:

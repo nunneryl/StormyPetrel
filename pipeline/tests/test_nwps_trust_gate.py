@@ -773,6 +773,123 @@ def test_headland_offline_never_rejects():
     assert v["reject"] is False and v["note"] is False and v["chord_km"] == 0.0
 
 
+def _synthetic_convex_coast(west_lon=-80.85):
+    """A ~12,000 km² mainland whose east coast bulges ~5 km seaward at mid-span — the SE-Florida
+    shape that produced the false positive. *west_lon* sets the peninsula width so a far-side
+    station can be placed inside the distance ceiling."""
+    import math
+    from shapely.geometry import Polygon
+    lon = lambda y: -80.10 + 0.05 * math.sin(math.pi * (y - 25.8) / 1.4)
+    ys = [25.8 + i * 0.01 for i in range(141)]
+    return Polygon([(lon(y), y) for y in ys] + [(west_lon, 27.2), (west_lon, 25.8)]), lon
+
+
+def test_headland_clears_along_coast_graze_of_buoys_own_landmass():
+    """THE BUG (mfl 2026-07-27): a nearshore buoy sits AGAINST land, so a spot->buoy geodesic running
+    parallel to a straight coast clips the landmass BOTH ends hang off. That must NOT be a headland."""
+    mainland, lon = _synthetic_convex_coast()
+    land = _fake_land([mainland])
+    buoy = (26.001, lon(26.001) + 0.003)                       # ~300 m off the beach (the 41122 shape)
+    seen = []
+    for lat in (26.30, 26.70, 26.88):                          # hillsboro / palm-beach / juno analogues
+        spot = (lat, lon(lat) + 0.001)
+        v = nn._headland_verdict(spot, buoy, land)
+        assert v["reject"] is False and v["chord_km"] == 0.0, (lat, v)
+        assert v["own_excluded"] is True                       # excluded as a graze, and said so
+        seen.append((v["dist_km"], v["own_chord_km"], v["own_penetration_km"]))
+    # the BUG SIGNATURE: clipped chord grows with along-coast distance (9 -> 90 km) while inland
+    # penetration does NOT (stays ~0-2 km). Penetration is what the fix keys on, which is why the
+    # reject no longer scales with distance.
+    assert seen[-1][1] > 8 * seen[0][1], seen                  # chord grew ~10x
+    assert all(p <= nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM for _, _, p in seen), seen
+    assert seen[-1][2] < 4.0, seen                             # deepest graze still only a few km inland
+
+
+def test_headland_still_flags_traverse_of_buoys_own_landmass():
+    """DO NOT OVERCORRECT: the Everglades / Florida-Bay f1 cases must keep rejecting. Both ways a
+    buoy can be behind its own nearest landmass — on the far side of it, or inside it."""
+    mainland, lon = _synthetic_convex_coast()
+    land = _fake_land([mainland])
+    spot = (26.30, lon(26.30) + 0.001)
+    far = nn._headland_verdict(spot, (26.30, -80.90), land)     # station off the OPPOSITE coast
+    assert far["reject"] is True and far["chord_km"] > 50.0
+    assert far["own_excluded"] is False                         # a traverse, not a graze
+    assert far["own_penetration_km"] > nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM
+    inside = nn._headland_verdict(spot, (26.40, -80.60), land)   # station INSIDE the landmass (marsh)
+    assert inside["reject"] is True and inside["chord_km"] > 20.0
+    assert inside["own_excluded"] is False                       # containment is never excluded
+    idx, contains = nn._headland_own_landmass((26.40, -80.60), land)
+    assert (idx, contains) == (0, True)
+
+
+def test_headland_own_exclusion_is_per_polygon_not_global():
+    """The exclusion applies to the buoy's OWN polygon only — a different landmass between spot and
+    buoy still rejects even while the buoy's own shore is being grazed on the same path."""
+    from shapely.geometry import box
+    mainland, lon = _synthetic_convex_coast()
+    cape = box(-80.30, 26.10, -79.95, 26.45)                   # a separate cape/island east of the coast
+    buoy = (26.001, lon(26.001) + 0.003)
+    spot = (26.60, lon(26.60) + 0.001)
+    v = nn._headland_verdict(spot, buoy, _fake_land([mainland, cape]))
+    assert v["own_excluded"] is True                            # mainland graze still excluded ...
+    assert v["reject"] is True and v["chord_km"] > 10.0         # ... but the cape still flags
+    # and with the cape removed the same pairing is clean — the cape is doing the rejecting
+    assert nn._headland_verdict(spot, buoy, _fake_land([mainland]))["reject"] is False
+
+
+def test_headland_own_landmass_resolution_and_fallback():
+    # a buoy offshore resolves to the nearest polygon (not contained); an unresolvable index falls
+    # back to (None, False) so every crossing counts — i.e. the OLD behaviour, never a silent clear
+    mainland, lon = _synthetic_convex_coast()
+    land = _fake_land([mainland])
+    assert nn._headland_own_landmass((26.001, lon(26.001) + 0.003), land) == (0, False)
+    class _Broken:
+        polygons = []
+        class polygon_tree:
+            @staticmethod
+            def query(_):  raise RuntimeError("no tree")
+            @staticmethod
+            def nearest(_): raise RuntimeError("no tree")
+    assert nn._headland_own_landmass((26.0, -80.0), _Broken()) == (None, False)
+
+
+def test_headland_mfl_regression():
+    """ACCEPTANCE BAR for the fix — real GSHHG, real coords. The four along-coast 41122 pairings must
+    NO LONGER be rejected on headland grounds; the two Everglades crossings must still be. Skips when
+    the GSHHG shapefile is absent (this sandbox); run on the Mac."""
+    from pipeline.enrichment.geodata import load_land_index
+    land = load_land_index()
+    if land is None:
+        print("    SKIP test_headland_mfl_regression — GSHHG shapefile absent (run on the Mac).")
+        return
+    import json, re
+    from pathlib import Path
+    repo = Path(__file__).resolve().parents[2]
+    E = json.loads((repo / "pipeline/spots_enriched.json").read_text())
+    slug = lambda n: re.sub(r"[^a-z0-9]+", "-", (n or "").lower()).strip("-")
+    coord = {(s.get("slug") or slug(s.get("name"))): (s.get("lat"), s.get("lng"))
+             for s in E if s.get("lat") is not None}
+    snap = json.loads((repo / "pipeline/data/ndbc_buoy_snapshot.json").read_text())
+    bll = {b: (snap[b]["lat"], snap[b]["lng"]) for b in ("41122", "trrf1", "wiwf1")}
+    # 41122 (Hollywood Beach, ~200 m off the beach) vs spots north on the SAME unbroken Atlantic
+    # beach — no headland exists between any of them.
+    MUST_CLEAR = {s: "41122" for s in ("hillsboro-beach", "palm-beach", "ocean-reef-park",
+                                       "juno-beach-pier")}
+    # real peninsula crossings — a DIFFERENT landmass relationship (station behind the Everglades)
+    MUST_FLAG = {"south-beach-miami": "trrf1", "haulover-inlet": "wiwf1"}
+    print("    mfl headland regression (real GSHHG):")
+    flagged = set()
+    for sl, b in {**MUST_CLEAR, **MUST_FLAG}.items():
+        v = nn._headland_verdict(coord[sl], bll[b], land)
+        pen = v["own_penetration_km"]
+        print(f"      {'FLAG ' if v['reject'] else 'clear'} {sl:20} {b:6} chord={v['chord_km']:5.1f} km  "
+              f"dist={v['dist_km']:5.0f} km  own_clip={v['own_chord_km']:5.1f} km  "
+              f"inland={'n/a' if pen is None else f'{pen:5.1f} km'}  excluded={v['own_excluded']}")
+        if v["reject"]:
+            flagged.add(sl)
+    assert flagged == set(MUST_FLAG), f"expected exactly the 2 Everglades crossings; got {sorted(flagged)}"
+
+
 def test_headland_27_pair_regression():
     """ACCEPTANCE BAR — real GSHHG. Must FLAG exactly the 6 wrong-side pairings and CLEAR the 21
     correct ones. Skips when the GSHHG shapefile is absent (this sandbox); run on the Mac."""
