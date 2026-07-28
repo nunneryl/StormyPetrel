@@ -173,6 +173,61 @@ def test_missing_value_key_masks_in_addition_to_9999():
     assert trk.trkng_systems_at(cyc, 1, 1, 0) == [], "1e20 missingValue masked, not read as swell"
 
 
+def test_diag_matches_the_swell_not_raw_index_0():
+    """The --diag comparison must select the SWELL system, not systems[0]. NWPS's system index is
+    neither energy-ordered nor temporally stable, so a short-period WIND SEA can occupy index 0 —
+    the mhx 20260728 00Z shape: index 0 = 0.14 m / 3.4 s / 173°, index 1 = 0.74 m / 7.0 s / 117°,
+    buoy swell_dir ~90°. Taking index 0 compared chop against the buoy's swell and inflated the
+    NEW/REF rows to ~+42° while the trust gate reported ~+7° on the same buoy and cycle."""
+    from pipeline.forecast import nwps_nearshore as nn
+    windsea = {"system": 1, "hs": 0.14, "tp": 3.4, "dir": 173.0}     # index 0 — short, wind-aligned
+    swell = {"system": 2, "hs": 0.74, "tp": 7.0, "dir": 117.0}       # index 1 — the real swell
+    systems = [windsea, swell]
+    ws, wdir = 7.0, 180.0                                            # ~7 m/s from the south
+    # wave age classifies them apart: c = g·tp/2π is 5.3 m/s for 3.4 s (below 1.2·U·cosδ) and
+    # 10.9 m/s for 7.0 s (above it)
+    assert nn._system_is_swell(windsea, ws, wdir) is False
+    assert nn._system_is_swell(swell, ws, wdir) is True
+    matched = nn._match_swell_system(systems, ws, wdir)
+    assert matched is swell, f"matched the wind sea at index 0, not the swell: {matched}"
+    assert matched["dir"] == 117.0
+    # the delta the diag would report: vs a ~90° buoy swell, matching gives ~+27°, index 0 ~+83°
+    assert abs(((matched["dir"] - 90.0 + 180) % 360) - 180) < abs(((systems[0]["dir"] - 90.0 + 180) % 360) - 180)
+
+    # ordering must not matter — the selector is energy-ranked among swells, not index-ranked
+    assert nn._match_swell_system([swell, windsea], ws, wdir) is swell
+    # a bigger wind sea must still lose to a smaller swell (energy rank applies AFTER the veto)
+    big_chop = {"system": 3, "hs": 1.8, "tp": 3.0, "dir": 178.0}
+    assert nn._match_swell_system([big_chop, swell], ws, wdir) is swell
+    # all-wind-sea → None, so the hour contributes NO sample (never a fallback to index 0)
+    assert nn._match_swell_system([windsea, big_chop], ws, wdir) is None
+    # no model wind → unclassifiable → None, again no fallback
+    assert nn._match_swell_system(systems, None, None) is None
+
+    # --- the actual --diag selection step (not a re-implementation of it) ---
+    # _matched_swell_at is what the diag loop calls per hour; --diag itself needs NOMADS+eccodes,
+    # so this is the seam that makes the changed code path testable offline.
+    VALID = 486_000
+    mw = {VALID: (ws, wdir)}
+    m, mdir = trk._matched_swell_at(systems, mw, VALID)
+    assert m is swell and mdir == 117.0, (m, mdir)
+    # index 0 would have given 173° — the chop-vs-swell comparison being fixed
+    assert mdir != systems[0]["dir"]
+    # an hour with no model wind is dropped, NOT back-filled with index 0
+    assert trk._matched_swell_at(systems, mw, VALID + 1) == (None, None)
+    assert trk._matched_swell_at(systems, {}, VALID) == (None, None)
+    assert trk._matched_swell_at(systems, None, VALID) == (None, None)
+    # an all-wind-sea hour is dropped the same way
+    assert trk._matched_swell_at([windsea, big_chop], mw, VALID) == (None, None)
+    assert trk._matched_swell_at([], mw, VALID) == (None, None)
+
+    # and the per-hour table marks the matched system so the selection is visible
+    assert trk._sys_str(systems, 1, matched).startswith("*"), "matched system must be marked"
+    assert not trk._sys_str(systems, 0, matched).startswith("*"), "wind sea must NOT be marked"
+    assert trk._sys_str(systems, 0, None) == trk._sys_str(systems, 0), "marker is opt-in"
+    assert trk._sys_str(systems, 5, matched).strip() == "—", "absent system still dashes"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
