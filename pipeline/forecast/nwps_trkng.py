@@ -353,12 +353,29 @@ def _spec_by_hour(buoy_id):
     return out
 
 
-def _sys_str(systems, idx):
-    """'hs/tp/dir' for the idx-th tracked system (by system index), or dashes."""
+def _matched_swell_at(systems, model_wind, valid):
+    """(matched_system | None, its dir | None) for ONE diag hour — the swell-selection step of
+    --diag, factored out so it is unit-testable without NOMADS/eccodes (the diag loop itself needs
+    both). Delegates to nwps_nearshore._match_swell_system, the SAME selector the trust gate uses,
+    fed the SAME model wind at the node (CG1 ws/wdir, keyed by valid hour) the gate passes as
+    model_ws/model_wdir — so the diag and the gate can never disagree about what "the swell" is.
+    No model wind for the hour → (None, None): unclassifiable, so the hour is not comparable.
+    Never falls back to systems[0]; that fallback is the bug this replaced."""
+    mw = (model_wind or {}).get(valid)
+    matched = nn._match_swell_system(systems, mw[0], mw[1]) if mw else None
+    return matched, (matched["dir"] if matched else None)
+
+
+def _sys_str(systems, idx, matched=None):
+    """'hs/tp/dir' for the idx-th tracked system (by system index), or dashes. A leading '*'
+    marks the system _match_swell_system picked as THE swell for that hour — the one the NEW/REF
+    comparisons use — so the selection is VISIBLE in the table instead of being inferred from the
+    numbers. Identity comparison (`is`), not equality: two systems can carry identical values."""
     if idx < len(systems):
         s = systems[idx]
         tp = f"{s['tp']:.1f}" if s.get("tp") is not None else "—"
-        return f"{s['hs']:.2f}/{tp}/{s['dir']:.0f}"
+        mark = "*" if any(s is m for m in ((matched,) if matched is not None else ())) else ""
+        return f"{mark}{s['hs']:.2f}/{tp}/{s['dir']:.0f}"
     return "   —   "
 
 
@@ -414,11 +431,16 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
 
     print(f"  {'valid(fh)':>11} {'dirpw':>5} {'sys1 hs/tp/dir':>14} {'sys2 hs/tp/dir':>14} "
           f"{'MWD':>4} {'.spec H/P/D':>13} {'SPECTRAL Hsw/dir/frac/totdir':>28} {'wind U/dir(src)':>15}")
+    print("  ('*' marks the system matched as THE swell — the one NEW/REF compare; an hour with "
+          "no match contributes no sample)")
     # paired series for the comparisons (task 3), over hours both sides cover
     old_m, old_b, new_m, new_b, ctl_m, ctl_b, ref_m, ref_b, fracs = ([] for _ in range(9))
     hs_sp, hs_ref = [], []   # spectral Hs_swell vs the buoy's own .spec SwH (band-split sanity, task 2)
     methods = set()          # which band split fired (ndbc_sep_freq / wave_age / fixed_cutoff)
     wind_srcs = set()        # which wind drove wave-age (buoy / model / none)
+    # hours the matched-swell selection DROPPED, reported after the table so the n= counts on the
+    # NEW/REF rows are explainable rather than mysteriously short
+    n_no_wind = n_no_swell = n_deep_match = 0
     shown = 0
     for fh in cg1["steps"]:
         if shown >= max_rows:
@@ -427,8 +449,25 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         dirpw = nn._node_value(cg1, "dirpw", fh, ci, cj)
         dirpw = dirpw if (dirpw is not None and dirpw == dirpw) else None
         systems = trkng_systems_at(trk, ti, tj, fh)
-        sys1_dir = systems[0]["dir"] if systems else None
         valid = int((cg1["cycle_dt"] + datetime.timedelta(hours=fh)).timestamp() // 3600)
+        # THE SWELL SYSTEM — not index 0. NWPS's system index is neither energy-ordered nor
+        # temporally stable, so on hours where a short-period wind sea occupies index 0 the raw
+        # pick compared CHOP against the buoy's SWELL: at fh2-4 of the mhx 20260728 00Z cycle,
+        # index 0 was 0.14 m / 3.4 s / 173° while the real swell at index 1 was 0.74 m / 7.0 s /
+        # 117° against a buoy swell_dir near 90°, inflating NEW and REF to ~+42° mean delta while
+        # the trust gate — which already uses this selector — reported ~+7° bias on the same buoy
+        # and cycle. Use the SAME wave-age wind-sea exclusion, fed the SAME model wind at the node
+        # (CG1 ws/wdir) the trust gate passes as model_ws/model_wdir. When nothing qualifies as
+        # swell the hour contributes NO sample — never a fallback to index 0, which is exactly the
+        # category error being fixed.
+        matched, matched_dir = _matched_swell_at(systems, model_wind, valid)
+        if systems:
+            if valid not in model_wind:
+                n_no_wind += 1              # unclassifiable: no model wind → no wave-age test
+            elif matched is None:
+                n_no_swell += 1             # every tracked system is wind sea this hour
+            elif all(matched is not s for s in systems[:2]):
+                n_deep_match += 1           # matched beyond sys2, so no '*' shows in the table
         b, sp, spx = std.get(valid), spec.get(valid), spectral.get(valid)
         mwd = b.get("mwd") if b else None
         buoy_sw = (f"{_n(sp.get('swh'),'{:.2f}')}/{_n(sp.get('swp'),'{:.1f}')}/{_n(sp.get('swd'))}"
@@ -450,16 +489,16 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         # accumulate the three paired comparisons (only where both sides are present)
         if dirpw is not None and mwd is not None:
             old_m.append(dirpw); old_b.append(mwd)
-        if sys1_dir is not None and spx and spx.get("swell_dir") is not None:
-            new_m.append(sys1_dir); new_b.append(spx["swell_dir"])
+        if matched_dir is not None and spx and spx.get("swell_dir") is not None:
+            new_m.append(matched_dir); new_b.append(spx["swell_dir"])
         if dirpw is not None and spx and spx.get("total_mean_dir") is not None:
             ctl_m.append(dirpw); ctl_b.append(spx["total_mean_dir"])
-        if sys1_dir is not None and sp and sp.get("swd") is not None:
-            ref_m.append(sys1_dir); ref_b.append(sp["swd"])   # vs the coarse 22.5°-binned SwD
+        if matched_dir is not None and sp and sp.get("swd") is not None:
+            ref_m.append(matched_dir); ref_b.append(sp["swd"])   # vs the coarse 22.5°-binned SwD
         if spx and sp and sp.get("swh") is not None:
             hs_sp.append(spx["hs_swell"]); hs_ref.append(sp["swh"])
-        print(f"  {valid:>7}({fh:>3}) {_n(dirpw):>5} {_sys_str(systems,0):>14} "
-              f"{_sys_str(systems,1):>14} {_n(mwd):>4} {buoy_sw:>13} {spec_col:>28} {wind_col:>15}")
+        print(f"  {valid:>7}({fh:>3}) {_n(dirpw):>5} {_sys_str(systems,0,matched):>14} "
+              f"{_sys_str(systems,1,matched):>14} {_n(mwd):>4} {buoy_sw:>13} {spec_col:>28} {wind_col:>15}")
         shown += 1
 
     # THE EXPERIMENT (task 3): is the partition-matched, degree-valued comparison tighter?
@@ -470,9 +509,21 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         print(f"  {label:<50} n={n:>3}  meanΔ {(_n(md,'{:+.1f}')):>6}°  circ_std {(_n(cs,'{:.1f}')):>5}°")
 
     _cmp("OLD   model dirpw    vs buoy MWD  (today's gate)", old_m, old_b)
-    _cmp("NEW   model sys1 dir vs buoy spectral swell_dir", new_m, new_b)
-    _cmp("REF   model sys1 dir vs buoy coarse .spec SwD", ref_m, ref_b)   # NEW vs REF = quantization gain
+    _cmp("NEW   model matched swell dir vs buoy spectral swell_dir", new_m, new_b)
+    _cmp("REF   model matched swell dir vs buoy coarse .spec SwD", ref_m, ref_b)  # NEW vs REF = quantization gain
     _cmp("CTRL  model dirpw    vs buoy spectral total dir", ctl_m, ctl_b)
+    # OLD and CTRL are the dirpw baselines and are deliberately UNCHANGED by the matched-swell
+    # selection — they must stay comparable to every earlier run of this diag.
+    if n_no_wind or n_no_swell or n_deep_match:
+        bits = []
+        if n_no_swell:
+            bits.append(f"{n_no_swell} with no system qualifying as swell (all wind sea)")
+        if n_no_wind:
+            bits.append(f"{n_no_wind} with no model wind at the node (unclassifiable)")
+        if n_deep_match:
+            bits.append(f"{n_deep_match} whose matched system is beyond sys2, so no '*' is visible")
+        print("  note: matched-swell selection — " + "; ".join(bits) +
+              ". Dropped hours contribute no NEW/REF sample (never a fallback to index 0).")
     # band-split sanity (task 2): our Hs_swell must track the buoy's OWN .spec SwH, else
     # the split is wrong. (Both use NDBC's separation frequency, so they should match.)
     if hs_sp:
