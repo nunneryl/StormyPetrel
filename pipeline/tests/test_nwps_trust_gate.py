@@ -577,15 +577,26 @@ def test_reverify_covers_pending_zones_not_just_pass():
     # The expected pending set is READ from the assignments file so it can't go stale: 46240/46284
     # were moved to unverifiable[] in the Monterey-Bay reference-offline change and are correctly NO
     # LONGER pending, and any future pending edits are picked up automatically.
+    #
+    # REGISTERING a pending zone and PLACING its spots are separate steps, so a zone can legitimately
+    # sit in pending[] with nothing placed behind it yet — mfl/41122 is registered while all 23 mfl
+    # spots are still swell_window_source=='raycast', placement having been deliberately deferred
+    # pending a non-flat cycle. _tagged_nwps_zones keys on PLACED spots, so such a zone is correctly
+    # absent from it and must not be demanded here. Scope the expectation to pending zones that
+    # actually have at least one placed spot; for those the assertion is unchanged and undiluted.
     import json
-    from pipeline.forecast.nwps_nearshore import NWPS_ASSIGNMENTS
+    from pipeline.forecast.nwps_nearshore import NWPS_ASSIGNMENTS, ENRICHED
     zones = {(w, b) for w, b, _ in nn._tagged_nwps_zones()}
     doc = json.loads(NWPS_ASSIGNMENTS.read_text())
     pending = {(r["wfo"], str(r["buoy"])) for r in (doc.get("buoy_reference") or {}).get("pending") or []
                if r.get("wfo") and r.get("buoy") is not None}
-    assert pending, "expected at least one placed pending zone in the assignments file"
-    missing = pending - zones
-    assert not missing, f"reverify must cover the pending zones; missing {missing}"
+    assert pending, "expected at least one pending zone in the assignments file"
+    placed_wfos = {s.get("nwps_wfo") for s in json.loads(ENRICHED.read_text())
+                   if s.get("swell_window_source") == "nwps"}
+    expected = {(w, b) for w, b in pending if w in placed_wfos}
+    assert expected, "expected at least one PLACED pending zone (all pending zones are unplaced?)"
+    missing = expected - zones
+    assert not missing, f"reverify must cover the PLACED pending zones; missing {missing}"
 
 
 def test_reverify_emit_settled_to_github_output():
@@ -851,6 +862,22 @@ def test_headland_own_landmass_resolution_and_fallback():
             @staticmethod
             def nearest(_): raise RuntimeError("no tree")
     assert nn._headland_own_landmass((26.0, -80.0), _Broken()) == (None, False)
+
+
+def test_headland_graze_ceiling_sits_in_the_measured_gap():
+    """The graze ceiling is a MEASURED boundary, not a tuned one, and its margin is only ~2 km wide.
+    At 8.0 it swallowed real headlands: on full-res GSHHG the whole North American mainland is ONE
+    polygon, so every East Coast buoy routes its mainland crossings through the graze test, and the
+    Canaveral crossings (33-78 km of land) reach only 4.1-5.4 km inland — under the old bar, so all
+    six wrong-side pairings cleared and the detector was a no-op for the entire seaboard. These are
+    the real-GSHHG margins that set the value; runs offline so the gap can't be silently invalidated."""
+    MUST_CLEAR_DEEPEST_KM = 2.15      # deepest inland reach of an along-coast pairing that must CLEAR
+    MUST_FLAG_SHALLOWEST_KM = 4.14    # shallowest inland reach of the six Canaveral crossings (must FLAG)
+    assert MUST_CLEAR_DEEPEST_KM < nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM < MUST_FLAG_SHALLOWEST_KM, (
+        f"FIND_BUOY_HEADLAND_OWN_GRAZE_KM={nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM} is outside the measured "
+        f"{MUST_CLEAR_DEEPEST_KM}-{MUST_FLAG_SHALLOWEST_KM} km gap; re-run BOTH real-GSHHG acceptance "
+        f"bars (test_headland_27_pair_regression 6 FLAG/21 clear, test_headland_mfl_regression 4 clear/"
+        f"2 FLAG) before changing it")
 
 
 def test_headland_mfl_regression():
