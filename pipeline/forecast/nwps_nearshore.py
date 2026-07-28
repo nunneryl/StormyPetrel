@@ -2565,6 +2565,14 @@ def _not_dead(r):
 # gently convex coast stays within a few km of the beach however long it is,     #
 # while crossing the Florida peninsula to the Everglades f1 stations penetrates  #
 # tens of km. A crossing of any OTHER polygon is untouched by all of this.       #
+#                                                                               #
+# READ THIS BEFORE TOUCHING THE GRAZE CEILING: on full-res GSHHG the entire      #
+# North American mainland is a SINGLE polygon, so for essentially every East     #
+# Coast buoy the "own landmass" IS the mainland and the graze test is the        #
+# NORMAL path, not a rare edge case — a cape and the beach 100 km away belong to #
+# one and the same polygon. The inland-penetration measure is therefore the only #
+# thing separating a real headland from a coast-parallel clip along the whole    #
+# seaboard, and its margin is ~2 km wide (see the constant below).               #
 # --------------------------------------------------------------------------- #
 FIND_BUOY_HEADLAND_AREA_KM2 = 500.0      # a crossed land polygon must exceed this to be a "headland"
                                           #   (500 sits mid-band of the 100–5000 km² clean range → drift-tolerant)
@@ -2575,7 +2583,20 @@ FIND_BUOY_HEADLAND_DENSIFY_M = 200.0     # geodesic vertex spacing (fine enough 
 # never gets further than this from that polygon's shoreline is a coast-parallel clip, not a headland
 # the path must round. Sits an order of magnitude below a peninsula traverse (the 11–94 km Everglades
 # f1 crossings run tens of km inland) and above the few-km inland reach of a long coastal chord.
-FIND_BUOY_HEADLAND_OWN_GRAZE_KM = 8.0
+#
+# LOWERED 8.0 → 3.0 (2026-07-28) — at 8.0 this test SWALLOWED REAL HEADLANDS. On full-res GSHHG the
+# whole North American mainland is ONE polygon, so every offshore East Coast buoy resolves that
+# polygon as its "own landmass" and EVERY mainland crossing was routed into the graze test rather
+# than counted. Cape Canaveral crossings run 33–78 km of land but reach only 4.1–5.4 km INLAND, all
+# under the old 8.0 bar, so all six wrong-side Canaveral pairings were silently cleared and the
+# detector was a NO-OP for the entire mainland coast. The measured margins that set this value:
+#     must-CLEAR along-coast pairings reach at most   2.15 km inland
+#     must-FLAG Canaveral headland crossings reach     4.14 km inland (min of the six)
+# 3.0 sits in that 2.15–4.14 km gap. It is a MEASURED boundary, not a tuned one — if it is ever
+# changed, BOTH real-GSHHG acceptance bars must be re-run (test_headland_27_pair_regression: exactly
+# 6 FLAG / 21 clear, and test_headland_mfl_regression: 4 clear / 2 FLAG). The gap is ~2 km wide, so
+# unlike the 100–5000 km² area floor this constant is NOT drift-tolerant.
+FIND_BUOY_HEADLAND_OWN_GRAZE_KM = 3.0
 FIND_BUOY_HEADLAND_GRAZE_SAMPLES = 25    # penetration is smooth along the path; ~25 samples finds its max
 # Distance ceiling: apply the wrong-side REJECTION only within this range. The 6 validated true
 # positives were all nearshore (spot→buoy 41–96 km); 110 km catches them with margin yet stays
