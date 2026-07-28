@@ -3387,6 +3387,83 @@
           "south-beach-miami"
         ],
         "to_place": "This record alone tags NOTHING. On the Mac run `--validate --wfo mfl --batch <these 15 slugs>` to compute each spot's nwps_node_lat/lng/distance, then `promote_nwps_validate --buoy 41122 --slugs <these 15>` merges them into 'spots'. Placement is via the pending path; 41122 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "mhx/44056",
+        "wfo": "mhx",
+        "buoy": "44056",
+        "reference": "44056 — Duck FRF, NC nearshore Waverider (18 m); a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 44056 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The mhx Outer Banks coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging a whole barrier-island coast to FAIL. Spots on the far side of Cape Point are NOT in any of these zones — see unverifiable mhx/wrong-side-of-cape-point.",
+        "spots": 7,
+        "slugs": [
+          "duck-pier",
+          "kitty-hawk-pier",
+          "black-pelican",
+          "avalon-pier",
+          "kill-devil-hills",
+          "bath-house",
+          "corolla-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 7 spots are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28, 23 placed-OK entries covering the whole mhx batch); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --buoy 44056 --slugs <these 7>` merges them into 'spots'. Placement is via the pending path; 44056 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "mhx/44086",
+        "wfo": "mhx",
+        "buoy": "44086",
+        "reference": "44086 — Nags Head, NC nearshore Waverider (21 m); a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 44086 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The mhx Outer Banks coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging a whole barrier-island coast to FAIL. Spots on the far side of Cape Point are NOT in any of these zones — see unverifiable mhx/wrong-side-of-cape-point.",
+        "spots": 4,
+        "slugs": [
+          "jennettes-pier",
+          "nags-head-pier",
+          "outer-banks-fishing-pier",
+          "abalone-street"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 4 spots are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28, 23 placed-OK entries covering the whole mhx batch); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --buoy 44086 --slugs <these 4>` merges them into 'spots'. Placement is via the pending path; 44086 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "mhx/44095",
+        "wfo": "mhx",
+        "buoy": "44095",
+        "reference": "44095 — Oregon Inlet, NC nearshore Datawell Waverider (18 m); a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 44095 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The mhx Outer Banks coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging a whole barrier-island coast to FAIL. Spots on the far side of Cape Point are NOT in any of these zones — see unverifiable mhx/wrong-side-of-cape-point.",
+        "spots": 5,
+        "slugs": [
+          "oregon-inlet",
+          "north-pea-island",
+          "s-turns",
+          "rodanthe",
+          "salvo"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 5 spots are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28, 23 placed-OK entries covering the whole mhx batch); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --buoy 44095 --slugs <these 5>` merges them into 'spots'. Placement is via the pending path; 44095 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "mhx/41120",
+        "wfo": "mhx",
+        "buoy": "41120",
+        "reference": "41120 — Cape Hatteras East, NC Waverider (29 m); a VALID directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41120 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The mhx Outer Banks coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging a whole barrier-island coast to FAIL. Spots on the far side of Cape Point are NOT in any of these zones — see unverifiable mhx/wrong-side-of-cape-point.",
+        "spots": 5,
+        "slugs": [
+          "avon-pier",
+          "north-buxton",
+          "the-point-buxton",
+          "cape-hatteras-lighthouse",
+          "ocracoke-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 5 spots are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28, 23 placed-OK entries covering the whole mhx batch); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --buoy 41120 --slugs <these 5>` merges them into 'spots'. Placement is via the pending path; 41120 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -3610,6 +3687,17 @@
           "key-west"
         ],
         "to_place": "7 spots - promoted with NO buoy. On the Mac run `--validate --wfo mfl --batch <these 7 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 7> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "mhx/wrong-side-of-cape-point",
+        "wfo": "mhx",
+        "reason": "WRONG SIDE OF CAPE POINT — no valid directional reference exists on these two spots' side of the cape. Cape Point at Hatteras is the sharpest headland on the US East Coast: it removes whole swell windows, so a buoy on one side measures seas the other side does not receive. 41120 (Cape Hatteras East, 29 m Waverider) is the nearest reference but sits EAST of the point, while frisco-pier and hatteras-ferry-docks face southwest into Hatteras Inlet and Pamlico Sound; a direction PASS against it would certify them from a different swell regime (false confidence). No buoy on their side publishes a directional axis. These two ride NWPS HEIGHT skill + raycast direction, direction unverified. Same disposition as jax/volusia-north-of-canaveral and ilm/brunswick-south-of-cape-fear (spot and reference on opposite sides of a cape), DISTINCT from the four mhx pending zones (valid live references fronting their own spots, direction merely pending). RE-CHECK TRIGGER: any nearshore directional buoy deployed south or west of Cape Point — a BU-6 monthly re-sweep would catch it.",
+        "nearest_candidate": "41120 Cape Hatteras East (29 m Waverider — EAST of Cape Point, wrong side for these two) / no directional buoy on the southwest side of the point - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "frisco-pier",
+          "hatteras-ferry-docks"
+        ],
+        "to_place": "2 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --no-buoy --slugs <these 2> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
