@@ -462,10 +462,82 @@ def test_water_depth_parse_tolerates_html_tags():
     assert nn._parse_water_depth("") is None
 
 
+def test_find_buoy_probes_the_nearest_candidates_not_roster_order():
+    """DEFECT 1 — the probe cap must be spent NEAREST-FIRST. _rank_candidates calls spectral_fn
+    inside the station loop, so whatever order that loop runs in decides which stations get probed.
+    Iterating the roster directly spent the cap in activestations.xml order: ljpc1 (La Jolla, 1 km,
+    both endpoints 404) went unprobed while stations 130 km away were probed, and the "probed the N
+    nearest" message was untrue."""
+    target = (32.87, -117.25)
+    # roster order puts the FAR station first, exactly as activestations.xml did for ljpc1
+    stations = [{"id": "far", "lat": 34.05, "lng": -117.25, "name": "Far"},          # ~131 km
+                {"id": "near", "lat": 32.879, "lng": -117.25, "name": "Near"}]       # ~1 km
+    meta = {"far": {"depth_m": 20.0, "payload": "Datawell Waverider"},
+            "near": {"depth_m": 18.0, "payload": "Datawell Waverider"}}
+    CAP = 1
+    probed, order = [], []
+
+    def _spec(bid):                       # mirrors find_buoy's _spec closure: capped, single-shot
+        order.append(bid)
+        if len(probed) >= CAP:
+            return None                   # not probed (cap) → UNKNOWN
+        probed.append(bid)
+        return True
+    rows = nn._rank_candidates(*target, stations, 150.0, meta_fn=lambda i: meta[i], spectral_fn=_spec)
+    assert probed == ["near"], f"cap spent on the wrong station: probed={probed} order={order}"
+    assert order[0] == "near", f"spectral_fn called in roster order, not distance order: {order}"
+    # and the probed near station is the recommendation, not the unprobed far one
+    assert rows[0]["id"] == "near" and rows[0]["spectral"] is True
+    assert nn._best_valid(rows)["id"] == "near"
+
+
+def test_find_buoy_unknown_spectral_ranks_below_confirmed():
+    """DEFECT 2 — `is False` let None (not probed → UNKNOWN) escape demotion and tie with a
+    confirmed live directional buoy on distance alone. That is how ljpc1, which publishes nothing,
+    outranked 46254 SCRIPPS Nearshore at the same distance. Unknown must sort BELOW confirmed and
+    ABOVE confirmed-absent — never discarded, since one transient probe failure must not bin a
+    good buoy."""
+    target = (32.87, -117.25)
+    stations = [{"id": "unknown", "lat": 32.879, "lng": -117.25, "name": "Unknown"},
+                {"id": "confirmed", "lat": 32.879, "lng": -117.25, "name": "Confirmed"},
+                {"id": "absent", "lat": 32.879, "lng": -117.25, "name": "Absent"}]
+    m = {"depth_m": 18.0, "payload": "Datawell Waverider"}
+    spec = {"unknown": None, "confirmed": True, "absent": False}
+    rows = nn._rank_candidates(*target, stations, 150.0,
+                               meta_fn=lambda i: dict(m), spectral_fn=lambda i: spec[i])
+    # identical verdict and identical distance — only the spectral state separates them
+    assert [r["id"] for r in rows] == ["confirmed", "unknown", "absent"], [r["id"] for r in rows]
+    assert len({r["d"] for r in rows}) == 1 and len({r["verdict"] for r in rows}) == 1
+    assert nn._best_valid(rows)["id"] == "confirmed", "a confirmed axis must win the recommendation"
+
+
+def test_find_buoy_unknown_spectral_does_not_fire_depth_fallback():
+    """DEFECT 2 (second half) — _depth_unconfirmed_valid had the same `is False` test. It already
+    accepts an unresolved DEPTH; accepting an unprobed AXIS too would stack two unknowns into a
+    VALID REFERENCE, which is what recommended ljpc1. Confirmed spectra required here."""
+    def _row(**kw):
+        base = {"d": 10.0, "id": "x", "name": "Nearshore", "depth": None,
+                "payload": "Datawell Waverider", "spectral": True,
+                "verdict": "VALID REFERENCE", "complete": False, "reasons": []}
+        base.update(kw)
+        return base
+    assert nn._depth_unconfirmed_valid(_row(spectral=True)) is True      # confirmed → fires
+    assert nn._depth_unconfirmed_valid(_row(spectral=None)) is False     # UNKNOWN → declines
+    assert nn._depth_unconfirmed_valid(_row(spectral=False)) is False    # absent → declines
+    # and it does not leak through _best_valid either
+    assert nn._best_valid([_row(spectral=None)]) is None
+    assert nn._best_valid([_row(spectral=True)])["id"] == "x"
+    # a DEPTH-RESOLVED row is unaffected — this tightening touches only the no-depth fallback
+    assert nn._best_valid([_row(spectral=None, depth=18.0, complete=True)])["id"] == "x"
+
+
 def test_find_buoy_depth_unconfirmed_waverider_fallback():
+    # spectral defaults to True (CONFIRMED): this fallback already accepts an unresolved DEPTH, so
+    # it requires the directional axis to be confirmed rather than merely not-known-absent — see
+    # test_find_buoy_unknown_spectral_does_not_fire_depth_fallback for the None case.
     def _row(**kw):
         base = {"d": 10.0, "id": "x", "name": "", "depth": None, "payload": None,
-                "spectral": None, "verdict": "VALID REFERENCE", "complete": False, "reasons": []}
+                "spectral": True, "verdict": "VALID REFERENCE", "complete": False, "reasons": []}
         base.update(kw)
         return base
     # a CLOSE Waverider whose depth didn't resolve (None) IS accepted VALID on payload+distance
