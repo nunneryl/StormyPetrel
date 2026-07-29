@@ -3320,6 +3320,226 @@
       "nwps_node_lng": -75.68976,
       "nwps_node_distance_m": 1098,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "bird-rock",
+      "name": "Bird Rock",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.805,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 1134,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "garbage-beach",
+      "name": "Garbage Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.67812,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 1841,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "mission-beach",
+      "name": "Mission Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.76875,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 1475,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "pacific-beach",
+      "name": "Pacific Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.805,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 1399,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "san-diego-blacks-beach",
+      "name": "San Diego Blacks Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.8775,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 1537,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "tourmaline",
+      "name": "Tourmaline",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.805,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 509,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "windansea-beach",
+      "name": "Windansea Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.82312,
+      "nwps_node_lng": -117.2906,
+      "nwps_node_distance_m": 1208,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "pb-point",
+      "name": "PB Point",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.805,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 278,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "law-street",
+      "name": "Law Street",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.805,
+      "nwps_node_lng": -117.26923,
+      "nwps_node_distance_m": 816,
+      "nwps_buoy_id": "46254"
+    },
+    {
+      "slug": "carlsbad-state-beach",
+      "name": "Carlsbad State Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.14937,
+      "nwps_node_lng": -117.3547,
+      "nwps_node_distance_m": 501,
+      "nwps_buoy_id": "46274"
+    },
+    {
+      "slug": "ponto-beach",
+      "name": "Ponto Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.07687,
+      "nwps_node_lng": -117.33333,
+      "nwps_node_distance_m": 1968,
+      "nwps_buoy_id": "46274"
+    },
+    {
+      "slug": "stone-steps",
+      "name": "Stone Steps",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.095,
+      "nwps_node_lng": -117.33333,
+      "nwps_node_distance_m": 1280,
+      "nwps_buoy_id": "46274"
+    },
+    {
+      "slug": "tamarack",
+      "name": "Tamarack",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.14937,
+      "nwps_node_lng": -117.3547,
+      "nwps_node_distance_m": 758,
+      "nwps_buoy_id": "46274"
+    },
+    {
+      "slug": "cottons",
+      "name": "Cottons",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.385,
+      "nwps_node_lng": -117.61111,
+      "nwps_node_distance_m": 1323,
+      "nwps_buoy_id": "46285"
+    },
+    {
+      "slug": "dana-point-california",
+      "name": "Dana Point, California",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.4575,
+      "nwps_node_lng": -117.71795,
+      "nwps_node_distance_m": 667,
+      "nwps_buoy_id": "46285"
+    },
+    {
+      "slug": "strands-beach",
+      "name": "Strands Beach",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.4575,
+      "nwps_node_lng": -117.71795,
+      "nwps_node_distance_m": 1160,
+      "nwps_buoy_id": "46285"
+    },
+    {
+      "slug": "oceanside-harbor",
+      "name": "Oceanside Harbor",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.20375,
+      "nwps_node_lng": -117.39744,
+      "nwps_node_distance_m": 110,
+      "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "san-onofre",
+      "name": "San Onofre",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.36687,
+      "nwps_node_lng": -117.56838,
+      "nwps_node_distance_m": 657,
+      "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "coronado-shores",
+      "name": "Coronado Shores",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.67812,
+      "nwps_node_lng": -117.18376,
+      "nwps_node_distance_m": 549,
+      "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "imperial-beach-pier",
+      "name": "Imperial Beach Pier",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.5875,
+      "nwps_node_lng": -117.14103,
+      "nwps_node_distance_m": 1056,
+      "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "imperial-beach-california",
+      "name": "Imperial Beach, California",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.5875,
+      "nwps_node_lng": -117.14103,
+      "nwps_node_distance_m": 702,
+      "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "tijuana-slough",
+      "name": "Tijuana Slough",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.55125,
+      "nwps_node_lng": -117.14103,
+      "nwps_node_distance_m": 1129,
+      "nwps_buoy_id": "46275"
     }
   ],
   "held": [],
