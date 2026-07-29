@@ -2371,44 +2371,74 @@ FIND_BUOY_LIVENESS_MAX_AGE_H = 12   # silent longer than this → NOT selectable
 FIND_BUOY_ROSTER_MAX_AGE_H = 12     # activestations.xml older than this → refetch before selecting
 
 
-def _probe_direction_axis(buoy, *, _get=None):
-    """Status-aware probe of a buoy's realtime .data_spec — the file the degree-valued swell-
-    direction reader needs. Distinguishes PERMANENT absence from a TRANSIENT blip:
-      ("available",   None)               200 with data — the directional axis is usable
-      ("unavailable", ".data_spec 404")   404/410 — PERMANENT: no directional axis (not selectable
-                                          as a DIRECTION reference; may still be a HEIGHT reference)
-      ("unknown",     ".data_spec <why>") timeout / 5xx after ONE retry — transient: UNKNOWN, never
-                                          silently selectable and never permanently blacklisted
-    Uses http.get_once (single attempt; returns the Response for 4xx/5xx so we read the status) and
-    retries ONCE on a transient failure, so a network blip cannot blacklist a good buoy. *_get*
-    injects the fetcher for tests."""
+def _probe_realtime_file(buoy, suffix, get_fn):
+    """Status-aware probe of ONE NDBC realtime2 file → ('available'|'unavailable'|'unknown', detail).
+    Factored out so every probed endpoint gets IDENTICAL retry and empty-body handling; the
+    three-state contract lives here and _probe_direction_axis just composes it across files.
+      available    200 with a real (non-HTML, non-empty) body
+      unavailable  404/410, or 200 with an empty/HTML body — PERMANENT for this file
+      unknown      timeout / 5xx after ONE retry, or any other status — transient
+    Uses http.get_once (single attempt; returns the Response for 4xx/5xx so we can read the status)
+    and retries ONCE on a transient failure, so a network blip cannot blacklist a good buoy."""
     from ..config import NDBC_REALTIME2_BASE
-    if _get is not None:
-        get_fn = _get
-    else:
-        from ..http import get_once as get_fn
-    url = f"{NDBC_REALTIME2_BASE}/{str(buoy).upper()}.data_spec"
-    detail = ".data_spec unreachable"
+    url = f"{NDBC_REALTIME2_BASE}/{str(buoy).upper()}{suffix}"
+    detail = f"{suffix} unreachable"
     for _attempt in (1, 2):
         try:
             resp = get_fn(url, timeout=15)
         except Exception as e:  # noqa: BLE001  transport error (Timeout / ConnectionError) — transient
-            detail = f".data_spec {type(e).__name__}"
+            detail = f"{suffix} {type(e).__name__}"
             continue            # retry once, then fall through to UNKNOWN
         code = getattr(resp, "status_code", None)
         if code in (404, 410):
-            return ("unavailable", f".data_spec {code}")
+            return ("unavailable", f"{suffix} {code}")
         if code == 200:
             text = (getattr(resp, "text", "") or "").strip()
             if text and not text.startswith("<"):
                 return ("available", None)
-            return ("unavailable", ".data_spec empty")   # 200 but no / HTML body → treat as absent
+            return ("unavailable", f"{suffix} empty")    # 200 but no / HTML body → treat as absent
         if code is not None and 500 <= code < 600:
-            detail = f".data_spec {code}"
+            detail = f"{suffix} {code}"
             continue            # retry once on 5xx
-        detail = f".data_spec HTTP {code}"
+        detail = f"{suffix} HTTP {code}"
         break                   # any other status → UNKNOWN (don't select, don't blacklist)
     return ("unknown", detail)
+
+
+def _probe_direction_axis(buoy, *, _get=None):
+    """Status-aware probe of whether a buoy publishes a usable DIRECTION axis. Same three states as
+    before, unchanged in meaning:
+      ("available",   None)            both files present — the directional axis is usable
+      ("unavailable", "<file> 404")    404/410 (or an empty body) on EITHER file — PERMANENT: no
+                                       directional axis (not selectable as a DIRECTION reference;
+                                       may still be a HEIGHT reference)
+      ("unknown",     "<file> <why>")  timeout / 5xx after ONE retry on EITHER file — transient:
+                                       never silently selectable, never permanently blacklisted
+
+    .data_spec ALONE IS NOT SUFFICIENT, which is what this fixes. .data_spec carries energy density
+    by frequency only — it says how much energy sits at each frequency, not which way any of it is
+    travelling. The directional MOMENTS live in .swdir (and .swr1). CDIP-mirrored coastal stations
+    publish the energy spectrum without the moments, so a 200 on .data_spec is NOT proof of a
+    direction axis: LJPC1 (La Jolla, CA 073) returns 200 on .data_spec and 404 on both .swdir and
+    .swr1, and its .txt agrees — WVHT, DPD and APD present, MWD reading MM. Probing .data_spec alone
+    therefore rated it as having a direction axis and it was recommended as a VALID directional
+    reference for seven San Diego spots; the downstream reader then found nothing usable, which is
+    why hours_since_last_obs returned None for it while returning 0 for real buoys. Real directional
+    buoys (46254, 44095, 41120) return 200 on .data_spec, .swdir AND .swr1.
+
+    So .swdir is REQUIRED in addition to .data_spec. .data_spec is probed first and a non-available
+    result short-circuits, so a station with no spectra at all costs one probe, not two. Only
+    .swdir is required, not .swr1: .swdir alone establishes that directional moments are published,
+    and each extra required file is another chance for a transient failure to mask a good buoy.
+    *_get* injects the fetcher for tests."""
+    if _get is not None:
+        get_fn = _get
+    else:
+        from ..http import get_once as get_fn
+    state, detail = _probe_realtime_file(buoy, ".data_spec", get_fn)
+    if state != "available":
+        return (state, detail)              # no energy spectrum → the moments cannot help
+    return _probe_realtime_file(buoy, ".swdir", get_fn)
 
 
 def _liveness_verdict(age_h, *, roster_stale=False):

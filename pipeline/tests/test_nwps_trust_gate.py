@@ -742,6 +742,90 @@ def test_find_buoy_404_makes_direction_unavailable():
     assert nn._probe_direction_axis("x", _get=lambda url, timeout=None: _FakeResp(410, ""))[0] == "unavailable"
 
 
+def _by_url(mapping, default=None):
+    """A fetcher fake that answers PER ENDPOINT, so the two probed files can differ. Values are a
+    _FakeResp or a callable raising a transport error. Records the URLs probed, in order."""
+    seen = []
+
+    def _get(url, timeout=None):
+        seen.append(url)
+        for suffix, resp in mapping.items():
+            if url.endswith(suffix):
+                if callable(resp):
+                    return resp()
+                return resp
+        if default is None:
+            raise AssertionError(f"unexpected probe URL: {url}")
+        return default
+    return _get, seen
+
+
+def test_find_buoy_data_spec_without_swdir_is_unavailable():
+    """LJPC1 (La Jolla, CA 073): 200 on .data_spec, 404 on .swdir and .swr1. .data_spec carries
+    energy density by frequency ONLY — no directional moments — so a 200 there is not proof of a
+    direction axis. Probing .data_spec alone rated it as having one and it was recommended as a
+    VALID directional reference for seven San Diego spots."""
+    SPEC = "2026 07 24 12 00  0.100  8.0 (0.08)"
+    get, seen = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _FakeResp(404, "<html>404</html>")})
+    assert nn._probe_direction_axis("ljpc1", _get=get) == ("unavailable", ".swdir 404")
+    assert any(u.endswith(".swdir") for u in seen), f".swdir was never probed: {seen}"
+    # unavailable -> spectral False -> not selectable, and it cannot ride the depth fallback either
+    assert nn._best_valid([_fb_row(id="ljpc1", spectral=False)]) is None
+    assert nn._depth_unconfirmed_valid(_fb_row(id="ljpc1", spectral=False, depth=None,
+                                               complete=False)) is False
+    # 410 on .swdir is equally permanent, and an empty 200 body is still treated as absent
+    g410, _ = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _FakeResp(410, "")})
+    assert nn._probe_direction_axis("x", _get=g410) == ("unavailable", ".swdir 410")
+    gempty, _ = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _FakeResp(200, "")})
+    assert nn._probe_direction_axis("x", _get=gempty) == ("unavailable", ".swdir empty")
+    # a .data_spec 404 short-circuits: no point probing the moments, and it stays the reported file
+    g404, seen404 = _by_url({".data_spec": _FakeResp(404, "<html>404</html>"),
+                             ".swdir": _FakeResp(200, SPEC)})
+    assert nn._probe_direction_axis("x", _get=g404) == ("unavailable", ".data_spec 404")
+    assert not any(u.endswith(".swdir") for u in seen404), "short-circuit failed, .swdir probed anyway"
+
+
+def test_find_buoy_both_files_present_is_available():
+    """46254 / 44095 / 41120 shape: energy spectrum AND directional moments both published."""
+    SPEC = "2026 07 24 12 00  0.100  8.0 (0.08)"
+    SWDIR = "2026 07 24 12 00  180.0 175.0 170.0"
+    get, seen = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _FakeResp(200, SWDIR)})
+    assert nn._probe_direction_axis("46254", _get=get) == ("available", None)
+    assert [u.rsplit(".", 1)[-1] for u in seen] == ["data_spec", "swdir"], seen
+    # available -> spectral True -> selectable, exactly as before this change
+    assert nn._best_valid([_fb_row(id="46254", spectral=True, age_h=2)])["id"] == "46254"
+
+
+def test_find_buoy_swdir_timeout_is_unknown_not_unavailable():
+    """A transient failure on the SECOND file must not read as permanent absence — otherwise a blip
+    on .swdir would blacklist a real directional buoy. The single retry applies to it too."""
+    import requests
+    SPEC = "2026 07 24 12 00  0.100  8.0 (0.08)"
+
+    def _timeout():
+        raise requests.Timeout("simulated")
+    get, seen = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _timeout})
+    state, detail = nn._probe_direction_axis("x", _get=get)
+    assert state == "unknown", f"transient .swdir failure read as {state}"
+    assert ".swdir" in detail and "Timeout" in detail, detail
+    assert sum(1 for u in seen if u.endswith(".swdir")) == 2, f"retry not applied to .swdir: {seen}"
+    # unknown -> spectral None -> not selectable on faith, but NOT blacklisted (ranks mid, not last)
+    spectral = {"available": True, "unavailable": False, "unknown": None}[state]
+    assert spectral is None
+    # a 5xx on .swdir is likewise transient, and a blip that recovers on the retry still succeeds
+    g5, _ = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _FakeResp(503, "")})
+    assert nn._probe_direction_axis("x", _get=g5) == ("unknown", ".swdir 503")
+    calls = {"n": 0}
+
+    def _flaky():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise requests.ConnectionError("blip")
+        return _FakeResp(200, "2026 07 24 12 00  180.0")
+    gflaky, _ = _by_url({".data_spec": _FakeResp(200, SPEC), ".swdir": _flaky})
+    assert nn._probe_direction_axis("x", _get=gflaky) == ("available", None)
+
+
 def test_find_buoy_timeout_is_unknown_not_permanent():
     # (3) a simulated timeout yields UNKNOWN — not VALID and not permanently invalid.
     import requests
