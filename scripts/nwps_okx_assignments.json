@@ -3694,6 +3694,84 @@
           "ocracoke-beach"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 5 spots are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28, 23 placed-OK entries covering the whole mhx batch); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --buoy 41120 --slugs <these 5>` merges them into 'spots'. Placement is via the pending path; 41120 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "sgx/46254",
+        "wfo": "sgx",
+        "buoy": "46254",
+        "reference": "46254 — SCRIPPS Nearshore, CA 201, 46 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46254 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The sgx coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging the whole San Diego / Orange County coast to FAIL.",
+        "spots": 9,
+        "slugs": [
+          "bird-rock",
+          "garbage-beach",
+          "mission-beach",
+          "pacific-beach",
+          "san-diego-blacks-beach",
+          "tourmaline",
+          "windansea-beach",
+          "pb-point",
+          "law-street"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 9 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46254 --slugs <these 9>` merges them into 'spots'. Placement is via the pending path; 46254 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "sgx/46274",
+        "wfo": "sgx",
+        "buoy": "46274",
+        "reference": "46274 — Leucadia Nearshore, CA 262, 17 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46274 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The sgx coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging the whole San Diego / Orange County coast to FAIL. FIRST-ASSESSMENT FINDING — the READER is suspect here, not the model. Buoy-side spectral sanity came back 21.6 degrees against an expected 15 degrees or less, and the direction spread of 21 degrees tracks that almost exactly, while the OLD dirpw metric read 2.7 degrees. That correspondence points at our spectral reader at this buoy rather than at model direction error. Do NOT read a future direction FAIL in this zone as a model failure until the reader has been checked at 46274.",
+        "spots": 4,
+        "slugs": [
+          "carlsbad-state-beach",
+          "ponto-beach",
+          "stone-steps",
+          "tamarack"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 4 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46274 --slugs <these 4>` merges them into 'spots'. Placement is via the pending path; 46274 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "sgx/46285",
+        "wfo": "sgx",
+        "buoy": "46285",
+        "reference": "46285 — Capistrano Beach Nearshore, CA 284, 11 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46285 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The sgx coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging the whole San Diego / Orange County coast to FAIL. FIRST-ASSESSMENT FINDING — do not misread a later verdict against this. The first assessable window gave HEIGHT FAIL with Pearson r 0.712 against the 0.8 bar, on a window whose buoy total-Hs span DID clear the 0.75 m variance floor, so the FAIL is a real reading and not an inconclusive one. DIRECTION on the same window was EXCELLENT: 3 degrees circular standard deviation and -3 degrees bias over 53 comparable hours. The model ran about 0.55 m BELOW the buoy every hour while tracking the same rising trend — a SYSTEMATIC UNDERESTIMATE, not a tracking failure, and consistent with island shadowing from Catalina and San Clemente being over-applied. This is ONE event: per the gate's own contract a single window does not block a region, so the zone is registered pending and the ROLLING accumulator decides. A later reader must not treat this height FAIL as settled, nor as evidence against the direction axis, which read excellent.",
+        "spots": 3,
+        "slugs": [
+          "cottons",
+          "dana-point-california",
+          "strands-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 3 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46285 --slugs <these 3>` merges them into 'spots'. Placement is via the pending path; 46285 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "sgx/46275",
+        "wfo": "sgx",
+        "buoy": "46275",
+        "reference": "46275 — Red Beach Nearshore, CA 264, 17 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46275 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The sgx coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging the whole San Diego / Orange County coast to FAIL. FIRST-ASSESSMENT FINDING — this zone spans a wide distance range. oceanside-harbor and san-onofre sit 11-14 km from the buoy; coronado-shores, imperial-beach-pier, imperial-beach-california and tijuana-slough sit 74-88 km away on the FAR SIDE of Point Loma. The distant four are the WEAKEST references in the zone. They were verified as geometrically LEGITIMATE — the wrong-side-of-headland check CLEARS them, and no closer station publishes a directional axis — so they are not a pairing error. But ONE zone verdict covers all six, so a FAIL here may be driven by the distant four rather than by the buoy or the model; check the per-spot residuals before drawing a conclusion about 46275 itself.",
+        "spots": 6,
+        "slugs": [
+          "oceanside-harbor",
+          "san-onofre",
+          "coronado-shores",
+          "imperial-beach-pier",
+          "imperial-beach-california",
+          "tijuana-slough"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46275 --slugs <these 6>` merges them into 'spots'. Placement is via the pending path; 46275 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
