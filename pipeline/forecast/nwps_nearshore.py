@@ -2475,12 +2475,23 @@ def _rank_candidates(tlat, tlng, stations, radius_km, *, meta_fn=_ndbc_station_m
     of the target with the SHARED _score_pairing (distance folded into the meta), then order
     best-first: usable VALID, then MARGINAL, then STRUCTURALLY INVALID, then metadata-incomplete,
     then no-spectral (unusable by our reader); nearest first within a class. *meta_fn* / *spectral_fn*
-    are injectable for tests. Returns a list of row dicts; scores nothing it has no data for."""
-    rows = []
+    are injectable for tests. Returns a list of row dicts; scores nothing it has no data for.
+
+    CANDIDATES ARE ORDERED BY DISTANCE **BEFORE** spectral_fn is called. spectral_fn is the live
+    probe and it is capped by the caller, so the order it is invoked in decides WHICH stations get
+    probed. Iterating the roster directly spent the cap in activestations.xml order: ljpc1 (La
+    Jolla, 1 km, both endpoints 404) went unprobed and kept spectral None while stations 130 km away
+    were probed, so it outranked 46254 SCRIPPS Nearshore — a live Waverider at the same distance
+    with a confirmed .data_spec — and was recommended for seven San Diego spots. It also made the
+    "probed the N nearest" message untrue. Sorting first makes the cap mean what it says."""
+    near = []
     for s in stations:
         d = _haversine_km(tlat, tlng, s["lat"], s["lng"])
-        if d > radius_km:
-            continue
+        if d <= radius_km:
+            near.append((d, s))
+    near.sort(key=lambda ds: ds[0])          # NEAREST FIRST — before a single probe is spent
+    rows = []
+    for d, s in near:
         meta = dict(meta_fn(s["id"]))
         meta["distance_km"] = d
         verdict, reasons = _score_pairing(meta)
@@ -2496,7 +2507,13 @@ def _rank_candidates(tlat, tlng, stations, radius_km, *, meta_fn=_ndbc_station_m
             base = max(base, 3)
         if r["spectral"] is False:  # no .data_spec/.swdir → unusable by our reader, rank last
             base = 4
-        return (base, r["d"])
+        # THREE-WAY, not two: confirmed-available (0) beats UNKNOWN (1) beats confirmed-absent (2).
+        # Testing only `is False` let None — "not probed, therefore unknown" — escape demotion and
+        # tie with a confirmed live directional buoy. Unknown must never rank as well as confirmed;
+        # equally it must not be treated as absent, or one transient probe failure would discard a
+        # good buoy. So it sorts between them, ahead of distance.
+        spec_rank = {True: 0, None: 1, False: 2}[r["spectral"]]
+        return (base, spec_rank, r["d"])
     rows.sort(key=_key)
     return rows
 
@@ -2507,11 +2524,22 @@ FIND_BUOY_FALLBACK_KM = 40.0   # depth-unconfirmed acceptance only within this r
 def _depth_unconfirmed_valid(r):
     """Option-2 fallback — fires ONLY when depth didn't resolve. A candidate with NO depth may still
     be accepted as VALID on payload + distance + exposure iff it is a Waverider (or a CDIP
-    'Nearshore' station), within FIND_BUOY_FALLBACK_KM, publishes spectra (not known-absent), and
+    'Nearshore' station), within FIND_BUOY_FALLBACK_KM, publishes spectra (CONFIRMED, see below), and
     _score_pairing already rated it VALID REFERENCE (which already means no sheltered/complex/
     structural flag). It can NEVER fire for a known-deep buoy: that scores STRUCTURALLY INVALID (not
-    VALID) and carries a resolved depth, so the 44098-class depth veto is preserved."""
-    if r.get("depth") is not None or r.get("verdict") != "VALID REFERENCE" or r.get("spectral") is False:
+    VALID) and carries a resolved depth, so the 44098-class depth veto is preserved.
+
+    Spectra must be CONFIRMED (True), not merely not-known-absent. This path already accepts a buoy
+    whose DEPTH never resolved; letting it also accept an UNPROBED directional axis would stack two
+    unknowns into a "VALID REFERENCE" verdict — which is how ljpc1, publishing nothing at all, was
+    recommended. Hence `is not True`, not `is False`: unknown declines HERE, even though it still
+    ranks ahead of confirmed-absent in _rank_candidates (a transient probe failure must not discard
+    a buoy from the list — it must only stop it being upgraded on faith). NOTE this also means the
+    OFFLINE seed path (nothing probed → every spectral None) no longer fallback-accepts a
+    depth-unconfirmed candidate; that output is already labelled as superseded by the Mac run, and
+    declining is the conservative direction."""
+    if (r.get("depth") is not None or r.get("verdict") != "VALID REFERENCE"
+            or r.get("spectral") is not True):
         return False
     if r.get("d", 1e9) > FIND_BUOY_FALLBACK_KM:
         return False
@@ -2884,7 +2912,9 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
     for i, r in enumerate(rows, 1):
         dep = f"{r['depth']:.0f} m" if r["depth"] is not None else "  —"
         pay = (r["payload"] or "unknown")[:20]
-        sp = {True: "yes", False: "NO", None: "—"}[r["spectral"]]
+        # '?' not '—': unknown must be visibly DIFFERENT from confirmed, and '—' is the same filler
+        # the depth/age columns use for "no data", which reads as absence rather than as unchecked.
+        sp = {True: "yes", False: "NO", None: "?"}[r["spectral"]]
         age_h = r.get("age_h")
         age_s = "—" if age_h is None else (f"{age_h}h" if age_h < 48 else f"{age_h // 24}d")
         live_status, live_text = _liveness_verdict(age_h, roster_stale=bool(roster_stale))
@@ -2899,6 +2929,12 @@ def find_buoy(wfo, target, radius_km=150.0, *, label=""):
                   if _depth_unconfirmed_valid(r) else "UNKNOWN (metadata → Mac)")
         else:
             vd = r["verdict"]
+        # Never let a bare verdict imply the directional axis was checked when it was not. The
+        # branches above catch the live probe-failure case; this catches the rest (offline, stale
+        # roster, or simply beyond the probe cap), where the row would otherwise print a clean
+        # "VALID REFERENCE" for a station nobody asked about.
+        if r["spectral"] is None:
+            vd = f"{vd} · direction axis UNCONFIRMED ({r.get('detail') or 'not probed'})"
         if r["spectral"] is not False and live_status != "dead":   # append the liveness evidence
             vd = f"{vd} · {live_text}"
         # Wrong-side-of-headland is its OWN verdict (never collapsed into a generic INVALID), and it
