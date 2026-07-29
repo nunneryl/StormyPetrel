@@ -403,11 +403,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 3.69,
     "nearest_buoy_id": "46254",
-    "nearest_buoy_dist_km": 1.59
+    "nearest_buoy_dist_km": 1.59,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.805,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 1134,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Blackies",
@@ -1050,11 +1056,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 32.7,
     "nearest_buoy_id": "46274",
-    "nearest_buoy_dist_km": 10.23
+    "nearest_buoy_dist_km": 10.23,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.14937,
+    "nwps_node_lng": -117.3547,
+    "nwps_node_distance_m": 501,
+    "nwps_buoy_id": "46274"
   },
   {
     "name": "Carmel Beach",
@@ -1409,12 +1421,18 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410170",
     "nearest_tide_station_dist_km": 4.35,
     "nearest_buoy_id": "46232",
     "nearest_buoy_dist_km": 28.85,
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.67812,
+    "nwps_node_lng": -117.18376,
+    "nwps_node_distance_m": 549,
+    "nwps_buoy_id": "46275"
   },
   {
     "name": "Cottons",
@@ -1477,11 +1495,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 1.22,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 6.18
+    "nearest_buoy_dist_km": 6.18,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.385,
+    "nwps_node_lng": -117.61111,
+    "nwps_node_distance_m": 1323,
+    "nwps_buoy_id": "46285"
   },
   {
     "name": "County Line",
@@ -1816,11 +1840,17 @@
       }
     ],
     "optimal_swell_dir": 232,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 9.41,
     "nearest_buoy_id": "46285",
-    "nearest_buoy_dist_km": 2.29
+    "nearest_buoy_dist_km": 2.29,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.4575,
+    "nwps_node_lng": -117.71795,
+    "nwps_node_distance_m": 667,
+    "nwps_buoy_id": "46285"
   },
   {
     "name": "Davenport Landing",
@@ -2677,9 +2707,15 @@
       }
     ],
     "optimal_swell_dir": 244,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410166",
-    "nearest_tide_station_dist_km": 5.22
+    "nearest_tide_station_dist_km": 5.22,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.67812,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 1841,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Half Moon Bay Jetty",
@@ -3326,9 +3362,15 @@
     "tide_preference_confidence": 0.8,
     "nwps_wfo": "sgx",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410120",
-    "nearest_tide_station_dist_km": 0.14
+    "nearest_tide_station_dist_km": 0.14,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.5875,
+    "nwps_node_lng": -117.14103,
+    "nwps_node_distance_m": 1056,
+    "nwps_buoy_id": "46275"
   },
   {
     "name": "Imperial Beach, California",
@@ -3388,7 +3430,7 @@
       }
     ],
     "optimal_swell_dir": 200,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410120",
     "nearest_tide_station_dist_km": 1.67,
     "nearest_buoy_id": "46232",
@@ -3396,7 +3438,13 @@
     "fallback_buoy_ids": [
       "46258",
       "46086"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.5875,
+    "nwps_node_lng": -117.14103,
+    "nwps_node_distance_m": 702,
+    "nwps_buoy_id": "46275"
   },
   {
     "name": "Jalama Beach",
@@ -4516,11 +4564,17 @@
       }
     ],
     "optimal_swell_dir": 240,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0413",
     "nearest_tide_station_dist_km": 2.52,
     "nearest_buoy_id": "46225",
-    "nearest_buoy_dist_km": 21.03
+    "nearest_buoy_dist_km": 21.03,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.76875,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 1475,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Mondos",
@@ -5434,11 +5488,17 @@
       }
     ],
     "optimal_swell_dir": 216,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 31.04,
     "nearest_buoy_id": "46224",
-    "nearest_buoy_dist_km": 7.56
+    "nearest_buoy_dist_km": 7.56,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.20375,
+    "nwps_node_lng": -117.39744,
+    "nwps_node_distance_m": 110,
+    "nwps_buoy_id": "46275"
   },
   {
     "name": "Oceanside Pier",
@@ -5565,11 +5625,17 @@
       }
     ],
     "optimal_swell_dir": 232,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 1.61,
     "nearest_buoy_id": "46258",
-    "nearest_buoy_dist_km": 23.43
+    "nearest_buoy_dist_km": 23.43,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.805,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 1399,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Pacifica Linda Mar",
@@ -5984,11 +6050,17 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 27.56,
     "nearest_buoy_id": "46224",
-    "nearest_buoy_dist_km": 15.85
+    "nearest_buoy_dist_km": 15.85,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.07687,
+    "nwps_node_lng": -117.33333,
+    "nwps_node_distance_m": 1968,
+    "nwps_buoy_id": "46274"
   },
   {
     "name": "Redondo Beach, California",
@@ -6717,11 +6789,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 2.34,
     "nearest_buoy_id": "ljpc1",
-    "nearest_buoy_dist_km": 1.76
+    "nearest_buoy_dist_km": 1.76,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.8775,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 1537,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "San Elijo State Beach",
@@ -6851,9 +6929,15 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
-    "nearest_tide_station_dist_km": 6.82
+    "nearest_tide_station_dist_km": 6.82,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.36687,
+    "nwps_node_lng": -117.56838,
+    "nwps_node_distance_m": 657,
+    "nwps_buoy_id": "46275"
   },
   {
     "name": "San Simeon",
@@ -7981,11 +8065,17 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 26.72,
     "nearest_buoy_id": "46266",
-    "nearest_buoy_dist_km": 8.7
+    "nearest_buoy_dist_km": 8.7,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.095,
+    "nwps_node_lng": -117.33333,
+    "nwps_node_distance_m": 1280,
+    "nwps_buoy_id": "46274"
   },
   {
     "name": "Strands Beach",
@@ -8052,9 +8142,15 @@
     "tide_preference_confidence": 0.7,
     "nwps_wfo": "sgx",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
-    "nearest_tide_station_dist_km": 10.94
+    "nearest_tide_station_dist_km": 10.94,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.4575,
+    "nwps_node_lng": -117.71795,
+    "nwps_node_distance_m": 1160,
+    "nwps_buoy_id": "46285"
   },
   {
     "name": "Suicide's",
@@ -8622,11 +8718,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 32.7,
     "nearest_buoy_id": "46274",
-    "nearest_buoy_dist_km": 10.23
+    "nearest_buoy_dist_km": 10.23,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.14937,
+    "nwps_node_lng": -117.3547,
+    "nwps_node_distance_m": 758,
+    "nwps_buoy_id": "46274"
   },
   {
     "name": "Thalia Street",
@@ -9251,9 +9353,15 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
-    "nearest_tide_station_dist_km": 2.32
+    "nearest_tide_station_dist_km": 2.32,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.805,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 509,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "3 Mile",
@@ -9796,11 +9904,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 4.57,
     "nearest_buoy_id": "46225",
-    "nearest_buoy_dist_km": 15.32
+    "nearest_buoy_dist_km": 15.32,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.82312,
+    "nwps_node_lng": -117.2906,
+    "nwps_node_distance_m": 1208,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Zuma Beach",
@@ -28374,7 +28488,7 @@
       }
     ],
     "optimal_swell_dir": 204,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410120",
     "nearest_tide_station_dist_km": 2.49,
     "nearest_buoy_id": "46232",
@@ -28383,7 +28497,13 @@
     "fallback_buoy_ids": [
       "46258",
       "46086"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.55125,
+    "nwps_node_lng": -117.14103,
+    "nwps_node_distance_m": 1129,
+    "nwps_buoy_id": "46275"
   },
   {
     "name": "Avalanches",
@@ -28453,12 +28573,18 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 2.8,
     "nearest_buoy_id": "ljpc1",
     "nearest_buoy_dist_km": 5.57,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.805,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 278,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Law Street",
@@ -28488,12 +28614,18 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 2.02,
     "nearest_buoy_id": "ljpc1",
     "nearest_buoy_dist_km": 6.24,
-    "nwps_wfo": "sgx"
+    "nwps_wfo": "sgx",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 32.805,
+    "nwps_node_lng": -117.26923,
+    "nwps_node_distance_m": 816,
+    "nwps_buoy_id": "46254"
   },
   {
     "name": "Scripps Pier",
