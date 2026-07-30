@@ -17142,9 +17142,15 @@
       }
     ],
     "optimal_swell_dir": 108,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8570536",
-    "nearest_tide_station_dist_km": 3.48
+    "nearest_tide_station_dist_km": 3.48,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.20174,
+    "nwps_node_lng": -75.13289,
+    "nwps_node_distance_m": 1509,
+    "nwps_buoy_id": "44084"
   },
   {
     "name": "Ocean City MD 28th Street",
@@ -17188,9 +17194,15 @@
       }
     ],
     "optimal_swell_dir": 116,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8570282",
-    "nearest_tide_station_dist_km": 0.23
+    "nearest_tide_station_dist_km": 0.23,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.33157,
+    "nwps_node_lng": -75.0727,
+    "nwps_node_distance_m": 864,
+    "nwps_buoy_id": "44084"
   },
   {
     "name": "Ocean City MD Inlet",
@@ -17234,9 +17246,15 @@
       }
     ],
     "optimal_swell_dir": 112,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8570282",
-    "nearest_tide_station_dist_km": 1.04
+    "nearest_tide_station_dist_km": 1.04,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 38.33157,
+    "nwps_node_lng": -75.0727,
+    "nwps_node_distance_m": 1268,
+    "nwps_buoy_id": "44084"
   },
   {
     "name": "Cisco Beach",
