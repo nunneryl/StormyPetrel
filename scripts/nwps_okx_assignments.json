@@ -4190,6 +4190,36 @@
       "nwps_node_lng": -69.70859,
       "nwps_node_distance_m": 1645,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "assateague-island-md",
+      "name": "Assateague Island MD",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.20174,
+      "nwps_node_lng": -75.13289,
+      "nwps_node_distance_m": 1509,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "ocean-city-md-28th-street",
+      "name": "Ocean City MD 28th Street",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.33157,
+      "nwps_node_lng": -75.0727,
+      "nwps_node_distance_m": 864,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "ocean-city-md-inlet",
+      "name": "Ocean City MD Inlet",
+      "nwps_wfo": "akq",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.33157,
+      "nwps_node_lng": -75.0727,
+      "nwps_node_distance_m": 1268,
+      "nwps_buoy_id": "44084"
     }
   ],
   "held": [],
@@ -4702,6 +4732,23 @@
           "nantucket-surf"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 10 spots are in the (Mac) scripts/nwps_box_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_box_validate_out.json --buoy 44085 --slugs <these 10>` merges them into 'spots'. Placement is via the pending path; 44085 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "akq/44084",
+        "wfo": "akq",
+        "buoy": "44084",
+        "reference": "44084 — Bethany Beach, DE 263, 11 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 44084 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. SEPARATE ZONE FROM phi/44084 EVEN THOUGH IT IS THE SAME BUOY: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so akq/44084 accumulates and settles independently of phi/44084. These three spots sit on the SAME continuous barrier coast as the phi Delaware spots, just south of the state line, at 38 km (assateague-island-md) and 23 km (both Ocean City spots) from the buoy — the split is an administrative wfo boundary, not a physical one. CAVEAT A LATER READER MUST NOT MISS: trust_by_buoy is keyed by BUOY ID ALONE, not by (wfo, buoy) — apply reads trust_by_buoy[str(buoy)]. So while the two zones ACCUMULATE separately, a single PASS written for 44084 would flip the spots in BOTH zones to 'verified' at once. The per-zone independence is in the gate, not in the tagging. ADDITIVE: akq already carries 5 spots on 44099, which holds PASS in trust_by_buoy, so those 5 remain verified and are untouched by this record. NOT IN THIS ZONE — north-end-virginia-beach: already placed on 44099 from an earlier session. It returned OFFWIN on the 2026-07-30 cycle, swell direction 341 degrees against 135-155 degrees at every other akq spot, a north-facing aspect at the mouth of the Chesapeake. OFFWIN is a PER-CYCLE verdict and does NOT unplace it — its row stands — but the aspect suggests it may be PERSISTENTLY off-window, which is worth re-checking on a different swell rather than reading as a one-cycle artefact.",
+        "spots": 3,
+        "slugs": [
+          "assateague-island-md",
+          "ocean-city-md-28th-street",
+          "ocean-city-md-inlet"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 3 spots are in the (Mac) scripts/nwps_akq_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_akq_validate_out.json --buoy 44084 --slugs <these 3>` merges them into 'spots'. NOTE the validate-out carries nwps_buoy_id=null for these three, because --validate copies that field from the spot record and the Maryland spots have never been assigned one; the buoy id comes from THIS record, not from that file. Placement is via the pending path; 44084 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
