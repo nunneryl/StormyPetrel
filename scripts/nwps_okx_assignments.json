@@ -3540,6 +3540,336 @@
       "nwps_node_lng": -117.14103,
       "nwps_node_distance_m": 1129,
       "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "brigantine",
+      "name": "Brigantine",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.39998,
+      "nwps_node_lng": -74.36379,
+      "nwps_node_distance_m": 963,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "seaside-road",
+      "name": "Seaside Road",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.36755,
+      "nwps_node_lng": -74.40517,
+      "nwps_node_distance_m": 1201,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "brigantine-jetty",
+      "name": "Brigantine Jetty",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.36755,
+      "nwps_node_lng": -74.40517,
+      "nwps_node_distance_m": 570,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "atlantic-city",
+      "name": "Atlantic City",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.35134,
+      "nwps_node_lng": -74.42586,
+      "nwps_node_distance_m": 630,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "caesars-pier",
+      "name": "Caesars Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.35134,
+      "nwps_node_lng": -74.42586,
+      "nwps_node_distance_m": 653,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "ventor-pier",
+      "name": "Ventor Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.33512,
+      "nwps_node_lng": -74.46724,
+      "nwps_node_distance_m": 829,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "margate-pier",
+      "name": "Margate Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.48793,
+      "nwps_node_distance_m": 1057,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "margate",
+      "name": "Margate",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.50862,
+      "nwps_node_distance_m": 373,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "quincy-ave",
+      "name": "Quincy Ave",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.50862,
+      "nwps_node_distance_m": 593,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "32nd-street",
+      "name": "32nd Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.50862,
+      "nwps_node_distance_m": 1160,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "ocean-city-nj",
+      "name": "Ocean City NJ",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.27026,
+      "nwps_node_lng": -74.57069,
+      "nwps_node_distance_m": 1153,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "south-end",
+      "name": "South End",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.22161,
+      "nwps_node_lng": -74.63276,
+      "nwps_node_distance_m": 280,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "strathmere",
+      "name": "Strathmere",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.18918,
+      "nwps_node_lng": -74.65345,
+      "nwps_node_distance_m": 856,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "sea-isle-city",
+      "name": "Sea Isle City",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.15674,
+      "nwps_node_lng": -74.67414,
+      "nwps_node_distance_m": 1370,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "56th-street",
+      "name": "56th Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.14053,
+      "nwps_node_lng": -74.69483,
+      "nwps_node_distance_m": 204,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "avalon-jetty",
+      "name": "Avalon Jetty",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.1081,
+      "nwps_node_lng": -74.69483,
+      "nwps_node_distance_m": 786,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "avalon-nj",
+      "name": "Avalon NJ",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.09188,
+      "nwps_node_lng": -74.69483,
+      "nwps_node_distance_m": 1594,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "30th-street-pier",
+      "name": "30th Street Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.09188,
+      "nwps_node_lng": -74.71552,
+      "nwps_node_distance_m": 138,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "stone-harbor",
+      "name": "Stone Harbor",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.04323,
+      "nwps_node_lng": -74.7569,
+      "nwps_node_distance_m": 426,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "north-wildwood",
+      "name": "North Wildwood",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.99458,
+      "nwps_node_lng": -74.77759,
+      "nwps_node_distance_m": 1066,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "wildwood",
+      "name": "Wildwood",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.97837,
+      "nwps_node_lng": -74.79828,
+      "nwps_node_distance_m": 1185,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "diamond-beach",
+      "name": "Diamond Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.94594,
+      "nwps_node_lng": -74.83966,
+      "nwps_node_distance_m": 1170,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "poverty-beach",
+      "name": "Poverty Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.88103,
+      "nwps_node_distance_m": 1439,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "the-rocks",
+      "name": "The Rocks",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.86034,
+      "nwps_node_distance_m": 1384,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "the-cove",
+      "name": "The Cove",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.9431,
+      "nwps_node_distance_m": 501,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "queen-street",
+      "name": "Queen Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.90172,
+      "nwps_node_distance_m": 1056,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "broadway-beach",
+      "name": "Broadway Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.9135,
+      "nwps_node_lng": -74.92241,
+      "nwps_node_distance_m": 1785,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "grant-street",
+      "name": "Grant Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.9135,
+      "nwps_node_lng": -74.92241,
+      "nwps_node_distance_m": 1655,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "gordon-pond",
+      "name": "Gordon Pond",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.75134,
+      "nwps_node_lng": -75.06724,
+      "nwps_node_distance_m": 1148,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "rehoboth-beach",
+      "name": "Rehoboth Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.71891,
+      "nwps_node_lng": -75.06724,
+      "nwps_node_distance_m": 947,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "dewey-beach",
+      "name": "Dewey Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.7027,
+      "nwps_node_lng": -75.06724,
+      "nwps_node_distance_m": 653,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "lewes-street-surf-beach",
+      "name": "Lewes Street Surf Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.47567,
+      "nwps_node_lng": -75.04655,
+      "nwps_node_distance_m": 919,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "fenwick-island",
+      "name": "Fenwick Island",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.45946,
+      "nwps_node_lng": -75.04655,
+      "nwps_node_distance_m": 275,
+      "nwps_buoy_id": "44084"
     }
   ],
   "held": [],
@@ -3552,7 +3882,7 @@
     "44098": "PASS"
   },
   "trust_buoy": "44025+44065",
-  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43. | trust_by_buoy is the HEIGHT-tagging gate (controls whether a spot consumes NWPS); the BUOY-CHECK disposition is governed by buoy_reference below. box/44098 (3) + gyx/44098 (11): buoy 44098 RETIRED as a reference on BOTH axes — structurally invalid 76 m offshore bank vs shallow nearshore node, no valid nearshore reference within 150 km (GoM shelf deep to the coast). These spots KEEP consuming NWPS height + raycast direction; only the buoy trust-CHECK is retired (no valid buoy to run it against), so nothing is height- or direction-gated against 44098 anymore.",
+  "trust_note": "44025 PASS r=0.896 circ_std=11.2 pairs=38; OKX south-shore only. radars+turtle-cove re-added (OFFWIN was a per-cycle verdict, not a placement fail). | NJ/phi (8) added: 44065 PASS r=0.865 circ_std=16.6 pairs=43. | phi/44091 (+11, 26 total): on the 2026-07-29 assessment 44091 returned HEIGHT PASS r=0.909, direction 12 degrees circ_std and 0 degrees bias ENERGY-WEIGHTED over 21 comparable hours against 22 degrees unweighted — the weighting is doing real work, not cosmetic smoothing — with 2 hours where the buoy showed swell but the model carried only a wind-sea system, so those hours were not comparable and contributed nothing. These 11 spots place as VERIFIED alongside the 15 already on 44091, and NO pending record is registered for them: apply_nwps_assignments checks the trust_by_buoy PASS branch BEFORE the pending path, so a pending record for a PASS buoy is dead weight that contradicts the actual behaviour. PASS means BOTH axes verified unless the direction axis is separately retired — see the box/gyx 44098 carve-off below, which is what makes that design deliberate rather than incidental. | SPECTRAL-SANITY CAVEAT (do not screen on this number yet): buoy-side spectral sanity read 45.3 degrees at 44091 and 22.4 degrees at 44084 against an expected 15 degrees or less, yet 44091 — the WORSE number — gave the TIGHTER direction agreement of the two. Sanity is therefore NOT a reliable proxy for verdict quality in flat, small, mixed seas, where the coarse 22.5-degree binned SwD can diverge from the degree-valued reader without either being wrong about the dominant swell. Do NOT use it to screen verdicts until it has been observed in a real swell. | trust_by_buoy is the HEIGHT-tagging gate (controls whether a spot consumes NWPS); the BUOY-CHECK disposition is governed by buoy_reference below. box/44098 (3) + gyx/44098 (11): buoy 44098 RETIRED as a reference on BOTH axes — structurally invalid 76 m offshore bank vs shallow nearshore node, no valid nearshore reference within 150 km (GoM shelf deep to the coast). These spots KEEP consuming NWPS height + raycast direction; only the buoy trust-CHECK is retired (no valid buoy to run it against), so nothing is height- or direction-gated against 44098 anymore.",
   "buoy_reference": {
     "_comment": "BUOY trust-CHECK disposition. apply_nwps_assignments READS this block (pending[]/retired[]/unverifiable[]) alongside trust_by_buoy to set each placed spot's nwps_direction_status — it is NOT inert. trust_by_buoy stays the HEIGHT-tagging gate (whether a spot consumes NWPS). THREE states: (1) 'pending' — a VALID reference buoy exists; the spots are placed on NWPS HEIGHT now but direction is NOT yet buoy-verified (no swell has run --trustcheck), so the buoy is NOT PASS in trust_by_buoy; the buoy-ready monitor WATCHES it and a qualifying swell accumulates a --trustcheck; direction is confirmed when the rolling verdict settles PASS. (2) 'retired' — NO valid nearshore reference buoy exists (e.g. 44098: a structurally-invalid 76 m offshore bank vs shallow nearshore nodes); the spots KEEP NWPS height + raycast direction on the listed 'axes'; the monitor EXCLUDES the buoy (never flagged). 'axes' is load-bearing: a record whose axes include 'direction' makes apply label those spots nwps_direction_status='unverifiable' (never 'verified') even when the buoy is PASS — that PASS is a HEIGHT verification only. (3) 'unverifiable' — a spot placed on NWPS HEIGHT (like pending, but with NO trust PASS and NO valid buoy on the row) whose direction can NEVER be buoy-verified: island-shadowed geometry where the nearest valid buoy is around a headland in different exposure. Keyed by SLUG; the row's nwps_buoy_id is null; the far 'nearest_candidate' is AUDIT-ONLY and is never used for placement or verification. apply checks unverifiable BEFORE the PASS branch, so these can never be relabeled 'verified'; the monitor NEVER watches them (no WATCH entry) and no far-buoy trust-check ever runs. Distinctions: pending = valid nearby buoy, awaiting a swell; retired = a buoy is nearby but structurally invalid; unverifiable = a valid buoy exists elsewhere but is geometrically wrong for these spots.",
     "retired": [
@@ -3992,6 +4322,42 @@
           "tijuana-slough"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46275 --slugs <these 6>` merges them into 'spots'. Placement is via the pending path; 46275 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "phi/44084",
+        "wfo": "phi",
+        "buoy": "44084",
+        "reference": "44084 — Bethany Beach, DE 263, 11 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: --trustcheck accumulates one event per qualifying swell and direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ADDITIVE, not a replacement: phi already carries TWO reference groups — 44065 with 14 placed spots and 44091 with 15 placed spots — both governed by a trust_by_buoy PASS. This record adds to that roster and changes nothing about the existing spots. FIRST-ASSESSMENT FINDING — HEIGHT INCONCLUSIVE, not a FAIL: the window was flat and the buoy total-Hs span did NOT clear the 0.75 m variance floor, so there was nothing to correlate against and no height reading was earned either way. Direction was 14 degrees circular standard deviation and +17 degrees bias over 23 comparable hours. ZONE SPAN: this zone runs 8 to 84 km. The Cape May cluster — grant-street, queen-street, broadway-beach and the-cove — sits ACROSS THE MOUTH OF DELAWARE BAY from the buoy: open water with no land between, so this is NOT a wrong-side-of-headland case, but it is a DIFFERENT EXPOSURE. ONE zone verdict covers the whole 8-84 km span, so a future FAIL may be driven by the far end rather than by the buoy or the model; check the per-spot residuals before concluding anything about 44084 itself. Unlike 44091, this buoy has NO trust_by_buoy entry, so its spots will be placed with nwps_direction_status='pending' as this record describes. SPECTRAL-SANITY FINDING (recorded on both new phi zones, since it is a comparison between them): buoy-side spectral sanity read 45.3 degrees at 44091 and 22.4 degrees at 44084, against an expected 15 degrees or less — yet 44091, the WORSE sanity number, produced the TIGHTER direction agreement of the two. Sanity is therefore NOT a reliable proxy for verdict quality in flat, small, mixed seas, where the coarse 22.5-degree binned SwD can diverge from the degree-valued reader without either being wrong about the dominant swell. Do NOT screen verdicts on this number until it has been observed in a real swell.",
+        "spots": 22,
+        "slugs": [
+          "south-end",
+          "strathmere",
+          "sea-isle-city",
+          "56th-street",
+          "avalon-jetty",
+          "avalon-nj",
+          "30th-street-pier",
+          "stone-harbor",
+          "north-wildwood",
+          "wildwood",
+          "diamond-beach",
+          "poverty-beach",
+          "the-rocks",
+          "the-cove",
+          "queen-street",
+          "broadway-beach",
+          "grant-street",
+          "gordon-pond",
+          "rehoboth-beach",
+          "dewey-beach",
+          "lewes-street-surf-beach",
+          "fenwick-island"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 22 spots are in the (Mac) scripts/nwps_phi_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_phi_validate_out.json --buoy 44084 --slugs <these 22>` merges them into 'spots'."
       }
     ],
     "unverifiable": [
