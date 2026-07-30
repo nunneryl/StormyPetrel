@@ -3540,6 +3540,336 @@
       "nwps_node_lng": -117.14103,
       "nwps_node_distance_m": 1129,
       "nwps_buoy_id": "46275"
+    },
+    {
+      "slug": "brigantine",
+      "name": "Brigantine",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.39998,
+      "nwps_node_lng": -74.36379,
+      "nwps_node_distance_m": 963,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "seaside-road",
+      "name": "Seaside Road",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.36755,
+      "nwps_node_lng": -74.40517,
+      "nwps_node_distance_m": 1201,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "brigantine-jetty",
+      "name": "Brigantine Jetty",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.36755,
+      "nwps_node_lng": -74.40517,
+      "nwps_node_distance_m": 570,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "atlantic-city",
+      "name": "Atlantic City",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.35134,
+      "nwps_node_lng": -74.42586,
+      "nwps_node_distance_m": 630,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "caesars-pier",
+      "name": "Caesars Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.35134,
+      "nwps_node_lng": -74.42586,
+      "nwps_node_distance_m": 653,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "ventor-pier",
+      "name": "Ventor Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.33512,
+      "nwps_node_lng": -74.46724,
+      "nwps_node_distance_m": 829,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "margate-pier",
+      "name": "Margate Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.48793,
+      "nwps_node_distance_m": 1057,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "margate",
+      "name": "Margate",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.50862,
+      "nwps_node_distance_m": 373,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "quincy-ave",
+      "name": "Quincy Ave",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.50862,
+      "nwps_node_distance_m": 593,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "32nd-street",
+      "name": "32nd Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.3189,
+      "nwps_node_lng": -74.50862,
+      "nwps_node_distance_m": 1160,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "ocean-city-nj",
+      "name": "Ocean City NJ",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.27026,
+      "nwps_node_lng": -74.57069,
+      "nwps_node_distance_m": 1153,
+      "nwps_buoy_id": "44091"
+    },
+    {
+      "slug": "south-end",
+      "name": "South End",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.22161,
+      "nwps_node_lng": -74.63276,
+      "nwps_node_distance_m": 280,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "strathmere",
+      "name": "Strathmere",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.18918,
+      "nwps_node_lng": -74.65345,
+      "nwps_node_distance_m": 856,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "sea-isle-city",
+      "name": "Sea Isle City",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.15674,
+      "nwps_node_lng": -74.67414,
+      "nwps_node_distance_m": 1370,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "56th-street",
+      "name": "56th Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.14053,
+      "nwps_node_lng": -74.69483,
+      "nwps_node_distance_m": 204,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "avalon-jetty",
+      "name": "Avalon Jetty",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.1081,
+      "nwps_node_lng": -74.69483,
+      "nwps_node_distance_m": 786,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "avalon-nj",
+      "name": "Avalon NJ",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.09188,
+      "nwps_node_lng": -74.69483,
+      "nwps_node_distance_m": 1594,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "30th-street-pier",
+      "name": "30th Street Pier",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.09188,
+      "nwps_node_lng": -74.71552,
+      "nwps_node_distance_m": 138,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "stone-harbor",
+      "name": "Stone Harbor",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 39.04323,
+      "nwps_node_lng": -74.7569,
+      "nwps_node_distance_m": 426,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "north-wildwood",
+      "name": "North Wildwood",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.99458,
+      "nwps_node_lng": -74.77759,
+      "nwps_node_distance_m": 1066,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "wildwood",
+      "name": "Wildwood",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.97837,
+      "nwps_node_lng": -74.79828,
+      "nwps_node_distance_m": 1185,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "diamond-beach",
+      "name": "Diamond Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.94594,
+      "nwps_node_lng": -74.83966,
+      "nwps_node_distance_m": 1170,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "poverty-beach",
+      "name": "Poverty Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.88103,
+      "nwps_node_distance_m": 1439,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "the-rocks",
+      "name": "The Rocks",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.86034,
+      "nwps_node_distance_m": 1384,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "the-cove",
+      "name": "The Cove",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.9431,
+      "nwps_node_distance_m": 501,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "queen-street",
+      "name": "Queen Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.92972,
+      "nwps_node_lng": -74.90172,
+      "nwps_node_distance_m": 1056,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "broadway-beach",
+      "name": "Broadway Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.9135,
+      "nwps_node_lng": -74.92241,
+      "nwps_node_distance_m": 1785,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "grant-street",
+      "name": "Grant Street",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.9135,
+      "nwps_node_lng": -74.92241,
+      "nwps_node_distance_m": 1655,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "gordon-pond",
+      "name": "Gordon Pond",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.75134,
+      "nwps_node_lng": -75.06724,
+      "nwps_node_distance_m": 1148,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "rehoboth-beach",
+      "name": "Rehoboth Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.71891,
+      "nwps_node_lng": -75.06724,
+      "nwps_node_distance_m": 947,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "dewey-beach",
+      "name": "Dewey Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.7027,
+      "nwps_node_lng": -75.06724,
+      "nwps_node_distance_m": 653,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "lewes-street-surf-beach",
+      "name": "Lewes Street Surf Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.47567,
+      "nwps_node_lng": -75.04655,
+      "nwps_node_distance_m": 919,
+      "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "fenwick-island",
+      "name": "Fenwick Island",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.45946,
+      "nwps_node_lng": -75.04655,
+      "nwps_node_distance_m": 275,
+      "nwps_buoy_id": "44084"
     }
   ],
   "held": [],
