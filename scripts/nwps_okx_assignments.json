@@ -4358,6 +4358,30 @@
           "fenwick-island"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 22 spots are in the (Mac) scripts/nwps_phi_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_phi_validate_out.json --buoy 44084 --slugs <these 22>` merges them into 'spots'."
+      },
+      {
+        "zone": "box/44085",
+        "wfo": "box",
+        "buoy": "44085",
+        "reference": "44085 — Buzzards Bay, MA 260, 21 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 44085 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ADDITIONAL ZONE, not a replacement: box already carries 27 spots on 44097 (Block Island), and this record adds to that roster without changing any of them. ZONE SPAN: 13 km at horseneck-beach to 88 km at nantucket-surf. The distant end covers the SOUTH SHORES of Martha's Vineyard and Nantucket, which face a DIFFERENT SWELL WINDOW than Buzzards Bay, and ONE zone verdict covers all of them — so a future FAIL may be driven by the island end rather than by the buoy or the model; check the per-spot residuals before drawing a conclusion about 44085 itself. Every pairing in this zone was checked against the wrong-side-of-headland detector and NONE was rejected, so the span is a swell-window question, not a geometry error.",
+        "spots": 10,
+        "slugs": [
+          "horseneck-beach",
+          "squibnocket",
+          "lucy-vincent",
+          "long-point",
+          "south-beach-state-park",
+          "madaket",
+          "cisco-beach",
+          "miacomet",
+          "nobadeer",
+          "nantucket-surf"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 10 spots are in the (Mac) scripts/nwps_box_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_box_validate_out.json --buoy 44085 --slugs <these 10>` merges them into 'spots'. Placement is via the pending path; 44085 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -4592,6 +4616,34 @@
           "hatteras-ferry-docks"
         ],
         "to_place": "2 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_mhx_validate_out.json (regenerated 2026-07-28); `promote_nwps_validate --validate-out scripts/nwps_mhx_validate_out.json --no-buoy --slugs <these 2> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "box/outer-cape-no-reference",
+        "wfo": "box",
+        "reason": "WRONG SIDE OF CAPE COD — these three face the OPEN ATLANTIC on the outer arm of the Cape, and every candidate reference sits on the wrong side of it. (1) 44020 (Nantucket Sound) is REJECTED by the wrong-side-of-headland detector at 45-52 km, crossing 15.7-23.1 km of land. (2) 44085 (Buzzards Bay) is REJECTED by the same detector at 102-106 km, crossing 29.0-40.2 km of land. (3) 44097 (Block Island) also crosses land but is BEYOND the 110 km distance ceiling at 136-142 km, so the detector surfaces it as a NOTE rather than a rejection — it is still not usable, and the note must not be read as a clearance. (4) 44090 (Cape Cod Bay) is only 33 km away with NO land crossing, because the path runs AROUND the outer coast rather than across the Cape — but it sits INSIDE Cape Cod Bay while these spots face the open Atlantic, so it measures a different sea. That is the one case here the headland detector cannot catch: no land is crossed, yet the exposure is wrong. --find-buoy returned NO VALID + LIVE nearshore directional reference for any of the three. These spots ride NWPS HEIGHT skill + raycast direction, direction unverified. Same disposition as mhx/wrong-side-of-cape-point. RE-CHECK TRIGGER: any nearshore directional buoy deployed on the outer (Atlantic) side of the Cape — a BU-6 monthly re-sweep would catch it.",
+        "nearest_candidate": "44090 Cape Cod Bay (33 km, no land crossing, but INSIDE the bay — wrong exposure) / 44020 Nantucket Sound (45-52 km, headland-REJECTED, 15.7-23.1 km land) / 44085 Buzzards Bay (102-106 km, headland-REJECTED, 29.0-40.2 km land) / 44097 Block Island (136-142 km, crosses land but past the 110 km ceiling so noted, not rejected) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "coast-guard-beach",
+          "marconi-beach",
+          "nauset-beach"
+        ],
+        "to_place": "3 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_box_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_box_validate_out.json --no-buoy --slugs <these 3> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "box/north-shore-no-reference",
+        "wfo": "box",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE in Massachusetts Bay / the north shore — a DEPTH problem, not a geometry one. The two nearest candidates are STRUCTURALLY INVALID on depth: 44098 (Jeffreys Ledge, 76 m) and 44013 (Boston, 65 m), both deep-water regimes measured against shallow nearshore nodes, where shoaling/breaking/sheltering make the comparison invalid. The least-bad remaining option is 44007 (Portland) at 94 km, a 49 m 3-m discus rated MARGINAL. This REPRODUCES the finding already recorded in the box/44098 RETIRED record — no valid nearshore reference exists within 150 km because the Gulf of Maine shelf runs DEEP TO THE COAST — and that condition is PERMANENT geography, not an outage. --find-buoy returned NO VALID + LIVE reference for any of the seven. These spots ride NWPS HEIGHT skill + raycast direction, direction unverified. DISTINCT from box/outer-cape-no-reference, where live candidates exist but sit on the wrong side of the Cape: here the candidates are on the right side and are simply too deep to be valid.",
+        "nearest_candidate": "44098 Jeffreys Ledge (76 m — STRUCTURALLY INVALID on depth) / 44013 Boston (65 m — STRUCTURALLY INVALID on depth) / 44007 Portland (94 km, 49 m 3-m discus — MARGINAL, the least-bad option and still not valid) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "nahant-beach",
+          "nantasket-beach",
+          "scituate",
+          "winthrop-jetty",
+          "revere-beach",
+          "lynn-beach",
+          "devereaux"
+        ],
+        "to_place": "7 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_box_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_box_validate_out.json --no-buoy --slugs <these 7> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
