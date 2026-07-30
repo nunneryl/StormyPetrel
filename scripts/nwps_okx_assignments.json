@@ -4070,6 +4070,126 @@
       "nwps_node_lng": -70.84091,
       "nwps_node_distance_m": 2178,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "fortunes-rocks",
+      "name": "Fortunes Rocks",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.4147,
+      "nwps_node_lng": -70.34844,
+      "nwps_node_distance_m": 2484,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "gooch-s-beach",
+      "name": "Gooch's Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.32451,
+      "nwps_node_lng": -70.47031,
+      "nwps_node_distance_m": 2583,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "higgins-beach",
+      "name": "Higgins Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.55,
+      "nwps_node_lng": -70.2875,
+      "nwps_node_distance_m": 1285,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "old-orchard-beach",
+      "name": "Old Orchard Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.5049,
+      "nwps_node_lng": -70.34844,
+      "nwps_node_distance_m": 2157,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "scarborough-beach",
+      "name": "Scarborough Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.55,
+      "nwps_node_lng": -70.2875,
+      "nwps_node_distance_m": 1929,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "short-sands-beach-york",
+      "name": "Short Sands Beach York",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.16667,
+      "nwps_node_lng": -70.59219,
+      "nwps_node_distance_m": 1447,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "moody-point",
+      "name": "Moody Point",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.27941,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 899,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "crescent-beach",
+      "name": "Crescent Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.30196,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 626,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "wells-beach",
+      "name": "Wells Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.30196,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 1266,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "drakes-island",
+      "name": "Drakes Island",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.32451,
+      "nwps_node_lng": -70.53125,
+      "nwps_node_distance_m": 1580,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pine-point-beach",
+      "name": "Pine Point Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.52745,
+      "nwps_node_lng": -70.34844,
+      "nwps_node_distance_m": 1791,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "reid-state-park",
+      "name": "Reid State Park",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.77549,
+      "nwps_node_lng": -69.70859,
+      "nwps_node_distance_m": 1645,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
