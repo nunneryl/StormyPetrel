@@ -3992,6 +3992,67 @@
           "tijuana-slough"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46275 --slugs <these 6>` merges them into 'spots'. Placement is via the pending path; 46275 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "phi/44091",
+        "wfo": "phi",
+        "buoy": "44091",
+        "reference": "44091 — Barnegat, NJ 209, 25 m Datawell Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: --trustcheck accumulates one event per qualifying swell and direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ADDITIVE, not a replacement: phi already carries TWO reference groups — 44065 with 14 placed spots and 44091 with 15 placed spots — both governed by a trust_by_buoy PASS. This record adds to that roster and changes nothing about the existing spots. FIRST-ASSESSMENT FINDING — the first assessable window returned HEIGHT PASS with Pearson r 0.909: the FIRST height PASS in the project. Direction was 12 degrees circular standard deviation and 0 degrees bias ENERGY-WEIGHTED over 21 comparable hours, against 22 degrees UNWEIGHTED — so the energy weighting is doing real work here, not cosmetic smoothing. Two hours had buoy swell but only a wind-sea system in the model, so they were not comparable and contributed nothing. This is ONE event and the ROLLING accumulator still decides, so the zone is registered pending rather than treated as settled. THE 11 NEW SPOTS JOIN A BUOY THAT ALREADY CARRIES 15 PLACED SPOTS. CONSEQUENCE A LATER READER MUST NOT MISREAD: 44091 is already 'PASS' in trust_by_buoy, and apply_nwps_assignments checks the trust_by_buoy PASS branch BEFORE the pending branch, so these 11 spots will be placed with nwps_direction_status='verified' — inheriting the buoy's existing verification — NOT 'pending', despite this record. That is the gate being keyed per (wfo, buoy) and emitting one verdict per zone: the buoy's direction axis is already verified, so new spots on it inherit that. The 'pending' framing here describes the NEW window's evidence, not the status apply will write. SPECTRAL-SANITY FINDING (recorded on both new phi zones, since it is a comparison between them): buoy-side spectral sanity read 45.3 degrees at 44091 and 22.4 degrees at 44084, against an expected 15 degrees or less — yet 44091, the WORSE sanity number, produced the TIGHTER direction agreement of the two. Sanity is therefore NOT a reliable proxy for verdict quality in flat, small, mixed seas, where the coarse 22.5-degree binned SwD can diverge from the degree-valued reader without either being wrong about the dominant swell. Do NOT screen verdicts on this number until it has been observed in a real swell.",
+        "spots": 11,
+        "slugs": [
+          "brigantine",
+          "seaside-road",
+          "brigantine-jetty",
+          "atlantic-city",
+          "caesars-pier",
+          "ventor-pier",
+          "margate-pier",
+          "margate",
+          "quincy-ave",
+          "32nd-street",
+          "ocean-city-nj"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 11 spots are in the (Mac) scripts/nwps_phi_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_phi_validate_out.json --buoy 44091 --slugs <these 11>` merges them into 'spots'."
+      },
+      {
+        "zone": "phi/44084",
+        "wfo": "phi",
+        "buoy": "44084",
+        "reference": "44084 — Bethany Beach, DE 263, 11 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: --trustcheck accumulates one event per qualifying swell and direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ADDITIVE, not a replacement: phi already carries TWO reference groups — 44065 with 14 placed spots and 44091 with 15 placed spots — both governed by a trust_by_buoy PASS. This record adds to that roster and changes nothing about the existing spots. FIRST-ASSESSMENT FINDING — HEIGHT INCONCLUSIVE, not a FAIL: the window was flat and the buoy total-Hs span did NOT clear the 0.75 m variance floor, so there was nothing to correlate against and no height reading was earned either way. Direction was 14 degrees circular standard deviation and +17 degrees bias over 23 comparable hours. ZONE SPAN: this zone runs 8 to 84 km. The Cape May cluster — grant-street, queen-street, broadway-beach and the-cove — sits ACROSS THE MOUTH OF DELAWARE BAY from the buoy: open water with no land between, so this is NOT a wrong-side-of-headland case, but it is a DIFFERENT EXPOSURE. ONE zone verdict covers the whole 8-84 km span, so a future FAIL may be driven by the far end rather than by the buoy or the model; check the per-spot residuals before concluding anything about 44084 itself. Unlike 44091, this buoy has NO trust_by_buoy entry, so its spots will be placed with nwps_direction_status='pending' as this record describes. SPECTRAL-SANITY FINDING (recorded on both new phi zones, since it is a comparison between them): buoy-side spectral sanity read 45.3 degrees at 44091 and 22.4 degrees at 44084, against an expected 15 degrees or less — yet 44091, the WORSE sanity number, produced the TIGHTER direction agreement of the two. Sanity is therefore NOT a reliable proxy for verdict quality in flat, small, mixed seas, where the coarse 22.5-degree binned SwD can diverge from the degree-valued reader without either being wrong about the dominant swell. Do NOT screen verdicts on this number until it has been observed in a real swell.",
+        "spots": 22,
+        "slugs": [
+          "south-end",
+          "strathmere",
+          "sea-isle-city",
+          "56th-street",
+          "avalon-jetty",
+          "avalon-nj",
+          "30th-street-pier",
+          "stone-harbor",
+          "north-wildwood",
+          "wildwood",
+          "diamond-beach",
+          "poverty-beach",
+          "the-rocks",
+          "the-cove",
+          "queen-street",
+          "broadway-beach",
+          "grant-street",
+          "gordon-pond",
+          "rehoboth-beach",
+          "dewey-beach",
+          "lewes-street-surf-beach",
+          "fenwick-island"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 22 spots are in the (Mac) scripts/nwps_phi_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_phi_validate_out.json --buoy 44084 --slugs <these 22>` merges them into 'spots'."
       }
     ],
     "unverifiable": [
