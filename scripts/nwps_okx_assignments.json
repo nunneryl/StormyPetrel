@@ -4844,6 +4844,27 @@
           "devereaux"
         ],
         "to_place": "7 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_box_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_box_validate_out.json --no-buoy --slugs <these 7> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "gyx/gulf-of-maine-no-reference",
+        "wfo": "gyx",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE on the Gulf of Maine coast — a DEPTH problem, not a geometry one. Verified LIVE on 2026-07-30 by --find-buoy against two spots at OPPOSITE ENDS of the region, so the result is not an artefact of one location. The least-bad candidate is 44007 (Portland) at 41-43 km, a 49 m 3-m discus rated MARGINAL. Every other candidate that publishes a directional axis is STRUCTURALLY INVALID on depth: 44098 Jeffreys Ledge 76 m, 44013 Boston 65 m, 44032 Central Maine 100 m, 44033 Penobscot 110 m — deep-water regimes measured against shallow nearshore nodes, where shoaling/breaking/sheltering make the comparison invalid. Conversely every station close enough to BE nearshore publishes NO directional axis at all: webm1 at 1 km, wexm1 and wqqm1 at 3 km. The two failure modes are complementary and leave no gap in between: deep enough to publish direction means too deep to compare; close enough to compare means no direction published. The Gulf of Maine shelf runs DEEP TO THE COAST, so this is PERMANENT geography, not an outage. This INDEPENDENTLY REPRODUCES the finding already recorded in the gyx/44098 RETIRED record, which covers the 11 gyx spots already placed — the same conclusion reached from a different starting point, which is corroboration rather than duplication. These 12 spots ride NWPS HEIGHT skill + raycast direction, direction UNVERIFIED. GRID-CAP NOTE (PR #81): the gyx grid spacing is 2.48 km, so the FAR placement cap is the GRID-AWARE 3.72 km rather than the legacy 3.0 km floor. Two York spots changed between the 2026-07-07 and 2026-07-30 validates under that cap: long-sands-beach moved to a CLOSER node, and short-sands-beach-york went from FAR to OK — which is why it appears in this zone at all. The 11 existing gyx rows in the spots array were placed under the OLD cap and carry pre-#81 coordinates, tracked as DQ-6. That is a REFRESH question, not a correctness one: those rows are still valid placements, merely computed under the earlier cap. RE-CHECK TRIGGER: any nearshore directional buoy deployed inside the Gulf of Maine, or any of webm1 / wexm1 / wqqm1 beginning to publish .swdir — a BU-6 monthly re-sweep would catch either.",
+        "nearest_candidate": "44007 Portland (41-43 km, 49 m 3-m discus — MARGINAL, the least-bad option and still not valid) / 44098 Jeffreys Ledge 76 m, 44013 Boston 65 m, 44032 Central Maine 100 m, 44033 Penobscot 110 m (all STRUCTURALLY INVALID on depth) / webm1 1 km, wexm1 + wqqm1 3 km (nearshore but publish NO directional axis) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "fortunes-rocks",
+          "gooch-s-beach",
+          "higgins-beach",
+          "old-orchard-beach",
+          "scarborough-beach",
+          "short-sands-beach-york",
+          "moody-point",
+          "crescent-beach",
+          "wells-beach",
+          "drakes-island",
+          "pine-point-beach",
+          "reid-state-park"
+        ],
+        "to_place": "12 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_gyx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_gyx_validate_out.json --no-buoy --slugs <these 12> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
