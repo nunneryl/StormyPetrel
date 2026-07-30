@@ -16766,11 +16766,17 @@
       }
     ],
     "optimal_swell_dir": 90,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418606",
     "nearest_tide_station_dist_km": 4.18,
     "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 71.43
+    "nearest_buoy_dist_km": 71.43,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.4147,
+    "nwps_node_lng": -70.34844,
+    "nwps_node_distance_m": 2484,
+    "nwps_buoy_id": null
   },
   {
     "name": "Gooch's Beach",
@@ -16814,9 +16820,15 @@
       }
     ],
     "optimal_swell_dir": 167,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418911",
-    "nearest_tide_station_dist_km": 6.69
+    "nearest_tide_station_dist_km": 6.69,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.32451,
+    "nwps_node_lng": -70.47031,
+    "nwps_node_distance_m": 2583,
+    "nwps_buoy_id": null
   },
   {
     "name": "Higgins Beach",
@@ -16860,11 +16872,17 @@
       }
     ],
     "optimal_swell_dir": 164,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418445",
     "nearest_tide_station_dist_km": 5.2,
     "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 85.07
+    "nearest_buoy_dist_km": 85.07,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.55,
+    "nwps_node_lng": -70.2875,
+    "nwps_node_distance_m": 1285,
+    "nwps_buoy_id": null
   },
   {
     "name": "Long Sands Beach",
@@ -16962,9 +16980,15 @@
       }
     ],
     "optimal_swell_dir": 115,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418557",
-    "nearest_tide_station_dist_km": 0.8
+    "nearest_tide_station_dist_km": 0.8,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.5049,
+    "nwps_node_lng": -70.34844,
+    "nwps_node_distance_m": 2157,
+    "nwps_buoy_id": null
   },
   {
     "name": "Scarborough Beach",
@@ -17008,11 +17032,17 @@
       }
     ],
     "optimal_swell_dir": 121,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418445",
     "nearest_tide_station_dist_km": 1.95,
     "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 83.33
+    "nearest_buoy_dist_km": 83.33,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.55,
+    "nwps_node_lng": -70.2875,
+    "nwps_node_distance_m": 1929,
+    "nwps_buoy_id": null
   },
   {
     "name": "Short Sands Beach York",
@@ -17060,9 +17090,15 @@
       }
     ],
     "optimal_swell_dir": 56,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8419399",
-    "nearest_tide_station_dist_km": 1.49
+    "nearest_tide_station_dist_km": 1.49,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.16667,
+    "nwps_node_lng": -70.59219,
+    "nwps_node_distance_m": 1447,
+    "nwps_buoy_id": null
   },
   {
     "name": "Assateague Island MD",
@@ -36429,12 +36465,18 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418911",
     "nearest_tide_station_dist_km": 11.23,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 62.96,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.27941,
+    "nwps_node_lng": -70.56172,
+    "nwps_node_distance_m": 899,
+    "nwps_buoy_id": null
   },
   {
     "name": "Crescent Beach",
@@ -36459,12 +36501,18 @@
       }
     ],
     "optimal_swell_dir": 120,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418911",
     "nearest_tide_station_dist_km": 9.72,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 64.14,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.30196,
+    "nwps_node_lng": -70.56172,
+    "nwps_node_distance_m": 626,
+    "nwps_buoy_id": null
   },
   {
     "name": "Wells Beach",
@@ -36489,12 +36537,18 @@
       }
     ],
     "optimal_swell_dir": 130,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418911",
     "nearest_tide_station_dist_km": 7.96,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 65.24,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.30196,
+    "nwps_node_lng": -70.56172,
+    "nwps_node_distance_m": 1266,
+    "nwps_buoy_id": null
   },
   {
     "name": "Drakes Island",
@@ -36519,12 +36573,18 @@
       }
     ],
     "optimal_swell_dir": 130,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418911",
     "nearest_tide_station_dist_km": 6.83,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 65.86,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.32451,
+    "nwps_node_lng": -70.53125,
+    "nwps_node_distance_m": 1580,
+    "nwps_buoy_id": null
   },
   {
     "name": "Pine Point Beach",
@@ -36549,12 +36609,18 @@
       }
     ],
     "optimal_swell_dir": 175,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8418445",
     "nearest_tide_station_dist_km": 2.41,
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 83.41,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.52745,
+    "nwps_node_lng": -70.34844,
+    "nwps_node_distance_m": 1791,
+    "nwps_buoy_id": null
   },
   {
     "name": "Reid State Park",
@@ -36579,10 +36645,16 @@
       }
     ],
     "optimal_swell_dir": 140,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_buoy_id": "44098",
     "nearest_buoy_dist_km": 114.36,
-    "nwps_wfo": "gyx"
+    "nwps_wfo": "gyx",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.77549,
+    "nwps_node_lng": -69.70859,
+    "nwps_node_distance_m": 1645,
+    "nwps_buoy_id": null
   },
   {
     "name": "Deep Cove",
