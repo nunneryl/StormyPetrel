@@ -642,6 +642,63 @@ def test_variance_floor_075_makes_marginal_range_inconclusive():
         "0.9 m span ≥ 0.75 → assessable; a tracking model → r≈1 PASS"
 
 
+def _expected_pending_zones(doc, enriched):
+    """(all_pending_zone_keys, the_ones_reverify_must_cover) as (wfo, buoy) string pairs.
+
+    A pending zone belongs in the EXPECTED set only when at least one spot carries that SAME
+    nwps_wfo AND that SAME nwps_buoy_id and has swell_window_source == 'nwps'. Scoping by the full
+    zone key rather than by wfo is the point: a wfo can have placed spots from an earlier batch
+    while a newly registered zone on a different buoy in the same wfo has none of its own yet.
+    Shared by the real-data guard and the synthetic regression below, so the synthetic case
+    exercises the actual rule instead of a re-implementation of it."""
+    pending = {(r["wfo"], str(r["buoy"]))
+               for r in (doc.get("buoy_reference") or {}).get("pending") or []
+               if r.get("wfo") and r.get("buoy") is not None}
+    placed = {(s.get("nwps_wfo"), str(s.get("nwps_buoy_id"))) for s in enriched
+              if s.get("swell_window_source") == "nwps" and s.get("nwps_buoy_id") is not None}
+    return pending, pending & placed
+
+
+def test_reverify_guard_scopes_by_zone_not_by_wfo():
+    """A wfo with placed spots on ONE buoy and a newly registered zone on a DIFFERENT buoy must not
+    be demanded coverage it cannot have. This is the phi shape: 29 phi spots placed on 44065/44091,
+    then phi/44084 registered with nothing of its own placed yet. Under the old wfo-only scoping the
+    guard failed on ('phi','44084') purely because some OTHER phi buoy had placements."""
+    doc = {"buoy_reference": {"pending": [
+        {"wfo": "phi", "buoy": "44091", "slugs": []},     # placed: 15 spots of its own
+        {"wfo": "phi", "buoy": "44084", "slugs": []},     # registered, NOTHING placed yet
+        {"wfo": "mtr", "buoy": "46237", "slugs": []},     # placed, unrelated wfo
+    ]}}
+    enriched = ([{"nwps_wfo": "phi", "nwps_buoy_id": "44091", "swell_window_source": "nwps"}] * 15
+                + [{"nwps_wfo": "phi", "nwps_buoy_id": "44065", "swell_window_source": "nwps"}] * 14
+                + [{"nwps_wfo": "mtr", "nwps_buoy_id": "46237", "swell_window_source": "nwps"}]
+                # 44084's own spots exist but are NOT yet placed
+                + [{"nwps_wfo": "phi", "nwps_buoy_id": None, "swell_window_source": "raycast"}] * 22)
+    pending, expected = _expected_pending_zones(doc, enriched)
+    assert pending == {("phi", "44091"), ("phi", "44084"), ("mtr", "46237")}
+    # the newly registered zone is EXCLUDED; the two with their own placed spots are NOT
+    assert expected == {("phi", "44091"), ("mtr", "46237")}, expected
+    assert ("phi", "44084") not in expected, "unplaced zone demanded because its WFO has placements"
+
+    # the guard then passes against a roster that legitimately lacks phi/44084 ...
+    zones = {("phi", "44091"), ("phi", "44065"), ("mtr", "46237")}
+    assert not (expected - zones), "guard must not fail on a registered-but-unplaced zone"
+    # ... and is NOT weakened: a zone that DOES have placed spots is still demanded, so dropping
+    # phi/44091 from the reverify roster still fails.
+    assert expected - {("phi", "44065"), ("mtr", "46237")} == {("phi", "44091")}
+
+    # wfo-only scoping (what PR #114 did) would have pulled the unplaced zone in — the regression
+    placed_wfos = {s["nwps_wfo"] for s in enriched if s["swell_window_source"] == "nwps"}
+    wfo_only = {(w, b) for w, b in pending if w in placed_wfos}
+    assert ("phi", "44084") in wfo_only, "fixture no longer reproduces the wfo-only failure"
+    assert wfo_only - expected == {("phi", "44084")}
+
+    # once 44084's spots ARE placed it is demanded again, so the fix defers rather than exempts
+    enriched2 = enriched + [{"nwps_wfo": "phi", "nwps_buoy_id": "44084", "swell_window_source": "nwps"}]
+    _, expected2 = _expected_pending_zones(doc, enriched2)
+    assert ("phi", "44084") in expected2
+
+
 def test_reverify_covers_pending_zones_not_just_pass():
     # Part 1(d): _tagged_nwps_zones keys on swell_window_source=='nwps', so it returns EVERY placed
     # zone — the PASS/verified ones AND the PENDING ones — so scheduling reverify accumulates for the
@@ -651,21 +708,22 @@ def test_reverify_covers_pending_zones_not_just_pass():
     # LONGER pending, and any future pending edits are picked up automatically.
     #
     # REGISTERING a pending zone and PLACING its spots are separate steps, so a zone can legitimately
-    # sit in pending[] with nothing placed behind it yet — mfl/41122 is registered while all 23 mfl
-    # spots are still swell_window_source=='raycast', placement having been deliberately deferred
-    # pending a non-flat cycle. _tagged_nwps_zones keys on PLACED spots, so such a zone is correctly
-    # absent from it and must not be demanded here. Scope the expectation to pending zones that
-    # actually have at least one placed spot; for those the assertion is unchanged and undiluted.
+    # sit in pending[] with nothing placed behind it yet. _tagged_nwps_zones keys on PLACED spots, so
+    # such a zone is correctly absent from it and must not be demanded here.
+    #
+    # SCOPED BY ZONE KEY (wfo AND buoy), not by wfo alone. A wfo can carry placed spots from an
+    # EARLIER batch while a newly registered zone for a DIFFERENT buoy in that same wfo has none yet:
+    # phi is exactly this shape — 29 phi spots are placed on 44065/44091, so wfo-only scoping demanded
+    # coverage for the freshly registered phi/44084 that it cannot have until apply runs. A registered
+    # zone with no placed spots OF ITS OWN is legitimately absent from _tagged_nwps_zones regardless
+    # of whether its wfo has other placements. For zones that DO have their own placed spots the
+    # assertion is unchanged and undiluted.
     import json
     from pipeline.forecast.nwps_nearshore import NWPS_ASSIGNMENTS, ENRICHED
-    zones = {(w, b) for w, b, _ in nn._tagged_nwps_zones()}
+    zones = {(w, str(b)) for w, b, _ in nn._tagged_nwps_zones() if b is not None}
     doc = json.loads(NWPS_ASSIGNMENTS.read_text())
-    pending = {(r["wfo"], str(r["buoy"])) for r in (doc.get("buoy_reference") or {}).get("pending") or []
-               if r.get("wfo") and r.get("buoy") is not None}
+    pending, expected = _expected_pending_zones(doc, json.loads(ENRICHED.read_text()))
     assert pending, "expected at least one pending zone in the assignments file"
-    placed_wfos = {s.get("nwps_wfo") for s in json.loads(ENRICHED.read_text())
-                   if s.get("swell_window_source") == "nwps"}
-    expected = {(w, b) for w, b in pending if w in placed_wfos}
     assert expected, "expected at least one PLACED pending zone (all pending zones are unplaced?)"
     missing = expected - zones
     assert not missing, f"reverify must cover the PLACED pending zones; missing {missing}"
