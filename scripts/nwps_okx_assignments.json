@@ -3870,6 +3870,206 @@
       "nwps_node_lng": -75.04655,
       "nwps_node_distance_m": 275,
       "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "horseneck-beach",
+      "name": "Horseneck Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.49777,
+      "nwps_node_lng": -71.05422,
+      "nwps_node_distance_m": 669,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "squibnocket",
+      "name": "Squibnocket",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.29906,
+      "nwps_node_lng": -70.76981,
+      "nwps_node_distance_m": 1818,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "lucy-vincent",
+      "name": "Lucy Vincent",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.33519,
+      "nwps_node_lng": -70.6987,
+      "nwps_node_distance_m": 2015,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "long-point",
+      "name": "Long Point",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.33519,
+      "nwps_node_lng": -70.6276,
+      "nwps_node_distance_m": 1458,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "south-beach-state-park",
+      "name": "South Beach State Park",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.33519,
+      "nwps_node_lng": -70.53279,
+      "nwps_node_distance_m": 1549,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "madaket",
+      "name": "Madaket",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.26293,
+      "nwps_node_lng": -70.22468,
+      "nwps_node_distance_m": 1855,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "cisco-beach",
+      "name": "Cisco Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.24486,
+      "nwps_node_lng": -70.17727,
+      "nwps_node_distance_m": 2217,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "miacomet",
+      "name": "Miacomet",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.2268,
+      "nwps_node_lng": -70.12987,
+      "nwps_node_distance_m": 2010,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "nobadeer",
+      "name": "Nobadeer",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.2268,
+      "nwps_node_lng": -70.05877,
+      "nwps_node_distance_m": 2129,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "nantucket-surf",
+      "name": "Nantucket Surf",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.31712,
+      "nwps_node_lng": -69.96396,
+      "nwps_node_distance_m": 1823,
+      "nwps_buoy_id": "44085"
+    },
+    {
+      "slug": "coast-guard-beach",
+      "name": "Coast Guard Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.84101,
+      "nwps_node_lng": -69.94026,
+      "nwps_node_distance_m": 712,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "marconi-beach",
+      "name": "Marconi Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.91327,
+      "nwps_node_lng": -69.96396,
+      "nwps_node_distance_m": 901,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nauset-beach",
+      "name": "Nauset Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.80488,
+      "nwps_node_lng": -69.91656,
+      "nwps_node_distance_m": 1662,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nahant-beach",
+      "name": "Nahant Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.43715,
+      "nwps_node_lng": -70.91201,
+      "nwps_node_distance_m": 2174,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nantasket-beach",
+      "name": "Nantasket Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.27457,
+      "nwps_node_lng": -70.84091,
+      "nwps_node_distance_m": 1090,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "scituate",
+      "name": "Scituate",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.18424,
+      "nwps_node_lng": -70.6987,
+      "nwps_node_distance_m": 1717,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "winthrop-jetty",
+      "name": "Winthrop Jetty",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.36489,
+      "nwps_node_lng": -70.95942,
+      "nwps_node_distance_m": 327,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "revere-beach",
+      "name": "Revere Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.41909,
+      "nwps_node_lng": -70.98312,
+      "nwps_node_distance_m": 213,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "lynn-beach",
+      "name": "Lynn Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.45522,
+      "nwps_node_lng": -70.91201,
+      "nwps_node_distance_m": 1342,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "devereaux",
+      "name": "Devereaux",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.47328,
+      "nwps_node_lng": -70.84091,
+      "nwps_node_distance_m": 2178,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
