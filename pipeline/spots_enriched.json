@@ -22849,9 +22849,15 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Bandon-Beaches",
     "nwps_wfo": "mfr",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9432373",
-    "nearest_tide_station_dist_km": 3.15
+    "nearest_tide_station_dist_km": 3.15,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.09531,
+    "nwps_node_lng": -124.43725,
+    "nwps_node_distance_m": 239,
+    "nwps_buoy_id": null
   },
   {
     "name": "Bastendorff Beach",
@@ -22905,12 +22911,18 @@
       }
     ],
     "optimal_swell_dir": 256,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9432780",
     "nearest_tide_station_dist_km": 2.04,
     "nearest_buoy_id": "46050",
     "nearest_buoy_dist_km": 148.82,
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [],
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.34819,
+    "nwps_node_lng": -124.36569,
+    "nwps_node_distance_m": 1050,
+    "nwps_buoy_id": null
   },
   {
     "name": "Brookings Beach",
@@ -22969,11 +22981,17 @@
       }
     ],
     "optimal_swell_dir": 276,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9430104",
     "nearest_tide_station_dist_km": 0.99,
     "nearest_buoy_id": "46244",
-    "nearest_buoy_dist_km": 127.85
+    "nearest_buoy_dist_km": 127.85,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.02959,
+    "nwps_node_lng": -124.27026,
+    "nwps_node_distance_m": 1354,
+    "nwps_buoy_id": null
   },
   {
     "name": "Cannon Beach",
@@ -23207,11 +23225,17 @@
       }
     ],
     "optimal_swell_dir": 256,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9431011",
     "nearest_tide_station_dist_km": 0.86,
     "nearest_buoy_id": "46015",
-    "nearest_buoy_dist_km": 50.58
+    "nearest_buoy_dist_km": 50.58,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.40891,
+    "nwps_node_lng": -124.43725,
+    "nwps_node_distance_m": 1013,
+    "nwps_buoy_id": null
   },
   {
     "name": "Hubbard Creek",
@@ -23264,9 +23288,15 @@
       }
     ],
     "optimal_swell_dir": 260,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9431647",
-    "nearest_tide_station_dist_km": 1.78
+    "nearest_tide_station_dist_km": 1.78,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 42.73405,
+    "nwps_node_lng": -124.48497,
+    "nwps_node_distance_m": 699,
+    "nwps_buoy_id": null
   },
   {
     "name": "Indian Beach Ecola",
@@ -23953,11 +23983,17 @@
       }
     ],
     "optimal_swell_dir": 256,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9432373",
     "nearest_tide_station_dist_km": 10.16,
     "nearest_buoy_id": "46015",
-    "nearest_buoy_dist_km": 62.37
+    "nearest_buoy_dist_km": 62.37,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 43.20369,
+    "nwps_node_lng": -124.4134,
+    "nwps_node_distance_m": 1601,
+    "nwps_buoy_id": null
   },
   {
     "name": "Presque Isle Beach",
