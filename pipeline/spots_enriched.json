@@ -22778,12 +22778,18 @@
       }
     ],
     "optimal_swell_dir": 288,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435385",
     "nearest_tide_station_dist_km": 5.66,
     "nearest_buoy_id": "46050",
     "nearest_buoy_dist_km": 37.14,
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.65648,
+    "nwps_node_lng": -124.06983,
+    "nwps_node_distance_m": 1438,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Bandon Beach",
@@ -23024,9 +23030,15 @@
     "tide_preference_confidence": 0.7,
     "nwps_wfo": "pqr",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9437954",
-    "nearest_tide_station_dist_km": 17.05
+    "nearest_tide_station_dist_km": 17.05,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.86717,
+    "nwps_node_lng": -123.9705,
+    "nwps_node_distance_m": 1051,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Cape Kiwanda",
@@ -23074,11 +23086,17 @@
       }
     ],
     "optimal_swell_dir": 276,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0857",
     "nearest_tide_station_dist_km": 5.47,
     "nearest_buoy_id": "46050",
-    "nearest_buoy_dist_km": 74.2
+    "nearest_buoy_dist_km": 74.2,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.21665,
+    "nwps_node_lng": -123.99533,
+    "nwps_node_distance_m": 1229,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Florence South Jetty",
@@ -23132,9 +23150,15 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9434032",
-    "nearest_tide_station_dist_km": 6.77
+    "nearest_tide_station_dist_km": 6.77,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.00596,
+    "nwps_node_lng": -124.14433,
+    "nwps_node_distance_m": 1056,
+    "nwps_buoy_id": null
   },
   {
     "name": "Gold Beach",
@@ -23291,11 +23315,17 @@
       }
     ],
     "optimal_swell_dir": 252,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9437954",
     "nearest_tide_station_dist_km": 18.59,
     "nearest_buoy_id": "46029",
-    "nearest_buoy_dist_km": 50.63
+    "nearest_buoy_dist_km": 50.63,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.88524,
+    "nwps_node_lng": -123.99533,
+    "nwps_node_distance_m": 2326,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Lincoln City Beach",
@@ -23349,11 +23379,17 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9436381",
     "nearest_tide_station_dist_km": 5.66,
     "nearest_buoy_id": "46050",
-    "nearest_buoy_dist_km": 54.5
+    "nearest_buoy_dist_km": 54.5,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.99981,
+    "nwps_node_lng": -124.02017,
+    "nwps_node_distance_m": 254,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Nelscott Reef",
@@ -23408,7 +23444,7 @@
       }
     ],
     "optimal_swell_dir": 284,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9436101",
     "nearest_tide_station_dist_km": 3.92,
     "nearest_buoy_id": "46050",
@@ -23417,7 +23453,13 @@
       "46029",
       "46248",
       "46243"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.96367,
+    "nwps_node_lng": -124.045,
+    "nwps_node_distance_m": 1689,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Nye Beach",
@@ -23465,14 +23507,20 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435385",
     "nearest_tide_station_dist_km": 1.67,
     "nearest_buoy_id": "46050",
     "nearest_buoy_dist_km": 37.4,
     "fallback_buoy_ids": [
       "46089"
-    ]
+    ],
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.65648,
+    "nwps_node_lng": -124.06983,
+    "nwps_node_distance_m": 912,
+    "nwps_buoy_id": null
   },
   {
     "name": "Otter Rock",
@@ -23526,7 +23574,7 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435827",
     "nearest_tide_station_dist_km": 5.91,
     "nearest_buoy_id": "46050",
@@ -23535,7 +23583,13 @@
       "46278",
       "46029",
       "46248"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.80104,
+    "nwps_node_lng": -124.09467,
+    "nwps_node_distance_m": 1600,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Pacific City Beach",
@@ -23588,7 +23642,7 @@
       }
     ],
     "optimal_swell_dir": 276,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0857",
     "nearest_tide_station_dist_km": 1.53,
     "nearest_buoy_id": "46050",
@@ -23597,7 +23651,13 @@
       "46029",
       "46248",
       "46089"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.19858,
+    "nwps_node_lng": -123.99533,
+    "nwps_node_distance_m": 1654,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Roads End",
@@ -23651,7 +23711,7 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9436381",
     "nearest_tide_station_dist_km": 4.64,
     "nearest_buoy_id": "46050",
@@ -23660,7 +23720,13 @@
       "46029",
       "46248",
       "46089"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.01788,
+    "nwps_node_lng": -124.02017,
+    "nwps_node_distance_m": 643,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "Seaside Cove",
@@ -23714,11 +23780,17 @@
       }
     ],
     "optimal_swell_dir": 252,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9438772",
     "nearest_tide_station_dist_km": 19.51,
     "nearest_buoy_id": "46243",
-    "nearest_buoy_dist_km": 29.92
+    "nearest_buoy_dist_km": 29.92,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.99366,
+    "nwps_node_lng": -123.94567,
+    "nwps_node_distance_m": 1799,
+    "nwps_buoy_id": "46243"
   },
   {
     "name": "Short Sands Beach Oswald West",
@@ -23767,11 +23839,17 @@
       }
     ],
     "optimal_swell_dir": 268,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9437908",
     "nearest_tide_station_dist_km": 5.4,
     "nearest_buoy_id": "46278",
-    "nearest_buoy_dist_km": 17.94
+    "nearest_buoy_dist_km": 17.94,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 45.75875,
+    "nwps_node_lng": -123.99533,
+    "nwps_node_distance_m": 2104,
+    "nwps_buoy_id": "46278"
   },
   {
     "name": "South Beach Newport",
@@ -23819,9 +23897,15 @@
       }
     ],
     "optimal_swell_dir": 256,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435380",
-    "nearest_tide_station_dist_km": 1.49
+    "nearest_tide_station_dist_km": 1.49,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 44.60227,
+    "nwps_node_lng": -124.09467,
+    "nwps_node_distance_m": 1701,
+    "nwps_buoy_id": null
   },
   {
     "name": "Whiskey Run Beach",
@@ -27724,11 +27808,17 @@
       }
     ],
     "optimal_swell_dir": 264,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9440574",
     "nearest_tide_station_dist_km": 1.89,
     "nearest_buoy_id": "46029",
-    "nearest_buoy_dist_km": 37.16
+    "nearest_buoy_dist_km": 37.16,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 46.28278,
+    "nwps_node_lng": -124.09467,
+    "nwps_node_distance_m": 1346,
+    "nwps_buoy_id": "46243"
   },
   {
     "name": "Hobuck Beach",
@@ -27782,9 +27872,15 @@
       }
     ],
     "optimal_swell_dir": 216,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442861",
-    "nearest_tide_station_dist_km": 4.41
+    "nearest_tide_station_dist_km": 4.41,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 48.33739,
+    "nwps_node_lng": -124.71469,
+    "nwps_node_distance_m": 3602,
+    "nwps_buoy_id": null
   },
   {
     "name": "Kalaloch Beach",
@@ -27849,9 +27945,15 @@
     "tide_preference_confidence": 0.5,
     "nwps_wfo": "sew",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0965",
-    "nearest_tide_station_dist_km": 12.14
+    "nearest_tide_station_dist_km": 12.14,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.57957,
+    "nwps_node_lng": -124.40306,
+    "nwps_node_distance_m": 2838,
+    "nwps_buoy_id": "46211"
   },
   {
     "name": "La Push First Beach",
@@ -27905,9 +28007,15 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
-    "nearest_tide_station_dist_km": 0.42
+    "nearest_tide_station_dist_km": 0.42,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.90435,
+    "nwps_node_lng": -124.66276,
+    "nwps_node_distance_m": 1821,
+    "nwps_buoy_id": null
   },
   {
     "name": "La Push Second Beach",
@@ -27956,9 +28064,15 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
-    "nearest_tide_station_dist_km": 0.42
+    "nearest_tide_station_dist_km": 0.42,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.86826,
+    "nwps_node_lng": -124.61082,
+    "nwps_node_distance_m": 1983,
+    "nwps_buoy_id": null
   },
   {
     "name": "La Push Third Beach",
@@ -28007,9 +28121,15 @@
       }
     ],
     "optimal_swell_dir": 200,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
-    "nearest_tide_station_dist_km": 5.44
+    "nearest_tide_station_dist_km": 5.44,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.86826,
+    "nwps_node_lng": -124.61082,
+    "nwps_node_distance_m": 1891,
+    "nwps_buoy_id": null
   },
   {
     "name": "Long Beach WA",
@@ -28052,11 +28172,17 @@
       }
     ],
     "optimal_swell_dir": 272,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9440597",
     "nearest_tide_station_dist_km": 4.51,
     "nearest_buoy_id": "46243",
-    "nearest_buoy_dist_km": 15.17
+    "nearest_buoy_dist_km": 15.17,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 46.35506,
+    "nwps_node_lng": -124.09467,
+    "nwps_node_distance_m": 1772,
+    "nwps_buoy_id": "46243"
   },
   {
     "name": "Ocean Shores",
@@ -28099,9 +28225,15 @@
       }
     ],
     "optimal_swell_dir": 264,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441156",
-    "nearest_tide_station_dist_km": 5.64
+    "nearest_tide_station_dist_km": 5.64,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.00218,
+    "nwps_node_lng": -124.19531,
+    "nwps_node_distance_m": 1558,
+    "nwps_buoy_id": "46211"
   },
   {
     "name": "Pacific Beach WA",
@@ -28154,7 +28286,7 @@
       }
     ],
     "optimal_swell_dir": 284,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441627",
     "nearest_tide_station_dist_km": 11.09,
     "nearest_buoy_id": "46211",
@@ -28163,7 +28295,13 @@
       "46243",
       "46029",
       "46248"
-    ]
+    ],
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.2187,
+    "nwps_node_lng": -124.24724,
+    "nwps_node_distance_m": 2867,
+    "nwps_buoy_id": "46211"
   },
   {
     "name": "Rialto Beach",
@@ -28216,11 +28354,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
     "nearest_tide_station_dist_km": 1.83,
     "nearest_buoy_id": "46206",
-    "nearest_buoy_dist_km": 142.63
+    "nearest_buoy_dist_km": 142.63,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 47.90435,
+    "nwps_node_lng": -124.66276,
+    "nwps_node_distance_m": 2176,
+    "nwps_buoy_id": null
   },
   {
     "name": "Shi Shi Beach",
@@ -28273,11 +28417,17 @@
       }
     ],
     "optimal_swell_dir": 224,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442861",
     "nearest_tide_station_dist_km": 3.92,
     "nearest_buoy_id": "46206",
-    "nearest_buoy_dist_km": 116.33
+    "nearest_buoy_dist_km": 116.33,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 48.26522,
+    "nwps_node_lng": -124.71469,
+    "nwps_node_distance_m": 2342,
+    "nwps_buoy_id": null
   },
   {
     "name": "Tokeland",
@@ -28325,9 +28475,15 @@
       }
     ],
     "optimal_swell_dir": 276,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9440910",
-    "nearest_tide_station_dist_km": 1.49
+    "nearest_tide_station_dist_km": 1.49,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 46.71348,
+    "nwps_node_lng": -124.03949,
+    "nwps_node_distance_m": 1327,
+    "nwps_buoy_id": "46211"
   },
   {
     "name": "Westport Jetty",
@@ -28370,11 +28526,17 @@
       }
     ],
     "optimal_swell_dir": 244,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441102",
     "nearest_tide_station_dist_km": 2.02,
     "nearest_buoy_id": "46211",
-    "nearest_buoy_dist_km": 9.5
+    "nearest_buoy_dist_km": 9.5,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 46.89391,
+    "nwps_node_lng": -124.14337,
+    "nwps_node_distance_m": 1161,
+    "nwps_buoy_id": "46211"
   },
   {
     "name": "Westport Light State Park",
@@ -28417,11 +28579,17 @@
       }
     ],
     "optimal_swell_dir": 248,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441102",
     "nearest_tide_station_dist_km": 1.63,
     "nearest_buoy_id": "46211",
-    "nearest_buoy_dist_km": 9.47
+    "nearest_buoy_dist_km": 9.47,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 46.89391,
+    "nwps_node_lng": -124.14337,
+    "nwps_node_distance_m": 908,
+    "nwps_buoy_id": "46211"
   },
   {
     "name": "Deland Park",
