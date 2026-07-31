@@ -5150,6 +5150,52 @@
           "kalaloch-beach"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_sew_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sew_validate_out.json --buoy 46211 --slugs <these 6>` merges them into 'spots'. Placement is via the pending path; 46211 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "tbw/42098",
+        "wfo": "tbw",
+        "buoy": "42098",
+        "reference": "42098 — Egmont Channel Entrance, FL 214, 14 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 42098 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. FIRST-ASSESSMENT FINDING — the worst result recorded anywhere in the project, and a later reader must read the CAUSE before the numbers. HEIGHT FAIL with Pearson r 0.352 against the 0.8 bar: the WORST height correlation in the project. DIRECTION on the same window read 2 degrees circular standard deviation and -19 degrees bias over 14 comparable hours, against the OLD dirpw metric at 11.8 degrees and -8.3 degrees over 53 hours. DO NOT read that 2 degrees as the partition gate winning again: BOTH numbers are CONTAMINATED and NEITHER is trustworthy. BU-14 — NDBC SPECTRAL BAND SPLIT REPORTED SUSPECT, and this is a READER problem, not a MODEL problem. The reader measured 0.55 m of swell where the NDBC .spec SwH column reads 0.00 m, and 9 comparable hours had buoy swell present while the model found only wind sea. So the swell/wind-sea split the reader derives from the spectrum disagrees with NDBC's own published split, and the buoy-side swell height and swell direction are BOTH suspect at source. Buoy-side spectral sanity read 29.9 degrees against an expected 15 degrees or less. BU-14 IS GULF-WIDE, NOT STATION-SPECIFIC: 42098 and 42092 flagged the SAME band split INDEPENDENTLY on the same cycle, 1500 km apart at opposite ends of the Gulf, so this is a property of the reader's swell/wind-sea split in this basin rather than a fault at either station. AND IT SITS UPSTREAM OF THE WHOLE DIRECTION GATE: buoy-side swell_dir is exactly what the gate compares the model against, so if the split that produces it is wrong then every direction number on this page — the partition figures and the old dirpw figures alike — inherits the fault. No direction verdict from either Gulf station can be trusted until BU-14 is resolved. Tracked as BU-14. A SECOND, INDEPENDENT SUSPECT ALSO IN PLAY: the zone spans 20-90 km, with englewood near the 100 km distance ceiling, and ONE zone verdict covers the whole span. The Tampa Bay spots sit BEHIND A SHALLOW SHELF while 42098 sits in a CHANNEL ENTRANCE, so a genuine REGIME MISMATCH may be present on top of BU-14 — the height FAIL in particular could come from either cause or both. Check the per-spot residuals against distance before drawing any conclusion about the buoy itself; and resolving BU-14 will not automatically clear the height reading. NOT IN THIS ZONE — 8 further tbw spots that came back FAR domain misses at 72-236 km: destin-jetty, mexico-beach, navarre-beach, okaloosa-island-pier, panama-city-beach-pier, pensacola-beach, st-andews-park, cape-san-b-liss. They are FLORIDA PANHANDLE spots at longitude -85.4 to -87.1, which is MOB and TAE territory rather than Tampa Bay, so they are MIS-TAGGED rather than unplaceable; both MOB and TAE run NWPS, which makes them RECOVERABLE BY RETAGGING. They are tracked SEPARATELY and are deliberately absent from every record here — do not read their absence as a judgement that they cannot be placed. TWO ARE MISSPELLED IN THE ROSTER: st-andews-park should be St Andrews Park, and cape-san-b-liss should be Cape San Blas; fix the names at the same time as the retag, since both slugs will change.",
+        "spots": 12,
+        "slugs": [
+          "spring-ave",
+          "st-pete-beach",
+          "treasure-island-fl",
+          "redington-pier",
+          "madeira-beach",
+          "twin-piers",
+          "whitney-beach",
+          "indian-rocks-beach",
+          "coolidge",
+          "siesta-key",
+          "venice-beach-fl",
+          "englewood"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 12 spots are in the (Mac) scripts/nwps_tbw_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_tbw_validate_out.json --buoy 42098 --slugs <these 12>` merges them into 'spots'. NOTE that validate-out carries nwps_buoy_id=null throughout, because --validate copies the field from the spot record and no tbw spot has ever been assigned one; the buoy id comes from THIS record, not from that file. Placement is via the pending path; 42098 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "crp/42092",
+        "wfo": "crp",
+        "buoy": "42092",
+        "reference": "42092 — Aransas Pass Channel Entrance S, TX 252, 23 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 42092 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. FIRST-ASSESSMENT FINDING — HEIGHT INCONCLUSIVE, not a FAIL: the buoy total-Hs span did not clear the 0.75 m variance floor, so there was nothing to correlate against. This zone reads 3 EVENTS — the FIRST zone anywhere in the project to accumulate more than one, so the rolling accumulator has genuinely begun to run here rather than resting on a single window. DIRECTION read 4 degrees circular standard deviation and +8 degrees bias over 27 comparable hours, against the OLD dirpw metric at 5.4 degrees and +8.8 degrees. Buoy-side spectral sanity read 14.3 degrees — the FIRST reading INSIDE the expected 15 degrees tolerance this session, after every other zone came back above it. BU-14 — NDBC SPECTRAL BAND SPLIT REPORTED SUSPECT, and this is a READER problem, not a MODEL problem. The reader measured 0.40 m of swell where the NDBC .spec SwH column reads 0.00 m, and 20 of 28 Trkng-diag hours had NO model system qualifying as swell at all. So the swell/wind-sea split the reader derives from the spectrum disagrees with NDBC's own published split, and the buoy-side swell height and swell direction are BOTH suspect at source. BU-14 IS GULF-WIDE, NOT STATION-SPECIFIC: 42098 and 42092 flagged the SAME band split INDEPENDENTLY on the same cycle, 1500 km apart at opposite ends of the Gulf, so this is a property of the reader's swell/wind-sea split in this basin rather than a fault at either station. AND IT SITS UPSTREAM OF THE WHOLE DIRECTION GATE: buoy-side swell_dir is exactly what the gate compares the model against, so if the split that produces it is wrong then every direction number on this page — the partition figures and the old dirpw figures alike — inherits the fault. No direction verdict from either Gulf station can be trusted until BU-14 is resolved. Tracked as BU-14. THE WINDOW THE PARTITION THESIS HAS BEEN WAITING FOR, AND IT CANNOT BE USED. The Trkng diag classified this window MIXED at swell fraction 0.49 — the DISCRIMINATING SEA STATE the thesis needs, and the FIRST such window observed anywhere: every earlier supporting result came from clean long-period groundswell, where any sane method separates the systems. But the swell fraction is computed FROM THE SAME SUSPECT SPLIT that BU-14 flags, so the evidence and the thing it would test share a common failure and the window CANNOT be used to evaluate the thesis. Do not count it either way. Re-run this comparison once BU-14 is resolved — a mixed window is rare and this one is worth revisiting rather than waiting for another.",
+        "spots": 6,
+        "slugs": [
+          "mustang-island",
+          "jp-luby-surf-park",
+          "port-a-beach",
+          "bob-hall-pier",
+          "horace-caldwell-pier",
+          "port-aransas-jetty"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_crp_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_crp_validate_out.json --buoy 42092 --slugs <these 6>` merges them into 'spots'. NOTE that validate-out carries nwps_buoy_id=null throughout, because --validate copies the field from the spot record and no crp spot has ever been assigned one; the buoy id comes from THIS record, not from that file. Placement is via the pending path; 42092 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -5475,6 +5521,42 @@
           "whiskey-run-beach"
         ],
         "to_place": "6 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_mfr_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_mfr_validate_out.json --no-buoy --slugs <these 6> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "tbw/southwest-florida-no-reference",
+        "wfo": "tbw",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE IN RANGE for these three southwest Florida spots. Verified LIVE on 2026-07-31 by --find-buoy against EACH of the three, every one of which returned NO valid live nearshore directional reference; this is not an extrapolation from a single probe. Every candidate within reach is a TIDE GAUGE, not a wave buoy, and publishes NO directional axis at all: rkqf1 and rkxf1 at 14 km, fmrf1 at 58 km. 42098 Egmont Channel Entrance — the reference the rest of the tbw coast shares, registered in tbw/42098 — is OUT OF RANGE from all three, so the coast does not simply extend south. This is the CANDIDATE-TYPE failure rather than the depth-versus-axis one seen on the Pacific coast: nothing here is too deep, there is simply no directional instrument. Note also that 42098 itself is currently under BU-14 (its swell/wind-sea split is reported suspect), so even bringing these three into that zone would not presently buy a trustworthy direction. These three ride NWPS HEIGHT skill + raycast direction, direction unverified. RE-CHECK TRIGGER: any directional wave buoy deployed between Sanibel and Naples, or rkqf1 / rkxf1 / fmrf1 beginning to publish .swdir — a BU-6 monthly re-sweep would catch either.",
+        "nearest_candidate": "rkqf1 and rkxf1 (14 km) and fmrf1 (58 km) — all TIDE GAUGES publishing NO directional axis / 42098 Egmont Channel Entrance (a VALID reference, but OUT OF RANGE from all three) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "naples-pier",
+          "gasparilla",
+          "captiva"
+        ],
+        "to_place": "3 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_tbw_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_tbw_validate_out.json --no-buoy --slugs <these 3> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "hgx/upper-texas-coast-no-reference",
+        "wfo": "hgx",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE IN RANGE for the upper Texas coast. Verified LIVE on 2026-07-31 by --find-buoy against EACH of the four, every one of which returned NO valid live nearshore directional reference; this is not an extrapolation from a single probe. The nearest candidate that publishes a directional axis is 42035 Galveston at 38 km, a 16 m SCOOP rated MARGINAL, so it is not usable as a reference. Everything CLOSER is HEIGHT-ONLY and publishes no directional axis at all, including gtot2 at 3 km and grrt2 at 10 km. The failure is therefore NOT distance — 38 km is comfortably inside the 100 km ceiling and would be an unusually close reference anywhere else in the project — it is that the one directional instrument in range does not clear the reference bar, and the instruments that are near enough do not measure direction. RE-CHECK TRIGGER: 42035 being re-rated VALID (a hull or mooring change would do it), or gtot2 / grrt2 beginning to publish .swdir — a BU-6 monthly re-sweep would catch either. These four ride NWPS HEIGHT skill + raycast direction, direction unverified.",
+        "nearest_candidate": "42035 Galveston (16 m SCOOP, 38 km — the only directional candidate in range, rated MARGINAL and therefore not usable) / gtot2 at 3 km and grrt2 at 10 km (near enough but HEIGHT-ONLY, no directional axis) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "galveston-seawall",
+          "61st-street-galveston",
+          "matagorda-beach",
+          "surfside-beach-tx"
+        ],
+        "to_place": "4 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_hgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_hgx_validate_out.json --no-buoy --slugs <these 4> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "bro/south-texas-no-reference",
+        "wfo": "bro",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE IN RANGE for south Texas. Verified LIVE on 2026-07-31 by --find-buoy against BOTH spots, each of which returned NO valid live nearshore directional reference. EVERY candidate in reach is a TIDE GAUGE, not a wave buoy, and publishes NO directional axis at all: pcgt2 and bzst2 at 3 km, ptit2 at 7 km — and 3 km is about as close as an instrument gets anywhere in the project, so proximity is emphatically not the problem. THE SAME CANDIDATE-TYPE FAILURE as tbw/southwest-florida-no-reference registered in this same batch: nothing here is too deep and nothing is too far, there is simply no directional instrument on this stretch of coast. This is the OPPOSITE shape to the Pacific depth-versus-axis class (gyx / sew / pqr / mfr), where deep directional buoys existed but could not be compared against. RE-CHECK TRIGGER: any directional wave buoy deployed off South Padre, or pcgt2 / bzst2 / ptit2 beginning to publish .swdir — a BU-6 monthly re-sweep would catch either. These two ride NWPS HEIGHT skill + raycast direction, direction unverified.",
+        "nearest_candidate": "pcgt2 and bzst2 (3 km) and ptit2 (7 km) — all TIDE GAUGES publishing NO directional axis; no wave buoy of any kind is in range - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "isla-blanca-park",
+          "south-padre-island"
+        ],
+        "to_place": "2 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_bro_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_bro_validate_out.json --no-buoy --slugs <these 2> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
