@@ -4500,6 +4500,66 @@
       "nwps_node_lng": -124.61082,
       "nwps_node_distance_m": 1891,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "bandon-beach",
+      "name": "Bandon Beach",
+      "nwps_wfo": "mfr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.09531,
+      "nwps_node_lng": -124.43725,
+      "nwps_node_distance_m": 239,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "bastendorff-beach",
+      "name": "Bastendorff Beach",
+      "nwps_wfo": "mfr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.34819,
+      "nwps_node_lng": -124.36569,
+      "nwps_node_distance_m": 1050,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "brookings-beach",
+      "name": "Brookings Beach",
+      "nwps_wfo": "mfr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.02959,
+      "nwps_node_lng": -124.27026,
+      "nwps_node_distance_m": 1354,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "gold-beach",
+      "name": "Gold Beach",
+      "nwps_wfo": "mfr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.40891,
+      "nwps_node_lng": -124.43725,
+      "nwps_node_distance_m": 1013,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hubbard-creek",
+      "name": "Hubbard Creek",
+      "nwps_wfo": "mfr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.73405,
+      "nwps_node_lng": -124.48497,
+      "nwps_node_distance_m": 699,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "whiskey-run-beach",
+      "name": "Whiskey Run Beach",
+      "nwps_wfo": "mfr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.20369,
+      "nwps_node_lng": -124.4134,
+      "nwps_node_distance_m": 1601,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
