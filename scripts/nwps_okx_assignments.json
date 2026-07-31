@@ -4560,6 +4560,276 @@
       "nwps_node_lng": -124.4134,
       "nwps_node_distance_m": 1601,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "spring-ave",
+      "name": "Spring Ave",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.51007,
+      "nwps_node_lng": -82.7375,
+      "nwps_node_distance_m": 1671,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "st-pete-beach",
+      "name": "St. Pete Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.73716,
+      "nwps_node_lng": -82.77337,
+      "nwps_node_distance_m": 1306,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "treasure-island-fl",
+      "name": "Treasure Island FL",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.75338,
+      "nwps_node_lng": -82.77337,
+      "nwps_node_distance_m": 1014,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "redington-pier",
+      "name": "Redington Pier",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.80205,
+      "nwps_node_lng": -82.82717,
+      "nwps_node_distance_m": 1368,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "madeira-beach",
+      "name": "Madeira Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.78582,
+      "nwps_node_lng": -82.80924,
+      "nwps_node_distance_m": 1829,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "twin-piers",
+      "name": "Twin Piers",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.4614,
+      "nwps_node_lng": -82.70163,
+      "nwps_node_distance_m": 290,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "whitney-beach",
+      "name": "Whitney Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.42896,
+      "nwps_node_lng": -82.70163,
+      "nwps_node_distance_m": 1470,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "indian-rocks-beach",
+      "name": "Indian Rocks Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.89937,
+      "nwps_node_lng": -82.86304,
+      "nwps_node_distance_m": 1275,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "coolidge",
+      "name": "Coolidge",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.29919,
+      "nwps_node_lng": -82.57609,
+      "nwps_node_distance_m": 1063,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "siesta-key",
+      "name": "Siesta Key",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.25053,
+      "nwps_node_lng": -82.55815,
+      "nwps_node_distance_m": 1524,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "venice-beach-fl",
+      "name": "Venice Beach FL",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.10454,
+      "nwps_node_lng": -82.46848,
+      "nwps_node_distance_m": 958,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "englewood",
+      "name": "Englewood",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.94233,
+      "nwps_node_lng": -82.3788,
+      "nwps_node_distance_m": 640,
+      "nwps_buoy_id": "42098"
+    },
+    {
+      "slug": "naples-pier",
+      "name": "Naples Pier",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.13128,
+      "nwps_node_lng": -81.82283,
+      "nwps_node_distance_m": 1453,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "gasparilla",
+      "name": "Gasparilla",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.79634,
+      "nwps_node_lng": -82.28913,
+      "nwps_node_distance_m": 954,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "captiva",
+      "name": "Captiva",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.52059,
+      "nwps_node_lng": -82.19946,
+      "nwps_node_distance_m": 736,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mustang-island",
+      "name": "Mustang Island",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.75003,
+      "nwps_node_lng": -97.11082,
+      "nwps_node_distance_m": 1258,
+      "nwps_buoy_id": "42092"
+    },
+    {
+      "slug": "jp-luby-surf-park",
+      "name": "JP Luby Surf Park",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.6366,
+      "nwps_node_lng": -97.18299,
+      "nwps_node_distance_m": 716,
+      "nwps_buoy_id": "42092"
+    },
+    {
+      "slug": "port-a-beach",
+      "name": "Port A Beach",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.79864,
+      "nwps_node_lng": -97.0567,
+      "nwps_node_distance_m": 1544,
+      "nwps_buoy_id": "42092"
+    },
+    {
+      "slug": "bob-hall-pier",
+      "name": "Bob Hall Pier",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.57179,
+      "nwps_node_lng": -97.21907,
+      "nwps_node_distance_m": 1172,
+      "nwps_buoy_id": "42092"
+    },
+    {
+      "slug": "horace-caldwell-pier",
+      "name": "Horace Caldwell Pier",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.83105,
+      "nwps_node_lng": -97.03866,
+      "nwps_node_distance_m": 1387,
+      "nwps_buoy_id": "42092"
+    },
+    {
+      "slug": "port-aransas-jetty",
+      "name": "Port Aransas Jetty",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.83105,
+      "nwps_node_lng": -97.03866,
+      "nwps_node_distance_m": 580,
+      "nwps_buoy_id": "42092"
+    },
+    {
+      "slug": "galveston-seawall",
+      "name": "Galveston Seawall",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.28476,
+      "nwps_node_lng": -94.79235,
+      "nwps_node_distance_m": 66,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "61st-street-galveston",
+      "name": "61st Street Galveston",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.25236,
+      "nwps_node_lng": -94.82882,
+      "nwps_node_distance_m": 1013,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "matagorda-beach",
+      "name": "Matagorda Beach",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.6042,
+      "nwps_node_lng": -95.94118,
+      "nwps_node_distance_m": 632,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "surfside-beach-tx",
+      "name": "Surfside Beach TX",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.94448,
+      "nwps_node_lng": -95.28471,
+      "nwps_node_distance_m": 687,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "isla-blanca-park",
+      "name": "Isla Blanca Park",
+      "nwps_wfo": "bro",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.08707,
+      "nwps_node_lng": -97.15465,
+      "nwps_node_distance_m": 1674,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "south-padre-island",
+      "name": "South Padre Island",
+      "nwps_wfo": "bro",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.08707,
+      "nwps_node_lng": -97.15465,
+      "nwps_node_distance_m": 923,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
