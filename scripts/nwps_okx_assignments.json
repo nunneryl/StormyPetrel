@@ -4220,6 +4220,286 @@
       "nwps_node_lng": -75.0727,
       "nwps_node_distance_m": 1268,
       "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "short-sands-beach-oswald-west",
+      "name": "Short Sands Beach Oswald West",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.75875,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 2104,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "cannon-beach",
+      "name": "Cannon Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.86717,
+      "nwps_node_lng": -123.9705,
+      "nwps_node_distance_m": 1051,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "indian-beach-ecola",
+      "name": "Indian Beach Ecola",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.88524,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 2326,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "cape-kiwanda",
+      "name": "Cape Kiwanda",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.21665,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 1229,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "pacific-city-beach",
+      "name": "Pacific City Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.19858,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 1654,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "roads-end",
+      "name": "Roads End",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.01788,
+      "nwps_node_lng": -124.02017,
+      "nwps_node_distance_m": 643,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "lincoln-city-beach",
+      "name": "Lincoln City Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.99981,
+      "nwps_node_lng": -124.02017,
+      "nwps_node_distance_m": 254,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "nelscott-reef",
+      "name": "Nelscott Reef",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.96367,
+      "nwps_node_lng": -124.045,
+      "nwps_node_distance_m": 1689,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "otter-rock",
+      "name": "Otter Rock",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.80104,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1600,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "agate-beach-newport",
+      "name": "Agate Beach Newport",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.06983,
+      "nwps_node_distance_m": 1438,
+      "nwps_buoy_id": "46278"
+    },
+    {
+      "slug": "cape-disappointment",
+      "name": "Cape Disappointment",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.28278,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1346,
+      "nwps_buoy_id": "46243"
+    },
+    {
+      "slug": "long-beach-wa",
+      "name": "Long Beach WA",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.35506,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1772,
+      "nwps_buoy_id": "46243"
+    },
+    {
+      "slug": "seaside-cove",
+      "name": "Seaside Cove",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.99366,
+      "nwps_node_lng": -123.94567,
+      "nwps_node_distance_m": 1799,
+      "nwps_buoy_id": "46243"
+    },
+    {
+      "slug": "florence-south-jetty",
+      "name": "Florence South Jetty",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.00596,
+      "nwps_node_lng": -124.14433,
+      "nwps_node_distance_m": 1056,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nye-beach",
+      "name": "Nye Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.06983,
+      "nwps_node_distance_m": 912,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "south-beach-newport",
+      "name": "South Beach Newport",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.60227,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1701,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "westport-light-state-park",
+      "name": "Westport Light State Park",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.89391,
+      "nwps_node_lng": -124.14337,
+      "nwps_node_distance_m": 908,
+      "nwps_buoy_id": "46211"
+    },
+    {
+      "slug": "westport-jetty",
+      "name": "Westport Jetty",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.89391,
+      "nwps_node_lng": -124.14337,
+      "nwps_node_distance_m": 1161,
+      "nwps_buoy_id": "46211"
+    },
+    {
+      "slug": "ocean-shores",
+      "name": "Ocean Shores",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.00218,
+      "nwps_node_lng": -124.19531,
+      "nwps_node_distance_m": 1558,
+      "nwps_buoy_id": "46211"
+    },
+    {
+      "slug": "tokeland",
+      "name": "Tokeland",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.71348,
+      "nwps_node_lng": -124.03949,
+      "nwps_node_distance_m": 1327,
+      "nwps_buoy_id": "46211"
+    },
+    {
+      "slug": "pacific-beach-wa",
+      "name": "Pacific Beach WA",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.2187,
+      "nwps_node_lng": -124.24724,
+      "nwps_node_distance_m": 2867,
+      "nwps_buoy_id": "46211"
+    },
+    {
+      "slug": "kalaloch-beach",
+      "name": "Kalaloch Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.57957,
+      "nwps_node_lng": -124.40306,
+      "nwps_node_distance_m": 2838,
+      "nwps_buoy_id": "46211"
+    },
+    {
+      "slug": "hobuck-beach",
+      "name": "Hobuck Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 48.33739,
+      "nwps_node_lng": -124.71469,
+      "nwps_node_distance_m": 3602,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "shi-shi-beach",
+      "name": "Shi Shi Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 48.26522,
+      "nwps_node_lng": -124.71469,
+      "nwps_node_distance_m": 2342,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rialto-beach",
+      "name": "Rialto Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.90435,
+      "nwps_node_lng": -124.66276,
+      "nwps_node_distance_m": 2176,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-push-first-beach",
+      "name": "La Push First Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.90435,
+      "nwps_node_lng": -124.66276,
+      "nwps_node_distance_m": 1821,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-push-second-beach",
+      "name": "La Push Second Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.86826,
+      "nwps_node_lng": -124.61082,
+      "nwps_node_distance_m": 1983,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-push-third-beach",
+      "name": "La Push Third Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.86826,
+      "nwps_node_lng": -124.61082,
+      "nwps_node_distance_m": 1891,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
@@ -4749,6 +5029,67 @@
           "ocean-city-md-inlet"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 3 spots are in the (Mac) scripts/nwps_akq_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_akq_validate_out.json --buoy 44084 --slugs <these 3>` merges them into 'spots'. NOTE the validate-out carries nwps_buoy_id=null for these three, because --validate copies that field from the spot record and the Maryland spots have never been assigned one; the buoy id comes from THIS record, not from that file. Placement is via the pending path; 44084 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "pqr/46278",
+        "wfo": "pqr",
+        "buoy": "46278",
+        "reference": "46278 — Tillamook Bay South Jetty, OR 270, 29 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46278 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ZONE SPAN: 23 km at short-sands-beach-oswald-west to 99 km at agate-beach-newport, and ONE zone verdict covers the whole span. agate-beach-newport sits just 1 km INSIDE the 100 km distance ceiling, while two neighbouring spots only 2 km away fall OUTSIDE it and are registered unverifiable in pqr/central-oregon-no-reference. That is the ceiling doing exactly its job at the boundary rather than a judgement about those spots, but it does mean this zone's far end is its weakest member: check the per-spot residuals before drawing a conclusion about 46278 itself. STRONGEST EVIDENCE SO FAR FOR THE PARTITION APPROACH (recorded on all three pqr/sew pending zones, because the force of it is that the SAME result appeared in three INDEPENDENT zones). On the 2026-07-30 cycle, with 15-17 second North Pacific groundswell running, the ENERGY-WEIGHTED PARTITION gate produced the tightest direction agreement measured anywhere in the project: 46278 at 4 degrees circular standard deviation and +16 degrees bias over 19 comparable hours; 46243 at 7 degrees and +20 degrees over 19 hours; 46211 at 7 degrees and +12 degrees over 18 hours. The OLD dirpw metric on the SAME windows read 18.5, 26.1 and 24.8 degrees with biases of +36 to +40 degrees. So the partition gate is roughly 3-4x TIGHTER in spread and roughly HALF the bias, consistently across three independent zones — a long-period groundswell is exactly the regime where a single tracked swell system should separate cleanly from wind sea, and it does. HEIGHT was INCONCLUSIVE on all three, because the buoy total-Hs span did not clear the 0.75 m variance floor, and all three read 1 EVENT. So NOTHING IS SETTLED here: the rolling accumulator still decides, and this record must not be read as a verdict. SPECTRAL-SANITY, AGAIN NOT A PROXY FOR QUALITY: buoy-side sanity read 22.0 degrees at 46278, 31.3 at 46243 and 36.1 at 46211, against an expected 15 degrees or less — while producing the BEST direction agreement in the project. This is further evidence that sanity does not predict verdict quality, consistent with the phi/44091 case where 45.3 degrees of sanity accompanied a HEIGHT PASS. Do NOT screen verdicts on that number.",
+        "spots": 10,
+        "slugs": [
+          "short-sands-beach-oswald-west",
+          "cannon-beach",
+          "indian-beach-ecola",
+          "cape-kiwanda",
+          "pacific-city-beach",
+          "roads-end",
+          "lincoln-city-beach",
+          "nelscott-reef",
+          "otter-rock",
+          "agate-beach-newport"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 10 spots are in the (Mac) scripts/nwps_pqr_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_pqr_validate_out.json --buoy 46278 --slugs <these 10>` merges them into 'spots'. Placement is via the pending path; 46278 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "pqr/46243",
+        "wfo": "pqr",
+        "buoy": "46243",
+        "reference": "46243 — Clatsop Spit, OR 162, 24 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46243 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. THIS ZONE SPANS TWO STATES: cape-disappointment and long-beach-wa are WASHINGTON spots that validate on the PQR grid, because PQR's marine zone covers the NORTH side of the Columbia River mouth. Their nwps_wfo is 'pqr' by grid, not by state — do not read that as a mis-tag. STRONGEST EVIDENCE SO FAR FOR THE PARTITION APPROACH (recorded on all three pqr/sew pending zones, because the force of it is that the SAME result appeared in three INDEPENDENT zones). On the 2026-07-30 cycle, with 15-17 second North Pacific groundswell running, the ENERGY-WEIGHTED PARTITION gate produced the tightest direction agreement measured anywhere in the project: 46278 at 4 degrees circular standard deviation and +16 degrees bias over 19 comparable hours; 46243 at 7 degrees and +20 degrees over 19 hours; 46211 at 7 degrees and +12 degrees over 18 hours. The OLD dirpw metric on the SAME windows read 18.5, 26.1 and 24.8 degrees with biases of +36 to +40 degrees. So the partition gate is roughly 3-4x TIGHTER in spread and roughly HALF the bias, consistently across three independent zones — a long-period groundswell is exactly the regime where a single tracked swell system should separate cleanly from wind sea, and it does. HEIGHT was INCONCLUSIVE on all three, because the buoy total-Hs span did not clear the 0.75 m variance floor, and all three read 1 EVENT. So NOTHING IS SETTLED here: the rolling accumulator still decides, and this record must not be read as a verdict. SPECTRAL-SANITY, AGAIN NOT A PROXY FOR QUALITY: buoy-side sanity read 22.0 degrees at 46278, 31.3 at 46243 and 36.1 at 46211, against an expected 15 degrees or less — while producing the BEST direction agreement in the project. This is further evidence that sanity does not predict verdict quality, consistent with the phi/44091 case where 45.3 degrees of sanity accompanied a HEIGHT PASS. Do NOT screen verdicts on that number.",
+        "spots": 3,
+        "slugs": [
+          "cape-disappointment",
+          "long-beach-wa",
+          "seaside-cove"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 3 spots are in the (Mac) scripts/nwps_pqr_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_pqr_validate_out.json --buoy 46243 --slugs <these 3>` merges them into 'spots'. Placement is via the pending path; 46243 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "sew/46211",
+        "wfo": "sew",
+        "buoy": "46211",
+        "reference": "46211 — Grays Harbor, WA 036, 39 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46211 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. GRID NOTE (PR #81): the sew grid spacing is 3.95 km, the COARSEST in the project, so the FAR placement cap is the GRID-AWARE 5.92 km rather than the legacy 3.0 km floor. Node distances of 2-3.6 km are NORMAL on this grid and are NOT marginal placements — do not read them as such by comparing against the old floor. STRONGEST EVIDENCE SO FAR FOR THE PARTITION APPROACH (recorded on all three pqr/sew pending zones, because the force of it is that the SAME result appeared in three INDEPENDENT zones). On the 2026-07-30 cycle, with 15-17 second North Pacific groundswell running, the ENERGY-WEIGHTED PARTITION gate produced the tightest direction agreement measured anywhere in the project: 46278 at 4 degrees circular standard deviation and +16 degrees bias over 19 comparable hours; 46243 at 7 degrees and +20 degrees over 19 hours; 46211 at 7 degrees and +12 degrees over 18 hours. The OLD dirpw metric on the SAME windows read 18.5, 26.1 and 24.8 degrees with biases of +36 to +40 degrees. So the partition gate is roughly 3-4x TIGHTER in spread and roughly HALF the bias, consistently across three independent zones — a long-period groundswell is exactly the regime where a single tracked swell system should separate cleanly from wind sea, and it does. HEIGHT was INCONCLUSIVE on all three, because the buoy total-Hs span did not clear the 0.75 m variance floor, and all three read 1 EVENT. So NOTHING IS SETTLED here: the rolling accumulator still decides, and this record must not be read as a verdict. SPECTRAL-SANITY, AGAIN NOT A PROXY FOR QUALITY: buoy-side sanity read 22.0 degrees at 46278, 31.3 at 46243 and 36.1 at 46211, against an expected 15 degrees or less — while producing the BEST direction agreement in the project. This is further evidence that sanity does not predict verdict quality, consistent with the phi/44091 case where 45.3 degrees of sanity accompanied a HEIGHT PASS. Do NOT screen verdicts on that number.",
+        "spots": 6,
+        "slugs": [
+          "westport-light-state-park",
+          "westport-jetty",
+          "ocean-shores",
+          "tokeland",
+          "pacific-beach-wa",
+          "kalaloch-beach"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_sew_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sew_validate_out.json --buoy 46211 --slugs <these 6>` merges them into 'spots'. Placement is via the pending path; 46211 stays OUT of trust_by_buoy (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       }
     ],
     "unverifiable": [
@@ -5032,6 +5373,33 @@
           "reid-state-park"
         ],
         "to_place": "12 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_gyx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_gyx_validate_out.json --no-buoy --slugs <these 12> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "pqr/central-oregon-no-reference",
+        "wfo": "pqr",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE IN RANGE for these three, for two different reasons. (1) A GENUINE CEILING CASE — nye-beach and south-beach-newport: the nearest candidate is 46278 (Tillamook Bay South Jetty) at 101 km and 107 km, PAST the 100 km distance ceiling and rated MARGINAL, and Yaquina Head sits between them and that buoy. agate-beach-newport, only 2 km away, CLEARED at 99 km and is registered in pqr/46278 — so this is the ceiling landing on a boundary, NOT an absence of candidates. Accepting a 101 km reference to gain two spots would weaken the standard for every zone that already respects it, so the ceiling is held. (2) OUT OF RANGE ENTIRELY — florence-south-jetty: 46278 does not reach it at all. Everything else nearby is structurally invalid on depth or publishes no directional axis: 46050 Stonewall Bank at 149 m, 46229 Umpqua Offshore at 180 m (both deep-water regimes against shallow nearshore nodes), 46281 Newport PWS South with .data_spec 404, and 46283 Yaquina Channel SW with .swdir 404 — note 46283 publishes the energy spectrum but NOT the directional moments, the LJPC1 shape. These three ride NWPS HEIGHT skill + raycast direction, direction unverified. RE-CHECK TRIGGER: 46281 or 46283 beginning to publish the missing file would put a reference within a few km of Newport — a BU-6 monthly re-sweep would catch it.",
+        "nearest_candidate": "46278 Tillamook Bay South Jetty (101 km / 107 km for nye-beach and south-beach-newport — PAST the 100 km ceiling, MARGINAL, and Yaquina Head intervenes; out of range entirely for florence-south-jetty) / 46050 Stonewall Bank 149 m and 46229 Umpqua Offshore 180 m (both STRUCTURALLY INVALID on depth) / 46281 Newport PWS South (.data_spec 404) and 46283 Yaquina Channel SW (.swdir 404 — energy spectrum but no directional moments) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "florence-south-jetty",
+          "nye-beach",
+          "south-beach-newport"
+        ],
+        "to_place": "3 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_pqr_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_pqr_validate_out.json --no-buoy --slugs <these 3> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "sew/olympic-coast-no-reference",
+        "wfo": "sew",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE on the Olympic coast — a DEPTH problem, not a geometry one, the SAME SHAPE as gyx/gulf-of-maine-no-reference. Every candidate that publishes a directional axis is STRUCTURALLY INVALID on depth: 46041 Cape Elizabeth at 131 m, 46087 Neah Bay at 259 m, 46267 Angeles Point at 75 m, 46088 New Dungeness at 116 m — deep-water regimes measured against shallow nearshore nodes. The nearest VALID reference is 46211 (Grays Harbor) at 120 km or more, rated MARGINAL. Conversely stations close enough to BE nearshore publish no directional axis at all, including lapw1 at 1 km. As in the Gulf of Maine, the two failure modes are complementary and leave no gap: deep enough to publish direction means too deep to compare, close enough to compare means no direction published. These six ride NWPS HEIGHT skill + raycast direction, direction unverified. GRID NOTE (PR #81): the sew grid spacing is 3.95 km, the COARSEST in the project, so the FAR placement cap is the GRID-AWARE 5.92 km rather than the legacy 3.0 km floor. Node distances of 2-3.6 km are NORMAL on this grid and are NOT marginal placements — do not read them as such by comparing against the old floor. RE-CHECK TRIGGER: any nearshore directional buoy deployed on the outer Olympic coast, or lapw1 beginning to publish .swdir — a BU-6 monthly re-sweep would catch either.",
+        "nearest_candidate": "46211 Grays Harbor (120 km or more — MARGINAL, the nearest VALID reference and still not usable here) / 46041 Cape Elizabeth 131 m, 46087 Neah Bay 259 m, 46267 Angeles Point 75 m, 46088 New Dungeness 116 m (all STRUCTURALLY INVALID on depth) / lapw1 at 1 km (nearshore but publishes NO directional axis) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "hobuck-beach",
+          "shi-shi-beach",
+          "rialto-beach",
+          "la-push-first-beach",
+          "la-push-second-beach",
+          "la-push-third-beach"
+        ],
+        "to_place": "6 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_sew_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sew_validate_out.json --no-buoy --slugs <these 6> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
