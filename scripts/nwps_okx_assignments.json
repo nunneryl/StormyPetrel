@@ -5400,6 +5400,21 @@
           "la-push-third-beach"
         ],
         "to_place": "6 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_sew_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sew_validate_out.json --no-buoy --slugs <these 6> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "mfr/southern-oregon-no-reference",
+        "wfo": "mfr",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE on the southern Oregon coast — a DEPTH problem, not a geometry one. Verified LIVE on 2026-07-30 by --find-buoy against ALL SIX spots, every one of which returned NO VALID + LIVE nearshore directional reference; this is not an extrapolation from one probe. Every candidate that publishes a directional axis is STRUCTURALLY INVALID on depth: 46015 Port Orford at 446 m — the DEEPEST reference rejected anywhere in the project, and it sits only 30-92 km from these spots, so proximity is not the problem; 46027 St Georges at 60 m; 46244 Humboldt Bay North at 117 m; 46050 Stonewall Bank at 149 m. All are deep-water regimes measured against shallow nearshore nodes, where shoaling/breaking/sheltering make the comparison invalid. Conversely every station close enough to BE nearshore publishes NO directional axis at all: chao3 at 1 km, poro3 at 2 km, snto3 at 10 km, chqo3 at 10 km. The continental shelf is NARROW here and drops STEEPLY, which is what puts a 446 m buoy within 30 km of the beach, so this is PERMANENT geography rather than an outage. THE SAME FAILURE SHAPE as gyx/gulf-of-maine-no-reference, sew/olympic-coast-no-reference and pqr/central-oregon-no-reference: deep enough to publish direction means too deep to compare, close enough to compare means no direction published, and the two failure modes are complementary and leave no gap between them. This is now the FOURTH region showing that pattern, so it is a recognised structural class rather than a run of separate coincidences — a later reader meeting a fifth should expect it, not re-derive it. (Note pqr/central-oregon ALSO carries a distance-ceiling component for two of its spots, which this zone does not; the shared part is the depth-versus-axis complementarity.) These six ride NWPS HEIGHT skill + raycast direction, direction unverified. RE-CHECK TRIGGER: any nearshore directional buoy deployed on the southern Oregon shelf, or any of chao3 / poro3 / snto3 / chqo3 beginning to publish .swdir — a BU-6 monthly re-sweep would catch either.",
+        "nearest_candidate": "46015 Port Orford (446 m, 30-92 km — the DEEPEST reference rejected anywhere in the project) / 46027 St Georges 60 m / 46244 Humboldt Bay North 117 m / 46050 Stonewall Bank 149 m (all STRUCTURALLY INVALID on depth) / chao3 1 km, poro3 2 km, snto3 10 km, chqo3 10 km (nearshore but publish NO directional axis) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "bandon-beach",
+          "bastendorff-beach",
+          "brookings-beach",
+          "gold-beach",
+          "hubbard-creek",
+          "whiskey-run-beach"
+        ],
+        "to_place": "6 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_mfr_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_mfr_validate_out.json --no-buoy --slugs <these 6> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_buoy or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
