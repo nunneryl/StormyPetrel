@@ -104,10 +104,16 @@ SWELL_FRAC_FLOOR = 0.3          # buoy swell-fraction floor — below this the s
 SWELL_MIN_QUALIFYING = 6        # < this many qualifying (swell-present) hours → INCONCLUSIVE
 # Model-system wind-sea/swell split. NWPS's watershed partitioning (Hanson & Phillips 2001,
 # as in SWAN/WW3) partitions the WHOLE 2-D spectrum, so the tracked "systems" INCLUDE the
-# local WIND-SEA — the biggest system on a windy day. We classify each model system with the
-# SAME wave-age criterion ndbc_spectral applies to the buoy spectrum, and exclude wind-sea
-# before matching, so we never compare the model's wind-sea against the buoy's swell.
-_WAVE_AGE_FACTOR = 1.2          # MUST match ndbc_spectral.WAVE_AGE_FACTOR (one criterion, both sides)
+# local WIND-SEA — the biggest system on a windy day. We classify each model system by
+# WAVE AGE and exclude wind-sea before matching, so we never compare the model's wind-sea
+# against the buoy's swell.
+# ASYMMETRY, DELIBERATE — the BUOY side no longer uses wave age. ndbc_spectral's band split
+# now prefers the fixed 0.125 Hz cutoff, because wave age APPORTIONED SPECTRAL ENERGY badly
+# (46278: Hs_swell 1.46 m vs .spec SwH 0.30 m). Here wave age is not apportioning anything:
+# it is a per-system VETO on an already-partitioned system that carries its own period and
+# direction, so that failure mode does not transfer. The two sides answer different
+# questions and are allowed to differ; do not "restore symmetry" without measuring first.
+_WAVE_AGE_FACTOR = 1.2          # same constant/value as ndbc_spectral.WAVE_AGE_FACTOR
 _G_MS2 = 9.80665               # gravity; deep-water phase speed c = g·tp/(2π)
 
 # ── Stage-1 rebuild (energy-weighted, spot-tiered, rolling) ──────────────────
@@ -775,8 +781,9 @@ def _circ_mean(diffs):
 
 
 def _system_is_swell(system, wind_speed, wind_dir):
-    """True iff a tracked model system is SWELL (not wind-sea) by the wave-age criterion —
-    the SAME test ndbc_spectral applies to the buoy spectrum: a component is WIND-SEA while
+    """True iff a tracked model system is SWELL (not wind-sea) by the wave-age criterion (a
+    per-system VETO here, NOT the buoy-side band split, which now prefers a fixed cutoff —
+    see _WAVE_AGE_FACTOR above): a component is WIND-SEA while
     its deep-water phase speed c = g·tp/(2π) is below 1.2·U·cos(δ) and it is aligned with the
     wind (δ = system dir − wind dir, both 'from'); once it outruns/opposes the wind it is
     swell. Needs the system PERIOD and the model wind at the node; returns False (NOT a swell
@@ -1265,7 +1272,8 @@ def trust_check(wfo, buoy_id, blat, blng, n_cycles=4, **kw):
     Assembles at the buoy's node across recent cycles (shortest lead per valid hour): the
     CG1 total height (swh) + 10 m wind (ws/wdir), and the CG0_Trkng per-system swell
     (hs/tp/dir). Fetches the buoy's SPECTRAL swell (degree-valued swell_dir + Hs_swell +
-    swell fraction; wave-age split on the buoy's wind, else the model wind just assembled)
+    swell fraction; the band split is ndbc_spectral's default — a published Sep_Freq when one
+    is valid, else the fixed 0.125 Hz cutoff, NOT wave age, which over-assigned to swell)
     and its WVHT, then judges via swell_trust_verdict: DIRECTION = the model's dominant
     swell system vs the buoy spectral swell_dir over swell-present hours; HEIGHT = model swh
     vs buoy WVHT. Needs NOMADS+NDBC+eccodes. Returns swell_trust_verdict(...) plus read-only

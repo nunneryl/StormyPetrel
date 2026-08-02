@@ -353,6 +353,83 @@ def _spec_by_hour(buoy_id):
     return out
 
 
+# ── band-split acceptance test (--diag): our Hs_swell vs the buoy's own .spec SwH ──────────
+# Measured across 45 days at ten reference buoys, the single SUSPECT flag was firing on THREE
+# different causes that are not the same finding. They are separated below; only the third is
+# a defect, and it is fixed in ndbc_spectral (the fixed cutoff now outranks wave age).
+BAND_SPLIT_BAR_M = 0.25          # mean|Δ| above this is a disagreement worth naming
+# CAUSE 1, a COMPARISON ARTIFACT. NDBC emits a NULL swell partition as SwH exactly 0.0 paired
+# with a physically impossible SwP, typically 20-25 s. At 42092 EVERY record over 45 days reads
+# SwH 0.0 with SwP 20.0-25.0 while WWH carries the full 0.9-1.1 m at 5 s — there is no swell
+# partition there to compare against, so scoring our reader on those hours scores it against a
+# NULL rather than a measurement. Excluded, and the exclusion is REPORTED, never silent.
+SPEC_NULL_SWP_MIN_S = 20.0
+# CAUSE 2, a CONVENTION DIFFERENCE. NDBC's partitioner classifies 5 s energy as swell (44095
+# reports SwH 0.8-1.0 m at SwP 4.5-5.6 s with STEEPNESS VERY_STEEP); our fixed 0.125 Hz cutoff
+# classifies it as wind sea. For a SURF forecast ours is the appropriate convention — 5 s waves
+# are chop — so the cutoff is NOT changed. An hour whose Hs_swell sits BELOW .spec SwH at a
+# sub-8 s SwP carries that signature and is labelled as such instead of SUSPECT.
+CONVENTION_SWP_MAX_S = 8.0
+# CAUSE 3 was a REAL over-assignment in the wave-age path (46278: our Hs_swell 1.46 m vs .spec
+# SwH 0.30 m, folding a 7-8 s wind sea into swell). Fixed at source in ndbc_spectral.classify_bands
+# by preferring the fixed cutoff; anything of that shape that survives still reads SUSPECT here.
+
+
+def _is_null_spec_partition(swh, swp):
+    """True when a .spec row carries NDBC's NULL swell partition rather than a measurement:
+    SwH exactly 0.0 paired with a physically impossible SwP of SPEC_NULL_SWP_MIN_S or more.
+    BOTH conditions are required — a genuinely flat hour reads SwH 0.0 at a SANE period and is
+    a real measurement, so excluding on SwH alone would hide real agreement. Pure."""
+    return (swh is not None and swp is not None
+            and float(swh) == 0.0 and float(swp) >= SPEC_NULL_SWP_MIN_S)
+
+
+def _is_convention_difference(hs_swell, swh, swp):
+    """True when an hour's Hs_swell gap carries the signature of our 8 s cutoff disagreeing with
+    NDBC's partitioner rather than of a defect: OUR swell is SMALLER than .spec SwH (we excluded
+    energy NDBC included) AND the .spec period is sub-8 s (the disputed energy is chop by our
+    convention). THE SIGN MATTERS — an hour where ours is LARGER is over-assignment, the real
+    defect, and must never be excused as a convention difference. Pure."""
+    return (hs_swell is not None and swh is not None and swp is not None
+            and float(hs_swell) < float(swh) and float(swp) < CONVENTION_SWP_MAX_S)
+
+
+def band_split_verdict(rows, *, bar=BAND_SPLIT_BAR_M):
+    """The --diag's band-split acceptance test over *rows* = [(hs_swell, swh, swp), …] →
+      {"verdict", "label", "mean_abs_delta", "n_kept", "n_excluded_null", "n_convention",
+       "mean_hs_swell", "mean_swh"}
+    verdict is one of NO_DATA / OK / CONVENTION / SUSPECT. Separates the three causes that were
+    previously conflated under one SUSPECT flag: null .spec partitions are EXCLUDED and counted;
+    a majority-sub-8 s, we-read-less disagreement is labelled CONVENTION, not SUSPECT; everything
+    else that misses *bar* stays SUSPECT, including the over-assignment shape (ours ABOVE SwH).
+    Pure — no I/O — so the whole verdict is unit-testable without NOMADS or NDBC."""
+    usable = [(hs, swh, swp) for hs, swh, swp in rows if hs is not None and swh is not None]
+    kept = [r for r in usable if not _is_null_spec_partition(r[1], r[2])]
+    n_null = len(usable) - len(kept)
+    out = {"verdict": "NO_DATA", "label": "", "mean_abs_delta": None, "n_kept": len(kept),
+           "n_excluded_null": n_null, "n_convention": 0, "mean_hs_swell": None, "mean_swh": None}
+    if not kept:
+        out["label"] = (f"no comparable hours — every .spec row carried NDBC's NULL swell "
+                        f"partition (SwH 0.0 with SwP >= {SPEC_NULL_SWP_MIN_S:.0f} s), so there "
+                        f"is nothing to check the split against. NOT a split failure.")
+        return out
+    mad = sum(abs(float(hs) - float(swh)) for hs, swh, _ in kept) / len(kept)
+    n_conv = sum(1 for hs, swh, swp in kept if _is_convention_difference(hs, swh, swp))
+    out.update(mean_abs_delta=mad, n_convention=n_conv,
+               mean_hs_swell=sum(float(hs) for hs, _s, _p in kept) / len(kept),
+               mean_swh=sum(float(swh) for _h, swh, _p in kept) / len(kept))
+    if mad <= bar:
+        out.update(verdict="OK", label="band split looks right")
+    elif n_conv * 2 >= len(kept):
+        out.update(verdict="CONVENTION", label=(
+            "CONVENTION DIFFERENCE, not a defect — NDBC's partitioner calls sub-8 s energy "
+            "SWELL; our 0.125 Hz cutoff calls it WIND SEA. For a surf forecast ours is the "
+            "appropriate convention (5 s waves are chop), so the cutoff is NOT changed"))
+    else:
+        out.update(verdict="SUSPECT", label="BAND SPLIT SUSPECT — investigate")
+    return out
+
+
 def _matched_swell_at(systems, model_wind, valid):
     """(matched_system | None, its dir | None) for ONE diag hour — the swell-selection step of
     --diag, factored out so it is unit-testable without NOMADS/eccodes (the diag loop itself needs
@@ -409,8 +486,10 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
     std = nn._buoy_hourly(buoy_id) or {}
     spec = _spec_by_hour(buoy_id)
     from . import ndbc_spectral as ndbc_spec
-    # MODEL wind at the node (CG1 ws/wdir), keyed by valid hour — the wave-age fallback for
-    # wave-only buoys that report MM wind (e.g. 44095). Buoy wind still takes priority.
+    # MODEL wind at the node (CG1 ws/wdir), keyed by valid hour. It drives the matched-swell
+    # selection below (the SAME wind the trust gate passes), and covers wave-only buoys that
+    # report MM wind (e.g. 44095) so the wind column is still populated. Buoy wind takes
+    # priority. It does NOT drive the buoy band split any more — that is the fixed cutoff.
     model_wind = {}
     for fh in cg1["steps"]:
         mws = nn._node_value(cg1, "ws", fh, ci, cj)
@@ -435,8 +514,10 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
           "no match contributes no sample)")
     # paired series for the comparisons (task 3), over hours both sides cover
     old_m, old_b, new_m, new_b, ctl_m, ctl_b, ref_m, ref_b, fracs = ([] for _ in range(9))
-    hs_sp, hs_ref = [], []   # spectral Hs_swell vs the buoy's own .spec SwH (band-split sanity, task 2)
-    methods = set()          # which band split fired (ndbc_sep_freq / wave_age / fixed_cutoff)
+    # (hs_swell, .spec SwH, .spec SwP) per comparable hour — band_split_verdict does the
+    # exclusion and the labelling, so the SwP has to be carried, not just the two heights
+    bs_rows = []
+    methods = set()          # which band split fired (ndbc_sep_freq / fixed_cutoff / wave_age)
     wind_srcs = set()        # which wind drove wave-age (buoy / model / none)
     # hours the matched-swell selection DROPPED, reported after the table so the n= counts on the
     # NEW/REF rows are explainable rather than mysteriously short
@@ -496,7 +577,7 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
         if matched_dir is not None and sp and sp.get("swd") is not None:
             ref_m.append(matched_dir); ref_b.append(sp["swd"])   # vs the coarse 22.5°-binned SwD
         if spx and sp and sp.get("swh") is not None:
-            hs_sp.append(spx["hs_swell"]); hs_ref.append(sp["swh"])
+            bs_rows.append((spx["hs_swell"], sp["swh"], sp.get("swp")))
         print(f"  {valid:>7}({fh:>3}) {_n(dirpw):>5} {_sys_str(systems,0,matched):>14} "
               f"{_sys_str(systems,1,matched):>14} {_n(mwd):>4} {buoy_sw:>13} {spec_col:>28} {wind_col:>15}")
         shown += 1
@@ -524,16 +605,30 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
             bits.append(f"{n_deep_match} whose matched system is beyond sys2, so no '*' is visible")
         print("  note: matched-swell selection — " + "; ".join(bits) +
               ". Dropped hours contribute no NEW/REF sample (never a fallback to index 0).")
-    # band-split sanity (task 2): our Hs_swell must track the buoy's OWN .spec SwH, else
-    # the split is wrong. (Both use NDBC's separation frequency, so they should match.)
-    if hs_sp:
-        d = [abs(a - b) for a, b in zip(hs_sp, hs_ref)]
-        verdict = "band split looks right" if (sum(d) / len(d)) <= 0.25 else "BAND SPLIT SUSPECT — investigate"
+    # band-split acceptance test (task 2): our Hs_swell should track the buoy's OWN .spec SwH.
+    # The three causes of a mismatch are NOT one finding, so band_split_verdict separates them
+    # instead of raising them all as SUSPECT — see its docstring and the constants above.
+    if bs_rows:
+        bs = band_split_verdict(bs_rows)
         meth = "/".join(sorted(m for m in methods if m)) or "—"
         wsrc = "/".join(sorted(s for s in wind_srcs if s)) or "—"
-        print(f"\n  band-split [{meth}, wind={wsrc}] check: mean Hs_swell(spectral) "
-              f"{sum(hs_sp)/len(hs_sp):.2f} m vs .spec SwH {sum(hs_ref)/len(hs_ref):.2f} m, "
-              f"mean|Δ| {sum(d)/len(d):.2f} m → {verdict}")
+        print()
+        if bs["n_excluded_null"]:
+            n_seen = bs["n_excluded_null"] + bs["n_kept"]
+            print(f"  band-split EXCLUSION: {bs['n_excluded_null']} of {n_seen} hours dropped — "
+                  f".spec SwH 0.0 with SwP >= {SPEC_NULL_SWP_MIN_S:.0f} s is NDBC's NULL swell "
+                  "partition, not a measurement, so scoring against it scores against a null.")
+        if bs["verdict"] == "NO_DATA":
+            print(f"  band-split [{meth}, wind={wsrc}] check: {bs['label']}")
+        else:
+            print(f"  band-split [{meth}, wind={wsrc}] check: mean Hs_swell(spectral) "
+                  f"{bs['mean_hs_swell']:.2f} m vs .spec SwH {bs['mean_swh']:.2f} m over "
+                  f"{bs['n_kept']} comparable hours, mean|Δ| {bs['mean_abs_delta']:.2f} m "
+                  f"→ {bs['label']}")
+            if bs["verdict"] == "CONVENTION":
+                print(f"       ({bs['n_convention']} of {bs['n_kept']} comparable hours read our "
+                      f"Hs_swell BELOW .spec SwH at a sub-{CONVENTION_SWP_MAX_S:.0f} s SwP — the "
+                      "cutoff-convention signature, not a split defect.)")
     fr = [f for f in fracs if isinstance(f, (int, float)) and f == f]
     if fr:
         avg = sum(fr) / len(fr)

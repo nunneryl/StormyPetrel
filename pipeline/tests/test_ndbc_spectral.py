@@ -61,35 +61,46 @@ def test_sep_freq_sentinel_is_rejected_not_coerced():
     assert not sp._valid_sep_freq(9.999) and not sp._valid_sep_freq(999.0)
     assert not sp._valid_sep_freq(None) and not sp._valid_sep_freq(0.0)
     assert sp._valid_sep_freq(0.08) and not sp._valid_sep_freq(0.45), "valid band 0.03–0.40 Hz"
-    # with 9.999 + wind present, the split must be wave-age, NOT a coerced 9.999 cutoff
+    # with 9.999 + wind present the split falls to the FIXED cutoff (wave age is opt-in only),
+    # and the sentinel is never coerced into a 9.999 Hz cutoff
     _, method, sep = sp.classify_bands([0.08, 0.15], {}, sep_freq=9.999, wind_speed=8.0, wind_dir=90.0)
-    assert method == "wave_age" and sep < 1.0
+    assert method == "fixed_cutoff" and abs(sep - sp.SWELL_WINDSEA_CUTOFF_HZ) < 1e-12
 
 
-def test_wave_age_split_captures_short_period_swell_and_is_direction_aware():
-    # 0.133 Hz = 7.5 s: the real 44095 swell that a 0.10/0.125 Hz cutoff misclassifies.
+def test_wave_age_opt_in_captures_short_period_swell_and_is_direction_aware():
+    # 0.133 Hz = 7.5 s: a swell the 0.125 Hz cutoff cannot see. Wave age CAN — but it is an
+    # explicit opt-in, because over 45 days it over-assigned to swell (46278: Hs_swell 1.46 m
+    # vs .spec SwH 0.30 m) where the fixed cutoff stayed within 0.36 m at its worst.
     fq = [0.08, 0.133, 0.20, 0.25]
-    isw, method, _ = sp.classify_bands(fq, {0.133: 90.0, 0.20: 90.0, 0.25: 90.0},
-                                       sep_freq=None, wind_speed=8.0, wind_dir=90.0)
+    dirs = {0.133: 90.0, 0.20: 90.0, 0.25: 90.0}
+    isw, method, _ = sp.classify_bands(fq, dirs, sep_freq=None, wind_speed=8.0, wind_dir=90.0,
+                                       prefer_wave_age=True)
     assert method == "wave_age"
     assert isw[1] is True, "7.5 s swell (c=11.7 m/s) has outrun an 8 m/s wind → swell"
     assert isw[3] is False, "4 s chop is slower than 1.2·U → wind-sea"
-    # a FIXED cutoff (no wind) gets the 7.5 s swell wrong — this is why wave-age is primary
-    isw_fixed, mfix, _ = sp.classify_bands(fq, {}, sep_freq=None, wind_speed=None)
-    assert mfix == "fixed_cutoff" and isw_fixed[1] is False
+    # the SAME call without the opt-in is the fixed cutoff, which calls that band wind sea.
+    # That trade is deliberate: for a surf forecast sub-8 s energy is chop.
+    isw_def, mdef, _ = sp.classify_bands(fq, dirs, sep_freq=None, wind_speed=8.0, wind_dir=90.0)
+    assert mdef == "fixed_cutoff" and isw_def[1] is False
     # direction-aware: a fast-enough band OPPOSING the wind is swell (wind can't drive it)
-    isw_opp, _, _ = sp.classify_bands([0.28], {0.28: 270.0}, wind_speed=12.0, wind_dir=90.0)
+    isw_opp, _, _ = sp.classify_bands([0.28], {0.28: 270.0}, wind_speed=12.0, wind_dir=90.0,
+                                      prefer_wave_age=True)
     assert isw_opp[0] is True
 
 
-def test_wave_age_restores_swell_dominated_label():
-    # a two-peak 44095-like sea (dominant 7.5 s swell + wind chop) must read SWELL-DOMINATED
+def test_wave_age_opt_in_assigns_more_energy_to_swell_than_the_cutoff():
+    # a two-peak 44095-like sea (dominant 7.5 s peak + wind chop). Under wave age it reads
+    # SWELL-DOMINATED; under the default fixed cutoff the 7.5 s peak is wind sea. The gap
+    # between the two IS the over-assignment that made wave age the non-default.
     spec = {"sep_freq": 9.999, "freqs": [0.10, 0.133, 0.20, 0.28], "c11": [2.0, 12.0, 1.0, 0.5]}
     dirs = {0.10: 92.0, 0.133: 90.0, 0.20: 88.0, 0.28: 90.0}
-    m = sp.spectral_metrics(spec, dirs, wind_speed=8.0, wind_dir=90.0)
+    m = sp.spectral_metrics(spec, dirs, wind_speed=8.0, wind_dir=90.0, prefer_wave_age=True)
     assert m["split_method"] == "wave_age"
     assert m["swell_frac"] is not None and m["swell_frac"] > 0.6, "not wind-sea-dominated"
     assert m["hs_swell"] > m["hs_windsea"]
+    m_def = sp.spectral_metrics(spec, dirs, wind_speed=8.0, wind_dir=90.0)
+    assert m_def["split_method"] == "fixed_cutoff", "the wind must not select wave age by itself"
+    assert m_def["hs_swell"] < m["hs_swell"]
 
 
 def test_hs_swell_matches_energy_integral_and_frac():
@@ -126,12 +137,17 @@ def test_model_wind_fallback_for_wave_only_buoy():
     ds = "#h\n2026 07 14 15 00 9.999 1.0 (0.08) 8.0 (0.133) 1.0 (0.25)\n"
     sd = "#h\n2026 07 14 15 00 90 (0.08) 90 (0.133) 90 (0.25)\n"
     ehk = sp._epoch_hour("2026", "07", "14", "15", "00")
-    # no buoy wind (std_text None), model wind supplied → wave_age via model
-    r = sp.compute(ds, sd, std_text=None, model_wind={ehk: (8.0, 90.0)})
+    # no buoy wind (std_text None), model wind supplied → it reaches the opt-in wave-age split
+    r = sp.compute(ds, sd, std_text=None, model_wind={ehk: (8.0, 90.0)}, prefer_wave_age=True)
     assert r[ehk]["split_method"] == "wave_age"
     assert r[ehk]["wind_used"] == (8.0, 90.0, "model")
     assert r[ehk]["swell_frac"] > 0.6, "with model wind, the 7.5 s sea reads swell-dominated"
-    # neither buoy nor model wind → fixed_cutoff, source 'none' (honest last resort)
+    # the DEFAULT call still resolves and REPORTS that wind — the diag needs to show which wind
+    # was available — but the split itself is the fixed cutoff, which ignores it
+    rd = sp.compute(ds, sd, std_text=None, model_wind={ehk: (8.0, 90.0)})
+    assert rd[ehk]["split_method"] == "fixed_cutoff"
+    assert rd[ehk]["wind_used"] == (8.0, 90.0, "model"), "wind still resolved and reported"
+    # neither buoy nor model wind → fixed_cutoff, source 'none' (honest)
     r0 = sp.compute(ds, sd, std_text=None, model_wind=None)
     assert r0[ehk]["split_method"] == "fixed_cutoff" and r0[ehk]["wind_used"][2] == "none"
     # buoy wind at :50 matches spectral at :00 (hour floor) AND takes priority over model
