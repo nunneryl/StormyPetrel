@@ -228,6 +228,110 @@ def test_diag_matches_the_swell_not_raw_index_0():
     assert trk._sys_str(systems, 5, matched).strip() == "—", "absent system still dashes"
 
 
+def test_band_split_excludes_ndbc_null_swell_partition():
+    """CAUSE 1, a comparison artifact. NDBC emits a NULL swell partition as SwH exactly 0.0 paired
+    with a physically impossible SwP, typically 20-25 s. At 42092 EVERY record over 45 days reads
+    SwH 0.0 with SwP 20.0-25.0 while WWH carries the full 0.9-1.1 m at 5 s, so the old check scored
+    our reader against a null and reported the split SUSPECT. Those hours must be EXCLUDED, and the
+    exclusion COUNTED so it is visible in the diag rather than silent."""
+    assert trk._is_null_spec_partition(0.0, 25.0) is True
+    assert trk._is_null_spec_partition(0.0, 20.0) is True, "20 s is the threshold, inclusive"
+    # BOTH conditions required: a genuinely flat hour at a SANE period is a real measurement
+    assert trk._is_null_spec_partition(0.0, 9.0) is False, "flat swell at 9 s is a measurement"
+    assert trk._is_null_spec_partition(1.4, 22.0) is False, "real swell height is never the null"
+    assert trk._is_null_spec_partition(0.0, None) is False
+    assert trk._is_null_spec_partition(None, 25.0) is False
+
+    # the 42092 shape — our reader measures real swell, .spec publishes only the null marker
+    rows = [(0.55, 0.0, 25.0), (0.60, 0.0, 22.0), (0.48, 0.0, 20.0)]
+    # what the OLD check saw: a 0.54 m mean|Δ| against a 0.25 m bar → SUSPECT, from nulls alone
+    assert sum(abs(h - s) for h, s, _ in rows) / len(rows) > trk.BAND_SPLIT_BAR_M
+    bs = trk.band_split_verdict(rows)
+    assert bs["n_excluded_null"] == 3 and bs["n_kept"] == 0
+    assert bs["verdict"] == "NO_DATA", "nothing left to compare — a non-verdict, NOT SUSPECT"
+    assert bs["mean_abs_delta"] is None and "NOT a split failure" in bs["label"]
+
+    # mixed: only the null hour is dropped, and the surviving hours decide the verdict
+    mixed = [(0.55, 0.0, 25.0), (0.30, 0.32, 11.0), (0.41, 0.38, 12.0)]
+    bs2 = trk.band_split_verdict(mixed)
+    assert bs2["n_excluded_null"] == 1 and bs2["n_kept"] == 2
+    assert bs2["verdict"] == "OK" and bs2["mean_abs_delta"] < trk.BAND_SPLIT_BAR_M
+    assert abs(bs2["mean_swh"] - 0.35) < 1e-9, "the excluded 0.0 must not drag the mean down"
+
+
+def test_band_split_labels_the_sub_8s_convention_difference():
+    """CAUSE 2, a convention difference. At 44095 NDBC reports SwH 0.8-1.0 m at SwP 4.5-5.6 s with
+    STEEPNESS VERY_STEEP — its partitioner classifies 5 s energy as swell, while our fixed 0.125 Hz
+    (8 s) cutoff classifies it as wind sea. For a surf forecast ours is the appropriate convention,
+    since 5 s waves are chop, so the cutoff is NOT changed; the diag must SAY that instead of
+    reporting SUSPECT."""
+    assert trk._is_convention_difference(0.10, 0.90, 4.5) is True
+    # THE SIGN MATTERS: ours ABOVE .spec SwH is over-assignment (cause 3), never a convention gap
+    assert trk._is_convention_difference(1.46, 0.30, 4.5) is False
+    # nor is a LONG-period disagreement the cutoff's doing — 12 s is swell on both conventions
+    assert trk._is_convention_difference(0.10, 0.90, 12.0) is False
+    assert trk._is_convention_difference(0.10, 0.90, 8.0) is False, "8 s is the cutoff, exclusive"
+    assert trk._is_convention_difference(0.10, 0.90, None) is False
+    assert trk._is_convention_difference(None, 0.90, 4.5) is False
+
+    rows = [(0.10, 0.90, 4.5), (0.12, 0.85, 5.0), (0.08, 1.00, 5.6)]      # the 44095 shape
+    bs = trk.band_split_verdict(rows)
+    assert bs["n_kept"] == 3 and bs["n_excluded_null"] == 0 and bs["n_convention"] == 3
+    assert bs["mean_abs_delta"] > trk.BAND_SPLIT_BAR_M, "the gap is real; only its LABEL changes"
+    assert bs["verdict"] == "CONVENTION"
+    assert "SUSPECT" not in bs["label"] and "convention difference" in bs["label"].lower()
+    assert "NOT changed" in bs["label"], "the label must say the cutoff stays"
+
+    # the 46278 shape — ours ABOVE .spec SwH at 10-14 s — must STILL come out SUSPECT
+    over = [(1.46, 0.30, 12.0), (1.40, 0.35, 11.0), (1.50, 0.40, 14.0)]
+    bs_over = trk.band_split_verdict(over)
+    assert bs_over["verdict"] == "SUSPECT" and bs_over["n_convention"] == 0
+    # and a minority of convention hours does not excuse a genuinely bad split
+    minority = [(0.10, 0.90, 4.5), (1.46, 0.30, 12.0), (1.40, 0.35, 11.0)]
+    assert trk.band_split_verdict(minority)["verdict"] == "SUSPECT"
+    # a split that simply agrees is OK regardless of period
+    assert trk.band_split_verdict([(0.30, 0.32, 4.5), (0.41, 0.38, 5.0)])["verdict"] == "OK"
+
+
+def test_classify_bands_prefers_fixed_cutoff_over_wave_age():
+    """CAUSE 3, the real defect. The wave-age split OVER-ASSIGNS to swell: at 46278 it read
+    Hs_swell 1.46 m against .spec SwH 0.30 m, folding a 7-8 s wind sea (WWH 1.5 m) into swell,
+    while .spec showed the true picture as SwH 0.3-0.4 at 10-14 s. Over 45 days the fixed-cutoff
+    path's worst-case mean|Δ| against .spec is 0.36 m against wave age's 1.16 m, so the fixed
+    cutoff must win when BOTH a wind and a spectrum are available. Wave age stays as an explicit
+    opt-in; a VALID published Sep_Freq still outranks both."""
+    from pipeline.forecast import ndbc_spectral as sp
+    fq = [0.08, 0.133, 0.20, 0.25]                    # 0.133 Hz = 7.5 s
+    dirs = {0.08: 90.0, 0.133: 90.0, 0.20: 90.0, 0.25: 90.0}
+
+    # wind AND spectrum present, Sep_Freq the usual 9.999 sentinel → fixed cutoff, not wave age
+    isw, method, sep = sp.classify_bands(fq, dirs, sep_freq=9.999, wind_speed=8.0, wind_dir=90.0)
+    assert method == "fixed_cutoff", "a usable wind must NOT divert the split to wave age"
+    assert abs(sep - sp.SWELL_WINDSEA_CUTOFF_HZ) < 1e-12, "and 9.999 is never coerced to a cutoff"
+    assert isw == [True, False, False, False], "f < 0.125 Hz is swell; the 7.5 s band is not"
+
+    # the opt-in still works, and still gives the wave-age answer
+    isw_wa, m_wa, _ = sp.classify_bands(fq, dirs, sep_freq=9.999, wind_speed=8.0, wind_dir=90.0,
+                                        prefer_wave_age=True)
+    assert m_wa == "wave_age" and isw_wa[1] is True, "wave age calls the 7.5 s band swell"
+    assert isw_wa != isw, "the two paths genuinely disagree — the preference is not cosmetic"
+
+    # a VALID published Sep_Freq outranks both, opt-in or not
+    _, m_sep, s_sep = sp.classify_bands(fq, dirs, sep_freq=0.10, wind_speed=8.0, wind_dir=90.0,
+                                        prefer_wave_age=True)
+    assert m_sep == "ndbc_sep_freq" and abs(s_sep - 0.10) < 1e-12
+    # no wind at all is still the fixed cutoff, and reports itself honestly
+    assert sp.classify_bands(fq, dirs, sep_freq=None, wind_speed=None)[1] == "fixed_cutoff"
+
+    # end-to-end: the metrics + compute paths inherit the default, and wave age assigns MORE
+    # energy to swell — the over-assignment being fixed
+    spec = {"sep_freq": 9.999, "freqs": fq, "c11": [1.0, 8.0, 1.0, 0.5]}
+    m = sp.spectral_metrics(spec, dirs, wind_speed=8.0, wind_dir=90.0)
+    m_opt = sp.spectral_metrics(spec, dirs, wind_speed=8.0, wind_dir=90.0, prefer_wave_age=True)
+    assert m["split_method"] == "fixed_cutoff" and m_opt["split_method"] == "wave_age"
+    assert m_opt["hs_swell"] > m["hs_swell"], "wave age folds the 7.5 s wind sea into swell"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
