@@ -422,7 +422,7 @@
       "cardinal": "W",
       "name": "Cape Kiwanda"
     },
-    "cape-san-b-liss": {
+    "cape-san-blas": {
       "orientation_deg": 220.0,
       "cardinal": "SW",
       "name": "Cape San B liss"
@@ -2823,7 +2823,7 @@
       "cardinal": "SE",
       "name": "Squibnocket"
     },
-    "st-andews-park": {
+    "st-andrews-park": {
       "orientation_deg": 230.0,
       "cardinal": "SW",
       "name": "St Andews Park"

@@ -262,7 +262,7 @@
       "lng": -123.980799,
       "note": "Position correction from spot_cleanup_manifest_2 (2026-06-16)."
     },
-    "Cape San B liss": {
+    "Cape San Blas": {
       "lat": 29.675973,
       "lng": -85.365272,
       "note": "Position refinement from orientation_apply_manifest (2026-06-16)."
