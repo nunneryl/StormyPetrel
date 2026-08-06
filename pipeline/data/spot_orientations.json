@@ -422,10 +422,10 @@
       "cardinal": "W",
       "name": "Cape Kiwanda"
     },
-    "cape-san-b-liss": {
+    "cape-san-blas": {
       "orientation_deg": 220.0,
       "cardinal": "SW",
-      "name": "Cape San B liss"
+      "name": "Cape San Blas"
     },
     "captiva": {
       "orientation_deg": 258.0,
@@ -2823,10 +2823,10 @@
       "cardinal": "SE",
       "name": "Squibnocket"
     },
-    "st-andews-park": {
+    "st-andrews-park": {
       "orientation_deg": 230.0,
       "cardinal": "SW",
-      "name": "St Andews Park"
+      "name": "St Andrews Park"
     },
     "st-augustine-beach-pier": {
       "orientation_deg": 87.0,

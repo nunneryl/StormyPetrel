@@ -11000,7 +11000,7 @@
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Destin",
     "tide_preference_confidence": 0.6,
-    "nwps_wfo": "tbw",
+    "nwps_wfo": "tae",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position refinement from orientation_apply_manifest (2026-06-16).",
@@ -12040,7 +12040,7 @@
       "current"
     ],
     "tide_preference_confidence": 0.5,
-    "nwps_wfo": "tbw",
+    "nwps_wfo": "tae",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -12229,7 +12229,7 @@
       "current"
     ],
     "tide_preference_confidence": 0.5,
-    "nwps_wfo": "tbw",
+    "nwps_wfo": "tae",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -12439,7 +12439,7 @@
     "tide_preference": "mid",
     "tide_preference_confidence": 0.6,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Okaloosa-Pier",
-    "nwps_wfo": "tbw",
+    "nwps_wfo": "tae",
     "orientation_source": "manual",
     "swell_window_source": "raycast",
     "nearest_tide_station_id": "8729547",
@@ -12527,7 +12527,7 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Panama-City-Beach",
     "tide_preference": "mid",
     "tide_preference_confidence": 0.6,
-    "nwps_wfo": "tbw",
+    "nwps_wfo": "tae",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position refinement from orientation_apply_manifest (2026-06-16).",
@@ -12627,7 +12627,7 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pensacola-Beach",
     "tide_preference": "mid",
     "tide_preference_confidence": 0.6,
-    "nwps_wfo": "tbw",
+    "nwps_wfo": "tae",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -31759,7 +31759,7 @@
     "nwps_buoy_id": null
   },
   {
-    "name": "St Andews Park",
+    "name": "St Andrews Park",
     "lat": 30.122784,
     "lng": -85.736275,
     "region_hint": "Florida",
@@ -31786,10 +31786,10 @@
     "nearest_tide_station_dist_km": 16.83,
     "nearest_buoy_id": "42039",
     "nearest_buoy_dist_km": 152.75,
-    "nwps_wfo": "tbw"
+    "nwps_wfo": "tae"
   },
   {
-    "name": "Cape San B liss",
+    "name": "Cape San Blas",
     "lat": 29.675973,
     "lng": -85.365272,
     "region_hint": "Florida",
@@ -31821,7 +31821,7 @@
     "nearest_tide_station_dist_km": 30.9,
     "nearest_buoy_id": "42039",
     "nearest_buoy_dist_km": 119.59,
-    "nwps_wfo": "tbw"
+    "nwps_wfo": "tae"
   },
   {
     "name": "Redington Pier",
