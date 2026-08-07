@@ -20385,49 +20385,6 @@
     "nwps_direction_status": "verified"
   },
   {
-    "name": "Hamlin Beach",
-    "lat": 43.366873,
-    "lng": -77.957375,
-    "region_hint": "New York",
-    "break_type": "beach",
-    "break_type_confidence": 0.5,
-    "sources": {
-      "osm_id": null,
-      "wikidata_id": null,
-      "wikipedia_url": null
-    },
-    "tags": {
-      "geocode_confidence": "exact",
-      "nominatim_query": "Hamlin Beach, Hamlin, NY",
-      "nominatim_display_name": "Hamlin Beach, Town of Hamlin, Monroe County, New York, United States"
-    },
-    "enrichment_confidence": {
-      "orientation": 1.0,
-      "swell_window": 0.0,
-      "break_type": 0.5,
-      "nearest_buoy": 0.0,
-      "nearest_tide_station": 0.0
-    },
-    "orientation_source": "manual",
-    "tide_preference": "all",
-    "tide_preference_confidence": 0.4,
-    "nwps_wfo": "okx",
-    "is_valid_surf_spot": true,
-    "coord_fix_applied": true,
-    "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 15.0,
-    "offshore_wind_deg": 195.0,
-    "swell_window_arcs": [
-      {
-        "min": 337,
-        "max": 227,
-        "span": 254
-      }
-    ],
-    "optimal_swell_dir": 100,
-    "swell_window_source": "raycast"
-  },
-  {
     "name": "Jones Beach",
     "lat": 40.586598,
     "lng": -73.526731,
@@ -20742,50 +20699,6 @@
     "nwps_node_distance_m": 338,
     "nwps_buoy_id": "44025",
     "nwps_direction_status": "verified"
-  },
-  {
-    "name": "Ontario Beach",
-    "lat": 43.261347,
-    "lng": -77.609932,
-    "region_hint": "New York",
-    "break_type": "beach",
-    "break_type_confidence": 0.5,
-    "sources": {
-      "osm_id": null,
-      "wikidata_id": null,
-      "wikipedia_url": null
-    },
-    "tags": {
-      "geocode_confidence": "exact",
-      "nominatim_query": "Ontario Beach, Rochester, NY",
-      "nominatim_display_name": "Ontario Beach, City of Rochester, Monroe County, New York, 14617, United States"
-    },
-    "enrichment_confidence": {
-      "orientation": 1.0,
-      "swell_window": 0.0,
-      "break_type": 0.5,
-      "nearest_buoy": 0.0,
-      "nearest_tide_station": 0.0
-    },
-    "surf_forecast_url": "https://www.surf-forecast.com/breaks/Ontario-Beach",
-    "orientation_source": "manual",
-    "tide_preference": "all",
-    "tide_preference_confidence": 0.5,
-    "nwps_wfo": "okx",
-    "is_valid_surf_spot": true,
-    "coord_fix_applied": true,
-    "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 20.0,
-    "offshore_wind_deg": 200.0,
-    "swell_window_arcs": [
-      {
-        "min": 337,
-        "max": 227,
-        "span": 254
-      }
-    ],
-    "optimal_swell_dir": 100,
-    "swell_window_source": "raycast"
   },
   {
     "name": "Point Lookout",
@@ -21263,50 +21176,6 @@
     "nwps_node_distance_m": 1137,
     "nwps_buoy_id": "44025",
     "nwps_direction_status": "verified"
-  },
-  {
-    "name": "Woodlawn Beach",
-    "lat": 42.790346,
-    "lng": -78.854928,
-    "region_hint": "New York",
-    "break_type": "beach",
-    "break_type_confidence": 0.5,
-    "sources": {
-      "osm_id": null,
-      "wikidata_id": null,
-      "wikipedia_url": null
-    },
-    "tags": {
-      "geocode_confidence": "exact",
-      "nominatim_query": "Woodlawn Beach, Hamburg, NY",
-      "nominatim_display_name": "Woodlawn Beach State Park, Woodlawn, Town of Hamburg, Erie County, New York, United States"
-    },
-    "enrichment_confidence": {
-      "orientation": 1.0,
-      "swell_window": 0.0,
-      "break_type": 0.5,
-      "nearest_buoy": 0.0,
-      "nearest_tide_station": 0.0
-    },
-    "orientation_source": "manual",
-    "orientation_note": "Open Lake Erie due west",
-    "tide_preference": null,
-    "tide_preference_confidence": 0.4,
-    "nwps_wfo": "okx",
-    "is_valid_surf_spot": true,
-    "coord_fix_applied": true,
-    "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 290.0,
-    "offshore_wind_deg": 110.0,
-    "swell_window_arcs": [
-      {
-        "min": 341,
-        "max": 223,
-        "span": 246
-      }
-    ],
-    "optimal_swell_dir": 100,
-    "swell_window_source": "raycast"
   },
   {
     "name": "Atlantic Beach NC",
@@ -24060,50 +23929,6 @@
     "nwps_node_lng": -124.4134,
     "nwps_node_distance_m": 1601,
     "nwps_buoy_id": null
-  },
-  {
-    "name": "Presque Isle Beach",
-    "lat": 42.145349,
-    "lng": -80.138311,
-    "region_hint": "Pennsylvania",
-    "break_type": "beach",
-    "break_type_confidence": 0.5,
-    "sources": {
-      "osm_id": null,
-      "wikidata_id": null,
-      "wikipedia_url": null
-    },
-    "tags": {
-      "geocode_confidence": "exact",
-      "nominatim_query": "Presque Isle Beach, Erie, PA",
-      "nominatim_display_name": "Presque Isle Beach 6 sand volleyball courts, Presque Isle Bike Path, Millcreek Township, Erie County, Pennsylvania, 16505, United States"
-    },
-    "enrichment_confidence": {
-      "orientation": 1.0,
-      "swell_window": 0.0,
-      "break_type": 0.5,
-      "nearest_buoy": 0.0,
-      "nearest_tide_station": 0.0
-    },
-    "orientation_source": "manual",
-    "orientation_note": "Peninsula curves N/NE; popular surf beaches face NNE",
-    "tide_preference": null,
-    "tide_preference_confidence": 0.4,
-    "nwps_wfo": "phi",
-    "is_valid_surf_spot": true,
-    "coord_fix_applied": true,
-    "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 302.0,
-    "offshore_wind_deg": 122.0,
-    "swell_window_arcs": [
-      {
-        "min": 341,
-        "max": 223,
-        "span": 246
-      }
-    ],
-    "optimal_swell_dir": 100,
-    "swell_window_source": "raycast"
   },
   {
     "name": "Antonio's",
@@ -37087,33 +36912,5 @@
     "nwps_node_lng": -69.70859,
     "nwps_node_distance_m": 1645,
     "nwps_buoy_id": null
-  },
-  {
-    "name": "Deep Cove",
-    "lat": 44.61497,
-    "lng": -66.87571,
-    "region_hint": "Maine",
-    "is_valid_surf_spot": true,
-    "source": "manifest_addition",
-    "sources": [
-      "manifest_addition"
-    ],
-    "coord_fix_applied": true,
-    "coord_fix_note": "Addition from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 144.0,
-    "offshore_wind_deg": 324.0,
-    "orientation_source": "manual",
-    "swell_window_arcs": [
-      {
-        "min": 153,
-        "max": 215,
-        "span": 66
-      }
-    ],
-    "optimal_swell_dir": 196,
-    "swell_window_source": "raycast",
-    "nearest_buoy_id": "44098",
-    "nearest_buoy_dist_km": 332.9,
-    "nwps_wfo": "gyx"
   }
 ]
