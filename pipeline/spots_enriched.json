@@ -11015,11 +11015,17 @@
       }
     ],
     "optimal_swell_dir": 184,
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8729511",
     "nearest_tide_station_dist_km": 1.69,
     "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 185.41
+    "nearest_buoy_dist_km": 185.41,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.37337,
+    "nwps_node_lng": -86.5031,
+    "nwps_node_distance_m": 913,
+    "nwps_buoy_id": null
   },
   {
     "name": "Flagler Beach Pier",
@@ -12060,11 +12066,17 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8728957",
     "nearest_tide_station_dist_km": 7.31,
     "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 143.55
+    "nearest_buoy_dist_km": 143.55,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.92014,
+    "nwps_node_lng": -85.39845,
+    "nwps_node_distance_m": 1244,
+    "nwps_buoy_id": null
   },
   {
     "name": "Monster Hole",
@@ -12244,11 +12256,17 @@
       }
     ],
     "optimal_swell_dir": 180,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8729678",
     "nearest_tide_station_dist_km": 0.4,
     "nearest_buoy_id": "42012",
-    "nearest_buoy_dist_km": 74.78
+    "nearest_buoy_dist_km": 74.78,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.37337,
+    "nwps_node_lng": -86.85291,
+    "nwps_node_distance_m": 1015,
+    "nwps_buoy_id": null
   },
   {
     "name": "New Smyrna Beach Inlet",
@@ -12441,9 +12459,15 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Okaloosa-Pier",
     "nwps_wfo": "tae",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8729547",
-    "nearest_tide_station_dist_km": 0.08
+    "nearest_tide_station_dist_km": 0.08,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.38956,
+    "nwps_node_lng": -86.59516,
+    "nwps_node_distance_m": 345,
+    "nwps_buoy_id": null
   },
   {
     "name": "Palm Beach",
@@ -12542,11 +12566,17 @@
       }
     ],
     "optimal_swell_dir": 216,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8729210",
     "nearest_tide_station_dist_km": 0.74,
     "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 161.38
+    "nearest_buoy_dist_km": 161.38,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.2115,
+    "nwps_node_lng": -85.87713,
+    "nwps_node_distance_m": 369,
+    "nwps_buoy_id": null
   },
   {
     "name": "Patrick Air Force Base Beach",
@@ -12642,11 +12672,17 @@
       }
     ],
     "optimal_swell_dir": 172,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8729806",
     "nearest_tide_station_dist_km": 1.09,
     "nearest_buoy_id": "42012",
-    "nearest_buoy_dist_km": 50.5
+    "nearest_buoy_dist_km": 50.5,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.32481,
+    "nwps_node_lng": -87.14748,
+    "nwps_node_distance_m": 816,
+    "nwps_buoy_id": null
   },
   {
     "name": "Playalinda Beach",
@@ -31781,12 +31817,18 @@
       }
     ],
     "optimal_swell_dir": 216,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8729210",
     "nearest_tide_station_dist_km": 16.83,
     "nearest_buoy_id": "42039",
     "nearest_buoy_dist_km": 152.75,
-    "nwps_wfo": "tae"
+    "nwps_wfo": "tae",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 30.11438,
+    "nwps_node_lng": -85.72984,
+    "nwps_node_distance_m": 1120,
+    "nwps_buoy_id": null
   },
   {
     "name": "Cape San Blas",
@@ -31816,12 +31858,18 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "8728957",
     "nearest_tide_station_dist_km": 30.9,
     "nearest_buoy_id": "42039",
     "nearest_buoy_dist_km": 119.59,
-    "nwps_wfo": "tae"
+    "nwps_wfo": "tae",
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 29.67733,
+    "nwps_node_lng": -85.38004,
+    "nwps_node_distance_m": 1435,
+    "nwps_buoy_id": null
   },
   {
     "name": "Redington Pier",
