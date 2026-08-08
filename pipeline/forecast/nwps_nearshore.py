@@ -49,6 +49,10 @@ from ..interpret import (
     period_quality,
 )
 from ..config import WFO_TO_REGION
+# ONE cutoff, both sides of the comparison. Importing the constant (rather than restating 8.0)
+# is what stops the buoy band split and the model system veto drifting apart. ndbc_spectral is
+# stdlib-only and imports nothing from here, so this is not a cycle.
+from .ndbc_spectral import SWELL_WINDSEA_CUTOFF_HZ as _BUOY_SWELL_CUTOFF_HZ
 from http.client import HTTPException      # base of IncompleteRead — a truncated NOMADS read raises
 from urllib.error import HTTPError, URLError   #   http.client.IncompleteRead, which is NOT an OSError
 
@@ -104,16 +108,18 @@ SWELL_FRAC_FLOOR = 0.3          # buoy swell-fraction floor — below this the s
 SWELL_MIN_QUALIFYING = 6        # < this many qualifying (swell-present) hours → INCONCLUSIVE
 # Model-system wind-sea/swell split. NWPS's watershed partitioning (Hanson & Phillips 2001,
 # as in SWAN/WW3) partitions the WHOLE 2-D spectrum, so the tracked "systems" INCLUDE the
-# local WIND-SEA — the biggest system on a windy day. We classify each model system by
-# WAVE AGE and exclude wind-sea before matching, so we never compare the model's wind-sea
-# against the buoy's swell.
-# ASYMMETRY, DELIBERATE — the BUOY side no longer uses wave age. ndbc_spectral's band split
-# now prefers the fixed 0.125 Hz cutoff, because wave age APPORTIONED SPECTRAL ENERGY badly
-# (46278: Hs_swell 1.46 m vs .spec SwH 0.30 m). Here wave age is not apportioning anything:
-# it is a per-system VETO on an already-partitioned system that carries its own period and
-# direction, so that failure mode does not transfer. The two sides answer different
-# questions and are allowed to differ; do not "restore symmetry" without measuring first.
-_WAVE_AGE_FACTOR = 1.2          # same constant/value as ndbc_spectral.WAVE_AGE_FACTOR
+# local WIND-SEA — the biggest system on a windy day. We classify each model system and
+# exclude wind-sea before matching, so we never compare the model's wind-sea against the
+# buoy's swell.
+# THE RULE IS A FIXED PERIOD CUTOFF, the SAME 8 s the buoy side uses — the value is derived
+# from ndbc_spectral.SWELL_WINDSEA_CUTOFF_HZ (0.125 Hz) rather than restated, so the two
+# sides of the comparison CANNOT drift apart. A previous note here said the buoy-side
+# asymmetry was deliberate and not to "restore symmetry without measuring first"; it has now
+# been measured, and wave age fails on this side too, for a different reason than it failed
+# on the buoy side (see _system_is_swell). Wave age is retained as an explicit opt-in,
+# exactly as PR #134 retained it for the band split.
+_SWELL_MIN_PERIOD_S = 1.0 / _BUOY_SWELL_CUTOFF_HZ   # 8.0 s — tp below this is WIND SEA
+_WAVE_AGE_FACTOR = 1.2          # OPT-IN ONLY; same value as ndbc_spectral.WAVE_AGE_FACTOR
 _G_MS2 = 9.80665               # gravity; deep-water phase speed c = g·tp/(2π)
 
 # ── Stage-1 rebuild (energy-weighted, spot-tiered, rolling) ──────────────────
@@ -780,47 +786,90 @@ def _circ_mean(diffs):
     return math.degrees(math.atan2(s, c))
 
 
-def _system_is_swell(system, wind_speed, wind_dir):
-    """True iff a tracked model system is SWELL (not wind-sea) by the wave-age criterion (a
-    per-system VETO here, NOT the buoy-side band split, which now prefers a fixed cutoff —
-    see _WAVE_AGE_FACTOR above): a component is WIND-SEA while
-    its deep-water phase speed c = g·tp/(2π) is below 1.2·U·cos(δ) and it is aligned with the
-    wind (δ = system dir − wind dir, both 'from'); once it outruns/opposes the wind it is
-    swell. Needs the system PERIOD and the model wind at the node; returns False (NOT a swell
-    candidate) when it can't classify, so an unclassifiable/wind-sea system is never mistaken
-    for the swell."""
+def swell_match_rule(*, prefer_wave_age=False):
+    """Human-readable label for the rule _system_is_swell is applying, so the --diag can PRINT
+    the selection rule instead of leaving a reader to infer it from the numbers. Derived from
+    the same constants the rule uses, so the label cannot drift from the behaviour."""
+    if prefer_wave_age:
+        return f"wave_age (wind sea while c < {_WAVE_AGE_FACTOR}·U·cosδ) [OPT-IN]"
+    return f"fixed_period_cutoff (wind sea while tp < {_SWELL_MIN_PERIOD_S:.1f} s)"
+
+
+def _system_is_swell(system, wind_speed, wind_dir, *, prefer_wave_age=False):
+    """True iff a tracked model system is SWELL (not wind-sea). DEFAULT RULE: a FIXED PERIOD
+    CUTOFF — wind sea while tp < _SWELL_MIN_PERIOD_S (8 s), swell at or above it. That is the
+    SAME threshold the buoy band split uses, derived from the same constant, so the two sides
+    of the comparison cannot drift apart.
+
+    WHY NOT WAVE AGE (the previous default): it DEGENERATES AT LOW WIND SPEED. The criterion
+    calls a component wind sea only while its phase speed c = g·tp/(2π) is below
+    1.2·U·cos(δ), so as U falls the threshold collapses and eventually sits below the phase
+    speed of even very short waves — the veto then never fires and NOTHING is classified as
+    wind sea. _match_swell_system's highest-energy rule is left picking whatever is biggest,
+    which in light wind is the local chop. Worked case, pqr/46243 fh0 at 4 m/s from 340
+    degrees: the real 12.2 s swell has c = 19.0 m/s against a 1.9 threshold, and the 6.6 s
+    WIND SEA has c = 10.3 m/s against 3.6 — both pass as swell, so height decides and the
+    1.10 m wind sea beats the 0.25 m swell. A 3 s wave at 4.7 m/s would pass too.
+    MEASURED, sgx/46254 on the 2026-08-08 cycle: over twelve consecutive hours of 2-4 m/s
+    wind the matched system was 0.44 m at 4.3 s, while an 18.2 s system at 0.13 m sat
+    alongside it holding a steady 273 degrees and NDBC's own .spec reported swell at 16.7 s —
+    the model's 4 s chop was being compared against the buoy's 18 s swell. At pqr/46243 the
+    same failure produced a match that swung 227, 37 and 305 degrees across consecutive hours
+    while the buoy held 267. Against the fixed cutoff over 48-hour windows the two rules
+    disagree on 48 of 48 hours at sgx/46254, 35 of 41 at phi/44091, 16 of 27 at box/44085,
+    9 of 48 at pqr/46243 and 4 of 37 at mhx/44095 — and those counts inspect only the first
+    two tracked systems, so they are LOWER BOUNDS where more systems exist.
+
+    *prefer_wave_age* restores the old criterion explicitly (kept, not deleted, exactly as
+    PR #134 kept it for the buoy band split).
+
+    UNCLASSIFIABLE → False, never mistaken for swell: missing/non-positive PERIOD, missing
+    DIRECTION, or missing/non-positive WIND. The wind guard is retained DELIBERATELY even
+    though the default rule does not consult the wind: `_match_swell_system(systems, None,
+    None) is None` is the contract behind "an hour with no model wind at the node contributes
+    no sample" in the trust gate and in nwps_trkng's --diag (its n_no_wind counter). Dropping
+    it here would silently widen the gate's comparable-hour set, which is a separate change
+    with its own measurement to do first."""
     tp, d = system.get("tp"), system.get("dir")
     if (tp is None or tp <= 0 or d is None
             or wind_speed is None or wind_dir is None or wind_speed <= 0):
         return False
+    if not prefer_wave_age:
+        return tp >= _SWELL_MIN_PERIOD_S
     c = _G_MS2 * tp / (2.0 * math.pi)                       # phase speed from the system period
     cosd = math.cos(math.radians(((d - wind_dir + 180) % 360) - 180))
     windsea = cosd > 0.0 and c < _WAVE_AGE_FACTOR * wind_speed * cosd
     return not windsea
 
 
-def _match_swell_system(systems, wind_speed, wind_dir):
+def _match_swell_system(systems, wind_speed, wind_dir, *, prefer_wave_age=False):
     """The model tracked SWELL system to compare against the buoy's swell. NWPS's watershed
     partitioning (Hanson & Phillips 2001, as in SWAN/WW3) partitions the WHOLE spectrum, so
     the tracked systems INCLUDE the local WIND-SEA — on a windy day it is the biggest system,
     and matching it against the buoy's swell is the dirpw-vs-MWD category error one level
-    deeper. So we FIRST drop wind-sea systems (wave-age, model wind at the node), THEN take
-    the highest-energy remaining SWELL system. Highest-energy (not sys1, not a direction
-    match): the buoy's swell-band mean is energy-weighted → its counterpart is the dominant
-    swell, and it is independent of direction so it can't rig the residual. None when no
-    system qualifies as swell → that hour is not comparable (validity, same as the buoy
-    precondition: we exclude hours where the quantity — a model swell — does not exist)."""
+    deeper. So we FIRST drop wind-sea systems (_system_is_swell: a fixed 8 s period cutoff by
+    default), THEN take the highest-energy remaining SWELL system. Highest-energy (not sys1,
+    not a direction match): the buoy's swell-band mean is energy-weighted → its counterpart is
+    the dominant swell, and it is independent of direction so it can't rig the residual.
+    NOTE the two steps are not interchangeable — the highest-energy step is only safe because
+    the veto ran first, which is precisely what stopped working when the veto degenerated at
+    low wind. None when no system qualifies as swell → that hour is not comparable (validity,
+    same as the buoy precondition: we exclude hours where the quantity — a model swell — does
+    not exist), and dropping such an hour is always preferable to matching chop into it."""
     swell = [s for s in (systems or [])
-             if s.get("hs") is not None and _system_is_swell(s, wind_speed, wind_dir)]
+             if s.get("hs") is not None
+             and _system_is_swell(s, wind_speed, wind_dir, prefer_wave_age=prefer_wave_age)]
     return max(swell, key=lambda s: s["hs"]) if swell else None
 
 
-def _match_windsea_system(systems, wind_speed, wind_dir):
+def _match_windsea_system(systems, wind_speed, wind_dir, *, prefer_wave_age=False):
     """The model's dominant WIND-SEA partition (highest-energy system classified wind-sea),
     for the side-by-side diagnostic — so the chop rotating with the wind is visible next to
-    the steady swell. None if no wind-sea system."""
+    the steady swell. None if no wind-sea system. Uses the SAME rule as the swell side, so
+    the two partitions stay complementary under either setting."""
     ws = [s for s in (systems or [])
-          if s.get("hs") is not None and not _system_is_swell(s, wind_speed, wind_dir)
+          if s.get("hs") is not None
+          and not _system_is_swell(s, wind_speed, wind_dir, prefer_wave_age=prefer_wave_age)
           and s.get("tp") is not None and s.get("dir") is not None]
     return max(ws, key=lambda s: s["hs"]) if ws else None
 
@@ -947,14 +996,16 @@ def swell_trust_verdict(samples, tier="point"):
         mws, mwd = s.get("model_ws"), s.get("model_wdir")
         matched = _match_swell_system(s.get("model_systems"), mws, mwd) if qual else None
         wsea = _match_windsea_system(s.get("model_systems"), mws, mwd)   # for the side-by-side diag
-        # KNOWN CONTAMINATION (option-c guard DEFERRED — needs calibration vs a known-good mixed-sea
-        # event before shipping): in light wind the model can emit NO wind-sea system (wsea is None),
-        # so local chop folds into the single tracked system, `matched` classifies it as swell by
-        # wave-age, and its direction rotates WITH the wind (observed +23° at 46237, +31° at 46215
-        # while the buoy swell held steady). A per-hour guard would skip matching when wsea is None
-        # yet wind speed / sea-state indicate chop is present. Not implemented here — do not add it
-        # without calibration. The banking guard + variance floor already stop these low-energy
-        # windows from accumulating; this note is the pointer for the eventual per-hour fix.
+        # THE LIGHT-WIND CONTAMINATION NOTED HERE IS NOW FIXED AT SOURCE. It read: in light wind
+        # the model emits no wind-sea system (wsea is None), local chop folds into the single
+        # tracked system, `matched` classifies it as swell BY WAVE-AGE, and its direction rotates
+        # WITH the wind (observed +23° at 46237, +31° at 46215 while the buoy swell held steady).
+        # The cause was the wave-age veto degenerating as U falls, so nothing was ever classified
+        # wind sea. _system_is_swell now applies a FIXED 8 s period cutoff, which vetoes chop
+        # independently of wind speed, so the deferred per-hour "option-c" guard is no longer the
+        # pointer for this — chop at tp < 8 s can no longer be matched at any wind speed. What the
+        # cutoff does NOT catch is a genuine >= 8 s system that is still locally wind-driven; if
+        # that ever shows up, calibrate against a known-good mixed-sea event before adding a guard.
         bdir, bhs = s.get("buoy_swell_dir"), s.get("buoy_hs_swell")
         d = w = None
         if qual and matched is None and s.get("model_systems"):

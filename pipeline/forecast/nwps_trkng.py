@@ -504,6 +504,12 @@ def diag_compare(wfo, buoy_id, blat, blng, max_rows=48):
     if model_wind:
         print(f"note: model wind available at the node for {len(model_wind)} hours "
               "(fallback when the buoy reports MM wind).")
+    # WHICH RULE picked the '*' system each hour. Printed, not inferred: the selection is the
+    # single biggest lever on the NEW/REF rows, and reading it back out of hs/tp/dir is exactly
+    # the guesswork that let the wave-age degeneracy sit unnoticed at light wind.
+    print(f"matched-swell rule: {nn.swell_match_rule()} — applied per hour by "
+          "nwps_nearshore._match_swell_system (veto first, then highest energy among the "
+          "survivors); the SAME selector the trust gate uses, so the two cannot disagree.")
 
     def _n(v, s="{:.0f}"):
         return s.format(v) if isinstance(v, (int, float)) and v == v else "—"
