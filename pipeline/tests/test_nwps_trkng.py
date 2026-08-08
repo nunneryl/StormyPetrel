@@ -181,12 +181,22 @@ def test_diag_matches_the_swell_not_raw_index_0():
     NEW/REF rows to ~+42° while the trust gate reported ~+7° on the same buoy and cycle."""
     from pipeline.forecast import nwps_nearshore as nn
     windsea = {"system": 1, "hs": 0.14, "tp": 3.4, "dir": 173.0}     # index 0 — short, wind-aligned
-    swell = {"system": 2, "hs": 0.74, "tp": 7.0, "dir": 117.0}       # index 1 — the real swell
-    systems = [windsea, swell]
+    short_swell = {"system": 2, "hs": 0.74, "tp": 7.0, "dir": 117.0}  # index 1 — 7.0 s, sub-cutoff
     ws, wdir = 7.0, 180.0                                            # ~7 m/s from the south
-    # wave age classifies them apart: c = g·tp/2π is 5.3 m/s for 3.4 s (below 1.2·U·cosδ) and
-    # 10.9 m/s for 7.0 s (above it)
+    # UNDER THE FIXED 8 s CUTOFF both of the measured systems are wind sea — 3.4 s and 7.0 s —
+    # so this hour is DROPPED rather than matched at all. Wave age called the 7.0 s system swell
+    # (c = 10.9 m/s, above 1.2·U·cosδ), which is what the old assertion recorded; the opt-in still
+    # reproduces it. Dropping is the stricter outcome and still satisfies "never index 0".
     assert nn._system_is_swell(windsea, ws, wdir) is False
+    assert nn._system_is_swell(short_swell, ws, wdir) is False, "7.0 s is below the 8 s cutoff"
+    assert nn._system_is_swell(short_swell, ws, wdir, prefer_wave_age=True) is True
+    assert nn._match_swell_system([windsea, short_swell], ws, wdir) is None, "no sample, not chop"
+    assert nn._match_swell_system([windsea, short_swell], ws, wdir,
+                                  prefer_wave_age=True) is short_swell
+
+    # the index-independence property itself, on a system the cutoff DOES admit
+    swell = {"system": 2, "hs": 0.74, "tp": 11.0, "dir": 117.0}      # index 1 — a real swell
+    systems = [windsea, swell]
     assert nn._system_is_swell(swell, ws, wdir) is True
     matched = nn._match_swell_system(systems, ws, wdir)
     assert matched is swell, f"matched the wind sea at index 0, not the swell: {matched}"
@@ -201,7 +211,8 @@ def test_diag_matches_the_swell_not_raw_index_0():
     assert nn._match_swell_system([big_chop, swell], ws, wdir) is swell
     # all-wind-sea → None, so the hour contributes NO sample (never a fallback to index 0)
     assert nn._match_swell_system([windsea, big_chop], ws, wdir) is None
-    # no model wind → unclassifiable → None, again no fallback
+    # no model wind → unclassifiable → None, again no fallback. The fixed cutoff does not
+    # consult the wind, but this guard is retained so hour-comparability is unchanged.
     assert nn._match_swell_system(systems, None, None) is None
 
     # --- the actual --diag selection step (not a re-implementation of it) ---
@@ -226,6 +237,100 @@ def test_diag_matches_the_swell_not_raw_index_0():
     assert not trk._sys_str(systems, 0, matched).startswith("*"), "wind sea must NOT be marked"
     assert trk._sys_str(systems, 0, None) == trk._sys_str(systems, 0), "marker is opt-in"
     assert trk._sys_str(systems, 5, matched).strip() == "—", "absent system still dashes"
+
+
+def test_light_wind_chop_no_longer_outranks_the_long_period_swell():
+    """THE sgx/46254 measurement, 2026-08-08 cycle: over twelve consecutive hours of 2-4 m/s wind
+    the matched system was 0.44 m at 4.3 s, while an 18.2 s system at 0.13 m sat alongside it
+    holding a steady 273 degrees and NDBC's own .spec reported swell at 16.7 s. Wave age was
+    comparing 4-second chop against the buoy's 18-second swell, because at 3 m/s the threshold
+    1.2·U·cosδ collapses to ~3.6 m/s and even a 4.3 s wave (c = 6.7 m/s) outruns it, so NOTHING
+    was vetoed and the highest-energy rule simply took the biggest system."""
+    from pipeline.forecast import nwps_nearshore as nn
+    chop = {"system": 1, "hs": 0.44, "tp": 4.3, "dir": 200.0}
+    long_swell = {"system": 2, "hs": 0.13, "tp": 18.2, "dir": 273.0}
+    systems = [chop, long_swell]
+    ws, wdir = 3.0, 200.0                       # light, and aligned with the chop
+
+    # the degeneracy itself: at 3 m/s wave age vetoes NEITHER system
+    assert nn._system_is_swell(chop, ws, wdir, prefer_wave_age=True) is True
+    assert nn._system_is_swell(long_swell, ws, wdir, prefer_wave_age=True) is True
+    assert nn._match_swell_system(systems, ws, wdir, prefer_wave_age=True) is chop, \
+        "wave age must reproduce the measured failure — 0.44 m of 4.3 s chop"
+
+    # the fix: the period cutoff vetoes the chop at any wind speed, so the 18.2 s system wins
+    assert nn._system_is_swell(chop, ws, wdir) is False
+    assert nn._system_is_swell(long_swell, ws, wdir) is True
+    matched = nn._match_swell_system(systems, ws, wdir)
+    assert matched is long_swell, f"expected the 18.2 s swell, got {matched}"
+    assert matched["dir"] == 273.0, "the steady 273 degrees, not the chop's 200"
+    # and it is NOT an energy artefact — the swell is the SMALLER system, 0.13 m vs 0.44 m
+    assert matched["hs"] < chop["hs"], "the veto, not the energy rank, is what picked it"
+    # the diag seam agrees with the gate, since both call the same selector
+    VALID = 486_000
+    assert trk._matched_swell_at(systems, {VALID: (ws, wdir)}, VALID) == (long_swell, 273.0)
+
+
+def test_sub_cutoff_system_is_never_swell_at_any_wind_speed():
+    """A system below the cutoff must never classify as swell, whatever the wind does. This is the
+    property wave age could not provide: its threshold is wind-dependent, so at low U it admitted
+    everything, and the worked pqr/46243 case shows a 3 s wave (c = 4.7 m/s) passing at 4 m/s."""
+    from pipeline.forecast import nwps_nearshore as nn
+    for tp in (2.0, 3.0, 4.3, 6.6, 7.0, 7.9):
+        for u in (0.5, 2.0, 4.0, 8.0, 15.0, 30.0):
+            for rel in (0, 45, 90, 135, 180):        # aligned, across, and opposing the wind
+                s = {"system": 1, "hs": 1.0, "tp": tp, "dir": (200.0 + rel) % 360.0}
+                assert nn._system_is_swell(s, u, 200.0) is False, (tp, u, rel)
+    # at or above the cutoff it is swell, again regardless of wind — the boundary is inclusive
+    for tp in (8.0, 8.1, 12.2, 18.2):
+        for u in (0.5, 4.0, 30.0):
+            s = {"system": 1, "hs": 1.0, "tp": tp, "dir": 200.0}
+            assert nn._system_is_swell(s, u, 200.0) is True, (tp, u)
+
+    # the pqr/46243 fh0 worked case: wind 4 m/s from 340, a 12.2 s / 0.25 m swell beside a
+    # 6.6 s / 1.10 m wind sea. Wave age passes BOTH (c 19.0 vs 1.9, and 10.3 vs 3.6), so height
+    # decides and the wind sea wins; the cutoff vetoes the 6.6 s system and the swell wins.
+    swell = {"system": 1, "hs": 0.25, "tp": 12.2, "dir": 267.0}
+    wsea = {"system": 2, "hs": 1.10, "tp": 6.6, "dir": 340.0}
+    assert nn._match_swell_system([swell, wsea], 4.0, 340.0, prefer_wave_age=True) is wsea
+    assert nn._match_swell_system([swell, wsea], 4.0, 340.0) is swell
+    # unclassifiable still returns False and is never mistaken for swell
+    assert nn._system_is_swell({"hs": 1.0, "tp": None, "dir": 200.0}, 4.0, 200.0) is False
+    assert nn._system_is_swell({"hs": 1.0, "tp": 0.0, "dir": 200.0}, 4.0, 200.0) is False
+    assert nn._system_is_swell({"hs": 1.0, "tp": 12.0, "dir": None}, 4.0, 200.0) is False
+    assert nn._system_is_swell({"hs": 1.0, "tp": 12.0, "dir": 200.0}, None, 200.0) is False
+    assert nn._system_is_swell({"hs": 1.0, "tp": 12.0, "dir": 200.0}, 4.0, None) is False
+
+
+def test_wave_age_remains_reachable_as_an_explicit_opt_in():
+    """Wave age is retained, not deleted — the same treatment PR #134 gave the buoy band split.
+    The default must be the cutoff, the opt-in must genuinely reach the other code path, and the
+    two must be sourced from one threshold so the sides cannot drift apart."""
+    from pipeline.forecast import nwps_nearshore as nn
+    from pipeline.forecast import ndbc_spectral as sp
+    # ONE constant, both sides: 0.125 Hz on the buoy side is 8.0 s here
+    assert nn._SWELL_MIN_PERIOD_S == 1.0 / sp.SWELL_WINDSEA_CUTOFF_HZ == 8.0
+
+    # a case where the two rules genuinely disagree, so "reachable" is not vacuous
+    short_opposing = {"system": 1, "hs": 1.0, "tp": 6.0, "dir": 90.0}   # opposes a 270 wind
+    assert nn._system_is_swell(short_opposing, 12.0, 270.0) is False
+    assert nn._system_is_swell(short_opposing, 12.0, 270.0, prefer_wave_age=True) is True
+
+    # the opt-in threads through both matchers, and they stay complementary
+    chop = {"system": 1, "hs": 0.44, "tp": 4.3, "dir": 200.0}
+    long_swell = {"system": 2, "hs": 0.13, "tp": 18.2, "dir": 273.0}
+    systems = [chop, long_swell]
+    assert nn._match_swell_system(systems, 3.0, 200.0) is long_swell
+    assert nn._match_windsea_system(systems, 3.0, 200.0) is chop
+    assert nn._match_swell_system(systems, 3.0, 200.0, prefer_wave_age=True) is chop
+    assert nn._match_windsea_system(systems, 3.0, 200.0, prefer_wave_age=True) is None, \
+        "wave age vetoes nothing at 3 m/s — which is the degeneracy"
+
+    # the rule LABEL the diag prints is derived from the same constants, so it cannot drift
+    assert nn.swell_match_rule() == "fixed_period_cutoff (wind sea while tp < 8.0 s)"
+    assert "wave_age" in nn.swell_match_rule(prefer_wave_age=True)
+    assert "OPT-IN" in nn.swell_match_rule(prefer_wave_age=True)
+    assert str(nn._SWELL_MIN_PERIOD_S) in nn.swell_match_rule()
 
 
 def test_band_split_excludes_ndbc_null_swell_partition():

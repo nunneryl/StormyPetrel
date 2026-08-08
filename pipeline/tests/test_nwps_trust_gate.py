@@ -67,14 +67,18 @@ def test_matching_is_highest_energy_among_swell():
 def test_windsea_system_is_excluded_even_when_biggest():
     # THE fix: a BIG wind-sea (short 5 s period, aligned with a 12 m/s wind) + a smaller
     # long-period swell. Old rule took the biggest (wind-sea); new rule must pick the swell.
-    windsea = _sys(1.8, 270.0, system=1, tp=5.0)    # c=7.8 m/s < 1.2·12·cos0=14.4 → wind-sea
-    swell = _sys(0.7, 120.0, system=2, tp=12.0)     # c=18.7 m/s > 14.4 → swell
+    windsea = _sys(1.8, 270.0, system=1, tp=5.0)    # tp 5 s < the 8 s cutoff → wind-sea
+    swell = _sys(0.7, 120.0, system=2, tp=12.0)     # tp 12 s ≥ 8 s → swell
     m = nn._match_swell_system([windsea, swell], 12.0, 270.0)
     assert m is not None and m["system"] == 2 and m["dir"] == 120.0, "the SWELL, not the bigger wind-sea"
     assert nn._system_is_swell(windsea, 12.0, 270.0) is False
     assert nn._system_is_swell(swell, 12.0, 270.0) is True
-    # a swell OPPOSING the wind stays swell regardless of period
-    assert nn._system_is_swell(_sys(1.0, 90.0, tp=6.0), 12.0, 270.0) is True
+    # RULE CHANGE: under the fixed cutoff a 6 s system is chop whatever its direction. Wave age
+    # called it swell purely for OPPOSING the wind (cosδ ≤ 0), which is how sub-8 s chop got
+    # matched against buoy swell; the opt-in still reproduces the old answer.
+    short_opposing = _sys(1.0, 90.0, tp=6.0)
+    assert nn._system_is_swell(short_opposing, 12.0, 270.0) is False, "6 s is chop by period"
+    assert nn._system_is_swell(short_opposing, 12.0, 270.0, prefer_wave_age=True) is True
     # the diag also surfaces the dominant WIND-SEA partition (chop that rotates with the wind)
     w = nn._match_windsea_system([windsea, swell], 12.0, 270.0)
     assert w is not None and w["system"] == 1 and w["dir"] == 270.0
