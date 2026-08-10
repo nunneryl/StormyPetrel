@@ -11,6 +11,22 @@ HARD BOUNDARY: this is CAPTURE ONLY. It never modifies a rating, a trust verdict
 assignment, spots_enriched.json, or any other table. It reads scripts/nwps_okx_assignments.json,
 reads NOMADS + NDBC, and writes exactly one table: `partition_archive`.
 
+INTENDED LIFESPAN — THIS IS NOT PERMANENT INFRASTRUCTURE. The table exists to settle the
+P3-2 rating design question and to serve as a validation corpus for the rating rewrite,
+expected to take TWELVE TO EIGHTEEN MONTHS. Once P3-2 is decided the intent is to THIN it to
+shortest-lead-per-valid-hour and drop the rest — roughly a 90% reduction — keeping the
+comparison corpus and discarding the lead sweep that only existed to answer the forecast-
+skill question. That is the PLAN, deliberately not implemented here: no deletion path ships
+with the capture, so nothing can prune the archive while it is still being filled.
+
+LEAD CAP: model rows are captured only out to MAX_LEAD_HOURS (72). NWPS publishes f000-f144,
+so this keeps about half the horizon and halves the storage. 72 h is chosen, not 48, because
+P3-2 is about near-term rating quality — it covers the check-on-Thursday-for-Saturday case —
+and because the peak-hopping failure mode being measured should if anything be MORE visible
+at longer leads, so a 48 h cap would risk measuring only the easy end. RAISING THE CAP LATER
+CANNOT BACKFILL: NOMADS retains ~5 days, so leads dropped today are gone for good. It is one
+named constant to change if that trade ever needs revisiting.
+
 WHAT IS CAPTURED — two rows per valid hour per pending zone:
   source='model'  CG1 at the buoy's node: swh, perpw, dirpw, shts, wind_speed, wind_dir;
                   CG0_Trkng at the reconciled node: the FULL RAW tracked-system list as
@@ -79,10 +95,57 @@ BUOY_LEAD_SENTINEL = 0
 # Upper bound on NWPS cycles published per day; only used to size the recent_cycles request
 # for a backfill window, never as a truth about the schedule.
 _MAX_CYCLES_PER_DAY = 8
+# FORECAST LEAD CAP. Model rows beyond this lead are not captured. NWPS publishes f000-f144;
+# 72 keeps about half the horizon and halves the storage. Chosen over 48 because the
+# peak-hopping failure mode P3-2 measures should be MORE visible at longer leads, so a
+# tighter cap would risk measuring only the easy end, and because 72 h covers the
+# check-on-Thursday-for-Saturday case the rating actually has to be good at.
+# ONE EDIT TO CHANGE — but raising it later CANNOT BACKFILL: NOMADS retains ~5 days, so any
+# lead not captured today is permanently gone.
+MAX_LEAD_HOURS = 72
+# Volume estimate, printed in the run header so the storage trade stays visible. Both
+# figures are ASSUMPTIONS about the NWPS schedule, not measurements: hourly steps (f000-f144
+# is 145 steps) and 4 cycles/day (the 6-hourly cadence reverify's n_cycles=4 ≈ 24 h implies).
+_ASSUMED_CYCLES_PER_DAY = 4
+_ASSUMED_STEP_HOURS = 1
 
-DDL = f"""-- Table {TABLE} expects this shape. The UNIQUE constraint is load-bearing:
--- archive_partitions.py upserts ON CONFLICT ({UPSERT_KEY}) and will FAIL LOUDLY if it
--- is absent, rather than silently inserting duplicates on every run.
+
+def within_lead_cap(lead_hours, cap=None):
+    """True iff a model step is inside the capture window. Pure, so the cap is testable
+    without NOMADS. Inclusive at the boundary: a lead of exactly MAX_LEAD_HOURS is KEPT —
+    "72 or less" — and a missing lead is not capturable at all."""
+    if lead_hours is None:
+        return False
+    return lead_hours <= (MAX_LEAD_HOURS if cap is None else cap)
+
+
+def expected_rows_per_zone_per_day(max_lead=None, *, cycles_per_day=_ASSUMED_CYCLES_PER_DAY,
+                                   step_hours=_ASSUMED_STEP_HOURS):
+    """(model, buoy, total) rows a single zone is expected to add per day under the lead cap.
+    Every cycle contributes one model row per step out to the cap, and a valid hour is covered
+    by every cycle within the cap — which is exactly why lead_hours is in the unique key.
+    Buoy rows are one per valid hour. Pure, so the header figure cannot drift from the cap."""
+    cap = MAX_LEAD_HOURS if max_lead is None else max_lead
+    steps_per_cycle = int(cap // step_hours) + 1              # f000 inclusive
+    model = steps_per_cycle * cycles_per_day
+    buoy = 24 // step_hours
+    return model, buoy, model + buoy
+
+DDL = f"""-- Table {TABLE}.
+--
+-- INTENDED LIFESPAN: NOT permanent infrastructure. This table exists to settle the P3-2
+-- rating design question and to serve as a validation corpus for the rating rewrite,
+-- expected to run TWELVE TO EIGHTEEN MONTHS. Once P3-2 is decided the intent is to THIN it
+-- to shortest-lead-per-valid-hour and drop the rest — roughly a 90% reduction — keeping the
+-- comparison corpus and discarding the lead sweep that only existed to answer the
+-- forecast-skill question. That is the plan, NOT implemented: no deletion path ships with
+-- the capture, so nothing can prune the archive while it is still being filled.
+--
+-- Model rows are captured only out to a {MAX_LEAD_HOURS} h forecast lead (see MAX_LEAD_HOURS).
+--
+-- The UNIQUE constraint is load-bearing: archive_partitions.py upserts ON CONFLICT
+-- ({UPSERT_KEY}) and will FAIL LOUDLY if it is absent, rather than
+-- silently inserting duplicates on every run.
 --
 -- lead_hours IS PART OF THE KEY, so every forecast lead that covered a valid hour is kept
 -- and skill can be compared ACROSS lead times. A repeated valid_hour therefore means "the
@@ -283,13 +346,32 @@ def ensure_table(client):
         ) from e
 
 
+def render_summary(rows_per_zone, n_skipped, *, dry_run):
+    """(total_rows, n_zones, line) for the final run summary. Extracted and pure BECAUSE IT
+    WAS WRONG: the totals were accumulated from upsert_rows' return value, which was 0 under
+    --dry-run, so a run whose per-zone lines each reported hundreds of rows finished with
+    "would write 0 row(s) across 26 zone(s)". A scheduled run is judged on that line, and a
+    real capture reporting zero reads as a silent no-op — the one failure mode this job must
+    not have. Counting the rows actually submitted per zone makes it true in both modes."""
+    total = sum(rows_per_zone)
+    n_zones = len(rows_per_zone)
+    verb = "would write" if dry_run else "wrote"
+    return total, n_zones, (f"{verb} {total} row(s) across {n_zones} zone(s); "
+                            f"{n_skipped} skipped.")
+
+
 def upsert_rows(client, rows, *, dry_run=False, batch_size=200):
-    """Upsert on the (valid_hour, wfo, buoy_id, source) unique key → number of rows written.
+    """Upsert on the (valid_hour, wfo, buoy_id, source, lead_hours) unique key → the number of
+    rows written, or under *dry_run* the number that WOULD be written. Returning the count in
+    both modes is deliberate: returning 0 for a dry run is what made the run summary read
+    "would write 0 row(s)" while every per-zone line reported hundreds.
     Idempotent BY CONSTRUCTION: same key → same row replaced, never a duplicate insert.
     A missing constraint surfaces as PostgREST 42P10 ("no unique or exclusion constraint
     matching the ON CONFLICT specification"); that is re-raised with the actionable message
     rather than left as a raw driver error — VERIFYING the key exists rather than assuming it."""
-    if dry_run or not rows:
+    if dry_run:
+        return len(rows)              # what WOULD be written — see the docstring
+    if not rows:
         return 0
     written = 0
     for i in range(0, len(rows), batch_size):
@@ -310,16 +392,40 @@ def upsert_rows(client, rows, *, dry_run=False, batch_size=200):
 # --------------------------------------------------------------------------- #
 # Per-zone capture (single-attempt fetches; one zone's failure never aborts)   #
 # --------------------------------------------------------------------------- #
-def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
+def load_station_roster():
+    """(active, reporting) NDBC station lists, loaded ONCE per run, plus a single staleness
+    warning. nwps_nearshore._buoy_latlng calls _warn_if_roster_stale() on every invocation
+    when the lists are not injected — its docstring says "warn once", but the caller is
+    per-zone, so a 26-zone run printed the same warning 26 times with the age drifting as the
+    clock moved (2.3 → 2.4 days). Loading here and INJECTING the lists takes that path out
+    entirely: the warning is emitted once, up front, and the XML is parsed once instead of
+    once per zone. Returns (None, None) if the roster is unavailable, which lets every zone
+    SKIP with its own specific message exactly as before."""
+    from pipeline.forecast import nwps_nearshore as nn
+    from pipeline.enrichment.geodata import (load_ndbc_active_stations,
+                                             load_ndbc_wave_stations)
+    nn._warn_if_roster_stale()                    # ONCE per run, not once per zone
+    try:
+        return list(load_ndbc_active_stations()), list(load_ndbc_wave_stations())
+    except Exception:                             # noqa: BLE001 — zones will SKIP individually
+        return None, None
+
+
+def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None,
+                 max_lead_hours=None, roster=None):
     """(rows, note) for one zone. Fetches are SINGLE-ATTEMPT with the module's own timeouts
     — no retry loop, so an outage degrades fast (the reverify job's discipline). Needs
-    NOMADS + eccodes + NDBC; raises on failure, and the caller turns that into a SKIP."""
+    NOMADS + eccodes + NDBC; raises on failure, and the caller turns that into a SKIP.
+    *roster* is the (active, reporting) pair from load_station_roster(), injected so the
+    staleness warning and the XML parse happen once per run rather than once per zone."""
     from pipeline.forecast import nwps_nearshore as nn
     from pipeline.forecast import nwps_trkng as trk
     from pipeline.forecast import ndbc_spectral as ndbc_spec
 
+    cap = MAX_LEAD_HOURS if max_lead_hours is None else max_lead_hours
     region = nn._region_for(wfo)
-    blat, blng = nn._buoy_latlng(buoy_id)
+    active, reporting = roster if roster else (None, None)
+    blat, blng = nn._buoy_latlng(buoy_id, _active=active, _reporting=reporting)
 
     # Cycle window. backfill 0 → the latest cycle only. backfill N → every cycle whose date
     # falls inside the last N days; recent_cycles is asked for a generous count and filtered
@@ -335,7 +441,7 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
     if not cycles:
         return [], "no NOMADS cycles in range"
 
-    model_rows, seen_hours = [], set()
+    model_rows, seen_hours, n_over_cap = [], set(), 0
     model_wind, trkng_why = {}, None
     # Oldest cycle first so the newest (shortest-lead) row is the one dedupe_shortest_lead
     # keeps on a tie; the lead comparison makes this ordering-independent anyway.
@@ -369,6 +475,9 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
             status = TRKNG_ABSENT if absent else TRKNG_ERROR
             trkng_why = f"Trkng {status}: {type(e).__name__}: {e}"
         for fh in cg1["steps"]:
+            if not within_lead_cap(fh, cap):
+                n_over_cap += 1        # beyond MAX_LEAD_HOURS — not captured, and reported
+                continue
             valid = int((cg1["cycle_dt"] + datetime.timedelta(hours=fh)).timestamp() // 3600)
             ws = nn._node_value(cg1, "ws", fh, ci, cj)
             wd = nn._node_value(cg1, "wdir", fh, ci, cj)
@@ -403,6 +512,7 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
     note = (f"{len(cycles)} cycle(s), {len(seen_hours)} model hour(s) "
             f"[trkng {'/'.join(f'{k}:{v}' for k, v in sorted(st.items())) or 'none'}], "
             f"{len(buoy_rows)} buoy hour(s)"
+            + (f", {n_over_cap} step(s) past the {cap} h lead cap" if n_over_cap else "")
             + (f"; {trkng_why}" if trkng_why and str(trkng_why).startswith("Trkng ") else ""))
     return rows, note
 
@@ -415,6 +525,9 @@ def main(argv=None):
                          "Use 5 on the first run to capture everything still retained.")
     ap.add_argument("--dry-run", action="store_true",
                     help="print what would be written and write NOTHING")
+    ap.add_argument("--max-lead", type=int, default=MAX_LEAD_HOURS, metavar="H",
+                    help=f"drop model rows past this forecast lead (default {MAX_LEAD_HOURS}). "
+                         "Raising it cannot backfill — NOMADS retains only ~5 days.")
     ap.add_argument("--print-ddl", action="store_true",
                     help="print the table DDL this script expects, then exit")
     ap.add_argument("--assignments", type=Path, default=ASSIGNMENTS)
@@ -426,8 +539,13 @@ def main(argv=None):
 
     doc = json.loads(Path(a.assignments).read_text(encoding="utf-8"))
     zones = pending_zones(doc)
+    m, b, t = expected_rows_per_zone_per_day(a.max_lead)
     print(f"=== archive_partitions — {len(zones)} pending zone(s) with a buoy "
-          f"| backfill {a.backfill}d | {'DRY RUN (writes nothing)' if a.dry_run else 'WRITING'} ===")
+          f"| backfill {a.backfill}d | lead cap {a.max_lead} h "
+          f"| {'DRY RUN (writes nothing)' if a.dry_run else 'WRITING'} ===")
+    print(f"expected steady-state volume: ~{t} row(s)/zone/day ({m} model + {b} buoy), "
+          f"~{t * len(zones):,}/day over {len(zones)} zones, ~{t * len(zones) * 365:,}/year "
+          f"(assumes hourly steps and {_ASSUMED_CYCLES_PER_DAY} cycles/day)")
     if not zones:
         print("nothing to archive.")
         return 0
@@ -438,10 +556,13 @@ def main(argv=None):
         client = get_client()
         ensure_table(client)          # loud, specific failure if the table is missing
 
-    total_written = total_skipped = 0
+    # Roster loaded ONCE: this is what stops _buoy_latlng's staleness warning firing per zone.
+    roster = load_station_roster()
+    rows_per_zone, total_skipped = [], 0
     for wfo, buoy_id, zone in zones:
         try:
-            rows, note = collect_zone(wfo, buoy_id, backfill_days=a.backfill)
+            rows, note = collect_zone(wfo, buoy_id, backfill_days=a.backfill,
+                                      max_lead_hours=a.max_lead, roster=roster)
         except Exception as e:        # noqa: BLE001 — one zone must never abort the run
             total_skipped += 1
             print(f"  SKIP  {zone:<20} {type(e).__name__}: {e}")
@@ -462,15 +583,15 @@ def main(argv=None):
             total_skipped += 1
             print(f"  SKIP  {zone:<20} write failed — {type(e).__name__}: {e}")
             continue
-        total_written += written
+        rows_per_zone.append(written)     # what this zone contributed, in BOTH modes
         verb = "would write" if a.dry_run else "wrote"
         print(f"  OK    {zone:<20} {verb} {len(rows):>4} row(s) "
               f"({n_model} model, {n_buoy} buoy) — {note}")
         if a.dry_run and rows:
             print(f"        sample: {json.dumps(rows[0], default=str)[:200]}…")
 
-    print(f"\n{'would write' if a.dry_run else 'wrote'} {total_written} row(s) "
-          f"across {len(zones) - total_skipped} zone(s); {total_skipped} skipped.")
+    total, n_ok, line = render_summary(rows_per_zone, total_skipped, dry_run=a.dry_run)
+    print(f"\n{line}")
     print("(capture only: no rating, trust verdict, assignment or spots_enriched.json touched.)")
     return 0                          # partial failure is not a run failure
 
