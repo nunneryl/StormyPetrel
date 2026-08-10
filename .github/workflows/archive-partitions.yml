@@ -1,0 +1,127 @@
+name: archive-partitions
+
+# Scheduled CAPTURE of partitioned wave data into Supabase `partition_archive`, so that a
+# year from now the P3-2 design question — which partition-selection rule actually tracks
+# the buoy — can be settled EMPIRICALLY instead of argued.
+#
+# THE CLOCK IS THE WHOLE POINT: NOMADS retains only ~5 days of cycles (confirmed by
+# directory listing — 20260806-20260810 populated, everything older empty). An hour not
+# captured inside that window is PERMANENTLY UNRECOVERABLE. That is why this runs on a
+# schedule rather than on demand, and why a partial failure must never stop the rest of the
+# run from capturing what it still can.
+#
+# HARD BOUNDARIES (capture only, by construction):
+#   * Writes exactly ONE table, `partition_archive`. NEVER modifies a rating, a trust
+#     verdict, trust_by_buoy, an assignment, spots_enriched.json, or any other DB table.
+#   * Commits NOTHING — hence `contents: read` only, no issues: write, no cache. The
+#     archive lives in Supabase, so there is no repo state to carry between runs (the
+#     contrast with reverify-trust-accumulate.yml, whose rolling history MUST be cached).
+#   * Does not create its table. The table is created by hand; a missing table or a missing
+#     UNIQUE (valid_hour, wfo, buoy_id, source) constraint FAILS THE RUN LOUDLY with the DDL
+#     to apply, rather than silently inserting duplicates on every schedule tick.
+#
+# Idempotence: every write upserts on (valid_hour, wfo, buoy_id, source), and the archiver
+# collapses multi-cycle rows to the SHORTEST lead per valid hour before writing, so re-runs
+# and overlapping schedules converge on the same row rather than fighting over it. That is
+# what makes a twice-daily cadence with a 5-day backfill safe to repeat.
+#
+# Frequency — twice daily at 09:00 / 21:00 UTC. DELIBERATELY OFFSET by four hours from
+# reverify-trust-accumulate.yml's 05:00 / 17:00 so the two jobs never contend for NOMADS:
+# both pull CG1 GRIBs for the same ~11 real-buoy zones, and overlapping them would double
+# the concurrent load on one origin for no benefit. Twice daily also means a single failed
+# run loses nothing permanently — the next run's default backfill still sits inside the
+# 5-day retention window.
+#
+# Graceful degradation (the reverify job's discipline, adopted verbatim): fetches are
+# SINGLE-ATTEMPT with timeouts and no retry loops, every zone is wrapped so one failure
+# prints a SKIP line instead of aborting, the run exits 0 on partial failure, and
+# timeout-minutes is the hard backstop against a slow NOMADS.
+
+on:
+  schedule:
+    - cron: '0 9,21 * * *'    # 09:00 & 21:00 UTC — offset 4 h from reverify's 05:00/17:00
+  workflow_dispatch:          # manual run, e.g. the first --backfill 5 capture
+    inputs:
+      backfill:
+        description: 'Days of NOMADS cycles to walk back (5 captures everything retained)'
+        required: false
+        default: '0'
+      dry_run:
+        description: 'Print what would be written and write nothing'
+        type: boolean
+        required: false
+        default: false
+
+env:
+  # Opt JS actions (checkout / setup-python) onto Node 24, matching the other workflows
+  # (Node 20 is being removed from runners).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+# One run at a time; don't cancel a healthy run mid-fetch.
+concurrency:
+  group: archive-partitions
+  cancel-in-progress: false
+
+permissions:
+  contents: read              # checkout only — this job commits nothing
+
+jobs:
+  archive:
+    name: archive partitioned wave data (capture only)
+    runs-on: ubuntu-latest
+    # ~26 pending zones x CG1 + CG0_Trkng GRIB fetches, and a --backfill 5 run multiplies
+    # that by the cycles in the window. Capped well under an hour so a slow NOMADS cannot
+    # run away; a hit cap loses at most one tick, and the next run re-captures the window.
+    timeout-minutes: 50
+    env:
+      PYTHONUNBUFFERED: '1'          # live logs so a stuck fetch is visible in the tail
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      # supabase-py reads SUPABASE_URL / SUPABASE_SERVICE_KEY; mirror to
+      # NEXT_PUBLIC_SUPABASE_URL too so any code that reads either works.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install eccodes (cfgrib's GRIB-2 backend for the NWPS cycles)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libeccodes0
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Fetch NDBC station roster (buoy lat/lng metadata for _buoy_latlng)
+        # Bounded (two small files, at most 3 retries each) — not a storm. activestations.xml
+        # is the roster _buoy_latlng resolves coordinates from; without it EVERY zone SKIPs
+        # with a KeyError and the run captures nothing, so a failure here is warned about
+        # loudly even though it is not fatal. latest_obs.txt is its companion:
+        # load_ndbc_wave_stations() needs BOTH or it logs "NDBC files missing" and returns [].
+        run: |
+          mkdir -p pipeline/geodata
+          curl -fsSL --retry 3 --retry-delay 5 \
+            https://www.ndbc.noaa.gov/activestations.xml \
+            -o pipeline/geodata/ndbc_stations.xml \
+            || echo "::warning::NDBC roster fetch failed — every zone will SKIP and this run will archive nothing"
+          curl -fsSL --retry 3 --retry-delay 5 \
+            https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt \
+            -o pipeline/geodata/ndbc_latest_obs.txt \
+            || echo "::warning::NDBC latest_obs fetch failed — load_ndbc_wave_stations() will log NDBC files missing"
+
+      - name: Archive partitions to Supabase
+        # CAPTURE ONLY: writes `partition_archive` and nothing else. Exits 0 on partial
+        # failure — the per-zone OK/SKIP lines are the audit trail. A missing table or
+        # missing UNIQUE constraint is the one FATAL case, and it names the fix.
+        run: |
+          python3 scripts/archive_partitions.py \
+            --backfill "${{ github.event.inputs.backfill || '0' }}" \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
