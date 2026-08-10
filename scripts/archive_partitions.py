@@ -26,13 +26,26 @@ WHAT IS CAPTURED — two rows per valid hour per pending zone:
                   INDEPENDENT reference the research report identifies and are not derivable
                   from anything else stored here, so they are captured verbatim.
 
-THE UNIQUE KEY IS (valid_hour, wfo, buoy_id, source) — see --print-ddl for the exact DDL
-this writes against. One consequence a later reader must not be surprised by: because
-lead_hours is NOT in the key, only ONE lead survives per valid hour. This job keeps the
-SHORTEST lead deterministically (the best estimate, and the same "shortest lead per valid
-hour" rule trust_check assembles with), so a re-run cannot flip which lead is stored. If
-lead-resolved analysis is ever wanted, lead_hours has to JOIN the unique key — that is a
-schema change, not a code change here.
+THE UNIQUE KEY IS (valid_hour, wfo, buoy_id, source, lead_hours) — see --print-ddl for the
+exact DDL this writes against. lead_hours is IN the key on purpose: P3-2 is about forecast
+quality, not only nowcast agreement, so skill across lead times is a question we are likely
+to want. Keeping every lead costs nothing at this volume, whereas excluding it and later
+wanting it would mean restarting a year-long capture with no backfill available past
+NOMADS' five-day retention.
+
+WHAT A REPEATED valid_hour MEANS, since the archive now contains several rows per hour: the
+same valid hour appears once per forecast lead that covered it — the 12Z cycle's f000, the
+06Z cycle's f006, the 00Z cycle's f012 and so on all describe 12Z at different lead times,
+and all are kept. To collapse the archive to ONE best estimate per hour, take the SHORTEST
+lead; that is the same "shortest lead per valid hour" rule trust_check assembles with, and
+it is deterministic. That rule is a documented property OF THE DATA for a reader to apply,
+NOT a property of the key — this job no longer discards the longer leads.
+
+BUOY ROWS CARRY lead_hours = 0 AS A SENTINEL, never NULL. An observation has no forecast
+lead, but NULL cannot be used: in Postgres a NULL in a unique key does not compare equal to
+another NULL, so two buoy rows for the same hour would BOTH insert and the constraint would
+silently stop deduplicating. 0 is the sentinel precisely because it also reads as "zero lead
+time", which an observation is.
 
   python3 scripts/archive_partitions.py --dry-run              # print, write nothing
   python3 scripts/archive_partitions.py --backfill 5           # first production run
@@ -54,7 +67,15 @@ if str(REPO) not in sys.path:
 
 ASSIGNMENTS = REPO / "scripts" / "nwps_okx_assignments.json"
 TABLE = "partition_archive"
-UPSERT_KEY = "valid_hour,wfo,buoy_id,source"
+UPSERT_KEY = "valid_hour,wfo,buoy_id,source,lead_hours"
+# CG0_Trkng availability for a model row, so the analysis never has to read meaning into an
+# empty systems array. 'ok' = the file was read and its system list (possibly legitimately
+# empty) is what the model emitted; 'absent' = the cycle published CG1 but no CG0_Trkng at
+# all; 'error' = the file existed but could not be read, parsed or node-reconciled.
+TRKNG_OK, TRKNG_ABSENT, TRKNG_ERROR = "ok", "absent", "error"
+# Buoy rows have no forecast lead. NULL is unusable here: a NULL in a Postgres unique key
+# never compares equal to another NULL, so two buoy rows for one hour would both insert.
+BUOY_LEAD_SENTINEL = 0
 # Upper bound on NWPS cycles published per day; only used to size the recent_cycles request
 # for a backfill window, never as a truth about the schedule.
 _MAX_CYCLES_PER_DAY = 8
@@ -62,16 +83,32 @@ _MAX_CYCLES_PER_DAY = 8
 DDL = f"""-- Table {TABLE} expects this shape. The UNIQUE constraint is load-bearing:
 -- archive_partitions.py upserts ON CONFLICT ({UPSERT_KEY}) and will FAIL LOUDLY if it
 -- is absent, rather than silently inserting duplicates on every run.
+--
+-- lead_hours IS PART OF THE KEY, so every forecast lead that covered a valid hour is kept
+-- and skill can be compared ACROSS lead times. A repeated valid_hour therefore means "the
+-- same hour, forecast from several cycles at different leads" — it is not a duplicate. To
+-- collapse to one best estimate per hour, take the SHORTEST lead (the rule trust_check
+-- assembles with). That is a property of the DATA for the reader to apply; the writer keeps
+-- every lead.
 create table if not exists {TABLE} (
   id             bigint generated always as identity primary key,
   valid_hour     timestamptz not null,      -- UTC, truncated to the hour
   wfo            text        not null,
   buoy_id        text        not null,
   source         text        not null,      -- 'model' | 'buoy'
+  -- lead_hours is NOT NULL and part of the unique key. Buoy rows carry the sentinel 0
+  -- rather than NULL: an observation has no lead, but a NULL in a unique key does not
+  -- compare equal to another NULL in Postgres, so NULL would silently stop deduplicating
+  -- buoy rows entirely. 0 also reads correctly as "zero lead time" for an observation.
+  lead_hours     integer     not null,      -- model: NWPS forecast hour. buoy: 0 (sentinel).
   -- model side (null on buoy rows)
   cycle_date     text,                      -- 'YYYYMMDD' of the NWPS cycle
   cycle_hour     text,                      -- '00'..'23'
-  lead_hours     integer,                   -- forecast hour; shortest lead wins per valid_hour
+  -- Was CG0_Trkng actually read for this row? Explicit, so an empty `systems` array never
+  -- has to carry the meaning: 'ok' = read (an empty list is then genuinely no systems),
+  -- 'absent' = the cycle published CG1 but no CG0_Trkng, 'error' = present but unreadable
+  -- or un-reconcilable. Filter on this, not on jsonb_array_length(systems) = 0.
+  trkng_status   text,                      -- 'ok' | 'absent' | 'error'  (null on buoy rows)
   swh            double precision,
   perpw          double precision,
   dirpw          double precision,
@@ -94,19 +131,21 @@ create table if not exists {TABLE} (
   spec_wvht      double precision,          -- .txt WVHT
   spec_mwd       double precision,          -- .txt MWD
   archived_at    timestamptz not null default now(),
-  constraint {TABLE}_key unique (valid_hour, wfo, buoy_id, source)
+  constraint {TABLE}_key unique (valid_hour, wfo, buoy_id, source, lead_hours)
 );
 create index if not exists {TABLE}_zone_idx on {TABLE} (wfo, buoy_id, valid_hour);
+-- Shortest-lead-per-hour is the common read, so make it cheap:
+create index if not exists {TABLE}_lead_idx on {TABLE} (wfo, buoy_id, source, valid_hour, lead_hours);
 """
 
 # Every column a row may carry, in a fixed order — the row builders emit exactly this key
 # set (missing values as None) so the shape cannot drift between the two sources.
-MODEL_FIELDS = ("cycle_date", "cycle_hour", "lead_hours", "swh", "perpw", "dirpw", "shts",
+KEY_FIELDS = ("valid_hour", "wfo", "buoy_id", "source", "lead_hours")
+MODEL_FIELDS = ("cycle_date", "cycle_hour", "trkng_status", "swh", "perpw", "dirpw", "shts",
                 "wind_speed", "wind_dir", "systems")
 BUOY_FIELDS = ("hs_total", "hs_swell", "hs_windsea", "swell_dir", "windsea_dir",
                "total_mean_dir", "swell_frac", "split_method", "spec_swh", "spec_swp",
                "spec_swd", "spec_wvht", "spec_mwd")
-KEY_FIELDS = ("valid_hour", "wfo", "buoy_id", "source")
 ALL_FIELDS = KEY_FIELDS + MODEL_FIELDS + BUOY_FIELDS
 
 
@@ -159,13 +198,24 @@ def pending_zones(doc):
 
 
 def build_model_row(wfo, buoy_id, epoch_hour, *, cycle_date, cycle_hour, lead_hours,
-                    swh=None, perpw=None, dirpw=None, shts=None,
+                    trkng_status=TRKNG_OK, swh=None, perpw=None, dirpw=None, shts=None,
                     wind_speed=None, wind_dir=None, systems=None):
-    """One source='model' row. Every ALL_FIELDS key is present; buoy-side columns are None."""
+    """One source='model' row. Every ALL_FIELDS key is present; buoy-side columns are None.
+
+    *lead_hours* is REQUIRED and part of the unique key, so it may not be None — a NULL in a
+    Postgres unique key never compares equal, which would silently stop the row deduplicating.
+    *trkng_status* records whether CG0_Trkng was actually read, so an empty *systems* list
+    never has to carry that meaning by implication."""
+    if lead_hours is None:
+        raise ValueError("lead_hours is part of the unique key and cannot be None on a model "
+                         "row; a NULL there would silently defeat deduplication")
+    if trkng_status not in (TRKNG_OK, TRKNG_ABSENT, TRKNG_ERROR):
+        raise ValueError(f"trkng_status must be one of "
+                         f"{(TRKNG_OK, TRKNG_ABSENT, TRKNG_ERROR)}, got {trkng_status!r}")
     row = {k: None for k in ALL_FIELDS}
     row.update(valid_hour=valid_hour_iso(epoch_hour), wfo=wfo, buoy_id=str(buoy_id),
                source="model", cycle_date=cycle_date, cycle_hour=cycle_hour,
-               lead_hours=(None if lead_hours is None else int(lead_hours)),
+               lead_hours=int(lead_hours), trkng_status=trkng_status,
                swh=_num(swh), perpw=_num(perpw), dirpw=_num(dirpw), shts=_num(shts),
                wind_speed=_num(wind_speed), wind_dir=_num(wind_dir),
                systems=sanitize_systems(systems))
@@ -176,11 +226,12 @@ def build_buoy_row(wfo, buoy_id, epoch_hour, *, spectral=None, spec=None, std=No
     """One source='buoy' row. *spectral* is an ndbc_spectral.by_hour entry, *spec* a
     {'swh','swp','swd'} .spec entry, *std* a {'hs','mwd'} .txt entry (WVHT / MWD). Any of
     the three may be absent — the row still carries the full key set with Nones, so a
-    partial hour is recorded rather than dropped."""
+    partial hour is recorded rather than dropped. lead_hours is the BUOY_LEAD_SENTINEL (0),
+    never NULL — see the constant."""
     sp, sc, st = spectral or {}, spec or {}, std or {}
     row = {k: None for k in ALL_FIELDS}
     row.update(valid_hour=valid_hour_iso(epoch_hour), wfo=wfo, buoy_id=str(buoy_id),
-               source="buoy",
+               source="buoy", lead_hours=BUOY_LEAD_SENTINEL,
                hs_total=_num(sp.get("hs_total")), hs_swell=_num(sp.get("hs_swell")),
                hs_windsea=_num(sp.get("hs_windsea")), swell_dir=_num(sp.get("swell_dir")),
                windsea_dir=_num(sp.get("windsea_dir")),
@@ -193,22 +244,22 @@ def build_buoy_row(wfo, buoy_id, epoch_hour, *, spectral=None, spec=None, std=No
     return row
 
 
-def dedupe_shortest_lead(rows):
-    """Collapse rows to ONE per (valid_hour, wfo, buoy_id, source) — the unique key. Model
-    rows from several cycles cover the same valid hour at different leads; the SHORTEST lead
-    wins, which is both the best estimate and DETERMINISTIC, so a re-run in any cycle order
-    stores the same row (that determinism is what makes the whole job idempotent, not just
-    the upsert). Ties and rows without a lead keep the first seen. Order is preserved."""
+def dedupe_by_key(rows):
+    """Collapse EXACT-key duplicates — one row per (valid_hour, wfo, buoy_id, source,
+    lead_hours). Different leads for the same valid hour are DIFFERENT keys and all survive:
+    keeping every lead is the point of putting lead_hours in the key, so this must never
+    collapse across leads. First occurrence wins (deterministic), order preserved.
+
+    This is not merely tidiness. PostgREST rejects a batch that contains two rows matching
+    the same ON CONFLICT target — "cannot affect row a second time" — so an exact-key
+    duplicate inside one upsert chunk would fail the whole chunk rather than dedupe itself.
+
+    NOTE the shortest-lead-per-hour rule now lives in the DATA, not here: to reduce the
+    archive to one best estimate per valid hour, a reader selects the minimum lead_hours per
+    (valid_hour, wfo, buoy_id, source). The writer keeps them all."""
     best = {}
     for r in rows:
-        k = tuple(r.get(f) for f in KEY_FIELDS)
-        cur = best.get(k)
-        if cur is None:
-            best[k] = r
-            continue
-        new_lead, cur_lead = r.get("lead_hours"), cur.get("lead_hours")
-        if new_lead is not None and (cur_lead is None or new_lead < cur_lead):
-            best[k] = r
+        best.setdefault(tuple(r.get(f) for f in KEY_FIELDS), r)
     return list(best.values())
 
 
@@ -297,14 +348,26 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
         node_lat = float(cg1["lats"][ci, cj])
         node_lng = float(cg1["lons"][ci, cj])
         # CG0_Trkng is OPTIONAL: a cycle can publish CG1 without it. Model rows are still
-        # captured (fields + wind), just with an empty system list — losing the whole hour
-        # because the partition file is missing would be the worse trade under a 5-day clock.
+        # captured (fields + wind) — losing the whole hour because the partition file is
+        # missing would be the worse trade under a 5-day clock. WHY it is missing is recorded
+        # on every row as trkng_status, so the analysis never has to infer it from an empty
+        # systems array (which is also what a successfully-read calm hour looks like).
         try:
             trkc = trk.load_trkng_cycle(wfo, (date, cc, url))
             ti, tj, trkng_why = trk.trkng_node(trkc, cg1, node_lat, node_lng)
-        except Exception:                                     # noqa: BLE001
+            status = TRKNG_OK if ti is not None else TRKNG_ERROR
+            if ti is None:
+                trkng_why = f"Trkng read but not node-reconciled: {trkng_why}"
+        except Exception as e:                                # noqa: BLE001
             trkc, ti, tj = None, None, None
-            trkng_why = "Trkng unavailable for this cycle"
+            # ABSENT vs ERROR: a 404 on the CG0 listing/file, or a body that is not GRIB,
+            # means the cycle simply did not publish CG0_Trkng. Anything else (eccodes
+            # failure, truncated read, parse error) is a real error and must not be
+            # laundered into "the file wasn't there".
+            code = getattr(e, "code", None)
+            absent = code == 404 or "not GRIB" in str(e) or "no swdir/shts/mpts" in str(e)
+            status = TRKNG_ABSENT if absent else TRKNG_ERROR
+            trkng_why = f"Trkng {status}: {type(e).__name__}: {e}"
         for fh in cg1["steps"]:
             valid = int((cg1["cycle_dt"] + datetime.timedelta(hours=fh)).timestamp() // 3600)
             ws = nn._node_value(cg1, "ws", fh, ci, cj)
@@ -315,6 +378,7 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
                        if trkc is not None and ti is not None else [])
             model_rows.append(build_model_row(
                 wfo, buoy_id, valid, cycle_date=date, cycle_hour=cc, lead_hours=fh,
+                trkng_status=status,
                 swh=nn._node_value(cg1, "swh", fh, ci, cj),
                 perpw=nn._node_value(cg1, "perpw", fh, ci, cj),
                 dirpw=nn._node_value(cg1, "dirpw", fh, ci, cj),
@@ -331,12 +395,15 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None):
                  for h in sorted(set(spectral) | set(spec) | set(std))
                  if h in seen_hours or not seen_hours]
 
-    rows = dedupe_shortest_lead(model_rows) + buoy_rows
+    rows = dedupe_by_key(model_rows + buoy_rows)
     if max_rows_per_zone:
         rows = rows[:max_rows_per_zone]
-    note = (f"{len(cycles)} cycle(s), {len(seen_hours)} model hour(s), "
+    from collections import Counter
+    st = Counter(r["trkng_status"] for r in rows if r["source"] == "model")
+    note = (f"{len(cycles)} cycle(s), {len(seen_hours)} model hour(s) "
+            f"[trkng {'/'.join(f'{k}:{v}' for k, v in sorted(st.items())) or 'none'}], "
             f"{len(buoy_rows)} buoy hour(s)"
-            + (f"; {trkng_why}" if trkng_why and "Trkng unavailable" in str(trkng_why) else ""))
+            + (f"; {trkng_why}" if trkng_why and str(trkng_why).startswith("Trkng ") else ""))
     return rows, note
 
 

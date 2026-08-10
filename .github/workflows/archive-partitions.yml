@@ -20,10 +20,15 @@ name: archive-partitions
 #     UNIQUE (valid_hour, wfo, buoy_id, source) constraint FAILS THE RUN LOUDLY with the DDL
 #     to apply, rather than silently inserting duplicates on every schedule tick.
 #
-# Idempotence: every write upserts on (valid_hour, wfo, buoy_id, source), and the archiver
-# collapses multi-cycle rows to the SHORTEST lead per valid hour before writing, so re-runs
-# and overlapping schedules converge on the same row rather than fighting over it. That is
-# what makes a twice-daily cadence with a 5-day backfill safe to repeat.
+# Idempotence: every write upserts on (valid_hour, wfo, buoy_id, source, lead_hours), so a
+# re-run replaces each row in place and overlapping schedules converge rather than fighting.
+# lead_hours is IN the key deliberately — P3-2 is about forecast quality, so skill across
+# lead times has to stay recoverable, and it cannot be backfilled once a cycle ages out of
+# NOMADS. A repeated valid_hour in the archive therefore means "the same hour forecast at
+# several leads", not a duplicate; a reader wanting one best estimate per hour takes the
+# SHORTEST lead. Buoy rows carry lead_hours = 0 as a sentinel, never NULL, because a NULL in
+# a Postgres unique key does not compare equal to another NULL and would stop deduplicating
+# them entirely. This is what makes a twice-daily cadence with a 5-day backfill safe.
 #
 # Frequency — twice daily at 09:00 / 21:00 UTC. DELIBERATELY OFFSET by four hours from
 # reverify-trust-accumulate.yml's 05:00 / 17:00 so the two jobs never contend for NOMADS:
