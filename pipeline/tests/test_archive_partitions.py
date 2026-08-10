@@ -205,9 +205,11 @@ def test_repeated_write_is_idempotent_against_the_unique_key():
             raised = True
         assert raised, "a NULL lead would silently defeat deduplication"
 
-    # --dry-run writes NOTHING
+    # --dry-run writes NOTHING, while still REPORTING what it would write (returning 0 here
+    # is what made the run summary read "would write 0 row(s)" — see the summary test)
     fresh = FakeClient()
-    assert ap.upsert_rows(fresh, rows, dry_run=True) == 0 and not fresh.store
+    assert ap.upsert_rows(fresh, rows, dry_run=True) == len(rows)
+    assert not fresh.store, "dry run must write nothing"
 
     # dedupe collapses EXACT-key duplicates only (a repeated chunk would otherwise make
     # PostgREST reject the whole batch), and never across leads
@@ -306,6 +308,98 @@ def test_missing_table_fails_loudly_rather_than_silently_skipping():
     # lead_hours is in the key, so it must be NOT NULL — a NULL there silently defeats dedupe
     assert "lead_hours     integer     not null" in ap.DDL
     assert "trkng_status   text" in ap.DDL
+
+
+def test_run_summary_accumulates_rows_across_zones():
+    """THE BUG THIS COVERS: the totals were accumulated from upsert_rows' return value, which
+    was 0 under --dry-run, so a run whose per-zone lines each reported hundreds of rows ended
+    with "would write 0 row(s) across 26 zone(s)". A scheduled run is judged on that final
+    line and a real capture reporting zero reads as a silent no-op — so the summary must never
+    under-report a run that captured anything."""
+    total, n_zones, line = ap.render_summary([316, 316, 208], 2, dry_run=True)
+    assert total == 840 and n_zones == 3, "totals must ACCUMULATE, not reset"
+    assert "would write 840 row(s) across 3 zone(s); 2 skipped." in line
+    # a nonzero capture can never render as zero — the exact shape of the reported bug
+    assert " 0 row(s)" not in line
+    # and the real-run wording differs only in tense
+    _, _, wrote = ap.render_summary([316, 316, 208], 2, dry_run=False)
+    assert "wrote 840 row(s) across 3 zone(s); 2 skipped." in wrote
+
+    # an all-skipped run genuinely IS zero, and must still say so honestly
+    z_total, z_n, z_line = ap.render_summary([], 26, dry_run=True)
+    assert (z_total, z_n) == (0, 0) and "0 row(s) across 0 zone(s); 26 skipped." in z_line
+
+    # upsert_rows reports the count in BOTH modes — returning 0 for a dry run is what made the
+    # totals stick at zero — while still writing nothing
+    client = FakeClient()
+    rows = [ap.build_model_row("sgx", "46254", HOUR, cycle_date="20260810", cycle_hour="12",
+                               lead_hours=6),
+            ap.build_buoy_row("sgx", "46254", HOUR, spectral=SPECTRAL)]
+    assert ap.upsert_rows(client, rows, dry_run=True) == 2, "dry run must report what it WOULD write"
+    assert not client.store, "…while writing nothing"
+    assert ap.upsert_rows(client, rows) == 2 and len(client.store) == 2
+    assert ap.upsert_rows(client, [], dry_run=True) == 0
+
+
+def test_lead_cap_drops_only_leads_past_the_cap():
+    """Model rows past MAX_LEAD_HOURS are not captured. The boundary is INCLUSIVE ("72 or
+    less"), and the cap is a named constant because raising it later cannot backfill —
+    NOMADS retains ~5 days, so a lead dropped today is gone."""
+    assert ap.MAX_LEAD_HOURS == 72
+    for keep in (0, 1, 24, 71, 72):
+        assert ap.within_lead_cap(keep) is True, keep
+    for drop in (73, 96, 120, 144):
+        assert ap.within_lead_cap(drop) is False, drop
+    assert ap.within_lead_cap(None) is False, "a missing lead is not capturable"
+    # an explicit cap overrides, so the constant is genuinely the single edit point
+    assert ap.within_lead_cap(100, 144) is True and ap.within_lead_cap(100, 48) is False
+
+    # the volume figure is derived from the cap, so the printed estimate cannot drift from it
+    m72, b72, t72 = ap.expected_rows_per_zone_per_day()
+    assert (m72, b72, t72) == (292, 24, 316), (m72, b72, t72)
+    m144, _, t144 = ap.expected_rows_per_zone_per_day(144)
+    assert m144 == 580 and abs(m72 / m144 - 0.5) < 0.02, "the cap keeps ~half the horizon"
+    assert ap.expected_rows_per_zone_per_day(48)[0] == 196
+
+    # the lifespan and the cap are both recorded where a future reader will look
+    for text in (ap.DDL, ap.__doc__):
+        assert "TWELVE TO EIGHTEEN MONTHS" in text.upper()
+        assert "90%" in text and "shortest-lead-per-valid-hour" in text
+    assert str(ap.MAX_LEAD_HOURS) in ap.DDL
+
+
+def test_roster_staleness_is_warned_once_per_run_not_once_per_zone():
+    """The warning fired 26 times in a 26-zone run, with the age drifting 2.3 → 2.4 days as
+    the clock moved, because nwps_nearshore._buoy_latlng calls _warn_if_roster_stale() on
+    every invocation whose station lists are not injected. load_station_roster warns once and
+    returns the lists, and collect_zone injects them — which takes that path out entirely."""
+    from pipeline.forecast import nwps_nearshore as nn
+    calls = []
+    orig_warn = nn._warn_if_roster_stale
+    orig_latlng = nn._buoy_latlng
+    try:
+        nn._warn_if_roster_stale = lambda *a, **k: calls.append("warn")
+        ap.load_station_roster()
+        assert calls.count("warn") == 1, "the roster warning must fire exactly once per run"
+
+        # and an INJECTED roster suppresses the per-call warning inside _buoy_latlng, which is
+        # the mechanism — a bare call still warns, an injected one does not
+        station = [{"id": "46254", "lat": 32.9, "lng": -117.4}]
+        calls.clear()
+        orig_latlng("46254", _active=station, _reporting=[{"id": "46254"}])
+        assert calls == [], "injected lists must bypass the per-call warner"
+    finally:
+        nn._warn_if_roster_stale = orig_warn
+        nn._buoy_latlng = orig_latlng
+
+    # an unavailable roster degrades to (None, None) so every zone still SKIPs individually
+    import pipeline.enrichment.geodata as geo
+    orig_active = geo.load_ndbc_active_stations
+    try:
+        geo.load_ndbc_active_stations = lambda *a, **k: (_ for _ in ()).throw(OSError("boom"))
+        assert ap.load_station_roster() == (None, None)
+    finally:
+        geo.load_ndbc_active_stations = orig_active
 
 
 def _run_all():
