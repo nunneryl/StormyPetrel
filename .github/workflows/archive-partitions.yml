@@ -74,10 +74,34 @@ jobs:
   archive:
     name: archive partitioned wave data (capture only)
     runs-on: ubuntu-latest
-    # ~26 pending zones x CG1 + CG0_Trkng GRIB fetches, and a --backfill 5 run multiplies
-    # that by the cycles in the window. Capped well under an hour so a slow NOMADS cannot
-    # run away; a hit cap loses at most one tick, and the next run re-captures the window.
-    timeout-minutes: 50
+    # MEASURED, not guessed — record real numbers here so the next person changing this cap
+    # is not reasoning from the cap itself:
+    #   * 24 min — a --backfill 0 run of 26 zones BEFORE the per-WFO grouping (PR #158),
+    #     when every zone refetched its own copy of the same GRIBs.
+    #   * ~57 min — the FIRST live scheduled run, 2026-08-12. All 15 WFOs were written; the
+    #     last write landed 09:57 UTC against a 09:00 trigger. It COMPLETED, so the runner
+    #     most likely started late rather than the job being killed — but either reading
+    #     leaves no margin under the old 50 min cap, which is why it is now 120.
+    # WHERE THE TIME ACTUALLY GOES — and a wrong guess, recorded so it is not made again:
+    #   HYPOTHESIS (WRONG): that PR #158's 1.73x cut in cycle fetches (26 zones -> 15 WFOs)
+    #     under-delivered because the 26 NDBC buoy reads are PER ZONE and were left unchanged,
+    #     so they must be a large share of the runtime.
+    #   MEASURED at zone 46254, which FALSIFIES it: ndbc_spectral.by_hour took 1.5 s for 1093
+    #     hours, and nwps_nearshore._buoy_hourly took 0.1 s. Across 26 zones that is roughly
+    #     45 s in total — about 1% of a 57-minute run, not a large share of anything.
+    #   THEREFORE the remaining time is GRIB FETCH + CFGRIB PARSE: 15 WFOs, several cycles
+    #     each, two multi-megabyte GRIB files per cycle. PR #158 already addressed that as far
+    #     as GROUPING can — every (wfo, cycle) pair is now fetched and parsed exactly once —
+    #     so any further gain has to come from the per-file cost or from parallelism, not from
+    #     removing duplicate work.
+    #   DO NOT restructure the NDBC path to save 45 seconds. That is the trap this note exists
+    #     to close; the hypothesis is kept rather than deleted because a recorded wrong guess
+    #     stops the same guess being made a second time.
+    # A --backfill 5 run multiplies the GRIB half by the cycles in the window, so it sits
+    # well above the scheduled figure. The cap is a backstop against a slow NOMADS, not a
+    # target: hitting it loses at most one tick, and the next run re-captures the window
+    # inside NOMADS' ~5-day retention.
+    timeout-minutes: 120
     env:
       PYTHONUNBUFFERED: '1'          # live logs so a stuck fetch is visible in the tail
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
