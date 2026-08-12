@@ -1,5 +1,5 @@
 {
-  "_comment": "Spots permanently excluded from the surf-spot database. Matched by exact name against the candidate/enriched records. Grouped by reason for reviewability. great_lakes: freshwater Great Lakes spots that were carrying ocean WFO tags and validated FAR at 402-550 km as domain misses, because the pipeline fetched an Atlantic grid and looked for them hundreds of km inland. NOAA DOES run NWPS for Great Lakes WFOs, so these could in principle be served by retagging, but the swell-window and raycast model assumes distant swell propagation while Great Lakes surf is short-fetch wind sea that dies within hours of the wind dropping. Serving them properly is a separate project, not a retag. Excluded rather than deleted so the decision is recorded and a future seed rebuild does not reintroduce them.",
+  "_comment": "Spots permanently excluded from the surf-spot database. Matched by exact name against the candidate/enriched records. Grouped by reason for reviewability. great_lakes: freshwater Great Lakes spots that were carrying ocean WFO tags and validated FAR at 402-550 km as domain misses, because the pipeline fetched an Atlantic grid and looked for them hundreds of km inland. NOAA DOES run NWPS for Great Lakes WFOs, so these could in principle be served by retagging, but the swell-window and raycast model assumes distant swell propagation while Great Lakes surf is short-fetch wind sea that dies within hours of the wind dropping. Serving them properly is a separate project, not a retag. Excluded rather than deleted so the decision is recorded and a future seed rebuild does not reintroduce them. SECOND BATCH, found by a different route: these fourteen carried NO nwps_wfo tag at all rather than a wrong one, because the WFO assignment step maps ocean coastlines only, so a freshwater spot receives nothing - the enrichment behaving correctly, not failing. The rationale above is unchanged and applies to them identically. Every untagged spot in spots_enriched.json turned out to be freshwater Great Lakes, so after this batch the untagged set is EMPTY: an absent nwps_wfo is no longer a state any record is in.",
   "_schema_version": 1,
   "duplicates": [
     "Block Island",
@@ -12,9 +12,23 @@
     "V-Land"
   ],
   "great_lakes": [
+    "Deland Park",
+    "Duluth Park Point",
+    "Edgewater Beach Cleveland",
+    "Frankfort Beach",
+    "Grand Haven South Pier",
+    "Grand Haven State Park",
     "Hamlin Beach",
+    "Lakeview Park Lorain",
+    "Muskegon South Pier",
+    "North Point Sheboygan",
     "Ontario Beach",
     "Presque Isle Beach",
+    "Silver Beach",
+    "Sleeping Bear Dunes",
+    "Stoney Point MN",
+    "Whihala Beach",
+    "Whitefish Bay WI",
     "Woodlawn Beach"
   ],
   "non_surfable": [
