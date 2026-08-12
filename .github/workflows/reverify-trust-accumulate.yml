@@ -8,7 +8,7 @@ name: reverify-trust-accumulate
 # nothing — automated accumulation can't settle a zone on noise.
 #
 # HARD BOUNDARIES (READ-ONLY on prod, by construction):
-#   * NEVER writes trust_by_buoy, NEVER sets PASS, NEVER runs apply_nwps_assignments,
+#   * NEVER writes trust_by_zone, NEVER sets PASS, NEVER runs apply_nwps_assignments,
 #     NEVER touches spots_enriched.json or the DB. It only appends to the append-only
 #     rolling trust-history log (pipeline/forecast_data/, gitignored) and reports.
 #   * Tagging stays MANUAL: when a zone's rolling verdict SETTLES (reaches the event
@@ -155,8 +155,12 @@ jobs:
                               : []),
               ...(other.length ? ['### Settled FAIL / INCOHERENT — review (likely do NOT tag)',
                                   ...other.map(line), ''] : []),
-              'To tag a PASS zone: set its buoy PASS in scripts/nwps_okx_assignments.json `trust_by_buoy`,',
-              'then run `apply_nwps_assignments --apply` — YOUR call, not this job\'s.',
+              'To tag a PASS zone: add `"<zone>": "PASS"` to `trust_by_zone` in',
+              'scripts/nwps_okx_assignments.json — copy the **zone** exactly as printed above',
+              '(`wfo/buoy`), NOT the buoy id on its own. The gate is keyed by zone precisely so a',
+              'PASS earned here cannot verify another WFO\'s spots on the same buoy (44084 anchors',
+              'both phi/44084 and akq/44084). Then run `apply_nwps_assignments --apply` — YOUR',
+              'call, not this job\'s.',
             ].join('\n');
             const found = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', labels: LABEL, per_page: 20 });
