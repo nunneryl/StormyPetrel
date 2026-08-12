@@ -575,6 +575,202 @@ def test_one_wfos_fetch_failure_is_scoped_and_does_not_stop_the_others():
         nn.find_latest_cycle = nn_saved
 
 
+class _Res:
+    def __init__(self, data):
+        self.data = data
+
+
+class SchemaFakeTable:
+    """A stand-in that models the PostgREST semantics ensure_table depends on:
+      * select naming a column the table lacks → SQLSTATE 42703;
+      * select('*') returns a row only if the table HAS one (an empty table reveals nothing);
+      * upsert with an on_conflict that no unique constraint covers → SQLSTATE 42P10;
+      * an upsert whose conflict target is a SUBSET of the key collapses rows — the silent
+        case, modelled so the probe is tested against it rather than only against the loud one.
+    """
+
+    def __init__(self, db):
+        self.db = db
+        self._op = self._cols = self._rows = None
+        self._filters = {}
+
+    def select(self, cols="*", *_a, **_k):
+        if cols != "*":
+            for c in (x.strip() for x in cols.split(",")):
+                if c not in self.db["columns"]:
+                    raise RuntimeError(f'42703: column {self.db["table"]}.{c} does not exist')
+        self._op, self._cols = "select", cols
+        return self
+
+    def upsert(self, rows, on_conflict=None):
+        target = tuple(c.strip() for c in (on_conflict or "").split(",") if c.strip())
+        if set(target) != set(self.db["constraint"]):
+            raise RuntimeError("42P10: there is no unique or exclusion constraint matching "
+                               "the ON CONFLICT specification")
+        self._op, self._rows = "upsert", rows
+        return self
+
+    def delete(self):
+        self._op = "delete"
+        return self
+
+    def eq(self, col, val):
+        self._filters[col] = val
+        return self
+
+    def limit(self, _n):
+        return self
+
+    def execute(self):
+        op, rows, filt = self._op, self._rows, dict(self._filters)
+        self._op = self._rows = None
+        self._filters = {}
+        store = self.db["store"]
+        if op == "upsert":
+            # key on the CONSTRAINT's columns, not the writer's — that is how a wrong
+            # constraint silently collapses rows
+            for r in rows:
+                store[tuple(r.get(c) for c in self.db["constraint"])] = dict(r)
+            return _Res(rows)
+        if op == "delete":
+            for k in [k for k, v in store.items()
+                      if all(v.get(c) == x for c, x in filt.items())]:
+                del store[k]
+            return _Res([])
+        kept = [v for v in store.values() if all(v.get(c) == x for c, x in filt.items())]
+        return _Res(kept)
+
+
+def _schema_db(columns=None, constraint=None):
+    cols = set(columns if columns is not None else ap.ALL_FIELDS)
+    cols |= {"id", "archived_at"}
+    return {"table": ap.TABLE, "columns": cols,
+            "constraint": tuple(constraint or ap.KEY_FIELDS), "store": {}}
+
+
+class SchemaFakeClient:
+    def __init__(self, db):
+        self.db = db
+
+    def table(self, name):
+        assert name == ap.TABLE, name
+        return SchemaFakeTable(self.db)
+
+
+def _ensure_err(db, **kw):
+    try:
+        ap.ensure_table(SchemaFakeClient(db), **kw)
+        return None
+    except RuntimeError as e:
+        return str(e)
+
+
+def test_schema_check_names_missing_columns_before_fetching():
+    """THE FAILURE THIS PREVENTS: a table missing total_mean_dir and trkng_status, built from a
+    slightly different DDL, passed the old readability probe and then failed on every zone
+    AFTER 4 h 49 min of fetching. The columns must be checked up front, and the error must name
+    exactly which are missing rather than stopping at the first."""
+    assert _ensure_err(_schema_db()) is None, "a matching schema must pass"
+
+    db = _schema_db(columns=[c for c in ap.ALL_FIELDS
+                             if c not in ("total_mean_dir", "trkng_status")])
+    err = _ensure_err(db)
+    assert err is not None, "a missing column must stop the run"
+    assert "total_mean_dir" in err and "trkng_status" in err, "BOTH must be named, not just one"
+    assert "MISSING" in err and "2 column(s)" in err
+    assert "--print-ddl" in err, "the pointer must survive"
+    assert "SCHEMA MISMATCH" in err and "refusing to fetch" in err
+
+    # the probe works on an EMPTY table — select('*') would reveal nothing there
+    assert db["store"] == {}, "the fixture table is empty, which is the hard case"
+    assert sorted(ap.probe_missing_columns(SchemaFakeClient(db))) == \
+        ["total_mean_dir", "trkng_status"], "both named, order-insensitively"
+    assert ap.probe_missing_columns(SchemaFakeClient(_schema_db())) == []
+
+    # a table that is not this table at all is reported as such, not as a missing column list
+    err2 = _ensure_err(_schema_db(columns=["something_else"]))
+    assert "no 'valid_hour' column" in err2 and "not the archive table" in err2
+
+
+def test_schema_check_names_unexpected_columns_when_it_can_see_them():
+    """An extra column usually means the table was built from a different DDL. PostgREST exposes
+    no column catalogue, so this is only detectable once a row exists — and when it is NOT
+    detectable the run must SAY so rather than imply the check passed."""
+    db = _schema_db(columns=list(ap.ALL_FIELDS) + ["legacy_swell_dir"])
+    # empty table: undetectable, and the run continues after saying so
+    assert _ensure_err(db) is None
+    cols, why = ap.probe_actual_columns(SchemaFakeClient(db))
+    assert cols is None and "table is empty" in why and "cannot be detected" in why
+
+    # once a row exists the extra column is visible and fatal
+    db["store"][("x",)] = {c: None for c in db["columns"]}
+    err = _ensure_err(db)
+    assert err is not None and "legacy_swell_dir" in err
+    assert "UNEXPECTED" in err and "1 UNEXPECTED column(s)" in err
+    assert "--print-ddl" in err
+
+    # id/archived_at are DDL-defaulted and must never be reported as unexpected
+    ok = _schema_db()
+    ok["store"][("x",)] = {c: None for c in ok["columns"]}
+    assert _ensure_err(ok) is None, "id/archived_at are not a mismatch"
+    seen, why2 = ap.probe_actual_columns(SchemaFakeClient(ok))
+    assert seen is not None and {"id", "archived_at"} <= seen and why2 == "sampled one row"
+
+
+def test_schema_check_rejects_a_constraint_on_the_wrong_columns():
+    """A four-column constraint instead of five is the case that actually happened. PostgREST
+    cannot expose the constraint definition, so the probe EXERCISES it: 42P10 for a target no
+    constraint covers, and a two-lead round-trip for the silent case where rows collapse."""
+    # the loud case: on_conflict names five columns, the table has a different set → 42P10
+    db4 = _schema_db(constraint=("valid_hour", "wfo", "buoy_id", "source"))
+    err = _ensure_err(db4)
+    assert err is not None, "a wrong constraint must stop the run BEFORE fetching"
+    assert "constraint is WRONG" in err and "42P10" in err
+    assert "collapses rows across leads" in err, "the message must name the dangerous case"
+    assert "--print-ddl" in err
+    ok, detail = ap.probe_unique_constraint(SchemaFakeClient(db4))
+    assert ok is False and "no UNIQUE" in detail
+
+    # the SILENT case: a constraint that accepts the target but keys on fewer columns, so the
+    # two probe leads collapse into one. This is worse than a hard failure — it looks like it
+    # worked — and the round-trip is what catches it.
+    class Collapsing(SchemaFakeTable):
+        def upsert(self, rows, on_conflict=None):
+            self._op, self._rows = "upsert", rows
+            return self
+
+        def execute(self):
+            if self._op == "upsert":
+                for r in self._rows:                      # keyed WITHOUT lead_hours
+                    self.db["store"][tuple(r.get(c) for c in
+                                           ("valid_hour", "wfo", "buoy_id", "source"))] = dict(r)
+                self._op = self._rows = None
+                return _Res([])
+            return super().execute()
+
+    class CollapsingClient(SchemaFakeClient):
+        def table(self, name):
+            return Collapsing(self.db)
+
+    dbc = _schema_db()
+    ok2, detail2 = ap.probe_unique_constraint(CollapsingClient(dbc))
+    assert ok2 is False, "a silent collapse must be caught"
+    assert "COLLAPSING rows across leads" in detail2, detail2
+    assert "not [0, 1]" in detail2, "the message must show what it expected"
+    assert "silently destroy the lead dimension" in detail2
+
+    # a correct constraint passes, and the probe cleans up after itself
+    good = _schema_db()
+    ok3, detail3 = ap.probe_unique_constraint(SchemaFakeClient(good))
+    assert ok3 is True and "two leads survived" in detail3
+    assert not [v for v in good["store"].values() if v.get("wfo") == ap.SCHEMA_PROBE_WFO], \
+        "the sentinel rows must be deleted"
+    assert ap.SCHEMA_PROBE_WFO.startswith("__"), "the sentinel cannot look like a real wfo"
+
+    # and the probe is skippable, which must SAY so rather than imply it passed
+    assert _ensure_err(db4, check_constraint=False) is None, "skipping bypasses the check"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

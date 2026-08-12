@@ -92,6 +92,15 @@ TRKNG_OK, TRKNG_ABSENT, TRKNG_ERROR = "ok", "absent", "error"
 # Buoy rows have no forecast lead. NULL is unusable here: a NULL in a Postgres unique key
 # never compares equal to another NULL, so two buoy rows for one hour would both insert.
 BUOY_LEAD_SENTINEL = 0
+# Sentinel scope for the pre-flight schema probe. It WRITES two rows to exercise the unique
+# constraint (PostgREST cannot expose the constraint definition to read), then deletes them.
+# The wfo is deliberately un-WFO-shaped so it can never collide with real data, and the
+# cleanup delete is scoped to it alone.
+SCHEMA_PROBE_WFO = "__schema_probe__"
+SCHEMA_PROBE_BUOY = "__probe__"
+# Columns the table may carry that the writer never sends, and which are therefore NOT a
+# mismatch: the surrogate key and the insert timestamp, both defaulted by the DDL.
+IGNORED_COLUMNS = frozenset({"id", "archived_at"})
 # Upper bound on NWPS cycles published per day; only used to size the recent_cycles request
 # for a backfill window, never as a truth about the schedule.
 _MAX_CYCLES_PER_DAY = 8
@@ -329,21 +338,179 @@ def dedupe_by_key(rows):
 # --------------------------------------------------------------------------- #
 # Supabase I/O                                                                 #
 # --------------------------------------------------------------------------- #
-def ensure_table(client):
-    """Fail LOUDLY and specifically if `partition_archive` is absent. The table is created by
-    hand before the first run, so a missing table is a setup error, not a transient one —
-    the run must stop with an actionable message rather than log a vague per-zone SKIP for
-    every zone and exit 0 as if it had merely degraded."""
+def _is_undefined_column(e):
+    """PostgREST reports a select naming a non-existent column as SQLSTATE 42703. This holds
+    on an EMPTY table, which is what makes column probing work before any row exists."""
+    s = str(e)
+    return "42703" in s or "does not exist" in s.lower()
+
+
+def _is_no_matching_constraint(e):
+    """SQLSTATE 42P10 — "there is no unique or exclusion constraint matching the ON CONFLICT
+    specification". Raised when the table's unique constraint does not cover exactly the
+    columns the upsert names."""
+    s = str(e)
+    return "42P10" in s or "ON CONFLICT" in s
+
+
+def probe_missing_columns(client, columns=None):
+    """[columns the table does not have], by asking PostgREST for each one. Works on an EMPTY
+    table — a select naming a missing column is rejected with 42703 whether or not any row
+    exists — which `select('*')` cannot do. Each column is probed separately so the error names
+    ALL of them at once instead of stopping at the first."""
+    missing = []
+    for col in (columns or ALL_FIELDS):
+        try:
+            client.table(TABLE).select(col).limit(1).execute()
+        except Exception as e:                               # noqa: BLE001
+            if not _is_undefined_column(e):
+                raise
+            missing.append(col)
+    return missing
+
+
+def probe_actual_columns(client):
+    """(set_of_columns | None, why). UNEXPECTED columns can only be found by seeing a real row:
+    PostgREST exposes no column catalogue to the client, so an EMPTY table cannot reveal them.
+    Returns None with the reason rather than pretending the check ran."""
+    try:
+        res = client.table(TABLE).select("*").limit(1).execute()
+    except Exception as e:                                   # noqa: BLE001
+        return None, f"could not sample a row ({_short(e)})"
+    rows = getattr(res, "data", None) or []
+    if not rows:
+        return None, ("table is empty — PostgREST exposes no column catalogue to the client, "
+                      "so UNEXPECTED extra columns cannot be detected until it holds a row")
+    return set(rows[0]), "sampled one row"
+
+
+def probe_unique_constraint(client, *, cleanup=True):
+    """(ok | None, detail) for the UNIQUE (UPSERT_KEY) constraint.
+
+    POSTGREST CANNOT EXPOSE THE CONSTRAINT DEFINITION: pg_constraint is not reachable through
+    the REST client, so there is no way to READ what the constraint covers. Rather than invent
+    an introspection that does not exist, this EXERCISES it, which is the stronger check
+    anyway because it tests exactly what the write path will do:
+
+      * an upsert naming on_conflict=UPSERT_KEY raises 42P10 unless a unique constraint covers
+        precisely those columns — that catches a constraint on the wrong columns;
+      * two sentinel rows differing ONLY in lead_hours must BOTH survive — that catches the
+        genuinely dangerous case, a constraint that silently collapses rows across leads. A
+        collapse would look like the job worked while quietly destroying the lead dimension,
+        which is unrecoverable past NOMADS' five-day retention;
+      * re-writing the same rows must leave the count unchanged — the idempotence the whole
+        schedule depends on.
+
+    The probe WRITES two rows under a sentinel wfo that cannot collide with real data, then
+    deletes them. Returns (None, why) if the probe could not run at all."""
+    base = {k: None for k in ALL_FIELDS}
+    base.update(valid_hour=valid_hour_iso(0), wfo=SCHEMA_PROBE_WFO,
+                buoy_id=SCHEMA_PROBE_BUOY, source="model", trkng_status=TRKNG_OK)
+    rows = [{**base, "lead_hours": 0}, {**base, "lead_hours": 1}]
+    try:
+        try:
+            client.table(TABLE).upsert(rows, on_conflict=UPSERT_KEY).execute()
+        except Exception as e:                               # noqa: BLE001
+            if _is_no_matching_constraint(e):
+                return False, (f"no UNIQUE ({UPSERT_KEY}) constraint — the upsert was rejected "
+                               f"with {_short(e)}")
+            return None, f"probe upsert failed for an unrelated reason ({_short(e)})"
+        res = client.table(TABLE).select("lead_hours").eq("wfo", SCHEMA_PROBE_WFO).execute()
+        got = sorted(r["lead_hours"] for r in (getattr(res, "data", None) or []))
+        if got != [0, 1]:
+            return False, (f"two probe rows differing only in lead_hours came back as {got!r}, "
+                           f"not [0, 1] — the constraint is COLLAPSING rows across leads, which "
+                           f"would silently destroy the lead dimension while appearing to work")
+        client.table(TABLE).upsert(rows, on_conflict=UPSERT_KEY).execute()   # idempotence
+        res2 = client.table(TABLE).select("lead_hours").eq("wfo", SCHEMA_PROBE_WFO).execute()
+        again = sorted(r["lead_hours"] for r in (getattr(res2, "data", None) or []))
+        if again != [0, 1]:
+            return False, (f"re-writing the same two rows changed the count to {again!r} — the "
+                           f"upsert is not idempotent against this constraint")
+        return True, "verified by round-trip: 42P10 not raised, and two leads survived a re-write"
+    finally:
+        if cleanup:
+            try:
+                client.table(TABLE).delete().eq("wfo", SCHEMA_PROBE_WFO).execute()
+            except Exception:                                # noqa: BLE001 — best effort
+                print(f"warning: could not delete the schema-probe rows "
+                      f"(wfo={SCHEMA_PROBE_WFO!r}); remove them by hand if they persist.")
+
+
+def _short(e):
+    return f"{type(e).__name__}: {str(e)[:160]}"
+
+
+def ensure_table(client, *, check_constraint=True):
+    """Validate the table BEFORE any fetching begins, and fail LOUDLY if it does not match.
+
+    WHY THIS IS MORE THAN A READABILITY PROBE: it used to only check the table could be read,
+    so a schema built from a slightly different DDL passed and the mismatch surfaced on the
+    first upsert. That happened — a table missing total_mean_dir and trkng_status, with a
+    four-column unique constraint instead of five, passed the probe and then failed on every
+    zone AFTER 4 h 49 min of fetching. Everything checkable is therefore checked up front,
+    where the cost of being wrong is seconds instead of hours.
+
+    A mismatch is a SETUP error, not an outage: it stops the whole run with the --print-ddl
+    pointer rather than degrading into per-zone SKIPs, which would read like a bad NOMADS day."""
+    def die(problem, detail=""):
+        raise RuntimeError(
+            f"{TABLE} SCHEMA MISMATCH — refusing to fetch.\n"
+            f"  {problem}\n" + (f"{detail}\n" if detail else "") +
+            f"This job does NOT create or migrate the table. Run\n"
+            f"    python3 scripts/archive_partitions.py --print-ddl\n"
+            f"and apply that DDL (or reconcile the existing table with it), then re-run.\n"
+            f"The writer sends exactly {len(ALL_FIELDS)} columns and upserts ON CONFLICT "
+            f"({UPSERT_KEY}).")
+
+    # 1. readable at all
     try:
         client.table(TABLE).select("valid_hour").limit(1).execute()
-    except Exception as e:                                   # noqa: BLE001 — any client error
+    except Exception as e:                                   # noqa: BLE001
+        if _is_undefined_column(e):
+            die("the table exists but has no 'valid_hour' column — this is not the archive "
+                f"table this job writes ({_short(e)}).")
         raise RuntimeError(
-            f"table {TABLE!r} is not readable ({type(e).__name__}: {e}).\n"
+            f"table {TABLE!r} is not readable ({_short(e)}).\n"
             f"This job does NOT create it. Create it first — run\n"
             f"    python3 scripts/archive_partitions.py --print-ddl\n"
             f"and apply that DDL, then re-run. The UNIQUE ({UPSERT_KEY}) constraint in it is\n"
             f"required: the upsert targets it by name and will fail without it."
         ) from e
+
+    # 2. every column the writer sends must exist
+    missing = probe_missing_columns(client)
+    if missing:
+        die(f"{len(missing)} column(s) the writer sends are MISSING: {', '.join(missing)}",
+            f"  every row carries all {len(ALL_FIELDS)} columns, so every insert would fail.")
+
+    # 3. columns the writer does NOT send — best effort, and honest when it cannot run
+    actual, why = probe_actual_columns(client)
+    if actual is not None:
+        unexpected = sorted(actual - set(ALL_FIELDS) - IGNORED_COLUMNS)
+        if unexpected:
+            die(f"{len(unexpected)} UNEXPECTED column(s) the writer never populates: "
+                f"{', '.join(unexpected)}",
+                "  they will stay NULL forever, which usually means the table was built from a "
+                "different DDL than this script emits.")
+    else:
+        print(f"note: unexpected-column check skipped — {why}.")
+
+    # 4. the unique constraint, exercised rather than introspected (see probe_unique_constraint)
+    if not check_constraint:
+        print("note: unique-constraint probe skipped (--no-constraint-probe); a wrong "
+              "constraint will not be caught until the first upsert.")
+        return
+    ok, detail = probe_unique_constraint(client)
+    if ok is False:
+        die(f"the unique constraint is WRONG: {detail}",
+            "  a constraint on the wrong columns either fails every upsert or, worse, silently "
+            "collapses rows across leads while appearing to succeed.")
+    if ok is None:
+        print(f"note: unique-constraint probe could not run — {detail}. "
+              "A wrong constraint will not be caught until the first upsert.")
+    else:
+        print(f"schema OK: {len(ALL_FIELDS)} columns present, unique constraint {detail}.")
 
 
 def render_summary(rows_per_zone, n_skipped, *, dry_run):
@@ -610,6 +777,10 @@ def main(argv=None):
                          "Use 5 on the first run to capture everything still retained.")
     ap.add_argument("--dry-run", action="store_true",
                     help="print what would be written and write NOTHING")
+    ap.add_argument("--no-constraint-probe", action="store_true",
+                    help="skip the unique-constraint round-trip in the pre-flight schema check. "
+                         "That probe WRITES two sentinel rows and deletes them; skipping it "
+                         "means a wrong constraint is not caught until the first upsert.")
     ap.add_argument("--max-lead", type=int, default=MAX_LEAD_HOURS, metavar="H",
                     help=f"drop model rows past this forecast lead (default {MAX_LEAD_HOURS}). "
                          "Raising it cannot backfill — NOMADS retains only ~5 days.")
@@ -639,7 +810,10 @@ def main(argv=None):
     if not a.dry_run:
         from pipeline.db_import import get_client
         client = get_client()
-        ensure_table(client)          # loud, specific failure if the table is missing
+        # BEFORE ANY FETCHING: columns and constraint validated up front, so a schema
+        # mismatch costs seconds rather than the 4 h 49 min it cost when it surfaced on the
+        # first upsert instead.
+        ensure_table(client, check_constraint=not a.no_constraint_probe)
 
     # Roster loaded ONCE: this is what stops _buoy_latlng's staleness warning firing per zone.
     roster = load_station_roster()
