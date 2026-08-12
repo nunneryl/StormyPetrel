@@ -12,7 +12,7 @@ name: archive-partitions
 #
 # HARD BOUNDARIES (capture only, by construction):
 #   * Writes exactly ONE table, `partition_archive`. NEVER modifies a rating, a trust
-#     verdict, trust_by_buoy, an assignment, spots_enriched.json, or any other DB table.
+#     verdict, trust_by_zone, an assignment, spots_enriched.json, or any other DB table.
 #   * Commits NOTHING — hence `contents: read` only, no issues: write, no cache. The
 #     archive lives in Supabase, so there is no repo state to carry between runs (the
 #     contrast with reverify-trust-accumulate.yml, whose rolling history MUST be cached).

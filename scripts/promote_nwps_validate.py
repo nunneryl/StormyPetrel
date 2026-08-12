@@ -9,7 +9,7 @@ placement failure (the node is valid; the sea just reads correctly-flat when off
 spots still get placed for HEIGHT. Genuine failures (FAR / DEAD / NO_WET_CELL — no valid node) are
 skipped. Dedupes by slug (an existing entry is replaced).
 
-This ONLY supplies the node coords the apply gate requires. It does NOT touch trust_by_buoy or
+This ONLY supplies the node coords the apply gate requires. It does NOT touch trust_by_zone or
 buoy_reference — placement of these spots relies on the pending / height-only path
 (apply_nwps_assignments: buoy listed in buoy_reference.pending[] -> direction_status 'pending').
 With --no-buoy the spots are promoted with nwps_buoy_id=null for the buoy_reference.unverifiable[]
@@ -145,7 +145,7 @@ def main(argv=None):
               + ", ".join(f"{s}({o})" for s, o in skipped))
     path = "buoy_reference.unverifiable[]" if buoy is None else "buoy_reference.pending[]"
     print(f"\n  {len(proms)} placeable spot(s). This sets NO trust PASS and does not touch "
-          f"trust_by_buoy / buoy_reference. Placement then relies on the {path} path.")
+          f"trust_by_zone / buoy_reference. Placement then relies on the {path} path.")
 
     if not a.apply:
         print("\ndry run only — nothing written. Re-run with --apply to merge into the assignments JSON.")
@@ -155,7 +155,7 @@ def main(argv=None):
     if raw.endswith("\n"):
         text += "\n"
     open(ASSIGNMENTS, "w").write(text)
-    print(f"\nMERGED → {ASSIGNMENTS}: {added} added, {replaced} replaced. trust_by_buoy untouched "
+    print(f"\nMERGED → {ASSIGNMENTS}: {added} added, {replaced} replaced. trust_by_zone untouched "
           "(no PASS set). Next: review, then `apply_nwps_assignments` (places them as 'pending').")
     return 0
 

@@ -3,8 +3,9 @@
 A spot is PLACED (swell_window_source=nwps) with direction_status:
   'unverifiable' if its slug is in buoy_reference.unverifiable[] (island-shadowed; checked
       BEFORE PASS so it can never be relabeled 'verified'; nwps_buoy_id nulled on the row), OR
-  'verified'     if its buoy is PASS in trust_by_buoy — UNLESS that buoy is retired on the
-      'direction' axis, in which case 'unverifiable' (the 44098 fix: PASS verifies HEIGHT only), OR
+  'verified'     if its ZONE ("wfo/buoy") is PASS in trust_by_zone — UNLESS that buoy is retired
+      on the 'direction' axis, in which case 'unverifiable' (the 44098 fix: PASS verifies HEIGHT
+      only). Keyed by ZONE, not buoy: a PASS must not verify another WFO's spots on the same buoy, OR
   'pending'      if its (wfo, buoy) is in buoy_reference.pending[];
   else HELD. A buoy in buoy_reference.retired[] never auto-places via the pending path. Node
 coords are required. Plus the --validate -> assignments promotion helper (OK + OFFWIN -> placeable
@@ -49,7 +50,8 @@ def _node(**kw):
 
 
 def _doc(spots, trust=None, pending=None, retired=None, unverifiable=None):
-    return {"trust_by_buoy": trust or {}, "spots": spots,
+    # *trust* is keyed by ZONE — {"wfo/buoy": verdict} — matching the live file.
+    return {"trust_by_zone": trust or {}, "spots": spots,
             "buoy_reference": {"pending": pending or [], "retired": retired or [],
                                "unverifiable": unverifiable or []}}
 
@@ -69,7 +71,7 @@ def test_pending_path_places_as_pending():
 def test_pass_path_places_as_verified():
     doc = _doc(
         spots=[dict(_node(), slug="breezy-point", name="Breezy Point", nwps_wfo="okx", nwps_buoy_id="44025")],
-        trust={"44025": "PASS"})
+        trust={"okx/44025": "PASS"})
     rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
     assert rows[0]["direction_status"] == "verified"
     assert rows[0]["fields"]["nwps_direction_status"] == "verified" and held == []
@@ -104,7 +106,7 @@ def test_missing_node_coords_is_a_problem_not_placed():
 def test_pass_path_regression_unchanged():
     # a PASS spot whose buoy is NOT retired places exactly as before (verified), same node fields
     doc = _doc(spots=[dict(_node(), slug="moss-landing", name="Moss Landing", nwps_wfo="mtr", nwps_buoy_id="44099")],
-               trust={"44099": "PASS"})
+               trust={"mtr/44099": "PASS"})
     rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
     f = rows[0]["fields"]
     assert rows[0]["direction_status"] == "verified" and held == []
@@ -134,7 +136,7 @@ def test_unverifiable_slug_beats_pass_ordering():
     # 'unverifiable' (checked BEFORE the PASS branch), never 'verified', and its buoy id is nulled.
     doc = _doc(
         spots=[dict(_node(), slug="breezy-point", name="Breezy Point", nwps_wfo="lox", nwps_buoy_id="44025")],
-        trust={"44025": "PASS"},
+        trust={"lox/44025": "PASS"},
         unverifiable=[{"zone": "lox/sbc", "wfo": "lox", "slugs": ["breezy-point"]}])
     rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
     assert rows[0]["direction_status"] == "unverifiable", "unverifiable[] is checked BEFORE PASS"
@@ -146,7 +148,7 @@ def test_pass_but_retired_direction_axis_is_unverifiable_not_verified():
     # 44098 shape: PASS in trust (a HEIGHT verification) BUT retired on the 'direction' axis ->
     # direction_status must read 'unverifiable', never 'verified'; still PLACED, buoy kept, height intact.
     doc = _doc(spots=[dict(_node(), slug="salisbury", name="Salisbury", nwps_wfo="box", nwps_buoy_id="44098")],
-               trust={"44098": "PASS"},
+               trust={"box/44098": "PASS"},
                retired=[{"zone": "box/44098", "wfo": "box", "buoy": "44098", "axes": ["height", "direction"]}])
     rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
     f = rows[0]["fields"]
@@ -160,7 +162,7 @@ def test_pass_but_retired_direction_axis_is_unverifiable_not_verified():
 def test_pass_retired_height_only_axis_stays_verified():
     # 'axes' granularity: retiring ONLY the height axis must NOT relabel direction — stays 'verified'
     doc = _doc(spots=[dict(_node(), slug="salisbury", name="Salisbury", nwps_wfo="box", nwps_buoy_id="44098")],
-               trust={"44098": "PASS"},
+               trust={"box/44098": "PASS"},
                retired=[{"zone": "box/44098", "wfo": "box", "buoy": "44098", "axes": ["height"]}])
     rows, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
     assert rows[0]["direction_status"] == "verified", "only a 'direction'-axis retirement flips to unverifiable"
@@ -191,7 +193,7 @@ def test_full_dryrun_direction_status_breakdown_live():
     # correct as new pending zones are promoted into spots[]. The 44098 retired-direction spots
     # remain the 'unverifiable' set today (14).
     doc, enriched = _real_doc(), _real_enriched()
-    ref, trust = doc["buoy_reference"], doc["trust_by_buoy"]
+    ref, trust = doc["buoy_reference"], doc["trust_by_zone"]
 
     def keyset(records):
         return {(r["wfo"], str(r["buoy"])) for r in records if r.get("wfo") and r.get("buoy") is not None}
@@ -206,7 +208,7 @@ def test_full_dryrun_direction_status_breakdown_live():
         key = (a.get("nwps_wfo"), str(buoy))
         if a.get("slug") in unver_slugs:
             label = "unverifiable"
-        elif trust.get(str(buoy)) == "PASS":
+        elif trust.get(f"{a.get('nwps_wfo')}/{buoy}") == "PASS":
             label = "unverifiable" if key in retired_dir else "verified"
         elif key in pending_keys and key not in retired_keys:
             label = "pending"
@@ -235,7 +237,7 @@ def _assert_unverifiable_record(zone, n_slugs, wfo):
     assert "buoy" not in rec, f"{zone}: no buoy on the record (B2, slug-keyed)"
     pend_slugs = {s for p in doc["buoy_reference"]["pending"] for s in p.get("slugs", [])}
     assert not (set(slugs) & pend_slugs), f"{zone}: unverifiable-only, never pending"
-    assert not (set(slugs) & set(doc["trust_by_buoy"])), f"{zone}: no slug collides with a trust buoy"
+    assert not (set(slugs) & set(doc["trust_by_zone"])), f"{zone}: no slug collides with a trust zone"
 
     def split(d, e):
         rows, problems, *_ = ap.build_plan(doc=d, enriched=e)
@@ -286,6 +288,127 @@ def test_force_places_a_held_spot():
     doc = _doc(spots=[dict(_node(), slug="pleasure-point", name="Pleasure Point", nwps_wfo="mtr", nwps_buoy_id="46240")])
     rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED, force=True)
     assert rows and rows[0]["direction_status"] == "forced" and held == []
+
+
+# --------------------------------------------------------------------------- #
+# trust_by_zone — a PASS is scoped to ONE zone, never to a buoy across WFOs     #
+# --------------------------------------------------------------------------- #
+def _refusal(doc):
+    """build_plan's ValueError message, or None if it did not raise."""
+    try:
+        ap.build_plan(doc=doc, enriched=_ENRICHED)
+        return None
+    except ValueError as e:
+        return str(e)
+
+
+def test_pass_on_one_zone_does_not_verify_another_zone_on_the_same_buoy():
+    # THE DEFECT THIS FIX CLOSES. 44084 anchors phi/44084 (22 spots) and akq/44084 (3) — an
+    # administrative WFO boundary, one physical buoy. The settled-zone issue names phi/44084, a
+    # human pastes that PASS, and akq's spots must NOT become direction-verified on evidence
+    # earned in another WFO: they stay HELD until akq settles on its own.
+    doc = _doc(
+        spots=[dict(_node(), slug="breezy-point", name="Breezy Point", nwps_wfo="phi", nwps_buoy_id="44084"),
+               dict(_node(), slug="salisbury", name="Salisbury", nwps_wfo="akq", nwps_buoy_id="44084")],
+        trust={"phi/44084": "PASS"})
+    rows, problems, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
+    assert [(r["slug"], r["direction_status"]) for r in rows] == [("breezy-point", "verified")], \
+        "only the zone that earned the PASS places verified"
+    assert [h[0] for h in held] == ["salisbury"], "the akq zone earned no PASS of its own — HELD"
+    assert held[0][1] == "akq/44084", "held names the ZONE key a human would have to add"
+    assert not problems
+
+
+def test_both_zones_verify_only_when_both_are_tagged():
+    # the other half of the same contract: two PASS entries on one buoy verify BOTH zones (this is
+    # how box/44098 + gyx/44098 keep their 14 spots), so the gate is scoped, not merely stricter.
+    doc = _doc(
+        spots=[dict(_node(), slug="breezy-point", name="Breezy Point", nwps_wfo="phi", nwps_buoy_id="44084"),
+               dict(_node(), slug="salisbury", name="Salisbury", nwps_wfo="akq", nwps_buoy_id="44084")],
+        trust={"phi/44084": "PASS", "akq/44084": "PASS"})
+    rows, _, held, *_ = ap.build_plan(doc=doc, enriched=_ENRICHED)
+    assert held == [], f"both zones are tagged — neither is held ({[h[1] for h in held]})"
+    assert sorted((r["slug"], r["direction_status"]) for r in rows) == \
+        [("breezy-point", "verified"), ("salisbury", "verified")], \
+        "a buoy spanning two WFOs is not a reason to withhold either zone's own PASS"
+
+
+def test_buoy_keyed_trust_map_is_refused():
+    # old format STOPS, naming the migration — it is never silently accepted (the line-83
+    # precedent, which refused the legacy global 'trust' flag the same way).
+    doc = {"trust_by_buoy": {"44025": "PASS"}, "spots": [], "buoy_reference": {}}
+    msg = _refusal(doc)
+    assert msg, "a buoy-keyed file must STOP, not be quietly read as if it were zone-keyed"
+    assert "trust_by_buoy" in msg and "trust_by_zone" in msg, f"names both shapes: {msg}"
+    assert "wfo/buoy" in msg, f"names the migration target: {msg}"
+    assert "44025" in msg, f"echoes what it found so the reader can see it: {msg}"
+    # the even older global-flag file still gets a useful diagnostic
+    assert "True" in (_refusal({"trust": True, "spots": []}) or "")
+
+
+def test_half_migrated_trust_map_is_refused():
+    # a file where SOME keys are scoped and some are not is worse than one that stops: the
+    # unscoped key would silently keep its buoy-wide reach. Refuse, and name the offending keys.
+    doc = _doc(spots=[], trust={"okx/44025": "PASS", "44065": "PASS"})
+    msg = _refusal(doc)
+    assert msg, "a half-migrated map must STOP"
+    assert "44065" in msg and "okx/44025" not in msg, f"names only the unscoped key: {msg}"
+    assert "HALF-MIGRATED" in msg, msg
+
+
+def test_single_zone_passes_place_verified_unchanged_live():
+    # REGRESSION for the five single-WFO PASS zones (okx/44025, phi/44065, akq/44099, phi/44091,
+    # box/44097): every spot they anchor still reads 'verified', exactly as under buoy keying.
+    # The box/44098 + gyx/44098 pair is excluded here — retired on the direction axis, so their
+    # PASS is a HEIGHT verification only and their 14 spots read 'unverifiable' (asserted above).
+    doc, enriched = _real_doc(), _real_enriched()
+    rows, problems, held, trust, *_ = ap.build_plan(doc=doc, enriched=enriched)
+    by_slug = {r["slug"]: r for r in rows}
+    retired_dir = {r["zone"] for r in doc["buoy_reference"]["retired"]
+                   if "direction" in (r.get("axes") or [])}
+    unver_slugs = {s for u in doc["buoy_reference"]["unverifiable"] for s in (u.get("slugs") or [])}
+    single = sorted(z for z, v in trust.items() if v == "PASS" and z not in retired_dir)
+    assert len(single) == 5, f"five single-WFO PASS zones today, got {single}"
+    seen = 0
+    for a in doc["spots"]:
+        zone = f"{a.get('nwps_wfo')}/{a.get('nwps_buoy_id')}"
+        if zone not in single or a.get("slug") in unver_slugs:
+            continue
+        assert a["slug"] in by_slug, f"{zone} {a['slug']}: PASS zone no longer places at all"
+        r = by_slug[a["slug"]]
+        assert r["direction_status"] == "verified", f"{zone} {a['slug']}: {r['direction_status']}"
+        assert r["fields"]["nwps_buoy_id"] == str(a["nwps_buoy_id"])
+        seen += 1
+    assert seen >= 5 and not problems and not held
+
+
+def test_live_trust_map_is_zone_keyed_and_covers_both_44098_wfos():
+    doc = _real_doc()
+    assert "trust_by_buoy" not in doc, "the buoy-keyed map is GONE, not left alongside the new one"
+    zm = doc["trust_by_zone"]
+    assert all("/" in k for k in zm), f"every key is wfo/buoy: {sorted(zm)}"
+    # 44098's PASS could not migrate to a single key: it anchors box (3 spots) AND gyx (11), so one
+    # entry would have dropped the other WFO's spots to held. Both zones are tagged.
+    assert {"box/44098", "gyx/44098"} <= set(zm), f"both 44098 zones carry the PASS: {sorted(zm)}"
+
+
+def test_zone_keying_moved_no_live_placement():
+    # The migration re-SCOPES a future PASS; it must not move a single current placement. Collapse
+    # the live zone map back to the buoy keying it replaced and assert the two lookups agree on
+    # every assignment row — this fails loudly if a zone key were ever dropped or mis-derived.
+    doc, enriched = _real_doc(), _real_enriched()
+    zone_map = doc["trust_by_zone"]
+    buoy_map = {}
+    for z, v in zone_map.items():
+        buoy = z.split("/", 1)[1]
+        assert buoy_map.setdefault(buoy, v) == v, f"{buoy}: zones disagree — no buoy-keyed equivalent"
+    for a in doc["spots"]:
+        zone = f"{a.get('nwps_wfo')}/{a.get('nwps_buoy_id')}"
+        assert zone_map.get(zone) == buoy_map.get(str(a.get("nwps_buoy_id"))), \
+            f"{zone}: zone keying disagrees with the buoy keying it replaced — a placement moved"
+    rows, problems, held, *_ = ap.build_plan(doc=doc, enriched=enriched)
+    assert len(rows) == 491 and not held and not problems, \
+        f"all 491 spots still place ({len(rows)} rows, {len(held)} held, {len(problems)} problems)"
 
 
 # --------------------------------------------------------------------------- #

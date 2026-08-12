@@ -163,7 +163,7 @@ _HERE = Path(__file__).resolve()
 _ROOT = _HERE.parents[2]
 SCRIPTS_DIR = _ROOT / "scripts"
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
-# The NWPS assignment records apply_nwps_assignments reads: trust_by_buoy (the HEIGHT-tagging gate
+# The NWPS assignment records apply_nwps_assignments reads: trust_by_zone (the HEIGHT-tagging gate
 # that controls whether a spot consumes NWPS) + spots + buoy_reference (the BUOY trust-CHECK
 # disposition, incl. zones whose buoy has been RETIRED as a reference — for 44098, on BOTH axes,
 # because it is structurally invalid). The gate reads buoy_reference to report a retired zone as
@@ -2061,7 +2061,7 @@ def reverify_tagged(n_cycles=4):
     and the ROLLING accumulated direction verdict (this window's height-ASSESSABLE records are
     appended to the history log first; INCONCLUSIVE windows bank nothing). Covers every NWPS-placed
     zone — PASS/verified AND pending (46240/46237/46284/46268/46215/46256) — since it keys on
-    swell_window_source, not on trust_by_buoy. Tags/writes NO prod data (only the append-only
+    swell_window_source, not on trust_by_zone. Tags/writes NO prod data (only the append-only
     monitoring log). Runs on the Mac OR on a schedule (buoy events accumulate automatically); when
     GITHUB_OUTPUT is set it emits the zones whose rolling verdict has SETTLED, for a workflow to
     surface for MANUAL tagging — it never tags anything itself."""

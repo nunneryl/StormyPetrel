@@ -20,7 +20,7 @@ one quiet — the quiet one is the whole point:
     but it is NOT the primary check (by the time a buoy is dropped it has usually been silent
     for weeks, which the age check above catches first).
 
-DETECT AND REPORT ONLY. This monitor NEVER retires a buoy and NEVER edits trust_by_buoy,
+DETECT AND REPORT ONLY. This monitor NEVER retires a buoy and NEVER edits trust_by_zone,
 buoy_reference, spots_enriched.json, or the DB. Retiring a reference is a both-axes
 production change, buoys come back after servicing, and an upstream NDBC outage must not be
 able to rewrite trust state unattended — so it follows the trust-loop pattern: open an issue,
@@ -28,7 +28,7 @@ a human decides (move the zone into buoy_reference.retired, then apply_nwps_assi
 --apply).
 
 The watched roster is DERIVED from the live assignments — every NWPS-placed zone that has a
-real buoy on the row: _tagged_nwps_zones() (which already covers both the trust_by_buoy PASS
+real buoy on the row: _tagged_nwps_zones() (which already covers both the trust_by_zone PASS
 zones and the buoy_reference.pending[] zones once placed), unioned with pending[] itself (a
 pending buoy not yet placed), MINUS the zones that deliberately have no buoy — retired
 both-axes (44098's box/gyx) and unverifiable (island-shadowed / no-buoy-exists). Alerting on
@@ -293,9 +293,9 @@ def _derive_watch_zones():
     """The roster to check — DERIVED from the live assignments, NOT the WATCH list.
 
     Sources (per the spec): every NWPS-placed zone with a real buoy on the row, taken from
-    _tagged_nwps_zones() — which already surfaces both the trust_by_buoy PASS zones and the
+    _tagged_nwps_zones() — which already surfaces both the trust_by_zone PASS zones and the
     placed buoy_reference.pending[] zones (it keys on swell_window_source=='nwps', not on
-    trust_by_buoy) — unioned with buoy_reference.pending[] itself (to catch a pending buoy
+    trust_by_zone) — unioned with buoy_reference.pending[] itself (to catch a pending buoy
     not yet placed). EXCLUDES the zones that deliberately have no buoy: retired both-axes
     (buoy_reference.retired) and unverifiable (nwps_buoy_id is None on the row). WATCH supplies
     labels only. Returns [{id, wfo, zone, spots}]."""
@@ -318,7 +318,7 @@ def _derive_watch_zones():
         zones[(wfo, str(buoy))] = nspots
 
     # Union pending[] (a pending buoy that has no placed spot yet), and use it to read
-    # trust_by_buoy for a completeness cross-check below.
+    # trust_by_zone for a completeness cross-check below.
     try:
         doc = json.loads(NWPS_ASSIGNMENTS.read_text())
     except (OSError, ValueError):
@@ -328,15 +328,17 @@ def _derive_watch_zones():
         if wfo and buoy is not None and (wfo, str(buoy)) not in retired:
             zones.setdefault((wfo, str(buoy)), r.get("spots"))
 
-    # trust_by_buoy completeness guard: every PASS buoy (bar the retired 44098) should already
-    # be covered via a tagged zone. Warn — don't silently drop — if one isn't (that would mean
-    # a verified buoy with no placed spot, which is unexpected and worth a human's eye).
-    covered = {b for (_w, b) in zones}
-    retired_buoys = {b for (_w, b) in retired}
-    for bid in (doc.get("trust_by_buoy") or {}):
-        if str(bid) not in covered and str(bid) not in retired_buoys:
-            print(f"warn: trust_by_buoy PASS buoy {bid} has no placed nwps zone — not covered by "
-                  "liveness (unexpected; a verified buoy should anchor spots)", file=sys.stderr)
+    # trust_by_zone completeness guard: every PASS zone (bar the retired 44098 pair) should
+    # already be covered via a tagged zone. Warn — don't silently drop — if one isn't (that would
+    # mean a verified zone with no placed spot, which is unexpected and worth a human's eye).
+    # Compared as (wfo, buoy), matching the map's own "wfo/buoy" keys: under the old buoy-keyed
+    # map a PASS on one WFO counted as cover for a zone on ANOTHER WFO sharing the buoy, so the
+    # guard could pass on the wrong zone entirely.
+    for zone_key in (doc.get("trust_by_zone") or {}):
+        wfo, _, bid = str(zone_key).partition("/")
+        if (wfo, bid) not in zones and (wfo, bid) not in retired:
+            print(f"warn: trust_by_zone PASS zone {zone_key} has no placed nwps zone — not covered "
+                  "by liveness (unexpected; a verified zone should anchor spots)", file=sys.stderr)
 
     out = []
     for (wfo, buoy), nspots in sorted(zones.items()):

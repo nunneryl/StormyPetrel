@@ -8,7 +8,7 @@ name: buoy-liveness-monitor
 # printed note, > 30 days = open a GitHub issue proposing MANUAL retirement. A buoy dropped
 # from activestations.xml entirely is a louder, secondary signal (issue regardless of age).
 #
-# DETECT AND REPORT ONLY — this workflow NEVER retires a buoy, never sets/edits trust_by_buoy
+# DETECT AND REPORT ONLY — this workflow NEVER retires a buoy, never sets/edits trust_by_zone
 # or buoy_reference, never touches spots_enriched.json or the DB. It opens/updates/closes a
 # per-buoy issue and a human decides (trust-loop pattern). The watched roster is DERIVED from
 # the live assignments, so a new Southeast-rollout zone is covered without editing anything.
@@ -140,7 +140,7 @@ jobs:
                 ``,
                 `### Heads-up only — nothing has been changed`,
                 `This monitor **detects and reports only**. It has NOT retired the buoy, changed `
-                  + `\`trust_by_buoy\`, edited \`buoy_reference\`, or touched \`spots_enriched.json\` `
+                  + `\`trust_by_zone\`, edited \`buoy_reference\`, or touched \`spots_enriched.json\` `
                   + `or the DB. Buoys often come back after servicing, and an upstream NDBC outage `
                   + `must not rewrite trust state unattended.`,
                 ``,

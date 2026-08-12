@@ -588,7 +588,8 @@ def test_resolve_find_target():
 def test_retired_reference_zones_parsing(tmp_path, monkeypatch):
     f = tmp_path / "assign.json"
     f.write_text(json.dumps({
-        "trust_by_buoy": {"44098": "PASS"},   # HEIGHT-tagging gate stays PASS — only the CHECK is retired
+        # HEIGHT-tagging gate stays PASS on BOTH zones — only the CHECK is retired
+        "trust_by_zone": {"box/44098": "PASS", "gyx/44098": "PASS"},
         "spots": [],
         "buoy_reference": {"retired": [
             {"zone": "box/44098", "wfo": "box", "buoy": "44098", "spots": 3,
@@ -605,7 +606,7 @@ def test_retired_reference_zones_parsing(tmp_path, monkeypatch):
     # a missing file / missing section → {} (never raises; a zone is simply "not retired")
     monkeypatch.setattr(nn, "NWPS_ASSIGNMENTS", tmp_path / "does_not_exist.json")
     assert nn._retired_reference_zones() == {}
-    f.write_text(json.dumps({"trust_by_buoy": {}, "spots": []}))   # no buoy_reference section
+    f.write_text(json.dumps({"trust_by_zone": {}, "spots": []}))   # no buoy_reference section
     monkeypatch.setattr(nn, "NWPS_ASSIGNMENTS", f)
     assert nn._retired_reference_zones() == {}
 
