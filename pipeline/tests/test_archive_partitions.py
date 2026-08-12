@@ -361,6 +361,22 @@ def test_lead_cap_drops_only_leads_past_the_cap():
     assert m144 == 580 and abs(m72 / m144 - 0.5) < 0.02, "the cap keeps ~half the horizon"
     assert ap.expected_rows_per_zone_per_day(48)[0] == 196
 
+    # THE FILTER IS ALSO EXERCISED WHERE IT RUNS — rows_for_zone, not just the predicate.
+    # The synthetic cycle carries steps [0, 1, 96]; the 96 must be dropped AND counted.
+    from pipeline.forecast import nwps_nearshore as nn
+    from pipeline.forecast import nwps_trkng as trk
+    cg1, trkc = _synthetic_cycle()
+    bundles = [("20260810", "12", cg1, trkc, ap.TRKNG_OK, None)]
+    rows, _wind, hours, n_over, _why = ap.rows_for_zone(
+        "okx", "44025", 40.0, -73.0, bundles, ap.MAX_LEAD_HOURS, nn=nn, trk=trk)
+    assert sorted(r["lead_hours"] for r in rows) == [0, 1], "the 96 h step must not be captured"
+    assert n_over == 1, "and it must be COUNTED, not silently dropped"
+    assert len(hours) == 2
+    # raising the cap admits it, so the filter really is the cap and not a step-list quirk
+    rows_hi, _w, _h, n_hi, _y = ap.rows_for_zone(
+        "okx", "44025", 40.0, -73.0, bundles, 144, nn=nn, trk=trk)
+    assert sorted(r["lead_hours"] for r in rows_hi) == [0, 1, 96] and n_hi == 0
+
     # the lifespan and the cap are both recorded where a future reader will look
     for text in (ap.DDL, ap.__doc__):
         assert "TWELVE TO EIGHTEEN MONTHS" in text.upper()
@@ -400,6 +416,163 @@ def test_roster_staleness_is_warned_once_per_run_not_once_per_zone():
         assert ap.load_station_roster() == (None, None)
     finally:
         geo.load_ndbc_active_stations = orig_active
+
+
+def _synthetic_cycle():
+    """A real CG1-shaped cycle dict and a real parsed CG0_Trkng cycle, so the node-sampling
+    code under test is the ACTUAL nn._nearest_cell / nn._node_value / trk.trkng_node path —
+    only the two FETCHES are stubbed, which is what the counter measures."""
+    import numpy as np
+    from pipeline.forecast import nwps_trkng as trk
+    lats = np.array([[40.0, 40.0], [39.98, 39.98]])
+    lons = np.array([[-73.0, -72.98], [-73.0, -72.98]])
+    cdt = datetime.datetime(2026, 8, 10, 12, tzinfo=datetime.timezone.utc)
+    steps = [0, 1, 96]        # 96 is past MAX_LEAD_HOURS — exercises the sampler filter
+    fields = {}
+    for short, val in (("swh", 1.2), ("perpw", 9.0), ("dirpw", 200.0), ("shts", 0.8),
+                       ("ws", 4.0), ("wdir", 210.0)):
+        for fh in steps:
+            fields[(short, fh)] = np.full((2, 2), val)
+    cg1 = {"lats": lats, "lons": lons, "mask": np.zeros((2, 2), bool), "cycle_dt": cdt,
+           "steps": steps, "fields": fields}
+    S = trk.TRKNG_SENTINEL
+
+    def grid(v):
+        a = np.full((2, 2), S, dtype="float64")
+        a[0, 0] = a[0, 1] = a[1, 0] = a[1, 1] = v
+        return a
+    records = [("swdir", 1, fh, grid(273.0), S) for fh in steps] \
+        + [("shts", 1, fh, grid(0.13), S) for fh in steps] \
+        + [("mpts", 1, fh, grid(18.2), S) for fh in steps]
+    return cg1, trk.parse_trkng(lats, lons, cdt, records)
+
+
+def test_zones_sharing_a_wfo_fetch_each_cycle_file_once():
+    """THE OPTIMISATION: zones on one WFO share the CG1 and CG0_Trkng grids exactly — only
+    their node coordinates differ — so the GRIBs must be fetched and parsed ONCE per (wfo,
+    cycle), not once per zone. Measured before this change: a --backfill 0 run took 24 min
+    wall clock for 26 zones against a 50 min workflow cap, about 2x headroom for a job that
+    runs twice daily indefinitely. 26 zones across ~15 WFOs is ~1.7x the necessary work."""
+    from pipeline.forecast import nwps_nearshore as nn
+    from pipeline.forecast import nwps_trkng as trk
+    from pipeline.forecast import ndbc_spectral as ndbc_spec
+    cg1, trkc = _synthetic_cycle()
+    calls = {"cg1": 0, "trk": 0}
+
+    def fake_cg1(wfo, cycle):
+        calls["cg1"] += 1
+        return cg1
+
+    def fake_trk(wfo, cycle):
+        calls["trk"] += 1
+        return trkc
+
+    saved = (nn.find_latest_cycle, nn._buoy_latlng, nn._buoy_hourly,
+             trk._spec_by_hour, ndbc_spec.by_hour)
+    try:
+        nn.find_latest_cycle = lambda *a, **k: ("20260810", "12", "u")
+        nn._buoy_latlng = lambda b, **k: (40.0, -73.0)
+        nn._buoy_hourly = lambda b: {}
+        trk._spec_by_hour = lambda b: {}
+        ndbc_spec.by_hour = lambda b, **k: {}
+
+        # TWO zones on ONE wfo — one fetch of each file, not two
+        members = [("44025", "okx/44025"), ("44065", "okx/44065")]
+        res = ap.collect_wfo("okx", members, load_cycle=fake_cg1, load_trkng=fake_trk)
+        assert calls == {"cg1": 1, "trk": 1}, f"refetched per zone: {calls}"
+        assert set(res) == {"44025", "44065"}, "every zone on the WFO still gets a result"
+        for buoy, (rows, note) in res.items():
+            assert rows, f"{buoy} produced no rows"
+            assert {r["buoy_id"] for r in rows} == {buoy}, "rows must not leak between zones"
+            assert all(r["wfo"] == "okx" for r in rows)
+            # the shared parse still yields per-zone trkng_status and real sampled values
+            model = [r for r in rows if r["source"] == "model"]
+            assert model and all(r["trkng_status"] == ap.TRKNG_OK for r in model)
+            assert all(r["swh"] == 1.2 and r["dirpw"] == 200.0 for r in model)
+            assert all(r["systems"] and r["systems"][0]["tp"] == 18.2 for r in model)
+            assert "1 cycle(s)" in note
+
+        # the un-grouped equivalent costs one fetch PER zone — this is the saving, measured
+        calls.update(cg1=0, trk=0)
+        for m in members:
+            ap.collect_wfo("okx", [m], load_cycle=fake_cg1, load_trkng=fake_trk)
+        assert calls == {"cg1": 2, "trk": 2}, "two separate calls must cost two fetches"
+
+        # four zones on one WFO (the mhx/sgx shape) still cost exactly one fetch of each
+        calls.update(cg1=0, trk=0)
+        four = [(b, f"mhx/{b}") for b in ("44056", "44086", "44095", "41120")]
+        res4 = ap.collect_wfo("mhx", four, load_cycle=fake_cg1, load_trkng=fake_trk)
+        assert calls == {"cg1": 1, "trk": 1} and len(res4) == 4
+    finally:
+        (nn.find_latest_cycle, nn._buoy_latlng, nn._buoy_hourly,
+         trk._spec_by_hour, ndbc_spec.by_hour) = saved
+
+    # grouping itself: order preserved, zones kept together, one entry per WFO
+    zones = [("mhx", "1", "mhx/1"), ("sgx", "2", "sgx/2"), ("mhx", "3", "mhx/3"),
+             ("sgx", "4", "sgx/4"), ("phi", "5", "phi/5")]
+    groups = ap.group_zones_by_wfo(zones)
+    assert [w for w, _ in groups] == ["mhx", "sgx", "phi"], "first-seen WFO order preserved"
+    assert dict(groups)["mhx"] == [("1", "mhx/1"), ("3", "mhx/3")]
+    assert sum(len(m) for _w, m in groups) == len(zones), "no zone lost in grouping"
+    assert ap.group_zones_by_wfo([]) == []
+
+
+def test_one_wfos_fetch_failure_is_scoped_and_does_not_stop_the_others():
+    """Error discipline, preserved but re-scoped. A fetch failure now affects EVERY zone on
+    that WFO rather than one, so it must be reported as a shared cause instead of looking like
+    the same unexplained error N times — and one WFO's failure must never abort the others."""
+    from pipeline.forecast import nwps_nearshore as nn
+    from pipeline.forecast import nwps_trkng as trk
+    from pipeline.forecast import ndbc_spectral as ndbc_spec
+    cg1, trkc = _synthetic_cycle()
+
+    # a CG1 that will not load drops that CYCLE, not the whole WFO run
+    bundles = ap.load_wfo_cycles("okx", [("20260810", "12", "u")],
+                                 load_cycle=lambda *a: (_ for _ in ()).throw(OSError("gone")),
+                                 load_trkng=lambda *a: trkc)
+    assert len(bundles) == 1 and bundles[0][2] is None, "CG1 failure recorded, not raised"
+    assert "CG1 unreadable" in bundles[0][5]
+
+    # CG0_Trkng stays OPTIONAL: its absence is a status on every row, not a lost cycle
+    for exc, want in ((OSError("not GRIB (Trkng file missing?)"), ap.TRKNG_ABSENT),
+                      (RuntimeError("eccodes exploded"), ap.TRKNG_ERROR)):
+        b = ap.load_wfo_cycles("okx", [("20260810", "12", "u")],
+                               load_cycle=lambda *a: cg1,
+                               load_trkng=lambda *a, _e=exc: (_ for _ in ()).throw(_e))
+        assert b[0][2] is cg1 and b[0][3] is None and b[0][4] == want, b
+
+    # a zone whose BUOY will not resolve is still a per-zone failure, leaving its sibling intact
+    saved = (nn.find_latest_cycle, nn._buoy_latlng, nn._buoy_hourly,
+             trk._spec_by_hour, ndbc_spec.by_hour)
+    try:
+        nn.find_latest_cycle = lambda *a, **k: ("20260810", "12", "u")
+        nn._buoy_hourly = lambda b: {}
+        trk._spec_by_hour = lambda b: {}
+        ndbc_spec.by_hour = lambda b, **k: {}
+
+        def picky(b, **k):
+            if b == "bad":
+                raise KeyError(f"buoy {b!r} not in the NDBC active-station list")
+            return (40.0, -73.0)
+        nn._buoy_latlng = picky
+        res = ap.collect_wfo("okx", [("bad", "okx/bad"), ("44025", "okx/44025")],
+                             load_cycle=lambda *a: cg1, load_trkng=lambda *a: trkc)
+        assert res["bad"][0] == [] and "KeyError" in res["bad"][1], "per-zone failure isolated"
+        assert res["44025"][0], "its sibling on the same WFO still captured"
+    finally:
+        (nn.find_latest_cycle, nn._buoy_latlng, nn._buoy_hourly,
+         trk._spec_by_hour, ndbc_spec.by_hour) = saved
+
+    # no cycles in range is a per-WFO answer for every member, not an exception
+    try:
+        nn_saved = nn.find_latest_cycle
+        nn.find_latest_cycle = lambda *a, **k: None
+        res = ap.collect_wfo("okx", [("1", "okx/1"), ("2", "okx/2")],
+                             load_cycle=lambda *a: cg1, load_trkng=lambda *a: trkc)
+        assert list(res) == ["1", "2"] and all(r == [] for r, _n in res.values())
+        assert all("no NOMADS cycles in range" in n for _r, n in res.values())
+    finally:
+        nn.find_latest_cycle = nn_saved
 
 
 def _run_all():

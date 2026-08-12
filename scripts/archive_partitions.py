@@ -411,69 +411,102 @@ def load_station_roster():
         return None, None
 
 
-def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None,
-                 max_lead_hours=None, roster=None):
-    """(rows, note) for one zone. Fetches are SINGLE-ATTEMPT with the module's own timeouts
-    — no retry loop, so an outage degrades fast (the reverify job's discipline). Needs
-    NOMADS + eccodes + NDBC; raises on failure, and the caller turns that into a SKIP.
-    *roster* is the (active, reporting) pair from load_station_roster(), injected so the
-    staleness warning and the XML parse happen once per run rather than once per zone."""
-    from pipeline.forecast import nwps_nearshore as nn
-    from pipeline.forecast import nwps_trkng as trk
-    from pipeline.forecast import ndbc_spectral as ndbc_spec
+def group_zones_by_wfo(zones):
+    """[(wfo, [(buoy_id, zone), ...])] preserving first-seen order, both of the WFOs and of
+    the zones inside each. Grouping FIRST is the whole optimisation: zones on one WFO share
+    the CG1 and CG0_Trkng grids EXACTLY — only their node coordinates differ — so fetching
+    inside a per-zone loop re-downloaded and re-parsed the same GRIBs once per zone. Across
+    26 zones on ~15 distinct WFOs that is ~1.7x the necessary work on average, and worse in
+    the multi-zone regions (mhx 4, sgx 4, then pqr/jax/ilm/lox at 2 each)."""
+    groups, order = {}, []
+    for wfo, buoy_id, zone in zones:
+        if wfo not in groups:
+            groups[wfo] = []
+            order.append(wfo)
+        groups[wfo].append((buoy_id, zone))
+    return [(w, groups[w]) for w in order]
 
-    cap = MAX_LEAD_HOURS if max_lead_hours is None else max_lead_hours
-    region = nn._region_for(wfo)
-    active, reporting = roster if roster else (None, None)
-    blat, blng = nn._buoy_latlng(buoy_id, _active=active, _reporting=reporting)
 
-    # Cycle window. backfill 0 → the latest cycle only. backfill N → every cycle whose date
-    # falls inside the last N days; recent_cycles is asked for a generous count and filtered
-    # by date, so the schedule's real cycles-per-day never has to be guessed.
+def resolve_cycles(wfo, region, backfill_days, *, nn):
+    """[(date, cc, url)] for a WFO's capture window, listed ONCE per WFO rather than once per
+    zone. backfill 0 → the latest cycle only. backfill N → every cycle whose date falls inside
+    the last N days; recent_cycles is asked for a generous count and filtered by date, so the
+    schedule's real cycles-per-day never has to be guessed."""
     if backfill_days and backfill_days > 0:
         want = max(1, (backfill_days + 1) * _MAX_CYCLES_PER_DAY)
         cutoff = (datetime.datetime.now(datetime.timezone.utc)
                   - datetime.timedelta(days=backfill_days)).strftime("%Y%m%d")
-        cycles = [c for c in nn.recent_cycles(wfo, want, region) if c[0] >= cutoff]
-    else:
-        latest = nn.find_latest_cycle(wfo, region)
-        cycles = [latest] if latest else []
-    if not cycles:
-        return [], "no NOMADS cycles in range"
+        return [c for c in nn.recent_cycles(wfo, want, region) if c[0] >= cutoff]
+    latest = nn.find_latest_cycle(wfo, region)
+    return [latest] if latest else []
 
-    model_rows, seen_hours, n_over_cap = [], set(), 0
-    model_wind, trkng_why = {}, None
-    # Oldest cycle first so the newest (shortest-lead) row is the one dedupe_shortest_lead
-    # keeps on a tie; the lead comparison makes this ordering-independent anyway.
+
+def _classify_trkng_error(e):
+    """(status, why) for a CG0_Trkng fetch failure. ABSENT vs ERROR: a 404 on the CG0
+    listing/file, or a body that is not GRIB, means the cycle simply did not publish
+    CG0_Trkng. Anything else (eccodes failure, truncated read, parse error) is a real error
+    and must not be laundered into "the file wasn't there"."""
+    code = getattr(e, "code", None)
+    absent = code == 404 or "not GRIB" in str(e) or "no swdir/shts/mpts" in str(e)
+    status = TRKNG_ABSENT if absent else TRKNG_ERROR
+    return status, f"Trkng {status}: {type(e).__name__}: {e}"
+
+
+def load_wfo_cycles(wfo, cycles, *, load_cycle, load_trkng):
+    """[(date, cc, cg1, trkc, fetch_status, fetch_why)] — each (wfo, cycle) pair fetched and
+    parsed EXACTLY ONCE, for every zone on that WFO to sample from. This is the function the
+    optimisation lives in; *load_cycle* and *load_trkng* are injected so the fetch COUNT is
+    testable offline.
+
+    A CG1 that will not load drops that CYCLE (not the WFO): the remaining cycles still
+    produce rows. CG0_Trkng stays OPTIONAL per cycle — a cycle can publish CG1 without it, and
+    losing a whole hour to a missing partition file would be the worse trade under a 5-day
+    clock — so its failure is recorded as a status and carried onto every row instead."""
+    bundles = []
     for date, cc, url in sorted(cycles):
-        cg1 = nn.load_cycle(wfo, (date, cc, url))
+        try:
+            cg1 = load_cycle(wfo, (date, cc, url))
+        except Exception as e:                              # noqa: BLE001
+            bundles.append((date, cc, None, None, TRKNG_ERROR,
+                            f"CG1 unreadable: {type(e).__name__}: {e}"))
+            continue
+        try:
+            trkc = load_trkng(wfo, (date, cc, url))
+            bundles.append((date, cc, cg1, trkc, TRKNG_OK, None))
+        except Exception as e:                              # noqa: BLE001
+            status, why = _classify_trkng_error(e)
+            bundles.append((date, cc, cg1, None, status, why))
+    return bundles
+
+
+def rows_for_zone(wfo, buoy_id, blat, blng, bundles, cap, *, nn, trk):
+    """(model_rows, model_wind, seen_hours, n_over_cap, trkng_why) for ONE zone, sampled from
+    ALREADY-PARSED cycles. Only the NODE differs between zones on a WFO, so this is the part
+    that genuinely has to run per zone — everything upstream of it is now shared.
+
+    trkng_status is resolved per zone even though the FETCH is shared: a cycle's Trkng file
+    can load fine and still fail to node-reconcile for one particular buoy, which is that
+    zone's 'error', not the WFO's."""
+    model_rows, seen_hours, model_wind, n_over_cap, trkng_why = [], set(), {}, 0, None
+    for date, cc, cg1, trkc, fetch_status, fetch_why in bundles:
+        if cg1 is None:                       # this cycle's CG1 never parsed — shared failure
+            trkng_why = fetch_why
+            continue
         pcell = nn._nearest_cell(cg1, blat, blng)
         if pcell is None:
             continue
         ci, cj = pcell[0], pcell[1]
-        node_lat = float(cg1["lats"][ci, cj])
-        node_lng = float(cg1["lons"][ci, cj])
-        # CG0_Trkng is OPTIONAL: a cycle can publish CG1 without it. Model rows are still
-        # captured (fields + wind) — losing the whole hour because the partition file is
-        # missing would be the worse trade under a 5-day clock. WHY it is missing is recorded
-        # on every row as trkng_status, so the analysis never has to infer it from an empty
-        # systems array (which is also what a successfully-read calm hour looks like).
-        try:
-            trkc = trk.load_trkng_cycle(wfo, (date, cc, url))
-            ti, tj, trkng_why = trk.trkng_node(trkc, cg1, node_lat, node_lng)
+        if trkc is None:
+            status, ti, tj = fetch_status, None, None
+            if fetch_why:
+                trkng_why = fetch_why
+        else:
+            node_lat = float(cg1["lats"][ci, cj])
+            node_lng = float(cg1["lons"][ci, cj])
+            ti, tj, why = trk.trkng_node(trkc, cg1, node_lat, node_lng)
             status = TRKNG_OK if ti is not None else TRKNG_ERROR
             if ti is None:
-                trkng_why = f"Trkng read but not node-reconciled: {trkng_why}"
-        except Exception as e:                                # noqa: BLE001
-            trkc, ti, tj = None, None, None
-            # ABSENT vs ERROR: a 404 on the CG0 listing/file, or a body that is not GRIB,
-            # means the cycle simply did not publish CG0_Trkng. Anything else (eccodes
-            # failure, truncated read, parse error) is a real error and must not be
-            # laundered into "the file wasn't there".
-            code = getattr(e, "code", None)
-            absent = code == 404 or "not GRIB" in str(e) or "no swdir/shts/mpts" in str(e)
-            status = TRKNG_ABSENT if absent else TRKNG_ERROR
-            trkng_why = f"Trkng {status}: {type(e).__name__}: {e}"
+                trkng_why = f"Trkng read but not node-reconciled: {why}"
         for fh in cg1["steps"]:
             if not within_lead_cap(fh, cap):
                 n_over_cap += 1        # beyond MAX_LEAD_HOURS — not captured, and reported
@@ -494,26 +527,78 @@ def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None,
                 shts=nn._node_value(cg1, "shts", fh, ci, cj),
                 wind_speed=ws, wind_dir=wd, systems=systems))
             seen_hours.add(valid)
+    return model_rows, model_wind, seen_hours, n_over_cap, trkng_why
 
-    # Buoy side — one read each, covering every hour the model rows span.
-    spectral = ndbc_spec.by_hour(buoy_id, model_wind=model_wind) or {}
-    spec = trk._spec_by_hour(buoy_id) or {}
-    std = nn._buoy_hourly(buoy_id) or {}
-    buoy_rows = [build_buoy_row(wfo, buoy_id, h, spectral=spectral.get(h),
-                                spec=spec.get(h), std=std.get(h))
-                 for h in sorted(set(spectral) | set(spec) | set(std))
-                 if h in seen_hours or not seen_hours]
 
-    rows = dedupe_by_key(model_rows + buoy_rows)
+def collect_wfo(wfo, members, *, backfill_days=0, max_lead_hours=None, roster=None,
+                load_cycle=None, load_trkng=None):
+    """{buoy_id: (rows, note)} for EVERY zone on one WFO, fetching each (wfo, cycle) pair
+    exactly ONCE. Fetches are SINGLE-ATTEMPT with the modules' own timeouts — no retry loop,
+    so an outage degrades fast (the reverify job's discipline).
+
+    ERROR SCOPE, which changed with the grouping: a cycle-listing or GRIB failure now affects
+    EVERY zone on this WFO rather than one, so it raises out of here and the caller reports it
+    against each affected zone as a shared cause. Failures that are genuinely per zone — an
+    unresolvable buoy id, a dead buoy feed — stay per zone and leave the others intact.
+
+    *load_cycle* / *load_trkng* are injected so the fetch COUNT is testable offline; they
+    default to the real NOMADS loaders."""
+    from pipeline.forecast import nwps_nearshore as nn
+    from pipeline.forecast import nwps_trkng as trk
+    from pipeline.forecast import ndbc_spectral as ndbc_spec
+
+    cap = MAX_LEAD_HOURS if max_lead_hours is None else max_lead_hours
+    active, reporting = roster if roster else (None, None)
+    region = nn._region_for(wfo)
+
+    # ── ONCE PER WFO ────────────────────────────────────────────────────────────────────
+    cycles = resolve_cycles(wfo, region, backfill_days, nn=nn)
+    if not cycles:
+        return {b: ([], "no NOMADS cycles in range") for b, _z in members}
+    bundles = load_wfo_cycles(wfo, cycles, load_cycle=load_cycle or nn.load_cycle,
+                              load_trkng=load_trkng or trk.load_trkng_cycle)
+
+    # ── ONCE PER ZONE (only the node differs) ───────────────────────────────────────────
+    out = {}
+    for buoy_id, _zone in members:
+        try:
+            blat, blng = nn._buoy_latlng(buoy_id, _active=active, _reporting=reporting)
+        except Exception as e:                              # noqa: BLE001 — per-zone only
+            out[buoy_id] = ([], f"{type(e).__name__}: {e}")
+            continue
+        model_rows, model_wind, seen_hours, n_over_cap, trkng_why = rows_for_zone(
+            wfo, buoy_id, blat, blng, bundles, cap, nn=nn, trk=trk)
+
+        # Buoy side — one read each, per zone (a different station per zone, so not shared).
+        spectral = ndbc_spec.by_hour(buoy_id, model_wind=model_wind) or {}
+        spec = trk._spec_by_hour(buoy_id) or {}
+        std = nn._buoy_hourly(buoy_id) or {}
+        buoy_rows = [build_buoy_row(wfo, buoy_id, h, spectral=spectral.get(h),
+                                    spec=spec.get(h), std=std.get(h))
+                     for h in sorted(set(spectral) | set(spec) | set(std))
+                     if h in seen_hours or not seen_hours]
+
+        rows = dedupe_by_key(model_rows + buoy_rows)
+        from collections import Counter
+        st = Counter(r["trkng_status"] for r in rows if r["source"] == "model")
+        note = (f"{len(cycles)} cycle(s), {len(seen_hours)} model hour(s) "
+                f"[trkng {'/'.join(f'{k}:{v}' for k, v in sorted(st.items())) or 'none'}], "
+                f"{len(buoy_rows)} buoy hour(s)"
+                + (f", {n_over_cap} step(s) past the {cap} h lead cap" if n_over_cap else "")
+                + (f"; {trkng_why}" if trkng_why and str(trkng_why).startswith("Trkng ") else ""))
+        out[buoy_id] = (rows, note)
+    return out
+
+
+def collect_zone(wfo, buoy_id, *, backfill_days=0, max_rows_per_zone=None,
+                 max_lead_hours=None, roster=None):
+    """(rows, note) for a SINGLE zone — a thin wrapper over collect_wfo, kept so the one-zone
+    path stays callable and exercised. The batch path groups by WFO first; see collect_wfo."""
+    res = collect_wfo(wfo, [(buoy_id, f"{wfo}/{buoy_id}")], backfill_days=backfill_days,
+                      max_lead_hours=max_lead_hours, roster=roster)
+    rows, note = res.get(buoy_id, ([], "no result"))
     if max_rows_per_zone:
         rows = rows[:max_rows_per_zone]
-    from collections import Counter
-    st = Counter(r["trkng_status"] for r in rows if r["source"] == "model")
-    note = (f"{len(cycles)} cycle(s), {len(seen_hours)} model hour(s) "
-            f"[trkng {'/'.join(f'{k}:{v}' for k, v in sorted(st.items())) or 'none'}], "
-            f"{len(buoy_rows)} buoy hour(s)"
-            + (f", {n_over_cap} step(s) past the {cap} h lead cap" if n_over_cap else "")
-            + (f"; {trkng_why}" if trkng_why and str(trkng_why).startswith("Trkng ") else ""))
     return rows, note
 
 
@@ -558,37 +643,50 @@ def main(argv=None):
 
     # Roster loaded ONCE: this is what stops _buoy_latlng's staleness warning firing per zone.
     roster = load_station_roster()
+    # GROUPED BY WFO so each cycle's GRIBs are fetched and parsed once, not once per zone.
+    groups = group_zones_by_wfo(zones)
+    print(f"grouped into {len(groups)} WFO(s): "
+          + ", ".join(f"{w}({len(m)})" for w, m in groups)
+          + f" — {len(zones)} zones / {len(groups)} WFOs = "
+            f"{len(zones)/max(1,len(groups)):.2f}x fewer cycle fetches than one-per-zone")
     rows_per_zone, total_skipped = [], 0
-    for wfo, buoy_id, zone in zones:
+    for wfo, members in groups:
         try:
-            rows, note = collect_zone(wfo, buoy_id, backfill_days=a.backfill,
-                                      max_lead_hours=a.max_lead, roster=roster)
-        except Exception as e:        # noqa: BLE001 — one zone must never abort the run
-            total_skipped += 1
-            print(f"  SKIP  {zone:<20} {type(e).__name__}: {e}")
+            results = collect_wfo(wfo, members, backfill_days=a.backfill,
+                                  max_lead_hours=a.max_lead, roster=roster)
+        except Exception as e:        # noqa: BLE001 — one WFO must never abort the others
+            # SCOPED REPORTING: the fetch is shared now, so a cycle/GRIB failure hits every
+            # zone on this WFO at once. Say so, instead of printing what looks like the same
+            # unexplained error N times.
+            total_skipped += len(members)
+            for _b, zone in members:
+                print(f"  SKIP  {zone:<20} {wfo} cycle fetch failed — {type(e).__name__}: {e} "
+                      f"(shared cause: all {len(members)} zone(s) on {wfo} affected)")
             if os.environ.get("ARCHIVE_PARTITIONS_TRACE"):
                 traceback.print_exc()
             continue
-        if not rows:
-            total_skipped += 1
-            print(f"  SKIP  {zone:<20} no rows — {note}")
-            continue
-        n_model = sum(1 for r in rows if r["source"] == "model")
-        n_buoy = len(rows) - n_model
-        try:
-            written = upsert_rows(client, rows, dry_run=a.dry_run)
-        except RuntimeError:
-            raise                     # a missing table/constraint is fatal, not a per-zone skip
-        except Exception as e:        # noqa: BLE001
-            total_skipped += 1
-            print(f"  SKIP  {zone:<20} write failed — {type(e).__name__}: {e}")
-            continue
-        rows_per_zone.append(written)     # what this zone contributed, in BOTH modes
-        verb = "would write" if a.dry_run else "wrote"
-        print(f"  OK    {zone:<20} {verb} {len(rows):>4} row(s) "
-              f"({n_model} model, {n_buoy} buoy) — {note}")
-        if a.dry_run and rows:
-            print(f"        sample: {json.dumps(rows[0], default=str)[:200]}…")
+        for buoy_id, zone in members:
+            rows, note = results.get(buoy_id, ([], "no result"))
+            if not rows:
+                total_skipped += 1
+                print(f"  SKIP  {zone:<20} no rows — {note}")
+                continue
+            n_model = sum(1 for r in rows if r["source"] == "model")
+            n_buoy = len(rows) - n_model
+            try:
+                written = upsert_rows(client, rows, dry_run=a.dry_run)
+            except RuntimeError:
+                raise                 # a missing table/constraint is fatal, not a per-zone skip
+            except Exception as e:    # noqa: BLE001
+                total_skipped += 1
+                print(f"  SKIP  {zone:<20} write failed — {type(e).__name__}: {e}")
+                continue
+            rows_per_zone.append(written)     # what this zone contributed, in BOTH modes
+            verb = "would write" if a.dry_run else "wrote"
+            print(f"  OK    {zone:<20} {verb} {len(rows):>4} row(s) "
+                  f"({n_model} model, {n_buoy} buoy) — {note}")
+            if a.dry_run and rows:
+                print(f"        sample: {json.dumps(rows[0], default=str)[:200]}…")
 
     total, n_ok, line = render_summary(rows_per_zone, total_skipped, dry_run=a.dry_run)
     print(f"\n{line}")
