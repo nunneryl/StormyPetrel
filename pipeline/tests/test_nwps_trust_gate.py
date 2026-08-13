@@ -1056,114 +1056,42 @@ def _node_grid(lats1d, lngs1d, wet_ij):
     return {"lats": la, "lons": lo, "mask": mask}
 
 
-# The land-crossing guard walks the MODEL'S OWN MASK — no GSHHG, no tuned constant. See the
-# guard block in nwps_nearshore for the measured reason the GSHHG polygon check was dropped at
-# this scale (36+ false positives; the continent polygon defeats the area floor; must-clear
-# penetration reaches 396 m while must-flag only clears it once a barrier exceeds 0.79 km, by
-# which point the model's own mask already marks it land).
-def _mask_grid(nr, nc, lat0, dlat, lng0, dlng, wet):
-    la, lo = np.meshgrid(np.array([lat0 + k * dlat for k in range(nr)]),
-                         np.array([lng0 + k * dlng for k in range(nc)]), indexing="ij")
-    m = np.ones(la.shape, dtype=bool)
-    for i, j in wet:
-        m[i, j] = False
-    return {"lats": la, "lons": lo, "mask": m}
+# The seaward half-plane rule is what stops a node being chosen behind land, and after the
+# seven-WFO result (see scripts/node_headland_calibrate.py) it is the ONLY thing doing that job.
+# Nothing else in the suite covered it directly, so it is covered here — if someone removes the
+# ±90° filter as a redundant heuristic, this fails.
+def test_seaward_half_plane_rejects_a_landward_cell():
+    # a wet cell WEST of an east-facing spot is landward (behind the beach) and NEARER; the true
+    # offshore cell is east and farther. Distance alone takes the wrong one; the filter does not.
+    la, lo = np.meshgrid(np.array([28.50]), np.array([-80.620 + k * 0.010 for k in range(5)]),
+                         indexing="ij")
+    mask = np.ones(la.shape, dtype=bool)
+    mask[0, 1] = mask[0, 4] = False          # one landward cell, one seaward
+    cyc = {"lats": la, "lons": lo, "mask": mask}
+    slat, slng = 28.50, -80.6035
+    landward = nn._haversine_km(slat, slng, 28.50, float(lo[0, 1]))
+    seaward = nn._haversine_km(slat, slng, 28.50, float(lo[0, 4]))
+    assert landward < seaward, "the landward cell really is the nearer of the two"
+    assert not nn._ang_within(nn._bearing(slat, slng, 28.50, float(lo[0, 1])), 90.0, 90)
+    # with no orientation there is no half-plane and distance wins — the failure mode
+    assert nn.select_node(cyc, slat, slng, None)[1] == 1
+    # with the spot's orientation the landward cell is dropped BEFORE distance is considered
+    sel = nn.select_node(cyc, slat, slng, 90.0)
+    assert sel[1] == 4, "seaward half-plane beats nearest"
+    assert sel[5] is True, "'moved' records that the naive nearest was overridden"
 
 
-def _barrier_cycle():
-    """Deliberately ANISOTROPIC — rows 2.22 km apart (offshore steps), columns 0.49 km apart
-    (along the barrier) — so the BAY cell two columns east is NEARER (0.98 km) than the open-ocean
-    cell one row north (2.22 km). Spot cell (2,2) is LAND, as a beach is; (2,3) is the barrier.
-    This is the only geometry that exhibits the case: a wet cell ADJACENT to the spot's cell is
-    always both nearest and unblockable, so the blocked cell has to be two cells out and the clear
-    fallback further still."""
-    return _mask_grid(4, 6, 28.470, 0.020, -80.620, 0.005,
-                      wet=[(2, 4), (1, 2), (0, 2), (1, 3), (0, 3)])
-
-
-def _barrier_spot(cyc):
-    return float(cyc["lats"][2, 2]), float(cyc["lons"][2, 2])
-
-
-def test_select_node_rejects_a_candidate_behind_land():
-    cyc = _barrier_cycle()
-    slat, slng = _barrier_spot(cyc)
-    bay, ocean = (2, 4), (1, 2)
-    d = lambda ij: nn._haversine_km(slat, slng, float(cyc["lats"][ij]), float(cyc["lons"][ij]))
-    assert d(bay) < d(ocean), "the blocked cell really is the nearer of the two"
-    assert nn._mask_blocked(cyc, slat, slng, *bay), "mask puts land between the spot and the bay"
-    assert not nn._mask_blocked(cyc, slat, slng, *ocean), "the fallback is genuinely clear"
-    plain = nn.select_node(cyc, slat, slng, None)
-    guarded = nn.select_node(cyc, slat, slng, None, avoid_land=True)
-    assert (plain[0], plain[1]) == bay, "unguarded: nearest wins, land or not"
-    assert (guarded[0], guarded[1]) == ocean, "guarded: next-nearest cell with clear water"
-    assert not nn._mask_blocked(cyc, slat, slng, guarded[0], guarded[1])
-    assert guarded[4] > plain[4], "the guard trades distance for an unobstructed path"
-
-
-def test_select_node_land_guard_is_off_by_default():
-    # every existing caller (nwps_series_by_hour, trkng_systems_by_hour) omits avoid_land and
-    # must pick exactly as before — the guard is placement-only.
-    cyc = _barrier_cycle()
-    slat, slng = _barrier_spot(cyc)
-    assert nn.select_node(cyc, slat, slng, None) \
-        == nn.select_node(cyc, slat, slng, None, avoid_land=False)
-    # and with no land in the grid at all it changes nothing either
-    clear = _mask_grid(3, 3, 28.49, 0.009, -80.61, 0.010,
-                       [(r, c) for r in range(3) for c in range(3)])
-    assert nn.select_node(clear, slat, slng, None) \
-        == nn.select_node(clear, slat, slng, None, avoid_land=True)
-
-
-def test_select_node_falls_back_when_every_candidate_is_blocked():
-    # insurance, not a new rejection path: if nothing clears, the nearest cell is still returned,
-    # so the guard can move a placement but never drop a spot to NO_WET_CELL.
-    cyc = _mask_grid(4, 3, 28.470, 0.020, -80.620, 0.005, wet=[(0, 0), (0, 1), (0, 2)])
-    slat, slng = float(cyc["lats"][2, 1]), float(cyc["lons"][2, 1])
-    for j in range(3):
-        assert nn._mask_blocked(cyc, slat, slng, 0, j), f"(0,{j}) is behind the land row"
-    assert nn.select_node(cyc, slat, slng, None, avoid_land=True) \
-        == nn.select_node(cyc, slat, slng, None), "falls back to today's nearest pick"
-
-
-def test_mask_walk_cannot_be_slipped_diagonally():
-    # sampling at ~1/3 of a cell must stop a path threading the corner between land cells.
-    cyc = _mask_grid(3, 3, 28.480, 0.009, -80.620, 0.010, wet=[(0, 0), (2, 2)])
-    slat, slng = float(cyc["lats"][0, 0]), float(cyc["lons"][0, 0])
-    assert nn._mask_blocked(cyc, slat, slng, 2, 2), "the diagonal crosses land cell (1,1)"
-
-
-def test_guard_needs_no_gshhg_and_no_tuned_constant():
-    # the point of the rewrite: the guard depends on the cycle alone. No coastline index, and no
-    # NODE_HEADLAND_* threshold left to drift out of scale or to be set in an overlapping band.
-    assert not [k for k in dir(nn) if k.startswith("NODE_HEADLAND")], \
-        "the unsettable node-scale constants are gone, not merely retuned"
-    cyc = _barrier_cycle()
-    assert nn._mask_blocked(cyc, *_barrier_spot(cyc), 2, 4)     # no land index in sight
-
-
-def test_adjacent_cell_is_never_blocked_which_is_correct_at_model_resolution():
-    # a node one cell from the spot cannot have land "in between" at the model's resolution, and
-    # this is what replaces the old NEAR_TRIM/END_TRIM distances — a resolution-matched skip
-    # rather than a tuned 100 m that was never measured.
-    cyc = _barrier_cycle()
-    slat, slng = _barrier_spot(cyc)
-    assert not nn._mask_blocked(cyc, slat, slng, 1, 2), "one row north — adjacent, never blocked"
-    assert not nn._mask_blocked(cyc, slat, slng, 1, 3), "diagonally adjacent — likewise"
-
-
-def test_grid_area_floor_is_one_cell_and_per_grid():
-    # per-grid land-area floor, derived from spacing the way grid_far_cap_km derives the far cap.
-    def mk(dlat, dlng, lat0=40.55, lng0=-73.95, n=6):
-        la, lo = np.meshgrid(np.array([lat0 + k * dlat for k in range(n)]),
-                             np.array([lng0 + k * dlng for k in range(n)]), indexing="ij")
-        return {"lats": la, "lons": lo}
-    fine = mk(0.01631, 0.02112)                                # okx-like ~1.8 km -> ~3.24 km2
-    coarse = mk(0.02256, 0.02750, lat0=37.0, lng0=-122.5)      # mtr-like ~2.48 km -> ~6.15 km2
-    assert 3.0 <= nn.grid_area_floor_km2(fine) <= 3.5
-    assert 5.5 <= nn.grid_area_floor_km2(coarse) <= 6.8
-    assert nn.grid_area_floor_km2(coarse) > nn.grid_area_floor_km2(fine), "coarser grid, higher floor"
-    assert abs(nn.grid_area_floor_km2(fine) - nn.grid_spacing_km(fine) ** 2) < 1e-9, "= one cell"
+def test_placement_carries_no_land_crossing_check():
+    # DELIBERATE ABSENCE, not an oversight. Two land-crossing guards were built and both were
+    # tested against real coastline across seven WFOs: the GSHHG polygon check produced 23 false
+    # positives (box alone would have lost 17 correctly-placed spots) and the model-mask walk
+    # moved zero nodes anywhere, including mhx's resolved ~1 km Hatteras barrier. The half-plane
+    # rule above had already covered every case. scripts/node_headland_calibrate.py is the record.
+    import inspect
+    assert list(inspect.signature(nn.select_node).parameters) == \
+        ["cycle", "lat", "lng", "orientation"], "select_node takes no land-guard parameter"
+    assert not [k for k in dir(nn) if k.startswith("NODE_HEADLAND")]
+    assert not hasattr(nn, "_mask_blocked") and not hasattr(nn, "grid_area_floor_km2")
 
 
 def test_buoy_scale_headland_defaults_are_untouched_by_the_parameterisation():
@@ -1203,23 +1131,6 @@ def test_buoy_scale_headland_defaults_are_untouched_by_the_parameterisation():
                    "own_graze_km": nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM}, got
     assert inspect.signature(nn._headland_verdict).parameters["max_km"].default \
         == nn.FIND_BUOY_HEADLAND_MAX_KM
-
-
-def test_no_current_placement_can_move_live():
-    # The guard is insurance for the ~25 spots about to place, not a fix for the placed ones.
-    # It is unreachable for them BY CONSTRUCTION: every placed spot carries a baked node, and the
-    # read path (nwps_series_by_hour / trkng_systems_by_hour) resolves that node with _nearest_cell,
-    # consulting select_node only when the baked node is ABSENT. select_node is passed a land index
-    # from exactly one place — validate_batch — which does not touch spots_enriched.json.
-    import os
-    enriched = json.loads(open(os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "pipeline", "spots_enriched.json")).read())
-    placed = [s for s in enriched if s.get("swell_window_source") == "nwps"]
-    assert len(placed) == 491, f"expected the 491 placed spots, got {len(placed)}"
-    missing = [s.get("name") for s in placed
-               if s.get("nwps_node_lat") is None or s.get("nwps_node_lng") is None]
-    assert not missing, f"these placed spots would re-enter select_node on read: {missing}"
 
 
 def _synthetic_convex_coast(west_lon=-80.85):

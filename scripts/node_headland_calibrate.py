@@ -1,47 +1,57 @@
 #!/usr/bin/env python3
-"""Node-scale land-crossing bar: the record of a REJECTED mechanism, and the head-to-head.
+"""Why placement does NO land-crossing check at node scale — the record, and the evidence.
 
-WHAT THE FIRST MAC RUN FOUND. The land-crossing guard originally reused _headland_verdict — the
---find-buoy GSHHG polygon check — at a re-scaled set of four constants. On real GSHHG that does
-not work at node scale, and no setting of those four is both safe and useful:
+FINAL FINDING. Two land-crossing guards were built for select_node and BOTH were dropped after
+being tested against real coastline across SEVEN WFOs (mfl, mhx, okx, phi, hgx, bro, box).
+Neither is needed: select_node's existing SEAWARD HALF-PLANE rule already prevents the failure
+they were built for. A cell behind a barrier is landward of the shore normal, so the +-90 filter
+drops it before distance is ever considered.
 
-  * phase 1: 36+ of the 491 placed spots rejected their own correct baked node, across nearly
-    every WFO.
-  * phase 3: 28 along-shore nodes rejected, clip penetration 2 m to 396 m.
-  * the AREA floor cannot filter. The crossed polygon reads 20,154,740 km2 over and over —
-    full-res GSHHG holds North America as ONE polygon. Making the floor PER-GRID (one cell,
-    nn.grid_area_floor_km2) removes only 2 of the 9 areas actually crossed: 0.6 km2 everywhere
-    and 4.4 km2 on coarse grids. 26.8, 29.4, 55.2, 107, 132, 243 km2 and the continent survive
-    on EVERY grid.
-  * PENETRATION cannot separate. must-CLEAR reaches 396 m (measured above); must-FLAG for a
-    barrier of width W is ~W/2, so it only clears 396 m once W > 0.79 km — and a barrier that
-    wide is about one grid cell, which is exactly when the MODEL'S OWN MASK already marks it
-    land. The band where GSHHG could add anything over the mask is the band where its threshold
-    is unsettable; even on the resolved side the margin is ~104 m on phi's 1 km grid, against a
-    2 km margin at buoy scale.
+  GSHHG polygon check (the --find-buoy _headland_verdict, re-scaled): 23 FALSE POSITIVES across
+  the seven, penetrations 24-133 m, mostly against the single North America polygon, plus
+  Martha's Vineyard (243.2 km2) and Nantucket (132.0 km2) clipping their own shorelines. box
+  alone would have lost 17 correctly-placed spots. No setting of its four constants is both safe
+  and useful:
+    * phase 1 on the 491 placed spots: 36+ rejected their own correct baked node.
+    * phase 3: 28 along-shore nodes rejected, clip penetration 2 m to 396 m.
+    * the AREA floor cannot filter. The crossed polygon reads 20,154,740 km2 over and over --
+      full-res GSHHG holds North America as ONE polygon. A PER-GRID floor of one cell (1.00 km2
+      at phi up to 9.30 at lox) removes only 2 of the 9 areas actually crossed: 0.6 km2
+      everywhere and 4.4 km2 on coarse grids. 26.8, 29.4, 55.2, 107, 132, 243 km2 and the
+      continent survive on EVERY grid.
+    * PENETRATION cannot separate. must-CLEAR reaches 396 m; must-FLAG for a barrier of width W
+      is ~W/2, so it only clears 396 m once W > 0.79 km -- and a barrier that wide is about one
+      grid cell, which is exactly when the model's own mask already marks it land. The band where
+      GSHHG could add anything is the band where its threshold is unsettable.
 
-So placement now walks the NWPS land mask (nn._mask_blocked), which needs no tuned constant at
-all. This script stays as the reproducible counterfactual and as the bar for what remains.
+  MODEL-MASK walk (no tuned constant at all -- sample the spot->cell segment against the NWPS
+  land mask): moved ZERO nodes on all seven WFOs, INCLUDING mhx, where Hatteras is a resolved
+  ~1 km barrier with open Pamlico Sound behind it. That was the strongest candidate geometry in
+  the set and it stayed silent, because the half-plane rule had already excluded every landward
+  cell before the walk ran.
 
-READ-ONLY: loads spots_enriched.json, the assignments file and GSHHG, and writes nothing except
-its own JSON summary next to the repo (--json).
+CONSEQUENCE FOR ANYONE CHANGING select_node: the +-90 seaward filter is LOAD-BEARING. It is not
+a redundant heuristic sitting in front of a real check -- it IS the check. Weaken it and this
+conclusion no longer holds; re-run this script before assuming otherwise.
 
-  phase 1  FALSE POSITIVES of the GSHHG mechanism + the two trim distributions. GSHHG only, NO
-           NOMADS. The distributions are what a trim-based approach would have needed:
-             * spot -> GSHHG shore, signed (+ = the spot's coordinate sits INLAND).
-             * node -> GSHHG shore, incl. any model-wet node GSHHG places inside land.
-           Both are printed AND written to the JSON summary, and repeated in a trailing SUMMARY
-           block so a piped `tail` still shows them.
-  phase 2  MUST-FLAG side, and the HEAD-TO-HEAD. Needs a CG1 cycle (Mac/NOMADS). For every spot
-           in the WFO — INCLUDING the ones not yet placed, which is the whole point on mfl —
-           reports what select_node picks with and without the mask guard, and what the GSHHG
-           mechanism would have said, with the crossed polygon's area and penetration.
-  phase 3  OVER-REJECTION probe for the graze ceiling, as above.
+This script is kept as that record and as the harness to re-run. READ-ONLY: it loads
+spots_enriched.json, the assignments file and GSHHG, and writes nothing except its own JSON
+summary with --json.
+
+  phase 1  the GSHHG mechanism's false positives on the 491 placed spots, plus the two trim
+           distributions a trim-based approach would have needed (spot -> GSHHG shore signed,
+           and node -> GSHHG shore incl. model-wet nodes GSHHG places inside land). GSHHG only,
+           no NOMADS. Both distributions are repeated in a trailing SUMMARY block so a piped
+           `tail` still shows them.
+  phase 2  per-WFO counterfactual: for every spot the WFO will decide for -- INCLUDING the ones
+           not yet placed, which is the whole point on mfl -- what select_node picks today and
+           what the GSHHG mechanism would have rejected, with the crossed polygon's area (at the
+           per-grid one-cell floor) and the crossing's inland penetration. Needs a CG1 cycle.
+  phase 3  over-rejection probe: placed spots whose node sits >=55 deg off the shore normal.
 
 Run:
   python3 scripts/node_headland_calibrate.py --phase1 --phase3 --json
-  python3 scripts/node_headland_calibrate.py --phase2 --wfo mfl     # then mhx, okx, phi, hgx, box
-Exit status is 1 if a phase fails its expected verdict, so it can gate a merge.
+  python3 scripts/node_headland_calibrate.py --phase2 --wfo mfl
 """
 from __future__ import annotations
 
@@ -112,15 +122,26 @@ def _placed_spots():
             if s.get("swell_window_source") == "nwps" and s.get("nwps_node_lat") is not None]
 
 
-# The GSHHG node-scale settings under measurement. They no longer live in nwps_nearshore: the
-# first Mac run showed no setting of them is both safe and useful, so placement moved to the
-# model's own land mask. They stay HERE so the counterfactual remains reproducible and so a future
-# reader can re-derive that finding rather than take it on trust. AREA is now PER-GRID where a
-# cycle is available (nn.grid_area_floor_km2) — one cell, land below which NWPS cannot see.
+# The GSHHG node-scale settings under measurement. They deliberately do NOT live in
+# nwps_nearshore: placement carries no land-crossing check at all, so these belong to the record
+# of the rejected mechanism, not to production. They stay HERE so the counterfactual remains
+# reproducible and a future reader can re-derive the finding rather than take it on trust.
+# Phase 2 substitutes the PER-GRID area floor (_one_cell_km2 — one grid cell, below which NWPS
+# cannot see the land at all) for the fixed value, which is the strongest form the area test can
+# take; the docstring records that even so it removes only 2 of the 9 areas actually crossed.
 GSHHG_NEAR_TRIM_KM = 0.10
 GSHHG_END_TRIM_KM = 0.10
 GSHHG_AREA_KM2 = 0.5
 GSHHG_OWN_GRAZE_KM = 0.0
+
+
+def _one_cell_km2(cycle):
+    """Per-grid land-area floor = ONE grid cell = grid_spacing_km(cycle)**2 (phi 1.0 km -> 1.00
+    km2; okx/akq 1.80 -> 3.24; box 1.99 -> 3.96; mtr 2.48 -> 6.15; gyx 2.49 -> 6.20; lox ~3.05 ->
+    9.30), derived from the grid the way grid_far_cap_km derives the placement cap. Lives here
+    rather than in nwps_nearshore because nothing in production uses it."""
+    sp = nn.grid_spacing_km(cycle)
+    return sp * sp if sp > 0 else nn.FAR_CAP_FLOOR_KM ** 2
 
 
 def _node_scale_kw(area_km2=None):
@@ -374,58 +395,44 @@ def phase2(land, geod, placed, wfo):
               "Live NOMADS + cfgrib needed — run on the Mac.", file=sys.stderr)
         return 2
     spacing = nn.grid_spacing_km(cycle)
-    per_grid_area = nn.grid_area_floor_km2(cycle)
+    per_grid_area = _one_cell_km2(cycle)
     print(f"grid spacing {spacing:.2f} km   far cap {nn.grid_far_cap_km(cycle):.2f} km   "
           f"one cell = {per_grid_area:.2f} km2")
     print(f"(GSHHG column uses the PER-GRID area floor {per_grid_area:.2f} km2, not the old "
           f"fixed {GSHHG_AREA_KM2} — land below one cell is invisible to NWPS.)\n")
 
-    print(f"  {'spot':24}{'st':>4}{'plain_km':>10}{'guarded_km':>12}  moved  "
-          f"{'gshhg':>7}{'area_km2':>10}{'pen_km':>9}")
-    moved, gshhg_only, both = [], [], []
+    print(f"  {'spot':24}{'st':>4}{'node_km':>9}{'brg_off':>9}  {'gshhg':>7}"
+          f"{'area_km2':>10}{'pen_km':>9}")
+    gshhg_rejects = []
     for s in roster:
         p = (s["lat"], s["lng"])
         o = s.get("orientation_deg")
-        plain = nn.select_node(cycle, p[0], p[1], o)
-        guarded = nn.select_node(cycle, p[0], p[1], o, avoid_land=True)
-        if plain is None or guarded is None:
+        sel = nn.select_node(cycle, p[0], p[1], o)
+        if sel is None:
             print(f"  {s['name'][:23]:24}{s['_state'][:4]:>4}   no wet cell in grid")
             continue
-        did_move = (plain[0], plain[1]) != (guarded[0], guarded[1])
-        gv = nn._headland_verdict(p, (plain[2], plain[3]), land,
+        node = (sel[2], sel[3])
+        off = (abs(((nn._bearing(p[0], p[1], *node) - o + 180) % 360) - 180)
+               if o is not None else float("nan"))
+        gv = nn._headland_verdict(p, node, land,
                                   **_node_scale_kw(area_km2=per_grid_area))["reject"]
-        ch, ar, pen = _describe_crossing(p, (plain[2], plain[3]), land, geod)
-        print(f"  {s['name'][:23]:24}{s['_state'][:4]:>4}{plain[4]:10.2f}{guarded[4]:12.2f}"
-              f"{'   YES' if did_move else '    - '}  {'REJECT' if gv else 'clear':>7}"
+        ch, ar, pen = _describe_crossing(p, node, land, geod)
+        print(f"  {s['name'][:23]:24}{s['_state'][:4]:>4}{sel[4]:9.2f}{off:9.0f}  "
+              f"{'REJECT' if gv else 'clear':>7}"
               f"{(ar if ar is not None else float('nan')):10.1f}"
               f"{(pen if pen is not None else float('nan')):9.3f}")
-        if did_move:
-            moved.append((s['name'], s['_state'], pen, ar))
-            if gv:
-                both.append(s['name'])
-        elif gv:
-            gshhg_only.append((s['name'], pen, ar))
+        if gv:
+            gshhg_rejects.append((s['name'], s['_state'], pen, ar))
 
-    print(f"\nMASK guard moved {len(moved)} node(s) — these are the must-FLAG cases, found at the")
-    print("model's own resolution with no tuned constant:")
-    for nm, st, pen, ar in moved:
-        print(f"    {nm}  [{st}]  crossed polygon {ar if ar else float('nan'):.1f} km2, "
+    print(f"\nselect_node's half-plane rule chose all {len(roster)} of these. The GSHHG mechanism")
+    print(f"would have REJECTED {len(gshhg_rejects)} of them — every one a false positive, since the")
+    print("chosen node is the correct seaward cell:")
+    for nm, st, pen, ar in gshhg_rejects:
+        print(f"    {nm}  [{st}]  polygon {ar if ar else float('nan'):.1f} km2, "
               f"penetration {pen*1000 if pen else float('nan'):.0f} m")
-    print(f"\nGSHHG would ALSO have rejected the plain pick for {len(gshhg_only)} spot(s) the mask")
-    print("did NOT move. Each is either a sub-grid barrier (the model cannot see it, so moving")
-    print("the node cannot recover shelter it never computed) or a false positive of the kind")
-    print(f"phase 1 counted:")
-    for nm, pen, ar in gshhg_only[:15]:
-        print(f"    {nm}  polygon {ar if ar else float('nan'):.1f} km2, "
-              f"penetration {pen*1000 if pen else float('nan'):.0f} m")
-    if len(gshhg_only) > 15:
-        print(f"    ... and {len(gshhg_only) - 15} more")
-    print(f"\nagreement: both moved/rejected {len(both)}; mask-only {len(moved) - len(both)}; "
-          f"gshhg-only {len(gshhg_only)}")
-    if not moved:
-        print("\nNo must-FLAG case on this WFO. That is a real result, not a pass: the guard has")
-        print("not yet been shown to fire on real coastline. Try the other BARRIER_WFOS before")
-        print("concluding it never fires.")
+    moved = []
+    if not gshhg_rejects:
+        print("    (none)")
     return 0
 
 

@@ -83,8 +83,11 @@ NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/"
 # otherwise-blocked energy, negligible only above ~0.11 Hz — so it matters MOST #
 # for the long-period groundswell that makes these spots work.                  #
 #                                                                              #
-# What replaced them is geometric: select_node now rejects a candidate cell     #
-# with LAND between it and the spot (see NODE_HEADLAND_* below).                #
+# NOTHING replaced them, and that is the evidenced answer rather than an        #
+# omission. Two land-crossing guards were built for select_node and both were   #
+# dropped after testing against real coastline across seven WFOs: its existing  #
+# SEAWARD HALF-PLANE rule already covers the case (see the note above           #
+# select_node, and scripts/node_headland_calibrate.py for the full result).     #
 # NOT added: a depth check. The CG1 GRIB carries dirc, dirpw, perpw, shts, spc, #
 # swh, wdir, ws and zos; zos is sea surface HEIGHT, not bathymetry, so no depth #
 # field is available and an external source is out of scope.                    #
@@ -503,113 +506,41 @@ def _wet_nodes(lats, lons, mask):
 
 
 # --------------------------------------------------------------------------- #
-# THE LAND-CROSSING GUARD — and why it walks the MODEL'S OWN MASK, not GSHHG.   #
+# THE SEAWARD HALF-PLANE RULE IS LOAD-BEARING — DO NOT REMOVE IT AS A            #
+# REDUNDANT HEURISTIC. It is what stops a node being chosen on the far side of   #
+# land, and placement carries NO separate land-crossing check because of it.     #
 #                                                                              #
-# The first implementation reused _headland_verdict (the --find-buoy GSHHG      #
-# polygon check) at a re-scaled NODE_HEADLAND_* set. MEASURED ON REAL GSHHG, it #
-# does not work at this scale, and no setting of its four constants makes it    #
-# both safe and useful:                                                         #
+# A cell behind a barrier is LANDWARD of the shore normal, so the ±90° filter    #
+# drops it BEFORE distance is ever considered. Two land-crossing guards were     #
+# built to back this up and BOTH were tested against real coastline across seven #
+# WFOs (mfl, mhx, okx, phi, hgx, bro, box) before being dropped as unnecessary:  #
 #                                                                              #
-#   * FALSE POSITIVES: 36+ of the 491 placed spots rejected their own correct   #
-#     baked node, across nearly every WFO.                                      #
-#   * The AREA floor cannot filter: the crossed polygon reads 20,154,740 km2    #
-#     over and over — full-res GSHHG holds North America as ONE polygon, the    #
-#     same single-continent artifact that made the buoy-scale detector a no-op  #
-#     at 8.0 km, here doing the opposite. Making the floor PER-GRID (one cell,  #
-#     grid_area_floor_km2 below) removes only 2 of the 9 polygon areas actually #
-#     crossed (0.6 km2 everywhere, 4.4 km2 on coarse grids); 26.8, 29.4, 55.2,  #
-#     107, 132, 243 km2 and the continent survive on EVERY grid.                #
-#   * PENETRATION cannot separate either. Measured must-CLEAR along-shore clip: #
-#     28 nodes, 2 m to 396 m. Must-FLAG for a barrier of width W is ~W/2, so it #
-#     only clears 396 m once W > 0.79 km. Below that the two ranges OVERLAP.    #
-#     Above it the barrier is roughly a grid cell wide — which is exactly when  #
-#     the MODEL'S OWN MASK already marks it land. The regime where GSHHG could  #
-#     add anything over the mask is precisely the regime where its threshold is #
-#     unsettable, and even on the resolved side the margin is ~104 m on phi's   #
-#     1 km grid against a 2 km margin at buoy scale.                            #
+#   * a GSHHG polygon check re-scaled from --find-buoy: 23 FALSE POSITIVES over  #
+#     those seven, penetrations 24–133 m, mostly against the single North        #
+#     America polygon, plus Martha's Vineyard (243.2 km²) and Nantucket (132.0   #
+#     km²) clipping their own shorelines. box alone would have lost 17 correctly #
+#     placed spots. No setting of its constants was both safe and useful: a      #
+#     per-grid area floor of one cell removed only 2 of the 9 polygon areas      #
+#     actually crossed, and penetration only separates must-clear from must-flag #
+#     once a barrier exceeds ~0.79 km — by which point the model's own mask      #
+#     already marks it land.                                                     #
+#   * a walk of the NWPS land mask itself, which needed no tuned constant:       #
+#     moved ZERO nodes on all seven, INCLUDING mhx, where Hatteras is a resolved #
+#     ~1 km barrier with open Pamlico Sound behind it — the strongest candidate  #
+#     geometry in the set, and it stayed silent.                                 #
 #                                                                              #
-# So the guard walks the NWPS land mask instead. That is the same yardstick the #
-# rest of placement already uses, and it needs NO tuned constant at all:        #
-#   - resolution-matched by construction. Land smaller than a cell is invisible #
-#     to NWPS, so it cannot be why a node is wrong; rejecting on it would add   #
-#     false-positive surface for no modelled benefit.                           #
-#   - no continent artifact — the mask is a raster, not a polygon.              #
-#   - no near/end trim: the spot's own cell and the destination cell are simply #
-#     excluded, which is a resolution-matched skip rather than a tuned distance.#
-#   - no GSHHG dependency, so it runs in CI and offline, and the NWPS-vs-GSHHG  #
-#     disagreement that made both trims guesses disappears.                     #
-# KNOWN LIMIT, stated rather than hidden: a barrier narrower than one cell is   #
-# not in the mask, so the guard cannot see it. Neither can the model — an       #
-# unresolved barrier means the model never computed the sheltering, so choosing #
-# a different cell cannot recover it. That is a model-resolution limit, not a   #
-# node-selection one.                                                           #
+# The half-plane rule had already covered every case. scripts/                   #
+# node_headland_calibrate.py holds the full result; it is kept as the record of  #
+# why placement does no land-crossing check at node scale. If this filter is     #
+# ever weakened, that conclusion no longer holds and the question reopens.       #
 # --------------------------------------------------------------------------- #
-def grid_area_floor_km2(cycle):
-    """Per-grid land-area floor = ONE grid cell = grid_spacing_km(cycle)**2 (phi 1.0 km -> 1.0 km2;
-    okx/akq 1.80 -> 3.24; box 1.99 -> 3.96; mtr 2.48 -> 6.15; gyx 2.49 -> 6.20; lox ~3.05 -> 9.30).
-    Derived from the grid the way grid_far_cap_km derives the placement cap, rather than fixed.
-    Land below this is invisible to NWPS and cannot be why a node is wrong. The mask walk gets this
-    for free — this function exists for the GSHHG counterfactual in the calibration harness, which
-    is what showed a per-grid floor still admits the continent and six real polygons."""
-    sp = grid_spacing_km(cycle)
-    return sp * sp if sp > 0 else FAR_CAP_FLOOR_KM * FAR_CAP_FLOOR_KM
-
-
-def _cell_index(cycle, lat, lng):
-    """(i, j) of the grid cell containing/nearest (lat, lng). NWPS CG1 grids are regular lat/lon
-    meshgrids built with indexing='ij', so the latitude vector is column 0 and the longitude vector
-    is row 0 — the same decomposition grid_spacing_km uses. None for a degenerate grid."""
-    lats = np.asarray(cycle["lats"]); lons = np.asarray(cycle["lons"])
-    if lats.ndim != 2 or lons.ndim != 2 or lats.size == 0:
-        return None
-    i = int(np.abs(lats[:, 0] - lat).argmin())
-    j = int(np.abs(lons[0, :] - lng).argmin())
-    return i, j
-
-
-def _mask_blocked(cycle, lat, lng, ni, nj):
-    """True when the MODEL'S OWN land mask puts land between the spot (*lat*, *lng*) and the wet
-    cell (*ni*, *nj*). Samples the straight spot->node segment at ~1/3 of a cell — dense enough that
-    a diagonal cannot slip between two land cells — and reports any INTERMEDIATE sample landing in a
-    masked cell. The spot's own cell is excluded (a surf spot sits on the beach, so its cell is
-    usually land) and so is the destination (wet by definition); a node one cell away therefore can
-    never be blocked, which is correct at model resolution. Pure: reads only lats/lons/mask."""
-    idx = _cell_index(cycle, lat, lng)
-    if idx is None:
-        return False
-    mask = cycle["mask"]
-    spacing = grid_spacing_km(cycle)
-    if spacing <= 0:
-        return False
-    lats, lons = np.asarray(cycle["lats"]), np.asarray(cycle["lons"])
-    nlat, nlng = float(lats[ni, nj]), float(lons[ni, nj])
-    total = _haversine_km(lat, lng, nlat, nlng)
-    steps = max(2, int(total / (spacing / 3.0)))
-    skip = {idx, (ni, nj)}
-    for k in range(1, steps):
-        f = k / steps
-        s = _cell_index(cycle, lat + (nlat - lat) * f, lng + (nlng - lng) * f)
-        if s is None or s in skip:
-            continue
-        if mask[s[0], s[1]]:
-            return True
-    return False
-
-
-def select_node(cycle, lat, lng, orientation, avoid_land=False):
+def select_node(cycle, lat, lng, orientation):
     """Seaward-aware nearest WET cell (replaces MOP's metaShoreNormal clause):
     prefer wet cells whose bearing from the spot is within ±90° of orientation_deg
     (the open-ocean half-plane), else nearest wet. Returns
     (i, j, node_lat, node_lng, dist_km, moved) or None if no wet cell.
 
-    With *avoid_land* (placement only — every existing caller keeps the default False and today's
-    behaviour exactly), candidates are walked NEAREST-FIRST and the first with no land between it
-    and the spot is taken (_mask_blocked). The ±90° filter is a bearing test only — it cannot tell
-    a cell across open water from one behind a barrier on the same bearing — so this is the
-    geometric guard that replaced the removed OFFWIN/DEAD condition checks (PLACEMENT_IS_GEOMETRY).
-    The search is bounded by grid_far_cap_km, beyond which placement_verdict returns FAR anyway; if
-    nothing inside the cap clears, the nearest seaward cell is returned, i.e. exactly today's pick.
-    The guard can therefore only ever move a selection, never drop a spot."""
+    The ±90° filter is LOAD-BEARING, not a nicety — see the block above."""
     wet = _wet_nodes(cycle["lats"], cycle["lons"], cycle["mask"])
     if not wet:
         return None
@@ -620,14 +551,7 @@ def select_node(cycle, lat, lng, orientation, avoid_land=False):
         sea = [n for n in wet if _ang_within(_bearing(lat, lng, n[0], n[1]), orientation, 90)]
     else:
         sea = wet
-    pool = sea or [naive]
-    best = min(pool, key=dist)
-    if avoid_land:
-        cap = grid_far_cap_km(cycle)
-        for cand in sorted((n for n in pool if dist(n) <= cap), key=dist):
-            if not _mask_blocked(cycle, lat, lng, cand[2], cand[3]):
-                best = cand
-                break
+    best = min(sea, key=dist) if sea else naive
     return best[2], best[3], best[0], best[1], dist(best), best is not naive
 
 
@@ -1730,15 +1654,11 @@ def validate_batch(batch=None, wfo=None):
     except Exception as e:  # noqa: BLE001
         print(f"(fallback baseline unavailable — {type(e).__name__}; showing NWPS sanity only)\n")
 
-    # The land-crossing guard walks the CYCLE'S OWN land mask (see the guard block above), so it
-    # needs no coastline download and no second dataset — it is always available wherever a cycle is.
-    print(f"land-crossing guard: ON — NWPS mask walk at {grid_spacing_km(cycle):.2f} km resolution "
-          f"(land below {grid_area_floor_km2(cycle):.2f} km2 is not in the mask and cannot be seen)")
     print(f"  {'slug':22}{'node_km':>8}{'swh':>6}{'per':>6}{'dir':>6}  verdict   NWPS★   fb★")
     placed, outcomes = [], []
     for s in spots:
         slug = _slug(s["name"]); wfo_tag = s.get("nwps_wfo", wfo)
-        sel = select_node(cycle, s["lat"], s["lng"], s.get("orientation_deg"), avoid_land=True)
+        sel = select_node(cycle, s["lat"], s["lng"], s.get("orientation_deg"))
         if sel is None:
             # No water anywhere in the fetched grid near this spot: the spot is
             # OUTSIDE this WFO's marine domain. A DISTINCT outcome from FAR (which
@@ -2948,14 +2868,14 @@ def _headland_land_chord_km(spot, buoy, land, detail=None, *,
     *near_trim_km* (the spot's own shore/barrier) and the last *end_trim_km* (near the buoy).
     land None → 0.0 (offline / no GSHHG: not checked).
 
-    THE FOUR KEYWORD CONSTANTS ARE SCALE, NOT POLICY. They default to the FIND_BUOY_HEADLAND_*
-    values calibrated for 10–110 km spot→buoy pairings, so every --find-buoy caller and both
-    real-GSHHG acceptance bars exercise EXACTLY the numbers they were validated against. They are
-    parameters because select_node reuses this same geometry over a spot→NODE path of ~1 km, where
-    the buoy-scale numbers make the test inert rather than strict: the 3.0 + 2.0 km combined trim
-    alone returns 0.0 outright on 490 of the 491 currently placed spots, and land within 3 km of
-    the spot — which is exactly where the land between a spot and a mis-picked nearby cell sits —
-    is trimmed on EVERY path regardless of length. See NODE_HEADLAND_* for the node-scale set.
+    THE FOUR KEYWORD CONSTANTS ARE SCALE, NOT POLICY, and every caller in this module uses the
+    defaults. They default to the FIND_BUOY_HEADLAND_* values calibrated for 10–110 km spot→buoy
+    pairings, so --find-buoy and both real-GSHHG acceptance bars exercise EXACTLY the numbers they
+    were validated against. They are parameters ONLY so scripts/node_headland_calibrate.py can
+    re-run the same geometry at a spot→node scale of ~1 km and reproduce why placement does no
+    land-crossing check there (at buoy scale the 3.0 + 2.0 km combined trim returns 0.0 outright
+    on 490 of the 491 placed spots; re-scaled it produced 23 false positives across seven WFOs).
+    PLACEMENT DOES NOT CALL THIS — see the note above select_node.
     NOT _ray_linestring — that casts a fixed-length ray along a BEARING; here we need the actual
     spot→buoy SEGMENT — but it reuses the same pyproj.Geod densify + shapely-intersection primitives.
 
@@ -3035,7 +2955,7 @@ def _headland_verdict(spot, buoy, land, *, max_km=FIND_BUOY_HEADLAND_MAX_KM, **s
     *max_km* and **scale (near_trim_km / end_trim_km / area_km2 / own_graze_km, forwarded to
     _headland_land_chord_km) default to the buoy-scale FIND_BUOY_HEADLAND_* constants, so an
     unqualified call — every --find-buoy caller, both real-GSHHG acceptance bars — behaves exactly
-    as before. select_node passes the NODE_HEADLAND_* set for its ~1 km spot→node paths."""
+    as before. Only scripts/node_headland_calibrate.py passes anything else."""
     dist_km = _haversine_km(spot[0], spot[1], buoy[0], buoy[1])
     detail = {}
     chord = _headland_land_chord_km(spot, buoy, land, detail=detail, **scale)
