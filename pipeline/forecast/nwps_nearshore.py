@@ -60,7 +60,37 @@ log = logging.getLogger("pipeline.forecast.nwps_nearshore")
 
 RATING_SOURCE = "ww3"          # face_ft shoaling factor — same as the validated chain
 NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/"
-PER_FLOOR_S = 3.0              # period below this = dead/sheltered (back-bay) cell
+# --------------------------------------------------------------------------- #
+# PLACEMENT_IS_GEOMETRY — why placement_verdict returns only OK / FAR.          #
+# Assigning a spot to a model node is a statement about where the spot is, not  #
+# about what the sea is doing while the check runs. placement_verdict used to   #
+# return five outcomes; two of them (DEAD, period below a floor; OFFWIN, peak   #
+# direction outside the spot's swell window) were sea-state conditions, so a    #
+# spot's data source depended on the MONTH it was validated.                    #
+#                                                                              #
+# State of the practice: no operational surf service documented — Surfline, the #
+# former Magicseaweed, surf-forecast.com, Windy, Stormglass — makes a spot's    #
+# data-source assignment conditional on current conditions. CDIP's MOP model,   #
+# the reference implementation for this exact problem, precomputes a continuous #
+# transfer coefficient per direction and frequency from BATHYMETRY ALONE and    #
+# applies it to whatever spectrum arrives. WAVEWATCH III represents unresolved- #
+# island blocking as a partial transmission coefficient, not a binary (Tolman   #
+# 2003).                                                                       #
+#                                                                              #
+# A hard directional gate is also physically wrong: diffraction puts wave       #
+# height at roughly HALF the open-ocean height on the geometric shadow line,    #
+# and Pawka, Inman & Guza (1984) found refraction supplies up to ~10% of        #
+# otherwise-blocked energy, negligible only above ~0.11 Hz — so it matters MOST #
+# for the long-period groundswell that makes these spots work.                  #
+#                                                                              #
+# What replaced them is geometric: select_node now rejects a candidate cell     #
+# with LAND between it and the spot (see NODE_HEADLAND_* below).                #
+# NOT added: a depth check. The CG1 GRIB carries dirc, dirpw, perpw, shts, spc, #
+# swh, wdir, ws and zos; zos is sea surface HEIGHT, not bathymetry, so no depth #
+# field is available and an external source is out of scope.                    #
+# --------------------------------------------------------------------------- #
+PER_FLOOR_S = 3.0              # RETIRED from placement (the removed DEAD floor) — kept as the
+                               # record of the threshold that was applied, referenced by nothing.
 # FAR placement cap — the max spot→nearest-seaward-wet-cell distance that still counts as
 # in-domain. GRID-AWARE (was a hardcoded 3.0 tuned to okx's 1.82 km grid): per-grid it is
 # max(FAR_CAP_FLOOR_KM, FAR_CAP_MULT × grid node spacing) — see grid_far_cap_km(). The 3.0 floor
@@ -215,16 +245,23 @@ def _in_arcs(deg, arcs):
 
 
 def placement_verdict(dist_km, per, dirpw, arcs, far_cap_km=FAR_CAP_FLOOR_KM):
-    """OK / FAR / DEAD / OFFWIN for a placed node — the clause-1 replacement.
+    """OK / FAR for a placed node — PURELY GEOMETRIC.
     FAR = no seaward wet cell within *far_cap_km* (the grid-aware cap from grid_far_cap_km();
-    defaults to the legacy FAR_CAP_FLOOR_KM for fine-grid / no-grid callers + tests); DEAD =
-    period below floor (sheltered); OFFWIN = direction outside the spot's swell window."""
+    defaults to the legacy FAR_CAP_FLOOR_KM for fine-grid / no-grid callers + tests).
+
+    *per*, *dirpw* and *arcs* ARE IGNORED and do not affect the verdict. They are retained only
+    so the existing call sites keep working; placement no longer needs a live wave spectrum.
+
+    DEAD (peak period below PER_FLOOR_S) and OFFWIN (peak direction outside the spot's swell
+    window) WERE RETURNED HERE AND WERE REMOVED (2026-08-13): they describe the sea state in the
+    hour the check happened to run, and were being used to make a permanent geographic decision,
+    so a spot's data source depended on the month it was validated. Twenty of Hawaii's 55 spots
+    read OFFWIN in August because they face N/NW and the only swell running was a SE trade sea —
+    Pipeline, Sunset, Waimea and Jaws are correctly off-window in August and in-window in
+    December. Five mainland spots failed the same way and two of those passed a month later.
+    See PLACEMENT_IS_GEOMETRY below for the state-of-practice and physics reasoning."""
     if dist_km is None or dist_km > far_cap_km:
         return "FAR"
-    if per is None or per != per or per < PER_FLOOR_S:
-        return "DEAD"
-    if dirpw is not None and dirpw == dirpw and not _in_arcs(dirpw, arcs):
-        return "OFFWIN"
     return "OK"
 
 
@@ -232,8 +269,13 @@ def _is_domain_miss(outcome):
     """Explicit rollup of the placement outcome: True when the spot fell OUTSIDE
     this WFO's grid domain — FAR (nearest wet cell beyond the grid's far cap) or NO_WET_CELL
     (no water in the grid at all) — so the grid-edge mop-up should retry it on
-    another WFO. False for in-domain disqualifiers (DEAD / OFFWIN) and OK. Purely
-    derived — it does NOT change how the outcomes themselves are computed."""
+    another WFO. False for OK. Purely derived — it does NOT change how the outcomes
+    themselves are computed.
+
+    Formerly also False for the in-domain disqualifiers DEAD / OFFWIN; both were removed from
+    placement_verdict (conditions, not geography — see its docstring), so the outcome set is now
+    OK / FAR / NO_WET_CELL. Passing either name still returns False, which is what it always
+    returned, so a stale caller or an archived validate-out is read the same way as before."""
     return outcome in ("FAR", "NO_WET_CELL")
 
 
@@ -460,11 +502,68 @@ def _wet_nodes(lats, lons, mask):
             for i in range(lats.shape[0]) for j in range(lats.shape[1]) if not mask[i, j]]
 
 
-def select_node(cycle, lat, lng, orientation):
+# --------------------------------------------------------------------------- #
+# NODE-SCALE headland constants — the SAME geometry as the --find-buoy check,   #
+# re-scaled for a spot→node path of ~1 km instead of a spot→buoy path of 10–110 #
+# km. Passed to _headland_verdict as keywords; nothing else uses them, and the  #
+# buoy-scale FIND_BUOY_HEADLAND_* defaults are untouched.                       #
+#                                                                              #
+# WHY RE-SCALING IS NECESSARY, MEASURED: over the 491 currently placed spots    #
+# the spot→node distance is median 1.35 km, p95 3.54 km, max 5.13 km, while     #
+# _headland_land_chord_km returns 0.0 outright when the path is shorter than    #
+# MID_START(3.0) + END_TRIM(2.0) = 5.0 km. That is 490 of 491 paths discarded   #
+# before a single polygon is queried; across the whole set 127 m of path is     #
+# examined. Worse, the 3.0 km near trim removes land close to the spot on EVERY #
+# path regardless of length — and land close to the spot is exactly the barrier #
+# or neck that would sit between a spot and a mis-picked nearby cell. Wired in  #
+# at buoy scale this guard is not strict, it is INERT.                          #
+#                                                                              #
+# NOT YET VALIDATED AGAINST REAL GSHHG. The two acceptance bars cover the       #
+# buoy-scale constants only; these four are reasoned from the geometry above    #
+# and covered offline by synthetic polygons. The Mac run is what validates      #
+# them — re-run select_node over all 491 placed spots with the real index and   #
+# confirm the reject count is still zero (see test_node_headland_*).            #
+# --------------------------------------------------------------------------- #
+NODE_HEADLAND_NEAR_TRIM_KM = 0.10   # skip the spot's own shoreline; spot coords carry ~tens of m error
+NODE_HEADLAND_END_TRIM_KM = 0.10    # skip the cell's own shoreline (a grid centre sits inside water)
+NODE_HEADLAND_AREA_KM2 = 0.5        # ignore rocks/sand bars; a real barrier island is far larger
+                                    #   (Fire I. ≈40, Assateague ≈60, Padre ≈350 km²) — and unlike the
+                                    #   buoy-scale 500 floor, a barrier IS the land in between here
+NODE_HEADLAND_OWN_GRAZE_KM = 0.0    # no coast-parallel graze to forgive over ~1 km: the two points are
+                                    #   close enough that ANY crossing genuinely separates them
+NODE_HEADLAND_MAX_CANDIDATES = 8    # bound the cost — cells are tested nearest-first and the walk stops
+                                    #   at the first clear one, so this only bites if many are blocked
+
+
+def _node_is_blocked(lat, lng, node, land):
+    """True when LAND sits between the spot (*lat*, *lng*) and *node* (a (nlat, nlng, i, j) wet
+    cell). Reuses _headland_verdict — the same GSHHG polygon crossing, area floor and own-landmass
+    logic as the --find-buoy check — at the NODE_HEADLAND_* scale. land None → always False (offline
+    / no GSHHG: never rejects, so placement degrades to today's behaviour rather than failing)."""
+    if land is None:
+        return False
+    v = _headland_verdict((lat, lng), (node[0], node[1]), land,
+                          max_km=float("inf"),          # a ~1 km path is never "far enough to wrap"
+                          near_trim_km=NODE_HEADLAND_NEAR_TRIM_KM,
+                          end_trim_km=NODE_HEADLAND_END_TRIM_KM,
+                          area_km2=NODE_HEADLAND_AREA_KM2,
+                          own_graze_km=NODE_HEADLAND_OWN_GRAZE_KM)
+    return bool(v["reject"])
+
+
+def select_node(cycle, lat, lng, orientation, land=None):
     """Seaward-aware nearest WET cell (replaces MOP's metaShoreNormal clause):
     prefer wet cells whose bearing from the spot is within ±90° of orientation_deg
     (the open-ocean half-plane), else nearest wet. Returns
-    (i, j, node_lat, node_lng, dist_km, moved) or None if no wet cell."""
+    (i, j, node_lat, node_lng, dist_km, moved) or None if no wet cell.
+
+    When *land* is a geodata.LandIndex, candidates are walked NEAREST-FIRST and the first with no
+    LAND CROSSING between it and the spot is taken (_node_is_blocked). The ±90° filter is a bearing
+    test only — it cannot tell a cell across open water from one behind a barrier on the same
+    bearing — so this is the geometric guard that replaced the removed OFFWIN/DEAD condition checks
+    (see PLACEMENT_IS_GEOMETRY). At most NODE_HEADLAND_MAX_CANDIDATES are tested; if none clear (or
+    *land* is None, the default — every existing caller) the nearest seaward cell is returned, i.e.
+    exactly today's pick. The guard can therefore only ever move a selection, never drop a spot."""
     wet = _wet_nodes(cycle["lats"], cycle["lons"], cycle["mask"])
     if not wet:
         return None
@@ -475,7 +574,13 @@ def select_node(cycle, lat, lng, orientation):
         sea = [n for n in wet if _ang_within(_bearing(lat, lng, n[0], n[1]), orientation, 90)]
     else:
         sea = wet
-    best = min(sea, key=dist) if sea else naive
+    pool = sea or [naive]
+    best = min(pool, key=dist)
+    if land is not None:
+        for cand in sorted(pool, key=dist)[:NODE_HEADLAND_MAX_CANDIDATES]:
+            if not _node_is_blocked(lat, lng, cand, land):
+                best = cand
+                break
     return best[2], best[3], best[0], best[1], dist(best), best is not naive
 
 
@@ -1540,7 +1645,7 @@ def validate_batch(batch=None, wfo=None):
     okx_pilot.json set (only when --wfo is absent entirely). The roster source + count is
     printed at the top so a run can never silently validate the wrong region's spots against a
     grid. Writes scripts/nwps_{wfo}_validate_out.json — a DIAGNOSTIC dump only (records every
-    spot's outcome: OK / FAR / DEAD / OFFWIN / NO_WET_CELL); it does NOT touch the curated apply
+    spot's outcome: OK / FAR / NO_WET_CELL); it does NOT touch the curated apply
     input scripts/nwps_okx_assignments.json (promote by hand after review). Mac-only (NOMADS);
     degrades to a clear message offline."""
     spots, roster_src, wfo = _validate_roster(batch, wfo)
@@ -1578,16 +1683,26 @@ def validate_batch(batch=None, wfo=None):
     except Exception as e:  # noqa: BLE001
         print(f"(fallback baseline unavailable — {type(e).__name__}; showing NWPS sanity only)\n")
 
+    # GSHHG full-res index for select_node's land-crossing guard — loaded ONCE for the whole
+    # roster (the same index the enrich raycast and --find-buoy use; no second loader). None
+    # offline / without GSHHG, in which case the guard is a no-op and node choice is unchanged.
+    land = None
+    try:
+        from ..enrichment.geodata import load_land_index
+        land = load_land_index()          # returns None (no raise) when GSHHG is absent
+    except Exception as e:  # noqa: BLE001  no GSHHG here — degrade, never fail placement on it
+        print(f"(coastline index unavailable — {type(e).__name__}; land-crossing guard is a no-op)")
+    print(f"land-crossing guard: {'ON — GSHHG full-res' if land is not None else 'OFF (no GSHHG index — nodes chosen by distance alone)'}")
     print(f"  {'slug':22}{'node_km':>8}{'swh':>6}{'per':>6}{'dir':>6}  verdict   NWPS★   fb★")
     placed, outcomes = [], []
     for s in spots:
         slug = _slug(s["name"]); wfo_tag = s.get("nwps_wfo", wfo)
-        sel = select_node(cycle, s["lat"], s["lng"], s.get("orientation_deg"))
+        sel = select_node(cycle, s["lat"], s["lng"], s.get("orientation_deg"), land=land)
         if sel is None:
             # No water anywhere in the fetched grid near this spot: the spot is
-            # OUTSIDE this WFO's marine domain. A DISTINCT outcome from FAR/DEAD/
-            # OFFWIN (those found a cell but disqualified it) — NO_WET_CELL means
-            # "retry against another WFO grid", not "genuinely off-window".
+            # OUTSIDE this WFO's marine domain. A DISTINCT outcome from FAR (which
+            # found a cell but beyond the grid's far cap) — NO_WET_CELL means
+            # "retry against another WFO grid", not "no usable cell nearby".
             print(f"  {slug:22}{'—':>8}  NO_WET_CELL  (no water in {wfo} grid — outside its marine domain)")
             outcomes.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag,
                              "grid_wfo": wfo, "outcome": "NO_WET_CELL",
@@ -1613,8 +1728,9 @@ def validate_batch(batch=None, wfo=None):
         print(f"  {slug:22}{dkm:8.2f}{(swh or 0):6.1f}{(per or 0):6.1f}{(dpw or 0):6.0f}"
               f"  {v:8}{sval:>6}{fval:>6}{'  *' if moved else ''}{'  domain-miss' if dm else ''}")
         # FAR = nearest seaward wet cell beyond the grid's far cap (spot outside this WFO's
-        # nearshore nest — a domain miss, like NO_WET_CELL); DEAD = period floor;
-        # OFFWIN = swell direction outside the spot's window (in-domain, not a miss).
+        # nearshore nest — a domain miss, like NO_WET_CELL). The outcome set is now OK / FAR /
+        # NO_WET_CELL: DEAD (period floor) and OFFWIN (direction outside the window) were removed
+        # because they are sea-state conditions, not geography — see PLACEMENT_IS_GEOMETRY.
         # domain_miss is the explicit rollup the grid-edge mop-up filters on.
         outcomes.append({"slug": slug, "name": s["name"], "nwps_wfo": wfo_tag, "grid_wfo": wfo,
                          "outcome": v, "domain_miss": dm, "nwps_node_distance_m": round(dkm * 1000),
@@ -1634,7 +1750,8 @@ def validate_batch(batch=None, wfo=None):
         validate_out = SCRIPTS_DIR / f"nwps_{wfo}_validate_out.json"   # per-region; no cross-region clobber
         validate_out.write_text(json.dumps(
             {"_comment": f"{wfo} --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every "
-             "spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input — review, then "
+             "spot's category (OK / FAR / NO_WET_CELL — placement is purely geometric; the former "
+             "DEAD/OFFWIN condition checks were removed). NOT the apply input — review, then "
              "promote OK spots into scripts/nwps_okx_assignments.json by hand.",
              "grid_wfo": wfo, "spots": placed, "outcomes": outcomes}, indent=2))
         n_ok = len(placed); n_other = len(outcomes) - n_ok
@@ -1659,13 +1776,18 @@ def _selftest():
     check("ang_within ±90", _ang_within(200, 180, 90) and not _ang_within(350, 180, 90))
     check("bearing east ≈90", abs(_bearing(40, -74, 40, -73) - 90) < 1)
 
-    # placement verdict (clause-1 replacement)
+    # placement verdict — PURELY GEOMETRIC (OK / FAR only; see PLACEMENT_IS_GEOMETRY)
     check("verdict FAR", placement_verdict(5.0, 10, 150, []) == "FAR")
-    check("verdict DEAD (period floor)", placement_verdict(1.0, 2.0, 150, []) == "DEAD")
-    check("verdict OFFWIN", placement_verdict(1.0, 10, 300, [{"min": 90, "max": 230}]) == "OFFWIN")
     check("verdict OK", placement_verdict(1.0, 10, 150, [{"min": 90, "max": 230}]) == "OK")
+    check("sub-floor period no longer DEAD (a condition, not geography)",
+          placement_verdict(1.0, 2.0, 150, []) == "OK")
+    check("off-window direction no longer OFFWIN (Pipeline in August)",
+          placement_verdict(1.0, 10, 300, [{"min": 90, "max": 230}]) == "OK")
+    check("placement needs no spectrum at all (per/dirpw absent)",
+          placement_verdict(1.0, None, None, [{"min": 90, "max": 230}]) == "OK")
     check("domain_miss rollup", _is_domain_miss("FAR") and _is_domain_miss("NO_WET_CELL")
-          and not _is_domain_miss("OFFWIN") and not _is_domain_miss("DEAD") and not _is_domain_miss("OK"))
+          and not _is_domain_miss("OK")
+          and not _is_domain_miss("OFFWIN") and not _is_domain_miss("DEAD"))   # retired names still False
 
     # grid-aware FAR cap — placement_verdict takes a per-grid cap (default = legacy 3.0 floor).
     check("default cap = legacy 3.0 (back-compat, fine grid)",
@@ -2772,14 +2894,27 @@ def _headland_inland_penetration_km(cross, poly, geod):
     return worst
 
 
-def _headland_land_chord_km(spot, buoy, land, detail=None):
+def _headland_land_chord_km(spot, buoy, land, detail=None, *,
+                            near_trim_km=FIND_BUOY_HEADLAND_MID_START_KM,
+                            end_trim_km=FIND_BUOY_HEADLAND_END_TRIM_KM,
+                            area_km2=FIND_BUOY_HEADLAND_AREA_KM2,
+                            own_graze_km=FIND_BUOY_HEADLAND_OWN_GRAZE_KM):
     """Geodesic length (km) of the LONGEST mid-path land crossing between *spot* and *buoy*, or 0.0
-    if the mid-path geodesic crosses no land polygon larger than FIND_BUOY_HEADLAND_AREA_KM2. *spot*
+    if the mid-path geodesic crosses no land polygon larger than *area_km2*. *spot*
     and *buoy* are (lat, lng); *land* is a geodata.LandIndex (its .polygons list + .polygon_tree
     STRtree — the SAME GSHHG full-res index the enrich raycast loads; no second loader). Ports the
     validated harness verbatim: densify to ~FIND_BUOY_HEADLAND_DENSIFY_M, then drop the first
-    FIND_BUOY_HEADLAND_MID_START_KM (the spot's own shore/barrier) and the last
-    FIND_BUOY_HEADLAND_END_TRIM_KM (near the buoy). land None → 0.0 (offline / no GSHHG: not checked).
+    *near_trim_km* (the spot's own shore/barrier) and the last *end_trim_km* (near the buoy).
+    land None → 0.0 (offline / no GSHHG: not checked).
+
+    THE FOUR KEYWORD CONSTANTS ARE SCALE, NOT POLICY. They default to the FIND_BUOY_HEADLAND_*
+    values calibrated for 10–110 km spot→buoy pairings, so every --find-buoy caller and both
+    real-GSHHG acceptance bars exercise EXACTLY the numbers they were validated against. They are
+    parameters because select_node reuses this same geometry over a spot→NODE path of ~1 km, where
+    the buoy-scale numbers make the test inert rather than strict: the 3.0 + 2.0 km combined trim
+    alone returns 0.0 outright on 490 of the 491 currently placed spots, and land within 3 km of
+    the spot — which is exactly where the land between a spot and a mis-picked nearby cell sits —
+    is trimmed on EVERY path regardless of length. See NODE_HEADLAND_* for the node-scale set.
     NOT _ray_linestring — that casts a fixed-length ray along a BEARING; here we need the actual
     spot→buoy SEGMENT — but it reuses the same pyproj.Geod densify + shapely-intersection primitives.
 
@@ -2795,14 +2930,14 @@ def _headland_land_chord_km(spot, buoy, land, detail=None):
     (sla, sln), (bla, bln) = spot, buoy
     _, _, dist_m = geod.inv(sln, sla, bln, bla)
     total_km = dist_m / 1000.0
-    if total_km <= FIND_BUOY_HEADLAND_MID_START_KM + FIND_BUOY_HEADLAND_END_TRIM_KM:
+    if total_km <= near_trim_km + end_trim_km:
         return 0.0                                             # nothing left after trimming both ends
     n = max(4, int(dist_m / FIND_BUOY_HEADLAND_DENSIFY_M))
     pts = [(sln, sla)] + [(lo, la) for lo, la in geod.npts(sln, sla, bln, bla, n - 1)] + [(bln, bla)]
     cum, acc = [0.0], 0.0
     for (l1, a1), (l2, a2) in zip(pts[:-1], pts[1:]):
         _, _, d = geod.inv(l1, a1, l2, a2); acc += d / 1000.0; cum.append(acc)
-    lo_km, hi_km = FIND_BUOY_HEADLAND_MID_START_KM, total_km - FIND_BUOY_HEADLAND_END_TRIM_KM
+    lo_km, hi_km = near_trim_km, total_km - end_trim_km
     mid = [p for p, c in zip(pts, cum) if lo_km <= c <= hi_km]
     if len(mid) < 2:
         return 0.0
@@ -2818,7 +2953,7 @@ def _headland_land_chord_km(spot, buoy, land, detail=None):
             continue
         poly = land.polygons[i]
         area_m2, _ = geod.geometry_area_perimeter(poly)
-        if abs(area_m2) / 1e6 <= FIND_BUOY_HEADLAND_AREA_KM2:  # a barrier island / inlet bank, not a headland
+        if abs(area_m2) / 1e6 <= area_km2:      # at buoy scale: a barrier island / inlet bank, not a headland
             continue
         inter = line.intersection(poly)
         crossings = []
@@ -2838,7 +2973,7 @@ def _headland_land_chord_km(spot, buoy, land, detail=None):
         # or when the path TRAVERSES it (the buoy is on the far side) — the two real-rejection cases.
         if i == own_idx and not own_contains:
             pen = max(_headland_inland_penetration_km(g, poly, geod) for _, g in crossings)
-            grazes = pen <= FIND_BUOY_HEADLAND_OWN_GRAZE_KM
+            grazes = pen <= own_graze_km
             if detail is not None:
                 detail.update(own_chord_km=longest, own_penetration_km=pen, own_excluded=grazes)
             if grazes:
@@ -2847,19 +2982,24 @@ def _headland_land_chord_km(spot, buoy, land, detail=None):
     return best
 
 
-def _headland_verdict(spot, buoy, land):
+def _headland_verdict(spot, buoy, land, *, max_km=FIND_BUOY_HEADLAND_MAX_KM, **scale):
     """{"chord_km", "dist_km", "reject", "note"} for the wrong-side-of-headland check between *spot*
     and *buoy* (both (lat, lng)). reject = a headland crosses the mid-path AND the buoy is within
-    FIND_BUOY_HEADLAND_MAX_KM. note = it crosses but the buoy is beyond the ceiling (wrapping may
-    save it — surfaced, not rejected). land None → never rejects (offline / no GSHHG: not checked).
+    *max_km*. note = it crosses but the buoy is beyond the ceiling (wrapping may save it — surfaced,
+    not rejected). land None → never rejects (offline / no GSHHG: not checked).
     Also carries own_* diagnostics: when the buoy's own landmass was crossed but EXCLUDED as a
     coast-parallel graze, own_excluded is True and own_chord_km / own_penetration_km say what was
-    skipped and why — so a cleared along-coast pairing is auditable, not silent."""
+    skipped and why — so a cleared along-coast pairing is auditable, not silent.
+
+    *max_km* and **scale (near_trim_km / end_trim_km / area_km2 / own_graze_km, forwarded to
+    _headland_land_chord_km) default to the buoy-scale FIND_BUOY_HEADLAND_* constants, so an
+    unqualified call — every --find-buoy caller, both real-GSHHG acceptance bars — behaves exactly
+    as before. select_node passes the NODE_HEADLAND_* set for its ~1 km spot→node paths."""
     dist_km = _haversine_km(spot[0], spot[1], buoy[0], buoy[1])
     detail = {}
-    chord = _headland_land_chord_km(spot, buoy, land, detail=detail)
+    chord = _headland_land_chord_km(spot, buoy, land, detail=detail, **scale)
     crosses = chord > 0.0
-    within = dist_km < FIND_BUOY_HEADLAND_MAX_KM
+    within = dist_km < max_km
     return {"chord_km": chord, "dist_km": dist_km,
             "reject": crosses and within, "note": crosses and not within,
             "own_excluded": bool(detail.get("own_excluded")),

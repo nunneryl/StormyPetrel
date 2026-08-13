@@ -1003,6 +1003,197 @@ def test_headland_offline_never_rejects():
     assert v["reject"] is False and v["note"] is False and v["chord_km"] == 0.0
 
 
+# --------------------------------------------------------------------------- #
+# Placement is GEOMETRY — DEAD/OFFWIN removed, land-crossing guard added        #
+# --------------------------------------------------------------------------- #
+def test_sub_floor_period_no_longer_returns_dead():
+    # DEAD was "peak period below PER_FLOOR_S" — a sea-state condition being used to make a
+    # permanent geographic decision. A flat hour must not un-place a spot.
+    assert nn.placement_verdict(1.0, 2.0, 150, []) == "OK"
+    assert nn.placement_verdict(1.0, 0.1, 150, []) == "OK", "no period is low enough to disqualify"
+    assert "DEAD" not in {nn.placement_verdict(1.0, p, 150, []) for p in (0.1, 2.0, 2.99, 3.0, 20.0)}
+
+
+def test_off_window_direction_no_longer_returns_offwin():
+    # OFFWIN was "peak direction outside the spot's swell window". Pipeline faces NW and is
+    # correctly off-window in August; that is a season, not a geography, and must not decide
+    # whether the spot gets NWPS at all. A due-south swell at a north-facing spot now places.
+    north_facing = [{"min": 300, "max": 30}]        # NW through N to NNE, wrapping 0/360
+    assert nn.placement_verdict(1.0, 12, 170, north_facing) == "OK", "SE trade sea in August"
+    assert nn.placement_verdict(1.0, 12, 15, north_facing) == "OK", "December NNE groundswell"
+    assert "OFFWIN" not in {nn.placement_verdict(1.0, 12, d, north_facing) for d in range(0, 360, 15)}
+
+
+def test_placement_needs_no_spectrum_and_ignores_the_condition_args():
+    # after the change placement does not require a live wave spectrum at all: the retained
+    # per/dirpw/arcs arguments must not move the verdict for ANY value, including None/NaN.
+    got = {nn.placement_verdict(1.0, p, d, a)
+           for p in (None, float("nan"), 0.0, 2.0, 18.0)
+           for d in (None, float("nan"), 0.0, 170.0, 359.0)
+           for a in ([], [{"min": 90, "max": 230}], [{"min": 300, "max": 30}])}
+    assert got == {"OK"}, f"the ignored args still change the verdict: {got}"
+
+
+def test_far_and_no_wet_cell_are_unchanged():
+    # the two PERMANENT geometric facts survive exactly as they were.
+    assert nn.placement_verdict(5.0, 10, 150, []) == "FAR"
+    assert nn.placement_verdict(None, 10, 150, []) == "FAR", "no seaward wet cell at all"
+    assert nn.placement_verdict(3.35, 10, 150, []) == "FAR", "default cap is still the legacy 3.0"
+    assert nn.placement_verdict(3.35, 10, 150, [], far_cap_km=5.0) == "OK", "grid-aware cap intact"
+    assert nn.placement_verdict(1.71, 10, 150, [], far_cap_km=3.0) == "OK"
+    # NO_WET_CELL is raised by the caller (select_node returning None), not by placement_verdict;
+    # both it and FAR still roll up as domain misses, and OK still does not.
+    assert nn._is_domain_miss("FAR") and nn._is_domain_miss("NO_WET_CELL")
+    assert not nn._is_domain_miss("OK")
+
+
+def _node_grid(lats1d, lngs1d, wet_ij):
+    """A minimal select_node cycle: a lat/lng meshgrid with only *wet_ij* cells unmasked."""
+    la, lo = np.meshgrid(np.array(lats1d), np.array(lngs1d), indexing="ij")
+    mask = np.ones(la.shape, dtype=bool)
+    for i, j in wet_ij:
+        mask[i, j] = False
+    return {"lats": la, "lons": lo, "mask": mask}
+
+
+# A ~6.8 km² east-running POINT just north of the spot, well over NODE_HEADLAND_AREA_KM2.
+# SPOT is south of it; BLOCKED is the nearer cell on the far (north) side; CLEAR is the
+# next-nearest, ESE with open water the whole way. Both bearings fall inside the ±90° seaward
+# filter of an east-facing spot, so the bearing test alone CANNOT separate them — which is the
+# whole point: it filters by direction, not by what lies in between.
+_PT_SPOT = (28.5000, -80.6050)
+_PT_BLOCKED = (28.5180, -80.5990)      # 2.09 km, bearing 16° — across the point
+_PT_CLEAR = (28.4990, -80.5800)        # 2.45 km, bearing 93° — clear water
+
+
+def _point_land():
+    from shapely.geometry import box
+    return _fake_land([box(-80.6100, 28.5040, -80.5400, 28.5130)])
+
+
+def _point_cycle():
+    # one row per candidate latitude; only the two candidate cells are wet
+    return _node_grid([_PT_BLOCKED[0], _PT_CLEAR[0]], [_PT_BLOCKED[1], _PT_CLEAR[1]],
+                      [(0, 0), (1, 1)])
+
+
+def test_select_node_rejects_a_candidate_behind_land():
+    land, cyc = _point_land(), _point_cycle()
+    slat, slng = _PT_SPOT
+    # the blocked cell really is the nearer of the two, so a plain nearest-first pick takes it
+    assert (nn._haversine_km(slat, slng, *_PT_BLOCKED)
+            < nn._haversine_km(slat, slng, *_PT_CLEAR))
+    assert nn.select_node(cyc, slat, slng, 90.0)[3] == _PT_BLOCKED[1], "without land: nearest wins"
+    # the guard really considers it blocked, and the fallback really is clear
+    assert nn._node_is_blocked(slat, slng, (*_PT_BLOCKED, 0, 0), land)
+    assert not nn._node_is_blocked(slat, slng, (*_PT_CLEAR, 1, 1), land)
+    sel = nn.select_node(cyc, slat, slng, 90.0, land=land)
+    assert (sel[2], sel[3]) == _PT_CLEAR, "land in between -> next-nearest qualifying cell"
+
+
+def test_select_node_land_guard_is_a_no_op_without_coastline():
+    # land=None (the default, and every existing caller) must pick exactly as before...
+    cyc = _point_cycle()
+    slat, slng = _PT_SPOT
+    assert nn.select_node(cyc, slat, slng, 90.0) \
+        == nn.select_node(cyc, slat, slng, 90.0, land=None), "default is unchanged"
+    # ...and a spot with NO blocked candidate is unaffected by passing an index
+    clear_only = _node_grid([_PT_CLEAR[0], 28.4950], [_PT_CLEAR[1], -80.5700], [(0, 0), (1, 1)])
+    assert nn.select_node(clear_only, slat, slng, 90.0) \
+        == nn.select_node(clear_only, slat, slng, 90.0, land=_point_land())
+    # the FAIL-SAFE contract itself: with no coastline data the helper must never block, so a
+    # missing GSHHG degrades placement to distance-only rather than rejecting every candidate.
+    assert not nn._node_is_blocked(slat, slng, (*_PT_BLOCKED, 0, 0), None), \
+        "land None must never block — offline placement degrades, it does not fail"
+
+
+def test_select_node_falls_back_when_every_candidate_is_blocked():
+    from shapely.geometry import box
+    # insurance, not a new rejection path: if nothing clears, the nearest seaward cell is still
+    # returned, so the guard can move a placement but can never drop a spot to NO_WET_CELL.
+    land = _fake_land([box(-80.6100, 28.4960, -80.5400, 28.5130)])   # swallows BOTH paths
+    cyc = _point_cycle()
+    slat, slng = _PT_SPOT
+    assert nn._node_is_blocked(slat, slng, (*_PT_BLOCKED, 0, 0), land)
+    assert nn._node_is_blocked(slat, slng, (*_PT_CLEAR, 1, 1), land)
+    sel = nn.select_node(cyc, slat, slng, 90.0, land=land)
+    assert sel is not None and (sel[2], sel[3]) == _PT_BLOCKED, \
+        "falls back to today's nearest-seaward pick"
+
+
+def test_buoy_scale_headland_defaults_are_untouched_by_the_node_rescale():
+    # the four scale keywords must default to the FIND_BUOY_HEADLAND_* constants, so --find-buoy
+    # and both real-GSHHG acceptance bars still run the numbers they were validated against.
+    land = _fake_land([_synthetic_cape()])
+    spot, buoy = (28.75, -80.70), (28.30, -80.45)
+    explicit = nn._headland_verdict(
+        spot, buoy, land, max_km=nn.FIND_BUOY_HEADLAND_MAX_KM,
+        near_trim_km=nn.FIND_BUOY_HEADLAND_MID_START_KM,
+        end_trim_km=nn.FIND_BUOY_HEADLAND_END_TRIM_KM,
+        area_km2=nn.FIND_BUOY_HEADLAND_AREA_KM2,
+        own_graze_km=nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM)
+    assert nn._headland_verdict(spot, buoy, land) == explicit, "unqualified call == buoy-scale call"
+    assert explicit["reject"] is True, "and it is still the validated wrong-side rejection"
+    # The cape sits 20+ km along a 55 km path, so it cannot detect a drifting NEAR TRIM. This case
+    # can: a spot 0.5 km inside a big landmass edge with an offshore buoy must stay CLEAR, which is
+    # the only thing the 3.0 km near trim does (cf. test_headland_clears_open_coast_and_trims_own_shore).
+    from shapely.geometry import box
+    own = _fake_land([box(-82.0, 28.0, -80.71, 29.5)])
+    ospot, obuoy = (28.75, -80.715), (28.75, -80.40)
+    assert nn._headland_verdict(ospot, obuoy, own)["reject"] is False, \
+        "buoy-scale near trim must still clear the spot's own shore"
+    assert nn._headland_verdict(ospot, obuoy, own)["chord_km"] == 0.0
+    # and prove the trim is what does it — the node-scale trim sees that same own shore
+    assert nn._headland_land_chord_km(
+        ospot, obuoy, own, near_trim_km=nn.NODE_HEADLAND_NEAR_TRIM_KM,
+        end_trim_km=nn.NODE_HEADLAND_END_TRIM_KM, area_km2=nn.NODE_HEADLAND_AREA_KM2,
+        own_graze_km=nn.NODE_HEADLAND_OWN_GRAZE_KM) > 0.0
+    # Behaviour alone cannot pin every default: the two real-GSHHG acceptance bars are what
+    # validate these four numbers, and they need the Mac. Offline, assert the defaults ARE those
+    # validated constants, so a node-scale value can never drift into the buoy-scale path unseen.
+    import inspect
+    got = {k: v.default for k, v in inspect.signature(nn._headland_land_chord_km).parameters.items()
+           if k.endswith(("_km", "_km2"))}
+    assert got == {"near_trim_km": nn.FIND_BUOY_HEADLAND_MID_START_KM,
+                   "end_trim_km": nn.FIND_BUOY_HEADLAND_END_TRIM_KM,
+                   "area_km2": nn.FIND_BUOY_HEADLAND_AREA_KM2,
+                   "own_graze_km": nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM}, got
+    assert inspect.signature(nn._headland_verdict).parameters["max_km"].default \
+        == nn.FIND_BUOY_HEADLAND_MAX_KM
+
+
+def test_no_current_placement_can_move_live():
+    # The guard is insurance for the ~25 spots about to place, not a fix for the placed ones.
+    # It is unreachable for them BY CONSTRUCTION: every placed spot carries a baked node, and the
+    # read path (nwps_series_by_hour / trkng_systems_by_hour) resolves that node with _nearest_cell,
+    # consulting select_node only when the baked node is ABSENT. select_node is passed a land index
+    # from exactly one place — validate_batch — which does not touch spots_enriched.json.
+    import os
+    enriched = json.loads(open(os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "pipeline", "spots_enriched.json")).read())
+    placed = [s for s in enriched if s.get("swell_window_source") == "nwps"]
+    assert len(placed) == 491, f"expected the 491 placed spots, got {len(placed)}"
+    missing = [s.get("name") for s in placed
+               if s.get("nwps_node_lat") is None or s.get("nwps_node_lng") is None]
+    assert not missing, f"these placed spots would re-enter select_node on read: {missing}"
+
+
+def test_node_scale_constants_are_what_make_the_guard_reachable():
+    from shapely.geometry import box
+    # the finding that motivated the re-scale: at buoy scale the combined 3.0 + 2.0 km trim
+    # returns 0.0 before any polygon is queried, so the guard would be INERT over a ~1 km path.
+    barrier = box(-80.5970, 27.9, -80.5908, 29.1)
+    land = _fake_land([barrier])
+    spot, node = (28.50, -80.6050), (28.50, -80.5880)
+    d = nn._haversine_km(*spot, *node)
+    assert d < nn.FIND_BUOY_HEADLAND_MID_START_KM + nn.FIND_BUOY_HEADLAND_END_TRIM_KM
+    assert nn._headland_verdict(spot, node, land)["reject"] is False, \
+        "buoy-scale trims discard the whole path — this is why the constants are parameterised"
+    assert nn._node_is_blocked(spot[0], spot[1], (node[0], node[1], 0, 0), land), \
+        "node-scale trims see the same crossing"
+
+
 def _synthetic_convex_coast(west_lon=-80.85):
     """A ~12,000 km² mainland whose east coast bulges ~5 km seaward at mid-span — the SE-Florida
     shape that produced the false positive. *west_lon* sets the peninsula width so a far-side
