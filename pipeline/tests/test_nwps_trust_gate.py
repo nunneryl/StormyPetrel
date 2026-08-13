@@ -1003,6 +1003,136 @@ def test_headland_offline_never_rejects():
     assert v["reject"] is False and v["note"] is False and v["chord_km"] == 0.0
 
 
+# --------------------------------------------------------------------------- #
+# Placement is GEOMETRY — DEAD/OFFWIN removed, land-crossing guard added        #
+# --------------------------------------------------------------------------- #
+def test_sub_floor_period_no_longer_returns_dead():
+    # DEAD was "peak period below PER_FLOOR_S" — a sea-state condition being used to make a
+    # permanent geographic decision. A flat hour must not un-place a spot.
+    assert nn.placement_verdict(1.0, 2.0, 150, []) == "OK"
+    assert nn.placement_verdict(1.0, 0.1, 150, []) == "OK", "no period is low enough to disqualify"
+    assert "DEAD" not in {nn.placement_verdict(1.0, p, 150, []) for p in (0.1, 2.0, 2.99, 3.0, 20.0)}
+
+
+def test_off_window_direction_no_longer_returns_offwin():
+    # OFFWIN was "peak direction outside the spot's swell window". Pipeline faces NW and is
+    # correctly off-window in August; that is a season, not a geography, and must not decide
+    # whether the spot gets NWPS at all. A due-south swell at a north-facing spot now places.
+    north_facing = [{"min": 300, "max": 30}]        # NW through N to NNE, wrapping 0/360
+    assert nn.placement_verdict(1.0, 12, 170, north_facing) == "OK", "SE trade sea in August"
+    assert nn.placement_verdict(1.0, 12, 15, north_facing) == "OK", "December NNE groundswell"
+    assert "OFFWIN" not in {nn.placement_verdict(1.0, 12, d, north_facing) for d in range(0, 360, 15)}
+
+
+def test_placement_needs_no_spectrum_and_ignores_the_condition_args():
+    # after the change placement does not require a live wave spectrum at all: the retained
+    # per/dirpw/arcs arguments must not move the verdict for ANY value, including None/NaN.
+    got = {nn.placement_verdict(1.0, p, d, a)
+           for p in (None, float("nan"), 0.0, 2.0, 18.0)
+           for d in (None, float("nan"), 0.0, 170.0, 359.0)
+           for a in ([], [{"min": 90, "max": 230}], [{"min": 300, "max": 30}])}
+    assert got == {"OK"}, f"the ignored args still change the verdict: {got}"
+
+
+def test_far_and_no_wet_cell_are_unchanged():
+    # the two PERMANENT geometric facts survive exactly as they were.
+    assert nn.placement_verdict(5.0, 10, 150, []) == "FAR"
+    assert nn.placement_verdict(None, 10, 150, []) == "FAR", "no seaward wet cell at all"
+    assert nn.placement_verdict(3.35, 10, 150, []) == "FAR", "default cap is still the legacy 3.0"
+    assert nn.placement_verdict(3.35, 10, 150, [], far_cap_km=5.0) == "OK", "grid-aware cap intact"
+    assert nn.placement_verdict(1.71, 10, 150, [], far_cap_km=3.0) == "OK"
+    # NO_WET_CELL is raised by the caller (select_node returning None), not by placement_verdict;
+    # both it and FAR still roll up as domain misses, and OK still does not.
+    assert nn._is_domain_miss("FAR") and nn._is_domain_miss("NO_WET_CELL")
+    assert not nn._is_domain_miss("OK")
+
+
+def _node_grid(lats1d, lngs1d, wet_ij):
+    """A minimal select_node cycle: a lat/lng meshgrid with only *wet_ij* cells unmasked."""
+    la, lo = np.meshgrid(np.array(lats1d), np.array(lngs1d), indexing="ij")
+    mask = np.ones(la.shape, dtype=bool)
+    for i, j in wet_ij:
+        mask[i, j] = False
+    return {"lats": la, "lons": lo, "mask": mask}
+
+
+# The seaward half-plane rule is what stops a node being chosen behind land, and after the
+# seven-WFO result (see scripts/node_headland_calibrate.py) it is the ONLY thing doing that job.
+# Nothing else in the suite covered it directly, so it is covered here — if someone removes the
+# ±90° filter as a redundant heuristic, this fails.
+def test_seaward_half_plane_rejects_a_landward_cell():
+    # a wet cell WEST of an east-facing spot is landward (behind the beach) and NEARER; the true
+    # offshore cell is east and farther. Distance alone takes the wrong one; the filter does not.
+    la, lo = np.meshgrid(np.array([28.50]), np.array([-80.620 + k * 0.010 for k in range(5)]),
+                         indexing="ij")
+    mask = np.ones(la.shape, dtype=bool)
+    mask[0, 1] = mask[0, 4] = False          # one landward cell, one seaward
+    cyc = {"lats": la, "lons": lo, "mask": mask}
+    slat, slng = 28.50, -80.6035
+    landward = nn._haversine_km(slat, slng, 28.50, float(lo[0, 1]))
+    seaward = nn._haversine_km(slat, slng, 28.50, float(lo[0, 4]))
+    assert landward < seaward, "the landward cell really is the nearer of the two"
+    assert not nn._ang_within(nn._bearing(slat, slng, 28.50, float(lo[0, 1])), 90.0, 90)
+    # with no orientation there is no half-plane and distance wins — the failure mode
+    assert nn.select_node(cyc, slat, slng, None)[1] == 1
+    # with the spot's orientation the landward cell is dropped BEFORE distance is considered
+    sel = nn.select_node(cyc, slat, slng, 90.0)
+    assert sel[1] == 4, "seaward half-plane beats nearest"
+    assert sel[5] is True, "'moved' records that the naive nearest was overridden"
+
+
+def test_placement_carries_no_land_crossing_check():
+    # DELIBERATE ABSENCE, not an oversight. Two land-crossing guards were built and both were
+    # tested against real coastline across seven WFOs: the GSHHG polygon check produced 23 false
+    # positives (box alone would have lost 17 correctly-placed spots) and the model-mask walk
+    # moved zero nodes anywhere, including mhx's resolved ~1 km Hatteras barrier. The half-plane
+    # rule above had already covered every case. scripts/node_headland_calibrate.py is the record.
+    import inspect
+    assert list(inspect.signature(nn.select_node).parameters) == \
+        ["cycle", "lat", "lng", "orientation"], "select_node takes no land-guard parameter"
+    assert not [k for k in dir(nn) if k.startswith("NODE_HEADLAND")]
+    assert not hasattr(nn, "_mask_blocked") and not hasattr(nn, "grid_area_floor_km2")
+
+
+def test_buoy_scale_headland_defaults_are_untouched_by_the_parameterisation():
+    # the four scale keywords must default to the FIND_BUOY_HEADLAND_* constants, so --find-buoy
+    # and both real-GSHHG acceptance bars still run the numbers they were validated against.
+    land = _fake_land([_synthetic_cape()])
+    spot, buoy = (28.75, -80.70), (28.30, -80.45)
+    explicit = nn._headland_verdict(
+        spot, buoy, land, max_km=nn.FIND_BUOY_HEADLAND_MAX_KM,
+        near_trim_km=nn.FIND_BUOY_HEADLAND_MID_START_KM,
+        end_trim_km=nn.FIND_BUOY_HEADLAND_END_TRIM_KM,
+        area_km2=nn.FIND_BUOY_HEADLAND_AREA_KM2,
+        own_graze_km=nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM)
+    assert nn._headland_verdict(spot, buoy, land) == explicit, "unqualified call == buoy-scale call"
+    assert explicit["reject"] is True, "and it is still the validated wrong-side rejection"
+    # The cape sits 20+ km along a 55 km path, so it cannot detect a drifting NEAR TRIM. This case
+    # can: a spot 0.5 km inside a big landmass edge with an offshore buoy must stay CLEAR, which is
+    # the only thing the 3.0 km near trim does (cf. test_headland_clears_open_coast_and_trims_own_shore).
+    from shapely.geometry import box
+    own = _fake_land([box(-82.0, 28.0, -80.71, 29.5)])
+    ospot, obuoy = (28.75, -80.715), (28.75, -80.40)
+    assert nn._headland_verdict(ospot, obuoy, own)["reject"] is False, \
+        "buoy-scale near trim must still clear the spot's own shore"
+    assert nn._headland_verdict(ospot, obuoy, own)["chord_km"] == 0.0
+    # and prove the trim is what does it — a node-scale trim sees that same own shore
+    assert nn._headland_land_chord_km(ospot, obuoy, own, near_trim_km=0.10, end_trim_km=0.10,
+                                      area_km2=0.5, own_graze_km=0.0) > 0.0
+    # Behaviour alone cannot pin every default: the two real-GSHHG acceptance bars are what
+    # validate these four numbers, and they need the Mac. Offline, assert the defaults ARE those
+    # validated constants, so a node-scale value can never drift into the buoy-scale path unseen.
+    import inspect
+    got = {k: v.default for k, v in inspect.signature(nn._headland_land_chord_km).parameters.items()
+           if k.endswith(("_km", "_km2"))}
+    assert got == {"near_trim_km": nn.FIND_BUOY_HEADLAND_MID_START_KM,
+                   "end_trim_km": nn.FIND_BUOY_HEADLAND_END_TRIM_KM,
+                   "area_km2": nn.FIND_BUOY_HEADLAND_AREA_KM2,
+                   "own_graze_km": nn.FIND_BUOY_HEADLAND_OWN_GRAZE_KM}, got
+    assert inspect.signature(nn._headland_verdict).parameters["max_km"].default \
+        == nn.FIND_BUOY_HEADLAND_MAX_KM
+
+
 def _synthetic_convex_coast(west_lon=-80.85):
     """A ~12,000 km² mainland whose east coast bulges ~5 km seaward at mid-span — the SE-Florida
     shape that produced the false positive. *west_lon* sets the peninsula width so a far-side
