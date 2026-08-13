@@ -518,19 +518,53 @@ def _wet_nodes(lats, lons, mask):
 # or neck that would sit between a spot and a mis-picked nearby cell. Wired in  #
 # at buoy scale this guard is not strict, it is INERT.                          #
 #                                                                              #
-# NOT YET VALIDATED AGAINST REAL GSHHG. The two acceptance bars cover the       #
-# buoy-scale constants only; these four are reasoned from the geometry above    #
-# and covered offline by synthetic polygons. The Mac run is what validates      #
-# them — re-run select_node over all 491 placed spots with the real index and   #
-# confirm the reject count is still zero (see test_node_headland_*).            #
+# NOT YET VALIDATED AGAINST REAL GSHHG — AND NOT OF EQUAL STANDING.             #
+# FIND_BUOY_HEADLAND_OWN_GRAZE_KM was set on a MEASURED separation: must-clear   #
+# pairings reach at most 2.15 km inland, must-flag Canaveral crossings at least  #
+# 4.14 km, and 3.0 sits in that gap. NONE of the four below has anything of that #
+# kind. Their status, graded honestly, so nobody later mistakes a plausible      #
+# number for a measured one:                                                     #
+#                                                                               #
+#   NEAR_TRIM   GUESS. The quantity that sets it is how far each spot's stored   #
+#     coordinate sits INLAND of the GSHHG shoreline; the trim must exceed the    #
+#     largest such value or those spots reject on their own beach — quietly,     #
+#     because a false reject only moves a node. Never measured. 100 m is an      #
+#     order-of-magnitude stand-in for spot-coordinate plus GSHHG positional      #
+#     error. Too small: systematic false rejects. Too large: inertness, the      #
+#     failure this guard was rewritten to escape.                                #
+#   END_TRIM    GUESS, same shape. Set by how far a model-WET cell centre can    #
+#     sit inside a GSHHG polygon — the NWPS mask and GSHHG are different         #
+#     datasets at different resolutions, and a 1-3 km cell centre can disagree.  #
+#   AREA_KM2    WEAKEST ANCHOR. "Ignore rocks, catch barriers" is true but is    #
+#     not the right yardstick. The defensible one is the GRID CELL AREA (1.0 km2 #
+#     at phi's 1.0 km spacing, up to ~9 km2 at lox's ~3 km): land smaller than a #
+#     cell is INVISIBLE to NWPS, so it cannot be why a node is wrong, and        #
+#     rejecting on it adds false-positive surface for no modelled benefit. 0.5   #
+#     sits BELOW every grid's cell area, so today the guard can reject on land   #
+#     the model does not resolve. That is a choice; it was made implicitly.      #
+#   OWN_GRAZE   MOST LIKELY WRONG. Set to 0.0 reasoning that over ~1 km there is #
+#     no coast-parallel graze to forgive. Unverified, and probably false: the    #
+#     fact that makes the buoy-scale ceiling load-bearing — on full-res GSHHG    #
+#     the whole North American mainland is ONE polygon — holds at every scale,   #
+#     so a spot on a straight beach whose nearest cell lies along-shore can clip #
+#     its own beach and reject. 0.0 disables that protection entirely.           #
+#                                                                               #
+# ALSO STILL INERT AT THE SHORT END: the two trims sum to 0.20 km, and 6 of the  #
+# 491 placed spots have nodes closer than that (66 m Galveston Seawall, 110 m    #
+# Oceanside Harbor, 137 m Lido Beach, 137 m 30th Street Pier, 159 m Jacksonville #
+# Beach Pier, 193 m Carolina Beach), so the chord function returns 0.0 for them  #
+# before querying land. Small version of the same bug class, stated rather than  #
+# left to be found.                                                              #
+#                                                                               #
+# scripts/node_headland_calibrate.py is the acceptance bar these need. Phases 1  #
+# and 3 need GSHHG only (no NOMADS) and produce the must-CLEAR side; phase 2     #
+# needs a CG1 cycle and produces the must-FLAG side. Set each constant in the    #
+# gap between them, as 3.0 was. Until then these are reasoned, not measured.     #
 # --------------------------------------------------------------------------- #
-NODE_HEADLAND_NEAR_TRIM_KM = 0.10   # skip the spot's own shoreline; spot coords carry ~tens of m error
-NODE_HEADLAND_END_TRIM_KM = 0.10    # skip the cell's own shoreline (a grid centre sits inside water)
-NODE_HEADLAND_AREA_KM2 = 0.5        # ignore rocks/sand bars; a real barrier island is far larger
-                                    #   (Fire I. ≈40, Assateague ≈60, Padre ≈350 km²) — and unlike the
-                                    #   buoy-scale 500 floor, a barrier IS the land in between here
-NODE_HEADLAND_OWN_GRAZE_KM = 0.0    # no coast-parallel graze to forgive over ~1 km: the two points are
-                                    #   close enough that ANY crossing genuinely separates them
+NODE_HEADLAND_NEAR_TRIM_KM = 0.10   # UNMEASURED — see NEAR_TRIM above
+NODE_HEADLAND_END_TRIM_KM = 0.10    # UNMEASURED — see END_TRIM above
+NODE_HEADLAND_AREA_KM2 = 0.5        # weak anchor; grid cell area is the better one — see above
+NODE_HEADLAND_OWN_GRAZE_KM = 0.0    # disables the coast-parallel exclusion — most likely wrong
 NODE_HEADLAND_MAX_CANDIDATES = 8    # bound the cost — cells are tested nearest-first and the walk stops
                                     #   at the first clear one, so this only bites if many are blocked
 
