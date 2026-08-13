@@ -407,8 +407,12 @@ def test_zone_keying_moved_no_live_placement():
         assert zone_map.get(zone) == buoy_map.get(str(a.get("nwps_buoy_id"))), \
             f"{zone}: zone keying disagrees with the buoy keying it replaced — a placement moved"
     rows, problems, held, *_ = ap.build_plan(doc=doc, enriched=enriched)
-    assert len(rows) == 491 and not held and not problems, \
-        f"all 491 spots still place ({len(rows)} rows, {len(held)} held, {len(problems)} problems)"
+    # derived, not hardcoded — the same discipline as test_full_dryrun_direction_status_breakdown_live,
+    # so it stays correct as new zones are promoted into spots[] (it went stale once at 491 when hfo
+    # added 55). The invariant is that EVERY assignment spot places, whatever the total is.
+    assert len(rows) == len(doc["spots"]) and not held and not problems, \
+        f"every assignment spot should place ({len(rows)} rows of {len(doc['spots'])}, " \
+        f"{len(held)} held, {len(problems)} problems)"
 
 
 # --------------------------------------------------------------------------- #

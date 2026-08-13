@@ -4910,6 +4910,556 @@
       "nwps_node_lng": -85.38004,
       "nwps_node_distance_m": 1435,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "bombora",
+      "name": "Bombora",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.28671,
+      "nwps_node_lng": -157.86633,
+      "nwps_node_distance_m": 1876,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "suicide-s",
+      "name": "Suicide's",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.97078,
+      "nwps_node_lng": -155.87037,
+      "nwps_node_distance_m": 2268,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ala-moana-bowls",
+      "name": "Ala Moana Bowls",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.26234,
+      "nwps_node_lng": -157.84074,
+      "nwps_node_distance_m": 2087,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "anahola-bay",
+      "name": "Anahola Bay",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 22.16399,
+      "nwps_node_lng": -159.29933,
+      "nwps_node_distance_m": 1806,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "backdoor-pipeline",
+      "name": "Backdoor Pipeline",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1743,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "banyans",
+      "name": "Banyans",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.60525,
+      "nwps_node_lng": -155.99832,
+      "nwps_node_distance_m": 2226,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "banzai-pipeline",
+      "name": "Banzai Pipeline",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1657,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "barbers-point",
+      "name": "Barbers Point",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.28671,
+      "nwps_node_lng": -158.09663,
+      "nwps_node_distance_m": 1446,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "bellows-beach",
+      "name": "Bellows Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.35982,
+      "nwps_node_lng": -157.68721,
+      "nwps_node_distance_m": 2092,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "big-beach-makena",
+      "name": "Big Beach Makena",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.62875,
+      "nwps_node_lng": -156.45892,
+      "nwps_node_distance_m": 1330,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "canoes-waikiki",
+      "name": "Canoes Waikiki",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.26234,
+      "nwps_node_lng": -157.84074,
+      "nwps_node_distance_m": 1866,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "chuns-reef",
+      "name": "Chuns Reef",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.62787,
+      "nwps_node_lng": -158.09663,
+      "nwps_node_distance_m": 1615,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "diamond-head-cliffs",
+      "name": "Diamond Head Cliffs",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.23797,
+      "nwps_node_lng": -157.81515,
+      "nwps_node_distance_m": 1870,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "ehukai-beach-park",
+      "name": "Ehukai Beach Park",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1345,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "electric-beach",
+      "name": "Electric Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.35982,
+      "nwps_node_lng": -158.14781,
+      "nwps_node_distance_m": 1628,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "flemings-beach",
+      "name": "Flemings Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.01865,
+      "nwps_node_lng": -156.66364,
+      "nwps_node_distance_m": 1609,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "haleiwa-ali-i-beach",
+      "name": "Haleiwa Ali'i Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.60351,
+      "nwps_node_lng": -158.12222,
+      "nwps_node_distance_m": 1725,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hanalei-bay",
+      "name": "Hanalei Bay",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 22.21273,
+      "nwps_node_lng": -159.50404,
+      "nwps_node_distance_m": 610,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hapuna-beach",
+      "name": "Hapuna Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.99515,
+      "nwps_node_lng": -155.84478,
+      "nwps_node_distance_m": 1925,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "honoli-i",
+      "name": "Honoli‘i",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.75146,
+      "nwps_node_lng": -155.0771,
+      "nwps_node_distance_m": 1529,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "honolua-bay",
+      "name": "Honolua Bay",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.01865,
+      "nwps_node_lng": -156.66364,
+      "nwps_node_distance_m": 2565,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ho-okipa",
+      "name": "Hoʻokipa",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.94554,
+      "nwps_node_lng": -156.35657,
+      "nwps_node_distance_m": 1301,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kaisers",
+      "name": "Kaisers",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.26234,
+      "nwps_node_lng": -157.84074,
+      "nwps_node_distance_m": 1970,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "kanaha-beach",
+      "name": "Kanaha Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.92117,
+      "nwps_node_lng": -156.43333,
+      "nwps_node_distance_m": 2486,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "keaau-beach",
+      "name": "Keaau Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.50603,
+      "nwps_node_lng": -158.25017,
+      "nwps_node_distance_m": 2455,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kiahuna-beach",
+      "name": "Kiahuna Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.87156,
+      "nwps_node_lng": -159.47845,
+      "nwps_node_distance_m": 2070,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kolekole-beach-park",
+      "name": "Kolekole Beach Park",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.87331,
+      "nwps_node_lng": -155.10269,
+      "nwps_node_distance_m": 1940,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "lahaina-breakwall",
+      "name": "Lahaina Breakwall",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.87244,
+      "nwps_node_lng": -156.68923,
+      "nwps_node_distance_m": 1007,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "laniakea",
+      "name": "Laniakea",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.62787,
+      "nwps_node_lng": -158.09663,
+      "nwps_node_distance_m": 1414,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "launiupoko",
+      "name": "Launiupoko",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.84807,
+      "nwps_node_lng": -156.66364,
+      "nwps_node_distance_m": 1206,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "log-cabins",
+      "name": "Log Cabins",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.65224,
+      "nwps_node_lng": -158.07104,
+      "nwps_node_distance_m": 835,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "lymans",
+      "name": "Lymans",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.60525,
+      "nwps_node_lng": -155.99832,
+      "nwps_node_distance_m": 2352,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "makaha",
+      "name": "Makaha",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.45729,
+      "nwps_node_lng": -158.22458,
+      "nwps_node_distance_m": 2292,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "makapuu-beach-park",
+      "name": "Makapuu Beach Park",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.31108,
+      "nwps_node_lng": -157.63603,
+      "nwps_node_distance_m": 2364,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "off-the-wall",
+      "name": "Off The Wall",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1864,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pakala",
+      "name": "Pakala",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.9203,
+      "nwps_node_lng": -159.65758,
+      "nwps_node_distance_m": 1692,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "peahi-jaws",
+      "name": "Peahi Jaws",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.96991,
+      "nwps_node_lng": -156.2798,
+      "nwps_node_distance_m": 2027,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pine-trees-hawaii",
+      "name": "Pine Trees Hawaii",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.67835,
+      "nwps_node_lng": -156.04949,
+      "nwps_node_distance_m": 1915,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "poipu-beach",
+      "name": "Poipu Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.87156,
+      "nwps_node_lng": -159.47845,
+      "nwps_node_distance_m": 2429,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "polihale-beach",
+      "name": "Polihale Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 22.09089,
+      "nwps_node_lng": -159.75993,
+      "nwps_node_distance_m": 420,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "puaena-point",
+      "name": "Puaena Point",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.60351,
+      "nwps_node_lng": -158.12222,
+      "nwps_node_distance_m": 1566,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "publics-waikiki",
+      "name": "Publics Waikiki",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.26234,
+      "nwps_node_lng": -157.84074,
+      "nwps_node_distance_m": 1774,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "p-p-kea-hawaii",
+      "name": "Pūpūkea, Hawaii",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1070,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "queens-waikiki",
+      "name": "Queens Waikiki",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.26234,
+      "nwps_node_lng": -157.84074,
+      "nwps_node_distance_m": 1870,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "richardson-beach",
+      "name": "Richardson Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 19.75146,
+      "nwps_node_lng": -155.02593,
+      "nwps_node_distance_m": 2079,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rocky-point",
+      "name": "Rocky Point",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 678,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sandy-beach-oahu",
+      "name": "Sandy Beach Oahu",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.28671,
+      "nwps_node_lng": -157.66162,
+      "nwps_node_distance_m": 1100,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sunset-beach-hawaii",
+      "name": "Sunset Beach Hawaii",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 479,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "thousand-peaks-maui",
+      "name": "Thousand Peaks Maui",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 20.79933,
+      "nwps_node_lng": -156.61246,
+      "nwps_node_distance_m": 1387,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "tunnels-beach",
+      "name": "Tunnels Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 22.2371,
+      "nwps_node_lng": -159.55522,
+      "nwps_node_distance_m": 1635,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "turtle-bay",
+      "name": "Turtle Bay",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.70098,
+      "nwps_node_lng": -158.01987,
+      "nwps_node_distance_m": 2124,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "velzyland",
+      "name": "Velzyland",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.67661,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1570,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "waimea-bay",
+      "name": "Waimea Bay",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.65224,
+      "nwps_node_lng": -158.07104,
+      "nwps_node_distance_m": 1399,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "white-plains-beach",
+      "name": "White Plains Beach",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.28671,
+      "nwps_node_lng": -158.04545,
+      "nwps_node_distance_m": 1800,
+      "nwps_buoy_id": "51211"
+    },
+    {
+      "slug": "yokohama-bay",
+      "name": "Yokohama Bay",
+      "nwps_wfo": "hfo",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 21.5304,
+      "nwps_node_lng": -158.25017,
+      "nwps_node_distance_m": 2071,
+      "nwps_buoy_id": null
     }
   ],
   "held": [],
@@ -5547,6 +6097,29 @@
           "port-aransas-jetty"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 6 spots are in the (Mac) scripts/nwps_crp_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_crp_validate_out.json --buoy 42092 --slugs <these 6>` merges them into 'spots'. NOTE that validate-out carries nwps_buoy_id=null throughout, because --validate copies the field from the spot record and no crp spot has ever been assigned one; the buoy id comes from THIS record, not from that file. Placement is via the pending path; 42092 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
+      },
+      {
+        "zone": "hfo/51211",
+        "wfo": "hfo",
+        "buoy": "51211",
+        "reference": "51211 — Pearl Harbor Entrance, HI 233, 35 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 51211 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ZONE GEOMETRY: this is the SOUTH SHORE OF OAHU from Barbers Point to Diamond Head, one continuous stretch with every spot 9 to 16 km from the buoy and all nine facing the same south swell window, so a single reference genuinely fronts the whole zone rather than being stretched across dissimilar exposures. 51211 IS THE ONLY SHALLOW-WATER DIRECTIONAL BUOY IN THE HAWAIIAN ISLANDS — every other directional station in the state sits in water far too deep to compare against a shallow nearshore node, which is why the other 46 spots are registered unverifiable in hfo/hawaii-no-shelf-no-reference rather than split across further pending zones. The zone's eastern boundary is GEOMETRIC, not arbitrary: the headland detector correctly REJECTED 51211 for sandy-beach-oahu, whose path to the buoy crosses 16.6 km of land around Koko Head, so that spot sits in the unverifiable zone. PLACEMENT IS NOW PURELY GEOMETRIC — this is the FIRST region validated after PR #169 removed the DEAD and OFFWIN condition checks from placement_verdict. On the PREVIOUS cycle 20 of these 55 returned OFFWIN purely because they face north or northwest and were validated in August; the validate-out behind this record carries 55 placed-OK and no other outcome. Spots such as banzai-pipeline, sunset-beach-hawaii, waimea-bay and peahi-jaws are therefore PLACED and are correctly rating 1.0 star on a 7.3 second trade sea. THAT IS THE INTENDED BEHAVIOUR, NOT A DEFECT: a north-shore break is genuinely flat in August and in-window in December, and which data source a spot uses is a fact about where it is, not about the sea on the hour the check ran. Do not read a 1.0 star north shore in summer as a placement bug.",
+        "spots": 9,
+        "slugs": [
+          "white-plains-beach",
+          "bombora",
+          "ala-moana-bowls",
+          "kaisers",
+          "canoes-waikiki",
+          "publics-waikiki",
+          "queens-waikiki",
+          "barbers-point",
+          "diamond-head-cliffs"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 9 spots are in the (Mac) scripts/nwps_hfo_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_hfo_validate_out.json --buoy 51211 --slugs <these 9>` merges them into 'spots'. Placement is via the pending path; 51211 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS. NOTE the validate-out carries nwps_buoy_id null THROUGHOUT because hfo had no prior assignments, so the buoy id on these nine rows comes from THIS record, not from that file."
       }
     ],
     "unverifiable": [
@@ -5925,6 +6498,61 @@
           "cape-san-blas"
         ],
         "to_place": "8 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_tae_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_tae_validate_out.json --no-buoy --slugs <these 8> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and they get NO WATCH/liveness entry. NOTE the validate-out was REGENERATED after the PR #138 rename, so it carries the corrected slugs st-andrews-park and cape-san-blas, not the old spellings."
+      },
+      {
+        "zone": "hfo/hawaii-no-shelf-no-reference",
+        "wfo": "hfo",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE anywhere in Hawaii outside the south shore of Oahu — a DEPTH problem, and the most extreme instance of it in the project. HAWAII HAS NO CONTINENTAL SHELF: the bottom drops from the beach to abyssal depths within a few kilometres, so with ONE exception every directional buoy in the state sits in water far too deep to compare against a shallow nearshore node. Verified LIVE on 2026-08-12 by --find-buoy against ALL 55 spots, not extrapolated from one probe. THE DEEP SIDE: 51201 Waimea Bay is 6 km from waimea-bay in 200 m of water; 51208 Hanalei is 11 km out in 200 m; 51206 Hilo is 13 km out in 345 m; 51205 Pauwela Maui is 200 m and 51202 Mokapu Point 81 m. THE SHALLOW SIDE, complementary and leaving no gap: every station close enough to BE nearshore publishes NO directional axis at all, including 51045 Hilo Bay at 3 km, 51046 Kawaihae, iloh1 at 5 km and nwwh1. 51213 Kaumalapau has not reported in 31 days. THE ONE EXCEPTION is 51211 Pearl Harbor Entrance, a 35 m Waverider, registered as its own pending zone hfo/51211 covering the nine south-shore Oahu spots it actually fronts. SIXTH REGION IN THE DEPTH-VERSUS-AXIS CLASS, after gyx/gulf-of-maine-no-reference, sew/olympic-coast-no-reference, pqr/central-oregon-no-reference, mfr/southern-oregon-no-reference and tae/florida-panhandle-no-reference — and the MOST EXTREME of them. Elsewhere the finding was no valid reference within 150 km because the shelf is NARROW; here the shelf is essentially ABSENT, so the same failure shape arrives by a shorter route: deep enough to publish direction means too deep to compare, close enough to compare means no direction published. A reader meeting a seventh should expect the pattern rather than re-derive it. ZONE BOUNDARY IS GEOMETRIC, NOT ARBITRARY: the headland detector correctly REJECTED 51211 for sandy-beach-oahu, whose path to the buoy crosses 16.6 km of land around Koko Head, so that spot is here rather than in the pending zone even though it sits on the same island at a comparable range. These 46 ride NWPS HEIGHT skill + raycast direction, direction unverified. PLACEMENT IS NOW PURELY GEOMETRIC — this is the FIRST region validated after PR #169 removed the DEAD and OFFWIN condition checks from placement_verdict. On the PREVIOUS cycle 20 of these 55 returned OFFWIN purely because they face north or northwest and were validated in August; the validate-out behind this record carries 55 placed-OK and no other outcome. Spots such as banzai-pipeline, sunset-beach-hawaii, waimea-bay and peahi-jaws are therefore PLACED and are correctly rating 1.0 star on a 7.3 second trade sea. THAT IS THE INTENDED BEHAVIOUR, NOT A DEFECT: a north-shore break is genuinely flat in August and in-window in December, and which data source a spot uses is a fact about where it is, not about the sea on the hour the check ran. Do not read a 1.0 star north shore in summer as a placement bug. RE-CHECK TRIGGER: any shallow-water directional buoy deployed anywhere in the state, 51213 Kaumalapau returning to service AND being depth-rated valid, or 51045 / 51046 / iloh1 / nwwh1 beginning to publish .data_spec + .swdir — a BU-6 monthly re-sweep would catch any of them.",
+        "nearest_candidate": "51201 Waimea Bay 6 km / 200 m, 51208 Hanalei 11 km / 200 m, 51206 Hilo 13 km / 345 m, 51205 Pauwela Maui 200 m, 51202 Mokapu Point 81 m (all STRUCTURALLY INVALID on depth) / 51045 Hilo Bay 3 km, 51046 Kawaihae, iloh1 5 km, nwwh1 (nearshore but publish NO directional axis) / 51213 Kaumalapau (no report in 31 days) / 51211 Pearl Harbor Entrance 35 m — the one valid reference in the state, and it fronts the south shore of Oahu only (see hfo/51211; rejected for sandy-beach-oahu by the headland detector at 16.6 km of land around Koko Head) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "suicide-s",
+          "anahola-bay",
+          "backdoor-pipeline",
+          "banyans",
+          "banzai-pipeline",
+          "bellows-beach",
+          "big-beach-makena",
+          "chuns-reef",
+          "ehukai-beach-park",
+          "electric-beach",
+          "flemings-beach",
+          "haleiwa-ali-i-beach",
+          "hanalei-bay",
+          "hapuna-beach",
+          "honoli-i",
+          "honolua-bay",
+          "ho-okipa",
+          "kanaha-beach",
+          "keaau-beach",
+          "kiahuna-beach",
+          "kolekole-beach-park",
+          "lahaina-breakwall",
+          "laniakea",
+          "launiupoko",
+          "log-cabins",
+          "lymans",
+          "makaha",
+          "makapuu-beach-park",
+          "off-the-wall",
+          "pakala",
+          "peahi-jaws",
+          "pine-trees-hawaii",
+          "poipu-beach",
+          "polihale-beach",
+          "puaena-point",
+          "p-p-kea-hawaii",
+          "richardson-beach",
+          "rocky-point",
+          "sandy-beach-oahu",
+          "sunset-beach-hawaii",
+          "thousand-peaks-maui",
+          "tunnels-beach",
+          "turtle-bay",
+          "velzyland",
+          "waimea-bay",
+          "yokohama-bay"
+        ],
+        "to_place": "46 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_hfo_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_hfo_validate_out.json --no-buoy --slugs <these 46> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and they get NO WATCH/liveness entry."
       }
     ]
   }
