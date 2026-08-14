@@ -5960,6 +5960,36 @@
       "nwps_node_lng": -75.04655,
       "nwps_node_distance_m": 1177,
       "nwps_buoy_id": "44084"
+    },
+    {
+      "slug": "jalama-beach",
+      "name": "Jalama Beach",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.47632,
+      "nwps_node_lng": -120.5234,
+      "nwps_node_distance_m": 3930,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "surf-beach-vandenberg",
+      "name": "Surf Beach Vandenberg",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 34.69281,
+      "nwps_node_lng": -120.65234,
+      "nwps_node_distance_m": 4160,
+      "nwps_buoy_id": "46215"
+    },
+    {
+      "slug": "seal-beach-california",
+      "name": "Seal Beach, California",
+      "nwps_wfo": "lox",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.71857,
+      "nwps_node_lng": -118.1166,
+      "nwps_node_distance_m": 5506,
+      "nwps_buoy_id": "46256"
     }
   ],
   "held": [],
@@ -6099,8 +6129,8 @@
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46256 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
-        "spots": 22,
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46256 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists. SEAL-BEACH-CALIFORNIA ADDED (22 -> 23). 46256 sits 13 km away and the headland detector CLEARED it: a 0.6 km along-coast clip reaching only 0.6 km inland, well under the 3.0 km graze ceiling. It REJECTED both alternatives — 46285 Capistrano at 26.5 km of crossed land and 46268 Topanga at 37.7 km — because PALOS VERDES SITS BETWEEN SEAL BEACH AND BOTH. That is the detector doing exactly what it was built for: the two geometrically plausible-looking candidates are the wrong side of a peninsula, and the one that clears is the one actually in the same water body. PREVIOUSLY CLASSIFIED AS PERMANENT GRID-GAP RAYCAST, AND THAT CLASSIFICATION WAS STALE RATHER THAN SUPERSEDED. It was made against the LEGACY 3.0 km FAR cap floor, before PR #81 made the cap GRID-AWARE at max(FAR_CAP_FLOOR_KM, 1.5 x grid spacing). These node distances — jalama-beach 3930 m, surf-beach-vandenberg 4160 m, seal-beach-california 5506 m — all exceed the legacy 3.0 km floor, which is why they read as a grid gap, but all three clear lox's grid-aware cap and validate OK. lox is the coarsest CG1 grid in the project (okx 1.80, box 1.99, mtr 2.48, gyx 2.49 km measured; lox coarser still), so it is precisely the grid the floor mis-served. The 2026-08-14 re-validate returns all three placed-OK with no other outcome. NOTHING ABOUT THE COAST CHANGED — only the cap the distances were judged against. A reader meeting another spot filed as permanent grid-gap on a coarse grid should re-validate it before believing the label.",
+        "spots": 23,
         "slugs": [
           "hermosa-beach-california",
           "hermosa-beach-pier",
@@ -6123,7 +6153,8 @@
           "newport-jetties",
           "blackies",
           "newport-point",
-          "newport-beach-california"
+          "newport-beach-california",
+          "seal-beach-california"
         ],
         "to_place": "This record alone tags NOTHING. Node coords for these 22 are in the current (Mac) nwps_lox_validate_out.json (freshly written by `--validate --wfo lox --batch <these 22 slugs>`); `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46256 --slugs <these 22> --apply` merges them into 'spots'. Placement via the pending path; 46256 stays OUT of trust_by_zone (no PASS)."
       },
@@ -6675,6 +6706,21 @@
           "aviones"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 7 spots are in the (Mac) scripts/nwps_sju_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sju_validate_out.json --buoy 41121 --slugs <these 7>` merges them into 'spots'. Placement is via the pending path; 41121 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS. NOTE the validate-out carries nwps_buoy_id null THROUGHOUT because sju had no prior assignments, so the buoy id on these 7 rows comes from THIS record, not from that file."
+      },
+      {
+        "zone": "lox/46215",
+        "wfo": "lox",
+        "buoy": "46215",
+        "reference": "46215 — Diablo Canyon, CA 076, 27 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46215 FROM THIS ZONE yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. A SEPARATE ZONE FROM mtr/46215 ON THE SAME BUOY, DELIBERATELY. The trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so mtr's 12 spots and this one accumulate and settle independently; a PASS earned at Diablo Canyon for mtr does NOT verify this spot, and vice versa. The existing precedent is 44084, shared between phi (22 spots) and akq (3). 46215 is now the THIRD buoy anchoring zones in more than one WFO, after 44084 and 44098 (box + gyx) — and the first registered since PR #165 re-keyed trust_by_zone from buoy to zone, so that independence is now enforced by the gate rather than only described here. CAVEATS A LATER READER SHOULD NOT MISS: 62 km is a LONG reference — the longest in any pending zone — and this is the ONLY spot in the zone, so its verdict rests entirely on one spot's residuals with no second spot to cross-check against. Read a FAIL here as 'this pairing at this range' rather than as a statement about 46215, which mtr/46215 exercises at much shorter range. PREVIOUSLY CLASSIFIED AS PERMANENT GRID-GAP RAYCAST, AND THAT CLASSIFICATION WAS STALE RATHER THAN SUPERSEDED. It was made against the LEGACY 3.0 km FAR cap floor, before PR #81 made the cap GRID-AWARE at max(FAR_CAP_FLOOR_KM, 1.5 x grid spacing). These node distances — jalama-beach 3930 m, surf-beach-vandenberg 4160 m, seal-beach-california 5506 m — all exceed the legacy 3.0 km floor, which is why they read as a grid gap, but all three clear lox's grid-aware cap and validate OK. lox is the coarsest CG1 grid in the project (okx 1.80, box 1.99, mtr 2.48, gyx 2.49 km measured; lox coarser still), so it is precisely the grid the floor mis-served. The 2026-08-14 re-validate returns all three placed-OK with no other outcome. NOTHING ABOUT THE COAST CHANGED — only the cap the distances were judged against. A reader meeting another spot filed as permanent grid-gap on a coarse grid should re-validate it before believing the label.",
+        "spots": 1,
+        "slugs": [
+          "surf-beach-vandenberg"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for this spot are in the (Mac) scripts/nwps_lox_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --slugs surf-beach-vandenberg` merges it into 'spots'. Placement is via the pending path; 46215 stays OUT of trust_by_zone for THIS zone (no PASS) — and note that a PASS written for mtr/46215 must NOT be copied here, which is exactly what zone keying prevents."
       }
     ],
     "unverifiable": [
@@ -7118,6 +7164,16 @@
           "la-pared-luquillo"
         ],
         "to_place": "1 spot - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_sju_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sju_validate_out.json --no-buoy --slugs la-pared-luquillo --apply` merges it into 'spots' with nwps_buoy_id=null; apply then places it height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so it can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and it gets NO WATCH/liveness entry."
+      },
+      {
+        "zone": "lox/point-conception-no-reference",
+        "wfo": "lox",
+        "reason": "NO VALID NEARSHORE DIRECTIONAL REFERENCE for jalama-beach, verified LIVE on 2026-08-14. TWO INDEPENDENT FAILURES, and both have to hold for the spot to be unverifiable. (1) GEOMETRY: 46215 Diablo Canyon is the only SHALLOW candidate in range at 84 km, and the headland detector REJECTS it for crossing 21.0 km of land — POINT CONCEPTION sits between them and is the sharpest coastline corner in California, the point where the coast turns from north-south to east-west, so a buoy 84 km up-coast is in a different exposure entirely. (2) DEPTH: every other candidate is STRUCTURALLY INVALID — 46054 West Santa Barbara at 454 m and 46218 Harvest at 550 m, both only 26 km away. Close enough, and far too deep. THE SAME DEPTH-VERSUS-AXIS PATTERN recorded at gyx/gulf-of-maine-no-reference, sew/olympic-coast-no-reference, pqr/central-oregon-no-reference, mfr/southern-oregon-no-reference, tae/florida-panhandle-no-reference and hfo/hawaii-no-shelf-no-reference — but HERE AS A SINGLE SPOT RATHER THAN A REGION, which is what makes it worth recording separately: the pattern is not a property of long coastlines, it can bite one spot behind one headland. Distinct from sju/luquillo-no-reference, where the nearby candidates are the right depth and fail only on a readable feed (BU-11); here the depth failure is real and no feed fix would help. This one spot rides NWPS HEIGHT skill + raycast direction, direction unverified. PREVIOUSLY CLASSIFIED AS PERMANENT GRID-GAP RAYCAST, AND THAT CLASSIFICATION WAS STALE RATHER THAN SUPERSEDED. It was made against the LEGACY 3.0 km FAR cap floor, before PR #81 made the cap GRID-AWARE at max(FAR_CAP_FLOOR_KM, 1.5 x grid spacing). These node distances — jalama-beach 3930 m, surf-beach-vandenberg 4160 m, seal-beach-california 5506 m — all exceed the legacy 3.0 km floor, which is why they read as a grid gap, but all three clear lox's grid-aware cap and validate OK. lox is the coarsest CG1 grid in the project (okx 1.80, box 1.99, mtr 2.48, gyx 2.49 km measured; lox coarser still), so it is precisely the grid the floor mis-served. The 2026-08-14 re-validate returns all three placed-OK with no other outcome. NOTHING ABOUT THE COAST CHANGED — only the cap the distances were judged against. A reader meeting another spot filed as permanent grid-gap on a coarse grid should re-validate it before believing the label. RE-CHECK TRIGGER: any shallow directional buoy deployed between Point Conception and Point Arguello, which would sit on the correct side of the corner and at usable range.",
+        "nearest_candidate": "46215 Diablo Canyon 84 km / 27 m (correct DEPTH, rejected by the headland detector for 21.0 km of crossed land around Point Conception) / 46054 West Santa Barbara 26 km / 454 m and 46218 Harvest 26 km / 550 m (correct DISTANCE, STRUCTURALLY INVALID on depth) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "jalama-beach"
+        ],
+        "to_place": "1 spot - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_lox_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --no-buoy --slugs jalama-beach --apply` merges it into 'spots' with nwps_buoy_id=null; apply then places it height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so it can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and it gets NO WATCH/liveness entry."
       }
     ]
   }
