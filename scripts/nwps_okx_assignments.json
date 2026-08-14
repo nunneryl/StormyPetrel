@@ -5460,6 +5460,246 @@
       "nwps_node_lng": -158.25017,
       "nwps_node_distance_m": 2071,
       "nwps_buoy_id": null
+    },
+    {
+      "slug": "antonio-s",
+      "name": "Antonio's",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.23729,
+      "nwps_node_distance_m": 965,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "aviones",
+      "name": "Aviones",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -65.9661,
+      "nwps_node_distance_m": 922,
+      "nwps_buoy_id": "41121"
+    },
+    {
+      "slug": "crash-boat-beach",
+      "name": "Crash Boat Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 735,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "dogmans-rincon",
+      "name": "Dogmans Rincon",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.33119,
+      "nwps_node_lng": -67.25424,
+      "nwps_node_distance_m": 1198,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "gas-chambers-aguadilla",
+      "name": "Gas Chambers Aguadilla",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 256,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "indicators",
+      "name": "Indicators",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 356,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "jobos-beach-isabela",
+      "name": "Jobos Beach Isabela",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.08475,
+      "nwps_node_distance_m": 1164,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "la-pared-luquillo",
+      "name": "La Pared Luquillo",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -65.71186,
+      "nwps_node_distance_m": 407,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "maria-s",
+      "name": "Maria's",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 1203,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "middles-isabela",
+      "name": "Middles Isabela",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.9661,
+      "nwps_node_distance_m": 320,
+      "nwps_buoy_id": "41121"
+    },
+    {
+      "slug": "pine-grove-beach",
+      "name": "Pine Grove Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -66.01695,
+      "nwps_node_distance_m": 1845,
+      "nwps_buoy_id": "41121"
+    },
+    {
+      "slug": "playa-guajataca",
+      "name": "Playa Guajataca",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.94915,
+      "nwps_node_distance_m": 762,
+      "nwps_buoy_id": "41121"
+    },
+    {
+      "slug": "playa-kikita",
+      "name": "Playa Kikita",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.27119,
+      "nwps_node_distance_m": 1576,
+      "nwps_buoy_id": "41121"
+    },
+    {
+      "slug": "playa-manati",
+      "name": "Playa Manati",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.52542,
+      "nwps_node_distance_m": 917,
+      "nwps_buoy_id": "41121"
+    },
+    {
+      "slug": "pools",
+      "name": "Pools",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.25424,
+      "nwps_node_distance_m": 1468,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "rincon-domes",
+      "name": "Rincon Domes",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 182,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "sandy-beach",
+      "name": "Sandy Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.25424,
+      "nwps_node_distance_m": 983,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "shacks-beach",
+      "name": "Shacks Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.10169,
+      "nwps_node_distance_m": 1447,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "steps-beach-rincon",
+      "name": "Steps Beach Rincon",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 728,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "surfers-beach-aguadilla",
+      "name": "Surfers Beach Aguadilla",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.50976,
+      "nwps_node_lng": -67.13559,
+      "nwps_node_distance_m": 286,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "table-tops-aguadilla",
+      "name": "Table Tops Aguadilla",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.42859,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 1448,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "tres-palmas",
+      "name": "Tres Palmas",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 698,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "wilderness",
+      "name": "Wilderness",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 932,
+      "nwps_buoy_id": "41115"
+    },
+    {
+      "slug": "fiji",
+      "name": "Fiji",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.47729,
+      "nwps_node_lng": -66.08475,
+      "nwps_node_distance_m": 1041,
+      "nwps_buoy_id": "41121"
     }
   ],
   "held": [],
@@ -6120,6 +6360,57 @@
           "diamond-head-cliffs"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 9 spots are in the (Mac) scripts/nwps_hfo_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_hfo_validate_out.json --buoy 51211 --slugs <these 9>` merges them into 'spots'. Placement is via the pending path; 51211 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS. NOTE the validate-out carries nwps_buoy_id null THROUGHOUT because hfo had no prior assignments, so the buoy id on these nine rows comes from THIS record, not from that file."
+      },
+      {
+        "zone": "sju/41115",
+        "wfo": "sju",
+        "buoy": "41115",
+        "reference": "41115 — Rincon, PR 181, 33 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41115 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. TIGHTEST ZONE IN THE PROJECT: the Rincon and Aguadilla spots sit 2 to 26 km from the buoy with SIX of them inside 5 km, all on the west coast facing the Mona Passage, so the reference and the spots share one exposure and one swell window. Nothing else registered so far comes close to that geometry, which makes this the zone where a direction verdict should be cleanest if the gate is working. FIRST ISLAND REGION WITH A REAL INSULAR SHELF. Puerto Rico is the direct contrast to hfo/hawaii-no-shelf-no-reference, where every directional buoy in the state sits in 200 to 345 m and only one shallow-water reference exists in the whole archipelago. Here the shelf carries TWO valid 32-33 m Waveriders, so 23 of the 24 sju spots place on a real nearshore reference. An island region is therefore not automatically a no-reference region — the shelf is the variable, not the fact of being an island. HEADLAND DETECTOR DID SUBSTANTIAL WORK HERE, AND WAS VERIFIED IN BOTH DIRECTIONS, which is what makes these zone boundaries geometric rather than drawn by hand. It REJECTED 41121 for tres-palmas (the path crosses 52.5 km of land around the island) and REJECTED 41115 for middles-isabela (18.5 km), so neither west-coast nor north-coast spots leak into the wrong zone. It also CORRECTLY CLEARED 41121 for pine-grove-beach at 73 km, where a 27.9 km along-coast clip reaches only 1.8 km inland — under the 3.0 km graze ceiling set in PR #114. A detector that only ever rejects proves nothing; this one was shown to pass a long along-coast pairing and fail two genuine traverses on the same coastline.",
+        "spots": 16,
+        "slugs": [
+          "indicators",
+          "maria-s",
+          "pools",
+          "rincon-domes",
+          "sandy-beach",
+          "steps-beach-rincon",
+          "antonio-s",
+          "tres-palmas",
+          "dogmans-rincon",
+          "table-tops-aguadilla",
+          "crash-boat-beach",
+          "gas-chambers-aguadilla",
+          "wilderness",
+          "surfers-beach-aguadilla",
+          "shacks-beach",
+          "jobos-beach-isabela"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 16 spots are in the (Mac) scripts/nwps_sju_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sju_validate_out.json --buoy 41115 --slugs <these 16>` merges them into 'spots'. Placement is via the pending path; 41115 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS. NOTE the validate-out carries nwps_buoy_id null THROUGHOUT because sju had no prior assignments, so the buoy id on these 16 rows comes from THIS record, not from that file."
+      },
+      {
+        "zone": "sju/41121",
+        "wfo": "sju",
+        "buoy": "41121",
+        "reference": "41121 — Arecibo, PR 249, 32 m Waverider; a VALID nearshore directional reference",
+        "axes_pending": [
+          "direction"
+        ],
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 41121 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. ZONE SPAN: 19 km at playa-manati out to 78 km at aviones, covering most of the north coast. THE EASTERN END PAST SAN JUAN IS THE WEAKEST PART OF THIS ZONE and should be read that way when the first verdict lands: if it FAILs, check the per-spot residuals at the eastern end before concluding anything about 41121 itself. That end is stretched NOT because no closer candidate exists but because the closer one is unreadable — 41053 San Juan sits 10 km from pine-grove-beach in 32 m, which is IDEAL depth and distance, and would front the eastern spots far better than Arecibo does, but it publishes no .data_spec and is therefore unusable. THAT IS BU-11, NOT AN ABSENCE OF CANDIDATES. If BU-11 is addressed, this zone should be re-cut with 41053 taking its eastern half. FIRST ISLAND REGION WITH A REAL INSULAR SHELF. Puerto Rico is the direct contrast to hfo/hawaii-no-shelf-no-reference, where every directional buoy in the state sits in 200 to 345 m and only one shallow-water reference exists in the whole archipelago. Here the shelf carries TWO valid 32-33 m Waveriders, so 23 of the 24 sju spots place on a real nearshore reference. An island region is therefore not automatically a no-reference region — the shelf is the variable, not the fact of being an island. HEADLAND DETECTOR DID SUBSTANTIAL WORK HERE, AND WAS VERIFIED IN BOTH DIRECTIONS, which is what makes these zone boundaries geometric rather than drawn by hand. It REJECTED 41121 for tres-palmas (the path crosses 52.5 km of land around the island) and REJECTED 41115 for middles-isabela (18.5 km), so neither west-coast nor north-coast spots leak into the wrong zone. It also CORRECTLY CLEARED 41121 for pine-grove-beach at 73 km, where a 27.9 km along-coast clip reaches only 1.8 km inland — under the 3.0 km graze ceiling set in PR #114. A detector that only ever rejects proves nothing; this one was shown to pass a long along-coast pairing and fail two genuine traverses on the same coastline.",
+        "spots": 7,
+        "slugs": [
+          "playa-manati",
+          "playa-guajataca",
+          "middles-isabela",
+          "playa-kikita",
+          "fiji",
+          "pine-grove-beach",
+          "aviones"
+        ],
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 7 spots are in the (Mac) scripts/nwps_sju_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sju_validate_out.json --buoy 41121 --slugs <these 7>` merges them into 'spots'. Placement is via the pending path; 41121 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS. NOTE the validate-out carries nwps_buoy_id null THROUGHOUT because sju had no prior assignments, so the buoy id on these 7 rows comes from THIS record, not from that file."
       }
     ],
     "unverifiable": [
@@ -6553,6 +6844,16 @@
           "yokohama-bay"
         ],
         "to_place": "46 spots - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_hfo_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_hfo_validate_out.json --no-buoy --slugs <these 46> --apply` merges them into 'spots' with nwps_buoy_id=null; apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and they get NO WATCH/liveness entry."
+      },
+      {
+        "zone": "sju/luquillo-no-reference",
+        "wfo": "sju",
+        "reason": "NO USABLE NEARSHORE DIRECTIONAL REFERENCE for la-pared-luquillo — and READ THIS RECORD DIFFERENTLY FROM ITS SIBLINGS. Verified LIVE on 2026-08-14. The nearest usable reference is 41121 Arecibo at 105 km, rated MARGINAL, which does not clear the bar. But the two candidates at CORRECT DEPTH AND DISTANCE are unusable for a FEED reason, not a geometric or bathymetric one: 41053 San Juan at 10 km in 32 m and 41056 Vieques Island at 29 km in 30 m BOTH publish no .data_spec despite being CDIP stations with directional capability. frdp4 Fajardo at 10 km is a tide gauge and was never a candidate. SO: THIS SPOT WOULD HAVE A GOOD REFERENCE IF THE CDIP DIRECTIONAL FEED WERE READABLE. It is NOT permanently unverifiable in the way gyx/gulf-of-maine, sew/olympic-coast, pqr/central-oregon, mfr/southern-oregon, tae/florida-panhandle and hfo/hawaii-no-shelf are — those are DEPTH-VERSUS-AXIS regions where the physics leaves no gap and no feed fix would help. Here the geometry is fine and the plumbing is not. REVISIT THIS RECORD WHEN BU-11 IS ADDRESSED rather than treating it as settled; a later reader who files it alongside the depth-versus-axis regions has mis-read it. FIRST ISLAND REGION WITH A REAL INSULAR SHELF. Puerto Rico is the direct contrast to hfo/hawaii-no-shelf-no-reference, where every directional buoy in the state sits in 200 to 345 m and only one shallow-water reference exists in the whole archipelago. Here the shelf carries TWO valid 32-33 m Waveriders, so 23 of the 24 sju spots place on a real nearshore reference. An island region is therefore not automatically a no-reference region — the shelf is the variable, not the fact of being an island. HEADLAND DETECTOR DID SUBSTANTIAL WORK HERE, AND WAS VERIFIED IN BOTH DIRECTIONS, which is what makes these zone boundaries geometric rather than drawn by hand. It REJECTED 41121 for tres-palmas (the path crosses 52.5 km of land around the island) and REJECTED 41115 for middles-isabela (18.5 km), so neither west-coast nor north-coast spots leak into the wrong zone. It also CORRECTLY CLEARED 41121 for pine-grove-beach at 73 km, where a 27.9 km along-coast clip reaches only 1.8 km inland — under the 3.0 km graze ceiling set in PR #114. A detector that only ever rejects proves nothing; this one was shown to pass a long along-coast pairing and fail two genuine traverses on the same coastline. This one spot rides NWPS HEIGHT skill + raycast direction, direction unverified, until then. RE-CHECK TRIGGER: BU-11 landing, or 41053 / 41056 beginning to publish .data_spec + .swdir — either would move la-pared-luquillo straight into a pending zone on a 10 km, 32 m reference.",
+        "nearest_candidate": "41053 San Juan 10 km / 32 m and 41056 Vieques Island 29 km / 30 m — BOTH ideal on depth and distance, both CDIP stations with directional capability, both publishing no .data_spec (BU-11) / 41121 Arecibo 105 km (nearest USABLE reference, rated MARGINAL) / frdp4 Fajardo 10 km (tide gauge, no wave axis) - AUDIT ONLY, never used for placement or verification",
+        "slugs": [
+          "la-pared-luquillo"
+        ],
+        "to_place": "1 spot - promoted with NO buoy. Node lat/lng/distance are in the (Mac) scripts/nwps_sju_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sju_validate_out.json --no-buoy --slugs la-pared-luquillo --apply` merges it into 'spots' with nwps_buoy_id=null; apply then places it height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so it can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and it gets NO WATCH/liveness entry."
       }
     ]
   }
