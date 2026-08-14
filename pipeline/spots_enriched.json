@@ -23790,9 +23790,15 @@
     "fallback_buoy_ids": [],
     "nwps_wfo": "sju",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
-    "nearest_tide_station_dist_km": 10.75
+    "nearest_tide_station_dist_km": 10.75,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.37989,
+    "nwps_node_lng": -67.23729,
+    "nwps_node_distance_m": 965,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Aviones",
@@ -23846,9 +23852,15 @@
       }
     ],
     "optimal_swell_dir": 48,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9754986",
-    "nearest_tide_station_dist_km": 3.42
+    "nearest_tide_station_dist_km": 3.42,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.46106,
+    "nwps_node_lng": -65.9661,
+    "nwps_node_distance_m": 922,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Crash Boat Beach",
@@ -23912,11 +23924,17 @@
       }
     ],
     "optimal_swell_dir": 40,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
     "nearest_tide_station_dist_km": 0.16,
     "nearest_buoy_id": "41115",
-    "nearest_buoy_dist_km": 14.77
+    "nearest_buoy_dist_km": 14.77,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.46106,
+    "nwps_node_lng": -67.16949,
+    "nwps_node_distance_m": 735,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Dogmans Rincon",
@@ -23980,9 +23998,15 @@
       }
     ],
     "optimal_swell_dir": 304,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
-    "nearest_tide_station_dist_km": 14.98
+    "nearest_tide_station_dist_km": 14.98,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.33119,
+    "nwps_node_lng": -67.25424,
+    "nwps_node_distance_m": 1198,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Gas Chambers Aguadilla",
@@ -24037,9 +24061,15 @@
       }
     ],
     "optimal_swell_dir": 36,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 0.56
+    "nearest_tide_station_dist_km": 0.56,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.46106,
+    "nwps_node_lng": -67.16949,
+    "nwps_node_distance_m": 256,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Indicators",
@@ -24098,11 +24128,17 @@
       }
     ],
     "optimal_swell_dir": 300,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
     "nearest_tide_station_dist_km": 12.86,
     "nearest_buoy_id": "41115",
-    "nearest_buoy_dist_km": 2.16
+    "nearest_buoy_dist_km": 2.16,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.36366,
+    "nwps_node_lng": -67.27119,
+    "nwps_node_distance_m": 356,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Jobos Beach Isabela",
@@ -24161,11 +24197,17 @@
       }
     ],
     "optimal_swell_dir": 8,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
     "nearest_tide_station_dist_km": 11.37,
     "nearest_buoy_id": "41121",
-    "nearest_buoy_dist_km": 39.58
+    "nearest_buoy_dist_km": 39.58,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.526,
+    "nwps_node_lng": -67.08475,
+    "nwps_node_distance_m": 1164,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "La Pared Luquillo",
@@ -24219,9 +24261,15 @@
       }
     ],
     "optimal_swell_dir": 324,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9753766",
-    "nearest_tide_station_dist_km": 2.29
+    "nearest_tide_station_dist_km": 2.29,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.37989,
+    "nwps_node_lng": -65.71186,
+    "nwps_node_distance_m": 407,
+    "nwps_buoy_id": null
   },
   {
     "name": "Maria's",
@@ -24281,11 +24329,17 @@
       }
     ],
     "optimal_swell_dir": 304,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
     "nearest_tide_station_dist_km": 13.07,
     "nearest_buoy_id": "41115",
-    "nearest_buoy_dist_km": 2.42
+    "nearest_buoy_dist_km": 2.42,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.34742,
+    "nwps_node_lng": -67.27119,
+    "nwps_node_distance_m": 1203,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Middles Isabela",
@@ -24349,9 +24403,15 @@
       }
     ],
     "optimal_swell_dir": 4,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 21.01
+    "nearest_tide_station_dist_km": 21.01,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.49353,
+    "nwps_node_lng": -66.9661,
+    "nwps_node_distance_m": 320,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Pine Grove Beach",
@@ -24418,9 +24478,15 @@
     "tide_preference_confidence": 0.7,
     "nwps_wfo": "sju",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9754986",
-    "nearest_tide_station_dist_km": 2.69
+    "nearest_tide_station_dist_km": 2.69,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.46106,
+    "nwps_node_lng": -66.01695,
+    "nwps_node_distance_m": 1845,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Playa Guajataca",
@@ -24488,9 +24554,15 @@
       }
     ],
     "optimal_swell_dir": 16,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 22.39
+    "nearest_tide_station_dist_km": 22.39,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.49353,
+    "nwps_node_lng": -66.94915,
+    "nwps_node_distance_m": 762,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Playa Kikita",
@@ -24544,9 +24616,15 @@
       }
     ],
     "optimal_swell_dir": 8,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9756567",
-    "nearest_tide_station_dist_km": 15.13
+    "nearest_tide_station_dist_km": 15.13,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.49353,
+    "nwps_node_lng": -66.27119,
+    "nwps_node_distance_m": 1576,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Playa Manati",
@@ -24604,9 +24682,15 @@
       }
     ],
     "optimal_swell_dir": 328,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9756567",
-    "nearest_tide_station_dist_km": 14.94
+    "nearest_tide_station_dist_km": 14.94,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.49353,
+    "nwps_node_lng": -66.52542,
+    "nwps_node_distance_m": 917,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Pools",
@@ -24668,9 +24752,15 @@
     "tide_preference_confidence": 0.9,
     "nwps_wfo": "sju",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
-    "nearest_tide_station_dist_km": 11.67
+    "nearest_tide_station_dist_km": 11.67,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.37989,
+    "nwps_node_lng": -67.25424,
+    "nwps_node_distance_m": 1468,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Rincon Domes",
@@ -24729,9 +24819,15 @@
       }
     ],
     "optimal_swell_dir": 296,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
-    "nearest_tide_station_dist_km": 12.34
+    "nearest_tide_station_dist_km": 12.34,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.36366,
+    "nwps_node_lng": -67.27119,
+    "nwps_node_distance_m": 182,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Sandy Beach",
@@ -24793,9 +24889,15 @@
     "tide_preference_confidence": 0.75,
     "nwps_wfo": "sju",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
-    "nearest_tide_station_dist_km": 11.3
+    "nearest_tide_station_dist_km": 11.3,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.37989,
+    "nwps_node_lng": -67.25424,
+    "nwps_node_distance_m": 983,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Shacks Beach",
@@ -24858,9 +24960,15 @@
       }
     ],
     "optimal_swell_dir": 4,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 8.94
+    "nearest_tide_station_dist_km": 8.94,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.526,
+    "nwps_node_lng": -67.10169,
+    "nwps_node_distance_m": 1447,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Steps Beach Rincon",
@@ -24918,9 +25026,15 @@
       }
     ],
     "optimal_swell_dir": 312,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 15.89
+    "nearest_tide_station_dist_km": 15.89,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.34742,
+    "nwps_node_lng": -67.27119,
+    "nwps_node_distance_m": 728,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Surfers Beach Aguadilla",
@@ -24974,9 +25088,15 @@
       }
     ],
     "optimal_swell_dir": 44,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 6.74
+    "nearest_tide_station_dist_km": 6.74,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.50976,
+    "nwps_node_lng": -67.13559,
+    "nwps_node_distance_m": 286,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Table Tops Aguadilla",
@@ -25040,9 +25160,15 @@
       }
     ],
     "optimal_swell_dir": 36,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 4.92
+    "nearest_tide_station_dist_km": 4.92,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.42859,
+    "nwps_node_lng": -67.16949,
+    "nwps_node_distance_m": 1448,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Tres Palmas",
@@ -25105,9 +25231,15 @@
     "tide_preference_confidence": 0.85,
     "nwps_wfo": "sju",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
-    "nearest_tide_station_dist_km": 16.05
+    "nearest_tide_station_dist_km": 16.05,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.34742,
+    "nwps_node_lng": -67.27119,
+    "nwps_node_distance_m": 698,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Wilderness",
@@ -25163,11 +25295,17 @@
       }
     ],
     "optimal_swell_dir": 56,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
     "nearest_tide_station_dist_km": 3.01,
     "nearest_buoy_id": "41115",
-    "nearest_buoy_dist_km": 16.92
+    "nearest_buoy_dist_km": 16.92,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.49353,
+    "nwps_node_lng": -67.16949,
+    "nwps_node_distance_m": 932,
+    "nwps_buoy_id": "41115"
   },
   {
     "name": "Charlestown Town Beach",
@@ -28436,9 +28574,15 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Little-Fiji-Escambron",
     "nwps_wfo": "sju",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "9755371",
-    "nearest_tide_station_dist_km": 3.03
+    "nearest_tide_station_dist_km": 3.03,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 18.47729,
+    "nwps_node_lng": -66.08475,
+    "nwps_node_distance_m": 1041,
+    "nwps_buoy_id": "41121"
   },
   {
     "name": "Tijuana Slough",
