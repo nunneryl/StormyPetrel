@@ -706,7 +706,7 @@
       }
     ],
     "optimal_swell_dir": 188,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
     "nearest_tide_station_dist_km": 2.81,
     "nearest_buoy_id": "51211",
@@ -715,7 +715,13 @@
     "coord_adjusted": false,
     "orientation_50m": 0.7769945376875853,
     "orientation_200m": 355.83858059511624,
-    "orientation_flipped": false
+    "orientation_flipped": false,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.28671,
+    "nwps_node_lng": -157.86633,
+    "nwps_node_distance_m": 1876,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Brooks Street",
@@ -8224,7 +8230,7 @@
       }
     ],
     "optimal_swell_dir": 160,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617433",
     "nearest_tide_station_dist_km": 10.14,
     "nearest_buoy_id": null,
@@ -8233,7 +8239,13 @@
     "coord_adjusted": true,
     "orientation_50m": 325.6292395154186,
     "orientation_200m": 324.92797833336294,
-    "orientation_flipped": false
+    "orientation_flipped": false,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.97078,
+    "nwps_node_lng": -155.87037,
+    "nwps_node_distance_m": 2268,
+    "nwps_buoy_id": null
   },
   {
     "name": "Sunset Cliffs",
@@ -13419,11 +13431,17 @@
       }
     ],
     "optimal_swell_dir": 196,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
     "nearest_tide_station_dist_km": 3.29,
     "nearest_buoy_id": "51211",
-    "nearest_buoy_dist_km": 12.01
+    "nearest_buoy_dist_km": 12.01,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.26234,
+    "nwps_node_lng": -157.84074,
+    "nwps_node_distance_m": 2087,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Anahola Bay",
@@ -13486,9 +13504,15 @@
       }
     ],
     "optimal_swell_dir": 72,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611443",
-    "nearest_tide_station_dist_km": 17.57
+    "nearest_tide_station_dist_km": 17.57,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 22.16399,
+    "nwps_node_lng": -159.29933,
+    "nwps_node_distance_m": 1806,
+    "nwps_buoy_id": null
   },
   {
     "name": "Backdoor Pipeline",
@@ -13551,9 +13575,15 @@
       }
     ],
     "optimal_swell_dir": 24,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2779",
-    "nearest_tide_station_dist_km": 7.42
+    "nearest_tide_station_dist_km": 7.42,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1743,
+    "nwps_buoy_id": null
   },
   {
     "name": "Banyans",
@@ -13612,9 +13642,15 @@
       }
     ],
     "optimal_swell_dir": 176,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617846",
-    "nearest_tide_station_dist_km": 0.35
+    "nearest_tide_station_dist_km": 0.35,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.60525,
+    "nwps_node_lng": -155.99832,
+    "nwps_node_distance_m": 2226,
+    "nwps_buoy_id": null
   },
   {
     "name": "Banzai Pipeline",
@@ -13687,9 +13723,15 @@
     "tide_preference_confidence": 0.95,
     "nwps_wfo": "hfo",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 9.19
+    "nearest_tide_station_dist_km": 9.19,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1657,
+    "nwps_buoy_id": null
   },
   {
     "name": "Barbers Point",
@@ -13749,9 +13791,15 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Barbers-Point-Coast-Guard-Jetty",
     "nwps_wfo": "hfo",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612366",
-    "nearest_tide_station_dist_km": 14.88
+    "nearest_tide_station_dist_km": 14.88,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.28671,
+    "nwps_node_lng": -158.09663,
+    "nwps_node_distance_m": 1446,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Bellows Beach",
@@ -13810,11 +13858,17 @@
       }
     ],
     "optimal_swell_dir": 100,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612376",
     "nearest_tide_station_dist_km": 3.16,
     "nearest_buoy_id": "51202",
-    "nearest_buoy_dist_km": 7.34
+    "nearest_buoy_dist_km": 7.34,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.35982,
+    "nwps_node_lng": -157.68721,
+    "nwps_node_distance_m": 2092,
+    "nwps_buoy_id": null
   },
   {
     "name": "Big Beach Makena",
@@ -13877,9 +13931,15 @@
     "tide_preference_confidence": 0.7,
     "nwps_wfo": "hfo",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615202",
-    "nearest_tide_station_dist_km": 2.83
+    "nearest_tide_station_dist_km": 2.83,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.62875,
+    "nwps_node_lng": -156.45892,
+    "nwps_node_distance_m": 1330,
+    "nwps_buoy_id": null
   },
   {
     "name": "Canoes Waikiki",
@@ -13933,11 +13993,17 @@
       }
     ],
     "optimal_swell_dir": 176,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
     "nearest_tide_station_dist_km": 5.04,
     "nearest_buoy_id": "51211",
-    "nearest_buoy_dist_km": 13.85
+    "nearest_buoy_dist_km": 13.85,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.26234,
+    "nwps_node_lng": -157.84074,
+    "nwps_node_distance_m": 1866,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Chuns Reef",
@@ -14001,9 +14067,15 @@
       }
     ],
     "optimal_swell_dir": 348,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 3.92
+    "nearest_tide_station_dist_km": 3.92,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.62787,
+    "nwps_node_lng": -158.09663,
+    "nwps_node_distance_m": 1615,
+    "nwps_buoy_id": null
   },
   {
     "name": "Diamond Head Cliffs",
@@ -14056,9 +14128,15 @@
       }
     ],
     "optimal_swell_dir": 192,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
-    "nearest_tide_station_dist_km": 8.14
+    "nearest_tide_station_dist_km": 8.14,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.23797,
+    "nwps_node_lng": -157.81515,
+    "nwps_node_distance_m": 1870,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Ehukai Beach Park",
@@ -14127,9 +14205,15 @@
       }
     ],
     "optimal_swell_dir": 8,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 9.46
+    "nearest_tide_station_dist_km": 9.46,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1345,
+    "nwps_buoy_id": null
   },
   {
     "name": "Electric Beach",
@@ -14192,11 +14276,17 @@
       }
     ],
     "optimal_swell_dir": 248,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612482",
     "nearest_tide_station_dist_km": 11.34,
     "nearest_buoy_id": "51212",
-    "nearest_buoy_dist_km": 4.26
+    "nearest_buoy_dist_km": 4.26,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.35982,
+    "nwps_node_lng": -158.14781,
+    "nwps_node_distance_m": 1628,
+    "nwps_buoy_id": null
   },
   {
     "name": "Flemings Beach",
@@ -14255,9 +14345,15 @@
       }
     ],
     "optimal_swell_dir": 92,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
-    "nearest_tide_station_dist_km": 12.72
+    "nearest_tide_station_dist_km": 12.72,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.01865,
+    "nwps_node_lng": -156.66364,
+    "nwps_node_distance_m": 1609,
+    "nwps_buoy_id": null
   },
   {
     "name": "Haleiwa Ali'i Beach",
@@ -14325,9 +14421,15 @@
       }
     ],
     "optimal_swell_dir": 332,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 1.27
+    "nearest_tide_station_dist_km": 1.27,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.60351,
+    "nwps_node_lng": -158.12222,
+    "nwps_node_distance_m": 1725,
+    "nwps_buoy_id": null
   },
   {
     "name": "Hanalei Bay",
@@ -14391,11 +14493,17 @@
       }
     ],
     "optimal_swell_dir": 0,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611683",
     "nearest_tide_station_dist_km": 0.92,
     "nearest_buoy_id": "51208",
-    "nearest_buoy_dist_km": 10.68
+    "nearest_buoy_dist_km": 10.68,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 22.21273,
+    "nwps_node_lng": -159.50404,
+    "nwps_node_distance_m": 610,
+    "nwps_buoy_id": null
   },
   {
     "name": "Hapuna Beach",
@@ -14454,9 +14562,15 @@
       }
     ],
     "optimal_swell_dir": 128,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617433",
-    "nearest_tide_station_dist_km": 4.95
+    "nearest_tide_station_dist_km": 4.95,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.99515,
+    "nwps_node_lng": -155.84478,
+    "nwps_node_distance_m": 1925,
+    "nwps_buoy_id": null
   },
   {
     "name": "Honoli‘i",
@@ -14518,11 +14632,17 @@
       }
     ],
     "optimal_swell_dir": 324,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617760",
     "nearest_tide_station_dist_km": 4.62,
     "nearest_buoy_id": "51206",
-    "nearest_buoy_dist_km": 12.89
+    "nearest_buoy_dist_km": 12.89,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.75146,
+    "nwps_node_lng": -155.0771,
+    "nwps_node_distance_m": 1529,
+    "nwps_buoy_id": null
   },
   {
     "name": "Honolua Bay",
@@ -14581,9 +14701,15 @@
       }
     ],
     "optimal_swell_dir": 84,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
-    "nearest_tide_station_dist_km": 15.3
+    "nearest_tide_station_dist_km": 15.3,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.01865,
+    "nwps_node_lng": -156.66364,
+    "nwps_node_distance_m": 2565,
+    "nwps_buoy_id": null
   },
   {
     "name": "Hoʻokipa",
@@ -14638,11 +14764,17 @@
       }
     ],
     "optimal_swell_dir": 92,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
     "nearest_tide_station_dist_km": 12.34,
     "nearest_buoy_id": "51205",
-    "nearest_buoy_dist_km": 10.65
+    "nearest_buoy_dist_km": 10.65,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.94554,
+    "nwps_node_lng": -156.35657,
+    "nwps_node_distance_m": 1301,
+    "nwps_buoy_id": null
   },
   {
     "name": "Kaisers",
@@ -14706,9 +14838,15 @@
       }
     ],
     "optimal_swell_dir": 180,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
-    "nearest_tide_station_dist_km": 0.93
+    "nearest_tide_station_dist_km": 0.93,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.26234,
+    "nwps_node_lng": -157.84074,
+    "nwps_node_distance_m": 1970,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Kanaha Beach",
@@ -14767,11 +14905,17 @@
       }
     ],
     "optimal_swell_dir": 136,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
     "nearest_tide_station_dist_km": 2.87,
     "nearest_buoy_id": "51205",
-    "nearest_buoy_dist_km": 12.81
+    "nearest_buoy_dist_km": 12.81,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.92117,
+    "nwps_node_lng": -156.43333,
+    "nwps_node_distance_m": 2486,
+    "nwps_buoy_id": null
   },
   {
     "name": "Keaau Beach",
@@ -14838,9 +14982,15 @@
     "tide_preference_confidence": 0.5,
     "nwps_wfo": "hfo",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612482",
-    "nearest_tide_station_dist_km": 6.76
+    "nearest_tide_station_dist_km": 6.76,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.50603,
+    "nwps_node_lng": -158.25017,
+    "nwps_node_distance_m": 2455,
+    "nwps_buoy_id": null
   },
   {
     "name": "Kiahuna Beach",
@@ -14897,9 +15047,15 @@
     "tide_preference_confidence": 0.5,
     "nwps_wfo": "hfo",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611400",
-    "nearest_tide_station_dist_km": 13.76
+    "nearest_tide_station_dist_km": 13.76,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.87156,
+    "nwps_node_lng": -159.47845,
+    "nwps_node_distance_m": 2070,
+    "nwps_buoy_id": null
   },
   {
     "name": "Kolekole Beach Park",
@@ -14953,9 +15109,15 @@
       }
     ],
     "optimal_swell_dir": 0,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617760",
-    "nearest_tide_station_dist_km": 18.14
+    "nearest_tide_station_dist_km": 18.14,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.87331,
+    "nwps_node_lng": -155.10269,
+    "nwps_node_distance_m": 1940,
+    "nwps_buoy_id": null
   },
   {
     "name": "Lahaina Breakwall",
@@ -15014,11 +15176,17 @@
       }
     ],
     "optimal_swell_dir": 112,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
     "nearest_tide_station_dist_km": 1.2,
     "nearest_buoy_id": "51211",
-    "nearest_buoy_dist_km": 140.89
+    "nearest_buoy_dist_km": 140.89,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.87244,
+    "nwps_node_lng": -156.68923,
+    "nwps_node_distance_m": 1007,
+    "nwps_buoy_id": null
   },
   {
     "name": "Laniakea",
@@ -15081,9 +15249,15 @@
       }
     ],
     "optimal_swell_dir": 20,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 3.09
+    "nearest_tide_station_dist_km": 3.09,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.62787,
+    "nwps_node_lng": -158.09663,
+    "nwps_node_distance_m": 1414,
+    "nwps_buoy_id": null
   },
   {
     "name": "Launiupoko",
@@ -15146,11 +15320,17 @@
       }
     ],
     "optimal_swell_dir": 104,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
     "nearest_tide_station_dist_km": 5.74,
     "nearest_buoy_id": "51211",
-    "nearest_buoy_dist_km": 144.85
+    "nearest_buoy_dist_km": 144.85,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.84807,
+    "nwps_node_lng": -156.66364,
+    "nwps_node_distance_m": 1206,
+    "nwps_buoy_id": null
   },
   {
     "name": "Log Cabins",
@@ -15219,9 +15399,15 @@
       }
     ],
     "optimal_swell_dir": 12,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 7.61
+    "nearest_tide_station_dist_km": 7.61,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.65224,
+    "nwps_node_lng": -158.07104,
+    "nwps_node_distance_m": 835,
+    "nwps_buoy_id": null
   },
   {
     "name": "Lymans",
@@ -15280,9 +15466,15 @@
       }
     ],
     "optimal_swell_dir": 176,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617846",
-    "nearest_tide_station_dist_km": 0.35
+    "nearest_tide_station_dist_km": 0.35,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.60525,
+    "nwps_node_lng": -155.99832,
+    "nwps_node_distance_m": 2352,
+    "nwps_buoy_id": null
   },
   {
     "name": "Makaha",
@@ -15346,11 +15538,17 @@
       }
     ],
     "optimal_swell_dir": 208,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612482",
     "nearest_tide_station_dist_km": 1.2,
     "nearest_buoy_id": "51212",
-    "nearest_buoy_dist_km": 15.3
+    "nearest_buoy_dist_km": 15.3,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.45729,
+    "nwps_node_lng": -158.22458,
+    "nwps_node_distance_m": 2292,
+    "nwps_buoy_id": null
   },
   {
     "name": "Makapuu Beach Park",
@@ -15416,9 +15614,15 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612376",
-    "nearest_tide_station_dist_km": 4.33
+    "nearest_tide_station_dist_km": 4.33,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.31108,
+    "nwps_node_lng": -157.63603,
+    "nwps_node_distance_m": 2364,
+    "nwps_buoy_id": null
   },
   {
     "name": "Off The Wall",
@@ -15481,9 +15685,15 @@
       }
     ],
     "optimal_swell_dir": 12,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 9.2
+    "nearest_tide_station_dist_km": 9.2,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1864,
+    "nwps_buoy_id": null
   },
   {
     "name": "Pakala",
@@ -15542,9 +15752,15 @@
       }
     ],
     "optimal_swell_dir": 112,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611401",
-    "nearest_tide_station_dist_km": 3.66
+    "nearest_tide_station_dist_km": 3.66,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.9203,
+    "nwps_node_lng": -159.65758,
+    "nwps_node_distance_m": 1692,
+    "nwps_buoy_id": null
   },
   {
     "name": "Peahi Jaws",
@@ -15604,9 +15820,15 @@
       }
     ],
     "optimal_swell_dir": 40,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
-    "nearest_tide_station_dist_km": 20.41
+    "nearest_tide_station_dist_km": 20.41,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.96991,
+    "nwps_node_lng": -156.2798,
+    "nwps_node_distance_m": 2027,
+    "nwps_buoy_id": null
   },
   {
     "name": "Pine Trees Hawaii",
@@ -15660,9 +15882,15 @@
       }
     ],
     "optimal_swell_dir": 268,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617846",
-    "nearest_tide_station_dist_km": 7.42
+    "nearest_tide_station_dist_km": 7.42,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.67835,
+    "nwps_node_lng": -156.04949,
+    "nwps_node_distance_m": 1915,
+    "nwps_buoy_id": null
   },
   {
     "name": "Poipu Beach",
@@ -15720,9 +15948,15 @@
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Inside-Poipu",
     "nwps_wfo": "hfo",
     "orientation_source": "manual",
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611400",
-    "nearest_tide_station_dist_km": 13.62
+    "nearest_tide_station_dist_km": 13.62,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.87156,
+    "nwps_node_lng": -159.47845,
+    "nwps_node_distance_m": 2429,
+    "nwps_buoy_id": null
   },
   {
     "name": "Polihale Beach",
@@ -15786,9 +16020,15 @@
       }
     ],
     "optimal_swell_dir": 212,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611401",
-    "nearest_tide_station_dist_km": 16.88
+    "nearest_tide_station_dist_km": 16.88,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 22.09089,
+    "nwps_node_lng": -159.75993,
+    "nwps_node_distance_m": 420,
+    "nwps_buoy_id": null
   },
   {
     "name": "Puaena Point",
@@ -15852,9 +16092,15 @@
       }
     ],
     "optimal_swell_dir": 12,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 0.51
+    "nearest_tide_station_dist_km": 0.51,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.60351,
+    "nwps_node_lng": -158.12222,
+    "nwps_node_distance_m": 1566,
+    "nwps_buoy_id": null
   },
   {
     "name": "Publics Waikiki",
@@ -15913,9 +16159,15 @@
       }
     ],
     "optimal_swell_dir": 184,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
-    "nearest_tide_station_dist_km": 5.9
+    "nearest_tide_station_dist_km": 5.9,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.26234,
+    "nwps_node_lng": -157.84074,
+    "nwps_node_distance_m": 1774,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Pūpūkea, Hawaii",
@@ -15981,9 +16233,15 @@
       }
     ],
     "optimal_swell_dir": 16,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 9.99
+    "nearest_tide_station_dist_km": 9.99,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1070,
+    "nwps_buoy_id": null
   },
   {
     "name": "Queens Waikiki",
@@ -16036,11 +16294,17 @@
       }
     ],
     "optimal_swell_dir": 184,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612340",
     "nearest_tide_station_dist_km": 5.09,
     "nearest_buoy_id": "51211",
-    "nearest_buoy_dist_km": 13.89
+    "nearest_buoy_dist_km": 13.89,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.26234,
+    "nwps_node_lng": -157.84074,
+    "nwps_node_distance_m": 1870,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Richardson Beach",
@@ -16088,11 +16352,17 @@
       }
     ],
     "optimal_swell_dir": 96,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617760",
     "nearest_tide_station_dist_km": 4.45,
     "nearest_buoy_id": "51206",
-    "nearest_buoy_dist_km": 6.32
+    "nearest_buoy_dist_km": 6.32,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 19.75146,
+    "nwps_node_lng": -155.02593,
+    "nwps_node_distance_m": 2079,
+    "nwps_buoy_id": null
   },
   {
     "name": "Rocky Point",
@@ -16161,9 +16431,15 @@
       }
     ],
     "optimal_swell_dir": 8,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 10.21
+    "nearest_tide_station_dist_km": 10.21,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 678,
+    "nwps_buoy_id": null
   },
   {
     "name": "Sandy Beach Oahu",
@@ -16226,9 +16502,15 @@
       }
     ],
     "optimal_swell_dir": 124,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612376",
-    "nearest_tide_station_dist_km": 5.37
+    "nearest_tide_station_dist_km": 5.37,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.28671,
+    "nwps_node_lng": -157.66162,
+    "nwps_node_distance_m": 1100,
+    "nwps_buoy_id": null
   },
   {
     "name": "Sunset Beach Hawaii",
@@ -16296,9 +16578,15 @@
       }
     ],
     "optimal_swell_dir": 12,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 9.4
+    "nearest_tide_station_dist_km": 9.4,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 479,
+    "nwps_buoy_id": null
   },
   {
     "name": "Thousand Peaks Maui",
@@ -16356,9 +16644,15 @@
       }
     ],
     "optimal_swell_dir": 60,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
-    "nearest_tide_station_dist_km": 12.62
+    "nearest_tide_station_dist_km": 12.62,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 20.79933,
+    "nwps_node_lng": -156.61246,
+    "nwps_node_distance_m": 1387,
+    "nwps_buoy_id": null
   },
   {
     "name": "Tunnels Beach",
@@ -16407,11 +16701,17 @@
       }
     ],
     "optimal_swell_dir": 288,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611683",
     "nearest_tide_station_dist_km": 6.14,
     "nearest_buoy_id": "51208",
-    "nearest_buoy_dist_km": 6.53
+    "nearest_buoy_dist_km": 6.53,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 22.2371,
+    "nwps_node_lng": -159.55522,
+    "nwps_node_distance_m": 1635,
+    "nwps_buoy_id": null
   },
   {
     "name": "Turtle Bay",
@@ -16470,9 +16770,15 @@
       }
     ],
     "optimal_swell_dir": 8,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2779",
-    "nearest_tide_station_dist_km": 9.13
+    "nearest_tide_station_dist_km": 9.13,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.70098,
+    "nwps_node_lng": -158.01987,
+    "nwps_node_distance_m": 2124,
+    "nwps_buoy_id": null
   },
   {
     "name": "Velzyland",
@@ -16536,9 +16842,15 @@
       }
     ],
     "optimal_swell_dir": 352,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2779",
-    "nearest_tide_station_dist_km": 4.23
+    "nearest_tide_station_dist_km": 4.23,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.67661,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1570,
+    "nwps_buoy_id": null
   },
   {
     "name": "Waimea Bay",
@@ -16603,9 +16915,15 @@
       }
     ],
     "optimal_swell_dir": 4,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612668",
-    "nearest_tide_station_dist_km": 6.53
+    "nearest_tide_station_dist_km": 6.53,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.65224,
+    "nwps_node_lng": -158.07104,
+    "nwps_node_distance_m": 1399,
+    "nwps_buoy_id": null
   },
   {
     "name": "White Plains Beach",
@@ -16664,11 +16982,17 @@
       }
     ],
     "optimal_swell_dir": 232,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612366",
     "nearest_tide_station_dist_km": 8.59,
     "nearest_buoy_id": "51211",
-    "nearest_buoy_dist_km": 8.95
+    "nearest_buoy_dist_km": 8.95,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.28671,
+    "nwps_node_lng": -158.04545,
+    "nwps_node_distance_m": 1800,
+    "nwps_buoy_id": "51211"
   },
   {
     "name": "Yokohama Bay",
@@ -16737,9 +17061,15 @@
       }
     ],
     "optimal_swell_dir": 300,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612482",
-    "nearest_tide_station_dist_km": 13.74
+    "nearest_tide_station_dist_km": 13.74,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 21.5304,
+    "nwps_node_lng": -158.25017,
+    "nwps_node_distance_m": 2071,
+    "nwps_buoy_id": null
   },
   {
     "name": "Fortunes Rocks",
