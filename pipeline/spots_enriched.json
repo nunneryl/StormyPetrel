@@ -3515,11 +3515,17 @@
       }
     ],
     "optimal_swell_dir": 200,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0473",
     "nearest_tide_station_dist_km": 16.15,
     "nearest_buoy_id": "46218",
-    "nearest_buoy_dist_km": 26.24
+    "nearest_buoy_dist_km": 26.24,
+    "nwps_direction_status": "unverifiable",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.47632,
+    "nwps_node_lng": -120.5234,
+    "nwps_node_distance_m": 3930,
+    "nwps_buoy_id": null
   },
   {
     "name": "Jenner Beach",
@@ -7448,9 +7454,15 @@
     ],
     "tide_preference_confidence": 0.75,
     "nwps_wfo": "lox",
-    "swell_window_source": "orientation_derived",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
-    "nearest_tide_station_dist_km": 5.6
+    "nearest_tide_station_dist_km": 5.6,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.71857,
+    "nwps_node_lng": -118.1166,
+    "nwps_node_distance_m": 5506,
+    "nwps_buoy_id": "46256"
   },
   {
     "name": "Second Peak",
@@ -8377,9 +8389,15 @@
       }
     ],
     "optimal_swell_dir": 220,
-    "swell_window_source": "raycast",
+    "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0473",
-    "nearest_tide_station_dist_km": 32.25
+    "nearest_tide_station_dist_km": 32.25,
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 34.69281,
+    "nwps_node_lng": -120.65234,
+    "nwps_node_distance_m": 4160,
+    "nwps_buoy_id": "46215"
   },
   {
     "name": "Surfside Jetty",
