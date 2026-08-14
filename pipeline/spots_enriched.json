@@ -32165,51 +32165,6 @@
     "nwps_wfo": "mfl"
   },
   {
-    "name": "Boyton Bech Inlet",
-    "lat": 26.54474,
-    "lng": -80.04232,
-    "region_hint": "Florida",
-    "is_valid_surf_spot": true,
-    "source": "manifest_addition",
-    "sources": [
-      "manifest_addition"
-    ],
-    "coord_fix_applied": true,
-    "coord_fix_note": "Addition from spot_cleanup_manifest_2 (2026-06-16).",
-    "orientation_deg": 100.0,
-    "offshore_wind_deg": 280.0,
-    "orientation_source": "manual",
-    "swell_window_arcs": [
-      {
-        "min": 17,
-        "max": 103,
-        "span": 90
-      },
-      {
-        "min": 149,
-        "max": 179,
-        "span": 34
-      },
-      {
-        "min": 197,
-        "max": 215,
-        "span": 22
-      },
-      {
-        "min": 289,
-        "max": 311,
-        "span": 26
-      }
-    ],
-    "optimal_swell_dir": 100,
-    "swell_window_source": "raycast",
-    "nearest_tide_station_id": "8722718",
-    "nearest_tide_station_dist_km": 2.36,
-    "nearest_buoy_id": "41122",
-    "nearest_buoy_dist_km": 60.74,
-    "nwps_wfo": "mfl"
-  },
-  {
     "name": "Ocean Reef Park",
     "lat": 26.785001,
     "lng": -80.031109,
