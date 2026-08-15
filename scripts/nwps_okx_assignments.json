@@ -5990,6 +5990,16 @@
       "nwps_node_lng": -118.1166,
       "nwps_node_distance_m": 5506,
       "nwps_buoy_id": "46256"
+    },
+    {
+      "slug": "rockpile-laguna",
+      "name": "Rockpile (Laguna)",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.53,
+      "nwps_node_lng": -117.78205,
+      "nwps_node_distance_m": 1557,
+      "nwps_buoy_id": "46285"
     }
   ],
   "held": [],
@@ -6416,12 +6426,13 @@
         "axes_pending": [
           "direction"
         ],
-        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46285 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The sgx coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging the whole San Diego / Orange County coast to FAIL. FIRST-ASSESSMENT FINDING — do not misread a later verdict against this. The first assessable window gave HEIGHT FAIL with Pearson r 0.712 against the 0.8 bar, on a window whose buoy total-Hs span DID clear the 0.75 m variance floor, so the FAIL is a real reading and not an inconclusive one. DIRECTION on the same window was EXCELLENT: 3 degrees circular standard deviation and -3 degrees bias over 53 comparable hours. The model ran about 0.55 m BELOW the buoy every hour while tracking the same rising trend — a SYSTEMATIC UNDERESTIMATE, not a tracking failure, and consistent with island shadowing from Catalina and San Clemente being over-applied. This is ONE event: per the gate's own contract a single window does not block a region, so the zone is registered pending and the ROLLING accumulator decides. A later reader must not treat this height FAIL as settled, nor as evidence against the direction axis, which read excellent.",
-        "spots": 3,
+        "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46285 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. The sgx coast is split into FOUR reference zones rather than one: the trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so keeping each buoy to the spots it actually fronts stops a distant pairing's larger direction residuals from dragging the whole San Diego / Orange County coast to FAIL. FIRST-ASSESSMENT FINDING — do not misread a later verdict against this. The first assessable window gave HEIGHT FAIL with Pearson r 0.712 against the 0.8 bar, on a window whose buoy total-Hs span DID clear the 0.75 m variance floor, so the FAIL is a real reading and not an inconclusive one. DIRECTION on the same window was EXCELLENT: 3 degrees circular standard deviation and -3 degrees bias over 53 comparable hours. The model ran about 0.55 m BELOW the buoy every hour while tracking the same rising trend — a SYSTEMATIC UNDERESTIMATE, not a tracking failure, and consistent with island shadowing from Catalina and San Clemente being over-applied. This is ONE event: per the gate's own contract a single window does not block a region, so the zone is registered pending and the ROLLING accumulator decides. A later reader must not treat this height FAIL as settled, nor as evidence against the direction axis, which read excellent. ROCKPILE-LAGUNA ADDED (3 -> 4) — THE LAST UNPLACED SPOT IN THE DATABASE. It was held out of the original sgx registration for a reason that had NOTHING TO DO WITH GEOMETRY OR REFERENCE AVAILABILITY: its orientation_deg was null (DQ-5). A null orientation makes nwps_stars return all None, and apply_nwps_overrides skips an hour whose stars are None, so the spot could not produce a rating to validate against — it was a data-quality hole wearing the costume of a placement failure. PR #178 set the orientation to 220 deg from the midpoint of its widest swell window arc and PR #182 wrote it into spots_enriched.json; it then validated OK at 1557 m with a real 2.5-star rating where it had previously produced none. 46285 sits 15 km away and the headland detector CLEARED it — a 7.5 km along-coast clip reaching only 1.0 km inland, under the 3.0 km graze ceiling set in PR #114 — so this is a genuine same-water-body pairing rather than a distance-only pick. WITH THIS ROW THE ROSTER REACHES 648 OF 648 once apply runs: 600 spots on nwps and 48 on cdip_mop, no overlap between the two sets, no spot left on raycast or orientation_derived, and no untagged record. That completes the placement backlog. A later reader should take the DQ-5 lesson rather than the milestone: the last spot to place was blocked by a null field, not by the coast, so when a spot resists placement, check its inputs before concluding anything about its geometry.",
+        "spots": 4,
         "slugs": [
           "cottons",
           "dana-point-california",
-          "strands-beach"
+          "strands-beach",
+          "rockpile-laguna"
         ],
         "to_place": "This record alone tags NOTHING. Node lat/lng/distance for these 3 spots are in the (Mac) scripts/nwps_sgx_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_sgx_validate_out.json --buoy 46285 --slugs <these 3>` merges them into 'spots'. Placement is via the pending path; 46285 stays OUT of trust_by_zone (no PASS) — direction is confirmed only when --trustcheck settles the rolling verdict to PASS."
       },
