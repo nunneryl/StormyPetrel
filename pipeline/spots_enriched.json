@@ -29164,7 +29164,13 @@
     "nearest_buoy_id": "46285",
     "nearest_buoy_dist_km": 14.85,
     "nwps_wfo": "sgx",
-    "swell_window_source": "raycast"
+    "swell_window_source": "nwps",
+    "nwps_direction_status": "pending",
+    "nwps_grid": "CG1",
+    "nwps_node_lat": 33.53,
+    "nwps_node_lng": -117.78205,
+    "nwps_node_distance_m": 1557,
+    "nwps_buoy_id": "46285"
   },
   {
     "name": "Crystal Cove",
