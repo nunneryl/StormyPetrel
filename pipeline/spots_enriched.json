@@ -29136,6 +29136,9 @@
     ],
     "coord_fix_applied": true,
     "coord_fix_note": "Addition from spot_cleanup_manifest_2 (2026-06-16).",
+    "orientation_deg": 220.0,
+    "offshore_wind_deg": 40.0,
+    "orientation_source": "manual",
     "disambiguated_from": "rockpile",
     "disambiguated_at": "2026-06-17",
     "swell_window_arcs": [
@@ -30528,6 +30531,9 @@
     ],
     "coord_fix_applied": true,
     "coord_fix_note": "Addition from spot_cleanup_manifest_2 (2026-06-16).",
+    "orientation_deg": 222.0,
+    "offshore_wind_deg": 42.0,
+    "orientation_source": "manual",
     "disambiguated_from": "shell-beach",
     "disambiguated_at": "2026-06-17",
     "swell_window_arcs": [
