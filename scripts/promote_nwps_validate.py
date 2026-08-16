@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Promote --validate node coords into the curated NWPS assignments 'spots' list.
 
-Reads a per-region diagnostic dump scripts/nwps_{wfo}_validate_out.json (written by
+Reads a diagnostic dump — scripts/nwps_{wfo}_validate_out.json for a full-region run, or
+nwps_{wfo}_batch_validate_out.json for a --batch run; --validate-out takes either path (written by
 `python -m pipeline.forecast.nwps_nearshore --validate --wfo {wfo}` on the Mac) and merges each
 PLACEABLE spot into scripts/nwps_okx_assignments.json's 'spots' list with its node fields and a
 reference buoy. Placeable = outcome OK or OFFWIN — OFFWIN is a per-cycle direction condition, not a
@@ -95,7 +96,9 @@ def merge_into_assignments(doc, promotions):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--validate-out", required=True, help="scripts/nwps_{wfo}_validate_out.json")
+    ap.add_argument("--validate-out", required=True,
+                    help="scripts/nwps_{wfo}_validate_out.json, or nwps_{wfo}_batch_validate_out.json "
+                         "from a --batch run")
     ap.add_argument("--buoy", default=None,
                     help="reference buoy id (nwps_buoy_id) for these spots. Omit and pass --no-buoy "
                          "for buoy_reference.unverifiable[] (island-shadowed) spots.")

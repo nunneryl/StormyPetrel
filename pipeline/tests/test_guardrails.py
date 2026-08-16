@@ -1,4 +1,4 @@
-"""Guardrail tests for two silent-corruption fixes (both prevent corrupting manual work).
+"""Guardrail tests for three silent-corruption fixes (all prevent losing work with no error).
 
   FIX 1 — --validate roster default: `--validate --wfo X` with no --batch must validate the
           nwps_wfo==X spots from spots_enriched.json, NOT the okx_pilot.json set, and print the
@@ -6,12 +6,18 @@
   FIX 2 — enrich preserve-guard: a full enrich must never SILENTLY demote a spot already on the
           nwps/cdip_mop swell-window tier back to raycast; --allow-tier-demotion opts out. The
           guard must NOT freeze nearest_buoy_id (the recomputable display buoy).
+  FIX 3 — --validate batch output path: a --batch run must NOT write to the full-region
+          scripts/nwps_{wfo}_validate_out.json. That file is the only record of a region's
+          FAR / NO_WET_CELL rows, and a one- or two-spot batch dump silently replaced it three
+          times (box + phi in PR #175, sgx in PR #183) with nothing failing or warning.
 
 Run: python -m pipeline.tests.test_guardrails   (or pytest)
 """
 from __future__ import annotations
 
-from pipeline.forecast.nwps_nearshore import _validate_roster
+from pipeline.forecast.nwps_nearshore import (
+    _validate_roster, validate_out_path, write_validate_out)
+import pipeline.forecast.nwps_nearshore as nn
 from pipeline.enrich import _apply_tier_guard, _strip_preserve_markers
 
 
@@ -115,6 +121,78 @@ def test_guard_does_not_freeze_nearest_buoy_id():
     assert _apply_tier_guard(spot2, enriched2, {}, allow_tier_demotion=False) is True
     assert enriched2["swell_window_source"] == "nwps"        # tier restored
     assert enriched2["nearest_buoy_id"] == "46237"           # display buoy left recomputed
+
+
+# --------------------------------------------------------------------------- #
+# FIX 3 — --validate batch output path                                         #
+# --------------------------------------------------------------------------- #
+import contextlib, json as _json, tempfile                                    # noqa: E402
+from pathlib import Path as _Path                                             # noqa: E402
+
+
+@contextlib.contextmanager
+def _scripts_dir(tmp):
+    """Point the module's SCRIPTS_DIR at a scratch dir so a test write touches no real file."""
+    saved = nn.SCRIPTS_DIR
+    nn.SCRIPTS_DIR = _Path(tmp)
+    try:
+        yield _Path(tmp)
+    finally:
+        nn.SCRIPTS_DIR = saved
+
+
+def test_batch_run_does_not_write_the_full_region_path():
+    """(6) THE FIX. A --batch run must land on its own path and leave the full-region file
+    untouched — asserted on the real write, not just on the path helper."""
+    with tempfile.TemporaryDirectory() as tmp, _scripts_dir(tmp) as d:
+        region = validate_out_path("sgx")
+        path, kind = write_validate_out("sgx", "rockpile-laguna", [{"slug": "rockpile-laguna"}],
+                                        [{"slug": "rockpile-laguna", "outcome": "OK"}])
+        assert kind == "BATCH", f"a --batch run must label itself BATCH, got {kind!r}"
+        assert path != region, "batch dump must not target the full-region path"
+        assert path.exists(), "the batch dump was not written"
+        assert not region.exists(), "a --batch run WROTE the full-region file"
+        assert set(p.name for p in d.iterdir()) == {path.name}, "only the batch file appeared"
+        assert "batch" in path.name, f"the name must show it at a glance: {path.name}"
+        assert _json.loads(path.read_text())["batch"] is True, \
+            "the dump must mark itself a batch so a reader of the FILE can tell too"
+
+
+def test_batch_run_cannot_clobber_an_existing_region_dump():
+    """(7) The incident itself, replayed: write a full-region dump, then a batch dump on the SAME
+    wfo, and the region dump must come back byte-identical. This is what failed three times."""
+    with tempfile.TemporaryDirectory() as tmp, _scripts_dir(tmp):
+        region_placed = [{"slug": f"spot-{i}"} for i in range(9)]
+        region_outcomes = ([{"slug": f"spot-{i}", "outcome": "OK"} for i in range(9)]
+                           + [{"slug": "far-one", "outcome": "FAR"},
+                              {"slug": "dry-one", "outcome": "NO_WET_CELL"}])
+        region, rkind = write_validate_out("sgx", None, region_placed, region_outcomes)
+        assert rkind == "full-region", f"a no-batch run is full-region, got {rkind!r}"
+        before = region.read_text()
+        batch, _ = write_validate_out("sgx", "rockpile-laguna", [{"slug": "rockpile-laguna"}],
+                                      [{"slug": "rockpile-laguna", "outcome": "OK"}])
+        assert region.read_text() == before, "the batch run overwrote the full-region dump"
+        doc = _json.loads(region.read_text())
+        assert len(doc["outcomes"]) == 11 and doc["batch"] is False, \
+            f'region dump altered: {len(doc["outcomes"])} outcomes, batch={doc["batch"]}'
+        assert {o["outcome"] for o in doc["outcomes"]} == {"OK", "FAR", "NO_WET_CELL"}, \
+            "the non-OK rows survive — they exist in no other file"
+        assert len(_json.loads(batch.read_text())["outcomes"]) == 1, "batch dump holds its own row"
+
+
+def test_full_region_path_is_unchanged():
+    """(8) The full-region name must NOT move: promote_nwps_validate invocations, every zone
+    record's to_place text and the committed eka/lox/mtr dumps all reference it by name."""
+    for wfo in ("sgx", "box", "phi", "lox", "hfo"):
+        want = f"nwps_{wfo}_validate_out.json"
+        for arg in (None, ""):          # no --batch, and an empty --batch, are both full-region
+            got = validate_out_path(wfo, arg).name
+            assert got == want, f"full-region path moved for batch={arg!r}: {got} != {want}"
+        assert validate_out_path(wfo).name == want, f"full-region path moved: {validate_out_path(wfo).name}"
+        assert validate_out_path(wfo, "a,b") != validate_out_path(wfo), \
+            f"{wfo}: batch and full-region resolve to the SAME path"
+    assert validate_out_path("sgx").parent == validate_out_path("sgx", "a").parent, \
+        "both dumps belong in SCRIPTS_DIR"
 
 
 if __name__ == "__main__":

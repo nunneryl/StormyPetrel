@@ -202,8 +202,10 @@ ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
 # because it is structurally invalid). The gate reads buoy_reference to report a retired zone as
 # retired-by-design and to run NO buoy comparison against an invalid reference. Read-only here.
 NWPS_ASSIGNMENTS = SCRIPTS_DIR / "nwps_okx_assignments.json"
-# --validate writes a per-region diagnostic dump, scripts/nwps_{wfo}_validate_out.json
-# (computed per run in validate_batch) — NOT the apply input.
+# --validate writes a diagnostic dump — NOT the apply input. A FULL-REGION run writes
+# scripts/nwps_{wfo}_validate_out.json; a --batch run writes
+# scripts/nwps_{wfo}_batch_validate_out.json instead, so a two-spot batch cannot destroy the
+# region file's FAR / NO_WET_CELL rows (see validate_out_path).
 
 
 def _slug(name):
@@ -1608,6 +1610,41 @@ def _buoy_latlng(buoy_id, *, _active=None, _reporting=None):
     return st["lat"], st["lng"]
 
 
+def validate_out_path(wfo, batch=None):
+    """Where --validate writes its diagnostic dump. Pure — returns a path, touches nothing.
+
+    FULL-REGION runs (no --batch) keep scripts/nwps_{wfo}_validate_out.json, unchanged. That
+    file is the ONLY record of a region's non-OK outcomes — the FAR and NO_WET_CELL rows never
+    appear anywhere else, since only placed-OK spots get promoted into the assignments file.
+
+    --batch runs write scripts/nwps_{wfo}_BATCH_validate_out.json instead. A one- or two-spot
+    batch dump landing on the region path silently destroyed that record THREE TIMES before
+    this split: box and phi in PR #175, sgx in PR #183. Nothing failed and nothing warned —
+    the file simply came back with two entries where it used to have a region.
+
+    Batch dumps still overwrite EACH OTHER per WFO, deliberately: a batch dump is scratch and
+    the thing worth protecting is the region file."""
+    stem = f"nwps_{wfo}_batch_validate_out" if batch else f"nwps_{wfo}_validate_out"
+    return SCRIPTS_DIR / f"{stem}.json"
+
+
+def write_validate_out(wfo, batch, placed, outcomes):
+    """Write the --validate diagnostic dump; return (path, kind). Split out of validate_batch so
+    the batch/full-region routing is testable without a live cycle (see test_guardrails)."""
+    path = validate_out_path(wfo, batch)
+    kind = "BATCH" if batch else "full-region"
+    path.write_text(json.dumps(
+        {"_comment": f"{wfo} --validate {kind} diagnostic. 'spots' = placed-OK (node fields); "
+         "'outcomes' = every spot's category (OK / FAR / NO_WET_CELL — placement is purely "
+         "geometric; the former DEAD/OFFWIN condition checks were removed). NOT the apply input — "
+         "review, then promote OK spots into scripts/nwps_okx_assignments.json by hand."
+         + (" THIS IS A BATCH DUMP covering only the --batch slugs, NOT the whole region; the "
+            f"full-region file nwps_{wfo}_validate_out.json is a separate path and was not "
+            "touched." if batch else ""),
+         "grid_wfo": wfo, "batch": bool(batch), "spots": placed, "outcomes": outcomes}, indent=2))
+    return path, kind
+
+
 def validate_batch(batch=None, wfo=None):
     """Part C — fetch one *wfo* cycle, place each spot's seaward node, sample its f000
     swh/perpw/dirpw, print placement verdict + NWPS★ vs the orientation fallback★, plus a
@@ -1615,7 +1652,9 @@ def validate_batch(batch=None, wfo=None):
     else, if *wfo* is given, every nwps_wfo==wfo spot in spots_enriched.json; else the
     okx_pilot.json set (only when --wfo is absent entirely). The roster source + count is
     printed at the top so a run can never silently validate the wrong region's spots against a
-    grid. Writes scripts/nwps_{wfo}_validate_out.json — a DIAGNOSTIC dump only (records every
+    grid. Writes a DIAGNOSTIC dump only, routed by validate_out_path — full-region runs to
+    scripts/nwps_{wfo}_validate_out.json, --batch runs to nwps_{wfo}_batch_validate_out.json so a
+    batch cannot clobber the region file (records every
     spot's outcome: OK / FAR / NO_WET_CELL); it does NOT touch the curated apply
     input scripts/nwps_okx_assignments.json (promote by hand after review). Mac-only (NOMADS);
     degrades to a clear message offline."""
@@ -1708,17 +1747,17 @@ def validate_batch(batch=None, wfo=None):
         print(f"\nforced-empty test: fed={st['fed']} fell_back={st['fell_back']} errored={st['errored']}; "
               f"base preserved: {'YES' if test[tname][0]['stars'] == 2.5 else 'NO'}")
     if outcomes:
-        validate_out = SCRIPTS_DIR / f"nwps_{wfo}_validate_out.json"   # per-region; no cross-region clobber
-        validate_out.write_text(json.dumps(
-            {"_comment": f"{wfo} --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every "
-             "spot's category (OK / FAR / NO_WET_CELL — placement is purely geometric; the former "
-             "DEAD/OFFWIN condition checks were removed). NOT the apply input — review, then "
-             "promote OK spots into scripts/nwps_okx_assignments.json by hand.",
-             "grid_wfo": wfo, "spots": placed, "outcomes": outcomes}, indent=2))
+        validate_out, kind = write_validate_out(wfo, batch, placed, outcomes)
         n_ok = len(placed); n_other = len(outcomes) - n_ok
         print(f"\nwrote {validate_out} ({n_ok} placed-OK, {n_other} other outcomes on the {wfo} grid) — "
-              "diagnostic only. The apply input scripts/nwps_okx_assignments.json is left untouched; review + "
-              "promote OK spots into it, then --trustcheck and apply_nwps_assignments --apply once the gate PASSES.")
+              f"{kind} diagnostic only. The apply input scripts/nwps_okx_assignments.json is left untouched; "
+              "review + promote OK spots into it, then --trustcheck and apply_nwps_assignments --apply once "
+              "the gate PASSES.")
+        if batch:
+            # say it in the run output rather than leaving it to be discovered later
+            print(f"  ^ BATCH dump — covers only the {len(outcomes)} --batch spot(s). The full-region file "
+                  f"{validate_out_path(wfo)} was NOT written and still holds the last whole-{wfo} run, "
+                  "including its FAR / NO_WET_CELL rows.")
     print("\nfb★ = the orientation-path baseline (interpret.compute_ratings via the existing NWPS "
           "fetcher) at the same f000 hour, when NWPS+tides fetch succeeds — NWPS★ should be sane "
           "next to it. Trust the WFO (--trustcheck) before apply_nwps_assignments --apply.")
