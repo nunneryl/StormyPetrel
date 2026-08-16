@@ -2334,11 +2334,6 @@
       "cardinal": "NNW",
       "name": "Richardson Beach"
     },
-    "rincon": {
-      "orientation_deg": 210.0,
-      "cardinal": "SSW",
-      "name": "Rincon"
-    },
     "river-jetties": {
       "orientation_deg": 215.0,
       "cardinal": "SW",
@@ -2586,11 +2581,6 @@
       "orientation_deg": 150.0,
       "cardinal": "SSE",
       "name": "Seaview Pier"
-    },
-    "sebastian-inlet": {
-      "orientation_deg": 80.0,
-      "cardinal": "E",
-      "name": "Sebastian Inlet"
     },
     "second-beach-newport": {
       "orientation_deg": 209.0,

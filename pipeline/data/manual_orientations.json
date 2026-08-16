@@ -348,12 +348,24 @@
     "Sebastian Inlet": {
       "orientation_deg": 80,
       "source": "Map verified — east-facing barrier island beach",
-      "notes": "Optimal swell from NE (45°) but beach faces E"
+      "notes": "Optimal swell from NE (45°) but beach faces E",
+      "bu17": {
+        "prior_manual_deg": 80,
+        "adopted_deg": 80,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Rincon": {
       "orientation_deg": 210,
       "source": "Map verified — south-facing point break",
-      "notes": "Optimal swell from WNW (290°) wraps around point. Cove faces SSW."
+      "notes": "Optimal swell from WNW (290°) wraps around point. Cove faces SSW.",
+      "bu17": {
+        "prior_manual_deg": 210,
+        "adopted_deg": 210,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "North Jetty": {
       "orientation_deg": 45,
