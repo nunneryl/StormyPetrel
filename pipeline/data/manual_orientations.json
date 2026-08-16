@@ -91,9 +91,15 @@
       "notes": "Peninsula curves N/NE; popular surf beaches face NNE"
     },
     "Peahi Jaws": {
-      "orientation_deg": 355,
+      "orientation_deg": 10,
       "source": "Maui north shore",
-      "notes": "Pe'ahi bowl faces NNW winter swell; slight east-of-north facing"
+      "notes": "Pe'ahi bowl faces NNW winter swell; slight east-of-north facing",
+      "bu17": {
+        "prior_manual_deg": 355,
+        "adopted_deg": 10,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Palm Beach Midtown": {
       "orientation_deg": 90,
@@ -101,9 +107,15 @@
       "notes": "Open Atlantic due east"
     },
     "Vilano Beach": {
-      "orientation_deg": 80,
+      "orientation_deg": 70,
       "source": "Florida east coast near St. Augustine",
-      "notes": "Beach faces ENE; slight bend at Vilano inlet"
+      "notes": "Beach faces ENE; slight bend at Vilano inlet",
+      "bu17": {
+        "prior_manual_deg": 80,
+        "adopted_deg": 70,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "IB Jetty": {
       "orientation_deg": 225,
@@ -111,55 +123,121 @@
       "notes": "Jetty points SW into the Pacific"
     },
     "Gooch's Beach": {
-      "orientation_deg": 140,
+      "orientation_deg": 167,
       "source": "Kennebunk, ME",
-      "notes": "Atlantic-facing beach with a SE bend toward Wells Bay"
+      "notes": "Atlantic-facing beach with a SE bend toward Wells Bay",
+      "bu17": {
+        "prior_manual_deg": 140,
+        "adopted_deg": 167,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "The Wall Hampton": {
-      "orientation_deg": 90,
+      "orientation_deg": 129,
       "source": "Hampton Beach, NH",
-      "notes": "Seawall section; Atlantic due east"
+      "notes": "Seawall section; Atlantic due east",
+      "bu17": {
+        "prior_manual_deg": 90,
+        "adopted_deg": 129,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Avalon NJ": {
-      "orientation_deg": 90,
+      "orientation_deg": 120,
       "source": "Jersey Shore barrier island",
-      "notes": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG — (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide."
+      "notes": "MANUAL ORIENTATION APPLIED BUT COORDS LOOK WRONG — (40.82, -74.32) is inland NJ near Livingston, not the actual Avalon at ~(39.10, -74.72). Needs entry in spot_coord_fixes.json to correct lat/lng before enrichment can compute buoy/tide.",
+      "bu17": {
+        "prior_manual_deg": 90,
+        "adopted_deg": 120,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Mecox Beach": {
-      "orientation_deg": 180,
+      "orientation_deg": 155,
       "source": "Long Island south shore (Bridgehampton, NY)",
-      "notes": "South-facing barrier beach"
+      "notes": "South-facing barrier beach",
+      "bu17": {
+        "prior_manual_deg": 180,
+        "adopted_deg": 155,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Ocean Isle Beach": {
-      "orientation_deg": 175,
+      "orientation_deg": 170,
       "source": "Brunswick County, NC barrier island",
-      "notes": "Island runs E-W; faces south into Long Bay"
+      "notes": "Island runs E-W; faces south into Long Bay",
+      "bu17": {
+        "prior_manual_deg": 175,
+        "adopted_deg": 170,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Sunset Beach NC": {
-      "orientation_deg": 175,
-      "source": "Brunswick County, NC (adjacent to Ocean Isle)"
+      "orientation_deg": 155,
+      "source": "Brunswick County, NC (adjacent to Ocean Isle)",
+      "bu17": {
+        "prior_manual_deg": 175,
+        "adopted_deg": 155,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Florence South Jetty": {
-      "orientation_deg": 270,
+      "orientation_deg": 268,
       "source": "Oregon coast at the Siuslaw River mouth",
-      "notes": "Jetty faces west into the open Pacific"
+      "notes": "Jetty faces west into the open Pacific",
+      "bu17": {
+        "prior_manual_deg": 270,
+        "adopted_deg": 268,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Charlestown Town Beach": {
-      "orientation_deg": 190,
-      "source": "South Rhode Island coast / Block Island Sound"
+      "orientation_deg": 146,
+      "source": "South Rhode Island coast / Block Island Sound",
+      "bu17": {
+        "prior_manual_deg": 190,
+        "adopted_deg": 146,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Moonstone Beach RI": {
-      "orientation_deg": 190,
-      "source": "South Rhode Island coast (Matunuck area)"
+      "orientation_deg": 161,
+      "source": "South Rhode Island coast (Matunuck area)",
+      "bu17": {
+        "prior_manual_deg": 190,
+        "adopted_deg": 161,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Hilton Head Island": {
-      "orientation_deg": 110,
+      "orientation_deg": 140,
       "source": "South Carolina barrier island",
-      "notes": "Ocean beach faces ESE"
+      "notes": "Ocean beach faces ESE",
+      "bu17": {
+        "prior_manual_deg": 110,
+        "adopted_deg": 140,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Dogmans Rincon": {
-      "orientation_deg": 270,
-      "source": "Rincon, PR west coast"
+      "orientation_deg": 251,
+      "source": "Rincon, PR west coast",
+      "bu17": {
+        "prior_manual_deg": 270,
+        "adopted_deg": 251,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Indicators Rincon": {
       "orientation_deg": 285,
@@ -172,8 +250,14 @@
       "notes": "Maria's faces slightly N of W"
     },
     "Rincon Domes": {
-      "orientation_deg": 270,
-      "source": "Rincon, PR (Domes Beach)"
+      "orientation_deg": 290,
+      "source": "Rincon, PR (Domes Beach)",
+      "bu17": {
+        "prior_manual_deg": 270,
+        "adopted_deg": 290,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Domes Beach Aguadilla": {
       "orientation_deg": 315,
@@ -181,34 +265,76 @@
       "notes": "Aguadilla coast curves from W-facing (Rincon) to N-facing; Domes here faces NW"
     },
     "Gas Chambers Aguadilla": {
-      "orientation_deg": 320,
+      "orientation_deg": 262,
       "source": "Aguadilla, PR (Ramey Air Force Base reef)",
-      "notes": "Reef faces NNW"
+      "notes": "Reef faces NNW",
+      "bu17": {
+        "prior_manual_deg": 320,
+        "adopted_deg": 262,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Surfers Beach Aguadilla": {
-      "orientation_deg": 315,
-      "source": "Aguadilla, PR"
+      "orientation_deg": 335,
+      "source": "Aguadilla, PR",
+      "bu17": {
+        "prior_manual_deg": 315,
+        "adopted_deg": 335,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Table Tops Aguadilla": {
-      "orientation_deg": 315,
+      "orientation_deg": 282,
       "source": "Aguadilla, PR",
-      "notes": "Shallow reef ledge facing NW"
+      "notes": "Shallow reef ledge facing NW",
+      "bu17": {
+        "prior_manual_deg": 315,
+        "adopted_deg": 282,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Middles Isabela": {
-      "orientation_deg": 0,
-      "source": "Isabela, PR — north coast"
+      "orientation_deg": 10,
+      "source": "Isabela, PR — north coast",
+      "bu17": {
+        "prior_manual_deg": 0,
+        "adopted_deg": 10,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Playa Guajataca": {
-      "orientation_deg": 0,
-      "source": "Quebradillas / Isabela, PR — north coast"
+      "orientation_deg": 5,
+      "source": "Quebradillas / Isabela, PR — north coast",
+      "bu17": {
+        "prior_manual_deg": 0,
+        "adopted_deg": 5,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Playa Kikita": {
-      "orientation_deg": 0,
-      "source": "North coast of Puerto Rico (Manatí area)"
+      "orientation_deg": 5,
+      "source": "North coast of Puerto Rico (Manatí area)",
+      "bu17": {
+        "prior_manual_deg": 0,
+        "adopted_deg": 5,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Shacks Beach": {
-      "orientation_deg": 0,
-      "source": "Isabela, PR — north coast"
+      "orientation_deg": 350,
+      "source": "Isabela, PR — north coast",
+      "bu17": {
+        "prior_manual_deg": 0,
+        "adopted_deg": 350,
+        "method": "satellite drag review",
+        "reviewed": "2026-08-16"
+      }
     },
     "Kamea Meha": {
       "orientation_deg": 0,
