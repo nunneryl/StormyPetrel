@@ -1,0 +1,29 @@
+{
+  "_comment": "sgx --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / NO_WET_CELL \u2014 placement is purely geometric; the former DEAD/OFFWIN condition checks were removed). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "sgx",
+  "spots": [
+    {
+      "slug": "rockpile-laguna",
+      "name": "Rockpile (Laguna)",
+      "nwps_wfo": "sgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.53,
+      "nwps_node_lng": -117.78205,
+      "nwps_node_distance_m": 1557,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "rockpile-laguna",
+      "name": "Rockpile (Laguna)",
+      "nwps_wfo": "sgx",
+      "grid_wfo": "sgx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1557,
+      "nwps_node_lat": 33.53,
+      "nwps_node_lng": -117.78205
+    }
+  ]
+}

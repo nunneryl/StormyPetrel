@@ -1,0 +1,491 @@
+{
+  "_comment": "mhx --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "mhx",
+  "spots": [
+    {
+      "slug": "avalon-pier",
+      "name": "Avalon Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.04672,
+      "nwps_node_lng": -75.67018,
+      "nwps_node_distance_m": 350,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "avon-pier",
+      "name": "Avon Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.34702,
+      "nwps_node_lng": -75.49398,
+      "nwps_node_distance_m": 512,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "cape-hatteras-lighthouse",
+      "name": "Cape Hatteras Lighthouse",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.21685,
+      "nwps_node_lng": -75.53313,
+      "nwps_node_distance_m": 1223,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "corolla-beach",
+      "name": "Corolla Beach",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.38843,
+      "nwps_node_lng": -75.80723,
+      "nwps_node_distance_m": 1596,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "duck-pier",
+      "name": "Duck Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.19317,
+      "nwps_node_lng": -75.74849,
+      "nwps_node_distance_m": 1140,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "frisco-pier",
+      "name": "Frisco Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.21685,
+      "nwps_node_lng": -75.63102,
+      "nwps_node_distance_m": 1417,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jennettes-pier",
+      "name": "Jennettes Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.91654,
+      "nwps_node_lng": -75.59187,
+      "nwps_node_distance_m": 725,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kill-devil-hills",
+      "name": "Kill Devil Hills",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.03045,
+      "nwps_node_lng": -75.6506,
+      "nwps_node_distance_m": 1279,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kitty-hawk-pier",
+      "name": "Kitty Hawk Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.11181,
+      "nwps_node_lng": -75.70934,
+      "nwps_node_distance_m": 1167,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nags-head-pier",
+      "name": "Nags Head Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.98163,
+      "nwps_node_lng": -75.63102,
+      "nwps_node_distance_m": 896,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ocracoke-beach",
+      "name": "Ocracoke Beach",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.08667,
+      "nwps_node_lng": -75.96386,
+      "nwps_node_distance_m": 987,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "oregon-inlet",
+      "name": "Oregon Inlet",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.78637,
+      "nwps_node_lng": -75.53313,
+      "nwps_node_distance_m": 292,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rodanthe",
+      "name": "Rodanthe",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.5911,
+      "nwps_node_lng": -75.45482,
+      "nwps_node_distance_m": 766,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "salvo",
+      "name": "Salvo",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.54229,
+      "nwps_node_lng": -75.45482,
+      "nwps_node_distance_m": 1202,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "the-point-buxton",
+      "name": "The Point Buxton",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.23312,
+      "nwps_node_lng": -75.51355,
+      "nwps_node_distance_m": 1073,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hatteras-ferry-docks",
+      "name": "Hatteras Ferry Docks",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.20058,
+      "nwps_node_lng": -75.68976,
+      "nwps_node_distance_m": 1098,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "north-buxton",
+      "name": "North Buxton",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.26566,
+      "nwps_node_lng": -75.51355,
+      "nwps_node_distance_m": 506,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "s-turns",
+      "name": "S-Turns",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.60738,
+      "nwps_node_lng": -75.45482,
+      "nwps_node_distance_m": 906,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "north-pea-island",
+      "name": "North Pea Island",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.7701,
+      "nwps_node_lng": -75.51355,
+      "nwps_node_distance_m": 1120,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "outer-banks-fishing-pier",
+      "name": "Outer Banks Fishing Pier",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.884,
+      "nwps_node_lng": -75.57229,
+      "nwps_node_distance_m": 860,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "abalone-street",
+      "name": "Abalone Street",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 35.98163,
+      "nwps_node_lng": -75.63102,
+      "nwps_node_distance_m": 985,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "bath-house",
+      "name": "Bath House",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.01418,
+      "nwps_node_lng": -75.6506,
+      "nwps_node_distance_m": 472,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "black-pelican",
+      "name": "Black Pelican",
+      "nwps_wfo": "mhx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 36.06299,
+      "nwps_node_lng": -75.67018,
+      "nwps_node_distance_m": 1561,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "avalon-pier",
+      "name": "Avalon Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 350,
+      "nwps_node_lat": 36.04672,
+      "nwps_node_lng": -75.67018
+    },
+    {
+      "slug": "avon-pier",
+      "name": "Avon Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 512,
+      "nwps_node_lat": 35.34702,
+      "nwps_node_lng": -75.49398
+    },
+    {
+      "slug": "cape-hatteras-lighthouse",
+      "name": "Cape Hatteras Lighthouse",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1223,
+      "nwps_node_lat": 35.21685,
+      "nwps_node_lng": -75.53313
+    },
+    {
+      "slug": "corolla-beach",
+      "name": "Corolla Beach",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1596,
+      "nwps_node_lat": 36.38843,
+      "nwps_node_lng": -75.80723
+    },
+    {
+      "slug": "duck-pier",
+      "name": "Duck Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1140,
+      "nwps_node_lat": 36.19317,
+      "nwps_node_lng": -75.74849
+    },
+    {
+      "slug": "frisco-pier",
+      "name": "Frisco Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1417,
+      "nwps_node_lat": 35.21685,
+      "nwps_node_lng": -75.63102
+    },
+    {
+      "slug": "jennettes-pier",
+      "name": "Jennettes Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 725,
+      "nwps_node_lat": 35.91654,
+      "nwps_node_lng": -75.59187
+    },
+    {
+      "slug": "kill-devil-hills",
+      "name": "Kill Devil Hills",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1279,
+      "nwps_node_lat": 36.03045,
+      "nwps_node_lng": -75.6506
+    },
+    {
+      "slug": "kitty-hawk-pier",
+      "name": "Kitty Hawk Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1167,
+      "nwps_node_lat": 36.11181,
+      "nwps_node_lng": -75.70934
+    },
+    {
+      "slug": "nags-head-pier",
+      "name": "Nags Head Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 896,
+      "nwps_node_lat": 35.98163,
+      "nwps_node_lng": -75.63102
+    },
+    {
+      "slug": "ocracoke-beach",
+      "name": "Ocracoke Beach",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 987,
+      "nwps_node_lat": 35.08667,
+      "nwps_node_lng": -75.96386
+    },
+    {
+      "slug": "oregon-inlet",
+      "name": "Oregon Inlet",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 292,
+      "nwps_node_lat": 35.78637,
+      "nwps_node_lng": -75.53313
+    },
+    {
+      "slug": "rodanthe",
+      "name": "Rodanthe",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 766,
+      "nwps_node_lat": 35.5911,
+      "nwps_node_lng": -75.45482
+    },
+    {
+      "slug": "salvo",
+      "name": "Salvo",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1202,
+      "nwps_node_lat": 35.54229,
+      "nwps_node_lng": -75.45482
+    },
+    {
+      "slug": "the-point-buxton",
+      "name": "The Point Buxton",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1073,
+      "nwps_node_lat": 35.23312,
+      "nwps_node_lng": -75.51355
+    },
+    {
+      "slug": "hatteras-ferry-docks",
+      "name": "Hatteras Ferry Docks",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1098,
+      "nwps_node_lat": 35.20058,
+      "nwps_node_lng": -75.68976
+    },
+    {
+      "slug": "north-buxton",
+      "name": "North Buxton",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 506,
+      "nwps_node_lat": 35.26566,
+      "nwps_node_lng": -75.51355
+    },
+    {
+      "slug": "s-turns",
+      "name": "S-Turns",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 906,
+      "nwps_node_lat": 35.60738,
+      "nwps_node_lng": -75.45482
+    },
+    {
+      "slug": "north-pea-island",
+      "name": "North Pea Island",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1120,
+      "nwps_node_lat": 35.7701,
+      "nwps_node_lng": -75.51355
+    },
+    {
+      "slug": "outer-banks-fishing-pier",
+      "name": "Outer Banks Fishing Pier",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 860,
+      "nwps_node_lat": 35.884,
+      "nwps_node_lng": -75.57229
+    },
+    {
+      "slug": "abalone-street",
+      "name": "Abalone Street",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 985,
+      "nwps_node_lat": 35.98163,
+      "nwps_node_lng": -75.63102
+    },
+    {
+      "slug": "bath-house",
+      "name": "Bath House",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 472,
+      "nwps_node_lat": 36.01418,
+      "nwps_node_lng": -75.6506
+    },
+    {
+      "slug": "black-pelican",
+      "name": "Black Pelican",
+      "nwps_wfo": "mhx",
+      "grid_wfo": "mhx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1561,
+      "nwps_node_lat": 36.06299,
+      "nwps_node_lng": -75.67018
+    }
+  ]
+}

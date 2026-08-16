@@ -1,0 +1,492 @@
+{
+  "_comment": "chs --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "chs",
+  "spots": [
+    {
+      "slug": "edisto-beach",
+      "name": "Edisto Beach",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.49078,
+      "nwps_node_lng": -80.30524,
+      "nwps_node_distance_m": 1225,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "folly-beach-pier",
+      "name": "Folly Beach Pier",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.65335,
+      "nwps_node_lng": -79.92827,
+      "nwps_node_distance_m": 990,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "folly-beach-washout",
+      "name": "Folly Beach Washout",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.66961,
+      "nwps_node_lng": -79.89058,
+      "nwps_node_distance_m": 1551,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "garden-city-pier",
+      "name": "Garden City Pier",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.58,
+      "nwps_node_lng": -78.98586,
+      "nwps_node_distance_m": 1154,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hilton-head-island",
+      "name": "Hilton Head Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.14939,
+      "nwps_node_lng": -80.7199,
+      "nwps_node_distance_m": 954,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hunting-island",
+      "name": "Hunting Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.36073,
+      "nwps_node_lng": -80.43717,
+      "nwps_node_distance_m": 889,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "isle-of-palms",
+      "name": "Isle of Palms",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.78341,
+      "nwps_node_lng": -79.77749,
+      "nwps_node_distance_m": 454,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kiawah-island-beach",
+      "name": "Kiawah Island Beach",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.58833,
+      "nwps_node_lng": -80.11675,
+      "nwps_node_distance_m": 351,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pawleys-island",
+      "name": "Pawleys Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.41743,
+      "nwps_node_lng": -79.1178,
+      "nwps_node_distance_m": 896,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "surfside-beach-sc",
+      "name": "Surfside Beach SC",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.58,
+      "nwps_node_lng": -78.96702,
+      "nwps_node_distance_m": 2738,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jekyll-island",
+      "name": "Jekyll Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 31.06017,
+      "nwps_node_lng": -81.39843,
+      "nwps_node_distance_m": 760,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "st-simons-island",
+      "name": "St Simons Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 31.1252,
+      "nwps_node_lng": -81.37958,
+      "nwps_node_distance_m": 1173,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sea-island",
+      "name": "Sea Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 31.19022,
+      "nwps_node_lng": -81.32304,
+      "nwps_node_distance_m": 1561,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "blackbeard-island",
+      "name": "Blackbeard Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 31.49911,
+      "nwps_node_lng": -81.1911,
+      "nwps_node_distance_m": 210,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "st-catherines-island",
+      "name": "St. Catherines Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 31.61291,
+      "nwps_node_lng": -81.13455,
+      "nwps_node_distance_m": 623,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "tybee-island",
+      "name": "Tybee Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.00307,
+      "nwps_node_lng": -80.83298,
+      "nwps_node_distance_m": 877,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "fripp-island",
+      "name": "Fripp Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.31196,
+      "nwps_node_lng": -80.47487,
+      "nwps_node_distance_m": 581,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "berts-bar",
+      "name": "Berts Bar",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.7509,
+      "nwps_node_lng": -79.83403,
+      "nwps_node_distance_m": 741,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "windjammer",
+      "name": "Windjammer",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.78341,
+      "nwps_node_lng": -79.77749,
+      "nwps_node_distance_m": 766,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "wild-dunes",
+      "name": "Wild Dunes",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.78341,
+      "nwps_node_lng": -79.73979,
+      "nwps_node_distance_m": 1707,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "dewees-island",
+      "name": "Dewees Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 32.83218,
+      "nwps_node_lng": -79.70209,
+      "nwps_node_distance_m": 627,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "south-island",
+      "name": "South Island",
+      "nwps_wfo": "chs",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 33.14106,
+      "nwps_node_lng": -79.23089,
+      "nwps_node_distance_m": 1327,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "cherry-grove-pier",
+      "name": "Cherry Grove Pier",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 27661,
+      "nwps_node_lat": 33.58,
+      "nwps_node_lng": -78.62775
+    },
+    {
+      "slug": "edisto-beach",
+      "name": "Edisto Beach",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1225,
+      "nwps_node_lat": 32.49078,
+      "nwps_node_lng": -80.30524
+    },
+    {
+      "slug": "folly-beach-pier",
+      "name": "Folly Beach Pier",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 990,
+      "nwps_node_lat": 32.65335,
+      "nwps_node_lng": -79.92827
+    },
+    {
+      "slug": "folly-beach-washout",
+      "name": "Folly Beach Washout",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1551,
+      "nwps_node_lat": 32.66961,
+      "nwps_node_lng": -79.89058
+    },
+    {
+      "slug": "garden-city-pier",
+      "name": "Garden City Pier",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1154,
+      "nwps_node_lat": 33.58,
+      "nwps_node_lng": -78.98586
+    },
+    {
+      "slug": "hilton-head-island",
+      "name": "Hilton Head Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 954,
+      "nwps_node_lat": 32.14939,
+      "nwps_node_lng": -80.7199
+    },
+    {
+      "slug": "hunting-island",
+      "name": "Hunting Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 889,
+      "nwps_node_lat": 32.36073,
+      "nwps_node_lng": -80.43717
+    },
+    {
+      "slug": "isle-of-palms",
+      "name": "Isle of Palms",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 454,
+      "nwps_node_lat": 32.78341,
+      "nwps_node_lng": -79.77749
+    },
+    {
+      "slug": "kiawah-island-beach",
+      "name": "Kiawah Island Beach",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 351,
+      "nwps_node_lat": 32.58833,
+      "nwps_node_lng": -80.11675
+    },
+    {
+      "slug": "myrtle-beach-state-park",
+      "name": "Myrtle Beach State Park",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 7564,
+      "nwps_node_lat": 33.58,
+      "nwps_node_lng": -78.92932
+    },
+    {
+      "slug": "pawleys-island",
+      "name": "Pawleys Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 896,
+      "nwps_node_lat": 33.41743,
+      "nwps_node_lng": -79.1178
+    },
+    {
+      "slug": "surfside-beach-sc",
+      "name": "Surfside Beach SC",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2738,
+      "nwps_node_lat": 33.58,
+      "nwps_node_lng": -78.96702
+    },
+    {
+      "slug": "jekyll-island",
+      "name": "Jekyll Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 760,
+      "nwps_node_lat": 31.06017,
+      "nwps_node_lng": -81.39843
+    },
+    {
+      "slug": "st-simons-island",
+      "name": "St Simons Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1173,
+      "nwps_node_lat": 31.1252,
+      "nwps_node_lng": -81.37958
+    },
+    {
+      "slug": "sea-island",
+      "name": "Sea Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1561,
+      "nwps_node_lat": 31.19022,
+      "nwps_node_lng": -81.32304
+    },
+    {
+      "slug": "blackbeard-island",
+      "name": "Blackbeard Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 210,
+      "nwps_node_lat": 31.49911,
+      "nwps_node_lng": -81.1911
+    },
+    {
+      "slug": "st-catherines-island",
+      "name": "St. Catherines Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 623,
+      "nwps_node_lat": 31.61291,
+      "nwps_node_lng": -81.13455
+    },
+    {
+      "slug": "tybee-island",
+      "name": "Tybee Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 877,
+      "nwps_node_lat": 32.00307,
+      "nwps_node_lng": -80.83298
+    },
+    {
+      "slug": "fripp-island",
+      "name": "Fripp Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 581,
+      "nwps_node_lat": 32.31196,
+      "nwps_node_lng": -80.47487
+    },
+    {
+      "slug": "berts-bar",
+      "name": "Berts Bar",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 741,
+      "nwps_node_lat": 32.7509,
+      "nwps_node_lng": -79.83403
+    },
+    {
+      "slug": "windjammer",
+      "name": "Windjammer",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 766,
+      "nwps_node_lat": 32.78341,
+      "nwps_node_lng": -79.77749
+    },
+    {
+      "slug": "wild-dunes",
+      "name": "Wild Dunes",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1707,
+      "nwps_node_lat": 32.78341,
+      "nwps_node_lng": -79.73979
+    },
+    {
+      "slug": "dewees-island",
+      "name": "Dewees Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 627,
+      "nwps_node_lat": 32.83218,
+      "nwps_node_lng": -79.70209
+    },
+    {
+      "slug": "south-island",
+      "name": "South Island",
+      "nwps_wfo": "chs",
+      "grid_wfo": "chs",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1327,
+      "nwps_node_lat": 33.14106,
+      "nwps_node_lng": -79.23089
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "_comment": "mob --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "mob",
+  "spots": [
+    {
+      "slug": "destin-jetty",
+      "name": "Destin Jetty",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.36691,
+      "nwps_node_lng": -86.5104,
+      "nwps_node_distance_m": 1639,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "navarre-beach",
+      "name": "Navarre Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.36691,
+      "nwps_node_lng": -86.86185,
+      "nwps_node_distance_m": 1274,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "okaloosa-island-pier",
+      "name": "Okaloosa Island Pier",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.38314,
+      "nwps_node_lng": -86.58439,
+      "nwps_node_distance_m": 1298,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "panama-city-beach-pier",
+      "name": "Panama City Beach Pier",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.2208,
+      "nwps_node_lng": -85.9,
+      "nwps_node_distance_m": 2232,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pensacola-beach",
+      "name": "Pensacola Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.31821,
+      "nwps_node_lng": -87.13931,
+      "nwps_node_distance_m": 1174,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "destin-jetty",
+      "name": "Destin Jetty",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1639,
+      "nwps_node_lat": 30.36691,
+      "nwps_node_lng": -86.5104
+    },
+    {
+      "slug": "mexico-beach",
+      "name": "Mexico Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 47969,
+      "nwps_node_lat": 29.92859,
+      "nwps_node_lng": -85.9
+    },
+    {
+      "slug": "navarre-beach",
+      "name": "Navarre Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1274,
+      "nwps_node_lat": 30.36691,
+      "nwps_node_lng": -86.86185
+    },
+    {
+      "slug": "okaloosa-island-pier",
+      "name": "Okaloosa Island Pier",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1298,
+      "nwps_node_lat": 30.38314,
+      "nwps_node_lng": -86.58439
+    },
+    {
+      "slug": "panama-city-beach-pier",
+      "name": "Panama City Beach Pier",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2232,
+      "nwps_node_lat": 30.2208,
+      "nwps_node_lng": -85.9
+    },
+    {
+      "slug": "pensacola-beach",
+      "name": "Pensacola Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1174,
+      "nwps_node_lat": 30.31821,
+      "nwps_node_lng": -87.13931
+    },
+    {
+      "slug": "st-andews-park",
+      "name": "St Andews Park",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 15747,
+      "nwps_node_lat": 30.1234,
+      "nwps_node_lng": -85.9
+    },
+    {
+      "slug": "cape-san-b-liss",
+      "name": "Cape San B liss",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "mob",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 51668,
+      "nwps_node_lat": 29.68508,
+      "nwps_node_lng": -85.9
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "_comment": "box --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / NO_WET_CELL \u2014 placement is purely geometric; the former DEAD/OFFWIN condition checks were removed). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "box",
+  "spots": [
+    {
+      "slug": "keyes-beach",
+      "name": "Keyes Beach",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 41.62423,
+      "nwps_node_lng": -70.29578,
+      "nwps_node_distance_m": 1285,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "green-harbor",
+      "name": "Green Harbor",
+      "nwps_wfo": "box",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.07585,
+      "nwps_node_lng": -70.6276,
+      "nwps_node_distance_m": 1253,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "keyes-beach",
+      "name": "Keyes Beach",
+      "nwps_wfo": "box",
+      "grid_wfo": "box",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1285,
+      "nwps_node_lat": 41.62423,
+      "nwps_node_lng": -70.29578
+    },
+    {
+      "slug": "green-harbor",
+      "name": "Green Harbor",
+      "nwps_wfo": "box",
+      "grid_wfo": "box",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1253,
+      "nwps_node_lat": 42.07585,
+      "nwps_node_lng": -70.6276
+    }
+  ]
+}

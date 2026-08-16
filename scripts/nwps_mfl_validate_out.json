@@ -1,0 +1,491 @@
+{
+  "_comment": "mfl --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / NO_WET_CELL \u2014 placement is purely geometric; the former DEAD/OFFWIN condition checks were removed). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "mfl",
+  "spots": [
+    {
+      "slug": "boca-raton-inlet",
+      "name": "Boca Raton Inlet",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.332,
+      "nwps_node_lng": -80.06738,
+      "nwps_node_distance_m": 455,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "boynton-beach-inlet",
+      "name": "Boynton Beach Inlet",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.512,
+      "nwps_node_lng": -80.04765,
+      "nwps_node_distance_m": 1714,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "dania-beach-pier",
+      "name": "Dania Beach Pier",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.062,
+      "nwps_node_lng": -80.10685,
+      "nwps_node_distance_m": 539,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "deerfield-beach-pier",
+      "name": "Deerfield Beach Pier",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.314,
+      "nwps_node_lng": -80.06738,
+      "nwps_node_distance_m": 716,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "delray-beach",
+      "name": "Delray Beach",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.458,
+      "nwps_node_lng": -80.04765,
+      "nwps_node_distance_m": 982,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "fort-lauderdale-beach",
+      "name": "Fort Lauderdale Beach",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.152,
+      "nwps_node_lng": -80.08712,
+      "nwps_node_distance_m": 1524,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "haulover-inlet",
+      "name": "Haulover Inlet",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 25.9,
+      "nwps_node_lng": -80.10685,
+      "nwps_node_distance_m": 1458,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "juno-beach-pier",
+      "name": "Juno Beach Pier",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.89,
+      "nwps_node_lng": -80.04765,
+      "nwps_node_distance_m": 880,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jupiter-inlet",
+      "name": "Jupiter Inlet",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.944,
+      "nwps_node_lng": -80.06738,
+      "nwps_node_distance_m": 397,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "lake-worth-pier",
+      "name": "Lake Worth Pier",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.62,
+      "nwps_node_lng": -80.02792,
+      "nwps_node_distance_m": 1143,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "palm-beach",
+      "name": "Palm Beach",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.71,
+      "nwps_node_lng": -80.02792,
+      "nwps_node_distance_m": 864,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pompano-beach-pier",
+      "name": "Pompano Beach Pier",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.224,
+      "nwps_node_lng": -80.08712,
+      "nwps_node_distance_m": 1243,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "south-beach-miami",
+      "name": "South Beach Miami",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 25.774,
+      "nwps_node_lng": -80.12658,
+      "nwps_node_distance_m": 284,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "key-west",
+      "name": "Key West",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 24.532,
+      "nwps_node_lng": -81.78396,
+      "nwps_node_distance_m": 1986,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sunny-isles",
+      "name": "Sunny Isles",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 25.936,
+      "nwps_node_lng": -80.10685,
+      "nwps_node_distance_m": 1161,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "spoils",
+      "name": "Spoils",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.098,
+      "nwps_node_lng": -80.08712,
+      "nwps_node_distance_m": 1696,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "commercial-pier",
+      "name": "Commercial Pier",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.188,
+      "nwps_node_lng": -80.08712,
+      "nwps_node_distance_m": 713,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hillsboro-inlet",
+      "name": "Hillsboro Inlet",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.26,
+      "nwps_node_lng": -80.06738,
+      "nwps_node_distance_m": 1518,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hillsboro-beach",
+      "name": "Hillsboro Beach",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.314,
+      "nwps_node_lng": -80.06738,
+      "nwps_node_distance_m": 1305,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "palmetto-pavilion",
+      "name": "Palmetto Pavilion",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.35,
+      "nwps_node_lng": -80.06738,
+      "nwps_node_distance_m": 203,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "boyton-bech-inlet",
+      "name": "Boyton Bech Inlet",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.548,
+      "nwps_node_lng": -80.02792,
+      "nwps_node_distance_m": 1477,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ocean-reef-park",
+      "name": "Ocean Reef Park",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.782,
+      "nwps_node_lng": -80.02792,
+      "nwps_node_distance_m": 460,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hobe-beach",
+      "name": "Hobe Beach",
+      "nwps_wfo": "mfl",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.034,
+      "nwps_node_lng": -80.08712,
+      "nwps_node_distance_m": 1151,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "boca-raton-inlet",
+      "name": "Boca Raton Inlet",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 455,
+      "nwps_node_lat": 26.332,
+      "nwps_node_lng": -80.06738
+    },
+    {
+      "slug": "boynton-beach-inlet",
+      "name": "Boynton Beach Inlet",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1714,
+      "nwps_node_lat": 26.512,
+      "nwps_node_lng": -80.04765
+    },
+    {
+      "slug": "dania-beach-pier",
+      "name": "Dania Beach Pier",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 539,
+      "nwps_node_lat": 26.062,
+      "nwps_node_lng": -80.10685
+    },
+    {
+      "slug": "deerfield-beach-pier",
+      "name": "Deerfield Beach Pier",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 716,
+      "nwps_node_lat": 26.314,
+      "nwps_node_lng": -80.06738
+    },
+    {
+      "slug": "delray-beach",
+      "name": "Delray Beach",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 982,
+      "nwps_node_lat": 26.458,
+      "nwps_node_lng": -80.04765
+    },
+    {
+      "slug": "fort-lauderdale-beach",
+      "name": "Fort Lauderdale Beach",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1524,
+      "nwps_node_lat": 26.152,
+      "nwps_node_lng": -80.08712
+    },
+    {
+      "slug": "haulover-inlet",
+      "name": "Haulover Inlet",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1458,
+      "nwps_node_lat": 25.9,
+      "nwps_node_lng": -80.10685
+    },
+    {
+      "slug": "juno-beach-pier",
+      "name": "Juno Beach Pier",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 880,
+      "nwps_node_lat": 26.89,
+      "nwps_node_lng": -80.04765
+    },
+    {
+      "slug": "jupiter-inlet",
+      "name": "Jupiter Inlet",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 397,
+      "nwps_node_lat": 26.944,
+      "nwps_node_lng": -80.06738
+    },
+    {
+      "slug": "lake-worth-pier",
+      "name": "Lake Worth Pier",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1143,
+      "nwps_node_lat": 26.62,
+      "nwps_node_lng": -80.02792
+    },
+    {
+      "slug": "palm-beach",
+      "name": "Palm Beach",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 864,
+      "nwps_node_lat": 26.71,
+      "nwps_node_lng": -80.02792
+    },
+    {
+      "slug": "pompano-beach-pier",
+      "name": "Pompano Beach Pier",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1243,
+      "nwps_node_lat": 26.224,
+      "nwps_node_lng": -80.08712
+    },
+    {
+      "slug": "south-beach-miami",
+      "name": "South Beach Miami",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 284,
+      "nwps_node_lat": 25.774,
+      "nwps_node_lng": -80.12658
+    },
+    {
+      "slug": "key-west",
+      "name": "Key West",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1986,
+      "nwps_node_lat": 24.532,
+      "nwps_node_lng": -81.78396
+    },
+    {
+      "slug": "sunny-isles",
+      "name": "Sunny Isles",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1161,
+      "nwps_node_lat": 25.936,
+      "nwps_node_lng": -80.10685
+    },
+    {
+      "slug": "spoils",
+      "name": "Spoils",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1696,
+      "nwps_node_lat": 26.098,
+      "nwps_node_lng": -80.08712
+    },
+    {
+      "slug": "commercial-pier",
+      "name": "Commercial Pier",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 713,
+      "nwps_node_lat": 26.188,
+      "nwps_node_lng": -80.08712
+    },
+    {
+      "slug": "hillsboro-inlet",
+      "name": "Hillsboro Inlet",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1518,
+      "nwps_node_lat": 26.26,
+      "nwps_node_lng": -80.06738
+    },
+    {
+      "slug": "hillsboro-beach",
+      "name": "Hillsboro Beach",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1305,
+      "nwps_node_lat": 26.314,
+      "nwps_node_lng": -80.06738
+    },
+    {
+      "slug": "palmetto-pavilion",
+      "name": "Palmetto Pavilion",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 203,
+      "nwps_node_lat": 26.35,
+      "nwps_node_lng": -80.06738
+    },
+    {
+      "slug": "boyton-bech-inlet",
+      "name": "Boyton Bech Inlet",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1477,
+      "nwps_node_lat": 26.548,
+      "nwps_node_lng": -80.02792
+    },
+    {
+      "slug": "ocean-reef-park",
+      "name": "Ocean Reef Park",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 460,
+      "nwps_node_lat": 26.782,
+      "nwps_node_lng": -80.02792
+    },
+    {
+      "slug": "hobe-beach",
+      "name": "Hobe Beach",
+      "nwps_wfo": "mfl",
+      "grid_wfo": "mfl",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1151,
+      "nwps_node_lat": 27.034,
+      "nwps_node_lng": -80.08712
+    }
+  ]
+}

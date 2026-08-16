@@ -1,0 +1,176 @@
+{
+  "_comment": "tae --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "tae",
+  "spots": [
+    {
+      "slug": "destin-jetty",
+      "name": "Destin Jetty",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.37337,
+      "nwps_node_lng": -86.5031,
+      "nwps_node_distance_m": 913,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mexico-beach",
+      "name": "Mexico Beach",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.92014,
+      "nwps_node_lng": -85.39845,
+      "nwps_node_distance_m": 1244,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "navarre-beach",
+      "name": "Navarre Beach",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.37337,
+      "nwps_node_lng": -86.85291,
+      "nwps_node_distance_m": 1015,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "okaloosa-island-pier",
+      "name": "Okaloosa Island Pier",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.38956,
+      "nwps_node_lng": -86.59516,
+      "nwps_node_distance_m": 345,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "panama-city-beach-pier",
+      "name": "Panama City Beach Pier",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.2115,
+      "nwps_node_lng": -85.87713,
+      "nwps_node_distance_m": 369,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pensacola-beach",
+      "name": "Pensacola Beach",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.32481,
+      "nwps_node_lng": -87.14748,
+      "nwps_node_distance_m": 816,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "st-andrews-park",
+      "name": "St Andrews Park",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 30.11438,
+      "nwps_node_lng": -85.72984,
+      "nwps_node_distance_m": 1120,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "cape-san-blas",
+      "name": "Cape San Blas",
+      "nwps_wfo": "tae",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.67733,
+      "nwps_node_lng": -85.38004,
+      "nwps_node_distance_m": 1435,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "destin-jetty",
+      "name": "Destin Jetty",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 913,
+      "nwps_node_lat": 30.37337,
+      "nwps_node_lng": -86.5031
+    },
+    {
+      "slug": "mexico-beach",
+      "name": "Mexico Beach",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1244,
+      "nwps_node_lat": 29.92014,
+      "nwps_node_lng": -85.39845
+    },
+    {
+      "slug": "navarre-beach",
+      "name": "Navarre Beach",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1015,
+      "nwps_node_lat": 30.37337,
+      "nwps_node_lng": -86.85291
+    },
+    {
+      "slug": "okaloosa-island-pier",
+      "name": "Okaloosa Island Pier",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 345,
+      "nwps_node_lat": 30.38956,
+      "nwps_node_lng": -86.59516
+    },
+    {
+      "slug": "panama-city-beach-pier",
+      "name": "Panama City Beach Pier",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 369,
+      "nwps_node_lat": 30.2115,
+      "nwps_node_lng": -85.87713
+    },
+    {
+      "slug": "pensacola-beach",
+      "name": "Pensacola Beach",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 816,
+      "nwps_node_lat": 30.32481,
+      "nwps_node_lng": -87.14748
+    },
+    {
+      "slug": "st-andrews-park",
+      "name": "St Andrews Park",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1120,
+      "nwps_node_lat": 30.11438,
+      "nwps_node_lng": -85.72984
+    },
+    {
+      "slug": "cape-san-blas",
+      "name": "Cape San Blas",
+      "nwps_wfo": "tae",
+      "grid_wfo": "tae",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1435,
+      "nwps_node_lat": 29.67733,
+      "nwps_node_lng": -85.38004
+    }
+  ]
+}

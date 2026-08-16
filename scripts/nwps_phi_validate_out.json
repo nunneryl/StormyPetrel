@@ -1,0 +1,50 @@
+{
+  "_comment": "phi --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / NO_WET_CELL \u2014 placement is purely geometric; the former DEAD/OFFWIN condition checks were removed). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "phi",
+  "spots": [
+    {
+      "slug": "bethany-beach",
+      "name": "Bethany Beach",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.54054,
+      "nwps_node_lng": -75.04655,
+      "nwps_node_distance_m": 629,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "indian-river-inlet",
+      "name": "Indian River Inlet",
+      "nwps_wfo": "phi",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 38.6054,
+      "nwps_node_lng": -75.04655,
+      "nwps_node_distance_m": 1177,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "bethany-beach",
+      "name": "Bethany Beach",
+      "nwps_wfo": "phi",
+      "grid_wfo": "phi",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 629,
+      "nwps_node_lat": 38.54054,
+      "nwps_node_lng": -75.04655
+    },
+    {
+      "slug": "indian-river-inlet",
+      "name": "Indian River Inlet",
+      "nwps_wfo": "phi",
+      "grid_wfo": "phi",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1177,
+      "nwps_node_lat": 38.6054,
+      "nwps_node_lng": -75.04655
+    }
+  ]
+}

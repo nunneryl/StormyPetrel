@@ -1,0 +1,344 @@
+{
+  "_comment": "pqr --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "pqr",
+  "spots": [
+    {
+      "slug": "agate-beach-newport",
+      "name": "Agate Beach Newport",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.06983,
+      "nwps_node_distance_m": 1438,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "cannon-beach",
+      "name": "Cannon Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.86717,
+      "nwps_node_lng": -123.9705,
+      "nwps_node_distance_m": 1051,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "cape-kiwanda",
+      "name": "Cape Kiwanda",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.21665,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 1229,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "florence-south-jetty",
+      "name": "Florence South Jetty",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.00596,
+      "nwps_node_lng": -124.14433,
+      "nwps_node_distance_m": 1056,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "indian-beach-ecola",
+      "name": "Indian Beach Ecola",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.88524,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 2326,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "lincoln-city-beach",
+      "name": "Lincoln City Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.99981,
+      "nwps_node_lng": -124.02017,
+      "nwps_node_distance_m": 254,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nelscott-reef",
+      "name": "Nelscott Reef",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.96367,
+      "nwps_node_lng": -124.045,
+      "nwps_node_distance_m": 1689,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "nye-beach",
+      "name": "Nye Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.06983,
+      "nwps_node_distance_m": 912,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "otter-rock",
+      "name": "Otter Rock",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.80104,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1600,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pacific-city-beach",
+      "name": "Pacific City Beach",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.19858,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 1654,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "roads-end",
+      "name": "Roads End",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.01788,
+      "nwps_node_lng": -124.02017,
+      "nwps_node_distance_m": 643,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "seaside-cove",
+      "name": "Seaside Cove",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.99366,
+      "nwps_node_lng": -123.94567,
+      "nwps_node_distance_m": 1799,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "short-sands-beach-oswald-west",
+      "name": "Short Sands Beach Oswald West",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 45.75875,
+      "nwps_node_lng": -123.99533,
+      "nwps_node_distance_m": 2104,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "south-beach-newport",
+      "name": "South Beach Newport",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 44.60227,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1701,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "cape-disappointment",
+      "name": "Cape Disappointment",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.28278,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1346,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "long-beach-wa",
+      "name": "Long Beach WA",
+      "nwps_wfo": "pqr",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.35506,
+      "nwps_node_lng": -124.09467,
+      "nwps_node_distance_m": 1772,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "agate-beach-newport",
+      "name": "Agate Beach Newport",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1438,
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.06983
+    },
+    {
+      "slug": "cannon-beach",
+      "name": "Cannon Beach",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1051,
+      "nwps_node_lat": 45.86717,
+      "nwps_node_lng": -123.9705
+    },
+    {
+      "slug": "cape-kiwanda",
+      "name": "Cape Kiwanda",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1229,
+      "nwps_node_lat": 45.21665,
+      "nwps_node_lng": -123.99533
+    },
+    {
+      "slug": "florence-south-jetty",
+      "name": "Florence South Jetty",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1056,
+      "nwps_node_lat": 44.00596,
+      "nwps_node_lng": -124.14433
+    },
+    {
+      "slug": "indian-beach-ecola",
+      "name": "Indian Beach Ecola",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2326,
+      "nwps_node_lat": 45.88524,
+      "nwps_node_lng": -123.99533
+    },
+    {
+      "slug": "lincoln-city-beach",
+      "name": "Lincoln City Beach",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 254,
+      "nwps_node_lat": 44.99981,
+      "nwps_node_lng": -124.02017
+    },
+    {
+      "slug": "nelscott-reef",
+      "name": "Nelscott Reef",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1689,
+      "nwps_node_lat": 44.96367,
+      "nwps_node_lng": -124.045
+    },
+    {
+      "slug": "nye-beach",
+      "name": "Nye Beach",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 912,
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.06983
+    },
+    {
+      "slug": "otter-rock",
+      "name": "Otter Rock",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1600,
+      "nwps_node_lat": 44.80104,
+      "nwps_node_lng": -124.09467
+    },
+    {
+      "slug": "pacific-city-beach",
+      "name": "Pacific City Beach",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1654,
+      "nwps_node_lat": 45.19858,
+      "nwps_node_lng": -123.99533
+    },
+    {
+      "slug": "roads-end",
+      "name": "Roads End",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 643,
+      "nwps_node_lat": 45.01788,
+      "nwps_node_lng": -124.02017
+    },
+    {
+      "slug": "seaside-cove",
+      "name": "Seaside Cove",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1799,
+      "nwps_node_lat": 45.99366,
+      "nwps_node_lng": -123.94567
+    },
+    {
+      "slug": "short-sands-beach-oswald-west",
+      "name": "Short Sands Beach Oswald West",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2104,
+      "nwps_node_lat": 45.75875,
+      "nwps_node_lng": -123.99533
+    },
+    {
+      "slug": "south-beach-newport",
+      "name": "South Beach Newport",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1701,
+      "nwps_node_lat": 44.60227,
+      "nwps_node_lng": -124.09467
+    },
+    {
+      "slug": "cape-disappointment",
+      "name": "Cape Disappointment",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1346,
+      "nwps_node_lat": 46.28278,
+      "nwps_node_lng": -124.09467
+    },
+    {
+      "slug": "long-beach-wa",
+      "name": "Long Beach WA",
+      "nwps_wfo": "pqr",
+      "grid_wfo": "pqr",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1772,
+      "nwps_node_lat": 46.35506,
+      "nwps_node_lng": -124.09467
+    }
+  ]
+}

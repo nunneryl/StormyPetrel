@@ -1,0 +1,50 @@
+{
+  "_comment": "bro --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "bro",
+  "spots": [
+    {
+      "slug": "isla-blanca-park",
+      "name": "Isla Blanca Park",
+      "nwps_wfo": "bro",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.08707,
+      "nwps_node_lng": -97.15465,
+      "nwps_node_distance_m": 1674,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "south-padre-island",
+      "name": "South Padre Island",
+      "nwps_wfo": "bro",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.08707,
+      "nwps_node_lng": -97.15465,
+      "nwps_node_distance_m": 923,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "isla-blanca-park",
+      "name": "Isla Blanca Park",
+      "nwps_wfo": "bro",
+      "grid_wfo": "bro",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1674,
+      "nwps_node_lat": 26.08707,
+      "nwps_node_lng": -97.15465
+    },
+    {
+      "slug": "south-padre-island",
+      "name": "South Padre Island",
+      "nwps_wfo": "bro",
+      "grid_wfo": "bro",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 923,
+      "nwps_node_lat": 26.08707,
+      "nwps_node_lng": -97.15465
+    }
+  ]
+}

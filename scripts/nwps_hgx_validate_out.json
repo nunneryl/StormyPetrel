@@ -1,0 +1,92 @@
+{
+  "_comment": "hgx --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "hgx",
+  "spots": [
+    {
+      "slug": "61st-street-galveston",
+      "name": "61st Street Galveston",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.25236,
+      "nwps_node_lng": -94.82882,
+      "nwps_node_distance_m": 1013,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "galveston-seawall",
+      "name": "Galveston Seawall",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 29.28476,
+      "nwps_node_lng": -94.79235,
+      "nwps_node_distance_m": 66,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "matagorda-beach",
+      "name": "Matagorda Beach",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.6042,
+      "nwps_node_lng": -95.94118,
+      "nwps_node_distance_m": 632,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "surfside-beach-tx",
+      "name": "Surfside Beach TX",
+      "nwps_wfo": "hgx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 28.94448,
+      "nwps_node_lng": -95.28471,
+      "nwps_node_distance_m": 687,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "61st-street-galveston",
+      "name": "61st Street Galveston",
+      "nwps_wfo": "hgx",
+      "grid_wfo": "hgx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1013,
+      "nwps_node_lat": 29.25236,
+      "nwps_node_lng": -94.82882
+    },
+    {
+      "slug": "galveston-seawall",
+      "name": "Galveston Seawall",
+      "nwps_wfo": "hgx",
+      "grid_wfo": "hgx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 66,
+      "nwps_node_lat": 29.28476,
+      "nwps_node_lng": -94.79235
+    },
+    {
+      "slug": "matagorda-beach",
+      "name": "Matagorda Beach",
+      "nwps_wfo": "hgx",
+      "grid_wfo": "hgx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 632,
+      "nwps_node_lat": 28.6042,
+      "nwps_node_lng": -95.94118
+    },
+    {
+      "slug": "surfside-beach-tx",
+      "name": "Surfside Beach TX",
+      "nwps_wfo": "hgx",
+      "grid_wfo": "hgx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 687,
+      "nwps_node_lat": 28.94448,
+      "nwps_node_lng": -95.28471
+    }
+  ]
+}

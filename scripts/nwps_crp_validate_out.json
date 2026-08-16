@@ -1,0 +1,134 @@
+{
+  "_comment": "crp --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "crp",
+  "spots": [
+    {
+      "slug": "bob-hall-pier",
+      "name": "Bob Hall Pier",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.57179,
+      "nwps_node_lng": -97.21907,
+      "nwps_node_distance_m": 1172,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "horace-caldwell-pier",
+      "name": "Horace Caldwell Pier",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.83105,
+      "nwps_node_lng": -97.03866,
+      "nwps_node_distance_m": 1387,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jp-luby-surf-park",
+      "name": "JP Luby Surf Park",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.6366,
+      "nwps_node_lng": -97.18299,
+      "nwps_node_distance_m": 716,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "mustang-island",
+      "name": "Mustang Island",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.75003,
+      "nwps_node_lng": -97.11082,
+      "nwps_node_distance_m": 1258,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "port-a-beach",
+      "name": "Port A Beach",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.79864,
+      "nwps_node_lng": -97.0567,
+      "nwps_node_distance_m": 1544,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "port-aransas-jetty",
+      "name": "Port Aransas Jetty",
+      "nwps_wfo": "crp",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.83105,
+      "nwps_node_lng": -97.03866,
+      "nwps_node_distance_m": 580,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "bob-hall-pier",
+      "name": "Bob Hall Pier",
+      "nwps_wfo": "crp",
+      "grid_wfo": "crp",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1172,
+      "nwps_node_lat": 27.57179,
+      "nwps_node_lng": -97.21907
+    },
+    {
+      "slug": "horace-caldwell-pier",
+      "name": "Horace Caldwell Pier",
+      "nwps_wfo": "crp",
+      "grid_wfo": "crp",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1387,
+      "nwps_node_lat": 27.83105,
+      "nwps_node_lng": -97.03866
+    },
+    {
+      "slug": "jp-luby-surf-park",
+      "name": "JP Luby Surf Park",
+      "nwps_wfo": "crp",
+      "grid_wfo": "crp",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 716,
+      "nwps_node_lat": 27.6366,
+      "nwps_node_lng": -97.18299
+    },
+    {
+      "slug": "mustang-island",
+      "name": "Mustang Island",
+      "nwps_wfo": "crp",
+      "grid_wfo": "crp",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1258,
+      "nwps_node_lat": 27.75003,
+      "nwps_node_lng": -97.11082
+    },
+    {
+      "slug": "port-a-beach",
+      "name": "Port A Beach",
+      "nwps_wfo": "crp",
+      "grid_wfo": "crp",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1544,
+      "nwps_node_lat": 27.79864,
+      "nwps_node_lng": -97.0567
+    },
+    {
+      "slug": "port-aransas-jetty",
+      "name": "Port Aransas Jetty",
+      "nwps_wfo": "crp",
+      "grid_wfo": "crp",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 580,
+      "nwps_node_lat": 27.83105,
+      "nwps_node_lng": -97.03866
+    }
+  ]
+}

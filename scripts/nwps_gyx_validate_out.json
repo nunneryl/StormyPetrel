@@ -1,0 +1,502 @@
+{
+  "_comment": "gyx --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "gyx",
+  "spots": [
+    {
+      "slug": "fortunes-rocks",
+      "name": "Fortunes Rocks",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.4147,
+      "nwps_node_lng": -70.34844,
+      "nwps_node_distance_m": 2484,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "gooch-s-beach",
+      "name": "Gooch's Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.32451,
+      "nwps_node_lng": -70.47031,
+      "nwps_node_distance_m": 2583,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "higgins-beach",
+      "name": "Higgins Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.55,
+      "nwps_node_lng": -70.2875,
+      "nwps_node_distance_m": 1285,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "long-sands-beach",
+      "name": "Long Sands Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.16667,
+      "nwps_node_lng": -70.59219,
+      "nwps_node_distance_m": 1986,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "old-orchard-beach",
+      "name": "Old Orchard Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.5049,
+      "nwps_node_lng": -70.34844,
+      "nwps_node_distance_m": 2157,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "scarborough-beach",
+      "name": "Scarborough Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.55,
+      "nwps_node_lng": -70.2875,
+      "nwps_node_distance_m": 1929,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "short-sands-beach-york",
+      "name": "Short Sands Beach York",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.16667,
+      "nwps_node_lng": -70.59219,
+      "nwps_node_distance_m": 1447,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "hampton-beach",
+      "name": "Hampton Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.89608,
+      "nwps_node_lng": -70.80547,
+      "nwps_node_distance_m": 1191,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "jenness-beach",
+      "name": "Jenness Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 1284,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "north-beach-rye",
+      "name": "North Beach Rye",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 1838,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "the-wall-hampton",
+      "name": "The Wall Hampton",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.91863,
+      "nwps_node_lng": -70.775,
+      "nwps_node_distance_m": 2069,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "costellos",
+      "name": "Costellos",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.94118,
+      "nwps_node_lng": -70.775,
+      "nwps_node_distance_m": 1748,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "fox-hill",
+      "name": "Fox Hill",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.96372,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 1882,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "straws-point",
+      "name": "Straws Point",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453,
+      "nwps_node_distance_m": 676,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "pirates-cove",
+      "name": "Pirates Cove",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.03137,
+      "nwps_node_lng": -70.71406,
+      "nwps_node_distance_m": 1552,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "harbor-beach",
+      "name": "Harbor Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.12157,
+      "nwps_node_lng": -70.62266,
+      "nwps_node_distance_m": 1695,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "ogunquit",
+      "name": "Ogunquit",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.25686,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 2338,
+      "nwps_buoy_id": "44098"
+    },
+    {
+      "slug": "moody-point",
+      "name": "Moody Point",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.27941,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 899,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "crescent-beach",
+      "name": "Crescent Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.30196,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 626,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "wells-beach",
+      "name": "Wells Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.30196,
+      "nwps_node_lng": -70.56172,
+      "nwps_node_distance_m": 1266,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "drakes-island",
+      "name": "Drakes Island",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.32451,
+      "nwps_node_lng": -70.53125,
+      "nwps_node_distance_m": 1580,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pine-point-beach",
+      "name": "Pine Point Beach",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.52745,
+      "nwps_node_lng": -70.34844,
+      "nwps_node_distance_m": 1791,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "reid-state-park",
+      "name": "Reid State Park",
+      "nwps_wfo": "gyx",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 43.77549,
+      "nwps_node_lng": -69.70859,
+      "nwps_node_distance_m": 1645,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "fortunes-rocks",
+      "name": "Fortunes Rocks",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2484,
+      "nwps_node_lat": 43.4147,
+      "nwps_node_lng": -70.34844
+    },
+    {
+      "slug": "gooch-s-beach",
+      "name": "Gooch's Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2583,
+      "nwps_node_lat": 43.32451,
+      "nwps_node_lng": -70.47031
+    },
+    {
+      "slug": "higgins-beach",
+      "name": "Higgins Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1285,
+      "nwps_node_lat": 43.55,
+      "nwps_node_lng": -70.2875
+    },
+    {
+      "slug": "long-sands-beach",
+      "name": "Long Sands Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1986,
+      "nwps_node_lat": 43.16667,
+      "nwps_node_lng": -70.59219
+    },
+    {
+      "slug": "old-orchard-beach",
+      "name": "Old Orchard Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2157,
+      "nwps_node_lat": 43.5049,
+      "nwps_node_lng": -70.34844
+    },
+    {
+      "slug": "scarborough-beach",
+      "name": "Scarborough Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1929,
+      "nwps_node_lat": 43.55,
+      "nwps_node_lng": -70.2875
+    },
+    {
+      "slug": "short-sands-beach-york",
+      "name": "Short Sands Beach York",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1447,
+      "nwps_node_lat": 43.16667,
+      "nwps_node_lng": -70.59219
+    },
+    {
+      "slug": "hampton-beach",
+      "name": "Hampton Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1191,
+      "nwps_node_lat": 42.89608,
+      "nwps_node_lng": -70.80547
+    },
+    {
+      "slug": "jenness-beach",
+      "name": "Jenness Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1284,
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453
+    },
+    {
+      "slug": "north-beach-rye",
+      "name": "North Beach Rye",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1838,
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453
+    },
+    {
+      "slug": "the-wall-hampton",
+      "name": "The Wall Hampton",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2069,
+      "nwps_node_lat": 42.91863,
+      "nwps_node_lng": -70.775
+    },
+    {
+      "slug": "costellos",
+      "name": "Costellos",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1748,
+      "nwps_node_lat": 42.94118,
+      "nwps_node_lng": -70.775
+    },
+    {
+      "slug": "fox-hill",
+      "name": "Fox Hill",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1882,
+      "nwps_node_lat": 42.96372,
+      "nwps_node_lng": -70.74453
+    },
+    {
+      "slug": "straws-point",
+      "name": "Straws Point",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 676,
+      "nwps_node_lat": 42.98627,
+      "nwps_node_lng": -70.74453
+    },
+    {
+      "slug": "pirates-cove",
+      "name": "Pirates Cove",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1552,
+      "nwps_node_lat": 43.03137,
+      "nwps_node_lng": -70.71406
+    },
+    {
+      "slug": "harbor-beach",
+      "name": "Harbor Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1695,
+      "nwps_node_lat": 43.12157,
+      "nwps_node_lng": -70.62266
+    },
+    {
+      "slug": "ogunquit",
+      "name": "Ogunquit",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2338,
+      "nwps_node_lat": 43.25686,
+      "nwps_node_lng": -70.56172
+    },
+    {
+      "slug": "moody-point",
+      "name": "Moody Point",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 899,
+      "nwps_node_lat": 43.27941,
+      "nwps_node_lng": -70.56172
+    },
+    {
+      "slug": "crescent-beach",
+      "name": "Crescent Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 626,
+      "nwps_node_lat": 43.30196,
+      "nwps_node_lng": -70.56172
+    },
+    {
+      "slug": "wells-beach",
+      "name": "Wells Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1266,
+      "nwps_node_lat": 43.30196,
+      "nwps_node_lng": -70.56172
+    },
+    {
+      "slug": "drakes-island",
+      "name": "Drakes Island",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1580,
+      "nwps_node_lat": 43.32451,
+      "nwps_node_lng": -70.53125
+    },
+    {
+      "slug": "pine-point-beach",
+      "name": "Pine Point Beach",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1791,
+      "nwps_node_lat": 43.52745,
+      "nwps_node_lng": -70.34844
+    },
+    {
+      "slug": "reid-state-park",
+      "name": "Reid State Park",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1645,
+      "nwps_node_lat": 43.77549,
+      "nwps_node_lng": -69.70859
+    },
+    {
+      "slug": "deep-cove",
+      "name": "Deep Cove",
+      "nwps_wfo": "gyx",
+      "grid_wfo": "gyx",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 96917,
+      "nwps_node_lat": 44.09117,
+      "nwps_node_lng": -67.85
+    }
+  ]
+}

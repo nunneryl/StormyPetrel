@@ -1,0 +1,512 @@
+{
+  "_comment": "sju --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / NO_WET_CELL \u2014 placement is purely geometric; the former DEAD/OFFWIN condition checks were removed). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "sju",
+  "spots": [
+    {
+      "slug": "antonio-s",
+      "name": "Antonio's",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.23729,
+      "nwps_node_distance_m": 965,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "aviones",
+      "name": "Aviones",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -65.9661,
+      "nwps_node_distance_m": 922,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "crash-boat-beach",
+      "name": "Crash Boat Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 735,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "dogmans-rincon",
+      "name": "Dogmans Rincon",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.33119,
+      "nwps_node_lng": -67.25424,
+      "nwps_node_distance_m": 1198,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "gas-chambers-aguadilla",
+      "name": "Gas Chambers Aguadilla",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 256,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "indicators",
+      "name": "Indicators",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 356,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "jobos-beach-isabela",
+      "name": "Jobos Beach Isabela",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.08475,
+      "nwps_node_distance_m": 1164,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-pared-luquillo",
+      "name": "La Pared Luquillo",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -65.71186,
+      "nwps_node_distance_m": 407,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "maria-s",
+      "name": "Maria's",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 1203,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "middles-isabela",
+      "name": "Middles Isabela",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.9661,
+      "nwps_node_distance_m": 320,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pine-grove-beach",
+      "name": "Pine Grove Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -66.01695,
+      "nwps_node_distance_m": 1845,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "playa-guajataca",
+      "name": "Playa Guajataca",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.94915,
+      "nwps_node_distance_m": 762,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "playa-kikita",
+      "name": "Playa Kikita",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.27119,
+      "nwps_node_distance_m": 1576,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "playa-manati",
+      "name": "Playa Manati",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.52542,
+      "nwps_node_distance_m": 917,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pools",
+      "name": "Pools",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.25424,
+      "nwps_node_distance_m": 1468,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rincon-domes",
+      "name": "Rincon Domes",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 182,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "sandy-beach",
+      "name": "Sandy Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.25424,
+      "nwps_node_distance_m": 983,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "shacks-beach",
+      "name": "Shacks Beach",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.10169,
+      "nwps_node_distance_m": 1447,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "steps-beach-rincon",
+      "name": "Steps Beach Rincon",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 728,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "surfers-beach-aguadilla",
+      "name": "Surfers Beach Aguadilla",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.50976,
+      "nwps_node_lng": -67.13559,
+      "nwps_node_distance_m": 286,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "table-tops-aguadilla",
+      "name": "Table Tops Aguadilla",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.42859,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 1448,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "tres-palmas",
+      "name": "Tres Palmas",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119,
+      "nwps_node_distance_m": 698,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "wilderness",
+      "name": "Wilderness",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -67.16949,
+      "nwps_node_distance_m": 932,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "fiji",
+      "name": "Fiji",
+      "nwps_wfo": "sju",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 18.47729,
+      "nwps_node_lng": -66.08475,
+      "nwps_node_distance_m": 1041,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "antonio-s",
+      "name": "Antonio's",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 965,
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.23729
+    },
+    {
+      "slug": "aviones",
+      "name": "Aviones",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 922,
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -65.9661
+    },
+    {
+      "slug": "crash-boat-beach",
+      "name": "Crash Boat Beach",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 735,
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.16949
+    },
+    {
+      "slug": "dogmans-rincon",
+      "name": "Dogmans Rincon",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1198,
+      "nwps_node_lat": 18.33119,
+      "nwps_node_lng": -67.25424
+    },
+    {
+      "slug": "gas-chambers-aguadilla",
+      "name": "Gas Chambers Aguadilla",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 256,
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.16949
+    },
+    {
+      "slug": "indicators",
+      "name": "Indicators",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 356,
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.27119
+    },
+    {
+      "slug": "jobos-beach-isabela",
+      "name": "Jobos Beach Isabela",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1164,
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.08475
+    },
+    {
+      "slug": "la-pared-luquillo",
+      "name": "La Pared Luquillo",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 407,
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -65.71186
+    },
+    {
+      "slug": "maria-s",
+      "name": "Maria's",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1203,
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119
+    },
+    {
+      "slug": "middles-isabela",
+      "name": "Middles Isabela",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 320,
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.9661
+    },
+    {
+      "slug": "pine-grove-beach",
+      "name": "Pine Grove Beach",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1845,
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -66.01695
+    },
+    {
+      "slug": "playa-guajataca",
+      "name": "Playa Guajataca",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 762,
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.94915
+    },
+    {
+      "slug": "playa-kikita",
+      "name": "Playa Kikita",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1576,
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.27119
+    },
+    {
+      "slug": "playa-manati",
+      "name": "Playa Manati",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 917,
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -66.52542
+    },
+    {
+      "slug": "pools",
+      "name": "Pools",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1468,
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.25424
+    },
+    {
+      "slug": "rincon-domes",
+      "name": "Rincon Domes",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 182,
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.27119
+    },
+    {
+      "slug": "sandy-beach",
+      "name": "Sandy Beach",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 983,
+      "nwps_node_lat": 18.37989,
+      "nwps_node_lng": -67.25424
+    },
+    {
+      "slug": "shacks-beach",
+      "name": "Shacks Beach",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1447,
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.10169
+    },
+    {
+      "slug": "steps-beach-rincon",
+      "name": "Steps Beach Rincon",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 728,
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119
+    },
+    {
+      "slug": "surfers-beach-aguadilla",
+      "name": "Surfers Beach Aguadilla",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 286,
+      "nwps_node_lat": 18.50976,
+      "nwps_node_lng": -67.13559
+    },
+    {
+      "slug": "table-tops-aguadilla",
+      "name": "Table Tops Aguadilla",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1448,
+      "nwps_node_lat": 18.42859,
+      "nwps_node_lng": -67.16949
+    },
+    {
+      "slug": "tres-palmas",
+      "name": "Tres Palmas",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 698,
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.27119
+    },
+    {
+      "slug": "wilderness",
+      "name": "Wilderness",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 932,
+      "nwps_node_lat": 18.49353,
+      "nwps_node_lng": -67.16949
+    },
+    {
+      "slug": "fiji",
+      "name": "Fiji",
+      "nwps_wfo": "sju",
+      "grid_wfo": "sju",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1041,
+      "nwps_node_lat": 18.47729,
+      "nwps_node_lng": -66.08475
+    }
+  ]
+}

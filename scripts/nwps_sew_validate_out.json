@@ -1,0 +1,260 @@
+{
+  "_comment": "sew --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "sew",
+  "spots": [
+    {
+      "slug": "hobuck-beach",
+      "name": "Hobuck Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 48.33739,
+      "nwps_node_lng": -124.71469,
+      "nwps_node_distance_m": 3602,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "kalaloch-beach",
+      "name": "Kalaloch Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.57957,
+      "nwps_node_lng": -124.40306,
+      "nwps_node_distance_m": 2838,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-push-first-beach",
+      "name": "La Push First Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.90435,
+      "nwps_node_lng": -124.66276,
+      "nwps_node_distance_m": 1821,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-push-second-beach",
+      "name": "La Push Second Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.86826,
+      "nwps_node_lng": -124.61082,
+      "nwps_node_distance_m": 1983,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "la-push-third-beach",
+      "name": "La Push Third Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.86826,
+      "nwps_node_lng": -124.61082,
+      "nwps_node_distance_m": 1891,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "ocean-shores",
+      "name": "Ocean Shores",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.00218,
+      "nwps_node_lng": -124.19531,
+      "nwps_node_distance_m": 1558,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "pacific-beach-wa",
+      "name": "Pacific Beach WA",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.2187,
+      "nwps_node_lng": -124.24724,
+      "nwps_node_distance_m": 2867,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "rialto-beach",
+      "name": "Rialto Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 47.90435,
+      "nwps_node_lng": -124.66276,
+      "nwps_node_distance_m": 2176,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "shi-shi-beach",
+      "name": "Shi Shi Beach",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 48.26522,
+      "nwps_node_lng": -124.71469,
+      "nwps_node_distance_m": 2342,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "tokeland",
+      "name": "Tokeland",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.71348,
+      "nwps_node_lng": -124.03949,
+      "nwps_node_distance_m": 1327,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "westport-jetty",
+      "name": "Westport Jetty",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.89391,
+      "nwps_node_lng": -124.14337,
+      "nwps_node_distance_m": 1161,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "westport-light-state-park",
+      "name": "Westport Light State Park",
+      "nwps_wfo": "sew",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 46.89391,
+      "nwps_node_lng": -124.14337,
+      "nwps_node_distance_m": 908,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "hobuck-beach",
+      "name": "Hobuck Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 3602,
+      "nwps_node_lat": 48.33739,
+      "nwps_node_lng": -124.71469
+    },
+    {
+      "slug": "kalaloch-beach",
+      "name": "Kalaloch Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2838,
+      "nwps_node_lat": 47.57957,
+      "nwps_node_lng": -124.40306
+    },
+    {
+      "slug": "la-push-first-beach",
+      "name": "La Push First Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1821,
+      "nwps_node_lat": 47.90435,
+      "nwps_node_lng": -124.66276
+    },
+    {
+      "slug": "la-push-second-beach",
+      "name": "La Push Second Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1983,
+      "nwps_node_lat": 47.86826,
+      "nwps_node_lng": -124.61082
+    },
+    {
+      "slug": "la-push-third-beach",
+      "name": "La Push Third Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1891,
+      "nwps_node_lat": 47.86826,
+      "nwps_node_lng": -124.61082
+    },
+    {
+      "slug": "ocean-shores",
+      "name": "Ocean Shores",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1558,
+      "nwps_node_lat": 47.00218,
+      "nwps_node_lng": -124.19531
+    },
+    {
+      "slug": "pacific-beach-wa",
+      "name": "Pacific Beach WA",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2867,
+      "nwps_node_lat": 47.2187,
+      "nwps_node_lng": -124.24724
+    },
+    {
+      "slug": "rialto-beach",
+      "name": "Rialto Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2176,
+      "nwps_node_lat": 47.90435,
+      "nwps_node_lng": -124.66276
+    },
+    {
+      "slug": "shi-shi-beach",
+      "name": "Shi Shi Beach",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 2342,
+      "nwps_node_lat": 48.26522,
+      "nwps_node_lng": -124.71469
+    },
+    {
+      "slug": "tokeland",
+      "name": "Tokeland",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1327,
+      "nwps_node_lat": 46.71348,
+      "nwps_node_lng": -124.03949
+    },
+    {
+      "slug": "westport-jetty",
+      "name": "Westport Jetty",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1161,
+      "nwps_node_lat": 46.89391,
+      "nwps_node_lng": -124.14337
+    },
+    {
+      "slug": "westport-light-state-park",
+      "name": "Westport Light State Park",
+      "nwps_wfo": "sew",
+      "grid_wfo": "sew",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 908,
+      "nwps_node_lat": 46.89391,
+      "nwps_node_lng": -124.14337
+    }
+  ]
+}

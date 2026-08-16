@@ -1,0 +1,411 @@
+{
+  "_comment": "tbw --validate diagnostic. 'spots' = placed-OK (node fields); 'outcomes' = every spot's category (OK / FAR / DEAD / OFFWIN / NO_WET_CELL). NOT the apply input \u2014 review, then promote OK spots into scripts/nwps_okx_assignments.json by hand.",
+  "grid_wfo": "tbw",
+  "spots": [
+    {
+      "slug": "indian-rocks-beach",
+      "name": "Indian Rocks Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.89937,
+      "nwps_node_lng": -82.86304,
+      "nwps_node_distance_m": 1275,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "naples-pier",
+      "name": "Naples Pier",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.13128,
+      "nwps_node_lng": -81.82283,
+      "nwps_node_distance_m": 1453,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "st-pete-beach",
+      "name": "St. Pete Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.73716,
+      "nwps_node_lng": -82.77337,
+      "nwps_node_distance_m": 1306,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "treasure-island-fl",
+      "name": "Treasure Island FL",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.75338,
+      "nwps_node_lng": -82.77337,
+      "nwps_node_distance_m": 1014,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "venice-beach-fl",
+      "name": "Venice Beach FL",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.10454,
+      "nwps_node_lng": -82.46848,
+      "nwps_node_distance_m": 958,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "redington-pier",
+      "name": "Redington Pier",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.80205,
+      "nwps_node_lng": -82.82717,
+      "nwps_node_distance_m": 1368,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "madeira-beach",
+      "name": "Madeira Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.78582,
+      "nwps_node_lng": -82.80924,
+      "nwps_node_distance_m": 1829,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "spring-ave",
+      "name": "Spring Ave",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.51007,
+      "nwps_node_lng": -82.7375,
+      "nwps_node_distance_m": 1671,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "twin-piers",
+      "name": "Twin Piers",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.4614,
+      "nwps_node_lng": -82.70163,
+      "nwps_node_distance_m": 290,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "whitney-beach",
+      "name": "Whitney Beach",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.42896,
+      "nwps_node_lng": -82.70163,
+      "nwps_node_distance_m": 1470,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "coolidge",
+      "name": "Coolidge",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.29919,
+      "nwps_node_lng": -82.57609,
+      "nwps_node_distance_m": 1063,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "siesta-key",
+      "name": "Siesta Key",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 27.25053,
+      "nwps_node_lng": -82.55815,
+      "nwps_node_distance_m": 1524,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "englewood",
+      "name": "Englewood",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.94233,
+      "nwps_node_lng": -82.3788,
+      "nwps_node_distance_m": 640,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "gasparilla",
+      "name": "Gasparilla",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.79634,
+      "nwps_node_lng": -82.28913,
+      "nwps_node_distance_m": 954,
+      "nwps_buoy_id": null
+    },
+    {
+      "slug": "captiva",
+      "name": "Captiva",
+      "nwps_wfo": "tbw",
+      "nwps_grid": "CG1",
+      "nwps_node_lat": 26.52059,
+      "nwps_node_lng": -82.19946,
+      "nwps_node_distance_m": 736,
+      "nwps_buoy_id": null
+    }
+  ],
+  "outcomes": [
+    {
+      "slug": "destin-jetty",
+      "name": "Destin Jetty",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 180847,
+      "nwps_node_lat": 29.7,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "indian-rocks-beach",
+      "name": "Indian Rocks Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1275,
+      "nwps_node_lat": 27.89937,
+      "nwps_node_lng": -82.86304
+    },
+    {
+      "slug": "mexico-beach",
+      "name": "Mexico Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 82257,
+      "nwps_node_lat": 29.40792,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "naples-pier",
+      "name": "Naples Pier",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1453,
+      "nwps_node_lat": 26.13128,
+      "nwps_node_lng": -81.82283
+    },
+    {
+      "slug": "navarre-beach",
+      "name": "Navarre Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 212311,
+      "nwps_node_lat": 29.7,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "okaloosa-island-pier",
+      "name": "Okaloosa Island Pier",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 188966,
+      "nwps_node_lat": 29.7,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "panama-city-beach-pier",
+      "name": "Panama City Beach Pier",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 120372,
+      "nwps_node_lat": 29.66746,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "pensacola-beach",
+      "name": "Pensacola Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 235922,
+      "nwps_node_lat": 29.7,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "st-pete-beach",
+      "name": "St. Pete Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1306,
+      "nwps_node_lat": 27.73716,
+      "nwps_node_lng": -82.77337
+    },
+    {
+      "slug": "treasure-island-fl",
+      "name": "Treasure Island FL",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1014,
+      "nwps_node_lat": 27.75338,
+      "nwps_node_lng": -82.77337
+    },
+    {
+      "slug": "venice-beach-fl",
+      "name": "Venice Beach FL",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 958,
+      "nwps_node_lat": 27.10454,
+      "nwps_node_lng": -82.46848
+    },
+    {
+      "slug": "st-andews-park",
+      "name": "St Andews Park",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 142558,
+      "nwps_node_lat": 29.13217,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "cape-san-b-liss",
+      "name": "Cape San B liss",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "FAR",
+      "domain_miss": true,
+      "nwps_node_distance_m": 72691,
+      "nwps_node_lat": 29.24571,
+      "nwps_node_lng": -84.8
+    },
+    {
+      "slug": "redington-pier",
+      "name": "Redington Pier",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1368,
+      "nwps_node_lat": 27.80205,
+      "nwps_node_lng": -82.82717
+    },
+    {
+      "slug": "madeira-beach",
+      "name": "Madeira Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1829,
+      "nwps_node_lat": 27.78582,
+      "nwps_node_lng": -82.80924
+    },
+    {
+      "slug": "spring-ave",
+      "name": "Spring Ave",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1671,
+      "nwps_node_lat": 27.51007,
+      "nwps_node_lng": -82.7375
+    },
+    {
+      "slug": "twin-piers",
+      "name": "Twin Piers",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 290,
+      "nwps_node_lat": 27.4614,
+      "nwps_node_lng": -82.70163
+    },
+    {
+      "slug": "whitney-beach",
+      "name": "Whitney Beach",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1470,
+      "nwps_node_lat": 27.42896,
+      "nwps_node_lng": -82.70163
+    },
+    {
+      "slug": "coolidge",
+      "name": "Coolidge",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1063,
+      "nwps_node_lat": 27.29919,
+      "nwps_node_lng": -82.57609
+    },
+    {
+      "slug": "siesta-key",
+      "name": "Siesta Key",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 1524,
+      "nwps_node_lat": 27.25053,
+      "nwps_node_lng": -82.55815
+    },
+    {
+      "slug": "englewood",
+      "name": "Englewood",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 640,
+      "nwps_node_lat": 26.94233,
+      "nwps_node_lng": -82.3788
+    },
+    {
+      "slug": "gasparilla",
+      "name": "Gasparilla",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 954,
+      "nwps_node_lat": 26.79634,
+      "nwps_node_lng": -82.28913
+    },
+    {
+      "slug": "captiva",
+      "name": "Captiva",
+      "nwps_wfo": "tbw",
+      "grid_wfo": "tbw",
+      "outcome": "OK",
+      "domain_miss": false,
+      "nwps_node_distance_m": 736,
+      "nwps_node_lat": 26.52059,
+      "nwps_node_lng": -82.19946
+    }
+  ]
+}
