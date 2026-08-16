@@ -42,10 +42,25 @@ does NOT reshift orientation-derived swell-window arcs; run a full ``enrich``
 later if you want those recomputed. Without ``--apply`` it prints the enriched
 diff too (dry-run parity). Matches by slug exactly; never creates new entries.
 
+``--promote-to-manual`` is a DIFFERENT job on the same export (BU-17). enrich.py
+applies name-keyed ``manual_orientations.json`` first and slug-keyed
+``spot_orientations.json`` second, so a slug row silently wins and 39 hand values
+never reach the rating. This mode writes the reviewed value into the MANUAL file
+and DELETES the slug row, so the two files agree and a re-seed of the bulk cache
+cannot flip them back — the pattern already recorded for North Jetty and Jetty
+Park Cocoa Beach, neither of which has a slug row. It preserves each entry's
+``notes`` and ``source`` verbatim, stamps a ``bu17`` provenance object, and
+verifies — in dry run AND apply — that no promoted slug would move
+``orientation_deg``/``offshore_wind_deg`` in spots_enriched.json, aborting if any
+would. It never writes spots_enriched.json and never touches Supabase.
+
     python -m pipeline.apply_orientation_relook --input EXPORT.json            # dry run (default)
     python -m pipeline.apply_orientation_relook --input EXPORT.json --apply    # write the override only
     python -m pipeline.apply_orientation_relook --input EXPORT.json --apply --also-patch-enriched
         # write the override AND surgically patch spots_enriched.json (orientation-only)
+    python -m pipeline.apply_orientation_relook --input EXPORT.json --promote-to-manual
+    python -m pipeline.apply_orientation_relook --input EXPORT.json --promote-to-manual --apply
+        # BU-17: manual_orientations.json gets the value, spot_orientations.json loses the row
 """
 from __future__ import annotations
 
@@ -58,7 +73,12 @@ from typing import Any
 
 DATA_DIR = Path(__file__).parent / "data"
 SPOT_ORIENTATIONS_PATH = DATA_DIR / "spot_orientations.json"
+MANUAL_ORIENTATIONS_PATH = DATA_DIR / "manual_orientations.json"
 ENRICHED_PATH = Path(__file__).parent / "spots_enriched.json"
+
+# --promote-to-manual provenance, stamped on every promoted entry (BU-17).
+BU17_METHOD = "satellite drag review"
+BU17_REVIEWED = "2026-08-16"
 
 # Mirror enrich._slug_for / db_import._slugify so our roster keys match the
 # override-lookup key the pipeline uses. Inlined (not imported) so this runs
@@ -341,12 +361,233 @@ def patch_enriched(ep: dict, enriched_spots: list, had_trailing_nl: bool) -> dic
     return {"patched": patched, "unmatched": len(ep["unmatched"]), "noops": len(ep["noops"])}
 
 
+# ---------------------------------------------------------------------------
+# --promote-to-manual: end the name-vs-slug override collision (BU-17)
+# ---------------------------------------------------------------------------
+# enrich.py applies the NAME-keyed manual_orientations.json first and the
+# SLUG-keyed spot_orientations.json second, so a slug row silently wins — see
+# _load_spot_orientations' own docstring, "a slug match here beats every other
+# source". 41 manual entries have a slug row and 39 disagree with it, so those
+# hand values never reach the rating. Promotion writes the reviewed value into
+# the manual file AND DELETES the slug row, so the two files agree and a re-seed
+# of the bulk cache cannot flip them back. That is the pattern manual_orientations
+# already records for North Jetty and Jetty Park Cocoa Beach, neither of which
+# has a slug row — the half of it that actually makes the manual value effective
+# is the deletion, not the copy.
+
+
+def _enrich_slug_for():
+    """Return enrich._slug_for — imported by name, never reimplemented.
+
+    The module-level _slug_for above is a deliberate inline copy so the default
+    modes run without enrich's geodata dependencies. THIS MODE MUST NOT USE IT:
+    the slug decides which manual entry a reviewed value binds to, and a silent
+    divergence between the two implementations would bind the wrong entry, or
+    none, with nothing to notice. So import the real one and fail loudly."""
+    from .enrich import _slug_for as enrich_slug_for   # noqa: PLC0415  (lazy on purpose)
+    return enrich_slug_for
+
+
+def _as_stored(deg: float, prior: Any) -> float | int:
+    """Match the neighbouring entries' numeric style: manual_orientations stores
+    whole degrees as ints. Integral values become ints when the entry it replaces
+    was one, so promotion does not sprinkle 120.0 through a file of 120s."""
+    v = round(float(deg) % 360.0, 1)
+    if v == int(v) and (prior is None or isinstance(prior, int)):
+        return int(v)
+    return v
+
+
+def promote_plan(export: dict[str, dict], manual_entries: dict[str, dict],
+                 slug_entries: dict[str, dict], slug_for) -> dict:
+    """Bind each export slug to a manual entry BY APPLYING slug_for TO THE MANUAL
+    ENTRY NAME, which is the same lookup enrich performs. Returns rows + no-match."""
+    by_slug: dict[str, list[str]] = {}
+    for name in manual_entries:
+        by_slug.setdefault(slug_for(name), []).append(name)
+    rows, nomatch, bad, ambiguous = [], [], [], []
+    for slug, entry in export.items():
+        adopted = _validate_deg(slug, entry)
+        if adopted is None:
+            bad.append(slug)
+            continue
+        names = by_slug.get(slug) or []
+        if not names:
+            nomatch.append({"slug": slug, "adopted": adopted, "name": entry.get("name")})
+            continue
+        if len(names) > 1:                    # two manual names slugging identically
+            ambiguous.append({"slug": slug, "names": names})
+            continue
+        name = names[0]
+        rec = manual_entries[name]
+        prior = rec.get("orientation_deg")
+        prior_deg = float(prior) % 360.0 if isinstance(prior, (int, float)) else None
+        rows.append({
+            "name": name, "slug": slug, "prior": prior_deg, "adopted": adopted,
+            "delta": _circular_delta(prior_deg, adopted) if prior_deg is not None else None,
+            "deletes_slug_row": slug in slug_entries,
+            "has_cardinal": "cardinal" in rec,
+        })
+    rows.sort(key=lambda r: (r["delta"] is None, -(r["delta"] or 0)))
+    return {"rows": rows, "nomatch": nomatch, "bad": bad, "ambiguous": ambiguous,
+            "n_export": len(export)}
+
+
+def verify_against_enriched(rows: list[dict], enriched_spots: list, slug_for) -> dict:
+    """Recompute what orientation_deg / offshore_wind_deg WOULD be after promotion
+    and diff against what spots_enriched.json holds now. Runs in dry run AND apply.
+
+    All 21 BU-17 values were reviewed to equal the live slug value, which is what
+    spots_enriched.json already carries, so this must come back ZERO. A non-zero
+    count means the reviewed set is not what it was believed to be and the
+    promotion would silently move live ratings — the run stops rather than writes."""
+    by_slug: dict[str, dict] = {}
+    for s in enriched_spots if isinstance(enriched_spots, list) else []:
+        sl = slug_for(s.get("name"))
+        if sl and sl not in by_slug:
+            by_slug[sl] = s
+    checked, diffs, absent = 0, [], []
+    for r in rows:
+        s = by_slug.get(r["slug"])
+        if s is None:
+            absent.append(r["slug"])
+            continue
+        checked += 1
+        want_o = round(r["adopted"] % 360.0, 1)
+        want_w = round((want_o + 180.0) % 360.0, 1)
+        cur_o, cur_w = s.get("orientation_deg"), s.get("offshore_wind_deg")
+        for field, cur, want in (("orientation_deg", cur_o, want_o),
+                                 ("offshore_wind_deg", cur_w, want_w)):
+            got = round(float(cur) % 360.0, 1) if isinstance(cur, (int, float)) else None
+            if got is None or _circular_delta(got, want) >= 0.05:
+                diffs.append({"slug": r["slug"], "field": field, "current": cur, "would_be": want})
+    return {"checked": checked, "diffs": diffs, "absent": absent}
+
+
+def print_promote_dry_run(p: dict, v: dict) -> None:
+    rows = p["rows"]
+    print("\nDRY RUN — PROMOTE TO MANUAL (BU-17)")
+    print("  writes the reviewed value into manual_orientations.json AND deletes the slug row from")
+    print("  spot_orientations.json, so enrich's slug-wins-last precedence can no longer override it.\n")
+    print(f"export entries: {p['n_export']}   promotable: {len(rows)}   "
+          f"NO-MATCH: {len(p['nomatch'])}   ambiguous: {len(p['ambiguous'])}   bad: {len(p['bad'])}\n")
+    if rows:
+        print(f"  {'name':28} {'slug':28} {'prior':>6} {'adopt':>6} {'Δ':>5}  slug row")
+        print(f"  {'-'*28} {'-'*28} {'-'*6} {'-'*6} {'-'*5}  {'-'*8}")
+        for r in rows:
+            prior = f"{r['prior']:.0f}" if r["prior"] is not None else "—"
+            dlt = f"{r['delta']:.0f}" if r["delta"] is not None else "—"
+            print(f"  {r['name'][:28]:28} {r['slug'][:28]:28} {prior:>6} {r['adopted']:>6.0f} "
+                  f"{dlt:>5}  {'DELETE' if r['deletes_slug_row'] else 'none'}")
+    if p["nomatch"]:
+        print(f"\n  ⚠ {len(p['nomatch'])} NO-MATCH (no manual entry whose name slugs to this; "
+              "NOTHING is written for these):")
+        for u in p["nomatch"]:
+            print(f"      {u['slug']:30} (adopted {u['adopted']:.0f}°, name={u['name']!r})")
+    if p["ambiguous"]:
+        print(f"\n  ⚠ {len(p['ambiguous'])} AMBIGUOUS (several manual names slug identically; SKIPPED):")
+        for a in p["ambiguous"]:
+            print(f"      {a['slug']:30} ← {a['names']}")
+    if p["bad"]:
+        print(f"\n  ⚠ {len(p['bad'])} malformed (no numeric orientation_deg; SKIPPED): {p['bad']}")
+    n_del = sum(1 for r in rows if r["deletes_slug_row"])
+    print(f"\n  TOTALS: {len(rows)} manual entries updated · {n_del} slug rows deleted · "
+          f"{len(rows) - n_del} already had no slug row · {len(p['nomatch'])} NO-MATCH skipped")
+    print(f"\n  VERIFICATION vs spots_enriched.json ({v['checked']} promoted slugs checked): "
+          f"{len(v['diffs'])} field(s) would change")
+    if v["absent"]:
+        print(f"    ({len(v['absent'])} promoted slug(s) not in spots_enriched.json, not checked: "
+              f"{', '.join(v['absent'][:6])})")
+    if v["diffs"]:
+        print("    ⚠ EXPECTED ZERO — every reviewed value was said to equal the live value:")
+        for d in v["diffs"][:20]:
+            print(f"      {d['slug']:28} {d['field']:18} live {d['current']} → would be {d['would_be']}")
+    else:
+        print("    ✓ zero — promotion moves no live orientation or offshore wind value")
+    print()
+
+
+def apply_promotion(p: dict, manual_doc: dict, slug_doc: dict) -> dict:
+    """Write both files. Every envelope key and every entry not named in the plan
+    is preserved untouched; on a promoted entry only orientation_deg, cardinal
+    (when it already had one) and bu17 are set — notes and source are left exactly
+    as they were, never edited, appended to or removed."""
+    manual_entries = manual_doc["orientations"]
+    slug_entries = slug_doc.get("orientations", {})
+    updated = deleted = carded = 0
+    for r in p["rows"]:
+        rec = manual_entries[r["name"]]
+        prior_raw = rec.get("orientation_deg")
+        rec["orientation_deg"] = _as_stored(r["adopted"], prior_raw)
+        if r["has_cardinal"]:
+            rec["cardinal"] = _cardinal(r["adopted"])
+            carded += 1
+        rec["bu17"] = {
+            "prior_manual_deg": prior_raw,
+            "adopted_deg": rec["orientation_deg"],
+            "method": BU17_METHOD,
+            "reviewed": BU17_REVIEWED,
+        }
+        updated += 1
+        if slug_entries.pop(r["slug"], None) is not None:
+            deleted += 1
+    MANUAL_ORIENTATIONS_PATH.write_text(json.dumps(manual_doc, indent=2, ensure_ascii=False) + "\n")
+    SPOT_ORIENTATIONS_PATH.write_text(json.dumps(slug_doc, indent=2, ensure_ascii=False) + "\n")
+    return {"updated": updated, "deleted": deleted, "carded": carded,
+            "manual_total": len(manual_entries), "slug_total": len(slug_entries)}
+
+
+def _run_promote(args, export: dict[str, dict]) -> int:
+    try:
+        slug_for = _enrich_slug_for()
+    except Exception as e:  # noqa: BLE001
+        print(f"error: --promote-to-manual needs pipeline.enrich for its slug helper "
+              f"({type(e).__name__}: {e}). Refusing to fall back to this module's inline copy — "
+              "binding a reviewed value to the wrong manual entry would be silent.", file=sys.stderr)
+        return 2
+    if not MANUAL_ORIENTATIONS_PATH.exists():
+        print(f"error: {MANUAL_ORIENTATIONS_PATH} not found", file=sys.stderr)
+        return 2
+    manual_doc = json.loads(MANUAL_ORIENTATIONS_PATH.read_text())
+    slug_doc = json.loads(SPOT_ORIENTATIONS_PATH.read_text()) if SPOT_ORIENTATIONS_PATH.exists() \
+        else {"_schema_version": 1, "orientations": {}}
+    p = promote_plan(export, manual_doc.get("orientations", {}),
+                     slug_doc.get("orientations", {}), slug_for)
+    enriched_spots, _ = _load_enriched_list()
+    v = verify_against_enriched(p["rows"], enriched_spots or [], slug_for)
+    print_promote_dry_run(p, v)
+
+    if v["diffs"]:
+        print(f"ABORT — verification found {len(v['diffs'])} field(s) that would change in "
+              "spots_enriched.json.\n"
+              "  All 21 BU-17 values were reviewed as equal to the live value, so this must be zero.\n"
+              "  Nothing was written. Re-check the export before promoting.", file=sys.stderr)
+        return 1
+    if not args.apply:
+        print(f"dry run only — nothing written. Re-run with --apply to write "
+              f"{MANUAL_ORIENTATIONS_PATH.name} + {SPOT_ORIENTATIONS_PATH.name}.")
+        return 0
+    res = apply_promotion(p, manual_doc, slug_doc)
+    print(f"APPLIED → {MANUAL_ORIENTATIONS_PATH}  +  {SPOT_ORIENTATIONS_PATH}")
+    print(f"  {res['updated']} manual entries updated (orientation_deg + bu17"
+          + (f" + cardinal on {res['carded']}" if res["carded"] else "") + "; notes/source untouched)")
+    print(f"  {res['deleted']} slug rows deleted — manual now wins because nothing outranks it")
+    print(f"  totals: manual {res['manual_total']} entries · slug file {res['slug_total']} entries")
+    print("  spots_enriched.json NOT written; Supabase NOT touched; enrich.py precedence unchanged.")
+    return 0
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--input", type=Path, required=True,
                     help="orientation_relook_export.json (slug-keyed)")
     ap.add_argument("--apply", action="store_true",
                     help="Write the merge into spot_orientations.json. Omit for a dry run.")
+    ap.add_argument("--promote-to-manual", action="store_true",
+                    help="BU-17: write each reviewed value into manual_orientations.json AND delete "
+                         "that slug's row from spot_orientations.json, so enrich's slug-wins-last "
+                         "precedence can no longer override the hand value. Dry run without --apply. "
+                         "Never touches spots_enriched.json or Supabase.")
     ap.add_argument("--also-patch-enriched", action="store_true",
                     help="With --apply, ALSO patch spots_enriched.json in place (orientation-only) "
                          "for the export slugs so db_import sees the new orientations without a full "
@@ -364,6 +605,9 @@ def main(argv: list[str] | None = None) -> int:
     except (ValueError, json.JSONDecodeError) as e:
         print(f"error: could not parse {args.input}: {e}", file=sys.stderr)
         return 2
+
+    if args.promote_to_manual:
+        return _run_promote(args, export)
 
     override = _load_current()
     p = plan(export, override, _enriched_orientations())
