@@ -156,9 +156,11 @@ jobs:
       - name: Open/update issue for SETTLED zones (manual tagging — never auto-applied)
         if: steps.reverify.outputs.any_settled == 'true'
         uses: actions/github-script@v7
+        continue-on-error: true
         env:
           SETTLED_JSON: ${{ steps.reverify.outputs.settled_json }}   # via env (no template injection)
         with:
+          retries: 3
           script: |
             const settled = JSON.parse(process.env.SETTLED_JSON || '[]');
             const LABEL = 'nwps-trust-settled';
