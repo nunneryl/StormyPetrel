@@ -129,12 +129,19 @@ jobs:
         # github.run_number moves the window each run, so the roster is covered over
         # several runs instead of one prefix being covered forever and the tail never.
         # The order itself stays sorted; only the start index moves and iteration wraps.
+        # The multiplier is the STRIDE, and it must be the window size, not 1.
+        # run_number increments by one, so a bare offset advances one zone per run:
+        # consecutive 15-zone windows then overlap by 14 and four runs cover only 18 of
+        # 57 zones. At stride 15 four runs cover 57/57. Do NOT pick a stride sharing a
+        # factor with the roster size (57 = 3 x 19): stride 19 cycles three fixed windows
+        # and 12 zones are NEVER visited at any run number. Re-check this if the roster
+        # size changes.
         # The per-process cycle cache cuts the refetching that made a zone cost 6.5 min,
         # so the window each run covers should now be considerably wider than 15 — but the
         # rotation is what guarantees fairness even if it is not.
         run: |
           python3 -m pipeline.forecast.nwps_nearshore --reverify-tagged \
-            --start-offset "${{ github.run_number }}"
+            --start-offset "$(( ${{ github.run_number }} * 15 ))"
 
       - name: Save rolling trust history
         # always(): persist even if reverify partially degraded, so no accumulated events
