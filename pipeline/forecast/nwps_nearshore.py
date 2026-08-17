@@ -425,31 +425,56 @@ def _step_hours(da):
     return [int(round(float(s / np.timedelta64(1, "h")))) for s in steps]
 
 
-def load_cycle(wfo, cycle=None):
-    """Fetch + parse the latest (or given) CG1 cycle. Returns a dict:
-      {lats, lons, mask, cycle_dt, steps, fields:{(short,fh): float32 grid}}
-    Read with xarray + cfgrib, mirroring the sibling fetcher pipeline/forecast/
-    nwps.py — the pipeline runner ships cfgrib/eccodes, not pygrib. cfgrib opens
-    an NWPS GRIB as MULTIPLE datasets (one per param group), so the 4 wave fields
-    can span datasets; we union them keyed by (shortName, forecast hour), the way
-    nwps._extract_time_series_from_datasets unions by valid_time. Land cells read
-    back NaN under cfgrib (they were masked arrays under pygrib), so `mask` is the
-    NaN footprint of swh@f000 and `_wet_nodes` still selects on ``not mask``.
-    Holds only the 4 wave fields × 145 steps in memory (≈tens of MB per WFO nest).
-    Raises on fetch/parse failure (callers catch)."""
+# --------------------------------------------------------------------------- #
+# PER-PROCESS CYCLE CACHE — the fix for reverify's redundant refetching.        #
+#                                                                              #
+# trust_check loads n_cycles CG1 cycles per ZONE, and zones share a WFO (mhx 4, #
+# sgx 4, lox 3), so a reverify pass fetched and REWROTE the same GRIB once per   #
+# zone. Rewriting is what hurt most: it made cfgrib's sidecar .idx older than    #
+# the GRIB, so every zone paid a full re-scan — the hundreds of "Ignoring index  #
+# file ... older than GRIB file" lines. A cycle costs 12.9 s parsed once with no #
+# index rebuild, against ~6.5 min per zone in CI.                               #
+#                                                                              #
+# Keyed on (wfo, date, cycle). Two levels, both PROCESS-LOCAL — nothing persists #
+# across runs, the path format and the /tmp location are unchanged:             #
+#   _CYCLE_FILES   keys whose GRIB this process wrote. A hit skips the download  #
+#                  AND the rewrite, so the sidecar index stays valid.           #
+#   _CYCLE_PARSED  the parsed dicts, bounded. Safe to share: load_cycle copies   #
+#                  every slab out with np.asarray before its cfgrib datasets go  #
+#                  out of scope, so the returned dict holds NO open GRIB handle  #
+#                  and no cfgrib lifetime is extended by keeping it.            #
+# Bounded because a full 57-zone pass touches ~60 cycles at tens of MB each. The #
+# zone list is wfo-sorted, so same-WFO zones are adjacent and a few entries hold #
+# every reuse; the cap trades a far-back re-parse for a bounded footprint.      #
+# --------------------------------------------------------------------------- #
+_CYCLE_CACHE_MAX = 8          # parsed cycles retained; ≈2 WFOs' worth at n_cycles=4
+_CYCLE_FILES: set = set()
+_CYCLE_PARSED: "collections.OrderedDict" = __import__("collections").OrderedDict()
+_CYCLE_STATS = {"requested": 0, "downloaded": 0, "file_reused": 0, "parse_reused": 0}
+
+
+def reset_cycle_cache():
+    """Drop the per-process cycle cache and its counters (tests; also lets a long
+    process reclaim memory). Does NOT delete the /tmp GRIB files."""
+    _CYCLE_FILES.clear()
+    _CYCLE_PARSED.clear()
+    for k in _CYCLE_STATS:
+        _CYCLE_STATS[k] = 0
+
+
+def cycle_cache_stats():
+    """{requested, downloaded, file_reused, parse_reused, saved} — 'saved' is the
+    number of requests served without a download. Pure read of the counters."""
+    s = dict(_CYCLE_STATS)
+    s["saved"] = s["file_reused"] + s["parse_reused"]
+    return s
+
+
+def _parse_cycle_file(path, url, date, cc):
+    """Parse an on-disk CG1 GRIB into the cycle dict. Split out of load_cycle so the
+    fetch/cache path is testable without cfgrib or a network (see test_reverify_cycle_cache)."""
     import cfgrib    # lazy: --selftest never calls load_cycle, so needs no eccodes
     import warnings  # to scope the cfgrib/xarray merge FutureWarning below
-    if cycle is None:
-        cycle = find_latest_cycle(wfo, _region_for(wfo))
-        if not cycle:
-            raise OSError(f"no recent CG1 cycle for {wfo}")
-    date, cc, url = cycle
-    path = os.path.join("/tmp", f"nwps_{wfo}_{date}_{cc}_CG1.grib2")
-    body = _http_get(url)
-    if body[:4] != b"GRIB":
-        raise OSError(f"not GRIB: {url}")
-    with open(path, "wb") as f:
-        f.write(body)
     with warnings.catch_warnings():
         # cfgrib.open_datasets merges each param group internally with xarray's
         # default `compat`, emitting one FutureWarning per group ("the default
@@ -500,6 +525,57 @@ def load_cycle(wfo, cycle=None):
     mask = np.isnan(swh0)   # land = NaN wave cell (was a masked array under pygrib)
     return {"lats": lats, "lons": lons, "mask": mask, "cycle_dt": _cycle_dt(date, cc),
             "steps": sorted(steps), "fields": fields}
+
+
+def load_cycle(wfo, cycle=None):
+    """Fetch + parse the latest (or given) CG1 cycle. Returns a dict:
+      {lats, lons, mask, cycle_dt, steps, fields:{(short,fh): float32 grid}}
+    Read with xarray + cfgrib, mirroring the sibling fetcher pipeline/forecast/
+    nwps.py — the pipeline runner ships cfgrib/eccodes, not pygrib. cfgrib opens
+    an NWPS GRIB as MULTIPLE datasets (one per param group), so the 4 wave fields
+    can span datasets; we union them keyed by (shortName, forecast hour), the way
+    nwps._extract_time_series_from_datasets unions by valid_time. Land cells read
+    back NaN under cfgrib (they were masked arrays under pygrib), so `mask` is the
+    NaN footprint of swh@f000 and `_wet_nodes` still selects on ``not mask``.
+    Holds only the 4 wave fields × 145 steps in memory (≈tens of MB per WFO nest).
+    Raises on fetch/parse failure (callers catch).
+
+    CACHED PER PROCESS on (wfo, date, cycle) — see the cache block above. A parsed
+    hit returns the same dict; a file hit re-parses but neither re-downloads nor
+    REWRITES the GRIB, which is what keeps cfgrib's sidecar index valid. Nothing is
+    cached until the parse succeeds, so a truncated body or a bad parse is retried
+    rather than remembered."""
+    if cycle is None:
+        cycle = find_latest_cycle(wfo, _region_for(wfo))
+        if not cycle:
+            raise OSError(f"no recent CG1 cycle for {wfo}")
+    date, cc, url = cycle
+    key = (wfo, date, cc)
+    path = os.path.join("/tmp", f"nwps_{wfo}_{date}_{cc}_CG1.grib2")
+    _CYCLE_STATS["requested"] += 1
+
+    hit = _CYCLE_PARSED.get(key)
+    if hit is not None:
+        _CYCLE_PARSED.move_to_end(key)
+        _CYCLE_STATS["parse_reused"] += 1
+        return hit
+
+    if key in _CYCLE_FILES and os.path.exists(path):
+        _CYCLE_STATS["file_reused"] += 1        # no download, no rewrite → sidecar index stays valid
+    else:
+        body = _http_get(url)
+        _CYCLE_STATS["downloaded"] += 1      # counted on the FETCH, not on success: a body that
+        if body[:4] != b"GRIB":              # turns out not to be GRIB still cost the network time
+            raise OSError(f"not GRIB: {url}")
+        with open(path, "wb") as f:
+            f.write(body)
+
+    out = _parse_cycle_file(path, url, date, cc)
+    _CYCLE_FILES.add(key)                        # only after a clean parse
+    _CYCLE_PARSED[key] = out
+    while len(_CYCLE_PARSED) > _CYCLE_CACHE_MAX:
+        _CYCLE_PARSED.popitem(last=False)
+    return out
 
 
 def _wet_nodes(lats, lons, mask):
@@ -2176,7 +2252,22 @@ def _zone_tiers(wfo, buoy):
     return counts, strictest
 
 
-def reverify_tagged(n_cycles=4):
+def rotate_zones(zones, start_offset=0):
+    """Rotate a SORTED zone list so a time-capped run does not always start at 'akq'.
+
+    reverify iterates 57 zones at ~6.5 min each in CI against a 40-minute cap, so it is
+    cancelled around zone 15 EVERY run and everything from mfl onward — okx/44025, phi/44091,
+    all four sgx zones, both sju zones — had never banked a single event. The list stays
+    sorted for determinism; only the START INDEX moves, and iteration wraps, so each run is a
+    contiguous window over the same fixed order and consecutive runs cover different zones.
+    Pure. offset 0 is the identity, so a Mac run is unchanged."""
+    if not zones:
+        return []
+    off = int(start_offset or 0) % len(zones)
+    return list(zones[off:]) + list(zones[:off])
+
+
+def reverify_tagged(n_cycles=4, start_offset=0):
     """READ-ONLY (deliverable) — re-run the Stage-1 gate against every tagged nwps zone:
     HEIGHT verdict (the PRIMARY gate), the ENERGY-WEIGHTED direction stats (unweighted shown
     alongside), the zone's strictest spot TIER + whether this window's direction clears it,
@@ -2187,38 +2278,52 @@ def reverify_tagged(n_cycles=4):
     monitoring log). Runs on the Mac OR on a schedule (buoy events accumulate automatically); when
     GITHUB_OUTPUT is set it emits the zones whose rolling verdict has SETTLED, for a workflow to
     surface for MANUAL tagging — it never tags anything itself."""
-    zones = _tagged_nwps_zones()
-    if not zones:
+    all_zones = _tagged_nwps_zones()
+    if not all_zones:
         print("no tagged nwps zones found in spots_enriched.json.")
         return 0
+    zones = rotate_zones(all_zones, start_offset)
+    n_zones = len(zones)
     print("=== RE-VERIFY tagged nwps zones — Stage 1: height-primary, energy-weighted, tiered, rolling ===")
-    print("  HEIGHT is the gate; DIRECTION is an energy-weighted, spot-tiered, ROLLING flag.\n")
-    print(f"  {'wfo/buoy':<11} {'sp':>3} {'tier':<9} {'HEIGHT':<11} {'dirW cs/bias':>14} "
+    print("  HEIGHT is the gate; DIRECTION is an energy-weighted, spot-tiered, ROLLING flag.")
+    first = f"{zones[0][0]}/{zones[0][1]}"
+    print(f"  {n_zones} zones, starting at index {int(start_offset or 0) % n_zones} ({first}) and "
+          f"wrapping — the order is fixed, only the start rotates so a capped run covers a "
+          f"different window each time.\n")
+    print(f"  {'#':>6} {'wfo/buoy':<11} {'sp':>3} {'tier':<9} {'HEIGHT':<11} {'dirW cs/bias':>14} "
           f"{'(unwtd)':>12} {'ev':>3} {'ROLLING':<13}")
     flagged, settled = [], []
     retired = _retired_reference_zones()
-    for wfo, buoy, nspots in zones:
+    # coverage bookkeeping — a cancelled run prints no summary at all, which is why every zone
+    # line carries a [k/n] counter: the LOG still shows how far the run reached.
+    visited, skipped_retired, skipped_unverifiable, skipped_error, checked = [], [], [], [], []
+    for zi, (wfo, buoy, nspots) in enumerate(zones, 1):
         tag = f"{wfo}/{buoy}"
+        pos = f"[{zi}/{n_zones}]"
+        visited.append(tag)
         counts, tier = _zone_tiers(wfo, buoy)
         tier_s = tier + (f"×{counts.get(tier)}" if len(counts) > 1 else "")
         if (wfo, str(buoy)) in retired:
             # BUOY retired on both axes — do NOT run ANY comparison against an invalid reference
             # (no height r, no direction verdict); these spots ride NWPS height + raycast, unverified.
-            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} RETIRED BOTH AXES — no valid buoy; "
+            print(f"  {pos:>6} {tag:<11} {nspots:>3} {tier_s:<9} RETIRED BOTH AXES — no valid buoy; "
                   "rides NWPS height + raycast direction (unverified)")
+            skipped_retired.append(tag)
             continue
         if buoy is None:
             # UNVERIFIABLE zone (buoy_reference.unverifiable[]: island-shadowed / no valid buoy) —
             # nwps_buoy_id is null by design, so there is nothing to trust-check. Rides NWPS height +
             # raycast direction, unverified. Skip cleanly (not an error, not a "run on the Mac" skip).
-            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} UNVERIFIABLE — no buoy on the row "
+            print(f"  {pos:>6} {tag:<11} {nspots:>3} {tier_s:<9} UNVERIFIABLE — no buoy on the row "
                   "(buoy_reference.unverifiable[]); rides NWPS height + raycast direction")
+            skipped_unverifiable.append(tag)
             continue
         try:
             blat, blng = _buoy_latlng(buoy)
             res = trust_check(wfo, buoy, blat, blng, n_cycles=n_cycles, tier=tier)
         except Exception as e:  # noqa: BLE001
-            print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {'SKIP':<11} — run on the Mac ({type(e).__name__})")
+            print(f"  {pos:>6} {tag:<11} {nspots:>3} {tier_s:<9} {'SKIP':<11} — run on the Mac ({type(e).__name__})")
+            skipped_error.append(tag)
             continue
 
         def _f(x, s):
@@ -2229,7 +2334,8 @@ def reverify_tagged(n_cycles=4):
         dw = f"{_f(res.get('dir_circ_std_w'), '%.0f')}/{_f(res.get('dir_bias_w'), '%+.0f')}"
         du = f"{_f(res.get('dir_circ_std_u'), '%.0f')}/{_f(res.get('dir_bias_u'), '%+.0f')}"
         flag = "" if res.get("dir_flag") else " ⚑"   # this window fails the tier's direction bar
-        print(f"  {tag:<11} {nspots:>3} {tier_s:<9} {hv:<11} {dw:>14} {du:>12} "
+        checked.append(tag)
+        print(f"  {pos:>6} {tag:<11} {nspots:>3} {tier_s:<9} {hv:<11} {dw:>14} {du:>12} "
               f"{res.get('n_events', 0):>3} {roll['verdict']:<13}{flag}")
         if skip_reason:
             print(f"      ↳ banked 0 events — {skip_reason}; this window does NOT accumulate "
@@ -2240,6 +2346,27 @@ def reverify_tagged(n_cycles=4):
             settled.append({"zone": tag, "wfo": wfo, "buoy": str(buoy), "spots": nspots,
                             "verdict": roll["verdict"], "n_events": roll.get("n_events", 0),
                             "reason": roll.get("reason")})
+    print("\n==== coverage ====")
+    not_reached = [f"{w}/{b}" for w, b, _ in zones if f"{w}/{b}" not in visited]
+    print(f"  zones in the roster: {n_zones}   reached: {len(visited)}   not reached: {len(not_reached)}")
+    print(f"  of those reached — trust-checked: {len(checked)}   skipped UNVERIFIABLE (no buoy on the "
+          f"row): {len(skipped_unverifiable)}   skipped RETIRED (both axes): {len(skipped_retired)}"
+          + (f"   skipped on error: {len(skipped_error)}" if skipped_error else ""))
+    if not_reached:
+        print(f"  NOT REACHED this run ({len(not_reached)}) — the next run's rotated offset should pick "
+              "them up; this is reported, NOT a failure:")
+        for i in range(0, len(not_reached), 6):
+            print("      " + ", ".join(not_reached[i:i + 6]))
+    else:
+        print("  full pass — every zone in the roster was reached.")
+    cs = cycle_cache_stats()
+    print(f"  CG1 cycle fetches: {cs['requested']} requested → {cs['downloaded']} downloaded "
+          f"({cs['saved']} served from the per-process cache: {cs['parse_reused']} parsed-reuse, "
+          f"{cs['file_reused']} file-reuse with no rewrite so cfgrib's index stayed valid)")
+    if not_reached:
+        print("  NOTE: a run CANCELLED by the workflow timeout never reaches this summary at all — "
+              "read the [k/n] counter on the last zone line to see how far it got.")
+
     print("\n==== summary ====")
     print("  HEIGHT is the primary gate (the skill the field verifies). Direction ⚑ = this window's")
     print("  energy-weighted residual exceeds the zone's strictest-spot tier; ROLLING is the verdict")
@@ -3224,6 +3351,11 @@ def main(argv=None):
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--validate", action="store_true", help="fetch one WFO cycle, place + sample (Mac)")
     ap.add_argument("--trustcheck", action="store_true", help="NWPS-vs-buoy trust gate (Mac)")
+    ap.add_argument("--start-offset", type=int, default=0,
+                    help="--reverify-tagged only: rotate the (sorted) zone list to start at this "
+                         "index and wrap. Default 0 = unchanged order, so a Mac run is unaffected. "
+                         "The scheduled workflow passes the run number so a time-capped run covers a "
+                         "different window each time instead of always dying around zone 15.")
     ap.add_argument("--reverify-tagged", dest="reverify_tagged", action="store_true",
                     help="re-run the rebuilt gate against all tagged nwps zones (read-only report; Mac)")
     ap.add_argument("--depth-experiment", dest="depth_experiment", action="store_true",
@@ -3256,7 +3388,7 @@ def main(argv=None):
         return validate_batch(a.batch, a.wfo)
     if a.reverify_tagged:
         try:
-            return reverify_tagged(n_cycles=a.cycles)
+            return reverify_tagged(n_cycles=a.cycles, start_offset=a.start_offset)
         except Exception as e:  # noqa: BLE001
             print(f"⚠ reverify needs live NOMADS+NDBC+eccodes ({type(e).__name__}: {e}) — run on the Mac.")
             return 0
