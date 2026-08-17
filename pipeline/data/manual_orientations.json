@@ -1,94 +1,14 @@
 {
-  "_comment": "Hand-curated orientations for spots where the geometric algorithm cannot resolve the seaward bearing. Applied by pipeline/enrich.py between Algorithm 1 (orientation) and Algorithm 2 (swell window), so the orientation-derived fallback builds arcs against the correct value. Treated as authoritative — overrides both the algorithmic result and LLM verification. Match by exact spot name.\n\nWHEN TO ADD AN ENTRY:\n- Great Lakes spots (GSHHG L1 lumps the lakes with land — orientation returns null)\n- Complex harbors, jetties, rivermouths where the coastline normal misrepresents the actual break geometry\n- Barrier-island spots whose Nominatim geocode landed on the bay side and whose automatic 180° hemisphere flip didn't cover it\n- Spots in Alaska / Guam / territories not covered by the region hemisphere table\n\nFIELDS:\n- orientation_deg (required, 0-359): the seaward-facing bearing. 0=N, 90=E, 180=S, 270=W. This is the direction the rider looks when facing the incoming swell.\n- source (optional): short attribution — 'local knowledge', 'surf-forecast.com manual check', 'OSM way heading', etc.\n- notes (optional): any disambiguation that matters (e.g. 'Pier points straight offshore', 'Break faces the reef pass rather than the beach', or flagging that the spot's coord looks wrong and needs a fix in spot_coord_fixes.json).\n\nNULL-ORIENTATION SPOTS (DQ-5) AND WHY THE ARC MIDPOINT IS THE SOURCE:\nA null orientation_deg is a CORRECTNESS fault, not a cosmetic one. nwps_stars returns all None when orientation is null, and apply_nwps_overrides skips an hour whose stars are None, so a spot placed on the nwps tier with a null orientation silently keeps its orientation-path rating every hour of every cycle — the NWPS override never fires and nothing reports a failure. Shell Beach (North) was in exactly that state.\nFor such spots the value here is the MIDPOINT OF THE WIDEST SWELL WINDOW ARC. The obvious alternative is a derived shore normal, and it was TESTED AND REJECTED: _shore_seaward_bearings in forecast/nwps_nearshore.py infers a seaward bearing from the NWPS land mask by taking the opposite of the bearing to the nearest MASKED cell. For Rockpile (Laguna) it returns 230 deg, within 10 deg of the arc midpoint, because the nearest land is 1.17 km away and the coast is locally straight. For Shell Beach (North) it returns 114 deg — 108 deg away and very nearly OPPOSITE the true facing — because the nearest masked cell is 4.79 km off and the spot sits inside San Luis Obispo Bay, where land wraps around it on three sides and 'nearest land' stops meaning 'shoreward'. The mask method therefore fails precisely in the bays and harbors where an orientation is most likely to be missing in the first place, which makes it useless exactly where it would be needed. NO RUNTIME DERIVATION WAS ADDED: two hand-checked values are better than a rule that fails in bays.\nNOTE ON PRECEDENCE, which decides whether an entry here has any effect at all: enrich.py applies this name-keyed file FIRST and then the slug-keyed spot_orientations.json, so a slug row there BEATS anything written here (see _load_spot_orientations' own docstring: 'a slug match here beats every other source'). An entry in this file is only effective when that slug has NO row in spot_orientations.json — which is why the two promoted entries below say the slug row was removed. Both spots added for DQ-5 were absent from BOTH files, so these two entries are effective as written.",
+  "_comment": "Hand-curated orientations for spots where the geometric algorithm cannot resolve the seaward bearing. Applied by pipeline/enrich.py between Algorithm 1 (orientation) and Algorithm 2 (swell window), so the orientation-derived fallback builds arcs against the correct value. Treated as authoritative — overrides both the algorithmic result and LLM verification. Match by exact spot name.\n\nWHEN TO ADD AN ENTRY:\n- Great Lakes spots (GSHHG L1 lumps the lakes with land — orientation returns null)\n- Complex harbors, jetties, rivermouths where the coastline normal misrepresents the actual break geometry\n- Barrier-island spots whose Nominatim geocode landed on the bay side and whose automatic 180° hemisphere flip didn't cover it\n- Spots in Alaska / Guam / territories not covered by the region hemisphere table\n\nFIELDS:\n- orientation_deg (required, 0-359): the seaward-facing bearing. 0=N, 90=E, 180=S, 270=W. This is the direction the rider looks when facing the incoming swell.\n- source (optional): short attribution — 'local knowledge', 'surf-forecast.com manual check', 'OSM way heading', etc.\n- notes (optional): any disambiguation that matters (e.g. 'Pier points straight offshore', 'Break faces the reef pass rather than the beach', or flagging that the spot's coord looks wrong and needs a fix in spot_coord_fixes.json).\n\nNULL-ORIENTATION SPOTS (DQ-5) AND WHY THE ARC MIDPOINT IS THE SOURCE:\nA null orientation_deg is a CORRECTNESS fault, not a cosmetic one. nwps_stars returns all None when orientation is null, and apply_nwps_overrides skips an hour whose stars are None, so a spot placed on the nwps tier with a null orientation silently keeps its orientation-path rating every hour of every cycle — the NWPS override never fires and nothing reports a failure. Shell Beach (North) was in exactly that state.\nFor such spots the value here is the MIDPOINT OF THE WIDEST SWELL WINDOW ARC. The obvious alternative is a derived shore normal, and it was TESTED AND REJECTED: _shore_seaward_bearings in forecast/nwps_nearshore.py infers a seaward bearing from the NWPS land mask by taking the opposite of the bearing to the nearest MASKED cell. For Rockpile (Laguna) it returns 230 deg, within 10 deg of the arc midpoint, because the nearest land is 1.17 km away and the coast is locally straight. For Shell Beach (North) it returns 114 deg — 108 deg away and very nearly OPPOSITE the true facing — because the nearest masked cell is 4.79 km off and the spot sits inside San Luis Obispo Bay, where land wraps around it on three sides and 'nearest land' stops meaning 'shoreward'. The mask method therefore fails precisely in the bays and harbors where an orientation is most likely to be missing in the first place, which makes it useless exactly where it would be needed. NO RUNTIME DERIVATION WAS ADDED: two hand-checked values are better than a rule that fails in bays.\nNOTE ON PRECEDENCE, which decides whether an entry here has any effect at all: enrich.py applies this name-keyed file FIRST and then the slug-keyed spot_orientations.json, so a slug row there BEATS anything written here (see _load_spot_orientations' own docstring: 'a slug match here beats every other source'). An entry in this file is only effective when that slug has NO row in spot_orientations.json — which is why the two promoted entries below say the slug row was removed. Both spots added for DQ-5 were absent from BOTH files, so these two entries are effective as written. AS OF 2026-08-17 THIS CAVEAT IS HISTORICAL: no name in this file has a slug row in spot_orientations.json, so every entry here is effective. BU-17 promoted the 21 live disagreements (plus Sebastian Inlet and Rincon, which agreed) by writing the reviewed value here and deleting the slug row, and the 18 remaining collisions were Great Lakes spots in excluded_spots.json whose entries were deleted from both files. pipeline/tests/test_orientation_override_collision.py fails if a collision is ever reintroduced, so the precedence order in enrich.py is no longer load-bearing for these values.",
   "_schema_version": 1,
   "orientations": {
-    "Grand Haven South Pier": {
-      "orientation_deg": 270,
-      "source": "Lake Michigan east shore",
-      "notes": "Pier points straight west into the lake"
-    },
-    "Grand Haven State Park": {
-      "orientation_deg": 270,
-      "source": "Lake Michigan east shore",
-      "notes": "Beach adjacent to the pier; same facing"
-    },
-    "Muskegon South Pier": {
-      "orientation_deg": 270,
-      "source": "Lake Michigan east shore"
-    },
-    "Frankfort Beach": {
-      "orientation_deg": 270,
-      "source": "Lake Michigan east shore",
-      "notes": "Point Betsie area; open lake due west"
-    },
-    "Silver Beach": {
-      "orientation_deg": 270,
-      "source": "Lake Michigan east shore (St. Joseph, MI)"
-    },
-    "Sleeping Bear Dunes": {
-      "orientation_deg": 270,
-      "source": "Lake Michigan east shore (Leelanau Peninsula)"
-    },
-    "Whihala Beach": {
-      "orientation_deg": 0,
-      "source": "Lake Michigan south shore (Whiting, IN)",
-      "notes": "At the south tip of the lake; open water due north"
-    },
     "Atwater Beach": {
       "orientation_deg": 90,
       "source": "Lake Michigan west shore (Milwaukee, WI)"
     },
-    "Deland Park": {
-      "orientation_deg": 90,
-      "source": "Lake Michigan west shore (Sheboygan, WI)"
-    },
-    "North Point Sheboygan": {
-      "orientation_deg": 90,
-      "source": "Lake Michigan west shore (Sheboygan, WI)"
-    },
     "Sheboygan, Wisconsin": {
       "orientation_deg": 90,
       "source": "Lake Michigan west shore"
-    },
-    "Whitefish Bay WI": {
-      "orientation_deg": 90,
-      "source": "Lake Michigan west shore (Milwaukee area)"
-    },
-    "Duluth Park Point": {
-      "orientation_deg": 100,
-      "source": "Lake Superior (Duluth, MN)",
-      "notes": "Park Point is a sandspit extending SE from Duluth; outside beach faces ESE into the open lake"
-    },
-    "Stoney Point MN": {
-      "orientation_deg": 160,
-      "source": "Lake Superior north shore (Two Harbors area, MN)",
-      "notes": "Point break facing SSE into the lake"
-    },
-    "Hamlin Beach": {
-      "orientation_deg": 0,
-      "source": "Lake Ontario south shore (Hamlin, NY)"
-    },
-    "Ontario Beach": {
-      "orientation_deg": 0,
-      "source": "Lake Ontario south shore (Rochester, NY)"
-    },
-    "Woodlawn Beach": {
-      "orientation_deg": 270,
-      "source": "Lake Erie east end (Woodlawn Beach State Park, NY south of Buffalo)",
-      "notes": "Open Lake Erie due west"
-    },
-    "Edgewater Beach Cleveland": {
-      "orientation_deg": 0,
-      "source": "Lake Erie south shore (Cleveland, OH)"
-    },
-    "Lakeview Park Lorain": {
-      "orientation_deg": 0,
-      "source": "Lake Erie south shore (Lorain, OH)"
-    },
-    "Presque Isle Beach": {
-      "orientation_deg": 30,
-      "source": "Lake Erie south shore (Presque Isle State Park, PA)",
-      "notes": "Peninsula curves N/NE; popular surf beaches face NNE"
     },
     "Peahi Jaws": {
       "orientation_deg": 10,
