@@ -1123,6 +1123,17 @@ def _swell_precondition(hs_swell, frac):
             and hs_swell >= SWELL_HS_FLOOR_M and frac >= SWELL_FRAC_FLOOR)
 
 
+def windsea_only_fail(res):
+    """True when THIS window's height FAIL was computed over a sea with NO comparable swell
+    hours (n_qualifying == 0), so the FAIL says nothing about groundswell skill.
+
+    Reporting only — it never suppresses a FAIL, changes a verdict, or filters a zone out of
+    the flagged list. Height is deliberately the buoy-independent primary gate, so it keeps
+    running on swell-free windows where it still has something to say; this just stops the
+    result being read as evidence it is not. Pure."""
+    return bool(res.get("verdict") == "FAIL" and (res.get("n_qualifying") or 0) == 0)
+
+
 def swell_trust_verdict(samples, tier="point"):
     """The rebuilt gate (Stage 1). HEIGHT is the PRIMARY gate — the skill the field actually
     verifies (JCOMM/ECMWF/NCEP score SWH & period, not buoy direction). DIRECTION is an
@@ -1138,9 +1149,15 @@ def swell_trust_verdict(samples, tier="point"):
     h = [(s["model_swh"], s["buoy_wvht"]) for s in samples
          if s.get("model_swh") is not None and s.get("buoy_wvht") is not None]
     height_r, height_n = float("nan"), len(h)
+    # The range guard already computes this span; keep it so the verdict can SAY what it was
+    # computed over. None whenever the correlation was NOT computed, so it never implies a
+    # comparison that did not happen. WHEN the correlation runs is unchanged.
+    height_hs_span = None
     if height_n >= TRUST_MIN_PAIRS:
         bwv = [b for _, b in h]
-        if max(bwv) - min(bwv) >= TRUST_BUOY_RANGE_MIN_M:
+        span = max(bwv) - min(bwv)
+        if span >= TRUST_BUOY_RANGE_MIN_M:
+            height_hs_span = span
             height_r = _pearson([m for m, _ in h], bwv)
 
     # DIRECTION — comparable hours only (buoy swell present AND a model SWELL system exists).
@@ -1191,16 +1208,26 @@ def swell_trust_verdict(samples, tier="point"):
     dir_flag = bool(coherent and w_cs == w_cs and w_cs <= th["circ_std"] and abs(w_bias) <= th["bias"])
 
     # HEIGHT-PRIMARY verdict for THIS window (direction is a flag, not a one-window block).
+    # The PASS/FAIL reasons state WHAT THE CORRELATION WAS COMPUTED OVER — overlapping hours,
+    # the buoy total-Hs span, and the comparable swell-hour count — because r alone cannot tell
+    # a groundswell divergence from a flat afternoon. phi/44091 on 2026-08-17 read FAIL r=0.746
+    # over 25 hr with n_qualifying 0: a true statement about a pure wind-sea window, and easy to
+    # misread as a statement about groundswell skill. The verdict is unchanged; only what it
+    # says about itself is.
+    _ev = (f"over {height_n} overlapping hr"
+           + (f", buoy Hs span {height_hs_span:.2f} m" if height_hs_span is not None else "")
+           + f", {dir_n} comparable swell hr"
+           + (" — WIND-SEA ONLY, no swell to compare" if dir_n == 0 else ""))
     if height_n < TRUST_MIN_PAIRS or height_r != height_r:
         verdict, hreason = "INCONCLUSIVE", "height not assessable this window (flat / too short)"
     elif height_r >= TRUST_R_MIN:
-        verdict, hreason = "PASS", None
+        verdict, hreason = "PASS", f"height r {height_r:.3f} >= {TRUST_R_MIN} {_ev}"
     else:
-        verdict, hreason = "FAIL", f"height r {height_r:.3f} < {TRUST_R_MIN}"
+        verdict, hreason = "FAIL", f"height r {height_r:.3f} < {TRUST_R_MIN} {_ev}"
 
     return {
         "verdict": verdict, "reason": hreason, "gate": "height (primary)",
-        "height_r": height_r, "height_n": height_n,
+        "height_r": height_r, "height_n": height_n, "height_hs_span": height_hs_span,
         "dir_bias_w": w_bias, "dir_circ_std_w": w_cs, "dir_bias_u": u_bias, "dir_circ_std_u": u_cs,
         "dir_rbar": rbar, "dir_rayleigh_p": rayleigh, "dir_coherent": coherent,
         "n_qualifying": dir_n, "n_events": n_events, "n_model_no_swell": n_model_no_swell,
@@ -2341,7 +2368,12 @@ def reverify_tagged(n_cycles=4, start_offset=0):
             print(f"      ↳ banked 0 events — {skip_reason}; this window does NOT accumulate "
                   "(height not assessable → its direction residual is not trusted)")
         if res["verdict"] == "FAIL" or roll["verdict"] == "FAIL":
-            flagged.append(f"{tag} ({nspots} sp): height {res['verdict']}, dir(rolling) {roll['verdict']} — {roll.get('reason') or res.get('reason') or ''}")
+            # Still listed — never filtered — but a height FAIL from a swell-free window is
+            # marked, so it is not read as evidence about groundswell skill.
+            ws_note = ("  [WIND-SEA ONLY — 0 comparable swell hours this window; the height FAIL "
+                       "is about wind chop, NOT groundswell skill]" if windsea_only_fail(res) else "")
+            flagged.append(f"{tag} ({nspots} sp): height {res['verdict']}, dir(rolling) "
+                           f"{roll['verdict']} — {roll.get('reason') or res.get('reason') or ''}{ws_note}")
         if roll["verdict"] != "ACCUMULATING":   # reached TRUST_MIN_EVENTS → SETTLED, ready for MANUAL review
             settled.append({"zone": tag, "wfo": wfo, "buoy": str(buoy), "spots": nspots,
                             "verdict": roll["verdict"], "n_events": roll.get("n_events", 0),
