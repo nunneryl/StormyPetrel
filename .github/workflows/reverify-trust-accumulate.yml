@@ -120,7 +120,21 @@ jobs:
         # sets PASS, never runs apply, never touches spots_enriched.json or the DB. Exits
         # 0 on an outage (per-zone SKIPs are logged); the per-zone banked/skip lines are
         # the audit trail.
-        run: python3 -m pipeline.forecast.nwps_nearshore --reverify-tagged
+        #
+        # --start-offset ROTATES THE ZONE START, and it is load-bearing for COVERAGE, not
+        # for speed. 57 zones at ~6.5 min each in CI against the 40-minute cap means this
+        # step is cancelled around zone 15 EVERY run. With a fixed alphabetical order that
+        # is always the same first 15, so everything from mfl onward — okx/44025,
+        # phi/44091, all four sgx zones, both sju zones — had NEVER banked a single event.
+        # github.run_number moves the window each run, so the roster is covered over
+        # several runs instead of one prefix being covered forever and the tail never.
+        # The order itself stays sorted; only the start index moves and iteration wraps.
+        # The per-process cycle cache cuts the refetching that made a zone cost 6.5 min,
+        # so the window each run covers should now be considerably wider than 15 — but the
+        # rotation is what guarantees fairness even if it is not.
+        run: |
+          python3 -m pipeline.forecast.nwps_nearshore --reverify-tagged \
+            --start-offset "${{ github.run_number }}"
 
       - name: Save rolling trust history
         # always(): persist even if reverify partially degraded, so no accumulated events
