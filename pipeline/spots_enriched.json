@@ -12492,7 +12492,7 @@
         "span": 152
       }
     ],
-    "optimal_swell_dir": null,
+    "optimal_swell_dir": 74,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722004",
     "nearest_tide_station_dist_km": 0.31,
