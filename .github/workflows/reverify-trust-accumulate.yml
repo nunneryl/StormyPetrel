@@ -159,16 +159,33 @@ jobs:
         continue-on-error: true
         env:
           SETTLED_JSON: ${{ steps.reverify.outputs.settled_json }}   # via env (no template injection)
+          # Not-yet-settled zones with BOTH rolling windows' event counts. The issue is still gated on
+          # any_settled, so a run where nothing settled opens nothing however many zones are stuck —
+          # this rides along on the runs that already post, it does not create new ones.
+          ACCUMULATING_JSON: ${{ steps.reverify.outputs.accumulating_json }}
         with:
           retries: 3
           script: |
             const settled = JSON.parse(process.env.SETTLED_JSON || '[]');
+            const accumulating = JSON.parse(process.env.ACCUMULATING_JSON || '[]');
             const LABEL = 'nwps-trust-settled';
             const owner = context.repo.owner, repo = context.repo.repo;
+            // "30d 1 (gate) / 90d 4" — window order comes from the record, so a third declared
+            // window renders here with no edit to this script.
+            const counts = z => Object.keys(z.events_by_window || {})
+              .sort((a, b) => Number(a) - Number(b))
+              .map(k => `${k}d ${z.events_by_window[k]}`
+                        + (String(z.gating_window_days) === k ? ' (gate)' : ''))
+              .join(' / ');
             const line = s => `- **${s.zone}** (${s.spots} sp): rolling **${s.verdict}** on `
-              + `${s.n_events} events` + (s.reason ? ` — ${s.reason}` : '');
+              + `${s.n_events} events` + (counts(s) ? ` [${counts(s)}]` : '')
+              + (s.reason ? ` — ${s.reason}` : '');
+            const accLine = a => `- **${a.zone}** (${a.spots} sp): ${counts(a) || 'no counts'}`
+              + (a.reason ? ` — ${a.reason}` : '')
+              + (a.expiry_note ? `\n  - ⚠️ ${a.expiry_note}` : '');
             const pass = settled.filter(s => s.verdict === 'PASS');
             const other = settled.filter(s => s.verdict !== 'PASS');
+            const expiring = accumulating.filter(a => a.expiry_note);
             const body = [
               'These zones have ACCUMULATED enough independent swell events for their rolling',
               'DIRECTION verdict to SETTLE. Heads-up for **manual** review only — this accumulator',
@@ -178,6 +195,14 @@ jobs:
                               : []),
               ...(other.length ? ['### Settled FAIL / INCOHERENT — review (likely do NOT tag)',
                                   ...other.map(line), ''] : []),
+              ...(accumulating.length ? [
+                '### Still ACCUMULATING — event counts per rolling window',
+                'A zone short at the **(gate)** window but well supplied at a wider one is NOT waiting',
+                'on swell: the gating window is expiring events faster than they arrive, so it can',
+                'never settle. Widening the gate is a separate decision — this only reports it.',
+                ...(expiring.length ? [`**${expiring.length} zone(s) below are expiring events, not waiting on swell.**`]
+                                    : []),
+                ...accumulating.map(accLine), ''] : []),
               'To tag a PASS zone: add `"<zone>": "PASS"` to `trust_by_zone` in',
               'scripts/nwps_okx_assignments.json — copy the **zone** exactly as printed above',
               '(`wfo/buoy`), NOT the buoy id on its own. The gate is keyed by zone precisely so a',
