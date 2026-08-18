@@ -46,12 +46,7 @@ _DEFAULT_BATCH = 200
 # exclusion file is truncated, swapped, or corrupted — so we refuse rather
 # than wipe the roster. Routine deletes are 1-2 at a time; bump only with a
 # deliberate reason.
-SAFETY_DELETE_CAP = 20   # TEMPORARY 2026-08-18: clearing a 15-row backlog of
-# already-excluded Great Lakes spots + the boyton-bech-inlet duplicate. Every one
-# verified present in excluded_spots.json and absent from spots_enriched.json.
-# The backlog crossed the cap of 10 on ~2026-08-12 and has aborted every spots
-# write since, pre-write, so no spot-level change has reached production in six
-# days. REVERT TO 10 once the successful run has drained it.
+SAFETY_DELETE_CAP = 10
 
 
 def _slugify(name: str) -> str:
