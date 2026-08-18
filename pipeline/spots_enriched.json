@@ -13749,7 +13749,7 @@
         "span": 22
       }
     ],
-    "optimal_swell_dir": 176,
+    "optimal_swell_dir": 242,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617846",
     "nearest_tide_station_dist_km": 0.35,
@@ -13965,7 +13965,7 @@
         "span": 18
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 60,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612376",
     "nearest_tide_station_dist_km": 3.16,
@@ -14011,7 +14011,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 84,
+    "optimal_swell_dir": 200,
     "break_type": "beach",
     "break_type_confidence": 0.5,
     "nearest_buoy_id": null,
@@ -14452,7 +14452,7 @@
         "span": 46
       }
     ],
-    "optimal_swell_dir": 92,
+    "optimal_swell_dir": 10,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
     "nearest_tide_station_dist_km": 12.72,
@@ -14739,7 +14739,7 @@
         "span": 18
       }
     ],
-    "optimal_swell_dir": 324,
+    "optimal_swell_dir": 54,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617760",
     "nearest_tide_station_dist_km": 4.62,
@@ -14871,7 +14871,7 @@
         "span": 98
       }
     ],
-    "optimal_swell_dir": 92,
+    "optimal_swell_dir": 0,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
     "nearest_tide_station_dist_km": 12.34,
@@ -15012,7 +15012,7 @@
         "span": 90
       }
     ],
-    "optimal_swell_dir": 136,
+    "optimal_swell_dir": 8,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
     "nearest_tide_station_dist_km": 2.87,
@@ -15283,7 +15283,7 @@
         "span": 82
       }
     ],
-    "optimal_swell_dir": 112,
+    "optimal_swell_dir": 188,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
     "nearest_tide_station_dist_km": 1.2,
@@ -15427,7 +15427,7 @@
         "span": 42
       }
     ],
-    "optimal_swell_dir": 104,
+    "optimal_swell_dir": 212,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TPT2799",
     "nearest_tide_station_dist_km": 5.74,
@@ -15573,7 +15573,7 @@
         "span": 22
       }
     ],
-    "optimal_swell_dir": 176,
+    "optimal_swell_dir": 244,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1617846",
     "nearest_tide_station_dist_km": 0.35,
@@ -15721,7 +15721,7 @@
         "span": 94
       }
     ],
-    "optimal_swell_dir": 124,
+    "optimal_swell_dir": 46,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612376",
     "nearest_tide_station_dist_km": 4.33,
@@ -15859,7 +15859,7 @@
         "span": 90
       }
     ],
-    "optimal_swell_dir": 112,
+    "optimal_swell_dir": 188,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611401",
     "nearest_tide_station_dist_km": 3.66,
@@ -16609,7 +16609,7 @@
         "span": 14
       }
     ],
-    "optimal_swell_dir": 124,
+    "optimal_swell_dir": 172,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612376",
     "nearest_tide_station_dist_km": 5.37,
@@ -17168,7 +17168,7 @@
         "span": 90
       }
     ],
-    "optimal_swell_dir": 300,
+    "optimal_swell_dir": 222,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1612482",
     "nearest_tide_station_dist_km": 13.74,
@@ -24559,7 +24559,7 @@
         "span": 114
       }
     ],
-    "optimal_swell_dir": 288,
+    "optimal_swell_dir": 348,
     "break_type": "beach",
     "break_type_confidence": 0.5,
     "nearest_buoy_id": null,
