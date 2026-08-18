@@ -175,7 +175,13 @@ SWELL_TIER_SHELTERED_ARC_DEG = 90.0   # ≤ this ⇒ sheltered; between ⇒ poin
 
 # ROLLING ACCUMULATION — continuous skill monitoring, never a one-shot verdict on 40
 # autocorrelated hours.
-TRUST_ROLLING_DAYS = (30, 90)         # report both windows
+TRUST_ROLLING_DAYS = (30, 90)         # report both windows — reverify_tagged reports EVERY entry
+# WHICH window decides PASS/FAIL, named rather than taken by position: reading TRUST_ROLLING_DAYS[0]
+# at the call site made "the gating one" an accident of tuple order, so reordering the tuple for
+# display would silently have moved the gate. Nothing else may assume a position. WIDENING this is a
+# deliberate separate decision with a real trade-off — a wider window mixes older model behaviour
+# into a current verdict — so it is not changed by anything that merely reports the other windows.
+TRUST_GATING_WINDOW_DAYS = TRUST_ROLLING_DAYS[0]
 TRUST_EVENT_GAP_HOURS = 12            # qualifying hours split into distinct swell EVENTS at ≥ this gap
 TRUST_MIN_EVENTS = 5                  # < this many independent events ⇒ ACCUMULATING (not PASS/FAIL)
 TRUST_RAYLEIGH_P = 0.05               # Rayleigh test: p > this ⇒ residuals directionally incoherent
@@ -1352,6 +1358,57 @@ def rolling_trust_verdict(records, tier="point"):
                                        f"{tier} (≤{th['circ_std']}° / ±{th['bias']}°)")}
 
 
+def window_records(records, days, now_epoch_hour):
+    """The subset of *records* inside the last *days*, by the SAME rule load_trust_history uses
+    (t >= now_epoch_hour - days*24) — and, like it, everything when either argument is None.
+
+    Split out so the windows can be cut in memory from ONE load instead of re-reading the log per
+    window, and so the cut is testable without touching disk. Pure."""
+    if days is None or now_epoch_hour is None:
+        return list(records)
+    cut = now_epoch_hour - days * 24
+    return [r for r in records if r.get("t") is not None and r["t"] >= cut]
+
+
+def rolling_by_window(records, tier="point", now_epoch_hour=None, windows=None):
+    """The rolling DIRECTION verdict for EVERY window in TRUST_ROLLING_DAYS, in tuple order —
+    [{days, n_records, n_events, verdict}] — cut from one already-loaded record list.
+
+    Iterates the tuple, so declaring a third window reports it with no further edit here. This is
+    REPORTING: which window gates PASS/FAIL is TRUST_GATING_WINDOW_DAYS, decided by the caller.
+    Pure."""
+    out = []
+    for d in (TRUST_ROLLING_DAYS if windows is None else windows):
+        sub = window_records(records, d, now_epoch_hour)
+        v = rolling_trust_verdict(sub, tier=tier)
+        out.append({"days": d, "n_records": len(sub), "n_events": v.get("n_events", 0), "verdict": v})
+    return out
+
+
+def window_expiry_note(windows, gating_days=None):
+    """One line when the WIDEST rolling window holds more independent events than the GATING one,
+    else None.
+
+    This is the distinction the counts exist to make: a zone stuck on ACCUMULATING because the sea
+    has been quiet looks identical, in a single number, to one whose gating window is EXPIRING
+    events faster than they arrive — the second can never settle however much swell it sees, and
+    only the wider count reveals it. With TRUST_MIN_EVENTS at 5, ONE expired event is the
+    difference between settling and not, so "materially more" is taken as strictly more; the note
+    prints the actual counts rather than a verdict on them. Pure."""
+    gating_days = TRUST_GATING_WINDOW_DAYS if gating_days is None else gating_days
+    gate = next((w for w in windows if w["days"] == gating_days), None)
+    wide = max(windows, key=lambda w: w["days"]) if windows else None
+    if not gate or not wide or wide["days"] == gate["days"] or wide["n_events"] <= gate["n_events"]:
+        return None
+    note = (f"{wide['n_events']} events at {wide['days']}d vs {gate['n_events']} at {gate['days']}d "
+            f"(+{wide['n_events'] - gate['n_events']}) — the {gate['days']}d gating window is "
+            f"EXPIRING events faster than they arrive, not merely waiting on swell")
+    if wide["n_events"] >= TRUST_MIN_EVENTS > gate["n_events"]:
+        note += (f"; it would ALREADY have settled at {wide['days']}d "
+                 f"({wide['n_events']} >= TRUST_MIN_EVENTS {TRUST_MIN_EVENTS})")
+    return note
+
+
 def trust_verdict(samples):
     """SUPERSEDED by swell_trust_verdict (the live gate is now partition-matched). Retained
     for the offline selftest + reference only — trust_check no longer calls it.
@@ -2317,9 +2374,16 @@ def reverify_tagged(n_cycles=4, start_offset=0):
     print(f"  {n_zones} zones, starting at index {int(start_offset or 0) % n_zones} ({first}) and "
           f"wrapping — the order is fixed, only the start rotates so a capped run covers a "
           f"different window each time.\n")
+    # ROLLING reports EVERY window in TRUST_ROLLING_DAYS (counts in tuple order), so the header is
+    # derived from the tuple and a third window needs no edit here. Only TRUST_GATING_WINDOW_DAYS
+    # decides the verdict shown beside them.
+    win_lbl = "/".join(f"{d}d" for d in TRUST_ROLLING_DAYS)
+    now_h = int(datetime.datetime.now(datetime.timezone.utc).timestamp() // 3600)
+    print(f"  ROLLING shows the verdict then independent-event counts for {win_lbl}; the PASS/FAIL "
+          f"gate uses {TRUST_GATING_WINDOW_DAYS}d only.\n")
     print(f"  {'#':>6} {'wfo/buoy':<11} {'sp':>3} {'tier':<9} {'HEIGHT':<11} {'dirW cs/bias':>14} "
-          f"{'(unwtd)':>12} {'ev':>3} {'ROLLING':<13}")
-    flagged, settled = [], []
+          f"{'(unwtd)':>12} {'ev':>3} {('ROLLING ' + win_lbl):<17}")
+    flagged, settled, accumulating, gate_unwindowed = [], [], [], []
     retired = _retired_reference_zones()
     # coverage bookkeeping — a cancelled run prints no summary at all, which is why every zone
     # line carries a [k/n] counter: the LOG still shows how far the run reached.
@@ -2357,13 +2421,28 @@ def reverify_tagged(n_cycles=4, start_offset=0):
             return (s % x) if isinstance(x, (int, float)) and x == x else "—"
         hv = res["verdict"] + (f"(r={res['height_r']:.2f})" if res.get("height_r") == res.get("height_r") else "")
         banked, skip_reason = _bank_records(wfo, buoy, res)   # option (b): bank nothing on INCONCLUSIVE
-        roll = rolling_trust_verdict(load_trust_history(wfo, buoy, days=TRUST_ROLLING_DAYS[0]), tier=tier)
+        # THE GATE — deliberately the same call as before, argument for argument, so no verdict can
+        # move: this change reports the other windows, it does not re-decide anything. Keeping the
+        # literal load_trust_history call (rather than reusing the full history below) also keeps
+        # the gate COUPLED to that function, so a later fix there reaches the gate on its own.
+        gate_hist = load_trust_history(wfo, buoy, days=TRUST_GATING_WINDOW_DAYS)
+        roll = rolling_trust_verdict(gate_hist, tier=tier)
+        # ...and REPORTING — every declared window, cut in memory from one full load.
+        windows = rolling_by_window(load_trust_history(wfo, buoy), tier=tier, now_epoch_hour=now_h)
+        gate_win = next((w for w in windows if w["days"] == TRUST_GATING_WINDOW_DAYS), None)
+        # MEASURED, not assumed: load_trust_history applies its day cut only when now_epoch_hour is
+        # given too, and the gate call above passes days= alone — so today the gate reads the WHOLE
+        # log, not TRUST_GATING_WINDOW_DAYS of it. Detect it from this zone's real records instead of
+        # restating what the source is believed to do, so the summary reports a later fix rather than
+        # going stale, and stays silent on zones with nothing old enough to discard.
+        if gate_win is not None and len(gate_hist) > gate_win["n_records"]:
+            gate_unwindowed.append(tag)
         dw = f"{_f(res.get('dir_circ_std_w'), '%.0f')}/{_f(res.get('dir_bias_w'), '%+.0f')}"
         du = f"{_f(res.get('dir_circ_std_u'), '%.0f')}/{_f(res.get('dir_bias_u'), '%+.0f')}"
         flag = "" if res.get("dir_flag") else " ⚑"   # this window fails the tier's direction bar
         checked.append(tag)
         print(f"  {pos:>6} {tag:<11} {nspots:>3} {tier_s:<9} {hv:<11} {dw:>14} {du:>12} "
-              f"{res.get('n_events', 0):>3} {roll['verdict']:<13}{flag}")
+              f"{res.get('n_events', 0):>3} {_rolling_cell(roll['verdict'], windows):<17}{flag}")
         if skip_reason:
             print(f"      ↳ banked 0 events — {skip_reason}; this window does NOT accumulate "
                   "(height not assessable → its direction residual is not trusted)")
@@ -2374,10 +2453,22 @@ def reverify_tagged(n_cycles=4, start_offset=0):
                        "is about wind chop, NOT groundswell skill]" if windsea_only_fail(res) else "")
             flagged.append(f"{tag} ({nspots} sp): height {res['verdict']}, dir(rolling) "
                            f"{roll['verdict']} — {roll.get('reason') or res.get('reason') or ''}{ws_note}")
+        by_window = {str(w["days"]): w["n_events"] for w in windows}
         if roll["verdict"] != "ACCUMULATING":   # reached TRUST_MIN_EVENTS → SETTLED, ready for MANUAL review
             settled.append({"zone": tag, "wfo": wfo, "buoy": str(buoy), "spots": nspots,
                             "verdict": roll["verdict"], "n_events": roll.get("n_events", 0),
-                            "reason": roll.get("reason")})
+                            "reason": roll.get("reason"),
+                            "events_by_window": by_window,
+                            "gating_window_days": TRUST_GATING_WINDOW_DAYS})
+        else:
+            # ACCUMULATING carries BOTH counts so a reader can separate "not enough swell yet" from
+            # "the gating window is expiring events faster than they arrive" — one number cannot.
+            accumulating.append({"zone": tag, "wfo": wfo, "buoy": str(buoy), "spots": nspots,
+                                 "verdict": roll["verdict"], "n_events": roll.get("n_events", 0),
+                                 "reason": roll.get("reason"),
+                                 "events_by_window": by_window,
+                                 "gating_window_days": TRUST_GATING_WINDOW_DAYS,
+                                 "expiry_note": window_expiry_note(windows)})
     print("\n==== coverage ====")
     not_reached = [f"{w}/{b}" for w, b, _ in zones if f"{w}/{b}" not in visited]
     print(f"  zones in the roster: {n_zones}   reached: {len(visited)}   not reached: {len(not_reached)}")
@@ -2421,24 +2512,75 @@ def reverify_tagged(n_cycles=4, start_offset=0):
         print("  this job NEVER tags them itself):")
         for s in settled:
             print(f"    • {s['zone']} ({s['spots']} sp): rolling {s['verdict']} on {s['n_events']} events"
+                  + f" [{_window_counts_str(s)}]"
                   + (f" — {s['reason']}" if s.get("reason") else ""))
+    if accumulating:
+        print(f"\n  ACCUMULATING zones — event counts at {win_lbl}. A zone short at "
+              f"{TRUST_GATING_WINDOW_DAYS}d but well supplied at a wider window is not waiting on")
+        print("  swell: the gating window is expiring events faster than they arrive, and it can never")
+        print("  settle. Widening the gate is a SEPARATE decision — this only reports the evidence:")
+        for a in accumulating:
+            print(f"    • {a['zone']} ({a['spots']} sp): {_window_counts_str(a)}"
+                  + (f" — {a['reason']}" if a.get("reason") else ""))
+            if a.get("expiry_note"):
+                print(f"        ↳ {a['expiry_note']}")
+    if gate_unwindowed:
+        print(f"\n  NOTE — the {TRUST_GATING_WINDOW_DAYS}d gating window is NOT being applied. "
+              "load_trust_history cuts by day only when")
+        print("  now_epoch_hour is passed as well, and the gate passes days= alone, so the verdict is "
+              "computed over")
+        print(f"  the ENTIRE banked log. Measured this run on {len(gate_unwindowed)} zone(s) holding "
+              "records older than the")
+        print(f"  window: {', '.join(gate_unwindowed[:8])}"
+              + (f", +{len(gate_unwindowed) - 8} more" if len(gate_unwindowed) > 8 else ""))
+        print(f"  So the {win_lbl} counts above are what the DECLARED windows would hold; the verdict "
+              "is over everything.")
+        print("  Left as-is deliberately: enforcing the cut would NARROW the gate and could unsettle "
+              "already-settled")
+        print("  zones — a verdict change, not a reporting one, and YOUR call.")
     print("  (Read-only: nothing tagged/untagged; spots_enriched.json untouched; only the monitoring log grows.)")
-    _emit_reverify_output(settled)
+    _emit_reverify_output(settled, accumulating)
     return 0
 
 
-def _emit_reverify_output(settled):
-    """Write any_settled / settled_json to $GITHUB_OUTPUT (only when the env var is set — i.e. under
-    a scheduling workflow; a no-op on the Mac). Lets the workflow open/update an issue for zones whose
-    ROLLING verdict has SETTLED (reached TRUST_MIN_EVENTS → PASS / FAIL / INCOHERENT) and are ready for
-    MANUAL review/tagging. This function NEVER tags anything — it only reports. Mirrors the buoy-ready
-    monitor's _emit_github_output pattern."""
+def _rolling_cell(verdict, windows):
+    """The ROLLING table cell — e.g. `ACCUMULATING 1/4`: the GATING verdict followed by the
+    independent-event count for EVERY declared window, in tuple order. One number could not
+    separate a quiet spell from a window expiring events faster than they arrive. Pure."""
+    return verdict + " " + "/".join(str(w["n_events"]) for w in windows)
+
+
+def _window_counts_str(rec):
+    """Render a record's events_by_window as e.g. `30d 1 (gate) / 90d 4`, in TRUST_ROLLING_DAYS
+    order with the GATING window marked. Reads the record's own map rather than the tuple, so a
+    record emitted under a different window set still renders. Pure."""
+    ev = rec.get("events_by_window") or {}
+    gating = rec.get("gating_window_days")
+    order = [str(d) for d in TRUST_ROLLING_DAYS if str(d) in ev]
+    order += [k for k in sorted(ev, key=lambda x: int(x)) if k not in order]
+    return " / ".join(f"{k}d {ev[k]}" + (" (gate)" if gating is not None and k == str(gating) else "")
+                      for k in order) or "no window counts"
+
+
+def _emit_reverify_output(settled, accumulating=None):
+    """Write any_settled / settled_json / accumulating_json to $GITHUB_OUTPUT (only when the env var
+    is set — i.e. under a scheduling workflow; a no-op on the Mac). Lets the workflow open/update an
+    issue for zones whose ROLLING verdict has SETTLED (reached TRUST_MIN_EVENTS → PASS / FAIL /
+    INCOHERENT) and are ready for MANUAL review/tagging. This function NEVER tags anything — it only
+    reports. Mirrors the buoy-ready monitor's _emit_github_output pattern.
+
+    accumulating_json carries the not-yet-settled zones with BOTH windows' event counts, so the issue
+    can distinguish a zone waiting on swell from one whose gating window expires events faster than
+    they arrive. It is ADDITIVE — any_settled still gates the issue exactly as before, so a run with
+    no settled zone opens nothing however many zones are accumulating."""
     path = os.environ.get("GITHUB_OUTPUT")
     if not path:
         return
     with open(path, "a", encoding="utf-8") as f:
         f.write(f"any_settled={'true' if settled else 'false'}\n")
         f.write("settled_json=" + json.dumps(settled, separators=(",", ":"), ensure_ascii=False) + "\n")
+        f.write("accumulating_json="
+                + json.dumps(accumulating or [], separators=(",", ":"), ensure_ascii=False) + "\n")
 
 
 def depth_experiment(n_cycles=4, radius_km=6.0):
