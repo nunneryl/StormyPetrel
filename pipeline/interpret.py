@@ -664,6 +664,162 @@ def latest_buoy_swell(buoy_block: dict | None) -> dict | None:
     return None
 
 
+# ===========================================================================
+# TEMPORARY INSTRUMENTATION — why is the WW3 path taken for only 7.5% of
+# spot-hours in production? REMOVE THIS WHOLE BLOCK (and its four call sites
+# in rate_spot / compute_ratings) once the numbers have been read.
+#
+# Logging ONLY: nothing here feeds a rating, changes control flow, or alters
+# an existing log line. Every counter is derived from values the rating path
+# already computed, so the instrumented run produces byte-identical ratings.
+#
+# Already ruled out by measurement, so the counters below are aimed at what
+# is left: the fetch writes 648/648 spots × 57/57 hours with parse_failed=0;
+# interpret logs "648 ww3 series" loaded; ww3.json ∩ spots_enriched.json is
+# 648/648 by name; _ww3_index → _ww3_at → combine_ww3_partitions run locally
+# against a fresh ww3.json succeed 48/48 hours for spots in BOTH a 0% and a
+# 56% WFO; the failure rate is flat across lead hour and across the offset
+# past the 3 h mark (so not timing/windowing); per-WFO usage runs from sgx
+# 56.6% down to eighteen WFOs at exactly 0.0% with identical valid_time
+# ranges; and the 0% WFOs' partition directions are well aligned with their
+# spots' orientations (so directional gain is not the discriminator).
+#
+# The buckets are MUTUALLY EXCLUSIVE and sum to `hours`, which the summary
+# asserts — overlapping buckets would make the percentages unreadable, and
+# that matters here precisely because the current 7.5% is the number under
+# suspicion. `idx_empty` is split further because "the series never arrived"
+# and "the series arrived but every valid_time was unparseable" are different
+# bugs that the single counter asked for cannot separate.
+_WW3_DIAG_SPOT_LOG_LIMIT = 10      # per-spot len(ww3_series) lines
+_WW3_DIAG_SAMPLE_LIMIT = 5         # fully-dumped combine_ww3_partitions→None hours
+
+_WW3_DIAG: dict = {}
+
+
+def _ww3_diag_reset() -> None:
+    """Fresh counters for one compute_ratings call (module-level state, so a
+    second call in the same process does not accumulate onto the first)."""
+    _WW3_DIAG.clear()
+    _WW3_DIAG.update({
+        "by_wfo": {},          # wfo -> Counter of the mutually-exclusive buckets
+        "spots_logged": 0,
+        "spot_series_len": [],  # (name, wfo, len(ww3_series)) for the first N spots
+        "samples": [],          # fully-dumped combine→None hours
+        # The five samples are the first five HOURS, as asked — which can all be
+        # one spot's consecutive hours and look far narrower than the bucket is.
+        # These sets say whether the five are representative.
+        "combine_none_spots": set(),
+        "combine_none_wfos": set(),
+    })
+
+
+def _ww3_diag_bucket(wfo: str | None, *buckets: str) -> None:
+    """Count ONE spot-hour. The first bucket is the exclusive outcome; any
+    further ones are sub-labels of it (they refine, they do not add an hour)."""
+    if not _WW3_DIAG:
+        return
+    by = _WW3_DIAG["by_wfo"].setdefault(wfo or "?", Counter())
+    by["hours"] += 1
+    for b in buckets:
+        by[b] += 1
+
+
+def _ww3_diag_sample(spot: dict, vt_iso, ww3_entry: dict) -> None:
+    """Full dump of one hour where an entry WAS found but combine returned None."""
+    if not _WW3_DIAG:
+        return
+    _WW3_DIAG["combine_none_spots"].add(spot.get("name"))
+    _WW3_DIAG["combine_none_wfos"].add(spot.get("nwps_wfo") or "?")
+    if len(_WW3_DIAG["samples"]) >= _WW3_DIAG_SAMPLE_LIMIT:
+        return
+    parts = {}
+    for prefix in _WW3_PARTITION_PREFIXES:
+        for field in ("hs", "tp", "dp"):
+            key = f"{prefix}_{field}"
+            parts[key] = ww3_entry.get(key)
+    _WW3_DIAG["samples"].append({
+        "spot": spot.get("name"),
+        "wfo": spot.get("nwps_wfo"),
+        "nwps_valid_time": vt_iso,
+        "ww3_valid_time": ww3_entry.get("valid_time"),
+        "partitions": parts,
+        "arcs": spot.get("swell_window_arcs"),
+        "optimal_swell_dir": spot.get("optimal_swell_dir"),
+        "orientation_deg": spot.get("orientation_deg"),
+    })
+
+
+def _ww3_diag_log() -> None:
+    """Emit the whole diagnostic at the end of compute_ratings."""
+    if not _WW3_DIAG:
+        return
+    by_wfo = _WW3_DIAG["by_wfo"]
+    tot = Counter()
+    for c in by_wfo.values():
+        tot.update(c)
+    hours = tot["hours"]
+    if not hours:
+        log.info("WW3-DIAG: no spot-hours processed (ww3 diagnostic idle)")
+        return
+
+    for name, wfo, n in _WW3_DIAG["spot_series_len"]:
+        log.info("WW3-DIAG spot: %-34s wfo=%-4s len(ww3_series)=%s", name, wfo or "?", n)
+
+    def pct(n):
+        return 100.0 * n / hours if hours else 0.0
+
+    log.info(
+        "WW3-DIAG TOTAL over %d spot-hours: ww3_used=%d (%.1f%%), idx_empty=%d (%.1f%%) "
+        "[of which series_missing=%d, index_unparseable=%d], ww3_at_none=%d (%.1f%%), "
+        "combine_none=%d (%.1f%%)",
+        hours, tot["ww3_used"], pct(tot["ww3_used"]),
+        tot["idx_empty"], pct(tot["idx_empty"]),
+        tot["idx_empty_series_missing"], tot["idx_empty_unparseable"],
+        tot["ww3_at_none"], pct(tot["ww3_at_none"]),
+        tot["combine_none"], pct(tot["combine_none"]),
+    )
+    accounted = tot["ww3_used"] + tot["idx_empty"] + tot["ww3_at_none"] + tot["combine_none"]
+    if accounted != hours:
+        log.warning("WW3-DIAG: buckets do not partition the hours (%d vs %d) — "
+                    "the breakdown below is unreliable", accounted, hours)
+
+    # No args on this call, so % is NOT consumed by %-formatting — a literal
+    # %% here would print as "%%".
+    log.info("WW3-DIAG per-WFO (sorted by ww3_used%, ascending — the 0% WFOs first):")
+    log.info("WW3-DIAG   %-5s %7s %8s %9s %9s %9s %9s", "wfo", "hours",
+             "ww3_used", "used_pct", "idx_empty", "at_none", "comb_none")
+    for wfo, c in sorted(by_wfo.items(),
+                         key=lambda kv: (100.0 * kv[1]["ww3_used"] / kv[1]["hours"]
+                                         if kv[1]["hours"] else 0.0, kv[0])):
+        h = c["hours"]
+        log.info("WW3-DIAG   %-5s %7d %8d %8.1f%% %9d %9d %9d",
+                 wfo, h, c["ww3_used"],
+                 (100.0 * c["ww3_used"] / h) if h else 0.0,
+                 c["idx_empty"], c["ww3_at_none"], c["combine_none"])
+
+    samples = _WW3_DIAG["samples"]
+    if not samples:
+        log.info("WW3-DIAG: no combine_ww3_partitions→None hours with a WW3 entry present "
+                 "(so combine_none is NOT where the path is being lost)")
+    else:
+        log.info("WW3-DIAG: combine_none spans %d distinct spot(s) across %d WFO(s): %s",
+                 len(_WW3_DIAG["combine_none_spots"]), len(_WW3_DIAG["combine_none_wfos"]),
+                 ", ".join(sorted(_WW3_DIAG["combine_none_wfos"])))
+        log.info("WW3-DIAG: first %d hours where a WW3 entry WAS found but "
+                 "combine_ww3_partitions returned None (these may be consecutive hours "
+                 "of ONE spot — read the span line above before generalising):", len(samples))
+        for i, s in enumerate(samples, 1):
+            log.info("WW3-DIAG   [%d] %s (wfo=%s)", i, s["spot"], s["wfo"])
+            log.info("WW3-DIAG       nwps_valid_time=%s  ww3_valid_time=%s",
+                     s["nwps_valid_time"], s["ww3_valid_time"])
+            log.info("WW3-DIAG       partitions=%s", s["partitions"])
+            log.info("WW3-DIAG       arcs=%s optimal_swell_dir=%s orientation_deg=%s",
+                     s["arcs"], s["optimal_swell_dir"], s["orientation_deg"])
+
+
+# ===================== end TEMPORARY INSTRUMENTATION ========================
+
+
 def rate_spot(
     spot: dict,
     forecast: list[dict],
@@ -694,6 +850,18 @@ def rate_spot(
     buoy_swell_dp = buoy_swell["swell_dp"] if buoy_swell else None
     buoy_swell_tp = buoy_swell["swell_tp"] if buoy_swell else None
     ww3_idx = _ww3_index(ww3_series)
+
+    # TEMP INSTRUMENTATION (remove with the _ww3_diag_* block above).
+    _diag_wfo = spot.get("nwps_wfo")
+    if _WW3_DIAG and _WW3_DIAG["spots_logged"] < _WW3_DIAG_SPOT_LOG_LIMIT:
+        _WW3_DIAG["spots_logged"] += 1
+        _WW3_DIAG["spot_series_len"].append(
+            (spot.get("name"), _diag_wfo,
+             "None" if ww3_series is None else len(ww3_series)))
+    # Distinguishes "the series never arrived" from "it arrived but every
+    # valid_time failed to parse", which _ww3_index collapses into the same [].
+    _diag_idx_empty_why = ("idx_empty_series_missing" if not ww3_series
+                           else "idx_empty_unparseable")
 
     out: list[dict] = []
     for entry in forecast:
@@ -746,6 +914,21 @@ def rate_spot(
         #     toward Surfline's 1–2 ft surf
         ww3_entry = _ww3_at(ww3_idx, vt) if ww3_idx else None
         ww3_combined = combine_ww3_partitions(ww3_entry, arcs, optimal, orientation)
+
+        # TEMP INSTRUMENTATION (remove with the _ww3_diag_* block above). Reads
+        # only what the two lines above already produced — no extra call, no
+        # branch the rating path can see. Buckets are mutually exclusive and in
+        # the order the path actually short-circuits.
+        if _WW3_DIAG:
+            if not ww3_idx:
+                _ww3_diag_bucket(_diag_wfo, "idx_empty", _diag_idx_empty_why)
+            elif ww3_entry is None:
+                _ww3_diag_bucket(_diag_wfo, "ww3_at_none")
+            elif ww3_combined is None:
+                _ww3_diag_bucket(_diag_wfo, "combine_none")
+                _ww3_diag_sample(spot, vt_iso, ww3_entry)
+            else:
+                _ww3_diag_bucket(_diag_wfo, "ww3_used")
 
         size_dp: float | None = None
         size_tp_eff: float | None = None
@@ -896,6 +1079,7 @@ def compute_ratings(
     spot_by_name = {s.get("name"): s for s in spots if s.get("name")}
     buoys = buoys or {}
     ww3 = ww3 or {}
+    _ww3_diag_reset()    # TEMP INSTRUMENTATION (remove with the _ww3_diag_* block)
     # Memoize the latest spec snapshot per buoy so we don't rescan its 24h
     # spec history once per spot.
     buoy_swell_cache: dict[str, dict | None] = {}
@@ -995,6 +1179,7 @@ def compute_ratings(
     )
     if missing_examples:
         log.info("interpret: station_missing sample: %s", ", ".join(missing_examples))
+    _ww3_diag_log()      # TEMP INSTRUMENTATION (remove with the _ww3_diag_* block)
     return results
 
 
