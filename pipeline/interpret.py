@@ -1459,6 +1459,25 @@ def main(argv: list[str] | None = None) -> int:
         if nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]:
             log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored",
                      nwps_stats["fed"], nwps_stats["fell_back"], nwps_stats["errored"])
+        # WHAT DROVE DIRECTION on the overridden hours. The override takes HEIGHT from
+        # NWPS but keeps WW3's swell direction/period; hours with no WW3 identity fall
+        # back to whole-spectrum dirpw. That fallback share is the number to watch — it
+        # was effectively 100% before, and silent.
+        _n_ww3 = nwps_stats.get("hours_ww3_dir", 0)
+        _n_dpw = nwps_stats.get("hours_dirpw_dir", 0)
+        if _n_ww3 or _n_dpw:
+            _tot = _n_ww3 + _n_dpw
+            log.info("interpret: NWPS override direction source — %d spot-hours from WW3 "
+                     "partitions (%.1f%%), %d fell back to NWPS dirpw (%.1f%%)",
+                     _n_ww3, 100.0 * _n_ww3 / _tot, _n_dpw, 100.0 * _n_dpw / _tot)
+            _by = nwps_stats.get("by_wfo") or {}
+            _worst = sorted(_by.items(),
+                            key=lambda kv: -(kv[1]["dirpw_dir"] / (kv[1]["hours"] or 1)))
+            for _w, _c in _worst[:8]:
+                if _c["dirpw_dir"]:
+                    log.info("interpret:   NWPS dirpw fallback — %s: %d/%d hrs (%.1f%%) "
+                             "across %d spot(s)", _w, _c["dirpw_dir"], _c["hours"],
+                             100.0 * _c["dirpw_dir"] / (_c["hours"] or 1), _c["spots"])
         # VISIBILITY: a whole-WFO download/parse outage degrades every one of that WFO's spots to the
         # coarse orientation path. That must never ship silently — log it LOUDLY (WARNING, named WFOs +
         # affected-spot count) so it is greppable/alertable, distinct from a benign per-hour fallback.
