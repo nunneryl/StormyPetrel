@@ -60,6 +60,16 @@ log = logging.getLogger("pipeline.forecast.nwps_nearshore")
 
 RATING_SOURCE = "ww3"          # face_ft shoaling factor — same as the validated chain
 NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/"
+
+# swell_source values this module writes. The override takes HEIGHT from NWPS but
+# SWELL IDENTITY (direction + period) from the WW3 partitions rate_spot already
+# resolved, so the result is a HYBRID of two feeds and gets its own value. Calling
+# that "nwps" is exactly what hid the dirpw substitution for months: the persisted
+# provenance said NWPS drove the rating, which was true of the height and false of
+# the direction the stars actually turned on. A distinct value makes an audit of
+# "what decided this rating" answerable from the column alone.
+SWELL_SOURCE_NWPS_WW3 = "nwps_height_ww3_dir"   # NWPS swh/shts + WW3 swell dp/tp
+SWELL_SOURCE_NWPS_DIRPW = "nwps"                # no WW3 identity for this hour → dirpw/perpw
 # --------------------------------------------------------------------------- #
 # PLACEMENT_IS_GEOMETRY — why placement_verdict returns only OK / FAR.          #
 # Assigning a spot to a model node is a statement about where the spot is, not  #
@@ -771,22 +781,48 @@ def nwps_series_by_hour(spot, cycle):
 # --------------------------------------------------------------------------- #
 # Rating + override (mirror mop_stars / apply_mop_overrides)                   #
 # --------------------------------------------------------------------------- #
-def nwps_stars(hs, per, dirpw, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0):
+def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0):
     """Nearshore-frame star rating for one NWPS hour, reusing interpret.py exactly
-    (face_ft from swh × directional_gain(dirpw vs orientation), period quality from
-    perpw), with per-hour wind/tide injected from the normal rater. Chop is derived
-    from the windsea split (swh vs shts); if shts is missing, chop falls to neutral
-    (the entry's wind-based texture still applies via wind_mult). Returns
-    (stars, face_ft, dir_gain, chop_mult, period_quality) or (None, …)."""
-    if hs is None or per is None or dirpw is None or orientation is None:
+    (face_ft from swh × directional_gain(swell_dir vs orientation), period quality
+    from the swell period), with per-hour wind/tide injected from the normal rater.
+    Chop is derived from the windsea split (swh vs shts); if shts is missing, chop
+    falls to neutral (the entry's wind-based texture still applies via wind_mult).
+    Returns (stars, face_ft, dir_gain, chop_mult, period_quality) or (None, …).
+
+    *swell_dir* and *per* describe the SWELL TRAIN, not the whole spectrum. The
+    caller passes the WW3 partition direction/period whenever rate_spot resolved
+    one, and only falls back to NWPS dirpw/perpw when it did not — these two
+    parameters were named dirpw/perpw when dirpw was the only thing ever passed,
+    and that naming is why the substitution read as intentional for so long."""
+    if hs is None or per is None or swell_dir is None or orientation is None:
         return None, None, None, None, None
-    dg = directional_gain(dirpw, [], orientation, orientation)   # cos²((dir−orientation)/2)
+    dg = directional_gain(swell_dir, [], orientation, orientation)   # cos²((dir−orientation)/2)
     face = face_ft(hs, per, RATING_SOURCE)
     eff = face * dg
     cm = chop_multiplier(chop_ratio(hs, swell_hs if swell_hs else hs))   # windsea-derived
     pq = period_quality(per)
     stars = composite_stars(eff, wind_mult, tide_mult, cm, pq)
     return stars, face, dg, cm, pq
+
+
+def _ww3_swell_identity(entry):
+    """(swell_dp, swell_tp) from a rating entry IFF rate_spot resolved them from the
+    WW3 partitions, else (None, None).
+
+    interpret sets swell_source="ww3" exactly when combine_ww3_partitions returned a
+    result, so that flag — not the mere presence of swell_dp — is the discriminator:
+    swell_dp is also populated on the buoy and nwps_total fallback paths, and those
+    are NOT deep-water partition directions. Both values must be present and numeric;
+    a half-resolved entry falls back rather than mixing frames. Pure."""
+    if (entry.get("swell_source") or "") != "ww3":
+        return None, None
+    dp, tp = entry.get("swell_dp"), entry.get("swell_tp")
+    if dp is None or tp is None:
+        return None, None
+    try:
+        return float(dp), float(tp)
+    except (TypeError, ValueError):
+        return None, None
 
 
 class _WfoUnavailable(Exception):
@@ -829,9 +865,20 @@ def _make_default_fetch():
 
 def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=None):
     """Override the swell rating of every swell_window_source=="nwps" spot with its
-    NWPS node series, keeping each hour's wind/tide. Mutates *ratings* in place
+    NWPS node HEIGHT, keeping each hour's wind/tide AND the WW3-derived swell
+    direction/period that rate_spot already resolved. Mutates *ratings* in place
     unless dry_run. *only* = slugs to restrict to. *_fetch* injectable for tests.
-    Returns stats {fed, fell_back, errored, wfo_unavailable, details}, where
+
+    SWELL IDENTITY IS NOT OVERWRITTEN. This used to replace swell_dp/swell_tp with
+    NWPS dirpw/perpw for every overridden hour, which discarded the WW3 partition
+    decomposition for 92% of the roster and rated those spots off a whole-spectrum
+    mean direction — see the coupling note at the update site. Hours with no WW3
+    identity still fall back to dirpw, tagged SWELL_SOURCE_NWPS_DIRPW and counted
+    per WFO, so the fallback is visible rather than silent.
+
+    Returns stats {fed, fell_back, errored, wfo_unavailable, details, by_wfo,
+    hours_ww3_dir, hours_dirpw_dir} — the first five unchanged in name and
+    meaning, the last three added — where
     wfo_unavailable maps each WFO whose whole cycle failed to download/parse to a
     reason — a distinct, VISIBLE signal so a mass fall-back to the orientation path
     can't ship silently (one WFO's GRIB failure is isolated to its spots; every
@@ -841,6 +888,7 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
     fetch = _fetch or _make_default_fetch()
     fed = fell_back = errored = 0
     wfo_unavailable = {}   # wfo -> reason: a whole-WFO download/parse outage (NOT a per-hour fallback)
+    by_wfo = {}            # wfo -> {spots, hours, ww3_dir, dirpw_dir} over the OVERRIDDEN hours
     details = []
     for s in spots:
         if s.get("swell_window_source") != "nwps":
@@ -871,7 +919,7 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
             fell_back += 1
             details.append((slug, "no fresh NWPS data → fallback", 0))
             continue
-        n_over = 0
+        n_over = n_ww3 = n_dirpw = 0
         for e in entries:
             t = _iso_to_epoch(e.get("valid_time"))
             if t is None:
@@ -881,7 +929,38 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
             if not m:
                 continue   # hour beyond f144 or missing → keep orientation path for it
             swh, per, dpw, shts = m
-            st, face, dg, cm, pq = nwps_stars(swh, per, dpw, shts, orient,
+            # HEIGHT from NWPS (swh/shts — nearshore-refracted, higher resolution than
+            # gfswave's 0.25° grid, which is why the override exists at all). SWELL
+            # IDENTITY from WW3 — the direction and period rate_spot already resolved
+            # by partition decomposition — because dirpw/perpw are WHOLE-SPECTRUM mean
+            # quantities: on a mixed sea they describe no real wave train and track
+            # whichever component carries most energy, usually local wind sea. That is
+            # how Huntington rated off a 255°/7.8 s mean while the surfable swell was a
+            # 15 s south at 191°, and how Pipeline/Sunset/Waimea rated off the 95°
+            # windward trade sea at spots facing 300–315°.
+            #
+            # COUPLING — READ BEFORE CHANGING THE DIRECTION INPUT.
+            # This is correct only while swell_window_arcs and optimal_swell_dir remain
+            # DEEP-WATER concepts: they are ray-cast from the coastline against distant
+            # swell propagation, so they ALREADY encode sheltering. Comparing a
+            # nearshore-refracted direction against them double-counts refraction. WW3
+            # partition direction is deep-water, i.e. the frame the window is defined
+            # in. If those fields are ever replaced by nearshore transfer coefficients
+            # (the P3-4 direction), the frame flips and a nearshore refracted direction
+            # — dirpw, or an NWPS partition — becomes the RIGHT input instead. Revisit
+            # this decision then; do not treat the WW3 preference as unconditional.
+            ww3_dir, ww3_per = _ww3_swell_identity(e)
+            if ww3_dir is not None:
+                dir_eff, per_eff, src = ww3_dir, ww3_per, SWELL_SOURCE_NWPS_WW3
+            else:
+                # No WW3 identity for this hour (combine_ww3_partitions returned None,
+                # or the spot has no WW3 series). Keep the override rather than dropping
+                # it — NWPS height is still the better height — but fall back to dirpw
+                # and TAG it, so a whole-spectrum direction can never again pass for a
+                # swell direction unnoticed.
+                dir_eff, per_eff, src = dpw, per, SWELL_SOURCE_NWPS_DIRPW
+                n_dirpw += 1
+            st, face, dg, cm, pq = nwps_stars(swh, per_eff, dir_eff, shts, orient,
                                               e.get("wind_mult", 1.0), e.get("tide_mult", 1.0))
             if st is None:
                 continue
@@ -889,19 +968,42 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
                 e.update(
                     face_ft=round(face, 2), dir_gain=round(dg, 3), chop_mult=round(cm, 3),
                     period_quality=round(pq, 3), effective_size_ft=round(face * dg, 2),
-                    stars=st, swell_dp=round(dpw, 3), swell_tp=round(per, 3),
+                    stars=st, swell_dp=round(dir_eff, 3), swell_tp=round(per_eff, 3),
                     swell_hs=round(shts, 3) if shts is not None else None,
-                    swell_source="nwps",
+                    swell_source=src,
                 )
+                # In-memory / ratings.json tag only — deliberately NOT a DB column, so
+                # this adds no schema. swell_source is the persisted discriminator.
+                if src == SWELL_SOURCE_NWPS_DIRPW:
+                    e["nwps_dirpw_fallback"] = True
+                else:
+                    e.pop("nwps_dirpw_fallback", None)
             n_over += 1
+            n_ww3 += 1 if src == SWELL_SOURCE_NWPS_WW3 else 0
         if n_over:
             fed += 1
-            details.append((slug, f"{n_over} hrs NWPS-fed", n_over))
+            # Per-WFO split of WHAT drove direction on the overridden hours. The dirpw
+            # count is the visible half: a WFO drifting toward it is losing the swell
+            # decomposition, and that must be readable per run, not inferred later from
+            # the DB.
+            w = by_wfo.setdefault(s.get("nwps_wfo") or "?",
+                                  {"spots": 0, "hours": 0, "ww3_dir": 0, "dirpw_dir": 0})
+            w["spots"] += 1
+            w["hours"] += n_over
+            w["ww3_dir"] += n_ww3
+            w["dirpw_dir"] += n_dirpw
+            details.append((slug, f"{n_over} hrs NWPS-fed "
+                                  f"({n_ww3} ww3-dir, {n_dirpw} dirpw-dir)", n_over))
         else:
             fell_back += 1
             details.append((slug, "NWPS had no overlapping hour → fallback", 0))
+    # ADDITIVE only: every pre-existing key keeps its name and meaning, so the existing
+    # consumers (interpret's summary log, the selftest) are untouched.
     return {"fed": fed, "fell_back": fell_back, "errored": errored,
-            "wfo_unavailable": wfo_unavailable, "details": details}
+            "wfo_unavailable": wfo_unavailable, "details": details,
+            "by_wfo": by_wfo,
+            "hours_ww3_dir": sum(w["ww3_dir"] for w in by_wfo.values()),
+            "hours_dirpw_dir": sum(w["dirpw_dir"] for w in by_wfo.values())}
 
 
 def _iso_to_epoch(iso):

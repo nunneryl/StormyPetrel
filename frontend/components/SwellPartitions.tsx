@@ -29,10 +29,15 @@ function gather(f: Forecast): Component[] {
 }
 
 const SOURCE_LABEL: Record<string, string> = {
-  ww3:        'WAVEWATCH III',
-  nwps_swell: 'NWPS swell',
-  buoy:       'NDBC buoy',
-  nwps_total: 'NWPS total',
+  ww3:                 'WAVEWATCH III',
+  // NWPS nearshore height + WW3 partition direction/period. A hybrid of two feeds, so it
+  // gets its own value rather than reusing 'nwps' — the plain value now means the override
+  // found no WW3 partition for that hour and fell back to whole-spectrum DIRPW.
+  nwps_height_ww3_dir: 'NWPS height + WW3',
+  nwps:                'NWPS (DIRPW)',
+  nwps_swell:          'NWPS swell',
+  buoy:                'NDBC buoy',
+  nwps_total:          'NWPS total',
 };
 
 export function SwellPartitions({ forecast }: { forecast: Forecast }) {
