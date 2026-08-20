@@ -2,7 +2,7 @@
 
 Reads spots_enriched.json plus the three forecast files (nwps.json,
 buoys.json, tides.json) and emits forecast_data/ratings.json — for every
-spot, every hour, a dict carrying all raw inputs plus five computed
+spot, every hour, a dict carrying all raw inputs plus the computed
 components and a 0-5 star composite.
 
 Rating pipeline per hour:
@@ -10,11 +10,21 @@ Rating pipeline per hour:
 1. Breaking face height (face_ft)  = hs * period_factor(tp) * 3.281
 2. Directional gain (dir_gain)     ∈ [0, 1]; 0 if dp is outside all
                                      swell_window_arcs, cos²(offset) inside.
-3. Wind quality (wind_mult)        ∈ [0.4, 1.2]; blended toward 1.0 when
-                                     wind_speed < 5 m/s.
-4. Tide quality (tide_mult)        ∈ [0.6, 1.0] using tide_preference and
-                                     the current normalized tide position.
-5. Composite stars (0 or 1-5, 0.5 increments) from size_score × mults.
+3. Wind quality (wind_mult)        ∈ [0.44, 1.2] as implemented; blended
+                                     toward 1.0 when wind_speed < 5 m/s.
+                                     (wind_multiplier's own docstring still
+                                     claims 0.4 — 0.44 is the reachable
+                                     minimum, 0.55 * 0.8 in the gale band.)
+4. Tide quality (tide_mult)        ∈ {0.6, 0.7, 0.8, 1.0} using
+                                     tide_preference and the current
+                                     normalized tide position.
+5. Chop penalty (chop_mult)        ∈ [0.3, 1.0] from chop_ratio — the wind-sea
+                                     fraction of total Hs.
+6. Period quality (period_quality) ∈ [0.5, 1.05] from the swell period. The
+                                     only factor that can exceed 1.0.
+7. Composite stars (0 or 1-5, 0.5 increments): size_score(effective face)
+   scaled by the WEIGHTED GEOMETRIC MEAN of factors 3-6 (unit-sum exponents,
+   COMPOSITE_FACTOR_EXPONENTS), not by their raw product. See composite_stars.
 
 Usage:
     python -m pipeline.interpret
@@ -341,6 +351,37 @@ def period_quality(tp_s: float) -> float:
     return _interp(tp_s, _PERIOD_QUALITY_POINTS)
 
 
+# Exponents of the WEIGHTED GEOMETRIC MEAN over the four quality factors, keyed
+# by the multiplier each one applies to. They must sum to 1.0: that is what makes
+# the aggregate a mean rather than a product, so all-factors-at-1.0 reproduces
+# size_score exactly and the composite keeps the units of size_score. Under the
+# old raw product, four independent sub-1.0 factors compounded — 0.8**4 = 0.41 —
+# which drove the whole roster down regardless of size.
+COMPOSITE_FACTOR_EXPONENTS = {
+    "wind_mult": 0.25,
+    "tide_mult": 0.25,
+    "chop_mult": 0.25,
+    "period_quality": 0.25,
+}
+# Import-time invariant. NOTE: a bare `assert` is stripped under `python -O`, so
+# this guards development, not a hardened runtime.
+assert abs(sum(COMPOSITE_FACTOR_EXPONENTS.values()) - 1.0) < 1e-12, (
+    "COMPOSITE_FACTOR_EXPONENTS must sum to 1.0 or the aggregate stops being a "
+    f"mean and silently rescales every rating: got {sum(COMPOSITE_FACTOR_EXPONENTS.values())!r}"
+)
+
+# Floor applied to each factor before exponentiation. This is a NUMERIC guard,
+# NOT a physical one: it exists only because a negative base with a fractional
+# exponent is well-defined in Python but useless here — (-0.5) ** 0.25 returns a
+# COMPLEX number rather than raising, which then survives the multiply and blows
+# up several lines later in round() with "type complex doesn't define __round__".
+# Clamping converts that into a defined, tiny result at the point of the error.
+# It is deliberately far below any value the four production factors can take
+# (their implemented minima are wind 0.44, tide 0.6, chop 0.3, period 0.5), so on
+# every real path this floor is inert and changes no rating.
+_FACTOR_EPSILON = 1e-9
+
+
 def composite_stars(
     effective_face_ft: float,
     wind_mult: float,
@@ -350,21 +391,36 @@ def composite_stars(
 ) -> float:
     """0 if flat (< 0.5 ft effective), else 1–5 in 0.5 increments.
 
-    raw = size_score(effective_size) × wind_mult × tide_mult
-        × chop_mult × period_quality
+    raw = size_score(effective_size)
+        × wind_mult**a × tide_mult**b × chop_mult**c × period_quality**d
+
+    where (a, b, c, d) are COMPOSITE_FACTOR_EXPONENTS and SUM TO 1.0 — so the
+    four quality factors combine as a WEIGHTED GEOMETRIC MEAN and size_score
+    keeps its scale: with every factor at 1.0, raw is exactly size_score(eff).
+    Previously they entered as a raw product, where four independent sub-1.0
+    factors compounded multiplicatively.
+
+    Each factor is floored at _FACTOR_EPSILON before the power — a numeric
+    guard against a negative input silently becoming complex, not a physical
+    bound. See the constant.
 
     The chop and period-quality multipliers were added after a real-world
     verification at Pipeline 2026-04-27 17:00 UTC: total Hs was 1.89 m but
     swell-only Hs was 0.91 m (the rest was 5 ft NE 8 s trade chop).
     Surfline rated it "POOR" / 3-4 ft. The pre-multiplier formula gave 4★;
     with chop_mult ≈ 0.53 and period_quality ≈ 0.91 the rating drops to
-    1.5★, matching ground truth.
+    1.5★, matching ground truth. Those figures describe the PRODUCT form;
+    under the geometric mean the same hour lands higher.
     """
     if effective_face_ft < 0.5:
         return 0.0
+    e = COMPOSITE_FACTOR_EXPONENTS
     raw = (
         size_score(effective_face_ft)
-        * wind_mult * tide_mult * chop_mult * period_q
+        * max(_FACTOR_EPSILON, wind_mult) ** e["wind_mult"]
+        * max(_FACTOR_EPSILON, tide_mult) ** e["tide_mult"]
+        * max(_FACTOR_EPSILON, chop_mult) ** e["chop_mult"]
+        * max(_FACTOR_EPSILON, period_q) ** e["period_quality"]
     )
     stars = round(raw * 2.0) / 2.0
     return max(1.0, min(5.0, stars))
