@@ -20,6 +20,12 @@ fallback (Rockaway, Lido, Montauk Point) is used.
 """
 import sys, os, re, json, math, urllib.request
 
+# Arc membership comes from the ONE shared helper, not a local copy. This script used to
+# carry its own min/max comparison, which drifted from production the moment the half-step
+# pad landed — the whole point of a probe is that it agrees with what it is probing.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pipeline.interpret import in_any_arc  # noqa: E402
+
 PROD = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/"
 WFO = "okx"
 REGION = "er"
@@ -101,14 +107,8 @@ def ang_within(deg, center, half):
     return d <= half
 
 def in_arcs(deg, arcs):
-    for a in arcs:
-        lo, hi = a["min"], a["max"]
-        if lo <= hi:
-            if lo <= deg <= hi:
-                return True
-        elif deg >= lo or deg <= hi:
-            return True
-    return False
+    """Thin alias onto the shared helper — kept so the call site below reads unchanged."""
+    return in_any_arc(deg, arcs)
 
 def report(path, spots):
     try:

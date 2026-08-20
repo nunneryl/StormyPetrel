@@ -18,7 +18,7 @@ from shapely.strtree import STRtree
 
 from pipeline.enrichment import swell_window as sw
 from pipeline.enrichment.geodata import LandIndex
-from pipeline.interpret import _in_any_arc
+from pipeline.interpret import in_any_arc
 
 KM_PER_DEG = 111.32  # at the equator, where we place the test spot
 
@@ -156,12 +156,11 @@ def test_open_ocean_window_survives_own_coast():
     arcs = r["swell_window_arcs"]
     assert arcs, "a west-facing coastal spot must have an open window"
 
+    # Membership comes from the SHARED helper, never a local copy: a test that
+    # re-implements its subject cannot catch a change to it (this copy compared raw
+    # min/max and so would have passed straight through the half-step-pad fix).
     def _in_open_arc(b):
-        for a in arcs:
-            lo, hi = a["min"], a["max"]
-            if (lo <= hi and lo <= b <= hi) or (lo > hi and (b >= lo or b <= hi)):
-                return True
-        return False
+        return in_any_arc(b, arcs)
 
     for seaward in (225, 250, 270, 290, 315):
         assert _in_open_arc(seaward), f"seaward bearing {seaward}° (open ocean) must be OPEN"
@@ -216,9 +215,8 @@ def test_island_spot_with_mainland_behind_stays_bounded():
     arcs = r["swell_window_arcs"]
     assert arcs, "the seaward (south) side must be open"
 
-    def _in(b):
-        return any((a["min"] <= b <= a["max"]) if a["min"] <= a["max"]
-                   else (b >= a["min"] or b <= a["max"]) for a in arcs)
+    def _in(b):                      # shared helper, not a local re-implementation
+        return in_any_arc(b, arcs)
 
     assert _in(180), "due south (open ocean) must be OPEN"
     assert not _in(0), "due north (large mainland close behind, within the solid range) must stay BLOCKED"
@@ -282,9 +280,8 @@ def test_ri_island_spot_stays_bounded_far_seaward_opens():
     arcs = r["swell_window_arcs"]
     assert arcs, "the seaward side must be open"
 
-    def _in(b):
-        return any((a["min"] <= b <= a["max"]) if a["min"] <= a["max"]
-                   else (b >= a["min"] or b <= a["max"]) for a in arcs)
+    def _in(b):                      # shared helper, not a local re-implementation
+        return in_any_arc(b, arcs)
 
     assert _in(180), "distant seaward land (~1800 km) wraps open by its own distance"
     assert not _in(0), "the mainland ~44 km behind stays BLOCKED"
@@ -312,8 +309,8 @@ def test_merge_arcs_keeps_legit_wraparound():
     assert a["min"] > a["max"], "a genuine wrap has min>max"
     assert a["span"] == (a["max"] + 360 - a["min"] + step), "span consistent with the wrap"
     assert 20 < a["span"] < 60, f"a ~40° window, not ~358° or dropped (got {a['span']})"
-    assert _in_any_arc(0.0, arcs) and _in_any_arc(350.0, arcs) and _in_any_arc(10.0, arcs)
-    assert not _in_any_arc(180.0, arcs), "a swell from the opposite side is OUTSIDE the wrap"
+    assert in_any_arc(0.0, arcs) and in_any_arc(350.0, arcs) and in_any_arc(10.0, arcs)
+    assert not in_any_arc(180.0, arcs), "a swell from the opposite side is OUTSIDE the wrap"
 
 
 def test_emitted_arcs_span_consistent_with_minmax():

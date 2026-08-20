@@ -46,7 +46,7 @@ import numpy as np
 
 from ..interpret import (
     chop_multiplier, chop_ratio, composite_stars, directional_gain, face_ft,
-    period_quality,
+    in_any_arc, period_quality,
 )
 from ..config import WFO_TO_REGION
 # ONE cutoff, both sides of the comparison. Importing the constant (rather than restating 8.0)
@@ -251,18 +251,11 @@ def _ang_within(deg, center, half):
     return abs(((deg - center + 180) % 360) - 180) <= half
 
 
-def _in_arcs(deg, arcs):
-    """deg inside any swell-window arc; handles multi-arc + 0/360 wrap."""
-    if not arcs:
-        return True
-    for a in arcs:
-        lo, hi = a["min"], a["max"]
-        if lo <= hi:
-            if lo <= deg <= hi:
-                return True
-        elif deg >= lo or deg <= hi:   # wraps through 0/360
-            return True
-    return False
+# _in_arcs was DELETED here. It was a third copy of the membership test, comparing min/max as
+# inclusive sector bounds, and its only caller was placement_verdict — whose own docstring
+# states "per, dirpw and arcs ARE IGNORED and do not affect the verdict", which the code
+# confirms. So nothing depended on it, including its empty-arcs-returns-True branch, which
+# differed from interpret's False and was itself a latent trap. Use interpret.in_any_arc.
 
 
 def placement_verdict(dist_km, per, dirpw, arcs, far_cap_km=FAR_CAP_FLOOR_KM):
@@ -2033,8 +2026,11 @@ def _selftest():
         nonlocal ok; ok = ok and c; print(f"  {'PASS' if c else 'FAIL'}  {n}")
 
     # window + geometry helpers
-    check("in_arcs simple", _in_arcs(120, [{"min": 90, "max": 230}]) and not _in_arcs(300, [{"min": 90, "max": 230}]))
-    check("in_arcs wrap 0/360", _in_arcs(10, [{"min": 340, "max": 30}]) and not _in_arcs(180, [{"min": 340, "max": 30}]))
+    # _in_arcs is gone; the shared interpret.in_any_arc replaces it. These fixtures carry no
+    # span, so arc_pad_deg returns 0 and the bounds read as sector edges — same answers as the
+    # deleted copy gave, which is why these two lines are unchanged in meaning.
+    check("in_any_arc simple", in_any_arc(120, [{"min": 90, "max": 230}]) and not in_any_arc(300, [{"min": 90, "max": 230}]))
+    check("in_any_arc wrap 0/360", in_any_arc(10, [{"min": 340, "max": 30}]) and not in_any_arc(180, [{"min": 340, "max": 30}]))
     check("ang_within ±90", _ang_within(200, 180, 90) and not _ang_within(350, 180, 90))
     check("bearing east ≈90", abs(_bearing(40, -74, 40, -73) - 90) < 1)
 
