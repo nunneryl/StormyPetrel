@@ -93,21 +93,72 @@ def face_ft(hs_m: float, tp_s: float, source: str = "nwps") -> float:
     return hs_m * period_factor(tp_s, source) * M_TO_FT
 
 
-def _in_any_arc(dp: float, arcs: list[dict]) -> bool:
-    # swell_window.py may emit an arc that wraps through 0° as {min: 340,
-    # max: 20} (hi < lo). The fallback splits such arcs, but be defensive.
-    for arc in arcs:
-        try:
-            lo, hi = arc["min"], arc["max"]
-        except (KeyError, TypeError):
-            continue
-        if lo <= hi:
-            if lo <= dp <= hi:
-                return True
-        else:
-            if dp >= lo or dp <= hi:
-                return True
+def arc_pad_deg(arc: dict) -> float:
+    """Half-step pad, in degrees, between an arc's stored bounds and its TRUE sector edges.
+
+    ``min`` and ``max`` are the first and last RAY BEARINGS that passed the raycast, and each
+    ray stands for the whole step-wide sector it samples — so the open window really runs half
+    a step beyond each bound. ``span`` is the sector measure that already accounts for this
+    (swell_window._make_arc: ``span = hi - lo + step``), which makes the pad recoverable from
+    the arc alone:
+
+        pad = (span - ((max - min) mod 360)) / 2
+
+    DERIVED, never assumed: four conventions are live in spots_enriched.json and this formula
+    reproduces every one of them without a table —
+        pad 2.0  1377 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4 (how the roster was built)
+        pad 1.0    12 arcs  raycast at config.SWELL_RAY_STEP_DEG = 2
+        pad 0.5    14 arcs  swell_window_fallback wrap-split halves (span = 360-lo, and hi+1)
+        pad 0.0    72 arcs  swell_window_fallback._centered_arc, non-wrapping (span = max-min)
+    The 0.0 cases are correct at 0: a synthesised centred arc is not a ray sample and its
+    bounds ARE its sector edges. An arc with no ``span`` gets pad 0 and is logged — that is a
+    provenance gap, not a shape to guess at. Pure apart from the log."""
+    try:
+        lo, hi, span = arc["min"], arc["max"], arc.get("span")
+    except (KeyError, TypeError):
+        return 0.0
+    if span is None:
+        log.debug("arc_pad_deg: arc without span, padding 0 (bounds treated as sector edges): %r", arc)
+        return 0.0
+    return (float(span) - ((float(hi) - float(lo)) % 360.0)) / 2.0
+
+
+def bearing_in_arc(dp: float, arc: dict) -> bool:
+    """Is bearing *dp* inside ONE arc's true sector — its stored bounds widened by arc_pad_deg?
+
+    Wrap-safe by construction: everything is measured as a forward offset from the padded
+    start, so an arc with min > max (a genuine 0/360 wrap, e.g. {min: 340, max: 20}) needs no
+    special case. Inclusive at BOTH padded edges, symmetrically.
+
+    THE SECTOR LENGTH IS ``span``: width + 2*pad collapses to span whenever span is present,
+    which is what keeps this consistent with _min_offset_from_arcs and with the width the
+    tiering code sums."""
+    try:
+        lo, hi = float(arc["min"]), float(arc["max"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    pad = arc_pad_deg(arc)
+    total = ((hi - lo) % 360.0) + 2.0 * pad
+    if total >= 360.0:
+        return True                      # fully open window
+    return ((float(dp) - lo + pad) % 360.0) <= total
+
+
+def in_any_arc(dp: float, arcs: list[dict] | None) -> bool:
+    """THE shared arc-membership test. Every caller in the repo routes here.
+
+    Previously three production copies and three test copies compared ``min <= dp <= max``,
+    treating ray bearings as inclusive sector bounds and so clipping half a step off each end
+    of every window. Measured on live WW3 partition bearings that misclassified 2019 of 94898
+    (2.13%), with gain swings from -0.150 to +0.600."""
+    for arc in (arcs or []):
+        if bearing_in_arc(dp, arc):
+            return True
     return False
+
+
+# Back-compat alias — the private name predates the shared helper and is still imported.
+_in_any_arc = in_any_arc
 
 
 def _angle_off(a: float, b: float) -> float:
@@ -123,16 +174,22 @@ def _min_offset_from_arcs(dp: float, arcs: list[dict]) -> float:
     penalties: a swell coming from 30° outside the window can still wrap
     into the break, but one coming from 120° outside is physically
     blocked by the coastline and won't.
+
+    Measured from the PADDED edge, the same sector boundary in_any_arc uses. Measuring from
+    the raw bound while membership used the padded one would not remove the discontinuity, it
+    would relocate it: a bearing just outside the sector would report a positive offset while
+    a bearing just inside reported 0, leaving the same cliff half a step further out.
     """
-    if _in_any_arc(dp, arcs):
+    if in_any_arc(dp, arcs):
         return 0.0
     min_off = 360.0
-    for arc in arcs:
+    for arc in (arcs or []):
         try:
-            lo, hi = arc["min"], arc["max"]
-        except (KeyError, TypeError):
+            lo, hi = float(arc["min"]), float(arc["max"])
+        except (KeyError, TypeError, ValueError):
             continue
-        min_off = min(min_off, _angle_off(dp, lo), _angle_off(dp, hi))
+        pad = arc_pad_deg(arc)
+        min_off = min(min_off, _angle_off(dp, lo - pad), _angle_off(dp, hi + pad))
     return min_off
 
 
@@ -147,7 +204,7 @@ def directional_gain(
     """Directional gain for a swell with bearing *dp* against the spot's window.
 
     Inside the window:
-      cos²(offset_from_optimal), floored at 0.1 — direct on-axis swells
+      cos²(offset_from_optimal), floored at 0.25 — direct on-axis swells
       score 1.0, oblique on-axis ones taper smoothly.
 
     Outside the window (*soft_outside* path, default on):
@@ -155,9 +212,12 @@ def directional_gain(
       grid resolution, so "outside the window" doesn't mean "no swell" —
       it means "swell wraps in via coastal geometry." Graduated by how
       far outside:
-        <45° off:    gain = 0.30  (refracted swell, real but reduced)
+        <45° off:    gain = 0.40  (refracted swell, real but reduced)
         45–90° off:  gain = 0.15  (heavily refracted, fringe)
         >90° off:    gain = 0.0   (physically blocked by the headland)
+
+      "Off" is measured from the arc's TRUE sector edge (bound ± arc_pad_deg),
+      matching in_any_arc, so the ladder starts where the window actually ends.
 
       Without this, spots like Steamer Lane (south-facing) zero-out under
       Surfline's listed NW swells even though refraction around the
