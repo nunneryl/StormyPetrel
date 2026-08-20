@@ -41,7 +41,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 log = logging.getLogger("revalidate")
@@ -103,17 +103,49 @@ def fetch_spot_meta(client) -> dict[int, dict]:
     return out
 
 
-def fetch_current_hour_ratings(client) -> dict[int, dict]:
-    """For each spot, the soonest forecast row with valid_time >= now().
+# Forward window for "each spot's soonest row at or after now".
+#
+# CHOSEN FROM THE WRITE GRIDS, not from a guess. Two writers populate `forecasts`:
+#   source='nwps'  — db_import.import_forecasts, one row per interpret ratings hour.
+#                    The NWPS CG1 series is HOURLY over f000..f144, so consecutive
+#                    rows for a spot are 1 h apart out to ~145 h.
+#   source='ecmwf' — ecmwf_wam.upsert_forecasts on ecmwf_wam.WAVE_STEPS, which is
+#                    3-HOURLY to 144 h then 6-HOURLY to the 240 h horizon.
+# The widest gap between consecutive rows, for any spot that has future rows at
+# all, is therefore 6 h (the ecmwf tail). This bound is 2x that worst gap, so a
+# spot with any live forecast is guaranteed at least one row inside the window.
+# The guarantee is structural — derived from the grids both writers emit — rather
+# than sampled, so it does not depend on the state of one particular cycle.
+#
+# WHY THE BOUND EXISTS AT ALL: without an upper bound the query selects every
+# future row (measured: 120,812 across ~121 pages) in order to use at most one per
+# spot (648) — 99.5% is fetched and then discarded by the `sid in out` guard below.
+# Deep offset paging cost 6.8 ms at offset 1000 and 7342 ms at offset 86,000, and
+# the cumulative cost across the page sequence exceeded the server statement
+# timeout. Bounded, the same query returns roughly 648 x (12 hourly + 4 three-
+# hourly) = ~10k rows over ~11 pages, keeping every offset in the cheap regime.
+#
+# Widening is cheap and safe; narrowing below 6 h is not, because the failure mode
+# of too-narrow is SILENT — a spot missing from the result never gets its page
+# revalidated and quietly serves stale content.
+CURRENT_HOUR_WINDOW_HOURS = 12
 
-    Returns spot_id -> {stars, face_ft}. Skips spots with no forthcoming
-    forecast row (rare — usually means the pipeline never wrote that spot).
+
+def fetch_current_hour_ratings(client) -> dict[int, dict]:
+    """For each spot, the soonest forecast row in [now, now + CURRENT_HOUR_WINDOW_HOURS].
+
+    Returns spot_id -> {stars, face_ft}. A spot with no row inside the window is
+    ABSENT from the mapping — it is never present with null values — so the caller
+    can tell "no forecast" from "a forecast that happens to be null".
     """
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    until_iso = (now + timedelta(hours=CURRENT_HOUR_WINDOW_HOURS)).isoformat()
     out: dict[int, dict] = {}
-    # Pull a wide window and keep first-row-per-spot. With ~500 spots
-    # and a 24h window we expect ~12,000 rows max; well under the 1000
-    # default page size if we just want "soonest per spot."
+    # Ascending valid_time plus first-row-per-spot-wins gives each spot its soonest
+    # row; every later row for that spot is dropped by the `sid in out` guard. With
+    # the window bounded this is ~11 pages, so plain offset paging is no longer the
+    # bottleneck and is kept as-is.
     page = 1000
     start = 0
     while True:
@@ -121,6 +153,7 @@ def fetch_current_hour_ratings(client) -> dict[int, dict]:
             client.table("forecasts")
             .select("spot_id,valid_time,stars,effective_size_ft")
             .gte("valid_time", now_iso)
+            .lte("valid_time", until_iso)
             .order("valid_time", desc=False)
             .range(start, start + page - 1)
             .execute()
@@ -139,6 +172,18 @@ def fetch_current_hour_ratings(client) -> dict[int, dict]:
         if len(rows) < page:
             break
         start += page
+    # Make a shortfall VISIBLE. A spot absent here never gets its page revalidated,
+    # which is silent in the old code — the run just posts fewer paths and nobody
+    # notices the stale page.
+    if not out:
+        log.warning(
+            "No forecast rows in the next %dh — every spot page will be treated as "
+            "unchanged. Check that db_import wrote this cycle.",
+            CURRENT_HOUR_WINDOW_HOURS,
+        )
+    else:
+        log.info("Current-hour ratings: %d spots inside the next %dh window",
+                 len(out), CURRENT_HOUR_WINDOW_HOURS)
     return out
 
 
