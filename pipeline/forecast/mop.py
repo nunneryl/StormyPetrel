@@ -145,7 +145,8 @@ def pull_mop_window(url, t0, t1):
         nc.close()
 
 
-def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0):
+def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
+              arcs=None, optimal=None):
     """Nearshore-frame star rating for one MOP hour, reusing interpret.py exactly
     (face_ft × directional_gain(dp vs shore-normal), chop from the MOP spectrum,
     period quality), with the per-hour wind/tide multipliers injected from the
@@ -153,7 +154,13 @@ def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0):
     or (None, …) if inputs are unusable."""
     if hs is None or tp is None or dp is None or shore_normal is None:
         return None, None, None, None, None
-    dg = directional_gain(dp, [], shore_normal, shore_normal)   # cos²((dp−normal)/2)
+    # SAME GEOMETRIC FRAME as the selection, matching nwps_stars. This used to pass
+    # `[], shore_normal, shore_normal` — empty arcs with the shore normal in the
+    # optimal_swell_dir slot — which made directional_gain's arc branch unreachable.
+    # arcs/optimal default to the old behaviour for callers with no spot geometry.
+    dg = directional_gain(dp, arcs or [],
+                          optimal if optimal is not None else shore_normal,
+                          shore_normal)
     face = face_ft(hs, tp, RATING_SOURCE)
     eff = face * dg
     cm = chop_multiplier(chop_ratio(hs, swell_hs if swell_hs else hs))
@@ -219,7 +226,9 @@ def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_
                 continue
             hs, tp, dp, swh = m
             st, face, dg, cm, pq = mop_stars(hs, tp, dp, swh, sn,
-                                             e.get("wind_mult", 1.0), e.get("tide_mult", 1.0))
+                                             e.get("wind_mult", 1.0), e.get("tide_mult", 1.0),
+                                             arcs=s.get("swell_window_arcs"),
+                                             optimal=s.get("optimal_swell_dir"))
             if st is None:
                 continue
             if not dry_run:
@@ -364,23 +373,29 @@ def validate_batch(batch=None, n_per_zone=3, with_fallback=True):
             first, n_ovlp = _overlap_hours(mop, fb.get(name) or [])
             if first:
                 t, (hs, tp, dp, swh), e = first
-                st, *_ = mop_stars(hs, tp, dp, swh, sn, e.get("wind_mult", 1.0), e.get("tide_mult", 1.0))
+                st, *_ = mop_stars(hs, tp, dp, swh, sn, e.get("wind_mult", 1.0), e.get("tide_mult", 1.0),
+                                   arcs=s.get("swell_window_arcs"), optimal=s.get("optimal_swell_dir"))
                 when = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d %H:%M")
                 print(f"  {slug:24}{zone:8}{str(pid):>6}  {when:16}{hs:5.2f}{tp:4.0f}{dp:5.0f}"
                       f"{st:6.1f}{e.get('stars', 0):6.1f}{n_ovlp:5d}  MOP-fed")
                 fed += 1
             else:
                 k = max(mop); hs, tp, dp, swh = mop[k]
-                st, *_ = mop_stars(hs, tp, dp, swh, sn)
+                st, *_ = mop_stars(hs, tp, dp, swh, sn,
+                                   arcs=s.get("swell_window_arcs"), optimal=s.get("optimal_swell_dir"))
                 when = datetime.datetime.utcfromtimestamp(k * 3600).strftime("%Y-%m-%d %H:%M")
                 print(f"  {slug:24}{zone:8}{str(pid):>6}  {when:16}{hs:5.2f}{tp:4.0f}{dp:5.0f}"
                       f"{st:6.1f}{'   -- ':>6}{0:5d}  MOP data but no forecast-hour overlap (horizon) → fallback")
                 fell += 1
         else:
             vals = list(mop.values())
-            stars = [x for x in (mop_stars(h, tp, dp, swh, sn)[0] for (h, tp, dp, swh) in vals) if x is not None]
+            stars = [x for x in (mop_stars(h, tp, dp, swh, sn,
+                                           arcs=s.get("swell_window_arcs"),
+                                           optimal=s.get("optimal_swell_dir"))[0]
+                                 for (h, tp, dp, swh) in vals) if x is not None]
             k = max(mop); hs, tp, dp, swh = mop[k]
-            st0 = mop_stars(hs, tp, dp, swh, sn)[0]
+            st0 = mop_stars(hs, tp, dp, swh, sn,
+                            arcs=s.get("swell_window_arcs"), optimal=s.get("optimal_swell_dir"))[0]
             phys = (all(0 <= h <= 12 for h, _, _, _ in vals) and all(2 <= tp <= 30 for _, tp, _, _ in vals)
                     and all(0 <= dp <= 360 for _, _, dp, _ in vals) and all(1 <= x <= 5 for x in stars))
             when = datetime.datetime.utcfromtimestamp(k * 3600).strftime("%Y-%m-%d %H:%M")
