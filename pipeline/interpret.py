@@ -683,6 +683,19 @@ def _ww3_at(
     return best
 
 
+# Exponent on period_quality in the partition SELECTION score (which partition
+# supplies tp/dp), not in the combined height. EMPIRICAL, NOT PHYSICAL: there is no
+# wave-theory result behind the number 2. It was chosen by sweeping 1, 2 and 4
+# against the frozen WW3 file and reading the roster-wide effect:
+#     exponent 1 — too weak; the control spots (Lower Trestles, Huntington) did
+#                  not flip at all.
+#     exponent 4 — roster-wide change rate 34.5%, and the extra churn concentrated
+#                  on exposed NorCal spots whose old pick was already correct.
+#     exponent 2 — fixes the controls at a 16.3% change rate. Chosen.
+# Changing it requires re-running that sweep; it is a calibration, not a constant.
+SELECTION_PERIOD_QUALITY_EXPONENT = 2
+
+
 def combine_ww3_partitions(
     ww3_entry: dict | None,
     arcs: list,
@@ -699,8 +712,41 @@ def combine_ww3_partitions(
 
         combined_hs = sqrt(sum(p_hs² * p_gain) for each partition)
 
-    The dominant partition (highest gain-weighted energy) supplies tp / dp
-    for display and downstream period_quality / chop calcs.
+    The dominant partition supplies tp / dp for display and downstream
+    period_quality / chop calcs. It is picked by a SEPARATE score that
+    weights the same gain-weighted energy by period quality:
+
+        selection_score = p_hs² * p_gain * period_quality(p_tp)**N
+        N = SELECTION_PERIOD_QUALITY_EXPONENT
+
+    THE SELECTION SCORE IS NOT THE HEIGHT. combined_hs above keeps the plain
+    `sum(p_hs² * p_gain)` with no period term — the two must not be merged back
+    into one field, or the weight silently rescales every WW3-path face height.
+
+    WHY. The score used to be exactly `p_hs² * p_gain`, so a fat short-period
+    windsea beat a lean groundswell every time, and the spot's published tp/dp
+    described the chop rather than the surf. Lower Trestles picked a 5.2 s / 269°
+    windsea over a 15.1 s / 200° groundswell; Malibu flipped 13.5 → 6.0 → 10.9 →
+    5.5 → 14.5 s across five consecutive records; Ocean Beach SF alternated
+    between a 12.2 s groundswell and a 7.1 s windswell.
+
+    MEASURED on the frozen WW3 file (648 spots x 57 records):
+      - The picked partition changes at 16.3% of spot-hours (6003 of 36936).
+      - 87.0% of flips are between two partitions that both produce a live
+        rating; 9.1% both dead; 2.0% revive a dead rating; 1.9% kill one.
+      - No height floor is needed, and this was measured rather than assumed:
+        flips to sub-0.25 m partitions occur only where BOTH candidates are
+        already below the 0.5 ft rating threshold.
+      - Flips move selection TOWARD the swell window: the new pick lands on the
+        soft-outside ladder at 5.9% of flips, against 20.1% for the old pick.
+
+    KNOWN RESIDUAL, pre-existing and queued separately — do not rediscover this
+    as a regression from this change. The remaining bad cases are all in the
+    LADDER, not in this rule: every worst case has the new pick at exactly gain
+    0.40, the ladder's top rung, which has no period dependence at all. Named
+    example: Brookings Beach 08-20T09:00 swaps 1.03 m / 5.7 s (gain 0.85) for
+    0.95 m / 11.6 s (gain 0.40) — a real Oregon groundswell underpriced because
+    it arrives outside the raycast window.
 
     Returns ``{hs, tp, dp, dominant_partition, dir_gain, contributions}``
     or None when no swell partition contributes any energy (every
@@ -733,20 +779,24 @@ def combine_ww3_partitions(
         gain = directional_gain(dp_f, arcs, optimal, orientation)
         if gain <= 0:
             continue
+        energy = hs_f * hs_f * gain
         contributions.append({
             "partition": prefix,
             "hs": hs_f,
             "tp": tp_f,
             "dp": dp_f,
             "gain": gain,
-            # Energy-proxy used to pick the "dominant" partition for tp/dp.
-            "energy": hs_f * hs_f * gain,
+            # HEIGHT term. Summed into combined_hs below — no period weighting,
+            # ever. Keep this field free of the selection weight.
+            "energy": energy,
+            # SELECTION term. Picks which partition supplies tp/dp; never summed.
+            "selection_score": energy * period_quality(tp_f) ** SELECTION_PERIOD_QUALITY_EXPONENT,
         })
     if not contributions:
         return None
     combined_hs_sq = sum(c["energy"] for c in contributions)
     combined_hs = math.sqrt(combined_hs_sq)
-    dominant = max(contributions, key=lambda c: c["energy"])
+    dominant = max(contributions, key=lambda c: c["selection_score"])
     return {
         "hs": combined_hs,
         "tp": dominant["tp"],
