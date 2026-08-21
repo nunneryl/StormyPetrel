@@ -774,7 +774,8 @@ def nwps_series_by_hour(spot, cycle):
 # --------------------------------------------------------------------------- #
 # Rating + override (mirror mop_stars / apply_mop_overrides)                   #
 # --------------------------------------------------------------------------- #
-def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0):
+def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0,
+               arcs=None, optimal=None):
     """Nearshore-frame star rating for one NWPS hour, reusing interpret.py exactly
     (face_ft from swh × directional_gain(swell_dir vs orientation), period quality
     from the swell period), with per-hour wind/tide injected from the normal rater.
@@ -789,7 +790,16 @@ def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mu
     and that naming is why the substitution read as intentional for so long."""
     if hs is None or per is None or swell_dir is None or orientation is None:
         return None, None, None, None, None
-    dg = directional_gain(swell_dir, [], orientation, orientation)   # cos²((dir−orientation)/2)
+    # SAME GEOMETRIC FRAME the partition was SELECTED in. combine_ww3_partitions picks the
+    # winning partition with the spot's real arcs and optimal_swell_dir; this used to rescore
+    # it with `[], orientation, orientation` — empty arcs, orientation in the optimal slot —
+    # and overwrite the selection value, so the partition was chosen in one frame and scored
+    # in another, and directional_gain's arc branch was unreachable for every nwps spot.
+    # arcs/optimal default to the old behaviour so a caller with no spot geometry (the
+    # selftest, the placement harness) is unchanged.
+    dg = directional_gain(swell_dir, arcs or [],
+                          optimal if optimal is not None else orientation,
+                          orientation)
     face = face_ft(hs, per, RATING_SOURCE)
     eff = face * dg
     cm = chop_multiplier(chop_ratio(hs, swell_hs if swell_hs else hs))   # windsea-derived
@@ -954,7 +964,9 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
                 dir_eff, per_eff, src = dpw, per, SWELL_SOURCE_NWPS_DIRPW
                 n_dirpw += 1
             st, face, dg, cm, pq = nwps_stars(swh, per_eff, dir_eff, shts, orient,
-                                              e.get("wind_mult", 1.0), e.get("tide_mult", 1.0))
+                                              e.get("wind_mult", 1.0), e.get("tide_mult", 1.0),
+                                              arcs=s.get("swell_window_arcs"),
+                                              optimal=s.get("optimal_swell_dir"))
             if st is None:
                 continue
             if not dry_run:
@@ -1976,7 +1988,9 @@ def validate_batch(batch=None, wfo=None):
             if t is not None and int(t // 3600) in (k0, k0 - 1, k0 + 1):
                 wm, tm, fbstar = e.get("wind_mult", 1.0), e.get("tide_mult", 1.0), e.get("stars")
                 break
-        st, *_ = nwps_stars(swh, per, dpw, shts, s.get("orientation_deg"), wm, tm)
+        st, *_ = nwps_stars(swh, per, dpw, shts, s.get("orientation_deg"), wm, tm,
+                            arcs=s.get("swell_window_arcs"),
+                            optimal=s.get("optimal_swell_dir"))
         sval = f"{st:.1f}" if st is not None else "—"
         fval = f"{fbstar:.1f}" if fbstar is not None else "—"
         dm = _is_domain_miss(v)

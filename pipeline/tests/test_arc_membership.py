@@ -20,7 +20,13 @@ An earlier brief for this work assumed pad 1.0 everywhere because config.SWELL_R
 exist to hold shut — see test_pad_is_derived_not_assumed_from_a_step_constant.
 
 WHAT IS DELIBERATELY NOT CHANGED, and these tests pin it: the 0.25 in-window floor, the
-soft-outside ladder values 0.40 / 0.15 / 0.0, the cos-squared kernels, and every stored arc.
+soft-outside ladder values 0.40 / 0.15 / 0.0, and every stored arc.
+
+LATER CHANGE, not part of this work. The in-window kernel was subsequently narrowed from
+cos²(diff) to cos²(diff/2) — the same half-angle curve the no-arcs branch already used — on
+MOP calibration evidence recorded in directional_gain's docstring. Four expectations here
+moved with it and say so at the assertion; the kernel itself is pinned by
+test_directional_gain_frame.py, not here.
 
 EVERY EXPECTED VALUE IS HAND-COMPUTED with the arithmetic in a comment. None is derived by
 calling the function under test — the three deleted test-side re-implementations
@@ -220,22 +226,25 @@ def test_directional_gain_half_a_degree_outside_the_optimal_facing_edge():
     """dp = 251.5, i.e. max + 0.5. Padded sector reaches 253, so this is now INSIDE and takes
     the in-window kernel:
         diff = ((251.5 - 244 + 540) mod 360) - 180 = 7.5
-        gain = cos²(7.5°); cos(7.5°) = 0.991444861, squared = 0.982962913
-        floor max(0.25, 0.982962913) does not bite
-    BEFORE THE FIX this bearing was outside and returned the ladder's 0.40 — a 0.583 cliff
-    across half a degree. That cliff is what this pins shut."""
+        gain = cos²(7.5/2) = cos²(3.75°); cos(3.75°) = 0.997858923, squared = 0.995722431
+        floor max(0.25, 0.995722431) does not bite
+    BEFORE THE FIX this bearing was outside and returned the ladder's 0.40 — a 0.596 cliff
+    across half a degree. That cliff is what this pins shut.
+    VALUE CHANGED from 0.982962913 when the in-window kernel moved from cos²(diff) to
+    cos²(diff/2) — see directional_gain's docstring for the MOP calibration behind that."""
     got = directional_gain(251.5, SL_ARCS, SL_OPTIMAL, SL_ORIENT)
-    assert _close(got, 0.982962913, tol=1e-9), got
+    assert _close(got, 0.995722430687, tol=1e-9), got
     assert got != 0.40
 
 
 def test_directional_gain_one_and_a_half_degrees_outside_the_optimal_facing_edge():
     """dp = 252.5, i.e. max + 1.5, still within the 2° pad.
         diff = 252.5 - 244 = 8.5
-        gain = cos²(8.5°); cos(8.5°) = 0.989015863, squared = 0.978152378
+        gain = cos²(8.5/2) = cos²(4.25°); cos(4.25°) = 0.997250185, squared = 0.994507932
+    VALUE CHANGED from 0.978152378 with the half-angle kernel.
     """
     got = directional_gain(252.5, SL_ARCS, SL_OPTIMAL, SL_ORIENT)
-    assert _close(got, 0.978152378, tol=1e-9), got
+    assert _close(got, 0.994507931681, tol=1e-9), got
 
 
 def test_directional_gain_is_continuous_across_the_padded_edge():
@@ -243,10 +252,12 @@ def test_directional_gain_is_continuous_across_the_padded_edge():
     A step remains — the ladder is a different function and the brief forbids changing it — but
     it now sits at the TRUE window edge instead of half a step inside it, and nothing between
     251 and 253 is misclassified any more.
-        253.0 inside : diff 9.0,  cos(9°) = 0.987688341, squared = 0.975528258
+        253.0 inside : diff 9.0, cos(9/2°) = cos(4.5°) = 0.996917334, squared = 0.993844170
         253.5 outside: offset from padded edge 253 is 0.5 -> ladder band <45° -> 0.40
+    VALUE CHANGED from 0.975528258 with the half-angle kernel; the ladder side is untouched.
     """
-    assert _close(directional_gain(253.0, SL_ARCS, SL_OPTIMAL, SL_ORIENT), 0.975528258, tol=1e-9)
+    assert _close(directional_gain(253.0, SL_ARCS, SL_OPTIMAL, SL_ORIENT),
+                  0.993844170298, tol=1e-9)
     assert directional_gain(253.5, SL_ARCS, SL_OPTIMAL, SL_ORIENT) == 0.40
 
 
@@ -289,9 +300,17 @@ def test_min_offset_measures_from_the_padded_edge_not_the_raw_bound():
 
 def test_untouched_kernels_and_floor():
     """The comparison changed; the scoring did not."""
-    # in-window floor is 0.25, not 0.1: a bearing inside the sector but ~90° off optimal
+    # A bearing inside the sector but exactly 90° off optimal.
+    #   diff = ((154 - 244 + 540) mod 360) - 180 = -90
+    #   gain = cos²(-90/2) = cos²(45°) = 0.5 exactly; the 0.25 floor does not bite.
+    # VALUE CHANGED from 0.25: under the OLD full-angle kernel this was cos²(90°) = 0.0,
+    # floored up to 0.25. The floor itself is untouched — see the dedicated floor pin below.
     inside_far = directional_gain(154.0, [{"min": 100, "max": 200, "span": 104}], 244, 128.0)
-    assert inside_far == 0.25, inside_far
+    assert _close(inside_far, 0.5, tol=1e-12), inside_far
+    # the in-window floor is still 0.25 and still 0.25: 180° off optimal gives cos²(90°) = 0.0
+    #   arc [100,200] span 104 -> pad 2 -> padded sector [98, 202]; dp 100 is inside it
+    #   diff = ((100 - 280 + 540) mod 360) - 180 = -180 -> cos²(-90°) = 0.0 -> floored to 0.25
+    assert directional_gain(100.0, [{"min": 100, "max": 200, "span": 104}], 280, 128.0) == 0.25
     # empty-arcs branch is unchanged (cos²(diff/2) about optimal, floored at 0.25)
     #   dp 244 vs optimal 244 -> diff 0 -> cos²(0) = 1.0
     assert _close(directional_gain(244.0, [], 244, 128.0), 1.0)
