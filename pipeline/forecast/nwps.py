@@ -531,6 +531,98 @@ def _find_wave_dataset(datasets: list):
     return None, None
 
 
+def _cell_is_water(wave_ds, wave_var: str, li: int, lj: int) -> bool:
+    """Is grid cell (li, lj) a wet cell? NWPS masks land as all-NaN across the step axis.
+
+    THE ONE land test. Lifted verbatim out of _find_offshore_point's closure so the
+    baked-node check below applies the SAME test rather than a second copy of it —
+    a divergence between the two would send the two paths to different cells for the
+    same reason. _find_offshore_point's behaviour is unchanged: its `_is_water` now
+    delegates here, with the identical try/except and the identical predicate.
+    """
+    import numpy as np
+
+    try:
+        sample = wave_ds[wave_var].isel(latitude=li, longitude=lj)
+        arr = np.atleast_1d(np.asarray(sample.values)).ravel()
+        return not np.all(np.isnan(arr))
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _baked_node_is_water(datasets: list, lat: float, lng: float) -> bool:
+    """Does the baked seaward node land on a wet cell in this cycle's grid?
+
+    A baked nwps_node_lat/lng is a NODE CENTRE that select_node already resolved on a
+    wet cell, so this should always be True. It is checked anyway because the roster is
+    baked once and the grid is re-fetched every cycle: a mask change, a regridded nest,
+    or a stale assignment would otherwise sample land silently and return all-null.
+    A False here is a DATA problem worth surfacing, not a condition to swallow.
+    """
+    wave_ds, wave_var = _find_wave_dataset(datasets)
+    if wave_ds is None:
+        # No wave variable in this run — can't tell land from water. Same posture as
+        # _find_offshore_point takes in this case: trust the input.
+        return True
+
+    import numpy as np
+
+    lng_adj = _normalize_longitude(wave_ds, lng)
+    lats = np.asarray(wave_ds["latitude"].values)
+    lngs = np.asarray(wave_ds["longitude"].values)
+    li = int(np.argmin(np.abs(lats - lat)))
+    lj = int(np.argmin(np.abs(lngs - lng_adj)))
+    return _cell_is_water(wave_ds, wave_var, li, lj)
+
+
+def _seaward_diag(spot: dict, point_lat: float, point_lng: float):
+    """(bearing, off_normal_deg, is_seaward) from *spot* to the chosen cell, or None.
+
+    DIAGNOSTIC ONLY — nothing here selects a node. It exists because the fallback log
+    line reported distance and never direction, so a walk into the sound behind a
+    barrier island and a walk out to sea printed identically as "fell back at N cells
+    away". 47 spots were doing the former silently.
+
+    "Seaward" is the same half-plane select_node uses to CHOOSE nodes: within ±90° of
+    orientation_deg. The bearing maths is imported from nwps_nearshore rather than
+    re-derived here so the two cannot drift — the import is function-local to keep this
+    fetcher's import-time dependencies unchanged. Returns None when the spot carries no
+    orientation_deg, since then there is no normal to measure against.
+    """
+    orientation = spot.get("orientation_deg")
+    if orientation is None:
+        return None
+    from .nwps_nearshore import _ang_within, _bearing   # local: no import-time coupling
+
+    brg = _bearing(float(spot["lat"]), float(spot["lng"]), point_lat, point_lng)
+    off = abs(((brg - float(orientation) + 180.0) % 360.0) - 180.0)
+    return brg, off, _ang_within(brg, float(orientation), 90.0)
+
+
+def _warn_impossible_swell_pairs(series: list[dict], spot_name: str) -> int:
+    """Count and log records where swell_hs > hs. Returns the count; MUTATES NOTHING.
+
+    Significant swell height is a COMPONENT of total significant height, so
+    swell_hs > hs is physically impossible — it cannot be a real sea state, only a
+    sampling or parsing fault. The values are deliberately left exactly as read:
+    clamping or dropping them would hide the fault while still corrupting the rating
+    downstream. Making it loud is the point.
+    """
+    bad = 0
+    for rec in series:
+        hs, swell_hs = rec.get("hs"), rec.get("swell_hs")
+        if hs is None or swell_hs is None:
+            continue
+        if swell_hs > hs:
+            bad += 1
+            log.warning(
+                "nwps: %s %s — IMPOSSIBLE swell_hs %.3f m > hs %.3f m "
+                "(swell is a component of total; values left unmodified)",
+                spot_name, rec.get("valid_time"), swell_hs, hs,
+            )
+    return bad
+
+
 def _find_offshore_point(
     datasets: list,
     lat: float,
@@ -566,12 +658,7 @@ def _find_offshore_point(
     lng_idx = int(np.argmin(np.abs(lngs - lng_adj)))
 
     def _is_water(li: int, lj: int) -> bool:
-        try:
-            sample = wave_ds[wave_var].isel(latitude=li, longitude=lj)
-            arr = np.atleast_1d(np.asarray(sample.values)).ravel()
-            return not np.all(np.isnan(arr))
-        except Exception:  # noqa: BLE001
-            return False
+        return _cell_is_water(wave_ds, wave_var, li, lj)
 
     def _to_input_convention(ds_lng: float) -> float:
         # Reverse _normalize_longitude: if the dataset uses 0–360 and the
@@ -657,6 +744,18 @@ def fetch(
     spots_offshore_ok = 0      # nominal nearest cell was already water
     spots_fallback = 0         # found water within search radius
     spots_skipped_land = 0     # no water cell within search radius
+    # HOW the node was chosen, and — for the walk path — which WAY it went. The two
+    # axes are orthogonal to the three counters above, which only count ring hops:
+    # a 0-ring "nominal nearest cell" can still sit landward of the spot.
+    nodes_baked = 0            # baked seaward node used (the good path)
+    nodes_baked_land = 0       # baked node present but tested as land -> fell to the walk
+    walk_seaward = 0           # ring walk ended within ±90° of orientation_deg
+    walk_landward = 0          # ring walk ended OUTSIDE that half-plane — the defect
+    walk_no_orientation = 0    # no orientation_deg, so direction is not assessable
+    baked_land_names: list[str] = []
+    walk_landward_names: list[str] = []
+    impossible_pairs = 0       # records where swell_hs > hs (physically impossible)
+    impossible_pair_spots: list[str] = []
 
     try:
         from tqdm import tqdm
@@ -695,25 +794,79 @@ def fetch(
         for spot in wfo_spots:
             spot_lat = float(spot["lat"])
             spot_lng = float(spot["lng"])
-            found = _find_offshore_point(datasets, spot_lat, spot_lng)
-            if found is None:
-                spots_skipped_land += 1
-                log.warning(
-                    "nwps: %s — no ocean grid cell within %d cells of (%.4f, %.4f); skipping",
-                    spot["name"], _LAND_SEARCH_MAX_RADIUS, spot_lat, spot_lng,
-                )
-                continue
-            corr_lat, corr_lng, fallback_cells = found
-            if fallback_cells > 0:
-                spots_fallback += 1
-                log.info(
-                    "nwps: %s: nearest grid (%.4f, %.4f) was land, fell back to (%.4f, %.4f) at %d cells away",
-                    spot["name"], spot_lat, spot_lng, corr_lat, corr_lng, fallback_cells,
-                )
-            else:
-                spots_offshore_ok += 1
+            # PREFER THE BAKED SEAWARD NODE. spots_enriched.json carries
+            # nwps_node_lat/lng for most of the roster — the node select_node already
+            # chose WITH the ±90° seaward half-plane rule and the placement far-cap.
+            # This fetcher used to ignore it and re-derive a point from the raw spot
+            # coordinate with _find_offshore_point, whose ring walk has no directional
+            # constraint and accepts the first wet cell it touches. On a barrier-island
+            # coast the first cell examined at radius 1 is a landward diagonal, so the
+            # walk sampled the sound behind the island — where shts reads exactly 0.0
+            # while swh carries local ripple. That is the source of swell_hs > hs.
+            nlat, nlng = spot.get("nwps_node_lat"), spot.get("nwps_node_lng")
+            corr_lat = corr_lng = None
+            if nlat is not None and nlng is not None:
+                if _baked_node_is_water(datasets, float(nlat), float(nlng)):
+                    corr_lat, corr_lng = float(nlat), float(nlng)
+                    nodes_baked += 1
+                    log.info(
+                        "nwps: %s: using baked seaward node (%.4f, %.4f)",
+                        spot["name"], corr_lat, corr_lng,
+                    )
+                else:
+                    # Stale assignment or a regridded nest — surface it, don't swallow it.
+                    nodes_baked_land += 1
+                    baked_land_names.append(spot["name"])
+                    log.warning(
+                        "nwps: %s — BAKED NODE (%.4f, %.4f) tests as LAND in this cycle's "
+                        "grid; falling back to the ring walk. The assignment is stale or "
+                        "the nest was regridded.",
+                        spot["name"], float(nlat), float(nlng),
+                    )
+
+            if corr_lat is None:
+                found = _find_offshore_point(datasets, spot_lat, spot_lng)
+                if found is None:
+                    spots_skipped_land += 1
+                    log.warning(
+                        "nwps: %s — no ocean grid cell within %d cells of (%.4f, %.4f); skipping",
+                        spot["name"], _LAND_SEARCH_MAX_RADIUS, spot_lat, spot_lng,
+                    )
+                    continue
+                corr_lat, corr_lng, fallback_cells = found
+                # Direction of the walk, which the old log line never reported.
+                diag = _seaward_diag(spot, corr_lat, corr_lng)
+                if diag is None:
+                    walk_no_orientation += 1
+                    where = "bearing unknown (spot has no orientation_deg)"
+                elif diag[2]:
+                    walk_seaward += 1
+                    where = f"bearing {diag[0]:.0f}° = {diag[1]:.0f}° off normal, SEAWARD"
+                else:
+                    walk_landward += 1
+                    walk_landward_names.append(spot["name"])
+                    where = f"bearing {diag[0]:.0f}° = {diag[1]:.0f}° off normal, LANDWARD"
+                if fallback_cells > 0:
+                    spots_fallback += 1
+                    log.info(
+                        "nwps: %s: nearest grid (%.4f, %.4f) was land, fell back to "
+                        "(%.4f, %.4f) at %d cells away — %s",
+                        spot["name"], spot_lat, spot_lng, corr_lat, corr_lng,
+                        fallback_cells, where,
+                    )
+                else:
+                    spots_offshore_ok += 1
+                    log.info("nwps: %s: nominal nearest cell (%.4f, %.4f) — %s",
+                             spot["name"], corr_lat, corr_lng, where)
+
             series = _extract_time_series_from_datasets(datasets, corr_lat, corr_lng)
             if series:
+                # Physically impossible pairs are LOGGED, never clamped — see
+                # _warn_impossible_swell_pairs. Counted so a run says how bad it was.
+                n_bad = _warn_impossible_swell_pairs(series, spot["name"])
+                if n_bad:
+                    impossible_pairs += n_bad
+                    impossible_pair_spots.append(spot["name"])
                 out[spot["name"]] = series
                 spots_with_data += 1
 
@@ -727,4 +880,24 @@ def fetch(
         "nwps: land-fallback summary — nearest-water=%d, fell-back=%d, no-water-within-%d-cells=%d",
         spots_offshore_ok, spots_fallback, _LAND_SEARCH_MAX_RADIUS, spots_skipped_land,
     )
+    log.info(
+        "nwps: node-selection summary — baked-node=%d, baked-node-rejected-as-land=%d, "
+        "ring-walk-seaward=%d, ring-walk-LANDWARD=%d, ring-walk-no-orientation=%d",
+        nodes_baked, nodes_baked_land, walk_seaward, walk_landward, walk_no_orientation,
+    )
+    # NAME the bad ones. A bare count is easy to scroll past, and both of these are
+    # conditions someone has to act on rather than watch.
+    if walk_landward_names:
+        log.warning("nwps: %d spot(s) sampled LANDWARD of their own shore normal: %s",
+                    len(walk_landward_names), ", ".join(sorted(walk_landward_names)))
+    if baked_land_names:
+        log.warning("nwps: %d baked node(s) tested as land: %s",
+                    len(baked_land_names), ", ".join(sorted(baked_land_names)))
+    if impossible_pairs:
+        log.warning(
+            "nwps: %d record(s) across %d spot(s) have swell_hs > hs — physically "
+            "impossible, left unmodified: %s",
+            impossible_pairs, len(set(impossible_pair_spots)),
+            ", ".join(sorted(set(impossible_pair_spots))),
+        )
     return out
