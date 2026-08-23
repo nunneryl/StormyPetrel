@@ -209,8 +209,18 @@ def test_a_reoverridden_entry_drops_a_stale_fallback_tag():
 # 4 — the wind and tide multipliers are untouched by the override               #
 # --------------------------------------------------------------------------- #
 def test_wind_and_tide_multipliers_are_unchanged_by_the_override():
-    """The override re-rates size and direction; the per-hour wind/tide come from the
-    normal rater and must pass through byte-identical on BOTH paths."""
+    """The override re-rates size and direction; the per-hour tide comes from the normal
+    rater and passes through byte-identical on BOTH paths, and so does wind_mult FOR THIS
+    FIXTURE.
+
+    NARROWED, and deliberately so. wind_mult is no longer unconditionally passed through:
+    when the entry carries wind_dir/wind_speed AND the spot carries offshore_wind_deg, the
+    override re-judges wind_multiplier's offshore-bonus cap against the chop IT computed,
+    because that cap used to be frozen in from rate_spot's chop and could contradict the
+    chop_mult the override then wrote. This fixture's _spot() has no offshore_wind_deg and
+    _entry() no wind fields, so the recompute cannot fire here and pass-through still
+    holds. The recompute and the leave-alone cases are pinned in
+    pipeline/tests/test_chop_consistency.py."""
     for src, dp, tp in (("ww3", WW3_DP, WW3_TP), ("nwps_total", None, None)):
         e = _entry(ww3_dp=dp, ww3_tp=tp, source=src, wind_mult=0.53, tide_mult=0.91)
         nn.apply_nwps_overrides({"T": [e]}, [_spot()], _fetch=_fetch)

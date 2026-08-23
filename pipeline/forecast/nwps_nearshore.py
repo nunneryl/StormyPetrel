@@ -45,8 +45,8 @@ from pathlib import Path
 import numpy as np
 
 from ..interpret import (
-    chop_multiplier, chop_ratio, composite_stars, directional_gain, face_ft,
-    in_any_arc, period_quality,
+    chop_factors, composite_stars, directional_gain, face_ft,
+    in_any_arc, period_quality, wind_multiplier,
 )
 from ..config import WFO_TO_REGION
 # ONE cutoff, both sides of the comparison. Importing the constant (rather than restating 8.0)
@@ -775,7 +775,7 @@ def nwps_series_by_hour(spot, cycle):
 # Rating + override (mirror mop_stars / apply_mop_overrides)                   #
 # --------------------------------------------------------------------------- #
 def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0,
-               arcs=None, optimal=None):
+               arcs=None, optimal=None, chop=None):
     """Nearshore-frame star rating for one NWPS hour, reusing interpret.py exactly
     (face_ft from swh × directional_gain(swell_dir vs orientation), period quality
     from the swell period), with per-hour wind/tide injected from the normal rater.
@@ -802,7 +802,19 @@ def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mu
                           orientation)
     face = face_ft(hs, per, RATING_SOURCE)
     eff = face * dg
-    cm = chop_multiplier(chop_ratio(hs, swell_hs if swell_hs else hs))   # windsea-derived
+    # Windsea-derived, from ONE computation that yields both the ratio and the
+    # multiplier. *chop* lets the caller pass the pair it already computed (it needs the
+    # ratio to persist alongside the multiplier and to re-judge the wind cap); when it is
+    # None this computes the same pair from the same inputs via the same function, so the
+    # two entry points cannot diverge.
+    #
+    # THE OLD IDIOM WAS `swell_hs if swell_hs else hs`, which could not tell None from
+    # 0.0: a present-but-zero shts substituted hs for itself and scored chop 0 -> mult
+    # 1.00, while rate_spot read the identical input as ratio 1.0 -> mult 0.30. Same
+    # data, opposite ends of the curve, and the override wrote last. A missing shts still
+    # falls to NEUTRAL, as the docstring above promises — but now via an explicit
+    # unknown (ratio None -> mult 1.0) rather than by pretending the swell equals total.
+    cr, cm = chop if chop is not None else chop_factors(hs, swell_hs)
     pq = period_quality(per)
     stars = composite_stars(eff, wind_mult, tide_mult, cm, pq)
     return stars, face, dg, cm, pq
@@ -963,15 +975,35 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
                 # swell direction unnoticed.
                 dir_eff, per_eff, src = dpw, per, SWELL_SOURCE_NWPS_DIRPW
                 n_dirpw += 1
+            # CHOP IS COMPUTED ONCE, HERE, and both halves of it are persisted below.
+            # This override replaces the height (swh/shts) that rate_spot's chop was
+            # derived from, so rate_spot's chop_ratio no longer describes this row —
+            # it must be recomputed and rewritten, not left behind while only the
+            # multiplier moves. That mismatch is the 19.5% disagreement.
+            cr, cm_pair = chop_factors(swh, shts)
+            # RE-JUDGE THE WIND CAP against the chop this row actually has.
+            # wind_multiplier caps an offshore bonus at 0.8 when chop_ratio > 0.4, and
+            # the stored wind_mult had that decision frozen in from rate_spot's chop.
+            # Recomputing it here is possible because the entry still carries the raw
+            # NWPS wind and the spot carries offshore_wind_deg; where either is absent
+            # the entry's existing wind_mult is kept untouched rather than guessed at.
+            wdir, wspd = e.get("wind_dir"), e.get("wind_speed")
+            offshore = s.get("offshore_wind_deg")
+            wm_eff = e.get("wind_mult", 1.0)
+            if wdir is not None and wspd is not None and offshore is not None:
+                wm_eff = wind_multiplier(float(wdir), float(wspd), offshore, cr)
             st, face, dg, cm, pq = nwps_stars(swh, per_eff, dir_eff, shts, orient,
-                                              e.get("wind_mult", 1.0), e.get("tide_mult", 1.0),
+                                              wm_eff, e.get("tide_mult", 1.0),
                                               arcs=s.get("swell_window_arcs"),
-                                              optimal=s.get("optimal_swell_dir"))
+                                              optimal=s.get("optimal_swell_dir"),
+                                              chop=(cr, cm_pair))
             if st is None:
                 continue
             if not dry_run:
                 e.update(
-                    face_ft=round(face, 2), dir_gain=round(dg, 3), chop_mult=round(cm, 3),
+                    face_ft=round(face, 2), dir_gain=round(dg, 3),
+                    chop_ratio=cr, chop_mult=round(cm, 3),
+                    wind_mult=round(wm_eff, 3),
                     period_quality=round(pq, 3), effective_size_ft=round(face * dg, 2),
                     stars=st, swell_dp=round(dir_eff, 3), swell_tp=round(per_eff, 3),
                     swell_hs=round(shts, 3) if shts is not None else None,

@@ -42,8 +42,8 @@ from pathlib import Path
 import numpy as np
 
 from ..interpret import (
-    chop_multiplier, chop_ratio, composite_stars, directional_gain, face_ft,
-    period_quality,
+    chop_factors, composite_stars, directional_gain, face_ft,
+    period_quality, wind_multiplier,
 )
 from urllib.error import HTTPError, URLError
 
@@ -146,7 +146,7 @@ def pull_mop_window(url, t0, t1):
 
 
 def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
-              arcs=None, optimal=None):
+              arcs=None, optimal=None, chop=None):
     """Nearshore-frame star rating for one MOP hour, reusing interpret.py exactly
     (face_ft × directional_gain(dp vs shore-normal), chop from the MOP spectrum,
     period quality), with the per-hour wind/tide multipliers injected from the
@@ -163,7 +163,12 @@ def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
                           shore_normal)
     face = face_ft(hs, tp, RATING_SOURCE)
     eff = face * dg
-    cm = chop_multiplier(chop_ratio(hs, swell_hs if swell_hs else hs))
+    # ONE computation yielding both the ratio and the multiplier, matching nwps_stars.
+    # *chop* lets the caller pass the pair it already computed; when None this derives the
+    # same pair from the same inputs via the same function, so the two cannot diverge.
+    # The old `swell_hs if swell_hs else hs` idiom could not distinguish None from 0.0 and
+    # scored a present-but-zero swell_hs as mult 1.00 where rate_spot gave 0.30.
+    cr, cm = chop if chop is not None else chop_factors(hs, swell_hs)
     pq = period_quality(tp)
     stars = composite_stars(eff, wind_mult, tide_mult, cm, pq)
     return stars, face, dg, cm, pq
@@ -225,15 +230,31 @@ def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_
             if not m:
                 continue
             hs, tp, dp, swh = m
+            # Chop computed ONCE and both halves persisted — this override replaces the
+            # height the rating is built from, so rate_spot's chop_ratio no longer
+            # describes this row. On this path the divergence was wider still: the ratio
+            # came from NWPS shts while the multiplier came from a CDIP spectral integral.
+            cr, cm_pair = chop_factors(hs, swh)
+            # Re-judge the wind cap against this row's actual chop — see the twin comment
+            # in apply_nwps_overrides. Kept untouched when wind or offshore bearing is
+            # absent rather than guessed at.
+            wdir, wspd = e.get("wind_dir"), e.get("wind_speed")
+            offshore = s.get("offshore_wind_deg")
+            wm_eff = e.get("wind_mult", 1.0)
+            if wdir is not None and wspd is not None and offshore is not None:
+                wm_eff = wind_multiplier(float(wdir), float(wspd), offshore, cr)
             st, face, dg, cm, pq = mop_stars(hs, tp, dp, swh, sn,
-                                             e.get("wind_mult", 1.0), e.get("tide_mult", 1.0),
+                                             wm_eff, e.get("tide_mult", 1.0),
                                              arcs=s.get("swell_window_arcs"),
-                                             optimal=s.get("optimal_swell_dir"))
+                                             optimal=s.get("optimal_swell_dir"),
+                                             chop=(cr, cm_pair))
             if st is None:
                 continue
             if not dry_run:
                 e.update(
-                    face_ft=round(face, 2), dir_gain=round(dg, 3), chop_mult=round(cm, 3),
+                    face_ft=round(face, 2), dir_gain=round(dg, 3),
+                    chop_ratio=cr, chop_mult=round(cm, 3),
+                    wind_mult=round(wm_eff, 3),
                     period_quality=round(pq, 3), effective_size_ft=round(face * dg, 2),
                     stars=st, swell_dp=round(dp, 3), swell_tp=round(tp, 3),
                     swell_hs=round(swh, 3) if swh is not None else None,

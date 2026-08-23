@@ -19,7 +19,12 @@ Rating pipeline per hour:
                                      tide_preference and the current
                                      normalized tide position.
 5. Chop penalty (chop_mult)        ∈ [0.3, 1.0] from chop_ratio — the wind-sea
-                                     fraction of total Hs.
+                                     fraction of total Hs. chop_ratio is NULL
+                                     when the inputs cannot support a ratio, and
+                                     an unknown scores the neutral 1.0. Both are
+                                     produced by one call to chop_factors, so
+                                     chop_multiplier(chop_ratio) == chop_mult on
+                                     every path.
 6. Period quality (period_quality) ∈ [0.5, 1.05] from the swell period. The
                                      only factor that can exceed 1.0.
 7. Composite stars (0 or 1-5, 0.5 increments): size_score(effective face)
@@ -331,7 +336,10 @@ def wind_multiplier(
     # Heavy chop overrides the "offshore is clean" assumption — when the
     # wind sea is half the total energy, the lineup is junked even with
     # offshore wind. Cap the offshore bonus at 0.8.
-    if chop_ratio_val > 0.4 and base > 1.0:
+    # None = chop is UNKNOWN for this hour, so the cap cannot be judged and is not
+    # applied. The threshold and the 0.8 cap are unchanged; only the None case is new,
+    # and it exists because chop_ratio can now say "unknown" instead of claiming 0.0.
+    if chop_ratio_val is not None and chop_ratio_val > 0.4 and base > 1.0:
         log.debug("wind: chop_ratio %.2f > 0.4 with offshore wind; capping wind_mult at 0.8",
                   chop_ratio_val)
         base = min(base, 0.8)
@@ -405,19 +413,91 @@ def size_score(effective_face_ft: float) -> float:
 _CHOP_POINTS = [
     (0.0, 1.0), (0.2, 1.0), (0.4, 0.85), (0.6, 0.65), (0.8, 0.45), (1.0, 0.3),
 ]
+# Decimal places both chop columns persist at (db_import writes forecasts.chop_ratio
+# and forecasts.chop_mult from the rounded values). chop_factors rounds the RATIO to
+# this precision and derives the multiplier from the rounded value, which is what makes
+# chop_multiplier(stored_ratio) reproduce stored_mult exactly. Not a calibration knob:
+# changing it changes storage precision, not the curve.
+_CHOP_ROUND_DP = 3
 
 
-def chop_ratio(hs: float | None, swell_hs: float | None) -> float:
-    """Fraction of total wave height that's wind sea (0 = pure swell, 1 = pure chop)."""
+def chop_ratio(hs: float | None, swell_hs: float | None) -> float | None:
+    """Fraction of total wave height that's wind sea, or None when UNKNOWN.
+
+    0 = pure swell, 1 = pure chop. Only ONE input combination yields a real ratio:
+    hs > 0 with 0 <= swell_hs <= hs. Everything else is returned as None.
+
+    NONE MEANS "WE DO NOT KNOW", NOT "NO CHOP". This used to return 0.0 for six
+    distinct conditions of which only one — swell_hs == hs — actually meant clean
+    water. The other five were missing or impossible data, and because 0.0 maps to
+    chop_multiplier's MAXIMUM of 1.0, absent shts scored as glassy. It reached
+    users: the frontend's classifyChop renders ratio < 0.2 as "Clean" and
+    CurrentConditions prints "{n}% wind sea", so a null shts displayed as
+    "Clean — 0% wind sea". classifyChop already maps null to 'unknown', so the
+    honest value has somewhere to land.
+
+    The unknown cases, and why each is not zero:
+        hs is None      — no total height was read at all
+        hs <= 0         — the ratio is undefined at zero total; also the
+                          land-cell / sheltered-node signature
+        swell_hs is None— shts absent from the grid, or dropped as NaN
+        swell_hs > hs   — physically impossible (swell is a COMPONENT of total);
+                          used to clamp UP to 0.0, i.e. read as the cleanest
+                          possible water
+        swell_hs < 0    — impossible; used to fall through and produce a ratio
+                          ABOVE 1.0, clamped to exactly 1.0, i.e. maximum chop
+                          from garbage input
+    """
     if hs is None or hs <= 0:
-        return 0.0
-    if swell_hs is None:
-        return 0.0
+        return None
+    if swell_hs is None or swell_hs < 0 or swell_hs > hs:
+        return None
     return max(0.0, min(1.0, (hs - swell_hs) / hs))
 
 
-def chop_multiplier(chop_ratio_val: float) -> float:
+def chop_multiplier(chop_ratio_val: float | None) -> float:
+    """Rating multiplier for a chop ratio. An UNKNOWN ratio scores NEUTRAL.
+
+    None -> 1.0: an unknown must not silently penalise a spot, and 1.0 is the
+    identity for the composite's geometric mean. The curve itself (_CHOP_POINTS)
+    is untouched — this only extends the domain to cover "no ratio available",
+    which chop_ratio can now express and previously could not.
+    """
+    if chop_ratio_val is None:
+        return 1.0
     return _interp(chop_ratio_val, _CHOP_POINTS)
+
+
+def chop_factors(hs: float | None, swell_hs: float | None) -> tuple[float | None, float]:
+    """(chop_ratio, chop_mult) as ONE computation. The only supported way to get either.
+
+    THE PAIR MUST TRAVEL TOGETHER. chop_ratio had a single writer (rate_spot) while
+    chop_mult had three (rate_spot, nwps_stars, mop_stars), and the two overrides wrote
+    the multiplier without ever writing the matching ratio. A persisted row could
+    therefore carry a ratio and a multiplier computed from different hours (the
+    overrides hour-match within +/-1 bucket), different node resolutions, and on the
+    MOP path different source data entirely. Measured at 16115 rows (19.5%) where
+    recomputing the ratio from the stored hs/swell_hs disagreed with the stored
+    chop_ratio; Corolla Beach carried chop_ratio 1.0 with chop_mult 0.507 where the
+    curve says 1.0 must give 0.30.
+
+    THE INVARIANT this restores, and the acceptance criterion for the change:
+        chop_multiplier(row.chop_ratio) == row.chop_mult    for every row, every path.
+    Every writer must persist BOTH values from one call to this function.
+
+    THE RATIO IS ROUNDED HERE, NOT AT THE WRITE SITE, and the multiplier is derived
+    FROM THE ROUNDED RATIO. Both columns persist at 3 dp, and the curve is piecewise
+    linear with non-integer slopes (-0.75 on the outer segments), so a multiplier
+    derived from the full-precision ratio does NOT in general reproduce at 3 dp: at
+    ratio 0.2005 the stored ratio is 0.2 but the exact multiplier is 0.999625, which
+    stores as 1.0 while chop_multiplier(0.2) is exactly 1.0 — the two agree only by
+    luck. Rounding first makes the round-trip exact at the precision anyone can
+    actually read back, which is the only precision the invariant can be stated at.
+    """
+    ratio = chop_ratio(hs, swell_hs)
+    if ratio is not None:
+        ratio = round(ratio, _CHOP_ROUND_DP)
+    return ratio, chop_multiplier(ratio)
 
 
 # Period quality — short-period (wind) waves are low-quality even when on-axis;
@@ -1160,8 +1240,10 @@ def rate_spot(
         # Chop ratio + multiplier — degrades the rating when total Hs
         # exceeds swell-only Hs (i.e. wind sea adds energy that shows on
         # buoys but textures the lineup rather than producing rideable face).
-        cr = chop_ratio(hs, swell_hs)
-        cm = chop_multiplier(cr)
+        # ONE computation, both values. cr is None when the inputs cannot support a
+        # ratio; cm is then the neutral 1.0. Both are persisted below, so the pair is
+        # always internally consistent — see chop_factors.
+        cr, cm = chop_factors(hs, swell_hs)
 
         # Period quality — short-period (8-9 s) waves are low-quality even
         # when on-axis; long-period (13 s+) groundswells are clean.
@@ -1204,7 +1286,9 @@ def rate_spot(
             "face_ft": round(fft, 2) if fft is not None else None,
             "dir_gain": round(dg, 3),
             "wind_mult": round(wm, 3),
-            "chop_ratio": round(cr, 3),
+            # NULL, not 0.0, when unknown — 0.0 is a real reading ("pure swell") and
+            # the frontend renders it as "Clean". null renders as 'unknown'.
+            "chop_ratio": round(cr, 3) if cr is not None else None,
             "chop_mult": round(cm, 3),
             "period_quality": round(pq, 3),
             "tide_level_ft": tide_raw,
