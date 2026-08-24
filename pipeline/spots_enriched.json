@@ -980,7 +980,7 @@
       "crowds"
     ],
     "tide_preference_confidence": 0.82,
-    "nwps_wfo": "lox",
+    "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position correction from spot_cleanup_manifest_2 (2026-06-16).",
@@ -9020,7 +9020,7 @@
       "current"
     ],
     "tide_preference_confidence": 0.7,
-    "nwps_wfo": "mtr",
+    "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Position refinement from orientation_apply_manifest (2026-06-16).",
