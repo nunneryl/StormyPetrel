@@ -599,6 +599,71 @@ def _seaward_diag(spot: dict, point_lat: float, point_lng: float):
     return brg, off, _ang_within(brg, float(orientation), 90.0)
 
 
+def _sampled_distance_km(spot_lat: float, spot_lng: float,
+                         point_lat: float, point_lng: float) -> float:
+    """Great-circle km from the spot to the cell actually sampled.
+
+    DIAGNOSTIC ONLY — nothing here selects or rejects a cell. This fetcher computed no
+    metric distance at all: the fallback line reported a CELL COUNT ("fell back at 1
+    cells away") and, later, a bearing, but never a distance. The Wedge sampled a cell
+    305 km away for two months behind a stale nwps_wfo and no log said so.
+
+    The maths is imported from nwps_nearshore rather than re-derived so the fetcher and
+    the placement pass cannot disagree about what a distance is; the import is
+    function-local to keep this module's import-time dependencies unchanged, the same
+    way _seaward_diag borrows _bearing / _ang_within.
+    """
+    from .nwps_nearshore import _haversine_km   # local: no import-time coupling
+
+    return _haversine_km(spot_lat, spot_lng, point_lat, point_lng)
+
+
+def _grid_spacing_and_cap_km(datasets: list) -> tuple[float, float]:
+    """(node spacing km, far cap km) for this cycle's grid. (0.0, floor) if undeterminable.
+
+    Mirrors nwps_nearshore.grid_spacing_km / grid_far_cap_km — the MEDIAN adjacent-node
+    step on each axis, converted to km at the grid's MEDIAN latitude and averaged, then
+    capped as max(FAR_CAP_FLOOR_KM, FAR_CAP_MULT * spacing). The constants are imported
+    rather than restated so the fetcher's cap and the placement pass's cap are the same
+    number by construction.
+
+    ONE DELIBERATE DIFFERENCE FROM THE SIBLING. grid_spacing_km takes a `cycle` whose
+    lats/lons are 2-D meshgrids and guards on `ndim != 2`, slicing the axes back out as
+    lats[:, 0] / lons[0, :]. cfgrib hands THIS module the 1-D axes directly, so that
+    guard does not transfer and is not reproduced: the axes are used as they arrive. A
+    degenerate axis (fewer than two points) contributes no step, and a grid that yields
+    no step at all falls back to the floor.
+
+    Computed once per WFO — the grid does not vary across the spots of one cycle.
+    """
+    import numpy as np
+
+    from .nwps_nearshore import FAR_CAP_FLOOR_KM, FAR_CAP_MULT, _haversine_km
+
+    wave_ds, _var = _find_wave_dataset(datasets)
+    if wave_ds is None:
+        return 0.0, FAR_CAP_FLOOR_KM
+    try:
+        lat1d = np.asarray(wave_ds["latitude"].values).ravel()
+        lng1d = np.asarray(wave_ds["longitude"].values).ravel()
+    except Exception:  # noqa: BLE001
+        return 0.0, FAR_CAP_FLOOR_KM
+
+    mid_lat = float(np.median(lat1d)) if lat1d.size else 0.0
+    steps = []
+    if lat1d.size > 1:
+        dlat = float(np.median(np.abs(np.diff(lat1d))))
+        if dlat > 0:
+            steps.append(_haversine_km(mid_lat, 0.0, mid_lat + dlat, 0.0))
+    if lng1d.size > 1:
+        dlng = float(np.median(np.abs(np.diff(lng1d))))
+        if dlng > 0:
+            steps.append(_haversine_km(mid_lat, 0.0, mid_lat, dlng))
+    spacing = sum(steps) / len(steps) if steps else 0.0
+    cap = max(FAR_CAP_FLOOR_KM, FAR_CAP_MULT * spacing) if spacing > 0 else FAR_CAP_FLOOR_KM
+    return spacing, cap
+
+
 def _warn_impossible_swell_pairs(series: list[dict], spot_name: str) -> int:
     """Count and log records where swell_hs > hs. Returns the count; MUTATES NOTHING.
 
@@ -756,6 +821,8 @@ def fetch(
     walk_landward_names: list[str] = []
     impossible_pairs = 0       # records where swell_hs > hs (physically impossible)
     impossible_pair_spots: list[str] = []
+    far_sampled = 0            # sampled cell beyond this grid's far cap — reported, NEVER refused
+    far_sampled_names: list[str] = []
 
     try:
         from tqdm import tqdm
@@ -788,6 +855,11 @@ def fetch(
             log.info("nwps: %s %s", wfo, _describe_dataset(ds, i))
 
         wfos_ok += 1
+        # ONE grid per cycle, so derive the spacing and the far cap ONCE per WFO rather
+        # than per spot. Same formula the placement pass uses — see _grid_spacing_and_cap_km.
+        grid_spacing_km_v, far_cap_km = _grid_spacing_and_cap_km(datasets)
+        log.info("nwps: %s grid spacing %.2f km -> sampled-distance cap %.2f km",
+                 wfo, grid_spacing_km_v, far_cap_km)
         wfo_spots = [s for s in spots if s.get("nwps_wfo") == wfo]
         log.info("nwps: %s (%sZ %s) — extracting %d spots from %s",
                  wfo, cycle_hh, cycle_date, len(wfo_spots), grib_path.name)
@@ -810,8 +882,9 @@ def fetch(
                     corr_lat, corr_lng = float(nlat), float(nlng)
                     nodes_baked += 1
                     log.info(
-                        "nwps: %s: using baked seaward node (%.4f, %.4f)",
+                        "nwps: %s: using baked seaward node (%.4f, %.4f) — %.2f km away",
                         spot["name"], corr_lat, corr_lng,
+                        _sampled_distance_km(spot_lat, spot_lng, corr_lat, corr_lng),
                     )
                 else:
                     # Stale assignment or a regridded nest — surface it, don't swallow it.
@@ -846,18 +919,41 @@ def fetch(
                     walk_landward += 1
                     walk_landward_names.append(spot["name"])
                     where = f"bearing {diag[0]:.0f}° = {diag[1]:.0f}° off normal, LANDWARD"
+                walk_km = _sampled_distance_km(spot_lat, spot_lng, corr_lat, corr_lng)
                 if fallback_cells > 0:
                     spots_fallback += 1
                     log.info(
                         "nwps: %s: nearest grid (%.4f, %.4f) was land, fell back to "
-                        "(%.4f, %.4f) at %d cells away — %s",
+                        "(%.4f, %.4f) at %d cells / %.2f km away — %s",
                         spot["name"], spot_lat, spot_lng, corr_lat, corr_lng,
-                        fallback_cells, where,
+                        fallback_cells, walk_km, where,
                     )
                 else:
                     spots_offshore_ok += 1
-                    log.info("nwps: %s: nominal nearest cell (%.4f, %.4f) — %s",
-                             spot["name"], corr_lat, corr_lng, where)
+                    log.info("nwps: %s: nominal nearest cell (%.4f, %.4f) — %.2f km away — %s",
+                             spot["name"], corr_lat, corr_lng, walk_km, where)
+
+            # HOW FAR did we actually sample, on WHICHEVER path got us here? Checked once,
+            # after both branches, so the baked node and the ring walk are measured alike.
+            #
+            # THIS REPORTS. IT MUST NEVER REFUSE. Do not "improve" this into a skip, a
+            # None return, a substituted cell, or a clamp. A skipped spot produces NO
+            # forecast rows AT ALL: it is absent from nwps.json, compute_ratings never
+            # visits it, db_import writes nothing, and the frontend has nothing to
+            # render. There is no fallback rater behind this — no buoy-only path, no
+            # orientation stub. A slightly-wrong forecast beats a blank page, so an
+            # over-cap sample is published and made loud, not withheld.
+            sampled_km = _sampled_distance_km(spot_lat, spot_lng, corr_lat, corr_lng)
+            if sampled_km > far_cap_km:
+                far_sampled += 1
+                far_sampled_names.append(spot["name"])
+                log.warning(
+                    "nwps: %s — sampled cell (%.4f, %.4f) is %.2f km away, OVER this "
+                    "grid's %.2f km cap (spacing %.2f km). Published anyway; the "
+                    "forecast is from a cell that far off.",
+                    spot["name"], corr_lat, corr_lng, sampled_km, far_cap_km,
+                    grid_spacing_km_v,
+                )
 
             series = _extract_time_series_from_datasets(datasets, corr_lat, corr_lng)
             if series:
@@ -882,8 +978,10 @@ def fetch(
     )
     log.info(
         "nwps: node-selection summary — baked-node=%d, baked-node-rejected-as-land=%d, "
-        "ring-walk-seaward=%d, ring-walk-LANDWARD=%d, ring-walk-no-orientation=%d",
+        "ring-walk-seaward=%d, ring-walk-LANDWARD=%d, ring-walk-no-orientation=%d, "
+        "over-far-cap=%d",
         nodes_baked, nodes_baked_land, walk_seaward, walk_landward, walk_no_orientation,
+        far_sampled,
     )
     # NAME the bad ones. A bare count is easy to scroll past, and both of these are
     # conditions someone has to act on rather than watch.
@@ -893,6 +991,10 @@ def fetch(
     if baked_land_names:
         log.warning("nwps: %d baked node(s) tested as land: %s",
                     len(baked_land_names), ", ".join(sorted(baked_land_names)))
+    if far_sampled_names:
+        log.warning("nwps: %d spot(s) sampled BEYOND their grid's far cap (published "
+                    "anyway, not skipped): %s",
+                    len(far_sampled_names), ", ".join(sorted(far_sampled_names)))
     if impossible_pairs:
         log.warning(
             "nwps: %d record(s) across %d spot(s) have swell_hs > hs — physically "
