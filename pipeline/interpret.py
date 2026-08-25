@@ -12,9 +12,11 @@ Rating pipeline per hour:
                                      swell_window_arcs, cos²(offset) inside.
 3. Wind quality (wind_mult)        ∈ [0.44, 1.2] as implemented; blended
                                      toward 1.0 when wind_speed < 5 m/s.
-                                     (wind_multiplier's own docstring still
-                                     claims 0.4 — 0.44 is the reachable
-                                     minimum, 0.55 * 0.8 in the gale band.)
+                                     (0.44 = 0.55 * 0.8, the deepest direction
+                                     band times the gale factor. This figure
+                                     and wind_multiplier's own docstring now
+                                     agree; both are pinned by value in
+                                     tests/test_wind_multiplier.py.)
 4. Tide quality (tide_mult)        ∈ {0.6, 0.7, 0.8, 1.0} using
                                      tide_preference and the current
                                      normalized tide position.
@@ -71,10 +73,30 @@ M_TO_FT = 3.281
 #
 #   - NWPS swell_hs (SHTS) is *nearshore* significant height. The wave has
 #     already partially shoaled, so the remaining deep→break amplification
-#     is moderate (1.2–1.6×).
+#     is moderate: 1.2× at and below 6 s, rising to 1.6× at 16 s.
 #   - WW3 swell_n_hs is the *deep-ocean* partition height before any
-#     coastal shoaling. Beach-break shoaling typically multiplies that by
-#     1.0–1.3× depending on bathymetry and period.
+#     coastal shoaling. Beach-break shoaling multiplies that by rather less,
+#     depending on bathymetry and period: 1.0× at and below 6 s, 1.25× at 16 s.
+#
+# THE TWO TABLES ARE SHAPED DIFFERENTLY PAST 16 s AND ONLY ONE OF THEM PLATEAUS.
+# State them separately; a single combined range misdescribes both.
+#
+#   NWPS ends (16.0, 1.6) → (99.0, 1.6). Both y are equal, so the last segment is
+#   genuinely horizontal: every period at or above 16 s returns exactly 1.6. The
+#   1.2–1.6× range above is therefore both the nominal AND the reachable range.
+#
+#   WW3 ends (16.0, 1.25) → (99.0, 1.3). It keeps climbing linearly across an
+#   83-second span and has no plateau at all, so 1.3 IS NOT A REACHABLE VALUE in
+#   any physical sea state — it occurs only AT tp = 99 s, the table's last anchor
+#   and the clamp beyond it. In the surfable range the curve tops out just above
+#   1.25:  tp 16 → 1.25,  tp 20 → 1.2524,  tp 40 → 1.2645,  tp 60 → 1.2765.
+#   The REALISTIC WW3 range is 1.0–1.25×; 1.0–1.3× is the table's endpoints, not
+#   its output. (An earlier version of this comment stated "1.0–1.3×" flat, which
+#   overstated the ceiling by 4% for every period a forecast actually carries.)
+#
+# Both shapes are pinned by value in pipeline/tests/test_period_factor.py — see
+# test_the_ww3_tail_segment_does_not_plateau_the_way_the_nwps_one_does, which
+# asserts the four figures above rather than leaving them to be trusted.
 #
 # Mis-applying the NWPS curve to WW3 was over-amplifying long-period swells
 # by ~30% (Pipeline showing 3.5 ft when Surfline reads 1–2 ft); split here.
@@ -93,8 +115,19 @@ _PERIOD_FACTOR_WW3 = [
 # 648 spots × 145 hours × 3 partitions per cycle — so an unguarded warning on one mistyped
 # source would emit hundreds of thousands of identical lines and bury every other
 # diagnostic in the run. Keyed by repr() so an unhashable source (a list, a dict) cannot
-# raise inside the guard either. It grows only with the number of DISTINCT bad values,
-# which is bounded by the number of call sites, not by the row count.
+# raise inside the guard either.
+#
+# HARD-CAPPED, because "bounded by the number of call sites" is only true while every
+# caller passes a LITERAL. Today they all do — rate_spot passes the two strings and both
+# override raters pass RATING_SOURCE — but a future caller passing a COMPUTED string (a
+# slug, a WFO id, an f-string carrying a spot name) would add one entry per distinct value
+# and the set would grow for the lifetime of the process, unbounded, in a long-running
+# pipeline run. 32 is chosen as far more than the number of distinct sources any correct
+# program has (there are two) while staying small enough that the set can never be a
+# memory concern. Past the cap the warning STILL FIRES — the diagnostic is never silenced,
+# it just stops being deduplicated, which is the right way round: a flood of warnings is
+# recoverable and visible, a silent unbounded set is neither.
+_UNKNOWN_PERIOD_SOURCES_MAX = 32
 _UNKNOWN_PERIOD_SOURCES_WARNED: set[str] = set()
 
 
@@ -118,7 +151,13 @@ def period_factor(tp: float, source: str = "nwps") -> float:
     if source != "ww3" and source != "nwps":
         key = repr(source)
         if key not in _UNKNOWN_PERIOD_SOURCES_WARNED:
-            _UNKNOWN_PERIOD_SOURCES_WARNED.add(key)
+            # Record only while under the cap; warn either way. Once the set is full the
+            # dedup stops and every subsequent unrecognised call re-reports — noisy by
+            # design, because reaching 32 distinct bad sources already means something is
+            # badly wrong upstream and the noise is the signal. See
+            # test_the_seen_set_is_bounded_and_keeps_warning_past_the_cap.
+            if len(_UNKNOWN_PERIOD_SOURCES_WARNED) < _UNKNOWN_PERIOD_SOURCES_MAX:
+                _UNKNOWN_PERIOD_SOURCES_WARNED.add(key)
             log.warning(
                 "interpret: unrecognised period_factor source %s — expected 'nwps' or "
                 "'ww3'. USED THE NWPS TABLE (the heavier nearshore curve: 1.6 vs 1.25 at "
@@ -336,10 +375,28 @@ def wind_multiplier(
     offshore_wind_deg: float | None,
     chop_ratio_val: float = 0.0,
 ) -> float:
-    """0.4–1.2 based on offset from the spot's offshore bearing, blended
+    """0.44–1.2 based on offset from the spot's offshore bearing, blended
     toward neutral 1.0 when winds are light (< 5 m/s). Adjusted downward
     when chop is heavy (the swell isn't clean even if local wind looks
     offshore) and when the wind is too strong to paddle into.
+
+    THE MINIMUM IS 0.44, NOT THE 0.4 THIS DOCSTRING USED TO CLAIM. 0.4 is
+    unreachable twice over, and neither mechanism can produce it:
+
+      1. The deepest direction band is 0.55 (the `else` below, ang >= 150°).
+         No band is 0.4, so 0.4 cannot arrive from direction alone.
+      2. The only thing that goes below a band value is the gale factor,
+         which is multiplicative: 0.55 * 0.8 = 0.44. That is the floor.
+
+    Nothing else reaches lower. The light-wind blend only pulls values UP
+    toward 1.0 and cannot coexist with the gale (one needs < 5 m/s, the other
+    > 20 m/s); the chop cap floors at 0.8 and requires base > 1.0, which the
+    > 15 m/s branch has already ruled out at gale speeds.
+
+    0.44 is pinned by value in pipeline/tests/test_wind_multiplier.py — see
+    test_the_implemented_range_is_zero_point_four_four_to_one_point_two, which
+    sweeps 3601 bearings × 15 speeds × 5 chop values and asserts both ends.
+    Check it there rather than trusting this line.
     """
     if offshore_wind_deg is None:
         return 1.0
@@ -372,6 +429,27 @@ def wind_multiplier(
     # None = chop is UNKNOWN for this hour, so the cap cannot be judged and is not
     # applied. The threshold and the 0.8 cap are unchanged; only the None case is new,
     # and it exists because chop_ratio can now say "unknown" instead of claiming 0.0.
+    #
+    # THIS BRANCH IS DEAD ABOVE 15 m/s. Documented, NOT fixed — deciding whether to
+    # reorder it is a separate change with its own before/after, because it would move
+    # published ratings.
+    #
+    # The `> 15.0` branch immediately above has already assigned base = 1.0 to anything
+    # that was over 1.0, and every other band is at or below 1.0 to begin with. So once
+    # the wind is above 15 m/s the `base > 1.0` guard here can never hold, and chop_ratio
+    # cannot affect the result at any value. Confirmed by exhaustive sweep — 9 speeds
+    # above 15 × 9 bearings × 4 chop ratios = 324 inputs, and chop changes the outcome in
+    # ZERO of them (test_wind_multiplier.test_the_chop_cap_is_dead_above_fifteen...).
+    # It is alive at and below 15.0, so this is an ordering artefact, not a dead
+    # condition everywhere. Benign in practice: above 15 m/s the wind penalty is already
+    # doing the work the chop cap would have done.
+    #
+    # NOTE ON `min`: when this branch DOES fire, base is necessarily > 1.0, so
+    # min(base, 0.8) is ALWAYS exactly 0.8 — measured across every firing input, the
+    # result set is the single value {0.8}. The `min` selects nothing; it is defensive
+    # spelling for "cap at 0.8". The window where base lies between 0.8 and 1.0 — where a
+    # min would actually choose — is excluded by the `base > 1.0` guard and never reaches
+    # here.
     if chop_ratio_val is not None and chop_ratio_val > 0.4 and base > 1.0:
         log.debug("wind: chop_ratio %.2f > 0.4 with offshore wind; capping wind_mult at 0.8",
                   chop_ratio_val)

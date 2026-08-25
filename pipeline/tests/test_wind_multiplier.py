@@ -402,7 +402,7 @@ def test_the_chop_cap_is_dead_above_fifteen_metres_per_second():
 # 11 — the implemented range                                                    #
 # --------------------------------------------------------------------------- #
 def test_the_implemented_range_is_zero_point_four_four_to_one_point_two():
-    """THE DOCSTRING SAYS "0.4–1.2". THE TRUE MINIMUM IS 0.44 AND 0.4 IS NOT REACHABLE.
+    """THE MINIMUM IS 0.44 AND 0.4 IS NOT REACHABLE.
 
         deepest band 0.55 (ang >= 150), gale factor 0.8 -> 0.55 * 0.8 = 0.44
 
@@ -410,10 +410,11 @@ def test_the_implemented_range_is_zero_point_four_four_to_one_point_two():
     coexist with the gale (one needs < 5 m/s, the other > 20), and the chop cap floors at 0.8
     and needs base > 1.0, which the >15 branch has already ruled out at gale speeds.
 
-    THE DOCSTRING IS NOT CHANGED IN THIS COMMIT — that is a separate, one-line edit with its
-    own review. It is pinned here as WRONG so the correction is deliberate. The module
-    docstring at interpret.py:13-16 already carries the corrected figure and flags the
-    disagreement, so the two are inconsistent with each other as well.
+    THE DOCSTRING NOW AGREES. It claimed "0.4–1.2" when this test was written, and the
+    assertion below was deliberately phrased "if it was corrected to 0.44, update this test"
+    — this IS that update. The check is kept and STRENGTHENED rather than dropped: the
+    corrected range must be present AND the old wrong claim must be absent, so a revert of
+    the docstring fails here just as loudly as the original error did.
 
     Measured over 3601 bearings x 15 speeds x 5 chop values = 270k inputs."""
     lo, hi = 9e9, -9e9
@@ -431,11 +432,25 @@ def test_the_implemented_range_is_zero_point_four_four_to_one_point_two():
     assert _close(hi, 1.2), (hi, hi_at)
     assert lo > 0.4, "0.4 is NOT reachable — the function docstring's lower bound is wrong"
 
-    # the docstring still claims it, and this test is the record that it does
-    assert "0.4–1.2" in (I.wind_multiplier.__doc__ or ""), \
-        "the docstring's range changed — if it was corrected to 0.44, update this test"
-    # the module docstring already carries the correction, so the two disagree in-tree
-    assert "0.44" in (I.__doc__ or "")
+    doc = I.wind_multiplier.__doc__ or ""
+    # the corrected range is stated...
+    assert "0.44–1.2" in doc, "the docstring must state the reachable range 0.44–1.2"
+    # ...and the old, unreachable claim is gone. `0.4–1.2` is NOT a substring of
+    # `0.44–1.2` (after "0.4" comes "4", not the dash), so this genuinely rejects a revert.
+    assert "0.4–1.2" not in doc, "the unreachable 0.4 lower bound came back"
+    # BOTH mechanisms that put 0.4 out of reach must be NAMED, not merely alluded to.
+    # A docstring that says "the minimum is 0.44" without saying why is the next reader's
+    # problem; these two lines are what let them check it against the code.
+    assert "deepest direction band is 0.55" in doc, \
+        "mechanism 1 (no band is 0.4) must be stated explicitly"
+    assert "0.55 * 0.8 = 0.44" in doc, \
+        "mechanism 2 (the gale factor is what reaches the floor) must show its arithmetic"
+    # and the module docstring agrees with the function docstring — they used to disagree,
+    # with the module one carrying a note that wind_multiplier's "still claims 0.4"
+    mod = I.__doc__ or ""
+    assert "0.44" in mod and "0.55 * 0.8" in mod, mod
+    assert "still\n                                     claims 0.4" not in mod, \
+        "the module docstring's stale cross-reference survived the correction"
 
 
 def _run_all():
