@@ -37,6 +37,7 @@ Run: python -m pipeline.tests.test_period_factor   (or pytest)
 """
 from __future__ import annotations
 
+import inspect
 import logging
 
 from pipeline import interpret as I
@@ -251,6 +252,21 @@ def test_the_ww3_tail_segment_does_not_plateau_the_way_the_nwps_one_does():
     # 1.3 is NOT attained anywhere a real forecast lives
     assert I.period_factor(30.0, "ww3") < 1.3
 
+    # AND THE BLOCK COMMENT ABOVE THE TABLES MUST SAY SO. This is a `#` comment, not a
+    # docstring, so it does not survive into __doc__ and can only be checked by reading the
+    # module SOURCE. It is worth checking: the comment claimed a flat "1.0–1.3×" for four
+    # months, which overstates the ceiling by 4% for every period a forecast actually
+    # carries, and a reader who trusts it will mis-predict every WW3-path face height.
+    src = inspect.getsource(I)
+    assert "The REALISTIC WW3 range is 1.0–1.25×" in src, \
+        "the WW3 block comment must state the REACHABLE range, not the table's endpoints"
+    assert "1.0–1.3× is the table's endpoints" in src, \
+        "the comment must say where 1.3 actually comes from"
+    assert "tp 20 → 1.2524" in src and "tp 40 → 1.2645" in src, \
+        "the comment must carry the measured tail values a reader can check"
+    # the NWPS side is stated SEPARATELY, because only that table plateaus
+    assert "genuinely horizontal" in src, "the NWPS plateau must be described on its own"
+
 
 # --------------------------------------------------------------------------- #
 # 9 — a REVERSED table returns a plausible constant, not an error               #
@@ -398,6 +414,79 @@ def test_an_unrecognised_source_reports_but_never_raises_and_never_redirects():
     finally:
         I.log.removeHandler(cap)
         I.log.propagate = prev_propagate
+        I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()
+        I._UNKNOWN_PERIOD_SOURCES_WARNED.update(saved_seen)
+
+
+def test_the_seen_set_is_bounded_and_keeps_warning_past_the_cap():
+    """_UNKNOWN_PERIOD_SOURCES_WARNED is a process-lifetime module-level set, so it must not
+    be able to grow without limit.
+
+    Today every caller passes a LITERAL — rate_spot passes the two strings, both override
+    raters pass RATING_SOURCE — so the set can hold at most the handful of distinct values
+    those sites produce. That is a property of the CALLERS, not of this module, and a future
+    caller passing a COMPUTED string (a slug, a WFO id, an f-string carrying a spot name)
+    would add one entry per distinct value and never release them.
+
+    THE CAP IS 32, and past it the dedup stops but the WARNING DOES NOT. That direction
+    matters: a flood of warnings is visible and recoverable, a silently growing set is
+    neither. Reaching 32 distinct bad sources already means something is badly wrong
+    upstream, so the noise past the cap is the signal.
+
+        feed 40 distinct sources ("bogus-0" .. "bogus-39")
+          -> the set stops at exactly 32
+          -> all 40 still warn (32 first-sightings + 8 past the cap)
+        then feed the 8 over-cap values AGAIN
+          -> they warn AGAIN, because they were never recorded
+    """
+    cap = _Capture()
+    I.log.addHandler(cap)
+    prev_propagate = I.log.propagate
+    prev_level = I.log.level
+    I.log.propagate = False
+    I.log.setLevel(logging.DEBUG)
+    saved_seen = set(I._UNKNOWN_PERIOD_SOURCES_WARNED)
+    I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()
+    try:
+        assert I._UNKNOWN_PERIOD_SOURCES_MAX == 32, I._UNKNOWN_PERIOD_SOURCES_MAX
+
+        over = I._UNKNOWN_PERIOD_SOURCES_MAX + 8          # 40 distinct sources
+        for i in range(over):
+            # the value is still correct on every one of them — the cap is about the SET,
+            # not about the rating: 16 s on the NWPS table is 1.6
+            assert I.period_factor(16.0, f"bogus-{i}") == 1.6, i
+
+        # THE SET STOPPED GROWING at exactly the cap
+        assert len(I._UNKNOWN_PERIOD_SOURCES_WARNED) == 32, len(I._UNKNOWN_PERIOD_SOURCES_WARNED)
+        assert len(I._UNKNOWN_PERIOD_SOURCES_WARNED) <= I._UNKNOWN_PERIOD_SOURCES_MAX
+        # the first 32 are the ones retained; the last 8 were never recorded
+        assert repr("bogus-0") in I._UNKNOWN_PERIOD_SOURCES_WARNED
+        assert repr("bogus-31") in I._UNKNOWN_PERIOD_SOURCES_WARNED
+        assert repr("bogus-32") not in I._UNKNOWN_PERIOD_SOURCES_WARNED
+        assert repr("bogus-39") not in I._UNKNOWN_PERIOD_SOURCES_WARNED
+
+        # WARNINGS KEPT COMING — one per source, including the 8 past the cap
+        warned = cap.warnings()
+        assert len(warned) == over, f"{len(warned)} warnings for {over} sources"
+        for i in (0, 31, 32, 39):
+            assert any(repr(f"bogus-{i}") in w for w in warned), i
+
+        # under the cap the dedup still works: a repeat of a RECORDED value adds nothing
+        before = len(cap.warnings())
+        for _ in range(50):
+            I.period_factor(12.0, "bogus-0")
+        assert len(cap.warnings()) == before, "dedup broke below the cap"
+
+        # past the cap it does NOT dedup — an unrecorded value re-warns every time, and the
+        # set still does not grow
+        for _ in range(5):
+            I.period_factor(12.0, "bogus-39")
+        assert len(cap.warnings()) == before + 5, "an over-cap source must keep reporting"
+        assert len(I._UNKNOWN_PERIOD_SOURCES_WARNED) == 32, "the set grew past its cap"
+    finally:
+        I.log.removeHandler(cap)
+        I.log.propagate = prev_propagate
+        I.log.setLevel(prev_level)
         I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()
         I._UNKNOWN_PERIOD_SOURCES_WARNED.update(saved_seen)
 
