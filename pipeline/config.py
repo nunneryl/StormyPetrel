@@ -55,6 +55,37 @@ COORD_DERIVED_DIST_TOLERANCE_KM = 5.0
 DEFAULT_ENRICHED_OUTPUT = PIPELINE_DIR / "spots_enriched.json"
 
 # Swell window ray-casting
+#
+# THIS IS NOT THE STEP THE LIVE ROSTER WAS BUILT AT. Read that sentence before using this
+# number for anything. SWELL_RAY_STEP_DEG is the DEFAULT for the enrichment path only —
+# swell_window.compute_swell_window falls back to it when its caller passes no ray_step
+# (swell_window.py: `step = ray_step if ray_step is not None else SWELL_RAY_STEP_DEG`).
+#
+# The roster in spots_enriched.json was produced by pipeline/sw1_raycast.py, which sets its
+# own RUN_STEP_DEG = 4 and passes it explicitly as ray_step. So the two differ, and the one
+# that shaped the live data is the one that is NOT in this file:
+#
+#     sw1_raycast.RUN_STEP_DEG = 4   -> 90 rays  -> 1,377 of 1,475 live arcs
+#     config.SWELL_RAY_STEP_DEG = 2  -> 180 rays ->    12 of 1,475 live arcs
+#
+# (The remaining 86 arcs are not ray samples at all: 72 come from
+# swell_window_fallback._centered_arc and 14 from its wrap-split halves. Counts measured
+# against the committed spots_enriched.json via interpret.arc_pad_deg — an arc's half-step
+# pad is 2.0 for a 4° cast and 1.0 for a 2° cast, so the step each arc was built at is
+# recoverable from the data itself.)
+#
+# THIS HAS MISLED READERS TWICE. docs/sw1_raycast_phase0_report.md still says the cast is
+# "180 rays" at 2°, describing this constant as though it were production; and an earlier
+# brief for the arc-membership work assumed a 1.0 pad everywhere for the same reason (see
+# the note in pipeline/tests/test_arc_membership.py). Both were reasoning from this line.
+#
+# WHY IT IS A DOCUMENTATION PROBLEM AND NOT A LIVE BUG: nothing in the membership path
+# reads either constant. interpret.arc_pad_deg DERIVES the half-step from each arc's own
+# `span` field — `pad = (span - ((max - min) mod 360)) / 2` — using only arc["min"],
+# arc["max"] and arc["span"]. So arcs cast at 4°, arcs cast at 2°, and synthesised fallback
+# arcs are each padded correctly side by side, and bearing_in_arc stays right no matter
+# which of these two numbers a reader believes. The cost of the confusion is entirely in
+# people's models of the system, which is what this comment exists to fix.
 SWELL_RAY_STEP_DEG = 2
 SWELL_ARC_SHRINK_DEG = 5  # conservative shrink on each end of merged open arcs
 SWELL_LOCAL_COAST_EXCLUSION_KM = 2  # ignore land within this distance of the spot; local coast isn't a swell blocker
