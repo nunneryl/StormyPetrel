@@ -88,9 +88,42 @@ _PERIOD_FACTOR_WW3 = [
 ]
 
 
+# Distinct unrecognised period_factor sources already reported, so the warning below
+# cannot flood. period_factor runs once per WW3 partition per spot-hour — on the order of
+# 648 spots × 145 hours × 3 partitions per cycle — so an unguarded warning on one mistyped
+# source would emit hundreds of thousands of identical lines and bury every other
+# diagnostic in the run. Keyed by repr() so an unhashable source (a list, a dict) cannot
+# raise inside the guard either. It grows only with the number of DISTINCT bad values,
+# which is bounded by the number of call sites, not by the row count.
+_UNKNOWN_PERIOD_SOURCES_WARNED: set[str] = set()
+
+
 def period_factor(tp: float, source: str = "nwps") -> float:
     """Hs → face amplification factor. *source* is "nwps" or "ww3"."""
     points = _PERIOD_FACTOR_WW3 if source == "ww3" else _PERIOD_FACTOR_NWPS
+    # REPORT, NEVER RAISE — and never change which table was selected above.
+    #
+    # The match is exact and case-sensitive, so EVERY value that is not the literal "ww3"
+    # lands on the NWPS table. That is correct for "nwps" and silent for everything else:
+    # at tp 16 the NWPS curve is 1.6 against WW3's 1.25, so a typo buys a 28% amplification
+    # with no other visible symptom. This warning exists to make that findable.
+    #
+    # DO NOT "IMPROVE" THIS INTO A RAISE, and do not add a fallback that picks a different
+    # table. period_factor runs inside interpret.compute_ratings, whose output db_import
+    # pushes; db_import.run_all calls import_spots FIRST with no try around it, so an
+    # exception raised on this path takes the entire Supabase push down and the site ships
+    # nothing for that cycle. A rating computed from the wrong curve is wrong by 28% and
+    # self-corrects on the next run once the caller is fixed. A blank site does not.
+    # Reporting loudly and continuing is the deliberate trade.
+    if source != "ww3" and source != "nwps":
+        key = repr(source)
+        if key not in _UNKNOWN_PERIOD_SOURCES_WARNED:
+            _UNKNOWN_PERIOD_SOURCES_WARNED.add(key)
+            log.warning(
+                "interpret: unrecognised period_factor source %s — expected 'nwps' or "
+                "'ww3'. USED THE NWPS TABLE (the heavier nearshore curve: 1.6 vs 1.25 at "
+                "tp 16 s, +28%%). The rating is published anyway, not withheld; fix the "
+                "caller. Reported once per distinct value per process.", key)
     return _interp(tp, points)
 
 
