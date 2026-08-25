@@ -630,9 +630,53 @@ def period_quality(tp_s: float) -> float:
 # size_score exactly and the composite keeps the units of size_score. Under the
 # old raw product, four independent sub-1.0 factors compounded — 0.8**4 = 0.41 —
 # which drove the whole roster down regardless of size.
+#
+# TWO SWEEPS PRODUCED THIS SET, AND THEY OPTIMISED FOR DIFFERENT ENDS.
+#
+# 2026-08-21 — five candidates against 5,000 real rows, optimising THE FLOOR. The
+# problem then was that 85.5% of spot-hours sat pinned at the 1-star floor under the
+# raw product. Equal weights (0.25 each) won on that criterion and shipped. That
+# sweep looked at the BONUS end of the compression and stopped there; nobody checked
+# what the same compression does to penalties.
+#
+# 2026-08-25 — this set, against 6,000 real rows, optimising THE PENALTY CEILING.
+# The geometric mean compresses penalties exactly as it compresses bonuses, and the
+# worst wind the system can represent is wind_mult = 0.550. Under a 0.25 exponent
+# that is 0.550**0.25 = 0.861 — a 14% haircut for fully blown-out conditions, where
+# the pre-geometric-mean product took 45%. A big day in moderate-to-strong onshore
+# wind therefore still rated well. Measured against a wind-derived condition banding
+# (onshore direction, wind speed 6+ m/s — the Encyclopedia of Surfing definition of
+# "blown out"), production had 9.31% of blown-out hours at 3.5 stars or better, with
+# a 4.0 ceiling: HIGHER than the clean band's 3.95% and triple the choppy band's
+# 2.97%. Raising wind's exponent to 0.35 makes the same 0.550 a 19% haircut
+# (0.550**0.35 = 0.811) and drops blown-out >=3.5 to 5.26% with a 3.5 ceiling.
+#
+#   set                       floor   >=3 stars   blown-out >=3.5   ceiling
+#   .25/.25/.25/.25 (old)     30.2%     11.57%          9.31%         4.0
+#   .35/.15/.25/.25 (THIS)    30.9%     11.47%          5.26%         3.5
+#   .40/.15/.20/.25           29.5%     11.40%          5.26%         3.5
+#   .50/.10/.20/.20           29.6%     11.07%          3.24%         3.5
+#
+# THE RELATIVE WEIGHTING OF WIND AGAINST TIDE IS A JUDGEMENT, NOT A DERIVATION. The
+# physics does not say how much wind should weigh against tide; both sweeps chose an
+# operating point on a curve, they did not find a true value. 0.50/0.10 bought a
+# further drop to 3.24% blown-out >=3.5 and was REJECTED because tide at 0.10 makes
+# tide nearly irrelevant: tide_mult bottoms at 0.6, and 0.6**0.10 = 0.95 is a 5%
+# adjustment at spots — reef passes, river mouths, tidal bars — where the tide is the
+# difference between surfable and not. Trading a real effect away to buy 2 points on
+# one band was not worth it. If that trade is ever revisited, revisit it deliberately.
+#
+# CAVEAT ON THE SAMPLE: the blown-out band is only 247 hours of the 6,000. The
+# DIRECTION of the effect is firm — a larger wind exponent monotonically lowers the
+# blown-out tail, which is arithmetic, not sampling — but the exact percentages above
+# carry the error bars of a 247-hour band and should not be quoted as precise.
+#
+# The values are pinned by test_composite_aggregation.test_the_exponents_are_pinned_
+# by_exact_value_and_sum_to_one; every hand-computed expectation in that file was
+# recomputed against this set.
 COMPOSITE_FACTOR_EXPONENTS = {
-    "wind_mult": 0.25,
-    "tide_mult": 0.25,
+    "wind_mult": 0.35,
+    "tide_mult": 0.15,
     "chop_mult": 0.25,
     "period_quality": 0.25,
 }
