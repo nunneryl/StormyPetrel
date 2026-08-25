@@ -37,12 +37,26 @@ Run: python -m pipeline.tests.test_period_factor   (or pytest)
 """
 from __future__ import annotations
 
+import logging
+
 from pipeline import interpret as I
 from pipeline.forecast import mop, nwps_nearshore as nn
 
 
 def _close(a, b, tol=1e-12):
     return abs(a - b) <= tol
+
+
+class _Capture(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record):
+        self.records.append(record)
+
+    def warnings(self):
+        return [r.getMessage() for r in self.records if r.levelno >= logging.WARNING]
 
 
 # --------------------------------------------------------------------------- #
@@ -304,19 +318,88 @@ def test_source_is_matched_by_exact_case_sensitive_equality_against_ww3_only():
     "ww3"" reads as an enumeration of two accepted values when the code accepts one.
 
     THE COST OF A TYPO, at tp 16 where the gap is widest:
-        nwps 1.6 / ww3 1.25 = 1.28  ->  a +28% face height, silently
-    On a 2 m swell that is 10.50 ft published instead of 8.20 ft. Nothing logs it."""
-    # tp 16 so the two curves are maximally far apart and no near-miss can hide
-    assert I.period_factor(16.0, "ww3") == 1.25          # the ONE string that selects ww3
-    for src in ("nwps", "NWPS", "Nwps", "WW3", "Ww3", "wW3", " ww3", "ww3 ", "ww_3",
-                "", "mop", "ecmwf", "cdip_mop", "nwps_total", None, 0, 3):
-        got = I.period_factor(16.0, src)
-        assert got == 1.6, f"source={src!r} selected the ww3 table ({got}); only 'ww3' may"
-    # the default argument is the nwps fallback, so an omitted source is the heavy curve
-    assert I.period_factor(16.0) == 1.6
-    # and the gap itself, so a table edit that narrows it is visible here too
-    assert _close(1.6 / 1.25, 1.28)
-    assert _close(I.period_factor(16.0, "nwps") / I.period_factor(16.0, "ww3"), 1.28)
+        nwps 1.6 / ww3 1.25 = 1.28  ->  a +28% face height
+    On a 2 m swell that is 10.50 ft published instead of 8.20 ft.
+
+    THE SELECTION IS UNCHANGED BY THE WARNING added alongside this test. An unrecognised
+    source still lands on the NWPS table and still returns a rating — the warning reports,
+    it does not raise, redirect, or withhold. Both halves are asserted below: every typo
+    still yields exactly 1.6, AND every typo emits exactly one WARNING naming it."""
+    cap = _Capture()
+    I.log.addHandler(cap)
+    prev_level = I.log.level
+    I.log.setLevel(logging.DEBUG)
+    saved_seen = set(I._UNKNOWN_PERIOD_SOURCES_WARNED)
+    I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()   # this process may already have warned
+    try:
+        # tp 16 so the two curves are maximally far apart and no near-miss can hide
+        assert I.period_factor(16.0, "ww3") == 1.25      # the ONE string that selects ww3
+        typos = ("NWPS", "Nwps", "WW3", "Ww3", "wW3", " ww3", "ww3 ", "ww_3",
+                 "", "mop", "ecmwf", "cdip_mop", "nwps_total", None, 0, 3)
+        for src in ("nwps",) + typos:
+            got = I.period_factor(16.0, src)
+            assert got == 1.6, f"source={src!r} selected the ww3 table ({got}); only 'ww3' may"
+        # the default argument is the nwps fallback, so an omitted source is the heavy curve
+        assert I.period_factor(16.0) == 1.6
+        # and the gap itself, so a table edit that narrows it is visible here too
+        assert _close(1.6 / 1.25, 1.28)
+        assert _close(I.period_factor(16.0, "nwps") / I.period_factor(16.0, "ww3"), 1.28)
+
+        # EVERY typo warned, exactly once each, naming the value it received.
+        warned = cap.warnings()
+        assert len(warned) == len(typos), f"{len(warned)} warnings for {len(typos)} typos: {warned}"
+        for src in typos:
+            assert any(repr(src) in w for w in warned), f"no warning named source {src!r}"
+            assert any("NWPS TABLE" in w for w in warned)
+        # NEITHER correct value warns. "nwps" reaches the table through the else branch,
+        # which is correct, not a typo — and "ww3" matches outright.
+        assert not any(repr("nwps") + " —" in w for w in warned), warned
+        assert not any(repr("ww3") + " —" in w for w in warned), warned
+        # and the guard does not flood: 500 repeats of an already-reported value add nothing
+        before = len(cap.warnings())
+        for _ in range(500):
+            I.period_factor(12.0, "mop")
+        assert len(cap.warnings()) == before, "the once-per-value guard leaked"
+    finally:
+        I.log.removeHandler(cap)
+        I.log.setLevel(prev_level)
+        I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()
+        I._UNKNOWN_PERIOD_SOURCES_WARNED.update(saved_seen)
+
+
+def test_an_unrecognised_source_reports_but_never_raises_and_never_redirects():
+    """The warning is INSURANCE, not a gate. No live caller can reach it today — rate_spot
+    passes the two literals and both override raters pass RATING_SOURCE — so this pins the
+    posture for the future caller that gets it wrong.
+
+    Raising here would be the wrong trade and the comment at the check says so: period_factor
+    runs inside compute_ratings, whose output db_import pushes, and db_import.run_all calls
+    import_spots FIRST with no try around it. An exception on this path takes the whole
+    Supabase push down and ships nothing for the cycle. A 28%-wrong number self-corrects next
+    run; a blank site does not."""
+    cap = _Capture()                      # swallow the warnings this test deliberately trips
+    I.log.addHandler(cap)
+    prev_propagate = I.log.propagate
+    I.log.propagate = False
+    saved_seen = set(I._UNKNOWN_PERIOD_SOURCES_WARNED)
+    I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()
+    try:
+        # never raises, for any shape of input — including UNHASHABLE ones, which is why the
+        # dedup key is repr(source) and not source itself
+        for src in ("garbage", None, 0, 3.5, ["ww3"], {"a": 1}, (1, 2), object()):
+            assert I.period_factor(16.0, src) == 1.6, src
+        # the whole curve is still the NWPS one, not a neutral or a blend
+        for tp, want in ((0.0, 1.2), (8.0, 1.3), (12.0, 1.5), (16.0, 1.6), (99.0, 1.6)):
+            assert I.period_factor(tp, "garbage") == want, (tp, want)
+        # and face_ft still publishes a real number: 2.0 * 1.6 * 3.281 = 10.4992
+        assert _close(I.face_ft(2.0, 16.0, "garbage"), 10.4992)
+        # it did report — this is "warn and continue", not "swallow"
+        assert cap.warnings(), "an unrecognised source must still be reported"
+    finally:
+        I.log.removeHandler(cap)
+        I.log.propagate = prev_propagate
+        I._UNKNOWN_PERIOD_SOURCES_WARNED.clear()
+        I._UNKNOWN_PERIOD_SOURCES_WARNED.update(saved_seen)
 
 
 # --------------------------------------------------------------------------- #
