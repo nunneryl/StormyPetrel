@@ -790,17 +790,50 @@ def _find_offshore_point(
     THE RULE IS select_node's, NOT A SECOND ONE. Filter the candidates to the ±90°
     half-plane around *orientation* FIRST, then take the nearest survivor — the same
     order nwps_nearshore.select_node applies to the 600 baked nodes, using the same
-    imported `_ang_within` / `_bearing`. Direction beats distance, deliberately:
-    Mavericks moves from 1.27 km at 100° off to 3.93 km at 40° off, paying 2.66 km to
-    stop sampling behind the point, while Mole Point moves to 1.86 km at 82° — nearer
-    AND correctly oriented. `_ang_within` compares with `<=`, so exactly 90.0° off
-    normal counts as INSIDE the half-plane; that boundary is inherited, not restated.
+    imported `_ang_within` / `_bearing`. `_ang_within` compares with `<=`, so exactly
+    90.0° off normal counts as INSIDE the half-plane; that boundary is inherited, not
+    restated.
+
+    THIS CHANGES TWO THINGS AT ONCE, AND THE SECOND IS THE BIGGER ONE. The half-plane
+    filter is the stated fix, but adopting select_node's `min(sea, key=dist)` also
+    replaces the traversal: the old walk took the first wet cell in CHEBYSHEV RING order
+    with index-order tie-breaking, and this one takes the nearest survivor by GREAT
+    CIRCLE. Those two metrics disagree constantly — a ring-1 diagonal is reached before a
+    ring-2 edge cell but is not necessarily nearer, and within one ring the visit order is
+    an artefact of index arithmetic, not geometry.
+
+    Measured against THIS implementation on the sgx 2026-08-24 12Z, mtr 2026-08-24 00Z,
+    lox 2026-08-24 06Z and eka 2026-08-22 12Z cycles, 31 of the 48 ring-walk spots change
+    cell — sgx 20 of 31, mtr 6 of 10, lox 4 of 6, eka 1 of 1. Only three of those were
+    sampling landward. The other 28 move because of the metric change, not the filter.
+
+    29 of the 31 move CLOSER, several substantially:
+        The Wedge        6.09 km -> 2.75 km
+        Lunada Bay       6.70 km -> 3.82 km
+        Pescadero        4.38 km -> 1.62 km
+        Stinson Beach    3.90 km -> 1.77 km
+    That improvement is a CONSEQUENCE of matching select_node's min-by-distance, not a
+    separate optimisation bolted on. Do not treat it as a tunable knob: it is whatever
+    picking the nearest survivor happens to give.
+
+    Only two move farther, and both were sampling landward — the trade the filter exists
+    to make:
+        Mavericks, California  1.27 km at 100° off -> 1.98 km at  7° off
+        Humboldt Bay Jetty     1.80 km at 131° off -> 2.23 km at 54° off
+    Mole Point, the third landward spot, gets both: 3.80 km at 117° -> 1.79 km at 66°.
+
+    DISTANCE DECIDES AMONG SURVIVORS, so a spot can take a WORSE off-normal angle while
+    getting closer — T Street Beach 3° -> 69°, Swamis 1° -> 63°. Every one of them is
+    still inside the half-plane, which is the only guarantee the rule makes. That is
+    select_node's trade-off and it is inherited deliberately; a variant that minimised
+    off-normal angle instead would be a different rule from the one placing the 600 baked
+    nodes, and the two would drift.
 
     IT MUST NEVER REFUSE A SPOT. If the half-plane admits no wet cell inside
     *max_radius* the pick falls back to the nearest wet cell regardless of direction and
     ``seaward_ok`` comes back False, so the caller can name it. A skipped spot produces
     NO forecast rows at all and blanks its page — see the block at the sampled-distance
-    check below. Measured over all 47 ring-walk spots on the sgx / mtr / lox grids, the
+    check below. Measured over all 48 ring-walk spots on the four cycles above, the
     fallback fired ZERO times; it is loud precisely because it should stay that way.
 
     ``seaward_ok`` is True when the pick satisfies the half-plane, and also True when no
@@ -808,12 +841,12 @@ def _find_offshore_point(
 
     WITHOUT an *orientation* the original ring walk runs UNCHANGED, first-wet-in-ring-
     order and all. That is deliberate rather than tidy: with no shore normal there is no
-    basis on which to prefer one direction, and the two traversals do not agree on ties
-    — ring order is nearest-by-CHEBYSHEV-index with index-order tie-breaking, while the
-    oriented path is nearest-by-GREAT-CIRCLE. Switching unoriented spots to the second
-    metric would silently move cells for no stated reason. All 48 ring-walk spots carry
-    an orientation_deg today, so this branch is unreached in production; it exists so
-    that a future spot without one behaves exactly as it always has.
+    basis on which to prefer one direction, and the two traversals disagree far more
+    often than on ties alone — 28 of the 48 spots above move on the metric change with no
+    landward problem to fix. Switching unoriented spots to great-circle-nearest would
+    move their cells too, for a reason nothing in their record states. All 48 ring-walk
+    spots carry an orientation_deg today, so this branch is unreached in production; it
+    exists so that a future spot without one behaves exactly as it always has.
     """
     import numpy as np
 
@@ -1067,8 +1100,8 @@ def fetch(
                 if not seaward_ok:
                     # The half-plane admitted nothing in range, so the pick is landward
                     # by necessity rather than by accident. Measured zero times across
-                    # all 47 ring-walk spots on sgx / mtr / lox; if it ever fires, the
-                    # spot is sampling behind its own break and someone has to look.
+                    # all 48 ring-walk spots on sgx / mtr / lox / eka; if it ever fires,
+                    # the spot is sampling behind its own break and someone has to look.
                     walk_no_seaward += 1
                     walk_no_seaward_names.append(spot["name"])
                     log.warning(
