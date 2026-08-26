@@ -765,19 +765,55 @@ def _find_offshore_point(
     lat: float,
     lng: float,
     max_radius: int = _LAND_SEARCH_MAX_RADIUS,
-) -> tuple[float, float, int] | None:
-    """Find the nearest ocean grid cell to (lat, lng).
+    orientation: float | None = None,
+) -> tuple[float, float, int, bool] | None:
+    """Nearest SEAWARD ocean grid cell to (lat, lng).
 
     The NWPS wave model masks land cells as NaN. For spots tucked behind
     jetties, sand spits, or whose lat/lng resolves to a coastline cell on
     the model grid, the naive "nearest neighbor" lookup lands on land and
     every wave variable comes back null.
 
-    This walks outward in expanding rings (1, 2, 3, ... cells) and returns
-    the first cell whose wave data is non-NaN. Returns
-    ``(corrected_lat, corrected_lng, fallback_cells)`` — fallback_cells=0 if
-    the nominal nearest cell was already water. Returns ``None`` if every
-    cell within *max_radius* is land.
+    Returns ``(corrected_lat, corrected_lng, fallback_cells, seaward_ok)``, where
+    ``fallback_cells`` is the chosen cell's ring distance — 0 when the nominal nearest
+    cell was taken — or ``None`` when every cell within *max_radius* is land.
+
+    THE DIRECTION IS PART OF THE SELECTION, NOT A NOTE ADDED AFTERWARDS.
+    This used to walk outward in expanding rings and accept the FIRST wet cell it
+    touched, with no directional constraint at all. `_seaward_diag` then measured which
+    way it had gone and wrote the answer into a log line — after the cell was already
+    committed. On a barrier-island or point coast the first cell examined at radius 1 is
+    a landward diagonal, so the walk sampled the water BEHIND the break: measured on the
+    2026-08-24 cycles, Mole Point sampled 3.80 km away at 117° off its own shore normal
+    and Mavericks 1.27 km at 100° off, both reported and neither corrected.
+
+    THE RULE IS select_node's, NOT A SECOND ONE. Filter the candidates to the ±90°
+    half-plane around *orientation* FIRST, then take the nearest survivor — the same
+    order nwps_nearshore.select_node applies to the 600 baked nodes, using the same
+    imported `_ang_within` / `_bearing`. Direction beats distance, deliberately:
+    Mavericks moves from 1.27 km at 100° off to 3.93 km at 40° off, paying 2.66 km to
+    stop sampling behind the point, while Mole Point moves to 1.86 km at 82° — nearer
+    AND correctly oriented. `_ang_within` compares with `<=`, so exactly 90.0° off
+    normal counts as INSIDE the half-plane; that boundary is inherited, not restated.
+
+    IT MUST NEVER REFUSE A SPOT. If the half-plane admits no wet cell inside
+    *max_radius* the pick falls back to the nearest wet cell regardless of direction and
+    ``seaward_ok`` comes back False, so the caller can name it. A skipped spot produces
+    NO forecast rows at all and blanks its page — see the block at the sampled-distance
+    check below. Measured over all 47 ring-walk spots on the sgx / mtr / lox grids, the
+    fallback fired ZERO times; it is loud precisely because it should stay that way.
+
+    ``seaward_ok`` is True when the pick satisfies the half-plane, and also True when no
+    *orientation* was supplied — there is no constraint to fail.
+
+    WITHOUT an *orientation* the original ring walk runs UNCHANGED, first-wet-in-ring-
+    order and all. That is deliberate rather than tidy: with no shore normal there is no
+    basis on which to prefer one direction, and the two traversals do not agree on ties
+    — ring order is nearest-by-CHEBYSHEV-index with index-order tie-breaking, while the
+    oriented path is nearest-by-GREAT-CIRCLE. Switching unoriented spots to the second
+    metric would silently move cells for no stated reason. All 48 ring-walk spots carry
+    an orientation_deg today, so this branch is unreached in production; it exists so
+    that a future spot without one behaves exactly as it always has.
     """
     import numpy as np
 
@@ -785,7 +821,7 @@ def _find_offshore_point(
     if wave_ds is None:
         # No wave variable in this run — can't tell land from water; trust
         # the input. (Wind-only runs etc.)
-        return lat, lng, 0
+        return lat, lng, 0, True
 
     # As in _baked_node_is_water: this picks the REFERENCE GRID for the indices, while
     # the land verdict is the union over every dataset — see _cell_is_water.
@@ -796,9 +832,6 @@ def _find_offshore_point(
     lat_idx = int(np.argmin(np.abs(lats - lat)))
     lng_idx = int(np.argmin(np.abs(lngs - lng_adj)))
 
-    def _is_water(li: int, lj: int) -> bool:
-        return _cell_is_water(datasets, li, lj)
-
     def _to_input_convention(ds_lng: float) -> float:
         # Reverse _normalize_longitude: if the dataset uses 0–360 and the
         # input was a negative (-180/180) lng, return to the negative form.
@@ -806,27 +839,69 @@ def _find_offshore_point(
             return ds_lng - 360.0
         return ds_lng
 
-    if _is_water(lat_idx, lng_idx):
-        return float(lats[lat_idx]), _to_input_convention(float(lngs[lng_idx])), 0
-
     n_lat = len(lats)
     n_lng = len(lngs)
-    for radius in range(1, max_radius + 1):
-        for di in range(-radius, radius + 1):
-            for dj in range(-radius, radius + 1):
-                # Only walk the outer ring at this radius — the interior was
-                # checked on previous iterations.
-                if max(abs(di), abs(dj)) != radius:
-                    continue
-                ni = lat_idx + di
-                nj = lng_idx + dj
-                if 0 <= ni < n_lat and 0 <= nj < n_lng and _is_water(ni, nj):
-                    return (
-                        float(lats[ni]),
-                        _to_input_convention(float(lngs[nj])),
-                        radius,
-                    )
-    return None
+
+    def _is_water(li: int, lj: int) -> bool:
+        return _cell_is_water(datasets, li, lj)
+
+    if orientation is None:
+        # THE ORIGINAL RING WALK, unchanged — see the docstring for why it is kept
+        # rather than folded into the oriented path.
+        if _is_water(lat_idx, lng_idx):
+            return (float(lats[lat_idx]),
+                    _to_input_convention(float(lngs[lng_idx])), 0, True)
+        for radius in range(1, max_radius + 1):
+            for di in range(-radius, radius + 1):
+                for dj in range(-radius, radius + 1):
+                    # Only walk the outer ring at this radius — the interior was
+                    # checked on previous iterations.
+                    if max(abs(di), abs(dj)) != radius:
+                        continue
+                    ni = lat_idx + di
+                    nj = lng_idx + dj
+                    if 0 <= ni < n_lat and 0 <= nj < n_lng and _is_water(ni, nj):
+                        return (float(lats[ni]),
+                                _to_input_convention(float(lngs[nj])), radius, True)
+        return None
+
+    # Same maths select_node uses, imported rather than re-derived so the placement pass
+    # and the walk cannot drift. Function-local, like _seaward_diag's, to keep this
+    # module's import-time dependencies unchanged.
+    from .nwps_nearshore import _ang_within, _bearing, _haversine_km
+
+    # Every wet cell in the (2*max_radius+1)^2 box, each with its ring distance and its
+    # true great-circle distance. The whole box is collected BEFORE anything is chosen,
+    # because "nearest survivor of the filtered set" cannot be decided ring by ring —
+    # the candidate set has to exist before the filter runs, exactly as in select_node.
+    wet: list[tuple[float, float, int, float]] = []
+    for di in range(-max_radius, max_radius + 1):
+        for dj in range(-max_radius, max_radius + 1):
+            ni = lat_idx + di
+            nj = lng_idx + dj
+            if not (0 <= ni < n_lat and 0 <= nj < n_lng):
+                continue
+            if not _is_water(ni, nj):
+                continue
+            clat = float(lats[ni])
+            clng = _to_input_convention(float(lngs[nj]))
+            wet.append((clat, clng, max(abs(di), abs(dj)),
+                        _haversine_km(lat, lng, clat, clng)))
+
+    if not wet:
+        return None
+
+    sea = [c for c in wet
+           if _ang_within(_bearing(lat, lng, c[0], c[1]), float(orientation), 90)]
+    if sea:
+        c = min(sea, key=lambda c: c[3])
+        return c[0], c[1], c[2], True
+
+    # No seaward wet cell in range. Publish the nearest wet cell anyway and flag it —
+    # a landward sample beats no forecast at all. select_node's own fallback is the
+    # same `min(wet, key=dist)`.
+    c = min(wet, key=lambda c: c[3])
+    return c[0], c[1], c[2], False
 
 
 # ---------------------------------------------------------------------------
@@ -891,8 +966,10 @@ def fetch(
     walk_seaward = 0           # ring walk ended within ±90° of orientation_deg
     walk_landward = 0          # ring walk ended OUTSIDE that half-plane — the defect
     walk_no_orientation = 0    # no orientation_deg, so direction is not assessable
+    walk_no_seaward = 0        # ±90° filter found nothing in range -> landward by necessity
     baked_land_names: list[str] = []
     walk_landward_names: list[str] = []
+    walk_no_seaward_names: list[str] = []
     impossible_pairs = 0       # records where swell_hs > hs (physically impossible)
     impossible_pair_spots: list[str] = []
     far_sampled = 0            # sampled cell beyond this grid's far cap — reported, NEVER refused
@@ -972,7 +1049,13 @@ def fetch(
                     )
 
             if corr_lat is None:
-                found = _find_offshore_point(datasets, spot_lat, spot_lng)
+                # The spot's own shore normal drives the walk now — the ±90° half-plane
+                # is applied DURING selection, not measured after it. See
+                # _find_offshore_point.
+                found = _find_offshore_point(
+                    datasets, spot_lat, spot_lng,
+                    orientation=spot.get("orientation_deg"),
+                )
                 if found is None:
                     spots_skipped_land += 1
                     log.warning(
@@ -980,7 +1063,20 @@ def fetch(
                         spot["name"], _LAND_SEARCH_MAX_RADIUS, spot_lat, spot_lng,
                     )
                     continue
-                corr_lat, corr_lng, fallback_cells = found
+                corr_lat, corr_lng, fallback_cells, seaward_ok = found
+                if not seaward_ok:
+                    # The half-plane admitted nothing in range, so the pick is landward
+                    # by necessity rather than by accident. Measured zero times across
+                    # all 47 ring-walk spots on sgx / mtr / lox; if it ever fires, the
+                    # spot is sampling behind its own break and someone has to look.
+                    walk_no_seaward += 1
+                    walk_no_seaward_names.append(spot["name"])
+                    log.warning(
+                        "nwps: %s — NO SEAWARD wet cell within %d cells of (%.4f, %.4f); "
+                        "fell back to the nearest wet cell regardless of direction. "
+                        "Published anyway, but the sample may be behind the break.",
+                        spot["name"], _LAND_SEARCH_MAX_RADIUS, spot_lat, spot_lng,
+                    )
                 # Direction of the walk, which the old log line never reported.
                 diag = _seaward_diag(spot, corr_lat, corr_lng)
                 if diag is None:
@@ -1053,15 +1149,20 @@ def fetch(
     log.info(
         "nwps: node-selection summary — baked-node=%d, baked-node-rejected-as-land=%d, "
         "ring-walk-seaward=%d, ring-walk-LANDWARD=%d, ring-walk-no-orientation=%d, "
-        "over-far-cap=%d",
+        "ring-walk-no-seaward-cell=%d, over-far-cap=%d",
         nodes_baked, nodes_baked_land, walk_seaward, walk_landward, walk_no_orientation,
-        far_sampled,
+        walk_no_seaward, far_sampled,
     )
     # NAME the bad ones. A bare count is easy to scroll past, and both of these are
     # conditions someone has to act on rather than watch.
     if walk_landward_names:
         log.warning("nwps: %d spot(s) sampled LANDWARD of their own shore normal: %s",
                     len(walk_landward_names), ", ".join(sorted(walk_landward_names)))
+    if walk_no_seaward_names:
+        log.warning("nwps: %d spot(s) had NO seaward wet cell within %d cells and sampled "
+                    "a landward one instead: %s",
+                    len(walk_no_seaward_names), _LAND_SEARCH_MAX_RADIUS,
+                    ", ".join(sorted(walk_no_seaward_names)))
     if baked_land_names:
         log.warning("nwps: %d baked node(s) tested as land: %s",
                     len(baked_land_names), ", ".join(sorted(baked_land_names)))

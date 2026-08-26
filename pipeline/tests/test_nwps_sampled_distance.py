@@ -66,10 +66,16 @@ FINE_LNGS = [-75.886, -75.868, -75.850, -75.832, -75.814]
 
 SPOT_LAT, SPOT_LNG = 36.000, -75.850        # coarse index (2,2), the grid centre
 
-# The two cells the ring walk reaches, from the spot at the grid centre. It visits
-# (di, dj) = (-1, -1) first, i.e. the SOUTH-WEST diagonal, and that matters: the
-# longitude leg is measured at a LOWER latitude than the north-east diagonal, so
-# cos(lat) is larger and the same degree offset spans slightly further.
+# The two cells the ring walk reaches, from the spot at the grid centre — the SOUTH-WEST
+# diagonals. That matters: the longitude leg is measured at a LOWER latitude than the
+# north-east diagonal, so cos(lat) is larger and the same degree offset spans further.
+#
+# The walk now filters to the ±90° half-plane around orientation_deg and takes the
+# NEAREST survivor, so these tests give their spot a SOUTH-WEST normal (225°) and mask
+# every cell but the target. A diagonal can never be the nearest seaward cell while its
+# adjacent edge cells are also wet and seaward — there is no orientation that admits the
+# SW corner while excluding both due-south and due-west — so isolating it is the only
+# way to keep these hand-computed distances as the values under test.
 #   radius 1 -> (35.955, -75.895) =  6.436962517655 km   (UNDER the 6.7889 cap)
 #   radius 2 -> (35.910, -75.940) = 12.875375961950 km   (OVER  the 6.7889 cap)
 # The mirror-image north-east diagonals are 6.435509639394 and 12.869564447747 — the
@@ -433,18 +439,16 @@ def test_the_returned_coordinates_are_identical_over_cap_and_under_cap():
 # 4 — BOTH paths are measured                                                  #
 # --------------------------------------------------------------------------- #
 def test_the_ring_walk_path_is_measured_too():
-    """The walk, not the baked node. Centre and all of ring 1 are land, so the walk
-    reaches radius 2 and takes its first candidate, the (-2,-2) diagonal.
+    """The walk, not the baked node. Only the SW radius-2 corner is wet, and the spot's
+    normal faces SW, so that corner is the only seaward candidate.
 
-        grid centre is index (2,2); radius-2 first candidate is (0,0) =
-        (35.910, -75.940), dlat = dlng = -0.09 deg (SOUTH-west, the walk's first probe)
+        grid centre is index (2,2); the wet cell is (0,0) =
+        (35.910, -75.940), dlat = dlng = -0.09 deg (SOUTH-west)
         distance = 12.875375961950 km  >  cap 6.788931002645  -> over, warns
     """
-    grid = _all_water()
-    for i in range(1, 4):                 # ring 1 and the centre -> land
-        for j in range(1, 4):
-            grid[i][j] = NAN
-    spot = _spot(name="Walker")           # no baked node -> the walk runs
+    grid = [[NAN] * 5 for _ in range(5)]  # everything land...
+    grid[0][0] = 1.2                      # ...except the SW radius-2 corner
+    spot = _spot(name="Walker", orientation=225.0)   # SW normal -> that corner is seaward
     _, seen, cap = _run_fetch([spot], "walk.json", _coarse(grid))
 
     assert seen == [WALK2], seen
@@ -458,12 +462,12 @@ def test_a_within_cap_ring_walk_reports_its_distance_without_warning():
     """One ring out, 6.4355 km, under the 6.7889 cap. The fallback line must still carry
     the distance — that line is why this work exists — but nothing warns.
 
-        centre (2,2) land, ring 1 water; first radius-1 candidate is (-1,-1) =
+        only (1,1) is wet, at (-1,-1) from the centre =
         (35.955, -75.895), dlat = dlng = -0.045 deg -> 6.436962517655 km
     """
-    grid = _all_water()
-    grid[2][2] = NAN
-    _, seen, cap = _run_fetch([_spot()], "walk_ok.json", _coarse(grid))
+    grid = [[NAN] * 5 for _ in range(5)]  # everything land...
+    grid[1][1] = 1.2                      # ...except the SW radius-1 diagonal
+    _, seen, cap = _run_fetch([_spot(orientation=225.0)], "walk_ok.json", _coarse(grid))
 
     assert seen == [WALK1], seen
     assert "at 1 cells / 6.44 km away" in cap.text(), cap.text()
@@ -509,13 +513,13 @@ def test_both_paths_in_one_run_are_each_measured_and_counted():
         Baked  : (36.09, -75.85) = 10.007543398011 km  -> over
         Walker : radius-2 (35.910, -75.940) = 12.875375961950 km -> over
     """
-    grid = _all_water()
-    for i in range(1, 4):
-        for j in range(1, 4):
-            grid[i][j] = NAN
-    grid[4][2] = 1.2                      # keep the baked node itself wet
-    baked = _spot(name="Baked", baked=FAR_BAKED)
-    walker = _spot(name="Walker")
+    grid = [[NAN] * 5 for _ in range(5)]
+    grid[0][0] = 1.2                      # the walker's only seaward cell
+    grid[4][2] = 1.2                      # keep the baked node itself wet. Due NORTH of
+                                          # the spot, 135° off a SW normal, so the walker
+                                          # cannot take it.
+    baked = _spot(name="Baked", baked=FAR_BAKED, orientation=225.0)
+    walker = _spot(name="Walker", orientation=225.0)
     _, seen, cap = _run_fetch([baked, walker], "both.json", _coarse(grid))
 
     assert seen == [FAR_BAKED, WALK2], seen

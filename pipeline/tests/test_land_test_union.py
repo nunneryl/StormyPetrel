@@ -308,16 +308,18 @@ def test_the_ring_walk_gets_the_union_verdict():
     Under the union it is already water, so the walk accepts it at radius 0 and returns
     that cell's own coordinates.
 
-    Expected literally: (36.35, -75.85, 0) — lat, lng, fallback_cells=0.
+    Expected literally: (36.35, -75.85, 0, True) — lat, lng, fallback_cells=0,
+    seaward_ok=True (no orientation supplied, so there is no constraint to fail).
     """
     g0 = [[0.5, 0.5, 0.5], [0.5, NAN, 0.5], [0.5, 0.5, 0.5]]
     g1 = [[0.6, 0.6, 0.6], [0.6, 0.55, 0.6], [0.6, 0.6, 0.6]]
     dss = [_scalar_step(g0), _multi_step([g1, g1])]
     got = nwps._find_offshore_point(dss, 36.35, -75.85)
     assert got is not None
-    lat, lng, cells = got
+    lat, lng, cells, seaward_ok = got
     assert round(lat, 2) == 36.35 and round(lng, 2) == -75.85, got
     assert cells == 0, got
+    assert seaward_ok is True, got
 
 
 def _run_all():
