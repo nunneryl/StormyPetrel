@@ -613,10 +613,12 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
 
     records: list[dict] = []
     skipped_unknown = 0
+    skipped_unknown_names: list[str] = []
     for spot_name, hours in ratings.items():
         spot_id = by_name.get(spot_name)
         if spot_id is None:
             skipped_unknown += 1
+            skipped_unknown_names.append(spot_name)
             continue
         for h in hours:
             vt = h.get("valid_time")
@@ -665,6 +667,18 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
         "forecasts: upserting %d rows (%d spots in ratings.json had no spots-table row, %d intra-batch duplicates dropped)",
         len(records), skipped_unknown, deduped,
     )
+    # NAME the skipped ones. The count above is easy to scroll past, and this is a
+    # condition someone has to ACT on rather than watch: the join is by name, so a spot
+    # whose name changed in spots_enriched.json without its DB row following (db_import
+    # upserts on the DERIVED slug, so a rename inserts a new row and orphans the old one)
+    # silently stops receiving forecasts. That is how st-andews-park and cape-san-b-liss
+    # went three weeks with an empty page while every run reported success.
+    if skipped_unknown_names:
+        log.warning(
+            "forecasts: %d spot(s) in ratings.json have no spots-table row — they receive "
+            "NO forecast rows at all and their pages render empty: %s",
+            len(skipped_unknown_names), ", ".join(sorted(skipped_unknown_names)),
+        )
     written = 0
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
