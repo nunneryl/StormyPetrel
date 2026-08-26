@@ -288,9 +288,9 @@ def test_the_land_test_is_the_same_predicate_the_walk_uses():
     """
     ds = _FakeDataset()
     for i in range(3):
-        assert nwps._cell_is_water(ds, "swh", i, 0) is True, i
-        assert nwps._cell_is_water(ds, "swh", i, 1) is False, i
-        assert nwps._cell_is_water(ds, "swh", i, 2) is True, i
+        assert nwps._cell_is_water([ds], i, 0) is True, i
+        assert nwps._cell_is_water([ds], i, 1) is False, i
+        assert nwps._cell_is_water([ds], i, 2) is True, i
     # and via the baked-node wrapper, at the coordinates rather than the indices
     assert nwps._baked_node_is_water(_datasets(), BAKED_LAT, BAKED_LNG) is True
     assert nwps._baked_node_is_water(_datasets(), SPOT_LAT, SPOT_LNG) is False
@@ -315,9 +315,9 @@ def test_a_partly_masked_cell_counts_as_water_across_the_whole_step_axis():
     grid[1][2] = [NAN, NAN, NAN]      # fully masked  -> land
     grid[2][2] = [0.40, 0.50, 0.60]   # clean         -> water
     ds = _FakeDataset(grid=grid)
-    assert nwps._cell_is_water(ds, "swh", 0, 2) is True
-    assert nwps._cell_is_water(ds, "swh", 1, 2) is False
-    assert nwps._cell_is_water(ds, "swh", 2, 2) is True
+    assert nwps._cell_is_water([ds], 0, 2) is True
+    assert nwps._cell_is_water([ds], 1, 2) is False
+    assert nwps._cell_is_water([ds], 2, 2) is True
     # and the baked-node wrapper agrees, since it routes through the same predicate:
     # the baked node (36.35, -75.80) is index (1,2), now fully masked
     assert nwps._baked_node_is_water([ds], BAKED_LAT, BAKED_LNG) is False

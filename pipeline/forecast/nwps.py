@@ -531,23 +531,92 @@ def _find_wave_dataset(datasets: list):
     return None, None
 
 
-def _cell_is_water(wave_ds, wave_var: str, li: int, lj: int) -> bool:
-    """Is grid cell (li, lj) a wet cell? NWPS masks land as all-NaN across the step axis.
+def _cell_is_water(datasets: list, li: int, lj: int) -> bool:
+    """Is grid cell (li, lj) a wet cell? Water iff ANY wave variable in ANY dataset
+    carries ANY finite value there; land only when every one of them is entirely NaN.
 
-    THE ONE land test. Lifted verbatim out of _find_offshore_point's closure so the
-    baked-node check below applies the SAME test rather than a second copy of it —
-    a divergence between the two would send the two paths to different cells for the
-    same reason. _find_offshore_point's behaviour is unchanged: its `_is_water` now
-    delegates here, with the identical try/except and the identical predicate.
+    THE ONE land test. Both callers route through it — _baked_node_is_water and
+    _find_offshore_point's `_is_water` closure — so the two paths cannot drift apart
+    and reach different cells for the same reason. Do not add a second copy.
+
+    WHY THE UNION, AND WHY IT MUST NOT BE "OPTIMISED" BACK TO FIRST-MATCH.
+    This used to take one (dataset, variable) pair from _find_wave_dataset — the FIRST
+    match, in cfgrib grouping order — and test only that. Measured against the real
+    gyx 2026-08-24 18Z CG1 cycle, cfgrib splits that file into two datasets carrying the
+    SAME six variables: ds[0] is the analysis hour f000 with no step dimension (scalar
+    step 0), ds[1] is steps 1..144. _find_wave_dataset returned ds[0], so the docstring's
+    old claim that land is "all-NaN across the step axis" was false here — there is no
+    step axis on ds[0], and the array evaluated had shape (1,). The whole land verdict
+    rested on ONE forecast hour.
+
+    That is not a rare edge. On the gyx grid 108 of 13287 cells (0.81%) are NaN at step 0
+    and finite at some later step. 95% of them have at least one wet neighbour at step 0
+    (mean 3.37, against 0.19 for stable-land cells): they are the wet/dry boundary, which
+    is exactly where surf spots sit. Short Sands Beach York's baked node is cell
+    (li=34, lj=38) — NaN at step 0, so production called it LAND, while carrying 69
+    finite values across ds[1] ranging 0.3401 to 0.7895 m. A rejected node with two
+    thirds of a forecast behind it.
+
+    Step 0 is not anomalously sparse — 6629 finite cells against a forecast-step range of
+    6605 to 6736. ANY single step is a coin flip for a boundary cell; that is the defect,
+    not something special about the analysis hour.
+
+    AND IT IS NOT ONE-DIRECTIONAL, which is why "just read the multi-step dataset" is
+    also wrong. On the same grid, cell (51, 15) — 43.5501N, 288.7070E — is finite at
+    step 0 (swh 0.0480) and all-NaN across every one of the 144 forecast steps. Reading
+    all steps is NOT a strict superset of reading step 0. Only the union over every
+    dataset and every wave variable is correct in both directions.
+
+    A total absence of wave variables returns WATER, not land: with nothing to read we
+    cannot tell them apart, so we trust the input rather than discard the spot. That is
+    the same posture _find_offshore_point and _baked_node_is_water take when
+    _find_wave_dataset comes back empty.
+
+    A read that RAISES is not evidence of land — it is the absence of evidence — so it
+    skips to the next variable instead of returning False. With a single wave variable
+    that fails, the loop still ends in the all-NaN branch and returns land, exactly as
+    the old try/except did.
     """
     import numpy as np
 
-    try:
-        sample = wave_ds[wave_var].isel(latitude=li, longitude=lj)
-        arr = np.atleast_1d(np.asarray(sample.values)).ravel()
-        return not np.all(np.isnan(arr))
-    except Exception:  # noqa: BLE001
-        return False
+    # Indices are grid-relative: the callers derive li/lj from _find_wave_dataset's
+    # dataset, so only datasets on THAT grid describe the same cell. A dataset with a
+    # different shape would silently answer for a different location, so it is skipped
+    # rather than trusted. On NWPS CG1 every group shares the nest, so this is a no-op.
+    ref_shape = None
+    seen_a_wave_var = False
+
+    for ds in datasets:
+        try:
+            names = [str(v) for v in ds.data_vars]
+        except Exception:  # noqa: BLE001
+            continue
+        wave_names = [v for v in names if v.lower() in _WAVE_VARS_FOR_LAND_CHECK]
+        if not wave_names:
+            continue
+
+        try:
+            shape = (int(ds.sizes["latitude"]), int(ds.sizes["longitude"]))
+        except Exception:  # noqa: BLE001
+            shape = None
+        if ref_shape is None:
+            ref_shape = shape
+        elif shape is not None and shape != ref_shape:
+            continue
+
+        for v in wave_names:
+            seen_a_wave_var = True
+            try:
+                sample = ds[v].isel(latitude=li, longitude=lj)
+                arr = np.atleast_1d(np.asarray(sample.values)).ravel()
+                if not np.all(np.isnan(arr)):
+                    return True
+            except Exception:  # noqa: BLE001
+                continue
+
+    # Every wave variable we could read was entirely NaN -> land. No wave variable at
+    # all -> water (trust the input).
+    return not seen_a_wave_var
 
 
 def _baked_node_is_water(datasets: list, lat: float, lng: float) -> bool:
@@ -559,7 +628,7 @@ def _baked_node_is_water(datasets: list, lat: float, lng: float) -> bool:
     or a stale assignment would otherwise sample land silently and return all-null.
     A False here is a DATA problem worth surfacing, not a condition to swallow.
     """
-    wave_ds, wave_var = _find_wave_dataset(datasets)
+    wave_ds, _wave_var = _find_wave_dataset(datasets)
     if wave_ds is None:
         # No wave variable in this run — can't tell land from water. Same posture as
         # _find_offshore_point takes in this case: trust the input.
@@ -567,12 +636,15 @@ def _baked_node_is_water(datasets: list, lat: float, lng: float) -> bool:
 
     import numpy as np
 
+    # _find_wave_dataset still picks the REFERENCE GRID here — the axes li/lj are
+    # resolved against. The land verdict itself is the union over every dataset; see
+    # _cell_is_water for why one dataset's answer is not enough.
     lng_adj = _normalize_longitude(wave_ds, lng)
     lats = np.asarray(wave_ds["latitude"].values)
     lngs = np.asarray(wave_ds["longitude"].values)
     li = int(np.argmin(np.abs(lats - lat)))
     lj = int(np.argmin(np.abs(lngs - lng_adj)))
-    return _cell_is_water(wave_ds, wave_var, li, lj)
+    return _cell_is_water(datasets, li, lj)
 
 
 def _seaward_diag(spot: dict, point_lat: float, point_lng: float):
@@ -709,12 +781,14 @@ def _find_offshore_point(
     """
     import numpy as np
 
-    wave_ds, wave_var = _find_wave_dataset(datasets)
+    wave_ds, _wave_var = _find_wave_dataset(datasets)
     if wave_ds is None:
         # No wave variable in this run — can't tell land from water; trust
         # the input. (Wind-only runs etc.)
         return lat, lng, 0
 
+    # As in _baked_node_is_water: this picks the REFERENCE GRID for the indices, while
+    # the land verdict is the union over every dataset — see _cell_is_water.
     lng_adj = _normalize_longitude(wave_ds, lng)
     lats = np.asarray(wave_ds["latitude"].values)
     lngs = np.asarray(wave_ds["longitude"].values)
@@ -723,7 +797,7 @@ def _find_offshore_point(
     lng_idx = int(np.argmin(np.abs(lngs - lng_adj)))
 
     def _is_water(li: int, lj: int) -> bool:
-        return _cell_is_water(wave_ds, wave_var, li, lj)
+        return _cell_is_water(datasets, li, lj)
 
     def _to_input_convention(ds_lng: float) -> float:
         # Reverse _normalize_longitude: if the dataset uses 0–360 and the
