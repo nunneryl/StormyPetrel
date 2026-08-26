@@ -169,8 +169,29 @@ def fetch_all_spots(client) -> list[dict]:
 
 
 def fetch_forecasts_window(client) -> dict[int, dict]:
-    """Per spot, keep the first forecast row at/after now AND the row
+    """Per spot, keep the first source='nwps' row at/after now AND the row
     closest to +24h. Returns a dict keyed by spot_id with both rows.
+
+    THE SOURCE FILTER IS LOAD-BEARING. `forecasts` is keyed UNIQUE(spot_id,
+    valid_time, source) and ecmwf_wam writes source='ecmwf' rows on a 3-hourly grid
+    carrying only hs/tp/dp — no stars, no face_ft, no wind.
+
+    `latest` was the exposed one. Unfiltered, whenever a spot's soonest future hour was
+    a multiple of 3 the two writers had rows at the SAME valid_time; rows.sort is stable,
+    so it left that tie in whatever order Postgres returned, and rows[0] could be the
+    unrated row. That is roughly one run in three. `plus24` was much better protected but
+    not by anything deliberate: min() picks the nearest row to the target and the hourly
+    nwps grid is always at least as near as the 3-hourly ecmwf one, so an ecmwf row won
+    only on an exact tie or when the spot had no nwps rows in the window at all.
+
+    Downstream the failure is silent, not loud — _build_user_prompt reads
+    `latest.get("stars") or 0`, so the spot is ranked ★0.0 and drops out of the top 10
+    entirely, and _compute_trend skips it because face_ft is None, so the region trend is
+    averaged over a smaller sample than it reports.
+
+    Filter on `source`, not on "stars is not null": interpret writes stars=0.0,
+    never None, when it cannot rate an hour, so a null test separates the two
+    writers today only because of which columns ecmwf_wam populates.
     """
     now = datetime.now(timezone.utc)
     iso_now = now.isoformat()
@@ -184,6 +205,7 @@ def fetch_forecasts_window(client) -> dict[int, dict]:
         resp = (
             client.table("forecasts")
             .select(_FCAST_COLS)
+            .eq("source", "nwps")
             .gte("valid_time", iso_end)
             .lte("valid_time", iso_cap)
             .order("valid_time")

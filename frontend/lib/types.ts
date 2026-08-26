@@ -30,6 +30,19 @@ export type Spot = {
 export type Forecast = {
   spot_id: number;
   valid_time: string;
+  /** Which writer produced this row — the third leg of the table's
+   *  UNIQUE(spot_id, valid_time, source) key. 'nwps' is db_import's rated
+   *  output and the only source any page renders; 'ecmwf' is ecmwf_wam's raw
+   *  comparison feed, which populates hs/tp/dp and leaves every rated column
+   *  null. Every query that reads this table filters .eq('source', 'nwps').
+   *
+   *  Selected even though PostgREST would let us filter on it without
+   *  selecting it: an invisible discriminator is how unfiltered ecmwf rows
+   *  reached the spot page unnoticed. Typed nullable because the column is
+   *  `source TEXT DEFAULT 'nwps'` with no NOT NULL — the default only applies
+   *  when a writer omits the column, so the DDL permits a null that no writer
+   *  in this repo actually produces. */
+  source: string | null;
   hs: number | null;
   swell_hs: number | null;
   tp: number | null;

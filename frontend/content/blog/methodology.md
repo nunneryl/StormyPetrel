@@ -77,15 +77,44 @@ Long-period swells refract more cleanly, shoal harder, and break with more push 
 
 ## Chop penalty
 
-When wind sea is comparable to swell height, the lineup is textured even on-axis. We compute `chop_ratio = (total_hs - swell_hs) / total_hs` and apply a multiplier:
+When wind sea is comparable to swell height, the lineup is textured even on-axis. We compute the **wind-sea height fraction** — how much of the total wave height is short-period local sea rather than swell:
 
-| chop_ratio | Multiplier | Label |
-|-----------|-----------|-------|
-| < 0.2     | 1.00 | Clean |
-| 0.2–0.4   | 0.85 | Mixed |
-| 0.4–0.6   | 0.65 | Choppy |
-| 0.6–0.8   | 0.45 | Choppy+ |
-| 0.8+      | 0.30 | Blown out |
+```
+chop_ratio = (total_hs - swell_hs) / total_hs
+```
+
+That fraction drives a rating multiplier. The multiplier is a **piecewise-linear curve through these knots, not a step function** — a chop_ratio between two knots is interpolated, so 0.3 gives 0.9250, not 0.85:
+
+| chop_ratio | Multiplier |
+|-----------|-----------|
+| 0.0 | 1.00 |
+| 0.2 | 1.00 |
+| 0.4 | 0.85 |
+| 0.6 | 0.65 |
+| 0.8 | 0.45 |
+| 1.0 | 0.30 |
+
+`chop_ratio` is NULL when the inputs can't support a ratio (no total height, no swell height, or a swell height above the total). An unknown scores the neutral 1.00 rather than being treated as zero.
+
+## Surface conditions
+
+The **Clean / Mixed / Choppy / Blown out** label on each spot page is a separate thing from the chop penalty above, and it is derived from **wind**, not from `chop_ratio`.
+
+That is a deliberate correction. "Blown out" is a wind condition — the Encyclopedia of Surfing defines it as an "ocean surface condition created by a moderate-to-strong onshore wind, which, by degrees, produces chopped-up, crumbly, messy surf." `chop_ratio` is a height fraction describing water offshore, which is a different quantity. Measured across 84,774 spot-hours, labelling from `chop_ratio` produced words that were essentially independent of wind: "Blown out" fired 57–64% of the time in *every* wind-direction band, and "Clean" fired more often onshore (5.9%) than offshore (1.9%). 57.3% of offshore-wind hours were labelled "Blown out" — next to a wind readout saying "offshore".
+
+The label now comes from the wind's angle off the spot's directly-offshore bearing (`off_angle`, wrapped to 0–180°) and its speed:
+
+| Condition | Label |
+|-----------|-------|
+| wind under 2.5 m/s | Clean (glassy — direction stops mattering) |
+| off_angle ≤ 60° | Clean (offshore) |
+| off_angle ≤ 120° | Mixed (cross-shore) |
+| off_angle > 120°, wind under 6 m/s | Choppy (light onshore) |
+| off_angle > 120°, wind 6 m/s or more | Blown out |
+
+Speed is checked before direction: a 1 m/s straight-onshore dawn is glassy, not choppy. Across the same 84,774 spot-hours this gives Clean 43.5%, Mixed 23.8%, Choppy 28.3%, Blown out 4.4%, and the average wind multiplier falls monotonically across the four bands (0.93 → 0.83 → 0.66 → 0.58).
+
+`chop_ratio` is still shown on the spot page, as the "swell mix" figure beneath the conditions word — it is a real statistic about what the swell is made of, just not the thing that decides whether the surface is blown out.
 
 ## Where we're still wrong
 

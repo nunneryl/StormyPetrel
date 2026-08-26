@@ -9,14 +9,18 @@ callers run the function independently, so a full pipeline run paid it twice. A 
 the snapshot step; db_import still wrote (its `!cancelled()` guard), but the revalidate step was
 skipped and the live site served stale pages.
 
-THE BOUND IS DERIVED FROM THE WRITE GRIDS, not guessed. Two writers populate `forecasts`:
+THE BOUND IS DERIVED FROM THE WRITE GRID, not guessed. Two writers populate `forecasts`,
+but the query now reads only one of them:
     source='nwps'  db_import.import_forecasts — HOURLY, f000..f144         -> 1 h gaps
-    source='ecmwf' ecmwf_wam.WAVE_STEPS       — 3-hourly to 144 h,
-                                                6-hourly 150..240 h        -> 6 h gaps
-Worst consecutive-row gap for any spot with future rows: 6 h. CURRENT_HOUR_WINDOW_HOURS is 12,
-i.e. 2x that, so a spot with any live forecast necessarily has a row inside the window.
-    rows in window ~= 648 spots x (12 hourly + 4 three-hourly) = 10,368 -> 11 pages, max
-    offset 10,000. Before: 120,812 -> 121 pages, max offset 120,000.
+    source='ecmwf' ecmwf_wam.WAVE_STEPS       — 3-hourly to 144 h,          (FILTERED OUT
+                                                6-hourly 150..240 h         by .eq source)
+Worst consecutive-row gap among in-scope rows: 1 h. CURRENT_HOUR_WINDOW_HOURS is 12, i.e. 12x
+that, so a spot with any live nwps forecast necessarily has rows inside the window. The 12 h
+value was originally derived as 2x the 6 h ecmwf tail, back when this query returned both
+writers; the source filter retired that derivation, and 12 is kept because the cost figures
+below already justify it and narrowing is the dangerous direction.
+    rows in window ~= 648 spots x 12 hourly = 7,776 -> 8 pages, max offset 7,000.
+    Before the bound (and before the filter): 120,812 -> 121 pages, max offset 120,000.
 
 WHY THE FILTER ASSERTIONS MATTER MOST. The absence of an upper bound IS the bug. A test that
 exercises the function through a fake returning a handful of rows would pass with or without
@@ -133,12 +137,15 @@ def test_query_applies_both_a_lower_and_an_upper_time_bound():
 
 
 def test_the_window_constant_is_named_and_at_least_twice_the_worst_grid_gap():
-    """Pinned by construction, not preference. Worst consecutive-row gap across both writers
-    is 6 h (ecmwf 6-hourly tail, 150..240 h); nwps is hourly. 12 / 6 = 2x margin.
-    Narrowing below 6 would let a spot fall between rows and silently lose revalidation."""
+    """Pinned by construction, not preference. The query filters to source='nwps', whose grid
+    is hourly over f000..f144, so the worst consecutive-row gap among in-scope rows is 1 h and
+    12 h clears it 12x over. The 12 was first derived as 2x the 6 h ecmwf tail, which the
+    source filter took out of scope; the FLOOR asserted here is kept at 12 anyway, because
+    narrowing is the direction that fails silently — a spot that falls between rows never gets
+    its page revalidated and quietly serves stale content."""
     assert R.CURRENT_HOUR_WINDOW_HOURS == 12
-    assert R.CURRENT_HOUR_WINDOW_HOURS >= 2 * 6, (
-        "the bound must stay at or above 2x the 6 h worst-case ecmwf gap")
+    assert R.CURRENT_HOUR_WINDOW_HOURS >= 12, (
+        "the bound must not be narrowed below 12 h; too-narrow fails silently")
     # and the constant is what the query actually uses
     c = FakeClient(pages=[[]])
     R.fetch_current_hour_ratings(c)
@@ -251,9 +258,14 @@ def test_rows_without_a_spot_id_are_skipped():
 
 
 def test_a_row_present_with_null_columns_is_kept_as_null():
-    """Distinct from the absent case above: the row EXISTS, its columns are null. That is a
-    real database state (ecmwf-source rows carry hs/tp/dp but no stars/effective_size_ft),
-    and the function reports it faithfully rather than dropping the spot."""
+    """Distinct from the absent case above: the row EXISTS, its columns are null. The function
+    reports it faithfully rather than dropping the spot.
+
+    The row that used to reach this path was an ecmwf-source one (hs/tp/dp, no stars or
+    effective_size_ft); the source filter now keeps those out of the result entirely. The
+    behaviour is still pinned because nothing guarantees a source='nwps' row is fully
+    populated — db_import passes h.get(...) straight through, so an interpret hour missing
+    effective_size_ft writes an nwps row with a null in it."""
     b = datetime(2026, 8, 20, 12, 0, tzinfo=timezone.utc)
     rows = [{"spot_id": 9, "valid_time": _iso(b), "stars": None, "effective_size_ft": None}]
     out = R.fetch_current_hour_ratings(FakeClient(pages=[rows]))

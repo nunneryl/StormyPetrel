@@ -49,16 +49,36 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
+// NWPS ROWS ONLY. `forecasts` is keyed UNIQUE(spot_id, valid_time, source) and has
+// two writers: db_import writes the rated source='nwps' rows this page renders, and
+// ecmwf_wam writes raw source='ecmwf' rows carrying hs/tp/dp and nothing else.
+// Unfiltered, both came back. ForecastGrid keeps the rows whose UTC hour is divisible
+// by 3, and every ecmwf valid_time is such an hour — the cycles are 00Z/12Z and every
+// entry in ecmwf_wam.WAVE_STEPS is a multiple of 3, including the 6-hourly tail — so
+// NO ecmwf row was ever dropped by that sampling and the 7-day grid rendered each
+// displayed slot twice, once rated and once blank.
+//
+// Filter on `source`, not on "stars is not null". ecmwf rows having a null `stars` is
+// a side effect of which columns that writer happens to populate; it is not a contract,
+// and interpret writes 0.0 rather than null when it cannot rate an hour, so a null test
+// discriminates the two writers only by accident.
+//
+// The secondary sort on `id` is belt-and-braces, not a need: with the source filter the
+// unique key already makes valid_time unique within one spot. It is there so that if the
+// filter is ever dropped, or a third writer appears, the row order stays a TOTAL order
+// (`id` is the primary key) instead of whatever Postgres hands back for a tie.
 async function loadForecasts(spotId: number): Promise<Forecast[]> {
   const nowIso = new Date().toISOString();
   const { data, error } = await supabase
     .from('forecasts')
     .select(
-      'spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
+      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
     )
     .eq('spot_id', spotId)
+    .eq('source', 'nwps')
     .gte('valid_time', nowIso)
     .order('valid_time', { ascending: true })
+    .order('id', { ascending: true })
     .limit(200);
   if (error) {
     console.error('loadForecasts', error);
