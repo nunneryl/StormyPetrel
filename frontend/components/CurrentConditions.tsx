@@ -2,7 +2,7 @@ import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
 import type { Forecast } from '@/lib/types';
 import {
-  classifyChop, chopBadgeClass, chopLabel,
+  classifySurface, surfaceTextClass, chopLabel,
   classifyWind, windQualityClass, windQualityLabel,
 } from '@/lib/ratings';
 import {
@@ -34,7 +34,16 @@ export function CurrentConditions({
   const dp = pickSwell(current?.swell_dp ?? null, current?.dp ?? null);
 
   const wQ = classifyWind(current?.wind_dir ?? null, offshoreDeg ?? null);
-  const cQ = classifyChop(current?.chop_ratio ?? null);
+  // Conditions is WIND-DERIVED. It reads the same wind_dir/offshore_wind_deg the Wind
+  // tile does, plus wind_speed — deliberately, so the two tiles can no longer contradict
+  // each other the way chop_ratio-driven labels did (offshore wind + "Blown out" in the
+  // same strip). They stay separate functions: Wind reports the wind, Conditions reports
+  // what that wind does to the surface. See classifySurface.
+  const cQ = classifySurface(
+    current?.wind_dir ?? null,
+    current?.wind_speed ?? null,
+    offshoreDeg ?? null,
+  );
 
   // Tide trend over the next 1 hour for the inline arrow indicator.
   const tideTrend = (() => {
@@ -92,20 +101,22 @@ export function CurrentConditions({
           ) : null
         }
       />
+      {/* The word appears ONCE, as the value — it is this tile's primary datum, the way
+          Face/Swell/Wind/Tide each put theirs there. The badge that used to repeat it is
+          gone; its colour moved onto the value via surfaceTextClass, so no information is
+          lost. 'unknown' yields an empty class, leaving the em-dash exactly as before.
+
+          The hint is a DIFFERENT measurement and is labelled as one. chop_ratio is the
+          wind-sea fraction of total Hs — a swell-composition statistic, not the surface
+          state above it — and this tile is the only place that number surfaces at all. */}
       <BigTile
         label="Conditions"
         value={chopLabel(cQ)}
+        valueClass={surfaceTextClass(cQ)}
         hint={
           current?.chop_ratio !== null && current?.chop_ratio !== undefined
-            ? `${(current.chop_ratio * 100).toFixed(0)}% wind sea`
+            ? `swell mix · ${(current.chop_ratio * 100).toFixed(0)}% wind sea`
             : null
-        }
-        badge={
-          cQ !== 'unknown' && (
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest2 ${chopBadgeClass(cQ)}`}>
-              {chopLabel(cQ)}
-            </span>
-          )
         }
       />
     </section>
@@ -115,11 +126,12 @@ export function CurrentConditions({
 function BigTile({
   label,
   value,
+  valueClass,
   hint,
   icon,
   badge,
   rightSpark,
-}: Tile & { badge?: React.ReactNode }) {
+}: Tile & { badge?: React.ReactNode; valueClass?: string }) {
   return (
     <div className="rounded-xl border border-ink-600 bg-ink-800/60 p-3.5">
       <div className="flex items-start justify-between mb-2">
@@ -130,7 +142,7 @@ function BigTile({
       </div>
       <div className="flex items-center gap-2">
         {icon}
-        <span className="text-2xl font-bold text-text-primary tabular-nums tracking-tightish">
+        <span className={`text-2xl font-bold tabular-nums tracking-tightish ${valueClass || 'text-text-primary'}`}>
           {value}
         </span>
       </div>
