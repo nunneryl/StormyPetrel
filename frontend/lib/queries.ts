@@ -73,6 +73,12 @@ export async function fetchAllSpots(): Promise<Spot[]> {
  * One query (sorted ascending) — we keep up to 2 rows per spot in JS;
  * Supabase REST has no DISTINCT ON. With ~500 spots and a 6h window
  * the result set is small.
+ *
+ * NWPS ROWS ONLY — see loadForecasts in app/spot/[slug]/page.tsx for the full
+ * reasoning. The failure here is sharper than a duplicated grid row: "first row
+ * per spot wins" means an unrated source='ecmwf' row that ties the soonest nwps
+ * row becomes that spot's `latest`, and every card on the index, map and region
+ * pages then reads its stars/face_ft/wind off a row that carries only hs/tp/dp.
  */
 export async function fetchLatestForecastPerSpot(): Promise<{
   latest: Map<number, Forecast>;
@@ -88,11 +94,13 @@ export async function fetchLatestForecastPerSpot(): Promise<{
     const { data, error } = await supabase
       .from('forecasts')
       .select(
-        'spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
+        'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
       )
+      .eq('source', 'nwps')
       .gte('valid_time', nowIso)
       .lte('valid_time', sixHoursLater)
       .order('valid_time', { ascending: true })
+      .order('id', { ascending: true })
       .range(from, from + page - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
@@ -135,6 +143,20 @@ export async function fetchSpotsWithLatest(): Promise<SpotWithLatest[]> {
 
 /**
  * Next-N-hours of face_ft for sparkline rendering.
+ *
+ * NWPS ROWS ONLY. This one query is the least visibly broken of the three — the
+ * `row.face_ft === null` skip below already drops every source='ecmwf' row, because
+ * ecmwf_wam writes no face_ft. That is an ACCIDENT of the other writer's column set,
+ * not a filter, and it would stop protecting this query the moment ecmwf_wam gained a
+ * face_ft or a second unrated writer appeared. The `.eq('source', 'nwps')` states the
+ * intent; the null skip stays because it is also a genuine guard against a rated nwps
+ * hour whose face_ft could not be computed.
+ *
+ * The `id` secondary sort matters more here than elsewhere: `.range()` is OFFSET
+ * pagination issued as separate queries, and ORDER BY valid_time alone is not a total
+ * order across ~500 spots sharing one timestamp, so Postgres is free to break those
+ * ties differently per page and drop or repeat a row at a page boundary. Ordering by
+ * the primary key makes the sequence deterministic.
  */
 export async function fetchSparklineData(): Promise<Map<number, number[]>> {
   const nowIso = new Date().toISOString();
@@ -146,9 +168,11 @@ export async function fetchSparklineData(): Promise<Map<number, number[]>> {
     const { data, error } = await supabase
       .from('forecasts')
       .select('spot_id, valid_time, face_ft')
+      .eq('source', 'nwps')
       .gte('valid_time', nowIso)
       .lte('valid_time', cap)
       .order('valid_time', { ascending: true })
+      .order('id', { ascending: true })
       .range(from, from + page - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;

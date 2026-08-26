@@ -14,7 +14,39 @@ This module is deliberately isolated from the NWPS pipeline:
     (← mwd, deg). Every other ``forecasts`` column is left NULL.
   * It uses the existing ``UNIQUE(spot_id, valid_time, source)`` key as
     the upsert conflict target — no schema change, no ``model`` column.
-  * It triggers NO revalidation. The rows aren't displayed yet.
+  * It triggers NO revalidation — but see below: that is not what keeps
+    these rows off the site.
+
+ISOLATION IS ENFORCED BY THE READERS, NOT BY THE WRITE PATH. An earlier
+version of this docstring said "It triggers NO revalidation. The rows
+aren't displayed yet." The first sentence is true; the second does not
+follow from it, and it was the source of a real defect. Display is driven
+by what the read query selects, not by who last asked Next.js to
+regenerate a page: every consumer of ``forecasts`` queries the table on
+each render or run, so an unfiltered reader picks these rows up the moment
+they are written, revalidation or no revalidation.
+
+That distinction matters because this module shares one table with the
+rated NWPS feed, distinguished only by ``source``. Every reader must
+therefore discriminate on ``source`` explicitly, and for a period none of
+them did:
+
+  * ``frontend/app/spot/[slug]/page.tsx`` rendered the 7-day grid twice
+    per hour. ``ForecastGrid`` keeps every 3rd hour, and ``WAVE_STEPS``
+    below is a multiple of 3 for its entire length, so every row written
+    here survived that sampling.
+  * ``frontend/lib/queries.ts`` picks "first row per spot"; whenever the
+    soonest future hour was a multiple of 3 these rows tied the NWPS row
+    for the same instant and the tie went to whichever Postgres returned
+    first — putting an unrated row behind a spot card's stars and face.
+  * ``pipeline/revalidate.py`` and ``pipeline/daily_report.py`` had the
+    same tie and read ``stars`` / ``effective_size_ft`` off the winner.
+
+All five now filter ``.eq('source', 'nwps')``. Adding a consumer means
+adding that filter. The tempting shortcut — inferring "raw, unrated" from
+a null ``stars`` — is wrong: ``interpret`` writes ``stars=0.0``, not NULL,
+for an hour it cannot rate, so that test separates the two feeds only as a
+side effect of which columns this module happens to populate.
 
 Run:
     python -m pipeline.ecmwf_wam            # latest available 00Z/12Z cycle

@@ -105,38 +105,57 @@ def fetch_spot_meta(client) -> dict[int, dict]:
 
 # Forward window for "each spot's soonest row at or after now".
 #
-# CHOSEN FROM THE WRITE GRIDS, not from a guess. Two writers populate `forecasts`:
+# CHOSEN FROM THE WRITE GRID, not from a guess. The query below reads source='nwps'
+# rows only, so only db_import's grid constrains this bound:
 #   source='nwps'  — db_import.import_forecasts, one row per interpret ratings hour.
 #                    The NWPS CG1 series is HOURLY over f000..f144, so consecutive
-#                    rows for a spot are 1 h apart out to ~145 h.
-#   source='ecmwf' — ecmwf_wam.upsert_forecasts on ecmwf_wam.WAVE_STEPS, which is
-#                    3-HOURLY to 144 h then 6-HOURLY to the 240 h horizon.
-# The widest gap between consecutive rows, for any spot that has future rows at
-# all, is therefore 6 h (the ecmwf tail). This bound is 2x that worst gap, so a
-# spot with any live forecast is guaranteed at least one row inside the window.
-# The guarantee is structural — derived from the grids both writers emit — rather
-# than sampled, so it does not depend on the state of one particular cycle.
+#                    rows for a spot are 1 h apart out to ~145 h from the cycle.
+# The widest gap between consecutive in-scope rows, for any spot that has future
+# nwps rows at all, is therefore 1 h. This bound is 12x that worst gap, so a spot
+# with any live forecast is guaranteed several rows inside the window. The guarantee
+# is structural — derived from the grid db_import emits — rather than sampled, so it
+# does not depend on the state of one particular cycle.
+#
+# The bound was originally derived against the 6 h tail of ecmwf_wam.WAVE_STEPS,
+# which was the widest gap back when this query returned BOTH writers' rows. The
+# source filter removed those rows, so that tail no longer constrains anything. 12 h
+# is kept unchanged because it is already proven on the cost side below and because
+# narrowing is the dangerous direction — not because 6 h still binds.
 #
 # WHY THE BOUND EXISTS AT ALL: without an upper bound the query selects every
-# future row (measured: 120,812 across ~121 pages) in order to use at most one per
-# spot (648) — 99.5% is fetched and then discarded by the `sid in out` guard below.
-# Deep offset paging cost 6.8 ms at offset 1000 and 7342 ms at offset 86,000, and
-# the cumulative cost across the page sequence exceeded the server statement
-# timeout. Bounded, the same query returns roughly 648 x (12 hourly + 4 three-
-# hourly) = ~10k rows over ~11 pages, keeping every offset in the cheap regime.
+# future row (measured: 120,812 across ~121 pages, both writers, before the source
+# filter) in order to use at most one per spot (648) — 99.5% is fetched and then
+# discarded by the `sid in out` guard below. Deep offset paging cost 6.8 ms at
+# offset 1000 and 7342 ms at offset 86,000, and the cumulative cost across the page
+# sequence exceeded the server statement timeout. Bounded AND filtered, the same
+# query returns roughly 648 x 12 hourly = ~7.8k rows over ~8 pages, keeping every
+# offset in the cheap regime.
 #
-# Widening is cheap and safe; narrowing below 6 h is not, because the failure mode
-# of too-narrow is SILENT — a spot missing from the result never gets its page
+# Widening is cheap and safe; narrowing is not, because the failure mode of
+# too-narrow is SILENT — a spot missing from the result never gets its page
 # revalidated and quietly serves stale content.
 CURRENT_HOUR_WINDOW_HOURS = 12
 
 
 def fetch_current_hour_ratings(client) -> dict[int, dict]:
-    """For each spot, the soonest forecast row in [now, now + CURRENT_HOUR_WINDOW_HOURS].
+    """For each spot, the soonest source='nwps' row in [now, now + CURRENT_HOUR_WINDOW_HOURS].
 
     Returns spot_id -> {stars, face_ft}. A spot with no row inside the window is
     ABSENT from the mapping — it is never present with null values — so the caller
     can tell "no forecast" from "a forecast that happens to be null".
+
+    THE SOURCE FILTER IS LOAD-BEARING. `forecasts` is keyed UNIQUE(spot_id, valid_time,
+    source) and ecmwf_wam writes source='ecmwf' rows on a 3-hourly grid carrying only
+    hs/tp/dp — no stars, no effective_size_ft. Unfiltered, whenever the soonest future
+    hour fell on a multiple of 3 the ecmwf row TIED the nwps row for the same instant,
+    the tie was broken arbitrarily by Postgres, and "first row per spot wins" could hand
+    this function {"stars": None, "face_ft": None} for a spot that had a perfectly good
+    rating. That poisons the snapshot on one run and flips back on the next, so
+    _rating_changed sees a null<->value transition and revalidates pages that never moved.
+
+    Filter on `source`, not on "stars is not null": interpret writes stars=0.0, never
+    None, when it cannot rate an hour, so a null test happens to separate the two writers
+    today only because of which columns ecmwf_wam populates.
     """
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
@@ -152,6 +171,7 @@ def fetch_current_hour_ratings(client) -> dict[int, dict]:
         res = (
             client.table("forecasts")
             .select("spot_id,valid_time,stars,effective_size_ft")
+            .eq("source", "nwps")
             .gte("valid_time", now_iso)
             .lte("valid_time", until_iso)
             .order("valid_time", desc=False)
