@@ -65,11 +65,17 @@ GRID = [
 ]
 
 SPOT_LAT, SPOT_LNG = 36.35, -75.85        # index (1,1) — land
-BAKED_LAT, BAKED_LNG = 36.35, -75.80      # index (1,2) — the ocean cell, seaward
-# The ring walk's radius-1 order is (-1,-1), (-1,0), (-1,+1), (0,-1), (0,+1), (+1,-1),
-# (+1,0), (+1,+1). From (1,1) the first candidate is (0,0) = lat 36.30, lng -75.90 —
-# the SOUND. It is water, so first-wet-wins accepts it and the walk stops there.
-WALK_LAT, WALK_LNG = 36.30, -75.90
+BAKED_LAT, BAKED_LNG = 36.40, -75.80      # index (2,2) — ocean, seaward at 45° off,
+                                          #   deliberately NOT the nearest seaward cell
+# THE WALK NOW FILTERS BY DIRECTION FIRST. Of the wet cells, the east column is inside
+# the ±90° half-plane around orientation 90 and the west column (the sound, bearing
+# ~219°) is not. The nearest survivor is (1,2) = lat 36.35, lng -75.80, due east.
+WALK_LAT, WALK_LNG = 36.35, -75.80        # index (1,2) — nearest SEAWARD cell
+# Where the walk used to go: the first wet cell in radius-1 index order was (-1,-1) =
+# (0,0), a landward diagonal into the sound. Kept as a named point so the tests can
+# assert the walk NO LONGER lands there, and so the no-seaward-cell fallback has
+# somewhere to fall back TO.
+SOUND_LAT, SOUND_LNG = 36.30, -75.90      # index (0,0) — landward, 128.9° off normal
 
 ORIENTATION = 90.0                        # east-facing
 
@@ -190,31 +196,48 @@ def test_the_fixture_puts_the_walk_and_the_baked_node_in_different_places():
     """Guard the premise. If the ring walk and the baked node coincided, every test
     below would pass with the defect still present.
 
-        spot   (36.35, -75.85)  index (1,1), GRID[1][1] = NaN -> LAND
-        baked  (36.35, -75.80)  index (1,2), GRID[1][2] = 1.35 -> water, due EAST
-        walk   (36.30, -75.90)  index (0,0), GRID[0][0] = 0.42 -> water, to the SW
+        spot   (36.35, -75.85)  index (1,1), GRID[1][1] = NaN  -> LAND
+        baked  (36.40, -75.80)  index (2,2), GRID[2][2] = 1.40 -> water, NE
+        walk   (36.35, -75.80)  index (1,2), GRID[1][2] = 1.35 -> water, due EAST
+        sound  (36.30, -75.90)  index (0,0), GRID[0][0] = 0.42 -> water, SW
 
     Bearings from the spot, orientation 90:
-        to baked: due east          -> 90.0°,  |90.0 - 90| =   0.0° off  -> SEAWARD
-        to walk : south-west        -> 218.9°, |218.9 - 90| = 128.9° off -> LANDWARD
+        to baked: north-east        ->  45.1°, | 45.1 - 90| =  44.9° off -> SEAWARD
+        to walk : due east          ->  90.0°, | 90.0 - 90| =   0.0° off -> SEAWARD
+        to sound: south-west        -> 218.9°, |218.9 - 90| = 128.9° off -> LANDWARD
+
+    Three distinct points, so "which one did it use" stays a real question: the baked
+    node is seaward but NOT nearest, the walk destination is the nearest seaward cell,
+    and the sound is where the unfiltered walk used to go.
     """
     assert (BAKED_LAT, BAKED_LNG) != (WALK_LAT, WALK_LNG)
+    assert (WALK_LAT, WALK_LNG) != (SOUND_LAT, SOUND_LNG)
     assert math.isnan(GRID[1][1]), "the spot's own cell must be land or the walk never runs"
     assert not math.isnan(GRID[1][2]) and not math.isnan(GRID[0][0])
-    # the walk really does go to the sound — asserted against _find_offshore_point itself,
-    # which this commit does not change
-    lat, lng, rings = nwps._find_offshore_point(_datasets(), SPOT_LAT, SPOT_LNG)
+    assert not math.isnan(GRID[2][2])
+    # The walk goes SEAWARD now — asserted against _find_offshore_point itself, with the
+    # spot's orientation supplied exactly as fetch() supplies it.
+    lat, lng, rings, seaward_ok = nwps._find_offshore_point(
+        _datasets(), SPOT_LAT, SPOT_LNG, orientation=ORIENTATION)
     assert (round(lat, 2), round(lng, 2)) == (WALK_LAT, WALK_LNG), (lat, lng)
     assert rings == 1, rings
+    assert seaward_ok is True
+    # and WITHOUT an orientation the original ring walk is untouched: first wet cell in
+    # radius-1 index order is (0,0), the sound.
+    lat, lng, rings, seaward_ok = nwps._find_offshore_point(
+        _datasets(), SPOT_LAT, SPOT_LNG)
+    assert (round(lat, 2), round(lng, 2)) == (SOUND_LAT, SOUND_LNG), (lat, lng)
+    assert rings == 1, rings
+    assert seaward_ok is True
 
 
 # --------------------------------------------------------------------------- #
 # 1 — a spot WITH a baked node extracts at the baked coordinates               #
 # --------------------------------------------------------------------------- #
 def test_a_baked_node_is_used_instead_of_the_ring_walk():
-    """THE FIX. The extractor must be handed (36.35, -75.80) — the ocean cell — and NOT
-    (36.30, -75.90), the sound cell the ring walk would have chosen. Before this change
-    the fetcher never read nwps_node_lat/lng at all and always got the sound."""
+    """THE FIX. The extractor must be handed (36.40, -75.80) — the baked ocean cell —
+    and NOT (36.35, -75.80), the cell the ring walk would choose on its own. Before this
+    change the fetcher never read nwps_node_lat/lng at all."""
     _, seen, cap = _run_fetch([_spot()], "baked.json")
     assert seen == [(BAKED_LAT, BAKED_LNG)], seen
     assert seen != [(WALK_LAT, WALK_LNG)], "still sampling the ring-walk point"
@@ -226,8 +249,9 @@ def test_the_baked_node_is_used_even_when_the_walk_would_have_succeeded():
     the spot's OWN cell is water, so the walk would return it at 0 rings — and the baked
     node must still take precedence.
 
-        GRID[1][1] = 0.90 (water) -> _find_offshore_point returns (36.35, -75.85), 0 rings
-        the fetcher must still hand the extractor (36.35, -75.80)
+        GRID[1][1] = 0.90 (water) -> the spot's own cell. Its bearing from the spot is
+        0.0° and |0.0 - 90| = 90.0, which _ang_within admits with <=, so the walk would
+        take it at 0 rings. The fetcher must still hand the extractor (36.40, -75.80).
     """
     grid = [row[:] for row in GRID]
     grid[1][1] = 0.90
@@ -240,11 +264,12 @@ def test_the_baked_node_is_used_even_when_the_walk_would_have_succeeded():
 # 2 — a spot WITHOUT a baked node still walks                                  #
 # --------------------------------------------------------------------------- #
 def test_a_spot_with_no_baked_node_still_uses_the_ring_walk():
-    """48 spots have no baked node (sgx 30, mtr 11, lox 6, eka 1) and must keep working
-    exactly as before. The walk lands in the sound at (36.30, -75.90) — that is the
-    ring walk's unchanged behaviour, not an endorsement of it."""
+    """48 spots have no baked node (sgx 31, mtr 10, lox 6, eka 1) and must keep working.
+    The walk now lands on the nearest SEAWARD cell, (36.35, -75.80), and no longer in
+    the sound at (36.30, -75.90)."""
     _, seen, _ = _run_fetch([_spot(baked=False)], "nobake.json")
     assert seen == [(WALK_LAT, WALK_LNG)], seen
+    assert seen != [(SOUND_LAT, SOUND_LNG)], "still walking into the sound"
 
 
 def test_a_half_baked_node_falls_back_rather_than_using_one_coordinate():
@@ -268,7 +293,7 @@ def test_a_baked_node_that_tests_as_land_falls_back_to_the_walk_and_warns():
         -> and WARN, naming the spot
     """
     grid = [row[:] for row in GRID]
-    grid[1][2] = NAN
+    grid[2][2] = NAN
     _, seen, cap = _run_fetch([_spot(name="Corolla Beach")], "bakedland.json", grid=grid)
     assert seen == [(WALK_LAT, WALK_LNG)], seen
     warnings = [r for r in cap.records if r.levelno >= logging.WARNING]
@@ -318,10 +343,12 @@ def test_a_partly_masked_cell_counts_as_water_across_the_whole_step_axis():
     assert nwps._cell_is_water([ds], 0, 2) is True
     assert nwps._cell_is_water([ds], 1, 2) is False
     assert nwps._cell_is_water([ds], 2, 2) is True
-    # and the baked-node wrapper agrees, since it routes through the same predicate:
-    # the baked node (36.35, -75.80) is index (1,2), now fully masked
-    assert nwps._baked_node_is_water([ds], BAKED_LAT, BAKED_LNG) is False
-    assert nwps._baked_node_is_water([ds], 36.30, -75.80) is True
+    # and the baked-node wrapper agrees, since it routes through the same predicate.
+    # These are the LITERAL coordinates of the cells masked above, not the fixture's
+    # BAKED_* constants — this test is about the step-axis predicate, not about which
+    # cell the roster happens to bake.
+    assert nwps._baked_node_is_water([ds], 36.35, -75.80) is False   # index (1,2), masked
+    assert nwps._baked_node_is_water([ds], 36.30, -75.80) is True    # index (0,2), partly
 
 
 # --------------------------------------------------------------------------- #
@@ -334,7 +361,7 @@ def test_the_seaward_diagnostic_is_exact():
         x = cos(lat1)·sin(lat2) − sin(lat1)·cos(lat2)·cos(dlng)
         bearing = (degrees(atan2(y, x)) + 360) mod 360
 
-    spot (36.35, -75.85) -> baked (36.35, -75.80). Same latitude, dlng = +0.05°.
+    spot (36.35, -75.85) -> walk (36.35, -75.80). Same latitude, dlng = +0.05°.
     Due east is NOT exactly 90° on a great circle — a rhumb line east curves — and
     with lat1 == lat2 the x term collapses to sin·cos·(1 − cos dlng):
         y = sin(0.05°)·cos(36.35°)                 = 7.028539022409e-04
@@ -342,16 +369,18 @@ def test_the_seaward_diagnostic_is_exact():
         atan2(y, x) = 89.985182093°  -> off = |89.985182093 − 90| = 0.014817907
     That 0.0148° is real spherical geometry, not float noise, so it is pinned as such.
 
-    spot (36.35, -75.85) -> walk (36.30, -75.90). 0.05° south, 0.05° west:
+    spot (36.35, -75.85) -> sound (36.30, -75.90). 0.05° south, 0.05° west:
         bearing = 218.872158773°  -> off = 128.872158773  -> NOT seaward
     """
     s = _spot()
-    brg, off, sea = nwps._seaward_diag(s, BAKED_LAT, BAKED_LNG)
+    # (36.35, -75.80) is the walk destination; the hand arithmetic above is for THESE
+    # literal coordinates, so they are written out rather than taken from a constant.
+    brg, off, sea = nwps._seaward_diag(s, 36.35, -75.80)
     assert _close(brg, 89.985182093), brg
     assert _close(off, 0.014817907), off
     assert sea is True
 
-    brg, off, sea = nwps._seaward_diag(s, WALK_LAT, WALK_LNG)
+    brg, off, sea = nwps._seaward_diag(s, 36.30, -75.90)
     assert _close(brg, 218.872158773), brg
     assert _close(off, 128.872158773), off
     assert sea is False
@@ -363,76 +392,100 @@ def test_a_spot_with_no_orientation_has_no_assessable_direction():
     assert nwps._seaward_diag(_spot(orientation=None), WALK_LAT, WALK_LNG) is None
 
 
-def test_a_landward_walk_is_logged_with_its_bearing_and_named_in_the_summary():
-    """The old line read "fell back to (...) at 1 cells away" and stopped there, so a
-    walk into the sound and a walk out to sea printed identically. Both the per-spot
-    line and the run summary must now say LANDWARD and name the spot."""
-    _, seen, cap = _run_fetch([_spot(name="Salvo", baked=False)], "landward.json")
-    assert seen == [(WALK_LAT, WALK_LNG)]
+def test_a_landward_walk_only_happens_when_no_seaward_cell_exists_and_is_named_twice():
+    """A LANDWARD walk is now reachable only through the no-seaward-cell fallback, and it
+    must be loud in BOTH reporting channels — the pre-existing `_seaward_diag` line, which
+    is how production is verified, and the new fallback warning.
+
+    The whole east column is masked, so every wet cell is in the sound and the ±90°
+    filter admits nothing. The fallback takes the nearest wet cell regardless:
+
+        wet cells: (0,0) (1,0) (2,0) — the sound column, all west of the spot
+        nearest is (1,0) = (36.35, -75.90), due WEST, one longitude step
+
+    Bearing by the same great-circle formula as the east case, whose dlng is the exact
+    negation of this one, so the bearing is its reflection about due north:
+        east  (36.35, -75.80) -> 89.985182093
+        west  (36.35, -75.90) -> 360 - 89.985182093 = 270.014817907
+        off = |((270.014817907 - 90 + 180) mod 360) - 180| = 179.985182093 -> LANDWARD
+    The log formats off with %.0f, so it prints 180.
+    """
+    grid = [row[:] for row in GRID]
+    for i in range(3):
+        grid[i][2] = NAN                      # mask the whole ocean column
+    _, seen, cap = _run_fetch([_spot(name="Salvo", baked=False)], "landward.json",
+                              grid=grid)
+    assert seen == [(36.35, -75.90)], seen
     txt = cap.text()
     assert "LANDWARD" in txt, txt
-    assert "129° off normal" in txt or "128° off normal" in txt, txt
+    assert "180° off normal" in txt, txt
     assert "ring-walk-LANDWARD=1" in txt, txt
+    assert "ring-walk-no-seaward-cell=1" in txt, txt
     warned = "\n".join(r.getMessage() for r in cap.records if r.levelno >= logging.WARNING)
     assert "Salvo" in warned and "LANDWARD" in warned, warned
+    assert "NO SEAWARD wet cell" in warned, warned
+    assert "had NO seaward wet cell" in warned and "Salvo" in warned, warned
 
 
 def test_a_seaward_walk_is_counted_separately_and_not_warned():
-    """The other six of the twelve measured MHX spots walked correctly. A seaward walk
-    must not be reported as a problem.
+    """The normal case now. A seaward walk must not be reported as a problem, and the
+    no-seaward-cell counter must stay at zero.
 
-        GRID[1][2] stays water and GRID[0][0] becomes LAND, so the radius-1 order
-        skips (0,0) and the first WET candidate is (0,2) = (36.30, -75.80).
-        bearing from (36.35,-75.85) to (36.30,-75.80) = 141.127841227°
-        off = |141.127841227 - 90| = 51.127841227 -> within ±90 -> SEAWARD
+        GRID[1][2] stays water, so the nearest cell inside the ±90° half-plane is
+        (1,2) = (36.35, -75.80), due east: off = 0.0148° -> SEAWARD.
     """
-    grid = [row[:] for row in GRID]
-    grid[0][0] = NAN
-    _, seen, cap = _run_fetch([_spot(baked=False)], "seaward.json", grid=grid)
-    assert seen == [(36.30, -75.80)], seen
+    _, seen, cap = _run_fetch([_spot(baked=False)], "seaward.json")
+    assert seen == [(WALK_LAT, WALK_LNG)], seen
     txt = cap.text()
     assert "SEAWARD" in txt, txt
     assert "ring-walk-seaward=1" in txt, txt
     assert "ring-walk-LANDWARD=0" in txt, txt
+    assert "ring-walk-no-seaward-cell=0" in txt, txt
+    warned = "\n".join(r.getMessage() for r in cap.records if r.levelno >= logging.WARNING)
+    assert "NO SEAWARD" not in warned, warned
 
 
 # --------------------------------------------------------------------------- #
 # 5 — the summary counters                                                     #
 # --------------------------------------------------------------------------- #
 def test_the_node_selection_summary_counts_all_four_outcomes():
-    """Four spots in one run, each taking a different route.
+    """Four spots in one run, each taking a different route. GRID[0][0] is masked so the
+    unoriented walk has a distinct destination from the oriented one.
 
-        Good     baked (36.35, -75.80), water            -> baked-node = 1
-        Stale    baked (36.40, -75.80), GRID[2][2] = NaN -> rejected as land = 1,
-                                                            THEN walks -> landward
-        Walker   no baked node                           -> walks -> landward
-        NoOrient no baked node, no orientation_deg       -> walks -> no-orientation
+        Good     baked (36.40, -75.80), water      -> baked-node = 1, extracts there
+        Stale    baked (36.30, -75.85) = GRID[0][1], the island -> rejected as land = 1,
+                                                     THEN walks, oriented -> (36.35,-75.80)
+        Walker   no baked node, orientation 90     -> walks, oriented -> (36.35,-75.80)
+        NoOrient no baked node, no orientation_deg -> the ORIGINAL ring walk. Radius-1
+                                                     order is (-1,-1) (0,0) MASKED,
+                                                     (-1,0) (0,1) land, (-1,+1) (0,2)
+                                                     WATER -> (36.30, -75.80)
 
-    So ring-walk-LANDWARD = 2, not 1: the two axes are orthogonal, and a spot whose
-    baked node is rejected still has its FALLBACK WALK direction classified. That is
-    the point of counting both — "baked node rejected" alone would not tell you the
-    replacement was worse.
-        seaward = 0, landward = 2 (Stale, Walker), no-orientation = 1 (NoOrient)
+    The two axes stay orthogonal: a spot whose baked node is rejected still has its
+    FALLBACK WALK direction classified, which is why Stale counts in both.
+        seaward = 2 (Stale, Walker), landward = 0, no-orientation = 1 (NoOrient)
     """
     grid = [row[:] for row in GRID]
-    grid[2][2] = NAN                                  # the north ocean cell -> land
+    grid[0][0] = NAN                                  # the SW sound cell -> land
     good = _spot(name="Good")
     stale = _spot(name="Stale")
-    stale["nwps_node_lat"], stale["nwps_node_lng"] = 36.40, -75.80
+    stale["nwps_node_lat"], stale["nwps_node_lng"] = 36.30, -75.85   # index (0,1), island
     walker = _spot(name="Walker", baked=False)
     noorient = _spot(name="NoOrient", baked=False, orientation=None)
     _, seen, cap = _run_fetch([good, stale, walker, noorient], "summary.json", grid=grid)
     assert len(seen) == 4, seen
     assert seen[0] == (BAKED_LAT, BAKED_LNG), seen        # Good took the baked node
-    assert seen[1:] == [(WALK_LAT, WALK_LNG)] * 3, seen   # the other three all walked
+    assert seen[1] == (WALK_LAT, WALK_LNG), seen          # Stale fell back, oriented
+    assert seen[2] == (WALK_LAT, WALK_LNG), seen          # Walker, oriented
+    assert seen[3] == (36.30, -75.80), seen               # NoOrient, original ring order
     txt = cap.text()
     assert "baked-node=1" in txt, txt
     assert "baked-node-rejected-as-land=1" in txt, txt
-    assert "ring-walk-LANDWARD=2" in txt, txt
+    assert "ring-walk-seaward=2" in txt, txt
+    assert "ring-walk-LANDWARD=0" in txt, txt
     assert "ring-walk-no-orientation=1" in txt, txt
-    assert "ring-walk-seaward=0" in txt, txt
+    assert "ring-walk-no-seaward-cell=0" in txt, txt
     warned = "\n".join(r.getMessage() for r in cap.records if r.levelno >= logging.WARNING)
-    assert "Stale, Walker" in warned, warned                # named, sorted
     assert "1 baked node(s) tested as land: Stale" in warned, warned
 
 
