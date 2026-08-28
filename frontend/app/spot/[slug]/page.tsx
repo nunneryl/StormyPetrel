@@ -15,6 +15,7 @@ import { OptimalConditions } from '@/components/OptimalConditions';
 import { CamSection } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
+import { spotInfoRows } from '@/lib/spotInfo';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { siteUrl } from '@/lib/site-url';
 
@@ -233,18 +234,14 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
       {/* Spot info / conditions match / buoy */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Rows come from lib/spotInfo so WHICH ROWS EXIST is testable. There is
+            no Hazards row: the column is unreviewed on all 648 spots, an em dash
+            would read as "no hazards here", and a populated row is a guess. See
+            spotInfoRows' comment before adding it back. */}
         <InfoBlock title="Spot info">
-          <Row k="Break" v={spot.break_type ?? '—'} />
-          <Row k="Tide preference" v={spot.tide_preference ?? '—'} />
-          <Row k="Crowd" v={spot.crowd_factor ?? '—'} />
-          <Row
-            k="Hazards"
-            v={
-              spot.hazards?.length
-                ? spot.hazards.map((h) => h.replace(/_/g, ' ')).join(', ')
-                : '—'
-            }
-          />
+          {spotInfoRows(spot).map((r) => (
+            <Row key={r.label} k={r.label} v={r.value} />
+          ))}
         </InfoBlock>
 
         <OptimalConditions spot={spot} />
