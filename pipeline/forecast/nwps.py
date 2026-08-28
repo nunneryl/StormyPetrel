@@ -521,6 +521,13 @@ _WAVE_VARS_FOR_LAND_CHECK = ("swh", "htsgw", "shts", "shww", "swell")
 # breakwaters / barrier islands without straying into a different surf zone.
 _LAND_SEARCH_MAX_RADIUS = 5
 
+# Slack allowed when testing a node against a grid's edge, in degrees. Float-noise
+# absorption ONLY: a node that is an exact cell centre of this grid must compare as inside
+# after a JSON round-trip, where the last bit or two can move. 1e-6 deg is ~0.1 m — four
+# orders finer than the tightest NWPS CG1 nest (~0.01 deg), so it can never admit a node
+# that is genuinely off the grid, not even by a fraction of a cell.
+_DOMAIN_EDGE_EPS_DEG = 1e-6
+
 
 def _find_wave_dataset(datasets: list):
     """Return (dataset, var_name) of the first wave-bearing dataset, else (None, None)."""
@@ -688,6 +695,61 @@ def _sampled_distance_km(spot_lat: float, spot_lng: float,
     from .nwps_nearshore import _haversine_km   # local: no import-time coupling
 
     return _haversine_km(spot_lat, spot_lng, point_lat, point_lng)
+
+
+def _grid_domain_miss(datasets: list, lat: float, lng: float):
+    """Does (lat, lng) fall OUTSIDE the loaded grid's own domain — and if so, where does
+    the lookup land instead?
+
+    Returns None when the point is inside, INCLUSIVE of the boundary: a node sitting on an
+    edge cell centre is a legitimate placement, not a miss (avila-beach sits exactly on
+    mtr's -120.7400 edge column and must not warn). Otherwise returns
+    (lat_min, lat_max, lng_min, lng_max, res_lat, res_lng) — the axis bounds it fell
+    outside, and the cell centre argmin actually resolves it to. Bounds and resolved
+    longitude come back in the CALLER's longitude convention, so they can be printed next
+    to the node without re-normalising.
+
+    WHY THIS EXISTS. Every coordinate lookup in this module is an argmin: here, in
+    _baked_node_is_water, and inside xarray's .sel(method="nearest") in
+    _extract_time_series_from_datasets. An argmin never errors and never reports — handed a
+    coordinate past the end of an axis it returns the last index, so an off-grid node
+    silently reads the edge column and the forecast publishes from there. Cherry Grove Pier
+    carried an ilm-nest node under nwps_wfo='chs' and published from chs's 33.5800 boundary,
+    27.8 km from the spot, for months. Nothing caught it: nwps_node_distance_m recorded the
+    2077 m to the node, which is correct and well inside the cap, and the far-cap check
+    measures to that same REQUESTED node. This asks the different question — is the node on
+    this grid at all.
+
+    Judged against _find_wave_dataset's REFERENCE GRID: the same axes _baked_node_is_water
+    resolves li/lj against, so the domain reported is the domain the lookup actually used.
+    """
+    import numpy as np
+
+    wave_ds, _var = _find_wave_dataset(datasets)
+    if wave_ds is None:
+        # No wave grid to judge against. Same trust-the-input posture _baked_node_is_water
+        # and _find_offshore_point take when they cannot tell land from water.
+        return None
+    try:
+        lats = np.asarray(wave_ds["latitude"].values).ravel()
+        lngs = np.asarray(wave_ds["longitude"].values).ravel()
+    except (KeyError, ValueError):
+        return None
+    if lats.size == 0 or lngs.size == 0:
+        return None
+
+    lng_adj = _normalize_longitude(wave_ds, lng)
+    lat_min, lat_max = float(lats.min()), float(lats.max())
+    lng_min, lng_max = float(lngs.min()), float(lngs.max())
+    eps = _DOMAIN_EDGE_EPS_DEG
+    if (lat_min - eps) <= lat <= (lat_max + eps) and (lng_min - eps) <= lng_adj <= (lng_max + eps):
+        return None
+
+    res_lat = float(lats[int(np.argmin(np.abs(lats - lat)))])
+    res_lng = float(lngs[int(np.argmin(np.abs(lngs - lng_adj)))])
+    # Undo any 0-360 normalisation so the bounds print in the same frame as the node.
+    shift = lng - lng_adj
+    return (lat_min, lat_max, lng_min + shift, lng_max + shift, res_lat, res_lng + shift)
 
 
 def _grid_spacing_and_cap_km(datasets: list) -> tuple[float, float]:
@@ -1007,6 +1069,8 @@ def fetch(
     impossible_pair_spots: list[str] = []
     far_sampled = 0            # sampled cell beyond this grid's far cap — reported, NEVER refused
     far_sampled_names: list[str] = []
+    out_of_domain = 0          # node not on the loaded grid at all — reported, NEVER refused
+    out_of_domain_names: list[str] = []
 
     try:
         from tqdm import tqdm
@@ -1158,6 +1222,40 @@ def fetch(
                     grid_spacing_km_v,
                 )
 
+            # IS THE NODE EVEN ON THIS GRID? The check above measures how far the
+            # REQUESTED node is; this one asks whether that node exists in the loaded
+            # domain at all, and the two are independent — Cherry Grove Pier's node was
+            # 2.08 km from the spot (comfortably inside chs's cap, so silent) and off
+            # chs's grid entirely, so the forecast came from the 33.5800 edge row 27.8 km
+            # away. The cap can never catch that: it measures to the node, and the node is
+            # not what gets read.
+            #
+            # Checked once after BOTH branches, like the cap above, because both resolve
+            # coordinates by argmin — the baked node via _baked_node_is_water and .sel,
+            # the ring walk via its own axis indexing — so corr_lat/corr_lng is the thing
+            # to test whichever path set it.
+            #
+            # THIS REPORTS. IT MUST NEVER REFUSE — same rule as the block above, for the
+            # same reason: a skipped spot has no forecast rows at all and blanks its page.
+            # An off-grid node is a wrong LABEL, and the edge cell it reads is still a real
+            # forecast. Publish it, and make the label loud.
+            miss = _grid_domain_miss(datasets, corr_lat, corr_lng)
+            if miss is not None:
+                lat_min, lat_max, lng_min, lng_max, res_lat, res_lng = miss
+                out_of_domain += 1
+                out_of_domain_names.append(spot["name"])
+                log.warning(
+                    "nwps: %s — node (%.5f, %.5f) is OUTSIDE the '%s' grid its nwps_wfo "
+                    "names (domain lat %.4f..%.4f, lon %.4f..%.4f). The lookup clamped to "
+                    "cell (%.5f, %.5f): %.2f km from the node, %.2f km from the spot. "
+                    "Published anyway — but the forecast is that edge cell's, not the "
+                    "node's. Fix the label, not this warning.",
+                    spot["name"], corr_lat, corr_lng, spot.get("nwps_wfo") or wfo,
+                    lat_min, lat_max, lng_min, lng_max, res_lat, res_lng,
+                    _sampled_distance_km(corr_lat, corr_lng, res_lat, res_lng),
+                    _sampled_distance_km(spot_lat, spot_lng, res_lat, res_lng),
+                )
+
             series = _extract_time_series_from_datasets(datasets, corr_lat, corr_lng)
             if series:
                 # Physically impossible pairs are LOGGED, never clamped — see
@@ -1182,9 +1280,9 @@ def fetch(
     log.info(
         "nwps: node-selection summary — baked-node=%d, baked-node-rejected-as-land=%d, "
         "ring-walk-seaward=%d, ring-walk-LANDWARD=%d, ring-walk-no-orientation=%d, "
-        "ring-walk-no-seaward-cell=%d, over-far-cap=%d",
+        "ring-walk-no-seaward-cell=%d, over-far-cap=%d, out-of-domain=%d",
         nodes_baked, nodes_baked_land, walk_seaward, walk_landward, walk_no_orientation,
-        walk_no_seaward, far_sampled,
+        walk_no_seaward, far_sampled, out_of_domain,
     )
     # NAME the bad ones. A bare count is easy to scroll past, and both of these are
     # conditions someone has to act on rather than watch.
@@ -1203,6 +1301,11 @@ def fetch(
         log.warning("nwps: %d spot(s) sampled BEYOND their grid's far cap (published "
                     "anyway, not skipped): %s",
                     len(far_sampled_names), ", ".join(sorted(far_sampled_names)))
+    if out_of_domain_names:
+        log.warning("nwps: %d spot(s) have a node OUTSIDE the grid their nwps_wfo names — "
+                    "each published from that grid's edge cell, not from its node "
+                    "(published anyway, not skipped). Their nwps_wfo is wrong: %s",
+                    len(out_of_domain_names), ", ".join(sorted(out_of_domain_names)))
     if impossible_pairs:
         log.warning(
             "nwps: %d record(s) across %d spot(s) have swell_hs > hs — physically "
