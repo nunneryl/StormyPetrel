@@ -25,8 +25,8 @@ type Params = { slug: string };
 
 // Pre-build all known spot pages at deploy time. Stale routes still
 // regenerate on demand after ISR expiry, and any new spot added to
-// the DB between deploys is built on first request. ~484 spots ⇒
-// ~484 prerendered HTML files per deploy.
+// the DB between deploys is built on first request. 648 spots ⇒
+// 648 prerendered HTML files per deploy.
 export async function generateStaticParams() {
   const spots = await fetchAllSpots();
   return spots.map((s) => ({ slug: s.slug }));

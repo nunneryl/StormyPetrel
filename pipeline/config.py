@@ -259,7 +259,7 @@ WW3_CACHE_DIR = CACHE_DIR / "ww3"
 WW3_FORECAST_FILE = FORECAST_DATA_DIR / "ww3.json"
 WW3_CYCLE_LOOKBACK = 4
 # Forecast horizon to bother extracting — gfswave publishes out to 384h
-# but we never display past 168h, so the extra 200h is wasted IO.
+# but we never display past 168h, so the extra 216h is wasted IO.
 WW3_MAX_FORECAST_HOURS = 168
 # gfswave per-step file naming. Steps are every 1h for f000–f120 then every
 # 3h thereafter. We sample every 3h (matches our display granularity and

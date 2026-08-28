@@ -317,8 +317,8 @@ def _fetch_existing_spots(client) -> dict[str, dict]:
     column absent from the partial source-derived record with the existing
     DB value, so a column the source doesn't carry is never NULLed by the
     upsert. Pages through Supabase's default 1000-row cap defensively
-    (the roster is ~668 today but a future expansion shouldn't silently
-    truncate).
+    (the roster is 648 today — the committed spots_enriched.json count —
+    but a future expansion shouldn't silently truncate).
 
     Uses ``select("*")`` deliberately: any column added to the spots
     schema later is automatically preserved here without touching this
@@ -590,8 +590,8 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
 def _spot_id_map(client) -> dict[str, int]:
     """Fetch name → id map for downstream foreign-key resolution.
 
-    Paginated: Supabase caps select() at 1000 rows by default; for ~485
-    spots one page is enough but we loop just in case.
+    Paginated: Supabase caps select() at 1000 rows by default; for the 648
+    spots on the roster today one page is enough but we loop just in case.
     """
     by_name: dict[str, int] = {}
     page_size = 1000
