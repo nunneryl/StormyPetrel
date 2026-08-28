@@ -99,7 +99,16 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
 
     Always-written keys (the upsert key, geometric anchors, and fields
     derived fresh every pipeline run): slug, name, lat, lng, state,
-    region, swell_window_arcs, data_sources, review_status.
+    region, swell_window_arcs, data_sources.
+
+    review_status is DELIBERATELY NOT WRITTEN HERE. It used to be, as the
+    literal "auto", which made the column incapable of holding a human
+    review: a reviewer's verdict was overwritten by the next pipeline run,
+    within 8 hours. It is not derived from source at all — nothing in
+    spots_enriched.json produces it — so leaving it out of the partial
+    record is exactly right, and concern (2) above then preserves whatever
+    the DB holds. A brand-new spot has nothing to preserve, so import_spots
+    seeds it "auto" at the one place a new row is identified.
     """
     # Tide freshness for THIS spot's station (honesty marker — never present old tides as current):
     #   tide_asof  = when the station's predictions were fetched (ISO), or None
@@ -139,7 +148,6 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
             "coord_fix_applied": spot.get("coord_fix_applied", False),
             "sources": spot.get("sources") or {},
         },
-        "review_status": "auto",
     }
     # Source-to-DB column mapping: any enriched-JSON key in this list whose
     # name matches a spots-table column gets written through. Keys absent
@@ -509,6 +517,14 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     for rec in records:
         base = existing.get(rec["slug"])
         if not base:
+            # Brand-new spot: nothing to preserve. review_status is the one column whose
+            # value is CREATED here rather than carried from source, so seed it. Two
+            # reasons it is set here and not in _spot_record: setting it there wrote
+            # "auto" over a human's verdict on EVERY run, and leaving it unset everywhere
+            # would give this chunk a ragged key set — PostgREST NULLs a key missing from
+            # one row of a batch, which is the exact bug this whole merge exists to
+            # prevent, so a new spot would land NULL-reviewed rather than 'auto'.
+            rec.setdefault("review_status", "auto")
             continue
         moved = _coords_changed(rec, base)
         if moved:
