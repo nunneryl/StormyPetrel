@@ -516,9 +516,13 @@ def _extract_time_series_from_datasets(datasets: list, lat: float, lng: float) -
 # water. Order doesn't matter — we use the first one that exists in a dataset.
 _WAVE_VARS_FOR_LAND_CHECK = ("swh", "htsgw", "shts", "shww", "swell")
 
-# How far from the nominal nearest-cell to search before giving up. 5 cells on
-# the NWPS CG1 grid is roughly 2–3 km — enough to walk past most jetties /
+# How far from the nominal nearest-cell to search before giving up, in CELLS. A CG1 cell
+# is roughly 1.0–2.5 km across (measured: phi≈1.0, okx≈1.80, akq≈1.80, box≈1.99, mtr≈2.48,
+# gyx≈2.49 — see nwps_nearshore.grid_spacing_km's docstring), so 5 cells reaches about
+# 5 km on the finest nest and 12.5 km on the coarsest — enough to walk past most jetties /
 # breakwaters / barrier islands without straying into a different surf zone.
+# (This comment used to say "5 cells on the NWPS CG1 grid is roughly 2–3 km". That is the
+# size of about ONE cell, not five, and it understated the walk's reach four-fold.)
 _LAND_SEARCH_MAX_RADIUS = 5
 
 # Slack allowed when testing a node against a grid's edge, in degrees. Float-noise

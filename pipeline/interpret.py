@@ -27,8 +27,11 @@ Rating pipeline per hour:
                                      produced by one call to chop_factors, so
                                      chop_multiplier(chop_ratio) == chop_mult on
                                      every path.
-6. Period quality (period_quality) ∈ [0.5, 1.05] from the swell period. The
-                                     only factor that can exceed 1.0.
+6. Period quality (period_quality) ∈ [0.5, 1.05] from the swell period. One of
+                                     the TWO factors that can exceed 1.0; the
+                                     other is wind_mult, which reaches 1.2 at
+                                     the best direction band (see 3 above).
+                                     tide_mult and chop_mult both cap at 1.0.
 7. Composite stars (0 or 1-5, 0.5 increments): size_score(effective face)
    scaled by the WEIGHTED GEOMETRIC MEAN of factors 3-6 (unit-sum exponents,
    COMPOSITE_FACTOR_EXPONENTS), not by their raw product. See composite_stars.

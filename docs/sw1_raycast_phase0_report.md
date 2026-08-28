@@ -17,8 +17,20 @@ committed to `spots_enriched.json`; `orientation_deg` untouched.
 
 ## 1. Current raycast code (pre-fix diagnosis)
 
-**Ray count / angular step.** `pipeline/config.py:49` — `SWELL_RAY_STEP_DEG = 2`,
-so `compute_swell_window` casts **180 rays** (`for bearing in range(0, 360, 2)`).
+**Ray count / angular step.** **Production casts 90 rays at 4°.** The roster is built
+by `pipeline/sw1_raycast.py`, which sets its own `RUN_STEP_DEG = 4`
+(`sw1_raycast.py:46`) and passes it explicitly as `ray_step`, so `compute_swell_window`
+steps `for bearing in range(0, 360, 4)`. `pipeline/config.py:89` —
+`SWELL_RAY_STEP_DEG = 2` — is only the DEFAULT, used when a caller passes no `ray_step`;
+no production path does.
+
+> **Corrected 2026-08-28.** This paragraph previously read "`pipeline/config.py:49` —
+> `SWELL_RAY_STEP_DEG = 2`, so `compute_swell_window` casts **180 rays**", describing
+> the default as though it were production, and citing a line number that has since
+> moved. `RUN_STEP_DEG = 4` was already in `sw1_raycast.py` in the same commit that
+> added this report, so the claim was never accurate. `config.py:59-88` records that
+> the same confusion misled two later pieces of work; this was the third.
+
 Each ray is a densified geodesic line from `SWELL_LOCAL_COAST_EXCLUSION_KM` (2 km)
 out to `SWELL_MIN_FETCH_KM` further.
 
@@ -224,6 +236,12 @@ data-availability limitation (§6), not an algorithm failure.
 ---
 
 ## 5. Perf plan for the full roster (estimates only — not run)
+
+> **Note (2026-08-28):** this section measures the 2° / 180-ray baseline *as it stood
+> before these levers were applied*, so its 180-ray figures are correct in context and
+> are deliberately left as written. The first lever below — the 4° step — was
+> subsequently adopted: production is `RUN_STEP_DEG = 4`, 90 rays. Do not read the
+> baseline row as a description of current behaviour.
 
 Baseline: ~35 s/spot × 664 ≈ **6.5 h**. The cost is dominated by
 `ray.intersects(poly)` against the full-res continental polygon (millions of
