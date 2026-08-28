@@ -29,23 +29,92 @@
  * otherwise reach for it.
  */
 
+import { degToCardinal } from './formatting.ts';
+
 export type SpotInfoRow = { label: string; value: string };
 
-/** The fields this panel reads. Structural on purpose: the module imports nothing,
- *  so it runs under `node --experimental-strip-types` with no packages installed. */
+/** The fields these two panels read. Structural on purpose, and the only import is
+ *  formatting.ts (itself import-free), so this module runs under
+ *  `node --experimental-strip-types` with no packages installed. */
 export type SpotInfoInput = {
   break_type?: string | null;
   tide_preference?: string | null;
   crowd_factor?: string | null;
+  optimal_swell_dir?: number | null;
+  offshore_wind_deg?: number | null;
   /** Received and NOT rendered — see the module comment. */
   hazards?: string[] | null;
 };
 
-/** The Spot info panel's rows, in display order. Never includes Hazards. */
+/** Absent, null, empty, or whitespace-only — all the ways a text column says "nothing
+ *  here". The DB carries both NULL and '' for these fields, and a whitespace-only value
+ *  renders as a blank gap, which is the same wrong claim with worse typography. */
+function isBlank(v: string | null | undefined): boolean {
+  return v === null || v === undefined || v.trim() === '';
+}
+
+/**
+ * The Spot info panel's rows, in display order. Never includes Hazards.
+ *
+ * NO CROWD ROW WHEN crowd_factor IS EMPTY — 475 of 648 spots.
+ * "Crowd —" is not a blank, it is an assertion: Crowd is a quantity, so an em dash
+ * reads as the low end of it — "not crowded" — about a spot nothing in this system has
+ * ever checked. Same defect as the Hazards row, on nearly three times as many spots.
+ * An absent row says "we don't know"; an em dash says "none". Drop the row.
+ *
+ * Break and Tide preference KEEP their em dashes, deliberately. Every spot has a break
+ * type, so a missing one reads as a gap rather than a claim. Tide is the ambiguous one
+ * — "no preference" is a real answer — and it is handled by making the two cards agree
+ * on '—' rather than by one card saying 'any'; see optimalConditionsRows.
+ */
 export function spotInfoRows(spot: SpotInfoInput): SpotInfoRow[] {
-  return [
+  const rows: SpotInfoRow[] = [
     { label: 'Break', value: spot.break_type ?? '—' },
     { label: 'Tide preference', value: spot.tide_preference ?? '—' },
-    { label: 'Crowd', value: spot.crowd_factor ?? '—' },
+  ];
+  if (!isBlank(spot.crowd_factor)) {
+    rows.push({ label: 'Crowd', value: spot.crowd_factor as string });
+  }
+  return rows;
+}
+
+/**
+ * The Optimal conditions card's rows, in display order.
+ *
+ * ONE NULL, ONE RENDERING. This card used to render `tide_preference ?? 'any'` while
+ * the Spot info panel beside it rendered `?? '—'`, so the same null read two different
+ * ways in two cards eighteen inches apart. 'any' is the wrong direction to resolve it:
+ * "works at any tide" is a real, specific answer, and asserting it from a null claims
+ * something we have not checked. '—' is the honest one, and it now matches its neighbour.
+ *
+ * NO PERIOD ROW. This card rendered `{ label: 'Period', value: '10s+' }` — a hardcoded
+ * literal, identical on all 648 spots. Steamer Lane and Point Judith are different
+ * breaks in different oceans and do not share an optimal period, but both displayed
+ * "10s+" as though it had been derived for them. There is nothing to derive it FROM:
+ * the spots table has no period column in any migration, the Spot type has no period
+ * field, and every tp in the schema (tp, swell_tp, swell_1_tp .. wind_wave_tp) belongs
+ * to forecasts, which is per-hour weather, not a property of the break. interpret's
+ * period_factor(tp, source) and period_quality(tp_s) take no spot argument at all — the
+ * curve is global. So the row was not a simplification of a real per-spot value; no
+ * such value exists anywhere in the system. It is removed rather than guessed at.
+ */
+export function optimalConditionsRows(spot: SpotInfoInput): SpotInfoRow[] {
+  return [
+    {
+      label: 'Swell',
+      value:
+        spot.optimal_swell_dir !== null && spot.optimal_swell_dir !== undefined
+          ? `${degToCardinal(spot.optimal_swell_dir)} ${Math.round(spot.optimal_swell_dir)}°`
+          : '—',
+    },
+    {
+      label: 'Wind',
+      value:
+        spot.offshore_wind_deg !== null && spot.offshore_wind_deg !== undefined
+          ? `${degToCardinal(spot.offshore_wind_deg)} offshore`
+          : 'offshore',
+    },
+    { label: 'Tide', value: spot.tide_preference ?? '—' },
+    { label: 'Break', value: spot.break_type ?? '—' },
   ];
 }
