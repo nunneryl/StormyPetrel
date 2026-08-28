@@ -1444,7 +1444,7 @@
     {
       "slug": "shell-beach-north",
       "name": "Shell Beach (North)",
-      "nwps_wfo": "mtr",
+      "nwps_wfo": "lox",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.12581,
       "nwps_node_lng": -120.69532,
@@ -1454,7 +1454,7 @@
     {
       "slug": "shell-beach",
       "name": "Shell Beach",
-      "nwps_wfo": "mtr",
+      "nwps_wfo": "lox",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.12581,
       "nwps_node_lng": -120.69532,
@@ -1464,7 +1464,7 @@
     {
       "slug": "pismo-beach-pier",
       "name": "Pismo Beach Pier",
-      "nwps_wfo": "mtr",
+      "nwps_wfo": "lox",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.12581,
       "nwps_node_lng": -120.69532,
@@ -1474,7 +1474,7 @@
     {
       "slug": "grover-beach",
       "name": "Grover Beach",
-      "nwps_wfo": "mtr",
+      "nwps_wfo": "lox",
       "nwps_grid": "CG1",
       "nwps_node_lat": 35.08973,
       "nwps_node_lng": -120.65234,
@@ -2914,7 +2914,7 @@
     {
       "slug": "cherry-grove-pier",
       "name": "Cherry Grove Pier",
-      "nwps_wfo": "chs",
+      "nwps_wfo": "ilm",
       "nwps_grid": "CG1",
       "nwps_node_lat": 33.83039,
       "nwps_node_lng": -78.61027,
@@ -2924,7 +2924,7 @@
     {
       "slug": "myrtle-beach-state-park",
       "name": "Myrtle Beach State Park",
-      "nwps_wfo": "chs",
+      "nwps_wfo": "ilm",
       "nwps_grid": "CG1",
       "nwps_node_lat": 33.65,
       "nwps_node_lng": -78.90411,
@@ -6113,8 +6113,8 @@
           "direction"
         ],
         "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46215 yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid buoy exists.",
-        "spots": 12,
-        "grid_crossing": "All 12 SLO spots carry nwps_wfo='mtr' and nwps_buoy_id='46215', but HEIGHT is supplied by TWO NWPS grids: 8 (andrew-molera-state-park, sand-dollar-beach, piedras-blancas, san-simeon, cayucos-pier, morro-rock, cable-landing, avila-beach — Big Sur→Avila) place on the mtr grid; 4 (shell-beach-north, shell-beach, pismo-beach-pier, grover-beach — Shell Beach→Grover) place on the LOX grid, because the mtr/lox marine-forecast boundary runs through Pismo and those 4 have a valid nearshore node only on the lox nest. Their nwps_wfo label stays 'mtr' (NOT relabeled to lox) — buoy 46215 is the valid direction reference for all 12 regardless of which grid supplies height. Keeping nwps_wfo='mtr' lets the single (mtr, 46215) pending key cover all 12. Promote the 4 lox-grid spots with `--buoy 46215 --wfo mtr` on the lox validate-out: the --wfo override takes the lox-grid node coords while keeping the label mtr.",
+        "spots": 8,
+        "grid_crossing": "All 12 SLO spots carry nwps_buoy_id='46215', but HEIGHT is supplied by TWO NWPS grids, so they carry TWO nwps_wfo labels: 8 (andrew-molera-state-park, sand-dollar-beach, piedras-blancas, san-simeon, cayucos-pier, morro-rock, cable-landing, avila-beach — Big Sur→Avila) place on the mtr grid and are nwps_wfo='mtr'; 4 (shell-beach-north, shell-beach, pismo-beach-pier, grover-beach — Shell Beach→Grover) place on the LOX grid and are nwps_wfo='lox' (zone lox/46215), because the mtr/lox marine-forecast boundary runs through Pismo and those 4 have a valid nearshore node only on the lox nest. CORRECTED: those 4 were originally promoted with `--buoy 46215 --wfo mtr`, an override that kept the label 'mtr' while taking lox-grid nodes, on the stated belief that nwps_wfo is only a region label and that one (mtr, 46215) pending key should cover all 12. nwps_wfo is NOT only a label — nwps.fetch selects the GRID with `[s for s in spots if s.get('nwps_wfo') == wfo]`, so all 4 were read out of the mtr GRIB. Their lox nodes lie EAST of mtr's eastern boundary (-120.7400), and an argmin lookup never errors on an out-of-domain coordinate — it silently clamps to the edge column. All 4 therefore published from mtr's boundary at 4.4–9.4 km from the spot, while nwps_node_distance_m recorded the (correct) 3.7–4.8 km to the lox node nobody was reading, so no distance check ever fired. mtr's own --validate had already recorded all 4 as FAR / domain_miss=true (44ca40c:scripts/nwps_mtr_validate_out.json — 4424 / 6671 / 8681 / 9387 m); the override re-promoted them past that verdict. The NODES were always right; only the LABEL was wrong, so the fix is the label. Zone lox/46215 was already in pending[], so all 4 keep direction_status='pending' exactly as before; 46215 remains the direction reference for all 12 and stays OUT of trust_by_zone. Do NOT use `promote_nwps_validate --wfo` to re-create the old label. avila-beach is NOT part of this: its node 35.15796,-120.74000 sits ON mtr's edge column, its recorded 2214 m IS the true distance, and mtr's own pass recorded domain_miss=false — it is correctly nwps_wfo='mtr'.",
         "slugs": [
           "andrew-molera-state-park",
           "sand-dollar-beach",
@@ -6123,13 +6123,9 @@
           "cayucos-pier",
           "morro-rock",
           "cable-landing",
-          "avila-beach",
-          "shell-beach-north",
-          "shell-beach",
-          "pismo-beach-pier",
-          "grover-beach"
+          "avila-beach"
         ],
-        "to_place": "This record alone tags NOTHING. Two-pass promote, BOTH under buoy 46215 (merge-by-slug accumulates across the two source files): (1) the 8 mtr-grid spots from nwps_mtr_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --buoy 46215 --slugs andrew-molera-state-park,sand-dollar-beach,piedras-blancas,san-simeon,cayucos-pier,morro-rock,cable-landing,avila-beach --apply`; (2) the 4 lox-grid Pismo spots from nwps_lox_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --wfo mtr --slugs shell-beach-north,shell-beach,pismo-beach-pier,grover-beach --apply` (the --wfo mtr override keeps the label mtr while taking the lox-grid nodes). Do pass (2) BEFORE re-validating the lox grid for anything else (it overwrites nwps_lox_validate_out.json). Placement via the pending path; 46215 stays OUT of trust_by_zone (no PASS)."
+        "to_place": "This record alone tags NOTHING. Two-pass promote, BOTH under buoy 46215 (merge-by-slug accumulates across the two source files): (1) the 8 mtr-grid spots from nwps_mtr_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_mtr_validate_out.json --buoy 46215 --slugs andrew-molera-state-park,sand-dollar-beach,piedras-blancas,san-simeon,cayucos-pier,morro-rock,cable-landing,avila-beach --apply`; (2) the 4 lox-grid Pismo spots from nwps_lox_validate_out.json — `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --slugs shell-beach-north,shell-beach,pismo-beach-pier,grover-beach --apply`, which labels them nwps_wfo='lox' from the validate-out's own grid_wfo. Do NOT pass `--wfo mtr` here — that override is what made them read the mtr GRIB and publish from its edge column; see grid_crossing. Do pass (2) BEFORE re-validating the lox grid for anything else (it overwrites nwps_lox_validate_out.json). Placement via the pending path; 46215 stays OUT of trust_by_zone (no PASS)."
       },
       {
         "zone": "lox/46256",
@@ -6727,11 +6723,16 @@
           "direction"
         ],
         "state": "OPTION B — place on NWPS HEIGHT now (height is buoy-independent), direction PENDING: no swell has verified direction against 46215 FROM THIS ZONE yet, so NO trust PASS. --trustcheck accumulates one event per qualifying swell; direction is confirmed when the rolling verdict settles PASS. NOT retired — a valid live buoy exists. A SEPARATE ZONE FROM mtr/46215 ON THE SAME BUOY, DELIBERATELY. The trust gate is keyed per (wfo, buoy) and emits ONE verdict per zone, so mtr's 12 spots and this one accumulate and settle independently; a PASS earned at Diablo Canyon for mtr does NOT verify this spot, and vice versa. The existing precedent is 44084, shared between phi (22 spots) and akq (3). 46215 is now the THIRD buoy anchoring zones in more than one WFO, after 44084 and 44098 (box + gyx) — and the first registered since PR #165 re-keyed trust_by_zone from buoy to zone, so that independence is now enforced by the gate rather than only described here. CAVEATS A LATER READER SHOULD NOT MISS: 62 km is a LONG reference — the longest in any pending zone — and this is the ONLY spot in the zone, so its verdict rests entirely on one spot's residuals with no second spot to cross-check against. Read a FAIL here as 'this pairing at this range' rather than as a statement about 46215, which mtr/46215 exercises at much shorter range. PREVIOUSLY CLASSIFIED AS PERMANENT GRID-GAP RAYCAST, AND THAT CLASSIFICATION WAS STALE RATHER THAN SUPERSEDED. It was made against the LEGACY 3.0 km FAR cap floor, before PR #81 made the cap GRID-AWARE at max(FAR_CAP_FLOOR_KM, 1.5 x grid spacing). These node distances — jalama-beach 3930 m, surf-beach-vandenberg 4160 m, seal-beach-california 5506 m — all exceed the legacy 3.0 km floor, which is why they read as a grid gap, but all three clear lox's grid-aware cap and validate OK. lox is the coarsest CG1 grid in the project (okx 1.80, box 1.99, mtr 2.48, gyx 2.49 km measured; lox coarser still), so it is precisely the grid the floor mis-served. The 2026-08-14 re-validate returns all three placed-OK with no other outcome. NOTHING ABOUT THE COAST CHANGED — only the cap the distances were judged against. A reader meeting another spot filed as permanent grid-gap on a coarse grid should re-validate it before believing the label.",
-        "spots": 1,
+        "spots": 5,
         "slugs": [
-          "surf-beach-vandenberg"
+          "surf-beach-vandenberg",
+          "shell-beach-north",
+          "shell-beach",
+          "pismo-beach-pier",
+          "grover-beach"
         ],
-        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for this spot are in the (Mac) scripts/nwps_lox_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --slugs surf-beach-vandenberg` merges it into 'spots'. Placement is via the pending path; 46215 stays OUT of trust_by_zone for THIS zone (no PASS) — and note that a PASS written for mtr/46215 must NOT be copied here, which is exactly what zone keying prevents."
+        "to_place": "This record alone tags NOTHING. Node lat/lng/distance for this spot are in the (Mac) scripts/nwps_lox_validate_out.json; `promote_nwps_validate --validate-out scripts/nwps_lox_validate_out.json --buoy 46215 --slugs surf-beach-vandenberg` merges it into 'spots'. Placement is via the pending path; 46215 stays OUT of trust_by_zone for THIS zone (no PASS) — and note that a PASS written for mtr/46215 must NOT be copied here, which is exactly what zone keying prevents.",
+        "grid_crossing": "4 of these 5 (shell-beach-north, shell-beach, pismo-beach-pier, grover-beach) are the SLO grid-crossing spots: they sit in the mtr forecast region and share the SLO reference buoy 46215 with the mtr/46215 zone, but their only valid nearshore node is on the lox nest, so they are nwps_wfo='lox'. They were labelled 'mtr' until this correction and published from mtr's edge column; see the mtr/46215 record's grid_crossing for the full account."
       }
     ],
     "unverifiable": [
@@ -6913,7 +6914,8 @@
           "st-catherines-island",
           "jekyll-island"
         ],
-        "to_place": "21 spots - promoted with NO buoy. On the Mac run `--validate --wfo chs --batch <these 21 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 21> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and they get NO WATCH/liveness entry."
+        "to_place": "21 spots - promoted with NO buoy. On the Mac run `--validate --wfo chs --batch <these 21 slugs>` to compute node lat/lng/distance, then `promote_nwps_validate --no-buoy --slugs <these 21> --apply` merges them into 'spots' with nwps_buoy_id=null. apply then places them height-live with nwps_direction_status='unverifiable' (the unverifiable[] slug branch is checked BEFORE the PASS/pending branches, so they can never be relabeled 'verified'). No buoy is added to trust_by_zone or pending[], and they get NO WATCH/liveness entry.",
+        "grid_crossing": "2 of these 21 slugs (cherry-grove-pier, myrtle-beach-state-park) are nwps_wfo='ilm', not 'chs': their nodes are ilm-nest cells north of chs's 33.5800 boundary, and while labelled 'chs' they were read out of the chs GRIB and clamped to its edge row — 27.8 km and 7.8 km from the spot, against recorded node distances of 2077 m and 2212 m. chs's own --validate had them as FAR / domain_miss=true (27661 m / 7564 m). The reason for THIS record is unchanged and still applies to all 21: the SC/GA bight has no valid nearshore directional buoy, whichever grid supplies height. unverifiable[] is keyed by SLUG, so the relabel does not affect placement — all 21 stay direction_status='unverifiable'."
       },
       {
         "zone": "chs/georgia-sounds-shadowed",
