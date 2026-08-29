@@ -61,10 +61,11 @@ from ..config import (
     WW3_FILE_PREFIX,
     WW3_FORECAST_FILE,
     WW3_GRID,
+    WW3_MIN_COVER_HOURS,
     WW3_NOMADS_BASE,
     WW3_STEP_HOURS,
 )
-from ..http import session
+from ..http import RetryableHTTPError, request, session
 
 log = logging.getLogger(__name__)
 
@@ -75,6 +76,15 @@ log = logging.getLogger(__name__)
 
 _DATE_HREF_RE = re.compile(r'href="' + re.escape(WW3_DATE_PREFIX) + r'\.(\d{8})/"')
 _HH_HREF_RE = re.compile(r'href="(\d{2})/"')
+# Step files inside a cycle's wave/gridded/ index, e.g.
+#   gfswave.t18z.global.0p25.f087.grib2
+# Built from the same pieces _step_filename uses, so the two cannot drift apart.
+_STEP_HREF_RE = re.compile(
+    r'href="' + re.escape(WW3_FILE_PREFIX) + r'\.t(\d{2})z\.'
+    + re.escape(WW3_GRID) + r'\.f(\d{3})\.grib2"'
+)
+# Cache-path filenames, for reporting which forecast hours a run actually obtained.
+_STEP_CACHE_RE = re.compile(r"_f(\d{3})\.grib2$")
 
 
 def _get_text(url: str) -> str | None:
@@ -155,10 +165,39 @@ def _step_cache_path(date_ymd: str, hh: str, fhour: int) -> Path:
     return WW3_CACHE_DIR / f"{date_ymd}_{hh}_f{fhour:03d}.grib2"
 
 
+def _fhour_of_path(path: Path) -> int | None:
+    """The forecast hour a cache path encodes, or None if the name does not match.
+
+    Reads back what _step_cache_path wrote. Used only for reporting: the series horizon
+    is a property of WHICH steps arrived, and the path list is where that lives.
+    """
+    m = _STEP_CACHE_RE.search(path.name)
+    return int(m.group(1)) if m else None
+
+
 def _download_step(date_ymd: str, hh: str, fhour: int, dest: Path) -> bool:
+    """Download one step file. True on success, False on any failure (never raises).
+
+    ROUTED THROUGH http.request SO IT GETS THE MODULE'S RETRIES. This used to call
+    `session().get(...)` directly, which bypasses the _RETRY decorator entirely — the
+    module is titled "Shared HTTP session with retry/backoff for all API calls", but the
+    decorator is on the module-level `request()` helper, not on Session.get. One transient
+    502 or read timeout therefore lost a step for the whole run, at log.debug, and with the
+    ascending fhour loop attempting each step exactly once there was no second chance. That
+    is the mechanism behind the interior blocks of 2-4 consecutive missing steps.
+
+    `request()` takes **kwargs straight through to Session.request, so stream=True works
+    unchanged; the streaming body is read below, outside the retried call.
+
+    WHAT THIS DOES NOT RETRY, said plainly: a body that fails or truncates MID-STREAM. The
+    retry covers connect, read-timeout, 429 and 5xx on the request itself; once headers are
+    in, iter_content runs outside _RETRY. A truncated body still lands on the size guard
+    below and returns False, exactly as before — an improvement over no retries at all, not
+    a claim of completeness.
+    """
     url = _step_direct_url(date_ymd, hh, fhour)
     try:
-        with session().get(url, stream=True, timeout=180) as resp:
+        with request("GET", url, stream=True, timeout=180) as resp:
             if resp.status_code != 200:
                 log.debug(
                     "ww3: GET %s → %d", url, resp.status_code,
@@ -179,23 +218,118 @@ def _download_step(date_ymd: str, hh: str, fhour: int, dest: Path) -> bool:
                 return False
             tmp.replace(dest)
         return True
+    except RetryableHTTPError as e:
+        # 429/5xx that survived all four attempts — an upstream problem, not a missing file.
+        log.debug("ww3: GET %s gave up after retries: %s", url, e)
+        return False
     except Exception as e:  # noqa: BLE001
+        # request() raises HTTPError on 4xx, which is the not-yet-published case and is
+        # deliberately NOT retried: burning four backed-off attempts on a 404 would slow
+        # every run for a file that cannot appear within the retry window. Cycle selection
+        # is what keeps us off unpublished cycles now — see _rank_candidates.
         log.debug("ww3: GET %s failed: %s", url, e)
         return False
 
 
-def _locate_cycle(use_cache: bool) -> tuple[str, str, list[Path]] | None:
-    """Resolve the newest gfswave cycle that yields enough step files.
+def _published_steps(date_ymd: str, hh: str) -> set[int] | None:
+    """Forecast hours this cycle has PUBLISHED, from its own directory index.
 
-    Returns (date_ymd, hh, [paths in fhour order]) or None if no cycle
-    has at least 24 step files available (one full day of forecast).
+    One cheap HTML GET per candidate, before a single 12 MB step is downloaded. Returns
+    the set of fhours (whatever the step spacing), or None when the index cannot be read —
+    which is "unknown", not "empty", and is ranked differently below.
+    """
+    url = (f"{WW3_NOMADS_BASE}/{WW3_DATE_PREFIX}.{date_ymd}/{hh}/"
+           f"{WW3_CYCLE_SUBPATH}/")
+    html = _get_text(url)
+    if html is None:
+        return None
+    return {int(fh) for cyc_hh, fh in _STEP_HREF_RE.findall(html) if cyc_hh == hh}
+
+
+def _contiguous_cover_h(published: set[int] | None) -> int | None:
+    """Forecast hours covered by an UNBROKEN run of WW3_STEP_HOURS from f000.
+
+    Contiguity is the property that matters, not the count. 30 steps running f000..f087
+    give a clean 87 h series; 30 steps scattered over f000..f168 give a series full of
+    holes that the ±90 min join in interpret._ww3_at cannot bridge — and the two are
+    indistinguishable by count alone, which is the whole reason this returns hours.
+    Returns 0 when f000 itself is absent, and None when *published* is None — "the index
+    was unreadable" is not "the cycle is empty", and the ranking treats them differently.
+    """
+    if published is None:
+        return None
+    cover = 0
+    for fhour in WW3_STEP_HOURS:
+        if fhour not in published:
+            break
+        cover = fhour
+    return cover
+
+
+def _rank_candidates(cycles: list[tuple[str, str]]) -> list[tuple[str, str, int | None]]:
+    """(date, hh, contiguous_cover_h) for each candidate, in PREFERENCE order.
+
+    THE ORDER IS THE FIX. It used to be "newest first, take anything with 8 steps", and
+    the newest cycle is by construction the LEAST complete one: NCEP publishes step files
+    progressively, so at 19:30 UTC the 18Z cycle is 1.5 h old and carries only its early
+    hours. The fetcher took it, produced a half-length series, and then — because the
+    per-step cache is keyed by cycle — abandoned it 8 h later for another fresh, equally
+    incomplete cycle. A maturing cycle was never harvested.
+
+    Preference now:
+      1. the NEWEST candidate that covers WW3_MIN_COVER_HOURS contiguously from f000;
+      2. else the candidate with the LONGEST contiguous cover (ties → newer);
+      3. else, when every index was unreadable, the original newest-first order.
+
+    Newest-that-is-complete, NOT most-complete-overall: the oldest candidate is always the
+    most complete, so ranking by cover alone would always pick the oldest and throw away
+    freshness for nothing. Rule 1 takes the freshest cycle that is actually usable, and
+    rule 2 only decides among cycles that are all short.
+    """
+    scored: list[tuple[str, str, int | None]] = []
+    for date_ymd, hh in cycles:                      # already newest-first
+        scored.append((date_ymd, hh, _contiguous_cover_h(_published_steps(date_ymd, hh))))
+
+    complete = [c for c in scored if c[2] is not None and c[2] >= WW3_MIN_COVER_HOURS]
+    short = [c for c in scored if c[2] is not None and c[2] < WW3_MIN_COVER_HOURS]
+    unknown = [c for c in scored if c[2] is None]
+    # sorted() is stable, so cycles of equal cover keep the newest-first order they
+    # arrived in — freshness is the tie-break, never the primary key.
+    short = sorted(short, key=lambda c: -(c[2] or 0))
+    return complete + short + unknown
+
+
+def _locate_cycle(use_cache: bool) -> tuple[str, str, list[Path]] | None:
+    """Resolve the best available gfswave cycle and download its step files.
+
+    Returns (date_ymd, hh, [paths in fhour order]) or None if no cycle yields at least
+    8 step files (24 h of forecast).
+
+    THE >= 8 FLOOR IS DELIBERATELY KEPT. It is the "something beats nothing" guard: a
+    short series still rates the next day of hours, while returning None drops WW3 for
+    the whole roster and every spot falls to whole-spectrum DIRPW. The ranking above
+    decides WHICH cycle is tried first; the floor decides whether a tried cycle is
+    usable at all. They answer different questions and removing either would undo the
+    other's work.
     """
     cycles = candidate_cycles()
     if not cycles:
         log.warning("ww3: no cycles available on NOMADS")
         return None
 
-    for date_ymd, hh in cycles:
+    ranked = _rank_candidates(cycles)
+    best = ranked[0][2] if ranked else None
+    if best is not None and best < WW3_MIN_COVER_HOURS:
+        log.warning(
+            "ww3: NO candidate cycle covers %d h contiguously from f000 — best is "
+            "%s %sZ at %d h. Proceeding with it: a short series beats no series, but "
+            "every NWPS hour past +%d h will carry no partitions.",
+            WW3_MIN_COVER_HOURS, ranked[0][0], ranked[0][1], best, best,
+        )
+
+    for date_ymd, hh, cover in ranked:
+        log.info("ww3: cycle %s %sZ — publishes %s h contiguously from f000",
+                 date_ymd, hh, "unknown" if cover is None else cover)
         paths: list[Path] = []
         missing = 0
         for fhour in WW3_STEP_HOURS:
@@ -562,6 +696,12 @@ def fetch(
 
     out: dict[str, list[dict]] = {}
     parse_failed = 0
+    # Horizon tracking for the summary below. `obtained` holds the forecast hours that
+    # actually PARSED, not merely the ones that downloaded — a step that fails to open is
+    # as absent from the series as one that never arrived, and the log must say so.
+    obtained: list[int] = []
+    min_vt: str | None = None
+    max_vt: str | None = None
 
     try:
         from tqdm import tqdm
@@ -596,6 +736,13 @@ def fetch(
 
         if valid_time is None:
             continue
+        fh = _fhour_of_path(path)
+        if fh is not None:
+            obtained.append(fh)
+        if min_vt is None or valid_time < min_vt:
+            min_vt = valid_time
+        if max_vt is None or valid_time > max_vt:
+            max_vt = valid_time
         for name, entry in step_entries.items():
             # Keep only entries with at least one swell / wind-sea / total
             # value — gfswave masks land cells as NaN, and we don't want
@@ -614,8 +761,46 @@ def fetch(
 
     WW3_FORECAST_FILE.parent.mkdir(parents=True, exist_ok=True)
     WW3_FORECAST_FILE.write_text(json.dumps(out, ensure_ascii=False))
+    # THE HORIZON, NOT JUST THE COUNT. "30/57 step files available" is the same line for a
+    # run that fetched f000..f087 contiguously and a run that fetched 30 steps scattered
+    # across the full range. The first produces a 68-hour cliff at the end of the series;
+    # the second produces interior holes the ±90 min join cannot bridge. The information
+    # that separates them is the ORDERING of `paths`, and only its length was ever
+    # reported — so neither failure was visible in a run log.
+    #
+    # THIS IS THE THIRD LOG THIS WEEK REPORTING A COUNT WHERE THE DIAGNOSTIC QUANTITY WAS
+    # ONE STEP AWAY. The NWPS fetcher reported a fallback CELL COUNT ("fell back at 1 cells
+    # away") and no distance, and The Wedge sampled 305 km off for two months unnoticed —
+    # see _sampled_distance_km in forecast/nwps.py. db_import counted silently-skipped
+    # forecast spots as an integer and named none of them. In all three the missing value
+    # was derivable from data already in hand at the log site. Prefer the quantity that
+    # would identify the fault over the one that is easiest to count.
+    got = set(obtained)
+    max_fh = max(got) if got else -1
+    # Contiguity is measured over the REQUESTED steps up to the last one obtained, so a
+    # short-but-solid series reads CONTIGUOUS and only real interior holes read WITH GAPS.
+    gaps = [fh for fh in WW3_STEP_HOURS if fh <= max_fh and fh not in got]
+    contiguous = not gaps
+    span = f"{min_vt} .. {max_vt}" if min_vt and max_vt else "none"
     log.info(
-        "ww3: wrote %d spots to %s (parse_failed=%d step files)",
-        len(out), WW3_FORECAST_FILE, parse_failed,
+        "ww3: wrote %d spots to %s — series spans %s, max f%03d of f%03d, "
+        "%d/%d steps %s from f000 (parse_failed=%d step files)",
+        len(out), WW3_FORECAST_FILE, span, max_fh, WW3_STEP_HOURS[-1],
+        len(obtained), len(WW3_STEP_HOURS),
+        "CONTIGUOUS" if contiguous else "WITH GAPS", parse_failed,
     )
+    if not contiguous:
+        log.warning(
+            "ww3: obtained steps are NOT contiguous from f000 — %d of the first %d "
+            "requested steps are missing, so the series has interior holes and the "
+            "±90 min join will leave those NWPS hours with no partitions. Missing: %s",
+            len(gaps), (max_fh // 3) + 1 if max_fh >= 0 else 0,
+            ", ".join(f"f{g:03d}" for g in gaps[:20]) + (" …" if len(gaps) > 20 else ""),
+        )
+    if 0 <= max_fh < WW3_STEP_HOURS[-1]:
+        log.warning(
+            "ww3: series ends at f%03d, %d h short of the requested f%03d — every NWPS "
+            "hour past %s will carry no partitions.",
+            max_fh, WW3_STEP_HOURS[-1] - max_fh, WW3_STEP_HOURS[-1], max_vt or "?",
+        )
     return out

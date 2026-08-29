@@ -265,6 +265,21 @@ WW3_MAX_FORECAST_HOURS = 168
 # 3h thereafter. We sample every 3h (matches our display granularity and
 # keeps the per-cycle download under ~50 MB after variable subset).
 WW3_STEP_HOURS = tuple(range(0, WW3_MAX_FORECAST_HOURS + 1, 3))
+# Forecast hours a candidate cycle must publish CONTIGUOUSLY FROM f000 before the fetcher
+# will prefer it. 144 is not a WW3 number — it is NWPS's horizon (nwps_nearshore's
+# HORIZON_MAX_FH, the f000..f144 CG1 series), and the WW3 partitions exist to be joined
+# onto those hours. A cycle that covers 144 h covers every NWPS hour there is; the 24 h
+# beyond it are slack, not requirement.
+#
+# WHY THIS EXISTS: NCEP publishes a cycle's step files progressively over ~2-3 h, and the
+# fetcher used to take the NEWEST cycle with any 8 steps. At 19:30 UTC that is the 18Z
+# cycle, 1.5 h old, carrying only its early steps — so the partition series stopped
+# roughly half-way and every NWPS hour past it joined to nothing.
+#
+# WHY AN OLDER CYCLE IS SAFE: WW3 runs 168 h and NWPS 144 h, so a WW3 cycle may be up to
+# 24 h older than the NWPS cycle and still cover NWPS's whole horizon. WW3_CYCLE_LOOKBACK
+# of 4 candidates spans at most 18 h, comfortably inside that budget.
+WW3_MIN_COVER_HOURS = 144
 WW3_GRID = "global.0p25"  # global 0.25° — single grid covers HI + PR + CONUS
 WW3_DATE_PREFIX = "gfs"          # date directories are gfs.YYYYMMDD/
 WW3_FILE_PREFIX = "gfswave"      # filenames still gfswave.tHHz....
