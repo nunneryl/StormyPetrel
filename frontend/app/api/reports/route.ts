@@ -1,7 +1,14 @@
 import { createHmac } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { submitReport, type ReportDb, type ReportRow } from '@/lib/surfReport';
+import {
+  submitReport,
+  type ReportDb,
+  type ReportRow,
+  type ReportKey,
+  type ReportUpdate,
+  type ExistingReport,
+} from '@/lib/surfReport';
 
 // POST /api/reports — a visitor's ground-truth surf-size report.
 //
@@ -101,10 +108,43 @@ const db: ReportDb = {
     const { error } = await supabase.from('surf_reports').insert(row);
     if (!error) return { ok: true as const };
     // 23505 = unique_violation. That is the UNIQUE(spot_id, observed_hour, reporter_hash)
-    // constraint firing on a repeat submission, which submitReport reads as success.
+    // constraint firing on a repeat submission, which submitReport handles by replacing the
+    // earlier answer rather than dropping this one.
     const duplicate = error.code === '23505';
     if (!duplicate) console.error('reports.insert', error);
     return { ok: false as const, duplicate, message: error.message };
+  },
+
+  async findExisting(key: ReportKey) {
+    const { data, error } = await supabase
+      .from('surf_reports')
+      .select('size_bucket, rating_verdict, revision')
+      .eq('spot_id', key.spot_id)
+      .eq('observed_hour', key.observed_hour)
+      .eq('reporter_hash', key.reporter_hash)
+      .maybeSingle();
+    if (error) {
+      console.error('reports.findExisting', error);
+      return null;
+    }
+    return (data as ExistingReport | null) ?? null;
+  },
+
+  async updateAnswer(key: ReportKey, patch: ReportUpdate) {
+    // `patch` is a ReportUpdate, which carries no forecast columns — so the original
+    // snapshot and first_reported_at survive a revision because they are not in the
+    // payload, not because this function remembers to leave them alone.
+    const { error } = await supabase
+      .from('surf_reports')
+      .update(patch)
+      .eq('spot_id', key.spot_id)
+      .eq('observed_hour', key.observed_hour)
+      .eq('reporter_hash', key.reporter_hash);
+    if (error) {
+      console.error('reports.updateAnswer', error);
+      return { ok: false as const, message: error.message };
+    }
+    return { ok: true as const };
   },
 };
 

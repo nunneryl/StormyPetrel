@@ -230,8 +230,31 @@ export function validateReport(raw: unknown, nowMs: number): ValidationResult {
 
 export type ForecastSnapshot = { face_ft: number | null; stars: number | null };
 
-/** The three database operations a submit needs, injected so this module stays import-free
- *  and the flow is testable without a database. */
+/** Identifies one report: the UNIQUE constraint from migration 014, as a value. */
+export type ReportKey = {
+  spot_id: number;
+  observed_hour: string;
+  reporter_hash: string;
+};
+
+/** The MUTABLE half of a row — everything a repeat submission is allowed to change.
+ *  Everything absent from this type is frozen at first insert; see ReportRow. */
+export type ReportUpdate = {
+  size_bucket: SizeBucket;
+  rating_verdict: RatingVerdict | null;
+  revision: number;
+  reported_at: string;
+};
+
+/** What we need to read back off an existing row to decide what a repeat means. */
+export type ExistingReport = {
+  size_bucket: SizeBucket;
+  rating_verdict: RatingVerdict | null;
+  revision: number;
+};
+
+/** The database operations a submit needs, injected so this module stays import-free and the
+ *  flow is testable without a database. */
 export type ReportDb = {
   /** null when the slug matches no spot. */
   findSpotId(slug: string): Promise<number | null>;
@@ -239,8 +262,23 @@ export type ReportDb = {
   findForecast(spotId: number, observedHourIso: string): Promise<ForecastSnapshot | null>;
   /** `duplicate` is the UNIQUE(spot_id, observed_hour, reporter_hash) conflict. */
   insert(row: ReportRow): Promise<{ ok: true } | { ok: false; duplicate: boolean; message: string }>;
+  /** The existing row for *key*, or null if it is not there (a lost race). */
+  findExisting(key: ReportKey): Promise<ExistingReport | null>;
+  /** Write ONLY the mutable columns of the row at *key*. */
+  updateAnswer(key: ReportKey, patch: ReportUpdate): Promise<{ ok: true } | { ok: false; message: string }>;
 };
 
+/**
+ * A full row, as first inserted.
+ *
+ * THE ROW HAS TWO HALVES, and which is which is the whole design of the revision path:
+ *
+ *   ORIGINAL, frozen at first insert:  forecast_face_ft, forecast_stars, first_reported_at
+ *   ANSWER, replaced by a revision:    size_bucket, rating_verdict, reported_at, revision
+ *
+ * so the snapshot a row carries is always the one taken at first_reported_at. See
+ * pipeline/migrations/015_surf_report_revisions.sql for the argument.
+ */
 export type ReportRow = {
   spot_id: number;
   observed_hour: string;
@@ -249,15 +287,42 @@ export type ReportRow = {
   forecast_face_ft: number | null;
   forecast_stars: number | null;
   rating_verdict: RatingVerdict | null;
+  revision: number;
+  reported_at: string;
+  first_reported_at: string;
 };
 
 export type SubmitOutcome = {
   status: number;
-  body: { ok: true; duplicate: boolean } | { ok: false; error: string };
+  body:
+    | { ok: true; duplicate: boolean; revised: boolean }
+    | { ok: false; error: string };
 };
 
+/** Did a repeat submission actually say something different? `rating_verdict` is nullable,
+ *  and null (skipped) is not the same answer as 'about_right' — a strict !== is correct
+ *  here and mirrors Postgres's IS DISTINCT FROM over these two columns. */
+function answerChanged(existing: ExistingReport, next: ReportInput): boolean {
+  return (
+    existing.size_bucket !== next.sizeBucket ||
+    existing.rating_verdict !== next.ratingVerdict
+  );
+}
+
 /**
- * Validate, resolve, snapshot, insert.
+ * Validate, resolve, snapshot, insert — and on a repeat, REPLACE the earlier answer.
+ *
+ * LAST ANSWER WINS. A repeat submission for the same (spot, hour, reporter) used to be
+ * dropped, keeping the FIRST answer. Someone who reports, refreshes and reports a different
+ * size is almost certainly correcting themselves, so keeping the mistake was the one outcome
+ * nobody wanted. The insert is tried first — that is the common case and stays one round
+ * trip — and only its UNIQUE violation pays for the read-then-write below.
+ *
+ * ONLY THE ANSWER IS MUTABLE. updateAnswer is handed a ReportUpdate, which has no forecast
+ * columns in it at all, so the original snapshot survives a revision by construction rather
+ * than by remembering. Re-snapshotting would move the value toward the nowcast — the exact
+ * quantity the column exists to avoid — and can only ever subtract information. The full
+ * argument is in migration 015's forecast_face_ft comment.
  *
  * THE SNAPSHOT IS NEVER SUBSTITUTED. findForecast is asked for the reported hour and no
  * other; when it returns null the row stores NULL for both forecast columns. Writing the
@@ -265,8 +330,10 @@ export type SubmitOutcome = {
  * the record would claim we forecast something we did not — so this function has no access
  * to a current-hour value at all. It is impossible by construction, not by discipline.
  *
- * A UNIQUE violation is a repeat submission, not an error: the reporter already told us
- * this, the row is already there, and the honest thing to show them is success.
+ * IDEMPOTENCE. A double-tap with the SAME answer takes the update path but leaves revision
+ * where it was, so the only observable change is reported_at. revision counts CORRECTIONS,
+ * not submissions; a counter that ticked on every double-tap would tell a calibration pass
+ * about the user's finger rather than about their confidence.
  */
 export async function submitReport(
   db: ReportDb,
@@ -285,23 +352,53 @@ export async function submitReport(
     return { status: 404, body: { ok: false, error: 'unknown spot' } };
   }
 
+  const key: ReportKey = {
+    spot_id: spotId,
+    observed_hour: input.observedHourIso,
+    reporter_hash: reporterHash,
+  };
+  const nowIso = new Date(nowMs).toISOString();
   const snapshot = await db.findForecast(spotId, input.observedHourIso);
 
   const written = await db.insert({
-    spot_id: spotId,
-    observed_hour: input.observedHourIso,
+    ...key,
     size_bucket: input.sizeBucket,
-    reporter_hash: reporterHash,
     forecast_face_ft: snapshot ? snapshot.face_ft : null,
     forecast_stars: snapshot ? snapshot.stars : null,
     rating_verdict: input.ratingVerdict,
+    revision: 0,
+    reported_at: nowIso,
+    first_reported_at: nowIso,
   });
-
-  if (!written.ok) {
-    if (written.duplicate) {
-      return { status: 200, body: { ok: true, duplicate: true } };
-    }
+  if (written.ok) {
+    return { status: 200, body: { ok: true, duplicate: false, revised: false } };
+  }
+  if (!written.duplicate) {
     return { status: 500, body: { ok: false, error: 'could not save the report' } };
   }
-  return { status: 200, body: { ok: true, duplicate: false } };
+
+  // --- the repeat path ------------------------------------------------------
+  const existing = await db.findExisting(key);
+  if (existing === null) {
+    // The row conflicted a moment ago and is gone now — a concurrent delete, or a read that
+    // failed. We cannot compute the next revision without it, and guessing 0 would erase a
+    // correction history. Report the failure rather than write something wrong.
+    return { status: 500, body: { ok: false, error: 'could not save the report' } };
+  }
+
+  const changed = answerChanged(existing, input);
+  const updated = await db.updateAnswer(key, {
+    size_bucket: input.sizeBucket,
+    rating_verdict: input.ratingVerdict,
+    // Only a CHANGED answer advances the counter. Read-then-write, so two genuinely
+    // concurrent revisions of one row could both read the same value and undercount by one.
+    // Accepted: this is a feedback control, and the alternative — a BEFORE UPDATE trigger —
+    // would move the rule into the database where no test in this repo can reach it.
+    revision: changed ? existing.revision + 1 : existing.revision,
+    reported_at: nowIso,
+  });
+  if (!updated.ok) {
+    return { status: 500, body: { ok: false, error: 'could not save the report' } };
+  }
+  return { status: 200, body: { ok: true, duplicate: true, revised: changed } };
 }

@@ -75,9 +75,27 @@ export function SurfReportProvider({
 }
 
 export function SurfReportTrigger() {
-  const { open, setOpen, submitted } = useSurfReport();
+  const { open, setOpen, submitted, setSubmitted } = useSurfReport();
   if (submitted) {
-    return <span className="text-[11px] text-cyan-400">Thanks — logged</span>;
+    // The reporter can still correct themselves. /api/reports now replaces an earlier
+    // answer for the same spot-hour instead of discarding the new one, so the only thing
+    // that used to stand between someone and a correction was this control locking after
+    // the first send — they had to refresh the page to get back in.
+    return (
+      <span className="text-[11px] text-cyan-400">
+        Thanks — logged{' '}
+        <button
+          type="button"
+          onClick={() => {
+            setSubmitted(false);
+            setOpen(true);
+          }}
+          className="text-text-muted hover:text-cyan-400 underline underline-offset-2"
+        >
+          change
+        </button>
+      </span>
+    );
   }
   return (
     <button
