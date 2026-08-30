@@ -19,16 +19,24 @@ type Tile = {
   hint?: string | null;
   icon?: React.ReactNode;
   rightSpark?: React.ReactNode;
+  /** Interactive affordance for this tile, rendered at the right of the hint row. Used by
+   *  the Face tile for the surf-report trigger, so the control sits against the number it
+   *  is reporting on rather than at the bottom of the page. */
+  action?: React.ReactNode;
 };
 
 export function CurrentConditions({
   current,
   forecasts,
   offshoreDeg,
+  faceAction,
 }: {
   current: Forecast | null;
   forecasts: Forecast[];
   offshoreDeg: number | null | undefined;
+  /** Passed down from the (server) spot page; the node itself is a client component. This
+   *  component stays a server component — it renders the node, it does not create it. */
+  faceAction?: React.ReactNode;
 }) {
   const tp = pickSwell(current?.swell_tp ?? null, current?.tp ?? null);
   const dp = pickSwell(current?.swell_dp ?? null, current?.dp ?? null);
@@ -61,6 +69,7 @@ export function CurrentConditions({
         label="Face"
         value={fmtFt(current?.face_ft)}
         hint={tp ? `${fmtSec(tp)} period` : null}
+        action={faceAction}
       />
       <BigTile
         label="Swell"
@@ -131,6 +140,7 @@ function BigTile({
   icon,
   badge,
   rightSpark,
+  action,
 }: Tile & { badge?: React.ReactNode; valueClass?: string }) {
   return (
     <div className="rounded-xl border border-ink-600 bg-ink-800/60 p-3.5">
@@ -146,10 +156,11 @@ function BigTile({
           {value}
         </span>
       </div>
-      {(hint || rightSpark) && (
-        <div className="mt-1 flex items-center justify-between text-xs text-text-muted">
+      {(hint || rightSpark || action) && (
+        <div className="mt-1 flex items-center justify-between gap-2 text-xs text-text-muted">
           <span>{hint}</span>
           {rightSpark}
+          {action}
         </div>
       )}
     </div>
