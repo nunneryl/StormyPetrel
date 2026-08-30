@@ -14,8 +14,14 @@ import { CurrentConditions } from '@/components/CurrentConditions';
 import { OptimalConditions } from '@/components/OptimalConditions';
 import { CamSection } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
+import {
+  SurfReportProvider,
+  SurfReportTrigger,
+  SurfReportPanel,
+} from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { spotInfoRows } from '@/lib/spotInfo';
+import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { siteUrl } from '@/lib/site-url';
 
@@ -68,8 +74,18 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 // unique key already makes valid_time unique within one spot. It is there so that if the
 // filter is ever dropped, or a third writer appears, the row order stays a TOTAL order
 // (`id` is the primary key) instead of whatever Postgres hands back for a tie.
+//
+// THE WINDOW REACHES BACKWARDS. It used to start at `now`, which meant a past hour was not
+// on the page at all — and the surf-report control asks people about hours that have already
+// happened (a dawn session reported at 4pm). It now starts HOUR_PICKER_SPAN hours back so
+// every hour the picker offers has its forecast row in memory, which is what lets the panel
+// tell a reporter that a chosen hour has no forecast behind it. The SNAPSHOT itself is still
+// taken server-side in /api/reports against the database — the client is never trusted for
+// it — so this widening is for the UI, not for the label.
+//
+// Everything downstream that means "from now on" now reads `upcoming`, not this array.
 async function loadForecasts(spotId: number): Promise<Forecast[]> {
-  const nowIso = new Date().toISOString();
+  const nowIso = new Date(Date.now() - HOUR_PICKER_SPAN * 3600_000).toISOString();
   const { data, error } = await supabase
     .from('forecasts')
     .select(
@@ -80,7 +96,11 @@ async function loadForecasts(spotId: number): Promise<Forecast[]> {
     .gte('valid_time', nowIso)
     .order('valid_time', { ascending: true })
     .order('id', { ascending: true })
-    .limit(200);
+    // Raised by exactly the widening (200 -> 212) so the FUTURE end keeps the same headroom
+    // it had before. A 7-day horizon is 168 hourly rows; the 12 backward hours take it to
+    // 180, and truncating at 200 would have started eating the far end of the forecast if
+    // the horizon ever ran long.
+    .limit(212);
   if (error) {
     console.error('loadForecasts', error);
     return [];
@@ -128,11 +148,30 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
     fetchCamsForSpot(spot.slug),
   ]);
 
-  const current = forecasts[0] ?? null;
+  // loadForecasts now reaches HOUR_PICKER_SPAN hours BACKWARDS (see its comment), so
+  // forecasts[0] is no longer "now" — it is up to 12 hours ago. Split once, here, and let
+  // every existing consumer keep its old meaning by reading `upcoming`.
+  const nowMs = Date.now();
+  const upcoming = forecasts.filter((r) => new Date(r.valid_time).getTime() >= nowMs);
+  const current = upcoming[0] ?? null;
+
+  // The UTC hours we actually hold an NWPS row for, over the picker's window. The panel uses
+  // this only to warn that a chosen hour will not be joinable; it never blocks a report.
+  // Bounded at BOTH ends: this list crosses into the client payload, and the picker only
+  // ever offers hours from HOUR_PICKER_SPAN ago up to the current one. Without the upper
+  // bound every future hour on the page — up to 180 of them — would be serialised too.
+  const oldestReportable = nowMs - HOUR_PICKER_SPAN * 3600_000;
+  const forecastHours = forecasts
+    .filter((r) => {
+      const t = new Date(r.valid_time).getTime();
+      return t >= oldestReportable && t <= nowMs;
+    })
+    .map((r) => new Date(r.valid_time).toISOString());
+
   // Charts get a 48h slice — the full 7-day window made the curves
   // too compressed to read. The grid below still shows everything.
-  const cutoff = Date.now() + 48 * 3600_000;
-  const chartForecasts = forecasts.filter(
+  const cutoff = nowMs + 48 * 3600_000;
+  const chartForecasts = upcoming.filter(
     (r) => new Date(r.valid_time).getTime() <= cutoff,
   );
 
@@ -209,12 +248,20 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           empty so the section disappears cleanly. */}
       <CamSection cams={cams} lat={spot.lat} lng={spot.lng} />
 
-      {/* Hero tiles */}
-      <CurrentConditions
-        current={current}
-        forecasts={forecasts}
-        offshoreDeg={spot.offshore_wind_deg}
-      />
+      {/* Hero tiles + the surf-report control. The provider is a client component taking a
+          SERVER subtree as children, which is what keeps CurrentConditions (and this page)
+          server components — nothing here reads cookies or headers, so all 648 routes keep
+          their prerender and their 1-hour revalidate. The trigger sits in the Face tile's
+          footer, against the number it reports on; the panel gets full width below it. */}
+      <SurfReportProvider slug={spot.slug} forecastHours={forecastHours}>
+        <CurrentConditions
+          current={current}
+          forecasts={upcoming}
+          offshoreDeg={spot.offshore_wind_deg}
+          faceAction={<SurfReportTrigger />}
+        />
+        <SurfReportPanel />
+      </SurfReportProvider>
 
       {/* Spectral swell components */}
       {current && <SwellPartitions forecast={current} />}
@@ -282,7 +329,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           to the next 48 hours with an in-grid expand button. */}
       <section>
         <SectionHeader title="7-day forecast" />
-        <ForecastGrid forecasts={forecasts} offshoreDeg={spot.offshore_wind_deg} />
+        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} />
       </section>
 
       {/* Footer breadcrumbs */}
