@@ -1885,10 +1885,17 @@ def main(argv: list[str] | None = None) -> int:
     # No-op until a spot carries the tag; wrapped so NWPS can never break the run.
     try:
         from .forecast.nwps_nearshore import apply_nwps_overrides
-        nwps_stats = apply_nwps_overrides(ratings, spots)
-        if nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]:
-            log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored",
-                     nwps_stats["fed"], nwps_stats["fell_back"], nwps_stats["errored"])
+        # PASS THE ARTIFACT WE ALREADY LOADED. The override reads the fetch stage's own
+        # series rather than downloading the cycle a second time, and handing it the very
+        # dict compute_ratings rated from is what makes hs/tp/dp and face_ft/swell_*/chop_*
+        # provably one read. See nwps_nearshore._make_artifact_fetch.
+        nwps_stats = apply_nwps_overrides(ratings, spots, nwps=nwps)
+        if (nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]
+                or nwps_stats.get("not_in_artifact")):
+            log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored, "
+                     "%d absent from the fetch artifact",
+                     nwps_stats["fed"], nwps_stats["fell_back"], nwps_stats["errored"],
+                     nwps_stats.get("not_in_artifact", 0))
         # WHAT DROVE DIRECTION on the overridden hours. The override takes HEIGHT from
         # NWPS but keeps WW3's swell direction/period; hours with no WW3 identity fall
         # back to whole-spectrum dirpw. That fallback share is the number to watch — it
