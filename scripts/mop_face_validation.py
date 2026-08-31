@@ -69,6 +69,7 @@ egress and scripts/mop_points.json present (the Mac).
     python3 scripts/mop_face_validation.py                    # 14 days back, all 153
     python3 scripts/mop_face_validation.py --days-back 30
     python3 scripts/mop_face_validation.py --limit 8          # smoke test, 8 spots
+    python3 scripts/mop_face_validation.py --chunk-size 16    # probe for the planner cliff
     python3 scripts/mop_face_validation.py --selftest         # offline, no network, no DB
 
 Writes scripts/mop_face_validation_out.json so a second run can be diffed against the
@@ -128,6 +129,46 @@ MOP_HS_FLOOR_M = 0.10
 _RETRY_ATTEMPTS = 4
 _RETRY_BACKOFF_S = (2, 4, 8)
 
+# PostgREST caps a select at 1000 rows, so paging inside a chunk is load-bearing.
+FORECAST_PAGE_ROWS = 1000
+
+# How many spot ids one forecasts statement may ask about.
+#
+# WHY THIS IS NEEDED. The un-chunked query timed out (PostgREST 57014, "canceling
+# statement due to statement timeout") at 40, 80, 120 and 153 ids, and at every one of
+# them it failed on the FIRST page — offset 0, before a single row came back. A row-count
+# ceiling would have failed on a LATER page, so this is a plan problem, not a volume one.
+#
+# THE MECHANISM. The statement is
+#     ... WHERE spot_id IN (...) AND source='nwps' AND valid_time BETWEEN t0 AND t1
+#     ORDER BY id LIMIT 1000 OFFSET 0
+# and `forecasts` carries a PK index on id plus idx_forecasts_spot_time(spot_id,
+# valid_time) (001_initial_schema.sql:102). ORDER BY ... LIMIT gives the planner two
+# shapes: (a) range-scan idx_forecasts_spot_time, sort the matches by id, take 1000; or
+# (b) walk the PK index in id order, filter each row, stop after 1000 matches — no sort
+# at all, and it can "stop early", so the planner likes it when it believes matches are
+# common. Selectivity is what picks between them: 8 of ~648 spots looks like ~1% of the
+# table, so (b) looks like a long walk and (a) wins; 40 looks like ~6%, so (b) looks
+# cheap and wins. But the estimate is wrong in a way the planner cannot see: `id` is
+# assigned in insertion order and the filter selects the LAST 14 days, so every matching
+# row sits at the high end of `id`. Plan (b) walks the table from id=1 through months of
+# older rows and reaches nothing before the timeout fires.
+#
+# The two committed readers of this table corroborate it: daily_report.py:206 and
+# revalidate.py:172 both scan ALL 648 spots with no IN list at all and never time out —
+# and both ORDER BY valid_time, which idx_forecasts_valid_time serves directly, so
+# neither ever offers the planner the id-walk.
+#
+# WHY 8 AND NOT A ROUNDER NUMBER. 8 is the largest value with direct positive evidence:
+# --limit 8 fetched 2,321 rows across three pages cleanly. 40 is the smallest with direct
+# negative evidence. The crossover is somewhere in (8, 40] and has not been measured, and
+# because it is a plan flip it is a CLIFF rather than a gradient — a value picked for
+# tidiness could sit one id past it and fail exactly as before. So this takes the proven
+# value rather than guessing at the boundary. The cost is small: 137 spots is 18 chunks,
+# each roughly three pages. --chunk-size exists to probe for the real boundary later; if
+# a larger value proves out, change the number here and record the evidence.
+FORECAST_CHUNK_SPOTS = 8
+
 
 # --------------------------------------------------------------------------- #
 # Pure — no network, no database. Everything here is pinned by --selftest.     #
@@ -147,6 +188,20 @@ def is_population(spot: dict) -> bool:
     if spot.get("swell_window_source") != "nwps":
         return False
     return not any(k.startswith("mop_") for k in spot)
+
+
+def chunk_ids(ids, size: int) -> list[list]:
+    """Split *ids* into consecutive chunks of at most *size*.
+
+    Order-preserving, and every id appears in exactly one chunk — the two properties the
+    reassembly in fetch_forecasts depends on. An exact multiple yields no empty trailing
+    chunk; an empty input yields no chunks at all (so the caller's loop simply does not
+    run, rather than issuing a query with an empty IN list).
+    """
+    if size < 1:
+        raise ValueError(f"chunk size must be >= 1, got {size}")
+    seq = list(ids)
+    return [seq[i:i + size] for i in range(0, len(seq), size)]
 
 
 def ratio(numer_ft, mop_hs_m, floor_m: float = MOP_HS_FLOOR_M):
@@ -314,20 +369,27 @@ def fetch_mop_by_hour(url, t0, t1):
     return out
 
 
-def fetch_forecasts(client, spot_ids, t0_iso, t1_iso):
-    """{spot_id: [rows]} of source='nwps' forecasts in the window, paginated.
+def _fetch_forecast_chunk(client, ids, t0_iso, t1_iso, page=FORECAST_PAGE_ROWS):
+    """Every source='nwps' row in the window for ONE chunk of spot ids, paginated.
 
-    PostgREST caps a select at 1000 rows; 153 spots x 14 days x 24 h is ~51k, so the
-    pagination is load-bearing, not defensive. Ordered by id so the pages are a total
-    order and a row cannot be skipped or repeated between them.
+    The query is UNCHANGED from the un-chunked version: same select list, same filters,
+    same `order("id")`, same 1000-row page. Chunking narrows only how many spots a single
+    statement asks about — it cannot alter what is fetched.
+
+    `order("id")` stays because it is what makes offset paging a TOTAL order: `id` is the
+    primary key, so no row can be skipped or repeated across a page boundary. Ordering by
+    `valid_time` instead would dodge the timeout (see FORECAST_CHUNK_SPOTS) but ties
+    across spots at the same hour make its page boundaries non-deterministic.
+
+    *page* is a parameter only so --selftest can exercise multi-page paging on a handful
+    of rows; production always uses FORECAST_PAGE_ROWS.
     """
-    by_spot = {}
-    page, frm = 1000, 0
+    out, frm = [], 0
     while True:
         resp = (
             client.table("forecasts")
             .select("spot_id, valid_time, face_ft, effective_size_ft, swell_source")
-            .in_("spot_id", list(spot_ids))
+            .in_("spot_id", list(ids))
             .eq("source", "nwps")
             .gte("valid_time", t0_iso)
             .lte("valid_time", t1_iso)
@@ -338,12 +400,32 @@ def fetch_forecasts(client, spot_ids, t0_iso, t1_iso):
         rows = resp.data or []
         if not rows:
             break
-        for r in rows:
-            by_spot.setdefault(r["spot_id"], []).append(r)
-        print(f"    …fetched {frm + len(rows)} forecast rows", flush=True)
+        out.extend(rows)
         if len(rows) < page:
             break
         frm += page
+    return out
+
+
+def fetch_forecasts(client, spot_ids, t0_iso, t1_iso,
+                    chunk_size=FORECAST_CHUNK_SPOTS, page=FORECAST_PAGE_ROWS):
+    """{spot_id: [rows]} of source='nwps' forecasts in the window.
+
+    Chunked over spot ids — see FORECAST_CHUNK_SPOTS for why, and why 8. Each spot's ids
+    land in exactly one chunk and each chunk is still ordered by `id`, so a spot's rows
+    come back in the same order a single un-chunked fetch would have produced them; the
+    reassembled dict is identical, which --selftest pins against a literal.
+    """
+    by_spot = {}
+    chunks = chunk_ids(spot_ids, chunk_size)
+    total = 0
+    for i, chunk in enumerate(chunks, 1):
+        rows = _fetch_forecast_chunk(client, chunk, t0_iso, t1_iso, page=page)
+        for r in rows:
+            by_spot.setdefault(r["spot_id"], []).append(r)
+        total += len(rows)
+        print(f"    chunk {i:3d}/{len(chunks)}  {len(chunk):2d} spots  "
+              f"+{len(rows):5d} rows  ({total} total)", flush=True)
     return by_spot
 
 
@@ -351,7 +433,8 @@ def fetch_forecasts(client, spot_ids, t0_iso, t1_iso):
 # Orchestration                                                                #
 # --------------------------------------------------------------------------- #
 
-def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT):
+def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
+        chunk_size=FORECAST_CHUNK_SPOTS):
     # Checked here rather than left to load_cache, whose miss message interpolates
     # sys.argv[0] and so would tell you to run `mop_face_validation.py build-cache` —
     # a subcommand this script does not have. The cache belongs to mop_blacks_slice.
@@ -439,7 +522,9 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT):
     if not ids:
         print("no matched spot has a spots-table row — nothing to join against", file=sys.stderr)
         return 2
-    fc = fetch_forecasts(client, ids, t0_iso, t1_iso)
+    print(f"  fetching in chunks of {chunk_size} spot ids "
+          f"({len(chunk_ids(ids, chunk_size))} chunks) — see FORECAST_CHUNK_SPOTS", flush=True)
+    fc = fetch_forecasts(client, ids, t0_iso, t1_iso, chunk_size=chunk_size)
     print(f"  forecasts: {sum(len(v) for v in fc.values())} rows across {len(fc)} spots",
           flush=True)
 
@@ -536,6 +621,8 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT):
         "constants": {
             "M_TO_FT": M_TO_FT, "MOP_HS_FLOOR_M": MOP_HS_FLOOR_M,
             "MATCH_SANITY_M": MATCH_SANITY_M,
+            "forecast_chunk_spots": chunk_size,
+            "forecast_page_rows": FORECAST_PAGE_ROWS,
             "SHORE_NORMAL_MAX_DELTA": SHORE_NORMAL_MAX_DELTA,
             "buoy_adoption_gate_applied": False,
         },
@@ -722,11 +809,141 @@ def run_selftest():
     check("shore-normal delta is unsigned", abs(shore_normal_delta(10, 350) - 20.0) < 1e-9)
     check("absent orientation -> None", shore_normal_delta(None, 270) is None)
 
+    # --- chunking ------------------------------------------------------------ #
+    # The split itself. Expected chunks written out, not produced by the function.
+    check("20 ids at size 8 split into exactly the listed chunks",
+          chunk_ids(list(range(1, 21)), 8) == [[1, 2, 3, 4, 5, 6, 7, 8],
+                                               [9, 10, 11, 12, 13, 14, 15, 16],
+                                               [17, 18, 19, 20]])
+    # 137 accepted spots at 8 per statement: 17 full chunks + a remainder of 1 = 18.
+    check("137 ids at size 8 -> 18 chunks", len(chunk_ids(range(137), 8)) == 18)
+    check("the last of those 18 holds the single remainder",
+          len(chunk_ids(range(137), 8)[-1]) == 1)
+    # An exact multiple must not produce a trailing empty chunk.
+    check("16 ids at size 8 -> 2 chunks, none empty",
+          [len(c) for c in chunk_ids(range(16), 8)] == [8, 8])
+    check("fewer ids than the chunk size -> one chunk", chunk_ids([4, 7], 8) == [[4, 7]])
+    check("no ids -> no chunks at all (never an empty IN list)", chunk_ids([], 8) == [])
+    check("size 1 -> one chunk per id", chunk_ids([5, 6, 7], 1) == [[5], [6], [7]])
+    try:
+        chunk_ids([1, 2], 0)
+        check("a zero chunk size raises rather than looping forever", False)
+    except ValueError:
+        check("a zero chunk size raises rather than looping forever", True)
+
+    # Every id exactly once, across an awkward split. 137 ids, 18 chunks.
+    flat = [i for c in chunk_ids(range(137), 8) for i in c]
+    check("chunking loses no id", len(flat) == 137)
+    check("chunking duplicates no id", len(set(flat)) == 137)
+    check("chunking preserves order", flat == list(range(137)))
+
+    # --- reassembly is identical to a single fetch ---------------------------- #
+    # A stand-in PostgREST builder: honours in_() and range(), orders by id, and ignores
+    # the filters this test does not vary. Rows are hand-written so the expected result
+    # below can be too.
+    class _Resp:
+        def __init__(self, data):
+            self.data = data
+
+    class _FakeQuery:
+        def __init__(self, rows):
+            self._rows, self._ids, self._frm, self._to = rows, None, 0, None
+            self.statements = 0
+
+        def select(self, *a, **k):
+            return self
+
+        def eq(self, *a, **k):
+            return self
+
+        def gte(self, *a, **k):
+            return self
+
+        def lte(self, *a, **k):
+            return self
+
+        def order(self, *a, **k):
+            return self
+
+        def in_(self, _col, vals):
+            self._ids = set(vals)
+            return self
+
+        def range(self, frm, to):
+            self._frm, self._to = frm, to
+            return self
+
+        def execute(self):
+            sel = sorted((r for r in self._rows
+                          if self._ids is None or r["spot_id"] in self._ids),
+                         key=lambda r: r["id"])
+            return _Resp(sel[self._frm:self._to + 1])
+
+    class _FakeClient:
+        def __init__(self, rows):
+            self._rows, self.statements = rows, 0
+
+        def table(self, _name):
+            self.statements += 1
+            return _FakeQuery(self._rows)
+
+    # Three spots, ids interleaved so an id-ordered fetch does NOT group by spot.
+    rows = [
+        {"id": 1, "spot_id": 10, "valid_time": "T1", "face_ft": 1.0,
+         "effective_size_ft": 0.5, "swell_source": "ww3"},
+        {"id": 2, "spot_id": 20, "valid_time": "T1", "face_ft": 2.0,
+         "effective_size_ft": 1.0, "swell_source": "ww3"},
+        {"id": 3, "spot_id": 10, "valid_time": "T2", "face_ft": 3.0,
+         "effective_size_ft": 1.5, "swell_source": "ww3"},
+        {"id": 4, "spot_id": 30, "valid_time": "T1", "face_ft": 4.0,
+         "effective_size_ft": 2.0, "swell_source": "ww3"},
+        {"id": 5, "spot_id": 20, "valid_time": "T2", "face_ft": 5.0,
+         "effective_size_ft": 2.5, "swell_source": "ww3"},
+    ]
+    # What the fetch MUST return, whatever the chunk size: each spot's rows in id order.
+    expected = {
+        10: [rows[0], rows[2]],
+        20: [rows[1], rows[4]],
+        30: [rows[3]],
+    }
+    got_1 = fetch_forecasts(_FakeClient(rows), [10, 20, 30], "t0", "t1", chunk_size=1, page=1000)
+    got_2 = fetch_forecasts(_FakeClient(rows), [10, 20, 30], "t0", "t1", chunk_size=2, page=1000)
+    got_all = fetch_forecasts(_FakeClient(rows), [10, 20, 30], "t0", "t1", chunk_size=99, page=1000)
+    check("chunk size 1 reassembles to the expected dict", got_1 == expected)
+    check("chunk size 2 reassembles to the expected dict", got_2 == expected)
+    check("one chunk (un-chunked) reassembles to the expected dict", got_all == expected)
+    check("every chunk size agrees with every other", got_1 == got_2 == got_all)
+    check("a spot absent from the data is absent from the result, not empty",
+          30 in got_2 and 40 not in got_2)
+
+    # Paging INSIDE a chunk still applies: 5 rows for one spot at page=2 is 3 statements.
+    solo = [{"id": i, "spot_id": 10, "valid_time": f"T{i}", "face_ft": float(i),
+             "effective_size_ft": float(i) / 2, "swell_source": "ww3"} for i in range(1, 6)]
+    fc = _FakeClient(solo)
+    paged = fetch_forecasts(fc, [10], "t0", "t1", chunk_size=8, page=2)
+    check("paging inside a chunk returns every row", len(paged[10]) == 5)
+    check("paged rows stay in id order", [r["id"] for r in paged[10]] == [1, 2, 3, 4, 5])
+    # 5 rows at 2/page: pages of 2, 2, 1 — the short third page ends the loop.
+    check(f"5 rows at page 2 took 3 statements ({fc.statements})", fc.statements == 3)
+    # An exact multiple needs the extra empty page to learn it is done: 4 rows -> 2, 2, 0.
+    fc4 = _FakeClient(solo[:4])
+    fetch_forecasts(fc4, [10], "t0", "t1", chunk_size=8, page=2)
+    check(f"4 rows at page 2 took 3 statements, the last empty ({fc4.statements})",
+          fc4.statements == 3)
+
+    check(f"the shipped chunk size is the proven 8 ({FORECAST_CHUNK_SPOTS})",
+          FORECAST_CHUNK_SPOTS == 8)
+    check(f"the shipped page size is PostgREST's cap ({FORECAST_PAGE_ROWS})",
+          FORECAST_PAGE_ROWS == 1000)
+
     print("\nNOT COVERED HERE, deliberately: the MOP fetch. fetch_mop_by_hour and")
     print("_pull_with_retry speak OPeNDAP to CDIP THREDDS; there is no way to exercise them")
     print("without the network, and a mock of netCDF4.Dataset would prove only that the mock")
     print("was written to match the code. Their first real exercise is the run itself.")
-    print("Likewise fetch_forecasts, which needs a live Supabase.")
+    print("fetch_forecasts IS covered above, but only its CHUNKING AND REASSEMBLY, against a")
+    print("stand-in PostgREST builder. What no offline test can reach is the thing that")
+    print("actually broke — the planner\'s choice on the real table — so whether 8 is small")
+    print("enough is settled by the run, not by these assertions.")
     print("\nself-test:", "ALL PASS" if ok else "FAILURES")
     return 0 if ok else 1
 
@@ -737,12 +954,17 @@ def main(argv=None):
     ap.add_argument("--days-back", type=int, default=DEFAULT_DAYS_BACK,
                     help=f"window length in days (default {DEFAULT_DAYS_BACK})")
     ap.add_argument("--limit", type=int, default=None, help="only the first N spots (smoke test)")
+    ap.add_argument("--chunk-size", type=int, default=FORECAST_CHUNK_SPOTS,
+                    help=f"spot ids per forecasts statement (default {FORECAST_CHUNK_SPOTS}; "
+                         "raise it to probe for the real planner cliff, which is somewhere "
+                         "in (8, 40] and unmeasured)")
     ap.add_argument("--out", default=OUT, help=f"results JSON (default {OUT})")
     ap.add_argument("--selftest", action="store_true", help="offline logic proof; no network, no DB")
     a = ap.parse_args(argv)
     if a.selftest:
         return run_selftest()
-    return run(days_back=a.days_back, limit=a.limit, out_path=a.out)
+    return run(days_back=a.days_back, limit=a.limit, out_path=a.out,
+               chunk_size=a.chunk_size)
 
 
 if __name__ == "__main__":
