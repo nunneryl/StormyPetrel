@@ -378,6 +378,15 @@ MANUAL_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "manual_orientations.json"
 # legacy file. Same role for orientation that SPOT_COORD_FIXES_FILE plays
 # for lat/lng: a committed override that survives re-enrich.
 SPOT_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "spot_orientations.json"
+# Slug-keyed optimal_swell_dir overrides — the same durable-override role for the
+# SWELL WINDOW that SPOT_ORIENTATIONS_FILE plays for orientation. It exists because
+# interpret.directional_gain targets optimal_swell_dir, not orientation_deg (the latter is
+# only its null-fallback), so correcting an orientation by hand does not move the rating.
+# Applied by enrich.py as Algo 2d, the LAST writer, so it beats the raycast, the
+# orientation-derived fallback, the tier preserve-guard and LLM verification alike.
+# NOT guarded against sw1_raycast.py:353, which writes optimal_swell_dir outside enrich —
+# see the file's own _comment for that known limit.
+SPOT_SWELL_WINDOWS_FILE = PIPELINE_DIR / "data" / "spot_swell_windows.json"
 # Persistent review queue — list of spots whose orientation/scrape/verification
 # state suggests they should get a manual eyeball at some point. Survives
 # regeneration: spots marked `reviewed: true` keep that flag.

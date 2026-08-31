@@ -20,6 +20,7 @@ from .config import (
     DEFAULT_OUTPUT,
     MANUAL_ORIENTATIONS_FILE,
     SPOT_ORIENTATIONS_FILE,
+    SPOT_SWELL_WINDOWS_FILE,
 )
 from .enrichment.adjust import seaward_adjust
 from .enrichment.break_type import compute_break_type
@@ -111,6 +112,59 @@ def _load_spot_orientations() -> dict[str, float]:
 
 
 _SPOT_ORIENTATIONS = _load_spot_orientations()
+
+
+# The stamp Algo 2d leaves on an overridden spot. A SEPARATE field from
+# swell_window_source, deliberately: that one carries the TIER (nwps / cdip_mop / raycast /
+# orientation_derived) and decides which forecast reader runs, so overloading it with
+# "manual" would silently move a spot off the NWPS tier. The merge passes downstream
+# (verify_spots, scrape_surf_forecast) read this stamp — not the file — to know they must
+# not overwrite optimal_swell_dir, exactly as they read orientation_source == "manual" to
+# leave a hand-set orientation alone.
+SWELL_WINDOW_OVERRIDE_SOURCE = "manual"
+
+
+def _load_spot_swell_windows() -> dict[str, float]:
+    """Return {slug: optimal_swell_dir} from the slug-keyed override file.
+
+    Same role for the swell window that ``spot_orientations.json`` plays for orientation,
+    and it is needed for the same reason plus one more: ``interpret.directional_gain``
+    targets ``optimal_swell_dir`` and falls back to ``orientation_deg`` only when the
+    optimal is null, so a hand-corrected orientation does not reach the rating at all.
+    Applied by ``_enrich_one`` as Algo 2d, AFTER the raycast, the orientation-derived
+    fallback and the tier preserve-guard, so it is the last writer in enrich.
+
+    ONLY optimal_swell_dir is overridden; ``swell_window_arcs`` are left alone. Hand
+    authoring arcs is a much harder task than hand-authoring one bearing, and the arcs the
+    raycast emits are structurally constrained (``_make_arc`` / ``_implied_span`` enforce
+    span-vs-min/max consistency and ``_merge_open_arcs`` drops arcs that fail). A corrected
+    optimal that lands outside its own arcs still moves the response peak onto the right
+    bearing but stays capped at directional_gain's 0.40 soft-outside rung.
+
+    A corrupt file degrades to "no overrides" with a warning rather than killing the run —
+    same posture as _load_spot_orientations.
+    """
+    path = SPOT_SWELL_WINDOWS_FILE
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("spot swell windows file %s corrupt (%s); ignoring", path, e)
+        return {}
+    entries = data.get("windows") or {}
+    out: dict[str, float] = {}
+    for slug, rec in entries.items():
+        if not isinstance(rec, dict):
+            continue
+        try:
+            out[slug] = float(rec["optimal_swell_dir"]) % 360.0
+        except (KeyError, TypeError, ValueError):
+            log.warning("spot swell window for slug %r missing or invalid; skipping", slug)
+    return out
+
+
+_SPOT_SWELL_WINDOWS = _load_spot_swell_windows()
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -368,6 +422,33 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
     # counts then strips before writing.
     if _apply_tier_guard(spot, enriched, confidence, allow_tier_demotion):
         enriched["_tier_preserved"] = True
+
+    # Algo 2d — slug-keyed optimal_swell_dir override. The comprehensive human-review file
+    # (spot_swell_windows.json), and the LAST writer of optimal_swell_dir in enrich: it runs
+    # after Algo 2 (raycast), Algo 2b (orientation-derived fallback) and Algo 2c (tier
+    # preserve-guard), each of which writes the field unconditionally. Direct assignment,
+    # NOT _set, so it beats LLM verification too — the same posture Algo 1b/1c take for
+    # orientation, and necessary here because three of the ten overridden spots carry
+    # verification_confidence == "high".
+    #
+    # WHY THIS FIELD AND NOT orientation_deg: interpret.directional_gain reads
+    # optimal_swell_dir as the cos²(Δ/2) target and only falls back to orientation_deg when
+    # the optimal is null, so a hand-set orientation never reaches the rating on a spot that
+    # has an optimal. Every spot in the file already had orientation_source == "manual".
+    #
+    # ARCS ARE NOT TOUCHED. Only the target moves; the gate stays as the raycast left it.
+    slug = _slug_for(spot.get("name"))
+    override_optimal = _SPOT_SWELL_WINDOWS.get(slug)
+    if override_optimal is not None:
+        enriched["optimal_swell_dir"] = override_optimal
+        # Separate stamp — NOT swell_window_source, which carries the tier and decides which
+        # forecast reader runs. verify_spots and scrape_surf_forecast read this to know they
+        # must leave the field alone.
+        enriched["swell_window_source_override"] = SWELL_WINDOW_OVERRIDE_SOURCE
+        log.debug(
+            "%s (%s): spot_swell_windows override optimal_swell_dir %.0f° applied",
+            spot.get("name"), slug, override_optimal,
+        )
 
     # Algo 3 — break type
     try:

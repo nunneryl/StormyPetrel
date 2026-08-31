@@ -700,6 +700,10 @@ def merge_into_spots(
         # arcs so a subsequent `enrich --skip-raycast` rebuilds them from
         # the corrected orientation.
         orient_locked = spot.get("orientation_source") == "manual"
+        # Hand-curated optimal_swell_dir (pipeline/data/spot_swell_windows.json, stamped by
+        # enrich Algo 2d) is locked the same way. Its own lock, not orient_locked: the two
+        # override files are independent and a spot can carry either without the other.
+        optimal_locked = spot.get("swell_window_source_override") == "manual"
 
         new_orient = rec.get("facing_direction_deg")
         if new_orient is not None and not orient_locked and new_orient != spot.get("orientation_deg"):
@@ -707,7 +711,11 @@ def merge_into_spots(
             stats["field_changes"]["orientation_deg"] += 1
             if spot.get("swell_window_source") == "orientation_derived":
                 spot["swell_window_arcs"] = []
-                spot["optimal_swell_dir"] = None
+                # The arcs are rebuilt from the corrected orientation, but a hand-curated
+                # optimal is not the algorithm's to null — clearing it would drop the
+                # override to None and hand the rating back to the orientation fallback.
+                if not optimal_locked:
+                    spot["optimal_swell_dir"] = None
                 spot.pop("swell_window_source", None)
 
         new_offshore = rec.get("offshore_wind_deg")
@@ -716,7 +724,8 @@ def merge_into_spots(
             stats["field_changes"]["offshore_wind_deg"] += 1
 
         new_optimal = rec.get("optimal_swell_dir")
-        if new_optimal is not None and new_optimal != spot.get("optimal_swell_dir"):
+        if (new_optimal is not None and not optimal_locked
+                and new_optimal != spot.get("optimal_swell_dir")):
             spot["optimal_swell_dir"] = new_optimal
             stats["field_changes"]["optimal_swell_dir"] += 1
 

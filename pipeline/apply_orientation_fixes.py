@@ -84,6 +84,17 @@ def _validate_entry(name: str, entry: Any) -> dict | None:
     }
 
 
+def _optimal_is_overridden(slug: str) -> bool:
+    """True when *slug* carries a hand-curated optimal_swell_dir.
+
+    Reads the SAME map enrich.py applies as Algo 2d — imported rather than re-parsed so
+    there is one loader and one file, not two. Imported lazily because enrich pulls in
+    shapely/pyproj through the enrichment package and this script otherwise needs neither.
+    """
+    from .enrich import _SPOT_SWELL_WINDOWS
+    return slug in _SPOT_SWELL_WINDOWS
+
+
 def _update_supabase(client, slug: str, orientation_deg: float) -> bool:
     """One UPDATE per verified spot. Returns True on success."""
     payload = {
@@ -91,6 +102,17 @@ def _update_supabase(client, slug: str, orientation_deg: float) -> bool:
         "offshore_wind_deg": (orientation_deg + 180.0) % 360.0,
         "optimal_swell_dir": orientation_deg,
     }
+    # THE ONE WRITER THAT BYPASSES spots_enriched.json. This script UPDATEs Supabase
+    # directly, so a hand-curated optimal_swell_dir would be silently replaced by
+    # orientation_deg in the live table — with the file still holding the right value and
+    # nothing disagreeing until the next db_import. The default "optimal == facing" is a
+    # reasonable guess for a spot nobody has reviewed and is exactly wrong for one somebody
+    # has: every spot in spot_swell_windows.json is there because its optimal differs
+    # sharply from its facing. Drop the key rather than skipping the row — the orientation
+    # half of this fix is still wanted.
+    if _optimal_is_overridden(slug):
+        del payload["optimal_swell_dir"]
+        log.info("  %s: optimal_swell_dir hand-curated — updating orientation only", slug)
     try:
         resp = client.table("spots").update(payload).eq("slug", slug).execute()
     except Exception:  # noqa: BLE001
