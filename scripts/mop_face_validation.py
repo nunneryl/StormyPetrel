@@ -39,6 +39,30 @@ Comparing the two ratios separates two very different diagnoses:
   * face_ratio inflated but eff_ratio near 1  → the inflation is the MISSING DIRECTIONAL
     GATE, and the fix is to publish effective_size_ft, which we already compute.
 
+CANDIDATE TRANSFORMS — WHAT THIS CAN AND CANNOT DECIDE
+=====================================================
+The run above measured the CURRENT transform at a median 1.56x MOP. This also scores a
+set of CANDIDATE replacements against the same reference, so a replacement can be chosen
+against evidence instead of proposed and measured afterwards. Every candidate is computed
+from columns the forecasts row already carries; nothing new is fetched, and NOTHING HERE
+IS SHIPPED.
+
+WHAT IT CAN DECIDE: which candidate is CLOSER to an independent nearshore reference,
+roster-wide and per WFO, and which of them collapse on small days. That is a relative
+ordering, and it is real evidence.
+
+WHAT IT CANNOT DECIDE: whether any candidate is CORRECT. MOP Hs at a ~10 m depth contour
+is not a breaking face. A candidate scoring a ratio of 1.00 is matching a nearshore
+SIGNIFICANT HEIGHT — that is not the same thing as being right about the face a surfer
+sees, and a real breaking face at 10 m Hs of 1 m is plausibly larger than 1 m. So "C_n
+scores 1.00" must never be written up as "C_n is correct"; the honest sentence is "C_n
+sits closest to MOP's nearshore Hs, which is the only independent reference we have".
+Settling the absolute question needs the surf_reports ground-truth labels, not this.
+
+The 48 cdip_mop spots are scored SEPARATELY and labelled circular: their face is computed
+from the very MOP point the score reads back, so their C0 ratio is period_factor by
+construction. It is a check on the arithmetic and a control, not evidence.
+
 THE POPULATION, AND WHY THE OBVIOUS ONE IS WRONG
 ================================================
 This deliberately EXCLUDES the 48 spots tagged swell_window_source == "cdip_mop". Their
@@ -70,6 +94,7 @@ egress and scripts/mop_points.json present (the Mac).
     python3 scripts/mop_face_validation.py --days-back 30
     python3 scripts/mop_face_validation.py --limit 8          # smoke test, 8 spots
     python3 scripts/mop_face_validation.py --chunk-size 16    # probe for the planner cliff
+    python3 scripts/mop_face_validation.py --skip-circular    # skip the cdip_mop control
     python3 scripts/mop_face_validation.py --selftest         # offline, no network, no DB
 
 Writes scripts/mop_face_validation_out.json so a second run can be diffed against the
@@ -109,7 +134,7 @@ from mop_handful_slice import SHORE_NORMAL_MAX_DELTA, pearson   # noqa: E402
 from pipeline.forecast.mop import (                             # noqa: E402
     _iso_to_epoch, _norm_epoch, nowcast_url, pull_mop_window,
 )
-from pipeline.interpret import M_TO_FT                          # noqa: E402
+from pipeline.interpret import M_TO_FT, period_factor           # noqa: E402
 
 ROSTER = os.path.join(ROOT, "pipeline", "spots_enriched.json")
 OUT = os.path.join(HERE, "mop_face_validation_out.json")
@@ -128,6 +153,15 @@ MOP_HS_FLOOR_M = 0.10
 # for why the real helper cannot be used here.
 _RETRY_ATTEMPTS = 4
 _RETRY_BACKOFF_S = (2, 4, 8)
+
+# Columns pulled per forecasts row. The first five are what the original ratio study
+# needed; the rest are the inputs the CANDIDATES read. Widening this is additive — no
+# consumer loses a column — and it is the only way a candidate can be computed from data
+# we already have rather than from a new fetch.
+FORECAST_COLS = (
+    "spot_id, valid_time, face_ft, effective_size_ft, swell_source, "
+    "hs, tp, swell_hs, swell_tp, dir_gain, swell_1_hs, swell_1_tp"
+)
 
 # PostgREST caps a select at 1000 rows, so paging inside a chunk is load-bearing.
 FORECAST_PAGE_ROWS = 1000
@@ -204,6 +238,226 @@ def chunk_ids(ids, size: int) -> list[list]:
     return [seq[i:i + size] for i in range(0, len(seq), size)]
 
 
+# --------------------------------------------------------------------------- #
+# Candidate transforms                                                          #
+# --------------------------------------------------------------------------- #
+#
+# WHAT A CANDIDATE IS: a rule producing a predicted face in FEET from columns the
+# forecasts row already carries. Nothing here fetches anything new, and nothing here is
+# shipped — this file is a measuring instrument.
+#
+# THE COLUMNS AVAILABLE (001_initial_schema.sql:79-100, plus migrations 002-005):
+#   hs, tp, dp                        total significant height / peak period / direction
+#   swell_hs, swell_tp, swell_dp      the swell component the override resolved
+#   swell_1..3_hs/tp/dp               WW3 partitions; swell_1_hs is NULL ~50% of hours
+#   wind_wave_hs/tp/dp                wind sea
+#   dir_gain, face_ft, effective_size_ft, chop_ratio, chop_mult, period_quality,
+#   wind_mult, tide_mult, stars, wind_speed, wind_dir, tide_level_ft, tide_norm,
+#   swell_source
+# Anything not on that list cannot be a candidate here, however good the idea.
+#
+# ONE TRAP, MEASURED RATHER THAN ASSUMED. apply_nwps_overrides (nwps_nearshore.py:1002)
+# computes face_ft from its OWN freshly-read NWPS `swh` and writes face_ft, swell_hs,
+# swell_tp and dir_gain — but it never rewrites the `hs` COLUMN, which was set earlier by
+# rate_spot from the NWPS entry it was handed. Those are two reads of the same model and
+# need not be the same sample. So "hs is the height that produced face_ft" is a HYPOTHESIS,
+# not a given. C0r exists to test it: if C0r reproduces the published face_ft, every
+# hs-based candidate is trustworthy; if it does not, C0r and C5 are unreliable and the
+# report says so before any ranking is read.
+
+
+def _pf(tp, source):
+    """period_factor guarded for a missing or non-positive period."""
+    if tp is None:
+        return None
+    tp = float(tp)
+    if tp <= 0:
+        return None
+    return period_factor(tp, source)
+
+
+def _c0(r):
+    """The PUBLISHED number, read straight off the row — not a reconstruction. This is
+    the honest baseline: it is what the site actually shows."""
+    return r.get("face_ft")
+
+
+def _c0r(r):
+    """The current RECIPE rebuilt from the row. Compared against _c0 to test the `hs`
+    hypothesis above; scored like any other candidate."""
+    pf = _pf(r.get("swell_tp"), "ww3")
+    if pf is None or r.get("hs") is None:
+        return None
+    return float(r["hs"]) * pf * M_TO_FT
+
+
+def _c1(r):
+    pf = _pf(r.get("swell_tp"), "ww3")
+    if pf is None or r.get("swell_hs") is None:
+        return None
+    return float(r["swell_hs"]) * pf * M_TO_FT
+
+
+def _c2(r):
+    return None if r.get("swell_hs") is None else float(r["swell_hs"]) * M_TO_FT
+
+
+def _c3(r):
+    """The published GATED number, read off the row (face_ft x dir_gain, already stored)."""
+    return r.get("effective_size_ft")
+
+
+def _c4(r):
+    pf = _pf(r.get("swell_tp"), "ww3")
+    if pf is None or r.get("swell_hs") is None or r.get("dir_gain") is None:
+        return None
+    return float(r["swell_hs"]) * pf * float(r["dir_gain"]) * M_TO_FT
+
+
+def _c5(r):
+    return None if r.get("hs") is None else float(r["hs"]) * M_TO_FT
+
+
+def _c6(r):
+    """Swell height on the NWPS period-factor table instead of the ww3 one.
+
+    ADDED, and the reason is a live inconsistency rather than curiosity: rate_spot's
+    NWPS fallback calls face_ft(..., source="nwps") (interpret.py:1374) while both
+    override paths pass RATING_SOURCE="ww3". The two tables differ by up to 30% at long
+    period (nwps 1.6 vs ww3 1.25 at 16 s), so if the wrong table is part of the observed
+    inflation this candidate separates that from the height question. It should score
+    WORSE than C1 — the nwps table is the more amplifying one — and if it does not, the
+    period factor is not where the inflation lives at all.
+    """
+    pf = _pf(r.get("swell_tp"), "nwps")
+    if pf is None or r.get("swell_hs") is None:
+        return None
+    return float(r["swell_hs"]) * pf * M_TO_FT
+
+
+def _c7(r):
+    """The dominant WW3 partition height, on its own period.
+
+    ADDED because it tests a different height source rather than a different scaling of
+    the same one: swell_1_hs is deep-water gfswave, where hs/swell_hs are NWPS nearshore.
+    Its coverage is the point as much as its accuracy — swell_1_hs was measured NULL on
+    50.2% of spot-hours, so `not_computable` below is the number to read first. A
+    candidate that cannot be evaluated half the time is unusable whatever its MAE.
+    """
+    pf = _pf(r.get("swell_1_tp"), "ww3")
+    if pf is None or r.get("swell_1_hs") is None:
+        return None
+    return float(r["swell_1_hs"]) * pf * M_TO_FT
+
+
+# Order is display order. Keys are stable — the output JSON is keyed on them.
+CANDIDATES = [
+    ("C0", "current, published face_ft column", _c0),
+    ("C0r", "current recipe rebuilt: hs x pf_ww3(swell_tp)", _c0r),
+    ("C1", "swell_hs x pf_ww3(swell_tp)", _c1),
+    ("C2", "swell_hs, no period factor", _c2),
+    ("C3", "current gated, published effective_size_ft column", _c3),
+    ("C4", "swell_hs x pf_ww3(swell_tp) x dir_gain", _c4),
+    ("C5", "hs, no period factor", _c5),
+    ("C6", "swell_hs x pf_NWPS(swell_tp)", _c6),
+    ("C7", "swell_1_hs x pf_ww3(swell_1_tp)", _c7),
+]
+
+# A candidate publishing under this is showing the user nothing. Counted per candidate
+# because a rule can have an excellent median and still collapse on small days, which
+# makes it unusable regardless.
+SMALL_FACE_FT = 0.5
+
+# DELIBERATELY NOT A CANDIDATE: any constant rescale of the current recipe (face_ft/1.56,
+# a fitted coefficient, a per-WFO scale factor). It would score ~1.0 against MOP by
+# construction, because the constant is derived from the very comparison being run. That
+# is fitting to the reference, not testing a transform, and it would look like the best
+# candidate on every metric here while telling us nothing.
+
+
+def candidate_faces(row: dict) -> dict:
+    """{candidate key: predicted face in feet, or None when the row lacks its inputs}."""
+    return {key: fn(row) for key, _label, fn in CANDIDATES}
+
+
+def score_candidate(pairs: list, key: str, fn) -> dict:
+    """Score one candidate over joined (our row, MOP hour) pairs.
+
+    ratio / bias / MAE / r are computed only over hours where the candidate IS computable
+    AND the MOP height clears MOP_HS_FLOOR_M; `not_computable` and `mop_below_floor` count
+    what was left out, so a candidate cannot look good by being evaluated on less.
+    """
+    ratios, preds, refs = [], [], []
+    not_computable = below_floor = small = 0
+    for p in pairs:
+        pred = fn(p["row"]) if "row" in p else None
+        if pred is None:
+            not_computable += 1
+            continue
+        pred = float(pred)
+        if pred < SMALL_FACE_FT:
+            small += 1
+        if not p["mop_hs_m"] > MOP_HS_FLOOR_M:
+            below_floor += 1
+            continue
+        ref = float(p["mop_hs_m"]) * M_TO_FT
+        ratios.append(pred / ref)
+        preds.append(pred)
+        refs.append(ref)
+    diffs = [a - b for a, b in zip(preds, refs)]
+    return {
+        "key": key,
+        "n": len(preds),
+        "not_computable": not_computable,
+        "mop_below_floor": below_floor,
+        "under_half_ft": small,
+        "ratio": _stats(ratios),
+        "bias_ft": statistics.fmean(diffs) if diffs else None,
+        "mae_ft": statistics.fmean([abs(d) for d in diffs]) if diffs else None,
+        "r": pearson(preds, refs) if len(preds) >= 3 else None,
+    }
+
+
+def score_all_candidates(pairs: list) -> dict:
+    """{key: score} for every candidate over one set of joined pairs."""
+    return {key: score_candidate(pairs, key, fn) for key, _label, fn in CANDIDATES}
+
+
+def rank_by_mae(scores: dict) -> list:
+    """Candidate keys best-MAE-first. A candidate with no usable hours ranks LAST rather
+    than being dropped, so it cannot vanish quietly from a ranking it failed to enter."""
+    def sort_key(item):
+        _k, s = item
+        mae = s.get("mae_ft")
+        return (1, 0.0) if mae is None else (0, mae)
+    return [k for k, _s in sorted(scores.items(), key=sort_key)]
+
+
+def reconstruction_check(pairs: list, tol_ft: float = 0.02) -> dict:
+    """Does C0r reproduce the published face_ft?
+
+    Tests the `hs` hypothesis in the block comment above. tol_ft is 0.02 because face_ft
+    is persisted rounded to 2 decimal places (nwps_nearshore.py:1004), so two values that
+    agree in the model can still differ by up to half a cent of a foot each way.
+    """
+    n = agree = 0
+    worst = 0.0
+    for p in pairs:
+        row = p.get("row") or {}
+        pub, rebuilt = _c0(row), _c0r(row)
+        if pub is None or rebuilt is None:
+            continue
+        n += 1
+        d = abs(float(pub) - rebuilt)
+        worst = max(worst, d)
+        if d <= tol_ft:
+            agree += 1
+    return {"n": n, "agree": agree, "disagree": n - agree,
+            "agree_rate": round(agree / n, 4) if n else None,
+            "max_abs_diff_ft": round(worst, 4) if n else None,
+            "tolerance_ft": tol_ft}
+
+
 def ratio(numer_ft, mop_hs_m, floor_m: float = MOP_HS_FLOOR_M):
     """our_feet / (MOP waveHs in feet), or None when it is not a measurement.
 
@@ -256,6 +510,10 @@ def join_on_hour(mop_by_hour: dict, rows: list) -> list[dict]:
             "face_ft": r.get("face_ft"),
             "effective_size_ft": r.get("effective_size_ft"),
             "swell_source": r.get("swell_source"),
+            # The whole row, so a candidate can read any fetched column without this
+            # function needing to know which. Additive: every key above still means
+            # exactly what it meant before.
+            "row": r,
         })
     return out
 
@@ -388,7 +646,7 @@ def _fetch_forecast_chunk(client, ids, t0_iso, t1_iso, page=FORECAST_PAGE_ROWS):
     while True:
         resp = (
             client.table("forecasts")
-            .select("spot_id, valid_time, face_ft, effective_size_ft, swell_source")
+            .select(FORECAST_COLS)
             .in_("spot_id", list(ids))
             .eq("source", "nwps")
             .gte("valid_time", t0_iso)
@@ -433,8 +691,89 @@ def fetch_forecasts(client, spot_ids, t0_iso, t1_iso,
 # Orchestration                                                                #
 # --------------------------------------------------------------------------- #
 
+def score_cdip_mop_circular(roster, client, name_to_id, t0, t1, t0_iso, t1_iso, chunk_size):
+    """Score the same candidates on the 48 cdip_mop spots. THE RESULT IS CIRCULAR.
+
+    Those spots' face_ft is computed FROM MOP by apply_mop_overrides
+    (face = face_ft(mop_hs, mop_tp, "ww3"), mop.py:164), against the SAME point this
+    function then reads back. So C0's ratio here is period_factor(mop_tp) by construction
+    and carries no information about whether the transform is right. It is a check on the
+    ARITHMETIC — if C0's median lands where the ww3 period-factor table says it should for
+    the periods in the window, the plumbing on both sides is sound — and it is a control:
+    the honest population's numbers should NOT look like these.
+
+    No matching is needed: these spots already carry mop_nowcast_url and mop_point_id from
+    apply_mop_assignments, and using the ADOPTED point is what makes the check circular in
+    the intended way.
+    """
+    pop = [s for s in roster if s.get("swell_window_source") == "cdip_mop"
+           and s.get("mop_nowcast_url")]
+    print(f"\ncircular control: {len(pop)} cdip_mop spots (their face is computed FROM MOP)",
+          flush=True)
+    if not pop:
+        return None
+    ids = [name_to_id[s["name"]] for s in pop if s.get("name") in name_to_id]
+    if not ids:
+        return None
+    fc = fetch_forecasts(client, ids, t0_iso, t1_iso, chunk_size=chunk_size)
+
+    pairs, errs = [], 0
+    for i, sp in enumerate(pop, 1):
+        sid = name_to_id.get(sp.get("name"))
+        if sid is None:
+            continue
+        try:
+            mop = fetch_mop_by_hour(nowcast_url(sp["mop_nowcast_url"]), t0, t1)
+        except Exception as e:  # noqa: BLE001
+            errs += 1
+            print(f"  [{i:3d}/{len(pop)}] {_slug(sp.get('name')):28} MOP ERROR "
+                  f"{type(e).__name__}", flush=True)
+            continue
+        got = join_on_hour(mop, fc.get(sid) or [])
+        pairs.extend(got)
+        print(f"  [{i:3d}/{len(pop)}] {_slug(sp.get('name')):28} "
+              f"{sp.get('mop_point_id'):>7}  join {len(got):4d}", flush=True)
+    scores = score_all_candidates(pairs)
+    return {
+        "circular": True,
+        "why_circular": (
+            "These spots' published face_ft is computed FROM the same MOP point this "
+            "reads back (forecast/mop.py apply_mop_overrides), so C0's ratio is "
+            "period_factor by construction. A check on the arithmetic and a control for "
+            "the honest population — NOT evidence about any candidate."
+        ),
+        "spots": len(pop), "errors": errs, "joined_hours": len(pairs),
+        "candidates": scores,
+        "candidate_ranking_by_mae": rank_by_mae(scores),
+    }
+
+
+def _print_candidates(title, scores, ranking):
+    """One candidate table. Ordered by the ranking passed in, so the caller decides
+    whether that is MAE-roster-wide or something else."""
+    print("\n" + "=" * 78)
+    print(title)
+    print(f"  {'cand':5}{'MAE ft':>8}{'bias ft':>9}{'r':>7}{'ratio med':>11}"
+          f"{'p10':>7}{'p90':>7}{'n':>8}{'<0.5ft':>8}{'n/a':>7}  definition")
+    labels = {k: lbl for k, lbl, _fn in CANDIDATES}
+    for k in ranking:
+        sc = scores[k]
+        st = sc["ratio"]
+        if sc["mae_ft"] is None:
+            print(f"  {k:5}{'--':>8}{'--':>9}{'--':>7}{'--':>11}{'--':>7}{'--':>7}"
+                  f"{sc['n']:>8}{sc['under_half_ft']:>8}{sc['not_computable']:>7}  {labels[k]}")
+            continue
+        print(f"  {k:5}{sc['mae_ft']:8.3f}{sc['bias_ft']:9.3f}"
+              f"{(sc['r'] if sc['r'] is not None else float('nan')):7.3f}"
+              f"{st['median']:11.3f}{st['p10']:7.3f}{st['p90']:7.3f}"
+              f"{sc['n']:8d}{sc['under_half_ft']:8d}{sc['not_computable']:7d}  {labels[k]}")
+    print("  MAE/bias are against (MOP Hs x 3.281). bias > 0 = we predict BIGGER than MOP.")
+    print(f"  '<0.5ft' = hours the candidate would publish under {SMALL_FACE_FT} ft; "
+          "'n/a' = hours it could not be computed at all.")
+
+
 def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
-        chunk_size=FORECAST_CHUNK_SPOTS):
+        chunk_size=FORECAST_CHUNK_SPOTS, with_circular=True):
     # Checked here rather than left to load_cache, whose miss message interpolates
     # sys.argv[0] and so would tell you to run `mop_face_validation.py build-cache` —
     # a subcommand this script does not have. The cache belongs to mop_blacks_slice.
@@ -531,6 +870,8 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
     # --- MOP, one OPeNDAP read per point -------------------------------------
     print(f"pulling MOP for {len(matched)} points — this is minutes, not seconds", flush=True)
     per_spot = []
+    all_pairs = []          # every joined pair, pooled for the roster-wide candidate scores
+    wfo_pairs = {}          # and split per WFO
     t_start = time.time()
     for i, (s, rec) in enumerate(matched, 1):
         sid = name_to_id.get(s.get("name"))
@@ -560,8 +901,13 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
         for p in pairs:
             srcs[p.get("swell_source") or "none"] = srcs.get(p.get("swell_source") or "none", 0) + 1
 
+        # ADDITIVE: every key the original study emitted is unchanged below; the
+        # candidate scores are new keys alongside them.
+        all_pairs.extend(pairs)
         entry = {
             **rec,
+            "candidates": score_all_candidates(pairs),
+            "candidate_ranking_by_mae": rank_by_mae(score_all_candidates(pairs)),
             "mop_hours": len(mop), "our_hours": len(rows), "joined_hours": len(pairs),
             "join_rate": round(len(pairs) / len(rows), 3) if rows else None,
             "face_ratio": _stats(face_ratios),
@@ -571,6 +917,7 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             "swell_source_counts": srcs,
         }
         per_spot.append(entry)
+        wfo_pairs.setdefault(rec.get("wfo") or "unknown", []).extend(pairs)
         fr = entry["face_ratio"]["median"]
         er = entry["eff_ratio"]["median"]
         joined = f"join {len(pairs):4d}/{len(rows):4d}"
@@ -608,6 +955,26 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
         (e for e in good if e["blocked_hours"]["n"] > 0),
         key=lambda e: (e["blocked_hours"]["published_face_ft"]["median"] or 0), reverse=True)[:12]
 
+    # --- candidate scoring: pooled roster-wide and per WFO --------------------
+    # Pooled over SPOT-HOURS, not averaged over per-spot medians: a candidate must be
+    # scored on the hours it would actually have published, and spots differ ten-fold in
+    # how many hours they contribute. The per-spot scores are in by_spot for anyone who
+    # wants the other weighting.
+    roster_candidates = score_all_candidates(all_pairs)
+    roster_ranking = rank_by_mae(roster_candidates)
+    wfo_candidates = {w: score_all_candidates(ps) for w, ps in sorted(wfo_pairs.items())}
+    wfo_ranking = {w: rank_by_mae(sc) for w, sc in wfo_candidates.items()}
+    recon = reconstruction_check(all_pairs)
+
+    circular = None
+    if with_circular:
+        try:
+            circular = score_cdip_mop_circular(roster, client, name_to_id,
+                                               t0, t1, t0_iso, t1_iso, chunk_size)
+        except Exception as e:  # noqa: BLE001 — a control must never sink the study
+            print(f"  circular control failed ({type(e).__name__}: {e}) — continuing",
+                  flush=True)
+
     result = {
         "generated_at": now.isoformat(),
         "window": {"t0": t0_iso, "t1": t1_iso, "days_back": days_back},
@@ -643,6 +1010,21 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
                                  "median_published_face_ft":
                                      e["blocked_hours"]["published_face_ft"]["median"]}
                                 for e in blocked_worst],
+        "candidate_definitions": {k: lbl for k, lbl, _fn in CANDIDATES},
+        "candidate_caveat": (
+            "RELATIVE ranking against an independent nearshore reference. MOP Hs at a "
+            "depth contour is NOT a breaking face, so a candidate scoring 1.00 is matching "
+            "a nearshore significant height, which is not the same as being right about "
+            "the face a surfer sees. This can order candidates; it cannot establish that "
+            "any of them is correct."
+        ),
+        "candidates_roster": roster_candidates,
+        "candidate_ranking_by_mae": roster_ranking,
+        "candidates_by_wfo": wfo_candidates,
+        "candidate_ranking_by_wfo": wfo_ranking,
+        "c0_reconstruction": recon,
+        "circular_check_cdip_mop": circular,
+        "small_face_threshold_ft": SMALL_FACE_FT,
         "by_spot": per_spot,
     }
     with open(out_path, "w") as f:
@@ -675,6 +1057,49 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             print(f"  {e['name'][:34]:36} {e['blocked_hours']['n']:4d} hrs, "
                   f"median published face "
                   f"{e['blocked_hours']['published_face_ft']['median']:.2f} ft")
+    _print_candidates("CANDIDATE TRANSFORMS — roster-wide, pooled over spot-hours",
+                      roster_candidates, roster_ranking)
+    print("\nRANKING BY MAE, PER WFO — a candidate that wins overall but loses in one")
+    print("region is not the answer, so read the rows for disagreement, not the winner:")
+    for w, order in wfo_ranking.items():
+        sc = wfo_candidates[w]
+        n = sc[order[0]]["n"] if order else 0
+        pretty = "  ".join(
+            f"{k}({sc[k]['mae_ft']:.2f})" if sc[k]["mae_ft"] is not None else f"{k}(--)"
+            for k in order[:5])
+        print(f"  {w:8} n={n:6d}  {pretty}")
+    agreed = roster_ranking[0] if roster_ranking else None
+    if agreed and all(order and order[0] == agreed for order in wfo_ranking.values()):
+        print(f"  -> {agreed} ranks first in EVERY WFO as well as roster-wide.")
+    else:
+        firsts = sorted({order[0] for order in wfo_ranking.values() if order})
+        print(f"  -> NO SINGLE WINNER: best-by-WFO is {', '.join(firsts)}. "
+              "Roster-wide MAE is hiding a regional split; do not pick from the pooled row alone.")
+
+    print(f"\nC0 RECONSTRUCTION CHECK (does hs x pf_ww3(swell_tp) reproduce the published "
+          f"face_ft?)")
+    if recon["n"] == 0:
+        print("  no hour had both values — cannot tell.")
+    else:
+        print(f"  {recon['agree']}/{recon['n']} hours agree within {recon['tolerance_ft']} ft "
+              f"({recon['agree_rate']:.1%}); worst gap {recon['max_abs_diff_ft']} ft")
+        if (recon["agree_rate"] or 0) < 0.95:
+            print("  *** WARNING: the `hs` COLUMN IS NOT THE HEIGHT THAT PRODUCED face_ft. ***")
+            print("  apply_nwps_overrides writes face_ft from its own NWPS read but never")
+            print("  rewrites `hs`. C0r and C5 are built on `hs`, so THEIR numbers above are")
+            print("  measuring a different height than the one we publish. C1/C2/C4/C6 use")
+            print("  swell_hs, which the override does write, and are unaffected.")
+
+    if circular:
+        _print_candidates(
+            f"CIRCULAR CONTROL — {circular['spots']} cdip_mop spots, "
+            f"{circular['joined_hours']} hours. NOT EVIDENCE.",
+            circular["candidates"], circular["candidate_ranking_by_mae"])
+        print("  ^^ These spots' face_ft is computed FROM this same MOP point, so C0's")
+        print("     ratio is period_factor by construction. Read it as a check that the")
+        print("     arithmetic on both sides lines up, and as a control: the honest")
+        print("     population above should NOT look like this.")
+
     print("=" * 78)
     print("READ THIS AS: a measurement of period_factor against an independent nearshore")
     print("height — NOT as face-vs-face. MOP has no breaking height. If face x and eff x")
@@ -936,6 +1361,119 @@ def run_selftest():
     check(f"the shipped page size is PostgREST's cap ({FORECAST_PAGE_ROWS})",
           FORECAST_PAGE_ROWS == 1000)
 
+    # --- candidate arithmetic ------------------------------------------------ #
+    # period_factor on the ww3 table is 1.15 at exactly 12 s and on the nwps table 1.50
+    # (interpret.py:106-113), and M_TO_FT is 3.281. Every expected face below is those
+    # numbers multiplied out by hand, NOT read back from candidate_faces.
+    arow = {"hs": 2.0, "swell_hs": 1.5, "swell_tp": 12.0, "dir_gain": 0.8,
+            "swell_1_hs": 1.2, "swell_1_tp": 12.0,
+            "face_ft": 7.55, "effective_size_ft": 6.04}
+    faces = candidate_faces(arow)
+
+    def close(a, b):
+        return a is not None and abs(a - b) < 1e-9
+
+    check("C0  is the published face_ft column, untouched", faces["C0"] == 7.55)
+    check("C0r 2.0 x 1.15 x 3.281 = 7.5463", close(faces["C0r"], 7.5463))
+    check("C1  1.5 x 1.15 x 3.281 = 5.659725", close(faces["C1"], 5.659725))
+    check("C2  1.5 x 3.281 = 4.9215", close(faces["C2"], 4.9215))
+    check("C3  is the published effective_size_ft column, untouched", faces["C3"] == 6.04)
+    check("C4  1.5 x 1.15 x 0.8 x 3.281 = 4.52778", close(faces["C4"], 4.52778))
+    check("C5  2.0 x 3.281 = 6.562", close(faces["C5"], 6.562))
+    check("C6  1.5 x 1.50 x 3.281 = 7.38225 (nwps table, not ww3)", close(faces["C6"], 7.38225))
+    check("C7  1.2 x 1.15 x 3.281 = 4.52778", close(faces["C7"], 4.52778))
+    check("C6 is bigger than C1 — the nwps table amplifies more at 12 s",
+          faces["C6"] > faces["C1"])
+    check("every candidate key is present", sorted(faces) ==
+          ["C0", "C0r", "C1", "C2", "C3", "C4", "C5", "C6", "C7"])
+
+    # Missing inputs must yield None, never a silent zero or a partial product.
+    check("C1 with no swell_hs -> None", candidate_faces({"swell_tp": 12.0})["C1"] is None)
+    check("C1 with no swell_tp -> None", candidate_faces({"swell_hs": 1.5})["C1"] is None)
+    check("a zero period -> None, not a divide or a 1.0 factor",
+          candidate_faces({"swell_hs": 1.5, "swell_tp": 0.0})["C1"] is None)
+    check("C4 with no dir_gain -> None",
+          candidate_faces({"swell_hs": 1.5, "swell_tp": 12.0})["C4"] is None)
+    check("C7 with no partition -> None (the ~50% NULL case)",
+          candidate_faces({"swell_1_tp": 12.0})["C7"] is None)
+    check("C0 with no published face -> None", candidate_faces({})["C0"] is None)
+    check("a zero height is a measurement, not an absence",
+          close(candidate_faces({"swell_hs": 0.0})["C2"], 0.0))
+
+    # --- scoring: bias, MAE, ratio, and the small-face counter --------------- #
+    # MOP 1.0 m -> ref 3.281 ft. swell_hs 1.5 -> C2 4.9215 (diff +1.6405); swell_hs 0.5 ->
+    # C2 1.6405 (diff -1.6405). Symmetric, so bias 0 and MAE 1.6405 by hand.
+    def pair(mop_hs, **row):
+        return {"hour": 0, "mop_hs_m": mop_hs, "row": row}
+
+    sp = [pair(1.0, swell_hs=1.5), pair(1.0, swell_hs=0.5)]
+    sc2 = score_candidate(sp, "C2", _c2)
+    check(f"C2 scored over 2 hours ({sc2['n']})", sc2["n"] == 2)
+    check(f"C2 bias is 0 ft — the errors cancel ({sc2['bias_ft']})", abs(sc2["bias_ft"]) < 1e-9)
+    check(f"C2 MAE is 1.6405 ft ({sc2['mae_ft']})", abs(sc2["mae_ft"] - 1.6405) < 1e-9)
+    check("C2 ratio median is 1.0 (ratios 1.5 and 0.5)", abs(sc2["ratio"]["median"] - 1.0) < 1e-9)
+    check("C2 ratio p10 is 0.5", abs(sc2["ratio"]["p10"] - 0.5) < 1e-9)
+    check("C2 ratio p90 is 1.5", abs(sc2["ratio"]["p90"] - 1.5) < 1e-9)
+    check("nothing under 0.5 ft here", sc2["under_half_ft"] == 0)
+
+    # 0.1 m of swell is 0.3281 ft — under the threshold, and it must be COUNTED even
+    # though it is a perfectly computable value.
+    small = score_candidate(sp + [pair(1.0, swell_hs=0.1)], "C2", _c2)
+    check(f"one hour publishes under 0.5 ft ({small['under_half_ft']})",
+          small["under_half_ft"] == 1)
+    check("the small hour still counts toward n", small["n"] == 3)
+
+    # An uncomputable hour is counted, not quietly excluded from the denominator.
+    nc = score_candidate(sp + [pair(1.0)], "C2", _c2)
+    check(f"the uncomputable hour is counted ({nc['not_computable']})",
+          nc["not_computable"] == 1)
+    check("and is NOT scored", nc["n"] == 2)
+
+    # A MOP height at or below the floor is excluded from the ratio but still counted.
+    bf = score_candidate(sp + [pair(MOP_HS_FLOOR_M, swell_hs=1.5)], "C2", _c2)
+    check(f"the below-floor hour is counted ({bf['mop_below_floor']})",
+          bf["mop_below_floor"] == 1)
+    check("and is NOT scored", bf["n"] == 2)
+    check("but it DOES count toward the small-face tally if it is small",
+          score_candidate([pair(MOP_HS_FLOOR_M, swell_hs=0.1)], "C2",
+                          _c2)["under_half_ft"] == 1)
+
+    # --- ranking -------------------------------------------------------------- #
+    # hs 1.0, swell_hs 2.0, swell_tp 12, dir_gain 0.5, published 3.281 / 1.6405, no
+    # partition. Against MOP 1.0 m (ref 3.281 ft) the MAEs are, by hand:
+    #   C0 0.0   C5 0.0   C0r 0.49215   C4 0.49215   C3 1.6405
+    #   C2 3.281 C1 4.2653  C6 6.562   C7 not computable
+    rrow = {"hs": 1.0, "swell_hs": 2.0, "swell_tp": 12.0, "dir_gain": 0.5,
+            "face_ft": 3.281, "effective_size_ft": 1.6405, "swell_1_hs": None}
+    rscores = score_all_candidates([{"hour": 0, "mop_hs_m": 1.0, "row": rrow}])
+    check("ranking is MAE-ascending, ties in declaration order, uncomputable last",
+          rank_by_mae(rscores) ==
+          ["C0", "C5", "C0r", "C4", "C3", "C2", "C1", "C6", "C7"])
+    check("the uncomputable candidate has no MAE rather than a zero one",
+          rscores["C7"]["mae_ft"] is None and rscores["C7"]["not_computable"] == 1)
+    check("a perfect candidate scores MAE 0", abs(rscores["C5"]["mae_ft"]) < 1e-9)
+    check(f"C6's MAE is 6.562 ({rscores['C6']['mae_ft']})",
+          abs(rscores["C6"]["mae_ft"] - 6.562) < 1e-9)
+    check("bias is signed: C6 over-predicts", rscores["C6"]["bias_ft"] > 0)
+    check("bias is signed: C3 under-predicts", rscores["C3"]["bias_ft"] < 0)
+    check("every candidate appears in the ranking exactly once",
+          sorted(rank_by_mae(rscores)) == sorted(k for k, _l, _f in CANDIDATES))
+
+    # --- the C0 reconstruction check ------------------------------------------ #
+    # hs 2.0 at 12 s rebuilds to 7.5463. A published 7.55 is 0.0037 away (agrees, inside
+    # the 2-decimal rounding); a published 9.00 is 1.4537 away (disagrees).
+    rec = reconstruction_check([
+        {"mop_hs_m": 1.0, "row": {"hs": 2.0, "swell_tp": 12.0, "face_ft": 7.55}},
+        {"mop_hs_m": 1.0, "row": {"hs": 2.0, "swell_tp": 12.0, "face_ft": 9.00}},
+    ])
+    check(f"reconstruction saw 2 comparable hours ({rec['n']})", rec["n"] == 2)
+    check(f"one agrees within 0.02 ft ({rec['agree']})", rec["agree"] == 1)
+    check(f"one disagrees ({rec['disagree']})", rec["disagree"] == 1)
+    check(f"agree rate 0.5 ({rec['agree_rate']})", rec["agree_rate"] == 0.5)
+    check(f"worst gap 1.4537 ft ({rec['max_abs_diff_ft']})", rec["max_abs_diff_ft"] == 1.4537)
+    check("an hour missing either value is skipped, not counted as a disagreement",
+          reconstruction_check([{"mop_hs_m": 1.0, "row": {"hs": 2.0}}])["n"] == 0)
+
     print("\nNOT COVERED HERE, deliberately: the MOP fetch. fetch_mop_by_hour and")
     print("_pull_with_retry speak OPeNDAP to CDIP THREDDS; there is no way to exercise them")
     print("without the network, and a mock of netCDF4.Dataset would prove only that the mock")
@@ -959,12 +1497,14 @@ def main(argv=None):
                          "raise it to probe for the real planner cliff, which is somewhere "
                          "in (8, 40] and unmeasured)")
     ap.add_argument("--out", default=OUT, help=f"results JSON (default {OUT})")
+    ap.add_argument("--skip-circular", action="store_true",
+                    help="skip the cdip_mop circular control (saves 48 OPeNDAP reads)")
     ap.add_argument("--selftest", action="store_true", help="offline logic proof; no network, no DB")
     a = ap.parse_args(argv)
     if a.selftest:
         return run_selftest()
     return run(days_back=a.days_back, limit=a.limit, out_path=a.out,
-               chunk_size=a.chunk_size)
+               chunk_size=a.chunk_size, with_circular=not a.skip_circular)
 
 
 if __name__ == "__main__":
