@@ -48,7 +48,7 @@ from ..interpret import (
     chop_factors, composite_stars, directional_gain, face_ft,
     in_any_arc, period_quality, wind_multiplier,
 )
-from ..config import WFO_TO_REGION
+from ..config import NWPS_FORECAST_FILE, WFO_TO_REGION
 # ONE cutoff, both sides of the comparison. Importing the constant (rather than restating 8.0)
 # is what stops the buoy band split and the model system veto drifting apart. ndbc_spectral is
 # stdlib-only and imports nothing from here, so this is not a cycle.
@@ -851,6 +851,79 @@ class _WfoUnavailable(Exception):
         self.reason = reason
 
 
+class _SpotNotInArtifact(Exception):
+    """The fetch stage produced no NWPS series for this spot, so the override has nothing to
+    read. Distinct from a per-hour fallback and from a WFO outage: it means the spot was
+    ABSENT from forecast_data/nwps.json, which nwps.fetch writes only when it extracted a
+    non-empty series (nwps.py:1272 `if series: out[spot["name"]] = series`). Carries the name
+    so the run summary can list who was lost rather than only how many."""
+    def __init__(self, name):
+        super().__init__(f"{name}: absent from the NWPS fetch artifact")
+        self.name = name
+
+
+def _make_artifact_fetch(nwps_by_spot):
+    """fetch(spot) → {hour_bucket: (swh, perpw, dirpw, shts)} from READ A's artifact.
+
+    THE SAME FOUR VALUES nwps_series_by_hour returns, taken from the fetch stage's own read
+    instead of a second download of the same cycle.
+
+    WHY THIS REPLACED THE SECOND DOWNLOAD. The pipeline ran `fetch_all` and `interpret` as
+    two processes, and each resolved its own NWPS cycle by its own rule — nwps._locate_cycle
+    (candidate DIRECTORIES, one constructed filename, grib_filter subset) versus
+    find_latest_cycle (any listed CG1 file, whole file). Measured over 14 days of California
+    rows: the two reads disagreed on the period they published for the same spot-hour on
+    ~5.5% of rows, up to 13.7 s apart, and on the face by up to 8.6 ft — with the row then
+    carrying `hs`/`tp`/`dp` from one read beside `face_ft`/`swell_*`/`chop_*` from the other.
+    Four other explanations were tested and refuted (publish-window timing, the ±1 hour
+    bucket slop, a perpw/mwp variable collision, and a much larger apparent rate that turned
+    out to be sub-0.05 s rounding noise); a plain cycle race between the two stages is the
+    one that survived. One read makes the disagreement impossible rather than smaller.
+
+    The hour bucket, the four values and their order are unchanged, so every consumer below
+    reads exactly what it read before. The KEY DIFFERENCE from nwps_series_by_hour is what
+    happens to a spot with no data: that function returns None (an ordinary fallback), while
+    this raises _SpotNotInArtifact so the loss is counted and NAMED — a spot the fetcher
+    skipped used to get a second chance from the second download and no longer does.
+
+    An hour is dropped on the same condition nwps_series_by_hour uses — swh, perpw or dirpw
+    missing — so the two paths admit and reject the same hours. shts may be None and is
+    passed through as None, exactly as before.
+    """
+    def fetch(spot):
+        entries = nwps_by_spot.get(spot.get("name"))
+        if not entries:
+            raise _SpotNotInArtifact(spot.get("name"))
+        out = {}
+        for e in entries:
+            t = _iso_to_epoch(e.get("valid_time"))
+            if t is None:
+                continue
+            swh, per, dpw = e.get("hs"), e.get("tp"), e.get("dp")
+            if swh is None or per is None or dpw is None:
+                continue
+            out[int(t // 3600)] = (swh, per, dpw, e.get("swell_hs"))
+        return out or None
+    return fetch
+
+
+def _load_nwps_artifact():
+    """READ A's artifact, {spot_name: [hourly entry, …]}. Raises when it is absent.
+
+    Raising rather than returning {} is deliberate: an empty dict would send all ~600 spots
+    down the not-in-artifact path and bury the real cause (the fetch stage never ran) under
+    600 individual warnings. interpret wraps the override in a try/except that logs the
+    exception and keeps the orientation-path ratings, so a loud failure here is both visible
+    and non-fatal."""
+    if not NWPS_FORECAST_FILE.exists():
+        raise OSError(
+            f"NWPS override needs {NWPS_FORECAST_FILE}, which does not exist — "
+            "run `python -m pipeline.forecast.fetch_all` first. The override reads the "
+            "fetch stage's series rather than downloading a second copy of the cycle."
+        )
+    return json.loads(NWPS_FORECAST_FILE.read_text())
+
+
 def _make_default_fetch():
     """Per-WFO cycle cache so all spots of a WFO share one fetch+parse. A WFO whose cycle fails to
     download/parse is cached as a FAILURE (a _WfoUnavailable) — it is NOT re-attempted for every one of
@@ -878,7 +951,7 @@ def _make_default_fetch():
     return fetch
 
 
-def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=None):
+def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None, _fetch=None):
     """Override the swell rating of every swell_window_source=="nwps" spot with its
     NWPS node HEIGHT, keeping each hour's wind/tide AND the WW3-derived swell
     direction/period that rate_spot already resolved. Mutates *ratings* in place
@@ -900,8 +973,19 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
     other WFO still applies). Mirrors apply_mop_overrides; the one difference is
     HORIZON — NWPS covers the full f000..f144, so every overlapping valid hour is
     fed (not just near-now), and only hours beyond coverage fall back."""
-    fetch = _fetch or _make_default_fetch()
+    # ONE READ. The override now reads the FETCH STAGE's series (read A) instead of
+    # downloading the cycle a second time — see _make_artifact_fetch for the measurement that
+    # forced it. _fetch still wins when injected, so the selftest, the validate harness and
+    # the trust gate keep their seam; *nwps* is the in-memory artifact interpret already
+    # loaded, which is what makes the override's inputs byte-identical to rate_spot's.
+    # load_cycle is NOT called on this path; it remains for the standalone grid tooling.
+    if _fetch is not None:
+        fetch = _fetch
+    else:
+        fetch = _make_artifact_fetch(nwps if nwps is not None else _load_nwps_artifact())
     fed = fell_back = errored = 0
+    not_in_artifact = 0
+    not_in_artifact_names = []
     wfo_unavailable = {}   # wfo -> reason: a whole-WFO download/parse outage (NOT a per-hour fallback)
     by_wfo = {}            # wfo -> {spots, hours, ww3_dir, dirpw_dir} over the OVERRIDDEN hours
     details = []
@@ -919,6 +1003,17 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
         orient = s.get("orientation_deg")
         try:
             series = fetch(s)
+        except _SpotNotInArtifact as e:
+            # THE BEHAVIOUR CHANGE, MADE VISIBLE. This spot produced no series in the fetch
+            # stage (its WFO had no cycle, or the node search found no water). It used to get
+            # a SECOND CHANCE from the override's own download, which could succeed where the
+            # fetcher failed; with one read that chance is gone. Counted and NAMED in its own
+            # bucket rather than folded into fell_back, so the loss is legible in the run
+            # summary instead of looking like an ordinary missing hour.
+            not_in_artifact += 1
+            not_in_artifact_names.append(e.name)
+            details.append((slug, "absent from the NWPS fetch artifact → fallback", 0))
+            continue
         except _WfoUnavailable as e:
             # WHOLE WFO down — isolate to its spots and record it as a distinct, visible outage so a
             # mass fall-back to the orientation path can never ship silently. Other WFOs keep going.
@@ -1036,7 +1131,16 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=Non
             details.append((slug, "NWPS had no overlapping hour → fallback", 0))
     # ADDITIVE only: every pre-existing key keeps its name and meaning, so the existing
     # consumers (interpret's summary log, the selftest) are untouched.
+    if not_in_artifact:
+        log.warning(
+            "nwps: %d spot(s) absent from the fetch artifact — they get NO override this run "
+            "(they used to get a second chance from the override's own download, which is "
+            "gone now that both stages share one read): %s",
+            not_in_artifact, ", ".join(sorted(not_in_artifact_names)),
+        )
     return {"fed": fed, "fell_back": fell_back, "errored": errored,
+            "not_in_artifact": not_in_artifact,
+            "not_in_artifact_names": sorted(not_in_artifact_names),
             "wfo_unavailable": wfo_unavailable, "details": details,
             "by_wfo": by_wfo,
             "hours_ww3_dir": sum(w["ww3_dir"] for w in by_wfo.values()),
@@ -2198,7 +2302,9 @@ def _selftest():
         ]
         wr = {n: [{"valid_time": "2026-01-01T00:00:00Z", "stars": 1.0,
                    "wind_mult": 1.0, "tide_mult": 1.0}] for n in ("OK", "B1", "B2")}
-        wst = apply_nwps_overrides(wr, wspots)   # default fetch → _make_default_fetch → _fake_load
+        # EXPLICIT now: the default is the artifact fetch, but _make_default_fetch's WFO
+        # isolation still guards the standalone grid tooling and is still worth pinning.
+        wst = apply_nwps_overrides(wr, wspots, _fetch=_make_default_fetch())
         check("WFO isolation: healthy WFO fed while another WFO is down", wst["fed"] == 1)
         check("WFO isolation: only the down WFO's 2 spots errored", wst["errored"] == 2)
         check("WFO isolation: IncompleteRead reported in wfo_unavailable", "gyx" in wst["wfo_unavailable"])
