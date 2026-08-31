@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-curated optimal_swell_dir (true-north degrees, the swell bearing the spot works best on) for spots whose ray-cast value is wrong. Applied by pipeline/enrich.py as Algorithm 2d, AFTER Algo 2 (raycast), Algo 2b (orientation-derived fallback) and Algo 2c (tier preserve-guard) — so it is the LAST writer of optimal_swell_dir in enrich and beats every other source, LLM verification included. Slug derivation mirrors pipeline/db_import._slugify (via enrich._slug_for) so re-enrich looks up by the same key that lands in the spots table. Stored alongside spot_orientations.json: the durable, re-enrich-survivable override mechanism for optimal_swell_dir, which had none.\n\nWHY THIS FILE EXISTS. interpret.directional_gain targets optimal_swell_dir and falls back to orientation_deg only when the optimal is null — so a hand-corrected orientation never reaches the rating on a spot that has an optimal. All ten spots below already carried orientation_source=\"manual\" and still rated off a swell arriving from behind the land. The cause is the ray-cast: _first_seaward_entry returns \"open\" when a ray exits the spot's own landmass and never returns, which is correct for a seaward ray leaving a beach and wrong for a landward ray leaving a finite island — a continent blocks because the ray never escapes within the 3000 km fetch, an island does not. Honolua Bay scored dir_gain 1.000 on an 84-degree east swell that would have to cross the whole of Maui. Prior research concluded that binary ray-casting structurally cannot model refraction and that the answer is nearshore model output (CDIP MOP / NWPS), so this is a durable human override, NOT a raycast fix.\n\nKNOWN LIMIT — THE RAYCAST HALF IS NOT GUARDED. pipeline/sw1_raycast.py:353 (_apply_raycast_result) writes spot[\"swell_window_arcs\"] and spot[\"optimal_swell_dir\"] unconditionally; its `preserve` flag gates only swell_window_source. sw1_raycast runs as its own workflow (.github/workflows/sw1-raycast.yml, mode=full) and writes spots_enriched.json WITHOUT going through enrich, so a full raycast run will still overwrite every value in this file. That guard was deliberately left out of round one: it cannot be verified until the next full raycast, which is rare. MITIGATION: after any `sw1-raycast mode=full`, re-run enrich so Algo 2d re-applies these values, and check the review-branch diff before merging it.\n\nFRAME CAVEAT, TRUE OF EVERY VALUE BELOW. Each source describes the DEEP-WATER swell direction. optimal_swell_dir is compared against the model's direction at a nearshore node 1-4 km out (NWPS DIRPW, or the WW3 partition direction), which for a wrap-around spot may already be partly refracted toward the shore normal. The two frames can therefore differ systematically: most at spots sitting inside a bay behind a headland — lovers-point and monterey-beach, both inside Monterey Bay behind Point Pinos — and least at spots facing open ocean with no headland to bend around — hapuna-beach and suicide-s on the Kohala coast. If a later measurement shows the nearshore frame runs consistently offset from these deep-water bearings, revise the values here rather than changing the gain kernel.\n\nARCS ARE NOT OVERRIDDEN. Only optimal_swell_dir. directional_gain uses swell_window_arcs as a GATE and the optimal as the TARGET, so a corrected optimal that falls outside the spot's own arcs moves the response peak onto the right bearing but stays capped at the 0.40 soft-outside rung. Four of the ten are in that state — see each entry's arc_verdict, which was computed against the committed arcs rather than asserted. Fixing those needs hand-authored arcs, which is separate work: arcs are structurally constrained (swell_window._make_arc / _implied_span enforce span-vs-min/max consistency, _merge_open_arcs drops arcs that fail) and much harder to author by hand than a single bearing.",
+  "_comment": "Hand-curated optimal_swell_dir (true-north degrees, the swell bearing the spot works best on) for spots whose ray-cast value is wrong. Applied by pipeline/enrich.py as Algorithm 2d, AFTER Algo 2 (raycast), Algo 2b (orientation-derived fallback) and Algo 2c (tier preserve-guard) — so it is the LAST writer of optimal_swell_dir in enrich and beats every other source, LLM verification included. Slug derivation mirrors pipeline/db_import._slugify (via enrich._slug_for) so re-enrich looks up by the same key that lands in the spots table. Stored alongside spot_orientations.json: the durable, re-enrich-survivable override mechanism for optimal_swell_dir, which had none.\n\nWHY THIS FILE EXISTS. interpret.directional_gain targets optimal_swell_dir and falls back to orientation_deg only when the optimal is null — so a hand-corrected orientation never reaches the rating on a spot that has an optimal. All ten spots below already carried orientation_source=\"manual\" and still rated off a swell arriving from behind the land. The cause is the ray-cast: _first_seaward_entry returns \"open\" when a ray exits the spot's own landmass and never returns, which is correct for a seaward ray leaving a beach and wrong for a landward ray leaving a finite island — a continent blocks because the ray never escapes within the 3000 km fetch, an island does not. Honolua Bay scored dir_gain 1.000 on an 84-degree east swell that would have to cross the whole of Maui. Prior research concluded that binary ray-casting structurally cannot model refraction and that the answer is nearshore model output (CDIP MOP / NWPS), so this is a durable human override, NOT a raycast fix.\n\nKNOWN LIMIT — THE RAYCAST HALF IS NOT GUARDED. pipeline/sw1_raycast.py:353 (_apply_raycast_result) writes spot[\"swell_window_arcs\"] and spot[\"optimal_swell_dir\"] unconditionally; its `preserve` flag gates only swell_window_source. sw1_raycast runs as its own workflow (.github/workflows/sw1-raycast.yml, mode=full) and writes spots_enriched.json WITHOUT going through enrich, so a full raycast run will still overwrite every value in this file. That guard was deliberately left out of round one: it cannot be verified until the next full raycast, which is rare. MITIGATION: after any `sw1-raycast mode=full`, re-run enrich so Algo 2d re-applies these values, and check the review-branch diff before merging it.\n\nFRAME CAVEAT, TRUE OF EVERY VALUE BELOW. Each source describes the DEEP-WATER swell direction. optimal_swell_dir is compared against the model's direction at a nearshore node 1-4 km out (NWPS DIRPW, or the WW3 partition direction), which for a wrap-around spot may already be partly refracted toward the shore normal. The two frames can therefore differ systematically: most at spots sitting inside a bay behind a headland — lovers-point and monterey-beach, both inside Monterey Bay behind Point Pinos — and least at spots facing open ocean with no headland to bend around — hapuna-beach and suicide-s on the Kohala coast. If a later measurement shows the nearshore frame runs consistently offset from these deep-water bearings, revise the values here rather than changing the gain kernel.\n\nARCS ARE PRUNED, NEVER AUTHORED. Only optimal_swell_dir is hand-written. The arcs are pruned against it by enrich.prune_arcs_to_optimal, which DROPS any arc whose nearest true sector edge (padded, the boundary in_any_arc uses) is more than ARC_PRUNE_MAX_OFFSET_DEG = 90 degrees from the corrected optimal. Strictly greater-than, so an arc at exactly 90.0 is KEPT. It is a subset operation: no arc is widened, re-centred or invented, and an empty result is left empty rather than backfilled by the orientation-derived fallback. Each entry's arcs_pruned field records what the rule did, computed rather than asserted, so a reader can check the rule was applied instead of values being invented.\n\nTWO THINGS PRUNING DOES NOT DO, both measured on these ten spots rather than assumed. (1) It cannot raise the gain at the corrected optimal: removing arcs never brings a bearing inside a window, so the four spots whose optimal already falls outside every arc — hapuna-beach, thousand-peaks-maui, crash-boat-beach, monterey-beach — stay on the 0.40 rung, before and after, identically. Lifting those needs hand-authored arcs, which this file refuses to write. (2) It is not monotonically protective. A bearing that sat INSIDE a dropped arc scored the in-window floor of 0.25; with that arc gone it is graded by the soft-outside ladder against the KEPT arcs, which returns 0.40 within 45 degrees of a kept edge. On spoils, crash-boat-beach, gas-chambers-aguadilla and table-tops-aguadilla at least one wrong-direction bearing therefore scores HIGHER after pruning. The rule was applied as specified; this is what it does.\n\nIT DOES NOT SAVE HONOLUA FROM THE EAST SWELL. honolua-bay's [77-91] arc — the one that lets an 80-degree swell out of the east rate at all — sits 85.0 degrees from the corrected optimal of 350 and is therefore KEPT under a 90-degree limit. An 80-degree swell scores 0.999 in production today, 0.500 once the optimal moves to 350, and 0.500 after pruning: the whole improvement comes from the optimal, none of it from the pruning. Any limit below 85.0 would drop that arc; 90 was the value chosen, and it does not.",
   "_schema_version": 1,
   "windows": {
     "honolua-bay": {
@@ -7,70 +7,241 @@
       "name": "Honolua Bay",
       "source": "Surfline: \"NNW to NNE is best to get in, NE is OK\"; surf-forecast, surfertoday and surftrips all give NNW-NNE. Researched 2026-08-31.",
       "notes": "Was 84 — east, through the whole of Maui — and scored dir_gain 1.000 on it while a swell from the spot's own facing scored 0.40.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [77-91] [161-211] [265-271] [341-47]: INSIDE, so directional_gain returns 1.00 — the optimal alone is sufficient for this spot."
+      "arc_verdict": "At the corrected optimal 350, directional_gain returns 1.00 with the unpruned arcs and 1.00 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot reaches full gain on its corrected bearing.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[77-91]",
+          "[161-211]",
+          "[265-271]",
+          "[341-47]"
+        ],
+        "kept": [
+          "[77-91] @ 85.0deg",
+          "[265-271] @ 77.0deg",
+          "[341-47] @ 0.0deg"
+        ],
+        "dropped": [
+          "[161-211] @ 137.0deg"
+        ]
+      }
     },
     "spoils": {
       "optimal_swell_dir": 40,
       "name": "Spoils",
       "source": "NNE/NE across three published guides. A jetty wedge north of Port Everglades where swell wraps off the jetty. Researched 2026-08-31.",
       "notes": "Was 292 — WNW, inland across the Florida peninsula. The spot's own baked NWPS wet node bears 81 at 1696 m, and its nine neighbours within 25 km all face 89-98.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [13-83] [145-175] [209-243] [261-279] [297-315]: INSIDE, so directional_gain returns 1.00 — the optimal alone is sufficient for this spot."
+      "arc_verdict": "At the corrected optimal 40, directional_gain returns 1.00 with the unpruned arcs and 1.00 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot reaches full gain on its corrected bearing.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[13-83]",
+          "[145-175]",
+          "[209-243]",
+          "[261-279]",
+          "[297-315]"
+        ],
+        "kept": [
+          "[13-83] @ 0.0deg",
+          "[297-315] @ 83.0deg"
+        ],
+        "dropped": [
+          "[145-175] @ 103.0deg",
+          "[209-243] @ 155.0deg",
+          "[261-279] @ 119.0deg"
+        ]
+      }
     },
     "hapuna-beach": {
       "optimal_swell_dir": 280,
       "name": "Hapuna Beach",
       "source": "Surfline: \"Big, winter W swells... transform Hapuna Bay's southern edge into a spectacular lefthand point-break\"; deepswell and surf-forecast both say west. Researched 2026-08-31.",
       "notes": "Was 128 — SE, straight through Mauna Kea. Corroborated in-repo: the baked NWPS wet node bears 280 at 1925 m, and the hand-set orientation_deg is 285.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [9-99] [117-203] [237-263] [285-311]: OUTSIDE by 3 degrees, so directional_gain caps this spot at 0.40 on its own corrected bearing. The peak moves to the right direction but the gate still excludes it; fixing that needs arcs, which this file deliberately does not carry."
+      "arc_verdict": "At the corrected optimal 280, directional_gain returns 0.40 with the unpruned arcs and 0.40 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot remains capped on the 0.40 soft-outside rung because its own arcs exclude its own corrected optimal; lifting that needs hand-authored arcs.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[9-99]",
+          "[117-203]",
+          "[237-263]",
+          "[285-311]"
+        ],
+        "kept": [
+          "[9-99] @ 87.0deg",
+          "[117-203] @ 75.0deg",
+          "[237-263] @ 15.0deg",
+          "[285-311] @ 3.0deg"
+        ],
+        "dropped": []
+      }
     },
     "suicide-s": {
       "optimal_swell_dir": 292,
       "name": "Suicide's",
       "source": "surf-forecast: \"the optimum swell angle is from the west northwest\". Kohala coast, 5 km from Anaehoomalu Bay; corroborates hapuna-beach 280 on the same coast. Researched 2026-08-31.",
       "notes": "SLUG NOTE: proposed as 'suicides'. The roster name is \"Suicide's\" and both enrich._slug_for and db_import._slugify render it 'suicide-s' — the apostrophe becomes a hyphen. Was 160 (SSE, through the island) and scored dir_gain 1.000 on it.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [65-99] [113-175] [237-265] [283-315]: INSIDE, so directional_gain returns 1.00 — the optimal alone is sufficient for this spot."
+      "arc_verdict": "At the corrected optimal 292, directional_gain returns 1.00 with the unpruned arcs and 1.00 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot reaches full gain on its corrected bearing.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[65-99]",
+          "[113-175]",
+          "[237-265]",
+          "[283-315]"
+        ],
+        "kept": [
+          "[237-265] @ 26.0deg",
+          "[283-315] @ 0.0deg"
+        ],
+        "dropped": [
+          "[65-99] @ 132.0deg",
+          "[113-175] @ 116.0deg"
+        ]
+      }
     },
     "thousand-peaks-maui": {
       "optimal_swell_dir": 200,
       "name": "Thousand Peaks Maui",
       "source": "Ukumehame, West Maui southwest shore. Multiple guides: the summer south swells are what work there. Researched 2026-08-31.",
       "notes": "SLUG NOTE: proposed as 'thousand-peaks'. The roster name is \"Thousand Peaks Maui\", which slugs to 'thousand-peaks-maui'. Was 60 — ENE, through the West Maui Mountains. Corroborated in-repo by the two nearest same-coast spots: Launiupoko (optimal 212, 7.3 km) and Lahaina Breakwall (optimal 188, 11.5 km).",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [33-83] [149-159] [205-251] [349-15]: OUTSIDE by 3 degrees, so directional_gain caps this spot at 0.40 on its own corrected bearing. The peak moves to the right direction but the gate still excludes it; fixing that needs arcs, which this file deliberately does not carry."
+      "arc_verdict": "At the corrected optimal 200, directional_gain returns 0.40 with the unpruned arcs and 0.40 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot remains capped on the 0.40 soft-outside rung because its own arcs exclude its own corrected optimal; lifting that needs hand-authored arcs.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[33-83]",
+          "[149-159]",
+          "[205-251]",
+          "[349-15]"
+        ],
+        "kept": [
+          "[149-159] @ 39.0deg",
+          "[205-251] @ 3.0deg"
+        ],
+        "dropped": [
+          "[33-83] @ 115.0deg",
+          "[349-15] @ 147.0deg"
+        ]
+      }
     },
     "crash-boat-beach": {
       "optimal_swell_dir": 305,
       "name": "Crash Boat Beach",
       "source": "Puerto Rico local guide table: Crash Boat swell NW. PopUp: \"needs real west in the swell\". Researched 2026-08-31.",
       "notes": "Was 40 — NE, which points at Surfers Beach, Shacks and Jobos 7-10 km away across the Punta Borinquen headland — and scored dir_gain 1.000. Corroborated in-repo: the baked NWPS wet node bears 305 at 735 m, the shortest node distance in this set and so the most trustworthy.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [65-75] [97-131] [153-159] [233-247] [317-47]: OUTSIDE by 10 degrees, so directional_gain caps this spot at 0.40 on its own corrected bearing. The peak moves to the right direction but the gate still excludes it; fixing that needs arcs, which this file deliberately does not carry."
+      "arc_verdict": "At the corrected optimal 305, directional_gain returns 0.40 with the unpruned arcs and 0.40 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot remains capped on the 0.40 soft-outside rung because its own arcs exclude its own corrected optimal; lifting that needs hand-authored arcs.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[65-75]",
+          "[97-131]",
+          "[153-159]",
+          "[233-247]",
+          "[317-47]"
+        ],
+        "kept": [
+          "[233-247] @ 56.0deg",
+          "[317-47] @ 10.0deg"
+        ],
+        "dropped": [
+          "[65-75] @ 118.0deg",
+          "[97-131] @ 150.0deg",
+          "[153-159] @ 144.0deg"
+        ]
+      }
     },
     "gas-chambers-aguadilla": {
       "optimal_swell_dir": 315,
       "name": "Gas Chambers Aguadilla",
       "source": "Same Puerto Rico local guide table: Gas Chamber swell NW. surf-forecast: \"requires a very large north, northwest swells\". Researched 2026-08-31.",
       "notes": "SLUG NOTE: proposed as 'gas-chambers'. The roster name is \"Gas Chambers Aguadilla\", which slugs to 'gas-chambers-aguadilla'. Was 36 — NE, 127 degrees from the spot's own baked NWPS wet node, which bears 269 at just 256 m and agrees with the hand-set orientation of 262 to 7 degrees.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [97-123] [233-247] [317-79]: INSIDE, so directional_gain returns 1.00 — the optimal alone is sufficient for this spot. (exactly on a padded sector edge, so it is admitted but fragile if the arcs are ever re-cast)"
+      "arc_verdict": "At the corrected optimal 315, directional_gain returns 1.00 with the unpruned arcs and 1.00 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot reaches full gain on its corrected bearing.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[97-123]",
+          "[233-247]",
+          "[317-79]"
+        ],
+        "kept": [
+          "[233-247] @ 66.0deg",
+          "[317-79] @ 0.0deg"
+        ],
+        "dropped": [
+          "[97-123] @ 140.0deg"
+        ]
+      }
     },
     "table-tops-aguadilla": {
       "optimal_swell_dir": 350,
       "name": "Table Tops Aguadilla",
       "source": "Same Puerto Rico local guide table: Table Top swell NW/N/NE. It is on the north-facing coast past the airport. Researched 2026-08-31.",
       "notes": "SLUG NOTE: proposed as 'table-tops'. The roster name is \"Table Tops Aguadilla\", which slugs to 'table-tops-aguadilla'. Was 36 — 152 degrees from its baked NWPS wet node (bearing 244 at 1448 m), the largest node/optimal divergence in the Aguadilla cluster.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [69-75] [93-115] [245-251] [301-327] [345-51]: INSIDE, so directional_gain returns 1.00 — the optimal alone is sufficient for this spot."
+      "arc_verdict": "At the corrected optimal 350, directional_gain returns 1.00 with the unpruned arcs and 1.00 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot reaches full gain on its corrected bearing.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[69-75]",
+          "[93-115]",
+          "[245-251]",
+          "[301-327]",
+          "[345-51]"
+        ],
+        "kept": [
+          "[69-75] @ 77.0deg",
+          "[301-327] @ 21.0deg",
+          "[345-51] @ 0.0deg"
+        ],
+        "dropped": [
+          "[93-115] @ 101.0deg",
+          "[245-251] @ 97.0deg"
+        ]
+      }
     },
     "lovers-point": {
       "optimal_swell_dir": 315,
       "name": "Lovers Point",
       "source": "Four sources say northwest: surf-forecast, surfmeteo, boarderspeak, shaman.surf. Researched 2026-08-31.",
       "notes": "Was 248, which points at Mole Point 4.3 km away ACROSS the Monterey Peninsula. Roster geometry, from committed coordinates: Carmel Beach bears 190, Mole Point 246, Asilomar 263, Boneyard (= Point Pinos, 36.6393/-121.9314) 314 — so everything from 190 to 263 is peninsula shoreline and the exposed sector starts just north of 314. DO NOT use this spot's baked NWPS node as a cross-check: it is the identical cell to monterey-beach's, (36.62468, -121.895), sitting 1785 m ENE alongshore rather than seaward, so its 96-degree bearing is a grid artifact of NWPS having no wet cell against the Pacific Grove shore.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [165-175] [213-219] [253-319]: INSIDE, so directional_gain returns 1.00 — the optimal alone is sufficient for this spot."
+      "arc_verdict": "At the corrected optimal 315, directional_gain returns 1.00 with the unpruned arcs and 1.00 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot reaches full gain on its corrected bearing.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[165-175]",
+          "[213-219]",
+          "[253-319]"
+        ],
+        "kept": [
+          "[253-319] @ 0.0deg"
+        ],
+        "dropped": [
+          "[165-175] @ 138.0deg",
+          "[213-219] @ 94.0deg"
+        ]
+      }
     },
     "monterey-beach": {
       "optimal_swell_dir": 320,
       "name": "Monterey Beach",
       "source": "WEAK — NO DIRECT SOURCE. Carried on regional grounds only: lovers-point on the same peninsula is sourced at NW by four guides, and monterey-beach sits just inside the bay from it. Researched 2026-08-31.",
       "notes": "WEAKEST VALUE IN THIS FILE — revise this one first if any of these are questioned. Was 200, pointing through the Monterey Peninsula toward Carmel: from committed coordinates every bearing from 217 to 312 lands on another peninsula spot. Partially corroborated in-repo, the baked NWPS wet node bears 333 at 2669 m — genuinely offshore into the bay here, unlike lovers-point's copy of the same cell.",
-      "arc_verdict": "Arc verdict, computed against the committed arcs [105-111] [129-195] [225-247] [265-303]: OUTSIDE by 15 degrees, so directional_gain caps this spot at 0.40 on its own corrected bearing. The peak moves to the right direction but the gate still excludes it; fixing that needs arcs, which this file deliberately does not carry."
+      "arc_verdict": "At the corrected optimal 320, directional_gain returns 0.40 with the unpruned arcs and 0.40 after pruning — unchanged, as pruning always leaves it: removing arcs cannot bring a bearing inside a window. This spot remains capped on the 0.40 soft-outside rung because its own arcs exclude its own corrected optimal; lifting that needs hand-authored arcs.",
+      "arcs_pruned": {
+        "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
+        "before": [
+          "[105-111]",
+          "[129-195]",
+          "[225-247]",
+          "[265-303]"
+        ],
+        "kept": [
+          "[225-247] @ 71.0deg",
+          "[265-303] @ 15.0deg"
+        ],
+        "dropped": [
+          "[105-111] @ 143.0deg",
+          "[129-195] @ 123.0deg"
+        ]
+      }
     }
   }
 }

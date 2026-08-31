@@ -358,6 +358,264 @@ def test_the_deep_water_versus_nearshore_frame_caveat_is_recorded():
     assert "lovers-point" in c and "hapuna-beach" in c, "the caveat must name where it bites"
 
 
+
+# --------------------------------------------------------------------------- #
+# 5 — arc pruning (round two)                                                  #
+# --------------------------------------------------------------------------- #
+#
+# THE RULE: drop any arc whose nearest PADDED sector edge is more than
+# ARC_PRUNE_MAX_OFFSET_DEG (90.0) from the corrected optimal. The comparison is STRICTLY
+# GREATER, so an arc at exactly 90.0 is KEPT. Prune only — nothing is authored, widened or
+# re-centred, and an empty result is left empty.
+#
+# Every expected list below is transcribed from the arcs committed in spots_enriched.json
+# and the offsets computed by hand from the padded edges; none is read back from
+# prune_arcs_to_optimal, which is the function under test.
+
+# {slug: (arcs kept, arcs dropped)} — written as [min, max] pairs.
+EXPECTED_PRUNE = {
+    # optimal 350. [161-211] padded [159-213]: |350-213| = 137 -> drop. [77-91] padded
+    # [75-93]: |350-75| = 85 -> KEPT, which is why the east-swell arc survives.
+    "honolua-bay": ([[77, 91], [265, 271], [341, 47]], [[161, 211]]),
+    # optimal 40. [297-315] padded [295-317]: |40-317| = 83 -> keep.
+    "spoils": ([[13, 83], [297, 315]], [[145, 175], [209, 243], [261, 279]]),
+    # optimal 280. [9-99] padded [7-101]: |280-7| = 87 -> keep. Nothing is dropped.
+    "hapuna-beach": ([[9, 99], [117, 203], [237, 263], [285, 311]], []),
+    "suicide-s": ([[237, 265], [283, 315]], [[65, 99], [113, 175]]),
+    "thousand-peaks-maui": ([[149, 159], [205, 251]], [[33, 83], [349, 15]]),
+    "crash-boat-beach": ([[233, 247], [317, 47]], [[65, 75], [97, 131], [153, 159]]),
+    "gas-chambers-aguadilla": ([[233, 247], [317, 79]], [[97, 123]]),
+    # [245-251] padded [243-253]: |350-253| = 97 -> drop, the narrowest drop in the set.
+    "table-tops-aguadilla": ([[69, 75], [301, 327], [345, 51]], [[93, 115], [245, 251]]),
+    # [213-219] padded [211-221]: |315-221| = 94 -> drop, the narrowest margin over the limit.
+    "lovers-point": ([[253, 319]], [[165, 175], [213, 219]]),
+    "monterey-beach": ([[225, 247], [265, 303]], [[105, 111], [129, 195]]),
+}
+
+
+def _pairs(arcs):
+    return [[a["min"], a["max"]] for a in arcs]
+
+
+def _roster():
+    return {E._slug_for(s.get("name")): s
+            for s in json.loads(E.DEFAULT_ENRICHED_OUTPUT.read_text())}
+
+
+def test_the_pruning_rule_keeps_and_drops_exactly_these_arcs():
+    roster = _roster()
+    for slug, (keep, drop) in EXPECTED_PRUNE.items():
+        arcs = roster[slug]["swell_window_arcs"]
+        got = E.prune_arcs_to_optimal(arcs, EXPECTED[slug])
+        assert _pairs(got) == keep, (slug, _pairs(got), keep)
+        assert _pairs([a for a in arcs if a not in got]) == drop, slug
+
+
+def test_pruning_reaches_the_enriched_record():
+    """The rule must run inside Algo 2d, not merely exist as a function."""
+    roster = _roster()
+    for slug, (keep, _drop) in EXPECTED_PRUNE.items():
+        s = roster[slug]
+        out = E._enrich_one(
+            _spot(s["name"], swell_window_arcs=s["swell_window_arcs"],
+                  optimal_swell_dir=s["optimal_swell_dir"],
+                  orientation_deg=s["orientation_deg"], swell_window_source="nwps"),
+            skip_raycast=True, prior_arcs={s["name"]: {
+                "swell_window_arcs": s["swell_window_arcs"],
+                "optimal_swell_dir": s["optimal_swell_dir"],
+                "swell_window_source": "nwps"}})
+        assert _pairs(out["swell_window_arcs"]) == keep, (slug, _pairs(out["swell_window_arcs"]))
+
+
+def test_a_spot_with_no_override_keeps_every_arc():
+    """Pruning is scoped to overridden spots. A spot absent from the file must come through
+    with its window byte-identical, however far its arcs sit from its optimal."""
+    far = [{"min": 100, "max": 140, "span": 44}, {"min": 200, "max": 240, "span": 44}]
+    out = E._enrich_one(
+        _spot("Steamer Lane", swell_window_arcs=far, optimal_swell_dir=244,
+              orientation_deg=128.0),
+        skip_raycast=True,
+        prior_arcs={"Steamer Lane": {"swell_window_arcs": far, "optimal_swell_dir": 244,
+                                     "swell_window_source": "nwps"}})
+    assert out["swell_window_arcs"] == far, out["swell_window_arcs"]
+    assert "swell_window_source_override" not in out
+
+
+def test_the_ninety_degree_boundary_is_inclusive_of_keeping():
+    """STRICTLY GREATER drops. An arc whose nearest padded edge is at exactly 90.0 is KEPT;
+    one at 90.5 is dropped. Built with pad 0 (span == max - min) so the edge is the bound."""
+    at_90 = {"min": 100, "max": 140, "span": 40}     # pad 0; |10 - 100| = 90 exactly
+    past_90 = {"min": 101, "max": 140, "span": 39}   # pad 0; |10 - 101| = 91
+    assert E.arc_offset_from(10, at_90) == 90.0, E.arc_offset_from(10, at_90)
+    assert E.prune_arcs_to_optimal([at_90], 10) == [at_90]
+    assert E.arc_offset_from(10, past_90) == 91.0, E.arc_offset_from(10, past_90)
+    assert E.prune_arcs_to_optimal([past_90], 10) == []
+
+
+def test_an_empty_result_is_left_empty_and_not_backfilled():
+    """Algo 2b's orientation-derived fallback would rebuild a window centred on
+    orientation_deg. It runs BEFORE Algo 2d, so a window pruned to empty must stay empty
+    rather than being re-authored — the one thing this channel refuses to do."""
+    far = [{"min": 100, "max": 140, "span": 44}]     # 175 deg from Honolua's optimal of 350
+    assert E.prune_arcs_to_optimal(far, 350) == []
+    out = E._enrich_one(
+        _spot("Honolua Bay", swell_window_arcs=far, orientation_deg=278.0,
+              swell_window_source="nwps"),
+        skip_raycast=True,
+        prior_arcs={"Honolua Bay": {"swell_window_arcs": far, "optimal_swell_dir": 84,
+                                    "swell_window_source": "nwps"}})
+    assert out["swell_window_arcs"] == [], out["swell_window_arcs"]
+    assert out["optimal_swell_dir"] == 350.0, out["optimal_swell_dir"]
+
+
+def test_empty_arcs_leave_directional_gain_on_the_optimal_branch():
+    """Why an empty window is survivable at all: with no arcs, directional_gain takes its
+    first branch — a plain cos²(Δ/2) peak about the optimal, floored at 0.25 — instead of
+    returning 0. Hand-computed: at dp == optimal, cos²(0) = 1.0; at dp 80 against optimal
+    350 the signed difference is ((80-350+540) mod 360) - 180 = 90, and cos²(45°) = 0.5.
+
+    NOTE, because it bears on the risk: NO spot in the committed roster currently has empty
+    arcs, so a spot pruned to empty would be the first to run this path in production. None
+    of the ten prunes to empty today."""
+    from pipeline.interpret import directional_gain
+    assert directional_gain(350.0, [], 350, 278.0) == 1.0
+    # cos(radians(45))**2 is 0.5000000000000001, not 0.5 — round rather than loosen the value.
+    assert round(directional_gain(80.0, [], 350, 278.0), 12) == 0.5
+    assert directional_gain(170.0, [], 350, 278.0) == 0.25      # cos²(90°) = 0, floored
+
+
+def test_no_roster_spot_currently_runs_with_empty_arcs():
+    """Pins the claim above, so it stops being true loudly rather than quietly."""
+    spots = json.loads(E.DEFAULT_ENRICHED_OUTPUT.read_text())
+    assert [s["name"] for s in spots if not (s.get("swell_window_arcs") or [])] == []
+
+
+def test_pruning_never_changes_the_gain_at_the_corrected_optimal():
+    """Removing arcs cannot bring a bearing INSIDE a window, so the headline number is
+    untouched for all ten — including the four that stay on the 0.40 rung. Pinned so that a
+    future change claiming to lift them has to face this test."""
+    from pipeline.interpret import directional_gain
+    roster = _roster()
+    for slug, deg in EXPECTED.items():
+        s = roster[slug]
+        before = s["swell_window_arcs"]
+        after = E.prune_arcs_to_optimal(before, deg)
+        o = s["orientation_deg"]
+        assert (directional_gain(float(deg), before, deg, o)
+                == directional_gain(float(deg), after, deg, o)), slug
+
+
+def test_pruning_can_raise_the_gain_at_some_bearings():
+    """NOT a bug, and not monotonic protection: a bearing that sat inside a dropped arc
+    scored the in-window floor of 0.25; once that arc is gone it is graded by the ladder
+    against the KEPT arcs, which returns 0.40 within 45 degrees of a kept edge.
+
+    Crash Boat Beach, corrected optimal 305. A swell from 70 sits inside [65-75], which is
+    dropped at 118 degrees. Afterwards its nearest kept edge is [317-47]'s padded 49, and
+    |70-49| = 21 < 45, so it lands on the 0.40 rung — HIGHER than the 0.25 it scored before.
+    Hand-computed; pinned so the trade-off is visible rather than discovered later."""
+    from pipeline.interpret import directional_gain
+    s = _roster()["crash-boat-beach"]
+    before = s["swell_window_arcs"]
+    after = E.prune_arcs_to_optimal(before, 305)
+    assert directional_gain(70.0, before, 305, s["orientation_deg"]) == 0.25
+    assert directional_gain(70.0, after, 305, s["orientation_deg"]) == 0.40
+
+
+def test_honolua_east_swell_arc_survives_the_ninety_degree_rule():
+    """THE CASE THE RULE DOES NOT FIX, pinned so nobody assumes it does. [77-91] is the arc
+    that lets an 80-degree east swell — blocked by the whole of Maui — rate at all. Its
+    nearest padded edge is 75, and |350-75| = 85, inside a 90-degree limit, so it is KEPT.
+    An 80-degree swell scores 0.999 in production, 0.500 after the optimal moves to 350, and
+    0.500 after pruning: the improvement is entirely the optimal's. Any limit below 85 would
+    drop it."""
+    from pipeline.interpret import directional_gain, in_any_arc
+    s = _roster()["honolua-bay"]
+    before = s["swell_window_arcs"]
+    after = E.prune_arcs_to_optimal(before, 350)
+    east = [a for a in after if [a["min"], a["max"]] == [77, 91]]
+    assert len(east) == 1, "the east arc must still be present under a 90-degree limit"
+    assert E.arc_offset_from(350, east[0]) == 85.0, E.arc_offset_from(350, east[0])
+    assert in_any_arc(80.0, after) is True
+    # cos²(2°) = 0.9987820251299122, cos²(45°) = 0.5000000000000001 — rounded, not loosened.
+    assert round(directional_gain(80.0, before, 84, 278.0), 4) == 0.9988   # production today
+    assert round(directional_gain(80.0, before, 350, 278.0), 12) == 0.5    # override only
+    assert round(directional_gain(80.0, after, 350, 278.0), 12) == 0.5     # + pruning
+
+
+def test_the_file_records_the_pruning_result_per_spot():
+    """Every entry must show what the rule did — the rule text, the arcs before, and the
+    kept/dropped split — so a reader can audit it without re-running enrich."""
+    doc = json.loads(SPOT_SWELL_WINDOWS_FILE.read_text())
+    for slug, rec in doc["windows"].items():
+        p = rec.get("arcs_pruned")
+        assert p, slug
+        for key in ("rule", "before", "kept", "dropped"):
+            assert key in p, (slug, key)
+        assert "90.0" in p["rule"], (slug, p["rule"])
+        assert len(p["kept"]) + len(p["dropped"]) == len(p["before"]), slug
+
+
+def test_the_recorded_prune_record_matches_what_the_rule_actually_does():
+    """THE POINT OF RECORDING IT: the file must describe the rule's real output, not a
+    hand-written claim about it. Recomputes kept/dropped and every offset from the committed
+    arcs and compares against the text in the file."""
+    doc = json.loads(SPOT_SWELL_WINDOWS_FILE.read_text())
+    roster = _roster()
+    for slug, rec in doc["windows"].items():
+        s = roster[slug]
+        arcs, deg = s["swell_window_arcs"], rec["optimal_swell_dir"]
+        kept = E.prune_arcs_to_optimal(arcs, deg)
+        kept_ids = [id(a) for a in kept]
+        exp_keep = [f"[{a['min']}-{a['max']}] @ {E.arc_offset_from(deg, a):.1f}deg"
+                    for a in arcs if id(a) in kept_ids]
+        exp_drop = [f"[{a['min']}-{a['max']}] @ {E.arc_offset_from(deg, a):.1f}deg"
+                    for a in arcs if id(a) not in kept_ids]
+        assert rec["arcs_pruned"]["kept"] == exp_keep, (slug, rec["arcs_pruned"]["kept"], exp_keep)
+        assert rec["arcs_pruned"]["dropped"] == exp_drop, (slug, rec["arcs_pruned"]["dropped"], exp_drop)
+        assert rec["arcs_pruned"]["before"] == [f"[{a['min']}-{a['max']}]" for a in arcs], slug
+
+
+
+def test_an_arc_containing_the_optimal_always_measures_zero():
+    """Containment is short-circuited to 0 REGARDLESS of how far the edges are, and that is
+    load-bearing for a wide arc. [0-300] with span 304 has pad 2, so its padded edges are 358
+    and 302; the optimal 150 sits inside it but is 152 degrees from the nearer edge. Without
+    the short-circuit the rule would drop the very arc the optimal lives in.
+
+    The committed roster cannot expose this — its five containing arcs are all narrow enough
+    that an edge stays inside 90 — so it is pinned directly on the primitive."""
+    wide = {"min": 0, "max": 300, "span": 304}
+    assert E.arc_offset_from(150, wide) == 0.0, E.arc_offset_from(150, wide)
+    assert E.prune_arcs_to_optimal([wide], 150) == [wide]
+
+
+def test_prune_returns_a_new_list_and_never_mutates_its_input():
+    """enrich does `enriched = dict(spot)` — a SHALLOW copy, so enriched["swell_window_arcs"]
+    is the same list object as spot["swell_window_arcs"]. An in-place prune would therefore
+    reach back and rewrite the caller's own spot record, which in a real run is an element of
+    the loaded roster. Asserted on identity, not just equality, because an aliased result
+    compares equal to itself and hides the fault."""
+    src = [{"min": 100, "max": 140, "span": 44}, {"min": 340, "max": 20, "span": 44}]
+    snapshot = [dict(a) for a in src]
+    out = E.prune_arcs_to_optimal(src, 350)
+    assert out is not src, "must return a new list, not the input"
+    assert src == snapshot, ("input was mutated", src, snapshot)
+    assert len(src) == 2 and len(out) == 1, (len(src), len(out))
+
+
+def test_algo_2d_does_not_rewrite_the_callers_spot_arcs():
+    """The end-to-end form of the above: _enrich_one must not reach back through the shallow
+    copy and prune the dict it was handed."""
+    arcs = [{"min": 161, "max": 211, "span": 54}, {"min": 341, "max": 47, "span": 70}]
+    spot = _spot("Honolua Bay", swell_window_arcs=arcs, swell_window_source="nwps")
+    out = E._enrich_one(spot, skip_raycast=True, prior_arcs={"Honolua Bay": {
+        "swell_window_arcs": arcs, "optimal_swell_dir": 84, "swell_window_source": "nwps"}})
+    assert _pairs(out["swell_window_arcs"]) == [[341, 47]], _pairs(out["swell_window_arcs"])
+    assert _pairs(spot["swell_window_arcs"]) == [[161, 211], [341, 47]], \
+        ("the caller's spot was mutated", _pairs(spot["swell_window_arcs"]))
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in fns:

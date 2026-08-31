@@ -387,6 +387,16 @@ SPOT_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "spot_orientations.json"
 # NOT guarded against sw1_raycast.py:353, which writes optimal_swell_dir outside enrich —
 # see the file's own _comment for that known limit.
 SPOT_SWELL_WINDOWS_FILE = PIPELINE_DIR / "data" / "spot_swell_windows.json"
+# ARC PRUNING, applied by enrich Algo 2d to OVERRIDDEN SPOTS ONLY. After a corrected optimal
+# lands, the raycast's other arcs may sit right around the compass — Honolua Bay's window was
+# [77-91] [161-211] [265-271] [341-47] with the corrected optimal at 350. An arc whose nearest
+# TRUE SECTOR EDGE (padded, the boundary in_any_arc uses) is further than this from the optimal
+# is dropped. 90 is not arbitrary: it is the same cutoff directional_gain's soft-outside ladder
+# uses to return 0.0 ("physically blocked by the headland"), so the rule and the gain agree on
+# what counts as unreachable. The comparison is STRICTLY GREATER: an arc at exactly 90.0 is
+# KEPT. Pruning only ever removes arcs — it never authors, widens or re-centres one, and an
+# empty result is left empty rather than backfilled.
+ARC_PRUNE_MAX_OFFSET_DEG = 90.0
 # Persistent review queue — list of spots whose orientation/scrape/verification
 # state suggests they should get a manual eyeball at some point. Survives
 # regeneration: spots marked `reviewed: true` keep that flag.
