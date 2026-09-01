@@ -770,6 +770,12 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
         # orientation_source="manual" and are never overwritten by a
         # scrape — the human review is the ground truth.
         orient_locked = spot.get("orientation_source") == "manual"
+        # Same rule for the hand-curated swell window: values in
+        # pipeline/data/spot_swell_windows.json are stamped
+        # swell_window_source_override="manual" by enrich Algo 2d and are never overwritten
+        # by a scrape. Its own lock, independent of orient_locked — the two override files
+        # are separate and a spot can carry either without the other.
+        optimal_locked = spot.get("swell_window_source_override") == "manual"
 
         ow = rec.get("offshore_wind_deg")
         if ow is not None and not orient_locked:
@@ -783,7 +789,7 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
                 stats["field_changes"]["orientation_deg"] += 1
 
         osd = rec.get("optimal_swell_dir")
-        if osd is not None:
+        if osd is not None and not optimal_locked:
             new_osd = int(osd) % 360
             if new_osd != spot.get("optimal_swell_dir"):
                 spot["optimal_swell_dir"] = new_osd

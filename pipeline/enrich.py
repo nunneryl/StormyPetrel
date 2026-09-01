@@ -18,8 +18,10 @@ from pathlib import Path
 from .config import (
     DEFAULT_ENRICHED_OUTPUT,
     DEFAULT_OUTPUT,
+    ARC_PRUNE_MAX_OFFSET_DEG,
     MANUAL_ORIENTATIONS_FILE,
     SPOT_ORIENTATIONS_FILE,
+    SPOT_SWELL_WINDOWS_FILE,
 )
 from .enrichment.adjust import seaward_adjust
 from .enrichment.break_type import compute_break_type
@@ -111,6 +113,107 @@ def _load_spot_orientations() -> dict[str, float]:
 
 
 _SPOT_ORIENTATIONS = _load_spot_orientations()
+
+
+# The stamp Algo 2d leaves on an overridden spot. A SEPARATE field from
+# swell_window_source, deliberately: that one carries the TIER (nwps / cdip_mop / raycast /
+# orientation_derived) and decides which forecast reader runs, so overloading it with
+# "manual" would silently move a spot off the NWPS tier. The merge passes downstream
+# (verify_spots, scrape_surf_forecast) read this stamp — not the file — to know they must
+# not overwrite optimal_swell_dir, exactly as they read orientation_source == "manual" to
+# leave a hand-set orientation alone.
+SWELL_WINDOW_OVERRIDE_SOURCE = "manual"
+
+
+def _load_spot_swell_windows() -> dict[str, float]:
+    """Return {slug: optimal_swell_dir} from the slug-keyed override file.
+
+    Same role for the swell window that ``spot_orientations.json`` plays for orientation,
+    and it is needed for the same reason plus one more: ``interpret.directional_gain``
+    targets ``optimal_swell_dir`` and falls back to ``orientation_deg`` only when the
+    optimal is null, so a hand-corrected orientation does not reach the rating at all.
+    Applied by ``_enrich_one`` as Algo 2d, AFTER the raycast, the orientation-derived
+    fallback and the tier preserve-guard, so it is the last writer in enrich.
+
+    ONLY optimal_swell_dir is AUTHORED here. ``swell_window_arcs`` are never hand-written —
+    that is a much harder task than one bearing, and the raycast's arcs are structurally
+    constrained (``_make_arc`` / ``_implied_span`` enforce span-vs-min/max consistency and
+    ``_merge_open_arcs`` drops arcs that fail). They are, however, PRUNED against the
+    corrected optimal by ``prune_arcs_to_optimal`` — a strict subset operation that removes
+    arcs the corrected optimal can no longer reach. A corrected optimal that lands outside
+    every remaining arc still moves the response peak onto the right bearing but stays capped
+    at directional_gain's 0.40 soft-outside rung; pruning cannot lift that, because removing
+    arcs never brings a bearing inside a window.
+
+    A corrupt file degrades to "no overrides" with a warning rather than killing the run —
+    same posture as _load_spot_orientations.
+    """
+    path = SPOT_SWELL_WINDOWS_FILE
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("spot swell windows file %s corrupt (%s); ignoring", path, e)
+        return {}
+    entries = data.get("windows") or {}
+    out: dict[str, float] = {}
+    for slug, rec in entries.items():
+        if not isinstance(rec, dict):
+            continue
+        try:
+            out[slug] = float(rec["optimal_swell_dir"]) % 360.0
+        except (KeyError, TypeError, ValueError):
+            log.warning("spot swell window for slug %r missing or invalid; skipping", slug)
+    return out
+
+
+_SPOT_SWELL_WINDOWS = _load_spot_swell_windows()
+
+
+def arc_offset_from(deg: float, arc: dict) -> float:
+    """Angular distance from bearing *deg* to ONE arc's nearest true sector edge; 0 inside.
+
+    Deliberately built from interpret's own primitives — ``bearing_in_arc`` for membership and
+    ``arc_pad_deg`` for the half-step pad — rather than comparing raw ``min``/``max``. The
+    padded sector IS the window as far as ``directional_gain`` is concerned, so measuring
+    against anything else would let the pruning rule and the gain disagree about where an arc
+    ends. This is the per-arc form of ``interpret._min_offset_from_arcs``, which returns only
+    the minimum across all arcs and so cannot say WHICH arc is far.
+    """
+    from .interpret import _angle_off, arc_pad_deg, bearing_in_arc
+    if bearing_in_arc(float(deg), arc):
+        return 0.0
+    try:
+        lo, hi = float(arc["min"]), float(arc["max"])
+    except (KeyError, TypeError, ValueError):
+        # An arc we cannot measure is one we cannot justify keeping.
+        return 360.0
+    pad = arc_pad_deg(arc)
+    return min(_angle_off(float(deg), lo - pad), _angle_off(float(deg), hi + pad))
+
+
+def prune_arcs_to_optimal(arcs, optimal, limit: float = ARC_PRUNE_MAX_OFFSET_DEG):
+    """Drop every arc whose nearest edge is further than *limit* from *optimal*. Return a NEW
+    list; never mutate the input.
+
+    PRUNE ONLY — this authors nothing. It cannot widen an arc, re-centre one or invent one,
+    so a spot's window after pruning is always a SUBSET of what the raycast produced. Two
+    consequences worth stating because they are easy to expect wrongly:
+
+      1. It cannot raise the gain at the corrected optimal. If the optimal already falls
+         outside every arc, removing arcs leaves it outside. Four of the ten overridden spots
+         are in that state and stay at directional_gain's 0.40 rung.
+      2. It is not monotonically protective. A bearing that sat INSIDE a dropped arc scored
+         the in-window floor of 0.25; once that arc is gone the bearing is graded by the
+         ladder against the KEPT arcs, which returns 0.40 when it lands within 45 degrees of a
+         kept edge. On four of the ten spots at least one wrong-direction bearing therefore
+         scores HIGHER after pruning, not lower. Measured, not theoretical — see the branch
+         report and test_pruning_can_raise_the_gain_at_some_bearings.
+
+    The comparison is strictly greater-than, so an arc at exactly *limit* is KEPT.
+    """
+    return [a for a in (arcs or []) if arc_offset_from(optimal, a) <= limit]
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -368,6 +471,49 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
     # counts then strips before writing.
     if _apply_tier_guard(spot, enriched, confidence, allow_tier_demotion):
         enriched["_tier_preserved"] = True
+
+    # Algo 2d — slug-keyed optimal_swell_dir override. The comprehensive human-review file
+    # (spot_swell_windows.json), and the LAST writer of optimal_swell_dir in enrich: it runs
+    # after Algo 2 (raycast), Algo 2b (orientation-derived fallback) and Algo 2c (tier
+    # preserve-guard), each of which writes the field unconditionally. Direct assignment,
+    # NOT _set, so it beats LLM verification too — the same posture Algo 1b/1c take for
+    # orientation, and necessary here because three of the ten overridden spots carry
+    # verification_confidence == "high".
+    #
+    # WHY THIS FIELD AND NOT orientation_deg: interpret.directional_gain reads
+    # optimal_swell_dir as the cos²(Δ/2) target and only falls back to orientation_deg when
+    # the optimal is null, so a hand-set orientation never reaches the rating on a spot that
+    # has an optimal. Every spot in the file already had orientation_source == "manual".
+    #
+    # ARCS ARE PRUNED, NEVER AUTHORED. The corrected optimal makes some of the raycast's
+    # arcs unreachable — Honolua Bay's [161-211] sits 137 degrees from its corrected 350 —
+    # and an arc that far away still ADMITS swells arriving inside it at the in-window floor
+    # of 0.25 rather than the ladder's 0.15/0.0. Dropping them is a strict subset operation:
+    # no arc is widened, re-centred or invented, so the window can only shrink. Applied to
+    # OVERRIDDEN SPOTS ONLY — a spot with no entry in the file keeps every arc it had.
+    slug = _slug_for(spot.get("name"))
+    override_optimal = _SPOT_SWELL_WINDOWS.get(slug)
+    if override_optimal is not None:
+        enriched["optimal_swell_dir"] = override_optimal
+        # Prune against the value we just wrote, not the one the raycast left behind.
+        before = enriched.get("swell_window_arcs") or []
+        kept = prune_arcs_to_optimal(before, override_optimal)
+        # An empty result is LEFT EMPTY, not backfilled. Algo 2b's orientation-derived
+        # fallback would happily rebuild a window centred on orientation_deg, but it has
+        # already run by now and re-running it here would author exactly the arc this file
+        # refuses to author. directional_gain handles empty arcs by falling through to a
+        # plain cos²(Δ/2) peak about the optimal, which is the honest answer when the
+        # geometry no longer supports any window.
+        enriched["swell_window_arcs"] = kept
+        # Separate stamp — NOT swell_window_source, which carries the tier and decides which
+        # forecast reader runs. verify_spots and scrape_surf_forecast read this to know they
+        # must leave the field alone.
+        enriched["swell_window_source_override"] = SWELL_WINDOW_OVERRIDE_SOURCE
+        log.debug(
+            "%s (%s): spot_swell_windows override optimal_swell_dir %.0f° applied; "
+            "arcs pruned %d → %d",
+            spot.get("name"), slug, override_optimal, len(before), len(kept),
+        )
 
     # Algo 3 — break type
     try:
