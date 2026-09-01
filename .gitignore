@@ -162,3 +162,12 @@ scripts/*.grib2
 mop_points.json
 mop_ca_verdicts.json
 mop_ca_buoy_recovery.json
+# mop_spread.json holds the per-spot face_ratio medians the star-impact script divides by.
+# It was BELIEVED to be ignored and was not — only the three names above were listed, so a
+# `git add scripts/` would have committed it. Same Mac-local, rebuild-on-demand status.
+mop_spread.json
+
+# scripts/star_impact_of_face_correction.py artifacts — a results JSON and an optional
+# frozen row cache (raw forecasts rows, only useful for replaying one measurement).
+star_impact_of_face_correction_out.json
+star_impact_rows.json
