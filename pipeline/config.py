@@ -397,6 +397,24 @@ SPOT_SWELL_WINDOWS_FILE = PIPELINE_DIR / "data" / "spot_swell_windows.json"
 # KEPT. Pruning only ever removes arcs — it never authors, widens or re-centres one, and an
 # empty result is left empty rather than backfilled.
 ARC_PRUNE_MAX_OFFSET_DEG = 90.0
+
+# ---------------------------------------------------------------------------
+# Per-spot face correction (CDIP MOP anchored)
+# ---------------------------------------------------------------------------
+# Measured per-spot divisors for face_ft, generated FROM the MOP validation harness by
+# `python3 scripts/build_face_factors.py --apply`. Committed so a factor is reviewable as a
+# diff — these are hand-measured constants with no physical derivation, and the only defence
+# against a bad one is that a human can see it change.
+SPOT_FACE_FACTORS_FILE = PIPELINE_DIR / "data" / "spot_face_factors.json"
+# A spot whose within-spot face_ratio p90/p10 exceeds this is NOT corrected. Above ~2.5 the
+# median is not describing a stable offset — it is the centre of a cloud, and dividing by it
+# moves the typical hour about as often as it fixes one. Rincon measured 6.47.
+FACE_FACTOR_MAX_SPREAD = 2.5
+# Age past which the run summary warns. The factors were measured over 14 SUMMER days;
+# California's swell climate changes in winter and a factor absorbing period-dependent
+# refraction will misfit when the period regime moves. 120 days puts the first warning in
+# late autumn, before the winter swell season rather than after it.
+FACE_FACTOR_MAX_AGE_DAYS = 120
 # Persistent review queue — list of spots whose orientation/scrape/verification
 # state suggests they should get a manual eyeball at some point. Survives
 # regeneration: spots marked `reviewed: true` keep that flag.
