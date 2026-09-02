@@ -99,7 +99,9 @@ INPUTS
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime
+import io
 import json
 import math
 import os
@@ -153,6 +155,66 @@ PREDICT_CORR_MIN = 0.70
 # spread in period moves the residual by 20% — the same size as the whole error budget, so
 # anything at or above this is a systematic trend rather than scatter.
 PREDICT_PERIOD_SLOPE_MAX = 0.02
+
+# PostgREST caps a select at 1000 rows, so paging inside a chunk is load-bearing.
+BUOY_PAGE_ROWS = 1000
+
+# THE BUOY FETCH: ONE BUOY PER STATEMENT, ORDERED BY observed_at. Same symptom as the
+# forecasts fetch, a DIFFERENT cure, because the table is shaped differently.
+#
+# THE SYMPTOM. This function raised PostgREST 57014 ("canceling statement due to statement
+# timeout") on the FIRST page, offset 0, before a row came back — the same signature as the
+# forecasts fetch and the same meaning: a plan problem, not a volume one. But it failed
+# while ALREADY chunked at FORECAST_CHUNK_SPOTS = 8, so chunking is not what was missing.
+# The variable that was still wrong is the ORDER BY.
+#
+# WHAT ACTUALLY DIFFERS, read from 001_initial_schema.sql rather than assumed:
+#
+#   forecasts          (79-105)   PK(id) · UNIQUE(spot_id, valid_time, source)
+#                                 idx_forecasts_spot_time(spot_id, valid_time)
+#                                 idx_forecasts_valid_time(valid_time)
+#   buoy_observations (111-126)   PK(id) · UNIQUE(buoy_id, observed_at)
+#                                 idx_buoy_obs_buoy_time(buoy_id, observed_at)
+#
+# Two consequences. (1) buoy_observations has NO standalone observed_at index — its only
+# route into a time range leads with buoy_id, so an unconstrained time scan has nothing to
+# use, where forecasts always has idx_forecasts_valid_time to fall back on. (2) It carries a
+# UNIQUE constraint on exactly the columns its one time-bearing index leads with. forecasts
+# does not, and (2) is the whole fix.
+#
+# `order("id")` is on the forecasts fetch because id is the only TOTAL order it has:
+# valid_time ties across spots at the same hour, so offset paging on it can skip or repeat
+# rows across a page boundary (mop_face_validation.py:379-382 says so). Here that constraint
+# lifts. Fix buoy_id to ONE value and observed_at is unique WITHIN THE STATEMENT by the
+# UNIQUE constraint, so order("observed_at") is a total order — proved from the schema, not
+# measured — and it is the physical order of idx_buoy_obs_buoy_time, so the statement is a
+# plain range scan with no sort node and nothing to tempt the planner into walking the PK
+# from id=1.
+#
+# WHY THE PK WALK IS WORSE HERE THAN ON forecasts. Nothing prunes this table: db_import
+# upserts a rolling 24 h per buoy on every run (db_import.py:736-796) and the only delete()
+# anywhere in pipeline/ is on `spots`. It is append-only, so the older rows an id-ascending
+# walk must cross grow every day the deployment runs. The failure gets worse with age.
+#
+# WHY 1 AND NOT THE 8 PROVEN FOR forecasts. 8 was the largest value with direct POSITIVE
+# evidence at a planner cliff whose location was unknown — a guess bounded by evidence. 1 is
+# not that kind of number: it is the size at which the total-order argument above holds, so
+# it is chosen by proof rather than by probing. It also deletes the IN list, so the
+# selectivity misestimate that drove the forecasts cliff cannot arise at all. And it is the
+# shape of the one reader of this table that has never timed out —
+# frontend/app/spot/[slug]/page.tsx:116 runs .eq('buoy_id', …).order('observed_at', …).
+# The cost is 23 statements instead of 3, each a clean index range scan, against a query
+# that currently never returns.
+#
+# buoy_id BEING TEXT changes none of this. Equality on a text column uses the index the same
+# way; what text costs is that `id` order carries no correlation with buoy_id at all, so the
+# id-walk has no clustering to make it accidentally cheap.
+#
+# ABOVE 1 IS A PROBE, NOT A SETTING. With more than one buoy in a statement observed_at
+# stops being unique — NDBC stations report on aligned minutes, so ties across buoys are the
+# common case rather than a corner — and offset paging stops being deterministic. The
+# --chunk-size flag exists to measure the planner, not to run production.
+BUOY_CHUNK_IDS = 1
 
 
 # --------------------------------------------------------------------------- #
@@ -420,35 +482,68 @@ def fetch_mop_series(url, t0, t1):
     return out
 
 
-def fetch_buoy_series(client, buoy_ids, t0_iso, t1_iso, page=1000):
-    """{buoy_id: [{t, hs, tp}]} from buoy_observations, paginated and chunked.
+def _fetch_buoy_chunk(client, ids, t0_iso, t1_iso, page=BUOY_PAGE_ROWS):
+    """Every row in the window for ONE chunk of buoy ids, paginated. Raw rows, unparsed.
 
-    Chunked at FORECAST_CHUNK_SPOTS ids per statement for the same reason the forecasts
-    fetch is: anything larger raised PostgREST 57014 statement timeouts during the MOP
-    validation. `order("id")` makes offset paging a total order.
+    A one-id chunk — the shipped path — uses .eq rather than a one-element .in_. Postgres
+    plans them the same, but .eq is the exact shape page.tsx:116 already runs against this
+    table without timing out, and there is no reason to ship a second shape when the proven
+    one is available. See BUOY_CHUNK_IDS for why the order is observed_at and not id.
+
+    *page* is a parameter only so --selftest can exercise multi-page paging on a handful of
+    rows; production always uses BUOY_PAGE_ROWS.
     """
-    out = {}
-    for chunk in chunk_ids(sorted(set(buoy_ids)), FORECAST_CHUNK_SPOTS):
-        frm = 0
-        while True:
-            resp = (client.table("buoy_observations")
-                    .select("buoy_id, observed_at, hs, tp")
-                    .in_("buoy_id", list(chunk))
-                    .gte("observed_at", t0_iso).lte("observed_at", t1_iso)
-                    .order("id").range(frm, frm + page - 1).execute())
-            rows = resp.data or []
-            if not rows:
-                break
-            for r in rows:
-                t = _norm_epoch(_iso_to_epoch(r.get("observed_at")))
-                if t is None or r.get("hs") is None:
-                    continue
-                out.setdefault(r["buoy_id"], []).append(
-                    {"t": t, "hs": float(r["hs"]),
-                     "tp": (float(r["tp"]) if r.get("tp") is not None else None)})
-            if len(rows) < page:
-                break
-            frm += page
+    out, frm = [], 0
+    while True:
+        q = client.table("buoy_observations").select("buoy_id, observed_at, hs, tp")
+        q = q.eq("buoy_id", ids[0]) if len(ids) == 1 else q.in_("buoy_id", list(ids))
+        resp = (q.gte("observed_at", t0_iso).lte("observed_at", t1_iso)
+                 .order("observed_at").range(frm, frm + page - 1).execute())
+        rows = resp.data or []
+        if not rows:
+            break
+        out.extend(rows)
+        if len(rows) < page:
+            break
+        frm += page
+    return out
+
+
+def fetch_buoy_series(client, buoy_ids, t0_iso, t1_iso,
+                      chunk_size=BUOY_CHUNK_IDS, page=BUOY_PAGE_ROWS):
+    """{buoy_id: [{t, hs, tp}]} from buoy_observations, one buoy per statement.
+
+    Chunked over buoy ids — see BUOY_CHUNK_IDS for why, and why 1 rather than the 8 the
+    forecasts fetch uses. Each id lands in exactly one chunk, so the reassembled dict is
+    what a single un-chunked fetch would have produced; --selftest pins that against a
+    literal.
+
+    PROGRESS IS PRINTED PER CHUNK, not at the end. At one buoy per statement that is one
+    line per buoy naming the buoy, so a run that stalls says which station it stalled on —
+    a 23-buoy fetch that prints nothing until it finishes is indistinguishable from a hung
+    one, which is how the 57014 presented in the first place.
+
+    Rows carrying no parseable observed_at or no hs are dropped here rather than filtered in
+    SQL: a NULL hs is a real NDBC row that simply reported no wave height that minute, and
+    counting it out at the parse is what makes "rows" and "usable" separately visible in the
+    progress line.
+    """
+    ids = sorted(set(buoy_ids))
+    chunks = chunk_ids(ids, chunk_size)
+    out, kept = {}, 0
+    for i, chunk in enumerate(chunks, 1):
+        rows = _fetch_buoy_chunk(client, chunk, t0_iso, t1_iso, page=page)
+        before = kept
+        for r in rows:
+            t = _norm_epoch(_iso_to_epoch(r.get("observed_at")))
+            if t is None or r.get("hs") is None:
+                continue
+            out.setdefault(r["buoy_id"], []).append(
+                {"t": t, "hs": float(r["hs"]),
+                 "tp": (float(r["tp"]) if r.get("tp") is not None else None)})
+            kept += 1
+        print(f"    chunk {i:3d}/{len(chunks)}  {','.join(map(str, chunk)):<14s} "
+              f"{len(rows):5d} rows  {kept - before:5d} usable  ({kept} total)", flush=True)
     return out
 
 
@@ -500,7 +595,7 @@ def build_pairs(mop_rows, buoy_rows, mop_depth_m, buoy_dep_m, shore_normal,
 # --------------------------------------------------------------------------- #
 
 def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=OUT,
-        limit=None):
+        limit=None, chunk_size=BUOY_CHUNK_IDS):
     if not os.path.exists(MOP_CACHE_PATH):
         print(f"no MOP point cache at {MOP_CACHE_PATH}\n"
               "  build it once (needs open CDIP THREDDS egress, ~11.7k points, resumable):\n"
@@ -533,7 +628,11 @@ def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=O
     buoy_ids = {s["nearest_buoy_id"] for s in pop}
     print(f"buoys: {len(buoy_ids)} distinct, fetching {t0.isoformat()} .. {now.isoformat()}",
           flush=True)
-    buoys = fetch_buoy_series(client, buoy_ids, t0.isoformat(), now.isoformat())
+    n_chunks = len(chunk_ids(sorted(buoy_ids), chunk_size))
+    print(f"  {chunk_size} buoy id(s) per statement, {n_chunks} chunks, ordered by "
+          f"observed_at — see BUOY_CHUNK_IDS", flush=True)
+    buoys = fetch_buoy_series(client, buoy_ids, t0.isoformat(), now.isoformat(),
+                              chunk_size=chunk_size)
     print(f"  {sum(len(v) for v in buoys.values())} observations across "
           f"{len(buoys)} buoys", flush=True)
     depths = {b: buoy_depth_m(b) for b in buoy_ids}
@@ -581,6 +680,7 @@ def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=O
         "generated_at": now.isoformat(),
         "window": {"t0": t0.isoformat(), "t1": now.isoformat(), "days_back": days_back},
         "max_buoy_km": max_buoy_km,
+        "buoy_chunk_ids": chunk_size,
         "method": "linear (Airy) shoaling; Ks = sqrt(0.5 / (n * tanh(kd))); H0 = H(d)/Ks",
         "prediction": {"rms_pct_max": PREDICT_RMS_PCT_MAX,
                        "corr_min": PREDICT_CORR_MIN,
@@ -611,7 +711,7 @@ def _print_report(res):
     print(f"  correlation           {r['corr'] if r['corr'] is None else round(r['corr'], 3)}")
     print(f"  period slope          {r['period_slope_per_s']:+.5f} per second"
           if r["period_slope_per_s"] is not None else "  period slope          n/a")
-    print(f"  obliquity slope       "
+    print("  obliquity slope       "
           + (f"{r['obliquity_slope_per_deg']:+.6f} per degree "
              f"({r['n_with_obliquity']} pairs with a shore normal)"
              if r["obliquity_slope_per_deg"] is not None else "n/a"))
@@ -803,11 +903,180 @@ def run_selftest():
           build_pairs([{"t": 3600, "hs": 0.1, "tp": 12.6, "dp": 280.0}],
                       [{"t": 3900, "hs": 1.0, "tp": 12.0}], 10.0, None, 270.0)[1] == 1)
 
+    # --- chunking: the split itself ------------------------------------------ #
+    # chunk_ids is mop_face_validation's and is pinned there too; these cases are the ones
+    # THIS caller depends on, at THIS chunk size, over TEXT ids. Expected chunks are written
+    # out, never produced by calling the function.
+    b23 = [f"460{i:02d}" for i in range(23)]        # 23 ids, the real population size
+    check("23 buoy ids at size 1 -> 23 chunks (one statement per buoy)",
+          len(chunk_ids(b23, 1)) == 23)
+    check("every chunk at size 1 holds exactly one id",
+          {len(c) for c in chunk_ids(b23, 1)} == {1})
+    check("23 ids at size 8 would be 3 chunks (8+8+7), not the 23 the fix uses",
+          [len(c) for c in chunk_ids(b23, 8)] == [8, 8, 7])
+    check("a list longer than the chunk size splits, order preserved",
+          chunk_ids(["a", "b", "c", "d", "e"], 2) == [["a", "b"], ["c", "d"], ["e"]])
+    # Every id exactly once, over text ids at the shipped size.
+    flat1 = [i for c in chunk_ids(b23, 1) for i in c]
+    check("chunking loses no buoy id", len(flat1) == 23)
+    check("chunking duplicates no buoy id", len(set(flat1)) == 23)
+    check("chunking preserves order", flat1 == b23)
+    check("no buoys -> no chunks at all (never an empty IN list)", chunk_ids([], 1) == [])
+
+    # --- the buoy fetch, against a fake client -------------------------------- #
+    # WHAT THIS PROVES: the chunking, the reassembly, and the QUERY SHAPE — that the fetch
+    # asks by buoy_id with .eq and orders by observed_at, which is the entire fix. WHAT IT
+    # CANNOT PROVE: that the resulting plan is fast. Only Postgres can say that, and the
+    # 57014 this replaces was a plan failure, not a logic one.
+    class _Resp:
+        def __init__(self, data):
+            self.data = data
+
+    class _FakeQuery:
+        def __init__(self, rows, log):
+            self._rows, self._log = rows, log
+            self._ids, self._order, self._frm, self._to = None, None, 0, 0
+
+        def select(self, *a, **k):
+            return self
+
+        def gte(self, *a, **k):
+            return self
+
+        def lte(self, *a, **k):
+            return self
+
+        def eq(self, _col, val):
+            self._log["eq"] += 1
+            self._ids = {val}
+            return self
+
+        def in_(self, _col, vals):
+            self._log["in_"] += 1
+            self._ids = set(vals)
+            return self
+
+        def order(self, col, **k):
+            self._log["order_cols"].add(col)
+            self._order = col
+            return self
+
+        def range(self, frm, to):
+            self._frm, self._to = frm, to
+            return self
+
+        def execute(self):
+            sel = sorted((r for r in self._rows
+                          if self._ids is None or r["buoy_id"] in self._ids),
+                         key=lambda r: r[self._order])
+            return _Resp(sel[self._frm:self._to + 1])
+
+    class _FakeClient:
+        def __init__(self, rows):
+            self._rows, self.statements = rows, 0
+            self.log = {"eq": 0, "in_": 0, "order_cols": set()}
+
+        def table(self, _name):
+            self.statements += 1
+            return _FakeQuery(self._rows, self.log)
+
+    # Three buoys. `id` runs ANTI-correlated with observed_at inside 46042 (id 90 is 01:30,
+    # id 92 is 00:00) so that ordering by id and ordering by observed_at give DIFFERENT
+    # answers — a revert to .order("id") fails the expected literal below rather than
+    # passing quietly. Epochs are written out; they are the exact .timestamp() of each ISO
+    # string, not a value read back from the code under test.
+    #   2026-08-01T00:00Z 1785542400   00:30Z 1785544200   01:00Z 1785546000
+    #                     01:30Z 1785547800   02:00Z 1785549600
+    brows = [
+        {"id": 90, "buoy_id": "46042", "observed_at": "2026-08-01T01:30:00+00:00",
+         "hs": 1.5, "tp": 12.0},
+        {"id": 91, "buoy_id": "46053", "observed_at": "2026-08-01T00:30:00+00:00",
+         "hs": 2.0, "tp": 14.0},
+        {"id": 92, "buoy_id": "46042", "observed_at": "2026-08-01T00:00:00+00:00",
+         "hs": 1.0, "tp": 11.0},
+        {"id": 93, "buoy_id": "46086", "observed_at": "2026-08-01T02:00:00+00:00",
+         "hs": 3.0, "tp": None},                       # NULL tp survives, as None
+        {"id": 94, "buoy_id": "46053", "observed_at": "2026-08-01T01:00:00+00:00",
+         "hs": None, "tp": 13.0},                      # NULL hs is dropped
+        {"id": 95, "buoy_id": "46053", "observed_at": "2026-08-01T01:30:00+00:00",
+         "hs": 2.5, "tp": 15.0},
+    ]
+    b_expect = {
+        "46042": [{"t": 1785542400.0, "hs": 1.0, "tp": 11.0},
+                  {"t": 1785547800.0, "hs": 1.5, "tp": 12.0}],
+        "46053": [{"t": 1785544200.0, "hs": 2.0, "tp": 14.0},
+                  {"t": 1785547800.0, "hs": 2.5, "tp": 15.0}],
+        "46086": [{"t": 1785549600.0, "hs": 3.0, "tp": None}],
+    }
+    bids = ["46042", "46053", "46086"]
+    fc1 = _FakeClient(brows)
+    got_1 = fetch_buoy_series(fc1, bids, "t0", "t1", chunk_size=1, page=1000)
+    got_2 = fetch_buoy_series(_FakeClient(brows), bids, "t0", "t1", chunk_size=2, page=1000)
+    got_all = fetch_buoy_series(_FakeClient(brows), bids, "t0", "t1", chunk_size=99, page=1000)
+    check("the shipped chunk size 1 reassembles to the expected dict", got_1 == b_expect)
+    check("chunk size 2 reassembles to the expected dict", got_2 == b_expect)
+    check("one chunk (un-chunked) reassembles to the expected dict", got_all == b_expect)
+    check("every chunk size agrees with every other", got_1 == got_2 == got_all)
+    check("each buoy's rows come back in observed_at order",
+          [r["t"] for r in got_1["46042"]] == [1785542400.0, 1785547800.0])
+    check("a NULL hs row is dropped, not carried as None",
+          len(got_1["46053"]) == 2)
+    check("a NULL tp row is KEPT with tp None", got_1["46086"][0]["tp"] is None)
+    check("a buoy absent from the data is absent from the result, not empty",
+          fetch_buoy_series(_FakeClient(brows), ["46042", "99999"], "t0", "t1",
+                            chunk_size=1, page=1000).keys() == {"46042"})
+
+    # THE FIX ITSELF. At the shipped size the fetch must ask with .eq and order by
+    # observed_at — never by id, which is what timed out.
+    check("the shipped path uses .eq per buoy, never an IN list",
+          fc1.log["eq"] == 3 and fc1.log["in_"] == 0)
+    check("the shipped path orders by observed_at and by nothing else",
+          fc1.log["order_cols"] == {"observed_at"})
+    check("one statement per buoy at the shipped size", fc1.statements == 3)
+
+    # PROGRESS IS A REQUIREMENT, SO IT IS PINNED. Without this, deleting the print leaves
+    # every other test green and hands back the silent fetch the fix exists to end.
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        fetch_buoy_series(_FakeClient(brows), bids, "t0", "t1", chunk_size=1, page=1000)
+    lines = [ln for ln in buf.getvalue().splitlines() if ln.strip()]
+    check("one progress line per chunk, printed as it goes", len(lines) == 3)
+    check("each progress line names its buoy and its position",
+          all(f"chunk {i:3d}/3" in ln and b in ln
+              for i, (ln, b) in enumerate(zip(lines, bids), 1)))
+
+    # Paging INSIDE a chunk still applies: 5 rows for one buoy at page=2 is 3 statements.
+    solo = [{"id": 500 + i, "buoy_id": "46042",
+             "observed_at": f"2026-08-01T0{i}:00:00+00:00", "hs": float(i), "tp": 10.0}
+            for i in range(1, 6)]
+    fcp = _FakeClient(solo)
+    paged = fetch_buoy_series(fcp, ["46042"], "t0", "t1", chunk_size=1, page=2)
+    check("paging inside a chunk returns every row", len(paged["46042"]) == 5)
+    check("paged rows stay in observed_at order",
+          [r["hs"] for r in paged["46042"]] == [1.0, 2.0, 3.0, 4.0, 5.0])
+    # 5 rows at 2/page: pages of 2, 2, 1 — the short third page ends the loop.
+    check(f"5 rows at page 2 took 3 statements ({fcp.statements})", fcp.statements == 3)
+    # An exact multiple needs the extra empty page to learn it is done: 4 rows -> 2, 2, 0.
+    fcp4 = _FakeClient(solo[:4])
+    fetch_buoy_series(fcp4, ["46042"], "t0", "t1", chunk_size=1, page=2)
+    check(f"4 rows at page 2 took 3 statements, the last empty ({fcp4.statements})",
+          fcp4.statements == 3)
+
+    # The two sizes are deliberately DIFFERENT, for reasons in BUOY_CHUNK_IDS. Pinned so
+    # that "harmonising" them to one number fails here and reads why.
+    check(f"the buoy chunk size is 1, not the forecasts 8 "
+          f"({BUOY_CHUNK_IDS} vs {FORECAST_CHUNK_SPOTS})",
+          BUOY_CHUNK_IDS == 1 and FORECAST_CHUNK_SPOTS == 8)
+    check(f"the buoy page size is PostgREST's cap ({BUOY_PAGE_ROWS})",
+          BUOY_PAGE_ROWS == 1000)
+
     print()
     print("  NOT TESTED, AND CANNOT BE WITHOUT NETWORK: fetch_mop_series (CDIP THREDDS over")
-    print("  OPeNDAP, 403 in this container) and fetch_buoy_series (Supabase). Mocking either")
-    print("  would prove only that the mock returns what it was told to. Their inputs and")
-    print("  outputs are exercised through build_pairs / join_within, which are pure.")
+    print("  OPeNDAP, 403 in this container) and the DATABASE half of fetch_buoy_series.")
+    print("  The fake client above pins its chunking, its reassembly and its query SHAPE —")
+    print("  .eq per buoy, ordered by observed_at — because those are what the 57014 fix")
+    print("  changed. It cannot pin that the resulting PLAN is fast: only Postgres can say")
+    print("  that, and the timeout being replaced was a plan failure, not a logic one.")
     print()
     print("selftest: " + ("ALL PASS" if ok else "FAILURES ABOVE"))
     return 0 if ok else 1
@@ -822,11 +1091,17 @@ def main(argv=None):
                     help=f"drop spots whose nearest buoy is further (default {DEFAULT_MAX_BUOY_KM})")
     ap.add_argument("--limit", type=int, default=None, help="only the first N spots (smoke test)")
     ap.add_argument("--out", default=OUT, help=f"results JSON (default {OUT})")
+    ap.add_argument("--chunk-size", type=int, default=BUOY_CHUNK_IDS,
+                    help=f"buoy ids per statement (default {BUOY_CHUNK_IDS}). A PROBE, not a "
+                         f"setting: above 1, observed_at is no longer unique within the "
+                         f"statement and offset paging stops being deterministic. See "
+                         f"BUOY_CHUNK_IDS")
     ap.add_argument("--selftest", action="store_true", help="offline logic proof; no network, no DB")
     a = ap.parse_args(argv)
     if a.selftest:
         return run_selftest()
-    return run(days_back=a.days_back, max_buoy_km=a.max_buoy_km, out_path=a.out, limit=a.limit)
+    return run(days_back=a.days_back, max_buoy_km=a.max_buoy_km, out_path=a.out, limit=a.limit,
+               chunk_size=a.chunk_size)
 
 
 if __name__ == "__main__":
