@@ -156,6 +156,64 @@ PREDICT_CORR_MIN = 0.70
 # anything at or above this is a systematic trend rather than scatter.
 PREDICT_PERIOD_SLOPE_MAX = 0.02
 
+# ---------------------------------------------------------------------------------------- #
+# RUN 2 PREDICTIONS. Run 1's thresholds above are UNCHANGED and still evaluated; these are
+# added alongside, not in place of them, and they are registered here — in code, before any
+# number is fetched — for the same reason the first set was.
+#
+# WHAT RUN 1 MEASURED: bias -0.325 (median -0.337), RMS 40.1%, correlation 0.376, period
+# slope -0.00871/s, obliquity slope -0.001295/deg, over 33,620 pairs on 104 spots. The
+# PERIOD slope passed comfortably; everything else failed on a one-third deficit in the same
+# direction everywhere. Run 2 exists to decide WHY, between two mechanisms that predict the
+# same sign and the same rough size but differ sharply on where the deficit concentrates.
+# ---------------------------------------------------------------------------------------- #
+
+# P2 — EXPOSURE. If the deficit is MOP's directional filtering, it must concentrate where
+# there is something to filter. Bias should move toward zero as the open swell window widens,
+# monotonically across window-width quartiles.
+#
+# THE MAGNITUDE THRESHOLD IS DERIVED, NOT PICKED. Over the 132 corrected spots the open
+# window (union of swell_window_arcs under interpret.bearing_in_arc) runs 62 deg to 201 deg,
+# median 148, quartile cuts near 122 / 148 / 164. A spot in the top quartile has 164-201 deg
+# of open water: there is almost no window left for MOP to remove. If those spots still show
+# the full roster deficit, window geometry cannot be what produces it.
+PREDICT_EXPOSURE_WIDEST_BIAS_MAX = 0.15    # |median bias| in the widest quartile
+PREDICT_EXPOSURE_SPREAD_MIN = 0.15         # widest-quartile median minus narrowest-quartile
+PREDICT_EXPOSURE_SPEARMAN_MIN = 0.40       # rank corr of per-spot median bias vs window_deg
+# Below this spread the bias is flat across exposure and the hypothesis is REFUTED outright
+# rather than merely unsupported.
+REFUTE_EXPOSURE_SPREAD_MAX = 0.05
+
+# P3 — OBLIQUITY WITHIN SPOT. Sharper than P2 because it varies inside one spot and so cannot
+# be produced by which spots happen to be sheltered. Each spot's residuals are demeaned by
+# that spot's OWN median before banding, which removes the between-spot term entirely; what
+# survives is the hour-to-hour effect of swell angle at fixed geometry.
+PREDICT_OBLIQUITY_WITHIN_SLOPE_MAX = -0.0005   # per degree; must be at least this negative
+# A within-spot slope this small means run 1's pooled -0.001295/deg was a between-spot
+# artefact — oblique spots being sheltered spots — and says nothing about filtering.
+REFUTE_OBLIQUITY_WITHIN_SLOPE_ABS = 0.0002
+
+# P4 — THE COMPETING HYPOTHESIS, which the brief does not name and which predicts the SAME
+# signature. buoy_observations.hs is NDBC .std, the DOMINANT (wind sea + swell) height —
+# migration 004's own header says so. MOP's waveHs at a nearshore point carries the offshore
+# spectrum propagated in, so summer NW wind sea generated locally at the buoy is in the buoy
+# number and not in MOP's. A uniform negative bias, a badly degraded correlation and NO period
+# dependence is exactly what that produces, because it is an additive uncorrelated energy term
+# rather than a period-dependent transfer.
+#
+# Both sides carry a swell-only height already: MOP's from _split_swell_hs over
+# waveEnergyDensity (f <= 0.10 Hz), the buoy's from NDBC .spec SwH (migration 004). Rerunning
+# on those, over the IDENTICAL joined hours with the IDENTICAL Tp and depths, changes exactly
+# one variable. If the bias barely moves, wind sea is not the explanation and filtering
+# survives. If it collapses toward zero, filtering is at best a partial account.
+PREDICT_SWELL_ONLY_DELTA_MAX = 0.05        # |bias(swell) - bias(total)| if filtering is it
+REFUTE_SWELL_ONLY_DELTA_MIN = 0.15         # movement toward zero this large indicts wind sea
+
+# Fixed geometric bands, not data-derived: the question is about angle, and degrees are the
+# natural unit to report it in. The last band is open-ended because swell more than 90 deg off
+# the shore normal is arriving from behind the shore-normal half-plane.
+OBLIQUITY_BAND_EDGES = (0.0, 15.0, 30.0, 45.0, 60.0, 90.0)
+
 # PostgREST caps a select at 1000 rows, so paging inside a chunk is load-bearing.
 BUOY_PAGE_ROWS = 1000
 
@@ -363,6 +421,43 @@ def ols_slope(xs, ys):
     return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
 
 
+def _rank(vals):
+    """Ranks of *vals*, 1-based, TIES AVERAGED. The tie handling is not cosmetic here:
+    window_deg is an integer count, so ties are common and competition-ranking them would
+    bias the rank correlation."""
+    order = sorted(range(len(vals)), key=lambda i: vals[i])
+    ranks = [0.0] * len(vals)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and vals[order[j + 1]] == vals[order[i]]:
+            j += 1
+        avg = (i + j) / 2.0 + 1.0
+        for k in range(i, j + 1):
+            ranks[order[k]] = avg
+        i = j + 1
+    return ranks
+
+
+def spearman(a, b):
+    """Rank correlation, or None. Pearson of the averaged ranks — one number for whether the
+    trend across exposure is monotonic, which is what P2 asks and what a slope does not say."""
+    if len(a) != len(b) or len(a) < 3:
+        return None
+    return pearson(_rank(list(a)), _rank(list(b)))
+
+
+def band_stats(residuals):
+    """n / mean / median / RMS% over a plain list of residual fractions, or None if empty."""
+    vals = [r for r in residuals if r is not None]
+    if not vals:
+        return None
+    return {"n": len(vals),
+            "bias_frac": statistics.fmean(vals),
+            "median_frac": statistics.median(vals),
+            "rms_pct": 100.0 * math.sqrt(statistics.fmean([v * v for v in vals]))}
+
+
 def residual_stats(pairs):
     """bias / RMS% / correlation / period slope / obliquity slope over joined pairs.
 
@@ -437,6 +532,109 @@ def verdict(stats):
     return ok, lines
 
 
+def hypothesis_verdict(bands, exp_rho, obl, swl):
+    """(supported: bool, [lines]) for the DIRECTIONAL-FILTERING hypothesis, against P2-P4.
+
+    Separate from verdict() on purpose. verdict() asks whether the shoaling relation is
+    validated; this asks why it appeared not to be. A run can fail the first and still answer
+    the second, and conflating them into one boolean would lose exactly the information the
+    second run exists to produce.
+
+    SUPPORTED requires all three: exposure monotone and large enough (P2), a within-spot
+    obliquity slope (P3), and the deficit surviving the swell-only rerun (P4). Any one of the
+    three refutation thresholds being hit is reported as REFUTED rather than as "not
+    supported" — they are stated separately in the constants so that a null result and a
+    contrary result cannot be read as the same thing.
+    """
+    lines, ok = [], True
+    st = [b["stats"] for b in bands if b.get("stats")]
+    if len(st) < 2:
+        return False, ["P2 exposure: too few populated bands to test"]
+
+    narrow, wide = st[0]["median_frac"], st[-1]["median_frac"]
+    spread = wide - narrow
+    med_ok = all(st[i]["median_frac"] <= st[i + 1]["median_frac"] + 1e-12
+                 for i in range(len(st) - 1))
+    if spread < REFUTE_EXPOSURE_SPREAD_MAX:
+        ok = False
+        lines.append(f"REFUTED  P2 exposure: median bias is FLAT across the window — "
+                     f"{narrow:+.3f} narrowest vs {wide:+.3f} widest, spread {spread:+.3f} "
+                     f"< {REFUTE_EXPOSURE_SPREAD_MAX}. The deficit does not live where the "
+                     f"filtering is, so filtering is not what produces it.")
+    elif spread < PREDICT_EXPOSURE_SPREAD_MIN:
+        ok = False
+        lines.append(f"FAIL     P2 exposure spread {spread:+.3f} < {PREDICT_EXPOSURE_SPREAD_MIN}")
+    else:
+        lines.append(f"PASS     P2 exposure spread {spread:+.3f} "
+                     f"({narrow:+.3f} narrowest -> {wide:+.3f} widest)")
+    lines.append(("PASS     " if med_ok else "FAIL     ")
+                 + "P2 median bias is monotonic across window quartiles"
+                 + ("" if med_ok else " — it is not"))
+    ok = ok and med_ok
+    if abs(wide) <= PREDICT_EXPOSURE_WIDEST_BIAS_MAX:
+        lines.append(f"PASS     P2 widest quartile |bias| {abs(wide):.3f} <= "
+                     f"{PREDICT_EXPOSURE_WIDEST_BIAS_MAX}")
+    else:
+        ok = False
+        lines.append(f"FAIL     P2 widest quartile |bias| {abs(wide):.3f} > "
+                     f"{PREDICT_EXPOSURE_WIDEST_BIAS_MAX} — spots with almost no window left "
+                     f"to filter still show most of the deficit")
+    if exp_rho is None:
+        ok = False
+        lines.append("FAIL     P2 rank correlation undefined")
+    elif exp_rho >= PREDICT_EXPOSURE_SPEARMAN_MIN:
+        lines.append(f"PASS     P2 Spearman(window, per-spot median bias) {exp_rho:+.3f} >= "
+                     f"{PREDICT_EXPOSURE_SPEARMAN_MIN}")
+    else:
+        ok = False
+        lines.append(f"FAIL     P2 Spearman {exp_rho:+.3f} < {PREDICT_EXPOSURE_SPEARMAN_MIN}")
+
+    ws = obl.get("within_slope")
+    if ws is None:
+        ok = False
+        lines.append("FAIL     P3 within-spot obliquity slope undefined")
+    elif abs(ws) < REFUTE_OBLIQUITY_WITHIN_SLOPE_ABS:
+        ok = False
+        lines.append(f"REFUTED  P3 within-spot obliquity slope {ws:+.6f}/deg is ~zero "
+                     f"(|.| < {REFUTE_OBLIQUITY_WITHIN_SLOPE_ABS}). Run 1's pooled "
+                     f"{obl.get('pooled_slope') or float('nan'):+.6f}/deg was a BETWEEN-spot "
+                     f"artefact: oblique spots are sheltered spots. It says nothing about "
+                     f"filtering.")
+    elif ws <= PREDICT_OBLIQUITY_WITHIN_SLOPE_MAX:
+        lines.append(f"PASS     P3 within-spot obliquity slope {ws:+.6f}/deg <= "
+                     f"{PREDICT_OBLIQUITY_WITHIN_SLOPE_MAX} "
+                     f"({100.0 * abs(ws) * 90.0:.1f}% over 90 deg, at fixed geometry)")
+    else:
+        ok = False
+        lines.append(f"FAIL     P3 within-spot obliquity slope {ws:+.6f}/deg is the WRONG "
+                     f"SIGN or too small — more oblique swell does not widen the gap")
+
+    if not swl.get("n"):
+        ok = False
+        lines.append("FAIL     P4 no hour carries a swell height on BOTH sides — untestable")
+    else:
+        d = swl["delta_bias"]
+        lines.append(f"         P4 subsample: {swl['n']} pairs "
+                     f"({100.0 * swl['coverage_frac']:.0f}% of the roster) carry both "
+                     f"swell partitions")
+        if abs(d) <= PREDICT_SWELL_ONLY_DELTA_MAX:
+            lines.append(f"PASS     P4 swell-only bias moves {d:+.3f} (<= "
+                         f"{PREDICT_SWELL_ONLY_DELTA_MAX}) — the deficit is NOT wind sea")
+        elif d >= REFUTE_SWELL_ONLY_DELTA_MIN:
+            ok = False
+            lines.append(f"REFUTED  P4 swell-only bias moves {d:+.3f} toward zero "
+                         f"({swl['total']['bias_frac']:+.3f} -> "
+                         f"{swl['swell']['bias_frac']:+.3f}). Most of the deficit was WIND "
+                         f"SEA in the buoy's .std height, not energy MOP removed.")
+        else:
+            ok = False
+            lines.append(f"FAIL     P4 swell-only bias moves {d:+.3f}, between the "
+                         f"{PREDICT_SWELL_ONLY_DELTA_MAX} the hypothesis allows and the "
+                         f"{REFUTE_SWELL_ONLY_DELTA_MIN} that would indict wind sea — both "
+                         f"mechanisms are contributing")
+    return ok, lines
+
+
 # --------------------------------------------------------------------------- #
 # Population + fetches                                                         #
 # --------------------------------------------------------------------------- #
@@ -462,12 +660,16 @@ def corrected_population(roster_path=ROSTER, factors_path=None, max_buoy_km=DEFA
 
 
 def fetch_mop_series(url, t0, t1):
-    """[{t, hs, tp, dp}] for one MOP point.
+    """[{t, hs, tp, dp, swell_hs}] for one MOP point.
 
     NOT mop_face_validation.fetch_mop_by_hour: that deliberately discards Tp and Dp
     ("carrying MOP's period would invite someone to feed it into face_ft and re-create the
     circularity"). This study NEEDS both — Tp drives the dispersion relation and Dp drives
     the obliquity discriminator — so it reads the same pull_mop_window and keeps them.
+
+    swell_hs is kept for P4 and costs nothing: pull_mop_window already computes it from
+    waveEnergyDensity via _split_swell_hs, and run 1 simply threw it away. It is None for a
+    point whose file carries no spectrum, which is counted rather than assumed present.
     """
     rows = pull_mop_window(url, t0, t1)
     out = []
@@ -478,7 +680,9 @@ def fetch_mop_series(url, t0, t1):
         if t is None:
             continue
         out.append({"t": t, "hs": float(r["hs"]), "tp": float(r["tp"]),
-                    "dp": (float(r["dp"]) if r.get("dp") is not None else None)})
+                    "dp": (float(r["dp"]) if r.get("dp") is not None else None),
+                    "swell_hs": (float(r["swell_hs"]) if r.get("swell_hs") is not None
+                                 else None)})
     return out
 
 
@@ -495,7 +699,8 @@ def _fetch_buoy_chunk(client, ids, t0_iso, t1_iso, page=BUOY_PAGE_ROWS):
     """
     out, frm = [], 0
     while True:
-        q = client.table("buoy_observations").select("buoy_id, observed_at, hs, tp")
+        q = client.table("buoy_observations").select(
+            "buoy_id, observed_at, hs, tp, swell_hs")
         q = q.eq("buoy_id", ids[0]) if len(ids) == 1 else q.in_("buoy_id", list(ids))
         resp = (q.gte("observed_at", t0_iso).lte("observed_at", t1_iso)
                  .order("observed_at").range(frm, frm + page - 1).execute())
@@ -540,7 +745,11 @@ def fetch_buoy_series(client, buoy_ids, t0_iso, t1_iso,
                 continue
             out.setdefault(r["buoy_id"], []).append(
                 {"t": t, "hs": float(r["hs"]),
-                 "tp": (float(r["tp"]) if r.get("tp") is not None else None)})
+                 "tp": (float(r["tp"]) if r.get("tp") is not None else None),
+                 # NDBC .spec SwH — the swell partition only, migration 004. Sparser than hs:
+                 # not every station files a .spec. None here is normal and is counted.
+                 "swell_hs": (float(r["swell_hs"]) if r.get("swell_hs") is not None
+                              else None)})
             kept += 1
         print(f"    chunk {i:3d}/{len(chunks)}  {','.join(map(str, chunk)):<14s} "
               f"{len(rows):5d} rows  {kept - before:5d} usable  ({kept} total)", flush=True)
@@ -556,6 +765,152 @@ def buoy_depth_m(buoy_id):
         return None
 
 
+def window_deg(arcs):
+    """Open swell window, in whole degrees of bearing, as the UNION of *arcs*.
+
+    THE EXPOSURE MEASURE, and it is not invented here. Membership is
+    interpret.bearing_in_arc — the same predicate the production directional gain uses — so
+    "open" means exactly what the rating means by it, and a spot's exposure cannot disagree
+    with its own rating. Sweeping integer bearings rather than doing interval arithmetic on
+    min/max/span is what makes overlapping arcs count once and a 0/360 wrap need no case:
+    both are properties of the predicate, not of this function.
+
+    NON-CIRCULAR with respect to what is being tested. The arcs come from the coastline
+    raycast (enrichment/swell_window.py), which never sees MOP, a buoy, or a face factor. So
+    banding the MOP-vs-buoy residual by this is not banding it by a function of itself.
+
+    The unit is a COUNT of integer bearings, 0..360, not an exact angular measure: both padded
+    edges are inclusive, so each disjoint arc reads about 1 deg wide of its own span. With at
+    most a handful of arcs per spot that is bounded by a few degrees against band widths of
+    tens, and it is uniform across spots, so it cannot move a ranking.
+    """
+    from pipeline.interpret import bearing_in_arc
+    if not arcs:
+        return 0
+    return sum(1 for d in range(360)
+               if any(bearing_in_arc(float(d), a) for a in arcs))
+
+
+def isotropic_ratio(w_deg):
+    """H0_mop/H0_buoy predicted by window geometry ALONE, for a broad offshore sea.
+
+    If the offshore directional spectrum were isotropic over the 180 deg seaward half-plane
+    and MOP removed every direction outside the window completely, the surviving energy
+    fraction would be w/180 and the height ratio sqrt(w/180).
+
+    THIS IS A SCALE REFERENCE, NOT A PREDICTION, and the difference matters. Real swell is
+    narrow in direction, so a window that CONTAINS the peak removes almost nothing and one
+    that excludes it removes almost everything — the isotropic figure is neither an upper nor
+    a lower bound in general. It is reported because it answers one specific question that
+    the raw bias cannot: how much of the deficit could window geometry produce at all. At the
+    population median window of 148 deg it is -0.093, against a measured -0.337.
+    """
+    if w_deg is None or w_deg < 0:
+        return None
+    return math.sqrt(min(float(w_deg), 360.0) / 180.0)
+
+
+def exposure_bands(spots, n_bands=4):
+    """Bias/RMS grouped by open-window quartile. *spots* is [{slug, window_deg, residuals}].
+
+    Bands are POPULATION QUARTILES of window_deg, not a hand-drawn classification: the cuts
+    are whatever the 104 spots turn out to be, and they are reported so the reader can see
+    them. Returns (bands, spearman_of_per_spot_median_vs_window, cuts).
+    """
+    usable = [s for s in spots if s.get("window_deg") is not None and s.get("residuals")]
+    if len(usable) < n_bands:
+        return [], None, []
+    widths = [float(s["window_deg"]) for s in usable]
+    cuts = statistics.quantiles(widths, n=n_bands, method="inclusive")
+    bands = []
+    for i in range(n_bands):
+        lo = -math.inf if i == 0 else cuts[i - 1]
+        hi = math.inf if i == n_bands - 1 else cuts[i]
+        members = [s for s in usable
+                   if (lo < float(s["window_deg"]) <= hi or (i == 0 and float(s["window_deg"]) <= hi))]
+        res = [r for s in members for r in s["residuals"]]
+        st = band_stats(res)
+        w = [float(s["window_deg"]) for s in members]
+        bands.append({
+            "band": i + 1,
+            "window_lo": (min(w) if w else None), "window_hi": (max(w) if w else None),
+            "n_spots": len(members), "stats": st,
+            # The geometry-only expectation at this band's MEDIAN window, for scale.
+            "isotropic_bias": ((isotropic_ratio(statistics.median(w)) - 1.0) if w else None),
+        })
+    per_spot_w = [float(s["window_deg"]) for s in usable]
+    per_spot_med = [statistics.median(s["residuals"]) for s in usable]
+    return bands, spearman(per_spot_w, per_spot_med), cuts
+
+
+def obliquity_bands(pairs, edges=OBLIQUITY_BAND_EDGES):
+    """Residual by |swell dir - shore normal|, POOLED and DEMEANED WITHIN SPOT.
+
+    The demeaned half is the one that answers Q3. Pooling across spots confounds obliquity
+    with exposure — the spots that see oblique swell are largely the sheltered ones — so a
+    pooled trend is consistent with the hypothesis without being evidence for it. Subtracting
+    each spot's own median residual removes the whole between-spot term, and what remains is
+    the hour-to-hour effect at fixed geometry. That is the signature the brief calls hard to
+    explain any other way, and it is the one that can actually carry that weight.
+
+    Returns {bands: [...], pooled_slope, within_slope, n}.
+    """
+    usable = [p for p in pairs if p.get("obliquity_deg") is not None]
+    if not usable:
+        return {"bands": [], "pooled_slope": None, "within_slope": None, "n": 0}
+    by_slug = {}
+    for p in usable:
+        by_slug.setdefault(p.get("slug"), []).append(p["residual"])
+    med = {k: statistics.median(v) for k, v in by_slug.items()}
+    dem = [p["residual"] - med[p.get("slug")] for p in usable]
+    obl = [p["obliquity_deg"] for p in usable]
+    bands = []
+    for i, lo in enumerate(edges):
+        hi = edges[i + 1] if i + 1 < len(edges) else math.inf
+        idx = [k for k, o in enumerate(obl) if lo <= o < hi]
+        bands.append({
+            "lo": lo, "hi": (None if hi == math.inf else hi),
+            "pooled": band_stats([usable[k]["residual"] for k in idx]),
+            "within_spot": band_stats([dem[k] for k in idx]),
+            "n_spots": len({usable[k].get("slug") for k in idx}),
+        })
+    return {"bands": bands,
+            "pooled_slope": ols_slope(obl, [p["residual"] for p in usable]),
+            "within_slope": ols_slope(obl, dem),
+            "n": len(usable)}
+
+
+def swell_only_comparison(pairs):
+    """Total-Hs against swell-only Hs on the IDENTICAL subsample of joined pairs.
+
+    ONE VARIABLE MOVES. Same hours, same Tp, same two depths, same deshoal — only which
+    height column feeds it changes. Reporting the total-Hs numbers restricted to this same
+    subsample, rather than against the whole-roster total, is what makes the delta
+    attributable to wind sea instead of to a change in which hours were included; the swell
+    columns are sparser than the total ones (not every NDBC station files a .spec) and an
+    unrestricted comparison would confound the two.
+
+    The two partitions are not defined identically — MOP's is an energy integral below
+    0.10 Hz, NDBC's SwH is the station's own spectral separation — so this bounds the wind-sea
+    contribution rather than measuring it exactly. That is enough to decide P4.
+    """
+    both = [p for p in pairs if p.get("residual_swell") is not None]
+    if not both:
+        return {"n": 0, "total": None, "swell": None, "corr_total": None,
+                "corr_swell": None, "delta_bias": None, "coverage_frac": 0.0}
+    tot = band_stats([p["residual"] for p in both])
+    swl = band_stats([p["residual_swell"] for p in both])
+    return {
+        "n": len(both),
+        "coverage_frac": len(both) / len(pairs) if pairs else 0.0,
+        "total": tot, "swell": swl,
+        "corr_total": pearson([p["h0_mop_m"] for p in both], [p["h0_buoy_m"] for p in both]),
+        "corr_swell": pearson([p["h0_mop_swell_m"] for p in both],
+                              [p["h0_buoy_swell_m"] for p in both]),
+        "delta_bias": swl["bias_frac"] - tot["bias_frac"],
+    }
+
+
 def circ_delta(a, b):
     """Smallest absolute angle between two bearings, in [0, 180]."""
     if a is None or b is None:
@@ -565,8 +920,15 @@ def circ_delta(a, b):
 
 
 def build_pairs(mop_rows, buoy_rows, mop_depth_m, buoy_dep_m, shore_normal,
-                tol_s=JOIN_TOLERANCE_S, hs_floor=HS_FLOOR_M):
-    """Joined, deshoaled pairs for one spot. Pure — no network, so the selftest drives it."""
+                tol_s=JOIN_TOLERANCE_S, hs_floor=HS_FLOOR_M, slug=None):
+    """Joined, deshoaled pairs for one spot. Pure — no network, so the selftest drives it.
+
+    Each pair carries TWO residuals. `residual` is run 1's, on the total heights, unchanged.
+    `residual_swell` is the same arithmetic on the swell-only heights and is None whenever
+    either side lacks one. They are built on the same joined hour with the same Tp and the
+    same two depths, which is what lets P4 attribute any difference between them to wind sea
+    and to nothing else. *slug* is carried so obliquity_bands can demean within spot.
+    """
     pairs, blocked = [], 0
     for j in join_within(mop_rows, buoy_rows, tol_s):
         m, b = j["mop"], j["buoy"]
@@ -580,11 +942,28 @@ def build_pairs(mop_rows, buoy_rows, mop_depth_m, buoy_dep_m, shore_normal,
         h0_buoy = deshoal(b["hs"], tp, buoy_dep_m)
         if h0_mop is None or h0_buoy is None or h0_buoy <= 0:
             continue
+        # THE SAME Tp DELIBERATELY. The swell partition's own peak period would be the more
+        # physical choice in isolation, but it would move two variables at once and destroy
+        # the discriminator: with Tp held fixed, the only thing separating residual_swell
+        # from residual is the height. The floor applies to the swell heights too — a 0.1 m
+        # swell partition is noise on both sides for the same reason a 0.1 m total is.
+        ms, bs = m.get("swell_hs"), b.get("swell_hs")
+        h0_ms = h0_bs = res_s = None
+        if ms is not None and bs is not None and ms >= hs_floor and bs >= hs_floor:
+            h0_ms = deshoal(ms, tp, mop_depth_m)
+            h0_bs = deshoal(bs, tp, buoy_dep_m)
+            if h0_ms is not None and h0_bs is not None and h0_bs > 0:
+                res_s = h0_ms / h0_bs - 1.0
+            else:
+                h0_ms = h0_bs = None
         pairs.append({
-            "t": j["t"], "dt_s": j["dt_s"], "tp_s": tp,
+            "t": j["t"], "dt_s": j["dt_s"], "tp_s": tp, "slug": slug,
             "mop_hs_m": m["hs"], "buoy_hs_m": b["hs"],
             "h0_mop_m": h0_mop, "h0_buoy_m": h0_buoy,
             "residual": h0_mop / h0_buoy - 1.0,
+            "h0_mop_swell_m": h0_ms, "h0_buoy_swell_m": h0_bs,
+            "residual_swell": res_s,
+            "mop_depth_m": mop_depth_m,
             "obliquity_deg": circ_delta(m.get("dp"), shore_normal),
         })
     return pairs, blocked
@@ -659,8 +1038,9 @@ def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=O
         brows = buoys.get(s["nearest_buoy_id"]) or []
         pairs, blocked = build_pairs(mop_rows, brows, depth,
                                      depths.get(s["nearest_buoy_id"]),
-                                     meta.get("shore_normal"))
+                                     meta.get("shore_normal"), slug=slug)
         st = residual_stats(pairs)
+        wdeg = window_deg(s.get("swell_window_arcs"))
         by_spot[slug] = {
             "mop_point": pid, "mop_depth_m": depth,
             "mop_match_m": round(dist_m, 1),
@@ -668,6 +1048,11 @@ def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=O
             "buoy_km": s.get("nearest_buoy_dist_km"),
             "buoy_depth_m": depths.get(s["nearest_buoy_id"]),
             "n_mop_rows": len(mop_rows), "n_buoy_rows": len(brows),
+            # EXPOSURE, from the coastline raycast — see window_deg for why it is not
+            # circular against the MOP/buoy residual it is used to band.
+            "window_deg": wdeg,
+            "n_arcs": len(s.get("swell_window_arcs") or []),
+            "shore_normal": meta.get("shore_normal"),
             "blocked_small_hs": blocked, "stats": st,
         }
         all_pairs.extend(pairs)
@@ -676,6 +1061,18 @@ def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=O
 
     roster_stats = residual_stats(all_pairs)
     passed, lines = verdict(roster_stats)
+    # Grouped in ONE pass. The obvious comprehension rescans all_pairs per spot, which is
+    # 104 x 33,620 on the real population.
+    res_by_slug = {}
+    for p in all_pairs:
+        res_by_slug.setdefault(p.get("slug"), []).append(p["residual"])
+    exp_spots = [{"slug": k, "window_deg": v["window_deg"],
+                  "residuals": res_by_slug.get(k, [])}
+                 for k, v in by_spot.items()]
+    bands, exp_rho, cuts = exposure_bands(exp_spots)
+    obl = obliquity_bands(all_pairs)
+    swl = swell_only_comparison(all_pairs)
+    h2_ok, h2_lines = hypothesis_verdict(bands, exp_rho, obl, swl)
     result = {
         "generated_at": now.isoformat(),
         "window": {"t0": t0.isoformat(), "t1": now.isoformat(), "days_back": days_back},
@@ -685,10 +1082,30 @@ def run(days_back=DEFAULT_DAYS_BACK, max_buoy_km=DEFAULT_MAX_BUOY_KM, out_path=O
         "prediction": {"rms_pct_max": PREDICT_RMS_PCT_MAX,
                        "corr_min": PREDICT_CORR_MIN,
                        "period_slope_max_per_s": PREDICT_PERIOD_SLOPE_MAX},
+        "prediction_run2": {
+            "exposure_widest_bias_max": PREDICT_EXPOSURE_WIDEST_BIAS_MAX,
+            "exposure_spread_min": PREDICT_EXPOSURE_SPREAD_MIN,
+            "exposure_spearman_min": PREDICT_EXPOSURE_SPEARMAN_MIN,
+            "refute_exposure_spread_max": REFUTE_EXPOSURE_SPREAD_MAX,
+            "obliquity_within_slope_max": PREDICT_OBLIQUITY_WITHIN_SLOPE_MAX,
+            "refute_obliquity_within_slope_abs": REFUTE_OBLIQUITY_WITHIN_SLOPE_ABS,
+            "swell_only_delta_max": PREDICT_SWELL_ONLY_DELTA_MAX,
+            "refute_swell_only_delta_min": REFUTE_SWELL_ONLY_DELTA_MIN,
+        },
         "roster": roster_stats, "by_spot": by_spot,
+        "exposure": {"bands": bands, "spearman": exp_rho, "quartile_cuts": cuts},
+        "obliquity": obl,
+        "swell_only": swl,
+        # Still buoy-dependent, so NOT an answer to "a test without a buoy" — but free, and
+        # it probes the shoaling relation directly: if Ks were wrong, the residual would
+        # depend on how much deshoaling each point needed.
+        "residual_vs_mop_depth_slope_per_m": ols_slope(
+            [p["mop_depth_m"] for p in all_pairs if p.get("mop_depth_m") is not None],
+            [p["residual"] for p in all_pairs if p.get("mop_depth_m") is not None]),
         "skipped": skipped, "dropped": dropped,
         "buoy_depth_unknown": n_unknown,
         "passed": passed, "verdict_lines": lines,
+        "filtering_hypothesis_supported": h2_ok, "hypothesis_lines": h2_lines,
     }
     _print_report(result)
     json.dump(result, open(out_path, "w"), indent=2, default=str)
@@ -744,11 +1161,126 @@ def _print_report(res):
     ranked = sorted(((v["stats"]["rms_pct"], k) for k, v in res["by_spot"].items()
                      if v["stats"]), reverse=True)
     print("WORST 10 SPOTS BY RMS")
-    print(f"  {'spot':<34}{'pairs':>7}{'RMS%':>8}{'bias':>8}{'depth':>7}  buoy")
+    print(f"  {'spot':<34}{'pairs':>7}{'RMS%':>8}{'bias':>8}{'depth':>7}{'window':>8}  buoy")
     for rms, slug in ranked[:10]:
         v = res["by_spot"][slug]
         print(f"  {slug[:33]:<34}{v['stats']['n']:>7}{rms:>8.1f}"
-              f"{v['stats']['bias_frac']:>+8.2f}{v['mop_depth_m']:>7.1f}  {v['buoy_id']}")
+              f"{v['stats']['bias_frac']:>+8.2f}{v['mop_depth_m']:>7.1f}"
+              f"{v.get('window_deg', 0):>8}  {v['buoy_id']}")
+    _print_hypothesis(res)
+
+
+def _print_hypothesis(res):
+    """The run-2 tests. Printed AFTER run 1's verdict so the original result stands first."""
+    print()
+    print("=" * 78)
+    print("RUN 2 — WHY? TESTING THE DIRECTIONAL-FILTERING HYPOTHESIS")
+    print("=" * 78)
+    print("  The claim under test: MOP is a spectral refraction model, so its waveHs at a")
+    print("  nearshore point has ALREADY had energy removed that never reaches that point.")
+    print("  A buoy offshore measures the whole sea. If so we are not comparing a shoaled")
+    print("  height against its own deep-water source, and deshoaling cannot recover energy")
+    print("  MOP removed on purpose.")
+    print()
+    print("  REGISTERED BEFORE THE NUMBERS (constants at the top of this file):")
+    print("    P2  bias must move toward zero as the window widens, monotonically;")
+    print(f"        widest quartile |median bias| <= {PREDICT_EXPOSURE_WIDEST_BIAS_MAX}; "
+          f"spread >= {PREDICT_EXPOSURE_SPREAD_MIN};")
+    print(f"        Spearman >= {PREDICT_EXPOSURE_SPEARMAN_MIN}.  "
+          f"REFUTED if the spread is < {REFUTE_EXPOSURE_SPREAD_MAX} (flat).")
+    print(f"    P3  within-spot obliquity slope <= {PREDICT_OBLIQUITY_WITHIN_SLOPE_MAX}/deg.")
+    print(f"        REFUTED if |slope| < {REFUTE_OBLIQUITY_WITHIN_SLOPE_ABS} — then run 1's")
+    print( "        pooled slope was a between-spot artefact and means nothing.")
+    print(f"    P4  swell-only rerun must move the bias by <= "
+          f"{PREDICT_SWELL_ONLY_DELTA_MAX}.")
+    print(f"        REFUTED if it moves >= {REFUTE_SWELL_ONLY_DELTA_MIN} toward zero — then")
+    print( "        the deficit was wind sea in the buoy's .std height, not MOP filtering.")
+
+    exp = res.get("exposure") or {}
+    print()
+    print("P2 — BIAS BY EXPOSURE (open swell window, union of raycast arcs)")
+    cuts = exp.get("quartile_cuts") or []
+    if cuts:
+        print(f"  quartile cuts at {', '.join(f'{c:.0f}' for c in cuts)} deg "
+              f"(data-derived, not chosen)")
+    print(f"  {'band':<6}{'window deg':>12}{'spots':>7}{'pairs':>8}{'median':>9}{'bias':>8}"
+          f"{'RMS%':>8}{'geom-only':>11}")
+    for b in exp.get("bands") or []:
+        s = b.get("stats")
+        if not s:
+            continue
+        iso = b.get("isotropic_bias")
+        rng = "%.0f-%.0f" % (b["window_lo"], b["window_hi"])
+        iso_s = "n/a" if iso is None else "%+.3f" % iso
+        print(f"  {b['band']:<6}{rng:>12}"
+              f"{b['n_spots']:>7}{s['n']:>8}{s['median_frac']:>+9.3f}{s['bias_frac']:>+8.3f}"
+              f"{s['rms_pct']:>8.1f}{iso_s:>11}")
+    rho = exp.get("spearman")
+    rho_s = "n/a" if rho is None else "%+.3f" % rho
+    print(f"  Spearman(window_deg, per-spot median bias) = {rho_s}")
+    print("  'geom-only' is the bias window geometry ALONE could produce for a BROAD sea:")
+    print("  sqrt(w/180) - 1. Narrow real swell can exceed it either way — it is a scale")
+    print("  reference for how much of the deficit geometry can account for, not a bound.")
+
+    obl = res.get("obliquity") or {}
+    print()
+    print("P3 — BIAS BY OBLIQUITY |MOP Dp - shore normal|, PER HOUR")
+    print(f"  {'band':<10}{'pairs':>8}{'spots':>7}{'pooled med':>12}{'within-spot med':>17}")
+    for b in obl.get("bands") or []:
+        p, w = b.get("pooled"), b.get("within_spot")
+        if not p:
+            continue
+        lab = f"{b['lo']:.0f}-{b['hi']:.0f}" if b["hi"] is not None else f"{b['lo']:.0f}+"
+        print(f"  {lab:<10}{p['n']:>8}{b['n_spots']:>7}{p['median_frac']:>+12.3f}"
+              f"{w['median_frac']:>+17.3f}")
+    ps, ws = obl.get("pooled_slope"), obl.get("within_slope")
+    print(f"  pooled slope      {'n/a' if ps is None else f'{ps:+.6f}'} /deg")
+    print(f"  within-spot slope {'n/a' if ws is None else f'{ws:+.6f}'} /deg   "
+          f"<- THE TEST. The pooled column mixes obliquity with which spots are sheltered;")
+    print("                                       the within-spot column removes each spot's "
+          "own median first.")
+
+    sw = res.get("swell_only") or {}
+    print()
+    print("P4 — COMPETING HYPOTHESIS: wind sea in the buoy's .std height")
+    print("  buoy_observations.hs is NDBC .std, the DOMINANT (wind sea + swell) height")
+    print("  (migration 004). Both sides also carry a swell-only height. Same hours, same Tp,")
+    print("  same depths — only the height column changes.")
+    if not sw.get("n"):
+        print("  NO PAIRS carry a swell partition on both sides — P4 is untestable on this run.")
+    else:
+        t, s = sw["total"], sw["swell"]
+        ct = "n/a" if sw["corr_total"] is None else "%.3f" % sw["corr_total"]
+        cs = "n/a" if sw["corr_swell"] is None else "%.3f" % sw["corr_swell"]
+        print(f"  subsample             {sw['n']} pairs "
+              f"({100.0 * sw['coverage_frac']:.0f}% of the roster)")
+        print(f"  {'':<22}{'bias':>9}{'median':>9}{'RMS%':>8}{'corr':>8}")
+        print(f"  {'total Hs (run 1)':<22}{t['bias_frac']:>+9.3f}{t['median_frac']:>+9.3f}"
+              f"{t['rms_pct']:>8.1f}{ct:>8}")
+        print(f"  {'swell only':<22}{s['bias_frac']:>+9.3f}{s['median_frac']:>+9.3f}"
+              f"{s['rms_pct']:>8.1f}{cs:>8}")
+        print(f"  delta bias            {sw['delta_bias']:+.3f}")
+
+    ds = res.get("residual_vs_mop_depth_slope_per_m")
+    print()
+    print("  DIAGNOSTIC (still buoy-dependent, so NOT a buoy-free test): residual vs MOP")
+    print(f"  point depth = {'n/a' if ds is None else f'{ds:+.5f}'} /m. If Ks were wrong the")
+    print( "  residual would track how much deshoaling each point needed.")
+
+    print()
+    for ln in res.get("hypothesis_lines") or []:
+        print("  " + ln)
+    print()
+    if res.get("filtering_hypothesis_supported"):
+        print("  HYPOTHESIS SUPPORTED. The deficit concentrates where MOP filters, varies with")
+        print("  swell angle INSIDE a spot, and survives the swell-only rerun. Run 1's absolute")
+        print("  bias and correlation were therefore never diagnostic of the shoaling relation:")
+        print("  they measured the MOP-to-buoy transfer function, which is not what was on test.")
+        print("  The PERIOD slope was the part of run 1 that could test Ks, and it passed.")
+    else:
+        print("  HYPOTHESIS NOT SUPPORTED on this evidence. Read the lines above: a REFUTED")
+        print("  line means the deficit is something else and the transform is genuinely")
+        print("  suspect; a FAIL line means this run could not separate the mechanisms.")
 
 
 # --------------------------------------------------------------------------- #
@@ -903,6 +1435,143 @@ def run_selftest():
           build_pairs([{"t": 3600, "hs": 0.1, "tp": 12.6, "dp": 280.0}],
                       [{"t": 3900, "hs": 1.0, "tp": 12.0}], 10.0, None, 270.0)[1] == 1)
 
+    # --- RUN 2: exposure, obliquity, swell-only ------------------------------- #
+    # window_deg uses interpret.bearing_in_arc, so these literals were cross-checked by hand
+    # from the pad formula pad = (span - ((max-min) mod 360))/2 before being written down.
+    # {min 189, max 251, span 66}: pad 2, sector [187, 253], 67 integer bearings.
+    # {min 285, max 327, span 46}: pad 2, sector [283, 329], 47. Disjoint -> 114.
+    a38 = [{"min": 189, "max": 251, "span": 66}, {"min": 285, "max": 327, "span": 46}]
+    check("window_deg of 38th Avenue's two arcs is 114", window_deg(a38) == 114)
+    check("window_deg of one arc alone is 67", window_deg(a38[:1]) == 67)
+    check("no arcs is a zero window, not a full one", window_deg([]) == 0)
+    check("window_deg of None is 0", window_deg(None) == 0)
+    # A 0/360 wrap needs no special case: {340, 20, span 44} -> pad 2 -> [338, 22] -> 45.
+    check("a wrapping arc is measured across 0/360",
+          window_deg([{"min": 340, "max": 20, "span": 44}]) == 45)
+    # OVERLAP MUST COUNT ONCE. [98,202] u [148,252] = [98,252] = 155, not 104+104.
+    check("overlapping arcs count their union, not their sum",
+          window_deg([{"min": 100, "max": 200, "span": 104},
+                      {"min": 150, "max": 250, "span": 104}]) == 155)
+    check("a fully open window saturates at 360",
+          window_deg([{"min": 0, "max": 359, "span": 360}]) == 360)
+
+    # sqrt(w/180) - 1, to 6 dp: w=45 -> -0.5, w=90 -> -0.292893, w=180 -> 0.0,
+    # w=148 (the population median) -> -0.093235, which is the number that matters.
+    check("isotropic_ratio at a 45 deg window is 0.5", close(isotropic_ratio(45), 0.5))
+    check("isotropic_ratio at 90 deg is 0.707107", close(isotropic_ratio(90), 0.707107, 1e-6))
+    check("a full half-plane window predicts no deficit", close(isotropic_ratio(180), 1.0))
+    check("at the population median window of 148 deg, geometry alone gives -0.0932",
+          close(isotropic_ratio(148) - 1.0, -0.093235, 1e-6))
+    check("isotropic_ratio of None is None", isotropic_ratio(None) is None)
+
+    # Ranks with ties AVERAGED, not competition-ranked: [10,20,20,40] -> [1, 2.5, 2.5, 4].
+    check("tied ranks are averaged", _rank([10, 20, 20, 40]) == [1.0, 2.5, 2.5, 4.0])
+    check("spearman of a monotone pair is 1.0",
+          close(spearman([1, 2, 3, 4], [10, 20, 30, 40]), 1.0))
+    check("spearman is 1.0 for a NON-linear monotone pair, where pearson is not",
+          close(spearman([1, 2, 3, 4], [1, 4, 9, 1000]), 1.0))
+    check("spearman of a reversed pair is -1.0",
+          close(spearman([1, 2, 3, 4], [40, 30, 20, 10]), -1.0))
+    check("spearman of too few points is None", spearman([1, 2], [1, 2]) is None)
+
+    check("band_stats of nothing is None", band_stats([]) is None)
+    check("band_stats ignores None entries", band_stats([None, 0.0, None])["n"] == 1)
+    # mean 0, median 0, RMS = sqrt((0.09+0+0.09)/3) = 0.244949 -> 24.4949%
+    bs = band_stats([-0.3, 0.0, 0.3])
+    check("band_stats mean/median/RMS on a symmetric triple",
+          bs["n"] == 3 and close(bs["bias_frac"], 0.0) and close(bs["median_frac"], 0.0)
+          and close(bs["rms_pct"], 24.494897, 1e-5))
+
+    # Quartile cuts of the 8 widths below are 95 / 130 / 165 under the inclusive method.
+    ex_spots = [{"slug": f"s{i}", "window_deg": w, "residuals": [r]}
+                for i, (w, r) in enumerate([(60.0, -0.50), (80.0, -0.40), (100.0, -0.30),
+                                            (120.0, -0.20), (140.0, -0.15), (160.0, -0.10),
+                                            (180.0, -0.05), (200.0, 0.00)])]
+    eb, rho, cuts = exposure_bands(ex_spots)
+    check("exposure quartile cuts are data-derived, not chosen",
+          [round(c, 1) for c in cuts] == [95.0, 130.0, 165.0])
+    check("four bands, two spots each on this fixture",
+          [b["n_spots"] for b in eb] == [2, 2, 2, 2])
+    check("band 1 is the narrowest windows", (eb[0]["window_lo"], eb[0]["window_hi"]) == (60.0, 80.0))
+    check("band 4 is the widest windows", (eb[3]["window_lo"], eb[3]["window_hi"]) == (180.0, 200.0))
+    # Band 1 medians -0.50 and -0.40 -> -0.45; band 4 -0.05 and 0.00 -> -0.025.
+    check("band medians read the right residuals",
+          close(eb[0]["stats"]["median_frac"], -0.45)
+          and close(eb[3]["stats"]["median_frac"], -0.025))
+    check("a perfectly monotone exposure trend gives Spearman 1.0", close(rho, 1.0))
+    # THE REFUTATION CASE MUST ALSO WORK: a flat bias must NOT produce a trend.
+    flat = [{"slug": f"f{i}", "window_deg": w, "residuals": [-0.33]}
+            for i, w in enumerate([60.0, 80.0, 100.0, 120.0, 140.0, 160.0, 180.0, 200.0])]
+    fb, frho, _ = exposure_bands(flat)
+    check("a bias that is flat across exposure yields zero spread",
+          close(fb[3]["stats"]["median_frac"] - fb[0]["stats"]["median_frac"], 0.0))
+    check("a flat bias has an undefined rank correlation, not a spurious one", frho is None)
+
+    # OBLIQUITY, and the point of the within-spot column. Two spots with DIFFERENT levels
+    # (-0.5 and -0.1) and NO within-spot obliquity effect at all. Pooled, the bias looks like
+    # it tracks obliquity, purely because the sheltered spot sees the oblique hours. Demeaned,
+    # it must vanish — that is the whole reason the demeaned column exists.
+    fake = ([{"slug": "sheltered", "residual": -0.5, "obliquity_deg": o} for o in (50.0, 70.0)]
+            + [{"slug": "open", "residual": -0.1, "obliquity_deg": o} for o in (5.0, 20.0)])
+    ob = obliquity_bands(fake)
+    check("pooled obliquity slope is NEGATIVE on a purely between-spot fixture",
+          ob["pooled_slope"] is not None and ob["pooled_slope"] < -0.001)
+    check("the within-spot slope is EXACTLY zero there — the artefact is removed",
+          close(ob["within_slope"], 0.0, 1e-12))
+    check("obliquity bands land in the right buckets",
+          [b["pooled"]["n"] if b["pooled"] else 0 for b in ob["bands"]] == [1, 1, 0, 1, 1, 0])
+    # And a REAL within-spot effect must survive demeaning: one spot, residual falling with
+    # obliquity. Slope over (0,-0.10) (30,-0.13) (60,-0.16) (90,-0.19) is exactly -0.001/deg.
+    real = [{"slug": "one", "residual": r, "obliquity_deg": o}
+            for o, r in ((0.0, -0.10), (30.0, -0.13), (60.0, -0.16), (90.0, -0.19))]
+    rb = obliquity_bands(real)
+    check("a genuine within-spot obliquity trend survives demeaning",
+          close(rb["within_slope"], -0.001, 1e-12))
+    check("obliquity_bands on nothing reports zero rather than raising",
+          obliquity_bands([])["n"] == 0)
+
+    # SWELL-ONLY: the like-for-like restriction is the load-bearing part. Pair 3 has no
+    # swell residual, so it must be excluded from BOTH columns — including the total one.
+    sp = [{"residual": -0.30, "residual_swell": -0.05, "h0_mop_m": 1.0, "h0_buoy_m": 1.4,
+           "h0_mop_swell_m": 1.0, "h0_buoy_swell_m": 1.05},
+          {"residual": -0.40, "residual_swell": -0.15, "h0_mop_m": 2.0, "h0_buoy_m": 3.3,
+           "h0_mop_swell_m": 2.0, "h0_buoy_swell_m": 2.35},
+          {"residual": 0.90, "residual_swell": None, "h0_mop_m": 9.0, "h0_buoy_m": 4.7,
+           "h0_mop_swell_m": None, "h0_buoy_swell_m": None}]
+    sc = swell_only_comparison(sp)
+    check("swell-only uses only the pairs that carry BOTH partitions", sc["n"] == 2)
+    check("the total column is restricted to that SAME subsample, not the whole roster",
+          close(sc["total"]["bias_frac"], -0.35))
+    check("the swell column is the swell residuals", close(sc["swell"]["bias_frac"], -0.10))
+    check("delta bias is swell minus total", close(sc["delta_bias"], 0.25))
+    check("coverage is reported, not assumed", close(sc["coverage_frac"], 2.0 / 3.0))
+    check("swell-only on pairs with no partitions reports n=0 rather than raising",
+          swell_only_comparison([{"residual": -0.3, "residual_swell": None}])["n"] == 0)
+
+    # build_pairs must now carry BOTH residuals off the SAME joined hour.
+    bp, _ = build_pairs([{"t": 3600, "hs": 1.0, "tp": 12.6, "dp": 280.0, "swell_hs": 0.8}],
+                        [{"t": 3900, "hs": 1.0, "tp": 12.0, "swell_hs": 0.8}],
+                        10.0, None, 270.0, slug="x")
+    check("build_pairs carries the spot slug for within-spot demeaning", bp[0]["slug"] == "x")
+    # H0 = 1.0/Ks(12.6,10) = 1/1.062516 = 0.941163 -> residual -0.058837. The swell pair is
+    # 0.8/1.062516 = 0.752930 against 0.8 -> the SAME -0.058837, because the ratio is what
+    # is measured and both sides were scaled alike.
+    check("the swell residual is computed on the same hour with the same Tp",
+          close(bp[0]["residual_swell"], -0.058837, 1e-6))
+    check("MOP point depth is carried for the depth diagnostic", bp[0]["mop_depth_m"] == 10.0)
+    # A missing partition on EITHER side must yield None, never a silent fallback to total.
+    bp2, _ = build_pairs([{"t": 3600, "hs": 1.0, "tp": 12.6, "dp": 280.0, "swell_hs": None}],
+                         [{"t": 3900, "hs": 1.0, "tp": 12.0, "swell_hs": 0.8}],
+                         10.0, None, 270.0)
+    check("a missing MOP partition gives residual_swell None, not a fallback to total Hs",
+          bp2[0]["residual_swell"] is None and bp2[0]["residual"] is not None)
+    # The small-Hs floor applies to the partitions too: 0.1 m of swell is noise either side.
+    bp3, _ = build_pairs([{"t": 3600, "hs": 1.0, "tp": 12.6, "dp": 280.0, "swell_hs": 0.1}],
+                         [{"t": 3900, "hs": 1.0, "tp": 12.0, "swell_hs": 0.8}],
+                         10.0, None, 270.0)
+    check("the Hs floor blocks a noise-level swell partition too",
+          bp3[0]["residual_swell"] is None)
+
     # --- chunking: the split itself ------------------------------------------ #
     # chunk_ids is mop_face_validation's and is pinned there too; these cases are the ones
     # THIS caller depends on, at THIS chunk size, over TEXT ids. Expected chunks are written
@@ -989,24 +1658,24 @@ def run_selftest():
     #                     01:30Z 1785547800   02:00Z 1785549600
     brows = [
         {"id": 90, "buoy_id": "46042", "observed_at": "2026-08-01T01:30:00+00:00",
-         "hs": 1.5, "tp": 12.0},
+         "hs": 1.5, "tp": 12.0, "swell_hs": 1.2},
         {"id": 91, "buoy_id": "46053", "observed_at": "2026-08-01T00:30:00+00:00",
-         "hs": 2.0, "tp": 14.0},
+         "hs": 2.0, "tp": 14.0, "swell_hs": 1.8},
         {"id": 92, "buoy_id": "46042", "observed_at": "2026-08-01T00:00:00+00:00",
-         "hs": 1.0, "tp": 11.0},
+         "hs": 1.0, "tp": 11.0, "swell_hs": None},     # NULL .spec: row KEPT, unlike NULL hs
         {"id": 93, "buoy_id": "46086", "observed_at": "2026-08-01T02:00:00+00:00",
-         "hs": 3.0, "tp": None},                       # NULL tp survives, as None
+         "hs": 3.0, "tp": None, "swell_hs": 2.5},      # NULL tp survives, as None
         {"id": 94, "buoy_id": "46053", "observed_at": "2026-08-01T01:00:00+00:00",
-         "hs": None, "tp": 13.0},                      # NULL hs is dropped
+         "hs": None, "tp": 13.0, "swell_hs": 1.0},     # NULL hs is dropped
         {"id": 95, "buoy_id": "46053", "observed_at": "2026-08-01T01:30:00+00:00",
-         "hs": 2.5, "tp": 15.0},
+         "hs": 2.5, "tp": 15.0, "swell_hs": 2.0},
     ]
     b_expect = {
-        "46042": [{"t": 1785542400.0, "hs": 1.0, "tp": 11.0},
-                  {"t": 1785547800.0, "hs": 1.5, "tp": 12.0}],
-        "46053": [{"t": 1785544200.0, "hs": 2.0, "tp": 14.0},
-                  {"t": 1785547800.0, "hs": 2.5, "tp": 15.0}],
-        "46086": [{"t": 1785549600.0, "hs": 3.0, "tp": None}],
+        "46042": [{"t": 1785542400.0, "hs": 1.0, "tp": 11.0, "swell_hs": None},
+                  {"t": 1785547800.0, "hs": 1.5, "tp": 12.0, "swell_hs": 1.2}],
+        "46053": [{"t": 1785544200.0, "hs": 2.0, "tp": 14.0, "swell_hs": 1.8},
+                  {"t": 1785547800.0, "hs": 2.5, "tp": 15.0, "swell_hs": 2.0}],
+        "46086": [{"t": 1785549600.0, "hs": 3.0, "tp": None, "swell_hs": 2.5}],
     }
     bids = ["46042", "46053", "46086"]
     fc1 = _FakeClient(brows)
@@ -1022,6 +1691,13 @@ def run_selftest():
     check("a NULL hs row is dropped, not carried as None",
           len(got_1["46053"]) == 2)
     check("a NULL tp row is KEPT with tp None", got_1["46086"][0]["tp"] is None)
+    # The two NULLs are treated DIFFERENTLY on purpose: hs is what the comparison needs, so
+    # its absence drops the row; swell_hs only feeds P4, so its absence must not cost the
+    # total-Hs comparison an hour it could otherwise have used.
+    check("a NULL swell_hs KEEPS its row — P4's sparseness must not shrink the run 1 sample",
+          got_1["46042"][0]["swell_hs"] is None and got_1["46042"][0]["hs"] == 1.0)
+    check("the swell partition is carried through when present",
+          got_1["46053"][1]["swell_hs"] == 2.0)
     check("a buoy absent from the data is absent from the result, not empty",
           fetch_buoy_series(_FakeClient(brows), ["46042", "99999"], "t0", "t1",
                             chunk_size=1, page=1000).keys() == {"46042"})
