@@ -162,3 +162,9 @@ scripts/*.grib2
 mop_points.json
 mop_ca_verdicts.json
 mop_ca_buoy_recovery.json
+# mop_spread.json holds the per-spot face_ratio medians that scripts/build_face_factors.py
+# turns into the committed pipeline/data/spot_face_factors.json. It was BELIEVED to be
+# ignored and was not — only the three names above were listed, so `git add scripts/` would
+# have committed it. Same Mac-local, rebuild-on-demand status.
+mop_spread.json
+

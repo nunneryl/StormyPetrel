@@ -1926,6 +1926,28 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:  # noqa: BLE001
         log.exception("interpret: NWPS override step failed — keeping orientation-path ratings")
 
+    # THE SINGLE FACE-CORRECTION SEAM, and it is HERE rather than inside rate_spot because
+    # this is where the four producers actually converge. rate_spot writes face_ft (the WW3
+    # and NWPS-fallback producers), then apply_mop_overrides overwrites it, then
+    # apply_nwps_overrides overwrites it again — both AFTER rate_spot has returned. A seam
+    # inside rate_spot would be overwritten by both overrides on every hour they cover, so a
+    # spot's face would jump between corrected and uncorrected on adjacent hours, which is
+    # the exact failure one seam exists to prevent. Everything above has finished writing
+    # face_ft by this line; nothing below writes it.
+    #
+    # NOT wrapped in try/except, deliberately, unlike the two override steps above. Those
+    # degrade to a coarser rating when they fail, which is a worse forecast but a valid one.
+    # This step failing means a factor is mis-keyed or the file is malformed — a spot we
+    # believe is corrected is not — and shipping that silently is the thing the explicit
+    # None lookup exists to prevent. It fails the run.
+    from .forecast.face_correction import apply_face_corrections
+    face_stats = apply_face_corrections(ratings, spots)
+    if face_stats["corrected_spots"]:
+        log.info("interpret: face correction — %d spot(s) / %d spot-hours scaled by their "
+                 "measured MOP factor; %d spot(s) had no factor, %d skipped on the MOP tier",
+                 face_stats["corrected_spots"], face_stats["corrected_hours"],
+                 face_stats["no_factor"], face_stats["mop_tier_skipped"])
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
     log.info("interpret: wrote %d spots to %s", len(ratings), args.output)
