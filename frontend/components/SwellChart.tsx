@@ -99,7 +99,7 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               if (typeof value !== 'number') return [value, key];
               const v = `${value.toFixed(1)} ft`;
               const map: Record<string, string> = {
-                face: 'Face',
+                face: 'Swell height',
                 p1: 'P1', p2: 'P2', p3: 'P3', ws: 'Wind sea',
               };
               return [v, map[key as string] ?? key];

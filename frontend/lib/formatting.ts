@@ -42,6 +42,49 @@ export function fmtFt(v: number | null | undefined): string {
   return `${v.toFixed(1)}ft`;
 }
 
+/**
+ * The published SWELL HEIGHT, as a whole-foot band when one was measured and as the point
+ * estimate when one was not.
+ *
+ * THE LABEL IS "SWELL HEIGHT", NOT "FACE". What the pipeline publishes is CDIP MOP
+ * significant wave height at the 10-15 m contour, which CDIP states is generally outside
+ * the surf zone. It is not a breaking face and is no longer called one. Only the DISPLAY
+ * changed: face_ft / face_lo_ft / face_hi_ft keep their names in the database, the API and
+ * every query, because those are parsed and this is not.
+ *
+ * WHOLE FEET. The measured band is roughly +/-20%, so a tenth of a foot is precision the
+ * measurement does not have; "3-5 ft" is the honest resolution and "3.3-4.9 ft" is not.
+ *
+ * NEVER "3-3 ft". When both ends round to the same whole foot the band is narrower than
+ * the display can show, and the honest render is that single number — a repeated bound
+ * reads as a bug and tells the reader nothing the single value did not.
+ *
+ * NO BAND MEANS NO BAND. 466 of 648 spots have no measured spread, and they fall through
+ * to the point estimate rather than to a default width. A default would be indistinguishable
+ * from a measured one to anybody reading the site, which is precisely why there isn't one.
+ * The two states ARE distinguishable on the page: a band renders as "3-5 ft" and an
+ * unmeasured spot as "4.0ft", so the presence of a range is itself the signal that a
+ * spread was measured.
+ */
+export function fmtFtRange(
+  lo: number | null | undefined,
+  hi: number | null | undefined,
+  point: number | null | undefined,
+): string {
+  if (lo === null || lo === undefined || hi === null || hi === undefined) {
+    return fmtFt(point);
+  }
+  if (Number.isNaN(lo) || Number.isNaN(hi)) return fmtFt(point);
+  const l = Math.round(lo);
+  const h = Math.round(hi);
+  // Guard the ordering rather than assuming it. The pipeline divides by p75 and p25 so
+  // lo <= hi holds by construction, but this function is also fed straight from database
+  // columns, and a swapped pair should render as a band rather than as "5-3 ft".
+  const [a, b] = l <= h ? [l, h] : [h, l];
+  if (a === b) return `${a}ft`;
+  return `${a}-${b}ft`;
+}
+
 export function fmtSec(v: number | null | undefined): string {
   if (v === null || v === undefined) return '—';
   return `${v.toFixed(0)}s`;

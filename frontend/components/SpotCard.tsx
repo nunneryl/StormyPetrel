@@ -3,7 +3,7 @@ import type { SpotWithLatest } from '@/lib/types';
 import { StarRating } from './StarRating';
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
-import { fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
+import { fmtFtRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { tierFromStars } from '@/lib/ratings';
 
 type Variant = 'default' | 'rail';
@@ -49,7 +49,7 @@ export function SpotCard({
       </div>
       <div className="mt-2.5 flex items-center gap-3 text-xs text-text-secondary">
         <span className="font-bold text-text-primary text-base tabular-nums">
-          {fmtFt(f?.face_ft ?? null)}
+          {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
         </span>
         <span className="text-text-muted tabular-nums">
           {fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}

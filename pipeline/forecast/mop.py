@@ -42,14 +42,17 @@ from pathlib import Path
 import numpy as np
 
 from ..interpret import (
-    chop_factors, composite_stars, directional_gain, face_ft,
+    M_TO_FT, chop_factors, composite_stars, directional_gain,
     period_quality, wind_multiplier,
 )
 from urllib.error import HTTPError, URLError
 
 log = logging.getLogger("pipeline.forecast.mop")
 
-RATING_SOURCE = "ww3"          # face_ft shoaling factor — same as the validated chain
+# NO RATING_SOURCE HERE ANY MORE. It existed only to select a period_factor curve for
+# face_ft, and mop_stars no longer calls either — see the block comment in mop_stars for
+# why. nwps_nearshore keeps its own; this module having none is the point, because a
+# constant sitting unused is an invitation to wire it back up.
 SWELL_MAX_FREQ_HZ = 0.10       # swell band cutoff for the energy-spectrum split
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
@@ -161,7 +164,31 @@ def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
     dg = directional_gain(dp, arcs or [],
                           optimal if optimal is not None else shore_normal,
                           shore_normal)
-    face = face_ft(hs, tp, RATING_SOURCE)
+    # NO period_factor ON THIS PATH, DELIBERATELY. DO NOT RE-ADD IT.
+    #
+    # This used to be `face_ft(hs, tp, RATING_SOURCE)`, i.e. hs * period_factor(tp) *
+    # M_TO_FT, and that made the 48 MOP-tier spots publish ~16% more than the 132
+    # MOP-corrected spots at the same MOP height — 21.6% of their hours at 3+ stars
+    # against 9.1%. The two tiers were reading off the same MOP number and disagreeing
+    # about what it meant.
+    #
+    # WHY REMOVED RATHER THAN CORRECTED LIKE THE OTHER 132. The correction is measured as
+    # median(face_ft / (MOP Hs x M_TO_FT)) over a spot's hours. On this path face_ft IS
+    # MOP Hs x period_factor(tp) x M_TO_FT, so MOP Hs cancels identically and the measured
+    # factor reduces to median(period_factor(tp)) — nothing about the spot, only what
+    # periods happened to arrive during the measurement window. Confirmed empirically: the
+    # measured 12.6 s ratio of 1.16 against period_factor(12.6, "ww3") = 1.165 over 6,336
+    # spot-hours. Measuring it would spend a THREDDS sweep to recover a number this file
+    # can compute, and would then freeze it: a constant divisor applied at an hour whose Tp
+    # differs from the window median carries a -14% / +11% period-dependent error, where
+    # removing the term outright is exact at every Tp.
+    #
+    # WHAT THIS TIER NOW PUBLISHES is MOP nearshore significant wave height in feet, which
+    # is what the 132 corrected spots converge on too. That is why the label is SWELL
+    # HEIGHT and not face: CDIP publishes this at the 10-15 m contour, generally outside
+    # the surf zone. Re-adding period_factor here would silently reintroduce the tier gap
+    # AND make the label wrong again.
+    face = hs * M_TO_FT
     eff = face * dg
     # ONE computation yielding both the ratio and the multiplier, matching nwps_stars.
     # *chop* lets the caller pass the pair it already computed; when None this derives the

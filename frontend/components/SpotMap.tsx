@@ -5,7 +5,7 @@ import type { SpotWithLatest } from '@/lib/types';
 import { classifyWind, tierFromStars, windQualityLabel } from '@/lib/ratings';
 import {
   degToCardinal,
-  fmtFt,
+  fmtFtRange,
   fmtSec,
   msToMph,
   pickSwell,
@@ -354,7 +354,7 @@ function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
 
   const conditionsLine = `
     <div style="font-size:12px;color:#0F172A;margin-top:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-variant-numeric:tabular-nums;">
-      <span style="font-weight:700;">${escapeHtml(fmtFt(f?.face_ft ?? null))}</span>
+      <span style="font-weight:700;">${escapeHtml(fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null))}</span>
       <span style="color:#475569;">${escapeHtml(fmtSec(swellPeriod))}</span>
       ${swellArrow ? `<span style="color:#0369A1;display:inline-flex;align-items:center;gap:3px;">${swellArrow}</span>` : ''}
     </div>

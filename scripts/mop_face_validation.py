@@ -261,11 +261,23 @@ def join_on_hour(mop_by_hour: dict, rows: list) -> list[dict]:
 
 
 def _stats(values: list) -> dict:
-    """n / mean / median / p10 / p90 / min / max for a list of floats. Empty -> n 0."""
+    """n / mean / median / p10 / p25 / p75 / p90 / min / max for floats. Empty -> n 0.
+
+    p25 AND p75 ARE THE PUBLISHED BAND. p10/p90 stay because the exclusion rule in
+    build_face_factors is written against p90/p10 and re-basing an exclusion threshold is a
+    separate decision from choosing what to display. p25/p75 is what the site shows: at
+    roughly +/-20% it rounds a 4 ft number to 3-5 ft with about half the measured hours
+    inside, where p10/p90's +/-40% rounds it to 2-6 ft — a band wide enough always to be
+    right and therefore worth nothing to a reader.
+
+    NOTE THAT THESE CANNOT BE BACK-FILLED. The raw per-hour ratios are consumed here and
+    never written, so mop_spread.json carries only what this returns. Adding a quantile
+    means re-running this script; it cannot be recovered from an existing spread file.
+    """
     vals = [float(v) for v in values if v is not None and not math.isnan(float(v))]
     if not vals:
-        return {"n": 0, "mean": None, "median": None, "p10": None, "p90": None,
-                "min": None, "max": None}
+        return {"n": 0, "mean": None, "median": None, "p10": None, "p25": None,
+                "p75": None, "p90": None, "min": None, "max": None}
     s = sorted(vals)
 
     def pct(p: float) -> float:
@@ -276,7 +288,8 @@ def _stats(values: list) -> dict:
 
     return {
         "n": len(s), "mean": statistics.fmean(s), "median": statistics.median(s),
-        "p10": pct(0.10), "p90": pct(0.90), "min": s[0], "max": s[-1],
+        "p10": pct(0.10), "p25": pct(0.25), "p75": pct(0.75), "p90": pct(0.90),
+        "min": s[0], "max": s[-1],
     }
 
 
@@ -779,7 +792,22 @@ def run_selftest():
     check(f"stats median 3.0 ({st['median']})", st["median"] == 3.0)
     check(f"stats p10 1.0 ({st['p10']})", st["p10"] == 1.0)
     check(f"stats p90 5.0 ({st['p90']})", st["p90"] == 5.0)
+    # p25/p75 ARE THE PUBLISHED BAND — face_correction divides the corrected face by them.
+    # Losing them here would make the regenerated factor file carry no range and the whole
+    # feature would ship inert with nothing else failing, so they are pinned at the source.
+    # Same nearest-rank rule on [1,2,3,4,5]: p25 -> round(0.25*4)=1 -> 2, p75 -> round(0.75*4)=3 -> 4.
+    check(f"stats p25 2.0 ({st['p25']})", st["p25"] == 2.0)
+    check(f"stats p75 4.0 ({st['p75']})", st["p75"] == 4.0)
+    # And on [1..9], where len-1 = 8: p25 -> round(2.0)=2 -> 3, p75 -> round(6.0)=6 -> 7.
+    st9 = _stats([float(v) for v in (9, 1, 8, 2, 7, 3, 6, 4, 5)])
+    check(f"stats p25 on nine values is 3.0 ({st9['p25']})", st9["p25"] == 3.0)
+    check(f"stats p75 on nine values is 7.0 ({st9['p75']})", st9["p75"] == 7.0)
+    # The band must be INSIDE p10/p90, which is the whole reason for preferring it.
+    check("p10 <= p25 <= p75 <= p90",
+          st["p10"] <= st["p25"] <= st["p75"] <= st["p90"])
     check("stats on an empty list -> n 0, no crash", _stats([])["n"] == 0)
+    check("an empty list still carries the p25/p75 keys, as None",
+          _stats([])["p25"] is None and _stats([])["p75"] is None)
     check("None entries are dropped, not counted", _stats([1.0, None, 3.0])["n"] == 2)
 
     # --- height agreement ---------------------------------------------------- #

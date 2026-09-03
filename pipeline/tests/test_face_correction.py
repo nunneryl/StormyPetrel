@@ -536,6 +536,183 @@ def test_the_generator_excludes_the_mop_tier_from_the_committed_file():
                     {"a-mop-spot"})[0] == "mop_tier"
 
 
+# --------------------------------------------------------------------------- #
+# THE PUBLISHED BAND — p25/p75, and the absence of one                         #
+# --------------------------------------------------------------------------- #
+
+def _rec_banded(factor=2.0, p25=1.6, p75=2.5, **kw):
+    """A factor record carrying the published band. p25 < factor < p75, as a real one is."""
+    return _rec(factor, p25=p25, p75=p75, **kw)
+
+
+def test_the_band_divides_by_p75_for_the_low_end_and_p25_for_the_high():
+    """THE ARITHMETIC, against literals. The stored quantiles are quantiles of the RATIO
+    face_ft / (MOP Hs * 3.281), and the factor is a DIVISOR, so the LARGER quantile makes
+    the SMALLER height. Getting this backwards inverts the band and is invisible without a
+    test, because both ends still look like plausible feet.
+
+        face 8.0, p75 2.5 -> lo = 8.0 / 2.5 = 3.2
+        face 8.0, p25 1.6 -> hi = 8.0 / 1.6 = 5.0
+    """
+    lo, hi = FC.face_range(8.0, _rec_banded(p25=1.6, p75=2.5))
+    assert lo == 3.2, lo
+    assert hi == 5.0, hi
+    assert lo < hi
+
+
+def test_the_point_estimate_lands_inside_the_band():
+    """factor is the MEDIAN of the same distribution the quantiles come from, so
+    p25 <= factor <= p75 and therefore lo <= face/factor <= hi. Not an accident worth
+    leaving unpinned: it is what makes the published point and the published band agree.
+
+        face 8.0, factor 2.0 -> point = 4.0, and 3.2 <= 4.0 <= 5.0
+    """
+    rec = _rec_banded(factor=2.0, p25=1.6, p75=2.5)
+    lo, hi = FC.face_range(8.0, rec)
+    assert lo == 3.2 and hi == 5.0
+    assert lo <= 8.0 / 2.0 <= hi
+
+
+def test_a_record_with_no_quantiles_gets_no_band():
+    """THE 466 SPOTS, and the committed factor file as it stands today: neither carries
+    p25/p75, so both get (None, None) and publish the point alone. A default band would be
+    indistinguishable from a measured one on the page, which is the whole argument."""
+    assert FC.face_range(8.0, _rec(2.0)) == (None, None)
+    assert FC.face_range(8.0, None) == (None, None)
+    assert FC.face_range(None, _rec_banded()) == (None, None)
+
+
+def test_a_half_present_band_is_treated_as_absent_not_half_used():
+    """One measured end and one invented one is worse than no band — it looks measured."""
+    assert FC.face_range(8.0, _rec(2.0, p25=1.6)) == (None, None)
+    assert FC.face_range(8.0, _rec(2.0, p75=2.5)) == (None, None)
+
+
+def test_non_positive_or_unparseable_quantiles_get_no_band():
+    """A zero divisor is an infinity, not a wide band; a string is a corrupt file."""
+    assert FC.face_range(8.0, _rec(2.0, p25=0.0, p75=2.5)) == (None, None)
+    assert FC.face_range(8.0, _rec(2.0, p25=1.6, p75=-1.0)) == (None, None)
+    assert FC.face_range(8.0, _rec(2.0, p25="wide", p75=2.5)) == (None, None)
+
+
+def test_quantiles_out_of_order_are_declined_not_silently_swapped():
+    """A swap would hide the corruption and publish a band nobody could trace back."""
+    assert FC.face_range(8.0, _rec(2.0, p25=2.5, p75=1.6)) == (None, None)
+
+
+def test_the_band_is_written_on_the_corrected_face_not_the_published_one():
+    """Both ends carry the same 1/factor the point does, so the band moves WITH the
+    correction instead of straddling a number the site no longer shows.
+
+        published face 8.0, factor 2.0 -> corrected 4.0
+        lo = 4.0 / 2.5 = 1.6      hi = 4.0 / 1.6 = 2.5
+    """
+    ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+    st = FC.apply_face_corrections(
+        ratings, [_spot()], factors={"steamer-lane": _rec_banded(2.0, 1.6, 2.5)},
+        slug_for=lambda n: "steamer-lane", now=TODAY)
+    e = ratings["Steamer Lane"][0]
+    assert e["face_ft"] == 4.0, e["face_ft"]
+    assert e["face_lo_ft"] == 1.6, e["face_lo_ft"]
+    assert e["face_hi_ft"] == 2.5, e["face_hi_ft"]
+    assert st["ranged_hours"] == 1
+    assert st["spots_without_spread"] == 0
+
+
+def test_a_corrected_spot_with_no_spread_gets_NO_band_keys_at_all():
+    """Not None-valued keys — ABSENT keys. db_import reads with .get(), so an absent key
+    and a None both push NULL; the difference is that a written None invites a later reader
+    to treat the band as computed-and-empty rather than never measured."""
+    ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+    st = FC.apply_face_corrections(
+        ratings, [_spot()], factors={"steamer-lane": _rec(2.0)},
+        slug_for=lambda n: "steamer-lane", now=TODAY)
+    e = ratings["Steamer Lane"][0]
+    assert e["face_ft"] == 4.0, "the correction itself still ran"
+    assert "face_lo_ft" not in e, sorted(e)
+    assert "face_hi_ft" not in e, sorted(e)
+    assert st["ranged_hours"] == 0
+    assert st["spots_without_spread"] == 1
+
+
+def test_an_uncorrected_spot_gets_no_band_keys_either():
+    """A spot with no factor is untouched, so it cannot acquire a band by a later edit that
+    forgot the factor lookup was the gate. Two spots, so the factor map still resolves and
+    validate_factor_slugs is satisfied — the point is the spot NOT in it."""
+    slugs = {"Steamer Lane": "steamer-lane", "Pleasure Point": "pleasure-point"}
+    ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)],
+               "Pleasure Point": [_entry(face=8.0, eff=8.0)]}
+    FC.apply_face_corrections(
+        ratings, [_spot(), _spot("Pleasure Point")],
+        factors={"steamer-lane": _rec_banded(2.0, 1.6, 2.5)},
+        slug_for=lambda n: slugs[n], now=TODAY)
+    banded, bare = ratings["Steamer Lane"][0], ratings["Pleasure Point"][0]
+    assert banded["face_lo_ft"] == 1.6, "the factored spot did get a band"
+    assert bare["face_ft"] == 8.0, "the unfactored spot is untouched"
+    assert "face_lo_ft" not in bare and "face_hi_ft" not in bare, sorted(bare)
+
+
+def test_the_band_does_not_move_the_stars():
+    """STARS STAY A SINGLE VALUE. composite_stars is called on the corrected effective
+    size and nothing else; adding the band must not perturb it. Two runs on identical
+    input, one with quantiles and one without, must agree on stars to the bit.
+
+        eff 8.0 / factor 2.0 = 4.0 -> the SAME star input either way
+    """
+    banded = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+    plain = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+    FC.apply_face_corrections(banded, [_spot()], factors={"steamer-lane": _rec_banded(2.0, 1.6, 2.5)},
+                              slug_for=lambda n: "steamer-lane", now=TODAY)
+    FC.apply_face_corrections(plain, [_spot()], factors={"steamer-lane": _rec(2.0)},
+                              slug_for=lambda n: "steamer-lane", now=TODAY)
+    b, p = banded["Steamer Lane"][0], plain["Steamer Lane"][0]
+    assert b["stars"] == p["stars"], (b["stars"], p["stars"])
+    assert b["effective_size_ft"] == p["effective_size_ft"] == 4.0
+    assert b["face_ft"] == p["face_ft"] == 4.0
+    # And the star value itself is the literal the size ladder gives at 4.0 ft with
+    # neutral quality factors: _SIZE_POINTS has (4, 3) exactly, so raw = 3.0 -> 3.0.
+    assert b["stars"] == 3.0, b["stars"]
+
+
+def test_the_relabel_did_not_rename_a_single_parsed_field():
+    """DECISION 1 IS DISPLAY-ONLY, pinned at the field names.
+
+    The tile now says "Swell height" because what is published is MOP significant wave
+    height at the 10-15 m contour, not a breaking face. Nothing PARSES that string — but a
+    later hand could reasonably decide to "finish the job" and rename the column too, and
+    face_ft is referenced by db_import, both frontend select lists, daily_report,
+    surf_reports.forecast_face_ft and migration 015. This is the test that makes that a
+    deliberate migration rather than a silent break.
+
+    Written as literals, not derived from the code under test."""
+    ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+    FC.apply_face_corrections(
+        ratings, [_spot()], factors={"steamer-lane": _rec_banded(2.0, 1.6, 2.5)},
+        slug_for=lambda n: "steamer-lane", now=TODAY)
+    keys = set(ratings["Steamer Lane"][0])
+    for name in ("face_ft", "effective_size_ft", "face_lo_ft", "face_hi_ft", "stars"):
+        assert name in keys, f"{name} was renamed; db_import and the frontend read it"
+    # And the tempting new names are NOT present, so a half-done rename fails here.
+    for wrong in ("swell_height_ft", "swell_ft", "swell_lo_ft", "swell_hi_ft"):
+        assert wrong not in keys, f"{wrong} appeared — the column rename is a migration"
+
+
+def test_the_committed_factor_file_has_no_quantiles_yet_so_nothing_publishes_a_band():
+    """THE SHIPPED STATE, pinned honestly. The band code is inert until the measurement is
+    re-run — mop_spread.json stores only the _stats summary and the raw per-hour ratios are
+    discarded, so p25/p75 cannot be back-filled. This test will FAIL the day the file is
+    regenerated, and that failure is the signal to delete it."""
+    import json as _json
+    from pipeline.config import SPOT_FACE_FACTORS_FILE
+    doc = _json.loads(SPOT_FACE_FACTORS_FILE.read_text())
+    factors = doc.get("factors") or {}
+    assert factors, "the committed file should carry factors"
+    banded = [s for s, r in factors.items() if r.get("p25") is not None]
+    assert not banded, (
+        f"{len(banded)} factor(s) now carry p25 — the measurement was regenerated. "
+        f"Delete this test; the band is live.")
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in fns:

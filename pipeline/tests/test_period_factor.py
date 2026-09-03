@@ -556,15 +556,14 @@ def test_m_to_ft_is_pinned_by_value_and_is_a_rounded_conversion():
 
 
 # --------------------------------------------------------------------------- #
-# 14 — RATING_SOURCE is "ww3" in BOTH override raters                          #
+# 14 — RATING_SOURCE is "ww3" in the NWPS rater; the MOP rater has NO curve     #
 # --------------------------------------------------------------------------- #
-def test_rating_source_is_ww3_in_both_override_raters():
-    """nwps_stars and mop_stars each pass their module's RATING_SOURCE straight into
-    face_ft, so flipping either constant silently switches that whole rater onto the other
-    curve — a 28% step at 16 s, with no other visible change.
+def test_rating_source_is_ww3_in_the_nwps_override_rater():
+    """nwps_stars passes its module's RATING_SOURCE straight into face_ft, so flipping the
+    constant silently switches that whole rater onto the other curve — a 28% step at 16 s,
+    with no other visible change.
 
-    Both modules carry the identical line:
-        RATING_SOURCE = "ww3"          # face_ft shoaling factor -- same as the validated chain
+        nwps_nearshore.RATING_SOURCE = "ww3"   # face_ft shoaling factor
 
     NOTE, reported not adjudicated: nwps_stars samples NWPS swh/shts and rates it through
     the WW3 (deep-ocean) curve. That is internally consistent — the override must reproduce
@@ -572,16 +571,54 @@ def test_rating_source_is_ww3_in_both_override_raters():
     _PERIOD_FACTOR_NWPS block comment. Both are in the tree; this test pins the current
     value so a change is a decision rather than a drift."""
     assert nn.RATING_SOURCE == "ww3", nn.RATING_SOURCE
-    assert mop.RATING_SOURCE == "ww3", mop.RATING_SOURCE
-    # both resolve to the ww3 table, exactly like the literal does
     assert I.period_factor(16.0, nn.RATING_SOURCE) == 1.25
-    assert I.period_factor(16.0, mop.RATING_SOURCE) == 1.25
-    # both raters share ONE constant value, so the two paths cannot diverge on the curve
-    assert nn.RATING_SOURCE == mop.RATING_SOURCE
     # face_ft through the constant equals face_ft through the literal:
     #   2.0 * 1.25 * 3.281 = 8.2025
     assert _close(I.face_ft(2.0, 16.0, nn.RATING_SOURCE), 8.2025)
-    assert _close(I.face_ft(2.0, 16.0, mop.RATING_SOURCE), 8.2025)
+
+
+def test_the_mop_rater_carries_no_period_curve_at_all():
+    """THE TIER FIX, pinned at the constant. mop_stars used to call
+    face_ft(hs, tp, RATING_SOURCE) and so amplified MOP's height by period_factor, putting
+    the 48 MOP-tier spots ~16% above the 132 MOP-corrected spots reading the same MOP
+    number. The constant is GONE from that module, not merely unused: an unused constant
+    named "RATING_SOURCE" sitting next to a rater is an invitation to wire it back up.
+
+    Asserting its ABSENCE is what makes re-adding it fail here rather than in production
+    six months later. See the block comment in mop.mop_stars for why the term is removed
+    outright instead of measured per spot."""
+    assert not hasattr(mop, "RATING_SOURCE"), (
+        "mop.RATING_SOURCE is back. The MOP tier must publish MOP height in feet with no "
+        "period amplification — re-adding the curve reopens the 21.6%-vs-9.1% tier gap "
+        "and makes the SWELL HEIGHT label wrong again."
+    )
+    # face_ft is not imported there either, so the curve cannot be reached by accident.
+    assert not hasattr(mop, "face_ft"), "mop.face_ft is back; the MOP path must not use it"
+
+
+def test_mop_stars_publishes_mop_height_in_feet_and_nothing_else():
+    """THE BEHAVIOUR, not just the constant. mop_stars must return hs * M_TO_FT as its
+    face, and the SAME face at every period — that period-independence is the whole point
+    and is what a re-added curve would break.
+
+        hs 2.0 -> 2.0 * 3.281 = 6.562 ft, at 8 s and at 16 s alike
+
+    Under the old code these differed by 19%:
+        8 s:  2.0 * 1.05 * 3.281 = 6.8901
+       16 s:  2.0 * 1.25 * 3.281 = 8.2025
+    Both literals are written out; neither is produced by calling anything under test.
+    Geometry is held fixed (dp on the shore normal) so only the period moves.
+    """
+    _, face_8, _, _, _ = mop.mop_stars(2.0, 8.0, 270.0, 2.0, 270.0)
+    _, face_16, _, _, _ = mop.mop_stars(2.0, 16.0, 270.0, 2.0, 270.0)
+    assert _close(face_8, 6.562), face_8
+    assert _close(face_16, 6.562), face_16
+    assert face_8 == face_16, (face_8, face_16)
+    # And explicitly NOT the amplified values the old path produced.
+    assert not _close(face_8, 6.8901), "period_factor is back on the 8 s hour"
+    assert not _close(face_16, 8.2025), "period_factor is back on the 16 s hour"
+    # M_TO_FT is the only scalar left between MOP metres and published feet.
+    assert _close(face_16, 2.0 * I.M_TO_FT), face_16
 
 
 # --------------------------------------------------------------------------- #

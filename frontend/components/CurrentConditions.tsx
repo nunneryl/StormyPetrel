@@ -7,7 +7,7 @@ import {
 } from '@/lib/ratings';
 import {
   degToCardinal,
-  fmtFt,
+  fmtFtRange,
   fmtMph,
   fmtSec,
   pickSwell,
@@ -66,8 +66,8 @@ export function CurrentConditions({
   return (
     <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <BigTile
-        label="Face"
-        value={fmtFt(current?.face_ft)}
+        label="Swell height"
+        value={fmtFtRange(current?.face_lo_ft, current?.face_hi_ft, current?.face_ft)}
         hint={tp ? `${fmtSec(tp)} period` : null}
         action={faceAction}
       />

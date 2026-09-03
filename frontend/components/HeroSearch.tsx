@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { tierFromStars } from '@/lib/ratings';
-import { fmtFt } from '@/lib/formatting';
+import { fmtFtRange } from '@/lib/formatting';
 
 export type HeroSearchItem = {
   slug: string;
@@ -13,6 +13,8 @@ export type HeroSearchItem = {
   stars: number | null;
   /** ft — used to render the inline size. */
   face_ft: number | null;
+  face_lo_ft: number | null;
+  face_hi_ft: number | null;
 };
 
 /**
@@ -120,7 +122,7 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-bold tabular-nums text-text-primary text-sm">
-                    {fmtFt(r.face_ft)}
+                    {fmtFtRange(r.face_lo_ft, r.face_hi_ft, r.face_ft)}
                   </span>
                   <span
                     className="text-[10px] font-bold tracking-widest2 uppercase px-1.5 py-0.5 rounded"

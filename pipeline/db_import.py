@@ -667,6 +667,11 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
                 "tide_level_ft": h.get("tide_level_ft"),
                 "tide_norm": h.get("tide_norm"),
                 "face_ft": h.get("face_ft"),
+                # The published band (migration 016). .get() yields None for every spot
+                # without a measured spread, which is the intended value — see
+                # face_correction.face_range. Do not coalesce these to face_ft.
+                "face_lo_ft": h.get("face_lo_ft"),
+                "face_hi_ft": h.get("face_hi_ft"),
                 "dir_gain": h.get("dir_gain"),
                 "wind_mult": h.get("wind_mult"),
                 "tide_mult": h.get("tide_mult"),
