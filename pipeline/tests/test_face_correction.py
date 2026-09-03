@@ -298,20 +298,157 @@ def test_a_held_out_spot_is_byte_identical_when_absent_from_the_map():
 # 5 — the spread rule                                                         #
 # --------------------------------------------------------------------------- #
 
-def test_the_spread_rule_excludes_above_two_point_five_and_keeps_at_it():
+def _fr(p25, p75, median=2.0, n=300, p10=0.5, p90=9.9):
+    """A by_spot record whose p25/p75 are the numbers under test. p10/p90 are deliberately
+    ABSURD — 0.5 and 9.9, a tail ratio of 19.8 — so any test that still passes is proving
+    the tails no longer decide anything. Under the old rule every one of these excluded."""
+    return {"slug": "s", "face_ratio": {"median": median, "n": n,
+                                        "p10": p10, "p25": p25, "p75": p75, "p90": p90}}
+
+
+def test_the_spread_rule_excludes_on_p75_over_p25_and_ignores_the_tails():
+    """THE STATISTIC CHANGE. Every record here has a p90/p10 of 19.8 — far past the old 2.5
+    — and the ones with a tight core are KEPT anyway. That is the whole point: a spot is no
+    longer thrown out for a tail no reader sees.
+
+    Hand-computed p75/p25, threshold 1.7, STRICTLY greater:
+        1.25 / 1.00 = 1.25  -> keep
+        1.70 / 1.00 = 1.70  -> keep    (exactly at the threshold)
+        1.71 / 1.00 = 1.71  -> spread
+        2.30 / 1.00 = 2.30  -> spread
+    """
     import sys
     sys.path.insert(0, "scripts")
     from build_face_factors import classify
-    # p90/p10: 2.50 -> keep (strictly greater excludes); 2.51 -> spread; 6.47 -> spread
-    for p90, expect in ((2.0, "keep"), (2.5, "keep"), (2.51, "spread"), (6.47, "spread")):
-        v, _ = classify({"slug": "s", "face_ratio": {"median": 2.0, "n": 9,
-                                                     "p10": 1.0, "p90": p90}}, set())
-        assert v == expect, (p90, v, expect)
+    for p75, expect in ((1.25, "keep"), (1.70, "keep"), (1.71, "spread"), (2.30, "spread")):
+        v, _ = classify(_fr(1.00, p75), set())
+        assert v == expect, (p75, v, expect)
+
+
+def test_exactly_at_the_threshold_is_KEPT_not_excluded():
+    """INCLUSIVE AT THE BOUNDARY, stated rather than left to be discovered. The comparison
+    is `> max_iqr`, matching ARC_PRUNE_MAX_OFFSET_DEG and the old spread rule, so a spot at
+    exactly 1.7 survives. Pinned from BOTH sides so an accidental >= fails here.
+        1.700 / 1.000 = 1.700 exactly -> keep
+        3.400 / 2.000 = 1.700 exactly -> keep   (same ratio, different magnitudes)
+    """
+    import sys
+    sys.path.insert(0, "scripts")
+    from build_face_factors import classify
+    assert classify(_fr(1.0, 1.7), set())[0] == "keep"
+    assert classify(_fr(2.0, 3.4), set())[0] == "keep"
+    # And one hair above is excluded, so the boundary is real and not a rounding artefact.
+    assert classify(_fr(1.0, 1.7001), set())[0] == "spread"
+
+
+def test_the_twelve_measured_spots_land_where_the_threshold_says():
+    """THE POPULATION, pinned per spot with its measured p75/p25 as a literal.
+
+    Measured over the 2026-08-18..09-01 window. The seven above the line and the five below
+    it are the cases the threshold decision turned on; every value is written out, none is
+    read back from the factor file or recomputed by the code under test.
+
+    rincon is EXCLUDED BY NAME regardless of its statistic — asserted separately below so
+    that changing the threshold can never silently re-admit it.
+    """
+    import sys
+    sys.path.insert(0, "scripts")
+    from build_face_factors import classify
+    # (slug, measured p75/p25, expected verdict at 1.7)
+    cases = [
+        ("tarpits",                 2.30, "spread"),
+        ("moonstone-beach-humboldt", 1.94, "spread"),
+        ("mackerricher",            1.78, "spread"),
+        ("ten-mile-beach",          1.73, "spread"),
+        # --- the 1.7 line ---
+        ("jug-handle",              1.64, "keep"),    # excluded at 1.6, kept at 1.7
+        ("westport",                1.61, "keep"),    # excluded at 1.6, kept at 1.7
+        ("point-arena",             1.570, "keep"),   # the widest spot that passes
+        ("caspar",                  1.557, "keep"),
+        ("steamer-lane",            1.46, "keep"),    # the reported regression
+        ("cowell-s-beach-children-s-surfing-area", 1.46, "keep"),
+        ("doran-beach",             1.39, "keep"),
+        ("second-peak",             1.36, "keep"),
+        ("natural-bridges",         1.34, "keep"),
+    ]
+    for slug, iqr, expect in cases:
+        rec = _fr(1.0, iqr)
+        rec["slug"] = slug
+        v, detail = classify(rec, set())
+        assert v == expect, (slug, iqr, v, expect, detail)
+    # The two the 1.6 proposal would have excluded and 1.7 keeps, stated as the difference.
+    assert classify({**_fr(1.0, 1.64), "slug": "jug-handle"}, set())[0] == "keep"
+    assert classify({**_fr(1.0, 1.61), "slug": "westport"}, set())[0] == "keep"
+
+
+def test_the_named_hold_outs_are_unaffected_by_the_statistic_change():
+    """fort-point, sandspit and rincon are excluded BEFORE any statistic is consulted, so
+    the switch from p90/p10 to p75/p25 cannot re-admit them. Each is given a perfectly tight
+    core (p75/p25 = 1.0) — the most passable spread possible — and must still be held out.
+
+    rincon matters most: it is the clearest example the spread rule exists to catch, and its
+    p75/p25 of 2.27 would exclude it anyway. The name is what guarantees it, not the number.
+    """
+    import sys
+    sys.path.insert(0, "scripts")
+    from build_face_factors import classify
+    from build_face_factors import HELD_OUT
+    for slug in ("fort-point", "sandspit", "rincon"):
+        assert slug in HELD_OUT, slug
+        rec = _fr(1.0, 1.0)          # a spread nothing could exclude
+        rec["slug"] = slug
+        v, detail = classify(rec, set())
+        assert v == "held_out", (slug, v)
+        assert detail == HELD_OUT[slug], slug
+    # Order still holds: MOP tier beats a named hold-out beats the statistic.
+    rec = _fr(1.0, 9.0)
+    rec["slug"] = "rincon"
+    assert classify(rec, {"rincon"})[0] == "mop_tier", "tier is checked first"
+
+
+def test_a_record_with_no_quartiles_is_unusable_not_silently_kept():
+    """A spread file predating the p25/p75 measurement cannot be judged. Keeping it would
+    correct a spot whose spread was never measured — the same "absent is not a default" rule
+    the factor lookup follows. Its p90/p10 is a perfect 1.0 and it is STILL not kept."""
+    import sys
+    sys.path.insert(0, "scripts")
+    from build_face_factors import classify
+    v, detail = classify({"slug": "s", "face_ratio": {"median": 2.0, "n": 300,
+                                                      "p10": 1.0, "p90": 1.0}}, set())
+    assert v == "unusable", (v, detail)
+    assert "p25/p75" in detail, detail
 
 
 def test_the_threshold_is_the_committed_constant():
-    from pipeline.config import FACE_FACTOR_MAX_SPREAD
-    assert FACE_FACTOR_MAX_SPREAD == 2.5
+    from pipeline.config import FACE_FACTOR_MAX_IQR_RATIO
+    assert FACE_FACTOR_MAX_IQR_RATIO == 1.7
+    # The old constant is GONE, not merely unused. A stale reader comparing p90/p10 against
+    # 1.7 would exclude almost the whole roster, so the rename has to fail loudly.
+    import pipeline.config as _cfg
+    assert not hasattr(_cfg, "FACE_FACTOR_MAX_SPREAD"), (
+        "FACE_FACTOR_MAX_SPREAD is back. The statistic changed from p90/p10 to p75/p25 and "
+        "the threshold from 2.5 to 1.7; a reader holding the old name will compare the "
+        "wrong ratio against the wrong number.")
+
+
+def test_the_tail_ratio_is_still_recorded_but_no_longer_decides():
+    """p90/p10 stays on every record as a diagnostic — a heavy tail should remain visible in
+    the diff — but it must not exclude. Steamer Lane's own numbers make the case:
+        p10 0.821  p25 2.234  p75 3.256  p90 3.630
+        p90/p10 = 4.4214...  (would have excluded under the old rule)
+        p75/p25 = 1.4575...  (comfortably inside 1.7)
+    """
+    import sys
+    sys.path.insert(0, "scripts")
+    from build_face_factors import _iqr_ratio, _spread
+    rec = {"slug": "steamer-lane",
+           "face_ratio": {"median": 2.808, "n": 334,
+                          "p10": 0.821, "p25": 2.234, "p75": 3.256, "p90": 3.630}}
+    # 3.630 / 0.821 = 4.42143...   3.256 / 2.234 = 1.45747...
+    assert abs(_spread(rec) - 4.421437) < 1e-5, _spread(rec)
+    assert abs(_iqr_ratio(rec) - 1.457475) < 1e-5, _iqr_ratio(rec)
+    from build_face_factors import classify
+    assert classify(rec, set())[0] == "keep", "the reported regression is fixed"
 
 
 # --------------------------------------------------------------------------- #
@@ -527,12 +664,14 @@ def test_the_generator_excludes_the_mop_tier_from_the_committed_file():
     sys.path.insert(0, "scripts")
     from build_face_factors import classify
     clean = {"slug": "a-mop-spot",
-             "face_ratio": {"median": 2.5, "n": 300, "p10": 1.0, "p90": 1.2}}
+             "face_ratio": {"median": 2.5, "n": 300,
+                            "p10": 1.0, "p25": 1.0, "p75": 1.2, "p90": 1.2}}
     assert classify(clean, {"a-mop-spot"})[0] == "mop_tier"
     assert classify(clean, set())[0] == "keep", "same record, no tier set -> kept"
     # Tier beats every statistical gate: the objection is structural, not about the numbers.
     assert classify({"slug": "a-mop-spot",
-                     "face_ratio": {"median": 2.0, "n": 9, "p10": 1.0, "p90": 9.0}},
+                     "face_ratio": {"median": 2.0, "n": 9,
+                                    "p10": 1.0, "p25": 1.0, "p75": 9.0, "p90": 9.0}},
                     {"a-mop-spot"})[0] == "mop_tier"
 
 
@@ -697,20 +836,30 @@ def test_the_relabel_did_not_rename_a_single_parsed_field():
         assert wrong not in keys, f"{wrong} appeared — the column rename is a migration"
 
 
-def test_the_committed_factor_file_has_no_quantiles_yet_so_nothing_publishes_a_band():
-    """THE SHIPPED STATE, pinned honestly. The band code is inert until the measurement is
-    re-run — mop_spread.json stores only the _stats summary and the raw per-hour ratios are
-    discarded, so p25/p75 cannot be back-filled. This test will FAIL the day the file is
-    regenerated, and that failure is the signal to delete it."""
+def test_every_committed_factor_carries_the_band_it_was_kept_on():
+    """THE SHIPPED STATE. This replaces the inert-state guard, which fired on schedule when
+    the measurement was regenerated (724f442) and had done its job.
+
+    Two invariants on the committed file, both of which the exclusion rule now depends on:
+
+      1. EVERY kept factor carries p25/p75. classify() returns "unusable" without them, so a
+         factor in the map that lacks them could only have arrived by hand-editing.
+      2. NO kept factor exceeds the threshold. The file and the constant must agree, or the
+         committed artifact is not the one the rule would produce.
+    """
     import json as _json
-    from pipeline.config import SPOT_FACE_FACTORS_FILE
+    from pipeline.config import FACE_FACTOR_MAX_IQR_RATIO, SPOT_FACE_FACTORS_FILE
     doc = _json.loads(SPOT_FACE_FACTORS_FILE.read_text())
     factors = doc.get("factors") or {}
     assert factors, "the committed file should carry factors"
-    banded = [s for s, r in factors.items() if r.get("p25") is not None]
-    assert not banded, (
-        f"{len(banded)} factor(s) now carry p25 — the measurement was regenerated. "
-        f"Delete this test; the band is live.")
+    missing = [s for s, r in factors.items() if r.get("p25") is None or r.get("p75") is None]
+    assert not missing, f"{len(missing)} committed factor(s) carry no band: {missing[:5]}"
+    over = [(s, r["p75"] / r["p25"]) for s, r in factors.items()
+            if r["p25"] > 0 and r["p75"] / r["p25"] > FACE_FACTOR_MAX_IQR_RATIO]
+    assert not over, (
+        f"{len(over)} committed factor(s) exceed the {FACE_FACTOR_MAX_IQR_RATIO} threshold: "
+        f"{sorted(over, key=lambda x: -x[1])[:5]}. Regenerate: "
+        f"python3 scripts/build_face_factors.py --apply")
 
 
 def _run_all():
