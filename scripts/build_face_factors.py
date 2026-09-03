@@ -13,7 +13,9 @@ the committed artifact can be regenerated and diffed rather than trusted.
 
 INPUT (Mac-local, GITIGNORED — never committed)
     scripts/mop_spread.json
-        by_spot[].slug, .face_ratio.median, .face_ratio.n, .face_ratio.p10, .face_ratio.p90
+        by_spot[].slug, .face_ratio.median, .face_ratio.n,
+        .face_ratio.p25, .face_ratio.p75   <- the exclusion statistic AND the published band
+        .face_ratio.p10, .face_ratio.p90   <- diagnostic only; excludes nothing
 
 EXCLUSION RULES, applied in this order and recorded per spot in the output's `held_out`:
 
@@ -22,9 +24,13 @@ EXCLUSION RULES, applied in this order and recorded per spot in the output's `he
      correcting them would divide MOP by a number derived from MOP. Read from the roster,
      never from a list, so a spot promoted to the MOP tier is excluded automatically.
   2. NAMED HOLD-OUTS — fort-point, sandspit, rincon. Reasons recorded per spot.
-  3. SPREAD — face_ratio p90/p10 > FACE_FACTOR_MAX_SPREAD (2.5). Above that the median is
-     not describing a stable offset, it is the centre of a cloud.
-  4. UNUSABLE — a missing, non-numeric or non-positive median.
+  3. SPREAD — face_ratio p75/p25 > FACE_FACTOR_MAX_IQR_RATIO (1.7). Above that the median
+     is not describing a stable offset, it is the centre of a cloud. This was p90/p10 > 2.5
+     until the p25/p75 band shipped; excluding on a tail nobody sees threw out 22 stable
+     spots in one regeneration. See the config constant for the Steamer Lane example.
+  4. UNUSABLE — a missing, non-numeric or non-positive median, OR no p25/p75 at all (a
+     spread file predating the quartile measurement cannot be judged and is not waved
+     through).
 
 A spot that survives all four gets a factor. Everything else is recorded with its reason
 and is ABSENT from the `factors` map, so the pipeline cannot correct it however it is
@@ -42,7 +48,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
-from pipeline.config import FACE_FACTOR_MAX_SPREAD                   # noqa: E402
+from pipeline.config import FACE_FACTOR_MAX_IQR_RATIO                # noqa: E402
 from pipeline.enrich import _slug_for                                # noqa: E402
 from pipeline.forecast.face_correction import MOP_TIER_SOURCES       # noqa: E402
 
@@ -121,8 +127,32 @@ _COMMENT = (
 )
 
 
+def _iqr_ratio(rec):
+    """p75 / p25, or None when either quartile is missing or p25 is non-positive.
+
+    THE STATISTIC WE EXCLUDE ON IS THE ONE WE PUBLISH — see FACE_FACTOR_MAX_IQR_RATIO for
+    the full argument and the Steamer Lane worked example. The p90/p10 form this replaces
+    is still computed as `spread_p90_p10` and carried on every record, because it is a
+    genuinely useful diagnostic of the tails; it is simply no longer what decides anything.
+
+    A record predating the p25/p75 measurement returns None, and classify treats that as
+    "cannot judge the spread" rather than as a pass — see there."""
+    fr = rec.get("face_ratio") or {}
+    p25, p75 = fr.get("p25"), fr.get("p75")
+    try:
+        p25, p75 = float(p25), float(p75)
+    except (TypeError, ValueError):
+        return None
+    if p25 <= 0.0:
+        return None
+    return p75 / p25
+
+
 def _spread(rec):
-    """p90 / p10, or None when either bound is missing or p10 is non-positive."""
+    """p90 / p10 — the TAIL ratio. Diagnostic only since the switch to _iqr_ratio; it is
+    still recorded on every factor so a heavy tail stays visible in the diff, but it no
+    longer excludes anything. Kept as a separate function so the two cannot be confused at
+    a call site."""
     fr = rec.get("face_ratio") or {}
     p10, p90 = fr.get("p10"), fr.get("p90")
     try:
@@ -134,7 +164,7 @@ def _spread(rec):
     return p90 / p10
 
 
-def classify(rec, mop_tier_slugs, max_spread=FACE_FACTOR_MAX_SPREAD):
+def classify(rec, mop_tier_slugs, max_iqr=FACE_FACTOR_MAX_IQR_RATIO):
     """('keep'|'mop_tier'|'held_out'|'spread'|'unusable', detail) for one by_spot record.
 
     Order matters and is the documented one: tier, then named hold-out, then spread, then
@@ -155,14 +185,20 @@ def classify(rec, mop_tier_slugs, max_spread=FACE_FACTOR_MAX_SPREAD):
         return "unusable", f"median is {fr.get('median')!r}"
     if not (med > 0.0):
         return "unusable", f"median {med} is not a positive divisor"
-    sp = _spread(rec)
-    if sp is not None and sp > max_spread:
-        return "spread", (f"within-spot p90/p10 spread {sp:.2f} exceeds {max_spread} — the "
+    iqr = _iqr_ratio(rec)
+    if iqr is None:
+        # NOT a pass. A record with no p25/p75 cannot be judged, and silently keeping it
+        # would correct a spot whose spread was never measured — the same "absent is not a
+        # default" rule the factor lookup itself follows.
+        return "unusable", ("no p25/p75 — regenerate mop_spread.json with "
+                            "scripts/mop_face_validation.py before building factors")
+    if iqr > max_iqr:
+        return "spread", (f"within-spot p75/p25 spread {iqr:.2f} exceeds {max_iqr} — the "
                           f"median is the centre of a cloud, not a stable offset")
     return "keep", None
 
 
-def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_spread=FACE_FACTOR_MAX_SPREAD,
+def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_iqr=FACE_FACTOR_MAX_IQR_RATIO,
           today=None):
     """(document, plan) — the file to write and a per-category slug listing."""
     doc_in = json.load(open(spread_path))
@@ -181,7 +217,7 @@ def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_spread=FACE_FACTOR_MA
         if not isinstance(rec, dict):
             continue
         slug = rec.get("slug")
-        verdict, detail = classify(rec, mop_tier_slugs, max_spread)
+        verdict, detail = classify(rec, mop_tier_slugs, max_iqr)
         # A slug that matches no spot would fail validate_factor_slugs at run time. Catch it
         # here instead, where it can be fixed, rather than shipping a file that aborts the
         # pipeline.
@@ -235,7 +271,7 @@ def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_spread=FACE_FACTOR_MA
             "published_band": "p25/p75 of the same ratio; lo = face/p75, hi = face/p25",
             "regenerate": "python3 scripts/mop_face_validation.py"
                           " && python3 scripts/build_face_factors.py --apply",
-            "max_spread_p90_p10": max_spread,
+            "max_iqr_ratio_p75_p25": max_iqr,
             "generated_at": datetime.datetime.now(datetime.timezone.utc)
                             .replace(microsecond=0).isoformat(),
         },
@@ -250,8 +286,8 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--spread", default=SPREAD_PATH, help=f"input (default {SPREAD_PATH})")
     ap.add_argument("--out", default=OUT, help=f"output (default {OUT})")
-    ap.add_argument("--max-spread", type=float, default=FACE_FACTOR_MAX_SPREAD,
-                    help=f"p90/p10 exclusion threshold (default {FACE_FACTOR_MAX_SPREAD})")
+    ap.add_argument("--max-iqr", type=float, default=FACE_FACTOR_MAX_IQR_RATIO,
+                    help=f"p75/p25 exclusion threshold (default {FACE_FACTOR_MAX_IQR_RATIO})")
     ap.add_argument("--apply", action="store_true", help="write the file (default: dry run)")
     ap.add_argument("--selftest", action="store_true", help="offline logic proof")
     a = ap.parse_args(argv)
@@ -262,11 +298,11 @@ def main(argv=None):
               "  It is Mac-local and gitignored. Produce it with the MOP validation harness "
               "first.", file=sys.stderr)
         return 2
-    doc, plan = build(a.spread, max_spread=a.max_spread)
+    doc, plan = build(a.spread, max_iqr=a.max_iqr)
     print(f"kept        {len(plan['keep']):4d} spots -> factors")
     for cat, label in (("mop_tier", "MOP tier (structural)"),
                        ("held_out", "named hold-outs"),
-                       ("spread", f"p90/p10 > {a.max_spread}"),
+                       ("spread", f"p75/p25 > {a.max_iqr}"),
                        ("unusable", "unusable median"),
                        ("unknown_slug", "slug matches no spot")):
         if plan[cat]:
@@ -291,29 +327,49 @@ def run_selftest():
         print(f"  {'PASS' if c else 'FAIL'}  {n}")
 
     mop = {"a-mop-spot"}
-    # spread 3.0/1.0 = 3.0 > 2.5 -> excluded; 2.0/1.0 = 2.0 -> kept; 2.5/1.0 = 2.5 -> kept
-    # (the rule is STRICTLY greater, so a spot exactly at the threshold survives).
-    keep = {"slug": "ok", "face_ratio": {"median": 2.87, "n": 334, "p10": 1.0, "p90": 2.0}}
+    # THE STATISTIC IS p75/p25 (FACE_FACTOR_MAX_IQR_RATIO = 1.7), STRICTLY greater. Every
+    # fixture below carries a DELIBERATELY AWFUL p10/p90 of 1.0/9.9 — a tail ratio of 9.9,
+    # four times the old 2.5 threshold — so a fixture that is kept proves the tails no
+    # longer decide. 1.3/1.0 = 1.3 -> kept; 1.7 exactly -> kept; 1.71 -> excluded.
+    keep = {"slug": "ok", "face_ratio": {"median": 2.87, "n": 334,
+                                         "p10": 1.0, "p25": 1.0, "p75": 1.3, "p90": 9.9}}
     check("a clean record is kept", classify(keep, mop)[0] == "keep")
     check("a MOP-tier slug is excluded structurally, before any statistic",
           classify({**keep, "slug": "a-mop-spot"}, mop)[0] == "mop_tier")
     check("a MOP-tier slug is excluded even with a perfect spread",
           classify({"slug": "a-mop-spot",
-                    "face_ratio": {"median": 2.0, "n": 999, "p10": 1.0, "p90": 1.0}},
+                    "face_ratio": {"median": 2.0, "n": 999, "p10": 1.0, "p25": 1.0,
+                                   "p75": 1.0, "p90": 1.0}},
                    mop)[0] == "mop_tier")
     for slug in ("fort-point", "sandspit", "rincon"):
         check(f"{slug} is held out by name",
               classify({**keep, "slug": slug}, mop)[0] == "held_out")
-    check("spread exactly 2.5 is KEPT (strictly greater excludes)",
-          classify({**keep, "face_ratio": {"median": 2.0, "n": 9, "p10": 1.0, "p90": 2.5}},
-                   mop)[0] == "keep")
-    check("spread 2.51 is excluded",
-          classify({**keep, "face_ratio": {"median": 2.0, "n": 9, "p10": 1.0, "p90": 2.51}},
-                   mop)[0] == "spread")
-    check("spread 6.47 (rincon's) would be excluded on spread even if unnamed",
+    check("p75/p25 exactly 1.7 is KEPT (strictly greater excludes)",
+          classify({**keep, "face_ratio": {"median": 2.0, "n": 9, "p10": 1.0, "p25": 1.0,
+                                           "p75": 1.7, "p90": 9.9}}, mop)[0] == "keep")
+    check("a tail ratio of 9.9 does NOT exclude when the core is tight",
+          classify(keep, mop)[0] == "keep")
+    check("Steamer Lane's real numbers are KEPT (p90/p10 4.42, p75/p25 1.46)",
+          classify({"slug": "steamer-lane",
+                    "face_ratio": {"median": 2.808, "n": 334, "p10": 0.821, "p25": 2.234,
+                                   "p75": 3.256, "p90": 3.630}}, mop)[0] == "keep")
+    check("a record with no p25/p75 is unusable, not waved through",
+          classify({"slug": "old", "face_ratio": {"median": 2.0, "n": 300,
+                                                  "p10": 1.0, "p90": 1.0}},
+                   mop)[0] == "unusable")
+    check("p75/p25 1.71 is excluded",
+          classify({**keep, "face_ratio": {"median": 2.0, "n": 9, "p10": 1.0, "p25": 1.0,
+                                           "p75": 1.71, "p90": 9.9}}, mop)[0] == "spread")
+    check("rincon's p75/p25 of 2.27 would exclude it on the statistic even if unnamed",
           classify({"slug": "elsewhere",
-                    "face_ratio": {"median": 0.62, "n": 300, "p10": 1.0, "p90": 6.47}},
-                   mop)[0] == "spread")
+                    "face_ratio": {"median": 0.62, "n": 300, "p10": 1.0, "p25": 1.0,
+                                   "p75": 2.27, "p90": 6.47}}, mop)[0] == "spread")
+    # The two spots the rejected 1.6 proposal would have excluded and 1.7 keeps.
+    for _slug, _p75 in (("westport", 1.61), ("jug-handle", 1.64)):
+        check(f"{_slug} p75/p25 {_p75} is KEPT at 1.7 (1.6 would have excluded it)",
+              classify({"slug": _slug,
+                        "face_ratio": {"median": 2.0, "n": 300, "p10": 1.0, "p25": 1.0,
+                                       "p75": _p75, "p90": 9.9}}, mop)[0] == "keep")
     check("a null median is unusable",
           classify({"slug": "x", "face_ratio": {"median": None}}, mop)[0] == "unusable")
     check("a zero median is unusable",
@@ -348,17 +404,24 @@ def run_selftest():
     check(f"the band survives build: p75 2.5 ({_rec.get('p75')})", _rec.get("p75") == 2.5)
     check("p10/p90 are still carried for the exclusion rule",
           _rec.get("p10") == 1.2 and _rec.get("p90") == 3.0)
-    # A spread file predating the p25/p75 measurement must yield a factor with NO band —
-    # never a p10/p90 substitute, which would silently double the published width.
+    # A spread file predating the p25/p75 measurement now yields NO FACTOR AT ALL. This is
+    # a deliberate tightening that came with making p75/p25 the exclusion statistic: the
+    # rule cannot judge a record it has no quartiles for, and keeping it would correct a
+    # spot whose spread was never measured. Never a p10/p90 substitute either — that would
+    # silently compare the wrong ratio against a threshold tuned for a different one.
+    # CONSEQUENCE, stated so it is not a surprise: mop_face_validation and this script must
+    # be re-run TOGETHER. A stale mop_spread.json produces an empty factor map, loudly.
     with open(_sp, "w") as fh:
         _json.dump({"by_spot": [{"slug": "banded-spot", "face_ratio": {
             "median": 2.0, "n": 300, "p10": 1.2, "p90": 3.0}}]}, fh)
-    _doc2, _ = build(spread_path=_sp, roster_path=_ro)
-    _rec2 = (_doc2.get("factors") or {}).get("banded-spot") or {}
-    check("an old spread file yields a factor with no band, not a p10/p90 stand-in",
-          _rec2.get("p25") is None and _rec2.get("p75") is None)
-    check("...and that factor is still usable for the point estimate",
-          _rec2.get("factor") == 2.0)
+    _doc2, _plan2 = build(spread_path=_sp, roster_path=_ro)
+    check("an old spread file yields NO factor, not a p10/p90 stand-in",
+          "banded-spot" not in (_doc2.get("factors") or {}))
+    check("...and it is recorded as unusable, with the remedy in the reason",
+          "banded-spot" in (_doc2.get("held_out") or {})
+          and "p25/p75" in (_doc2["held_out"]["banded-spot"].get("reason") or ""))
+    check("...and it lands in the unusable bucket of the plan, not the spread one",
+          "banded-spot" in (_plan2.get("unusable") or []))
     print()
     print("selftest: " + ("ALL PASS" if ok else "FAILURES ABOVE"))
     return 0 if ok else 1

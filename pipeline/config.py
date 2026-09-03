@@ -406,10 +406,46 @@ ARC_PRUNE_MAX_OFFSET_DEG = 90.0
 # diff — these are hand-measured constants with no physical derivation, and the only defence
 # against a bad one is that a human can see it change.
 SPOT_FACE_FACTORS_FILE = PIPELINE_DIR / "data" / "spot_face_factors.json"
-# A spot whose within-spot face_ratio p90/p10 exceeds this is NOT corrected. Above ~2.5 the
-# median is not describing a stable offset — it is the centre of a cloud, and dividing by it
-# moves the typical hour about as often as it fixes one. Rincon measured 6.47.
-FACE_FACTOR_MAX_SPREAD = 2.5
+# A spot whose within-spot face_ratio p75/p25 exceeds this is NOT corrected. STRICTLY
+# GREATER: a spot at exactly 1.7 is KEPT, matching every other threshold in this file.
+#
+# EXCLUDE ON THE STATISTIC YOU PUBLISH. This was p90/p10 > 2.5 and it was wrong — not
+# mis-tuned, wrong in kind. We publish the p25/p75 band (migration 016), so excluding on
+# p90/p10 throws a spot out for a tail no reader ever sees. The old rule PREDATES p25/p75
+# existing at all: _stats emitted only p10/p90 when it was written, so p90/p10 was the only
+# spread available. It was never compared against p75/p25 and chosen; it was the only
+# option. That is the whole reason it survived.
+#
+# THE WORKED EXAMPLE. Steamer Lane, window 2026-08-18..09-01:
+#     p10 0.821   p25 2.234   median 2.808   p75 3.256   p90 3.630
+# p25 through p90 is tightly packed. p10 is a cliff. p90/p10 = 4.42 comes ENTIRELY from the
+# bottom decile; p75/p25 = 1.46, TIGHTER than the roster median of 1.52 measured a week
+# earlier. Nothing about the spot's stability changed — a few anomalous hours entered the
+# bottom decile, the old rule fired, and Steamer Lane's page moved 1.4 ft -> 6.9 ft between
+# two regenerations two days apart. It took 21 other spots with it: 132 corrected -> 110.
+#
+# WHY 1.7 AND NOT THE 1.6 FIRST PROPOSED. 1.6 was argued as sitting in the gap between
+# westport 1.61 and moonstone 1.94. That gap does not exist: jug-handle 1.64, ten-mile-beach
+# 1.73 and mackerricher 1.78 sit inside it, and on the other side point-arena — the widest
+# spot that PASSES — is at 1.570, just 1.9% below 1.6. A threshold 1.9% above the population
+# ceiling is the same fragility that caused this ticket, in a new statistic.
+#
+# 1.7 dominates 1.6 on both counts at once, so there is no trade to make:
+#     margin above the widest passing spot   1.6 -> +1.9%      1.7 -> +8.3%
+#     spots excluded on the statistic        1.6 ->  6         1.7 ->  4
+# It is MORE stable and MORE permissive. It also lands in a real gap (1.64 -> 1.73, 5.5%)
+# rather than in dense data. Measured over the 110 spots that currently pass: p75/p25 runs
+# 1.106 to 1.570, median 1.281 — so 1.7 excludes at ~33% wider than the typical spot.
+#
+# Considered and rejected: 1.85, which sits in the widest gap of all (1.78 -> 1.94, 9.0%)
+# and would give +17.8% margin, but leaves only 2 exclusions and effectively abolishes the
+# statistical gate. A rule that fires twice is not a rule.
+#
+# THE THRESHOLD IS LOOSER THAN IT LOOKS, deliberately. The band is now PUBLISHED, so a wide
+# spot is honestly represented rather than silently wrong — which is not what was true when
+# the old rule was written. What this gate still defends is the DIVISOR: past some width the
+# median stops being an informative offset however honestly the spread is drawn.
+FACE_FACTOR_MAX_IQR_RATIO = 1.7
 # Age past which the run summary warns. The factors were measured over 14 SUMMER days;
 # California's swell climate changes in winter and a factor absorbing period-dependent
 # refraction will misfit when the period regime moves. 120 days puts the first warning in
