@@ -41,6 +41,8 @@ export default async function CamsPage() {
             state: s.state,
             stars: s.latest?.stars ?? null,
             face_ft: s.latest?.face_ft ?? null,
+            face_lo_ft: s.latest?.face_lo_ft ?? null,
+            face_hi_ft: s.latest?.face_hi_ft ?? null,
           }
         : null,
     };

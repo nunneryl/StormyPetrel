@@ -98,7 +98,15 @@ SYSTEM_PROMPT = (
     "best spots with their ratings, note the wind and when it goes "
     "onshore, and mention what's coming in the next 2-3 days. Sound "
     "like a knowledgeable surfer, not a weather robot. Keep it under "
-    "100 words. No hashtags, no emojis."
+    "100 words. No hashtags, no emojis. "
+    # THE HEIGHTS ARE NOT BREAKING FACES. They are CDIP MOP significant wave height at the
+    # 10-15 m contour, generally outside the surf zone, and the site labels them "Swell
+    # height" for that reason. Without this the model writes "4 ft faces" from a 4 ft swell
+    # height and contradicts the tile the reader is looking at.
+    "The heights you are given are SWELL HEIGHT — significant wave height "
+    "measured offshore of the surf zone, not the height of a breaking wave "
+    "face. Call it swell or swell height. Never call it face height, and "
+    "never describe it as how big the waves break."
 )
 
 _CARDINAL_16 = [
@@ -276,7 +284,11 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
         wind_mph = _ms_to_mph(latest.get("wind_speed"))
         wind_q = _classify_wind(wind_dir, s.get("offshore_wind_deg"))
 
-        face_str = f"{face:.1f}ft" if face is not None else "—"
+        # LABELLED IN THE PAYLOAD, not left bare. The model receives a number and a system
+        # prompt telling it to write a surf report, so an unlabelled height reads as "the
+        # size of the waves" and the prose comes back talking about faces while the site
+        # says swell height. Naming the quantity here is what keeps the two agreeing.
+        face_str = f"{face:.1f}ft swell height" if face is not None else "—"
         tp_str = f"{tp:.0f}s" if tp is not None else "—"
         wind_str = (
             f"{wind_mph:.0f} mph {_cardinal(wind_dir)} ({wind_q})"

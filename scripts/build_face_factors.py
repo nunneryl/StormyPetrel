@@ -199,6 +199,13 @@ def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_spread=FACE_FACTOR_MA
                 "factor": round(float(fr["median"]), 4),
                 "hours": fr.get("n"),
                 "p10": fr.get("p10"),
+                # THE PUBLISHED BAND. face_correction.face_range divides the corrected face
+                # by these to get hi and lo. .get() rather than [] because a spread file
+                # generated before mop_face_validation carried them has neither, and the
+                # right behaviour then is a factor with no range — not a crash, and not a
+                # substituted p10/p90, which would silently double the published width.
+                "p25": fr.get("p25"),
+                "p75": fr.get("p75"),
                 "p90": fr.get("p90"),
                 "spread_p90_p10": round(sp, 3) if sp is not None else None,
                 "measured_on": measured_on,
@@ -225,7 +232,9 @@ def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_spread=FACE_FACTOR_MA
             "window": {"t0": WINDOW_T0, "t1": WINDOW_T1},
             "reference": "CDIP MOP alongshore nowcast at the 10 m contour",
             "statistic": "median of face_ft / (MOP Hs * 3.281) over the joined hours",
-            "regenerate": "python3 scripts/build_face_factors.py --apply",
+            "published_band": "p25/p75 of the same ratio; lo = face/p75, hi = face/p25",
+            "regenerate": "python3 scripts/mop_face_validation.py"
+                          " && python3 scripts/build_face_factors.py --apply",
             "max_spread_p90_p10": max_spread,
             "generated_at": datetime.datetime.now(datetime.timezone.utc)
                             .replace(microsecond=0).isoformat(),
@@ -316,6 +325,40 @@ def run_selftest():
     check("_spread returns None when p10 is zero",
           _spread({"face_ratio": {"p10": 0.0, "p90": 2.0}}) is None)
     check("_spread computes p90/p10", _spread({"face_ratio": {"p10": 2.0, "p90": 5.0}}) == 2.5)
+
+    # --- the published band survives into the factor record ------------------- #
+    # p25/p75 are what face_correction.face_range divides by. Dropping them here would
+    # regenerate a file with no band and ship the feature inert with nothing else failing,
+    # so the carry-through is pinned end to end on a fixture rather than assumed.
+    import json as _json
+    import os as _os
+    import tempfile as _tf
+    _d = _tf.mkdtemp()
+    _sp = _os.path.join(_d, "spread.json")
+    _ro = _os.path.join(_d, "roster.json")
+    with open(_sp, "w") as fh:
+        _json.dump({"by_spot": [{"slug": "banded-spot", "face_ratio": {
+            "median": 2.0, "n": 300, "p10": 1.2, "p25": 1.6,
+            "p75": 2.5, "p90": 3.0}}]}, fh)
+    with open(_ro, "w") as fh:
+        _json.dump([{"name": "Banded Spot"}], fh)
+    _doc, _plan = build(spread_path=_sp, roster_path=_ro)
+    _rec = (_doc.get("factors") or {}).get("banded-spot") or {}
+    check(f"the band survives build: p25 1.6 ({_rec.get('p25')})", _rec.get("p25") == 1.6)
+    check(f"the band survives build: p75 2.5 ({_rec.get('p75')})", _rec.get("p75") == 2.5)
+    check("p10/p90 are still carried for the exclusion rule",
+          _rec.get("p10") == 1.2 and _rec.get("p90") == 3.0)
+    # A spread file predating the p25/p75 measurement must yield a factor with NO band —
+    # never a p10/p90 substitute, which would silently double the published width.
+    with open(_sp, "w") as fh:
+        _json.dump({"by_spot": [{"slug": "banded-spot", "face_ratio": {
+            "median": 2.0, "n": 300, "p10": 1.2, "p90": 3.0}}]}, fh)
+    _doc2, _ = build(spread_path=_sp, roster_path=_ro)
+    _rec2 = (_doc2.get("factors") or {}).get("banded-spot") or {}
+    check("an old spread file yields a factor with no band, not a p10/p90 stand-in",
+          _rec2.get("p25") is None and _rec2.get("p75") is None)
+    check("...and that factor is still usable for the point estimate",
+          _rec2.get("factor") == 2.0)
     print()
     print("selftest: " + ("ALL PASS" if ok else "FAILURES ABOVE"))
     return 0 if ok else 1

@@ -8,7 +8,7 @@ import { ReportCard } from '@/components/ReportCard';
 import { CamBadge } from '@/components/CamBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
-import { fmtFt, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
+import { fmtFtRange, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
 import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
 import { fetchCamSlugSet } from '@/lib/cams';
@@ -71,6 +71,8 @@ export default async function HomePage() {
     state: s.state,
     stars: s.latest?.stars ?? null,
     face_ft: s.latest?.face_ft ?? null,
+    face_lo_ft: s.latest?.face_lo_ft ?? null,
+    face_hi_ft: s.latest?.face_hi_ft ?? null,
   }));
 
   return (
@@ -139,7 +141,7 @@ export default async function HomePage() {
             <div>Spot</div>
             <div>State</div>
             <div>Rating</div>
-            <div className="text-right">Face</div>
+            <div className="text-right">Swell (ft)</div>
             <div className="text-right">Period</div>
             <div>Wind</div>
           </div>
@@ -170,7 +172,7 @@ export default async function HomePage() {
                   <StarRating score={f?.stars ?? 0} size="sm" />
                 </div>
                 <div className="hidden md:flex items-center justify-end font-bold tabular-nums text-text-primary">
-                  {fmtFt(f?.face_ft ?? null)}
+                  {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
                 </div>
                 <div className="hidden md:flex items-center justify-end text-text-secondary tabular-nums text-sm">
                   {fmtSec(tp)}
@@ -184,7 +186,7 @@ export default async function HomePage() {
                 {/* Mobile-only summary on the right side */}
                 <div className="md:hidden flex items-center gap-2 shrink-0 self-start">
                   <span className="font-bold tabular-nums text-text-primary">
-                    {fmtFt(f?.face_ft ?? null)}
+                    {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
                   </span>
                   <StarRating score={f?.stars ?? 0} size="sm" />
                 </div>

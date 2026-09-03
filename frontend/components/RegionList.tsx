@@ -8,7 +8,7 @@ import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
 import { CamBadge } from './CamBadge';
 import { Sparkline } from './Sparkline';
-import { degToCardinal, fmtFt, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
+import { degToCardinal, fmtFtRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { tierFromStars } from '@/lib/ratings';
 
 type Filter = 'all' | 'fair' | 'good';
@@ -94,7 +94,7 @@ export function RegionList({
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-xs text-text-secondary flex-wrap">
                     <span className="font-bold text-text-primary tabular-nums">
-                      {fmtFt(f?.face_ft ?? null)}
+                      {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
                     </span>
                     <span className="tabular-nums">
                       {fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}

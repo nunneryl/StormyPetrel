@@ -12,6 +12,8 @@ import {
   isCamLive,
   providerLabel,
 } from '@/lib/cam-utils';
+// Pure string helper, no Supabase client — safe in a client component.
+import { fmtFtRange } from '@/lib/formatting';
 import { StarRating } from './StarRating';
 
 const PROVIDER_BG: Record<string, string> = {
@@ -29,6 +31,8 @@ export type CamSpot = {
   state: string | null;
   stars: number | null;
   face_ft: number | null;
+  face_lo_ft: number | null;
+  face_hi_ft: number | null;
 };
 
 export type CamRow = {
@@ -183,7 +187,12 @@ function CamCard({ row }: { row: CamRow }) {
         )}
       </div>
 
-      <RatingFaceRow stars={spot?.stars ?? null} faceFt={spot?.face_ft ?? null} />
+      <RatingSwellRow
+        stars={spot?.stars ?? null}
+        faceFt={spot?.face_ft ?? null}
+        loFt={spot?.face_lo_ft ?? null}
+        hiFt={spot?.face_hi_ft ?? null}
+      />
 
       <div className="mt-auto pt-1">
         {externalUrl ? (
@@ -208,12 +217,16 @@ function CamCard({ row }: { row: CamRow }) {
   );
 }
 
-function RatingFaceRow({
+function RatingSwellRow({
   stars,
   faceFt,
+  loFt,
+  hiFt,
 }: {
   stars: number | null;
   faceFt: number | null;
+  loFt: number | null;
+  hiFt: number | null;
 }) {
   if (stars === null && faceFt === null) return null;
   return (
@@ -221,7 +234,7 @@ function RatingFaceRow({
       {stars !== null && <StarRating score={stars} size="xs" />}
       {faceFt !== null && (
         <span className="font-bold text-text-primary tabular-nums">
-          {faceFt.toFixed(1)}ft
+          {fmtFtRange(loFt, hiFt, faceFt)}
         </span>
       )}
     </div>
