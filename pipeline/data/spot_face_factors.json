@@ -13,47 +13,17 @@
     "published_band": "p25/p75 of the same ratio; lo = face/p75, hi = face/p25",
     "regenerate": "python3 scripts/mop_face_validation.py && python3 scripts/build_face_factors.py --apply",
     "max_spread_p90_p10": 2.5,
-    "generated_at": "2026-09-03T18:50:17+00:00"
+    "generated_at": "2026-09-03T20:22:32+00:00"
   },
   "factors": {
-    "3-mile": {
-      "factor": 2.077,
-      "hours": 334,
-      "p10": 1.7456092389063615,
-      "p25": null,
-      "p75": null,
-      "p90": 2.5168542790561776,
-      "spread_p90_p10": 1.442,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
     "38th-avenue": {
       "factor": 1.568,
       "hours": 334,
-      "p10": 1.281825659074977,
-      "p25": null,
-      "p75": null,
+      "p10": 1.058616312730432,
+      "p25": 1.3500165441480811,
+      "p75": 1.7859818744263363,
       "p90": 1.955107152797073,
-      "spread_p90_p10": 1.525,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "4-mile": {
-      "factor": 1.9631,
-      "hours": 334,
-      "p10": 1.7038268899484503,
-      "p25": null,
-      "p75": null,
-      "p90": 2.29976803120518,
-      "spread_p90_p10": 1.35,
+      "spread_p90_p10": 1.847,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -62,13 +32,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "andrew-molera-state-park": {
-      "factor": 1.7823,
+      "factor": 1.7428,
       "hours": 334,
-      "p10": 1.563393611207796,
-      "p25": null,
-      "p75": null,
-      "p90": 2.0693741049222867,
-      "spread_p90_p10": 1.324,
+      "p10": 1.1242695114998489,
+      "p25": 1.5507744376828916,
+      "p75": 1.9647389885281616,
+      "p90": 2.0438589658060105,
+      "spread_p90_p10": 1.818,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -77,13 +47,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "avila-beach": {
-      "factor": 1.2693,
-      "hours": 334,
-      "p10": 1.0539175871594904,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5930170728841087,
-      "spread_p90_p10": 1.512,
+      "factor": 1.2614,
+      "hours": 335,
+      "p10": 1.0158598377737138,
+      "p25": 1.124671869150112,
+      "p75": 1.4126450307982092,
+      "p90": 1.5521642743087891,
+      "spread_p90_p10": 1.528,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -92,28 +62,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "bird-rock": {
-      "factor": 1.2215,
-      "hours": 334,
-      "p10": 1.0793837262870858,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4588366516054294,
-      "spread_p90_p10": 1.352,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "blackies": {
-      "factor": 2.1793,
-      "hours": 334,
-      "p10": 1.678776161127087,
-      "p25": null,
-      "p75": null,
-      "p90": 2.7907820858538,
-      "spread_p90_p10": 1.662,
+      "factor": 1.2142,
+      "hours": 335,
+      "p10": 1.0385893253643215,
+      "p25": 1.1440925685486762,
+      "p75": 1.3008079500935383,
+      "p90": 1.4521939819962488,
+      "spread_p90_p10": 1.398,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -122,13 +77,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "bolsa-chica-state-beach": {
-      "factor": 1.5696,
+      "factor": 1.556,
       "hours": 334,
-      "p10": 1.223885066125535,
-      "p25": null,
-      "p75": null,
-      "p90": 1.9195467470529712,
-      "spread_p90_p10": 1.568,
+      "p10": 1.0629202955738801,
+      "p25": 1.3605485871821181,
+      "p75": 1.708389287108457,
+      "p90": 1.919335208729556,
+      "spread_p90_p10": 1.806,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -137,13 +92,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "boneyard": {
-      "factor": 1.7158,
-      "hours": 334,
-      "p10": 1.4503706269793883,
-      "p25": null,
-      "p75": null,
-      "p90": 2.0103489144513573,
-      "spread_p90_p10": 1.386,
+      "factor": 1.5989,
+      "hours": 335,
+      "p10": 1.0532780464673361,
+      "p25": 1.444936702119,
+      "p75": 1.8326537032317802,
+      "p90": 1.9765846415904667,
+      "spread_p90_p10": 1.877,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -152,13 +107,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "bruce-s-beach": {
-      "factor": 1.6125,
+      "factor": 1.5877,
       "hours": 334,
-      "p10": 1.3765197198637782,
-      "p25": null,
-      "p75": null,
+      "p10": 1.0978529100945664,
+      "p25": 1.4308137995491579,
+      "p75": 1.7886528810428992,
       "p90": 2.01461655975327,
-      "spread_p90_p10": 1.464,
+      "spread_p90_p10": 1.835,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -167,13 +122,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "c-street-ventura": {
-      "factor": 1.6211,
+      "factor": 1.5688,
       "hours": 334,
-      "p10": 1.3698757577642897,
-      "p25": null,
-      "p75": null,
-      "p90": 2.017930687186798,
-      "spread_p90_p10": 1.473,
+      "p10": 1.1875040836345034,
+      "p25": 1.388160894967006,
+      "p75": 1.8000232871202244,
+      "p90": 1.9908079260339184,
+      "spread_p90_p10": 1.676,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -182,13 +137,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "cable-landing": {
-      "factor": 1.4083,
-      "hours": 334,
-      "p10": 1.1947882260062113,
-      "p25": null,
-      "p75": null,
-      "p90": 1.6499632787588208,
-      "spread_p90_p10": 1.381,
+      "factor": 1.3854,
+      "hours": 335,
+      "p10": 1.1375745374801023,
+      "p25": 1.2378322273991669,
+      "p75": 1.498276892721583,
+      "p90": 1.6579037657099782,
+      "spread_p90_p10": 1.457,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -197,13 +152,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "cabrillo-beach": {
-      "factor": 1.6784,
-      "hours": 334,
-      "p10": 1.368499831517176,
-      "p25": null,
-      "p75": null,
+      "factor": 1.6545,
+      "hours": 335,
+      "p10": 1.132945287955006,
+      "p25": 1.4304899807478468,
+      "p75": 1.8397391781932668,
       "p90": 2.062626891252168,
-      "spread_p90_p10": 1.507,
+      "spread_p90_p10": 1.821,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -212,13 +167,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "campus-point-ucsb": {
-      "factor": 1.9864,
+      "factor": 1.9034,
       "hours": 334,
-      "p10": 1.5426813354708238,
-      "p25": null,
-      "p75": null,
-      "p90": 2.6027531566881983,
-      "spread_p90_p10": 1.687,
+      "p10": 1.3262789458178779,
+      "p25": 1.5763790304971963,
+      "p75": 2.2624706645951087,
+      "p90": 2.5615354350185657,
+      "spread_p90_p10": 1.931,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -227,13 +182,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "carlsbad-state-beach": {
-      "factor": 1.2724,
-      "hours": 334,
-      "p10": 1.124614167029658,
-      "p25": null,
-      "p75": null,
-      "p90": 1.3978918733738783,
-      "spread_p90_p10": 1.243,
+      "factor": 1.2563,
+      "hours": 335,
+      "p10": 1.0944902544839878,
+      "p25": 1.1644678556146786,
+      "p75": 1.3205203002715409,
+      "p90": 1.383497066997328,
+      "spread_p90_p10": 1.264,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -242,13 +197,28 @@
       "source": "scripts/mop_face_validation.py"
     },
     "carpinteria-state-beach": {
-      "factor": 1.4743,
+      "factor": 1.4319,
       "hours": 334,
-      "p10": 1.1899057085967397,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8509487468142267,
-      "spread_p90_p10": 1.556,
+      "p10": 1.0795416202458257,
+      "p25": 1.2654089681665623,
+      "p75": 1.6383235807187908,
+      "p90": 1.8307244292276863,
+      "spread_p90_p10": 1.696,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "caspar": {
+      "factor": 3.8934,
+      "hours": 334,
+      "p10": 2.8259591041533523,
+      "p25": 3.3622988848829025,
+      "p75": 5.233766096218589,
+      "p90": 6.6776365116943435,
+      "spread_p90_p10": 2.363,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -257,13 +227,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "cayucos-pier": {
-      "factor": 1.7388,
-      "hours": 334,
-      "p10": 1.4939075790702847,
-      "p25": null,
-      "p75": null,
+      "factor": 1.6706,
+      "hours": 335,
+      "p10": 1.1069030411981007,
+      "p25": 1.4641323058920084,
+      "p75": 1.972080667959857,
       "p90": 2.310029007929047,
-      "spread_p90_p10": 1.546,
+      "spread_p90_p10": 2.087,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -272,13 +242,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "chart-house": {
-      "factor": 1.658,
+      "factor": 1.5689,
       "hours": 334,
-      "p10": 1.097218553643965,
-      "p25": null,
-      "p75": null,
-      "p90": 2.0620030327576084,
-      "spread_p90_p10": 1.879,
+      "p10": 1.0412664911458465,
+      "p25": 1.2284290046863875,
+      "p75": 1.826026637115267,
+      "p90": 2.0325258362659,
+      "spread_p90_p10": 1.952,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -287,13 +257,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "coronado-shores": {
-      "factor": 1.3716,
-      "hours": 334,
-      "p10": 1.188522842815056,
-      "p25": null,
-      "p75": null,
+      "factor": 1.3634,
+      "hours": 335,
+      "p10": 1.063537223835172,
+      "p25": 1.218828954394504,
+      "p75": 1.5113689835955273,
       "p90": 1.659682264859311,
-      "spread_p90_p10": 1.396,
+      "spread_p90_p10": 1.561,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -302,13 +272,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "cottons": {
-      "factor": 1.3419,
-      "hours": 334,
-      "p10": 1.1551863477820212,
-      "p25": null,
-      "p75": null,
-      "p90": 1.475682527481157,
-      "spread_p90_p10": 1.277,
+      "factor": 1.2933,
+      "hours": 335,
+      "p10": 1.0616465396262322,
+      "p25": 1.180040986677516,
+      "p75": 1.389419953138225,
+      "p90": 1.4648815931194872,
+      "spread_p90_p10": 1.38,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -317,28 +287,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "county-line": {
-      "factor": 1.576,
+      "factor": 1.5368,
       "hours": 334,
-      "p10": 1.3664219929943524,
-      "p25": null,
-      "p75": null,
+      "p10": 1.2790782747512417,
+      "p25": 1.3983504634931585,
+      "p75": 1.730017698388976,
       "p90": 1.849435091225944,
-      "spread_p90_p10": 1.353,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "cowell-s-beach-children-s-surfing-area": {
-      "factor": 2.8751,
-      "hours": 334,
-      "p10": 2.2591301650313014,
-      "p25": null,
-      "p75": null,
-      "p90": 3.63029195040477,
-      "spread_p90_p10": 1.607,
+      "spread_p90_p10": 1.446,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -347,13 +302,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "dana-point-california": {
-      "factor": 1.423,
-      "hours": 334,
-      "p10": 1.2670315881961063,
-      "p25": null,
-      "p75": null,
+      "factor": 1.3899,
+      "hours": 335,
+      "p10": 1.1259137069744785,
+      "p25": 1.2944023860586025,
+      "p75": 1.5720758135003154,
       "p90": 1.68883646885684,
-      "spread_p90_p10": 1.333,
+      "spread_p90_p10": 1.5,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -362,13 +317,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "davenport-landing": {
-      "factor": 1.9276,
+      "factor": 1.8438,
       "hours": 334,
-      "p10": 1.6528311774646893,
-      "p25": null,
-      "p75": null,
-      "p90": 2.2266373556520156,
-      "spread_p90_p10": 1.347,
+      "p10": 0.9196500678391285,
+      "p25": 1.6361953133388665,
+      "p75": 1.998589152486413,
+      "p90": 2.131561998010943,
+      "spread_p90_p10": 2.318,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -377,13 +332,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "devereux": {
-      "factor": 1.546,
+      "factor": 1.4932,
       "hours": 334,
-      "p10": 1.2021602367095674,
-      "p25": null,
-      "p75": null,
-      "p90": 2.0022702872547615,
-      "spread_p90_p10": 1.666,
+      "p10": 1.1270802857444078,
+      "p25": 1.273236697452765,
+      "p75": 1.7655156974132853,
+      "p90": 1.9825312850241184,
+      "spread_p90_p10": 1.759,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -392,13 +347,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "dillon-beach": {
-      "factor": 1.9313,
+      "factor": 1.8744,
       "hours": 334,
-      "p10": 1.5548503899122306,
-      "p25": null,
-      "p75": null,
+      "p10": 0.9899665226535567,
+      "p25": 1.5665389897569957,
+      "p75": 2.1311885769537873,
       "p90": 2.4633989328577335,
-      "spread_p90_p10": 1.584,
+      "spread_p90_p10": 2.488,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -407,28 +362,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "dockweiler-beach": {
-      "factor": 1.6335,
+      "factor": 1.6054,
       "hours": 334,
-      "p10": 1.3785275121134257,
-      "p25": null,
-      "p75": null,
+      "p10": 1.148531434183054,
+      "p25": 1.3925171993363026,
+      "p75": 1.8127103926634693,
       "p90": 2.0279879000939136,
-      "spread_p90_p10": 1.471,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "doran-beach": {
-      "factor": 3.5315,
-      "hours": 334,
-      "p10": 2.812802468342175,
-      "p25": null,
-      "p75": null,
-      "p90": 4.604428220037956,
-      "spread_p90_p10": 1.637,
+      "spread_p90_p10": 1.766,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -437,13 +377,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "el-capitan-state-beach": {
-      "factor": 1.8238,
+      "factor": 1.7505,
       "hours": 334,
-      "p10": 1.4677059297756654,
-      "p25": null,
-      "p75": null,
-      "p90": 2.125956333725659,
-      "spread_p90_p10": 1.448,
+      "p10": 1.2816695137080136,
+      "p25": 1.5102439822278415,
+      "p75": 1.93623771579145,
+      "p90": 2.106185174656388,
+      "spread_p90_p10": 1.643,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -452,13 +392,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "el-porto": {
-      "factor": 1.6052,
+      "factor": 1.5693,
       "hours": 334,
-      "p10": 1.3485049312402493,
-      "p25": null,
-      "p75": null,
+      "p10": 1.0809921242779086,
+      "p25": 1.382751319349226,
+      "p75": 1.752858214899964,
       "p90": 1.9632498449764064,
-      "spread_p90_p10": 1.456,
+      "spread_p90_p10": 1.816,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -467,13 +407,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "emma-wood-state-beach": {
-      "factor": 1.5944,
+      "factor": 1.5511,
       "hours": 334,
-      "p10": 1.2877714698071945,
-      "p25": null,
-      "p75": null,
-      "p90": 1.902479743499041,
-      "spread_p90_p10": 1.477,
+      "p10": 1.1353876064958521,
+      "p25": 1.3310212928095904,
+      "p75": 1.7170454746723844,
+      "p90": 1.8745274694492597,
+      "spread_p90_p10": 1.651,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -482,28 +422,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "faria-beach": {
-      "factor": 1.4842,
+      "factor": 1.4765,
       "hours": 334,
-      "p10": 1.159589997518423,
-      "p25": null,
-      "p75": null,
-      "p90": 1.909154890715987,
-      "spread_p90_p10": 1.646,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "first-peak": {
-      "factor": 2.1863,
-      "hours": 334,
-      "p10": 1.7647285826117292,
-      "p25": null,
-      "p75": null,
-      "p90": 2.856865920021742,
-      "spread_p90_p10": 1.619,
+      "p10": 1.1334081495402981,
+      "p25": 1.2600147754303324,
+      "p75": 1.7017714557234689,
+      "p90": 1.9172539309071834,
+      "spread_p90_p10": 1.692,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -512,177 +437,12 @@
       "source": "scripts/mop_face_validation.py"
     },
     "garbage-beach": {
-      "factor": 1.158,
-      "hours": 334,
-      "p10": 1.0505849298026675,
-      "p25": null,
-      "p75": null,
-      "p90": 1.3504427456117625,
-      "spread_p90_p10": 1.285,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "grover-beach": {
-      "factor": 2.0311,
-      "hours": 334,
-      "p10": 1.567696869430791,
-      "p25": null,
-      "p75": null,
-      "p90": 2.5266316189090436,
-      "spread_p90_p10": 1.612,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "haggarty-s": {
-      "factor": 1.5558,
-      "hours": 334,
-      "p10": 1.2475856245123442,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8947923932233033,
-      "spread_p90_p10": 1.519,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "half-moon-bay": {
-      "factor": 1.9833,
-      "hours": 334,
-      "p10": 1.6797575538031095,
-      "p25": null,
-      "p75": null,
-      "p90": 2.341050680469857,
-      "spread_p90_p10": 1.394,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "hammonds": {
-      "factor": 1.0983,
-      "hours": 334,
-      "p10": 0.8606719512453156,
-      "p25": null,
-      "p75": null,
-      "p90": 1.3598677118652667,
-      "spread_p90_p10": 1.58,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "hermosa-beach-california": {
-      "factor": 1.3337,
-      "hours": 334,
-      "p10": 1.0968868587535525,
-      "p25": null,
-      "p75": null,
-      "p90": 1.7176546315109653,
-      "spread_p90_p10": 1.566,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "hermosa-beach-pier": {
-      "factor": 1.4335,
-      "hours": 334,
-      "p10": 1.1784391949919424,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8591356417322635,
-      "spread_p90_p10": 1.578,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "huntington-beach-california": {
-      "factor": 1.3115,
-      "hours": 334,
-      "p10": 1.0937305734171316,
-      "p25": null,
-      "p75": null,
-      "p90": 1.6944644693129218,
-      "spread_p90_p10": 1.549,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "huntington-beach-pier": {
-      "factor": 1.1813,
-      "hours": 334,
-      "p10": 0.9969828285310616,
-      "p25": null,
-      "p75": null,
-      "p90": 1.531124308235238,
-      "spread_p90_p10": 1.536,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "huntington-cliffs": {
-      "factor": 1.2054,
-      "hours": 334,
-      "p10": 1.027028812622316,
-      "p25": null,
-      "p75": null,
-      "p90": 1.531379217694922,
-      "spread_p90_p10": 1.491,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "imperial-beach-california": {
-      "factor": 1.2607,
-      "hours": 334,
-      "p10": 1.1055335662884649,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4817237862953145,
-      "spread_p90_p10": 1.34,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "imperial-beach-pier": {
-      "factor": 1.2136,
-      "hours": 334,
-      "p10": 1.071907619094041,
-      "p25": null,
-      "p75": null,
-      "p90": 1.3936897151123389,
+      "factor": 1.1726,
+      "hours": 335,
+      "p10": 1.038443294860259,
+      "p25": 1.0900758095054421,
+      "p75": 1.2527064813886999,
+      "p90": 1.3497253600501349,
       "spread_p90_p10": 1.3,
       "measured_on": "2026-09-01",
       "window": {
@@ -691,14 +451,14 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "jalama-beach": {
-      "factor": 2.37,
-      "hours": 334,
-      "p10": 2.0325197906491175,
-      "p25": null,
-      "p75": null,
-      "p90": 2.839080509053198,
-      "spread_p90_p10": 1.397,
+    "haggarty-s": {
+      "factor": 1.5468,
+      "hours": 335,
+      "p10": 1.0247807431913316,
+      "p25": 1.3509372479396489,
+      "p75": 1.7417766734629967,
+      "p90": 1.8947923932233033,
+      "spread_p90_p10": 1.849,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -706,373 +466,13 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "jug-handle": {
-      "factor": 1.7732,
+    "hammonds": {
+      "factor": 1.1105,
       "hours": 334,
-      "p10": 1.2942540415040835,
-      "p25": null,
-      "p75": null,
-      "p90": 2.967772398552797,
-      "spread_p90_p10": 2.293,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "law-street": {
-      "factor": 1.2807,
-      "hours": 334,
-      "p10": 1.125275706114235,
-      "p25": null,
-      "p75": null,
-      "p90": 1.485351931912778,
-      "spread_p90_p10": 1.32,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "leadbetter-beach": {
-      "factor": 2.5577,
-      "hours": 334,
-      "p10": 2.1459639565784405,
-      "p25": null,
-      "p75": null,
-      "p90": 3.298259841137607,
-      "spread_p90_p10": 1.537,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "leo-carrillo-state-beach": {
-      "factor": 1.6605,
-      "hours": 334,
-      "p10": 1.3864212182083042,
-      "p25": null,
-      "p75": null,
-      "p90": 1.974839335953546,
-      "spread_p90_p10": 1.424,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "lovers-point": {
-      "factor": 1.8113,
-      "hours": 334,
-      "p10": 1.5314876071515824,
-      "p25": null,
-      "p75": null,
-      "p90": 2.129167425429995,
-      "spread_p90_p10": 1.39,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mackerricher": {
-      "factor": 1.6174,
-      "hours": 334,
-      "p10": 1.16003301744031,
-      "p25": null,
-      "p75": null,
-      "p90": 2.633592277801089,
-      "spread_p90_p10": 2.27,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "malibu-point": {
-      "factor": 1.6141,
-      "hours": 334,
-      "p10": 1.1846007123886693,
-      "p25": null,
-      "p75": null,
-      "p90": 2.019427402794257,
-      "spread_p90_p10": 1.705,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "malibu-surfrider-beach": {
-      "factor": 1.3835,
-      "hours": 334,
-      "p10": 1.0421154548370672,
-      "p25": null,
-      "p75": null,
-      "p90": 1.7562121720821242,
-      "spread_p90_p10": 1.685,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "manresa-state-beach": {
-      "factor": 1.8915,
-      "hours": 334,
-      "p10": 1.6361948976682237,
-      "p25": null,
-      "p75": null,
-      "p90": 2.208811522410508,
-      "spread_p90_p10": 1.35,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "marina-state-beach": {
-      "factor": 1.3347,
-      "hours": 334,
-      "p10": 1.0584192942438049,
-      "p25": null,
-      "p75": null,
-      "p90": 1.657205598261667,
-      "spread_p90_p10": 1.566,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mendocino": {
-      "factor": 1.2718,
-      "hours": 334,
-      "p10": 1.0126838635560755,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5597926577066037,
-      "spread_p90_p10": 1.54,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mesa-lane": {
-      "factor": 1.4347,
-      "hours": 334,
-      "p10": 1.1681013470786656,
-      "p25": null,
-      "p75": null,
-      "p90": 1.847881240488121,
-      "spread_p90_p10": 1.582,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "miramar": {
-      "factor": 1.083,
-      "hours": 334,
-      "p10": 0.8390602459689565,
-      "p25": null,
-      "p75": null,
-      "p90": 1.389200297955714,
-      "spread_p90_p10": 1.656,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mission-beach": {
-      "factor": 1.2242,
-      "hours": 334,
-      "p10": 1.1055493682450652,
-      "p25": null,
-      "p75": null,
-      "p90": 1.402369333042582,
-      "spread_p90_p10": 1.268,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mitchell-s-cove": {
-      "factor": 2.187,
-      "hours": 334,
-      "p10": 1.7169289915261083,
-      "p25": null,
-      "p75": null,
-      "p90": 2.8483301194914707,
-      "spread_p90_p10": 1.659,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mondos": {
-      "factor": 1.5167,
-      "hours": 334,
-      "p10": 1.2265506143748046,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8129533392743646,
-      "spread_p90_p10": 1.478,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "monterey-beach": {
-      "factor": 2.2106,
-      "hours": 334,
-      "p10": 1.7317986663231308,
-      "p25": null,
-      "p75": null,
-      "p90": 2.7998310307317635,
-      "spread_p90_p10": 1.617,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "moonstone-beach-humboldt": {
-      "factor": 0.4322,
-      "hours": 334,
-      "p10": 0.32682058330656,
-      "p25": null,
-      "p75": null,
-      "p90": 0.763426237027853,
-      "spread_p90_p10": 2.336,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "morro-rock": {
-      "factor": 1.4258,
-      "hours": 334,
-      "p10": 1.2049763608474253,
-      "p25": null,
-      "p75": null,
-      "p90": 1.652407764481361,
-      "spread_p90_p10": 1.371,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "moss-landing": {
-      "factor": 2.1679,
-      "hours": 334,
-      "p10": 1.7550074976581174,
-      "p25": null,
-      "p75": null,
-      "p90": 2.6542128606441056,
-      "spread_p90_p10": 1.512,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "mussel-shoals": {
-      "factor": 1.487,
-      "hours": 334,
-      "p10": 1.1859565978630295,
-      "p25": null,
-      "p75": null,
-      "p90": 1.9629691871704347,
-      "spread_p90_p10": 1.655,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "natural-bridges": {
-      "factor": 2.5704,
-      "hours": 334,
-      "p10": 2.112489162380968,
-      "p25": null,
-      "p75": null,
-      "p90": 3.1474259514678518,
-      "spread_p90_p10": 1.49,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "newport-beach-california": {
-      "factor": 1.3505,
-      "hours": 334,
-      "p10": 1.0608637825792806,
-      "p25": null,
-      "p75": null,
-      "p90": 1.7818324676970212,
-      "spread_p90_p10": 1.68,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "newport-jetties": {
-      "factor": 1.1042,
-      "hours": 334,
-      "p10": 0.815113676374542,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4888522249337943,
-      "spread_p90_p10": 1.827,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "newport-point": {
-      "factor": 2.4072,
-      "hours": 334,
-      "p10": 1.905290380828954,
-      "p25": null,
-      "p75": null,
-      "p90": 3.083115995904297,
+      "p10": 0.893910944402034,
+      "p25": 0.9840577564054143,
+      "p75": 1.2705715437454441,
+      "p90": 1.4465565728438472,
       "spread_p90_p10": 1.618,
       "measured_on": "2026-09-01",
       "window": {
@@ -1081,14 +481,404 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "oxnard-beach": {
-      "factor": 1.7707,
+    "hermosa-beach-california": {
+      "factor": 1.3425,
       "hours": 334,
-      "p10": 1.4442340353132943,
-      "p25": null,
-      "p75": null,
-      "p90": 2.0735826362853222,
-      "spread_p90_p10": 1.436,
+      "p10": 1.0968868587535525,
+      "p25": 1.2035132502881722,
+      "p75": 1.5523224434425695,
+      "p90": 1.7301491357192826,
+      "spread_p90_p10": 1.577,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "hermosa-beach-pier": {
+      "factor": 1.4371,
+      "hours": 334,
+      "p10": 1.0733434126640147,
+      "p25": 1.283954411515233,
+      "p75": 1.6535747125224831,
+      "p90": 1.8591356417322635,
+      "spread_p90_p10": 1.732,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "huntington-beach-california": {
+      "factor": 1.2958,
+      "hours": 334,
+      "p10": 1.0716696384019255,
+      "p25": 1.1893701415243605,
+      "p75": 1.4539975805643197,
+      "p90": 1.6944644693129218,
+      "spread_p90_p10": 1.581,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "huntington-beach-pier": {
+      "factor": 1.1979,
+      "hours": 334,
+      "p10": 1.0204264060102115,
+      "p25": 1.0983518477267407,
+      "p75": 1.326953561724784,
+      "p90": 1.5403110139587461,
+      "spread_p90_p10": 1.509,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "huntington-cliffs": {
+      "factor": 1.2201,
+      "hours": 334,
+      "p10": 1.0506485054313632,
+      "p25": 1.115735331648557,
+      "p75": 1.3511993307987025,
+      "p90": 1.531572335590094,
+      "spread_p90_p10": 1.458,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "imperial-beach-california": {
+      "factor": 1.2427,
+      "hours": 335,
+      "p10": 1.0400411210612859,
+      "p25": 1.136273262607787,
+      "p75": 1.3573718269185635,
+      "p90": 1.4817237862953145,
+      "spread_p90_p10": 1.425,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "imperial-beach-pier": {
+      "factor": 1.1913,
+      "hours": 335,
+      "p10": 1.0291781612033568,
+      "p25": 1.106040185706275,
+      "p75": 1.2912639201728975,
+      "p90": 1.3936897151123389,
+      "spread_p90_p10": 1.354,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "jalama-beach": {
+      "factor": 2.3257,
+      "hours": 334,
+      "p10": 1.2054847986944708,
+      "p25": 2.041148627966958,
+      "p75": 2.5376440449307553,
+      "p90": 2.839080509053198,
+      "spread_p90_p10": 2.355,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "law-street": {
+      "factor": 1.2655,
+      "hours": 335,
+      "p10": 1.0590401929994828,
+      "p25": 1.1753069799310571,
+      "p75": 1.369508666337833,
+      "p90": 1.4783970641263975,
+      "spread_p90_p10": 1.396,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "leadbetter-beach": {
+      "factor": 2.4356,
+      "hours": 334,
+      "p10": 1.4911733679712684,
+      "p25": 2.1394548921828664,
+      "p75": 2.7649333034761017,
+      "p90": 3.171624737607715,
+      "spread_p90_p10": 2.127,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "leo-carrillo-state-beach": {
+      "factor": 1.5937,
+      "hours": 334,
+      "p10": 1.2802577764923357,
+      "p25": 1.4076349421550367,
+      "p75": 1.8012647939812694,
+      "p90": 1.974839335953546,
+      "spread_p90_p10": 1.543,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "lovers-point": {
+      "factor": 1.7086,
+      "hours": 334,
+      "p10": 1.133826603115608,
+      "p25": 1.51644085179367,
+      "p75": 1.9207886730045565,
+      "p90": 2.0833094734548507,
+      "spread_p90_p10": 1.837,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "malibu-point": {
+      "factor": 1.5318,
+      "hours": 334,
+      "p10": 1.1539028267892768,
+      "p25": 1.322905203428076,
+      "p75": 1.7724863602343404,
+      "p90": 1.9804901341942018,
+      "spread_p90_p10": 1.716,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "malibu-surfrider-beach": {
+      "factor": 1.36,
+      "hours": 334,
+      "p10": 1.0279230714906478,
+      "p25": 1.2131632214829986,
+      "p75": 1.5519116760146145,
+      "p90": 1.7269603702208118,
+      "spread_p90_p10": 1.68,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "manresa-state-beach": {
+      "factor": 1.8691,
+      "hours": 334,
+      "p10": 0.8910765348660402,
+      "p25": 1.658147016506514,
+      "p75": 2.0418787876626556,
+      "p90": 2.208811522410508,
+      "spread_p90_p10": 2.479,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "marina-state-beach": {
+      "factor": 1.2641,
+      "hours": 334,
+      "p10": 1.0047158346798577,
+      "p25": 1.0971965295138055,
+      "p75": 1.3950717322098287,
+      "p90": 1.5533273300637214,
+      "spread_p90_p10": 1.546,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mendocino": {
+      "factor": 1.2261,
+      "hours": 334,
+      "p10": 0.8147864055785439,
+      "p25": 1.062569355514864,
+      "p75": 1.4000626260300069,
+      "p90": 1.5597926577066037,
+      "spread_p90_p10": 1.914,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mesa-lane": {
+      "factor": 1.4058,
+      "hours": 334,
+      "p10": 1.136010872583835,
+      "p25": 1.2503532466884222,
+      "p75": 1.6267831868044855,
+      "p90": 1.851717112075981,
+      "spread_p90_p10": 1.63,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "miramar": {
+      "factor": 1.1101,
+      "hours": 334,
+      "p10": 0.8606464058774093,
+      "p25": 0.9628282632098268,
+      "p75": 1.2898369247321044,
+      "p90": 1.4433000243488148,
+      "spread_p90_p10": 1.677,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mission-beach": {
+      "factor": 1.2176,
+      "hours": 335,
+      "p10": 1.070246420741563,
+      "p25": 1.1453593609243355,
+      "p75": 1.3214502463686886,
+      "p90": 1.3973552269023255,
+      "spread_p90_p10": 1.306,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mondos": {
+      "factor": 1.5052,
+      "hours": 334,
+      "p10": 1.1624843957844524,
+      "p25": 1.3004705419231506,
+      "p75": 1.672188345563829,
+      "p90": 1.8214929801011508,
+      "spread_p90_p10": 1.567,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "monterey-beach": {
+      "factor": 2.0793,
+      "hours": 335,
+      "p10": 1.308491376347593,
+      "p25": 1.662802059600597,
+      "p75": 2.4510522897034663,
+      "p90": 2.76403920000807,
+      "spread_p90_p10": 2.112,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "morro-rock": {
+      "factor": 1.403,
+      "hours": 335,
+      "p10": 1.1148410657844658,
+      "p25": 1.2516014462433664,
+      "p75": 1.5149356064466177,
+      "p90": 1.6647250485687384,
+      "spread_p90_p10": 1.493,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mussel-shoals": {
+      "factor": 1.4713,
+      "hours": 334,
+      "p10": 1.1439616479163766,
+      "p25": 1.2886150587067244,
+      "p75": 1.7282488875635444,
+      "p90": 1.970776238211798,
+      "spread_p90_p10": 1.723,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "newport-beach-california": {
+      "factor": 1.3034,
+      "hours": 335,
+      "p10": 0.9953729083434321,
+      "p25": 1.2080533526955215,
+      "p75": 1.4977015667181406,
+      "p90": 1.7818324676970212,
+      "spread_p90_p10": 1.79,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "newport-jetties": {
+      "factor": 1.1214,
+      "hours": 335,
+      "p10": 0.815113676374542,
+      "p25": 1.0021229864402286,
+      "p75": 1.2843888938274348,
+      "p90": 1.5041965460744104,
+      "spread_p90_p10": 1.845,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "oxnard-beach": {
+      "factor": 1.7552,
+      "hours": 334,
+      "p10": 1.3321138991290806,
+      "p25": 1.553245538578172,
+      "p75": 1.9376569725785457,
+      "p90": 2.061034176940565,
+      "spread_p90_p10": 1.547,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1097,13 +887,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "pacific-beach": {
-      "factor": 1.3132,
-      "hours": 334,
-      "p10": 1.1390777991691112,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5175211021395543,
-      "spread_p90_p10": 1.332,
+      "factor": 1.2995,
+      "hours": 335,
+      "p10": 1.0453354961813774,
+      "p25": 1.1925349410613026,
+      "p75": 1.4092714995070479,
+      "p90": 1.5119394127778925,
+      "spread_p90_p10": 1.446,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1112,13 +902,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "palos-verdes-cove": {
-      "factor": 1.4021,
+      "factor": 1.4032,
       "hours": 334,
-      "p10": 1.139638527436665,
-      "p25": null,
-      "p75": null,
-      "p90": 1.7067627543285007,
-      "spread_p90_p10": 1.498,
+      "p10": 1.0256902999118787,
+      "p25": 1.2355750703364752,
+      "p75": 1.5629068040379552,
+      "p90": 1.7061685502725372,
+      "spread_p90_p10": 1.663,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1127,13 +917,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "pb-point": {
-      "factor": 1.2667,
-      "hours": 334,
-      "p10": 1.0966194626883188,
-      "p25": null,
-      "p75": null,
-      "p90": 1.480543497987971,
-      "spread_p90_p10": 1.35,
+      "factor": 1.2517,
+      "hours": 335,
+      "p10": 1.0342967214471943,
+      "p25": 1.153593672046876,
+      "p75": 1.351426103568619,
+      "p90": 1.4600130424695923,
+      "spread_p90_p10": 1.412,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1142,13 +932,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "piedras-blancas": {
-      "factor": 1.3036,
-      "hours": 334,
-      "p10": 1.080716745101711,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4791007049664333,
-      "spread_p90_p10": 1.369,
+      "factor": 1.2707,
+      "hours": 335,
+      "p10": 1.0319715048249223,
+      "p25": 1.1328374008780888,
+      "p75": 1.3869473889844453,
+      "p90": 1.4789213829743666,
+      "spread_p90_p10": 1.433,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1157,13 +947,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "pigeon-point": {
-      "factor": 1.817,
-      "hours": 334,
-      "p10": 1.5070153642096786,
-      "p25": null,
-      "p75": null,
-      "p90": 2.1753135275187336,
-      "spread_p90_p10": 1.443,
+      "factor": 1.7158,
+      "hours": 335,
+      "p10": 0.8841764189540989,
+      "p25": 1.4855011856978033,
+      "p75": 1.9171971504799186,
+      "p90": 2.068790211274012,
+      "spread_p90_p10": 2.34,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1172,13 +962,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "pismo-beach-pier": {
-      "factor": 1.9802,
-      "hours": 334,
-      "p10": 1.6426410443117987,
-      "p25": null,
-      "p75": null,
+      "factor": 1.9267,
+      "hours": 335,
+      "p10": 1.1489191297247252,
+      "p25": 1.6168933500224623,
+      "p75": 2.180206471354757,
       "p90": 2.381207657635893,
-      "spread_p90_p10": 1.45,
+      "spread_p90_p10": 2.073,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1187,28 +977,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "pitas-point": {
-      "factor": 1.5573,
+      "factor": 1.5451,
       "hours": 334,
-      "p10": 1.2242399009304774,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8849553170929378,
-      "spread_p90_p10": 1.54,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "pleasure-point": {
-      "factor": 2.1863,
-      "hours": 334,
-      "p10": 1.7647285826117292,
-      "p25": null,
-      "p75": null,
-      "p90": 2.856865920021742,
-      "spread_p90_p10": 1.619,
+      "p10": 1.1692762721496233,
+      "p25": 1.3141983674544027,
+      "p75": 1.7294171205257916,
+      "p90": 1.8901751594168628,
+      "spread_p90_p10": 1.617,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1217,13 +992,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "point-arena": {
-      "factor": 0.8799,
+      "factor": 0.9313,
       "hours": 334,
-      "p10": 0.5554298664631746,
-      "p25": null,
-      "p75": null,
-      "p90": 1.200405335542537,
-      "spread_p90_p10": 2.161,
+      "p10": 0.5567384060180146,
+      "p25": 0.7201318346866682,
+      "p75": 1.1303113471193138,
+      "p90": 1.3459158452368192,
+      "spread_p90_p10": 2.418,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1232,13 +1007,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "point-dume": {
-      "factor": 1.6303,
+      "factor": 1.5851,
       "hours": 334,
-      "p10": 1.2358533398144724,
-      "p25": null,
-      "p75": null,
+      "p10": 1.134449554493214,
+      "p25": 1.3183121690339648,
+      "p75": 1.8108751962683942,
       "p90": 2.0092883962333827,
-      "spread_p90_p10": 1.626,
+      "spread_p90_p10": 1.771,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1247,13 +1022,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "point-reyes-north": {
-      "factor": 1.6311,
+      "factor": 1.5849,
       "hours": 334,
-      "p10": 1.2750890377460158,
-      "p25": null,
-      "p75": null,
+      "p10": 0.999425138736217,
+      "p25": 1.298305893766722,
+      "p75": 1.915564259308343,
       "p90": 2.2122683324105528,
-      "spread_p90_p10": 1.735,
+      "spread_p90_p10": 2.214,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1262,13 +1037,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "ponto-beach": {
-      "factor": 1.2996,
-      "hours": 334,
-      "p10": 1.19207673879874,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4459470262414102,
-      "spread_p90_p10": 1.213,
+      "factor": 1.295,
+      "hours": 335,
+      "p10": 1.1511316928536703,
+      "p25": 1.217156031919847,
+      "p75": 1.3667757889926737,
+      "p90": 1.4412062951681364,
+      "spread_p90_p10": 1.252,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1277,13 +1052,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "port-hueneme": {
-      "factor": 1.8348,
+      "factor": 1.7624,
       "hours": 334,
-      "p10": 1.559262873925059,
-      "p25": null,
-      "p75": null,
+      "p10": 1.2906510070210977,
+      "p25": 1.575609605951339,
+      "p75": 1.9777168222078028,
       "p90": 2.1939647507702653,
-      "spread_p90_p10": 1.407,
+      "spread_p90_p10": 1.7,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1292,13 +1067,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "redondo-beach-california": {
-      "factor": 1.6415,
+      "factor": 1.6244,
       "hours": 334,
-      "p10": 1.3145010840331275,
-      "p25": null,
-      "p75": null,
+      "p10": 0.9757911695972867,
+      "p25": 1.4137854440007898,
+      "p75": 1.84352353693891,
       "p90": 2.0759175706736794,
-      "spread_p90_p10": 1.579,
+      "spread_p90_p10": 2.127,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1307,13 +1082,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "redondo-breakwater": {
-      "factor": 1.8007,
+      "factor": 1.7809,
       "hours": 334,
-      "p10": 1.5225043005161176,
-      "p25": null,
-      "p75": null,
-      "p90": 2.2538962704426693,
-      "spread_p90_p10": 1.48,
+      "p10": 1.0866055603093754,
+      "p25": 1.5839498763242987,
+      "p75": 1.9909071408815018,
+      "p90": 2.2163778956041367,
+      "spread_p90_p10": 2.04,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1322,13 +1097,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "refugio-state-beach": {
-      "factor": 2.0968,
+      "factor": 1.973,
       "hours": 334,
-      "p10": 1.616838957125374,
-      "p25": null,
-      "p75": null,
-      "p90": 2.54836684547914,
-      "spread_p90_p10": 1.576,
+      "p10": 1.367698728100485,
+      "p25": 1.6334547547670386,
+      "p75": 2.276366513304287,
+      "p90": 2.5480418592337704,
+      "spread_p90_p10": 1.863,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1337,147 +1112,12 @@
       "source": "scripts/mop_face_validation.py"
     },
     "river-jetties": {
-      "factor": 1.2147,
-      "hours": 334,
-      "p10": 0.9941443926859204,
-      "p25": null,
-      "p75": null,
-      "p90": 1.565392820183854,
-      "spread_p90_p10": 1.575,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "rockaway-beach-pacifica": {
-      "factor": 0.9615,
-      "hours": 334,
-      "p10": 0.6144480126489437,
-      "p25": null,
-      "p75": null,
-      "p90": 1.399648059442525,
-      "spread_p90_p10": 2.278,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "rockpile": {
-      "factor": 1.5807,
-      "hours": 334,
-      "p10": 1.2509220886120311,
-      "p25": null,
-      "p75": null,
-      "p90": 1.9325295502502753,
-      "spread_p90_p10": 1.545,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "rockpile-laguna": {
-      "factor": 1.2364,
-      "hours": 334,
-      "p10": 1.0410587538052238,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5191902767646999,
-      "spread_p90_p10": 1.459,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "salmon-creek-beach": {
-      "factor": 1.4973,
-      "hours": 334,
-      "p10": 1.1418064991942083,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8108953869198372,
-      "spread_p90_p10": 1.586,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "san-diego-blacks-beach": {
-      "factor": 0.9401,
-      "hours": 334,
-      "p10": 0.7834793694344296,
-      "p25": null,
-      "p75": null,
-      "p90": 1.066413418010964,
-      "spread_p90_p10": 1.361,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "san-onofre": {
-      "factor": 1.3095,
-      "hours": 334,
-      "p10": 1.1913523157132382,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4541945509038194,
-      "spread_p90_p10": 1.221,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "san-simeon": {
-      "factor": 1.9694,
-      "hours": 334,
-      "p10": 1.6785388982320644,
-      "p25": null,
-      "p75": null,
-      "p90": 2.4116071255754314,
-      "spread_p90_p10": 1.437,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "sand-dollar-beach": {
-      "factor": 1.4989,
-      "hours": 334,
-      "p10": 1.3126712028239542,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8159040972759202,
-      "spread_p90_p10": 1.383,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "santa-monica-beach": {
-      "factor": 1.5159,
-      "hours": 334,
-      "p10": 1.1703727624671558,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8524429811736345,
+      "factor": 1.2241,
+      "hours": 335,
+      "p10": 0.9926646742446562,
+      "p25": 1.1272721752236816,
+      "p75": 1.3487032462288082,
+      "p90": 1.571185548666191,
       "spread_p90_p10": 1.583,
       "measured_on": "2026-09-01",
       "window": {
@@ -1486,14 +1126,149 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "santa-monica-pier": {
-      "factor": 1.714,
+    "rockaway-beach-pacifica": {
+      "factor": 1.0248,
       "hours": 334,
-      "p10": 1.3297341972814531,
-      "p25": null,
-      "p75": null,
-      "p90": 2.1124104769891776,
-      "spread_p90_p10": 1.589,
+      "p10": 0.6144480126489437,
+      "p25": 0.8149255120942493,
+      "p75": 1.250043493473508,
+      "p90": 1.4893313814764666,
+      "spread_p90_p10": 2.424,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "rockpile": {
+      "factor": 1.5398,
+      "hours": 334,
+      "p10": 1.1582343542014137,
+      "p25": 1.2992257265038962,
+      "p75": 1.7288939494461963,
+      "p90": 1.9297966067502483,
+      "spread_p90_p10": 1.666,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "rockpile-laguna": {
+      "factor": 1.2169,
+      "hours": 335,
+      "p10": 0.9756592349895581,
+      "p25": 1.1194100839336838,
+      "p75": 1.3759300889799264,
+      "p90": 1.510111610417986,
+      "spread_p90_p10": 1.548,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "salmon-creek-beach": {
+      "factor": 1.4357,
+      "hours": 334,
+      "p10": 1.0316036657457281,
+      "p25": 1.2502412829845864,
+      "p75": 1.6527274754582106,
+      "p90": 1.8081202820403461,
+      "spread_p90_p10": 1.753,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "san-diego-blacks-beach": {
+      "factor": 0.978,
+      "hours": 335,
+      "p10": 0.8078172796920653,
+      "p25": 0.8710099673391561,
+      "p75": 1.0698277646059102,
+      "p90": 1.2391760212355185,
+      "spread_p90_p10": 1.534,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "san-onofre": {
+      "factor": 1.2934,
+      "hours": 335,
+      "p10": 1.084931753432079,
+      "p25": 1.2198017075117111,
+      "p75": 1.358015534181746,
+      "p90": 1.4541945509038194,
+      "spread_p90_p10": 1.34,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "san-simeon": {
+      "factor": 1.9144,
+      "hours": 335,
+      "p10": 1.089784920010946,
+      "p25": 1.6586539040195507,
+      "p75": 2.104963389922908,
+      "p90": 2.4116071255754314,
+      "spread_p90_p10": 2.213,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "sand-dollar-beach": {
+      "factor": 1.4721,
+      "hours": 335,
+      "p10": 1.2143969992926686,
+      "p25": 1.3247066567529369,
+      "p75": 1.63371996129573,
+      "p90": 1.8159040972759202,
+      "spread_p90_p10": 1.495,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "santa-monica-beach": {
+      "factor": 1.485,
+      "hours": 334,
+      "p10": 1.073965393763392,
+      "p25": 1.2692094210052407,
+      "p75": 1.667876382349541,
+      "p90": 1.8367714394117387,
+      "spread_p90_p10": 1.71,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "santa-monica-pier": {
+      "factor": 1.6561,
+      "hours": 334,
+      "p10": 1.1425000736928943,
+      "p25": 1.3600444060748624,
+      "p75": 1.8835703074343222,
+      "p90": 2.102465546710121,
+      "spread_p90_p10": 1.84,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1502,43 +1277,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "scotts-creek": {
-      "factor": 1.7585,
+      "factor": 1.6695,
       "hours": 334,
-      "p10": 1.4810056189413898,
-      "p25": null,
-      "p75": null,
-      "p90": 2.0795619564040178,
-      "spread_p90_p10": 1.404,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "second-peak": {
-      "factor": 2.3846,
-      "hours": 334,
-      "p10": 1.9285915799364575,
-      "p25": null,
-      "p75": null,
-      "p90": 3.1363937512760747,
-      "spread_p90_p10": 1.626,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "sewer-peak": {
-      "factor": 2.1863,
-      "hours": 334,
-      "p10": 1.7647285826117292,
-      "p25": null,
-      "p75": null,
-      "p90": 2.856865920021742,
-      "spread_p90_p10": 1.619,
+      "p10": 0.9664215408931042,
+      "p25": 1.4607452590547212,
+      "p75": 1.8427982234133289,
+      "p90": 1.9530848130043073,
+      "spread_p90_p10": 2.021,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1547,13 +1292,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "sharp-park": {
-      "factor": 1.3806,
+      "factor": 1.3245,
       "hours": 334,
-      "p10": 1.0934047552155937,
-      "p25": null,
-      "p75": null,
-      "p90": 1.6976709351685588,
-      "spread_p90_p10": 1.553,
+      "p10": 0.98310762024562,
+      "p25": 1.1234254789739389,
+      "p75": 1.5409881557414467,
+      "p90": 1.6934062645077113,
+      "spread_p90_p10": 1.723,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1562,13 +1307,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "shell-beach": {
-      "factor": 1.92,
-      "hours": 334,
-      "p10": 1.6364739338887526,
-      "p25": null,
-      "p75": null,
+      "factor": 1.8617,
+      "hours": 335,
+      "p10": 1.179850887875475,
+      "p25": 1.5997193800457947,
+      "p75": 2.1820529592753135,
       "p90": 2.4800667542934955,
-      "spread_p90_p10": 1.515,
+      "spread_p90_p10": 2.102,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1577,13 +1322,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "shell-beach-north": {
-      "factor": 2.1545,
-      "hours": 334,
-      "p10": 1.7662499389514201,
-      "p25": null,
-      "p75": null,
+      "factor": 2.0857,
+      "hours": 335,
+      "p10": 1.0874830476315467,
+      "p25": 1.7204718114451605,
+      "p75": 2.3676618832055336,
       "p90": 2.633765103231911,
-      "spread_p90_p10": 1.491,
+      "spread_p90_p10": 2.422,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1592,13 +1337,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "shelter-cove": {
-      "factor": 1.5088,
+      "factor": 1.3697,
       "hours": 334,
-      "p10": 1.1486880582908607,
-      "p25": null,
-      "p75": null,
-      "p90": 1.9587897712968214,
-      "spread_p90_p10": 1.705,
+      "p10": 0.7840345633016392,
+      "p25": 1.1336143038284379,
+      "p75": 1.7320151458339788,
+      "p90": 1.9478355827113363,
+      "spread_p90_p10": 2.484,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1607,13 +1352,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "shitpipe": {
-      "factor": 1.6072,
+      "factor": 1.5742,
       "hours": 334,
-      "p10": 1.3636125860200028,
-      "p25": null,
-      "p75": null,
+      "p10": 1.1108982002194336,
+      "p25": 1.3906731564354862,
+      "p75": 1.7682536787423884,
       "p90": 1.9735184295202135,
-      "spread_p90_p10": 1.447,
+      "spread_p90_p10": 1.777,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1622,28 +1367,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "silver-strand": {
-      "factor": 1.9629,
+      "factor": 1.9451,
       "hours": 334,
-      "p10": 1.5974350923668454,
-      "p25": null,
-      "p75": null,
-      "p90": 2.3899147703279238,
-      "spread_p90_p10": 1.496,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "steamer-lane": {
-      "factor": 2.8702,
-      "hours": 334,
-      "p10": 2.2591301650313014,
-      "p25": null,
-      "p75": null,
-      "p90": 3.63029195040477,
-      "spread_p90_p10": 1.607,
+      "p10": 1.2771882909156018,
+      "p25": 1.722729932274667,
+      "p75": 2.2117782642699364,
+      "p90": 2.3873968301421895,
+      "spread_p90_p10": 1.869,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1652,13 +1382,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "stone-steps": {
-      "factor": 1.2707,
-      "hours": 334,
-      "p10": 1.1596858414445625,
-      "p25": null,
-      "p75": null,
-      "p90": 1.3871127429077907,
-      "spread_p90_p10": 1.196,
+      "factor": 1.2611,
+      "hours": 335,
+      "p10": 1.1078688079951595,
+      "p25": 1.1901949542124934,
+      "p75": 1.3172472296348465,
+      "p90": 1.3889634547144891,
+      "spread_p90_p10": 1.254,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1667,13 +1397,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "strands-beach": {
-      "factor": 1.3369,
-      "hours": 334,
-      "p10": 1.1812370217297112,
-      "p25": null,
-      "p75": null,
+      "factor": 1.3271,
+      "hours": 335,
+      "p10": 1.1427981077719596,
+      "p25": 1.2311296639144458,
+      "p75": 1.482191089686124,
       "p90": 1.615112866802252,
-      "spread_p90_p10": 1.367,
+      "spread_p90_p10": 1.413,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1682,13 +1412,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "sunset-point": {
-      "factor": 1.5849,
+      "factor": 1.5038,
       "hours": 334,
-      "p10": 1.026896008693171,
-      "p25": null,
-      "p75": null,
-      "p90": 1.9766622903488749,
-      "spread_p90_p10": 1.925,
+      "p10": 0.977127953174676,
+      "p25": 1.1868654337942999,
+      "p75": 1.7345234085119638,
+      "p90": 1.9608030494047555,
+      "spread_p90_p10": 2.007,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1697,13 +1427,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "surf-beach-vandenberg": {
-      "factor": 1.3205,
+      "factor": 1.2861,
       "hours": 334,
-      "p10": 1.1081093887918065,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5104216845675345,
-      "spread_p90_p10": 1.363,
+      "p10": 1.0698812931898627,
+      "p25": 1.152394844551536,
+      "p75": 1.4089222770852854,
+      "p90": 1.484950576669387,
+      "spread_p90_p10": 1.388,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1712,13 +1442,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "surfside-california": {
-      "factor": 1.368,
-      "hours": 334,
-      "p10": 1.0858660833105027,
-      "p25": null,
-      "p75": null,
+      "factor": 1.326,
+      "hours": 335,
+      "p10": 0.99747986189409,
+      "p25": 1.1454423748816571,
+      "p75": 1.5650674384614234,
       "p90": 1.8508507114897064,
-      "spread_p90_p10": 1.704,
+      "spread_p90_p10": 1.856,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1727,28 +1457,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "tamarack": {
-      "factor": 1.2963,
-      "hours": 334,
-      "p10": 1.1738033146272118,
-      "p25": null,
-      "p75": null,
-      "p90": 1.4129130251678172,
-      "spread_p90_p10": 1.204,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "ten-mile-beach": {
-      "factor": 1.6731,
-      "hours": 334,
-      "p10": 1.2308401149204313,
-      "p25": null,
-      "p75": null,
-      "p90": 2.7455185833707683,
-      "spread_p90_p10": 2.231,
+      "factor": 1.286,
+      "hours": 335,
+      "p10": 1.1211093745025185,
+      "p25": 1.2095463232538841,
+      "p75": 1.337960837757872,
+      "p90": 1.4055089340110682,
+      "spread_p90_p10": 1.254,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1757,117 +1472,12 @@
       "source": "scripts/mop_face_validation.py"
     },
     "the-hook": {
-      "factor": 1.5518,
-      "hours": 334,
-      "p10": 1.2494129701573622,
-      "p25": null,
-      "p75": null,
+      "factor": 1.5505,
+      "hours": 335,
+      "p10": 1.0548085593733452,
+      "p25": 1.325661630994706,
+      "p75": 1.7803063420037482,
       "p90": 1.942018348518507,
-      "spread_p90_p10": 1.554,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "tijuana-slough": {
-      "factor": 1.3301,
-      "hours": 334,
-      "p10": 1.1683575926917187,
-      "p25": null,
-      "p75": null,
-      "p90": 1.618925980034192,
-      "spread_p90_p10": 1.386,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "toes-over": {
-      "factor": 1.8653,
-      "hours": 334,
-      "p10": 1.5929595764412234,
-      "p25": null,
-      "p75": null,
-      "p90": 2.317874973965299,
-      "spread_p90_p10": 1.455,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "topanga-beach": {
-      "factor": 1.6946,
-      "hours": 334,
-      "p10": 1.1476656736109305,
-      "p25": null,
-      "p75": null,
-      "p90": 2.1001222513856614,
-      "spread_p90_p10": 1.83,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "tourmaline": {
-      "factor": 1.293,
-      "hours": 334,
-      "p10": 1.1288780141571702,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5082522112600345,
-      "spread_p90_p10": 1.336,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "venice-beach-breakwater": {
-      "factor": 1.5311,
-      "hours": 334,
-      "p10": 1.2312717072838821,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8775193782367818,
-      "spread_p90_p10": 1.525,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "venice-beach-pier": {
-      "factor": 1.4893,
-      "hours": 334,
-      "p10": 1.2454172242982187,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8528198467303687,
-      "spread_p90_p10": 1.488,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "ventura-harbor": {
-      "factor": 2.0804,
-      "hours": 334,
-      "p10": 1.491608087759341,
-      "p25": null,
-      "p75": null,
-      "p90": 2.746125961311762,
       "spread_p90_p10": 1.841,
       "measured_on": "2026-09-01",
       "window": {
@@ -1876,44 +1486,119 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "tijuana-slough": {
+      "factor": 1.3146,
+      "hours": 335,
+      "p10": 1.038876545586228,
+      "p25": 1.1980268933383638,
+      "p75": 1.455008032070138,
+      "p90": 1.618925980034192,
+      "spread_p90_p10": 1.558,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "toes-over": {
+      "factor": 1.8557,
+      "hours": 335,
+      "p10": 0.955632451038629,
+      "p25": 1.645150244136641,
+      "p75": 2.133455685178987,
+      "p90": 2.317874973965299,
+      "spread_p90_p10": 2.425,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "topanga-beach": {
+      "factor": 1.6176,
+      "hours": 334,
+      "p10": 1.0649700007272034,
+      "p25": 1.2307450500686574,
+      "p75": 1.8685064264302185,
+      "p90": 2.0790038356532614,
+      "spread_p90_p10": 1.952,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "tourmaline": {
+      "factor": 1.2776,
+      "hours": 335,
+      "p10": 1.0589260090669157,
+      "p25": 1.179717128049513,
+      "p75": 1.382623829485191,
+      "p90": 1.5032927028225125,
+      "spread_p90_p10": 1.42,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "venice-beach-breakwater": {
+      "factor": 1.4851,
+      "hours": 334,
+      "p10": 1.170507938488956,
+      "p25": 1.2855297170382007,
+      "p75": 1.6963847222374726,
+      "p90": 1.8696240548824843,
+      "spread_p90_p10": 1.597,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "venice-beach-pier": {
+      "factor": 1.4751,
+      "hours": 334,
+      "p10": 1.1923532874971154,
+      "p25": 1.294586609570657,
+      "p75": 1.673799259636403,
+      "p90": 1.8528198467303687,
+      "spread_p90_p10": 1.554,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "ventura-harbor": {
+      "factor": 2.0777,
+      "hours": 334,
+      "p10": 1.3494865532225753,
+      "p25": 1.6989148425286824,
+      "p75": 2.4780669729287514,
+      "p90": 2.7373514786094293,
+      "spread_p90_p10": 2.028,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "ventura-point": {
-      "factor": 1.5555,
+      "factor": 1.514,
       "hours": 334,
-      "p10": 1.28205011045313,
-      "p25": null,
-      "p75": null,
-      "p90": 1.895994696323279,
-      "spread_p90_p10": 1.479,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "waddell-creek": {
-      "factor": 2.2676,
-      "hours": 334,
-      "p10": 1.9382328483966524,
-      "p25": null,
-      "p75": null,
-      "p90": 2.5730426195863885,
-      "spread_p90_p10": 1.328,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "westport": {
-      "factor": 1.6209,
-      "hours": 334,
-      "p10": 1.1851581049903064,
-      "p25": null,
-      "p75": null,
-      "p90": 2.4950613172626417,
-      "spread_p90_p10": 2.105,
+      "p10": 1.170309102346886,
+      "p25": 1.3292700932875154,
+      "p75": 1.704292782226678,
+      "p90": 1.8838344528766224,
+      "spread_p90_p10": 1.61,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1922,13 +1607,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "white-point": {
-      "factor": 1.4797,
-      "hours": 334,
-      "p10": 1.2420667445892617,
-      "p25": null,
-      "p75": null,
+      "factor": 1.4706,
+      "hours": 335,
+      "p10": 1.0907729840855447,
+      "p25": 1.2833415086204953,
+      "p75": 1.62483048004681,
       "p90": 1.8818944831760254,
-      "spread_p90_p10": 1.515,
+      "spread_p90_p10": 1.725,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1937,28 +1622,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "will-rogers": {
-      "factor": 1.4873,
+      "factor": 1.4552,
       "hours": 334,
-      "p10": 1.0253996422622655,
-      "p25": null,
-      "p75": null,
-      "p90": 1.8708162134952058,
-      "spread_p90_p10": 1.824,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "wind-and-sea": {
-      "factor": 2.0972,
-      "hours": 334,
-      "p10": 1.7055826711272828,
-      "p25": null,
-      "p75": null,
-      "p90": 2.705037811468282,
-      "spread_p90_p10": 1.586,
+      "p10": 1.0004923574545377,
+      "p25": 1.2036136369507064,
+      "p75": 1.6352626438130837,
+      "p90": 1.837309744893927,
+      "spread_p90_p10": 1.836,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1967,13 +1637,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "windansea-beach": {
-      "factor": 1.2869,
-      "hours": 334,
-      "p10": 1.1600281699201536,
-      "p25": null,
-      "p75": null,
+      "factor": 1.2876,
+      "hours": 335,
+      "p10": 1.0965093755314712,
+      "p25": 1.2005864499443015,
+      "p75": 1.3969133659748034,
       "p90": 1.5059415999514423,
-      "spread_p90_p10": 1.298,
+      "spread_p90_p10": 1.373,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1982,13 +1652,13 @@
       "source": "scripts/mop_face_validation.py"
     },
     "zuma-beach": {
-      "factor": 1.3289,
+      "factor": 1.3331,
       "hours": 334,
-      "p10": 1.1358743466268937,
-      "p25": null,
-      "p75": null,
-      "p90": 1.5711557258434832,
-      "spread_p90_p10": 1.383,
+      "p10": 1.1336202720185478,
+      "p25": 1.203748828993191,
+      "p75": 1.4746304510458261,
+      "p90": 1.5659809338035748,
+      "spread_p90_p10": 1.381,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1998,12 +1668,77 @@
     }
   },
   "held_out": {
-    "caspar": {
-      "reason": "within-spot p90/p10 spread 2.55 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+    "3-mile": {
+      "reason": "within-spot p90/p10 spread 3.10 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
       "verdict": "spread",
-      "factor": 3.899748510066555,
+      "factor": 1.966986167752312,
+      "hours": 335,
+      "spread_p90_p10": 3.097,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "4-mile": {
+      "reason": "within-spot p90/p10 spread 2.52 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.8999731818807148,
+      "hours": 335,
+      "spread_p90_p10": 2.523,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "blackies": {
+      "reason": "within-spot p90/p10 spread 3.13 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.1591691456948743,
       "hours": 334,
-      "spread_p90_p10": 2.547,
+      "spread_p90_p10": 3.125,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "cowell-s-beach-children-s-surfing-area": {
+      "reason": "within-spot p90/p10 spread 4.47 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.8184982180040308,
+      "hours": 334,
+      "spread_p90_p10": 4.469,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "doran-beach": {
+      "reason": "within-spot p90/p10 spread 5.69 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 3.4559038028369655,
+      "hours": 334,
+      "spread_p90_p10": 5.694,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "first-peak": {
+      "reason": "within-spot p90/p10 spread 3.11 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.1670298469356792,
+      "hours": 334,
+      "spread_p90_p10": 3.107,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -2014,9 +1749,139 @@
     "fort-point": {
       "reason": "91.7% of hours land at the 1-star floor after correction. At that size the rating carries no information: composite_stars clamps to 1.0 for any effective size between 0.5 and ~1.25 ft, so wind, tide and chop stop mattering because size dominates and the spot becomes a binary flat-or-one-star readout.",
       "verdict": "held_out",
-      "factor": 3.1668583653103224,
+      "factor": 3.083973311462093,
       "hours": 334,
-      "spread_p90_p10": 1.853,
+      "spread_p90_p10": 1.949,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "grover-beach": {
+      "reason": "within-spot p90/p10 spread 2.50 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.869823583225993,
+      "hours": 335,
+      "spread_p90_p10": 2.501,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "half-moon-bay": {
+      "reason": "within-spot p90/p10 spread 2.58 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.9356614867714999,
+      "hours": 335,
+      "spread_p90_p10": 2.579,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "jug-handle": {
+      "reason": "within-spot p90/p10 spread 4.22 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.690715847503848,
+      "hours": 334,
+      "spread_p90_p10": 4.217,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mackerricher": {
+      "reason": "within-spot p90/p10 spread 4.04 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.526483359974251,
+      "hours": 334,
+      "spread_p90_p10": 4.039,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "mitchell-s-cove": {
+      "reason": "within-spot p90/p10 spread 3.32 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.1088837310175537,
+      "hours": 335,
+      "spread_p90_p10": 3.323,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "moonstone-beach-humboldt": {
+      "reason": "within-spot p90/p10 spread 4.13 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 0.4967949362146973,
+      "hours": 334,
+      "spread_p90_p10": 4.126,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "moss-landing": {
+      "reason": "within-spot p90/p10 spread 2.63 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.9874681766547289,
+      "hours": 334,
+      "spread_p90_p10": 2.628,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "natural-bridges": {
+      "reason": "within-spot p90/p10 spread 3.97 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.5075899764105674,
+      "hours": 334,
+      "spread_p90_p10": 3.968,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "newport-point": {
+      "reason": "within-spot p90/p10 spread 3.43 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.4022132276772026,
+      "hours": 335,
+      "spread_p90_p10": 3.431,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "pleasure-point": {
+      "reason": "within-spot p90/p10 spread 3.11 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.1670298469356792,
+      "hours": 334,
+      "spread_p90_p10": 3.107,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -2027,9 +1892,9 @@
     "rincon": {
       "reason": "Factor 0.62 with a 6.47x within-spot spread. The correction would make Rincon BIGGER, and at that spread the ratio is nearly uncorrelated — the median is the centre of a cloud rather than a stable offset, so dividing by it moves the typical hour about as often as it fixes one. This is the clearest example in the population of what the spread rule exists to catch.",
       "verdict": "held_out",
-      "factor": 0.6156061194489089,
+      "factor": 0.6224108094842314,
       "hours": 331,
-      "spread_p90_p10": 6.468,
+      "spread_p90_p10": 6.956,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -2040,9 +1905,48 @@
     "sandspit": {
       "reason": "60.7% of hours at the 1-star floor after correction — same mechanism as fort-point, and enough of the range collapses that the corrected rating stops discriminating between conditions.",
       "verdict": "held_out",
-      "factor": 3.4152198606855446,
+      "factor": 3.462214978879834,
       "hours": 334,
-      "spread_p90_p10": 1.583,
+      "spread_p90_p10": 1.902,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "second-peak": {
+      "reason": "within-spot p90/p10 spread 3.52 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.3657205196256412,
+      "hours": 335,
+      "spread_p90_p10": 3.524,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "sewer-peak": {
+      "reason": "within-spot p90/p10 spread 3.13 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.1631619958735993,
+      "hours": 335,
+      "spread_p90_p10": 3.134,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "steamer-lane": {
+      "reason": "within-spot p90/p10 spread 4.42 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.808355287396395,
+      "hours": 335,
+      "spread_p90_p10": 4.424,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -2051,11 +1955,63 @@
       "source": "scripts/mop_face_validation.py"
     },
     "tarpits": {
-      "reason": "within-spot p90/p10 spread 5.84 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "reason": "within-spot p90/p10 spread 6.61 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
       "verdict": "spread",
-      "factor": 0.7053778391371751,
+      "factor": 0.684750401262943,
       "hours": 331,
-      "spread_p90_p10": 5.844,
+      "spread_p90_p10": 6.606,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "ten-mile-beach": {
+      "reason": "within-spot p90/p10 spread 4.02 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.5877644699181128,
+      "hours": 334,
+      "spread_p90_p10": 4.022,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "waddell-creek": {
+      "reason": "within-spot p90/p10 spread 2.90 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.1862846108528693,
+      "hours": 335,
+      "spread_p90_p10": 2.902,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "westport": {
+      "reason": "within-spot p90/p10 spread 3.57 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 1.511523931564966,
+      "hours": 334,
+      "spread_p90_p10": 3.568,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "wind-and-sea": {
+      "reason": "within-spot p90/p10 spread 2.98 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "verdict": "spread",
+      "factor": 2.084498575120423,
+      "hours": 334,
+      "spread_p90_p10": 2.98,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
