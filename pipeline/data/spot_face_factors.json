@@ -12,10 +12,25 @@
     "statistic": "median of face_ft / (MOP Hs * 3.281) over the joined hours",
     "published_band": "p25/p75 of the same ratio; lo = face/p75, hi = face/p25",
     "regenerate": "python3 scripts/mop_face_validation.py && python3 scripts/build_face_factors.py --apply",
-    "max_spread_p90_p10": 2.5,
-    "generated_at": "2026-09-03T20:22:32+00:00"
+    "max_iqr_ratio_p75_p25": 1.7,
+    "generated_at": "2026-09-03T23:20:28+00:00"
   },
   "factors": {
+    "3-mile": {
+      "factor": 1.967,
+      "hours": 335,
+      "p10": 0.8062578316981132,
+      "p25": 1.7440238197099314,
+      "p75": 2.222601061850378,
+      "p90": 2.496673637644992,
+      "spread_p90_p10": 3.097,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "38th-avenue": {
       "factor": 1.568,
       "hours": 334,
@@ -24,6 +39,21 @@
       "p75": 1.7859818744263363,
       "p90": 1.955107152797073,
       "spread_p90_p10": 1.847,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "4-mile": {
+      "factor": 1.9,
+      "hours": 335,
+      "p10": 0.8965388207969135,
+      "p25": 1.6804214363051417,
+      "p75": 2.1207830481351446,
+      "p90": 2.2622396957027346,
+      "spread_p90_p10": 2.523,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -69,6 +99,21 @@
       "p75": 1.3008079500935383,
       "p90": 1.4521939819962488,
       "spread_p90_p10": 1.398,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "blackies": {
+      "factor": 2.1592,
+      "hours": 334,
+      "p10": 0.8930424855177549,
+      "p25": 1.8123912224379055,
+      "p75": 2.5506882214831634,
+      "p90": 2.7907820858538,
+      "spread_p90_p10": 3.125,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -301,6 +346,21 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "cowell-s-beach-children-s-surfing-area": {
+      "factor": 2.8185,
+      "hours": 334,
+      "p10": 0.812287990397346,
+      "p25": 2.233742876714607,
+      "p75": 3.271865881863046,
+      "p90": 3.63029195040477,
+      "spread_p90_p10": 4.469,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "dana-point-california": {
       "factor": 1.3899,
       "hours": 335,
@@ -376,6 +436,21 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "doran-beach": {
+      "factor": 3.4559,
+      "hours": 334,
+      "p10": 0.8085975041945428,
+      "p25": 2.8335308495130973,
+      "p75": 3.948183489829007,
+      "p90": 4.604428220037956,
+      "spread_p90_p10": 5.694,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "el-capitan-state-beach": {
       "factor": 1.7505,
       "hours": 334,
@@ -436,6 +511,21 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "first-peak": {
+      "factor": 2.167,
+      "hours": 334,
+      "p10": 0.9195502782752343,
+      "p25": 1.8318287593836857,
+      "p75": 2.508536348585546,
+      "p90": 2.856865920021742,
+      "spread_p90_p10": 3.107,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "garbage-beach": {
       "factor": 1.1726,
       "hours": 335,
@@ -451,6 +541,21 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "grover-beach": {
+      "factor": 1.8698,
+      "hours": 335,
+      "p10": 1.0103392264266955,
+      "p25": 1.5393723509366093,
+      "p75": 2.286530039882791,
+      "p90": 2.5266316189090436,
+      "spread_p90_p10": 2.501,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "haggarty-s": {
       "factor": 1.5468,
       "hours": 335,
@@ -459,6 +564,21 @@
       "p75": 1.7417766734629967,
       "p90": 1.8947923932233033,
       "spread_p90_p10": 1.849,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "half-moon-bay": {
+      "factor": 1.9357,
+      "hours": 335,
+      "p10": 0.9076950238478724,
+      "p25": 1.6797575538031095,
+      "p75": 2.0922168137333563,
+      "p90": 2.341050680469857,
+      "spread_p90_p10": 2.579,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -594,6 +714,21 @@
       "p75": 2.5376440449307553,
       "p90": 2.839080509053198,
       "spread_p90_p10": 2.355,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "jug-handle": {
+      "factor": 1.6907,
+      "hours": 334,
+      "p10": 0.7038408059571188,
+      "p25": 1.2887095723184818,
+      "p75": 2.1108070610877894,
+      "p90": 2.967772398552797,
+      "spread_p90_p10": 4.217,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -781,6 +916,21 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "mitchell-s-cove": {
+      "factor": 2.1089,
+      "hours": 335,
+      "p10": 0.8570482006922525,
+      "p25": 1.6709190027380325,
+      "p75": 2.4859799529434325,
+      "p90": 2.8483301194914707,
+      "spread_p90_p10": 3.323,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "mondos": {
       "factor": 1.5052,
       "hours": 334,
@@ -826,6 +976,21 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "moss-landing": {
+      "factor": 1.9875,
+      "hours": 334,
+      "p10": 0.9680019672988336,
+      "p25": 1.7186202221774594,
+      "p75": 2.2993627187810333,
+      "p90": 2.5437506220690516,
+      "spread_p90_p10": 2.628,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "mussel-shoals": {
       "factor": 1.4713,
       "hours": 334,
@@ -834,6 +999,21 @@
       "p75": 1.7282488875635444,
       "p90": 1.970776238211798,
       "spread_p90_p10": 1.723,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "natural-bridges": {
+      "factor": 2.5076,
+      "hours": 334,
+      "p10": 0.793157757015012,
+      "p25": 2.1026195667152394,
+      "p75": 2.8105554776626684,
+      "p90": 3.1474259514678518,
+      "spread_p90_p10": 3.968,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -864,6 +1044,21 @@
       "p75": 1.2843888938274348,
       "p90": 1.5041965460744104,
       "spread_p90_p10": 1.845,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "newport-point": {
+      "factor": 2.4022,
+      "hours": 335,
+      "p10": 0.8986032634717815,
+      "p25": 2.082093312726242,
+      "p75": 2.8747326410545866,
+      "p90": 3.083115995904297,
+      "spread_p90_p10": 3.431,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -984,6 +1179,21 @@
       "p75": 1.7294171205257916,
       "p90": 1.8901751594168628,
       "spread_p90_p10": 1.617,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "pleasure-point": {
+      "factor": 2.167,
+      "hours": 334,
+      "p10": 0.9195502782752343,
+      "p25": 1.8318287593836857,
+      "p75": 2.508536348585546,
+      "p90": 2.856865920021742,
+      "spread_p90_p10": 3.107,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1291,6 +1501,36 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "second-peak": {
+      "factor": 2.3657,
+      "hours": 335,
+      "p10": 0.8900219950319628,
+      "p25": 1.9958587533009677,
+      "p75": 2.7232761672611785,
+      "p90": 3.1363937512760747,
+      "spread_p90_p10": 3.524,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "sewer-peak": {
+      "factor": 2.1632,
+      "hours": 335,
+      "p10": 0.9114834997042761,
+      "p25": 1.8318287593836857,
+      "p75": 2.505017739468772,
+      "p90": 2.856865920021742,
+      "spread_p90_p10": 3.134,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "sharp-park": {
       "factor": 1.3245,
       "hours": 334,
@@ -1374,6 +1614,21 @@
       "p75": 2.2117782642699364,
       "p90": 2.3873968301421895,
       "spread_p90_p10": 1.869,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "steamer-lane": {
+      "factor": 2.8084,
+      "hours": 335,
+      "p10": 0.8206321063215852,
+      "p25": 2.233742876714607,
+      "p75": 3.2557688881436126,
+      "p90": 3.63029195040477,
+      "spread_p90_p10": 4.424,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1606,6 +1861,36 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
+    "waddell-creek": {
+      "factor": 2.1863,
+      "hours": 335,
+      "p10": 0.8590121736954425,
+      "p25": 1.9144754585420318,
+      "p75": 2.3744071911968336,
+      "p90": 2.4925372564588404,
+      "spread_p90_p10": 2.902,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "westport": {
+      "factor": 1.5115,
+      "hours": 334,
+      "p10": 0.6992925887885324,
+      "p25": 1.1851581049903064,
+      "p75": 1.902841891046877,
+      "p90": 2.4950613172626417,
+      "spread_p90_p10": 3.568,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
     "white-point": {
       "factor": 1.4706,
       "hours": 335,
@@ -1629,6 +1914,21 @@
       "p75": 1.6352626438130837,
       "p90": 1.837309744893927,
       "spread_p90_p10": 1.836,
+      "measured_on": "2026-09-01",
+      "window": {
+        "t0": "2026-08-18",
+        "t1": "2026-09-01"
+      },
+      "source": "scripts/mop_face_validation.py"
+    },
+    "wind-and-sea": {
+      "factor": 2.0845,
+      "hours": 334,
+      "p10": 0.9077960575780708,
+      "p25": 1.7646694432429206,
+      "p75": 2.368550261207488,
+      "p90": 2.705037811468282,
+      "spread_p90_p10": 2.98,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1668,84 +1968,6 @@
     }
   },
   "held_out": {
-    "3-mile": {
-      "reason": "within-spot p90/p10 spread 3.10 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.966986167752312,
-      "hours": 335,
-      "spread_p90_p10": 3.097,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "4-mile": {
-      "reason": "within-spot p90/p10 spread 2.52 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.8999731818807148,
-      "hours": 335,
-      "spread_p90_p10": 2.523,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "blackies": {
-      "reason": "within-spot p90/p10 spread 3.13 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.1591691456948743,
-      "hours": 334,
-      "spread_p90_p10": 3.125,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "cowell-s-beach-children-s-surfing-area": {
-      "reason": "within-spot p90/p10 spread 4.47 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.8184982180040308,
-      "hours": 334,
-      "spread_p90_p10": 4.469,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "doran-beach": {
-      "reason": "within-spot p90/p10 spread 5.69 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 3.4559038028369655,
-      "hours": 334,
-      "spread_p90_p10": 5.694,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "first-peak": {
-      "reason": "within-spot p90/p10 spread 3.11 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.1670298469356792,
-      "hours": 334,
-      "spread_p90_p10": 3.107,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
     "fort-point": {
       "reason": "91.7% of hours land at the 1-star floor after correction. At that size the rating carries no information: composite_stars clamps to 1.0 for any effective size between 0.5 and ~1.25 ft, so wind, tide and chop stop mattering because size dominates and the spot becomes a binary flat-or-one-star readout.",
       "verdict": "held_out",
@@ -1759,47 +1981,8 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "grover-beach": {
-      "reason": "within-spot p90/p10 spread 2.50 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.869823583225993,
-      "hours": 335,
-      "spread_p90_p10": 2.501,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "half-moon-bay": {
-      "reason": "within-spot p90/p10 spread 2.58 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.9356614867714999,
-      "hours": 335,
-      "spread_p90_p10": 2.579,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "jug-handle": {
-      "reason": "within-spot p90/p10 spread 4.22 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.690715847503848,
-      "hours": 334,
-      "spread_p90_p10": 4.217,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
     "mackerricher": {
-      "reason": "within-spot p90/p10 spread 4.04 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "reason": "within-spot p75/p25 spread 1.78 exceeds 1.7 — the median is the centre of a cloud, not a stable offset",
       "verdict": "spread",
       "factor": 1.526483359974251,
       "hours": 334,
@@ -1811,77 +1994,12 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "mitchell-s-cove": {
-      "reason": "within-spot p90/p10 spread 3.32 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.1088837310175537,
-      "hours": 335,
-      "spread_p90_p10": 3.323,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
     "moonstone-beach-humboldt": {
-      "reason": "within-spot p90/p10 spread 4.13 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "reason": "within-spot p75/p25 spread 1.94 exceeds 1.7 — the median is the centre of a cloud, not a stable offset",
       "verdict": "spread",
       "factor": 0.4967949362146973,
       "hours": 334,
       "spread_p90_p10": 4.126,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "moss-landing": {
-      "reason": "within-spot p90/p10 spread 2.63 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.9874681766547289,
-      "hours": 334,
-      "spread_p90_p10": 2.628,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "natural-bridges": {
-      "reason": "within-spot p90/p10 spread 3.97 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.5075899764105674,
-      "hours": 334,
-      "spread_p90_p10": 3.968,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "newport-point": {
-      "reason": "within-spot p90/p10 spread 3.43 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.4022132276772026,
-      "hours": 335,
-      "spread_p90_p10": 3.431,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "pleasure-point": {
-      "reason": "within-spot p90/p10 spread 3.11 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.1670298469356792,
-      "hours": 334,
-      "spread_p90_p10": 3.107,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
@@ -1915,47 +2033,8 @@
       },
       "source": "scripts/mop_face_validation.py"
     },
-    "second-peak": {
-      "reason": "within-spot p90/p10 spread 3.52 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.3657205196256412,
-      "hours": 335,
-      "spread_p90_p10": 3.524,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "sewer-peak": {
-      "reason": "within-spot p90/p10 spread 3.13 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.1631619958735993,
-      "hours": 335,
-      "spread_p90_p10": 3.134,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "steamer-lane": {
-      "reason": "within-spot p90/p10 spread 4.42 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.808355287396395,
-      "hours": 335,
-      "spread_p90_p10": 4.424,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
     "tarpits": {
-      "reason": "within-spot p90/p10 spread 6.61 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "reason": "within-spot p75/p25 spread 2.30 exceeds 1.7 — the median is the centre of a cloud, not a stable offset",
       "verdict": "spread",
       "factor": 0.684750401262943,
       "hours": 331,
@@ -1968,50 +2047,11 @@
       "source": "scripts/mop_face_validation.py"
     },
     "ten-mile-beach": {
-      "reason": "within-spot p90/p10 spread 4.02 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
+      "reason": "within-spot p75/p25 spread 1.73 exceeds 1.7 — the median is the centre of a cloud, not a stable offset",
       "verdict": "spread",
       "factor": 1.5877644699181128,
       "hours": 334,
       "spread_p90_p10": 4.022,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "waddell-creek": {
-      "reason": "within-spot p90/p10 spread 2.90 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.1862846108528693,
-      "hours": 335,
-      "spread_p90_p10": 2.902,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "westport": {
-      "reason": "within-spot p90/p10 spread 3.57 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 1.511523931564966,
-      "hours": 334,
-      "spread_p90_p10": 3.568,
-      "measured_on": "2026-09-01",
-      "window": {
-        "t0": "2026-08-18",
-        "t1": "2026-09-01"
-      },
-      "source": "scripts/mop_face_validation.py"
-    },
-    "wind-and-sea": {
-      "reason": "within-spot p90/p10 spread 2.98 exceeds 2.5 — the median is the centre of a cloud, not a stable offset",
-      "verdict": "spread",
-      "factor": 2.084498575120423,
-      "hours": 334,
-      "spread_p90_p10": 2.98,
       "measured_on": "2026-09-01",
       "window": {
         "t0": "2026-08-18",
