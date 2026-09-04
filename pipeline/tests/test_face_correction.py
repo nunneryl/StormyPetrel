@@ -739,12 +739,21 @@ def test_quantiles_out_of_order_are_declined_not_silently_swapped():
     assert FC.face_range(8.0, _rec(2.0, p25=2.5, p75=1.6)) == (None, None)
 
 
-def test_the_band_is_written_on_the_corrected_face_not_the_published_one():
-    """Both ends carry the same 1/factor the point does, so the band moves WITH the
-    correction instead of straddling a number the site no longer shows.
+def test_the_band_divides_the_RAW_face_so_it_brackets_the_published_one():
+    """THE REGRESSION. This test previously asserted the opposite and was WRONG.
 
-        published face 8.0, factor 2.0 -> corrected 4.0
-        lo = 4.0 / 2.5 = 1.6      hi = 4.0 / 1.6 = 2.5
+    It was named "...on the corrected face", and its literals 1.6 / 2.5 were hand-computed
+    as 4.0/2.5 and 4.0/1.6 — dividing the ALREADY-CORRECTED face a second time. Both ends
+    landed below the published face and the assertion locked that in. The literals obeyed
+    the "never derive an expected value by calling the function under test" rule and were
+    still wrong, because the same mistaken model produced the code and the arithmetic.
+    See the module docstring of this file for the full account.
+
+    All three numbers divide ONE raw face:
+        raw 8.0, factor 2.0  -> point = 8.0 / 2.0  = 4.0
+        raw 8.0, p75   2.5   -> lo    = 8.0 / 2.5  = 3.2
+        raw 8.0, p25   1.6   -> hi    = 8.0 / 1.6  = 5.0
+    and 3.2 <= 4.0 <= 5.0, which is the invariant migration 016 promises.
     """
     ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
     st = FC.apply_face_corrections(
@@ -752,10 +761,167 @@ def test_the_band_is_written_on_the_corrected_face_not_the_published_one():
         slug_for=lambda n: "steamer-lane", now=TODAY)
     e = ratings["Steamer Lane"][0]
     assert e["face_ft"] == 4.0, e["face_ft"]
-    assert e["face_lo_ft"] == 1.6, e["face_lo_ft"]
-    assert e["face_hi_ft"] == 2.5, e["face_hi_ft"]
+    assert e["face_lo_ft"] == 3.2, e["face_lo_ft"]
+    assert e["face_hi_ft"] == 5.0, e["face_hi_ft"]
     assert st["ranged_hours"] == 1
     assert st["spots_without_spread"] == 0
+    assert st["bad_band_spots"] == 0
+
+
+def test_the_written_columns_satisfy_lo_le_face_le_hi():
+    """THE INVARIANT, ON THE COLUMNS THAT ARE ACTUALLY WRITTEN.
+
+    The only invariant test that existed checked face_range() in isolation with a raw face
+    — the one call that was never wrong. Nothing checked the three values the pipeline
+    PUBLISHES together, which is where the double divide lived. This is that test.
+
+    Driven across a spread of factors and quantiles so it cannot pass by coincidence on one
+    fixture. Every triple is asserted as a relation, not against a precomputed number, so a
+    future arithmetic change cannot make it vacuous the way a wrong literal did.
+    """
+    cases = [
+        # (raw face, factor, p25, p75)
+        (8.0, 2.0, 1.6, 2.5),
+        (4.0, 1.0, 0.8, 1.25),      # factor exactly 1: the band still brackets
+        (12.5, 3.4, 3.4, 3.4),      # degenerate: all three quantiles equal
+        (1.0, 0.5, 0.4, 0.6),       # factor below 1 — the correction makes it BIGGER
+        (20.0, 2.8084, 2.2337, 3.2558),   # Steamer Lane's real quantiles
+    ]
+    for raw, factor, p25, p75 in cases:
+        ratings = {"Steamer Lane": [_entry(face=raw, eff=raw)]}
+        FC.apply_face_corrections(
+            ratings, [_spot()], factors={"steamer-lane": _rec_banded(factor, p25, p75)},
+            slug_for=lambda n: "steamer-lane", now=TODAY)
+        e = ratings["Steamer Lane"][0]
+        lo, face, hi = e["face_lo_ft"], e["face_ft"], e["face_hi_ft"]
+        assert lo <= face <= hi, (raw, factor, p25, p75, lo, face, hi)
+        # And the band must not collapse onto the point unless the quantiles did.
+        if p25 != p75:
+            assert lo < hi, (raw, factor, p25, p75, lo, hi)
+
+
+def test_steamer_lane_and_cowells_publish_the_band_measured_in_production():
+    """THE TWO SPOTS FROM THE BUG REPORT, at their real committed factors.
+
+    Steamer Lane  factor 2.8084  p25 2.2337  p75 3.2558
+    Cowell's      factor 2.8185  p25 2.2337  p75 3.2719
+
+    Driven from a raw face chosen so the corrected point is 1.45, the value production
+    published. Hand-computed, none read back from the code:
+
+      Steamer Lane  raw = 1.45 * 2.8084 = 4.07218
+                    lo  = 4.07218 / 3.2558 = 1.250747... -> 1.25
+                    hi  = 4.07218 / 2.2337 = 1.823043... -> 1.82
+      Cowell's      raw = 1.45 * 2.8185 = 4.086825
+                    lo  = 4.086825 / 3.2719 = 1.249069... -> 1.25
+                    hi  = 4.086825 / 2.2337 = 1.829599... -> 1.83
+
+    What shipped was 0.45-0.65 and 0.44-0.65 — both ends below the point.
+    """
+    for slug, raw, factor, p25, p75, want_lo, want_hi in (
+        ("steamer-lane", 4.07218, 2.8084, 2.2337, 3.2558, 1.25, 1.82),
+        ("cowells", 4.086825, 2.8185, 2.2337, 3.2719, 1.25, 1.83),
+    ):
+        ratings = {"Steamer Lane": [_entry(face=raw, eff=raw)]}
+        FC.apply_face_corrections(
+            ratings, [_spot()], factors={slug: _rec_banded(factor, p25, p75)},
+            slug_for=lambda n: slug, now=TODAY)
+        e = ratings["Steamer Lane"][0]
+        assert e["face_ft"] == 1.45, (slug, e["face_ft"])
+        assert e["face_lo_ft"] == want_lo, (slug, e["face_lo_ft"])
+        assert e["face_hi_ft"] == want_hi, (slug, e["face_hi_ft"])
+        # The shipped values, asserted ABSENT so a revert fails here by name.
+        assert e["face_lo_ft"] != 0.45 and e["face_hi_ft"] != 0.65, slug
+
+
+def test_a_record_whose_quantiles_do_not_bracket_its_median_is_dropped_LOUDLY():
+    """A hand-edited record with p75 < median cannot produce a valid band. The band is
+    dropped and an ERROR is logged naming the spot — never published known-wrong, and never
+    suppressed quietly. It took a manual SQL query to find the double divide precisely
+    because nothing on this path said anything.
+
+        raw 8.0, factor 2.0 -> point 4.0
+        p25 1.6, p75 1.8    -> lo = 8.0/1.8 = 4.444, hi = 8.0/1.6 = 5.0
+        lo 4.444 > point 4.0  -> invariant violated
+    """
+    cap = _CaptureLog()
+    logging.getLogger("pipeline.forecast.face_correction").addHandler(cap)
+    try:
+        ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+        st = FC.apply_face_corrections(
+            ratings, [_spot()], factors={"steamer-lane": _rec_banded(2.0, 1.6, 1.8)},
+            slug_for=lambda n: "steamer-lane", now=TODAY)
+    finally:
+        logging.getLogger("pipeline.forecast.face_correction").removeHandler(cap)
+    e = ratings["Steamer Lane"][0]
+    assert e["face_ft"] == 4.0, "the point estimate is still published"
+    assert "face_lo_ft" not in e, "the bad band must not be written"
+    assert "face_hi_ft" not in e
+    assert st["bad_band_spots"] == 1, st
+    assert st["ranged_hours"] == 0, st
+    msgs = " ".join(r.getMessage() for r in cap.records)
+    assert "steamer-lane" in msgs, msgs
+    assert "DROPPED" in msgs, msgs
+
+
+def test_the_invariant_is_checked_on_BOTH_sides_not_just_the_low_one():
+    """The high-side violation, which a one-sided check misses.
+
+    Found by mutation: weakening `lo <= face <= hi` to `lo <= face` SURVIVED every other
+    test here, because the only bad-band fixture violated on the low side. A record whose
+    p25 sits ABOVE its median puts hi BELOW the point while lo stays under it:
+
+        raw 8.0, factor 2.0 -> point 4.0
+        p25 2.5, p75 3.0    -> lo = 8.0/3.0 = 2.6667, hi = 8.0/2.5 = 3.2
+        lo 2.667 <= 4.0  (low side fine)   hi 3.2 < 4.0  (high side violated)
+
+    p25 < p75 here, so face_range's own ordering guard passes it through — this is exactly
+    the record that reaches the invariant check and nothing else.
+    """
+    ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
+    st = FC.apply_face_corrections(
+        ratings, [_spot()], factors={"steamer-lane": _rec_banded(2.0, 2.5, 3.0)},
+        slug_for=lambda n: "steamer-lane", now=TODAY)
+    e = ratings["Steamer Lane"][0]
+    # Confirm the fixture really does violate on the HIGH side only, so the test cannot
+    # silently degenerate into a second copy of the low-side case.
+    lo, hi = FC.face_range(8.0, _rec_banded(2.0, 2.5, 3.0))
+    assert lo <= 4.0, lo
+    assert hi < 4.0, hi
+    assert "face_lo_ft" not in e, "a band that ends below its point must not be written"
+    assert "face_hi_ft" not in e
+    assert st["bad_band_spots"] == 1, st
+
+
+def test_every_hour_of_the_committed_factor_file_satisfies_the_invariant():
+    """THE FULL FILE, not a fixture. Every committed factor must have quantiles that
+    bracket its own median, or the band it produces cannot bracket the published face —
+    which is the defect this change fixes, checked against the real data rather than
+    against numbers chosen to pass."""
+    import json as _json
+    from pipeline.config import SPOT_FACE_FACTORS_FILE
+    doc = _json.loads(SPOT_FACE_FACTORS_FILE.read_text())
+    bad = []
+    for slug, rec in (doc.get("factors") or {}).items():
+        p25, p75, factor = rec.get("p25"), rec.get("p75"), rec.get("factor")
+        if p25 is None or p75 is None:
+            continue
+        if not (p25 <= factor <= p75):
+            bad.append((slug, p25, factor, p75))
+    assert not bad, (
+        f"{len(bad)} committed factor(s) have quantiles that do not bracket their median, "
+        f"so their published band cannot bracket the published face: {bad[:5]}")
+    # And the consequence, on a representative face, for every one of them.
+    off = []
+    for slug, rec in (doc.get("factors") or {}).items():
+        if rec.get("p25") is None or rec.get("p75") is None:
+            continue
+        raw = 10.0
+        lo, hi = FC.face_range(raw, rec)
+        point = raw / rec["factor"]
+        if not (lo <= point <= hi):
+            off.append((slug, lo, point, hi))
+    assert not off, f"{len(off)} spot(s) publish a band that misses the point: {off[:5]}"
 
 
 def test_a_corrected_spot_with_no_spread_gets_NO_band_keys_at_all():
@@ -786,7 +952,9 @@ def test_an_uncorrected_spot_gets_no_band_keys_either():
         factors={"steamer-lane": _rec_banded(2.0, 1.6, 2.5)},
         slug_for=lambda n: slugs[n], now=TODAY)
     banded, bare = ratings["Steamer Lane"][0], ratings["Pleasure Point"][0]
-    assert banded["face_lo_ft"] == 1.6, "the factored spot did get a band"
+    # raw 8.0 / p75 2.5 = 3.2 — the RAW face divided once, bracketing the 4.0 point.
+    # This literal was 1.6 under the double-divide bug and is corrected with the code.
+    assert banded["face_lo_ft"] == 3.2, "the factored spot did get a band"
     assert bare["face_ft"] == 8.0, "the unfactored spot is untouched"
     assert "face_lo_ft" not in bare and "face_hi_ft" not in bare, sorted(bare)
 
