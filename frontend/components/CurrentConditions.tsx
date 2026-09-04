@@ -1,5 +1,17 @@
+'use client';
+
+// CLIENT, SO THE HOUR IS THE VIEWER'S. These tiles used to receive a `current` row chosen
+// with the SERVER's clock, and the spot routes are statically generated with
+// `revalidate = 3600` — so the row could have been picked up to an hour before anyone read
+// it. `'use client'` does NOT opt the route out of prerendering: the initial HTML is still
+// server-rendered from `serverNowMs` (identical bytes to before, so crawlers and first
+// paint are unchanged), and the effect below re-picks with the reader's own clock on mount
+// and once a minute after.
+import { useEffect, useState } from 'react';
+
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
+import { selectCurrentHour } from '@/lib/currentHour';
 import type { Forecast } from '@/lib/types';
 import {
   classifySurface, surfaceTextClass, chopLabel,
@@ -26,18 +38,37 @@ type Tile = {
 };
 
 export function CurrentConditions({
-  current,
-  forecasts,
+  rows,
+  serverNowMs,
   offshoreDeg,
   faceAction,
 }: {
-  current: Forecast | null;
-  forecasts: Forecast[];
+  /** The spot's forecast rows, INCLUDING the recent past. The current hour's row is the one
+   *  whose bucket contains now, so a window starting at `now` would exclude it the moment
+   *  the server clock crossed the hour — see selectCurrentHour. */
+  rows: Forecast[];
+  /** The server's clock at render time. Used for the first paint on BOTH sides so the
+   *  markup matches, then replaced by the viewer's clock in the effect below. */
+  serverNowMs: number;
   offshoreDeg: number | null | undefined;
-  /** Passed down from the (server) spot page; the node itself is a client component. This
-   *  component stays a server component — it renders the node, it does not create it. */
   faceAction?: React.ReactNode;
 }) {
+  // Server render and first client render both use serverNowMs — no hydration mismatch.
+  // The effect then corrects to the reader's clock, and the interval keeps a page that is
+  // left open from drifting into a stale hour the way the static HTML did.
+  const [nowMs, setNowMs] = useState(serverNowMs);
+  useEffect(() => {
+    setNowMs(Date.now());
+    const id = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const selection = selectCurrentHour(rows, nowMs);
+  const current = selection.row;
+  // The NEXT hour, for the tide trend arrow — relative to the selected hour, not to
+  // whatever happened to be second in the array.
+  const forecasts =
+    selection.state === 'current' ? rows.slice(selection.index) : [];
   const tp = pickSwell(current?.swell_tp ?? null, current?.tp ?? null);
   const dp = pickSwell(current?.swell_dp ?? null, current?.dp ?? null);
 
@@ -64,7 +95,20 @@ export function CurrentConditions({
   })();
 
   return (
-    <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+    <>
+      {/* ABSENT IS NOT THE NEXT HOUR. When no row covers the current hour the tiles render
+          empty and say so, rather than quietly showing a neighbouring hour's numbers under
+          a heading that means now. That fall-through is how an expired hour came to be
+          displayed as current; a gap in the data is a fact about the data and the reader is
+          told it. Distinct from a null FIELD — the Tide tile's em-dash means "this hour has
+          no tide reading", this banner means "there is no row for this hour at all". */}
+      {selection.state === 'absent' && (
+        <p className="mb-2 text-xs text-text-muted">
+          No forecast published for the current hour. The chart and the 7-day grid below are
+          unaffected.
+        </p>
+      )}
+      <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <BigTile
         label="Swell height"
         value={fmtFtRange(current?.face_lo_ft, current?.face_hi_ft, current?.face_ft)}
@@ -128,7 +172,8 @@ export function CurrentConditions({
             : null
         }
       />
-    </section>
+      </section>
+    </>
   );
 }
 
