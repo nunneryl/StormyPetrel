@@ -54,6 +54,7 @@ from ..config import (
     TIDES_CACHE_DIR,
     TIDES_FORECAST_FILE,
 )
+from ..enrichment.geodata import load_tide_stations
 from ..http import get_once
 
 log = logging.getLogger(__name__)
@@ -412,6 +413,84 @@ def _fetch_station_30d(station_id: str, begin_yyyymmdd: str, horizon_hours: int,
     return (hilo or []), (hourly or [])
 
 
+# --------------------------------------------------------------------------- #
+# visibility: a station that produces nothing must SAY SO, by name               #
+# --------------------------------------------------------------------------- #
+# A station could return zero rows on every hour and leave no trace in a run log. The two
+# steady states both hide:
+#   * KNOWN-BAD — skipped at the top of fetch(); named once, on the run that marked it, then
+#     forever after only a count in "%d known-no-predictions".
+#   * UNREACHABLE — _stale_entry with no cache emits empty series; logged at DEBUG only.
+# Either way the spots pointing at it are silently tideless, and the only symptom is an
+# em-dash on a page nobody is watching. Kalaloch Beach sat like that until it was found by
+# hand. These two helpers are pure so the warnings can be tested without a network.
+MAX_NAMED_IN_WARNING = 12
+
+
+def stations_with_no_rows(emitted: dict[str, dict], requested: list[str]) -> list[str]:
+    """Requested station ids that will give no spot a tide, sorted.
+
+    ABSENT COUNTS, and getting this wrong was the first thing the end-to-end test caught.
+    Scanning only the emitted dict misses the loudest case: a station that returns nothing
+    on both intervals is marked known-bad and `continue`s WITHOUT being added to `out`
+    (fetch, the `if not hilo and not hourly` branch), and one already on the known-bad list
+    is filtered out of `active_ids` before the loop starts. Neither ever appears in
+    `emitted`, so a check over `emitted.items()` would have reported zero on exactly the
+    station that prompted this work.
+
+    So the definition is taken from what was ASKED FOR, not from what came back:
+      * requested and missing from `emitted`  -> skipped or abandoned
+      * requested and present but empty       -> unreachable, or a coverage anomaly
+    Both mean the same thing downstream — no tide for any spot on that station.
+    """
+    got = emitted or {}
+    out = []
+    for sid in set(requested or []):
+        entry = got.get(sid)
+        if entry is None or (not entry.get("hilo") and not entry.get("hourly")):
+            out.append(sid)
+    return sorted(out)
+
+
+def unresolvable_station_ids(spots: list[dict], stations: list[dict]) -> dict[str, list[str]]:
+    """{station_id: [spot names]} for roster ids that match no entry in the station list.
+
+    THE ROSTER AND THE STATION FILE CAN DISAGREE, and nothing checked that they didn't. A
+    spot's nearest_tide_station_id is written by a PAST enrich run against the station file
+    as it was THEN; the file is a downloaded artifact (gitignored) that can be refreshed
+    independently. So an id can stop resolving without any code changing and without any
+    error: the fetcher asks CO-OPS for a station that is no longer in our list, and every
+    spot pointing at it goes quietly tideless.
+
+    Exact string comparison, deliberately. A near-match — differing case, or a dropped
+    suffix on a subordinate id like TWC0965 vs TWC0965F — is exactly the failure this exists
+    to surface, so normalising the two sides before comparing would hide it.
+
+    Returns {} when the station list is EMPTY: that means the file is missing, not that all
+    234 ids went bad, and reporting the whole roster as unresolvable would be a false alarm
+    louder than the signal.
+    """
+    known = {str(st.get("id")) for st in (stations or []) if st.get("id") is not None}
+    if not known:
+        return {}
+    out: dict[str, list[str]] = {}
+    for sp in spots or []:
+        sid = sp.get("nearest_tide_station_id")
+        if not sid:
+            continue
+        if str(sid) not in known:
+            out.setdefault(str(sid), []).append(str(sp.get("name") or "?"))
+    return {k: sorted(v) for k, v in sorted(out.items())}
+
+
+def _format_named(items: list[str], limit: int = MAX_NAMED_IN_WARNING) -> str:
+    """Comma-joined, capped, with the remainder counted. A warning that dumps 200 ids is
+    scrolled past as fast as one that names none."""
+    if len(items) <= limit:
+        return ", ".join(items)
+    return f"{', '.join(items[:limit])} (+{len(items) - limit} more)"
+
+
 def _unique_station_ids(spots: list[dict]) -> list[str]:
     seen: set[str] = set()
     ordered: list[str] = []
@@ -426,10 +505,15 @@ def _unique_station_ids(spots: list[dict]) -> list[str]:
 # --------------------------------------------------------------------------- #
 # stage entry point                                                             #
 # --------------------------------------------------------------------------- #
-def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
+def fetch(spots: list[dict], use_cache: bool = True,
+          _fetch_station=_fetch_station_30d) -> dict[str, dict]:
     """Fetch/serve tide predictions for every unique station in *spots*. NEVER raises and is bounded
     in wall-clock (cap + breaker + deadline) so a dead CO-OPS backend cannot block the pipeline.
-    Returns a dict keyed by station_id (each with `asof`/`stale`) and writes TIDES_FORECAST_FILE."""
+    Returns a dict keyed by station_id (each with `asof`/`stale`) and writes TIDES_FORECAST_FILE.
+
+    *_fetch_station* is injectable so the run summary's reporting can be tested without a
+    network, matching the `_fetch=` seam on mop.apply_mop_overrides. Production never passes
+    it."""
     station_ids = _unique_station_ids(spots)
     known_bad_map = _load_no_predictions_map() if use_cache else {}   # {sid: first_seen_iso}, TTL-pruned
     known_bad = set(known_bad_map)
@@ -493,7 +577,7 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
             horizon_h = _station_horizon_hours(sid)
             skip_hourly = bool(cache and cache.get("hilo_only"))   # subordinate: skip the always-empty hourly
             try:
-                hilo, hourly = _fetch_station_30d(sid, begin_yyyymmdd, horizon_h, pacer, skip_hourly)  # (C) single attempt, paced
+                hilo, hourly = _fetch_station(sid, begin_yyyymmdd, horizon_h, pacer, skip_hourly)  # (C) single attempt, paced
             except _TideOutage as e:
                 consecutive_failures += 1
                 log.debug("tides: %s unreachable (%s) [%d in a row]", sid, e, consecutive_failures)
@@ -578,6 +662,49 @@ def fetch(spots: list[dict], use_cache: bool = True) -> dict[str, dict]:
     log.info("tides: wrote %d stations to %s (live=%d, cached=%d, stale/missing=%d, known-bad-new=%d, "
              "hilo-only=%d, breaker=%s)", len(out), TIDES_FORECAST_FILE, n_live, n_cache, n_stale,
              len(new_bad), n_hilo_only, "OPEN" if breaker_open else "closed")
+
+    # ---- COUNTED AND NAMED, because a count alone is not a symptom -------------------- #
+    # Both of these were previously invisible: a station could produce nothing on every run
+    # and the only trace was an increment in an aggregate above. Named at WARNING so a run
+    # log shows WHICH station and WHICH spots, which is what anyone acts on.
+    spots_by_station: dict[str, list[str]] = {}
+    for sp in spots or []:
+        sid = sp.get("nearest_tide_station_id")
+        if sid:
+            spots_by_station.setdefault(str(sid), []).append(str(sp.get("name") or "?"))
+
+    empty = stations_with_no_rows(out, station_ids)
+    if empty:
+        affected = sorted({n for sid in empty for n in spots_by_station.get(sid, [])})
+        log.warning(
+            "tides: %d station(s) returned NO rows for any hour — %d spot(s) will publish no "
+            "tide at all. Stations: %s. Spots: %s. Check %s for these ids (a station confirmed "
+            "to have no predictions is skipped for %d days) and, if one is listed there in "
+            "error, delete its entry and re-run.",
+            len(empty), len(affected), _format_named(empty), _format_named(affected),
+            _NO_PREDICTIONS_FILE, TIDE_KNOWN_BAD_TTL_DAYS,
+        )
+
+    # The roster and the station file are produced by different runs and can drift apart —
+    # see unresolvable_station_ids. Checked here because this is the first place both are in
+    # scope, and skipped entirely when the station file is absent.
+    try:
+        unresolved = unresolvable_station_ids(spots, load_tide_stations())
+    except Exception as e:                                       # noqa: BLE001
+        # Visibility must never take the stage down; tides are a rating MODIFIER.
+        log.debug("tides: could not check roster station ids against the station list (%s)", e)
+        unresolved = {}
+    if unresolved:
+        n_spots = sum(len(v) for v in unresolved.values())
+        log.warning(
+            "tides: %d station id(s) on the roster match NO entry in the tide station list — "
+            "%d spot(s) are pointing at a station we cannot resolve and will publish no tide. "
+            "Ids: %s. Spots: %s. The comparison is exact, so a dropped suffix or a case "
+            "difference (TWC0965 vs TWC0965F) lands here; re-run enrich to re-assign against "
+            "the current station file.",
+            len(unresolved), n_spots, _format_named(sorted(unresolved)),
+            _format_named(sorted({n for v in unresolved.values() for n in v})),
+        )
     return out
 
 
