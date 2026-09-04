@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { fetchAllSpots, fetchSpotBySlug } from '@/lib/queries';
 import type { Forecast, BuoyObservation } from '@/lib/types';
-import { StarRating } from '@/components/StarRating';
 import { ForecastGrid } from '@/components/ForecastGrid';
 import { SwellChart } from '@/components/SwellChart';
 import { WindChart } from '@/components/WindChart';
 import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
+import { CurrentHero } from '@/components/CurrentHero';
 import { OptimalConditions } from '@/components/OptimalConditions';
 import { CamSection } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -20,6 +20,7 @@ import {
   SurfReportPanel,
 } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
+import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
 import { spotInfoRows } from '@/lib/spotInfo';
 import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
 import { fetchCamsForSpot } from '@/lib/cams';
@@ -124,18 +125,9 @@ async function loadLatestBuoy(buoyId: string | null): Promise<BuoyObservation | 
   return data as BuoyObservation | null;
 }
 
-function freshnessLabel(latest: Forecast | null): string {
-  if (!latest) return '—';
-  // The most recent forecast row is always current-or-future hour. The
-  // best signal of "data freshness" is the hour-of-day distance from
-  // now to the most recent record's valid_time. Cap at 24h for display.
-  const ms = Date.now() - new Date(latest.valid_time).getTime();
-  const min = Math.max(0, Math.round(ms / 60000));
-  if (min < 60) return `Updated ${min} min ago`;
-  const h = Math.round(min / 60);
-  if (h < 24) return `Updated ${h}h ago`;
-  return `Updated ${Math.round(h / 24)}d ago`;
-}
+// freshnessLabel MOVED to components/CurrentHero. It measured `Date.now() - valid_time` at
+// RENDER time, so a statically-served page an hour old still announced "Updated 0 min ago".
+// It now measures against the same clock that selects the row, on the client.
 
 export default async function SpotPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
@@ -153,7 +145,16 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // every existing consumer keep its old meaning by reading `upcoming`.
   const nowMs = Date.now();
   const upcoming = forecasts.filter((r) => new Date(r.valid_time).getTime() >= nowMs);
-  const current = upcoming[0] ?? null;
+  // THE TILES NO LONGER USE `upcoming[0]`. That is the next hour BOUNDARY at server-render
+  // time, and these routes are statically generated with `revalidate = 3600` below, so it
+  // could be up to an hour old before anyone read it. CurrentConditions and CurrentHero
+  // now take the raw rows (which reach HOUR_PICKER_SPAN hours backwards, so the bucket
+  // containing "now" is always present) plus this clock, and re-pick on the viewer's clock
+  // once mounted — see lib/currentHour.selectCurrentHour.
+  //
+  // `upcoming` is UNCHANGED and still means "now onward": the 48h charts and the 7-day grid
+  // both want that window and neither is touched by this.
+  const current = selectCurrentHour(forecasts, nowMs).row;
 
   // The UTC hours we actually hold an NWPS row for, over the picker's window. The panel uses
   // this only to warn that a chosen hour will not be joinable; it never blocks a report.
@@ -170,10 +171,10 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
   // Charts get a 48h slice — the full 7-day window made the curves
   // too compressed to read. The grid below still shows everything.
-  const cutoff = nowMs + 48 * 3600_000;
-  const chartForecasts = upcoming.filter(
-    (r) => new Date(r.valid_time).getTime() <= cutoff,
-  );
+  // UNCHANGED semantics, extracted so a test can pin them: >= now, <= now + 48h. The
+  // current-hour fix moves only the hero tiles; the charts and the grid keep the forward
+  // window they had.
+  const chartForecasts = chartWindow(forecasts, nowMs);
 
   // Structured data for rich search results. Kept inline so the JSON-LD
   // ships in the initial HTML payload that crawlers parse — Next.js'
@@ -225,12 +226,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
             {spot.tide_preference && <span>tide: {spot.tide_preference}</span>}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <StarRating score={current?.stars ?? 0} size="xl" showScore />
-          <span className="text-[10px] uppercase tracking-widest2 text-text-muted">
-            {freshnessLabel(current)}
-          </span>
-        </div>
+        <CurrentHero rows={forecasts} serverNowMs={nowMs} />
       </header>
 
       {/* Factual blurb from pipeline.generate_descriptions. Renders
@@ -255,8 +251,8 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           footer, against the number it reports on; the panel gets full width below it. */}
       <SurfReportProvider slug={spot.slug} forecastHours={forecastHours}>
         <CurrentConditions
-          current={current}
-          forecasts={upcoming}
+          rows={forecasts}
+          serverNowMs={nowMs}
           offshoreDeg={spot.offshore_wind_deg}
           faceAction={<SurfReportTrigger />}
         />
