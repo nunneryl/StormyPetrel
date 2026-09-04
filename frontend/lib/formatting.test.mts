@@ -92,6 +92,38 @@ check(
 );
 
 // --------------------------------------------------------------------------- //
+// 4b — THE INVARIANT BACKSTOP: a band that misses its own point                 //
+// --------------------------------------------------------------------------- //
+// What actually shipped. Steamer Lane published face 1.45 with a band of 0.45-0.65 —
+// computed from the already-corrected face, so BOTH ends sat below the point. The band was
+// well-ordered, so the lo>hi swap never fired, and this rendered "0-1ft" for a 1.45 ft
+// spot. It is now dropped in favour of the point, and logged.
+{
+  const errs: unknown[][] = [];
+  const real = console.error;
+  console.error = (...a: unknown[]) => { errs.push(a); };
+  try {
+    eq('a band entirely below its point is dropped', fmtFtRange(0.45, 0.65, 1.45), '1.4ft');
+    eq("...and Cowell's the same", fmtFtRange(0.44, 0.65, 1.45), '1.4ft');
+    eq('a band entirely above its point is dropped too', fmtFtRange(5.0, 7.0, 1.45), '1.4ft');
+    check('each violation is logged, not silently suppressed', errs.length === 3,
+      `logged ${errs.length} time(s)`);
+    check('the log names the offending numbers',
+      String(errs[0]?.[0] ?? '').includes('0.45') && String(errs[0]?.[0] ?? '').includes('1.45'));
+  } finally {
+    console.error = real;
+  }
+}
+// The corrected values for the same spot render the band the fix produces.
+//   raw 4.07218 / p75 3.2558 = 1.2507 -> 1 ;  / p25 2.2337 = 1.8230 -> 2
+eq('the FIXED Steamer Lane band renders 1-2ft', fmtFtRange(1.25, 1.82, 1.45), '1-2ft');
+// A point exactly on either bound is INSIDE the band and must still render as a band.
+eq('a point exactly on the low bound is inside', fmtFtRange(3.0, 5.0, 3.0), '3-5ft');
+eq('a point exactly on the high bound is inside', fmtFtRange(3.0, 5.0, 5.0), '3-5ft');
+// With no point at all there is nothing to check against, so the band still renders.
+eq('no point means no invariant to violate', fmtFtRange(3.2, 4.9, null), '3-5ft');
+
+// --------------------------------------------------------------------------- //
 // 5 — defensive ordering                                                       //
 // --------------------------------------------------------------------------- //
 // lo <= hi holds by construction in the pipeline (divide by p75 and p25), but these come

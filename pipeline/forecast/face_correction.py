@@ -77,11 +77,20 @@ nothing. p25/p75 is roughly +/-20% before rounding, puts about half the measured
 inside the band, and rounds 4.0 to 3-5. A range wide enough always to be right is a range
 nobody reads.
 
-  lo = face / p75 and hi = face / p25, because the stored quantiles are quantiles of the
-  RATIO face_ft / (MOP Hs x 3.281) and the factor is a DIVISOR. Dividing by the larger
-  quantile gives the smaller height, so the ordering is guaranteed by p25 <= p75 rather
-  than by a sort. The point estimate face / factor necessarily lands inside the band,
-  because factor is the median of the same distribution.
+  ALL THREE NUMBERS DIVIDE THE SAME RAW FACE. The stored quantiles are quantiles of the
+  RATIO face_ft / (MOP Hs x 3.281) and the factor is a DIVISOR, so:
+
+      lo    = raw_face / p75
+      point = raw_face / median      (this is `factor`)
+      hi    = raw_face / p25
+
+  Dividing by the larger quantile gives the smaller height, so the ordering follows from
+  p25 <= median <= p75 and needs no sort. THE INVARIANT lo <= point <= hi IS A CONSEQUENCE
+  OF THAT STRUCTURE, not a separate calculation — which is exactly why it must be written
+  this way. Passing the ALREADY-CORRECTED face to face_range divides twice and puts both
+  ends below the point; that shipped, and Steamer Lane published face 1.45 with a band of
+  0.45-0.65 until it was found by hand in SQL. apply_face_corrections now also asserts the
+  invariant at the point of writing and drops the band, loudly, if it ever fails again.
 
   NO SPREAD MEANS NO RANGE. A record without both p25 and p75 gets lo = hi = None and the
   spot publishes the point estimate alone. This is the same rule as the factor itself —
@@ -256,7 +265,7 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
     if not factors:
         return {"corrected_spots": 0, "corrected_hours": 0, "no_factor": len(spots),
                 "mop_tier_skipped": 0, "unrateable_hours": 0, "stale": None,
-                "ranged_hours": 0, "spots_without_spread": 0}
+                "ranged_hours": 0, "spots_without_spread": 0, "bad_band_spots": 0}
 
     validate_factor_slugs(factors, spots, slug_for)
 
@@ -275,7 +284,7 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
 
     by_name = {s.get("name"): s for s in spots}
     corrected_spots = corrected_hours = mop_skipped = unrateable = 0
-    no_factor = ranged_hours = no_spread = 0
+    no_factor = ranged_hours = no_spread = bad_band = 0
     for name, entries in ratings.items():
         spot = by_name.get(name)
         if spot is None:
@@ -318,16 +327,44 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             new_face = float(face) / factor
             e["face_ft"] = round(new_face, 2)
             e["effective_size_ft"] = round(new_eff, 2)
-            # THE RANGE IS ON THE CORRECTED FACE, not the published one. Both ends carry
-            # the same 1/factor the point does, so the band moves with the correction
-            # instead of straddling a number the site no longer shows. Keys are written
-            # ONLY when the spread was measured — see face_range. A spot without one keeps
-            # the byte-identical no-op the rest of this module is built on.
+            # THE BAND DIVIDES THE RAW FACE, exactly as the point does.
+            #
+            # This passed `new_face` and so divided twice: face_lo_ft came out as
+            # (raw/factor)/p75, which is smaller than the published face rather than
+            # bracketing it. Steamer Lane published face 1.45 with a band of 0.45-0.65 —
+            # BOTH ends below the point — and the site rendered "0-1ft" for a 1.45 ft spot.
+            #
+            # The three published numbers are ONE raw face divided by THREE quantiles of the
+            # same distribution:  lo = raw/p75,  point = raw/median,  hi = raw/p25.
+            # Written that way the invariant lo <= point <= hi is a consequence of
+            # p25 <= median <= p75 and needs no separate arithmetic to hold. The equivalent
+            # form new_face * (factor/p75) is algebraically identical but re-derives the raw
+            # face implicitly, giving a second expression of the same relationship that can
+            # drift from this one; passing the raw value keeps there being only one.
+            #
+            # Keys are written ONLY when the spread was measured — see face_range. A spot
+            # without one keeps the byte-identical no-op the rest of this module is built on.
             if has_spread:
-                lo, hi = face_range(new_face, rec)
-                e["face_lo_ft"] = round(lo, 2)
-                e["face_hi_ft"] = round(hi, 2)
-                ranged_hours += 1
+                lo, hi = face_range(float(face), rec)
+                # THE INVARIANT, CHECKED AT THE POINT OF WRITING. It can only fail on a
+                # hand-edited record whose quantiles do not bracket its own median, and the
+                # cost of not checking was this bug reaching production and needing a manual
+                # SQL query to find. Loud, and the band is dropped rather than published
+                # known-wrong: a suppressed band costs a reader nothing, a wrong one lies.
+                if not (lo <= new_face <= hi):
+                    log.error(
+                        "face band for %r violates lo <= face <= hi (%.4f, %.4f, %.4f) "
+                        "from factor %.4f p25 %r p75 %r — band DROPPED for this spot, "
+                        "point estimate still published. The quantiles must bracket the "
+                        "median they were measured with; regenerate with %s",
+                        slug_for(name), lo, new_face, hi, factor,
+                        rec.get("p25"), rec.get("p75"), REGEN_COMMAND)
+                    bad_band += 1
+                    has_spread = False
+                else:
+                    e["face_lo_ft"] = round(lo, 2)
+                    e["face_hi_ft"] = round(hi, 2)
+                    ranged_hours += 1
             touched += 1
         if touched:
             corrected_spots += 1
@@ -336,4 +373,5 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             "no_factor": no_factor, "mop_tier_skipped": mop_skipped,
             "unrateable_hours": unrateable,
             "stale": {"days": stale[0], "slug": stale[1]} if stale else None,
-            "ranged_hours": ranged_hours, "spots_without_spread": no_spread}
+            "ranged_hours": ranged_hours, "spots_without_spread": no_spread,
+            "bad_band_spots": bad_band}

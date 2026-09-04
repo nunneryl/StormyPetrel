@@ -75,6 +75,31 @@ export function fmtFtRange(
     return fmtFt(point);
   }
   if (Number.isNaN(lo) || Number.isNaN(hi)) return fmtFt(point);
+  // THE INVARIANT, AS A BACKSTOP. lo <= point <= hi is guaranteed by construction upstream
+  // (all three divide one raw face by three quantiles of one distribution), and the
+  // pipeline now asserts it at the point of writing. It is re-checked here because these
+  // arrive as three independent database columns and a stale row from an older pipeline
+  // run carries an older arithmetic.
+  //
+  // WHAT WENT WRONG WITHOUT IT: the band was computed from the already-corrected face and
+  // so divided twice. Steamer Lane published face 1.45 with lo 0.45 and hi 0.65, and this
+  // function rendered "0-1ft" — a well-ordered band, so the lo>hi swap below never fired,
+  // and nothing else looked. It took a manual SQL query to find. LOUD, not silent: a band
+  // that cannot contain its own point is dropped and the point published alone, and the
+  // violation is logged with the numbers so it shows up in the server log rather than
+  // only on the page.
+  if (point !== null && point !== undefined && !Number.isNaN(point)) {
+    const lowest = Math.min(lo, hi);
+    const highest = Math.max(lo, hi);
+    if (point < lowest || point > highest) {
+      console.error(
+        `fmtFtRange: band [${lo}, ${hi}] does not contain its point ${point} — ` +
+          `publishing the point alone. The three values must divide one raw face by ` +
+          `p75 / median / p25; a band that misses its point means they did not.`,
+      );
+      return fmtFt(point);
+    }
+  }
   const l = Math.round(lo);
   const h = Math.round(hi);
   // Guard the ordering rather than assuming it. The pipeline divides by p75 and p25 so
