@@ -274,13 +274,54 @@ def _emit(station_id: str, entry: dict, start_date: date, end_date: date,
     }
 
 
-def _stale_entry(station_id: str, cache: dict | None, start_date: date, end_date: date) -> dict:
-    """Best-effort stale output: serve the (sliced) cache if we have one — marked stale — else an
-    empty, explicitly-stale entry so the spot is annotated rather than silently missing tides."""
-    if cache:
-        return _emit(station_id, cache, start_date, end_date, stale=True, asof=cache.get("fetched_at"))
+def _no_data_entry(station_id: str) -> dict:
+    """The explicit NO-DATA state: we have nothing to serve for this window and say so.
+
+    Same shape as every other entry so downstream never special-cases it, but `asof` is None —
+    which is the honest distinction from a stale-but-usable entry. An entry carrying
+    `asof: "2026-07-30..."` reads as "we have July's tides, just old"; this one reads as "we
+    have no tides for these dates at all", which is what is true. stations_with_no_rows picks it
+    up (both series empty) so the station and its spots are NAMED in the run summary."""
     return {"station_id": station_id, "fetched_at": None, "asof": None,
             "stale": True, "hilo": [], "hourly": []}
+
+
+def _stale_entry(station_id: str, cache: dict | None, start_date: date, end_date: date) -> dict:
+    """Best-effort stale output — but ONLY from a cache that still covers the OUTPUT WINDOW.
+
+    THE BUG THIS FIXES. This used to be `if cache:` — any non-None cache was re-adopted and
+    emitted with stale=True, with no date check anywhere on the path. Coverage is tested once,
+    at the (B) gate, against `refetch_until`; a station that falls THROUGH that gate (its cache
+    has lapsed) and then fails its refetch — breaker open, outage, stage deadline, coverage
+    anomaly — landed here, where `covers_until` was never consulted again. So a cache whose
+    predictions stopped weeks ago was served as "stale but fine" indefinitely, and because the
+    only thing distinguishing it from a healthy stale entry is a `fetched_at` nobody reads,
+    nothing said so. TWC0965F sat in exactly that state: cached 2026-07-30, covering to
+    2026-08-27, re-served every run through September.
+
+    A PARTIAL WINDOW IS THE DANGEROUS CASE, not an empty one. If covers_until has merely fallen
+    INSIDE the 7-day window — say it covers 4 of the 7 days — _slice returns those 4 days and
+    the entry looks healthy: non-empty series, plausible asof, and stations_with_no_rows does
+    NOT flag it because hilo is non-empty. Downstream that is not "4 good days and 3 missing":
+    interpret.build_tide_series takes min/max from whatever rows are present, so a 4-day series
+    RESCALES tide_norm = (v-min)/(max-min) for the days it does cover (a 4-day tidal range is
+    not a 7-day one across the spring/neap cycle), and lookup_tide_norm returns None past the
+    last point, scoring the uncovered hours at a neutral tide_multiplier of 1.0. Wrong numbers
+    on the covered days and silent neutrality on the rest. Hence all-or-nothing: partial
+    coverage is treated as missing, and the good days are deliberately discarded rather than
+    published under a normalisation that does not apply to them.
+
+    The test is `_cache_covers(cache, end_date)` — the window we are about to EMIT, not the
+    refetch threshold. (They happen to be the same date today, TIDE_CACHE_REFETCH_WITHIN_HOURS
+    being 168h and _OUTPUT_DAYS 7, but they answer different questions and must not be tied:
+    one asks "is it worth a network round-trip", this one asks "can we honestly publish this".)
+    It is conservative by up to a day, since _slice's range is half-open [start, end) while
+    covers_until is a date — a cache ending ON end_date-1 covers the window but is rejected. A
+    day of margin on the side of not publishing a truncated series is the right way to be wrong.
+    """
+    if _cache_covers(cache, end_date):
+        return _emit(station_id, cache, start_date, end_date, stale=True, asof=cache.get("fetched_at"))
+    return _no_data_entry(station_id)
 
 
 # --------------------------------------------------------------------------- #
@@ -491,6 +532,88 @@ def _format_named(items: list[str], limit: int = MAX_NAMED_IN_WARNING) -> str:
     return f"{', '.join(items[:limit])} (+{len(items) - limit} more)"
 
 
+# --------------------------------------------------------------------------- #
+# run accounting — the summary must be reconcilable to the station list          #
+# --------------------------------------------------------------------------- #
+class _Partition:
+    """Every station in the run lands in EXACTLY ONE bucket, and the buckets sum to the total.
+
+    WHAT WENT WRONG. The old accounting was four loose ints (n_live, n_cache, n_stale,
+    n_hilo_only) incremented at the branches that happened to have an increment. Two paths had
+    none — the genuine-no-predictions branch and the known-bad skip — and n_hilo_only was not a
+    bucket at all but an ATTRIBUTE of stations already counted in n_live, so adding the printed
+    numbers up gave a total that matched nothing. A run then reported `live=0, cached=233,
+    stale/missing=0` over 234 stations: three buckets summing to 233, one station simply absent,
+    and no line anywhere that would have shown it. The count that WOULD have exposed it —
+    len(station_ids) — was printed once, before the loop, forty lines away from the summary.
+
+    THIS IS THE FOURTH TIME A RUN SUMMARY HAS REPORTED HEALTH IT DID NOT HAVE, and the four
+    share one shape — a number that is true about the subset the code walked, presented as
+    though it were about the job:
+      1. the sampled-distance warning counted CELLS it had examined and reported that count as
+         though it were about DISTANCE, which it had never measured;
+      2. db_import counted the spots it SKIPPED without naming any of them, so the count was
+         un-actionable and nobody could tell which spots were missing;
+      3. WW3 reported a STEP COUNT with no horizon, so "48 steps" could mean 48 hours or 6 days
+         and the summary could not distinguish a full run from a truncated one;
+      4. this one — three health buckets that did not add up to the station list, so a station
+         could take a path with no increment and vanish from its own run's totals.
+    The lesson each time is the same and it is not "add another counter": a summary must be
+    RECONCILABLE against the thing it summarises, by arithmetic the reader can do on one line.
+    So the denominator is printed beside the parts, the parts are disjoint and exhaustive by
+    construction rather than by inspection, and a station that reaches no bucket is not merely
+    absent — it is counted as `uncounted` and NAMED at ERROR.
+
+    Disjoint by construction: bucketing is a dict keyed by station id, so a station cannot be in
+    two buckets; a second, conflicting put() is recorded in `double_assigned` and reported.
+    Exhaustive by check, not by hope: uncounted() is the ids in the roster that no branch
+    claimed, which is precisely the failure above.
+    """
+
+    #: In report order. Each is a TERMINAL state of one station in one run.
+    BUCKETS = ("live", "cached", "stale", "no-data", "no-predictions", "known-bad-skipped")
+
+    def __init__(self, station_ids: list[str]) -> None:
+        self._all: list[str] = [str(s) for s in station_ids or []]
+        self._of: dict[str, str] = {}
+        self.double_assigned: list[str] = []
+
+    def put(self, station_id: str, bucket: str) -> None:
+        sid = str(station_id)
+        if bucket not in self.BUCKETS:                       # programming error, never data
+            raise ValueError(f"unknown bucket {bucket!r}")
+        prev = self._of.get(sid)
+        if prev is not None and prev != bucket:
+            self.double_assigned.append(f"{sid}:{prev}->{bucket}")
+        self._of[sid] = bucket
+
+    def uncounted(self) -> list[str]:
+        """Roster ids no branch claimed. MUST be empty; when it is not, these are the names."""
+        return [sid for sid in self._all if sid not in self._of]
+
+    def counts(self) -> dict[str, int]:
+        c = {b: 0 for b in self.BUCKETS}
+        for b in self._of.values():
+            c[b] += 1
+        c["uncounted"] = len(self.uncounted())
+        return c
+
+    def total(self) -> int:
+        """The sum the reader would get by adding the printed parts."""
+        return sum(self.counts().values())
+
+    def balanced(self) -> bool:
+        return (self.total() == len(self._all)
+                and not self.uncounted() and not self.double_assigned)
+
+    def render(self) -> str:
+        """One line the reader can check by adding up, with the denominator on it."""
+        c = self.counts()
+        parts = " + ".join(f"{b} {c[b]}" for b in (*self.BUCKETS, "uncounted"))
+        return (f"{len(self._all)} stations = {parts} "
+                f"[sum {self.total()}, {'balanced' if self.balanced() else 'MISMATCH'}]")
+
+
 def _unique_station_ids(spots: list[dict]) -> list[str]:
     seen: set[str] = set()
     ordered: list[str] = []
@@ -533,7 +656,31 @@ def fetch(spots: list[dict], use_cache: bool = True,
     new_bad: list[str] = []
     consecutive_failures = 0
     breaker_open = False
-    n_live = n_cache = n_stale = n_hilo_only = 0
+    n_hilo_only = 0          # an ATTRIBUTE of the `live` bucket, not a bucket — see _Partition
+
+    # Exhaustive accounting over the FULL station list, not just the ones we walk. The known-bad
+    # skips are the stations that never enter the loop at all; seeding them here is what makes
+    # the partition cover `station_ids` rather than `active_ids`.
+    part = _Partition(station_ids)
+    for sid in station_ids:
+        if sid in known_bad:
+            part.put(sid, "known-bad-skipped")
+
+    # {station_id: covers_until (or None when there was no cache at all)} for stations that
+    # ended the run with nothing publishable. Named in a WARNING below — see _no_data_entry.
+    no_data: dict[str, str | None] = {}
+
+    def _serve_stale(sid: str, cache: dict | None) -> dict:
+        """Route every stale exit through ONE place, so the entry, the bucket and the warning
+        cannot disagree about whether the cache was usable. _stale_entry makes the call; this
+        re-asks the same predicate to classify, rather than inferring it from the entry."""
+        entry = _stale_entry(sid, cache, win_start, win_end)
+        if _cache_covers(cache, win_end):
+            part.put(sid, "stale")                    # cache still covers the window; just not refreshed
+        else:
+            part.put(sid, "no-data")
+            no_data[sid] = (cache or {}).get("covers_until")
+        return entry
 
     try:
         from tqdm import tqdm
@@ -555,20 +702,18 @@ def fetch(spots: list[dict], use_cache: bool = True,
                           TIDE_STAGE_DEADLINE_S, idx, len(active_ids) - idx)
                 for rsid in active_ids[idx:]:
                     rcache = _load_cache(rsid) if use_cache else None
-                    out[rsid] = _stale_entry(rsid, rcache, win_start, win_end)
-                    n_stale += 1
+                    out[rsid] = _serve_stale(rsid, rcache)
                 break
 
             # (B) fresh long-cache — no network at all (deterministic predictions still valid).
             if _cache_covers(cache, refetch_until):
                 out[sid] = _emit(sid, cache, win_start, win_end, stale=False, asof=cache.get("fetched_at"))
-                n_cache += 1
+                part.put(sid, "cached")
                 continue
 
             # (D) breaker open — don't touch NOAA; serve stale-or-empty.
             if breaker_open:
-                out[sid] = _stale_entry(sid, cache, win_start, win_end)
-                n_stale += 1
+                out[sid] = _serve_stale(sid, cache)
                 continue
 
             # need a live refetch (no cache / cache expiring within the window). Horizon is a
@@ -581,8 +726,7 @@ def fetch(spots: list[dict], use_cache: bool = True,
             except _TideOutage as e:
                 consecutive_failures += 1
                 log.debug("tides: %s unreachable (%s) [%d in a row]", sid, e, consecutive_failures)
-                out[sid] = _stale_entry(sid, cache, win_start, win_end)
-                n_stale += 1
+                out[sid] = _serve_stale(sid, cache)
                 if consecutive_failures >= TIDE_FETCH_MAX_CONSECUTIVE_FAILURES and not breaker_open:
                     breaker_open = True
                     log.error("tides: NOAA CO-OPS unreachable — %d consecutive station failures; "
@@ -597,6 +741,7 @@ def fetch(spots: list[dict], use_cache: bool = True,
                 # datum (a throttle/non-200/non-JSON would have raised _TideOutage above, not landed
                 # here). Only then is a permanent known-bad mark warranted.
                 new_bad.append(sid)
+                part.put(sid, "no-predictions")   # THE PATH THAT USED TO INCREMENT NOTHING
                 log.info("tides: %s — genuine no-predictions on both hilo+hourly, all datums — "
                          "marking known-bad", sid)
                 continue
@@ -610,8 +755,7 @@ def fetch(spots: list[dict], use_cache: bool = True,
                 log.warning("tides: %s returned rows with no parseable timestamp (hilo=%d, hourly=%d) — "
                             "not caching; serving stale/empty, will retry next run",
                             sid, len(hilo), len(hourly))
-                out[sid] = _stale_entry(sid, cache, win_start, win_end)
-                n_stale += 1
+                out[sid] = _serve_stale(sid, cache)
                 continue
             covers_until, shortfall_h, governing = coverage
             if shortfall_h > 24:
@@ -643,7 +787,7 @@ def fetch(spots: list[dict], use_cache: bool = True,
             }
             _save_cache(sid, entry)
             out[sid] = _emit(sid, entry, win_start, win_end, stale=False, asof=now_iso)
-            n_live += 1
+            part.put(sid, "live")
     finally:
         # STAGE ISOLATION (A): always persist what we have + the no-pred markers, no matter how we
         # exit (success, break, or an unexpected error) — so db_import always has a tides.json.
@@ -659,9 +803,29 @@ def fetch(spots: list[dict], use_cache: bool = True,
         TIDES_FORECAST_FILE.parent.mkdir(parents=True, exist_ok=True)
         TIDES_FORECAST_FILE.write_text(json.dumps(out, indent=2, ensure_ascii=False))
 
-    log.info("tides: wrote %d stations to %s (live=%d, cached=%d, stale/missing=%d, known-bad-new=%d, "
-             "hilo-only=%d, breaker=%s)", len(out), TIDES_FORECAST_FILE, n_live, n_cache, n_stale,
-             len(new_bad), n_hilo_only, "OPEN" if breaker_open else "closed")
+    # ---- THE SUMMARY, RECONCILABLE ON ONE LINE ---------------------------------------- #
+    # The denominator sits beside the parts so the reader can add them up without going back
+    # forty lines for len(station_ids), and `wrote N` is explained rather than left to differ
+    # from the total for unstated reasons: the entries NOT written are exactly the two buckets
+    # that produce no output (no-predictions + known-bad-skipped). hilo-only is stated as an
+    # attribute of `live`, not as a bucket, because it was previously printed alongside the
+    # buckets and silently double-counted stations already in them.
+    log.info("tides: %s; wrote %d entries to %s (the %d not written = no-predictions + "
+             "known-bad-skipped); hilo-only %d of live; breaker %s",
+             part.render(), len(out), TIDES_FORECAST_FILE, len(station_ids) - len(out),
+             n_hilo_only, "OPEN" if breaker_open else "closed")
+
+    # THE LINE THAT WOULD HAVE MADE THE MISSING STATION VISIBLE. A bare `assert` is wrong here
+    # twice over: this stage's contract is that it NEVER raises (see the module docstring), and
+    # -O would strip it. So the imbalance is reported at ERROR, with the ids — a count of
+    # unaccounted stations is the same un-actionable number that started this.
+    if not part.balanced():
+        log.error("tides: RUN ACCOUNTING BROKEN — the buckets do not partition the station list "
+                  "(%s). Unaccounted: %s. Double-assigned: %s. Every station must reach exactly "
+                  "one terminal bucket; a station that reaches none took a code path with no "
+                  "counter, which is how a station vanished from its own run's totals before.",
+                  part.render(), _format_named(part.uncounted()) or "(none)",
+                  _format_named(part.double_assigned) or "(none)")
 
     # ---- COUNTED AND NAMED, because a count alone is not a symptom -------------------- #
     # Both of these were previously invisible: a station could produce nothing on every run
@@ -673,6 +837,31 @@ def fetch(spots: list[dict], use_cache: bool = True,
         if sid:
             spots_by_station.setdefault(str(sid), []).append(str(sp.get("name") or "?"))
 
+    # ---- THE STALE SERVE, NAMED --------------------------------------------------------- #
+    # A station whose cache had lapsed PAST the output window and whose refetch did not land is
+    # the loudest thing this stage can find, and until now it was the quietest: _stale_entry
+    # re-adopted the expired cache, marked it stale=True, and the run said nothing. `stale` is
+    # not a severity — a cache that still covers the window and merely wasn't refreshed is fine
+    # and stays at DEBUG; this is the other kind, where the spots publish no tide at all.
+    # Named, with the expiry date, in the same shape as the roster-resolution warning below.
+    if no_data:
+        detail = [f"{sid} (cache covered to {cu})" if cu else f"{sid} (no cache)"
+                  for sid, cu in sorted(no_data.items())]
+        nd_spots = sorted({n for sid in no_data for n in spots_by_station.get(sid, [])})
+        log.warning(
+            "tides: %d station(s) had NO usable predictions for the %s..%s window and were NOT "
+            "served from cache — %d spot(s) publish no tide. Stations: %s. Spots: %s. An expired "
+            "cache is deliberately treated as missing rather than re-served: a cache that has "
+            "lapsed part-way into the window would rescale tide_norm for the days it does cover "
+            "(see _stale_entry). These recover by themselves on the next run that reaches "
+            "CO-OPS; if they persist, the refetch is failing and %s is where to look.",
+            len(no_data), win_start.isoformat(), win_end.isoformat(), len(nd_spots),
+            _format_named(detail), _format_named(nd_spots), _NO_PREDICTIONS_FILE,
+        )
+
+    # The broader check: anything that ended up with an empty window for ANY reason — the
+    # no-data stations above, plus known-bad skips and stations that never reached `out` at all.
+    # Deliberately overlapping; this one answers "which spots are tideless", that one "why".
     empty = stations_with_no_rows(out, station_ids)
     if empty:
         affected = sorted({n for sid in empty for n in spots_by_station.get(sid, [])})
