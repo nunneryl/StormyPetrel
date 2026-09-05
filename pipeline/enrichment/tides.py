@@ -75,3 +75,49 @@ def compute_nearest_tide_station(spot: dict, stations: list[dict] | None = None)
         "nearest_tide_station_id": s["id"],
         "nearest_tide_station_dist_km": round(dist_km, 2),
     }
+
+
+def resolve_tide_station_override(spot: dict, station_id: str,
+                                  stations: list[dict] | None = None) -> dict:
+    """The {id, dist_km} pair for a HAND-ASSIGNED station. Same shape as the algorithm's.
+
+    THE DISTANCE IS COMPUTED, NOT DECLARED. It would be easier to let the override file carry
+    the kilometres its author measured, and it would be wrong: db_import._validate_coord_derived
+    recomputes the great-circle distance to the station's real coordinates and NULLs the ENTIRE
+    pairing — id and distance both — when the stored value disagrees by more than
+    COORD_DERIVED_DIST_TOLERANCE_KM. A hand-written distance that drifted from tide_stations.json
+    (the file is a downloaded artifact, refreshed independently) would delete the override at
+    import time, one stage after the override appeared to work. Computing it here means the
+    stored distance is true by construction and that rule can never fire on an override.
+
+    NO DISTANCE CAP. compute_nearest_tide_station drops anything past TIDE_STATION_MAX_DIST_KM;
+    an override is by definition a deliberate departure from that rule, and capping it would make
+    the channel fail for the one case it exists for — a station further away that actually works.
+    The caller warns when the result exceeds the cap; it does not drop it.
+
+    AN UNRESOLVABLE ID IS KEPT, NOT DISCARDED, with a null distance. Discarding would silently
+    restore the algorithm's answer, which is the revert this whole channel exists to prevent;
+    keeping it routes the spot into forecast.tides.unresolvable_station_ids, which names the id
+    and every spot on it. The null distance is deliberate too — db_import's `_check` skips a
+    record whose station it cannot find, so a null cannot trigger the NULLing rule.
+
+    *stations* is the same injection seam compute_nearest_tide_station carries: the default path
+    reads the committed station file, a supplied list is used verbatim.
+    """
+    all_stations = load_tide_stations() if stations is None else stations
+    match = None
+    for st in all_stations or []:
+        if str(st.get("id")) == str(station_id):        # EXACT — TWC0965 is not TWC0965F
+            match = st
+            break
+    if match is None:
+        log.warning(
+            "tide-station override for %r names %r, which is in no entry of the tide station "
+            "list — keeping the id (so it is reported as unresolvable) with a null distance",
+            spot.get("name"), station_id)
+        return {"nearest_tide_station_id": str(station_id), "nearest_tide_station_dist_km": None}
+    dist_km = haversine_m(spot["lat"], spot["lng"], match["lat"], match["lng"]) / 1000.0
+    return {
+        "nearest_tide_station_id": str(match["id"]),    # verbatim, from the station file
+        "nearest_tide_station_dist_km": round(dist_km, 2),
+    }

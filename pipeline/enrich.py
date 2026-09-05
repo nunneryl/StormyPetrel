@@ -22,6 +22,9 @@ from .config import (
     MANUAL_ORIENTATIONS_FILE,
     SPOT_ORIENTATIONS_FILE,
     SPOT_SWELL_WINDOWS_FILE,
+    SPOT_TIDE_STATIONS_FILE,
+    TIDE_STATION_MAX_DIST_KM,
+    TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM,
 )
 from .enrichment.adjust import seaward_adjust
 from .enrichment.break_type import compute_break_type
@@ -30,7 +33,7 @@ from .enrichment.geodata import load_land_index
 from .enrichment.orientation import compute_orientation
 from .enrichment.swell_window import compute_swell_window
 from .enrichment.swell_window_fallback import compute_swell_window_fallback
-from .enrichment.tides import compute_nearest_tide_station
+from .enrichment.tides import compute_nearest_tide_station, resolve_tide_station_override
 
 log = logging.getLogger("pipeline.enrich")
 
@@ -169,6 +172,54 @@ def _load_spot_swell_windows() -> dict[str, float]:
 
 
 _SPOT_SWELL_WINDOWS = _load_spot_swell_windows()
+
+
+def _load_spot_tide_stations() -> dict[str, dict]:
+    """Return {slug: {station_id, expect_km?, ...}} from the slug-keyed tide-station override file.
+
+    THE DURABLE CHANNEL FOR nearest_tide_station_id, and until now there was none. Every other
+    writer of that field either recomputes it or propagates it:
+
+        enrich Algo 5          compute_nearest_tide_station(spot)  — UNCONDITIONAL, every run
+        db_import._spot_record copies the enriched value into the DB row
+        db_import preserve     fills the column from the DB only when the key is ABSENT
+        cleanup_spots          pops it on a coord fix so enrich recomputes
+
+    Algo 5 always writes the key, so db_import never falls through to the DB preserve, so a hand
+    edit to spots_enriched.json or to the DB row is gone on the next enrich — and enrich defaults
+    to reading spots_enriched.json as its own input, so the edit is read in and overwritten in
+    the same run. This file is the only place a tide-station decision survives, which is exactly
+    the role spot_orientations.json fills for orientation.
+
+    Only `station_id` is load-bearing. `expect_km` is a tripwire (see _enrich_one Algo 5b) and
+    everything else in an entry is prose for the next reader. A corrupt file degrades to "no
+    overrides" with a warning rather than killing the run — same posture as the other loaders.
+    """
+    path = SPOT_TIDE_STATIONS_FILE
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        log.warning("spot tide stations file %s corrupt (%s); ignoring", path, e)
+        return {}
+    entries = data.get("stations") or {}
+    out: dict[str, dict] = {}
+    for slug, rec in entries.items():
+        if not isinstance(rec, dict):
+            continue
+        sid = rec.get("station_id")
+        # An entry with no usable id is DROPPED, not written as None: writing None would look
+        # like "this spot has no tide station" and would be indistinguishable from the
+        # algorithm's own out-of-range answer.
+        if sid is None or str(sid).strip() == "":
+            log.warning("tide-station override for slug %r has no station_id; skipping", slug)
+            continue
+        out[slug] = dict(rec, station_id=str(sid))
+    return out
+
+
+_SPOT_TIDE_STATIONS = _load_spot_tide_stations()
 
 
 def arc_offset_from(deg: float, arc: dict) -> float:
@@ -549,6 +600,50 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
         log.warning("%s: tide failed: %s", spot.get("name"), e)
         enriched.update(nearest_tide_station_id=None, nearest_tide_station_dist_km=None)
         confidence["nearest_tide_station"] = 0.0
+
+    # Algo 5b — durable tide-station override (spot_tide_stations.json)
+    #
+    # A DELIBERATE OVERRIDE OF THE NEAREST-STATION RULE, NOT A CORRECTION TO IT. Algo 5 answers
+    # a geometric question and answers it correctly; it cannot know whether the station it picks
+    # is reachable from the environment the pipeline runs in. Kalaloch Beach's nearest is
+    # TWC0965 at 12.1 km, which works from a laptop and fails from the GitHub runner every run —
+    # so the spot had a station assigned and no tide. See the entry's own `reason` before
+    # removing it: re-running the assignment WILL put the nearer station straight back, and that
+    # is the expected result rather than evidence the override is stale.
+    #
+    # Placed OUTSIDE the try/except above on purpose, so an override still lands when Algo 5
+    # threw — a spot whose geometric assignment is failing is more in need of a hand-set station,
+    # not less.
+    tide_override = _SPOT_TIDE_STATIONS.get(_slug_for(spot.get("name")))
+    if tide_override is not None:
+        r = resolve_tide_station_override(spot, tide_override["station_id"])
+        enriched["nearest_tide_station_id"] = r["nearest_tide_station_id"]
+        enriched["nearest_tide_station_dist_km"] = r["nearest_tide_station_dist_km"]
+        # Confidence tracks whether a station is ASSIGNED, exactly as in Algo 5 — a hand-picked
+        # station is not less trustworthy than a computed one, and the id is always non-null here.
+        confidence["nearest_tide_station"] = 1.0
+        # Separate stamp so a reader of the roster can tell a hand-set station from a computed
+        # one without opening the data file. Nothing downstream branches on it.
+        enriched["nearest_tide_station_source"] = "override"
+        dist = r["nearest_tide_station_dist_km"]
+        expect = tide_override.get("expect_km")
+        if dist is not None and expect is not None and \
+                abs(dist - float(expect)) > TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM:
+            # The id names a different station than the entry's author believed. Warned, never
+            # dropped: the computed distance is the true one and still wins.
+            log.warning("%s: tide-station override %s computes %.1f km but the entry documents "
+                        "%.1f km — the id may not be the station the entry describes",
+                        spot.get("name"), r["nearest_tide_station_id"], dist, float(expect))
+        elif dist is not None and dist > TIDE_STATION_MAX_DIST_KM:
+            # Not an error — an override is allowed past the automatic cap, which is half the
+            # reason the channel exists — but it should never be silent.
+            log.warning("%s: tide-station override %s is %.1f km away, past the %.0f km cap the "
+                        "automatic assignment applies", spot.get("name"),
+                        r["nearest_tide_station_id"], dist, TIDE_STATION_MAX_DIST_KM)
+        else:
+            log.debug("%s: tide-station override -> %s (%.1f km, was %s)", spot.get("name"),
+                      r["nearest_tide_station_id"], dist if dist is not None else float("nan"),
+                      tide_override.get("replaces"))
 
     enriched["sources"] = spot.get("sources", {})
     enriched["tags"] = spot.get("tags", {})

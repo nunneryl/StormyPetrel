@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "SLUG-KEYED TIDE-STATION OVERRIDES. Applied by pipeline/enrich.py as Algo 5b, after",
+    "compute_nearest_tide_station, so an entry here beats the nearest-station rule. Same durable-",
+    "override role that spot_orientations.json plays for orientation and spot_swell_windows.json",
+    "for the swell window.",
+    "",
+    "EVERY ENTRY IS A DELIBERATE DEPARTURE FROM 'NEAREST WINS', NOT A CORRECTION TO IT. The",
+    "algorithm is not wrong about which station is closest; it answers a purely geometric question",
+    "and cannot know whether a station is actually reachable. If you are about to remove an entry",
+    "because you re-ran the assignment and got something nearer, read its reason first — getting",
+    "something nearer is the expected outcome, not evidence the entry is stale.",
+    "",
+    "THE DISTANCE IS NOT DECLARED HERE. enrich recomputes nearest_tide_station_dist_km from",
+    "tide_stations.json. `expect_km` below is documentation plus a tripwire: a computed distance",
+    "more than TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM away from it logs a warning, because that",
+    "means the id names a different station than the author believed. It never overrides the",
+    "computed value and never fails a run.",
+    "",
+    "WHAT WOULD RETIRE AN ENTRY: evidence that the original station now works from the environment",
+    "the pipeline runs in — i.e. a run log with the station in the `live` bucket, not a successful",
+    "hand-run from a laptop. The two are not the same, which is the whole point of this file."
+  ],
+  "stations": {
+    "kalaloch-beach": {
+      "station_id": "9441627",
+      "station_name": "Point Grenville, WA",
+      "expect_km": 32.7,
+      "replaces": "TWC0965",
+      "replaces_km": 12.1,
+      "reason": [
+        "TWC0965 (Destruction Island) is NEARER — 12.1 km against 32.7 — and it is not broken.",
+        "Called directly against the CO-OPS API from a laptop it returns a full hilo series. From",
+        "the GitHub Actions runner it fails, every run: the tide stage marks it known-bad and the",
+        "last run logged `known-bad-skipped 1` naming TWC0965. The known-bad TTL is 30 days and the",
+        "cache was 37 days old with no TTL-expiry line in the log, so the entry is being RE-MARKED",
+        "each run rather than sitting stale — the station genuinely fails from CI and genuinely",
+        "works from a developer machine. That is NOAA's behaviour toward a GitHub runner, not",
+        "something in this repository, and it is not being chased.",
+        "",
+        "Kalaloch Beach was the only spot on the roster with a station assigned and no tide.",
+        "",
+        "WHY POINT GRENVILLE. Nearest of the three reachable candidates: James Island 9442388 at",
+        "40.9 km and La Push 9442396 at 41.1 km are both further. It sits on the same open",
+        "Washington coast with no bay or estuary between it and Kalaloch, so the tide PHASE should",
+        "be close — and phase, not range, is what the rating uses: interpret.lookup_tide_norm",
+        "normalises to (v-min)/(max-min), so a range error is divided out and a phase error is not.",
+        "It is also already in service: Pacific Beach WA has used 9441627 since the roster was",
+        "built.",
+        "",
+        "It is a NUMERIC primary station, not a TWC subordinate, so it publishes a full hourly",
+        "harmonic curve rather than hilo-only — build_tide_series takes the `hourly` branch and",
+        "does not need to interpolate between high/low extremes."
+      ]
+    }
+  }
+}
