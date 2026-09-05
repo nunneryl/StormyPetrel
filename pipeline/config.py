@@ -397,6 +397,29 @@ SPOT_SWELL_WINDOWS_FILE = PIPELINE_DIR / "data" / "spot_swell_windows.json"
 # KEPT. Pruning only ever removes arcs — it never authors, widens or re-centres one, and an
 # empty result is left empty rather than backfilled.
 ARC_PRUNE_MAX_OFFSET_DEG = 90.0
+# Slug-keyed tide-station overrides — the same durable-override role for the TIDE STATION that
+# SPOT_ORIENTATIONS_FILE plays for orientation and SPOT_SWELL_WINDOWS_FILE for the swell window.
+# Applied by enrich.py as Algo 5b, AFTER compute_nearest_tide_station, so it beats the
+# nearest-within-TIDE_STATION_MAX_DIST_KM rule.
+#
+# IT EXISTS BECAUSE NEAREST IS NOT ALWAYS REACHABLE. compute_nearest_tide_station answers a
+# purely geometric question and has no way to know that a station is unfetchable from the
+# environment the pipeline actually runs in — see the file's own entries. Without this channel
+# the only places to record such a decision are spots_enriched.json and the DB, and enrich
+# rewrites the field from the algorithm on every run, so both revert silently.
+#
+# THE DISTANCE IS NEVER TAKEN FROM THE FILE. Algo 5b recomputes nearest_tide_station_dist_km
+# from the station's coordinates in tide_stations.json, because db_import._validate_coord_derived
+# NULLs the whole pairing when the stored distance disagrees with the great-circle distance by
+# more than COORD_DERIVED_DIST_TOLERANCE_KM. A hand-written distance that drifted from the
+# station file would therefore delete the override at import, silently, one stage later.
+SPOT_TIDE_STATIONS_FILE = PIPELINE_DIR / "data" / "spot_tide_stations.json"
+# An override whose recomputed distance differs from the entry's documented `expect_km` by more
+# than this is WARNED about (never dropped — the computed value still wins). The point is to
+# catch "this id is not the station the author thought it was" without letting a stale literal
+# in a data file break a run. 5.0 matches COORD_DERIVED_DIST_TOLERANCE_KM so the warning fires
+# before db_import's NULLing rule would, not after.
+TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM = 5.0
 
 # ---------------------------------------------------------------------------
 # Per-spot face correction (CDIP MOP anchored)
