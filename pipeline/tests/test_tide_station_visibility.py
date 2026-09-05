@@ -25,9 +25,41 @@ Run: python -m pipeline.tests.test_tide_station_visibility
 from __future__ import annotations
 
 import logging
+import shutil
+import tempfile
+from pathlib import Path
 
 from pipeline.enrichment.tides import compute_nearest_tide_station
 from pipeline.forecast import tides as T
+
+
+class _Sandbox:
+    """Point the tide stage's THREE write targets at a temp dir for the duration of a test.
+
+    THIS WAS A DEFECT IN THIS FILE. The end-to-end test below called T.fetch() with the module
+    paths untouched, and fetch()'s `finally` writes tides.json and _no_predictions.json
+    unconditionally — `use_cache=False` governs READS, not writes. So running the suite
+    overwrote a developer's real known-bad list with the test's fixture station, silently
+    changing which stations the next pipeline run would skip. A test that mutates the state it
+    is testing against is worse than no test. (No workflow runs this suite, so CI never did it;
+    the damage was local, which is exactly why it went unnoticed.) Mirrors _redirect/_restore in
+    test_tides_resilience.py."""
+
+    def __enter__(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self._saved = (T.TIDES_CACHE_DIR, T.TIDES_FORECAST_FILE, T._NO_PREDICTIONS_FILE,
+                       T.NOAA_COOPS_MIN_INTERVAL_S)
+        T.TIDES_CACHE_DIR = self.tmp / "cache"
+        T.TIDES_FORECAST_FILE = self.tmp / "tides.json"
+        T._NO_PREDICTIONS_FILE = self.tmp / "cache" / "_no_predictions.json"
+        T.NOAA_COOPS_MIN_INTERVAL_S = 0.0
+        return self
+
+    def __exit__(self, *exc):
+        (T.TIDES_CACHE_DIR, T.TIDES_FORECAST_FILE, T._NO_PREDICTIONS_FILE,
+         T.NOAA_COOPS_MIN_INTERVAL_S) = self._saved
+        shutil.rmtree(self.tmp, ignore_errors=True)
+        return False
 
 
 class _CaptureLog(logging.Handler):
@@ -206,16 +238,17 @@ def test_the_run_summary_warns_by_name_when_a_station_produced_nothing():
     cap = _CaptureLog()
     log = logging.getLogger("pipeline.forecast.tides")
     log.addHandler(cap)
-    saved_bad, saved_load = T._load_no_predictions_map, T.load_tide_stations
+    saved_load = T.load_tide_stations
     try:
-        # No known-bad, no station file (so the resolution check stands down), and every
-        # station fetch returns empty — the shape of a station CO-OPS has nothing for.
-        T._load_no_predictions_map = lambda: {}
-        T.load_tide_stations = lambda: []
-        spots = [_spot("Kalaloch Beach", "TWC0965F"), _spot("Ruby Beach", "TWC0965F")]
-        T.fetch(spots, use_cache=False, _fetch_station=lambda *a, **k: ([], []))
+        # No station file (so the resolution check stands down), and every station fetch returns
+        # empty — the shape of a station CO-OPS has nothing for. The sandbox is what keeps
+        # fetch()'s unconditional `finally` write off the real cache directory.
+        with _Sandbox():
+            T.load_tide_stations = lambda: []
+            spots = [_spot("Kalaloch Beach", "TWC0965F"), _spot("Ruby Beach", "TWC0965F")]
+            T.fetch(spots, use_cache=True, _fetch_station=lambda *a, **k: ([], []))
     finally:
-        T._load_no_predictions_map, T.load_tide_stations = saved_bad, saved_load
+        T.load_tide_stations = saved_load
         log.removeHandler(cap)
     m = _msgs(cap)
     assert "returned NO rows" in m, m
