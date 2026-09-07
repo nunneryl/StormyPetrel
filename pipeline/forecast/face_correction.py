@@ -101,6 +101,7 @@ nobody reads.
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
 import logging
 
@@ -111,6 +112,17 @@ from ..config import (
 from ..interpret import composite_stars
 
 log = logging.getLogger("pipeline.forecast.face_correction")
+
+# THE SEAM'S ARITHMETIC VERSION. Bump this when what the seam DOES to a face changes — the
+# divisor form, the star recompute, the band formula. Do NOT bump it when the factor file is
+# regenerated: that moves the fingerprint instead, and the two are deliberately separate
+# because they mean different things to a reader of the stamp. See face_correction_stamp.
+FACE_CORRECTION_VERSION = 1
+
+# The two provenance keys the seam writes on every rated hour. Named once so the tests, the
+# db_import record and the "which fields did the seam leave alone" checks all agree on the
+# set rather than each carrying its own copy.
+PROVENANCE_KEYS = ("face_ft_raw", "face_correction_version")
 
 # Tiers whose face is computed FROM MOP. Structural exclusion — see the module docstring.
 # apply_mop_assignments writes swell_window_source="cdip_mop" when it promotes a spot, so
@@ -177,6 +189,69 @@ def load_face_factors(path=None):
             continue
         out[slug] = {**rec, "factor": f}
     return out
+
+
+def face_correction_stamp(factors):
+    """The per-row provenance string: "<code>:<measured_on>:<fingerprint>".
+
+    IDENTIFIES THE RUN, NOT THE OUTCOME. Every row the seam sees gets the same stamp —
+    corrected, uncorrected, MOP-tier alike — because the question it has to answer is "were
+    these two rows produced by the same correction regime", and a stamp that varied with the
+    outcome would answer a different one. Whether an individual row was corrected is already
+    recoverable: face_ft_raw != face_ft.
+
+    THE THREE PARTS, and why not one hash of everything:
+
+      <code>         FACE_CORRECTION_VERSION. Changes when the ARITHMETIC changes. This is
+                     the part that invalidates a measurement even when face_ft_raw is
+                     present, because raw is only pre-correction with respect to a seam that
+                     behaves as this one does.
+      <measured_on>  the newest measured_on across the factor records — human-readable, so a
+                     stamp can be read without a lookup table. "none" when there are none.
+      <fingerprint>  8 hex of sha256 over the sorted "slug=factor" pairs. A regeneration that
+                     moves any divisor changes it; one that moves none does not, which is the
+                     behaviour a fingerprint over the file bytes would NOT give (the file
+                     carries generated_at and would differ on every run). "none" when empty.
+
+    Formatted %.10g rather than repr so the fingerprint is stable across Python versions and
+    across a float that round-trips differently, and so it does not depend on how json
+    happened to parse the literal.
+
+    A worked value: {"a": {"factor": 2.0}} with measured_on 2026-09-01 gives
+    "1:2026-09-01:" + sha256("a=2")[:8].
+    """
+    if not factors:
+        return f"{FACE_CORRECTION_VERSION}:none:none"
+    lines = "\n".join(f"{slug}={float(rec['factor']):.10g}"
+                      for slug, rec in sorted(factors.items()))
+    fingerprint = hashlib.sha256(lines.encode("utf-8")).hexdigest()[:8]
+    dates = sorted(str(rec.get("measured_on")) for rec in factors.values()
+                   if rec.get("measured_on"))
+    return f"{FACE_CORRECTION_VERSION}:{dates[-1] if dates else 'none'}:{fingerprint}"
+
+
+def stamp_provenance(ratings, stamp):
+    """Write face_ft_raw + face_correction_version on every hour, BEFORE anything divides.
+
+    THIS IS THE WHOLE POINT OF THE CHANGE, so it is one pass over everything rather than a
+    line in each of the seam's four branches. A per-branch stamp is a thing a fifth branch
+    forgets, and the forgetting is silent — the row would carry a raw face equal to a
+    corrected one and read as clean. Here the invariant "raw is the pre-correction face" is
+    established once, for all rows, before the divisor is even looked up, so no later branch
+    can violate it except by writing face_ft_raw again, which nothing does.
+
+    face_ft_raw is a VERBATIM copy of face_ft, not a rounded or re-derived one. Whatever
+    rounding the upstream producer applied is preserved, which makes the column directly
+    comparable to the face_ft of a row written before the correction existed — the harness
+    can fall back across the migration boundary without a units or precision seam.
+
+    An hour with no face gets None, exactly as face_ft holds None. That is the honest value:
+    the hour is unrateable, not "raw zero".
+    """
+    for entries in ratings.values():
+        for e in entries:
+            e["face_ft_raw"] = e.get("face_ft")
+            e["face_correction_version"] = stamp
 
 
 def validate_factor_slugs(factors, spots, slug_for):
@@ -255,19 +330,43 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
     """Scale face_ft (and effective_size_ft) by 1/factor and recompute stars, in place.
 
     Mutates *ratings*. Returns a stats dict for the run summary. Every spot without a
-    factor, on the MOP tier, or held out is left BYTE-IDENTICAL — no key is written, not
-    even an unchanged one.
+    factor, on the MOP tier, or held out has every RATING field left byte-identical —
+    face_ft, effective_size_ft, stars, face_lo_ft and face_hi_ft are not written, not even
+    unchanged.
+
+    THE GUARANTEE USED TO BE "the entry is byte-identical", full stop, and it is now
+    "every rating field is byte-identical". The two PROVENANCE_KEYS are written on every
+    hour, including those spots'. That is a deliberate narrowing, not an erosion: the
+    property worth having is that no ARITHMETIC runs on a spot we never measured, and
+    stamping a verbatim copy of face_ft is not arithmetic. Making the stamp conditional
+    would defeat its purpose — a NULL face_correction_version has to mean "produced before
+    this existed", and it cannot also mean "produced by a run that chose not to correct
+    this spot", or the contamination query cannot distinguish the two.
     """
     if slug_for is None:
         from ..enrich import _slug_for as slug_for      # noqa: PLC0415 - avoids a cycle
     if factors is None:
         factors = load_face_factors()
+
+    stamp = face_correction_stamp(factors)
+    # VALIDATION STILL RUNS BEFORE ANY MUTATION, stamp included. A mis-keyed file fails the
+    # run, and a failed run must leave the ratings exactly as it found them — otherwise the
+    # only evidence of how far it got is the exception text.
+    if factors:
+        validate_factor_slugs(factors, spots, slug_for)
+
+    # BEFORE THE EARLY RETURN, and before the divisor is looked up. A run with no factors
+    # file still stamps, because "the seam ran and corrected nothing" is a fact worth
+    # recording and is NOT the same fact as "this row predates the seam" — which is what a
+    # NULL would say. It is also the state every fresh checkout is in, so leaving it
+    # unstamped would make local rows indistinguishable from pre-migration ones.
+    stamp_provenance(ratings, stamp)
+
     if not factors:
         return {"corrected_spots": 0, "corrected_hours": 0, "no_factor": len(spots),
                 "mop_tier_skipped": 0, "unrateable_hours": 0, "stale": None,
-                "ranged_hours": 0, "spots_without_spread": 0, "bad_band_spots": 0}
-
-    validate_factor_slugs(factors, spots, slug_for)
+                "ranged_hours": 0, "spots_without_spread": 0, "bad_band_spots": 0,
+                "stamp": stamp}
 
     now = now or datetime.date.today()
     stale = _stalest(factors, now)
@@ -374,4 +473,4 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             "unrateable_hours": unrateable,
             "stale": {"days": stale[0], "slug": stale[1]} if stale else None,
             "ranged_hours": ranged_hours, "spots_without_spread": no_spread,
-            "bad_band_spots": bad_band}
+            "bad_band_spots": bad_band, "stamp": stamp}

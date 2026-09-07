@@ -165,8 +165,37 @@ def test_the_sub_half_foot_cutoff_is_reachable_by_correction():
 
 
 # --------------------------------------------------------------------------- #
-# 2 — everything without a factor is BYTE-IDENTICAL                           #
+# 2 — everything without a factor keeps every RATING FIELD byte-identical       #
 # --------------------------------------------------------------------------- #
+# THE GUARANTEE NARROWED WITH MIGRATION 017 AND THESE TESTS GOT SHARPER, NOT LOOSER.
+# It used to be "the entry is byte-identical". The seam now stamps two PROVENANCE keys on
+# every hour — face_ft_raw and face_correction_version — including on spots it does not
+# correct, because a NULL face_correction_version has to mean "produced before this existed"
+# and cannot also mean "produced by a run that chose not to correct this spot".
+#
+# So each of these now asserts THREE things where it used to assert one:
+#   * every rating field unchanged  (unchanged_except_provenance)
+#   * face_ft_raw == face_ft        — which is the positive statement that NO DIVISION RAN,
+#                                     something whole-entry equality could never say
+#   * the stamp is present          — the row is attributable to this run
+
+
+def unchanged_except_provenance(entry, before):
+    """True when *entry* differs from *before* in nothing but the provenance keys.
+
+    Written out here rather than imported from the module under test: a helper that asked
+    face_correction which keys to ignore would pass no matter which keys it started
+    writing, which is the one thing these tests exist to catch."""
+    return {k: v for k, v in entry.items()
+            if k not in ("face_ft_raw", "face_correction_version")} == before
+
+
+def assert_untouched(entry, before):
+    assert unchanged_except_provenance(entry, before), entry
+    assert entry["face_ft_raw"] == entry["face_ft"], \
+        "raw must equal published where nothing divided"
+    assert entry["face_ft_raw"] == before["face_ft"], "and must equal the pre-seam value"
+    assert isinstance(entry["face_correction_version"], str) and entry["face_correction_version"]
 
 def test_a_spot_with_no_factor_is_byte_identical():
     before = _entry()
@@ -174,7 +203,7 @@ def test_a_spot_with_no_factor_is_byte_identical():
     st = FC.apply_face_corrections(ratings, [_spot("Ocean Beach"), _spot("Steamer Lane")],
                                    factors={"steamer-lane": _rec(2.87)},
                                    slug_for=_slug, now=TODAY)
-    assert ratings["Ocean Beach"][0] == before, ratings["Ocean Beach"][0]
+    assert_untouched(ratings["Ocean Beach"][0], before)
     assert st["corrected_spots"] == 0 and st["no_factor"] == 1, st
 
 
@@ -182,8 +211,10 @@ def test_an_empty_factor_map_touches_nothing_and_short_circuits():
     before = _entry()
     ratings = {"Steamer Lane": [dict(before)]}
     st = FC.apply_face_corrections(ratings, [_spot()], factors={}, slug_for=_slug, now=TODAY)
-    assert ratings["Steamer Lane"][0] == before
+    assert_untouched(ratings["Steamer Lane"][0], before)
     assert st["corrected_spots"] == 0 and st["corrected_hours"] == 0
+    # An inert run still stamps, and its stamp says so rather than going quiet.
+    assert st["stamp"] == "1:none:none", st["stamp"]
 
 
 def test_absent_is_not_one_point_zero():
@@ -211,7 +242,7 @@ def test_a_rating_for_a_spot_missing_from_the_roster_is_untouched():
     st = FC.apply_face_corrections(ratings, [_spot("Steamer Lane")],
                                    factors={"steamer-lane": _rec(2.0)},
                                    slug_for=_slug, now=TODAY)
-    assert ratings["Ghost Spot"][0] == before
+    assert_untouched(ratings["Ghost Spot"][0], before)
     assert st["corrected_spots"] == 0
 
 
@@ -240,7 +271,7 @@ def test_a_mop_tier_spot_is_untouched_even_with_a_factor():
     st = FC.apply_face_corrections(ratings, [_spot(source="cdip_mop")],
                                    factors={"steamer-lane": _rec(2.87)},
                                    slug_for=_slug, now=TODAY)
-    assert ratings["Steamer Lane"][0] == before, ratings["Steamer Lane"][0]
+    assert_untouched(ratings["Steamer Lane"][0], before)
     assert st["mop_tier_skipped"] == 1 and st["corrected_spots"] == 0, st
 
 
@@ -291,7 +322,7 @@ def test_a_held_out_spot_is_byte_identical_when_absent_from_the_map():
     ratings = {"Fort Point": [dict(before)]}
     FC.apply_face_corrections(ratings, [_spot("Fort Point"), _spot("Steamer Lane")],
                               factors={"steamer-lane": _rec(2.87)}, slug_for=_slug, now=TODAY)
-    assert ratings["Fort Point"][0] == before
+    assert_untouched(ratings["Fort Point"][0], before)
 
 
 # --------------------------------------------------------------------------- #
@@ -480,6 +511,8 @@ def test_validation_runs_before_any_row_is_touched():
     except FC.FaceFactorSlugError:
         pass
     assert ratings["Steamer Lane"][0] == before, "rows were mutated before validation failed"
+    assert "face_ft_raw" not in ratings["Steamer Lane"][0], \
+        "not even the provenance stamp may land before validation rejects the file"
 
 
 # --------------------------------------------------------------------------- #
