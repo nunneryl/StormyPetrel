@@ -1947,6 +1947,11 @@ def main(argv: list[str] | None = None) -> int:
                  "measured MOP factor; %d spot(s) had no factor, %d skipped on the MOP tier",
                  face_stats["corrected_spots"], face_stats["corrected_hours"],
                  face_stats["no_factor"], face_stats["mop_tier_skipped"])
+    # The stamp on every row this run writes (migration 017). Logged so a run can be tied to
+    # the rows it produced without a query, and so a factor regeneration is visible in the log
+    # the day it happens rather than the next time someone measures.
+    log.info("interpret: face provenance stamp %s — written on every rated hour; "
+             "face_ft_raw carries the pre-correction face", face_stats["stamp"])
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))

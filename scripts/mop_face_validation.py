@@ -249,15 +249,209 @@ def join_on_hour(mop_by_hour: dict, rows: list) -> list[dict]:
         mop_hs = mop_by_hour[h]
         if mop_hs is None:
             continue
+        face_measured, face_source = measured_face(r)
         out.append({
             "hour": h,
             "valid_time": r.get("valid_time"),
             "mop_hs_m": float(mop_hs),
+            # THE TWO FACES ARE DELIBERATELY BOTH HERE AND DELIBERATELY NAMED APART.
+            #   face_ft        — what we PUBLISHED for that hour, verbatim. Post-correction
+            #                    on a corrected row. This is the right number for "what did a
+            #                    reader see", which is what the blocked-hours report asks.
+            #   face_measured  — the PRE-correction face, which is the only thing the ratio
+            #                    may be computed from. See measured_face.
+            # Before migration 017 they were the same value and one key served both. Letting
+            # one key keep serving both after the split is how the blocked-hours report would
+            # have quietly started reporting a corrected number under a heading about what we
+            # published — a second contamination of the same shape as the first.
             "face_ft": r.get("face_ft"),
+            "face_measured": face_measured,
+            "face_source": face_source,
+            "face_correction_version": r.get("face_correction_version"),
             "effective_size_ft": r.get("effective_size_ft"),
             "swell_source": r.get("swell_source"),
         })
     return out
+
+
+def measured_face(row: dict) -> tuple:
+    """(face to measure, "raw" | "fallback") for one forecasts row.
+
+    face_ft_raw (migration 017) is the face BEFORE the per-spot MOP correction divided it,
+    and it is the only quantity this script may put over MOP Hs. face_ft is post-correction
+    on a corrected row, so measuring it after 2026-09-02 03:30 UTC returns the RESIDUAL of
+    the correction rather than the offset — and over a window straddling that instant, a
+    blend of the two that looks like neither.
+
+    THE FALLBACK IS NOT A SAFE DEFAULT AND IS NOT TREATED AS ONE. Every row written before
+    017 has face_ft_raw NULL, and for those rows face_ft is the raw face if and only if the
+    row also predates the correction. Nothing on the row says which: face_correction_version
+    is NULL across BOTH the pre-correction era and the contaminated one, and no repair exists
+    because the divisor was not uniform (steamer-lane spans un-corrected, /2.8702, absent
+    again, /2.8084 inside one fortnight). So "fallback" means UNKNOWN CORRECTION STATE, and
+    the caller's job is to decide what to do about that — see classify_window, which refuses
+    to let unknown rows sit silently beside known ones.
+    """
+    raw = row.get("face_ft_raw")
+    if raw is not None:
+        return raw, "raw"
+    return row.get("face_ft"), "fallback"
+
+
+def is_stamped(row: dict) -> bool:
+    """True when this row was written by a run that knew about migration 017.
+
+    THE CLASSIFIER IS THE STAMP, NOT THE PRESENCE OF face_ft_raw, and the difference is not
+    academic. face_ft_raw is NULL on an UNRATEABLE hour — one whose face_ft is itself NULL —
+    because the seam copies face_ft verbatim, nulls included. Classifying on the raw column
+    would therefore file every unrateable hour of a perfectly clean window as unknown, flag
+    the window MIXED, and print the loud banner over nothing. A warning that fires on healthy
+    data is a warning that gets turned off, and this one has one job.
+
+    face_correction_version has no such hole: stamp_provenance writes it on every hour it
+    sees, rateable or not, so it means exactly "a post-017 run produced this row". For a
+    stamped row, raw is present if and only if the face is, so nothing measurable is lost.
+
+    A row carrying a raw but no stamp is treated as UNSTAMPED — conservative, and reachable
+    only by hand-editing, since both columns are written by the same pass.
+    """
+    return row.get("face_correction_version") is not None
+
+
+def classify_window(n_stamped: int, n_unstamped: int) -> str:
+    """"clean" | "legacy" | "mixed" | "empty" for a window's row provenance.
+
+    Pure and total so the policy is a thing that can be tested against literals rather than
+    inferred from a run's output.
+
+      clean   every row was written by a post-017 run, so every rateable one carries its
+              pre-correction face. The measurement needs no caveat.
+      legacy  NO row was — the whole window predates migration 017. Measurable, but the
+              correction state is unknown, so it is reported as unknown rather than assumed
+              innocent.
+      mixed   BOTH. This is the exact condition that produced the 2026-09-07 reading of
+              steamer-lane at 2.188 against a factor of 2.81: two populations averaged into
+              one median that belongs to neither. The caller drops the unstamped rows and
+              says so loudly. It does NOT average them, and it does not go quiet about it —
+              a window that silently shortens is how a sample-size artefact gets read as a
+              spread problem.
+      empty   nothing joined.
+    """
+    if n_stamped and n_unstamped:
+        return "mixed"
+    if n_stamped:
+        return "clean"
+    if n_unstamped:
+        return "legacy"
+    return "empty"
+
+
+def retain_for_measurement(pairs: list) -> list:
+    """The pairs whose face_measured may be pooled together.
+
+    Under "mixed", only the rows a post-017 run wrote. Under "clean" and "legacy" every pair
+    is kept, because in both of those every row is of the SAME provenance and the ratio is at
+    least internally consistent — which is the property that was violated.
+    """
+    verdict = classify_window(sum(1 for p in pairs if is_stamped(p)),
+                              sum(1 for p in pairs if not is_stamped(p)))
+    if verdict == "mixed":
+        return [p for p in pairs if is_stamped(p)]
+    return list(pairs)
+
+
+def summarise_spot(pairs: list, mop_hours: int, our_hours: int) -> dict:
+    """Every measured field for one spot, from its joined pairs. Pure, so it can be tested.
+
+    EXTRACTED FROM main BECAUSE IT WAS THE ONE PART NOTHING COULD REACH. main needs Supabase
+    and a CDIP OPeNDAP read, so the arithmetic that decides which rows reach a statistic sat
+    behind a network boundary — and two mutations of it (computing the ratio over `pairs`
+    instead of `kept`, and reporting the pre-drop count as joined_hours) survived the whole
+    suite. Both are precisely the "silently average them" failure this change exists to stop,
+    so the contamination-critical arithmetic does not get to live where it cannot be pinned.
+
+    joined_hours IS THE RETAINED COUNT, not the joined one, and that is deliberate:
+    build_face_factors reads it, and a p75/p25 exclusion judged against a sample size the
+    spot never had would read a dropped window as an unstable spot.
+    """
+    n_stamped = sum(1 for p in pairs if is_stamped(p))
+    n_unstamped = len(pairs) - n_stamped
+    verdict = classify_window(n_stamped, n_unstamped)
+    kept = retain_for_measurement(pairs)
+
+    stamps: dict = {}
+    for p in kept:
+        v = p.get("face_correction_version")
+        if v is not None:
+            stamps[v] = stamps.get(v, 0) + 1
+
+    face_ratios = [r for r in (ratio(p["face_measured"], p["mop_hs_m"]) for p in kept)
+                   if r is not None]
+    eff_ratios = [r for r in (ratio(p["effective_size_ft"], p["mop_hs_m"]) for p in kept)
+                  if r is not None]
+
+    # Hours MOP says the swell did not arrive, with what we PUBLISHED there — face_ft, not
+    # face_measured. This one asks what a reader saw, so the corrected number is the right
+    # number here and the raw one would answer a different question.
+    blocked = [p for p in kept if p["mop_hs_m"] <= MOP_HS_FLOOR_M]
+
+    srcs: dict = {}
+    for p in kept:
+        srcs[p.get("swell_source") or "none"] = srcs.get(p.get("swell_source") or "none", 0) + 1
+
+    return {
+        "mop_hours": mop_hours, "our_hours": our_hours, "joined_hours": len(kept),
+        "join_rate": round(len(kept) / our_hours, 3) if our_hours else None,
+        "provenance": {"verdict": verdict, "raw_rows": n_stamped,
+                       "fallback_rows": n_unstamped,
+                       "dropped": len(pairs) - len(kept), "stamps": stamps},
+        "face_ratio": _stats(face_ratios),
+        "eff_ratio": _stats(eff_ratios),
+        "height_agreement": height_agreement(kept),
+        "blocked_hours": {"n": len(blocked),
+                          "published_face_ft": _stats([p["face_ft"] for p in blocked])},
+        "swell_source_counts": srcs,
+    }
+
+
+def _print_window_integrity(wi: dict) -> None:
+    """The banner. Loud for anything but "clean", and quiet for clean so it stays loud."""
+    v = wi["verdict"]
+    # A CODE-VERSION MISMATCH IS LOUD EVEN ON A CLEAN WINDOW, and getting that wrong is the
+    # obvious shape of this function: `if clean: print one line; return` skips the one check
+    # that face_ft_raw does NOT make redundant. raw is only pre-correction with respect to a
+    # seam that behaves as this one does, so two seams in one window is its own contamination.
+    code_mismatch = len(wi["seam_code_versions"]) > 1
+    if v == "clean" and not code_mismatch:
+        print(f"WINDOW PROVENANCE: clean — all {wi['raw_rows']} joined rows carry "
+              f"face_ft_raw; the ratio is of the pre-correction face.")
+        return
+    bar = "!" * 78
+    print(bar)
+    if v == "clean":
+        print("WINDOW PROVENANCE: every row carries face_ft_raw, BUT NOT FROM ONE SEAM.")
+    elif v == "mixed":
+        print("MIXED WINDOW — THE FACTORS FROM THIS RUN ARE NOT SAFE TO APPLY AS THEY STAND.")
+        print(f"  {wi['raw_rows']} row(s) carry face_ft_raw (pre-correction, measurable)")
+        print(f"  {wi['fallback_rows']} row(s) do NOT — written before migration 017, so their")
+        print("    correction state is UNKNOWN and no repair exists: the applied divisor was")
+        print("    not uniform (steamer-lane spans un-corrected, /2.8702, absent, /2.8084).")
+        print(f"  {wi['dropped_rows']} row(s) DROPPED. They were not averaged in.")
+        print("  The effective window is therefore SHORTER than the one requested. Fewer")
+        print("  hours widens p75/p25, and build_face_factors excludes on p75/p25 — so a")
+        print("  spot may be excluded here for sample size and not for instability.")
+        print("  Re-run once the whole window post-dates the migration.")
+    elif v == "legacy":
+        print("LEGACY WINDOW — CORRECTION STATE UNKNOWN FOR EVERY ROW.")
+        print(f"  none of the {wi['fallback_rows']} joined rows carries face_ft_raw, so this")
+        print("  window predates migration 017. If any part of it post-dates the correction")
+        print("  (2026-09-02 03:30 UTC) the ratio is a blend and belongs to neither pipeline.")
+    else:
+        print("EMPTY WINDOW — nothing joined; there is no measurement here.")
+    if code_mismatch:
+        print(f"  SEAM CODE VERSIONS DIFFER across retained rows: {wi['seam_code_versions']}.")
+        print("  face_ft_raw is only pre-correction with respect to one seam's arithmetic.")
+    print(bar)
 
 
 def _stats(values: list) -> dict:
@@ -294,18 +488,25 @@ def _stats(values: list) -> dict:
 
 
 def height_agreement(pairs: list[dict]) -> dict:
-    """bias / MAE / Pearson r of our face_ft against MOP waveHs, both in FEET.
+    """bias / MAE / Pearson r of our PRE-CORRECTION face against MOP waveHs, both in FEET.
 
     Reported because it is what was asked for, and labelled in the output as what it is:
     the two are NOT the same quantity (see the module docstring), so a non-zero bias here
     is expected and is the amplification being measured — not an error. The CORRELATION
     is the part that carries information about tracking, independent of the scale factor.
+
+    Reads face_measured for the same reason face_ratio does: bias against a CORRECTED face
+    measures how well the correction landed, not how big the transform's offset is, and the
+    two would silently swap meaning on 2026-09-02. Pearson r is the exception that would
+    have survived either — it is invariant under a positive scale factor, so a per-spot
+    divisor cannot move it — but it is computed from the same list as the other two and
+    splitting them across two quantities would be worse than the consistency is worth.
     """
     ours, mop = [], []
     for p in pairs:
-        if p["face_ft"] is None:
+        if p.get("face_measured") is None:
             continue
-        ours.append(float(p["face_ft"]))
+        ours.append(float(p["face_measured"]))
         mop.append(float(p["mop_hs_m"]) * M_TO_FT)
     if not ours:
         return {"n": 0, "bias_ft": None, "mae_ft": None, "r": None}
@@ -401,7 +602,8 @@ def _fetch_forecast_chunk(client, ids, t0_iso, t1_iso, page=FORECAST_PAGE_ROWS):
     while True:
         resp = (
             client.table("forecasts")
-            .select("spot_id, valid_time, face_ft, effective_size_ft, swell_source")
+            .select("spot_id, valid_time, face_ft, face_ft_raw, "
+                    "face_correction_version, effective_size_ft, swell_source")
             .in_("spot_id", list(ids))
             .eq("source", "nwps")
             .gte("valid_time", t0_iso)
@@ -544,6 +746,10 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
     # --- MOP, one OPeNDAP read per point -------------------------------------
     print(f"pulling MOP for {len(matched)} points — this is minutes, not seconds", flush=True)
     per_spot = []
+    # Row provenance, accumulated across the sweep — see classify_window.
+    window_verdicts: dict = {}
+    stamps: dict = {}
+    total_raw = total_fallback = 0
     t_start = time.time()
     for i, (s, rec) in enumerate(matched, 1):
         sid = name_to_id.get(s.get("name"))
@@ -560,29 +766,16 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
         rows = fc.get(sid) or []
         pairs = join_on_hour(mop, rows)
 
-        face_ratios = [ratio(p["face_ft"], p["mop_hs_m"]) for p in pairs]
-        eff_ratios = [ratio(p["effective_size_ft"], p["mop_hs_m"]) for p in pairs]
-        face_ratios = [r for r in face_ratios if r is not None]
-        eff_ratios = [r for r in eff_ratios if r is not None]
-
-        # Hours MOP says the swell did not arrive, with what we published there.
-        blocked = [p for p in pairs if p["mop_hs_m"] <= MOP_HS_FLOOR_M]
-        blocked_face = _stats([p["face_ft"] for p in blocked])
-
-        srcs = {}
-        for p in pairs:
-            srcs[p.get("swell_source") or "none"] = srcs.get(p.get("swell_source") or "none", 0) + 1
-
-        entry = {
-            **rec,
-            "mop_hours": len(mop), "our_hours": len(rows), "joined_hours": len(pairs),
-            "join_rate": round(len(pairs) / len(rows), 3) if rows else None,
-            "face_ratio": _stats(face_ratios),
-            "eff_ratio": _stats(eff_ratios),
-            "height_agreement": height_agreement(pairs),
-            "blocked_hours": {"n": len(blocked), "published_face_ft": blocked_face},
-            "swell_source_counts": srcs,
-        }
+        # PROVENANCE FIRST, ARITHMETIC SECOND — and both inside summarise_spot, so there is
+        # no route to a statistic that bypasses the retention rule. This loop only folds the
+        # per-spot verdict into the run-wide totals.
+        entry = {**rec, **summarise_spot(pairs, len(mop), len(rows))}
+        prov = entry["provenance"]
+        window_verdicts[prov["verdict"]] = window_verdicts.get(prov["verdict"], 0) + 1
+        total_raw += prov["raw_rows"]
+        total_fallback += prov["fallback_rows"]
+        for v, n in prov["stamps"].items():
+            stamps[v] = stamps.get(v, 0) + n
         per_spot.append(entry)
         fr = entry["face_ratio"]["median"]
         er = entry["eff_ratio"]["median"]
@@ -621,9 +814,33 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
         (e for e in good if e["blocked_hours"]["n"] > 0),
         key=lambda e: (e["blocked_hours"]["published_face_ft"]["median"] or 0), reverse=True)[:12]
 
+    overall = classify_window(total_raw, total_fallback)
+    code_versions = sorted({v.split(":", 1)[0] for v in stamps})
+    window_integrity = {
+        "verdict": overall,
+        "raw_rows": total_raw,
+        "fallback_rows": total_fallback,
+        "dropped_rows": sum(e.get("provenance", {}).get("dropped", 0)
+                            for e in per_spot if "error" not in e),
+        "per_spot_verdicts": window_verdicts,
+        "stamps": stamps,
+        "seam_code_versions": code_versions,
+        "meaning": (
+            "clean: every joined row carries face_ft_raw, so the ratio is of the "
+            "PRE-correction face and needs no caveat. legacy: no row carries it — the whole "
+            "window predates migration 017 and the correction state is UNKNOWN, not "
+            "innocent. mixed: both, and the fallback rows have been DROPPED rather than "
+            "averaged in; joined_hours per spot is the retained count. A differing "
+            "fingerprint across stamps is benign once face_ft_raw is present (raw is "
+            "pre-correction whichever divisor was applied); a differing seam CODE version "
+            "is not, and is listed separately."
+        ),
+    }
+
     result = {
         "generated_at": now.isoformat(),
         "window": {"t0": t0_iso, "t1": t1_iso, "days_back": days_back},
+        "window_integrity": window_integrity,
         "what_this_measures": (
             "face_ft / (MOP waveHs x M_TO_FT). NOT height vs height: MOP publishes Hs at a "
             "~10 m depth contour and has no breaking height. The ratio measures the "
@@ -665,6 +882,7 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
     fr, er = result["roster"]["face_ratio_median_of_spot_medians"], \
         result["roster"]["eff_ratio_median_of_spot_medians"]
     print("\n" + "=" * 78)
+    _print_window_integrity(window_integrity)
     print(f"ROSTER — {len(good)} spots, {result['roster']['joined_hours_total']} joined spot-hours")
     for label, st in (("face_ft", fr), ("effective_size_ft", er)):
         head = f"  {label} / (MOP Hs x {M_TO_FT})"
@@ -694,6 +912,10 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
     print("are both inflated, the inflation is in period_factor; if face x is inflated and")
     print("eff x is near 1, it is the missing directional gate and effective_size_ft is")
     print("already the fix.")
+    # REPEATED AT THE BOTTOM ON PURPOSE. The run prints hundreds of lines and the reader
+    # scrolls to the end; a caveat that appears only above the roster block is a caveat that
+    # gets missed, which is how the 2026-09-07 reading was very nearly acted on.
+    _print_window_integrity(window_integrity)
     print(f"\nwrote {out_path}")
     return 0
 
@@ -777,7 +999,12 @@ def run_selftest():
           [p["mop_hs_m"] for p in pairs] == [1.0, 2.0])
     # 3.281/(1.0*3.281)=1.0 ; 9.843/(2.0*3.281)=1.5  — both hand-computed above.
     check("face ratios across the join are 1.0 and 1.5",
-          [round(ratio(p["face_ft"], p["mop_hs_m"]), 6) for p in pairs] == [1.0, 1.5])
+          [round(ratio(p["face_measured"], p["mop_hs_m"]), 6) for p in pairs] == [1.0, 1.5])
+    # These fixture rows carry no face_ft_raw, so face_measured falls back to face_ft and the
+    # two agree — which is exactly the pre-migration case, pinned as such.
+    check("with no raw column the join falls back and says so",
+          [p["face_source"] for p in pairs] == ["fallback", "fallback"]
+          and [p["face_measured"] for p in pairs] == [p["face_ft"] for p in pairs])
     # 1.6405/(1.0*3.281)=0.5 ; 6.562/(2.0*3.281)=1.0
     check("eff ratios across the join are 0.5 and 1.0",
           [round(ratio(p["effective_size_ft"], p["mop_hs_m"]), 6) for p in pairs] == [0.5, 1.0])
@@ -813,13 +1040,43 @@ def run_selftest():
     # --- height agreement ---------------------------------------------------- #
     # face 3.281 vs MOP 1.0 m = 3.281 ft -> diff 0 ; face 9.843 vs 2.0 m = 6.562 ft -> diff 3.281.
     # bias = (0 + 3.281)/2 = 1.6405 ; MAE identical because both diffs are >= 0.
+    # face_measured, NOT face_ft — height_agreement measures the PRE-correction face for
+    # the same reason face_ratio does. Feeding it face_ft would silently swap the quantity.
     ha = height_agreement([
-        {"face_ft": 3.281, "mop_hs_m": 1.0},
-        {"face_ft": 9.843, "mop_hs_m": 2.0},
+        {"face_measured": 3.281, "mop_hs_m": 1.0},
+        {"face_measured": 9.843, "mop_hs_m": 2.0},
     ])
     check(f"height bias 1.6405 ft ({ha['bias_ft']})", abs(ha["bias_ft"] - 1.6405) < 1e-9)
     check(f"height MAE 1.6405 ft ({ha['mae_ft']})", abs(ha["mae_ft"] - 1.6405) < 1e-9)
     check("r is None below 3 samples (not a fake 1.0)", ha["r"] is None)
+
+    # --- row provenance (migration 017) -------------------------------------- #
+    check("raw wins over the corrected face",
+          measured_face({"face_ft": 4.0, "face_ft_raw": 8.0}) == (8.0, "raw"))
+    check("a missing raw falls back and is LABELLED fallback",
+          measured_face({"face_ft": 4.0}) == (4.0, "fallback"))
+    check("a raw of 0.0 is a value, not an absence",
+          measured_face({"face_ft": 4.0, "face_ft_raw": 0.0}) == (0.0, "raw"))
+    check("all-raw -> clean", classify_window(10, 0) == "clean")
+    check("all-fallback -> legacy", classify_window(0, 10) == "legacy")
+    check("any of both -> mixed", classify_window(1, 999) == "mixed"
+          and classify_window(999, 1) == "mixed")
+    check("nothing joined -> empty", classify_window(0, 0) == "empty")
+    # RETENTION IS CLASSIFIED BY THE STAMP, not by face_ft_raw — see is_stamped. An
+    # unrateable hour has a NULL raw and is still stamped, and classifying on the raw column
+    # would flag an entirely post-017 window as mixed and drop those hours for nothing.
+    _v = "1:2026-09-01:aaaaaaaa"
+    check("a stamped row is stamped", is_stamped({"face_correction_version": _v}) is True)
+    check("an unstamped row is not", is_stamped({"face_correction_version": None}) is False)
+    check("stamped with a NULL raw is still stamped (an unrateable post-017 hour)",
+          is_stamped({"face_correction_version": _v, "face_ft_raw": None}) is True)
+    _mixed = ([{"face_correction_version": _v}] * 3 + [{"face_correction_version": None}] * 2)
+    check("a mixed window drops the unknown rows rather than averaging them",
+          len(retain_for_measurement(_mixed)) == 3)
+    check("a clean window keeps everything",
+          len(retain_for_measurement([{"face_correction_version": _v}] * 4)) == 4)
+    check("a legacy window keeps everything",
+          len(retain_for_measurement([{"face_correction_version": None}] * 4)) == 4)
 
     # --- the referencing gate ------------------------------------------------ #
     check("close match, aligned shore normal -> accepted", match_verdict(600.0, 10.0)[0] is True)

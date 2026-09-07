@@ -672,6 +672,14 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
                 # face_correction.face_range. Do not coalesce these to face_ft.
                 "face_lo_ft": h.get("face_lo_ft"),
                 "face_hi_ft": h.get("face_hi_ft"),
+                # Provenance (migration 017). PASSED THROUGH, NEVER DERIVED: it would be easy
+                # to write `h.get("face_ft_raw", h.get("face_ft"))` and have the column always
+                # populated, and that is exactly the bug this pair exists to prevent — a seam
+                # that corrected the face but failed to stamp the raw would then be papered
+                # over here, and the row would read as clean. If the seam did not write these,
+                # the correct value is NULL: "this row's correction state is unknown".
+                "face_ft_raw": h.get("face_ft_raw"),
+                "face_correction_version": h.get("face_correction_version"),
                 "dir_gain": h.get("dir_gain"),
                 "wind_mult": h.get("wind_mult"),
                 "tide_mult": h.get("tide_mult"),
