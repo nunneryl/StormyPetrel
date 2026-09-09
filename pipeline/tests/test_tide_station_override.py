@@ -396,23 +396,38 @@ def test_the_rosters_distance_is_null_so_the_import_guard_cannot_delete_the_pair
         "the key must be PRESENT-and-null, not absent: db_import preserves absent keys from the DB"
 
 
+# Spots whose tide station has been DELIBERATELY hand-set, and are therefore outside the
+# "nothing else moved" digest below. It grows only when a documented override lands.
+#   Kalaloch Beach                        this file's own change
+#   Caspar, Jug Handle, Mackerricher,     the Mendocino four, assigned station 9416841
+#   Ten Mile Beach                        (see test_tide_override_mendocino.py)
+_HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach"}
+
+
 def test_no_other_spot_changed_station():
     """EXHAUSTIVE, against the state before this change.
 
-    The digest covers (name, nearest_tide_station_id) for all 647 non-Kalaloch spots and was
+    The digest covers (name, nearest_tide_station_id) for every spot NOT in _HAND_SET and was
     computed from origin/main's committed spots_enriched.json — an independent source, not the
     file under test and not any function in this repository.
 
         git show origin/main:pipeline/spots_enriched.json
-        sha256 over sorted "name\\tstation_id" lines, excluding Kalaloch Beach
+        sha256 over sorted "name\\tstation_id" lines, excluding _HAND_SET
+
+    THE EXCLUSION GREW FROM 1 TO 5 AND THE DIGEST CHANGED WITH IT, which is the kind of edit
+    that can hide a mistake, so it was verified rather than merely updated: the four additions
+    are the ONLY spots whose station differs from origin/main (Caspar, Jug Handle,
+    Mackerricher, Ten Mile Beach — each None -> "9416841"), and the digest over the remaining
+    643 is byte-identical between origin/main and this tree. This test caught that change the
+    moment it landed, which is what it is for.
     """
     roster = _roster()
     assert len(roster) == 648, len(roster)
     pairs = sorted((str(s.get("name")), str(s.get("nearest_tide_station_id")))
-                   for s in roster if s.get("name") != "Kalaloch Beach")
-    assert len(pairs) == 647, len(pairs)
+                   for s in roster if s.get("name") not in _HAND_SET)
+    assert len(pairs) == 643, len(pairs)
     digest = hashlib.sha256("\n".join(f"{a}\t{b}" for a, b in pairs).encode()).hexdigest()
-    assert digest == "444e597bfba1e64d81c5756cf7322787176304e3d5c02a8260be95b4592c891e", digest
+    assert digest == "128085fc8d85852b39d90979e444655bb983d08cba453a35ba0e80f9353abd57", digest
 
 
 def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():

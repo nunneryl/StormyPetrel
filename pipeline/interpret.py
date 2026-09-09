@@ -1272,6 +1272,11 @@ def rate_spot(
     arcs = spot.get("swell_window_arcs") or []
     optimal = spot.get("optimal_swell_dir")
     preference = spot.get("tide_preference")
+    # THE TILE/RATING SPLIT. Written by enrich Algo 5b from spot_tide_stations.json when a
+    # spot's station is trusted for PHASE but not for HEIGHT — typically one tens of km up the
+    # same open coast. The series still feeds tide_norm, so tide_mult and the star rating are
+    # unaffected; only tide_level_ft is withheld. See the row write below.
+    suppress_tide_height = bool(spot.get("tide_height_suppressed"))
     lng = float(spot.get("lng") or 0.0)
     buoy_swell_dp = buoy_swell["swell_dp"] if buoy_swell else None
     buoy_swell_tp = buoy_swell["swell_tp"] if buoy_swell else None
@@ -1449,7 +1454,18 @@ def rate_spot(
             "chop_ratio": round(cr, 3) if cr is not None else None,
             "chop_mult": round(cm, 3),
             "period_quality": round(pq, 3),
-            "tide_level_ft": tide_raw,
+            # THE HEIGHT IS WITHHELD, THE PHASE IS NOT — see suppress_tide_height above.
+            # tide_norm is what the rating reads (via tide_multiplier, already applied to tm
+            # by this line) and tide_level_ft is what every display reads: the Tide tile, the
+            # tide chart, the forecast grid column and the two trend arrows. They are separate
+            # columns with disjoint consumers, so nulling one leaves the other untouched — no
+            # schema change and no frontend change were needed for this, because every display
+            # path already null-guards and renders an em dash or "No tide data for this spot".
+            #
+            # NULL RATHER THAN A ROUNDED OR HEDGED NUMBER. A height in feet measured 50-70 km
+            # up the coast is not an imprecise version of this spot's height, it is a different
+            # spot's height, and there is no presentation that makes it honest.
+            "tide_level_ft": None if suppress_tide_height else tide_raw,
             "tide_norm": tide_norm,
             "tide_mult": round(tm, 3),
             "effective_size_ft": round(effective, 2),
