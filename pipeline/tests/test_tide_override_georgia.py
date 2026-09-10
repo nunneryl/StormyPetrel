@@ -154,8 +154,10 @@ def test_the_roster_carries_both():
     for name, (_slug, sid, _e) in ASSIGNED.items():
         assert by[name]["nearest_tide_station_id"] == sid, (name, by[name].get("nearest_tide_station_id"))
         assert by[name]["nearest_tide_station_source"] == "override", name
-        assert by[name]["nearest_tide_station_dist_km"] is None, \
-            f"{name}: a guessed distance could be NULLed by db_import; Algo 5b computes it"
+        # Measured from the station file; 1.4 and 8.3 km, matching the entries' expect_km.
+        # This asserted None while the distance was unmeasurable in the authoring environment.
+        assert by[name]["nearest_tide_station_dist_km"] == _e, \
+            (name, by[name].get("nearest_tide_station_dist_km"), _e)
 
 
 def test_neither_is_height_suppressed():
