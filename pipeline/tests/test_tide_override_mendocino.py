@@ -15,7 +15,9 @@ open, unindented coast. The rating consumes PHASE — lookup_tide_norm normalise
 (v-min)/(max-min), so an error in absolute range divides out — and the tile is suppressed,
 because a height in feet from 70 km up the coast is a different spot's height and no
 presentation makes it honest. The other eight are left deliberately blank, each with its
-reason recorded in the override file.
+reason recorded in the override file. Five of those eight have since been assigned local
+stations (Key West, Captiva, Reid State Park, St Simons Island, Jekyll Island) and three
+remain blank — the Georgia islands whose only reference station is up an inland river.
 
 EVERY EXPECTED VALUE IS A LITERAL. Station ids, slugs, spot names and the tide_multiplier
 outputs are all written out; nothing is produced by calling the function under test.
@@ -33,11 +35,17 @@ from pipeline.enrichment import tides as ET
 MENDOCINO = ("Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach")
 MENDOCINO_SLUGS = ("caspar", "jug-handle", "mackerricher", "ten-mile-beach")
 ARENA_COVE = "9416841"
-GEORGIA = ("Blackbeard Island", "Jekyll Island", "Sea Island", "St Simons Island",
-           "St. Catherines Island")
-GEORGIA_SLUGS = ("blackbeard-island", "jekyll-island", "sea-island", "st-simons-island",
-                 "st-catherines-island")
-OTHER_BLANK = ("Key West", "Captiva", "Reid State Park")
+# St Simons Island and Jekyll Island were in this group and are not any more: reading the
+# station file showed 8677344 at the mouth of St Simons Sound, 1.4 and 8.3 km away. The three
+# that remain are declined on MEASURED grounds — their only reference station, 8674301, solves
+# to 31.5747, -81.1893, inland of the barrier chain. See test_tide_override_georgia.py.
+GEORGIA = ("Blackbeard Island", "Sea Island", "St. Catherines Island")
+GEORGIA_SLUGS = ("blackbeard-island", "sea-island", "st-catherines-island")
+# Key West, Captiva and Reid State Park WERE in this group and are not any more — see
+# test_tide_override_local_stations.py. They were declined on regime and geometry arguments
+# resting on distances of 50-176 km that were upper bounds over the wrong candidate set, and
+# their real nearest stations are 3-5 km away. Nothing but the Georgia five is blank now.
+LOCAL = {"Key West": "8724580", "Captiva": "8725383", "Reid State Park": "8417177"}
 
 
 def _roster():
@@ -232,7 +240,7 @@ def test_every_blank_is_PRESENT_and_null_never_absent():
     preserve on a COORD change, which none of these had. So an absent key would have let a
     stale station survive the very import meant to clear it. Present-and-null cannot."""
     by = _by_name()
-    for n in GEORGIA + OTHER_BLANK:
+    for n in GEORGIA:
         assert "nearest_tide_station_id" in by[n], f"{n}: key must be present, not absent"
         assert "nearest_tide_station_dist_km" in by[n], n
         assert by[n]["nearest_tide_station_id"] is None, n
@@ -241,11 +249,15 @@ def test_every_blank_is_PRESENT_and_null_never_absent():
     assert absent == [], absent
 
 
-def test_the_other_three_blanks_are_recorded_too():
+def test_the_three_former_blanks_are_now_assigned_locally():
+    """The inverse of what this test used to assert, and it fired the moment they moved —
+    which is the point of pinning a blank rather than leaving it implicit."""
     by = _by_name()
-    for n in OTHER_BLANK:
-        assert by[n]["nearest_tide_station_id"] is None, n
-        assert by[n]["nearest_tide_station_source"] == "unassigned_override", n
+    for n, sid in LOCAL.items():
+        assert by[n]["nearest_tide_station_id"] == sid, (n, by[n].get("nearest_tide_station_id"))
+        assert by[n]["nearest_tide_station_source"] == "override", n
+        assert "tide_height_suppressed" not in by[n], \
+            f"{n} is a LOCAL station — nothing to withhold"
 
 
 def test_a_slug_in_BOTH_blocks_is_fatal():
@@ -301,7 +313,7 @@ def test_the_conflict_check_actually_RUNS_at_import():
     # Back to the committed state, and the real file still passes the check.
     assert "caspar" in enrich._SPOT_TIDE_STATIONS
     assert "caspar" not in enrich._SPOT_TIDE_UNASSIGNED
-    assert len(enrich._SPOT_TIDE_UNASSIGNED) == 8
+    assert len(enrich._SPOT_TIDE_UNASSIGNED) == 3
 
 
 def test_an_override_WITHOUT_suppress_height_does_not_get_the_flag():
@@ -339,14 +351,19 @@ def test_an_override_WITHOUT_suppress_height_does_not_get_the_flag():
         "an override without suppress_height must keep its tide tile"
 
 
-def test_the_unassigned_block_lists_all_eight_and_no_slug_is_in_both():
+def test_the_unassigned_block_lists_the_georgia_five_and_no_slug_is_in_both():
     doc = _override_doc()
     loaded = enrich._load_spot_tide_unassigned()
-    for slug in GEORGIA_SLUGS + ("key-west", "captiva", "reid-state-park"):
+    for slug in GEORGIA_SLUGS:
         assert slug in doc["unassigned"], slug
         assert slug in loaded, slug
     assert "_comment" not in loaded, "the prose key is not a slug"
-    assert len(loaded) == 8, sorted(loaded)
+    assert len(loaded) == 3, sorted(loaded)
+    # ...and everything that moved is gone from it entirely, not left in both blocks.
+    for slug in ("key-west", "captiva", "reid-state-park",
+                 "st-simons-island", "jekyll-island"):
+        assert slug not in loaded, slug
+        assert slug not in doc["unassigned"], slug
     # The two blocks mean opposite things; a slug in both is a decision the file does not make.
     assert set(enrich._SPOT_TIDE_STATIONS) & loaded == set()
 
@@ -354,7 +371,11 @@ def test_the_unassigned_block_lists_all_eight_and_no_slug_is_in_both():
 def test_a_deliberate_blank_CLEARS_a_station_the_algorithm_assigned():
     """THE POINT OF THE BLOCK. Without it, a refreshed station file or a raised cap hands the
     spot a station and the recorded judgement is silently overturned. Jekyll Island is the live
-    case: it missed the 50 km cap by at most a kilometre, so a cap of 55 would pick it up.
+    case was Jekyll Island, which missed the 50 km cap by at most a kilometre — and which has
+    since been ASSIGNED, because reading the station file turned up 8677344 at 8.3 km. This
+    test moved to Blackbeard Island, which stays blank on measured grounds: its only reference
+    station solves to 31.5747, -81.1893, up the South Newport River inland of the barrier
+    chain, and no cap change makes that the right station.
 
     Algo 5 is stubbed to return a station — what a raised cap would produce — and the run must
     end with none, loudly."""
@@ -387,7 +408,7 @@ def test_a_deliberate_blank_CLEARS_a_station_the_algorithm_assigned():
                                                    "orientation_confidence": 0.5}
         enrich.compute_break_type = lambda spot: {"break_type": "beach",
                                                   "break_type_confidence": 0.5}
-        out = enrich._enrich_one({"name": "Jekyll Island", "lat": 31.0574, "lng": -81.4057},
+        out = enrich._enrich_one({"name": "Blackbeard Island", "lat": 31.5010, "lng": -81.1910},
                                  skip_raycast=True)
     finally:
         for k, v in saved.items():
@@ -400,7 +421,7 @@ def test_a_deliberate_blank_CLEARS_a_station_the_algorithm_assigned():
     assert out["enrichment_confidence"]["nearest_tide_station"] == 0.0
     msgs = " ".join(r.getMessage() for r in cap.records)
     assert "8720086" in msgs and "UNASSIGNED" in msgs, msgs
-    assert "Jekyll Island" in msgs, msgs
+    assert "Blackbeard Island" in msgs, msgs
 
 
 def test_clearing_is_SILENT_when_the_algorithm_already_returned_nothing():
@@ -435,7 +456,7 @@ def test_clearing_is_SILENT_when_the_algorithm_already_returned_nothing():
                                                    "orientation_confidence": 0.5}
         enrich.compute_break_type = lambda spot: {"break_type": "beach",
                                                   "break_type_confidence": 0.5}
-        out = enrich._enrich_one({"name": "Jekyll Island", "lat": 31.0574, "lng": -81.4057},
+        out = enrich._enrich_one({"name": "Blackbeard Island", "lat": 31.5010, "lng": -81.1910},
                                  skip_raycast=True)
     finally:
         for k, v in saved.items():

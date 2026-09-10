@@ -401,7 +401,15 @@ def test_the_rosters_distance_is_null_so_the_import_guard_cannot_delete_the_pair
 #   Kalaloch Beach                        this file's own change
 #   Caspar, Jug Handle, Mackerricher,     the Mendocino four, assigned station 9416841
 #   Ten Mile Beach                        (see test_tide_override_mendocino.py)
-_HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach"}
+#   Key West, Captiva, Reid State Park    local reference stations, 3-5 km — assigned once
+#                                         the station file was read and the earlier
+#                                         50-176 km distance estimates turned out to be
+#                                         upper bounds over the wrong candidate set
+#   St Simons Island, Jekyll Island       8677344 at the mouth of St Simons Sound, 1.4 and
+#                                         8.3 km — same correction, Georgia coast
+_HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach",
+             "Key West", "Captiva", "Reid State Park",
+             "St Simons Island", "Jekyll Island"}
 
 
 def test_no_other_spot_changed_station():
@@ -414,20 +422,21 @@ def test_no_other_spot_changed_station():
         git show origin/main:pipeline/spots_enriched.json
         sha256 over sorted "name\\tstation_id" lines, excluding _HAND_SET
 
-    THE EXCLUSION GREW FROM 1 TO 5 AND THE DIGEST CHANGED WITH IT, which is the kind of edit
-    that can hide a mistake, so it was verified rather than merely updated: the four additions
-    are the ONLY spots whose station differs from origin/main (Caspar, Jug Handle,
-    Mackerricher, Ten Mile Beach — each None -> "9416841"), and the digest over the remaining
-    643 is byte-identical between origin/main and this tree. This test caught that change the
-    moment it landed, which is what it is for.
+    THE EXCLUSION HAS GROWN THREE TIMES AND THE DIGEST CHANGED WITH IT, which is the kind of
+    edit that can hide a mistake, so each growth was verified rather than merely updated. This
+    round: the five spots that differ from origin/main (Key West, Captiva, Reid State Park,
+    St Simons Island, Jekyll Island — each None -> a station) are exactly the additions, and
+    the digest over the remaining 638 is byte-identical between origin/main and this tree.
+    This test has fired on every one of those changes the moment it landed, which is what it
+    is for.
     """
     roster = _roster()
     assert len(roster) == 648, len(roster)
     pairs = sorted((str(s.get("name")), str(s.get("nearest_tide_station_id")))
                    for s in roster if s.get("name") not in _HAND_SET)
-    assert len(pairs) == 643, len(pairs)
+    assert len(pairs) == 638, len(pairs)
     digest = hashlib.sha256("\n".join(f"{a}\t{b}" for a, b in pairs).encode()).hexdigest()
-    assert digest == "128085fc8d85852b39d90979e444655bb983d08cba453a35ba0e80f9353abd57", digest
+    assert digest == "ec21a9773b5415ee23a41726043bd5464bf8cdb92e9fe415fbce9adc19839e69", digest
 
 
 def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
@@ -437,7 +446,40 @@ def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
     ids = [s.get("nearest_tide_station_id") for s in _roster()]
     assert ids.count("TWC0965") == 0
     assert ids.count("9441627") == 2
-    assert len({i for i in ids if i}) == 233, "one fewer distinct station than before (was 234)"
+    # 234 originally. TWC0965 left when Kalaloch moved to 9441627, which was already in service
+    # for Pacific Beach WA, so that was a net loss of one: 233. Arena Cove 9416841 arrived with
+    # the Mendocino four (236 after the three local reference stations 8724580 / 8725383 /
+    # 8417177). St Simons and Jekyll then added ONE between them — they share 8677344 — so 237.
+    assert len({i for i in ids if i}) == 237, len({i for i in ids if i})
+
+
+def test_the_entry_records_that_point_grenville_is_a_SUBORDINATE():
+    """A CORRECTION THIS FILE'S ENTRY USED TO GET WRONG, pinned so it cannot come back.
+
+    The entry claimed 9441627 is "a NUMERIC primary station, not a TWC subordinate, so it
+    publishes a full hourly harmonic curve". Both clauses are false: it conflated the ID FORMAT
+    with the station TYPE, and tide_stations.json records 9441627 as type=S. TWC0965 was also
+    subordinate, so the swap traded a subordinate for a subordinate.
+
+    It does not change the decision — the reason for the swap was CI reachability, not type —
+    and the entry has to say BOTH of those things, or a reader finds either an unexplained
+    falsehood or an unexplained reversal. Nothing tested the entry's prose, so a mutation that
+    restored the false claim passed the whole suite.
+    """
+    doc = json.loads(config.SPOT_TIDE_STATIONS_FILE.read_text())
+    reason = " ".join(doc["stations"]["kalaloch-beach"]["reason"])
+    low = reason.lower()
+    assert "type=s" in low, "must state what 9441627 actually is"
+    assert "subordinate for a subordinate" in low, "...and that the swap did not change class"
+    assert "conflated the id format with the station type" in low, "...and name the mistake"
+    # The false claim itself must be quoted as a correction, not silently deleted — and must
+    # not survive as an assertion anywhere in the entry.
+    assert "correction, recorded rather than quietly edited" in low
+    assert "the type was never the reason" in low, "must say the decision still stands"
+    # And the reference-station alternative must be named with the reason it was declined,
+    # or the next reader re-opens the question from scratch.
+    assert "9442396" in reason, "must name La Push"
+    assert "not taken" in low and "41.1" in reason
 
 
 def _run_all():
