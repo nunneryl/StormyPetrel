@@ -87,8 +87,8 @@ def test_the_three_are_gone_from_the_unassigned_block():
         assert slug not in doc["unassigned"], f"{slug} still listed as a deliberate blank"
         assert slug not in loaded, slug
     # Only the Georgia five remain.
-    assert sorted(loaded) == ["blackbeard-island", "jekyll-island", "sea-island",
-                              "st-catherines-island", "st-simons-island"], sorted(loaded)
+    assert sorted(loaded) == ["blackbeard-island", "sea-island",
+                              "st-catherines-island"], sorted(loaded)
 
 
 def test_the_roster_distance_is_null_so_the_import_guard_cannot_delete_it():
