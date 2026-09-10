@@ -31982,8 +31982,8 @@
     "nwps_node_lng": -82.19946,
     "nwps_node_distance_m": 736,
     "nwps_buoy_id": null,
-    "nearest_tide_station_source": "unassigned_override",
-    "nearest_tide_station_id": null,
+    "nearest_tide_station_source": "override",
+    "nearest_tide_station_id": "8725383",
     "nearest_tide_station_dist_km": null
   },
   {
@@ -32034,8 +32034,8 @@
     "nwps_node_lng": -81.78396,
     "nwps_node_distance_m": 1986,
     "nwps_buoy_id": null,
-    "nearest_tide_station_source": "unassigned_override",
-    "nearest_tide_station_id": null,
+    "nearest_tide_station_source": "override",
+    "nearest_tide_station_id": "8724580",
     "nearest_tide_station_dist_km": null
   },
   {
@@ -36873,8 +36873,8 @@
     "nwps_node_lng": -69.70859,
     "nwps_node_distance_m": 1645,
     "nwps_buoy_id": null,
-    "nearest_tide_station_source": "unassigned_override",
-    "nearest_tide_station_id": null,
+    "nearest_tide_station_source": "override",
+    "nearest_tide_station_id": "8417177",
     "nearest_tide_station_dist_km": null
   }
 ]

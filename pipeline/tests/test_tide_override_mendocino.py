@@ -15,7 +15,8 @@ open, unindented coast. The rating consumes PHASE — lookup_tide_norm normalise
 (v-min)/(max-min), so an error in absolute range divides out — and the tile is suppressed,
 because a height in feet from 70 km up the coast is a different spot's height and no
 presentation makes it honest. The other eight are left deliberately blank, each with its
-reason recorded in the override file.
+reason recorded in the override file; three of those eight have since been
+assigned local stations and only the Georgia five remain blank.
 
 EVERY EXPECTED VALUE IS A LITERAL. Station ids, slugs, spot names and the tide_multiplier
 outputs are all written out; nothing is produced by calling the function under test.
@@ -37,7 +38,11 @@ GEORGIA = ("Blackbeard Island", "Jekyll Island", "Sea Island", "St Simons Island
            "St. Catherines Island")
 GEORGIA_SLUGS = ("blackbeard-island", "jekyll-island", "sea-island", "st-simons-island",
                  "st-catherines-island")
-OTHER_BLANK = ("Key West", "Captiva", "Reid State Park")
+# Key West, Captiva and Reid State Park WERE in this group and are not any more — see
+# test_tide_override_local_stations.py. They were declined on regime and geometry arguments
+# resting on distances of 50-176 km that were upper bounds over the wrong candidate set, and
+# their real nearest stations are 3-5 km away. Nothing but the Georgia five is blank now.
+LOCAL = {"Key West": "8724580", "Captiva": "8725383", "Reid State Park": "8417177"}
 
 
 def _roster():
@@ -232,7 +237,7 @@ def test_every_blank_is_PRESENT_and_null_never_absent():
     preserve on a COORD change, which none of these had. So an absent key would have let a
     stale station survive the very import meant to clear it. Present-and-null cannot."""
     by = _by_name()
-    for n in GEORGIA + OTHER_BLANK:
+    for n in GEORGIA:
         assert "nearest_tide_station_id" in by[n], f"{n}: key must be present, not absent"
         assert "nearest_tide_station_dist_km" in by[n], n
         assert by[n]["nearest_tide_station_id"] is None, n
@@ -241,11 +246,15 @@ def test_every_blank_is_PRESENT_and_null_never_absent():
     assert absent == [], absent
 
 
-def test_the_other_three_blanks_are_recorded_too():
+def test_the_three_former_blanks_are_now_assigned_locally():
+    """The inverse of what this test used to assert, and it fired the moment they moved —
+    which is the point of pinning a blank rather than leaving it implicit."""
     by = _by_name()
-    for n in OTHER_BLANK:
-        assert by[n]["nearest_tide_station_id"] is None, n
-        assert by[n]["nearest_tide_station_source"] == "unassigned_override", n
+    for n, sid in LOCAL.items():
+        assert by[n]["nearest_tide_station_id"] == sid, (n, by[n].get("nearest_tide_station_id"))
+        assert by[n]["nearest_tide_station_source"] == "override", n
+        assert "tide_height_suppressed" not in by[n], \
+            f"{n} is a LOCAL station — nothing to withhold"
 
 
 def test_a_slug_in_BOTH_blocks_is_fatal():
@@ -301,7 +310,7 @@ def test_the_conflict_check_actually_RUNS_at_import():
     # Back to the committed state, and the real file still passes the check.
     assert "caspar" in enrich._SPOT_TIDE_STATIONS
     assert "caspar" not in enrich._SPOT_TIDE_UNASSIGNED
-    assert len(enrich._SPOT_TIDE_UNASSIGNED) == 8
+    assert len(enrich._SPOT_TIDE_UNASSIGNED) == 5
 
 
 def test_an_override_WITHOUT_suppress_height_does_not_get_the_flag():
@@ -339,14 +348,18 @@ def test_an_override_WITHOUT_suppress_height_does_not_get_the_flag():
         "an override without suppress_height must keep its tide tile"
 
 
-def test_the_unassigned_block_lists_all_eight_and_no_slug_is_in_both():
+def test_the_unassigned_block_lists_the_georgia_five_and_no_slug_is_in_both():
     doc = _override_doc()
     loaded = enrich._load_spot_tide_unassigned()
-    for slug in GEORGIA_SLUGS + ("key-west", "captiva", "reid-state-park"):
+    for slug in GEORGIA_SLUGS:
         assert slug in doc["unassigned"], slug
         assert slug in loaded, slug
     assert "_comment" not in loaded, "the prose key is not a slug"
-    assert len(loaded) == 8, sorted(loaded)
+    assert len(loaded) == 5, sorted(loaded)
+    # ...and the three that moved are gone from it entirely, not left in both blocks.
+    for slug in ("key-west", "captiva", "reid-state-park"):
+        assert slug not in loaded, slug
+        assert slug not in doc["unassigned"], slug
     # The two blocks mean opposite things; a slug in both is a decision the file does not make.
     assert set(enrich._SPOT_TIDE_STATIONS) & loaded == set()
 

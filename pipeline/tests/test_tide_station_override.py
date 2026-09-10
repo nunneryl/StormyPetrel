@@ -401,7 +401,12 @@ def test_the_rosters_distance_is_null_so_the_import_guard_cannot_delete_the_pair
 #   Kalaloch Beach                        this file's own change
 #   Caspar, Jug Handle, Mackerricher,     the Mendocino four, assigned station 9416841
 #   Ten Mile Beach                        (see test_tide_override_mendocino.py)
-_HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach"}
+#   Key West, Captiva, Reid State Park    local reference stations, 3-5 km — assigned once
+#                                         the station file was read and the earlier
+#                                         50-176 km distance estimates turned out to be
+#                                         upper bounds over the wrong candidate set
+_HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach",
+             "Key West", "Captiva", "Reid State Park"}
 
 
 def test_no_other_spot_changed_station():
@@ -414,20 +419,20 @@ def test_no_other_spot_changed_station():
         git show origin/main:pipeline/spots_enriched.json
         sha256 over sorted "name\\tstation_id" lines, excluding _HAND_SET
 
-    THE EXCLUSION GREW FROM 1 TO 5 AND THE DIGEST CHANGED WITH IT, which is the kind of edit
-    that can hide a mistake, so it was verified rather than merely updated: the four additions
-    are the ONLY spots whose station differs from origin/main (Caspar, Jug Handle,
-    Mackerricher, Ten Mile Beach — each None -> "9416841"), and the digest over the remaining
-    643 is byte-identical between origin/main and this tree. This test caught that change the
-    moment it landed, which is what it is for.
+    THE EXCLUSION HAS GROWN TWICE AND THE DIGEST CHANGED WITH IT, which is the kind of edit
+    that can hide a mistake, so each growth was verified rather than merely updated. This
+    round: the three additions (Key West, Captiva, Reid State Park — each None -> a local
+    reference station) are the ONLY spots whose station differs from origin/main, and the
+    digest over the remaining 640 is byte-identical between origin/main and this tree. This
+    test fired on both changes the moment they landed, which is what it is for.
     """
     roster = _roster()
     assert len(roster) == 648, len(roster)
     pairs = sorted((str(s.get("name")), str(s.get("nearest_tide_station_id")))
                    for s in roster if s.get("name") not in _HAND_SET)
-    assert len(pairs) == 643, len(pairs)
+    assert len(pairs) == 640, len(pairs)
     digest = hashlib.sha256("\n".join(f"{a}\t{b}" for a, b in pairs).encode()).hexdigest()
-    assert digest == "128085fc8d85852b39d90979e444655bb983d08cba453a35ba0e80f9353abd57", digest
+    assert digest == "50d85fd601c3c65bf0dbdf698bf23aac464356e860a509790f74882a8caf3c52", digest
 
 
 def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
@@ -437,7 +442,11 @@ def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
     ids = [s.get("nearest_tide_station_id") for s in _roster()]
     assert ids.count("TWC0965") == 0
     assert ids.count("9441627") == 2
-    assert len({i for i in ids if i}) == 233, "one fewer distinct station than before (was 234)"
+    # 234 originally. TWC0965 left when Kalaloch moved to 9441627, which was already in service
+    # for Pacific Beach WA, so that was a net loss of one: 233. Arena Cove 9416841 arrived with
+    # the Mendocino four and is ALREADY inside that 233 — the count was re-pinned then. This
+    # round adds exactly three new ones (8724580, 8725383, 8417177): 233 + 3 = 236.
+    assert len({i for i in ids if i}) == 236, len({i for i in ids if i})
 
 
 def _run_all():
