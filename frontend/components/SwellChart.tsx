@@ -4,7 +4,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -32,6 +31,19 @@ const COLOR = {
 };
 
 /** THE USER-FACING NAME OF EVERY SERIES, and the only place they are written.
+ *
+ *  THIS CHART PLOTS ONLY `face`. The other four names are kept deliberately.
+ *  The partition series were removed because they are UNCORRECTED heights and
+ *  `face` is corrected - divided by a per-spot factor, median 1.538 and up to
+ *  3.893 across the 130 measured spots - so the two cannot share a y-axis
+ *  without the published number being the smallest thing on the chart. The
+ *  Swell breakdown panel above the charts already lists the four components
+ *  with their own directions, periods and energy shares, as numbers rather than
+ *  on a shared scale, which is where a comparison is safe.
+ *  The names stay so that if the components ever get their own chart - the
+ *  Magicseaweed arrangement, separate panels rather than one combined axis -
+ *  nobody has to rediscover that an unnamed recharts series labels itself with
+ *  its dataKey.
  *
  *  Each one is passed as the Area's `name`, which is what both <Legend> and
  *  <Tooltip> print. Recharts falls back to the series `dataKey` when `name` is
@@ -67,7 +79,6 @@ const tickLabel = (ms: number) => fmtDayTimeTick(new Date(ms).toISOString());
 
 export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
   const data = buildSeries(forecasts);
-  const hasPartitions = data.some((d) => d.p1 || d.p2 || d.p3);
 
   // THE NOTE BELOW IS CONDITIONAL BECAUSE THE BAND IS. Only spots with a
   // measured face-ratio spread get face_lo_ft/face_hi_ft written
@@ -86,10 +97,8 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
             <defs>
-              <linearGradient id="ws-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={COLOR.ws} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={COLOR.ws} stopOpacity={0.05} />
-              </linearGradient>
+              {/* ws-fill went with the partition stack - nothing references a
+                  wind-sea gradient now. */}
               <linearGradient id="face-fill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={COLOR.face} stopOpacity={0.55} />
                 <stop offset="100%" stopColor={COLOR.face} stopOpacity={0.03} />
@@ -140,68 +149,25 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
                 name,
               ]}
             />
-            {/* AN ARRAY, NOT A FRAGMENT, AND IT MUST STAY ONE.
-                Recharts collects its series by walking these children through
-                util/ReactUtils.toArray, which unwraps a Fragment only when
-                react-is isFragment() agrees it is one. React 19 renamed element
-                $$typeof to Symbol(react.transitional.element); recharts 2.15 pins
-                react-is ^18.3.1, which still tests for Symbol(react.element) and
-                so answers false for every React 19 element. A Fragment here is
-                therefore pushed to recharts as one opaque child whose type is not
-                Area, and all four series vanish from the plot AND the legend - the
-                chart renders as though hasPartitions were false, which is exactly
-                what it did from ec17f7b until this commit. An array needs no
-                react-is: React.Children.forEach flattens it natively. The same
-                trap applies to <Cell> inside <Bar> (see BreakerComparison, which
-                is safe only because it uses .map()). */}
-            {hasPartitions && [
-              <Area
-                key="ws"
-                type="monotone"
-                dataKey="ws"
-                name={LABEL.ws}
-                stackId="comp"
-                stroke="none"
-                fill="url(#ws-fill)"
-                isAnimationActive={false}
-              />,
-              <Area
-                key="p3"
-                type="monotone"
-                dataKey="p3"
-                name={LABEL.p3}
-                stackId="comp"
-                stroke="none"
-                fill={COLOR.p3}
-                fillOpacity={0.35}
-                isAnimationActive={false}
-              />,
-              <Area
-                key="p2"
-                type="monotone"
-                dataKey="p2"
-                name={LABEL.p2}
-                stackId="comp"
-                stroke="none"
-                fill={COLOR.p2}
-                fillOpacity={0.55}
-                isAnimationActive={false}
-              />,
-              <Area
-                key="p1"
-                type="monotone"
-                dataKey="p1"
-                name={LABEL.p1}
-                stackId="comp"
-                stroke="none"
-                fill={COLOR.p1}
-                fillOpacity={0.75}
-                isAnimationActive={false}
-              />,
-            ]}
-            {/* name=, never a renamed dataKey: dataKey is the key into the Pt rows
-                buildSeries produces, so renaming it would break the binding rather
-                than relabel the series. */}
+            {/* ONE SERIES, AND IF A SECOND IS EVER ADDED BACK, ADD IT AS AN ARRAY
+                ITEM AND NOT INSIDE A FRAGMENT. Recharts collects its series by
+                walking these children through util/ReactUtils.toArray, which
+                unwraps a Fragment only when react-is isFragment() agrees it is
+                one. React 19 renamed element $$typeof to
+                Symbol(react.transitional.element); recharts 2.15 pins react-is
+                ^18.3.1, which still tests for Symbol(react.element) and so
+                answers false for every React 19 element. A Fragment here is
+                handed to recharts as one opaque child whose type is not Area and
+                everything inside it vanishes from the plot and the legend with no
+                error - which is what hid the partition stack from ec17f7b until
+                it was found. The same trap catches <Cell> inside <Bar> (see
+                BreakerComparison, safe only because it uses .map()). Recording it
+                here because this variant is the one with nothing left to break.
+
+                name=, never a renamed dataKey: dataKey is the key into the Pt
+                rows buildSeries produces, so renaming it would break the binding
+                rather than relabel the series. With the legend gone it is the
+                tooltip that prints it. */}
             <Area
               type="monotone"
               dataKey="face"
@@ -211,20 +177,20 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               fill="url(#face-fill)"
               isAnimationActive={false}
             />
-            <Legend
-              verticalAlign="top"
-              height={20}
-              iconType="rect"
-              iconSize={10}
-              wrapperStyle={{ fontSize: 11, color: '#475569' }}
-            />
+            {/* No <Legend>. A one-entry legend reading "Swell height" under a card
+                already titled "Swell height (ft)" is the same word twice. */}
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      {/* The old copy said "The range shown above it spans the uncertainty in that
+          estimate". With the stack drawn there WAS something above the line and a
+          reader took it for an uncertainty band; the range has always lived in the
+          Swell height tile at the top of the page, never in this plot. Nothing is
+          above the line in this variant, so the caption says where to look. */}
       {hasBand && (
         <p className="mt-1.5 text-[10px] leading-snug text-text-muted">
-          The swell height line is a single best estimate. The range shown above it
-          spans the uncertainty in that estimate.
+          Swell height is a single best estimate; the tile at the top of the page
+          gives its range.
         </p>
       )}
     </>
