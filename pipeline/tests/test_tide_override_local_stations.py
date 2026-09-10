@@ -91,16 +91,20 @@ def test_the_three_are_gone_from_the_unassigned_block():
                               "st-catherines-island"], sorted(loaded)
 
 
-def test_the_roster_distance_is_null_so_the_import_guard_cannot_delete_it():
-    """The true distance needs tide_stations.json, still absent here. A guessed number more
-    than COORD_DERIVED_DIST_TOLERANCE_KM off would make db_import NULL the whole pairing;
-    its tolerance branch is guarded by `stored is not None`, so a null is skipped. Algo 5b
-    computes the real value on the next enrich."""
+def test_the_roster_carries_the_measured_distance():
+    """These three are 3-5 km from their stations and the roster says so.
+
+    IT USED TO ASSERT NULL. That was correct for the state it was written in — the environment
+    lacked tide_stations.json, so any number would have been a guess, and a guess more than
+    COORD_DERIVED_DIST_TOLERANCE_KM off would have made db_import NULL the whole pairing. The
+    distances have since been measured from the station file, so the placeholder is gone."""
     by = _by_name()
+    want = {"Key West": 3.1, "Captiva": 4.5, "Reid State Park": 5.1}
     for name in LOCAL:
-        assert by[name]["nearest_tide_station_dist_km"] is None, name
-        assert "nearest_tide_station_dist_km" in by[name], \
-            "PRESENT-and-null, not absent: db_import fills an ABSENT key from the DB row"
+        assert by[name]["nearest_tide_station_dist_km"] == want[name], \
+            (name, by[name].get("nearest_tide_station_dist_km"), want[name])
+        # Local, by the definition that separates these from the Mendocino four.
+        assert by[name]["nearest_tide_station_dist_km"] < config.TIDE_STATION_MAX_DIST_KM, name
 
 
 # --------------------------------------------------------------------------- #

@@ -116,24 +116,37 @@ def test_an_override_past_the_distance_cap_is_returned_not_rejected():
         "nearest_tide_station_id": "9416841", "nearest_tide_station_dist_km": 111.19}
 
 
+# The measured distances, read from the station file on a machine that has it. Written out
+# here rather than imported so this file stands alone; test_override_distances.py owns them.
+MENDOCINO_KM = {"Caspar": 50.5, "Jug Handle": 52.2, "Mackerricher": 64.5, "Ten Mile Beach": 69.6}
+
+
 def test_the_import_guard_cannot_delete_an_over_cap_override():
     """THE CHECK THAT COULD HAVE SILENTLY REJECTED IT, and the reason it does not.
 
     db_import._validate_coord_derived recomputes the great-circle distance and NULLs the whole
     pairing when the stored value disagrees by more than COORD_DERIVED_DIST_TOLERANCE_KM, or
-    when the true distance exceeds _COORD_DERIVED_SANE_CAP_KM. Neither fires here: the sane cap
-    is 500 km, far above the 50-71 km these overrides sit at, and the tolerance branch is
-    guarded by `stored is not None` — the roster carries a NULL distance, so it is skipped
-    entirely. A guessed number more than 5 km off would have deleted the assignment at import.
+    when the true distance exceeds _COORD_DERIVED_SANE_CAP_KM. Neither fires: the sane cap is
+    500 km, far above the 50-70 km these overrides sit at, and the stored value now IS the
+    great-circle distance, so the tolerance branch compares a number against itself.
+
+    THIS TEST USED TO ASSERT THE DISTANCE WAS NULL, and that was right for the state it was
+    written in: the environment those commits were made in has no tide_stations.json, so a
+    number would have been a guess, and a guess more than 5 km off would have deleted the
+    assignment at import. Null was the safe placeholder. It is no longer a placeholder — the
+    distances were measured — and the assertion follows the data rather than the other way
+    round. Note the guard is now STRICTER than it was: a null skipped the tolerance branch
+    entirely, a measured value passes it.
     """
     from pipeline import db_import
     assert config.COORD_DERIVED_DIST_TOLERANCE_KM == 5.0
     assert db_import._COORD_DERIVED_SANE_CAP_KM == 500.0
     by = _by_name()
     for n in MENDOCINO:
-        assert by[n]["nearest_tide_station_dist_km"] is None, n
-        assert "nearest_tide_station_dist_km" in by[n], \
-            "PRESENT-and-null, not absent: db_import fills an ABSENT key from the DB row"
+        km = by[n]["nearest_tide_station_dist_km"]
+        assert km == MENDOCINO_KM[n], (n, km, MENDOCINO_KM[n])
+        assert km > config.TIDE_STATION_MAX_DIST_KM, f"{n} is meant to exceed the cap"
+        assert km < db_import._COORD_DERIVED_SANE_CAP_KM, n
 
 
 # --------------------------------------------------------------------------- #

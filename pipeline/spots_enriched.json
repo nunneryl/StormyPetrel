@@ -27989,7 +27989,7 @@
     "orientation_source": "manual",
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441627",
-    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_dist_km": 32.7,
     "nearest_tide_station_source": "override",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -31303,7 +31303,7 @@
     "nwps_node_distance_m": 4033,
     "nwps_buoy_id": null,
     "nearest_tide_station_id": "9416841",
-    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_dist_km": 50.5,
     "nearest_tide_station_source": "override",
     "tide_height_suppressed": true
   },
@@ -31351,7 +31351,7 @@
     "nwps_node_distance_m": 3545,
     "nwps_buoy_id": null,
     "nearest_tide_station_id": "9416841",
-    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_dist_km": 52.2,
     "nearest_tide_station_source": "override",
     "tide_height_suppressed": true
   },
@@ -31399,7 +31399,7 @@
     "nwps_node_distance_m": 1411,
     "nwps_buoy_id": null,
     "nearest_tide_station_id": "9416841",
-    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_dist_km": 64.5,
     "nearest_tide_station_source": "override",
     "tide_height_suppressed": true
   },
@@ -31447,7 +31447,7 @@
     "nwps_node_distance_m": 3865,
     "nwps_buoy_id": null,
     "nearest_tide_station_id": "9416841",
-    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_dist_km": 69.6,
     "nearest_tide_station_source": "override",
     "tide_height_suppressed": true
   },
@@ -31984,7 +31984,7 @@
     "nwps_buoy_id": null,
     "nearest_tide_station_source": "override",
     "nearest_tide_station_id": "8725383",
-    "nearest_tide_station_dist_km": null
+    "nearest_tide_station_dist_km": 4.5
   },
   {
     "name": "Key West",
@@ -32036,7 +32036,7 @@
     "nwps_buoy_id": null,
     "nearest_tide_station_source": "override",
     "nearest_tide_station_id": "8724580",
-    "nearest_tide_station_dist_km": null
+    "nearest_tide_station_dist_km": 3.1
   },
   {
     "name": "Sunny Isles",
@@ -32987,7 +32987,7 @@
     "nwps_buoy_id": null,
     "nearest_tide_station_source": "override",
     "nearest_tide_station_id": "8677344",
-    "nearest_tide_station_dist_km": null
+    "nearest_tide_station_dist_km": 8.3
   },
   {
     "name": "St Simons Island",
@@ -33024,7 +33024,7 @@
     "nwps_buoy_id": null,
     "nearest_tide_station_source": "override",
     "nearest_tide_station_id": "8677344",
-    "nearest_tide_station_dist_km": null
+    "nearest_tide_station_dist_km": 1.4
   },
   {
     "name": "Sea Island",
@@ -36875,6 +36875,6 @@
     "nwps_buoy_id": null,
     "nearest_tide_station_source": "override",
     "nearest_tide_station_id": "8417177",
-    "nearest_tide_station_dist_km": null
+    "nearest_tide_station_dist_km": 5.1
   }
 ]

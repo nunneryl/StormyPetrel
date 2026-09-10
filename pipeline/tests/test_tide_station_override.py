@@ -381,19 +381,21 @@ def test_the_committed_roster_puts_kalaloch_on_9441627():
     assert hits[0]["nearest_tide_station_id"] == "9441627", hits[0].get("nearest_tide_station_id")
 
 
-def test_the_rosters_distance_is_null_so_the_import_guard_cannot_delete_the_pairing():
-    """db_import._validate_coord_derived NULLs the pairing when the stored distance disagrees
-    with the great-circle distance by more than COORD_DERIVED_DIST_TOLERANCE_KM. Its check is
-    `stored is not None and abs(gc - stored) > tol`, so a null distance is skipped and the id
-    survives. The true distance was not measurable where this edit was made — tide_stations.json
-    is a gitignored download and the CO-OPS API is unreachable from that environment — and a
-    guessed number that turned out to be more than 5 km off would have silently deleted the
-    whole assignment at import. Algo 5b fills it in on the next enrich."""
+def test_the_roster_carries_point_grenvilles_measured_distance():
+    """32.7 km, measured from the station file.
+
+    THIS ASSERTED NULL UNTIL THE STATION FILE WAS READ, and that was the right call at the time:
+    db_import._validate_coord_derived NULLs the pairing when the stored distance disagrees with
+    the recomputed great-circle by more than COORD_DERIVED_DIST_TOLERANCE_KM, so a guessed
+    number could have deleted the whole assignment at import, and its check is guarded by
+    `stored is not None` — a null was skipped and therefore safe. Safe, but a station with no
+    distance is still a half-written record. The value is measured now."""
     assert config.COORD_DERIVED_DIST_TOLERANCE_KM == 5.0
     kal = next(s for s in _roster() if s.get("name") == "Kalaloch Beach")
-    assert kal["nearest_tide_station_dist_km"] is None, kal.get("nearest_tide_station_dist_km")
-    assert "nearest_tide_station_dist_km" in kal, \
-        "the key must be PRESENT-and-null, not absent: db_import preserves absent keys from the DB"
+    assert kal["nearest_tide_station_dist_km"] == 32.7, kal.get("nearest_tide_station_dist_km")
+    # Inside the cap, unlike the Mendocino four — Kalaloch's override is about CI reachability,
+    # not distance, and it never needed to exceed it.
+    assert kal["nearest_tide_station_dist_km"] < config.TIDE_STATION_MAX_DIST_KM
 
 
 # Spots whose tide station has been DELIBERATELY hand-set, and are therefore outside the
