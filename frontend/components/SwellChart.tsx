@@ -105,6 +105,19 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               return [v, map[key as string] ?? key];
             }}
           />
+          {/* THIS STACK DOES NOT CURRENTLY RENDER. Recharts finds its series by
+              walking children through util/ReactUtils.toArray, which flattens a
+              Fragment only when react-is isFragment() says it is one. React 19
+              renamed element $$typeof to Symbol(react.transitional.element);
+              recharts 2.15 pins react-is ^18.3.1, which still tests for
+              Symbol(react.element) and so returns false for every React 19
+              element. The Fragment is therefore pushed as one opaque child whose
+              type is not Area, and these four series are dropped from both the
+              plot and the legend - the chart renders as if hasPartitions were
+              false. Spreading them as an array instead of a Fragment restores
+              all four (React.Children.forEach flattens arrays natively, with no
+              react-is involved). Give each one a name= at the same time, or they
+              will come back labelled "ws"/"p3"/"p2"/"p1". */}
           {hasPartitions && (
             <>
               <Area
@@ -144,9 +157,15 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               />
             </>
           )}
+          {/* name= is what the <Legend> below prints. Without it Recharts falls
+              back to dataKey and the legend reads "face" while the tile above
+              reads "Swell height" - two names for one quantity on one page.
+              Do NOT rename dataKey to fix a label: dataKey is the key into the
+              Pt rows built by buildSeries, and renaming it breaks the binding. */}
           <Area
             type="monotone"
             dataKey="face"
+            name="Swell height"
             stroke={COLOR.face}
             strokeWidth={2}
             fill="url(#face-fill)"
