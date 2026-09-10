@@ -17,6 +17,21 @@
     "means the id names a different station than the author believed. It never overrides the",
     "computed value and never fails a run.",
     "",
+    "TWO BLOCKS, AND THEY MEAN OPPOSITE THINGS.",
+    "  `stations`   assign this station to this spot, whatever the algorithm says.",
+    "  `unassigned` assign NOTHING to this spot, whatever the algorithm says — a deliberate",
+    "               blank. It exists because 'no station' is a decision that the algorithm will",
+    "               silently overturn the moment a station appears within TIDE_STATION_MAX_DIST_KM",
+    "               of the spot, and a decision nothing records is a decision that gets re-made by",
+    "               accident. A slug may appear in one block or the other, never both.",
+    "",
+    "`suppress_height` SPLITS THE RATING FROM THE TILE. With it true, the spot's tide series still",
+    "feeds tide_norm and therefore tide_mult and the star rating, but tide_level_ft is written NULL",
+    "so the Tide tile, the tide chart and the forecast grid show nothing. Use it when the PHASE is",
+    "trustworthy but the HEIGHT is not — a station tens of kilometres up the same coast gives a",
+    "usable position between the day's low and high while its feet-above-datum are somebody else's",
+    "numbers. See interpret.rate_spot, which is where the split is applied.",
+    "",
     "WHAT WOULD RETIRE AN ENTRY: evidence that the original station now works from the environment",
     "the pipeline runs in — i.e. a run log with the station in the `live` bucket, not a successful",
     "hand-run from a laptop. The two are not the same, which is the whole point of this file."
@@ -51,6 +66,201 @@
         "It is a NUMERIC primary station, not a TWC subordinate, so it publishes a full hourly",
         "harmonic curve rather than hilo-only — build_tide_series takes the `hourly` branch and",
         "does not need to interpolate between high/low extremes."
+      ]
+    },
+    "caspar": {
+      "station_id": "9416841",
+      "station_name": "Arena Cove, CA",
+      "expect_km": 52.0,
+      "suppress_height": true,
+      "replaces": null,
+      "replaces_km": null,
+      "reason": [
+        "ONE OF FOUR MENDOCINO SPOTS THAT HAD NO STATION AT ALL. The nearest CO-OPS station is",
+        "past TIDE_STATION_MAX_DIST_KM (50 km), so compute_nearest_tide_station returned a NULL",
+        "pair and the spot published no tide of any kind.",
+        "",
+        "WHY THIS STATION. 9416841 sits within 1.84 km of the Point Arena surf spot, which is on",
+        "the same open, unindented, north-south Mendocino shoreline as Caspar with no bay, sound",
+        "or river mouth between them. Phase along an exposed coast with no estuary in between",
+        "tracks closely; it is estuarine and river-mouth stations that lag materially. The",
+        "rating consumes PHASE only — lookup_tide_norm normalises to (v-min)/(max-min), so an",
+        "error in absolute range divides out and an error in timing does not.",
+        "",
+        "WHY THE HEIGHT IS SUPPRESSED. See suppress_height. The phase is usable at this distance;",
+        "the feet-above-datum are not, and a confidently wrong height on the Tide tile is worse",
+        "than an em dash. The rating keeps the series, the tile shows nothing.",
+        "",
+        "READ THIS BEFORE RE-RUNNING THE ASSIGNMENT: the algorithm will return NULL for this spot",
+        "again, because 9416841 is past the cap. That is the expected outcome, not evidence the",
+        "entry is stale."
+      ]
+    },
+    "jug-handle": {
+      "station_id": "9416841",
+      "station_name": "Arena Cove, CA",
+      "expect_km": 53.7,
+      "suppress_height": true,
+      "replaces": null,
+      "replaces_km": null,
+      "reason": [
+        "See `caspar`. Same station, same open Mendocino coast, same reasoning; Jug Handle sits",
+        "1.7 km north of Caspar. Height suppressed, phase kept."
+      ]
+    },
+    "mackerricher": {
+      "station_id": "9416841",
+      "station_name": "Arena Cove, CA",
+      "expect_km": 66.0,
+      "suppress_height": true,
+      "replaces": null,
+      "replaces_km": null,
+      "reason": [
+        "See `caspar`. Same station and the same open coast, but note the DISTANCE IS LONGER —",
+        "about 66 km against Caspar's 52 — because Mackerricher is 14 km further north while the",
+        "station stays put. The shoreline between is unbroken and north-south, so the phase",
+        "argument still holds, but this is the weaker half of the four and the first entry to",
+        "revisit if a closer open-coast station ever appears. Height suppressed, phase kept."
+      ]
+    },
+    "ten-mile-beach": {
+      "station_id": "9416841",
+      "station_name": "Arena Cove, CA",
+      "expect_km": 71.0,
+      "suppress_height": true,
+      "replaces": null,
+      "replaces_km": null,
+      "reason": [
+        "See `caspar` and `mackerricher`. The FURTHEST of the four at about 71 km, and therefore",
+        "the weakest. Kept in the group because the shoreline from Arena Cove to Ten Mile is one",
+        "continuous exposed coast with no estuary crossing, which is the property the phase",
+        "argument rests on — not the kilometres. Height suppressed, phase kept.",
+        "",
+        "NOTE: station 9418024 (within 1.46 km of the Shelter Cove surf spot) is about 59 km from",
+        "Ten Mile, nearer than Arena Cove. It was NOT used, so that the four Mendocino spots share",
+        "ONE station and one phase error rather than two. If that trade is ever revisited, revisit",
+        "it for all four together."
+      ]
+    }
+  },
+  "unassigned": {
+    "_comment": [
+      "DELIBERATELY NO STATION. enrich clears any station the algorithm assigned to these spots",
+      "and logs when it actually had to, so a station file update that would silently overturn",
+      "the decision is visible rather than invisible.",
+      "",
+      "THE STANDARD THESE ARE JUDGED AGAINST: a spot with no tide gets tide_mult = 1.0, the",
+      "neutral top of the 0.6-1.0 range. So a WRONG tide is strictly worse than none — it can",
+      "only move the rating down, and a phase error of a few hours inverts the low/mid/high",
+      "verdict outright. 'No station' is not a gap here; it is the correct answer."
+    ],
+    "blackbeard-island": {
+      "reason": [
+        "GEORGIA SEA ISLAND. The five Georgia spots span 31.06-31.62 N, about 62 km, and the only",
+        "stations any roster spot uses sit at the two ENDS of that stretch: 8720086 (within 2.4 km",
+        "of the Amelia Island surf spot, ~30.62 N) and 8669338 (within 1.7 km of Hilton Head,",
+        "~32.15 N). So one station would serve spots 50 km and 86 km from it, and whatever phase",
+        "error it carries would not be the same error for all five — the assignment could not be",
+        "validated once and trusted across the group. Blackbeard is the far end: 82.6-86.1 km from",
+        "8669338.",
+        "",
+        "The Georgia bight is a barrier-island coast cut by sounds, and CO-OPS coverage there is",
+        "predominantly inside those sounds and river mouths, where the tide lags the open coast",
+        "materially. That characterisation is GENERAL KNOWLEDGE, not something established from",
+        "this repository: pipeline/geodata/tide_stations.json is a gitignored download and carries",
+        "the station names that would settle it. The geometry above does not depend on it."
+      ]
+    },
+    "jekyll-island": {
+      "reason": [
+        "GEORGIA SEA ISLAND — see `blackbeard-island` for the shared reasoning.",
+        "",
+        "WORTH KNOWING BEFORE ANYONE RAISES THE CAP: Jekyll is the nearest miss on the whole",
+        "roster. Its distance to 8720086 brackets to 46.2-51.0 km, and since the algorithm",
+        "returned NULL the true value is in (50.0, 51.0] — it missed the 50 km cap by at most a",
+        "kilometre. A cap of 55 would pick it up automatically, which is why the decision is",
+        "recorded HERE rather than left to the cap: the blank is deliberate, not a rounding",
+        "accident, and raising the cap must not silently undo it."
+      ]
+    },
+    "sea-island": {
+      "reason": [
+        "GEORGIA SEA ISLAND — see `blackbeard-island`. 63.4-68.1 km from 8720086."
+      ]
+    },
+    "st-simons-island": {
+      "reason": [
+        "GEORGIA SEA ISLAND — see `blackbeard-island`. 55.0-59.8 km from 8720086."
+      ]
+    },
+    "st-catherines-island": {
+      "reason": [
+        "GEORGIA SEA ISLAND — see `blackbeard-island`. 68.9-72.4 km from 8669338."
+      ]
+    },
+    "key-west": {
+      "reason": [
+        "FLORIDA KEYS — a different tidal regime from both other groups, and the reason it is",
+        "blank is not distance.",
+        "",
+        "Key West sits at the junction of the Atlantic and the Gulf of Mexico, where the two",
+        "regimes meet: the Atlantic side of the Keys is semidiurnal and the Gulf side is mixed",
+        "with a strong diurnal component, and the transition runs THROUGH the Keys rather than",
+        "around them. Two stations a short distance apart can therefore differ not merely in",
+        "phase but in the NUMBER of highs per day, which is a failure the phase argument used for",
+        "Mendocino does not survive: normalising to (v-min)/(max-min) cannot repair a series that",
+        "has the wrong number of extremes. That is general knowledge, flagged as such.",
+        "",
+        "What this repository does establish: no station any roster spot uses is within 176 km of",
+        "Key West, which is far and away the largest gap of the twelve. That bound is weak — no",
+        "roster spot is anywhere near Key West, so nearer stations almost certainly exist in the",
+        "station file — but nothing here can identify them, and picking one blind in a regime",
+        "where the tide TYPE varies over short distances is exactly the confidently-wrong answer",
+        "this file exists to avoid."
+      ]
+    },
+    "captiva": {
+      "reason": [
+        "SOUTHWEST FLORIDA GULF COAST — blank on tidal-regime grounds, not distance.",
+        "",
+        "The nearest station any roster spot uses is 8725110, localised to within 30 metres of the",
+        "Naples Pier surf spot and 57.5-57.6 km from Captiva — an open-coast station on the same",
+        "Gulf shoreline, which is a better geometric case than any of the Georgia five.",
+        "",
+        "It is still declined. Captiva is a barrier island with Pine Island Sound and the",
+        "Caloosahatchee estuary directly behind it, and the Gulf coast tide here is MIXED",
+        "SEMIDIURNAL — unequal successive highs and lows, with the diurnal inequality varying",
+        "through the month. lookup_tide_norm normalises against the day's min and max, so on a",
+        "day when the two highs differ materially the normalised position depends on WHICH high",
+        "the series captured; a station 58 km away with a different inequality gives a tide_norm",
+        "that is wrong in a way distance alone does not predict. The Mendocino argument — a purely",
+        "semidiurnal open coast where phase shifts smoothly with alongshore distance — does not",
+        "transfer to a mixed regime.",
+        "",
+        "The regime characterisation is general knowledge, flagged as such. The 57.5-57.6 km",
+        "figure is measured from committed data."
+      ]
+    },
+    "reid-state-park": {
+      "reason": [
+        "MAINE — blank, and this is the closest call of the seven.",
+        "",
+        "The Gulf of Maine is strongly and cleanly semidiurnal, which is the regime the Mendocino",
+        "phase argument works in, and 8418445 trilaterates from three roster spots (Higgins Beach,",
+        "Scarborough Beach, Pine Point Beach) to 43.5572,-70.3348 with 0.65 km RMS — a well-pinned",
+        "position 51.5-55.4 km away. On regime and distance alone this would qualify.",
+        "",
+        "It is declined on COASTAL GEOMETRY. Reid State Park sits at the mouth of the Sheepscot",
+        "River among the Maine drowned river valleys, and the 55 km between it and the station",
+        "crosses Casco Bay — an indented, island-strewn embayment, not the unbroken exposed",
+        "shoreline the Mendocino case rests on. Alongshore distance is not the variable that",
+        "matters; whether the path crosses an embayment is, and here it does.",
+        "",
+        "It is also ONE spot. The Mendocino override buys four spots for one station and one",
+        "phase error; this would buy one, for a weaker geometric argument. If a Maine station",
+        "closer than Casco Bay is ever identified, this is the first entry to revisit — and the",
+        "thing that would settle it is the station name from tide_stations.json, which this",
+        "container does not have."
       ]
     }
   }

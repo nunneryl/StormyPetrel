@@ -219,7 +219,66 @@ def _load_spot_tide_stations() -> dict[str, dict]:
     return out
 
 
+def _load_spot_tide_unassigned() -> set[str]:
+    """Slugs the override file marks as DELIBERATELY having no tide station.
+
+    "No station" is a decision, and before this it was the only decision in the tide path
+    that nothing recorded. compute_nearest_tide_station returns a NULL pair whenever the
+    nearest station is past TIDE_STATION_MAX_DIST_KM, so a blank spot and a deliberately
+    blank spot were the same bytes — and the moment a station appears within the cap (a
+    refreshed station file, or a raised cap) the algorithm assigns one and the decision is
+    silently overturned. Jekyll Island is the live example: it missed the 50 km cap by at
+    most a kilometre, so a cap of 55 would pick it up automatically.
+
+    THE STANDARD THESE ARE JUDGED AGAINST, and it is why the blank is worth defending: a
+    spot with no tide gets tide_mult = 1.0 (interpret.tide_multiplier short-circuits on a
+    None tide_norm), which is the neutral TOP of the 0.6-1.0 range. A wrong tide can only
+    move the rating down, and a phase error of a few hours inverts the low/mid/high verdict
+    outright. Against that standard "no station" is the correct answer, not a gap.
+
+    The `_comment` key is skipped — it is prose for the reader, not a slug.
+    """
+    path = SPOT_TIDE_STATIONS_FILE
+    if not path.exists():
+        return set()
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return set()          # already warned by _load_spot_tide_stations
+    entries = data.get("unassigned") or {}
+    return {slug for slug in entries if slug != "_comment"}
+
+
+
+
 _SPOT_TIDE_STATIONS = _load_spot_tide_stations()
+
+_SPOT_TIDE_UNASSIGNED = _load_spot_tide_unassigned()
+
+def check_tide_override_conflicts(stations, unassigned):
+    """Raise if any slug is in BOTH override blocks. A pure function, deliberately.
+
+    The check itself is one line; making it a function is what makes it testable, because the
+    call site runs at IMPORT and a test cannot re-import the module with a doctored file
+    without fighting the module cache. Left inline, it survived a mutation that deleted it
+    outright — nothing exercised it.
+
+    FATAL, not a warning. The two blocks mean opposite things — assign this station, and
+    assign nothing — so a slug in both is not an ambiguity to resolve by ordering, it is a
+    decision the file does not actually make. Silently letting Algo 5c win would look like it
+    worked.
+    """
+    both = sorted(set(stations) & set(unassigned))
+    if both:
+        raise ValueError(
+            f"{SPOT_TIDE_STATIONS_FILE}: {len(both)} slug(s) appear in BOTH `stations` and "
+            f"`unassigned`: {both}. The two blocks mean opposite things — assign this station, "
+            f"and assign nothing — so an entry in both is a decision the file does not "
+            f"actually make. Remove one."
+        )
+
+
+check_tide_override_conflicts(_SPOT_TIDE_STATIONS, _SPOT_TIDE_UNASSIGNED)
 
 
 def arc_offset_from(deg: float, arc: dict) -> float:
@@ -625,6 +684,17 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
         # Separate stamp so a reader of the roster can tell a hand-set station from a computed
         # one without opening the data file. Nothing downstream branches on it.
         enriched["nearest_tide_station_source"] = "override"
+        # THE TILE/RATING SPLIT. With suppress_height the spot keeps its tide series — and so
+        # keeps tide_norm, tide_mult and the star rating — while interpret writes tide_level_ft
+        # NULL so the Tide tile, the tide chart and the forecast grid show nothing. Used when
+        # the PHASE is trustworthy but the HEIGHT is not: a station tens of kilometres up the
+        # same open coast puts the tide in the right place between the day's low and high, and
+        # its feet-above-datum are somebody else's numbers. Applied in interpret.rate_spot;
+        # written here as a plain roster field so nothing downstream needs the override file.
+        # Only ever written TRUE — an absent key is the default and a False would be a third
+        # state to reason about for no gain.
+        if tide_override.get("suppress_height"):
+            enriched["tide_height_suppressed"] = True
         dist = r["nearest_tide_station_dist_km"]
         expect = tide_override.get("expect_km")
         if dist is not None and expect is not None and \
@@ -644,6 +714,35 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
             log.debug("%s: tide-station override -> %s (%.1f km, was %s)", spot.get("name"),
                       r["nearest_tide_station_id"], dist if dist is not None else float("nan"),
                       tide_override.get("replaces"))
+
+    # Algo 5c — the DELIBERATE BLANK (spot_tide_stations.json `unassigned`)
+    #
+    # Runs last of the tide steps, so it beats both Algo 5 and Algo 5b. A spot listed here
+    # publishes no tide at all, on purpose, and this is what keeps that a decision rather than
+    # a coincidence: without it, a refreshed station file or a raised cap would hand the spot a
+    # station and nobody would know the recorded judgement had been overturned.
+    #
+    # LOUD ONLY WHEN IT ACTUALLY DID SOMETHING. If Algo 5 already returned NULL — the normal
+    # case today — this is a no-op and says nothing. If it had to CLEAR an assignment, that
+    # means the world changed under the entry, which is the one thing a reader needs to see:
+    # a station now exists inside the cap, and whether it is still the wrong one is a question
+    # for a human.
+    if _slug_for(spot.get("name")) in _SPOT_TIDE_UNASSIGNED:
+        cleared = enriched.get("nearest_tide_station_id")
+        if cleared:
+            log.warning(
+                "%s: tide station %s was assigned but the spot is marked UNASSIGNED in %s — "
+                "clearing it. A station now falls inside the %.0f km cap where none did when "
+                "the entry was written; re-read the entry's reason and decide deliberately "
+                "rather than deleting it.",
+                spot.get("name"), cleared, SPOT_TIDE_STATIONS_FILE, TIDE_STATION_MAX_DIST_KM)
+        enriched["nearest_tide_station_id"] = None
+        enriched["nearest_tide_station_dist_km"] = None
+        enriched["nearest_tide_station_source"] = "unassigned_override"
+        # A suppressed height is meaningless without a series; drop it so the roster cannot
+        # carry a flag whose only effect would be to null a field that is already null.
+        enriched.pop("tide_height_suppressed", None)
+        confidence["nearest_tide_station"] = 0.0
 
     enriched["sources"] = spot.get("sources", {})
     enriched["tags"] = spot.get("tags", {})

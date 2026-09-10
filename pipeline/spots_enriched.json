@@ -31301,7 +31301,11 @@
     "nwps_node_lat": 39.37716,
     "nwps_node_lng": -123.85984,
     "nwps_node_distance_m": 4033,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_id": "9416841",
+    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_source": "override",
+    "tide_height_suppressed": true
   },
   {
     "name": "Jug Handle",
@@ -31345,7 +31349,11 @@
     "nwps_node_lat": 39.37716,
     "nwps_node_lng": -123.85984,
     "nwps_node_distance_m": 3545,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_id": "9416841",
+    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_source": "override",
+    "tide_height_suppressed": true
   },
   {
     "name": "Mackerricher",
@@ -31389,7 +31397,11 @@
     "nwps_node_lat": 39.48573,
     "nwps_node_lng": -123.81349,
     "nwps_node_distance_m": 1411,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_id": "9416841",
+    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_source": "override",
+    "tide_height_suppressed": true
   },
   {
     "name": "Ten Mile Beach",
@@ -31433,7 +31445,11 @@
     "nwps_node_lat": 39.52192,
     "nwps_node_lng": -123.81349,
     "nwps_node_distance_m": 3865,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_id": "9416841",
+    "nearest_tide_station_dist_km": null,
+    "nearest_tide_station_source": "override",
+    "tide_height_suppressed": true
   },
   {
     "name": "Westport",
@@ -31965,7 +31981,10 @@
     "nwps_node_lat": 26.52059,
     "nwps_node_lng": -82.19946,
     "nwps_node_distance_m": 736,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "Key West",
@@ -32014,7 +32033,10 @@
     "nwps_node_lat": 24.532,
     "nwps_node_lng": -81.78396,
     "nwps_node_distance_m": 1986,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "Sunny Isles",
@@ -32962,7 +32984,10 @@
     "nwps_node_lat": 31.06017,
     "nwps_node_lng": -81.39843,
     "nwps_node_distance_m": 760,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "St Simons Island",
@@ -32996,7 +33021,10 @@
     "nwps_node_lat": 31.1252,
     "nwps_node_lng": -81.37958,
     "nwps_node_distance_m": 1173,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "Sea Island",
@@ -33030,7 +33058,10 @@
     "nwps_node_lat": 31.19022,
     "nwps_node_lng": -81.32304,
     "nwps_node_distance_m": 1561,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "Blackbeard Island",
@@ -33064,7 +33095,10 @@
     "nwps_node_lat": 31.49911,
     "nwps_node_lng": -81.1911,
     "nwps_node_distance_m": 210,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "St. Catherines Island",
@@ -33098,7 +33132,10 @@
     "nwps_node_lat": 31.61291,
     "nwps_node_lng": -81.13455,
     "nwps_node_distance_m": 623,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   },
   {
     "name": "Tybee Island",
@@ -36835,6 +36872,9 @@
     "nwps_node_lat": 43.77549,
     "nwps_node_lng": -69.70859,
     "nwps_node_distance_m": 1645,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "nearest_tide_station_source": "unassigned_override",
+    "nearest_tide_station_id": null,
+    "nearest_tide_station_dist_km": null
   }
 ]
