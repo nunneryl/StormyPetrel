@@ -264,7 +264,10 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
       {/* Charts — next 48h only so curves stay legible */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <ChartCard title="Swell components (ft) · next 48h">
+        {/* Titled for the quantity it plots. It said "Swell components" while the
+            chart drew a partition stack; that chart now draws the published swell
+            height only, and the components are in the Swell breakdown panel above. */}
+        <ChartCard title="Swell height (ft) · next 48h">
           <SwellChart forecasts={chartForecasts} />
         </ChartCard>
         <ChartCard title="Wind speed (mph) · next 48h">
