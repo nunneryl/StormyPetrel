@@ -26,6 +26,31 @@ window that the raycast got wrong.
 THREDDS is egress-blocked in the dev sandbox (403); run this where egress is open
 (the user's Mac pulled MOP successfully). It exits loudly if THREDDS is
 unreachable rather than inventing numbers.
+
+CACHE SHAPE — AN ABSENT SCALAR IS WRITTEN AS null, THE KEY IS NEVER OMITTED.
+Every point carries all of lat/lon/water_depth/shore_normal, with null where CDIP
+has no value. Three reasons this beats dropping the key:
+
+  1. It is already the schema. meta_scalar returns None for a variable that is
+     absent, unreadable or masked, and json.dump writes that as null, so nothing
+     downstream needs teaching and no existing reader changes.
+  2. null distinguishes "the builder looked and CDIP had nothing" from "this
+     cache predates the field existing". An omitted key conflates them, and this
+     cache is gitignored — it is routinely rebuilt by whatever copy of this file
+     a given machine happens to have. The same conflation bit db_import's
+     preserve-merge, where absent keys were refilled from the database row while
+     explicit nulls were honoured.
+  3. `.get(field)` returns None either way, so an omitted key buys no safety at
+     the read side while costing the distinction above.
+
+`absent` carries the REASON per field (masked / absent / unreadable / empty /
+non-finite) and is written only when something is missing, so a healthy point
+keeps the shape it has always had. The read side already declines None:
+mop_face_validation.shore_normal_delta returns None for a None normal and
+match_verdict rejects with "no orientation_deg or no metaShoreNormal to compare",
+which is the honest outcome — the spot loses MOP eligibility and keeps its NWPS
+face. mop_handful_slice documents its own reader the same way ("or None if the
+point has no shore-normal").
 """
 from __future__ import annotations
 
@@ -158,6 +183,73 @@ def list_all_mop_points(max_refs=200):
     return [(pid, url) for pid, (r, url) in best.items()]
 
 
+def meta_scalar(nc, *names):
+    """(value, status) for the first of *names* that yields a real number, else (None, why).
+
+    A MASKED VALUE IS ABSENT, NOT A NUMBER. This used to read
+
+        float(np.asarray(nc.variables[n][:]).ravel()[0])
+
+    and np.asarray() DISCARDS a numpy mask, exposing the raw fill underneath with no
+    warning and no exception. netCDF4 masks an element precisely to say "there is no value
+    here", so that call turned CDIP's "unknown" into a confident number. Reading
+    float(arr[0]) directly would at least have produced nan and a UserWarning; np.asarray
+    produced a plausible-looking bearing instead.
+
+    IT HAD FIRED. 129 of the 11,677 points in the MOP cache carried shore_normal exactly
+    0.0 — 1.1% — while the other 11,548 spanned 0.56 to 359.21 at full float precision.
+    Queried against THREDDS directly, D0930 / OC643 / OC642 / SF071 all report the variable
+    PRESENT and its data MASKED: CDIP simply has no shore normal for those points. The
+    zeros were this function inventing one. Four spots (oceanside-harbor, seal-beach-pier,
+    seal-beach-california, surfside-jetty) were rejected by the face harness on a
+    shore-normal delta that was really the circular distance from their own orientation to
+    the number zero.
+
+    The 129 are scattered across nine region prefixes — F 81, L 12, MO 9, SF 9, HU 8, D 6,
+    OC 2, MA 1, VE 1 — so this was never one bad batch to re-fetch.
+
+    DO NOT DERIVE A SHORE NORMAL FOR THESE POINTS FROM THEIR NEIGHBOURS, however tempting
+    the alongshore geometry makes it look. Neighbouring MOP points are 100 m apart along a
+    coastline that bends, and a run of 81 consecutive missing points spans kilometres; an
+    interpolated bearing would be a number we made up, wearing the same field name as a
+    number CDIP measured, with nothing downstream able to tell them apart. The honest cost
+    is that the four affected spots lose MOP eligibility. Pay it.
+
+    A masked first alias falls through to the next name rather than giving up: the three
+    names are alternative spellings of one quantity, and a file may carry a value under the
+    second when the first is masked.
+
+    Status is one of ok / masked / absent / unreadable / empty / non-finite, so the caller
+    can record WHY a field is missing rather than only that it is.
+    """
+    why = "absent"
+    for n in names:
+        if n not in getattr(nc, "variables", {}):
+            continue
+        try:
+            raw = nc.variables[n][:]
+        except Exception:  # noqa: BLE001
+            why = "unreadable"
+            continue
+        # getdata/getmaskarray work on a plain ndarray too (mask reads all-False), so this
+        # does not assume netCDF4 handed back a MaskedArray, and it handles the 0-d scalar
+        # case and the np.ma.masked singleton without special-casing either.
+        data = np.ma.getdata(raw).ravel()
+        mask = np.ma.getmaskarray(raw).ravel()
+        if data.size == 0:
+            why = "empty"
+            continue
+        if bool(mask[0]):
+            why = "masked"
+            continue
+        value = float(data[0])
+        if not math.isfinite(value):
+            why = "non-finite"
+            continue
+        return value, "ok"
+    return None, why
+
+
 def _read_meta(args):
     pid, url = args
     import netCDF4
@@ -166,25 +258,166 @@ def _read_meta(args):
     except Exception as e:  # noqa: BLE001
         return pid, {"error": str(e)[:80]}
     try:
-        def scalar(*names):
-            for n in names:
-                if n in nc.variables:
-                    try:
-                        return float(np.asarray(nc.variables[n][:]).ravel()[0])
-                    except Exception:  # noqa: BLE001
-                        pass
-            return None
-        lat = scalar("metaLatitude", "metaDeployLatitude")
-        lon = scalar("metaLongitude", "metaDeployLongitude")
+        lat, lat_why = meta_scalar(nc, "metaLatitude", "metaDeployLatitude")
+        lon, lon_why = meta_scalar(nc, "metaLongitude", "metaDeployLongitude")
         if lat is None and hasattr(nc, "geospatial_lat_min"):
+            # Reached on a MASKED latitude now, not only a missing one. The old test was
+            # `lat is None`, and a masked lat arrived as 0.0 rather than None, so the one
+            # recovery path in this function was disabled by exactly the failure it exists
+            # to catch. water_depth came back clean across all 11,677 points, so this has
+            # not fired on coordinates — but the mechanism was identical.
             lat, lon = float(nc.geospatial_lat_min), float(nc.geospatial_lon_min)
-        return pid, {
+            lat_why = lon_why = "ok (geospatial_lat_min fallback)"
+        depth, depth_why = meta_scalar(nc, "metaWaterDepth", "metaWaterDepths",
+                                       "metaGridMappingDepth")
+        normal, normal_why = meta_scalar(nc, "metaShoreNormal", "metaShoreNormalOrientation",
+                                         "metaShorelineAngle")
+        meta = {
             "url": url, "lat": lat, "lon": lon,
-            "water_depth": scalar("metaWaterDepth", "metaWaterDepths", "metaGridMappingDepth"),
-            "shore_normal": scalar("metaShoreNormal", "metaShoreNormalOrientation", "metaShorelineAngle"),
+            "water_depth": depth,
+            # PRESENT AND NULL, never omitted — see the module docstring on cache shape.
+            "shore_normal": normal,
         }
+        # Why each missing field is missing, recorded only when something IS missing so a
+        # healthy point keeps the shape it has always had and the cache does not churn.
+        absent = {k: w for k, w in (("lat", lat_why), ("lon", lon_why),
+                                    ("water_depth", depth_why), ("shore_normal", normal_why))
+                  if not w.startswith("ok")}
+        if absent:
+            meta["absent"] = absent
+        return pid, meta
     finally:
         nc.close()
+
+
+# Bounds a cached value must satisfy to be a measurement rather than damage. Low bound is
+# EXCLUSIVE for water_depth: these points sit on the 10 m contour and a depth of 0 is not a
+# shallow reading, it is a missing one. The 12000 m ceiling matches the sanity bound the
+# NDBC path already applies in nwps_nearshore._parse_water_depth — the pattern existed in
+# this repo, it had just never been pointed at the MOP cache.
+_FIELD_BOUNDS = {
+    "lat":          (-90.0, 90.0, True),     # (lo, hi, lo_inclusive)
+    "lon":          (-180.0, 180.0, True),
+    "water_depth":  (0.0, 12000.0, False),
+    "shore_normal": (0.0, 360.0, True),
+}
+# Fields where an exact 0.0 is the historical fill signature rather than a plausible value.
+# shore_normal 0.0 is a legal bearing in principle, so it is reported as SUSPECT rather than
+# impossible: after the meta_scalar fix a 0.0 here would mean CDIP really published one.
+_SUSPECT_ZERO = ("shore_normal", "lat", "lon")
+
+
+def audit_cache(cache):
+    """Per-field census of a built MOP cache. Pure — no network, no file I/O.
+
+    THE POINT OF THIS FUNCTION IS THAT 129 OF 11,677 POINTS CARRIED AN IMPOSSIBLE VALUE AND
+    NOTHING SAID SO. build_cache reported only "N points, M with coordinates", which counted
+    the one field that happened to be healthy. A 1.1% corruption rate is invisible in a
+    summary like that and obvious in one that names the field.
+
+    Returns {field: {present, absent, zero, impossible, ids}} plus a top-level "errors"
+    count, where `ids` lists up to _AUDIT_ID_SAMPLE offending point ids so a run can be
+    chased without re-reading the cache by hand.
+    """
+    report = {"points": len(cache),
+              "errors": sum(1 for m in cache.values() if isinstance(m, dict) and "error" in m)}
+    for field, (lo, hi, lo_inc) in _FIELD_BOUNDS.items():
+        present = absent = zero = 0
+        bad_ids, zero_ids = [], []
+        for pid, m in cache.items():
+            if not isinstance(m, dict) or "error" in m:
+                continue
+            v = m.get(field)
+            if v is None:
+                absent += 1
+                continue
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                bad_ids.append(pid)
+                continue
+            in_range = (lo <= v <= hi) if lo_inc else (lo < v <= hi)
+            if not math.isfinite(v) or not in_range:
+                bad_ids.append(pid)
+                continue
+            present += 1
+            if v == 0.0 and field in _SUSPECT_ZERO:
+                zero += 1
+                zero_ids.append(pid)
+        report[field] = {
+            "present": present, "absent": absent, "zero": zero,
+            "impossible": len(bad_ids),
+            "impossible_ids": sorted(bad_ids)[:_AUDIT_ID_SAMPLE],
+            "zero_ids": sorted(zero_ids)[:_AUDIT_ID_SAMPLE],
+        }
+    return report
+
+
+_AUDIT_ID_SAMPLE = 12
+
+
+def needs_reread(cache, pid):
+    """Should build_cache re-read *pid*? Pure, so the sticky-zero bug stays pinned.
+
+    The predicate used to be `pid not in cache or cache[pid].get("lat") is None`, which
+    re-read a point only when it was missing or had no coordinates. Every one of the 129
+    damaged points had a perfectly good latitude, so a rebuild over an existing cache
+    skipped all of them and printed a success line. Repairing them required deleting the
+    whole cache and re-pulling 11,677 points over OPeNDAP.
+    """
+    if pid not in cache:
+        return True
+    m = cache[pid]
+    if not isinstance(m, dict) or "error" in m:
+        return True
+    if m.get("lat") is None:
+        return True
+    return any(m.get(f) == 0.0 for f in _SUSPECT_ZERO)
+
+
+def print_cache_audit(report):
+    """Render an audit_cache report and return the number of findings that should fail a run.
+
+    Impossible values are findings. So is a suspect zero: it is what this whole change is
+    about, and a run that emits one has either hit a genuine CDIP zero or been produced by a
+    builder predating the meta_scalar fix. Both deserve a look before the cache is used.
+    """
+    print(f"cache audit: {report['points']} points, {report['errors']} error entries")
+    findings = 0
+    for field in _FIELD_BOUNDS:
+        s = report[field]
+        pct = (100.0 * s["absent"] / report["points"]) if report["points"] else 0.0
+        line = (f"  {field:13} present {s['present']:6}  absent {s['absent']:5} ({pct:4.1f}%)"
+                f"  impossible {s['impossible']:5}  zero {s['zero']:5}")
+        print(line)
+        if s["impossible"]:
+            findings += s["impossible"]
+            print(f"      IMPOSSIBLE values at: {', '.join(s['impossible_ids'])}"
+                  f"{' …' if s['impossible'] > _AUDIT_ID_SAMPLE else ''}")
+        if s["zero"]:
+            findings += s["zero"]
+            print(f"      SUSPECT exact zeros at: {', '.join(s['zero_ids'])}"
+                  f"{' …' if s['zero'] > _AUDIT_ID_SAMPLE else ''}")
+            print("      An exact 0.0 here was the masked-fill signature. If this cache was "
+                  "built by a\n      current builder the value is CDIP's own; if not, rebuild "
+                  "it. Do NOT interpolate\n      a replacement from neighbouring points.")
+    if findings:
+        print(f"  -> {findings} finding(s). The cache is written; inspect before relying on it.")
+    return findings
+
+
+CACHE_AUDIT_EXIT = 3
+
+
+def audit_exit_code(cache):
+    """Print the audit and return build_cache's exit status. Split out to be testable.
+
+    build_cache cannot run offline — it opens the THREDDS catalog on its first line — so
+    with this inline, "the audit runs at all" and "findings reach the exit code" were the
+    two things no test could reach. Both are the point of the change: an audit nobody acts
+    on is the silence it replaced.
+    """
+    return CACHE_AUDIT_EXIT if print_cache_audit(audit_cache(cache)) else 0
 
 
 def build_cache(workers=8):
@@ -198,7 +431,12 @@ def build_cache(workers=8):
     if os.path.exists(CACHE):
         cache = json.load(open(CACHE))
         print(f"resuming: {len(cache)} already cached")
-    todo = [(pid, url) for pid, url in points if pid not in cache or cache[pid].get("lat") is None]
+    # RETRY KNOWN-BAD POINTS, not only missing ones. This tested `lat is None` alone, so a
+    # point with a good latitude and a fabricated shore_normal of 0.0 was never re-read —
+    # the 129 damaged points were STICKY, and re-running build-cache over an existing cache
+    # skipped every one of them while reporting success. A cache written before the
+    # meta_scalar fix is repaired by re-running this, now that the predicate can see it.
+    todo = [(pid, url) for pid, url in points if needs_reread(cache, pid)]
     print(f"resolving {len(todo)} points over OPeNDAP ({workers} workers)...")
     done = 0
     with ThreadPoolExecutor(max_workers=workers) as ex:
@@ -212,7 +450,11 @@ def build_cache(workers=8):
     json.dump(cache, open(CACHE, "w"), indent=0)
     ok = sum(1 for v in cache.values() if v.get("lat") is not None)
     print(f"wrote {CACHE}: {len(cache)} points, {ok} with coordinates")
-    return 0
+    # AUDIT AFTER WRITING, DELIBERATELY. This build takes hours over OPeNDAP and is
+    # resumable; refusing to write on a finding would throw away good work and force the
+    # whole pull again. The cache lands, the findings are named, and the exit code carries
+    # them so a script or a person notices rather than reading "wrote N points" as success.
+    return audit_exit_code(cache)
 
 
 def load_cache():
@@ -374,6 +616,43 @@ def run_selftest():
 
     check("circ_offset 350 vs 10 = -20", circ_offset(350, 10) == -20)
     check("circ_offset 10 vs 350 = +20", circ_offset(10, 350) == 20)
+
+    # --- the masked-scalar guard, offline ------------------------------------ #
+    # These need no netCDF4: meta_scalar only ever does `nc.variables[n][:]`.
+    class _V:
+        def __init__(self, p): self._p = p
+        def __getitem__(self, _k): return self._p
+
+    class _N:
+        def __init__(self, **v): self.variables = dict(v)
+
+    _masked = np.ma.MaskedArray([0.0], mask=[True])
+    check("a masked scalar reads as ABSENT, not as the 0.0 underneath",
+          meta_scalar(_N(metaShoreNormal=_V(_masked)), "metaShoreNormal") == (None, "masked"))
+    check("the OLD expression really did yield 0.0 from that same input",
+          float(np.asarray(_masked).ravel()[0]) == 0.0)
+    check("an UNMASKED 0.0 is a real reading and survives",
+          meta_scalar(_N(metaShoreNormal=_V(np.array([0.0]))), "metaShoreNormal") == (0.0, "ok"))
+    check("a masked first alias falls through to a good second",
+          meta_scalar(_N(a=_V(_masked), b=_V(np.array([147.25]))), "a", "b") == (147.25, "ok"))
+    check("a missing variable is absent", meta_scalar(_N(), "metaShoreNormal") == (None, "absent"))
+    check("the audit counts 3 suspect zeros among 4 points and flags them",
+          audit_cache({
+              "D0930": {"lat": 33.2, "lon": -117.4, "water_depth": 10.0, "shore_normal": 0.0},
+              "OC642": {"lat": 33.7, "lon": -118.1, "water_depth": 11.0, "shore_normal": 0.0},
+              "OC643": {"lat": 33.7, "lon": -118.1, "water_depth": 11.0, "shore_normal": 0.0},
+              "SM297": {"lat": 37.5, "lon": -122.5, "water_depth": 12.0, "shore_normal": 158.6},
+          })["shore_normal"]["zero"] == 3)
+    check("a null shore normal is absent, not a finding",
+          audit_cache({"X": {"lat": 1.0, "lon": 2.0, "water_depth": 10.0,
+                             "shore_normal": None}})["shore_normal"]["absent"] == 1)
+    check("a zero water depth is IMPOSSIBLE, not merely suspect",
+          audit_cache({"X": {"lat": 1.0, "lon": 2.0, "water_depth": 0.0,
+                             "shore_normal": 231.0}})["water_depth"]["impossible"] == 1)
+    check("a damaged point is re-read; a healthy one is not",
+          needs_reread({"X": {"lat": 1.0, "shore_normal": 0.0}}, "X") is True
+          and needs_reread({"X": {"lat": 1.0, "lon": 2.0, "water_depth": 10.0,
+                                  "shore_normal": 231.0}}, "X") is False)
 
     freq = np.linspace(0.04, 0.25, 64)
     e = np.zeros(64); e[freq <= 0.1] = 2.0                  # all energy long-period
