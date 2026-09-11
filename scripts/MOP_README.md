@@ -53,7 +53,7 @@ All in **`scripts/mop_handful_slice.py`** (module-level constants, consumed by
 | constant | value | meaning |
 |---|---|---|
 | `MATCH_FALLBACK_M` | `1200.0` m | Hard far-outlier veto. MOP points sit on the 10 m contour (0.5–1.5 km offshore is normal); beyond this the match isn't the break's contour → FALL BACK. |
-| `SHORE_NORMAL_MAX_DELTA` | `35.0`° | `|orientation_deg − point metaShoreNormal|`; beyond this the matched point faces a different stretch than the break → FALL BACK. |
+| `SHORE_NORMAL_MAX_DELTA` | `35.0`° | `|orientation_deg − point metaShoreNormal|`; beyond this the matched point faces a different stretch than the break → FALL BACK. **ADOPTION ONLY.** `mop_face_validation.py` uses its own `FACE_SHORE_NORMAL_MAX_DELTA = 90.0` — see below. |
 | `HS_CORR_MIN` | `0.80` | MOP-vs-buoy significant-height Pearson r must clear this (MOP tracks the buoy's swell events). |
 | `DIR_STD_MAX` | `25.0`° | MOP-vs-buoy direction-offset `circ_std` must be a stable refraction (below this). |
 | `HARD_HS_CORR` | `0.85` | Low-skill zones need **stronger** height agreement to override. |
@@ -104,6 +104,29 @@ python -m pipeline.apply_mop_assignments --apply     # write spots_enriched.json
 ```
 
 ## (d) Why only ~48 CA spots are adopted today
+
+### The two shore-normal gates, and why they differ
+
+`SHORE_NORMAL_MAX_DELTA = 35.0` governs **adoption**; `FACE_SHORE_NORMAL_MAX_DELTA = 90.0`
+(in `scripts/mop_face_validation.py`) governs **referencing**. They are not a duplicate and
+must not be reunified. The distinction is **scalar versus directional**:
+
+* `mop_ca_rollout.py` reads `waveHs`, `waveTp`, `waveDp` **and** `waveEnergyDensity`, and
+  resolves `waveDp` against `metaShoreNormal` through `interpret.directional_gain`. A normal
+  wrong by *d* makes every directional term wrong by *d*, first-order, in a **published**
+  rating. 35° is a real tolerance there.
+* `mop_face_validation.py` keeps `waveHs` and nothing else — `fetch_mop_by_hour` discards Tp
+  and Dp on purpose, and `face_ratio` is one scalar divided by another. Nothing on that path
+  resolves a direction, so 35° was guarding a risk it does not carry. It excluded New
+  Brighton Reef by one degree.
+
+90° is the sign change of the dot product between the two seaward vectors: below it some
+swell bearing is onshore at both break and matched point, beyond it none is. A *constant*
+exposure difference is what the per-spot face factor absorbs anyway; what a bad pairing costs
+is instability, which the run already measures as the p25/p75 the factor file carries.
+
+Pinned by `pipeline/tests/test_face_shore_normal_gate.py`, which fails if the constants are
+merged or if the face harness starts reading `waveDp`.
 
 It is a **per-spot quality / buoy-verification gate, not a domain cap.** MOP covers the
 entire CA mainland 10 m contour as ~11,700 alongshore points, and the rollout evaluates

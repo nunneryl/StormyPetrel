@@ -114,6 +114,57 @@ from pipeline.interpret import M_TO_FT                          # noqa: E402
 ROSTER = os.path.join(ROOT, "pipeline", "spots_enriched.json")
 OUT = os.path.join(HERE, "mop_face_validation_out.json")
 
+# --------------------------------------------------------------------------- #
+# THE SHORE-NORMAL GATE IS LOOSER HERE THAN ON THE ADOPTION PATH, AND THAT IS  #
+# DELIBERATE. DO NOT REUNIFY THEM.                                            #
+#                                                                             #
+# THE DISTINCTION IS SCALAR VERSUS DIRECTIONAL, and it is visible in what each #
+# path reads out of MOP:                                                       #
+#                                                                             #
+#   mop_ca_rollout (ADOPTION, keeps SHORE_NORMAL_MAX_DELTA = 35) reads         #
+#   waveHs, waveTp, waveDp AND waveEnergyDensity — the directional spectrum —  #
+#   and resolves waveDp against metaShoreNormal through interpret's            #
+#   directional_gain. A normal wrong by d makes every directional term wrong   #
+#   by d, first-order, in a PUBLISHED rating. 35 deg is a real tolerance there #
+#   and must stay.                                                             #
+#                                                                             #
+#   this harness (REFERENCING) keeps waveHs and nothing else. fetch_mop_by_hour#
+#   discards Tp and Dp on purpose, and face_ratio is one scalar divided by     #
+#   another. Nothing here resolves a direction against a shore normal, so the  #
+#   35-deg gate was protecting against a risk this path does not carry.        #
+#                                                                             #
+# WHY 90 AND NOT A TIGHTER NUMBER. A CONSTANT exposure difference between the  #
+# break and the matched point is exactly what the face factor absorbs: the     #
+# factor is a per-spot divisor fitted as the MEDIAN ratio over the window, so  #
+# a point that systematically runs 20% smaller than the break puts that 20%    #
+# into the factor and the correction still lands. What a bad pairing costs is  #
+# not offset but INSTABILITY as the swell direction moves through the window — #
+# and this harness already measures that, as the p25/p75 the factor file       #
+# carries and face_range publishes as the band. The angle gate was a           #
+# pre-filter for a defect the run quantifies afterwards anyway, which argues   #
+# for a backstop rather than a tolerance.                                      #
+#                                                                             #
+# WHY 90 IS NOT AN ARBITRARY ROUND NUMBER. 90 deg is where the dot product of  #
+# the two seaward unit vectors changes sign. Below it there is at least one    #
+# swell bearing that is simultaneously onshore at the break and at the matched #
+# point, so the two can be sampling one sea state; at 90 that set collapses to #
+# a single grazing bearing; beyond it no bearing is onshore at both and the    #
+# pairing is physically incoherent rather than merely imprecise. cos(90) = 0   #
+# is a property of the geometry. Two alternatives were considered and dropped: #
+# 80 deg (half-overlap of two +/-80 swell windows) makes the gate depend on the#
+# orientation-derived fallback arc shape, which several of these spots do not  #
+# use; and 60 deg, at the visible gap between 52 and 66 in the observed        #
+# deltas, is gap-fitting on 16 points — move one spot and the gap moves.       #
+#                                                                             #
+# WHAT IS STILL GUARDED, because this is a backstop and not a removal: a point #
+# facing the far side of a headland or the inside of a harbour arm, where no    #
+# swell can reach both. DISTANCE IS THE BETTER GUARD FOR THE REST and is NOT   #
+# yet enforced here — see match_verdict, which records match_distance_m per    #
+# spot for exactly that. Bolinas is the standing example: 73 deg passes this   #
+# gate, but its MOP point is 2.4 km away across a curving coast, which is an   #
+# independent reason to doubt the pairing.                                     #
+FACE_SHORE_NORMAL_MAX_DELTA = 90.0
+
 DEFAULT_DAYS_BACK = 14
 
 # Below this the denominator is noise, not a measurement: a 0.05 m MOP Hs turns any face
@@ -520,31 +571,75 @@ def height_agreement(pairs: list[dict]) -> dict:
 
 
 def shore_normal_delta(orientation_deg, shore_normal):
-    """|orientation - metaShoreNormal| in [0,180], or None when either is absent."""
+    """|orientation - metaShoreNormal| in [0,180], or None when either is absent.
+
+    AN EXACT 0.0 SHORE NORMAL IS TREATED AS ABSENT, NOT AS DUE NORTH. The MOP cache
+    builder (mop_blacks_slice.scalar) returns None when metaShoreNormal is missing
+    altogether, so a literal 0.0 means the netCDF variable was present and read as zero —
+    and np.asarray() on a masked array drops the mask, so a fill value arrives as a plain
+    number. Across the 48 MOP-ADOPTED spots no normal is 0.0, the values span 170.02-343.54
+    and carry full float precision (231.02000427246094); a bare 0.0 is not what real data
+    from this source looks like.
+
+    Four of the sixteen spots this harness rejected were rejected on a 0.0: seal-beach-pier,
+    surfside-jetty, seal-beach-california and oceanside-harbor, whose deltas were 148, 147,
+    135 and 129 — each EXACTLY 360 - orientation_deg, i.e. the circular distance from the
+    spot's own orientation to the number zero rather than to any measurement. Oceanside
+    Harbor's stored 231.0 is corroborated to 0.02 deg by Oceanside Pier, 1.6 km away and
+    MOP-adopted, whose normal is 231.02.
+
+    THIS GUARD IS LOAD-BEARING BECAUSE OF THE RELAXATION ABOVE, not merely tidy. At the old
+    35-deg gate a 0.0 slipped through for 5 of the 153 population spots (those oriented
+    within 35 deg of north); at FACE_SHORE_NORMAL_MAX_DELTA = 90 that becomes 26. Widening
+    the angle without this would have widened the blast radius of the zero five-fold.
+
+    Reported and declined rather than silently mapped, because a genuine due-north normal
+    does exist on some coasts and a spot dropped for a repairable cache entry should be
+    findable. Declining costs one spot's eligibility; accepting a fabricated bearing costs a
+    published face factor measured against the wrong stretch of water.
+    """
     if orientation_deg is None or shore_normal is None:
         return None
-    return abs(circ_offset(float(orientation_deg), float(shore_normal)))
+    sn = float(shore_normal)
+    if not math.isfinite(sn) or sn == 0.0:
+        # stderr, so it cannot interleave with the report this script prints to stdout.
+        # This module has no logger; the rest of it prints. Pure apart from the warning.
+        print(f"    WARNING metaShoreNormal is {shore_normal!r} — treating as ABSENT, not as "
+              f"due north; this MOP cache entry needs repair", file=sys.stderr, flush=True)
+        return None
+    return abs(circ_offset(float(orientation_deg), sn))
 
 
 def match_verdict(dist_m, sn_delta):
     """(accepted, reason). The REFERENCING gate, not the adoption gate.
 
     Two checks only: MATCH_SANITY_M (is there a MOP point near this spot at all) and
-    SHORE_NORMAL_MAX_DELTA (does that point face the same stretch of coast as the break).
+    FACE_SHORE_NORMAL_MAX_DELTA (does that point face water the break's swell can reach).
     The buoy cross-check from mop_handful_slice.verdict is DELIBERATELY NOT APPLIED: it
     exists to license PUBLISHING from MOP, and every spot it rejects is one whose face is
     still NWPS-derived — i.e. exactly the population this study needs.
 
+    THE ANGLE GATE HERE IS 90, NOT THE ADOPTION PATH'S 35 — see
+    FACE_SHORE_NORMAL_MAX_DELTA for why the two differ and why they must keep differing.
+
     MATCH_FALLBACK_M (1200 m) is likewise not applied. It is a publishing threshold; a
     point 1.5 km along the same contour is still a fair reference. The distance is
     recorded per spot instead, so it can be used as a filter at analysis time.
+
+    DISTANCE IS NOW THE WEAKEST LINK, and deliberately still unenforced. With the angle
+    relaxed to a physical backstop, the remaining reason to doubt a pairing is geometric
+    separation, not aspect: Bolinas passes at 73 deg with its MOP point 2.4 km away across
+    a curving coast. Enforcing a distance cap here is a live proposal, not an oversight —
+    it is left out of this change so that relaxing the angle and tightening the distance do
+    not land in one commit and become impossible to attribute.
     """
     if dist_m > MATCH_SANITY_M:
         return False, f"nearest MOP point {dist_m / 1000:.1f} km away (> {MATCH_SANITY_M / 1000:.0f} km)"
     if sn_delta is None:
         return False, "no orientation_deg or no metaShoreNormal to compare"
-    if sn_delta > SHORE_NORMAL_MAX_DELTA:
-        return False, f"shore-normal delta {sn_delta:.0f} deg (> {SHORE_NORMAL_MAX_DELTA:.0f})"
+    if sn_delta > FACE_SHORE_NORMAL_MAX_DELTA:
+        return False, (f"shore-normal delta {sn_delta:.0f} deg "
+                       f"(> {FACE_SHORE_NORMAL_MAX_DELTA:.0f})")
     return True, "ok"
 
 
@@ -704,6 +799,8 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             rejected.append({**rec, "reason": why})
     print(f"matched: {len(matched)} accepted, {len(rejected)} rejected "
           f"(MATCH_SANITY_M={MATCH_SANITY_M / 1000:.0f} km, "
+          f"FACE_SHORE_NORMAL_MAX_DELTA={FACE_SHORE_NORMAL_MAX_DELTA:.0f} deg — this path "
+          f"reads scalar waveHs only; the adoption path keeps "
           f"SHORE_NORMAL_MAX_DELTA={SHORE_NORMAL_MAX_DELTA:.0f} deg; "
           f"buoy adoption gate NOT applied)", flush=True)
     for r in rejected:
@@ -853,7 +950,11 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             "MATCH_SANITY_M": MATCH_SANITY_M,
             "forecast_chunk_spots": chunk_size,
             "forecast_page_rows": FORECAST_PAGE_ROWS,
-            "SHORE_NORMAL_MAX_DELTA": SHORE_NORMAL_MAX_DELTA,
+            # BOTH are recorded, and the names say which path each belongs to, so a run
+            # report can never be read as if one number governed both. See
+            # FACE_SHORE_NORMAL_MAX_DELTA for why they differ.
+            "FACE_SHORE_NORMAL_MAX_DELTA": FACE_SHORE_NORMAL_MAX_DELTA,
+            "adoption_path_SHORE_NORMAL_MAX_DELTA": SHORE_NORMAL_MAX_DELTA,
             "buoy_adoption_gate_applied": False,
         },
         "population": {"selected": len(pop), "matched": len(matched),
@@ -1084,11 +1185,25 @@ def run_selftest():
           match_verdict(5000.0, 10.0)[0] is True)
     check("beyond MATCH_SANITY_M -> rejected",
           match_verdict(MATCH_SANITY_M + 1.0, 10.0)[0] is False)
+    # LITERALS, NOT THE CONSTANT. Writing these as SHORE_NORMAL_MAX_DELTA +/- 0.1 made them
+    # true for any value of the constant, so they could not catch the gate being moved.
     check("shore-normal delta beyond the threshold -> rejected",
-          match_verdict(600.0, SHORE_NORMAL_MAX_DELTA + 0.1)[0] is False)
+          match_verdict(600.0, 90.1)[0] is False)
     check("exactly at the shore-normal threshold -> accepted (inclusive)",
-          match_verdict(600.0, SHORE_NORMAL_MAX_DELTA)[0] is True)
+          match_verdict(600.0, 90.0)[0] is True)
+    check("the face gate is 90, NOT the adoption path's 35",
+          match_verdict(600.0, 36.0)[0] is True and match_verdict(600.0, 73.0)[0] is True)
+    check("the adoption path constant is untouched at 35", SHORE_NORMAL_MAX_DELTA == 35.0)
+    check("the two gates are genuinely different numbers",
+          FACE_SHORE_NORMAL_MAX_DELTA == 90.0 and FACE_SHORE_NORMAL_MAX_DELTA > SHORE_NORMAL_MAX_DELTA)
     check("no shore normal to compare -> rejected, not assumed", match_verdict(600.0, None)[0] is False)
+    # A 0.0 normal is cache damage, not due north. 212 vs 0 would otherwise read 148 deg.
+    check("an exactly-zero shore normal is ABSENT, not due north",
+          shore_normal_delta(212.0, 0.0) is None)
+    check("a non-finite shore normal is ABSENT too",
+          shore_normal_delta(212.0, float("nan")) is None)
+    check("a real normal near zero is still honoured",
+          abs(shore_normal_delta(212.0, 0.5) - 148.5) < 1e-9)
     # 350 vs 10 is 20 deg apart across 0/360, not 340.
     check("shore-normal delta wraps across 0/360", abs(shore_normal_delta(350, 10) - 20.0) < 1e-9)
     check("shore-normal delta is unsigned", abs(shore_normal_delta(10, 350) - 20.0) < 1e-9)
