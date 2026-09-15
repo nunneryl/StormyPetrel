@@ -40,9 +40,17 @@ from .config import (
     SPOT_VERIFY_MAX_RETRIES,
     SPOT_VERIFY_MODEL,
     SPOT_VERIFY_RETRY_BACKOFF_SECONDS,
+    tide_source_may_overwrite,
+    tide_source_rank,
 )
 
 log = logging.getLogger("pipeline.verify_spots")
+
+# This pass hands the model a real web_search tool (see the tools list at :406,
+# passed to the API at :416) and its prompt directs it to search surf-forecast.com
+# before answering. A source is therefore genuinely consulted for THIS break,
+# which is what 'researched' means in migration 018's vocabulary.
+_TIDE_SOURCE = "researched"
 
 
 # Long, stable system prompt — designed to (a) elicit consistent JSON,
@@ -751,8 +759,25 @@ def merge_into_spots(
 
         new_tide = rec.get("tide_preference")
         if new_tide is not None and new_tide != spot.get("tide_preference"):
-            spot["tide_preference"] = new_tide
-            stats["field_changes"]["tide_preference"] += 1
+            # RANK GUARD — see config.tide_source_may_overwrite. This pass
+            # searches the web (tools at :406) so it writes 'researched', the top
+            # of the ladder; in practice it is only ever declined by another
+            # 'researched' writer, which equal rank permits.
+            existing = spot.get("tide_preference_source")
+            if tide_source_may_overwrite(existing, _TIDE_SOURCE):
+                # One statement: value and source together.
+                spot["tide_preference"] = new_tide
+                spot["tide_preference_source"] = _TIDE_SOURCE
+                stats["field_changes"]["tide_preference"] += 1
+            else:
+                # LOGGED, NEVER SILENT.
+                log.warning(
+                    "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
+                    "the verified %r (rank %d)",
+                    spot.get("name"), spot.get("tide_preference"), existing,
+                    tide_source_rank(existing), new_tide, tide_source_rank(_TIDE_SOURCE),
+                )
+                stats["tide_preference_declined"] = stats.get("tide_preference_declined", 0) + 1
 
         new_crowd = rec.get("crowd_factor")
         if new_crowd is not None and new_crowd != spot.get("crowd_factor"):

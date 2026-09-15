@@ -28,9 +28,37 @@ from .config import (
     TIDE_CLASSIFY_BATCH_SIZE,
     TIDE_CLASSIFY_CACHE_FILE,
     TIDE_CLASSIFY_MODEL,
+    tide_source_may_overwrite,
+    tide_source_rank,
 )
 
 log = logging.getLogger("pipeline.classify_tides")
+
+# WHY 'researched' AND NOT 'derived_from_break_type', and what that label
+# overstates.
+#
+# The axis migration 018's vocabulary actually encodes is WHAT THE CLAIM IS
+# ABOUT: 'researched' is a claim about THIS break, 'derived_from_break_type' is
+# a claim about its CLASS. On that axis this writer is 'researched', because the
+# prompt above now forbids the class-level fallback outright — it says "do not
+# fall back to the general preference typical for that coastline or break style"
+# and requires "unknown" instead. A non-"unknown" answer from this pass is
+# therefore asserted of the specific spot, which is what 'researched' means here.
+#
+# IT OVERSTATES PROVENANCE RELATIVE TO verify_spots, and that is worth knowing
+# before anyone reads the column as evidence. verify_spots passes a real
+# web_search tool (verify_spots.py:406, handed to the API at :416) and its prompt
+# tells the model to search surf-forecast.com first. This module passes NO tools
+# at all — classify_all's messages.create call has no `tools=` argument — so it
+# answers from the model's own training data with nothing consulted and nothing
+# cited. Both land on 'researched' today and the column cannot tell them apart.
+#
+# The vocabulary has no value for "the model's unsourced recall", and inventing
+# one here is not possible without a migration: migration 018's CHECK constraint
+# is applied and admits exactly researched / scraped / derived_from_break_type /
+# unattributed / unknown. If that distinction ever needs to be visible, the fix
+# is a new value and a new migration, not a relabelling here.
+_TIDE_SOURCE = "researched"
 
 _SYSTEM_PROMPT = (
     "You are a surf forecasting expert. For each US surf spot the user gives "
@@ -296,17 +324,46 @@ def main(argv: list[str] | None = None) -> int:
 
     # Merge results back into the enriched records.
     updated = 0
+    declined = 0
     for s in spots:
         rec = cache.get(s["name"])
         if rec:
+            # RANK GUARD. This write was unconditional — it overwrote whatever
+            # scrape_surf_forecast or verify_spots had put there, with no record
+            # that it had done so. See config.tide_source_may_overwrite.
+            existing = s.get("tide_preference_source")
+            if not tide_source_may_overwrite(existing, _TIDE_SOURCE):
+                # LOGGED, NEVER SILENT. A declined write is a real disagreement
+                # between two sources about one spot, and it is the only moment
+                # at which that disagreement is visible.
+                log.warning(
+                    "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
+                    "this run's %r from %r (rank %d)",
+                    s["name"], s.get("tide_preference"), existing,
+                    tide_source_rank(existing), rec["tide_preference"], _TIDE_SOURCE,
+                    tide_source_rank(_TIDE_SOURCE),
+                )
+                declined += 1
+                continue
+            # ONE STATEMENT, THREE FIELDS. The value, its confidence and its
+            # source are written together so none can describe a superseded
+            # version of another.
             s["tide_preference"] = rec["tide_preference"]
             s["tide_preference_confidence"] = rec["tide_preference_confidence"]
+            s["tide_preference_source"] = _TIDE_SOURCE
             updated += 1
 
     output_path = args.output or args.input
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(spots, indent=2, ensure_ascii=False))
     log.info("Wrote %d spots (%d with tide preference) to %s", len(spots), updated, output_path)
+    if declined:
+        # Surfaced in the run summary as well as per-spot above, so a run that
+        # changed less than it looks like it changed says so in one line.
+        log.warning(
+            "tide: %d spot(s) kept a higher-ranked tide_preference_source and were "
+            "NOT updated by this run — see the per-spot warnings above", declined,
+        )
 
     _summarize(spots, cache, stats)
     return 0
