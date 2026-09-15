@@ -228,15 +228,44 @@ FORECAST_CHUNK_SPOTS = 8
 def is_population(spot: dict) -> bool:
     """Is this spot in the valid validation population?
 
-    California, fed by the NWPS path, and carrying NO mop_* field. The mop_* test is
-    the load-bearing half: a spot with mop_point_id has its face computed from MOP by
-    apply_mop_overrides, so including it would validate MOP against itself. Testing for
-    the FIELDS rather than only for swell_window_source means a spot that was ever
-    MOP-associated stays excluded even if its tier is later changed by hand.
+    California, fed by the NWPS path, judged a real surf spot, and carrying NO mop_*
+    field. The mop_* test is the load-bearing half: a spot with mop_point_id has its
+    face computed from MOP by apply_mop_overrides, so including it would validate MOP
+    against itself. Testing for the FIELDS rather than only for swell_window_source
+    means a spot that was ever MOP-associated stays excluded even if its tier is later
+    changed by hand.
+
+    WHY THIS HARNESS NEEDS AN is_valid_surf_spot FILTER WHEN db_import ALREADY HAS ONE.
+    They are filtering two different populations, and that was never visible until it
+    was measured. This harness reads pipeline/spots_enriched.json directly (ROSTER
+    above) — the FULL enrichment record, including entries enrichment itself judged not
+    to be surf spots. The `spots` table is the SUBSET that survived that judgement,
+    because db_import.py:473 drops the invalid ones on the way in. So "every California
+    NWPS spot" meant one thing to the importer and a larger thing here, and the harness
+    was measuring MOP against a break the site does not publish and has no row for.
+
+    Seal Beach, California is the one entry this removes, and its own record says why:
+    sources.wikidata_id Q593039 is the article about the CITY, and verification_notes
+    reads "town center on bay side ... the actual surf break is Seal Beach Pier. Marked
+    duplicate." It is 3.34 km from seal-beach-pier by its own stored coordinates — back
+    inside Anaheim Bay, not on the open-ocean beach. invalid_reason "duplicate" at
+    verification_confidence "high". The real break is that separate roster entry,
+    seal-beach-pier, which is valid and stays in.
+
+    IDENTITY, NOT TRUTHINESS — `is False`, mirroring db_import.py:473's `is not False`
+    exactly. The distinction is not pedantry: of the 153 spots this predicate used to
+    return, 136 are explicitly true, 16 CARRY NO is_valid_surf_spot KEY AT ALL (verify
+    never reached them — the roster has no explicit nulls, only absences) and 1 is
+    explicitly false. An identity check drops the 1 and keeps the 16; `if not
+    spot.get("is_valid_surf_spot")` would drop all 17 — and one of the 16 it would take
+    with it is seal-beach-pier, the genuine break this filter exists to preserve. An
+    unverified spot is not a rejected one, and only the importer's rule gets that right.
     """
     if spot.get("region_hint") != "California":
         return False
     if spot.get("swell_window_source") != "nwps":
+        return False
+    if spot.get("is_valid_surf_spot") is False:
         return False
     return not any(k.startswith("mop_") for k in spot)
 
@@ -586,12 +615,17 @@ def shore_normal_delta(orientation_deg, shore_normal):
     135 and 129 — each EXACTLY 360 - orientation_deg, i.e. the circular distance from the
     spot's own orientation to the number zero rather than to any measurement. Oceanside
     Harbor's stored 231.0 is corroborated to 0.02 deg by Oceanside Pier, 1.6 km away and
-    MOP-adopted, whose normal is 231.02.
+    MOP-adopted, whose normal is 231.02. (That is the historical record of the run those
+    numbers came from. seal-beach-california has since left the population entirely — see
+    is_population, which now drops is_valid_surf_spot false — so a rerun rejects three
+    spots on a 0.0, not four. The other three are unaffected.)
 
     THIS GUARD IS LOAD-BEARING BECAUSE OF THE RELAXATION ABOVE, not merely tidy. At the old
-    35-deg gate a 0.0 slipped through for 5 of the 153 population spots (those oriented
+    35-deg gate a 0.0 slipped through for 5 of the 152 population spots (those oriented
     within 35 deg of north); at FACE_SHORE_NORMAL_MAX_DELTA = 90 that becomes 26. Widening
     the angle without this would have widened the blast radius of the zero five-fold.
+    (5 and 26 are unchanged by the is_valid_surf_spot filter: the one spot it removes is
+    oriented 225, which is 135 from north and so was in neither count.)
 
     Reported and declined rather than silently mapped, because a genuine due-north normal
     does exist on some coasts and a spot dropped for a repairable cache entry should be
@@ -1045,6 +1079,16 @@ def run_selftest():
           is_population({**ca_nwps, "region_hint": "Hawaii"}) is False)
     check("orientation_derived CA spot excluded (face is not NWPS-derived)",
           is_population({**ca_nwps, "swell_window_source": "orientation_derived"}) is False)
+    check("is_valid_surf_spot false excludes it (db_import drops it too)",
+          is_population({**ca_nwps, "is_valid_surf_spot": False}) is False)
+    check("is_valid_surf_spot true is kept",
+          is_population({**ca_nwps, "is_valid_surf_spot": True}) is True)
+    check("is_valid_surf_spot null is kept — unverified is not rejected",
+          is_population({**ca_nwps, "is_valid_surf_spot": None}) is True)
+    # Identity, not truthiness: these three are all falsy but none of them IS False.
+    for falsy in (None, 0, ""):
+        check(f"falsy-but-not-False {falsy!r} is kept",
+              is_population({**ca_nwps, "is_valid_surf_spot": falsy}) is True)
 
     # The committed roster must give the number the brief expects.
     roster = json.load(open(ROSTER))
@@ -1053,7 +1097,9 @@ def run_selftest():
     n_mop = sum(1 for s in roster if s.get("swell_window_source") == "cdip_mop")
     check(f"committed roster: 201 California spots ({n_ca})", n_ca == 201)
     check(f"committed roster: 48 on the cdip_mop tier ({n_mop})", n_mop == 48)
-    check(f"committed roster: population is 153 ({n_pop})", n_pop == 153)
+    # 152, not the 153 this printed before the is_valid_surf_spot filter: Seal Beach,
+    # California (invalid_reason "duplicate") is the single entry it removes.
+    check(f"committed roster: population is 152 ({n_pop})", n_pop == 152)
 
     # --- ratio arithmetic ---------------------------------------------------- #
     # M_TO_FT = 3.281. A 1.00 m MOP Hs is 3.281 ft, so a published 3.281 ft face is

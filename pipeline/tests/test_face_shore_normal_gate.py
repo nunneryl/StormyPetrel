@@ -77,10 +77,18 @@ RECOVERED_AT_90 = {
 STILL_EXCLUDED_AT_90 = {
     "trinidad-state-beach",     # 99 deg, a real nonzero normal of 169.9
     "oceanside-harbor",         # 129 = 360 - 231, a 0.0 normal
-    "seal-beach-california",    # 135 = 360 - 225, a 0.0 normal, and is_valid_surf_spot false
+    "seal-beach-california",    # 135 = 360 - 225, a 0.0 normal — see note below
     "surfside-jetty",           # 147 = 360 - 213, a 0.0 normal
     "seal-beach-pier",          # 148 = 360 - 212, a 0.0 normal
 }
+
+# seal-beach-california no longer REACHES this gate. is_population now drops
+# is_valid_surf_spot false, and that entry is false (invalid_reason "duplicate"), so it is
+# filtered out before any match or angle is computed. It stays in these sets because they
+# are a transcript of the run that motivated the 90-deg relaxation, and rewriting history
+# to match today's population would destroy the evidence that argued for the number. The
+# tests below feed match_verdict directly and so are unaffected either way.
+# Pinned in pipeline/tests/test_face_population_valid_spot.py.
 
 # A match distance well inside MATCH_SANITY_M, so every verdict below turns on the angle
 # alone and never on distance.
