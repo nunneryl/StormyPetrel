@@ -236,6 +236,7 @@ def test_tide_multiplier_pinned_at_every_bucket():
     assert I.tide_multiplier(None, "low") == 1.0        # no tide -> neutral
     assert I.tide_multiplier(0.5, None) == 1.0          # no preference -> neutral
     assert I.tide_multiplier(0.5, "all") == 1.0
+    assert I.tide_multiplier(0.5, "unknown") == 1.0     # absence of a claim -> neutral
     assert I.tide_multiplier(0.1, "low") == 1.0         # low pref, low tide
     assert I.tide_multiplier(0.5, "low") == 0.8
     assert I.tide_multiplier(0.9, "low") == 0.6         # MINIMUM
@@ -246,9 +247,83 @@ def test_tide_multiplier_pinned_at_every_bucket():
     assert I.tide_multiplier(0.1, "high") == 0.6        # MINIMUM
     assert I.tide_multiplier(0.5, "bogus") == 1.0       # unknown preference -> neutral
     got = {I.tide_multiplier(t, p)
-           for p in (None, "", "all", "low", "mid", "high", "bogus")
+           for p in (None, "", "all", "unknown", "low", "low_mid", "mid",
+                     "mid_high", "high", "bogus")
            for t in (None, 0.0, 0.29, 0.3, 0.5, 0.7, 0.71, 1.0)}
     assert got == {0.6, 0.7, 0.8, 1.0}, got
+
+
+# The seven tide positions the sweep above uses, as a name so the new-bucket tests below
+# read against the same ladder rather than a second hand-written copy of it.
+_TIDE_POSITIONS = (0.0, 0.29, 0.3, 0.5, 0.7, 0.71, 1.0)
+
+
+def test_low_mid_is_pinned_at_every_tide_position():
+    """EXPECTED VALUES WRITTEN OUT, not derived from the boundary constant.
+
+    low_mid is 1.0 up to and INCLUDING 0.7, then 0.7. Listing all seven positions rather
+    than the two either side of the edge is the point of this test: a bucket that silently
+    fell through to the `return 1.0` at the bottom of tide_multiplier would pass a test that
+    only checked the 1.0 cases, which is exactly how the four-value set went unguarded.
+    """
+    expected = {0.0: 1.0, 0.29: 1.0, 0.3: 1.0, 0.5: 1.0, 0.7: 1.0, 0.71: 0.7, 1.0: 0.7}
+    for t in _TIDE_POSITIONS:
+        assert I.tide_multiplier(t, "low_mid") == expected[t], t
+
+
+def test_mid_high_is_pinned_at_every_tide_position():
+    """mid_high is 0.7 below 0.3, then 1.0 from 0.3 upward INCLUSIVE."""
+    expected = {0.0: 0.7, 0.29: 0.7, 0.3: 1.0, 0.5: 1.0, 0.7: 1.0, 0.71: 1.0, 1.0: 1.0}
+    for t in _TIDE_POSITIONS:
+        assert I.tide_multiplier(t, "mid_high") == expected[t], t
+
+
+def test_unknown_is_flat_at_every_tide_position():
+    """unknown is neutral everywhere, like "all" and like a null preference.
+
+    Pinned across the whole ladder so that giving "unknown" a penalty later is a test
+    failure rather than a silent rating change on every spot that carries it.
+    """
+    for t in _TIDE_POSITIONS:
+        assert I.tide_multiplier(t, "unknown") == 1.0, t
+
+
+def test_a_new_bucket_is_not_merely_falling_through_to_neutral():
+    """The guard the old test could not provide.
+
+    tide_multiplier ends in a bare `return 1.0`, so an unhandled preference is
+    indistinguishable from a deliberately neutral one at any single tide position. The
+    difference is only visible where a real bucket is NOT 1.0 — so each new bucket is
+    asserted to differ from the bogus-string baseline somewhere on the ladder.
+    """
+    for pref in ("low_mid", "mid_high"):
+        assert any(I.tide_multiplier(t, pref) != I.tide_multiplier(t, "bogus")
+                   for t in _TIDE_POSITIONS), pref
+    # ...and "unknown" is the one new value that IS deliberately neutral everywhere.
+    assert all(I.tide_multiplier(t, "unknown") == I.tide_multiplier(t, "bogus")
+               for t in _TIDE_POSITIONS)
+
+
+def test_the_widening_did_not_move_the_original_four_buckets():
+    """Additive, not a re-tune. Every pre-existing (tide_norm, preference) pair, by value.
+
+    The 0.3/0.7 boundary asymmetry is part of what is pinned here: at exactly 0.3 low gives
+    0.8 while high gives 0.6, and at exactly 0.7 both give 0.8. That asymmetry is a known
+    wart deliberately NOT fixed in this change, and this test fails if it is fixed by
+    accident alongside the widening.
+    """
+    expected = {
+        ("low", 0.0): 1.0, ("low", 0.29): 1.0, ("low", 0.3): 0.8, ("low", 0.5): 0.8,
+        ("low", 0.7): 0.6, ("low", 0.71): 0.6, ("low", 1.0): 0.6,
+        ("mid", 0.0): 0.7, ("mid", 0.29): 0.7, ("mid", 0.3): 1.0, ("mid", 0.5): 1.0,
+        ("mid", 0.7): 1.0, ("mid", 0.71): 0.7, ("mid", 1.0): 0.7,
+        ("high", 0.0): 0.6, ("high", 0.29): 0.6, ("high", 0.3): 0.6, ("high", 0.5): 0.8,
+        ("high", 0.7): 0.8, ("high", 0.71): 1.0, ("high", 1.0): 1.0,
+        ("all", 0.0): 1.0, ("all", 0.29): 1.0, ("all", 0.3): 1.0, ("all", 0.5): 1.0,
+        ("all", 0.7): 1.0, ("all", 0.71): 1.0, ("all", 1.0): 1.0,
+    }
+    for (pref, t), want in expected.items():
+        assert I.tide_multiplier(t, pref) == want, (pref, t)
 
 
 def test_chop_multiplier_pinned():

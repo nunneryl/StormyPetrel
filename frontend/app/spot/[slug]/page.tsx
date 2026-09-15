@@ -21,7 +21,7 @@ import {
 } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
-import { spotInfoRows } from '@/lib/spotInfo';
+import { fmtTidePreference, spotInfoRows } from '@/lib/spotInfo';
 import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { siteUrl } from '@/lib/site-url';
@@ -223,7 +223,14 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
                 {spot.break_type}
               </span>
             )}
-            {spot.tide_preference && <span>tide: {spot.tide_preference}</span>}
+            {/* Through the shared formatter, not raw: the widened tide_preference
+                set carries snake_case compounds that would render as "low_mid".
+                The guard tests the FORMATTED value so "unknown" drops the chip
+                exactly as null already does — a chip reading "tide: —" says
+                nothing and costs a line of header. */}
+            {fmtTidePreference(spot.tide_preference) !== '—' && (
+              <span>tide: {fmtTidePreference(spot.tide_preference)}</span>
+            )}
           </div>
         </div>
         <CurrentHero rows={forecasts} serverNowMs={nowMs} />

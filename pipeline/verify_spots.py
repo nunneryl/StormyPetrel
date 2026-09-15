@@ -134,10 +134,25 @@ For each object:
                           if the spot is mixed (e.g. beach with a reef
                           section), pick the one most surfers associate
                           with the name.
-  tide_preference       — string. One of: "low", "mid", "high", "all".
+  tide_preference       — string. One of: "low", "low_mid", "mid",
+                          "mid_high", "high", "all", "unknown".
                           The tide stage at which the spot works best.
+                          Use a compound value when the spot works across
+                          two adjacent stages: "low_mid" for a spot that
+                          works from low through mid and closes out on a
+                          push, "mid_high" for its mirror.
                           "all" only when the spot is genuinely
-                          tide-tolerant; default to "mid" if uncertain.
+                          tide-tolerant.
+                          RETURN "unknown" WHEN YOU DO NOT KNOW. Do not
+                          fall back to "mid" or to any other value as a
+                          default. "mid" is a claim that this spot works
+                          best around mid tide, and it is consumed as one:
+                          it penalises the spot's rating at high and low
+                          water. If you cannot name the tide stage from
+                          your own knowledge of this specific break, the
+                          honest answer is "unknown", which is treated as
+                          neutral rather than as a preference. A wrong
+                          "mid" is worse than an honest "unknown".
   crowd_factor          — string. One of: "heavy", "moderate", "light",
                           "empty". Your best estimate of typical crowd
                           density on a good day. Heavy = packed lineups
@@ -435,7 +450,7 @@ def _verify_batch(client, spots: list[dict]) -> tuple[list[dict], _UsageTotal]:
 
 _VALID_INVALID_REASONS = {"surf_shop", "river", "lake", "duplicate", "non_surfable", "unknown"}
 _VALID_BREAK_TYPES = {"beach", "reef", "point", "jetty", "rivermouth"}
-_VALID_TIDE_PREFS = {"low", "mid", "high", "all"}
+_VALID_TIDE_PREFS = {"low", "low_mid", "mid", "mid_high", "high", "all", "unknown"}
 _VALID_CROWD = {"heavy", "moderate", "light", "empty"}
 _VALID_CONFIDENCE = {"high", "medium", "low"}
 

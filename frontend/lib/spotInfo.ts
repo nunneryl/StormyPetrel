@@ -67,10 +67,45 @@ function isBlank(v: string | null | undefined): boolean {
  * — "no preference" is a real answer — and it is handled by making the two cards agree
  * on '—' rather than by one card saying 'any'; see optimalConditionsRows.
  */
+/** THE STORED VALUE IS A KEY, NOT A LABEL. tide_preference widened from
+ *  {low, mid, high, all} to add low_mid, mid_high and unknown, and the two
+ *  compound keys are snake_case — rendered raw they would read "low_mid" on the
+ *  page. Both cards go through this one map so they cannot drift apart, which is
+ *  the same reason they already share '—' rather than one saying 'any'.
+ *
+ *  "unknown" MAPS TO THE SAME EM DASH AS NULL, and that is the point of having
+ *  the value at all. Null means nothing has ever looked at this spot; "unknown"
+ *  means something looked and declined to guess. Those are different facts about
+ *  our data and both are stored, but to a surfer they are one fact — we cannot
+ *  tell you — so they render identically. The distinction is for the pipeline,
+ *  not the page.
+ *
+ *  ONLY THE NEW KEYS ARE MAPPED. low / mid / high / all keep rendering verbatim,
+ *  exactly as they did before the widening, because three tests in
+ *  spotInfo.test.mts pin that by name ("a real tide preference still renders
+ *  verbatim"). Re-casing them to "Low" / "Mid" would be a copy change to 429
+ *  spots riding along inside a widening, and it is not what this commit is for.
+ *  The casing is therefore mixed on the page — "low" beside "Low to mid" — which
+ *  is a real wrinkle and a deliberate one; normalising it is a separate change
+ *  with its own test updates. An unmapped key therefore falls through to ITSELF,
+ *  not to '—': that is what keeps the original four verbatim, and it also means a
+ *  future value nobody labelled shows up on the page as a bug to notice rather
+ *  than hiding behind a dash. */
+const TIDE_PREFERENCE_LABEL: Record<string, string> = {
+  low_mid: 'Low to mid',
+  mid_high: 'Mid to high',
+  unknown: '—',
+};
+
+export function fmtTidePreference(value: string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—';
+  return TIDE_PREFERENCE_LABEL[value] ?? value;
+}
+
 export function spotInfoRows(spot: SpotInfoInput): SpotInfoRow[] {
   const rows: SpotInfoRow[] = [
     { label: 'Break', value: spot.break_type ?? '—' },
-    { label: 'Tide preference', value: spot.tide_preference ?? '—' },
+    { label: 'Tide preference', value: fmtTidePreference(spot.tide_preference) },
   ];
   if (!isBlank(spot.crowd_factor)) {
     rows.push({ label: 'Crowd', value: spot.crowd_factor as string });
@@ -114,7 +149,7 @@ export function optimalConditionsRows(spot: SpotInfoInput): SpotInfoRow[] {
           ? `${degToCardinal(spot.offshore_wind_deg)} offshore`
           : 'offshore',
     },
-    { label: 'Tide', value: spot.tide_preference ?? '—' },
+    { label: 'Tide', value: fmtTidePreference(spot.tide_preference) },
     { label: 'Break', value: spot.break_type ?? '—' },
   ];
 }
