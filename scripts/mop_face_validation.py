@@ -1091,6 +1091,20 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             "adoption_path_MATCH_FALLBACK_M": MATCH_FALLBACK_M,
             "adoption_path_MATCH_FALLBACK_M_applied": False,
             "buoy_adoption_gate_applied": False,
+            # THE THIRD THING THAT DEFINES THE POPULATION, and the only one that is not a
+            # number. is_population drops is_valid_surf_spot false (see there); without
+            # this flag a downstream artifact can read the two gate DISTANCES out of this
+            # report and still not know whether the spots were filtered for validity.
+            # build_face_factors copies all three into the committed factor file and
+            # records null for any this report omits, so an omission here becomes a
+            # permanent gap in that file's provenance rather than a recoverable one.
+            #
+            # PROBED, NOT ASSERTED. A literal True here would keep saying True after
+            # someone deleted the clause — the same failure as the RUN_ON literal that
+            # kept stamping 2026-09-01 onto later measurements. This asks the predicate.
+            "is_valid_surf_spot_filter_applied": not is_population(
+                {"region_hint": "California", "swell_window_source": "nwps",
+                 "name": "probe", "is_valid_surf_spot": False}),
         },
         "population": {"selected": len(pop), "matched": len(matched),
                        "rejected": rejected, "with_results": len(good)},
