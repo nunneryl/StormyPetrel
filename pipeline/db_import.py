@@ -157,7 +157,7 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
     for k in (
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
         "break_type", "break_type_confidence",
-        "tide_preference", "crowd_factor", "hazards",
+        "tide_preference", "tide_preference_source", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
         "nwps_wfo",

@@ -165,6 +165,62 @@ TIDE_CLASSIFY_BATCH_SIZE = 10
 TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
 
 # ---------------------------------------------------------------------------
+# tide_preference provenance — the rank ladder and the ONLY comparison of it
+# ---------------------------------------------------------------------------
+# THREE WRITERS SET tide_preference AND NONE RECORDED ITSELF. classify_tides,
+# verify_spots and scrape_surf_forecast each overwrite the field, in whatever
+# order the operator runs them, and until migration 018 nothing said which one
+# won. That is exactly how break_type_confidence came to describe a superseded
+# value on 83 spots: the scraper and the LLM both overwrote break_type without
+# touching the confidence written beside it, so the number now describes a
+# classification that no longer exists. tide_preference_source exists to stop
+# the same thing happening here, and it only works if every writer stamps it in
+# the same statement as the value.
+#
+# ONE MAP AND ONE COMPARISON, both here. The failure mode this guards against is
+# two sites disagreeing about which source outranks which, so the rank lookup
+# lives beside the ladder rather than being reimplemented at each write site.
+# This is the only function in an otherwise constants-only module, and that is
+# the reason: co-locating the single operation with the data it operates on is
+# what makes drift impossible rather than merely unlikely.
+#
+# The values are migration 018's CHECK list. 'unknown' is deliberately ABSENT
+# from the ladder — it is a valid column value meaning "the source is not one we
+# can name", and an unranked source falls to 0, so it can be overwritten by
+# anything and can overwrite nothing. That is the correct behaviour for a value
+# that makes no provenance claim.
+TIDE_SOURCE_RANK = {
+    "researched": 4,
+    "scraped": 3,
+    "derived_from_break_type": 2,
+    "unattributed": 1,
+}
+
+
+def tide_source_rank(source: str | None) -> int:
+    """Rank of *source*, 0 for NULL/absent/unrecognised.
+
+    Unrecognised ranks 0 rather than raising: a value that reached the column
+    without passing through TIDE_SOURCE_RANK is a bug to be outranked, not a
+    reason to stop a pipeline run mid-roster.
+    """
+    return TIDE_SOURCE_RANK.get(source or "", 0)
+
+
+def tide_source_may_overwrite(existing: str | None, incoming: str | None) -> bool:
+    """May a write stamped *incoming* replace a value stamped *existing*?
+
+    EQUAL RANK IS ALLOWED, and that is deliberate rather than an oversight. The
+    rule being enforced is "a lower-ranked source cannot overwrite a
+    higher-ranked one"; equal is not lower. Blocking equals would mean whichever
+    'researched' writer ran first could never be corrected by the other — and
+    verify_spots, which actually searches the web, would be permanently locked
+    out by classify_tides, which does not. Within a rank the existing
+    last-writer-wins behaviour is unchanged.
+    """
+    return tide_source_rank(incoming) >= tide_source_rank(existing)
+
+# ---------------------------------------------------------------------------
 # Forecast fetching (Phase 1)
 # ---------------------------------------------------------------------------
 NOAA_COOPS_ENDPOINT = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
