@@ -36,19 +36,27 @@ _SYSTEM_PROMPT = (
     "You are a surf forecasting expert. For each US surf spot the user gives "
     "you, determine the optimal tide state for surfing based on the spot's "
     "name, region, and coordinates. Use your knowledge of well-known spots "
-    "where available; otherwise fall back to the general tide preference "
-    "typical for that coastline and break style. Respond with JSON only — "
+    "where available. RETURN \"unknown\" WHEN YOU DO NOT KNOW — do not fall "
+    "back to the general preference typical for that coastline or break "
+    "style, and do not default to \"mid\". Every named value is consumed as a "
+    "claim about this specific break and penalises its rating at the wrong "
+    "tide; \"unknown\" is treated as neutral. An honest \"unknown\" is worth "
+    "more than a plausible guess. Respond with JSON only — "
     "no prose, no markdown fences.\n\n"
     "Tide values:\n"
     '- "low": best on a low / dropping tide (many shallow reefs, some point '
     "breaks)\n"
-    '- "mid": best around mid tide (most beach breaks, most common answer)\n'
+    '- "low_mid": works from low through mid, falls off on a push\n'
+    '- "mid": best around mid tide\n'
+    '- "mid_high": works from mid through high, falls off on a drain\n'
     '- "high": best on a high / pushing tide (sandbar spots that need '
     "deeper water; some reef passes)\n"
-    '- "all": works reasonably across most tides\n\n'
+    '- "all": works reasonably across most tides\n'
+    '- "unknown": you do not know this spot\'s tide preference\n\n'
     "Confidence scale: 0.9+ if the spot is well-known with a clear documented "
     "preference, 0.6-0.8 for plausible inference from the region and name, "
-    "0.3-0.5 when guessing from coastline type alone."
+    "0.3-0.5 when guessing from coastline type alone. If you would be at the "
+    "bottom of that scale, return \"unknown\" instead of guessing."
 )
 
 
@@ -85,7 +93,8 @@ def _build_user_prompt(spots: list[dict]) -> str:
     lines = [
         'For each surf spot below, return the optimal tide for surfing. '
         'Reply with JSON only, no other text: '
-        '[{"name": "...", "tide_preference": "low|mid|high|all", "confidence": 0.0-1.0}]',
+        '[{"name": "...", "tide_preference": '
+        '"low|low_mid|mid|mid_high|high|all|unknown", "confidence": 0.0-1.0}]',
         "",
         "Spots:",
     ]
@@ -142,7 +151,7 @@ def _normalize_result(entry: dict) -> dict | None:
     name = entry.get("name")
     tide = entry.get("tide_preference")
     conf = entry.get("confidence")
-    if not name or tide not in {"low", "mid", "high", "all"}:
+    if not name or tide not in {"low", "low_mid", "mid", "mid_high", "high", "all", "unknown"}:
         return None
     try:
         conf = float(conf)
@@ -257,8 +266,11 @@ def _summarize(spots: list[dict], cache: dict[str, dict], stats: dict) -> None:
     if stats["missing_from_response"]:
         print(f"  missing/invalid:      {stats['missing_from_response']}")
     print("  distribution:")
-    for pref in ("low", "mid", "high", "all"):
-        print(f"    {pref:<5} {by_pref.get(pref, 0)}")
+    # Every accepted value, including the ones that come back zero — a run that returns no
+    # "unknown" at all is worth seeing, because the prompt now asks for it and a zero means
+    # either a genuinely well-known batch or a model still defaulting its way out.
+    for pref in ("low", "low_mid", "mid", "mid_high", "high", "all", "unknown"):
+        print(f"    {pref:<8} {by_pref.get(pref, 0)}")
     print("=" * 60)
 
 

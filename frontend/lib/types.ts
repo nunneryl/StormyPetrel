@@ -13,6 +13,17 @@ export type Spot = {
    *  An arc wraps when min > max (e.g. {min: 350, max: 30}). */
   swell_window_arcs: { min: number; max: number; span?: number }[] | null;
   break_type: string | null;
+  /** One of: low | low_mid | mid | mid_high | high | all | unknown.
+   *
+   *  A STORAGE KEY, NOT A LABEL — render it through spotInfo.fmtTidePreference,
+   *  which maps the snake_case compounds to "Low to mid" / "Mid to high" and
+   *  collapses "unknown" onto the same em dash as null. Rendered raw it reads
+   *  "low_mid" on the page.
+   *
+   *  null and "unknown" are distinct in the database and identical on screen:
+   *  null means nothing has ever classified this spot, "unknown" means something
+   *  did and declined to guess. interpret.tide_multiplier treats both as
+   *  neutral, so neither moves a rating. */
   tide_preference: string | null;
   crowd_factor: string | null;
   hazards: string[] | null;

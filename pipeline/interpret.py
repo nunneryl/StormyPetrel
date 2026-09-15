@@ -466,8 +466,29 @@ def wind_multiplier(
 
 
 def tide_multiplier(tide_norm: float | None, preference: str | None) -> float:
-    """0.6–1.0 based on normalized tide position vs preference bucket."""
-    if tide_norm is None or preference in (None, "all", ""):
+    """0.6–1.0 based on normalized tide position vs preference bucket.
+
+    "unknown" IS NOT "all". They return the same 1.0 and always will, but they mean
+    different things and the distinction is the reason this widening exists: "all" is a
+    claim that the spot is genuinely tide-tolerant, "unknown" is the absence of a claim.
+    Collapsing them here is safe only because a neutral multiplier is the honest answer to
+    both; anything that wants to tell them apart must read tide_preference, not tide_mult.
+
+    THE COMPOUND BUCKETS ARE ONE-SIDED, not a narrower band. low_mid means "works from low
+    through mid and falls off above", so it is 1.0 across the whole lower two-thirds rather
+    than 1.0 only in some new middle band — a spot that works at both low and mid is not
+    fussier than one that works at mid alone. mid_high is its mirror. Their penalty is 0.7,
+    matching "mid", because the shape of the claim is the same: one soft edge, not two hard
+    ones like low/high.
+
+    THE 0.3/0.7 BOUNDARY ASYMMETRY IS PRESERVED DELIBERATELY. low uses `< 0.3`, mid uses an
+    inclusive `0.3 <= n <= 0.7`, high uses `> 0.7`, so at exactly 0.3 low gives 0.8 while
+    high gives 0.6. That is not a bug being fixed here. Changing it would move ratings on
+    the 429 spots already carrying low/mid/high, which is a separate change with a separate
+    blast radius; this one must be additive. The new buckets follow mid's inclusive
+    convention (`<= 0.7`, `>= 0.3`) so they agree with the bucket they overlap.
+    """
+    if tide_norm is None or preference in (None, "all", "", "unknown"):
         return 1.0
     if preference == "low":
         if tide_norm < 0.3:
@@ -475,10 +496,14 @@ def tide_multiplier(tide_norm: float | None, preference: str | None) -> float:
         if tide_norm < 0.7:
             return 0.8
         return 0.6
+    if preference == "low_mid":
+        return 1.0 if tide_norm <= 0.7 else 0.7
     if preference == "mid":
         if 0.3 <= tide_norm <= 0.7:
             return 1.0
         return 0.7
+    if preference == "mid_high":
+        return 1.0 if tide_norm >= 0.3 else 0.7
     if preference == "high":
         if tide_norm > 0.7:
             return 1.0
