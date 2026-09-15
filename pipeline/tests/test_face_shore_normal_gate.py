@@ -74,6 +74,10 @@ RECOVERED_AT_90 = {
     "crescent-city-beach",
     "bolinas",
 }
+# RECOVERED BY THE ANGLE GATE — not necessarily present in a run. bolinas clears 90 deg
+# and is then rejected on MATCH_SEPARATION_M at a reported 2439 m, so it is recovered
+# here and absent there. These sets are about the angle and nothing else; the separation
+# gate is pinned in pipeline/tests/test_face_separation_gate.py.
 STILL_EXCLUDED_AT_90 = {
     "trinidad-state-beach",     # 99 deg, a real nonzero normal of 169.9
     "oceanside-harbor",         # 129 = 360 - 231, a 0.0 normal
@@ -90,8 +94,10 @@ STILL_EXCLUDED_AT_90 = {
 # tests below feed match_verdict directly and so are unaffected either way.
 # Pinned in pipeline/tests/test_face_population_valid_spot.py.
 
-# A match distance well inside MATCH_SANITY_M, so every verdict below turns on the angle
-# alone and never on distance.
+# A match distance well inside MATCH_SEPARATION_M (2200 m), so every verdict below turns
+# on the angle alone and never on distance. This was chosen against MATCH_SANITY_M when
+# distance was unenforced; it is still correct, but the binding constant is now the
+# separation gate, and a larger NEAR would silently start testing that instead.
 NEAR = 600.0
 
 
@@ -295,15 +301,24 @@ def test_the_four_zero_rejections_each_equal_360_minus_their_orientation():
         assert abs((360.0 - orientation) - delta) < 0.6, slug
 
 
-def test_distance_is_still_the_unenforced_guard_and_bolinas_shows_why():
-    """Bolinas passes the relaxed angle at 73 deg with a 2439 m match.
+def test_distance_is_no_longer_the_unenforced_guard_and_bolinas_is_the_case():
+    """THIS TEST RECORDS A DELIBERATE BEHAVIOUR CHANGE — it used to assert the opposite.
 
-    MATCH_FALLBACK_M is deliberately not applied on this path, so the angle relaxation
-    leaves distance as the weakest link. Pinned so that if a distance cap is added later,
-    this test is the one that records the behaviour it changed.
+    When the angle was relaxed to 90, Bolinas was the standing argument for capping
+    distance: it passes at 73 deg while its MOP point is reportedly 2439 m away across a
+    curving coast. The earlier version of this test asserted that pairing was ACCEPTED,
+    and said "if a distance cap is added later, this test is the one that records the
+    behaviour it changed." MATCH_SEPARATION_M is that cap, so this is that record.
+
+    The 2439 m figure is not verifiable from a clone — scripts/mop_points.json is
+    gitignored — so what is asserted here is the gate's verdict AT that distance, never
+    that Bolinas is really that far from its point.
     """
     assert SIXTEEN["bolinas"] == 73
-    assert match_verdict(2439.3, 73.0)[0] is True
+    assert _accepted(73) is True                      # the ANGLE still passes it
+    ok, why = match_verdict(2439.3, 73.0)             # the SEPARATION gate does not
+    assert ok is False
+    assert "separation gate" in why
     # and the sanity cap is still a real cap, far out
     from mop_ca_rollout import MATCH_SANITY_M
     assert match_verdict(MATCH_SANITY_M + 1.0, 10.0)[0] is False

@@ -105,7 +105,9 @@ sys.path.insert(0, ROOT)   # pipeline.*
 from mop_blacks_slice import CACHE as MOP_CACHE_PATH            # noqa: E402
 from mop_blacks_slice import circ_offset, load_cache            # noqa: E402
 from mop_ca_rollout import MATCH_SANITY_M, _match, _slug, ca_zone  # noqa: E402
-from mop_handful_slice import SHORE_NORMAL_MAX_DELTA, pearson   # noqa: E402
+from mop_handful_slice import (                                 # noqa: E402
+    MATCH_FALLBACK_M, SHORE_NORMAL_MAX_DELTA, pearson,
+)
 from pipeline.forecast.mop import (                             # noqa: E402
     _iso_to_epoch, _norm_epoch, nowcast_url, pull_mop_window,
 )
@@ -158,12 +160,92 @@ OUT = os.path.join(HERE, "mop_face_validation_out.json")
 #                                                                             #
 # WHAT IS STILL GUARDED, because this is a backstop and not a removal: a point #
 # facing the far side of a headland or the inside of a harbour arm, where no    #
-# swell can reach both. DISTANCE IS THE BETTER GUARD FOR THE REST and is NOT   #
-# yet enforced here — see match_verdict, which records match_distance_m per    #
-# spot for exactly that. Bolinas is the standing example: 73 deg passes this   #
-# gate, but its MOP point is 2.4 km away across a curving coast, which is an   #
-# independent reason to doubt the pairing.                                     #
+# swell can reach both. DISTANCE IS THE BETTER GUARD FOR THE REST, and it is   #
+# now enforced — see MATCH_SEPARATION_M below. Bolinas was the standing        #
+# example for leaving it unenforced: 73 deg passes this angle gate, but its    #
+# MOP point is reportedly 2.4 km away across a curving coast. That is the pair #
+# the separation gate now rejects.                                             #
 FACE_SHORE_NORMAL_MAX_DELTA = 90.0
+
+# --------------------------------------------------------------------------- #
+# THIS CONSTANT IS EMPIRICAL, NOT PHYSICAL. That is the first thing to know    #
+# about it, and the reason every paragraph below is about a measurement        #
+# rather than about geometry.                                                  #
+#                                                                             #
+# FACE_SHORE_NORMAL_MAX_DELTA has a derivation: 90 deg is where the dot        #
+# product of two seaward unit vectors changes sign, which is a property of the #
+# geometry and would be the same number on any coast in any dataset. THIS      #
+# CONSTANT HAS NO SUCH ARGUMENT AND SHOULD NOT BE GIVEN ONE. There is no       #
+# distance at which a MOP point stops sampling the break's sea state; exposure #
+# decorrelates gradually and continuously, and nothing in the physics puts a   #
+# step anywhere. 2200 m is a cut placed in the widest gap of one observed      #
+# distribution. Argue it from that measurement, revise it when the measurement #
+# changes, and do not round it to 2000 because 2000 looks tidier.              #
+#                                                                             #
+# THE MEASUREMENT, AND WHY NOTHING HERE CAN CHECK IT. Every figure in this     #
+# block was measured off-repo, on the author's machine, against               #
+# scripts/mop_points.json. That cache is gitignored and absent from any clone; #
+# _match cannot run without it, so neither CI nor a reviewer can recompute a   #
+# single one of these numbers. They are recorded as REPORTED MEASUREMENTS, not #
+# as facts this repository can verify, and deliberately NO TEST ASSERTS THEM.  #
+# The tests pin the gate's behaviour at given distances, which is checkable;   #
+# they do not pin any spot's actual distance, which is not.                    #
+#                                                                             #
+#   Separation across the full population, before the is_valid_surf_spot       #
+#   filter landed:  p50 648 m   p75 888 m   p90 1340 m   p95 1623 m            #
+#                   p99 2753 m.  Ten spots exceeded 1500 m.                    #
+#   The sorted tail of the current 152-spot population:                        #
+#     2753, 2439, 2426, 2074, 1794, 1663, 1623, 1535, 1530, 1448               #
+#                                                                             #
+# WHY 2200. Adjacent gaps through that tail run 20-130 m, with one exception:  #
+# 2074 -> 2426 is a 352 m jump, roughly three times any other gap in the       #
+# region. Any cut inside (2074, 2426) separates exactly the same three spots,  #
+# so what the data supports is a RANGE, and 2200 is a point inside it rather   #
+# than a threshold the data singles out.                                       #
+#                                                                             #
+# THIS IS GAP-FITTING, WHICH THE ANGLE GATE ABOVE EXPLICITLY REJECTED, and the #
+# difference is worth stating rather than hoping nobody notices. There, 60 deg #
+# was declined for sitting in the gap between 52 and 66 — "move one spot and   #
+# the gap moves" — because a NON-empirical alternative existed and was better. #
+# Here no such alternative exists. Gap-fitting is not being preferred over a   #
+# principled cut; it is the only method available, and it inherits the same    #
+# fragility, which is why the provenance above is recorded in this much detail #
+# and why the successor below matters.                                         #
+#                                                                             #
+# WHY THIS IS NOT MATCH_FALLBACK_M (1200 m) FROM mop_handful_slice. Two        #
+# reasons. The first is in that constant's own comment, at                     #
+# mop_handful_slice.py:73-75: "MOP points sit on the 10 m contour, legitimately#
+# 0.5-1.5 km offshore, so we only HARD-disqualify beyond ~1.2 km." By its own  #
+# account a standoff of up to 1.5 km is NORMAL, so 1200 m does not separate    #
+# sound pairings from unsound ones — it clips the top off the healthy          #
+# distribution.                                                                #
+# The percentiles agree: 1200 m falls between p75 (888) and p90 (1340), so it  #
+# would cut somewhere between a tenth and a quarter of the population, against #
+# 3 of 152 here. Second, it is the wrong KIND of constant. MATCH_FALLBACK_M is #
+# a PUBLISHING threshold on the adoption path, deciding whether MOP may become #
+# a spot's source; this is a PAIRING test, deciding whether two measurements   #
+# describe the same water. Borrowing it would repeat precisely the error the   #
+# 35-deg shore-normal gate made on this path — importing a constant calibrated #
+# for adoption into a harness that only references.                            #
+#                                                                             #
+# THE KNOWN WEAKNESS, WHICH IS NOT SMALL. Distance is a scalar and the defect  #
+# is directional. 2.4 km straight out to sea and 2.4 km along the coast are    #
+# different failures with different costs, and this gate cannot tell them      #
+# apart: both survive together or are cut together, on a number that says      #
+# nothing about which one occurred. Toes Over and New Brighton Reef make it    #
+# concrete. They sit 1.27 km apart in a straight line on the same stretch of   #
+# Santa Cruz coast — that one figure IS checkable, computed from their roster  #
+# coordinates — yet their reported separations are 2074 m and 2753 m, so this  #
+# gate keeps one and drops the other. Nothing about the coastline justifies    #
+# splitting that pair; the cut falls between them because of where their       #
+# nearest cache points happen to lie.                                          #
+#                                                                             #
+# A BEARING TEST IS THE INTENDED SUCCESSOR: comparing the spot-to-point        #
+# bearing against the break's own shore normal separates offshore standoff     #
+# from alongshore drift, which is the distinction this constant is blind to.   #
+# WHEN IT LANDS, REVISIT THIS NUMBER. A gate that can tell those two apart may #
+# want a larger distance allowance, or may not need one at all.                #
+MATCH_SEPARATION_M = 2200.0
 
 DEFAULT_DAYS_BACK = 14
 
@@ -647,7 +729,8 @@ def shore_normal_delta(orientation_deg, shore_normal):
 def match_verdict(dist_m, sn_delta):
     """(accepted, reason). The REFERENCING gate, not the adoption gate.
 
-    Two checks only: MATCH_SANITY_M (is there a MOP point near this spot at all) and
+    Three checks: MATCH_SANITY_M (is there a MOP point near this spot at all),
+    MATCH_SEPARATION_M (is it near enough to be sampling the same water) and
     FACE_SHORE_NORMAL_MAX_DELTA (does that point face water the break's swell can reach).
     The buoy cross-check from mop_handful_slice.verdict is DELIBERATELY NOT APPLIED: it
     exists to license PUBLISHING from MOP, and every spot it rejects is one whose face is
@@ -656,19 +739,23 @@ def match_verdict(dist_m, sn_delta):
     THE ANGLE GATE HERE IS 90, NOT THE ADOPTION PATH'S 35 — see
     FACE_SHORE_NORMAL_MAX_DELTA for why the two differ and why they must keep differing.
 
-    MATCH_FALLBACK_M (1200 m) is likewise not applied. It is a publishing threshold; a
-    point 1.5 km along the same contour is still a fair reference. The distance is
-    recorded per spot instead, so it can be used as a filter at analysis time.
+    THE DISTANCE GATE HERE IS 2200 m, NOT THE ADOPTION PATH'S MATCH_FALLBACK_M (1200 m)
+    — see MATCH_SEPARATION_M for the measurement it comes from, for why borrowing 1200
+    would repeat the 35-deg mistake, and for the directional blindness it still carries.
 
-    DISTANCE IS NOW THE WEAKEST LINK, and deliberately still unenforced. With the angle
-    relaxed to a physical backstop, the remaining reason to doubt a pairing is geometric
-    separation, not aspect: Bolinas passes at 73 deg with its MOP point 2.4 km away across
-    a curving coast. Enforcing a distance cap here is a live proposal, not an oversight —
-    it is left out of this change so that relaxing the angle and tightening the distance do
-    not land in one commit and become impossible to attribute.
+    WHY BOTH DISTANCE CHECKS STAY, AND IN THIS ORDER. Every spot the 25 km sanity cap
+    rejects would also fail the 2.2 km separation gate, so the cap no longer does
+    independent GATING work. It does DIAGNOSTIC work, which is why it is still first:
+    "nearest MOP point 31.4 km away" says the cache has no coverage for this stretch of
+    coast, while "nearest MOP point 2753 m away" says there is coverage and this
+    particular pairing is too loose. Those are different problems with different fixes,
+    and collapsing them would report a coverage hole as a pairing complaint.
     """
     if dist_m > MATCH_SANITY_M:
         return False, f"nearest MOP point {dist_m / 1000:.1f} km away (> {MATCH_SANITY_M / 1000:.0f} km)"
+    if dist_m > MATCH_SEPARATION_M:
+        return False, (f"nearest MOP point {dist_m:.0f} m away "
+                       f"(> {MATCH_SEPARATION_M:.0f} m separation gate)")
     if sn_delta is None:
         return False, "no orientation_deg or no metaShoreNormal to compare"
     if sn_delta > FACE_SHORE_NORMAL_MAX_DELTA:
@@ -833,6 +920,8 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             rejected.append({**rec, "reason": why})
     print(f"matched: {len(matched)} accepted, {len(rejected)} rejected "
           f"(MATCH_SANITY_M={MATCH_SANITY_M / 1000:.0f} km, "
+          f"MATCH_SEPARATION_M={MATCH_SEPARATION_M:.0f} m — empirical, see its comment; "
+          f"the adoption path's MATCH_FALLBACK_M={MATCH_FALLBACK_M:.0f} m NOT applied; "
           f"FACE_SHORE_NORMAL_MAX_DELTA={FACE_SHORE_NORMAL_MAX_DELTA:.0f} deg — this path "
           f"reads scalar waveHs only; the adoption path keeps "
           f"SHORE_NORMAL_MAX_DELTA={SHORE_NORMAL_MAX_DELTA:.0f} deg; "
@@ -989,6 +1078,18 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
             # FACE_SHORE_NORMAL_MAX_DELTA for why they differ.
             "FACE_SHORE_NORMAL_MAX_DELTA": FACE_SHORE_NORMAL_MAX_DELTA,
             "adoption_path_SHORE_NORMAL_MAX_DELTA": SHORE_NORMAL_MAX_DELTA,
+            # Same treatment for the distance pair, for the same reason. The run report
+            # is the only artifact that survives the run, so a later reader must be able
+            # to tell WHICH gate produced a rejection without rereading this file.
+            "MATCH_SEPARATION_M": MATCH_SEPARATION_M,
+            "MATCH_SEPARATION_M_basis": (
+                "EMPIRICAL, not physical: placed in the 2074-2426 m gap of an "
+                "externally measured separation distribution. Not reproducible from a "
+                "clone — scripts/mop_points.json is gitignored. See the constant's "
+                "comment for the measurement and for its directional blindness."
+            ),
+            "adoption_path_MATCH_FALLBACK_M": MATCH_FALLBACK_M,
+            "adoption_path_MATCH_FALLBACK_M_applied": False,
             "buoy_adoption_gate_applied": False,
         },
         "population": {"selected": len(pop), "matched": len(matched),
@@ -1227,10 +1328,23 @@ def run_selftest():
 
     # --- the referencing gate ------------------------------------------------ #
     check("close match, aligned shore normal -> accepted", match_verdict(600.0, 10.0)[0] is True)
-    check("a 5 km match is still accepted (MATCH_FALLBACK_M is a PUBLISHING gate)",
-          match_verdict(5000.0, 10.0)[0] is True)
+    check("a 5 km match is now REJECTED on separation, however good its angle",
+          match_verdict(5000.0, 10.0)[0] is False)
     check("beyond MATCH_SANITY_M -> rejected",
           match_verdict(MATCH_SANITY_M + 1.0, 10.0)[0] is False)
+    # LITERALS, NOT THE CONSTANT, for the same reason as the angle checks below.
+    check("2200 m exactly -> accepted (the gate is inclusive at its own boundary)",
+          match_verdict(2200.0, 10.0)[0] is True)
+    check("2200.1 m -> rejected", match_verdict(2200.1, 10.0)[0] is False)
+    check("1300 m -> accepted; this is NOT the adoption path's 1200 m",
+          match_verdict(1300.0, 10.0)[0] is True)
+    check("the separation gate is 2200, and MATCH_FALLBACK_M is untouched at 1200",
+          MATCH_SEPARATION_M == 2200.0 and MATCH_FALLBACK_M == 1200.0)
+    check("a far match reports separation, not the 25 km sanity cap",
+          "separation gate" in match_verdict(2753.0, 10.0)[1])
+    check("a truly absurd match still reports the sanity cap, not separation",
+          "km away" in match_verdict(31_400.0, 10.0)[1]
+          and "separation gate" not in match_verdict(31_400.0, 10.0)[1])
     # LITERALS, NOT THE CONSTANT. Writing these as SHORE_NORMAL_MAX_DELTA +/- 0.1 made them
     # true for any value of the constant, so they could not catch the gate being moved.
     check("shore-normal delta beyond the threshold -> rejected",
