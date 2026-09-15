@@ -287,16 +287,26 @@ def test_the_default_input_matches_the_harness_output_constant():
 
 def test_nothing_in_the_tree_writes_the_legacy_name():
     """The premise of the change. If some script starts writing mop_spread.json, the
-    default should be reconsidered rather than left pointing elsewhere."""
+    default should be reconsidered rather than left pointing elsewhere.
+
+    THE WHITELIST INCLUDES THIS FILE, and that is not a fudge — it is the self-reference
+    every grep-for-a-string test has. The name appears here in the search term and in the
+    whitelist itself, so `git grep` finds this file the moment it is tracked. It was
+    written with the whitelist omitting itself, passed while the file was still untracked,
+    and went red on main as soon as it was committed. Recorded rather than quietly
+    patched: an assertion whose own source satisfies its search pattern is a shape to
+    recognise, not a one-off slip.
+    """
     import subprocess
 
     out = subprocess.run(["git", "grep", "-l", "mop_spread.json", "--",
                           "scripts/", "pipeline/"],
                          cwd=ROOT, capture_output=True, text=True).stdout.split()
-    # Mentioned in prose by these two; written by neither.
+    # Mentioned in prose or as a search term by these; WRITTEN by none of them.
     assert set(out) <= {"scripts/build_face_factors.py",
                         "scripts/mop_face_validation.py",
-                        "pipeline/data/spot_face_factors.json"}, out
+                        "pipeline/data/spot_face_factors.json",
+                        "pipeline/tests/test_face_factor_provenance_build.py"}, out
 
 
 def test_a_stale_artifact_is_refused():
