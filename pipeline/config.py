@@ -1,4 +1,21 @@
 """Pipeline constants: endpoints, user agent, rate limits, thresholds."""
+# REQUIRED FOR PYTHON 3.9, WHICH IS WHERE THIS CODE ACTUALLY RUNS. tide_source_rank and
+# tide_source_may_overwrite annotate `str | None` (PEP 604), which 3.9 PARSES but cannot
+# EVALUATE — the annotation is computed at def-time and raises
+#     TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+# taking config.py down at import, and with it interpret.py, mop_blacks_slice.py and
+# scripts/mop_face_validation.py. It shipped because CI runs 3.12 and the dev container
+# 3.11, so every machine that tested it accepted the syntax and the one machine that runs
+# the harness did not.
+#
+# THE OTHER 44 FILES USING PEP 604 ALREADY CARRY THIS LINE. config.py was the only one
+# without it, which is why it was the only one that broke. The rescue is exact and
+# limited: PEP 563 makes ANNOTATIONS strings, so they are never evaluated. It does NOT
+# rescue a union in a runtime position — a default value, a typing.cast argument, a
+# TypeAlias right-hand side or an isinstance check still raises on 3.9. There are
+# currently zero of those in the repo and a test now keeps it that way.
+from __future__ import annotations
+
 from pathlib import Path
 
 USER_AGENT = "StormyPetrel-Pipeline/0.1 (+https://stormypetrel.surf)"
