@@ -1003,8 +1003,15 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
         if fr is None or er is None:
             print(f"{label}  {joined}  (no usable ratio this window)", flush=True)
         else:
+            # READ IT OFF THE ENTRY, not from a local. `blocked` was a local of this loop
+            # until 89f4e74 moved the arithmetic into summarise_spot; the binding went
+            # with it and this reference did not, leaving a LOAD_GLOBAL for a name bound
+            # nowhere. Every run that reached a spot with a usable ratio — the ordinary
+            # case, i.e. the first one — died here with NameError, and nothing noticed
+            # for thirteen days because run() needs Supabase and a CDIP read, so no test
+            # and no selftest can reach it.
             print(f"{label}  {joined}  face x{fr:5.2f}  eff x{er:5.2f}  "
-                  f"blocked {len(blocked):3d}", flush=True)
+                  f"blocked {entry['blocked_hours']['n']:3d}", flush=True)
     print(f"  MOP sweep done in {time.time() - t_start:.0f}s", flush=True)
 
     # --- aggregate -----------------------------------------------------------
