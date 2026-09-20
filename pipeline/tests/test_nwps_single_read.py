@@ -285,8 +285,21 @@ def test_interpret_overrides_from_the_artifact_it_rated_from():
     default NWPS_FORECAST_FILE carries hs 9.0 (face 9.0 * 1.175 * 3.281 = 34.6963 -> 34.70).
     """
     from pipeline import interpret
+    from pipeline.forecast import face_correction as fc
 
     saved_file = nn.NWPS_FORECAST_FILE
+    # THE ONE-SPOT ROSTER BELOW IS WHY THIS HAS TO BE REDIRECTED. interpret calls
+    # validate_factor_slugs, which raises when any slug in the committed factor file
+    # matches no spot in the roster it was handed — and this fixture's roster is a single
+    # synthetic spot, so all 130 committed slugs miss and the guard fires. That is the
+    # guard working as designed on a fixture, not a defect in it: the file and the roster
+    # really do disagree here. Pointing at an absent factors file makes load_face_factors
+    # return {} and the check a no-op, which is what this test wants anyway — it is about
+    # --nwps artifact identity, and face correction is incidental to it. The module global
+    # is resolved inside load_face_factors' body precisely so a test can do this; see its
+    # docstring. The expected face_ft is unchanged either way, because spot "t" appears in
+    # no factor file.
+    saved_factors = fc.SPOT_FACE_FACTORS_FILE
     tmp = Path(tempfile.mkdtemp())
     spot = dict(_spot(), slug="t", lat=33.0, lon=-118.0)
     (tmp / "spots.json").write_text(json.dumps([spot]))
@@ -294,6 +307,7 @@ def test_interpret_overrides_from_the_artifact_it_rated_from():
     (tmp / "decoy.json").write_text(json.dumps({"T": [dict(ARTIFACT_ENTRY, hs=9.0)]}))
     (tmp / "tides.json").write_text(json.dumps({}))
     try:
+        fc.SPOT_FACE_FACTORS_FILE = tmp / "no_such_factors.json"
         nn.NWPS_FORECAST_FILE = tmp / "decoy.json"
         # main() calls logging.basicConfig itself, so silencing the root logger would not
         # survive the call; disable() outranks it and is restored below.
@@ -307,6 +321,7 @@ def test_interpret_overrides_from_the_artifact_it_rated_from():
     finally:
         logging.disable(logging.NOTSET)
         nn.NWPS_FORECAST_FILE = saved_file
+        fc.SPOT_FACE_FACTORS_FILE = saved_factors
         for f in tmp.iterdir():
             f.unlink()
         tmp.rmdir()
@@ -315,6 +330,8 @@ def test_interpret_overrides_from_the_artifact_it_rated_from():
     assert e["swell_source"] == "nwps", e
     assert e["face_ft"] == 7.71, e["face_ft"]      # 2.0 from --nwps, not 9.0 from the decoy
     assert e["hs"] == 2.0, e["hs"]                 # ...and the published hs is that same 2.0
+    # The redirect is restored, so no later test inherits an absent factors file.
+    assert fc.SPOT_FACE_FACTORS_FILE == saved_factors
 
 
 def test_the_stats_dict_keeps_every_pre_existing_key():
