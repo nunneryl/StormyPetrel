@@ -26,6 +26,7 @@ authority.
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -375,11 +376,164 @@ def test_named_holdouts_are_excluded_from_crossings_in_BOTH_directions():
     assert [x["slug"] for x in r["holdout"]["kept_to_held"]] == []
 
 
-def test_a_named_holdout_that_moved_is_flagged_as_impossible():
+def test_a_named_holdout_that_moved_BETWEEN_MAPS_is_flagged_as_impossible():
+    """Present on both sides, in different maps. HELD_OUT is consulted before the spread
+    rule, so a named spot can never be written to `factors` — this one really is a bug."""
     old = _doc({}, {"rincon": _named(0.62)}, GATES_NEW)
     new = _doc({"rincon": _kept(0.62)}, {}, GATES_NEW)
+    r = _cmp(old, new)
+    (row,) = [x for x in r["holdout"]["named"] if x["slug"] == "rincon"]
+    assert row["impossible"] is True
+    assert row["status"] == "moved between maps"
+    assert "should be impossible" in D.render(r)
+
+
+def test_a_named_holdout_ABSENT_FROM_THE_NEW_FILE_left_the_population():
+    """THE fort-point CASE, and it is not an impossibility.
+
+    fort-point is in HELD_OUT, yet it vanished from the new file because the HARNESS
+    rejected it upstream on "no orientation_deg or no metaShoreNormal" — its MOP point's
+    shore normal reads as absent since the masked-scalar fix, which is that fix working.
+    The named list only pins what happens to a spot that REACHES the builder; it says
+    nothing about whether the spot gets there. Calling this impossible sent a reader
+    hunting for a bug in the hold-out machinery.
+    """
+    old = _doc({}, {"fort-point": _named(3.08)}, GATES_NEW)
+    new = _doc({"a": _kept(2.0)}, {}, GATES_NEW)
+    r = _cmp(old, new)
+    (row,) = [x for x in r["holdout"]["named"] if x["slug"] == "fort-point"]
+    assert row["impossible"] is False
+    assert row["status"] == "left the population"
+    assert row["old"] == "held_out" and row["new"] == "absent"
+
+    text = D.render(r)
+    assert "LEFT THE POPULATION" in text
+    assert "see section 2" in text
+    assert "should be impossible" not in text
+
+    # ...and it is genuinely in section 2, which is where the reader is being sent.
+    assert [x["slug"] for x in r["membership"]["left"]] == ["fort-point"]
+
+
+def test_a_named_holdout_in_NEITHER_file_did_not_leave_anything():
+    """Absent on both sides is not a departure, and the distinction is not academic: the
+    named list has three slugs and a run that never generated any of them would otherwise
+    report three spots as having left a population they were never in. Found by rehearsing
+    the tool against two files that shared no named hold-out."""
+    r = _cmp(_doc({"a": _kept(2.0)}, {}, GATES_NEW),
+             _doc({"a": _kept(2.0)}, {}, GATES_NEW))
+    (row,) = [x for x in r["holdout"]["named"] if x["slug"] == "fort-point"]
+    assert row["old"] == "absent" and row["new"] == "absent"
+    assert row["status"] == "absent from both"
+    assert row["impossible"] is False
+    text = D.render(r)
+    assert "in neither file" in text
+    assert "LEFT THE POPULATION" not in text
+    # Nothing left and nothing entered, so section 2 has nothing to point at either.
+    assert r["membership"]["left"] == [] and r["membership"]["entered"] == []
+
+
+def test_a_named_holdout_that_ENTERS_is_a_membership_change_too():
+    """The converse direction, so the rule is 'absent on either side', not 'absent in the
+    new file'."""
+    old = _doc({"a": _kept(2.0)}, {}, GATES_NEW)
+    new = _doc({}, {"rincon": _named(0.62)}, GATES_NEW)
+    r = _cmp(old, new)
+    (row,) = [x for x in r["holdout"]["named"] if x["slug"] == "rincon"]
+    assert row["impossible"] is False
+    assert row["status"] == "entered"
+    assert "should be impossible" not in D.render(r)
+
+
+def test_an_unchanged_named_holdout_is_flagged_as_nothing():
+    old = new = _doc({}, {"rincon": _named(0.62)}, GATES_NEW)
+    (row,) = [x for x in _cmp(old, new)["holdout"]["named"] if x["slug"] == "rincon"]
+    assert row["status"] == "unchanged" and row["impossible"] is False
+
+
+def test_the_named_section_says_what_the_list_does_not_pin():
+    """The sentence that would have saved the reader the hunt."""
+    text = D.render(_cmp(_doc({}, {"rincon": _named(0.62)}, GATES_NEW),
+                         _doc({}, {"rincon": _named(0.62)}, GATES_NEW)))
+    assert "REACHES the builder, not whether it does" in text
+
+
+# --------------------------------------------------------------------------- #
+# The drift histogram: exclusive ranges, ordered, with a cumulative column.    #
+# --------------------------------------------------------------------------- #
+
+def _bands_for(ratios):
+    """The band rows for a synthetic set of new/old ratios."""
+    old = _doc({f"s{i}": _kept(1.0) for i in range(len(ratios))}, {}, GATES_NEW)
+    new = _doc({f"s{i}": _kept(round(r, 4)) for i, r in enumerate(ratios)}, {}, GATES_NEW)
+    return _cmp(old, new)["drift"]["bands"]
+
+
+def test_the_bands_are_an_ordered_list_widest_last():
+    """A dict ordered them lexicographically, so a real run printed 10%, 25%, 5%, 50%.
+    Order is part of the meaning, so it is a list and the upper edges ascend."""
+    bands = _bands_for([1.02, 1.07, 1.2, 1.4, 2.0])
+    assert isinstance(bands, list)
+    labels = [b["label"] for b in bands]
+    assert labels == ["0-5%", "5-10%", "10-25%", "25-50%", "beyond 50%"]
+    uppers = [b["upper_pct"] for b in bands[:-1]]
+    assert uppers == sorted(uppers)
+    assert bands[-1]["upper_pct"] is None
+
+
+def test_the_labels_are_ranges_not_the_misleading_within():
+    """"within +/-10%" named a bucket holding 5-10% only, so a reader took 35 for the
+    number that moved under 10% when 97 had."""
+    for b in _bands_for([1.02, 1.07]):
+        assert "within" not in b["label"], b
+
+
+def test_the_bands_are_exclusive_and_sum_to_the_population():
+    bands = _bands_for([1.01, 1.02, 1.07, 1.2, 1.4, 2.0])
+    assert sum(b["total"] for b in bands) == 6
+    assert [b["total"] for b in bands] == [2, 1, 1, 1, 1]
+
+
+def test_the_cumulative_column_is_the_running_total():
+    """The reading the old labels implied but did not provide."""
+    bands = _bands_for([1.01, 1.02, 1.07, 1.2, 1.4, 2.0])
+    assert [b["cumulative"] for b in bands] == [2, 3, 4, 5, 6]
+    assert bands[-1]["cumulative"] == sum(b["total"] for b in bands)
+
+
+def test_each_band_still_carries_its_direction_split():
+    bands = _bands_for([1.02, 1 / 1.02, 1.07])
+    tight = bands[0]
+    assert tight["total"] == 2 and tight["up"] == 1 and tight["down"] == 1
+    assert bands[1]["total"] == 1 and bands[1]["up"] == 1
+
+
+def test_the_rendered_table_is_in_order_and_shows_the_cumulative_column():
+    old = _doc({f"s{i}": _kept(1.0) for i in range(4)}, {}, GATES_NEW)
+    new = _doc({"s0": _kept(1.02), "s1": _kept(1.07), "s2": _kept(1.2),
+                "s3": _kept(2.0)}, {}, GATES_NEW)
     text = D.render(_cmp(old, new))
-    assert "should be impossible" in text
+    for label in ("0-5%", "5-10%", "10-25%", "beyond 50%"):
+        assert label in text, label
+    assert "cum" in text
+    assert "within +/-" not in text
+    # widest last, in the rendered order
+    positions = [text.index(lbl) for lbl in ("0-5%", "5-10%", "10-25%", "beyond 50%")]
+    assert positions == sorted(positions)
+
+    # THE NUMBERS ON THE PAGE, not just the headings. Checking labels and order alone let
+    # a mutant that printed the band total in the `cum` column survive — and the cum
+    # column is the entire point of the change, since it is what a reader was getting
+    # wrong when "within +/-10%: 35" made 35 look like the count below 10%.
+    #
+    # Expected by hand from the four ratios above (1.02, 1.07, 1.2, 2.0), NOT from
+    # compare_drift: one spot each in 0-5%, 5-10%, 10-25% and beyond 50%, none in
+    # 25-50%. Running total 1, 2, 3, 3, 4.
+    rows = re.findall(r"^\s+((?:\d+(?:\.\d+)?-\d+(?:\.\d+)?%)|(?:beyond \S+))\s+"
+                      r"(\d+)\s+(\d+)\s", text, re.M)
+    assert [(lbl, int(n), int(cum)) for lbl, n, cum in rows] == [
+        ("0-5%", 1, 1), ("5-10%", 1, 2), ("10-25%", 1, 3),
+        ("25-50%", 0, 3), ("beyond 50%", 1, 4)]
 
 
 # --------------------------------------------------------------------------- #

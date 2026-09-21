@@ -320,13 +320,44 @@ def compare_drift(old, new, both_kept):
     n_down = sum(1 for r in rows if r["ratio"] < 1.0)
     n_flat = sum(1 for r in rows if r["ratio"] == 1.0)
 
-    bands = {}
+    # AN ORDERED LIST OF EXCLUSIVE RANGES, NOT A DICT KEYED BY "within +/-N%".
+    #
+    # The old labels said "within +/-10%" for a bucket that actually held 5%-10% only, and
+    # a dict ordered them lexicographically, so a real run printed
+    #     within +/-10%  35 / within +/-25%  30 / within +/-5%  62 / within +/-50%  1
+    # Two defects in four lines: "within" reads as cumulative, so 35 looks like the number
+    # of spots that moved under 10% when the true figure is 97; and 5% sorts after 25%
+    # because "5" > "2" as text. A reader who trusts either reading gets the stability
+    # answer backwards, which is the one question this tool exists to inform.
+    #
+    # The ranges are exclusive and the cumulative count is carried alongside, so both
+    # readings are available and neither has to be inferred. A list rather than a dict
+    # because the ORDER IS PART OF THE MEANING and a dict does not promise it to a JSON
+    # consumer.
+    edges = list(_BANDS)
+    counters = {edge: {"total": 0, "up": 0, "down": 0, "flat": 0}
+                for edge in edges + [None]}
     for r in rows:
-        edge = band_of(r["ratio"])
-        key = f"within +/-{int(edge * 100)}%" if edge else f"beyond +/-{int(_BANDS[-1] * 100)}%"
-        bucket = bands.setdefault(key, {"total": 0, "up": 0, "down": 0, "flat": 0})
+        bucket = counters[band_of(r["ratio"])]
         bucket["total"] += 1
         bucket["up" if r["ratio"] > 1 else "down" if r["ratio"] < 1 else "flat"] += 1
+
+    bands, running = [], 0
+    for i, edge in enumerate(edges + [None]):
+        c = counters[edge]
+        running += c["total"]
+        lower = 0.0 if i == 0 else edges[i - 1]
+        if edge is None:
+            label = f"beyond {edges[-1] * 100:g}%"
+        else:
+            label = f"{lower * 100:g}-{edge * 100:g}%"
+        bands.append({
+            "label": label,
+            "lower_pct": lower * 100,
+            "upper_pct": None if edge is None else edge * 100,
+            **c,
+            "cumulative": running,
+        })
 
     movers = sorted(rows, key=lambda r: abs(math.log(r["ratio"])), reverse=True)
     return {
@@ -406,12 +437,46 @@ def compare_holdout(old, new, present_in_both):
 
     named_rows = []
     for slug in named:
+        where_old = ("held_out" if slug in old["held"] else
+                     "factors" if slug in old["kept"] else "absent")
+        where_new = ("held_out" if slug in new["held"] else
+                     "factors" if slug in new["kept"] else "absent")
+        # WHAT THE NAMED LIST ACTUALLY PINS, AND WHAT IT DOES NOT.
+        #
+        # HELD_OUT is consulted by classify() and only ever moves a spot that REACHED the
+        # builder from `factors` into `held_out`. It says nothing about whether the spot
+        # reaches the builder at all — the harness decides that, upstream, and can drop a
+        # spot for reasons the named list has never heard of.
+        #
+        # fort-point is the case that exposed this. It is named, yet it vanished from the
+        # new file because the harness rejected it on "no orientation_deg or no
+        # metaShoreNormal": its MOP point's shore normal now reads as ABSENT rather than
+        # as a fabricated 0.0, which is the masked-scalar fix working as intended. That is
+        # a MEMBERSHIP change — it is already listed under section 2 — and calling it
+        # impossible sent a reader looking for a bug in the hold-out machinery instead.
+        #
+        # So an absent side is a population change and points at section 2. Only a move
+        # BETWEEN the two maps, with the spot present on both sides, is impossible: a
+        # named spot can never be written to `factors`.
+        #
+        # ABSENT FROM BOTH IS ITS OWN ANSWER, not a departure. Calling it "left the
+        # population" would report a loss that never happened — the spot was in neither
+        # file, so nothing about it changed, and a reader chasing the loss finds nothing.
+        if where_old == where_new == "absent":
+            status = "absent from both"
+            impossible = False
+        elif "absent" in (where_old, where_new):
+            status = "left the population" if where_new == "absent" else "entered"
+            impossible = False
+        elif where_old != where_new:
+            status = "moved between maps"
+            impossible = True
+        else:
+            status = "unchanged"
+            impossible = False
         named_rows.append({
-            "slug": slug,
-            "old": ("held_out" if slug in old["held"] else
-                    "factors" if slug in old["kept"] else "absent"),
-            "new": ("held_out" if slug in new["held"] else
-                    "factors" if slug in new["kept"] else "absent"),
+            "slug": slug, "old": where_old, "new": where_new,
+            "status": status, "impossible": impossible,
         })
     return {
         "kept_to_held": [crossing(s, "kept -> held_out") for s in kept_to_held],
@@ -559,11 +624,13 @@ def render(report):
         w("   A balance near zero with a wide spread is CHURN IN BOTH DIRECTIONS.")
         w("   A balance far from zero, or a median ratio away from 1.0, is ONE-WAY DRIFT.")
         w("")
-        w("   distribution (bands are symmetric in ratio space: r and 1/r share a band)")
-        for key in sorted(d["bands"], key=lambda k: (k.startswith("beyond"), k)):
-            b = d["bands"][key]
-            w(f"     {key:<22} {b['total']:4d}   ({b['up']} up, {b['down']} down, "
-              f"{b['flat']} unchanged)")
+        w("   distribution — EXCLUSIVE ranges, widest last. `cum` is the running total,")
+        w("   i.e. the number of spots that moved by LESS than that band's upper edge.")
+        w("   Bands are symmetric in ratio space: r and 1/r share a band.")
+        w(f"     {'range':<14} {'n':>4} {'cum':>5}   direction")
+        for b in d["bands"]:
+            w(f"     {b['label']:<14} {b['total']:4d} {b['cumulative']:5d}   "
+              f"({b['up']} up, {b['down']} down, {b['flat']} unchanged)")
         if d["largest_movers"]:
             w("")
             w("   largest movers")
@@ -630,9 +697,20 @@ def render(report):
     w("")
     w("   NAMED hold-outs, reported separately — hardcoded by slug, cannot churn.")
     w("   Mixing them in would inflate the apparent stability of the spread filter.")
+    w("   They pin what happens to a spot that REACHES the builder, not whether it does —")
+    w("   the harness can drop one upstream for reasons this list never sees.")
     for r in h["named"]:
-        flag = "" if r["old"] == r["new"] else "   <-- MOVED, which should be impossible"
-        w(f"     {r['slug']:<30} old {r['old']:<9} new {r['new']}{flag}")
+        if r["impossible"]:
+            flag = "   <-- MOVED BETWEEN MAPS, which should be impossible"
+        elif r["status"] == "left the population":
+            flag = "   <-- LEFT THE POPULATION (not a hold-out failure) — see section 2"
+        elif r["status"] == "entered":
+            flag = "   <-- entered the population — see section 2"
+        elif r["status"] == "absent from both":
+            flag = "   <-- in neither file; nothing changed for it"
+        else:
+            flag = ""
+        w(f"     {r['slug']:<30} old {r['old']:<9} new {r['new']:<9}{flag}")
 
     w("")
     w("-" * 78)
