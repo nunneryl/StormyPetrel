@@ -327,13 +327,57 @@ def test_the_future_import_does_NOT_rescue_a_runtime_position():
         assert "does NOT rescue" in got[0][2], got
 
 
+def _parses_here(src):
+    """Can the RUNNING interpreter parse this source?
+
+    THE TESTS BELOW BRANCH ON CAPABILITY, NOT ON sys.version_info, and that distinction is
+    the whole point of this helper. A version-floor test that only passes on interpreters
+    ABOVE the floor is not testing the floor — and that is exactly what shipped: two tests
+    fed `match` to the scanner and asserted the message "match statement is 3.10+", which
+    only appears when the parser accepted the syntax in the first place. On 3.9, the floor
+    itself, ast.parse raises and the scanner correctly reports `does not parse` instead, so
+    the tests failed on the one interpreter they were written to protect.
+
+    Asking the parser rather than the version number also means this keeps working when
+    the floor moves: nothing here has to be updated to know what 3.13 can parse.
+    """
+    try:
+        ast.parse(src)
+        return True
+    except SyntaxError:
+        return False
+
+
+MATCH_SRC = "def f(x):\n    match x:\n        case 1:\n            return 2\n"
+EXCEPT_STAR_SRC = ("def f():\n    try:\n        pass\n"
+                   "    except* ValueError:\n        pass\n")
+
+
+def _assert_refused_as_syntax(src, label):
+    """The construct is refused as SYNTAX, by whichever route this interpreter can take.
+
+    A SEPARATE HELPER SO THE SIMULATION BELOW CAN RUN IT UNDER AN OLDER PARSER. Left
+    inline, this logic would only ever execute on the branch the running interpreter
+    happens to take, and the 3.9 branch would ship untested from a 3.11 container — which
+    is how the original version of these tests reached a Mac it had never run on.
+    """
+    got = _scan_src(src)
+    assert got, f"{label} produced no finding at all"
+    assert got[0][0] == "SYNTAX", got
+    if _parses_here(src):
+        # This interpreter understands the syntax, so the NAMED rule must be what fired —
+        # "does not parse" here would mean the version rule had gone missing.
+        assert label in got[0][2], got
+    else:
+        # This interpreter is older than the construct. Refusing to parse is the correct
+        # and stronger outcome; the named rule cannot fire and must not be demanded.
+        assert "does not parse" in got[0][2], got
+
+
 def test_match_and_except_star_are_syntax_findings():
-    """These do not even parse on 3.9, so they are a different and worse category."""
-    got = _scan_src("def f(x):\n    match x:\n        case 1:\n            return 2\n")
-    assert got[0][0] == "SYNTAX" and "match" in got[0][2], got
-    got = _scan_src("def f():\n    try:\n        pass\n"
-                    "    except* ValueError:\n        pass\n")
-    assert got[0][0] == "SYNTAX" and "except*" in got[0][2], got
+    """Refused on every interpreter at or above the floor — by one of two routes."""
+    _assert_refused_as_syntax(MATCH_SRC, "match")
+    _assert_refused_as_syntax(EXCEPT_STAR_SRC, "except*")
 
 
 def test_3_9_features_are_NOT_flagged():
@@ -371,12 +415,68 @@ def test_an_unparsable_file_is_a_syntax_finding_not_silence():
     assert _scan_src("def (:\n")[0][0] == "SYNTAX"
 
 
+def test_the_older_interpreter_path_is_exercised_even_on_a_newer_one():
+    """Run the 3.9 branch HERE, so it is not a branch only one machine ever takes.
+
+    The capability branching above is correct but self-fulfilling on a new interpreter:
+    3.11 always takes the "parser accepted it" path, so the 3.9 path ships untested from
+    the container and is first exercised on the Mac — which is precisely how the original
+    defect reached a machine it had never run on. Patching ast.parse to refuse the syntax
+    reproduces what 3.9 does, on any interpreter, so both branches are covered everywhere.
+    """
+    real_parse = ast.parse
+
+    def parse_like_an_older_python(src, *a, **kw):
+        if "match " in src or "except*" in src:
+            raise SyntaxError("invalid syntax")
+        return real_parse(src, *a, **kw)
+
+    ast.parse = parse_like_an_older_python
+    try:
+        assert _parses_here(MATCH_SRC) is False
+        for src in (MATCH_SRC, EXCEPT_STAR_SRC):
+            got = _scan_src(src)
+            assert got and got[0][0] == "SYNTAX", got
+            assert "does not parse" in got[0][2], got
+
+        # AND THE REAL ASSERTION HELPER, run under the older parser. Without this the
+        # capability branch in _assert_refused_as_syntax is never taken on a new
+        # interpreter: replacing `if _parses_here(src)` with `if True` — which is exactly
+        # the bug that shipped — passes everything on 3.11 and fails on 3.9. Mutation
+        # testing confirmed that survivor before this line existed.
+        _assert_refused_as_syntax(MATCH_SRC, "match")
+        _assert_refused_as_syntax(EXCEPT_STAR_SRC, "except*")
+
+        # PEP 604 still parses on that older interpreter, so its rule still fires — which
+        # is exactly why it, and not match, carries the floor-relaxation demonstration.
+        pep604 = "def f(x: str | None):\n    return x\n"
+        assert _parses_here(pep604) is True
+        got = _scan_src(pep604)
+        assert got and got[0][0] == "RUNTIME", got
+    finally:
+        ast.parse = real_parse
+
+    # restored, and the real parser is back
+    assert ast.parse is real_parse
+    assert _parses_here("x = 1\n") is True
+
+
 def test_the_rules_are_driven_by_min_python_not_hardcoded():
     """Raising the floor must actually relax the checks, or MIN_PYTHON is decoration.
 
-    Demonstrated by temporarily moving the floor to 3.11: PEP 604 and match stop being
-    findings, because a 3.11 interpreter accepts both. If this fails, someone has
-    hardcoded a version back into scan() and the constant no longer governs anything.
+    Demonstrated by temporarily moving the floor to 3.11, at which point PEP 604 stops
+    being a finding. If this fails, someone has hardcoded a version back into scan() and
+    the constant no longer governs anything.
+
+    THE DEMONSTRATION USES PEP 604, NOT `match`, AND THAT IS DELIBERATE. `X | Y` is
+    syntactically valid all the way back to 3.9 — it is an ordinary BinOp, and only its
+    EVALUATION fails there, which is why config.py raised TypeError at import rather than
+    SyntaxError. So every interpreter at or above the floor can parse it, and raising the
+    floor genuinely changes the verdict on all of them. `match` cannot do this job: on 3.9
+    it fails to parse whatever the floor says, so it would still be a finding at a 3.11
+    floor and this test would fail on the one interpreter it exists to protect. That was
+    the shipped bug. match's version-gating is covered above instead, by the route a 3.9
+    interpreter can actually express.
 
     IT PATCHES globals(), NOT A RE-IMPORT OF THIS MODULE BY NAME. The first draft did
     `import pipeline.tests.test_python_version_floor as mod` and set mod.MIN_PYTHON —
@@ -388,16 +488,17 @@ def test_the_rules_are_driven_by_min_python_not_hardcoded():
     """
     ns = globals()
     pep604 = "def f(x: str | None):\n    return x\n"
-    match_stmt = "def f(x):\n    match x:\n        case 1:\n            return 2\n"
+    assert _parses_here(pep604), "PEP 604 must parse everywhere at or above the floor"
 
     assert _scan_src(pep604), "PEP 604 should be a finding at the 3.9 floor"
-    assert _scan_src(match_stmt), "match should be a finding at the 3.9 floor"
 
     original = ns["MIN_PYTHON"]
     try:
         ns["MIN_PYTHON"] = (3, 11)
         assert _scan_src(pep604) == [], "raising the floor did not relax the PEP 604 rule"
-        assert _scan_src(match_stmt) == [], "raising the floor did not relax the match rule"
+        # And the match rule too, but only where the parser can get that far.
+        if _parses_here(MATCH_SRC):
+            assert _scan_src(MATCH_SRC) == [], "raising the floor did not relax match"
     finally:
         ns["MIN_PYTHON"] = original
     assert ns["MIN_PYTHON"] == (3, 9)

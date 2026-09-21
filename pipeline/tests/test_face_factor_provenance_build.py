@@ -285,28 +285,136 @@ def test_the_default_input_matches_the_harness_output_constant():
     assert os.path.abspath(B.SPREAD_PATH) == os.path.abspath(mop_face_validation.OUT)
 
 
-def test_nothing_in_the_tree_writes_the_legacy_name():
-    """The premise of the change. If some script starts writing mop_spread.json, the
-    default should be reconsidered rather than left pointing elsewhere.
+LEGACY_NAME = "mop_spread.json"
 
-    THE WHITELIST INCLUDES THIS FILE, and that is not a fudge — it is the self-reference
-    every grep-for-a-string test has. The name appears here in the search term and in the
-    whitelist itself, so `git grep` finds this file the moment it is tracked. It was
-    written with the whitelist omitting itself, passed while the file was still untracked,
-    and went red on main as soon as it was committed. Recorded rather than quietly
-    patched: an assertion whose own source satisfies its search pattern is a shape to
-    recognise, not a one-off slip.
+# The one module allowed to name the legacy path IN CODE. It defines LEGACY_SPREAD_PATH so
+# a leftover can be reported as ignored, and names it in an error message — neither writes.
+LEGACY_NAME_MAY_APPEAR_IN = {"scripts/build_face_factors.py"}
+
+
+def _string_literals_naming(target, path):
+    """[(lineno, value)] for string literals containing *target*, EXCLUDING docstrings.
+
+    THIS REPLACES A `git grep`, AND THE REASON IS THE POINT. The grep matched any file
+    that MENTIONED the name, so prose about the test satisfied the test's own search
+    pattern. That fired twice: in #217 the whitelist omitted this file, and in #220 a
+    docstring in test_python_version_floor.py explaining the #217 bug became a fresh
+    instance of it. Both times the new file was still UNTRACKED when the suite was run —
+    git grep skips untracked files — so both times it went green locally and red the
+    moment it was committed.
+
+    Reading string literals out of the AST removes the whole class rather than the
+    instances. Comments are not in the AST at all, and a docstring is identifiable and
+    skipped, so writing ABOUT the name can never again break the check. What is left is
+    what the test actually cares about: code that references the path.
     """
-    import subprocess
+    import ast
 
-    out = subprocess.run(["git", "grep", "-l", "mop_spread.json", "--",
-                          "scripts/", "pipeline/"],
-                         cwd=ROOT, capture_output=True, text=True).stdout.split()
-    # Mentioned in prose or as a search term by these; WRITTEN by none of them.
-    assert set(out) <= {"scripts/build_face_factors.py",
-                        "scripts/mop_face_validation.py",
-                        "pipeline/data/spot_face_factors.json",
-                        "pipeline/tests/test_face_factor_provenance_build.py"}, out
+    try:
+        tree = ast.parse(open(path, encoding="utf-8", errors="replace").read())
+    except SyntaxError:
+        return []
+    docstrings = set()
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef,
+                             ast.ClassDef)) and body:
+            first = body[0]
+            if (isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant)
+                    and isinstance(first.value.value, str)):
+                docstrings.add(id(first.value))
+    return [(n.lineno, n.value) for n in ast.walk(tree)
+            if isinstance(n, ast.Constant) and isinstance(n.value, str)
+            and target in n.value and id(n) not in docstrings]
+
+
+def test_nothing_in_the_tree_writes_the_legacy_name():
+    """The premise of the change: nothing writes mop_spread.json, so the input default
+    must point at what the harness really produces.
+
+    Test files are skipped because a test that searches for a literal must contain it, and
+    a test is by definition not a writer.
+    """
+    offenders = {}
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        dirnames[:] = [d for d in dirnames
+                       if d not in {".git", "node_modules", "__pycache__", ".venv",
+                                    "venv", ".next", "dist", "build"}]
+        for name in sorted(filenames):
+            if not name.endswith(".py") or name.startswith("test_"):
+                continue
+            path = os.path.join(dirpath, name)
+            rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
+            if rel in LEGACY_NAME_MAY_APPEAR_IN:
+                continue
+            hits = _string_literals_naming(LEGACY_NAME, path)
+            if hits:
+                offenders[rel] = hits
+    assert not offenders, (
+        f"{LEGACY_NAME} is referenced in code outside "
+        f"{sorted(LEGACY_NAME_MAY_APPEAR_IN)}: {offenders}")
+
+
+def test_the_allowed_reference_does_not_write_the_legacy_name():
+    """The stronger claim, checked directly rather than inferred from where the string is.
+
+    build_face_factors may NAME the legacy path — that is how it reports a leftover as
+    ignored — but it must never open it. Asserted against the source so `--apply` cannot
+    start writing that name without this failing.
+    """
+    import ast
+
+    path = os.path.join(ROOT, "scripts", "build_face_factors.py")
+    tree = ast.parse(open(path, encoding="utf-8").read())
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id == "open"):
+            continue
+        mode = None
+        if len(node.args) > 1 and isinstance(node.args[1], ast.Constant):
+            mode = node.args[1].value
+        for kw in node.keywords:
+            if kw.arg == "mode" and isinstance(kw.value, ast.Constant):
+                mode = kw.value.value
+        if mode and any(m in str(mode) for m in ("w", "a", "x", "+")):
+            target = ast.unparse(node.args[0]) if node.args else ""
+            assert "LEGACY" not in target.upper(), (
+                f"build_face_factors opens the legacy path for writing at line "
+                f"{node.lineno}: {target}")
+
+
+def test_the_check_is_blind_to_comments_and_docstrings():
+    """The property that ends the recurrence, demonstrated rather than asserted about.
+
+    A file may now say the name in prose as often as it likes; only code counts.
+    """
+    import tempfile
+
+    d = tempfile.mkdtemp()
+    prose = os.path.join(d, "prose.py")
+    with open(prose, "w") as fh:
+        fh.write('"""A module docstring about mop_spread.json."""\n'
+                 "# a comment about mop_spread.json\n"
+                 "def f():\n"
+                 '    """A function docstring about mop_spread.json."""\n'
+                 "    return 1\n")
+    assert _string_literals_naming(LEGACY_NAME, prose) == []
+
+    code = os.path.join(d, "code.py")
+    with open(code, "w") as fh:
+        fh.write('PATH = "scripts/mop_spread.json"\n')
+    assert _string_literals_naming(LEGACY_NAME, code) == [(1, "scripts/mop_spread.json")]
+
+
+def test_the_file_that_broke_it_twice_is_now_clean():
+    """#220's docstring in test_python_version_floor.py — prose explaining the #217 bug —
+    was itself a fresh instance of it. Under the AST check it is invisible, which is the
+    fix rather than a fourth whitelist entry."""
+    floor_test = os.path.join(ROOT, "pipeline", "tests", "test_python_version_floor.py")
+    assert os.path.exists(floor_test)
+    assert LEGACY_NAME in open(floor_test, encoding="utf-8").read(), \
+        "the prose that triggered this was removed; the demonstration is now vacuous"
+    assert _string_literals_naming(LEGACY_NAME, floor_test) == []
 
 
 def test_a_stale_artifact_is_refused():
