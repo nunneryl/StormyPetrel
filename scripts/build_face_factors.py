@@ -552,6 +552,12 @@ def main(argv=None):
     ap.add_argument("--window-t1", help="measurement window end, YYYY-MM-DD. Required "
                                         "only when the spread file records no window.")
     ap.add_argument("--apply", action="store_true", help="write the file (default: dry run)")
+    ap.add_argument("--i-know-the-window-is-mixed", action="store_true",
+                    dest="override_mixed",
+                    help="write factors from a MIXED-provenance window anyway. The "
+                         "measurement spans both sides of migration 017, the unstamped "
+                         "rows were dropped, and the effective window is shorter than "
+                         "requested. The override is recorded in the output file.")
     ap.add_argument("--selftest", action="store_true", help="offline logic proof")
     a = ap.parse_args(argv)
     if a.selftest:
@@ -598,6 +604,57 @@ def main(argv=None):
     if not a.apply:
         print(f"\nDRY RUN — nothing written. Re-run with --apply to write {a.out}")
         return 0
+
+    # --- THE MIXED-WINDOW GATE ------------------------------------------------ #
+    # The harness prints "MIXED WINDOW — NOT SAFE TO APPLY AS THEY STAND" and nothing
+    # downstream could read it, so a rehearsal against a deliberately contaminated
+    # artifact saw that banner twice and then wrote 139 factors from the same file
+    # without comment. The verdict now travels in the artifact and is checked HERE, at
+    # the --apply decision, rather than inside build() — so a dry run, the selftest and
+    # every caller that only wants the plan are unaffected.
+    integrity = doc_in.get("window_integrity")
+    if isinstance(integrity, dict) and integrity.get("safe_to_apply") is False:
+        detail = (f"{integrity.get('rows_kept')} row(s) kept, "
+                  f"{integrity.get('rows_dropped')} dropped, "
+                  f"verdict {integrity.get('verdict')!r}")
+        if not a.override_mixed:
+            print("\n" + "!" * 76, file=sys.stderr)
+            print("REFUSING TO WRITE: the measurement window is not safe to apply.",
+                  file=sys.stderr)
+            print(f"  {detail}", file=sys.stderr)
+            print(f"  {integrity.get('unsafe_reason')}", file=sys.stderr)
+            print("  Nothing was written. Re-run the harness over a clean window, or pass",
+                  file=sys.stderr)
+            print("  --i-know-the-window-is-mixed to write anyway (it is recorded in the "
+                  "file).", file=sys.stderr)
+            print("!" * 76, file=sys.stderr)
+            return 2
+        # Overridden. Say so in the OUTPUT, not just on the terminal — the whole defect
+        # was a warning that existed only where nobody downstream could see it.
+        print(f"\nOVERRIDDEN: writing from a {integrity.get('verdict')} window because "
+              f"--i-know-the-window-is-mixed was given ({detail}).")
+        doc["measurement"]["window_integrity_override"] = {
+            "overridden": True,
+            "flag": "--i-know-the-window-is-mixed",
+            "verdict": integrity.get("verdict"),
+            "rows_kept": integrity.get("rows_kept"),
+            "rows_dropped": integrity.get("rows_dropped"),
+            "reason_overridden": integrity.get("unsafe_reason"),
+            "note": (
+                "These factors were built from a window the harness judged NOT SAFE TO "
+                "APPLY. An operator passed the override. The effective window is shorter "
+                "than the one measurement.window states, so p75/p25 is wider than the "
+                "requested window would have given and the hold-out set may reflect "
+                "sample size rather than instability."
+            ),
+        }
+    elif integrity is None:
+        # Unverifiable, not safe — the same posture as an unrecorded gate. Reported and
+        # allowed through, because an artifact predating this field is not evidence of
+        # contamination and refusing it would block a legitimate rebuild.
+        print("\nnote: this artifact records no window_integrity, so the provenance of "
+              "its window could not be checked. Absent means UNRECORDED, not clean.",
+              file=sys.stderr)
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w") as fh:
         json.dump(doc, fh, indent=2, ensure_ascii=False)

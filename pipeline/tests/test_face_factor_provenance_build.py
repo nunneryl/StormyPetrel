@@ -548,6 +548,210 @@ def _cli(doc, *extra, apply_=True):
     return rc, err.getvalue(), os.path.exists(out)
 
 
+# --------------------------------------------------------------------------- #
+# The mixed-window gate. A banner on a terminal is not a guard.                #
+# --------------------------------------------------------------------------- #
+
+MIXED_INTEGRITY = {
+    "verdict": "mixed", "raw_rows": 31000, "fallback_rows": 9000,
+    "dropped_rows": 9000, "rows_kept": 31000, "rows_dropped": 9000,
+    "safe_to_apply": False,
+    "unsafe_reason": "MIXED WINDOW: the joined rows span both sides of migration 017.",
+}
+CLEAN_INTEGRITY = {
+    "verdict": "clean", "raw_rows": 40000, "fallback_rows": 0, "dropped_rows": 0,
+    "rows_kept": 40000, "rows_dropped": 0, "safe_to_apply": True, "unsafe_reason": None,
+}
+
+
+def test_apply_is_refused_when_the_window_is_not_safe():
+    """THE DEFECT. A rehearsal against a contaminated artifact saw the harness print
+    'MIXED WINDOW — NOT SAFE TO APPLY' twice, and then build_face_factors planned and
+    wrote 139 factors from that same artifact without comment. The banner existed only
+    where nothing downstream could read it."""
+    rc, err, wrote = _cli(_artifact(window_integrity=MIXED_INTEGRITY))
+    assert rc == 2, rc
+    assert not wrote, "factors were written from an unsafe window"
+    assert "REFUSING TO WRITE" in err
+    assert "31000" in err and "9000" in err          # rows kept and dropped, both shown
+    assert "--i-know-the-window-is-mixed" in err     # and the way out is named
+
+
+def test_a_safe_window_still_writes():
+    """The converse, so the gate is a gate and not a wall."""
+    rc, _, wrote = _cli(_artifact(window_integrity=CLEAN_INTEGRITY))
+    assert rc == 0 and wrote
+
+
+def test_the_refusal_is_overridable_only_by_the_loudly_named_flag():
+    """The flag NAME is part of the contract: it has to be impossible to pass by habit.
+
+    SystemExit, not AssertionError, is what a renamed flag raises — argparse calls
+    sys.exit(2) on an unrecognised argument. It is caught here so the failure reads as
+    'the flag is gone' rather than as the whole run dying.
+    """
+    doc = _artifact(window_integrity=MIXED_INTEGRITY)
+    try:
+        rc, _, wrote = _cli(doc, "--i-know-the-window-is-mixed")
+    except SystemExit as e:
+        raise AssertionError(
+            "--i-know-the-window-is-mixed was rejected by the parser (argparse exited "
+            f"{e.code}); the override flag has been renamed or removed") from None
+    assert rc == 0 and wrote
+
+
+def test_the_override_is_recorded_in_the_OUTPUT_not_just_the_terminal():
+    """The whole point. An operator who overrides leaves a mark in the artifact, because
+    the next reader of that file is not the operator at the terminal."""
+    import contextlib
+    import io
+    import tempfile
+
+    d = tempfile.mkdtemp()
+    sp = os.path.join(d, "mop_face_validation_out.json")
+    out = os.path.join(d, "factors.json")
+    json.dump(_artifact(window_integrity=MIXED_INTEGRITY), open(sp, "w"))
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        rc = B.main(["--spread", sp, "--out", out, "--apply",
+                     "--i-know-the-window-is-mixed"])
+    assert rc == 0
+    rec = json.load(open(out))["measurement"]["window_integrity_override"]
+    assert rec["overridden"] is True
+    assert rec["flag"] == "--i-know-the-window-is-mixed"
+    assert rec["verdict"] == "mixed"
+    assert rec["rows_kept"] == 31000 and rec["rows_dropped"] == 9000
+    assert "NOT SAFE TO APPLY" in rec["note"]
+
+
+def test_a_safe_build_carries_no_override_record():
+    """Absence of the key is the positive assertion that no override happened."""
+    import contextlib
+    import io
+    import tempfile
+
+    d = tempfile.mkdtemp()
+    sp = os.path.join(d, "mop_face_validation_out.json")
+    out = os.path.join(d, "factors.json")
+    json.dump(_artifact(window_integrity=CLEAN_INTEGRITY), open(sp, "w"))
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        rc = B.main(["--spread", sp, "--out", out, "--apply"])
+    assert rc == 0
+    assert "window_integrity_override" not in json.load(open(out))["measurement"]
+
+
+def test_a_dry_run_against_an_unsafe_window_is_not_blocked():
+    """The gate is on --apply. A plan is not a write, and refusing to even LOOK at a
+    contaminated artifact would make it harder to diagnose."""
+    rc, _, wrote = _cli(_artifact(window_integrity=MIXED_INTEGRITY), apply_=False)
+    assert rc == 0 and not wrote
+
+
+def test_an_artifact_with_no_integrity_record_is_reported_not_refused():
+    """Unverifiable, not unsafe — the same posture as an unrecorded gate. An artifact
+    predating this field is not evidence of contamination, and refusing it would block a
+    legitimate rebuild; but silence would read as clean, so it is said out loud."""
+    doc = _artifact()
+    assert "window_integrity" not in doc
+    rc, err, wrote = _cli(doc)
+    assert rc == 0 and wrote
+    assert "no window_integrity" in err
+    assert "UNRECORDED, not clean" in err
+
+
+def test_an_integrity_block_that_predates_safe_to_apply_is_not_refused():
+    """The dict is there; the field is not, because the artifact was written before the
+    field existed. The gate keys on `is False`, so this is allowed through — refusing an
+    artifact merely for being old would block a legitimate rebuild, and the field being
+    absent is not the same fact as its being False."""
+    old_style = {"verdict": "clean", "raw_rows": 40000, "fallback_rows": 0,
+                 "dropped_rows": 0}
+    assert "safe_to_apply" not in old_style
+    rc, _, wrote = _cli(_artifact(window_integrity=old_style))
+    assert rc == 0 and wrote
+
+
+def test_the_harness_records_kept_and_dropped_and_the_verdict():
+    """The producing side of the contract, EXERCISED rather than grepped.
+
+    An earlier version of this test only checked that the four field names appeared in the
+    harness source. Mutation testing walked straight through it: `"rows_dropped": 0` and
+    `"rows_kept": total_raw` both kept the names and lied about the numbers, and both
+    survived. A consumer reads the value, not the key.
+    """
+    import mop_face_validation as MF
+
+    b = MF.window_integrity_block(
+        per_spot=[{"joined_hours": 300, "provenance": {"dropped": 90}},
+                  {"joined_hours": 10, "provenance": {"dropped": 0}}],
+        total_raw=31000, total_fallback=9000,
+        window_verdicts={"steamer-lane": "mixed"}, stamps={"seam:abc": 300})
+    assert b["rows_kept"] == 310            # 300 + 10, by hand
+    assert b["rows_dropped"] == 90          # 90 + 0, by hand
+    assert b["raw_rows"] == 31000 and b["fallback_rows"] == 9000
+    assert b["verdict"] == "mixed"
+    assert b["safe_to_apply"] is False
+    assert "MIXED WINDOW" in b["unsafe_reason"]
+    # The trap the docstring warns about: kept is NOT the raw row count.
+    assert b["rows_kept"] != b["raw_rows"]
+
+
+def test_rows_kept_is_the_retained_count_and_skips_errored_spots():
+    """A spot that errored has no measurement, so its rows are in neither total. Counting
+    them would inflate the kept figure that the override record publishes."""
+    import mop_face_validation as MF
+
+    b = MF.window_integrity_block(
+        per_spot=[{"joined_hours": 40, "provenance": {"dropped": 5}},
+                  {"error": "no orientation_deg", "joined_hours": 999,
+                   "provenance": {"dropped": 999}}],
+        total_raw=100, total_fallback=0, window_verdicts={}, stamps={})
+    assert b["rows_kept"] == 40 and b["rows_dropped"] == 5
+
+
+def test_under_legacy_kept_equals_fallback_and_nothing_is_dropped():
+    """The case that makes raw_rows the wrong definition of kept. Under legacy every row is
+    unstamped, every row is retained, and kept == fallback_rows — the opposite of mixed."""
+    import mop_face_validation as MF
+
+    b = MF.window_integrity_block(
+        per_spot=[{"joined_hours": 800, "provenance": {"dropped": 0}}],
+        total_raw=0, total_fallback=800, window_verdicts={}, stamps={})
+    assert b["verdict"] == "legacy"
+    assert b["rows_kept"] == 800 == b["fallback_rows"] and b["rows_dropped"] == 0
+    assert b["safe_to_apply"] is True
+    assert b["unsafe_reason"] is None
+
+
+def test_unsafe_reason_is_present_under_mixed_and_absent_otherwise():
+    """The refusal banner prints this string. If it went None the operator would be told
+    'None' where the explanation belongs."""
+    import mop_face_validation as MF
+
+    def reason(raw, fallback):
+        return MF.window_integrity_block([], raw, fallback, {}, {})["unsafe_reason"]
+
+    assert reason(5, 5) and "migration 017" in reason(5, 5)
+    assert reason(5, 0) is None
+    assert reason(0, 5) is None
+    assert reason(0, 0) is None
+
+
+def test_safe_to_apply_is_false_exactly_when_the_verdict_is_mixed():
+    """Derived from classify_window rather than asserted, so the two cannot drift."""
+    import mop_face_validation as MF
+
+    assert MF.classify_window(5, 5) == "mixed"        # -> unsafe
+    assert MF.classify_window(5, 0) == "clean"        # -> safe
+    assert MF.classify_window(0, 5) == "legacy"       # -> safe, deliberately: see below
+    assert MF.classify_window(0, 0) == "empty"
+    src = open(os.path.join(ROOT, "scripts", "mop_face_validation.py"),
+               encoding="utf-8").read()
+    assert '"safe_to_apply": overall != "mixed"' in src, (
+        "the gate must key on 'mixed' alone. LEGACY is a different hazard — every row "
+        "predates migration 017, so nothing was dropped and the window is not short — "
+        "and extending the refusal to it is a separate decision, not a tidy-up.")
+
+
 def test_a_refused_build_exits_nonzero_and_writes_nothing():
     """The regenerate command is `mop_face_validation.py && build_face_factors.py --apply`.
     An abort that exits 0 would let that `&&` report success on a file it never wrote —

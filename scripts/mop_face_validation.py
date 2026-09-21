@@ -522,6 +522,62 @@ def retain_for_measurement(pairs: list) -> list:
     return list(pairs)
 
 
+def window_integrity_block(per_spot: list, total_raw: int, total_fallback: int,
+                           window_verdicts: dict, stamps: dict) -> dict:
+    """The window's provenance, as a block that travels WITH the artifact.
+
+    EXTRACTED FROM run FOR THE SAME REASON summarise_spot WAS. The rehearsal defect was that
+    the harness printed "MIXED WINDOW — NOT SAFE TO APPLY" twice and build_face_factors then
+    planned and wrote 139 factors from that same artifact without comment: the verdict lived
+    only on a terminal, where nothing downstream could read it. A banner is not a guard. So
+    the state is recorded here and build_face_factors refuses --apply on it — and this
+    function is pure precisely so that what it records can be checked against literals
+    rather than inferred from a run that needs Supabase and a CDIP read.
+
+    KEPT AND DROPPED ARE STATED OUTRIGHT, because a consumer must not have to derive them.
+    raw_rows is NOT the kept count in general: under "legacy" every row is unstamped and
+    every row is kept, so kept == fallback_rows there and == raw_rows only under "mixed".
+    joined_hours is the retained count per spot (see summarise_spot), so summing it is the
+    one definition that holds in all four verdicts.
+    """
+    overall = classify_window(total_raw, total_fallback)
+    dropped = sum(e.get("provenance", {}).get("dropped", 0)
+                  for e in per_spot if "error" not in e)
+    return {
+        "verdict": overall,
+        "raw_rows": total_raw,
+        "fallback_rows": total_fallback,
+        "dropped_rows": dropped,
+        "rows_kept": sum(e.get("joined_hours", 0)
+                         for e in per_spot if "error" not in e),
+        # THIS IS THE FIELD build_face_factors REFUSES ON.
+        "rows_dropped": dropped,
+        "safe_to_apply": overall != "mixed",
+        "unsafe_reason": (
+            None if overall != "mixed" else
+            "MIXED WINDOW: the joined rows span both sides of migration 017, so the "
+            "unstamped ones were DROPPED rather than averaged in. The effective window "
+            "is shorter than the one requested, which widens p75/p25 — and "
+            "build_face_factors excludes on p75/p25, so a spot can be held out for "
+            "sample size and not for instability. Re-run once the whole window "
+            "post-dates the migration."
+        ),
+        "per_spot_verdicts": window_verdicts,
+        "stamps": stamps,
+        "seam_code_versions": sorted({v.split(":", 1)[0] for v in stamps}),
+        "meaning": (
+            "clean: every joined row carries face_ft_raw, so the ratio is of the "
+            "PRE-correction face and needs no caveat. legacy: no row carries it — the whole "
+            "window predates migration 017 and the correction state is UNKNOWN, not "
+            "innocent. mixed: both, and the fallback rows have been DROPPED rather than "
+            "averaged in; joined_hours per spot is the retained count. A differing "
+            "fingerprint across stamps is benign once face_ft_raw is present (raw is "
+            "pre-correction whichever divisor was applied); a differing seam CODE version "
+            "is not, and is listed separately."
+        ),
+    }
+
+
 def summarise_spot(pairs: list, mop_hours: int, our_hours: int) -> dict:
     """Every measured field for one spot, from its joined pairs. Pure, so it can be tested.
 
@@ -1041,28 +1097,8 @@ def run(days_back=DEFAULT_DAYS_BACK, limit=None, out_path=OUT,
         (e for e in good if e["blocked_hours"]["n"] > 0),
         key=lambda e: (e["blocked_hours"]["published_face_ft"]["median"] or 0), reverse=True)[:12]
 
-    overall = classify_window(total_raw, total_fallback)
-    code_versions = sorted({v.split(":", 1)[0] for v in stamps})
-    window_integrity = {
-        "verdict": overall,
-        "raw_rows": total_raw,
-        "fallback_rows": total_fallback,
-        "dropped_rows": sum(e.get("provenance", {}).get("dropped", 0)
-                            for e in per_spot if "error" not in e),
-        "per_spot_verdicts": window_verdicts,
-        "stamps": stamps,
-        "seam_code_versions": code_versions,
-        "meaning": (
-            "clean: every joined row carries face_ft_raw, so the ratio is of the "
-            "PRE-correction face and needs no caveat. legacy: no row carries it — the whole "
-            "window predates migration 017 and the correction state is UNKNOWN, not "
-            "innocent. mixed: both, and the fallback rows have been DROPPED rather than "
-            "averaged in; joined_hours per spot is the retained count. A differing "
-            "fingerprint across stamps is benign once face_ft_raw is present (raw is "
-            "pre-correction whichever divisor was applied); a differing seam CODE version "
-            "is not, and is listed separately."
-        ),
-    }
+    window_integrity = window_integrity_block(
+        per_spot, total_raw, total_fallback, window_verdicts, stamps)
 
     result = {
         "generated_at": now.isoformat(),
