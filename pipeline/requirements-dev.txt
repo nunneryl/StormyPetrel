@@ -1,0 +1,19 @@
+# Everything needed to RUN THE TEST SUITE — runtime deps plus the test runner.
+#
+# WHY THIS FILE EXISTS. pytest was declared nowhere. It was installed ad hoc on the one
+# Mac that ran the suite, and CI ran the suite nowhere at all, so "what do I need to test
+# this repo" had no answer you could check out. That is the same shape as the three breaks
+# of 2026-09-20: config.py's PEP 604 union, the `blocked` NameError, and four tests that
+# passed in a container and failed on the Mac — each one an environment difference nobody
+# could see because nothing wrote the environment down.
+#
+#     pip install -r pipeline/requirements-dev.txt
+#
+# is now the single command CI runs and the Mac can run, so the two cannot drift by
+# accident. requirements.txt stays the production list; nothing here ships to a runner
+# that only moves data.
+-r requirements.txt
+
+# Pinned to a major. Unpinned, CI would pick up pytest 9 the day it lands while the Mac
+# stayed on 8, which is exactly the invisible-difference problem this file exists to end.
+pytest>=8.0,<9
