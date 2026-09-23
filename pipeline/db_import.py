@@ -48,6 +48,92 @@ _DEFAULT_BATCH = 200
 # deliberate reason.
 SAFETY_DELETE_CAP = 10
 
+# Every column each upsert below can send, by table, in the order its record is built. The
+# column preflight (pipeline/column_preflight.py) checks these against the live tables at the
+# start of a run, before the fetch, so a migration that was never applied is found before it
+# can refuse an upsert. test_column_preflight.py holds each list to what its builder really
+# sends: a column added to a builder but not here fails the suite rather than slip past the
+# check. The spots upsert also sends back columns read from the live table itself (the
+# preserve merge in import_spots); those exist by construction, so they are not listed.
+WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
+    "buoys": ("id", "lat", "lng", "name"),
+    "spots": (
+        "slug", "name", "lat", "lng", "state", "region", "swell_window_arcs", "data_sources",
+        "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
+        "break_type", "break_type_confidence",
+        "tide_preference", "tide_preference_source", "crowd_factor", "hazards",
+        "nearest_buoy_id", "nearest_buoy_dist_km",
+        "nearest_tide_station_id", "nearest_tide_station_dist_km",
+        "nwps_wfo", "fallback_buoy_ids", "swell_window_source",
+        "review_status", "description", "description_signature",
+    ),
+    "forecasts": (
+        "spot_id", "valid_time", "hs", "tp", "dp", "wind_speed", "wind_dir",
+        "swell_hs", "swell_tp", "swell_dp",
+        "swell_1_hs", "swell_1_tp", "swell_1_dp", "swell_2_hs", "swell_2_tp", "swell_2_dp",
+        "swell_3_hs", "swell_3_tp", "swell_3_dp", "wind_wave_hs", "wind_wave_tp", "wind_wave_dp",
+        "swell_source", "tide_level_ft", "tide_norm", "face_ft", "face_lo_ft", "face_hi_ft",
+        "face_ft_raw", "face_correction_version", "dir_gain", "wind_mult", "tide_mult",
+        "chop_ratio", "chop_mult", "period_quality", "effective_size_ft", "stars",
+        "nwps_cycle", "source",
+    ),
+    "buoy_observations": (
+        "buoy_id", "observed_at", "hs", "tp", "dp", "swell_hs", "swell_tp", "swell_dp",
+        "wind_speed", "wind_dir", "water_temp",
+    ),
+    "tide_predictions": ("station_id", "predicted_at", "level_ft", "type"),
+}
+
+# The ON CONFLICT key of each upsert. A key column can never be left out: the upsert has
+# nothing to match rows on without it, so a missing key column fails exactly as before.
+UPSERT_KEYS: dict[str, tuple[str, ...]] = {
+    "buoys": ("id",),
+    "spots": ("slug",),
+    "forecasts": ("spot_id", "valid_time", "source"),
+    "buoy_observations": ("buoy_id", "observed_at"),
+    "tide_predictions": ("station_id", "predicted_at"),
+}
+
+# Names the column preflight's result file. Only when it is set does db_import leave anything
+# out, so a run without the preflight (a manual or local one) sends every column, as before.
+PREFLIGHT_RESULT_ENV = "COLUMN_PREFLIGHT_RESULT"
+
+
+def _without(chunk: list[dict], leave_out, table: str) -> list[dict]:
+    """The rows to send to *table*, minus the columns the start-of-run preflight found missing
+    from it. With nothing to leave out, which is every normal run, this returns *chunk*
+    itself: what is sent is exactly what was built."""
+    drop = (leave_out or {}).get(table)
+    if not drop:
+        return chunk
+    return [{k: v for k, v in r.items() if k not in drop} for r in chunk]
+
+
+def preflight_leave_out(environ=None) -> dict[str, frozenset[str]]:
+    """{table: columns} to leave out, read from the column preflight's result. Empty (send
+    every column, as before) unless PREFLIGHT_RESULT_ENV names the result of a check that
+    completed. Only non-key columns db_import writes can be named; anything else is ignored."""
+    environ = os.environ if environ is None else environ
+    path = environ.get(PREFLIGHT_RESULT_ENV)
+    if not path:
+        return {}
+    try:
+        result = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        log.warning("db_import: no column preflight result at %s (%s) — sending every column, "
+                    "as before", path, type(e).__name__)
+        return {}
+    if not isinstance(result, dict) or result.get("status") != "checked":
+        return {}
+    out: dict[str, frozenset[str]] = {}
+    for table, cols in (result.get("leave_out") or {}).items():
+        if table not in WRITTEN_COLUMNS:
+            continue
+        drop = frozenset(cols) & (frozenset(WRITTEN_COLUMNS[table]) - frozenset(UPSERT_KEYS[table]))
+        if drop:
+            out[table] = drop
+    return out
+
 
 def _slugify(name: str) -> str:
     """Lowercase, hyphen-join, drop everything that isn't [a-z0-9-]."""
@@ -453,7 +539,7 @@ def _load_tide_freshness(tides_path: Path = TIDES_FORECAST_FILE) -> dict[str, di
 
 
 def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
-                 batch_size: int = _DEFAULT_BATCH) -> int:
+                 batch_size: int = _DEFAULT_BATCH, leave_out=None) -> int:
     """Upsert valid spots from the enriched JSON, then delete any DB rows
     whose slug appears in `excluded_spots.json`.
 
@@ -570,7 +656,7 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     written = 0
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
-        client.table("spots").upsert(chunk, on_conflict="slug").execute()
+        client.table("spots").upsert(_without(chunk, leave_out, "spots"), on_conflict="slug").execute()
         written += len(chunk)
 
     # Deletion pass — DB rows matching an excluded entry. The cams FK is
@@ -620,7 +706,7 @@ def _spot_id_map(client) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
-                     batch_size: int = _DEFAULT_BATCH * 5) -> int:
+                     batch_size: int = _DEFAULT_BATCH * 5, leave_out=None) -> int:
     """Upsert per-spot hourly forecasts from ratings.json."""
     ratings = _read_forecast_json(ratings_path, "ratings")
     if ratings is None:
@@ -721,7 +807,7 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
         res = client.table("forecasts").upsert(
-            chunk, on_conflict="spot_id,valid_time,source"
+            _without(chunk, leave_out, "forecasts"), on_conflict="spot_id,valid_time,source"
         ).execute()
         rows = getattr(res, "data", None)
         sent += len(chunk)
@@ -764,7 +850,7 @@ def _buoy_obs_record(buoy_id: str, obs: dict) -> dict | None:
 
 
 def import_buoys(client, buoys_path: Path = BUOYS_FORECAST_FILE,
-                 batch_size: int = _DEFAULT_BATCH * 5) -> int:
+                 batch_size: int = _DEFAULT_BATCH * 5, leave_out=None) -> int:
     """Upsert NDBC buoy observations from buoys.json (latest + 24h history).
 
     Merges the .std and .spec histories by observed_at so the swell-only
@@ -821,7 +907,7 @@ def import_buoys(client, buoys_path: Path = BUOYS_FORECAST_FILE,
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
         client.table("buoy_observations").upsert(
-            chunk, on_conflict="buoy_id,observed_at"
+            _without(chunk, leave_out, "buoy_observations"), on_conflict="buoy_id,observed_at"
         ).execute()
         written += len(chunk)
     return written
@@ -847,7 +933,7 @@ def _parse_coops_time(t_str: str) -> str | None:
 
 
 def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
-                 batch_size: int = _DEFAULT_BATCH * 5) -> int:
+                 batch_size: int = _DEFAULT_BATCH * 5, leave_out=None) -> int:
     """Upsert CO-OPS tide predictions from tides.json (hilo + hourly)."""
     tides = _read_forecast_json(tides_path, "tides")
     if tides is None:
@@ -886,7 +972,7 @@ def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
         client.table("tide_predictions").upsert(
-            chunk, on_conflict="station_id,predicted_at"
+            _without(chunk, leave_out, "tide_predictions"), on_conflict="station_id,predicted_at"
         ).execute()
         written += len(chunk)
     return written
@@ -896,7 +982,7 @@ def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
 # Buoy coordinate snapshot (durable id -> lat/lng, for SQL audit + import validation)
 # ---------------------------------------------------------------------------
 
-def import_buoy_snapshot(client, batch_size: int = _DEFAULT_BATCH * 5) -> int:
+def import_buoy_snapshot(client, batch_size: int = _DEFAULT_BATCH * 5, leave_out=None) -> int:
     """Mirror the committed NDBC buoy snapshot (pipeline.snapshot_buoys) into the `buoys` table so
     assignments can be audited/validated in SQL without a live NDBC fetch. No-op (0) when the snapshot
     file is absent, so a run without it doesn't wipe the table."""
@@ -910,7 +996,7 @@ def import_buoy_snapshot(client, batch_size: int = _DEFAULT_BATCH * 5) -> int:
     written = 0
     for i in range(0, len(rows), batch_size):
         chunk = rows[i:i + batch_size]
-        client.table("buoys").upsert(chunk, on_conflict="id").execute()
+        client.table("buoys").upsert(_without(chunk, leave_out, "buoys"), on_conflict="id").execute()
         written += len(chunk)
     log.info("buoys: upserted %d buoy-coordinate rows", written)
     return written
@@ -920,31 +1006,50 @@ def import_buoy_snapshot(client, batch_size: int = _DEFAULT_BATCH * 5) -> int:
 # Orchestration
 # ---------------------------------------------------------------------------
 
+def tables_written(spots: bool = True, forecasts: bool = True, buoys: bool = True,
+                   tides: bool = True) -> tuple[str, ...]:
+    """The tables run_all writes for these gates, in the order it writes them."""
+    return ((("buoys", "spots") if spots else ())
+            + (("forecasts",) if forecasts else ())
+            + (("buoy_observations",) if buoys else ())
+            + (("tide_predictions",) if tides else ()))
+
+
 def run_all(
     spots: bool = True,
     forecasts: bool = True,
     buoys: bool = True,
     tides: bool = True,
+    leave_out=None,
 ) -> dict[str, int]:
     """Library entry point — used by fetch_all.py via --push-to-db.
 
     Each table is gated independently so the hourly buoy-only cron job
     can call this with just buoys=True, while the every-6h full pipeline
     leaves all four enabled.
+
+    *leave_out* is {table: columns} the start-of-run column preflight found missing from the
+    live tables (see preflight_leave_out); those columns, and only those, are left out of
+    every row sent. None or {} sends every column.
     """
     client = get_client()
+    for table in tables_written(spots, forecasts, buoys, tides):
+        if (leave_out or {}).get(table):
+            log.warning("db_import: leaving %s out of every %s row — the column preflight found it "
+                        "missing from the live table. Everything else is sent.",
+                        ", ".join(sorted(leave_out[table])), table)
     stats: dict[str, int] = {}
     if spots:
         # Refresh the buoy-coordinate snapshot table first so it's current for auditing; import_spots
         # then validates each spot's stored buoy/tide distance against the station's real coordinates.
-        stats["buoys_meta"] = import_buoy_snapshot(client)
-        stats["spots"] = import_spots(client)
+        stats["buoys_meta"] = import_buoy_snapshot(client, leave_out=leave_out)
+        stats["spots"] = import_spots(client, leave_out=leave_out)
     if forecasts:
-        stats["forecasts"] = import_forecasts(client)
+        stats["forecasts"] = import_forecasts(client, leave_out=leave_out)
     if buoys:
-        stats["buoy_observations"] = import_buoys(client)
+        stats["buoy_observations"] = import_buoys(client, leave_out=leave_out)
     if tides:
-        stats["tide_predictions"] = import_tides(client)
+        stats["tide_predictions"] = import_tides(client, leave_out=leave_out)
     return stats
 
 
@@ -976,6 +1081,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
+def _mode_kwargs(args: argparse.Namespace) -> dict[str, bool]:
+    if args.spots_only:
+        return dict(spots=True, forecasts=False, buoys=False, tides=False)
+    if args.forecasts_only:
+        return dict(spots=False, forecasts=True, buoys=True, tides=True)
+    if args.buoys_only:
+        return dict(spots=False, forecasts=False, buoys=True, tides=False)
+    if args.tides_only:
+        return dict(spots=False, forecasts=False, buoys=False, tides=True)
+    return dict(spots=True, forecasts=True, buoys=True, tides=True)   # --all (default)
+
+
+def tables_for_args(argv: list[str] | None) -> tuple[str, ...]:
+    """The tables `python -m pipeline.db_import <argv>` writes. The column preflight takes the
+    same flags and checks exactly these, so the two cannot disagree about a mode."""
+    return tables_written(**_mode_kwargs(_parse_args(argv)))
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     logging.basicConfig(
@@ -983,19 +1106,10 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    if args.spots_only:
-        kwargs = dict(spots=True, forecasts=False, buoys=False, tides=False)
-    elif args.forecasts_only:
-        kwargs = dict(spots=False, forecasts=True, buoys=True, tides=True)
-    elif args.buoys_only:
-        kwargs = dict(spots=False, forecasts=False, buoys=True, tides=False)
-    elif args.tides_only:
-        kwargs = dict(spots=False, forecasts=False, buoys=False, tides=True)
-    else:  # --all (default)
-        kwargs = dict(spots=True, forecasts=True, buoys=True, tides=True)
+    kwargs = _mode_kwargs(args)
 
     try:
-        stats = run_all(**kwargs)
+        stats = run_all(**kwargs, leave_out=preflight_leave_out())
     except RuntimeError as e:
         log.error("%s", e)
         return 1
