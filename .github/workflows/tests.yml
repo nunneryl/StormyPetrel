@@ -65,6 +65,26 @@ jobs:
         # what the other nine workflows install. Keep it a single-line [ ... ] list.
         python-version: ['3.9', '3.12']
 
+    # A REAL POSTGRES, because the rule that an older NWPS cycle never overwrites a newer one
+    # lives in a trigger (pipeline/migrations/019), and a trigger nothing runs is a comment.
+    # pipeline/tests/test_nwps_cycle_trigger.py applies that migration verbatim to a throwaway
+    # database here. Off CI it skips, with its reason, when TEST_DATABASE_URL is unset; ON CI
+    # it refuses to skip, so losing this service turns the check red rather than quiet.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
