@@ -137,7 +137,7 @@ eq('an unparseable time has no age', rowAgeMinutes(row('nope', 1), T10), null);
 // --------------------------------------------------------------------------- //
 // 5 — THE CHART WINDOW IS UNCHANGED by the current-hour fix                     //
 // --------------------------------------------------------------------------- //
-// The charts and the 7-day grid keep the forward window they always had: >= now, <= now+48h,
+// The charts and the forecast grid keep the forward window they always had: >= now, <= now+48h,
 // inclusive at BOTH ends. Only the hero tiles moved to bucket matching. Bounds written out.
 eq('the chart window is 48 hours', CHART_WINDOW_HOURS, 48);
 // From the 5-row fixture at now = 10:00, the forward rows are 10:00, 11:00, 12:00.

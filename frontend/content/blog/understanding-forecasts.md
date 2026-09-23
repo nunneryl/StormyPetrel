@@ -49,7 +49,7 @@ The HRRR model used for our wind forecasts resolves these cycles at 3 km × hour
 
 ## 5. Tide affects each spot differently
 
-Some spots only break on a low tide (the swell needs the bottom to feel it), some only on a high tide (otherwise it's too shallow and closes out), some at all tides. We track each spot's tide preference and reduce the rating outside its window. The forecast page shows you the current tide level + whether it's rising or falling, plus a chart of the next 7 days with H/L markers.
+Some spots only break on a low tide (the swell needs the bottom to feel it), some only on a high tide (otherwise it's too shallow and closes out), some at all tides. We track each spot's tide preference and reduce the rating outside its window. The forecast page shows you the current tide level + whether it's rising or falling, plus a chart of the tide curve.
 
 Rule of thumb when reading a forecast:
 - **Reef breaks** often need a specific tide window
