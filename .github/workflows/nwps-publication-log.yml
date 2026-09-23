@@ -1,0 +1,69 @@
+name: nwps-publication-log
+
+# READ-ONLY LOGGER of when each NWPS cycle is published on NOMADS. Nothing recorded it, and
+# the next design choice (fetch cadence, and what covers the hours between the NWPS frontier
+# and the claimed forecast length) turns on it. NOMADS keeps only the last few days, so the
+# history is taken while it is there. scripts/nwps_publication_log.py explains the method and
+# how to pull the tables back out of these logs.
+#
+# Every listing and file request is printed with the HTTP status it returned, as seen. NOMADS
+# answers 403 for a path that does not exist; the logger records 403 as 403 and draws nothing
+# from it.
+#
+# Guardrails, by construction: prints to this log and nothing else — no database, no repo, no
+# file the pipeline reads, no secrets. It does not run the forecast pipeline and cannot touch
+# forecast rows, which is what makes it safe before the 2026-10-06 face-factor measurement.
+# Requests are spaced at least a second apart; NOMADS blocks clients that hammer it.
+
+on:
+  schedule:
+    # Every 6 hours, off the top of the hour. Last-Modified is the server's own timestamp,
+    # so it is exact however late a run starts, and NOMADS keeps several days — a delayed
+    # or dropped run loses nothing.
+    - cron: '41 */6 * * *'
+  workflow_dispatch: {}
+  pull_request:
+    # A change to the logger runs a two-office smoke check against NOMADS on its own PR,
+    # because nothing else can exercise it before it is merged.
+    paths:
+      - .github/workflows/nwps-publication-log.yml
+      - scripts/nwps_publication_log.py
+
+permissions:
+  contents: read              # checkout only — this workflow writes nothing
+
+concurrency:
+  group: nwps-publication-log-${{ github.event_name }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  PYTHONUNBUFFERED: '1'
+  PYTHONDONTWRITEBYTECODE: '1'   # not even a __pycache__ on the runner
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
+jobs:
+  log:
+    name: log NWPS publication times (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the two packages pipeline.forecast.nwps imports
+        # Read from pipeline/requirements.txt rather than retyped, so the pins cannot drift.
+        run: grep -E '^(requests|tenacity)[<>=]' pipeline/requirements.txt | xargs python -m pip install
+
+      - name: Log publication times, every office (writes nothing)
+        if: github.event_name != 'pull_request'
+        run: python scripts/nwps_publication_log.py
+
+      - name: Smoke check on the PR, lox and afc only (writes nothing)
+        if: github.event_name == 'pull_request'
+        run: python scripts/nwps_publication_log.py --offices lox,afc
