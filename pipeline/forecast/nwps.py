@@ -29,9 +29,12 @@ import json
 import logging
 import math
 import re
+import time
 from datetime import datetime, timedelta, timezone
-from functools import lru_cache
 from pathlib import Path
+from typing import NamedTuple
+
+import requests
 
 from ..config import (
     NWPS_CACHE_DIR,
@@ -226,29 +229,96 @@ _DATE_HREF_RE = re.compile(r'href="([a-z]{2})\.(\d{8})/"', re.IGNORECASE)
 _HH_HREF_RE = re.compile(r'href="(\d{2})/"')
 
 
-def _get_text(url: str) -> str | None:
-    """GET a URL via the shared session; return body text, or None on failure."""
+# THREE ANSWERS, NOT TWO. A listing request can tell us the folder holds these cycles, tell
+# us the folder is not there, or tell us nothing — and the old code folded the last two
+# together. _get_text returned None for a failure, _list_wfo_cycles turned that None into []
+# ("this office has not run today"), lru_cache kept the [] for the rest of the run, and
+# candidate_cycles fell back to yesterday. Yesterday's older cycle then overwrote newer rows:
+# sju four times in the 7 days to 2026-09-23, each a 60 s read timeout on the first NOMADS
+# request after sgx's seven-minute extraction.
+#
+#   LISTED   200. The folder exists and its links are what it holds (which may be nothing).
+#   ABSENT   403 or 404. The folder is not there. NOMADS answers 403, not 404, for a path that
+#            does not exist (every afc folder on every date), so on either answer, falling back
+#            to the previous day is CORRECT.
+#   UNKNOWN  a timeout, a connection error, a 5xx — or any other status, since only 200, 403
+#            and 404 carry a meaning here. We learned nothing, so nothing may be concluded:
+#            retried on a FRESH connection, never cached, and if still unknown the office is
+#            skipped for the run, its rows left as they are, rather than fed an older cycle.
+LISTED, ABSENT, UNKNOWN = "listed", "absent", "unknown"
+LISTING_ATTEMPTS = 3
+LISTING_RETRY_WAIT_S = (5.0, 15.0)     # before the 2nd and the 3rd attempt
+_sleep = time.sleep                    # a seam, so the tests do not wait
+
+
+class Listing(NamedTuple):
+    state: str          # LISTED | ABSENT | UNKNOWN
+    text: str = ""      # the index HTML, LISTED only
+    detail: str = ""    # what the server said, for the log
+
+
+def _listing_once(sess, url: str, timeout) -> Listing:
     try:
-        resp = session().get(url, timeout=60, allow_redirects=True)
-    except Exception as e:  # noqa: BLE001
-        log.warning("nwps: GET %s failed: %s", url, e)
-        return None
-    if resp.status_code != 200:
-        log.warning("nwps: GET %s → %d", url, resp.status_code)
-        return None
-    return resp.text
+        resp = sess.get(url, timeout=timeout, allow_redirects=True)
+    except Exception as e:  # noqa: BLE001 — every transport failure is UNKNOWN
+        return Listing(UNKNOWN, detail=f"{type(e).__name__}: {e}")
+    if resp.status_code == 200:
+        return Listing(LISTED, resp.text)
+    if resp.status_code in (403, 404):
+        return Listing(ABSENT, detail=f"HTTP {resp.status_code}")
+    return Listing(UNKNOWN, detail=f"HTTP {resp.status_code}")
 
 
-@lru_cache(maxsize=1)
-def _list_root_dates() -> dict[str, list[str]]:
-    """Return {region_code: [YYYYMMDD newest-first]} from the NOMADS root
-    index at /pub/data/nccf/com/nwps/prod/. Memoized once per process.
+def _fetch_listing(url: str) -> Listing:
+    """GET a NOMADS index and classify the answer. UNKNOWN is retried on a new connection.
+
+    The first attempt uses the shared session. A retry never does: the sju timeouts were all
+    the first request after a seven-minute idle, which fits a pooled connection that died while
+    idle, so a retry on the same pool could hand back the same dead socket.
     """
-    html = _get_text(f"{NWPS_NOMADS_BASE}/")
-    if html is None:
-        return {}
+    got = _listing_once(session(), url, timeout=60)
+    attempts = 1
+    while got.state == UNKNOWN and attempts < LISTING_ATTEMPTS:
+        log.warning("nwps: listing %s unknown (%s) — retrying on a fresh connection",
+                    url, got.detail)
+        _sleep(LISTING_RETRY_WAIT_S[attempts - 1])
+        with requests.Session() as fresh:
+            fresh.headers.update(session().headers)
+            got = _listing_once(fresh, url, timeout=(10, 60))
+        attempts += 1
+    if got.state == UNKNOWN:
+        log.warning("nwps: listing %s still unknown after %d attempts (%s)",
+                    url, attempts, got.detail)
+    return got
+
+
+# Only a LISTED answer is cached, and only for this process. A failure is never remembered:
+# remembering one is how a single timeout became a whole run's fallback to yesterday.
+_root_dates_cache: dict[str, list[str]] | None = None
+_wfo_cycles_cache: dict[tuple[str, str, str], "CycleListing"] = {}
+
+
+def _clear_listing_caches() -> None:
+    global _root_dates_cache
+    _root_dates_cache = None
+    _wfo_cycles_cache.clear()
+
+
+def _list_root_dates() -> dict[str, list[str]] | None:
+    """{region_code: [YYYYMMDD newest-first]} from the NOMADS root index at
+    /pub/data/nccf/com/nwps/prod/, or None when that index could not be read. A root that
+    answers 403 or 404 is None too: the tree is always there, so its absence says the URL is
+    wrong, not that there is nothing to fetch.
+    """
+    global _root_dates_cache
+    if _root_dates_cache is not None:
+        return _root_dates_cache
+    got = _fetch_listing(f"{NWPS_NOMADS_BASE}/")
+    if got.state != LISTED:
+        log.warning("nwps: NOMADS root index not read (%s %s)", got.state, got.detail)
+        return None
     out: dict[str, list[str]] = {}
-    for region, date in _DATE_HREF_RE.findall(html):
+    for region, date in _DATE_HREF_RE.findall(got.text):
         out.setdefault(region.lower(), []).append(date)
     for dates in out.values():
         dates.sort(reverse=True)  # newest first
@@ -257,45 +327,74 @@ def _list_root_dates() -> dict[str, list[str]]:
         len(out), ", ".join(f"{r}:{len(d)}" for r, d in sorted(out.items())),
     )
     if not out:
-        snippet = html[:400].replace("\n", " ")
+        snippet = got.text[:400].replace("\n", " ")
         log.info("nwps: root listing yielded nothing; first 400 chars: %s", snippet)
+    _root_dates_cache = out
     return out
 
 
-@lru_cache(maxsize=None)
-def _list_wfo_cycles(region: str, date_ymd: str, wfo: str) -> list[str]:
-    """Return [HH newest-first] for the given {region}.{date}/{wfo}/ dir.
+class CycleListing(NamedTuple):
+    state: str                    # LISTED | ABSENT | UNKNOWN
+    cycles: tuple[str, ...] = ()  # HH newest-first; empty unless LISTED
+    detail: str = ""
 
-    Each NWPS WFO run has its cycle as a numeric subdirectory (e.g. 00/, 06/,
-    12/, 18/). Empty list means the WFO hasn't run on this date yet.
+
+def _list_wfo_cycles(region: str, date_ymd: str, wfo: str) -> CycleListing:
+    """What {region}.{date}/{wfo}/ holds. Each NWPS run is a numeric subdirectory (00/, 06/,
+    12/, 18/). LISTED with no cycles and ABSENT both mean "nothing here"; UNKNOWN means the
+    question went unanswered.
     """
-    url = f"{NWPS_NOMADS_BASE}/{region}.{date_ymd}/{wfo}/"
-    html = _get_text(url)
-    if html is None:
-        return []
-    hhs = sorted(set(_HH_HREF_RE.findall(html)), reverse=True)
-    return hhs
+    key = (region, date_ymd, wfo)
+    if key in _wfo_cycles_cache:
+        return _wfo_cycles_cache[key]
+    got = _fetch_listing(f"{NWPS_NOMADS_BASE}/{region}.{date_ymd}/{wfo}/")
+    if got.state != LISTED:
+        return CycleListing(got.state, detail=got.detail)
+    hhs = tuple(sorted(set(_HH_HREF_RE.findall(got.text)), reverse=True))
+    listing = CycleListing(LISTED, hhs)
+    _wfo_cycles_cache[key] = listing
+    return listing
 
 
-def candidate_cycles(wfo: str) -> list[tuple[str, str]]:
-    """Up to NWPS_CYCLE_LOOKBACK (date, HH) candidates for *wfo*, newest-first,
-    from the NOMADS directory listing.
+def candidate_cycles(wfo: str) -> list[tuple[str, str]] | None:
+    """Up to NWPS_CYCLE_LOOKBACK (date, HH) candidates for *wfo*, newest-first, from the
+    NOMADS directory listing.
+
+    None, NOT [], when a listing that decides which cycle is newest went unanswered: the root
+    index, or an office folder dated after every cycle found so far. The caller must then
+    skip the office for this run. [] means NOMADS positively holds no cycle for it.
     """
     region = WFO_TO_REGION.get(wfo)
     if region is None:
         return []
-    dates = _list_root_dates().get(region, [])
-    if not dates:
-        return []
+    root = _list_root_dates()
+    if root is None:
+        log.warning("nwps: %s — NOMADS root index unknown; skipping this office for the run "
+                    "rather than guessing a cycle", wfo)
+        return None
     result: list[tuple[str, str]] = []
-    # Only the three most recent date dirs — cycles don't persist longer than
-    # that on NOMADS, and each date lookup is one extra HTTP request per WFO.
-    for date_ymd in dates[:3]:
-        for hh in _list_wfo_cycles(region, date_ymd, wfo):
+    # Only the three most recent date dirs — cycles don't persist longer than that on NOMADS,
+    # and each date lookup is one extra HTTP request per WFO.
+    for date_ymd in root.get(region, [])[:3]:
+        listing = _list_wfo_cycles(region, date_ymd, wfo)
+        if listing.state == UNKNOWN:
+            if not result:
+                log.warning(
+                    "nwps: %s — listing of %s.%s/%s/ still unknown (%s); skipping this office "
+                    "for the run instead of falling back to an older day. Its rows stay as "
+                    "they are.", wfo, region, date_ymd, wfo, listing.detail)
+                return None
+            break   # newer candidates are in hand; an older day only ever fed a fallback
+        for hh in listing.cycles:   # ABSENT, or LISTED-but-empty: the day before is right
             result.append((date_ymd, hh))
             if len(result) >= NWPS_CYCLE_LOOKBACK:
                 return result
     return result
+
+
+def cycle_timestamp(date_ymd: str, hh: str) -> str:
+    """The cycle's nominal time as the nwps_cycle value every extracted hour carries."""
+    return f"{date_ymd[:4]}-{date_ymd[4:6]}-{date_ymd[6:]}T{hh}:00:00Z"
 
 
 def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path) -> bool:
@@ -338,7 +437,9 @@ def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path
 def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
     """Find a usable GRIB2 file for this WFO — cached or via cycle fallback.
 
-    Returns (local_path, date_ymd, hh) or None if no cycle is available.
+    Returns (local_path, date_ymd, hh), or None when no cycle is available or a listing that
+    decides the newest one went unanswered (candidate_cycles returned None). Either way the
+    office gets no new rows this run and keeps the ones it has.
     """
     region = WFO_TO_REGION.get(wfo)
     if region is None:
@@ -346,8 +447,10 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
         return None
 
     cycles = candidate_cycles(wfo)
+    if cycles is None:
+        return None      # a listing went unanswered — logged; the office sits this run out
     if not cycles:
-        dates = _list_root_dates().get(region, [])
+        dates = (_list_root_dates() or {}).get(region, [])
         latest_dir = (
             f"{NWPS_NOMADS_BASE}/{region}.{dates[0]}/{wfo}/"
             if dates else f"{NWPS_NOMADS_BASE}/"
@@ -365,7 +468,10 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
             log.info("nwps: %s/%s %sZ — cache hit (%s)", wfo, date_ymd, hh, path.name)
             return path, date_ymd, hh
 
-    # Download the newest cycle that exists.
+    # Download the newest cycle that exists. A download that fails falls through to the next
+    # older candidate — the ilm 404s were listed cycles whose file was not up yet. That can
+    # only ever fill hours the newer cycle does not hold: migration 019's trigger refuses, row
+    # by row, to let an older nwps_cycle overwrite a newer one, whatever this loop picks.
     for date_ymd, hh in cycles:
         path = _grib_path(wfo, date_ymd, hh)
         log.info(
@@ -1086,9 +1192,13 @@ def fetch(
         located = _locate_cycle(wfo, use_cache)
         if located is None:
             wfos_missing += 1
-            log.warning("nwps: no cycle available for WFO %s in the lookback window", wfo)
+            log.warning("nwps: no cycle used for WFO %s this run — its existing rows stay "
+                        "as they are (the reason is logged above)", wfo)
             continue
         grib_path, cycle_date, cycle_hh = located
+        # Every hour this cycle yields carries it, through interpret to db_import, so the
+        # database can refuse to let an older cycle overwrite a newer one (migration 019).
+        nwps_cycle = cycle_timestamp(cycle_date, cycle_hh)
 
         try:
             datasets = _open_grib_datasets(grib_path)
@@ -1262,6 +1372,8 @@ def fetch(
 
             series = _extract_time_series_from_datasets(datasets, corr_lat, corr_lng)
             if series:
+                for entry in series:
+                    entry["nwps_cycle"] = nwps_cycle
                 # Physically impossible pairs are LOGGED, never clamped — see
                 # _warn_impossible_swell_pairs. Counted so a run says how bad it was.
                 n_bad = _warn_impossible_swell_pairs(series, spot["name"])

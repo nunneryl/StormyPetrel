@@ -688,6 +688,9 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
                 "period_quality": h.get("period_quality"),
                 "effective_size_ft": h.get("effective_size_ft"),
                 "stars": h.get("stars"),
+                # The NWPS cycle that produced this hour (migration 019). The database refuses
+                # to let an older cycle overwrite a row a newer one wrote.
+                "nwps_cycle": h.get("nwps_cycle"),
                 "source": "nwps",
             })
 
@@ -708,14 +711,28 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
             "NO forecast rows at all and their pages render empty: %s",
             len(skipped_unknown_names), ", ".join(sorted(skipped_unknown_names)),
         )
-    written = 0
+    # SENT IS NOT WRITTEN. Migration 019's trigger skips, row by row, any row a NEWER nwps_cycle
+    # already wrote; PostgREST then returns only the rows it applied. That shortfall is the
+    # rule working — an older cycle kept off newer data — not an error, and nothing here or
+    # downstream treats it as one. It is counted and logged so it is visible, and the applied
+    # count is what this returns. A response without a row list (never seen from PostgREST;
+    # possible from a test double) counts as applied in full, since nothing says otherwise.
+    sent = applied = 0
     for i in range(0, len(records), batch_size):
         chunk = records[i:i + batch_size]
-        client.table("forecasts").upsert(
+        res = client.table("forecasts").upsert(
             chunk, on_conflict="spot_id,valid_time,source"
         ).execute()
-        written += len(chunk)
-    return written
+        rows = getattr(res, "data", None)
+        sent += len(chunk)
+        applied += len(rows) if isinstance(rows, list) else len(chunk)
+    kept = sent - applied
+    if kept:
+        log.info(
+            "forecasts: %d of %d rows sent were NOT applied — a newer NWPS cycle already wrote "
+            "them, and the database kept it (migration 019). Expected when a run falls back "
+            "to an older cycle; not an error.", kept, sent)
+    return applied
 
 
 # ---------------------------------------------------------------------------

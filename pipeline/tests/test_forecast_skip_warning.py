@@ -52,6 +52,7 @@ class RecordingQuery:
         self._spot_rows = spot_rows
         self._upsert_raises = upsert_raises
         self._served = False
+        self._upserted = None
 
     def select(self, cols):
         self.rec["select"].append(cols)
@@ -70,9 +71,15 @@ class RecordingQuery:
         self.rec["upserted_spot_ids"].update(r["spot_id"] for r in chunk)
         if self._upsert_raises:
             raise RuntimeError("simulated PostgREST failure")
+        self._upserted = list(chunk)
         return self
 
     def execute(self):
+        if self._upserted is not None:
+            # PostgREST answers an upsert with the rows it applied (return=representation),
+            # and import_forecasts counts those since migration 019. No trigger stands in the
+            # way here, so every row sent is a row applied.
+            return type("Res", (), {"data": self._upserted})()
         # _spot_id_map pages until it gets a short page; serve the rows once, then empty.
         page = [] if self._served else list(self._spot_rows)
         self._served = True
