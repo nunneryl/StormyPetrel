@@ -24,6 +24,7 @@ import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
 import { fmtTidePreference, spotInfoRows } from '@/lib/spotInfo';
 import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
 import { fetchCamsForSpot } from '@/lib/cams';
+import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { siteUrl } from '@/lib/site-url';
 
 export const revalidate = 3600;
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   if (!spot) return { title: 'Spot not found' };
   const title = `${spot.name} Surf Forecast — Wave Height, Swell & Wind | Stormy Petrel`;
   const description =
-    `Free 7-day surf forecast for ${spot.name}` +
+    `Free ${CLAIMED_FORECAST_LABEL} surf forecast for ${spot.name}` +
     (spot.state ? `, ${spot.state}` : '') +
     `. Wave height, swell direction, period, wind, and tide — updated every 6 hours.`;
   return {
@@ -63,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 // Unfiltered, both came back. ForecastGrid keeps the rows whose UTC hour is divisible
 // by 3, and every ecmwf valid_time is such an hour — the cycles are 00Z/12Z and every
 // entry in ecmwf_wam.WAVE_STEPS is a multiple of 3, including the 6-hourly tail — so
-// NO ecmwf row was ever dropped by that sampling and the 7-day grid rendered each
+// NO ecmwf row was ever dropped by that sampling and the forecast grid rendered each
 // displayed slot twice, once rated and once blank.
 //
 // Filter on `source`, not on "stars is not null". ecmwf rows having a null `stars` is
@@ -152,7 +153,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // containing "now" is always present) plus this clock, and re-pick on the viewer's clock
   // once mounted — see lib/currentHour.selectCurrentHour.
   //
-  // `upcoming` is UNCHANGED and still means "now onward": the 48h charts and the 7-day grid
+  // `upcoming` is UNCHANGED and still means "now onward": the 48h charts and the forecast grid
   // both want that window and neither is touched by this.
   const current = selectCurrentHour(forecasts, nowMs).row;
 
@@ -169,7 +170,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
     })
     .map((r) => new Date(r.valid_time).toISOString());
 
-  // Charts get a 48h slice — the full 7-day window made the curves
+  // Charts get a 48h slice — the full forecast window made the curves
   // too compressed to read. The grid below still shows everything.
   // UNCHANGED semantics, extracted so a test can pin them: >= now, <= now + 48h. The
   // current-hour fix moves only the hero tiles; the charts and the grid keep the forward
@@ -184,7 +185,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: `${spot.name} Surf Forecast`,
-    description: `Free 7-day surf forecast for ${spot.name}${
+    description: `Free ${CLAIMED_FORECAST_LABEL} surf forecast for ${spot.name}${
       spot.state ? `, ${spot.state}` : ''
     }. Wave height, swell direction, period, wind, and tide — updated every 6 hours.`,
     url: `${base}/spot/${spot.slug}`,
@@ -330,11 +331,11 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </InfoBlock>
       </section>
 
-      {/* 7-day grid — moved to the bottom as the detailed reference
+      {/* Forecast grid — moved to the bottom as the detailed reference
           view; the charts above carry the at-a-glance trend. Defaults
           to the next 48 hours with an in-grid expand button. */}
       <section>
-        <SectionHeader title="7-day forecast" />
+        <SectionHeader title={`${CLAIMED_FORECAST_LABEL} forecast`} />
         <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} />
       </section>
 

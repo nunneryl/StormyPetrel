@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
 import { selectCurrentHour } from '@/lib/currentHour';
+import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import type { Forecast } from '@/lib/types';
 import {
   classifySurface, surfaceTextClass, chopLabel,
@@ -104,8 +105,8 @@ export function CurrentConditions({
           no tide reading", this banner means "there is no row for this hour at all". */}
       {selection.state === 'absent' && (
         <p className="mb-2 text-xs text-text-muted">
-          No forecast published for the current hour. The chart and the 7-day grid below are
-          unaffected.
+          No forecast published for the current hour. The chart and the {CLAIMED_FORECAST_LABEL}{' '}
+          grid below are unaffected.
         </p>
       )}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">

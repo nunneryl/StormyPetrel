@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Forecast } from '@/lib/types';
+import { CLAIMED_FORECAST_DAYS, CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from '@/lib/ratings';
 import {
   dayKey,
@@ -52,7 +53,7 @@ function isBestWindow(rows: Forecast[], idx: number): boolean {
 }
 
 // Default forecast window when collapsed — about 48h of 3-hour blocks.
-// Show-full reveals the rest out to ~7 days.
+// Show-full reveals the rest of whatever the feed holds.
 const COLLAPSED_HOURS = 48;
 
 export function ForecastGrid({
@@ -77,7 +78,7 @@ export function ForecastGrid({
   if (days.length === 0) {
     return (
       <div className="rounded-xl border border-ink-600 bg-ink-900 p-6 text-text-muted">
-        No forecast data in the next 7 days.
+        No forecast data in the next {CLAIMED_FORECAST_DAYS} days.
       </div>
     );
   }
@@ -204,7 +205,7 @@ export function ForecastGrid({
           onClick={() => setExpanded(true)}
           className="w-full px-4 py-3 text-sm font-bold text-cyan-600 hover:bg-ink-800 border-t border-ink-600 transition"
         >
-          Show full 7-day forecast →
+          Show full {CLAIMED_FORECAST_LABEL} forecast →
         </button>
       )}
       {expanded && (
