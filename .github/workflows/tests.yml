@@ -1,0 +1,132 @@
+# Run the test suite. On every push and every pull request.
+#
+# WHY THIS EXISTS. Nine workflows moved data on a schedule; not one of them ran a test.
+# Over the weekend of 2026-09-20 that let three breaks through to a machine that had no
+# way to catch them:
+#
+#   pipeline/config.py used PEP 604 `str | None` without the future import, which parses
+#   on 3.9 and raises TypeError when the annotation is evaluated — taking config.py down
+#   at import, and interpret.py and the MOP harness with it.
+#
+#   scripts/mop_face_validation.py referenced an undefined `blocked`, crashing every real
+#   harness run from 2026-09-07 onward.
+#
+#   Four tests passed in a 3.11 dev container and failed on the 3.9 Mac.
+#
+# Every one of the three is a difference BETWEEN ENVIRONMENTS, not a mistake visible in a
+# diff. So the matrix is the point of this file: the suite runs on the oldest interpreter
+# that actually runs this code and on the one the other nine workflows use, and a
+# disagreement between them is reported rather than discovered a fortnight later.
+
+name: tests
+
+# Literally every push and every pull request, as the point is to have no gap to slip
+# through. The concurrency group below keeps that cheap.
+on:
+  push:
+  pull_request:
+
+env:
+  # Opt JS actions (checkout / setup-python / setup-node) onto Node 24, matching the
+  # other workflows. This is the runtime GitHub uses to execute the ACTIONS; it is not
+  # the Node the frontend job tests under, which is declared in that job.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  PYTHONUNBUFFERED: '1'
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
+# Unlike the data pipelines, a superseded test run is worth nothing, so cancel it. Keying
+# on head_ref for pull requests and ref otherwise puts a branch push and its PR in the
+# same group, so pushing to an open PR leaves one run, not two.
+concurrency:
+  group: tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read              # checkout only — this workflow writes nothing
+
+jobs:
+  python:
+    name: pytest (Python ${{ matrix.python-version }})
+    # PINNED, NOT ubuntu-latest, AND THAT IS LOAD-BEARING. actions/python-versions ships
+    # 3.9.25 for ubuntu 22.04 and 24.04 only; there is no 3.9 build for 24.04's successor,
+    # while 3.12 already has one. The day ubuntu-latest moves on, an unpinned 3.9 leg
+    # stops resolving and fails looking like a code break. Unpin this when MIN_PYTHON
+    # rises above 3.9 — pipeline/tests/test_ci_workflow.py holds you to that.
+    runs-on: ubuntu-24.04
+    strategy:
+      # Report both legs. A 3.9-only break is the exact failure this workflow exists to
+      # catch, and cancelling 3.12 on it would hide whether the break is version-specific
+      # or general — which is the first question anyone asks.
+      fail-fast: false
+      matrix:
+        # THE FLOOR FIRST, THEN THE FLEET. Written as an inline list on purpose: it is
+        # the one machine-readable declaration of these versions outside Python, and
+        # test_ci_workflow.py parses this line to hold it against MIN_PYTHON and against
+        # what the other nine workflows install. Keep it a single-line [ ... ] list.
+        python-version: ['3.9', '3.12']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pipeline/requirements-dev.txt
+
+      - name: Report the interpreter that will actually run the suite
+        # The three breaks were all "which Python was that?" questions. Answer it in the
+        # log, from the interpreter itself, before anything can go wrong.
+        run: python -VV
+
+      - name: Install Python dependencies
+        # The same one command the Mac runs. No inline package list to drift from it.
+        run: pip install -r pipeline/requirements-dev.txt
+
+      - name: Run the suite
+        # -ra prints a reason line for every non-passing outcome, skips included. The
+        # suite has no skip mechanism in it today and reads "N passed" with nothing
+        # else; if that ever changes, the reason lands in the log rather than being
+        # quietly absorbed into a green tick.
+        run: python -m pytest pipeline/tests -ra
+
+  frontend:
+    name: frontend (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        # The project's own declaration of its Node runtime is devDependencies
+        # "@types/node": "^22.9.0" — the types tsc checks this code against. Testing on a
+        # different major from the one you typecheck against is the same class of gap as
+        # testing on 3.11 and shipping to 3.9. test_ci_workflow.py pins the two together.
+        node-version: ['22']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        # ci, not install: the lockfile is the declaration, and npm ci fails rather than
+        # silently resolving something else when package.json and the lock disagree.
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run the frontend suites
+        # The five .test.mts suites throw on failure, so node exits non-zero and the &&
+        # chain stops. Nothing here is continue-on-error; a red test is a red check.
+        run: npm test
