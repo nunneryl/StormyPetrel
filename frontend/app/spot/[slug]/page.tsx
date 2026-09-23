@@ -25,6 +25,7 @@ import { fmtTidePreference, spotInfoRows } from '@/lib/spotInfo';
 import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
+import { FORECAST_UPDATES } from '@/lib/updateCadence';
 import { siteUrl } from '@/lib/site-url';
 
 export const revalidate = 3600;
@@ -48,7 +49,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const description =
     `Free ${CLAIMED_FORECAST_LABEL} surf forecast for ${spot.name}` +
     (spot.state ? `, ${spot.state}` : '') +
-    `. Wave height, swell direction, period, wind, and tide — updated every 6 hours.`;
+    `. Wave height, swell direction, period, wind, and tide — ${FORECAST_UPDATES}.`;
   return {
     title: { absolute: title },
     description,
@@ -187,7 +188,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
     name: `${spot.name} Surf Forecast`,
     description: `Free ${CLAIMED_FORECAST_LABEL} surf forecast for ${spot.name}${
       spot.state ? `, ${spot.state}` : ''
-    }. Wave height, swell direction, period, wind, and tide — updated every 6 hours.`,
+    }. Wave height, swell direction, period, wind, and tide — ${FORECAST_UPDATES}.`,
     url: `${base}/spot/${spot.slug}`,
     isPartOf: {
       '@type': 'WebSite',

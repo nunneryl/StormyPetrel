@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { BUOY_UPDATES, FORECAST_UPDATES } from '@/lib/updateCadence';
 
 export const revalidate = 86400; // 24h — content is essentially static
 
@@ -83,9 +84,10 @@ export default function AboutPage() {
         </h2>
 
         <p>
-          Every six hours, we pull fresh data from NOAA&rsquo;s Nearshore Wave
-          Prediction System, WAVEWATCH III spectral models, HRRR 3km wind
-          grids, NDBC buoy observations, and CO-OPS tide predictions. Our
+          We pull fresh data from NOAA&rsquo;s Nearshore Wave Prediction
+          System, WAVEWATCH III spectral models, HRRR 3km wind grids, NDBC
+          buoy observations, and CO-OPS tide predictions: forecasts are{' '}
+          {FORECAST_UPDATES}, buoy readings arrive {BUOY_UPDATES}. Our
           interpretation engine scores each spot on swell direction, period,
           wind quality, and tide state. No one&rsquo;s selling you a
           &ldquo;forecaster&rsquo;s insight&rdquo; upgrade.

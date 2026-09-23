@@ -9,7 +9,8 @@
  * out by hand — "5-day grid", "next 5 days" — so a literal "5-day" is as illegal as a
  * literal "7-day". The length in copy has to come from CLAIMED_FORECAST_DAYS.
  *
- * IT READS COPY, NOT SOURCE. Every .ts/.tsx file is parsed with the TypeScript compiler and
+ * IT READS COPY, NOT SOURCE, through the scanner in copyScan.ts, which the update-cadence
+ * guard shares. Every .ts/.tsx file is parsed with the TypeScript compiler and
  * only reader-facing text is checked: string literals, template text and JSX text. Comments
  * never become nodes, so a comment may say whatever it likes — which matters, because
  * page.tsx documents a query limit sized for "a 7-day horizon" and that sizing is a real
@@ -28,10 +29,12 @@
  *
  *     node --experimental-strip-types frontend/lib/forecastClaim.test.mts
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import ts from 'typescript';
+import {
+  copyOf, copyStrings, definitionsOf, isTestFile, references, scannedFiles, walkedFiles,
+} from './copyScan.ts';
 import { CLAIMED_FORECAST_DAYS, CLAIMED_FORECAST_LABEL } from './forecastClaim.ts';
 
 let failures = 0;
@@ -47,7 +50,6 @@ function check(name: string, cond: boolean, detail = ''): void {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FRONTEND = dirname(HERE);
-const SCANNED_DIRS = ['app', 'components', 'lib', 'content'];
 
 // --------------------------------------------------------------------------- //
 // The rules                                                                   //
@@ -83,80 +85,11 @@ function violations(file: string, line: number, text: string): Finding[] {
 }
 
 // --------------------------------------------------------------------------- //
-// Copy extraction                                                             //
+// Copy extraction lives in copyScan.ts, shared with the update-cadence guard.  //
 // --------------------------------------------------------------------------- //
-const ELIDED = '…';   // what a non-literal expression contributes: "…"
-
-function literalText(e: ts.Expression): string {
-  if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e) || ts.isNumericLiteral(e)) {
-    return e.text;
-  }
-  if (ts.isParenthesizedExpression(e)) return literalText(e.expression);
-  return ELIDED;
-}
-
-/** Reader-facing strings in one TS/TSX source, with the line each starts on. */
-export function copyStrings(fileName: string, source: string): { line: number; text: string }[] {
-  const kind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, kind);
-  const out: { line: number; text: string }[] = [];
-  const at = (n: ts.Node) => sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
-
-  const visit = (n: ts.Node): void => {
-    if (ts.isImportDeclaration(n) || ts.isExportDeclaration(n)) return;   // module specifiers
-    if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) {
-      out.push({ line: at(n), text: n.text });
-    } else if (ts.isTemplateExpression(n)) {
-      const parts = [n.head.text];
-      for (const span of n.templateSpans) parts.push(literalText(span.expression), span.literal.text);
-      out.push({ line: at(n), text: parts.join('') });
-    } else if (ts.isJsxElement(n) || ts.isJsxFragment(n)) {
-      const parts = n.children.map((c) => {
-        if (ts.isJsxText(c)) return c.text;
-        if (ts.isJsxExpression(c)) return c.expression ? literalText(c.expression) : '';
-        return ELIDED;   // a nested element is checked on its own when the walk reaches it
-      });
-      out.push({ line: at(n), text: parts.join('').replace(/\s+/g, ' ') });
-    }
-    ts.forEachChild(n, visit);
-  };
-  visit(sf);
-  return out;
-}
-
-function isTestFile(rel: string): boolean {
-  return /\.test\.[cm]?[jt]sx?$/.test(rel);
-}
-
-// .mts and .cts ARE walked, and that is what makes the test-file exclusion load-bearing. A
-// first draft walked only .ts/.tsx, which skipped every *.test.mts before isTestFile ever
-// saw it — so the self-reference guard was a file-extension accident, and a copy-bearing
-// .mts module would have been skipped too. Mutation testing found it by deleting the
-// exclusion and watching the suite stay green.
-function walk(dir: string, acc: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    if (statSync(p).isDirectory()) {
-      if (name !== 'node_modules' && name !== '.next') walk(p, acc);
-    } else if (/\.(?:[cm]?ts|tsx|md)$/.test(name) && !/\.d\.[cm]?ts$/.test(name)) {
-      acc.push(p);
-    }
-  }
-  return acc;
-}
-
-function scanFile(abs: string): Finding[] {
-  const rel = relative(FRONTEND, abs);
-  const src = readFileSync(abs, 'utf8');
-  if (rel.endsWith('.md')) {
-    return src.split('\n').flatMap((text, i) => violations(rel, i + 1, text));
-  }
-  return copyStrings(rel, src).flatMap((s) => violations(rel, s.line, s.text));
-}
-
-function scannedFiles(): string[] {
-  return SCANNED_DIRS.flatMap((d) => walk(join(FRONTEND, d)))
-    .filter((abs) => !isTestFile(relative(FRONTEND, abs)));
+function scanFile(rel: string): Finding[] {
+  return copyOf(rel, readFileSync(join(FRONTEND, rel), 'utf8'))
+    .flatMap((s) => violations(rel, s.line, s.text));
 }
 
 function fixture(src: string, name = 'fixture.tsx'): Finding[] {
@@ -216,10 +149,9 @@ const SELF = relative(FRONTEND, fileURLToPath(import.meta.url));
 check('this file would be flagged if it were scanned — the exclusion is load-bearing',
   copyStrings(SELF, readFileSync(fileURLToPath(import.meta.url), 'utf8'))
     .some((s) => violations(SELF, s.line, s.text).length > 0));
-const walked = SCANNED_DIRS.flatMap((d) => walk(join(FRONTEND, d))).map((abs) => relative(FRONTEND, abs));
 check('the walk reaches this very file, so it is the exclusion — not the extension — that keeps it out',
-  walked.includes(SELF));
-const files = scannedFiles().map((abs) => relative(FRONTEND, abs));
+  walkedFiles(FRONTEND).includes(SELF));
+const files = scannedFiles(FRONTEND);
 check('no test file is scanned, this one included',
   !files.some(isTestFile) && !files.includes(SELF), files.filter(isTestFile).join(', '));
 
@@ -241,7 +173,7 @@ check('the scan is not trivially small', files.length >= 40, `${files.length} fi
 // --------------------------------------------------------------------------- //
 // 4 — THE GUARD: no literal length anywhere in the site's copy                  //
 // --------------------------------------------------------------------------- //
-const found = scannedFiles().flatMap(scanFile);
+const found = files.flatMap(scanFile);
 check('no copy states a forecast length except through CLAIMED_FORECAST_DAYS',
   found.length === 0,
   found.map((f) => `\n        ${f.file}:${f.line}  [${f.rule}]  ${JSON.stringify(f.text)}`).join(''));
@@ -249,18 +181,7 @@ check('no copy states a forecast length except through CLAIMED_FORECAST_DAYS',
 // --------------------------------------------------------------------------- //
 // 5 — one definition, in a shape the pipeline's future guarantee test can read  //
 // --------------------------------------------------------------------------- //
-const definitions: string[] = [];
-for (const abs of scannedFiles().filter((f) => /\.tsx?$/.test(f))) {
-  const rel = relative(FRONTEND, abs);
-  const sf = ts.createSourceFile(rel, readFileSync(abs, 'utf8'), ts.ScriptTarget.Latest, true);
-  const visit = (n: ts.Node): void => {
-    if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === 'CLAIMED_FORECAST_DAYS') {
-      definitions.push(rel);
-    }
-    ts.forEachChild(n, visit);
-  };
-  visit(sf);
-}
+const definitions = definitionsOf(FRONTEND, 'CLAIMED_FORECAST_DAYS');
 check('CLAIMED_FORECAST_DAYS is defined exactly once, in lib/forecastClaim.ts',
   definitions.length === 1 && definitions[0] === 'lib/forecastClaim.ts', definitions.join(', '));
 const claimSrc = readFileSync(join(HERE, 'forecastClaim.ts'), 'utf8');
@@ -274,25 +195,13 @@ check('the label is that number followed by "-day"',
 // --------------------------------------------------------------------------- //
 // 6 — the copy sites read the setting, rather than merely not spelling a length //
 // --------------------------------------------------------------------------- //
-function references(rel: string, name: string): number {
-  const sf = ts.createSourceFile(rel, readFileSync(join(FRONTEND, rel), 'utf8'),
-    ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  let n = 0;
-  const visit = (node: ts.Node): void => {
-    if (ts.isImportDeclaration(node)) return;
-    if (ts.isIdentifier(node) && node.text === name) n += 1;
-    ts.forEachChild(node, visit);
-  };
-  visit(sf);
-  return n;
-}
 check('the spot page reads the label for its description, JSON-LD and heading',
-  references('app/spot/[slug]/page.tsx', 'CLAIMED_FORECAST_LABEL') >= 3);
+  references(FRONTEND, 'app/spot/[slug]/page.tsx', 'CLAIMED_FORECAST_LABEL') >= 3);
 check('the grid reads the setting for its button and its empty state',
-  references('components/ForecastGrid.tsx', 'CLAIMED_FORECAST_LABEL') >= 1
-  && references('components/ForecastGrid.tsx', 'CLAIMED_FORECAST_DAYS') >= 1);
+  references(FRONTEND, 'components/ForecastGrid.tsx', 'CLAIMED_FORECAST_LABEL') >= 1
+  && references(FRONTEND, 'components/ForecastGrid.tsx', 'CLAIMED_FORECAST_DAYS') >= 1);
 check('the absent-hour notice reads the label',
-  references('components/CurrentConditions.tsx', 'CLAIMED_FORECAST_LABEL') >= 1);
+  references(FRONTEND, 'components/CurrentConditions.tsx', 'CLAIMED_FORECAST_LABEL') >= 1);
 
 if (failures > 0) {
   throw new Error(`forecastClaim: ${failures} FAILURE(S)`);
