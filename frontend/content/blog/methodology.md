@@ -122,6 +122,6 @@ The rating engine is honest about its blind spots:
 
 1. **Local geology.** A reef pass that focuses energy or a sand bar that seasonally shifts isn't in any model. Spot-specific hand-tuning would help; it's on the roadmap.
 2. **Crowd factor isn't modeled.** Two spots can have identical model conditions but very different "is it worth driving to" answers.
-3. **The 6-hour refresh latency.** Forecasts update every 6 hours; if a swell builds faster than that, the rating lags reality by up to 6h. Buoy observations help here — they refresh hourly and we display the latest reading next to each spot.
+3. **Refresh latency.** Forecasts are {{FORECAST_UPDATES}}, not continuously; if a swell builds faster than that, the rating lags reality until the next update lands. Buoy observations help here — they arrive {{BUOY_UPDATES}} and we display the latest reading next to each spot.
 
 For all of this, the source code is on [GitHub](https://github.com/nunneryl/StormyPetrel) — read the rating engine in [`pipeline/interpret.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/interpret.py), file an issue if you spot a bug, send a PR if you want to fix one.

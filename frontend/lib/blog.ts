@@ -3,6 +3,7 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import remarkHtml from 'remark-html';
+import { fillCopyTokens } from './updateCadence';
 
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 // Average words-per-minute used by the reading-time estimator. 220 is the
@@ -45,7 +46,8 @@ export function listPosts(): BlogPostMeta[] {
   const files = readFiles();
   const posts = files.map((file) => {
     const slug = file.replace(/\.(md|mdx)$/, '');
-    const raw = fs.readFileSync(path.join(BLOG_DIR, file), 'utf-8');
+    // Tokens are filled before gray-matter, so frontmatter reads the settings too.
+    const raw = fillCopyTokens(fs.readFileSync(path.join(BLOG_DIR, file), 'utf-8'));
     const { data, content } = matter(raw);
     return {
       slug,
@@ -63,7 +65,7 @@ export async function getPost(slug: string): Promise<BlogPost | null> {
     fs.existsSync(path.join(BLOG_DIR, f)),
   );
   if (!found) return null;
-  const raw = fs.readFileSync(path.join(BLOG_DIR, found), 'utf-8');
+  const raw = fillCopyTokens(fs.readFileSync(path.join(BLOG_DIR, found), 'utf-8'));
   const { data, content } = matter(raw);
   const processed = await remark().use(remarkHtml).process(content);
   return {

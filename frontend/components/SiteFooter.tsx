@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { WaveGlyph } from './Logo';
+import { BUOY_UPDATES, FORECAST_UPDATES } from '@/lib/updateCadence';
 
 export function SiteFooter() {
   return (
@@ -116,7 +117,7 @@ export function SiteFooter() {
             </li>
           </ul>
           <p className="mt-3 text-text-muted text-xs">
-            Forecasts refresh every 8 h · buoys every 3 h
+            Forecasts {FORECAST_UPDATES} · buoys {BUOY_UPDATES}
           </p>
         </div>
       </div>
