@@ -84,6 +84,9 @@ jobs:
       # stuck step is debuggable from the live Actions tail.
       PYTHONUNBUFFERED: '1'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      # Where the column preflight writes what it found. Set for the whole job so the preflight,
+      # db_import and the last step all read one file (see pipeline/column_preflight.py).
+      COLUMN_PREFLIGHT_RESULT: pipeline/forecast_data/column_preflight.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -102,6 +105,15 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install -r pipeline/requirements.txt
+
+      - name: Check the live tables have every column db_import writes
+        # Before the fetch, so a migration that was never applied is named at the top of the log:
+        # each missing column, with the file in pipeline/migrations/ that adds it. db_import then
+        # leaves exactly those columns out and uploads everything else, and the last step below
+        # fails the run. This step never stops the run; continue-on-error means not even a crash
+        # here can, and the last step then says the check did not run.
+        continue-on-error: true
+        run: python -m pipeline.column_preflight --all
 
       - name: Restore geodata cache
         id: geodata-cache
@@ -182,18 +194,32 @@ jobs:
       - name: Revalidate ISR cache (home + map + regions + CHANGED spot pages only)
         run: python -m pipeline.revalidate --scope full --diff-from pipeline/forecast_data/ratings_snapshot.json
 
+      - name: Fail the run if a database column was missing
+        # The LAST step that does anything, after every upload and the revalidation, so it can
+        # never stop one of them. !cancelled() so it still reports after an earlier step failed.
+        # Exits 1 with one line naming the missing columns and their migrations; exits 0, silent,
+        # when nothing was missing.
+        if: ${{ !cancelled() }}
+        run: python -m pipeline.column_preflight --finish
+
       - name: Open issue on failure
         if: failure()
         uses: actions/github-script@v7
         with:
           script: |
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            // The column preflight's one-line reason, when it is why the run failed.
+            let columns = '';
+            try {
+              columns = JSON.parse(require('fs').readFileSync(process.env.COLUMN_PREFLIGHT_RESULT, 'utf8')).reason || '';
+            } catch (e) { columns = ''; }
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `[cron] full-pipeline failed (run ${context.runNumber})`,
               body: [
                 `The scheduled forecast pipeline failed at \`${new Date().toISOString()}\`.`,
+                ...(columns ? [``, `**${columns}**`] : []),
                 ``,
                 `**Run logs:** ${runUrl}`,
                 ``,
@@ -220,6 +246,7 @@ jobs:
       REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
       PYTHONUNBUFFERED: '1'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      COLUMN_PREFLIGHT_RESULT: pipeline/forecast_data/column_preflight.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -234,6 +261,11 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r pipeline/requirements.txt
 
+      - name: Check the live tables have every column db_import writes
+        # Same check as full-pipeline's, for the one table this job writes. Never stops the run.
+        continue-on-error: true
+        run: python -m pipeline.column_preflight --buoys-only
+
       - name: Create runtime directories
         run: mkdir -p pipeline/cache pipeline/forecast_data
 
@@ -245,3 +277,8 @@ jobs:
 
       - name: Revalidate ISR cache (home + map)
         run: python -m pipeline.revalidate --scope buoys
+
+      - name: Fail the run if a database column was missing
+        # Last, after the upload and the revalidation; see full-pipeline's step of the same name.
+        if: ${{ !cancelled() }}
+        run: python -m pipeline.column_preflight --finish
