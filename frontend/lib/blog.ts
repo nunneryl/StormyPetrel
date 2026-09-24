@@ -1,9 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
-import { remark } from 'remark';
-import remarkHtml from 'remark-html';
-import { fillCopyTokens } from './updateCadence';
+import { renderMarkdown } from './markdown.ts';
+import { fillCopyTokens } from './updateCadence.ts';
 
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 // Average words-per-minute used by the reading-time estimator. 220 is the
@@ -67,10 +66,9 @@ export async function getPost(slug: string): Promise<BlogPost | null> {
   if (!found) return null;
   const raw = fillCopyTokens(fs.readFileSync(path.join(BLOG_DIR, found), 'utf-8'));
   const { data, content } = matter(raw);
-  const processed = await remark().use(remarkHtml).process(content);
   return {
     slug,
-    contentHtml: processed.toString(),
+    contentHtml: await renderMarkdown(content),
     readingMinutes: readingTimeMinutes(content),
     ...(data as BlogFrontmatter),
   };
