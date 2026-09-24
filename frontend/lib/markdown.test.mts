@@ -60,19 +60,23 @@ const outsideTables = (html: string) =>
 const post = await getPost('methodology');
 const html = post?.contentHtml ?? '';
 const found = tables(html);
-check('the methodology post renders its four tables as tables', found.length === 4, `${found.length}`);
+check('the methodology post renders its seven tables as tables', found.length === 7, `${found.length}`);
 check('no table is left as a paragraph of pipes', !/<p>\|/.test(html));
-check('the tables are the four the post writes, in order', JSON.stringify(found.map((t) => t.headers)) ===
-  JSON.stringify([['Component', 'Source', 'What it measures'], ['Period', 'Multiplier'],
-    ['chop_ratio', 'Multiplier'], ['Condition', 'Label']]), JSON.stringify(found.map((t) => t.headers)));
-check('every row arrives', JSON.stringify(found.map((t) => t.rows)) === JSON.stringify([5, 6, 6, 5]),
+check('the tables are the seven the post writes, in order', JSON.stringify(found.map((t) => t.headers)) ===
+  JSON.stringify([['Height', 'Size score'], ['Quality score', 'Weight'], ['What', 'Source', 'Notes'],
+    ['Swell direction', 'Direction gain'], ['Period', 'Score'], ['chop_ratio', 'Score'], ['Condition', 'Label']]),
+  JSON.stringify(found.map((t) => t.headers)));
+check('every row arrives', JSON.stringify(found.map((t) => t.rows)) === JSON.stringify([8, 4, 6, 4, 9, 6, 5]),
   JSON.stringify(found.map((t) => t.rows)));
+// A column goes right only when every body cell is a number: "10 ft or more", "6 s or less" and the
+// cos² formula keep their columns left, and the all-number columns go right.
 check('numeric columns are right-aligned, text columns are not', JSON.stringify(found.map((t) => t.aligns)) ===
-  JSON.stringify([[null, null, null], ['right', 'right'], ['right', 'right'], [null, null]]),
+  JSON.stringify([[null, 'right'], [null, 'right'], [null, null, null], [null, null], [null, 'right'],
+    ['right', 'right'], [null, null]]),
   JSON.stringify(found.map((t) => t.aligns)));
 check('each table sits in a box that scrolls on its own, reachable by keyboard and labelled',
   found.every((t) => t.box.includes('role="region"') && t.box.includes('tabindex="0"')) &&
-  found[1]?.box.includes('aria-label="Table: Period, Multiplier"') === true, found[1]?.box);
+  found[4]?.box.includes('aria-label="Table: Period, Score"') === true, found[4]?.box);
 
 // --------------------------------------------------------------------------- //
 // 2 — nothing but the tables changed, in any post                             //
