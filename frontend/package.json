@@ -8,12 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types lib/ratings.test.mts && node --experimental-strip-types lib/spotInfo.test.mts && node --experimental-strip-types lib/surfReport.test.mts && node --experimental-strip-types lib/formatting.test.mts && node --experimental-strip-types lib/currentHour.test.mts && node --experimental-strip-types lib/forecastClaim.test.mts && node --experimental-strip-types lib/updateCadence.test.mts"
+    "test": "node --experimental-strip-types lib/ratings.test.mts && node --experimental-strip-types lib/spotInfo.test.mts && node --experimental-strip-types lib/surfReport.test.mts && node --experimental-strip-types lib/formatting.test.mts && node --experimental-strip-types lib/currentHour.test.mts && node --experimental-strip-types lib/forecastClaim.test.mts && node --experimental-strip-types lib/updateCadence.test.mts && node --experimental-strip-types lib/markdown.test.mts && node --experimental-strip-types lib/methodology.test.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "@types/leaflet.markercluster": "^1.5.6",
     "gray-matter": "^4.0.3",
+    "hast-util-sanitize": "^5.0.2",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "next": "^15.0.3",
@@ -21,6 +22,7 @@
     "react-dom": "^19.0.0",
     "recharts": "^2.13.3",
     "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
     "remark-html": "^16.0.1"
   },
   "devDependencies": {
