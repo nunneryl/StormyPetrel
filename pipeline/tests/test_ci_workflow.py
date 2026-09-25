@@ -174,6 +174,36 @@ def other_workflow_python_versions():
     return workflow_python_versions(WORKFLOW_DIR)
 
 
+FLOATING_LABEL = "ubuntu-latest"
+
+
+def workflow_files(directory):
+    """The files GitHub runs from `directory`: every .yml and .yaml, nothing else."""
+    return sorted(fn for fn in os.listdir(directory) if fn.endswith((".yml", ".yaml")))
+
+
+def floating_label_lines(directory):
+    """[(filename, line number, code)] for every line of workflow CODE naming ubuntu-latest.
+
+    EVERY LINE, NOT JUST runs-on. A job can reach the label without its runs-on line ever
+    spelling it: `runs-on: ${{ matrix.os }}` with `os: [ubuntu-latest]`, or an expression
+    default like `${{ inputs.runner || 'ubuntu-latest' }}`. A check that read runs-on
+    values would pass both. Comments are stripped first, because tests.yml explains in
+    prose why it is not on ubuntu-latest, and that explanation must not trip the check it
+    motivates. Case-insensitive, so `Ubuntu-Latest` cannot slip past either.
+
+    Includes tests.yml. The fleet scan above skips it so it cannot vote on its own
+    matrix; there is nothing to vote on here, and it floats like any other workflow.
+    """
+    hits = []
+    for fn in workflow_files(directory):
+        code = yaml_code(open(os.path.join(directory, fn), encoding="utf-8").read())
+        for n, line in enumerate(code.splitlines(), 1):
+            if FLOATING_LABEL in line.lower():
+                hits.append((fn, n, line.strip()))
+    return hits
+
+
 def requirement_lines(path):
     """A requirements file's actual requirements — comments and blanks removed.
 
@@ -484,6 +514,95 @@ def test_the_frontend_job_installs_typechecks_and_tests():
     text = ci_text()
     for command in ("npm ci", "npm run typecheck", "npm test"):
         assert re.search(r"run:\s*%s\s*$" % re.escape(command), text, re.M), command
+
+
+# --------------------------------------------------------------------------- #
+# 4 — no workflow floats on ubuntu-latest                                       #
+# --------------------------------------------------------------------------- #
+def test_no_workflow_floats_on_ubuntu_latest():
+    """GitHub moves ubuntu-latest to Ubuntu 26.04 over the weeks from 2026-10-19
+    (actions/runner-images#14748). The forecast pipeline installs libeccodes0 from apt and
+    a geospatial stack from pip wheels on whatever image it lands on, so a floating label
+    would swap the platform under the forecasts on GitHub's schedule, a run at a time,
+    with nothing in the diff to say so. Pinned, the move happens when someone makes it,
+    in one PR that changes every runs-on and has been tried on the new image first.
+
+    This is the fleet-wide rule. The floor test above is the reason tests.yml in
+    particular cannot move until MIN_PYTHON does; this one holds whatever the floor."""
+    hits = floating_label_lines(WORKFLOW_DIR)
+    assert not hits, (
+        "ubuntu-latest moves to a new Ubuntu release on GitHub's schedule. Pin ubuntu-24.04, "
+        "or move every workflow to a newer image deliberately:\n"
+        + "\n".join(f"  .github/workflows/{fn}:{n}: {code}" for fn, n, code in hits))
+
+
+def test_the_floating_label_scan_catches_every_way_a_job_can_name_it():
+    """Line numbers are written out by hand from the fixtures, so the scan is held to
+    where the label really is rather than to whatever it happens to report."""
+    import tempfile
+
+    fixtures = {
+        "scalar.yml": "jobs:\n  a:\n    runs-on: ubuntu-latest\n",
+        "quoted.yml": "jobs:\n  a:\n    runs-on: 'ubuntu-latest'\n",
+        "inline-list.yml": "jobs:\n  a:\n    runs-on: [self-hosted, ubuntu-latest]\n",
+        "block-list.yml": "jobs:\n  a:\n    runs-on:\n      - ubuntu-latest\n",
+        "matrix.yml": ("jobs:\n  a:\n    strategy:\n      matrix:\n        os: [ubuntu-latest]\n"
+                       "    runs-on: ${{ matrix.os }}\n"),
+        "expression.yml": "jobs:\n  a:\n    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}\n",
+        "other-case.yaml": "jobs:\n  a:\n    runs-on: Ubuntu-Latest\n",
+    }
+    with tempfile.TemporaryDirectory() as d:
+        for fn, text in fixtures.items():
+            open(os.path.join(d, fn), "w").write(text)
+        got = {(fn, n) for fn, n, _ in floating_label_lines(d)}
+    assert got == {("scalar.yml", 3), ("quoted.yml", 3), ("inline-list.yml", 3),
+                   ("block-list.yml", 4), ("matrix.yml", 5), ("expression.yml", 3),
+                   ("other-case.yaml", 3)}, sorted(got)
+
+
+def test_the_floating_label_scan_ignores_prose_and_files_github_does_not_run():
+    """The other half. Failing on prose would make the explanation in tests.yml impossible
+    to write, and docs/archive keeps an old workflow as .yml.txt that GitHub never runs."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        open(os.path.join(d, "pinned.yml"), "w").write(
+            "# Not ubuntu-latest: that label moves on GitHub's schedule.\n"
+            "jobs:\n"
+            "  a:\n"
+            "    runs-on: ubuntu-24.04   # was ubuntu-latest\n")
+        open(os.path.join(d, "notes.md"), "w").write("runs-on: ubuntu-latest\n")
+        open(os.path.join(d, "prototype.yml.txt"), "w").write("runs-on: ubuntu-latest\n")
+        assert floating_label_lines(d) == []
+
+
+def test_the_floating_label_scan_sees_every_job_in_the_real_workflows():
+    """Guards the guard, on the real files rather than toy ones. A copy of the workflow
+    directory has every runs-on line flipped to ubuntu-latest, and the scan must report
+    exactly those lines. That fails if the listing misses a file, if the comment stripper
+    eats a real line, or if the reader stops reading, and each of those would otherwise
+    leave the check above passing on an empty result."""
+    import tempfile
+
+    flipped = set()
+    with tempfile.TemporaryDirectory() as d:
+        for fn in os.listdir(WORKFLOW_DIR):
+            path = os.path.join(WORKFLOW_DIR, fn)
+            if not os.path.isfile(path):
+                continue
+            lines = open(path, encoding="utf-8").read().split("\n")
+            if fn.endswith((".yml", ".yaml")):
+                for i, line in enumerate(lines):
+                    m = re.match(r"(\s*runs-on:\s*)\S", line)
+                    if m:
+                        lines[i] = m.group(1) + "ubuntu-latest"
+                        flipped.add((fn, i + 1))
+            open(os.path.join(d, fn), "w", encoding="utf-8").write("\n".join(lines))
+        got = {(fn, n) for fn, n, _ in floating_label_lines(d)}
+    files = {fn for fn, _ in flipped}
+    assert len(files) >= 8 and CI_WORKFLOW_NAME in files, (
+        f"the runs-on lines were found in only {sorted(files)} — has the regex broken?")
+    assert got == flipped, {"missed": sorted(flipped - got), "extra": sorted(got - flipped)}
 
 
 if __name__ == "__main__":

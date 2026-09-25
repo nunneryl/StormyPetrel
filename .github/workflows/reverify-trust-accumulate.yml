@@ -60,7 +60,7 @@ permissions:
 jobs:
   reverify:
     name: reverify-tagged (accumulate direction events)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Estimate ~15-30 min: ~11 real-buoy zones x n_cycles=4 => ~44 CG1 GRIB fetches over
     # NOMADS + NDBC spectra. Hard cap well under an hour so a slow NOMADS can't run away.
     timeout-minutes: 40
@@ -69,10 +69,10 @@ jobs:
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
@@ -107,7 +107,7 @@ jobs:
             || echo "::warning::NDBC latest_obs fetch failed — load_ndbc_wave_stations() will log NDBC files missing"
 
       - name: Restore rolling trust history (accumulated across prior runs)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: pipeline/forecast_data/nwps_trust_history
           key: nwps-trust-history-${{ github.run_id }}
@@ -148,14 +148,14 @@ jobs:
         # are dropped. A fresh key per run (caches are immutable); restore-keys above pulls
         # the newest on the next run.
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: pipeline/forecast_data/nwps_trust_history
           key: nwps-trust-history-${{ github.run_id }}
 
       - name: Open/update issue for SETTLED zones (manual tagging — never auto-applied)
         if: steps.reverify.outputs.any_settled == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           SETTLED_JSON: ${{ steps.reverify.outputs.settled_json }}   # via env (no template injection)

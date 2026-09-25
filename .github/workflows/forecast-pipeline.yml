@@ -61,7 +61,7 @@ jobs:
     if: |
       (github.event_name == 'schedule' && github.event.schedule == '30 3,11,19 * * *') ||
       (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     # The default GITHUB_TOKEN is read-only on Issues; the failure
     # notification step needs `issues: write` to call POST /issues.
@@ -89,10 +89,10 @@ jobs:
       COLUMN_PREFLIGHT_RESULT: pipeline/forecast_data/column_preflight.json
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
@@ -117,7 +117,7 @@ jobs:
 
       - name: Restore geodata cache
         id: geodata-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: pipeline/geodata
           # Keyed on the script content — bump key automatically when the
@@ -152,7 +152,7 @@ jobs:
         run: echo "key=tide-cache-$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - name: Restore tide prediction cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: pipeline/cache/tides
           key: ${{ steps.tide-cache-key.outputs.key }}
@@ -169,7 +169,7 @@ jobs:
 
       - name: Save tide prediction cache
         if: always()   # persist new/refreshed cache entries even if a later fetcher failed / timed out
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: pipeline/cache/tides
           # Per-date key: the first run of the day creates it; a 2nd/3rd run the same day hits the
@@ -204,7 +204,7 @@ jobs:
 
       - name: Open issue on failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
@@ -236,7 +236,7 @@ jobs:
     if: |
       (github.event_name == 'schedule' && github.event.schedule == '0 * * * *') ||
       (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -249,10 +249,10 @@ jobs:
       COLUMN_PREFLIGHT_RESULT: pipeline/forecast_data/column_preflight.json
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip

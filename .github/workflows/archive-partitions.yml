@@ -73,7 +73,7 @@ permissions:
 jobs:
   archive:
     name: archive partitioned wave data (capture only)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # MEASURED, not guessed — record real numbers here so the next person changing this cap
     # is not reasoning from the cap itself:
     #   * 24 min — a --backfill 0 run of 26 zones BEFORE the per-WFO grouping (PR #158),
@@ -112,10 +112,10 @@ jobs:
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip

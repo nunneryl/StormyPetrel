@@ -58,7 +58,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
     # bbox pre-clip + multiprocessing).
@@ -71,10 +71,10 @@ jobs:
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
@@ -89,7 +89,7 @@ jobs:
 
       - name: Restore geodata cache
         id: geodata-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: pipeline/geodata
           key: geodata-v1-${{ hashFiles('pipeline/download_geodata.sh') }}
