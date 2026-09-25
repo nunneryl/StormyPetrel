@@ -10,12 +10,12 @@
  * rules on a grid that lands on, just under and just over every threshold the post names. A
  * moved threshold, a flipped < / <=, or a reordered check fails, on either side.
  *
- * ONLY TABLES THAT MATCH TODAY ARE PINNED. The chop table is held against interpret.py's
- * _CHOP_POINTS in pipeline/tests/test_methodology_tables.py. The period-quality table does not
- * match the code (its 14 s row), so it is reported for the prose rewrite, not pinned.
+ * The post's opening line, "from 0 (FLAT) to 5 (EPIC)", is held against tierFromStars here too.
+ * Every number the post takes from the PIPELINE (weights, curves, gains, horizons, spot counts)
+ * is held in pipeline/tests/test_methodology_tables.py.
  *
  * NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. The expected word for every probe is the
- * post's; classifySurface supplies only the actual.
+ * post's; classifySurface and tierFromStars supply only the actual.
  *
  *     node --experimental-strip-types frontend/lib/methodology.test.mts
  */
@@ -26,7 +26,7 @@ import matter from 'gray-matter';
 import { remark } from 'remark';
 import remarkGfm from 'remark-gfm';
 import type { Nodes, PhrasingContent, TableCell } from 'mdast';
-import { chopLabel, classifySurface } from './ratings.ts';
+import { chopLabel, classifySurface, tierFromStars } from './ratings.ts';
 
 const POST = join(dirname(fileURLToPath(import.meta.url)), '..', 'content', 'blog', 'methodology.md');
 
@@ -153,6 +153,19 @@ for (const speed of speeds) {
 }
 check(`on all ${probes} probes, classifySurface gives the word the post's table gives`,
   disagreements === 0, `${disagreements} disagree, e.g. ${examples.join('; ')}`);
+
+// --------------------------------------------------------------------------- //
+// The two ends of the scale, as the post's first line names them              //
+// --------------------------------------------------------------------------- //
+const ends = /from (\d+) \(([A-Z ]+)\) to (\d+) \(([A-Z ]+)\)/.exec(readFileSync(POST, 'utf8'));
+check('the post still names the two ends of the star scale', ends !== null);
+if (ends) {
+  const [, bottom, bottomLabel, top, topLabel] = ends;
+  check(`${bottom} stars is ${bottomLabel} on the site`, tierFromStars(Number(bottom)).label === bottomLabel,
+    tierFromStars(Number(bottom)).label);
+  check(`${top} stars is ${topLabel} on the site`, tierFromStars(Number(top)).label === topLabel,
+    tierFromStars(Number(top)).label);
+}
 
 if (failures > 0) {
   throw new Error(`methodology: ${failures} FAILURE(S)`);

@@ -14,10 +14,9 @@
  * literals, template text and JSX text, reassembled, with comments ignored; markdown whole.
  * Only the rules below are this file's own.
  *
- * MODEL FACTS ARE NOT OUR CADENCE, AND ARE LISTED BY NAME. The learn pages and the
- * methodology post state true things about the MODELS and the ocean — GFS and ECMWF run "four
- * times a day", HRRR "updates every hour", GFS-derived wind "only updates every 6 hours", a
- * buoy reports "every 20 minutes", the tide turns "twice per day". Nothing in the
+ * MODEL FACTS ARE NOT OUR CADENCE, AND ARE LISTED BY NAME. The learn pages state true things
+ * about the MODELS and the ocean — GFS and ECMWF run "four times a day", HRRR "updates every
+ * hour", a buoy reports "every 20 minutes", the tide turns "twice per day". Nothing in the
  * shape of a sentence tells "HRRR updates every hour" from "the forecast updates every hour",
  * so no pattern can let one through and stop the other. They are allowed by exact phrase, one
  * reviewed entry each, and an entry that stops matching anything fails too, so the list
@@ -82,8 +81,6 @@ const MODEL_FACTS: { file: string; phrase: string; why: string }[] = [
     why: "HRRR's own cycle" },
   { file: 'app/learn/wind/page.tsx', phrase: 'updates every hour out to 18 hours',
     why: "HRRR's own cycle and horizon" },
-  { file: 'content/blog/methodology.md', phrase: 'only updates every 6 hours',
-    why: 'GFS-derived wind, the reason the pipeline moved to HRRR' },
   { file: 'app/learn/buoys/page.tsx', phrase: 'Every 20 minutes, it sends a summary',
     why: "an NDBC buoy's own reporting interval" },
   { file: 'app/learn/tides/page.tsx', phrase: 'high and low water roughly twice per day',
@@ -180,8 +177,8 @@ check('a markdown token is not a claim — it is the setting, filled in at rende
 check('a model fact is allowed only in the file its entry names',
   fixture('const A = () => <p>HRRR is a 3-km model that updates every hour.</p>;').length > 0);
 check('a new claim inside an allowed sentence is still caught',
-  violations('content/blog/methodology.md', 47,
-    'GFS-derived wind only updates every 6 hours, and our forecasts refresh hourly.')
+  violations('app/learn/forecasts/page.tsx', 1,
+    'HRRR is a 3-km model that updates every hour, and our forecasts refresh hourly.')
     .map((f) => f.match).join('|') === 'refresh hourly');
 
 // --------------------------------------------------------------------------- //
