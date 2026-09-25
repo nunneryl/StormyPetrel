@@ -404,7 +404,7 @@ def test_the_mop_spot_count_is_the_tagged_roster():
 
 def test_the_calibration_count_and_window_are_the_factor_files():
     n = int(_says(r"\*\*Calibration at (\d+) California spots\.\*\*", "the calibrated spot count").group(1))
-    assert _post().count(f"{n} California spots") >= 3      # the table, this section, and "still wrong"
+    assert _post().count(f"{n} California spots") >= 3      # the table, this section, and "still working on"
     data = _factors()
     assert len(data["factors"]) == n
     offices = {s["name"]: s.get("nwps_wfo") for s in _rated_spots()}

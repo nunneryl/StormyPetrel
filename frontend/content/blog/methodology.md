@@ -191,7 +191,7 @@ Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On 
 
 `chop_ratio` still appears on the spot page, as the "swell mix" figure under the word.
 
-## Where we're still wrong
+## What we're still working on
 
 1. **Local geology.** A reef pass that focuses energy, or a sandbar that moves with the seasons, isn't in any model. The calibration at 130 California spots corrects each one's typical height; other spots have no local height correction.
 2. **Crowds aren't modelled.** Two spots with the same conditions can be very different sessions.
