@@ -36,6 +36,17 @@ export function SiteFooter() {
             </li>
             <li>
               <a
+                href="https://cdip.ucsd.edu/"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-cyan-600"
+              >
+                CDIP
+              </a>{' '}
+              — California nearshore waves (Scripps)
+            </li>
+            <li>
+              <a
                 href="https://polar.ncep.noaa.gov/waves/"
                 target="_blank"
                 rel="noreferrer"

@@ -86,7 +86,9 @@ export default function AboutPage() {
         <p>
           We pull fresh data from NOAA&rsquo;s Nearshore Wave Prediction
           System, WAVEWATCH III spectral models, HRRR 3km wind grids, NDBC
-          buoy observations, and CO-OPS tide predictions: forecasts are{' '}
+          buoy observations, CO-OPS tide predictions, and California
+          nearshore wave data from Scripps Institution of Oceanography&rsquo;s
+          Coastal Data Information Program (CDIP): forecasts are{' '}
           {FORECAST_UPDATES}, buoy readings arrive {BUOY_UPDATES}. Our
           interpretation engine scores each spot on swell direction, period,
           wind quality, and tide state. No one&rsquo;s selling you a

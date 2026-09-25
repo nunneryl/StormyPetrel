@@ -6,7 +6,7 @@ author: 'Stormy Petrel'
 tag: 'methodology'
 ---
 
-*Last updated: 24 September 2026.*
+*Last updated: 25 September 2026.*
 
 ## TL;DR
 
@@ -81,7 +81,7 @@ The model behind the height depends on the spot and the hour:
 
 **Calibration at 130 California spots.** For these spots we compared our height with MOP's over two weeks, 18 August to 1 September 2026, and now divide our height by each spot's typical ratio. The star rating is then recomputed from the calibrated height.
 
-**What the number is.** The height we publish is nearshore swell height: the significant height of the waves just outside the surf zone, roughly the average of the bigger waves. It is not the face of a breaking wave, which is often bigger. Apart from the hours that come straight from MOP, the model height also gets a boost for longer-period swell.
+**What the number is.** The height we publish is labelled nearshore swell height: the significant height of the waves just outside the surf zone, roughly the average of the bigger waves. It is not the face of a breaking wave, which is often bigger. The label holds at the 48 MOP spots for MOP's hours, and the 130 calibrated California spots are scaled so their typical height matches MOP's. Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, so it can read higher than nearshore swell height.
 
 ## Swell direction and period
 
@@ -191,12 +191,13 @@ Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On 
 
 `chop_ratio` still appears on the spot page, as the "swell mix" figure under the word.
 
-## Where we're still wrong
+## What we're still working on
 
 1. **Local geology.** A reef pass that focuses energy, or a sandbar that moves with the seasons, isn't in any model. The calibration at 130 California spots corrects each one's typical height; other spots have no local height correction.
 2. **Crowds aren't modelled.** Two spots with the same conditions can be very different sessions.
 3. **Tide preference.** For most spots, the preferred tide is an unverified estimate. We're replacing these with researched values.
 4. **Height calibration drifts.** Each spot's factor comes from a single two-week window, and it moves with the swell mix: between two windows, about a third of spots shifted by more than 10%.
-5. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
+5. **Uncalibrated heights can run high.** Outside the 130 calibrated California spots, and apart from the hours that come straight from MOP, heights aren't corrected. They include the period boost and can read higher than the nearshore swell height they're labelled as. At the California spots where we measured it, the uncorrected height was typically about 1.5 times MOP's.
+6. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
 
 The code is on [GitHub](https://github.com/nunneryl/StormyPetrel). The rating is in [`pipeline/interpret.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/interpret.py), and the NWPS, MOP and calibration steps are in [`nwps_nearshore.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/nwps_nearshore.py), [`mop.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/mop.py) and [`face_correction.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/face_correction.py). File an issue if you spot a bug, or send a PR if you want to fix one.

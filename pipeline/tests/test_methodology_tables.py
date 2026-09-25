@@ -404,7 +404,7 @@ def test_the_mop_spot_count_is_the_tagged_roster():
 
 def test_the_calibration_count_and_window_are_the_factor_files():
     n = int(_says(r"\*\*Calibration at (\d+) California spots\.\*\*", "the calibrated spot count").group(1))
-    assert _post().count(f"{n} California spots") >= 3      # the table, this section, and "still wrong"
+    assert _post().count(f"{n} California spots") >= 3      # the table, this section, and "still working on"
     data = _factors()
     assert len(data["factors"]) == n
     offices = {s["name"]: s.get("nwps_wfo") for s in _rated_spots()}
@@ -418,6 +418,61 @@ def test_the_calibration_count_and_window_are_the_factor_files():
     assert (t0.isoformat(), t1.isoformat()) == (window["t0"], window["t1"]), window
     weeks = {_WORDS[w] for w in _every(r"over (\w+) weeks", "how long the calibration was measured")}
     assert {(t1 - t0).days} == {7 * w for w in weeks}, weeks
+
+
+# --------------------------------------------------------------------------- #
+# The height scale: MOP's hours, the calibrated spots, and everywhere else      #
+# --------------------------------------------------------------------------- #
+def test_every_mop_and_calibrated_count_in_the_post_is_the_datas():
+    mop = sum(s.get("swell_window_source") == "cdip_mop" for s in _rated_spots())
+    assert {int(n) for n in _every(r"(\d+) MOP spots", "the MOP spot count")} == {mop}
+    calibrated = len(_factors()["factors"])
+    assert {int(n) for n in _every(r"(\d+) calibrated California spots", "the calibrated spot count")} == {calibrated}
+
+
+def test_only_mops_own_hours_skip_the_period_boost():
+    _says(r"The label holds at the 48 MOP spots for MOP's hours", "that MOP's hours carry MOP's own height")
+    _says(r"Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, "
+          r"so it can read higher than nearshore swell height\.", "the uncorrected, boosted height")
+    from pipeline.forecast import mop
+    hs = 1.5
+    for tp in (8.0, 12.0, 16.0):
+        face = mop.mop_stars(hs, tp, 270.0, hs, 270.0)[1]
+        assert math.isclose(face, hs * I.M_TO_FT, rel_tol=1e-12), (tp, face)   # no boost on MOP's hours
+    # Everywhere else the boost never lowers a height, and it grows with period.
+    for source in ("ww3", "nwps"):
+        factors = [I.period_factor(tp, source) for tp in range(0, 31)]
+        assert min(factors) >= 1.0 and factors == sorted(factors), (source, factors)
+        assert I.period_factor(16.0, source) > I.period_factor(6.0, source), source
+
+
+def test_calibrated_spots_are_divided_and_everything_else_is_left_as_the_model_made_it():
+    _says(r"Outside the 130 calibrated California spots, and apart from the hours that come straight from MOP, "
+          r"heights aren't corrected\.", "which heights aren't corrected")
+    from pipeline.forecast import face_correction as F
+    spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
+             {"name": "Uncalibrated", "swell_window_source": "nwps"},
+             {"name": "Mop", "swell_window_source": "cdip_mop"}]
+    hour = {"face_ft": 4.0, "effective_size_ft": 4.0, "stars": 3.0,
+            "wind_mult": 1.0, "tide_mult": 1.0, "chop_mult": 1.0, "period_quality": 1.0}
+    ratings = {s["name"]: [dict(hour)] for s in spots}
+    # The MOP spot is given a factor on purpose: its height is MOP's own, so even a factor must not touch it.
+    F.apply_face_corrections(ratings, spots, factors={"calibrated": {"factor": 2.0}, "mop": {"factor": 3.0}},
+                             slug_for=lambda name: name.lower(), now=datetime.date(2026, 9, 25))
+    assert ratings["Calibrated"][0]["face_ft"] == 4.0 / 2.0      # "divide our height by each spot's typical ratio"
+    assert ratings["Uncalibrated"][0]["face_ft"] == 4.0          # "aren't corrected"
+    assert ratings["Mop"][0]["face_ft"] == 4.0                   # MOP's own height, never divided
+
+
+def test_the_uncorrected_height_ratio_is_the_measured_median():
+    m = _says(rf"At the California spots where we measured it, the uncorrected height was typically about "
+              rf"{_N} times MOP's\.", "how far the uncorrected height ran above MOP's")
+    ratios = sorted(rec["factor"] for rec in _factors()["factors"].values())
+    mid = len(ratios) // 2
+    median = ratios[mid] if len(ratios) % 2 else (ratios[mid - 1] + ratios[mid]) / 2.0
+    # "About X times" is read literally, so it has to be X to the nearest tenth. Rounding to the
+    # post's own precision is too loose here: it would let a median of 1.54 be called "about 2".
+    assert abs(median - float(m.group(1))) <= 0.05, (median, m.group(1))
 
 
 def _run_all():
