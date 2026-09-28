@@ -8,24 +8,27 @@ import { ReportCard } from '@/components/ReportCard';
 import { CamBadge } from '@/components/CamBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
+import { HeightBasisMark } from '@/components/HeightBasisMark';
 import { fmtFtRange, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
+import { heightBasis } from '@/lib/heightBasis';
 import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
 import { fetchCamSlugSet } from '@/lib/cams';
+import { NOAA_SOURCES, RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
 export const revalidate = 900;
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Stormy Petrel — Free Surf Forecasts for 484 US Spots',
+    absolute: `Stormy Petrel — Free Surf Forecasts for ${RATED_SPOT_COUNT} US Spots`,
   },
   description:
-    'Free surf forecasts with wave height, swell direction, wind, and tide. No paywall. Built on NOAA NWPS, WAVEWATCH III, and HRRR data.',
+    `Free surf forecasts with wave height, swell direction, wind, and tide. No paywall. Built on NOAA ${NOAA_SOURCES} data.`,
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'Stormy Petrel — Free Surf Forecasts for 484 US Spots',
+    title: `Stormy Petrel — Free Surf Forecasts for ${RATED_SPOT_COUNT} US Spots`,
     description:
-      'Free surf forecasts with wave height, swell direction, wind, and tide. No paywall. Built on NOAA NWPS, WAVEWATCH III, and HRRR data.',
+      `Free surf forecasts with wave height, swell direction, wind, and tide. No paywall. Built on NOAA ${NOAA_SOURCES} data.`,
     type: 'website',
   },
 };
@@ -73,6 +76,7 @@ export default async function HomePage() {
     face_ft: s.latest?.face_ft ?? null,
     face_lo_ft: s.latest?.face_lo_ft ?? null,
     face_hi_ft: s.latest?.face_hi_ft ?? null,
+    height_basis: heightBasis(s.latest),
   }));
 
   return (
@@ -137,7 +141,7 @@ export default async function HomePage() {
           }
         />
         <div className="rounded-xl border border-ink-600 bg-white shadow-card overflow-hidden">
-          <div className="hidden md:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_64px_72px_120px] gap-3 px-4 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
+          <div className="hidden md:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_72px_72px_120px] gap-3 px-4 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
             <div>Spot</div>
             <div>State</div>
             <div>Rating</div>
@@ -147,15 +151,18 @@ export default async function HomePage() {
           </div>
           {top10.map((s) => {
             const f = s.latest;
+            const basis = heightBasis(f);
             const tp = pickSwell(f?.swell_tp ?? null, f?.tp ?? null);
             const wMph = msToMph(f?.wind_speed ?? null);
             return (
               <Link
                 key={s.id}
                 href={`/spot/${s.slug}`}
-                className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_64px_72px_120px] gap-3 px-4 py-2.5 border-b border-ink-600 last:border-b-0 hover:bg-ink-800 transition group"
+                className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_72px_72px_120px] gap-3 px-4 py-2.5 border-b border-ink-600 last:border-b-0 hover:bg-ink-800 transition group"
               >
-                <div className="min-w-0">
+                {/* Centred on desktop: the Swell cell is two lines now (height, then its
+                    basis), and every other cell already centres itself in the row. */}
+                <div className="min-w-0 md:self-center">
                   <div className="font-bold text-text-primary group-hover:text-cyan-600 truncate flex items-center gap-1.5">
                     <span className="truncate">{s.name}</span>
                     <CamBadge hasCam={camSlugs.has(s.slug)} size={12} />
@@ -171,8 +178,11 @@ export default async function HomePage() {
                 <div className="hidden md:flex items-center">
                   <StarRating score={f?.stars ?? 0} size="sm" />
                 </div>
-                <div className="hidden md:flex items-center justify-end font-bold tabular-nums text-text-primary">
-                  {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                <div className="hidden md:flex flex-col items-end justify-center gap-0.5">
+                  <span className="font-bold tabular-nums text-text-primary">
+                    {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                  </span>
+                  <HeightBasisMark basis={basis} />
                 </div>
                 <div className="hidden md:flex items-center justify-end text-text-secondary tabular-nums text-sm">
                   {fmtSec(tp)}
@@ -185,8 +195,11 @@ export default async function HomePage() {
                 </div>
                 {/* Mobile-only summary on the right side */}
                 <div className="md:hidden flex items-center gap-2 shrink-0 self-start">
-                  <span className="font-bold tabular-nums text-text-primary">
-                    {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                  <span className="flex flex-col items-end gap-0.5">
+                    <span className="font-bold tabular-nums text-text-primary">
+                      {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                    </span>
+                    <HeightBasisMark basis={basis} />
                   </span>
                   <StarRating score={f?.stars ?? 0} size="sm" />
                 </div>

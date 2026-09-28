@@ -46,11 +46,20 @@ export function fmtFt(v: number | null | undefined): string {
  * The published SWELL HEIGHT, as a whole-foot band when one was measured and as the point
  * estimate when one was not.
  *
- * THE LABEL IS "SWELL HEIGHT", NOT "FACE". What the pipeline publishes is CDIP MOP
- * significant wave height at the 10-15 m contour, which CDIP states is generally outside
- * the surf zone. It is not a breaking face and is no longer called one. Only the DISPLAY
- * changed: face_ft / face_lo_ft / face_hi_ft keep their names in the database, the API and
- * every query, because those are parsed and this is not.
+ * THE LABEL IS "SWELL HEIGHT", NOT "FACE". No row is a breaking face and none is called one.
+ * But the rows are NOT all on one scale, and this string does not say which one it is on —
+ * lib/heightBasis.ts does, and every surface that prints this string puts that label beside it:
+ *
+ *   calibrated  130 California spots: the model's height divided by the spot's measured factor,
+ *               so its typical value matches CDIP MOP significant wave height at the 10-15 m
+ *               contour, which CDIP states is generally outside the surf zone.
+ *   cdip        a MOP-fed hour: MOP's own height, on that same scale.
+ *   model       every other spot: the wave models' height with the long-period boost and no
+ *               correction, which can read well above MOP's — about 1.5 times, at the
+ *               California spots where the two were compared.
+ *
+ * Only the DISPLAY changed: face_ft / face_lo_ft / face_hi_ft keep their names in the database,
+ * the API and every query, because those are parsed and this is not.
  *
  * WHOLE FEET. The measured band is roughly +/-20%, so a tenth of a foot is precision the
  * measurement does not have; "3-5 ft" is the honest resolution and "3.3-4.9 ft" is not.
@@ -60,7 +69,7 @@ export function fmtFt(v: number | null | undefined): string {
  *   WHAT WENT WRONG. This rounded both ends to nearest, so the two ends could land on the
  *   same whole foot and the band VANISHED. Measured over 17,030 banded future hours, 5,566
  *   collapsed — 32.7%. Steamer Lane rendered a bare "2ft" from a real 2.52-2.87 band, and a
- *   reader could not tell it from one of the 466 spots that were never measured at all. The
+ *   reader could not tell it from one of the 516 spots that have no measured band at all. The
  *   collapse was worst exactly where the band is narrowest, which is where a reader most
  *   needs to be told the number is soft.
  *
@@ -90,7 +99,7 @@ export function fmtFt(v: number | null | undefined): string {
  * rule the band's own ratio is at most 1.7, so a floored-to-zero low end forces a high end
  * under 1.7 and this form can only ever be "under 1ft" or "under 2ft".
  *
- * NO BAND MEANS NO BAND. 466 of 648 spots have no measured spread, and they fall through
+ * NO BAND MEANS NO BAND. 516 of 646 spots have no measured spread, and they fall through
  * to the point estimate rather than to a default width. A default would be indistinguishable
  * from a measured one to anybody reading the site, which is precisely why there isn't one.
  * The two states ARE distinguishable on the page, and after the outward-expansion change

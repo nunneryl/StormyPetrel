@@ -9,10 +9,16 @@
 // and once a minute after.
 import { useEffect, useState } from 'react';
 
+import Link from 'next/link';
+
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
 import { selectCurrentHour } from '@/lib/currentHour';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
+import {
+  heightBasis, HEIGHT_BASIS_COLOR, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_NOTE,
+  HEIGHT_METHOD_HREF, HEIGHT_METHOD_LINK_TEXT,
+} from '@/lib/heightBasis';
 import type { Forecast } from '@/lib/types';
 import {
   classifySurface, surfaceTextClass, chopLabel,
@@ -66,6 +72,9 @@ export function CurrentConditions({
 
   const selection = selectCurrentHour(rows, nowMs);
   const current = selection.row;
+  // What the height in the Swell height tile IS — calibrated, CDIP's own, or a model
+  // estimate — read off the same row, so it moves with the row when the hour turns over.
+  const basis = heightBasis(current);
   // The NEXT hour, for the tide trend arrow — relative to the selected hour, not to
   // whatever happened to be second in the array.
   const forecasts =
@@ -113,6 +122,13 @@ export function CurrentConditions({
       <BigTile
         label="Swell height"
         value={fmtFtRange(current?.face_lo_ft, current?.face_hi_ft, current?.face_ft)}
+        sub={
+          basis && (
+            <span className="font-medium" style={{ color: HEIGHT_BASIS_COLOR[basis] }}>
+              {HEIGHT_BASIS_LABEL[basis]}
+            </span>
+          )
+        }
         hint={tp ? `${fmtSec(tp)} period` : null}
         action={faceAction}
       />
@@ -174,6 +190,15 @@ export function CurrentConditions({
         }
       />
       </section>
+      {/* What the height above is, in one line, and where that is explained. */}
+      {basis && (
+        <p className="mt-2 text-xs text-text-secondary">
+          {HEIGHT_BASIS_NOTE[basis]}{' '}
+          <Link href={HEIGHT_METHOD_HREF} className="text-cyan-600 hover:underline whitespace-nowrap">
+            {HEIGHT_METHOD_LINK_TEXT} →
+          </Link>
+        </p>
+      )}
     </>
   );
 }
@@ -182,12 +207,13 @@ function BigTile({
   label,
   value,
   valueClass,
+  sub,
   hint,
   icon,
   badge,
   rightSpark,
   action,
-}: Tile & { badge?: React.ReactNode; valueClass?: string }) {
+}: Tile & { badge?: React.ReactNode; valueClass?: string; sub?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-ink-600 bg-ink-800/60 p-3.5">
       <div className="flex items-start justify-between mb-2">
@@ -202,6 +228,8 @@ function BigTile({
           {value}
         </span>
       </div>
+      {/* A line about the value itself, directly under it — the Swell height tile's basis. */}
+      {sub && <div className="mt-0.5 text-xs leading-snug">{sub}</div>}
       {(hint || rightSpark || action) && (
         <div className="mt-1 flex items-center justify-between gap-2 text-xs text-text-muted">
           <span>{hint}</span>

@@ -10,10 +10,12 @@ import {
   todayIso,
   truncateAt,
 } from '@/lib/reports';
+import { HeightBasisMark } from '@/components/HeightBasisMark';
 import { StarRating } from '@/components/StarRating';
 import { StarText } from '@/components/StarText';
 import { ShareButton } from '@/components/ShareButton';
 import { siteUrl } from '@/lib/site-url';
+import { storedHeightBasis } from '@/lib/heightBasis';
 
 export const revalidate = 1800;
 
@@ -176,9 +178,15 @@ export default async function ReportPage({
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <StarRating score={s.stars} size="sm" />
+                  {/* The height, and under it the basis the report STORED for it — none
+                      for a report stored before the field existed, never a guess. Fixed
+                      width, so the stars line up whichever word is under the height. */}
                   {s.face_ft !== null && s.face_ft !== undefined && (
-                    <span className="font-bold tabular-nums text-text-primary">
-                      {s.face_ft.toFixed(1)}ft
+                    <span className="flex flex-col items-end gap-0.5 w-16">
+                      <span className="font-bold tabular-nums text-text-primary">
+                        {s.face_ft.toFixed(1)}ft
+                      </span>
+                      <HeightBasisMark basis={storedHeightBasis(s.height_basis)} />
                     </span>
                   )}
                 </div>

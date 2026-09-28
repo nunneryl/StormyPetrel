@@ -92,7 +92,7 @@ async function loadForecasts(spotId: number): Promise<Forecast[]> {
   const { data, error } = await supabase
     .from('forecasts')
     .select(
-      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_lo_ft, face_hi_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
+      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_ft_raw, face_lo_ft, face_hi_ft, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
     )
     .eq('spot_id', spotId)
     .eq('source', 'nwps')
@@ -367,10 +367,15 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
       {/* CDIP attribution — required wherever the nearshore forecast is fed by
           the CDIP MOP model (swell_window_source = 'cdip_mop'). Link must point
-          to the CDIP homepage per their data license. */}
+          to the CDIP homepage per their data license.
+
+          A CREDIT, NOT A CLAIM ABOUT THE NUMBERS ABOVE. It read "Nearshore forecast from
+          CDIP MOP", but MOP's nowcast ends before the current hour, so every hour this page
+          shows is a model estimate and the Swell height tile says so. The pipeline still
+          reads MOP for this spot's past hours, which is what the credit is for. */}
       {spot.swell_window_source === 'cdip_mop' && (
         <p className="pt-1 text-xs text-text-muted">
-          Nearshore forecast from CDIP MOP — data courtesy of{' '}
+          CDIP MOP data for this spot courtesy of{' '}
           <a
             href="https://cdip.ucsd.edu"
             target="_blank"

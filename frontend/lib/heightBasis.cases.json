@@ -1,0 +1,107 @@
+{
+  "_comment": "Hand-written rows and the height basis each must get. Read by frontend/lib/heightBasis.test.mts (heightBasis) and pipeline/tests/test_daily_report_height_basis.py (daily_report.height_basis), so the page and the report prompt cannot label the same row differently. Every expected value is written out here, never computed by the code under test. face_ft is face_ft_raw divided by the spot's factor and rounded to 2 dp, exactly as face_correction.apply_face_corrections writes it; the arithmetic is in each case's note.",
+  "cases": [
+    {
+      "name": "calibrated, factor above 1 (steamer-lane-like, 2.0)",
+      "row": {"face_ft": 2.31, "face_ft_raw": 4.62, "swell_source": "nwps_height_ww3_dir"},
+      "basis": "calibrated",
+      "note": "4.62 / 2.0 = 2.31: the published height is the smaller one"
+    },
+    {
+      "name": "calibrated, factor BELOW 1 (point-arena, 0.9313)",
+      "row": {"face_ft": 3.33, "face_ft_raw": 3.1, "swell_source": "nwps_height_ww3_dir"},
+      "basis": "calibrated",
+      "note": "3.1 / 0.9313 = 3.3287 -> 3.33: the published height is LARGER than the raw one, so a raw > face test would call this a model estimate"
+    },
+    {
+      "name": "calibrated, factor just below 1 (san-diego-blacks-beach, 0.978)",
+      "row": {"face_ft": 2.04, "face_ft_raw": 2.0, "swell_source": "nwps_height_ww3_dir"},
+      "basis": "calibrated",
+      "note": "2.0 / 0.978 = 2.04499 -> 2.04"
+    },
+    {
+      "name": "calibrated, on the WW3 path the NWPS override did not cover",
+      "row": {"face_ft": 1.9, "face_ft_raw": 3.8, "swell_source": "ww3"},
+      "basis": "calibrated",
+      "note": "the correction divides every rated hour of a calibrated spot, whichever producer wrote it: 3.8 / 2.0 = 1.9"
+    },
+    {
+      "name": "a MOP-tier spot's model row (the hours readers see there)",
+      "row": {"face_ft": 5.12, "face_ft_raw": 5.12, "swell_source": "ww3"},
+      "basis": "model",
+      "note": "MOP-tier spots are never corrected (face_correction.MOP_TIER_SOURCES), so raw equals face; the hour is not MOP-fed"
+    },
+    {
+      "name": "a MOP-tier spot's model row on the NWPS fallback",
+      "row": {"face_ft": 3.7, "face_ft_raw": 3.7, "swell_source": "nwps_swell"},
+      "basis": "model",
+      "note": "rate_spot's NWPS fallback; not MOP-fed, not corrected"
+    },
+    {
+      "name": "a MOP-fed row",
+      "row": {"face_ft": 3.28, "face_ft_raw": 3.28, "swell_source": "cdip_mop"},
+      "basis": "cdip",
+      "note": "apply_mop_overrides writes MOP Hs x 3.281 and tags the hour cdip_mop; the correction skips the tier"
+    },
+    {
+      "name": "uncalibrated NWPS spot",
+      "row": {"face_ft": 4.4, "face_ft_raw": 4.4, "swell_source": "nwps_height_ww3_dir"},
+      "basis": "model",
+      "note": "no factor: stamp_provenance copied face into raw and nothing divided"
+    },
+    {
+      "name": "uncalibrated NWPS spot, DIRPW direction",
+      "row": {"face_ft": 2.2, "face_ft_raw": 2.2, "swell_source": "nwps"},
+      "basis": "model",
+      "note": "the NWPS override's fallback tag is 'nwps', which is not 'cdip_mop'"
+    },
+    {
+      "name": "uncalibrated spot, buoy direction",
+      "row": {"face_ft": 1.6, "face_ft_raw": 1.6, "swell_source": "buoy"},
+      "basis": "model",
+      "note": "rate_spot's buoy-persistence tag"
+    },
+    {
+      "name": "uncalibrated spot, NWPS total direction",
+      "row": {"face_ft": 6.1, "face_ft_raw": 6.1, "swell_source": "nwps_total"},
+      "basis": "model",
+      "note": "rate_spot's last-resort tag"
+    },
+    {
+      "name": "row written before migration 017",
+      "row": {"face_ft": 4.0, "face_ft_raw": null, "swell_source": "nwps_height_ww3_dir"},
+      "basis": "model",
+      "note": "no raw value is no evidence of calibration; the label must not claim it"
+    },
+    {
+      "name": "flat hour at a calibrated spot",
+      "row": {"face_ft": 0.0, "face_ft_raw": 0.0, "swell_source": "nwps_height_ww3_dir"},
+      "basis": "model",
+      "note": "0 / factor = 0: dividing changed nothing, and the number shown is exactly the model's"
+    },
+    {
+      "name": "swell_source missing",
+      "row": {"face_ft": 2.0, "face_ft_raw": 2.0, "swell_source": null},
+      "basis": "model",
+      "note": "nothing says CDIP, so it is not called CDIP"
+    },
+    {
+      "name": "a near miss on the MOP tag",
+      "row": {"face_ft": 2.5, "face_ft_raw": 2.5, "swell_source": "CDIP_MOP"},
+      "basis": "model",
+      "note": "the tag is matched exactly; a looser match is how a model row gets called CDIP's"
+    },
+    {
+      "name": "unrateable hour",
+      "row": {"face_ft": null, "face_ft_raw": null, "swell_source": "none"},
+      "basis": null,
+      "note": "no height, so nothing to label"
+    },
+    {
+      "name": "calibrated AND tagged cdip_mop (cannot happen: the MOP tier is never corrected)",
+      "row": {"face_ft": 1.5, "face_ft_raw": 3.0, "swell_source": "cdip_mop"},
+      "basis": "calibrated",
+      "note": "the order the rule is stated in: a divided height is not CDIP's own any more"
+    }
+  ]
+}

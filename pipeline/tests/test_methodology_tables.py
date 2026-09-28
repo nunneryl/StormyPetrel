@@ -11,8 +11,12 @@ fails CI.
 A TEST FILE, NOT A PIPELINE CHANGE. It reads the post and imports the code; it changes neither.
 The surface-conditions table mirrors frontend code and is held in frontend/lib/methodology.test.mts.
 
-NOT PINNED, deliberately: the 84,774 spot-hour figures (a measurement, dated in the post) and the
-calibration drift figure (a measurement taken outside this repo). Neither is a number the code owns.
+NOT PINNED, deliberately: the 84,774 spot-hour figures (a measurement, dated in the post), the
+calibration drift figure (a measurement taken outside this repo), the half-star gap between
+calibrated and uncalibrated ratings (measured on live rows, dated in the post), and that MOP's
+nowcast ends before the current hour (a property of CDIP's feed, seen on live rows). None is a
+number the code owns. What the code does own about the last two — that the stars follow the
+calibrated height, and that MOP is read from its nowcast — is pinned below.
 
 NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. Every expected number is read out of the post;
 the code supplies only the actual side. Where a claim is prose, the test finds it by its wording
@@ -393,7 +397,7 @@ def _factors():
 
 
 def test_the_mop_spot_count_is_the_tagged_roster():
-    n = int(_says(r"\*\*(\d+) California spots: CDIP MOP, for the hours around now\.\*\*", "the MOP spot count").group(1))
+    n = int(_says(r"\*\*(\d+) California spots: CDIP MOP, for past hours only\.\*\*", "the MOP spot count").group(1))
     assert _post().count(f"CDIP MOP at {n} California spots") == 1
     mop = [s for s in _rated_spots() if s.get("swell_window_source") == "cdip_mop"]
     assert len(mop) == n
@@ -431,7 +435,7 @@ def test_every_mop_and_calibrated_count_in_the_post_is_the_datas():
 
 
 def test_only_mops_own_hours_skip_the_period_boost():
-    _says(r"The label holds at the 48 MOP spots for MOP's hours", "that MOP's hours carry MOP's own height")
+    _says(r"MOP's own height, which carries no boost, never reaches the page\.", "that MOP's own height carries no boost")
     _says(r"Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, "
           r"so it can read higher than nearshore swell height\.", "the uncorrected, boosted height")
     from pipeline.forecast import mop
@@ -447,8 +451,8 @@ def test_only_mops_own_hours_skip_the_period_boost():
 
 
 def test_calibrated_spots_are_divided_and_everything_else_is_left_as_the_model_made_it():
-    _says(r"Outside the 130 calibrated California spots, and apart from the hours that come straight from MOP, "
-          r"heights aren't corrected\.", "which heights aren't corrected")
+    _says(r"Outside the 130 calibrated California spots, heights aren't corrected, and that includes all the "
+          r"hours you can see at the 48 MOP spots\.", "which heights aren't corrected")
     from pipeline.forecast import face_correction as F
     spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
              {"name": "Uncalibrated", "swell_window_source": "nwps"},
@@ -462,6 +466,51 @@ def test_calibrated_spots_are_divided_and_everything_else_is_left_as_the_model_m
     assert ratings["Calibrated"][0]["face_ft"] == 4.0 / 2.0      # "divide our height by each spot's typical ratio"
     assert ratings["Uncalibrated"][0]["face_ft"] == 4.0          # "aren't corrected"
     assert ratings["Mop"][0]["face_ft"] == 4.0                   # MOP's own height, never divided
+
+
+def test_mop_is_read_from_its_nowcast():
+    """"For past hours only" rests on what we read: MOP's NOWCAST, which stops before the present.
+    That the feed stops short of the current hour is CDIP's, measured on live rows and not pinned;
+    that the pipeline reads the nowcast, whatever flavour a point URL was cached in, is code."""
+    _says(r"We read its nowcast, and the nowcast ends before the current hour", "that MOP is read from its nowcast")
+    from pipeline.forecast import mop
+    for flavour in ("_hindcast", "_forecast", "_ecmwf_fc"):
+        assert mop.nowcast_url(f"x/D0045{flavour}.nc") == "x/D0045_nowcast.nc", flavour
+    # ... and the override's fetch asks for that URL, not the one the spot was cached with.
+    asked = []
+    real = mop.pull_mop_window
+    mop.pull_mop_window = lambda url, t0, t1: asked.append(url) or []
+    try:
+        assert mop.mop_swell_by_hour({"mop_point_url": "x/D0045_forecast.nc"}) is None
+    finally:
+        mop.pull_mop_window = real
+    assert asked == ["x/D0045_nowcast.nc"], asked
+
+
+def test_calibrated_spots_are_rated_on_the_calibrated_height():
+    m = _says(r"Stars at the (\d+) calibrated California spots are worked out from the calibrated height, "
+              r"which is smaller than the uncalibrated one at all but (\w+) of them\.",
+              "that calibrated spots are rated on the calibrated height")
+    n, but = int(m.group(1)), _WORDS[m.group(2)]
+    factors = [rec["factor"] for rec in _factors()["factors"].values()]
+    assert len(factors) == n
+    # The calibrated height is the raw one DIVIDED by the factor, so it is the smaller one exactly
+    # where the factor is above 1.
+    assert sum(f > 1.0 for f in factors) == n - but, sorted(f for f in factors if f <= 1.0)
+    # And the stars follow the divided height. Expected values are read off the post's size
+    # table: with every quality score at 1 the rating is the size score, and 2.0 and 3.0 are
+    # already whole or half stars, so rounding leaves them alone.
+    size = {x: y for x, y, _ in _curve_rows(["Height", "Size score"], "ft")}
+    from pipeline.forecast import face_correction as F
+    spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
+             {"name": "Uncalibrated", "swell_window_source": "nwps"}]
+    hour = {"face_ft": 4.0, "effective_size_ft": 4.0, "stars": size[4.0],
+            "wind_mult": 1.0, "tide_mult": 1.0, "chop_mult": 1.0, "period_quality": 1.0}
+    ratings = {s["name"]: [dict(hour)] for s in spots}
+    F.apply_face_corrections(ratings, spots, factors={"calibrated": {"factor": 2.0}},
+                             slug_for=lambda name: name.lower(), now=datetime.date(2026, 9, 28))
+    assert ratings["Calibrated"][0]["stars"] == size[2.0] < size[4.0]     # rated on 4 ft / 2 = 2 ft
+    assert ratings["Uncalibrated"][0]["stars"] == size[4.0]               # rated on the 4 ft it had
 
 
 def test_the_uncorrected_height_ratio_is_the_measured_median():

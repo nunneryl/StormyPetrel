@@ -10,6 +10,7 @@ import {
   msToMph,
   pickSwell,
 } from '@/lib/formatting';
+import { heightBasis, heightBasisMarkHtml } from '@/lib/heightBasis';
 import { camBadgeHtml } from './CamBadge';
 
 const LEAFLET_CSS_ID = 'leaflet-css';
@@ -354,7 +355,7 @@ function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
 
   const conditionsLine = `
     <div style="font-size:12px;color:#0F172A;margin-top:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-variant-numeric:tabular-nums;">
-      <span style="font-weight:700;">${escapeHtml(fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null))}</span>
+      <span style="display:inline-flex;align-items:baseline;gap:4px;"><span style="font-weight:700;">${escapeHtml(fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null))}</span>${heightBasisMarkHtml(heightBasis(f))}</span>
       <span style="color:#475569;">${escapeHtml(fmtSec(swellPeriod))}</span>
       ${swellArrow ? `<span style="color:#0369A1;display:inline-flex;align-items:center;gap:3px;">${swellArrow}</span>` : ''}
     </div>

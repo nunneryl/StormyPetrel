@@ -99,14 +99,26 @@ SYSTEM_PROMPT = (
     "onshore, and mention what's coming in the next 2-3 days. Sound "
     "like a knowledgeable surfer, not a weather robot. Keep it under "
     "100 words. No hashtags, no emojis. "
-    # THE HEIGHTS ARE NOT BREAKING FACES. They are CDIP MOP significant wave height at the
-    # 10-15 m contour, generally outside the surf zone, and the site labels them "Swell
-    # height" for that reason. Without this the model writes "4 ft faces" from a 4 ft swell
-    # height and contradicts the tile the reader is looking at.
-    "The heights you are given are SWELL HEIGHT — significant wave height "
-    "measured offshore of the surf zone, not the height of a breaking wave "
-    "face. Call it swell or swell height. Never call it face height, and "
-    "never describe it as how big the waves break."
+    # THE HEIGHTS ARE NOT BREAKING FACES. The site labels them "Swell height", and without
+    # this the model writes "4 ft faces" from a 4 ft swell height and contradicts the tile
+    # the reader is looking at.
+    "The heights you are given are SWELL HEIGHT, not the height of a breaking "
+    "wave face. Call it swell or swell height. Never call it face height, and "
+    "never describe it as how big the waves break. "
+    # NOR ARE THEY ALL ON ONE SCALE, AND NONE IS A MEASUREMENT. This used to say every height
+    # was significant wave height "measured" offshore of the surf zone — CDIP MOP's, by the
+    # comment above it. That was true of none of them: the 130 calibrated spots are model
+    # heights scaled to CDIP, MOP's own rows never reach the report's hours, and every other
+    # spot is an uncalibrated model estimate that can read well above CDIP's height. Each
+    # spot's height now arrives tagged with which it is (height_basis, below), and the site
+    # shows the same tag beside the same number (frontend/lib/heightBasis.ts).
+    "Each height is tagged with what it is. 'calibrated to CDIP': our model "
+    "height, scaled to match CDIP's nearshore height at that spot. 'CDIP "
+    "nearshore height': CDIP's own. 'model estimate': straight from the wave "
+    "models, not calibrated, and it can read higher than nearshore swell "
+    "height. None of them is a measurement: never describe a height as "
+    "measured or observed, and never describe a model estimate as calibrated "
+    "or as CDIP's."
 )
 
 _CARDINAL_16 = [
@@ -149,8 +161,40 @@ _SPOT_COLS = (
 
 _FCAST_COLS = (
     "spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, "
-    "wind_speed, wind_dir, face_ft, stars, tide_level_ft"
+    "wind_speed, wind_dir, face_ft, face_ft_raw, swell_source, stars, tide_level_ft"
 )
+
+
+# ---------------------------------------------------------------------------
+# What each height is
+# ---------------------------------------------------------------------------
+
+# The tag each basis carries into the prompt. SYSTEM_PROMPT explains all three by these words.
+HEIGHT_BASIS_TAG = {
+    "calibrated": "calibrated to CDIP",
+    "cdip": "CDIP nearshore height",
+    "model": "model estimate",
+}
+
+
+def height_basis(row: dict | None) -> str | None:
+    """'calibrated', 'cdip' or 'model' for one forecast row, or None when it has no height.
+
+    THE SAME RULE AS frontend/lib/heightBasis.ts, which labels the same rows on the site, and
+    both are held to one table of cases (frontend/lib/heightBasis.cases.json). face_correction
+    copies face_ft into face_ft_raw on every hour before it divides anything, so the two differ
+    exactly where the spot was calibrated — in EITHER direction, since point-arena's factor is
+    below 1. apply_mop_overrides tags the hours it feeds 'cdip_mop'. A row with no raw value,
+    or one that is not a finite number, is a model estimate: no evidence, no claim.
+    """
+    if not row or row.get("face_ft") is None:
+        return None
+    face, raw = row["face_ft"], row.get("face_ft_raw")
+    if (raw is not None and math.isfinite(raw) and math.isfinite(face) and raw != face):
+        return "calibrated"
+    if row.get("swell_source") == "cdip_mop":
+        return "cdip"
+    return "model"
 
 
 def fetch_all_spots(client) -> list[dict]:
@@ -269,7 +313,7 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
     it needs to write the summary without burning tokens on prose."""
     lines = [
         f"REGION: {region_label}",
-        f"TREND (next 24h, avg face change across top spots): {trend}",
+        f"TREND (next 24h, avg swell height change across top spots): {trend}",
         "",
         "TOP SPOTS (by current rating):",
     ]
@@ -287,8 +331,13 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
         # LABELLED IN THE PAYLOAD, not left bare. The model receives a number and a system
         # prompt telling it to write a surf report, so an unlabelled height reads as "the
         # size of the waves" and the prose comes back talking about faces while the site
-        # says swell height. Naming the quantity here is what keeps the two agreeing.
-        face_str = f"{face:.1f}ft swell height" if face is not None else "—"
+        # says swell height. Naming the quantity here is what keeps the two agreeing — and
+        # the tag after it says WHICH swell height, the same one the site shows beside it.
+        basis = height_basis(latest)
+        face_str = (
+            f"{face:.1f}ft swell height ({HEIGHT_BASIS_TAG[basis]})"
+            if face is not None and basis is not None else "—"
+        )
         tp_str = f"{tp:.0f}s" if tp is not None else "—"
         wind_str = (
             f"{wind_mph:.0f} mph {_cardinal(wind_dir)} ({wind_q})"
@@ -365,6 +414,12 @@ def build_region_report(
 
     summary = generate_summary(client_anthropic, region.label, trend, top)
 
+    # STORED in daily_reports.top_spots and printed on the report cards. height_basis is the
+    # one field added to it, and it is ADDITIVE: the five before it are written exactly as they
+    # were. It is read off the same `latest` row as face_ft, because the cards can only label
+    # the number they print with what that number was when it was stored — the row is gone by
+    # the time anyone reads the report. Reports stored before this field have no key at all,
+    # and the frontend shows them no tag (heightBasis.storedHeightBasis), never a guess.
     top_spots_payload = [
         {
             "name": s["name"],
@@ -372,6 +427,7 @@ def build_region_report(
             "state": s.get("state"),
             "stars": s["latest"].get("stars"),
             "face_ft": s["latest"].get("face_ft"),
+            "height_basis": height_basis(s["latest"]),
         }
         for s in top
     ]

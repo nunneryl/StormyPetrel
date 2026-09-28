@@ -8,6 +8,11 @@ export type ReportTopSpot = {
   state: string | null;
   stars: number | null;
   face_ft: number | null;
+  /** What face_ft is — 'calibrated' | 'cdip' | 'model', or null when there was no height —
+   *  written by daily_report.py from the row face_ft came from. ABSENT on every report stored
+   *  before the field existed. Read it only through heightBasis.storedHeightBasis, which turns
+   *  absent or unknown into null: no tag, never a guess. */
+  height_basis?: string | null;
 };
 
 export type DailyReport = {
