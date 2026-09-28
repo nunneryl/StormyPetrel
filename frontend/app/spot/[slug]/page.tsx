@@ -158,6 +158,22 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // both want that window and neither is touched by this.
   const current = selectCurrentHour(forecasts, nowMs).row;
 
+  // TWO HIDDEN STAMPS, for measuring how old a SERVED copy of this page is. The route is
+  // prerendered with `revalidate = 3600`, so a request can get back a copy built hours earlier,
+  // and Vercel's `age` header reads 0 on a PRERENDER response, so it can't say how old.
+  //   sp-rendered-at    `nowMs`, this render's own clock. A cached copy carries the moment it
+  //                     was built, never the moment it was requested.
+  //   sp-headline-hour  the valid_time of `current`: the same rows, selector and clock that
+  //                     CurrentConditions renders the Swell height tile's first paint from, so
+  //                     it names the row this HTML's headline height came from. The viewer's
+  //                     clock re-picks after mount; this records the copy, not the re-pick.
+  // With no current row the tiles say so, and sp-headline-hour is left out rather than filled
+  // with a neighbouring hour. Both are <meta> elements returned from this component, and React
+  // hoists them into the prerendered copy's <head>, so nothing on the page changes.
+  // tests/spotPageStamps.test.mts reads them off a served page.
+  const renderedAt = new Date(nowMs).toISOString();
+  const headlineHour = current ? new Date(current.valid_time).toISOString() : null;
+
   // The UTC hours we actually hold an NWPS row for, over the picker's window. The panel uses
   // this only to warn that a chosen hour will not be joinable; it never blocks a report.
   // Bounded at BOTH ends: this list crosses into the client payload, and the picker only
@@ -199,6 +215,8 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 sm:py-7 space-y-6">
+      <meta name="sp-rendered-at" content={renderedAt} />
+      {headlineHour && <meta name="sp-headline-hour" content={headlineHour} />}
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger

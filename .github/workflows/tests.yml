@@ -151,3 +151,10 @@ jobs:
         # The five .test.mts suites throw on failure, so node exits non-zero and the &&
         # chain stops. Nothing here is continue-on-error; a red test is a red check.
         run: npm test
+
+      - name: Render a spot page and read its freshness stamps
+        # A production build against a stand-in Supabase, then real requests to next start.
+        # The spot page's sp-rendered-at and sp-headline-hour tags are only worth anything in
+        # the HTML a request gets back, so that is where tests/spotPageStamps.test.mts reads
+        # them. It throws on any failure, so a missing or malformed tag is a red check.
+        run: npm run test:render
