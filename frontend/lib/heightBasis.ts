@@ -35,8 +35,10 @@
  * spots are model estimates like anywhere else. The label is here so that the day MOP rows
  * do reach the page they are named for what they are, rather than falling into 'model'.
  *
- * pipeline/daily_report.py derives the same three values for the report prompt; the two are
- * held to one table of cases by heightBasis.test.mts and test_daily_report_height_basis.py.
+ * pipeline/daily_report.py derives the same three values for the report prompt, and stores each
+ * top spot's in daily_reports.top_spots for the report cards (read back by storedHeightBasis,
+ * below); the two derivations are held to one table of cases by heightBasis.test.mts and
+ * test_daily_report_height_basis.py.
  */
 
 export type HeightBasis = 'calibrated' | 'cdip' | 'model';
@@ -67,9 +69,27 @@ export function heightBasis(row: HeightBasisRow | null | undefined): HeightBasis
   return 'model';
 }
 
-/** Beside the height on the spot page. */
+/**
+ * The basis a daily report STORED for one of its top spots, or null for no tag.
+ *
+ * pipeline/daily_report.py writes `height_basis` into each daily_reports.top_spots entry, by the
+ * same rule as heightBasis(), off the very row whose face_ft it stores. Reports stored before it
+ * did have no such field, and for them this is null: the row their height came from is gone, and
+ * anything else — the spot's current row, the spot's calibration status — would be a guess about
+ * a different number. Only the three exact strings are accepted, since top_spots is JSON from the
+ * database and a value this code never writes is not a basis.
+ */
+export function storedHeightBasis(value: unknown): HeightBasis | null {
+  return value === 'calibrated' || value === 'cdip' || value === 'model' ? value : null;
+}
+
+/** Beside the height on the spot page.
+ *
+ *  "CDIP'S NEARSHORE MODEL", NOT "CDIP MEASUREMENTS". The factors divide our height by its
+ *  ratio to MOP's nowcast, and MOP is CDIP's buoy-driven nearshore MODEL at points where
+ *  there is no buoy. Calling it a measurement claimed an observation that was never made. */
 export const HEIGHT_BASIS_LABEL: Record<HeightBasis, string> = {
-  calibrated: 'Calibrated to CDIP measurements',
+  calibrated: "Calibrated to CDIP's nearshore model",
   cdip: 'CDIP nearshore height',
   model: 'Model estimate',
 };

@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import { storedHeightBasis } from '@/lib/heightBasis';
 import type { DailyReport, ReportTrend } from '@/lib/reports';
+import { HeightBasisMark } from './HeightBasisMark';
 import { StarRating } from './StarRating';
 import { StarText } from './StarText';
 import { ShareButton } from './ShareButton';
@@ -62,10 +64,18 @@ export function ReportCard({
                       {s.name}
                     </span>
                     <StarRating score={s.stars} size="xs" />
-                    <span className="font-bold text-text-primary tabular-nums w-12 text-right">
-                      {s.face_ft !== null && s.face_ft !== undefined
-                        ? `${s.face_ft.toFixed(1)}ft`
-                        : '—'}
+                    {/* The height, and under it the basis the report STORED for it. Fixed
+                        width so the stars line up across rows whichever word is there; a
+                        report stored before the field existed gets no word at all. */}
+                    <span className="flex flex-col items-end w-14">
+                      <span className="font-bold text-text-primary tabular-nums">
+                        {s.face_ft !== null && s.face_ft !== undefined
+                          ? `${s.face_ft.toFixed(1)}ft`
+                          : '—'}
+                      </span>
+                      {s.face_ft !== null && s.face_ft !== undefined && (
+                        <HeightBasisMark basis={storedHeightBasis(s.height_basis)} />
+                      )}
                     </span>
                   </li>
                 ))}
@@ -118,9 +128,14 @@ export function ReportCard({
               </Link>
               <span className="flex items-center gap-1.5 shrink-0">
                 <StarRating score={s.stars} size="xs" />
+                {/* Stacked, not beside: the list is two columns wide on a card, and a word
+                    after the height took the room the spot's name needs. */}
                 {s.face_ft !== null && s.face_ft !== undefined && (
-                  <span className="font-bold text-text-primary tabular-nums text-xs">
-                    {s.face_ft.toFixed(1)}ft
+                  <span className="flex flex-col items-end">
+                    <span className="font-bold text-text-primary tabular-nums text-xs">
+                      {s.face_ft.toFixed(1)}ft
+                    </span>
+                    <HeightBasisMark basis={storedHeightBasis(s.height_basis)} />
                   </span>
                 )}
               </span>

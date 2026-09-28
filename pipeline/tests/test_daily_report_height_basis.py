@@ -19,6 +19,10 @@ WHAT IS HELD HERE.
      estimate row is tagged "model estimate" and its line never says calibrated or CDIP.
   5. The fetch selects the two columns height_basis reads. Without them every row would quietly
      come back a model estimate, which is safe but wrong at the 130 calibrated spots.
+  6. WHAT IS STORED. daily_reports.top_spots gains ONE field, height_basis, read off the same row
+     as face_ft, and every field it already carried is written exactly as before — same keys, same
+     values, from the same row. The report cards print that basis; reports stored before it have
+     no key, and the frontend shows them no tag (heightBasis.test.mts holds that side).
 
 NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST: every basis, tag and phrase is a literal here or
 in the cases file.
@@ -184,9 +188,7 @@ def test_the_tag_reaches_the_prompt_through_build_region_report():
     assert row is not None and row["top_spots"][0]["slug"] == "point-arena", row
     user = fake.sent[0]["messages"][0]["content"]
     assert "· 3.3ft swell height (calibrated to CDIP) @" in _line(user, "Point Arena"), user
-    # What is STORED is untouched: the same five keys, the same values.
-    assert row["top_spots"] == [{"name": "Point Arena", "slug": "point-arena", "state": "California",
-                                 "stars": 3.0, "face_ft": 3.33}], row["top_spots"]
+    # What is STORED is pinned field by field in section 6.
 
 
 # --------------------------------------------------------------------------- #
@@ -215,6 +217,69 @@ def test_the_fetch_selects_the_columns_the_basis_is_read_from():
     cols = [c.strip() for c in D._FCAST_COLS.split(",")]
     for col in ("face_ft", "face_ft_raw", "swell_source"):
         assert cols.count(col) == 1, (col, cols)
+
+
+# --------------------------------------------------------------------------- #
+# 6 — what is STORED: top_spots gains one field and keeps the other five       #
+# --------------------------------------------------------------------------- #
+# The five keys every top_spots entry carried before height_basis, in the order they are written.
+TOP_SPOT_KEYS_BEFORE = ("name", "slug", "state", "stars", "face_ft")
+
+
+def test_top_spots_store_the_basis_and_keep_every_existing_field_unchanged():
+    """daily_reports.top_spots is stored, and read back by the report cards. The basis is ONE
+    added key; the five before it are written exactly as they were — the same keys, the same
+    values, off the same `latest` row.
+
+    Six spots with distinct stars, so the ranking is fixed. Every spot's `plus24` row differs from
+    its `latest` in height, stars AND basis, so a field read off the wrong row fails here.
+    """
+    cols = [c.strip() for c in D._FCAST_COLS.split(",")]
+    project = lambda r: {c: r.get(c) for c in cols}      # noqa: E731
+
+    def spot(i, slug, name):
+        return {"id": i, "slug": slug, "name": name, "state": "California",
+                "lat": 36.0 + i / 10.0, "lng": -122.0, "offshore_wind_deg": 90.0}
+
+    spots = [spot(1, "point-arena", "Point Arena"), spot(2, "steamer-lane", "Steamer Lane"),
+             spot(3, "asilomar-state-beach", "Asilomar State Beach"), spot(4, "a-mop-hour", "A MOP hour"),
+             spot(5, "old-row", "Old row"), spot(6, "unrateable", "Unrateable")]
+    latest = {
+        1: _row(3.33, 3.1, "nwps_height_ww3_dir", stars=4.0),    # factor 0.9313: calibrated, larger
+        2: _row(2.31, 4.62, "nwps_height_ww3_dir", stars=3.5),   # factor 2.0: calibrated, smaller
+        3: _row(5.12, 5.12, "ww3", stars=3.0),                   # MOP tier, model row: model
+        4: _row(3.28, 3.28, "cdip_mop", stars=2.5),              # MOP-fed: cdip
+        5: _row(4.0, None, "nwps_height_ww3_dir", stars=2.0),    # before migration 017: model
+        6: _row(None, None, "none", stars=0.0),                  # no height: no basis
+    }
+    plus24 = _row(9.99, 9.99, "cdip_mop", stars=1.0)
+    forecasts = {i: {"latest": project({**r, "spot_id": i}), "plus24": project({**plus24, "spot_id": i})}
+                 for i, r in latest.items()}
+    norcal = next(r for r in D.REGIONS if r.key == "norcal")
+    row = D.build_region_report(norcal, spots, forecasts, _FakeAnthropic())
+    stored = row["top_spots"]
+
+    # EVERY EXISTING FIELD UNCHANGED — the five keys and their values, written out.
+    assert [{k: e[k] for k in TOP_SPOT_KEYS_BEFORE} for e in stored] == [
+        {"name": "Point Arena", "slug": "point-arena", "state": "California", "stars": 4.0, "face_ft": 3.33},
+        {"name": "Steamer Lane", "slug": "steamer-lane", "state": "California", "stars": 3.5, "face_ft": 2.31},
+        {"name": "Asilomar State Beach", "slug": "asilomar-state-beach", "state": "California",
+         "stars": 3.0, "face_ft": 5.12},
+        {"name": "A MOP hour", "slug": "a-mop-hour", "state": "California", "stars": 2.5, "face_ft": 3.28},
+        {"name": "Old row", "slug": "old-row", "state": "California", "stars": 2.0, "face_ft": 4.0},
+        {"name": "Unrateable", "slug": "unrateable", "state": "California", "stars": 0.0, "face_ft": None},
+    ], stored
+    # ONE NEW FIELD, after them, and nothing else.
+    assert [list(e) for e in stored] == [[*TOP_SPOT_KEYS_BEFORE, "height_basis"]] * 6, stored
+    # ... holding the basis of the row face_ft came from: the strings the frontend accepts, or
+    # None where there is no height to describe.
+    assert [e["height_basis"] for e in stored] == \
+        ["calibrated", "calibrated", "model", "cdip", "model", None], stored
+    # It survives the trip through JSON (the column is JSONB) unchanged.
+    assert json.loads(json.dumps(stored)) == stored
+    # And the upserted row's own keys are the same seven.
+    assert sorted(row) == ["generated_at", "region", "region_label", "report_date", "summary",
+                           "top_spots", "trend"], sorted(row)
 
 
 def _run_all():

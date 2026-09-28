@@ -414,6 +414,12 @@ def build_region_report(
 
     summary = generate_summary(client_anthropic, region.label, trend, top)
 
+    # STORED in daily_reports.top_spots and printed on the report cards. height_basis is the
+    # one field added to it, and it is ADDITIVE: the five before it are written exactly as they
+    # were. It is read off the same `latest` row as face_ft, because the cards can only label
+    # the number they print with what that number was when it was stored — the row is gone by
+    # the time anyone reads the report. Reports stored before this field have no key at all,
+    # and the frontend shows them no tag (heightBasis.storedHeightBasis), never a guess.
     top_spots_payload = [
         {
             "name": s["name"],
@@ -421,6 +427,7 @@ def build_region_report(
             "state": s.get("state"),
             "stars": s["latest"].get("stars"),
             "face_ft": s["latest"].get("face_ft"),
+            "height_basis": height_basis(s["latest"]),
         }
         for s in top
     ]
