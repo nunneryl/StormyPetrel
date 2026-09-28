@@ -4,6 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { tierFromStars } from '@/lib/ratings';
 import { fmtFtRange } from '@/lib/formatting';
+import type { HeightBasis } from '@/lib/heightBasis';
+import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
+import { HeightBasisMark } from './HeightBasisMark';
 
 export type HeroSearchItem = {
   slug: string;
@@ -15,6 +18,9 @@ export type HeroSearchItem = {
   face_ft: number | null;
   face_lo_ft: number | null;
   face_hi_ft: number | null;
+  /** heightBasis() of the same latest row, derived on the server so the client payload
+   *  carries one word rather than the two columns it is read from. */
+  height_basis: HeightBasis | null;
 };
 
 /**
@@ -93,7 +99,7 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
               setOpen(false);
             }
           }}
-          placeholder="Search 484 spots — Mavericks, Pipeline, Rockaway..."
+          placeholder={`Search ${RATED_SPOT_COUNT} spots — Mavericks, Pipeline, Rockaway...`}
           aria-label="Search surf spots"
           className="w-full h-14 sm:h-16 pl-14 pr-20 text-base sm:text-lg rounded-xl border border-ink-600 bg-white text-text-primary placeholder:text-text-muted focus:border-cyan-500 focus:outline-none shadow-card transition"
         />
@@ -124,6 +130,7 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
                   <span className="font-bold tabular-nums text-text-primary text-sm">
                     {fmtFtRange(r.face_lo_ft, r.face_hi_ft, r.face_ft)}
                   </span>
+                  <HeightBasisMark basis={r.height_basis} />
                   <span
                     className="text-[10px] font-bold tracking-widest2 uppercase px-1.5 py-0.5 rounded"
                     style={{

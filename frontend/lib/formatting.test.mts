@@ -5,7 +5,7 @@
  * the collapse as correct behaviour — "a band narrower than a foot collapses to the single
  * value", pinned three ways and called out in its own header as the thing being protected.
  * It was protecting a bug. Round-to-nearest made 5,566 of 17,030 banded future hours (32.7%)
- * render a bare point, indistinguishable from the 466 spots that were never measured, and
+ * render a bare point, indistinguishable from the 516 spots with no measured band, and
  * every one of those tests passed the whole time. A test that pins the wrong behaviour is
  * worse than no test: it makes the bug look deliberate. Noted here rather than quietly
  * rewritten.
@@ -22,7 +22,7 @@
  *     and the measurement does not support that. Same call StarRating already made when it
  *     refused to draw zero stars and printed FLAT instead.
  *
- *  4. NO BAND MEANS THE POINT, NOT A FABRICATED BAND. 466 of 648 spots have no measured
+ *  4. NO BAND MEANS THE POINT, NOT A FABRICATED BAND. 516 of 646 spots have no measured
  *     spread. They fall through to fmtFt's one-decimal point estimate and never to a default
  *     width. After this change that fall-through is the ONLY way to get a bare point, so the
  *     absence of a range now means exactly one thing.
@@ -177,7 +177,7 @@ check('no rendered band ever starts with a minus sign',
 }
 
 // --------------------------------------------------------------------------- //
-// 4 — the 466 spots with no measured spread                                    //
+// 4 — the 516 spots with no measured spread                                    //
 // --------------------------------------------------------------------------- //
 // Both ends absent -> the point estimate, at one decimal, exactly as before this change.
 eq('no band at all publishes the point estimate', fmtFtRange(null, null, 4.0), '4.0ft');

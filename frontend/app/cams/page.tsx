@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { fetchAllActiveCams } from '@/lib/cams';
 import { fetchSpotsWithLatest } from '@/lib/queries';
+import { heightBasis } from '@/lib/heightBasis';
 import { CamsBrowser, type CamRow } from '@/components/CamsBrowser';
 
 export const revalidate = 900;
@@ -43,6 +44,7 @@ export default async function CamsPage() {
             face_ft: s.latest?.face_ft ?? null,
             face_lo_ft: s.latest?.face_lo_ft ?? null,
             face_hi_ft: s.latest?.face_hi_ft ?? null,
+            height_basis: heightBasis(s.latest),
           }
         : null,
     };

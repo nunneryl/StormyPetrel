@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import './globals.css';
 import { siteUrl } from '@/lib/site-url';
+import { NOAA_SOURCES, RATED_SPOT_COUNT } from '@/lib/siteDescription';
 import { SiteNav, type SpotSearchItem } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { fetchAllSpots } from '@/lib/queries';
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
     template: '%s · Stormy Petrel',
   },
   description:
-    'Free surf forecasts for ~500 US spots. No paywall, no ads. Built on NOAA NWPS, NDBC, gfswave (WAVEWATCH III) and HRRR data.',
+    `Free surf forecasts for ${RATED_SPOT_COUNT} US spots. No paywall, no ads. Built on NOAA ${NOAA_SOURCES} data.`,
   applicationName: 'Stormy Petrel',
   keywords: [
     'surf forecast', 'surf report', 'free surf forecast', 'NOAA surf',
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     siteName: 'Stormy Petrel',
     title: 'Stormy Petrel — Free US Surf Forecasts',
     description:
-      'Free surf forecasts for ~500 US spots. No paywall, no ads. Built on NOAA data.',
+      `Free surf forecasts for ${RATED_SPOT_COUNT} US spots. No paywall, no ads. Built on NOAA data.`,
     url: SITE_URL,
     locale: 'en_US',
   },
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Stormy Petrel — Free US Surf Forecasts',
     description:
-      'Free surf forecasts for ~500 US spots. No paywall, no ads. Built on NOAA data.',
+      `Free surf forecasts for ${RATED_SPOT_COUNT} US spots. No paywall, no ads. Built on NOAA data.`,
   },
   robots: {
     index: true,

@@ -3,18 +3,19 @@ import { fetchSpotsWithLatest } from '@/lib/queries';
 import { fetchCamSlugSet } from '@/lib/cams';
 import { SpotMap } from '@/components/SpotMap';
 import { tierFromStars } from '@/lib/ratings';
+import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
 export const revalidate = 900;
 
 export const metadata: Metadata = {
-  title: { absolute: 'Surf Spot Map — 484 US Spots | Stormy Petrel' },
+  title: { absolute: `Surf Spot Map — ${RATED_SPOT_COUNT} US Spots | Stormy Petrel` },
   description:
-    'Interactive map of 484 US surf spots with live ratings, wave height, and conditions. Find the best surf near you.',
+    `Interactive map of ${RATED_SPOT_COUNT} US surf spots with live ratings, wave height, and conditions. Find the best surf near you.`,
   alternates: { canonical: '/map' },
   openGraph: {
-    title: 'Surf Spot Map — 484 US Spots | Stormy Petrel',
+    title: `Surf Spot Map — ${RATED_SPOT_COUNT} US Spots | Stormy Petrel`,
     description:
-      'Interactive map of 484 US surf spots with live ratings, wave height, and conditions. Find the best surf near you.',
+      `Interactive map of ${RATED_SPOT_COUNT} US surf spots with live ratings, wave height, and conditions. Find the best surf near you.`,
     type: 'website',
   },
 };

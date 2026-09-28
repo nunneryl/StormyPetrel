@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
 type Item = { slug: string; name: string; state: string | null };
 
@@ -84,7 +85,7 @@ export function SearchBar({
               setOpen(false);
             }
           }}
-          placeholder="Search 500+ spots..."
+          placeholder={`Search ${RATED_SPOT_COUNT} spots...`}
           className={`w-full pl-12 pr-16 ${inputCls} rounded-xl border border-ink-600 bg-ink-800 text-text-primary placeholder:text-text-muted focus:border-cyan-500 focus:outline-none transition`}
         />
         <kbd className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono text-text-muted border border-ink-600 rounded">

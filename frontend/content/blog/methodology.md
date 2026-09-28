@@ -6,7 +6,7 @@ author: 'Stormy Petrel'
 tag: 'methodology'
 ---
 
-*Last updated: 25 September 2026.*
+*Last updated: 28 September 2026.*
 
 ## TL;DR
 
@@ -64,8 +64,8 @@ Technically it's a weighted geometric mean: each score is raised to the power of
 
 | What | Source | Notes |
 |------|--------|-------|
-| Wave height | NWPS, NOAA's Nearshore Wave Prediction System | Most spots. CDIP MOP at 48 California spots, for the hours around now. WAVEWATCH III fills the rest. |
-| Swell direction and period | WAVEWATCH III (gfswave) | Up to three swells plus local wind sea, in 3-hour steps. CDIP MOP at the MOP spots, for its hours. |
+| Wave height | NWPS, NOAA's Nearshore Wave Prediction System | Most spots. WAVEWATCH III fills the rest. CDIP MOP at 48 California spots, for past hours only. |
+| Swell direction and period | WAVEWATCH III (gfswave) | Up to three swells plus local wind sea, in 3-hour steps. CDIP MOP at the MOP spots, for its past hours. |
 | Wind | HRRR, a 3 km model of the continental US | Hourly steps for the first 48 hours of each run, then NWPS wind. NWPS wind throughout in Hawaii and Puerto Rico. |
 | Tide | NOAA CO-OPS predictions | Hourly where the station publishes them, otherwise built from the high and low times. |
 | Buoys | NDBC | The latest reading is shown on each spot page. Buoys also check NWPS before we use it at a spot, and at some spots and hours they stand in for swell direction and period. |
@@ -76,12 +76,12 @@ Technically it's a weighted geometric mean: each score is raised to the power of
 The model behind the height depends on the spot and the hour:
 
 - **Most spots: NWPS.** NOAA runs NWPS separately for each coastal forecast office, on a much finer grid than the global models. We read a grid point just offshore of the spot, for each hour the latest run covers.
-- **48 California spots: CDIP MOP, for the hours around now.** MOP is the Coastal Data Information Program's model of points along the California coast, just outside the surf zone.
+- **48 California spots: CDIP MOP, for past hours only.** MOP is the Coastal Data Information Program's model of points along the California coast, just outside the surf zone. We read its nowcast, and the nowcast ends before the current hour, even right after a forecast run. So at the 48 MOP spots, the hours you can see, the current one included, are handled like any other hour, below.
 - **Any other hour: WAVEWATCH III.** The WW3 swells are combined as described below. If WW3 has nothing usable for that hour either, we fall back to NWPS's own height.
 
 **Calibration at 130 California spots.** For these spots we compared our height with MOP's over two weeks, 18 August to 1 September 2026, and now divide our height by each spot's typical ratio. The star rating is then recomputed from the calibrated height.
 
-**What the number is.** The height we publish is labelled nearshore swell height: the significant height of the waves just outside the surf zone, roughly the average of the bigger waves. It is not the face of a breaking wave, which is often bigger. The label holds at the 48 MOP spots for MOP's hours, and the 130 calibrated California spots are scaled so their typical height matches MOP's. Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, so it can read higher than nearshore swell height.
+**What the number is.** The height we publish is labelled nearshore swell height: the significant height of the waves just outside the surf zone, roughly the average of the bigger waves. It is not the face of a breaking wave, which is often bigger. The label holds at the 130 calibrated California spots, which are scaled so their typical height matches MOP's. Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, so it can read higher than nearshore swell height. That includes all the hours you can see at the 48 MOP spots: MOP's own height, which carries no boost, never reaches the page. On the site, each spot's current height is marked with which it is: "Calibrated to CDIP measurements" or "Model estimate".
 
 ## Swell direction and period
 
@@ -197,7 +197,8 @@ Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On 
 2. **Crowds aren't modelled.** Two spots with the same conditions can be very different sessions.
 3. **Tide preference.** For most spots, the preferred tide is an unverified estimate. We're replacing these with researched values.
 4. **Height calibration drifts.** Each spot's factor comes from a single two-week window, and it moves with the swell mix: between two windows, about a third of spots shifted by more than 10%.
-5. **Uncalibrated heights can run high.** Outside the 130 calibrated California spots, and apart from the hours that come straight from MOP, heights aren't corrected. They include the period boost and can read higher than the nearshore swell height they're labelled as. At the California spots where we measured it, the uncorrected height was typically about 1.5 times MOP's.
-6. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
+5. **Uncalibrated heights can run high.** Outside the 130 calibrated California spots, heights aren't corrected, and that includes all the hours you can see at the 48 MOP spots. They include the period boost and can read higher than nearshore swell height, which is why they're marked as model estimates. At the California spots where we measured it, the uncorrected height was typically about 1.5 times MOP's.
+6. **Calibrated spots rate lower.** Stars at the 130 calibrated California spots are worked out from the calibrated height, which is smaller than the uncalibrated one at all but two of them. So in the same swell they tend to rate lower than uncalibrated spots: about half a star on average, measured on 28 September 2026. We're checking which is right against observations before changing it.
+7. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
 
 The code is on [GitHub](https://github.com/nunneryl/StormyPetrel). The rating is in [`pipeline/interpret.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/interpret.py), and the NWPS, MOP and calibration steps are in [`nwps_nearshore.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/nwps_nearshore.py), [`mop.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/mop.py) and [`face_correction.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/face_correction.py). File an issue if you spot a bug, or send a PR if you want to fix one.

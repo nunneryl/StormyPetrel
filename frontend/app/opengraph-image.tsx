@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
 export const alt = 'Stormy Petrel — Free US Surf Forecasts';
 export const revalidate = 86400;
@@ -62,7 +63,9 @@ export default function OGImage() {
             color: '#8aa3c0',
           }}
         >
-          ~500 US spots · NOAA-powered · stormypetrel.surf
+          {/* ONE text child: Satori rejects a div with several children and no display:flex,
+              and `{count} US spots` in JSX is two. */}
+          {`${RATED_SPOT_COUNT} US spots · NOAA-powered · stormypetrel.surf`}
         </div>
       </div>
     ),

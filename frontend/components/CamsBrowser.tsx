@@ -14,6 +14,9 @@ import {
 } from '@/lib/cam-utils';
 // Pure string helper, no Supabase client — safe in a client component.
 import { fmtFtRange } from '@/lib/formatting';
+// Pure too: the type and the label tables, nothing that reaches the database.
+import type { HeightBasis } from '@/lib/heightBasis';
+import { HeightBasisMark } from './HeightBasisMark';
 import { StarRating } from './StarRating';
 
 const PROVIDER_BG: Record<string, string> = {
@@ -33,6 +36,8 @@ export type CamSpot = {
   face_ft: number | null;
   face_lo_ft: number | null;
   face_hi_ft: number | null;
+  /** heightBasis() of the same latest row — see app/cams/page.tsx. */
+  height_basis: HeightBasis | null;
 };
 
 export type CamRow = {
@@ -192,6 +197,7 @@ function CamCard({ row }: { row: CamRow }) {
         faceFt={spot?.face_ft ?? null}
         loFt={spot?.face_lo_ft ?? null}
         hiFt={spot?.face_hi_ft ?? null}
+        basis={spot?.height_basis ?? null}
       />
 
       <div className="mt-auto pt-1">
@@ -222,11 +228,13 @@ function RatingSwellRow({
   faceFt,
   loFt,
   hiFt,
+  basis,
 }: {
   stars: number | null;
   faceFt: number | null;
   loFt: number | null;
   hiFt: number | null;
+  basis: HeightBasis | null;
 }) {
   if (stars === null && faceFt === null) return null;
   return (
@@ -237,6 +245,7 @@ function RatingSwellRow({
           {fmtFtRange(loFt, hiFt, faceFt)}
         </span>
       )}
+      {faceFt !== null && <HeightBasisMark basis={basis} />}
     </div>
   );
 }
