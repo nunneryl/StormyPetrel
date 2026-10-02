@@ -37,7 +37,7 @@ import json
 import logging
 import shutil
 import tempfile
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from pipeline.forecast import tides as T
@@ -326,11 +326,24 @@ def test_an_empty_run_is_balanced():
 # 3 — END TO END through fetch(): every path, counted; the stale serve, named   #
 # --------------------------------------------------------------------------- #
 # Fixture stations, one per terminal bucket. Dates are relative to the real clock because
-# fetch() reads date.today(); the BUCKET each lands in is what is asserted, and every expected
+# fetch() reads date.today() and the known-bad TTL is measured from datetime.now(), with no
+# way to hand either a clock; the BUCKET each lands in is what is asserted, and every expected
 # count below is a literal.
+#
+# EVERY TIMESTAMP THE CODE COMPARES WITH A CLOCK IS BUILT FROM THAT CLOCK, read once here:
+# _TODAY (the local date, as fetch() reads it) for cache coverage, _NOW (UTC, as the TTL reads
+# it) for the known-bad first-seen. A fixed date is a date bomb: S_KNOWNBAD's first-seen was
+# written as "2026-09-01T00:00:00+00:00", and on 2026-10-01 the 30-day TTL dropped it, so
+# fetch() re-verified the station and the test failed with "unexpected fetch for S_KNOWNBAD"
+# on every run from then on.
 _TODAY = date.today()
+_NOW = datetime.now(timezone.utc)
 _LONG = (_TODAY + timedelta(days=60)).isoformat()      # comfortably past refetch_until
 _LAPSED = (_TODAY - timedelta(days=9)).isoformat()     # covers_until in the PAST
+# Confirmed known-bad halfway through its TTL, in the form fetch() writes: 15 days old against
+# the 30-day TIDE_KNOWN_BAD_TTL_DAYS whatever the date, time of day or local offset, so it is
+# always skipped, and a TTL cut below half would show.
+_SEEN_BAD = (_NOW - timedelta(days=T.TIDE_KNOWN_BAD_TTL_DAYS / 2)).isoformat()
 
 
 def _cache(covers_until, *, hilo_only=False, first=None, n=30):
@@ -359,7 +372,12 @@ def test_every_path_is_counted_and_the_buckets_sum_to_the_station_total():
             box.write_cache("S_CACHED", _cache(_LONG))
             box.write_cache("S_HILO_FAIL", _cache(_LAPSED, hilo_only=True,
                                                   first=_TODAY - timedelta(days=39)))
-            T._save_no_predictions({"S_KNOWNBAD": "2026-09-01T00:00:00+00:00"})
+            T._save_no_predictions({"S_KNOWNBAD": _SEEN_BAD})
+            # The fixture's premise, checked rather than assumed: the entry is still inside its
+            # TTL on the clock fetch() is about to read. Had this been here, the date bomb would
+            # have named itself instead of surfacing as an unexpected fetch.
+            assert T._load_no_predictions() == {"S_KNOWNBAD"}, \
+                f"the fixture's known-bad entry ({_SEEN_BAD}) is already past its TTL"
             spots = [_spot("Cached Spot", "S_CACHED"), _spot("Live Spot", "S_LIVE"),
                      _spot("Kalaloch Beach", "S_HILO_FAIL"), _spot("Ruby Beach", "S_HILO_FAIL"),
                      _spot("Nopred Spot", "S_NOPRED"), _spot("Knownbad Spot", "S_KNOWNBAD")]
