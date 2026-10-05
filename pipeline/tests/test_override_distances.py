@@ -251,7 +251,7 @@ def test_enrich_keeps_an_over_cap_override_and_says_so():
     lvl = lg.level
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         lg.addHandler(cap)
@@ -264,8 +264,6 @@ def test_enrich_keeps_an_over_cap_override_and_says_so():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 270.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         # The station is placed at Ten Mile Beach's MEASURED distance, 69.6 km, so the run
         # exercises the real case: past the 50 km cap and INSIDE the 5 km tripwire, which is
         # what makes the over-cap warning the one that fires. 0.625928 deg of latitude is

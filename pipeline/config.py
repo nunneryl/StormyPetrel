@@ -16,6 +16,7 @@
 # currently zero of those in the repo and a test now keeps it that way.
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 USER_AGENT = "StormyPetrel-Pipeline/0.1 (+https://stormypetrel.surf)"
@@ -197,9 +198,9 @@ TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
 # ONE MAP AND ONE COMPARISON, both here. The failure mode this guards against is
 # two sites disagreeing about which source outranks which, so the rank lookup
 # lives beside the ladder rather than being reimplemented at each write site.
-# This is the only function in an otherwise constants-only module, and that is
-# the reason: co-locating the single operation with the data it operates on is
-# what makes drift impossible rather than merely unlikely.
+# That is why functions sit in an otherwise constants-only module: co-locating
+# the single operation with the data it operates on is what makes drift
+# impossible rather than merely unlikely. The break_type block below follows it.
 #
 # The values are migration 018's CHECK list. 'unknown' is deliberately ABSENT
 # from the ladder — it is a valid column value meaning "the source is not one we
@@ -236,6 +237,136 @@ def tide_source_may_overwrite(existing: str | None, incoming: str | None) -> boo
     last-writer-wins behaviour is unchanged.
     """
     return tide_source_rank(incoming) >= tide_source_rank(existing)
+
+
+# ---------------------------------------------------------------------------
+# break_type provenance — the list, the ladder, the confidence, and the one way
+# to write all of them
+# ---------------------------------------------------------------------------
+# The defect the tide ladder above was built to prevent already happened here.
+# enrich, verify_spots and scrape_surf_forecast all wrote break_type and none
+# recorded itself; enrich wrote break_type_confidence = 0.5 beside every value,
+# and the other two overwrote the value without touching it. Migration 020 adds
+# break_type_source, a citation, and a confidence the database computes from the
+# source. These are its lists, and these functions are the only place they are
+# compared or combined — the same reasoning as the tide ladder: one place to
+# drift is none.
+#
+# migration 020's CHECKs are these tuples written out, and its generated
+# break_type_confidence column is break_type_confidence() written in SQL;
+# pipeline/tests/test_break_type_migration.py holds each pair together.
+
+# 'unknown' means someone looked and could not tell. None (NULL) means nobody has
+# looked. Both are answers the column must be able to hold, so both are allowed.
+BREAK_TYPE_VALUES = ("beach", "reef", "point", "jetty", "rivermouth", "unknown")
+
+# A lower rank may never overwrite a higher one; an equal rank may, for the
+# reason tide_source_may_overwrite gives.
+BREAK_TYPE_SOURCE_RANK = {
+    "reviewed": 6,           # a person set it
+    "researched": 5,         # a source was consulted for this break and is cited
+    "scraped": 4,            # read off the break's own surf-forecast.com page
+    "model_recall": 3,       # a language model answered without a citation
+    "unattributed": 2,       # held, but no writer recorded itself (all 444 values before 020)
+    "algorithm_default": 1,  # an algorithm's fallback answer
+}
+
+# The sources that ARE citations. Each must carry the page it cites.
+BREAK_TYPE_CITED_SOURCES = ("researched", "scraped")
+
+# The longest quote break_type_evidence holds (migration 020's evidence check).
+BREAK_TYPE_EVIDENCE_MAX_CHARS = 300
+
+# The five keys that describe one break type. A writer sets all five together or
+# none of them: spot.update(break_type_fields(...)) is one statement.
+BREAK_TYPE_FIELDS = (
+    "break_type", "break_type_source", "break_type_confidence",
+    "break_type_source_url", "break_type_evidence",
+)
+
+# The same rule as migration 020's spots_break_type_source_url_check.
+BREAK_TYPE_URL_RE = re.compile(r"^https?://\S+$")
+
+
+def break_type_source_rank(source: str | None) -> int:
+    """Rank of *source*, 0 for NULL/absent/unrecognised (see tide_source_rank)."""
+    return BREAK_TYPE_SOURCE_RANK.get(source or "", 0)
+
+
+def break_type_may_overwrite(existing: str | None, incoming: str | None) -> bool:
+    """May a write stamped *incoming* replace a break_type stamped *existing*?
+
+    Lower may not overwrite higher; equal may. A scrape cannot replace a cited
+    answer, and a second researched answer can still correct the first.
+    """
+    return break_type_source_rank(incoming) >= break_type_source_rank(existing)
+
+
+def break_type_confidence(source: str | None) -> str | None:
+    """high for reviewed, medium for researched or scraped, low otherwise.
+
+    None when there is no source, because then there is no value to be confident
+    about. Migration 020 computes the database column with this same mapping, so
+    no writer sets it there; writers set it in spots_enriched.json through
+    break_type_fields, in the same statement as the value.
+    """
+    if source is None:
+        return None
+    if source == "reviewed":
+        return "high"
+    if source in BREAK_TYPE_CITED_SOURCES:
+        return "medium"
+    return "low"
+
+
+def break_type_quote(text: str | None) -> str | None:
+    """*text* as a break_type_evidence quote: whitespace collapsed, cut to
+    BREAK_TYPE_EVIDENCE_MAX_CHARS with an ellipsis marking the cut. None when
+    nothing is left."""
+    if not isinstance(text, str):
+        return None
+    quote = " ".join(text.split())
+    if len(quote) > BREAK_TYPE_EVIDENCE_MAX_CHARS:
+        quote = quote[:BREAK_TYPE_EVIDENCE_MAX_CHARS - 1].rstrip() + "…"
+    return quote or None
+
+
+def break_type_fields(value: str | None, source: str | None, url: str | None = None,
+                      evidence: str | None = None) -> dict:
+    """The five break_type keys, together. The only way a writer sets break_type.
+
+    `spot.update(break_type_fields(...))` writes the value, its source, the
+    confidence that follows from the source and the citation in one statement, so
+    none of them can be written without the others. break_type_fields(None, None)
+    clears all five together.
+
+    Raises ValueError for anything migration 020 would refuse, so a bad write fails
+    at the writer that made it — not as a refused spots upsert in db_import, which
+    runs before the forecast upload and would take it down too.
+    """
+    if value is None:
+        if source is not None or url is not None or evidence is not None:
+            raise ValueError("a break_type source or citation needs a break_type")
+        return dict.fromkeys(BREAK_TYPE_FIELDS)
+    if value not in BREAK_TYPE_VALUES:
+        raise ValueError(f"break_type {value!r} is not one of {BREAK_TYPE_VALUES}")
+    if source not in BREAK_TYPE_SOURCE_RANK:
+        raise ValueError(f"break_type_source {source!r} is not one of "
+                         f"{tuple(BREAK_TYPE_SOURCE_RANK)}")
+    if url is not None and not BREAK_TYPE_URL_RE.match(url):
+        raise ValueError(f"break_type_source_url {url!r} is not an http(s) URL")
+    if source in BREAK_TYPE_CITED_SOURCES and url is None:
+        raise ValueError(f"a {source} break_type must cite the page it came from")
+    if evidence is not None and not 1 <= len(evidence) <= BREAK_TYPE_EVIDENCE_MAX_CHARS:
+        raise ValueError(f"break_type_evidence must be 1-{BREAK_TYPE_EVIDENCE_MAX_CHARS} "
+                         f"characters, got {len(evidence)}")
+    return {
+        "break_type": value,
+        "break_type_source": source,
+        "break_type_confidence": break_type_confidence(source),
+        "break_type_source_url": url,
+        "break_type_evidence": evidence,
+    }
 
 # ---------------------------------------------------------------------------
 # Forecast fetching (Phase 1)

@@ -238,7 +238,7 @@ def test_the_override_survives_algo_5_which_rewrites_the_field_every_run():
     """
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         enrich.load_land_index = lambda: None                       # no GSHHG in a test env
@@ -249,8 +249,6 @@ def test_the_override_survives_algo_5_which_rewrites_the_field_every_run():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 260.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         ET.load_tide_stations = lambda: _stations()
         out = enrich._enrich_one(dict(KALALOCH), skip_raycast=True)
     finally:
@@ -272,7 +270,7 @@ def _enrich_with(station_lat_offset, capture=True):
     lvl = lg.level
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         lg.addHandler(cap)
@@ -285,8 +283,6 @@ def _enrich_with(station_lat_offset, capture=True):
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 260.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         ET.load_tide_stations = lambda: [
             {"id": CHOSEN, "lat": KALALOCH["lat"] + station_lat_offset,
              "lng": KALALOCH["lng"], "name": "Point Grenville"}]
@@ -341,7 +337,7 @@ def test_a_spot_with_no_override_entry_keeps_the_algorithms_answer():
     stamped every spot, the 'no other spot changed' guarantee below would be worthless."""
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     try:
         enrich.load_land_index = lambda: None
         enrich.compute_nearest_tide_station = lambda spot: {
@@ -351,8 +347,6 @@ def test_a_spot_with_no_override_entry_keeps_the_algorithms_answer():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 260.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         out = enrich._enrich_one(
             {"name": "Pacific Beach WA", "lat": 47.210153, "lng": -124.211426},
             skip_raycast=True)

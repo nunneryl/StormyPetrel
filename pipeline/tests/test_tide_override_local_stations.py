@@ -137,7 +137,7 @@ def test_enrich_assigns_the_station_without_the_flag():
     """End to end through Algo 5b for one of the three, with the station list injected."""
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         enrich.load_land_index = lambda: None
@@ -148,8 +148,6 @@ def test_enrich_assigns_the_station_without_the_flag():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 180.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "reef",
-                                                  "break_type_confidence": 0.5}
         # The chosen station sits ON the spot so the computed distance is exactly 0.0 — a
         # literal, not an arithmetic result — and the subordinate is placed further away so a
         # nearest-wins fallback would be visible.
