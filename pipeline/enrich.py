@@ -1,7 +1,14 @@
 """Phase 0B enrichment orchestrator.
 
-Reads spots_seed.json, runs the five enrichment algorithms on each spot,
+Reads spots_seed.json, runs the enrichment algorithms on each spot,
 and writes spots_enriched.json with the full schema.
+
+It does not set break_type or anything beside it. Algorithm 3 (break type
+from coastline curvature) answered 'beach' for every spot — both of its
+thresholds were infinity — and wrote break_type_confidence = 0.5 beside
+that answer on every run, which is how the column came to describe nothing
+(migration 020). Break types now come only from writers that record their
+source; see config.break_type_fields.
 
 CLI:
     python -m pipeline.enrich [--input ...] [--output ...] [--skip-raycast]
@@ -27,7 +34,6 @@ from .config import (
     TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM,
 )
 from .enrichment.adjust import seaward_adjust
-from .enrichment.break_type import compute_break_type
 from .enrichment.buoys import compute_nearest_buoy
 from .enrichment.geodata import load_land_index
 from .enrichment.orientation import compute_orientation
@@ -354,10 +360,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 # Fields the LLM verification pass claims authority over. For any spot with a
 # high/medium-confidence verification record, the enrichment algorithms must
-# NOT overwrite these — the LLM's answer is the source of truth.
+# NOT overwrite these — the LLM's answer is the source of truth. break_type is
+# not here because enrich no longer writes it for any spot, verified or not.
 _VERIFIED_FIELDS = frozenset({
     "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
-    "break_type", "tide_preference",
+    "tide_preference",
 })
 
 
@@ -625,17 +632,9 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
             spot.get("name"), slug, override_optimal, len(before), len(kept),
         )
 
-    # Algo 3 — break type
-    try:
-        r = compute_break_type(spot_for_algo)
-        _set("break_type", r["break_type"])
-        enriched["break_type_confidence"] = r["break_type_confidence"]
-        confidence["break_type"] = r["break_type_confidence"]
-    except Exception as e:  # noqa: BLE001
-        log.warning("%s: break_type failed: %s", spot.get("name"), e)
-        _set("break_type", "beach")
-        enriched["break_type_confidence"] = 0.5
-        confidence["break_type"] = 0.5
+    # Algo 3 (break type) was removed: it answered 'beach' for every spot and stamped
+    # break_type_confidence 0.5 beside it. Whatever break_type the spot carries passes
+    # through untouched, with its source, in the dict(spot) copy above.
 
     # Algo 4 — nearest buoy
     try:
@@ -772,7 +771,6 @@ def _summarize(records: list[dict]) -> None:
     print(f"  swell window resolved:      {pct(lambda r: r.get('optimal_swell_dir') is not None)}")
     print(f"    raycast-resolved:         {pct(lambda r: r.get('optimal_swell_dir') is not None and r.get('swell_window_source') != 'orientation_derived')}")
     print(f"    orientation-derived:      {pct(lambda r: r.get('swell_window_source') == 'orientation_derived')}")
-    print(f"  break type = point:         {pct(lambda r: r.get('break_type') == 'point')}")
     print(f"  nearest buoy assigned:      {pct(lambda r: r.get('nearest_buoy_id'))}")
     print(f"  nearest tide station ≤50km: {pct(lambda r: r.get('nearest_tide_station_id'))}")
     print("=" * 60)

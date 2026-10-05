@@ -247,7 +247,7 @@ def test_enrich_assigns_st_simons_and_leaves_blackbeard_blank():
     """One run of the real Algo 5b/5c against injected stations, covering both outcomes."""
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         enrich.load_land_index = lambda: None
@@ -259,8 +259,6 @@ def test_enrich_assigns_st_simons_and_leaves_blackbeard_blank():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 90.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         ET.load_tide_stations = lambda: [
             {"id": ST_SIMONS_LIGHT, "lat": 31.1318, "lng": -81.3970, "name": "St. Simons Light"},
             {"id": SOUTH_NEWPORT_RIVER, "lat": 31.5747, "lng": -81.1893, "name": "South Newport River"},

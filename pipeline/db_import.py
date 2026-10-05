@@ -60,7 +60,7 @@ WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
     "spots": (
         "slug", "name", "lat", "lng", "state", "region", "swell_window_arcs", "data_sources",
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
-        "break_type", "break_type_confidence",
+        "break_type", "break_type_source", "break_type_source_url", "break_type_evidence",
         "tide_preference", "tide_preference_source", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
@@ -240,9 +240,12 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
     # from *spot* are not written; the preserve safety net in import_spots
     # fills them from the existing DB row at merge time. Concern (1)
     # from the docstring; concern (2) is import_spots' responsibility.
+    # break_type travels with its source and citation; break_type_confidence does not travel
+    # at all — migration 020 computes it in the database from break_type_source (see
+    # _DB_MANAGED_COLUMNS).
     for k in (
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
-        "break_type", "break_type_confidence",
+        "break_type", "break_type_source", "break_type_source_url", "break_type_evidence",
         "tide_preference", "tide_preference_source", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
@@ -268,13 +271,17 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
 
 # Columns that are DB-managed and must never be sent back through the
 # upsert: the auto-incrementing PK, the trigger-derived PostGIS geometry,
-# and the timestamp columns. Anything else in the spots table is treated
+# the timestamp columns, and break_type_confidence, which migration 020
+# makes a GENERATED column computed from break_type_source — Postgres
+# refuses any write to it, so sending back the value the SELECT read would
+# fail the whole spots upsert. Anything else in the spots table is treated
 # as preserve-by-default: an absent key in the source dict gets filled
 # from the current DB row at merge time. That's the schema-wide
 # generic rule — adding a new column to the schema can't reopen the
 # silent-NULL bug class because the preserve happens by SELECT *,
 # not by name list.
-_DB_MANAGED_COLUMNS = frozenset({"id", "geom", "created_at", "updated_at"})
+_DB_MANAGED_COLUMNS = frozenset({"id", "geom", "created_at", "updated_at",
+                                 "break_type_confidence"})
 
 # Coordinate-DERIVED fields: their value is only meaningful for the coords they were computed from.
 # The preserve-merge must NOT resurrect them from the DB when a spot's coordinates have changed, or a
