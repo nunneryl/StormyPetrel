@@ -54,8 +54,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read              # checkout
-  issues: write               # open/update the settled-zones review issue
+  contents: read              # checkout; each job below that writes says so itself
 
 jobs:
   reverify:
@@ -64,6 +63,9 @@ jobs:
     # Estimate ~15-30 min: ~11 real-buoy zones x n_cycles=4 => ~44 CG1 GRIB fetches over
     # NOMADS + NDBC spectra. Hard cap well under an hour so a slow NOMADS can't run away.
     timeout-minutes: 40
+    permissions:
+      contents: read          # checkout
+      issues: write           # open/update the settled-zones review issue
     env:
       PYTHONUNBUFFERED: '1'          # live logs so a stuck fetch is visible in the tail
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
@@ -222,3 +224,31 @@ jobs:
                 body, labels: [LABEL] });
               core.info(`opened settled-zones issue #${issue.data.number}`);
             }
+
+  failure-issue:
+    # This workflow's one failure issue, kept by .github/actions/failure-issue: the job itself
+    # failing, not a settled zone (that is the review issue above). It runs after every other
+    # job whatever their result, so a timeout is reported too.
+    needs: [reverify]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # the failing step's name, from the run's job list
+      contents: read              # checkout of the shared action
+      issues: write               # open, comment on and close the failure issue
+    concurrency:
+      # One report at a time per workflow, so two runs failing together cannot open two.
+      group: failure-issue-${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the shared action
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions/failure-issue
+          persist-credentials: false
+
+      - name: Report to the failure issue
+        uses: ./.github/actions/failure-issue
+        with:
+          needs: ${{ toJSON(needs) }}

@@ -13,7 +13,8 @@ name: nwps-publication-log
 # Guardrails, by construction: prints to this log and nothing else — no database, no repo, no
 # file the pipeline reads, no secrets. It does not run the forecast pipeline and cannot touch
 # forecast rows, which is what makes it safe before the 2026-10-06 face-factor measurement.
-# Requests are spaced at least a second apart; NOMADS blocks clients that hammer it.
+# Requests are spaced at least a second apart; NOMADS blocks clients that hammer it. The
+# failure-issue job at the end writes to issues and nothing else, and not on a PR run.
 
 on:
   schedule:
@@ -30,7 +31,7 @@ on:
       - scripts/nwps_publication_log.py
 
 permissions:
-  contents: read              # checkout only — this workflow writes nothing
+  contents: read              # checkout only — the logger writes nothing
 
 concurrency:
   group: nwps-publication-log-${{ github.event_name }}
@@ -67,3 +68,31 @@ jobs:
       - name: Smoke check on the PR, lox and afc only (writes nothing)
         if: github.event_name == 'pull_request'
         run: python scripts/nwps_publication_log.py --offices lox,afc
+
+  failure-issue:
+    # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
+    # every other job whatever their result, so a timeout is reported too; on a pull_request
+    # run it reports nothing.
+    needs: [log]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # the failing step's name, from the run's job list
+      contents: read              # checkout of the shared action
+      issues: write               # open, comment on and close the failure issue
+    concurrency:
+      # One report at a time per workflow, so two runs failing together cannot open two.
+      group: failure-issue-${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the shared action
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions/failure-issue
+          persist-credentials: false
+
+      - name: Report to the failure issue
+        uses: ./.github/actions/failure-issue
+        with:
+          needs: ${{ toJSON(needs) }}

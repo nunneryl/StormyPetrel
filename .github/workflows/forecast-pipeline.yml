@@ -55,6 +55,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.schedule || inputs.job }}
   cancel-in-progress: false
 
+# Read-only by default, so no job holds a scope it was never given on purpose. The
+# failure-issue job at the end is the only one that may write, and only to issues.
+permissions:
+  contents: read
+
 jobs:
   full-pipeline:
     name: full-pipeline (NWPS + WW3 + HRRR + buoys + tides)
@@ -63,13 +68,13 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    # The default GITHUB_TOKEN is read-only on Issues; the failure
-    # notification step needs `issues: write` to call POST /issues.
-    # contents:read is required for the checkout action under the
-    # restrictive default token policy.
+    # contents:read for the checkout. Nothing in this job writes to issues: the
+    # failure-issue job at the end of this file reports a failure.
     permissions:
       contents: read
-      issues: write
+    # The column check's line, for the failure issue (set only when the job failed).
+    outputs:
+      failure-note: ${{ steps.failure-note.outputs.note }}
     env:
       # supabase-py reads SUPABASE_URL / SUPABASE_SERVICE_KEY; mirror to
       # NEXT_PUBLIC_SUPABASE_URL too so any code that reads either works.
@@ -202,34 +207,23 @@ jobs:
         if: ${{ !cancelled() }}
         run: python -m pipeline.column_preflight --finish
 
-      - name: Open issue on failure
+      - name: Hand the column check's line to the failure issue
+        # Only when the job failed. The preflight's one-line reason, if it found anything,
+        # becomes this job's failure-note output, and the failure-issue job quotes it under
+        # this job. Reads the preflight's file and nothing else; it cannot fail the run.
+        id: failure-note
         if: failure()
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            // The column preflight's one-line reason, when it is why the run failed.
-            let columns = '';
-            try {
-              columns = JSON.parse(require('fs').readFileSync(process.env.COLUMN_PREFLIGHT_RESULT, 'utf8')).reason || '';
-            } catch (e) { columns = ''; }
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `[cron] full-pipeline failed (run ${context.runNumber})`,
-              body: [
-                `The scheduled forecast pipeline failed at \`${new Date().toISOString()}\`.`,
-                ...(columns ? [``, `**${columns}**`] : []),
-                ``,
-                `**Run logs:** ${runUrl}`,
-                ``,
-                `Common causes:`,
-                `- NOMADS rate-limit / missing cycle (will self-resolve next run)`,
-                `- Supabase TLS hiccup mid-upsert (re-run is idempotent)`,
-                `- New cfgrib variable name in a GRIB (check the first-step diagnostic in the log)`,
-              ].join('\n'),
-              labels: ['cron-failure', 'forecast-pipeline'],
-            });
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          try:
+              with open(os.environ["COLUMN_PREFLIGHT_RESULT"], encoding="utf-8") as f:
+                  reason = json.load(f).get("reason") or ""
+          except Exception:
+              reason = ""
+          if reason:
+              print("note=" + " ".join(str(reason).split()))
+          PY
 
   buoy-update:
     name: buoy-update (hourly NDBC refresh)
@@ -238,6 +232,8 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    outputs:
+      failure-note: ${{ steps.failure-note.outputs.note }}
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -282,3 +278,46 @@ jobs:
         # Last, after the upload and the revalidation; see full-pipeline's step of the same name.
         if: ${{ !cancelled() }}
         run: python -m pipeline.column_preflight --finish
+
+      - name: Hand the column check's line to the failure issue
+        # As in full-pipeline: only when the job failed, and it cannot fail the run.
+        id: failure-note
+        if: failure()
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          try:
+              with open(os.environ["COLUMN_PREFLIGHT_RESULT"], encoding="utf-8") as f:
+                  reason = json.load(f).get("reason") or ""
+          except Exception:
+              reason = ""
+          if reason:
+              print("note=" + " ".join(str(reason).split()))
+          PY
+
+  failure-issue:
+    # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
+    # every other job whatever their result, so a timeout is reported too.
+    needs: [full-pipeline, buoy-update]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # the failing step's name, from the run's job list
+      contents: read              # checkout of the shared action
+      issues: write               # open, comment on and close the failure issue
+    concurrency:
+      # One report at a time per workflow, so two runs failing together cannot open two.
+      group: failure-issue-${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the shared action
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions/failure-issue
+          persist-credentials: false
+
+      - name: Report to the failure issue
+        uses: ./.github/actions/failure-issue
+        with:
+          needs: ${{ toJSON(needs) }}

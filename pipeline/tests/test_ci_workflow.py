@@ -31,12 +31,20 @@ that matters: a test that searches for a string its own file contains is checkin
 as well as its subject, and this repo has been bitten by it three times. Everything here
 reads a DIFFERENT file, and the scan of the other workflows excludes tests.yml by name.
 
+SECTION 5 holds the fleet to one failure issue per scheduled workflow: every scheduled
+workflow reports through the shared .github/actions/failure-issue step, nothing else in the
+repository opens an issue except two named alert managers, and no job can write issues
+unless it does. The scan for issue-openers skips pipeline/tests for the same reason as above:
+the tests hold those patterns as data.
+
 Run: python -m pipeline.tests.test_ci_workflow   (or pytest)
 """
 import ast
+import io
 import json
 import os
 import re
+import tokenize
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -603,6 +611,581 @@ def test_the_floating_label_scan_sees_every_job_in_the_real_workflows():
     assert len(files) >= 8 and CI_WORKFLOW_NAME in files, (
         f"the runs-on lines were found in only {sorted(files)} — has the regex broken?")
     assert got == flipped, {"missed": sorted(flipped - got), "extra": sorted(got - flipped)}
+
+
+# --------------------------------------------------------------------------- #
+# 5 — one failure issue per scheduled workflow                                  #
+# --------------------------------------------------------------------------- #
+# forecast-pipeline used to open a new issue for every failed run, and 54 piled up. The
+# shared step replaced it in every scheduled workflow; these hold the fleet to it.
+SHARED_STEP = "./.github/actions/failure-issue"
+SHARED_ACTION = os.path.join(ROOT, ".github", "actions", "failure-issue", "action.yml")
+SHARED_SCRIPT = ".github/actions/failure-issue/failure_issue.py"
+REPORTER_PERMISSIONS = {"actions": "read", "contents": "read", "issues": "write"}
+REPORTER_CONCURRENCY = {"group": "failure-issue-${{ github.workflow }}",
+                        "cancel-in-progress": "false"}
+
+# EVERYTHING ALLOWED TO OPEN AN ISSUE, and why. The shared step is the only way a failure
+# becomes an issue. The two workflow steps are alert managers, not failure reports: each keeps
+# its own issues under its own label, looks for an open one before opening another, and holds
+# issues: write in its own job only. Adding a fourth means adding it here, on purpose.
+ISSUE_OPENERS = {
+    (SHARED_SCRIPT, None, None),
+    (".github/workflows/buoy-ready-monitor.yml", "buoy-liveness",
+     "Manage 'buoy-liveness' issues (per buoy — detect & report only)"),
+    (".github/workflows/reverify-trust-accumulate.yml", "reverify",
+     "Open/update issue for SETTLED zones (manual tagging — never auto-applied)"),
+}
+ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled"}
+
+# How code opens an issue: the octokit call github-script uses, the GitHub CLI, the GraphQL
+# mutation and PyGithub's method, and the REST path itself. A comment naming one is prose.
+ISSUE_WRITE = re.compile(
+    r"\bissues\s*\.\s*create\s*\("
+    r"|\bgh\s+issue\s+(?:create|new)\b"
+    r"|\bcreate_?issue\b"
+    r"|/issues(?![\w/-])",
+    re.I | re.M)
+SCAN_EXTENSIONS = (".py", ".sh", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".yml", ".yaml")
+SCAN_SKIP_DIRS = {".git", "node_modules", ".next", "__pycache__", ".venv", "venv",
+                  ".mypy_cache", ".pytest_cache", "dist", "build"}
+
+
+def top_level(code, key):
+    """(inline value, indented block) of a column-0 `key:`, or (None, None) without one. The
+    block runs to the next column-0 line, so a stripped comment's blank line stays inside."""
+    m = re.search(r"^%s:[ \t]*(.*)$" % re.escape(key), code, re.M)
+    if not m:
+        return None, None
+    rest = code[m.end():]
+    end = re.search(r"^\S", rest, re.M)
+    return (m.group(1).strip() or None), (rest[:end.start()] if end else rest)
+
+
+def unquote(value):
+    """A scalar without the one pair of quotes YAML allows around it: 'false' is false."""
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        return value[1:-1]
+    return value
+
+
+def keys_at(block, indent):
+    """[(key, value)] of the `key: value` lines indented exactly `indent` spaces."""
+    return [(k, unquote(v)) for k, v in
+            re.findall(r"^ {%d}([\w-]+):[ \t]*(.*?)[ \t]*$" % indent, block or "", re.M)]
+
+
+def triggers(code):
+    """The events under `on:`, in order, in any of the three ways YAML can write them."""
+    inline, block = top_level(code, "on")
+    if inline:
+        return [t.strip() for t in inline.strip("[]").split(",") if t.strip()]
+    return [k for k, _ in keys_at(block, 2)]
+
+
+def jobs_of(code):
+    """{job id: the job's text}, in file order."""
+    _inline, block = top_level(code, "jobs")
+    if block is None:
+        raise AssertionError("no jobs: block")
+    parts = re.split(r"^  ([\w-]+):[ \t]*$", block, flags=re.M)
+    return dict(zip(parts[1::2], parts[2::2]))
+
+
+def job_key(job, key):
+    """(inline value, block) of one of a job's own keys, or (None, None) without it."""
+    m = re.search(r"^    %s:[ \t]*(.*)$" % re.escape(key), job, re.M)
+    if not m:
+        return None, None
+    rest = job[m.end():]
+    end = re.search(r"^ {0,4}\S", rest, re.M)
+    return (unquote(m.group(1).strip()) or None), (rest[:end.start()] if end else rest)
+
+
+def permission_map(inline, block, indent):
+    """{scope: level} of a permissions key, or None when it is not declared at all. The
+    shorthands expand, so `write-all` reads as the write it is, not as no permissions."""
+    if inline is None and block is None:
+        return None
+    if inline is None:
+        return dict(keys_at(block, indent))
+    if inline in ("read-all", "write-all"):
+        return {"*": inline[:-4]}
+    if inline == "{}":
+        return {}
+    raise AssertionError(f"unrecognised permissions: {inline!r}")
+
+
+def can_write_issues(perms):
+    return bool(perms) and "write" in (perms.get("issues"), perms.get("*"))
+
+
+def needs_of(job):
+    """A job's needs, written inline or as a block list."""
+    inline, block = job_key(job, "needs")
+    if inline:
+        return [n.strip() for n in inline.strip("[]").split(",") if n.strip()]
+    return re.findall(r"^ {6}- ([\w-]+)[ \t]*$", block or "", re.M)
+
+
+def steps_of(job):
+    """[(the step's single-line keys, the step's text)], in order."""
+    _inline, block = job_key(job, "steps")
+    return [({k: unquote(v) for k, v in
+              re.findall(r"^(?: {8})?([\w-]+):[ \t]*(.*?)[ \t]*$", chunk, re.M)}, chunk)
+            for chunk in re.split(r"^      - ", block or "", flags=re.M)[1:]]
+
+
+def step_with(chunk):
+    """A step's `with:` inputs."""
+    m = re.search(r"^ {8}with:[ \t]*$", chunk, re.M)
+    if not m:
+        return {}
+    rest = chunk[m.end():]
+    end = re.search(r"^ {0,8}\S", rest, re.M)
+    return dict(keys_at(rest[:end.start()] if end else rest, 10))
+
+
+def workflow_code(directory, fn):
+    return yaml_code(open(os.path.join(directory, fn), encoding="utf-8").read())
+
+
+def scheduled_workflows(directory):
+    return [fn for fn in workflow_files(directory)
+            if "schedule" in triggers(workflow_code(directory, fn))]
+
+
+def is_reporter(job):
+    return any(keys.get("uses") == SHARED_STEP for keys, _ in steps_of(job))
+
+
+def failure_issue_problems(directory):
+    """Every way a scheduled workflow in `directory` falls short of reporting its failures
+    through the shared step, one line each. Empty means every one of them is wired."""
+    problems = []
+    for fn in scheduled_workflows(directory):
+        code = workflow_code(directory, fn)
+        name = top_level(code, "name")[0] or ""
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) or name in ALERT_LABELS:
+            problems.append(f"{fn}: name {name!r} cannot be its failure label")
+        jobs = jobs_of(code)
+        reporters = [j for j, text in jobs.items() if is_reporter(text)]
+        if len(reporters) != 1:
+            problems.append(f"{fn}: {len(reporters)} jobs use {SHARED_STEP}, not one")
+            continue
+        r = reporters[0]
+        job = jobs[r]
+        others = sorted(j for j in jobs if j != r)
+        if sorted(needs_of(job)) != others:
+            problems.append(f"{fn}: {r} needs {needs_of(job)}, not every other job {others}")
+        if job_key(job, "if")[0] != "always()":
+            problems.append(f"{fn}: {r} runs if {job_key(job, 'if')[0]!r}, not always(), so a "
+                            "failure or a timeout would skip it")
+        perms = permission_map(*job_key(job, "permissions"), 6)
+        if perms != REPORTER_PERMISSIONS:
+            problems.append(f"{fn}: {r} permissions {perms}, not {REPORTER_PERMISSIONS}")
+        concurrency = dict(keys_at(job_key(job, "concurrency")[1], 6))
+        if concurrency != REPORTER_CONCURRENCY:
+            problems.append(f"{fn}: {r} concurrency {concurrency}, not {REPORTER_CONCURRENCY}")
+        if not (job_key(job, "timeout-minutes")[0] or "").isdigit():
+            problems.append(f"{fn}: {r} has no timeout-minutes")
+        steps = steps_of(job)
+        uses = [keys.get("uses") for keys, _ in steps]
+        if len(uses) != 2 or not (uses[0] or "").startswith("actions/checkout@") \
+                or uses[1] != SHARED_STEP:
+            problems.append(f"{fn}: {r} steps use {uses}, not a checkout then {SHARED_STEP}")
+            continue
+        if step_with(steps[0][1]) != {"sparse-checkout": ".github/actions/failure-issue",
+                                      "persist-credentials": "false"}:
+            problems.append(f"{fn}: {r} checkout with {step_with(steps[0][1])}")
+        if step_with(steps[1][1]) != {"needs": "${{ toJSON(needs) }}"}:
+            problems.append(f"{fn}: {r} hands the step {step_with(steps[1][1])}, "
+                            "not needs: ${{ toJSON(needs) }}")
+    return problems
+
+
+def permission_problems(directory):
+    """Every job in `directory` that could write issues without having a step that does, and
+    every job whose permissions are not stated anywhere: that job holds whatever the
+    repository's default grants, which can include issues: write."""
+    problems = []
+    for fn in workflow_files(directory):
+        code = workflow_code(directory, fn)
+        top = permission_map(*top_level(code, "permissions"), 2)
+        if can_write_issues(top):
+            problems.append(f"{fn}: issues: write at the top level reaches every job")
+        for j, text in jobs_of(code).items():
+            own = permission_map(*job_key(text, "permissions"), 6)
+            perms = own if own is not None else top
+            if perms is None:
+                problems.append(f"{fn}: {j} states no permissions, so it gets the "
+                                "repository's default token")
+                continue
+            if not can_write_issues(perms) or is_reporter(text):
+                continue
+            if not any((f".github/workflows/{fn}", j, keys.get("name")) in ISSUE_OPENERS
+                       for keys, _ in steps_of(text)):
+                problems.append(f"{fn}: {j} can write issues and no step of it does")
+    return problems
+
+
+def python_code(src):
+    """Python source with its comments blanked. Strings stay: a URL in one is code."""
+    lines = src.splitlines(True)
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+            if tok.type == tokenize.COMMENT:
+                row, col = tok.start
+                lines[row - 1] = lines[row - 1][:col] + "\n"
+    except (tokenize.TokenError, SyntaxError):
+        pass
+    return "".join(lines)
+
+
+def _issue_action(uses):
+    """A third-party action whose name says it handles issues. The shared step is not one."""
+    return bool(uses) and "issue" in uses.lower() and uses != SHARED_STEP
+
+
+def issue_openers(root):
+    """{(path, job, step)} for every place under `root` that can open an issue: a workflow
+    step as (path, job id, step name), anything else as (path, None, None)."""
+    found = set()
+    for dirpath, dirnames, filenames in os.walk(root):
+        rel_dir = os.path.relpath(dirpath, root)
+        dirnames[:] = sorted(
+            d for d in dirnames if d not in SCAN_SKIP_DIRS and
+            os.path.normpath(os.path.join(rel_dir, d)).replace(os.sep, "/") != "pipeline/tests")
+        for name in sorted(filenames):
+            if not name.endswith(SCAN_EXTENSIONS):
+                continue
+            path = os.path.join(dirpath, name)
+            rel = os.path.relpath(path, root).replace(os.sep, "/")
+            src = open(path, encoding="utf-8", errors="replace").read()
+            if rel.startswith(".github/workflows/"):
+                for j, text in jobs_of(yaml_code(src)).items():
+                    for keys, chunk in steps_of(text):
+                        if ISSUE_WRITE.search(chunk) or _issue_action(keys.get("uses")):
+                            found.add((rel, j, keys.get("name")))
+                continue
+            code = (python_code(src) if name.endswith(".py")
+                    else yaml_code(src) if name.endswith((".yml", ".yaml", ".sh")) else src)
+            uses = re.findall(r"^\s*-?\s*uses:\s*['\"]?([^'\"\s]+)", code, re.M)
+            if ISSUE_WRITE.search(code) or any(_issue_action(u) for u in uses):
+                found.add((rel, None, None))
+    return found
+
+
+def test_the_workflow_readers_read_hand_written_yaml():
+    code = yaml_code(
+        "name: demo\n"
+        "on:\n"
+        "  schedule:\n"
+        "    - cron: '0 * * * *'   # hourly\n"
+        "  workflow_dispatch: {}\n"
+        "permissions:\n"
+        "  contents: read\n"
+        "jobs:\n"
+        "  work:\n"
+        "    runs-on: ubuntu-24.04\n"
+        "    permissions:\n"
+        "      # the alert step below writes issues\n"
+        "      contents: read\n"
+        "      issues: write   # a comment\n"
+        "    steps:\n"
+        "      - name: One\n"
+        "        run: echo 1\n"
+        "      - name: Two\n"
+        "        uses: 'x/y@v1'\n"
+        "        with:\n"
+        "          a: \"b\"\n"
+        "          c: ${{ d }}\n"
+        "        env:\n"
+        "          E: f\n"
+        "  report:\n"
+        "    needs: [work, other]\n"
+        "    if: always()\n"
+        "    concurrency:\n"
+        "      group: g\n"
+        "      cancel-in-progress: false\n"
+        "    steps:\n"
+        "      - uses: ./z\n"
+        "  other:\n"
+        "    needs:\n"
+        "      - work\n"
+        "    permissions: write-all\n")
+    assert triggers(code) == ["schedule", "workflow_dispatch"]
+    assert top_level(code, "name") == ("demo", "\n")
+    assert top_level(code, "concurrency") == (None, None)
+    jobs = jobs_of(code)
+    assert list(jobs) == ["work", "report", "other"]
+    assert permission_map(*top_level(code, "permissions"), 2) == {"contents": "read"}
+    assert permission_map(*job_key(jobs["work"], "permissions"), 6) == {
+        "contents": "read", "issues": "write"}
+    assert permission_map(*job_key(jobs["report"], "permissions"), 6) is None
+    assert permission_map(*job_key(jobs["other"], "permissions"), 6) == {"*": "write"}
+    assert permission_map("read-all", None, 2) == {"*": "read"}
+    assert permission_map("{}", None, 2) == {}
+    assert needs_of(jobs["report"]) == ["work", "other"]
+    assert needs_of(jobs["other"]) == ["work"]
+    assert needs_of(jobs["work"]) == []
+    assert job_key(jobs["report"], "if") == ("always()", "\n")
+    assert dict(keys_at(job_key(jobs["report"], "concurrency")[1], 6)) == {
+        "group": "g", "cancel-in-progress": "false"}
+    steps = steps_of(jobs["work"])
+    assert [keys for keys, _ in steps] == [
+        {"name": "One", "run": "echo 1"},
+        {"name": "Two", "uses": "x/y@v1", "with": "", "env": ""}]
+    assert step_with(steps[1][1]) == {"a": "b", "c": "${{ d }}"}
+    assert step_with(steps[0][1]) == {}
+    assert [keys for keys, _ in steps_of(jobs["report"])] == [{"uses": "./z"}]
+    assert steps_of(jobs["other"]) == []
+    assert triggers(yaml_code("on: [push, pull_request]\njobs:\n  a:\n")) == ["push", "pull_request"]
+    assert triggers(yaml_code("on: push\njobs:\n  a:\n")) == ["push"]
+
+
+def test_keys_at_removes_one_pair_of_quotes_and_only_a_matching_pair():
+    """'false' and false are the same YAML scalar, so a quoted value must not read as a
+    different setting; a lone or mismatched quote is part of the value."""
+    block = "  a: 'x'\n  b: \"y\"\n  c: 'z\n  d: 'e\"\n  f: ''\n    g: deeper\n"
+    assert keys_at(block, 2) == [("a", "x"), ("b", "y"), ("c", "'z"), ("d", "'e\""), ("f", "")]
+
+
+def test_permission_map_refuses_a_form_it_cannot_read():
+    """An unreadable permissions value must not read as 'grants nothing'."""
+    try:
+        permission_map("${{ fromJSON(x) }}", None, 6)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("an unrecognised permissions value must raise")
+
+
+def test_python_code_blanks_comments_and_keeps_strings():
+    src = ('x = "/repos/o/r/issues"   # gh issue create\n'
+           '# repo.create_issue(\n'
+           'y = 1\n')
+    assert python_code(src) == 'x = "/repos/o/r/issues"   \n\ny = 1\n'
+
+
+def test_every_scheduled_workflow_reports_failures_through_the_shared_step():
+    """One job per scheduled workflow, after every other job, whatever their result, with
+    only the permissions it needs, one at a time per workflow, running the shared step and
+    nothing else. A workflow added on a schedule without it fails here."""
+    problems = failure_issue_problems(WORKFLOW_DIR)
+    assert not problems, "\n".join(problems)
+
+
+def test_the_scheduled_workflows_are_all_seen():
+    """Guards the guard: a broken trigger reader would find no scheduled workflow, and the
+    test above would pass on an empty fleet."""
+    scheduled = scheduled_workflows(WORKFLOW_DIR)
+    assert len(scheduled) >= 8, scheduled
+    assert "forecast-pipeline.yml" in scheduled and CI_WORKFLOW_NAME not in scheduled
+
+
+def test_nothing_else_opens_an_issue():
+    """No step anywhere opens an issue except the shared one and the two named alert
+    managers. The old per-run step in forecast-pipeline would fail this, and so would a new
+    github-script, gh, GraphQL, PyGithub or REST call, or an issue-creating action."""
+    found = issue_openers(ROOT)
+    assert found == ISSUE_OPENERS, {"unexpected": sorted(found - ISSUE_OPENERS, key=str),
+                                    "missing": sorted(ISSUE_OPENERS - found, key=str)}
+
+
+def test_the_alert_managers_look_for_an_open_issue_before_opening_one():
+    """What earns them their place in ISSUE_OPENERS: each lists the open issues under its
+    own label first, and opens one only when none is there to update."""
+    for path, job, step in sorted(ISSUE_OPENERS - {(SHARED_SCRIPT, None, None)}):
+        code = yaml_code(open(os.path.join(ROOT, path), encoding="utf-8").read())
+        chunk = {keys.get("name"): c for keys, c in steps_of(jobs_of(code)[job])}[step]
+        assert re.search(r"listForRepo\(\{\s*owner, repo, state: 'open', labels: LABEL", chunk), path
+        assert re.search(r"const LABEL = '([\w-]+)'", chunk).group(1) in ALERT_LABELS, path
+
+
+def test_issues_write_is_held_only_by_jobs_that_write_issues():
+    """Least privilege, fleet-wide: no top-level issues: write, no job without stated
+    permissions, and issues: write only in a failure-issue job or an alert manager's job.
+    The jobs that run the pipeline hold secrets and run third-party code; they cannot touch
+    an issue."""
+    problems = permission_problems(WORKFLOW_DIR)
+    assert not problems, "\n".join(problems)
+
+
+def test_the_shared_action_hands_the_script_its_input_through_the_environment():
+    """No expression is spliced into the command, so no job output or name can become source;
+    and the token is the job's own, so nothing in a workflow names a secret for it."""
+    text = yaml_code(open(SHARED_ACTION, encoding="utf-8").read())
+    assert re.search(r"^  using: composite$", text, re.M)
+    runs = re.findall(r"^ +run: (.+)$", text, re.M)
+    assert runs == ['python3 "$GITHUB_ACTION_PATH/failure_issue.py"'], runs
+    env = dict(re.findall(r"^ {8}([A-Z_]+): (.+)$", text, re.M))
+    assert env == {"FAILURE_ISSUE_NEEDS": "${{ inputs.needs }}",
+                   "GITHUB_TOKEN": "${{ inputs.token }}"}, env
+    assert re.search(r"^    default: \$\{\{ github\.token \}\}$", text, re.M)
+    assert os.path.isfile(os.path.join(ROOT, SHARED_SCRIPT))
+
+
+def test_the_shared_action_holds_no_expression_the_runner_cannot_evaluate():
+    """The runner evaluates `${{ }}` everywhere in action.yml, input descriptions included,
+    and inside an action only github, inputs and the like exist. The first push of this
+    action described its input as `${{ toJSON(needs) }}`, and every failure-issue job died
+    loading the manifest with "Unrecognized named-value: 'needs'"; actionlint and a YAML
+    parser both passed it. So the expressions are listed, and only these three may appear."""
+    text = yaml_code(open(SHARED_ACTION, encoding="utf-8").read())
+    found = re.findall(r"\$\{\{\s*(.*?)\s*\}\}", text)
+    assert sorted(found) == ["github.token", "inputs.needs", "inputs.token"], found
+
+
+def _copy_workflows(d):
+    for fn in workflow_files(WORKFLOW_DIR):
+        open(os.path.join(d, fn), "w", encoding="utf-8").write(
+            open(os.path.join(WORKFLOW_DIR, fn), encoding="utf-8").read())
+
+
+def _edit(d, fn, old, new):
+    path = os.path.join(d, fn)
+    text = open(path, encoding="utf-8").read()
+    assert text.count(old) == 1, (fn, old)
+    open(path, "w", encoding="utf-8").write(text.replace(old, new))
+
+
+def test_the_wiring_check_catches_each_way_a_real_workflow_can_drift():
+    """Guards the guard, on copies of the real files: each break is made once, in one
+    workflow, and the check must name that workflow and that fault, and nothing else."""
+    import tempfile
+
+    cut_job = ("daily-report.yml", None, None, "daily-report.yml: 0 jobs use")
+    cases = [
+        cut_job,
+        ("forecast-pipeline.yml", "needs: [full-pipeline, buoy-update]",
+         "needs: [full-pipeline]", "forecast-pipeline.yml: failure-issue needs ['full-pipeline']"),
+        ("resolve-cams.yml", "    if: always()\n", "    if: failure()\n",
+         "resolve-cams.yml: failure-issue runs if 'failure()'"),
+        ("ecmwf-wam.yml",
+         "      issues: write               # open, comment on and close the failure issue\n",
+         "", "ecmwf-wam.yml: failure-issue permissions"),
+        ("archive-partitions.yml", "group: failure-issue-${{ github.workflow }}",
+         "group: ${{ github.workflow }}", "archive-partitions.yml: failure-issue concurrency"),
+        ("nwps-publication-log.yml", "needs: ${{ toJSON(needs) }}", "needs: '{}'",
+         "nwps-publication-log.yml: failure-issue hands the step"),
+        ("buoy-ready-monitor.yml", "          persist-credentials: false\n", "",
+         "buoy-ready-monitor.yml: failure-issue checkout with"),
+        ("reverify-trust-accumulate.yml", "    timeout-minutes: 5\n", "",
+         "reverify-trust-accumulate.yml: failure-issue has no timeout-minutes"),
+    ]
+    for fn, old, new, expected in cases:
+        with tempfile.TemporaryDirectory() as d:
+            _copy_workflows(d)
+            if old is None:
+                path = os.path.join(d, fn)
+                text = open(path, encoding="utf-8").read()
+                open(path, "w", encoding="utf-8").write(text.split("\n  failure-issue:\n")[0])
+            else:
+                _edit(d, fn, old, new)
+            problems = failure_issue_problems(d)
+        assert len(problems) == 1 and problems[0].startswith(expected), (fn, problems)
+
+
+def test_the_permission_check_catches_each_way_a_real_job_can_overreach():
+    """The same, for least privilege: issues: write handed to a job that writes none, to the
+    whole workflow, or left to the repository's default by stating nothing."""
+    import tempfile
+
+    cases = [
+        ("forecast-pipeline.yml", "    permissions:\n      contents: read\n    # The column",
+         "    permissions:\n      contents: read\n      issues: write\n    # The column",
+         "forecast-pipeline.yml: full-pipeline can write issues and no step of it does"),
+        ("forecast-pipeline.yml", "permissions:\n  contents: read\n\njobs:",
+         "jobs:", "forecast-pipeline.yml: buoy-update states no permissions"),
+        ("buoy-ready-monitor.yml", "permissions:\n  contents: read ",
+         "permissions:\n  issues: write\n  contents: read ",
+         "buoy-ready-monitor.yml: issues: write at the top level"),
+        (CI_WORKFLOW_NAME, "permissions:\n  contents: read ", "permissions: write-all\n  #",
+         f"{CI_WORKFLOW_NAME}: issues: write at the top level"),
+    ]
+    for fn, old, new, expected in cases:
+        with tempfile.TemporaryDirectory() as d:
+            _copy_workflows(d)
+            _edit(d, fn, old, new)
+            problems = permission_problems(d)
+        assert problems and all(p.startswith(fn) for p in problems), (fn, problems)
+        assert any(p.startswith(expected) for p in problems), (fn, problems)
+
+
+def test_the_issue_scan_finds_every_way_to_open_one_and_no_prose():
+    """Constructed files, with the hits written out by hand."""
+    import tempfile
+
+    files = {
+        ".github/workflows/x.yml": (
+            "on: push\n"
+            "jobs:\n"
+            "  a:\n"
+            "    steps:\n"
+            "      - name: script\n"
+            "        uses: actions/github-script@v9\n"
+            "        with:\n"
+            "          script: await github.rest.issues.create({owner, repo, title: 't'})\n"
+            "      - name: cli\n"
+            "        run: gh issue create --title t\n"
+            "      - name: action\n"
+            "        uses: someone/create-an-issue@v2\n"
+            "      - name: rest\n"
+            "        run: curl -X POST https://api.github.com/repos/o/r/issues -d @b.json\n"
+            "      - name: prose\n"
+            "        # never calls github.rest.issues.create() or gh issue create\n"
+            "        run: echo fine\n"
+            "      - name: shared\n"
+            "        uses: ./.github/actions/failure-issue\n"),
+        "scripts/a.py": 'requests.post(f"{API}/repos/{REPO}/issues", json=body)\n',
+        "scripts/b.py": "# gh issue create, issues.create(, repo.create_issue(\nx = 1\n",
+        "scripts/c.sh": "gh  issue  new --title t\n",
+        "frontend/lib/d.ts": "await octokit.rest.issues.create({ owner, repo, title })\n",
+        "frontend/lib/e.ts": "fetch(`${api}/repos/${repo}/issues/${n}/comments`)\n",
+        "pipeline/f.py": "g.get_repo(r).create_issue(title='t')\n",
+        "pipeline/tests/test_g.py": "github.rest.issues.create(\n",
+        "frontend/node_modules/h.js": "issues.create(\n",
+        "docs/i.md": "gh issue create\n",
+    }
+    with tempfile.TemporaryDirectory() as d:
+        for rel, text in files.items():
+            os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
+            open(os.path.join(d, rel), "w", encoding="utf-8").write(text)
+        got = issue_openers(d)
+    assert got == {(".github/workflows/x.yml", "a", "script"),
+                   (".github/workflows/x.yml", "a", "cli"),
+                   (".github/workflows/x.yml", "a", "action"),
+                   (".github/workflows/x.yml", "a", "rest"),
+                   ("scripts/a.py", None, None),
+                   ("scripts/c.sh", None, None),
+                   ("frontend/lib/d.ts", None, None),
+                   ("pipeline/f.py", None, None)}, sorted(got, key=str)
+
+
+def test_the_issue_scan_sees_a_step_added_to_a_real_workflow():
+    """Guards the guard on the real files: the old per-run step, put back into a copy of
+    forecast-pipeline.yml, is found, by job and step."""
+    import shutil
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        shutil.copytree(os.path.join(ROOT, ".github"), os.path.join(d, ".github"))
+        _edit(os.path.join(d, ".github", "workflows"), "forecast-pipeline.yml",
+              "      - name: Hand the column check's line to the failure issue\n"
+              "        # Only when the job failed.",
+              "      - name: Open issue on failure\n"
+              "        if: failure()\n"
+              "        uses: actions/github-script@v9\n"
+              "        with:\n"
+              "          script: |\n"
+              "            await github.rest.issues.create({ owner: context.repo.owner,\n"
+              "              repo: context.repo.repo, title: 'failed' });\n\n"
+              "      - name: Hand the column check's line to the failure issue\n"
+              "        # Only when the job failed.")
+        got = issue_openers(d)
+    assert got - ISSUE_OPENERS == {(".github/workflows/forecast-pipeline.yml", "full-pipeline",
+                                    "Open issue on failure")}, sorted(got, key=str)
 
 
 if __name__ == "__main__":

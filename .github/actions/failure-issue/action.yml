@@ -1,0 +1,33 @@
+name: failure-issue
+description: >-
+  Keep at most one open failure issue per scheduled workflow. On a failure, comment on the
+  workflow's open issue (run link, time, failing step), or open it if there is none; once every
+  failing job has succeeded again, comment and close it. failure_issue.py says how and why.
+
+# Use it as the only step after a checkout, in a job that needs every other job of the
+# workflow and runs if: always(). That job needs these permissions and no others:
+#   actions: read    the failing step's name, from the run's job list
+#   contents: read   the checkout of this action
+#   issues: write    open, comment on and close the issue
+# No expression in a description: the runner evaluates those too, and `needs` does not exist
+# in here, so writing the calling job's expression out failed the manifest (PR #239's run).
+inputs:
+  needs:
+    description: The calling job's needs context, as JSON (toJSON of needs)
+    required: true
+  token:
+    description: A token with the permissions above
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Report this run to the workflow's failure issue
+      shell: bash
+      env:
+        # Through the environment, never spliced into the script, so no job output or job
+        # name can become shell or Python source.
+        FAILURE_ISSUE_NEEDS: ${{ inputs.needs }}
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: python3 "$GITHUB_ACTION_PATH/failure_issue.py"
