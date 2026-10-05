@@ -25,7 +25,11 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import os
 import re
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -725,9 +729,45 @@ def test_the_failure_comes_last_and_after_revalidation(job):
     assert job_env(text, job).get("COLUMN_PREFLIGHT_RESULT") == "pipeline/forecast_data/column_preflight.json"
 
 
-def test_the_failure_issue_carries_the_columns_line():
-    ss = steps(yaml_code(WORKFLOW.read_text(encoding="utf-8")), "full-pipeline")
-    issue = ss[-1]
-    assert issue.get("name") == "Open issue on failure" and issue.get("if") == "failure()"
-    script = WORKFLOW.read_text(encoding="utf-8").split("Open issue on failure", 1)[1]
-    assert "process.env.COLUMN_PREFLIGHT_RESULT" in script and ".reason" in script
+def _failure_note_script(job: str) -> str:
+    """The Python a job's failure-note step runs, cut out of the workflow exactly as written."""
+    m = re.search(r"python - <<'PY' >> \"\$GITHUB_OUTPUT\"\n(.*?\n)[ \t]*PY\n",
+                  _job(WORKFLOW.read_text(encoding="utf-8"), job), re.S)
+    assert m, f"{job} has no failure-note step reading the preflight's result"
+    return textwrap.dedent(m.group(1))
+
+
+@pytest.mark.parametrize("job", ["full-pipeline", "buoy-update"])
+def test_the_failure_issue_carries_the_columns_line(job, tmp_path):
+    """The old issue step quoted the preflight's reason. The failure issue is now kept by the
+    failure-issue job, on another runner that cannot read this job's files, so the reason
+    leaves the job as its failure-note output. The step's own Python is run here against a
+    result file, so what is pinned is the line that arrives, not the shape of the step."""
+    text = yaml_code(WORKFLOW.read_text(encoding="utf-8"))
+    last = steps(text, job)[-1]
+    assert last.get("id") == "failure-note" and last.get("if") == "failure()"
+    head = re.split(r"^    steps:\n", _job(text, job), maxsplit=1, flags=re.M)[0]
+    assert re.search(r"^    outputs:\n      failure-note: \$\{\{ steps\.failure-note\.outputs\.note \}\}$",
+                     head, re.M), "the note must be the job's failure-note output"
+
+    script, result = _failure_note_script(job), tmp_path / "column_preflight.json"
+
+    def output(content: str | None) -> str:
+        if content is None:
+            result.unlink(missing_ok=True)
+        else:
+            result.write_text(content, encoding="utf-8")
+        env = {"COLUMN_PREFLIGHT_RESULT": str(result), "PATH": os.environ.get("PATH", "")}
+        done = subprocess.run([sys.executable, "-"], input=script, env=env,
+                              capture_output=True, text=True, timeout=30)
+        assert done.returncode == 0, done.stderr
+        return done.stdout
+
+    line = ("Missing database column: forecasts.nwps_cycle (019_nwps_cycle.sql) — left out of "
+            "this run's upload; apply the migration to write them.")
+    assert output(json.dumps({"status": "checked", "reason": line})) == f"note={line}\n"
+    # one line, whatever the reason holds: a newline would end the output early
+    assert output(json.dumps({"reason": "a\n  b"})) == "note=a b\n"
+    assert output(json.dumps({"status": "checked", "reason": None})) == ""
+    assert output("not json") == ""
+    assert output(None) == "", "a run that died before the preflight leaves no file"
