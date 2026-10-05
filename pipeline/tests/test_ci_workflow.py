@@ -1026,6 +1026,17 @@ def test_the_shared_action_hands_the_script_its_input_through_the_environment():
     assert os.path.isfile(os.path.join(ROOT, SHARED_SCRIPT))
 
 
+def test_the_shared_action_holds_no_expression_the_runner_cannot_evaluate():
+    """The runner evaluates `${{ }}` everywhere in action.yml, input descriptions included,
+    and inside an action only github, inputs and the like exist. The first push of this
+    action described its input as `${{ toJSON(needs) }}`, and every failure-issue job died
+    loading the manifest with "Unrecognized named-value: 'needs'"; actionlint and a YAML
+    parser both passed it. So the expressions are listed, and only these three may appear."""
+    text = yaml_code(open(SHARED_ACTION, encoding="utf-8").read())
+    found = re.findall(r"\$\{\{\s*(.*?)\s*\}\}", text)
+    assert sorted(found) == ["github.token", "inputs.needs", "inputs.token"], found
+
+
 def _copy_workflows(d):
     for fn in workflow_files(WORKFLOW_DIR):
         open(os.path.join(d, fn), "w", encoding="utf-8").write(
