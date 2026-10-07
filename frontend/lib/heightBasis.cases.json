@@ -8,13 +8,13 @@
       "note": "4.62 / 2.0 = 2.31: the published height is the smaller one"
     },
     {
-      "name": "calibrated, factor BELOW 1 (point-arena, 0.9313)",
+      "name": "calibrated, factor BELOW 1 (point-arena, 0.9313 in the 2026-09-01 file)",
       "row": {"face_ft": 3.33, "face_ft_raw": 3.1, "swell_source": "nwps_height_ww3_dir"},
       "basis": "calibrated",
       "note": "3.1 / 0.9313 = 3.3287 -> 3.33: the published height is LARGER than the raw one, so a raw > face test would call this a model estimate"
     },
     {
-      "name": "calibrated, factor just below 1 (san-diego-blacks-beach, 0.978)",
+      "name": "calibrated, factor just below 1 (san-diego-blacks-beach, 0.978 in the 2026-09-01 file)",
       "row": {"face_ft": 2.04, "face_ft_raw": 2.0, "swell_source": "nwps_height_ww3_dir"},
       "basis": "calibrated",
       "note": "2.0 / 0.978 = 2.04499 -> 2.04"

@@ -2,8 +2,8 @@
 
 THE DEFECT. SYSTEM_PROMPT said every height it was given was "significant wave height measured
 offshore of the surf zone" — CDIP MOP's, by the comment above it. That was true of none of them.
-516 of the 646 rated spots publish an uncalibrated model estimate, boosted for long-period swell
-and about 1.5 times MOP's where the two were compared; the 130 calibrated spots are model heights
+505 of the 646 rated spots publish an uncalibrated model estimate, boosted for long-period swell
+and about 1.6 times MOP's where the two were compared; the 141 calibrated spots are model heights
 scaled to CDIP; and MOP's own rows end before the hours the report reads. So the report could
 call a model estimate a measurement, in the same breath as the site labelling it a model estimate.
 
@@ -18,7 +18,7 @@ WHAT IS HELD HERE.
   4. THE GUARD: across every swell_source the pipeline writes and a sweep of heights, a model-
      estimate row is tagged "model estimate" and its line never says calibrated or CDIP.
   5. The fetch selects the two columns height_basis reads. Without them every row would quietly
-     come back a model estimate, which is safe but wrong at the 130 calibrated spots.
+     come back a model estimate, which is safe but wrong at the 141 calibrated spots.
   6. WHAT IS STORED. daily_reports.top_spots gains ONE field, height_basis, read off the same row
      as face_ft, and every field it already carried is written exactly as before — same keys, same
      values, from the same row. The report cards print that basis; reports stored before it have
@@ -103,7 +103,8 @@ def test_every_shared_case_gets_the_basis_written_for_it():
 
 
 def test_the_named_cases():
-    # point-arena: factor 0.9313, so 3.1 / 0.9313 = 3.3287 -> 3.33 is LARGER than the raw 3.1.
+    # point-arena: factor 0.9313 in the 2026-09-01 file, so 3.1 / 0.9313 = 3.3287 -> 3.33 is LARGER
+    # than the raw 3.1. (Its factor in the 2026-10-06 file, 0.812, is further below 1 still.)
     assert D.height_basis({"face_ft": 3.33, "face_ft_raw": 3.1, "swell_source": "nwps_height_ww3_dir"}) \
         == "calibrated"
     # A MOP-tier spot's model row: never corrected (raw == face), not MOP-fed.
@@ -150,7 +151,7 @@ def test_the_prompt_forbids_calling_a_model_estimate_measured_or_calibrated():
 # --------------------------------------------------------------------------- #
 def test_each_spot_line_carries_its_own_tag():
     top = [
-        _spot("Point Arena", _row(3.33, 3.1, "nwps_height_ww3_dir")),          # factor 0.9313
+        _spot("Point Arena", _row(3.33, 3.1, "nwps_height_ww3_dir")),          # factor 0.9313 (09-01 file)
         _spot("Steamer Lane", _row(2.31, 4.62, "nwps_height_ww3_dir")),        # factor 2.0
         _spot("Asilomar State Beach", _row(5.12, 5.12, "ww3")),                # MOP tier, model row
         _spot("A MOP hour", _row(3.28, 3.28, "cdip_mop")),                     # MOP-fed
@@ -245,7 +246,7 @@ def test_top_spots_store_the_basis_and_keep_every_existing_field_unchanged():
              spot(3, "asilomar-state-beach", "Asilomar State Beach"), spot(4, "a-mop-hour", "A MOP hour"),
              spot(5, "old-row", "Old row"), spot(6, "unrateable", "Unrateable")]
     latest = {
-        1: _row(3.33, 3.1, "nwps_height_ww3_dir", stars=4.0),    # factor 0.9313: calibrated, larger
+        1: _row(3.33, 3.1, "nwps_height_ww3_dir", stars=4.0),    # factor 0.9313 (09-01 file): calibrated, larger
         2: _row(2.31, 4.62, "nwps_height_ww3_dir", stars=3.5),   # factor 2.0: calibrated, smaller
         3: _row(5.12, 5.12, "ww3", stars=3.0),                   # MOP tier, model row: model
         4: _row(3.28, 3.28, "cdip_mop", stars=2.5),              # MOP-fed: cdip

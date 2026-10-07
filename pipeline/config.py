@@ -673,10 +673,11 @@ SPOT_FACE_FACTORS_FILE = PIPELINE_DIR / "data" / "spot_face_factors.json"
 # the old rule was written. What this gate still defends is the DIVISOR: past some width the
 # median stops being an informative offset however honestly the spread is drawn.
 FACE_FACTOR_MAX_IQR_RATIO = 1.7
-# Age past which the run summary warns. The factors were measured over 14 SUMMER days;
-# California's swell climate changes in winter and a factor absorbing period-dependent
-# refraction will misfit when the period regime moves. 120 days puts the first warning in
-# late autumn, before the winter swell season rather than after it.
+# Age past which the run summary warns. A file's factors come from one measurement window
+# (its measurement.window), and California's swell climate changes in winter: a factor
+# absorbing period-dependent refraction will misfit when the period regime moves. 120 days was
+# chosen against the 2026-09-01 file, whose first warning fell on 2026-12-31; against the
+# 2026-10-06 file the first warning falls on 2027-02-04.
 FACE_FACTOR_MAX_AGE_DAYS = 120
 # Persistent review queue — list of spots whose orientation/scrape/verification
 # state suggests they should get a manual eyeball at some point. Survives

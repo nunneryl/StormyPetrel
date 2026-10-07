@@ -245,6 +245,18 @@ def test_the_prose_says_only_the_displayed_height_is_scaled():
     assert "Both face_ft and effective_size_ft are scaled" not in comment
 
 
+def test_the_prose_does_not_claim_the_period_contrast_for_whatever_window_it_was_built_from():
+    """mtr 13.79 s against sgx 7.98 s was found by the first, two-week measurement. The prose
+    said "the measurement itself found" it "in the same fortnight", which every regeneration over
+    another window — the 28-day one, say — turns false. The finding stays, attributed to the
+    measurement that made it, without the old dates the tests above rightly refuse."""
+    comment = _written(_artifact())[0]["_comment"]
+    assert ("an earlier two-week measurement found mtr's median period at 13.79 s against "
+            "sgx's 7.98 s over the same two weeks") in comment
+    assert "the measurement itself found" not in comment
+    assert "fortnight" not in comment
+
+
 def test_the_prose_points_at_the_real_input_name():
     """It told the reader to regenerate from a file nothing writes."""
     doc, _ = _written(_artifact())
@@ -253,7 +265,8 @@ def test_the_prose_points_at_the_real_input_name():
 
 
 def test_run_on_is_the_window_end_not_the_build_day():
-    """The committed 09-01 file has run_on 2026-09-01 against generated_at 2026-09-03.
+    """The committed file has run_on 2026-10-06 against generated_at 2026-10-07 (the 09-01
+    file before it: run_on 2026-09-01 against generated_at 2026-09-03).
     Building days after the window closes is the normal case, which is exactly why
     'today' was never the right default."""
     doc, _ = _written(_artifact())
@@ -909,19 +922,23 @@ def test_the_artifacts_own_timestamp_is_carried_through():
 # The committed baseline must not move.                                        #
 # --------------------------------------------------------------------------- #
 
-def test_the_committed_09_01_file_is_untouched():
-    """It is the regeneration's comparison baseline. This change is to the generator only.
+def test_the_committed_10_06_file_is_untouched():
+    """It is the next regeneration's comparison baseline, so nothing but a deliberate
+    regeneration may change it.
 
     Pinned on the fields that identify the measurement rather than on a byte hash, so the
-    test says what it is protecting.
+    test says what it is protecting. It replaced the 09-01 file, which predated the provenance
+    fields; this one was built by the generator that writes them, so it carries all three.
     """
     d = json.load(open(os.path.join(ROOT, "pipeline", "data", "spot_face_factors.json")))
-    assert len(d["factors"]) == 130
-    assert len(d["held_out"]) == 7
+    assert len(d["factors"]) == 141
+    assert sorted(d["held_out"]) == ["rincon", "sandspit", "tarpits"]
     m = d["measurement"]
-    assert m["run_on"] == "2026-09-01"
-    assert m["window"] == {"t0": "2026-08-18", "t1": "2026-09-01"}
-    assert m["generated_at"] == "2026-09-03T23:20:28+00:00"
-    # The baseline predates every field this commit adds, and must not have acquired one.
-    for added in ("window_from", "population_gates", "spread_artifact_generated_at"):
-        assert added not in m, f"the 09-01 baseline was regenerated; {added} appeared"
+    assert m["run_on"] == "2026-10-06"
+    assert m["window"] == {"t0": "2026-09-08", "t1": "2026-10-06"}
+    assert m["generated_at"] == "2026-10-07T11:45:35+00:00"
+    assert m["window_from"] == "supplied by the caller"
+    assert m["population_gates"] == {"FACE_SHORE_NORMAL_MAX_DELTA": 90.0,
+                                     "MATCH_SEPARATION_M": 2200.0,
+                                     "is_valid_surf_spot_filter_applied": True}
+    assert m["spread_artifact_generated_at"] == "2026-10-06T18:41:46.194719+00:00"
