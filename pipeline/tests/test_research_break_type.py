@@ -1,22 +1,27 @@
-"""The break-type research pass: what it sends, what it believes, what it spends, and
-what it may write.
+"""The break-type and bottom research pass: what it sends, what it believes, what it spends,
+and what it may write.
 
 WHAT THESE TESTS HOLD:
 
   1. the pilot is the twenty spots asked for, each matched in the roster exactly once;
   2. the model is never shown our break_type, its source or anything else of ours but
      the spot's name, state and coordinates;
-  3. the requests go to MODEL with web search and web fetch called directly, and the
-     memory answer has no tools;
-  4. a researched answer stands only on a URL a tool really returned and a quote really
-     on that page; anything else is 'unknown';
+  3. the requests go to MODEL with web search and web fetch called directly, fetched pages
+     cut at 3,000 tokens, and the memory answer has no tools;
+  4. the break type and the bottom each stand only on a URL a tool really returned and a
+     quote really on that page; anything else is 'unknown', for that value alone;
   5. a page that puts the spot in another state, or far from our coordinates, is no
-     evidence, and a same-named spot elsewhere is recorded;
-  6. cost is the API's usage at list price, the budget stops the run before a spot that
+     evidence for the value that cites it, and a same-named spot elsewhere is recorded;
+  6. the sand-bottom flag is derived from a researched bottom, and the researched and
+     memory answers are compared on it;
+  7. a failed fetch that leaves a value unknown gets one follow-up, which only fills
+     values the first turn left unknown;
+  8. cost is the API's usage at list price, the budget stops the run before a spot that
      could cross it, and it holds across re-runs;
-  7. the run writes the results file and nothing else: never the roster, never the
-     database;
-  8. the real SDK accepts the request and its response is read correctly.
+  9. the run writes the results file and nothing else: never the roster, never the
+     database, and the bottom has no column anywhere;
+ 10. the real SDK accepts the requests, the follow-up included, and its responses are
+     read correctly.
 
 No expected value below is produced by calling the code under test: prices, costs,
 distances, sentences and table rows are written out or worked by hand in the comments.
@@ -47,13 +52,20 @@ NO_SLEEP = lambda seconds: None  # noqa: E731
 
 URL = "https://www.surf-forecast.com/breaks/Banzai-Pipeline"
 OTHER_URL = "https://www.wannasurf.com/spot/North_America/USA/Hawaii/Oahu/pipeline/"
+# A URL the model typed in itself, which web_fetch refuses with url_not_in_prior_context.
+GUESSED_URL = "https://www.surf-forecast.com/breaks/Pipeline"
+# 26 + 2 + 47 + 76 + 76 = 227 characters.
 PAGE = ("Banzai Pipeline Surf Guide\n\n**Banzai Pipeline** in Oahu is an exposed reef "
-        "break that has very consistent surf and works all around the year. Location: "
-        "North Shore, O\u2018ahu, Hawaii.")
+        "break that has very consistent surf and works all around the year. The wave "
+        "breaks over a shallow lava rock shelf. Location: North Shore, O‘ahu, Hawaii.")
 QUOTE = "Banzai Pipeline in Oahu is an exposed reef break"
+BOTTOM_QUOTE = "The wave breaks over a shallow lava rock shelf"
+PAGE_ENTRY = {"url": URL, "place": "North Shore, Oahu", "state": "Hawaii", "lat": None,
+              "lng": None, "location_quote": "Banzai Pipeline in Oahu"}
 PIPELINE_PROMPT = ("Name: Banzai Pipeline\n"
                    "State or territory: Hawaii, United States\n"
                    "Coordinates: 21.66400, -158.05400 (latitude, longitude)")
+UNKNOWN = {"value": "unknown", "all": [], "source_url": None, "quote": None}
 
 # A roster entry carrying everything we know about the spot, our value included.
 SPOT = {
@@ -70,8 +82,18 @@ IDENTITY = {"name": "Banzai Pipeline", "region": "Hawaii", "lat": 21.664, "lng":
 SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 3,
                "allowed_callers": ["direct"]}
 FETCH_TOOL = {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 2,
-              "max_content_tokens": 6000, "citations": {"enabled": True},
+              "max_content_tokens": 3000, "citations": {"enabled": True},
               "allowed_callers": ["direct"]}
+
+FOLLOW_UP_TEXT = (
+    "This fetch did not work:\n"
+    "- https://www.surf-forecast.com/breaks/Pipeline: web_fetch opens only a URL that a "
+    "search result or an earlier fetch returned, and this one came from neither\n"
+    "\n"
+    "Your answer for the kind of break and the bottom is still unknown. You may make one "
+    "more tool call: one web search or one web fetch, not both. A URL written in this "
+    "message may be fetched. Then give your final answer again, both values, as the same "
+    "JSON object at the end of your reply.")
 
 
 # --- response builders: the shapes the Messages API returns ---------------------------
@@ -104,13 +126,24 @@ def _fetch(call_id, url, page, landed=None):
                                      "citations": {"enabled": True}}}}]
 
 
-def _answer(**overrides):
-    answer = {"break_type": "reef", "break_types": ["reef"], "source_url": URL,
-              "quote": QUOTE, "source_place": "North Shore, Oahu",
-              "source_state": "Hawaii", "source_lat": None, "source_lng": None,
-              "location_quote": "Banzai Pipeline in Oahu", "same_name_elsewhere": [],
-              "note": None}
-    answer.update(overrides)
+def _fetch_failed(call_id, url, code="url_not_in_prior_context"):
+    return [{"type": "server_tool_use", "id": call_id, "name": "web_fetch",
+             "input": {"url": url}},
+            {"type": "web_fetch_tool_result", "tool_use_id": call_id,
+             "content": {"type": "web_fetch_tool_result_error", "error_code": code}}]
+
+
+def _answer(bt=None, bottom=None, pages=None, **top):
+    """The research answer: reef on lava rock, both from the surf-forecast.com page, unless
+    *bt* or *bottom* override fields of that value."""
+    answer = {
+        "break_type": dict({"value": "reef", "all": ["reef"], "source_url": URL,
+                            "quote": QUOTE}, **(bt or {})),
+        "bottom": dict({"value": "rock", "all": ["rock"], "source_url": URL,
+                        "quote": BOTTOM_QUOTE}, **(bottom or {})),
+        "pages": [dict(PAGE_ENTRY)] if pages is None else pages,
+        "same_name_elsewhere": [], "note": None}
+    answer.update(top)
     return _text("```json\n" + json.dumps(answer) + "\n```")
 
 
@@ -133,9 +166,15 @@ def _researched(*answer_blocks, fetch=True, stop="end_turn"):
     return [_response(content, stop)]
 
 
-def _recall(value="reef", confidence="high"):
-    return _response([_text(json.dumps({"break_type": value, "break_types": [value],
-                                        "confidence": confidence, "note": None}))])
+def _recall(bt="reef", bottom="rock", confidence="high"):
+    return _response([_text(json.dumps({
+        "break_type": {"value": bt, "all": [bt], "confidence": confidence},
+        "bottom": {"value": bottom, "all": [bottom], "confidence": confidence},
+        "note": None}))])
+
+
+def _judge(*answer_blocks, **kw):
+    return rb.judge_research(_researched(*answer_blocks, **kw), IDENTITY)
 
 
 class FakeClient:
@@ -253,59 +292,94 @@ def test_the_prompts_do_not_name_any_pilot_spot():
     assert {"suicide's", "bombora", "pipeline", "mavericks", "zuma"} <= names
 
 
-def test_both_prompts_offer_exactly_the_six_values():
+def test_both_prompts_offer_the_six_break_types_and_the_six_bottoms():
     for prompt in (rb.RESEARCH_SYSTEM, rb.RECALL_SYSTEM):
-        assert ('"break_type": "beach" | "reef" | "point" | "jetty" | "rivermouth" '
+        assert ('"value": "beach" | "reef" | "point" | "jetty" | "rivermouth" '
                 '| "unknown"') in prompt
+        assert '"value": "sand" | "rock" | "coral" | "cobble" | "mixed" | "unknown"' in prompt
     assert rb.BREAK_TYPE_VALUES == ("beach", "reef", "point", "jetty", "rivermouth",
                                     "unknown")
+    assert rb.BOTTOM_VALUES == ("sand", "rock", "coral", "cobble", "mixed", "unknown")
+    assert rb.FIELD_VALUES == {"break_type": rb.BREAK_TYPE_VALUES,
+                               "bottom": rb.BOTTOM_VALUES}
 
 
-# --- 4. what counts as researched --------------------------------------------------------
+def test_the_break_types_are_migration_020s_list_unchanged():
+    with open(os.path.join(ROOT, "pipeline", "migrations", "020_break_type_provenance.sql"),
+              encoding="utf-8") as fh:
+        sql = fh.read()
+    listed = re.search(r"break_type IS NULL OR break_type IN \(\s*([^)]*?)\s*\)", sql)
+    assert listed.group(1) == "'beach', 'reef', 'point', 'jetty', 'rivermouth', 'unknown'"
+    assert rb.FIELD_VALUES["break_type"] == ("beach", "reef", "point", "jetty",
+                                             "rivermouth", "unknown")
+
+
+def test_fetched_pages_are_cut_at_3000_tokens_and_pdfs_and_typed_urls_are_ruled_out():
+    # The first pilot cut pages at 6,000 tokens. PDFs are outside the API's cut, and a URL
+    # the model types in itself is refused (url_not_in_prior_context), so the prompt rules
+    # out both.
+    assert rb.FETCH_MAX_CONTENT_TOKENS == 3000
+    assert rb.WEB_FETCH_TOOL == FETCH_TOOL
+    assert "do not type one in yourself. Do not fetch PDFs." in rb.RESEARCH_SYSTEM.replace(
+        "\n   ", " ")
+
+
+# --- 4. what counts as researched ----------------------------------------------------------
 
 def test_a_quote_on_the_fetched_page_with_its_url_is_researched():
-    research = rb.judge_research(_researched(_answer()), IDENTITY)
-    assert research["status"] == "researched"
-    assert research["break_type"] == "reef"
-    assert research["break_types"] == ["reef"]
-    assert research["mixed"] is False
-    assert research["source_url"] == URL
-    assert research["quote"] == QUOTE
-    assert research["quote_found_in"] == "fetched page"
-    assert research["quote_names_type"] is True
-    assert research["location"]["verdict"] == "ok"
+    research = _judge(_answer())
+    kind, bottom = research["break_type"], research["bottom"]
+    assert (kind["status"], kind["value"], kind["values"], kind["mixed"]) == (
+        "researched", "reef", ["reef"], False)
+    assert (bottom["status"], bottom["value"], bottom["values"], bottom["mixed"]) == (
+        "researched", "rock", ["rock"], False)
+    assert kind["source_url"] == bottom["source_url"] == URL
+    assert (kind["quote"], bottom["quote"]) == (QUOTE, BOTTOM_QUOTE)
+    assert kind["quote_found_in"] == bottom["quote_found_in"] == "fetched page"
+    assert kind["quote_names_value"] is True and bottom["quote_names_value"] is True
+    assert kind["location"]["verdict"] == bottom["location"]["verdict"] == "ok"
+    assert kind["reason"] is None and bottom["reason"] is None
+    assert research["sand_bottom"] == "no"
     assert research["queries"] == ["Banzai Pipeline Hawaii surf"]
     assert research["fetches"] == [URL]
-    assert research["reason"] is None
+    assert research["follow_up"] is None
+
+
+def test_each_value_stands_on_its_own_quote():
+    # The bottom's quote is not on the page; the break type's is. Only the bottom is lost.
+    research = _judge(_answer(bottom={"quote": "It breaks over a shallow coral reef"}))
+    assert research["break_type"]["status"] == "researched"
+    assert research["bottom"]["status"] == "unknown"
+    assert research["bottom"]["reason"] == "the quote is not on the cited page"
+    assert research["sand_bottom"] == "unknown"
 
 
 def test_a_url_no_tool_returned_is_not_evidence():
     made_up = "https://www.surfline.com/surf-report/pipeline/5842041f4e65fad6a7708890"
-    research = rb.judge_research(_researched(_answer(source_url=made_up)), IDENTITY)
-    assert research["status"] == "unknown"
-    assert research["break_type"] == "unknown"
-    assert research["reason"] == ("the cited URL was not returned by any search or fetch "
-                                  "in this request")
+    research = _judge(_answer(bt={"source_url": made_up}, bottom={"source_url": made_up}))
+    for field in ("break_type", "bottom"):
+        assert research[field]["status"] == "unknown"
+        assert research[field]["value"] == "unknown"
+        assert research[field]["reason"] == ("the cited URL was not returned by any search or "
+                                             "fetch for this spot")
 
 
 def test_a_quote_that_is_not_on_the_page_is_not_evidence():
-    research = rb.judge_research(
-        _researched(_answer(quote="Pipeline is a shallow lava reef break")), IDENTITY)
-    assert research["status"] == "unknown"
-    assert research["reason"] == "the quote is not on the cited page"
+    research = _judge(_answer(bt={"quote": "Pipeline is a shallow lava reef break"}))
+    assert research["break_type"]["status"] == "unknown"
+    assert research["break_type"]["reason"] == "the quote is not on the cited page"
 
 
 def test_a_quote_too_short_to_prove_anything_is_not_evidence():
-    research = rb.judge_research(_researched(_answer(quote="reef break")), IDENTITY)
-    assert research["status"] == "unknown"
-    assert research["reason"] == "the quote is under 3 words, too short to check"
+    research = _judge(_answer(bt={"quote": "reef break"}, bottom={"quote": "lava rock"}))
+    for field in ("break_type", "bottom"):
+        assert research[field]["reason"] == "the quote is under 3 words, too short to check"
 
 
-def test_no_quote_is_not_evidence():
-    research = rb.judge_research(_researched(_answer(quote=None)), IDENTITY)
-    assert research["reason"] == "no quote"
-    research = rb.judge_research(_researched(_answer(source_url=None)), IDENTITY)
-    assert research["reason"] == "no source URL"
+def test_no_quote_or_no_url_is_not_evidence():
+    research = _judge(_answer(bt={"quote": None}, bottom={"source_url": None}))
+    assert research["break_type"]["reason"] == "no quote"
+    assert research["bottom"]["reason"] == "no source URL"
 
 
 def test_a_search_citation_backs_a_quote_from_a_page_never_fetched():
@@ -313,27 +387,28 @@ def test_a_search_citation_backs_a_quote_from_a_page_never_fetched():
                 "encrypted_index": "i",
                 "cited_text": "Banzai Pipeline in Oahu is an exposed reef break that has "
                               "very consistent surf and wor..."}
-    blocks = _researched(_text("The guide says it is a reef break.", [citation]),
-                         _answer(), fetch=False)
-    research = rb.judge_research(blocks, IDENTITY)
-    assert research["status"] == "researched"
-    assert research["quote_found_in"] == "search citation"
+    research = _judge(_text("The guide says it is a reef break.", [citation]), _answer(),
+                      fetch=False)
+    assert research["break_type"]["status"] == "researched"
+    assert research["break_type"]["quote_found_in"] == "search citation"
+    # The citation does not hold the bottom's words, and nothing was fetched.
+    assert research["bottom"]["reason"] == "the quote is not on the cited page"
 
 
 def test_a_citation_from_another_page_does_not_back_the_quote():
     citation = {"type": "web_search_result_location", "url": OTHER_URL, "title": "t",
                 "encrypted_index": "i", "cited_text": QUOTE}
-    blocks = _researched(_text("x", [citation]), _answer(), fetch=False)
-    assert rb.judge_research(blocks, IDENTITY)["reason"] == "the quote is not on the cited page"
+    research = _judge(_text("x", [citation]), _answer(), fetch=False)
+    assert research["break_type"]["reason"] == "the quote is not on the cited page"
 
 
 def test_quote_marks_markdown_ellipses_and_spacing_do_not_hide_a_real_quote():
-    quote = "\u201c...Banzai Pipeline in O\u2019ahu is   an exposed REEF break...\u201d"
+    quote = "“...Banzai Pipeline in O’ahu is   an exposed REEF break...”"
     page = PAGE.replace("in Oahu", "in O'ahu")
     content = (_search("s1", "q", [URL]) + _fetch("f1", URL, page)
-               + [_answer(quote=quote)])
+               + [_answer(bt={"quote": quote})])
     research = rb.judge_research([_response(content)], IDENTITY)
-    assert research["quote_found_in"] == "fetched page"
+    assert research["break_type"]["quote_found_in"] == "fetched page"
 
 
 def test_a_redirected_fetch_still_backs_the_url_the_model_asked_for():
@@ -341,46 +416,55 @@ def test_a_redirected_fetch_still_backs_the_url_the_model_asked_for():
     content = _search("s1", "q", [URL]) + _fetch("f1", URL, PAGE, landed=landed)
     content.append(_answer())
     research = rb.judge_research([_response(content)], IDENTITY)
-    assert research["status"] == "researched"
-    assert research["quote_found_in"] == "fetched page"
+    assert research["break_type"]["status"] == research["bottom"]["status"] == "researched"
+    assert research["break_type"]["quote_found_in"] == "fetched page"
 
 
 def test_www_scheme_and_trailing_slash_do_not_make_a_url_a_different_page():
-    research = rb.judge_research(
-        _researched(_answer(source_url="http://surf-forecast.com/breaks/Banzai-Pipeline/")),
-        IDENTITY)
-    assert research["status"] == "researched"
+    research = _judge(_answer(bt={"source_url": "http://surf-forecast.com/breaks/Banzai-Pipeline/"}))
+    assert research["break_type"]["status"] == "researched"
+    # ... and the answer's location entry, written the other way, is still that page's.
+    assert research["break_type"]["location"]["verdict"] == "ok"
 
 
-def test_a_value_outside_the_six_is_unknown():
-    research = rb.judge_research(_researched(_answer(break_type="pier")), IDENTITY)
-    assert research["status"] == "unknown"
-    assert research["reason"] == "it answered 'pier', which is not one of the six values"
+def test_a_value_outside_each_list_is_unknown():
+    research = _judge(_answer(bt={"value": "pier"}, bottom={"value": "gravel"}))
+    assert research["break_type"]["reason"] == ("it answered 'pier', which is not one of "
+                                                "the 6 values")
+    assert research["bottom"]["reason"] == "it answered 'gravel', which is not one of the 6 values"
+
+
+def test_a_bare_value_or_a_missing_one_is_unknown():
+    # The first pilot's flat answer: a bare break_type, no bottom.
+    flat = _text(json.dumps({"break_type": "reef", "source_url": URL, "quote": QUOTE}))
+    research = _judge(flat)
+    assert research["break_type"]["reason"] == "no source URL"
+    assert research["bottom"]["reason"] == "the answer has no bottom"
 
 
 def test_the_models_own_unknown_is_kept_with_its_note():
-    research = rb.judge_research(_researched(_answer(
-        break_type="unknown", source_url=None, quote=None,
-        note="Every page found is about a different spot.")), IDENTITY)
-    assert research["status"] == "unknown"
-    assert research["reason"] == ("no page it read says: Every page found is about a "
-                                  "different spot.")
+    research = _judge(_answer(bt=UNKNOWN, bottom=UNKNOWN,
+                              note="Every page found is about a different spot."))
+    for field in ("break_type", "bottom"):
+        assert research[field]["status"] == "unknown"
+        assert research[field]["reason"] == ("no page it read says: Every page found is about "
+                                             "a different spot.")
 
 
 def test_no_answer_a_truncated_answer_and_a_refusal_are_each_unknown_and_said_so():
-    assert rb.judge_research(_researched(_text("I could not decide.")),
-                             IDENTITY)["reason"] == "no JSON answer"
-    assert rb.judge_research(_researched(_text("{\"break_type\": \"re"), stop="max_tokens"),
-                             IDENTITY)["reason"] == ("no JSON answer (it ran out of output "
-                                                     "tokens)")
+    none = _judge(_text("I could not decide."))
+    assert none["break_type"]["reason"] == none["bottom"]["reason"] == "no JSON answer"
+    cut = _judge(_text("{\"break_type\": {\"value\": \"re"), stop="max_tokens")
+    assert cut["bottom"]["reason"] == "no JSON answer (it ran out of output tokens)"
     refused = rb.judge_research([_response([], stop="refusal")], IDENTITY)
     assert refused["reason"] == "the model declined to answer (stop_reason refusal)"
+    assert refused["break_type"]["reason"] == refused["reason"]
+    assert refused["sand_bottom"] == "unknown"
 
 
 def test_an_answer_split_across_cited_text_blocks_is_read_whole():
     # With citations the API splits text into blocks; the JSON is read across them.
-    whole = json.loads(_answer()["text"][len("```json\n"):-len("\n```")])
-    raw = json.dumps(whole)
+    raw = _answer()["text"][len("```json\n"):-len("\n```")]
     cut = raw.index(QUOTE)
     content = (_search("s1", "q", [URL]) + _fetch("f1", URL, PAGE)
                + [_text(raw[:cut]), _text(QUOTE, [{"type": "char_location",
@@ -389,129 +473,419 @@ def test_an_answer_split_across_cited_text_blocks_is_read_whole():
                                                     "start_char_index": 0,
                                                     "end_char_index": 10}]),
                   _text(raw[cut + len(QUOTE):])])
-    assert rb.judge_research([_response(content)], IDENTITY)["status"] == "researched"
+    research = rb.judge_research([_response(content)], IDENTITY)
+    assert research["break_type"]["status"] == research["bottom"]["status"] == "researched"
 
 
-def test_the_answer_is_the_last_json_object_that_has_a_break_type():
-    draft = json.dumps({"break_type": "beach", "source_url": None})
+def test_the_answer_is_the_last_json_object_with_a_break_type_at_its_top_level():
+    draft = json.dumps({"break_type": {"value": "beach"}, "bottom": {"value": "sand"}})
     final = _answer()["text"]
-    trailer = json.dumps({"checked": True})
-    blocks = _researched(_text("A first guess: " + draft + " - then I read the page. "),
-                         _text(final + "\n" + trailer))
-    assert rb.judge_research(blocks, IDENTITY)["break_type"] == "reef"
+    trailer = json.dumps({"checked": True, "value": "beach"})
+    research = _judge(_text("A first guess: " + draft + " - then I read the page. "),
+                      _text(final + "\n" + trailer))
+    assert (research["break_type"]["value"], research["bottom"]["value"]) == ("reef", "rock")
 
 
 def test_a_long_quote_is_kept_cut_to_300_characters():
     sentence = "Banzai Pipeline in Oahu is an exposed reef break " + "and so on " * 40
     content = (_search("s1", "q", [URL]) + _fetch("f1", URL, sentence)
-               + [_answer(quote=sentence)])
+               + [_answer(bt={"quote": sentence})])
     research = rb.judge_research([_response(content)], IDENTITY)
-    assert research["quote_found_in"] == "fetched page"
+    assert research["break_type"]["quote_found_in"] == "fetched page"
     # The first 299 characters are the 49-character opening and 25 "and so on " (250);
     # the last of those is a space, which goes, and an ellipsis marks the cut.
-    assert research["quote"] == ("Banzai Pipeline in Oahu is an exposed reef break "
-                                 + "and so on " * 24 + "and so on\u2026")
+    assert research["break_type"]["quote"] == ("Banzai Pipeline in Oahu is an exposed reef "
+                                               "break " + "and so on " * 24 + "and so on…")
 
 
-def test_mixed_breaks_are_noted_in_the_pages_order():
-    mixed = rb.judge_research(_researched(_answer(break_types=["reef", "beach"])), IDENTITY)
-    assert (mixed["break_type"], mixed["break_types"], mixed["mixed"]) == (
-        "reef", ["reef", "beach"], True)
+def test_mixed_values_are_listed_in_the_pages_order():
+    mixed = _judge(_answer(bt={"all": ["reef", "beach"]}))["break_type"]
+    assert (mixed["value"], mixed["values"], mixed["mixed"]) == ("reef", ["reef", "beach"], True)
     # The value is put first when the list left it out; unknown and junk are dropped.
-    odd = rb.judge_research(_researched(_answer(break_types=["beach", "unknown", "pier"])),
-                            IDENTITY)
-    assert odd["break_types"] == ["reef", "beach"]
+    odd = _judge(_answer(bt={"all": ["beach", "unknown", "pier"]}))["break_type"]
+    assert odd["values"] == ["reef", "beach"]
+    # A mixed bottom lists the materials it names, never the word "mixed".
+    page = "Banzai Pipeline in Oahu is an exposed reef break. Its bottom is sand over rock."
+    content = (_search("s1", "q", [URL]) + _fetch("f1", URL, page)
+               + [_answer(bottom={"value": "mixed", "all": ["sand", "mixed", "rock"],
+                                  "quote": "Its bottom is sand over rock"})])
+    research = rb.judge_research([_response(content)], IDENTITY)
+    bottom = research["bottom"]
+    assert (bottom["status"], bottom["value"], bottom["values"], bottom["mixed"]) == (
+        "researched", "mixed", ["sand", "rock"], True)
+    assert research["sand_bottom"] == "unknown"
 
 
-def test_the_quote_type_flag_ignores_the_spots_own_name():
-    assert rb.quote_names_type("Zuma Beach is an exposed beach break", "beach",
-                               "Zuma Beach") is True
-    assert rb.quote_names_type("Zuma Beach is a popular spot with lifeguards", "beach",
-                               "Zuma Beach") is False
-    assert rb.quote_names_type("it breaks over a shallow coral shelf", "reef", "X") is True
+def test_the_quote_flag_looks_for_a_word_for_the_value_outside_the_spots_name():
+    names = rb.quote_names_value
+    assert names("Zuma Beach is an exposed beach break", "break_type", "beach",
+                 "Zuma Beach") is True
+    assert names("Zuma Beach is a popular spot with lifeguards", "break_type", "beach",
+                 "Zuma Beach") is False
+    assert names("it breaks over a shallow coral shelf", "break_type", "reef", "X") is True
+    assert names("The wave breaks over a shallow lava rock shelf", "bottom", "rock", "X") is True
+    assert names("It breaks over a shallow reef", "bottom", "coral", "X") is False
+    assert names("It breaks over a shallow reef", "bottom", "rock", "X") is True
+    assert names("a sandbar over rocks", "bottom", "mixed", "X") is True
+    assert names("a long sandbar", "bottom", "mixed", "X") is False
+    assert names("Sandspit breaks over boulders", "bottom", "sand", "Sandspit") is False
 
 
-# --- 5. the location check ----------------------------------------------------------------
+def test_the_record_keeps_each_fetched_pages_size_and_kind_and_each_failed_fetch():
+    pdf_url = "https://www.example.gov/park-brochure.pdf"
+    pdf = [{"type": "server_tool_use", "id": "f3", "name": "web_fetch",
+            "input": {"url": pdf_url}},
+           {"type": "web_fetch_tool_result", "tool_use_id": "f3",
+            "content": {"type": "web_fetch_result", "url": pdf_url,
+                        "retrieved_at": "2026-10-06T12:00:00Z",
+                        "content": {"type": "document",
+                                    "source": {"type": "base64",
+                                               "media_type": "application/pdf",
+                                               "data": "JVBERi0x"}}}}]
+    content = (_search("s1", "q", [URL]) + _fetch("f1", URL, "x" * 4000)
+               + _fetch_failed("f2", GUESSED_URL) + pdf
+               + [_answer(bt=UNKNOWN, bottom=UNKNOWN)])
+    research = rb.judge_research([_response(content)], IDENTITY)
+    assert research["fetched_pages"] == [{"url": URL, "kind": "text", "chars": 4000},
+                                         {"url": pdf_url, "kind": "pdf", "chars": None}]
+    assert research["failed_fetches"] == [{"url": GUESSED_URL,
+                                           "error": "url_not_in_prior_context"}]
+    assert research["tool_errors"] == ["web_fetch: url_not_in_prior_context"]
+
+
+# --- 5. the location check ------------------------------------------------------------------
 
 def test_a_page_about_a_same_named_spot_in_another_state_is_no_evidence():
-    answer = _answer(source_state="California", source_place="Santa Cruz",
-                     location_quote="Suicides in Santa Cruz",
-                     same_name_elsewhere=["Santa Cruz, California"])
-    research = rb.judge_research(_researched(answer), IDENTITY)
-    assert research["status"] == "unknown"
-    assert research["break_type"] == "unknown"
-    assert research["location"]["verdict"] == "wrong place"
-    assert research["reason"] == ("the page describes another place: the page puts it in "
-                                  "California")
+    elsewhere = [{"url": URL, "place": "Santa Cruz", "state": "California", "lat": None,
+                  "lng": None, "location_quote": "Suicides in Santa Cruz"}]
+    research = _judge(_answer(pages=elsewhere, same_name_elsewhere=["Santa Cruz, California"]))
+    for field in ("break_type", "bottom"):
+        assert research[field]["status"] == "unknown"
+        assert research[field]["location"]["verdict"] == "wrong place"
+        assert research[field]["reason"] == ("the page describes another place: the page "
+                                             "puts it in California")
     assert research["same_name_elsewhere"] == ["Santa Cruz, California"]
-    assert research["model_answer"]["break_type"] == "reef"
+    assert research["model_answer"]["break_type"]["value"] == "reef"
+    assert research["sand_bottom"] == "unknown"
+
+
+def test_each_value_is_located_by_the_page_it_cites():
+    other_page = "Pipeline, Santa Cruz: the wave breaks over a rock ledge off the stairs."
+    pages = [dict(PAGE_ENTRY),
+             {"url": OTHER_URL, "place": "Santa Cruz", "state": "California", "lat": None,
+              "lng": None, "location_quote": "Pipeline, Santa Cruz"}]
+    content = (_search("s1", "q", [URL, OTHER_URL]) + _fetch("f1", URL, PAGE)
+               + _fetch("f2", OTHER_URL, other_page)
+               + [_answer(bottom={"source_url": OTHER_URL,
+                                  "quote": "the wave breaks over a rock ledge"}, pages=pages)])
+    research = rb.judge_research([_response(content)], IDENTITY)
+    assert research["break_type"]["status"] == "researched"
+    assert research["break_type"]["location"]["verdict"] == "ok"
+    assert research["bottom"]["status"] == "unknown"
+    assert research["bottom"]["location"]["verdict"] == "wrong place"
 
 
 def test_the_pages_own_location_words_outrank_the_state_the_model_reports():
-    answer = _answer(source_state="Hawaii",
-                     location_quote="Suicides, Santa Cruz, California")
-    research = rb.judge_research(_researched(answer), IDENTITY)
-    assert research["location"]["verdict"] == "wrong place"
-    assert research["location"]["reasons"] == ["the page's location words name California"]
+    pages = [dict(PAGE_ENTRY, state="Hawaii",
+                  location_quote="Suicides, Santa Cruz, California")]
+    research = _judge(_answer(pages=pages))
+    assert research["break_type"]["location"]["verdict"] == "wrong place"
+    assert research["break_type"]["location"]["reasons"] == [
+        "the page's location words name California"]
 
 
 def test_coordinates_more_than_25_km_from_ours_are_another_place():
     # A pure latitude offset of 0.36 degrees is 6371 km * 0.36 * pi/180 = 40.03 km;
     # 0.09 degrees is 10.01 km.
-    far = rb.check_location(IDENTITY, {"source_state": "Hawaii", "source_lat": 22.024,
-                                       "source_lng": -158.054})
+    far = rb.check_location(IDENTITY, {"state": "Hawaii", "lat": 22.024, "lng": -158.054})
     assert far["verdict"] == "wrong place"
     assert far["distance_km"] == 40.0
     assert far["reasons"] == ["the page's coordinates are 40 km from ours"]
-    near = rb.check_location(IDENTITY, {"source_state": "Hawaii", "source_lat": 21.754,
-                                        "source_lng": -158.054})
+    near = rb.check_location(IDENTITY, {"state": "Hawaii", "lat": 21.754, "lng": -158.054})
     assert (near["verdict"], near["distance_km"]) == ("ok", 10.0)
 
 
 def test_a_page_that_says_nowhere_is_unverified_and_its_value_kept():
-    research = rb.judge_research(_researched(_answer(
-        source_state=None, source_place=None, location_quote=None)), IDENTITY)
-    assert research["status"] == "researched"
-    assert research["location"]["verdict"] == "unverified"
-    assert research["location"]["reasons"] == ["the page does not say which state"]
+    research = _judge(_answer(pages=[]))
+    for field in ("break_type", "bottom"):
+        assert research[field]["status"] == "researched"
+        assert research[field]["location"]["verdict"] == "unverified"
+        assert research[field]["location"]["reasons"] == ["the page does not say which state"]
 
 
 def test_state_spellings_read_the_same():
-    for stated in ("Hawaii", "HI", "hawaii", "Hawai\u02bbi", "Hawaii (state)"):
-        assert rb.check_location(IDENTITY, {"source_state": stated})["verdict"] == "ok", stated
-    odd = rb.check_location(IDENTITY, {"source_state": "Oahu"})
+    for stated in ("Hawaii", "HI", "hawaii", "Hawaiʻi", "Hawaii (state)"):
+        assert rb.check_location(IDENTITY, {"state": stated})["verdict"] == "ok", stated
+    odd = rb.check_location(IDENTITY, {"state": "Oahu"})
     assert (odd["verdict"], odd["reasons"]) == ("unverified", ["cannot read the state 'Oahu'"])
 
 
 def test_states_are_read_from_prose_by_full_name_only():
-    assert rb.states_named_in("North Shore, O\u2018ahu, Hawai\u02bbi") == {"Hawaii"}
+    assert rb.states_named_in("North Shore, O‘ahu, Hawaiʻi") == {"Hawaii"}
     assert rb.states_named_in("Pupukea, Hawai'i") == {"Hawaii"}
     assert rb.states_named_in("Morgantown, West Virginia") == {"West Virginia"}
     assert rb.states_named_in("the Jersey Shore in New Jersey") == {"New Jersey"}
     assert rb.states_named_in("works in or near me") == set()
 
 
-# --- the memory answer and agreement ------------------------------------------------------
+# --- 6. the sand-bottom flag, the memory answer and agreement --------------------------------
+
+def test_the_sand_bottom_flag_is_yes_for_sand_no_for_a_fixed_bottom_and_unknown_otherwise():
+    assert rb.SAND_BOTTOM == {"sand": "yes", "rock": "no", "coral": "no", "cobble": "no",
+                              "mixed": "unknown", "unknown": "unknown"}
+    cases = (("sand", ["sand"], "The wave breaks over shifting sandbars", "yes"),
+             ("coral", ["coral"], "The wave breaks over a shallow coral reef", "no"),
+             ("cobble", ["cobble"], "The wave breaks over rounded cobblestones", "no"),
+             ("mixed", ["sand", "rock"], "The wave breaks over sand and rock", "unknown"))
+    for value, materials, sentence, flag in cases:
+        content = (_search("s1", "q", [URL]) + _fetch("f1", URL, "Pipeline. " + sentence + ".")
+                   + [_answer(bt=UNKNOWN, bottom={"value": value, "all": materials,
+                                                  "quote": sentence})])
+        research = rb.judge_research([_response(content)], IDENTITY)
+        assert research["bottom"]["status"] == "researched", value
+        assert research["sand_bottom"] == flag, value
+
+
+def test_the_sand_bottom_flag_comes_only_from_a_researched_bottom():
+    research = _judge(_answer(bottom={"value": "sand", "all": ["sand"],
+                                      "quote": "The wave breaks over shifting sandbars"}))
+    assert research["bottom"]["status"] == "unknown"
+    assert research["sand_bottom"] == "unknown"
+
 
 def test_the_memory_answer_is_read_as_given():
-    recall = rb.judge_recall(_recall("point", "medium"))
-    assert (recall["source"], recall["break_type"], recall["confidence"]) == (
-        "model_recall", "point", "medium")
-    junk = rb.judge_recall(_response([_text('{"break_type": "sandbar", "confidence": "sure"}')]))
-    assert junk["break_type"] == "unknown"
-    assert junk["reason"] == "it answered 'sandbar', which is not one of the six values"
-    unsure = rb.judge_recall(_response([_text('{"break_type": "reef", "confidence": "sure"}')]))
-    assert (unsure["break_type"], unsure["confidence"]) == ("reef", None)
+    recall = rb.judge_recall(_recall("point", "cobble", "medium"))
+    assert recall["source"] == "model_recall"
+    assert (recall["break_type"]["value"], recall["break_type"]["confidence"]) == (
+        "point", "medium")
+    assert (recall["bottom"]["value"], recall["sand_bottom"]) == ("cobble", "no")
+    assert rb.judge_recall(_recall("beach", "sand"))["sand_bottom"] == "yes"
+    assert rb.judge_recall(_recall("beach", "mixed"))["sand_bottom"] == "unknown"
+    junk = rb.judge_recall(_response([_text(
+        '{"break_type": {"value": "sandbar", "confidence": "sure"}, "bottom": "gravel"}')]))
+    assert junk["break_type"]["reason"] == ("it answered 'sandbar', which is not one of "
+                                            "the 6 values")
+    assert junk["bottom"]["reason"] == "it answered 'gravel', which is not one of the 6 values"
+    unsure = rb.judge_recall(_response([_text(
+        '{"break_type": {"value": "reef", "confidence": "sure"}}')]))
+    assert (unsure["break_type"]["value"], unsure["break_type"]["confidence"]) == ("reef", None)
+    assert unsure["bottom"]["reason"] == "the answer has no bottom"
+    refused = rb.judge_recall(_response([], stop="refusal"))
+    assert refused["reason"] == "the model declined to answer (stop_reason refusal)"
 
 
-def test_agreement_needs_both_answers_to_name_a_type():
+def test_agreement_needs_both_answers_to_give_a_value():
     assert rb.agreement("reef", "reef") == "yes"
     assert rb.agreement("reef", "beach") == "no"
     assert rb.agreement("unknown", "reef") == "n/a"
     assert rb.agreement("reef", "unknown") == "n/a"
 
 
-# --- 6. cost and budget ----------------------------------------------------------------------
+def test_the_answers_are_compared_on_each_value_and_on_the_sand_flag():
+    research = _judge(_answer())  # reef, on rock: not a sand bottom
+    # Rock against coral: the bottoms differ, but both are fixed, so the flag agrees.
+    assert rb.agreements(research, rb.judge_recall(_recall("point", "coral"))) == {
+        "break_type": "no", "bottom": "no", "sand_bottom": "yes"}
+    assert rb.agreements(research, rb.judge_recall(_recall("reef", "sand"))) == {
+        "break_type": "yes", "bottom": "no", "sand_bottom": "no"}
+    assert rb.agreements(research, rb.judge_recall(_recall("unknown", "unknown"))) == {
+        "break_type": "n/a", "bottom": "n/a", "sand_bottom": "n/a"}
+
+
+# --- 7. one follow-up after a failed fetch ----------------------------------------------------
+
+def test_the_follow_up_message_says_which_fetch_failed_why_and_what_is_allowed():
+    assert rb.follow_up_message([{"url": GUESSED_URL, "error": "url_not_in_prior_context"}],
+                                ["break_type", "bottom"]) == FOLLOW_UP_TEXT
+    two = rb.follow_up_message([{"url": "https://a.example/x", "error": "url_not_accessible"},
+                                {"url": None, "error": "brand_new_code"}], ["bottom"])
+    assert two.splitlines()[:3] == ["These fetches did not work:",
+                                    "- https://a.example/x: the site did not return the page",
+                                    "- (no URL): error brand_new_code"]
+    assert "Your answer for the bottom is still unknown." in two
+
+
+def _failed_then_found(second_content, second_usage=None):
+    """A client whose first research turn fails to fetch the URL the model typed in and
+    answers unknown, and whose second turn is *second_content*."""
+    first = ([{"type": "thinking", "thinking": "", "signature": "sig"}]
+             + _search("s1", "Banzai Pipeline Hawaii surf", [OTHER_URL])
+             + _fetch_failed("f1", GUESSED_URL)
+             + [_answer(bt=UNKNOWN, bottom=UNKNOWN, pages=[], note="The fetch failed.")])
+
+    def respond(request, n):
+        if "tools" not in request:
+            return _recall()
+        if n == 1:
+            return _response(first, usage=_usage(1000, 100, searches=1, fetches=1))
+        return _response(second_content, usage=second_usage or _usage(2000, 100, fetches=1))
+    return FakeClient(respond), first
+
+
+def test_a_failed_fetch_that_leaves_values_unknown_gets_one_follow_up():
+    found = (_fetch("f2", GUESSED_URL, PAGE)
+             + [_answer(bt={"source_url": GUESSED_URL}, bottom={"source_url": GUESSED_URL},
+                        pages=[dict(PAGE_ENTRY, url=GUESSED_URL)])])
+    client, first = _failed_then_found(found)
+    record, exc = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                   NO_SLEEP)
+    assert exc is None
+    asked = [call for call in client.calls if "tools" in call]
+    assert len(asked) == 2
+    # The same system and tools, and the conversation only appended to: the earlier turn
+    # sent back unchanged, then the one follow-up message.
+    assert asked[1]["system"] == asked[0]["system"]
+    assert asked[1]["tools"] == asked[0]["tools"] == [SEARCH_TOOL, FETCH_TOOL]
+    assert asked[1]["messages"] == [{"role": "user", "content": PIPELINE_PROMPT},
+                                    {"role": "assistant", "content": first},
+                                    {"role": "user", "content": FOLLOW_UP_TEXT}]
+    research = record["research"]
+    assert research["break_type"]["status"] == research["bottom"]["status"] == "researched"
+    assert research["sand_bottom"] == "no"
+    assert research["follow_up"] == {
+        "after": [{"url": GUESSED_URL, "error": "url_not_in_prior_context"}],
+        "needed": ["break_type", "bottom"], "searches": 0, "fetches": 1,
+        "filled": ["break_type", "bottom"]}
+    # 1,000 + 2,000 in x $2/M = $0.0060; 200 out x $10/M = $0.0020; 1 search = $0.0100.
+    assert record["research_usage"]["cost_usd"] == pytest.approx(0.0180)
+    assert record["research_usage"]["requests"] == 2
+    assert record["done"] is True
+
+
+def test_the_follow_up_only_fills_values_the_first_turn_left_unknown():
+    later = "https://www.example.org/pipeline"
+    later_page = ("Banzai Pipeline is a famous point break on Oahu, Hawaii. "
+                  "It breaks over a shallow coral reef.")
+    first = (_search("s1", "q", [URL, OTHER_URL]) + _fetch("f1", URL, PAGE)
+             + _fetch_failed("f2", OTHER_URL, "url_not_accessible")
+             + [_answer(bottom=UNKNOWN)])
+    second = (_fetch("f3", later, later_page)
+              + [_answer(bt={"value": "point", "all": ["point"], "source_url": later,
+                             "quote": "Banzai Pipeline is a famous point break"},
+                         bottom={"value": "coral", "all": ["coral"], "source_url": later,
+                                 "quote": "It breaks over a shallow coral reef"},
+                         pages=[dict(PAGE_ENTRY, url=later)])])
+
+    def respond(request, n):
+        if "tools" not in request:
+            return _recall()
+        return _response(first if n == 1 else second)
+    record, exc = rb.research_spot(FakeClient(respond), PIPELINE_ENTRY, SPOT, "medium",
+                                   rb.Budget(5.0), NO_SLEEP)
+    assert exc is None
+    research = record["research"]
+    # The break type the first turn researched stays; the follow-up fills the bottom.
+    assert (research["break_type"]["value"], research["break_type"]["source_url"]) == (
+        "reef", URL)
+    assert (research["bottom"]["value"], research["bottom"]["source_url"]) == ("coral", later)
+    assert research["follow_up"]["needed"] == ["bottom"]
+    assert research["follow_up"]["filled"] == ["bottom"]
+    assert research["sand_bottom"] == "no"
+
+
+def test_the_sand_flag_follows_the_bottom_that_is_kept():
+    sand_page = "Banzai Pipeline, Oahu, Hawaii. The wave breaks over shifting sandbars."
+    first = (_search("s1", "q", [URL]) + _fetch("f1", URL, sand_page)
+             + _fetch_failed("f2", GUESSED_URL)
+             + [_answer(bt=UNKNOWN, bottom={"value": "sand", "all": ["sand"],
+                                             "quote": "The wave breaks over shifting sandbars"})])
+    later = "https://www.example.org/pipeline"
+    second = (_fetch("f3", later, PAGE)
+              + [_answer(bt={"source_url": later}, bottom={"source_url": later},
+                         pages=[dict(PAGE_ENTRY, url=later)])])
+
+    def respond(request, n):
+        if "tools" not in request:
+            return _recall()
+        return _response(first if n == 1 else second)
+    record, exc = rb.research_spot(FakeClient(respond), PIPELINE_ENTRY, SPOT, "medium",
+                                   rb.Budget(5.0), NO_SLEEP)
+    assert exc is None
+    research = record["research"]
+    # The first turn's sand bottom stays, and the flag follows it, not the follow-up's rock.
+    assert (research["bottom"]["value"], research["sand_bottom"]) == ("sand", "yes")
+    assert research["break_type"]["value"] == "reef"
+    assert research["follow_up"]["filled"] == ["break_type"]
+
+
+def test_there_is_only_one_follow_up():
+    # The follow-up fails too and the values stay unknown: no second follow-up.
+    again = _fetch_failed("f2", GUESSED_URL, "url_not_accessible") + [
+        _answer(bt=UNKNOWN, bottom=UNKNOWN, pages=[])]
+    client, _ = _failed_then_found(again)
+    record, exc = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                   NO_SLEEP)
+    assert exc is None and record["done"] is True
+    assert sum(1 for call in client.calls if "tools" in call) == 2
+    assert record["research"]["follow_up"]["filled"] == []
+    assert record["research"]["failed_fetches"] == [
+        {"url": GUESSED_URL, "error": "url_not_in_prior_context"},
+        {"url": GUESSED_URL, "error": "url_not_accessible"}]
+
+
+def test_no_follow_up_without_a_failed_fetch_or_once_every_value_is_researched():
+    def ask(content):
+        client = FakeClient(lambda request, n: _response(content) if "tools" in request
+                            else _recall())
+        record, _ = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                     NO_SLEEP)
+        return record, sum(1 for call in client.calls if "tools" in call)
+    # Unknown, but nothing failed: the pages simply did not say.
+    record, research_requests = ask(_search("s1", "q", [URL])
+                                    + [_answer(bt=UNKNOWN, bottom=UNKNOWN)])
+    assert research_requests == 1 and record["research"]["follow_up"] is None
+    # A fetch failed, but both values were researched anyway.
+    record, research_requests = ask(_search("s1", "q", [URL]) + _fetch_failed("f1", GUESSED_URL)
+                                    + _fetch("f2", URL, PAGE) + [_answer()])
+    assert research_requests == 1 and record["research"]["follow_up"] is None
+
+
+def test_no_follow_up_after_a_turn_that_did_not_end_normally():
+    for stop in ("max_tokens", "refusal"):
+        content = (_search("s1", "q", [URL]) + _fetch_failed("f1", GUESSED_URL)
+                   + [_text("{\"break_type\": {\"value\": \"re")])
+        client = FakeClient(lambda request, n: _response(content, stop=stop)
+                            if "tools" in request else _recall())
+        record, _ = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                     NO_SLEEP)
+        assert sum(1 for call in client.calls if "tools" in call) == 1, stop
+        assert record["research"]["follow_up"] is None, stop
+
+
+def test_a_follow_up_that_makes_more_than_one_call_is_flagged():
+    found = (_search("s2", "Pipeline surf guide", [URL]) + _fetch("f2", URL, PAGE)
+             + [_answer()])
+    client, _ = _failed_then_found(found)
+    record, exc = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                   NO_SLEEP)
+    assert exc is None
+    assert (record["research"]["follow_up"]["searches"],
+            record["research"]["follow_up"]["fetches"]) == (1, 1)
+    results = rb.new_results("medium", 5.0)
+    results["spots"]["Banzai Pipeline|Hawaii"] = record
+    row = [line for line in rb.render_report(results).splitlines()
+           if line.startswith("| Banzai Pipeline | 1 |")]
+    assert row and ("after url_not_in_prior_context: 1 search, 1 fetch; filled break_type "
+                    "and bottom · more than the one call allowed") in row[0]
+
+
+def test_the_follow_up_is_charged_to_the_budget_and_stops_with_it():
+    # Cap $1.00: the spot may start (0 + 0.50 <= 1). Its first research turn costs
+    # 500,000 in x $2/M = $1.00, so the follow-up would start with the cap spent.
+    first = (_search("s1", "q", [URL]) + _fetch_failed("f1", GUESSED_URL)
+             + [_answer(bt=UNKNOWN, bottom=UNKNOWN)])
+    client = FakeClient(lambda request, n: _response(first, usage=_usage(500_000))
+                        if "tools" in request else _recall())
+    results = rb.new_results("medium", 1.0)
+    stopped = rb.run(client, rb.resolve_pilot(ROSTER), results, rb.Budget(1.0), "medium",
+                     pause_seconds=0, sleep=NO_SLEEP)
+    assert stopped == "budget" and len(client.calls) == 1
+    record = results["spots"]["Banzai Pipeline|Hawaii"]
+    assert record["error"] == "BudgetExhausted: spent $1.0000 of the $1.00 budget"
+    assert record["done"] is False and record["cost_usd"] == pytest.approx(1.00)
+
+
+# --- 8. cost and budget ----------------------------------------------------------------------
 
 def test_the_model_and_its_list_prices():
     assert rb.MODEL == "claude-sonnet-5-5"
@@ -543,13 +917,17 @@ def test_one_hour_cache_writes_are_priced_as_such():
     assert rb.cost_usd(usage) == pytest.approx(0.0040)
 
 
+def test_the_default_budget_is_three_dollars():
+    assert rb.PILOT_BUDGET_USD == 3.00
+    assert rb._parse_args([]).budget == 3.00
+
+
 def _dollar_responses(research_usd, recall_usd, research_stop="end_turn"):
     """A client whose research request costs research_usd and memory request recall_usd,
     all of it input tokens at $2 per million."""
     def respond(request, n):
         if "tools" in request:
-            return _response([_answer(break_type="unknown", source_url=None, quote=None)],
-                             stop=research_stop,
+            return _response([_answer(bt=UNKNOWN, bottom=UNKNOWN)], stop=research_stop,
                              usage=_usage(input_tokens=round(research_usd * 500_000)))
         return _response(_recall()["content"],
                          usage=_usage(input_tokens=round(recall_usd * 500_000)))
@@ -632,7 +1010,8 @@ def test_a_paused_turn_is_resumed_with_its_content_sent_back_unchanged():
     assert client.calls[1]["messages"] == [
         {"role": "user", "content": PIPELINE_PROMPT},
         {"role": "assistant", "content": paused}]
-    assert record["research"]["status"] == "researched"
+    assert record["research"]["break_type"]["status"] == "researched"
+    assert record["research"]["bottom"]["status"] == "researched"
     # 3,000 in x $2/M + 30 out x $10/M + 1 search x $0.01 = 0.006 + 0.0003 + 0.01
     assert record["research_usage"]["cost_usd"] == pytest.approx(0.0163)
     assert record["research_usage"]["requests"] == 2
@@ -691,12 +1070,25 @@ def test_a_bad_request_stops_the_run_and_a_server_error_skips_one_spot():
     assert second["done"] is True
 
 
+def test_the_settings_cover_the_prompts_and_the_follow_up_wording(monkeypatch):
+    before = rb.run_settings("medium")
+    assert before["tools"] == [SEARCH_TOOL, FETCH_TOOL]
+    monkeypatch.setitem(rb.FETCH_ERRORS, "url_not_accessible", "the page did not load")
+    assert rb.run_settings("medium")["prompts_sha256"] != before["prompts_sha256"]
+
+
 def test_a_results_file_from_other_settings_is_not_resumed(tmp_path):
     path = tmp_path / "results.json"
     rb.save_results(path, rb.new_results("medium", 5.0))
     with pytest.raises(SystemExit, match="different settings"):
         rb.load_results(path, "high", 5.0, fresh=False)
     assert rb.load_results(path, "high", 5.0, fresh=True)["settings"]["effort"] == "high"
+    # The first pilot's file (schema 1) is never resumed either.
+    old = rb.new_results("medium", 5.0)
+    old["schema"] = 1
+    rb.save_results(path, old)
+    with pytest.raises(SystemExit, match="different settings"):
+        rb.load_results(path, "medium", 5.0, fresh=False)
 
 
 def test_the_full_roster_estimate_is_the_pilots_mean_and_dearest_times_646():
@@ -709,7 +1101,7 @@ def test_the_full_roster_estimate_is_the_pilots_mean_and_dearest_times_646():
     assert figures["full_at_max"] == pytest.approx(193.80)
 
 
-# --- 7. what it may write ----------------------------------------------------------------------
+# --- 9. what it may write ----------------------------------------------------------------------
 
 def _good_client():
     def respond(request, n):
@@ -732,7 +1124,14 @@ def test_a_run_writes_its_results_file_and_nothing_else(tmp_path):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["results.json",
                                                          "spots_enriched_copy.json"]
     saved = json.loads(output.read_text())
+    assert saved["schema"] == 2
     assert [r["done"] for r in saved["spots"].values()] == [True, True]
+    assert [r["research"]["sand_bottom"] for r in saved["spots"].values()] == ["no", "no"]
+
+
+def test_the_first_pilots_results_are_left_where_they_are():
+    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_pilot2.json"
+    assert rb.DEFAULT_OUTPUT.name != "break_type_research_pilot.json"
 
 
 def test_the_results_file_may_not_be_the_roster(tmp_path):
@@ -753,8 +1152,13 @@ def test_a_dry_run_and_a_report_call_nothing_and_write_nothing(tmp_path, capsys)
     assert rb.main(["--dry-run", "--output", str(output)], client=never) == 0
     printed = capsys.readouterr().out
     assert PIPELINE_PROMPT in printed and rb.RESEARCH_SYSTEM in printed
+    assert "Your answer for the bottom is still unknown." in printed
     assert not output.exists()
     with pytest.raises(SystemExit, match="no results file"):
+        rb.main(["--report", "--output", str(output)], client=never)
+    # The first pilot's file has schema 1, which this report cannot read.
+    output.write_text(json.dumps({"schema": 1, "spots": {}}))
+    with pytest.raises(SystemExit, match="schema 1"):
         rb.main(["--report", "--output", str(output)], client=never)
 
 
@@ -772,6 +1176,17 @@ def test_nothing_here_can_reach_the_database():
                         "pathlib", ".config", ".geo", "inspect", "anthropic"}
 
 
+def test_the_bottom_has_no_column_anywhere():
+    # The results file only, for now: no migration adds a bottom column and the import
+    # never sends one.
+    migrations = os.path.join(ROOT, "pipeline", "migrations")
+    for name in sorted(os.listdir(migrations)):
+        with open(os.path.join(migrations, name), encoding="utf-8") as fh:
+            assert not re.search(r"ADD\s+COLUMN[^;]*\bbottom", fh.read(), re.I), name
+    with open(os.path.join(ROOT, "pipeline", "db_import.py"), encoding="utf-8") as fh:
+        assert "bottom" not in fh.read()
+
+
 # --- the report -----------------------------------------------------------------------------
 
 def test_the_report_rows():
@@ -782,26 +1197,54 @@ def test_the_report_rows():
     results["spots"]["Banzai Pipeline|Hawaii"] = record
     results["spent_usd"] = record["cost_usd"]
     report = rb.render_report(results).splitlines()
-    assert report[0] == ("| Spot | Current value | Researched value | Source URL "
-                         "| Location check | Memory answer | Agree |")
-    assert report[2] == ("| Banzai Pipeline | beach | reef "
-                         "| https://www.surf-forecast.com/breaks/Banzai-Pipeline "
-                         "| ok (Hawaii) | reef, high confidence | yes |")
-    assert report[3] == "| Waimea Bay | — | not run | — | — | — | — |"
-    assert report[18] == "| Mavericks (control: reef) | — | not run | — | — | — | — |"
+    assert report[:5] == [
+        "Break type:", "",
+        "| Spot | Current value | Researched break type | Source URL | Location check "
+        "| Memory answer | Agree |",
+        "|---|---|---|---|---|---|---|",
+        "| Banzai Pipeline | beach | reef | https://www.surf-forecast.com/breaks/Banzai-Pipeline "
+        "| ok (Hawaii) | reef, high confidence | yes |"]
+    assert report[5] == "| Waimea Bay | — | not run | — | — | — | — |"
+    assert report[20] == "| Mavericks (control: reef) | — | not run | — | — | — | — |"
+    bottom = report.index("Bottom (in this results file only):")
+    assert report[bottom + 2:bottom + 5] == [
+        "| Spot | Researched bottom | Source URL | Location check | Memory answer | Agree "
+        "| Sand bottom: researched | Sand bottom: memory | Sand bottom: agree |",
+        "|---|---|---|---|---|---|---|---|---|",
+        "| Banzai Pipeline | rock | https://www.surf-forecast.com/breaks/Banzai-Pipeline "
+        "| ok (Hawaii) | rock, high confidence | yes | no | no | yes |"]
+    assert report[bottom + 5] == "| Waimea Bay | not run | — | — | — | — | — | — | — |"
     # Research: 12,000 in x $2/M + 900 out x $10/M + 1 search x $0.01
     #   = 0.0240 + 0.0090 + 0.0100 = $0.0430.
     # Memory: 300 in x $2/M + 50 out x $10/M = 0.0006 + 0.0005 = $0.0011.
-    costs = report[report.index("| Spot | Searches | Fetches | Input tokens | Output tokens "
-                                "| Research | Memory | Total |") + 2]
-    assert costs == ("| Banzai Pipeline | 1 | 1 | 12,300 | 950 | $0.0430 | $0.0011 "
-                     "| $0.0441 |")
+    # Fetched text: PAGE is 227 characters, 227 // 4 = 56 tokens.
+    cost = report.index("Cost:")
+    assert report[cost + 4] == ("| Banzai Pipeline | 1 | 1 | 1 page, about 56 tokens | — "
+                                "| 12,300 | 950 | $0.0430 | $0.0011 | $0.0441 |")
     # 0.0441 x 646 = 28.4886
-    assert report[-3:] == [
+    assert report[-5:] == [
         "Spent $0.0441 of the $5.00 budget, at list prices.",
         "Per spot, over 1 finished: mean $0.0441, median $0.0441, cheapest $0.0441, "
         "dearest $0.0441.",
-        "The full 646 spots at the pilot's mean: $28.49; at its dearest spot's cost: $28.49."]
+        "The full 646 spots at the pilot's mean: $28.49; at its dearest spot's cost: $28.49.",
+        "Sand bottom, researched: 0 yes, 1 no, 0 unknown; from memory: 0 yes, 1 no, "
+        "0 unknown.",
+        "Where both answers say yes or no, they agree on 1 of 1."]
+
+
+def test_the_report_counts_follow_ups_and_the_values_they_gained():
+    found = (_fetch("f2", GUESSED_URL, PAGE)
+             + [_answer(bt={"source_url": GUESSED_URL}, bottom={"source_url": GUESSED_URL},
+                        pages=[dict(PAGE_ENTRY, url=GUESSED_URL)])])
+    client, _ = _failed_then_found(found)
+    record, _ = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                 NO_SLEEP)
+    results = rb.new_results("medium", 5.0)
+    results["spots"]["Banzai Pipeline|Hawaii"] = record
+    report = rb.render_report(results).splitlines()
+    assert report[-1] == "Followed up a failed fetch at 1 of 1 spots; 1 of them gained a value."
+    assert ("after url_not_in_prior_context: 0 searches, 1 fetch; filled break_type and "
+            "bottom |") in [line for line in report if line.startswith("| Banzai Pipeline | 1 |")][0]
 
 
 def test_a_report_cell_cannot_break_the_table():
@@ -809,50 +1252,63 @@ def test_a_report_cell_cannot_break_the_table():
 
 
 def test_the_report_says_why_a_value_was_withheld():
+    elsewhere = [dict(PAGE_ENTRY, place="Santa Cruz", state="California",
+                      location_quote="Suicides in Santa Cruz")]
+
     def respond(request, n):
         if "tools" in request:
-            return _researched(_answer(source_state="California",
+            return _researched(_answer(pages=elsewhere,
                                        same_name_elsewhere=["Santa Cruz, California"]))[0]
         return _recall()
     record, _ = rb.research_spot(FakeClient(respond), PIPELINE_ENTRY, SPOT, "medium",
                                  rb.Budget(5.0), NO_SLEEP)
     results = rb.new_results("medium", 5.0)
     results["spots"]["Banzai Pipeline|Hawaii"] = record
-    assert rb.render_report(results).splitlines()[2] == (
+    report = rb.render_report(results).splitlines()
+    assert report[4] == (
         "| Banzai Pipeline | beach | unknown: the page describes another place: the page "
         "puts it in California | https://www.surf-forecast.com/breaks/Banzai-Pipeline "
         "| wrong place: the page puts it in California · name also used: Santa Cruz, "
         "California | reef, high confidence | n/a |")
+    bottom = report.index("Bottom (in this results file only):")
+    assert report[bottom + 4] == (
+        "| Banzai Pipeline | unknown: the page describes another place: the page puts it in "
+        "California | https://www.surf-forecast.com/breaks/Banzai-Pipeline | wrong place: the "
+        "page puts it in California | rock, high confidence | n/a | unknown | no | n/a |")
 
 
-# --- 8. the real SDK ---------------------------------------------------------------------------
+# --- 10. the real SDK ---------------------------------------------------------------------------
 
-def test_the_real_sdk_sends_this_request_and_reads_the_answer_back():
+def _sdk_client(handler):
     anthropic = pytest.importorskip("anthropic")
     httpx = pytest.importorskip("httpx")
-    bodies = []
+    return anthropic.Anthropic(api_key="test-key", max_retries=0,
+                               http_client=httpx.Client(transport=httpx.MockTransport(handler)))
 
-    def message(content, usage):
-        return {"id": "msg_test", "type": "message", "role": "assistant",
-                "model": "claude-sonnet-5-5", "content": content, "stop_reason": "end_turn",
-                "stop_sequence": None, "usage": usage}
+
+def _sdk_message(content, usage):
+    return {"id": "msg_test", "type": "message", "role": "assistant",
+            "model": "claude-sonnet-5-5", "content": content, "stop_reason": "end_turn",
+            "stop_sequence": None, "usage": usage}
+
+
+def test_the_real_sdk_sends_this_request_and_reads_the_answer_back():
+    httpx = pytest.importorskip("httpx")
+    bodies = []
 
     def handler(request):
         body = json.loads(request.content)
         bodies.append(body)
         if "tools" in body:
-            return httpx.Response(200, json=message(
+            return httpx.Response(200, json=_sdk_message(
                 _researched(_answer())[0]["content"],
                 {"input_tokens": 12000, "output_tokens": 900,
                  "server_tool_use": {"web_search_requests": 1, "web_fetch_requests": 1}}))
-        return httpx.Response(200, json=message(_recall()["content"],
-                                                {"input_tokens": 300, "output_tokens": 50}))
+        return httpx.Response(200, json=_sdk_message(_recall()["content"],
+                                                     {"input_tokens": 300, "output_tokens": 50}))
 
-    client = anthropic.Anthropic(api_key="test-key", max_retries=0,
-                                 http_client=httpx.Client(
-                                     transport=httpx.MockTransport(handler)))
-    record, exc = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
-                                   NO_SLEEP)
+    record, exc = rb.research_spot(_sdk_client(handler), PIPELINE_ENTRY, SPOT, "medium",
+                                   rb.Budget(5.0), NO_SLEEP)
     assert exc is None, record["error"]
     research_body, recall_body = bodies
     for field in ("model", "max_tokens", "system", "tools", "thinking", "output_config",
@@ -862,8 +1318,46 @@ def test_the_real_sdk_sends_this_request_and_reads_the_answer_back():
     assert recall_body["messages"] == RECALL_REQUEST["messages"]
     for ours in ("unattributed", "ROSTER-ONLY", "break_type_source"):
         assert ours not in json.dumps(bodies)
-    assert record["research"]["status"] == "researched"
-    assert record["research"]["quote_found_in"] == "fetched page"
-    assert record["model_recall"]["break_type"] == "reef"
-    assert record["agree"] == "yes"
+    assert record["research"]["break_type"]["status"] == "researched"
+    assert record["research"]["bottom"]["quote_found_in"] == "fetched page"
+    assert record["model_recall"]["break_type"]["value"] == "reef"
+    assert record["agree"] == {"break_type": "yes", "bottom": "yes", "sand_bottom": "yes"}
     assert record["cost_usd"] == pytest.approx(0.0441)
+
+
+def test_the_real_sdk_sends_the_failed_fetch_back_and_the_follow_up_after_it():
+    # The error code goes back to the API exactly as it came, which is what an SDK older
+    # than 0.105 warns about (its list of codes predates url_not_in_prior_context) without
+    # changing what it sends.
+    httpx = pytest.importorskip("httpx")
+    bodies = []
+    first = (_search("s1", "Banzai Pipeline Hawaii surf", [OTHER_URL])
+             + _fetch_failed("f1", GUESSED_URL)
+             + [_answer(bt=UNKNOWN, bottom=UNKNOWN, pages=[])])
+    found = (_fetch("f2", GUESSED_URL, PAGE)
+             + [_answer(bt={"source_url": GUESSED_URL}, bottom={"source_url": GUESSED_URL},
+                        pages=[dict(PAGE_ENTRY, url=GUESSED_URL)])])
+
+    def handler(request):
+        body = json.loads(request.content)
+        bodies.append(body)
+        if "tools" not in body:
+            return httpx.Response(200, json=_sdk_message(
+                _recall()["content"], {"input_tokens": 300, "output_tokens": 50}))
+        content = first if len(body["messages"]) == 1 else found
+        return httpx.Response(200, json=_sdk_message(
+            content, {"input_tokens": 1000, "output_tokens": 100}))
+
+    record, exc = rb.research_spot(_sdk_client(handler), PIPELINE_ENTRY, SPOT, "medium",
+                                   rb.Budget(5.0), NO_SLEEP)
+    assert exc is None, record["error"]
+    follow_up = bodies[1]
+    assert [message["role"] for message in follow_up["messages"]] == ["user", "assistant",
+                                                                      "user"]
+    returned = [block for block in follow_up["messages"][1]["content"]
+                if block["type"] == "web_fetch_tool_result"]
+    assert returned == [{"type": "web_fetch_tool_result", "tool_use_id": "f1",
+                         "content": {"type": "web_fetch_tool_result_error",
+                                     "error_code": "url_not_in_prior_context"}}]
+    assert follow_up["messages"][2]["content"] == FOLLOW_UP_TEXT
+    assert record["research"]["follow_up"]["filled"] == ["break_type", "bottom"]

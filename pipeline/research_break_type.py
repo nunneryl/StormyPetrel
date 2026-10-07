@@ -1,4 +1,5 @@
-"""Break-type research: what kind of break each spot is, from a page that says so.
+"""Break-type and bottom research: what kind of break each spot is and what its waves break
+over, each from a page that says so.
 
 Step 2 of the break-type plan, piloted on the 20 spots in PILOT_SPOTS. It is separate
 from verify_spots.py, whose prompt shows the model our current break_type and tells it
@@ -8,22 +9,39 @@ WHAT THE MODEL IS SHOWN. Only the spot's name, its state or territory and its co
 (spot_identity). It is never shown our break_type, its source, the verification notes or
 anything else in the roster, so it cannot hand our value back to us.
 
+TWO THINGS, RESEARCHED SEPARATELY, each standing on its own cited URL and quote:
+  break_type  the shape of the break, one of migration 020's values (BREAK_TYPE_VALUES)
+  bottom      what the waves break over (BOTTOM_VALUES). The results file only: the spots
+              table has no column for it yet.
+A page that gives one and not the other gives that one only. Our one-word break_type mixed
+the two ("reef" is a bottom, "point" a shape); the next use, a size ceiling for breaks that
+close out, depends mainly on the bottom.
+
+SAND BOTTOM. sand_bottom is 'yes', 'no' or 'unknown', derived from the bottom (SAND_BOTTOM):
+shifting sand closes out and a fixed bottom holds. A 'mixed' bottom gives 'unknown', because
+the page names sand and something fixed without saying which the wave breaks on.
+
 TWO ANSWERS PER SPOT, from the same model (MODEL):
-  researched    With web search and web fetch. It counts only with a URL that a search or
-                fetch really returned in that request, and a quote that is really on that
-                page. Anything less is 'unknown'.
-  model_recall  The same question with no tools, from memory. Kept for comparison only.
+  researched    With web search and web fetch. Each value counts only with a URL that a
+                search or fetch really returned for that spot, and a quote that is really on
+                that page. Anything less is 'unknown'.
+  model_recall  The same questions with no tools, from memory. Kept for comparison only.
 
 LOCATION CHECK. A page about a same-named spot somewhere else is no evidence. The model
-reports where the page puts the spot; check_location compares that with our state and
-coordinates, and a page that puts it somewhere else makes the answer 'unknown'. Hawaii's
-Suicide's and Bombora were once researched as California spots.
+reports where each page it quotes puts the spot; check_location compares that with our
+state and coordinates, and a page that puts it somewhere else makes the value 'unknown'.
+Hawaii's Suicide's and Bombora were once researched as California spots.
 
-COST. Each request's usage is priced at list price (PRICES) and added up per spot. A spot
-starts only if the money left covers twice the dearest spot so far, and at least
-SPOT_RESERVE_FLOOR_USD before any spot has been priced. No request starts once the budget
-is spent. The budget ($5 by default) holds across re-runs: the results file carries what
-has been spent.
+ONE MORE TRY AFTER A FAILED FETCH. When a fetch failed and a value is still unknown at the
+end of the turn, the conversation goes on once (follow_up_message): the model is told which
+fetch failed and why, and may make one more search or one more fetch before answering again.
+
+COST. Each request's usage is priced at list price (PRICES) and added up per spot. A fetched
+page is cut at FETCH_MAX_CONTENT_TOKENS, and the model is told not to fetch PDFs, which that
+cut does not cover. A spot starts only if the money left covers twice the dearest spot so
+far, and at least SPOT_RESERVE_FLOOR_USD before any spot has been priced. No request starts
+once the budget is spent. The budget ($3 by default) holds across re-runs: the results file
+carries what has been spent.
 
 WRITES ONE FILE: the results file (DEFAULT_OUTPUT), after every spot. Never the roster and
 never the database. Nothing here imports db_import or a database client, and the results
@@ -32,7 +50,7 @@ path may not be the roster.
 RUN on the Mac, from the repo root, with ANTHROPIC_API_KEY set:
     python3 -m pipeline.research_break_type --limit 1    # one spot, to check the setup
     python3 -m pipeline.research_break_type              # the rest of the pilot
-    python3 -m pipeline.research_break_type --report     # the table again, no API calls
+    python3 -m pipeline.research_break_type --report     # the tables again, no API calls
     python3 -m pipeline.research_break_type --dry-run    # what the model is sent, no calls
 """
 from __future__ import annotations
@@ -81,6 +99,13 @@ PRICES = {
     "per_web_fetch": 0.00,
 }
 
+# How much of a fetched page enters the model's context, in tokens. The first pilot used
+# 6,000. A page is read again on every later step of the same turn, so this is paid more
+# than once. The API's limit is approximate and does not apply to PDFs (see the prompt).
+FETCH_MAX_CONTENT_TOKENS = 3000
+# The fetch tool's own estimate: an average 10 kB web page is about 2,500 tokens.
+CHARS_PER_TOKEN = 4
+
 # Both tools are called directly, not through dynamic filtering, so every search result
 # and every fetched page comes back in the response. That is what lets the code check
 # that the cited URL was really returned and that the quote is really on the page.
@@ -94,7 +119,7 @@ WEB_FETCH_TOOL = {
     "type": "web_fetch_20260209",
     "name": "web_fetch",
     "max_uses": 2,
-    "max_content_tokens": 6000,
+    "max_content_tokens": FETCH_MAX_CONTENT_TOKENS,
     "citations": {"enabled": True},
     "allowed_callers": ["direct"],
 }
@@ -108,7 +133,7 @@ RATE_LIMIT_WAIT_SECONDS = 60.0
 # Between spots, as verify_spots paces its batches, to stay under input-token rate limits.
 SPOT_PAUSE_SECONDS = 15.0
 
-PILOT_BUDGET_USD = 5.00
+PILOT_BUDGET_USD = 3.00
 SPOT_RESERVE_FLOOR_USD = 0.50
 # Rated spots in the database: the 2026-10-06 pipeline run upserted 646.
 FULL_ROSTER_SPOTS = 646
@@ -118,8 +143,18 @@ LOCATION_MAX_KM = 25.0
 # A shorter quote ("reef break") could be found on almost any page, so it proves nothing.
 MIN_QUOTE_WORDS = 3
 
-DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_pilot.json"
-SCHEMA_VERSION = 1
+# The first pilot's results (break type only, schema 1) stay in break_type_research_pilot.json.
+DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_pilot2.json"
+SCHEMA_VERSION = 2
+
+# What the waves break over. Kept in the results file only: the spots table has no column.
+BOTTOM_VALUES = ("sand", "rock", "coral", "cobble", "mixed", "unknown")
+# The field a close-out size ceiling would read: shifting sand closes out, a fixed bottom
+# holds. 'mixed' is 'unknown' because the page does not say which the wave breaks on.
+SAND_BOTTOM = {"sand": "yes", "rock": "no", "coral": "no", "cobble": "no",
+               "mixed": "unknown", "unknown": "unknown"}
+FIELD_VALUES = {"break_type": BREAK_TYPE_VALUES, "bottom": BOTTOM_VALUES}
+FIELDS = tuple(FIELD_VALUES)
 
 # (roster name, region_hint, as the request named it, the known answer for a control).
 # The known answer is used only in the report. The model is never shown it.
@@ -155,9 +190,21 @@ _KINDS = (
     "  rivermouth  waves break on the bar at a river or creek mouth\n"
 )
 
+# What a close-out ceiling needs is sand against a fixed bottom, so a reef that is not said to
+# be coral counts as rock rather than as unknown.
+_BOTTOMS = (
+    "  sand    sand or sandbars\n"
+    "  rock    rock, boulders, rock ledges or lava, and any reef not said to be coral\n"
+    "  coral   coral\n"
+    "  cobble  cobblestones or rounded stones\n"
+    "  mixed   more than one of these, such as sand over rock\n"
+)
+
 RESEARCH_SYSTEM = (
-    "You find out what kind of surf break one surf spot is, from a web page that says so,\n"
-    "and report it in a fixed format.\n"
+    "You find out two things about one surf spot, each from a web page that says so, and\n"
+    "report them in a fixed format:\n"
+    "  break_type  what kind of break it is\n"
+    "  bottom      what the waves break over\n"
     "\n"
     "The spot is given by its name, its US state or territory and its coordinates. Surf\n"
     "spots often share a name with spots in other states or countries, and some names are\n"
@@ -168,43 +215,64 @@ RESEARCH_SYSTEM = (
     "How to work:\n"
     "1. Search for the spot, for example its name, its state and the word surf. Surf\n"
     "   guides such as surf-forecast.com and wannasurf.com usually say what kind of break\n"
-    "   a spot is.\n"
+    "   a spot is and what its bottom is.\n"
     "2. Fetch the page you will quote with web_fetch, so that its exact words can be\n"
-    "   checked.\n"
-    "3. Find the words on that page that say what the waves break over or along, and copy\n"
-    "   them exactly: one continuous passage, no ellipses, at most 300 characters.\n"
+    "   checked. web_fetch opens only a URL that a search result or an earlier fetch\n"
+    "   returned, so do not type one in yourself. Do not fetch PDFs.\n"
+    "3. For each of the two, find the words on the page that say it, and copy them\n"
+    "   exactly: one continuous passage, no ellipses, at most 300 characters. The two may\n"
+    "   come from the same page, and from the same passage.\n"
     "\n"
     "break_type is exactly one of:\n"
     + _KINDS +
     "  unknown     no page you read says what kind of break this spot is, or the pages you\n"
     "              found describe a same-named spot somewhere else\n"
-    "If the page names more than one kind (\"a reef and beach break\"), set break_type to\n"
-    "the one it says dominates, or else the first one it names, and list every kind it\n"
-    "names, in its order, in break_types.\n"
+    "If the page names more than one kind (\"a reef and beach break\"), set the value to the\n"
+    "one it says dominates, or else the first one it names, and list every kind it names,\n"
+    "in its order, in \"all\".\n"
     "\n"
-    "Answer only from what a page you read says. Without such a page, break_type is\n"
-    "\"unknown\". Never quote words that are not on the page, and never cite a page you did\n"
-    "not read.\n"
+    "bottom is exactly one of:\n"
+    + _BOTTOMS +
+    "  unknown no page you read says what the bottom is\n"
+    "List every material the page names, in its order, in \"all\".\n"
+    "\n"
+    "Answer each of the two from what a page you read says, and each on its own: a page\n"
+    "that says the kind of break but not the bottom gives you the kind of break only.\n"
+    "Without such a page the value is \"unknown\". Never quote words that are not on the\n"
+    "page, and never cite a page you did not read.\n"
     "\n"
     "End your reply with this JSON object, and nothing after it:\n"
     "{\n"
-    "  \"break_type\": \"beach\" | \"reef\" | \"point\" | \"jetty\" | \"rivermouth\" | \"unknown\",\n"
-    "  \"break_types\": [every kind the page names, in its order],\n"
-    "  \"source_url\": \"the URL of the page you quote\" or null,\n"
-    "  \"quote\": \"the exact words on that page that say what kind of break it is\" or null,\n"
-    "  \"source_place\": \"where that page says the spot is, in its words\" or null,\n"
-    "  \"source_state\": \"the US state or territory that page puts the spot in\" or null,\n"
-    "  \"source_lat\": the latitude that page gives for the spot, or null,\n"
-    "  \"source_lng\": the longitude that page gives for the spot, or null,\n"
-    "  \"location_quote\": \"the exact words on that page that say where the spot is\" or null,\n"
+    "  \"break_type\": {\n"
+    "    \"value\": \"beach\" | \"reef\" | \"point\" | \"jetty\" | \"rivermouth\" | \"unknown\",\n"
+    "    \"all\": [every kind the page names, in its order],\n"
+    "    \"source_url\": \"the URL of the page you quote\" or null,\n"
+    "    \"quote\": \"the exact words on that page that say what kind of break it is\" or null\n"
+    "  },\n"
+    "  \"bottom\": {\n"
+    "    \"value\": \"sand\" | \"rock\" | \"coral\" | \"cobble\" | \"mixed\" | \"unknown\",\n"
+    "    \"all\": [every material the page names, in its order],\n"
+    "    \"source_url\": \"the URL of the page you quote\" or null,\n"
+    "    \"quote\": \"the exact words on that page that say what the bottom is\" or null\n"
+    "  },\n"
+    "  \"pages\": [\n"
+    "    {\n"
+    "      \"url\": \"a page you quote above, each page once\",\n"
+    "      \"place\": \"where that page says the spot is, in its words\" or null,\n"
+    "      \"state\": \"the US state or territory that page puts the spot in\" or null,\n"
+    "      \"lat\": the latitude that page gives for the spot, or null,\n"
+    "      \"lng\": the longitude that page gives for the spot, or null,\n"
+    "      \"location_quote\": \"the exact words on that page that say where the spot is\" or null\n"
+    "    }\n"
+    "  ],\n"
     "  \"same_name_elsewhere\": [\"other places you found with a surf spot of this name\"],\n"
     "  \"note\": \"one short sentence a reviewer should know\" or null\n"
     "}\n"
 )
 
 RECALL_SYSTEM = (
-    "You say, from your own knowledge and without searching, what kind of surf break one\n"
-    "surf spot is.\n"
+    "You say, from your own knowledge and without searching, two things about one surf\n"
+    "spot: what kind of break it is (break_type) and what the waves break over (bottom).\n"
     "\n"
     "The spot is given by its name, its US state or territory and its coordinates. Surf\n"
     "spots share names, so answer for the spot at these coordinates in this state.\n"
@@ -212,25 +280,79 @@ RECALL_SYSTEM = (
     "break_type is exactly one of:\n"
     + _KINDS +
     "  unknown     you do not know this particular spot\n"
-    "If the spot is more than one kind, set break_type to the dominant one and list every\n"
-    "kind in break_types.\n"
+    "If the spot is more than one kind, set the value to the dominant one and list every\n"
+    "kind in \"all\".\n"
+    "\n"
+    "bottom is exactly one of:\n"
+    + _BOTTOMS +
+    "  unknown you do not know this spot's bottom\n"
+    "List every material in \"all\".\n"
     "\n"
     "End your reply with this JSON object, and nothing after it:\n"
     "{\n"
-    "  \"break_type\": \"beach\" | \"reef\" | \"point\" | \"jetty\" | \"rivermouth\" | \"unknown\",\n"
-    "  \"break_types\": [every kind it is],\n"
-    "  \"confidence\": \"high\" | \"medium\" | \"low\",\n"
+    "  \"break_type\": {\n"
+    "    \"value\": \"beach\" | \"reef\" | \"point\" | \"jetty\" | \"rivermouth\" | \"unknown\",\n"
+    "    \"all\": [every kind it is],\n"
+    "    \"confidence\": \"high\" | \"medium\" | \"low\"\n"
+    "  },\n"
+    "  \"bottom\": {\n"
+    "    \"value\": \"sand\" | \"rock\" | \"coral\" | \"cobble\" | \"mixed\" | \"unknown\",\n"
+    "    \"all\": [every material it is],\n"
+    "    \"confidence\": \"high\" | \"medium\" | \"low\"\n"
+    "  },\n"
     "  \"note\": \"one short sentence\" or null\n"
     "}\n"
 )
 
-# Words that name each kind, for the reviewer's "does the quote name the type" flag.
-TYPE_WORDS = {
-    "beach": ("beach", "sand"),
-    "reef": ("reef", "coral", "lava", "rock", "ledge", "slab", "boulder"),
-    "point": ("point",),
-    "jetty": ("jetty", "jetties", "groin", "groyne", "breakwater", "inlet"),
-    "rivermouth": ("river", "estuary", "creek"),
+# Why a fetch failed, in words the model is given when the conversation goes on. The codes
+# are the web fetch tool's.
+FETCH_ERRORS = {
+    "url_not_in_prior_context": "web_fetch opens only a URL that a search result or an "
+                                "earlier fetch returned, and this one came from neither",
+    "url_not_accessible": "the site did not return the page",
+    "unsupported_content_type": "it is not a text, HTML or PDF page",
+    "too_many_requests": "the fetch was rate-limited",
+    "url_not_allowed": "fetching that URL is not allowed",
+    "url_too_long": "the URL is longer than 250 characters",
+    "invalid_tool_input": "the URL was not valid",
+    "max_uses_exceeded": "the fetches allowed for that turn were used up",
+    "unavailable": "the fetch service failed",
+}
+_FIELD_WORDS = {"break_type": "the kind of break", "bottom": "the bottom"}
+
+
+def follow_up_message(failed: list, needed: list) -> str:
+    """The one message that continues a turn after a failed fetch left a value unknown.
+    A URL written in a user message may be fetched, so a URL the model typed in itself
+    can be tried again."""
+    lines = ["This fetch did not work:" if len(failed) == 1 else "These fetches did not work:"]
+    for fetch in failed:
+        why = FETCH_ERRORS.get(fetch["error"], f"error {fetch['error']}")
+        lines.append(f"- {fetch['url'] or '(no URL)'}: {why}")
+    lines += ["",
+              "Your answer for " + " and ".join(_FIELD_WORDS[field] for field in needed)
+              + " is still unknown. You may make one more tool call: one web search or one "
+              "web fetch, not both. A URL written in this message may be fetched. Then give "
+              "your final answer again, both values, as the same JSON object at the end of "
+              "your reply."]
+    return "\n".join(lines)
+
+
+# Words that name each value, for the reviewer's "does the quote name the value" flag.
+VALUE_WORDS = {
+    "break_type": {
+        "beach": ("beach", "sand"),
+        "reef": ("reef", "coral", "lava", "rock", "ledge", "slab", "boulder"),
+        "point": ("point",),
+        "jetty": ("jetty", "jetties", "groin", "groyne", "breakwater", "inlet"),
+        "rivermouth": ("river", "estuary", "creek"),
+    },
+    "bottom": {
+        "sand": ("sand",),
+        "rock": ("rock", "boulder", "ledge", "lava", "reef", "slab"),
+        "coral": ("coral",),
+        "cobble": ("cobble", "pebble", "stone"),
+    },
 }
 
 _FATAL_STATUS = frozenset({400, 401, 403, 404, 413})
@@ -317,9 +439,15 @@ def recall_request(identity: dict, effort: str) -> dict:
     }
 
 
+def _follow_up_sample() -> str:
+    """The follow-up message with every error code in it: its wording, for the settings."""
+    return follow_up_message([{"url": "https://example.com/", "error": code}
+                              for code in sorted(FETCH_ERRORS)], list(FIELDS))
+
+
 def run_settings(effort: str) -> dict:
     """Everything that shapes an answer. A results file is resumed only under the same."""
-    prompts = (RESEARCH_SYSTEM + "\x00" + RECALL_SYSTEM).encode("utf-8")
+    prompts = "\x00".join((RESEARCH_SYSTEM, RECALL_SYSTEM, _follow_up_sample())).encode("utf-8")
     return {
         "model": MODEL,
         "thinking": "adaptive",
@@ -448,7 +576,7 @@ def states_named_in(text: str) -> set:
 
 
 def last_json_object(text: str):
-    """The last JSON object in *text* that has a break_type, or None."""
+    """The last JSON object in *text* that has a break_type at its top level, or None."""
     decoder = json.JSONDecoder()
     found = None
     for i, char in enumerate(text):
@@ -464,9 +592,11 @@ def last_json_object(text: str):
 
 
 def collect_evidence(blocks: list) -> dict:
-    """What the tools really returned in one research turn, read from its blocks."""
+    """What the tools really returned in one research conversation, read from its blocks."""
     queries, fetches, search_urls, errors, texts = [], [], [], [], []
     pages = {}       # _url_key -> page text ('' when the page was a PDF)
+    fetched = []     # {"url", "kind", "chars"} for each page a fetch returned
+    failed = []      # {"url", "error"} for each fetch that returned an error
     citations = []   # {"url", "cited_text"} from web search citations
     asked = {}       # web_fetch call id -> the URL it asked for
     for block in blocks:
@@ -494,8 +624,17 @@ def collect_evidence(blocks: list) -> dict:
                 pages[_url_key(content["url"])] = text
                 if asked.get(block.get("tool_use_id")):
                     pages[_url_key(asked[block["tool_use_id"]])] = text
+                if source.get("type") == "text":
+                    fetched.append({"url": content["url"], "kind": "text", "chars": len(text)})
+                else:
+                    media = str(source.get("media_type") or source.get("type") or "unknown")
+                    fetched.append({"url": content["url"],
+                                    "kind": "pdf" if media == "application/pdf" else media,
+                                    "chars": None})
             else:
                 errors.append("web_fetch: " + str(content.get("error_code")))
+                failed.append({"url": asked.get(block.get("tool_use_id")),
+                               "error": str(content.get("error_code"))})
         elif kind == "text":
             texts.append(block.get("text") or "")
             for citation in block.get("citations") or []:
@@ -503,8 +642,8 @@ def collect_evidence(blocks: list) -> dict:
                     citations.append({"url": citation["url"],
                                       "cited_text": citation.get("cited_text") or ""})
     return {"queries": queries, "fetches": fetches, "search_urls": search_urls,
-            "pages": pages, "citations": citations, "errors": errors,
-            "text": "".join(texts)}
+            "pages": pages, "fetched": fetched, "failed": failed, "citations": citations,
+            "errors": errors, "text": "".join(texts)}
 
 
 def find_quote(quote, url: str, evidence: dict) -> tuple:
@@ -525,11 +664,18 @@ def find_quote(quote, url: str, evidence: dict) -> tuple:
     return None, "the quote is not on the cited page"
 
 
-def quote_names_type(quote: str, value: str, spot_name: str) -> bool:
-    """Whether the quote, outside the spot's own name, has a word for *value*."""
+def quote_names_value(quote: str, field: str, value: str, spot_name: str) -> bool:
+    """Whether the quote, outside the spot's own name, has a word for *value*. A mixed
+    bottom needs words for two materials."""
     unnamed = re.sub(r"\b" + re.escape(_fold(spot_name)) + r"\b", " ", _clean_quote(quote))
     words = _ascii_words(unnamed)
-    return any(word.startswith(stem) for word in words for stem in TYPE_WORDS[value])
+    stems = VALUE_WORDS[field]
+
+    def named(kind):
+        return any(word.startswith(stem) for word in words for stem in stems[kind])
+    if field == "bottom" and value == "mixed":
+        return sum(1 for kind in stems if named(kind)) >= 2
+    return named(value)
 
 
 def _number_in(value, low: float, high: float) -> bool:
@@ -537,16 +683,17 @@ def _number_in(value, low: float, high: float) -> bool:
             and low <= value <= high)
 
 
-def check_location(identity: dict, answer: dict) -> dict:
+def check_location(identity: dict, page: dict) -> dict:
     """Does the page describe OUR spot? Its state, the states its own location words name,
-    and its coordinates when it gives them, against ours.
+    and its coordinates when it gives them, against ours. *page* is the answer's entry
+    for that page: state, place, lat, lng and location_quote.
 
     'wrong place'  it puts the spot in another state, or its coordinates are more than
                    LOCATION_MAX_KM from ours
     'ok'           it puts the spot in our state, or its coordinates are near ours
     'unverified'   it says neither"""
     ours = normalize_state(identity["region"])
-    stated = answer.get("source_state")
+    stated = page.get("state")
     theirs = None
     if isinstance(stated, str):
         # As written ("Hawaii (state)", "HI"), else with okina and accents folded away.
@@ -556,14 +703,14 @@ def check_location(identity: dict, answer: dict) -> dict:
     if theirs is not None and theirs != ours:
         wrong = True
         reasons.append(f"the page puts it in {theirs}")
-    named = states_named_in(" ".join(str(answer.get(key) or "")
-                                     for key in ("location_quote", "source_place")))
+    named = states_named_in(" ".join(str(page.get(key) or "")
+                                     for key in ("location_quote", "place")))
     others = sorted(named - {ours})
     if others and ours not in named:
         wrong = True
         reasons.append("the page's location words name " + ", ".join(others))
     distance_km = None
-    lat, lng = answer.get("source_lat"), answer.get("source_lng")
+    lat, lng = page.get("lat"), page.get("lng")
     if _number_in(lat, -90, 90) and _number_in(lng, -180, 180):
         distance_km = round(haversine_m(identity["lat"], identity["lng"],
                                         float(lat), float(lng)) / 1000.0, 1)
@@ -579,19 +726,40 @@ def check_location(identity: dict, answer: dict) -> dict:
         reasons.append("the page does not say which state" if not stated
                        else f"cannot read the state {stated!r}")
     return {"verdict": verdict, "our_state": ours, "source_state": theirs or stated,
-            "source_place": answer.get("source_place"),
-            "location_quote": answer.get("location_quote"),
+            "source_place": page.get("place"),
+            "location_quote": page.get("location_quote"),
             "distance_km": distance_km, "reasons": reasons}
 
 
-def _kinds(answer: dict, value: str) -> list:
-    """Every kind the answer names, each once, in its order; the value first if the list
-    left it out."""
-    listed = answer.get("break_types")
+def _page_for(answer: dict, url: str) -> dict:
+    """The answer's location entry for the page at *url*, or {} when it gave none."""
+    pages = answer.get("pages")
+    for page in pages if isinstance(pages, list) else []:
+        if (isinstance(page, dict) and isinstance(page.get("url"), str)
+                and _url_key(page["url"]) == _url_key(url)):
+            return page
+    return {}
+
+
+def _claim(answer: dict, field: str):
+    """The answer's object for *field*; a bare value is read as an object without evidence."""
+    claim = answer.get(field)
+    if isinstance(claim, str):
+        return {"value": claim}
+    return claim if isinstance(claim, dict) else None
+
+
+def _listed(claim: dict, value: str, field: str) -> list:
+    """Every kind or material the claim lists, each once, in its order; the value first if
+    the list left it out. 'mixed' and 'unknown' name no kind or material, so they are
+    never listed."""
+    listed = claim.get("all")
     listed = listed if isinstance(listed, list) else []
+    head = [] if value in listed or value in ("mixed", "unknown") else [value]
     kinds = []
-    for kind in (listed if value in listed else [value] + listed):
-        if kind in BREAK_TYPE_VALUES and kind != "unknown" and kind not in kinds:
+    for kind in head + listed:
+        if kind in FIELD_VALUES[field] and kind not in ("mixed", "unknown") \
+                and kind not in kinds:
             kinds.append(kind)
     return kinds
 
@@ -601,38 +769,25 @@ def _note(answer: dict):
     return " ".join(str(note).split())[:300] if note else None
 
 
-def judge_research(responses: list, identity: dict) -> dict:
-    """The researched answer: the model's JSON, kept only if a returned page backs it."""
-    evidence = collect_evidence([block for response in responses
-                                 for block in (response.get("content") or [])])
-    stops = [response.get("stop_reason") for response in responses]
-    out = {"status": "unknown", "break_type": "unknown", "break_types": [], "mixed": False,
-           "source_url": None, "quote": None, "quote_found_in": None,
-           "quote_names_type": None, "location": None, "same_name_elsewhere": [],
-           "reason": None, "model_answer": None,
-           "queries": evidence["queries"], "fetches": evidence["fetches"],
-           "search_result_urls": sorted(set(evidence["search_urls"])),
-           "tool_errors": evidence["errors"], "stop_reasons": stops}
-    if stops and stops[-1] == "refusal":
-        out["reason"] = "the model declined to answer (stop_reason refusal)"
-        return out
-    answer = last_json_object(evidence["text"])
-    if answer is None:
-        out["reason"] = "no JSON answer" + (" (it ran out of output tokens)"
-                                            if stops and stops[-1] == "max_tokens" else "")
-        return out
-    out["model_answer"] = answer
-    elsewhere = answer.get("same_name_elsewhere")
-    if isinstance(elsewhere, list):
-        out["same_name_elsewhere"] = [" ".join(str(p).split()) for p in elsewhere if p][:10]
-    value = answer.get("break_type")
-    if value not in BREAK_TYPE_VALUES:
-        out["reason"] = f"it answered {value!r}, which is not one of the six values"
-        return out
+def _unknown(reason) -> dict:
+    return {"status": "unknown", "value": "unknown", "values": [], "mixed": False,
+            "source_url": None, "quote": None, "quote_found_in": None,
+            "quote_names_value": None, "location": None, "reason": reason}
+
+
+def judge_claim(answer: dict, field: str, evidence: dict, identity: dict) -> dict:
+    """One value of the researched answer, kept only if a returned page backs it."""
+    values = FIELD_VALUES[field]
+    claim = _claim(answer, field)
+    if claim is None:
+        return _unknown(f"the answer has no {field}")
+    value = claim.get("value")
+    if value not in values:
+        return _unknown(f"it answered {value!r}, which is not one of the {len(values)} values")
     if value == "unknown":
-        out["reason"] = "no page it read says" + (": " + _note(answer) if _note(answer) else "")
-        return out
-    url = answer.get("source_url")
+        return _unknown("no page it read says" + (": " + _note(answer) if _note(answer) else ""))
+    out = _unknown(None)
+    url = claim.get("source_url")
     if not (isinstance(url, str) and BREAK_TYPE_URL_RE.match(url.strip())):
         out["reason"] = "no source URL"
         return out
@@ -640,24 +795,57 @@ def judge_research(responses: list, identity: dict) -> dict:
     returned = {_url_key(u) for u in evidence["search_urls"]} | set(evidence["pages"])
     if _url_key(url) not in returned:
         out["source_url"] = url
-        out["reason"] = "the cited URL was not returned by any search or fetch in this request"
+        out["reason"] = "the cited URL was not returned by any search or fetch for this spot"
         return out
-    found_in, problem = find_quote(answer.get("quote"), url, evidence)
+    found_in, problem = find_quote(claim.get("quote"), url, evidence)
     if found_in is None:
         out["source_url"] = url
         out["reason"] = problem
         return out
-    out.update(source_url=url, quote=break_type_quote(answer["quote"]),
+    out.update(source_url=url, quote=break_type_quote(claim["quote"]),
                quote_found_in=found_in,
-               quote_names_type=quote_names_type(answer["quote"], value, identity["name"]),
-               location=check_location(identity, answer))
+               quote_names_value=quote_names_value(claim["quote"], field, value,
+                                                   identity["name"]),
+               location=check_location(identity, _page_for(answer, url)))
     if out["location"]["verdict"] == "wrong place":
         out["reason"] = "the page describes another place: " + "; ".join(
             out["location"]["reasons"])
         return out
-    kinds = _kinds(answer, value)
-    out.update(status="researched", break_type=value, break_types=kinds,
-               mixed=len(kinds) > 1)
+    kinds = _listed(claim, value, field)
+    out.update(status="researched", value=value, values=kinds,
+               mixed=value == "mixed" or len(kinds) > 1)
+    return out
+
+
+def judge_research(responses: list, identity: dict) -> dict:
+    """The researched answer: each value kept only if a returned page backs it, and the
+    sand-bottom flag derived from the bottom."""
+    evidence = collect_evidence([block for response in responses
+                                 for block in (response.get("content") or [])])
+    stops = [response.get("stop_reason") for response in responses]
+    out = {"sand_bottom": "unknown", "same_name_elsewhere": [], "reason": None,
+           "model_answer": None, "follow_up": None,
+           "queries": evidence["queries"], "fetches": evidence["fetches"],
+           "fetched_pages": evidence["fetched"], "failed_fetches": evidence["failed"],
+           "search_result_urls": sorted(set(evidence["search_urls"])),
+           "tool_errors": evidence["errors"], "stop_reasons": stops}
+    answer = None
+    if stops and stops[-1] == "refusal":
+        out["reason"] = "the model declined to answer (stop_reason refusal)"
+    else:
+        answer = last_json_object(evidence["text"])
+        if answer is None:
+            out["reason"] = "no JSON answer" + (" (it ran out of output tokens)"
+                                                if stops and stops[-1] == "max_tokens" else "")
+    if answer is None:
+        out.update({field: _unknown(out["reason"]) for field in FIELDS})
+        return out
+    out["model_answer"] = answer
+    elsewhere = answer.get("same_name_elsewhere")
+    if isinstance(elsewhere, list):
+        out["same_name_elsewhere"] = [" ".join(str(p).split()) for p in elsewhere if p][:10]
+    out.update({field: judge_claim(answer, field, evidence, identity) for field in FIELDS})
+    out["sand_bottom"] = SAND_BOTTOM[out["bottom"]["value"]]
     return out
 
 
@@ -666,9 +854,10 @@ def judge_recall(response: dict) -> dict:
     text = "".join(block.get("text") or "" for block in (response.get("content") or [])
                    if block.get("type") == "text")
     stop = response.get("stop_reason")
-    out = {"source": "model_recall", "break_type": "unknown", "break_types": [],
-           "mixed": False, "confidence": None, "note": None, "reason": None,
+    out = {"source": "model_recall", "sand_bottom": "unknown", "note": None, "reason": None,
            "stop_reason": stop}
+    out.update({field: {"value": "unknown", "values": [], "mixed": False, "confidence": None,
+                        "reason": None} for field in FIELDS})
     if stop == "refusal":
         out["reason"] = "the model declined to answer (stop_reason refusal)"
         return out
@@ -676,23 +865,39 @@ def judge_recall(response: dict) -> dict:
     if answer is None:
         out["reason"] = "no JSON answer"
         return out
-    value = answer.get("break_type")
-    if value not in BREAK_TYPE_VALUES:
-        out["reason"] = f"it answered {value!r}, which is not one of the six values"
-        return out
-    kinds = _kinds(answer, value) if value != "unknown" else []
-    confidence = answer.get("confidence")
-    out.update(break_type=value, break_types=kinds, mixed=len(kinds) > 1,
-               confidence=confidence if confidence in ("high", "medium", "low") else None,
-               note=_note(answer))
+    for field in FIELDS:
+        claim, part = _claim(answer, field), out[field]
+        value = (claim or {}).get("value")
+        if claim is None:
+            part["reason"] = f"the answer has no {field}"
+        elif value not in FIELD_VALUES[field]:
+            part["reason"] = (f"it answered {value!r}, which is not one of the "
+                              f"{len(FIELD_VALUES[field])} values")
+        else:
+            kinds = _listed(claim, value, field) if value != "unknown" else []
+            confidence = claim.get("confidence")
+            part.update(value=value, values=kinds, mixed=value == "mixed" or len(kinds) > 1,
+                        confidence=confidence if confidence in ("high", "medium", "low")
+                        else None)
+    out["sand_bottom"] = SAND_BOTTOM[out["bottom"]["value"]]
+    out["note"] = _note(answer)
     return out
 
 
 def agreement(researched: str, recalled: str) -> str:
-    """'yes' or 'no' when both answers name a type, else 'n/a'."""
+    """'yes' or 'no' when both answers give a value, else 'n/a'."""
     if researched == "unknown" or recalled == "unknown":
         return "n/a"
     return "yes" if researched == recalled else "no"
+
+
+def agreements(research: dict, recall: dict) -> dict:
+    """Whether the researched and memory answers agree: on each value, and on the
+    sand-bottom flag a close-out ceiling would read."""
+    out = {field: agreement(research[field]["value"], recall[field]["value"])
+           for field in FIELDS}
+    out["sand_bottom"] = agreement(research["sand_bottom"], recall["sand_bottom"])
+    return out
 
 
 # --- calling the API ----------------------------------------------------------------
@@ -777,6 +982,7 @@ def new_record(entry: tuple, spot: dict) -> dict:
         "name": entry[0], "region": entry[1], "asked_as": entry[2],
         "control_answer": entry[3], "lat": spot["lat"], "lng": spot["lng"],
         # Read for the report. Never sent: the requests are built from spot_identity.
+        # The roster has no bottom, so there is no current bottom to show.
         "current": {"break_type": spot.get("break_type"),
                     "break_type_source": spot.get("break_type_source")},
         "research": None, "model_recall": None,
@@ -785,31 +991,81 @@ def new_record(entry: tuple, spot: dict) -> dict:
     }
 
 
+def _run_turn(client, request: dict, messages: list, budget: Budget, sleep,
+              spent: dict) -> tuple:
+    """One assistant turn: the request and its resumed pauses. Returns (its responses, the
+    messages its last request was sent with, its last message as the client returned it).
+    Each response is charged as it arrives, to *budget* and to spent['usage'], so what an
+    interrupted turn cost is still counted."""
+    responses = []
+    for _ in range(MAX_PAUSE_CONTINUATIONS + 1):
+        budget.require_room()
+        message = _create(client, dict(request, messages=messages), sleep)
+        data = _as_dict(message)
+        responses.append(data)
+        used = usage_of(data)
+        spent["usage"] = add_usage(spent["usage"], used)
+        budget.charge(cost_usd(used))
+        if data.get("stop_reason") != "pause_turn":
+            break
+        messages = messages + [{"role": "assistant", "content": _replay_content(message)}]
+    return responses, messages, message
+
+
+def follow_up_needed(research: dict):
+    """{'failed', 'needed'} when the conversation should go on once, else None: a fetch
+    failed, the turn ended normally, and a value is still unknown."""
+    needed = [field for field in FIELDS if research[field]["status"] != "researched"]
+    stops = research["stop_reasons"]
+    if not (research["failed_fetches"] and needed and stops and stops[-1] == "end_turn"):
+        return None
+    return {"failed": research["failed_fetches"], "needed": needed}
+
+
+def merge_follow_up(first: dict, combined: dict, follow: dict, more: list) -> dict:
+    """The answer after the follow-up. It only fills values the first turn left unknown: a
+    value the first turn researched stays as it was, and each other value is the one the
+    whole conversation's evidence backs."""
+    merged = dict(combined)
+    for field in FIELDS:
+        if first[field]["status"] == "researched":
+            merged[field] = first[field]
+    merged["sand_bottom"] = SAND_BOTTOM[merged["bottom"]["value"]]
+    calls = collect_evidence([block for response in more
+                              for block in (response.get("content") or [])])
+    merged["follow_up"] = {
+        "after": follow["failed"], "needed": follow["needed"],
+        "searches": len(calls["queries"]), "fetches": len(calls["fetches"]),
+        "filled": [field for field in follow["needed"]
+                   if merged[field]["status"] == "researched"],
+    }
+    return merged
+
+
 def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
                   sleep) -> tuple:
     """(record, the exception that stopped it or None). Both answers for one spot."""
     identity = spot_identity(spot)
     record = new_record(entry, spot)
+    spent = {"usage": zero_usage()}
     try:
         request = research_request(identity, effort)
-        messages = list(request["messages"])
-        responses, usage = [], zero_usage()
         try:
-            for _ in range(MAX_PAUSE_CONTINUATIONS + 1):
-                budget.require_room()
-                message = _create(client, dict(request, messages=messages), sleep)
-                data = _as_dict(message)
-                responses.append(data)
-                used = usage_of(data)
-                usage = add_usage(usage, used)
-                budget.charge(cost_usd(used))
-                if data.get("stop_reason") != "pause_turn":
-                    break
-                messages = messages + [{"role": "assistant",
-                                        "content": _replay_content(message)}]
+            responses, messages, last = _run_turn(client, request, list(request["messages"]),
+                                                  budget, sleep, spent)
+            record["research"] = judge_research(responses, identity)
+            follow = follow_up_needed(record["research"])
+            if follow is not None:
+                messages = messages + [
+                    {"role": "assistant", "content": _replay_content(last)},
+                    {"role": "user",
+                     "content": follow_up_message(follow["failed"], follow["needed"])}]
+                more, _, _ = _run_turn(client, request, messages, budget, sleep, spent)
+                record["research"] = merge_follow_up(
+                    record["research"], judge_research(responses + more, identity), follow,
+                    more)
         finally:
-            record["research_usage"] = _priced(usage)
-        record["research"] = judge_research(responses, identity)
+            record["research_usage"] = _priced(spent["usage"])
 
         budget.require_room()
         data = _as_dict(_create(client, recall_request(identity, effort), sleep))
@@ -817,8 +1073,7 @@ def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
         budget.charge(cost_usd(used))
         record["recall_usage"] = _priced(used)
         record["model_recall"] = judge_recall(data)
-        record["agree"] = agreement(record["research"]["break_type"],
-                                    record["model_recall"]["break_type"])
+        record["agree"] = agreements(record["research"], record["model_recall"])
         record["done"] = True
         return record, None
     except Exception as exc:
@@ -872,8 +1127,12 @@ def _progress_line(record: dict, budget: Budget) -> str:
     research, recall = record.get("research"), record.get("model_recall")
     usage = record.get("research_usage") or zero_usage()
     parts = [f"{record['asked_as']}:"]
-    parts.append(f"researched {research['break_type']}" if research else "no research")
-    parts.append(f"memory {recall['break_type']}" if recall else "no memory answer")
+    parts.append(f"researched {research['break_type']['value']} on {research['bottom']['value']}"
+                 f" (sand bottom {research['sand_bottom']})" if research else "no research")
+    parts.append(f"memory {recall['break_type']['value']} on {recall['bottom']['value']}"
+                 if recall else "no memory answer")
+    if research and research.get("follow_up"):
+        parts.append("followed up a failed fetch")
     parts.append(f"{usage['web_search_requests']} searches, "
                  f"{usage['web_fetch_requests']} fetches")
     parts.append(f"${record['cost_usd']:.4f}")
@@ -892,8 +1151,9 @@ def _now() -> str:
 def new_results(effort: str, budget_usd: float) -> dict:
     return {
         "schema": SCHEMA_VERSION,
-        "what": ("Break-type research pilot. A results file only: nothing in it has been "
-                 "applied to the roster or the database."),
+        "what": ("Break-type and bottom research pilot. A results file only: nothing in it "
+                 "has been applied to the roster or the database, and the spots table has no "
+                 "column for the bottom."),
         "settings": run_settings(effort),
         "prices_usd": dict(PRICES),
         "budget_usd": budget_usd,
@@ -939,23 +1199,40 @@ def _cell(text) -> str:
     return " ".join(str(text).replace("|", "/").split())
 
 
-def _researched_cell(research) -> str:
+def _row(*cells) -> str:
+    return "| " + " | ".join(_cell(c) for c in cells) + " |"
+
+
+def _value_cell(part: dict) -> str:
+    """A value with the kinds or materials it lists: 'reef (mixed: reef and beach)',
+    'mixed: sand and rock'."""
+    if part["value"] == "mixed":
+        return "mixed: " + " and ".join(part["values"]) if part["values"] else "mixed"
+    if part["mixed"]:
+        return part["value"] + " (mixed: " + " and ".join(part["values"]) + ")"
+    return part["value"]
+
+
+def _researched_cell(research, field: str) -> str:
     if research is None:
         return "not run"
-    if research["status"] == "researched":
-        cell = research["break_type"]
-        if research["mixed"]:
-            cell += " (mixed: " + " and ".join(research["break_types"]) + ")"
-        if research["quote_names_type"] is False:
-            cell += " · the quote does not name the type"
-        return cell
-    return "unknown: " + (research.get("reason") or "")
+    claim = research[field]
+    if claim["status"] != "researched":
+        return "unknown: " + (claim.get("reason") or "")
+    cell = _value_cell(claim)
+    if claim["quote_names_value"] is False:
+        cell += " · the quote does not name it"
+    return cell
 
 
-def _location_cell(research) -> str:
+def _url_cell(research, field: str) -> str:
+    return ((research or {}).get(field) or {}).get("source_url") or "—"
+
+
+def _location_cell(research, field: str, elsewhere: bool) -> str:
     if research is None:
         return "—"
-    location = research.get("location")
+    location = research[field].get("location")
     if location is None:
         cell = "—"
     elif location["verdict"] == "ok":
@@ -965,21 +1242,50 @@ def _location_cell(research) -> str:
         cell += ")"
     else:
         cell = location["verdict"] + ": " + "; ".join(location["reasons"])
-    if research.get("same_name_elsewhere"):
+    if elsewhere and research.get("same_name_elsewhere"):
         cell += " · name also used: " + ", ".join(research["same_name_elsewhere"])
     return cell
 
 
-def _memory_cell(recall) -> str:
+def _memory_cell(recall, field: str) -> str:
     if recall is None:
         return "not run"
-    cell = recall["break_type"]
-    if recall["mixed"]:
-        cell += " (mixed: " + " and ".join(recall["break_types"]) + ")"
-    if recall["confidence"]:
-        cell += f", {recall['confidence']} confidence"
-    if recall["reason"]:
-        cell += f" ({recall['reason']})"
+    part = recall[field]
+    cell = _value_cell(part)
+    if part["confidence"]:
+        cell += f", {part['confidence']} confidence"
+    reason = part["reason"] or recall["reason"]
+    if reason:
+        cell += f" ({reason})"
+    return cell
+
+
+def _fetched_cell(research) -> str:
+    """The pages the fetches brought in, and roughly how many tokens of text."""
+    pages = (research or {}).get("fetched_pages") or []
+    if not pages:
+        return "none"
+    chars = sum(page["chars"] for page in pages if page["kind"] == "text")
+    cell = (f"{len(pages)} page" + ("s" if len(pages) != 1 else "")
+            + f", about {chars // CHARS_PER_TOKEN:,} tokens")
+    others = [page["kind"] for page in pages if page["kind"] != "text"]
+    if others:
+        cell += " + " + ", ".join(others)
+    return cell
+
+
+def _follow_up_cell(research) -> str:
+    follow = (research or {}).get("follow_up")
+    if not follow:
+        return "—"
+    errors = ", ".join(sorted({fetch["error"] for fetch in follow["after"]}))
+    cell = (f"after {errors}: {follow['searches']} search"
+            + ("es" if follow["searches"] != 1 else "")
+            + f", {follow['fetches']} fetch" + ("es" if follow["fetches"] != 1 else ""))
+    cell += ("; filled " + " and ".join(follow["filled"]) if follow["filled"]
+             else "; filled nothing")
+    if follow["searches"] + follow["fetches"] > 1:
+        cell += " · more than the one call allowed"
     return cell
 
 
@@ -996,44 +1302,52 @@ def estimate(costs: list) -> dict:
             "full_at_max": max(costs) * FULL_ROSTER_SPOTS}
 
 
+def _tally(flags: list) -> str:
+    return ", ".join(f"{flags.count(flag)} {flag}" for flag in ("yes", "no", "unknown"))
+
+
 def render_report(results: dict) -> str:
-    lines = ["| Spot | Current value | Researched value | Source URL | Location check "
-             "| Memory answer | Agree |",
-             "|---|---|---|---|---|---|---|"]
-    costs = ["| Spot | Searches | Fetches | Input tokens | Output tokens | Research | Memory "
-             "| Total |",
-             "|---|---|---|---|---|---|---|---|"]
+    kinds = [_row("Spot", "Current value", "Researched break type", "Source URL",
+                  "Location check", "Memory answer", "Agree"), "|---|---|---|---|---|---|---|"]
+    bottoms = [_row("Spot", "Researched bottom", "Source URL", "Location check",
+                    "Memory answer", "Agree", "Sand bottom: researched", "Sand bottom: memory",
+                    "Sand bottom: agree"), "|---|---|---|---|---|---|---|---|---|"]
+    costs = [_row("Spot", "Searches", "Fetches", "Fetched text", "Follow-up", "Input tokens",
+                  "Output tokens", "Research", "Memory", "Total"),
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for entry in PILOT_SPOTS:
         record = results["spots"].get(spot_key(entry))
         label = entry[2] + (f" (control: {entry[3]})" if entry[3] else "")
         if record is None:
-            lines.append(f"| {_cell(label)} | — | not run | — | — | — | — |")
+            kinds.append(_row(label, "—", "not run", "—", "—", "—", "—"))
+            bottoms.append(_row(label, "not run", "—", "—", "—", "—", "—", "—", "—"))
             continue
         research, recall = record.get("research"), record.get("model_recall")
-        lines.append("| " + " | ".join(_cell(c) for c in (
-            label,
-            record["current"]["break_type"] or "(none)",
-            _researched_cell(research),
-            (research or {}).get("source_url") or "—",
-            _location_cell(research),
-            _memory_cell(recall),
-            record.get("agree") or "—",
-        )) + " |")
+        agree = record.get("agree") or {}
+        kinds.append(_row(label, record["current"]["break_type"] or "(none)",
+                          _researched_cell(research, "break_type"),
+                          _url_cell(research, "break_type"),
+                          _location_cell(research, "break_type", elsewhere=True),
+                          _memory_cell(recall, "break_type"), agree.get("break_type") or "—"))
+        bottoms.append(_row(label, _researched_cell(research, "bottom"),
+                            _url_cell(research, "bottom"),
+                            _location_cell(research, "bottom", elsewhere=False),
+                            _memory_cell(recall, "bottom"), agree.get("bottom") or "—",
+                            (research or {}).get("sand_bottom") or "—",
+                            (recall or {}).get("sand_bottom") or "—",
+                            agree.get("sand_bottom") or "—"))
         r_use = record.get("research_usage") or _priced(zero_usage())
         m_use = record.get("recall_usage") or _priced(zero_usage())
-        costs.append("| " + " | ".join(_cell(c) for c in (
-            label,
-            r_use["web_search_requests"],
-            r_use["web_fetch_requests"],
+        costs.append(_row(
+            label, r_use["web_search_requests"], r_use["web_fetch_requests"],
+            _fetched_cell(research), _follow_up_cell(research),
             f"{input_tokens_all(r_use) + input_tokens_all(m_use):,}",
             f"{r_use['output_tokens'] + m_use['output_tokens']:,}",
-            f"${r_use['cost_usd']:.4f}",
-            f"${m_use['cost_usd']:.4f}",
-            f"${record['cost_usd']:.4f}" + ("" if record.get("done")
-                                           else " (unfinished: " + (record.get("error") or "")
-                                           + ")"),
-        )) + " |")
-    out = lines + [""] + costs + [""]
+            f"${r_use['cost_usd']:.4f}", f"${m_use['cost_usd']:.4f}",
+            f"${record['cost_usd']:.4f}" + ("" if record.get("done") else
+                                           " (unfinished: " + (record.get("error") or "") + ")")))
+    out = (["Break type:", ""] + kinds + ["", "Bottom (in this results file only):", ""]
+           + bottoms + ["", "Cost:", ""] + costs + [""])
     out.append(f"Spent ${results['spent_usd']:.4f} of the ${results['budget_usd']:.2f} budget, "
                "at list prices.")
     done = per_spot_costs(results)
@@ -1045,6 +1359,20 @@ def render_report(results: dict) -> str:
         out.append(f"The full {FULL_ROSTER_SPOTS} spots at the pilot's mean: "
                    f"${figures['full_at_mean']:.2f}; at its dearest spot's cost: "
                    f"${figures['full_at_max']:.2f}.")
+    finished = [record for record in results["spots"].values() if record.get("done")]
+    if finished:
+        out.append("Sand bottom, researched: "
+                   + _tally([r["research"]["sand_bottom"] for r in finished])
+                   + "; from memory: "
+                   + _tally([r["model_recall"]["sand_bottom"] for r in finished]) + ".")
+        both = [r["agree"]["sand_bottom"] for r in finished if r["agree"]["sand_bottom"] != "n/a"]
+        out.append(f"Where both answers say yes or no, they agree on {both.count('yes')} "
+                   f"of {len(both)}.")
+        followed = [r for r in finished if r["research"].get("follow_up")]
+        if followed:
+            filled = sum(1 for r in followed if r["research"]["follow_up"]["filled"])
+            out.append(f"Followed up a failed fetch at {len(followed)} of {len(finished)} "
+                       f"spots; {filled} of them gained a value.")
     stops = [run_["stopped"] for run_ in results.get("runs", []) if run_.get("stopped")]
     if stops:
         out.append("Stopped early: " + stops[-1])
@@ -1054,10 +1382,16 @@ def render_report(results: dict) -> str:
 def render_dry_run(resolved: list, effort: str) -> str:
     """Exactly what the model is sent, without calling it."""
     sample = research_request(spot_identity(resolved[0][1]), effort)
+    example = follow_up_message(
+        [{"url": "https://www.example.com/breaks/a-spot", "error": "url_not_in_prior_context"}],
+        ["bottom"])
     parts = [f"Model {MODEL}, effort {effort}. Every request is one of these two.", "",
              "RESEARCHED ANSWER: system prompt (the same for every spot)", "",
              RESEARCH_SYSTEM,
              "tools:", json.dumps(sample["tools"], indent=2), "",
+             "IF A FETCH FAILED AND A VALUE IS STILL UNKNOWN at the end of that turn, the "
+             "conversation goes on once, with a message like this one naming the real URLs "
+             "and reasons:", "", example, "",
              "MEMORY ANSWER: system prompt (the same for every spot; no tools)", "",
              RECALL_SYSTEM,
              "THE ONLY TEXT ABOUT EACH SPOT (the user message, the same in both requests):"]
@@ -1092,8 +1426,8 @@ def _make_client():
 def _parse_args(argv):
     parser = argparse.ArgumentParser(
         prog="python3 -m pipeline.research_break_type",
-        description="Research the pilot spots' break types into a results file. Reads the "
-                    "roster; never writes it or the database.")
+        description="Research the pilot spots' break types and bottoms into a results file. "
+                    "Reads the roster; never writes it or the database.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT,
                         help="the results file (default: %(default)s)")
     parser.add_argument("--roster", type=Path, default=DEFAULT_ENRICHED_OUTPUT,
@@ -1123,7 +1457,11 @@ def main(argv=None, client=None, sleep=time.sleep) -> int:
     if args.report:
         if not args.output.exists():
             raise SystemExit(f"no results file at {args.output}")
-        print(render_report(json.loads(args.output.read_text(encoding="utf-8"))))
+        results = json.loads(args.output.read_text(encoding="utf-8"))
+        if results.get("schema") != SCHEMA_VERSION:
+            raise SystemExit(f"{args.output} has results schema {results.get('schema')}; this "
+                             f"version of the script reports schema {SCHEMA_VERSION} only")
+        print(render_report(results))
         return 0
     resolved = resolve_pilot(load_roster(args.roster))
     if args.dry_run:
