@@ -165,8 +165,8 @@ _COMMENT_TEMPLATE = (
 
     "THESE ARE SEASONAL AND THAT IS NOT A CAVEAT, IT IS THE MAIN LIMITATION. Every factor "
     "was measured over a single {span}-day window, {t0} to {t1}. California's swell "
-    "climate changes in winter — the measurement itself found mtr's median period at 13.79 s "
-    "against sgx's 7.98 s in the same fortnight — and a single constant that absorbs "
+    "climate changes in winter — an earlier two-week measurement found mtr's median period "
+    "at 13.79 s against sgx's 7.98 s over the same two weeks — and a single constant that absorbs "
     "period-dependent refraction will misfit when the period regime moves. These factors are "
     "UNVALIDATED ACROSS A SEASON CHANGE. Nothing here has been tested against a winter "
     "swell.\n\n"

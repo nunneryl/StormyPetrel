@@ -1,9 +1,9 @@
 /**
  * Every published height says what it is, and a model estimate is never called anything else.
  *
- * WHAT WENT WRONG. 516 of the 646 rated spots publish an uncalibrated model estimate — boosted
- * for long-period swell, about 1.5 times MOP's at the California spots where the two were
- * compared — and the 130 calibrated spots publish a height scaled to CDIP's. Both reached the page
+ * WHAT WENT WRONG. 505 of the 646 rated spots publish an uncalibrated model estimate — boosted
+ * for long-period swell, about 1.6 times MOP's at the California spots where the two were
+ * compared — and the 141 calibrated spots publish a height scaled to CDIP's. Both reached the page
  * as a bare "4.0ft" under one "Swell height" heading, and formatting.ts told the next reader they
  * were all CDIP MOP significant wave height.
  *
@@ -74,8 +74,9 @@ for (const basis of ['calibrated', 'cdip', 'model', null]) {
 // --------------------------------------------------------------------------- //
 // 2 — the named cases                                                          //
 // --------------------------------------------------------------------------- //
-// point-arena: factor 0.9313, so 3.1 / 0.9313 = 3.3287 -> 3.33, LARGER than the raw 3.1.
-check('point-arena (factor 0.9313) is calibrated although its published height is the larger',
+// point-arena: factor 0.9313 in the 2026-09-01 file, so 3.1 / 0.9313 = 3.3287 -> 3.33, LARGER than
+// the raw 3.1. (Its factor in the 2026-10-06 file, 0.812, is further below 1 still.)
+check('point-arena (factor 0.9313, 2026-09-01 file) is calibrated although its published height is the larger',
   heightBasis({ face_ft: 3.33, face_ft_raw: 3.1, swell_source: 'nwps_height_ww3_dir' }) === 'calibrated');
 check('...and its spot-page label says so',
   HEIGHT_BASIS_LABEL[heightBasis({ face_ft: 3.33, face_ft_raw: 3.1, swell_source: 'nwps_height_ww3_dir' })!]
@@ -226,7 +227,7 @@ const literal = files.flatMap((rel) => tally(rel, read(rel)).literalBasis);
 check('no marker or label is fed a hard-coded basis', literal.length === 0, literal.join(', '));
 
 // The rows those surfaces read must carry the two columns. Missing either, every row would come
-// back a model estimate: safe, but wrong at the 130 calibrated spots, and silent.
+// back a model estimate: safe, but wrong at the 141 calibrated spots, and silent.
 const SELECTS: { file: string; fn: string }[] = [
   { file: 'lib/queries.ts', fn: 'fetchLatestForecastPerSpot' },
   { file: 'app/spot/[slug]/page.tsx', fn: 'loadForecasts' },

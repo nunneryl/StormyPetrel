@@ -61,9 +61,9 @@ WHAT IS EXCLUDED, AND HOW STRUCTURALLY.
   indistinguishable from a deliberate omission, and would assert "this spot needs no
   correction" where the truth is "this spot was never measured".
 
-SEASONALITY. See the data file's own header. These factors were measured over 14 summer
-days and are not validated across a season change; the run summary warns past
-FACE_FACTOR_MAX_AGE_DAYS.
+SEASONALITY. See the data file's own header. Each file's factors come from a single
+measurement window (its measurement.window) and are not validated across a season change;
+the run summary warns past FACE_FACTOR_MAX_AGE_DAYS.
 
 THE PUBLISHED RANGE, and why p25/p75 rather than p10/p90. The same measurement that gives
 the median gives the scatter around it. p10/p90 is roughly -18% / +23% and rounds a 4 ft
@@ -374,13 +374,18 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
     now = now or datetime.date.today()
     stale = _stalest(factors, now)
     if stale and stale[0] > FACE_FACTOR_MAX_AGE_DAYS:
+        # The window comes from the stale record itself: this used to say "14 SUMMER days",
+        # which stopped being true when the 28-day 2026-09-08..10-06 file replaced the 14-day one.
+        window = factors[stale[1]].get("window") or {}
+        measured = (f"over {window['t0']} to {window['t1']}"
+                    if window.get("t0") and window.get("t1") else "over a single window")
         log.warning(
             "face factors are %d days old (oldest: %s), past the %d-day limit. They were "
-            "measured over 14 SUMMER days and are NOT validated across a season change — a "
-            "factor absorbing period-dependent refraction will misfit when the period "
-            "regime moves. Re-measure: %s (file: %s). Treat the first winter re-measurement "
-            "as a TEST of whether one constant per spot holds at all, not as maintenance.",
-            stale[0], stale[1], FACE_FACTOR_MAX_AGE_DAYS, REGEN_COMMAND,
+            "measured %s and are NOT validated across a season change — a factor absorbing "
+            "period-dependent refraction will misfit when the period regime moves. "
+            "Re-measure: %s (file: %s). Treat the first winter re-measurement as a TEST of "
+            "whether one constant per spot holds at all, not as maintenance.",
+            stale[0], stale[1], FACE_FACTOR_MAX_AGE_DAYS, measured, REGEN_COMMAND,
             SPOT_FACE_FACTORS_FILE,
         )
 

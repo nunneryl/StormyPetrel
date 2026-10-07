@@ -50,12 +50,12 @@ export function fmtFt(v: number | null | undefined): string {
  * But the rows are NOT all on one scale, and this string does not say which one it is on —
  * lib/heightBasis.ts does, and every surface that prints this string puts that label beside it:
  *
- *   calibrated  130 California spots: the model's height divided by the spot's measured factor,
+ *   calibrated  141 California spots: the model's height divided by the spot's measured factor,
  *               so its typical value matches CDIP MOP significant wave height at the 10-15 m
  *               contour, which CDIP states is generally outside the surf zone.
  *   cdip        a MOP-fed hour: MOP's own height, on that same scale.
  *   model       every other spot: the wave models' height with the long-period boost and no
- *               correction, which can read well above MOP's — about 1.5 times, at the
+ *               correction, which can read well above MOP's — about 1.6 times, at the
  *               California spots where the two were compared.
  *
  * Only the DISPLAY changed: face_ft / face_lo_ft / face_hi_ft keep their names in the database,

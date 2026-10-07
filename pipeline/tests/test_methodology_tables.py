@@ -14,11 +14,14 @@ The surface-conditions table mirrors frontend code and is held in frontend/lib/m
 NOT PINNED, deliberately: the 84,774 spot-hour figures (a measurement, dated in the post), the
 calibration drift figure (a measurement taken outside this repo), the 3-star shares at calibrated
 and uncalibrated spots before and after the rating stopped using the calibrated height (0.4%,
-9.1% and 10.3%, measured on the forecast published 4 October 2026, dated in the post), and that
-MOP's nowcast ends before the current hour (a property of CDIP's feed, seen on live rows). None
-is a number the code owns. What the code does own about the last two — that every spot's stars
-come from the same model height whatever its calibration, and that MOP is read from its nowcast
-— is pinned below.
+9.1% and 10.3%, measured on the forecast published 4 October 2026, dated in the post), the
+earlier calibration's 130 spots and the "all but two" whose calibrated height was the smaller
+(item 6 quotes them as history: that file was measured 18 August to 1 September 2026 and has
+been replaced, so nothing in the repo can check them), and that MOP's nowcast ends before the
+current hour (a property of CDIP's feed, seen on live rows). None is a number the code owns. What
+the code does own about these — that every spot's stars come from the same model height whatever
+its calibration, that item 6 describes a calibration older than the current file, and that MOP is
+read from its nowcast — is pinned below.
 
 NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. Every expected number is read out of the post;
 the code supplies only the actual side. Where a claim is prose, the test finds it by its wording
@@ -417,12 +420,16 @@ def test_the_calibration_count_and_window_are_the_factor_files():
     slug = lambda name: re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")  # noqa: E731
     by_slug = {slug(name): wfo for name, wfo in offices.items()}
     assert {by_slug.get(k) for k in data["factors"]} <= _CALIFORNIA_OFFICES
-    m = _says(r"over two weeks, (\d+) (\w+) to (\d+) (\w+) (\d{4})", "the calibration window")
-    t0 = datetime.datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(5)}", "%d %B %Y").date()
-    t1 = datetime.datetime.strptime(f"{m.group(3)} {m.group(4)} {m.group(5)}", "%d %B %Y").date()
+    m = _says(r"over (\w+) weeks, (\d+) (\w+) to (\d+) (\w+) (\d{4})", "the calibration window")
+    t0 = datetime.datetime.strptime(f"{m.group(2)} {m.group(3)} {m.group(6)}", "%d %B %Y").date()
+    t1 = datetime.datetime.strptime(f"{m.group(4)} {m.group(5)} {m.group(6)}", "%d %B %Y").date()
     window = data["measurement"]["window"]
     assert (t0.isoformat(), t1.isoformat()) == (window["t0"], window["t1"]), window
+    # Every length the post gives the current window — the table's, this section's and the one in
+    # "what we're still working on" — is the file's. (Item 4's "earlier two-week windows" is plural
+    # and describes older files, so the singular pattern leaves it alone.)
     weeks = {_WORDS[w] for w in _every(r"over (\w+) weeks", "how long the calibration was measured")}
+    weeks |= {_WORDS[w] for w in _every(r"single (\w+)-week window\b", "the window each factor comes from")}
     assert {(t1 - t0).days} == {7 * w for w in weeks}, weeks
 
 
@@ -453,7 +460,9 @@ def test_only_mops_own_hours_skip_the_period_boost():
 
 
 def test_calibrated_spots_are_divided_and_everything_else_is_left_as_the_model_made_it():
-    _says(r"Outside the 130 calibrated California spots, heights aren't corrected, and that includes all the "
+    # The calibrated count is held to the factor file by
+    # test_every_mop_and_calibrated_count_in_the_post_is_the_datas.
+    _says(r"Outside the \d+ calibrated California spots, heights aren't corrected, and that includes all the "
           r"hours you can see at the 48 MOP spots\.", "which heights aren't corrected")
     from pipeline.forecast import face_correction as F
     spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
@@ -502,17 +511,26 @@ def test_every_spot_is_rated_on_the_model_height_whatever_its_calibration():
     _says(r"and now divide the height we show by each spot's typical ratio\. The star rating isn't "
           r"divided: it comes from the model's height, the same input every other spot is rated on\.",
           "that the calibration divides the height shown and not the rating")
-    m = _says(r"We used to work out stars at the (\d+) calibrated California spots from the calibrated "
-              r"height, which is smaller than the uncalibrated one at all but (\w+) of them",
-              "why calibrated spots used to rate lower")
+    then = _says(r"We used to work out stars at the calibrated spots from the calibrated height\. The "
+                 r"calibration in use then covered \d+ California spots, measured from (\d+) (\w+) to (\d+) (\w+) "
+                 r"(\d{4}), and at all but \w+ of them that height was smaller than the uncalibrated one",
+                 "why calibrated spots used to rate lower, dated to the calibration of the time")
+    shares = _says(r"In the forecast published on (\d+) (\w+) (\d{4}), " + _N + r"% of those spots' daylight "
+                   r"hours rated 3 stars or more, against " + _N + r"% at uncalibrated spots; rated on the "
+                   r"model's height instead, they came to " + _N + r"%\.",
+                   "the 3-star shares, dated to the forecast they were measured on")
     _says(r"Now the calibration corrects only the swell height we show, and the rating uses the same "
           r"input at every spot", "what we changed")
-    n, but = int(m.group(1)), _WORDS[m.group(2)]
-    factors = [rec["factor"] for rec in _factors()["factors"].values()]
-    assert len(factors) == n
-    # The calibrated height is the raw one DIVIDED by the factor, so it is the smaller one
-    # exactly where the factor is above 1 — which is why rating on it rated those spots lower.
-    assert sum(f > 1.0 for f in factors) == n - but, sorted(f for f in factors if f <= 1.0)
+    # Item 6's numbers describe an EARLIER factor file, so they must read as history, never as the
+    # current calibration: its window ended before the current file's began, and the forecast the
+    # shares were measured on was published before the current file was generated. (The count
+    # and the "all but N" are that file's, and that file is gone; see the module docstring.)
+    _date = lambda d, mon, y: datetime.datetime.strptime(f"{d} {mon} {y}", "%d %B %Y").date()  # noqa: E731
+    measurement = _factors()["measurement"]
+    assert _date(then.group(3), then.group(4), then.group(5)) < \
+        datetime.date.fromisoformat(measurement["window"]["t0"]), (then.groups(), measurement["window"])
+    assert _date(*shares.group(1, 2, 3)) < \
+        datetime.date.fromisoformat(measurement["generated_at"][:10]), (shares.groups(), measurement)
     # And the code. Expected values are read off the post's size table: with every quality
     # score at 1 the rating is the size score, and 3.0 is already a whole star. The hour carries
     # the 3.0 stars the producer gives 4 ft; rating the 2 ft shown instead would give 2.0.
