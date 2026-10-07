@@ -33,6 +33,8 @@ import sys
 from pathlib import Path
 
 from .config import (
+    BREAK_TYPE_URL_RE,
+    BREAK_TYPE_VALUES,
     DEFAULT_ENRICHED_OUTPUT,
     SPOT_VERIFICATION_FILE,
     SPOT_VERIFY_BATCH_SIZE,
@@ -40,17 +42,28 @@ from .config import (
     SPOT_VERIFY_MAX_RETRIES,
     SPOT_VERIFY_MODEL,
     SPOT_VERIFY_RETRY_BACKOFF_SECONDS,
+    break_type_fields,
+    break_type_may_overwrite,
+    break_type_quote,
+    break_type_source_rank,
     tide_source_may_overwrite,
     tide_source_rank,
 )
 
 log = logging.getLogger("pipeline.verify_spots")
 
-# This pass hands the model a real web_search tool (see the tools list at :406,
-# passed to the API at :416) and its prompt directs it to search surf-forecast.com
+# This pass hands the model a real web_search tool (the tools list in _verify_batch,
+# passed to the API there) and its prompt directs it to search surf-forecast.com
 # before answering. A source is therefore genuinely consulted for THIS break,
 # which is what 'researched' means in migration 018's vocabulary.
 _TIDE_SOURCE = "researched"
+
+# break_type is held to a stricter rule than the tide, because the prompt tells the
+# model NOT to search for it ("details you can reasonably infer"). A break type is
+# 'researched' only when the record cites the page that names it; without that it
+# is the model's own answer, and migration 020 calls that 'model_recall'.
+_BREAK_TYPE_CITED = "researched"
+_BREAK_TYPE_UNCITED = "model_recall"
 
 
 # Long, stable system prompt — designed to (a) elicit consistent JSON,
@@ -138,10 +151,22 @@ For each object:
                           point breaks and reef passes it can be
                           significantly off-axis.
   break_type            — string. One of: "beach", "reef", "point",
-                          "jetty", "rivermouth". Pick the dominant type;
-                          if the spot is mixed (e.g. beach with a reef
-                          section), pick the one most surfers associate
-                          with the name.
+                          "jetty", "rivermouth", "unknown". Pick the
+                          dominant type; if the spot is mixed (e.g. beach
+                          with a reef section), pick the one most surfers
+                          associate with the name. Return "unknown" when
+                          you cannot name the type of this specific break.
+  break_type_source_url — string or null. The URL of a page you actually
+                          read in this conversation that names this
+                          break's type — for example its surf-forecast.com
+                          page saying it "is an exposed reef break". null
+                          when no page you read names it; then break_type
+                          is your own answer, which is fine, and the null
+                          says so. Never cite a page you did not read.
+  break_type_evidence   — string or null. The words on that page that name
+                          the type, quoted exactly, at most 300
+                          characters. null when break_type_source_url is
+                          null.
   tide_preference       — string. One of: "low", "low_mid", "mid",
                           "mid_high", "high", "all", "unknown".
                           The tide stage at which the spot works best.
@@ -457,7 +482,7 @@ def _verify_batch(client, spots: list[dict]) -> tuple[list[dict], _UsageTotal]:
 
 
 _VALID_INVALID_REASONS = {"surf_shop", "river", "lake", "duplicate", "non_surfable", "unknown"}
-_VALID_BREAK_TYPES = {"beach", "reef", "point", "jetty", "rivermouth"}
+_VALID_BREAK_TYPES = set(BREAK_TYPE_VALUES)   # migration 020's list, 'unknown' included
 _VALID_TIDE_PREFS = {"low", "low_mid", "mid", "mid_high", "high", "all", "unknown"}
 _VALID_CROWD = {"heavy", "moderate", "light", "empty"}
 _VALID_CONFIDENCE = {"high", "medium", "low"}
@@ -490,6 +515,16 @@ def _normalize_record(entry: dict) -> dict | None:
         confidence = "low"
 
     break_type = entry.get("break_type") if entry.get("break_type") in _VALID_BREAK_TYPES else None
+    # The citation counts only as an http(s) URL beside a break type. Anything else — a bare
+    # domain, prose, a URL with no type to support — is dropped here, so the merge stamps the
+    # type 'model_recall' rather than 'researched'.
+    cited_url = entry.get("break_type_source_url")
+    if not (break_type and isinstance(cited_url, str)
+            and BREAK_TYPE_URL_RE.match(cited_url.strip())):
+        cited_url = None
+    else:
+        cited_url = cited_url.strip()
+    evidence = break_type_quote(entry.get("break_type_evidence")) if cited_url else None
     tide_pref = entry.get("tide_preference") if entry.get("tide_preference") in _VALID_TIDE_PREFS else None
     crowd = entry.get("crowd_factor") if entry.get("crowd_factor") in _VALID_CROWD else None
 
@@ -507,6 +542,8 @@ def _normalize_record(entry: dict) -> dict | None:
         "offshore_wind_deg": _coerce_int(entry.get("offshore_wind_deg"), mod=360),
         "optimal_swell_dir": _coerce_int(entry.get("optimal_swell_dir"), mod=360),
         "break_type": break_type,
+        "break_type_source_url": cited_url,
+        "break_type_evidence": evidence,
         "tide_preference": tide_pref,
         "crowd_factor": crowd,
         "hazards": hazards,
@@ -753,15 +790,41 @@ def merge_into_spots(
             stats["field_changes"]["optimal_swell_dir"] += 1
 
         new_break = rec.get("break_type")
-        if new_break is not None and new_break != spot.get("break_type"):
-            spot["break_type"] = new_break
-            stats["field_changes"]["break_type"] += 1
+        if new_break is not None:
+            # 'researched' only with a cited page; otherwise the model's own answer.
+            cited = rec.get("break_type_source_url")
+            source = _BREAK_TYPE_CITED if cited else _BREAK_TYPE_UNCITED
+            incoming = break_type_fields(
+                new_break, source, url=cited,
+                evidence=rec.get("break_type_evidence") if cited else None)
+            if any(spot.get(k) != v for k, v in incoming.items()):
+                # RANK GUARD — config.break_type_may_overwrite. An uncited answer cannot
+                # replace a cited or reviewed one; it can replace an unattributed one.
+                existing = spot.get("break_type_source")
+                if break_type_may_overwrite(existing, source):
+                    if new_break != spot.get("break_type"):
+                        stats["field_changes"]["break_type"] += 1
+                    else:
+                        # Same value, better-known source: the provenance moves on its own.
+                        stats["break_type_restamped"] = stats.get("break_type_restamped", 0) + 1
+                    # ONE STATEMENT: value, source, confidence and citation together.
+                    spot.update(incoming)
+                else:
+                    # LOGGED, NEVER SILENT.
+                    log.warning(
+                        "break_type: NOT overwriting %r — stored %r from %r (rank %d) "
+                        "outranks the verified %r from %r (rank %d)",
+                        spot.get("name"), spot.get("break_type"), existing,
+                        break_type_source_rank(existing), new_break, source,
+                        break_type_source_rank(source),
+                    )
+                    stats["break_type_declined"] = stats.get("break_type_declined", 0) + 1
 
         new_tide = rec.get("tide_preference")
         if new_tide is not None and new_tide != spot.get("tide_preference"):
             # RANK GUARD — see config.tide_source_may_overwrite. This pass
-            # searches the web (tools at :406) so it writes 'researched', the top
-            # of the ladder; in practice it is only ever declined by another
+            # searches the web (tools in _verify_batch) so it writes 'researched',
+            # the top of the ladder; in practice it is only ever declined by another
             # 'researched' writer, which equal rank permits.
             existing = spot.get("tide_preference_source")
             if tide_source_may_overwrite(existing, _TIDE_SOURCE):
@@ -861,6 +924,12 @@ def _summarize(
         print("    field changes:")
         for field, n in merge_stats["field_changes"].items():
             print(f"      {field:<22} {n}")
+        if merge_stats.get("break_type_restamped"):
+            print(f"    break_type re-sourced (same value): "
+                  f"{merge_stats['break_type_restamped']}")
+        if merge_stats.get("break_type_declined"):
+            print(f"    break_type declined (outranked):    "
+                  f"{merge_stats['break_type_declined']}")
     print("=" * 60)
 
 

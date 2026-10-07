@@ -38,7 +38,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 import nwps_publication_log as P  # noqa: E402
-from pipeline.tests.test_ci_workflow import yaml_code  # noqa: E402
+from pipeline.tests.test_ci_workflow import job_key, jobs_of, yaml_code  # noqa: E402
 
 SCRIPT = os.path.join(ROOT, "scripts", "nwps_publication_log.py")
 WORKFLOW = os.path.join(ROOT, ".github", "workflows", "nwps-publication-log.yml")
@@ -319,6 +319,12 @@ def test_the_workflow_can_only_read():
     assert re.findall(r"^\s+(\w[\w-]*):\s*(\w+)", perms, re.M) == [("contents", "read")]
     assert "secrets." not in text
     assert "write" not in perms
+    # The logger states no permissions of its own, so it holds only that read. The one job
+    # with its own is failure-issue, which writes issues and nothing else; test_ci_workflow
+    # pins exactly what it holds.
+    jobs = jobs_of(text)
+    assert job_key(jobs["log"], "permissions") == (None, None)
+    assert [j for j in jobs if job_key(jobs[j], "permissions") != (None, None)] == ["failure-issue"]
 
 
 def test_the_workflow_runs_the_logger_and_nothing_of_the_pipeline():

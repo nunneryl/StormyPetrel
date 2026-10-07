@@ -34,6 +34,10 @@ from .config import (
     SURF_FORECAST_DIRECTORY_FILE,
     SURF_FORECAST_FUZZY_THRESHOLD,
     SURF_FORECAST_MIN_INTERVAL_S,
+    break_type_fields,
+    break_type_may_overwrite,
+    break_type_quote,
+    break_type_source_rank,
     tide_source_may_overwrite,
     tide_source_rank,
 )
@@ -45,6 +49,12 @@ from .geo import haversine_m
 # It outranks derived_from_break_type and unattributed and is outranked by
 # researched.
 _TIDE_SOURCE = "scraped"
+
+# The same for break_type, read from the page's own sentence about its break
+# (own_break_type) and stamped with that page's URL and the sentence as evidence.
+# On migration 020's ladder it outranks model_recall and unattributed and is
+# outranked by researched and reviewed.
+_BREAK_TYPE_SOURCE = "scraped"
 
 _USER_AGENT = "StormyPetrel/0.1 (surf forecast project)"
 
@@ -210,15 +220,119 @@ def extract_page_coords(html: str) -> tuple[float, float] | None:
     return None
 
 
-def parse_spot_page(html: str) -> dict:
+# ---------------------------------------------------------------------------
+# The page's own sentence about its break
+# ---------------------------------------------------------------------------
+# surf-forecast.com describes each break in one templated sentence:
+#
+#     "<Break> [in <Place>] is a(n) [exposed|sheltered|...] <type>[ and <type>] break that ..."
+#
+# The rest of the page names other breaks too — nearby spots, navigation, adverts —
+# and the old parser took the first of "beach break" / "reef break" / "point break"
+# / "jetty break" found ANYWHERE in the text, so any page that mentioned a beach
+# break anywhere came out 'beach'. A type is now read only from the sentence whose
+# subject is this page's own break, and only when that sentence names exactly one
+# type: a page saying "beach and reef break" does not say which dominates, so it
+# yields no break_type rather than the first-listed one. A sentence with a word this
+# parser does not know yields none either. No answer is better than a wrong one,
+# because the value is stamped 'scraped' and outranks unattributed and model_recall.
+_BREAK_TYPE_WORDS = frozenset({"beach", "reef", "point", "jetty", "rivermouth"})
+_BREAK_QUALIFIERS = frozenset({
+    "exposed", "sheltered", "protected", "fairly", "very", "quite", "rather",
+    "pretty", "reasonably", "somewhat", "partly", "partially", "well", "semi",
+})
+_BREAK_CONNECTORS = frozenset({"and", "or"})
+# What a page title or heading appends to the break's name.
+_TITLE_TAIL = re.compile(r"\s+surf\s+(?:forecast|report|guide)\b.*$", re.IGNORECASE | re.S)
+
+
+def _plain_words(text: str | None) -> list[str]:
+    """Lower-case words of *text*, split at any punctuation: "Pipeline - Backdoor" ->
+    ["pipeline", "backdoor"], "Maria's" -> ["maria", "s"], so the name matches the
+    page whichever apostrophe it prints."""
+    return re.findall(r"[a-z0-9]+", (text or "").lower())
+
+
+def page_break_names(soup, break_name: str | None = None) -> list[list[str]]:
+    """The names this page's own sentence can start with, as word lists: the page's
+    heading, its title and og:title with any "Surf Forecast ..." tail removed, then
+    the name the spot was looked up by. Duplicates dropped, order kept."""
+    raw = []
+    h1 = soup.find("h1")
+    if h1 is not None:
+        raw.append(h1.get_text(" ", strip=True))
+    if soup.title is not None:
+        raw.append(soup.title.get_text(" ", strip=True))
+    og = soup.find("meta", attrs={"property": "og:title"})
+    if og is not None and og.get("content"):
+        raw.append(og["content"])
+    if break_name:
+        raw.append(break_name)
+    out: list[list[str]] = []
+    for name in raw:
+        words = _plain_words(_TITLE_TAIL.sub("", name))
+        if words and words not in out:
+            out.append(words)
+    return out
+
+
+def _break_types_in(desc: str) -> list[str] | None:
+    """The break types a sentence's description names, in order: "fairly exposed
+    beach and reef" -> ["beach", "reef"]. None when it holds a word that is not a type,
+    a qualifier or a connector — a sentence this parser cannot read."""
+    tokens = re.findall(r"[a-z]+", desc.lower())
+    types: list[str] = []
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token == "river" and i + 1 < len(tokens) and tokens[i + 1] == "mouth":
+            token, i = "rivermouth", i + 1
+        if token in _BREAK_TYPE_WORDS:
+            if token not in types:
+                types.append(token)
+        elif token not in _BREAK_QUALIFIERS and token not in _BREAK_CONNECTORS:
+            return None
+        i += 1
+    return types or None
+
+
+def own_break_type(text: str, names: list[list[str]]) -> tuple[str | None, str | None]:
+    """(break_type, evidence) from the page's own sentence about its break.
+
+    *names* are page_break_names(). The sentence must open with one of them, may
+    name a place ("in Santa Barbara", no full stop inside), then reads "is a(n)
+    <description> break". break_type is the one type that description names, or
+    None when it names several or a word the parser does not know; evidence is the
+    sentence up to "break", whenever the sentence was found, so a run can show what
+    it read. (None, None) when no sentence about this break is on the page.
+    """
+    for words in names:
+        name_re = r"\W+".join(re.escape(w) for w in words)
+        m = re.search(
+            r"(?<![\w'])" + name_re + r"(?:\s+in\s+[^.!?]{1,80}?)?"
+            r"\s+is\s+an?\s+(?P<desc>[A-Za-z][A-Za-z ,/&-]{0,60}?)\s+break\b",
+            text, re.IGNORECASE)
+        if m:
+            types = _break_types_in(m.group("desc"))
+            value = types[0] if types and len(types) == 1 else None
+            return value, break_type_quote(m.group(0))
+    return None, None
+
+
+def parse_spot_page(html: str, break_name: str | None = None) -> dict:
     """Extract surf metadata from a surf-forecast.com spot page.
 
-    Returns a dict with seven keys; any extractor that can't find its
+    Returns a dict of the fields below; any extractor that can't find its
     pattern leaves the value None (empty string for free-form crowd /
     hazards). The caller decides whether a sparse result counts as a
     successful match. ``page_lat`` / ``page_lng`` are the coordinates
     surf-forecast.com publishes for the break, used downstream to
     reject slug matches that point at the wrong spot.
+
+    ``break_type`` comes only from the page's own sentence about its break
+    (own_break_type), which ``break_type_evidence`` quotes. *break_name* — the
+    name the spot was looked up by — is tried after the page's own heading and
+    title as the sentence's subject.
     """
     from bs4 import BeautifulSoup
 
@@ -230,6 +344,7 @@ def parse_spot_page(html: str) -> dict:
         "offshore_wind_deg": None,
         "optimal_swell_dir": None,
         "break_type": None,
+        "break_type_evidence": None,
         "tide_preference": None,
         "crowd": None,
         "hazards": None,
@@ -254,10 +369,8 @@ def parse_spot_page(html: str) -> dict:
     if m:
         fields["optimal_swell_dir"] = _direction_to_deg(m.group(1))
 
-    for bt in ("beach break", "reef break", "point break", "jetty break"):
-        if bt in lower:
-            fields["break_type"] = bt.split()[0]
-            break
+    fields["break_type"], fields["break_type_evidence"] = own_break_type(
+        text, page_break_names(soup, break_name))
 
     if re.search(r"at all stages|works at all tides|all\s+tides?\b", lower):
         fields["tide_preference"] = "all"
@@ -289,8 +402,9 @@ def fetch_spot(
     directory: dict | None = None,
 ) -> dict | None:
     """Try each slug candidate; return the first page that parses to a
-    useful record. A 200 without offshore_wind_deg OR break_type is
-    treated as a miss (disambiguation / error / unrelated page).
+    useful record. A 200 with neither offshore_wind_deg nor a sentence
+    describing its own break is treated as a miss (disambiguation /
+    error / unrelated page).
 
     When ``expected_coord`` is supplied, pages whose published lat/lng
     sit more than ``max_distance_km`` from it are also treated as
@@ -321,8 +435,10 @@ def fetch_spot(
             continue
         if resp.status_code != 200:
             continue
-        fields = parse_spot_page(resp.text)
-        if fields.get("offshore_wind_deg") is None and fields.get("break_type") is None:
+        fields = parse_spot_page(resp.text, name)
+        # A page that describes its own break is a spot page even when that sentence names
+        # two types and so yields no break_type.
+        if fields.get("offshore_wind_deg") is None and fields.get("break_type_evidence") is None:
             continue
 
         if expected_coord is not None and fields.get("page_lat") is not None:
@@ -805,9 +921,40 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
                 stats["field_changes"]["optimal_swell_dir"] += 1
 
         bt = rec.get("break_type")
-        if bt and bt != spot.get("break_type"):
-            spot["break_type"] = bt
-            stats["field_changes"]["break_type"] += 1
+        quote = rec.get("break_type_evidence")
+        if bt and not quote:
+            # Parsed before break_type was read only from the page's own sentence: this value
+            # is the first type phrase found anywhere on the page, the defect that rule
+            # replaced. Not applied; re-scrape the spot to read its own sentence.
+            stats["break_type_old_parse"] = stats.get("break_type_old_parse", 0) + 1
+        elif quote and not bt:
+            # The page's own sentence names several types (or a word the parser does not
+            # know), so it does not say which one this break is. Nothing to write.
+            stats["break_type_not_single"] = stats.get("break_type_not_single", 0) + 1
+        elif bt:
+            incoming = break_type_fields(bt, _BREAK_TYPE_SOURCE, url=rec["source_url"],
+                                         evidence=quote)
+            if any(spot.get(k) != v for k, v in incoming.items()):
+                # RANK GUARD — config.break_type_may_overwrite. A page scrape replaces an
+                # unattributed or model-recalled type, never a researched or reviewed one.
+                existing = spot.get("break_type_source")
+                if break_type_may_overwrite(existing, _BREAK_TYPE_SOURCE):
+                    if bt != spot.get("break_type"):
+                        stats["field_changes"]["break_type"] += 1
+                    else:
+                        stats["break_type_restamped"] = stats.get("break_type_restamped", 0) + 1
+                    # ONE STATEMENT: value, source, confidence and citation together.
+                    spot.update(incoming)
+                else:
+                    # LOGGED, NEVER SILENT.
+                    log.warning(
+                        "break_type: NOT overwriting %r — stored %r from %r (rank %d) "
+                        "outranks the scraped %r (rank %d)",
+                        spot.get("name"), spot.get("break_type"), existing,
+                        break_type_source_rank(existing), bt,
+                        break_type_source_rank(_BREAK_TYPE_SOURCE),
+                    )
+                    stats["break_type_declined"] = stats.get("break_type_declined", 0) + 1
 
         tp = rec.get("tide_preference")
         if tp and tp != spot.get("tide_preference"):
@@ -846,7 +993,8 @@ def unmerge_stale_matches(spots: list[dict], cache: dict[str, dict]) -> dict:
     match, but the earlier merge already wrote its orientation / swell /
     break-type / tide values into spots_enriched.json. Clear those five
     fields (plus ``surf_forecast_url``) so the next enrich / verify pass
-    can recompute them from scratch.
+    can recompute them from scratch — break_type, with its source and
+    citation, only where the dropped page is what wrote it.
     """
     stats = {
         "unmerged": 0,
@@ -865,9 +1013,19 @@ def unmerge_stale_matches(spots: list[dict], cache: dict[str, dict]) -> dict:
             continue
         stats["unmerged"] += 1
         for f in _MERGE_FIELDS:
+            if f == "break_type":
+                continue   # below: with its provenance, and only if this page wrote it
             if spot.get(f) is not None:
                 spot[f] = None
                 stats["cleared_fields"][f] += 1
+        # break_type now records who wrote it, so a dropped match takes back exactly what
+        # that page wrote — a type stamped 'scraped' and citing the dropped URL — and all
+        # five keys go together. A researched, reviewed or unattributed type is not this
+        # page's to clear.
+        if (spot.get("break_type_source") == _BREAK_TYPE_SOURCE
+                and spot.get("break_type_source_url") == rec["previously_matched_url"]):
+            spot.update(break_type_fields(None, None))
+            stats["cleared_fields"]["break_type"] += 1
         # THE SOURCE GOES WITH THE VALUE. This loop clears tide_preference via a
         # variable key, so it is a fourth write site that a grep for
         # `["tide_preference"] =` does not find — and without this, a dropped
@@ -930,6 +1088,14 @@ def _summarize(
     print("    field overwrites:")
     for field in _MERGE_FIELDS:
         print(f"      {field:<22} {merge_stats['field_changes'][field]}")
+    for key, label in (
+        ("break_type_restamped", "break_type re-sourced (same value)"),
+        ("break_type_declined", "break_type declined (outranked)"),
+        ("break_type_not_single", "own sentence names no single type"),
+        ("break_type_old_parse", "record parsed by the old rule (ignored)"),
+    ):
+        if merge_stats.get(key):
+            print(f"    {label:<40} {merge_stats[key]}")
     print("=" * 60)
 
 

@@ -208,7 +208,7 @@ def test_the_committed_roster_carries_the_flag_on_exactly_the_four():
 def test_enrich_writes_the_flag_from_the_override_file():
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         enrich.load_land_index = lambda: None
@@ -219,8 +219,6 @@ def test_enrich_writes_the_flag_from_the_override_file():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 270.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         ET.load_tide_stations = lambda: [
             {"id": ARENA_COVE, "lat": 38.9019, "lng": -123.7038, "name": "Arena Cove"}]
         out = enrich._enrich_one({"name": "Caspar", "lat": 39.3611, "lng": -123.8178},
@@ -338,7 +336,7 @@ def test_an_override_WITHOUT_suppress_height_does_not_get_the_flag():
         "the control entry must not carry the flag"
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     saved_load = ET.load_tide_stations
     try:
         enrich.load_land_index = lambda: None
@@ -349,8 +347,6 @@ def test_an_override_WITHOUT_suppress_height_does_not_get_the_flag():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 270.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         ET.load_tide_stations = lambda: [
             {"id": "9441627", "lat": 47.30, "lng": -124.27, "name": "Point Grenville"}]
         out = enrich._enrich_one({"name": "Kalaloch Beach", "lat": 47.5897, "lng": -124.3683},
@@ -407,7 +403,7 @@ def test_a_deliberate_blank_CLEARS_a_station_the_algorithm_assigned():
     lvl = lg.level
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     try:
         lg.addHandler(cap)
         lg.setLevel(logging.INFO)
@@ -419,8 +415,6 @@ def test_a_deliberate_blank_CLEARS_a_station_the_algorithm_assigned():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 90.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         out = enrich._enrich_one({"name": "Blackbeard Island", "lat": 31.5010, "lng": -81.1910},
                                  skip_raycast=True)
     finally:
@@ -455,7 +449,7 @@ def test_clearing_is_SILENT_when_the_algorithm_already_returned_nothing():
     lvl = lg.level
     saved = {k: getattr(enrich, k) for k in
              ("load_land_index", "compute_nearest_tide_station", "compute_nearest_buoy",
-              "compute_orientation", "compute_break_type")}
+              "compute_orientation")}
     try:
         lg.addHandler(cap)
         lg.setLevel(logging.INFO)
@@ -467,8 +461,6 @@ def test_clearing_is_SILENT_when_the_algorithm_already_returned_nothing():
             "fallback_buoy_ids": [], "buoy_confidence": 0.0}
         enrich.compute_orientation = lambda spot: {"orientation_deg": 90.0,
                                                    "orientation_confidence": 0.5}
-        enrich.compute_break_type = lambda spot: {"break_type": "beach",
-                                                  "break_type_confidence": 0.5}
         out = enrich._enrich_one({"name": "Blackbeard Island", "lat": 31.5010, "lng": -81.1910},
                                  skip_raycast=True)
     finally:

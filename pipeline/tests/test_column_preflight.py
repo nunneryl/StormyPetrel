@@ -25,7 +25,11 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import os
 import re
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -49,8 +53,9 @@ WRITTEN = {
     "spots": [
         "slug", "name", "lat", "lng", "state", "region", "swell_window_arcs", "data_sources",
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir", "break_type",
-        "break_type_confidence", "tide_preference", "tide_preference_source", "crowd_factor",
-        "hazards", "nearest_buoy_id", "nearest_buoy_dist_km", "nearest_tide_station_id",
+        "break_type_source", "break_type_source_url", "break_type_evidence", "tide_preference",
+        "tide_preference_source", "crowd_factor", "hazards", "nearest_buoy_id",
+        "nearest_buoy_dist_km", "nearest_tide_station_id",
         "nearest_tide_station_dist_km", "nwps_wfo", "fallback_buoy_ids", "swell_window_source",
         "review_status", "description", "description_signature",
     ],
@@ -70,8 +75,10 @@ WRITTEN = {
 KEYS = {"buoys": ("id",), "spots": ("slug",), "forecasts": ("spot_id", "valid_time", "source"),
         "buoy_observations": ("buoy_id", "observed_at"),
         "tide_predictions": ("station_id", "predicted_at")}
-# Columns the live tables have that db_import never sends.
-DB_ONLY = {"buoys": [], "spots": ["id", "geom", "aka_names", "created_at", "updated_at"],
+# Columns the live tables have that db_import never sends. break_type_confidence is generated
+# from break_type_source by migration 020, so it is read back but never written.
+DB_ONLY = {"buoys": [], "spots": ["id", "geom", "aka_names", "created_at", "updated_at",
+                                  "break_type_confidence"],
            "forecasts": ["id", "fetched_at"], "buoy_observations": ["id"],
            "tide_predictions": ["id"]}
 ALL_TABLES = ("buoys", "spots", "forecasts", "buoy_observations", "tide_predictions")
@@ -191,7 +198,10 @@ ENRICHED = [
     {"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
      "is_valid_surf_spot": True, "swell_window_arcs": [{"min": 180, "max": 300}],
      "orientation_deg": 190.0, "offshore_wind_deg": 10.0, "optimal_swell_dir": 250.0,
-     "break_type": "point", "break_type_confidence": 0.9, "tide_preference": "mid",
+     "break_type": "point", "break_type_source": "researched", "break_type_confidence": "medium",
+     "break_type_source_url": "https://www.surf-forecast.com/breaks/Steamer-Lane",
+     "break_type_evidence": "Steamer Lane in Santa Cruz is an exposed point break",
+     "tide_preference": "mid",
      "tide_preference_source": "manual", "crowd_factor": "high", "hazards": ["rocks"],
      "nearest_buoy_id": "46042", "nearest_buoy_dist_km": 30.1,
      "nearest_tide_station_id": "9413745", "nearest_tide_station_dist_km": 1.2,
@@ -202,6 +212,8 @@ ENRICHED = [
 EXISTING_SPOT = {"id": 7, "slug": "steamer-lane", "name": "Steamer Lane", "aka_names": ["The Lane"],
                  "lat": 36.9513, "lng": -122.0266, "geom": "0101", "state": "California",
                  "region": "California", "review_status": "reviewed",
+                 "break_type": "reef", "break_type_source": "unattributed",
+                 "break_type_confidence": "low",
                  "description": "A right point.", "description_signature": "0000000000000000",
                  "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-09-01T00:00:00Z"}
 SPOT_IDS = [{"id": 7, "name": "Steamer Lane"}, {"id": 8, "name": "Mavericks"}]
@@ -340,6 +352,34 @@ def test_a_missing_column_in_any_table_is_left_out_of_that_table_only(run, capsy
     line, = capsys.readouterr().out.splitlines()
     assert line == (f"Missing database columns: {missing} (pipeline/migrations/{migration}) — "
                     "left out of this run's upload; apply the migration to write them.")
+
+
+def test_merged_before_migration_020_the_run_publishes_and_ends_failed_naming_it(run, capsys):
+    """The order the break_type PR states, and what happens if it is not kept.
+
+    Before 020 the live spots table has none of its three columns, and break_type_confidence
+    is still the old DOUBLE PRECISION one. db_import never sends that column any more (the
+    database computes it after 020), so the only effect of merging first is three missing
+    columns: left out of the spots rows, every table still written, the run ends failed and
+    names the migration."""
+    missing = ("spots.break_type_evidence", "spots.break_type_source",
+               "spots.break_type_source_url")
+    fake = FakePostgrest(live(*missing))
+    assert run.go(fake) == 0
+    sent = fake.rows_sent("spots")
+    assert sent and all(not any(m.partition(".")[2] in r for m in missing) for r in sent)
+    assert all("break_type_confidence" not in r for r in sent)
+    assert fake.rows_sent("forecasts") == [FORECAST_ROW]
+    for table in ALL_TABLES:
+        assert fake.rows_sent(table), f"{table} must still be written"
+    capsys.readouterr()
+    assert run.finish() == 1
+    assert capsys.readouterr().out.splitlines() == [
+        "Missing database columns: "
+        "spots.break_type_source (pipeline/migrations/020_break_type_provenance.sql), "
+        "spots.break_type_source_url (pipeline/migrations/020_break_type_provenance.sql), "
+        "spots.break_type_evidence (pipeline/migrations/020_break_type_provenance.sql) — "
+        "left out of this run's upload; apply the migration to write them."]
 
 
 def test_two_missing_columns_are_both_named_on_the_one_line(run, capsys):
@@ -578,7 +618,10 @@ def test_every_builder_sends_exactly_its_declared_columns(run):
     for table in ("buoys", "forecasts", "buoy_observations", "tide_predictions"):
         for row in fake.rows_sent(table):
             assert list(row) == WRITTEN[table], table
-    merged = set(EXISTING_SPOT) - {"id", "geom", "created_at", "updated_at"}
+    # break_type_confidence is read back with the row and must not be sent back: migration
+    # 020 generates it, and Postgres refuses a write to a generated column.
+    merged = set(EXISTING_SPOT) - {"id", "geom", "created_at", "updated_at",
+                                   "break_type_confidence"}
     sent = [set(r) for r in fake.rows_sent("spots")]
     assert all(keys <= set(WRITTEN["spots"]) | merged for keys in sent), "an undeclared spots column"
     assert set().union(*sent) >= set(WRITTEN["spots"]), "a declared spots column nothing sends"
@@ -725,9 +768,45 @@ def test_the_failure_comes_last_and_after_revalidation(job):
     assert job_env(text, job).get("COLUMN_PREFLIGHT_RESULT") == "pipeline/forecast_data/column_preflight.json"
 
 
-def test_the_failure_issue_carries_the_columns_line():
-    ss = steps(yaml_code(WORKFLOW.read_text(encoding="utf-8")), "full-pipeline")
-    issue = ss[-1]
-    assert issue.get("name") == "Open issue on failure" and issue.get("if") == "failure()"
-    script = WORKFLOW.read_text(encoding="utf-8").split("Open issue on failure", 1)[1]
-    assert "process.env.COLUMN_PREFLIGHT_RESULT" in script and ".reason" in script
+def _failure_note_script(job: str) -> str:
+    """The Python a job's failure-note step runs, cut out of the workflow exactly as written."""
+    m = re.search(r"python - <<'PY' >> \"\$GITHUB_OUTPUT\"\n(.*?\n)[ \t]*PY\n",
+                  _job(WORKFLOW.read_text(encoding="utf-8"), job), re.S)
+    assert m, f"{job} has no failure-note step reading the preflight's result"
+    return textwrap.dedent(m.group(1))
+
+
+@pytest.mark.parametrize("job", ["full-pipeline", "buoy-update"])
+def test_the_failure_issue_carries_the_columns_line(job, tmp_path):
+    """The old issue step quoted the preflight's reason. The failure issue is now kept by the
+    failure-issue job, on another runner that cannot read this job's files, so the reason
+    leaves the job as its failure-note output. The step's own Python is run here against a
+    result file, so what is pinned is the line that arrives, not the shape of the step."""
+    text = yaml_code(WORKFLOW.read_text(encoding="utf-8"))
+    last = steps(text, job)[-1]
+    assert last.get("id") == "failure-note" and last.get("if") == "failure()"
+    head = re.split(r"^    steps:\n", _job(text, job), maxsplit=1, flags=re.M)[0]
+    assert re.search(r"^    outputs:\n      failure-note: \$\{\{ steps\.failure-note\.outputs\.note \}\}$",
+                     head, re.M), "the note must be the job's failure-note output"
+
+    script, result = _failure_note_script(job), tmp_path / "column_preflight.json"
+
+    def output(content: str | None) -> str:
+        if content is None:
+            result.unlink(missing_ok=True)
+        else:
+            result.write_text(content, encoding="utf-8")
+        env = {"COLUMN_PREFLIGHT_RESULT": str(result), "PATH": os.environ.get("PATH", "")}
+        done = subprocess.run([sys.executable, "-"], input=script, env=env,
+                              capture_output=True, text=True, timeout=30)
+        assert done.returncode == 0, done.stderr
+        return done.stdout
+
+    line = ("Missing database column: forecasts.nwps_cycle (019_nwps_cycle.sql) — left out of "
+            "this run's upload; apply the migration to write them.")
+    assert output(json.dumps({"status": "checked", "reason": line})) == f"note={line}\n"
+    # one line, whatever the reason holds: a newline would end the output early
+    assert output(json.dumps({"reason": "a\n  b"})) == "note=a b\n"
+    assert output(json.dumps({"status": "checked", "reason": None})) == ""
+    assert output("not json") == ""
+    assert output(None) == "", "a run that died before the preflight leaves no file"
