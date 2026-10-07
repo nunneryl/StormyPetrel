@@ -233,6 +233,18 @@ def test_the_prose_span_is_computed_not_assumed():
     assert "30-day window, 2026-08-20 to 2026-09-19" in doc["_comment"]
 
 
+def test_the_prose_says_only_the_displayed_height_is_scaled():
+    """The file describes what face_correction does with its factors, and that changed: the
+    seam divides face_ft and its band and no longer touches effective_size_ft or stars
+    (FACE_CORRECTION_VERSION 2). A regenerated file must not go on claiming the old recompute."""
+    comment = _written(_artifact())[0]["_comment"]
+    assert "Only the displayed height is scaled: face_ft and its published band." in comment
+    assert ("effective_size_ft and stars are left as the producer computed them, so a "
+            "calibrated spot is rated on the same input as every other spot.") in comment
+    assert "stars is recomputed" not in comment
+    assert "Both face_ft and effective_size_ft are scaled" not in comment
+
+
 def test_the_prose_points_at_the_real_input_name():
     """It told the reader to regenerate from a file nothing writes."""
     doc, _ = _written(_artifact())
