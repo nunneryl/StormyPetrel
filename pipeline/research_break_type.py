@@ -370,13 +370,15 @@ class Budget:
     request starts only while the cap has not been reached. What is spent is what the
     API's usage reports, at PRICES."""
 
-    def __init__(self, cap_usd: float, spent_usd: float = 0.0, dearest_spot_usd: float = 0.0):
+    def __init__(self, cap_usd: float, spent_usd: float = 0.0, dearest_spot_usd: float = 0.0,
+                 floor_usd: float = SPOT_RESERVE_FLOOR_USD):
         self.cap_usd = float(cap_usd)
         self.spent_usd = float(spent_usd)
         self.dearest_spot_usd = float(dearest_spot_usd)
+        self.floor_usd = float(floor_usd)
 
     def spot_reserve_usd(self) -> float:
-        return max(SPOT_RESERVE_FLOOR_USD, 2.0 * self.dearest_spot_usd)
+        return max(self.floor_usd, 2.0 * self.dearest_spot_usd)
 
     def may_start_spot(self) -> bool:
         return self.spent_usd + self.spot_reserve_usd() <= self.cap_usd
@@ -942,8 +944,9 @@ def _create(client, request: dict, sleep):
 
 
 def _describe(exc: BaseException) -> str:
+    """The error in full: its type, its HTTP status, and the API's whole message."""
     status = getattr(exc, "status_code", None)
-    text = " ".join(str(exc).split())[:300]
+    text = " ".join(str(exc).split())
     return f"{type(exc).__name__}" + (f" {status}" if status else "") + f": {text}"
 
 
@@ -1400,6 +1403,460 @@ def render_dry_run(resolved: list, effort: str) -> str:
     return "\n".join(parts)
 
 
+# --- memory-only mode: every rated spot, from the model's memory --------------------------
+#
+# A memory answer (no web search) for every rated spot first; how much research is worth
+# doing is decided from it. The same model, and the same identity-only user message, as the
+# pilot's memory answer: the model never sees our value. Writes its own results file.
+
+MEMORY_BUDGET_USD = 6.00
+# One small request per spot, so the reserve floor is far below the research pilot's: a spot
+# starts while the money left covers twice the dearest spot so far, and at least this much.
+MEMORY_RESERVE_FLOOR_USD = 0.05
+MEMORY_PAUSE_SECONDS = 1.0
+MEMORY_MAX_TOKENS = RECALL_MAX_TOKENS
+DEFAULT_MEMORY_OUTPUT = PIPELINE_DIR / "data" / "break_type_memory_all.json"
+MEMORY_SCHEMA_VERSION = 1
+
+MEMORY_SYSTEM = (
+    "You say, from your own knowledge and without searching, two things about one surf\n"
+    "spot: what kind of break it is (break_type) and what the waves break over (bottom).\n"
+    "\n"
+    "The spot is given by its name, its US state or territory and its coordinates. Surf\n"
+    "spots share names, so answer for the spot at these coordinates in this state, and say\n"
+    "whether you know of a surf spot with the same name somewhere else.\n"
+    "\n"
+    "break_type is exactly one of:\n"
+    + _KINDS +
+    "  unknown     you do not know this particular spot\n"
+    "If the spot is more than one kind, set the value to the dominant one and list every\n"
+    "kind in \"all\".\n"
+    "\n"
+    "bottom is exactly one of:\n"
+    + _BOTTOMS +
+    "  unknown you do not know this spot's bottom\n"
+    "List every material in \"all\".\n"
+    "\n"
+    "End your reply with this JSON object, and nothing after it:\n"
+    "{\n"
+    "  \"break_type\": {\n"
+    "    \"value\": \"beach\" | \"reef\" | \"point\" | \"jetty\" | \"rivermouth\" | \"unknown\",\n"
+    "    \"all\": [every kind it is],\n"
+    "    \"confidence\": \"high\" | \"medium\" | \"low\"\n"
+    "  },\n"
+    "  \"bottom\": {\n"
+    "    \"value\": \"sand\" | \"rock\" | \"coral\" | \"cobble\" | \"mixed\" | \"unknown\",\n"
+    "    \"all\": [every material it is],\n"
+    "    \"confidence\": \"high\" | \"medium\" | \"low\"\n"
+    "  },\n"
+    "  \"mixed_note\": \"if it is more than one kind of break or bottom, one short sentence on\n"
+    "                 how they combine\" or null,\n"
+    "  \"name_shared_elsewhere\": true | false,\n"
+    "  \"other_places\": [\"other places you know with a surf spot of this name\"],\n"
+    "  \"note\": \"one short sentence\" or null\n"
+    "}\n"
+)
+
+# The settled-by-geography rule, for the report. Edit these lists to change it; the report
+# prints them. Florida is split by its coordinates (coast_region).
+SAND_BARRIER_REGIONS = ("New Jersey", "Delaware", "Maryland", "Virginia", "North Carolina",
+                        "South Carolina", "Georgia", "Texas", "Florida (Gulf)",
+                        "Florida (Atlantic)")
+# Atlantic Florida's known reef spots in the roster, left out of the sand-barrier group.
+FLORIDA_KNOWN_REEF = ("Monster Hole", "Bathtub Beach", "Ocean Reef Park", "Dania Beach Pier")
+# Where rock or reef bottoms are common, so a memory answer settles nothing by geography.
+ROCKY_REGIONS = ("California", "Oregon", "Washington", "Hawaii", "Puerto Rico", "Maine",
+                 "New Hampshire", "Massachusetts", "Rhode Island", "Florida (Keys)")
+
+REASON_CONFIDENCE = "low or medium confidence"
+REASON_NOT_SAND = "not sand, or mixed"
+REASON_ROCKY = "rocky or reef region"
+REASON_NAME = "possible name collision"
+REASON_VERIFIED = "disagrees with a verified label"
+REASON_ELSEWHERE = "sand with high confidence, outside the sand-barrier regions"
+REASONS = (REASON_CONFIDENCE, REASON_NOT_SAND, REASON_ROCKY, REASON_NAME, REASON_VERIFIED,
+           REASON_ELSEWHERE)
+HUMAN_LIST_SIZE = 30
+
+
+def coast_region(spot: dict) -> str:
+    """The spot's state, with Florida split by coast: the Keys south of 25.3 N; the Gulf
+    west of 84 W (the panhandle) or west of 81.6 W south of 29 N (the west coast); the
+    Atlantic everywhere else."""
+    state = spot.get("region_hint") or spot.get("state")
+    if state != "Florida":
+        return state
+    lat, lng = float(spot["lat"]), float(spot["lng"])
+    if lat < 25.3:
+        return "Florida (Keys)"
+    if lng < -84.0 or (lng < -81.6 and lat < 29.0):
+        return "Florida (Gulf)"
+    return "Florida (Atlantic)"
+
+
+def in_sand_barrier_region(spot: dict) -> bool:
+    return coast_region(spot) in SAND_BARRIER_REGIONS and spot["name"] not in FLORIDA_KNOWN_REEF
+
+
+def in_rocky_region(spot: dict) -> bool:
+    region = coast_region(spot)
+    return region in ROCKY_REGIONS or (region.startswith("Florida")
+                                       and spot["name"] in FLORIDA_KNOWN_REEF)
+
+
+def memory_request(identity: dict, effort: str) -> dict:
+    """The memory-only request: no tools, our value nowhere."""
+    return {
+        "model": MODEL,
+        "max_tokens": MEMORY_MAX_TOKENS,
+        "system": MEMORY_SYSTEM,
+        "thinking": {"type": "adaptive"},
+        "output_config": {"effort": effort},
+        "messages": [{"role": "user", "content": spot_prompt(identity)}],
+    }
+
+
+def memory_settings(effort: str) -> dict:
+    return {"model": MODEL, "thinking": "adaptive", "effort": effort,
+            "max_tokens": MEMORY_MAX_TOKENS,
+            "prompt_sha256": hashlib.sha256(MEMORY_SYSTEM.encode("utf-8")).hexdigest()[:16]}
+
+
+def judge_memory(response: dict) -> dict:
+    """The memory answer as the model gave it: both values with their confidence, the sand
+    flag, the mixed note, and whether it knows of a same-named spot elsewhere."""
+    out = judge_recall(response)
+    out.update(mixed_note=None, name_shared_elsewhere=None, other_places=[])
+    if out["reason"]:
+        return out
+    text = "".join(block.get("text") or "" for block in (response.get("content") or [])
+                   if block.get("type") == "text")
+    answer = last_json_object(text) or {}
+    note = answer.get("mixed_note")
+    out["mixed_note"] = " ".join(str(note).split())[:300] if note else None
+    shared = answer.get("name_shared_elsewhere")
+    out["name_shared_elsewhere"] = shared if isinstance(shared, bool) else None
+    places = answer.get("other_places")
+    if isinstance(places, list):
+        out["other_places"] = [" ".join(str(p).split()) for p in places if p][:10]
+    return out
+
+
+def shares_name(memory: dict) -> bool:
+    return memory.get("name_shared_elsewhere") is True or bool(memory.get("other_places"))
+
+
+def memory_key(spot: dict) -> str:
+    return f"{spot['name']}|{spot['region_hint']}"
+
+
+def memory_spots(roster: list) -> list:
+    """Every rated spot in the roster, in its order, each key once."""
+    spots = [spot for spot in roster if spot.get("is_valid_surf_spot") is not False]
+    keys = [memory_key(spot) for spot in spots]
+    if len(set(keys)) != len(keys):
+        raise SystemExit("two rated spots share a name and state; the results cannot key them")
+    return spots
+
+
+def new_memory_record(spot: dict) -> dict:
+    return {
+        "name": spot["name"], "state": spot["region_hint"],
+        "lat": spot["lat"], "lng": spot["lng"],
+        # Read for the report. Never sent: the request is built from spot_identity.
+        "current": {"break_type": spot.get("break_type"),
+                    "verified": spot.get("verification_confidence") is not None,
+                    "verification_confidence": spot.get("verification_confidence")},
+        "memory": None, "usage": None, "cost_usd": 0.0, "done": False, "error": None,
+    }
+
+
+def memory_spot(client, spot: dict, effort: str, budget: Budget, sleep) -> tuple:
+    """(record, the exception that stopped it or None). One memory answer."""
+    record = new_memory_record(spot)
+    try:
+        budget.require_room()
+        data = _as_dict(_create(client, memory_request(spot_identity(spot), effort), sleep))
+        used = usage_of(data)
+        budget.charge(cost_usd(used))
+        record["usage"] = _priced(used)
+        record["memory"] = judge_memory(data)
+        record["done"] = True
+        return record, None
+    except Exception as exc:
+        record["error"] = _describe(exc)
+        log.error("%s (%s): the call failed: %s", spot["name"], spot["region_hint"],
+                  record["error"])
+        return record, exc
+    finally:
+        record["cost_usd"] = (record["usage"] or {}).get("cost_usd", 0.0)
+        record["finished_at"] = _now()
+
+
+def memory_run(client, spots: list, results: dict, budget: Budget, effort: str, *,
+               limit=None, pause_seconds: float = MEMORY_PAUSE_SECONDS, sleep=time.sleep,
+               save=None):
+    """A memory answer for each spot not yet done, in order. Returns why it stopped early:
+    None, 'budget', or 'error: ...'."""
+    started = 0
+    for position, spot in enumerate(spots, 1):
+        key = memory_key(spot)
+        earlier = results["spots"].get(key)
+        if earlier and earlier.get("done"):
+            continue
+        if limit is not None and started >= limit:
+            return None
+        if not budget.may_start_spot():
+            log.info("budget: $%.4f spent of $%.2f; the next spot needs room for $%.2f, "
+                     "so the run stops here", budget.spent_usd, budget.cap_usd,
+                     budget.spot_reserve_usd())
+            return "budget"
+        if started and pause_seconds:
+            sleep(pause_seconds)
+        record, exc = memory_spot(client, spot, effort, budget, sleep)
+        results["spots"][key] = record
+        results["spent_usd"] = round(budget.spent_usd, 6)
+        budget.spot_priced(record["cost_usd"])
+        if save is not None:
+            save(results)
+        started += 1
+        memory = record["memory"]
+        log.info("[%3d/%d] %s (%s): %s · $%.4f · spent $%.4f of $%.2f", position, len(spots),
+                 spot["name"], spot["region_hint"],
+                 (f"{memory['break_type']['value']} on {memory['bottom']['value']}, sand "
+                  f"bottom {memory['sand_bottom']}") if memory else "no answer",
+                 record["cost_usd"], budget.spent_usd, budget.cap_usd)
+        if isinstance(exc, BudgetExhausted):
+            return "budget"
+        if exc is not None and _is_fatal(exc):
+            return "error: " + record["error"]
+    return None
+
+
+def new_memory_results(effort: str, budget_usd: float, total_spots: int) -> dict:
+    return {
+        "schema": MEMORY_SCHEMA_VERSION,
+        "kind": "memory_only",
+        "what": ("Break type and bottom from the model's memory, no web search, for every "
+                 "rated spot. A results file only: nothing in it has been applied to the "
+                 "roster or the database."),
+        "settings": memory_settings(effort),
+        "prices_usd": dict(PRICES),
+        "budget_usd": budget_usd,
+        "spent_usd": 0.0,
+        "total_spots": total_spots,
+        "runs": [],
+        "spots": {},
+    }
+
+
+def load_memory_results(path: Path, effort: str, budget_usd: float, fresh: bool,
+                        total_spots: int) -> dict:
+    """The memory results so far, to resume, or a new file. Refuses to mix settings."""
+    if fresh or not path.exists():
+        return new_memory_results(effort, budget_usd, total_spots)
+    results = json.loads(path.read_text(encoding="utf-8"))
+    if (results.get("kind") != "memory_only" or results.get("schema") != MEMORY_SCHEMA_VERSION
+            or results.get("settings") != memory_settings(effort)):
+        raise SystemExit(f"{path} is not a memory-only results file made with these settings "
+                         "(model, effort or prompt). Pass --fresh to start over, or --output "
+                         "for a new file.")
+    results["budget_usd"] = budget_usd
+    results["total_spots"] = total_spots
+    return results
+
+
+# --- the memory-only report ------------------------------------------------------------
+
+def memory_verdict(record: dict) -> tuple:
+    """('settled', []) when geography settles the bottom, else ('candidate', [reasons])."""
+    memory = record["memory"]
+    shared = shares_name(memory)
+    if (in_sand_barrier_region(record) and memory["sand_bottom"] == "yes"
+            and memory["bottom"]["confidence"] == "high" and not shared):
+        return "settled", []
+    reasons = []
+    if any(memory[field]["confidence"] != "high" for field in FIELDS):
+        reasons.append(REASON_CONFIDENCE)
+    if memory["sand_bottom"] != "yes":
+        reasons.append(REASON_NOT_SAND)
+    if in_rocky_region(record):
+        reasons.append(REASON_ROCKY)
+    if shared:
+        reasons.append(REASON_NAME)
+    if _disagrees_with_verified(record):
+        reasons.append(REASON_VERIFIED)
+    if not reasons:
+        reasons.append(REASON_ELSEWHERE)
+    return "candidate", reasons
+
+
+def _disagrees_with_verified(record: dict) -> bool:
+    current, said = record["current"], record["memory"]["break_type"]["value"]
+    return bool(current["verified"] and current["break_type"] and said != "unknown"
+                and said != current["break_type"])
+
+
+def confusion(record: dict) -> tuple:
+    """(score, reasons): how much a spot needs a person's eye, and why in a few words."""
+    memory, current = record["memory"], record["current"]
+    kind, bottom = memory["break_type"], memory["bottom"]
+    score, why = 0, []
+    if _disagrees_with_verified(record):
+        score += 3
+        why.append(f"memory says {kind['value']}, the verified label says "
+                   f"{current['break_type']}")
+    if (not current["verified"] and current["break_type"] == "beach"
+            and kind["value"] in ("reef", "point") and kind["confidence"] == "high"):
+        score += 2
+        why.append(f"memory says {kind['value']} with high confidence; the unverified "
+                   "label says beach")
+    if shares_name(memory):
+        score += 2
+        places = ", ".join(memory["other_places"][:3])
+        why.append("the name is also used " + (f"at {places}" if places else "elsewhere"))
+    if in_sand_barrier_region(record) and bottom["value"] in ("rock", "coral", "cobble"):
+        score += 2
+        why.append(f"memory says a {bottom['value']} bottom in a sand-barrier region")
+    lows = [field for field in FIELDS if memory[field]["confidence"] in ("low", None)]
+    mediums = [field for field in FIELDS if memory[field]["confidence"] == "medium"]
+    if lows:
+        score += 2
+        why.append("low or no confidence on its " + " and ".join(_NAMES[f] for f in lows))
+    elif mediums:
+        score += 1
+        why.append("medium confidence on its " + " and ".join(_NAMES[f] for f in mediums))
+    unknown = [field for field in FIELDS if memory[field]["value"] == "unknown"]
+    if unknown:
+        score += 1
+        why.append("memory does not know its " + " or ".join(_NAMES[f] for f in unknown))
+    if kind["mixed"] or bottom["mixed"]:
+        score += 1
+        why.append("mixed: " + (memory["mixed_note"] or _value_cell(
+            bottom if bottom["mixed"] else kind)).rstrip("."))
+    return score, why
+
+
+_NAMES = {"break_type": "break type", "bottom": "bottom"}
+
+
+def _label(record: dict) -> str:
+    return f"{record['name']} ({coast_region(record)})"
+
+
+def _count_row(name, values: list, order: tuple) -> str:
+    return _row(name, len(values), *(values.count(v) for v in order))
+
+
+def render_memory_report(results: dict) -> str:
+    records = list(results["spots"].values())
+    done = [r for r in records if r.get("done")]
+    total = results.get("total_spots") or len(records)
+    out = [f"Memory answers for {len(done)} of {total} rated spots. Spent "
+           f"${results['spent_usd']:.4f} of the ${results['budget_usd']:.2f} budget, at list "
+           "prices."]
+    if done:
+        mean = statistics.mean(r["cost_usd"] for r in done)
+        left = max(total - len(done), 0)
+        out.append(f"Per spot: mean ${mean:.4f}, dearest ${max(r['cost_usd'] for r in done):.4f}."
+                   f" The {left} spots left would cost about ${mean * left:.2f} at that mean.")
+    failed = [r for r in records if not r.get("done")]
+    for record in failed:
+        out.append(f"Not answered: {_label(record)}: {record.get('error') or 'not finished'}")
+    stops = [run_["stopped"] for run_ in results.get("runs", []) if run_.get("stopped")]
+    if stops:
+        out.append("Stopped early: " + stops[-1])
+    if not done:
+        return "\n".join(out)
+
+    flags = ("yes", "no", "unknown")
+    out += ["", "By region (Florida split by coast):", "",
+            _row("Region", "Spots", "Sand bottom: yes", "no", "unknown"), "|---|---|---|---|---|"]
+    regions = sorted({coast_region(r) for r in done})
+    for region in regions:
+        out.append(_count_row(region, [r["memory"]["sand_bottom"] for r in done
+                                       if coast_region(r) == region], flags))
+    out.append(_count_row("All", [r["memory"]["sand_bottom"] for r in done], flags))
+    levels = ("high", "medium", "low", None)
+    out += ["", "By confidence:", "",
+            _row("Confidence", "Break type", "Bottom"), "|---|---|---|"]
+    for level in levels:
+        out.append(_row(level or "none", *(sum(1 for r in done
+                                               if r["memory"][field]["confidence"] == level)
+                                           for field in FIELDS)))
+    sand = [r["memory"]["sand_bottom"] for r in done]
+    out += ["", "By sand-bottom flag: " + _tally(sand) + "."]
+    out += ["", "Name possibly shared with a spot elsewhere: "
+                f"{sum(1 for r in done if shares_name(r['memory']))}."]
+
+    out += ["", "Where memory disagrees with the current label:"]
+    for title, group, label in (
+            ("Verified labels", [r for r in done if r["current"]["verified"]], None),
+            ("Unverified 'beach' labels",
+             [r for r in done if not r["current"]["verified"]
+              and r["current"]["break_type"] == "beach"], "beach")):
+        said = [r for r in group if r["memory"]["break_type"]["value"] != "unknown"]
+        differ = [r for r in said if r["memory"]["break_type"]["value"]
+                  != r["current"]["break_type"]]
+        out += ["", f"{title} ({len(group)} spots): memory gives a break type for {len(said)}, "
+                    f"agrees on {len(said) - len(differ)} and disagrees on {len(differ)}."]
+        if label == "beach":
+            out.append("Memory says the bottom is not sand at "
+                       f"{sum(1 for r in group if r['memory']['sand_bottom'] == 'no')} of them.")
+        if differ:
+            out += ["", _row("Spot", "Label", "Memory", "Memory confidence", "Memory bottom"),
+                    "|---|---|---|---|---|"]
+            for r in sorted(differ, key=lambda r: (coast_region(r), r["name"])):
+                kind = r["memory"]["break_type"]
+                out.append(_row(_label(r), r["current"]["break_type"], _value_cell(kind),
+                                kind["confidence"] or "none",
+                                _value_cell(r["memory"]["bottom"])))
+
+    verdicts = [(r, memory_verdict(r)) for r in done]
+    settled = [r for r, (verdict, _) in verdicts if verdict == "settled"]
+    out += ["", f"Settled by geography: {len(settled)} spots. The rule: the spot is in a "
+                "sand-barrier region, memory says a sand bottom with high confidence, and "
+                "memory knows of no same-named spot elsewhere.",
+            "Sand-barrier regions: " + ", ".join(SAND_BARRIER_REGIONS) + ". Atlantic Florida "
+            "leaves out " + ", ".join(FLORIDA_KNOWN_REEF) + ". Florida's coasts: the Keys "
+            "south of 25.3 N; the Gulf west of 84 W, or west of 81.6 W south of 29 N; the "
+            "Atlantic everywhere else.",
+            "By region: " + ", ".join(
+                f"{region} {sum(1 for r in settled if coast_region(r) == region)}"
+                for region in SAND_BARRIER_REGIONS) + ".",
+            "Settled is about the bottom only: of these, "
+            f"{sum(1 for r in settled if _disagrees_with_verified(r))} have a break type that "
+            "disagrees with a verified label, and are in the table above."]
+
+    candidates = [(r, reasons) for r, (verdict, reasons) in verdicts if verdict == "candidate"]
+    out += ["", f"Candidates for research: {len(candidates)} spots, grouped by reason. A spot "
+                "can have more than one."]
+    for reason in REASONS:
+        group = [r for r, reasons in candidates if reason in reasons]
+        out += ["", f"{reason} ({len(group)}):"]
+        if group:
+            out.append("; ".join(_label(r) for r in sorted(
+                group, key=lambda r: (coast_region(r), r["name"]))))
+
+    ranked = sorted(((confusion(r), r) for r in done),
+                    key=lambda item: (-item[0][0], coast_region(item[1]), item[1]["name"]))
+    ranked = [(why, r) for (score, why), r in ranked if score > 0][:HUMAN_LIST_SIZE]
+    out += ["", f"For a human to look at ({len(ranked)} most confusing):"]
+    for n, (why, r) in enumerate(ranked, 1):
+        out.append(f"{n}. {_label(r)}: " + "; ".join(why) + ".")
+    return "\n".join(out)
+
+
+def render_memory_dry_run(spots: list, effort: str) -> str:
+    """Exactly what the model is sent in memory-only mode, without calling it."""
+    parts = [f"Model {MODEL}, effort {effort}, no tools. One request per rated spot: "
+             f"{len(spots)} spots.", "", "SYSTEM PROMPT (the same for every spot)", "",
+             MEMORY_SYSTEM, "THE ONLY TEXT ABOUT EACH SPOT (the user message):"]
+    for spot in spots:
+        parts += ["", spot_prompt(spot_identity(spot))]
+    return "\n".join(parts)
+
+
 # --- entry point --------------------------------------------------------------------
 
 def load_roster(path: Path) -> list:
@@ -1426,19 +1883,27 @@ def _make_client():
 def _parse_args(argv):
     parser = argparse.ArgumentParser(
         prog="python3 -m pipeline.research_break_type",
-        description="Research the pilot spots' break types and bottoms into a results file. "
+        description="Research the pilot spots' break types and bottoms into a results file, "
+                    "or, with --memory-only, ask the model's memory about every rated spot. "
                     "Reads the roster; never writes it or the database.")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT,
-                        help="the results file (default: %(default)s)")
+    parser.add_argument("--memory-only", action="store_true",
+                        help="a memory answer (no web search) for every rated spot, into "
+                             f"its own results file (default {DEFAULT_MEMORY_OUTPUT.name}, "
+                             f"${MEMORY_BUDGET_USD:.2f} cap, {MEMORY_PAUSE_SECONDS:.0f} s "
+                             "between spots)")
+    parser.add_argument("--output", type=Path, default=None,
+                        help=f"the results file (default: {DEFAULT_OUTPUT.name} in "
+                             "pipeline/data)")
     parser.add_argument("--roster", type=Path, default=DEFAULT_ENRICHED_OUTPUT,
                         help="the roster to read (default: %(default)s)")
-    parser.add_argument("--budget", type=float, default=PILOT_BUDGET_USD,
-                        help="the cap in US dollars, across re-runs (default: %(default).2f)")
+    parser.add_argument("--budget", type=float, default=None,
+                        help="the cap in US dollars, across re-runs "
+                             f"(default: {PILOT_BUDGET_USD:.2f})")
     parser.add_argument("--effort", choices=EFFORTS, default=DEFAULT_EFFORT)
     parser.add_argument("--limit", type=int, default=None,
                         help="research at most this many spots in this run")
-    parser.add_argument("--pause", type=float, default=SPOT_PAUSE_SECONDS,
-                        help="seconds between spots (default: %(default).0f)")
+    parser.add_argument("--pause", type=float, default=None,
+                        help=f"seconds between spots (default: {SPOT_PAUSE_SECONDS:.0f})")
     parser.add_argument("--fresh", action="store_true",
                         help="start a new results file instead of resuming")
     mode = parser.add_mutually_exclusive_group()
@@ -1447,7 +1912,15 @@ def _parse_args(argv):
     mode.add_argument("--report", action="store_true",
                       help="print the report from the results file; call nothing")
     parser.add_argument("-v", "--verbose", action="store_true")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    memory = args.memory_only
+    if args.output is None:
+        args.output = DEFAULT_MEMORY_OUTPUT if memory else DEFAULT_OUTPUT
+    if args.budget is None:
+        args.budget = MEMORY_BUDGET_USD if memory else PILOT_BUDGET_USD
+    if args.pause is None:
+        args.pause = MEMORY_PAUSE_SECONDS if memory else SPOT_PAUSE_SECONDS
+    return args
 
 
 def main(argv=None, client=None, sleep=time.sleep) -> int:
@@ -1458,11 +1931,20 @@ def main(argv=None, client=None, sleep=time.sleep) -> int:
         if not args.output.exists():
             raise SystemExit(f"no results file at {args.output}")
         results = json.loads(args.output.read_text(encoding="utf-8"))
-        if results.get("schema") != SCHEMA_VERSION:
+        if args.memory_only:
+            if (results.get("kind") != "memory_only"
+                    or results.get("schema") != MEMORY_SCHEMA_VERSION):
+                raise SystemExit(f"{args.output} is not a memory-only results file "
+                                 f"(schema {MEMORY_SCHEMA_VERSION})")
+            print(render_memory_report(results))
+            return 0
+        if results.get("kind") == "memory_only" or results.get("schema") != SCHEMA_VERSION:
             raise SystemExit(f"{args.output} has results schema {results.get('schema')}; this "
                              f"version of the script reports schema {SCHEMA_VERSION} only")
         print(render_report(results))
         return 0
+    if args.memory_only:
+        return _main_memory(args, client, sleep)
     resolved = resolve_pilot(load_roster(args.roster))
     if args.dry_run:
         print(render_dry_run(resolved, args.effort))
@@ -1484,6 +1966,33 @@ def main(argv=None, client=None, sleep=time.sleep) -> int:
     results["spent_usd"] = round(budget.spent_usd, 6)
     save_results(args.output, results)
     print(render_report(results))
+    log.info("results: %s", args.output)
+    return 1 if stopped and stopped.startswith("error") else 0
+
+
+def _main_memory(args, client, sleep) -> int:
+    spots = memory_spots(load_roster(args.roster))
+    if args.dry_run:
+        print(render_memory_dry_run(spots, args.effort))
+        return 0
+    guard_output_path(args.output, args.roster)
+    if not args.budget > 0:
+        raise SystemExit("--budget must be more than 0")
+    results = load_memory_results(args.output, args.effort, args.budget, args.fresh, len(spots))
+    if client is None:
+        client = _make_client()
+    costs = [r["cost_usd"] for r in results["spots"].values() if r.get("done")]
+    budget = Budget(args.budget, results["spent_usd"], max(costs or [0.0]),
+                    floor_usd=MEMORY_RESERVE_FLOOR_USD)
+    this_run = {"started_at": _now(), "finished_at": None, "stopped": None}
+    results["runs"].append(this_run)
+    stopped = memory_run(client, spots, results, budget, args.effort, limit=args.limit,
+                         pause_seconds=args.pause, sleep=sleep,
+                         save=lambda data: save_results(args.output, data))
+    this_run.update(finished_at=_now(), stopped=stopped)
+    results["spent_usd"] = round(budget.spent_usd, 6)
+    save_results(args.output, results)
+    print(render_memory_report(results))
     log.info("results: %s", args.output)
     return 1 if stopped and stopped.startswith("error") else 0
 
