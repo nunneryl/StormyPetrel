@@ -1343,11 +1343,11 @@ def test_a_results_file_from_other_settings_is_not_resumed(tmp_path):
     with pytest.raises(SystemExit, match="different settings"):
         rb.load_results(path, "high", 5.0, fresh=False)
     assert rb.load_results(path, "high", 5.0, fresh=True)["settings"]["effort"] == "high"
-    # The first pilot's file (schema 1) is never resumed either.
+    # Nor is an earlier schema's file: the first gate runs' (schema 3) saved no pages.
     old = rb.new_results("medium", 5.0)
-    old["schema"] = 1
+    old["schema"] = 3
     rb.save_results(path, old)
-    with pytest.raises(SystemExit, match="different settings"):
+    with pytest.raises(SystemExit, match="has results schema 3; this version writes schema 4"):
         rb.load_results(path, "medium", 5.0, fresh=False)
 
 
@@ -1384,15 +1384,17 @@ def test_a_run_writes_its_results_file_and_nothing_else(tmp_path):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["results.json",
                                                          "spots_enriched_copy.json"]
     saved = json.loads(output.read_text())
-    assert saved["schema"] == 3
+    assert saved["schema"] == 4
     assert [r["done"] for r in saved["spots"].values()] == [True, True]
     assert [r["research"]["sand_bottom"] for r in saved["spots"].values()] == ["no", "no"]
 
 
-def test_the_earlier_pilots_results_are_left_where_they_are():
-    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_gate.json"
+def test_the_earlier_runs_results_are_left_where_they_are():
+    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_gate3.json"
     assert rb.DEFAULT_OUTPUT.name not in ("break_type_research_pilot.json",
-                                          "break_type_research_pilot2.json")
+                                          "break_type_research_pilot2.json",
+                                          "break_type_research_gate.json",
+                                          "break_type_research_gate2.json")
 
 
 def test_the_results_file_may_not_be_the_roster(tmp_path):

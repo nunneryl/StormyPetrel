@@ -10,7 +10,8 @@ WHAT THESE TESTS HOLD:
      run's answer carried in the record;
   3. it writes its own results file and nothing else, resumes where it stopped, keeps to
      its cap ($70 by default), and will not write over the memory-only results;
-  4. the report's tables are the ones written out here.
+  4. the report's tables are the ones written out here;
+  5. its file can be rechecked with no API calls, like the gate's.
 
 No expected value below is produced by calling the code under test.
 """
@@ -171,7 +172,7 @@ def test_the_plan_settles_what_the_rule_settles_and_researches_the_rest():
 def test_the_full_runs_defaults():
     assert rb.FULL_BUDGET_USD == 70.00
     assert rb.DEFAULT_FULL_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_full.json"
-    assert rb.FULL_SCHEMA_VERSION == 1
+    assert rb.FULL_SCHEMA_VERSION == 2
 
 
 # --- 2-3. the run ------------------------------------------------------------------------------
@@ -193,7 +194,7 @@ def test_the_run_researches_each_planned_spot_once_and_writes_only_its_file(file
     assert sorted(p.name for p in files["dir"].iterdir()) == ["full.json", "memory.json",
                                                              "roster_copy.json"]
     saved = json.loads(files["output"].read_text())
-    assert (saved["kind"], saved["schema"], saved["budget_usd"]) == ("full", 1, 70.0)
+    assert (saved["kind"], saved["schema"], saved["budget_usd"]) == ("full", 2, 70.0)
     assert sorted(saved["settled"]) == ["Rockaway Beach|New York", "Sandy|New Jersey"]
     assert saved["planned"] == ["Ditch Plains|New York", "Twin|New Jersey", "Cove|California",
                                 "Lost|Maine", "Unasked|Texas"]
@@ -266,7 +267,7 @@ def test_each_report_refuses_the_others_results_file(files):
     with pytest.raises(SystemExit, match="not a full-run results file"):
         rb.main(["--full", "--report", "--output", str(pilot)])
     assert _main(files, "--limit", "1", client=FakeClient()) == 0
-    with pytest.raises(SystemExit, match="schema 3 only"):
+    with pytest.raises(SystemExit, match="schema 4 only"):
         rb.main(["--report", "--output", str(files["output"])])
 
 
@@ -365,3 +366,46 @@ def test_the_report_of_an_unfinished_run_marks_the_rest_pending(files, capsys):
     assert report[3] == "Stopped early: budget"
     assert "Final sand-bottom flag, every spot (7): 4 yes, 1 no, 1 unknown, 1 pending." in report
     assert report[-1] == "| Unasked (Texas) | pending | — | not researched yet |"
+
+
+def test_a_full_run_file_is_rechecked_with_no_calls(files, capsys, monkeypatch):
+    # No key and no client: a recheck that tried to make one would stop with an error.
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    assert _main(files, client=FakeClient()) == 0
+    saved = json.loads(files["output"].read_text())
+    # Ditch Plains' bottom as checks that missed its quote would have left it.
+    ditch = saved["spots"]["Ditch Plains|New York"]["research"]
+    ditch["bottom"] = {"status": "unknown", "value": "unknown", "values": [], "mixed": False,
+                       "source_url": DITCH, "cited_url": None, "quote": None,
+                       "quote_found_in": None, "quote_names_value": None, "location": None,
+                       "reason": "the quote is not on the cited page"}
+    ditch["sand_bottom"] = "unknown"
+    rb.save_results(files["output"], saved)
+    before = files["output"].read_bytes()
+    capsys.readouterr()
+    assert rb.main(["--full", "--recheck", "--output", str(files["output"]), "--roster",
+                    str(files["roster"]), "--memory-results", str(files["memory"])]) == 0
+    printed = capsys.readouterr().out.splitlines()
+    assert printed[:10] == [
+        "Rechecked 5 spots from full.json against their saved responses and pages, with no "
+        "API calls. Wrote full.rechecked.json.",
+        "Values changed by the recheck: 1.",
+        "",
+        "| Spot | Value | Before | After |",
+        "|---|---|---|---|",
+        "| Ditch Plains (New York) | bottom | unknown: the quote is not on the cited page "
+        "| rock |",
+        "",
+        "Values unchanged, with a different reason, URL, quote or location: 0.",
+        "",
+        "Researched 5 of the 5 rated spots that geography does not settle; 2 more are settled "
+        "by geography. Spent $0.3125 of the $70.00 budget, at list prices."]
+    assert files["output"].read_bytes() == before
+    rechecked = json.loads((files["dir"] / "full.rechecked.json").read_text())
+    assert (rechecked["kind"], rechecked["schema"]) == ("full", 2)
+    research = rechecked["spots"]["Ditch Plains|New York"]["research"]
+    assert (research["bottom"]["status"], research["bottom"]["value"],
+            research["bottom"]["source_url"], research["sand_bottom"]) == (
+        "researched", "rock", DITCH, "no")
+    assert rechecked["settled"] == saved["settled"]
+    assert rechecked["planned"] == saved["planned"]

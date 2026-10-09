@@ -163,7 +163,7 @@ def test_the_memory_mode_has_its_own_file_budget_and_pause():
     assert args.output == config.PIPELINE_DIR / "data" / "break_type_memory_all.json"
     assert (args.budget, args.pause) == (6.00, 1.0)
     pilot = rb._parse_args([])
-    assert pilot.output == config.PIPELINE_DIR / "data" / "break_type_research_gate.json"
+    assert pilot.output == config.PIPELINE_DIR / "data" / "break_type_research_gate3.json"
     assert (pilot.budget, pilot.pause) == (4.00, 15.0)
     full = rb._parse_args(["--full"])
     assert full.output == config.PIPELINE_DIR / "data" / "break_type_research_full.json"
@@ -262,7 +262,7 @@ def test_a_run_writes_its_results_file_and_nothing_else(tmp_path):
 def test_each_mode_refuses_the_others_results_file(tmp_path):
     memory = tmp_path / "memory.json"
     rb.save_results(memory, rb.new_memory_results("medium", 6.0, 646))
-    with pytest.raises(SystemExit, match="schema 3 only"):
+    with pytest.raises(SystemExit, match="schema 4 only"):
         rb.main(["--report", "--output", str(memory)])
     pilot = tmp_path / "pilot.json"
     rb.save_results(pilot, rb.new_results("medium", 3.0))

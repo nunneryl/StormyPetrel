@@ -43,8 +43,8 @@ far, and at least SPOT_RESERVE_FLOOR_USD before any spot has been priced. No req
 once the budget is spent. The budget ($4 by default) holds across re-runs: the results file
 carries what has been spent.
 
-WRITES ONE FILE: the results file (DEFAULT_OUTPUT), after every spot. Never the roster and
-never the database. Nothing here imports db_import or a database client, and the results
+WRITES ONE FILE: the results file (DEFAULT_OUTPUT), after every spot; --recheck writes its
+own. Never the roster and never the database. Nothing here imports db_import or a database client, and the results
 path may not be the roster.
 
 RUN on the Mac, from the repo root, with ANTHROPIC_API_KEY set:
@@ -52,7 +52,14 @@ RUN on the Mac, from the repo root, with ANTHROPIC_API_KEY set:
     python3 -m pipeline.research_break_type              # the rest of the pilot
     python3 -m pipeline.research_break_type --report     # the tables again, no API calls
     python3 -m pipeline.research_break_type --dry-run    # what the model is sent, no calls
+    python3 -m pipeline.research_break_type --recheck    # the checks again, no calls
 The pilot's report ends with the gate for the full run (gate_verdict): PASS or FAIL.
+
+SAVED PAGES AND --recheck. Each research turn's responses are saved in the results file,
+the fetched pages' text included (saved_responses), and the run judges that saved copy.
+After a fix to the checks, --recheck judges every saved answer again with no API calls and
+writes the result to a new file (x.json -> x.rechecked.json), leaving the original as it
+was. It cannot search, fetch or ask again: what the saved pages do not back stays unknown.
 
 THE FULL RUN (--full), only once the gate passes, after the memory-only run (--memory-only):
 researches every rated spot that the memory answers do not settle by geography, into its own
@@ -151,9 +158,11 @@ LOCATION_MAX_KM = 25.0
 MIN_QUOTE_WORDS = 3
 
 # Earlier runs keep their own files: the first pilot (schema 1) break_type_research_pilot.json,
-# the revision (schema 2) break_type_research_pilot2.json. The gate run writes this one.
-DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_gate.json"
-SCHEMA_VERSION = 3
+# the revision (schema 2) break_type_research_pilot2.json, the first gate runs (schema 3)
+# break_type_research_gate.json and _gate2.json. Schema 4 saves each research turn's
+# responses, the fetched pages' text included, so that --recheck can judge them again.
+DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_gate3.json"
+SCHEMA_VERSION = 4
 
 # What the waves break over. Kept in the results file only: the spots table has no column.
 BOTTOM_VALUES = ("sand", "rock", "coral", "cobble", "mixed", "unknown")
@@ -985,6 +994,79 @@ def agreements(research: dict, recall: dict) -> dict:
     return out
 
 
+# --- the saved responses ------------------------------------------------------------
+#
+# Each research turn's responses are saved in the record (research_responses) with every
+# field the checks read: the tool calls, the URLs each search returned, each fetched
+# page's text, each failed fetch's error, and the model's own text with its citations.
+# Thinking, encrypted search content and usage are left out. The run judges this saved
+# copy, never the raw responses, so --recheck, which judges it again with no API calls,
+# gives the same verdicts until the checks themselves change.
+
+def _saved_block(block: dict):
+    """The parts of one content block that the checks read, or None for a block they
+    never read (thinking)."""
+    kind = block.get("type")
+    if kind == "server_tool_use":
+        return {"type": kind, "id": block.get("id"), "name": block.get("name"),
+                "input": block.get("input")}
+    if kind == "web_search_tool_result":
+        content = block.get("content")
+        if isinstance(content, list):
+            content = [{"type": item.get("type"), "url": item.get("url"),
+                        "title": item.get("title")}
+                       for item in content if isinstance(item, dict)]
+        elif isinstance(content, dict):
+            content = {"type": content.get("type"), "error_code": content.get("error_code")}
+        return {"type": kind, "tool_use_id": block.get("tool_use_id"), "content": content}
+    if kind == "web_fetch_tool_result":
+        content = block.get("content") or {}
+        if content.get("type") == "web_fetch_result":
+            document = content.get("content") or {}
+            source = document.get("source") or {}
+            kept = {"type": source.get("type"), "media_type": source.get("media_type")}
+            if source.get("type") == "text":
+                # The page's text, as the model read it: what a quote is checked against.
+                kept["data"] = source.get("data")
+            content = {"type": "web_fetch_result", "url": content.get("url"),
+                       "retrieved_at": content.get("retrieved_at"),
+                       "content": {"type": document.get("type"), "title": document.get("title"),
+                                   "source": kept}}
+        else:
+            content = {"type": content.get("type"), "error_code": content.get("error_code")}
+        return {"type": kind, "tool_use_id": block.get("tool_use_id"), "content": content}
+    if kind == "text":
+        saved = {"type": "text", "text": block.get("text")}
+        if block.get("citations"):
+            saved["citations"] = [{key: value for key, value in citation.items()
+                                   if key != "encrypted_index"}
+                                  for citation in block["citations"]]
+        return saved
+    return None
+
+
+def saved_responses(responses: list) -> list:
+    """*responses* as they are saved: each one's stop reason and the blocks the checks read."""
+    return [{"stop_reason": response.get("stop_reason"),
+             "content": [saved for saved in (_saved_block(block)
+                                             for block in (response.get("content") or []))
+                         if saved is not None]}
+            for response in responses]
+
+
+def judge_saved(saved: dict, identity: dict) -> dict:
+    """The researched answer from the saved responses: the first turn's, merged with the
+    follow-up's when there was one, by the follow-up's rule."""
+    first = judge_research(saved["first"], identity)
+    follow_up = saved.get("follow_up")
+    if follow_up is None:
+        return first
+    combined = judge_research(saved["first"] + follow_up["responses"], identity)
+    return merge_follow_up(first, combined, {"failed": first["failed_fetches"],
+                                             "needed": follow_up["asked_for"]},
+                           follow_up["responses"])
+
+
 # --- calling the API ----------------------------------------------------------------
 
 def _as_dict(message) -> dict:
@@ -1067,10 +1149,14 @@ def new_record(entry: tuple, spot: dict) -> dict:
     return {
         "name": entry[0], "region": entry[1], "asked_as": entry[2],
         "control_answer": entry[3], "lat": spot["lat"], "lng": spot["lng"],
+        # What the model was told about the spot, and what the checks compare pages with.
+        "identity": spot_identity(spot),
         # Read for the report. Never sent: the requests are built from spot_identity.
         # The roster has no bottom, so there is no current bottom to show.
         "current": {"break_type": spot.get("break_type"),
                     "break_type_source": spot.get("break_type_source")},
+        # Each research turn's responses, page text included (see saved_responses).
+        "research_responses": None,
         "research": None, "model_recall": None,
         "research_usage": None, "recall_usage": None,
         "cost_usd": 0.0, "agree": None, "done": False, "error": None,
@@ -1141,7 +1227,9 @@ def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
         try:
             responses, messages, last = _run_turn(client, request, list(request["messages"]),
                                                   budget, sleep, spent)
-            record["research"] = judge_research(responses, identity)
+            saved = {"first": saved_responses(responses), "follow_up": None}
+            record["research_responses"] = saved
+            record["research"] = judge_saved(saved, identity)
             follow = follow_up_needed(record["research"])
             if follow is not None:
                 messages = messages + [
@@ -1149,9 +1237,9 @@ def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
                     {"role": "user",
                      "content": follow_up_message(follow["failed"], follow["needed"])}]
                 more, _, _ = _run_turn(client, request, messages, budget, sleep, spent)
-                record["research"] = merge_follow_up(
-                    record["research"], judge_research(responses + more, identity), follow,
-                    more)
+                saved["follow_up"] = {"asked_for": follow["needed"],
+                                      "responses": saved_responses(more)}
+                record["research"] = judge_saved(saved, identity)
         finally:
             record["research_usage"] = _priced(spent["usage"])
 
@@ -1265,7 +1353,11 @@ def load_results(path: Path, effort: str, budget_usd: float, fresh: bool) -> dic
     if fresh or not path.exists():
         return new_results(effort, budget_usd)
     results = json.loads(path.read_text(encoding="utf-8"))
-    if results.get("schema") != SCHEMA_VERSION or results.get("settings") != run_settings(effort):
+    if results.get("schema") != SCHEMA_VERSION:
+        raise SystemExit(f"{path} has results schema {results.get('schema')}; this version "
+                         f"writes schema {SCHEMA_VERSION}. Pass --fresh to start over, or "
+                         "--output for a new file.")
+    if results.get("settings") != run_settings(effort):
         raise SystemExit(f"{path} was made with different settings (model, effort, tools "
                          "or prompts). Pass --fresh to start over, or --output for a new file.")
     results["budget_usd"] = budget_usd
@@ -2045,7 +2137,8 @@ def render_memory_dry_run(spots: list, effort: str) -> str:
 FULL_BUDGET_USD = 70.00
 FULL_PAUSE_SECONDS = SPOT_PAUSE_SECONDS
 DEFAULT_FULL_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_full.json"
-FULL_SCHEMA_VERSION = 1
+# 2: each research turn's responses saved, as in the gate's schema 4.
+FULL_SCHEMA_VERSION = 2
 
 
 def load_memory_answers(path: Path) -> dict:
@@ -2263,6 +2356,76 @@ def render_full_dry_run(settled: list, to_research: list, effort: str) -> str:
     return "\n".join(parts)
 
 
+# --- recheck: the checks again, on the saved responses, with no API calls -----------------
+#
+# After a fix to the checks: every saved research answer is judged again from its saved
+# responses and pages (judge_saved), and the results go to a new file, never over the one
+# read. Nothing is asked of the model, nothing is fetched or searched, and no follow-up is
+# made that the run did not make, so a value the saved pages cannot back stays unknown.
+
+def recheck_path(path: Path) -> Path:
+    """Where a recheck of *path* is written unless --into says otherwise: x.json becomes
+    x.rechecked.json."""
+    return path.with_name(path.stem + ".rechecked.json")
+
+
+def recheck_results(results: dict, source: str) -> tuple:
+    """(the results with every saved research answer judged again; the values whose status
+    or value changed, as (record, field, before, after); how many values kept their status
+    and value but changed otherwise, in reason, URL, quote or location; how many spots had
+    nothing saved to judge)."""
+    out = copy.deepcopy(results)
+    changed, details, unsaved = [], 0, 0
+    for record in out["spots"].values():
+        saved = record.get("research_responses")
+        if not saved:
+            unsaved += 1
+            continue
+        before = record.get("research") or {}
+        record["research"] = judge_saved(saved, record["identity"])
+        if record.get("model_recall"):
+            record["agree"] = agreements(record["research"], record["model_recall"])
+        for field in FIELDS:
+            old = before.get(field) or _unknown("not judged")
+            new = record["research"][field]
+            if (old["status"], old["value"]) != (new["status"], new["value"]):
+                changed.append((record, field, old, new))
+            elif old != new:
+                details += 1
+    out["rechecks"] = list(results.get("rechecks") or []) + [
+        {"at": _now(), "from": source, "values_changed": len(changed)}]
+    return out, changed, details, unsaved
+
+
+def _spots(count: int) -> str:
+    return f"{count} spot" + ("" if count == 1 else "s")
+
+
+def render_recheck(source: str, into: str, before: dict, after: dict, changed: list,
+                   details: int, unsaved: int, gate: bool) -> str:
+    rechecked = len(after["spots"]) - unsaved
+    out = [f"Rechecked {_spots(rechecked)} from {source} against their saved responses and "
+           f"pages, with no API calls. Wrote {into}."]
+    if unsaved:
+        out.append(f"Nothing saved to recheck at {_spots(unsaved)} (not researched, or "
+                   "stopped before an answer); left as they were.")
+    out.append(f"Values changed by the recheck: {len(changed)}.")
+    if changed:
+        out += ["", _row("Spot", "Value", "Before", "After"), "|---|---|---|---|"]
+        for record, field, old, new in changed:
+            out.append(_row(f"{record['name']} ({record['region']})", _NAMES[field],
+                            _researched_cell({field: old}, field),
+                            _researched_cell({field: new}, field)))
+        out.append("")
+    out.append("Values unchanged, with a different reason, URL, quote or location: "
+               f"{details}.")
+    if gate:
+        out.append("The gate: " + ("PASS" if gate_verdict(before)[0] else "FAIL")
+                   + " before the recheck, " + ("PASS" if gate_verdict(after)[0] else "FAIL")
+                   + " after.")
+    return "\n".join(out)
+
+
 # --- entry point --------------------------------------------------------------------
 
 def load_roster(path: Path) -> list:
@@ -2326,8 +2489,17 @@ def _parse_args(argv):
                       help="print what the model is sent; call nothing, write nothing")
     mode.add_argument("--report", action="store_true",
                       help="print the report from the results file; call nothing")
+    mode.add_argument("--recheck", action="store_true",
+                      help="judge every saved research answer in the results file again, "
+                           "against its saved pages, with no API calls, and write the "
+                           "result to a new file (see --into); with --full, a full-run file")
+    parser.add_argument("--into", type=Path, default=None,
+                        help="with --recheck: the file to write (default: the results "
+                             "file's name with .rechecked before .json)")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
+    if args.into is not None and not args.recheck:
+        parser.error("--into goes with --recheck")
     output, budget, pause = (
         (DEFAULT_MEMORY_OUTPUT, MEMORY_BUDGET_USD, MEMORY_PAUSE_SECONDS) if args.memory_only
         else (DEFAULT_FULL_OUTPUT, FULL_BUDGET_USD, FULL_PAUSE_SECONDS) if args.full
@@ -2345,6 +2517,8 @@ def main(argv=None, client=None, sleep=time.sleep) -> int:
     args = _parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(message)s", stream=sys.stderr)
+    if args.recheck:
+        return _main_recheck(args)
     if args.report:
         if not args.output.exists():
             raise SystemExit(f"no results file at {args.output}")
@@ -2394,6 +2568,40 @@ def main(argv=None, client=None, sleep=time.sleep) -> int:
     print(render_report(results))
     log.info("results: %s", args.output)
     return 1 if stopped and stopped.startswith("error") else 0
+
+
+def _main_recheck(args) -> int:
+    """--recheck: reads the results file, writes the rechecked results to another file, and
+    prints what changed and the report. Makes no client and calls nothing."""
+    if args.memory_only:
+        raise SystemExit("--recheck judges researched answers against their saved pages; the "
+                         "memory-only answers cite no pages, so there is nothing to recheck")
+    path = args.output
+    if not path.exists():
+        raise SystemExit(f"no results file at {path}")
+    results = json.loads(path.read_text(encoding="utf-8"))
+    kind, schema, name = (("full", FULL_SCHEMA_VERSION, "full-run") if args.full
+                          else (None, SCHEMA_VERSION, "gate"))
+    if results.get("kind") != kind or results.get("schema") != schema:
+        raise SystemExit(f"{path} is not a {name} results file of schema {schema}, the first "
+                         "to save each research turn's responses and pages. A file made "
+                         "before that cannot be rechecked: run it again into a fresh file.")
+    into = args.into if args.into is not None else recheck_path(path)
+    guard_output_path(into, args.roster)
+    if into.resolve() == path.resolve():
+        raise SystemExit(f"refusing to write the recheck over {path}: the file it reads is "
+                         "kept as it was")
+    if into.resolve() == args.memory_results.resolve():
+        raise SystemExit(f"refusing to write the recheck over {into}: that is the memory-only "
+                         "results file")
+    rechecked, changed, details, unsaved = recheck_results(results, path.name)
+    save_results(into, rechecked)
+    print(render_recheck(path.name, into.name, results, rechecked, changed, details, unsaved,
+                         gate=not args.full))
+    print()
+    print(render_full_report(rechecked) if args.full else render_report(rechecked))
+    log.info("rechecked results: %s", into)
+    return 0
 
 
 def _main_memory(args, client, sleep) -> int:
