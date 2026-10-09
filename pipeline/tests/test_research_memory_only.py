@@ -163,8 +163,14 @@ def test_the_memory_mode_has_its_own_file_budget_and_pause():
     assert args.output == config.PIPELINE_DIR / "data" / "break_type_memory_all.json"
     assert (args.budget, args.pause) == (6.00, 1.0)
     pilot = rb._parse_args([])
-    assert pilot.output == config.PIPELINE_DIR / "data" / "break_type_research_pilot2.json"
-    assert (pilot.budget, pilot.pause) == (3.00, 15.0)
+    assert pilot.output == config.PIPELINE_DIR / "data" / "break_type_research_gate.json"
+    assert (pilot.budget, pilot.pause) == (4.00, 15.0)
+    full = rb._parse_args(["--full"])
+    assert full.output == config.PIPELINE_DIR / "data" / "break_type_research_full.json"
+    assert (full.budget, full.pause) == (70.00, 15.0)
+    assert full.memory_results == config.PIPELINE_DIR / "data" / "break_type_memory_all.json"
+    with pytest.raises(SystemExit):
+        rb._parse_args(["--full", "--memory-only"])
 
 
 def test_a_record_carries_the_current_label_for_the_report_only():
@@ -256,7 +262,7 @@ def test_a_run_writes_its_results_file_and_nothing_else(tmp_path):
 def test_each_mode_refuses_the_others_results_file(tmp_path):
     memory = tmp_path / "memory.json"
     rb.save_results(memory, rb.new_memory_results("medium", 6.0, 646))
-    with pytest.raises(SystemExit, match="schema 2 only"):
+    with pytest.raises(SystemExit, match="schema 3 only"):
         rb.main(["--report", "--output", str(memory)])
     pilot = tmp_path / "pilot.json"
     rb.save_results(pilot, rb.new_results("medium", 3.0))
@@ -303,12 +309,13 @@ GULF = ["Cape San Blas", "Captiva", "Coolidge", "Destin Jetty", "Englewood", "Ga
 def test_the_geography_lists_are_the_ones_proposed():
     assert rb.SAND_BARRIER_REGIONS == ("New Jersey", "Delaware", "Maryland", "Virginia",
                                        "North Carolina", "South Carolina", "Georgia", "Texas",
-                                       "Florida (Gulf)", "Florida (Atlantic)")
+                                       "Florida (Gulf)", "Florida (Atlantic)",
+                                       "New York (Long Island south shore)")
     assert rb.FLORIDA_KNOWN_REEF == ("Monster Hole", "Bathtub Beach", "Ocean Reef Park",
                                      "Dania Beach Pier")
     assert rb.ROCKY_REGIONS == ("California", "Oregon", "Washington", "Hawaii",
                                 "Puerto Rico", "Maine", "New Hampshire", "Massachusetts",
-                                "Rhode Island", "Florida (Keys)")
+                                "Rhode Island", "Florida (Keys)", "New York (Montauk)")
     assert rb.HUMAN_LIST_SIZE == 30
 
 
@@ -324,6 +331,39 @@ def test_florida_is_split_by_coast():
         by["Florida (Atlantic)"])
 
 
+MONTAUK = ["Ditch Plains", "Hither Hills", "Montauk Point", "Poles", "Radars", "Terrace",
+           "Turtle Cove Montauk"]
+SOUTH_SHORE = ["Breezy Point", "Cupsogue Beach", "Davis Park", "Fire Island",
+               "Flying Point Beach", "Georgica Beach", "Gilgo Beach", "Jones Beach",
+               "Lido Beach", "Long Beach NY", "Main Beach East Hampton", "Mecox Beach",
+               "Ocean Bay Park", "Point Lookout", "Ponquogue Beach", "Robert Moses State Park",
+               "Rockaway 67th Street", "Rockaway 90th Street", "Rockaway Beach", "Saltaire",
+               "Shinnecock Inlet", "Smith Point Beach", "West End Long Beach"]
+
+
+def test_new_york_is_split_into_long_islands_south_shore_and_montauk():
+    # All 30 of the roster's rated New York spots: the 7 east of 72.05 W are Montauk, Hither
+    # Hills (72.026 W) among them; the other 23, Breezy Point and the Rockaways included,
+    # are the south shore.
+    by = {}
+    for spot in rb.memory_spots(ROSTER):
+        if spot["region_hint"] == "New York":
+            by.setdefault(rb.coast_region(spot), []).append(spot["name"])
+    assert sorted(by) == ["New York (Long Island south shore)", "New York (Montauk)"]
+    assert sorted(by["New York (Montauk)"]) == MONTAUK
+    assert sorted(by["New York (Long Island south shore)"]) == SOUTH_SHORE
+    # Made-up spots on either side of each line. The south-shore line at 73.53 W is at
+    # 40.55 + 0.23 x 0.47 = 40.658 N; at 72.17 W, 40.55 + 0.23 x 1.83 = 40.971 N.
+    for lat, lng, region in ((40.60, -73.53, "New York (Long Island south shore)"),
+                             (40.88, -73.53, "New York"),        # the north shore, Oyster Bay
+                             (40.96, -72.17, "New York (Long Island south shore)"),
+                             (40.98, -72.17, "New York"),
+                             (41.00, -72.04, "New York (Montauk)"),
+                             (41.00, -72.06, "New York"),
+                             (40.50, -74.10, "New York")):     # west of 74.05 W
+        assert rb.coast_region(_spot("X", "New York", lat, lng)) == region, (lat, lng)
+
+
 def _spot(name, state, lat=0.0, lng=0.0):
     return {"name": name, "region_hint": state, "lat": lat, "lng": lng}
 
@@ -332,12 +372,15 @@ def test_which_spots_are_in_a_sand_barrier_or_a_rocky_region():
     cocoa = _spot("Cocoa Beach Pier", "Florida", 28.368, -80.601)
     monster = _spot("Monster Hole", "Florida", 27.868, -80.447)
     key_west = _spot("Key West", "Florida", 24.55, -81.78)
-    assert [rb.in_sand_barrier_region(s) for s in (
-        cocoa, monster, key_west, _spot("A", "Texas"), _spot("B", "New York"),
-        _spot("C", "California"))] == [True, False, False, True, False, False]
-    assert [rb.in_rocky_region(s) for s in (
-        cocoa, monster, key_west, _spot("A", "Texas"), _spot("B", "New York"),
-        _spot("C", "California"))] == [False, True, True, False, False, True]
+    rockaway = _spot("Rockaway Beach", "New York", 40.58329, -73.806882)
+    hither = _spot("Hither Hills", "New York", 41.001019, -72.025809)
+    north = _spot("B", "New York", 40.88, -73.53)
+    spots = (cocoa, monster, key_west, _spot("A", "Texas"), north, _spot("C", "California"),
+             rockaway, hither)
+    assert [rb.in_sand_barrier_region(s) for s in spots] == [
+        True, False, False, True, False, False, True, False]
+    assert [rb.in_rocky_region(s) for s in spots] == [
+        False, True, True, False, False, True, False, True]
 
 
 def _record(name, state, lat=0.0, lng=0.0, label=None, verified=False, **answer):
@@ -363,8 +406,15 @@ def test_settled_needs_a_sand_barrier_region_sand_with_high_confidence_and_no_sh
         "candidate", ["not sand, or mixed"])
     assert rb.memory_verdict(_record("E", state="California", bt="beach", bottom="sand")) == (
         "candidate", ["rocky or reef region"])
-    assert rb.memory_verdict(_record("F", state="New York", bt="beach", bottom="sand")) == (
+    assert rb.memory_verdict(_record("F", "New York", 40.88, -73.53, bt="beach",
+                                     bottom="sand")) == (
         "candidate", ["sand with high confidence, outside the sand-barrier regions"])
+    # Long Island's south shore settles; Montauk, Hither Hills included, never does.
+    assert rb.memory_verdict(_record("Rockaway Beach", "New York", 40.58329, -73.806882,
+                                     bt="beach", bottom="sand")) == ("settled", [])
+    assert rb.memory_verdict(_record("Hither Hills", "New York", 41.001019, -72.025809,
+                                     bt="beach", bottom="sand")) == (
+        "candidate", ["rocky or reef region"])
     assert rb.memory_verdict(_record("Monster Hole", "Florida", 27.868, -80.447, bt="beach",
                                      bottom="sand")) == ("candidate", ["rocky or reef region"])
     assert rb.memory_verdict(_record("G", "California", label="reef", verified=True,

@@ -7,7 +7,7 @@ WHAT THESE TESTS HOLD:
   2. the model is never shown our break_type, its source or anything else of ours but
      the spot's name, state and coordinates;
   3. the requests go to MODEL with web search and web fetch called directly, fetched pages
-     cut at 3,000 tokens, and the memory answer has no tools;
+     cut at 6,000 tokens, and the memory answer has no tools;
   4. the break type and the bottom each stand only on a URL a tool really returned and a
      quote really on that page; anything else is 'unknown', for that value alone;
   5. a page that puts the spot in another state, or far from our coordinates, is no
@@ -21,7 +21,10 @@ WHAT THESE TESTS HOLD:
   9. the run writes the results file and nothing else: never the roster, never the
      database, and the bottom has no column anywhere;
  10. the real SDK accepts the requests, the follow-up included, and its responses are
-     read correctly.
+     read correctly;
+ 11. a quote is matched whatever its okina, accents or apostrophes, may stand on another
+     page the run fetched, and when it is not found the reason says what the page was;
+ 12. the report ends with the gate for the full run, PASS or FAIL on each rule as set.
 
 No expected value below is produced by calling the code under test: prices, costs,
 distances, sentences and table rows are written out or worked by hand in the comments.
@@ -82,7 +85,7 @@ IDENTITY = {"name": "Banzai Pipeline", "region": "Hawaii", "lat": 21.664, "lng":
 SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 3,
                "allowed_callers": ["direct"]}
 FETCH_TOOL = {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 2,
-              "max_content_tokens": 3000, "citations": {"enabled": True},
+              "max_content_tokens": 6000, "citations": {"enabled": True},
               "allowed_callers": ["direct"]}
 
 FOLLOW_UP_TEXT = (
@@ -314,11 +317,12 @@ def test_the_break_types_are_migration_020s_list_unchanged():
                                              "rivermouth", "unknown")
 
 
-def test_fetched_pages_are_cut_at_3000_tokens_and_pdfs_and_typed_urls_are_ruled_out():
-    # The first pilot cut pages at 6,000 tokens. PDFs are outside the API's cut, and a URL
-    # the model types in itself is refused (url_not_in_prior_context), so the prompt rules
-    # out both.
-    assert rb.FETCH_MAX_CONTENT_TOKENS == 3000
+def test_fetched_pages_are_cut_at_6000_tokens_and_pdfs_and_typed_urls_are_ruled_out():
+    # The first pilot cut pages at 6,000 tokens and its answers held; the revision's 3,000
+    # lost five of them, so the cap is back at 6,000. PDFs are outside the API's cut, and a
+    # URL the model types in itself is refused (url_not_in_prior_context), so the prompt
+    # rules out both.
+    assert rb.FETCH_MAX_CONTENT_TOKENS == 6000
     assert rb.WEB_FETCH_TOOL == FETCH_TOOL
     assert "do not type one in yourself. Do not fetch PDFs." in rb.RESEARCH_SYSTEM.replace(
         "\n   ", " ")
@@ -392,14 +396,18 @@ def test_a_search_citation_backs_a_quote_from_a_page_never_fetched():
     assert research["break_type"]["status"] == "researched"
     assert research["break_type"]["quote_found_in"] == "search citation"
     # The citation does not hold the bottom's words, and nothing was fetched.
-    assert research["bottom"]["reason"] == "the quote is not on the cited page"
+    assert research["bottom"]["reason"] == (
+        "the quote is not on the cited page, which was never fetched, and no search "
+        "citation from it holds the quote")
 
 
 def test_a_citation_from_another_page_does_not_back_the_quote():
     citation = {"type": "web_search_result_location", "url": OTHER_URL, "title": "t",
                 "encrypted_index": "i", "cited_text": QUOTE}
     research = _judge(_text("x", [citation]), _answer(), fetch=False)
-    assert research["break_type"]["reason"] == "the quote is not on the cited page"
+    assert research["break_type"]["reason"] == (
+        "the quote is not on the cited page, which was never fetched, and no search "
+        "citation from it holds the quote")
 
 
 def test_quote_marks_markdown_ellipses_and_spacing_do_not_hide_a_real_quote():
@@ -418,6 +426,121 @@ def test_a_redirected_fetch_still_backs_the_url_the_model_asked_for():
     research = rb.judge_research([_response(content)], IDENTITY)
     assert research["break_type"]["status"] == research["bottom"]["status"] == "researched"
     assert research["break_type"]["quote_found_in"] == "fetched page"
+
+
+# The revision's pilot lost Pipeline, Jaws, Tres Palmas, Suicide's and Bombora with "the
+# quote is not on the cited page". The words were the same; the spelling was not: a page's
+# okina (U+02BB), an accent or an apostrophe against the quote's plain letters, or the
+# other way round.
+@pytest.mark.parametrize("on_page, quoted", [
+    ("Banzai Pipeline in Oʻahu is an exposed reef break",
+     "Banzai Pipeline in Oahu is an exposed reef break"),
+    ("Banzai Pipeline in Oahu is an exposed reef break",
+     "Banzai Pipeline in Oʻahu is an exposed reef break"),
+    ("Banzai Pipeline in O'ahu is an exposed reef break",
+     "Banzai Pipeline in O‘ahu is an exposed reef break"),
+    ("Peʻahi, also called Jaws, is a big-wave reef break",
+     "Peahi, also called Jaws, is a big-wave reef break"),
+    ("Tres Palmas off Rincón is a big-wave reef break",
+     "Tres Palmas off Rincon is a big-wave reef break"),
+    ("Tres Palmas off Rincon is a big-wave reef break",
+     "Tres Palmas off Rincón is a big-wave reef break"),
+    ("Suicides is a fast reef break", "Suicide's is a fast reef break"),
+    ("Suicide’s is a fast reef break", "Suicides is a fast reef break"),
+])
+def test_okina_accents_and_apostrophes_do_not_hide_a_real_quote(on_page, quoted):
+    content = (_search("s1", "q", [URL]) + _fetch("f1", URL, on_page)
+               + [_answer(bt={"quote": quoted}, bottom=UNKNOWN)])
+    research = rb.judge_research([_response(content)], IDENTITY)
+    assert research["break_type"]["status"] == "researched"
+    assert research["break_type"]["quote_found_in"] == "fetched page"
+
+
+def test_a_different_word_is_still_not_the_quote():
+    content = (_search("s1", "q", [URL]) + _fetch("f1", URL, PAGE)
+               + [_answer(bt={"quote": "Banzai Pipeline in Maui is an exposed reef break"})])
+    research = rb.judge_research([_response(content)], IDENTITY)
+    assert research["break_type"]["reason"] == "the quote is not on the cited page"
+
+
+OTHER_PAGE = ("Pipeline, North Shore of Oahu. Type of wave: left reef. The wave breaks over a "
+              "shallow lava rock shelf close to the beach.")
+
+
+def test_a_quote_on_another_fetched_page_stands_on_that_page():
+    # The model cites the surf-forecast page for words that are on the wannasurf page, which
+    # it also fetched. The value stands on the wannasurf page, located by its own entry.
+    quote = "breaks over a shallow lava rock shelf close to the beach"
+    content = (_search("s1", "q", [URL, OTHER_URL]) + _fetch("f1", URL, PAGE)
+               + _fetch("f2", OTHER_URL, OTHER_PAGE)
+               + [_answer(bottom={"quote": quote},
+                          pages=[dict(PAGE_ENTRY),
+                                 dict(PAGE_ENTRY, url=OTHER_URL, place="North Shore of Oahu",
+                                      location_quote="Pipeline, North Shore of Oahu")])])
+    research = rb.judge_research([_response(content)], IDENTITY)
+    bottom = research["bottom"]
+    assert (bottom["status"], bottom["source_url"], bottom["cited_url"]) == (
+        "researched", OTHER_URL, URL)
+    assert bottom["quote_found_in"] == "fetched page"
+    assert bottom["location"]["source_place"] == "North Shore of Oahu"
+    assert bottom["location"]["verdict"] == "ok"
+    assert (research["break_type"]["source_url"], research["break_type"]["cited_url"]) == (
+        URL, None)
+
+
+def test_a_quote_moved_to_a_page_with_no_location_entry_is_unverified_not_lost():
+    quote = "breaks over a shallow lava rock shelf close to the beach"
+    content = (_search("s1", "q", [URL, OTHER_URL]) + _fetch("f1", URL, PAGE)
+               + _fetch("f2", OTHER_URL, OTHER_PAGE) + [_answer(bottom={"quote": quote})])
+    bottom = rb.judge_research([_response(content)], IDENTITY)["bottom"]
+    assert (bottom["status"], bottom["source_url"]) == ("researched", OTHER_URL)
+    assert bottom["location"]["verdict"] == "unverified"
+
+
+def test_a_search_result_page_never_fetched_does_not_lend_its_words():
+    # Only fetched pages are searched for a moved quote: OTHER_URL came back from the
+    # search but was never fetched, so its words are nowhere the code can read.
+    quote = "breaks over a shallow lava rock shelf close to the beach"
+    content = (_search("s1", "q", [URL, OTHER_URL]) + _fetch("f1", URL, PAGE)
+               + [_answer(bottom={"quote": quote})])
+    bottom = rb.judge_research([_response(content)], IDENTITY)["bottom"]
+    assert bottom["reason"] == "the quote is not on the cited page"
+
+
+def test_a_page_long_enough_to_have_been_cut_is_named_in_the_reason():
+    # 6,000 tokens x 4 characters x 0.9 = 21,600 characters. PAGE is 227 characters; one
+    # space and 21,372 x's make 21,600, and one x fewer makes 21,599.
+    for xs, reason in ((21_372, "the quote is not on the cited page, whose fetched text "
+                                "(21,600 characters) was probably cut at the 6,000-token "
+                                "limit"),
+                       (21_371, "the quote is not on the cited page")):
+        page = PAGE + " " + "x" * xs
+        content = (_search("s1", "q", [URL]) + _fetch("f1", URL, page)
+                   + [_answer(bt={"quote": "Pipeline is described further down the page"})])
+        research = rb.judge_research([_response(content)], IDENTITY)
+        assert research["break_type"]["reason"] == reason, xs
+
+
+def test_a_quote_cited_to_a_pdf_says_so():
+    content = _search("s1", "q", [URL]) + [
+        {"type": "server_tool_use", "id": "f1", "name": "web_fetch", "input": {"url": URL}},
+        {"type": "web_fetch_tool_result", "tool_use_id": "f1",
+         "content": {"type": "web_fetch_result", "url": URL,
+                     "retrieved_at": "2026-10-06T12:00:00Z",
+                     "content": {"type": "document",
+                                 "source": {"type": "base64", "media_type": "application/pdf",
+                                            "data": "JVBERi0xLjQK"}}}},
+        _answer()]
+    research = rb.judge_research([_response(content)], IDENTITY)
+    assert research["break_type"]["reason"] == ("the quote is not on the cited page, a PDF, "
+                                                "whose text cannot be checked")
+
+
+def test_the_prompt_says_to_quote_the_fetched_text_and_where_it_stops():
+    assert ("4. Copy each quote from the text the fetch returned, not from a search result, "
+            "and cite the URL of that fetched page. Your quote is checked against that text, "
+            "which stops after about 6,000 tokens of the page.") in rb.RESEARCH_SYSTEM.replace(
+        "\n   ", " ")
 
 
 def test_www_scheme_and_trailing_slash_do_not_make_a_url_a_different_page():
@@ -917,9 +1040,9 @@ def test_one_hour_cache_writes_are_priced_as_such():
     assert rb.cost_usd(usage) == pytest.approx(0.0040)
 
 
-def test_the_default_budget_is_three_dollars():
-    assert rb.PILOT_BUDGET_USD == 3.00
-    assert rb._parse_args([]).budget == 3.00
+def test_the_default_budget_is_four_dollars():
+    assert rb.PILOT_BUDGET_USD == 4.00
+    assert rb._parse_args([]).budget == 4.00
 
 
 def _dollar_responses(research_usd, recall_usd, research_stop="end_turn"):
@@ -1124,14 +1247,15 @@ def test_a_run_writes_its_results_file_and_nothing_else(tmp_path):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["results.json",
                                                          "spots_enriched_copy.json"]
     saved = json.loads(output.read_text())
-    assert saved["schema"] == 2
+    assert saved["schema"] == 3
     assert [r["done"] for r in saved["spots"].values()] == [True, True]
     assert [r["research"]["sand_bottom"] for r in saved["spots"].values()] == ["no", "no"]
 
 
-def test_the_first_pilots_results_are_left_where_they_are():
-    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_pilot2.json"
-    assert rb.DEFAULT_OUTPUT.name != "break_type_research_pilot.json"
+def test_the_earlier_pilots_results_are_left_where_they_are():
+    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_gate.json"
+    assert rb.DEFAULT_OUTPUT.name not in ("break_type_research_pilot.json",
+                                          "break_type_research_pilot2.json")
 
 
 def test_the_results_file_may_not_be_the_roster(tmp_path):
@@ -1222,7 +1346,10 @@ def test_the_report_rows():
     assert report[cost + 4] == ("| Banzai Pipeline | 1 | 1 | 1 page, about 56 tokens | — "
                                 "| 12,300 | 950 | $0.0430 | $0.0011 | $0.0441 |")
     # 0.0441 x 646 = 28.4886
-    assert report[-5:] == [
+    gate = report.index("The gate for the full run:")
+    assert report[gate - 1] == "" and report[-1] == "GATE: FAIL"
+    assert "PASS  Banzai Pipeline is not unknown; researched reef" in report[gate:]
+    assert report[gate - 6:gate - 1] == [
         "Spent $0.0441 of the $5.00 budget, at list prices.",
         "Per spot, over 1 finished: mean $0.0441, median $0.0441, cheapest $0.0441, "
         "dearest $0.0441.",
@@ -1242,9 +1369,175 @@ def test_the_report_counts_follow_ups_and_the_values_they_gained():
     results = rb.new_results("medium", 5.0)
     results["spots"]["Banzai Pipeline|Hawaii"] = record
     report = rb.render_report(results).splitlines()
-    assert report[-1] == "Followed up a failed fetch at 1 of 1 spots; 1 of them gained a value."
+    gate = report.index("The gate for the full run:")
+    assert report[gate - 2] == ("Followed up a failed fetch at 1 of 1 spots; 1 of them gained "
+                                "a value.")
     assert ("after url_not_in_prior_context: 0 searches, 1 fetch; filled break_type and "
             "bottom |") in [line for line in report if line.startswith("| Banzai Pipeline | 1 |")][0]
+
+
+# --- the gate for the full run -------------------------------------------------------------
+
+GATE_KEYS = {"Mavericks": "Mavericks, California|California",
+             "Malibu": "Malibu Surfrider Beach|California", "Zuma": "Zuma Beach|California",
+             "Steamer": "Steamer Lane|California", "Pipeline": "Banzai Pipeline|Hawaii",
+             "Jaws": "Peahi Jaws|Hawaii", "Waimea": "Waimea Bay|Hawaii",
+             "Tres": "Tres Palmas|Puerto Rico", "3 Mile": "3 Mile|California",
+             "Refugio": "Refugio State Beach|California", "Tourmaline": "Tourmaline|California",
+             "Lake Worth": "Lake Worth Pier|Florida", "Honolua": "Honolua Bay|Hawaii"}
+
+
+def _gate_results(**changes):
+    """Every pilot spot finished: the controls right and every other spot researched as a
+    reef, except *changes*, by GATE_KEYS name: a value, 'unknown', 'unfinished' or None
+    for not run."""
+    values = {"Mavericks, California": "reef", "Malibu Surfrider Beach": "point",
+              "Zuma Beach": "beach", "Steamer Lane": "point"}
+    spots = {}
+    for entry in rb.PILOT_SPOTS:
+        spots[f"{entry[0]}|{entry[1]}"] = values.get(entry[0], "reef")
+    for name, value in changes.items():
+        spots[GATE_KEYS[name.replace("_", " ")]] = value
+    results = {"spots": {}}
+    for key, value in spots.items():
+        if value is None:
+            continue
+        status = "unknown" if value in ("unknown", "unfinished") else "researched"
+        results["spots"][key] = {
+            "done": value != "unfinished",
+            "research": {"break_type": {"status": status,
+                                        "value": "unknown" if status == "unknown" else value}}}
+    return results
+
+
+GATE_PASSED = [
+    "PASS  control Mavericks, California: reef; researched reef",
+    "PASS  control Malibu Surfrider Beach: point; researched point",
+    "PASS  control Zuma Beach: beach; researched beach",
+    "PASS  control Steamer Lane: point or reef; researched point",
+    "PASS  Banzai Pipeline is not unknown; researched reef",
+    "PASS  Peahi Jaws is not unknown; researched reef",
+    "PASS  Waimea Bay is not unknown; researched reef",
+    "PASS  Tres Palmas is not unknown; researched reef",
+]
+
+
+def test_the_gate_passes_with_the_controls_right_and_four_unknown():
+    passed, lines = rb.gate_verdict(_gate_results(**{"3_Mile": "unknown", "Refugio": "unknown",
+                                                     "Tourmaline": "unknown",
+                                                     "Lake_Worth": "unknown"}))
+    assert passed is True
+    assert lines == GATE_PASSED + [
+        "PASS  no more than 4 of the 20 unknown for break type; 4 are: researched as unknown: "
+        "3 Mile, Refugio State Beach, Tourmaline, Lake Worth Pier",
+        "GATE: PASS"]
+
+
+def test_five_unknown_fail_the_gate():
+    passed, lines = rb.gate_verdict(_gate_results(**{"3_Mile": "unknown", "Refugio": "unknown",
+                                                     "Tourmaline": "unknown",
+                                                     "Lake_Worth": "unknown",
+                                                     "Honolua": "unknown"}))
+    assert passed is False
+    assert lines == GATE_PASSED + [
+        "FAIL  no more than 4 of the 20 unknown for break type; 5 are: researched as unknown: "
+        "Honolua Bay, 3 Mile, Refugio State Beach, Tourmaline, Lake Worth Pier",
+        "GATE: FAIL"]
+
+
+def test_steamer_lane_may_be_a_point_or_a_reef_and_nothing_else():
+    assert rb.gate_verdict(_gate_results(Steamer="reef"))[0] is True
+    passed, lines = rb.gate_verdict(_gate_results(Steamer="beach"))
+    assert passed is False
+    assert lines[3] == "FAIL  control Steamer Lane: point or reef; researched beach"
+    passed, lines = rb.gate_verdict(_gate_results(Steamer="unknown"))
+    assert lines[3] == "FAIL  control Steamer Lane: point or reef; researched unknown"
+
+
+@pytest.mark.parametrize("name, value, line", [
+    ("Mavericks", "point", "FAIL  control Mavericks, California: reef; researched point"),
+    ("Malibu", "beach", "FAIL  control Malibu Surfrider Beach: point; researched beach"),
+    ("Zuma", "reef", "FAIL  control Zuma Beach: beach; researched reef"),
+])
+def test_each_other_control_has_one_right_answer(name, value, line):
+    passed, lines = rb.gate_verdict(_gate_results(**{name: value}))
+    assert passed is False and line in lines
+
+
+@pytest.mark.parametrize("name, line", [
+    ("Pipeline", "FAIL  Banzai Pipeline is not unknown; researched unknown"),
+    ("Jaws", "FAIL  Peahi Jaws is not unknown; researched unknown"),
+    ("Waimea", "FAIL  Waimea Bay is not unknown; researched unknown"),
+    ("Tres", "FAIL  Tres Palmas is not unknown; researched unknown"),
+])
+def test_each_famous_break_left_unknown_fails_the_gate_alone(name, line):
+    # One unknown is well inside the count of four, so this rule alone fails it.
+    passed, lines = rb.gate_verdict(_gate_results(**{name: "unknown"}))
+    assert passed is False
+    assert [entry for entry in lines if entry.startswith("FAIL")] == [line]
+
+
+def test_spots_not_run_or_not_finished_count_as_unknown():
+    passed, lines = rb.gate_verdict(_gate_results(**{"3_Mile": "unknown", "Refugio": None,
+                                                     "Tourmaline": "unfinished",
+                                                     "Lake_Worth": None, "Honolua": None}))
+    assert passed is False
+    assert lines[-2] == (
+        "FAIL  no more than 4 of the 20 unknown for break type; 5 are: researched as unknown: "
+        "3 Mile; not run or not finished, so counted as unknown: Honolua Bay, Refugio State "
+        "Beach, Tourmaline, Lake Worth Pier")
+    passed, lines = rb.gate_verdict(_gate_results(Pipeline=None))
+    assert passed is False
+    assert "FAIL  Banzai Pipeline is not unknown; researched unknown" in lines
+    assert lines[-2] == ("PASS  no more than 4 of the 20 unknown for break type; 1 is: not "
+                         "run or not finished, so counted as unknown: Banzai Pipeline")
+
+
+def test_a_spot_whose_research_ended_but_whose_run_did_not_counts_as_unknown():
+    # Pipeline's research turn came back reef, then its memory request failed: the spot is
+    # not finished, so the next run researches it again, and the gate reads it as unknown.
+    results = _gate_results()
+    results["spots"][GATE_KEYS["Pipeline"]]["done"] = False
+    passed, lines = rb.gate_verdict(results)
+    assert passed is False
+    assert lines[4] == "FAIL  Banzai Pipeline is not unknown; researched unknown"
+    results = _gate_results()
+    results["spots"][GATE_KEYS["Mavericks"]]["done"] = False
+    assert rb.gate_verdict(results)[1][0] == (
+        "FAIL  control Mavericks, California: reef; researched unknown")
+
+
+def test_an_empty_results_file_fails_every_rule():
+    passed, lines = rb.gate_verdict({"spots": {}})
+    assert passed is False
+    assert [line[:4] for line in lines[:-1]] == ["FAIL"] * 9
+    assert lines[-1] == "GATE: FAIL"
+
+
+def test_the_report_ends_with_the_gate(tmp_path, capsys):
+    # A results file with nothing run yet: every spot counts as unknown.
+    output = tmp_path / "gate.json"
+    rb.save_results(output, rb.new_results("medium", 4.0))
+    never = FakeClient(lambda request, n: pytest.fail("no request may be made"))
+    assert rb.main(["--report", "--output", str(output)], client=never) == 0
+    printed = capsys.readouterr().out.splitlines()
+    assert printed[-12:] == [
+        "The gate for the full run:", "",
+        "FAIL  control Mavericks, California: reef; researched unknown",
+        "FAIL  control Malibu Surfrider Beach: point; researched unknown",
+        "FAIL  control Zuma Beach: beach; researched unknown",
+        "FAIL  control Steamer Lane: point or reef; researched unknown",
+        "FAIL  Banzai Pipeline is not unknown; researched unknown",
+        "FAIL  Peahi Jaws is not unknown; researched unknown",
+        "FAIL  Waimea Bay is not unknown; researched unknown",
+        "FAIL  Tres Palmas is not unknown; researched unknown",
+        "FAIL  no more than 4 of the 20 unknown for break type; 20 are: not run or not "
+        "finished, so counted as unknown: Banzai Pipeline, Waimea Bay, Peahi Jaws, Honolua "
+        "Bay, Rincon Domes, Tres Palmas, Suicide's, Bombora, 3 Mile, Refugio State Beach, "
+        "Tourmaline, Venice Beach Breakwater, Lower Trestles, Jacksonville Beach Pier, Lake "
+        "Worth Pier, Manasquan Inlet, Mavericks, California, Steamer Lane, Malibu Surfrider "
+        "Beach, Zuma Beach",
+        "GATE: FAIL"]
 
 
 def test_a_report_cell_cannot_break_the_table():

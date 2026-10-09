@@ -40,7 +40,7 @@ COST. Each request's usage is priced at list price (PRICES) and added up per spo
 page is cut at FETCH_MAX_CONTENT_TOKENS, and the model is told not to fetch PDFs, which that
 cut does not cover. A spot starts only if the money left covers twice the dearest spot so
 far, and at least SPOT_RESERVE_FLOOR_USD before any spot has been priced. No request starts
-once the budget is spent. The budget ($3 by default) holds across re-runs: the results file
+once the budget is spent. The budget ($4 by default) holds across re-runs: the results file
 carries what has been spent.
 
 WRITES ONE FILE: the results file (DEFAULT_OUTPUT), after every spot. Never the roster and
@@ -52,6 +52,12 @@ RUN on the Mac, from the repo root, with ANTHROPIC_API_KEY set:
     python3 -m pipeline.research_break_type              # the rest of the pilot
     python3 -m pipeline.research_break_type --report     # the tables again, no API calls
     python3 -m pipeline.research_break_type --dry-run    # what the model is sent, no calls
+The pilot's report ends with the gate for the full run (gate_verdict): PASS or FAIL.
+
+THE FULL RUN (--full), only once the gate passes, after the memory-only run (--memory-only):
+researches every rated spot that the memory answers do not settle by geography, into its own
+results file, $70 cap, resumable. Its report lists what changed against memory and against
+the current label, and the final sand-bottom flag for every spot.
 """
 from __future__ import annotations
 
@@ -100,9 +106,10 @@ PRICES = {
 }
 
 # How much of a fetched page enters the model's context, in tokens. The first pilot used
-# 6,000. A page is read again on every later step of the same turn, so this is paid more
-# than once. The API's limit is approximate and does not apply to PDFs (see the prompt).
-FETCH_MAX_CONTENT_TOKENS = 3000
+# 6,000 and its answers held up; the revision's 3,000 cut surf-guide pages before their
+# description, and five spots it had got right came back unknown. Accuracy over cost: back
+# to 6,000. The API's limit is approximate and does not apply to PDFs (see the prompt).
+FETCH_MAX_CONTENT_TOKENS = 6000
 # The fetch tool's own estimate: an average 10 kB web page is about 2,500 tokens.
 CHARS_PER_TOKEN = 4
 
@@ -133,7 +140,7 @@ RATE_LIMIT_WAIT_SECONDS = 60.0
 # Between spots, as verify_spots paces its batches, to stay under input-token rate limits.
 SPOT_PAUSE_SECONDS = 15.0
 
-PILOT_BUDGET_USD = 3.00
+PILOT_BUDGET_USD = 4.00
 SPOT_RESERVE_FLOOR_USD = 0.50
 # Rated spots in the database: the 2026-10-06 pipeline run upserted 646.
 FULL_ROSTER_SPOTS = 646
@@ -143,9 +150,10 @@ LOCATION_MAX_KM = 25.0
 # A shorter quote ("reef break") could be found on almost any page, so it proves nothing.
 MIN_QUOTE_WORDS = 3
 
-# The first pilot's results (break type only, schema 1) stay in break_type_research_pilot.json.
-DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_pilot2.json"
-SCHEMA_VERSION = 2
+# Earlier runs keep their own files: the first pilot (schema 1) break_type_research_pilot.json,
+# the revision (schema 2) break_type_research_pilot2.json. The gate run writes this one.
+DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_gate.json"
+SCHEMA_VERSION = 3
 
 # What the waves break over. Kept in the results file only: the spots table has no column.
 BOTTOM_VALUES = ("sand", "rock", "coral", "cobble", "mixed", "unknown")
@@ -222,6 +230,9 @@ RESEARCH_SYSTEM = (
     "3. For each of the two, find the words on the page that say it, and copy them\n"
     "   exactly: one continuous passage, no ellipses, at most 300 characters. The two may\n"
     "   come from the same page, and from the same passage.\n"
+    "4. Copy each quote from the text the fetch returned, not from a search result, and\n"
+    "   cite the URL of that fetched page. Your quote is checked against that text, which\n"
+    "   stops after about 6,000 tokens of the page.\n"
     "\n"
     "break_type is exactly one of:\n"
     + _KINDS +
@@ -520,10 +531,18 @@ _PUNCT = str.maketrans({"\u2018": "'", "\u2019": "'", "\u02bc": "'", "\u201c": '
 _MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 
 
+# Apostrophes, and the Hawaiian okina, are dropped before comparing: a page's "Oʻahu",
+# "Peʻahi" or "Suicides" is the quote's "O'ahu", "Pe'ahi" or "Suicide's".
+_APOSTROPHES = re.compile("['`\u02bb]")
+
+
 def _fold(text: str) -> str:
-    """*text* for comparing a quote with a page: case, quote marks, dashes, markdown
-    and whitespace evened out."""
-    folded = unicodedata.normalize("NFKC", text).translate(_PUNCT)
+    """*text* for comparing a quote with a page: case, accents, apostrophes and the okina,
+    quote marks, dashes, markdown and whitespace evened out."""
+    folded = unicodedata.normalize("NFKD", text)
+    folded = "".join(char for char in folded if not unicodedata.combining(char))
+    folded = unicodedata.normalize("NFKC", folded).translate(_PUNCT)
+    folded = _APOSTROPHES.sub("", folded)
     folded = _MD_LINK.sub(r"\1", folded)
     folded = re.sub(r"[*_`#>|]", " ", folded)
     return " ".join(folded.split()).lower()
@@ -648,22 +667,40 @@ def collect_evidence(blocks: list) -> dict:
             "errors": errors, "text": "".join(texts)}
 
 
+# A fetched page this long was probably cut at FETCH_MAX_CONTENT_TOKENS (the limit is
+# approximate, so nine tenths of it).
+CUT_PAGE_CHARS = int(FETCH_MAX_CONTENT_TOKENS * CHARS_PER_TOKEN * 0.9)
+
+
 def find_quote(quote, url: str, evidence: dict) -> tuple:
-    """Where *quote* is on the page at *url*: ('fetched page' | 'search citation', None),
-    or (None, why not)."""
+    """Where *quote* is: ('fetched page' | 'search citation', None, the page's URL), or
+    (None, why not, None). A quote that is not on the cited page but is on another page a
+    fetch returned stands on that page, under its URL."""
     if not isinstance(quote, str) or not quote.strip():
-        return None, "no quote"
+        return None, "no quote", None
     wanted = _clean_quote(quote)
     if len(wanted.split()) < MIN_QUOTE_WORDS:
-        return None, f"the quote is under {MIN_QUOTE_WORDS} words, too short to check"
+        return None, f"the quote is under {MIN_QUOTE_WORDS} words, too short to check", None
     key = _url_key(url)
     page = evidence["pages"].get(key)
     if page and wanted in _fold(page):
-        return "fetched page", None
+        return "fetched page", None, url
     for citation in evidence["citations"]:
         if _url_key(citation["url"]) == key and wanted in _clean_quote(citation["cited_text"]):
-            return "search citation", None
-    return None, "the quote is not on the cited page"
+            return "search citation", None, url
+    for fetched in evidence["fetched"]:
+        text = evidence["pages"].get(_url_key(fetched["url"])) or ""
+        if _url_key(fetched["url"]) != key and text and wanted in _fold(text):
+            return "fetched page", None, fetched["url"]
+    why = "the quote is not on the cited page"
+    if page is None:
+        why += ", which was never fetched, and no search citation from it holds the quote"
+    elif not page:
+        why += ", a PDF, whose text cannot be checked"
+    elif len(page) >= CUT_PAGE_CHARS:
+        why += (f", whose fetched text ({len(page):,} characters) was probably cut at the "
+                f"{FETCH_MAX_CONTENT_TOKENS:,}-token limit")
+    return None, why, None
 
 
 def quote_names_value(quote: str, field: str, value: str, spot_name: str) -> bool:
@@ -773,7 +810,7 @@ def _note(answer: dict):
 
 def _unknown(reason) -> dict:
     return {"status": "unknown", "value": "unknown", "values": [], "mixed": False,
-            "source_url": None, "quote": None, "quote_found_in": None,
+            "source_url": None, "cited_url": None, "quote": None, "quote_found_in": None,
             "quote_names_value": None, "location": None, "reason": reason}
 
 
@@ -799,16 +836,16 @@ def judge_claim(answer: dict, field: str, evidence: dict, identity: dict) -> dic
         out["source_url"] = url
         out["reason"] = "the cited URL was not returned by any search or fetch for this spot"
         return out
-    found_in, problem = find_quote(claim.get("quote"), url, evidence)
+    found_in, problem, found_url = find_quote(claim.get("quote"), url, evidence)
     if found_in is None:
         out["source_url"] = url
         out["reason"] = problem
         return out
-    out.update(source_url=url, quote=break_type_quote(claim["quote"]),
-               quote_found_in=found_in,
+    out.update(source_url=found_url, cited_url=None if found_url == url else url,
+               quote=break_type_quote(claim["quote"]), quote_found_in=found_in,
                quote_names_value=quote_names_value(claim["quote"], field, value,
                                                    identity["name"]),
-               location=check_location(identity, _page_for(answer, url)))
+               location=check_location(identity, _page_for(answer, found_url)))
     if out["location"]["verdict"] == "wrong place":
         out["reason"] = "the page describes another place: " + "; ".join(
             out["location"]["reasons"])
@@ -1046,8 +1083,10 @@ def merge_follow_up(first: dict, combined: dict, follow: dict, more: list) -> di
 
 
 def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
-                  sleep) -> tuple:
-    """(record, the exception that stopped it or None). Both answers for one spot."""
+                  sleep, recall: bool = True) -> tuple:
+    """(record, the exception that stopped it or None). Both answers for one spot, or the
+    researched answer only when *recall* is False (the full run, which has the memory
+    answers from the memory-only run)."""
     identity = spot_identity(spot)
     record = new_record(entry, spot)
     spent = {"usage": zero_usage()}
@@ -1070,6 +1109,9 @@ def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
         finally:
             record["research_usage"] = _priced(spent["usage"])
 
+        if not recall:
+            record["done"] = True
+            return record, None
         budget.require_room()
         data = _as_dict(_create(client, recall_request(identity, effort), sleep))
         used = usage_of(data)
@@ -1090,9 +1132,10 @@ def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
 
 def run(client, resolved: list, results: dict, budget: Budget, effort: str, *,
         limit=None, pause_seconds: float = SPOT_PAUSE_SECONDS, sleep=time.sleep,
-        save=None):
-    """Research the pilot spots not yet done, in order. Returns why it stopped early:
-    None, 'budget', or 'error: ...'."""
+        save=None, memory=None):
+    """Research the spots not yet done, in order. Returns why it stopped early: None,
+    'budget', or 'error: ...'. With *memory* (the full run: spot key -> the memory-only
+    run's answer, or None) no memory request is made; the record carries that answer."""
     started = 0
     for position, (entry, spot) in enumerate(resolved, 1):
         key = spot_key(entry)
@@ -1108,7 +1151,11 @@ def run(client, resolved: list, results: dict, budget: Budget, effort: str, *,
             return "budget"
         if started and pause_seconds:
             sleep(pause_seconds)
-        record, exc = research_spot(client, entry, spot, effort, budget, sleep)
+        record, exc = research_spot(client, entry, spot, effort, budget, sleep,
+                                    recall=memory is None)
+        if memory is not None:
+            record["memory"] = memory.get(key)
+            record["current"]["verified"] = spot.get("verification_confidence") is not None
         if earlier:
             record["earlier_attempts_usd"] = round(
                 earlier.get("cost_usd", 0.0) + earlier.get("earlier_attempts_usd", 0.0), 6)
@@ -1127,7 +1174,8 @@ def run(client, resolved: list, results: dict, budget: Budget, effort: str, *,
 
 
 def _progress_line(record: dict, budget: Budget) -> str:
-    research, recall = record.get("research"), record.get("model_recall")
+    research = record.get("research")
+    recall = record.get("model_recall") or record.get("memory")
     usage = record.get("research_usage") or zero_usage()
     parts = [f"{record['asked_as']}:"]
     parts.append(f"researched {research['break_type']['value']} on {research['bottom']['value']}"
@@ -1309,6 +1357,63 @@ def _tally(flags: list) -> str:
     return ", ".join(f"{flags.count(flag)} {flag}" for flag in ("yes", "no", "unknown"))
 
 
+# The gate for the full run, as it was set: the controls come out right; the famous breaks
+# are not unknown; at most GATE_MAX_UNKNOWN of the 20 are unknown for break type. Every rule
+# reads the researched break type, and a spot not run or not finished counts as unknown.
+GATE_CONTROLS = (
+    (("Mavericks, California", "California"), ("reef",)),
+    (("Malibu Surfrider Beach", "California"), ("point",)),
+    (("Zuma Beach", "California"), ("beach",)),
+    (("Steamer Lane", "California"), ("point", "reef")),
+)
+GATE_NOT_UNKNOWN = (("Banzai Pipeline", "Hawaii"), ("Peahi Jaws", "Hawaii"),
+                    ("Waimea Bay", "Hawaii"), ("Tres Palmas", "Puerto Rico"))
+GATE_MAX_UNKNOWN = 4
+
+
+def _gate_break_type(results: dict, name_region: tuple):
+    """The researched break type of a pilot spot, or None if it is unknown, not run or
+    not finished."""
+    record = results["spots"].get(f"{name_region[0]}|{name_region[1]}")
+    if not record or not record.get("done"):
+        return None
+    claim = record["research"]["break_type"]
+    return claim["value"] if claim["status"] == "researched" else None
+
+
+def gate_verdict(results: dict) -> tuple:
+    """(passed, lines): each rule with PASS or FAIL, then the gate's own."""
+    lines, passed = [], True
+
+    def rule(ok: bool, text: str):
+        nonlocal passed
+        passed = passed and ok
+        lines.append(("PASS" if ok else "FAIL") + "  " + text)
+
+    for (name, region), allowed in GATE_CONTROLS:
+        got = _gate_break_type(results, (name, region))
+        rule(got in allowed, f"control {name}: {' or '.join(allowed)}; researched "
+                             f"{got or 'unknown'}")
+    for name, region in GATE_NOT_UNKNOWN:
+        got = _gate_break_type(results, (name, region))
+        rule(got is not None, f"{name} is not unknown; researched {got or 'unknown'}")
+    unfinished = [entry[0] for entry in PILOT_SPOTS
+                  if not (results["spots"].get(spot_key(entry)) or {}).get("done")]
+    unknown = [entry[0] for entry in PILOT_SPOTS if entry[0] not in unfinished
+               and _gate_break_type(results, entry[:2]) is None]
+    count = len(unknown) + len(unfinished)
+    text = (f"no more than {GATE_MAX_UNKNOWN} of the {len(PILOT_SPOTS)} unknown for break "
+            f"type; {count} " + ("is" if count == 1 else "are"))
+    if unknown:
+        text += ": researched as unknown: " + ", ".join(unknown)
+    if unfinished:
+        text += ("; " if unknown else ": ") + "not run or not finished, so counted as " \
+                "unknown: " + ", ".join(unfinished)
+    rule(count <= GATE_MAX_UNKNOWN, text)
+    lines.append("GATE: " + ("PASS" if passed else "FAIL"))
+    return passed, lines
+
+
 def render_report(results: dict) -> str:
     kinds = [_row("Spot", "Current value", "Researched break type", "Source URL",
                   "Location check", "Memory answer", "Agree"), "|---|---|---|---|---|---|---|"]
@@ -1379,25 +1484,32 @@ def render_report(results: dict) -> str:
     stops = [run_["stopped"] for run_ in results.get("runs", []) if run_.get("stopped")]
     if stops:
         out.append("Stopped early: " + stops[-1])
+    out += ["", "The gate for the full run:", ""] + gate_verdict(results)[1]
     return "\n".join(out)
 
 
-def render_dry_run(resolved: list, effort: str) -> str:
-    """Exactly what the model is sent, without calling it."""
+def render_dry_run(resolved: list, effort: str, recall: bool = True) -> str:
+    """Exactly what the model is sent, without calling it. Without *recall* (the full run)
+    there is no memory request to show."""
     sample = research_request(spot_identity(resolved[0][1]), effort)
     example = follow_up_message(
         [{"url": "https://www.example.com/breaks/a-spot", "error": "url_not_in_prior_context"}],
         ["bottom"])
-    parts = [f"Model {MODEL}, effort {effort}. Every request is one of these two.", "",
+    parts = [f"Model {MODEL}, effort {effort}. Every request is "
+             + ("one of these two." if recall else "this one."), "",
              "RESEARCHED ANSWER: system prompt (the same for every spot)", "",
              RESEARCH_SYSTEM,
              "tools:", json.dumps(sample["tools"], indent=2), "",
              "IF A FETCH FAILED AND A VALUE IS STILL UNKNOWN at the end of that turn, the "
              "conversation goes on once, with a message like this one naming the real URLs "
-             "and reasons:", "", example, "",
-             "MEMORY ANSWER: system prompt (the same for every spot; no tools)", "",
-             RECALL_SYSTEM,
-             "THE ONLY TEXT ABOUT EACH SPOT (the user message, the same in both requests):"]
+             "and reasons:", "", example, ""]
+    if recall:
+        parts += ["MEMORY ANSWER: system prompt (the same for every spot; no tools)", "",
+                  RECALL_SYSTEM,
+                  "THE ONLY TEXT ABOUT EACH SPOT (the user message, the same in both "
+                  "requests):"]
+    else:
+        parts.append("THE ONLY TEXT ABOUT EACH SPOT (the user message):")
     for _, spot in resolved:
         parts += ["", spot_prompt(spot_identity(spot))]
     return "\n".join(parts)
@@ -1458,15 +1570,24 @@ MEMORY_SYSTEM = (
 )
 
 # The settled-by-geography rule, for the report. Edit these lists to change it; the report
-# prints them. Florida is split by its coordinates (coast_region).
+# prints them. Florida and New York are split by their coordinates (coast_region).
 SAND_BARRIER_REGIONS = ("New Jersey", "Delaware", "Maryland", "Virginia", "North Carolina",
                         "South Carolina", "Georgia", "Texas", "Florida (Gulf)",
-                        "Florida (Atlantic)")
+                        "Florida (Atlantic)", "New York (Long Island south shore)")
 # Atlantic Florida's known reef spots in the roster, left out of the sand-barrier group.
 FLORIDA_KNOWN_REEF = ("Monster Hole", "Bathtub Beach", "Ocean Reef Park", "Dania Beach Pier")
 # Where rock or reef bottoms are common, so a memory answer settles nothing by geography.
 ROCKY_REGIONS = ("California", "Oregon", "Washington", "Hawaii", "Puerto Rico", "Maine",
-                 "New Hampshire", "Massachusetts", "Rhode Island", "Florida (Keys)")
+                 "New Hampshire", "Massachusetts", "Rhode Island", "Florida (Keys)",
+                 "New York (Montauk)")
+# Montauk: east of 72.05 W, which puts Hither Hills (72.026 W) in it.
+MONTAUK_EAST_OF_LNG = -72.05
+# Long Island's ocean shore runs from Breezy Point (40.54 N, 73.94 W) to East Hampton
+# (40.95 N, 72.17 W). A New York spot counts as on it when it is west of Montauk, east of
+# 74.05 W and south of the line through 40.55 N 74.0 W rising 0.23 degrees of latitude per
+# degree of longitude eastward; the north shore is some 0.3 degrees north of that line.
+LI_WEST_LNG = -74.05
+LI_LINE_LAT, LI_LINE_LNG, LI_LINE_SLOPE = 40.55, -74.0, 0.23
 
 REASON_CONFIDENCE = "low or medium confidence"
 REASON_NOT_SAND = "not sand, or mixed"
@@ -1482,8 +1603,16 @@ HUMAN_LIST_SIZE = 30
 def coast_region(spot: dict) -> str:
     """The spot's state, with Florida split by coast: the Keys south of 25.3 N; the Gulf
     west of 84 W (the panhandle) or west of 81.6 W south of 29 N (the west coast); the
-    Atlantic everywhere else."""
+    Atlantic everywhere else. New York is split into Montauk (east of 72.05 W), Long
+    Island's south shore (see LI_LINE_*), and anywhere else, which stays 'New York'."""
     state = spot.get("region_hint") or spot.get("state")
+    if state == "New York":
+        lat, lng = float(spot["lat"]), float(spot["lng"])
+        if lng > MONTAUK_EAST_OF_LNG:
+            return "New York (Montauk)"
+        if lng > LI_WEST_LNG and lat < LI_LINE_LAT + LI_LINE_SLOPE * (lng - LI_LINE_LNG):
+            return "New York (Long Island south shore)"
+        return state
     if state != "Florida":
         return state
     lat, lng = float(spot["lat"]), float(spot["lng"])
@@ -1770,7 +1899,8 @@ def render_memory_report(results: dict) -> str:
         return "\n".join(out)
 
     flags = ("yes", "no", "unknown")
-    out += ["", "By region (Florida split by coast):", "",
+    out += ["", "By region (Florida split by coast, New York into Montauk and the south shore):",
+            "",
             _row("Region", "Spots", "Sand bottom: yes", "no", "unknown"), "|---|---|---|---|---|"]
     regions = sorted({coast_region(r) for r in done})
     for region in regions:
@@ -1820,7 +1950,9 @@ def render_memory_report(results: dict) -> str:
             "Sand-barrier regions: " + ", ".join(SAND_BARRIER_REGIONS) + ". Atlantic Florida "
             "leaves out " + ", ".join(FLORIDA_KNOWN_REEF) + ". Florida's coasts: the Keys "
             "south of 25.3 N; the Gulf west of 84 W, or west of 81.6 W south of 29 N; the "
-            "Atlantic everywhere else.",
+            "Atlantic everywhere else. Long Island's south shore runs from Breezy Point and "
+            "the Rockaways east to East Hampton; Montauk, east of 72.05 W and so including "
+            "Hither Hills, is a rocky region and is never settled.",
             "By region: " + ", ".join(
                 f"{region} {sum(1 for r in settled if coast_region(r) == region)}"
                 for region in SAND_BARRIER_REGIONS) + ".",
@@ -1857,6 +1989,234 @@ def render_memory_dry_run(spots: list, effort: str) -> str:
     return "\n".join(parts)
 
 
+# --- full run: research every rated spot that geography does not settle -----------------
+#
+# Reads the memory-only run's results. A spot whose memory answer the settled-by-geography
+# rule accepts (memory_verdict) is not researched; every other rated spot is, including any
+# spot the memory run did not answer. The researched answer is the pilot's, with no memory
+# request: the memory answer comes from the memory-only run. Resumable, like the others.
+
+FULL_BUDGET_USD = 70.00
+FULL_PAUSE_SECONDS = SPOT_PAUSE_SECONDS
+DEFAULT_FULL_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_full.json"
+FULL_SCHEMA_VERSION = 1
+
+
+def load_memory_answers(path: Path) -> dict:
+    if not path.exists():
+        raise SystemExit(f"no memory-only results at {path}. Run --memory-only first, or pass "
+                         "--memory-results.")
+    results = json.loads(path.read_text(encoding="utf-8"))
+    if results.get("kind") != "memory_only" or results.get("schema") != MEMORY_SCHEMA_VERSION:
+        raise SystemExit(f"{path} is not a memory-only results file "
+                         f"(schema {MEMORY_SCHEMA_VERSION})")
+    return results
+
+
+def full_plan(spots: list, memory_results: dict) -> tuple:
+    """(settled, to_research), in roster order: settled is [(spot, its memory record)],
+    to_research [(spot, its finished memory record or None)]."""
+    settled, to_research = [], []
+    for spot in spots:
+        record = memory_results["spots"].get(memory_key(spot))
+        if not (record and record.get("done")):
+            to_research.append((spot, None))
+        elif memory_verdict(record)[0] == "settled":
+            settled.append((spot, record))
+        else:
+            to_research.append((spot, record))
+    return settled, to_research
+
+
+def full_entry(spot: dict) -> tuple:
+    """The spot as a PILOT_SPOTS-shaped entry: asked as its own name, no control answer."""
+    return (spot["name"], spot["region_hint"], spot["name"], None)
+
+
+def new_full_results(effort: str, budget_usd: float) -> dict:
+    return {
+        "schema": FULL_SCHEMA_VERSION,
+        "kind": "full",
+        "what": ("Break-type and bottom research for every rated spot that geography does not "
+                 "settle. A results file only: nothing in it has been applied to the roster "
+                 "or the database, and the spots table has no column for the bottom."),
+        "settings": run_settings(effort),
+        "prices_usd": dict(PRICES),
+        "budget_usd": budget_usd,
+        "spent_usd": 0.0,
+        "memory_results": None,
+        "settled": {},
+        "planned": [],
+        "regions": {},
+        "runs": [],
+        "spots": {},
+    }
+
+
+def load_full_results(path: Path, effort: str, budget_usd: float, fresh: bool) -> dict:
+    """The full run's results so far, to resume, or a new file. Refuses to mix settings."""
+    if fresh or not path.exists():
+        return new_full_results(effort, budget_usd)
+    results = json.loads(path.read_text(encoding="utf-8"))
+    if (results.get("kind") != "full" or results.get("schema") != FULL_SCHEMA_VERSION
+            or results.get("settings") != run_settings(effort)):
+        raise SystemExit(f"{path} is not a full-run results file made with these settings "
+                         "(model, effort, tools or prompts). Pass --fresh to start over, or "
+                         "--output for a new file.")
+    results["budget_usd"] = budget_usd
+    return results
+
+
+def record_plan(results: dict, settled: list, to_research: list, memory_path: Path,
+                memory_results: dict) -> None:
+    """Writes this run's plan into the results: which spots are settled, with the memory
+    answer that settled them, and which are to be researched, in order."""
+    results["memory_results"] = {"file": memory_path.name,
+                                 "answered": sum(1 for r in memory_results["spots"].values()
+                                                 if r.get("done"))}
+    results["settled"] = {memory_key(spot): {key: record[key] for key in (
+        "name", "state", "lat", "lng", "current", "memory")} for spot, record in settled}
+    results["planned"] = [memory_key(spot) for spot, _ in to_research]
+    results["regions"] = {memory_key(spot): coast_region(spot)
+                          for spot, _ in settled + to_research}
+
+
+def _region_of(record: dict) -> str:
+    return coast_region({"region_hint": record.get("region") or record.get("state"),
+                         "lat": record["lat"], "lng": record["lng"]})
+
+
+def _spot_label(record: dict) -> str:
+    return f"{record['name']} ({_region_of(record)})"
+
+
+def _memory_value(memory, field: str) -> str:
+    return _value_cell(memory[field]) if memory else "(no memory answer)"
+
+
+def _label_cell(current: dict) -> str:
+    if not current.get("break_type"):
+        return "(none)"
+    return current["break_type"] + (" (verified)" if current.get("verified") else
+                                     " (unverified)")
+
+
+def final_sand_bottom(results: dict) -> list:
+    """[(label, region, flag, bottom, from)] for every spot in the plan: settled spots from
+    the memory answer that settled them, researched spots from the research alone."""
+    rows = []
+    for record in results["settled"].values():
+        rows.append((_label(record), coast_region(record), record["memory"]["sand_bottom"],
+                     _value_cell(record["memory"]["bottom"]),
+                     "settled by geography (memory: sand, high confidence)"))
+    for key in results["planned"]:
+        record = results["spots"].get(key)
+        if not (record and record.get("done")):
+            region = results["regions"][key]
+            rows.append((f"{key.split('|', 1)[0]} ({region})", region, "pending", "—",
+                         "not researched yet"))
+            continue
+        claim = record["research"]["bottom"]
+        source = ("research: " + (claim.get("source_url") or "")
+                  if claim["status"] == "researched" else
+                  "research found no bottom: " + (claim.get("reason") or ""))
+        rows.append((_spot_label(record), _region_of(record), record["research"]["sand_bottom"],
+                     _researched_cell(record["research"], "bottom"), source))
+    return sorted(rows, key=lambda row: (row[1], row[0]))
+
+
+def render_full_report(results: dict) -> str:
+    planned = results["planned"]
+    records = [results["spots"][key] for key in planned if key in results["spots"]]
+    done = [r for r in records if r.get("done")]
+    out = [f"Researched {len(done)} of the {len(planned)} rated spots that geography does not "
+           f"settle; {len(results['settled'])} more are settled by geography. Spent "
+           f"${results['spent_usd']:.4f} of the ${results['budget_usd']:.2f} budget, at list "
+           "prices."]
+    memory_file = results.get("memory_results") or {}
+    if memory_file:
+        out.append(f"Memory answers from {memory_file['file']} ({memory_file['answered']} "
+                   "answered).")
+    if done:
+        costs = [r["cost_usd"] for r in done]
+        left = len(planned) - len(done)
+        out.append(f"Per spot: mean ${statistics.mean(costs):.4f}, dearest ${max(costs):.4f}. "
+                   f"The {left} spots left would cost about ${statistics.mean(costs) * left:.2f} "
+                   "at that mean.")
+    for record in records:
+        if not record.get("done"):
+            out.append(f"Not finished: {_spot_label(record)}: "
+                       f"{record.get('error') or 'not finished'}")
+    stops = [run_["stopped"] for run_ in results.get("runs", []) if run_.get("stopped")]
+    if stops:
+        out.append("Stopped early: " + stops[-1])
+    for field in FIELDS:
+        unknown = sum(1 for r in done if r["research"][field]["status"] != "researched")
+        out.append(f"Research left the {_NAMES[field]} unknown at {unknown} of {len(done)}.")
+
+    for field in FIELDS:
+        changed = [r for r in done if r["research"][field]["status"] == "researched"
+                   and (r.get("memory") is None
+                        or r["research"][field]["value"] != r["memory"][field]["value"])]
+        out += ["", f"{_NAMES[field].capitalize()}: changed against memory ({len(changed)} "
+                    "spots; memory 'unknown' or no memory answer counts as a change):", ""]
+        header = ["Spot", "Memory", "Researched", "Source URL"]
+        if field == "bottom":
+            header[3:3] = ["Sand bottom: memory", "Sand bottom: researched"]
+        out += [_row(*header), "|" + "---|" * len(header)]
+        for r in sorted(changed, key=lambda r: (_region_of(r), r["name"])):
+            cells = [_spot_label(r), _memory_value(r.get("memory"), field),
+                     _researched_cell(r["research"], field), _url_cell(r["research"], field)]
+            if field == "bottom":
+                cells[3:3] = [(r.get("memory") or {}).get("sand_bottom") or "—",
+                              r["research"]["sand_bottom"]]
+            out.append(_row(*cells))
+
+    claimed = [r for r in done if r["research"]["break_type"]["status"] == "researched"]
+    changed = [r for r in claimed
+               if r["research"]["break_type"]["value"] != r["current"]["break_type"]]
+    groups = (("verified", lambda r: r["current"].get("verified")),
+              ("unverified", lambda r: r["current"]["break_type"]
+               and not r["current"].get("verified")),
+              ("no label", lambda r: not r["current"]["break_type"]))
+    out += ["", f"Break type: changed against the current label ({len(changed)} of the "
+                f"{len(claimed)} researched; "
+                + ", ".join(f"{sum(1 for r in changed if test(r))} {name}"
+                            for name, test in groups) + "):", "",
+            _row("Spot", "Current label", "Researched", "Source URL"), "|---|---|---|---|"]
+    for r in sorted(changed, key=lambda r: (_region_of(r), r["name"])):
+        out.append(_row(_spot_label(r), _label_cell(r["current"]),
+                        _researched_cell(r["research"], "break_type"),
+                        _url_cell(r["research"], "break_type")))
+
+    rows = final_sand_bottom(results)
+    flags = [row[2] for row in rows]
+    out += ["", f"Final sand-bottom flag, every spot ({len(rows)}): "
+                + ", ".join(f"{flags.count(flag)} {flag}"
+                            for flag in ("yes", "no", "unknown", "pending")) + ".", "",
+            _row("Spot", "Sand bottom", "Bottom", "From"), "|---|---|---|---|"]
+    for label, _, flag, bottom, source in rows:
+        out.append(_row(label, flag, bottom, source))
+    return "\n".join(out)
+
+
+def render_full_dry_run(settled: list, to_research: list, effort: str) -> str:
+    """The plan, and exactly what the model is sent, without calling it."""
+    regions = sorted({coast_region(spot) for spot, _ in settled + to_research})
+    unanswered = sum(1 for _, record in to_research if record is None)
+    parts = [f"Settled by geography: {len(settled)} spots. To research: {len(to_research)} "
+             f"spots, {unanswered} of them with no memory answer. No memory request is made: "
+             "each spot is one researched answer, with at most one follow-up.", "",
+             _row("Region", "Settled", "To research"), "|---|---|---|"]
+    for region in regions:
+        parts.append(_row(region, sum(1 for s, _ in settled if coast_region(s) == region),
+                          sum(1 for s, _ in to_research if coast_region(s) == region)))
+    if to_research:
+        parts += ["", render_dry_run([(full_entry(s), s) for s, _ in to_research], effort,
+                                     recall=False)]
+    return "\n".join(parts)
+
+
 # --- entry point --------------------------------------------------------------------
 
 def load_roster(path: Path) -> list:
@@ -1886,11 +2246,20 @@ def _parse_args(argv):
         description="Research the pilot spots' break types and bottoms into a results file, "
                     "or, with --memory-only, ask the model's memory about every rated spot. "
                     "Reads the roster; never writes it or the database.")
-    parser.add_argument("--memory-only", action="store_true",
-                        help="a memory answer (no web search) for every rated spot, into "
-                             f"its own results file (default {DEFAULT_MEMORY_OUTPUT.name}, "
-                             f"${MEMORY_BUDGET_USD:.2f} cap, {MEMORY_PAUSE_SECONDS:.0f} s "
-                             "between spots)")
+    which = parser.add_mutually_exclusive_group()
+    which.add_argument("--memory-only", action="store_true",
+                       help="a memory answer (no web search) for every rated spot, into "
+                            f"its own results file (default {DEFAULT_MEMORY_OUTPUT.name}, "
+                            f"${MEMORY_BUDGET_USD:.2f} cap, {MEMORY_PAUSE_SECONDS:.0f} s "
+                            "between spots)")
+    which.add_argument("--full", action="store_true",
+                       help="research every rated spot that the memory-only run's answers "
+                            "do not settle by geography, into its own results file (default "
+                            f"{DEFAULT_FULL_OUTPUT.name}, ${FULL_BUDGET_USD:.2f} cap, "
+                            f"{FULL_PAUSE_SECONDS:.0f} s between spots)")
+    parser.add_argument("--memory-results", type=Path, default=DEFAULT_MEMORY_OUTPUT,
+                        help="with --full: the memory-only results to plan from "
+                             "(default: %(default)s)")
     parser.add_argument("--output", type=Path, default=None,
                         help=f"the results file (default: {DEFAULT_OUTPUT.name} in "
                              "pipeline/data)")
@@ -1913,13 +2282,16 @@ def _parse_args(argv):
                       help="print the report from the results file; call nothing")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
-    memory = args.memory_only
+    output, budget, pause = (
+        (DEFAULT_MEMORY_OUTPUT, MEMORY_BUDGET_USD, MEMORY_PAUSE_SECONDS) if args.memory_only
+        else (DEFAULT_FULL_OUTPUT, FULL_BUDGET_USD, FULL_PAUSE_SECONDS) if args.full
+        else (DEFAULT_OUTPUT, PILOT_BUDGET_USD, SPOT_PAUSE_SECONDS))
     if args.output is None:
-        args.output = DEFAULT_MEMORY_OUTPUT if memory else DEFAULT_OUTPUT
+        args.output = output
     if args.budget is None:
-        args.budget = MEMORY_BUDGET_USD if memory else PILOT_BUDGET_USD
+        args.budget = budget
     if args.pause is None:
-        args.pause = MEMORY_PAUSE_SECONDS if memory else SPOT_PAUSE_SECONDS
+        args.pause = pause
     return args
 
 
@@ -1938,13 +2310,21 @@ def main(argv=None, client=None, sleep=time.sleep) -> int:
                                  f"(schema {MEMORY_SCHEMA_VERSION})")
             print(render_memory_report(results))
             return 0
-        if results.get("kind") == "memory_only" or results.get("schema") != SCHEMA_VERSION:
+        if args.full:
+            if results.get("kind") != "full" or results.get("schema") != FULL_SCHEMA_VERSION:
+                raise SystemExit(f"{args.output} is not a full-run results file "
+                                 f"(schema {FULL_SCHEMA_VERSION})")
+            print(render_full_report(results))
+            return 0
+        if results.get("kind") is not None or results.get("schema") != SCHEMA_VERSION:
             raise SystemExit(f"{args.output} has results schema {results.get('schema')}; this "
                              f"version of the script reports schema {SCHEMA_VERSION} only")
         print(render_report(results))
         return 0
     if args.memory_only:
         return _main_memory(args, client, sleep)
+    if args.full:
+        return _main_full(args, client, sleep)
     resolved = resolve_pilot(load_roster(args.roster))
     if args.dry_run:
         print(render_dry_run(resolved, args.effort))
@@ -1993,6 +2373,40 @@ def _main_memory(args, client, sleep) -> int:
     results["spent_usd"] = round(budget.spent_usd, 6)
     save_results(args.output, results)
     print(render_memory_report(results))
+    log.info("results: %s", args.output)
+    return 1 if stopped and stopped.startswith("error") else 0
+
+
+def _main_full(args, client, sleep) -> int:
+    spots = memory_spots(load_roster(args.roster))
+    memory_results = load_memory_answers(args.memory_results)
+    settled, to_research = full_plan(spots, memory_results)
+    if args.dry_run:
+        print(render_full_dry_run(settled, to_research, args.effort))
+        return 0
+    guard_output_path(args.output, args.roster)
+    if args.output.resolve() == args.memory_results.resolve():
+        raise SystemExit(f"refusing to write the full run's results over {args.output}: that "
+                         "is the memory-only results file")
+    if not args.budget > 0:
+        raise SystemExit("--budget must be more than 0")
+    results = load_full_results(args.output, args.effort, args.budget, args.fresh)
+    record_plan(results, settled, to_research, args.memory_results, memory_results)
+    if client is None:
+        client = _make_client()
+    costs = [r["cost_usd"] for r in results["spots"].values() if r.get("done")]
+    budget = Budget(args.budget, results["spent_usd"], max(costs or [0.0]))
+    this_run = {"started_at": _now(), "finished_at": None, "stopped": None}
+    results["runs"].append(this_run)
+    memory = {memory_key(spot): (record or {}).get("memory") for spot, record in to_research}
+    stopped = run(client, [(full_entry(spot), spot) for spot, _ in to_research], results,
+                  budget, args.effort, limit=args.limit, pause_seconds=args.pause,
+                  sleep=sleep, save=lambda data: save_results(args.output, data),
+                  memory=memory)
+    this_run.update(finished_at=_now(), stopped=stopped)
+    results["spent_usd"] = round(budget.spent_usd, 6)
+    save_results(args.output, results)
+    print(render_full_report(results))
     log.info("results: %s", args.output)
     return 1 if stopped and stopped.startswith("error") else 0
 
