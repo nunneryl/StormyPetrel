@@ -528,7 +528,18 @@ def input_tokens_all(usage: dict) -> int:
 _PUNCT = str.maketrans({"\u2018": "'", "\u2019": "'", "\u02bc": "'", "\u201c": '"',
                         "\u201d": '"', "\u2013": "-", "\u2014": "-", "\u00a0": " ",
                         "\u2026": "..."})
-_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+# A markdown link's URL part, which may hold one level of parentheses, as Wikipedia's do:
+# (https://en.wikipedia.org/wiki/North_Shore_(Oahu)).
+_URL_PART = r"\((?:[^()\s]|\([^()\s]*\))*\)"
+_MD_LINK = re.compile(r"\[([^\]]*)\]" + _URL_PART)
+# Footnote markers, which a quote may leave out: [1], [[1]](...#cite_note-1), and
+# [citation needed].
+_FOOTNOTE = re.compile(r"\[\[?\d+\]\]?(?:" + _URL_PART + r")?|\[\W*citation needed\W*\]", re.I)
+# What a quote is compared on: its words, and any ellipsis, in order. Punctuation and
+# markup between words are not compared, because a fetched page is markdown and a quote
+# copies it unevenly: a link with or without its URL ("[Hawaii]" for
+# "[Hawaii](https://...)"), bold markers kept or dropped, a comma moved by either.
+_WORD = re.compile(r"[^\W_]+|\.\.\.")
 
 
 # Apostrophes, and the Hawaiian okina, are dropped before comparing: a page's "Oʻahu",
@@ -543,6 +554,7 @@ def _fold(text: str) -> str:
     folded = "".join(char for char in folded if not unicodedata.combining(char))
     folded = unicodedata.normalize("NFKC", folded).translate(_PUNCT)
     folded = _APOSTROPHES.sub("", folded)
+    folded = _FOOTNOTE.sub(" ", folded)
     folded = _MD_LINK.sub(r"\1", folded)
     folded = re.sub(r"[*_`#>|]", " ", folded)
     return " ".join(folded.split()).lower()
@@ -556,6 +568,36 @@ def _clean_quote(text: str) -> str:
     while quote.endswith("..."):
         quote = quote[:-3].rstrip(" \"'")
     return quote
+
+
+def _words(text: str) -> list:
+    """*text* folded, as the words (and ellipses) a quote is compared on."""
+    return _WORD.findall(_fold(text))
+
+
+def _holds(page_words: list, words: list) -> bool:
+    """Whether *words* are on the page, together and in order."""
+    return (" " + " ".join(words) + " ") in (" " + " ".join(page_words) + " ")
+
+
+def where_it_differs(words: list, page_words: list) -> str:
+    """Where the quote leaves the page: the longest run of its opening words on the page,
+    and the word after it on each side."""
+    best, at = 0, None
+    for start in range(len(page_words)):
+        run = 0
+        while (run < len(words) and start + run < len(page_words)
+               and page_words[start + run] == words[run]):
+            run += 1
+        if run > best:
+            best, at = run, start
+    if best == 0:
+        return f"its first word, {words[0]!r}, is not on the page"
+    following = at + best
+    page_has = (f"the page has {page_words[following]!r}" if following < len(page_words)
+                else "the page ends")
+    opening = "its first word is" if best == 1 else f"its first {best} words are"
+    return f"{opening} on the page, then the quote has {words[best]!r} where {page_has}"
 
 
 def _url_key(url: str) -> str:
@@ -678,28 +720,32 @@ def find_quote(quote, url: str, evidence: dict) -> tuple:
     fetch returned stands on that page, under its URL."""
     if not isinstance(quote, str) or not quote.strip():
         return None, "no quote", None
-    wanted = _clean_quote(quote)
-    if len(wanted.split()) < MIN_QUOTE_WORDS:
+    words = _words(_clean_quote(quote))
+    if sum(1 for word in words if word != "...") < MIN_QUOTE_WORDS:
         return None, f"the quote is under {MIN_QUOTE_WORDS} words, too short to check", None
     key = _url_key(url)
     page = evidence["pages"].get(key)
-    if page and wanted in _fold(page):
+    if page and _holds(_words(page), words):
         return "fetched page", None, url
     for citation in evidence["citations"]:
-        if _url_key(citation["url"]) == key and wanted in _clean_quote(citation["cited_text"]):
+        if _url_key(citation["url"]) == key and _holds(
+                _words(_clean_quote(citation["cited_text"])), words):
             return "search citation", None, url
     for fetched in evidence["fetched"]:
         text = evidence["pages"].get(_url_key(fetched["url"])) or ""
-        if _url_key(fetched["url"]) != key and text and wanted in _fold(text):
+        if _url_key(fetched["url"]) != key and text and _holds(_words(text), words):
             return "fetched page", None, fetched["url"]
     why = "the quote is not on the cited page"
     if page is None:
         why += ", which was never fetched, and no search citation from it holds the quote"
     elif not page:
         why += ", a PDF, whose text cannot be checked"
-    elif len(page) >= CUT_PAGE_CHARS:
-        why += (f", whose fetched text ({len(page):,} characters) was probably cut at the "
-                f"{FETCH_MAX_CONTENT_TOKENS:,}-token limit")
+    else:
+        cut = (f"probably cut at the {FETCH_MAX_CONTENT_TOKENS:,}-token limit"
+               if len(page) >= CUT_PAGE_CHARS else
+               f"short of the {FETCH_MAX_CONTENT_TOKENS:,}-token limit, so not cut")
+        why += (f" ({len(page):,} characters fetched, {cut}): "
+                + where_it_differs(words, _words(page)))
     return None, why, None
 
 

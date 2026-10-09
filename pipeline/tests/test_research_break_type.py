@@ -354,7 +354,10 @@ def test_each_value_stands_on_its_own_quote():
     research = _judge(_answer(bottom={"quote": "It breaks over a shallow coral reef"}))
     assert research["break_type"]["status"] == "researched"
     assert research["bottom"]["status"] == "unknown"
-    assert research["bottom"]["reason"] == "the quote is not on the cited page"
+    # PAGE is 227 characters, and "it" is not one of its words.
+    assert research["bottom"]["reason"] == (
+        "the quote is not on the cited page (227 characters fetched, short of the "
+        "6,000-token limit, so not cut): its first word, 'it', is not on the page")
     assert research["sand_bottom"] == "unknown"
 
 
@@ -371,7 +374,11 @@ def test_a_url_no_tool_returned_is_not_evidence():
 def test_a_quote_that_is_not_on_the_page_is_not_evidence():
     research = _judge(_answer(bt={"quote": "Pipeline is a shallow lava reef break"}))
     assert research["break_type"]["status"] == "unknown"
-    assert research["break_type"]["reason"] == "the quote is not on the cited page"
+    # PAGE's words begin "banzai pipeline surf guide": "pipeline" is there, then "surf".
+    assert research["break_type"]["reason"] == (
+        "the quote is not on the cited page (227 characters fetched, short of the "
+        "6,000-token limit, so not cut): its first word is on the page, then the quote has "
+        "'is' where the page has 'surf'")
 
 
 def test_a_quote_too_short_to_prove_anything_is_not_evidence():
@@ -399,6 +406,17 @@ def test_a_search_citation_backs_a_quote_from_a_page_never_fetched():
     assert research["bottom"]["reason"] == (
         "the quote is not on the cited page, which was never fetched, and no search "
         "citation from it holds the quote")
+
+
+def test_a_search_citation_is_compared_on_its_words_too():
+    citation = {"type": "web_search_result_location", "url": URL, "title": "t",
+                "encrypted_index": "i",
+                "cited_text": "The **Banzai Pipeline**, in [Oahu](https://x.org/Oahu), is a "
+                              "reef break"}
+    research = _judge(_text("x", [citation]),
+                      _answer(bt={"quote": "The Banzai Pipeline, in Oahu, is a reef break"}),
+                      fetch=False)
+    assert research["break_type"]["quote_found_in"] == "search citation"
 
 
 def test_a_citation_from_another_page_does_not_back_the_quote():
@@ -460,7 +478,11 @@ def test_a_different_word_is_still_not_the_quote():
     content = (_search("s1", "q", [URL]) + _fetch("f1", URL, PAGE)
                + [_answer(bt={"quote": "Banzai Pipeline in Maui is an exposed reef break"})])
     research = rb.judge_research([_response(content)], IDENTITY)
-    assert research["break_type"]["reason"] == "the quote is not on the cited page"
+    # "banzai pipeline in" is on PAGE (its second "banzai pipeline"), then "oahu".
+    assert research["break_type"]["reason"] == (
+        "the quote is not on the cited page (227 characters fetched, short of the "
+        "6,000-token limit, so not cut): its first 3 words are on the page, then the quote "
+        "has 'maui' where the page has 'oahu'")
 
 
 OTHER_PAGE = ("Pipeline, North Shore of Oahu. Type of wave: left reef. The wave breaks over a "
@@ -504,16 +526,24 @@ def test_a_search_result_page_never_fetched_does_not_lend_its_words():
     content = (_search("s1", "q", [URL, OTHER_URL]) + _fetch("f1", URL, PAGE)
                + [_answer(bottom={"quote": quote})])
     bottom = rb.judge_research([_response(content)], IDENTITY)["bottom"]
-    assert bottom["reason"] == "the quote is not on the cited page"
+    # PAGE has "breaks over a shallow lava rock shelf. Location: ...".
+    assert bottom["reason"] == (
+        "the quote is not on the cited page (227 characters fetched, short of the "
+        "6,000-token limit, so not cut): its first 7 words are on the page, then the quote "
+        "has 'close' where the page has 'location'")
 
 
 def test_a_page_long_enough_to_have_been_cut_is_named_in_the_reason():
     # 6,000 tokens x 4 characters x 0.9 = 21,600 characters. PAGE is 227 characters; one
     # space and 21,372 x's make 21,600, and one x fewer makes 21,599.
-    for xs, reason in ((21_372, "the quote is not on the cited page, whose fetched text "
-                                "(21,600 characters) was probably cut at the 6,000-token "
-                                "limit"),
-                       (21_371, "the quote is not on the cited page")):
+    # Either way the quote's "pipeline" is PAGE's second word, followed by "surf".
+    differs = ("its first word is on the page, then the quote has 'is' where the page has "
+               "'surf'")
+    for xs, reason in ((21_372, "the quote is not on the cited page (21,600 characters "
+                                "fetched, probably cut at the 6,000-token limit): " + differs),
+                       (21_371, "the quote is not on the cited page (21,599 characters "
+                                "fetched, short of the 6,000-token limit, so not cut): "
+                                + differs)):
         page = PAGE + " " + "x" * xs
         content = (_search("s1", "q", [URL]) + _fetch("f1", URL, page)
                    + [_answer(bt={"quote": "Pipeline is described further down the page"})])
@@ -534,6 +564,113 @@ def test_a_quote_cited_to_a_pdf_says_so():
     research = rb.judge_research([_response(content)], IDENTITY)
     assert research["break_type"]["reason"] == ("the quote is not on the cited page, a PDF, "
                                                 "whose text cannot be checked")
+
+
+# The gate run's Pipeline record: the break-type quote, exactly as the model gave it,
+# cited to the Wikipedia article. It copies the page's markdown, a link and all, and stops
+# inside the next link: "[Hawaii]" without its "(https://...)". The page around it is
+# written here as web_fetch returns Wikipedia, as markdown, with the bold and footnote
+# markers such a page carries.
+PIPELINE_WIKI = "https://en.wikipedia.org/wiki/Banzai_Pipeline"
+PIPELINE_QUOTE = ("The Banzai Pipeline, or simply Pipeline or Pipe, is a\n"
+                  "[surf](https://en.wikipedia.org/wiki/Surfing) reef break located in [Hawaii]")
+WIKI_PAGE = (
+    "# Banzai Pipeline\n\nThe Banzai Pipeline, or simply Pipeline or Pipe, is a\n"
+    "[surf](https://en.wikipedia.org/wiki/Surfing) reef break located in "
+    "[Hawaii](https://en.wikipedia.org/wiki/Hawaii), off Ehukai Beach Park in "
+    "[Pupukea](https://en.wikipedia.org/wiki/Pupukea,_Hawaii) on "
+    "[O'ahu](https://en.wikipedia.org/wiki/O'ahu)'s "
+    "[North Shore](https://en.wikipedia.org/wiki/North_Shore_(Oahu)).[[1]]"
+    "(https://en.wikipedia.org/wiki/Banzai_Pipeline#cite_note-1) There are also several "
+    "jagged, underwater lava spires that can injure fallen surfers.")
+WIKI_ENTRY = {"url": PIPELINE_WIKI, "place": "off Ehukai Beach Park", "state": "Hawaii",
+              "lat": None, "lng": None, "location_quote": "located in Hawaii"}
+
+
+def _wiki(page, quote):
+    content = (_search("s1", "q", [PIPELINE_WIKI]) + _fetch("f1", PIPELINE_WIKI, page)
+               + [_answer(bt={"source_url": PIPELINE_WIKI, "quote": quote},
+                          bottom=UNKNOWN, pages=[WIKI_ENTRY])])
+    return rb.judge_research([_response(content)], IDENTITY)["break_type"]
+
+
+def test_the_gate_runs_pipeline_quote_with_a_link_cut_off_is_on_the_page():
+    kind = _wiki(WIKI_PAGE, PIPELINE_QUOTE)
+    assert (kind["status"], kind["value"], kind["quote_found_in"]) == (
+        "researched", "reef", "fetched page")
+
+
+@pytest.mark.parametrize("page, quote", [
+    # The page's bold markers, which the quote drops; before, they left " ," against ",".
+    ("The **Banzai Pipeline**, or simply **Pipeline** or **Pipe**, is a surf reef break",
+     "The Banzai Pipeline, or simply Pipeline or Pipe, is a surf reef break"),
+    # A link whose URL holds parentheses, kept whole by the quote or dropped.
+    ("on the [North Shore](https://en.wikipedia.org/wiki/North_Shore_(Oahu)). It breaks",
+     "on the North Shore. It breaks"),
+    ("on the [North Shore](https://en.wikipedia.org/wiki/North_Shore_(Oahu)). It breaks",
+     "on the [North Shore](https://en.wikipedia.org/wiki/North_Shore_(Oahu)). It breaks"),
+    # Text after the inner parentheses is still URL, not words on the page.
+    ("a [reef](https://example.com/wiki/Reef_(surf)_break_guide) break over lava",
+     "a reef break over lava"),
+    # Footnote markers, which the quote leaves out.
+    ("a reef break.[[1]](https://en.wikipedia.org/wiki/X#cite_note-1) It breaks left",
+     "a reef break. It breaks left"),
+    ("a reef break.[2] It breaks left[citation needed] over lava",
+     "a reef break. It breaks left over lava"),
+    # The quote's punctuation differs from the page's.
+    ("Pipeline - a left-hand reef break - works in winter",
+     "Pipeline, a left-hand reef break, works in winter"),
+])
+def test_markup_and_punctuation_between_the_words_do_not_hide_a_real_quote(page, quote):
+    assert _wiki(page, quote)["quote_found_in"] == "fetched page"
+
+
+@pytest.mark.parametrize("page, quote", [
+    # A word left out, or two swapped: the words must be on the page together, in order.
+    ("is a surf reef break located in Hawaii", "is a reef break located in Hawaii"),
+    ("is a surf reef break located in Hawaii", "is a reef surf break located in Hawaii"),
+    # An ellipsis inside the quote stands for words left out, unless the page has one.
+    ("is a surf reef break located in Hawaii", "is a surf ... located in Hawaii"),
+    ("is a surf reef break located in Hawaii", "is a surf ... reef break located"),
+    # A word cut short is not the word.
+    ("is a surf reef break located in Hawaii", "is a surf reef bre"),
+    # A link's URL is not a word on the page: "wiki", "surfing" and the rest are not there.
+    ("is a surf reef break", "is a https://en.wikipedia.org/wiki/Surfing reef break"),
+])
+def test_the_words_must_still_be_together_and_in_order(page, quote):
+    assert _wiki(page, quote)["status"] == "unknown"
+
+
+def test_an_ellipsis_the_page_has_is_part_of_the_quote():
+    assert _wiki("Waves here... break hard on the reef", "Waves here... break hard on the reef"
+                 )["quote_found_in"] == "fetched page"
+
+
+def test_the_reason_says_where_the_quote_leaves_the_page():
+    # WIKI_PAGE, folded to words, holds "... reef break located in hawaii off ehukai ...".
+    # 15 of the quote's words are on it; then the quote has "maui".
+    kind = _wiki(WIKI_PAGE, PIPELINE_QUOTE.replace("[Hawaii]", "Maui"))
+    assert kind["reason"] == (
+        f"the quote is not on the cited page ({len(WIKI_PAGE):,} characters fetched, short of "
+        "the 6,000-token limit, so not cut): its first 15 words are on the page, then the "
+        "quote has 'maui' where the page has 'hawaii'")
+    # The page's text stops before the quote does. "The Banzai Pipeline, or simply
+    # Pipeline or Pipe, is a surf reef break located in", word by word with the spaces:
+    # 4+7+10+3+7+9+3+6+3+2+5+5+6+8+2 = 80 characters.
+    page = "The Banzai Pipeline, or simply Pipeline or Pipe, is a surf reef break located in"
+    assert _wiki(page, PIPELINE_QUOTE)["reason"] == (
+        "the quote is not on the cited page (80 characters fetched, short of the 6,000-token "
+        "limit, so not cut): its first 15 words are on the page, then the quote has 'hawaii' "
+        "where the page ends")
+
+
+def test_a_quote_of_ellipses_and_two_words_is_too_short():
+    research = _judge(_answer(bt={"quote": "reef ... break"}))
+    assert research["break_type"]["reason"] == ("the quote is under 3 words, too short to "
+                                                "check")
+    research = _judge(_answer(bt={"quote": "... reef break ..."}))
+    assert research["break_type"]["reason"] == ("the quote is under 3 words, too short to "
+                                                "check")
 
 
 def test_the_prompt_says_to_quote_the_fetched_text_and_where_it_stops():
