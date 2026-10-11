@@ -14,8 +14,8 @@ WHAT THESE TESTS HOLD:
      evidence for the value that cites it, and a same-named spot elsewhere is recorded;
   6. the sand-bottom flag is derived from a researched bottom, and the researched and
      memory answers are compared on it;
-  7. a failed fetch that leaves a value unknown gets one follow-up, which only fills
-     values the first turn left unknown;
+  7. a failed fetch that leaves a value unknown, or a quote under three words, gets one
+     follow-up, which only fills values the first turn left unknown;
   8. cost is the API's usage at list price, the budget stops the run before a spot that
      could cross it, and it holds across re-runs;
   9. the run writes the results file and nothing else: never the roster, never the
@@ -24,7 +24,8 @@ WHAT THESE TESTS HOLD:
      read correctly;
  11. a quote is matched whatever its okina, accents or apostrophes, may stand on another
      page the run fetched, and when it is not found the reason says what the page was;
- 12. the report ends with the gate for the full run, PASS or FAIL on each rule as set.
+ 12. the report ends with the gate for the full run, PASS or FAIL on each rule as set on
+     2026-10-11.
 
 No expected value below is produced by calling the code under test: prices, costs,
 distances, sentences and table rows are written out or worked by hand in the comments.
@@ -1004,7 +1005,7 @@ def test_a_failed_fetch_that_leaves_values_unknown_gets_one_follow_up():
     assert research["sand_bottom"] == "no"
     assert research["follow_up"] == {
         "after": [{"url": GUESSED_URL, "error": "url_not_in_prior_context"}],
-        "needed": ["break_type", "bottom"], "searches": 0, "fetches": 1,
+        "short_quotes": [], "needed": ["break_type", "bottom"], "searches": 0, "fetches": 1,
         "filled": ["break_type", "bottom"]}
     # 1,000 + 2,000 in x $2/M = $0.0060; 200 out x $10/M = $0.0020; 1 search = $0.0100.
     assert record["research_usage"]["cost_usd"] == pytest.approx(0.0180)
@@ -1110,6 +1111,147 @@ def test_no_follow_up_after_a_turn_that_did_not_end_normally():
                                      NO_SLEEP)
         assert sum(1 for call in client.calls if "tools" in call) == 1, stop
         assert record["research"]["follow_up"] is None, stop
+
+
+# --- the same follow-up, for a quote under three words -------------------------------------
+
+SHORT_FOLLOW_UP = (
+    'Your quote for the kind of break, "reef break", is too short to check. Copy a full '
+    "sentence of at least six words that contains your answer, exactly as it is on a page "
+    "you fetched, and cite that page.\n"
+    "\n"
+    "You may make one more tool call: one web search or one web fetch, not both. Then give "
+    "your final answer again, both values, as the same JSON object at the end of your reply.")
+
+
+def _short_then(second_content):
+    """A client whose first research turn fetches PAGE and gives the break type with a
+    two-word quote (the bottom with a good one), and whose second turn is *second_content*."""
+    first = _researched(_answer(bt={"quote": "reef break"}))[0]["content"]
+
+    def respond(request, n):
+        if "tools" not in request:
+            return _recall()
+        return _response(first if n == 1 else second_content)
+    return FakeClient(respond), first
+
+
+def test_the_prompt_asks_for_a_full_sentence_of_six_words():
+    # The quote's description wraps under it with 14 spaces, the steps with 3.
+    prompt = rb.RESEARCH_SYSTEM.replace("\n              ", " ").replace("\n   ", " ")
+    assert ("3. For each of the two, copy a full sentence from the page that contains your "
+            "answer: at least six words, exactly as written, no ellipses, at most 300 "
+            "characters. A heading or a few words are not enough.") in prompt
+    assert ('"quote": "a full sentence from that page, at least six words, that says what '
+            'kind of break it is" or null') in prompt
+    assert ('"quote": "a full sentence from that page, at least six words, that says what '
+            'the bottom is" or null') in prompt
+
+
+def test_a_quote_under_three_words_gets_the_follow_up_asking_for_the_full_sentence():
+    client, first = _short_then([_answer()])
+    record, exc = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                   NO_SLEEP)
+    assert exc is None
+    asked = [call for call in client.calls if "tools" in call]
+    assert len(asked) == 2
+    assert asked[1]["messages"] == [{"role": "user", "content": PIPELINE_PROMPT},
+                                    {"role": "assistant", "content": first},
+                                    {"role": "user", "content": SHORT_FOLLOW_UP}]
+    research = record["research"]
+    assert (research["break_type"]["status"], research["break_type"]["value"],
+            research["break_type"]["quote"]) == ("researched", "reef", QUOTE)
+    # The bottom's quote was good the first time, and stays the first turn's.
+    assert research["bottom"]["quote"] == BOTTOM_QUOTE
+    assert research["follow_up"] == {"after": [], "short_quotes": ["break_type"],
+                                     "needed": ["break_type"], "searches": 0, "fetches": 0,
+                                     "filled": ["break_type"]}
+    assert record["research_responses"]["follow_up"]["short_quotes"] == ["break_type"]
+    assert record["research_responses"]["follow_up"]["asked_for"] == ["break_type"]
+
+
+def test_the_short_quote_follow_up_is_asked_once():
+    # The second answer is short again: no third research request, and the value stays
+    # unknown for the same reason.
+    client, _ = _short_then([_answer(bt={"quote": "a reef"})])
+    record, _ = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                 NO_SLEEP)
+    assert sum(1 for call in client.calls if "tools" in call) == 2
+    kind = record["research"]["break_type"]
+    assert (kind["status"], kind["reason"]) == (
+        "unknown", "the quote is under 3 words, too short to check")
+    assert record["research"]["follow_up"]["filled"] == []
+
+
+def test_a_failed_fetch_and_a_short_quote_share_one_follow_up():
+    content = (_search("s1", "q", [URL]) + _fetch_failed("f1", GUESSED_URL)
+               + [_answer(bt={"quote": "reef break"}, bottom=UNKNOWN)])
+    client = FakeClient(lambda request, n: _recall() if "tools" not in request
+                        else _response(content if n == 1 else [_answer(bottom=UNKNOWN)]))
+    rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0), NO_SLEEP)
+    asked = [call for call in client.calls if "tools" in call]
+    assert len(asked) == 2
+    assert asked[1]["messages"][2]["content"] == (
+        "This fetch did not work:\n"
+        "- https://www.surf-forecast.com/breaks/Pipeline: web_fetch opens only a URL that a "
+        "search result or an earlier fetch returned, and this one came from neither\n"
+        "\n"
+        'Your quote for the kind of break, "reef break", is too short to check. Copy a full '
+        "sentence of at least six words that contains your answer, exactly as it is on a page "
+        "you fetched, and cite that page.\n"
+        "\n"
+        "Your answer for the bottom is still unknown. You may make one more tool call: one "
+        "web search or one web fetch, not both. A URL written in this message may be "
+        "fetched. Then give your final answer again, both values, as the same JSON object at "
+        "the end of your reply.")
+
+
+def _turn(stop="end_turn", failed=(), **fields):
+    """A judged first turn: each field ('status', 'reason', 'quote'), and the answer."""
+    research = {"stop_reasons": [stop], "failed_fetches": list(failed),
+                "model_answer": {field: {"value": "reef", "quote": quote}
+                                 for field, (_, _, quote) in fields.items()}}
+    for field, (status, reason, _) in fields.items():
+        research[field] = {"status": status, "reason": reason}
+    return research
+
+
+SHORT = "the quote is under 3 words, too short to check"
+
+
+def test_which_turns_get_the_short_quote_follow_up():
+    done = ("researched", None, "Pipeline is a reef break")
+    short = ("unknown", SHORT, "reef break")
+    missing = ("unknown", "the quote is not on the cited page", "Pipeline is a lava reef")
+    assert rb.follow_up_needed(_turn(break_type=short, bottom=done)) == {
+        "failed": [], "needed": ["break_type"], "short": {"break_type": "reef break"}}
+    # Another unknown value goes with it only when a fetch failed too.
+    assert rb.follow_up_needed(_turn(break_type=short, bottom=missing)) == {
+        "failed": [], "needed": ["break_type"], "short": {"break_type": "reef break"}}
+    failed = [{"url": GUESSED_URL, "error": "url_not_in_prior_context"}]
+    assert rb.follow_up_needed(_turn(failed=failed, break_type=short, bottom=missing)) == {
+        "failed": failed, "needed": ["break_type", "bottom"],
+        "short": {"break_type": "reef break"}}
+    # A quote of three words or more that is not on the page gets none; nor does a turn
+    # that did not end normally.
+    assert rb.follow_up_needed(_turn(break_type=missing, bottom=done)) is None
+    assert rb.follow_up_needed(_turn(stop="max_tokens", break_type=short, bottom=done)) is None
+
+
+def test_the_report_and_the_dry_run_show_the_short_quote_follow_up(capsys):
+    client, _ = _short_then([_answer()])
+    record, _ = rb.research_spot(client, PIPELINE_ENTRY, SPOT, "medium", rb.Budget(5.0),
+                                 NO_SLEEP)
+    assert rb._follow_up_cell(record["research"]) == (
+        "after a short quote for break_type: 0 searches, 0 fetches; filled break_type")
+    assert rb.main(["--dry-run"], client=FakeClient(lambda r, n: pytest.fail("no call"))) == 0
+    printed = capsys.readouterr().out
+    assert ("IF A QUOTE IS UNDER 3 WORDS, the conversation goes on once (the same follow-up, "
+            "so at most one per spot), with a message like this one giving the real quote:"
+            ) in printed
+    assert 'Your quote for the kind of break, "Zuma Beach", is too short to check.' in printed
+    # The wording is part of the settings, so a results file is resumed only under it.
+    assert "is too short to check" in rb._follow_up_sample()
 
 
 def test_a_follow_up_that_makes_more_than_one_call_is_flagged():
@@ -1390,11 +1532,12 @@ def test_a_run_writes_its_results_file_and_nothing_else(tmp_path):
 
 
 def test_the_earlier_runs_results_are_left_where_they_are():
-    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_gate3.json"
+    assert rb.DEFAULT_OUTPUT == config.PIPELINE_DIR / "data" / "break_type_research_gate4.json"
     assert rb.DEFAULT_OUTPUT.name not in ("break_type_research_pilot.json",
                                           "break_type_research_pilot2.json",
                                           "break_type_research_gate.json",
-                                          "break_type_research_gate2.json")
+                                          "break_type_research_gate2.json",
+                                          "break_type_research_gate3.json")
 
 
 def test_the_results_file_may_not_be_the_roster(tmp_path):
@@ -1487,7 +1630,9 @@ def test_the_report_rows():
     # 0.0441 x 646 = 28.4886
     gate = report.index("The gate for the full run:")
     assert report[gate - 1] == "" and report[-1] == "GATE: FAIL"
-    assert "PASS  Banzai Pipeline is not unknown; researched reef" in report[gate:]
+    # Only Pipeline ran: researched reef on rock, so no famous reef is wrong.
+    assert report[gate + 3].startswith("PASS  no famous reef is researched as beach or has a "
+                                       "sand bottom: Banzai Pipeline reef, sand bottom no; ")
     assert report[gate - 6:gate - 1] == [
         "Spent $0.0441 of the $5.00 budget, at list prices.",
         "Per spot, over 1 finished: mean $0.0441, median $0.0441, cheapest $0.0441, "
@@ -1509,8 +1654,8 @@ def test_the_report_counts_follow_ups_and_the_values_they_gained():
     results["spots"]["Banzai Pipeline|Hawaii"] = record
     report = rb.render_report(results).splitlines()
     gate = report.index("The gate for the full run:")
-    assert report[gate - 2] == ("Followed up a failed fetch at 1 of 1 spots; 1 of them gained "
-                                "a value.")
+    assert report[gate - 2] == ("Followed up a failed fetch or a short quote at 1 of 1 spots; "
+                                "1 of them gained a value.")
     assert ("after url_not_in_prior_context: 0 searches, 1 fetch; filled break_type and "
             "bottom |") in [line for line in report if line.startswith("| Banzai Pipeline | 1 |")][0]
 
@@ -1523,97 +1668,136 @@ GATE_KEYS = {"Mavericks": "Mavericks, California|California",
              "Jaws": "Peahi Jaws|Hawaii", "Waimea": "Waimea Bay|Hawaii",
              "Tres": "Tres Palmas|Puerto Rico", "3 Mile": "3 Mile|California",
              "Refugio": "Refugio State Beach|California", "Tourmaline": "Tourmaline|California",
-             "Lake Worth": "Lake Worth Pier|Florida", "Honolua": "Honolua Bay|Hawaii"}
+             "Lake Worth": "Lake Worth Pier|Florida", "Honolua": "Honolua Bay|Hawaii",
+             "Bombora": "Bombora|Hawaii"}
 
 
 def _gate_results(**changes):
-    """Every pilot spot finished: the controls right and every other spot researched as a
-    reef, except *changes*, by GATE_KEYS name: a value, 'unknown', 'unfinished' or None
-    for not run."""
-    values = {"Mavericks, California": "reef", "Malibu Surfrider Beach": "point",
-              "Zuma Beach": "beach", "Steamer Lane": "point"}
-    spots = {}
-    for entry in rb.PILOT_SPOTS:
-        spots[f"{entry[0]}|{entry[1]}"] = values.get(entry[0], "reef")
+    """Every pilot spot finished with its break type and sand-bottom flag: the controls
+    right (Zuma a beach on sand, the rest on rock) and every other spot a reef on rock,
+    except *changes*, by GATE_KEYS name: a break type, (break type, sand-bottom flag),
+    'unknown', 'unfinished' or None for not run."""
+    values = {"Mavericks, California": ("reef", "no"), "Malibu Surfrider Beach": ("point", "no"),
+              "Zuma Beach": ("beach", "yes"), "Steamer Lane": ("point", "no")}
+    spots = {f"{entry[0]}|{entry[1]}": values.get(entry[0], ("reef", "no"))
+             for entry in rb.PILOT_SPOTS}
     for name, value in changes.items():
         spots[GATE_KEYS[name.replace("_", " ")]] = value
     results = {"spots": {}}
     for key, value in spots.items():
         if value is None:
             continue
-        status = "unknown" if value in ("unknown", "unfinished") else "researched"
+        kind, sand = value if isinstance(value, tuple) else (value, "no")
+        if kind in ("unknown", "unfinished"):
+            sand = "unknown" if not isinstance(value, tuple) else sand
         results["spots"][key] = {
-            "done": value != "unfinished",
-            "research": {"break_type": {"status": status,
-                                        "value": "unknown" if status == "unknown" else value}}}
+            "done": kind != "unfinished",
+            "research": {"break_type": {"status": "unknown" if kind in ("unknown", "unfinished")
+                                        else "researched",
+                                        "value": "unknown" if kind == "unfinished" else kind},
+                         "sand_bottom": sand}}
     return results
 
 
-GATE_PASSED = [
-    "PASS  control Mavericks, California: reef; researched reef",
-    "PASS  control Malibu Surfrider Beach: point; researched point",
-    "PASS  control Zuma Beach: beach; researched beach",
-    "PASS  control Steamer Lane: point or reef; researched point",
-    "PASS  Banzai Pipeline is not unknown; researched reef",
-    "PASS  Peahi Jaws is not unknown; researched reef",
-    "PASS  Waimea Bay is not unknown; researched reef",
-    "PASS  Tres Palmas is not unknown; researched reef",
-]
+CONTROLS_RIGHT = ("PASS  no control gets a wrong answer: Mavericks, California reef; Malibu "
+                  "Surfrider Beach point; Zuma Beach beach; Steamer Lane point")
+REEFS_RIGHT = ("PASS  no famous reef is researched as beach or has a sand bottom: Banzai "
+               "Pipeline reef, sand bottom no; Peahi Jaws reef, sand bottom no; Waimea Bay "
+               "reef, sand bottom no; Tres Palmas reef, sand bottom no")
+COUNTS = " (unknown counts toward the 4)"
 
 
-def test_the_gate_passes_with_the_controls_right_and_four_unknown():
-    passed, lines = rb.gate_verdict(_gate_results(**{"3_Mile": "unknown", "Refugio": "unknown",
-                                                     "Tourmaline": "unknown",
-                                                     "Lake_Worth": "unknown"}))
-    assert passed is True
-    assert lines == GATE_PASSED + [
-        "PASS  no more than 4 of the 20 unknown for break type; 4 are: researched as unknown: "
-        "3 Mile, Refugio State Beach, Tourmaline, Lake Worth Pier",
-        "GATE: PASS"]
+def test_the_gate_passes_with_every_answer_right():
+    assert rb.gate_verdict(_gate_results()) == (True, [
+        CONTROLS_RIGHT, REEFS_RIGHT,
+        "PASS  no more than 4 of the 20 unknown for break type; 0 are", "GATE: PASS"])
 
 
-def test_five_unknown_fail_the_gate():
-    passed, lines = rb.gate_verdict(_gate_results(**{"3_Mile": "unknown", "Refugio": "unknown",
-                                                     "Tourmaline": "unknown",
-                                                     "Lake_Worth": "unknown",
-                                                     "Honolua": "unknown"}))
-    assert passed is False
-    assert lines == GATE_PASSED + [
-        "FAIL  no more than 4 of the 20 unknown for break type; 5 are: researched as unknown: "
-        "Honolua Bay, 3 Mile, Refugio State Beach, Tourmaline, Lake Worth Pier",
-        "GATE: FAIL"]
+def test_the_third_gate_runs_unknown_zuma_and_bombora_now_pass():
+    # Zuma (a control) and Bombora unknown, nothing wrong: two unknowns count toward the 4
+    # and fail nothing on their own.
+    assert rb.gate_verdict(_gate_results(Zuma="unknown", Bombora="unknown")) == (True, [
+        "PASS  no control gets a wrong answer: Mavericks, California reef; Malibu Surfrider "
+        "Beach point; Zuma Beach unknown" + COUNTS + "; Steamer Lane point",
+        REEFS_RIGHT,
+        "PASS  no more than 4 of the 20 unknown for break type; 2 are: researched as unknown: "
+        "Bombora, Zuma Beach",
+        "GATE: PASS"])
 
 
-def test_steamer_lane_may_be_a_point_or_a_reef_and_nothing_else():
-    assert rb.gate_verdict(_gate_results(Steamer="reef"))[0] is True
-    passed, lines = rb.gate_verdict(_gate_results(Steamer="beach"))
-    assert passed is False
-    assert lines[3] == "FAIL  control Steamer Lane: point or reef; researched beach"
-    passed, lines = rb.gate_verdict(_gate_results(Steamer="unknown"))
-    assert lines[3] == "FAIL  control Steamer Lane: point or reef; researched unknown"
-
-
-@pytest.mark.parametrize("name, value, line", [
-    ("Mavericks", "point", "FAIL  control Mavericks, California: reef; researched point"),
-    ("Malibu", "beach", "FAIL  control Malibu Surfrider Beach: point; researched beach"),
-    ("Zuma", "reef", "FAIL  control Zuma Beach: beach; researched reef"),
+@pytest.mark.parametrize("name, value, wrong", [
+    ("Mavericks", "point", "Mavericks, California point (wrong: needs reef)"),
+    ("Malibu", "beach", "Malibu Surfrider Beach beach (wrong: needs point)"),
+    ("Zuma", "reef", "Zuma Beach reef (wrong: needs beach)"),
+    ("Steamer", "beach", "Steamer Lane beach (wrong: needs point or reef)"),
+    ("Steamer", "jetty", "Steamer Lane jetty (wrong: needs point or reef)"),
 ])
-def test_each_other_control_has_one_right_answer(name, value, line):
+def test_a_wrong_control_fails_the_gate(name, value, wrong):
     passed, lines = rb.gate_verdict(_gate_results(**{name: value}))
-    assert passed is False and line in lines
-
-
-@pytest.mark.parametrize("name, line", [
-    ("Pipeline", "FAIL  Banzai Pipeline is not unknown; researched unknown"),
-    ("Jaws", "FAIL  Peahi Jaws is not unknown; researched unknown"),
-    ("Waimea", "FAIL  Waimea Bay is not unknown; researched unknown"),
-    ("Tres", "FAIL  Tres Palmas is not unknown; researched unknown"),
-])
-def test_each_famous_break_left_unknown_fails_the_gate_alone(name, line):
-    # One unknown is well inside the count of four, so this rule alone fails it.
-    passed, lines = rb.gate_verdict(_gate_results(**{name: "unknown"}))
     assert passed is False
-    assert [entry for entry in lines if entry.startswith("FAIL")] == [line]
+    assert lines[0].startswith("FAIL  no control gets a wrong answer: ")
+    assert wrong in lines[0]
+    assert lines[1:] == [REEFS_RIGHT,
+                         "PASS  no more than 4 of the 20 unknown for break type; 0 are",
+                         "GATE: FAIL"]
+
+
+def test_steamer_lane_may_be_a_point_or_a_reef():
+    passed, lines = rb.gate_verdict(_gate_results(Steamer="reef"))
+    assert passed is True
+    assert lines[0] == ("PASS  no control gets a wrong answer: Mavericks, California reef; "
+                        "Malibu Surfrider Beach point; Zuma Beach beach; Steamer Lane reef")
+
+
+@pytest.mark.parametrize("name, value, said", [
+    ("Pipeline", ("beach", "no"),
+     "Banzai Pipeline beach, sand bottom no (wrong: researched as beach)"),
+    ("Jaws", ("reef", "yes"), "Peahi Jaws reef, sand bottom yes (wrong: sand bottom yes)"),
+    ("Waimea", ("beach", "yes"),
+     "Waimea Bay beach, sand bottom yes (wrong: researched as beach, sand bottom yes)"),
+    # A sand bottom fails it even when the break type is unknown.
+    ("Tres", ("unknown", "yes"),
+     "Tres Palmas unknown" + COUNTS + ", sand bottom yes (wrong: sand bottom yes)"),
+])
+def test_a_famous_reef_researched_as_beach_or_on_sand_fails_the_gate(name, value, said):
+    passed, lines = rb.gate_verdict(_gate_results(**{name: value}))
+    assert passed is False
+    assert lines[0] == CONTROLS_RIGHT
+    assert lines[1].startswith("FAIL  no famous reef is researched as beach or has a sand "
+                               "bottom: ")
+    assert said in lines[1]
+    assert lines[-1] == "GATE: FAIL"
+
+
+@pytest.mark.parametrize("name", ["Mavericks", "Malibu", "Zuma", "Steamer", "Pipeline", "Jaws",
+                                  "Waimea", "Tres"])
+def test_an_unknown_control_or_famous_reef_fails_nothing_on_its_own(name):
+    passed, lines = rb.gate_verdict(_gate_results(**{name: "unknown"}))
+    assert passed is True
+    assert [line[:4] for line in lines[:3]] == ["PASS", "PASS", "PASS"]
+    assert lines[2].startswith("PASS  no more than 4 of the 20 unknown for break type; 1 is: ")
+
+
+def test_a_famous_reef_on_a_mixed_or_unknown_bottom_passes():
+    passed, lines = rb.gate_verdict(_gate_results(Pipeline=("reef", "unknown")))
+    assert passed is True
+    assert "Banzai Pipeline reef, sand bottom unknown;" in lines[1]
+
+
+def test_four_unknown_pass_and_five_fail_wherever_they_are():
+    four = {"Zuma": "unknown", "Pipeline": "unknown", "Jaws": "unknown", "Mavericks": "unknown"}
+    passed, lines = rb.gate_verdict(_gate_results(**four))
+    assert passed is True
+    assert lines[2] == ("PASS  no more than 4 of the 20 unknown for break type; 4 are: "
+                        "researched as unknown: Banzai Pipeline, Peahi Jaws, Mavericks, "
+                        "California, Zuma Beach")
+    passed, lines = rb.gate_verdict(_gate_results(**four, Bombora="unknown"))
+    assert passed is False
+    assert [line[:4] for line in lines] == ["PASS", "PASS", "FAIL", "GATE"]
+    assert lines[2] == ("FAIL  no more than 4 of the 20 unknown for break type; 5 are: "
+                        "researched as unknown: Banzai Pipeline, Peahi Jaws, Bombora, "
+                        "Mavericks, California, Zuma Beach")
+    assert lines[3] == "GATE: FAIL"
 
 
 def test_spots_not_run_or_not_finished_count_as_unknown():
@@ -1625,32 +1809,40 @@ def test_spots_not_run_or_not_finished_count_as_unknown():
         "FAIL  no more than 4 of the 20 unknown for break type; 5 are: researched as unknown: "
         "3 Mile; not run or not finished, so counted as unknown: Honolua Bay, Refugio State "
         "Beach, Tourmaline, Lake Worth Pier")
-    passed, lines = rb.gate_verdict(_gate_results(Pipeline=None))
-    assert passed is False
-    assert "FAIL  Banzai Pipeline is not unknown; researched unknown" in lines
-    assert lines[-2] == ("PASS  no more than 4 of the 20 unknown for break type; 1 is: not "
-                         "run or not finished, so counted as unknown: Banzai Pipeline")
 
 
-def test_a_spot_whose_research_ended_but_whose_run_did_not_counts_as_unknown():
-    # Pipeline's research turn came back reef, then its memory request failed: the spot is
-    # not finished, so the next run researches it again, and the gate reads it as unknown.
-    results = _gate_results()
+def test_a_spot_whose_run_did_not_finish_is_unknown_not_wrong():
+    # Pipeline's research turn came back beach on sand, then its memory request failed: the
+    # spot is not finished, so the next run researches it again. Until then the gate reads
+    # it as unknown, not as a wrong answer.
+    results = _gate_results(Pipeline=("beach", "yes"))
     results["spots"][GATE_KEYS["Pipeline"]]["done"] = False
     passed, lines = rb.gate_verdict(results)
-    assert passed is False
-    assert lines[4] == "FAIL  Banzai Pipeline is not unknown; researched unknown"
-    results = _gate_results()
-    results["spots"][GATE_KEYS["Mavericks"]]["done"] = False
-    assert rb.gate_verdict(results)[1][0] == (
-        "FAIL  control Mavericks, California: reef; researched unknown")
+    assert passed is True
+    assert ("Banzai Pipeline unknown" + COUNTS + ", sand bottom unknown;") in lines[1]
+    assert lines[2] == ("PASS  no more than 4 of the 20 unknown for break type; 1 is: not run "
+                        "or not finished, so counted as unknown: Banzai Pipeline")
 
 
-def test_an_empty_results_file_fails_every_rule():
-    passed, lines = rb.gate_verdict({"spots": {}})
-    assert passed is False
-    assert [line[:4] for line in lines[:-1]] == ["FAIL"] * 9
-    assert lines[-1] == "GATE: FAIL"
+EMPTY_GATE = [
+    "PASS  no control gets a wrong answer: Mavericks, California unknown" + COUNTS
+    + "; Malibu Surfrider Beach unknown" + COUNTS + "; Zuma Beach unknown" + COUNTS
+    + "; Steamer Lane unknown" + COUNTS,
+    "PASS  no famous reef is researched as beach or has a sand bottom: Banzai Pipeline unknown"
+    + COUNTS + ", sand bottom unknown; Peahi Jaws unknown" + COUNTS + ", sand bottom unknown; "
+    "Waimea Bay unknown" + COUNTS + ", sand bottom unknown; Tres Palmas unknown" + COUNTS
+    + ", sand bottom unknown",
+    "FAIL  no more than 4 of the 20 unknown for break type; 20 are: not run or not "
+    "finished, so counted as unknown: Banzai Pipeline, Waimea Bay, Peahi Jaws, Honolua "
+    "Bay, Rincon Domes, Tres Palmas, Suicide's, Bombora, 3 Mile, Refugio State Beach, "
+    "Tourmaline, Venice Beach Breakwater, Lower Trestles, Jacksonville Beach Pier, Lake "
+    "Worth Pier, Manasquan Inlet, Mavericks, California, Steamer Lane, Malibu Surfrider "
+    "Beach, Zuma Beach",
+    "GATE: FAIL"]
+
+
+def test_an_empty_results_file_fails_on_the_count_alone():
+    assert rb.gate_verdict({"spots": {}}) == (False, EMPTY_GATE)
 
 
 def test_the_report_ends_with_the_gate(tmp_path, capsys):
@@ -1660,23 +1852,7 @@ def test_the_report_ends_with_the_gate(tmp_path, capsys):
     never = FakeClient(lambda request, n: pytest.fail("no request may be made"))
     assert rb.main(["--report", "--output", str(output)], client=never) == 0
     printed = capsys.readouterr().out.splitlines()
-    assert printed[-12:] == [
-        "The gate for the full run:", "",
-        "FAIL  control Mavericks, California: reef; researched unknown",
-        "FAIL  control Malibu Surfrider Beach: point; researched unknown",
-        "FAIL  control Zuma Beach: beach; researched unknown",
-        "FAIL  control Steamer Lane: point or reef; researched unknown",
-        "FAIL  Banzai Pipeline is not unknown; researched unknown",
-        "FAIL  Peahi Jaws is not unknown; researched unknown",
-        "FAIL  Waimea Bay is not unknown; researched unknown",
-        "FAIL  Tres Palmas is not unknown; researched unknown",
-        "FAIL  no more than 4 of the 20 unknown for break type; 20 are: not run or not "
-        "finished, so counted as unknown: Banzai Pipeline, Waimea Bay, Peahi Jaws, Honolua "
-        "Bay, Rincon Domes, Tres Palmas, Suicide's, Bombora, 3 Mile, Refugio State Beach, "
-        "Tourmaline, Venice Beach Breakwater, Lower Trestles, Jacksonville Beach Pier, Lake "
-        "Worth Pier, Manasquan Inlet, Mavericks, California, Steamer Lane, Malibu Surfrider "
-        "Beach, Zuma Beach",
-        "GATE: FAIL"]
+    assert printed[-6:] == ["The gate for the full run:", ""] + EMPTY_GATE
 
 
 def test_a_report_cell_cannot_break_the_table():

@@ -32,9 +32,11 @@ reports where each page it quotes puts the spot; check_location compares that wi
 state and coordinates, and a page that puts it somewhere else makes the value 'unknown'.
 Hawaii's Suicide's and Bombora were once researched as California spots.
 
-ONE MORE TRY AFTER A FAILED FETCH. When a fetch failed and a value is still unknown at the
-end of the turn, the conversation goes on once (follow_up_message): the model is told which
-fetch failed and why, and may make one more search or one more fetch before answering again.
+ONE MORE TRY AFTER A FAILED FETCH OR A SHORT QUOTE. When a fetch failed and a value is still
+unknown at the end of the turn, or a quote under MIN_QUOTE_WORDS words left a value unknown,
+the conversation goes on once (follow_up_message): the model is told which fetch failed and
+why, and is asked for the full sentence behind a short quote, and may make one more search
+or one more fetch before answering again. One follow-up per spot, whatever the reasons.
 
 COST. Each request's usage is priced at list price (PRICES) and added up per spot. A fetched
 page is cut at FETCH_MAX_CONTENT_TOKENS, and the model is told not to fetch PDFs, which that
@@ -156,12 +158,15 @@ FULL_ROSTER_SPOTS = 646
 LOCATION_MAX_KM = 25.0
 # A shorter quote ("reef break") could be found on almost any page, so it proves nothing.
 MIN_QUOTE_WORDS = 3
+# A value whose quote is shorter gets one follow-up asking for the full sentence.
+SHORT_QUOTE_REASON = f"the quote is under {MIN_QUOTE_WORDS} words, too short to check"
 
 # Earlier runs keep their own files: the first pilot (schema 1) break_type_research_pilot.json,
 # the revision (schema 2) break_type_research_pilot2.json, the first gate runs (schema 3)
-# break_type_research_gate.json and _gate2.json. Schema 4 saves each research turn's
-# responses, the fetched pages' text included, so that --recheck can judge them again.
-DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_gate3.json"
+# break_type_research_gate.json and _gate2.json, and the third (schema 4) _gate3.json.
+# Schema 4 saves each research turn's responses, the fetched pages' text included, so that
+# --recheck can judge them again; --report and --recheck read _gate3.json still.
+DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_gate4.json"
 SCHEMA_VERSION = 4
 
 # What the waves break over. Kept in the results file only: the spots table has no column.
@@ -236,9 +241,10 @@ RESEARCH_SYSTEM = (
     "2. Fetch the page you will quote with web_fetch, so that its exact words can be\n"
     "   checked. web_fetch opens only a URL that a search result or an earlier fetch\n"
     "   returned, so do not type one in yourself. Do not fetch PDFs.\n"
-    "3. For each of the two, find the words on the page that say it, and copy them\n"
-    "   exactly: one continuous passage, no ellipses, at most 300 characters. The two may\n"
-    "   come from the same page, and from the same passage.\n"
+    "3. For each of the two, copy a full sentence from the page that contains your\n"
+    "   answer: at least six words, exactly as written, no ellipses, at most 300\n"
+    "   characters. A heading or a few words are not enough. The two may come from the\n"
+    "   same page, and from the same sentence.\n"
     "4. Copy each quote from the text the fetch returned, not from a search result, and\n"
     "   cite the URL of that fetched page. Your quote is checked against that text, which\n"
     "   stops after about 6,000 tokens of the page.\n"
@@ -267,13 +273,15 @@ RESEARCH_SYSTEM = (
     "    \"value\": \"beach\" | \"reef\" | \"point\" | \"jetty\" | \"rivermouth\" | \"unknown\",\n"
     "    \"all\": [every kind the page names, in its order],\n"
     "    \"source_url\": \"the URL of the page you quote\" or null,\n"
-    "    \"quote\": \"the exact words on that page that say what kind of break it is\" or null\n"
+    "    \"quote\": \"a full sentence from that page, at least six words, that says what\n"
+    "              kind of break it is\" or null\n"
     "  },\n"
     "  \"bottom\": {\n"
     "    \"value\": \"sand\" | \"rock\" | \"coral\" | \"cobble\" | \"mixed\" | \"unknown\",\n"
     "    \"all\": [every material the page names, in its order],\n"
     "    \"source_url\": \"the URL of the page you quote\" or null,\n"
-    "    \"quote\": \"the exact words on that page that say what the bottom is\" or null\n"
+    "    \"quote\": \"a full sentence from that page, at least six words, that says what\n"
+    "              the bottom is\" or null\n"
     "  },\n"
     "  \"pages\": [\n"
     "    {\n"
@@ -341,20 +349,32 @@ FETCH_ERRORS = {
 _FIELD_WORDS = {"break_type": "the kind of break", "bottom": "the bottom"}
 
 
-def follow_up_message(failed: list, needed: list) -> str:
-    """The one message that continues a turn after a failed fetch left a value unknown.
+def follow_up_message(failed: list, needed: list, short: dict = None) -> str:
+    """The one message that continues a turn: after a failed fetch left a value unknown,
+    or a quote under MIN_QUOTE_WORDS words (*short*: field -> the quote) left one unknown.
     A URL written in a user message may be fetched, so a URL the model typed in itself
     can be tried again."""
-    lines = ["This fetch did not work:" if len(failed) == 1 else "These fetches did not work:"]
-    for fetch in failed:
-        why = FETCH_ERRORS.get(fetch["error"], f"error {fetch['error']}")
-        lines.append(f"- {fetch['url'] or '(no URL)'}: {why}")
-    lines += ["",
-              "Your answer for " + " and ".join(_FIELD_WORDS[field] for field in needed)
-              + " is still unknown. You may make one more tool call: one web search or one "
-              "web fetch, not both. A URL written in this message may be fetched. Then give "
-              "your final answer again, both values, as the same JSON object at the end of "
-              "your reply."]
+    short = short or {}
+    lines = []
+    if failed:
+        lines.append("This fetch did not work:" if len(failed) == 1
+                     else "These fetches did not work:")
+        for fetch in failed:
+            why = FETCH_ERRORS.get(fetch["error"], f"error {fetch['error']}")
+            lines.append(f"- {fetch['url'] or '(no URL)'}: {why}")
+        lines.append("")
+    for field, quote in short.items():
+        lines += [f"Your quote for {_FIELD_WORDS[field]}, \"{' '.join(str(quote).split())}\", "
+                  "is too short to check. Copy a full sentence of at least six words that "
+                  "contains your answer, exactly as it is on a page you fetched, and cite "
+                  "that page.", ""]
+    still = [field for field in needed if field not in short]
+    lines.append(("Your answer for " + " and ".join(_FIELD_WORDS[field] for field in still)
+                  + " is still unknown. " if still else "")
+                 + "You may make one more tool call: one web search or one web fetch, not "
+                 "both. " + ("A URL written in this message may be fetched. " if failed else "")
+                 + "Then give your final answer again, both values, as the same JSON object "
+                 "at the end of your reply.")
     return "\n".join(lines)
 
 
@@ -464,7 +484,8 @@ def recall_request(identity: dict, effort: str) -> dict:
 def _follow_up_sample() -> str:
     """The follow-up message with every error code in it: its wording, for the settings."""
     return follow_up_message([{"url": "https://example.com/", "error": code}
-                              for code in sorted(FETCH_ERRORS)], list(FIELDS))
+                              for code in sorted(FETCH_ERRORS)], list(FIELDS),
+                             {field: "a few words" for field in FIELDS})
 
 
 def run_settings(effort: str) -> dict:
@@ -731,7 +752,7 @@ def find_quote(quote, url: str, evidence: dict) -> tuple:
         return None, "no quote", None
     words = _words(_clean_quote(quote))
     if sum(1 for word in words if word != "...") < MIN_QUOTE_WORDS:
-        return None, f"the quote is under {MIN_QUOTE_WORDS} words, too short to check", None
+        return None, SHORT_QUOTE_REASON, None
     key = _url_key(url)
     page = evidence["pages"].get(key)
     if page and _holds(_words(page), words):
@@ -1063,7 +1084,9 @@ def judge_saved(saved: dict, identity: dict) -> dict:
         return first
     combined = judge_research(saved["first"] + follow_up["responses"], identity)
     return merge_follow_up(first, combined, {"failed": first["failed_fetches"],
-                                             "needed": follow_up["asked_for"]},
+                                             "needed": follow_up["asked_for"],
+                                             # Saved since the short-quote follow-up.
+                                             "short": follow_up.get("short_quotes") or []},
                            follow_up["responses"])
 
 
@@ -1185,13 +1208,21 @@ def _run_turn(client, request: dict, messages: list, budget: Budget, sleep,
 
 
 def follow_up_needed(research: dict):
-    """{'failed', 'needed'} when the conversation should go on once, else None: a fetch
-    failed, the turn ended normally, and a value is still unknown."""
-    needed = [field for field in FIELDS if research[field]["status"] != "researched"]
+    """{'failed', 'needed', 'short'} when the conversation should go on once, else None.
+    It goes on when the turn ended normally and either a fetch failed and a value is still
+    unknown (needed: every unknown value), or a quote under MIN_QUOTE_WORDS words left a
+    value unknown (short: field -> that quote; needed: at least those values)."""
     stops = research["stop_reasons"]
-    if not (research["failed_fetches"] and needed and stops and stops[-1] == "end_turn"):
+    if not (stops and stops[-1] == "end_turn"):
         return None
-    return {"failed": research["failed_fetches"], "needed": needed}
+    unknown = [field for field in FIELDS if research[field]["status"] != "researched"]
+    short = {field: (_claim(research.get("model_answer") or {}, field) or {}).get("quote")
+             for field in unknown if research[field]["reason"] == SHORT_QUOTE_REASON}
+    failed = research["failed_fetches"]
+    needed = unknown if failed else list(short)
+    if not needed:
+        return None
+    return {"failed": failed, "needed": needed, "short": short}
 
 
 def merge_follow_up(first: dict, combined: dict, follow: dict, more: list) -> dict:
@@ -1206,7 +1237,8 @@ def merge_follow_up(first: dict, combined: dict, follow: dict, more: list) -> di
     calls = collect_evidence([block for response in more
                               for block in (response.get("content") or [])])
     merged["follow_up"] = {
-        "after": follow["failed"], "needed": follow["needed"],
+        "after": follow["failed"], "short_quotes": list(follow.get("short") or []),
+        "needed": follow["needed"],
         "searches": len(calls["queries"]), "fetches": len(calls["fetches"]),
         "filled": [field for field in follow["needed"]
                    if merged[field]["status"] == "researched"],
@@ -1235,9 +1267,11 @@ def research_spot(client, entry: tuple, spot: dict, effort: str, budget: Budget,
                 messages = messages + [
                     {"role": "assistant", "content": _replay_content(last)},
                     {"role": "user",
-                     "content": follow_up_message(follow["failed"], follow["needed"])}]
+                     "content": follow_up_message(follow["failed"], follow["needed"],
+                                                  follow["short"])}]
                 more, _, _ = _run_turn(client, request, messages, budget, sleep, spent)
                 saved["follow_up"] = {"asked_for": follow["needed"],
+                                      "short_quotes": list(follow["short"]),
                                       "responses": saved_responses(more)}
                 record["research"] = judge_saved(saved, identity)
         finally:
@@ -1317,7 +1351,7 @@ def _progress_line(record: dict, budget: Budget) -> str:
     parts.append(f"memory {recall['break_type']['value']} on {recall['bottom']['value']}"
                  if recall else "no memory answer")
     if research and research.get("follow_up"):
-        parts.append("followed up a failed fetch")
+        parts.append("followed up")
     parts.append(f"{usage['web_search_requests']} searches, "
                  f"{usage['web_fetch_requests']} fetches")
     parts.append(f"${record['cost_usd']:.4f}")
@@ -1467,8 +1501,12 @@ def _follow_up_cell(research) -> str:
     follow = (research or {}).get("follow_up")
     if not follow:
         return "—"
-    errors = ", ".join(sorted({fetch["error"] for fetch in follow["after"]}))
-    cell = (f"after {errors}: {follow['searches']} search"
+    after = []
+    if follow["after"]:
+        after.append(", ".join(sorted({fetch["error"] for fetch in follow["after"]})))
+    if follow.get("short_quotes"):
+        after.append("a short quote for " + " and ".join(follow["short_quotes"]))
+    cell = (f"after {' and '.join(after)}: {follow['searches']} search"
             + ("es" if follow["searches"] != 1 else "")
             + f", {follow['fetches']} fetch" + ("es" if follow["fetches"] != 1 else ""))
     cell += ("; filled " + " and ".join(follow["filled"]) if follow["filled"]
@@ -1495,28 +1533,33 @@ def _tally(flags: list) -> str:
     return ", ".join(f"{flags.count(flag)} {flag}" for flag in ("yes", "no", "unknown"))
 
 
-# The gate for the full run, as it was set: the controls come out right; the famous breaks
-# are not unknown; at most GATE_MAX_UNKNOWN of the 20 are unknown for break type. Every rule
-# reads the researched break type, and a spot not run or not finished counts as unknown.
+# The gate for the full run, as it was set on 2026-10-11. It FAILs if a control gets a
+# wrong answer, if a famous reef is researched as beach or its sand-bottom flag is yes, or
+# if more than GATE_MAX_UNKNOWN of the 20 are unknown for break type. An unknown at a
+# control or famous reef counts toward that limit and fails nothing on its own. A spot not
+# run or not finished counts as unknown.
 GATE_CONTROLS = (
     (("Mavericks, California", "California"), ("reef",)),
     (("Malibu Surfrider Beach", "California"), ("point",)),
     (("Zuma Beach", "California"), ("beach",)),
     (("Steamer Lane", "California"), ("point", "reef")),
 )
-GATE_NOT_UNKNOWN = (("Banzai Pipeline", "Hawaii"), ("Peahi Jaws", "Hawaii"),
-                    ("Waimea Bay", "Hawaii"), ("Tres Palmas", "Puerto Rico"))
+GATE_FAMOUS_REEFS = (("Banzai Pipeline", "Hawaii"), ("Peahi Jaws", "Hawaii"),
+                     ("Waimea Bay", "Hawaii"), ("Tres Palmas", "Puerto Rico"))
 GATE_MAX_UNKNOWN = 4
+_COUNTED = " (unknown counts toward the 4)"
 
 
-def _gate_break_type(results: dict, name_region: tuple):
-    """The researched break type of a pilot spot, or None if it is unknown, not run or
-    not finished."""
+def _gate_answer(results: dict, name_region: tuple) -> tuple:
+    """(researched break type, sand-bottom flag) of a pilot spot; ('unknown', 'unknown')
+    when it is not run or not finished, and 'unknown' for a value not researched."""
     record = results["spots"].get(f"{name_region[0]}|{name_region[1]}")
     if not record or not record.get("done"):
-        return None
-    claim = record["research"]["break_type"]
-    return claim["value"] if claim["status"] == "researched" else None
+        return "unknown", "unknown"
+    research = record["research"]
+    claim = research["break_type"]
+    return (claim["value"] if claim["status"] == "researched" else "unknown",
+            research["sand_bottom"])
 
 
 def gate_verdict(results: dict) -> tuple:
@@ -1528,17 +1571,30 @@ def gate_verdict(results: dict) -> tuple:
         passed = passed and ok
         lines.append(("PASS" if ok else "FAIL") + "  " + text)
 
+    wrong, said = False, []
     for (name, region), allowed in GATE_CONTROLS:
-        got = _gate_break_type(results, (name, region))
-        rule(got in allowed, f"control {name}: {' or '.join(allowed)}; researched "
-                             f"{got or 'unknown'}")
-    for name, region in GATE_NOT_UNKNOWN:
-        got = _gate_break_type(results, (name, region))
-        rule(got is not None, f"{name} is not unknown; researched {got or 'unknown'}")
+        kind, _ = _gate_answer(results, (name, region))
+        bad = kind != "unknown" and kind not in allowed
+        wrong = wrong or bad
+        said.append(f"{name} {kind}" + (_COUNTED if kind == "unknown" else "")
+                    + (f" (wrong: needs {' or '.join(allowed)})" if bad else ""))
+    rule(not wrong, "no control gets a wrong answer: " + "; ".join(said))
+
+    wrong, said = False, []
+    for name, region in GATE_FAMOUS_REEFS:
+        kind, sand = _gate_answer(results, (name, region))
+        why = (["researched as beach"] if kind == "beach" else []) + (
+            ["sand bottom yes"] if sand == "yes" else [])
+        wrong = wrong or bool(why)
+        said.append(f"{name} {kind}" + (_COUNTED if kind == "unknown" else "")
+                    + f", sand bottom {sand}" + (f" (wrong: {', '.join(why)})" if why else ""))
+    rule(not wrong, "no famous reef is researched as beach or has a sand bottom: "
+                    + "; ".join(said))
+
     unfinished = [entry[0] for entry in PILOT_SPOTS
                   if not (results["spots"].get(spot_key(entry)) or {}).get("done")]
     unknown = [entry[0] for entry in PILOT_SPOTS if entry[0] not in unfinished
-               and _gate_break_type(results, entry[:2]) is None]
+               and _gate_answer(results, entry[:2])[0] == "unknown"]
     count = len(unknown) + len(unfinished)
     text = (f"no more than {GATE_MAX_UNKNOWN} of the {len(PILOT_SPOTS)} unknown for break "
             f"type; {count} " + ("is" if count == 1 else "are"))
@@ -1617,8 +1673,8 @@ def render_report(results: dict) -> str:
         followed = [r for r in finished if r["research"].get("follow_up")]
         if followed:
             filled = sum(1 for r in followed if r["research"]["follow_up"]["filled"])
-            out.append(f"Followed up a failed fetch at {len(followed)} of {len(finished)} "
-                       f"spots; {filled} of them gained a value.")
+            out.append(f"Followed up a failed fetch or a short quote at {len(followed)} of "
+                       f"{len(finished)} spots; {filled} of them gained a value.")
     stops = [run_["stopped"] for run_ in results.get("runs", []) if run_.get("stopped")]
     if stops:
         out.append("Stopped early: " + stops[-1])
@@ -1640,7 +1696,11 @@ def render_dry_run(resolved: list, effort: str, recall: bool = True) -> str:
              "tools:", json.dumps(sample["tools"], indent=2), "",
              "IF A FETCH FAILED AND A VALUE IS STILL UNKNOWN at the end of that turn, the "
              "conversation goes on once, with a message like this one naming the real URLs "
-             "and reasons:", "", example, ""]
+             "and reasons:", "", example, "",
+             f"IF A QUOTE IS UNDER {MIN_QUOTE_WORDS} WORDS, the conversation goes on once "
+             "(the same follow-up, so at most one per spot), with a message like this one "
+             "giving the real quote:", "",
+             follow_up_message([], ["break_type"], {"break_type": "Zuma Beach"}), ""]
     if recall:
         parts += ["MEMORY ANSWER: system prompt (the same for every spot; no tools)", "",
                   RECALL_SYSTEM,

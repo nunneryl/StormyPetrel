@@ -163,7 +163,7 @@ def test_the_memory_mode_has_its_own_file_budget_and_pause():
     assert args.output == config.PIPELINE_DIR / "data" / "break_type_memory_all.json"
     assert (args.budget, args.pause) == (6.00, 1.0)
     pilot = rb._parse_args([])
-    assert pilot.output == config.PIPELINE_DIR / "data" / "break_type_research_gate3.json"
+    assert pilot.output == config.PIPELINE_DIR / "data" / "break_type_research_gate4.json"
     assert (pilot.budget, pilot.pause) == (4.00, 15.0)
     full = rb._parse_args(["--full"])
     assert full.output == config.PIPELINE_DIR / "data" / "break_type_research_full.json"

@@ -425,7 +425,7 @@ def test_a_recheck_keeps_the_follow_ups_rule():
         "reef", GUIDE)
     assert (research["bottom"]["value"], research["bottom"]["source_url"]) == ("rock", GUESSED)
     assert research["follow_up"] == {
-        "after": [{"url": GUESSED, "error": "url_not_in_prior_context"}],
+        "after": [{"url": GUESSED, "error": "url_not_in_prior_context"}], "short_quotes": [],
         "needed": ["bottom"], "searches": 0, "fetches": 1, "filled": ["bottom"]}
     assert [(field, old["value"], new["value"]) for _, field, old, new in changed] == [
         ("break_type", "unknown", "reef"), ("bottom", "unknown", "rock")]
@@ -433,6 +433,39 @@ def test_a_recheck_keeps_the_follow_ups_rule():
     # The results read are left as they were.
     assert results["spots"]["Banzai Pipeline|Hawaii"]["research"]["bottom"] == OLD_VERDICT
     assert "rechecks" not in results
+
+
+def test_a_short_quote_follow_up_is_rechecked_as_it_ran():
+    # The first turn quoted two words for the break type; the follow-up asked for the full
+    # sentence and got it. Checks that then missed it left it unknown; the recheck reads the
+    # saved follow-up, short quote and all.
+    first = [*_search("s1", [WIKI]), *_fetch("f1", WIKI, WIKI_PAGE),
+             _answer(_claim("reef", WIKI, "reef break"), _claim("rock", WIKI, LAVA_QUOTE),
+                     [WIKI_ENTRY])]
+    second = [_answer(_claim("reef", WIKI, PIPELINE_QUOTE), _claim("rock", WIKI, LAVA_QUOTE),
+                      [WIKI_ENTRY])]
+
+    def respond(request, n):
+        if "tools" not in request:
+            return {"content": [_recall()], "stop_reason": "end_turn",
+                    "usage": {"input_tokens": 0, "output_tokens": 0}}
+        return {"content": first if n == 1 else second, "stop_reason": "end_turn",
+                "usage": {"input_tokens": 0, "output_tokens": 0}}
+    record, exc = rb.research_spot(FakeClient(respond), PIPELINE_ENTRY, SPOT, "medium",
+                                   rb.Budget(5.0), NO_SLEEP)
+    assert exc is None
+    record["research"]["break_type"] = dict(OLD_VERDICT)
+    record["research"]["follow_up"]["filled"] = []
+    results = rb.new_results("medium", 4.0)
+    results["spots"]["Banzai Pipeline|Hawaii"] = record
+    rechecked, changed, _, _ = rb.recheck_results(results, "gate.json")
+    research = rechecked["spots"]["Banzai Pipeline|Hawaii"]["research"]
+    assert (research["break_type"]["status"], research["break_type"]["value"]) == (
+        "researched", "reef")
+    assert research["follow_up"] == {"after": [], "short_quotes": ["break_type"],
+                                     "needed": ["break_type"], "searches": 0, "fetches": 0,
+                                     "filled": ["break_type"]}
+    assert len(changed) == 1
 
 
 def _gate_client():
@@ -466,33 +499,44 @@ def _gate_client():
 
 
 def test_the_gate_failed_by_the_old_checks_passes_on_recheck(tmp_path, capsys, monkeypatch):
+    # Five break types the old checks left unknown: one more than the gate allows. Their
+    # saved pages hold the quotes, so the recheck finds all five.
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     results = rb.new_results("medium", 4.0)
     assert rb.run(_gate_client(), rb.resolve_pilot(ROSTER), results, rb.Budget(4.0), "medium",
                   pause_seconds=0, sleep=NO_SLEEP) is None
-    pipeline = results["spots"]["Banzai Pipeline|Hawaii"]
-    pipeline["research"]["break_type"] = dict(OLD_VERDICT)
-    pipeline["agree"]["break_type"] = "n/a"
+    lost = ["Banzai Pipeline|Hawaii", "3 Mile|California", "Refugio State Beach|California",
+            "Tourmaline|California", "Lake Worth Pier|Florida"]
+    for key in lost:
+        results["spots"][key]["research"]["break_type"] = dict(OLD_VERDICT)
+        results["spots"][key]["agree"]["break_type"] = "n/a"
     source = tmp_path / "gate.json"
     rb.save_results(source, results)
     assert rb.main(["--recheck", "--output", str(source)], client=_never()) == 0
     printed = capsys.readouterr().out.splitlines()
-    assert printed[:9] == [
+    before = "unknown: the quote is not on the cited page"
+    assert printed[:13] == [
         "Rechecked 20 spots from gate.json against their saved responses and pages, with no "
         "API calls. Wrote gate.rechecked.json.",
-        "Values changed by the recheck: 1.",
+        "Values changed by the recheck: 5.",
         "",
         "| Spot | Value | Before | After |",
         "|---|---|---|---|",
-        "| Banzai Pipeline (Hawaii) | break type | unknown: the quote is not on the cited page "
-        "| reef |",
+        f"| Banzai Pipeline (Hawaii) | break type | {before} | reef |",
+        f"| 3 Mile (California) | break type | {before} | reef |",
+        f"| Refugio State Beach (California) | break type | {before} | reef |",
+        f"| Tourmaline (California) | break type | {before} | reef |",
+        f"| Lake Worth Pier (Florida) | break type | {before} | reef |",
         "",
         "Values unchanged, with a different reason, URL, quote or location: 0.",
         "The gate: FAIL before the recheck, PASS after."]
     assert printed[-2:] == ["PASS  no more than 4 of the 20 unknown for break type; 0 are",
                             "GATE: PASS"]
     assert rb.main(["--report", "--output", str(source)], client=_never()) == 0
-    assert capsys.readouterr().out.splitlines()[-1] == "GATE: FAIL"
+    assert capsys.readouterr().out.splitlines()[-2:] == [
+        "FAIL  no more than 4 of the 20 unknown for break type; 5 are: researched as unknown: "
+        "Banzai Pipeline, 3 Mile, Refugio State Beach, Tourmaline, Lake Worth Pier",
+        "GATE: FAIL"]
 
 
 # --- 6. what it refuses -------------------------------------------------------------------------
