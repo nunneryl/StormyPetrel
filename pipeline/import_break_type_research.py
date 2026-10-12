@@ -9,16 +9,20 @@ written straight into the database would be overwritten by the next run.
 FOR EACH RATED SPOT AND EACH OF THE TWO VALUES, the first of these that applies:
   1. research gave a checked value (status 'researched': a URL a tool returned, a quote on
      that page, a location check): it is written with source 'researched', the page it
-     cites and its quote;
-  2. otherwise the memory answer, if it gave a value: source 'model_recall', no page;
-  3. otherwise nothing is written: a value that research and memory both left unknown stays
-     as it is.
-A value is written only where config.break_type_may_overwrite / config.bottom_may_overwrite
-allow it, so never from a source ranked below the one already there. Every write goes
-through config.break_type_fields / config.bottom_fields: the value, its source, its
-confidence and its citation in one statement, refused there if migration 020 or 021 would
-refuse it. A spot whose coordinates have moved more than MOVED_KM since the answers were
-given is left as it is: the answers were about the spot where it was.
+     cites and its quote, over any value config's ladder ranks below it
+     (config.break_type_may_overwrite / config.bottom_may_overwrite);
+  2. otherwise the memory answer, as 'model_recall' with no page, but only under the memory
+     rules (MEMORY_MAY_REPLACE, memory_rule): into an empty value, or over the break type's
+     unverified default 'beach' (stamped 'unattributed', no verification_confidence);
+     never over a verified label or any other held value, and never an answer marked low
+     confidence. The bottom has no default, so memory only fills an empty one;
+  3. otherwise nothing is written: a value research and memory both left unknown stays as
+     it is.
+Every write goes through config.break_type_fields / config.bottom_fields: the value, its
+source, its confidence and its citation in one statement, refused there if migration 020
+or 021 would refuse it. A spot whose coordinates have moved more than MOVED_KM since the
+answers were given is left as it is: the answers were about the spot where it was. The dry
+run counts what each rule wrote and skipped (RULES).
 
 IT ALSO WRITES A SUMMARY (SUMMARY_OUTPUT), committed beside the roster, with no page text:
 each rated spot's research and memory answers, their sources and quotes, what the roster
@@ -72,8 +76,33 @@ _NAMES = {"break_type": "break type", "bottom": "bottom"}
 WRITE = "write"            # written: a new value, or the same value from a better-known source
 SAME = "same"              # the roster already holds exactly this
 KEPT = "kept"              # a source ranked above the incoming one holds it
+SKIPPED = "skipped"        # a memory answer the memory rules do not let in
 LEFT = "left"              # research and memory gave no value: left as it is
 MOVED = "moved"            # the spot has moved since the answers were given: left as it is
+
+# The rule behind each outcome, in the order the dry run reports them. A memory answer that
+# more than one rule stops is counted under the first of them here.
+RULES = (
+    ("research_written", "research (cited): written"),
+    ("research_same", "research: already the same"),
+    ("research_kept", "research: skipped, a higher-ranked source holds it"),
+    ("memory_filled_empty", "memory: written where the value was empty"),
+    ("memory_replaced_default", "memory: written over the unverified default 'beach'"),
+    ("memory_same", "memory: already the same"),
+    ("memory_skipped_verified", "memory: skipped, a verified label"),
+    ("memory_skipped_held", "memory: skipped, the spot holds another value"),
+    ("memory_skipped_low", "memory: skipped, low confidence"),
+    ("left", "left: neither research nor memory gave a value"),
+    ("moved", "left: the spot has moved since the answers"),
+)
+
+# THE MEMORY RULES. A memory answer ('model_recall', no citation) may only fill a value that
+# is empty, or the break type's unverified default: 'beach' stamped 'unattributed' on a spot
+# with no verification_confidence (what enrich's removed algorithm wrote everywhere). Never a
+# verified label, never any other held value, and never an answer marked low confidence. The
+# bottom has no default: memory only fills an empty one. Research, which cites its page, may
+# overwrite anything ranked below it (config's ladder).
+MEMORY_MAY_REPLACE = {"break_type": "beach", "bottom": None}
 
 # A spot whose roster coordinates are further than this from the ones the answers were
 # given for is left alone.
@@ -110,11 +139,32 @@ def research_claim(record, field: str):
 
 
 def memory_claim(record, field: str):
-    """The memory answer's value, or None where it gave none or 'unknown'."""
+    """(value, confidence) of the memory answer, or None where it gave none or 'unknown'."""
     if not record or not record.get("done") or not record.get("memory"):
         return None
-    value = record["memory"][field]["value"]
-    return None if value in (None, "unknown") else value
+    answer = record["memory"][field]
+    value = answer["value"]
+    return None if value in (None, "unknown") else (value, answer.get("confidence"))
+
+
+def _verified(spot: dict) -> bool:
+    return spot.get("verification_confidence") is not None
+
+
+def memory_rule(spot: dict, field: str, confidence) -> str:
+    """Which memory rule decides a memory answer for *field* at *spot*: the rule that
+    stops it, or the one that lets it in."""
+    held = spot.get(field)
+    # Checked first, so the default below is always an unverified one.
+    if held is not None and _verified(spot):
+        return "memory_skipped_verified"
+    default = (held is not None and held == MEMORY_MAY_REPLACE[field]
+               and spot.get(f"{field}_source") == "unattributed")
+    if held is not None and not default:
+        return "memory_skipped_held"
+    if confidence == "low":
+        return "memory_skipped_low"
+    return "memory_replaced_default" if default else "memory_filled_empty"
 
 
 def _moved_km(spot: dict, record) -> float:
@@ -128,31 +178,41 @@ def _moved_km(spot: dict, record) -> float:
 # --- the plan -------------------------------------------------------------------------------
 
 def plan_value(spot: dict, field: str, researched, memory) -> dict:
-    """What happens to one value at one spot: {'action', 'source', 'before', 'after',
-    'fields'} — 'fields' the five keys to write, for WRITE only."""
+    """What happens to one value at one spot: {'action', 'rule', 'source', 'before',
+    'after', 'fields'} — 'fields' the five keys to write, for WRITE only."""
     build, may_overwrite, keys = VALUES[field]
     before = spot.get(field)
+
+    def outcome(action, rule, source=None, fields=None):
+        return {"action": action, "rule": rule, "source": source, "before": before,
+                "after": fields[field] if action == WRITE else before, "fields": fields}
+
     if max(_moved_km(spot, researched), _moved_km(spot, memory)) > MOVED_KM:
-        return {"action": MOVED, "source": None, "before": before, "after": before,
-                "fields": None}
+        return outcome(MOVED, "moved")
     found = research_claim(researched, field)
     if found is not None:
         value, url, quote = found
-        fields, source = build(value, RESEARCHED, url=url, evidence=quote), RESEARCHED
-    else:
-        value = memory_claim(memory, field)
-        if value is None:
-            return {"action": LEFT, "source": None, "before": before, "after": before,
-                    "fields": None}
-        fields, source = build(value, MEMORY), MEMORY
-    if not may_overwrite(spot.get(f"{field}_source"), source):
-        return {"action": KEPT, "source": source, "before": before, "after": before,
-                "fields": None}
+        fields = build(value, RESEARCHED, url=url, evidence=quote)
+        if not may_overwrite(spot.get(f"{field}_source"), RESEARCHED):
+            return outcome(KEPT, "research_kept", RESEARCHED)
+        if all(spot.get(key) == fields[key] for key in keys):
+            return outcome(SAME, "research_same", RESEARCHED)
+        return outcome(WRITE, "research_written", RESEARCHED, fields)
+    answer = memory_claim(memory, field)
+    if answer is None:
+        return outcome(LEFT, "left")
+    value, confidence = answer
+    fields = build(value, MEMORY)
     if all(spot.get(key) == fields[key] for key in keys):
-        return {"action": SAME, "source": source, "before": before, "after": before,
-                "fields": None}
-    return {"action": WRITE, "source": source, "before": before, "after": fields[field],
-            "fields": fields}
+        return outcome(SAME, "memory_same", MEMORY)
+    rule = memory_rule(spot, field, confidence)
+    if rule.startswith("memory_skipped"):
+        return outcome(SKIPPED, rule, MEMORY)
+    # The memory rules only let memory replace an empty value or an 'unattributed' one,
+    # both ranked below model_recall, so the ladder always agrees; it is asked all the same.
+    if not may_overwrite(spot.get(f"{field}_source"), MEMORY):
+        return outcome(SKIPPED, "memory_skipped_held", MEMORY)
+    return outcome(WRITE, rule, MEMORY, fields)
 
 
 def plan(roster: list, full: dict, memory: dict) -> list:
@@ -284,10 +344,6 @@ def _label(spot: dict) -> str:
     return f"{spot['name']} ({spot['region_hint']})"
 
 
-def _verified(spot: dict) -> bool:
-    return spot.get("verification_confidence") is not None
-
-
 def render_report(planned: list, full: dict, memory: dict, wrote: bool) -> str:
     researched = sum(1 for _, record, _, _, _ in planned if record and record.get("done"))
     answered = sum(1 for _, _, record, _, _ in planned if record and record.get("done"))
@@ -299,19 +355,13 @@ def render_report(planned: list, full: dict, memory: dict, wrote: bool) -> str:
     if outside:
         out.append(f"In the full run but not a rated spot in the roster, so not used: "
                    f"{', '.join(outside)}.")
-    actions = (WRITE, SAME, KEPT, LEFT, MOVED)
-    out += ["", "What each value gets:", "",
-            _row("Value", "researched written", "model_recall written",
-                 "already the same", "kept: a higher source holds it",
-                 "left as it is: nothing checked", "left: the spot has moved"),
-            "|---|---|---|---|---|---|---|"]
-    for field in VALUES:
-        changes = [c[field] for *_, c in planned]
-        out.append(_row(_NAMES[field],
-                        sum(1 for c in changes if c["action"] == WRITE and c["source"] == RESEARCHED),
-                        sum(1 for c in changes if c["action"] == WRITE and c["source"] == MEMORY),
-                        *(sum(1 for c in changes if c["action"] == action)
-                          for action in actions[1:])))
+    out += ["", "What each rule wrote and skipped (a memory answer stopped by more than one "
+                "rule is counted under the first):", "",
+            _row("Rule", "break type", "bottom"), "|---|---|---|"]
+    for rule, label in RULES:
+        out.append(_row(label, *(sum(1 for *_, c in planned if c[field]["rule"] == rule)
+                                 for field in VALUES)))
+    out.append(_row("total", *(len(planned) for _ in VALUES)))
     for field in VALUES:
         levels = [(record["memory"][field].get("confidence") or "none")
                   for _, _, record, _, changes in planned
@@ -337,7 +387,7 @@ def render_report(planned: list, full: dict, memory: dict, wrote: bool) -> str:
                     else "verified label changed by memory")
         out.append(_row(_label(spot), now, c["after"], c["source"], flag))
     out += ["", f"Verified labels that research changes: {len(by_research)}.",
-            f"Verified labels that memory changes (research left them unknown): "
+            f"Verified labels that memory changes (the memory rules allow none): "
             f"{len(by_memory)}.",
             f"Spots that had no break type and get one: "
             f"{sum(1 for _, c in changed if c['before'] is None)}."]
