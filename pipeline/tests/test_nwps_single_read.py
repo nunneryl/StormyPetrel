@@ -291,7 +291,7 @@ def test_interpret_overrides_from_the_artifact_it_rated_from():
     # THE ONE-SPOT ROSTER BELOW IS WHY THIS HAS TO BE REDIRECTED. interpret calls
     # validate_factor_slugs, which raises when any slug in the committed factor file
     # matches no spot in the roster it was handed — and this fixture's roster is a single
-    # synthetic spot, so all 130 committed slugs miss and the guard fires. That is the
+    # synthetic spot, so every committed slug misses and the guard fires. That is the
     # guard working as designed on a fixture, not a defect in it: the file and the roster
     # really do disagree here. Pointing at an absent factors file makes load_face_factors
     # return {} and the check a no-op, which is what this test wants anyway — it is about

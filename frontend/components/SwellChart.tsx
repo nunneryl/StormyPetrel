@@ -34,8 +34,8 @@ const COLOR = {
  *
  *  THIS CHART PLOTS ONLY `face`. The other four names are kept deliberately.
  *  The partition series were removed because they are UNCORRECTED heights and
- *  `face` is corrected - divided by a per-spot factor, median 1.538 and up to
- *  3.893 across the 130 measured spots - so the two cannot share a y-axis
+ *  `face` is corrected - divided by a per-spot factor, median 1.591 and up to
+ *  3.175 across the 141 measured spots - so the two cannot share a y-axis
  *  without the published number being the smallest thing on the chart. The
  *  Swell breakdown panel above the charts already lists the four components
  *  with their own directions, periods and energy shares, as numbers rather than

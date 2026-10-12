@@ -5,11 +5,11 @@
  * file nothing on the page said which one a number was:
  *
  *   calibrated  the model's height divided by the spot's measured factor, so its typical value
- *               matches CDIP's nearshore height. The 130 spots in
+ *               matches CDIP's nearshore height. The 141 spots in
  *               pipeline/data/spot_face_factors.json.
  *   cdip        CDIP MOP's own nearshore height, from its nowcast (pipeline/forecast/mop.py).
  *   model       everything else: the wave models' height with the period boost, uncorrected.
- *               It can read well above the other two — about 1.5 times MOP's at the
+ *               It can read well above the other two — about 1.6 times MOP's at the
  *               California spots where it was measured.
  *
  * DERIVED PER ROW, FROM TWO COLUMNS, WITH NO NEW ONE. face_correction.stamp_provenance copies
@@ -19,9 +19,9 @@
  * different ones. apply_mop_overrides tags every hour it writes with swell_source 'cdip_mop'.
  *
  * "DIFFERS", NOT "IS LARGER". A factor is usually above 1, so a calibrated height is usually
- * the smaller of the two, but point-arena's factor is 0.9313 and san-diego-blacks-beach's is
- * 0.978: dividing by them makes the published height LARGER than the raw one. A test for
- * raw > face would call both of them model estimates.
+ * the smaller of the two, but five spots' factors are below 1 — point-arena's 0.812 the lowest,
+ * mendocino's 0.9818 the nearest to 1: dividing by them makes the published height LARGER than
+ * the raw one. A test for raw > face would call all five of them model estimates.
  *
  * WHEN IN DOUBT, IT IS A MODEL ESTIMATE. That is the direction that cannot overclaim. A row
  * whose raw value is missing (written before migration 017) or not a finite number has no
