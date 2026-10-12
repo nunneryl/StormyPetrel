@@ -163,7 +163,10 @@ def memory_results():
 @pytest.fixture
 def files(tmp_path):
     paths = {"roster": tmp_path / "roster.json", "full": tmp_path / "full.json",
-             "memory": tmp_path / "memory.json", "summary": tmp_path / "summary.json"}
+             "memory": tmp_path / "memory.json", "summary": tmp_path / "summary.json",
+             "reviewed": tmp_path / "reviewed.json"}
+    # No reviews unless a test writes some: the committed file names real spots.
+    paths["reviewed"].write_text(json.dumps({"spots": []}), encoding="utf-8")
     paths["roster"].write_text(json.dumps(roster(), indent=2, ensure_ascii=False) + "\n",
                                encoding="utf-8")
     paths["full"].write_text(json.dumps(full_results()), encoding="utf-8")
@@ -174,7 +177,7 @@ def files(tmp_path):
 def _run(files, *more):
     return imp.main(["--roster", str(files["roster"]), "--full", str(files["full"]),
                      "--memory", str(files["memory"]), "--summary", str(files["summary"]),
-                     *more])
+                     "--reviewed", str(files["reviewed"]), *more])
 
 
 def _by_name(path):
@@ -322,6 +325,8 @@ DRY_RUN = [
     "",
     "| Rule | break type | bottom |",
     "|---|---|---|",
+    "| reviewed: written | 0 | 0 |",
+    "| reviewed: already the same | 0 | 0 |",
     "| research (cited): written | 2 | 5 |",            # A E | A C E G H
     "| research: already the same | 1 | 0 |",           # H
     "| research: skipped, a higher-ranked source holds it | 1 | 0 |",   # G
@@ -348,6 +353,8 @@ DRY_RUN = [
     "| Fresh (Texas) | (none) | beach | researched |  |",
     "",
     "Verified labels that research changes: 1.",
+    "Verified labels research would change, where a review decides instead: 0.",
+    "Verified labels that a review changes: 0.",
     "Verified labels that memory changes (the memory rules allow none): 0.",
     "Spots that had no break type and get one: 1.",
     "",
@@ -403,7 +410,7 @@ def test_the_summary_has_both_sand_flags_and_no_page_text(files):
     assert list(spots) == ["Reefy", "Sandy", "Pointy", "Nowhere", "Fresh", "Moved", "Cited",
                            "Same", "Held", "Shaky", "Again"]
     assert spots["Fresh"] == {
-        "name": "Fresh", "state": "Texas", "settled_by_geography": False,
+        "name": "Fresh", "state": "Texas", "settled_by_geography": False, "reviewed": None,
         "research": {"break_type": {"value": "beach", "status": "researched",
                                     "source_url": URL_E, "quote": Q_E, "reason": None},
                      "bottom": {"value": "sand", "status": "researched",
@@ -502,3 +509,211 @@ def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
             with open(path, encoding="utf-8") as fh:
                 text = fh.read()
             assert "break_type" not in text and "bottom\"" not in text, name
+
+
+# --- reviewed break types ------------------------------------------------------------------------
+
+REVIEWS = {"spots": [
+    {"name": "Reefy", "state": "Hawaii", "break_type": "point", "note": "A point, not a reef."},
+    {"name": "Sandy", "state": "New Jersey", "break_type": "jetty", "note": "Shaped by the jetty."},
+    {"name": "Cited", "state": "Oregon", "break_type": "reef", "note": "A reef."},
+]}
+
+
+def test_a_review_is_written_after_research_and_memory_and_only_for_the_break_type(files):
+    files["reviewed"].write_text(json.dumps(REVIEWS), encoding="utf-8")
+    before = _by_name(files["roster"])
+    assert _run(files) == 0
+    after = _by_name(files["roster"])
+    pick = lambda spot, keys: {k: spot.get(k) for k in keys}  # noqa: E731
+    reviewed = {"break_type_source": "reviewed", "break_type_confidence": "high",
+                "break_type_source_url": None, "break_type_evidence": None}
+    # Reefy: research would write reef; the review writes point. The bottom stays research's.
+    assert pick(after["Reefy"], config.BREAK_TYPE_FIELDS) == {"break_type": "point", **reviewed}
+    assert (after["Reefy"]["bottom"], after["Reefy"]["bottom_source"]) == ("rock", "researched")
+    # Sandy: memory would write beach; the review writes jetty. The bottom stays memory's.
+    assert pick(after["Sandy"], config.BREAK_TYPE_FIELDS) == {"break_type": "jetty", **reviewed}
+    assert (after["Sandy"]["bottom"], after["Sandy"]["bottom_source"]) == ("sand",
+                                                                            "model_recall")
+    # Cited: already reviewed as reef.
+    assert after["Cited"]["break_type"] == "reef" and after["Cited"]["break_type"] == (
+        before["Cited"]["break_type"])
+    summary = {s["name"]: s for s in json.loads(files["summary"].read_text())["spots"]}
+    assert summary["Reefy"]["reviewed"] == {"break_type": "point", "note": "A point, not a reef."}
+    assert summary["Reefy"]["research"]["break_type"]["value"] == "reef"
+    assert summary["Reefy"]["roster"]["break_type"] == {"value": "point", "source": "reviewed"}
+    assert summary["Fresh"]["reviewed"] is None
+
+
+def test_the_dry_run_reports_the_reviews_as_their_own_rule(files, capsys):
+    files["reviewed"].write_text(json.dumps(REVIEWS), encoding="utf-8")
+    assert _run(files, "--dry-run") == 0
+    report = capsys.readouterr().out.splitlines()
+    table = report[report.index("| Rule | break type | bottom |") + 2:]
+    assert table[:14] == [
+        "| reviewed: written | 2 | 0 |",                    # Reefy Sandy
+        "| reviewed: already the same | 1 | 0 |",           # Cited
+        "| research (cited): written | 1 | 5 |",            # Fresh | A C E G H
+        "| research: already the same | 1 | 0 |",           # Same
+        "| research: skipped, a higher-ranked source holds it | 0 | 0 |",
+        "| memory: written where the value was empty | 0 | 2 |",
+        "| memory: written over the unverified default 'beach' | 0 | 0 |",
+        "| memory: already the same | 1 | 1 |",
+        "| memory: skipped, a verified label | 1 | 0 |",
+        "| memory: skipped, the spot holds another value | 1 | 0 |",
+        "| memory: skipped, low confidence | 1 | 1 |",
+        "| left: neither research nor memory gave a value | 1 | 1 |",
+        "| left: the spot has moved since the answers | 1 | 1 |",
+        "| total | 11 | 11 |"]
+    # No memory answer is written for a break type now: Sandy's was replaced by its review.
+    assert not any(line.startswith("Memory answers written for the break type") for line in report)
+    start = report.index("Reviewed break types (3), applied after research and memory:")
+    assert report[start + 2:start + 7] == [
+        "| Spot | Now | Research or memory would write | Reviewed | Note |",
+        "|---|---|---|---|---|",
+        "| Reefy (Hawaii) | beach | reef (researched) | point | A point, not a reef. |",
+        "| Sandy (New Jersey) | beach | beach (model_recall) | jetty | Shaped by the jetty. |",
+        "| Cited (Oregon) | reef | nothing new | reef (already) | A reef. |"]
+    start = report.index("Spots whose break type changes (3):")
+    assert report[start + 2:start + 14] == [
+        "| Spot | Now | Becomes | From | Flag |",
+        "|---|---|---|---|---|",
+        "| Reefy (Hawaii) | beach (unattributed, verified) | point | reviewed | verified label "
+        "changed by review |",
+        "| Sandy (New Jersey) | beach (unattributed) | jetty | reviewed |  |",
+        "| Fresh (Texas) | (none) | beach | researched |  |",
+        "",
+        "Verified labels that research changes: 0.",
+        "Verified labels research would change, where a review decides instead: 1.",
+        "Verified labels that a review changes: 1.",
+        "Verified labels that memory changes (the memory rules allow none): 0.",
+        "Spots that had no break type and get one: 1.",
+        ""]
+
+
+def test_research_never_overwrites_a_review_in_a_later_run(files, capsys):
+    files["reviewed"].write_text(json.dumps(REVIEWS), encoding="utf-8")
+    assert _run(files) == 0
+    # A later run with no reviews listed: research still says reef for Reefy, and is kept
+    # out by the ladder; memory may not touch Sandy's reviewed jetty.
+    files["reviewed"].write_text(json.dumps({"spots": []}), encoding="utf-8")
+    capsys.readouterr()
+    assert _run(files) == 0
+    after = _by_name(files["roster"])
+    assert (after["Reefy"]["break_type"], after["Reefy"]["break_type_source"]) == (
+        "point", "reviewed")
+    assert (after["Sandy"]["break_type"], after["Sandy"]["break_type_source"]) == (
+        "jetty", "reviewed")
+    report = capsys.readouterr().out.splitlines()
+    assert "| research: skipped, a higher-ranked source holds it | 2 | 0 |" in report
+    assert "| memory: skipped, the spot holds another value | 2 | 0 |" in report
+
+
+def test_a_reviewed_entry_that_is_not_a_rated_spot_stops_the_import_and_writes_nothing(files):
+    files["reviewed"].write_text(json.dumps({"spots": [
+        {"name": "Reefy", "state": "Hawaii", "break_type": "point", "note": "A point."},
+        {"name": "Reefy", "state": "Hawaii", "break_type": "point", "note": "Twice."},
+        {"name": "Reefy Beach", "state": "Hawaii", "break_type": "reef", "note": "No such spot."},
+        {"name": "Gone", "state": "Texas", "break_type": "beach", "note": "Not rated."},
+        {"name": "Cited", "state": "California", "break_type": "reef", "note": "Wrong state."},
+        {"name": "Sandy", "state": "New Jersey", "break_type": "sandbar", "note": "Bad value."},
+        {"name": "Fresh", "state": "Texas", "break_type": "beach", "note": " "},
+        {"name": "Same", "state": "Texas", "break_type": "jetty", "note": "x" * 301},
+        {"name": "Held", "state": "Georgia", "break_type": "reef", "note": "x" * 300},
+    ]}), encoding="utf-8")
+    before = {name: path.read_bytes() for name, path in files.items() if path.exists()}
+    for more in (["--dry-run"], []):
+        with pytest.raises(SystemExit) as err:
+            _run(files, *more)
+        assert str(err.value).splitlines()[1:] == [
+            "  Reefy (Hawaii): listed twice",
+            "  Reefy Beach (Hawaii): not a rated spot in spots_enriched.json (the name and "
+            "state must match exactly)",
+            "  Gone (Texas): not a rated spot in spots_enriched.json (the name and state must "
+            "match exactly)",
+            "  Cited (California): not a rated spot in spots_enriched.json (the name and state "
+            "must match exactly)",
+            "  Sandy (New Jersey): break_type 'sandbar' is not one of ('beach', 'reef', "
+            "'point', 'jetty', 'rivermouth', 'unknown')",
+            "  Fresh (Texas): needs a note of 1-300 characters",
+            "  Same (Texas): needs a note of 1-300 characters"]
+        assert str(err.value).splitlines()[0].endswith(
+            ": 7 of its 9 entries cannot be applied; nothing was written:")
+    assert {name: path.read_bytes() for name, path in files.items()
+            if path.exists()} == before
+    assert not files["summary"].exists()
+
+
+# The committed file, written out: 17 jetties, three points and a reef.
+JETTIES = [("Humboldt Bay Jetty", "California"), ("Surfside Jetty", "California"),
+           ("Seal Beach Jetty", "California"), ("Newport Jetties", "California"),
+           ("Indian River Inlet", "Delaware"), ("Boca Raton Inlet", "Florida"),
+           ("Boynton Beach Inlet", "Florida"), ("Destin Jetty", "Florida"),
+           ("Fort Pierce Inlet", "Florida"), ("Haulover Inlet", "Florida"),
+           ("Jetty Park Cocoa Beach", "Florida"), ("Jupiter Inlet", "Florida"),
+           ("New Smyrna Beach Inlet", "Florida"), ("Matanzas Inlet", "Florida"),
+           ("Hillsboro Inlet", "Florida"), ("North Jetty", "Florida"),
+           ("Wooden Jetty", "New Jersey")]
+
+
+def test_the_committed_reviews_are_the_ones_asked_for_and_all_in_the_roster():
+    with open(config.DEFAULT_ENRICHED_OUTPUT, encoding="utf-8") as fh:
+        real = json.load(fh)
+    reviewed = imp.load_reviewed(imp.REVIEWED_FILE, real)
+    assert {(e["name"], e["state"]): e["break_type"] for e in reviewed.values()} == {
+        **{spot: "jetty" for spot in JETTIES},
+        ("Lovers Point", "California"): "point", ("Ventura Point", "California"): "point",
+        ("Point Arena", "California"): "point", ("Monster Hole", "Florida"): "reef"}
+    notes = {(e["name"], e["state"]): e["note"] for e in reviewed.values()}
+    assert notes[("Lovers Point", "California")] == "A point. There is no jetty there."
+    assert notes[("Ventura Point", "California")] == "A cobble point."
+    assert all("jetty or inlet structure" in notes[spot] for spot in JETTIES)
+    assert imp.REVIEWED_FILE == config.PIPELINE_DIR / "data" / "break_type_reviewed.json"
+
+
+def test_the_reviewed_file_is_committed_though_the_results_beside_it_are_not():
+    if shutil.which("git") is None or not os.path.isdir(os.path.join(ROOT, ".git")):
+        pytest.skip("not a git checkout")
+
+    def ignored(path):
+        return subprocess.run(["git", "check-ignore", "-q", os.path.relpath(path, ROOT)],
+                              cwd=ROOT).returncode == 0
+    assert not ignored(imp.REVIEWED_FILE)
+    assert ignored(config.PIPELINE_DIR / "data" / "break_type_research_full.json")
+
+
+def test_the_summary_may_not_be_written_over_the_reviewed_file(files):
+    with pytest.raises(SystemExit, match="refusing to write the summary over"):
+        imp.main(["--roster", str(files["roster"]), "--full", str(files["full"]),
+                  "--memory", str(files["memory"]), "--reviewed", str(files["reviewed"]),
+                  "--summary", str(files["reviewed"])])
+    assert json.loads(files["reviewed"].read_text()) == {"spots": []}
+
+
+def test_instead_counts_only_verified_labels_research_would_change():
+    # Reefy: a verified beach research would change to reef: counted. Sandy, made verified,
+    # with research saying beach too: research would only restamp it, not change it. Nowhere,
+    # made verified, with no break type and memory saying beach: memory would fill an empty
+    # value, which changes no label. All three are reviewed.
+    spots = roster()
+    spots[1]["verification_confidence"] = "high"
+    spots[3]["verification_confidence"] = "high"
+    full, memory = full_results(), memory_results()
+    full["spots"]["Sandy|New Jersey"] = _researched(40.0, -74.0, _claim("beach", URL_E, Q_E),
+                                                    _claim("sand", URL_E, Q_E))
+    memory["spots"]["Nowhere|Maine"] = _remembered(43.5, -70.3, "beach", "rock")
+    reviewed = {f"{e['name']}|{e['state']}": e for e in (
+        {"name": "Reefy", "state": "Hawaii", "break_type": "point", "note": "A point."},
+        {"name": "Sandy", "state": "New Jersey", "break_type": "jetty", "note": "A jetty."},
+        {"name": "Nowhere", "state": "Maine", "break_type": "point", "note": "A point."})}
+    planned = imp.plan(spots, full, memory, reviewed)
+    under = {spot["name"]: (c["break_type"]["under"]["rule"], c["break_type"]["under"]["source"])
+             for spot, *_, c in planned if spot["name"] in ("Reefy", "Sandy", "Nowhere")}
+    assert under == {"Reefy": ("research_written", "researched"),
+                     "Sandy": ("research_written", "researched"),
+                     "Nowhere": ("memory_filled_empty", "model_recall")}
+    report = imp.render_report(planned, full, memory, wrote=False).splitlines()
+    assert "Verified labels research would change, where a review decides instead: 1." in report
+    assert "Verified labels that a review changes: 2." in report   # Reefy, Sandy
+    # Nowhere had no label to change, so its row carries no flag.
+    assert "| Nowhere (Maine) | (none) | point | reviewed |  |" in report

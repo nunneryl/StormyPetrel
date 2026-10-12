@@ -152,6 +152,8 @@ pipeline/forecast_data/
 # answers, rechecks). They hold the text of every fetched page, so they stay on the
 # machine that ran them; the committed summary has another name.
 pipeline/data/break_type_*.json
+# ... except the reviewed break types: written by a person, committed, and read by the import.
+!pipeline/data/break_type_reviewed.json
 
 # Python
 __pycache__/
