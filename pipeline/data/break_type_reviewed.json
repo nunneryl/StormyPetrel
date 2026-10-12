@@ -1,0 +1,26 @@
+{
+  "what": "Break types a person reviewed. pipeline/import_break_type_research.py writes each into the roster as source 'reviewed' (rank 6), after research and memory; nothing ranked below it can overwrite it. Each spot is named exactly as in pipeline/spots_enriched.json, by name and state. Break type only: the bottom is left as research and memory set it.",
+  "spots": [
+    {"name": "Humboldt Bay Jetty", "state": "California", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Surfside Jetty", "state": "California", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Seal Beach Jetty", "state": "California", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Newport Jetties", "state": "California", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Indian River Inlet", "state": "Delaware", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Boca Raton Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Boynton Beach Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Destin Jetty", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Fort Pierce Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Haulover Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Jetty Park Cocoa Beach", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Jupiter Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "New Smyrna Beach Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Matanzas Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Hillsboro Inlet", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "North Jetty", "state": "Florida", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Wooden Jetty", "state": "New Jersey", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
+    {"name": "Lovers Point", "state": "California", "break_type": "point", "note": "A point. There is no jetty there."},
+    {"name": "Ventura Point", "state": "California", "break_type": "point", "note": "A cobble point."},
+    {"name": "Point Arena", "state": "California", "break_type": "point", "note": "A point."},
+    {"name": "Monster Hole", "state": "Florida", "break_type": "reef", "note": "A reef."}
+  ]
+}

@@ -11,8 +11,8 @@ anything else in the roster, so it cannot hand our value back to us.
 
 TWO THINGS, RESEARCHED SEPARATELY, each standing on its own cited URL and quote:
   break_type  the shape of the break, one of migration 020's values (BREAK_TYPE_VALUES)
-  bottom      what the waves break over (BOTTOM_VALUES). The results file only: the spots
-              table has no column for it yet.
+  bottom      what the waves break over (BOTTOM_VALUES, migration 021's list). Written to
+              the results file only; import_break_type_research takes it into the roster.
 A page that gives one and not the other gives that one only. Our one-word break_type mixed
 the two ("reef" is a bottom, "point" a shape); the next use, a size ceiling for breaks that
 close out, depends mainly on the bottom.
@@ -85,6 +85,7 @@ import unicodedata
 from pathlib import Path
 
 from .config import (
+    BOTTOM_VALUES,
     BREAK_TYPE_URL_RE,
     BREAK_TYPE_VALUES,
     DEFAULT_ENRICHED_OUTPUT,
@@ -169,8 +170,9 @@ SHORT_QUOTE_REASON = f"the quote is under {MIN_QUOTE_WORDS} words, too short to 
 DEFAULT_OUTPUT = PIPELINE_DIR / "data" / "break_type_research_gate4.json"
 SCHEMA_VERSION = 4
 
-# What the waves break over. Kept in the results file only: the spots table has no column.
-BOTTOM_VALUES = ("sand", "rock", "coral", "cobble", "mixed", "unknown")
+# What the waves break over: config.BOTTOM_VALUES, migration 021's list. The research
+# writes it into its results file only; pipeline/import_break_type_research.py takes it
+# from there into the roster.
 # The field a close-out size ceiling would read: shifting sand closes out, a fixed bottom
 # holds. 'mixed' is 'unknown' because the page does not say which the wave breaks on.
 SAND_BOTTOM = {"sand": "yes", "rock": "no", "coral": "no", "cobble": "no",
@@ -1371,8 +1373,7 @@ def new_results(effort: str, budget_usd: float) -> dict:
     return {
         "schema": SCHEMA_VERSION,
         "what": ("Break-type and bottom research pilot. A results file only: nothing in it "
-                 "has been applied to the roster or the database, and the spots table has no "
-                 "column for the bottom."),
+                 "has been applied to the roster or the database."),
         "settings": run_settings(effort),
         "prices_usd": dict(PRICES),
         "budget_usd": budget_usd,
@@ -2238,7 +2239,8 @@ def new_full_results(effort: str, budget_usd: float) -> dict:
         "kind": "full",
         "what": ("Break-type and bottom research for every rated spot that geography does not "
                  "settle. A results file only: nothing in it has been applied to the roster "
-                 "or the database, and the spots table has no column for the bottom."),
+                 "or the database; pipeline/import_break_type_research.py applies it to the "
+                 "roster."),
         "settings": run_settings(effort),
         "prices_usd": dict(PRICES),
         "budget_usd": budget_usd,

@@ -19,7 +19,7 @@ WHAT THESE TESTS HOLD:
   8. cost is the API's usage at list price, the budget stops the run before a spot that
      could cross it, and it holds across re-runs;
   9. the run writes the results file and nothing else: never the roster, never the
-     database, and the bottom has no column anywhere;
+     database: the bottom reaches them only through import_break_type_research;
  10. the real SDK accepts the requests, the follow-up included, and its responses are
      read correctly;
  11. a quote is matched whatever its okina, accents or apostrophes, may stand on another
@@ -1597,15 +1597,14 @@ def test_nothing_here_can_reach_the_database():
                         "pathlib", ".config", ".geo", "inspect", "anthropic"}
 
 
-def test_the_bottom_has_no_column_anywhere():
-    # The results file only, for now: no migration adds a bottom column and the import
-    # never sends one.
-    migrations = os.path.join(ROOT, "pipeline", "migrations")
-    for name in sorted(os.listdir(migrations)):
-        with open(os.path.join(migrations, name), encoding="utf-8") as fh:
-            assert not re.search(r"ADD\s+COLUMN[^;]*\bbottom", fh.read(), re.I), name
-    with open(os.path.join(ROOT, "pipeline", "db_import.py"), encoding="utf-8") as fh:
-        assert "bottom" not in fh.read()
+def test_the_research_never_writes_the_bottom_it_finds():
+    # The bottom has columns since migration 021, filled from the roster by db_import.
+    # Research writes only its results file; import_break_type_research takes the bottom
+    # from there into the roster. Nothing in this module names a bottom column's source.
+    with open(MODULE, encoding="utf-8") as fh:
+        text = fh.read()
+    for name in ("bottom_source", "bottom_fields", "spots_enriched"):
+        assert name not in text, name
 
 
 # --- the report -----------------------------------------------------------------------------
