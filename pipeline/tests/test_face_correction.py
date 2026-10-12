@@ -1,7 +1,9 @@
-"""The per-spot MOP face correction, and the star recompute that must follow it.
+"""The per-spot MOP face correction, which divides the displayed height and nothing else.
 
-WHAT IS BEING PINNED. A measured divisor scales face_ft AND effective_size_ft, and stars is
-recomputed by the production composite_stars from the corrected size. A spot with no factor,
+WHAT IS BEING PINNED. A measured divisor scales the DISPLAYED face_ft (and its band), and
+leaves effective_size_ft and stars exactly as the producer computed them, so a corrected spot
+rates exactly like an uncorrected one with identical inputs (FACE_CORRECTION_VERSION 2;
+version 1 also divided effective_size_ft and re-rated stars from it). A spot with no factor,
 a spot on the MOP tier, and a held-out spot must all come through BYTE-IDENTICAL — not
 "unchanged in value", but with no key written at all, so a future reader cannot mistake an
 untouched spot for one that was corrected by 1.0.
@@ -64,77 +66,86 @@ class _CaptureLog(logging.Handler):
 
 
 # --------------------------------------------------------------------------- #
-# 1 — a spot WITH a factor is corrected, and its stars recomputed              #
+# 1 — a spot WITH a factor has its displayed face divided, and its rating kept  #
 # --------------------------------------------------------------------------- #
 
-def test_a_factored_spot_has_face_effective_and_stars_all_corrected():
-    """size_score knots: (0,0) (1,1) (2,2) (3,2.5) (4,3) (5,3.5) (6,4) (8,4.5) (10,5).
+def test_a_factored_spot_has_its_face_divided_and_its_rating_left_alone():
+    """The only arithmetic is the display: face 6.0 / 3.0 = 2.0. effective_size_ft and stars
+    are the producer's — 6.0 and 4.0 going in, 6.0 and 4.0 coming out — and the raw face is
+    the 6.0 the producer wrote.
 
-        before: eff 6.0 -> size_score 4.0 (a knot) -> stars 4.0
-        factor 3.0
-        after:  face 6.0 / 3.0 = 2.0
-                eff  6.0 / 3.0 = 2.0 -> size_score 2.0 (a knot) -> stars 2.0
-    """
+    Version 1 also divided the size, eff 6.0 / 3.0 = 2.0 -> size_score 2.0 (a knot) -> 2.0
+    stars, and this test asserted that; the rating no longer moves."""
     ratings = {"Steamer Lane": [_entry(face=6.0, eff=6.0)]}
     st = FC.apply_face_corrections(ratings, [_spot()],
                                    factors={"steamer-lane": _rec(3.0)},
                                    slug_for=_slug, now=TODAY)
     e = ratings["Steamer Lane"][0]
     assert e["face_ft"] == 2.0, e["face_ft"]
-    assert e["effective_size_ft"] == 2.0, e["effective_size_ft"]
-    assert e["stars"] == 2.0, e["stars"]
+    assert e["face_ft_raw"] == 6.0, e["face_ft_raw"]
+    assert e["effective_size_ft"] == 6.0, e["effective_size_ft"]
+    assert e["stars"] == 4.0, e["stars"]
     assert st["corrected_spots"] == 1 and st["corrected_hours"] == 1, st
 
 
-def test_the_star_recompute_is_non_linear_in_the_face():
-    """The whole reason this is not a display-layer fix. Dividing the face by 2.87 does NOT
-    divide the stars by 2.87.
+def test_a_corrected_spot_rates_exactly_like_an_uncorrected_one_with_identical_inputs():
+    """THE DECISION, at the seam. Three spots, one identical hour each, and a factor for two
+    of them: Steamer Lane (corrected), Ocean Beach (no factor) and a MOP-tier spot (given a
+    factor on purpose — its height is MOP's own, so even a factor must not touch it).
 
-        before: eff 6.0 -> size_score 4.0 -> stars 4.0
-        after:  eff 6.0 / 2.87 = 2.0905923...
-                size_score interpolates (2,2)->(3,2.5): 2 + 0.0905923 * 0.5 = 2.0452961
-                round(4.0905923) / 2 = 4 / 2 = 2.0
-        4.0 -> 2.0 is a factor of 2.0 in stars for a factor of 2.87 in face.
+    Realistic, non-neutral inputs: an NWPS-path hour with face 7.71, dir_gain 0.7, so
+    eff = round(7.71 * 0.7, 2) = 5.4, and a 3.0-star rating under wind 0.8 / chop 0.85.
+
+        Steamer Lane   face 7.71 / 2.8084 = 2.74533... -> 2.75   (Steamer Lane's real factor)
+        everything else in the hour, the rating included, identical on all three spots
     """
-    ratings = {"Steamer Lane": [_entry(face=6.0, eff=6.0)]}
-    FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(2.87)},
+    hour = _entry(face=7.71, eff=5.4, dir_gain=0.7, wind_mult=0.8, chop_mult=0.85,
+                  period_quality=0.9, stars=3.0)
+    ratings = {"Steamer Lane": [dict(hour)], "Ocean Beach": [dict(hour)],
+               "Moss Landing": [dict(hour)]}
+    st = FC.apply_face_corrections(
+        ratings, [_spot(), _spot("Ocean Beach"), _spot("Moss Landing", source="cdip_mop")],
+        factors={"steamer-lane": _rec(2.8084), "moss-landing": _rec(3.0)},
+        slug_for=_slug, now=TODAY)
+    cal, unc, mop = (ratings[n][0] for n in ("Steamer Lane", "Ocean Beach", "Moss Landing"))
+    assert cal["face_ft"] == 2.75, cal["face_ft"]                     # the height shown: divided
+    assert (cal["effective_size_ft"], cal["stars"]) == (5.4, 3.0), cal  # the rating: undivided
+    # ...and identical to the uncorrected spot's, field for field, but for the height shown.
+    assert {k: v for k, v in cal.items() if k != "face_ft"} == \
+        {k: v for k, v in unc.items() if k != "face_ft"}, (cal, unc)
+    assert_untouched(unc, hour)                                        # uncorrected: unchanged
+    assert_untouched(mop, hour)                                        # MOP tier: unchanged
+    assert cal["face_ft_raw"] == unc["face_ft_raw"] == mop["face_ft_raw"] == 7.71
+    assert st["corrected_spots"] == 1 and st["mop_tier_skipped"] == 1 and st["no_factor"] == 1, st
+
+
+def test_the_seam_never_re_rates_a_corrected_hour():
+    """A sentinel, because a recompute from the UNDIVIDED size would pass every consistent
+    fixture: composite_stars can never return 4.2 (it snaps to whole and half stars), and
+    7.77 is not a size any fixture's face implies. Both must come out exactly as they went in.
+
+    And the star chain is not imported at all: re-rating here would have to be added back
+    deliberately, past the module docstring that says why it was taken out."""
+    ratings = {"Steamer Lane": [_entry(face=6.0, eff=7.77, stars=4.2)]}
+    FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(2.0)},
                               slug_for=_slug, now=TODAY)
     e = ratings["Steamer Lane"][0]
-    assert e["face_ft"] == 2.09, e["face_ft"]          # round(2.0905923, 2)
-    assert e["effective_size_ft"] == 2.09, e["effective_size_ft"]
-    assert e["stars"] == 2.0, e["stars"]
-
-
-def test_the_recompute_uses_the_production_star_chain():
-    """Identity, plus a tripwire proving composite_stars is CALLED rather than shadowed by
-    a local copy of the curve."""
-    import pipeline.interpret as I
-    assert FC.composite_stars is I.composite_stars
-    saved = FC.composite_stars
-    try:
-        FC.composite_stars = lambda *a, **k: 4.25
-        ratings = {"Steamer Lane": [_entry()]}
-        FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(2.0)},
-                                  slug_for=_slug, now=TODAY)
-        assert ratings["Steamer Lane"][0]["stars"] == 4.25
-    finally:
-        FC.composite_stars = saved
+    assert e["face_ft"] == 3.0, e
+    assert e["effective_size_ft"] == 7.77 and e["stars"] == 4.2, e
+    assert not hasattr(FC, "composite_stars"), "the seam must not import the star chain"
 
 
 def test_the_four_quality_factors_are_passed_through_unchanged():
-    """Only the size moves. wind/tide/chop/period are the row's own values.
-
-        eff 8.0 / 2.0 = 4.0 -> size_score 3.0 (a knot)
-        raw = 3.0 * 0.8**0.35 * 0.8**0.15 * 0.8**0.25 * 0.8**0.25
-            = 3.0 * 0.8**1.0 = 2.4          (the exponents sum to 1.0)
-        stars = round(4.8) / 2 = 5 / 2 = 2.5
-    """
+    """Nothing in the rating moves: wind/tide/chop/period, the size input and the stars are
+    the row's own. The entry's 4.0 stars stay 4.0 — version 1 re-rated this hour to 2.5 from
+    eff 8.0 / 2.0 = 4.0 (size_score 3.0 x 0.8 = 2.4 -> 2.5)."""
     ratings = {"Steamer Lane": [_entry(face=8.0, eff=8.0, wind_mult=0.8, tide_mult=0.8,
                                        chop_mult=0.8, period_quality=0.8)]}
     FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(2.0)},
                               slug_for=_slug, now=TODAY)
     e = ratings["Steamer Lane"][0]
-    assert e["stars"] == 2.5, e["stars"]
+    assert e["face_ft"] == 4.0, e["face_ft"]
+    assert e["effective_size_ft"] == 8.0 and e["stars"] == 4.0, e
     assert (e["wind_mult"], e["tide_mult"], e["chop_mult"], e["period_quality"]) \
         == (0.8, 0.8, 0.8, 0.8)
 
@@ -143,25 +154,27 @@ def test_a_factor_below_one_makes_the_face_bigger():
     """Rincon's 0.62 shape — held out in the shipped file, but the arithmetic must be right
     for whatever a future file contains.
 
-        face 2.0 / 0.5 = 4.0; eff 2.0 / 0.5 = 4.0 -> size_score 3.0 -> stars 3.0
+        face 2.0 / 0.5 = 4.0; eff stays 2.0 and stars stays the entry's 4.0
     """
     ratings = {"Steamer Lane": [_entry(face=2.0, eff=2.0)]}
     FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(0.5)},
                               slug_for=_slug, now=TODAY)
     e = ratings["Steamer Lane"][0]
-    assert e["face_ft"] == 4.0 and e["effective_size_ft"] == 4.0 and e["stars"] == 3.0
+    assert e["face_ft"] == 4.0 and e["effective_size_ft"] == 2.0 and e["stars"] == 4.0, e
 
 
-def test_the_sub_half_foot_cutoff_is_reachable_by_correction():
-    """A correction can push an hour under composite_stars' 0.5 ft flat cutoff, which is a
-    DIFFERENT state from the 1.0 floor.
+def test_a_correction_can_no_longer_make_an_hour_flat():
+    """Version 1 could push an hour under composite_stars' 0.5 ft flat cutoff by dividing its
+    size: eff 1.0 / 2.87 = 0.348 -> 0.0 stars. The divisor now reaches only the height shown.
 
-        eff 1.0 / 2.87 = 0.348...  < 0.5  ->  0.0 stars, not 1.0
+        face 1.0 / 2.87 = 0.34843... -> 0.35 shown; eff 1.0 and 1.0 star kept
     """
     ratings = {"Steamer Lane": [_entry(face=1.0, eff=1.0, stars=1.0)]}
     FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(2.87)},
                               slug_for=_slug, now=TODAY)
-    assert ratings["Steamer Lane"][0]["stars"] == 0.0
+    e = ratings["Steamer Lane"][0]
+    assert e["face_ft"] == 0.35, e["face_ft"]
+    assert e["effective_size_ft"] == 1.0 and e["stars"] == 1.0, e
 
 
 # --------------------------------------------------------------------------- #
@@ -214,18 +227,19 @@ def test_an_empty_factor_map_touches_nothing_and_short_circuits():
     assert_untouched(ratings["Steamer Lane"][0], before)
     assert st["corrected_spots"] == 0 and st["corrected_hours"] == 0
     # An inert run still stamps, and its stamp says so rather than going quiet.
-    assert st["stamp"] == "1:none:none", st["stamp"]
+    assert st["stamp"] == "2:none:none", st["stamp"]
 
 
 def test_absent_is_not_one_point_zero():
     """The distinction the design rests on: a spot with no entry must take NO arithmetic
     path, so a mis-keyed slug and a deliberate omission cannot look alike. Pinned by
-    tripwiring composite_stars — an unfactored spot must never reach it."""
-    saved = FC.composite_stars
+    tripwiring face_range, which every factored spot reaches once (to probe its record for
+    a spread) — an unfactored spot must never reach it."""
+    saved = FC.face_range
     try:
         def _boom(*_a, **_k):
-            raise AssertionError("composite_stars was called for an unfactored spot")
-        FC.composite_stars = _boom
+            raise AssertionError("face_range was called for an unfactored spot")
+        FC.face_range = _boom
         ratings = {"Ocean Beach": [_entry()]}
         # Steamer Lane is in the ROSTER (so validation passes) but has no RATINGS, so the
         # only spot iterated is the unfactored one.
@@ -233,7 +247,7 @@ def test_absent_is_not_one_point_zero():
                                   factors={"steamer-lane": _rec(2.0)},
                                   slug_for=_slug, now=TODAY)
     finally:
-        FC.composite_stars = saved
+        FC.face_range = saved
 
 
 def test_a_rating_for_a_spot_missing_from_the_roster_is_untouched():
@@ -246,7 +260,16 @@ def test_a_rating_for_a_spot_missing_from_the_roster_is_untouched():
     assert st["corrected_spots"] == 0
 
 
-def test_an_hour_with_no_face_or_no_effective_is_counted_not_corrupted():
+def test_an_hour_with_no_face_is_counted_and_one_with_no_effective_size_is_still_shown():
+    """Only a missing FACE makes an hour unrateable here: the seam reads no effective size
+    since version 2, so a missing one no longer blocks the display correction — and it is
+    never filled in. (No producer writes a face without an effective size; this pins what
+    the seam does if one ever did.)
+
+        x: face None            -> counted, untouched
+        y: face 6.0, eff None   -> shown as 6.0 / 2.0 = 3.0, eff stays None, 4.0 stars kept
+        z: face 6.0, eff 6.0    -> shown as 3.0, eff 6.0 and 4.0 stars kept
+    """
     ratings = {"Steamer Lane": [
         {"valid_time": "x", "face_ft": None, "effective_size_ft": 6.0, "stars": 4.0},
         {"valid_time": "y", "face_ft": 6.0, "effective_size_ft": None, "stars": 4.0},
@@ -254,9 +277,11 @@ def test_an_hour_with_no_face_or_no_effective_is_counted_not_corrupted():
     ]}
     st = FC.apply_face_corrections(ratings, [_spot()], factors={"steamer-lane": _rec(2.0)},
                                    slug_for=_slug, now=TODAY)
-    assert ratings["Steamer Lane"][0]["stars"] == 4.0   # untouched
-    assert ratings["Steamer Lane"][1]["stars"] == 4.0   # untouched
-    assert st["unrateable_hours"] == 2 and st["corrected_hours"] == 1, st
+    x, y, z = ratings["Steamer Lane"]
+    assert (x["face_ft"], x["effective_size_ft"], x["stars"]) == (None, 6.0, 4.0), x
+    assert (y["face_ft"], y["effective_size_ft"], y["stars"]) == (3.0, None, 4.0), y
+    assert (z["face_ft"], z["effective_size_ft"], z["stars"]) == (3.0, 6.0, 4.0), z
+    assert st["unrateable_hours"] == 1 and st["corrected_hours"] == 2, st
 
 
 # --------------------------------------------------------------------------- #
@@ -683,6 +708,72 @@ def test_the_seam_runs_after_both_overrides_in_interpret_main():
     assert e["face_ft"] == 2.57, ("the seam did not run, or ran before an override", e["face_ft"])
 
 
+def test_through_interpret_main_a_calibrated_spot_rates_like_its_uncalibrated_twin():
+    """THE DECISION, end to end: rate_spot, both overrides and the seam, on fixture files.
+
+    Two spots with IDENTICAL geometry and an identical NWPS hour; only Steamer Lane has a
+    factor (3.0). Everything the producer computed must come out identical on both — the
+    rating included — and only the height shown may differ.
+
+    Hand-computed, as in the test above. The NWPS override rates the hour: no WW3 series, so
+    direction 220 and period 13.0 come from NWPS; 220 is the optimal bearing inside the
+    180..260 window, so dir_gain = cos^2(0) = 1.0.
+        face  = 2.0 * period_factor(13.0, "ww3") * 3.281 = 2.0 * 1.175 * 3.281 = 7.71035
+        eff   = face * 1.0 = 7.71035 -> stored 7.71
+        stars : wind, tide, chop (2.0 of 2.0 is swell) and period (13 s) all score 1.0, so
+                raw = size_score(7.71035) = 4.0 + (1.71035 / 2) * 0.5 = 4.42759
+                round(8.85518) / 2 = 9 / 2 = 4.5
+        shown : Steamer Lane 7.71 / 3.0 = 2.57; the twin 7.71
+    Version 1 re-rated Steamer Lane from eff 2.57: size_score 2.285 -> round(4.57) / 2 = 2.5.
+    """
+    import contextlib, io, tempfile
+    from pathlib import Path as _P
+    from pipeline import interpret
+
+    tmp = _P(tempfile.mkdtemp())
+    geometry = {"lat": 36.9515, "lng": -122.0256, "swell_window_source": "nwps",
+                "orientation_deg": 220.0, "optimal_swell_dir": 220, "nwps_wfo": "mtr",
+                "swell_window_arcs": [{"min": 180, "max": 260, "span": 84}]}
+    hour = {"valid_time": "2026-09-01T00:00:00Z", "hs": 2.0, "tp": 13.0, "dp": 220.0,
+            "swell_hs": 2.0}
+    (tmp / "spots.json").write_text(json.dumps([
+        dict(geometry, name="Steamer Lane", slug="steamer-lane"),
+        dict(geometry, name="Steamer Twin", slug="steamer-twin")]))
+    (tmp / "nwps.json").write_text(json.dumps({"Steamer Lane": [dict(hour)],
+                                               "Steamer Twin": [dict(hour)]}))
+    (tmp / "tides.json").write_text(json.dumps({}))
+    (tmp / "factors.json").write_text(json.dumps({"factors": {"steamer-lane": {
+        "factor": 3.0, "hours": 334, "measured_on": "2026-09-01",
+        "source": "scripts/mop_face_validation.py"}}}))
+
+    saved = FC.SPOT_FACE_FACTORS_FILE
+    try:
+        FC.SPOT_FACE_FACTORS_FILE = tmp / "factors.json"
+        logging.disable(logging.CRITICAL)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = interpret.main(["--spots", str(tmp / "spots.json"),
+                                 "--nwps", str(tmp / "nwps.json"),
+                                 "--tides", str(tmp / "tides.json"),
+                                 "--output", str(tmp / "out.json")])
+        out = json.loads((tmp / "out.json").read_text())
+    finally:
+        logging.disable(logging.NOTSET)
+        FC.SPOT_FACE_FACTORS_FILE = saved
+        for f in tmp.iterdir():
+            f.unlink()
+        tmp.rmdir()
+
+    assert rc == 0, rc
+    cal, twin = out["Steamer Lane"][0], out["Steamer Twin"][0]
+    assert (cal["face_ft"], twin["face_ft"]) == (2.57, 7.71), (cal["face_ft"], twin["face_ft"])
+    assert cal["face_ft_raw"] == twin["face_ft_raw"] == 7.71
+    assert cal["effective_size_ft"] == twin["effective_size_ft"] == 7.71
+    assert cal["stars"] == twin["stars"] == 4.5, (cal["stars"], twin["stars"])
+    # Field for field, nothing else differs: the producer's work is the same on both.
+    assert {k: v for k, v in cal.items() if k != "face_ft"} == \
+        {k: v for k, v in twin.items() if k != "face_ft"}, (cal, twin)
+
+
 
 def test_the_generator_excludes_the_mop_tier_from_the_committed_file():
     """The SECOND line of defence, and it needs its own test because the runtime exclusion
@@ -993,12 +1084,10 @@ def test_an_uncorrected_spot_gets_no_band_keys_either():
 
 
 def test_the_band_does_not_move_the_stars():
-    """STARS STAY A SINGLE VALUE. composite_stars is called on the corrected effective
-    size and nothing else; adding the band must not perturb it. Two runs on identical
-    input, one with quantiles and one without, must agree on stars to the bit.
-
-        eff 8.0 / factor 2.0 = 4.0 -> the SAME star input either way
-    """
+    """STARS STAY A SINGLE VALUE, and it is the producer's. Two runs on identical input, one
+    with quantiles and one without, publish the same face and leave the same rating: the
+    entry's 8.0 size input and 4.0 stars, in both. (Version 1 re-rated both runs to 3.0
+    from eff 8.0 / 2.0 = 4.0; the band never moved the stars then either.)"""
     banded = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
     plain = {"Steamer Lane": [_entry(face=8.0, eff=8.0)]}
     FC.apply_face_corrections(banded, [_spot()], factors={"steamer-lane": _rec_banded(2.0, 1.6, 2.5)},
@@ -1006,12 +1095,9 @@ def test_the_band_does_not_move_the_stars():
     FC.apply_face_corrections(plain, [_spot()], factors={"steamer-lane": _rec(2.0)},
                               slug_for=lambda n: "steamer-lane", now=TODAY)
     b, p = banded["Steamer Lane"][0], plain["Steamer Lane"][0]
-    assert b["stars"] == p["stars"], (b["stars"], p["stars"])
-    assert b["effective_size_ft"] == p["effective_size_ft"] == 4.0
+    assert b["stars"] == p["stars"] == 4.0, (b["stars"], p["stars"])
+    assert b["effective_size_ft"] == p["effective_size_ft"] == 8.0
     assert b["face_ft"] == p["face_ft"] == 4.0
-    # And the star value itself is the literal the size ladder gives at 4.0 ft with
-    # neutral quality factors: _SIZE_POINTS has (4, 3) exactly, so raw = 3.0 -> 3.0.
-    assert b["stars"] == 3.0, b["stars"]
 
 
 def test_the_relabel_did_not_rename_a_single_parsed_field():

@@ -1,4 +1,4 @@
-"""Per-spot multiplicative correction of face_ft against CDIP MOP, and the star recompute.
+"""Per-spot multiplicative correction of the DISPLAYED face_ft against CDIP MOP. Display only.
 
 THE MEASUREMENT. For each California spot on the NWPS tier, the MOP validation harness
 measured face_ft / (MOP Hs x 3.281) over ~334 joined hours. The median of that ratio is the
@@ -20,34 +20,29 @@ producing exactly the corrected/uncorrected adjacent-hour jump the single-seam d
 to prevent. The convergence point is in main, after line 1892 — which is where this runs.
 The intent is honoured; the address was wrong.
 
-HOW THE STARS ARE RECOMPUTED, AND WHY THIS FORM. Both face_ft and effective_size_ft are
-scaled by the same 1/factor, then stars is recomputed by calling the PRODUCTION
-interpret.composite_stars on the corrected effective size with the row's own four quality
-factors unchanged. Nothing is reimplemented.
+THE CORRECTION IS DISPLAY-ONLY: THE HEIGHT IS DIVIDED, THE RATING IS NOT. The seam writes
+face_ft (the corrected height) and, where the spread was measured, face_lo_ft / face_hi_ft.
+effective_size_ft and stars are left EXACTLY as the producer computed them — undivided —
+which is what every uncalibrated spot is rated on. A corrected spot and an uncorrected one
+with identical inputs therefore publish identical effective sizes and identical stars, and
+differ only in the height shown. Nothing here calls composite_stars, so there is no star
+chain to keep in step with interpret.
 
-  Scaling the STORED effective_size_ft, rather than recomputing it as corrected_face x
-  dir_gain, is deliberate and is the only branch-independent form. The three producers do
-  not agree on how effective relates to face:
+  WHY, AND WHAT IT REPLACED. FACE_CORRECTION_VERSION 1 also divided effective_size_ft by the
+  factor and re-rated stars from the divided size. That rated the calibrated spots on a
+  different yardstick from every other spot. The factor corrects the HEIGHT WE SHOW against
+  MOP's significant wave height; the size curve and the quality weights were set before the
+  correction existed, on the model's own size input, and every other spot is still rated on
+  that input. Dividing it at the calibrated spots alone made them rate lower in the same
+  swell. Measured on the published window on 2026-10-04 (kg_rating_diag, variant E):
+  calibrated spots had 0.4% of daylight hours at 3+ stars, against 9.1% at uncalibrated
+  spots, and 10.3% when rated from the undivided size. No other spot changes.
 
-      nwps_stars      nwps_nearshore.py:804   eff = face * dg
-      mop_stars       mop.py:165              eff = face * dg
-      rate_spot       interpret.py:1425-1428  eff = fft * dg  on the NWPS path
-                                              eff = fft       on the WW3 path, because
-                                              combine_ww3_partitions already weighted by
-                                              gain inside the RMS sum and multiplying again
-                                              would double-count
-
-  Effective is LINEAR in face under all three, so dividing the stored effective by the
-  factor is exact for every one of them and needs no guess about which producer wrote the
-  row. Recomputing as face x dir_gain would be WRONG on the WW3 path.
-
-  (The brief states that effective_size_ft is not face x dir_gain and that dir_gain
-  participates through the geometric mean. That is not what the code does — composite_stars
-  takes no dir_gain argument, and all four call sites pass exactly
-  (eff, wind_mult, tide_mult, chop_mult, period_quality). The conclusion the brief draws
-  from it is right anyway, for a different reason: effective_size_ft is a separately
-  persisted column computed upstream, so correcting the display leaves it stale. Scaling
-  the stored effective is correct under either account, which is why it is used here.)
+  WHAT THE COLUMNS MEAN AT A CORRECTED SPOT. face_ft is the calibrated height;
+  effective_size_ft is the rating's size input on the same scale as everywhere else, so it
+  no longer follows face_ft by the producer's rule (eff = face * dir_gain on the NWPS and
+  MOP paths, eff = face on the WW3 path). face_ft_raw is the face that rule applies to, and
+  it means exactly what it meant under version 1: the face before anything divided it.
 
 WHAT IS EXCLUDED, AND HOW STRUCTURALLY.
 
@@ -109,15 +104,19 @@ from ..config import (
     FACE_FACTOR_MAX_AGE_DAYS,
     SPOT_FACE_FACTORS_FILE,
 )
-from ..interpret import composite_stars
 
 log = logging.getLogger("pipeline.forecast.face_correction")
 
-# THE SEAM'S ARITHMETIC VERSION. Bump this when what the seam DOES to a face changes — the
-# divisor form, the star recompute, the band formula. Do NOT bump it when the factor file is
-# regenerated: that moves the fingerprint instead, and the two are deliberately separate
+# THE SEAM'S ARITHMETIC VERSION. Bump this when what the seam DOES to a row changes — the
+# divisor form, which columns it writes, the band formula. Do NOT bump it when the factor file
+# is regenerated: that moves the fingerprint instead, and the two are deliberately separate
 # because they mean different things to a reader of the stamp. See face_correction_stamp.
-FACE_CORRECTION_VERSION = 1
+#
+#   1  divided face_ft AND effective_size_ft, and re-rated stars from the divided size
+#   2  divides face_ft and its band only; effective_size_ft and stars are the producer's
+#
+# face_ft_raw means the same under both: the face before anything divided it.
+FACE_CORRECTION_VERSION = 2
 
 # The two provenance keys the seam writes on every rated hour. Named once so the tests, the
 # db_import record and the "which fields did the seam leave alone" checks all agree on the
@@ -327,12 +326,16 @@ def _stalest(factors, now):
 
 
 def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None):
-    """Scale face_ft (and effective_size_ft) by 1/factor and recompute stars, in place.
+    """Divide face_ft by the spot's factor and write its band, in place. The display only.
 
-    Mutates *ratings*. Returns a stats dict for the run summary. Every spot without a
-    factor, on the MOP tier, or held out has every RATING field left byte-identical —
-    face_ft, effective_size_ft, stars, face_lo_ft and face_hi_ft are not written, not even
-    unchanged.
+    Mutates *ratings*. Returns a stats dict for the run summary.
+
+    effective_size_ft AND stars ARE NEVER WRITTEN, at any spot. They stay exactly as the
+    producer computed them, so a corrected spot is rated on the same input as every other
+    spot — see the module docstring. At a corrected spot the seam writes face_ft and, when
+    the spread was measured, face_lo_ft and face_hi_ft. Every spot without a factor, on the
+    MOP tier, or held out has every RATING field left byte-identical — face_ft, face_lo_ft
+    and face_hi_ft are not written, not even unchanged.
 
     THE GUARANTEE USED TO BE "the entry is byte-identical", full stop, and it is now
     "every rating field is byte-identical". The two PROVENANCE_KEYS are written on every
@@ -408,24 +411,16 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
         touched = 0
         for e in entries:
             face = e.get("face_ft")
-            eff = e.get("effective_size_ft")
-            if face is None or eff is None:
+            if face is None:
+                # No face, so nothing to display: the hour is unrateable and left as it is.
                 unrateable += 1
                 continue
-            new_eff = float(eff) / factor
-            # THE PRODUCTION STAR CHAIN, called not copied. composite_stars owns the
-            # size_score curve, the weighted geometric mean, the half-star snap, the [1,5]
-            # clamp and the sub-0.5 ft cutoff; a local copy would drift from any of them
-            # silently. The four quality factors are the row's own, unchanged — the only
-            # input that moves is the size.
-            e["stars"] = composite_stars(
-                new_eff,
-                e.get("wind_mult", 1.0), e.get("tide_mult", 1.0),
-                e.get("chop_mult", 1.0), e.get("period_quality", 1.0),
-            )
+            # THE DISPLAY ONLY. effective_size_ft and stars are not read and not written:
+            # they are the producer's, undivided, the input every uncorrected spot is rated
+            # on. Version 1 divided effective_size_ft here as well and re-rated stars from
+            # it, which rated these spots on a different yardstick — see the module docstring.
             new_face = float(face) / factor
             e["face_ft"] = round(new_face, 2)
-            e["effective_size_ft"] = round(new_eff, 2)
             # THE BAND DIVIDES THE RAW FACE, exactly as the point does.
             #
             # This passed `new_face` and so divided twice: face_lo_ft came out as

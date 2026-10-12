@@ -76,7 +76,7 @@ def test_face_ft_raw_is_the_pre_division_face_for_a_corrected_spot():
     e = ratings["Steamer Lane"][0]
     assert e["face_ft"] == 4.0, e            # corrected: 8.0 / 2.0
     assert e["face_ft_raw"] == 8.0, e        # raw: what it was before the division
-    assert e["effective_size_ft"] == 3.0, e  # 6.0 / 2.0, to show the seam really ran
+    assert e["effective_size_ft"] == 6.0, e  # the rating's input is never divided (version 2)
 
 
 def test_the_applied_divisor_is_recoverable_from_the_two_columns():
@@ -159,8 +159,8 @@ def test_raw_equals_face_when_there_are_no_factors_at_all():
     st = FC.apply_face_corrections(ratings, [_spot()], factors={}, slug_for=_slug, now=TODAY)
     e = ratings["Steamer Lane"][0]
     assert e["face_ft"] == 8.0 and e["face_ft_raw"] == 8.0
-    assert e["face_correction_version"] == "1:none:none", e
-    assert st["stamp"] == "1:none:none"
+    assert e["face_correction_version"] == "2:none:none", e
+    assert st["stamp"] == "2:none:none"
 
 
 # --------------------------------------------------------------------------- #
@@ -196,9 +196,11 @@ def test_the_stamp_format_is_code_date_fingerprint():
     factors = {"b-spot": _rec(2.0, measured_on="2026-09-01"),
                "a-spot": _rec(1.5, measured_on="2026-08-30")}
     canonical = "a-spot=1.5\nb-spot=2"
-    expect = f"1:2026-09-01:{hashlib.sha256(canonical.encode()).hexdigest()[:8]}"
+    expect = f"2:2026-09-01:{hashlib.sha256(canonical.encode()).hexdigest()[:8]}"
     assert FC.face_correction_stamp(factors) == expect, FC.face_correction_stamp(factors)
-    assert FC.FACE_CORRECTION_VERSION == 1
+    # 2 since the seam stopped dividing effective_size_ft and re-rating stars: the rows it
+    # writes changed, so a window straddling the change must be able to tell the two apart.
+    assert FC.FACE_CORRECTION_VERSION == 2
     # The date is the NEWEST measured_on, not the first encountered or the alphabetically
     # smallest — a partially re-measured file must read as the newer measurement.
     assert expect.split(":")[1] == "2026-09-01"
@@ -215,7 +217,7 @@ def test_a_regeneration_that_moves_a_divisor_changes_the_fingerprint():
     # A spot LEAVING the file changes it too — that is the 724f442 regime, where steamer-lane
     # was absent and therefore not corrected at all.
     assert a != FC.face_correction_stamp({"steamer-lane": _rec(2.8702), "other": _rec(1.1)})
-    assert FC.face_correction_stamp({}) == "1:none:none"
+    assert FC.face_correction_stamp({}) == "2:none:none"
 
 
 def test_the_code_version_is_the_first_field_so_it_can_be_split_out():
@@ -223,7 +225,7 @@ def test_the_code_version_is_the_first_field_so_it_can_be_split_out():
     raw is pre-correction whatever divisor was applied, but only with respect to one seam's
     arithmetic. That split has to be positional and stable."""
     s = FC.face_correction_stamp({"x": _rec(2.0)})
-    assert s.split(":", 1)[0] == "1"
+    assert s.split(":", 1)[0] == "2"
     assert len(s.split(":")) == 3, s
 
 

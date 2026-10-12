@@ -12,11 +12,13 @@ A TEST FILE, NOT A PIPELINE CHANGE. It reads the post and imports the code; it c
 The surface-conditions table mirrors frontend code and is held in frontend/lib/methodology.test.mts.
 
 NOT PINNED, deliberately: the 84,774 spot-hour figures (a measurement, dated in the post), the
-calibration drift figure (a measurement taken outside this repo), the half-star gap between
-calibrated and uncalibrated ratings (measured on live rows, dated in the post), and that MOP's
-nowcast ends before the current hour (a property of CDIP's feed, seen on live rows). None is a
-number the code owns. What the code does own about the last two — that the stars follow the
-calibrated height, and that MOP is read from its nowcast — is pinned below.
+calibration drift figure (a measurement taken outside this repo), the 3-star shares at calibrated
+and uncalibrated spots before and after the rating stopped using the calibrated height (0.4%,
+9.1% and 10.3%, measured on the forecast published 4 October 2026, dated in the post), and that
+MOP's nowcast ends before the current hour (a property of CDIP's feed, seen on live rows). None
+is a number the code owns. What the code does own about the last two — that every spot's stars
+come from the same model height whatever its calibration, and that MOP is read from its nowcast
+— is pinned below.
 
 NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. Every expected number is read out of the post;
 the code supplies only the actual side. Where a claim is prose, the test finds it by its wording
@@ -487,19 +489,33 @@ def test_mop_is_read_from_its_nowcast():
     assert asked == ["x/D0045_nowcast.nc"], asked
 
 
-def test_calibrated_spots_are_rated_on_the_calibrated_height():
-    m = _says(r"Stars at the (\d+) calibrated California spots are worked out from the calibrated height, "
-              r"which is smaller than the uncalibrated one at all but (\w+) of them\.",
-              "that calibrated spots are rated on the calibrated height")
+def test_every_spot_is_rated_on_the_model_height_whatever_its_calibration():
+    """The post says it three times — in the size section, under calibration, and in what we
+    changed — so all three are read, and the code is held to them: the seam divides the height
+    shown and leaves the rating's input and the stars exactly as the producer computed them,
+    so a calibrated spot and an uncalibrated one with identical inputs get identical stars."""
+    # The count in each sentence is held to the factor file by
+    # test_every_mop_and_calibrated_count_in_the_post_is_the_datas; here only the claim is read.
+    _says(r"It's the model's height at every spot: at the \d+ calibrated California spots the page "
+          r"shows a calibrated height, but the rating uses the model's, as everywhere else\.",
+          "that the size score uses the model's height at every spot")
+    _says(r"and now divide the height we show by each spot's typical ratio\. The star rating isn't "
+          r"divided: it comes from the model's height, the same input every other spot is rated on\.",
+          "that the calibration divides the height shown and not the rating")
+    m = _says(r"We used to work out stars at the (\d+) calibrated California spots from the calibrated "
+              r"height, which is smaller than the uncalibrated one at all but (\w+) of them",
+              "why calibrated spots used to rate lower")
+    _says(r"Now the calibration corrects only the swell height we show, and the rating uses the same "
+          r"input at every spot", "what we changed")
     n, but = int(m.group(1)), _WORDS[m.group(2)]
     factors = [rec["factor"] for rec in _factors()["factors"].values()]
     assert len(factors) == n
-    # The calibrated height is the raw one DIVIDED by the factor, so it is the smaller one exactly
-    # where the factor is above 1.
+    # The calibrated height is the raw one DIVIDED by the factor, so it is the smaller one
+    # exactly where the factor is above 1 — which is why rating on it rated those spots lower.
     assert sum(f > 1.0 for f in factors) == n - but, sorted(f for f in factors if f <= 1.0)
-    # And the stars follow the divided height. Expected values are read off the post's size
-    # table: with every quality score at 1 the rating is the size score, and 2.0 and 3.0 are
-    # already whole or half stars, so rounding leaves them alone.
+    # And the code. Expected values are read off the post's size table: with every quality
+    # score at 1 the rating is the size score, and 3.0 is already a whole star. The hour carries
+    # the 3.0 stars the producer gives 4 ft; rating the 2 ft shown instead would give 2.0.
     size = {x: y for x, y, _ in _curve_rows(["Height", "Size score"], "ft")}
     from pipeline.forecast import face_correction as F
     spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
@@ -508,9 +524,11 @@ def test_calibrated_spots_are_rated_on_the_calibrated_height():
             "wind_mult": 1.0, "tide_mult": 1.0, "chop_mult": 1.0, "period_quality": 1.0}
     ratings = {s["name"]: [dict(hour)] for s in spots}
     F.apply_face_corrections(ratings, spots, factors={"calibrated": {"factor": 2.0}},
-                             slug_for=lambda name: name.lower(), now=datetime.date(2026, 9, 28))
-    assert ratings["Calibrated"][0]["stars"] == size[2.0] < size[4.0]     # rated on 4 ft / 2 = 2 ft
-    assert ratings["Uncalibrated"][0]["stars"] == size[4.0]               # rated on the 4 ft it had
+                             slug_for=lambda name: name.lower(), now=datetime.date(2026, 10, 4))
+    cal, unc = ratings["Calibrated"][0], ratings["Uncalibrated"][0]
+    assert (cal["face_ft"], unc["face_ft"]) == (4.0 / 2.0, 4.0)          # "the height we show"
+    assert cal["effective_size_ft"] == unc["effective_size_ft"] == 4.0   # "the same input"
+    assert cal["stars"] == unc["stars"] == size[4.0] != size[2.0]        # rated on 4 ft, not 2 ft
 
 
 def test_the_uncorrected_height_ratio_is_the_measured_median():

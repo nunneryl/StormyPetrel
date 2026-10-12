@@ -153,8 +153,9 @@ _COMMENT_TEMPLATE = (
     "a DIVISOR: corrected_face = published_face / factor, so 2.87 means we publish 2.87x "
     "what MOP implies. Applied by pipeline/forecast/face_correction.py at the single seam in "
     "interpret.main AFTER apply_mop_overrides and apply_nwps_overrides, which is where the "
-    "four face_ft producers actually converge. Both face_ft and effective_size_ft are scaled "
-    "and stars is recomputed by the production interpret.composite_stars.\n\n"
+    "four face_ft producers actually converge. Only the displayed height is scaled: face_ft "
+    "and its published band. effective_size_ft and stars are left as the producer computed "
+    "them, so a calibrated spot is rated on the same input as every other spot.\n\n"
 
     "GENERATED, NOT TRANSCRIBED. Regenerate with `python3 scripts/build_face_factors.py "
     "--apply` from scripts/mop_face_validation_out.json (Mac-local, gitignored). Do not "
