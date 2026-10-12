@@ -1540,6 +1540,21 @@ def test_the_earlier_runs_results_are_left_where_they_are():
                                           "break_type_research_gate3.json")
 
 
+def test_every_results_file_is_ignored_by_git():
+    # They hold the text of every fetched page; none may be committed.
+    import subprocess
+    if shutil.which("git") is None or not os.path.isdir(os.path.join(ROOT, ".git")):
+        pytest.skip("not a git checkout")
+    paths = [rb.DEFAULT_OUTPUT, rb.DEFAULT_MEMORY_OUTPUT, rb.DEFAULT_FULL_OUTPUT,
+             rb.recheck_path(rb.DEFAULT_OUTPUT), rb.recheck_path(rb.DEFAULT_FULL_OUTPUT),
+             config.PIPELINE_DIR / "data" / "break_type_research_pilot.json",
+             config.PIPELINE_DIR / "data" / "break_type_research_gate.json"]
+    for path in paths:
+        relative = os.path.relpath(path, ROOT)
+        assert subprocess.run(["git", "check-ignore", "-q", relative], cwd=ROOT).returncode == 0, (
+            relative)
+
+
 def test_the_results_file_may_not_be_the_roster(tmp_path):
     with pytest.raises(SystemExit, match="that is the roster"):
         rb.guard_output_path(config.DEFAULT_ENRICHED_OUTPUT, config.DEFAULT_ENRICHED_OUTPUT)
