@@ -53,7 +53,8 @@ WRITTEN = {
     "spots": [
         "slug", "name", "lat", "lng", "state", "region", "swell_window_arcs", "data_sources",
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir", "break_type",
-        "break_type_source", "break_type_source_url", "break_type_evidence", "tide_preference",
+        "break_type_source", "break_type_source_url", "break_type_evidence",
+        "bottom", "bottom_source", "bottom_source_url", "bottom_evidence", "tide_preference",
         "tide_preference_source", "crowd_factor", "hazards", "nearest_buoy_id",
         "nearest_buoy_dist_km", "nearest_tide_station_id",
         "nearest_tide_station_dist_km", "nwps_wfo", "fallback_buoy_ids", "swell_window_source",
@@ -78,7 +79,7 @@ KEYS = {"buoys": ("id",), "spots": ("slug",), "forecasts": ("spot_id", "valid_ti
 # Columns the live tables have that db_import never sends. break_type_confidence is generated
 # from break_type_source by migration 020, so it is read back but never written.
 DB_ONLY = {"buoys": [], "spots": ["id", "geom", "aka_names", "created_at", "updated_at",
-                                  "break_type_confidence"],
+                                  "break_type_confidence", "bottom_confidence"],
            "forecasts": ["id", "fetched_at"], "buoy_observations": ["id"],
            "tide_predictions": ["id"]}
 ALL_TABLES = ("buoys", "spots", "forecasts", "buoy_observations", "tide_predictions")
@@ -201,6 +202,9 @@ ENRICHED = [
      "break_type": "point", "break_type_source": "researched", "break_type_confidence": "medium",
      "break_type_source_url": "https://www.surf-forecast.com/breaks/Steamer-Lane",
      "break_type_evidence": "Steamer Lane in Santa Cruz is an exposed point break",
+     "bottom": "rock", "bottom_source": "researched", "bottom_confidence": "medium",
+     "bottom_source_url": "https://www.surf-forecast.com/breaks/Steamer-Lane",
+     "bottom_evidence": "The wave breaks over a rock reef off the point",
      "tide_preference": "mid",
      "tide_preference_source": "manual", "crowd_factor": "high", "hazards": ["rocks"],
      "nearest_buoy_id": "46042", "nearest_buoy_dist_km": 30.1,
@@ -213,7 +217,7 @@ EXISTING_SPOT = {"id": 7, "slug": "steamer-lane", "name": "Steamer Lane", "aka_n
                  "lat": 36.9513, "lng": -122.0266, "geom": "0101", "state": "California",
                  "region": "California", "review_status": "reviewed",
                  "break_type": "reef", "break_type_source": "unattributed",
-                 "break_type_confidence": "low",
+                 "break_type_confidence": "low", "bottom_confidence": None,
                  "description": "A right point.", "description_signature": "0000000000000000",
                  "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-09-01T00:00:00Z"}
 SPOT_IDS = [{"id": 7, "name": "Steamer Lane"}, {"id": 8, "name": "Mavericks"}]
@@ -380,6 +384,44 @@ def test_merged_before_migration_020_the_run_publishes_and_ends_failed_naming_it
         "spots.break_type_source_url (pipeline/migrations/020_break_type_provenance.sql), "
         "spots.break_type_evidence (pipeline/migrations/020_break_type_provenance.sql) — "
         "left out of this run's upload; apply the migration to write them."]
+
+
+def test_merged_before_migration_021_the_run_publishes_and_ends_failed_naming_it(run, capsys):
+    """The bottom's order, kept the same way: before 021 the live spots table has none of
+    its columns. The bottom's four are left out of the spots rows, bottom_confidence is never
+    sent (the database computes it after 021), every table is still written, and the run
+    ends failed naming the migration."""
+    missing = ("spots.bottom", "spots.bottom_source", "spots.bottom_source_url",
+               "spots.bottom_evidence")
+    fake = FakePostgrest(live(*missing, "spots.bottom_confidence"))
+    assert run.go(fake) == 0
+    sent = fake.rows_sent("spots")
+    assert sent and all(not any(m.partition(".")[2] in r for m in missing) for r in sent)
+    assert all("bottom_confidence" not in r for r in sent)
+    assert fake.rows_sent("forecasts") == [FORECAST_ROW]
+    for table in ALL_TABLES:
+        assert fake.rows_sent(table), f"{table} must still be written"
+    capsys.readouterr()
+    assert run.finish() == 1
+    assert capsys.readouterr().out.splitlines() == [
+        "Missing database columns: "
+        "spots.bottom (pipeline/migrations/021_bottom_provenance.sql), "
+        "spots.bottom_source (pipeline/migrations/021_bottom_provenance.sql), "
+        "spots.bottom_source_url (pipeline/migrations/021_bottom_provenance.sql), "
+        "spots.bottom_evidence (pipeline/migrations/021_bottom_provenance.sql) — "
+        "left out of this run's upload; apply the migration to write them."]
+
+
+def test_after_migration_021_the_bottom_travels_with_its_source_and_citation(run):
+    fake = FakePostgrest(live())
+    assert run.go(fake) == 0
+    steamer = next(r for r in fake.rows_sent("spots") if r["slug"] == "steamer-lane")
+    assert {k: steamer[k] for k in ("bottom", "bottom_source", "bottom_source_url",
+                                    "bottom_evidence")} == {
+        "bottom": "rock", "bottom_source": "researched",
+        "bottom_source_url": "https://www.surf-forecast.com/breaks/Steamer-Lane",
+        "bottom_evidence": "The wave breaks over a rock reef off the point"}
+    assert "bottom_confidence" not in steamer
 
 
 def test_two_missing_columns_are_both_named_on_the_one_line(run, capsys):

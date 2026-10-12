@@ -331,6 +331,33 @@ def break_type_quote(text: str | None) -> str | None:
     return quote or None
 
 
+def _provenance_fields(name: str, values: tuple, value: str | None, source: str | None,
+                       url: str | None, evidence: str | None) -> dict:
+    """The five keys of one sourced field (*name*, *name*_source, *name*_confidence,
+    *name*_source_url, *name*_evidence), checked against the rules its migration enforces.
+    break_type (020) and bottom (021) share the ladder, the confidence, the citation rules
+    and the quote limit, so they share this one builder."""
+    keys = (name, f"{name}_source", f"{name}_confidence", f"{name}_source_url",
+            f"{name}_evidence")
+    if value is None:
+        if source is not None or url is not None or evidence is not None:
+            raise ValueError(f"a {name} source or citation needs a {name}")
+        return dict.fromkeys(keys)
+    if value not in values:
+        raise ValueError(f"{name} {value!r} is not one of {values}")
+    if source not in BREAK_TYPE_SOURCE_RANK:
+        raise ValueError(f"{name}_source {source!r} is not one of "
+                         f"{tuple(BREAK_TYPE_SOURCE_RANK)}")
+    if url is not None and not BREAK_TYPE_URL_RE.match(url):
+        raise ValueError(f"{name}_source_url {url!r} is not an http(s) URL")
+    if source in BREAK_TYPE_CITED_SOURCES and url is None:
+        raise ValueError(f"a {source} {name} must cite the page it came from")
+    if evidence is not None and not 1 <= len(evidence) <= BREAK_TYPE_EVIDENCE_MAX_CHARS:
+        raise ValueError(f"{name}_evidence must be 1-{BREAK_TYPE_EVIDENCE_MAX_CHARS} "
+                         f"characters, got {len(evidence)}")
+    return dict(zip(keys, (value, source, break_type_confidence(source), url, evidence)))
+
+
 def break_type_fields(value: str | None, source: str | None, url: str | None = None,
                       evidence: str | None = None) -> dict:
     """The five break_type keys, together. The only way a writer sets break_type.
@@ -344,29 +371,40 @@ def break_type_fields(value: str | None, source: str | None, url: str | None = N
     at the writer that made it — not as a refused spots upsert in db_import, which
     runs before the forecast upload and would take it down too.
     """
-    if value is None:
-        if source is not None or url is not None or evidence is not None:
-            raise ValueError("a break_type source or citation needs a break_type")
-        return dict.fromkeys(BREAK_TYPE_FIELDS)
-    if value not in BREAK_TYPE_VALUES:
-        raise ValueError(f"break_type {value!r} is not one of {BREAK_TYPE_VALUES}")
-    if source not in BREAK_TYPE_SOURCE_RANK:
-        raise ValueError(f"break_type_source {source!r} is not one of "
-                         f"{tuple(BREAK_TYPE_SOURCE_RANK)}")
-    if url is not None and not BREAK_TYPE_URL_RE.match(url):
-        raise ValueError(f"break_type_source_url {url!r} is not an http(s) URL")
-    if source in BREAK_TYPE_CITED_SOURCES and url is None:
-        raise ValueError(f"a {source} break_type must cite the page it came from")
-    if evidence is not None and not 1 <= len(evidence) <= BREAK_TYPE_EVIDENCE_MAX_CHARS:
-        raise ValueError(f"break_type_evidence must be 1-{BREAK_TYPE_EVIDENCE_MAX_CHARS} "
-                         f"characters, got {len(evidence)}")
-    return {
-        "break_type": value,
-        "break_type_source": source,
-        "break_type_confidence": break_type_confidence(source),
-        "break_type_source_url": url,
-        "break_type_evidence": evidence,
-    }
+    return _provenance_fields("break_type", BREAK_TYPE_VALUES, value, source, url, evidence)
+
+
+# ---------------------------------------------------------------------------
+# bottom provenance — what the waves break over (migration 021)
+# ---------------------------------------------------------------------------
+# The break type mixes two things: the shape of the break ("point") and what it breaks
+# over ("reef"). A close-out ceiling depends mainly on the second: shifting sand closes
+# out, a fixed bottom holds. Migration 021 adds bottom beside break_type with 020's
+# rules exactly: the same ladder and ranks, value and source together, the same two
+# cited sources carrying their page, a quote of at most 300 characters, and a
+# confidence the database computes from the source. Only the values differ.
+# pipeline/tests/test_bottom_migration.py holds 021 to these.
+
+# 'unknown' means someone looked and could not tell; None (NULL), nobody has looked.
+# 'rock' includes any reef not said to be coral (pipeline/research_break_type.py).
+BOTTOM_VALUES = ("sand", "rock", "coral", "cobble", "mixed", "unknown")
+
+# The five keys that describe one bottom, set together or not at all.
+BOTTOM_FIELDS = ("bottom", "bottom_source", "bottom_confidence", "bottom_source_url",
+                 "bottom_evidence")
+
+
+def bottom_may_overwrite(existing: str | None, incoming: str | None) -> bool:
+    """May a write stamped *incoming* replace a bottom stamped *existing*? The bottom's
+    sources are break_type's ladder, so this is break_type_may_overwrite: one comparison."""
+    return break_type_may_overwrite(existing, incoming)
+
+
+def bottom_fields(value: str | None, source: str | None, url: str | None = None,
+                  evidence: str | None = None) -> dict:
+    """The five bottom keys, together: the only way a writer sets bottom. Raises
+    ValueError for anything migration 021 would refuse (see break_type_fields)."""
+    return _provenance_fields("bottom", BOTTOM_VALUES, value, source, url, evidence)
 
 # ---------------------------------------------------------------------------
 # Forecast fetching (Phase 1)
