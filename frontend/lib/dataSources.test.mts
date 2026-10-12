@@ -4,7 +4,7 @@
  * WHAT THIS HOLDS TOGETHER. The footer's "Data sources" list and the About page's "How it works"
  * paragraph name the providers behind the forecast. CDIP (Scripps Institution of Oceanography's
  * Coastal Data Information Program) was missing from both, although 48 spots take their height
- * from its MOP model and 130 are calibrated against it. This checks that each list names every
+ * from its MOP model and 141 are calibrated against it. This checks that each list names every
  * source, that CDIP stays credited for as long as any spot is on the MOP tier, and that the
  * footer links CDIP the way it links the others.
  *

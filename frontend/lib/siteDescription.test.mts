@@ -14,7 +14,7 @@
  *   2. It is defined once, on one line, as a plain integer.
  *   3. No copy anywhere states a count of spots in three or more digits except through it. The
  *      scanner is copyScan.ts, shared with the forecast-length and cadence guards, so comments
- *      may say what they like; subset counts ("48 California spots", "130 calibrated
+ *      may say what they like; subset counts ("48 California spots", "141 calibrated
  *      California spots") are two digits or qualified, and pass.
  *   4. The copy sites read it, and the descriptions that list NOAA's feeds read NOAA_SOURCES,
  *      which names every NOAA feed the footer credits, CO-OPS included.
@@ -87,7 +87,7 @@ check('the setting, used the way the site uses it, passes',
   fixture('const d = `Free surf forecasts for ${RATED_SPOT_COUNT} US spots.`;'
     + 'const A = () => <p>{`${RATED_SPOT_COUNT} US spots · NOAA-powered`}</p>;').length === 0);
 check('subset counts and a measurement pass',
-  fixture('const a = "CDIP MOP at 48 California spots"; const b = "the 130 calibrated California spots";'
+  fixture('const a = "CDIP MOP at 48 California spots"; const b = "the 141 calibrated California spots";'
     + 'const c = "across 84,774 spot-hours"; const d = "48 MOP spots";').length === 0);
 check('a comment is not copy', fixture('// ~500 US spots\n/* 484 spots */\nconst x = 1;').length === 0);
 

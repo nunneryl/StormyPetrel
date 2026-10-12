@@ -96,7 +96,7 @@ def test_a_corrected_spot_rates_exactly_like_an_uncorrected_one_with_identical_i
     Realistic, non-neutral inputs: an NWPS-path hour with face 7.71, dir_gain 0.7, so
     eff = round(7.71 * 0.7, 2) = 5.4, and a 3.0-star rating under wind 0.8 / chop 0.85.
 
-        Steamer Lane   face 7.71 / 2.8084 = 2.74533... -> 2.75   (Steamer Lane's real factor)
+        Steamer Lane   face 7.71 / 2.8084 = 2.74533... -> 2.75   (its factor in the 2026-09-01 file)
         everything else in the hour, the rating included, identical on all three spots
     """
     hour = _entry(face=7.71, eff=5.4, dir_gain=0.7, wind_mult=0.8, chop_mult=0.85,
@@ -579,7 +579,30 @@ def test_the_age_warning_fires_one_day_past_the_limit():
     assert "121 days old" in said[0], said[0]
     assert "steamer-lane" in said[0], said[0]
     assert "build_face_factors.py --apply" in said[0], "the warning must carry its remedy"
-    assert "SUMMER" in said[0], "the warning must say why age matters here"
+    # Why age matters here, and when the stale factors were measured — read from the record,
+    # not written into the message: it used to say "14 SUMMER days" whatever the file held.
+    assert "NOT validated across a season change" in said[0], said[0]
+    assert "measured over 2026-08-18 to 2026-09-01" in said[0], said[0]
+
+
+def test_the_age_warning_names_the_measurement_window_of_the_stale_record():
+    """The 2026-10-06 file's window is 28 days, 2026-09-08 to 2026-10-06, and a record
+    without a window (written before records carried one) is still warned about."""
+    rec = _rec(2.0, measured_on="2026-10-06", window={"t0": "2026-09-08", "t1": "2026-10-06"})
+    # 2027-02-04 is 121 days after 2026-10-06.
+    said = _warn_lines({"steamer-lane": rec}, datetime.date(2027, 2, 4))
+    assert len(said) == 1 and "measured over 2026-09-08 to 2026-10-06" in said[0], said
+    bare = _rec(2.0, measured_on="2026-10-06")
+    del bare["window"]
+    said = _warn_lines({"steamer-lane": bare}, datetime.date(2027, 2, 4))
+    assert len(said) == 1 and "measured over a single window" in said[0], said
+    # With two records, the window named is the stalest record's, not the first one's: the
+    # 10-06 record comes first here, and the warning is about the older 09-01 one.
+    said = _warn_lines({"steamer-lane": rec, "older-spot": _rec(2.0, measured_on="2026-09-01")},
+                       datetime.date(2027, 2, 4))
+    assert len(said) == 1 and "older-spot" in said[0], said
+    assert "measured over 2026-08-18 to 2026-09-01" in said[0], said
+    assert "2026-09-08" not in said[0], said
 
 
 def test_the_warning_names_the_oldest_factor_not_the_first():
@@ -909,7 +932,7 @@ def test_the_written_columns_satisfy_lo_le_face_le_hi():
         (4.0, 1.0, 0.8, 1.25),      # factor exactly 1: the band still brackets
         (12.5, 3.4, 3.4, 3.4),      # degenerate: all three quantiles equal
         (1.0, 0.5, 0.4, 0.6),       # factor below 1 — the correction makes it BIGGER
-        (20.0, 2.8084, 2.2337, 3.2558),   # Steamer Lane's real quantiles
+        (20.0, 2.8084, 2.2337, 3.2558),   # Steamer Lane's quantiles in the 2026-09-01 file
     ]
     for raw, factor, p25, p75 in cases:
         ratings = {"Steamer Lane": [_entry(face=raw, eff=raw)]}
@@ -925,7 +948,7 @@ def test_the_written_columns_satisfy_lo_le_face_le_hi():
 
 
 def test_steamer_lane_and_cowells_publish_the_band_measured_in_production():
-    """THE TWO SPOTS FROM THE BUG REPORT, at their real committed factors.
+    """THE TWO SPOTS FROM THE BUG REPORT, at the factors committed then (the 2026-09-01 file).
 
     Steamer Lane  factor 2.8084  p25 2.2337  p75 3.2558
     Cowell's      factor 2.8185  p25 2.2337  p75 3.2719

@@ -107,7 +107,7 @@ SYSTEM_PROMPT = (
     "never describe it as how big the waves break. "
     # NOR ARE THEY ALL ON ONE SCALE, AND NONE IS A MEASUREMENT. This used to say every height
     # was significant wave height "measured" offshore of the surf zone — CDIP MOP's, by the
-    # comment above it. That was true of none of them: the 130 calibrated spots are model
+    # comment above it. That was true of none of them: the 141 calibrated spots are model
     # heights scaled to CDIP, MOP's own rows never reach the report's hours, and every other
     # spot is an uncalibrated model estimate that can read well above CDIP's height. Each
     # spot's height now arrives tagged with which it is (height_basis, below), and the site

@@ -531,14 +531,15 @@ def test_the_migration_adds_both_columns_and_is_idempotent():
 
 
 def test_the_committed_factors_are_UNCHANGED_by_this_work():
-    """130 spots, measured_on 2026-09-01. Nothing here regenerates them, and nothing may:
-    they stay as they are until a clean 14-day window exists."""
+    """141 spots, measured over 2026-09-08 to 2026-10-06. Nothing here regenerates them, and
+    nothing may: a new file is its own commit, built by scripts/build_face_factors.py --apply
+    from a fresh measurement."""
     p = Path(__file__).resolve().parents[1] / "data" / "spot_face_factors.json"
     doc = json.loads(p.read_text())
-    assert len(doc["factors"]) == 130
-    assert doc["measurement"]["run_on"] == "2026-09-01"
-    assert doc["factors"]["steamer-lane"]["factor"] == 2.8084
-    assert {r["measured_on"] for r in doc["factors"].values()} == {"2026-09-01"}
+    assert len(doc["factors"]) == 141
+    assert doc["measurement"]["run_on"] == "2026-10-06"
+    assert doc["factors"]["steamer-lane"]["factor"] == 3.1094
+    assert {r["measured_on"] for r in doc["factors"].values()} == {"2026-10-06"}
 
 
 def _run_all():

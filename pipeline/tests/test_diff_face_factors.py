@@ -670,93 +670,96 @@ def test_the_three_sections_are_disjoint_by_construction():
 
 
 # --------------------------------------------------------------------------- #
-# The real 09-01 baseline. The premises of the expected diff, checked.         #
+# The real baseline: the committed 10-06 file, which replaced the 09-01 one.   #
 # --------------------------------------------------------------------------- #
 
+# The brief's expected 09-19 diff against the 09-01 file: one spot leaving and nine arriving.
+# The 09-01 file is gone, so what is checkable now is the outcome, in the file that replaced it.
+LEAVING_0919 = ["moonstone-beach-humboldt"]
+ARRIVING_0919 = ["agate-beach", "carmel-beach", "crescent-city-beach", "cronkhite",
+                 "half-moon-bay-jetty", "jenner-beach", "pacifica-linda-mar", "rat-beach",
+                 "seal-beach-jetty"]
+
+
 def test_the_committed_baseline_loads_and_has_the_expected_shape():
+    """141 factors; rincon and sandspit held out by name, tarpits on spread."""
     side = D.load(BASELINE)
-    assert len(side["kept"]) == 130
-    assert len(side["held"]) == 7
+    assert len(side["kept"]) == 141
+    assert side["held"] == {"rincon", "sandspit", "tarpits"}
     assert side["kept"] & side["held"] == set()
 
 
-def test_the_baseline_records_no_gates_so_the_real_comparison_is_unverifiable():
-    """The 09-01 file predates the provenance commit. The tool must say so rather than
-    reading its absent gates as 'off' and declaring the populations identical."""
+def test_the_baseline_records_its_gates_so_the_next_comparison_is_verifiable():
+    """The 09-01 file predated the provenance commit, so comparing against it left every gate
+    unverifiable — the tool said so rather than reading absent gates as 'off'. The 10-06 file
+    records all three and the spread threshold, so against a file built under the same gates
+    nothing is unverifiable and nothing disagrees."""
     new = _doc({}, {}, GATES_NEW)
     po, pn = _paths(json.load(open(BASELINE)), new)
     r = D.compare(D.load(po), D.load(pn))
     assert r["provenance"]["disagreement"] == []
-    assert set(r["provenance"]["unverifiable"]) >= set(GATE_CONSTANT_KEYS)
+    assert r["provenance"]["unverifiable"] == []
 
 
-def test_the_expected_membership_change_is_checked_against_the_files():
-    """The brief's expected 09-19 diff is one leaving and nine arriving. What IS checkable
-    here is the premise of that list, and it is checked rather than trusted:
+def test_the_expected_09_19_membership_change_is_in_the_committed_file():
+    """The brief's expected diff, checked against the file that replaced the 09-01 one:
 
-      * moonstone-beach-humboldt is in the 09-01 file, so it can leave
-      * none of the nine is in the 09-01 file, so each can arrive
+      * each of the nine arrivals is now a factor
+      * moonstone-beach-humboldt, the one expected to leave, is in neither section
       * all ten are in today's is_population, so the change is a GATE outcome and not a
         roster change
 
-    What is NOT checkable in this container is the gate outcome itself — which of the ten
-    passes the 90-degree and 2200 m gates needs scripts/mop_points.json, which is
-    gitignored and absent. So this test pins the premises and the tool's classification,
-    never the gate verdicts.
+    The gate verdicts themselves still need scripts/mop_points.json, which is gitignored and
+    absent, so they are not pinned here.
     """
     import mop_face_validation as MF
     from pipeline.enrich import _slug_for
 
-    leaving = ["moonstone-beach-humboldt"]
-    arriving = ["agate-beach", "carmel-beach", "crescent-city-beach", "cronkhite",
-                "half-moon-bay-jetty", "jenner-beach", "pacifica-linda-mar", "rat-beach",
-                "seal-beach-jetty"]
-    assert len(arriving) == 9
-
+    assert len(ARRIVING_0919) == 9
     side = D.load(BASELINE)
-    baseline_pop = side["kept"] | side["held"]
-    for slug in leaving:
-        assert slug in baseline_pop, f"{slug} cannot leave a file it is not in"
-    for slug in arriving:
-        assert slug not in baseline_pop, f"{slug} cannot arrive; it is already there"
+    for slug in ARRIVING_0919:
+        assert slug in side["kept"], f"{slug} was expected to arrive"
+    for slug in LEAVING_0919:
+        assert slug not in side["kept"] | side["held"], f"{slug} was expected to leave"
 
     roster = json.load(open(os.path.join(ROOT, "pipeline", "spots_enriched.json")))
     population = {_slug_for(s["name"]) for s in roster if MF.is_population(s)}
-    for slug in leaving + arriving:
+    for slug in LEAVING_0919 + ARRIVING_0919:
         assert slug in population, f"{slug} is not in today's population at all"
 
 
-def test_the_tool_classifies_the_expected_09_19_diff_correctly():
-    """End to end against the real baseline: build the expected 09-19 population, then
-    check the tool puts each change in the right section and keeps the arrivals and the
-    departure out of the drift statistics entirely.
+def test_the_tool_keeps_a_membership_change_out_of_the_drift_on_the_real_file():
+    """End to end against the real baseline: a next file in which one held-out spot leaves
+    and two spots arrive, while no factor moves. The tool must put each change in the right
+    section and keep all three out of the drift statistics entirely.
+
+    tarpits is held out on spread in the 10-06 file; bolinas and trinidad-state-beach are in
+    today's population but in neither section of it.
     """
-    leaving = "moonstone-beach-humboldt"
-    arriving = ["agate-beach", "carmel-beach", "crescent-city-beach", "cronkhite",
-                "half-moon-bay-jetty", "jenner-beach", "pacifica-linda-mar", "rat-beach",
-                "seal-beach-jetty"]
+    leaving = "tarpits"
+    arriving = ["bolinas", "trinidad-state-beach"]
     base = json.load(open(BASELINE))
     new = json.loads(json.dumps(base))          # deep copy, no mutation of the original
     new["held_out"].pop(leaving)
     for slug in arriving:
+        assert slug not in base["factors"] and slug not in base["held_out"], slug
         new["factors"][slug] = _kept(1.5)
-    new["measurement"]["population_gates"] = GATES_NEW
-    new["measurement"]["run_on"] = "2026-09-19"
-    new["measurement"]["window"] = {"t0": "2026-09-05", "t1": "2026-09-19"}
+    new["measurement"]["run_on"] = "2026-11-03"
+    new["measurement"]["window"] = {"t0": "2026-10-06", "t1": "2026-11-03"}
 
     po, pn = _paths(base, new)
     r = D.compare(D.load(po), D.load(pn))
 
     assert r["membership"]["n_left"] == 1
     assert [x["slug"] for x in r["membership"]["left"]] == [leaving]
-    assert r["membership"]["n_entered"] == 9
+    assert r["membership"]["n_entered"] == 2
     assert sorted(x["slug"] for x in r["membership"]["entered"]) == sorted(arriving)
 
     drift_slugs = {x["slug"] for x in r["drift"]["rows"]}
-    assert r["drift"]["n"] == 130
+    assert r["drift"]["n"] == 141
     assert leaving not in drift_slugs
     assert not (set(arriving) & drift_slugs)
-    # Nothing drifted in this fixture, so it must read as perfectly stable despite ten
+    # Nothing drifted in this fixture, so it must read as perfectly stable despite three
     # membership changes. That is the whole separation, on the real file.
     assert r["drift"]["median_ratio"] == 1.0
     assert r["drift"]["direction_balance"] == 0
