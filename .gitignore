@@ -148,6 +148,10 @@ pipeline/spots_seed.json
 # new version when adding/editing spots.
 pipeline/geodata/
 pipeline/forecast_data/
+# Break-type research results (pipeline/research_break_type.py: gate, full run, memory
+# answers, rechecks). They hold the text of every fetched page, so they stay on the
+# machine that ran them; the committed summary has another name.
+pipeline/data/break_type_*.json
 
 # Python
 __pycache__/
