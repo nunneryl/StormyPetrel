@@ -247,10 +247,6 @@
     "description": "Boynton Beach Inlet is a jetty break on Florida's coast facing east at approximately 100°. It picks up swells from a wide window spanning N through E, SE through S, S through SW, and W through NW, with an optimal swell from the east. The break prefers mid tide conditions, and offshore winds come from the west.",
     "signature": "5559795e456d276e"
   },
-  "boyton-bech-inlet": {
-    "description": "Boynton Beach Inlet is a Florida surf spot facing east (100°), making it receptive to swells from the north through east, southeast through southwest, and west through northwest quadrants, with an optimal swell direction from the east. Offshore winds blow from the west (280°). Tide preferences are referenced to NOAA station 8722718.",
-    "signature": "14f9dbb55ded2e0b"
-  },
   "bradley-beach": {
     "description": "Bradley Beach is an east-facing beach break in New Jersey with an orientation of 100 degrees, picking up swells from the north through south with an optimal swell direction from the east. It prefers mid tide conditions and goes offshore with westerly winds (280 degrees).",
     "signature": "6a117cc009b198d9"
@@ -330,10 +326,6 @@
   "cape-kiwanda": {
     "description": "Cape Kiwanda is a west-facing beach break that picks up swells from a wide window spanning south through north, with an optimal swell direction from the west. It prefers mid tide conditions and goes offshore with easterly winds.",
     "signature": "8f7fa970cca5cb2d"
-  },
-  "cape-san-b-liss": {
-    "description": "Cape San Bliss is a surf spot in Florida that faces southwest (220°). It picks up swells from the southeast through west and west through northwest, with the optimal swell direction from the southwest. Offshore winds blow from the northeast. Tide preferences are not specified in the available data.",
-    "signature": "9b89d8f863525ced"
   },
   "captiva": {
     "description": "Captiva is a surf break in Florida that faces west (258°), picking up swells from the south through northwest, with an optimal swell direction from the west. It prefers offshore winds from the east. The nearest monitoring buoy is NOAA station 42098.",
@@ -499,10 +491,6 @@
     "description": "Deal is a beach break in New Jersey facing east (105°), with offshore winds from the west. It picks up swells from the northeast through south, with an optimal swell direction from the east. The break performs best at mid tide.",
     "signature": "7fff16d4df6f48d8"
   },
-  "deep-cove": {
-    "description": "Deep Cove is a surf spot in Maine that faces southeast (144°). It picks up swells from the SE to SW window, with south being the optimal swell direction. The break prefers offshore winds from the northwest. Tide preference data is not specified in the available metadata.",
-    "signature": "58b7f50c899f4106"
-  },
   "deep-hole": {
     "description": "Deep Hole is a surf spot in Rhode Island that faces south (162°). It picks up swells from the east through southwest, with south swells being optimal. Offshore winds blow from the north. Tide preference data is referenced via station 8455083.",
     "signature": "3e11fc6f38e1a595"
@@ -514,10 +502,6 @@
   "del-mar-beach": {
     "description": "Del Mar Beach is a west-facing beach break that picks up swells from a broad window spanning east-southeast through northwest, with southwest swells being optimal. It performs best at mid tide, and offshore winds blow from the east.",
     "signature": "b5b18b304ed58418"
-  },
-  "deland-park": {
-    "description": "Deland Park is a beach break in Wisconsin facing east (94°), making it offshore in westerly winds. It picks up swells from a wide window spanning SW through W and N through SW, with the optimal swell direction from the southeast. This break works at all tide stages.",
-    "signature": "a160bd1a426a822c"
   },
   "delray-beach": {
     "description": "Delray Beach is an east-facing beach break in Florida that picks up swells from a wide window spanning north-northwest through south-southwest. It prefers a mid tide and goes offshore with westerly winds.",
@@ -583,10 +567,6 @@
     "description": "Duck Pier is an east-facing beach break in North Carolina that picks up swells from the north through southeast, with an optimal swell direction from the east. It prefers mid tide conditions and is offshore in westerly winds.",
     "signature": "fe0a53c388e1ca1f"
   },
-  "duluth-park-point": {
-    "description": "Duluth Park Point is a freshwater beach break on Lake Superior facing northeast, with an orientation of 51°. It picks up swells from a broad window spanning SW to NW and N to S, with the optimal swell direction coming from the east. The break works at all tide levels, and offshore winds blow from the southwest at approximately 231°.",
-    "signature": "929aae7bb7b3521d"
-  },
   "dunes-park": {
     "description": "Dunes Park is a surf spot in Rhode Island that faces south (174°). It picks up swells from the E through SE, S, and SW quadrants, as well as NW through NE, with the optimal swell direction coming from the SE. The spot prefers northerly winds (354°) for offshore conditions.",
     "signature": "fa552d996f997cf1"
@@ -598,10 +578,6 @@
   "east-matunuck-state-beach": {
     "description": "East Matunuck State Beach is a south-facing beach break that picks up swells from the east through west window, with optimal conditions from a southerly swell direction. It performs best at mid tide and goes offshore with northerly winds.",
     "signature": "2e7f3765f6eabc23"
-  },
-  "edgewater-beach-cleveland": {
-    "description": "Edgewater Beach Cleveland is a beach break located in Ohio on Lake Erie, facing northwest (335°). It picks up swells from the north through southwest window, with an optimal swell direction from the east. The break works at all tide levels, and offshore winds blow from the southeast.",
-    "signature": "a2a42905884f7d7f"
   },
   "edisto-beach": {
     "description": "Edisto Beach is a southeast-facing beach break in South Carolina that picks up swells from the E through SW window, as well as N swells, with optimal energy arriving from the SE. It prefers a mid tide and goes offshore with northwest winds.",
@@ -719,10 +695,6 @@
     "description": "Fox Hill is a surf spot in New Hampshire that faces southeast (115°). It picks up swells from the NE to S window, with the optimal swell direction from the SE. Offshore winds blow from the northwest. Tide preference data is available via station 8424601.",
     "signature": "7572929d5f9ebc71"
   },
-  "frankfort-beach": {
-    "description": "Frankfort Beach is a west-facing beach break in Michigan that picks up swells from the southwest through northwest, with an optimal swell direction from the west. It works at all tide stages. Offshore winds blow from the east.",
-    "signature": "6909ffa131aa861f"
-  },
   "fripp-island": {
     "description": "Fripp Island is a beach break located in South Carolina that faces southeast. It picks up swells from the east through southwest, with the optimal swell direction coming from the southeast. Northwest winds are offshore here. Tide data is referenced from the nearest local tide station.",
     "signature": "c2f6858d98658f7e"
@@ -775,14 +747,6 @@
     "description": "Gordon Pond is a surf break in Delaware that faces east (88°) and picks up swells from the northeast through south, with an optimal swell direction from the southeast. It also has a secondary swell window from the west. Offshore winds blow from the west (268°). Tide preference data is not specified in the provided metadata.",
     "signature": "f04a954395623cd3"
   },
-  "grand-haven-south-pier": {
-    "description": "Grand Haven South Pier is a beach break on Lake Michigan facing west, with an orientation of 260°. It picks up swells from the SW through W and N through SW windows, with optimal swell from the SE. The break works at all tide levels, and offshore winds blow from the east (80°).",
-    "signature": "1120aa14d4b84294"
-  },
-  "grand-haven-state-park": {
-    "description": "Grand Haven State Park is a west-facing beach break in Michigan that picks up swells from the SW through W and N through SW windows, with an optimal swell from the SE. It works at all tide stages. Offshore winds blow from the east.",
-    "signature": "ac18bdcccd4b40aa"
-  },
   "grant-street": {
     "description": "Grant Street is a surf spot in New Jersey that faces south (175°). It picks up swells from the north through east to south, with southeast being the optimal swell direction. The offshore wind blows from the north. Tide preferences are referenced against station 8535962.",
     "signature": "b8bd4d23f37adc59"
@@ -810,10 +774,6 @@
   "half-moon-bay-jetty": {
     "description": "Half Moon Bay Jetty is a jetty break facing southwest that picks up swells from the east through south-southwest to west-northwest, with an optimal swell direction from the southwest. It prefers mid tide conditions and goes offshore with northeast winds.",
     "signature": "e3bd37387d0e00d6"
-  },
-  "hamlin-beach": {
-    "description": "Hamlin Beach is a north-facing beach break located in New York, oriented at 15 degrees. It picks up swells from the northwest through southwest window, with an optimal swell direction from the east, and works across all tide stages. Offshore winds blow from the south (195 degrees).",
-    "signature": "cfd5461cced7231e"
   },
   "hammonds": {
     "description": "Hammonds is a south-facing reef break in California that picks up swell from the southeast through south, southwest, and west to north. It prefers a mid tide and goes offshore with north winds.",
@@ -1111,10 +1071,6 @@
     "description": "Lake Worth Pier is an east-facing jetty break in Florida that picks up swells from a wide window spanning north-northwest through south-southeast, with the optimal direction coming from the east. It prefers mid tide conditions and goes offshore with westerly winds.",
     "signature": "700a0415f448fec8"
   },
-  "lakeview-park-lorain": {
-    "description": "Lakeview Park Lorain is a beach break in Ohio facing northwest (329°), with an offshore wind from the southeast. It picks up swells from the north through southwest and works at all tide levels.",
-    "signature": "e82c850db775769b"
-  },
   "laniakea": {
     "description": "Laniakea is a beach break on Oahu's North Shore facing northwest (325°), with a broad swell window spanning northeast through east, southeast, south-southwest, west, and northwest through northeast, with optimal swells arriving from the north. It works at all tide stages. Offshore winds blow from the southeast (145°).",
     "signature": "bc5fd4d66498f410"
@@ -1407,10 +1363,6 @@
     "description": "Moss Landing is a west-facing beach break that accepts swells from a wide window spanning east-southeast through northwest, with an optimal direction from the southwest. It prefers a mid tide and goes offshore with easterly winds.",
     "signature": "3fd17d91ce2ae0b5"
   },
-  "muskegon-south-pier": {
-    "description": "Muskegon South Pier is a beach break on Lake Michigan facing southwest, with an orientation of 245°. It picks up swells from the SW–W and N–SW windows, with optimal swell from the SE. It works at all tide levels, and offshore winds blow from the northeast.",
-    "signature": "591c13c4844de257"
-  },
   "mussel-shoals": {
     "description": "Mussel Shoals is a surf spot in California facing southwest (211°) that picks up swells from a wide window spanning east through northwest, with southwest swells being optimal. It is offshore with northeast winds. Tide preference data is not specified in the available metadata.",
     "signature": "b9fd84a8b97419dd"
@@ -1515,10 +1467,6 @@
     "description": "North Pea Island is a beach break located on the Outer Banks of North Carolina, facing northeast at approximately 64°. It picks up swells from the south-southwest through north-to-south window, with an optimal swell from the east. Offshore winds blow from the southwest. Tide preferences are not specified in the available data.",
     "signature": "9b51f5b88359dc9f"
   },
-  "north-point-sheboygan": {
-    "description": "North Point Sheboygan is an east-facing beach break in Wisconsin that works across all tide stages. It picks up swells from the southwest through west and north through southwest quadrants, with an optimal swell direction from the southeast. Offshore winds blow from the west (265°).",
-    "signature": "b7d3955845848e6f"
-  },
   "north-wildwood": {
     "description": "North Wildwood is a beach break in New Jersey facing southeast (130°), picking up swells from the northeast through south, with southeast swells being optimal. It performs best with northwest winds, which blow offshore at 310°. Tide preferences are referenced from station 8535835.",
     "signature": "fff1aead8e7aa12d"
@@ -1602,10 +1550,6 @@
   "old-orchard-beach": {
     "description": "Old Orchard Beach is a southeast-facing beach break in Maine that picks up swells from the northeast through south, with the optimal direction coming from the southeast. It prefers a mid tide and works best with northwest winds blowing offshore.",
     "signature": "0c7d9cfbe9ff528a"
-  },
-  "ontario-beach": {
-    "description": "Ontario Beach is a north-facing beach break in New York that picks up swells from the northwest through southwest window, with an optimal swell direction from the east. It works at all tide levels. Offshore winds blow from the south.",
-    "signature": "a08c833185b2089a"
   },
   "oregon-inlet": {
     "description": "Oregon Inlet is an east-facing beach break in North Carolina that picks up swells from the south-southwest through north-southeast window, with an optimal swell direction from the east. It performs best at low tide, and offshore winds blow from the west.",
@@ -1842,10 +1786,6 @@
   "poverty-beach": {
     "description": "Poverty Beach is a surf spot in New Jersey that faces southeast (155°). It picks up swells from the E to S window, with optimal swell from the SE. Offshore winds blow from the northwest. Tide preference data is not specified in the available metadata.",
     "signature": "4beaa29ff7469007"
-  },
-  "presque-isle-beach": {
-    "description": "Presque Isle Beach is a beach break located in Pennsylvania on Lake Erie, facing northwest at approximately 302°. It picks up swells from the north through southwest window, with an optimal swell from the east. The break prefers offshore winds from the southeast, and performance varies with tide conditions typical of freshwater lake environments.",
-    "signature": "e2a41df3473427b1"
   },
   "puaena-point": {
     "description": "Puaena Point is a northwest-facing beach break in Hawaii. It picks up swells from a wide window spanning northeast, east, south-southwest, west, and northwest-to-northeast, with the optimal direction from the north. It prefers mid tide conditions, and winds from the southeast are offshore.",
@@ -2187,17 +2127,9 @@
     "description": "Siesta Key is a beach break on Florida's Gulf Coast that faces southwest (222°). It picks up swells from the northeast through east and south through northwest quadrants, with optimal swell from the southwest. Offshore winds blow from the northeast. Tide preference data is not specified in the available metadata.",
     "signature": "493572742116bfb3"
   },
-  "silver-beach": {
-    "description": "Silver Beach is a west-facing beach break in Michigan with an orientation of 286°. It picks up swells from the SW to W and N to SW windows, with an optimal swell direction from the SE. It works at all tide levels, and offshore winds blow from the east.",
-    "signature": "4af5cc5f7144ee19"
-  },
   "silver-strand": {
     "description": "Silver Strand is a California surf break facing southwest (230°) that picks up swells from the SE through W range, with an optimal swell direction from the south. Offshore winds blow from the northeast. Tide preferences are referenced to station 9411065.",
     "signature": "22cef091f8ae01e6"
-  },
-  "sleeping-bear-dunes": {
-    "description": "Sleeping Bear Dunes is a west-facing beach break in Michigan that works across all tides. It picks up swells from the southwest, west, and a broad northwest-to-southwest window, with an optimal swell from the east. Offshore winds blow from the east (approximately 105°).",
-    "signature": "ba23794027cc2f6f"
   },
   "smith-point-beach": {
     "description": "Smith Point Beach is a southeast-facing beach break on Long Island, New York. It picks up swells from the east through southwest, with the optimal direction coming from the southeast. The break prefers mid tide conditions, and northwest winds blow offshore.",
@@ -2255,10 +2187,6 @@
     "description": "Squibnocket is a surf spot in Massachusetts that faces southeast (127°). It picks up swells from the northeast through southwest window, with southeast swells being optimal. Offshore winds blow from the northwest. Tide preference data is not specified in the available metadata.",
     "signature": "47bc2ceceb99c11c"
   },
-  "st-andews-park": {
-    "description": "St. Andrews Park is a surf spot in Florida that faces southwest (230°). It picks up swells from the southeast through west, with the optimal swell direction from the southwest. Offshore winds blow from the northeast. Tide preferences are referenced to the nearest station at 8729210.",
-    "signature": "bbfe1e8dffbca822"
-  },
   "st-augustine-beach-pier": {
     "description": "St. Augustine Beach Pier is an east-facing beach break that picks up swells from the north through southeast, with an optimal swell direction from the east. It performs best at mid tide and goes offshore with westerly winds.",
     "signature": "0dbe2bb8a3efda8d"
@@ -2294,10 +2222,6 @@
   "stone-steps": {
     "description": "Stone Steps is a west-facing beach break in California that picks up swells from a wide window spanning east-southeast through south to northwest, with southwest swell being optimal. It performs best at mid tide, and offshore winds blow from the east.",
     "signature": "381cbb8ef6c5657e"
-  },
-  "stoney-point-mn": {
-    "description": "Stoney Point MN is a beach break in Minnesota facing south (199°). It picks up swells from a broad window spanning SW through NW and N through S, with optimal swell from the east. It works at all tide stages, and offshore winds blow from the north (19°).",
-    "signature": "c67f7cf8eadb964b"
   },
   "strands-beach": {
     "description": "Strands Beach is a southwest-facing beach break in California that picks up swells from the east, south through west, and northwest through north, with an optimal direction from the southwest. It prefers low tide conditions, and offshore winds blow from the northeast.",
@@ -2587,10 +2511,6 @@
     "description": "Westport Light State Park is a west-facing beach break in Washington state. It picks up swells from the south through northwest, with an optimal swell direction from the west, and prefers mid tide conditions. Offshore winds blow from the east.",
     "signature": "8429b3bde2fec0f8"
   },
-  "whihala-beach": {
-    "description": "Whihala Beach is a beach break located in Indiana that faces northeast (35°). It picks up swells from the northwest through west, with an optimal swell direction from the southeast. The break prefers offshore winds from the southwest (215°).",
-    "signature": "50ec2ef7cbc8ea58"
-  },
   "whiskey-run-beach": {
     "description": "Whiskey Run Beach is a west-facing beach break located on the Oregon coast. It picks up swells from the southeast through north, with an optimal swell direction from the west, and prefers mid tide conditions. Offshore winds blow from the east.",
     "signature": "49d3bac40944699d"
@@ -2602,10 +2522,6 @@
   "white-point": {
     "description": "White Point is a surf spot in California that faces southwest (217°), picking up swells from the SE through S, SW through W, and N. It prefers offshore winds from the northeast. Tide preferences are referenced to NOAA station 9410738.",
     "signature": "f3abdc2365ba63ff"
-  },
-  "whitefish-bay-wi": {
-    "description": "Whitefish Bay is a beach break in Wisconsin facing northeast (63°). It picks up swells from a wide window spanning SW through W, W through NW, and N through SW, with optimal swell from the SE. It works at all tide stages, and offshore winds blow from the southwest.",
-    "signature": "d08fbee1049efccc"
   },
   "whitney-beach": {
     "description": "Whitney Beach is a surf spot in Florida that faces southwest (240°). It picks up swells from the southeast through northwest window, with optimal swell from the southwest. Offshore winds blow from the northeast. Tide preference data references station TEC4271.",
@@ -2650,10 +2566,6 @@
   "wooden-jetty": {
     "description": "Wooden Jetty is a surf spot in New Jersey facing southeast (120°). It picks up swells from the northeast through southwest, with the optimal swell direction from the southeast. Northwest winds (300°) are offshore at this break. Tide preference data is not specified in the available metadata.",
     "signature": "e978a61f5112e804"
-  },
-  "woodlawn-beach": {
-    "description": "Woodlawn Beach is a beach break located in New York that faces west (290°). It picks up swells from the north through southwest window, with optimal swell coming from the east. The break prefers offshore winds from the east (110°).",
-    "signature": "67566ed06fbb14b3"
   },
   "wrightsville-beach": {
     "description": "Wrightsville Beach is a southeast-facing beach break in North Carolina that picks up swells from the northeast through south, with an optimal direction from the southeast. It prefers a mid tide and goes offshore with northwest winds.",

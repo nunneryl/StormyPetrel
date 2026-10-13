@@ -92,61 +92,96 @@ def test_unmoved_spot_still_preserves_absent_fields():
     assert up.get("nwps_wfo") == "mtr"
 
 
-def test_description_signature_unit():
-    s1 = db_import.description_signature(39.14, -74.70, "New Jersey", 115)
-    assert s1 == db_import.description_signature(39.1401, -74.6999, "new jersey", 115.0), \
-        "rounded coords / case-folded state / int-vs-float orientation are stable"
-    assert s1 != db_import.description_signature(33.62, -117.95, "California", 115), "coords+state change"
-    assert s1 != db_import.description_signature(39.14, -74.70, "New Jersey", 202), "orientation change"
+# --------------------------------------------------------------------------- #
+# Descriptions under signature v2 (pipeline/descriptions.py)                   #
+# --------------------------------------------------------------------------- #
+# Steamer Lane as the roster gives it. Its payload, written out by hand (no swell window, which is
+# never sent; tide stated because its source is researched):
+#   {"bottom":"rock","break_type":"point","faces":"SE","name":"Steamer Lane","offshore_wind_deg":308,
+#    "offshore_wind_from":"NW","optimal_swell_deg":225,"optimal_swell_from":"SW","orientation_deg":128,
+#    "state":"California","tide_preference":"all"}
+# and its signature, 'v2:' + sha1("t2\n" + that)[:16], computed with hashlib directly:
+STEAMER = {"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
+           "orientation_deg": 128, "offshore_wind_deg": 308, "optimal_swell_dir": 225,
+           "swell_window_arcs": [{"min": 180, "max": 315}], "tide_preference": "all",
+           "tide_preference_source": "researched",
+           "break_type": "point", "break_type_source": "researched",
+           "bottom": "rock", "bottom_source": "researched", "is_valid_surf_spot": True}
+STEAMER_V2 = "v2:fb3e7d4f849945e3"
+STEAMER_ROW = {"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
+               "state": "California", "orientation_deg": 128,
+               "description": "Steamer Lane is a point break over rock.",
+               "description_signature": STEAMER_V2}
 
 
-def test_stale_description_is_blanked_on_signature_mismatch():
-    # DB description was written against California metadata; the spot is now New Jersey -> the
-    # description ("in California") contradicts the record and must be blanked so it can't persist.
-    ca_sig = db_import.description_signature(33.6239, -117.9459, "California", 115)
-    existing = [{"slug": "56th-street", "name": "56th Street", "lat": 33.6239, "lng": -117.9459,
-                 "state": "California", "orientation_deg": 115,
-                 "description": "A fun California beach break.", "description_signature": ca_sig}]
-    enriched = [{"name": "56th Street", "lat": 39.1416, "lng": -74.6968, "region_hint": "New Jersey",
-                 "orientation_deg": 115, "is_valid_surf_spot": True}]
-    up = _run_import(existing, enriched)["56th-street"]
-    assert up["description"] is None, "a description that no longer matches its record must be blanked"
-    assert up["description_signature"] == db_import.description_signature(39.1416, -74.6968, "New Jersey", 115)
+def test_a_matching_v2_signature_keeps_the_description_and_its_signature():
+    up = _run_import([dict(STEAMER_ROW)], [dict(STEAMER)])["steamer-lane"]
+    assert up["description"] == "Steamer Lane is a point break over rock."
+    assert up["description_signature"] == STEAMER_V2
 
 
-def test_matching_signature_preserves_description():
-    sig = db_import.description_signature(36.9513, -122.0266, "California", 128)
-    existing = [{"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
-                 "state": "California", "orientation_deg": 128,
-                 "description": "World-class right at Santa Cruz.", "description_signature": sig}]
-    enriched = [{"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
-                 "orientation_deg": 128, "is_valid_surf_spot": True}]
-    up = _run_import(existing, enriched)["steamer-lane"]
-    assert up.get("description") == "World-class right at Santa Cruz.", "matching signature keeps the text"
+def test_a_v2_signature_that_no_longer_matches_blanks_the_text_and_keeps_the_signature():
+    """The research import corrects a break type: the description states the old one, so it goes.
+    db_import never writes a signature: the stored one stays until the generator replaces both."""
+    moved = dict(STEAMER, break_type="reef")
+    up = _run_import([dict(STEAMER_ROW)], [moved])["steamer-lane"]
+    assert up["description"] is None
+    assert up["description_signature"] == STEAMER_V2
 
 
-def test_null_stored_signature_does_not_blank_and_backfills():
-    # First run after migration 012 adds description_signature: it is NULL for all 668 existing rows. A
-    # NULL stored signature means "not yet tracked", NOT "mismatch" — so it must NOT blank the (correct)
-    # description. If it did, every description would blank in one run and stay blank (the offline
-    # generator isn't in the pipeline). The guard is `base.get("description_signature") and ...`: a NULL
-    # (or absent) stored signature is falsy and short-circuits the blank. The signature is still stamped,
-    # giving every subsequent run a baseline to compare against.
-    #   case "null"   -> column present, value None (the realistic production first-run for all 668 rows)
-    #   case "absent" -> column entirely missing from the row (defensive: same falsy path)
+def test_a_source_crossing_the_stated_line_is_a_change():
+    """researched -> model_recall takes break_type and bottom out of the payload, so the text that
+    states them is stale even though the values did not change."""
+    recalled = dict(STEAMER, break_type_source="model_recall", bottom_source="model_recall")
+    up = _run_import([dict(STEAMER_ROW)], [recalled])["steamer-lane"]
+    assert up["description"] is None
+
+
+def test_the_payload_is_read_from_the_roster_before_the_database_fills_it():
+    """A roster spot without tide_preference or its source: the database's researched 'low' is merged
+    into the row, but the generator never saw it, so it must not count as a change. The payload with
+    the database's tide would differ from the stored one; only the roster's view matches."""
+    no_tide = {k: v for k, v in STEAMER.items()
+               if k not in ("tide_preference", "tide_preference_source")}
+    stored = "v2:b5b2a65c8afe6279"   # the payload above without "tide_preference":"all", by hashlib
+    row = dict(STEAMER_ROW, description_signature=stored, tide_preference="low",
+               tide_preference_source="researched")
+    up = _run_import([row], [no_tide])["steamer-lane"]
+    assert up["description"] == "Steamer Lane is a point break over rock."
+    assert up["tide_preference"] == "low"
+
+
+def test_a_version_1_signature_leaves_the_text_alone_and_is_not_rewritten():
+    """The changeover: every stored signature is version 1 when v2 is merged. Comparing it would blank
+    all 646 descriptions in one run; re-stamping it would hide the old text from the generator. So
+    both the text and the version-1 signature pass through untouched, whatever has changed."""
+    v1 = "a1b2c3d4e5f60718"
+    row = dict(STEAMER_ROW, description_signature=v1)
+    up = _run_import([row], [dict(STEAMER, break_type="reef", region_hint="Oregon")])["steamer-lane"]
+    assert up["description"] == "Steamer Lane is a point break over rock."
+    assert up["description_signature"] == v1
+
+
+def test_a_missing_signature_leaves_the_text_alone():
     for case in ("null", "absent"):
-        base = {"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
-                "state": "California", "orientation_deg": 128,
-                "description": "World-class right at Santa Cruz."}
+        row = dict(STEAMER_ROW)
         if case == "null":
-            base["description_signature"] = None
-        enriched = [{"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
-                     "orientation_deg": 128, "is_valid_surf_spot": True}]
-        up = _run_import([base], enriched)["steamer-lane"]
-        assert up.get("description") == "World-class right at Santa Cruz.", \
-            f"a {case} stored signature is 'not yet tracked', not a mismatch — the description must survive"
-        assert up["description_signature"] == db_import.description_signature(36.9513, -122.0266, "California", 128), \
-            f"the signature must be backfilled ({case} case) so the next run has a baseline"
+            row["description_signature"] = None
+        else:
+            del row["description_signature"]
+        up = _run_import([row], [dict(STEAMER, break_type="reef")])["steamer-lane"]
+        assert up["description"] == "Steamer Lane is a point break over rock.", case
+        assert up.get("description_signature") is None, case
+
+
+def test_an_already_blank_description_is_not_counted_again():
+    row = dict(STEAMER_ROW, description=None)
+    assert db_import.description_blank_reason(
+        db_import._spot_record(dict(STEAMER, break_type="reef")), row) is None
+    # the reef payload, signed with hashlib: break_type "reef" in place of "point"
+    assert db_import.description_blank_reason(
+        db_import._spot_record(dict(STEAMER, break_type="reef")), STEAMER_ROW) == (
+        "signature v2:fb3e7d4f849945e3 != v2:dc2aff9f87336abe")
 
 
 def test_fallback_buoy_ids_maps_from_source_defaulting_to_empty():

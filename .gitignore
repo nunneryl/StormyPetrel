@@ -154,6 +154,10 @@ pipeline/forecast_data/
 pipeline/data/break_type_*.json
 # ... except the reviewed break types: written by a person, committed, and read by the import.
 !pipeline/data/break_type_reviewed.json
+# generate_descriptions --sample output: ten descriptions to read before a full run, not the cache
+# (pipeline/data/spot_descriptions.json is the committed cache). The .tmp is a cache write in flight.
+pipeline/data/spot_descriptions_sample.json
+pipeline/data/spot_descriptions*.json.tmp
 
 # Python
 __pycache__/
