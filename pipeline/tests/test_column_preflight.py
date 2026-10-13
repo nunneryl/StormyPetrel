@@ -805,7 +805,14 @@ def test_the_failure_comes_last_and_after_revalidation(job):
     work = [i for i, r in enumerate(runs) if "pipeline.db_import" in r or "pipeline.revalidate --scope" in r]
     assert work and max(work) < end, "every upload and revalidation runs before the failure"
     assert ss[end].get("if") == "${{ !cancelled() }}", "it reports even after an earlier failure"
-    assert all(s.get("if") == "failure()" for s in ss[end + 1:]), \
+    after = ss[end + 1:]
+    if job == "full-pipeline":
+        # The one exception: the dead-man's-switch ping, which only a run that passed this
+        # check may send, and which can never fail the run (pipeline/tests/test_dispatch_gate.py).
+        ping = after.pop(0)
+        assert ping.get("name") == "Ping the dead-man's switch (healthchecks.io)"
+        assert ping.get("if") == "success()" and ping.get("continue-on-error") == "true"
+    assert after and all(s.get("if") == "failure()" for s in after), \
         "only failure handlers may follow it"
     assert job_env(text, job).get("COLUMN_PREFLIGHT_RESULT") == "pipeline/forecast_data/column_preflight.json"
 
