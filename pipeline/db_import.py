@@ -18,7 +18,6 @@ CLI:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import logging
 import os
@@ -28,6 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .cleanup_spots import load_excluded_names
+from .descriptions import description_payload, description_signature, is_v2
 from .config import (
     BUOYS_FORECAST_FILE,
     COORD_DERIVED_DIST_TOLERANCE_KM,
@@ -309,25 +309,20 @@ def _coords_changed(rec: dict, base: dict) -> bool:
         return False
 
 
-def description_signature(lat, lng, state, orientation_deg) -> str:
-    """Short stable hash of the fields a spot description ASSERTS — coordinates, state, and orientation.
-    A description is written once (generate_descriptions is a manual step, NOT in the pipeline) so a
-    later change to any of these silently strands the text ("in California" for a spot moved to New
-    Jersey; "faces south (202°)" when orientation is now 115). db_import blanks a description whose
-    signature no longer matches; generate_descriptions regenerates and re-stamps it. Rounded (~100 m,
-    1 deg) so trivial noise doesn't churn. Kept in one place so both writers agree byte-for-byte."""
-    def _n(v, nd):
-        try:
-            return f"{round(float(v), nd)}"
-        except (TypeError, ValueError):
-            return ""
-    parts = (_n(lat, 3), _n(lng, 3), (state or "").strip().lower(), _n(orientation_deg, 0))
-    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+def description_blank_reason(rec: dict, base: dict) -> str | None:
+    """Why the stored description must be blanked this run, or None to leave it.
 
-
-def _description_signature(rec: dict) -> str:
-    return description_signature(rec.get("lat"), rec.get("lng"), rec.get("state"),
-                                 rec.get("orientation_deg"))
+    `rec` is the record as the ROSTER gives it, before the merge fills absent keys from the database,
+    so the payload here is exactly the one generate_descriptions built from the same roster (both use
+    pipeline/descriptions.py). Only a v2 signature is compared, and only generate_descriptions writes
+    one, together with the text it describes. A version-1 or missing signature means "written before
+    v2": that text is left alone until the generator rewrites it, so merging the v2 change blanks
+    nothing. A description that is already blank needs no blanking."""
+    stored = base.get("description_signature")
+    if not is_v2(stored) or not base.get("description"):
+        return None
+    current = description_signature(description_payload(rec))
+    return None if stored == current else f"signature {stored} != {current}"
 
 
 # Coarse global backstop for GROSS corruption (the ~3800-4000 km fabrications), deliberately NOT
@@ -609,6 +604,7 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
     filled_any = 0
     coord_moved = 0
     desc_nulled = 0
+    desc_pre_v2 = 0
     for rec in records:
         base = existing.get(rec["slug"])
         if not base:
@@ -624,6 +620,10 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
         moved = _coords_changed(rec, base)
         if moved:
             coord_moved += 1
+        # Before the merge below fills absent keys from the database: see description_blank_reason.
+        blank_reason = description_blank_reason(rec, base)
+        if base.get("description") and not is_v2(base.get("description_signature")):
+            desc_pre_v2 += 1
         for k, v in base.items():
             if k not in rec:
                 # Never resurrect a coord-derived value onto a spot whose coordinates have moved —
@@ -633,25 +633,26 @@ def import_spots(client, spots_path: Path = DEFAULT_ENRICHED_OUTPUT,
                 rec[k] = v
                 filled_any += 1
 
-        # Description staleness enforcement: descriptions are write-once (generate_descriptions is a
-        # manual step, not wired into the pipeline), so a coord/state/orientation change strands the
-        # text. Blank a description whose stored signature no longer matches the record so it can't keep
-        # contradicting the live site ("in California" for a New Jersey spot); the offline generator
-        # backfills it. Always re-stamp the signature to current. First-seen (no stored signature) just
-        # backfills without blanking — the known-stale set is handled by a one-time regeneration.
-        cur_sig = _description_signature(rec)
-        if base.get("description_signature") and base["description_signature"] != cur_sig:
+        # Description staleness: descriptions are written by hand (generate_descriptions is not in the
+        # pipeline), so a change to anything a description asserts strands the text — a beach break
+        # corrected to reef, a spot moved to another state. Blank it so it cannot contradict the page;
+        # the generator writes a new one. The signature column is never written here: the merge above
+        # carries the stored one through, and only the generator stamps a v2 signature, with its text.
+        if blank_reason:
             rec["description"] = None
             desc_nulled += 1
-        rec["description_signature"] = cur_sig
+            log.info("spots: %s description blanked (%s)", rec["slug"], blank_reason)
 
     if coord_moved:
         log.info("spots: %d record(s) moved coordinates — their absent coord-derived fields "
                  "(buoy/tide/nwps_wfo) were left NULL to force a recompute, not preserved", coord_moved)
     if desc_nulled:
-        log.warning("spots: blanked %d description(s) whose signature no longer matches their record "
-                    "(coords/state/orientation changed) — run pipeline.generate_descriptions to backfill",
-                    desc_nulled)
+        log.warning("spots: blanked %d description(s) whose v2 signature no longer matches the roster "
+                    "(something the description states has changed) — run pipeline.generate_descriptions "
+                    "to write new ones", desc_nulled)
+    if desc_pre_v2:
+        log.info("spots: %d description(s) predate signature v2 and are left as they are until "
+                 "pipeline.generate_descriptions rewrites them", desc_pre_v2)
 
     # Item 4: reject any stored buoy/tide pairing whose distance can't be reproduced from the station's
     # actual coordinates, before it reaches the DB.

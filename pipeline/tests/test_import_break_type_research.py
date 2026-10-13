@@ -488,7 +488,7 @@ def test_it_imports_no_database_client_and_nothing_that_rates():
 def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
     # Where break_type is read at all, outside its writers: descriptions, the review queue,
     # and the NWPS trust diagnostic's tier — none of them in the forecast run's rating or
-    # row code. The bottom is read nowhere yet.
+    # row code. The bottom is read only by the descriptions (pipeline/descriptions.py).
     readers = []
     for folder in ("pipeline", os.path.join("pipeline", "forecast")):
         for name in sorted(os.listdir(os.path.join(ROOT, folder))):
@@ -499,7 +499,7 @@ def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
                     readers.append(os.path.join(folder, name).replace(os.sep, "/"))
     assert readers == [
         "pipeline/audit_review_queue.py", "pipeline/config.py",
-        "pipeline/db_import.py", "pipeline/generate_descriptions.py",
+        "pipeline/db_import.py", "pipeline/descriptions.py", "pipeline/generate_descriptions.py",
         "pipeline/import_break_type_research.py", "pipeline/research_break_type.py",
         "pipeline/scrape_surf_forecast.py", "pipeline/verify_spots.py",
         "pipeline/forecast/nwps_nearshore.py"]

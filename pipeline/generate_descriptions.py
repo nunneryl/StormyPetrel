@@ -1,38 +1,65 @@
 """Generate short factual spot descriptions with Claude.
 
-Walks every spot in spots_enriched.json, sends its metadata to Claude
-with a tight prompt that bans subjective wave-quality claims, and
-writes the result into both pipeline/data/spot_descriptions.json
-(idempotent cache) and the spots.description column in Supabase.
+Walks every spot in spots_enriched.json, sends Claude the payload pipeline/descriptions.py builds for it
+(only facts the roster holds from a source that can be stated plainly), and records the result in
+pipeline/data/spot_descriptions.json (the cache) and in the spots table's description and
+description_signature columns. Not part of the scheduled pipeline: run it by hand.
 
-Re-runs are cheap: cached slugs are skipped unless --no-cache forces
-a regeneration. The cache file itself doubles as the result file —
-no second filesystem location to keep in sync.
+THE SIGNATURE. Each description is stamped with description_signature(payload): 'v2:' plus a hash of
+PROMPT_VERSION and the exact payload. A spot is regenerated when its cached signature differs from the
+current one — no description yet, one written before v2, or anything it states has changed. This script
+is the ONLY writer of v2 signatures; db_import blanks a description whose stored v2 signature no longer
+matches the roster, and leaves anything older alone.
+
+MODES
+  --dry-run   No API calls and no writes. One block per spot: what would happen and why, what the
+              payload states and leaves out, and whether the current text contradicts the break type.
+              Then totals and a cost estimate.
+  --sample    Generates the ten spots in SAMPLE_SPOTS and writes them to a separate file
+              (--sample-output) only — never to the cache, never to Supabase. Prints each with its
+              payload.
+  (default)   The full run. Resumable: the cache is saved every SAVE_EVERY generations and a rerun
+              skips every spot whose cached signature is current. Each description is written to
+              Supabase as soon as it is generated; one that could not be written is kept in the cache
+              marked "pushed": false and written on the next run. A final reconcile reads the table
+              and re-writes any row whose signature differs from the cache — which also repairs a row
+              that a forecast-pipeline run, writing back the row it read before this one changed it,
+              put back while this was running. Only the rows this run touched are written; nothing
+              else in the cache is pushed. Cache entries for spots no longer in the roster are pruned.
 
 CLI:
-    python -m pipeline.generate_descriptions [--limit N] [--no-cache]
-                                             [--no-db] [-v]
+    python -m pipeline.generate_descriptions --dry-run > dry_run.txt
+    python -m pipeline.generate_descriptions --sample
+    python -m pipeline.generate_descriptions [--limit N] [--no-db] [--no-cache] [-v]
 
 Env:
-    ANTHROPIC_API_KEY  — required.
-    SUPABASE_URL, SUPABASE_SERVICE_KEY — required unless --no-db.
+    ANTHROPIC_API_KEY  — required for --sample and the full run.
+    SUPABASE_URL, SUPABASE_SERVICE_KEY — required for the full run unless --no-db.
 
-Cost estimate: 485 spots × ~500 in + ~120 out tokens at
-Sonnet 4.6 pricing ≈ ~$2 per full regeneration.
+Cost: claude-sonnet-4-6 at $3 / $15 per million input / output tokens. 648 spots at roughly 300 input
+and 90 output tokens each is about $1.40 for a full regeneration; --dry-run prints the estimate for
+what it would actually generate.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import logging
+import math
 import os
+import re
 import sys
 from pathlib import Path
 
-import anthropic
-
 from .config import DEFAULT_ENRICHED_OUTPUT
-from .db_import import _slugify, description_signature, get_client
+from .db_import import _excluded_slugs, _fetch_existing_spots, _slugify, get_client
+from .descriptions import (
+    STATED_SOURCES,
+    SYSTEM_PROMPT,
+    description_payload,
+    description_signature,
+    spot_fields,
+)
 
 log = logging.getLogger("pipeline.generate_descriptions")
 
@@ -40,78 +67,201 @@ MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 200  # 75-word cap is ~110 tokens; leaves headroom.
 
 OUTPUT_FILE = Path(__file__).parent / "data" / "spot_descriptions.json"
+SAMPLE_FILE = Path(__file__).parent / "data" / "spot_descriptions_sample.json"
+SAVE_EVERY = 10
 
-SYSTEM_PROMPT = (
-    "Write a 2-3 sentence factual description of this surf spot using "
-    "ONLY the provided metadata. State the type of break, what direction "
-    "it faces, what swell window it picks up, what tide it prefers, and "
-    "what wind direction is offshore. Do not make claims about wave "
-    "quality, consistency, barrel potential, crowd levels, skill level, "
-    "or how the wave breaks beyond what the data directly supports. Do "
-    "not say 'one of the best' or 'most popular' or 'iconic'. Keep it "
-    "factual and concise. No more than 75 words."
+# claude-sonnet-4-6 list price, USD per million tokens (Anthropic's model table, as of 2026-10-06).
+PRICE_PER_MTOK = {"input": 3.00, "output": 15.00}
+# The dry run has no API to count tokens with, so it estimates from characters. Existing descriptions
+# average 257 characters (about 43 words); 90 output tokens is a little above that.
+CHARS_PER_TOKEN_EST = 3.5
+OUTPUT_TOKENS_EST = 90
+
+# --sample: one spot for each case worth reading before a full run.
+SAMPLE_SPOTS = (
+    "Banzai Pipeline",          # reef over rock, researched
+    "Waimea Bay",               # reef over a mixed bottom
+    "Steamer Lane",             # point over rock, tide 'all'
+    "Malibu Surfrider Beach",   # point over cobble
+    "Matanzas Inlet",           # jetty, reviewed — its old text said rivermouth
+    "Asbury Park",              # a New Jersey beach; its bottom is model_recall, so left out
+    "Pensacola Beach",          # break type model_recall: left out
+    "Agate Beach",              # no break type at all
+    "Aviones",                  # a Puerto Rico reef over coral
+    "Seaside Reef",             # tide preference missing
 )
 
-_CARDINALS_8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+GENERATE, PUSH, KEEP = "generate", "push", "keep"
 
 
-def _deg_to_cardinal(deg: float | None) -> str | None:
-    if deg is None:
-        return None
-    idx = round((deg % 360) / 45) % 8
-    return _CARDINALS_8[idx]
-
-
-def _arcs_to_readable(arcs: list[dict] | None) -> list[str]:
-    """[{min: 168, max: 328}] -> ['SSE..NW']. 8-point cardinals so the
-    range reads as a directional sweep rather than a math problem."""
-    out: list[str] = []
-    for arc in arcs or []:
-        a = _deg_to_cardinal(arc.get("min"))
-        b = _deg_to_cardinal(arc.get("max"))
-        if a and b:
-            out.append(f"{a}..{b}")
+# --------------------------------------------------------------------------- #
+# Which spots, and what to do with each                                        #
+# --------------------------------------------------------------------------- #
+def roster_spots(spots):
+    """{slug: spot} for the spots db_import would upsert: named, with coordinates, not marked invalid,
+    not excluded, first occurrence of each slug. Only these are generated: a description of a spot
+    db_import skips would never reach the site."""
+    excluded = _excluded_slugs()
+    out = {}
+    for s in spots:
+        if not s.get("name") or s.get("lat") is None or s.get("lng") is None:
+            continue
+        if s.get("is_valid_surf_spot") is False:
+            continue
+        slug = _slugify(s["name"])
+        if slug and slug not in out and slug not in excluded:
+            out[slug] = s
     return out
 
 
-def _build_user_prompt(spot: dict) -> str:
-    """JSON-stringified metadata. Compact — the model doesn't need
-    pretty-printed prose, and tokens are tight."""
-    payload = {
-        "name": spot.get("name"),
-        "state": spot.get("region_hint"),
-        "break_type": spot.get("break_type"),
-        "faces": _deg_to_cardinal(spot.get("orientation_deg")),
-        "orientation_deg": spot.get("orientation_deg"),
-        "offshore_wind_from": _deg_to_cardinal(spot.get("offshore_wind_deg")),
-        "offshore_wind_deg": spot.get("offshore_wind_deg"),
-        "tide_preference": spot.get("tide_preference"),
-        "swell_window": _arcs_to_readable(spot.get("swell_window_arcs")),
-        "optimal_swell_from": _deg_to_cardinal(spot.get("optimal_swell_dir")),
-        "nearest_buoy_id": spot.get("nearest_buoy_id"),
-        "nearest_tide_station_id": spot.get("nearest_tide_station_id"),
-    }
-    # Strip null/empty entries so the model doesn't waste attention on
-    # missing data fields ("offshore_wind_from": null).
-    payload = {k: v for k, v in payload.items() if v not in (None, "", [])}
+def plan(roster, cache, force=False):
+    """[(slug, spot, payload, signature, action, reason)] in roster order."""
+    items = []
+    for slug, spot in roster.items():
+        payload = description_payload(spot_fields(spot))
+        sig = description_signature(payload)
+        entry = cache.get(slug)
+        cached_sig = entry.get("signature") if isinstance(entry, dict) else None
+        if force:
+            action, reason = GENERATE, "--no-cache"
+        elif entry is None:
+            action, reason = GENERATE, "no description yet"
+        elif cached_sig == sig:
+            if entry.get("pushed") is False:
+                action, reason = PUSH, "generated but not yet written to Supabase"
+            else:
+                action, reason = KEEP, "current"
+        elif not (cached_sig or "").startswith("v2:"):
+            action, reason = GENERATE, "written before signature v2"
+        else:
+            action, reason = GENERATE, "something it states has changed"
+        items.append((slug, spot, payload, sig, action, reason))
+    return items
+
+
+def orphans(spots, cache):
+    """Cache entries whose spot is no longer in the roster file at all. A spot that is still listed
+    but skipped (marked invalid, or excluded) keeps its entry: it is neither regenerated nor pruned."""
+    named = {_slugify(s["name"]) for s in spots if s.get("name")}
+    return sorted(k for k in cache if k not in named)
+
+
+def left_out(spot):
+    """What the payload leaves out of break_type and bottom, and why, one phrase each."""
+    out = []
+    for field in ("break_type", "bottom"):
+        value, source = spot.get(field), spot.get(f"{field}_source")
+        if value in (None, ""):
+            out.append(f"{field} not set")
+        elif value == "unknown":
+            out.append(f"{field} 'unknown'")
+        elif source not in STATED_SOURCES:
+            out.append(f"{field} {value} ({source or 'no source'})")
+    return out
+
+
+# The break type a description NAMES. Matched after the spot's own name is removed, so "Chuns Reef"
+# is not read as saying reef. "reef" alone counts; "point" counts only as "point break" or a
+# right/left-hand point, since "point" is so often a place name.
+_TYPE_PATTERNS = {
+    "beach": r"\bbeach[- ]?breaks?\b",
+    "reef": r"\breef[- ]?breaks?\b|\breef\b",
+    "point": r"\bpoint[- ]?breaks?\b|\b(?:right|left)[- ]hand(?:ed)? point\b",
+    "jetty": r"\bjetty[- ]?breaks?\b",
+    "rivermouth": r"\briver[- ]?mouth\b",
+}
+
+
+def stated_break_types(text, name):
+    body = text or ""
+    for n in sorted({name or "", (name or "").split(",")[0]}, key=len, reverse=True):
+        if n:
+            body = re.sub(re.escape(n), " ", body, flags=re.I)
+    return {k for k, rx in _TYPE_PATTERNS.items() if re.search(rx, body, re.I)}
+
+
+def contradiction(text, spot):
+    """'says beach; break_type is now reef (researched)', or None."""
+    said = stated_break_types(text, spot.get("name"))
+    now = spot.get("break_type")
+    if not said or not now or now in said:
+        return None
+    return (f"says {'/'.join(sorted(said))}; break_type is now {now} "
+            f"({spot.get('break_type_source') or 'no source'})")
+
+
+def estimate(payloads):
+    """(calls, mean input tokens, output tokens per call, USD) — a character-count estimate."""
+    n = len(payloads)
+    if not n:
+        return 0, 0, OUTPUT_TOKENS_EST, 0.0
+    tokens_in = [math.ceil((len(SYSTEM_PROMPT) + len(user_prompt(p))) / CHARS_PER_TOKEN_EST)
+                 for p in payloads]
+    usd = (sum(tokens_in) * PRICE_PER_MTOK["input"]
+           + n * OUTPUT_TOKENS_EST * PRICE_PER_MTOK["output"]) / 1_000_000
+    return n, round(sum(tokens_in) / n), OUTPUT_TOKENS_EST, usd
+
+
+def dry_run_report(items, cache, orphan_slugs):
+    lines = []
+    counts = {GENERATE: {}, PUSH: 0, KEEP: 0}
+    contradicting = 0
+    left = {"break_type": {}, "bottom": {}}
+    for slug, spot, payload, _sig, action, reason in items:
+        text = (cache.get(slug) or {}).get("description") if isinstance(cache.get(slug), dict) else None
+        wrong = contradiction(text, spot) if text else None
+        contradicting += bool(wrong)
+        for field in ("break_type", "bottom"):
+            if field not in payload:
+                key = (spot.get(f"{field}_source") or "not set") if spot.get(field) else "not set"
+                left[field][key] = left[field].get(key, 0) + 1
+        if action == GENERATE:
+            counts[GENERATE][reason] = counts[GENERATE].get(reason, 0) + 1
+        else:
+            counts[action] += 1
+        if action == KEEP and not wrong:
+            lines.append(f"[keep] {slug} — {reason}")
+            continue
+        lines.append(f"[{action}] {slug} — {reason}")
+        stated = [f"{f} {payload[f]} ({spot.get(f + '_source')})"
+                  for f in ("break_type", "bottom") if f in payload]
+        lines.append(f"    states:   {', '.join(stated) or '—'}")
+        lines.append(f"    left out: {', '.join(left_out(spot)) or '—'}")
+        if wrong:
+            lines.append(f"    current text contradicts: {wrong}")
+        lines.append(f"    payload:  {user_prompt(payload)}")
+    n_gen = sum(counts[GENERATE].values())
+    calls, tin, tout, usd = estimate([p for _s, _sp, p, _g, a, _r in items if a == GENERATE])
+    lines += [
+        "",
+        "TOTALS",
+        f"  spots in the roster:              {len(items)}",
+        f"  to generate:                      {n_gen}"
+        + "".join(f"\n      {r}: {c}" for r, c in sorted(counts[GENERATE].items())),
+        f"  to write to Supabase only:        {counts[PUSH]}",
+        f"  unchanged:                        {counts[KEEP]}",
+        f"  orphan cache entries to prune:    {len(orphan_slugs)}"
+        + (f" ({', '.join(orphan_slugs)})" if orphan_slugs else ""),
+        f"  current texts contradicting the break type: {contradicting}",
+        "  break_type left out: " + _counts(left["break_type"]),
+        "  bottom left out:     " + _counts(left["bottom"]),
+        f"  estimate: {calls} call(s) x ~{tin} input + ~{tout} output tokens = about ${usd:.2f} on "
+        f"{MODEL} at ${PRICE_PER_MTOK['input']:.2f} / ${PRICE_PER_MTOK['output']:.2f} per million "
+        "tokens (from character counts, not a token count)",
+    ]
+    return lines
+
+
+def _counts(d):
+    return ", ".join(f"{k} {v}" for k, v in sorted(d.items())) or "none"
+
+
+# --------------------------------------------------------------------------- #
+# The model                                                                    #
+# --------------------------------------------------------------------------- #
+def user_prompt(payload):
+    """The user message: the payload as compact JSON, in the builder's key order."""
     return json.dumps(payload, ensure_ascii=False)
-
-
-def _load_cache(path: Path) -> dict[str, str]:
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text())
-    except json.JSONDecodeError as e:
-        log.warning("cache %s corrupt (%s) — starting fresh", path, e)
-        return {}
-
-
-def _save_cache(path: Path, data: dict[str, str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # Stable key order so diffs read cleanly.
-    ordered = {k: data[k] for k in sorted(data)}
-    path.write_text(json.dumps(ordered, indent=2, ensure_ascii=False) + "\n")
 
 
 def _strip_quotes(text: str) -> str:
@@ -122,13 +272,17 @@ def _strip_quotes(text: str) -> str:
     return t
 
 
-def _generate_one(client: anthropic.Anthropic, spot: dict) -> str:
-    prompt = _build_user_prompt(spot)
+def anthropic_client():
+    import anthropic
+    return anthropic.Anthropic()
+
+
+def generate_one(client, payload) -> str:
     message = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
         system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": user_prompt(payload)}],
     )
     text = next((b.text for b in message.content if b.type == "text"), "")
     cleaned = _strip_quotes(text)
@@ -137,127 +291,189 @@ def _generate_one(client: anthropic.Anthropic, spot: dict) -> str:
     return cleaned
 
 
-def _upsert_descriptions(client, descriptions: dict) -> int:
-    """Push descriptions (and their staleness signature) to Supabase keyed on slug. Returns count
-    updated. One update per spot (updating a couple of columns on existing rows is simpler with
-    .update().eq() than a full-schema upsert). Accepts the new {slug: {description, signature}} entries
-    or legacy {slug: text}. Writing the signature is what lets db_import stop re-blanking the row."""
-    written = 0
-    for slug, entry in descriptions.items():
-        if isinstance(entry, dict):
-            payload = {"description": entry.get("description")}
-            if entry.get("signature"):
-                payload["description_signature"] = entry["signature"]
+# --------------------------------------------------------------------------- #
+# Files and the table                                                          #
+# --------------------------------------------------------------------------- #
+def load_cache(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"{path} is not valid JSON ({e}); fix or move it before running") from None
+    return data if isinstance(data, dict) else {}
+
+
+def save_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    ordered = {k: data[k] for k in sorted(data)}  # stable key order so diffs read cleanly
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(ordered, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def push(db, slug, entry) -> bool:
+    """Write one description and its signature. False when the write failed or matched no row (a
+    spot db_import has not created yet)."""
+    try:
+        res = (db.table("spots")
+               .update({"description": entry["description"],
+                        "description_signature": entry["signature"]})
+               .eq("slug", slug).execute())
+    except Exception:  # noqa: BLE001
+        log.exception("%s: Supabase update failed", slug)
+        return False
+    if not getattr(res, "data", None):
+        log.warning("%s: no spots row with this slug yet; kept for the next run", slug)
+        return False
+    return True
+
+
+def reconcile(db, cache, roster) -> tuple[int, int]:
+    """Re-write every row whose stored signature differs from its current cache entry. Returns
+    (rows re-written, rows that still differ)."""
+    rows = _fetch_existing_spots(db)
+    fixed = failed = 0
+    for slug, entry in sorted(cache.items()):
+        if slug not in roster or not isinstance(entry, dict) or entry.get("pushed") is False:
+            continue
+        row = rows.get(slug)
+        if row is None:
+            continue
+        if (row.get("description_signature") == entry.get("signature")
+                and row.get("description") == entry.get("description")):
+            continue
+        if push(db, slug, entry):
+            fixed += 1
         else:
-            payload = {"description": entry}
-        try:
-            client.table("spots").update(payload).eq("slug", slug).execute()
-            written += 1
-        except Exception:  # noqa: BLE001
-            log.exception("DB update failed for %s", slug)
-    return written
+            failed += 1
+    return fixed, failed
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--input", type=Path, default=DEFAULT_ENRICHED_OUTPUT,
-                   help="spots_enriched.json")
-    p.add_argument("--output", type=Path, default=OUTPUT_FILE,
-                   help="JSON file storing {slug: description}")
-    p.add_argument("--limit", type=int, default=None,
-                   help="Cap on spots to process this run (dev).")
-    p.add_argument("--no-cache", action="store_true",
-                   help="Ignore existing descriptions and regenerate.")
-    p.add_argument("--no-db", action="store_true",
-                   help="Write the JSON file but skip the Supabase upsert.")
-    p.add_argument("-v", "--verbose", action="store_true")
-    return p.parse_args(argv)
-
-
-def main(argv: list[str] | None = None) -> int:
-    args = _parse_args(argv)
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
-
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        log.error("ANTHROPIC_API_KEY is required")
-        return 1
-
-    spots = json.loads(args.input.read_text())
-    if not isinstance(spots, list):
-        log.error("expected a JSON array at %s", args.input)
+# --------------------------------------------------------------------------- #
+# Modes                                                                        #
+# --------------------------------------------------------------------------- #
+def run_sample(roster, out_path: Path, client) -> int:
+    by_name = {s["name"]: (slug, s) for slug, s in roster.items()}
+    missing = [n for n in SAMPLE_SPOTS if n not in by_name]
+    if missing:
+        log.error("sample spots not in the roster: %s", ", ".join(missing))
         return 2
-
-    cache = {} if args.no_cache else _load_cache(args.output)
-    log.info("loaded %d spots; %d already cached", len(spots), len(cache))
-
-    anthropic_client = anthropic.Anthropic()
-
-    generated = 0
-    skipped = 0
-    failed = 0
-    new_entries: dict[str, str] = {}
-
-    for spot in spots:
-        name = spot.get("name")
-        if not name:
-            continue
-        slug = _slugify(name)
-        if not slug:
-            continue
-        # Signature of the fields the description asserts (coords/state/orientation). Regenerate when it
-        # differs from the cached one — that is the "trigger": a spot whose coordinates, state, or
-        # orientation changed gets a fresh description instead of being skipped as already-cached.
-        sig = description_signature(spot.get("lat"), spot.get("lng"),
-                                    spot.get("region_hint"), spot.get("orientation_deg"))
-        cached = cache.get(slug)
-        cached_sig = cached.get("signature") if isinstance(cached, dict) else None
-        if cached is not None and cached_sig == sig and not args.no_cache:
-            skipped += 1
-            continue
-        if args.limit is not None and generated >= args.limit:
-            break
-
+    results, failed = {}, 0
+    for name in SAMPLE_SPOTS:
+        slug, spot = by_name[name]
+        payload = description_payload(spot_fields(spot))
         try:
-            desc = _generate_one(anthropic_client, spot)
+            text = generate_one(client, payload)
         except Exception:  # noqa: BLE001
             log.exception("%s: generation failed", slug)
             failed += 1
             continue
-
-        entry = {"description": desc, "signature": sig}
-        cache[slug] = entry
-        new_entries[slug] = entry
-        generated += 1
-        log.info("%s: %s", slug, desc[:80] + ("…" if len(desc) > 80 else ""))
-
-        # Snapshot the cache every 25 entries so a crash doesn't burn
-        # all the in-flight work.
-        if generated % 25 == 0:
-            _save_cache(args.output, cache)
-
-    _save_cache(args.output, cache)
-    log.info("cache written → %s (generated=%d skipped=%d failed=%d)",
-             args.output, generated, skipped, failed)
-
-    if args.no_db:
-        log.info("--no-db: skipping Supabase upsert")
-        return 0 if failed == 0 else 1
-
-    # Push the rows we touched this run. Skipping --no-db is the way
-    # to do a JSON-only dry run; otherwise we always sync the new
-    # generations even if --no-cache wasn't passed.
-    payload = new_entries if new_entries else cache
-    if not payload:
-        log.info("nothing to push to Supabase")
-        return 0
-    log.info("pushing %d description(s) to Supabase", len(payload))
-    db = get_client()
-    written = _upsert_descriptions(db, payload)
-    log.info("upserted %d row(s)", written)
+        results[slug] = {"name": name, "payload": payload,
+                         "signature": description_signature(payload), "description": text}
+        print(f"== {name} ({slug})")
+        print(f"   left out: {', '.join(left_out(spot)) or '—'}")
+        print(f"   payload:  {user_prompt(payload)}")
+        print(f"   {text}\n", flush=True)
+    save_json(out_path, results)
+    print(f"{len(results)} sample description(s) written to {out_path}; nothing else was written.")
     return 0 if failed == 0 else 1
+
+
+def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=False) -> int:
+    cache = load_cache(cache_path)
+    gone = orphans(spots, cache)
+    for slug in gone:
+        del cache[slug]
+    if gone:
+        log.info("pruned %d cache entr%s for spots no longer in the roster: %s",
+                 len(gone), "y" if len(gone) == 1 else "ies", ", ".join(gone))
+        save_json(cache_path, cache)
+
+    items = plan(roster, cache, force=force)
+    generated = pushed = kept_unpushed = failed = 0
+    for slug, _spot, payload, sig, action, reason in items:
+        if action == KEEP:
+            continue
+        if action == PUSH:
+            if db is not None and push(db, slug, cache[slug]):
+                cache[slug].pop("pushed", None)
+                pushed += 1
+                save_json(cache_path, cache)
+            continue
+        if limit is not None and generated >= limit:
+            break
+        try:
+            text = generate_one(client, payload)
+        except Exception:  # noqa: BLE001
+            log.exception("%s: generation failed", slug)
+            failed += 1
+            continue
+        entry = {"description": text, "signature": sig}
+        generated += 1
+        if db is not None and push(db, slug, entry):
+            pushed += 1
+        else:
+            entry["pushed"] = False
+            kept_unpushed += 1
+        cache[slug] = entry
+        log.info("%s (%s): %s", slug, reason, text[:80] + ("…" if len(text) > 80 else ""))
+        if generated % SAVE_EVERY == 0:
+            save_json(cache_path, cache)
+    save_json(cache_path, cache)
+
+    fixed = still = 0
+    if db is not None:
+        fixed, still = reconcile(db, cache, roster)
+    log.info("generated=%d written=%d kept-unwritten=%d failed=%d reconciled=%d still-differ=%d; "
+             "cache → %s", generated, pushed, kept_unpushed, failed, fixed, still, cache_path)
+    # Unwritten entries are expected under --no-db; with Supabase they mean a rerun is needed.
+    return 0 if failed == 0 and still == 0 and (db is None or kept_unpushed == 0) else 1
+
+
+def _parse_args(argv=None) -> argparse.Namespace:
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--dry-run", action="store_true",
+                      help="No API calls, no writes: the per-spot report, totals and cost estimate.")
+    mode.add_argument("--sample", action="store_true",
+                      help="Generate the ten SAMPLE_SPOTS into --sample-output only.")
+    p.add_argument("--input", type=Path, default=DEFAULT_ENRICHED_OUTPUT, help="spots_enriched.json")
+    p.add_argument("--output", type=Path, default=OUTPUT_FILE, help="the description cache")
+    p.add_argument("--sample-output", type=Path, default=SAMPLE_FILE)
+    p.add_argument("--limit", type=int, default=None, help="Cap on generations this run.")
+    p.add_argument("--no-cache", action="store_true",
+                   help="Regenerate every spot, whatever its cached signature.")
+    p.add_argument("--no-db", action="store_true",
+                   help="Full run without Supabase: entries are kept marked unwritten.")
+    p.add_argument("-v", "--verbose", action="store_true")
+    return p.parse_args(argv)
+
+
+def main(argv=None) -> int:
+    args = _parse_args(argv)
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
+                        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    spots = json.loads(args.input.read_text(encoding="utf-8"))
+    if not isinstance(spots, list):
+        log.error("expected a JSON array at %s", args.input)
+        return 2
+    roster = roster_spots(spots)
+
+    if args.dry_run:
+        cache = load_cache(args.output)
+        items = plan(roster, cache, force=args.no_cache)
+        print("\n".join(dry_run_report(items, cache, orphans(spots, cache))))
+        return 0
+
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        log.error("ANTHROPIC_API_KEY is required")
+        return 1
+    if args.sample:
+        return run_sample(roster, args.sample_output, anthropic_client())
+    db = None if args.no_db else get_client()
+    return run_full(spots, roster, args.output, anthropic_client(), db, limit=args.limit,
+                    force=args.no_cache)
 
 
 if __name__ == "__main__":
