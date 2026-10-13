@@ -1058,8 +1058,9 @@ def test_the_wiring_check_catches_each_way_a_real_workflow_can_drift():
     cut_job = ("daily-report.yml", None, None, "daily-report.yml: 0 jobs use")
     cases = [
         cut_job,
-        ("forecast-pipeline.yml", "needs: [full-pipeline, buoy-update]",
-         "needs: [full-pipeline]", "forecast-pipeline.yml: failure-issue needs ['full-pipeline']"),
+        ("forecast-pipeline.yml", "needs: [gate, full-pipeline, buoy-update]",
+         "needs: [full-pipeline, buoy-update]",
+         "forecast-pipeline.yml: failure-issue needs ['full-pipeline', 'buoy-update']"),
         ("resolve-cams.yml", "    if: always()\n", "    if: failure()\n",
          "resolve-cams.yml: failure-issue runs if 'failure()'"),
         ("ecmwf-wam.yml",

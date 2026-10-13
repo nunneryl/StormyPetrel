@@ -389,6 +389,39 @@ def test_the_hourly_job_succeeding_does_not_close_an_issue_about_the_other():
     assert gh.open_issues() == []
 
 
+def test_a_run_the_gate_turned_away_reports_nothing_and_closes_nothing():
+    """forecast-pipeline's gate job succeeds and skips both work jobs when an earlier run
+    already covered the slot. That run says nothing about either job: an open issue about a
+    failed full-pipeline stays open and untouched, and with no issue open nothing is written."""
+    fp = "forecast-pipeline"
+    open_issue = {"number": 230, "title": "[cron] forecast-pipeline failing",
+                  "labels": ["cron-failure", fp], "state": "open",
+                  "body": '<!-- failure-issue {"failing": ["full-pipeline"]} -->'}
+    turned_away = needs(gate="success", full_pipeline="skipped", buoy_update="skipped")
+
+    gh = FakeGitHub(issues=[open_issue])
+    said = FI.report(gh, ctx(workflow=fp), turned_away)
+    assert said == "forecast-pipeline: nothing to report (failed none, succeeded ['gate'])"
+    assert gh.writes() == [] and gh.open_issues() == [230]
+    assert gh.issues[230]["body"] == '<!-- failure-issue {"failing": ["full-pipeline"]} -->'
+
+    gh = FakeGitHub()
+    said = FI.report(gh, ctx(workflow=fp), turned_away)
+    assert said == "forecast-pipeline: nothing to report (failed none, succeeded ['gate'])"
+    assert gh.writes() == []
+
+
+def test_a_gate_that_failed_is_reported_although_the_run_went_ahead():
+    """The gate fails open: a gate job that failed outright (say its checkout) leaves no answer,
+    and full-pipeline runs anyway. The gate's own failure is still worth an issue."""
+    gh = FakeGitHub()
+    said = FI.report(gh, ctx(workflow="forecast-pipeline"),
+                     needs(gate="failure", full_pipeline="success", buoy_update="skipped"))
+    assert said == "forecast-pipeline: failed ['gate']; opened #201"
+    assert gh.issues[201]["body"].endswith('<!-- failure-issue {"failing": ["gate"]} -->')
+    assert "- job `gate` failed" in gh.issues[201]["body"]
+
+
 def test_a_run_whose_jobs_were_all_skipped_writes_nothing():
     gh = FakeGitHub(issues=[{"number": 230, "title": "t", "labels": ["cron-failure", "w"],
                              "state": "open", "body": '<!-- failure-issue {"failing": ["a"]} -->'}])

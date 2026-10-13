@@ -1,44 +1,56 @@
 name: forecast-pipeline
 
-# Two scheduled jobs in one workflow:
-#   - full-pipeline   every 8h (03:30 / 11:30 / 19:30 UTC), runs the full
-#                     NWPS + WW3 + HRRR + buoys + tides fetch + interpret +
-#                     Supabase push. 8-hour cadence is enough freshness
-#                     for surf-forecast use while cutting Actions minutes
-#                     by a third vs. the prior every-6h schedule.
-#   - buoy-update     every 1h on the hour. NDBC publishes obs every
-#                     30–60 min, so a 1-hour cadence keeps the "now"
-#                     reading near-real-time. Vercel Pro removed the
-#                     ISR Write cap that previously made the 3-hour
-#                     cadence the right tradeoff; only / and /map are
+# Two jobs in one workflow:
+#   - full-pipeline   four times a day, at the slots in DISPATCH_SLOTS below (01:45 / 08:15 /
+#                     13:45 / 20:15 UTC): the full NWPS + WW3 + HRRR + buoys + tides fetch +
+#                     interpret + Supabase push. The slots land just after most NWPS offices
+#                     publish each cycle; docs/scheduling.md has the measurement behind them.
+#   - buoy-update     every hour on the hour. NDBC publishes obs every 30–60 min, so a 1-hour
+#                     cadence keeps the "now" reading near-real-time. Only / and /map are
 #                     revalidated so spot pages aren't touched.
 #
-# Manual trigger via the Actions tab — pick which job to run from the
-# `job` input dropdown. Both jobs gate themselves with an `if:` so a
-# scheduled trigger only fires the matching job.
+# WHO STARTS THEM. An outside scheduler (cron-job.org) calls workflow_dispatch at each slot
+# with trigger: external — GitHub's own scheduler started full runs a median 4.4 h late over
+# 30 days and ran the hourly job in only 22% of hours, while a dispatch starts within seconds.
+# GitHub's cron below is kept only as a FALLBACK, 20 minutes after each slot. The gate job
+# (scripts/dispatch_gate.py) skips a scheduled or external run when an earlier run of the same
+# job already covers its slot, so a late cron run never repeats a dispatched one. A manual run
+# from the Actions tab (trigger: manual, the default) always goes ahead.
+#
+# docs/scheduling.md holds the cron-job.org jobs and the Healthchecks.io settings. Change a slot
+# in DISPATCH_SLOTS, the fallback crons, the full-pipeline if: and there, together;
+# pipeline/tests/test_dispatch_gate.py fails until they agree.
+
+# The run's title begins with its logical job, because the gate reads it back from the runs list
+# (which carries neither the inputs nor the cron string) to tell the two jobs' runs apart.
+run-name: ${{ (github.event.schedule == '0 * * * *' || inputs.job == 'buoy-update') && 'buoy-update' || 'full-pipeline' }} (${{ github.event_name == 'workflow_dispatch' && inputs.trigger || github.event_name }})
 
 on:
   workflow_dispatch:
     inputs:
       job:
-        description: Which job to run (manual trigger only)
+        description: Which job to run
         required: true
         default: full-pipeline
         type: choice
         options:
           - full-pipeline
           - buoy-update
+      trigger:
+        description: Who is starting it. Leave manual; the outside scheduler sends external
+        required: false
+        default: manual
+        type: choice
+        options:
+          - manual
+          - external
   schedule:
-    # Forecast pipeline runs every 8h. Lines up with NCEP's 00/06/12/18Z
-    # model cycles plus ~90 min for uploads — picks 00Z+3h30, 06Z+5h30,
-    # 12Z+7h30 in practice but the spacing is what matters: an 8-hour
-    # cadence is enough freshness for the surf use case at lower runner
-    # cost than every-6h.
-    - cron: '30 3,11,19 * * *'
-    # Buoy refresh hourly. NDBC publishes ~every 30 min, so this keeps
-    # the "now" reading inside the 30-min freshness window most of the
-    # time. Only revalidates / and /map (not spot pages) so the higher
-    # cadence doesn't fan out into per-spot ISR Writes.
+    # FALLBACK ONLY, 20 minutes after each slot in DISPATCH_SLOTS (01:45 08:15 13:45 20:15):
+    # 02:05 and 14:05, then 08:35 and 20:35. The dispatched run normally covers the slot first
+    # and the gate skips these; when the outside scheduler is down, they still run, late.
+    - cron: '5 2,14 * * *'
+    - cron: '35 8,20 * * *'
+    # Buoy refresh hourly, also dispatched from outside; this is its gated fallback.
     - cron: '0 * * * *'
 
 # Opt JavaScript-based actions (checkout, setup-python, github-script,
@@ -47,12 +59,18 @@ on:
 # silences the deprecation warning and tracks the new default.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  # The full pipeline's slots, UTC, the one place they are held. The gate reads them; the
+  # fallback crons above sit 20 minutes after each; docs/scheduling.md lists the cron-job.org
+  # jobs that dispatch them.
+  DISPATCH_SLOTS: '01:45 08:15 13:45 20:15'
 
-# Limit concurrency per logical job — if a previous run is still going,
-# the new schedule trigger waits or replaces it (cancel-in-progress=false
-# avoids killing a healthy run mid-upload).
+# One run at a time per LOGICAL JOB, whoever started it. This was keyed on
+# `github.event.schedule || inputs.job`, which put a scheduled full run (group '30 3,11,19 * * *')
+# and a dispatched one (group 'full-pipeline') in different groups, so the two could run at once.
+# Now both name the job. A run that arrives while one is going waits (cancel-in-progress=false
+# avoids killing a healthy run mid-upload), and its gate then sees the finished run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.schedule || inputs.job }}
+  group: ${{ github.workflow }}-${{ (github.event.schedule == '0 * * * *' || inputs.job == 'buoy-update') && 'buoy-update' || 'full-pipeline' }}
   cancel-in-progress: false
 
 # Read-only by default, so no job holds a scope it was never given on purpose. The
@@ -61,11 +79,44 @@ permissions:
   contents: read
 
 jobs:
+  gate:
+    # Skips a scheduled or external run that an earlier run already covers; see
+    # scripts/dispatch_gate.py. It FAILS OPEN: the script always exits 0 and answers "run" when
+    # it cannot decide, the step is continue-on-error, and the jobs below go ahead unless the
+    # answer is exactly 'false' — so a broken gate costs at most a duplicate run, never a slot.
+    name: gate (skip a run another run already covers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # this workflow's runs list
+      contents: read              # checkout of the gate script
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - name: Checkout the gate script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+
+      - name: Decide whether this run goes ahead
+        id: decide
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GATE_JOB: ${{ (github.event.schedule == '0 * * * *' || inputs.job == 'buoy-update') && 'buoy-update' || 'full-pipeline' }}
+          GATE_TRIGGER: ${{ inputs.trigger }}
+        run: python3 scripts/dispatch_gate.py
+
   full-pipeline:
     name: full-pipeline (NWPS + WW3 + HRRR + buoys + tides)
+    needs: gate
+    # !cancelled() so a failed gate job still lets the run through (fail open).
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '30 3,11,19 * * *') ||
-      (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline')
+      !cancelled() && needs.gate.outputs.run != 'false' && (
+        (github.event_name == 'schedule' &&
+          (github.event.schedule == '5 2,14 * * *' || github.event.schedule == '35 8,20 * * *')) ||
+        (github.event_name == 'workflow_dispatch' && inputs.job == 'full-pipeline'))
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     # contents:read for the checkout. Nothing in this job writes to issues: the
@@ -142,11 +193,11 @@ jobs:
       # gitignored + ephemeral). Same restore/save shape as reverify-trust-accumulate.yml.
       #
       # KEY IS PER-DATE, NOT PER-RUN. A per-run key (github.run_id) minted a fresh ~8 MiB cache entry
-      # on EVERY run — 3 full-pipeline runs/day, forever. Those entries compete under GitHub's 10 GB
+      # on EVERY run — 4 full-pipeline runs/day, forever. Those entries compete under GitHub's 10 GB
       # per-repo LRU cap with the nwps-trust-history cache, and trust history is IRREPLACEABLE (NOMADS
       # retains ~5 days; a lost direction event cannot be backfilled) while this tide cache is fully
       # regenerable — so we must not churn disposable entries that could evict the irreplaceable one.
-      # A per-UTC-date key mints at most ONE entry/day: the 2nd/3rd run that day restores it on an
+      # A per-UTC-date key mints at most ONE entry/day: each later run that day restores it on an
       # exact-key hit and its save no-ops ("cache already exists"). Freezing the day's entry at the
       # first run's state is harmless — the 30-day horizon only needs a refetch ~every 23 days per
       # station, so a few un-persisted intra-day refreshes cost only repeat fetches, never correctness.
@@ -177,7 +228,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: pipeline/cache/tides
-          # Per-date key: the first run of the day creates it; a 2nd/3rd run the same day hits the
+          # Per-date key: the first run of the day creates it; a later run the same day hits the
           # exact key on restore and this save is a harmless no-op ("cache already exists", not a
           # failure — so if: always() stays green).
           key: ${{ steps.tide-cache-key.outputs.key }}
@@ -207,6 +258,25 @@ jobs:
         if: ${{ !cancelled() }}
         run: python -m pipeline.column_preflight --finish
 
+      - name: Ping the dead-man's switch (healthchecks.io)
+        # Only after a run in which every step succeeded, the column check above included.
+        # Healthchecks.io emails when no ping arrives for Period 7 h + Grace 1 h
+        # (docs/scheduling.md), which catches the one thing the failure issue cannot: no run at
+        # all. continue-on-error and a short timeout, so the ping can never fail or hold up the
+        # run. The secret is unset until the check exists; the step then says so and does nothing.
+        if: success()
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          HEALTHCHECKS_URL: ${{ secrets.HEALTHCHECKS_FULL_PIPELINE_URL }}
+        run: |
+          if [ -z "$HEALTHCHECKS_URL" ]; then
+            echo "HEALTHCHECKS_FULL_PIPELINE_URL is not set: no ping sent."
+            exit 0
+          fi
+          curl -fsS -m 10 --retry 5 --retry-all-errors -o /dev/null "$HEALTHCHECKS_URL"
+          echo "Pinged healthchecks.io."
+
       - name: Hand the column check's line to the failure issue
         # Only when the job failed. The preflight's one-line reason, if it found anything,
         # becomes this job's failure-note output, and the failure-issue job quotes it under
@@ -227,9 +297,11 @@ jobs:
 
   buoy-update:
     name: buoy-update (hourly NDBC refresh)
+    needs: gate
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '0 * * * *') ||
-      (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update')
+      !cancelled() && needs.gate.outputs.run != 'false' && (
+        (github.event_name == 'schedule' && github.event.schedule == '0 * * * *') ||
+        (github.event_name == 'workflow_dispatch' && inputs.job == 'buoy-update'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
@@ -298,7 +370,8 @@ jobs:
   failure-issue:
     # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
     # every other job whatever their result, so a timeout is reported too.
-    needs: [full-pipeline, buoy-update]
+    # gate succeeding with both jobs skipped (a run the gate turned away) reports nothing.
+    needs: [gate, full-pipeline, buoy-update]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
