@@ -1,9 +1,10 @@
-"""What a spot description may say, and the signature that says when it is stale.
+"""What a spot description says, how it is written, and the signature that says when it is stale.
 
-ONE BUILDER, TWO USERS. pipeline/generate_descriptions.py sends description_payload() to the model,
-and stamps the description with description_signature() of that same payload. pipeline/db_import.py
-rebuilds the payload from the roster on every run and blanks a description whose stored signature no
-longer matches. Both call the functions below, so they cannot disagree about what a description asserts.
+ONE BUILDER, TWO USERS. pipeline/generate_descriptions.py renders description_payload() through the
+template below and stamps the text with description_signature() of that same payload.
+pipeline/db_import.py rebuilds the payload from the roster on every run and blanks a description whose
+stored signature no longer matches. Both call the functions below, so they cannot disagree about what a
+description asserts.
 
 WHAT GOES IN. Only what the roster knows, and only what it knows from a source that can be stated
 plainly. break_type, bottom and tide_preference go in only when their source is reviewed, researched or
@@ -18,41 +19,35 @@ could not tell) is left out too, since there is nothing to state. Left out entir
       Puerto Rico) SE–S, Matanzas Inlet (Florida's east coast) S/SW and SW/W, and Seaside Reef, which
       faces west, E–SE. faces and optimal_swell_from stay.
 
+WHY A TEMPLATE, NOT A MODEL. Once the payload was cut down to verified facts, a language model added
+nothing a template cannot state, and failed at the spots with the fewest facts: in the 2026-10-13
+samples it twice answered Pensacola Beach with self-talk ("Wait, I need to revise — I was instructed
+not to mention missing fields"). render() states exactly the payload's name, state, break type,
+bottom, facing, optimal swell direction and offshore wind, leaving out whatever is absent, in one of
+PATTERN_COUNT sentence patterns picked by a hash of the slug so the pages do not all read alike. The
+tide preference is in the payload (and so in the signature) but is not stated.
+
 WHY THE SIGNATURE HASHES THE PAYLOAD. Version 1 hashed coordinates, state and orientation only, so a
 break_type corrected from beach to reef never made the description stale: 105 descriptions came to
-contradict the displayed break type after the research import (#245). Version 2 hashes PROMPT_VERSION
-and the exact payload, so any change to anything the description is built from — a field, its source
-crossing the stated/left-out line, or the prompt — marks it stale.
+contradict the displayed break type after the research import (#245). Version 2 hashes
+TEMPLATE_VERSION and the exact payload, so any change to anything the description is built from — a
+field, its source crossing the stated/left-out line, or the template — marks it stale.
 
     v2:<16 hex>    written ONLY by generate_descriptions, alongside the text it describes
     anything else  a version-1 (or missing) signature: db_import leaves that text alone
 
-Change SYSTEM_PROMPT and you must bump PROMPT_VERSION; pipeline/tests/test_descriptions.py pins both.
+Change the template's wording and you must bump TEMPLATE_VERSION; pipeline/tests/test_descriptions.py
+pins both.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 
-PROMPT_VERSION = "3"
+TEMPLATE_VERSION = "t1"
 SIGNATURE_PREFIX = "v2:"
 STATED_SOURCES = ("reviewed", "researched", "scraped")
 GATED_FIELDS = ("break_type", "bottom", "tide_preference")  # each stated only from STATED_SOURCES
-
-SYSTEM_PROMPT = (
-    "Write a 2-3 sentence factual description of this surf spot using ONLY the facts in the "
-    "metadata. Never add anything from general knowledge: no place names, regions, islands, "
-    "coastlines, shores, nearby towns or landmarks other than the given name and state, and no "
-    "other details. Mention only the fields that are given: the type of break (break_type), what "
-    "the waves break over (bottom), the direction it faces, the optimal swell direction, the "
-    "preferred tide, and the offshore wind direction. Say nothing at all about a field that is not "
-    "given: do not mention that it is missing, unknown or unspecified, and do not guess it. If "
-    "break_type is not given, call it a surf spot. A bottom of 'rock' means a rock reef; 'mixed' "
-    "means more than one kind of bottom, so say 'a mixed bottom' without naming them. Do not make "
-    "claims about wave quality, consistency, barrel potential, crowd levels, skill level, or how "
-    "the wave breaks beyond what the data directly supports. Do not say 'one of the best' or 'most "
-    "popular' or 'iconic'. Keep it factual and concise. No more than 75 words."
-)
 
 _CARDINALS_8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
@@ -75,7 +70,7 @@ def stated(value, source):
 
 
 def description_payload(rec):
-    """What the model is told about one spot. `rec` uses the spots-table names (state, not
+    """What a description may state about one spot. `rec` uses the spots-table names (state, not
     region_hint) — db_import's record, or a roster spot through spot_fields(). Nulls and empties are
     dropped, so an absent fact is absent rather than null."""
     payload = {
@@ -113,10 +108,97 @@ def canonical(payload):
 
 
 def description_signature(payload):
-    """'v2:' + 16 hex of sha1(PROMPT_VERSION, the payload). Stable across key order."""
-    digest = hashlib.sha1(f"{PROMPT_VERSION}\n{canonical(payload)}".encode("utf-8")).hexdigest()
+    """'v2:' + 16 hex of sha1(TEMPLATE_VERSION, the payload). Stable across key order."""
+    digest = hashlib.sha1(f"{TEMPLATE_VERSION}\n{canonical(payload)}".encode("utf-8")).hexdigest()
     return SIGNATURE_PREFIX + digest[:16]
 
 
 def is_v2(signature):
     return isinstance(signature, str) and signature.startswith(SIGNATURE_PREFIX)
+
+
+# --------------------------------------------------------------------------- #
+# The template                                                                 #
+# --------------------------------------------------------------------------- #
+DIRECTION_WORDS = {"N": "north", "NE": "northeast", "E": "east", "SE": "southeast",
+                   "S": "south", "SW": "southwest", "W": "west", "NW": "northwest"}
+BREAK_WORDS = {"beach": "beach break", "reef": "reef break", "point": "point break",
+               "jetty": "jetty break", "rivermouth": "rivermouth break"}
+NO_BREAK_TYPE = "surf spot"
+
+
+def _an(word):
+    return "an" if word[:1] and word[:1].lower() in "aeiou" else "a"
+
+
+def _sentence(clauses):
+    """Clauses joined with ', and ', first letter raised, full stop; None when there are none."""
+    clauses = [c for c in clauses if c]
+    if not clauses:
+        return None
+    text = ", and ".join(clauses)
+    return text[0].upper() + text[1:] + "."
+
+
+def _facts(payload):
+    """The payload's words: name, state, kind of break, bottom and the three directions."""
+    bt = payload.get("break_type")
+    return {
+        "name": payload["name"],
+        "state": payload.get("state"),
+        "kind": BREAK_WORDS.get(bt, f"{bt} break") if bt else NO_BREAK_TYPE,
+        "bottom": payload.get("bottom"),
+        "faces": DIRECTION_WORDS.get(payload.get("faces")),
+        "swell": DIRECTION_WORDS.get(payload.get("optimal_swell_from")),
+        "wind": DIRECTION_WORDS.get(payload.get("offshore_wind_from")),
+    }
+
+
+def _pattern_0(f):
+    # Banzai Pipeline is a reef break in Hawaii over a rock bottom. It faces northwest, and its
+    # optimal swell direction is north. Offshore winds blow from the southeast.
+    first = (f"{f['name']} is {_an(f['kind'])} {f['kind']}"
+             + (f" in {f['state']}" if f["state"] else "")
+             + (f" over {_an(f['bottom'])} {f['bottom']} bottom" if f["bottom"] else "") + ".")
+    return [first,
+            _sentence([f["faces"] and f"it faces {f['faces']}",
+                       f["swell"] and f"its optimal swell direction is {f['swell']}"]),
+            _sentence([f["wind"] and f"offshore winds blow from the {f['wind']}"])]
+
+
+def _pattern_1(f):
+    # Banzai Pipeline is a Hawaii reef break with a rock bottom. It faces northwest, and it is
+    # offshore in southeast winds. The optimal swell comes from the north.
+    lead = f"{f['state']} {f['kind']}" if f["state"] else f["kind"]
+    first = (f"{f['name']} is {_an(lead)} {lead}"
+             + (f" with {_an(f['bottom'])} {f['bottom']} bottom" if f["bottom"] else "") + ".")
+    return [first,
+            _sentence([f["faces"] and f"it faces {f['faces']}",
+                       f["wind"] and f"it is offshore in {f['wind']} winds"]),
+            _sentence([f["swell"] and f"the optimal swell comes from the {f['swell']}"])]
+
+
+def _pattern_2(f):
+    # Facing northwest, Banzai Pipeline is a reef break in Hawaii over a rock bottom. The optimal
+    # swell comes from the north, and the offshore wind is from the southeast.
+    first = ((f"Facing {f['faces']}, " if f["faces"] else "")
+             + f"{f['name']} is {_an(f['kind'])} {f['kind']}"
+             + (f" in {f['state']}" if f["state"] else "")
+             + (f" over {_an(f['bottom'])} {f['bottom']} bottom" if f["bottom"] else "") + ".")
+    return [first,
+            _sentence([f["swell"] and f"the optimal swell comes from the {f['swell']}",
+                       f["wind"] and f"the offshore wind is from the {f['wind']}"])]
+
+
+PATTERNS = (_pattern_0, _pattern_1, _pattern_2)
+PATTERN_COUNT = len(PATTERNS)
+
+
+def pattern_for(slug):
+    """Which pattern a spot gets: sha1 of its slug, mod PATTERN_COUNT. Stable across runs."""
+    return int(hashlib.sha1(slug.encode("utf-8")).hexdigest(), 16) % PATTERN_COUNT
+
+
+def render(payload, slug):
+    """The description of *payload*: every stated fact, nothing else, in the slug's pattern."""
+    return " ".join(s for s in PATTERNS[pattern_for(slug)](_facts(payload)) if s)

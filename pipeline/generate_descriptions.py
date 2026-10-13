@@ -1,38 +1,36 @@
-"""Generate short factual spot descriptions with Claude.
+"""Write short factual spot descriptions from a template.
 
-Walks every spot in spots_enriched.json, sends Claude the payload pipeline/descriptions.py builds for it
-(only facts the roster holds from a source that can be stated plainly), and records the result in
-pipeline/data/spot_descriptions.json (the cache) and in the spots table's description and
-description_signature columns. Not part of the scheduled pipeline: run it by hand.
+Walks every spot in spots_enriched.json, renders the payload pipeline/descriptions.py builds for it
+(only facts the roster holds from a source that can be stated plainly) through that module's template,
+and records the result in pipeline/data/spot_descriptions.json (the cache) and in the spots table's
+description and description_signature columns. Not part of the scheduled pipeline: run it by hand.
+No API key is needed: nothing here calls a model.
 
 THE SIGNATURE. Each description is stamped with description_signature(payload): 'v2:' plus a hash of
-PROMPT_VERSION and the exact payload. A spot is regenerated when its cached signature differs from the
+TEMPLATE_VERSION and the exact payload. A spot is rewritten when its cached signature differs from the
 current one — no description yet, one written before v2, or anything it states has changed. This script
 is the ONLY writer of v2 signatures; db_import blanks a description whose stored v2 signature no longer
 matches the roster, and leaves anything older alone.
 
 MODES
-  --dry-run   No API calls and no writes. One block per spot: what would happen and why, what the
-              payload states and leaves out, whether the current text contradicts the break type,
-              and the output check of the current text against the new payload. Then totals and a
-              cost estimate.
-  --sample    Generates the ten spots in SAMPLE_SPOTS and writes them to a separate file
-              (--sample-output) only — never to the cache, never to Supabase. Prints each with its
-              payload and every try with its output check.
-  (default)   The full run. Resumable: the cache is saved every SAVE_EVERY generations and a rerun
+  --dry-run   No writes. One block per spot: what would happen and why, what the payload states and
+              leaves out, whether the current text contradicts the break type, the pattern, the
+              output check, and the exact final text. Then totals.
+  --sample    The ten spots in SAMPLE_SPOTS, written to a separate file (--sample-output) only —
+              never to the cache, never to Supabase. Prints each with its payload, check and text.
+  (default)   The full run. Resumable: the cache is saved every SAVE_EVERY descriptions and a rerun
               skips every spot whose cached signature is current. Each description is written to
-              Supabase as soon as it is generated; one that could not be written is kept in the cache
+              Supabase as soon as it is rendered; one that could not be written is kept in the cache
               marked "pushed": false and written on the next run. A final reconcile reads the table
-              and re-writes any row whose signature differs from the cache — which also repairs a row
-              that a forecast-pipeline run, writing back the row it read before this one changed it,
-              put back while this was running. Only the rows this run touched are written; nothing
+              and re-writes any row whose signature or text differs from the cache — which also repairs
+              a row that a forecast-pipeline run, writing back the row it read before this one changed
+              it, put back while this was running. Only the rows this run touched are written; nothing
               else in the cache is pushed. Cache entries for spots no longer in the roster are pruned.
 
-THE OUTPUT CHECK. Every reply goes through check_description before anything is saved or written:
-one paragraph, no self-talk, nothing about absent fields, at most MAX_WORDS words, the spot's name,
-and the break type stated exactly when the payload gives one. A failing reply is retried once with
-the same payload; a spot that fails twice keeps its existing description and gets no signature, is
-listed in the end-of-run report, and is tried again on the next run.
+THE OUTPUT CHECK. Every rendered text goes through check_description before anything is saved or
+written: one paragraph, no self-talk, nothing about absent fields, at most MAX_WORDS words, the spot's
+name, and the break type stated exactly when the payload gives one. A text that fails keeps the spot's
+existing description and gets no signature, and the spot is listed in the end-of-run report.
 
 CLI:
     python -m pipeline.generate_descriptions --dry-run > dry_run.txt
@@ -40,20 +38,13 @@ CLI:
     python -m pipeline.generate_descriptions [--limit N] [--no-db] [--no-cache] [-v]
 
 Env:
-    ANTHROPIC_API_KEY  — required for --sample and the full run.
     SUPABASE_URL, SUPABASE_SERVICE_KEY — required for the full run unless --no-db.
-
-Cost: claude-sonnet-4-6 at $3 / $15 per million input / output tokens. 646 spots at roughly 360 input
-and 90 output tokens each is about $1.60 for a full regeneration; --dry-run prints the estimate for
-what it would actually generate.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import logging
-import math
-import os
 import re
 import sys
 import unicodedata
@@ -64,27 +55,18 @@ from .db_import import _excluded_slugs, _fetch_existing_spots, _slugify, get_cli
 from .descriptions import (
     GATED_FIELDS,
     STATED_SOURCES,
-    SYSTEM_PROMPT,
     description_payload,
     description_signature,
+    pattern_for,
+    render,
     spot_fields,
 )
 
 log = logging.getLogger("pipeline.generate_descriptions")
 
-MODEL = "claude-sonnet-4-6"
-MAX_TOKENS = 200  # 75-word cap is ~110 tokens; leaves headroom.
-
 OUTPUT_FILE = Path(__file__).parent / "data" / "spot_descriptions.json"
 SAMPLE_FILE = Path(__file__).parent / "data" / "spot_descriptions_sample.json"
 SAVE_EVERY = 10
-
-# claude-sonnet-4-6 list price, USD per million tokens (Anthropic's model table, as of 2026-10-06).
-PRICE_PER_MTOK = {"input": 3.00, "output": 15.00}
-# The dry run has no API to count tokens with, so it estimates from characters. Existing descriptions
-# average 257 characters (about 43 words); 90 output tokens is a little above that.
-CHARS_PER_TOKEN_EST = 3.5
-OUTPUT_TOKENS_EST = 90
 
 # --sample: one spot for each case worth reading before a full run.
 SAMPLE_SPOTS = (
@@ -203,12 +185,12 @@ def contradiction(text, spot):
 # --------------------------------------------------------------------------- #
 # The output check                                                             #
 # --------------------------------------------------------------------------- #
-# WHY. A sample run saved this as Pensacola Beach's description: a first paragraph that named the
-# missing fields, then "---", then "Wait, I need to revise — I was instructed not to mention missing
-# fields. Here is the corrected version:" and a second description. Nothing between the model and
-# the cache looked at the reply. check_description does, and a reply that fails it is retried once
-# and then dropped: the spot keeps its existing description and gets no new signature, so the next
-# run tries again.
+# WHY. A sample run, when a model still wrote these, saved this as Pensacola Beach's description: a
+# first paragraph that named the missing fields, then "---", then "Wait, I need to revise — I was
+# instructed not to mention missing fields. Here is the corrected version:" and a second description.
+# The template cannot do that, but the check stays as a guard on what it writes: a text that fails it
+# is not saved, the spot keeps its existing description and gets no new signature, and the end-of-run
+# report names it.
 MAX_WORDS = 80
 _APOSTROPHES = str.maketrans({"’": "'", "ʻ": "'", "‘": "'", "`": "'"})
 _SELF_TALK = re.compile(
@@ -272,8 +254,9 @@ def check_description(text, payload):
     words = len(text.split())
     if words > MAX_WORDS:
         problems.append(f"{words} words (at most {MAX_WORDS})")
-    folded = _fold(text)
-    if not any(_fold(n) and _fold(n) in folded for n in (name, name.split(",")[0])):
+    # whole words: the name "A" is not found inside "Wait"
+    folded = f" {_fold(text)} "
+    if not any(_fold(n) and f" {_fold(n)} " in folded for n in (name, name.split(",")[0])):
         problems.append("does not include the spot's name")
     given = payload.get("break_type")
     named = sorted(k for k, rx in _NAMED_TYPES.items() if re.search(rx, body, re.I))
@@ -292,43 +275,44 @@ def check_line(problems):
     return "pass" if not problems else "FAIL — " + "; ".join(problems)
 
 
-def estimate(payloads):
-    """(calls, mean input tokens, output tokens per call, USD) — a character-count estimate."""
-    n = len(payloads)
-    if not n:
-        return 0, 0, OUTPUT_TOKENS_EST, 0.0
-    tokens_in = [math.ceil((len(SYSTEM_PROMPT) + len(user_prompt(p))) / CHARS_PER_TOKEN_EST)
-                 for p in payloads]
-    usd = (sum(tokens_in) * PRICE_PER_MTOK["input"]
-           + n * OUTPUT_TOKENS_EST * PRICE_PER_MTOK["output"]) / 1_000_000
-    return n, round(sum(tokens_in) / n), OUTPUT_TOKENS_EST, usd
+def payload_line(payload):
+    """The payload as compact JSON, in the builder's key order."""
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def written(slug, payload):
+    """(text, problems): the template's text for this spot and how it fares in the output check."""
+    text = render(payload, slug)
+    return text, check_description(text, payload)
 
 
 def dry_run_report(items, cache, orphan_slugs):
     lines = []
     counts = {GENERATE: {}, PUSH: 0, KEEP: 0}
-    contradicting = with_text = failing = 0
+    contradicting = failing = 0
+    patterns = {}
     left = {field: {} for field in GATED_FIELDS}
     for slug, spot, payload, _sig, action, reason in items:
-        text = (cache.get(slug) or {}).get("description") if isinstance(cache.get(slug), dict) else None
-        wrong = contradiction(text, spot) if text else None
+        entry = cache.get(slug) if isinstance(cache.get(slug), dict) else {}
+        current = entry.get("description")
+        wrong = contradiction(current, spot) if current else None
         contradicting += bool(wrong)
-        problems = check_description(text, payload) if text else None
-        with_text += problems is not None
-        failing += bool(problems)
         for field in GATED_FIELDS:
             if field not in payload:
                 value = spot.get(field)
                 key = ("not set" if value in (None, "") else "'unknown'" if value == "unknown"
                        else spot.get(f"{field}_source") or "no source")
                 left[field][key] = left[field].get(key, 0) + 1
-        if action == GENERATE:
-            counts[GENERATE][reason] = counts[GENERATE].get(reason, 0) + 1
-        else:
+        if action != GENERATE:
             counts[action] += 1
-        if action == KEEP and not wrong and not problems:
-            lines.append(f"[keep] {slug} — {reason}; current text check: pass")
+            lines.append(f"[{action}] {slug} — {reason}")
+            lines.append(f"    final:    {current}")
             continue
+        counts[GENERATE][reason] = counts[GENERATE].get(reason, 0) + 1
+        text, problems = written(slug, payload)
+        failing += bool(problems)
+        n = pattern_for(slug)
+        patterns[n] = patterns.get(n, 0) + 1
         lines.append(f"[{action}] {slug} — {reason}")
         stated = [f"{f} {payload[f]} ({spot.get(f + '_source')})"
                   for f in GATED_FIELDS if f in payload]
@@ -336,84 +320,37 @@ def dry_run_report(items, cache, orphan_slugs):
         lines.append(f"    left out: {', '.join(left_out(spot)) or '—'}")
         if wrong:
             lines.append(f"    current text contradicts: {wrong}")
-        lines.append("    current text check: "
-                     + ("no current text" if problems is None else check_line(problems)))
-        lines.append(f"    payload:  {user_prompt(payload)}")
+        lines.append(f"    payload:  {payload_line(payload)}")
+        lines.append(f"    pattern:  {n}")
+        lines.append(f"    check:    {check_line(problems)}")
+        if problems:
+            lines.append(f"    final:    (unchanged) {current if current else '—'}")
+        else:
+            lines.append(f"    final:    {text}")
     n_gen = sum(counts[GENERATE].values())
-    calls, tin, tout, usd = estimate([p for _s, _sp, p, _g, a, _r in items if a == GENERATE])
     lines += [
         "",
         "TOTALS",
         f"  spots in the roster:              {len(items)}",
-        f"  to generate:                      {n_gen}"
-        + "".join(f"\n      {r}: {c}" for r, c in sorted(counts[GENERATE].items())),
+        f"  to write:                         {n_gen}",
+        *[f"      {r}: {c}" for r, c in sorted(counts[GENERATE].items())],
         f"  to write to Supabase only:        {counts[PUSH]}",
         f"  unchanged:                        {counts[KEEP]}",
         f"  orphan cache entries to prune:    {len(orphan_slugs)}"
         + (f" ({', '.join(orphan_slugs)})" if orphan_slugs else ""),
         f"  current texts contradicting the break type: {contradicting}",
-        f"  current texts failing the output check against the new payload: {failing} of "
-        f"{with_text}",
+        f"  new texts failing the output check (would be rejected): {failing}",
+        "  patterns among the texts to write: "
+        + (", ".join(f"{k} x{v}" for k, v in sorted(patterns.items())) or "none"),
         "  break_type left out:      " + _counts(left["break_type"]),
         "  bottom left out:          " + _counts(left["bottom"]),
         "  tide_preference left out: " + _counts(left["tide_preference"]),
-        f"  estimate: {calls} call(s) x ~{tin} input + ~{tout} output tokens = about ${usd:.2f} on "
-        f"{MODEL} at ${PRICE_PER_MTOK['input']:.2f} / ${PRICE_PER_MTOK['output']:.2f} per million "
-        "tokens (from character counts, not a token count)",
     ]
     return lines
 
 
 def _counts(d):
     return ", ".join(f"{k} {v}" for k, v in sorted(d.items())) or "none"
-
-
-# --------------------------------------------------------------------------- #
-# The model                                                                    #
-# --------------------------------------------------------------------------- #
-def user_prompt(payload):
-    """The user message: the payload as compact JSON, in the builder's key order."""
-    return json.dumps(payload, ensure_ascii=False)
-
-
-def _strip_quotes(text: str) -> str:
-    """Models sometimes wrap the answer in straight or smart quotes."""
-    t = text.strip()
-    if len(t) >= 2 and t[0] in "\"'“‘" and t[-1] in "\"'”’":
-        return t[1:-1].strip()
-    return t
-
-
-def anthropic_client():
-    import anthropic
-    return anthropic.Anthropic()
-
-
-def generate_one(client, payload) -> str:
-    message = client.messages.create(
-        model=MODEL,
-        max_tokens=MAX_TOKENS,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt(payload)}],
-    )
-    text = next((b.text for b in message.content if b.type == "text"), "")
-    cleaned = _strip_quotes(text)
-    if not cleaned:
-        raise RuntimeError("empty response")
-    return cleaned
-
-
-def generate_checked(client, payload, tries=2):
-    """(text, attempts): the first reply that passes check_description, or None when every try
-    failed. attempts is [(reply, problems)] in order. An API error is raised, not retried here."""
-    attempts = []
-    for _ in range(tries):
-        text = generate_one(client, payload)
-        problems = check_description(text, payload)
-        attempts.append((text, problems))
-        if not problems:
-            return text, attempts
-    return None, attempts
 
 
 # --------------------------------------------------------------------------- #
@@ -478,44 +415,38 @@ def reconcile(db, cache, roster) -> tuple[int, int]:
 # --------------------------------------------------------------------------- #
 # Modes                                                                        #
 # --------------------------------------------------------------------------- #
-def run_sample(roster, out_path: Path, client) -> int:
+def run_sample(roster, out_path: Path) -> int:
     by_name = {s["name"]: (slug, s) for slug, s in roster.items()}
     missing = [n for n in SAMPLE_SPOTS if n not in by_name]
     if missing:
         log.error("sample spots not in the roster: %s", ", ".join(missing))
         return 2
-    results, failed, rejected = {}, 0, []
+    results, rejected = {}, []
     for name in SAMPLE_SPOTS:
         slug, spot = by_name[name]
         payload = description_payload(spot_fields(spot))
-        try:
-            text, attempts = generate_checked(client, payload)
-        except Exception:  # noqa: BLE001
-            log.exception("%s: generation failed", slug)
-            failed += 1
-            continue
-        results[slug] = {"name": name, "payload": payload,
-                         "signature": description_signature(payload) if text else None,
-                         "description": text,
-                         "attempts": [{"reply": r, "check": check_line(p)} for r, p in attempts]}
+        text, problems = written(slug, payload)
+        results[slug] = {"name": name, "payload": payload, "pattern": pattern_for(slug),
+                         "check": check_line(problems),
+                         "signature": None if problems else description_signature(payload),
+                         "description": None if problems else text}
         print(f"== {name} ({slug})")
         print(f"   left out: {', '.join(left_out(spot)) or '—'}")
-        print(f"   payload:  {user_prompt(payload)}")
-        for i, (reply, problems) in enumerate(attempts, 1):
-            print(f"   try {i} check: {check_line(problems)}")
-            print(f"   {reply}")
-        if text is None:
+        print(f"   payload:  {payload_line(payload)}")
+        print(f"   pattern {pattern_for(slug)}, check: {check_line(problems)}")
+        print(f"   {text}")
+        if problems:
             rejected.append(slug)
-            print("   REJECTED after 2 tries: a full run would keep the existing description")
+            print("   REJECTED: a full run would keep the existing description")
         print(flush=True)
     save_json(out_path, results)
     print(f"{len(results)} sample description(s) written to {out_path}; nothing else was written.")
     if rejected:
-        print(f"rejected after 2 tries: {', '.join(rejected)}")
-    return 0 if failed == 0 and not rejected else 1
+        print(f"rejected by the output check: {', '.join(rejected)}")
+    return 0 if not rejected else 1
 
 
-def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=False) -> int:
+def run_full(spots, roster, cache_path: Path, db, limit=None, force=False) -> int:
     cache = load_cache(cache_path)
     gone = orphans(spots, cache)
     for slug in gone:
@@ -526,7 +457,7 @@ def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=Fals
         save_json(cache_path, cache)
 
     items = plan(roster, cache, force=force)
-    generated = pushed = kept_unpushed = failed = 0
+    written_n = pushed = kept_unpushed = 0
     rejected = []
     for slug, _spot, payload, sig, action, reason in items:
         if action == KEEP:
@@ -537,22 +468,16 @@ def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=Fals
                 pushed += 1
                 save_json(cache_path, cache)
             continue
-        if limit is not None and generated >= limit:
+        if limit is not None and written_n >= limit:
             break
-        try:
-            text, attempts = generate_checked(client, payload)
-        except Exception:  # noqa: BLE001
-            log.exception("%s: generation failed", slug)
-            failed += 1
-            continue
-        if text is None:
-            # Keep whatever the spot has: no cache change, no write, no signature. Next run retries.
-            rejected.append((slug, attempts[-1]))
-            log.warning("%s: rejected after %d tries (%s)", slug, len(attempts),
-                        check_line(attempts[-1][1]))
+        text, problems = written(slug, payload)
+        if problems:
+            # Keep whatever the spot has: no cache change, no write, no signature.
+            rejected.append((slug, (text, problems)))
+            log.warning("%s: rejected (%s)", slug, check_line(problems))
             continue
         entry = {"description": text, "signature": sig}
-        generated += 1
+        written_n += 1
         if db is not None and push(db, slug, entry):
             pushed += 1
         else:
@@ -560,31 +485,31 @@ def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=Fals
             kept_unpushed += 1
         cache[slug] = entry
         log.info("%s (%s): %s", slug, reason, text[:80] + ("…" if len(text) > 80 else ""))
-        if generated % SAVE_EVERY == 0:
+        if written_n % SAVE_EVERY == 0:
             save_json(cache_path, cache)
     save_json(cache_path, cache)
 
     fixed = still = 0
     if db is not None:
         fixed, still = reconcile(db, cache, roster)
-    log.info("generated=%d written=%d kept-unwritten=%d failed=%d rejected=%d reconciled=%d "
-             "still-differ=%d; cache → %s", generated, pushed, kept_unpushed, failed,
-             len(rejected), fixed, still, cache_path)
+    log.info("written=%d to-supabase=%d kept-unwritten=%d rejected=%d reconciled=%d "
+             "still-differ=%d; cache → %s", written_n, pushed, kept_unpushed, len(rejected), fixed,
+             still, cache_path)
     print("\n".join(rejected_report(rejected)), flush=True)
     # Unwritten entries are expected under --no-db; with Supabase they mean a rerun is needed.
-    ok = failed == 0 and not rejected and still == 0 and (db is None or kept_unpushed == 0)
+    ok = not rejected and still == 0 and (db is None or kept_unpushed == 0)
     return 0 if ok else 1
 
 
 def rejected_report(rejected):
-    """The end-of-run list of spots whose replies failed the output check twice."""
+    """The end-of-run list of spots whose text failed the output check."""
     if not rejected:
         return ["Output check: no spot rejected."]
-    lines = [f"Output check: {len(rejected)} spot(s) rejected after 2 tries — existing description "
-             "kept, no signature written; the next run tries them again:"]
-    for slug, (reply, problems) in rejected:
+    lines = [f"Output check: {len(rejected)} spot(s) rejected — existing description kept, no "
+             "signature written:"]
+    for slug, (text, problems) in rejected:
         lines.append(f"  {slug} — {'; '.join(problems)}")
-        lines.append(f"    last reply: {' '.join(reply.split())[:160]}")
+        lines.append(f"    text: {' '.join(text.split())[:160]}")
     return lines
 
 
@@ -592,15 +517,15 @@ def _parse_args(argv=None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true",
-                      help="No API calls, no writes: the per-spot report, totals and cost estimate.")
+                      help="No writes: the per-spot report with each final text, then totals.")
     mode.add_argument("--sample", action="store_true",
-                      help="Generate the ten SAMPLE_SPOTS into --sample-output only.")
+                      help="Write the ten SAMPLE_SPOTS into --sample-output only.")
     p.add_argument("--input", type=Path, default=DEFAULT_ENRICHED_OUTPUT, help="spots_enriched.json")
     p.add_argument("--output", type=Path, default=OUTPUT_FILE, help="the description cache")
     p.add_argument("--sample-output", type=Path, default=SAMPLE_FILE)
-    p.add_argument("--limit", type=int, default=None, help="Cap on generations this run.")
+    p.add_argument("--limit", type=int, default=None, help="Cap on descriptions written this run.")
     p.add_argument("--no-cache", action="store_true",
-                   help="Regenerate every spot, whatever its cached signature.")
+                   help="Rewrite every spot, whatever its cached signature.")
     p.add_argument("--no-db", action="store_true",
                    help="Full run without Supabase: entries are kept marked unwritten.")
     p.add_argument("-v", "--verbose", action="store_true")
@@ -622,15 +547,10 @@ def main(argv=None) -> int:
         items = plan(roster, cache, force=args.no_cache)
         print("\n".join(dry_run_report(items, cache, orphans(spots, cache))))
         return 0
-
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        log.error("ANTHROPIC_API_KEY is required")
-        return 1
     if args.sample:
-        return run_sample(roster, args.sample_output, anthropic_client())
+        return run_sample(roster, args.sample_output)
     db = None if args.no_db else get_client()
-    return run_full(spots, roster, args.output, anthropic_client(), db, limit=args.limit,
-                    force=args.no_cache)
+    return run_full(spots, roster, args.output, db, limit=args.limit, force=args.no_cache)
 
 
 if __name__ == "__main__":

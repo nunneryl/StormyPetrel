@@ -1,25 +1,28 @@
-"""Spot descriptions: what the payload may state (pipeline/descriptions.py) and the generator's three
-modes (pipeline/generate_descriptions.py).
+"""Spot descriptions: what the payload may state and how the template writes it
+(pipeline/descriptions.py), and the generator's three modes (pipeline/generate_descriptions.py).
 
 WHAT IS PINNED HERE:
   1. the payload: break_type and bottom only from reviewed, researched or scraped; no buoy or tide
      station ids; nothing null; roster names mapped as db_import maps them;
-  2. signature v2: literal values computed with hashlib directly, the PROMPT_VERSION in the hash, and
-     the system prompt's fingerprint, so editing the prompt without bumping the version fails here;
+  2. signature v2: literal values computed with hashlib directly, the TEMPLATE_VERSION in the hash,
+     and the template's fingerprint, so editing its wording without bumping the version fails here;
   3. the plan: generate / write-only / keep, with the reason, and orphan pruning;
-  4. --dry-run makes no API call and writes nothing; --sample writes its own file and nothing else;
+  4. --dry-run writes nothing and prints every final text; --sample writes its own file only;
      the full run writes only what it touched, keeps what it could not write, resumes, and
      reconciles rows a concurrent run put back;
-  5. the ten sample spots exist in the committed roster and are the cases they stand for.
+  5. the ten sample spots exist in the committed roster and are the cases they stand for;
+  6. the output check, on the reply a model once gave for Pensacola Beach and rule by rule;
+  7. the template: the exact text of each pattern, with and without break type, bottom and the
+     directions, and every spot in the committed roster passing the output check.
 
-The model and Supabase are fakes. Every expected value is written by hand; none is obtained by calling
+Supabase is a fake. Every expected value is written by hand; none is obtained by calling
 the function under test.
 """
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
-import math
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -40,9 +43,9 @@ STEAMER_PAYLOAD = {"name": "Steamer Lane", "state": "California", "break_type": 
                    "bottom": "rock", "faces": "SE", "orientation_deg": 128,
                    "offshore_wind_from": "NW", "offshore_wind_deg": 308, "tide_preference": "all",
                    "optimal_swell_from": "SW"}
-# 'v2:' + sha1("3\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
-STEAMER_V2 = "v2:6a01ee8c53a9e540"
-STEAMER_V2_LEFT_OUT = "v2:ea9b0d001f8d3118"   # the same with break_type and bottom left out
+# 'v2:' + sha1("t1\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
+STEAMER_V2 = "v2:98f76133915fd7cc"
+STEAMER_V2_LEFT_OUT = "v2:7b1c37dc2da0d400"   # the same with break_type and bottom left out
 
 
 # --------------------------------------------------------------------------- #
@@ -146,36 +149,29 @@ def test_the_signature_ignores_key_order():
     assert Dn.description_signature(dict(reversed(list(STEAMER_PAYLOAD.items())))) == STEAMER_V2
 
 
-def test_the_prompt_version_is_in_the_signature(monkeypatch):
-    monkeypatch.setattr(Dn, "PROMPT_VERSION", "4")
-    expected = "v2:" + hashlib.sha1(("4\n" + json.dumps(
+def test_the_template_version_is_in_the_signature(monkeypatch):
+    monkeypatch.setattr(Dn, "TEMPLATE_VERSION", "t2")
+    expected = "v2:" + hashlib.sha1(("t2\n" + json.dumps(
         STEAMER_PAYLOAD, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     ).encode()).hexdigest()[:16]
     assert Dn.description_signature(STEAMER_PAYLOAD) == expected != STEAMER_V2
 
 
-def test_the_prompt_cannot_change_without_a_new_version():
-    """Edit SYSTEM_PROMPT and this fails: bump PROMPT_VERSION, then record the new fingerprint."""
-    assert (Dn.PROMPT_VERSION, hashlib.sha1(Dn.SYSTEM_PROMPT.encode()).hexdigest()[:12]) == (
-        "3", "8422d63f683f")
+def template_source():
+    return ("".join(inspect.getsource(f) for f in (Dn._an, Dn._sentence, Dn._facts, *Dn.PATTERNS))
+            + repr(Dn.DIRECTION_WORDS) + repr(Dn.BREAK_WORDS) + Dn.NO_BREAK_TYPE)
 
 
-def test_the_prompt_says_to_state_only_what_is_given():
-    p = Dn.SYSTEM_PROMPT
-    assert "Mention only the fields that are given" in p
-    assert "Say nothing at all about a field that is not given" in p
-    assert "do not mention that it is missing, unknown or unspecified" in p
-    assert "If break_type is not given, call it a surf spot" in p
-    assert "using ONLY the facts in the metadata" in p
-    assert ("Never add anything from general knowledge: no place names, regions, islands, "
-            "coastlines, shores, nearby towns or landmarks other than the given name and state, "
-            "and no other details.") in p
-    assert "swell window" not in p
+def test_the_template_cannot_change_without_a_new_version():
+    """Edit the template's wording and this fails: bump TEMPLATE_VERSION, then record the new
+    fingerprint. Every description written by the old wording is then rewritten."""
+    assert (Dn.TEMPLATE_VERSION, hashlib.sha1(template_source().encode()).hexdigest()[:12]) == (
+        "t1", "660fb9d501c2")
 
 
 def test_is_v2():
-    assert Dn.is_v2("v2:6a01ee8c53a9e540") and Dn.is_v2("v2:")
-    for sig in ("6a01ee8c53a9e540", None, "", "V2:abc", 2):
+    assert Dn.is_v2("v2:98f76133915fd7cc") and Dn.is_v2("v2:")
+    for sig in ("98f76133915fd7cc", None, "", "V2:abc", 2):
         assert not Dn.is_v2(sig), sig
 
 
@@ -183,7 +179,8 @@ def test_the_generator_and_db_import_share_one_builder():
     from pipeline import db_import
     assert GD.description_payload is Dn.description_payload is db_import.description_payload
     assert GD.description_signature is Dn.description_signature is db_import.description_signature
-    assert GD.SYSTEM_PROMPT is Dn.SYSTEM_PROMPT and GD.MODEL == "claude-sonnet-4-6"
+    assert GD.render is Dn.render and GD.pattern_for is Dn.pattern_for
+    assert not hasattr(GD, "MODEL") and not hasattr(Dn, "SYSTEM_PROMPT")
 
 
 # --------------------------------------------------------------------------- #
@@ -211,9 +208,9 @@ def test_each_spot_gets_its_action_and_reason(no_exclusions):
     roster = GD.roster_spots([spot("New"), spot("Old"), spot("Changed"), spot("Same"),
                               spot("Unwritten")])
     same_sig = "v2:" + hashlib.sha1(
-        b'3\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
+        b't1\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
     unwritten_sig = "v2:" + hashlib.sha1(
-        b'3\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
+        b't1\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
     ).hexdigest()[:16]
     cache = {"old": {"description": "t", "signature": "0123456789abcdef"},
              "changed": {"description": "t", "signature": "v2:0000000000000000"},
@@ -267,36 +264,6 @@ def test_a_contradiction_is_named_with_the_current_value_and_source():
     assert GD.contradiction("A beach break.", {"name": "X"}) is None
 
 
-def test_the_cost_estimate():
-    payload = {"name": "A"}
-    tokens_in = math.ceil((len(Dn.SYSTEM_PROMPT) + len('{"name": "A"}')) / 3.5)
-    calls, tin, tout, usd = GD.estimate([payload, payload])
-    assert (calls, tin, tout) == (2, tokens_in, 90)
-    assert usd == pytest.approx((2 * tokens_in * 3.00 + 2 * 90 * 15.00) / 1_000_000)
-    assert GD.estimate([]) == (0, 0, 90, 0.0)
-
-
-# --------------------------------------------------------------------------- #
-# 4 — the modes                                                                #
-# --------------------------------------------------------------------------- #
-class FakeClaude:
-    """Answers '"About <name>."' (which passes the output check for a payload with no break type),
-    or the next of the scripted replies for that name."""
-
-    def __init__(self, fail=(), replies=None):
-        self.calls, self.fail = [], set(fail)
-        self.replies = {k: list(v) for k, v in (replies or {}).items()}
-        self.messages = SimpleNamespace(create=self.create)
-
-    def create(self, **kw):
-        self.calls.append(kw)
-        name = json.loads(kw["messages"][0]["content"])["name"]
-        if name in self.fail:
-            raise RuntimeError("boom")
-        text = self.replies[name].pop(0) if self.replies.get(name) else f'"About {name}."'
-        return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)])
-
-
 class FakeDB:
     """The spots table: update().eq().execute() and select('*').range().execute()."""
 
@@ -345,7 +312,7 @@ class FakeQuery:
 
 def sig_of(name):
     """The v2 signature of spot(name)'s payload, written out and hashed with hashlib."""
-    return "v2:" + hashlib.sha1(('3\n{"faces":"NW","name":"%s","orientation_deg":315,'
+    return "v2:" + hashlib.sha1(('t1\n{"faces":"NW","name":"%s","orientation_deg":315,'
                                  '"state":"Hawaii"}' % name).encode()).hexdigest()[:16]
 
 
@@ -363,54 +330,91 @@ def forbid(monkeypatch, *names):
         monkeypatch.setattr(GD, n, lambda *a, _n=n, **k: pytest.fail(f"{_n} was called"))
 
 
-def test_the_dry_run_calls_nothing_and_writes_nothing(tmp_path, monkeypatch, capsys, no_exclusions):
+def text_of(name, pattern):
+    """What the template writes for spot(name): Hawaii, facing northwest, nothing else known.
+    Written out by hand for each of the three patterns."""
+    return {0: f"{name} is a surf spot in Hawaii. It faces northwest.",
+            1: f"{name} is a Hawaii surf spot. It faces northwest.",
+            2: f"Facing northwest, {name} is a surf spot in Hawaii."}[pattern]
+
+
+# Which pattern each slug used below gets: sha1(slug) mod 3, computed with hashlib directly.
+#   a 1, b 0, c 2, new 2, old 1, same 1, unwritten 0, banzai-pipeline 1, pensacola-beach 2,
+#   aviones 0, waimea-bay 2, steamer-lane 1
+
+
+def test_the_pattern_picks_are_pinned():
+    picks = {"a": 1, "b": 0, "c": 2, "new": 2, "old": 1, "same": 1, "unwritten": 0,
+             "banzai-pipeline": 1, "pensacola-beach": 2, "aviones": 0, "waimea-bay": 2,
+             "steamer-lane": 1}
+    assert {slug: Dn.pattern_for(slug) for slug in picks} == picks
+
+
+def test_the_dry_run_writes_nothing_and_prints_every_final_text(tmp_path, monkeypatch, capsys,
+                                                                no_exclusions):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    forbid(monkeypatch, "anthropic_client", "get_client", "save_json")
+    forbid(monkeypatch, "get_client", "save_json", "push")
     spots = [spot("Banzai Pipeline", break_type="reef", break_type_source="researched",
                   bottom="rock", bottom_source="model_recall", tide_preference="low"),
              spot("Same"), spot("Gone", is_valid_surf_spot=False)]
     cache = {"banzai-pipeline": {"description": "Banzai Pipeline is a beach break.",
                                  "signature": "0123456789abcdef"},
-             "same": {"description": "Same is a surf spot.", "signature": sig_of("Same")},
+             "same": {"description": text_of("Same", 1), "signature": sig_of("Same")},
              "renamed": {"description": "x", "signature": "v2:x"}}
     roster, out = write(tmp_path, spots, cache)
     before = out.read_bytes()
     assert GD.main(["--dry-run", "--input", str(roster), "--output", str(out)]) == 0
     assert out.read_bytes() == before and not (tmp_path / "cache.json.tmp").exists()
-    lines = capsys.readouterr().out.splitlines()
-    assert lines[:7] == [
+    assert capsys.readouterr().out.splitlines() == [
         "[generate] banzai-pipeline — written before signature v2",
         "    states:   break_type reef (researched)",
         "    left out: bottom rock (model_recall), tide_preference low (no source)",
         "    current text contradicts: says beach; break_type is now reef (researched)",
-        "    current text check: FAIL — does not state the break type 'reef'; names another "
-        "break type: beach",
         '    payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", '
         '"faces": "NW", "orientation_deg": 315}',
-        "[keep] same — current; current text check: pass",
-    ]
-    tokens_in = math.ceil((len(Dn.SYSTEM_PROMPT) + len(
-        '{"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", "faces": "NW", '
-        '"orientation_deg": 315}')) / 3.5)
-    usd = (tokens_in * 3.00 + 90 * 15.00) / 1_000_000
-    assert lines[7:] == [
+        "    pattern:  1",
+        "    check:    pass",
+        "    final:    Banzai Pipeline is a Hawaii reef break. It faces northwest.",
+        "[keep] same — current",
+        "    final:    Same is a Hawaii surf spot. It faces northwest.",
         "",
         "TOTALS",
         "  spots in the roster:              2",
-        "  to generate:                      1",
+        "  to write:                         1",
         "      written before signature v2: 1",
         "  to write to Supabase only:        0",
         "  unchanged:                        1",
         "  orphan cache entries to prune:    1 (renamed)",
         "  current texts contradicting the break type: 1",
-        "  current texts failing the output check against the new payload: 1 of 2",
+        "  new texts failing the output check (would be rejected): 0",
+        "  patterns among the texts to write: 1 x1",
         "  break_type left out:      not set 1",
         "  bottom left out:          model_recall 1, not set 1",
         "  tide_preference left out: no source 1, not set 1",
-        f"  estimate: 1 call(s) x ~{tokens_in} input + ~90 output tokens = about ${usd:.2f} on "
-        "claude-sonnet-4-6 at $3.00 / $15.00 per million tokens (from character counts, not a "
-        "token count)",
     ]
+
+
+def bad_render(bad_slug):
+    """The template, except that *bad_slug* gets a text the output check rejects."""
+    real = Dn.render
+    return lambda payload, slug: "Wait." if slug == bad_slug else real(payload, slug)
+
+
+def test_the_dry_run_shows_a_text_the_check_would_reject(tmp_path, monkeypatch, capsys,
+                                                         no_exclusions):
+    monkeypatch.setattr(GD, "render", bad_render("a"))
+    cache = {"a": {"description": "A was here.", "signature": "0123456789abcdef"}}
+    roster, out = write(tmp_path, [spot("A"), spot("B")], cache)
+    assert GD.main(["--dry-run", "--input", str(roster), "--output", str(out)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[4:7] == [
+        "    pattern:  1",
+        "    check:    FAIL — self-talk or meta text: 'wait'; does not include the spot's name",
+        "    final:    (unchanged) A was here.",
+    ]
+    assert "    final:    B is a surf spot in Hawaii. It faces northwest." in lines
+    assert "  new texts failing the output check (would be rejected): 1" in lines
+    assert "  patterns among the texts to write: 0 x1, 1 x1" in lines
 
 
 def sample_roster():
@@ -419,9 +423,7 @@ def sample_roster():
 
 def test_the_sample_writes_its_own_file_and_nothing_else(tmp_path, monkeypatch, capsys,
                                                           no_exclusions):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-    claude = FakeClaude()
-    monkeypatch.setattr(GD, "anthropic_client", lambda: claude)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     forbid(monkeypatch, "get_client", "push", "reconcile")
     roster, out = write(tmp_path, sample_roster(), {"other": {"description": "x", "signature": "y"}})
     before = out.read_bytes()
@@ -435,156 +437,171 @@ def test_the_sample_writes_its_own_file_and_nothing_else(tmp_path, monkeypatch, 
                                   "pensacola-beach", "agate-beach", "aviones", "seaside-reef"])
     assert got["aviones"] == {"name": "Aviones", "payload": {"name": "Aviones", "state": "Hawaii",
                                                              "faces": "NW", "orientation_deg": 315},
-                              "signature": sig_of("Aviones"), "description": "About Aviones.",
-                              "attempts": [{"reply": "About Aviones.", "check": "pass"}]}
-    assert len(claude.calls) == 10
-    assert claude.calls[0] == {"model": "claude-sonnet-4-6", "max_tokens": 200,
-                               "system": Dn.SYSTEM_PROMPT,
-                               "messages": [{"role": "user", "content":
-                                             '{"name": "Banzai Pipeline", "state": "Hawaii", '
-                                             '"faces": "NW", "orientation_deg": 315}'}]}
+                              "pattern": 0, "check": "pass", "signature": sig_of("Aviones"),
+                              "description": text_of("Aviones", 0)}
     printed = capsys.readouterr().out
-    assert "== Banzai Pipeline (banzai-pipeline)\n   left out: break_type not set, bottom not set, " \
-           "tide_preference not set\n" \
-           '   payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "faces": "NW", ' \
-           '"orientation_deg": 315}\n   try 1 check: pass\n   About Banzai Pipeline.\n\n' in printed
+    assert ("== Banzai Pipeline (banzai-pipeline)\n"
+            "   left out: break_type not set, bottom not set, tide_preference not set\n"
+            '   payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "faces": "NW", '
+            '"orientation_deg": 315}\n'
+            "   pattern 1, check: pass\n"
+            "   Banzai Pipeline is a Hawaii surf spot. It faces northwest.\n\n") in printed
     assert printed.endswith(f"10 sample description(s) written to {sample}; nothing else was "
                             "written.\n")
 
 
-def test_a_sample_spot_missing_from_the_roster_stops_before_any_call(tmp_path, monkeypatch,
-                                                                      no_exclusions):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-    claude = FakeClaude()
-    monkeypatch.setattr(GD, "anthropic_client", lambda: claude)
+def test_a_sample_spot_missing_from_the_roster_stops_before_writing(tmp_path, no_exclusions):
     roster, out = write(tmp_path, sample_roster()[1:])
     sample = tmp_path / "sample.json"
     assert GD.main(["--sample", "--input", str(roster), "--output", str(out),
                     "--sample-output", str(sample)]) == 2
-    assert claude.calls == [] and not sample.exists()
+    assert not sample.exists()
 
 
-def full(tmp_path, monkeypatch, spots, cache, db, claude=None, extra=()):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-    claude = claude or FakeClaude()
-    monkeypatch.setattr(GD, "anthropic_client", lambda: claude)
+def test_the_sample_reports_a_rejected_text(tmp_path, monkeypatch, capsys, no_exclusions):
+    monkeypatch.setattr(GD, "render", bad_render("pensacola-beach"))
+    roster, out = write(tmp_path, sample_roster())
+    sample = tmp_path / "sample.json"
+    assert GD.main(["--sample", "--input", str(roster), "--output", str(out),
+                    "--sample-output", str(sample)]) == 1
+    got = json.loads(sample.read_text())["pensacola-beach"]
+    fail = "FAIL — self-talk or meta text: 'wait'; does not include the spot's name"
+    assert (got["check"], got["signature"], got["description"]) == (fail, None, None)
+    printed = capsys.readouterr().out
+    assert (f"   pattern 2, check: {fail}\n   Wait.\n"
+            "   REJECTED: a full run would keep the existing description\n") in printed
+    assert printed.endswith("rejected by the output check: pensacola-beach\n")
+    assert not out.exists()
+
+
+def full(tmp_path, monkeypatch, spots, cache, db, extra=()):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setattr(GD, "get_client", lambda: db)
     roster, out = write(tmp_path, spots, cache)
     rc = GD.main(["--input", str(roster), "--output", str(out), *extra])
-    return rc, json.loads(out.read_text()), claude
+    return rc, json.loads(out.read_text())
 
 
-def test_the_full_run_writes_what_it_generates_prunes_orphans_and_keeps_the_rest(
+def test_the_full_run_writes_what_changed_prunes_orphans_and_keeps_the_rest(
         tmp_path, monkeypatch, no_exclusions):
     spots = [spot("New"), spot("Old"), spot("Same")]
     cache = {"old": {"description": "Old is a beach break.", "signature": "0123456789abcdef"},
-             "same": {"description": "Same text.", "signature": sig_of("Same")},
+             "same": {"description": text_of("Same", 1), "signature": sig_of("Same")},
              "renamed": {"description": "x", "signature": "v2:x"}}
     db = FakeDB([{"slug": "new"}, {"slug": "old", "description": "Old is a beach break."},
-                 {"slug": "same", "description": "Same text.",
+                 {"slug": "same", "description": text_of("Same", 1),
                   "description_signature": sig_of("Same")}])
-    rc, got, claude = full(tmp_path, monkeypatch, spots, cache, db)
+    rc, got = full(tmp_path, monkeypatch, spots, cache, db)
     assert rc == 0
-    assert got == {"new": {"description": "About New.", "signature": sig_of("New")},
-                   "old": {"description": "About Old.", "signature": sig_of("Old")},
-                   "same": {"description": "Same text.", "signature": sig_of("Same")}}
+    assert got == {"new": {"description": text_of("New", 2), "signature": sig_of("New")},
+                   "old": {"description": text_of("Old", 1), "signature": sig_of("Old")},
+                   "same": {"description": text_of("Same", 1), "signature": sig_of("Same")}}
     assert db.updates == [
-        ("new", {"description": "About New.", "description_signature": sig_of("New")}),
-        ("old", {"description": "About Old.", "description_signature": sig_of("Old")})]
-    assert [json.loads(c["messages"][0]["content"])["name"] for c in claude.calls] == ["New", "Old"]
+        ("new", {"description": text_of("New", 2), "description_signature": sig_of("New")}),
+        ("old", {"description": text_of("Old", 1), "description_signature": sig_of("Old")})]
 
 
 def test_nothing_is_written_when_nothing_changed(tmp_path, monkeypatch, no_exclusions):
-    cache = {"same": {"description": "Same text.", "signature": sig_of("Same")}}
-    db = FakeDB([{"slug": "same", "description": "Same text.",
+    cache = {"same": {"description": text_of("Same", 1), "signature": sig_of("Same")}}
+    db = FakeDB([{"slug": "same", "description": text_of("Same", 1),
                   "description_signature": sig_of("Same")}])
-    rc, got, claude = full(tmp_path, monkeypatch, [spot("Same")], cache, db)
-    assert (rc, got, claude.calls, db.updates) == (0, cache, [], [])
+    rc, got = full(tmp_path, monkeypatch, [spot("Same")], cache, db)
+    assert (rc, got, db.updates) == (0, cache, [])
 
 
-def test_an_unwritten_description_is_kept_and_written_next_run_without_regenerating(
-        tmp_path, monkeypatch, no_exclusions):
+def test_an_unwritten_description_is_kept_and_written_next_run(tmp_path, monkeypatch,
+                                                                no_exclusions):
     db = FakeDB([{"slug": "a"}, {"slug": "b"}], fail={"b"})
-    rc, got, _ = full(tmp_path, monkeypatch, [spot("A"), spot("B")], {}, db)
+    rc, got = full(tmp_path, monkeypatch, [spot("A"), spot("B")], {}, db)
     assert rc == 1
-    assert got["b"] == {"description": "About B.", "signature": sig_of("B"), "pushed": False}
-    assert got["a"] == {"description": "About A.", "signature": sig_of("A")}
+    assert got["b"] == {"description": text_of("B", 0), "signature": sig_of("B"), "pushed": False}
+    assert got["a"] == {"description": text_of("A", 1), "signature": sig_of("A")}
 
     db.fail.clear()
-    rc, got, claude = full(tmp_path, monkeypatch, [spot("A"), spot("B")], got, db)
-    assert rc == 0 and claude.calls == []
-    assert got["b"] == {"description": "About B.", "signature": sig_of("B")}
-    assert db.updates[-1] == ("b", {"description": "About B.", "description_signature": sig_of("B")})
+    rc, got = full(tmp_path, monkeypatch, [spot("A"), spot("B")], got, db)
+    assert rc == 0
+    assert got["b"] == {"description": text_of("B", 0), "signature": sig_of("B")}
+    assert db.updates[-1] == ("b", {"description": text_of("B", 0),
+                                    "description_signature": sig_of("B")})
 
 
 def test_a_spot_with_no_row_yet_is_kept_unwritten(tmp_path, monkeypatch, no_exclusions):
-    rc, got, _ = full(tmp_path, monkeypatch, [spot("A")], {}, FakeDB([]))
+    rc, got = full(tmp_path, monkeypatch, [spot("A")], {}, FakeDB([]))
     assert rc == 1 and got["a"]["pushed"] is False
 
 
 def test_the_run_resumes_where_it_stopped(tmp_path, monkeypatch, no_exclusions):
     spots = [spot("A"), spot("B"), spot("C")]
     db = FakeDB([{"slug": "a"}, {"slug": "b"}, {"slug": "c"}])
-    rc, got, claude = full(tmp_path, monkeypatch, spots, {}, db, extra=("--limit", "2"))
-    assert rc == 0 and sorted(got) == ["a", "b"] and len(claude.calls) == 2
-    rc, got, claude = full(tmp_path, monkeypatch, spots, got, db)
+    rc, got = full(tmp_path, monkeypatch, spots, {}, db, extra=("--limit", "2"))
+    assert rc == 0 and sorted(got) == ["a", "b"]
+    db.updates.clear()
+    rc, got = full(tmp_path, monkeypatch, spots, got, db)
     assert rc == 0 and sorted(got) == ["a", "b", "c"]
-    assert [json.loads(c["messages"][0]["content"])["name"] for c in claude.calls] == ["C"]
-
-
-def test_a_failed_generation_fails_the_run_and_is_retried_next_time(tmp_path, monkeypatch,
-                                                                     no_exclusions):
-    db = FakeDB([{"slug": "a"}, {"slug": "b"}])
-    rc, got, _ = full(tmp_path, monkeypatch, [spot("A"), spot("B")], {}, db,
-                      claude=FakeClaude(fail={"A"}))
-    assert rc == 1 and sorted(got) == ["b"]
-    rc, got, claude = full(tmp_path, monkeypatch, [spot("A"), spot("B")], got, db)
-    assert rc == 0 and len(claude.calls) == 1 and sorted(got) == ["a", "b"]
+    assert db.updates == [("c", {"description": text_of("C", 2),
+                                 "description_signature": sig_of("C")})]
 
 
 def test_the_reconcile_puts_back_a_row_a_concurrent_run_reverted(tmp_path, monkeypatch,
                                                                   no_exclusions):
     """A forecast-pipeline run that read the row before the generator wrote it upserts the old text
-    and the version-1 signature back. The cache is current, so the spot is not regenerated, but the
+    and the version-1 signature back. The cache is current, so the spot is not rewritten, but the
     reconcile sees the row differ and writes it again."""
-    cache = {"same": {"description": "Same text.", "signature": sig_of("Same")}}
+    cache = {"same": {"description": text_of("Same", 1), "signature": sig_of("Same")}}
     db = FakeDB([{"slug": "same", "description": "Same is a beach break.",
                   "description_signature": "0123456789abcdef"}])
-    rc, _got, claude = full(tmp_path, monkeypatch, [spot("Same")], cache, db)
-    assert rc == 0 and claude.calls == []
-    assert db.updates == [("same", {"description": "Same text.",
+    rc, _got = full(tmp_path, monkeypatch, [spot("Same")], cache, db)
+    assert rc == 0
+    assert db.updates == [("same", {"description": text_of("Same", 1),
                                     "description_signature": sig_of("Same")})]
 
 
 def test_the_reconcile_also_compares_the_text(tmp_path, monkeypatch, no_exclusions):
-    """The signature matches but the text in the table is not the cached one (edited by hand, or a
-    write that landed half): the cache's text is written back."""
-    cache = {"same": {"description": "Same text.", "signature": sig_of("Same")}}
+    cache = {"same": {"description": text_of("Same", 1), "signature": sig_of("Same")}}
     db = FakeDB([{"slug": "same", "description": "Edited in the table.",
                   "description_signature": sig_of("Same")}])
-    rc, _got, claude = full(tmp_path, monkeypatch, [spot("Same")], cache, db)
-    assert rc == 0 and claude.calls == []
-    assert db.updates == [("same", {"description": "Same text.",
+    rc, _got = full(tmp_path, monkeypatch, [spot("Same")], cache, db)
+    assert rc == 0
+    assert db.updates == [("same", {"description": text_of("Same", 1),
                                     "description_signature": sig_of("Same")})]
 
 
-def test_no_db_keeps_everything_unwritten_and_never_opens_supabase(tmp_path, monkeypatch,
-                                                                    no_exclusions):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-    monkeypatch.setattr(GD, "anthropic_client", lambda: FakeClaude())
+def test_no_db_needs_no_key_keeps_everything_unwritten_and_never_opens_supabase(
+        tmp_path, monkeypatch, no_exclusions):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     forbid(monkeypatch, "get_client")
     roster, out = write(tmp_path, [spot("A")], {})
     assert GD.main(["--no-db", "--input", str(roster), "--output", str(out)]) == 0
     assert json.loads(out.read_text()) == {
-        "a": {"description": "About A.", "signature": sig_of("A"), "pushed": False}}
+        "a": {"description": text_of("A", 1), "signature": sig_of("A"), "pushed": False}}
 
 
-def test_without_a_key_only_the_dry_run_works(tmp_path, monkeypatch, no_exclusions):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    forbid(monkeypatch, "anthropic_client", "get_client")
-    roster, out = write(tmp_path, [spot("A")], {})
-    assert GD.main(["--input", str(roster), "--output", str(out)]) == 1
-    assert GD.main(["--sample", "--input", str(roster), "--output", str(out)]) == 1
+def test_a_rejected_text_keeps_the_description_and_gets_no_signature(tmp_path, monkeypatch,
+                                                                     capsys, no_exclusions):
+    """The cache entry and the table row are left exactly as they were, the run fails, and the
+    end-of-run report names the spot. The other spot is written as usual."""
+    monkeypatch.setattr(GD, "render", bad_render("pensacola-beach"))
+    spots = [spot("Pensacola Beach"), spot("A")]
+    old = {"description": "Pensacola Beach is a beach break.", "signature": "0123456789abcdef"}
+    db = FakeDB([{"slug": "pensacola-beach", "description": old["description"],
+                  "description_signature": old["signature"]}, {"slug": "a"}])
+    rc, got = full(tmp_path, monkeypatch, spots, {"pensacola-beach": dict(old)}, db)
+    assert rc == 1
+    assert got["pensacola-beach"] == old
+    assert db.rows["pensacola-beach"] == {"slug": "pensacola-beach",
+                                          "description": old["description"],
+                                          "description_signature": old["signature"]}
+    assert [slug for slug, _p in db.updates] == ["a"]
+    assert capsys.readouterr().out.splitlines() == [
+        "Output check: 1 spot(s) rejected — existing description kept, no signature written:",
+        "  pensacola-beach — self-talk or meta text: 'wait'; does not include the spot's name",
+        "    text: Wait.",
+    ]
+
+
+def test_a_clean_run_reports_no_rejection(tmp_path, monkeypatch, capsys, no_exclusions):
+    rc, _got = full(tmp_path, monkeypatch, [spot("A")], {}, FakeDB([{"slug": "a"}]))
+    assert rc == 0 and capsys.readouterr().out == "Output check: no spot rejected.\n"
 
 
 # --------------------------------------------------------------------------- #
@@ -712,6 +729,12 @@ def test_a_reef_or_point_given_may_be_stated_loosely():
         "does not state the break type 'beach'"]
 
 
+def test_the_name_is_found_as_whole_words_only():
+    assert GD.check_description("Wait.", {"name": "A"}) == [
+        "self-talk or meta text: 'wait'", "does not include the spot's name"]
+    assert GD.check_description("Lido Beach is a surf spot.", {"name": "Lido"}) == []
+
+
 def test_the_name_is_removed_as_whole_words_only():
     assert GD.check_description("A. Wait for it.", {"name": "A"}) == ["self-talk or meta text: 'wait'"]
     assert GD.check_description("Pools is a surf spot near whirlpools.", {"name": "Pools"}) == []
@@ -737,91 +760,137 @@ def test_the_name_is_read_out_before_the_rules_and_matched_loosely():
                                 {"name": "Atlantic Beach, NC"}) == []
 
 
-def test_generate_checked_retries_once_then_gives_up(no_exclusions):
-    payload = {"name": "A"}
-    claude = FakeClaude(replies={"A": ["A.\n\nWait, A.", "About A."]})
-    assert GD.generate_checked(claude, payload) == ("About A.", [
-        ("A.\n\nWait, A.", ["more than one paragraph (line break)",
-                            "self-talk or meta text: 'wait'"]),
-        ("About A.", [])])
-    claude = FakeClaude(replies={"A": ["B.", "C."]})
-    text, attempts = GD.generate_checked(claude, payload)
-    assert text is None and [r for r, _p in attempts] == ["B.", "C."] and len(claude.calls) == 2
-    claude = FakeClaude()
-    assert GD.generate_checked(claude, payload) == ("About A.", [("About A.", [])])
-    assert len(claude.calls) == 1
+# --------------------------------------------------------------------------- #
+# 7 — the template                                                             #
+# --------------------------------------------------------------------------- #
+FULL = {"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", "bottom": "rock",
+        "faces": "NW", "orientation_deg": 315, "offshore_wind_from": "SE",
+        "offshore_wind_deg": 135, "optimal_swell_from": "N"}
+NO_BOTTOM = {k: v for k, v in FULL.items() if k != "bottom"}
+NO_TYPE = {k: v for k, v in FULL.items() if k != "break_type"}
+NEITHER = {k: v for k, v in FULL.items() if k not in ("break_type", "bottom")}
 
 
-def test_a_rejected_spot_keeps_its_description_and_gets_no_signature(tmp_path, monkeypatch,
-                                                                     capsys, no_exclusions):
-    """Pensacola's reply twice: the cache entry and the table row are left exactly as they were,
-    the run fails, and the end-of-run report names the spot. The other spot is written as usual."""
-    spots = [spot("Pensacola Beach"), spot("A")]
-    old = {"description": "Pensacola Beach is a beach break.", "signature": "0123456789abcdef"}
-    db = FakeDB([{"slug": "pensacola-beach", "description": old["description"],
-                  "description_signature": old["signature"]}, {"slug": "a"}])
-    claude = FakeClaude(replies={"Pensacola Beach": [PENSACOLA_REPLY, PENSACOLA_REPLY]})
-    rc, got, _ = full(tmp_path, monkeypatch, spots, {"pensacola-beach": dict(old)}, db,
-                      claude=claude)
-    assert rc == 1
-    assert got["pensacola-beach"] == old
-    assert db.rows["pensacola-beach"] == {"slug": "pensacola-beach", "description": old["description"],
-                                          "description_signature": old["signature"]}
-    assert [slug for slug, _p in db.updates] == ["a"]
-    assert capsys.readouterr().out.splitlines() == [
-        "Output check: 1 spot(s) rejected after 2 tries — existing description kept, no "
-        "signature written; the next run tries them again:",
-        "  pensacola-beach — more than one paragraph (line break); contains '---'; self-talk or "
-        "meta text: 'I', 'corrected', 'here is', 'instructed', 'revise', 'wait'; mentions an "
-        "absent field: 'No bottom type or tide preference is specified', 'missing'; 88 words "
-        "(at most 80)",
-        "    last reply: Pensacola Beach is a surf spot in Florida that faces south and works best "
-        "with swells from the south. Offshore winds blow from the north, helping to clean up th",
-    ]
+def in_pattern(payload, n):
+    return " ".join(x for x in Dn.PATTERNS[n](Dn._facts(payload)) if x)
 
 
-def test_a_reply_that_passes_on_the_retry_is_written(tmp_path, monkeypatch, capsys, no_exclusions):
-    db = FakeDB([{"slug": "pensacola-beach"}])
-    claude = FakeClaude(replies={"Pensacola Beach": [PENSACOLA_REPLY,
-                                                     "Pensacola Beach faces south."]})
-    rc, got, _ = full(tmp_path, monkeypatch, [spot("Pensacola Beach")], {}, db, claude=claude)
-    assert rc == 0
-    assert got["pensacola-beach"]["description"] == "Pensacola Beach faces south."
-    assert capsys.readouterr().out == "Output check: no spot rejected.\n"
+@pytest.mark.parametrize("payload, n, text", [
+    (FULL, 0, "Banzai Pipeline is a reef break in Hawaii over a rock bottom. It faces northwest, and "
+              "its optimal swell direction is north. Offshore winds blow from the southeast."),
+    (FULL, 1, "Banzai Pipeline is a Hawaii reef break with a rock bottom. It faces northwest, and it "
+              "is offshore in southeast winds. The optimal swell comes from the north."),
+    (FULL, 2, "Facing northwest, Banzai Pipeline is a reef break in Hawaii over a rock bottom. The "
+              "optimal swell comes from the north, and the offshore wind is from the southeast."),
+    (NO_BOTTOM, 0, "Banzai Pipeline is a reef break in Hawaii. It faces northwest, and its optimal "
+                   "swell direction is north. Offshore winds blow from the southeast."),
+    (NO_BOTTOM, 1, "Banzai Pipeline is a Hawaii reef break. It faces northwest, and it is offshore "
+                   "in southeast winds. The optimal swell comes from the north."),
+    (NO_BOTTOM, 2, "Facing northwest, Banzai Pipeline is a reef break in Hawaii. The optimal swell "
+                   "comes from the north, and the offshore wind is from the southeast."),
+    (NO_TYPE, 0, "Banzai Pipeline is a surf spot in Hawaii over a rock bottom. It faces northwest, "
+                 "and its optimal swell direction is north. Offshore winds blow from the southeast."),
+    (NO_TYPE, 1, "Banzai Pipeline is a Hawaii surf spot with a rock bottom. It faces northwest, and "
+                 "it is offshore in southeast winds. The optimal swell comes from the north."),
+    (NO_TYPE, 2, "Facing northwest, Banzai Pipeline is a surf spot in Hawaii over a rock bottom. The "
+                 "optimal swell comes from the north, and the offshore wind is from the southeast."),
+    (NEITHER, 0, "Banzai Pipeline is a surf spot in Hawaii. It faces northwest, and its optimal "
+                 "swell direction is north. Offshore winds blow from the southeast."),
+    (NEITHER, 1, "Banzai Pipeline is a Hawaii surf spot. It faces northwest, and it is offshore in "
+                 "southeast winds. The optimal swell comes from the north."),
+    (NEITHER, 2, "Facing northwest, Banzai Pipeline is a surf spot in Hawaii. The optimal swell "
+                 "comes from the north, and the offshore wind is from the southeast."),
+])
+def test_each_pattern_word_for_word(payload, n, text):
+    assert in_pattern(payload, n) == text
+    assert GD.check_description(text, payload) == []
 
 
-def test_the_sample_shows_each_try_and_its_check(tmp_path, monkeypatch, capsys, no_exclusions):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-    claude = FakeClaude(replies={"Pensacola Beach": [PENSACOLA_REPLY, PENSACOLA_REPLY]})
-    monkeypatch.setattr(GD, "anthropic_client", lambda: claude)
-    forbid(monkeypatch, "get_client", "push", "reconcile")
-    roster, out = write(tmp_path, sample_roster())
-    sample = tmp_path / "sample.json"
-    assert GD.main(["--sample", "--input", str(roster), "--output", str(out),
-                    "--sample-output", str(sample)]) == 1
-    got = json.loads(sample.read_text())["pensacola-beach"]
-    fail = ("FAIL — more than one paragraph (line break); contains '---'; self-talk or meta text: "
-            "'I', 'corrected', 'here is', 'instructed', 'revise', 'wait'; mentions an absent field: "
-            "'No bottom type or tide preference is specified', 'missing'; 88 words (at most 80)")
-    assert (got["description"], got["signature"]) == (None, None)
-    assert got["attempts"] == [{"reply": PENSACOLA_REPLY, "check": fail}] * 2
-    printed = capsys.readouterr().out
-    assert f"   try 1 check: {fail}\n   {PENSACOLA_REPLY}\n   try 2 check: {fail}\n" in printed
-    assert "   REJECTED after 2 tries: a full run would keep the existing description\n" in printed
-    assert printed.endswith("rejected after 2 tries: pensacola-beach\n")
-    assert not out.exists()
+@pytest.mark.parametrize("drop, texts", [
+    ("faces", ("Banzai Pipeline is a reef break in Hawaii over a rock bottom. Its optimal swell "
+               "direction is north. Offshore winds blow from the southeast.",
+               "Banzai Pipeline is a Hawaii reef break with a rock bottom. It is offshore in "
+               "southeast winds. The optimal swell comes from the north.",
+               "Banzai Pipeline is a reef break in Hawaii over a rock bottom. The optimal swell "
+               "comes from the north, and the offshore wind is from the southeast.")),
+    ("optimal_swell_from", ("Banzai Pipeline is a reef break in Hawaii over a rock bottom. It faces "
+                            "northwest. Offshore winds blow from the southeast.",
+                            "Banzai Pipeline is a Hawaii reef break with a rock bottom. It faces "
+                            "northwest, and it is offshore in southeast winds.",
+                            "Facing northwest, Banzai Pipeline is a reef break in Hawaii over a "
+                            "rock bottom. The offshore wind is from the southeast.")),
+    ("offshore_wind_from", ("Banzai Pipeline is a reef break in Hawaii over a rock bottom. It faces "
+                            "northwest, and its optimal swell direction is north.",
+                            "Banzai Pipeline is a Hawaii reef break with a rock bottom. It faces "
+                            "northwest. The optimal swell comes from the north.",
+                            "Facing northwest, Banzai Pipeline is a reef break in Hawaii over a "
+                            "rock bottom. The optimal swell comes from the north.")),
+    ("state", ("Banzai Pipeline is a reef break over a rock bottom. It faces northwest, and its "
+               "optimal swell direction is north. Offshore winds blow from the southeast.",
+               "Banzai Pipeline is a reef break with a rock bottom. It faces northwest, and it is "
+               "offshore in southeast winds. The optimal swell comes from the north.",
+               "Facing northwest, Banzai Pipeline is a reef break over a rock bottom. The optimal "
+               "swell comes from the north, and the offshore wind is from the southeast.")),
+])
+def test_an_absent_field_is_simply_left_out(drop, texts):
+    payload = {k: v for k, v in FULL.items() if k != drop}
+    assert tuple(in_pattern(payload, n) for n in range(3)) == texts
 
 
-def test_the_dry_run_shows_a_current_text_that_fails_the_check(tmp_path, monkeypatch, capsys,
-                                                               no_exclusions):
-    """A spot whose signature is current is kept, but a text that fails the check is still shown,
-    with the failure, rather than as a one-line keep."""
-    cache = {"same": {"description": "Same is a surf spot. Wait, revised.",
-                      "signature": sig_of("Same")}}
-    roster, out = write(tmp_path, [spot("Same")], cache)
-    assert GD.main(["--dry-run", "--input", str(roster), "--output", str(out)]) == 0
-    lines = capsys.readouterr().out.splitlines()
-    assert lines[:2] == ["[keep] same — current",
-                         "    states:   —"]
-    assert "    current text check: FAIL — self-talk or meta text: 'revised', 'wait'" in lines
-    assert "  current texts failing the output check against the new payload: 1 of 1" in lines
+def test_name_and_state_alone():
+    bare = {"name": "Agate Beach", "state": "California"}
+    assert [in_pattern(bare, n) for n in range(3)] == [
+        "Agate Beach is a surf spot in California.", "Agate Beach is a California surf spot.",
+        "Agate Beach is a surf spot in California."]
+    assert [in_pattern({"name": "X"}, n) for n in range(3)] == ["X is a surf spot."] * 3
+
+
+def test_a_and_an():
+    oregon = {"name": "Nye Beach", "state": "Oregon", "break_type": "beach"}
+    assert in_pattern(oregon, 1) == "Nye Beach is an Oregon beach break."
+    assert in_pattern(oregon, 0) == "Nye Beach is a beach break in Oregon."
+    assert [Dn._an(w) for w in ("Oregon", "Indiana", "Hawaii", "reef break", "")] == [
+        "an", "an", "a", "a", "a"]
+
+
+@pytest.mark.parametrize("break_type, bottom, words", [
+    ("beach", "sand", "a beach break in Florida over a sand bottom"),
+    ("point", "cobble", "a point break in Florida over a cobble bottom"),
+    ("jetty", "sand", "a jetty break in Florida over a sand bottom"),
+    ("rivermouth", "mixed", "a rivermouth break in Florida over a mixed bottom"),
+    ("reef", "coral", "a reef break in Florida over a coral bottom"),
+])
+def test_every_break_type_and_bottom_reads_plainly(break_type, bottom, words):
+    payload = {"name": "Spot", "state": "Florida", "break_type": break_type, "bottom": bottom}
+    assert in_pattern(payload, 0) == f"Spot is {words}."
+    assert GD.check_description(in_pattern(payload, 0), payload) == []
+
+
+def test_every_direction_has_its_word():
+    for code, word in [("N", "north"), ("NE", "northeast"), ("E", "east"), ("SE", "southeast"),
+                       ("S", "south"), ("SW", "southwest"), ("W", "west"), ("NW", "northwest")]:
+        assert in_pattern({"name": "X", "faces": code}, 0) == f"X is a surf spot. It faces {word}."
+
+
+def test_render_uses_the_slugs_pattern():
+    assert Dn.render(FULL, "banzai-pipeline") == in_pattern(FULL, 1)
+    assert Dn.render(FULL, "aviones") == in_pattern(FULL, 0)
+    assert Dn.render(FULL, "pensacola-beach") == in_pattern(FULL, 2)
+
+
+def test_the_tide_is_never_stated():
+    with_tide = dict(FULL, tide_preference="low")
+    assert [in_pattern(with_tide, n) for n in range(3)] == [in_pattern(FULL, n) for n in range(3)]
+
+
+def test_every_spot_in_the_committed_roster_passes_the_check():
+    """The template against the real roster: no text the full run would reject, none mentions
+    tide or the swell window, and each names exactly the break type its payload gives."""
+    roster = GD.roster_spots(json.loads(
+        (ROOT / "pipeline" / "spots_enriched.json").read_text(encoding="utf-8")))
+    assert len(roster) >= 600
+    for slug, s in roster.items():
+        payload = Dn.description_payload(Dn.spot_fields(s))
+        text = Dn.render(payload, slug)
+        assert GD.check_description(text, payload) == [], (slug, text)
+        assert "tide" not in text.lower() and "window" not in text.lower(), (slug, text)
