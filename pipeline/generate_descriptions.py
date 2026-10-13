@@ -13,11 +13,12 @@ matches the roster, and leaves anything older alone.
 
 MODES
   --dry-run   No API calls and no writes. One block per spot: what would happen and why, what the
-              payload states and leaves out, and whether the current text contradicts the break type.
-              Then totals and a cost estimate.
+              payload states and leaves out, whether the current text contradicts the break type,
+              and the output check of the current text against the new payload. Then totals and a
+              cost estimate.
   --sample    Generates the ten spots in SAMPLE_SPOTS and writes them to a separate file
               (--sample-output) only — never to the cache, never to Supabase. Prints each with its
-              payload.
+              payload and every try with its output check.
   (default)   The full run. Resumable: the cache is saved every SAVE_EVERY generations and a rerun
               skips every spot whose cached signature is current. Each description is written to
               Supabase as soon as it is generated; one that could not be written is kept in the cache
@@ -26,6 +27,12 @@ MODES
               that a forecast-pipeline run, writing back the row it read before this one changed it,
               put back while this was running. Only the rows this run touched are written; nothing
               else in the cache is pushed. Cache entries for spots no longer in the roster are pruned.
+
+THE OUTPUT CHECK. Every reply goes through check_description before anything is saved or written:
+one paragraph, no self-talk, nothing about absent fields, at most MAX_WORDS words, the spot's name,
+and the break type stated exactly when the payload gives one. A failing reply is retried once with
+the same payload; a spot that fails twice keeps its existing description and gets no signature, is
+listed in the end-of-run report, and is tried again on the next run.
 
 CLI:
     python -m pipeline.generate_descriptions --dry-run > dry_run.txt
@@ -49,6 +56,7 @@ import math
 import os
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 from .config import DEFAULT_ENRICHED_OUTPUT
@@ -192,6 +200,98 @@ def contradiction(text, spot):
             f"({spot.get('break_type_source') or 'no source'})")
 
 
+# --------------------------------------------------------------------------- #
+# The output check                                                             #
+# --------------------------------------------------------------------------- #
+# WHY. A sample run saved this as Pensacola Beach's description: a first paragraph that named the
+# missing fields, then "---", then "Wait, I need to revise — I was instructed not to mention missing
+# fields. Here is the corrected version:" and a second description. Nothing between the model and
+# the cache looked at the reply. check_description does, and a reply that fails it is retried once
+# and then dropped: the spot keeps its existing description and gets no new signature, so the next
+# run tries again.
+MAX_WORDS = 80
+_APOSTROPHES = str.maketrans({"’": "'", "ʻ": "'", "‘": "'", "`": "'"})
+_SELF_TALK = re.compile(
+    r"\b(?:wait|revis(?:e|ed|es|ing|ion)|correct(?:ed|ion)|instruct(?:ed|ion|ions)|"
+    r"here is|here's|metadata|payload)\b", re.I)
+_FIRST_PERSON = re.compile(r"\bI(?:'m|'ve|'ll|'d)?\b")          # case-sensitive: the pronoun
+_ABSENT = re.compile(
+    r"\bnot (?:specified|provided|given|available|listed|known|included|stated)\b"
+    r"|\b(?:unspecified|unknown|missing)\b"
+    r"|\bno (?:data|information|details)\b"
+    r"|\bno\b[^.;]{0,60}?\b(?:is|are|was|were|has been|have been)\s+"
+    r"(?:specified|provided|given|available|listed|known|included|stated)\b", re.I)
+# A break type NAMED as such: what must be absent when break_type is not in the payload.
+_NAMED_TYPES = {
+    "beach": r"\bbeach[- ]?breaks?\b",
+    "reef": r"\breef[- ]?breaks?\b",
+    "point": r"\bpoint[- ]?breaks?\b",
+    "jetty": r"\bjett(?:y|ies)\b",
+    "rivermouth": r"\briver[- ]?mouths?\b",
+}
+# How a description may state the break type it was given. Wider than _NAMED_TYPES for reef and
+# point ("breaks over a shallow reef", "a right-hand point"), since the name is stripped first.
+_STATES_TYPE = dict(_NAMED_TYPES, reef=r"\breef\b", point=r"\bpoint\b")
+
+
+def _fold(text):
+    """Lower case, no accents, no apostrophes, other punctuation as spaces: 'Hoʻokipa' matches
+    "Ho'okipa", 'Surf City NJ' matches 'Surf City, NJ', 'St Simons' matches 'St. Simons'."""
+    t = unicodedata.normalize("NFKD", (text or "").translate(_APOSTROPHES))
+    t = "".join(c for c in t if not unicodedata.combining(c)).replace("'", "")
+    return " ".join(re.sub(r"[^\w\s]", " ", t.lower()).split())
+
+
+def _without_name(text, name):
+    """*text* with the spot's name removed, so 'Avalon Jetty' or 'Ali'i' are not read as words."""
+    body = (text or "").translate(_APOSTROPHES)
+    for n in sorted({name or "", (name or "").split(",")[0]}, key=len, reverse=True):
+        if n:
+            # whole words only: removing "Pools" must not eat into "whirlpools"
+            body = re.sub(r"(?<!\w)" + re.escape(n.translate(_APOSTROPHES)) + r"(?!\w)", " ",
+                          body, flags=re.I)
+    return body
+
+
+def check_description(text, payload):
+    """Every way *text* fails as the description of *payload*, one short phrase each; [] passes."""
+    problems = []
+    name = payload.get("name") or ""
+    if "\n" in text or "\r" in text:
+        problems.append("more than one paragraph (line break)")
+    if "---" in text:
+        problems.append("contains '---'")
+    body = _without_name(text, name)
+    talk = sorted({m.group(0).lower() for m in _SELF_TALK.finditer(body)}
+                  | {m.group(0) for m in _FIRST_PERSON.finditer(body)})
+    if talk:
+        problems.append("self-talk or meta text: " + ", ".join(repr(t) for t in talk))
+    absent = [m.group(0) for m in _ABSENT.finditer(body)]
+    if absent:
+        problems.append("mentions an absent field: " + ", ".join(repr(a) for a in absent))
+    words = len(text.split())
+    if words > MAX_WORDS:
+        problems.append(f"{words} words (at most {MAX_WORDS})")
+    folded = _fold(text)
+    if not any(_fold(n) and _fold(n) in folded for n in (name, name.split(",")[0])):
+        problems.append("does not include the spot's name")
+    given = payload.get("break_type")
+    named = sorted(k for k, rx in _NAMED_TYPES.items() if re.search(rx, body, re.I))
+    if given:
+        if not re.search(_STATES_TYPE.get(given, re.escape(given)), body, re.I):
+            problems.append(f"does not state the break type {given!r}")
+        others = [k for k in named if k != given]
+        if others:
+            problems.append("names another break type: " + ", ".join(others))
+    elif named:
+        problems.append("names a break type it was not given: " + ", ".join(named))
+    return problems
+
+
+def check_line(problems):
+    return "pass" if not problems else "FAIL — " + "; ".join(problems)
+
+
 def estimate(payloads):
     """(calls, mean input tokens, output tokens per call, USD) — a character-count estimate."""
     n = len(payloads)
@@ -207,12 +307,15 @@ def estimate(payloads):
 def dry_run_report(items, cache, orphan_slugs):
     lines = []
     counts = {GENERATE: {}, PUSH: 0, KEEP: 0}
-    contradicting = 0
+    contradicting = with_text = failing = 0
     left = {field: {} for field in GATED_FIELDS}
     for slug, spot, payload, _sig, action, reason in items:
         text = (cache.get(slug) or {}).get("description") if isinstance(cache.get(slug), dict) else None
         wrong = contradiction(text, spot) if text else None
         contradicting += bool(wrong)
+        problems = check_description(text, payload) if text else None
+        with_text += problems is not None
+        failing += bool(problems)
         for field in GATED_FIELDS:
             if field not in payload:
                 value = spot.get(field)
@@ -223,8 +326,8 @@ def dry_run_report(items, cache, orphan_slugs):
             counts[GENERATE][reason] = counts[GENERATE].get(reason, 0) + 1
         else:
             counts[action] += 1
-        if action == KEEP and not wrong:
-            lines.append(f"[keep] {slug} — {reason}")
+        if action == KEEP and not wrong and not problems:
+            lines.append(f"[keep] {slug} — {reason}; current text check: pass")
             continue
         lines.append(f"[{action}] {slug} — {reason}")
         stated = [f"{f} {payload[f]} ({spot.get(f + '_source')})"
@@ -233,6 +336,8 @@ def dry_run_report(items, cache, orphan_slugs):
         lines.append(f"    left out: {', '.join(left_out(spot)) or '—'}")
         if wrong:
             lines.append(f"    current text contradicts: {wrong}")
+        lines.append("    current text check: "
+                     + ("no current text" if problems is None else check_line(problems)))
         lines.append(f"    payload:  {user_prompt(payload)}")
     n_gen = sum(counts[GENERATE].values())
     calls, tin, tout, usd = estimate([p for _s, _sp, p, _g, a, _r in items if a == GENERATE])
@@ -247,6 +352,8 @@ def dry_run_report(items, cache, orphan_slugs):
         f"  orphan cache entries to prune:    {len(orphan_slugs)}"
         + (f" ({', '.join(orphan_slugs)})" if orphan_slugs else ""),
         f"  current texts contradicting the break type: {contradicting}",
+        f"  current texts failing the output check against the new payload: {failing} of "
+        f"{with_text}",
         "  break_type left out:      " + _counts(left["break_type"]),
         "  bottom left out:          " + _counts(left["bottom"]),
         "  tide_preference left out: " + _counts(left["tide_preference"]),
@@ -294,6 +401,19 @@ def generate_one(client, payload) -> str:
     if not cleaned:
         raise RuntimeError("empty response")
     return cleaned
+
+
+def generate_checked(client, payload, tries=2):
+    """(text, attempts): the first reply that passes check_description, or None when every try
+    failed. attempts is [(reply, problems)] in order. An API error is raised, not retried here."""
+    attempts = []
+    for _ in range(tries):
+        text = generate_one(client, payload)
+        problems = check_description(text, payload)
+        attempts.append((text, problems))
+        if not problems:
+            return text, attempts
+    return None, attempts
 
 
 # --------------------------------------------------------------------------- #
@@ -364,25 +484,35 @@ def run_sample(roster, out_path: Path, client) -> int:
     if missing:
         log.error("sample spots not in the roster: %s", ", ".join(missing))
         return 2
-    results, failed = {}, 0
+    results, failed, rejected = {}, 0, []
     for name in SAMPLE_SPOTS:
         slug, spot = by_name[name]
         payload = description_payload(spot_fields(spot))
         try:
-            text = generate_one(client, payload)
+            text, attempts = generate_checked(client, payload)
         except Exception:  # noqa: BLE001
             log.exception("%s: generation failed", slug)
             failed += 1
             continue
         results[slug] = {"name": name, "payload": payload,
-                         "signature": description_signature(payload), "description": text}
+                         "signature": description_signature(payload) if text else None,
+                         "description": text,
+                         "attempts": [{"reply": r, "check": check_line(p)} for r, p in attempts]}
         print(f"== {name} ({slug})")
         print(f"   left out: {', '.join(left_out(spot)) or '—'}")
         print(f"   payload:  {user_prompt(payload)}")
-        print(f"   {text}\n", flush=True)
+        for i, (reply, problems) in enumerate(attempts, 1):
+            print(f"   try {i} check: {check_line(problems)}")
+            print(f"   {reply}")
+        if text is None:
+            rejected.append(slug)
+            print("   REJECTED after 2 tries: a full run would keep the existing description")
+        print(flush=True)
     save_json(out_path, results)
     print(f"{len(results)} sample description(s) written to {out_path}; nothing else was written.")
-    return 0 if failed == 0 else 1
+    if rejected:
+        print(f"rejected after 2 tries: {', '.join(rejected)}")
+    return 0 if failed == 0 and not rejected else 1
 
 
 def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=False) -> int:
@@ -397,6 +527,7 @@ def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=Fals
 
     items = plan(roster, cache, force=force)
     generated = pushed = kept_unpushed = failed = 0
+    rejected = []
     for slug, _spot, payload, sig, action, reason in items:
         if action == KEEP:
             continue
@@ -409,10 +540,16 @@ def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=Fals
         if limit is not None and generated >= limit:
             break
         try:
-            text = generate_one(client, payload)
+            text, attempts = generate_checked(client, payload)
         except Exception:  # noqa: BLE001
             log.exception("%s: generation failed", slug)
             failed += 1
+            continue
+        if text is None:
+            # Keep whatever the spot has: no cache change, no write, no signature. Next run retries.
+            rejected.append((slug, attempts[-1]))
+            log.warning("%s: rejected after %d tries (%s)", slug, len(attempts),
+                        check_line(attempts[-1][1]))
             continue
         entry = {"description": text, "signature": sig}
         generated += 1
@@ -430,10 +567,25 @@ def run_full(spots, roster, cache_path: Path, client, db, limit=None, force=Fals
     fixed = still = 0
     if db is not None:
         fixed, still = reconcile(db, cache, roster)
-    log.info("generated=%d written=%d kept-unwritten=%d failed=%d reconciled=%d still-differ=%d; "
-             "cache → %s", generated, pushed, kept_unpushed, failed, fixed, still, cache_path)
+    log.info("generated=%d written=%d kept-unwritten=%d failed=%d rejected=%d reconciled=%d "
+             "still-differ=%d; cache → %s", generated, pushed, kept_unpushed, failed,
+             len(rejected), fixed, still, cache_path)
+    print("\n".join(rejected_report(rejected)), flush=True)
     # Unwritten entries are expected under --no-db; with Supabase they mean a rerun is needed.
-    return 0 if failed == 0 and still == 0 and (db is None or kept_unpushed == 0) else 1
+    ok = failed == 0 and not rejected and still == 0 and (db is None or kept_unpushed == 0)
+    return 0 if ok else 1
+
+
+def rejected_report(rejected):
+    """The end-of-run list of spots whose replies failed the output check twice."""
+    if not rejected:
+        return ["Output check: no spot rejected."]
+    lines = [f"Output check: {len(rejected)} spot(s) rejected after 2 tries — existing description "
+             "kept, no signature written; the next run tries them again:"]
+    for slug, (reply, problems) in rejected:
+        lines.append(f"  {slug} — {'; '.join(problems)}")
+        lines.append(f"    last reply: {' '.join(reply.split())[:160]}")
+    return lines
 
 
 def _parse_args(argv=None) -> argparse.Namespace:

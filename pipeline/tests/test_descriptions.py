@@ -280,8 +280,12 @@ def test_the_cost_estimate():
 # 4 — the modes                                                                #
 # --------------------------------------------------------------------------- #
 class FakeClaude:
-    def __init__(self, fail=()):
+    """Answers '"About <name>."' (which passes the output check for a payload with no break type),
+    or the next of the scripted replies for that name."""
+
+    def __init__(self, fail=(), replies=None):
         self.calls, self.fail = [], set(fail)
+        self.replies = {k: list(v) for k, v in (replies or {}).items()}
         self.messages = SimpleNamespace(create=self.create)
 
     def create(self, **kw):
@@ -289,7 +293,8 @@ class FakeClaude:
         name = json.loads(kw["messages"][0]["content"])["name"]
         if name in self.fail:
             raise RuntimeError("boom")
-        return SimpleNamespace(content=[SimpleNamespace(type="text", text=f'"About {name}."')])
+        text = self.replies[name].pop(0) if self.replies.get(name) else f'"About {name}."'
+        return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)])
 
 
 class FakeDB:
@@ -373,20 +378,22 @@ def test_the_dry_run_calls_nothing_and_writes_nothing(tmp_path, monkeypatch, cap
     assert GD.main(["--dry-run", "--input", str(roster), "--output", str(out)]) == 0
     assert out.read_bytes() == before and not (tmp_path / "cache.json.tmp").exists()
     lines = capsys.readouterr().out.splitlines()
-    assert lines[:6] == [
+    assert lines[:7] == [
         "[generate] banzai-pipeline — written before signature v2",
         "    states:   break_type reef (researched)",
         "    left out: bottom rock (model_recall), tide_preference low (no source)",
         "    current text contradicts: says beach; break_type is now reef (researched)",
+        "    current text check: FAIL — does not state the break type 'reef'; names another "
+        "break type: beach",
         '    payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", '
         '"faces": "NW", "orientation_deg": 315}',
-        "[keep] same — current",
+        "[keep] same — current; current text check: pass",
     ]
     tokens_in = math.ceil((len(Dn.SYSTEM_PROMPT) + len(
         '{"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", "faces": "NW", '
         '"orientation_deg": 315}')) / 3.5)
     usd = (tokens_in * 3.00 + 90 * 15.00) / 1_000_000
-    assert lines[6:] == [
+    assert lines[7:] == [
         "",
         "TOTALS",
         "  spots in the roster:              2",
@@ -396,6 +403,7 @@ def test_the_dry_run_calls_nothing_and_writes_nothing(tmp_path, monkeypatch, cap
         "  unchanged:                        1",
         "  orphan cache entries to prune:    1 (renamed)",
         "  current texts contradicting the break type: 1",
+        "  current texts failing the output check against the new payload: 1 of 2",
         "  break_type left out:      not set 1",
         "  bottom left out:          model_recall 1, not set 1",
         "  tide_preference left out: no source 1, not set 1",
@@ -427,7 +435,8 @@ def test_the_sample_writes_its_own_file_and_nothing_else(tmp_path, monkeypatch, 
                                   "pensacola-beach", "agate-beach", "aviones", "seaside-reef"])
     assert got["aviones"] == {"name": "Aviones", "payload": {"name": "Aviones", "state": "Hawaii",
                                                              "faces": "NW", "orientation_deg": 315},
-                              "signature": sig_of("Aviones"), "description": "About Aviones."}
+                              "signature": sig_of("Aviones"), "description": "About Aviones.",
+                              "attempts": [{"reply": "About Aviones.", "check": "pass"}]}
     assert len(claude.calls) == 10
     assert claude.calls[0] == {"model": "claude-sonnet-4-6", "max_tokens": 200,
                                "system": Dn.SYSTEM_PROMPT,
@@ -438,7 +447,7 @@ def test_the_sample_writes_its_own_file_and_nothing_else(tmp_path, monkeypatch, 
     assert "== Banzai Pipeline (banzai-pipeline)\n   left out: break_type not set, bottom not set, " \
            "tide_preference not set\n" \
            '   payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "faces": "NW", ' \
-           '"orientation_deg": 315}\n   About Banzai Pipeline.\n' in printed
+           '"orientation_deg": 315}\n   try 1 check: pass\n   About Banzai Pipeline.\n\n' in printed
     assert printed.endswith(f"10 sample description(s) written to {sample}; nothing else was "
                             "written.\n")
 
@@ -600,3 +609,219 @@ def test_the_sample_spots_are_the_cases_they_stand_for():
     assert {pick[n]["region_hint"] for n in ("Banzai Pipeline", "Waimea Bay")} == {"Hawaii"}
     assert {pick[n]["region_hint"] for n in ("Steamer Lane", "Malibu Surfrider Beach")} == {
         "California"}
+
+
+# --------------------------------------------------------------------------- #
+# 6 — the output check                                                         #
+# --------------------------------------------------------------------------- #
+# The reply the second sample run (2026-10-13) saved as Pensacola Beach's description, copied
+# from its terminal printout: line breaks as printed, the dash after "revise" an em dash.
+PENSACOLA_REPLY = (
+    "Pensacola Beach is a surf spot in Florida that faces south and works best with swells from "
+    "the south. Offshore winds blow from the north, helping to clean up the surf. No bottom type "
+    "or tide preference is specified for this location.\n\n---\n\nWait, I need to revise — I was "
+    "instructed not to mention missing fields. Here is the corrected version:\n\nPensacola Beach "
+    "is a surf spot in Florida that faces south and is best suited for swells from the south. "
+    "Offshore winds blow from the north.")
+# Its break type is model_recall, so the payload has none.
+PENSACOLA_PAYLOAD = {"name": "Pensacola Beach", "state": "Florida", "faces": "S",
+                     "orientation_deg": 180, "offshore_wind_from": "N", "offshore_wind_deg": 0,
+                     "optimal_swell_from": "S"}
+
+
+def test_the_pensacola_reply_fails_on_every_count_it_should():
+    # 88 words, counted by hand: 19 + 12 + 11 in the first paragraph, 1 for "---", 14 + 5 in the
+    # self-talk, 20 + 6 in the second description.
+    assert GD.check_description(PENSACOLA_REPLY, PENSACOLA_PAYLOAD) == [
+        "more than one paragraph (line break)",
+        "contains '---'",
+        "self-talk or meta text: 'I', 'corrected', 'here is', 'instructed', 'revise', 'wait'",
+        "mentions an absent field: 'No bottom type or tide preference is specified', 'missing'",
+        "88 words (at most 80)",
+    ]
+
+
+def test_its_corrected_second_paragraph_alone_passes():
+    assert GD.check_description(
+        "Pensacola Beach is a surf spot in Florida that faces south and is best suited for swells "
+        "from the south. Offshore winds blow from the north.", PENSACOLA_PAYLOAD) == []
+
+
+PIPE = {"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", "bottom": "rock",
+        "faces": "NW"}
+PIPE_TEXT = ("Banzai Pipeline is a reef break in Hawaii over a rock bottom. It faces northwest and "
+             "is offshore in southeast winds.")
+
+
+def test_a_good_description_passes():
+    assert GD.check_description(PIPE_TEXT, PIPE) == []
+    assert GD.check_line([]) == "pass"
+    assert GD.check_line(["a", "b"]) == "FAIL — a; b"
+
+
+@pytest.mark.parametrize("text, problems", [
+    (PIPE_TEXT.replace(". It", ".\nIt"), ["more than one paragraph (line break)"]),
+    (PIPE_TEXT.replace(". It", ".\r It"), ["more than one paragraph (line break)"]),
+    (PIPE_TEXT + " ---", ["contains '---'"]),
+    ("Here's the description: " + PIPE_TEXT, ["self-talk or meta text: \"here's\""]),
+    (PIPE_TEXT + " I hope this helps.", ["self-talk or meta text: 'I'"]),
+    (PIPE_TEXT + " Wait for a north swell.", ["self-talk or meta text: 'wait'"]),
+    (PIPE_TEXT + " Revised per the metadata.", ["self-talk or meta text: 'metadata', 'revised'"]),
+    (PIPE_TEXT + " The tide preference is not specified.",
+     ["mentions an absent field: 'not specified'"]),
+    (PIPE_TEXT + " No tide preference is given.",
+     ["mentions an absent field: 'No tide preference is given'"]),
+    (PIPE_TEXT + " Its tide is unknown.", ["mentions an absent field: 'unknown'"]),
+    (PIPE_TEXT.replace("Banzai Pipeline", "Pipeline"), ["does not include the spot's name"]),
+    (PIPE_TEXT.replace("a reef break", "a beach break"),
+     ["does not state the break type 'reef'", "names another break type: beach"]),
+    (PIPE_TEXT.replace("a reef break", "a surf spot"), ["does not state the break type 'reef'"]),
+    (PIPE_TEXT + " It sits beside a jetty.", ["names another break type: jetty"]),
+])
+def test_each_rule_on_its_own(text, problems):
+    assert GD.check_description(text, PIPE) == problems
+
+
+def test_eighty_words_pass_and_eighty_one_fail():
+    payload = {"name": "Pipe"}
+    assert GD.check_description("Pipe" + " swell" * 79, payload) == []            # 1 + 79 = 80
+    assert GD.check_description("Pipe" + " swell" * 80, payload) == ["81 words (at most 80)"]
+
+
+@pytest.mark.parametrize("text", [
+    "Pensacola Beach is a beach break.", "Pensacola Beach is a reef break.",
+    "Pensacola Beach is a point break.", "Pensacola Beach breaks beside a jetty.",
+    "Pensacola Beach is a river mouth.", "Pensacola Beach is a rivermouth."])
+def test_no_break_type_may_be_named_when_none_is_given(text):
+    named = {"beach": "beach", "reef": "reef", "point": "point", "jetty": "jetty",
+             "river": "rivermouth"}[next(w for w in ("beach break", "reef", "point", "jetty",
+                                                    "river") if w in text).split()[0]]
+    assert GD.check_description(text, PENSACOLA_PAYLOAD) == [
+        f"names a break type it was not given: {named}"]
+
+
+def test_a_reef_or_point_given_may_be_stated_loosely():
+    reef = dict(PIPE, name="Pipe")
+    assert GD.check_description("Pipe breaks over a shallow reef.", reef) == []
+    point = {"name": "Rincon", "break_type": "point"}
+    assert GD.check_description("Rincon is a right-hand point.", point) == []
+    assert GD.check_description("Rincon is a point break.", point) == []
+    beach = {"name": "Asbury Park", "break_type": "beach"}
+    assert GD.check_description("Asbury Park is a beach break near the boardwalk.", beach) == []
+    assert GD.check_description("Asbury Park is a sandy beach.", beach) == [
+        "does not state the break type 'beach'"]
+
+
+def test_the_name_is_removed_as_whole_words_only():
+    assert GD.check_description("A. Wait for it.", {"name": "A"}) == ["self-talk or meta text: 'wait'"]
+    assert GD.check_description("Pools is a surf spot near whirlpools.", {"name": "Pools"}) == []
+
+
+def test_the_name_is_read_out_before_the_rules_and_matched_loosely():
+    # a name holding a break type or "I" is not read as one
+    assert GD.check_description("Avalon Jetty is a surf spot.", {"name": "Avalon Jetty"}) == []
+    assert GD.check_description("Chuns Reef is a surf spot.",
+                                {"name": "Chuns Reef", "break_type": "reef"}) == [
+        "does not state the break type 'reef'"]
+    assert GD.check_description("Haleiwa Ali'i Beach is a beach break.",
+                                {"name": "Haleiwa Ali'i Beach", "break_type": "beach"}) == []
+    # okina, accents and punctuation do not matter
+    assert GD.check_description("Ho'okipa is a surf spot.", {"name": "Hoʻokipa"}) == []
+    assert GD.check_description("Surf City, NJ is a surf spot.", {"name": "Surf City NJ"}) == []
+    assert GD.check_description("St. Simons Island is a surf spot.",
+                                {"name": "St Simons Island"}) == []
+    # an apostrophe may be dropped, not just changed
+    assert GD.check_description("Marias is a surf spot.", {"name": "Maria's"}) == []
+    # the part before a comma is enough
+    assert GD.check_description("Atlantic Beach is a surf spot.",
+                                {"name": "Atlantic Beach, NC"}) == []
+
+
+def test_generate_checked_retries_once_then_gives_up(no_exclusions):
+    payload = {"name": "A"}
+    claude = FakeClaude(replies={"A": ["A.\n\nWait, A.", "About A."]})
+    assert GD.generate_checked(claude, payload) == ("About A.", [
+        ("A.\n\nWait, A.", ["more than one paragraph (line break)",
+                            "self-talk or meta text: 'wait'"]),
+        ("About A.", [])])
+    claude = FakeClaude(replies={"A": ["B.", "C."]})
+    text, attempts = GD.generate_checked(claude, payload)
+    assert text is None and [r for r, _p in attempts] == ["B.", "C."] and len(claude.calls) == 2
+    claude = FakeClaude()
+    assert GD.generate_checked(claude, payload) == ("About A.", [("About A.", [])])
+    assert len(claude.calls) == 1
+
+
+def test_a_rejected_spot_keeps_its_description_and_gets_no_signature(tmp_path, monkeypatch,
+                                                                     capsys, no_exclusions):
+    """Pensacola's reply twice: the cache entry and the table row are left exactly as they were,
+    the run fails, and the end-of-run report names the spot. The other spot is written as usual."""
+    spots = [spot("Pensacola Beach"), spot("A")]
+    old = {"description": "Pensacola Beach is a beach break.", "signature": "0123456789abcdef"}
+    db = FakeDB([{"slug": "pensacola-beach", "description": old["description"],
+                  "description_signature": old["signature"]}, {"slug": "a"}])
+    claude = FakeClaude(replies={"Pensacola Beach": [PENSACOLA_REPLY, PENSACOLA_REPLY]})
+    rc, got, _ = full(tmp_path, monkeypatch, spots, {"pensacola-beach": dict(old)}, db,
+                      claude=claude)
+    assert rc == 1
+    assert got["pensacola-beach"] == old
+    assert db.rows["pensacola-beach"] == {"slug": "pensacola-beach", "description": old["description"],
+                                          "description_signature": old["signature"]}
+    assert [slug for slug, _p in db.updates] == ["a"]
+    assert capsys.readouterr().out.splitlines() == [
+        "Output check: 1 spot(s) rejected after 2 tries — existing description kept, no "
+        "signature written; the next run tries them again:",
+        "  pensacola-beach — more than one paragraph (line break); contains '---'; self-talk or "
+        "meta text: 'I', 'corrected', 'here is', 'instructed', 'revise', 'wait'; mentions an "
+        "absent field: 'No bottom type or tide preference is specified', 'missing'; 88 words "
+        "(at most 80)",
+        "    last reply: Pensacola Beach is a surf spot in Florida that faces south and works best "
+        "with swells from the south. Offshore winds blow from the north, helping to clean up th",
+    ]
+
+
+def test_a_reply_that_passes_on_the_retry_is_written(tmp_path, monkeypatch, capsys, no_exclusions):
+    db = FakeDB([{"slug": "pensacola-beach"}])
+    claude = FakeClaude(replies={"Pensacola Beach": [PENSACOLA_REPLY,
+                                                     "Pensacola Beach faces south."]})
+    rc, got, _ = full(tmp_path, monkeypatch, [spot("Pensacola Beach")], {}, db, claude=claude)
+    assert rc == 0
+    assert got["pensacola-beach"]["description"] == "Pensacola Beach faces south."
+    assert capsys.readouterr().out == "Output check: no spot rejected.\n"
+
+
+def test_the_sample_shows_each_try_and_its_check(tmp_path, monkeypatch, capsys, no_exclusions):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    claude = FakeClaude(replies={"Pensacola Beach": [PENSACOLA_REPLY, PENSACOLA_REPLY]})
+    monkeypatch.setattr(GD, "anthropic_client", lambda: claude)
+    forbid(monkeypatch, "get_client", "push", "reconcile")
+    roster, out = write(tmp_path, sample_roster())
+    sample = tmp_path / "sample.json"
+    assert GD.main(["--sample", "--input", str(roster), "--output", str(out),
+                    "--sample-output", str(sample)]) == 1
+    got = json.loads(sample.read_text())["pensacola-beach"]
+    fail = ("FAIL — more than one paragraph (line break); contains '---'; self-talk or meta text: "
+            "'I', 'corrected', 'here is', 'instructed', 'revise', 'wait'; mentions an absent field: "
+            "'No bottom type or tide preference is specified', 'missing'; 88 words (at most 80)")
+    assert (got["description"], got["signature"]) == (None, None)
+    assert got["attempts"] == [{"reply": PENSACOLA_REPLY, "check": fail}] * 2
+    printed = capsys.readouterr().out
+    assert f"   try 1 check: {fail}\n   {PENSACOLA_REPLY}\n   try 2 check: {fail}\n" in printed
+    assert "   REJECTED after 2 tries: a full run would keep the existing description\n" in printed
+    assert printed.endswith("rejected after 2 tries: pensacola-beach\n")
+    assert not out.exists()
+
+
+def test_the_dry_run_shows_a_current_text_that_fails_the_check(tmp_path, monkeypatch, capsys,
+                                                               no_exclusions):
+    """A spot whose signature is current is kept, but a text that fails the check is still shown,
+    with the failure, rather than as a one-line keep."""
+    cache = {"same": {"description": "Same is a surf spot. Wait, revised.",
+                      "signature": sig_of("Same")}}
+    roster, out = write(tmp_path, [spot("Same")], cache)
+    assert GD.main(["--dry-run", "--input", str(roster), "--output", str(out)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[:2] == ["[keep] same — current",
+                         "    states:   —"]
+    assert "    current text check: FAIL — self-talk or meta text: 'revised', 'wait'" in lines
+    assert "  current texts failing the output check against the new payload: 1 of 1" in lines
