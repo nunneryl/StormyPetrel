@@ -25,7 +25,13 @@ samples it twice answered Pensacola Beach with self-talk ("Wait, I need to revis
 not to mention missing fields"). render() states exactly the payload's name, state, break type,
 bottom, facing, optimal swell direction and offshore wind, leaving out whatever is absent, in one of
 PATTERN_COUNT sentence patterns picked by a hash of the slug so the pages do not all read alike. The
-tide preference is in the payload (and so in the signature) but is not stated.
+tide preference is in the payload (and so in the signature) but is not stated. Two more facts are
+held back from the sentence while staying in the payload, so that correcting them rewrites the text:
+  the optimal swell direction, when it is more than SWELL_MAX_OFF_FACING_DEG from the direction the
+      spot faces — a swell from behind the beach comes from the faulty swell windows or a wrong
+      orientation (31 spots on 2026-10-13, e.g. Spoils faces E with an optimal W);
+  the state, when the spot's name already holds it ("Dana Point, California", "Sunset Beach Hawaii",
+      "North End Virginia Beach": 13 spots).
 
 WHY THE SIGNATURE HASHES THE PAYLOAD. Version 1 hashed coordinates, state and orientation only, so a
 break_type corrected from beach to reef never made the description stale: 105 descriptions came to
@@ -43,8 +49,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 
-TEMPLATE_VERSION = "t1"
+TEMPLATE_VERSION = "t2"
 SIGNATURE_PREFIX = "v2:"
 STATED_SOURCES = ("reviewed", "researched", "scraped")
 GATED_FIELDS = ("break_type", "bottom", "tide_preference")  # each stated only from STATED_SOURCES
@@ -84,6 +91,7 @@ def description_payload(rec):
         "offshore_wind_deg": _whole(rec.get("offshore_wind_deg")),
         "tide_preference": stated(rec.get("tide_preference"), rec.get("tide_preference_source")),
         "optimal_swell_from": deg_to_cardinal(rec.get("optimal_swell_dir")),
+        "optimal_swell_deg": _whole(rec.get("optimal_swell_dir")),
     }
     return {k: v for k, v in payload.items() if v not in (None, "", [])}
 
@@ -125,6 +133,7 @@ DIRECTION_WORDS = {"N": "north", "NE": "northeast", "E": "east", "SE": "southeas
 BREAK_WORDS = {"beach": "beach break", "reef": "reef break", "point": "point break",
                "jetty": "jetty break", "rivermouth": "rivermouth break"}
 NO_BREAK_TYPE = "surf spot"
+SWELL_MAX_OFF_FACING_DEG = 90
 
 
 def _an(word):
@@ -140,16 +149,37 @@ def _sentence(clauses):
     return text[0].upper() + text[1:] + "."
 
 
+def _degrees_apart(a, b):
+    d = abs(a - b) % 360
+    return min(d, 360 - d)
+
+
+def _swell_behind(payload):
+    """True when the optimal swell is more than SWELL_MAX_OFF_FACING_DEG from where the spot faces."""
+    facing, swell = payload.get("orientation_deg"), payload.get("optimal_swell_deg")
+    if facing is None or swell is None:
+        return False
+    return _degrees_apart(facing, swell) > SWELL_MAX_OFF_FACING_DEG
+
+
+def _name_holds(name, state):
+    """True when *state* appears in *name* as whole words, in any case."""
+    return bool(state) and re.search(r"(?<!\w)" + re.escape(state) + r"(?!\w)", name, re.I) is not None
+
+
 def _facts(payload):
-    """The payload's words: name, state, kind of break, bottom and the three directions."""
+    """The payload's words: name, state, kind of break, bottom and the three directions. The state
+    is dropped when the name already holds it, the swell when it comes from behind the spot."""
     bt = payload.get("break_type")
+    state = payload.get("state")
     return {
         "name": payload["name"],
-        "state": payload.get("state"),
+        "state": None if _name_holds(payload["name"], state) else state,
         "kind": BREAK_WORDS.get(bt, f"{bt} break") if bt else NO_BREAK_TYPE,
         "bottom": payload.get("bottom"),
         "faces": DIRECTION_WORDS.get(payload.get("faces")),
-        "swell": DIRECTION_WORDS.get(payload.get("optimal_swell_from")),
+        "swell": (None if _swell_behind(payload)
+                  else DIRECTION_WORDS.get(payload.get("optimal_swell_from"))),
         "wind": DIRECTION_WORDS.get(payload.get("offshore_wind_from")),
     }
 

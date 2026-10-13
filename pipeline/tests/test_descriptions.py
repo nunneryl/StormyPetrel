@@ -42,10 +42,10 @@ STEAMER = {"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hin
 STEAMER_PAYLOAD = {"name": "Steamer Lane", "state": "California", "break_type": "point",
                    "bottom": "rock", "faces": "SE", "orientation_deg": 128,
                    "offshore_wind_from": "NW", "offshore_wind_deg": 308, "tide_preference": "all",
-                   "optimal_swell_from": "SW"}
-# 'v2:' + sha1("t1\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
-STEAMER_V2 = "v2:98f76133915fd7cc"
-STEAMER_V2_LEFT_OUT = "v2:7b1c37dc2da0d400"   # the same with break_type and bottom left out
+                   "optimal_swell_from": "SW", "optimal_swell_deg": 225}
+# 'v2:' + sha1("t2\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
+STEAMER_V2 = "v2:fb3e7d4f849945e3"
+STEAMER_V2_LEFT_OUT = "v2:380c5caa202c9bf2"   # the same with break_type and bottom left out
 
 
 # --------------------------------------------------------------------------- #
@@ -58,7 +58,7 @@ def test_the_payload_of_a_researched_spot():
 def test_the_payload_keeps_its_key_order():
     assert list(Dn.description_payload(Dn.spot_fields(STEAMER))) == [
         "name", "state", "break_type", "bottom", "faces", "orientation_deg", "offshore_wind_from",
-        "offshore_wind_deg", "tide_preference", "optimal_swell_from"]
+        "offshore_wind_deg", "tide_preference", "optimal_swell_from", "optimal_swell_deg"]
 
 
 @pytest.mark.parametrize("source, kept", [
@@ -124,7 +124,8 @@ def test_degrees_are_whole_and_cardinals_have_eight_points():
     assert Dn.description_payload(Dn.spot_fields(spot)) == {
         "name": "X", "state": "Y", "faces": "N", "orientation_deg": 22,
         # 202.6 / 45 = 4.502, just past the S/SW midpoint at 202.5, so SW
-        "offshore_wind_from": "SW", "offshore_wind_deg": 203, "optimal_swell_from": "N"}
+        "offshore_wind_from": "SW", "offshore_wind_deg": 203, "optimal_swell_from": "N",
+        "optimal_swell_deg": 338}
     assert [Dn.deg_to_cardinal(d) for d in (0, 22.5, 45, 67.5, 180, 359, -45)] == [
         "N", "N", "NE", "E", "S", "N", "NW"]
 
@@ -150,28 +151,30 @@ def test_the_signature_ignores_key_order():
 
 
 def test_the_template_version_is_in_the_signature(monkeypatch):
-    monkeypatch.setattr(Dn, "TEMPLATE_VERSION", "t2")
-    expected = "v2:" + hashlib.sha1(("t2\n" + json.dumps(
+    monkeypatch.setattr(Dn, "TEMPLATE_VERSION", "t3")
+    expected = "v2:" + hashlib.sha1(("t3\n" + json.dumps(
         STEAMER_PAYLOAD, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     ).encode()).hexdigest()[:16]
     assert Dn.description_signature(STEAMER_PAYLOAD) == expected != STEAMER_V2
 
 
 def template_source():
-    return ("".join(inspect.getsource(f) for f in (Dn._an, Dn._sentence, Dn._facts, *Dn.PATTERNS))
-            + repr(Dn.DIRECTION_WORDS) + repr(Dn.BREAK_WORDS) + Dn.NO_BREAK_TYPE)
+    parts = (Dn._an, Dn._sentence, Dn._degrees_apart, Dn._swell_behind, Dn._name_holds, Dn._facts,
+             *Dn.PATTERNS)
+    return ("".join(inspect.getsource(f) for f in parts) + repr(Dn.DIRECTION_WORDS)
+            + repr(Dn.BREAK_WORDS) + Dn.NO_BREAK_TYPE + repr(Dn.SWELL_MAX_OFF_FACING_DEG))
 
 
 def test_the_template_cannot_change_without_a_new_version():
     """Edit the template's wording and this fails: bump TEMPLATE_VERSION, then record the new
     fingerprint. Every description written by the old wording is then rewritten."""
     assert (Dn.TEMPLATE_VERSION, hashlib.sha1(template_source().encode()).hexdigest()[:12]) == (
-        "t1", "660fb9d501c2")
+        "t2", "28b70373f076")
 
 
 def test_is_v2():
-    assert Dn.is_v2("v2:98f76133915fd7cc") and Dn.is_v2("v2:")
-    for sig in ("98f76133915fd7cc", None, "", "V2:abc", 2):
+    assert Dn.is_v2("v2:fb3e7d4f849945e3") and Dn.is_v2("v2:")
+    for sig in ("fb3e7d4f849945e3", None, "", "V2:abc", 2):
         assert not Dn.is_v2(sig), sig
 
 
@@ -208,9 +211,9 @@ def test_each_spot_gets_its_action_and_reason(no_exclusions):
     roster = GD.roster_spots([spot("New"), spot("Old"), spot("Changed"), spot("Same"),
                               spot("Unwritten")])
     same_sig = "v2:" + hashlib.sha1(
-        b't1\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
+        b't2\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
     unwritten_sig = "v2:" + hashlib.sha1(
-        b't1\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
+        b't2\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
     ).hexdigest()[:16]
     cache = {"old": {"description": "t", "signature": "0123456789abcdef"},
              "changed": {"description": "t", "signature": "v2:0000000000000000"},
@@ -312,7 +315,7 @@ class FakeQuery:
 
 def sig_of(name):
     """The v2 signature of spot(name)'s payload, written out and hashed with hashlib."""
-    return "v2:" + hashlib.sha1(('t1\n{"faces":"NW","name":"%s","orientation_deg":315,'
+    return "v2:" + hashlib.sha1(('t2\n{"faces":"NW","name":"%s","orientation_deg":315,'
                                  '"state":"Hawaii"}' % name).encode()).hexdigest()[:16]
 
 
@@ -765,7 +768,7 @@ def test_the_name_is_read_out_before_the_rules_and_matched_loosely():
 # --------------------------------------------------------------------------- #
 FULL = {"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", "bottom": "rock",
         "faces": "NW", "orientation_deg": 315, "offshore_wind_from": "SE",
-        "offshore_wind_deg": 135, "optimal_swell_from": "N"}
+        "offshore_wind_deg": 135, "optimal_swell_from": "N", "optimal_swell_deg": 0}
 NO_BOTTOM = {k: v for k, v in FULL.items() if k != "bottom"}
 NO_TYPE = {k: v for k, v in FULL.items() if k != "break_type"}
 NEITHER = {k: v for k, v in FULL.items() if k not in ("break_type", "bottom")}
@@ -894,3 +897,121 @@ def test_every_spot_in_the_committed_roster_passes_the_check():
         text = Dn.render(payload, slug)
         assert GD.check_description(text, payload) == [], (slug, text)
         assert "tide" not in text.lower() and "window" not in text.lower(), (slug, text)
+
+
+
+# --------------------------------------------------------------------------- #
+# 8 — a swell from behind the spot, and a state already in the name            #
+# --------------------------------------------------------------------------- #
+# Spoils as the roster gives it: faces east (95°) with an optimal swell from the west (292°), 163°
+# apart. The swell clause is left out of every pattern; the value stays in the payload.
+SPOILS = {"name": "Spoils", "state": "Florida", "break_type": "jetty", "bottom": "rock",
+          "faces": "E", "orientation_deg": 95, "offshore_wind_from": "W", "offshore_wind_deg": 275,
+          "optimal_swell_from": "W", "optimal_swell_deg": 292}
+
+
+def test_a_swell_from_behind_is_left_out_of_every_pattern():
+    assert [in_pattern(SPOILS, n) for n in range(3)] == [
+        "Spoils is a jetty break in Florida over a rock bottom. It faces east. Offshore winds blow "
+        "from the west.",
+        "Spoils is a Florida jetty break with a rock bottom. It faces east, and it is offshore in "
+        "west winds.",
+        "Facing east, Spoils is a jetty break in Florida over a rock bottom. The offshore wind is "
+        "from the west.",
+    ]
+
+
+@pytest.mark.parametrize("facing, swell, stated", [
+    (95, 185, True),     # 90 apart: stated
+    (95, 186, False),    # 91 apart: left out
+    (350, 80, True),     # 90 apart across north
+    (350, 81, False),    # 91 apart across north
+    (10, 280, True),     # 90 apart the other way across north
+    (10, 279, False),
+    (180, 0, False),     # straight behind
+])
+def test_more_than_ninety_degrees_is_behind(facing, swell, stated):
+    payload = dict(SPOILS, orientation_deg=facing, optimal_swell_deg=swell)
+    assert ("optimal swell direction is west" in in_pattern(payload, 0)) is stated
+
+
+def test_the_swell_is_stated_when_the_facing_or_its_degrees_are_unknown():
+    for drop in ("orientation_deg", "optimal_swell_deg"):
+        payload = {k: v for k, v in SPOILS.items() if k != drop}
+        assert "its optimal swell direction is west" in in_pattern(payload, 0), drop
+
+
+def test_the_held_back_swell_stays_in_the_payload_and_signature():
+    """A corrected optimal swell (here 100°, in front of the spot) changes the signature, so the
+    text is rewritten, now with the swell in it."""
+    spot_ = {"name": "Spoils", "region_hint": "Florida", "orientation_deg": 95,
+             "offshore_wind_deg": 275, "optimal_swell_dir": 292}
+    behind = Dn.description_payload(Dn.spot_fields(spot_))
+    assert (behind["optimal_swell_from"], behind["optimal_swell_deg"]) == ("W", 292)
+    fixed = Dn.description_payload(Dn.spot_fields(dict(spot_, optimal_swell_dir=100)))
+    assert (fixed["optimal_swell_from"], fixed["optimal_swell_deg"]) == ("E", 100)
+    assert Dn.description_signature(behind) != Dn.description_signature(fixed)
+    assert "optimal swell" not in Dn.render(behind, "spoils")
+    assert "optimal swell" in Dn.render(fixed, "spoils")
+
+
+DANA = {"name": "Dana Point, California", "state": "California", "break_type": "beach",
+        "faces": "W", "orientation_deg": 265, "offshore_wind_from": "E", "offshore_wind_deg": 85,
+        "optimal_swell_from": "SW", "optimal_swell_deg": 225}
+
+
+def test_a_state_already_in_the_name_is_not_stated_again():
+    assert [in_pattern(DANA, n) for n in range(3)] == [
+        "Dana Point, California is a beach break. It faces west, and its optimal swell direction "
+        "is southwest. Offshore winds blow from the east.",
+        "Dana Point, California is a beach break. It faces west, and it is offshore in east winds. "
+        "The optimal swell comes from the southwest.",
+        "Facing west, Dana Point, California is a beach break. The optimal swell comes from the "
+        "southwest, and the offshore wind is from the east.",
+    ]
+    for n in range(3):
+        assert GD.check_description(in_pattern(DANA, n), DANA) == []
+
+
+@pytest.mark.parametrize("name, state, text", [
+    ("North End Virginia Beach", "Virginia",
+     "North End Virginia Beach is a beach break over a sand bottom."),
+    ("Sunset Beach Hawaii", "Hawaii", "Sunset Beach Hawaii is a beach break over a sand bottom."),
+    ("Pūpūkea, Hawaii", "Hawaii", "Pūpūkea, Hawaii is a beach break over a sand bottom."),
+    ("sunset beach HAWAII", "Hawaii", "sunset beach HAWAII is a beach break over a sand bottom."),
+    # not as a whole word: the state is stated
+    ("Hawaiian Reef", "Hawaii", "Hawaiian Reef is a beach break in Hawaii over a sand bottom."),
+    ("Westvirginia Point", "Virginia",
+     "Westvirginia Point is a beach break in Virginia over a sand bottom."),
+])
+def test_which_names_hold_their_state(name, state, text):
+    payload = {"name": name, "state": state, "break_type": "beach", "bottom": "sand"}
+    assert in_pattern(payload, 0) == text
+
+
+def test_the_two_cases_on_the_committed_roster():
+    """Spot by spot, against the lists drawn up when the rules were set (2026-10-13)."""
+    roster = GD.roster_spots(json.loads(
+        (ROOT / "pipeline" / "spots_enriched.json").read_text(encoding="utf-8")))
+    behind, named = set(), set()
+    for slug, s in roster.items():
+        payload = Dn.description_payload(Dn.spot_fields(s))
+        text = Dn.render(payload, slug)
+        if "optimal_swell_from" in payload and "optimal swell" not in text:
+            behind.add(slug)
+        # the state stated outside the name, or not at all
+        if payload.get("state") and payload["state"] not in text.replace(s["name"], ""):
+            named.add(slug)
+    assert behind == {
+        "38th-avenue", "bolinas", "boneyard", "campus-point-ucsb",
+        "cowell-s-beach-children-s-surfing-area", "crash-boat-beach", "doran-beach", "first-peak",
+        "fort-point", "gas-chambers-aguadilla", "haggarty-s", "hapuna-beach", "honolua-bay",
+        "leadbetter-beach", "lovers-point", "mackerricher", "marina-state-beach", "monterey-beach",
+        "polihale-beach", "rat-beach", "richardson-beach", "sandspit", "second-peak", "spoils",
+        "steamer-lane", "suicide-s", "table-tops-aguadilla", "the-hook", "thousand-peaks-maui",
+        "topanga-beach", "wilderness"}
+    assert named == {
+        "dana-point-california", "hermosa-beach-california", "huntington-beach-california",
+        "imperial-beach-california", "mavericks-california", "newport-beach-california",
+        "redondo-beach-california", "surfside-california", "pine-trees-hawaii", "p-p-kea-hawaii",
+        "sunset-beach-hawaii", "virginia-beach-oceanfront", "north-end-virginia-beach"}
