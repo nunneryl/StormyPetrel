@@ -36,8 +36,8 @@ Env:
     ANTHROPIC_API_KEY  — required for --sample and the full run.
     SUPABASE_URL, SUPABASE_SERVICE_KEY — required for the full run unless --no-db.
 
-Cost: claude-sonnet-4-6 at $3 / $15 per million input / output tokens. 648 spots at roughly 300 input
-and 90 output tokens each is about $1.40 for a full regeneration; --dry-run prints the estimate for
+Cost: claude-sonnet-4-6 at $3 / $15 per million input / output tokens. 646 spots at roughly 360 input
+and 90 output tokens each is about $1.60 for a full regeneration; --dry-run prints the estimate for
 what it would actually generate.
 """
 from __future__ import annotations
@@ -54,6 +54,7 @@ from pathlib import Path
 from .config import DEFAULT_ENRICHED_OUTPUT
 from .db_import import _excluded_slugs, _fetch_existing_spots, _slugify, get_client
 from .descriptions import (
+    GATED_FIELDS,
     STATED_SOURCES,
     SYSTEM_PROMPT,
     description_payload,
@@ -147,9 +148,10 @@ def orphans(spots, cache):
 
 
 def left_out(spot):
-    """What the payload leaves out of break_type and bottom, and why, one phrase each."""
+    """What the payload leaves out of break_type, bottom and tide_preference, and why, one phrase
+    each."""
     out = []
-    for field in ("break_type", "bottom"):
+    for field in GATED_FIELDS:
         value, source = spot.get(field), spot.get(f"{field}_source")
         if value in (None, ""):
             out.append(f"{field} not set")
@@ -206,14 +208,16 @@ def dry_run_report(items, cache, orphan_slugs):
     lines = []
     counts = {GENERATE: {}, PUSH: 0, KEEP: 0}
     contradicting = 0
-    left = {"break_type": {}, "bottom": {}}
+    left = {field: {} for field in GATED_FIELDS}
     for slug, spot, payload, _sig, action, reason in items:
         text = (cache.get(slug) or {}).get("description") if isinstance(cache.get(slug), dict) else None
         wrong = contradiction(text, spot) if text else None
         contradicting += bool(wrong)
-        for field in ("break_type", "bottom"):
+        for field in GATED_FIELDS:
             if field not in payload:
-                key = (spot.get(f"{field}_source") or "not set") if spot.get(field) else "not set"
+                value = spot.get(field)
+                key = ("not set" if value in (None, "") else "'unknown'" if value == "unknown"
+                       else spot.get(f"{field}_source") or "no source")
                 left[field][key] = left[field].get(key, 0) + 1
         if action == GENERATE:
             counts[GENERATE][reason] = counts[GENERATE].get(reason, 0) + 1
@@ -224,7 +228,7 @@ def dry_run_report(items, cache, orphan_slugs):
             continue
         lines.append(f"[{action}] {slug} — {reason}")
         stated = [f"{f} {payload[f]} ({spot.get(f + '_source')})"
-                  for f in ("break_type", "bottom") if f in payload]
+                  for f in GATED_FIELDS if f in payload]
         lines.append(f"    states:   {', '.join(stated) or '—'}")
         lines.append(f"    left out: {', '.join(left_out(spot)) or '—'}")
         if wrong:
@@ -243,8 +247,9 @@ def dry_run_report(items, cache, orphan_slugs):
         f"  orphan cache entries to prune:    {len(orphan_slugs)}"
         + (f" ({', '.join(orphan_slugs)})" if orphan_slugs else ""),
         f"  current texts contradicting the break type: {contradicting}",
-        "  break_type left out: " + _counts(left["break_type"]),
-        "  bottom left out:     " + _counts(left["bottom"]),
+        "  break_type left out:      " + _counts(left["break_type"]),
+        "  bottom left out:          " + _counts(left["bottom"]),
+        "  tide_preference left out: " + _counts(left["tide_preference"]),
         f"  estimate: {calls} call(s) x ~{tin} input + ~{tout} output tokens = about ${usd:.2f} on "
         f"{MODEL} at ${PRICE_PER_MTOK['input']:.2f} / ${PRICE_PER_MTOK['output']:.2f} per million "
         "tokens (from character counts, not a token count)",

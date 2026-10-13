@@ -33,16 +33,16 @@ ROOT = Path(__file__).resolve().parents[2]
 STEAMER = {"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
            "orientation_deg": 128, "offshore_wind_deg": 308, "optimal_swell_dir": 225,
            "swell_window_arcs": [{"min": 180, "max": 315}], "tide_preference": "all",
-           "break_type": "point", "break_type_source": "researched",
+           "tide_preference_source": "researched", "break_type": "point", "break_type_source": "researched",
            "bottom": "rock", "bottom_source": "researched",
            "nearest_buoy_id": "46269", "nearest_tide_station_id": "9413745"}
 STEAMER_PAYLOAD = {"name": "Steamer Lane", "state": "California", "break_type": "point",
                    "bottom": "rock", "faces": "SE", "orientation_deg": 128,
                    "offshore_wind_from": "NW", "offshore_wind_deg": 308, "tide_preference": "all",
-                   "swell_window": ["S..NW"], "optimal_swell_from": "SW"}
-# 'v2:' + sha1("2\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
-STEAMER_V2 = "v2:5d6fec8ee8c395c4"
-STEAMER_V2_LEFT_OUT = "v2:f5c39adebca3cd3d"   # the same with break_type and bottom left out
+                   "optimal_swell_from": "SW"}
+# 'v2:' + sha1("3\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
+STEAMER_V2 = "v2:6a01ee8c53a9e540"
+STEAMER_V2_LEFT_OUT = "v2:ea9b0d001f8d3118"   # the same with break_type and bottom left out
 
 
 # --------------------------------------------------------------------------- #
@@ -55,7 +55,7 @@ def test_the_payload_of_a_researched_spot():
 def test_the_payload_keeps_its_key_order():
     assert list(Dn.description_payload(Dn.spot_fields(STEAMER))) == [
         "name", "state", "break_type", "bottom", "faces", "orientation_deg", "offshore_wind_from",
-        "offshore_wind_deg", "tide_preference", "swell_window", "optimal_swell_from"]
+        "offshore_wind_deg", "tide_preference", "optimal_swell_from"]
 
 
 @pytest.mark.parametrize("source, kept", [
@@ -63,9 +63,34 @@ def test_the_payload_keeps_its_key_order():
     ("model_recall", False), ("unattributed", False), ("algorithm_default", False),
     (None, False), ("", False), ("REVIEWED", False)])
 def test_only_a_source_that_can_be_stated_puts_a_value_in(source, kept):
-    spot = dict(STEAMER, break_type_source=source, bottom_source=source)
+    spot = dict(STEAMER, break_type_source=source, bottom_source=source,
+                tide_preference_source=source)
     payload = Dn.description_payload(Dn.spot_fields(spot))
-    assert ("break_type" in payload, "bottom" in payload) == (kept, kept)
+    assert ("break_type" in payload, "bottom" in payload, "tide_preference" in payload) == (
+        kept, kept, kept)
+
+
+@pytest.mark.parametrize("source", ["derived_from_break_type", "unattributed", "unknown", None])
+def test_a_tide_without_a_stated_source_is_left_out(source):
+    spot = dict(STEAMER, tide_preference_source=source)
+    assert "tide_preference" not in Dn.description_payload(Dn.spot_fields(spot))
+
+
+def test_a_tide_with_no_source_key_at_all_is_left_out():
+    """The committed roster today: 444 tide values, not one with a source."""
+    spot = {k: v for k, v in STEAMER.items() if k != "tide_preference_source"}
+    assert "tide_preference" not in Dn.description_payload(Dn.spot_fields(spot))
+
+
+def test_an_unknown_tide_states_nothing():
+    spot = dict(STEAMER, tide_preference="unknown")
+    assert "tide_preference" not in Dn.description_payload(Dn.spot_fields(spot))
+
+
+def test_the_swell_window_is_never_sent():
+    payload = Dn.description_payload(Dn.spot_fields(STEAMER))
+    assert "swell_window" not in payload and "swell_window_arcs" not in payload
+    assert "swell_window_arcs" not in Dn.spot_fields(STEAMER)
 
 
 def test_break_type_and_bottom_are_judged_separately():
@@ -85,6 +110,9 @@ def test_no_station_ids_and_no_nulls_reach_the_model():
             "nearest_tide_station_id": "9419750"}
     assert Dn.description_payload(Dn.spot_fields(bare)) == {"name": "Agate Beach",
                                                             "state": "California"}
+    # an empty string is dropped like a null, not sent as ""
+    assert Dn.description_payload(Dn.spot_fields(dict(bare, region_hint=""))) == {
+        "name": "Agate Beach"}
 
 
 def test_degrees_are_whole_and_cardinals_have_eight_points():
@@ -93,8 +121,7 @@ def test_degrees_are_whole_and_cardinals_have_eight_points():
     assert Dn.description_payload(Dn.spot_fields(spot)) == {
         "name": "X", "state": "Y", "faces": "N", "orientation_deg": 22,
         # 202.6 / 45 = 4.502, just past the S/SW midpoint at 202.5, so SW
-        "offshore_wind_from": "SW", "offshore_wind_deg": 203, "swell_window": ["N..N"],
-        "optimal_swell_from": "N"}
+        "offshore_wind_from": "SW", "offshore_wind_deg": 203, "optimal_swell_from": "N"}
     assert [Dn.deg_to_cardinal(d) for d in (0, 22.5, 45, 67.5, 180, 359, -45)] == [
         "N", "N", "NE", "E", "S", "N", "NW"]
 
@@ -120,8 +147,8 @@ def test_the_signature_ignores_key_order():
 
 
 def test_the_prompt_version_is_in_the_signature(monkeypatch):
-    monkeypatch.setattr(Dn, "PROMPT_VERSION", "3")
-    expected = "v2:" + hashlib.sha1(("3\n" + json.dumps(
+    monkeypatch.setattr(Dn, "PROMPT_VERSION", "4")
+    expected = "v2:" + hashlib.sha1(("4\n" + json.dumps(
         STEAMER_PAYLOAD, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     ).encode()).hexdigest()[:16]
     assert Dn.description_signature(STEAMER_PAYLOAD) == expected != STEAMER_V2
@@ -130,7 +157,7 @@ def test_the_prompt_version_is_in_the_signature(monkeypatch):
 def test_the_prompt_cannot_change_without_a_new_version():
     """Edit SYSTEM_PROMPT and this fails: bump PROMPT_VERSION, then record the new fingerprint."""
     assert (Dn.PROMPT_VERSION, hashlib.sha1(Dn.SYSTEM_PROMPT.encode()).hexdigest()[:12]) == (
-        "2", "1ff8340919bc")
+        "3", "8422d63f683f")
 
 
 def test_the_prompt_says_to_state_only_what_is_given():
@@ -139,11 +166,16 @@ def test_the_prompt_says_to_state_only_what_is_given():
     assert "Say nothing at all about a field that is not given" in p
     assert "do not mention that it is missing, unknown or unspecified" in p
     assert "If break_type is not given, call it a surf spot" in p
+    assert "using ONLY the facts in the metadata" in p
+    assert ("Never add anything from general knowledge: no place names, regions, islands, "
+            "coastlines, shores, nearby towns or landmarks other than the given name and state, "
+            "and no other details.") in p
+    assert "swell window" not in p
 
 
 def test_is_v2():
-    assert Dn.is_v2("v2:5d6fec8ee8c395c4") and Dn.is_v2("v2:")
-    for sig in ("5d6fec8ee8c395c4", None, "", "V2:abc", 2):
+    assert Dn.is_v2("v2:6a01ee8c53a9e540") and Dn.is_v2("v2:")
+    for sig in ("6a01ee8c53a9e540", None, "", "V2:abc", 2):
         assert not Dn.is_v2(sig), sig
 
 
@@ -179,9 +211,9 @@ def test_each_spot_gets_its_action_and_reason(no_exclusions):
     roster = GD.roster_spots([spot("New"), spot("Old"), spot("Changed"), spot("Same"),
                               spot("Unwritten")])
     same_sig = "v2:" + hashlib.sha1(
-        b'2\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
+        b'3\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
     unwritten_sig = "v2:" + hashlib.sha1(
-        b'2\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
+        b'3\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
     ).hexdigest()[:16]
     cache = {"old": {"description": "t", "signature": "0123456789abcdef"},
              "changed": {"description": "t", "signature": "v2:0000000000000000"},
@@ -204,9 +236,12 @@ def test_orphans_are_only_spots_gone_from_the_roster_file():
 
 
 def test_left_out_names_each_value_and_why():
-    assert GD.left_out(dict(STEAMER, break_type_source="model_recall", bottom="unknown")) == [
-        "break_type point (model_recall)", "bottom 'unknown'"]
-    assert GD.left_out({"break_type": "beach"}) == ["break_type beach (no source)", "bottom not set"]
+    assert GD.left_out(dict(STEAMER, break_type_source="model_recall", bottom="unknown",
+                            tide_preference_source=None)) == [
+        "break_type point (model_recall)", "bottom 'unknown'", "tide_preference all (no source)"]
+    assert GD.left_out({"break_type": "beach"}) == [
+        "break_type beach (no source)", "bottom not set", "tide_preference not set"]
+    assert GD.left_out(dict(STEAMER, tide_preference="unknown")) == ["tide_preference 'unknown'"]
     assert GD.left_out(STEAMER) == []
 
 
@@ -305,7 +340,7 @@ class FakeQuery:
 
 def sig_of(name):
     """The v2 signature of spot(name)'s payload, written out and hashed with hashlib."""
-    return "v2:" + hashlib.sha1(('2\n{"faces":"NW","name":"%s","orientation_deg":315,'
+    return "v2:" + hashlib.sha1(('3\n{"faces":"NW","name":"%s","orientation_deg":315,'
                                  '"state":"Hawaii"}' % name).encode()).hexdigest()[:16]
 
 
@@ -327,7 +362,7 @@ def test_the_dry_run_calls_nothing_and_writes_nothing(tmp_path, monkeypatch, cap
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     forbid(monkeypatch, "anthropic_client", "get_client", "save_json")
     spots = [spot("Banzai Pipeline", break_type="reef", break_type_source="researched",
-                  bottom="rock", bottom_source="model_recall"),
+                  bottom="rock", bottom_source="model_recall", tide_preference="low"),
              spot("Same"), spot("Gone", is_valid_surf_spot=False)]
     cache = {"banzai-pipeline": {"description": "Banzai Pipeline is a beach break.",
                                  "signature": "0123456789abcdef"},
@@ -341,7 +376,7 @@ def test_the_dry_run_calls_nothing_and_writes_nothing(tmp_path, monkeypatch, cap
     assert lines[:6] == [
         "[generate] banzai-pipeline — written before signature v2",
         "    states:   break_type reef (researched)",
-        "    left out: bottom rock (model_recall)",
+        "    left out: bottom rock (model_recall), tide_preference low (no source)",
         "    current text contradicts: says beach; break_type is now reef (researched)",
         '    payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "break_type": "reef", '
         '"faces": "NW", "orientation_deg": 315}',
@@ -361,8 +396,9 @@ def test_the_dry_run_calls_nothing_and_writes_nothing(tmp_path, monkeypatch, cap
         "  unchanged:                        1",
         "  orphan cache entries to prune:    1 (renamed)",
         "  current texts contradicting the break type: 1",
-        "  break_type left out: not set 1",
-        "  bottom left out:     model_recall 1, not set 1",
+        "  break_type left out:      not set 1",
+        "  bottom left out:          model_recall 1, not set 1",
+        "  tide_preference left out: no source 1, not set 1",
         f"  estimate: 1 call(s) x ~{tokens_in} input + ~90 output tokens = about ${usd:.2f} on "
         "claude-sonnet-4-6 at $3.00 / $15.00 per million tokens (from character counts, not a "
         "token count)",
@@ -399,7 +435,8 @@ def test_the_sample_writes_its_own_file_and_nothing_else(tmp_path, monkeypatch, 
                                              '{"name": "Banzai Pipeline", "state": "Hawaii", '
                                              '"faces": "NW", "orientation_deg": 315}'}]}
     printed = capsys.readouterr().out
-    assert "== Banzai Pipeline (banzai-pipeline)\n   left out: break_type not set, bottom not set\n" \
+    assert "== Banzai Pipeline (banzai-pipeline)\n   left out: break_type not set, bottom not set, " \
+           "tide_preference not set\n" \
            '   payload:  {"name": "Banzai Pipeline", "state": "Hawaii", "faces": "NW", ' \
            '"orientation_deg": 315}\n   About Banzai Pipeline.\n' in printed
     assert printed.endswith(f"10 sample description(s) written to {sample}; nothing else was "

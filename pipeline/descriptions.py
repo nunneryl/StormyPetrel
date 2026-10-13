@@ -6,12 +6,17 @@ rebuilds the payload from the roster on every run and blanks a description whose
 longer matches. Both call the functions below, so they cannot disagree about what a description asserts.
 
 WHAT GOES IN. Only what the roster knows, and only what it knows from a source that can be stated
-plainly. break_type and bottom go in only when their source is reviewed, researched or scraped (a person
-set it, or a cited page says so). A model_recall, unattributed or algorithm_default value is LEFT OUT,
-not hedged: a description then never contradicts the break-type badge — it agrees with a verified value
-or says nothing. A bottom of 'unknown' (someone looked and could not tell) is left out too, since there
-is nothing to state. The nearest buoy and tide station ids are not sent: the model used to quote them
-("Tide preferences are referenced to station 8652226").
+plainly. break_type, bottom and tide_preference go in only when their source is reviewed, researched or
+scraped (a person set it, or a cited page says so). A model_recall, unattributed, algorithm_default,
+derived_from_break_type or missing source is LEFT OUT, not hedged: a description then never contradicts
+the page — it agrees with a verified value or says nothing. A value of 'unknown' (someone looked and
+could not tell) is left out too, since there is nothing to state. Left out entirely:
+  the nearest buoy and tide station ids — the model used to quote them ("Tide preferences are
+      referenced to station 8652226");
+  the swell window — the arcs are not trustworthy enough to state: the sample run of 2026-10-13 had
+      Banzai Pipeline and Waimea Bay taking S–SW swell on Oahu's North Shore, Aviones (north coast of
+      Puerto Rico) SE–S, Matanzas Inlet (Florida's east coast) S/SW and SW/W, and Seaside Reef, which
+      faces west, E–SE. faces and optimal_swell_from stay.
 
 WHY THE SIGNATURE HASHES THE PAYLOAD. Version 1 hashed coordinates, state and orientation only, so a
 break_type corrected from beach to reef never made the description stale: 105 descriptions came to
@@ -29,14 +34,17 @@ from __future__ import annotations
 import hashlib
 import json
 
-PROMPT_VERSION = "2"
+PROMPT_VERSION = "3"
 SIGNATURE_PREFIX = "v2:"
 STATED_SOURCES = ("reviewed", "researched", "scraped")
+GATED_FIELDS = ("break_type", "bottom", "tide_preference")  # each stated only from STATED_SOURCES
 
 SYSTEM_PROMPT = (
-    "Write a 2-3 sentence factual description of this surf spot using ONLY the provided metadata. "
-    "Mention only the fields that are given: the type of break (break_type), what the waves break "
-    "over (bottom), the direction it faces, the swell window and optimal swell direction, the "
+    "Write a 2-3 sentence factual description of this surf spot using ONLY the facts in the "
+    "metadata. Never add anything from general knowledge: no place names, regions, islands, "
+    "coastlines, shores, nearby towns or landmarks other than the given name and state, and no "
+    "other details. Mention only the fields that are given: the type of break (break_type), what "
+    "the waves break over (bottom), the direction it faces, the optimal swell direction, the "
     "preferred tide, and the offshore wind direction. Say nothing at all about a field that is not "
     "given: do not mention that it is missing, unknown or unspecified, and do not guess it. If "
     "break_type is not given, call it a surf spot. A bottom of 'rock' means a rock reef; 'mixed' "
@@ -53,18 +61,6 @@ def deg_to_cardinal(deg):
     if deg is None:
         return None
     return _CARDINALS_8[round((float(deg) % 360) / 45) % 8]
-
-
-def arcs_to_readable(arcs):
-    """[{min: 168, max: 328}] -> ['S..NW']. 8-point cardinals so the range reads as a directional
-    sweep rather than a math problem."""
-    out = []
-    for arc in arcs or []:
-        a = deg_to_cardinal(arc.get("min"))
-        b = deg_to_cardinal(arc.get("max"))
-        if a and b:
-            out.append(f"{a}..{b}")
-    return out
 
 
 def _whole(deg):
@@ -91,16 +87,15 @@ def description_payload(rec):
         "orientation_deg": _whole(rec.get("orientation_deg")),
         "offshore_wind_from": deg_to_cardinal(rec.get("offshore_wind_deg")),
         "offshore_wind_deg": _whole(rec.get("offshore_wind_deg")),
-        "tide_preference": rec.get("tide_preference"),
-        "swell_window": arcs_to_readable(rec.get("swell_window_arcs")),
+        "tide_preference": stated(rec.get("tide_preference"), rec.get("tide_preference_source")),
         "optimal_swell_from": deg_to_cardinal(rec.get("optimal_swell_dir")),
     }
     return {k: v for k, v in payload.items() if v not in (None, "", [])}
 
 
 PAYLOAD_INPUTS = ("name", "break_type", "break_type_source", "bottom", "bottom_source",
-                  "orientation_deg", "offshore_wind_deg", "tide_preference", "swell_window_arcs",
-                  "optimal_swell_dir")
+                  "orientation_deg", "offshore_wind_deg", "tide_preference",
+                  "tide_preference_source", "optimal_swell_dir")
 
 
 def spot_fields(spot):

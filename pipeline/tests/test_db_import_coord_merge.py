@@ -95,17 +95,19 @@ def test_unmoved_spot_still_preserves_absent_fields():
 # --------------------------------------------------------------------------- #
 # Descriptions under signature v2 (pipeline/descriptions.py)                   #
 # --------------------------------------------------------------------------- #
-# Steamer Lane as the roster gives it. Its payload, written out by hand:
+# Steamer Lane as the roster gives it. Its payload, written out by hand (no swell window, which is
+# never sent; tide stated because its source is researched):
 #   {"bottom":"rock","break_type":"point","faces":"SE","name":"Steamer Lane","offshore_wind_deg":308,
 #    "offshore_wind_from":"NW","optimal_swell_from":"SW","orientation_deg":128,"state":"California",
-#    "swell_window":["S..NW"],"tide_preference":"all"}
-# and its signature, 'v2:' + sha1("2\n" + that)[:16], computed with hashlib directly:
+#    "tide_preference":"all"}
+# and its signature, 'v2:' + sha1("3\n" + that)[:16], computed with hashlib directly:
 STEAMER = {"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
            "orientation_deg": 128, "offshore_wind_deg": 308, "optimal_swell_dir": 225,
            "swell_window_arcs": [{"min": 180, "max": 315}], "tide_preference": "all",
+           "tide_preference_source": "researched",
            "break_type": "point", "break_type_source": "researched",
            "bottom": "rock", "bottom_source": "researched", "is_valid_surf_spot": True}
-STEAMER_V2 = "v2:5d6fec8ee8c395c4"
+STEAMER_V2 = "v2:6a01ee8c53a9e540"
 STEAMER_ROW = {"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
                "state": "California", "orientation_deg": 128,
                "description": "Steamer Lane is a point break over rock.",
@@ -136,16 +138,14 @@ def test_a_source_crossing_the_stated_line_is_a_change():
 
 
 def test_the_payload_is_read_from_the_roster_before_the_database_fills_it():
-    """A roster spot without tide_preference: the database's tide value is merged into the row, but the
-    generator never saw it, so it must not count as a change. Payload without tide or with the
-    database's 'low' would both differ from the stored one; only the roster's view matches."""
-    no_tide = {k: v for k, v in STEAMER.items() if k != "tide_preference"}
-    # The payload above without "tide_preference":"all", signed the same way with hashlib:
-    stored = "v2:" + __import__("hashlib").sha1((
-        '2\n{"bottom":"rock","break_type":"point","faces":"SE","name":"Steamer Lane",'
-        '"offshore_wind_deg":308,"offshore_wind_from":"NW","optimal_swell_from":"SW",'
-        '"orientation_deg":128,"state":"California","swell_window":["S..NW"]}').encode()).hexdigest()[:16]
-    row = dict(STEAMER_ROW, description_signature=stored, tide_preference="low")
+    """A roster spot without tide_preference or its source: the database's researched 'low' is merged
+    into the row, but the generator never saw it, so it must not count as a change. The payload with
+    the database's tide would differ from the stored one; only the roster's view matches."""
+    no_tide = {k: v for k, v in STEAMER.items()
+               if k not in ("tide_preference", "tide_preference_source")}
+    stored = "v2:a0f021f0d0ce0daa"   # the payload above without "tide_preference":"all", by hashlib
+    row = dict(STEAMER_ROW, description_signature=stored, tide_preference="low",
+               tide_preference_source="researched")
     up = _run_import([row], [no_tide])["steamer-lane"]
     assert up["description"] == "Steamer Lane is a point break over rock."
     assert up["tide_preference"] == "low"
@@ -178,13 +178,10 @@ def test_an_already_blank_description_is_not_counted_again():
     row = dict(STEAMER_ROW, description=None)
     assert db_import.description_blank_reason(
         db_import._spot_record(dict(STEAMER, break_type="reef")), row) is None
+    # the reef payload, signed with hashlib: break_type "reef" in place of "point"
     assert db_import.description_blank_reason(
         db_import._spot_record(dict(STEAMER, break_type="reef")), STEAMER_ROW) == (
-        "signature v2:5d6fec8ee8c395c4 != v2:" + __import__("hashlib").sha1((
-            '2\n{"bottom":"rock","break_type":"reef","faces":"SE","name":"Steamer Lane",'
-            '"offshore_wind_deg":308,"offshore_wind_from":"NW","optimal_swell_from":"SW",'
-            '"orientation_deg":128,"state":"California","swell_window":["S..NW"],'
-            '"tide_preference":"all"}').encode()).hexdigest()[:16])
+        "signature v2:6a01ee8c53a9e540 != v2:b01872df7b9674e2")
 
 
 def test_fallback_buoy_ids_maps_from_source_defaulting_to_empty():
