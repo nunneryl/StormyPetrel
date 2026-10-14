@@ -279,6 +279,33 @@ def test_the_allowance_is_measured_from_the_spots_own_depth():
     assert r["swell_window_arcs"] == [{"min": 217, "max": 323, "span": 108}], r["swell_window_arcs"]
 
 
+def test_a_ray_across_the_island_is_blocked_at_its_start_by_the_local_coast_rule():
+    """Where the block is attributed, for --debug-blockers: the due-south ray from the
+    offshore spot starts 2 km out inside the island and leaves it ~46 km later. It is
+    blocked AT ITS START, 2 km from the spot, by the local-coast rule, and flagged own —
+    not at the far shore 46 km away under the mainland-solid rule."""
+    sw._AREA_CACHE.clear()
+    sw._PREPARED_CACHE.clear()
+    sw._DEPTH_CACHE.clear()
+    dr = {}
+    lat, lng = _OFFSHORE
+    sw._classify_bearings(lat, lng, _index([_ISLAND]), 4, debug=dr)
+    assert (dr[180]["result"], dr[180]["rule"], dr[180]["own"]) == ("hard", "local_coast_30km", True)
+    assert round(dr[180]["dist_km"], 3) == 2.0, dr[180]["dist_km"]
+
+
+def test_a_spot_off_the_coast_has_no_depth_allowance():
+    """A spot OFF the land gets no depth allowance, however close the coast. A strip of land
+    1.5-2.5 km east of a spot at (0,0) (0.01348-0.02246 deg of longitude at the equator,
+    222 km long, ~222 km2): the due-east ray starts 2 km out inside the strip and leaves it
+    at 2.5 km. The spot is not on that land, so its depth is 0 and the allowance 2 km:
+    2.5 > 2, blocked. Taking the depth from the distance to the strip (1.5 km) would allow
+    3.5 km and let the ray through."""
+    strip = Polygon([(0.01348, -1.0), (0.02246, -1.0), (0.02246, 1.0), (0.01348, 1.0)])
+    _, r = _open([strip])
+    assert not in_any_arc(90, r["swell_window_arcs"]), r["swell_window_arcs"]
+
+
 def test_own_coast_skipped_but_offshore_reentry_still_blocks():
     # Guard against over-opening: a spot ~3.3 km inland of a west coast, with a SECOND
     # coast ~28 km offshore to the west (across a strait). The own coast must NOT block

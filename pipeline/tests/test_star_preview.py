@@ -61,6 +61,13 @@ def test_mop_uses_the_raw_face_when_a_correction_divided_the_published_one():
     assert SP.rescore(_mop(face_ft=2.0, face_ft_raw=4.0), WEST)["stars"] == 3.0
 
 
+def test_mop_aims_at_the_optimal_not_the_shore_normal():
+    # Optimal 250, MOP shore normal 270, swell from 270 inside [250-290]: the in-window
+    # gain is cos(20/2)**2 = cos(10)**2 = 0.969846, not the 1.0 aiming at the normal gives.
+    spot = dict(WEST, optimal_swell_dir=250, mop_shore_normal=270.0)
+    assert round(SP.rescore(_mop(), spot)["gain"], 6) == 0.969846
+
+
 # --------------------------------------------------------------------------- #
 # NWPS override: direction and period from the partitions, else dirpw/perpw   #
 # --------------------------------------------------------------------------- #

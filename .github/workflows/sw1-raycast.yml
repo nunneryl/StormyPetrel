@@ -19,6 +19,9 @@ name: sw1-raycast
 #       the result and commits that SEPARATELY on the same branch, so the hand
 #       overrides in spot_swell_windows.json (Algo 2d, with their arc pruning)
 #       land on the new arcs and the two diffs can be reviewed apart.
+#       With then_preview (default on), after the push it runs --debug-blockers on
+#       every spot whose facing is still outside every arc, and the read-only star
+#       preview of the new roster against the one this run started from.
 #   mode = star-preview: READ-ONLY. Score the published forecast window with
 #       the swell windows in another spots file (pipeline/star_preview.py) and
 #       print stars before vs after. Uses the Supabase secrets to SELECT only;
@@ -58,6 +61,11 @@ on:
         type: string
       then_enrich:
         description: (full only) run enrich --skip-raycast after the raycast and commit it separately
+        required: false
+        default: true
+        type: boolean
+      then_preview:
+        description: (full only) after pushing, run --debug-blockers on spots whose facing is outside every arc, and the read-only star preview
         required: false
         default: true
         type: boolean
@@ -167,8 +175,8 @@ jobs:
           spots_enriched.json diff before merging; orientation_deg is untouched."
           fi
 
-      - name: Install the enrich dependencies
-        if: ${{ inputs.mode == 'full' && inputs.then_enrich }}
+      - name: Install the enrich / report / preview dependencies
+        if: ${{ inputs.mode == 'full' && (inputs.then_enrich || inputs.then_preview) }}
         run: pip install -r pipeline/requirements.txt
 
       - name: Enrich --skip-raycast over the new arcs (hand overrides + pruning)
@@ -199,6 +207,37 @@ jobs:
           fi
           git push -u origin "$BR"
           echo "::notice::Pushed branch $BR — open a PR to review the spots_enriched.json diff before merge."
+
+      - name: Before-and-after counts, and --debug-blockers where the facing is outside every arc
+        if: ${{ inputs.mode == 'full' && inputs.then_preview }}
+        run: |
+          set -euo pipefail
+          git show "${{ github.sha }}:pipeline/spots_enriched.json" > "$RUNNER_TEMP/before.json"
+          python -m pipeline.swell_window_report --before "$RUNNER_TEMP/before.json" \
+            --after pipeline/spots_enriched.json
+          SLUGS="$(python -m pipeline.swell_window_report --before "$RUNNER_TEMP/before.json" \
+            --after pipeline/spots_enriched.json --facing-outside)"
+          echo "facing outside every arc: ${SLUGS:-none}"
+          if [[ -n "$SLUGS" ]]; then
+            python -m pipeline.sw1_raycast --mode validate --debug-blockers --spots "$SLUGS"
+          fi
+
+      - name: Star preview of the new roster (SELECT only)
+        if: ${{ inputs.mode == 'full' && inputs.then_preview }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -m pipeline.star_preview --arcs pipeline/spots_enriched.json \
+            --baseline "$RUNNER_TEMP/before.json" --out star_preview.json
+
+      - name: Upload the star preview
+        if: ${{ inputs.mode == 'full' && inputs.then_preview && always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: star-preview-${{ github.run_number }}
+          path: star_preview.json
+          if-no-files-found: warn
 
   star-preview:
     name: sw1 star preview (read-only)
