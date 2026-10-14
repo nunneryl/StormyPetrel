@@ -57,6 +57,7 @@ from ..config import (
     SWELL_MAINLAND_SOLID_KM,
     SWELL_MIN_FETCH_KM,
     SWELL_MIN_SHADOW_DEG,
+    SWELL_OWN_LAND_CROSSING_KM,
     SWELL_RAY_STEP_DEG,
 )
 from .geodata import LandIndex, load_land_index
@@ -71,6 +72,10 @@ _GEOD = Geod(ellps="WGS84")
 # the same polygon objects, so id(poly) is stable and shared across both.
 _AREA_CACHE: dict[int, float] = {}
 _PREPARED_CACHE: dict[int, object] = {}
+# How far inside a polygon a spot sits, keyed (id(poly), lng, lat): every ray of one spot
+# asks the same question of the same landmass, and the answer needs a nearest-point search
+# along the whole coastline.
+_DEPTH_CACHE: dict[tuple[int, float, float], float] = {}
 
 
 def _ray_linestring(lat: float, lng: float, bearing_deg: float) -> LineString:
@@ -123,18 +128,8 @@ def _prepared(poly):
     return p
 
 
-def _first_seaward_entry(ray: LineString, inter, origin: Point):
-    """For a ray whose ORIGIN sits inside a land polygon (the spot's own coast),
-    return the Point at which the ray next runs INTO that polygon — i.e. re-enters
-    it after crossing open water (a coast across a bay/strait), or *origin* itself
-    when the ray never exits the polygon within the fetch (the bearing faces into
-    the landmass). Return None when the ray leaves the polygon and never returns:
-    open water lies seaward, so the polygon does not block this bearing.
-
-    Planar arc-length along the densified ray orders the crossings (it is monotone
-    along a simple outbound ray); the blocking distance itself is measured
-    geodesically by the caller from the returned Point.
-    """
+def _own_intervals(ray: LineString, inter) -> list[tuple[float, float]]:
+    """The ray's crossings of one polygon as sorted (start, end) planar arc-lengths."""
     intervals: list[tuple[float, float]] = []
     for g in getattr(inter, "geoms", [inter]):
         for part in getattr(g, "geoms", [g]):
@@ -142,15 +137,51 @@ def _first_seaward_entry(ray: LineString, inter, origin: Point):
                 continue  # a tangential point touch is not a crossing
             ts = [ray.project(Point(xy)) for xy in part.coords]
             intervals.append((min(ts), max(ts)))
+    return sorted(intervals)
+
+
+def _first_seaward_entry(ray: LineString, inter, origin: Point):
+    """For a ray whose ORIGIN sits inside a land polygon (the spot's own coast),
+    return the Point at which the ray next runs INTO that polygon — i.e. re-enters
+    it after crossing open water (a coast across a bay/strait), or *origin* itself
+    when the ray never exits the polygon within the fetch (the bearing faces into
+    the landmass). Return None when the ray leaves the polygon and never returns:
+    open water lies beyond. Whether that is OPEN depends on how much land the ray
+    crossed first — _ray_hits decides that, from _own_exit_point.
+
+    Planar arc-length along the densified ray orders the crossings (it is monotone
+    along a simple outbound ray); the blocking distance itself is measured
+    geodesically by the caller from the returned Point.
+    """
+    intervals = _own_intervals(ray, inter)
     if not intervals:
         return None
-    intervals.sort()
     reentries = [a for a, _ in intervals[1:]]   # entries after the own-coast segment
     if reentries:
         return ray.interpolate(min(reentries))
     if intervals[0][1] >= ray.length - 1e-9:    # never exits → faces into the landmass
         return origin
-    return None                                 # exits to open water, never returns → open
+    return None                                 # exits to open water, never returns
+
+
+def _own_exit_point(ray: LineString, inter) -> Point:
+    """Where the ray first leaves the polygon its origin sits inside."""
+    return ray.interpolate(_own_intervals(ray, inter)[0][1])
+
+
+def _depth_inside_km(poly, spot_ll: Point) -> float:
+    """How far inside *poly* the spot itself sits, in km: 0 for a spot on or off the coast,
+    else the geodesic distance to the nearest point of the polygon's boundary. Cached."""
+    key = (id(poly), spot_ll.x, spot_ll.y)
+    d = _DEPTH_CACHE.get(key)
+    if d is None:
+        if not _prepared(poly).contains(spot_ll):
+            d = 0.0
+        else:
+            coast, _ = nearest_points(poly.boundary, spot_ll)
+            d = _GEOD.inv(spot_ll.x, spot_ll.y, coast.x, coast.y)[2] / 1000.0
+        _DEPTH_CACHE[key] = d
+    return d
 
 
 def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float]]:
@@ -161,11 +192,13 @@ def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float
     (or just inland of) the GSHHG coastline that start can still be INSIDE the spot's
     own landmass. Counting that near-field own-coast as a hit hard-blocks even seaward
     bearings, since the ray exits to open ocean a few km out (the too-narrow-window
-    bug). So a polygon the ray STARTS inside blocks the bearing only if the ray
-    re-enters it after reaching open water (a coast across a bay/strait) or never
-    exits within the fetch (faces into the landmass); a ray that exits to open water
-    and never returns is open. Polygons the ray enters from open water (islands, the
-    far continent) are hits at the true water→land crossing, as before.
+    bug). So a polygon the ray STARTS inside blocks the bearing if the ray re-enters
+    it after reaching open water (a coast across a bay/strait), never exits within the
+    fetch (faces into the landmass), or exits only after crossing more than
+    SWELL_OWN_LAND_CROSSING_KM beyond the spot's own depth inside it (it crossed the
+    island). A ray that leaves within that allowance and never returns is open.
+    Polygons the ray enters from open water (islands, the far continent) are hits at
+    the true water→land crossing, as before.
     """
     try:
         candidates = land.polygon_tree.query(ray)
@@ -187,7 +220,16 @@ def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float
             # bearing that never escapes the landmass).
             blocker = _first_seaward_entry(ray, inter, origin)
             if blocker is None:
-                continue  # exits to open water → open along this bearing
+                # Exits to open water and never returns. Open only if it crossed little more
+                # land than the spot's own distance to the coast: a seaward ray from a spot
+                # slightly inland leaves within that, a landward ray across an island (Banzai
+                # Pipeline due south across Oahu, ~40 km) does not, and is blocked like a
+                # bearing that faces into the landmass.
+                exit_pt = _own_exit_point(ray, inter)
+                exit_km = _GEOD.inv(spot_ll.x, spot_ll.y, exit_pt.x, exit_pt.y)[2] / 1000.0
+                if exit_km <= _depth_inside_km(poly, spot_ll) + SWELL_OWN_LAND_CROSSING_KM:
+                    continue  # exits to open water within the own-coast allowance → open
+                blocker = origin
             closest_on_inter = blocker
         else:
             # Spot is seaward of this polygon: the nearest intersection point is the

@@ -398,6 +398,7 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
     elapsed = time.time() - t0
 
     raycast_n = fallback_n = empty_n = preserved_n = 0
+    preserved_names: list[str] = []
     ca_widths: list[int] = []
     ri_widths: list[int] = []
     for idx, r in results:
@@ -413,6 +414,7 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
                 ri_widths.append(w)
         elif cat == "preserved":
             preserved_n += 1
+            preserved_names.append(s.get("name") or f"#{idx}")
         elif cat == "fallback":
             fallback_n += 1
         else:
@@ -425,7 +427,10 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
     print("\n==== SW-1 full roster raycast — summary ====")
     print(f"  spots cast:            {len(items)}")
     print(f"  source=raycast:        {raycast_n}")
-    print(f"  source=nwps/cdip_mop:  {preserved_n}  (better tier preserved; arcs refreshed if solved)")
+    print(f"  source=nwps/cdip_mop:  {preserved_n}  (better tier, raycast found NO open arc: "
+          "the stored arcs and optimal are KEPT, not recomputed)")
+    for name in sorted(preserved_names):
+        print(f"    kept stored window:  {name}")
     print(f"  source=orientation:    {fallback_n}  (no open arc; fallback kept)")
     print(f"  unresolved (no arcs):  {empty_n}")
     if ca_widths:
