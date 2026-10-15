@@ -126,6 +126,17 @@ SWELL_MIN_FETCH_KM = 3_000  # a bearing is "open" iff the first land hit is beyo
 # wall — it wraps open by distance through the diffraction machinery below.
 SWELL_BLOCKER_AREA_KM2 = 500.0   # land below this is a partial blocker, not a wall
 SWELL_LOCAL_LANDMASS_KM = 30.0   # any land nearer than this always hard-blocks (local coast)
+# How much MORE of its own landmass a ray may cross than the spot's distance to that
+# landmass's nearest coast, and still count as open. A ray whose start point (2 km out) lies
+# inside the land the spot sits on is the own-coast case: #64 let it through whenever it
+# left that land and never came back, so a spot sitting a little inland was not walled off by
+# its own beach. That also let through every LANDWARD ray across a finite island: from Banzai
+# Pipeline a ray due south crosses ~40 km of Oahu, leaves the south shore, never re-enters,
+# and so came out "open" (the committed arcs had 181-203 open at Pipeline). The ray now counts
+# as open only if it leaves the landmass within depth + this many km, where depth is how far
+# inside that landmass the spot itself sits (0 for a spot on or off the coast). 2 km matches
+# SWELL_LOCAL_COAST_EXCLUSION_KM, the distance already treated as "local coast, not a blocker".
+SWELL_OWN_LAND_CROSSING_KM = 2.0
 # A large (>= SWELL_BLOCKER_AREA_KM2) landmass hard-blocks only within this range;
 # beyond it, it is demoted to a partial blocker and fed through the same distance-aware
 # diffraction-wrap machinery a sub-threshold island already gets. This fixes the

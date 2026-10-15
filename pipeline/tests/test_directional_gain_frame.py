@@ -27,9 +27,16 @@ every one is stated alongside what the OLD code returned for the same input. Non
 derived by calling the function under test: cos²(30°) = 0.750 under the new form and
 0.250 under the old, and a test that cannot tell those apart is not a test.
 
-ALL GEOMETRY IS LIVE, read from spots_enriched.json, never invented — the frames only
-diverge where optimal_swell_dir actually differs from orientation_deg, and a synthetic
-fixture would be free to make that gap whatever flattered the change.
+ALL GEOMETRY IS REAL, never invented — the frames only diverge where optimal_swell_dir
+actually differs from orientation_deg, and a synthetic fixture would be free to make that
+gap whatever flattered the change. The arcs and optima are copied from
+pipeline/spots_enriched.json at 635ba9c (main on 2026-10-14), the last roster before the
+own-land ray-cast fix recomputed every window. That recompute moved all four: North
+Buxton's window no longer holds optimal +/- 90 and San Simeon is no longer the
+optimal == orientation control, so they are kept FROZEN at that commit rather than
+re-pointed at spots that no longer have the properties these tests are about. The
+inputs the recompute did not touch — orientation_deg and mop_shore_normal — are still
+asserted against the live roster.
 
 Run: python -m pipeline.tests.test_directional_gain_frame   (or pytest)
 """
@@ -59,7 +66,7 @@ def _close(a, b, tol=1e-12):
 
 
 # --------------------------------------------------------------------------- #
-# Live geometry. Every number here is copied out of pipeline/spots_enriched.json. #
+# Real geometry, copied out of pipeline/spots_enriched.json at 635ba9c.         #
 # --------------------------------------------------------------------------- #
 
 # North Buxton, NC. One very wide arc, and optimal (120) is NOT the orientation (98).
@@ -122,22 +129,21 @@ def test_the_fixtures_have_the_geometry_these_tests_assume():
 
 
 def test_the_fixtures_are_copied_from_the_live_roster_not_invented():
-    """Backs the claim in this module's docstring. Every fixture above is asserted to be
-    byte-equal to what pipeline/spots_enriched.json holds for that spot. If the roster is
-    re-enriched and a window moves, this fails loudly instead of leaving the tests pinning
-    a geometry that no longer exists anywhere."""
+    """Backs the claim in this module's docstring as far as the live roster still can.
+    The arcs and optima are frozen at 635ba9c (see the docstring: the own-land recompute
+    moved all four, and two lost the property their tests need). What the recompute did
+    not touch is still asserted live: each spot exists, and its orientation_deg (or MOP
+    shore normal) is the value these tests use. If a facing moves, this fails loudly."""
     spots = json.load(open(os.path.join(_REPO, "pipeline", "spots_enriched.json")))
     by_name = {s.get("name"): s for s in spots}
-    for name, arcs, opt, target_key, target in (
-        ("North Buxton", NB_ARCS, NB_OPTIMAL, "orientation_deg", NB_ORIENT),
-        ("Steamer Lane", SL_ARCS, SL_OPTIMAL, "orientation_deg", SL_ORIENT),
-        ("San Simeon", SS_ARCS, SS_OPTIMAL, "orientation_deg", SS_ORIENT),
-        ("15th Street Del Mar", DM_ARCS, DM_OPTIMAL, "mop_shore_normal", DM_SHORE_NORMAL),
+    for name, target_key, target in (
+        ("North Buxton", "orientation_deg", NB_ORIENT),
+        ("Steamer Lane", "orientation_deg", SL_ORIENT),
+        ("San Simeon", "orientation_deg", SS_ORIENT),
+        ("15th Street Del Mar", "mop_shore_normal", DM_SHORE_NORMAL),
     ):
         s = by_name.get(name)
         assert s is not None, f"fixture spot vanished from the roster: {name}"
-        assert s.get("swell_window_arcs") == arcs, (name, s.get("swell_window_arcs"))
-        assert s.get("optimal_swell_dir") == opt, (name, s.get("optimal_swell_dir"))
         assert s.get(target_key) == target, (name, target_key, s.get(target_key))
 
 

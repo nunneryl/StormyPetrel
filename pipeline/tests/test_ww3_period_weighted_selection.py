@@ -53,26 +53,24 @@ def _entry(*parts):
 # Live geometry, copied from pipeline/spots_enriched.json                       #
 # --------------------------------------------------------------------------- #
 
-# Lower Trestles. All three arcs are step-4 raycast, pad = (span - width)/2 = 2:
-#   {93,115,span 26}   width 22  -> sector [ 91, 117]
+# Lower Trestles. One step-4 raycast arc, pad = (span - width)/2 = 2:
 #   {165,291,span 130} width 126 -> sector [163, 293]
-#   {325,343,span 22}  width 18  -> sector [323, 345]
-LT_ARCS = [{"min": 93, "max": 115, "span": 26},
-           {"min": 165, "max": 291, "span": 130},
-           {"min": 325, "max": 343, "span": 22}]
+# (Re-copied after the own-land fix: the cast that blocks rays across the spot's own
+# landmass left this one arc. The optimal is 228 again, as before the fix; the arcs
+# [93-115] and [325-343] that went held none of the partitions below, so every value
+# here is the original one.)
+LT_ARCS = [{"min": 165, "max": 291, "span": 130}]
 LT_OPTIMAL = 228
 LT_ORIENT = 205.0
 
-# Huntington Beach Pier. Four arcs, every pad 2:
-#   { 93,111,span 22} width 18 -> sector [ 91, 113]
+# Huntington Beach Pier. Two arcs, every pad 2. The own-land fix dropped [93-111] and
+# [325-343] (no partition below sits in either) and moved the optimal from 204 to 208,
+# which moves every gain and score below — re-derived by hand:
 #   {145,211,span 70} width 66 -> sector [143, 213]
 #   {241,275,span 38} width 34 -> sector [239, 277]
-#   {325,343,span 22} width 18 -> sector [323, 345]
-HB_ARCS = [{"min": 93, "max": 111, "span": 22},
-           {"min": 145, "max": 211, "span": 70},
-           {"min": 241, "max": 275, "span": 38},
-           {"min": 325, "max": 343, "span": 22}]
-HB_OPTIMAL = 204
+HB_ARCS = [{"min": 145, "max": 211, "span": 70},
+           {"min": 241, "max": 275, "span": 38}]
+HB_OPTIMAL = 208
 HB_ORIENT = 220.0
 
 
@@ -160,7 +158,7 @@ def test_the_named_constant_is_the_one_actually_used():
 #   swell_3  0.36 m / 15.1 s / 200°
 #
 # Gains, optimal 228, half-angle in-window kernel max(0.25, cos²(diff/2)):
-#   s1 dp 269, inside arc2's sector [163, 293]. diff = 269-228 = 41
+#   s1 dp 269, inside the sector [163, 293]. diff = 269-228 = 41
 #      cos²(20.5°) = 0.877354790111
 #   s2 dp 200, inside [163, 293]. diff = -28 -> cos²(-14°) = 0.941473796429
 #   s3 dp 200, same                           -> 0.941473796429
@@ -213,47 +211,47 @@ def test_lower_trestles_selection_scores_are_exactly_as_hand_computed():
 # swell_1 0.76 m / 5.6 s / 270°, swell_2 0.26 m / 13.4 s / 198°,
 # swell_3 0.24 m / 15.8 s / 195°.
 #
-# Gains, optimal 204:
-#   s1 dp 270, inside arc3's sector [239, 277]. diff = 66 -> cos²(33°)  = 0.703368321538
-#   s2 dp 198, inside arc2's sector [143, 213]. diff = -6 -> cos²(-3°)  = 0.997260947684
-#   s3 dp 195, inside [143, 213].               diff = -9 -> cos²(-4.5°)= 0.993844170298
+# Gains, optimal 208:
+#   s1 dp 270, inside the sector [239, 277]. diff = 62  -> cos²(31°)   = 0.734735781393
+#   s2 dp 198, inside the sector [143, 213]. diff = -10 -> cos²(-5°)   = 0.992403876506
+#   s3 dp 195, inside [143, 213].            diff = -13 -> cos²(-6.5°) = 0.987185032393
 #
 # period_quality: s1 0.5, s2 1.006666666667, s3 1.046666666667
 #
 #            OLD  hs²·gain                    NEW  hs²·gain·pq²
-#   s1   0.76²·0.703368321538 = 0.406265542520  ·0.25          = 0.101566385630
-#   s2   0.26²·0.997260947684 = 0.067414840063  ·1.013377778   = 0.068316700813
-#   s3   0.24²·0.993844170298 = 0.057245424209  ·1.095511111   = 0.062712998281
+#   s1   0.76²·0.734735781393 = 0.424383387333  ·0.25          = 0.106095846833
+#   s2   0.26²·0.992403876506 = 0.067086502052  ·1.013377778   = 0.067983970368
+#   s3   0.24²·0.987185032393 = 0.056861857866  ·1.095511111   = 0.062292797090
 #
 # OLD winner: swell_1.  NEW winner: swell_1 — IT DOES NOT FLIP AT EXPONENT 2.
 #
-# This is a real finding, not a gap in the test. The windsea leads by 7.10x on raw
-# gain-weighted energy (0.4063 / 0.0572) because 0.76 m against 0.24 m is 10.0x in
+# This is a real finding, not a gap in the test. The windsea leads by 7.46x on raw
+# gain-weighted energy (0.4244 / 0.0569) because 0.76 m against 0.24 m is 10.0x in
 # hs² before gain. The most the weight can claw back is (1.046666667/0.5)² = 4.38x.
-# The flip threshold is the exponent N solving (0.4063/0.0572) = (1.046666667/0.5)**N,
-# i.e. N = ln(7.0969)/ln(2.0933) = 2.653. Exponent 2 is below it; exponent 4 clears it.
-# So this fixture pins the SHAPE of the effect — the gap narrows from 7.10x to 1.62x —
+# The flip threshold is the exponent N solving (0.4244/0.0569) = (1.046666667/0.5)**N,
+# i.e. N = ln(7.4634)/ln(2.0933) = 2.721. Exponent 2 is below it; exponent 4 clears it.
+# So this fixture pins the SHAPE of the effect — the gap narrows from 7.46x to 1.70x —
 # and it is the test that fails if anyone raises the exponent to 4.
 HB_ENTRY = _entry((0.76, 5.6, 270), (0.26, 13.4, 198), (0.24, 15.8, 195))
 
 
 def test_huntington_narrows_the_gap_but_does_not_flip_at_exponent_two():
     """Honest pin of what exponent 2 actually does here. See the block comment above
-    for the 2.653 flip threshold — this fixture is the guard on the exponent's upper
+    for the 2.721 flip threshold — this fixture is the guard on the exponent's upper
     side, the way Lower Trestles is the guard on its lower side."""
     r = combine_ww3_partitions(HB_ENTRY, HB_ARCS, HB_OPTIMAL, HB_ORIENT)
     assert r is not None
     assert r["dominant_partition"] == "swell_1", r["dominant_partition"]
     assert r["tp"] == 5.6, r["tp"]
     by = {c["partition"]: c for c in r["contributions"]}
-    assert _close(by["swell_1"]["selection_score"], 0.101566385630)
-    assert _close(by["swell_2"]["selection_score"], 0.068316700813)
-    assert _close(by["swell_3"]["selection_score"], 0.062712998281)
-    # the gap really does narrow: 7.0969x on the old score, 1.6196x on the new one
+    assert _close(by["swell_1"]["selection_score"], 0.106095846833)
+    assert _close(by["swell_2"]["selection_score"], 0.067983970368)
+    assert _close(by["swell_3"]["selection_score"], 0.062292797090)
+    # the gap really does narrow: 7.4634x on the old score, 1.7032x on the new one
     old_ratio = by["swell_1"]["energy"] / by["swell_3"]["energy"]
     new_ratio = by["swell_1"]["selection_score"] / by["swell_3"]["selection_score"]
-    assert _close(old_ratio, 7.096908584973, tol=1e-9), old_ratio
-    assert _close(new_ratio, 1.619542812709, tol=1e-9), new_ratio
+    assert _close(old_ratio, 7.463410505053, tol=1e-9), old_ratio
+    assert _close(new_ratio, 1.703180010991, tol=1e-9), new_ratio
     assert new_ratio < old_ratio
 
 
@@ -279,10 +277,10 @@ def test_combined_height_is_untouched_by_the_period_weight():
     assert not _close(r["hs"], 0.589555366, tol=1e-6), "the period weight leaked into the RMS sum"
     # and the same on Huntington, whose winner does NOT change — proving the height
     # pin is independent of whether the selection flipped
-    #   0.406265542520 + 0.067414840063 + 0.057245424209 = 0.530925806793
-    #   sqrt = 0.728646558211
+    #   0.424383387333 + 0.067086502052 + 0.056861857866 = 0.548331747250
+    #   sqrt = 0.740494258756
     h = combine_ww3_partitions(HB_ENTRY, HB_ARCS, HB_OPTIMAL, HB_ORIENT)
-    assert _close(h["hs"], 0.728646558211), h["hs"]
+    assert _close(h["hs"], 0.740494258756), h["hs"]
 
 
 def test_combined_height_equals_the_rms_of_the_energy_field_itself():
@@ -364,8 +362,7 @@ def test_no_contributing_partition_still_returns_none():
     a missing / non-numeric / non-positive hs or tp is dropped before period_quality is
     ever called, and an entry with nothing left returns None rather than a zero-height
     dict. Driven here by unusable partition values rather than by a blocked bearing —
-    Lower Trestles' padded sectors [91,117], [163,293] and [323,345] leave no bearing
-    more than 90° from every edge, so on this geometry the ladder never reaches 0.0."""
+    the blocked-bearing path is pinned on Ocean Beach SF in the next test."""
     assert combine_ww3_partitions({}, LT_ARCS, LT_OPTIMAL, LT_ORIENT) is None
     assert combine_ww3_partitions(None, LT_ARCS, LT_OPTIMAL, LT_ORIENT) is None
     # non-positive hs and tp are rejected before the score
@@ -380,8 +377,8 @@ def test_a_blocked_partition_is_dropped_before_it_can_be_scored():
     partition >90° outside the window is PHYSICALLY BLOCKED and must not enter the
     height sum at all, however long its period.
 
-    Ocean Beach SF, live geometry: arcs {153,159,span 10} and {189,295,span 110},
-    both pad 2, so the padded sectors are [151, 161] and [187, 297]. Optimal 232.
+    Ocean Beach SF, live geometry: arcs {153,155,span 6} and {189,295,span 110},
+    both pad 2, so the padded sectors are [151, 157] and [187, 297]. Optimal 232.
     dp 44 sits in the middle of the 214°-wide blocked gap — 107° from the nearest
     edge either way — so the ladder's >90° rung gives gain 0.0 exactly.
 
@@ -395,7 +392,7 @@ def test_a_blocked_partition_is_dropped_before_it_can_be_scored():
     energy — but it would WIN the selection at score 0, so tp/dp would describe a swell
     the headland blocks.
     """
-    ob_arcs = [{"min": 153, "max": 159, "span": 10}, {"min": 189, "max": 295, "span": 110}]
+    ob_arcs = [{"min": 153, "max": 155, "span": 6}, {"min": 189, "max": 295, "span": 110}]
     entry = _entry((0.90, 16.0, 44), (0.30, 12.0, 220))
     r = combine_ww3_partitions(entry, ob_arcs, 232, 259.0)
     assert len(r["contributions"]) == 1, r["contributions"]

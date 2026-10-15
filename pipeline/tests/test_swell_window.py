@@ -42,6 +42,7 @@ def _open(polys):
     land = _index(polys)
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
+    sw._DEPTH_CACHE.clear()
     orig = sw.load_land_index
     sw.load_land_index = lambda: land
     try:
@@ -108,6 +109,7 @@ def _debug_cast(polys, step=None):
     land = _index(polys)
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
+    sw._DEPTH_CACHE.clear()
     debug_rays: dict = {}
     hard, small = sw._classify_bearings(0.0, 0.0, land, step, debug=debug_rays)
     debug_chains: list = []
@@ -145,16 +147,25 @@ def test_debug_blockers_attribution():
 
 
 def test_open_ocean_window_survives_own_coast():
-    # The exact failing case: a spot sitting ~5.5 km INLAND of a large landmass's west
-    # coast, open ocean to the WEST. Before the fix, the ray's 2 km start sat inside the
-    # continent and hard-blocked EVERY bearing (seaward included) at ~2 km. The seaward
-    # half must be OPEN; only the landward half BLOCKED. Continent = everything east of
-    # lng=-0.05 (west coast there); the spot at (0,0) is ~5.5 km inside it, and it is far
-    # larger than SWELL_BLOCKER_AREA_KM2 so it is a genuine wall.
+    # The #64 case: a spot sitting ~5.5 km INLAND of a large landmass's west coast, open
+    # ocean to the WEST. Before #64, the ray's 2 km start sat inside the continent and
+    # hard-blocked EVERY bearing (seaward included) at ~2 km. The seaward side must be OPEN,
+    # the landward side BLOCKED. Continent = everything east of lng=-0.05 (west coast
+    # there); it is far larger than SWELL_BLOCKER_AREA_KM2, so it is a genuine wall.
+    #
+    # WHAT THE OWN-LAND ALLOWANCE DOES HERE, BY HAND. The spot's depth inside the continent
+    # is 0.05 deg x 111.32 = 5.566 km (nearest coast due west). A seaward ray phi degrees
+    # off due west leaves the land after 5.566 / cos(phi) km, and is open while that is
+    # within depth + SWELL_OWN_LAND_CROSSING_KM = 7.566 km, i.e. cos(phi) >= 0.7357,
+    # phi <= 42.6 deg. At the 2-degree step that is 228..312 (phi 42 at both ends;
+    # cos 44 = 0.719 fails). Shrunk 5 deg each end: [233-307], span 307-233+2 = 76.
+    # #64 left this spot the whole western semicircle; the grazing bearings it now drops
+    # cross 7.6 to 16 km of land, which is the landward-ray fault the allowance stops.
     continent = Polygon([(-0.05, -40), (40, -40), (40, 40), (-0.05, 40)])
     _, r = _open([continent])
+    assert r["swell_window_arcs"] == [{"min": 233, "max": 307, "span": 76}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 270, r["optimal_swell_dir"]
     arcs = r["swell_window_arcs"]
-    assert arcs, "a west-facing coastal spot must have an open window"
 
     # Membership comes from the SHARED helper, never a local copy: a test that
     # re-implements its subject cannot catch a change to it (this copy compared raw
@@ -162,12 +173,185 @@ def test_open_ocean_window_survives_own_coast():
     def _in_open_arc(b):
         return in_any_arc(b, arcs)
 
-    for seaward in (225, 250, 270, 290, 315):
+    for seaward in (240, 250, 270, 290, 300):
         assert _in_open_arc(seaward), f"seaward bearing {seaward}° (open ocean) must be OPEN"
     for landward in (45, 90, 135):
         assert not _in_open_arc(landward), f"landward bearing {landward}° (into the continent) must be BLOCKED"
-    span = sum(a["span"] for a in arcs)
-    assert 120 < span < 260, f"window should be ~the seaward semicircle, not all/none (got {span}°)"
+
+
+# --------------------------------------------------------------------------- #
+# The own-land allowance on an island: Banzai Pipeline's S-SW window          #
+# --------------------------------------------------------------------------- #
+# A 0.65 x 0.416 degree rectangle at Oahu's latitude: west edge -158.30, east edge -157.65,
+# south edge 21.25, north coast 21.666 (~67 x 46 km, ~3,100 km2, so a SOLID landmass). The
+# spot is at lng -158.053, which puts it 0.247 deg x 103.4 km/deg = 25.5 km from the west
+# edge and 0.403 deg x 103.4 = 41.7 km from the east edge, with ~46 km of island to its
+# south. Rays at the roster's 4-degree step.
+#
+# Every expected window below is worked by hand, never read back from compute_swell_window.
+# Two spot positions, each with and without the 2 km ray-start skip:
+#
+#   OFFSHORE, lat 21.669: 0.003 deg x 110.77 km/deg = 0.332 km north of the coast.
+#     Bearing 92 heads sin(2) = 0.0349 south per km and so meets the coast at
+#     0.332 / 0.0349 = 9.5 km (inside the 41.7 km east edge): land within 30 km, hard. 268
+#     the same against the 25.5 km west edge. 88 and 272 head north, away from the island.
+#     With the skip, bearings 100..260 start 2 km out INSIDE the island (2 x sin 10 =
+#     0.347 > 0.332 km) and cross it: 25-62 km of land, far past the 2 km allowance
+#     (depth 0, the spot is not on land), so blocked. Window: 272..88 open, shrunk 5 deg
+#     -> [277-83], span (83-277) mod 360 + 4 = 170; symmetric about north, optimal 0.
+#     BEFORE THE FIX, with the skip, 100..260 crossed the island, never came back and
+#     counted OPEN: arcs [105-255] and [277-83], Pipeline's S-SW arc in miniature.
+#
+#   INSIDE, lat 21.665: 0.001 deg x 110.77 = 0.111 km inside the north coast (the depth).
+#     Allowance = 0.111 + 2 = 2.111 km. Bearing 84 leaves the land after
+#     0.111 / cos 84 = 0.111 / 0.1045 = 1.06 km: open. Bearing 88 only after
+#     0.111 / cos 88 = 0.111 / 0.0349 = 3.18 km (3.24 km along the ray, which is drawn as
+#     50 km chords): past the allowance either way, blocked; 272 the same.
+#     With the skip, 84 starts 2 x cos 84 = 0.209 km north, already at sea: open. Window:
+#     276..84, shrunk -> [281-79], span (79-281) mod 360 + 4 = 162, optimal 0.
+#     BEFORE THE FIX every landward ray left the island and never came back, so the whole
+#     compass was open: [0-356], span 360, no optimal.
+_ISLAND = Polygon([(-158.30, 21.25), (-157.65, 21.25), (-157.65, 21.666), (-158.30, 21.666)])
+_OFFSHORE = (21.669, -158.053)
+_INSIDE = (21.665, -158.053)
+_SEAWARD_ONLY = [{"min": 277, "max": 83, "span": 170}]
+_INSIDE_WINDOW = [{"min": 281, "max": 79, "span": 162}]
+
+
+def _cast_island(lat_lng, skip_km=None, allowance_km=None):
+    """compute_swell_window for one spot against _ISLAND alone, at the 4-degree step, with
+    the ray-start skip and the own-land allowance optionally overridden for this call."""
+    sw._AREA_CACHE.clear()
+    sw._PREPARED_CACHE.clear()
+    sw._DEPTH_CACHE.clear()
+    saved = sw.SWELL_LOCAL_COAST_EXCLUSION_KM, sw.SWELL_OWN_LAND_CROSSING_KM
+    try:
+        if skip_km is not None:
+            sw.SWELL_LOCAL_COAST_EXCLUSION_KM = skip_km
+        if allowance_km is not None:
+            sw.SWELL_OWN_LAND_CROSSING_KM = allowance_km
+        lat, lng = lat_lng
+        return sw.compute_swell_window({"name": "t", "lat": lat, "lng": lng},
+                                       land=_index([_ISLAND]), ray_step=4)
+    finally:
+        sw.SWELL_LOCAL_COAST_EXCLUSION_KM, sw.SWELL_OWN_LAND_CROSSING_KM = saved
+
+
+def test_island_offshore_spot_with_the_skip_blocks_the_rays_across_the_island():
+    r = _cast_island(_OFFSHORE)
+    assert r["swell_window_arcs"] == _SEAWARD_ONLY, r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 0, r["optimal_swell_dir"]
+    assert not in_any_arc(190, r["swell_window_arcs"]), "due S-SW crosses the island"
+
+
+def test_island_offshore_spot_without_the_skip():
+    r = _cast_island(_OFFSHORE, skip_km=0)
+    assert r["swell_window_arcs"] == _SEAWARD_ONLY, r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 0, r["optimal_swell_dir"]
+
+
+def test_island_spot_inside_the_polygon_with_the_skip():
+    r = _cast_island(_INSIDE)
+    assert r["swell_window_arcs"] == _INSIDE_WINDOW, r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 0, r["optimal_swell_dir"]
+
+
+def test_island_spot_inside_the_polygon_without_the_skip():
+    r = _cast_island(_INSIDE, skip_km=0)
+    assert r["swell_window_arcs"] == _INSIDE_WINDOW, r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 0, r["optimal_swell_dir"]
+
+
+def test_the_allowance_is_measured_from_the_spots_own_depth():
+    """The continent case with the allowance raised to 5 km. The spot is 5.566 km inside, so
+    a seaward ray is open while 5.566 / cos(phi) <= 5.566 + 5 = 10.566 km: cos(phi) >= 0.5268,
+    phi <= 58.2 deg. At the 2-degree step that is 212..328 (cos 58 = 0.530 passes, cos 60 =
+    0.5 fails), shrunk 5 deg each end: [217-323], span 323-217+2 = 108. Measured from the
+    spot alone, with no depth, no ray could leave the continent within 5 km and the window
+    would be empty."""
+    continent = Polygon([(-0.05, -40), (40, -40), (40, 40), (-0.05, 40)])
+    saved = sw.SWELL_OWN_LAND_CROSSING_KM
+    try:
+        sw.SWELL_OWN_LAND_CROSSING_KM = 5.0
+        _, r = _open([continent])
+    finally:
+        sw.SWELL_OWN_LAND_CROSSING_KM = saved
+    assert r["swell_window_arcs"] == [{"min": 217, "max": 323, "span": 108}], r["swell_window_arcs"]
+
+
+def test_a_ray_across_the_island_is_blocked_at_its_start_by_the_local_coast_rule():
+    """Where the block is attributed, for --debug-blockers: the due-south ray from the
+    offshore spot starts 2 km out inside the island and leaves it ~46 km later. It is
+    blocked AT ITS START, 2 km from the spot, by the local-coast rule, and flagged own —
+    not at the far shore 46 km away under the mainland-solid rule."""
+    sw._AREA_CACHE.clear()
+    sw._PREPARED_CACHE.clear()
+    sw._DEPTH_CACHE.clear()
+    dr = {}
+    lat, lng = _OFFSHORE
+    sw._classify_bearings(lat, lng, _index([_ISLAND]), 4, debug=dr)
+    assert (dr[180]["result"], dr[180]["rule"], dr[180]["own"]) == ("hard", "local_coast_30km", True)
+    assert round(dr[180]["dist_km"], 3) == 2.0, dr[180]["dist_km"]
+
+
+def test_a_ray_across_a_peninsula_is_blocked_even_when_it_re_enters_the_same_land_far_away():
+    """THE GAP THE FIRST FIX LEFT. One C-shaped polygon at the equator (~7,300 km², a solid
+    landmass): a peninsula from lng -0.02 to 0.27 (lat -0.5 to 0.8), a band along its top
+    (lat 0.7-0.8) running east to a far arm at lng 1.5-1.6 (lat -0.1 to 0.8). The spot at
+    (0, 0) sits 0.02 deg x 111.32 = 2.226 km inside the peninsula's west coast.
+
+    Due east, the ray leaves the peninsula at 0.27 deg = 30.1 km, crosses open water, and
+    re-enters the SAME polygon at the far arm, 1.5 deg = 167 km out. The first fix checked
+    the own-land allowance only for a ray that never came back, so this one was graded a
+    distant hit beyond SWELL_MAINLAND_SOLID_KM ('small', 167 km) and the rays across the
+    peninsula to the north-east wrapped open as [45-87]. Now the crossing is checked first:
+    30.1 km > 2.226 + 2 km, blocked at the ray's start by the local-coast rule.
+
+    The whole window, by hand: every east-half ray crosses 30-89 km of the peninsula and is
+    blocked. A west-half ray phi degrees off due west leaves after 2.226 / cos(phi) km and is
+    open while that is within 4.226 km: cos(phi) >= 0.5267, phi <= 58.2 deg, i.e. 212..328 at
+    the 2-degree step (cos 58 = 0.530 passes, cos 60 = 0.5 fails); shrunk 5 deg each end:
+    [217-323], span 323-217+2 = 108, optimal 270."""
+    pen = Polygon([(-0.02, -0.5), (0.27, -0.5), (0.27, 0.7), (1.5, 0.7), (1.5, -0.1),
+                   (1.6, -0.1), (1.6, 0.8), (-0.02, 0.8)])
+    dr, _, hard, _ = _debug_cast([pen])
+    assert 90 in hard
+    assert (dr[90]["result"], dr[90]["rule"], dr[90]["own"]) == ("hard", "local_coast_30km", True), dr[90]
+    assert round(dr[90]["dist_km"], 3) == 2.0, dr[90]["dist_km"]
+    _, r = _open([pen])
+    assert r["swell_window_arcs"] == [{"min": 217, "max": 323, "span": 108}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 270, r["optimal_swell_dir"]
+    for crossing in (45, 60, 87, 90):
+        assert not in_any_arc(crossing, r["swell_window_arcs"]), crossing
+
+
+def test_a_ray_leaving_within_the_allowance_still_blocks_on_the_same_land_across_a_bay():
+    """The Fort Point case (Marin across the Golden Gate, 9.8 km): one polygon wrapped round
+    a bay, at the equator. The west land runs to lng 0.02695 (3.0 km east of the spot) and
+    lat 0.01348 (1.5 km north of it); the east land starts at lng 0.11678 (13.0 km); a band
+    along the south (lat -0.5 to -0.4) joins them. The spot at (0, 0) is 1.5 km inside the
+    north coast, its nearest — so the allowance is 1.5 + 2 = 3.5 km. Due east the ray starts
+    2 km out still on land, leaves at 3.0 km (within the allowance), crosses 10 km of bay and
+    re-enters the SAME polygon at 13.0 km: a coast across a bay, hard-blocked there by the
+    local-coast rule and flagged own — not opened as the spot's own coast."""
+    bay = Polygon([(-1.0, -0.5), (1.0, -0.5), (1.0, 0.5), (0.11678, 0.5), (0.11678, -0.4),
+                   (0.02695, -0.4), (0.02695, 0.01348), (-1.0, 0.01348)])
+    dr, _, hard, _ = _debug_cast([bay])
+    assert 90 in hard
+    assert (dr[90]["result"], dr[90]["rule"], dr[90]["own"]) == ("hard", "local_coast_30km", True), dr[90]
+    assert round(dr[90]["dist_km"], 1) == 13.0, dr[90]["dist_km"]
+
+
+def test_a_spot_off_the_coast_has_no_depth_allowance():
+    """A spot OFF the land gets no depth allowance, however close the coast. A strip of land
+    1.5-2.5 km east of a spot at (0,0) (0.01348-0.02246 deg of longitude at the equator,
+    222 km long, ~222 km2): the due-east ray starts 2 km out inside the strip and leaves it
+    at 2.5 km. The spot is not on that land, so its depth is 0 and the allowance 2 km:
+    2.5 > 2, blocked. Taking the depth from the distance to the strip (1.5 km) would allow
+    3.5 km and let the ray through."""
+    strip = Polygon([(0.01348, -1.0), (0.02246, -1.0), (0.02246, 1.0), (0.01348, 1.0)])
+    _, r = _open([strip])
+    assert not in_any_arc(90, r["swell_window_arcs"]), r["swell_window_arcs"]
 
 
 def test_own_coast_skipped_but_offshore_reentry_still_blocks():
@@ -230,6 +414,7 @@ def test_mainland_solid_km_override_sweeps():
     idx = _index([_square(600, 140)])   # nearest edge ~128 km
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
+    sw._DEPTH_CACHE.clear()
     hard_hi, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG, mainland_solid_km=150.0)
     hard_lo, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG, mainland_solid_km=100.0)
     assert 90 in hard_hi, "≥500 km² wall at ~128 km is SOLID when the solid range is 150 km"

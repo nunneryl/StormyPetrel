@@ -29,7 +29,8 @@ tide preference is in the payload (and so in the signature) but is not stated. T
 held back from the sentence while staying in the payload, so that correcting them rewrites the text:
   the optimal swell direction, when it is more than SWELL_MAX_OFF_FACING_DEG from the direction the
       spot faces — a swell from behind the beach comes from the faulty swell windows or a wrong
-      orientation (31 spots on 2026-10-13, e.g. Spoils faces E with an optimal W);
+      orientation (31 spots on 2026-10-13, e.g. Spoils faces E with an optimal W; 2 after
+      the own-land ray-cast recompute);
   the state, when the spot's name already holds it ("Dana Point, California", "Sunset Beach Hawaii",
       "North End Virginia Beach": 13 spots).
 
