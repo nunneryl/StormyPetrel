@@ -86,7 +86,7 @@ on:
         default: main
         type: string
       tide_modes:
-        description: "(tide-preview only) comma-separated: keep, neutral, damp:K (0 < K < 1, the share of the penalty kept)"
+        description: "(tide-preview only) comma-separated: keep, neutral, damp:K (0 < K < 1, the share of the penalty kept), rated (the rater's own rule)"
         required: false
         default: neutral,damp:0.5
         type: string
@@ -357,8 +357,10 @@ jobs:
           # Through the environment, never interpolated into the shell command.
           TIDE_MODES: ${{ inputs.tide_modes }}
         run: |
+          # --tide-roster: the 'rated' mode reads the tide sources of the roster this run is on.
           python -m pipeline.star_preview --tide "${TIDE_MODES:-neutral,damp:0.5}" \
-            --baseline "$RUNNER_TEMP/baseline.json" --out tide_preview.json
+            --baseline "$RUNNER_TEMP/baseline.json" \
+            --tide-roster pipeline/spots_enriched.json --out tide_preview.json
 
       - name: Upload the report
         if: ${{ always() }}

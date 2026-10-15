@@ -42,8 +42,8 @@ from pipeline.config import (  # noqa: E402
 # Migration 022's CHECK list for tide_preference_source, written out: the ladder in rank
 # order, then 'unknown', which is legal and makes no provenance claim.
 MIGRATION_022_SOURCES = (
-    "researched", "scraped", "model_recall", "derived_from_break_type", "unattributed",
-    "unknown",
+    "reviewed", "researched", "scraped", "model_recall", "derived_from_break_type",
+    "unattributed", "unknown",
 )
 URL = "https://www.surf-forecast.com/breaks/Rincon"
 QUOTE = "Best around low tide"
@@ -70,8 +70,9 @@ def _tide(spot):
 # --------------------------------------------------------------------------- #
 # the ladder                                                                   #
 # --------------------------------------------------------------------------- #
-def test_the_rank_ladder_is_exactly_these_five_values():
+def test_the_rank_ladder_is_exactly_these_six_values():
     assert TIDE_SOURCE_RANK == {
+        "reviewed": 6,
         "researched": 5,
         "scraped": 4,
         "model_recall": 3,
@@ -83,7 +84,7 @@ def test_the_rank_ladder_is_exactly_these_five_values():
 def test_the_ladder_is_a_strict_total_order():
     ranks = list(TIDE_SOURCE_RANK.values())
     assert len(set(ranks)) == len(ranks)
-    assert sorted(ranks) == [1, 2, 3, 4, 5]
+    assert sorted(ranks) == [1, 2, 3, 4, 5, 6]
 
 
 def test_absent_null_and_unrecognised_all_rank_zero():
@@ -104,6 +105,7 @@ def test_a_model_answer_cannot_overwrite_a_cited_one():
     assert tide_source_may_overwrite("researched", "model_recall") is False
     assert tide_source_may_overwrite("scraped", "model_recall") is False
     assert tide_source_may_overwrite("researched", "scraped") is False
+    assert tide_source_may_overwrite("reviewed", "researched") is False
     assert tide_source_may_overwrite("model_recall", "derived_from_break_type") is False
     assert tide_source_may_overwrite("model_recall", "unattributed") is False
 
@@ -132,6 +134,7 @@ def test_equal_rank_is_permitted():
     (("high", "scraped"), {"url": URL, "evidence": QUOTE}, _all_four("high", "scraped", URL, QUOTE)),
     (("low", "researched"), {"url": URL, "evidence": QUOTE},
      _all_four("low", "researched", URL, QUOTE)),
+    (("mid", "reviewed"), {}, _all_four("mid", "reviewed")),    # a person needs no page
     ((None, None), {}, _all_four(None, None)),
 ])
 def test_the_builder_returns_all_four_keys(args, kwargs, expected):

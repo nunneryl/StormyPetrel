@@ -18,9 +18,10 @@
 --
 -- WHAT THIS ADDS, mirroring 020:
 --
---   tide_preference_source      model_recall joins the list. The ladder (pipeline/config.py
---                               TIDE_SOURCE_RANK holds the same numbers; a lower rank may never
---                               overwrite a higher one, an equal rank may):
+--   tide_preference_source      reviewed and model_recall join the list. The ladder
+--                               (pipeline/config.py TIDE_SOURCE_RANK holds the same numbers; a
+--                               lower rank may never overwrite a higher one, an equal rank may):
+--                                 reviewed                 6  a person set it
 --                                 researched               5  a page was read, cited and quoted
 --                                 scraped                  4  read off the break's own surf-forecast.com page, cited
 --                                 model_recall             3  a language model answered with no citation
@@ -131,8 +132,8 @@ ALTER TABLE spots
 ALTER TABLE spots
   ADD CONSTRAINT spots_tide_preference_source_check CHECK (
     tide_preference_source IS NULL OR tide_preference_source IN (
-      'researched', 'scraped', 'model_recall', 'derived_from_break_type', 'unattributed',
-      'unknown'
+      'reviewed', 'researched', 'scraped', 'model_recall', 'derived_from_break_type',
+      'unattributed', 'unknown'
     )
   );
 
@@ -190,14 +191,16 @@ ALTER TABLE spots
   );
 
 COMMENT ON COLUMN spots.tide_preference_source IS
-  'Where tide_preference came from, ranked: researched 5 > scraped 4 > model_recall 3 > '
+  'Where tide_preference came from, ranked: reviewed 6 > researched 5 > scraped 4 > '
+  'model_recall 3 > '
   'derived_from_break_type 2 > unattributed 1 (pipeline/config.py TIDE_SOURCE_RANK); '
   '''unknown'' is admitted and unranked. A lower rank never overwrites a higher one; an equal '
   'rank may. Always set together with tide_preference '
   '(spots_tide_preference_source_paired_check). researched needs a cited page and a quote, '
   'scraped a cited page (spots_tide_preference_citation_check). ''unattributed'' is the state of '
   'the 444 values that predate migration 018; a model''s uncited answer is model_recall '
-  '(migration 022).';
+  '(migration 022). Ratings apply tide_preference only when this is reviewed, researched or '
+  'scraped (pipeline/interpret.py rated_tide_preference).';
 
 COMMENT ON COLUMN spots.tide_preference_source_url IS
   'The page cited for tide_preference. Required when tide_preference_source is researched or '

@@ -19,7 +19,11 @@ Rating pipeline per hour:
                                      tests/test_wind_multiplier.py.)
 4. Tide quality (tide_mult)        ∈ {0.6, 0.7, 0.8, 1.0} using
                                      tide_preference and the current
-                                     normalized tide position.
+                                     normalized tide position — but only
+                                     when tide_preference_source is reviewed,
+                                     researched or scraped
+                                     (rated_tide_preference); any other
+                                     source, or none, scores the neutral 1.0.
 5. Chop penalty (chop_mult)        ∈ [0.3, 1.0] from chop_ratio — the wind-sea
                                      fraction of total Hs. chop_ratio is NULL
                                      when the inputs cannot support a ratio, and
@@ -58,6 +62,7 @@ from .config import (
     NWPS_FORECAST_FILE,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
+    TIDE_RATED_SOURCES,
     WW3_FORECAST_FILE,
 )
 
@@ -463,6 +468,20 @@ def wind_multiplier(
         base *= 0.8
 
     return base
+
+
+def rated_tide_preference(spot: dict) -> str | None:
+    """The tide preference the rating applies: the spot's own, when its source is one of
+    config.TIDE_RATED_SOURCES (reviewed, researched, scraped), else None — which
+    tide_multiplier scores as the neutral 1.0, the same as 'all'.
+
+    An unverified preference is not a weaker preference, it is no evidence at all: the 444
+    held when this rule was made were all 'unattributed' model answers, and tide_mult can only
+    lower a rating. See config.TIDE_RATED_SOURCES for the measurement behind it.
+    """
+    if spot.get("tide_preference_source") not in TIDE_RATED_SOURCES:
+        return None
+    return spot.get("tide_preference")
 
 
 def tide_multiplier(tide_norm: float | None, preference: str | None) -> float:
@@ -1296,7 +1315,9 @@ def rate_spot(
     offshore = spot.get("offshore_wind_deg")
     arcs = spot.get("swell_window_arcs") or []
     optimal = spot.get("optimal_swell_dir")
-    preference = spot.get("tide_preference")
+    # Only a verified preference moves the rating (rated_tide_preference); an unverified one
+    # is no preference, and tide_mult is 1.0 on every hour.
+    preference = rated_tide_preference(spot)
     # THE TILE/RATING SPLIT. Written by enrich Algo 5b from spot_tide_stations.json when a
     # spot's station is trusted for PHASE but not for HEIGHT — typically one tens of km up the
     # same open coast. The series still feeds tide_norm, so tide_mult and the star rating are

@@ -6,7 +6,7 @@ author: 'Stormy Petrel'
 tag: 'methodology'
 ---
 
-*Last updated: 7 October 2026.*
+*Last updated: 15 October 2026.*
 
 ## TL;DR
 
@@ -169,7 +169,11 @@ Heavy chop also takes away the offshore-wind bonus. When more than 40% of the he
 
 ## Tide
 
-The tide score compares the tide at that hour with the tide the spot prefers: low, mid, high, or a range in between. It's full marks when they match and lower when they don't. Spots with no known preference, or no tide data, score neutral. For most spots the preference is still an estimate; see below.
+The tide score compares the tide at that hour with the tide the spot prefers: low, mid, high, or a range in between. It's full marks when they match and lower when they don't.
+
+**A preferred tide only counts once it's verified.** We use it only when a person has reviewed it, or when it comes from a page about that spot that we cite: a source we researched, or the spot's own surf-forecast.com page. Any other preference scores neutral, the same as a spot that works at all tides. So does a spot with no preference, and an hour with no tide data.
+
+Why: every preferred tide we held, 444 of them, was an estimate written by a language model that had been told to give an answer even when it didn't know one, and 365 of the 444 said "mid". The tide score can only lower a rating, never raise it. When we replayed the forecast published on 15 October 2026 with those estimates set aside, 6,574 of 83,359 spot-hours (7.9%), across 426 of our spots, came out half a star higher, and none came out lower. A guess shouldn't cost a spot half a star, so for now no spot's preferred tide affects its rating. Each one will count again once it's verified.
 
 ## Surface conditions
 
@@ -195,7 +199,7 @@ Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On 
 
 1. **Local geology.** A reef pass that focuses energy, or a sandbar that moves with the seasons, isn't in any model. The calibration at 141 California spots corrects each one's typical height; other spots have no local height correction.
 2. **Crowds aren't modelled.** Two spots with the same conditions can be very different sessions.
-3. **Tide preference.** For most spots, the preferred tide is an unverified estimate. We're replacing these with researched values.
+3. **Tide preference.** No spot's preferred tide is verified yet, so for now the tide doesn't change any rating (see Tide). We're researching them spot by spot, each from a source we cite.
 4. **Height calibration drifts.** Each spot's factor comes from a single four-week window, and it moves with the swell mix: between two of the earlier two-week windows, about a third of spots shifted by more than 10%.
 5. **Uncalibrated heights can run high.** Outside the 141 calibrated California spots, heights aren't corrected, and that includes all the hours you can see at the 48 MOP spots. They include the period boost and can read higher than nearshore swell height, which is why they're marked as model estimates. At the California spots where we measured it, the uncorrected height was typically about 1.6 times MOP's.
 6. **Calibrated spots used to rate lower.** We used to work out stars at the calibrated spots from the calibrated height. The calibration in use then covered 130 California spots, measured from 18 August to 1 September 2026, and at all but two of them that height was smaller than the uncalibrated one, so in the same swell they rated lower than everywhere else. In the forecast published on 4 October 2026, 0.4% of those spots' daylight hours rated 3 stars or more, against 9.1% at uncalibrated spots; rated on the model's height instead, they came to 10.3%. Now the calibration corrects only the swell height we show, and the rating uses the same input at every spot.

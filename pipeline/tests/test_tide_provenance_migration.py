@@ -54,10 +54,10 @@ CREATE TABLE spots (
 LIVE = (("mid", 365), ("low", 62), ("high", 9), ("all", 8), (None, 202))
 
 # Written out, not read from config.
-LADDER_IN_RANK_ORDER = ("researched", "scraped", "model_recall", "derived_from_break_type",
-                        "unattributed")
-RANKS = {"researched": 5, "scraped": 4, "model_recall": 3, "derived_from_break_type": 2,
-         "unattributed": 1}
+LADDER_IN_RANK_ORDER = ("reviewed", "researched", "scraped", "model_recall",
+                        "derived_from_break_type", "unattributed")
+RANKS = {"reviewed": 6, "researched": 5, "scraped": 4, "model_recall": 3,
+         "derived_from_break_type": 2, "unattributed": 1}
 URL = "https://www.surf-forecast.com/breaks/Rincon"
 QUOTE = "best around low tide"
 
@@ -120,7 +120,7 @@ def test_the_quote_limit_and_url_pattern_are_configs():
 
 def test_the_header_and_the_column_comment_state_the_ranks():
     header = dict((n, int(r)) for n, r in re.findall(
-        r"^--\s+(researched|scraped|model_recall|derived_from_break_type|unattributed)"
+        r"^--\s+(reviewed|researched|scraped|model_recall|derived_from_break_type|unattributed)"
         r"\s+(\d)\s", _sql(), re.M))
     assert header == RANKS
     comment = re.search(r"COMMENT ON COLUMN spots\.tide_preference_source IS(.*?);", _sql(), re.S)
@@ -342,6 +342,7 @@ def test_the_database_and_the_builder_refuse_the_same_rows(db, why, row, constra
     ("high", "scraped", URL, None),                    # a scrape cites its page; a quote is optional
     ("high", "scraped", URL, "x" * 300),               # the longest quote allowed
     ("low", "researched", URL, QUOTE),
+    ("mid_high", "reviewed", None, None),           # a person needs no page
 ])
 def test_the_database_and_the_builder_accept_the_same_rows(db, value, source, url, evidence):
     slug = f"ok-{uuid.uuid4().hex[:8]}"

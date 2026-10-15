@@ -220,6 +220,7 @@ TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
 # anything and can overwrite nothing. That is the correct behaviour for a value
 # that makes no provenance claim.
 TIDE_SOURCE_RANK = {
+    "reviewed": 6,                 # a person set it
     "researched": 5,               # a page was consulted for THIS break, cited and quoted
     "scraped": 4,                  # read off the break's own surf-forecast.com page, cited
     "model_recall": 3,             # a language model answered without a citation
@@ -269,6 +270,19 @@ TIDE_PREFERENCE_VALUES = ("low", "low_mid", "mid", "mid_high", "high", "all", "u
 # The sources that ARE citations, and the one that must also quote its page.
 TIDE_CITED_SOURCES = ("researched", "scraped")
 TIDE_QUOTED_SOURCES = ("researched",)
+
+# THE SOURCES THE RATING TRUSTS. interpret.rated_tide_preference applies a spot's tide
+# preference only from these — a person's review, or a page cited for this break — and
+# treats every other source, or none, as no preference: tide_mult 1.0. They are the same
+# three descriptions.STATED_SOURCES lets a description state, so the page's words and its
+# stars rest on the same evidence.
+#
+# WHY. Every preference held when this was decided (sw1-raycast run 15, 2026-10-15) was
+# 'unattributed' — written by a language model told to answer whether or not it knew, 365 of
+# the 444 of them 'mid' — and the multiplier only ever lowers a rating. Applied, those guesses
+# took half a star off 6,574 of the 83,359 replayed spot-hours (7.9%) at 426 spots; nothing
+# they did raised one. A tide penalty is kept for when it can be backed.
+TIDE_RATED_SOURCES = ("reviewed", "researched", "scraped")
 
 # The four keys that describe one tide preference, set together or not at all:
 # spot.update(tide_preference_fields(...)) is one statement.

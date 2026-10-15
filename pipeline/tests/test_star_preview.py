@@ -291,7 +291,7 @@ def test_a_tide_mode_outside_the_three_is_refused(spec):
 
 
 @pytest.mark.parametrize("source, expected", [
-    ("researched", False), ("scraped", False), ("model_recall", True),
+    ("reviewed", False), ("researched", False), ("scraped", False), ("model_recall", True),
     ("unattributed", True), ("derived_from_break_type", True), (None, True),
 ])
 def test_unverified_means_no_cited_source(source, expected):
@@ -374,3 +374,43 @@ def test_the_tide_fetch_without_the_source_column_reads_every_source_as_none():
 def test_the_cli_needs_arcs_or_tide():
     with pytest.raises(SystemExit):
         SP.main([])
+
+
+# --------------------------------------------------------------------------- #
+# 'rated': the rater's own rule, held to neutral                               #
+# --------------------------------------------------------------------------- #
+# The rows of _tide_rows, recomputed with interpret's rule from the row's tide_norm and the
+# roster's source: low at tide_norm 0.9 is 0.6 when trusted, 1.0 when not (see the tide
+# preview's hand arithmetic above for the stars).
+
+def _rated(roster):
+    return SP.compare(_tide_rows(), TIDE_SPOTS, TIDE_SPOTS, TIDE_NAMES,
+                      row_after=SP.rated_row_after(roster, TIDE_NAMES))
+
+
+ROSTER_AS_LIVE = {   # the sources TIDES holds, as a roster
+    "A": dict(WEST, name="A", tide_preference="low", tide_preference_source="unattributed"),
+    "B": dict(WEST, name="B", tide_preference="low", tide_preference_source="scraped"),
+    "C": dict(WEST, name="C", tide_preference=None, tide_preference_source=None),
+}
+
+
+def test_rated_is_neutral_hour_for_hour_when_the_sources_agree():
+    """The check that the rating publishes what the neutral preview showed: the same rows,
+    the same changes, the same examples."""
+    assert _rated(ROSTER_AS_LIVE) == _tide_compare("neutral")
+
+
+def test_rated_keeps_a_trusted_penalty_and_lifts_an_untrusted_one():
+    rep = _rated(ROSTER_AS_LIVE)
+    assert (rep["changed_spot_hours"], rep["changed_spots"]) == (2, 1)
+    assert rep["delta_by_state"]["California"] == {0.0: 1}     # B, scraped: 0.6 kept, 3.0
+    assert rep["delta_by_state"]["Hawaii"] == {0.5: 2}         # A: 0.6 -> 1.0, 3.0 -> 3.5
+
+
+def test_rated_reapplies_a_reviewed_preference_the_live_table_calls_unattributed():
+    """'rated' reads the roster, as the rater does; a roster that trusts A's 'low' leaves its
+    stored 0.6 in place, so nothing changes."""
+    roster = dict(ROSTER_AS_LIVE, A=dict(ROSTER_AS_LIVE["A"], tide_preference_source="reviewed"))
+    assert _rated(roster)["changed_spot_hours"] == 0
+

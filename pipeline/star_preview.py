@@ -43,14 +43,19 @@ is not previewed here.
 
 THE TIDE PREVIEW (--tide). The same replay, with the swell window held and the stored
 tide_mult replaced on every hour of a spot whose tide preference is UNVERIFIED — its
-tide_preference_source in the live spots table is not one of config.TIDE_CITED_SOURCES
-(researched, scraped):
+tide_preference_source in the live spots table is not one of config.TIDE_RATED_SOURCES
+(reviewed, researched, scraped), the sources the rating trusts:
 
     keep        tide_mult unchanged (the replay check alone)
     neutral     tide_mult = 1.0, as if the preference were 'all'
     damp:K      tide_mult = 1 - K x (1 - tide_mult): K of the penalty kept, 0 < K < 1
+    rated       the rater's own rule, on every spot: tide_mult = interpret.tide_multiplier(
+                the row's tide_norm, interpret.rated_tide_preference(the spot in
+                --tide-roster)). With every source unverified it must equal neutral hour for
+                hour — the check that the rating now publishes what neutral previewed.
 
-    python -m pipeline.star_preview --tide neutral,damp:0.5 [--baseline B.json] [--out OUT.json]
+    python -m pipeline.star_preview --tide neutral,rated [--baseline B.json]
+        [--tide-roster R.json] [--out OUT.json]
 
 It also prints a census: the live spots' (tide_preference, tide_preference_source) counts,
 and over the window the stored tide_mult values, by preference, and how many of them
@@ -65,7 +70,7 @@ import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 
-from .config import TIDE_CITED_SOURCES
+from .config import TIDE_RATED_SOURCES
 from .interpret import (
     combine_ww3_partitions,
     composite_stars,
@@ -73,6 +78,7 @@ from .interpret import (
     face_ft,
     period_factor,
     period_quality,
+    rated_tide_preference,
     tide_multiplier,
     M_TO_FT,
 )
@@ -243,7 +249,8 @@ def compare(rows, before_spots, after_spots, names, row_after=None):
 
 
 def tide_mode(spec):
-    """'keep', 'neutral' or 'damp:K' -> (label, f) where f maps a stored tide_mult to the new one."""
+    """'keep', 'neutral' or 'damp:K' -> (label, f) where f maps a stored tide_mult to the new one.
+    ('rated' is not a map of the stored value; main builds it with rated_row_after.)"""
     if spec == "keep":
         return spec, lambda tm: tm
     if spec == "neutral":
@@ -253,13 +260,14 @@ def tide_mode(spec):
         if not 0.0 < k < 1.0:
             raise ValueError(f"{spec}: K must be strictly between 0 and 1")
         return spec, lambda tm: 1.0 - k * (1.0 - tm)
-    raise ValueError(f"unknown tide mode {spec!r}: keep, neutral or damp:K")
+    raise ValueError(f"unknown tide mode {spec!r}: keep, neutral, damp:K or rated")
 
 
 def unverified(tide):
-    """Is a spot's tide preference unverified — no cited source (config.TIDE_CITED_SOURCES)?
-    *tide* is the spot's {"tide_preference", "tide_preference_source"} from the live table."""
-    return (tide or {}).get("tide_preference_source") not in TIDE_CITED_SOURCES
+    """Is a spot's tide preference unverified — its source not one the rating trusts
+    (config.TIDE_RATED_SOURCES)? *tide* is the spot's {"tide_preference",
+    "tide_preference_source"} from the live table."""
+    return (tide or {}).get("tide_preference_source") not in TIDE_RATED_SOURCES
 
 
 def tide_row_after(tides, f):
@@ -270,6 +278,20 @@ def tide_row_after(tides, f):
         if tm is None or not unverified(tides.get(row["spot_id"])):
             return row
         return dict(row, tide_mult=f(float(tm)))
+    return after
+
+
+def rated_row_after(roster, names):
+    """The AFTER row for the 'rated' mode: tide_mult recomputed by the rater's own rule from the
+    row's tide_norm and the spot as *roster* (name -> spot) holds it. A row whose spot is not in
+    the roster is unchanged."""
+    def after(row):
+        name = names.get(row["spot_id"], (None, None))[0]
+        spot = roster.get(name)
+        if spot is None:
+            return row
+        return dict(row, tide_mult=tide_multiplier(_num(row.get("tide_norm")),
+                                                   rated_tide_preference(spot)))
     return after
 
 
@@ -403,13 +425,17 @@ def main(argv=None):
     p.add_argument("--baseline", default="pipeline/spots_enriched.json",
                    help="spots file the published window was rated with (default: the roster)")
     p.add_argument("--tide", default=None,
-                   help="comma-separated tide modes to preview: keep, neutral, damp:K")
+                   help="comma-separated tide modes to preview: keep, neutral, damp:K, rated")
+    p.add_argument("--tide-roster", default=None,
+                   help="spots file whose tide preference and source the 'rated' mode reads "
+                        "(default: --baseline)")
     p.add_argument("--since", default=None, help="ISO start of the window (default: now)")
     p.add_argument("--out", default=None, help="write the report as JSON here")
     args = p.parse_args(argv)
     if args.arcs is None and args.tide is None:
         p.error("give --arcs (a swell-window preview) or --tide (a tide preview), or both")
-    modes = [tide_mode(m.strip()) for m in args.tide.split(",")] if args.tide else []
+    specs = [m.strip() for m in args.tide.split(",")] if args.tide else []
+    modes = [(m, None) if m == "rated" else tide_mode(m) for m in specs]
     from supabase import create_client
     client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
     since = args.since or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -426,11 +452,20 @@ def main(argv=None):
         out["census"] = tide_census(rows, tides)
         _print_census(out["census"])
         out["tide"] = {}
+        roster = _by_name(args.tide_roster) if args.tide_roster else before
         for label, f in modes:
-            print(f"\n=== tide: {label} on every unverified preference "
-                  f"({sum(unverified(t) and t.get('tide_preference') is not None for t in tides.values())} "
-                  f"spots with a preference and no cited source) ===")
-            rep = compare(rows, before, after, names, row_after=tide_row_after(tides, f))
+            if label == "rated":
+                print(f"\n=== tide: rated — the rater's rule on the sources in "
+                      f"{args.tide_roster or args.baseline} "
+                      f"({sum(rated_tide_preference(s) is not None for s in roster.values())} "
+                      f"spots whose preference the rating applies) ===")
+                row_after = rated_row_after(roster, names)
+            else:
+                print(f"\n=== tide: {label} on every unverified preference "
+                      f"({sum(unverified(t) and t.get('tide_preference') is not None for t in tides.values())} "
+                      f"spots with a preference and no source the rating trusts) ===")
+                row_after = tide_row_after(tides, f)
+            rep = compare(rows, before, after, names, row_after=row_after)
             _print(rep, since)
             out["tide"][label] = rep
     if args.out:
