@@ -294,6 +294,54 @@ def test_a_ray_across_the_island_is_blocked_at_its_start_by_the_local_coast_rule
     assert round(dr[180]["dist_km"], 3) == 2.0, dr[180]["dist_km"]
 
 
+def test_a_ray_across_a_peninsula_is_blocked_even_when_it_re_enters_the_same_land_far_away():
+    """THE GAP THE FIRST FIX LEFT. One C-shaped polygon at the equator (~7,300 km², a solid
+    landmass): a peninsula from lng -0.02 to 0.27 (lat -0.5 to 0.8), a band along its top
+    (lat 0.7-0.8) running east to a far arm at lng 1.5-1.6 (lat -0.1 to 0.8). The spot at
+    (0, 0) sits 0.02 deg x 111.32 = 2.226 km inside the peninsula's west coast.
+
+    Due east, the ray leaves the peninsula at 0.27 deg = 30.1 km, crosses open water, and
+    re-enters the SAME polygon at the far arm, 1.5 deg = 167 km out. The first fix checked
+    the own-land allowance only for a ray that never came back, so this one was graded a
+    distant hit beyond SWELL_MAINLAND_SOLID_KM ('small', 167 km) and the rays across the
+    peninsula to the north-east wrapped open as [45-87]. Now the crossing is checked first:
+    30.1 km > 2.226 + 2 km, blocked at the ray's start by the local-coast rule.
+
+    The whole window, by hand: every east-half ray crosses 30-89 km of the peninsula and is
+    blocked. A west-half ray phi degrees off due west leaves after 2.226 / cos(phi) km and is
+    open while that is within 4.226 km: cos(phi) >= 0.5267, phi <= 58.2 deg, i.e. 212..328 at
+    the 2-degree step (cos 58 = 0.530 passes, cos 60 = 0.5 fails); shrunk 5 deg each end:
+    [217-323], span 323-217+2 = 108, optimal 270."""
+    pen = Polygon([(-0.02, -0.5), (0.27, -0.5), (0.27, 0.7), (1.5, 0.7), (1.5, -0.1),
+                   (1.6, -0.1), (1.6, 0.8), (-0.02, 0.8)])
+    dr, _, hard, _ = _debug_cast([pen])
+    assert 90 in hard
+    assert (dr[90]["result"], dr[90]["rule"], dr[90]["own"]) == ("hard", "local_coast_30km", True), dr[90]
+    assert round(dr[90]["dist_km"], 3) == 2.0, dr[90]["dist_km"]
+    _, r = _open([pen])
+    assert r["swell_window_arcs"] == [{"min": 217, "max": 323, "span": 108}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 270, r["optimal_swell_dir"]
+    for crossing in (45, 60, 87, 90):
+        assert not in_any_arc(crossing, r["swell_window_arcs"]), crossing
+
+
+def test_a_ray_leaving_within_the_allowance_still_blocks_on_the_same_land_across_a_bay():
+    """The Fort Point case (Marin across the Golden Gate, 9.8 km): one polygon wrapped round
+    a bay, at the equator. The west land runs to lng 0.02695 (3.0 km east of the spot) and
+    lat 0.01348 (1.5 km north of it); the east land starts at lng 0.11678 (13.0 km); a band
+    along the south (lat -0.5 to -0.4) joins them. The spot at (0, 0) is 1.5 km inside the
+    north coast, its nearest — so the allowance is 1.5 + 2 = 3.5 km. Due east the ray starts
+    2 km out still on land, leaves at 3.0 km (within the allowance), crosses 10 km of bay and
+    re-enters the SAME polygon at 13.0 km: a coast across a bay, hard-blocked there by the
+    local-coast rule and flagged own — not opened as the spot's own coast."""
+    bay = Polygon([(-1.0, -0.5), (1.0, -0.5), (1.0, 0.5), (0.11678, 0.5), (0.11678, -0.4),
+                   (0.02695, -0.4), (0.02695, 0.01348), (-1.0, 0.01348)])
+    dr, _, hard, _ = _debug_cast([bay])
+    assert 90 in hard
+    assert (dr[90]["result"], dr[90]["rule"], dr[90]["own"]) == ("hard", "local_coast_30km", True), dr[90]
+    assert round(dr[90]["dist_km"], 1) == 13.0, dr[90]["dist_km"]
+
+
 def test_a_spot_off_the_coast_has_no_depth_allowance():
     """A spot OFF the land gets no depth allowance, however close the coast. A strip of land
     1.5-2.5 km east of a spot at (0,0) (0.01348-0.02246 deg of longitude at the equator,
