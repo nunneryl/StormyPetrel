@@ -185,7 +185,7 @@ def arc_pad_deg(arc: dict) -> float:
         pad = (span - ((max - min) mod 360)) / 2
 
     DERIVED, never assumed: this formula reproduces every convention without a table —
-        pad 2.0   986 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4 (how the roster was built)
+        pad 2.0   708 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4 (how the roster was built)
         pad 1.0     0 arcs  raycast at config.SWELL_RAY_STEP_DEG = 2 (12 before the own-land
                             recompute re-cast those spots at 4)
         pad 0.5    14 arcs  swell_window_fallback wrap-split halves (span = 360-lo, and hi+1)

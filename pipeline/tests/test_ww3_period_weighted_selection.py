@@ -55,19 +55,22 @@ def _entry(*parts):
 
 # Lower Trestles. One step-4 raycast arc, pad = (span - width)/2 = 2:
 #   {165,291,span 130} width 126 -> sector [163, 293]
-# (Re-copied after the own-land fix: the cast that dropped rays across the spot's own
-# landmass left this one arc, and the optimal moved from 228 to 224.)
+# (Re-copied after the own-land fix: the cast that blocks rays across the spot's own
+# landmass left this one arc. The optimal is 228 again, as before the fix; the arcs
+# [93-115] and [325-343] that went held none of the partitions below, so every value
+# here is the original one.)
 LT_ARCS = [{"min": 165, "max": 291, "span": 130}]
-LT_OPTIMAL = 224
+LT_OPTIMAL = 228
 LT_ORIENT = 205.0
 
-# Huntington Beach Pier. Two arcs, every pad 2 (the own-land fix dropped [93-111] and
-# [325-343]; no partition below sits in either, so no value moved):
+# Huntington Beach Pier. Two arcs, every pad 2. The own-land fix dropped [93-111] and
+# [325-343] (no partition below sits in either) and moved the optimal from 204 to 208,
+# which moves every gain and score below — re-derived by hand:
 #   {145,211,span 70} width 66 -> sector [143, 213]
 #   {241,275,span 38} width 34 -> sector [239, 277]
 HB_ARCS = [{"min": 145, "max": 211, "span": 70},
            {"min": 241, "max": 275, "span": 38}]
-HB_OPTIMAL = 204
+HB_OPTIMAL = 208
 HB_ORIENT = 220.0
 
 
@@ -124,9 +127,9 @@ def test_the_named_constant_is_the_one_actually_used():
 
     This also pins the sweep result the constant's comment cites — that exponent 1 is
     too weak to flip the controls:
-        s1  0.297121935266 * 0.5            = 0.148560967633   <- still the winner
-        s2  0.138157982042 * 1.016666666667 = 0.140460615076
-        s3  0.123997745655 * 1.035          = 0.128337666753
+        s1  0.305407202438 * 0.5            = 0.152703601219   <- still the winner
+        s2  0.135948816204 * 1.016666666667 = 0.138214629808
+        s3  0.122015004017 * 1.035          = 0.126285529158
     """
     import pipeline.interpret as I
     saved = I.SELECTION_PERIOD_QUALITY_EXPONENT
@@ -137,9 +140,9 @@ def test_the_named_constant_is_the_one_actually_used():
             "exponent 1 should be too weak to flip Lower Trestles; either the sweep "
             f"claim is wrong or the constant is not being read: {r['dominant_partition']}")
         by = {c["partition"]: c for c in r["contributions"]}
-        assert _close(by["swell_1"]["selection_score"], 0.148560967633)
-        assert _close(by["swell_2"]["selection_score"], 0.140460615076)
-        assert _close(by["swell_3"]["selection_score"], 0.128337666753)
+        assert _close(by["swell_1"]["selection_score"], 0.152703601219)
+        assert _close(by["swell_2"]["selection_score"], 0.138214629808)
+        assert _close(by["swell_3"]["selection_score"], 0.126285529158)
     finally:
         I.SELECTION_PERIOD_QUALITY_EXPONENT = saved
     # and back to 2, the flip returns
@@ -154,21 +157,21 @@ def test_the_named_constant_is_the_one_actually_used():
 #   swell_1  0.59 m / 5.2 s / 269°     swell_2  0.38 m / 14.0 s / 200°
 #   swell_3  0.36 m / 15.1 s / 200°
 #
-# Gains, optimal 224, half-angle in-window kernel max(0.25, cos²(diff/2)):
-#   s1 dp 269, inside the sector [163, 293]. diff = 269-224 = 45
-#      cos²(22.5°) = 0.853553390593
-#   s2 dp 200, inside [163, 293]. diff = -24 -> cos²(-12°) = 0.956772728821
-#   s3 dp 200, same                           -> 0.956772728821
+# Gains, optimal 228, half-angle in-window kernel max(0.25, cos²(diff/2)):
+#   s1 dp 269, inside the sector [163, 293]. diff = 269-228 = 41
+#      cos²(20.5°) = 0.877354790111
+#   s2 dp 200, inside [163, 293]. diff = -28 -> cos²(-14°) = 0.941473796429
+#   s3 dp 200, same                           -> 0.941473796429
 #
 # period_quality: s1 0.5, s2 1.016666666667, s3 1.035
 #
 #            OLD  hs²·gain                    NEW  hs²·gain·pq²
-#   s1   0.59²·0.853553390593 = 0.297121935266   ·0.25         = 0.074280483816
-#   s2   0.38²·0.956772728821 = 0.138157982042   ·1.033611111  = 0.142801625327
-#   s3   0.36²·0.956772728821 = 0.123997745655   ·1.071225     = 0.132829485090
+#   s1   0.59²·0.877354790111 = 0.305407202438   ·0.25         = 0.076351800609
+#   s2   0.38²·0.941473796429 = 0.135948816204   ·1.033611111  = 0.140518206971
+#   s3   0.36²·0.941473796429 = 0.122015004017   ·1.071225     = 0.130705522678
 #
-# OLD winner: swell_1  (0.2971 — more than twice either groundswell)
-# NEW winner: swell_2  (0.1428, ahead of s3's 0.1328 and s1's 0.0743)
+# OLD winner: swell_1  (0.3054 — more than twice either groundswell)
+# NEW winner: swell_2  (0.1405, ahead of s3's 0.1307 and s1's 0.0764)
 # The 5.2 s windsea loses three quarters of its score to pq² = 0.25 and drops to last.
 LT_ENTRY = _entry((0.59, 5.2, 269), (0.38, 14.0, 200), (0.36, 15.1, 200))
 
@@ -193,13 +196,13 @@ def test_lower_trestles_selection_scores_are_exactly_as_hand_computed():
     winner happens to survive."""
     r = combine_ww3_partitions(LT_ENTRY, LT_ARCS, LT_OPTIMAL, LT_ORIENT)
     by = {c["partition"]: c for c in r["contributions"]}
-    assert _close(by["swell_1"]["selection_score"], 0.074280483816)
-    assert _close(by["swell_2"]["selection_score"], 0.142801625327)
-    assert _close(by["swell_3"]["selection_score"], 0.132829485090)
+    assert _close(by["swell_1"]["selection_score"], 0.076351800609)
+    assert _close(by["swell_2"]["selection_score"], 0.140518206971)
+    assert _close(by["swell_3"]["selection_score"], 0.130705522678)
     # the unweighted energy field is still the OLD score, untouched
-    assert _close(by["swell_1"]["energy"], 0.297121935266)
-    assert _close(by["swell_2"]["energy"], 0.138157982042)
-    assert _close(by["swell_3"]["energy"], 0.123997745655)
+    assert _close(by["swell_1"]["energy"], 0.305407202438)
+    assert _close(by["swell_2"]["energy"], 0.135948816204)
+    assert _close(by["swell_3"]["energy"], 0.122015004017)
 
 
 # --------------------------------------------------------------------------- #
@@ -208,47 +211,47 @@ def test_lower_trestles_selection_scores_are_exactly_as_hand_computed():
 # swell_1 0.76 m / 5.6 s / 270°, swell_2 0.26 m / 13.4 s / 198°,
 # swell_3 0.24 m / 15.8 s / 195°.
 #
-# Gains, optimal 204:
-#   s1 dp 270, inside arc3's sector [239, 277]. diff = 66 -> cos²(33°)  = 0.703368321538
-#   s2 dp 198, inside arc2's sector [143, 213]. diff = -6 -> cos²(-3°)  = 0.997260947684
-#   s3 dp 195, inside [143, 213].               diff = -9 -> cos²(-4.5°)= 0.993844170298
+# Gains, optimal 208:
+#   s1 dp 270, inside the sector [239, 277]. diff = 62  -> cos²(31°)   = 0.734735781393
+#   s2 dp 198, inside the sector [143, 213]. diff = -10 -> cos²(-5°)   = 0.992403876506
+#   s3 dp 195, inside [143, 213].            diff = -13 -> cos²(-6.5°) = 0.987185032393
 #
 # period_quality: s1 0.5, s2 1.006666666667, s3 1.046666666667
 #
 #            OLD  hs²·gain                    NEW  hs²·gain·pq²
-#   s1   0.76²·0.703368321538 = 0.406265542520  ·0.25          = 0.101566385630
-#   s2   0.26²·0.997260947684 = 0.067414840063  ·1.013377778   = 0.068316700813
-#   s3   0.24²·0.993844170298 = 0.057245424209  ·1.095511111   = 0.062712998281
+#   s1   0.76²·0.734735781393 = 0.424383387333  ·0.25          = 0.106095846833
+#   s2   0.26²·0.992403876506 = 0.067086502052  ·1.013377778   = 0.067983970368
+#   s3   0.24²·0.987185032393 = 0.056861857866  ·1.095511111   = 0.062292797090
 #
 # OLD winner: swell_1.  NEW winner: swell_1 — IT DOES NOT FLIP AT EXPONENT 2.
 #
-# This is a real finding, not a gap in the test. The windsea leads by 7.10x on raw
-# gain-weighted energy (0.4063 / 0.0572) because 0.76 m against 0.24 m is 10.0x in
+# This is a real finding, not a gap in the test. The windsea leads by 7.46x on raw
+# gain-weighted energy (0.4244 / 0.0569) because 0.76 m against 0.24 m is 10.0x in
 # hs² before gain. The most the weight can claw back is (1.046666667/0.5)² = 4.38x.
-# The flip threshold is the exponent N solving (0.4063/0.0572) = (1.046666667/0.5)**N,
-# i.e. N = ln(7.0969)/ln(2.0933) = 2.653. Exponent 2 is below it; exponent 4 clears it.
-# So this fixture pins the SHAPE of the effect — the gap narrows from 7.10x to 1.62x —
+# The flip threshold is the exponent N solving (0.4244/0.0569) = (1.046666667/0.5)**N,
+# i.e. N = ln(7.4634)/ln(2.0933) = 2.721. Exponent 2 is below it; exponent 4 clears it.
+# So this fixture pins the SHAPE of the effect — the gap narrows from 7.46x to 1.70x —
 # and it is the test that fails if anyone raises the exponent to 4.
 HB_ENTRY = _entry((0.76, 5.6, 270), (0.26, 13.4, 198), (0.24, 15.8, 195))
 
 
 def test_huntington_narrows_the_gap_but_does_not_flip_at_exponent_two():
     """Honest pin of what exponent 2 actually does here. See the block comment above
-    for the 2.653 flip threshold — this fixture is the guard on the exponent's upper
+    for the 2.721 flip threshold — this fixture is the guard on the exponent's upper
     side, the way Lower Trestles is the guard on its lower side."""
     r = combine_ww3_partitions(HB_ENTRY, HB_ARCS, HB_OPTIMAL, HB_ORIENT)
     assert r is not None
     assert r["dominant_partition"] == "swell_1", r["dominant_partition"]
     assert r["tp"] == 5.6, r["tp"]
     by = {c["partition"]: c for c in r["contributions"]}
-    assert _close(by["swell_1"]["selection_score"], 0.101566385630)
-    assert _close(by["swell_2"]["selection_score"], 0.068316700813)
-    assert _close(by["swell_3"]["selection_score"], 0.062712998281)
-    # the gap really does narrow: 7.0969x on the old score, 1.6196x on the new one
+    assert _close(by["swell_1"]["selection_score"], 0.106095846833)
+    assert _close(by["swell_2"]["selection_score"], 0.067983970368)
+    assert _close(by["swell_3"]["selection_score"], 0.062292797090)
+    # the gap really does narrow: 7.4634x on the old score, 1.7032x on the new one
     old_ratio = by["swell_1"]["energy"] / by["swell_3"]["energy"]
     new_ratio = by["swell_1"]["selection_score"] / by["swell_3"]["selection_score"]
-    assert _close(old_ratio, 7.096908584973, tol=1e-9), old_ratio
-    assert _close(new_ratio, 1.619542812709, tol=1e-9), new_ratio
+    assert _close(old_ratio, 7.463410505053, tol=1e-9), old_ratio
+    assert _close(new_ratio, 1.703180010991, tol=1e-9), new_ratio
     assert new_ratio < old_ratio
 
 
@@ -260,24 +263,24 @@ def test_combined_height_is_untouched_by_the_period_weight():
     fixture whose three partitions have wildly different periods (5.2 / 14.0 / 15.1),
     so any weight reaching the RMS sum moves the answer.
 
-        s1  0.59² * 0.853553390593 = 0.297121935266
-        s2  0.38² * 0.956772728821 = 0.138157982042
-        s3  0.36² * 0.956772728821 = 0.123997745655
-        sum                        = 0.559277662963
-        sqrt                       = 0.747848689885
+        s1  0.59² * 0.877354790111 = 0.305407202438
+        s2  0.38² * 0.941473796429 = 0.135948816204
+        s3  0.36² * 0.941473796429 = 0.122015004017
+        sum                        = 0.563371022659
+        sqrt                       = 0.750580457153
 
     If the weight were applied inside the sum instead, the total would be
-    0.074280483816 + 0.142801625327 + 0.132829485090 = 0.349911594233 and the height
-    would read 0.591533257 — a 21.5% drop across the whole WW3 path."""
+    0.076351800609 + 0.140518206971 + 0.130705522678 = 0.347575530258 and the height
+    would read 0.589555366 — a 21.5% drop across the whole WW3 path."""
     r = combine_ww3_partitions(LT_ENTRY, LT_ARCS, LT_OPTIMAL, LT_ORIENT)
-    assert _close(r["hs"], 0.747848689885), r["hs"]
-    assert not _close(r["hs"], 0.591533257, tol=1e-6), "the period weight leaked into the RMS sum"
+    assert _close(r["hs"], 0.750580457153), r["hs"]
+    assert not _close(r["hs"], 0.589555366, tol=1e-6), "the period weight leaked into the RMS sum"
     # and the same on Huntington, whose winner does NOT change — proving the height
     # pin is independent of whether the selection flipped
-    #   0.406265542520 + 0.067414840063 + 0.057245424209 = 0.530925806793
-    #   sqrt = 0.728646558211
+    #   0.424383387333 + 0.067086502052 + 0.056861857866 = 0.548331747250
+    #   sqrt = 0.740494258756
     h = combine_ww3_partitions(HB_ENTRY, HB_ARCS, HB_OPTIMAL, HB_ORIENT)
-    assert _close(h["hs"], 0.728646558211), h["hs"]
+    assert _close(h["hs"], 0.740494258756), h["hs"]
 
 
 def test_combined_height_equals_the_rms_of_the_energy_field_itself():
@@ -300,10 +303,10 @@ def test_equal_periods_leave_the_winner_exactly_where_the_old_rule_put_it():
 
     All three at 12.0 s, on Lower Trestles geometry:
         pq(12.0) = 0.95 exactly (a table point, no interpolation), pq² = 0.9025
-        s1 dp 269 gain 0.853553390593, s2/s3 dp 200 gain 0.956772728821
-            s1  0.50² * 0.853553390593 = 0.213388347648  -> *0.9025 = 0.192582983753
-            s2  0.40² * 0.956772728821 = 0.153083636611  -> *0.9025 = 0.138157982042
-            s3  0.30² * 0.956772728821 = 0.086109545594  -> *0.9025 = 0.077713864899
+        s1 dp 269 gain 0.877354790111, s2/s3 dp 200 gain 0.941473796429
+            s1  0.50² * 0.877354790111 = 0.219338697528  -> *0.9025 = 0.197953174519
+            s2  0.40² * 0.941473796429 = 0.150635807429  -> *0.9025 = 0.135948816204
+            s3  0.30² * 0.941473796429 = 0.084732641679  -> *0.9025 = 0.076471209115
         Same ordering both ways: s1 > s2 > s3. Winner swell_1 under either rule.
     """
     entry = _entry((0.50, 12.0, 269), (0.40, 12.0, 200), (0.30, 12.0, 200))
@@ -311,8 +314,8 @@ def test_equal_periods_leave_the_winner_exactly_where_the_old_rule_put_it():
     assert r["dominant_partition"] == "swell_1", r["dominant_partition"]
     by = {c["partition"]: c for c in r["contributions"]}
     # every selection_score is its energy scaled by the SAME 0.9025 — a common factor
-    for slot, energy in (("swell_1", 0.213388347648), ("swell_2", 0.153083636611),
-                         ("swell_3", 0.086109545594)):
+    for slot, energy in (("swell_1", 0.219338697528), ("swell_2", 0.150635807429),
+                         ("swell_3", 0.084732641679)):
         assert _close(by[slot]["energy"], energy), (slot, by[slot]["energy"])
         assert _close(by[slot]["selection_score"], energy * 0.9025), slot
     # the ordering is identical under both scores
@@ -324,33 +327,33 @@ def test_equal_periods_leave_the_winner_exactly_where_the_old_rule_put_it():
 def test_a_single_partition_is_unaffected_by_the_weight():
     """One candidate, so the argmax is forced and the weight cannot change anything.
     The height is still the plain RMS of that one partition:
-        0.44² * 0.956772728821 = 0.185231200300, sqrt = 0.430384944323
+        0.44² * 0.941473796429 = 0.182269326989, sqrt = 0.426930119561
     """
     entry = _entry((0.44, 9.0, 200))
     r = combine_ww3_partitions(entry, LT_ARCS, LT_OPTIMAL, LT_ORIENT)
     assert r["dominant_partition"] == "swell_1"
     assert r["tp"] == 9.0
-    assert _close(r["hs"], 0.430384944323), r["hs"]
+    assert _close(r["hs"], 0.426930119561), r["hs"]
 
 
 def test_the_weight_never_changes_which_partitions_qualify():
     """Membership is decided by hs/tp/dp validity and gain > 0, all upstream of the
     score. A 4.0 s partition scores pq(4.0)² = 0.25 of its energy but still CONTRIBUTES
     its full energy to the height — being outscored is not being excluded.
-        s1 0.30² * 0.853553390593 = 0.076819805153   (4.0 s, pq 0.5)
-        s2 0.20² * 0.956772728821 = 0.038270909153  (14.0 s)
-        sum = 0.115090714306, sqrt = 0.339250223738
+        s1 0.30² * 0.877354790111 = 0.078961931110   (4.0 s, pq 0.5)
+        s2 0.20² * 0.941473796429 = 0.037658951857  (14.0 s)
+        sum = 0.116620882967, sqrt = 0.341497998482
     """
     entry = _entry((0.30, 4.0, 269), (0.20, 14.0, 200))
     r = combine_ww3_partitions(entry, LT_ARCS, LT_OPTIMAL, LT_ORIENT)
     assert len(r["contributions"]) == 2, r["contributions"]
     assert {c["partition"] for c in r["contributions"]} == {"swell_1", "swell_2"}
-    assert _close(r["hs"], 0.339250223738), r["hs"]
+    assert _close(r["hs"], 0.341497998482), r["hs"]
     # s1 keeps its full energy in the height while losing the selection
     by = {c["partition"]: c for c in r["contributions"]}
-    assert _close(by["swell_1"]["energy"], 0.076819805153)
-    #   0.076819805153 * 0.25 = 0.019204951288  vs  0.038270909153 * 1.033611111 = 0.039557236933
-    assert _close(by["swell_1"]["selection_score"], 0.019204951288)
+    assert _close(by["swell_1"]["energy"], 0.078961931110)
+    #   0.078961931110 * 0.25 = 0.019740482778  vs  0.037658951857 * 1.033611111 = 0.038924711072
+    assert _close(by["swell_1"]["selection_score"], 0.019740482778)
     assert r["dominant_partition"] == "swell_2", r["dominant_partition"]
 
 
@@ -406,12 +409,12 @@ def test_wind_wave_is_still_excluded_from_the_swell_combine():
     the swell combine, on either score. Untouched by this change and pinned so.
 
     Lower Trestles geometry, a big on-axis 4.0 s wind_wave alongside one real swell:
-        swell_1  0.30 m / 14.0 s / 200 -> gain 0.956772728821
-                 energy 0.30² * 0.956772728821 = 0.086109545594
-                 combined_hs = sqrt(0.086109545594) = 0.293444280220
-    If wind_wave were admitted it would add 0.80² * 0.956772728821 = 0.612334546446,
-    taking the height to sqrt(0.698444092040) = 0.835729676414 and — at 4.0 s, pq 0.5,
-    score 0.153083636611 — it would also outscore the swell's 0.089004... and steal
+        swell_1  0.30 m / 14.0 s / 200 -> gain 0.941473796429
+                 energy 0.30² * 0.941473796429 = 0.084732641679
+                 combined_hs = sqrt(0.084732641679) = 0.291088717883
+    If wind_wave were admitted it would add 0.80² * 0.941473796429 = 0.602543229715,
+    taking the height to sqrt(0.687275871394) = 0.829021031937 and — at 4.0 s, pq 0.5,
+    score 0.150635807429 — it would also outscore the swell's 0.087606... and steal
     tp/dp.
     """
     entry = _entry((0.30, 14.0, 200))
@@ -420,8 +423,8 @@ def test_wind_wave_is_still_excluded_from_the_swell_combine():
     assert [c["partition"] for c in r["contributions"]] == ["swell_1"], r["contributions"]
     assert r["dominant_partition"] == "swell_1"
     assert r["tp"] == 14.0
-    assert _close(r["hs"], 0.293444280220), r["hs"]
-    assert not _close(r["hs"], 0.835729676414, tol=1e-6), "wind_wave leaked into the combine"
+    assert _close(r["hs"], 0.291088717883), r["hs"]
+    assert not _close(r["hs"], 0.829021031937, tol=1e-6), "wind_wave leaked into the combine"
 
 
 def _run_all():

@@ -50,17 +50,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 193,
         "max": 311,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 252,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 10.34,
@@ -129,7 +124,7 @@
         "span": 66
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 220,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 4.66,
@@ -199,7 +194,7 @@
         "span": 138
       }
     ],
-    "optimal_swell_dir": 116,
+    "optimal_swell_dir": 120,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8535375",
     "nearest_tide_station_dist_km": 2.8,
@@ -275,7 +270,7 @@
         "span": 138
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413375",
     "nearest_tide_station_dist_km": 27.99,
@@ -341,17 +336,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 129,
-        "max": 143,
-        "span": 18
-      },
-      {
         "min": 233,
         "max": 319,
         "span": 90
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 276,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9413450",
     "nearest_tide_station_dist_km": 4.66,
@@ -415,17 +405,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 131,
-        "span": 22
-      },
-      {
         "min": 181,
         "max": 319,
         "span": 142
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 3.69,
@@ -567,14 +552,9 @@
         "min": 169,
         "max": 227,
         "span": 62
-      },
-      {
-        "min": 337,
-        "max": 355,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414958",
     "nearest_tide_station_dist_km": 0.72,
@@ -638,9 +618,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 141,
+        "min": 149,
         "max": 207,
-        "span": 70
+        "span": 62
       },
       {
         "min": 241,
@@ -648,7 +628,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 188,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 2.03,
@@ -781,17 +761,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 123,
-        "span": 10
-      },
-      {
         "min": 157,
         "max": 283,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 220,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 16.01,
@@ -865,7 +840,7 @@
         "span": 70
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411189",
     "nearest_tide_station_dist_km": 1.35,
@@ -937,14 +912,9 @@
         "min": 177,
         "max": 263,
         "span": 90
-      },
-      {
-        "min": 321,
-        "max": 347,
-        "span": 30
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 12.87,
@@ -1007,17 +977,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 189,
         "max": 311,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 248,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 16.67,
@@ -1077,17 +1042,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 125,
-        "max": 143,
-        "span": 22
-      },
-      {
         "min": 177,
         "max": 307,
         "span": 134
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 32.7,
@@ -1151,17 +1111,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 129,
-        "max": 139,
-        "span": 14
-      },
-      {
         "min": 225,
         "max": 287,
         "span": 66
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 256,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413375",
     "nearest_tide_station_dist_km": 3.6,
@@ -1231,14 +1186,9 @@
         "min": 225,
         "max": 263,
         "span": 42
-      },
-      {
-        "min": 341,
-        "max": 347,
-        "span": 10
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411270",
     "nearest_tide_station_dist_km": 8.65,
@@ -1267,14 +1217,9 @@
         "min": 185,
         "max": 259,
         "span": 78
-      },
-      {
-        "min": 333,
-        "max": 351,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 220,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -1528,7 +1473,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 1.22,
@@ -1597,7 +1542,7 @@
         "span": 158
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0445",
     "nearest_tide_station_dist_km": 13.81,
@@ -1669,7 +1614,7 @@
         "span": 54
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 0.67,
@@ -1736,19 +1681,9 @@
         "min": 189,
         "max": 275,
         "span": 90
-      },
-      {
-        "min": 321,
-        "max": 331,
-        "span": 14
-      },
-      {
-        "min": 1,
-        "max": 7,
-        "span": 10
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9419750",
     "nearest_tide_station_dist_km": 1.34,
@@ -1811,22 +1746,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
-      {
-        "min": 117,
-        "max": 151,
-        "span": 38
-      },
-      {
         "min": 185,
         "max": 307,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 244,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 20.21,
@@ -1893,7 +1818,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 9.41,
@@ -1964,7 +1889,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 15.23,
@@ -2028,17 +1953,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 193,
         "max": 311,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 252,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 11.87,
@@ -2110,14 +2030,9 @@
         "min": 173,
         "max": 267,
         "span": 98
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 17.72,
@@ -2185,14 +2100,9 @@
         "min": 253,
         "max": 295,
         "span": 46
-      },
-      {
-        "min": 341,
-        "max": 355,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 296,
+    "optimal_swell_dir": 272,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415469",
     "nearest_tide_station_dist_km": 1.71,
@@ -2255,11 +2165,6 @@
     "offshore_wind_deg": 10.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
       {
         "min": 161,
         "max": 259,
@@ -2332,14 +2237,9 @@
         "min": 201,
         "max": 215,
         "span": 18
-      },
-      {
-        "min": 345,
-        "max": 355,
-        "span": 14
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415625",
     "nearest_tide_station_dist_km": 2.74,
@@ -2413,19 +2313,9 @@
         "min": 153,
         "max": 259,
         "span": 110
-      },
-      {
-        "min": 325,
-        "max": 327,
-        "span": 6
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 208,
+    "optimal_swell_dir": 192,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411399",
     "nearest_tide_station_dist_km": 19.71,
@@ -2495,7 +2385,7 @@
         "span": 94
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410777",
     "nearest_tide_station_dist_km": 1.45,
@@ -2529,14 +2419,9 @@
         "min": 197,
         "max": 275,
         "span": 82
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 216,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -2613,7 +2498,7 @@
         "span": 70
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 220,
     "break_type": "reef",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -2804,7 +2689,7 @@
         "span": 142
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 252,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410166",
     "nearest_tide_station_dist_km": 5.22,
@@ -2867,7 +2752,7 @@
         "span": 78
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 212,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414131",
     "nearest_tide_station_dist_km": 1.06,
@@ -2938,14 +2823,9 @@
         "min": 217,
         "max": 243,
         "span": 30
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 184,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 5.13,
@@ -2969,17 +2849,12 @@
     "orientation_flipped": false,
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 99,
-        "span": 6
-      },
-      {
         "min": 201,
         "max": 283,
         "span": 86
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 240,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -3083,17 +2958,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 99,
-        "span": 6
-      },
-      {
         "min": 197,
         "max": 283,
         "span": 90
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 2.2,
@@ -3197,7 +3067,7 @@
         "span": 38
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 208,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -3313,14 +3183,9 @@
         "min": 241,
         "max": 279,
         "span": 42
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 208,
+    "optimal_swell_dir": 212,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
     "nearest_tide_station_dist_km": 2.87,
@@ -3393,7 +3258,7 @@
         "span": 34
       }
     ],
-    "optimal_swell_dir": 196,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 6.29,
@@ -3417,11 +3282,6 @@
     "orientation_flipped": true,
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 135,
-        "span": 26
-      },
-      {
         "min": 181,
         "max": 199,
         "span": 22
@@ -3432,7 +3292,7 @@
         "span": 78
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 248,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -3537,11 +3397,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 135,
-        "span": 26
-      },
-      {
         "min": 189,
         "max": 199,
         "span": 14
@@ -3552,7 +3407,7 @@
         "span": 74
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410120",
     "nearest_tide_station_dist_km": 1.67,
@@ -3622,17 +3477,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 109,
-        "max": 135,
-        "span": 30
-      },
-      {
         "min": 165,
         "max": 287,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0473",
     "nearest_tide_station_dist_km": 16.15,
@@ -3700,14 +3550,9 @@
         "min": 177,
         "max": 295,
         "span": 122
-      },
-      {
-        "min": 333,
-        "max": 359,
-        "span": 30
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9416024",
     "nearest_tide_station_dist_km": 11.88,
@@ -3772,17 +3617,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 139,
-        "span": 22
-      },
-      {
         "min": 249,
         "max": 319,
         "span": 74
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 284,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 1.33,
@@ -3815,14 +3655,9 @@
         "min": 217,
         "max": 243,
         "span": 30
-      },
-      {
-        "min": 329,
-        "max": 347,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 176,
     "break_type": "point",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -3890,11 +3725,11 @@
     "swell_window_arcs": [
       {
         "min": 133,
-        "max": 283,
-        "span": 154
+        "max": 279,
+        "span": 150
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 204,
     "break_type": "reef",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -4003,22 +3838,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 95,
-        "span": 6
-      },
-      {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 181,
         "max": 307,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 244,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 22.9,
@@ -4048,7 +3873,7 @@
         "span": 70
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 220,
     "break_type": "reef",
     "break_type_source": "unattributed",
     "break_type_confidence": "low",
@@ -4228,7 +4053,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 4.85,
@@ -4293,17 +4118,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 137,
-        "max": 143,
-        "span": 10
-      },
-      {
         "min": 173,
         "max": 291,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 232,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 8.89,
@@ -4372,7 +4192,7 @@
         "span": 102
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 17.72,
@@ -4440,7 +4260,7 @@
         "span": 94
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 236,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410777",
     "nearest_tide_station_dist_km": 3.27,
@@ -4502,17 +4322,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 139,
-        "span": 10
-      },
-      {
         "min": 205,
         "max": 271,
         "span": 70
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413663",
     "nearest_tide_station_dist_km": 11.07,
@@ -4576,22 +4391,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 115,
-        "span": 6
-      },
-      {
-        "min": 133,
-        "max": 139,
-        "span": 10
-      },
-      {
         "min": 245,
         "max": 307,
         "span": 66
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 276,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413616",
     "nearest_tide_station_dist_km": 11.58,
@@ -4735,17 +4540,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 119,
-        "span": 10
-      },
-      {
         "min": 193,
         "max": 323,
         "span": 134
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 256,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0413",
     "nearest_tide_station_dist_km": 2.52,
@@ -4818,11 +4618,6 @@
         "min": 233,
         "max": 271,
         "span": 42
-      },
-      {
-        "min": 341,
-        "max": 347,
-        "span": 10
       }
     ],
     "nearest_buoy_id": "46251",
@@ -4832,7 +4627,7 @@
     ],
     "nwps_wfo": "lox",
     "orientation_source": "manual",
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411270",
     "nearest_tide_station_dist_km": 6.9,
@@ -4899,7 +4694,7 @@
         "span": 114
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 256,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414131",
     "nearest_tide_station_dist_km": 6.03,
@@ -4962,22 +4757,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
-      {
-        "min": 117,
-        "max": 151,
-        "span": 38
-      },
-      {
         "min": 185,
         "max": 307,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 244,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 20.48,
@@ -5005,14 +4790,9 @@
         "min": 209,
         "max": 299,
         "span": 94
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 252,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -5123,17 +4903,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 129,
-        "max": 131,
-        "span": 6
-      },
-      {
         "min": 201,
         "max": 299,
         "span": 102
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412110",
     "nearest_tide_station_dist_km": 24.59,
@@ -5199,17 +4974,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 139,
-        "span": 10
-      },
-      {
         "min": 221,
         "max": 295,
         "span": 78
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 256,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413623",
     "nearest_tide_station_dist_km": 0.73,
@@ -5281,7 +5051,7 @@
         "span": 98
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 3.66,
@@ -5344,7 +5114,7 @@
         "span": 34
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 7.04,
@@ -5409,7 +5179,7 @@
         "span": 138
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410583",
     "nearest_tide_station_dist_km": 1.87,
@@ -5483,7 +5253,7 @@
         "span": 42
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410583",
     "nearest_tide_station_dist_km": 3.17,
@@ -5615,17 +5385,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 153,
-        "max": 155,
-        "span": 6
-      },
-      {
         "min": 189,
         "max": 295,
         "span": 110
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 240,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414275",
     "nearest_tide_station_dist_km": 2.11,
@@ -5690,17 +5455,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 125,
-        "max": 135,
-        "span": 14
-      },
-      {
         "min": 173,
         "max": 295,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 31.04,
@@ -5764,17 +5524,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 125,
-        "max": 139,
-        "span": 18
-      },
-      {
         "min": 173,
         "max": 299,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 236,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 32.82,
@@ -5836,17 +5591,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 127,
-        "span": 26
-      },
-      {
         "min": 189,
         "max": 315,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 252,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 1.61,
@@ -5912,17 +5662,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 151,
-        "span": 22
-      },
-      {
         "min": 253,
         "max": 307,
         "span": 58
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 280,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 10.79,
@@ -5988,17 +5733,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 135,
-        "span": 6
-      },
-      {
         "min": 241,
         "max": 291,
         "span": 54
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 264,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 5.21,
@@ -6024,22 +5764,12 @@
     "orientation_flipped": true,
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 139,
-        "span": 38
-      },
-      {
         "min": 193,
         "max": 275,
         "span": 86
-      },
-      {
-        "min": 333,
-        "max": 347,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 232,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -6146,7 +5876,7 @@
         "span": 74
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 4.69,
@@ -6218,14 +5948,9 @@
         "min": 149,
         "max": 303,
         "span": 158
-      },
-      {
-        "min": 333,
-        "max": 339,
-        "span": 10
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9416841",
     "nearest_tide_station_dist_km": 1.84,
@@ -6288,22 +6013,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 95,
-        "span": 6
-      },
-      {
-        "min": 117,
-        "max": 151,
-        "span": 38
-      },
-      {
         "min": 181,
         "max": 307,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 244,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 27.56,
@@ -6371,7 +6086,7 @@
         "span": 74
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 252,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 2.17,
@@ -6440,7 +6155,7 @@
         "span": 82
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 1.45,
@@ -6513,14 +6228,9 @@
         "min": 149,
         "max": 259,
         "span": 114
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 200,
+    "optimal_swell_dir": 192,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411399",
     "nearest_tide_station_dist_km": 16.55,
@@ -6593,14 +6303,9 @@
         "min": 237,
         "max": 267,
         "span": 34
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411270",
     "nearest_tide_station_dist_km": 5.49,
@@ -6678,7 +6383,7 @@
         "span": 38
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410599",
     "nearest_tide_station_dist_km": 3.01,
@@ -6744,17 +6449,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 151,
-        "span": 22
-      },
-      {
         "min": 237,
         "max": 307,
         "span": 74
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 272,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 10.32,
@@ -6827,11 +6527,6 @@
         "min": 201,
         "max": 267,
         "span": 70
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
     "nearest_buoy_id": "46053",
@@ -6843,7 +6538,7 @@
     "orientation_deg": 200.0,
     "offshore_wind_deg": 20.0,
     "orientation_source": "manual",
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 19.14,
@@ -6912,7 +6607,7 @@
         "span": 102
       }
     ],
-    "optimal_swell_dir": 264,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9415625",
     "nearest_tide_station_dist_km": 3.57,
@@ -6978,11 +6673,6 @@
     "offshore_wind_deg": 56.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
       {
         "min": 161,
         "max": 287,
@@ -7052,17 +6742,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 143,
-        "span": 30
-      },
-      {
         "min": 225,
         "max": 315,
         "span": 94
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 2.34,
@@ -7128,17 +6813,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 185,
         "max": 311,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 248,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 17.35,
@@ -7206,7 +6886,7 @@
         "span": 122
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 6.82,
@@ -7268,14 +6948,9 @@
         "min": 157,
         "max": 287,
         "span": 134
-      },
-      {
-        "min": 333,
-        "max": 351,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 220,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412553",
     "nearest_tide_station_dist_km": 5.07,
@@ -7343,14 +7018,9 @@
         "min": 181,
         "max": 311,
         "span": 134
-      },
-      {
-        "min": 349,
-        "max": 351,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 244,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412802",
     "nearest_tide_station_dist_km": 3.1,
@@ -7428,14 +7098,9 @@
         "min": 217,
         "max": 227,
         "span": 14
-      },
-      {
-        "min": 317,
-        "max": 347,
-        "span": 34
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 172,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 0.46,
@@ -7501,19 +7166,9 @@
         "min": 173,
         "max": 259,
         "span": 90
-      },
-      {
-        "min": 321,
-        "max": 323,
-        "span": 6
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 1.13,
@@ -7583,7 +7238,7 @@
         "span": 134
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 11.92,
@@ -7617,7 +7272,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 192,
+    "optimal_swell_dir": 196,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -7756,7 +7411,7 @@
         "span": 70
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 220,
     "break_type": "reef",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -7830,7 +7485,7 @@
         "span": 74
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 224,
     "break_type": "reef",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -7940,17 +7595,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 155,
-        "span": 26
-      },
-      {
         "min": 217,
         "max": 303,
         "span": 90
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 9.25,
@@ -8010,22 +7660,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 107,
-        "span": 6
-      },
-      {
         "min": 189,
         "max": 271,
         "span": 86
-      },
-      {
-        "min": 333,
-        "max": 347,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412110",
     "nearest_tide_station_dist_km": 6.11,
@@ -8091,22 +7731,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 109,
-        "max": 111,
-        "span": 6
-      },
-      {
         "min": 173,
         "max": 291,
         "span": 122
-      },
-      {
-        "min": 1,
-        "max": 3,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9418024",
     "nearest_tide_station_dist_km": 1.46,
@@ -8167,17 +7797,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 189,
         "max": 311,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 248,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 14.11,
@@ -8245,14 +7870,9 @@
         "min": 181,
         "max": 251,
         "span": 74
-      },
-      {
-        "min": 329,
-        "max": 331,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 1.03,
@@ -8320,14 +7940,9 @@
         "min": 173,
         "max": 255,
         "span": 86
-      },
-      {
-        "min": 337,
-        "max": 355,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 212,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414958",
     "nearest_tide_station_dist_km": 3.6,
@@ -8390,22 +8005,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
-      {
-        "min": 117,
-        "max": 151,
-        "span": 38
-      },
-      {
         "min": 181,
         "max": 307,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 208,
+    "optimal_swell_dir": 244,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 26.72,
@@ -8430,11 +8035,6 @@
     "offshore_wind_deg": 65.0,
     "orientation_flipped": false,
     "swell_window_arcs": [
-      {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
       {
         "min": 161,
         "max": 287,
@@ -8699,22 +8299,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 101,
-        "max": 103,
-        "span": 6
-      },
-      {
-        "min": 121,
-        "max": 135,
-        "span": 18
-      },
-      {
         "min": 209,
         "max": 331,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 252,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0473",
     "nearest_tide_station_dist_km": 32.25,
@@ -8778,11 +8368,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 119,
-        "span": 6
-      },
-      {
         "min": 145,
         "max": 207,
         "span": 66
@@ -8793,7 +8378,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 192,
+    "optimal_swell_dir": 200,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 5.88,
@@ -8855,11 +8440,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 119,
-        "span": 6
-      },
-      {
         "min": 145,
         "max": 207,
         "span": 66
@@ -8870,7 +8450,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 192,
+    "optimal_swell_dir": 200,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 3.42,
@@ -8935,22 +8515,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
-      {
-        "min": 117,
-        "max": 151,
-        "span": 38
-      },
-      {
         "min": 185,
         "max": 311,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 248,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 18.97,
@@ -9015,17 +8585,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 125,
-        "max": 127,
-        "span": 6
-      },
-      {
         "min": 165,
         "max": 291,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 0.09,
@@ -9089,17 +8654,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 143,
-        "span": 30
-      },
-      {
         "min": 177,
         "max": 307,
         "span": 134
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 32.7,
@@ -9163,17 +8723,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 123,
-        "span": 10
-      },
-      {
         "min": 157,
         "max": 283,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 220,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 12.27,
@@ -9203,7 +8758,7 @@
         "span": 66
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 220,
     "break_type": "point",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -9312,17 +8867,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 125,
-        "max": 127,
-        "span": 6
-      },
-      {
         "min": 165,
         "max": 291,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 0.53,
@@ -9396,14 +8946,9 @@
         "min": 245,
         "max": 279,
         "span": 38
-      },
-      {
-        "min": 321,
-        "max": 323,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 216,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 1.01,
@@ -9468,7 +9013,7 @@
         "span": 34
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 6.23,
@@ -9535,14 +9080,9 @@
         "min": 161,
         "max": 251,
         "span": 94
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 8.33,
@@ -9606,17 +9146,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 141,
-        "max": 147,
-        "span": 10
-      },
-      {
         "min": 233,
         "max": 287,
         "span": 58
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 260,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 4.14,
@@ -9676,17 +9211,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 147,
-        "span": 30
-      },
-      {
         "min": 197,
         "max": 315,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 256,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 7.18,
@@ -9747,22 +9277,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 95,
-        "span": 6
-      },
-      {
-        "min": 113,
-        "max": 131,
-        "span": 22
-      },
-      {
         "min": 185,
         "max": 311,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 2.32,
@@ -9829,7 +9349,7 @@
         "span": 110
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 8.53,
@@ -9898,7 +9418,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 3.76,
@@ -10037,7 +9557,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 1.22,
@@ -10103,14 +9623,9 @@
         "min": 177,
         "max": 267,
         "span": 94
-      },
-      {
-        "min": 337,
-        "max": 343,
-        "span": 10
       }
     ],
-    "optimal_swell_dir": 236,
+    "optimal_swell_dir": 220,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 3.39,
@@ -10186,7 +9701,7 @@
         "span": 78
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411189",
     "nearest_tide_station_dist_km": 2.09,
@@ -10251,17 +9766,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 107,
-        "span": 6
-      },
-      {
         "min": 165,
         "max": 275,
         "span": 114
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 5.69,
@@ -10329,17 +9839,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 131,
-        "span": 22
-      },
-      {
         "min": 177,
         "max": 319,
         "span": 146
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 4.57,
@@ -10407,7 +9912,7 @@
         "span": 146
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0445",
     "nearest_tide_station_dist_km": 26.27,
@@ -10438,7 +9943,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 112,
+    "optimal_swell_dir": 100,
     "break_type": "beach",
     "break_type_source": "unattributed",
     "break_type_confidence": "low",
@@ -10740,14 +10245,9 @@
         "min": 45,
         "max": 163,
         "span": 122
-      },
-      {
-        "min": 293,
-        "max": 311,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 104,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8557863",
     "nearest_tide_station_dist_km": 1.09,
@@ -10879,19 +10379,9 @@
         "min": 9,
         "max": 159,
         "span": 154
-      },
-      {
-        "min": 189,
-        "max": 215,
-        "span": 30
-      },
-      {
-        "min": 245,
-        "max": 271,
-        "span": 30
       }
     ],
-    "optimal_swell_dir": 120,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720267",
     "nearest_tide_station_dist_km": 1.8,
@@ -11031,19 +10521,9 @@
         "min": 145,
         "max": 179,
         "span": 38
-      },
-      {
-        "min": 205,
-        "max": 219,
-        "span": 18
-      },
-      {
-        "min": 293,
-        "max": 315,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 68,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722832",
     "nearest_tide_station_dist_km": 2.12,
@@ -11114,19 +10594,9 @@
         "min": 153,
         "max": 179,
         "span": 30
-      },
-      {
-        "min": 197,
-        "max": 215,
-        "span": 22
-      },
-      {
-        "min": 289,
-        "max": 311,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 112,
+    "optimal_swell_dir": 92,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722718",
     "nearest_tide_station_dist_km": 0.54,
@@ -11227,19 +10697,9 @@
         "min": 141,
         "max": 175,
         "span": 38
-      },
-      {
-        "min": 209,
-        "max": 223,
-        "span": 18
-      },
-      {
-        "min": 297,
-        "max": 315,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 92,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -11344,22 +10804,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 207,
-        "span": 34
-      },
-      {
-        "min": 265,
-        "max": 283,
-        "span": 22
-      },
-      {
         "min": 349,
         "max": 135,
         "span": 150
       }
     ],
-    "optimal_swell_dir": 80,
+    "optimal_swell_dir": 60,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721120",
     "nearest_tide_station_dist_km": 6.38,
@@ -11391,19 +10841,9 @@
         "min": 145,
         "max": 175,
         "span": 34
-      },
-      {
-        "min": 205,
-        "max": 223,
-        "span": 22
-      },
-      {
-        "min": 293,
-        "max": 315,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 96,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -11515,19 +10955,9 @@
         "min": 153,
         "max": 179,
         "span": 30
-      },
-      {
-        "min": 201,
-        "max": 219,
-        "span": 22
-      },
-      {
-        "min": 289,
-        "max": 311,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 112,
+    "optimal_swell_dir": 96,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722761",
     "nearest_tide_station_dist_km": 2.71,
@@ -11621,22 +11051,12 @@
     "orientation_flipped": false,
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 203,
-        "span": 30
-      },
-      {
-        "min": 257,
-        "max": 279,
-        "span": 26
-      },
-      {
         "min": 353,
         "max": 147,
         "span": 158
       }
     ],
-    "optimal_swell_dir": 92,
+    "optimal_swell_dir": 68,
     "break_type": "beach",
     "break_type_source": "unattributed",
     "break_type_confidence": "low",
@@ -11714,19 +11134,9 @@
         "min": 145,
         "max": 175,
         "span": 34
-      },
-      {
-        "min": 205,
-        "max": 219,
-        "span": 18
-      },
-      {
-        "min": 297,
-        "max": 315,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 56,
+    "optimal_swell_dir": 84,
     "break_type": "beach",
     "break_type_source": "unattributed",
     "break_type_confidence": "low",
@@ -11910,14 +11320,9 @@
         "min": 137,
         "max": 167,
         "span": 34
-      },
-      {
-        "min": 289,
-        "max": 303,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 56,
+    "optimal_swell_dir": 80,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8723073",
     "nearest_tide_station_dist_km": 0.18,
@@ -11978,9 +11383,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 189,
+        "min": 197,
         "max": 275,
-        "span": 90
+        "span": 82
       },
       {
         "min": 329,
@@ -11988,7 +11393,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8726625",
     "nearest_tide_station_dist_km": 0.88,
@@ -12015,19 +11420,9 @@
         "min": 5,
         "max": 155,
         "span": 154
-      },
-      {
-        "min": 181,
-        "max": 203,
-        "span": 26
-      },
-      {
-        "min": 249,
-        "max": 271,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 116,
+    "optimal_swell_dir": 80,
     "break_type": "jetty",
     "break_type_source": "unattributed",
     "break_type_confidence": "low",
@@ -12137,17 +11532,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 9,
-        "max": 23,
-        "span": 18
-      },
-      {
         "min": 57,
         "max": 159,
         "span": 106
       }
     ],
-    "optimal_swell_dir": 92,
+    "optimal_swell_dir": 108,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721604",
     "nearest_tide_station_dist_km": 1.02,
@@ -12179,22 +11569,12 @@
     "orientation_flipped": false,
     "swell_window_arcs": [
       {
-        "min": 193,
-        "max": 215,
-        "span": 26
-      },
-      {
-        "min": 285,
-        "max": 307,
-        "span": 26
-      },
-      {
         "min": 353,
         "max": 155,
         "span": 166
       }
     ],
-    "optimal_swell_dir": 80,
+    "optimal_swell_dir": 72,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -12308,22 +11688,12 @@
         "span": 18
       },
       {
-        "min": 185,
-        "max": 207,
-        "span": 26
-      },
-      {
-        "min": 241,
-        "max": 259,
-        "span": 22
-      },
-      {
         "min": 353,
         "max": 111,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 92,
+    "optimal_swell_dir": 72,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC3783",
     "nearest_tide_station_dist_km": 0.3,
@@ -12395,19 +11765,9 @@
         "min": 157,
         "max": 175,
         "span": 22
-      },
-      {
-        "min": 229,
-        "max": 255,
-        "span": 30
-      },
-      {
-        "min": 289,
-        "max": 311,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 84,
+    "optimal_swell_dir": 88,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722670",
     "nearest_tide_station_dist_km": 0.26,
@@ -12530,22 +11890,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 203,
-        "span": 30
-      },
-      {
-        "min": 257,
-        "max": 275,
-        "span": 22
-      },
-      {
         "min": 357,
         "max": 147,
         "span": 154
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 72,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720692",
     "nearest_tide_station_dist_km": 4.08,
@@ -12608,22 +11958,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 181,
-        "max": 203,
-        "span": 26
-      },
-      {
-        "min": 245,
-        "max": 267,
-        "span": 26
-      },
-      {
         "min": 357,
         "max": 147,
         "span": 154
       }
     ],
-    "optimal_swell_dir": 96,
+    "optimal_swell_dir": 72,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720692",
     "nearest_tide_station_dist_km": 0.28,
@@ -12691,19 +12031,9 @@
         "min": 9,
         "max": 159,
         "span": 154
-      },
-      {
-        "min": 193,
-        "max": 215,
-        "span": 26
-      },
-      {
-        "min": 245,
-        "max": 267,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 116,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720259",
     "nearest_tide_station_dist_km": 5.4,
@@ -12766,17 +12096,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 37,
-        "max": 63,
-        "span": 30
-      },
-      {
         "min": 197,
         "max": 287,
         "span": 94
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8728957",
     "nearest_tide_station_dist_km": 7.31,
@@ -12907,17 +12232,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 9,
-        "max": 27,
-        "span": 22
-      },
-      {
-        "min": 181,
+        "min": 185,
         "max": 319,
-        "span": 142
+        "span": 138
       }
     ],
-    "optimal_swell_dir": 264,
+    "optimal_swell_dir": 252,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8725110",
     "nearest_tide_station_dist_km": 0.03,
@@ -13050,22 +12370,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 203,
-        "span": 30
-      },
-      {
-        "min": 221,
-        "max": 247,
-        "span": 30
-      },
-      {
         "min": 345,
         "max": 143,
         "span": 162
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 64,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721138",
     "nearest_tide_station_dist_km": 2.36,
@@ -13265,14 +12575,9 @@
         "min": 153,
         "max": 175,
         "span": 26
-      },
-      {
-        "min": 241,
-        "max": 291,
-        "span": 54
       }
     ],
-    "optimal_swell_dir": 68,
+    "optimal_swell_dir": 80,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722621",
     "nearest_tide_station_dist_km": 0.48,
@@ -13508,22 +12813,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 237,
-        "max": 255,
-        "span": 22
-      },
-      {
-        "min": 273,
-        "max": 291,
-        "span": 22
-      },
-      {
         "min": 341,
         "max": 139,
         "span": 162
       }
     ],
-    "optimal_swell_dir": 36,
+    "optimal_swell_dir": 60,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC3693",
     "nearest_tide_station_dist_km": 36.49,
@@ -13557,21 +12852,6 @@
         "min": 145,
         "max": 175,
         "span": 34
-      },
-      {
-        "min": 205,
-        "max": 219,
-        "span": 18
-      },
-      {
-        "min": 293,
-        "max": 315,
-        "span": 26
-      },
-      {
-        "min": 349,
-        "max": 351,
-        "span": 6
       }
     ],
     "optimal_swell_dir": 96,
@@ -13661,22 +12941,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 203,
-        "span": 30
-      },
-      {
-        "min": 265,
-        "max": 283,
-        "span": 22
-      },
-      {
         "min": 345,
         "max": 139,
         "span": 158
       }
     ],
-    "optimal_swell_dir": 76,
+    "optimal_swell_dir": 60,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721138",
     "nearest_tide_station_dist_km": 0.85,
@@ -13733,19 +13003,9 @@
         "min": 5,
         "max": 155,
         "span": 154
-      },
-      {
-        "min": 181,
-        "max": 207,
-        "span": 30
-      },
-      {
-        "min": 249,
-        "max": 271,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 112,
+    "optimal_swell_dir": 80,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720305",
     "nearest_tide_station_dist_km": 4.52,
@@ -14157,17 +13417,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 49,
-        "max": 51,
-        "span": 6
-      },
-      {
         "min": 169,
         "max": 323,
         "span": 158
       }
     ],
-    "optimal_swell_dir": 252,
+    "optimal_swell_dir": 244,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8725889",
     "nearest_tide_station_dist_km": 1.36,
@@ -14224,17 +13479,12 @@
     "offshore_wind_deg": 250.0,
     "swell_window_arcs": [
       {
-        "min": 245,
-        "max": 275,
-        "span": 34
-      },
-      {
         "min": 357,
         "max": 143,
         "span": 150
       }
     ],
-    "optimal_swell_dir": 64,
+    "optimal_swell_dir": 68,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720554",
     "nearest_tide_station_dist_km": 3.24,
@@ -18083,12 +17333,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 29,
+        "min": 33,
         "max": 195,
-        "span": 170
+        "span": 166
       }
     ],
-    "optimal_swell_dir": 116,
+    "optimal_swell_dir": 112,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8570282",
     "nearest_tide_station_dist_km": 0.23,
@@ -18388,7 +17638,7 @@
         "span": 78
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8447975",
     "nearest_tide_station_dist_km": 0.93,
@@ -18447,7 +17697,7 @@
         "span": 174
       }
     ],
-    "optimal_swell_dir": 68,
+    "optimal_swell_dir": 72,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8446613",
     "nearest_tide_station_dist_km": 7.93,
@@ -19892,14 +19142,9 @@
         "min": 57,
         "max": 183,
         "span": 130
-      },
-      {
-        "min": 245,
-        "max": 247,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 128,
+    "optimal_swell_dir": 120,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532591",
     "nearest_tide_station_dist_km": 0.11,
@@ -20135,7 +19380,7 @@
         "span": 134
       }
     ],
-    "optimal_swell_dir": 120,
+    "optimal_swell_dir": 116,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532585",
     "nearest_tide_station_dist_km": 1.47,
@@ -22586,17 +21831,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 13,
-        "max": 19,
-        "span": 10
-      },
-      {
         "min": 101,
         "max": 227,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 156,
+    "optimal_swell_dir": 164,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8654400",
     "nearest_tide_station_dist_km": 4.32,
@@ -22650,17 +21890,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 17,
-        "max": 39,
-        "span": 26
-      },
-      {
         "min": 109,
         "max": 223,
         "span": 118
       }
     ],
-    "optimal_swell_dir": 148,
+    "optimal_swell_dir": 164,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8659665",
     "nearest_tide_station_dist_km": 6.66,
@@ -23041,17 +22276,12 @@
     "offshore_wind_deg": 350.0,
     "swell_window_arcs": [
       {
-        "min": 17,
-        "max": 47,
-        "span": 34
-      },
-      {
         "min": 97,
         "max": 215,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 132,
+    "optimal_swell_dir": 156,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8659665",
     "nearest_tide_station_dist_km": 6.64,
@@ -23243,7 +22473,7 @@
         "span": 174
       }
     ],
-    "optimal_swell_dir": 104,
+    "optimal_swell_dir": 100,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8653215",
     "nearest_tide_station_dist_km": 0.77,
@@ -23301,14 +22531,9 @@
         "min": 13,
         "max": 179,
         "span": 170
-      },
-      {
-        "min": 205,
-        "max": 207,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 104,
+    "optimal_swell_dir": 96,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8653215",
     "nearest_tide_station_dist_km": 6.73,
@@ -23424,7 +22649,7 @@
         "span": 138
       }
     ],
-    "optimal_swell_dir": 140,
+    "optimal_swell_dir": 144,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8657419",
     "nearest_tide_station_dist_km": 5.64,
@@ -23657,11 +22882,11 @@
     "swell_window_arcs": [
       {
         "min": 193,
-        "max": 351,
-        "span": 162
+        "max": 347,
+        "span": 158
       }
     ],
-    "optimal_swell_dir": 284,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435385",
     "nearest_tide_station_dist_km": 5.66,
@@ -23689,11 +22914,11 @@
     "swell_window_arcs": [
       {
         "min": 209,
-        "max": 359,
-        "span": 154
+        "max": 351,
+        "span": 146
       }
     ],
-    "optimal_swell_dir": 272,
+    "optimal_swell_dir": 280,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -23783,22 +23008,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 147,
-        "span": 6
-      },
-      {
-        "min": 165,
-        "max": 175,
-        "span": 14
-      },
-      {
         "min": 257,
         "max": 3,
         "span": 110
       }
     ],
-    "optimal_swell_dir": 292,
+    "optimal_swell_dir": 308,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9432780",
     "nearest_tide_station_dist_km": 2.04,
@@ -23853,19 +23068,9 @@
         "min": 185,
         "max": 263,
         "span": 82
-      },
-      {
-        "min": 321,
-        "max": 335,
-        "span": 18
-      },
-      {
-        "min": 357,
-        "max": 7,
-        "span": 14
       }
     ],
-    "optimal_swell_dir": 264,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9430104",
     "nearest_tide_station_dist_km": 0.99,
@@ -23891,17 +23096,12 @@
     "orientation_flipped": false,
     "swell_window_arcs": [
       {
-        "min": 149,
-        "max": 151,
-        "span": 6
-      },
-      {
         "min": 201,
         "max": 335,
         "span": 138
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 268,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -23992,17 +23192,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 37,
-        "max": 39,
-        "span": 6
-      },
-      {
         "min": 197,
         "max": 343,
         "span": 150
       }
     ],
-    "optimal_swell_dir": 272,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0857",
     "nearest_tide_station_dist_km": 5.47,
@@ -24058,17 +23253,12 @@
     "offshore_wind_deg": 88.0,
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 147,
-        "span": 6
-      },
-      {
         "min": 201,
         "max": 355,
         "span": 158
       }
     ],
-    "optimal_swell_dir": 272,
+    "optimal_swell_dir": 276,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9434032",
     "nearest_tide_station_dist_km": 6.77,
@@ -24122,17 +23312,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 141,
-        "max": 143,
-        "span": 6
-      },
-      {
         "min": 189,
-        "max": 339,
-        "span": 154
+        "max": 335,
+        "span": 150
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9431011",
     "nearest_tide_station_dist_km": 0.86,
@@ -24190,19 +23375,9 @@
         "min": 181,
         "max": 263,
         "span": 86
-      },
-      {
-        "min": 317,
-        "max": 319,
-        "span": 6
-      },
-      {
-        "min": 337,
-        "max": 3,
-        "span": 30
       }
     ],
-    "optimal_swell_dir": 252,
+    "optimal_swell_dir": 220,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9431647",
     "nearest_tide_station_dist_km": 1.78,
@@ -24256,17 +23431,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 149,
-        "max": 151,
-        "span": 6
-      },
-      {
         "min": 197,
         "max": 331,
         "span": 138
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 264,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9437954",
     "nearest_tide_station_dist_km": 18.59,
@@ -24327,7 +23497,7 @@
         "span": 154
       }
     ],
-    "optimal_swell_dir": 280,
+    "optimal_swell_dir": 276,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9436381",
     "nearest_tide_station_dist_km": 5.66,
@@ -24389,7 +23559,7 @@
         "span": 158
       }
     ],
-    "optimal_swell_dir": 284,
+    "optimal_swell_dir": 276,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9436101",
     "nearest_tide_station_dist_km": 3.92,
@@ -24454,7 +23624,7 @@
         "span": 138
       }
     ],
-    "optimal_swell_dir": 268,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435385",
     "nearest_tide_station_dist_km": 1.67,
@@ -24512,11 +23682,6 @@
     "offshore_wind_deg": 115.0,
     "orientation_source": "manual",
     "swell_window_arcs": [
-      {
-        "min": 145,
-        "max": 147,
-        "span": 6
-      },
       {
         "min": 189,
         "max": 359,
@@ -24588,7 +23753,7 @@
         "span": 146
       }
     ],
-    "optimal_swell_dir": 280,
+    "optimal_swell_dir": 272,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0857",
     "nearest_tide_station_dist_km": 1.53,
@@ -24654,7 +23819,7 @@
         "span": 150
       }
     ],
-    "optimal_swell_dir": 276,
+    "optimal_swell_dir": 272,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9436381",
     "nearest_tide_station_dist_km": 4.64,
@@ -24715,17 +23880,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 149,
-        "max": 151,
-        "span": 6
-      },
-      {
         "min": 261,
         "max": 335,
         "span": 78
       }
     ],
-    "optimal_swell_dir": 288,
+    "optimal_swell_dir": 296,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9438772",
     "nearest_tide_station_dist_km": 19.51,
@@ -24841,17 +24001,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 151,
-        "span": 10
-      },
-      {
         "min": 193,
         "max": 347,
         "span": 158
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9435380",
     "nearest_tide_station_dist_km": 1.49,
@@ -24904,17 +24059,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 165,
-        "max": 171,
-        "span": 10
-      },
-      {
         "min": 205,
         "max": 351,
         "span": 150
       }
     ],
-    "optimal_swell_dir": 264,
+    "optimal_swell_dir": 276,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9432373",
     "nearest_tide_station_dist_km": 10.16,
@@ -24981,7 +24131,7 @@
         "span": 110
       }
     ],
-    "optimal_swell_dir": 332,
+    "optimal_swell_dir": 324,
     "nearest_buoy_id": "41115",
     "nearest_buoy_dist_km": 3.74,
     "fallback_buoy_ids": [],
@@ -25166,11 +24316,6 @@
     "offshore_wind_deg": 71.0,
     "swell_window_arcs": [
       {
-        "min": 89,
-        "max": 91,
-        "span": 6
-      },
-      {
         "min": 181,
         "max": 239,
         "span": 62
@@ -25186,7 +24331,7 @@
         "span": 26
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 244,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
     "nearest_tide_station_dist_km": 14.98,
@@ -25321,7 +24466,7 @@
         "span": 110
       }
     ],
-    "optimal_swell_dir": 292,
+    "optimal_swell_dir": 288,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
     "nearest_tide_station_dist_km": 12.86,
@@ -25443,7 +24588,7 @@
         "span": 118
       }
     ],
-    "optimal_swell_dir": 4,
+    "optimal_swell_dir": 8,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9753766",
     "nearest_tide_station_dist_km": 2.29,
@@ -25603,7 +24748,7 @@
         "span": 114
       }
     ],
-    "optimal_swell_dir": 344,
+    "optimal_swell_dir": 348,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -25845,7 +24990,7 @@
         "span": 114
       }
     ],
-    "optimal_swell_dir": 308,
+    "optimal_swell_dir": 304,
     "break_type": "reef",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -25947,7 +25092,7 @@
         "span": 110
       }
     ],
-    "optimal_swell_dir": 292,
+    "optimal_swell_dir": 288,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759394",
     "nearest_tide_station_dist_km": 12.34,
@@ -25981,7 +25126,7 @@
         "span": 114
       }
     ],
-    "optimal_swell_dir": 324,
+    "optimal_swell_dir": 320,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -26204,7 +25349,7 @@
         "span": 122
       }
     ],
-    "optimal_swell_dir": 4,
+    "optimal_swell_dir": 356,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
     "nearest_tide_station_dist_km": 6.74,
@@ -26403,7 +25548,7 @@
         "span": 94
       }
     ],
-    "optimal_swell_dir": 352,
+    "optimal_swell_dir": 344,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9759412",
     "nearest_tide_station_dist_km": 3.01,
@@ -26471,14 +25616,9 @@
         "min": 221,
         "max": 227,
         "span": 10
-      },
-      {
-        "min": 333,
-        "max": 15,
-        "span": 46
       }
     ],
-    "optimal_swell_dir": 140,
+    "optimal_swell_dir": 156,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 11.73,
@@ -26541,7 +25681,7 @@
         "span": 22
       }
     ],
-    "optimal_swell_dir": 156,
+    "optimal_swell_dir": 160,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 0.79,
@@ -26785,14 +25925,9 @@
         "min": 209,
         "max": 223,
         "span": 18
-      },
-      {
-        "min": 333,
-        "max": 23,
-        "span": 54
       }
     ],
-    "optimal_swell_dir": 116,
+    "optimal_swell_dir": 160,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 3.48,
@@ -26849,14 +25984,9 @@
         "min": 89,
         "max": 167,
         "span": 82
-      },
-      {
-        "min": 333,
-        "max": 343,
-        "span": 14
       }
     ],
-    "optimal_swell_dir": 124,
+    "optimal_swell_dir": 128,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8454658",
     "nearest_tide_station_dist_km": 1.23,
@@ -27041,7 +26171,7 @@
         "span": 22
       }
     ],
-    "optimal_swell_dir": 156,
+    "optimal_swell_dir": 160,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 0.51,
@@ -27536,7 +26666,7 @@
         "span": 166
       }
     ],
-    "optimal_swell_dir": 144,
+    "optimal_swell_dir": 140,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8666652",
     "nearest_tide_station_dist_km": 0.8,
@@ -27562,22 +26692,12 @@
     "orientation_flipped": false,
     "swell_window_arcs": [
       {
-        "min": 21,
-        "max": 31,
-        "span": 14
-      },
-      {
         "min": 77,
         "max": 195,
         "span": 122
-      },
-      {
-        "min": 233,
-        "max": 251,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 140,
+    "optimal_swell_dir": 136,
     "break_type": "beach",
     "break_type_source": "model_recall",
     "break_type_confidence": "low",
@@ -27849,7 +26969,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 148,
+    "optimal_swell_dir": 152,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8667062",
     "nearest_tide_station_dist_km": 0.86,
@@ -27905,19 +27025,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 17,
-        "max": 35,
-        "span": 22
-      },
-      {
         "min": 81,
         "max": 199,
         "span": 122
-      },
-      {
-        "min": 233,
-        "max": 251,
-        "span": 22
       }
     ],
     "optimal_swell_dir": 140,
@@ -27949,14 +27059,9 @@
         "min": 65,
         "max": 183,
         "span": 122
-      },
-      {
-        "min": 253,
-        "max": 255,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 120,
+    "optimal_swell_dir": 124,
     "break_type": "beach",
     "break_type_source": "model_recall",
     "break_type_confidence": "low",
@@ -28044,22 +27149,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 21,
-        "max": 31,
-        "span": 14
-      },
-      {
         "min": 77,
         "max": 195,
         "span": 122
-      },
-      {
-        "min": 233,
-        "max": 251,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 140,
+    "optimal_swell_dir": 136,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8661437",
     "nearest_tide_station_dist_km": 4.05,
@@ -28781,14 +27876,9 @@
         "min": 57,
         "max": 211,
         "span": 158
-      },
-      {
-        "min": 265,
-        "max": 279,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 152,
+    "optimal_swell_dir": 132,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8772447",
     "nearest_tide_station_dist_km": 1.69,
@@ -28908,14 +27998,9 @@
         "min": 25,
         "max": 155,
         "span": 134
-      },
-      {
-        "min": 221,
-        "max": 243,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639168",
     "nearest_tide_station_dist_km": 0.81,
@@ -29039,14 +28124,9 @@
         "min": 25,
         "max": 155,
         "span": 134
-      },
-      {
-        "min": 217,
-        "max": 243,
-        "span": 30
       }
     ],
-    "optimal_swell_dir": 104,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639168",
     "nearest_tide_station_dist_km": 0.23,
@@ -29162,22 +28242,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 117,
-        "max": 131,
-        "span": 18
-      },
-      {
-        "min": 153,
-        "max": 163,
-        "span": 14
-      },
-      {
         "min": 205,
         "max": 279,
         "span": 78
       }
     ],
-    "optimal_swell_dir": 208,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442861",
     "nearest_tide_station_dist_km": 4.41,
@@ -29201,27 +28271,12 @@
     "orientation_flipped": false,
     "swell_window_arcs": [
       {
-        "min": 57,
-        "max": 91,
-        "span": 38
-      },
-      {
-        "min": 109,
-        "max": 115,
-        "span": 10
-      },
-      {
         "min": 181,
         "max": 323,
         "span": 146
-      },
-      {
-        "min": 353,
-        "max": 355,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 252,
     "break_type": "beach",
     "break_type_source": "researched",
     "break_type_confidence": "medium",
@@ -29312,22 +28367,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 69,
-        "max": 87,
-        "span": 22
-      },
-      {
-        "min": 105,
-        "max": 119,
-        "span": 18
-      },
-      {
         "min": 177,
         "max": 299,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
     "nearest_tide_station_dist_km": 0.42,
@@ -29381,17 +28426,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 81,
-        "max": 103,
-        "span": 26
-      },
-      {
         "min": 165,
         "max": 307,
         "span": 146
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
     "nearest_tide_station_dist_km": 0.42,
@@ -29445,17 +28485,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 77,
-        "max": 115,
-        "span": 42
-      },
-      {
         "min": 169,
         "max": 279,
         "span": 114
       }
     ],
-    "optimal_swell_dir": 196,
+    "optimal_swell_dir": 224,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
     "nearest_tide_station_dist_km": 5.44,
@@ -29573,7 +28608,7 @@
         "span": 154
       }
     ],
-    "optimal_swell_dir": 264,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441156",
     "nearest_tide_station_dist_km": 5.64,
@@ -29626,22 +28661,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 41,
-        "max": 59,
-        "span": 22
-      },
-      {
         "min": 181,
         "max": 327,
         "span": 150
-      },
-      {
-        "min": 1,
-        "max": 15,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 284,
+    "optimal_swell_dir": 252,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9441627",
     "nearest_tide_station_dist_km": 11.09,
@@ -29701,11 +28726,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 81,
-        "max": 119,
-        "span": 42
-      },
-      {
         "min": 177,
         "max": 287,
         "span": 114
@@ -29716,7 +28736,7 @@
         "span": 10
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442396",
     "nearest_tide_station_dist_km": 1.83,
@@ -29771,22 +28791,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 109,
-        "max": 131,
-        "span": 26
-      },
-      {
-        "min": 153,
-        "max": 155,
-        "span": 6
-      },
-      {
         "min": 225,
         "max": 311,
         "span": 90
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9442861",
     "nearest_tide_station_dist_km": 3.92,
@@ -29839,14 +28849,9 @@
         "min": 209,
         "max": 275,
         "span": 70
-      },
-      {
-        "min": 309,
-        "max": 327,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 272,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9440910",
     "nearest_tide_station_dist_km": 1.49,
@@ -30060,11 +29065,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 113,
-        "max": 135,
-        "span": 26
-      },
-      {
         "min": 181,
         "max": 199,
         "span": 22
@@ -30075,7 +29075,7 @@
         "span": 78
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 252,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410120",
     "nearest_tide_station_dist_km": 2.49,
@@ -30125,7 +29125,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 260,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410166",
     "nearest_tide_station_dist_km": 2.34,
@@ -30165,22 +29165,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 95,
-        "span": 6
-      },
-      {
-        "min": 113,
-        "max": 131,
-        "span": 22
-      },
-      {
         "min": 181,
-        "max": 319,
-        "span": 142
+        "max": 315,
+        "span": 138
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 2.8,
@@ -30221,17 +29211,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 131,
-        "span": 30
-      },
-      {
         "min": 185,
-        "max": 315,
-        "span": 134
+        "max": 311,
+        "span": 130
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 248,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410196",
     "nearest_tide_station_dist_km": 2.02,
@@ -30272,17 +29257,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 143,
-        "span": 26
-      },
-      {
         "min": 237,
         "max": 319,
         "span": 86
       }
     ],
-    "optimal_swell_dir": 252,
+    "optimal_swell_dir": 276,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 0.17,
@@ -30322,17 +29302,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 189,
         "max": 311,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 248,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 14.81,
@@ -30372,22 +29347,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 95,
-        "span": 6
-      },
-      {
-        "min": 121,
-        "max": 151,
-        "span": 34
-      },
-      {
         "min": 185,
         "max": 311,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 248,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410230",
     "nearest_tide_station_dist_km": 17.97,
@@ -30432,7 +29397,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 8.72,
@@ -30477,7 +29442,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 1.85,
@@ -30522,7 +29487,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 228,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "TWC0419",
     "nearest_tide_station_dist_km": 5.11,
@@ -30564,22 +29529,12 @@
     "disambiguated_at": "2026-06-17",
     "swell_window_arcs": [
       {
-        "min": 93,
-        "max": 99,
-        "span": 10
-      },
-      {
-        "min": 117,
-        "max": 123,
-        "span": 10
-      },
-      {
         "min": 157,
         "max": 283,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 220,
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 10.68,
     "nearest_buoy_id": "46285",
@@ -30623,14 +29578,9 @@
         "min": 157,
         "max": 283,
         "span": 130
-      },
-      {
-        "min": 317,
-        "max": 319,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 220,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9410580",
     "nearest_tide_station_dist_km": 7.34,
@@ -30673,11 +29623,6 @@
         "min": 153,
         "max": 279,
         "span": 130
-      },
-      {
-        "min": 321,
-        "max": 323,
-        "span": 6
       }
     ],
     "optimal_swell_dir": 216,
@@ -30776,7 +29721,7 @@
         "span": 30
       }
     ],
-    "optimal_swell_dir": 200,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TWC0427",
     "nearest_tide_station_dist_km": 6.64,
@@ -30919,17 +29864,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 141,
-        "max": 147,
-        "span": 10
-      },
-      {
         "min": 233,
         "max": 291,
         "span": 62
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 4.94,
@@ -30970,17 +29910,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 147,
-        "span": 18
-      },
-      {
         "min": 237,
         "max": 287,
         "span": 54
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410738",
     "nearest_tide_station_dist_km": 4.72,
@@ -31026,7 +29961,7 @@
         "span": 94
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410777",
     "nearest_tide_station_dist_km": 2.08,
@@ -31072,7 +30007,7 @@
         "span": 98
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410777",
     "nearest_tide_station_dist_km": 1.64,
@@ -31118,7 +30053,7 @@
         "span": 98
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410777",
     "nearest_tide_station_dist_km": 3.88,
@@ -31164,7 +30099,7 @@
         "span": 94
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 220,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 4.44,
@@ -31208,14 +30143,9 @@
         "min": 173,
         "max": 263,
         "span": 94
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 0.07,
@@ -31259,19 +30189,9 @@
         "min": 169,
         "max": 255,
         "span": 90
-      },
-      {
-        "min": 321,
-        "max": 323,
-        "span": 6
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 212,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 4.71,
@@ -31305,19 +30225,9 @@
         "min": 165,
         "max": 255,
         "span": 94
-      },
-      {
-        "min": 317,
-        "max": 323,
-        "span": 10
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 5.91,
@@ -31351,14 +30261,9 @@
         "min": 161,
         "max": 251,
         "span": 94
-      },
-      {
-        "min": 341,
-        "max": 343,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 7.75,
@@ -31404,7 +30309,7 @@
         "span": 102
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 16.68,
@@ -31450,7 +30355,7 @@
         "span": 150
       }
     ],
-    "optimal_swell_dir": 216,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9410840",
     "nearest_tide_station_dist_km": 28.22,
@@ -31491,9 +30396,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 129,
+        "min": 133,
         "max": 223,
-        "span": 98
+        "span": 94
       },
       {
         "min": 245,
@@ -31501,7 +30406,7 @@
         "span": 42
       }
     ],
-    "optimal_swell_dir": 200,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411065",
     "nearest_tide_station_dist_km": 1.34,
@@ -31552,7 +30457,7 @@
         "span": 46
       }
     ],
-    "optimal_swell_dir": 200,
+    "optimal_swell_dir": 204,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411065",
     "nearest_tide_station_dist_km": 1.67,
@@ -31593,11 +30498,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 141,
-        "max": 143,
-        "span": 6
-      },
-      {
         "min": 165,
         "max": 203,
         "span": 42
@@ -31608,7 +30508,7 @@
         "span": 54
       }
     ],
-    "optimal_swell_dir": 208,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411065",
     "nearest_tide_station_dist_km": 4.76,
@@ -31649,11 +30549,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 137,
-        "max": 143,
-        "span": 10
-      },
-      {
         "min": 177,
         "max": 191,
         "span": 18
@@ -31664,7 +30559,7 @@
         "span": 62
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411189",
     "nearest_tide_station_dist_km": 2.75,
@@ -31713,14 +30608,9 @@
         "min": 233,
         "max": 271,
         "span": 42
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411270",
     "nearest_tide_station_dist_km": 6.09,
@@ -31761,19 +30651,14 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 149,
+        "min": 153,
         "max": 211,
-        "span": 66
+        "span": 62
       },
       {
         "min": 241,
         "max": 271,
         "span": 34
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
     "optimal_swell_dir": 208,
@@ -31825,14 +30710,9 @@
         "min": 229,
         "max": 271,
         "span": 46
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 204,
+    "optimal_swell_dir": 208,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411270",
     "nearest_tide_station_dist_km": 0.73,
@@ -31881,14 +30761,9 @@
         "min": 225,
         "max": 267,
         "span": 46
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 196,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411270",
     "nearest_tide_station_dist_km": 6.66,
@@ -31937,14 +30812,9 @@
         "min": 217,
         "max": 243,
         "span": 30
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 184,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 6.15,
@@ -31993,19 +30863,9 @@
         "min": 225,
         "max": 267,
         "span": 46
-      },
-      {
-        "min": 317,
-        "max": 327,
-        "span": 14
-      },
-      {
-        "min": 345,
-        "max": 347,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 220,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 3.36,
@@ -32049,14 +30909,9 @@
         "min": 181,
         "max": 219,
         "span": 42
-      },
-      {
-        "min": 341,
-        "max": 347,
-        "span": 10
       }
     ],
-    "optimal_swell_dir": 212,
+    "optimal_swell_dir": 200,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412110",
     "nearest_tide_station_dist_km": 7.46,
@@ -32097,17 +30952,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 139,
-        "span": 46
-      },
-      {
         "min": 193,
         "max": 283,
         "span": 94
       }
     ],
-    "optimal_swell_dir": 208,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412110",
     "nearest_tide_station_dist_km": 11.77,
@@ -32150,22 +31000,12 @@
     "disambiguated_at": "2026-06-17",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 107,
-        "span": 6
-      },
-      {
         "min": 185,
         "max": 259,
         "span": 78
-      },
-      {
-        "min": 337,
-        "max": 347,
-        "span": 14
       }
     ],
-    "optimal_swell_dir": 224,
+    "optimal_swell_dir": 220,
     "nearest_tide_station_id": "9412110",
     "nearest_tide_station_dist_km": 6.82,
     "nearest_buoy_id": "46218",
@@ -32206,17 +31046,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 97,
-        "max": 123,
-        "span": 30
-      },
-      {
         "min": 213,
         "max": 311,
         "span": 102
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412110",
     "nearest_tide_station_dist_km": 20.84,
@@ -32298,17 +31133,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 129,
-        "max": 143,
-        "span": 18
-      },
-      {
         "min": 217,
         "max": 323,
         "span": 110
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 268,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9413450",
     "nearest_tide_station_dist_km": 6.06,
@@ -32357,7 +31187,7 @@
         "span": 98
       }
     ],
-    "optimal_swell_dir": 264,
+    "optimal_swell_dir": 272,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413450",
     "nearest_tide_station_dist_km": 4.92,
@@ -32449,7 +31279,7 @@
         "span": 74
       }
     ],
-    "optimal_swell_dir": 228,
+    "optimal_swell_dir": 216,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 2.13,
@@ -32495,7 +31325,7 @@
         "span": 118
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413745",
     "nearest_tide_station_dist_km": 9.42,
@@ -32582,17 +31412,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 105,
-        "max": 107,
-        "span": 6
-      },
-      {
         "min": 209,
         "max": 319,
         "span": 114
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 264,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 18.66,
@@ -32637,7 +31462,7 @@
         "span": 110
       }
     ],
-    "optimal_swell_dir": 220,
+    "optimal_swell_dir": 232,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414131",
     "nearest_tide_station_dist_km": 3.91,
@@ -32678,17 +31503,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 133,
-        "max": 151,
-        "span": 22
-      },
-      {
         "min": 197,
         "max": 307,
         "span": 114
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 252,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414413",
     "nearest_tide_station_dist_km": 10.11,
@@ -32728,17 +31548,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 149,
-        "max": 155,
-        "span": 10
-      },
-      {
         "min": 189,
         "max": 295,
         "span": 110
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 240,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414275",
     "nearest_tide_station_dist_km": 2.23,
@@ -32783,7 +31598,7 @@
         "span": 106
       }
     ],
-    "optimal_swell_dir": 232,
+    "optimal_swell_dir": 240,
     "swell_window_source": "cdip_mop",
     "nearest_tide_station_id": "9414275",
     "nearest_tide_station_dist_km": 2.22,
@@ -32826,14 +31641,9 @@
         "min": 185,
         "max": 287,
         "span": 106
-      },
-      {
-        "min": 337,
-        "max": 355,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 256,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9414290",
     "nearest_tide_station_dist_km": 5.73,
@@ -32920,17 +31730,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 137,
-        "max": 147,
-        "span": 14
-      },
-      {
         "min": 201,
         "max": 323,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 260,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9416841",
     "nearest_tide_station_dist_km": 44.88,
@@ -32971,17 +31776,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 147,
-        "span": 6
-      },
-      {
         "min": 209,
         "max": 331,
         "span": 126
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 132.11,
@@ -33024,17 +31824,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 147,
-        "span": 6
-      },
-      {
         "min": 205,
         "max": 331,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 260,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 133.78,
@@ -33077,17 +31872,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 151,
-        "span": 10
-      },
-      {
         "min": 205,
         "max": 323,
         "span": 122
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 264,
     "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 145.33,
@@ -33130,17 +31920,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 137,
-        "max": 151,
-        "span": 18
-      },
-      {
         "min": 217,
         "max": 319,
         "span": 106
       }
     ],
-    "optimal_swell_dir": 248,
+    "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
     "nearest_buoy_id": "46013",
     "nearest_buoy_dist_km": 149.81,
@@ -33173,17 +31958,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 145,
-        "max": 151,
-        "span": 10
-      },
-      {
         "min": 193,
         "max": 319,
         "span": 130
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 256,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9418024",
     "nearest_tide_station_dist_km": 49.87,
@@ -33219,7 +31999,7 @@
         "span": 110
       }
     ],
-    "optimal_swell_dir": 284,
+    "optimal_swell_dir": 292,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9419059",
     "nearest_tide_station_dist_km": 10.09,
@@ -33358,11 +32138,11 @@
     "swell_window_arcs": [
       {
         "min": 177,
-        "max": 319,
-        "span": 146
+        "max": 311,
+        "span": 138
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 240,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8726494",
     "nearest_tide_station_dist_km": 7.61,
@@ -33408,7 +32188,7 @@
         "span": 126
       }
     ],
-    "optimal_swell_dir": 244,
+    "optimal_swell_dir": 236,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8726494",
     "nearest_tide_station_dist_km": 5.84,
@@ -33619,11 +32399,11 @@
     "swell_window_arcs": [
       {
         "min": 161,
-        "max": 319,
-        "span": 162
+        "max": 299,
+        "span": 142
       }
     ],
-    "optimal_swell_dir": 240,
+    "optimal_swell_dir": 228,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8725889",
     "nearest_tide_station_dist_km": 20.39,
@@ -33858,19 +32638,9 @@
         "min": 13,
         "max": 171,
         "span": 162
-      },
-      {
-        "min": 233,
-        "max": 247,
-        "span": 18
-      },
-      {
-        "min": 301,
-        "max": 319,
-        "span": 22
       }
     ],
-    "optimal_swell_dir": 72,
+    "optimal_swell_dir": 92,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8723073",
     "nearest_tide_station_dist_km": 3.54,
@@ -33914,11 +32684,6 @@
         "min": 13,
         "max": 83,
         "span": 74
-      },
-      {
-        "min": 297,
-        "max": 315,
-        "span": 22
       }
     ],
     "optimal_swell_dir": 40.0,
@@ -33971,24 +32736,9 @@
         "min": 145,
         "max": 175,
         "span": 34
-      },
-      {
-        "min": 205,
-        "max": 219,
-        "span": 18
-      },
-      {
-        "min": 297,
-        "max": 315,
-        "span": 22
-      },
-      {
-        "min": 349,
-        "max": 351,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 48,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722939",
     "nearest_tide_station_dist_km": 4.77,
@@ -34037,16 +32787,6 @@
         "min": 141,
         "max": 179,
         "span": 42
-      },
-      {
-        "min": 205,
-        "max": 223,
-        "span": 22
-      },
-      {
-        "min": 293,
-        "max": 315,
-        "span": 26
       }
     ],
     "optimal_swell_dir": 96,
@@ -34096,21 +32836,11 @@
       },
       {
         "min": 145,
-        "max": 179,
-        "span": 38
-      },
-      {
-        "min": 205,
-        "max": 223,
-        "span": 22
-      },
-      {
-        "min": 293,
-        "max": 315,
-        "span": 26
+        "max": 175,
+        "span": 34
       }
     ],
-    "optimal_swell_dir": 104,
+    "optimal_swell_dir": 96,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722832",
     "nearest_tide_station_dist_km": 1.27,
@@ -34159,19 +32889,9 @@
         "min": 149,
         "max": 179,
         "span": 34
-      },
-      {
-        "min": 205,
-        "max": 219,
-        "span": 18
-      },
-      {
-        "min": 289,
-        "max": 311,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 60,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722832",
     "nearest_tide_station_dist_km": 3.69,
@@ -34212,22 +32932,17 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
+        "min": 5,
+        "max": 111,
+        "span": 110
+      },
+      {
         "min": 157,
         "max": 171,
         "span": 18
-      },
-      {
-        "min": 261,
-        "max": 275,
-        "span": 18
-      },
-      {
-        "min": 357,
-        "max": 111,
-        "span": 118
       }
     ],
-    "optimal_swell_dir": 72,
+    "optimal_swell_dir": 80,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8722621",
     "nearest_tide_station_dist_km": 8.94,
@@ -34274,22 +32989,12 @@
         "span": 38
       },
       {
-        "min": 221,
-        "max": 239,
-        "span": 22
-      },
-      {
-        "min": 285,
-        "max": 307,
-        "span": 26
-      },
-      {
         "min": 349,
         "max": 103,
         "span": 118
       }
     ],
-    "optimal_swell_dir": 56,
+    "optimal_swell_dir": 72,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC3783",
     "nearest_tide_station_dist_km": 8.97,
@@ -34705,22 +33410,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 203,
-        "span": 30
-      },
-      {
-        "min": 269,
-        "max": 287,
-        "span": 22
-      },
-      {
         "min": 345,
         "max": 139,
         "span": 158
       }
     ],
-    "optimal_swell_dir": 72,
+    "optimal_swell_dir": 60,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721164",
     "nearest_tide_station_dist_km": 3.41,
@@ -34761,22 +33456,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 177,
-        "max": 203,
-        "span": 30
-      },
-      {
-        "min": 265,
-        "max": 283,
-        "span": 22
-      },
-      {
         "min": 353,
         "max": 139,
         "span": 150
       }
     ],
-    "optimal_swell_dir": 80,
+    "optimal_swell_dir": 64,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8721138",
     "nearest_tide_station_dist_km": 6.53,
@@ -34866,19 +33551,9 @@
         "min": 5,
         "max": 155,
         "span": 154
-      },
-      {
-        "min": 181,
-        "max": 203,
-        "span": 26
-      },
-      {
-        "min": 241,
-        "max": 271,
-        "span": 34
       }
     ],
-    "optimal_swell_dir": 120,
+    "optimal_swell_dir": 80,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8720291",
     "nearest_tide_station_dist_km": 1.6,
@@ -35190,7 +33865,7 @@
         "span": 130
       }
     ],
-    "optimal_swell_dir": 124,
+    "optimal_swell_dir": 120,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8669338",
     "nearest_tide_station_dist_km": 22.68,
@@ -35282,7 +33957,7 @@
         "span": 142
       }
     ],
-    "optimal_swell_dir": 128,
+    "optimal_swell_dir": 140,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
     "nearest_tide_station_dist_km": 6.15,
@@ -35420,7 +34095,7 @@
         "span": 134
       }
     ],
-    "optimal_swell_dir": 132,
+    "optimal_swell_dir": 128,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8665387",
     "nearest_tide_station_dist_km": 9.03,
@@ -35773,17 +34448,12 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 29,
-        "max": 31,
-        "span": 6
-      },
-      {
         "min": 89,
         "max": 227,
         "span": 142
       }
     ],
-    "optimal_swell_dir": 152,
+    "optimal_swell_dir": 160,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8654400",
     "nearest_tide_station_dist_km": 10.35,
@@ -35880,7 +34550,7 @@
         "span": 166
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 96,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8653215",
     "nearest_tide_station_dist_km": 1.88,
@@ -35931,7 +34601,7 @@
         "span": 158
       }
     ],
-    "optimal_swell_dir": 80,
+    "optimal_swell_dir": 76,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8652226",
     "nearest_tide_station_dist_km": 18.11,
@@ -36164,14 +34834,9 @@
         "min": 29,
         "max": 155,
         "span": 130
-      },
-      {
-        "min": 217,
-        "max": 239,
-        "span": 26
       }
     ],
-    "optimal_swell_dir": 100,
+    "optimal_swell_dir": 84,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8639168",
     "nearest_tide_station_dist_km": 7.22,
@@ -36261,14 +34926,9 @@
         "min": 49,
         "max": 163,
         "span": 118
-      },
-      {
-        "min": 249,
-        "max": 251,
-        "span": 6
       }
     ],
-    "optimal_swell_dir": 116,
+    "optimal_swell_dir": 104,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8557863",
     "nearest_tide_station_dist_km": 3.52,
@@ -36314,7 +34974,7 @@
         "span": 90
       }
     ],
-    "optimal_swell_dir": 132,
+    "optimal_swell_dir": 140,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8535962",
     "nearest_tide_station_dist_km": 1.43,
@@ -36360,7 +35020,7 @@
         "span": 98
       }
     ],
-    "optimal_swell_dir": 128,
+    "optimal_swell_dir": 136,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8535962",
     "nearest_tide_station_dist_km": 0.76,
@@ -36406,7 +35066,7 @@
         "span": 106
       }
     ],
-    "optimal_swell_dir": 124,
+    "optimal_swell_dir": 132,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8535962",
     "nearest_tide_station_dist_km": 0.57,
@@ -36452,7 +35112,7 @@
         "span": 106
       }
     ],
-    "optimal_swell_dir": 128,
+    "optimal_swell_dir": 132,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8535962",
     "nearest_tide_station_dist_km": 0.78,
@@ -36498,7 +35158,7 @@
         "span": 118
       }
     ],
-    "optimal_swell_dir": 124,
+    "optimal_swell_dir": 128,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8535962",
     "nearest_tide_station_dist_km": 3.95,
@@ -36994,7 +35654,7 @@
         "span": 142
       }
     ],
-    "optimal_swell_dir": 132,
+    "optimal_swell_dir": 140,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8534720",
     "nearest_tide_station_dist_km": 1.31,
@@ -37355,14 +36015,9 @@
         "min": 57,
         "max": 183,
         "span": 130
-      },
-      {
-        "min": 233,
-        "max": 247,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 136,
+    "optimal_swell_dir": 120,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8532371",
     "nearest_tide_station_dist_km": 2.11,
@@ -37454,7 +36109,7 @@
         "span": 114
       }
     ],
-    "optimal_swell_dir": 132,
+    "optimal_swell_dir": 124,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8531991",
     "nearest_tide_station_dist_km": 3.8,
@@ -37940,11 +36595,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 5,
-        "max": 23,
-        "span": 22
-      },
-      {
         "min": 101,
         "max": 115,
         "span": 18
@@ -37958,14 +36608,9 @@
         "min": 213,
         "max": 223,
         "span": 14
-      },
-      {
-        "min": 333,
-        "max": 347,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 148,
+    "optimal_swell_dir": 164,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 0.32,
@@ -38006,11 +36651,6 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 5,
-        "max": 23,
-        "span": 22
-      },
-      {
         "min": 97,
         "max": 115,
         "span": 22
@@ -38024,14 +36664,9 @@
         "min": 213,
         "max": 223,
         "span": 14
-      },
-      {
-        "min": 333,
-        "max": 347,
-        "span": 18
       }
     ],
-    "optimal_swell_dir": 120,
+    "optimal_swell_dir": 164,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 0.06,
@@ -38080,14 +36715,9 @@
         "min": 177,
         "max": 223,
         "span": 50
-      },
-      {
-        "min": 333,
-        "max": 15,
-        "span": 46
       }
     ],
-    "optimal_swell_dir": 136,
+    "optimal_swell_dir": 148,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 9.69,
@@ -38141,14 +36771,9 @@
         "min": 221,
         "max": 227,
         "span": 10
-      },
-      {
-        "min": 333,
-        "max": 15,
-        "span": 46
       }
     ],
-    "optimal_swell_dir": 132,
+    "optimal_swell_dir": 152,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8458022",
     "nearest_tide_station_dist_km": 10.64,
@@ -38386,19 +37011,9 @@
         "min": 85,
         "max": 183,
         "span": 102
-      },
-      {
-        "min": 213,
-        "max": 235,
-        "span": 26
-      },
-      {
-        "min": 337,
-        "max": 343,
-        "span": 10
       }
     ],
-    "optimal_swell_dir": 152,
+    "optimal_swell_dir": 132,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8455083",
     "nearest_tide_station_dist_km": 2.83,
@@ -38442,14 +37057,9 @@
         "min": 93,
         "max": 187,
         "span": 98
-      },
-      {
-        "min": 333,
-        "max": 343,
-        "span": 14
       }
     ],
-    "optimal_swell_dir": 144,
+    "optimal_swell_dir": 140,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8454658",
     "nearest_tide_station_dist_km": 2.77,

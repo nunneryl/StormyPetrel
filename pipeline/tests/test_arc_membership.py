@@ -11,7 +11,7 @@ half a step off each end of every window. Measured on live WW3 partition bearing
 THE PAD IS DERIVED, NEVER ASSUMED: pad = (span - ((max - min) mod 360)) / 2. Four conventions
 exist and one formula reproduces all four, which is exactly why it is computed rather than
 tabled. In spots_enriched.json since the own-land ray-cast recompute:
-    pad 2.0   986 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4  (how the roster was built)
+    pad 2.0   708 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4  (how the roster was built)
     pad 1.0     0 arcs  raycast at config.SWELL_RAY_STEP_DEG = 2 (12 before the recompute)
     pad 0.5    14 arcs  swell_window_fallback wrap-split halves
     pad 0.0    72 arcs  swell_window_fallback._centered_arc, non-wrapping
@@ -111,10 +111,10 @@ def test_pad_is_derived_not_assumed_from_a_step_constant():
 
 
 def test_every_live_arc_yields_one_of_the_known_pads():
-    """Regression net over the real data: 1072 arcs, no new convention, no arc without span.
+    """Regression net over the real data: 794 arcs, no new convention, no arc without span.
     A new value here is a finding about the data, not a reason to clamp.
 
-    Three conventions are live since the own-land ray-cast recompute: 986 arcs at pad 2.0
+    Three conventions are live since the own-land ray-cast recompute: 708 arcs at pad 2.0
     (the 4-degree roster cast), 72 at 0.0 and 14 at 0.5 (swell_window_fallback). The 12
     pad-1.0 arcs, from spots cast at the 2-degree config step, were re-cast at 4 degrees
     and are gone; arc_pad_deg still reads them correctly (see the test above)."""
@@ -127,8 +127,8 @@ def test_every_live_arc_yields_one_of_the_known_pads():
             seen[p] = seen.get(p, 0) + 1
             assert a.get("span") is not None, f"live arc without span: {s.get('name')} {a}"
     assert set(seen) <= {0.0, 0.5, 1.0, 2.0}, f"unexpected pad convention in live data: {seen}"
-    assert seen == {2.0: 986, 0.0: 72, 0.5: 14}, seen
-    assert n == sum(seen.values()) == 1072, n
+    assert seen == {2.0: 708, 0.0: 72, 0.5: 14}, seen
+    assert n == sum(seen.values()) == 794, n
 
 
 # --------------------------------------------------------------------------- #

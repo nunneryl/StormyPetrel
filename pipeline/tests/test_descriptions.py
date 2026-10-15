@@ -992,7 +992,7 @@ def test_which_names_hold_their_state(name, state, text):
 def test_the_two_cases_on_the_committed_roster():
     """Spot by spot, against the lists drawn up when the rules were set (2026-10-13). The
     swell held back from the text were 31 spots then; the own-land ray-cast recompute brought
-    the optimal back within 90 degrees of the facing for 25 of them, leaving these six."""
+    the optimal back within 90 degrees of the facing for 29 of them, leaving these two."""
     roster = GD.roster_spots(json.loads(
         (ROOT / "pipeline" / "spots_enriched.json").read_text(encoding="utf-8")))
     behind, named = set(), set()
@@ -1004,8 +1004,7 @@ def test_the_two_cases_on_the_committed_roster():
         # the state stated outside the name, or not at all
         if payload.get("state") and payload["state"] not in text.replace(s["name"], ""):
             named.add(slug)
-    assert behind == {"bolinas", "boneyard", "campus-point-ucsb", "doran-beach", "sandspit",
-                      "steamer-lane"}
+    assert behind == {"boneyard", "campus-point-ucsb"}
     assert named == {
         "dana-point-california", "hermosa-beach-california", "huntington-beach-california",
         "imperial-beach-california", "mavericks-california", "newport-beach-california",

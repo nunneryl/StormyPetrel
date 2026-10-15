@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-curated optimal_swell_dir (true-north degrees, the swell bearing the spot works best on) for spots whose ray-cast value is wrong. Applied by pipeline/enrich.py as Algorithm 2d, AFTER Algo 2 (raycast), Algo 2b (orientation-derived fallback) and Algo 2c (tier preserve-guard) — so it is the LAST writer of optimal_swell_dir in enrich and beats every other source, LLM verification included. Slug derivation mirrors pipeline/db_import._slugify (via enrich._slug_for) so re-enrich looks up by the same key that lands in the spots table. Stored alongside spot_orientations.json: the durable, re-enrich-survivable override mechanism for optimal_swell_dir, which had none.\n\nWHY THIS FILE EXISTS. interpret.directional_gain targets optimal_swell_dir and falls back to orientation_deg only when the optimal is null — so a hand-corrected orientation never reaches the rating on a spot that has an optimal. All ten spots below already carried orientation_source=\"manual\" and still rated off a swell arriving from behind the land. The cause is the ray-cast: _first_seaward_entry returns \"open\" when a ray exits the spot's own landmass and never returns, which is correct for a seaward ray leaving a beach and wrong for a landward ray leaving a finite island — a continent blocks because the ray never escapes within the 3000 km fetch, an island does not. Honolua Bay scored dir_gain 1.000 on an 84-degree east swell that would have to cross the whole of Maui. Prior research concluded that binary ray-casting structurally cannot model refraction and that the answer is nearshore model output (CDIP MOP / NWPS), so this is a durable human override, NOT a raycast fix.\n\nKNOWN LIMIT — THE RAYCAST HALF IS NOT GUARDED. pipeline/sw1_raycast.py:353 (_apply_raycast_result) writes spot[\"swell_window_arcs\"] and spot[\"optimal_swell_dir\"] unconditionally; its `preserve` flag gates only swell_window_source. sw1_raycast runs as its own workflow (.github/workflows/sw1-raycast.yml, mode=full) and writes spots_enriched.json WITHOUT going through enrich, so a full raycast run will still overwrite every value in this file. That guard was deliberately left out of round one: it cannot be verified until the next full raycast, which is rare. MITIGATION: `sw1-raycast mode=full` now runs `enrich --skip-raycast` after the cast (then_enrich, on by default) and commits it separately, so Algo 2d re-applies these values on the review branch; check that diff before merging it.\n\nFRAME CAVEAT, TRUE OF EVERY VALUE BELOW. Each source describes the DEEP-WATER swell direction. optimal_swell_dir is compared against the model's direction at a nearshore node 1-4 km out (NWPS DIRPW, or the WW3 partition direction), which for a wrap-around spot may already be partly refracted toward the shore normal. The two frames can therefore differ systematically: most at spots sitting inside a bay behind a headland — lovers-point and monterey-beach, both inside Monterey Bay behind Point Pinos — and least at spots facing open ocean with no headland to bend around — hapuna-beach and suicide-s on the Kohala coast. If a later measurement shows the nearshore frame runs consistently offset from these deep-water bearings, revise the values here rather than changing the gain kernel.\n\nARCS ARE PRUNED, NEVER AUTHORED. Only optimal_swell_dir is hand-written. The arcs are pruned against it by enrich.prune_arcs_to_optimal, which DROPS any arc whose nearest true sector edge (padded, the boundary in_any_arc uses) is more than ARC_PRUNE_MAX_OFFSET_DEG = 90 degrees from the corrected optimal. Strictly greater-than, so an arc at exactly 90.0 is KEPT. It is a subset operation: no arc is widened, re-centred or invented, and an empty result is left empty rather than backfilled by the orientation-derived fallback. Each entry's arcs_pruned field records what the rule did, computed rather than asserted, so a reader can check the rule was applied instead of values being invented.\n\nTWO THINGS PRUNING DOES NOT DO, both measured on these ten spots (run-11 arcs, the first full cast with the own-land rule) rather than assumed. (1) It cannot bring a bearing INSIDE a window, so the three spots whose optimal falls outside every arc — hapuna-beach, thousand-peaks-maui, table-tops-aguadilla — stay on the 0.40 rung, before and after, identically. The exception is a window pruned to EMPTY: monterey-beach's only arc, [129-147], sits 167 degrees from 320, so pruning empties it and directional_gain falls to its no-arcs branch (cos² about the optimal, floored at 0.25): the optimal goes from 0.00 to 1.00 and no bearing is gated any more. (2) It is not monotonically protective. A bearing that sat INSIDE a dropped arc scored at least the in-window floor of 0.25; with that arc gone it is graded by the soft-outside ladder against the KEPT arcs, which returns 0.40 within 45 degrees of a kept edge. On spoils (45 half-degree bearings, from 259) and monterey-beach (497, via the no-arcs branch) at least one bearing therefore scores HIGHER after pruning. The rule was applied as specified; this is what it does.\n\nTHE EAST SWELL AT HONOLUA. Before the own-land ray-cast fix honolua-bay carried a [77-91] arc — a ray east across West Maui that left the island, never came back and counted as open — and it was KEPT under the 90-degree limit (85.0 degrees from 350). The run-11 cast no longer opens it: an 80-degree swell now sits outside every arc, 31 degrees from the padded edge 49 of [341-47], and scores 0.40 on the soft-outside ladder. It scored 0.999 in production on the old arcs and optimal.",
+  "_comment": "Hand-curated optimal_swell_dir (true-north degrees, the swell bearing the spot works best on) for spots whose ray-cast value is wrong. Applied by pipeline/enrich.py as Algorithm 2d, AFTER Algo 2 (raycast), Algo 2b (orientation-derived fallback) and Algo 2c (tier preserve-guard) — so it is the LAST writer of optimal_swell_dir in enrich and beats every other source, LLM verification included. Slug derivation mirrors pipeline/db_import._slugify (via enrich._slug_for) so re-enrich looks up by the same key that lands in the spots table. Stored alongside spot_orientations.json: the durable, re-enrich-survivable override mechanism for optimal_swell_dir, which had none.\n\nWHY THIS FILE EXISTS. interpret.directional_gain targets optimal_swell_dir and falls back to orientation_deg only when the optimal is null — so a hand-corrected orientation never reaches the rating on a spot that has an optimal. All ten spots below already carried orientation_source=\"manual\" and still rated off a swell arriving from behind the land. The cause is the ray-cast: _first_seaward_entry returns \"open\" when a ray exits the spot's own landmass and never returns, which is correct for a seaward ray leaving a beach and wrong for a landward ray leaving a finite island — a continent blocks because the ray never escapes within the 3000 km fetch, an island does not. Honolua Bay scored dir_gain 1.000 on an 84-degree east swell that would have to cross the whole of Maui. Prior research concluded that binary ray-casting structurally cannot model refraction and that the answer is nearshore model output (CDIP MOP / NWPS), so this is a durable human override, NOT a raycast fix.\n\nKNOWN LIMIT — THE RAYCAST HALF IS NOT GUARDED. pipeline/sw1_raycast.py:353 (_apply_raycast_result) writes spot[\"swell_window_arcs\"] and spot[\"optimal_swell_dir\"] unconditionally; its `preserve` flag gates only swell_window_source. sw1_raycast runs as its own workflow (.github/workflows/sw1-raycast.yml, mode=full) and writes spots_enriched.json WITHOUT going through enrich, so a full raycast run will still overwrite every value in this file. That guard was deliberately left out of round one: it cannot be verified until the next full raycast, which is rare. MITIGATION: `sw1-raycast mode=full` now runs `enrich --skip-raycast` after the cast (then_enrich, on by default) and commits it separately, so Algo 2d re-applies these values on the review branch; check that diff before merging it.\n\nFRAME CAVEAT, TRUE OF EVERY VALUE BELOW. Each source describes the DEEP-WATER swell direction. optimal_swell_dir is compared against the model's direction at a nearshore node 1-4 km out (NWPS DIRPW, or the WW3 partition direction), which for a wrap-around spot may already be partly refracted toward the shore normal. The two frames can therefore differ systematically: most at spots sitting inside a bay behind a headland — lovers-point and monterey-beach, both inside Monterey Bay behind Point Pinos — and least at spots facing open ocean with no headland to bend around — hapuna-beach and suicide-s on the Kohala coast. If a later measurement shows the nearshore frame runs consistently offset from these deep-water bearings, revise the values here rather than changing the gain kernel.\n\nARCS ARE PRUNED, NEVER AUTHORED. Only optimal_swell_dir is hand-written. The arcs are pruned against it by enrich.prune_arcs_to_optimal, which DROPS any arc whose nearest true sector edge (padded, the boundary in_any_arc uses) is more than ARC_PRUNE_MAX_OFFSET_DEG = 90 degrees from the corrected optimal. Strictly greater-than, so an arc at exactly 90.0 is KEPT. It is a subset operation: no arc is widened, re-centred or invented, and an empty result is left empty rather than backfilled by the orientation-derived fallback. Each entry's arcs_pruned field records what the rule did, computed rather than asserted, so a reader can check the rule was applied instead of values being invented.\n\nTWO THINGS PRUNING DOES NOT DO, both measured on these ten spots (run-13 arcs: the own-land rule, checked before any re-entry) rather than assumed. (1) It cannot bring a bearing INSIDE a window, so the three spots whose optimal falls outside every arc — hapuna-beach, thousand-peaks-maui, table-tops-aguadilla — stay on the 0.40 rung, before and after, identically. monterey-beach has no window to prune: the run-13 cast opens none (88 of 90 rays blocked, the two open ones shrink away), so it runs on directional_gain's no-arcs branch (cos² about the optimal, floored at 0.25) and no bearing is gated. (2) It is not monotonically protective in general. A bearing that sat INSIDE a dropped arc scored at least the in-window floor of 0.25; with that arc gone it is graded by the soft-outside ladder against the KEPT arcs, which returns 0.40 within 45 degrees of a kept edge. On the run-13 arcs no bearing at any of the ten scores higher after pruning (spoils and table-tops-aguadilla only lose); on the run-11 arcs Spoils had 45 such half-degree bearings, from 259. The rule is applied as specified; this is what it does.\n\nTHE EAST SWELL AT HONOLUA. Before the own-land ray-cast fix honolua-bay carried a [77-91] arc — a ray east across West Maui that left the island, never came back and counted as open — and it was KEPT under the 90-degree limit (85.0 degrees from 350). The own-land casts (runs 11 and 13) no longer open it: an 80-degree swell now sits outside every arc, 31 degrees from the padded edge 49 of [341-47], and scores 0.40 on the soft-outside ladder. It scored 0.999 in production on the old arcs and optimal.",
   "_schema_version": 1,
   "windows": {
     "honolua-bay": {
@@ -19,7 +19,7 @@
           "[341-47] @ 0.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "spoils": {
@@ -32,21 +32,15 @@
         "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
         "before": [
           "[13-83]",
-          "[145-175]",
-          "[209-243]",
-          "[261-279]",
-          "[297-315]"
+          "[145-175]"
         ],
         "kept": [
-          "[13-83] @ 0.0deg",
-          "[297-315] @ 83.0deg"
+          "[13-83] @ 0.0deg"
         ],
         "dropped": [
-          "[145-175] @ 103.0deg",
-          "[209-243] @ 155.0deg",
-          "[261-279] @ 119.0deg"
+          "[145-175] @ 103.0deg"
         ],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "hapuna-beach": {
@@ -66,7 +60,7 @@
           "[285-311] @ 3.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "suicide-s": {
@@ -86,7 +80,7 @@
           "[285-315] @ 0.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "thousand-peaks-maui": {
@@ -106,7 +100,7 @@
           "[205-251] @ 3.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "crash-boat-beach": {
@@ -126,7 +120,7 @@
           "[301-339] @ 0.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "gas-chambers-aguadilla": {
@@ -146,7 +140,7 @@
           "[301-351] @ 0.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "table-tops-aguadilla": {
@@ -167,7 +161,7 @@
         "dropped": [
           "[245-251] @ 97.0deg"
         ],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "lovers-point": {
@@ -185,7 +179,7 @@
           "[317-319] @ 0.0deg"
         ],
         "dropped": [],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     },
     "monterey-beach": {
@@ -193,17 +187,13 @@
       "name": "Monterey Beach",
       "source": "WEAK — NO DIRECT SOURCE. Carried on regional grounds only: lovers-point on the same peninsula is sourced at NW by four guides, and monterey-beach sits just inside the bay from it. Researched 2026-08-31.",
       "notes": "WEAKEST VALUE IN THIS FILE — revise this one first if any of these are questioned. Was 200, pointing through the Monterey Peninsula toward Carmel: from committed coordinates every bearing from 217 to 312 lands on another peninsula spot. Partially corroborated in-repo, the baked NWPS wet node bears 333 at 2669 m — genuinely offshore into the bay here, unlike lovers-point's copy of the same cell.",
-      "arc_verdict": "At the corrected optimal 320, directional_gain returns 0.00 with the unpruned arcs and 1.00 after pruning. The run-11 cast leaves this spot one arc, [129-147], 167 degrees from 320, so the optimal is more than 90 degrees outside every arc and scores 0. Pruning drops that arc and leaves the window EMPTY, which sends directional_gain to its no-arcs branch: a plain cos²(Δ/2) about 320 with the 0.25 floor, so this spot is no longer gated by any window at all. The one case where pruning changes the gain at the optimal is the case where it empties the window.",
+      "arc_verdict": "At the corrected optimal 320, directional_gain returns 1.00 with no arcs before or after pruning. The run-13 cast opens no window here at all (88 of its 90 rays are blocked; the two open ones shrink away), so the stored window stays empty and directional_gain runs its no-arcs branch: a plain cos²(Δ/2) about 320 with the 0.25 floor — no bearing is gated.",
       "arcs_pruned": {
         "rule": "drop any arc whose nearest padded sector edge is more than 90.0 degrees from optimal_swell_dir; an arc at exactly 90.0 is kept",
-        "before": [
-          "[129-147]"
-        ],
+        "before": [],
         "kept": [],
-        "dropped": [
-          "[129-147] @ 167.0deg"
-        ],
-        "arcs_from": "sw1-raycast run 11 (2026-10-14), the first full cast with the own-land rule"
+        "dropped": [],
+        "arcs_from": "sw1-raycast run 13 (2026-10-15): the own-land rule, checked before any re-entry"
       }
     }
   }
