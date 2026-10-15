@@ -19,9 +19,10 @@ name: sw1-raycast
 #       the result and commits that SEPARATELY on the same branch, so the hand
 #       overrides in spot_swell_windows.json (Algo 2d, with their arc pruning)
 #       land on the new arcs and the two diffs can be reviewed apart.
-#       With then_preview (default on), after the push it runs --debug-blockers on
-#       every spot whose facing is still outside every arc, and the read-only star
-#       preview of the new roster against the one this run started from.
+#       With then_preview (default on), after the push it prints the before-and-after
+#       counts against the roster this run started from, runs --debug-blockers on every
+#       spot whose facing is still outside every arc, and runs the read-only star
+#       preview of the new roster against main's (the one the published window used).
 #   mode = star-preview: READ-ONLY. Score the published forecast window with
 #       the swell windows in another spots file (pipeline/star_preview.py) and
 #       print stars before vs after. Uses the Supabase secrets to SELECT only;
@@ -228,8 +229,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
+          set -euo pipefail
+          # The baseline is main's roster — what the published window was rated with — not
+          # the roster this run started from, which on a branch may already carry a previous
+          # recompute (and then almost no published row would reproduce).
+          git fetch --depth=1 origin main
+          git show FETCH_HEAD:pipeline/spots_enriched.json > "$RUNNER_TEMP/published.json"
           python -m pipeline.star_preview --arcs pipeline/spots_enriched.json \
-            --baseline "$RUNNER_TEMP/before.json" --out star_preview.json
+            --baseline "$RUNNER_TEMP/published.json" --out star_preview.json
 
       - name: Upload the star preview
         if: ${{ inputs.mode == 'full' && inputs.then_preview && always() }}
