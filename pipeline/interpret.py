@@ -184,10 +184,10 @@ def arc_pad_deg(arc: dict) -> float:
 
         pad = (span - ((max - min) mod 360)) / 2
 
-    DERIVED, never assumed: four conventions are live in spots_enriched.json and this formula
-    reproduces every one of them without a table —
-        pad 2.0  1377 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4 (how the roster was built)
-        pad 1.0    12 arcs  raycast at config.SWELL_RAY_STEP_DEG = 2
+    DERIVED, never assumed: this formula reproduces every convention without a table —
+        pad 2.0   986 arcs  raycast at sw1_raycast.RUN_STEP_DEG = 4 (how the roster was built)
+        pad 1.0     0 arcs  raycast at config.SWELL_RAY_STEP_DEG = 2 (12 before the own-land
+                            recompute re-cast those spots at 4)
         pad 0.5    14 arcs  swell_window_fallback wrap-split halves (span = 360-lo, and hi+1)
         pad 0.0    72 arcs  swell_window_fallback._centered_arc, non-wrapping (span = max-min)
     The 0.0 cases are correct at 0: a synthesised centred arc is not a ray sample and its

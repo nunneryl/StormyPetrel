@@ -222,6 +222,13 @@ def _by_name(path):
 
 
 def _fetch(client, since):
+    """Every spot, then the published window ONE SPOT AT A TIME.
+
+    One query per spot, filtered on spot_id, source and valid_time — the forecasts table's
+    UNIQUE(spot_id, valid_time, source) key — so each read is a short index range. The first
+    version paged the whole window with ORDER BY spot_id, valid_time and a growing OFFSET;
+    Supabase cancelled it with a statement timeout (57014) partway through, in sw1-raycast
+    run 11."""
     names, frm = {}, 0
     while True:
         rows = (client.table("spots").select("id, name, state").order("id")
@@ -230,16 +237,18 @@ def _fetch(client, since):
         if len(rows) < 1000:
             break
         frm += 1000
-    out, frm = [], 0
-    while True:
-        rows = (client.table("forecasts").select(FORECAST_COLS)
-                .eq("source", "nwps").gte("valid_time", since)
-                .order("spot_id").order("valid_time")
-                .range(frm, frm + 999).execute().data or [])
-        out.extend(rows)
-        if len(rows) < 1000:
-            break
-        frm += 1000
+    out = []
+    for sid in sorted(names):
+        frm = 0
+        while True:
+            rows = (client.table("forecasts").select(FORECAST_COLS)
+                    .eq("spot_id", sid).eq("source", "nwps").gte("valid_time", since)
+                    .order("valid_time")
+                    .range(frm, frm + 999).execute().data or [])
+            out.extend(rows)
+            if len(rows) < 1000:
+                break
+            frm += 1000
     return names, out
 
 

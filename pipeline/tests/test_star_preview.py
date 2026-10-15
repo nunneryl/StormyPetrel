@@ -188,11 +188,12 @@ class _Recorder:
     """A stand-in Supabase client that records every method called on it."""
 
     def __init__(self, data):
-        self.calls, self._data, self._table = [], data, None
+        self.calls, self.args, self._data, self._table = [], [], data, None
 
     def __getattr__(self, name):
         def call(*args, **kw):
             self.calls.append(name)
+            self.args.append((name, args))
             if name == "table":
                 self._table = args[0]
             return self
@@ -213,3 +214,16 @@ def test_the_fetch_only_reads():
     names, rows = SP._fetch(client, "2026-10-15T00:00:00+00:00")
     assert names == {1: ("A", "Hawaii")} and rows == [{"spot_id": 1, "valid_time": "t"}]
     assert set(client.calls) == {"table", "select", "eq", "gte", "order", "range", "execute"}
+
+
+def test_the_window_is_read_one_spot_at_a_time():
+    """Run 11 timed out paging the whole window by OFFSET. Each forecasts read must now carry
+    its spot's id, so it is a short range on the UNIQUE(spot_id, valid_time, source) key."""
+    client = _Recorder({"spots": [{"id": 7, "name": "A", "state": "Hawaii"},
+                                  {"id": 3, "name": "B", "state": "California"}],
+                        "forecasts": []})
+    SP._fetch(client, "2026-10-15T00:00:00+00:00")
+    tables = [a[0] for n, a in client.args if n == "table"]
+    assert tables == ["spots", "forecasts", "forecasts"]
+    assert [a for n, a in client.args if n == "eq" and a[0] == "spot_id"] == [("spot_id", 3), ("spot_id", 7)]
+    assert [a for n, a in client.args if n == "eq" and a[0] == "source"] == [("source", "nwps")] * 2

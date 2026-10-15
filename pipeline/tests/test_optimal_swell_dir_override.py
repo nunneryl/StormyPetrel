@@ -368,28 +368,55 @@ def test_the_deep_water_versus_nearshore_frame_caveat_is_recorded():
 # GREATER, so an arc at exactly 90.0 is KEPT. Prune only — nothing is authored, widened or
 # re-centred, and an empty result is left empty.
 #
-# Every expected list below is transcribed from the arcs committed in spots_enriched.json
-# and the offsets computed by hand from the padded edges; none is read back from
+# THE INPUT IS THE RAY-CAST, NOT THE ROSTER. Since enrich runs Algo 2d over the run-11 arcs,
+# the committed roster carries the arcs AFTER pruning; the arcs before pruning are the cast's
+# own output, transcribed below from sw1-raycast run 11 (2026-10-14, the first full cast with
+# the own-land rule; its raycast-only commit on the review branch sw1-raycast/full-11).
+#
+# Every expected list below is transcribed from those arcs, with the offsets computed by hand
+# from the padded edges (every pad is 2: span - width = 4); none is read back from
 # prune_arcs_to_optimal, which is the function under test.
+
+RAYCAST_ARCS = {
+    "honolua-bay": [{"min": 265, "max": 271, "span": 10}, {"min": 341, "max": 47, "span": 70}],
+    "spoils": [{"min": 13, "max": 83, "span": 74}, {"min": 145, "max": 175, "span": 34},
+               {"min": 209, "max": 243, "span": 38}, {"min": 261, "max": 279, "span": 22},
+               {"min": 297, "max": 315, "span": 22}],
+    "hapuna-beach": [{"min": 237, "max": 263, "span": 30}, {"min": 285, "max": 311, "span": 30}],
+    "suicide-s": [{"min": 245, "max": 263, "span": 22}, {"min": 285, "max": 315, "span": 34}],
+    "thousand-peaks-maui": [{"min": 149, "max": 159, "span": 14}, {"min": 205, "max": 251, "span": 50}],
+    "crash-boat-beach": [{"min": 233, "max": 247, "span": 18}, {"min": 301, "max": 339, "span": 42}],
+    "gas-chambers-aguadilla": [{"min": 233, "max": 247, "span": 18}, {"min": 301, "max": 351, "span": 54}],
+    "table-tops-aguadilla": [{"min": 245, "max": 251, "span": 10}, {"min": 301, "max": 327, "span": 30}],
+    "lovers-point": [{"min": 317, "max": 319, "span": 6}],
+    "monterey-beach": [{"min": 129, "max": 147, "span": 22}],
+}
 
 # {slug: (arcs kept, arcs dropped)} — written as [min, max] pairs.
 EXPECTED_PRUNE = {
-    # optimal 350. [161-211] padded [159-213]: |350-213| = 137 -> drop. [77-91] padded
-    # [75-93]: |350-75| = 85 -> KEPT, which is why the east-swell arc survives.
-    "honolua-bay": ([[77, 91], [265, 271], [341, 47]], [[161, 211]]),
-    # optimal 40. [297-315] padded [295-317]: |40-317| = 83 -> keep.
+    # optimal 350. [265-271] padded [263-273]: |350-273| = 77 -> keep. [341-47] holds 350.
+    # The east arc [77-91] that used to survive here is no longer cast at all.
+    "honolua-bay": ([[265, 271], [341, 47]], []),
+    # optimal 40. [297-315] padded [295-317]: |40-317| = 83 -> keep. [145-175] padded
+    # [143-177]: 143-40 = 103; [209-243] -> [207-245]: 155 from 245 the other way round
+    # (40+360-245); [261-279] -> [259-281]: 40+360-281 = 119. All three dropped.
     "spoils": ([[13, 83], [297, 315]], [[145, 175], [209, 243], [261, 279]]),
-    # optimal 280. [9-99] padded [7-101]: |280-7| = 87 -> keep. Nothing is dropped.
-    "hapuna-beach": ([[9, 99], [117, 203], [237, 263], [285, 311]], []),
-    "suicide-s": ([[237, 265], [283, 315]], [[65, 99], [113, 175]]),
-    "thousand-peaks-maui": ([[149, 159], [205, 251]], [[33, 83], [349, 15]]),
-    "crash-boat-beach": ([[233, 247], [317, 47]], [[65, 75], [97, 131], [153, 159]]),
-    "gas-chambers-aguadilla": ([[233, 247], [317, 79]], [[97, 123]]),
-    # [245-251] padded [243-253]: |350-253| = 97 -> drop, the narrowest drop in the set.
-    "table-tops-aguadilla": ([[69, 75], [301, 327], [345, 51]], [[93, 115], [245, 251]]),
-    # [213-219] padded [211-221]: |315-221| = 94 -> drop, the narrowest margin over the limit.
-    "lovers-point": ([[253, 319]], [[165, 175], [213, 219]]),
-    "monterey-beach": ([[225, 247], [265, 303]], [[105, 111], [129, 195]]),
+    # optimal 280 sits between the two arcs: 280-265 = 15, 283-280 = 3. Both kept.
+    "hapuna-beach": ([[237, 263], [285, 311]], []),
+    # optimal 292 inside [283-317]; [243-265]: 292-265 = 27. Both kept.
+    "suicide-s": ([[245, 263], [285, 315]], []),
+    # optimal 200: [147-161]: 200-161 = 39; [203-253]: 203-200 = 3. Both kept.
+    "thousand-peaks-maui": ([[149, 159], [205, 251]], []),
+    # optimal 305 inside [299-341]; [231-249]: 305-249 = 56. Both kept.
+    "crash-boat-beach": ([[233, 247], [301, 339]], []),
+    # optimal 315 inside [299-353]; [231-249]: 315-249 = 66. Both kept.
+    "gas-chambers-aguadilla": ([[233, 247], [301, 351]], []),
+    # optimal 350: [243-253]: 350-253 = 97 -> drop. [299-329]: 350-329 = 21 -> keep.
+    "table-tops-aguadilla": ([[301, 327]], [[245, 251]]),
+    # optimal 315 on the padded edge of [315-321]: inside, 0 -> keep.
+    "lovers-point": ([[317, 319]], []),
+    # optimal 320: [127-149]: 320-149 = 171, 127+360-320 = 167 -> 167 > 90, dropped. EMPTY.
+    "monterey-beach": ([], [[129, 147]]),
 }
 
 
@@ -403,9 +430,8 @@ def _roster():
 
 
 def test_the_pruning_rule_keeps_and_drops_exactly_these_arcs():
-    roster = _roster()
     for slug, (keep, drop) in EXPECTED_PRUNE.items():
-        arcs = roster[slug]["swell_window_arcs"]
+        arcs = RAYCAST_ARCS[slug]
         got = E.prune_arcs_to_optimal(arcs, EXPECTED[slug])
         assert _pairs(got) == keep, (slug, _pairs(got), keep)
         assert _pairs([a for a in arcs if a not in got]) == drop, slug
@@ -416,15 +442,34 @@ def test_pruning_reaches_the_enriched_record():
     roster = _roster()
     for slug, (keep, _drop) in EXPECTED_PRUNE.items():
         s = roster[slug]
+        arcs = RAYCAST_ARCS[slug]
         out = E._enrich_one(
-            _spot(s["name"], swell_window_arcs=s["swell_window_arcs"],
-                  optimal_swell_dir=s["optimal_swell_dir"],
+            _spot(s["name"], swell_window_arcs=arcs, optimal_swell_dir=s["optimal_swell_dir"],
                   orientation_deg=s["orientation_deg"], swell_window_source="nwps"),
             skip_raycast=True, prior_arcs={s["name"]: {
-                "swell_window_arcs": s["swell_window_arcs"],
+                "swell_window_arcs": arcs,
                 "optimal_swell_dir": s["optimal_swell_dir"],
                 "swell_window_source": "nwps"}})
         assert _pairs(out["swell_window_arcs"]) == keep, (slug, _pairs(out["swell_window_arcs"]))
+
+
+def test_every_override_is_applied_in_the_committed_roster():
+    """THE CHECK THAT WAS MISSING. From 2026-09-01 to the run-11 recompute none of the ten
+    values reached spots_enriched.json: enrich, the only thing that applies them, had not been
+    run and committed since, and every test above runs enrich in memory. This reads the
+    committed roster itself and fails for any entry in the file that is not applied there:
+    the researched degrees, the override stamp, and the arcs exactly as pruned."""
+    roster = _roster()
+    doc = json.loads(SPOT_SWELL_WINDOWS_FILE.read_text())
+    assert set(doc["windows"]) == set(EXPECTED), sorted(set(doc["windows"]) ^ set(EXPECTED))
+    for slug, rec in doc["windows"].items():
+        s = roster[slug]
+        assert s.get("optimal_swell_dir") == float(rec["optimal_swell_dir"]), \
+            (slug, s.get("optimal_swell_dir"), rec["optimal_swell_dir"])
+        assert s.get("optimal_swell_dir") == EXPECTED[slug], slug
+        assert s.get("swell_window_source_override") == "manual", slug
+        assert _pairs(s.get("swell_window_arcs") or []) == EXPECTED_PRUNE[slug][0], \
+            (slug, _pairs(s.get("swell_window_arcs") or []))
 
 
 def test_a_spot_with_no_override_keeps_every_arc():
@@ -474,9 +519,8 @@ def test_empty_arcs_leave_directional_gain_on_the_optimal_branch():
     returning 0. Hand-computed: at dp == optimal, cos²(0) = 1.0; at dp 80 against optimal
     350 the signed difference is ((80-350+540) mod 360) - 180 = 90, and cos²(45°) = 0.5.
 
-    NOTE, because it bears on the risk: NO spot in the committed roster currently has empty
-    arcs, so a spot pruned to empty would be the first to run this path in production. None
-    of the ten prunes to empty today."""
+    NOTE, because it bears on the risk: since the run-11 recompute ONE spot runs this path
+    in production — monterey-beach, pruned to empty (see the next test)."""
     from pipeline.interpret import directional_gain
     assert directional_gain(350.0, [], 350, 278.0) == 1.0
     # cos(radians(45))**2 is 0.5000000000000001, not 0.5 — round rather than loosen the value.
@@ -484,25 +528,36 @@ def test_empty_arcs_leave_directional_gain_on_the_optimal_branch():
     assert directional_gain(170.0, [], 350, 278.0) == 0.25      # cos²(90°) = 0, floored
 
 
-def test_no_roster_spot_currently_runs_with_empty_arcs():
-    """Pins the claim above, so it stops being true loudly rather than quietly."""
+def test_monterey_beach_is_the_one_roster_spot_with_empty_arcs():
+    """Pins the claim above, so a second empty window shows up loudly rather than quietly.
+    monterey-beach's only run-11 arc, [129-147], is 167 degrees from its researched 320."""
     spots = json.loads(E.DEFAULT_ENRICHED_OUTPUT.read_text())
-    assert [s["name"] for s in spots if not (s.get("swell_window_arcs") or [])] == []
+    assert [s["name"] for s in spots if not (s.get("swell_window_arcs") or [])] == ["Monterey Beach"]
 
 
-def test_pruning_never_changes_the_gain_at_the_corrected_optimal():
-    """Removing arcs cannot bring a bearing INSIDE a window, so the headline number is
-    untouched for all ten — including the four that stay on the 0.40 rung. Pinned so that a
-    future change claiming to lift them has to face this test."""
+def test_pruning_changes_the_gain_at_the_optimal_only_when_it_empties_the_window():
+    """Removing arcs cannot bring a bearing INSIDE a window, so the gain at the corrected
+    optimal is untouched for nine of the ten — including the three that stay on the 0.40
+    rung (hapuna-beach, thousand-peaks-maui, table-tops-aguadilla). The tenth is the
+    exception: monterey-beach's optimal 320 is 167 degrees outside its one arc, > 90, so it
+    scores 0.0 before pruning; pruning empties the window, and the no-arcs branch gives
+    cos²(0) = 1.0 at the optimal."""
     from pipeline.interpret import directional_gain
     roster = _roster()
     for slug, deg in EXPECTED.items():
-        s = roster[slug]
-        before = s["swell_window_arcs"]
+        o = roster[slug]["orientation_deg"]
+        before = RAYCAST_ARCS[slug]
         after = E.prune_arcs_to_optimal(before, deg)
-        o = s["orientation_deg"]
-        assert (directional_gain(float(deg), before, deg, o)
-                == directional_gain(float(deg), after, deg, o)), slug
+        b = directional_gain(float(deg), before, deg, o)
+        a = directional_gain(float(deg), after, deg, o)
+        if slug == "monterey-beach":
+            assert (b, a) == (0.0, 1.0), (b, a)
+        else:
+            assert b == a, slug
+    for slug in ("hapuna-beach", "thousand-peaks-maui", "table-tops-aguadilla"):
+        o = roster[slug]["orientation_deg"]
+        deg = EXPECTED[slug]
+        assert directional_gain(float(deg), RAYCAST_ARCS[slug], deg, o) == 0.40, slug
 
 
 def test_pruning_can_raise_the_gain_at_some_bearings():
@@ -510,37 +565,32 @@ def test_pruning_can_raise_the_gain_at_some_bearings():
     scored the in-window floor of 0.25; once that arc is gone it is graded by the ladder
     against the KEPT arcs, which returns 0.40 within 45 degrees of a kept edge.
 
-    Crash Boat Beach, corrected optimal 305. A swell from 70 sits inside [65-75], which is
-    dropped at 118 degrees. Afterwards its nearest kept edge is [317-47]'s padded 49, and
-    |70-49| = 21 < 45, so it lands on the 0.40 rung — HIGHER than the 0.25 it scored before.
-    Hand-computed; pinned so the trade-off is visible rather than discovered later."""
+    Spoils, corrected optimal 40. A swell from 270 sits inside [261-279] (padded [259-281]),
+    which is dropped. Before: in-window, signed difference ((270-40+540) mod 360) - 180 =
+    -130, cos²(-65°) = 0.179, floored to 0.25. After: outside; the nearest kept edge is
+    [297-315]'s padded 295, |295-270| = 25 < 45, so it lands on the 0.40 rung — HIGHER than
+    the 0.25 it scored before. Hand-computed; pinned so the trade-off is visible."""
     from pipeline.interpret import directional_gain
-    s = _roster()["crash-boat-beach"]
-    before = s["swell_window_arcs"]
-    after = E.prune_arcs_to_optimal(before, 305)
-    assert directional_gain(70.0, before, 305, s["orientation_deg"]) == 0.25
-    assert directional_gain(70.0, after, 305, s["orientation_deg"]) == 0.40
+    s = _roster()["spoils"]
+    before = RAYCAST_ARCS["spoils"]
+    after = E.prune_arcs_to_optimal(before, 40)
+    assert directional_gain(270.0, before, 40, s["orientation_deg"]) == 0.25
+    assert directional_gain(270.0, after, 40, s["orientation_deg"]) == 0.40
 
 
-def test_honolua_east_swell_arc_survives_the_ninety_degree_rule():
-    """THE CASE THE RULE DOES NOT FIX, pinned so nobody assumes it does. [77-91] is the arc
-    that lets an 80-degree east swell — blocked by the whole of Maui — rate at all. Its
-    nearest padded edge is 75, and |350-75| = 85, inside a 90-degree limit, so it is KEPT.
-    An 80-degree swell scores 0.999 in production, 0.500 after the optimal moves to 350, and
-    0.500 after pruning: the improvement is entirely the optimal's. Any limit below 85 would
-    drop it."""
+def test_honolua_east_swell_is_no_longer_in_a_window():
+    """THE CASE PRUNING COULD NOT FIX, now fixed upstream. Honolua Bay's [77-91] arc let an
+    80-degree east swell, blocked by the whole of West Maui, rate at all; at 85.0 degrees from
+    350 it survived the 90-degree rule. The own-land ray-cast no longer casts it. The
+    committed arcs are [265-271] and [341-47] (padded [263-273] and [339-49]); 80 is in
+    neither, and its nearest padded edge is 49, |80-49| = 31 < 45: the 0.40 rung. It scored
+    0.999 in production on the old arcs with the old optimal 84."""
     from pipeline.interpret import directional_gain, in_any_arc
     s = _roster()["honolua-bay"]
-    before = s["swell_window_arcs"]
-    after = E.prune_arcs_to_optimal(before, 350)
-    east = [a for a in after if [a["min"], a["max"]] == [77, 91]]
-    assert len(east) == 1, "the east arc must still be present under a 90-degree limit"
-    assert E.arc_offset_from(350, east[0]) == 85.0, E.arc_offset_from(350, east[0])
-    assert in_any_arc(80.0, after) is True
-    # cos²(2°) = 0.9987820251299122, cos²(45°) = 0.5000000000000001 — rounded, not loosened.
-    assert round(directional_gain(80.0, before, 84, 278.0), 4) == 0.9988   # production today
-    assert round(directional_gain(80.0, before, 350, 278.0), 12) == 0.5    # override only
-    assert round(directional_gain(80.0, after, 350, 278.0), 12) == 0.5     # + pruning
+    arcs = s["swell_window_arcs"]
+    assert _pairs(arcs) == [[265, 271], [341, 47]], _pairs(arcs)
+    assert in_any_arc(80.0, arcs) is False
+    assert directional_gain(80.0, arcs, 350, 278.0) == 0.40
 
 
 def test_the_file_records_the_pruning_result_per_spot():
@@ -558,13 +608,11 @@ def test_the_file_records_the_pruning_result_per_spot():
 
 def test_the_recorded_prune_record_matches_what_the_rule_actually_does():
     """THE POINT OF RECORDING IT: the file must describe the rule's real output, not a
-    hand-written claim about it. Recomputes kept/dropped and every offset from the committed
+    hand-written claim about it. Recomputes kept/dropped and every offset from the run-11
     arcs and compares against the text in the file."""
     doc = json.loads(SPOT_SWELL_WINDOWS_FILE.read_text())
-    roster = _roster()
     for slug, rec in doc["windows"].items():
-        s = roster[slug]
-        arcs, deg = s["swell_window_arcs"], rec["optimal_swell_dir"]
+        arcs, deg = RAYCAST_ARCS[slug], rec["optimal_swell_dir"]
         kept = E.prune_arcs_to_optimal(arcs, deg)
         kept_ids = [id(a) for a in kept]
         exp_keep = [f"[{a['min']}-{a['max']}] @ {E.arc_offset_from(deg, a):.1f}deg"
@@ -574,7 +622,6 @@ def test_the_recorded_prune_record_matches_what_the_rule_actually_does():
         assert rec["arcs_pruned"]["kept"] == exp_keep, (slug, rec["arcs_pruned"]["kept"], exp_keep)
         assert rec["arcs_pruned"]["dropped"] == exp_drop, (slug, rec["arcs_pruned"]["dropped"], exp_drop)
         assert rec["arcs_pruned"]["before"] == [f"[{a['min']}-{a['max']}]" for a in arcs], slug
-
 
 
 def test_an_arc_containing_the_optimal_always_measures_zero():
