@@ -27,6 +27,10 @@ name: sw1-raycast
 #       the swell windows in another spots file (pipeline/star_preview.py) and
 #       print stars before vs after. Uses the Supabase secrets to SELECT only;
 #       writes nothing anywhere but the job log and its artifact.
+#   mode = tide-preview: READ-ONLY. A census of spots.tide_preference and its source, and
+#       the published window re-scored with every unverified tide preference (no cited
+#       source) treated as neutral, or damped (pipeline/star_preview.py --tide). The swell
+#       window is held at main's roster, the one the window was rated with. SELECT only.
 
 on:
   workflow_dispatch:
@@ -40,6 +44,7 @@ on:
           - validate
           - full
           - star-preview
+          - tide-preview
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -76,9 +81,14 @@ on:
         default: ''
         type: string
       baseline_ref:
-        description: (star-preview only) git ref whose roster the published window was rated with
+        description: (star-preview and tide-preview) git ref whose roster the published window was rated with
         required: false
         default: main
+        type: string
+      tide_modes:
+        description: "(tide-preview only) comma-separated: keep, neutral, damp:K (0 < K < 1, the share of the penalty kept)"
+        required: false
+        default: neutral,damp:0.5
         type: string
 
 env:
@@ -91,7 +101,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -302,4 +312,58 @@ jobs:
         with:
           name: star-preview-${{ github.run_number }}
           path: star_preview.json
+          if-no-files-found: warn
+
+  tide-preview:
+    name: sw1 tide preview (read-only)
+    if: ${{ inputs.mode == 'tide-preview' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Resolve the roster the window was rated with
+        env:
+          BASELINE_REF: ${{ inputs.baseline_ref }}
+        run: |
+          set -euo pipefail
+          base="${BASELINE_REF:-main}"
+          git rev-parse --verify --quiet "$base^{commit}" >/dev/null || base="origin/$base"
+          git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
+          echo "baseline: $base ($(git rev-parse "$base"))"
+
+      - name: Tide census and preview of the published window (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Through the environment, never interpolated into the shell command.
+          TIDE_MODES: ${{ inputs.tide_modes }}
+        run: |
+          python -m pipeline.star_preview --tide "${TIDE_MODES:-neutral,damp:0.5}" \
+            --baseline "$RUNNER_TEMP/baseline.json" --out tide_preview.json
+
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: tide-preview-${{ github.run_number }}
+          path: tide_preview.json
           if-no-files-found: warn

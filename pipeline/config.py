@@ -213,16 +213,18 @@ TIDE_CLASSIFY_CACHE_FILE = CACHE_DIR / "tide_classification.json"
 # the single operation with the data it operates on is what makes drift
 # impossible rather than merely unlikely. The break_type block below follows it.
 #
-# The values are migration 018's CHECK list. 'unknown' is deliberately ABSENT
+# The values are migration 022's CHECK list (018's, plus model_recall, which 022
+# adds for an uncited model answer). 'unknown' is deliberately ABSENT
 # from the ladder — it is a valid column value meaning "the source is not one we
 # can name", and an unranked source falls to 0, so it can be overwritten by
 # anything and can overwrite nothing. That is the correct behaviour for a value
 # that makes no provenance claim.
 TIDE_SOURCE_RANK = {
-    "researched": 4,
-    "scraped": 3,
-    "derived_from_break_type": 2,
-    "unattributed": 1,
+    "researched": 5,               # a page was consulted for THIS break, cited and quoted
+    "scraped": 4,                  # read off the break's own surf-forecast.com page, cited
+    "model_recall": 3,             # a language model answered without a citation
+    "derived_from_break_type": 2,  # inferred from the break's class, not the break
+    "unattributed": 1,             # held, but no writer recorded itself
 }
 
 
@@ -242,12 +244,84 @@ def tide_source_may_overwrite(existing: str | None, incoming: str | None) -> boo
     EQUAL RANK IS ALLOWED, and that is deliberate rather than an oversight. The
     rule being enforced is "a lower-ranked source cannot overwrite a
     higher-ranked one"; equal is not lower. Blocking equals would mean whichever
-    'researched' writer ran first could never be corrected by the other — and
-    verify_spots, which actually searches the web, would be permanently locked
-    out by classify_tides, which does not. Within a rank the existing
-    last-writer-wins behaviour is unchanged.
+    writer ran first at a rank could never be corrected by a second one at the
+    same rank. Within a rank the existing last-writer-wins behaviour is unchanged.
     """
     return tide_source_rank(incoming) >= tide_source_rank(existing)
+
+
+# ---------------------------------------------------------------------------
+# tide_preference — the values, the citation rules, and the one way to write them
+# ---------------------------------------------------------------------------
+# WHAT WENT WRONG AFTER 018. Every writer now stamped a source, but two of them
+# stamped the wrong one: classify_tides asks a model with no tools at all, and
+# verify_spots asks a model that may search the web but never cites anything for
+# the tide — and both wrote 'researched', the top of the ladder, which reads as
+# "a page was consulted for this break". Neither recorded a page. Migration 022
+# adds model_recall for exactly that answer, and holds 'researched' to what it
+# means for break_type: a cited page AND a quote from it. 'scraped' cites its
+# page too. These functions are the only place the rules live, as for break_type,
+# so a writer cannot stamp a source the citation does not support.
+
+# 'unknown' means someone looked and could not tell; None (NULL), nobody has looked.
+TIDE_PREFERENCE_VALUES = ("low", "low_mid", "mid", "mid_high", "high", "all", "unknown")
+
+# The sources that ARE citations, and the one that must also quote its page.
+TIDE_CITED_SOURCES = ("researched", "scraped")
+TIDE_QUOTED_SOURCES = ("researched",)
+
+# The four keys that describe one tide preference, set together or not at all:
+# spot.update(tide_preference_fields(...)) is one statement.
+TIDE_PREFERENCE_FIELDS = (
+    "tide_preference", "tide_preference_source",
+    "tide_preference_source_url", "tide_preference_evidence",
+)
+
+
+def tide_preference_fields(value: str | None, source: str | None, url: str | None = None,
+                           evidence: str | None = None) -> dict:
+    """The four tide_preference keys, together. The only way a writer sets the tide.
+
+    Raises ValueError for anything migration 022 would refuse — an unknown value or
+    source, a source with no value, a cited source without its page, a researched
+    preference without a quote, a quote longer than BREAK_TYPE_EVIDENCE_MAX_CHARS — so a
+    bad write fails at the writer that made it. tide_preference_fields(None, None)
+    clears all four together.
+    """
+    keys = TIDE_PREFERENCE_FIELDS
+    if value is None:
+        if source is not None or url is not None or evidence is not None:
+            raise ValueError("a tide_preference source or citation needs a tide_preference")
+        return dict.fromkeys(keys)
+    if value not in TIDE_PREFERENCE_VALUES:
+        raise ValueError(f"tide_preference {value!r} is not one of {TIDE_PREFERENCE_VALUES}")
+    if source not in TIDE_SOURCE_RANK:
+        raise ValueError(f"tide_preference_source {source!r} is not one of "
+                         f"{tuple(TIDE_SOURCE_RANK)}")
+    if url is not None and not BREAK_TYPE_URL_RE.match(url):
+        raise ValueError(f"tide_preference_source_url {url!r} is not an http(s) URL")
+    if source in TIDE_CITED_SOURCES and url is None:
+        raise ValueError(f"a {source} tide_preference must cite the page it came from")
+    if source in TIDE_QUOTED_SOURCES and evidence is None:
+        raise ValueError(f"a {source} tide_preference must quote the page it cites")
+    if evidence is not None and not 1 <= len(evidence) <= BREAK_TYPE_EVIDENCE_MAX_CHARS:
+        raise ValueError(f"tide_preference_evidence must be 1-{BREAK_TYPE_EVIDENCE_MAX_CHARS} "
+                         f"characters, got {len(evidence)}")
+    if evidence is not None and url is None:
+        raise ValueError("a tide_preference quote needs the page it comes from")
+    return dict(zip(keys, (value, source, url, evidence)))
+
+
+def tide_preference_may_write(spot: dict, incoming: str | None) -> bool:
+    """May a writer stamped *incoming* set *spot*'s tide preference?
+
+    No for a spot marked is_valid_surf_spot False — a surf shop, a river or a duplicate has
+    no tide preference to classify. Otherwise the ladder decides: lower may not overwrite
+    higher; equal may (tide_source_may_overwrite).
+    """
+    if spot.get("is_valid_surf_spot") is False:
+        return False
+    return tide_source_may_overwrite(spot.get("tide_preference_source"), incoming)
 
 
 # ---------------------------------------------------------------------------

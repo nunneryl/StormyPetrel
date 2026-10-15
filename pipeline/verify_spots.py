@@ -46,17 +46,21 @@ from .config import (
     break_type_may_overwrite,
     break_type_quote,
     break_type_source_rank,
-    tide_source_may_overwrite,
+    tide_preference_fields,
+    tide_preference_may_write,
     tide_source_rank,
 )
 
 log = logging.getLogger("pipeline.verify_spots")
 
-# This pass hands the model a real web_search tool (the tools list in _verify_batch,
-# passed to the API there) and its prompt directs it to search surf-forecast.com
-# before answering. A source is therefore genuinely consulted for THIS break,
-# which is what 'researched' means in migration 018's vocabulary.
-_TIDE_SOURCE = "researched"
+# The tide follows break_type's rule exactly. This pass hands the model a web_search
+# tool, but a search it may have run is not a citation: until migration 022 every tide
+# answer from here was stamped 'researched' whether or not the model read anything about
+# the tide, and nothing recorded what it read. A tide preference is now 'researched' only
+# when the record cites the page that states it AND quotes it; without both it is the
+# model's own answer, 'model_recall'.
+_TIDE_CITED = "researched"
+_TIDE_UNCITED = "model_recall"
 
 # break_type is held to a stricter rule than the tide, because the prompt tells the
 # model NOT to search for it ("details you can reasonably infer"). A break type is
@@ -186,6 +190,16 @@ For each object:
                           honest answer is "unknown", which is treated as
                           neutral rather than as a preference. A wrong
                           "mid" is worse than an honest "unknown".
+  tide_preference_source_url — string or null. The URL of a page you
+                          actually read in this conversation that states
+                          this break's best tide. null when no page you
+                          read states it; then tide_preference is your own
+                          answer, and the null says so. Never cite a page
+                          you did not read.
+  tide_preference_evidence — string or null. The words on that page that
+                          state the tide, quoted exactly, at most 300
+                          characters. null when tide_preference_source_url
+                          is null.
   crowd_factor          — string. One of: "heavy", "moderate", "light",
                           "empty". Your best estimate of typical crowd
                           density on a good day. Heavy = packed lineups
@@ -526,6 +540,16 @@ def _normalize_record(entry: dict) -> dict | None:
         cited_url = cited_url.strip()
     evidence = break_type_quote(entry.get("break_type_evidence")) if cited_url else None
     tide_pref = entry.get("tide_preference") if entry.get("tide_preference") in _VALID_TIDE_PREFS else None
+    # The same rule for the tide: a citation counts only as an http(s) URL beside a tide
+    # preference, AND with a quote from it — 'researched' needs both (migration 022).
+    # Anything less is dropped here, so the merge stamps the tide 'model_recall'.
+    tide_url = entry.get("tide_preference_source_url")
+    tide_quote = break_type_quote(entry.get("tide_preference_evidence"))
+    if not (tide_pref and isinstance(tide_url, str)
+            and BREAK_TYPE_URL_RE.match(tide_url.strip()) and tide_quote):
+        tide_url, tide_quote = None, None
+    else:
+        tide_url = tide_url.strip()
     crowd = entry.get("crowd_factor") if entry.get("crowd_factor") in _VALID_CROWD else None
 
     hazards = entry.get("hazards") or []
@@ -545,6 +569,8 @@ def _normalize_record(entry: dict) -> dict | None:
         "break_type_source_url": cited_url,
         "break_type_evidence": evidence,
         "tide_preference": tide_pref,
+        "tide_preference_source_url": tide_url,
+        "tide_preference_evidence": tide_quote,
         "crowd_factor": crowd,
         "hazards": hazards,
         "confidence": confidence,
@@ -821,26 +847,37 @@ def merge_into_spots(
                     stats["break_type_declined"] = stats.get("break_type_declined", 0) + 1
 
         new_tide = rec.get("tide_preference")
-        if new_tide is not None and new_tide != spot.get("tide_preference"):
-            # RANK GUARD — see config.tide_source_may_overwrite. This pass
-            # searches the web (tools in _verify_batch) so it writes 'researched',
-            # the top of the ladder; in practice it is only ever declined by another
-            # 'researched' writer, which equal rank permits.
-            existing = spot.get("tide_preference_source")
-            if tide_source_may_overwrite(existing, _TIDE_SOURCE):
-                # One statement: value and source together.
-                spot["tide_preference"] = new_tide
-                spot["tide_preference_source"] = _TIDE_SOURCE
-                stats["field_changes"]["tide_preference"] += 1
-            else:
-                # LOGGED, NEVER SILENT.
-                log.warning(
-                    "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
-                    "the verified %r (rank %d)",
-                    spot.get("name"), spot.get("tide_preference"), existing,
-                    tide_source_rank(existing), new_tide, tide_source_rank(_TIDE_SOURCE),
-                )
-                stats["tide_preference_declined"] = stats.get("tide_preference_declined", 0) + 1
+        if new_tide is not None and spot.get("is_valid_surf_spot") is not False:
+            # 'researched' only with a cited and quoted page; otherwise the model's own
+            # answer. A spot marked not a surf spot gets no tide preference at all.
+            cited = rec.get("tide_preference_source_url")
+            source = _TIDE_CITED if cited else _TIDE_UNCITED
+            incoming = tide_preference_fields(
+                new_tide, source, url=cited,
+                evidence=rec.get("tide_preference_evidence") if cited else None)
+            if any(spot.get(k) != v for k, v in incoming.items()):
+                # RANK GUARD — config.tide_preference_may_write. An uncited answer cannot
+                # replace a cited one; it can replace an unattributed one.
+                existing = spot.get("tide_preference_source")
+                if tide_preference_may_write(spot, source):
+                    if new_tide != spot.get("tide_preference"):
+                        stats["field_changes"]["tide_preference"] += 1
+                    else:
+                        stats["tide_preference_restamped"] = (
+                            stats.get("tide_preference_restamped", 0) + 1)
+                    # ONE STATEMENT: value, source and citation together.
+                    spot.update(incoming)
+                else:
+                    # LOGGED, NEVER SILENT.
+                    log.warning(
+                        "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
+                        "the verified %r from %r (rank %d)",
+                        spot.get("name"), spot.get("tide_preference"), existing,
+                        tide_source_rank(existing), new_tide, source,
+                        tide_source_rank(source),
+                    )
+                    stats["tide_preference_declined"] = (
+                        stats.get("tide_preference_declined", 0) + 1)
 
         new_crowd = rec.get("crowd_factor")
         if new_crowd is not None and new_crowd != spot.get("crowd_factor"):

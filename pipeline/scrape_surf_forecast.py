@@ -38,7 +38,8 @@ from .config import (
     break_type_may_overwrite,
     break_type_quote,
     break_type_source_rank,
-    tide_source_may_overwrite,
+    tide_preference_fields,
+    tide_preference_may_write,
     tide_source_rank,
 )
 from .geo import haversine_m
@@ -346,6 +347,7 @@ def parse_spot_page(html: str, break_name: str | None = None) -> dict:
         "break_type": None,
         "break_type_evidence": None,
         "tide_preference": None,
+        "tide_preference_evidence": None,
         "crowd": None,
         "hazards": None,
         "page_lat": None,
@@ -372,12 +374,17 @@ def parse_spot_page(html: str, break_name: str | None = None) -> dict:
     fields["break_type"], fields["break_type_evidence"] = own_break_type(
         text, page_break_names(soup, break_name))
 
-    if re.search(r"at all stages|works at all tides|all\s+tides?\b", lower):
+    # The phrase that set the tide is kept as its quote, in the page's own case.
+    m = re.search(r"at all stages|works at all tides|all\s+tides?\b", text, flags=re.I)
+    if m:
         fields["tide_preference"] = "all"
+        fields["tide_preference_evidence"] = break_type_quote(m.group(0))
     else:
         for tp in ("low", "mid", "high"):
-            if re.search(rf"best\s+(?:around|at)\s+{tp}\s+tide", lower):
+            m = re.search(rf"best\s+(?:around|at)\s+{tp}\s+tide", text, flags=re.I)
+            if m:
                 fields["tide_preference"] = tp
+                fields["tide_preference_evidence"] = break_type_quote(m.group(0))
                 break
 
     # Free-form sentence extractors — preserve the whole sentence so a
@@ -957,29 +964,33 @@ def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> dict:
                     stats["break_type_declined"] = stats.get("break_type_declined", 0) + 1
 
         tp = rec.get("tide_preference")
-        if tp and tp != spot.get("tide_preference"):
-            # RANK GUARD — see config.tide_source_may_overwrite. A scrape is a
-            # published claim about this break and outranks an inference, but it
-            # must not overwrite a researched value.
-            existing = spot.get("tide_preference_source")
-            if tide_source_may_overwrite(existing, _TIDE_SOURCE):
-                # One statement: the value and its source, never one without
-                # the other.
-                spot["tide_preference"] = tp
-                spot["tide_preference_source"] = _TIDE_SOURCE
-                stats["field_changes"]["tide_preference"] += 1
-            else:
-                # LOGGED, NEVER SILENT. The scrape found a tide preference on the
-                # page and is declining to apply it; that is a disagreement
-                # between a published page and a higher-ranked source, and it is
-                # worth seeing.
-                log.warning(
-                    "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
-                    "the scraped %r (rank %d)",
-                    spot.get("name"), spot.get("tide_preference"), existing,
-                    tide_source_rank(existing), tp, tide_source_rank(_TIDE_SOURCE),
-                )
-                stats["tide_preference_declined"] = stats.get("tide_preference_declined", 0) + 1
+        if tp and spot.get("is_valid_surf_spot") is not False:
+            # Cited to the page it was read from, with the phrase that said it as the
+            # quote — config.tide_preference_fields, the one way a writer sets the tide.
+            incoming = tide_preference_fields(tp, _TIDE_SOURCE, url=rec["source_url"],
+                                              evidence=rec.get("tide_preference_evidence"))
+            if any(spot.get(k) != v for k, v in incoming.items()):
+                # RANK GUARD — config.tide_preference_may_write. A scrape is a published
+                # claim about this break and outranks a model's recall, but it must not
+                # overwrite a researched value.
+                existing = spot.get("tide_preference_source")
+                if tide_preference_may_write(spot, _TIDE_SOURCE):
+                    if tp != spot.get("tide_preference"):
+                        stats["field_changes"]["tide_preference"] += 1
+                    # ONE STATEMENT: the value, its source and its citation together.
+                    spot.update(incoming)
+                else:
+                    # LOGGED, NEVER SILENT. The scrape found a tide preference on the
+                    # page and is declining to apply it; that is a disagreement
+                    # between a published page and a higher-ranked source, and it is
+                    # worth seeing.
+                    log.warning(
+                        "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
+                        "the scraped %r (rank %d)",
+                        spot.get("name"), spot.get("tide_preference"), existing,
+                        tide_source_rank(existing), tp, tide_source_rank(_TIDE_SOURCE),
+                    )
+                    stats["tide_preference_declined"] = stats.get("tide_preference_declined", 0) + 1
 
     return stats
 
@@ -993,8 +1004,8 @@ def unmerge_stale_matches(spots: list[dict], cache: dict[str, dict]) -> dict:
     match, but the earlier merge already wrote its orientation / swell /
     break-type / tide values into spots_enriched.json. Clear those five
     fields (plus ``surf_forecast_url``) so the next enrich / verify pass
-    can recompute them from scratch — break_type, with its source and
-    citation, only where the dropped page is what wrote it.
+    can recompute them from scratch — break_type and tide_preference, each
+    with its source and citation, only where the dropped page is what wrote it.
     """
     stats = {
         "unmerged": 0,
@@ -1013,38 +1024,25 @@ def unmerge_stale_matches(spots: list[dict], cache: dict[str, dict]) -> dict:
             continue
         stats["unmerged"] += 1
         for f in _MERGE_FIELDS:
-            if f == "break_type":
-                continue   # below: with its provenance, and only if this page wrote it
+            if f in ("break_type", "tide_preference"):
+                continue   # below: with their provenance, and only if this page wrote them
             if spot.get(f) is not None:
                 spot[f] = None
                 stats["cleared_fields"][f] += 1
-        # break_type now records who wrote it, so a dropped match takes back exactly what
-        # that page wrote — a type stamped 'scraped' and citing the dropped URL — and all
-        # five keys go together. A researched, reviewed or unattributed type is not this
-        # page's to clear.
+        # break_type and the tide record who wrote them, so a dropped match takes back exactly
+        # what that page wrote — a value stamped 'scraped' and citing the dropped URL — and
+        # all of its keys go together. A researched, model_recall or unattributed value is not
+        # this page's to clear. (The tide used to be cleared here whoever had written it, and
+        # its source cleared with it unconditionally; with the citation recorded, the page
+        # can now be told apart from every other writer.)
         if (spot.get("break_type_source") == _BREAK_TYPE_SOURCE
                 and spot.get("break_type_source_url") == rec["previously_matched_url"]):
             spot.update(break_type_fields(None, None))
             stats["cleared_fields"]["break_type"] += 1
-        # THE SOURCE GOES WITH THE VALUE. This loop clears tide_preference via a
-        # variable key, so it is a fourth write site that a grep for
-        # `["tide_preference"] =` does not find — and without this, a dropped
-        # match left tide_preference_source stamped 'scraped' on a
-        # tide_preference that had just been set to None. That is precisely the
-        # break_type_confidence defect (a provenance field outliving the value
-        # it describes) reappearing inside the change meant to prevent it.
-        #
-        # Cleared unconditionally rather than only when it reads 'scraped': a
-        # NULL value carrying any non-null source is incoherent whoever wrote it.
-        # (Note that this loop clears fields it may no longer own — a later
-        # verify_spots pass can have replaced the scraped tide_preference with a
-        # researched one, which unmerge then discards. That is pre-existing
-        # behaviour, not introduced here, and is left alone deliberately.)
-        if spot.get("tide_preference_source") is not None:
-            spot["tide_preference_source"] = None
-            stats["cleared_tide_preference_source"] = (
-                stats.get("cleared_tide_preference_source", 0) + 1
-            )
+        if (spot.get("tide_preference_source") == _TIDE_SOURCE
+                and spot.get("tide_preference_source_url") == rec["previously_matched_url"]):
+            spot.update(tide_preference_fields(None, None))
+            stats["cleared_fields"]["tide_preference"] += 1
         spot.pop("surf_forecast_url", None)
     return stats
 
