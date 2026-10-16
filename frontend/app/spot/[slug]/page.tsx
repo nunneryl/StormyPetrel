@@ -21,7 +21,7 @@ import {
 } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
-import { fmtTidePreference, spotInfoRows } from '@/lib/spotInfo';
+import { breakTypeShown, spotInfoRows, tidePreferenceShown } from '@/lib/spotInfo';
 import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
 import { fetchCamsForSpot } from '@/lib/cams';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
@@ -238,18 +238,18 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
             {spot.name}
           </h1>
           <div className="mt-1 text-sm text-text-secondary flex items-center gap-2 flex-wrap">
+            {/* Marked "(unverified)" unless break_type_source is trusted (lib/provenance). */}
             {spot.break_type && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-ink-800 border border-ink-600 text-text-primary text-xs">
-                {spot.break_type}
+                {breakTypeShown(spot)}
               </span>
             )}
-            {/* Through the shared formatter, not raw: the widened tide_preference
-                set carries snake_case compounds that would render as "low_mid".
-                The guard tests the FORMATTED value so "unknown" drops the chip
-                exactly as null already does — a chip reading "tide: —" says
-                nothing and costs a line of header. */}
-            {fmtTidePreference(spot.tide_preference) !== '—' && (
-              <span>tide: {fmtTidePreference(spot.tide_preference)}</span>
+            {/* Through the same helper as both cards: formatted (no raw "low_mid"), and '—'
+                unless tide_preference_source is trusted (lib/provenance), so an unverified
+                preference drops the chip exactly as null and "unknown" do — a chip reading
+                "tide: —" says nothing and costs a line of header. */}
+            {tidePreferenceShown(spot) !== '—' && (
+              <span>tide: {tidePreferenceShown(spot)}</span>
             )}
           </div>
         </div>

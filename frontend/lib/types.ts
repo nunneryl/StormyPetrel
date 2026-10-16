@@ -13,6 +13,9 @@ export type Spot = {
    *  An arc wraps when min > max (e.g. {min: 350, max: 30}). */
   swell_window_arcs: { min: number; max: number; span?: number }[] | null;
   break_type: string | null;
+  /** Where break_type came from (migration 020). Shown plainly only when reviewed, researched
+   *  or scraped; otherwise marked "(unverified)" — lib/provenance.fmtBreakType. */
+  break_type_source: string | null;
   /** One of: low | low_mid | mid | mid_high | high | all | unknown.
    *
    *  A STORAGE KEY, NOT A LABEL — render it through spotInfo.fmtTidePreference,
@@ -25,6 +28,10 @@ export type Spot = {
    *  did and declined to guess. interpret.tide_multiplier treats both as
    *  neutral, so neither moves a rating. */
   tide_preference: string | null;
+  /** Where tide_preference came from (migrations 018 and 022). The page shows the preference
+   *  only when this is reviewed, researched or scraped — the sources the rating applies it
+   *  from — lib/provenance.shownTidePreference. */
+  tide_preference_source: string | null;
   crowd_factor: string | null;
   hazards: string[] | null;
   nearest_buoy_id: string | null;

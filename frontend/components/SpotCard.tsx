@@ -6,6 +6,7 @@ import { SwellCompass } from './SwellCompass';
 import { HeightBasisMark } from './HeightBasisMark';
 import { fmtFtRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { heightBasis } from '@/lib/heightBasis';
+import { fmtBreakType } from '@/lib/provenance';
 import { tierFromStars } from '@/lib/ratings';
 
 type Variant = 'default' | 'rail';
@@ -44,7 +45,7 @@ export function SpotCard({
           </div>
           <div className="text-xs text-text-secondary truncate">
             {spot.state ?? '—'}
-            {spot.break_type ? ` · ${spot.break_type}` : ''}
+            {spot.break_type ? ` · ${fmtBreakType(spot.break_type, spot.break_type_source)}` : ''}
           </div>
         </div>
         <StarRating score={f?.stars ?? 0} size="sm" />

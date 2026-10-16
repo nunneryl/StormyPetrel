@@ -30,15 +30,20 @@
  */
 
 import { degToCardinal } from './formatting.ts';
+import { fmtBreakType, shownTidePreference } from './provenance.ts';
 
 export type SpotInfoRow = { label: string; value: string };
 
-/** The fields these two panels read. Structural on purpose, and the only import is
- *  formatting.ts (itself import-free), so this module runs under
+/** The fields these two panels read. Structural on purpose, and the only imports are
+ *  formatting.ts and provenance.ts (both import-free), so this module runs under
  *  `node --experimental-strip-types` with no packages installed. */
 export type SpotInfoInput = {
   break_type?: string | null;
+  /** Where break_type came from. Untrusted (lib/provenance) -> the type is marked "(unverified)". */
+  break_type_source?: string | null;
   tide_preference?: string | null;
+  /** Where tide_preference came from. Untrusted (lib/provenance) -> the tide is not shown. */
+  tide_preference_source?: string | null;
   crowd_factor?: string | null;
   optimal_swell_dir?: number | null;
   offshore_wind_deg?: number | null;
@@ -102,10 +107,22 @@ export function fmtTidePreference(value: string | null | undefined): string {
   return TIDE_PREFERENCE_LABEL[value] ?? value;
 }
 
+/** The tide preference as both cards and the header chip show it: '—' unless its source is
+ *  trusted (lib/provenance — reviewed, researched or scraped), then the formatted key. */
+export function tidePreferenceShown(spot: SpotInfoInput): string {
+  return fmtTidePreference(shownTidePreference(spot.tide_preference, spot.tide_preference_source));
+}
+
+/** The break type as both cards show it: '—' when there is none, "(unverified)" appended
+ *  when its source is not trusted (lib/provenance). */
+export function breakTypeShown(spot: SpotInfoInput): string {
+  return fmtBreakType(spot.break_type, spot.break_type_source) ?? '—';
+}
+
 export function spotInfoRows(spot: SpotInfoInput): SpotInfoRow[] {
   const rows: SpotInfoRow[] = [
-    { label: 'Break', value: spot.break_type ?? '—' },
-    { label: 'Tide preference', value: fmtTidePreference(spot.tide_preference) },
+    { label: 'Break', value: breakTypeShown(spot) },
+    { label: 'Tide preference', value: tidePreferenceShown(spot) },
   ];
   if (!isBlank(spot.crowd_factor)) {
     rows.push({ label: 'Crowd', value: spot.crowd_factor as string });
@@ -149,7 +166,7 @@ export function optimalConditionsRows(spot: SpotInfoInput): SpotInfoRow[] {
           ? `${degToCardinal(spot.offshore_wind_deg)} offshore`
           : 'offshore',
     },
-    { label: 'Tide', value: fmtTidePreference(spot.tide_preference) },
-    { label: 'Break', value: spot.break_type ?? '—' },
+    { label: 'Tide', value: tidePreferenceShown(spot) },
+    { label: 'Break', value: breakTypeShown(spot) },
   ];
 }

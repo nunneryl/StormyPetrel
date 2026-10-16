@@ -11,6 +11,7 @@ import { HeightBasisMark } from './HeightBasisMark';
 import { Sparkline } from './Sparkline';
 import { degToCardinal, fmtFtRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { heightBasis } from '@/lib/heightBasis';
+import { fmtBreakType } from '@/lib/provenance';
 import { tierFromStars } from '@/lib/ratings';
 
 type Filter = 'all' | 'fair' | 'good';
@@ -91,7 +92,9 @@ export function RegionList({
                     </span>
                     <StarRating score={f?.stars ?? 0} size="sm" />
                     {s.break_type && (
-                      <span className="text-xs text-text-muted">{s.break_type}</span>
+                      <span className="text-xs text-text-muted">
+                        {fmtBreakType(s.break_type, s.break_type_source)}
+                      </span>
                     )}
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-xs text-text-secondary flex-wrap">
