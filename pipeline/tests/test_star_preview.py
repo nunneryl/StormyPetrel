@@ -227,3 +227,190 @@ def test_the_window_is_read_one_spot_at_a_time():
     assert tables == ["spots", "forecasts", "forecasts"]
     assert [a for n, a in client.args if n == "eq" and a[0] == "spot_id"] == [("spot_id", 3), ("spot_id", 7)]
     assert [a for n, a in client.args if n == "eq" and a[0] == "source"] == [("source", "nwps")] * 2
+
+
+# --------------------------------------------------------------------------- #
+# The tide preview: the stored tide_mult swapped on unverified preferences      #
+# --------------------------------------------------------------------------- #
+#
+# Worked by hand. tide_mult enters composite_stars as tide_mult**0.15:
+#   0.6**0.15 = exp(0.15 x ln 0.6) = exp(-0.076624) = 0.926238
+#   0.8**0.15 = exp(0.15 x ln 0.8) = exp(-0.033472) = 0.967082
+# A MOP row on WEST at 270 has gain 1.0; with wind, chop and period quality at 1.0,
+# stars = round(2 x size x tide_mult**0.15) / 2, and size_score is 3 + 0.5 x (face - 4)
+# between 4 and 5 ft:
+#   face 4.9: size 3.45, 2 x size = 6.9
+#       tide 0.6 -> 6.9 x 0.926238 = 6.391 -> 6 -> 3.0     (published)
+#       tide 0.8 -> 6.9 x 0.967082 = 6.673 -> 7 -> 3.5     (damp:0.5 keeps 1 - 0.5 x 0.4 = 0.8)
+#       tide 1.0 -> 6.9                    -> 7 -> 3.5     (neutral)
+#   face 4.6: size 3.3, 2 x size = 6.6
+#       tide 0.6 -> 6.6 x 0.926238 = 6.113 -> 6 -> 3.0     (published)
+#       tide 0.8 -> 6.6 x 0.967082 = 6.383 -> 6 -> 3.0     (damp:0.5: no change)
+#       tide 1.0 -> 6.6                    -> 7 -> 3.5     (neutral)
+
+import pytest  # noqa: E402
+
+TIDES = {1: {"tide_preference": "low", "tide_preference_source": "unattributed"},
+         2: {"tide_preference": "low", "tide_preference_source": "scraped"},
+         3: {"tide_preference": None, "tide_preference_source": None}}
+TIDE_NAMES = {1: ("A", "Hawaii"), 2: ("B", "California"), 3: ("C", "Florida")}
+TIDE_SPOTS = {"A": WEST, "B": WEST, "C": WEST}
+
+
+def _tide_rows():
+    return [
+        dict(_mop(face_ft=4.9, tide_mult=0.6, tide_norm=0.9), spot_id=1, valid_time="t1", stars=3.0),
+        dict(_mop(face_ft=4.6, tide_mult=0.6, tide_norm=0.9), spot_id=1, valid_time="t2", stars=3.0),
+        dict(_mop(face_ft=4.9, tide_mult=0.6, tide_norm=0.9), spot_id=2, valid_time="t1", stars=3.0),
+        dict(_mop(face_ft=4.9, tide_mult=1.0, tide_norm=0.1), spot_id=3, valid_time="t1", stars=3.5),
+    ]
+
+
+def _tide_compare(spec):
+    _, f = SP.tide_mode(spec)
+    return SP.compare(_tide_rows(), TIDE_SPOTS, TIDE_SPOTS, TIDE_NAMES,
+                      row_after=SP.tide_row_after(TIDES, f))
+
+
+@pytest.mark.parametrize("spec, tm, expected", [
+    ("keep", 0.6, 0.6),
+    ("neutral", 0.6, 1.0),
+    ("neutral", 0.8, 1.0),
+    ("damp:0.5", 0.6, 0.8),          # 1 - 0.5 x 0.4
+    ("damp:0.25", 0.7, 0.925),       # 1 - 0.25 x 0.3
+    ("damp:0.5", 1.0, 1.0),          # no penalty to keep
+])
+def test_tide_modes(spec, tm, expected):
+    assert SP.tide_mode(spec)[1](tm) == pytest.approx(expected, abs=1e-12)
+
+
+@pytest.mark.parametrize("spec", ["damp:0", "damp:1", "damp:1.5", "half", ""])
+def test_a_tide_mode_outside_the_three_is_refused(spec):
+    with pytest.raises(ValueError):
+        SP.tide_mode(spec)
+
+
+@pytest.mark.parametrize("source, expected", [
+    ("reviewed", False), ("researched", False), ("scraped", False), ("model_recall", True),
+    ("unattributed", True), ("derived_from_break_type", True), (None, True),
+])
+def test_unverified_means_no_cited_source(source, expected):
+    assert SP.unverified({"tide_preference": "mid", "tide_preference_source": source}) is expected
+    assert SP.unverified(None) is True
+
+
+def test_neutral_lifts_both_unverified_off_tide_hours_and_leaves_the_scraped_spot():
+    rep = _tide_compare("neutral")
+    assert rep["replay"] == {"MOP reproduced": 4}
+    assert (rep["changed_spot_hours"], rep["changed_spots"]) == (2, 1)
+    assert rep["delta_by_state"] == {"California": {0.0: 1}, "Florida": {0.0: 1},
+                                     "Hawaii": {0.5: 2}}
+    top, = rep["top20"]
+    assert (top["spot"], top["changed_hours"]) == ("A", 2)
+    ex = top["example"]
+    assert (ex["valid_time"], ex["tide_norm"], ex["tide_mult_before"], ex["tide_mult_after"],
+            ex["stars_before"], ex["stars_after"]) == ("t1", 0.9, 0.6, 1.0, 3.0, 3.5)
+
+
+def test_damping_by_half_moves_only_the_hour_near_the_boundary():
+    rep = _tide_compare("damp:0.5")
+    assert (rep["changed_spot_hours"], rep["changed_spots"]) == (1, 1)
+    assert rep["delta_by_state"]["Hawaii"] == {0.0: 1, 0.5: 1}
+    ex = rep["top20"][0]["example"]
+    assert (ex["valid_time"], ex["stars_after"]) == ("t1", 3.5)
+    assert ex["tide_mult_after"] == pytest.approx(0.8, abs=1e-12)
+
+
+def test_keep_changes_nothing():
+    rep = _tide_compare("keep")
+    assert (rep["compared"], rep["changed_spot_hours"]) == (4, 0)
+
+
+def test_the_swell_window_report_carries_no_tide_fields():
+    rows = [dict(_mop(), spot_id=1, valid_time="t", stars=3.0)]
+    rep = SP.compare(rows, {"A": WEST}, {"A": NW}, {1: ("A", "Hawaii")})
+    assert "tide_mult_before" not in rep["top20"][0]["example"]
+
+
+def test_the_tide_census():
+    """mid is 1.0 inside [0.3, 0.7] and 0.7 outside; low is 1.0 below 0.3, 0.8 below 0.7."""
+    tides = {1: {"tide_preference": "mid", "tide_preference_source": "unattributed"},
+             2: {"tide_preference": "low", "tide_preference_source": "unattributed"}}
+    rows = [{"spot_id": 1, "tide_norm": 0.5, "tide_mult": 1.0},     # mid in range: 1.0
+            {"spot_id": 1, "tide_norm": 0.9, "tide_mult": 0.7},     # mid out of range: 0.7
+            {"spot_id": 2, "tide_norm": 0.5, "tide_mult": 0.8},     # low, 0.3..0.7: 0.8
+            {"spot_id": 2, "tide_norm": 0.1, "tide_mult": 0.6},     # low below 0.3 is 1.0, not 0.6
+            {"spot_id": 1, "tide_norm": None, "tide_mult": None}]
+    c = SP.tide_census(rows, tides)
+    assert c["spots"] == {"low / unattributed": 1, "mid / unattributed": 1}
+    assert c["rows"] == 5
+    assert c["tide_mult_by_preference"] == {"low": {"0.6": 1, "0.8": 1},
+                                            "mid": {"0.7": 1, "1": 1, "None": 1}}
+    assert c["hours_below_1_by_preference"] == {"low": 2, "mid": 1}
+    assert c["tide_mult_from_tide_norm_and_preference"] == {"NOT reproduced": 1, "reproduced": 3}
+
+
+def test_the_tide_fetch_only_reads():
+    client = _Recorder({"spots": [{"id": 1, "tide_preference": "mid",
+                                   "tide_preference_source": "unattributed"}]})
+    assert SP._fetch_tides(client) == {1: {"tide_preference": "mid",
+                                           "tide_preference_source": "unattributed"}}
+    assert set(client.calls) == {"table", "select", "order", "range", "execute"}
+
+
+def test_the_tide_fetch_without_the_source_column_reads_every_source_as_none():
+    class NoSource(_Recorder):
+        def execute(self):
+            if any(n == "select" and "tide_preference_source" in a[0] for n, a in self.args):
+                self.args.clear()
+                raise RuntimeError("column spots.tide_preference_source does not exist")
+            return super().execute()
+
+    client = NoSource({"spots": [{"id": 1, "tide_preference": "mid"}]})
+    assert SP._fetch_tides(client) == {1: {"tide_preference": "mid",
+                                           "tide_preference_source": None}}
+
+
+def test_the_cli_needs_arcs_or_tide():
+    with pytest.raises(SystemExit):
+        SP.main([])
+
+
+# --------------------------------------------------------------------------- #
+# 'rated': the rater's own rule, held to neutral                               #
+# --------------------------------------------------------------------------- #
+# The rows of _tide_rows, recomputed with interpret's rule from the row's tide_norm and the
+# roster's source: low at tide_norm 0.9 is 0.6 when trusted, 1.0 when not (see the tide
+# preview's hand arithmetic above for the stars).
+
+def _rated(roster):
+    return SP.compare(_tide_rows(), TIDE_SPOTS, TIDE_SPOTS, TIDE_NAMES,
+                      row_after=SP.rated_row_after(roster, TIDE_NAMES))
+
+
+ROSTER_AS_LIVE = {   # the sources TIDES holds, as a roster
+    "A": dict(WEST, name="A", tide_preference="low", tide_preference_source="unattributed"),
+    "B": dict(WEST, name="B", tide_preference="low", tide_preference_source="scraped"),
+    "C": dict(WEST, name="C", tide_preference=None, tide_preference_source=None),
+}
+
+
+def test_rated_is_neutral_hour_for_hour_when_the_sources_agree():
+    """The check that the rating publishes what the neutral preview showed: the same rows,
+    the same changes, the same examples."""
+    assert _rated(ROSTER_AS_LIVE) == _tide_compare("neutral")
+
+
+def test_rated_keeps_a_trusted_penalty_and_lifts_an_untrusted_one():
+    rep = _rated(ROSTER_AS_LIVE)
+    assert (rep["changed_spot_hours"], rep["changed_spots"]) == (2, 1)
+    assert rep["delta_by_state"]["California"] == {0.0: 1}     # B, scraped: 0.6 kept, 3.0
+    assert rep["delta_by_state"]["Hawaii"] == {0.5: 2}         # A: 0.6 -> 1.0, 3.0 -> 3.5
+
+
+def test_rated_reapplies_a_reviewed_preference_the_live_table_calls_unattributed():
+    """'rated' reads the roster, as the rater does; a roster that trusts A's 'low' leaves its
+    stored 0.6 in place, so nothing changes."""
+    roster = dict(ROSTER_AS_LIVE, A=dict(ROSTER_AS_LIVE["A"], tide_preference_source="reviewed"))
+    assert _rated(roster)["changed_spot_hours"] == 0
+

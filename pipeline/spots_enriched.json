@@ -65,7 +65,10 @@
     "mop_shore_normal": 264.5299987792969,
     "mop_match_distance_m": 621,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0619_nowcast.nc",
-    "mop_buoy_id": "46266"
+    "mop_buoy_id": "46266",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "38th Avenue",
@@ -135,7 +138,10 @@
     "nwps_node_lat": 36.96316,
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 1532,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "56th Street",
@@ -210,7 +216,10 @@
     "nwps_node_lat": 39.14053,
     "nwps_node_lng": -74.69483,
     "nwps_node_distance_m": 204,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Andrew Molera State Park",
@@ -281,7 +290,10 @@
     "nwps_node_lat": 36.26364,
     "nwps_node_lng": -121.8675,
     "nwps_node_distance_m": 1932,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Asilomar State Beach",
@@ -351,7 +363,10 @@
     "mop_shore_normal": 286.4800109863281,
     "mop_match_distance_m": 452,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MO720_nowcast.nc",
-    "mop_buoy_id": "46012"
+    "mop_buoy_id": "46012",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bird Rock",
@@ -421,7 +436,10 @@
     "nwps_node_lat": 32.805,
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 1134,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Blackies",
@@ -495,7 +513,10 @@
     "nwps_node_lat": 33.57424,
     "nwps_node_lng": -117.94468,
     "nwps_node_distance_m": 4030,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bolinas",
@@ -565,7 +586,10 @@
     "nwps_node_lat": 37.88832,
     "nwps_node_lng": -122.665,
     "nwps_node_distance_m": 2440,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bolsa Chica State Beach",
@@ -639,7 +663,10 @@
     "nwps_node_lat": 33.68249,
     "nwps_node_lng": -118.07362,
     "nwps_node_distance_m": 2668,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bombora",
@@ -706,7 +733,10 @@
     "nwps_node_lat": 21.28671,
     "nwps_node_lng": -157.86633,
     "nwps_node_distance_m": 1876,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Brooks Street",
@@ -776,7 +806,10 @@
     "mop_shore_normal": 238.41000366210938,
     "mop_match_distance_m": 408,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC256_nowcast.nc",
-    "mop_buoy_id": "46277"
+    "mop_buoy_id": "46277",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "C Street Ventura",
@@ -849,7 +882,10 @@
     "nwps_node_lat": 34.25982,
     "nwps_node_lng": -119.32,
     "nwps_node_distance_m": 2988,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Campus Point UCSB",
@@ -923,7 +959,10 @@
     "nwps_node_lat": 34.40415,
     "nwps_node_lng": -119.83574,
     "nwps_node_distance_m": 711,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cardiff Reef",
@@ -990,7 +1029,10 @@
     "mop_shore_normal": 238.52999877929688,
     "mop_match_distance_m": 558,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0685_nowcast.nc",
-    "mop_buoy_id": "46274"
+    "mop_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Carlsbad State Beach",
@@ -1058,7 +1100,10 @@
     "nwps_node_lat": 33.14937,
     "nwps_node_lng": -117.3547,
     "nwps_node_distance_m": 501,
-    "nwps_buoy_id": "46274"
+    "nwps_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Carmel Beach",
@@ -1125,7 +1170,10 @@
     "nwps_node_lat": 36.55699,
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 1831,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Carpinteria State Beach",
@@ -1199,7 +1247,10 @@
     "nwps_node_lat": 34.36807,
     "nwps_node_lng": -119.53489,
     "nwps_node_distance_m": 2756,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cayucos Pier",
@@ -1271,7 +1322,10 @@
     "nwps_node_lat": 35.42874,
     "nwps_node_lng": -120.905,
     "nwps_node_distance_m": 2139,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Church",
@@ -1340,7 +1394,10 @@
     "mop_shore_normal": 196.97000122070312,
     "mop_match_distance_m": 842,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1194_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Coronado Shores",
@@ -1414,7 +1471,10 @@
     "nwps_node_lat": 32.67812,
     "nwps_node_lng": -117.18376,
     "nwps_node_distance_m": 549,
-    "nwps_buoy_id": "46275"
+    "nwps_buoy_id": "46275",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cottons",
@@ -1484,7 +1544,10 @@
     "nwps_node_lat": 33.385,
     "nwps_node_lng": -117.61111,
     "nwps_node_distance_m": 1323,
-    "nwps_buoy_id": "46285"
+    "nwps_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "County Line",
@@ -1553,7 +1616,10 @@
     "nwps_node_lat": 34.00724,
     "nwps_node_lng": -118.97617,
     "nwps_node_distance_m": 5127,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cowell's Beach Children's Surfing Area",
@@ -1625,7 +1691,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -122.0325,
     "nwps_node_distance_m": 2323,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Crescent City Beach",
@@ -1692,7 +1761,10 @@
     "nwps_node_lat": 41.72957,
     "nwps_node_lng": -124.18429,
     "nwps_node_distance_m": 1639,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "D Street Encinitas",
@@ -1761,7 +1833,10 @@
     "mop_shore_normal": 262.5,
     "mop_match_distance_m": 593,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0719_nowcast.nc",
-    "mop_buoy_id": "46274"
+    "mop_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Dana Point, California",
@@ -1829,7 +1904,10 @@
     "nwps_node_lat": 33.4575,
     "nwps_node_lng": -117.71795,
     "nwps_node_distance_m": 667,
-    "nwps_buoy_id": "46285"
+    "nwps_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Davenport Landing",
@@ -1900,7 +1978,10 @@
     "nwps_node_lat": 37.00829,
     "nwps_node_lng": -122.225,
     "nwps_node_distance_m": 2332,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Del Mar Beach",
@@ -1968,7 +2049,10 @@
     "mop_shore_normal": 262.0299987792969,
     "mop_match_distance_m": 721,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0633_nowcast.nc",
-    "mop_buoy_id": "46266"
+    "mop_buoy_id": "46266",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Devereux",
@@ -2043,7 +2127,10 @@
     "nwps_node_lat": 34.40415,
     "nwps_node_lng": -119.87872,
     "nwps_node_distance_m": 601,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Dillon Beach",
@@ -2113,7 +2200,10 @@
     "nwps_node_lat": 38.24936,
     "nwps_node_lng": -122.995,
     "nwps_node_distance_m": 2280,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Doheny State Beach",
@@ -2181,7 +2271,10 @@
     "mop_shore_normal": 170.02000427246094,
     "mop_match_distance_m": 1155,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC131_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Doran Beach",
@@ -2250,7 +2343,10 @@
     "nwps_node_lat": 38.29449,
     "nwps_node_lng": -123.05,
     "nwps_node_distance_m": 1965,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "El Capitan State Beach",
@@ -2326,7 +2422,10 @@
     "nwps_node_lat": 34.44023,
     "nwps_node_lng": -120.00766,
     "nwps_node_distance_m": 2600,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "El Porto",
@@ -2396,7 +2495,10 @@
     "nwps_node_lat": 33.89899,
     "nwps_node_lng": -118.46043,
     "nwps_node_distance_m": 3348,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Emma Wood State Beach",
@@ -2478,7 +2580,10 @@
     "nwps_node_lat": 34.25982,
     "nwps_node_lng": -119.32,
     "nwps_node_distance_m": 2722,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "First Peak",
@@ -2555,7 +2660,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -121.9775,
     "nwps_node_distance_m": 1661,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Fort Point",
@@ -2628,7 +2736,10 @@
     "nwps_node_lat": 37.82063,
     "nwps_node_lng": -122.4725,
     "nwps_node_distance_m": 1096,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Garbage Beach",
@@ -2698,7 +2809,10 @@
     "nwps_node_lat": 32.67812,
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 1841,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Half Moon Bay Jetty",
@@ -2763,7 +2877,10 @@
     "nwps_node_lat": 37.48215,
     "nwps_node_lng": -122.4725,
     "nwps_node_distance_m": 1779,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hammonds",
@@ -2834,7 +2951,10 @@
     "nwps_node_lat": 34.40415,
     "nwps_node_lng": -119.62085,
     "nwps_node_distance_m": 1944,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hermosa Beach Pier",
@@ -2908,7 +3028,10 @@
     "nwps_node_lat": 33.82682,
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 4067,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hermosa Beach, California",
@@ -2974,7 +3097,10 @@
     "nwps_node_lat": 33.82682,
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 4810,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Humboldt Bay Jetty",
@@ -3042,7 +3168,10 @@
     "mop_shore_normal": 284.7900085449219,
     "mop_match_distance_m": 858,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/HU541_nowcast.nc",
-    "mop_buoy_id": "46244"
+    "mop_buoy_id": "46244",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Huntington Beach Pier",
@@ -3124,7 +3253,10 @@
     "nwps_node_lat": 33.64641,
     "nwps_node_lng": -118.03064,
     "nwps_node_distance_m": 2572,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Huntington Beach, California",
@@ -3194,7 +3326,10 @@
     "nwps_node_lat": 33.61032,
     "nwps_node_lng": -117.98766,
     "nwps_node_distance_m": 3373,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Huntington Cliffs",
@@ -3267,7 +3402,10 @@
     "nwps_node_lat": 33.64641,
     "nwps_node_lng": -118.03064,
     "nwps_node_distance_m": 2345,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Imperial Beach Pier",
@@ -3346,7 +3484,10 @@
     "nwps_node_lat": 32.5875,
     "nwps_node_lng": -117.14103,
     "nwps_node_distance_m": 1056,
-    "nwps_buoy_id": "46275"
+    "nwps_buoy_id": "46275",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Imperial Beach, California",
@@ -3422,7 +3563,10 @@
     "nwps_node_lat": 32.5875,
     "nwps_node_lng": -117.14103,
     "nwps_node_distance_m": 702,
-    "nwps_buoy_id": "46275"
+    "nwps_buoy_id": "46275",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jalama Beach",
@@ -3493,7 +3637,10 @@
     "nwps_node_lat": 34.47632,
     "nwps_node_lng": -120.5234,
     "nwps_node_distance_m": 3930,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jenner Beach",
@@ -3563,7 +3710,10 @@
     "nwps_node_lat": 38.42988,
     "nwps_node_lng": -123.1325,
     "nwps_node_distance_m": 2089,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "La Jolla Shores",
@@ -3632,7 +3782,10 @@
     "mop_shore_normal": 293.9700012207031,
     "mop_match_distance_m": 342,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0504_nowcast.nc",
-    "mop_buoy_id": "ljpc1"
+    "mop_buoy_id": "ljpc1",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Leadbetter Beach",
@@ -3709,7 +3862,10 @@
     "nwps_node_lat": 34.36807,
     "nwps_node_lng": -119.70681,
     "nwps_node_distance_m": 3699,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Leo Carrillo State Beach",
@@ -3786,7 +3942,10 @@
     "nwps_node_lat": 34.00724,
     "nwps_node_lng": -118.93319,
     "nwps_node_distance_m": 4145,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Leucadia",
@@ -3853,7 +4012,10 @@
     "mop_shore_normal": 250.5500030517578,
     "mop_match_distance_m": 528,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0749_nowcast.nc",
-    "mop_buoy_id": "46274"
+    "mop_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Wind and Sea",
@@ -3922,7 +4084,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -121.9775,
     "nwps_node_distance_m": 1504,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lovers Point",
@@ -3993,7 +4158,10 @@
     "nwps_node_distance_m": 1785,
     "nwps_buoy_id": null,
     "fallback_buoy_ids": [],
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lower Trestles",
@@ -4063,7 +4231,10 @@
     "mop_shore_normal": 196.50999450683594,
     "mop_match_distance_m": 883,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1201_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lunada Bay",
@@ -4133,7 +4304,10 @@
     "mop_shore_normal": 283.9700012207031,
     "mop_match_distance_m": 511,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0395_nowcast.nc",
-    "mop_buoy_id": "46221"
+    "mop_buoy_id": "46221",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Malibu Surfrider Beach",
@@ -4203,7 +4377,10 @@
     "nwps_node_lat": 34.00724,
     "nwps_node_lng": -118.67532,
     "nwps_node_distance_m": 2966,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Manhattan Beach Pier",
@@ -4270,7 +4447,10 @@
     "mop_shore_normal": 245.52000427246094,
     "mop_match_distance_m": 442,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0553_nowcast.nc",
-    "mop_buoy_id": "46221"
+    "mop_buoy_id": "46221",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Manresa State Beach",
@@ -4338,7 +4518,10 @@
     "nwps_node_lat": 36.91803,
     "nwps_node_lng": -121.8675,
     "nwps_node_distance_m": 1059,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Marina State Beach",
@@ -4411,7 +4594,10 @@
     "fallback_buoy_ids": [
       "46042",
       "46012"
-    ]
+    ],
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mavericks, California",
@@ -4487,7 +4673,10 @@
     "mop_shore_normal": 221.00999450683594,
     "mop_match_distance_m": 287,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SM305_nowcast.nc",
-    "mop_buoy_id": "46237"
+    "mop_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mission Beach",
@@ -4556,7 +4745,10 @@
     "nwps_node_lat": 32.76875,
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 1475,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mondos",
@@ -4636,7 +4828,10 @@
     "nwps_node_lat": 34.2959,
     "nwps_node_lng": -119.40596,
     "nwps_node_distance_m": 3936,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Montara State Beach",
@@ -4704,7 +4899,10 @@
     "mop_shore_normal": 275.94000244140625,
     "mop_match_distance_m": 453,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SM341_nowcast.nc",
-    "mop_buoy_id": "46237"
+    "mop_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Moonlight Beach",
@@ -4772,7 +4970,10 @@
     "mop_shore_normal": 251.00999450683594,
     "mop_match_distance_m": 576,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0724_nowcast.nc",
-    "mop_buoy_id": "46274"
+    "mop_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Moonstone Beach Humboldt",
@@ -4847,7 +5048,10 @@
     "nwps_node_lat": 41.04194,
     "nwps_node_lng": -124.13794,
     "nwps_node_distance_m": 2727,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Morro Rock",
@@ -4919,7 +5123,10 @@
     "nwps_node_lat": 35.36104,
     "nwps_node_lng": -120.8775,
     "nwps_node_distance_m": 1609,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Moss Landing",
@@ -4990,7 +5197,10 @@
     "nwps_node_lat": 36.8052,
     "nwps_node_lng": -121.8125,
     "nwps_node_distance_m": 1921,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Natural Bridges",
@@ -5062,7 +5272,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -122.06,
     "nwps_node_distance_m": 894,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "New Brighton Reef",
@@ -5125,7 +5338,10 @@
     "nwps_node_lat": 36.96316,
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 2016,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Newport Beach, California",
@@ -5190,7 +5406,10 @@
     "nwps_node_lat": 33.57424,
     "nwps_node_lng": -117.9017,
     "nwps_node_distance_m": 3422,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Newport Point",
@@ -5264,7 +5483,10 @@
     "nwps_node_lat": 33.57424,
     "nwps_node_lng": -117.94468,
     "nwps_node_distance_m": 3708,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean Beach Pier SD",
@@ -5330,7 +5552,10 @@
     "mop_shore_normal": 281.4700012207031,
     "mop_match_distance_m": 834,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0347_nowcast.nc",
-    "mop_buoy_id": "ljpc1"
+    "mop_buoy_id": "ljpc1",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean Beach SF",
@@ -5400,7 +5625,10 @@
     "mop_shore_normal": 261.4800109863281,
     "mop_match_distance_m": 695,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/SF026_nowcast.nc",
-    "mop_buoy_id": "46237"
+    "mop_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Oceanside Harbor",
@@ -5471,7 +5699,10 @@
     "nwps_node_lat": 33.20375,
     "nwps_node_lng": -117.39744,
     "nwps_node_distance_m": 110,
-    "nwps_buoy_id": "46275"
+    "nwps_buoy_id": "46275",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Oceanside Pier",
@@ -5539,7 +5770,10 @@
     "mop_shore_normal": 231.02000427246094,
     "mop_match_distance_m": 773,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0903_nowcast.nc",
-    "mop_buoy_id": "46224"
+    "mop_buoy_id": "46224",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pacific Beach",
@@ -5607,7 +5841,10 @@
     "nwps_node_lat": 32.805,
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 1399,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pacifica Linda Mar",
@@ -5678,7 +5915,10 @@
     "nwps_node_lat": 37.61754,
     "nwps_node_lng": -122.5,
     "nwps_node_distance_m": 1740,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Palos Verdes Cove",
@@ -5749,7 +5989,10 @@
     "nwps_node_lat": 33.82682,
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 3885,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pismo Beach Pier",
@@ -5814,7 +6057,10 @@
     "nwps_node_lat": 35.12581,
     "nwps_node_lng": -120.69532,
     "nwps_node_distance_m": 4817,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pleasure Point",
@@ -5887,7 +6133,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -121.9775,
     "nwps_node_distance_m": 1582,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Point Arena",
@@ -5961,7 +6210,10 @@
     "nwps_node_lat": 38.90375,
     "nwps_node_lng": -123.71,
     "nwps_node_distance_m": 574,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ponto Beach",
@@ -6029,7 +6281,10 @@
     "nwps_node_lat": 33.07687,
     "nwps_node_lng": -117.33333,
     "nwps_node_distance_m": 1968,
-    "nwps_buoy_id": "46274"
+    "nwps_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Redondo Beach, California",
@@ -6095,7 +6350,10 @@
     "nwps_node_lat": 33.82682,
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 2658,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Redondo Breakwater",
@@ -6166,7 +6424,10 @@
     "nwps_node_lat": 33.82682,
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 2426,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Refugio State Beach",
@@ -6241,7 +6502,10 @@
     "nwps_node_lat": 34.44023,
     "nwps_node_lng": -120.05064,
     "nwps_node_distance_m": 2404,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rincon",
@@ -6316,7 +6580,10 @@
     "nwps_node_lat": 34.36807,
     "nwps_node_lng": -119.49191,
     "nwps_node_distance_m": 1299,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "River Jetties",
@@ -6394,7 +6661,10 @@
     "nwps_node_lat": 33.61032,
     "nwps_node_lng": -117.98766,
     "nwps_node_distance_m": 3292,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rockaway Beach Pacifica",
@@ -6465,7 +6735,10 @@
     "nwps_node_lat": 37.61754,
     "nwps_node_lng": -122.5,
     "nwps_node_distance_m": 877,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rockpile",
@@ -6547,7 +6820,10 @@
     "nwps_node_lat": 34.40415,
     "nwps_node_lng": -119.9217,
     "nwps_node_distance_m": 2668,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Salmon Creek Beach",
@@ -6618,7 +6894,10 @@
     "nwps_node_lat": 38.33962,
     "nwps_node_lng": -123.0775,
     "nwps_node_distance_m": 680,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Salt Creek",
@@ -6687,7 +6966,10 @@
     "mop_shore_normal": 248.5,
     "mop_match_distance_m": 486,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC172_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "San Diego Blacks Beach",
@@ -6758,7 +7040,10 @@
     "nwps_node_lat": 32.8775,
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 1537,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "San Elijo State Beach",
@@ -6828,7 +7113,10 @@
     "mop_shore_normal": 242.52000427246094,
     "mop_match_distance_m": 616,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0690_nowcast.nc",
-    "mop_buoy_id": "46266"
+    "mop_buoy_id": "46266",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "San Onofre",
@@ -6895,7 +7183,10 @@
     "nwps_node_lat": 33.36687,
     "nwps_node_lng": -117.56838,
     "nwps_node_distance_m": 657,
-    "nwps_buoy_id": "46275"
+    "nwps_buoy_id": "46275",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "San Simeon",
@@ -6961,7 +7252,10 @@
     "nwps_node_lat": 35.60926,
     "nwps_node_lng": -121.1525,
     "nwps_node_distance_m": 562,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sand Dollar Beach",
@@ -7031,7 +7325,10 @@
     "nwps_node_lat": 35.92517,
     "nwps_node_lng": -121.4825,
     "nwps_node_distance_m": 1098,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sandspit",
@@ -7111,7 +7408,10 @@
     "nwps_node_lat": 34.36807,
     "nwps_node_lng": -119.66383,
     "nwps_node_distance_m": 4675,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Santa Monica Beach",
@@ -7179,7 +7479,10 @@
     "nwps_node_lat": 34.00724,
     "nwps_node_lng": -118.54638,
     "nwps_node_distance_m": 3752,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Scotts Creek",
@@ -7247,7 +7550,10 @@
     "nwps_node_lat": 37.03085,
     "nwps_node_lng": -122.2525,
     "nwps_node_distance_m": 2048,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Seal Beach Pier",
@@ -7327,7 +7633,10 @@
     "nwps_node_lat": 33.71857,
     "nwps_node_lng": -118.1166,
     "nwps_node_distance_m": 2266,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Seal Beach, California",
@@ -7391,7 +7700,10 @@
     "nwps_node_lat": 33.71857,
     "nwps_node_lng": -118.1166,
     "nwps_node_distance_m": 5506,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Second Peak",
@@ -7465,7 +7777,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -121.9775,
     "nwps_node_distance_m": 1782,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sewer Peak",
@@ -7540,7 +7855,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -121.9775,
     "nwps_node_distance_m": 1496,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sharp Park",
@@ -7611,7 +7929,10 @@
     "nwps_node_lat": 37.64011,
     "nwps_node_lng": -122.5,
     "nwps_node_distance_m": 902,
-    "nwps_buoy_id": "46237"
+    "nwps_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Shell Beach",
@@ -7676,7 +7997,10 @@
     "nwps_node_lat": 35.12581,
     "nwps_node_lng": -120.69532,
     "nwps_node_distance_m": 3843,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Shelter Cove",
@@ -7745,7 +8069,10 @@
     "nwps_node_lat": 39.9924,
     "nwps_node_lng": -124.04524,
     "nwps_node_distance_m": 3771,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Solana Beach",
@@ -7812,7 +8139,10 @@
     "mop_shore_normal": 257.010009765625,
     "mop_match_distance_m": 663,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0652_nowcast.nc",
-    "mop_buoy_id": "46266"
+    "mop_buoy_id": "46266",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Steamer Lane",
@@ -7883,7 +8213,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -122.0325,
     "nwps_node_distance_m": 1359,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Stinson Beach",
@@ -7952,7 +8285,10 @@
     "mop_shore_normal": 214.5,
     "mop_match_distance_m": 1012,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MA124_nowcast.nc",
-    "mop_buoy_id": "46237"
+    "mop_buoy_id": "46237",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Stone Steps",
@@ -8021,7 +8357,10 @@
     "nwps_node_lat": 33.095,
     "nwps_node_lng": -117.33333,
     "nwps_node_distance_m": 1280,
-    "nwps_buoy_id": "46274"
+    "nwps_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Strands Beach",
@@ -8093,7 +8432,10 @@
     "nwps_node_lat": 33.4575,
     "nwps_node_lng": -117.71795,
     "nwps_node_distance_m": 1160,
-    "nwps_buoy_id": "46285"
+    "nwps_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Suicide's",
@@ -8174,7 +8516,10 @@
     "nwps_node_lng": -155.87037,
     "nwps_node_distance_m": 2268,
     "nwps_buoy_id": null,
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sunset Cliffs",
@@ -8246,7 +8591,10 @@
     "mop_shore_normal": 264.4700012207031,
     "mop_match_distance_m": 800,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0317_nowcast.nc",
-    "mop_buoy_id": "46258"
+    "mop_buoy_id": "46258",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surf Beach Vandenberg",
@@ -8313,7 +8661,10 @@
     "nwps_node_lat": 34.69281,
     "nwps_node_lng": -120.65234,
     "nwps_node_distance_m": 4160,
-    "nwps_buoy_id": "46215"
+    "nwps_buoy_id": "46215",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surfside Jetty",
@@ -8389,7 +8740,10 @@
     "nwps_node_lat": 33.71857,
     "nwps_node_lng": -118.1166,
     "nwps_node_distance_m": 2768,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surfside, California",
@@ -8461,7 +8815,10 @@
     "nwps_node_lat": 33.71857,
     "nwps_node_lng": -118.1166,
     "nwps_node_distance_m": 3075,
-    "nwps_buoy_id": "46256"
+    "nwps_buoy_id": "46256",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Swamis",
@@ -8530,7 +8887,10 @@
     "mop_shore_normal": 219.50999450683594,
     "mop_match_distance_m": 602,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0708_nowcast.nc",
-    "mop_buoy_id": "46266"
+    "mop_buoy_id": "46266",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "T Street Beach",
@@ -8600,7 +8960,10 @@
     "mop_shore_normal": 232.0,
     "mop_match_distance_m": 758,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC040_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Tamarack",
@@ -8670,7 +9033,10 @@
     "nwps_node_lat": 33.14937,
     "nwps_node_lng": -117.3547,
     "nwps_node_distance_m": 758,
-    "nwps_buoy_id": "46274"
+    "nwps_buoy_id": "46274",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Thalia Street",
@@ -8738,7 +9104,10 @@
     "mop_shore_normal": 237.9499969482422,
     "mop_match_distance_m": 386,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC259_nowcast.nc",
-    "mop_buoy_id": "46277"
+    "mop_buoy_id": "46277",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "The Hook",
@@ -8815,7 +9184,10 @@
     "nwps_node_lat": 36.96316,
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 1348,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "The Pier Beach",
@@ -8882,7 +9254,10 @@
     "mop_shore_normal": 235.97999572753906,
     "mop_match_distance_m": 839,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC043_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "The Wedge",
@@ -8956,7 +9331,10 @@
     "mop_shore_normal": 196.02999877929688,
     "mop_match_distance_m": 355,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC381_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Toes Over",
@@ -9024,7 +9402,10 @@
     "nwps_node_lat": 36.96316,
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 956,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Topanga Beach",
@@ -9093,7 +9474,10 @@
     "nwps_node_lat": 34.00724,
     "nwps_node_lng": -118.58936,
     "nwps_node_distance_m": 3402,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Torrance Beach",
@@ -9161,7 +9545,10 @@
     "mop_shore_normal": 281.0400085449219,
     "mop_match_distance_m": 321,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0465_nowcast.nc",
-    "mop_buoy_id": "46221"
+    "mop_buoy_id": "46221",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Torrey Pines State Beach",
@@ -9226,7 +9613,10 @@
     "mop_shore_normal": 262.0,
     "mop_match_distance_m": 463,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0585_nowcast.nc",
-    "mop_buoy_id": "46266"
+    "mop_buoy_id": "46266",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Tourmaline",
@@ -9291,7 +9681,10 @@
     "nwps_node_lat": 32.805,
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 509,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "3 Mile",
@@ -9360,7 +9753,10 @@
     "nwps_node_lat": 36.94059,
     "nwps_node_lng": -122.115,
     "nwps_node_distance_m": 2307,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Trestles",
@@ -9428,7 +9824,10 @@
     "mop_shore_normal": 220.00999450683594,
     "mop_match_distance_m": 739,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1203_nowcast.nc",
-    "mop_buoy_id": "46277"
+    "mop_buoy_id": "46277",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Trinidad State Beach",
@@ -9497,7 +9896,10 @@
     "nwps_node_lat": 41.04194,
     "nwps_node_lng": -124.18429,
     "nwps_node_distance_m": 3355,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Upper Trestles",
@@ -9567,7 +9969,10 @@
     "mop_shore_normal": 218.50999450683594,
     "mop_match_distance_m": 627,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D1208_nowcast.nc",
-    "mop_buoy_id": "46285"
+    "mop_buoy_id": "46285",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Venice Beach Breakwater",
@@ -9636,7 +10041,10 @@
     "nwps_node_lat": 33.97115,
     "nwps_node_lng": -118.5034,
     "nwps_node_distance_m": 2873,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ventura Point",
@@ -9710,7 +10118,10 @@
     "nwps_node_lat": 34.25982,
     "nwps_node_lng": -119.32,
     "nwps_node_distance_m": 1950,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Waddell Creek",
@@ -9782,7 +10193,10 @@
     "nwps_node_lat": 37.07598,
     "nwps_node_lng": -122.28,
     "nwps_node_distance_m": 2297,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Windansea Beach",
@@ -9855,7 +10269,10 @@
     "nwps_node_lat": 32.82312,
     "nwps_node_lng": -117.2906,
     "nwps_node_distance_m": 1208,
-    "nwps_buoy_id": "46254"
+    "nwps_buoy_id": "46254",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Zuma Beach",
@@ -9923,7 +10340,10 @@
     "nwps_node_lat": 34.00724,
     "nwps_node_lng": -118.84723,
     "nwps_node_distance_m": 2677,
-    "nwps_buoy_id": "46268"
+    "nwps_buoy_id": "46268",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bethany Beach",
@@ -9994,7 +10414,10 @@
     "nwps_node_lat": 38.54054,
     "nwps_node_lng": -75.04655,
     "nwps_node_distance_m": 629,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Dewey Beach",
@@ -10060,7 +10483,10 @@
     "nwps_node_lat": 38.7027,
     "nwps_node_lng": -75.06724,
     "nwps_node_distance_m": 653,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Indian River Inlet",
@@ -10131,7 +10557,10 @@
     "nwps_node_lat": 38.6054,
     "nwps_node_lng": -75.04655,
     "nwps_node_distance_m": 1177,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lewes Street Surf Beach",
@@ -10190,7 +10619,10 @@
     "nwps_node_lat": 38.47567,
     "nwps_node_lng": -75.04655,
     "nwps_node_distance_m": 919,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rehoboth Beach",
@@ -10256,7 +10688,10 @@
     "nwps_node_lat": 38.71891,
     "nwps_node_lng": -75.06724,
     "nwps_node_distance_m": 947,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Amelia Island",
@@ -10324,7 +10759,10 @@
     "nwps_node_lat": 30.61821,
     "nwps_node_lng": -81.42308,
     "nwps_node_distance_m": 1368,
-    "nwps_buoy_id": "41112"
+    "nwps_buoy_id": "41112",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Atlantic Beach",
@@ -10390,7 +10828,10 @@
     "nwps_node_lat": 30.34186,
     "nwps_node_lng": -81.38615,
     "nwps_node_distance_m": 1092,
-    "nwps_buoy_id": "41112"
+    "nwps_buoy_id": "41112",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bathtub Beach",
@@ -10459,7 +10900,10 @@
     "nwps_node_lat": 27.19677,
     "nwps_node_lng": -80.16403,
     "nwps_node_distance_m": 1273,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Boca Raton Inlet",
@@ -10532,7 +10976,10 @@
     "nwps_node_lat": 26.332,
     "nwps_node_lng": -80.06738,
     "nwps_node_distance_m": 455,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Boynton Beach Inlet",
@@ -10605,7 +11052,10 @@
     "nwps_node_lat": 26.512,
     "nwps_node_lng": -80.04765,
     "nwps_node_distance_m": 1714,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cocoa Beach Pier",
@@ -10674,7 +11124,10 @@
     "nwps_node_lat": 28.36346,
     "nwps_node_lng": -80.60025,
     "nwps_node_distance_m": 461,
-    "nwps_buoy_id": "41113"
+    "nwps_buoy_id": "41113",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Dania Beach Pier",
@@ -10751,7 +11204,10 @@
     "nwps_node_lat": 26.062,
     "nwps_node_lng": -80.10685,
     "nwps_node_distance_m": 539,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Daytona Beach",
@@ -10818,7 +11274,10 @@
     "nwps_node_lat": 29.17142,
     "nwps_node_lng": -80.96154,
     "nwps_node_distance_m": 1717,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Deerfield Beach Pier",
@@ -10895,7 +11354,10 @@
     "nwps_node_lat": 26.314,
     "nwps_node_lng": -80.06738,
     "nwps_node_distance_m": 716,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Delray Beach",
@@ -10966,7 +11428,10 @@
     "nwps_node_lat": 26.458,
     "nwps_node_lng": -80.04765,
     "nwps_node_distance_m": 982,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Destin Jetty",
@@ -11036,7 +11501,10 @@
     "nwps_node_lat": 30.37337,
     "nwps_node_lng": -86.5031,
     "nwps_node_distance_m": 913,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Flagler Beach Pier",
@@ -11111,7 +11579,10 @@
     "nwps_node_lat": 29.48029,
     "nwps_node_lng": -81.10923,
     "nwps_node_distance_m": 1582,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Fort Lauderdale Beach",
@@ -11187,7 +11658,10 @@
     "nwps_node_lat": 26.152,
     "nwps_node_lng": -80.08712,
     "nwps_node_distance_m": 1524,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Fort Pierce Inlet",
@@ -11255,7 +11729,10 @@
     "nwps_node_lat": 27.47224,
     "nwps_node_lng": -80.27308,
     "nwps_node_distance_m": 1576,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Haulover Inlet",
@@ -11331,7 +11808,10 @@
     "nwps_node_lat": 25.9,
     "nwps_node_lng": -80.10685,
     "nwps_node_distance_m": 1458,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Indian Rocks Beach",
@@ -11402,7 +11882,10 @@
     "nwps_node_lat": 27.89937,
     "nwps_node_lng": -82.86304,
     "nwps_node_distance_m": 1275,
-    "nwps_buoy_id": "42098"
+    "nwps_buoy_id": "42098",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jacksonville Beach Pier",
@@ -11478,7 +11961,10 @@
     "nwps_node_lat": 30.29309,
     "nwps_node_lng": -81.38615,
     "nwps_node_distance_m": 158,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jetty Park Cocoa Beach",
@@ -11554,7 +12040,10 @@
     "nwps_node_lat": 28.41207,
     "nwps_node_lng": -80.58208,
     "nwps_node_distance_m": 854,
-    "nwps_buoy_id": "41113"
+    "nwps_buoy_id": "41113",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Juno Beach Pier",
@@ -11627,7 +12116,10 @@
     "nwps_node_lat": 26.89,
     "nwps_node_lng": -80.04765,
     "nwps_node_distance_m": 880,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jupiter Inlet",
@@ -11702,7 +12194,10 @@
     "nwps_node_lat": 26.944,
     "nwps_node_lng": -80.06738,
     "nwps_node_distance_m": 397,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lake Worth Pier",
@@ -11776,7 +12271,10 @@
     "nwps_node_lat": 26.62,
     "nwps_node_lng": -80.02792,
     "nwps_node_distance_m": 1143,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lori Wilson Park",
@@ -11844,7 +12342,10 @@
     "nwps_node_lat": 28.33105,
     "nwps_node_lng": -80.60025,
     "nwps_node_distance_m": 641,
-    "nwps_buoy_id": "41113"
+    "nwps_buoy_id": "41113",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Marineland",
@@ -11906,7 +12407,10 @@
     "nwps_node_lat": 29.67536,
     "nwps_node_lng": -81.20154,
     "nwps_node_distance_m": 1105,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Matanzas Inlet",
@@ -11974,7 +12478,10 @@
     "nwps_node_lat": 29.70787,
     "nwps_node_lng": -81.22,
     "nwps_node_distance_m": 213,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mayport Poles",
@@ -12044,7 +12551,10 @@
     "nwps_node_lat": 30.39062,
     "nwps_node_lng": -81.38615,
     "nwps_node_distance_m": 1230,
-    "nwps_buoy_id": "41112"
+    "nwps_buoy_id": "41112",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mexico Beach",
@@ -12112,7 +12622,10 @@
     "nwps_node_lat": 29.92014,
     "nwps_node_lng": -85.39845,
     "nwps_node_distance_m": 1244,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Monster Hole",
@@ -12178,7 +12691,10 @@
     "nwps_node_lat": 27.86114,
     "nwps_node_lng": -80.43667,
     "nwps_node_distance_m": 1274,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Naples Pier",
@@ -12246,7 +12762,10 @@
     "nwps_node_lat": 26.13128,
     "nwps_node_lng": -81.82283,
     "nwps_node_distance_m": 1453,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Navarre Beach",
@@ -12313,7 +12832,10 @@
     "nwps_node_lat": 30.37337,
     "nwps_node_lng": -86.85291,
     "nwps_node_distance_m": 1015,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "New Smyrna Beach Inlet",
@@ -12384,7 +12906,10 @@
     "nwps_node_lat": 29.07389,
     "nwps_node_lng": -80.90615,
     "nwps_node_distance_m": 427,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "North Jetty",
@@ -12458,7 +12983,10 @@
     "nwps_node_lat": 27.86114,
     "nwps_node_lng": -80.43667,
     "nwps_node_distance_m": 976,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Okaloosa Island Pier",
@@ -12525,7 +13053,10 @@
     "nwps_node_lat": 30.38956,
     "nwps_node_lng": -86.59516,
     "nwps_node_distance_m": 345,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Palm Beach",
@@ -12588,7 +13119,10 @@
     "nwps_node_lat": 26.71,
     "nwps_node_lng": -80.02792,
     "nwps_node_distance_m": 864,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Panama City Beach Pier",
@@ -12649,7 +13183,10 @@
     "nwps_node_lat": 30.2115,
     "nwps_node_lng": -85.87713,
     "nwps_node_distance_m": 369,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Patrick Air Force Base Beach",
@@ -12708,7 +13245,10 @@
     "nwps_node_lat": 28.26624,
     "nwps_node_lng": -80.60025,
     "nwps_node_distance_m": 904,
-    "nwps_buoy_id": "41113"
+    "nwps_buoy_id": "41113",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pensacola Beach",
@@ -12769,7 +13309,10 @@
     "nwps_node_lat": 30.32481,
     "nwps_node_lng": -87.14748,
     "nwps_node_distance_m": 816,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Playalinda Beach",
@@ -12829,7 +13372,10 @@
     "nwps_node_lat": 28.75236,
     "nwps_node_lng": -80.69113,
     "nwps_node_distance_m": 1270,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pompano Beach Pier",
@@ -12896,7 +13442,10 @@
     "nwps_node_lat": 26.224,
     "nwps_node_lng": -80.08712,
     "nwps_node_distance_m": 1243,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ponce Inlet",
@@ -12955,7 +13504,10 @@
     "nwps_node_lat": 29.12266,
     "nwps_node_lng": -80.94308,
     "nwps_node_distance_m": 641,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ponte Vedra Beach",
@@ -13016,7 +13568,10 @@
     "nwps_node_lat": 30.22806,
     "nwps_node_lng": -81.36769,
     "nwps_node_distance_m": 1006,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Satellite Beach",
@@ -13075,7 +13630,10 @@
     "nwps_node_lat": 28.16901,
     "nwps_node_lng": -80.58208,
     "nwps_node_distance_m": 708,
-    "nwps_buoy_id": "41113"
+    "nwps_buoy_id": "41113",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sebastian Inlet",
@@ -13133,7 +13691,10 @@
     "nwps_node_lat": 27.86114,
     "nwps_node_lng": -80.43667,
     "nwps_node_distance_m": 989,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "South Beach Miami",
@@ -13196,7 +13757,10 @@
     "nwps_node_lat": 25.774,
     "nwps_node_lng": -80.12658,
     "nwps_node_distance_m": 284,
-    "nwps_buoy_id": "41122"
+    "nwps_buoy_id": "41122",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "St. Augustine Beach Pier",
@@ -13257,7 +13821,10 @@
     "nwps_node_lat": 29.85418,
     "nwps_node_lng": -81.25692,
     "nwps_node_distance_m": 713,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "St. Pete Beach",
@@ -13315,7 +13882,10 @@
     "nwps_node_lat": 27.73716,
     "nwps_node_lng": -82.77337,
     "nwps_node_distance_m": 1306,
-    "nwps_buoy_id": "42098"
+    "nwps_buoy_id": "42098",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Treasure Island FL",
@@ -13373,7 +13943,10 @@
     "nwps_node_lat": 27.75338,
     "nwps_node_lng": -82.77337,
     "nwps_node_distance_m": 1014,
-    "nwps_buoy_id": "42098"
+    "nwps_buoy_id": "42098",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Venice Beach FL",
@@ -13433,7 +14006,10 @@
     "nwps_node_lat": 27.10454,
     "nwps_node_lng": -82.46848,
     "nwps_node_distance_m": 958,
-    "nwps_buoy_id": "42098"
+    "nwps_buoy_id": "42098",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Vilano Beach",
@@ -13493,7 +14069,10 @@
     "nwps_node_lat": 29.9192,
     "nwps_node_lng": -81.27538,
     "nwps_node_distance_m": 1333,
-    "nwps_buoy_id": "41117"
+    "nwps_buoy_id": "41117",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ala Moana Bowls",
@@ -13554,7 +14133,10 @@
     "nwps_node_lat": 21.26234,
     "nwps_node_lng": -157.84074,
     "nwps_node_distance_m": 2087,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Anahola Bay",
@@ -13612,7 +14194,10 @@
     "nwps_node_lat": 22.16399,
     "nwps_node_lng": -159.29933,
     "nwps_node_distance_m": 1806,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Backdoor Pipeline",
@@ -13675,7 +14260,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1743,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Banyans",
@@ -13734,7 +14322,10 @@
     "nwps_node_lat": 19.60525,
     "nwps_node_lng": -155.99832,
     "nwps_node_distance_m": 2226,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Banzai Pipeline",
@@ -13802,7 +14393,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1657,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Barbers Point",
@@ -13872,7 +14466,10 @@
     "nwps_node_lat": 21.28671,
     "nwps_node_lng": -158.09663,
     "nwps_node_distance_m": 1446,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bellows Beach",
@@ -13933,7 +14530,10 @@
     "nwps_node_lat": 21.35982,
     "nwps_node_lng": -157.68721,
     "nwps_node_distance_m": 2092,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Big Beach Makena",
@@ -14001,7 +14601,10 @@
     "nwps_node_lat": 20.62875,
     "nwps_node_lng": -156.45892,
     "nwps_node_distance_m": 1330,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Canoes Waikiki",
@@ -14062,7 +14665,10 @@
     "nwps_node_lat": 21.26234,
     "nwps_node_lng": -157.84074,
     "nwps_node_distance_m": 1866,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Chuns Reef",
@@ -14126,7 +14732,10 @@
     "nwps_node_lat": 21.62787,
     "nwps_node_lng": -158.09663,
     "nwps_node_distance_m": 1615,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Diamond Head Cliffs",
@@ -14184,7 +14793,10 @@
     "nwps_node_lat": 21.23797,
     "nwps_node_lng": -157.81515,
     "nwps_node_distance_m": 1870,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ehukai Beach Park",
@@ -14248,7 +14860,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1345,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Electric Beach",
@@ -14313,7 +14928,10 @@
     "nwps_node_lat": 21.35982,
     "nwps_node_lng": -158.14781,
     "nwps_node_distance_m": 1628,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Flemings Beach",
@@ -14377,7 +14995,10 @@
     "nwps_node_lat": 21.01865,
     "nwps_node_lng": -156.66364,
     "nwps_node_distance_m": 1609,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Haleiwa Ali'i Beach",
@@ -14435,7 +15056,10 @@
     "nwps_node_lat": 21.60351,
     "nwps_node_lng": -158.12222,
     "nwps_node_distance_m": 1725,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hanalei Bay",
@@ -14496,7 +15120,10 @@
     "nwps_node_lat": 22.21273,
     "nwps_node_lng": -159.50404,
     "nwps_node_distance_m": 610,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hapuna Beach",
@@ -14561,7 +15188,10 @@
     "nwps_node_lng": -155.84478,
     "nwps_node_distance_m": 1925,
     "nwps_buoy_id": null,
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Honoli‘i",
@@ -14620,7 +15250,10 @@
     "nwps_node_lat": 19.75146,
     "nwps_node_lng": -155.0771,
     "nwps_node_distance_m": 1529,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Honolua Bay",
@@ -14685,7 +15318,10 @@
     "nwps_node_lng": -156.66364,
     "nwps_node_distance_m": 2565,
     "nwps_buoy_id": null,
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hoʻokipa",
@@ -14747,7 +15383,10 @@
     "nwps_node_lat": 20.94554,
     "nwps_node_lng": -156.35657,
     "nwps_node_distance_m": 1301,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kaisers",
@@ -14806,7 +15445,10 @@
     "nwps_node_lat": 21.26234,
     "nwps_node_lng": -157.84074,
     "nwps_node_distance_m": 1970,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kanaha Beach",
@@ -14867,7 +15509,10 @@
     "nwps_node_lat": 20.92117,
     "nwps_node_lng": -156.43333,
     "nwps_node_distance_m": 2486,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Keaau Beach",
@@ -14929,7 +15574,10 @@
     "nwps_node_lat": 21.50603,
     "nwps_node_lng": -158.25017,
     "nwps_node_distance_m": 2455,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kiahuna Beach",
@@ -14991,7 +15639,10 @@
     "nwps_node_lat": 21.87156,
     "nwps_node_lng": -159.47845,
     "nwps_node_distance_m": 2070,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kolekole Beach Park",
@@ -15050,7 +15701,10 @@
     "nwps_node_lat": 19.87331,
     "nwps_node_lng": -155.10269,
     "nwps_node_distance_m": 1940,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lahaina Breakwall",
@@ -15111,7 +15765,10 @@
     "nwps_node_lat": 20.87244,
     "nwps_node_lng": -156.68923,
     "nwps_node_distance_m": 1007,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Laniakea",
@@ -15174,7 +15831,10 @@
     "nwps_node_lat": 21.62787,
     "nwps_node_lng": -158.09663,
     "nwps_node_distance_m": 1414,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Launiupoko",
@@ -15239,7 +15899,10 @@
     "nwps_node_lat": 20.84807,
     "nwps_node_lng": -156.66364,
     "nwps_node_distance_m": 1206,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Log Cabins",
@@ -15303,7 +15966,10 @@
     "nwps_node_lat": 21.65224,
     "nwps_node_lng": -158.07104,
     "nwps_node_distance_m": 835,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lymans",
@@ -15362,7 +16028,10 @@
     "nwps_node_lat": 19.60525,
     "nwps_node_lng": -155.99832,
     "nwps_node_distance_m": 2352,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Makaha",
@@ -15428,7 +16097,10 @@
     "nwps_node_lat": 21.45729,
     "nwps_node_lng": -158.22458,
     "nwps_node_distance_m": 2292,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Makapuu Beach Park",
@@ -15494,7 +16166,10 @@
     "nwps_node_lat": 21.31108,
     "nwps_node_lng": -157.63603,
     "nwps_node_distance_m": 2364,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Off The Wall",
@@ -15557,7 +16232,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1864,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pakala",
@@ -15621,7 +16299,10 @@
     "nwps_node_lat": 21.9203,
     "nwps_node_lng": -159.65758,
     "nwps_node_distance_m": 1692,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Peahi Jaws",
@@ -15681,7 +16362,10 @@
     "nwps_node_lat": 20.96991,
     "nwps_node_lng": -156.2798,
     "nwps_node_distance_m": 2027,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pine Trees Hawaii",
@@ -15740,7 +16424,10 @@
     "nwps_node_lat": 19.67835,
     "nwps_node_lng": -156.04949,
     "nwps_node_distance_m": 1915,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Poipu Beach",
@@ -15803,7 +16490,10 @@
     "nwps_node_lat": 21.87156,
     "nwps_node_lng": -159.47845,
     "nwps_node_distance_m": 2429,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Polihale Beach",
@@ -15867,7 +16557,10 @@
     "nwps_node_lat": 22.09089,
     "nwps_node_lng": -159.75993,
     "nwps_node_distance_m": 420,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Puaena Point",
@@ -15931,7 +16624,10 @@
     "nwps_node_lat": 21.60351,
     "nwps_node_lng": -158.12222,
     "nwps_node_distance_m": 1566,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Publics Waikiki",
@@ -15990,7 +16686,10 @@
     "nwps_node_lat": 21.26234,
     "nwps_node_lng": -157.84074,
     "nwps_node_distance_m": 1774,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pūpūkea, Hawaii",
@@ -16051,7 +16750,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1070,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Queens Waikiki",
@@ -16111,7 +16813,10 @@
     "nwps_node_lat": 21.26234,
     "nwps_node_lng": -157.84074,
     "nwps_node_distance_m": 1870,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Richardson Beach",
@@ -16171,7 +16876,10 @@
     "nwps_node_lat": 19.75146,
     "nwps_node_lng": -155.02593,
     "nwps_node_distance_m": 2079,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rocky Point",
@@ -16235,7 +16943,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 678,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sandy Beach Oahu",
@@ -16298,7 +17009,10 @@
     "nwps_node_lat": 21.28671,
     "nwps_node_lng": -157.66162,
     "nwps_node_distance_m": 1100,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sunset Beach Hawaii",
@@ -16361,7 +17075,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 479,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Thousand Peaks Maui",
@@ -16425,7 +17142,10 @@
     "nwps_node_lng": -156.61246,
     "nwps_node_distance_m": 1387,
     "nwps_buoy_id": null,
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Tunnels Beach",
@@ -16486,7 +17206,10 @@
     "nwps_node_lat": 22.2371,
     "nwps_node_lng": -159.55522,
     "nwps_node_distance_m": 1635,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Turtle Bay",
@@ -16550,7 +17273,10 @@
     "nwps_node_lat": 21.70098,
     "nwps_node_lng": -158.01987,
     "nwps_node_distance_m": 2124,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Velzyland",
@@ -16614,7 +17340,10 @@
     "nwps_node_lat": 21.67661,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1570,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Waimea Bay",
@@ -16679,7 +17408,10 @@
     "nwps_node_lat": 21.65224,
     "nwps_node_lng": -158.07104,
     "nwps_node_distance_m": 1399,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "White Plains Beach",
@@ -16740,7 +17472,10 @@
     "nwps_node_lat": 21.28671,
     "nwps_node_lng": -158.04545,
     "nwps_node_distance_m": 1800,
-    "nwps_buoy_id": "51211"
+    "nwps_buoy_id": "51211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Yokohama Bay",
@@ -16804,7 +17539,10 @@
     "nwps_node_lat": 21.5304,
     "nwps_node_lng": -158.25017,
     "nwps_node_distance_m": 2071,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Fortunes Rocks",
@@ -16865,7 +17603,10 @@
     "nwps_node_lat": 43.4147,
     "nwps_node_lng": -70.34844,
     "nwps_node_distance_m": 2484,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Gooch's Beach",
@@ -16924,7 +17665,10 @@
     "nwps_node_lat": 43.32451,
     "nwps_node_lng": -70.47031,
     "nwps_node_distance_m": 2583,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Higgins Beach",
@@ -16985,7 +17729,10 @@
     "nwps_node_lat": 43.55,
     "nwps_node_lng": -70.2875,
     "nwps_node_distance_m": 1285,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Long Sands Beach",
@@ -17046,7 +17793,10 @@
     "nwps_node_lng": -70.62266,
     "nwps_node_distance_m": 2195,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Old Orchard Beach",
@@ -17105,7 +17855,10 @@
     "nwps_node_lat": 43.5049,
     "nwps_node_lng": -70.34844,
     "nwps_node_distance_m": 2157,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Scarborough Beach",
@@ -17166,7 +17919,10 @@
     "nwps_node_lat": 43.55,
     "nwps_node_lng": -70.2875,
     "nwps_node_distance_m": 1929,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Short Sands Beach York",
@@ -17229,7 +17985,10 @@
     "nwps_node_lat": 43.16667,
     "nwps_node_lng": -70.59219,
     "nwps_node_distance_m": 1447,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Assateague Island MD",
@@ -17288,7 +18047,10 @@
     "nwps_node_lat": 38.20174,
     "nwps_node_lng": -75.13289,
     "nwps_node_distance_m": 1509,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean City MD 28th Street",
@@ -17347,7 +18109,10 @@
     "nwps_node_lat": 38.33157,
     "nwps_node_lng": -75.0727,
     "nwps_node_distance_m": 864,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean City MD Inlet",
@@ -17406,7 +18171,10 @@
     "nwps_node_lat": 38.33157,
     "nwps_node_lng": -75.0727,
     "nwps_node_distance_m": 1268,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cisco Beach",
@@ -17470,7 +18238,10 @@
     "nwps_node_lat": 41.24486,
     "nwps_node_lng": -70.17727,
     "nwps_node_distance_m": 2217,
-    "nwps_buoy_id": "44085"
+    "nwps_buoy_id": "44085",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Coast Guard Beach",
@@ -17530,7 +18301,10 @@
     "nwps_node_lat": 41.84101,
     "nwps_node_lng": -69.94026,
     "nwps_node_distance_m": 712,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Good Harbor Beach",
@@ -17589,7 +18363,10 @@
     "nwps_node_lng": -70.6276,
     "nwps_node_distance_m": 222,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Horseneck Beach",
@@ -17647,7 +18424,10 @@
     "nwps_node_lat": 41.49777,
     "nwps_node_lng": -71.05422,
     "nwps_node_distance_m": 669,
-    "nwps_buoy_id": "44085"
+    "nwps_buoy_id": "44085",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Marconi Beach",
@@ -17708,7 +18488,10 @@
     "nwps_node_lat": 41.91327,
     "nwps_node_lng": -69.96396,
     "nwps_node_distance_m": 901,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nahant Beach",
@@ -17769,7 +18552,10 @@
     "nwps_node_lat": 42.43715,
     "nwps_node_lng": -70.91201,
     "nwps_node_distance_m": 2174,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nantasket Beach",
@@ -17835,7 +18621,10 @@
     "nwps_node_lat": 42.27457,
     "nwps_node_lng": -70.84091,
     "nwps_node_distance_m": 1090,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nantucket Surf",
@@ -17898,7 +18687,10 @@
     "nwps_node_lat": 41.31712,
     "nwps_node_lng": -69.96396,
     "nwps_node_distance_m": 1823,
-    "nwps_buoy_id": "44085"
+    "nwps_buoy_id": "44085",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nauset Beach",
@@ -17957,7 +18749,10 @@
     "nwps_node_lat": 41.80488,
     "nwps_node_lng": -69.91656,
     "nwps_node_distance_m": 1662,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Plum Island",
@@ -18016,7 +18811,10 @@
     "nwps_node_lng": -70.79351,
     "nwps_node_distance_m": 1128,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hampton Beach",
@@ -18075,7 +18873,10 @@
     "nwps_node_lng": -70.80547,
     "nwps_node_distance_m": 1191,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jenness Beach",
@@ -18136,7 +18937,10 @@
     "nwps_node_lng": -70.74453,
     "nwps_node_distance_m": 1284,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "North Beach Rye",
@@ -18196,7 +19000,10 @@
     "nwps_node_lng": -70.74453,
     "nwps_node_distance_m": 1838,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "The Wall Hampton",
@@ -18256,7 +19063,10 @@
     "nwps_node_lng": -70.775,
     "nwps_node_distance_m": 2069,
     "nwps_buoy_id": "44098",
-    "nwps_direction_status": "unverifiable"
+    "nwps_direction_status": "unverifiable",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Asbury Park",
@@ -18317,7 +19127,10 @@
     "nwps_node_lng": -73.9854,
     "nwps_node_distance_m": 1329,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Atlantic City",
@@ -18375,7 +19188,10 @@
     "nwps_node_lat": 39.35134,
     "nwps_node_lng": -74.42586,
     "nwps_node_distance_m": 630,
-    "nwps_buoy_id": "44091"
+    "nwps_buoy_id": "44091",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Avalon NJ",
@@ -18434,7 +19250,10 @@
     "nwps_node_lat": 39.09188,
     "nwps_node_lng": -74.69483,
     "nwps_node_distance_m": 1594,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Avon-by-the-Sea",
@@ -18494,7 +19313,10 @@
     "nwps_node_lng": -73.99138,
     "nwps_node_distance_m": 1457,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Barnegat Light",
@@ -18554,7 +19376,10 @@
     "nwps_node_lng": -74.09483,
     "nwps_node_distance_m": 308,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bay Head",
@@ -18615,7 +19440,10 @@
     "nwps_node_lng": -74.03276,
     "nwps_node_distance_m": 705,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Belmar",
@@ -18676,7 +19504,10 @@
     "nwps_node_lng": -73.99138,
     "nwps_node_distance_m": 1552,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bradley Beach",
@@ -18737,7 +19568,10 @@
     "nwps_node_lng": -73.99138,
     "nwps_node_distance_m": 1301,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Brigantine",
@@ -18795,7 +19629,10 @@
     "nwps_node_lat": 39.39998,
     "nwps_node_lng": -74.36379,
     "nwps_node_distance_m": 963,
-    "nwps_buoy_id": "44091"
+    "nwps_buoy_id": "44091",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Deal",
@@ -18854,7 +19691,10 @@
     "nwps_node_lng": -73.9854,
     "nwps_node_distance_m": 892,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Harvey Cedars",
@@ -18913,7 +19753,10 @@
     "nwps_node_lng": -74.11552,
     "nwps_node_distance_m": 1487,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Island Beach State Park",
@@ -18974,7 +19817,10 @@
     "nwps_node_lng": -74.07414,
     "nwps_node_distance_m": 251,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Long Beach Island",
@@ -19034,7 +19880,10 @@
     "nwps_node_lng": -74.17759,
     "nwps_node_distance_m": 925,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Long Branch",
@@ -19094,7 +19943,10 @@
     "nwps_node_lng": -73.96429,
     "nwps_node_distance_m": 1123,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Manasquan Inlet",
@@ -19153,7 +20005,10 @@
     "nwps_node_lng": -74.03276,
     "nwps_node_distance_m": 1213,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Margate",
@@ -19212,7 +20067,10 @@
     "nwps_node_lat": 39.3189,
     "nwps_node_lng": -74.50862,
     "nwps_node_distance_m": 373,
-    "nwps_buoy_id": "44091"
+    "nwps_buoy_id": "44091",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean City NJ",
@@ -19270,7 +20128,10 @@
     "nwps_node_lat": 39.27026,
     "nwps_node_lng": -74.57069,
     "nwps_node_distance_m": 1153,
-    "nwps_buoy_id": "44091"
+    "nwps_buoy_id": "44091",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pier Village",
@@ -19330,7 +20191,10 @@
     "nwps_node_lng": -73.96429,
     "nwps_node_distance_m": 1074,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Point Pleasant Beach",
@@ -19391,7 +20255,10 @@
     "nwps_node_lng": -74.03276,
     "nwps_node_distance_m": 755,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sandy Hook",
@@ -19450,7 +20317,10 @@
     "nwps_node_lng": -73.96429,
     "nwps_node_distance_m": 1584,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sea Bright",
@@ -19510,7 +20380,10 @@
     "nwps_node_lng": -73.96429,
     "nwps_node_distance_m": 911,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sea Isle City",
@@ -19570,7 +20443,10 @@
     "nwps_node_lat": 39.15674,
     "nwps_node_lng": -74.67414,
     "nwps_node_distance_m": 1370,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Seaside Heights",
@@ -19629,7 +20505,10 @@
     "nwps_node_lng": -74.05345,
     "nwps_node_distance_m": 1467,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Seaside Park",
@@ -19688,7 +20567,10 @@
     "nwps_node_lng": -74.05345,
     "nwps_node_distance_m": 1441,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ship Bottom",
@@ -19748,7 +20630,10 @@
     "nwps_node_lng": -74.1569,
     "nwps_node_distance_m": 1345,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Spring Lake",
@@ -19808,7 +20693,10 @@
     "nwps_node_lng": -74.01207,
     "nwps_node_distance_m": 816,
     "nwps_buoy_id": "44065",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Stone Harbor",
@@ -19866,7 +20754,10 @@
     "nwps_node_lat": 39.04323,
     "nwps_node_lng": -74.7569,
     "nwps_node_distance_m": 426,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Strathmere",
@@ -19927,7 +20818,10 @@
     "nwps_node_lat": 39.18918,
     "nwps_node_lng": -74.65345,
     "nwps_node_distance_m": 856,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surf City NJ",
@@ -19987,7 +20881,10 @@
     "nwps_node_lng": -74.1569,
     "nwps_node_distance_m": 525,
     "nwps_buoy_id": "44091",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Wildwood",
@@ -20048,7 +20945,10 @@
     "nwps_node_lat": 38.97837,
     "nwps_node_lng": -74.79828,
     "nwps_node_distance_m": 1185,
-    "nwps_buoy_id": "44084"
+    "nwps_buoy_id": "44084",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cupsogue Beach",
@@ -20107,7 +21007,10 @@
     "nwps_node_lng": -72.73944,
     "nwps_node_distance_m": 756,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ditch Plains",
@@ -20168,7 +21071,10 @@
     "nwps_node_lng": -71.91584,
     "nwps_node_distance_m": 1604,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Fire Island",
@@ -20226,7 +21132,10 @@
     "nwps_node_lng": -73.24627,
     "nwps_node_distance_m": 1061,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Flying Point Beach",
@@ -20284,7 +21193,10 @@
     "nwps_node_lng": -72.38043,
     "nwps_node_distance_m": 1050,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Georgica Beach",
@@ -20344,7 +21256,10 @@
     "nwps_node_lng": -72.21149,
     "nwps_node_distance_m": 944,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Gilgo Beach",
@@ -20405,7 +21320,10 @@
     "nwps_node_lng": -73.37298,
     "nwps_node_distance_m": 1883,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jones Beach",
@@ -20464,7 +21382,10 @@
     "nwps_node_lng": -73.52081,
     "nwps_node_distance_m": 628,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lido Beach",
@@ -20525,7 +21446,10 @@
     "nwps_node_lng": -73.60528,
     "nwps_node_distance_m": 137,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Long Beach NY",
@@ -20583,7 +21507,10 @@
     "nwps_node_lng": -73.66863,
     "nwps_node_distance_m": 1682,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Main Beach East Hampton",
@@ -20643,7 +21570,10 @@
     "nwps_node_lng": -72.16925,
     "nwps_node_distance_m": 806,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mecox Beach",
@@ -20702,7 +21632,10 @@
     "nwps_node_lng": -72.31708,
     "nwps_node_distance_m": 1785,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Montauk Point",
@@ -20763,7 +21696,10 @@
     "nwps_node_lng": -71.85248,
     "nwps_node_distance_m": 338,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Point Lookout",
@@ -20823,7 +21759,10 @@
     "nwps_node_lng": -73.58416,
     "nwps_node_distance_m": 392,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ponquogue Beach",
@@ -20882,7 +21821,10 @@
     "nwps_node_lng": -72.48602,
     "nwps_node_distance_m": 1132,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Robert Moses State Park",
@@ -20941,7 +21883,10 @@
     "nwps_node_lng": -73.28851,
     "nwps_node_distance_m": 881,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rockaway 67th Street",
@@ -21001,7 +21946,10 @@
     "nwps_node_lng": -73.79534,
     "nwps_node_distance_m": 271,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rockaway 90th Street",
@@ -21061,7 +22009,10 @@
     "nwps_node_lng": -73.81646,
     "nwps_node_distance_m": 1528,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rockaway Beach",
@@ -21121,7 +22072,10 @@
     "nwps_node_lng": -73.79534,
     "nwps_node_distance_m": 975,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Shinnecock Inlet",
@@ -21179,7 +22133,10 @@
     "nwps_node_lng": -72.48602,
     "nwps_node_distance_m": 1383,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Smith Point Beach",
@@ -21237,7 +22194,10 @@
     "nwps_node_lng": -72.84503,
     "nwps_node_distance_m": 1638,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Turtle Cove Montauk",
@@ -21298,7 +22258,10 @@
     "nwps_node_lng": -71.85254,
     "nwps_node_distance_m": 1137,
     "nwps_buoy_id": "44025",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Atlantic Beach NC",
@@ -21359,7 +22322,10 @@
     "nwps_node_lat": 34.68725,
     "nwps_node_lng": -76.74041,
     "nwps_node_distance_m": 964,
-    "nwps_buoy_id": "41159"
+    "nwps_buoy_id": "41159",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Avalon Pier",
@@ -21420,7 +22386,10 @@
     "nwps_node_lat": 36.04672,
     "nwps_node_lng": -75.67018,
     "nwps_node_distance_m": 350,
-    "nwps_buoy_id": "44056"
+    "nwps_buoy_id": "44056",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Avon Pier",
@@ -21483,7 +22452,10 @@
     "nwps_node_lat": 35.34702,
     "nwps_node_lng": -75.49398,
     "nwps_node_distance_m": 512,
-    "nwps_buoy_id": "41120"
+    "nwps_buoy_id": "41120",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cape Hatteras Lighthouse",
@@ -21541,7 +22513,10 @@
     "nwps_node_lat": 35.21685,
     "nwps_node_lng": -75.53313,
     "nwps_node_distance_m": 1223,
-    "nwps_buoy_id": "41120"
+    "nwps_buoy_id": "41120",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Carolina Beach",
@@ -21599,7 +22574,10 @@
     "nwps_node_lat": 34.03333,
     "nwps_node_lng": -77.88904,
     "nwps_node_distance_m": 193,
-    "nwps_buoy_id": "41110"
+    "nwps_buoy_id": "41110",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Corolla Beach",
@@ -21660,7 +22638,10 @@
     "nwps_node_lat": 36.38843,
     "nwps_node_lng": -75.80723,
     "nwps_node_distance_m": 1596,
-    "nwps_buoy_id": "44056"
+    "nwps_buoy_id": "44056",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Duck Pier",
@@ -21726,7 +22707,10 @@
     "nwps_node_lat": 36.19317,
     "nwps_node_lng": -75.74849,
     "nwps_node_distance_m": 1140,
-    "nwps_buoy_id": "44056"
+    "nwps_buoy_id": "44056",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Emerald Isle",
@@ -21786,7 +22770,10 @@
     "nwps_node_lat": 34.64215,
     "nwps_node_lng": -77.03425,
     "nwps_node_distance_m": 1938,
-    "nwps_buoy_id": "41159"
+    "nwps_buoy_id": "41159",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Frisco Pier",
@@ -21845,7 +22832,10 @@
     "nwps_node_lat": 35.21685,
     "nwps_node_lng": -75.63102,
     "nwps_node_distance_m": 1417,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Holden Beach",
@@ -21906,7 +22896,10 @@
     "nwps_node_lat": 33.89804,
     "nwps_node_lng": -78.31644,
     "nwps_node_distance_m": 1249,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jennettes Pier",
@@ -21972,7 +22965,10 @@
     "nwps_node_lat": 35.91654,
     "nwps_node_lng": -75.59187,
     "nwps_node_distance_m": 725,
-    "nwps_buoy_id": "44086"
+    "nwps_buoy_id": "44086",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kill Devil Hills",
@@ -22032,7 +23028,10 @@
     "nwps_node_lat": 36.03045,
     "nwps_node_lng": -75.6506,
     "nwps_node_distance_m": 1279,
-    "nwps_buoy_id": "44056"
+    "nwps_buoy_id": "44056",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kitty Hawk Pier",
@@ -22099,7 +23098,10 @@
     "nwps_node_lat": 36.11181,
     "nwps_node_lng": -75.70934,
     "nwps_node_distance_m": 1167,
-    "nwps_buoy_id": "44056"
+    "nwps_buoy_id": "44056",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kure Beach",
@@ -22159,7 +23161,10 @@
     "nwps_node_lat": 33.98823,
     "nwps_node_lng": -77.88904,
     "nwps_node_distance_m": 1863,
-    "nwps_buoy_id": "41110"
+    "nwps_buoy_id": "41110",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nags Head Pier",
@@ -22231,7 +23236,10 @@
     "nwps_node_lat": 35.98163,
     "nwps_node_lng": -75.63102,
     "nwps_node_distance_m": 896,
-    "nwps_buoy_id": "44086"
+    "nwps_buoy_id": "44086",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean Isle Beach",
@@ -22290,7 +23298,10 @@
     "nwps_node_lat": 33.87549,
     "nwps_node_lng": -78.42329,
     "nwps_node_distance_m": 1554,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocracoke Beach",
@@ -22348,7 +23359,10 @@
     "nwps_node_lat": 35.08667,
     "nwps_node_lng": -75.96386,
     "nwps_node_distance_m": 987,
-    "nwps_buoy_id": "41120"
+    "nwps_buoy_id": "41120",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Oregon Inlet",
@@ -22413,7 +23427,10 @@
     "nwps_node_lat": 35.78637,
     "nwps_node_lng": -75.53313,
     "nwps_node_distance_m": 292,
-    "nwps_buoy_id": "44095"
+    "nwps_buoy_id": "44095",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rodanthe",
@@ -22484,7 +23501,10 @@
     "nwps_node_lat": 35.5911,
     "nwps_node_lng": -75.45482,
     "nwps_node_distance_m": 766,
-    "nwps_buoy_id": "44095"
+    "nwps_buoy_id": "44095",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Salvo",
@@ -22542,7 +23562,10 @@
     "nwps_node_lat": 35.54229,
     "nwps_node_lng": -75.45482,
     "nwps_node_distance_m": 1202,
-    "nwps_buoy_id": "44095"
+    "nwps_buoy_id": "44095",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sunset Beach NC",
@@ -22600,7 +23623,10 @@
     "nwps_node_lat": 33.85294,
     "nwps_node_lng": -78.50342,
     "nwps_node_distance_m": 1241,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surf City NC",
@@ -22658,7 +23684,10 @@
     "nwps_node_lat": 34.41666,
     "nwps_node_lng": -77.54178,
     "nwps_node_distance_m": 847,
-    "nwps_buoy_id": "41110"
+    "nwps_buoy_id": "41110",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "The Point Buxton",
@@ -22716,7 +23745,10 @@
     "nwps_node_lat": 35.23312,
     "nwps_node_lng": -75.51355,
     "nwps_node_distance_m": 1073,
-    "nwps_buoy_id": "41120"
+    "nwps_buoy_id": "41120",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Topsail Beach",
@@ -22777,7 +23809,10 @@
     "nwps_node_lat": 34.34902,
     "nwps_node_lng": -77.62192,
     "nwps_node_distance_m": 1616,
-    "nwps_buoy_id": "41110"
+    "nwps_buoy_id": "41110",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Wrightsville Beach",
@@ -22836,7 +23871,10 @@
     "nwps_node_lat": 34.21372,
     "nwps_node_lng": -77.78219,
     "nwps_node_distance_m": 1163,
-    "nwps_buoy_id": "41110"
+    "nwps_buoy_id": "41110",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Agate Beach Newport",
@@ -22898,7 +23936,10 @@
     "nwps_node_lat": 44.65648,
     "nwps_node_lng": -124.06983,
     "nwps_node_distance_m": 1438,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bandon Beach",
@@ -22963,7 +24004,10 @@
     "nwps_node_lat": 43.09531,
     "nwps_node_lng": -124.43725,
     "nwps_node_distance_m": 239,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bastendorff Beach",
@@ -23025,7 +24069,10 @@
     "nwps_node_lat": 43.34819,
     "nwps_node_lng": -124.36569,
     "nwps_node_distance_m": 1050,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Brookings Beach",
@@ -23081,7 +24128,10 @@
     "nwps_node_lat": 42.02959,
     "nwps_node_lng": -124.27026,
     "nwps_node_distance_m": 1354,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cannon Beach",
@@ -23148,7 +24198,10 @@
     "nwps_node_lat": 45.86717,
     "nwps_node_lng": -123.9705,
     "nwps_node_distance_m": 1051,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cape Kiwanda",
@@ -23208,7 +24261,10 @@
     "nwps_node_lat": 45.21665,
     "nwps_node_lng": -123.99533,
     "nwps_node_distance_m": 1229,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Florence South Jetty",
@@ -23267,7 +24323,10 @@
     "nwps_node_lat": 44.00596,
     "nwps_node_lng": -124.14433,
     "nwps_node_distance_m": 1056,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Gold Beach",
@@ -23328,7 +24387,10 @@
     "nwps_node_lat": 42.40891,
     "nwps_node_lng": -124.43725,
     "nwps_node_distance_m": 1013,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hubbard Creek",
@@ -23386,7 +24448,10 @@
     "nwps_node_lat": 42.73405,
     "nwps_node_lng": -124.48497,
     "nwps_node_distance_m": 699,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Indian Beach Ecola",
@@ -23447,7 +24512,10 @@
     "nwps_node_lat": 45.88524,
     "nwps_node_lng": -123.99533,
     "nwps_node_distance_m": 2326,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Lincoln City Beach",
@@ -23508,7 +24576,10 @@
     "nwps_node_lat": 44.99981,
     "nwps_node_lng": -124.02017,
     "nwps_node_distance_m": 254,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nelscott Reef",
@@ -23575,7 +24646,10 @@
     "nwps_node_lat": 44.96367,
     "nwps_node_lng": -124.045,
     "nwps_node_distance_m": 1689,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Nye Beach",
@@ -23638,7 +24712,10 @@
     "nwps_node_lat": 44.65648,
     "nwps_node_lng": -124.06983,
     "nwps_node_distance_m": 912,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Otter Rock",
@@ -23704,7 +24781,10 @@
     "nwps_node_lat": 44.80104,
     "nwps_node_lng": -124.09467,
     "nwps_node_distance_m": 1600,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pacific City Beach",
@@ -23769,7 +24849,10 @@
     "nwps_node_lat": 45.19858,
     "nwps_node_lng": -123.99533,
     "nwps_node_distance_m": 1654,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Roads End",
@@ -23835,7 +24918,10 @@
     "nwps_node_lat": 45.01788,
     "nwps_node_lng": -124.02017,
     "nwps_node_distance_m": 643,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Seaside Cove",
@@ -23896,7 +24982,10 @@
     "nwps_node_lat": 45.99366,
     "nwps_node_lng": -123.94567,
     "nwps_node_distance_m": 1799,
-    "nwps_buoy_id": "46243"
+    "nwps_buoy_id": "46243",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Short Sands Beach Oswald West",
@@ -23957,7 +25046,10 @@
     "nwps_node_lat": 45.75875,
     "nwps_node_lng": -123.99533,
     "nwps_node_distance_m": 2104,
-    "nwps_buoy_id": "46278"
+    "nwps_buoy_id": "46278",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "South Beach Newport",
@@ -24015,7 +25107,10 @@
     "nwps_node_lat": 44.60227,
     "nwps_node_lng": -124.09467,
     "nwps_node_distance_m": 1701,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Whiskey Run Beach",
@@ -24075,7 +25170,10 @@
     "nwps_node_lat": 43.20369,
     "nwps_node_lng": -124.4134,
     "nwps_node_distance_m": 1601,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Antonio's",
@@ -24145,7 +25243,10 @@
     "nwps_node_lat": 18.37989,
     "nwps_node_lng": -67.23729,
     "nwps_node_distance_m": 965,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Aviones",
@@ -24204,7 +25305,10 @@
     "nwps_node_lat": 18.46106,
     "nwps_node_lng": -65.9661,
     "nwps_node_distance_m": 922,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Crash Boat Beach",
@@ -24271,7 +25375,10 @@
     "nwps_node_lng": -67.16949,
     "nwps_node_distance_m": 735,
     "nwps_buoy_id": "41115",
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Dogmans Rincon",
@@ -24340,7 +25447,10 @@
     "nwps_node_lat": 18.33119,
     "nwps_node_lng": -67.25424,
     "nwps_node_distance_m": 1198,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Gas Chambers Aguadilla",
@@ -24406,7 +25516,10 @@
     "nwps_node_lng": -67.16949,
     "nwps_node_distance_m": 256,
     "nwps_buoy_id": "41115",
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Indicators",
@@ -24477,7 +25590,10 @@
     "nwps_node_lat": 18.36366,
     "nwps_node_lng": -67.27119,
     "nwps_node_distance_m": 356,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Jobos Beach Isabela",
@@ -24538,7 +25654,10 @@
     "nwps_node_lat": 18.526,
     "nwps_node_lng": -67.08475,
     "nwps_node_distance_m": 1164,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "La Pared Luquillo",
@@ -24597,7 +25716,10 @@
     "nwps_node_lat": 18.37989,
     "nwps_node_lng": -65.71186,
     "nwps_node_distance_m": 407,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Maria's",
@@ -24669,7 +25791,10 @@
     "nwps_node_lat": 18.34742,
     "nwps_node_lng": -67.27119,
     "nwps_node_distance_m": 1203,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Middles Isabela",
@@ -24728,7 +25853,10 @@
     "nwps_node_lat": 18.49353,
     "nwps_node_lng": -66.9661,
     "nwps_node_distance_m": 320,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pine Grove Beach",
@@ -24790,7 +25918,10 @@
     "nwps_node_lat": 18.46106,
     "nwps_node_lng": -66.01695,
     "nwps_node_distance_m": 1845,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Playa Guajataca",
@@ -24848,7 +25979,10 @@
     "nwps_node_lat": 18.49353,
     "nwps_node_lng": -66.94915,
     "nwps_node_distance_m": 762,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Playa Kikita",
@@ -24907,7 +26041,10 @@
     "nwps_node_lat": 18.49353,
     "nwps_node_lng": -66.27119,
     "nwps_node_distance_m": 1576,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Playa Manati",
@@ -24960,7 +26097,10 @@
     "nwps_node_lat": 18.49353,
     "nwps_node_lng": -66.52542,
     "nwps_node_distance_m": 917,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pools",
@@ -25032,7 +26172,10 @@
     "nwps_node_lat": 18.37989,
     "nwps_node_lng": -67.25424,
     "nwps_node_distance_m": 1468,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rincon Domes",
@@ -25101,7 +26244,10 @@
     "nwps_node_lat": 18.36366,
     "nwps_node_lng": -67.27119,
     "nwps_node_distance_m": 182,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sandy Beach",
@@ -25168,7 +26314,10 @@
     "nwps_node_lat": 18.37989,
     "nwps_node_lng": -67.25424,
     "nwps_node_distance_m": 983,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Shacks Beach",
@@ -25226,7 +26375,10 @@
     "nwps_node_lat": 18.526,
     "nwps_node_lng": -67.10169,
     "nwps_node_distance_m": 1447,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Steps Beach Rincon",
@@ -25294,7 +26446,10 @@
     "nwps_node_lat": 18.34742,
     "nwps_node_lng": -67.27119,
     "nwps_node_distance_m": 728,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surfers Beach Aguadilla",
@@ -25358,7 +26513,10 @@
     "nwps_node_lat": 18.50976,
     "nwps_node_lng": -67.13559,
     "nwps_node_distance_m": 286,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Table Tops Aguadilla",
@@ -25418,7 +26576,10 @@
     "nwps_node_lng": -67.16949,
     "nwps_node_distance_m": 1448,
     "nwps_buoy_id": "41115",
-    "swell_window_source_override": "manual"
+    "swell_window_source_override": "manual",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Tres Palmas",
@@ -25491,7 +26652,10 @@
     "nwps_node_lat": 18.34742,
     "nwps_node_lng": -67.27119,
     "nwps_node_distance_m": 698,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Wilderness",
@@ -25559,7 +26723,10 @@
     "nwps_node_lat": 18.49353,
     "nwps_node_lng": -67.16949,
     "nwps_node_distance_m": 932,
-    "nwps_buoy_id": "41115"
+    "nwps_buoy_id": "41115",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Charlestown Town Beach",
@@ -25627,7 +26794,10 @@
     "nwps_node_lng": -71.62305,
     "nwps_node_distance_m": 1040,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Conant Ave",
@@ -25692,7 +26862,10 @@
     "nwps_node_lng": -71.48084,
     "nwps_node_distance_m": 1791,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "East Matunuck State Beach",
@@ -25753,7 +26926,10 @@
     "nwps_node_lng": -71.52825,
     "nwps_node_distance_m": 2590,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Marys",
@@ -25806,7 +26982,10 @@
     "nwps_node_lng": -71.55195,
     "nwps_node_distance_m": 2348,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Matunuck",
@@ -25867,7 +27046,10 @@
     "nwps_node_lng": -71.52825,
     "nwps_node_distance_m": 2294,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Misquamicut State Beach",
@@ -25936,7 +27118,10 @@
     "nwps_node_lng": -71.78896,
     "nwps_node_distance_m": 876,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Monahans",
@@ -25997,7 +27182,10 @@
     "nwps_node_lng": -71.43344,
     "nwps_node_distance_m": 1868,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Moonstone Beach RI",
@@ -26055,7 +27243,10 @@
     "nwps_node_lng": -71.57565,
     "nwps_node_distance_m": 2024,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Narragansett Beach",
@@ -26116,7 +27307,10 @@
     "nwps_node_lng": -71.43344,
     "nwps_node_distance_m": 1950,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pilgrim Ave",
@@ -26182,7 +27376,10 @@
     "nwps_node_lng": -71.48084,
     "nwps_node_distance_m": 1391,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Point Judith",
@@ -26245,7 +27442,10 @@
     "nwps_node_lng": -71.48084,
     "nwps_node_distance_m": 1035,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ruggles",
@@ -26306,7 +27506,10 @@
     "nwps_node_lng": -71.29123,
     "nwps_node_distance_m": 766,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Second Beach Newport",
@@ -26366,7 +27569,10 @@
     "nwps_node_lng": -71.24383,
     "nwps_node_distance_m": 2829,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Third Beach Newport",
@@ -26429,7 +27635,10 @@
     "nwps_node_lng": -71.22013,
     "nwps_node_distance_m": 2415,
     "nwps_buoy_id": "44097",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cherry Grove Pier",
@@ -26494,7 +27703,10 @@
     "nwps_node_lat": 33.83039,
     "nwps_node_lng": -78.61027,
     "nwps_node_distance_m": 2077,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Edisto Beach",
@@ -26555,7 +27767,10 @@
     "nwps_node_lat": 32.49078,
     "nwps_node_lng": -80.30524,
     "nwps_node_distance_m": 1225,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Folly Beach Pier",
@@ -26616,7 +27831,10 @@
     "nwps_node_lat": 32.65335,
     "nwps_node_lng": -79.92827,
     "nwps_node_distance_m": 990,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Folly Beach Washout",
@@ -26677,7 +27895,10 @@
     "nwps_node_lat": 32.66961,
     "nwps_node_lng": -79.89058,
     "nwps_node_distance_m": 1551,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Garden City Pier",
@@ -26742,7 +27963,10 @@
     "nwps_node_lat": 33.58,
     "nwps_node_lng": -78.98586,
     "nwps_node_distance_m": 1154,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hilton Head Island",
@@ -26801,7 +28025,10 @@
     "nwps_node_lat": 32.14939,
     "nwps_node_lng": -80.7199,
     "nwps_node_distance_m": 954,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hunting Island",
@@ -26862,7 +28089,10 @@
     "nwps_node_lat": 32.36073,
     "nwps_node_lng": -80.43717,
     "nwps_node_distance_m": 889,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Isle of Palms",
@@ -26920,7 +28150,10 @@
     "nwps_node_lat": 32.78341,
     "nwps_node_lng": -79.77749,
     "nwps_node_distance_m": 454,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kiawah Island Beach",
@@ -26980,7 +28213,10 @@
     "nwps_node_lat": 32.58833,
     "nwps_node_lng": -80.11675,
     "nwps_node_distance_m": 351,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Myrtle Beach State Park",
@@ -27041,7 +28277,10 @@
     "nwps_node_lat": 33.65,
     "nwps_node_lng": -78.90411,
     "nwps_node_distance_m": 2212,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pawleys Island",
@@ -27105,7 +28344,10 @@
     "nwps_node_lat": 33.41743,
     "nwps_node_lng": -79.1178,
     "nwps_node_distance_m": 896,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surfside Beach SC",
@@ -27165,7 +28407,10 @@
     "nwps_node_lat": 33.58,
     "nwps_node_lng": -78.96702,
     "nwps_node_distance_m": 2738,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "61st Street Galveston",
@@ -27224,7 +28469,10 @@
     "nwps_node_lat": 29.25236,
     "nwps_node_lng": -94.82882,
     "nwps_node_distance_m": 1013,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Bob Hall Pier",
@@ -27285,7 +28533,10 @@
     "nwps_node_lat": 27.57179,
     "nwps_node_lng": -97.21907,
     "nwps_node_distance_m": 1172,
-    "nwps_buoy_id": "42092"
+    "nwps_buoy_id": "42092",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Galveston Seawall",
@@ -27346,7 +28597,10 @@
     "nwps_node_lat": 29.28476,
     "nwps_node_lng": -94.79235,
     "nwps_node_distance_m": 66,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Horace Caldwell Pier",
@@ -27413,7 +28667,10 @@
     "nwps_node_lat": 27.83105,
     "nwps_node_lng": -97.03866,
     "nwps_node_distance_m": 1387,
-    "nwps_buoy_id": "42092"
+    "nwps_buoy_id": "42092",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Isla Blanca Park",
@@ -27476,7 +28733,10 @@
     "nwps_node_lat": 26.08707,
     "nwps_node_lng": -97.15465,
     "nwps_node_distance_m": 1674,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "JP Luby Surf Park",
@@ -27534,7 +28794,10 @@
     "nwps_node_lat": 27.6366,
     "nwps_node_lng": -97.18299,
     "nwps_node_distance_m": 716,
-    "nwps_buoy_id": "42092"
+    "nwps_buoy_id": "42092",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Matagorda Beach",
@@ -27595,7 +28858,10 @@
     "nwps_node_lat": 28.6042,
     "nwps_node_lng": -95.94118,
     "nwps_node_distance_m": 632,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Mustang Island",
@@ -27653,7 +28919,10 @@
     "nwps_node_lat": 27.75003,
     "nwps_node_lng": -97.11082,
     "nwps_node_distance_m": 1258,
-    "nwps_buoy_id": "42092"
+    "nwps_buoy_id": "42092",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Port A Beach",
@@ -27711,7 +28980,10 @@
     "nwps_node_lat": 27.79864,
     "nwps_node_lng": -97.0567,
     "nwps_node_distance_m": 1544,
-    "nwps_buoy_id": "42092"
+    "nwps_buoy_id": "42092",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Port Aransas Jetty",
@@ -27770,7 +29042,10 @@
     "nwps_node_lat": 27.83105,
     "nwps_node_lng": -97.03866,
     "nwps_node_distance_m": 580,
-    "nwps_buoy_id": "42092"
+    "nwps_buoy_id": "42092",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "South Padre Island",
@@ -27829,7 +29104,10 @@
     "nwps_node_lat": 26.08707,
     "nwps_node_lng": -97.15465,
     "nwps_node_distance_m": 923,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Surfside Beach TX",
@@ -27889,7 +29167,10 @@
     "nwps_node_lat": 28.94448,
     "nwps_node_lng": -95.28471,
     "nwps_node_distance_m": 687,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Croatan Beach",
@@ -27950,7 +29231,10 @@
     "nwps_node_lng": -75.95559,
     "nwps_node_distance_m": 1040,
     "nwps_buoy_id": "44099",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "First Street Jetty VB",
@@ -28011,7 +29295,10 @@
     "nwps_node_lng": -75.95559,
     "nwps_node_distance_m": 1376,
     "nwps_buoy_id": "44099",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Sandbridge Beach",
@@ -28076,7 +29363,10 @@
     "nwps_node_lng": -75.93553,
     "nwps_node_distance_m": 866,
     "nwps_buoy_id": "44099",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Virginia Beach Oceanfront",
@@ -28137,7 +29427,10 @@
     "nwps_node_lng": -75.95559,
     "nwps_node_distance_m": 1439,
     "nwps_buoy_id": "44099",
-    "nwps_direction_status": "verified"
+    "nwps_direction_status": "verified",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Cape Disappointment",
@@ -28197,7 +29490,10 @@
     "nwps_node_lat": 46.28278,
     "nwps_node_lng": -124.09467,
     "nwps_node_distance_m": 1346,
-    "nwps_buoy_id": "46243"
+    "nwps_buoy_id": "46243",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Hobuck Beach",
@@ -28256,7 +29552,10 @@
     "nwps_node_lat": 48.33739,
     "nwps_node_lng": -124.71469,
     "nwps_node_distance_m": 3602,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Kalaloch Beach",
@@ -28322,7 +29621,10 @@
     "nwps_node_lat": 47.57957,
     "nwps_node_lng": -124.40306,
     "nwps_node_distance_m": 2838,
-    "nwps_buoy_id": "46211"
+    "nwps_buoy_id": "46211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "La Push First Beach",
@@ -28381,7 +29683,10 @@
     "nwps_node_lat": 47.90435,
     "nwps_node_lng": -124.66276,
     "nwps_node_distance_m": 1821,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "La Push Second Beach",
@@ -28440,7 +29745,10 @@
     "nwps_node_lat": 47.86826,
     "nwps_node_lng": -124.61082,
     "nwps_node_distance_m": 1983,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "La Push Third Beach",
@@ -28499,7 +29807,10 @@
     "nwps_node_lat": 47.86826,
     "nwps_node_lng": -124.61082,
     "nwps_node_distance_m": 1891,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Long Beach WA",
@@ -28559,7 +29870,10 @@
     "nwps_node_lat": 46.35506,
     "nwps_node_lng": -124.09467,
     "nwps_node_distance_m": 1772,
-    "nwps_buoy_id": "46243"
+    "nwps_buoy_id": "46243",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Ocean Shores",
@@ -28617,7 +29931,10 @@
     "nwps_node_lat": 47.00218,
     "nwps_node_lng": -124.19531,
     "nwps_node_distance_m": 1558,
-    "nwps_buoy_id": "46211"
+    "nwps_buoy_id": "46211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Pacific Beach WA",
@@ -28682,7 +29999,10 @@
     "nwps_node_lat": 47.2187,
     "nwps_node_lng": -124.24724,
     "nwps_node_distance_m": 2867,
-    "nwps_buoy_id": "46211"
+    "nwps_buoy_id": "46211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Rialto Beach",
@@ -28747,7 +30067,10 @@
     "nwps_node_lat": 47.90435,
     "nwps_node_lng": -124.66276,
     "nwps_node_distance_m": 2176,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Shi Shi Beach",
@@ -28807,7 +30130,10 @@
     "nwps_node_lat": 48.26522,
     "nwps_node_lng": -124.71469,
     "nwps_node_distance_m": 2342,
-    "nwps_buoy_id": null
+    "nwps_buoy_id": null,
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Tokeland",
@@ -28860,7 +30186,10 @@
     "nwps_node_lat": 46.71348,
     "nwps_node_lng": -124.03949,
     "nwps_node_distance_m": 1327,
-    "nwps_buoy_id": "46211"
+    "nwps_buoy_id": "46211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Westport Jetty",
@@ -28920,7 +30249,10 @@
     "nwps_node_lat": 46.89391,
     "nwps_node_lng": -124.14337,
     "nwps_node_distance_m": 1161,
-    "nwps_buoy_id": "46211"
+    "nwps_buoy_id": "46211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Westport Light State Park",
@@ -28980,7 +30312,10 @@
     "nwps_node_lat": 46.89391,
     "nwps_node_lng": -124.14337,
     "nwps_node_distance_m": 908,
-    "nwps_buoy_id": "46211"
+    "nwps_buoy_id": "46211",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Fiji",
@@ -29036,7 +30371,10 @@
     "nwps_node_lat": 18.47729,
     "nwps_node_lng": -66.08475,
     "nwps_node_distance_m": 1041,
-    "nwps_buoy_id": "41121"
+    "nwps_buoy_id": "41121",
+    "tide_preference_source": "unattributed",
+    "tide_preference_source_url": null,
+    "tide_preference_evidence": null
   },
   {
     "name": "Tijuana Slough",

@@ -28,37 +28,23 @@ from .config import (
     TIDE_CLASSIFY_BATCH_SIZE,
     TIDE_CLASSIFY_CACHE_FILE,
     TIDE_CLASSIFY_MODEL,
-    tide_source_may_overwrite,
+    tide_preference_fields,
+    tide_preference_may_write,
     tide_source_rank,
 )
 
 log = logging.getLogger("pipeline.classify_tides")
 
-# WHY 'researched' AND NOT 'derived_from_break_type', and what that label
-# overstates.
-#
-# The axis migration 018's vocabulary actually encodes is WHAT THE CLAIM IS
-# ABOUT: 'researched' is a claim about THIS break, 'derived_from_break_type' is
-# a claim about its CLASS. On that axis this writer is 'researched', because the
-# prompt above now forbids the class-level fallback outright — it says "do not
-# fall back to the general preference typical for that coastline or break style"
-# and requires "unknown" instead. A non-"unknown" answer from this pass is
-# therefore asserted of the specific spot, which is what 'researched' means here.
-#
-# IT OVERSTATES PROVENANCE RELATIVE TO verify_spots, and that is worth knowing
-# before anyone reads the column as evidence. verify_spots passes a real
-# web_search tool (verify_spots.py:406, handed to the API at :416) and its prompt
-# tells the model to search surf-forecast.com first. This module passes NO tools
-# at all — classify_all's messages.create call has no `tools=` argument — so it
-# answers from the model's own training data with nothing consulted and nothing
-# cited. Both land on 'researched' today and the column cannot tell them apart.
-#
-# The vocabulary has no value for "the model's unsourced recall", and inventing
-# one here is not possible without a migration: migration 018's CHECK constraint
-# is applied and admits exactly researched / scraped / derived_from_break_type /
-# unattributed / unknown. If that distinction ever needs to be visible, the fix
-# is a new value and a new migration, not a relabelling here.
-_TIDE_SOURCE = "researched"
+# WHY 'model_recall'. This pass hands the model NO tools — classify_all's
+# messages.create call has no `tools=` argument — so it answers from its own training
+# data with nothing consulted and nothing cited. It used to stamp 'researched', which on
+# migration 022's ladder means a page was consulted for this break, cited and quoted; a
+# reader of the column could not tell this answer from one that was. model_recall (022)
+# is the honest label: a language model's answer about this specific break, with no
+# citation. It outranks derived_from_break_type and unattributed and is outranked by a
+# scraped or researched value, which therefore cannot be overwritten by a re-run of this
+# pass (config.tide_preference_may_write).
+_TIDE_SOURCE = "model_recall"
 
 _SYSTEM_PROMPT = (
     "You are a surf forecasting expert. For each US surf spot the user gives "
@@ -202,7 +188,10 @@ def classify_all(
     import anthropic
 
     cache = _load_cache() if use_cache else {}
-    pending = [s for s in spots if s["name"] not in cache]
+    # A spot marked is_valid_surf_spot False (a surf shop, a river, a duplicate) has no
+    # tide preference to classify, so it is never sent.
+    pending = [s for s in spots
+               if s["name"] not in cache and s.get("is_valid_surf_spot") is not False]
     if limit is not None:
         pending = pending[:limit]
     log.info(
@@ -302,6 +291,46 @@ def _summarize(spots: list[dict], cache: dict[str, dict], stats: dict) -> None:
     print("=" * 60)
 
 
+def merge_into_spots(spots: list[dict], cache: dict[str, dict]) -> tuple[int, int]:
+    """Write each cached classification onto its spot. Returns (updated, declined).
+
+    Through config.tide_preference_fields and config.tide_preference_may_write, like every
+    tide writer: stamped model_recall, never on a spot marked is_valid_surf_spot False, and
+    never over a higher-ranked source.
+    """
+    updated = 0
+    declined = 0
+    for s in spots:
+        rec = cache.get(s["name"])
+        if rec:
+            if s.get("is_valid_surf_spot") is False:
+                continue   # not a surf spot: no tide preference to write (see classify_all)
+            # RANK GUARD. This write was unconditional — it overwrote whatever
+            # scrape_surf_forecast or verify_spots had put there, with no record
+            # that it had done so. See config.tide_preference_may_write.
+            existing = s.get("tide_preference_source")
+            if not tide_preference_may_write(s, _TIDE_SOURCE):
+                # LOGGED, NEVER SILENT. A declined write is a real disagreement
+                # between two sources about one spot, and it is the only moment
+                # at which that disagreement is visible.
+                log.warning(
+                    "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
+                    "this run's %r from %r (rank %d)",
+                    s["name"], s.get("tide_preference"), existing,
+                    tide_source_rank(existing), rec["tide_preference"], _TIDE_SOURCE,
+                    tide_source_rank(_TIDE_SOURCE),
+                )
+                declined += 1
+                continue
+            # ONE STATEMENT. The value, its source and its (absent) citation through
+            # config.tide_preference_fields, with the model's self-scored confidence
+            # beside them, so none can describe a superseded version of another.
+            s.update(tide_preference_fields(rec["tide_preference"], _TIDE_SOURCE))
+            s["tide_preference_confidence"] = rec["tide_preference_confidence"]
+            updated += 1
+    return updated, declined
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     logging.basicConfig(
@@ -323,35 +352,7 @@ def main(argv: list[str] | None = None) -> int:
     cache, stats = classify_all(spots, use_cache=not args.no_cache, limit=args.limit)
 
     # Merge results back into the enriched records.
-    updated = 0
-    declined = 0
-    for s in spots:
-        rec = cache.get(s["name"])
-        if rec:
-            # RANK GUARD. This write was unconditional — it overwrote whatever
-            # scrape_surf_forecast or verify_spots had put there, with no record
-            # that it had done so. See config.tide_source_may_overwrite.
-            existing = s.get("tide_preference_source")
-            if not tide_source_may_overwrite(existing, _TIDE_SOURCE):
-                # LOGGED, NEVER SILENT. A declined write is a real disagreement
-                # between two sources about one spot, and it is the only moment
-                # at which that disagreement is visible.
-                log.warning(
-                    "tide: NOT overwriting %r — stored %r from %r (rank %d) outranks "
-                    "this run's %r from %r (rank %d)",
-                    s["name"], s.get("tide_preference"), existing,
-                    tide_source_rank(existing), rec["tide_preference"], _TIDE_SOURCE,
-                    tide_source_rank(_TIDE_SOURCE),
-                )
-                declined += 1
-                continue
-            # ONE STATEMENT, THREE FIELDS. The value, its confidence and its
-            # source are written together so none can describe a superseded
-            # version of another.
-            s["tide_preference"] = rec["tide_preference"]
-            s["tide_preference_confidence"] = rec["tide_preference_confidence"]
-            s["tide_preference_source"] = _TIDE_SOURCE
-            updated += 1
+    updated, declined = merge_into_spots(spots, cache)
 
     output_path = args.output or args.input
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -62,7 +62,8 @@ WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
         "break_type", "break_type_source", "break_type_source_url", "break_type_evidence",
         "bottom", "bottom_source", "bottom_source_url", "bottom_evidence",
-        "tide_preference", "tide_preference_source", "crowd_factor", "hazards",
+        "tide_preference", "tide_preference_source", "tide_preference_source_url",
+        "tide_preference_evidence", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
         "nwps_wfo", "fallback_buoy_ids", "swell_window_source",
@@ -243,12 +244,14 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
     # from the docstring; concern (2) is import_spots' responsibility.
     # break_type travels with its source and citation; break_type_confidence does not travel
     # at all — migration 020 computes it in the database from break_type_source (see
-    # _DB_MANAGED_COLUMNS). bottom is the same under migration 021.
+    # _DB_MANAGED_COLUMNS). bottom is the same under migration 021. tide_preference travels
+    # with its source and citation (migration 022).
     for k in (
         "orientation_deg", "offshore_wind_deg", "optimal_swell_dir",
         "break_type", "break_type_source", "break_type_source_url", "break_type_evidence",
         "bottom", "bottom_source", "bottom_source_url", "bottom_evidence",
-        "tide_preference", "tide_preference_source", "crowd_factor", "hazards",
+        "tide_preference", "tide_preference_source", "tide_preference_source_url",
+        "tide_preference_evidence", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
         "nwps_wfo",
