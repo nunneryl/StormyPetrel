@@ -31,7 +31,9 @@
  * functions' output and add no rows of their own, which is the seam that makes the
  * data-level pin meaningful.
  */
-import { spotInfoRows, optimalConditionsRows, type SpotInfoInput } from './spotInfo.ts';
+import {
+  breakTypeShown, optimalConditionsRows, spotInfoRows, tidePreferenceShown, type SpotInfoInput,
+} from './spotInfo.ts';
 
 let failures = 0;
 
@@ -60,8 +62,11 @@ const hasRow = (rows: string[], word: string): boolean =>
 //   optimal_swell_dir 315 -> ((315 % 360) + 360) % 360 = 315; 315 / 22.5 = 14 exactly;
 //                            CARDINAL_16[14] = 'NW';  Math.round(315) = 315  -> 'NW 315°'
 //   offshore_wind_deg  45 -> 45 / 22.5 = 2 exactly;   CARDINAL_16[2]  = 'NE' -> 'NE offshore'
+// Both sources trusted ('researched'), so the break type and tide render plainly; section 7
+// pins what an untrusted source does.
 const POPULATED: SpotInfoInput = {
-  break_type: 'reef', tide_preference: 'mid', crowd_factor: 'high',
+  break_type: 'reef', break_type_source: 'researched',
+  tide_preference: 'mid', tide_preference_source: 'researched', crowd_factor: 'high',
   optimal_swell_dir: 315, offshore_wind_deg: 45,
   hazards: ['sharp_reef', 'strong_rip', 'localism'],
 };
@@ -73,7 +78,8 @@ const POPULATED: SpotInfoInput = {
 const EMPTY_ARRAY: SpotInfoInput = { ...POPULATED, hazards: [] };
 const NULL_HAZARDS: SpotInfoInput = { ...POPULATED, hazards: null };
 const ABSENT: SpotInfoInput = {
-  break_type: 'reef', tide_preference: 'mid', crowd_factor: 'high',
+  break_type: 'reef', break_type_source: 'researched',
+  tide_preference: 'mid', tide_preference_source: 'researched', crowd_factor: 'high',
 };
 
 check('populated hazards array -> NO Hazards row', !hasRow(labels(POPULATED), 'hazard'));
@@ -135,13 +141,16 @@ const ALL_EMPTY: SpotInfoInput = {
 eq('all-empty spot renders exactly two rows', labels(ALL_EMPTY), ['Break', 'Tide preference']);
 eq('...both as em dashes', values(ALL_EMPTY), ['—', '—']);
 eq('null break_type alone -> em dash, row kept',
-   values({ break_type: null, tide_preference: 'low', crowd_factor: 'high' }),
+   values({ break_type: null, tide_preference: 'low', tide_preference_source: 'researched',
+            crowd_factor: 'high' }),
    ['—', 'low', 'high']);
 eq('null tide_preference alone -> em dash, row kept',
-   values({ break_type: 'point', tide_preference: null, crowd_factor: 'high' }),
+   values({ break_type: 'point', break_type_source: 'reviewed', tide_preference: null,
+            crowd_factor: 'high' }),
    ['point', '—', 'high']);
 eq('empty-string break_type is passed through, not coerced',
-   values({ break_type: '', tide_preference: 'mid', crowd_factor: 'low' }),
+   values({ break_type: '', tide_preference: 'mid', tide_preference_source: 'scraped',
+            crowd_factor: 'low' }),
    ['', 'mid', 'low']);
 
 // --------------------------------------------------------------------------- //
@@ -224,6 +233,61 @@ check('optimalConditionsRows returns a fresh array each call',
 eq('spot-info rows are stable across calls', spotInfoRows(POPULATED), spotInfoRows(POPULATED));
 eq('optimal rows are stable across calls',
    optimalConditionsRows(POPULATED), optimalConditionsRows(POPULATED));
+
+// --------------------------------------------------------------------------- //
+// 7 — SOURCES: what an untrusted source does to the tide and the break type    //
+// --------------------------------------------------------------------------- //
+// The rule (lib/provenance): reviewed, researched and scraped are trusted; anything else,
+// or none, is not. An untrusted tide preference is not shown — '—' in both cards; an
+// untrusted break type is shown with " (unverified)" after it, in both cards. Every expected
+// string below is written out.
+const both = (s: SpotInfoInput): [string, string, string, string] => [
+  tideOf(spotInfoRows(s), 'Break'), tideOf(spotInfoRows(s), 'Tide preference'),
+  tideOf(optimalConditionsRows(s), 'Break'), tideOf(optimalConditionsRows(s), 'Tide'),
+];
+for (const src of ['reviewed', 'researched', 'scraped']) {
+  eq(`trusted ${src}: break and tide render plainly in both cards`,
+     both({ break_type: 'reef', break_type_source: src,
+            tide_preference: 'low_mid', tide_preference_source: src }),
+     ['reef', 'Low to mid', 'reef', 'Low to mid']);
+}
+for (const src of ['model_recall', 'unattributed', 'derived_from_break_type', 'unknown', '', null]) {
+  eq(`untrusted ${JSON.stringify(src)}: break marked (unverified), tide hidden, in both cards`,
+     both({ break_type: 'beach', break_type_source: src,
+            tide_preference: 'mid', tide_preference_source: src }),
+     ['beach (unverified)', '—', 'beach (unverified)', '—']);
+}
+eq('no source keys at all: break marked (unverified), tide hidden',
+   both({ break_type: 'beach', tide_preference: 'mid' }),
+   ['beach (unverified)', '—', 'beach (unverified)', '—']);
+eq('the two sources are independent: trusted break, untrusted tide',
+   both({ break_type: 'point', break_type_source: 'reviewed',
+          tide_preference: 'high', tide_preference_source: 'unattributed' }),
+   ['point', '—', 'point', '—']);
+eq('...and untrusted break, trusted tide',
+   both({ break_type: 'jetty', break_type_source: 'model_recall',
+          tide_preference: 'high', tide_preference_source: 'scraped' }),
+   ['jetty (unverified)', 'high', 'jetty (unverified)', 'high']);
+eq('no break type: em dash, never "— (unverified)", whatever the source',
+   both({ break_type: null, break_type_source: 'model_recall',
+          tide_preference: null, tide_preference_source: null }),
+   ['—', '—', '—', '—']);
+eq('a trusted "unknown" tide still renders as the em dash',
+   both({ break_type: 'reef', break_type_source: 'researched',
+          tide_preference: 'unknown', tide_preference_source: 'researched' }),
+   ['reef', '—', 'reef', '—']);
+eq('the source changes values, not which rows exist',
+   labels({ break_type: 'beach', break_type_source: 'model_recall', tide_preference: 'mid',
+            tide_preference_source: 'unattributed', crowd_factor: 'light' }),
+   ['Break', 'Tide preference', 'Crowd']);
+eq('tidePreferenceShown: the header chip reads the same rule',
+   [tidePreferenceShown({ tide_preference: 'mid', tide_preference_source: 'unattributed' }),
+    tidePreferenceShown({ tide_preference: 'mid_high', tide_preference_source: 'reviewed' })],
+   ['—', 'Mid to high']);
+eq('breakTypeShown: the header chip reads the same rule',
+   [breakTypeShown({ break_type: 'beach', break_type_source: 'model_recall' }),
+    breakTypeShown({ break_type: 'reef', break_type_source: 'researched' })],
+   ['beach (unverified)', 'reef']);
 
 // Throw rather than process.exit: a thrown error still gives node a non-zero exit code,
 // and it keeps this file free of any ambient Node types, so it typechecks and runs with

@@ -11,6 +11,7 @@ import {
   pickSwell,
 } from '@/lib/formatting';
 import { heightBasis, heightBasisMarkHtml } from '@/lib/heightBasis';
+import { fmtBreakType } from '@/lib/provenance';
 import { camBadgeHtml } from './CamBadge';
 
 const LEAFLET_CSS_ID = 'leaflet-css';
@@ -351,7 +352,7 @@ function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
 
   const subtitleParts: string[] = [];
   if (s.state) subtitleParts.push(escapeHtml(s.state));
-  if (s.break_type) subtitleParts.push(escapeHtml(s.break_type));
+  if (s.break_type) subtitleParts.push(escapeHtml(fmtBreakType(s.break_type, s.break_type_source) ?? ''));
 
   const conditionsLine = `
     <div style="font-size:12px;color:#0F172A;margin-top:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-variant-numeric:tabular-nums;">

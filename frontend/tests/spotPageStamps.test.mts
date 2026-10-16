@@ -22,6 +22,13 @@
  *      tile shows: every fixture hour has its own height, so the tile's text names the row.
  *   6. With no row for the current hour the page says so, and sp-headline-hour is absent.
  *   7. The grep pattern given for reading the tags with curl finds exactly the two tags.
+ *   8. Tide preference and break type follow their sources (lib/provenance) on the served page:
+ *      a tide preference from an untrusted source drops the header chip and reads '—' in both
+ *      cards; a break type from an untrusted source carries "(unverified)" in the header chip,
+ *      both cards and the region list. Three spots are shaped like the roster's Banzai Pipeline
+ *      (reef, researched; low tide, unattributed), Pensacola Beach (beach, model_recall; mid
+ *      tide, unattributed) and Sunset Point (no break type, no tide), and a fourth carries a
+ *      researched tide, so the chip is seen to render when it should.
  *
  * NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. The expected hour is this file's own
  * arithmetic (the render time floored to the hour), the expected height is looked up in this
@@ -77,7 +84,8 @@ const T0 = Math.floor(Date.now() / HOUR) * HOUR;
 const SPOT_FIELDS = {
   lat: 36.95, lng: -122.02, state: 'California', region: 'Santa Cruz',
   orientation_deg: 180, offshore_wind_deg: 0, optimal_swell_dir: 270, swell_window_arcs: null,
-  break_type: 'reef', tide_preference: null, crowd_factor: null, hazards: null,
+  break_type: 'reef', break_type_source: 'researched', tide_preference: null,
+  tide_preference_source: null, crowd_factor: null, hazards: null,
   nearest_buoy_id: null, nearest_buoy_dist_km: null, nearest_tide_station_id: null,
   description: null, swell_window_source: null,
 };
@@ -85,7 +93,31 @@ const SPOT_FIELDS = {
 const WITH_ROW = { ...SPOT_FIELDS, id: 990001, slug: 'stamp-test-point', name: 'Stamp Test Point' };
 // Rows only from 3 hours ahead, so no row covers the hour the page renders in.
 const NO_ROW = { ...SPOT_FIELDS, id: 990002, slug: 'stamp-test-gap', name: 'Stamp Test Gap' };
-const SPOTS = [WITH_ROW, NO_ROW];
+// 8: the sources. Fields from the committed roster; coordinates rounded.
+const PIPELINE = {
+  ...SPOT_FIELDS, id: 990003, slug: 'banzai-pipeline', name: 'Banzai Pipeline',
+  lat: 21.664, lng: -158.054, state: 'Hawaii', region: 'Oahu',
+  break_type: 'reef', break_type_source: 'researched',
+  tide_preference: 'low', tide_preference_source: 'unattributed',
+};
+const PENSACOLA = {
+  ...SPOT_FIELDS, id: 990004, slug: 'pensacola-beach', name: 'Pensacola Beach',
+  lat: 30.329, lng: -87.140, state: 'Florida', region: 'Panhandle',
+  break_type: 'beach', break_type_source: 'model_recall',
+  tide_preference: 'mid', tide_preference_source: 'unattributed',
+};
+const SUNSET_POINT = {
+  ...SPOT_FIELDS, id: 990005, slug: 'sunset-point', name: 'Sunset Point',
+  lat: 34.037, lng: -118.554, state: 'California', region: 'Malibu',
+  break_type: null, break_type_source: null, tide_preference: null, tide_preference_source: null,
+};
+const VERIFIED_TIDE = {
+  ...SPOT_FIELDS, id: 990006, slug: 'stamp-test-verified-tide', name: 'Stamp Test Verified Tide',
+  break_type: 'point', break_type_source: 'reviewed',
+  tide_preference: 'low_mid', tide_preference_source: 'researched',
+};
+const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE];
+const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
 // Every hour has its own height: 2.0 ft twelve hours back, rising 0.1 ft an hour. The Swell
 // height tile shows one decimal, so the tile's text names exactly one row.
@@ -124,6 +156,8 @@ function hours(from: number, to: number): number[] {
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
+  ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) => row(sp.id, h))] as
+    [number, Record<string, unknown>[]]),
 ]);
 
 // Enough of PostgREST for this site: the two spots, their rows, and an empty list for anything
@@ -172,6 +206,26 @@ function metaTags(html: string, name: string): Tag[] {
 function swellHeightTile(html: string): string | null {
   const m = /Swell height<\/span>[\s\S]*?<span class="text-2xl[^"]*">([^<]*)<\/span>/.exec(html);
   return m ? m[1] : null;
+}
+
+/** What the page states about a spot's break and tide, read off the served HTML. React puts an
+ *  empty comment between adjacent text nodes ("tide: <!-- -->low"), so those are removed. */
+function sourcedFacts(html: string) {
+  const text = (v: string | undefined) => (v === undefined ? null : v.replace(/<!-- -->/g, ''));
+  const chip = /<span class="inline-flex items-center px-2 py-0\.5 rounded-full bg-ink-800 border border-ink-600 text-text-primary text-xs">([^<]*)<\/span>/.exec(html);
+  const tideChip = /<span>tide: (?:<!-- -->)?([^<]*)<\/span>/.exec(html);
+  const infoRow = (k: string) => new RegExp(
+    `<span class="text-text-secondary shrink-0">${k}</span><span class="text-text-primary text-right truncate">([^<]*)</span>`,
+  ).exec(html)?.[1];
+  const optimalRow = (k: string) => new RegExp(
+    `<span class="text-text-secondary">${k}</span><span class="text-text-primary text-right truncate tabular-nums">([^<]*)</span>`,
+  ).exec(html)?.[1];
+  return {
+    breakChip: text(chip?.[1]) ?? '(none)',
+    tideChip: text(tideChip?.[1]) ?? '(none)',
+    infoBreak: text(infoRow('Break')), infoTide: text(infoRow('Tide preference')),
+    optimalTide: text(optimalRow('Tide')), optimalBreak: text(optimalRow('Break')),
+  };
 }
 
 /** Checks one tag is there exactly once, inside <head>, and returns its content. */
@@ -324,6 +378,42 @@ async function main(): Promise<void> {
     metaTags(gap.html, 'sp-headline-hour').length, 0);
   eq('no current row: the curl grep pattern finds just sp-rendered-at',
     [...gap.html.matchAll(new RegExp(CURL_GREP, 'g'))].length, 1);
+
+  // 8: the break type and tide, by source, on four spot pages and two region lists.
+  const EXPECTED: [string, ReturnType<typeof sourcedFacts>][] = [
+    [PIPELINE.slug, { breakChip: 'reef', tideChip: '(none)', infoBreak: 'reef', infoTide: '—',
+                      optimalTide: '—', optimalBreak: 'reef' }],
+    [PENSACOLA.slug, { breakChip: 'beach (unverified)', tideChip: '(none)',
+                       infoBreak: 'beach (unverified)', infoTide: '—',
+                       optimalTide: '—', optimalBreak: 'beach (unverified)' }],
+    [SUNSET_POINT.slug, { breakChip: '(none)', tideChip: '(none)', infoBreak: '—', infoTide: '—',
+                          optimalTide: '—', optimalBreak: '—' }],
+    [VERIFIED_TIDE.slug, { breakChip: 'point', tideChip: 'Low to mid', infoBreak: 'point',
+                           infoTide: 'Low to mid', optimalTide: 'Low to mid', optimalBreak: 'point' }],
+  ];
+  for (const [slug, want] of EXPECTED) {
+    const page = await load(slug);
+    eq(`${slug}: the spot page answers 200`, page.status, 200);
+    const got = sourcedFacts(page.html);
+    console.log(`        ${slug}: ${JSON.stringify(got)}`);
+    eq(`${slug}: header chip, both cards' Break and Tide rows`, JSON.stringify(got), JSON.stringify(want));
+  }
+  check('no served spot page says "tide: mid" or "tide: low" for an unattributed preference',
+    !(await load(PIPELINE.slug)).html.includes('>tide: ')
+    && !(await load(PENSACOLA.slug)).html.includes('>tide: '));
+  for (const [state, has, hasNot] of [
+    ['florida', '>beach (unverified)<', '>beach<'],
+    ['hawaii', '>reef<', 'reef (unverified)'],
+  ] as const) {
+    const res = await fetch(`${site}/region/${state}`);
+    const html = (await res.text()).replace(/<!-- -->/g, '');
+    eq(`/region/${state} answers 200`, res.status, 200);
+    const list = /<span class="text-xs text-text-muted">([^<]*)<\/span>/.exec(html)?.[1]?.trim();
+    console.log(`        /region/${state} break label: ${JSON.stringify(list)}`);
+    check(`/region/${state}: the list's break label is ${has.slice(1, -1)}`,
+      html.replace(/>\s+/g, '>').replace(/\s+</g, '<').includes(has)
+      && !html.replace(/>\s+/g, '>').replace(/\s+</g, '<').includes(hasNot));
+  }
 
   // 4: a regenerated copy.
   const revalidatedAt = Date.now();
