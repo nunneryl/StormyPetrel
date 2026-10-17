@@ -20,11 +20,9 @@ state a best tide, maps each with map_sentence, and prints:
   - unknown statements by reason, conflicts on one page and across pages;
   - pages that were probably cut at the 6,000-token fetch limit.
 
-The mapping rules are the design's (directions such as "pushing tide", tide-dependent and
-comparative sentences, negatives and non-adjacent stages stay unknown; access, parking and
-tidepool sentences are not statements at all). On the 50 sentences in the committed research
-summary that mention the tide, it agreed with a hand reading on 49; the 50th, a low-to-medium
-statement next to the word "shallow", it leaves unknown.
+The rules are pipeline/tide_free_pass.py's: only clean prose (no link lists, menus or
+forecast-widget text), stormypetrel.surf left out, and map_sentence's mapping. The free pass
+itself — with its domain rules and the review file — is `python3 -m pipeline.tide_free_pass`.
 """
 from __future__ import annotations
 
@@ -45,71 +43,9 @@ from pipeline.research_break_type import (  # noqa: E402
     _url_key,
     collect_evidence,
 )
-
-STAGE = r"(low|mid|medium|middle|half|high)"
-UNIT = r"(?:tides?|tide (?:levels?|conditions|stages?)|water)"
-POSITIVE = (r"(best|works?|working|work best|favou?rable|ideal|good|great|excellent|prefers?"
-            r"|needs?|requires?|only|breaks? best|turns on|comes alive|fires|fish for it"
-            r"|suitable|surf(?:ed|able)|rideable|performs best)")
-# About something other than the surf: never a preference, whatever else the sentence says.
-NOT_ABOUT_SURF = (r"(tidepools?|tide pools?|accessib\w* only|only accessib\w*|access\w* only during"
-                  r"|walk(ing)? (around|out|across)|parking|sea glass|dog|swimming|beachcomb)")
-# About the surf, but not a preference unless "best", "only" or "needs" says so.
-NOT_A_PREFERENCE = (r"(exposed|dangerous|shallow|rocks? show|hollower|mellower|forgiving"
-                    r"|challenging|depend|dependent|sensitive|check the tide)")
-DIRECTION = r"\b(rising|incoming|pushing|push|dropping|falling|outgoing|ebb|flood)(ing)? tide\b"
-STAGE_OF = {"low": "low", "mid": "mid", "medium": "mid", "middle": "mid", "half": "mid",
-            "high": "high"}
-PAIR = {frozenset({"low", "mid"}): "low_mid", frozenset({"mid", "high"}): "mid_high",
-        frozenset({"low", "high"}): "all"}
-
-
-def sentences(text):
-    text = re.sub(r"\s+", " ", text)
-    return [s.strip() for s in re.split(r"(?<=[.!?])\s+(?=[A-Z0-9\"'*])", text) if s.strip()]
-
-
-def map_sentence(s):
-    """(value, rule) for one sentence, or (None, why). value is one of low, low_mid, mid,
-    mid_high, high, all, or 'unknown' for a tide statement that names no usable stage."""
-    t = s.lower().replace("’", "'")
-    if not re.search(r"\btides?\b|\blow water\b|\bhigh water\b", t):
-        return None, "no tide"
-    if re.search(NOT_ABOUT_SURF, t):
-        return None, "not about the surf"
-    if re.search(r"\b(all|any|every) (stages? of the )?tides?\b|\ball tide (levels|conditions|stages)"
-                 r"|\b(at|on|in) all stages\b|\bwhatever the tide\b|\btide (doesn't|does not) matter",
-                 t):
-        return "all", "all tides"
-    # "low to mid", "low and medium", "medium to high", "low-mid"
-    m = re.search(rf"\b{STAGE}\s*(to|and|-|through|or)\s*{STAGE}\b(?:\s+{UNIT})?", t)
-    if m and re.search(POSITIVE, t) and STAGE_OF[m.group(1)] != STAGE_OF[m.group(3)]:
-        if re.search(NOT_A_PREFERENCE, t) and not re.search(r"\bbest\b", t):
-            return "unknown", "pair, not a preference"
-        pair = frozenset({STAGE_OF[m.group(1)], STAGE_OF[m.group(3)]})
-        if pair == frozenset({"low", "high"}) and m.group(2) in ("and", "or"):
-            return "unknown", "two stages that are not adjacent"
-        return PAIR[pair], "pair"
-    m = re.search(rf"\b(minus|negative|spring) (low )?tide\b", t)
-    if m and re.search(POSITIVE, t):
-        return "low", "minus tide"
-    hits = {STAGE_OF[x] for x in re.findall(rf"\b{STAGE}(?:er)? {UNIT}", t)}
-    if len(hits) == 1:
-        if re.search(NOT_A_PREFERENCE, t) and not re.search(r"\b(best|only|needs?|requires?)\b", t):
-            return "unknown", "stage named, not a preference"
-        if re.search(r"\b(lower|higher) tides?\b", t) and not re.search(r"\b(best|only|needs?)\b", t):
-            return "unknown", "comparative"
-        if re.search(rf"\b(not|never|avoid|doesn't|does not|won't|kills?|swamp)", t):
-            return "unknown", "negative"
-        if re.search(POSITIVE, t):
-            return hits.pop(), "single stage"
-        return "unknown", "stage named, no positive cue"
-    if len(hits) > 1:
-        return "unknown", "several stages"
-    if re.search(DIRECTION, t):
-        return "unknown", "direction, not a stage"
-    return "unknown", "tide named, no stage"
-
+# One copy of the rules: the free pass's (pipeline/tide_free_pass.py), so this measurement and
+# the review file it previews cannot disagree about what a sentence says.
+from pipeline.tide_free_pass import excluded, map_sentence, prose_sentences  # noqa: E402
 
 def domain(url):
     return _url_key(url).split("/")[0]
@@ -145,7 +81,7 @@ def main(argv=None) -> int:
         seen_pages = set()
         for f in ev["fetched"]:
             k = _url_key(f["url"])
-            if k in seen_pages:
+            if k in seen_pages or excluded(f["url"]):
                 continue
             seen_pages.add(k)
             text = ev["pages"].get(k) or ""
@@ -153,7 +89,7 @@ def main(argv=None) -> int:
             if len(text) >= CUT_PAGE_CHARS:
                 cut += 1
             page_vals = set()
-            for s in sentences(text):
+            for s in prose_sentences(text):
                 v, why = map_sentence(s)
                 if v is None:
                     continue
