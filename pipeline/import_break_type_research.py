@@ -18,12 +18,13 @@ FOR EACH RATED SPOT AND EACH OF THE TWO VALUES, the first of these that applies:
      confidence. The bottom has no default, so memory only fills an empty one;
   3. otherwise nothing is written: a value research and memory both left unknown stays as
      it is.
-THEN THE REVIEWED BREAK TYPES (REVIEWED_FILE, committed): each listed spot's break type is
-written as 'reviewed' (rank 6) over whatever research or memory would leave, through the same
-may-overwrite rule. Nothing ranked below it overwrites it, in this run or a later one. Break
-type only; the bottom is left as research and memory set it. A listed spot that is not
-exactly one rated spot in the roster stops the import, dry run included, before anything is
-written.
+THEN THE REVIEWED VALUES (REVIEWED_FILE, committed): each listed spot's break type, bottom,
+or both, whichever the entry names, is written as 'reviewed' (rank 6) over whatever research
+or memory would leave, through the same may-overwrite rule as the value's other writes.
+Nothing ranked below it overwrites it, in this run or a later one. A value the entry does not
+name is left as research and memory set it. A listed spot that is not exactly one rated spot
+in the roster, or an entry that names neither value, stops the import, dry run included,
+before anything is written.
 Every write goes through config.break_type_fields / config.bottom_fields: the value, its
 source, its confidence and its citation in one statement, refused there if migration 020
 or 021 would refuse it. A spot whose coordinates have moved more than MOVED_KM since the
@@ -32,8 +33,9 @@ run counts what each rule wrote and skipped (RULES).
 
 IT ALSO WRITES A SUMMARY (SUMMARY_OUTPUT), committed beside the roster, with no page text:
 each rated spot's research and memory answers, their sources and quotes, what the roster
-now holds, and both sand-bottom flags. The beach-break ceiling to come needs to know where
-memory and research both say sand.
+now holds, any reviewed value with its note, and both sand-bottom flags. The beach-break
+ceiling to come needs to know where memory and research both say sand. (The flags are
+research's and memory's; a reviewed bottom changes the roster's bottom, not them.)
 
 WHAT IT CANNOT CHANGE. It writes the roster's break_type and bottom keys and the summary,
 nothing else: no star rating, no forecast row, no database. Neither value is read by the
@@ -54,6 +56,7 @@ from pathlib import Path
 from . import research_break_type as rb
 from .config import (
     BOTTOM_FIELDS,
+    BOTTOM_VALUES,
     BREAK_TYPE_FIELDS,
     BREAK_TYPE_VALUES,
     DEFAULT_ENRICHED_OUTPUT,
@@ -73,12 +76,16 @@ SUMMARY_SCHEMA = 1
 
 RESEARCHED, MEMORY, REVIEWED = "researched", "model_recall", "reviewed"
 
-# Break types a person reviewed, by exact roster name and state, with a short note. Applied
-# after research and memory, as 'reviewed' (rank 6): nothing ranked below it overwrites it,
-# here or in any later run. Break type only. The note stays in this file and the summary;
-# break_type_evidence holds quotes from a cited page, and a reviewer's note is not one.
+# Values a person reviewed — a break type, a bottom, or both — by exact roster name and state,
+# with a short note. Applied after research and memory, as 'reviewed' (rank 6): nothing ranked
+# below it overwrites it, here or in any later run. The note stays in this file and the
+# summary; *_evidence holds quotes from a cited page, and a reviewer's note is not one.
 REVIEWED_FILE = PIPELINE_DIR / "data" / "break_type_reviewed.json"
 NOTE_MAX_CHARS = 300
+# The values a reviewed entry may name, each against its own list, and the keys an entry may
+# have at all: a misspelt key ("botom") would otherwise be ignored without a word.
+REVIEWED_VALUES = {"break_type": BREAK_TYPE_VALUES, "bottom": BOTTOM_VALUES}
+REVIEWED_KEYS = frozenset({"name", "state", "note", *REVIEWED_VALUES})
 # The two values, each with its one builder, its one overwrite rule and its five keys.
 VALUES = {
     "break_type": (break_type_fields, break_type_may_overwrite, BREAK_TYPE_FIELDS),
@@ -233,10 +240,10 @@ def plan_value(spot: dict, field: str, researched, memory) -> dict:
 
 def load_reviewed(path: Path, roster: list) -> dict:
     """{spot key: entry} from the reviewed file. Fails loudly, naming every entry, if any is
-    not exactly one rated spot in the roster, is listed twice, has a break type outside the
-    list, or has no note."""
+    not exactly one rated spot in the roster, is listed twice, names neither a break type nor
+    a bottom, has a value outside its list or a key the file does not use, or has no note."""
     if not path.exists():
-        raise SystemExit(f"no reviewed break types at {path}")
+        raise SystemExit(f"no reviewed values at {path}")
     doc = json.loads(path.read_text(encoding="utf-8"))
     entries = doc.get("spots") if isinstance(doc, dict) else None
     if not isinstance(entries, list):
@@ -248,14 +255,22 @@ def load_reviewed(path: Path, roster: list) -> dict:
         key = f"{entry.get('name')}|{entry.get('state')}"
         label = f"{entry.get('name')} ({entry.get('state')})"
         note = entry.get("note")
+        named = [field for field in REVIEWED_VALUES if field in entry]
+        bad = [f"{field} {entry[field]!r} is not one of {REVIEWED_VALUES[field]}"
+               for field in named if entry[field] not in REVIEWED_VALUES[field]]
+        extra = sorted(set(entry) - REVIEWED_KEYS)
         if key in out:
             problems.append(f"{label}: listed twice")
         elif key not in rated:
             problems.append(f"{label}: not a rated spot in {DEFAULT_ENRICHED_OUTPUT.name} "
                             "(the name and state must match exactly)")
-        elif entry.get("break_type") not in BREAK_TYPE_VALUES:
-            problems.append(f"{label}: break_type {entry.get('break_type')!r} is not one of "
-                            f"{BREAK_TYPE_VALUES}")
+        elif extra:
+            problems.append(f"{label}: unknown key{'s' if len(extra) > 1 else ''} "
+                            + ", ".join(repr(k) for k in extra))
+        elif not named:
+            problems.append(f"{label}: names neither a break_type nor a bottom")
+        elif bad:
+            problems.append(f"{label}: " + "; ".join(bad))
         elif not (isinstance(note, str) and 1 <= len(note.strip()) <= NOTE_MAX_CHARS):
             problems.append(f"{label}: needs a note of 1-{NOTE_MAX_CHARS} characters")
         else:
@@ -266,35 +281,39 @@ def load_reviewed(path: Path, roster: list) -> dict:
     return out
 
 
-def plan_reviewed(spot: dict, entry: dict, under: dict) -> dict:
-    """A reviewed break type, applied after research and memory (*under*: what they would
-    do), through the shared may-overwrite rule. Keeps *under* for the report."""
-    fields = break_type_fields(entry["break_type"], REVIEWED)
-    held = (under["fields"]["break_type_source"] if under["action"] == WRITE
-            else spot.get("break_type_source"))
-    before = spot.get("break_type")
-    if not break_type_may_overwrite(held, REVIEWED):
+def plan_reviewed(spot: dict, entry: dict, field: str, under: dict) -> dict:
+    """A reviewed *field* (break_type or bottom), applied after research and memory (*under*:
+    what they would do), through that value's own builder and may-overwrite rule. Keeps
+    *under* for the report."""
+    build, may_overwrite, keys = VALUES[field]
+    fields = build(entry[field], REVIEWED)
+    held = (under["fields"][f"{field}_source"] if under["action"] == WRITE
+            else spot.get(f"{field}_source"))
+    before = spot.get(field)
+    if not may_overwrite(held, REVIEWED):
         return under   # cannot happen: reviewed tops the ladder; asked all the same
     common = {"source": REVIEWED, "before": before, "under": under, "note": entry["note"]}
-    if all(spot.get(key) == fields[key] for key in BREAK_TYPE_FIELDS):
+    if all(spot.get(key) == fields[key] for key in keys):
         return {**common, "action": SAME, "rule": "reviewed_same", "after": before,
                 "fields": None}
     return {**common, "action": WRITE, "rule": "reviewed_written",
-            "after": entry["break_type"], "fields": fields}
+            "after": entry[field], "fields": fields}
 
 
 def plan(roster: list, full: dict, memory: dict, reviewed: dict = None) -> list:
     """[(roster spot, its full-run record or None, its memory record or None, settled?,
-    {field: plan_value})] for every rated spot, in roster order; a reviewed break type
-    (load_reviewed) replaces what research and memory would do with it."""
+    {field: plan_value})] for every rated spot, in roster order; a reviewed value
+    (load_reviewed) replaces what research and memory would do with that value."""
     out = []
     for spot in rb.memory_spots(roster):
         key = rb.memory_key(spot)
         researched = full["spots"].get(key)
         remembered = memory["spots"].get(key)
         changes = {field: plan_value(spot, field, researched, remembered) for field in VALUES}
-        if key in (reviewed or {}):
-            changes["break_type"] = plan_reviewed(spot, reviewed[key], changes["break_type"])
+        entry = (reviewed or {}).get(key)
+        for field in VALUES:
+            if entry is not None and field in entry:
+                changes[field] = plan_reviewed(spot, entry, field, changes[field])
         out.append((spot, researched, remembered, key in full.get("settled", {}), changes))
     return out
 
@@ -367,6 +386,13 @@ def _memory_part(record):
     return part
 
 
+def _reviewed_part(entry):
+    """The values a reviewed entry names, in VALUES order, then its note; None with no entry."""
+    if entry is None:
+        return None
+    return {**{field: entry[field] for field in VALUES if field in entry}, "note": entry["note"]}
+
+
 def summary(planned: list, roster_after: list, full_name: str, memory_name: str,
             reviewed: dict = None) -> dict:
     """Each rated spot's answers and what the roster now holds; no page text."""
@@ -382,8 +408,7 @@ def summary(planned: list, roster_after: list, full_name: str, memory_name: str,
             "name": spot["name"], "state": spot["region_hint"],
             "settled_by_geography": settled,
             "research": research, "memory": memory,
-            "reviewed": ({"break_type": reviewed[key]["break_type"],
-                          "note": reviewed[key]["note"]} if key in (reviewed or {}) else None),
+            "reviewed": _reviewed_part((reviewed or {}).get(key)),
             "roster": {field: {"value": now.get(field), "source": now.get(f"{field}_source")}
                        for field in VALUES},
             "sand_bottom": {"research": research_sand, "memory": memory_sand,
@@ -392,8 +417,8 @@ def summary(planned: list, roster_after: list, full_name: str, memory_name: str,
     return {"schema": SUMMARY_SCHEMA,
             "what": ("Each rated spot's break type and bottom: the research answer (checked "
                      "against the page it cites), the memory answer, a reviewed break type "
-                     "where a person set one, what the roster holds, and both sand-bottom "
-                     "flags. No page text."),
+                     "or bottom where a person set one, what the roster holds, and both "
+                     "sand-bottom flags. No page text."),
             "from": {"full_run": full_name, "memory": memory_name},
             "spots": spots}
 
@@ -416,6 +441,22 @@ def _row(*cells) -> str:
 
 def _label(spot: dict) -> str:
     return f"{spot['name']} ({spot['region_hint']})"
+
+
+def _review_table(what: str, reviews: list) -> list:
+    """The report's table of one value's reviews, or nothing when there are none."""
+    if not reviews:
+        return []
+    out = ["", f"Reviewed {what} ({len(reviews)}), applied after research and memory:", "",
+           _row("Spot", "Now", "Research or memory would write", "Reviewed", "Note"),
+           "|---|---|---|---|---|"]
+    for spot, c in reviews:
+        under = c["under"]
+        would = (f"{under['after']} ({under['source']})" if under["action"] == WRITE
+                 else "nothing new")
+        out.append(_row(_label(spot), c["before"] or "(none)", would, c["after"]
+                        if c["action"] == WRITE else f"{c['after']} (already)", c["note"]))
+    return out
 
 
 def render_report(planned: list, full: dict, memory: dict, wrote: bool) -> str:
@@ -447,17 +488,9 @@ def render_report(planned: list, full: dict, memory: dict, wrote: bool) -> str:
 
     reviews = [(spot, changes["break_type"]) for spot, *_, changes in planned
                if changes["break_type"]["source"] == REVIEWED]
-    if reviews:
-        out += ["", f"Reviewed break types ({len(reviews)}), applied after research and "
-                    "memory:", "",
-                _row("Spot", "Now", "Research or memory would write", "Reviewed", "Note"),
-                "|---|---|---|---|---|"]
-        for spot, c in reviews:
-            under = c["under"]
-            would = (f"{under['after']} ({under['source']})" if under["action"] == WRITE
-                     else "nothing new")
-            out.append(_row(_label(spot), c["before"] or "(none)", would, c["after"]
-                            if c["action"] == WRITE else f"{c['after']} (already)", c["note"]))
+    out += _review_table("break types", reviews)
+    out += _review_table("bottoms", [(spot, changes["bottom"]) for spot, *_, changes in planned
+                                     if changes["bottom"]["source"] == REVIEWED])
 
     changed = [(spot, changes["break_type"]) for spot, _, _, _, changes in planned
                if changes["break_type"]["action"] == WRITE
@@ -522,7 +555,7 @@ def _parse_args(argv):
     parser.add_argument("--roster", type=Path, default=DEFAULT_ENRICHED_OUTPUT,
                         help="the roster to update (default: %(default)s)")
     parser.add_argument("--reviewed", type=Path, default=REVIEWED_FILE,
-                        help="the reviewed break types (default: %(default)s)")
+                        help="the reviewed break types and bottoms (default: %(default)s)")
     parser.add_argument("--summary", type=Path, default=SUMMARY_OUTPUT,
                         help="the summary to write (default: %(default)s)")
     parser.add_argument("--dry-run", action="store_true",

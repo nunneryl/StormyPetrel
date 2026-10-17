@@ -644,6 +644,146 @@ def test_a_reviewed_entry_that_is_not_a_rated_spot_stops_the_import_and_writes_n
     assert not files["summary"].exists()
 
 
+# --- reviewed bottoms -----------------------------------------------------------------------------
+#
+# Worked from the fixture by hand. Research would write Reefy's bottom rock and Pointy's cobble;
+# Again holds sand from memory, which memory would leave as it is. The reviews:
+#   Reefy   break type point and bottom coral (both named)
+#   Pointy  bottom rock only: its break type stays as memory's rules leave it (point,
+#           unattributed: memory is skipped at a verified label)
+#   Again   bottom sand only: the same value, now from a person, so it is restamped
+
+BOTTOM_REVIEWS = {"spots": [
+    {"name": "Reefy", "state": "Hawaii", "break_type": "point", "bottom": "coral",
+     "note": "A point over coral."},
+    {"name": "Pointy", "state": "California", "bottom": "rock", "note": "Rock, not cobble."},
+    {"name": "Again", "state": "North Carolina", "bottom": "sand", "note": "Sand, checked."},
+]}
+REVIEWED_BOTTOM = {"bottom_source": "reviewed", "bottom_confidence": "high",
+                   "bottom_source_url": None, "bottom_evidence": None}
+
+
+def test_a_reviewed_bottom_is_written_with_or_without_a_reviewed_break_type(files):
+    files["reviewed"].write_text(json.dumps(BOTTOM_REVIEWS), encoding="utf-8")
+    assert _run(files) == 0
+    after = _by_name(files["roster"])
+    pick = lambda spot, keys: {k: spot.get(k) for k in keys}  # noqa: E731
+    assert pick(after["Reefy"], config.BOTTOM_FIELDS) == {"bottom": "coral", **REVIEWED_BOTTOM}
+    assert (after["Reefy"]["break_type"], after["Reefy"]["break_type_source"]) == (
+        "point", "reviewed")
+    assert pick(after["Pointy"], config.BOTTOM_FIELDS) == {"bottom": "rock", **REVIEWED_BOTTOM}
+    assert (after["Pointy"]["break_type"], after["Pointy"]["break_type_source"]) == (
+        "point", "unattributed")
+    assert pick(after["Again"], config.BOTTOM_FIELDS) == {"bottom": "sand", **REVIEWED_BOTTOM}
+    assert (after["Again"]["break_type"], after["Again"]["break_type_source"]) == (
+        "beach", "model_recall")
+    summary = {s["name"]: s for s in json.loads(files["summary"].read_text())["spots"]}
+    assert summary["Reefy"]["reviewed"] == {"break_type": "point", "bottom": "coral",
+                                            "note": "A point over coral."}
+    assert summary["Pointy"]["reviewed"] == {"bottom": "rock", "note": "Rock, not cobble."}
+    assert summary["Pointy"]["roster"]["bottom"] == {"value": "rock", "source": "reviewed"}
+    # The flags stay research's and memory's: Pointy's research said cobble.
+    assert summary["Pointy"]["research"]["bottom"]["value"] == "cobble"
+    assert summary["Pointy"]["sand_bottom"]["research"] == "no"
+
+
+def test_the_dry_run_reports_reviewed_bottoms(files, capsys):
+    files["reviewed"].write_text(json.dumps(BOTTOM_REVIEWS), encoding="utf-8")
+    before = {name: path.read_bytes() for name, path in files.items() if path.exists()}
+    assert _run(files, "--dry-run") == 0
+    assert {name: path.read_bytes() for name, path in files.items()
+            if path.exists()} == before
+    report = capsys.readouterr().out.splitlines()
+    table = report[report.index("| Rule | break type | bottom |") + 2:]
+    assert table[:14] == [
+        "| reviewed: written | 1 | 3 |",                    # Reefy | Reefy Pointy Again
+        "| reviewed: already the same | 0 | 0 |",
+        "| research (cited): written | 1 | 3 |",            # Fresh | Fresh Cited Same
+        "| research: already the same | 1 | 0 |",           # Same
+        "| research: skipped, a higher-ranked source holds it | 1 | 0 |",   # Cited
+        "| memory: written where the value was empty | 0 | 2 |",           # - | Sandy Shaky
+        "| memory: written over the unverified default 'beach' | 1 | 0 |",  # Sandy
+        "| memory: already the same | 1 | 0 |",             # Again | (now reviewed)
+        "| memory: skipped, a verified label | 1 | 0 |",     # Pointy
+        "| memory: skipped, the spot holds another value | 1 | 0 |",       # Held
+        "| memory: skipped, low confidence | 1 | 1 |",       # Shaky | Held
+        "| left: neither research nor memory gave a value | 1 | 1 |",      # Nowhere
+        "| left: the spot has moved since the answers | 1 | 1 |",          # Moved
+        "| total | 11 | 11 |"]
+    start = report.index("Reviewed break types (1), applied after research and memory:")
+    assert report[start + 2:start + 5] == [
+        "| Spot | Now | Research or memory would write | Reviewed | Note |",
+        "|---|---|---|---|---|",
+        "| Reefy (Hawaii) | beach | reef (researched) | point | A point over coral. |"]
+    start = report.index("Reviewed bottoms (3), applied after research and memory:")
+    assert report[start + 2:start + 7] == [
+        "| Spot | Now | Research or memory would write | Reviewed | Note |",
+        "|---|---|---|---|---|",
+        "| Reefy (Hawaii) | (none) | rock (researched) | coral | A point over coral. |",
+        "| Pointy (California) | (none) | cobble (researched) | rock | Rock, not cobble. |",
+        "| Again (North Carolina) | sand | nothing new | sand | Sand, checked. |"]
+    # Reviewed: Reefy coral, Pointy rock, Again sand. Research: Fresh sand, Cited rock, Same
+    # sand. Memory: Sandy sand, Shaky sand.
+    assert "Bottoms written, by value: sand 5, rock 2, coral 1, cobble 0, mixed 0, unknown 0." \
+        in report
+
+
+def test_no_reviewed_bottoms_no_bottom_table(files, capsys):
+    files["reviewed"].write_text(json.dumps(REVIEWS), encoding="utf-8")
+    assert _run(files, "--dry-run") == 0
+    report = capsys.readouterr().out
+    assert "Reviewed break types (3)" in report and "Reviewed bottoms" not in report
+
+
+def test_a_reviewed_bottom_holds_in_later_runs(files, capsys):
+    files["reviewed"].write_text(json.dumps(BOTTOM_REVIEWS), encoding="utf-8")
+    assert _run(files) == 0
+    capsys.readouterr()
+    # The same reviews again: nothing left to write.
+    assert _run(files) == 0
+    report = capsys.readouterr().out.splitlines()
+    assert "| reviewed: written | 0 | 0 |" in report
+    assert "| reviewed: already the same | 1 | 3 |" in report
+    # No reviews listed: research's rock and cobble are kept out by the ladder, and memory's
+    # sand may not replace Again's reviewed sand.
+    files["reviewed"].write_text(json.dumps({"spots": []}), encoding="utf-8")
+    assert _run(files) == 0
+    report = capsys.readouterr().out.splitlines()
+    assert "| research: skipped, a higher-ranked source holds it | 2 | 2 |" in report
+    after = _by_name(files["roster"])
+    assert [(after[n]["bottom"], after[n]["bottom_source"]) for n in ("Reefy", "Pointy", "Again")] \
+        == [("coral", "reviewed"), ("rock", "reviewed"), ("sand", "reviewed")]
+
+
+def test_a_reviewed_entry_with_a_bad_bottom_stops_the_import_and_writes_nothing(files):
+    files["reviewed"].write_text(json.dumps({"spots": [
+        {"name": "Reefy", "state": "Hawaii", "note": "Names nothing."},
+        {"name": "Sandy", "state": "New Jersey", "bottom": "gravel", "note": "Bad bottom."},
+        {"name": "Fresh", "state": "Texas", "break_type": "sandbar", "bottom": "pebbles",
+         "note": "Both bad."},
+        {"name": "Same", "state": "Texas", "botom": "sand", "note": "A misspelt key."},
+        {"name": "Held", "state": "Georgia", "bottom": "rock", "note": ""},
+        {"name": "Cited", "state": "Oregon", "bottom": "rock", "note": "Fine."},
+    ]}), encoding="utf-8")
+    before = {name: path.read_bytes() for name, path in files.items() if path.exists()}
+    bottoms = "('sand', 'rock', 'coral', 'cobble', 'mixed', 'unknown')"
+    for more in (["--dry-run"], []):
+        with pytest.raises(SystemExit) as err:
+            _run(files, *more)
+        assert str(err.value).splitlines()[0].endswith(
+            ": 5 of its 6 entries cannot be applied; nothing was written:")
+        assert str(err.value).splitlines()[1:] == [
+            "  Reefy (Hawaii): names neither a break_type nor a bottom",
+            f"  Sandy (New Jersey): bottom 'gravel' is not one of {bottoms}",
+            "  Fresh (Texas): break_type 'sandbar' is not one of ('beach', 'reef', 'point', "
+            f"'jetty', 'rivermouth', 'unknown'); bottom 'pebbles' is not one of {bottoms}",
+            "  Same (Texas): unknown key 'botom'",
+            "  Held (Georgia): needs a note of 1-300 characters"]
+    assert {name: path.read_bytes() for name, path in files.items()
+            if path.exists()} == before
+    assert not files["summary"].exists()
+
+
 # The committed file, written out: 17 jetties, three points and a reef.
 JETTIES = [("Humboldt Bay Jetty", "California"), ("Surfside Jetty", "California"),
            ("Seal Beach Jetty", "California"), ("Newport Jetties", "California"),
@@ -656,19 +796,51 @@ JETTIES = [("Humboldt Bay Jetty", "California"), ("Surfside Jetty", "California"
            ("Wooden Jetty", "New Jersey")]
 
 
+# The mondo.surf corrections (2026-10-17): a 'coral reef' outside Hawaii, Puerto Rico and
+# Florida, where no reef-building coral grows; Backdoor matched to Banzai Pipeline's reef;
+# and two break types the spot's own name and our definitions settle.
+MONDO_CORAL = (("Bird Rock", "California"), ("Rockpile", "California"),
+               ("Monahans", "Rhode Island"), ("Nelscott Reef", "Oregon"),
+               ("Upper Trestles", "California"))
+
+
 def test_the_committed_reviews_are_the_ones_asked_for_and_all_in_the_roster():
     with open(config.DEFAULT_ENRICHED_OUTPUT, encoding="utf-8") as fh:
         real = json.load(fh)
     reviewed = imp.load_reviewed(imp.REVIEWED_FILE, real)
-    assert {(e["name"], e["state"]): e["break_type"] for e in reviewed.values()} == {
+    assert {(e["name"], e["state"]): e["break_type"] for e in reviewed.values()
+            if "break_type" in e} == {
         **{spot: "jetty" for spot in JETTIES},
         ("Lovers Point", "California"): "point", ("Ventura Point", "California"): "point",
-        ("Point Arena", "California"): "point", ("Monster Hole", "Florida"): "reef"}
+        ("Point Arena", "California"): "point", ("Monster Hole", "Florida"): "reef",
+        ("Bird Rock", "California"): "reef", ("Rockpile", "California"): "reef",
+        ("Pedro Point", "California"): "point", ("River Jetties", "California"): "jetty"}
+    assert {(e["name"], e["state"]): e["bottom"] for e in reviewed.values()
+            if "bottom" in e} == {
+        ("Bird Rock", "California"): "rock", ("Rockpile", "California"): "rock",
+        ("Monahans", "Rhode Island"): "rock", ("Nelscott Reef", "Oregon"): "rock",
+        ("Upper Trestles", "California"): "cobble", ("Backdoor Pipeline", "Hawaii"): "rock"}
+    assert len(reviewed) == 21 + 8
     notes = {(e["name"], e["state"]): e["note"] for e in reviewed.values()}
     assert notes[("Lovers Point", "California")] == "A point. There is no jetty there."
     assert notes[("Ventura Point", "California")] == "A cobble point."
     assert all("jetty or inlet structure" in notes[spot] for spot in JETTIES)
+    assert all("coral" in notes[spot] and "is wrong" in notes[spot] for spot in MONDO_CORAL)
+    assert "Banzai Pipeline" in notes[("Backdoor Pipeline", "Hawaii")]
     assert imp.REVIEWED_FILE == config.PIPELINE_DIR / "data" / "break_type_reviewed.json"
+
+
+def test_the_coral_reviews_correct_what_research_took_from_mondo_surf():
+    """Each corrected coral claim is in the committed summary as research cited it: a
+    mondo.surf page whose quote says coral, in a state outside Hawaii, Puerto Rico and
+    Florida. The review replaces it with a bottom that is not coral."""
+    with open(imp.SUMMARY_OUTPUT, encoding="utf-8") as fh:
+        spots = {(s["name"], s["state"]): s for s in json.load(fh)["spots"]}
+    for spot in MONDO_CORAL:
+        bottom = spots[spot]["research"]["bottom"]
+        assert "mondo.surf" in bottom["source_url"], spot
+        assert "coral" in bottom["quote"].lower(), spot
+        assert spot[1] not in ("Hawaii", "Puerto Rico", "Florida"), spot
 
 
 def test_the_reviewed_file_is_committed_though_the_results_beside_it_are_not():
