@@ -1,5 +1,5 @@
 {
-  "what": "Break types a person reviewed. pipeline/import_break_type_research.py writes each into the roster as source 'reviewed' (rank 6), after research and memory; nothing ranked below it can overwrite it. Each spot is named exactly as in pipeline/spots_enriched.json, by name and state. Break type only: the bottom is left as research and memory set it.",
+  "what": "Break types and bottoms a person reviewed. pipeline/import_break_type_research.py writes each named value into the roster as source 'reviewed' (rank 6), after research and memory; nothing ranked below it can overwrite it. Each spot is named exactly as in pipeline/spots_enriched.json, by name and state. An entry names a break_type, a bottom, or both, with a note; a value it does not name is left as research and memory set it.",
   "spots": [
     {"name": "Humboldt Bay Jetty", "state": "California", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
     {"name": "Surfside Jetty", "state": "California", "break_type": "jetty", "note": "Waves shaped by a jetty or inlet structure, our definition of jetty. Research called it beach because surf guides describe the sandbar."},
@@ -21,6 +21,14 @@
     {"name": "Lovers Point", "state": "California", "break_type": "point", "note": "A point. There is no jetty there."},
     {"name": "Ventura Point", "state": "California", "break_type": "point", "note": "A cobble point."},
     {"name": "Point Arena", "state": "California", "break_type": "point", "note": "A point."},
-    {"name": "Monster Hole", "state": "Florida", "break_type": "reef", "note": "A reef."}
+    {"name": "Monster Hole", "state": "Florida", "break_type": "reef", "note": "A reef."},
+    {"name": "Bird Rock", "state": "California", "break_type": "reef", "bottom": "rock", "note": "Rock reef. No reef-building coral in California; mondo.surf's 'coral reef' is wrong."},
+    {"name": "Rockpile", "state": "California", "break_type": "reef", "bottom": "rock", "note": "Rock reef. No reef-building coral in California; mondo.surf's 'coral reef' is wrong."},
+    {"name": "Monahans", "state": "Rhode Island", "bottom": "rock", "note": "Rocks by the jetty. No coral in Rhode Island; mondo.surf's 'coral reef' is wrong."},
+    {"name": "Nelscott Reef", "state": "Oregon", "bottom": "rock", "note": "Offshore rock reef. No coral in Oregon; mondo.surf's 'coral reef and sand' is wrong."},
+    {"name": "Upper Trestles", "state": "California", "bottom": "cobble", "note": "Cobblestone and sand. No coral in California; mondo.surf's 'coral reef and sand' is wrong."},
+    {"name": "Backdoor Pipeline", "state": "Hawaii", "bottom": "rock", "note": "The same reef as Banzai Pipeline, whose bottom is rock; kept the same as Pipeline."},
+    {"name": "Pedro Point", "state": "California", "break_type": "point", "note": "A point, as with Lovers Point and Point Arena."},
+    {"name": "River Jetties", "state": "California", "break_type": "jetty", "note": "Waves shaped by the river-mouth jetties, our definition of jetty."}
   ]
 }
