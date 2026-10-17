@@ -352,17 +352,29 @@ def results():
     return {"schema": 2, "kind": "full", "spots": spots}
 
 
+def _roster():
+    """The fixture's spots as rated roster entries, so decisions can name them."""
+    return [{"name": r["identity"]["name"], "region_hint": r["identity"]["region"],
+             "lat": 33.0, "lng": -117.0, "is_valid_surf_spot": True}
+            for r in results()["spots"].values()]
+
+
 @pytest.fixture
 def files(tmp_path):
     path = tmp_path / "full.json"
     path.write_text(json.dumps(results()), encoding="utf-8")
+    roster = tmp_path / "roster.json"
+    roster.write_text(json.dumps(_roster()), encoding="utf-8")
+    decisions = tmp_path / "decisions.json"
+    decisions.write_text(json.dumps({"spots": []}), encoding="utf-8")
     return {"results": path, "review": tmp_path / "review.csv",
-            "conflicts": tmp_path / "conflicts.csv"}
+            "conflicts": tmp_path / "conflicts.csv", "roster": roster, "decisions": decisions}
 
 
 def _run(files, capsys):
     assert tfp.main(["--results", str(files["results"]), "--review", str(files["review"]),
-                     "--conflicts", str(files["conflicts"])]) == 0
+                     "--conflicts", str(files["conflicts"]), "--roster", str(files["roster"]),
+                     "--decisions", str(files["decisions"])]) == 0
     return capsys.readouterr().out.splitlines()
 
 
@@ -383,6 +395,8 @@ def test_the_review_file(files, capsys):
     ]
     assert rows[0]["quote"] == "There are left and right breaking reefs Best around low tide."
     assert (rows[0]["url"], rows[0]["domain"], rows[0]["decision"]) == (SO, "surf-forecast.com", "")
+    # No decisions: the proposed rows may be imported once reviewed, the uncorroborated not.
+    assert [r["import"] for r in rows] == ["yes", "yes", "no"]
     assert rows[1]["other_quotes"] == (
         "surfline.com: The Wedge is a famous shorebreak that is best around mid tide.")
     assert rows[2]["flags"] == "mondo.surf: never counts alone"
@@ -417,7 +431,8 @@ def test_it_writes_only_the_two_review_files(files, capsys, tmp_path):
     _run(files, capsys)
     after = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
     assert set(after) - set(before) == {"review.csv", "conflicts.csv"}
-    assert after["full.json"] == before["full.json"]
+    for name in ("full.json", "roster.json", "decisions.json"):
+        assert after[name] == before[name]
 
 
 @pytest.mark.parametrize("where", ["roster", "results", "json"])
@@ -426,7 +441,8 @@ def test_it_refuses_to_write_anywhere_but_a_csv(files, where):
               "json": str(files["review"].with_suffix(".json"))}[where]
     with pytest.raises(SystemExit, match="refusing to write"):
         tfp.main(["--results", str(files["results"]), "--review", target,
-                  "--conflicts", str(files["conflicts"])])
+                  "--conflicts", str(files["conflicts"]), "--roster", str(files["roster"]),
+                  "--decisions", str(files["decisions"])])
 
 
 def test_it_imports_nothing_that_writes_the_roster_or_the_database():
@@ -462,3 +478,191 @@ def test_the_review_order_single_source_and_unusual_first():
     rows = tfp.review_rows(outcomes, {"flagged.example": "mostly mid (9 of 10)"})
     assert [r["name"] for r in rows] == ["Foxtrot", "Delta", "Bravo", "Charlie", "Alpha", "Echo"]
     assert rows[0]["flags"] == "flagged.example: mostly mid (9 of 10)"
+
+
+# --- 5. the review's mapper fixes (2026-10-17) -------------------------------------------------
+#
+# From the first review of the 187 rows. The pages are on the Mac, so each case is a sentence
+# built around the words the review quoted, given here in quotation marks.
+
+@pytest.mark.parametrize("spot, sentence, value", [
+    # "low, mid, and high tide": all three listed, was 'high' from the last one
+    ("Seal Beach Jetty", "Seal Beach Jetty works at low, mid, and high tide on a south swell.", "all"),
+    ("listed with or", "It can be surfed at low, medium or high tides.", "all"),
+    ("listed with slashes", "It works best at low/mid/high tide.", "all"),
+    ("three words, two stages", "It works best at low, mid, or medium tide.", "low_mid"),
+    ("three words, low and high", "It works best at low, high, or low tide.", "unknown"),
+    # "low-to-mid": a hyphenated range, was 'mid' from "mid tide"
+    ("San Clemente Beach", "San Clemente Beach is best on a low-to-mid tide.", "low_mid"),
+    ("an en dash", "San Clemente Beach is best on a low–mid tide.", "low_mid"),
+    ("a slash", "It works best at low/mid tide.", "low_mid"),
+    ("mid-high", "It works best at mid-high tide.", "mid_high"),
+    # "medium high to low": two stage words run together, cannot be read
+    ("Pismo Beach Pier", "Pismo Beach Pier works best at medium high to low tide.", "unknown"),
+    # "a low to rising mid tide": a direction word inside the range
+    ("San Elijo State Beach", "San Elijo works best on a low to rising mid tide.", "low_mid"),
+    ("an incoming low", "It is best on an incoming low to mid tide.", "low_mid"),
+    # unchanged
+    ("low and high", "Works at low and high tide but not mid.", "unknown"),
+    ("low/high", "Works best at low/high tide.", "unknown"),
+    ("low to high", "Works from low to high tide.", "all"),
+])
+def test_the_review_fixes(spot, sentence, value):
+    assert tfp.map_sentence(sentence)[0] == value, spot
+
+
+def test_a_full_stop_with_no_space_ends_the_sentence():
+    """Crash Boat Beach: "…more forgiving at higher tide.Best at 3–8 ft." was one sentence, and
+    'Best' made the comparison a preference ('high'). Split, the comparison stays unknown."""
+    page = ("The wave is a right peeling off the pier over sand, fast and hollow on a solid swell, "
+            "mellower and more forgiving at higher tide.Best at 3–8 ft on a north swell.")
+    sentences = tfp.prose_sentences(page)
+    assert sentences == [
+        "The wave is a right peeling off the pier over sand, fast and hollow on a solid swell, "
+        "mellower and more forgiving at higher tide.",
+        "Best at 3–8 ft on a north swell."]
+    assert [tfp.map_sentence(x)[0] for x in sentences] == ["unknown", None]
+    assert tfp.map_sentence(page)[0] == "high"     # what the run-on sentence gave
+
+
+@pytest.mark.parametrize("text", [
+    "The bar is 0.4 ft deep at the lowest tide and works best at mid tide.",
+    "It is a reef in the U.S.Virgin Islands that works best at low tide on a north swell.",
+])
+def test_the_run_on_split_needs_a_lower_case_letter_before_the_stop(text):
+    """The new split is only "<lower-case>.<Capital>": a decimal, or an acronym run into the
+    next word, stays one sentence."""
+    assert tfp.prose_sentences(text) == [text]
+
+
+# --- 6. a person's decisions -------------------------------------------------------------------
+
+def test_the_committed_decisions():
+    with open(config.DEFAULT_ENRICHED_OUTPUT, encoding="utf-8") as fh:
+        roster = json.load(fh)
+    decisions = tfp.load_decisions(tfp.DECISIONS_FILE, roster)
+    assert {k: (e["decision"], e.get("value")) for k, e in decisions.items()} == {
+        "Shi Shi Beach|Washington": ("reject", None),
+        "Ponce Inlet|Florida": ("accept", "all")}
+    assert "rock arches" in decisions["Shi Shi Beach|Washington"]["note"]
+    assert tfp.DECISIONS_FILE == config.PIPELINE_DIR / "data" / "tide_review_decisions.json"
+
+
+def test_a_missing_decisions_file_is_no_decisions(tmp_path):
+    assert tfp.load_decisions(tmp_path / "none.json", _roster()) == {}
+
+
+def test_bad_decisions_stop_the_run_naming_each(tmp_path):
+    path = tmp_path / "d.json"
+    path.write_text(json.dumps({"spots": [
+        {"name": "San Onofre", "state": "California", "decision": "reject", "note": "Fine."},
+        {"name": "San Onofre", "state": "California", "decision": "reject", "note": "Twice."},
+        {"name": "Nowhere", "state": "California", "decision": "reject", "note": "No such spot."},
+        {"name": "The Wedge", "state": "California", "decision": "reject", "notes": "x"},
+        {"name": "Jalama Beach", "state": "California", "decision": "maybe", "note": "x"},
+        {"name": "Deep Hole", "state": "Rhode Island", "decision": "accept", "note": "No value."},
+        {"name": "Rincon", "state": "California", "decision": "accept", "value": "sometimes",
+         "note": "Bad value."},
+        {"name": "Pedro Point", "state": "California", "decision": "reject", "value": "low",
+         "note": "A reject with a value."},
+        {"name": "Toes Over", "state": "California", "decision": "reject", "note": " "},
+    ]}), encoding="utf-8")
+    with pytest.raises(SystemExit) as err:
+        tfp.load_decisions(path, _roster())
+    lines = str(err.value).splitlines()
+    assert lines[0].endswith(": 8 of its 9 entries cannot be used:")
+    values = "('low', 'low_mid', 'mid', 'mid_high', 'high', 'all')"
+    assert lines[1:] == [
+        "  San Onofre (California): listed twice",
+        "  Nowhere (California): not a rated spot in spots_enriched.json (the name and state "
+        "must match exactly)",
+        "  The Wedge (California): unknown key 'notes'",
+        "  Jalama Beach (California): decision 'maybe' is not one of ('accept', 'reject')",
+        f"  Deep Hole (Rhode Island): an accept names the value checked, one of {values}",
+        f"  Rincon (California): an accept names the value checked, one of {values}",
+        "  Pedro Point (California): a reject takes no value",
+        "  Toes Over (California): needs a note of 1-300 characters"]
+
+
+ACCEPT_ALL = {"decision": "accept", "value": "all", "note": "x"}
+REJECT = {"decision": "reject", "note": "x"}
+
+
+@pytest.mark.parametrize("status, value, entry, out", [
+    ("proposed", "low", None, (True, "proposed")),
+    ("uncorroborated", "all", None, (False, "uncorroborated: needs an accept")),
+    ("conflict", None, None, (False, "conflict")),
+    ("none", None, None, (False, "no statement")),
+    ("proposed", "all", REJECT, (False, "rejected on review")),
+    ("uncorroborated", "all", REJECT, (False, "rejected on review")),
+    ("proposed", "all", ACCEPT_ALL, (True, "accepted on review as all")),
+    ("uncorroborated", "all", ACCEPT_ALL, (True, "accepted on review as all")),
+    ("proposed", "mid", ACCEPT_ALL,
+     (False, "accepted on review as all, but the pass now gives mid (proposed)")),
+    ("conflict", None, ACCEPT_ALL,
+     (False, "accepted on review as all, but the pass now gives no value (conflict)")),
+])
+def test_import_decision(status, value, entry, out):
+    assert tfp.import_decision({"status": status, "value": value}, entry) == out
+
+
+def test_the_review_file_shows_the_decisions(files, capsys):
+    files["decisions"].write_text(json.dumps({"spots": [
+        {"name": "San Onofre", "state": "California", "decision": "reject", "note": "Not surf."},
+        {"name": "The Wedge", "state": "California", "decision": "accept", "value": "low",
+         "note": "Checked low."},
+        {"name": "Jalama Beach", "state": "California", "decision": "accept", "value": "all",
+         "note": "Checked all."},
+        {"name": "Deep Hole", "state": "Rhode Island", "decision": "accept", "value": "low",
+         "note": "Low, as the atlas says."},
+    ]}), encoding="utf-8")
+    out = _run(files, capsys)
+    rows = {r["name"]: r for r in _csv(files["review"])}
+    assert [(n, rows[n]["import"], rows[n]["decision"], rows[n]["decision_note"])
+            for n in ("San Onofre", "The Wedge", "Jalama Beach")] == [
+        ("San Onofre", "no", "reject", "Not surf."),
+        ("The Wedge", "no", "accept low", "Checked low."),
+        ("Jalama Beach", "yes", "accept all", "Checked all.")]
+    assert rows["The Wedge"]["flags"] == (
+        "accepted on review as low, but the pass now gives mid (proposed)")
+    assert "decisions: 4 (accept 3, reject 1); rows the import would write: 1" in out
+    # Deep Hole is a conflict, so it has no review row.
+    assert "decisions with no row in the review file: Deep Hole|Rhode Island" in out
+    assert ("accept no longer matches: The Wedge (California): accepted on review as low, but "
+            "the pass now gives mid (proposed)") in out
+
+
+def test_a_rerun_reports_what_changed_and_keeps_the_old_file(files, capsys):
+    old = [
+        {"name": "San Onofre", "state": "California", "status": "proposed", "value": "high",
+         "quote": "q", "url": SO, "decision": ""},
+        {"name": "The Wedge", "state": "California", "status": "proposed", "value": "mid",
+         "quote": "an older quote", "url": "https://example.org/old", "decision": ""},
+        {"name": "Gone Spot", "state": "Texas", "status": "proposed", "value": "low",
+         "quote": "q", "url": "u", "decision": ""},
+        {"name": "Typed Spot", "state": "Texas", "status": "proposed", "value": "low",
+         "quote": "q", "url": "u", "decision": "reject: about kayaks"},
+    ]
+    with open(files["review"], "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=list(old[0]))
+        writer.writeheader()
+        writer.writerows(old)
+    previous = files["review"].read_bytes()
+    out = _run(files, capsys)
+    assert files["review"].with_name("review.previous.csv").read_bytes() == previous
+    start = out.index("rows changed since the last review file: 5")
+    assert out[start + 1:start + 6] == [
+        "  San Onofre (California): proposed high -> proposed low",
+        "  The Wedge (California): proposed mid, same value from a different quote",
+        "  Jalama Beach (California): new row, uncorroborated all",
+        "  Gone Spot (Texas): row gone (was proposed low)",
+        "  Typed Spot (Texas): row gone (was proposed low)"]
+    assert ("typed into the old review file's decision column but not in the decisions file "
+            "(add them there, or they are lost): Typed Spot (Texas): 'reject: about kayaks'") in out
+    assert out[-1] == "Dry run: nothing imported. Review the rows before anything is written."
+
+
+def test_the_first_run_says_there_is_no_earlier_file(files, capsys):
+    out = _run(files, capsys)
+    assert "rows changed since the last review file: no earlier review file" in out
+    assert not files["review"].with_name("review.previous.csv").exists()

@@ -1,0 +1,7 @@
+{
+  "what": "A person's decisions on the free tide pass's review rows (pipeline/tide_free_pass.py). 'reject' keeps a spot's row out of any import. 'accept' names the value the person checked: the row is written only while the pass still proposes exactly that value. A proposed row with no entry may be imported once reviewed; an uncorroborated one only with an accept. Each spot is named exactly as in pipeline/spots_enriched.json, by name and state, with a note.",
+  "spots": [
+    {"name": "Shi Shi Beach", "state": "Washington", "decision": "reject", "note": "The quote is about paddling around the rock arches, not about the surf."},
+    {"name": "Ponce Inlet", "state": "Florida", "decision": "accept", "value": "all", "note": "Reviewed: all tides, as the page says."}
+  ]
+}

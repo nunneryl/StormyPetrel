@@ -30,11 +30,20 @@ count only beside another domain, and a value from them that disagrees with the 
 noted, not counted. Any other domain that says one value for most of its spots (DOMINANT_*) is
 flagged in the review file, not excluded: a person decides.
 
-THE REVIEW FILE (REVIEW_OUTPUT), one row per spot with a value: status, value, the domains, the
-quote, its URL and domain, flags, and an empty "decision" column. Single-source rows and unusual
-values come first. Uncorroborated rows (a never-alone domain only) follow. THE CONFLICTS FILE
-(CONFLICTS_OUTPUT) lists every spot whose statements disagree, each page with its value, quote
-and URL.
+THE REVIEW FILE (REVIEW_OUTPUT), one row per spot with a value: status, value, whether the import
+would write it, the reviewed decision and its note, the domains, the quote, its URL and domain,
+flags. Single-source rows and unusual values come first. Uncorroborated rows (a never-alone domain
+only) follow. THE CONFLICTS FILE (CONFLICTS_OUTPUT) lists every spot whose statements disagree,
+each page with its value, quote and URL.
+
+THE DECISIONS (DECISIONS_FILE, committed): a person's 'reject' keeps a spot's row out of any import;
+an 'accept' names the value the person checked, and the row is written only while the pass still
+proposes exactly that value. A proposed row with no decision may be imported once reviewed; an
+uncorroborated row only with an 'accept'. See import_decision.
+
+EACH RUN SAYS WHAT CHANGED: before the review file is replaced it is copied beside itself
+(*.previous.csv) and compared with the new one, row by row; anything typed into the old file's
+decision column that is not in the decisions file is listed, so it is not lost.
 """
 from __future__ import annotations
 
@@ -56,6 +65,12 @@ from .research_break_type import (
 
 REVIEW_OUTPUT = PIPELINE_DIR / "data" / "tide_free_pass_review.csv"
 CONFLICTS_OUTPUT = PIPELINE_DIR / "data" / "tide_free_pass_conflicts.csv"
+# A person's decisions on the review rows, committed. The free pass shows them in the review file,
+# and the import, when there is one, writes only what import_decision allows (see there).
+DECISIONS_FILE = PIPELINE_DIR / "data" / "tide_review_decisions.json"
+DECISIONS = ("accept", "reject")
+DECISION_KEYS = frozenset({"name", "state", "decision", "value", "note"})
+NOTE_MAX_CHARS = 300
 
 # Our own site: a page there repeats what we hold, so it is evidence of nothing.
 EXCLUDED_DOMAINS = ("stormypetrel.surf",)
@@ -111,6 +126,7 @@ _WIDGET = re.compile(r"\b(time\s?zone|forecast updated|last updated|updated \d|o
 _CLOCK = re.compile(r"\b\d{1,2}:\d{2}\b")
 _EMPHASIS = re.compile(r"\*\*|__|`")
 _BULLET = re.compile(r"^(?:[*+-]|\d+[.)])\s+")
+_RUN_ON = re.compile(r"([a-z][.!?])([A-Z])")
 _SENTENCE_END = re.compile(r"[.!?][\"'”’)\]]*$")
 _TOKEN = re.compile(r"[A-Za-z][A-Za-z'’-]*|\d[\d.,/-]*")
 FUNCTION_WORDS = frozenset({"the", "a", "an", "is", "are", "was", "it", "its", "at", "on", "in",
@@ -178,6 +194,9 @@ def prose_sentences(text: str) -> list:
     out = []
     for paragraph in paragraphs:
         paragraph = _EMPHASIS.sub("", re.sub(r"\s+", " ", paragraph))
+        # A full stop with no space after it still ends a sentence: "higher tide.Best at 3-8 ft."
+        # Only after a lower-case letter and before a capital, so "0.4 ft" and "U.S." stay whole.
+        paragraph = _RUN_ON.sub(r"\1 \2", paragraph)
         for s in re.split(r"(?<=[.!?])\s+(?=[A-Z0-9\"'“\[])", paragraph):
             if is_prose(s):
                 out.append(unlinked(s.strip()))
@@ -198,6 +217,13 @@ NOT_ABOUT_SURF = (r"(tidepools?|tide pools?|accessib\w* only|only accessib\w*|ac
 NOT_A_PREFERENCE = (r"(exposed|dangerous|shallow|rocks? show|hollower|mellower|forgiving"
                     r"|challenging|depend|dependent|sensitive|check the tide)")
 DIRECTION = r"\b(rising|incoming|pushing|push|dropping|falling|outgoing|ebb|flood)(ing)? tide\b"
+# Between the two stages of a range: "to", "and", "through", "or", a hyphen, slash or dash, also
+# written with hyphens ("low-to-mid"); and a direction word may sit before either stage ("a low
+# to rising mid tide").
+_MOVING = r"(?:(?:rising|incoming|pushing|dropping|falling|outgoing)\s+)?"
+_JOIN = r"\s*(?:-\s*)?(to|and|through|or|-|/)(?:\s*-)?\s*"
+# A list of all three stages: "low, mid, and high tide", "low, medium or high tides".
+_LIST_SEP = r"\s*(?:,\s*(?:and\s+|or\s+)?|\s(?:and|or)\s+|/)\s*"
 STAGE_OF = {"low": "low", "mid": "mid", "medium": "mid", "middle": "mid", "half": "mid",
             "high": "high"}
 PAIR = {frozenset({"low", "mid"}): "low_mid", frozenset({"mid", "high"}): "mid_high",
@@ -208,10 +234,12 @@ def map_sentence(s: str) -> tuple:
     """(value, rule) for one sentence, or (None, why) when it is not a statement about the
     surf's tide at all. value is one of VALUES, or 'unknown' for a tide statement that gives no
     usable stage: a direction ("pushing tide"), "tide dependent", a comparison ("hollower at
-    lower tides"), a negative ("avoid high tide"), or two stages that are not adjacent ("low
-    and high"). "low to high" is a range, so 'all'. A stage needs a positive word beside it
-    ("best", "works", "needs", "only", "good" ...)."""
-    t = s.lower().replace("’", "'")
+    lower tides"), a negative ("avoid high tide"), two stages that are not adjacent ("low
+    and high"), or two stage words run together ("medium high to low"). "low to high" is a
+    range, so 'all', and so is a list of all three ("low, mid, and high tide"). A range may be
+    hyphenated ("low-to-mid") and carry a direction word ("a low to rising mid tide"). A stage
+    needs a positive word beside it ("best", "works", "needs", "only", "good" ...)."""
+    t = s.lower().replace("’", "'").replace("–", "-").replace("—", "-")
     if not re.search(r"\btides?\b|\blow water\b|\bhigh water\b", t):
         return None, "no tide"
     if re.search(NOT_ABOUT_SURF, t):
@@ -220,12 +248,25 @@ def map_sentence(s: str) -> tuple:
                  r"|\b(at|on|in) all stages\b|\bwhatever the tide\b|\btide (doesn't|does not) matter",
                  t):
         return "all", "all tides"
-    m = re.search(rf"\b{STAGE}\s*(to|and|-|through|or)\s*{STAGE}\b(?:\s+{UNIT})?", t)
+    # Two stage words side by side, with nothing joining them ("medium high to low"): which
+    # stages it means cannot be read.
+    if re.search(rf"\b{STAGE}\s+{STAGE}\b", t):
+        return "unknown", "stages run together"
+    m = re.search(rf"\b{STAGE}{_LIST_SEP}{STAGE}{_LIST_SEP}{STAGE}\b", t)
+    if m and re.search(POSITIVE, t):
+        listed = frozenset(STAGE_OF[g] for g in m.groups())
+        if listed == {"low", "mid", "high"}:
+            return "all", "all three stages listed"
+        # Three words for two stages ("low, mid, or medium tide"): the pair they name, if any.
+        if PAIR.get(listed) in ("low_mid", "mid_high"):
+            return PAIR[listed], "list of two stages"
+        return "unknown", "listed stages that are not adjacent"
+    m = re.search(rf"\b{_MOVING}{STAGE}{_JOIN}{_MOVING}{STAGE}\b(?:\s+{UNIT})?", t)
     if m and re.search(POSITIVE, t) and STAGE_OF[m.group(1)] != STAGE_OF[m.group(3)]:
         if re.search(NOT_A_PREFERENCE, t) and not re.search(r"\bbest\b", t):
             return "unknown", "pair, not a preference"
         pair = frozenset({STAGE_OF[m.group(1)], STAGE_OF[m.group(3)]})
-        if pair == frozenset({"low", "high"}) and m.group(2) in ("and", "or"):
+        if pair == frozenset({"low", "high"}) and m.group(2) in ("and", "or", "/"):
             return "unknown", "two stages that are not adjacent"
         return PAIR[pair], "pair"
     m = re.search(r"\b(minus|negative|spring) (low )?tide\b", t)
@@ -409,10 +450,79 @@ def dominant_domains(outcomes: list) -> dict:
     return flags
 
 
-# --- 4. the review file ------------------------------------------------------------------------
+# --- 4. a person's decisions -------------------------------------------------------------------
 
-REVIEW_COLUMNS = ("name", "state", "status", "value", "domains", "quote", "url", "domain",
-                  "flags", "other_quotes", "decision")
+def load_decisions(path: Path, roster: list) -> dict:
+    """{'name|state': entry} from the decisions file. Fails loudly, naming every entry, if any is
+    not exactly one rated spot in the roster, is listed twice, has a key the file does not use,
+    a decision other than accept or reject, an accept without one of VALUES or a reject with a
+    value, or no note of 1-NOTE_MAX_CHARS characters. A missing file is no decisions."""
+    from .research_break_type import memory_key, memory_spots
+    if not path.exists():
+        return {}
+    import json
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    entries = doc.get("spots") if isinstance(doc, dict) else None
+    if not isinstance(entries, list):
+        raise SystemExit(f"{path} has no list of spots")
+    rated = {memory_key(spot) for spot in memory_spots(roster)}
+    out, problems = {}, []
+    for entry in entries:
+        entry = entry if isinstance(entry, dict) else {}
+        key = f"{entry.get('name')}|{entry.get('state')}"
+        label = f"{entry.get('name')} ({entry.get('state')})"
+        extra = sorted(set(entry) - DECISION_KEYS)
+        decision, value, note = entry.get("decision"), entry.get("value"), entry.get("note")
+        if key in out:
+            problems.append(f"{label}: listed twice")
+        elif key not in rated:
+            problems.append(f"{label}: not a rated spot in {DEFAULT_ENRICHED_OUTPUT.name} "
+                            "(the name and state must match exactly)")
+        elif extra:
+            problems.append(f"{label}: unknown key{'s' if len(extra) > 1 else ''} "
+                            + ", ".join(repr(k) for k in extra))
+        elif decision not in DECISIONS:
+            problems.append(f"{label}: decision {decision!r} is not one of {DECISIONS}")
+        elif decision == "accept" and value not in VALUES:
+            problems.append(f"{label}: an accept names the value checked, one of {VALUES}")
+        elif decision == "reject" and "value" in entry:
+            problems.append(f"{label}: a reject takes no value")
+        elif not (isinstance(note, str) and 1 <= len(note.strip()) <= NOTE_MAX_CHARS):
+            problems.append(f"{label}: needs a note of 1-{NOTE_MAX_CHARS} characters")
+        else:
+            out[key] = entry
+    if problems:
+        raise SystemExit(f"{path}: {len(problems)} of its {len(entries)} entries cannot be used:\n  "
+                         + "\n  ".join(problems))
+    return out
+
+
+def import_decision(outcome: dict, entry) -> tuple:
+    """(import?, why) for one spot's outcome and its decision entry (or None). The rule the import
+    will apply:
+      reject                       never
+      accept                       only while the pass proposes (or, uncorroborated, gives)
+                                   exactly the value accepted
+      no decision                  a proposed row, once reviewed; never an uncorroborated one,
+                                   a conflict or nothing"""
+    status, value = outcome["status"], outcome["value"]
+    if entry is not None and entry["decision"] == "reject":
+        return False, "rejected on review"
+    if entry is not None:
+        if status in ("proposed", "uncorroborated") and value == entry["value"]:
+            return True, f"accepted on review as {entry['value']}"
+        return False, (f"accepted on review as {entry['value']}, but the pass now gives "
+                       f"{value or 'no value'} ({status})")
+    if status == "proposed":
+        return True, "proposed"
+    return False, {"uncorroborated": "uncorroborated: needs an accept",
+                   "conflict": "conflict", "none": "no statement"}[status]
+
+
+# --- 5. the review file ------------------------------------------------------------------------
+
+REVIEW_COLUMNS = ("name", "state", "status", "value", "import", "decision", "decision_note",
+                  "domains", "quote", "url", "domain", "flags", "other_quotes")
 CONFLICT_COLUMNS = ("name", "state", "domain", "value", "quote", "url", "note")
 
 
@@ -428,9 +538,10 @@ def _flags(pages: list, dominant: dict, ignored: list) -> str:
     return "; ".join(out)
 
 
-def review_rows(outcomes: list, dominant: dict) -> list:
+def review_rows(outcomes: list, dominant: dict, decisions: dict = None) -> list:
     """The review file's rows: proposed spots, single-source and unusual values first, then the
-    uncorroborated ones."""
+    uncorroborated ones; each with what import_decision says of it."""
+    decisions = decisions or {}
     proposed = [o for o in outcomes if o["status"] == "proposed"]
     frequency = Counter(o["value"] for o in proposed)
     rows = []
@@ -443,11 +554,19 @@ def review_rows(outcomes: list, dominant: dict) -> list:
         others = [f"{p['domain']}: {s}" for p in pages if p is not first
                   for v, s in p["statements"] if v == p["value"]][:3]
         domains = sorted({p["domain"] for p in pages})
+        entry = decisions.get(f"{o['name']}|{o['state']}")
+        ok, why = import_decision(o, entry)
+        flags = _flags(pages, dominant, o["ignored"])
+        if entry is not None and not ok and entry["decision"] == "accept":
+            flags = "; ".join(f for f in (flags, why) if f)
         rows.append({"name": o["name"], "state": o["state"], "status": o["status"],
                      "value": o["value"], "domains": " ".join(domains), "quote": quote,
                      "url": first["url"], "domain": first["domain"],
-                     "flags": _flags(pages, dominant, o["ignored"]),
-                     "other_quotes": " || ".join(others), "decision": "",
+                     "flags": flags, "other_quotes": " || ".join(others),
+                     "import": "yes" if ok else "no",
+                     "decision": (f"{entry['decision']} {entry.get('value', '')}".strip()
+                                  if entry else ""),
+                     "decision_note": entry["note"] if entry else "",
                      "_key": (o["status"] != "proposed", len(domains) > 1,
                               not any(p["domain"] in dominant for p in pages),
                               frequency[o["value"]], o["state"], o["name"])})
@@ -493,6 +612,36 @@ def run(results: dict) -> tuple:
     return outcomes, stats
 
 
+def read_review(path: Path) -> dict:
+    """{(name, state): row} from an earlier review file, any column layout; {} if there is none."""
+    if not path.exists():
+        return {}
+    with open(path, encoding="utf-8", newline="") as fh:
+        return {(r.get("name"), r.get("state")): r for r in csv.DictReader(fh)}
+
+
+def review_changes(before: dict, rows: list) -> list:
+    """What changed between an earlier review file and the new rows, one line per spot, in the
+    new file's order and then the rows that are gone."""
+    after = {(r["name"], r["state"]): r for r in rows}
+    out = []
+    for key, row in after.items():
+        old = before.get(key)
+        label = f"{key[0]} ({key[1]})"
+        if old is None:
+            out.append(f"{label}: new row, {row['status']} {row['value']}")
+            continue
+        was, now = f"{old.get('status')} {old.get('value')}", f"{row['status']} {row['value']}"
+        if was != now:
+            out.append(f"{label}: {was} -> {now}")
+        elif (old.get("quote"), old.get("url")) != (row["quote"], row["url"]):
+            out.append(f"{label}: {now}, same value from a different quote")
+    for key, old in before.items():
+        if key not in after:
+            out.append(f"{key[0]} ({key[1]}): row gone (was {old.get('status')} {old.get('value')})")
+    return out
+
+
 def report(outcomes: list, stats: Counter, dominant: dict, review: Path, conflicts: Path) -> str:
     status = Counter(o["status"] for o in outcomes)
     proposed = Counter(o["value"] for o in outcomes if o["status"] == "proposed")
@@ -506,8 +655,7 @@ def report(outcomes: list, stats: Counter, dominant: dict, review: Path, conflic
              "flagged domains (mostly one value): "
              + ("; ".join(f"{d} {f}" for d, f in sorted(dominant.items())) or "none")]
     lines += [f"{k}: {v}" for k, v in sorted(stats.items())]
-    lines += [f"review file: {review}", f"conflicts file: {conflicts}",
-              "Dry run: nothing imported. Review the rows before anything is written."]
+    lines += [f"review file: {review}", f"conflicts file: {conflicts}"]
     return "\n".join(lines)
 
 
@@ -519,6 +667,10 @@ def main(argv=None) -> int:
                    help="the full run's results (default: %(default)s)")
     p.add_argument("--review", type=Path, default=REVIEW_OUTPUT)
     p.add_argument("--conflicts", type=Path, default=CONFLICTS_OUTPUT)
+    p.add_argument("--decisions", type=Path, default=DECISIONS_FILE,
+                   help="a person's decisions on the review rows (default: %(default)s)")
+    p.add_argument("--roster", type=Path, default=None,
+                   help="the roster the decisions name spots in (default: the committed one)")
     args = p.parse_args(argv)
     protected = {Path(DEFAULT_ENRICHED_OUTPUT).resolve(), args.results.resolve()}
     for out in (args.review, args.conflicts):
@@ -526,12 +678,50 @@ def main(argv=None) -> int:
             raise SystemExit(f"refusing to write {out}: the outputs are .csv review files")
     if args.review.resolve() == args.conflicts.resolve():
         raise SystemExit("--review and --conflicts must be different files")
+    import json
+    roster = json.loads(Path(DEFAULT_ENRICHED_OUTPUT if args.roster is None else args.roster)
+                        .read_text(encoding="utf-8"))
+    decisions = load_decisions(args.decisions, roster)
     outcomes, stats = run(load_full(args.results))
     dominant = dominant_domains(outcomes)
-    write_csv(args.review, REVIEW_COLUMNS, review_rows(outcomes, dominant))
+    rows = review_rows(outcomes, dominant, decisions)
+    before = read_review(args.review)
+    if args.review.exists():
+        backup = args.review.with_name(args.review.stem + ".previous.csv")
+        backup.write_bytes(args.review.read_bytes())
+    write_csv(args.review, REVIEW_COLUMNS, rows)
     write_csv(args.conflicts, CONFLICT_COLUMNS, conflict_rows(outcomes))
     print(report(outcomes, stats, dominant, args.review, args.conflicts))
+    print(decisions_report(outcomes, rows, decisions, before))
     return 0
+
+
+def decisions_report(outcomes: list, rows: list, decisions: dict, before: dict) -> str:
+    imports = Counter(r["import"] for r in rows)
+    lines = ["", f"decisions: {len(decisions)} ("
+             + ", ".join(f"{d} {sum(1 for e in decisions.values() if e['decision'] == d)}"
+                         for d in DECISIONS) + f"); rows the import would write: {imports['yes']}"]
+    seen = {f"{r['name']}|{r['state']}" for r in rows}
+    unmatched = sorted(k for k in decisions if k not in seen)
+    if unmatched:
+        lines.append("decisions with no row in the review file: " + "; ".join(unmatched))
+    held = [r for r in rows if r["decision"].startswith("accept") and r["import"] == "no"]
+    for r in held:
+        lines.append(f"accept no longer matches: {r['name']} ({r['state']}): {r['flags']}")
+    typed = sorted(f"{k[0]} ({k[1]}): {r.get('decision')!r}" for k, r in before.items()
+                   if (r.get("decision") or "").strip()
+                   and f"{k[0]}|{k[1]}" not in decisions)
+    if typed:
+        lines.append("typed into the old review file's decision column but not in the decisions "
+                     "file (add them there, or they are lost): " + "; ".join(typed))
+    if before:
+        changes = review_changes(before, rows)
+        lines += ["", f"rows changed since the last review file: {len(changes)}"]
+        lines += [f"  {line}" for line in changes]
+    else:
+        lines += ["", "rows changed since the last review file: no earlier review file"]
+    lines += ["", "Dry run: nothing imported. Review the rows before anything is written."]
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
