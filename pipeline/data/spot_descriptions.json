@@ -133,8 +133,7 @@
   },
   "backdoor-pipeline": {
     "description": "Backdoor Pipeline is a Hawaii reef break with a rock bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest.",
-    "signature": "v2:cc14c1f08ee3e569",
-    "pushed": false
+    "signature": "v2:cc14c1f08ee3e569"
   },
   "baileys-beach": {
     "description": "Baileys Beach is a beach break in Rhode Island over a sand bottom. It faces southwest, and its optimal swell direction is south. Offshore winds blow from the northeast.",
@@ -202,8 +201,7 @@
   },
   "bird-rock": {
     "description": "Facing southwest, Bird Rock is a reef break in California over a rock bottom. The optimal swell comes from the west, and the offshore wind is from the northeast.",
-    "signature": "v2:b6209853d84579c1",
-    "pushed": false
+    "signature": "v2:b6209853d84579c1"
   },
   "black-pelican": {
     "description": "Black Pelican is a surf spot in North Carolina. It faces northeast, and its optimal swell direction is northeast. Offshore winds blow from the southwest.",
@@ -1319,8 +1317,7 @@
   },
   "monahans": {
     "description": "Monahans is a Rhode Island jetty break with a rock bottom. It faces east, and it is offshore in west winds. The optimal swell comes from the southeast.",
-    "signature": "v2:49a10726b0ee9430",
-    "pushed": false
+    "signature": "v2:49a10726b0ee9430"
   },
   "mondos": {
     "description": "Mondos is a beach break in California over a mixed bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
@@ -1424,8 +1421,7 @@
   },
   "nelscott-reef": {
     "description": "Facing west, Nelscott Reef is a reef break in Oregon over a rock bottom. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:d4feb0e57bf81c6f",
-    "pushed": false
+    "signature": "v2:d4feb0e57bf81c6f"
   },
   "new-brighton-reef": {
     "description": "New Brighton Reef is a surf spot in California. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
@@ -1633,8 +1629,7 @@
   },
   "pedro-point": {
     "description": "Pedro Point is a point break in California over a rock bottom. It faces northwest, and its optimal swell direction is west. Offshore winds blow from the southeast.",
-    "signature": "v2:f5c5c7b9056920ca",
-    "pushed": false
+    "signature": "v2:f5c5c7b9056920ca"
   },
   "pelican-beach": {
     "description": "Pelican Beach is a Florida beach break with a mixed bottom. It faces east, and it is offshore in west winds. The optimal swell comes from the east.",
@@ -1870,8 +1865,7 @@
   },
   "river-jetties": {
     "description": "River Jetties is a jetty break in California over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
-    "signature": "v2:9bcb34c2a56ff2f9",
-    "pushed": false
+    "signature": "v2:9bcb34c2a56ff2f9"
   },
   "roads-end": {
     "description": "Roads End is an Oregon reef break with a mixed bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the west.",
@@ -1899,8 +1893,7 @@
   },
   "rockpile": {
     "description": "Rockpile is a reef break in California over a rock bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
-    "signature": "v2:0ac83bc6cf51e630",
-    "pushed": false
+    "signature": "v2:0ac83bc6cf51e630"
   },
   "rockpile-laguna": {
     "description": "Rockpile (Laguna) is a surf spot in California over a rock bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -2452,8 +2445,7 @@
   },
   "upper-trestles": {
     "description": "Facing southwest, Upper Trestles is a surf spot in California over a cobble bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
-    "signature": "v2:1b26d5bf663423d5",
-    "pushed": false
+    "signature": "v2:1b26d5bf663423d5"
   },
   "velzyland": {
     "description": "Facing northwest, Velzyland is a reef break in Hawaii over a coral bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
