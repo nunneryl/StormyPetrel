@@ -497,10 +497,18 @@ def load_decisions(path: Path, roster: list) -> dict:
     return out
 
 
+def stating_page(outcome: dict):
+    """The first of the outcome's pages that states its value itself, or None. A value combined
+    from pages that each say less ("low" here, "mid" there: low_mid) has none."""
+    return next((p for p in outcome.get("pages") or [] if p["value"] == outcome["value"]), None)
+
+
 def import_decision(outcome: dict, entry) -> tuple:
     """(import?, why) for one spot's outcome and its decision entry (or None). The rule the import
-    will apply:
+    applies (pipeline/import_tide_free_pass.py):
       reject                       never
+      combined                     never: no one page states the value, and a 'researched' value
+                                   is a cited page and a quote that say it (migration 022)
       accept                       only while the pass proposes (or, uncorroborated, gives)
                                    exactly the value accepted
       no decision                  a proposed row, once reviewed; never an uncorroborated one,
@@ -508,6 +516,8 @@ def import_decision(outcome: dict, entry) -> tuple:
     status, value = outcome["status"], outcome["value"]
     if entry is not None and entry["decision"] == "reject":
         return False, "rejected on review"
+    if value is not None and stating_page(outcome) is None:
+        return False, f"combined: no one page says {value}"
     if entry is not None:
         if status in ("proposed", "uncorroborated") and value == entry["value"]:
             return True, f"accepted on review as {entry['value']}"
@@ -549,7 +559,7 @@ def review_rows(outcomes: list, dominant: dict, decisions: dict = None) -> list:
         if o["status"] not in ("proposed", "uncorroborated"):
             continue
         pages = o["pages"]
-        first = next((p for p in pages if p["value"] == o["value"]), pages[0])
+        first = stating_page(o) or pages[0]
         quote = next(s for v, s in first["statements"] if v == first["value"])
         others = [f"{p['domain']}: {s}" for p in pages if p is not first
                   for v, s in p["statements"] if v == p["value"]][:3]
@@ -557,7 +567,8 @@ def review_rows(outcomes: list, dominant: dict, decisions: dict = None) -> list:
         entry = decisions.get(f"{o['name']}|{o['state']}")
         ok, why = import_decision(o, entry)
         flags = _flags(pages, dominant, o["ignored"])
-        if entry is not None and not ok and entry["decision"] == "accept":
+        if not ok and why.startswith("combined") or (
+                entry is not None and not ok and entry["decision"] == "accept"):
             flags = "; ".join(f for f in (flags, why) if f)
         rows.append({"name": o["name"], "state": o["state"], "status": o["status"],
                      "value": o["value"], "domains": " ".join(domains), "quote": quote,
@@ -607,7 +618,7 @@ def run(results: dict) -> tuple:
         pages = spot_pages(record, stats)
         outcome = decide(pages)
         outcome.update(name=record["identity"]["name"], state=record["identity"]["region"],
-                       all_pages=pages)
+                       lat=record.get("lat"), lng=record.get("lng"), all_pages=pages)
         outcomes.append(outcome)
     return outcomes, stats
 

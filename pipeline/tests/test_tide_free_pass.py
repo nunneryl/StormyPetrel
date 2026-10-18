@@ -603,7 +603,31 @@ REJECT = {"decision": "reject", "note": "x"}
      (False, "accepted on review as all, but the pass now gives no value (conflict)")),
 ])
 def test_import_decision(status, value, entry, out):
-    assert tfp.import_decision({"status": status, "value": value}, entry) == out
+    # Each outcome here has a page that states its value, as a single-page outcome does.
+    pages = [{"value": value}] if value else []
+    assert tfp.import_decision({"status": status, "value": value, "pages": pages}, entry) == out
+
+
+@pytest.mark.parametrize("entry", [None, {"decision": "accept", "value": "low_mid", "note": "x"}])
+def test_a_value_no_one_page_states_is_never_imported(entry):
+    """low here, mid there: the pass proposes low_mid, but 'researched' means a cited page and a
+    quote that say the value, and no page says low_mid. Held back, even with an accept."""
+    outcome = {"status": "proposed", "value": "low_mid",
+               "pages": [{"value": "low"}, {"value": "mid"}]}
+    assert tfp.import_decision(outcome, entry) == (False, "combined: no one page says low_mid")
+    assert tfp.stating_page(outcome) is None
+    assert tfp.stating_page(dict(outcome, pages=[{"value": "low"}, {"value": "low_mid"}])) == {
+        "value": "low_mid"}
+
+
+def test_a_combined_row_shows_why_in_the_review_file():
+    pages = [_page(SF, "low", sentence="X works best at low tide."),
+             _page(DEEP, "mid", sentence="X works best at mid tide.")]
+    outcome = {"name": "X", "state": "California", "status": "proposed", "value": "low_mid",
+               "pages": pages, "ignored": [], "all_pages": pages}
+    row, = tfp.review_rows([outcome], {})
+    assert (row["import"], row["flags"]) == ("no", "combined: no one page says low_mid")
+    assert row["quote"] == "X works best at low tide."
 
 
 def test_the_review_file_shows_the_decisions(files, capsys):

@@ -58,8 +58,9 @@ tide_preference_source in the live spots table is not one of config.TIDE_RATED_S
         [--tide-roster R.json] [--out OUT.json]
 
 It also prints a census: the live spots' (tide_preference, tide_preference_source) counts,
-and over the window the stored tide_mult values, by preference, and how many of them
-interpret.tide_multiplier reproduces from the row's tide_norm and the spot's preference.
+and over the window the stored tide_mult values, by preference, and how many of them the rater's
+rule reproduces from the row's tide_norm and the spot's live preference and source
+(interpret.tide_multiplier of interpret.rated_tide_preference).
 """
 from __future__ import annotations
 
@@ -308,7 +309,10 @@ def tide_census(rows, tides):
             continue
         if float(tm) < 1.0:
             below[str(pref)] += 1
-        expected = round(tide_multiplier(_num(row.get("tide_norm")), pref), 3)
+        # The rater's own rule (interpret.rated_tide_preference): only a trusted source's
+        # preference is applied, so since #251 an unattributed one rates 1.0.
+        expected = round(tide_multiplier(_num(row.get("tide_norm")),
+                                         rated_tide_preference(tides.get(row["spot_id"]) or {})), 3)
         repro["reproduced" if expected == round(float(tm), 3) else "NOT reproduced"] += 1
     return {
         "spots": {f"{p} / {s}": n for (p, s), n in sorted(spots.items(), key=str)},
