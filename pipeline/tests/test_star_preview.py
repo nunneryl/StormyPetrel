@@ -333,21 +333,25 @@ def test_the_swell_window_report_carries_no_tide_fields():
 
 
 def test_the_tide_census():
-    """mid is 1.0 inside [0.3, 0.7] and 0.7 outside; low is 1.0 below 0.3, 0.8 below 0.7."""
-    tides = {1: {"tide_preference": "mid", "tide_preference_source": "unattributed"},
-             2: {"tide_preference": "low", "tide_preference_source": "unattributed"}}
+    """The rater's rule: a researched preference is applied (mid is 1.0 inside [0.3, 0.7] and 0.7
+    outside; low is 1.0 below 0.3, 0.8 below 0.7), an unattributed one rates 1.0 (since #251)."""
+    tides = {1: {"tide_preference": "mid", "tide_preference_source": "researched"},
+             2: {"tide_preference": "low", "tide_preference_source": "researched"},
+             3: {"tide_preference": "mid", "tide_preference_source": "unattributed"}}
     rows = [{"spot_id": 1, "tide_norm": 0.5, "tide_mult": 1.0},     # mid in range: 1.0
             {"spot_id": 1, "tide_norm": 0.9, "tide_mult": 0.7},     # mid out of range: 0.7
             {"spot_id": 2, "tide_norm": 0.5, "tide_mult": 0.8},     # low, 0.3..0.7: 0.8
             {"spot_id": 2, "tide_norm": 0.1, "tide_mult": 0.6},     # low below 0.3 is 1.0, not 0.6
-            {"spot_id": 1, "tide_norm": None, "tide_mult": None}]
+            {"spot_id": 1, "tide_norm": None, "tide_mult": None},
+            {"spot_id": 3, "tide_norm": 0.9, "tide_mult": 1.0}]     # unattributed: 1.0, not 0.7
     c = SP.tide_census(rows, tides)
-    assert c["spots"] == {"low / unattributed": 1, "mid / unattributed": 1}
-    assert c["rows"] == 5
+    assert c["spots"] == {"low / researched": 1, "mid / researched": 1, "mid / unattributed": 1}
+    assert c["rows"] == 6
     assert c["tide_mult_by_preference"] == {"low": {"0.6": 1, "0.8": 1},
-                                            "mid": {"0.7": 1, "1": 1, "None": 1}}
+                                            "mid": {"0.7": 1, "1": 2, "None": 1}}
     assert c["hours_below_1_by_preference"] == {"low": 2, "mid": 1}
-    assert c["tide_mult_from_tide_norm_and_preference"] == {"NOT reproduced": 1, "reproduced": 3}
+    # Ungated, spot 3's 1.0 at tide_norm 0.9 would be read as a wrong 0.7.
+    assert c["tide_mult_from_tide_norm_and_preference"] == {"NOT reproduced": 1, "reproduced": 4}
 
 
 def test_the_tide_fetch_only_reads():

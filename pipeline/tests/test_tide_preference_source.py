@@ -463,20 +463,29 @@ def test_db_import_omits_tide_keys_the_roster_does_not_carry():
         assert k not in rec, k
 
 
-def test_the_roster_stamps_every_held_tide_unattributed():
+def test_the_roster_stamps_every_held_tide_unattributed_or_researched():
     """018's header counted the live table: mid 365, low 62, high 9, all 8 = 444 values, 202
-    NULL, 646 rated spots. The roster's two invalid spots both hold 'mid' (018: 367 vs 365)."""
+    NULL, 646 rated spots. The free tide pass (0b1c37a) then wrote 126 'researched' values, each
+    with its page and quote: 88 over 'unattributed' ones (mid 75, low 11, high 1, all 1) and 38
+    where there was none. Left unattributed: mid 365-75 = 290, low 62-11 = 51, high 9-1 = 8,
+    all 8-1 = 7; NULL 202-38 = 164. The roster's two invalid spots both hold 'mid' (018: 367
+    vs 365)."""
     import json
     with open(os.path.join(ROOT, "pipeline", "spots_enriched.json"), encoding="utf-8") as f:
         spots = json.load(f)
+    rated = [s for s in spots if s.get("is_valid_surf_spot") is not False]
+    researched = [s for s in rated if s.get("tide_preference_source") == "researched"]
+    assert len(researched) == 126
+    assert all(s.get("tide_preference_source_url") and s.get("tide_preference_evidence")
+               for s in researched)
     valid = Counter((s.get("tide_preference"), s.get("tide_preference_source"),
                      s.get("tide_preference_source_url"), s.get("tide_preference_evidence"))
-                    for s in spots if s.get("is_valid_surf_spot") is not False)
-    assert valid == {("mid", "unattributed", None, None): 365,
-                     ("low", "unattributed", None, None): 62,
-                     ("high", "unattributed", None, None): 9,
-                     ("all", "unattributed", None, None): 8,
-                     (None, None, None, None): 202}
+                    for s in rated if s.get("tide_preference_source") != "researched")
+    assert valid == {("mid", "unattributed", None, None): 290,
+                     ("low", "unattributed", None, None): 51,
+                     ("high", "unattributed", None, None): 8,
+                     ("all", "unattributed", None, None): 7,
+                     (None, None, None, None): 164}
     invalid = [(s["name"], s.get("tide_preference"), s.get("tide_preference_source"))
                for s in spots if s.get("is_valid_surf_spot") is False]
     assert sorted(invalid) == [("Lewes Street Surf Beach", "mid", "unattributed"),

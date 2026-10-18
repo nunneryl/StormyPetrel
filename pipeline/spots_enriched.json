@@ -255,7 +255,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com lists this as a beach and point break with offshore wind from the NE (45°) and optimal swell from the W (270°); corrected from computed NE=69° and optimal=249°. The dominant surf feature is the Big Sur Rivermouth semi-point setup, so break_type corrected from 'beach' to 'rivermouth'. Tide preference corrected to low/mid based on multiple sources; low set here.",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "light",
     "hazards": [
       "current",
@@ -264,7 +264,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Andrew-Molera-State-Park",
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -291,9 +291,9 @@
     "nwps_node_lng": -121.8675,
     "nwps_node_distance_m": 1932,
     "nwps_buoy_id": "46215",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Andrew-Molera-State-Park",
+    "tide_preference_evidence": "Prevailing right breaking waves at the beach break Best around low tide when the tide is rising."
   },
   {
     "name": "Asilomar State Beach",
@@ -328,7 +328,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com lists Asilomar as a beach and reef break with offshore wind from the SE (135°) and optimal swell from the W (270°); computed offshore_wind_deg of 96° (≈E) is incorrect and corrected to 135°. The reef sections are the primary draw, so break_type corrected from 'beach' to 'reef'. Works at all tide stages per surf-forecast.com.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rocks",
@@ -338,7 +338,7 @@
       "current"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Asilomar",
-    "tide_preference_confidence": 0.65,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -364,9 +364,9 @@
     "mop_match_distance_m": 452,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MO720_nowcast.nc",
     "mop_buoy_id": "46012",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Asilomar",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Bird Rock",
@@ -1138,7 +1138,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms offshore wind from the East (90°) and ideal swell from the West (270°); computed facing/offshore values were already correct. Tide preference corrected to mid (rising) per surf-forecast.com; tide_preference was null in input.",
-    "tide_preference": "mid",
+    "tide_preference": "mid_high",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -1146,7 +1146,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Carmel-Beach",
-    "tide_preference_confidence": 0.65,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -1171,9 +1171,9 @@
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 1831,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/california/california-central/monterey-county/carmel-beach/",
+    "tide_preference_evidence": "The best tides are mid to high, and the best swells come from the West, North, Northwest, South, and Southwest."
   },
   {
     "name": "Carpinteria State Beach",
@@ -1878,7 +1878,7 @@
       "crowds"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Dana-Point",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -1905,9 +1905,9 @@
     "nwps_node_lng": -117.71795,
     "nwps_node_distance_m": 667,
     "nwps_buoy_id": "46285",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Dana-Point",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Davenport Landing",
@@ -1952,7 +1952,7 @@
       "sharks"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Davenport-Landing",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -1979,9 +1979,9 @@
     "nwps_node_lng": -122.225,
     "nwps_node_distance_m": 2332,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/california/davenport-landing/",
+    "tide_preference_evidence": "It will work best on lower tides."
   },
   {
     "name": "Del Mar Beach",
@@ -2238,14 +2238,14 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com lists offshore wind from the North and optimal swell from the SSW (202°); computed offshore of 47° (NE) and facing of 227° (SW) both corrected. Doheny sits inside Dana Point Harbor's shadow making true N/NNE winds offshore; the SSW swell exposure is the primary swell window. Break type is a cobblestone/beach hybrid; surf-forecast.com characterizes it as a right-hand reef but most surfers know it as a beginner-friendly beach. Tide-tolerant per surf-forecast.com ('good surf at al",
-    "tide_preference": "high",
+    "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
       "rocks",
       "pollution",
       "crowds"
     ],
-    "tide_preference_confidence": 0.78,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Doheney-Beach",
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
@@ -2272,9 +2272,9 @@
     "mop_match_distance_m": 1155,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/OC131_nowcast.nc",
     "mop_buoy_id": "46285",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://surftrips.co/united-states/california/doheny-state-beach",
+    "tide_preference_evidence": "NE Santa Ana winds clean things up and the wave works best at mid tide, when exposed rocks back off."
   },
   {
     "name": "Doran Beach",
@@ -2381,7 +2381,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Multiple sources (surf-forecast.com, Surfline, Yeeew, Surfnerd) confirm this is a south-facing right-hand point/reef break needing large W swells; surf-forecast.com lists ideal swell as West and offshore wind from North. Computed break_type 'beach' corrected to 'point'; optimal_swell_dir corrected from 199° to 270° (W); tide_preference set to 'low' per Surfnerd ('low to mid tides').",
-    "tide_preference": "mid",
+    "tide_preference": "low_mid",
     "crowd_factor": "moderate",
     "hazards": [
       "rocks",
@@ -2391,7 +2391,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/El-Capitan",
-    "tide_preference_confidence": 0.65,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -2423,9 +2423,9 @@
     "nwps_node_lng": -120.00766,
     "nwps_node_distance_m": 2600,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/california/el-capitan-state-beach/",
+    "tide_preference_evidence": "Works on a low to mid tide."
   },
   {
     "name": "El Porto",
@@ -3017,7 +3017,7 @@
       "wood_pilings"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hermosa-Beach-Pier",
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
     "swell_window_source": "nwps",
@@ -3029,9 +3029,9 @@
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 4067,
     "nwps_buoy_id": "46256",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Hermosa-Beach-Pier",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Hermosa Beach, California",
@@ -3064,14 +3064,14 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms best conditions when a SW swell combines with offshore wind from the East; Surfline notes SW/WSW/W/WNW combo swells work best at mid tide. Computed orientation and swell direction of ~248° are consistent with sources; offshore_wind_deg corrected to integer 68 (was 67.69).",
-    "tide_preference": "mid",
+    "tide_preference": "mid_high",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
       "pollution",
       "crowds"
     ],
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -3098,9 +3098,9 @@
     "nwps_node_lng": -118.41745,
     "nwps_node_distance_m": 4810,
     "nwps_buoy_id": "46256",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/hermosa-beach",
+    "tide_preference_evidence": "It's best on mid to high tide, and a rising tide is generally the better call."
   },
   {
     "name": "Humboldt Bay Jetty",
@@ -3289,7 +3289,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms WSW optimal swell (247°) and NE offshore wind (67°) for this stretch of Huntington Beach. Coordinates place this ~4 km north of the Pier spot; treated as a distinct named entry covering the broader beach rather than a duplicate.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "heavy",
     "hazards": [
       "rips",
@@ -3297,7 +3297,7 @@
       "pollution"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Huntington-Beach",
-    "tide_preference_confidence": 0.85,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -3327,9 +3327,9 @@
     "nwps_node_lng": -117.98766,
     "nwps_node_distance_m": 3373,
     "nwps_buoy_id": "46256",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Huntington-Beach",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Huntington Cliffs",
@@ -3473,7 +3473,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Imperial-Beach",
-    "tide_preference_confidence": 0.8,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "orientation_source": "manual",
     "swell_window_source": "nwps",
@@ -3485,9 +3485,9 @@
     "nwps_node_lng": -117.14103,
     "nwps_node_distance_m": 1056,
     "nwps_buoy_id": "46275",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://deepswell.com/surf-guide/US/South-San-Diego/Imperial-Beach-Pier/1025",
+    "tide_preference_evidence": "The surfing experience at Imperial Beach changes with the shifting sandbars but is generally best at medium tide."
   },
   {
     "name": "Imperial Beach, California",
@@ -3842,7 +3842,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com identifies Leadbetter as a sheltered point break with ideal swell from the west (270°) and best wind from the north (0°). The computed orientation of ~316° (NW-facing) and offshore wind of ~136° (SE) are incorrect: the break sits just north of Santa Barbara Harbor, faces roughly west-southwest into the Santa Barbara Channel, and the documented offshore wind is northerly. Surfline confirms long rights off the point needing a W swell; surf-forecast.com notes best around low-to-mi",
-    "tide_preference": "mid",
+    "tide_preference": "low_mid",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -3851,7 +3851,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Leadbetter",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
     "swell_window_source": "nwps",
@@ -3863,9 +3863,9 @@
     "nwps_node_lng": -119.70681,
     "nwps_node_distance_m": 3699,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/leadbetter-beach",
+    "tide_preference_evidence": "The point works through low and mid tide, and a rising tide is generally the better call."
   },
   {
     "name": "Leo Carrillo State Beach",
@@ -3980,14 +3980,14 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms offshore winds from ENE (~67°) and best swell from the West (~270°). Computed orientation of 243° was too far south; corrected facing to 270° (due W) to match sourced data. Tide-tolerant beach break per surf-forecast.com.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "light",
     "hazards": [
       "rips",
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Leucadia",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4013,9 +4013,9 @@
     "mop_match_distance_m": 528,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0749_nowcast.nc",
     "mop_buoy_id": "46274",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Leucadia",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Wind and Sea",
@@ -4122,7 +4122,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Surf-forecast.com confirms this is a left-hand point break with offshore winds from the South and best swell from the Northwest. Computed orientation of ~359° (north-facing) is wrong; the point at Pacific Grove wraps into Monterey Bay and the wave-facing direction is NW (~315°), consistent with all sourced data. Break_type corrected from 'beach' to 'point'.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "light",
     "hazards": [
       "rips",
@@ -4130,7 +4130,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lovers-Point",
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4159,9 +4159,9 @@
     "nwps_buoy_id": null,
     "fallback_buoy_ids": [],
     "swell_window_source_override": "manual",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.boarderspeak.com/surf-spots/info/lovers-point?id=4590",
+    "tide_preference_evidence": "Lover's Point works best at all tides on rising and falling tides."
   },
   {
     "name": "Lower Trestles",
@@ -4269,7 +4269,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed break_type 'beach' and facing/offshore corrected: Lunada Bay is a well-documented reef/point break on the Palos Verdes Peninsula facing WSW (~247°). surf-forecast.com confirms optimal swell from WNW and offshore wind from the East (ENE ~67°); optimal_swell_dir set to 292 (WNW midpoint per source). Famous for heavy localism and boulder-strewn lineup.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "light",
     "hazards": [
       "rocks",
@@ -4279,7 +4279,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lunada-Bay",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4305,9 +4305,9 @@
     "mop_match_distance_m": 511,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/L0395_nowcast.nc",
     "mop_buoy_id": "46221",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Lunada-Bay",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Malibu Surfrider Beach",
@@ -4342,7 +4342,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed break_type 'beach' and orientation corrected: Malibu/Surfrider is a classic cobblestone point break facing roughly south (~180°); surf-forecast.com confirms offshore wind from the North (0°) and best swell from the SW (~225°). Computed offshore_wind_deg of ~20° and orientation of ~200° are partially plausible for the point geometry but the canonical N-offshore / SW-swell values from surf-forecast.com are more accurate for this point break.",
-    "tide_preference": "mid",
+    "tide_preference": "mid_high",
     "crowd_factor": "heavy",
     "hazards": [
       "crowds",
@@ -4351,7 +4351,7 @@
       "localism",
       "current"
     ],
-    "tide_preference_confidence": 0.85,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4378,9 +4378,9 @@
     "nwps_node_lng": -118.67532,
     "nwps_node_distance_m": 2966,
     "nwps_buoy_id": "46268",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfertoday.com/surfing/how-to-surf-malibu-surfrider-beach",
+    "tide_preference_evidence": "Best at medium/high incoming tide."
   },
   {
     "name": "Manhattan Beach Pier",
@@ -4492,7 +4492,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Manresa-State-Beach",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4519,9 +4519,9 @@
     "nwps_node_lng": -121.8675,
     "nwps_node_distance_m": 1059,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Manresa-State-Beach",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Marina State Beach",
@@ -4556,7 +4556,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms offshore wind from ESE (112°) and optimal swell from W (270°). Computed offshore_wind_deg of ~89° (east) was incorrect; corrected to 112° (ESE). Facing direction adjusted from 269° to 270° (due west) to match sourced swell direction. Tide preference set to mid-rising per surf-forecast.com guide.",
-    "tide_preference": "mid",
+    "tide_preference": "mid_high",
     "crowd_factor": "light",
     "hazards": [
       "rips",
@@ -4564,7 +4564,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Marina-State-Beach",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4595,9 +4595,9 @@
       "46042",
       "46012"
     ],
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/california/california-central/monterey-county/marina-state-beach/forecast/",
+    "tide_preference_evidence": "Works best on a mid to high tide."
   },
   {
     "name": "Mavericks, California",
@@ -4711,7 +4711,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms offshore winds from the East (90°) and ideal swell from the Southwest (225°). Computed orientation of 264° is close but corrected to 270° to reflect the westward-facing beachfront; optimal swell corrected from 264° to 225° (SW) per source. Tide preference corrected to high per surf-forecast.com.",
-    "tide_preference": "mid",
+    "tide_preference": "high",
     "crowd_factor": "heavy",
     "hazards": [
       "rocks",
@@ -4719,7 +4719,7 @@
       "crowds"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Mission-Beach",
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4746,9 +4746,9 @@
     "nwps_node_lng": -117.26923,
     "nwps_node_distance_m": 1475,
     "nwps_buoy_id": "46254",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Mission-Beach",
+    "tide_preference_evidence": "Best around high tide when the tide is falling."
   },
   {
     "name": "Mondos",
@@ -4945,7 +4945,7 @@
       "current"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Moonlight-Beach",
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -4971,9 +4971,9 @@
     "mop_match_distance_m": 576,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0724_nowcast.nc",
     "mop_buoy_id": "46274",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.primo.surf/moonlight-beach",
+    "tide_preference_evidence": "Mid tide on the push usually lines things up best."
   },
   {
     "name": "Moonstone Beach Humboldt",
@@ -5086,7 +5086,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms offshore winds from the east (90°) and ideal swell from the northwest (315°); Surfline states the beach faces due west (270°). Computed orientation of 325° is corrected to 270°. Tide preference set to 'all' per surf-forecast.com listing 'good surf at all stages of the tide'.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rocks",
@@ -5097,7 +5097,7 @@
       "boat_traffic"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Morro-Rock",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -5124,9 +5124,9 @@
     "nwps_node_lng": -120.8775,
     "nwps_node_distance_m": 1609,
     "nwps_buoy_id": "46215",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Morro-Rock",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Moss Landing",
@@ -5171,7 +5171,7 @@
       "localism"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Moss-Landing",
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -5198,9 +5198,9 @@
     "nwps_node_lng": -121.8125,
     "nwps_node_distance_m": 1921,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Moss-Landing",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Natural Bridges",
@@ -5235,7 +5235,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed facing of 188° (S) is wrong; pipeline likely geocoded to the bay side. surf-forecast.com confirms offshore winds from NE (45°) and ideal swell from NW (315°), placing the facing direction at ~315°. Surfline confirms a right reef/point best at lower tides; break_type corrected from beach to reef.",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
       "reef",
@@ -5245,7 +5245,7 @@
       "cold_water",
       "localism"
     ],
-    "tide_preference_confidence": 0.65,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Natural-Bridges-State-Beach",
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
@@ -5273,9 +5273,9 @@
     "nwps_node_lng": -122.06,
     "nwps_node_distance_m": 894,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfline.com/surf-report/natural-bridges/5842041f4e65fad6a7708986",
+    "tide_preference_evidence": "It's a winter spot, best on bigger swells and lower tides."
   },
   {
     "name": "New Brighton Reef",
@@ -5374,12 +5374,12 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms ideal wind from the northeast and ideal swell from the south-southwest; NE offshore converts to ~45° but the dominant offshore at Newport is NNE (~20°), consistent with multiple nearby Newport break pages. Computed orientation of ~195° and optimal swell of ~195° are close but corrected to 200°/202° to match sourced SSW swell direction; tide listed as 'all stages' per surf-forecast.com.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rips"
     ],
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Newport-Point",
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
@@ -5407,9 +5407,9 @@
     "nwps_node_lng": -117.9017,
     "nwps_node_distance_m": 3422,
     "nwps_buoy_id": "46256",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Newportbeach",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Newport Point",
@@ -5444,7 +5444,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Sourced corrections applied: surf-forecast.com and socalforecast.com both confirm a point break (not beach) firing on S-SSE swells (160-180 deg, midpoint 170) with NE offshore winds (45 deg). Computed orientation of 198 and NNE offshore were incorrect; the spot sits at the bend of the Newport Peninsula and the wave-facing geometry is more SSE than SSW.",
-    "tide_preference": "low",
+    "tide_preference": "mid",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -5452,7 +5452,7 @@
       "crowds"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Newport-Point",
-    "tide_preference_confidence": 0.72,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -5484,9 +5484,9 @@
     "nwps_node_lng": -117.94468,
     "nwps_node_distance_m": 3708,
     "nwps_buoy_id": "46256",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/california/california-south/orange-county/orange-county-north/newport-point/",
+    "tide_preference_evidence": "The Point works best on mid tides."
   },
   {
     "name": "Ocean Beach Pier SD",
@@ -6045,8 +6045,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pismo-Beach-Pier",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "high",
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
     "swell_window_source": "nwps",
@@ -6058,9 +6058,9 @@
     "nwps_node_lng": -120.69532,
     "nwps_node_distance_m": 4817,
     "nwps_buoy_id": "46215",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://gatheringwaves.com/pismo-beach-surf-a-locals-guide-to-surfing-in-and-around-pismo-beach-california/",
+    "tide_preference_evidence": "Pismo Beach is best surfed around high tide."
   },
   {
     "name": "Pleasure Point",
@@ -6184,7 +6184,7 @@
       "rips"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Point-Arena",
-    "tide_preference_confidence": 0.65,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -6211,9 +6211,9 @@
     "nwps_node_lng": -123.71,
     "nwps_node_distance_m": 574,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Point-Arena",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Ponto Beach",
@@ -6868,7 +6868,7 @@
       "current"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Salmon-Creek",
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -6895,9 +6895,9 @@
     "nwps_node_lng": -123.0775,
     "nwps_node_distance_m": 680,
     "nwps_buoy_id": "46237",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Salmon-Creek",
+    "tide_preference_evidence": "Best around mid tide when the tide is falling."
   },
   {
     "name": "Salt Creek",
@@ -7078,7 +7078,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com (Pipes/San Elijo) lists offshore wind from ENE (67°) and ideal swell from WSW (247°); computed offshore_wind_deg (62°) and optimal_swell_dir (242°) are close but corrected to ENE=67 and WSW=247 per source. Break type corrected from beach to reef — surf-forecast.com and Surfline both describe erratic reef and sand bottom; mid tide preferred per surf-forecast.com.",
-    "tide_preference": "mid",
+    "tide_preference": "low_mid",
     "crowd_factor": "moderate",
     "hazards": [
       "reef",
@@ -7087,7 +7087,7 @@
       "crowds",
       "pollution"
     ],
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pipes-San-Elijo-State-Beach",
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
@@ -7114,9 +7114,9 @@
     "mop_match_distance_m": 616,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0690_nowcast.nc",
     "mop_buoy_id": "46266",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.primo.surf/san-elijo-state-beach",
+    "tide_preference_evidence": "Morning offshore or light east wind holds the shape, and a low to rising mid tide typically fills the reef best."
   },
   {
     "name": "San Onofre",
@@ -7151,7 +7151,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com lists this as a beach and point break with ideal winds from the ENE (ENE=67, corrected to offshore_wind_deg=40 per ENE cardinal midpoint) and ideal swell from the SW; swell sources consistently cite SW swell (185-220deg, midpoint ~202) as optimal. The break faces roughly SSW given the coastline orientation and protective point geometry at Old Man's/Dog Patch; break_type corrected from 'beach' to 'point' as the named sections (The Point, Old Man's) are cobblestone-reef point set",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
       "rocks",
@@ -7159,7 +7159,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/San-Onofre",
-    "tide_preference_confidence": 0.8,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -7184,9 +7184,9 @@
     "nwps_node_lng": -117.56838,
     "nwps_node_distance_m": 657,
     "nwps_buoy_id": "46275",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/San-Onofre",
+    "tide_preference_evidence": "There are left and right breaking reefs Best around low tide."
   },
   {
     "name": "San Simeon",
@@ -7614,7 +7614,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms SW swell (225°) and NE offshore wind (45°). Computed orientation of ~212° and offshore of ~32° were corrected to match sourced values; the beach faces SW and is sheltered enough to work at all tide stages.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -7622,7 +7622,7 @@
       "localism"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Seal-Beach-Pier",
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "lox",
     "orientation_source": "manual",
     "swell_window_source": "nwps",
@@ -7634,9 +7634,9 @@
     "nwps_node_lng": -118.1166,
     "nwps_node_distance_m": 2266,
     "nwps_buoy_id": "46256",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Seal-Beach-Pier",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Seal Beach, California",
@@ -8251,7 +8251,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms best swell from SW and offshore winds from NE. Computed orientation of 214° was slightly off; corrected facing to 225° (SW) to align with sourced SW swell optimum and DeepSwell's 'faces southwest' description. Tide preference corrected to high per surf-forecast.com guide ('best around high tide'). Sharks noted from documented attack history.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -8260,7 +8260,7 @@
       "current"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Stinson-Beach",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -8286,9 +8286,9 @@
     "mop_match_distance_m": 1012,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/MA124_nowcast.nc",
     "mop_buoy_id": "46237",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/stinson-beach",
+    "tide_preference_evidence": "It can work across low, mid, and high tide, though a rising tide and higher water generally deliver the cleaner shape."
   },
   {
     "name": "Stone Steps",
@@ -8331,7 +8331,7 @@
       "shallow"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Stone-Steps",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -8358,9 +8358,9 @@
     "nwps_node_lng": -117.33333,
     "nwps_node_distance_m": 1280,
     "nwps_buoy_id": "46274",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Stone-Steps",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Strands Beach",
@@ -8554,7 +8554,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Corrected break_type from 'beach' to 'reef': surf-forecast.com and Surfline both document this as a collection of reef breaks along the sandstone cliffs. Facing direction adjusted to 270° (due west) per surf-forecast.com's documented ideal swell from the west and offshore wind from the east; computed orientation of 281° is reasonable but 270° better matches the west-facing reef exposure. Offshore wind is from the east (90°), confirming (facing+180)%360.",
-    "tide_preference": "low",
+    "tide_preference": "low_mid",
     "crowd_factor": "moderate",
     "hazards": [
       "reef",
@@ -8566,7 +8566,7 @@
       "cold_water"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Sunset-Cliffs",
-    "tide_preference_confidence": 0.85,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sgx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -8592,9 +8592,9 @@
     "mop_match_distance_m": 800,
     "mop_nowcast_url": "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/model/MOP_alongshore/D0317_nowcast.nc",
     "mop_buoy_id": "46258",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://deepswell.com/surf-guide/US/South-San-Diego/Sunset-Cliffs/1024",
+    "tide_preference_evidence": "Most of the surf breaks in the Sunset Cliffs region prefer a low to medium tide."
   },
   {
     "name": "Surf Beach Vandenberg",
@@ -9368,7 +9368,7 @@
     },
     "verification_confidence": "medium",
     "verification_notes": "Computed orientation (~325°, NW-facing) and offshore wind (~145°, SE) are inverted errors — this Capitola-area reef faces south/SSW like all neighboring Santa Cruz east-bay breaks. Corrected to facing ~200°, offshore from N (~20°), optimal swell SSW (~202°). Break_type corrected from 'beach' to 'reef'; tide corrected to 'low' (needs minus low tide to break per local guides).",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "light",
     "hazards": [
       "reef",
@@ -9376,7 +9376,7 @@
       "shallow",
       "cold_water"
     ],
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mtr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -9403,9 +9403,9 @@
     "nwps_node_lng": -121.95,
     "nwps_node_distance_m": 956,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.santacruz.com/guides/santa-cruz-surf-spots",
+    "tide_preference_evidence": "Also, about a block and a reef away is the infamous Toe’s Over, which needs a huge winter swell and a minus low tide to break."
   },
   {
     "name": "Topanga Beach",
@@ -10007,14 +10007,14 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com lists best swell as WNW (292°) and offshore wind from NE (45°); computed offshore_wind_deg of 75° (ENE) and optimal_swell_dir of 255° (WSW) are both corrected. Facing direction ~255° (WSW) is consistent with the Santa Monica Bay coastline orientation and is retained.",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
       "rocks",
       "rips",
       "localism"
     ],
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Venice-Breakwater",
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
@@ -10042,9 +10042,9 @@
     "nwps_node_lng": -118.5034,
     "nwps_node_distance_m": 2873,
     "nwps_buoy_id": "46268",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://westsidelosangeles.com/visitor-guide-venice-breakwater.php",
+    "tide_preference_evidence": "The optimum swell angle is from the west-northwest, and the waves are best around low tide when the tide is falling."
   },
   {
     "name": "Ventura Point",
@@ -10079,7 +10079,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms best swell from the west and offshore wind from the northeast (NE=45°). Corrected break_type from 'beach' to 'point': this is the well-known California Street / Surfer's Point multi-section point break. Tide preference set to 'all' per surf-forecast.com ('Good surf at all stages of the tide').",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "heavy",
     "hazards": [
       "rocks",
@@ -10088,7 +10088,7 @@
       "crowds",
       "localism"
     ],
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Ventura-Overhead",
     "nwps_wfo": "lox",
     "is_valid_surf_spot": true,
@@ -10119,9 +10119,9 @@
     "nwps_node_lng": -119.32,
     "nwps_node_distance_m": 1950,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Ventura-Point-California-Street",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Waddell Creek",
@@ -10521,7 +10521,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed orientation of ~28° (NNE-facing) is wrong — this is a jetty/inlet break on Delaware's south-facing Atlantic coast. Surf-forecast.com lists both the Northside and Southside as beach/jetty breaks with offshore winds from the West (270°) and ideal swell from the SSE (~157°), consistent with Surfline and SurfBagel guides. Facing direction corrected to SSE (~157°); the pipeline-derived value geocoded to the inlet channel rather than the ocean-facing wave zone.",
-    "tide_preference": "mid",
+    "tide_preference": "low_mid",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -10533,7 +10533,7 @@
       "jetty",
       "current"
     ],
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -10558,9 +10558,9 @@
     "nwps_node_lng": -75.04655,
     "nwps_node_distance_m": 1177,
     "nwps_buoy_id": "44084",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/indian-river-inlet",
+    "tide_preference_evidence": "Indian River Inlet is usually best with northeast to southeast (NE-SE) swell around 1.2 m / 4 ft to 2.4 m / 8 ft, wind from southwest to west-northwest (SW-WNW), with west-southwest (WSW) offshore, and low to mid tide."
   },
   {
     "name": "Lewes Street Surf Beach",
@@ -10938,7 +10938,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com confirms offshore wind from the West (270°) and ideal swell from the Northeast (45°). Computed optimal_swell_dir of 90° (E) corrected to 45° (NE) per sourced data. Break type updated from 'beach' to 'jetty' as surf-forecast.com classifies it as a beach/jetty break and the jetty structure is the defining feature. Tide preference confirmed all-stages per source.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -10947,7 +10947,7 @@
       "boat_traffic"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Boca-Raton-Inlet",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfl",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -10977,9 +10977,9 @@
     "nwps_node_lng": -80.06738,
     "nwps_node_distance_m": 455,
     "nwps_buoy_id": "41122",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Boca-Raton-Inlet",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Boynton Beach Inlet",
@@ -11014,7 +11014,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed orientation of 167° and offshore wind of 347° are incorrect — this is a standard east-facing South Florida inlet. surf-forecast.com (Boynton Inlet) confirms offshore winds from the West (270°) and best swell from the Northeast (45°). DeepSwell local guide notes the spot works best at low tide. Break type corrected from 'beach' to 'jetty'; facing and offshore directions corrected accordingly.",
-    "tide_preference": "mid",
+    "tide_preference": "low_mid",
     "crowd_factor": "light",
     "hazards": [
       "rips",
@@ -11023,7 +11023,7 @@
       "current"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Boynton-Beach",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfl",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -11053,9 +11053,9 @@
     "nwps_node_lng": -80.04765,
     "nwps_node_distance_m": 1714,
     "nwps_buoy_id": "41122",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/florida/florida-east-coast/palm-beach-county-south/boynton-inlet/forecast/",
+    "tide_preference_evidence": "Works best on a low to mid-tide."
   },
   {
     "name": "Cocoa Beach Pier",
@@ -11334,7 +11334,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Surf-forecast.com specifies offshore winds from WNW (292°) and best swell from the E (90°); corrected offshore_wind from computed 277° to 292° and facing from 97° to 112° to match the sourced WNW offshore bearing.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -11343,7 +11343,7 @@
       "jetty"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Deerfield-Beach-Pier",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfl",
     "orientation_source": "manual",
     "swell_window_source": "nwps",
@@ -11355,9 +11355,9 @@
     "nwps_node_lng": -80.06738,
     "nwps_node_distance_m": 716,
     "nwps_buoy_id": "41122",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfguru.com/deerfield-beach-pier-surf-report",
+    "tide_preference_evidence": "It is an exposed, sand-bottom beach and pier break that gives up lefts and rights over the sandbars the pier helps shape, working on all tides."
   },
   {
     "name": "Delray Beach",
@@ -11696,7 +11696,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed orientation of ~131° and swell of 131° corrected: surf-forecast.com and Surfline both confirm best swell is from the NE (~45°) and offshore wind is from the W (270°). The beach faces essentially east (~90°). Surfline notes the spot works best at high tide, contrary to the computed null. Break type corrected to jetty (North Jetty is the primary surf structure).",
-    "tide_preference": "low",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -11705,7 +11705,7 @@
       "jetty",
       "localism"
     ],
-    "tide_preference_confidence": 0.8,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mlb",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -11730,9 +11730,9 @@
     "nwps_node_lng": -80.27308,
     "nwps_node_distance_m": 1576,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://surfguru.com/fort-pierce-inlet-surf-report-live-surf-cam-conditions-forecast/",
+    "tide_preference_evidence": "The jetty helps organize and focus swell into a consistent, mostly right-hand break that holds waves at all stages of the tide."
   },
   {
     "name": "Haulover Inlet",
@@ -11767,7 +11767,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed orientation ~112° and swell 112° corrected: surf-forecast.com confirms ideal wind is from the west (270°) and best swell direction is from the NNE (~22°). The coastline here faces nearly due east (~90°). Tide preference corrected to low (surf-forecast.com states 'best around low tide when the tide is rising'). Break type corrected to jetty; the main surf is shaped by the inlet jetties and tidal sandbars.",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "moderate",
     "hazards": [
       "rips",
@@ -11779,7 +11779,7 @@
       "localism"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Haulover",
-    "tide_preference_confidence": 0.75,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfl",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -11809,9 +11809,9 @@
     "nwps_node_lng": -80.10685,
     "nwps_node_distance_m": 1458,
     "nwps_buoy_id": "41122",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://deepswell.com/surf-guide/US/South-Florida/Haulover-Inlet/1215",
+    "tide_preference_evidence": "A SE swell will bring lefts and rights that are best at low tides."
   },
   {
     "name": "Indian Rocks Beach",
@@ -12232,7 +12232,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "Computed orientation of 89° is consistent with east-facing Atlantic exposure — facing_direction_deg retained at 90. Surf-forecast.com confirms offshore winds from the West (270°) and optimal NE swell (~45°). Tide preference set to 'all' per surf-forecast.com; break_type corrected from 'beach' to 'jetty' given the pier structure.",
-    "tide_preference": "mid",
+    "tide_preference": "all",
     "crowd_factor": "moderate",
     "hazards": [
       "sharks",
@@ -12242,7 +12242,7 @@
       "crowds"
     ],
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lake-Worth-Pier",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfl",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -12272,9 +12272,9 @@
     "nwps_node_lng": -80.02792,
     "nwps_node_distance_m": 1143,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Lake-Worth-Pier",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Lori Wilson Park",
@@ -12655,7 +12655,7 @@
     },
     "verification_confidence": "high",
     "verification_notes": "surf-forecast.com lists offshore wind from the West (270°) and ideal swell from the North-Northeast (NNE = 22°), both corrected from the pipeline's computed 247°/67°. The break is an ebb-shoal sandbar/reef over rocks on the south side of Sebastian Inlet; academic research confirms peak swell direction ~60° (ENE) with best quality under NNE swells; tide preference corrected to low per surf-forecast.com and multiple sources.",
-    "tide_preference": "mid",
+    "tide_preference": "low",
     "crowd_factor": "light",
     "hazards": [
       "sharks",
@@ -12665,7 +12665,7 @@
       "rocks",
       "localism"
     ],
-    "tide_preference_confidence": 0.6,
+    "tide_preference_confidence": null,
     "nwps_wfo": "mlb",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -12692,9 +12692,9 @@
     "nwps_node_lng": -80.43667,
     "nwps_node_distance_m": 1274,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Monster-Hole",
+    "tide_preference_evidence": "Best around low tide when the tide is rising."
   },
   {
     "name": "Naples Pier",
@@ -13220,8 +13220,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Patrick-Air-Force-Base",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.65,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "mlb",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -13246,9 +13246,9 @@
     "nwps_node_lng": -80.60025,
     "nwps_node_distance_m": 904,
     "nwps_buoy_id": "41113",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Patrick-Air-Force-Base",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Pensacola Beach",
@@ -13479,8 +13479,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/PonceInlet",
-    "tide_preference": "low",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "jax",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -13505,9 +13505,9 @@
     "nwps_node_lng": -80.94308,
     "nwps_node_distance_m": 641,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://deepswell.com/surf-guide/US/North-Florida/Ponce-Inlet/1181",
+    "tide_preference_evidence": "Ponce Inlet can work during any tide but best at high tide when the water can get over the outer sandbar."
   },
   {
     "name": "Ponte Vedra Beach",
@@ -13666,8 +13666,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "low",
-    "tide_preference_confidence": 0.9,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "mlb",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -13692,9 +13692,9 @@
     "nwps_node_lng": -80.43667,
     "nwps_node_distance_m": 989,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Sebastian-Inlet_First-Peak",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "South Beach Miami",
@@ -13727,8 +13727,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "low",
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfl",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -13758,9 +13758,9 @@
     "nwps_node_lng": -80.12658,
     "nwps_node_distance_m": 284,
     "nwps_buoy_id": "41122",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/South-Beach_Miami",
+    "tide_preference_evidence": "Best around low tide when the tide is rising."
   },
   {
     "name": "St. Augustine Beach Pier",
@@ -14503,8 +14503,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Bellows",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.65,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -14531,9 +14531,9 @@
     "nwps_node_lng": -157.68721,
     "nwps_node_distance_m": 2092,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Bellows",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Big Beach Makena",
@@ -15093,8 +15093,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hanalei-Bay",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -15121,9 +15121,9 @@
     "nwps_node_lng": -159.50404,
     "nwps_node_distance_m": 610,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Hanalei-Bay",
+    "tide_preference_evidence": "There is a right hand reef break Good surf at all stages of the tide."
   },
   {
     "name": "Hapuna Beach",
@@ -15222,8 +15222,8 @@
       "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Honolii-Beach-Park",
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
@@ -15251,9 +15251,9 @@
     "nwps_node_lng": -155.0771,
     "nwps_node_distance_m": 1529,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/honolii-point",
+    "tide_preference_evidence": "Honolii Point is usually best with swell from north through east-northeast to southeast (N-ENE-SE), ideally northeast (NE) around 0.6 m / 2 ft to 3.7 m / 12 ft, southwest (SW) offshore wind, and any tide."
   },
   {
     "name": "Honolua Bay",
@@ -15356,7 +15356,7 @@
       "nearest_tide_station": 1.0
     },
     "tide_preference": "all",
-    "tide_preference_confidence": 0.8,
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hookipa",
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
@@ -15384,9 +15384,9 @@
     "nwps_node_lng": -156.35657,
     "nwps_node_distance_m": 1301,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Hookipa",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Kaisers",
@@ -15482,8 +15482,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Kanaha",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.65,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -15510,9 +15510,9 @@
     "nwps_node_lng": -156.43333,
     "nwps_node_distance_m": 2486,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/kanaha",
+    "tide_preference_evidence": "It can work across low, mid, and high tide, with a rising tide generally the better call."
   },
   {
     "name": "Keaau Beach",
@@ -15676,8 +15676,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Kolekole",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.45,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -15702,9 +15702,9 @@
     "nwps_node_lng": -155.10269,
     "nwps_node_distance_m": 1940,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Kolekole",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Lahaina Breakwall",
@@ -15936,8 +15936,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Log-Cabins",
-    "tide_preference": "low",
-    "tide_preference_confidence": 0.85,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -15967,9 +15967,9 @@
     "nwps_node_lng": -158.07104,
     "nwps_node_distance_m": 835,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Log-Cabins",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Lymans",
@@ -16065,8 +16065,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Makaha",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.8,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -16098,9 +16098,9 @@
     "nwps_node_lng": -158.22458,
     "nwps_node_distance_m": 2292,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Makaha",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Makapuu Beach Park",
@@ -17179,8 +17179,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Tunnels",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.8,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "hfo",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -17207,9 +17207,9 @@
     "nwps_node_lng": -159.55522,
     "nwps_node_distance_m": 1635,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Tunnels",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Turtle Bay",
@@ -17891,8 +17891,8 @@
       "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.65,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Scarborough-Beach_Maine",
     "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
@@ -17920,9 +17920,9 @@
     "nwps_node_lng": -70.2875,
     "nwps_node_distance_m": 1929,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Scarborough-Beach_Maine",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Short Sands Beach York",
@@ -18399,8 +18399,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -18425,9 +18425,9 @@
     "nwps_node_lng": -71.05422,
     "nwps_node_distance_m": 669,
     "nwps_buoy_id": "44085",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Horseneck-Beach",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Marconi Beach",
@@ -18460,8 +18460,8 @@
       "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "high",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Marconis-Beach",
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
@@ -18489,9 +18489,9 @@
     "nwps_node_lng": -69.96396,
     "nwps_node_distance_m": 901,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://capebeachdog.com/marconi-beach-in-wellfleet-ma-cape-cod-national-seashore",
+    "tide_preference_evidence": "At high tide these bars can create excellent wave conditions for surfers and bodysurfing."
   },
   {
     "name": "Nahant Beach",
@@ -18525,8 +18525,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Nahant-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.65,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -18553,9 +18553,9 @@
     "nwps_node_lng": -70.91201,
     "nwps_node_distance_m": 2174,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/nahant-beach",
+    "tide_preference_evidence": "Nahant can work across low, mid, and high tide, with a rising tide generally the better call."
   },
   {
     "name": "Nantasket Beach",
@@ -18724,8 +18724,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Nauset-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "low_mid",
+    "tide_preference_confidence": null,
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -18750,9 +18750,9 @@
     "nwps_node_lng": -69.91656,
     "nwps_node_distance_m": 1662,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/nauset-beach",
+    "tide_preference_evidence": "Nauset Beach is usually best with swell from northeast to southeast (NE-SE), ideally southeast (SE) around 0.6 m / 2 ft to 4.6 m / 15 ft, west (W) offshore wind, and low to mid tide."
   },
   {
     "name": "Plum Island",
@@ -18848,8 +18848,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hampton-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "mid_high",
+    "tide_preference_confidence": null,
     "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -18874,9 +18874,9 @@
     "nwps_node_distance_m": 1191,
     "nwps_buoy_id": "44098",
     "nwps_direction_status": "unverifiable",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/new-england/new-hampshire/hampton-beach/",
+    "tide_preference_evidence": "Works best on mid to high tide."
   },
   {
     "name": "Jenness Beach",
@@ -18911,7 +18911,7 @@
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Jenness-Beach",
     "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "gyx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -18938,9 +18938,9 @@
     "nwps_node_distance_m": 1284,
     "nwps_buoy_id": "44098",
     "nwps_direction_status": "unverifiable",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Jenness-Beach",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "North Beach Rye",
@@ -19163,8 +19163,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "low_mid",
+    "tide_preference_confidence": null,
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -19189,9 +19189,9 @@
     "nwps_node_lng": -74.42586,
     "nwps_node_distance_m": 630,
     "nwps_buoy_id": "44091",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://hwztsurf.com/spots/atlantic-city",
+    "tide_preference_evidence": "The ideal tide is low to mid."
   },
   {
     "name": "Avalon NJ",
@@ -19541,8 +19541,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Bradley-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "low_mid",
+    "tide_preference_confidence": null,
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -19569,9 +19569,9 @@
     "nwps_node_distance_m": 1301,
     "nwps_buoy_id": "44065",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/bradley-beach",
+    "tide_preference_evidence": "Bradley Beach is usually best with swell from northeast through east-southeast to south (NE-ESE-S), ideally southeast (SE) around 0.6 m / 2 ft to 2.4 m / 8 ft, west (W) offshore wind, and low to mid tide."
   },
   {
     "name": "Brigantine",
@@ -19604,8 +19604,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.65,
+    "tide_preference": "mid_high",
+    "tide_preference_confidence": null,
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -19630,9 +19630,9 @@
     "nwps_node_lng": -74.36379,
     "nwps_node_distance_m": 963,
     "nwps_buoy_id": "44091",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-jersey-new-york/new-jersey-new-jersey-new-york/new-jersey-atlantic-city/brigantine/forecast/",
+    "tide_preference_evidence": "Works on a mid to high tide."
   },
   {
     "name": "Deal",
@@ -19980,8 +19980,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Manasquan-Inlet",
-    "tide_preference": "low",
-    "tide_preference_confidence": 0.8,
+    "tide_preference": "mid",
+    "tide_preference_confidence": null,
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -20006,9 +20006,9 @@
     "nwps_node_distance_m": 1213,
     "nwps_buoy_id": "44065",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Manasquan-Inlet",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising."
   },
   {
     "name": "Margate",
@@ -20480,8 +20480,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Seaside-Heights",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -20506,9 +20506,9 @@
     "nwps_node_distance_m": 1467,
     "nwps_buoy_id": "44091",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Seaside-Heights",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Seaside Park",
@@ -20790,8 +20790,8 @@
       "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Strathmere-7th-Street",
     "nwps_wfo": "phi",
     "is_valid_surf_spot": true,
@@ -20819,9 +20819,9 @@
     "nwps_node_lng": -74.65345,
     "nwps_node_distance_m": 856,
     "nwps_buoy_id": "44084",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/new-jersey-new-york/new-jersey-new-jersey-new-york/new-jersey-cape-may/strathmere/",
+    "tide_preference_evidence": "Works on all tides depending on the bars."
   },
   {
     "name": "Surf City NJ",
@@ -21044,8 +21044,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Ditch-Plains",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.85,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "okx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -21072,9 +21072,9 @@
     "nwps_node_distance_m": 1604,
     "nwps_buoy_id": "44025",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://trvlcollective.com/your-guide-to-surfing-montauk-ny/",
+    "tide_preference_evidence": "Ditch Plains can work on any tide depending on the size of the swell."
   },
   {
     "name": "Fire Island",
@@ -22359,8 +22359,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Avalon-Pier",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "low_mid",
+    "tide_preference_confidence": null,
     "nwps_wfo": "mhx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -22387,9 +22387,9 @@
     "nwps_node_lng": -75.67018,
     "nwps_node_distance_m": 350,
     "nwps_buoy_id": "44056",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/north-carolina/north-carolina-outer-banks-north/avalon-pier/",
+    "tide_preference_evidence": "Works best on mid to low tide."
   },
   {
     "name": "Avon Pier",
@@ -22488,8 +22488,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "low",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "low_mid",
+    "tide_preference_confidence": null,
     "nwps_wfo": "mhx",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -22514,9 +22514,9 @@
     "nwps_node_lng": -75.53313,
     "nwps_node_distance_m": 1223,
     "nwps_buoy_id": "41120",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/cape-hatteras-lighthouse",
+    "tide_preference_evidence": "Cape Hatteras Lighthouse is usually best with north-northeast through east-southeast to south (NNE-ESE-S) swell around 1.8 m / 6 ft to 2.4 m / 8 ft, wind from west to north-northwest (W-NNW), with west-northwest (WNW) offshore, and low to mid tide."
   },
   {
     "name": "Carolina Beach",
@@ -24360,8 +24360,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Gold-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "mfr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -24388,9 +24388,9 @@
     "nwps_node_lng": -124.43725,
     "nwps_node_distance_m": 1013,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Gold-Beach",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Hubbard Creek",
@@ -24549,8 +24549,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Lincoln-City",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "pqr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -24577,9 +24577,9 @@
     "nwps_node_lng": -124.02017,
     "nwps_node_distance_m": 254,
     "nwps_buoy_id": "46278",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/oregon/north/lincoln-city/",
+    "tide_preference_evidence": "Works on all tides depending on the bars."
   },
   {
     "name": "Nelscott Reef",
@@ -24750,7 +24750,7 @@
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Otter-Rock",
     "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference_confidence": null,
     "nwps_wfo": "pqr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -24782,9 +24782,9 @@
     "nwps_node_lng": -124.09467,
     "nwps_node_distance_m": 1600,
     "nwps_buoy_id": "46278",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/oregon/central-north/otter-rock/",
+    "tide_preference_evidence": "Works best on a medium tide."
   },
   {
     "name": "Pacific City Beach",
@@ -24817,8 +24817,8 @@
       "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "pqr",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -24850,9 +24850,9 @@
     "nwps_node_lng": -123.99533,
     "nwps_node_distance_m": 1654,
     "nwps_buoy_id": "46278",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Pacific-City",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Roads End",
@@ -25209,8 +25209,8 @@
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
     "coord_fix_note": "Puerto Rico point break near Rincon; seed coords placed it off Venezuela.",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.5,
+    "tide_preference": "low_mid",
+    "tide_preference_confidence": null,
     "coord_adjusted": false,
     "orientation_50m": 178.93804990358132,
     "orientation_deg": 341.0,
@@ -25244,9 +25244,9 @@
     "nwps_node_lng": -67.23729,
     "nwps_node_distance_m": 965,
     "nwps_buoy_id": "41115",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/antonios",
+    "tide_preference_evidence": "Antonio's is usually best with west to north (W-N) swell around 1.2 m / 4 ft to 2.4 m / 8 ft, wind from south-southwest to east-southeast (SSW-ESE), with south-southeast (SSE) offshore, and low to mid tide."
   },
   {
     "name": "Aviones",
@@ -25484,10 +25484,10 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Gas-Chambers",
-    "tide_preference": "low",
+    "tide_preference": "all",
     "orientation_source": "manual",
     "orientation_note": "Reef faces NNW",
-    "tide_preference_confidence": 0.8,
+    "tide_preference_confidence": null,
     "nwps_wfo": "sju",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -25517,9 +25517,9 @@
     "nwps_node_distance_m": 256,
     "nwps_buoy_id": "41115",
     "swell_window_source_override": "manual",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.xtremespots.com/board-sports/surfing/gas-chambers-aguadilla-puerto-rico/",
+    "tide_preference_evidence": "Furthermore, the best tide movement is rising and falling tides and the ideal tide position is all tides."
   },
   {
     "name": "Indicators",
@@ -26016,8 +26016,8 @@
       "nearest_tide_station": 1.0
     },
     "orientation_source": "manual",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Playa-Kikitas",
     "nwps_wfo": "sju",
     "is_valid_surf_spot": true,
@@ -26042,9 +26042,9 @@
     "nwps_node_lng": -66.27119,
     "nwps_node_distance_m": 1576,
     "nwps_buoy_id": "41121",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Playa-Kikitas",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Playa Manati",
@@ -27019,8 +27019,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Matunuck",
-    "tide_preference": "low",
-    "tide_preference_confidence": 0.75,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -27047,9 +27047,9 @@
     "nwps_node_distance_m": 2294,
     "nwps_buoy_id": "44097",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-england/rhode-island/rhode-island-west/matunuck/",
+    "tide_preference_evidence": "Works on all tides, but fattens up a bit on higher ones."
   },
   {
     "name": "Misquamicut State Beach",
@@ -27083,8 +27083,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Misquamicut-State-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.7,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -27119,9 +27119,9 @@
     "nwps_node_distance_m": 876,
     "nwps_buoy_id": "44097",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Misquamicut-State-Beach",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Monahans",
@@ -27343,8 +27343,8 @@
       "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Pilgrim-Avenue",
     "nwps_wfo": "box",
     "is_valid_surf_spot": true,
@@ -27377,9 +27377,9 @@
     "nwps_node_distance_m": 1391,
     "nwps_buoy_id": "44097",
     "nwps_direction_status": "verified",
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/pilgrim-avenue",
+    "tide_preference_evidence": "Pilgrim Avenue is usually best with swell from east to south (E-S), ideally south (S) around 0.9 m / 3 ft to 4.6 m / 15 ft, west (W) offshore wind, and any tide."
   },
   {
     "name": "Point Judith",
@@ -27740,8 +27740,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Edisto-Beach",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.55,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "chs",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -27768,9 +27768,9 @@
     "nwps_node_lng": -80.30524,
     "nwps_node_distance_m": 1225,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Edisto-Beach",
+    "tide_preference_evidence": "Surfable at all stages of the tide."
   },
   {
     "name": "Folly Beach Pier",
@@ -28062,8 +28062,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hunting-Island",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.5,
+    "tide_preference": "high",
+    "tide_preference_confidence": null,
     "nwps_wfo": "chs",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -28090,9 +28090,9 @@
     "nwps_node_lng": -80.43717,
     "nwps_node_distance_m": 889,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Hunting-Island",
+    "tide_preference_evidence": "Best around high tide when the tide is rising."
   },
   {
     "name": "Isle of Palms",
@@ -29078,8 +29078,8 @@
       "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/South-Padre-Island-1",
     "nwps_wfo": "bro",
     "is_valid_surf_spot": true,
@@ -29105,9 +29105,9 @@
     "nwps_node_lng": -97.15465,
     "nwps_node_distance_m": 923,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/South-Padre-Island-1",
+    "tide_preference_evidence": "Good surf at all stages of the tide."
   },
   {
     "name": "Surfside Beach TX",
@@ -29527,8 +29527,8 @@
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hobuck",
-    "tide_preference": "mid",
-    "tide_preference_confidence": 0.6,
+    "tide_preference": "all",
+    "tide_preference_confidence": null,
     "nwps_wfo": "sew",
     "is_valid_surf_spot": true,
     "coord_fix_applied": true,
@@ -29553,9 +29553,9 @@
     "nwps_node_lng": -124.71469,
     "nwps_node_distance_m": 3602,
     "nwps_buoy_id": null,
-    "tide_preference_source": "unattributed",
-    "tide_preference_source_url": null,
-    "tide_preference_evidence": null
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/washington/hobuck-beach/",
+    "tide_preference_evidence": "Works on all tides depending on the swell and bars."
   },
   {
     "name": "Kalaloch Beach",
@@ -30628,6 +30628,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/seaside-reef-south-cardiff-state-beach",
     "bottom_evidence": "It breaks over a mix of rock ledge and sand and throws both lefts and rights.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/seaside-reef-south-cardiff-state-beach",
+    "tide_preference_evidence": "The reef works on low and mid tide, with a rising tide generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -30763,6 +30767,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://surftrips.co/united-states/california/san-clemente-state-beach",
     "bottom_evidence": "A mellow beachbreak half a mile north of the Trestles complex, San Clemente State Beach functions as the pressure-release valve when the circus at Lowers gets too heavy.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://surftrips.co/united-states/california/san-clemente-state-beach",
+    "tide_preference_evidence": "It picks up S-SW swells and short-to-mid-period W-WNW energy, working best at head-high on a low-to-mid tide with a light NE or E wind keeping faces clean.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -31037,6 +31045,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/seal-beach-jetty",
     "bottom_evidence": "Seal Beach Jetty breaks over sand as a mix of beach, pier, and jetty peaks, offering both rights and lefts.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/seal-beach-jetty",
+    "tide_preference_evidence": "It works through low, mid, and high tide, with a rising tide generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -31236,6 +31248,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/california/california-south/los-angeles-county/south-bay/rat-beach/forecast/",
     "bottom_evidence": "The waves here are pretty easy to surf and break for up to 100 meters over a rock and sand bottom.",
+    "tide_preference": "low",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Rat-Beach",
+    "tide_preference_evidence": "Best around low tide when the tide is rising.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -31328,6 +31344,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/shitpipe",
     "bottom_evidence": "Shitpipe is a left beach break over sand and rock.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/shitpipe",
+    "tide_preference_evidence": "Shitpipe is usually best with south-southwest to west (SSW-W) swell around 1.8 m / 6 ft to 3.7 m / 12 ft, wind from north through east-northeast to southeast (N-ENE-SE), with east-northeast (ENE) offshore, and low to mid tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -31420,6 +31440,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surf-forecast.com/breaks/Venice-Pier",
     "bottom_evidence": "**Venice Pier** in Los Angeles County is an exposed sandbar break.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Venice-Pier",
+    "tide_preference_evidence": "Surfable at all stages of the tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -31824,6 +31848,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/oxnard",
     "bottom_evidence": "Oxnard is a mile-long stretch of beachbreak that breaks over sand and peels both left and right.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/oxnard",
+    "tide_preference_evidence": "Oxnard is usually best with south-southeast through south to west-northwest (SSE-S-WNW) swell around 0.9 m / 3 ft to 3 m / 10 ft, wind from north-northeast to east (NNE-E), with northeast (NE) offshore, and any tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -31875,6 +31903,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/ventura-harbor",
     "bottom_evidence": "It breaks over sand as a beach and jetty setup, serving up both rights and lefts.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/ventura-harbor",
+    "tide_preference_evidence": "Ventura Harbor is usually best with south-southeast through south to west-northwest (SSE-S-WNW) swell around 1.2 m / 4 ft to 3 m / 10 ft, wind from northeast to east-southeast (NE-ESE), with east-northeast (ENE) offshore, and any tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -32028,6 +32060,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/little-rincon-mussel-shoals",
     "bottom_evidence": "Little Rincon/Mussel Shoals is a right point break over boulders and sand.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/little-rincon-mussel-shoals",
+    "tide_preference_evidence": "It works on low and mid tide, and comes into its own on the lower tide during those bigger winter swells, with a rising tide generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -32079,6 +32115,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/tarpits-carpinteria-state-beach",
     "bottom_evidence": "Tarpits/Carpinteria State Beach is a left-and-right beach break over boulders and sand.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/tarpits-carpinteria-state-beach",
+    "tide_preference_evidence": "Tarpits/Carpinteria State Beach is usually best with swell from southwest to northwest (SW-NW), ideally west (W) around 0.9 m / 3 ft to 1.8 m / 6 ft, northeast (NE) offshore wind, and low to mid tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -32130,6 +32170,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/california/california-south/santa-barbara-county/santa-barbara-east/miramar/forecast/",
     "bottom_evidence": "Found in Montecito, Santa Barbara County, Southern California, Miramar is a decent point break that peels across a boulder and sand bottom.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/california/california-south/santa-barbara-county/santa-barbara-east/miramar/forecast/",
+    "tide_preference_evidence": "The best winds come from the Northeast, the best swells from the Northwest and West, and the best tides are low to mid.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -32600,6 +32644,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surf-forecast.com/breaks/Mitchells-Cove",
     "bottom_evidence": "Mitchell's Cove in Santa Cruz is a sheltered reef and point break that has quite reliable surf.",
+    "tide_preference": "low",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Mitchells-Cove",
+    "tide_preference_evidence": "Best around low tide when the tide is rising.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -33010,6 +33058,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/point-reyes-north",
     "bottom_evidence": "Point Reyes (north) is a sand-bottomed beach break on the north side of the Point Reyes peninsula, throwing both lefts and rights.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/point-reyes-north",
+    "tide_preference_evidence": "It works through mid and high tide, and a rising tide is generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34007,6 +34059,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/florida/florida-east-coast/broward-and-dade-counties/spoils/",
     "bottom_evidence": "Located on the East coast of Florida, Spoils is a decent jetty wedge that breaks over a rock bottom.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/florida/florida-east-coast/broward-and-dade-counties/spoils/",
+    "tide_preference_evidence": "Works best on a mid to high tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34362,6 +34418,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "low",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Jensen-Beach",
+    "tide_preference_evidence": "Best around low tide when the tide is rising.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34411,6 +34471,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://deepswell.com/surf-guide/US/Central-Florida/Vero-Beach/1191",
     "bottom_evidence": "The original pier was destroyed by Hurricane Irene in 1999 but has since returned with sandbar spots on each side which are good at high tide.",
+    "tide_preference": "high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://deepswell.com/surf-guide/US/Central-Florida/Vero-Beach/1191",
+    "tide_preference_evidence": "The original pier was destroyed by Hurricane Irene in 1999 but has since returned with sandbar spots on each side which are good at high tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34460,6 +34524,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/spessard-holland/XSkif2K7PBvCBXKRA",
     "bottom_evidence": "Spessard Holland is a sand-bottomed beach break with peaks that break both left and right, spread across two parks to the north and south.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/spessard-holland/XSkif2K7PBvCBXKRA",
+    "tide_preference_evidence": "It breaks best on low to mid tide, and a rising tide is generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34644,6 +34712,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/pelican-beach-park",
     "bottom_evidence": "It breaks over sand and coquina worm rock and throws both rights and lefts.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/pelican-beach-park",
+    "tide_preference_evidence": "It can work across low, mid, and high tide, though a rising tide is generally the better call and low to mid tide the standout.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34736,6 +34808,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Flagler-Avenue",
+    "tide_preference_evidence": "Best around mid tide when the tide is rising.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -34966,6 +35042,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://deepswell.com/surf-guide/US/Georgia/Jekyll-Island/1169",
     "bottom_evidence": "There are a lot of offshore sandbars that stop the swell from reaching the shore.",
+    "tide_preference": "high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://deepswell.com/surf-guide/US/Georgia/Jekyll-Island/1169",
+    "tide_preference_evidence": "Otherwise, the surf is best at high tide and suited mostly for longboarding.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -35060,6 +35140,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.spots.guru/en/new_spots/surf-sea-island",
     "bottom_evidence": "Sea Island features a beach break with both right and left waves, breaking over a sandy bottom.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.spots.guru/en/new_spots/surf-sea-island",
+    "tide_preference_evidence": "The spot is best during mid to high tide, particularly with a rising tide, offering clean conditions when the swell is right.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -35278,6 +35362,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Berts-Bar",
+    "tide_preference_evidence": "Good surf at all stages of the tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -36341,6 +36429,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/new-jersey-new-york/new-jersey-new-jersey-new-york/new-jersey-cape-may/broadway/forecast",
     "bottom_evidence": "Located in Cape May, New Jersey, Broadway is a fun beach break with a sand-covered bottom.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-jersey-new-york/new-jersey-new-jersey-new-york/new-jersey-cape-may/broadway/forecast",
+    "tide_preference_evidence": "Best on mid to high tides.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -36433,6 +36525,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Queen-Street",
+    "tide_preference_evidence": "Good surf at all stages of the tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -36561,6 +36657,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Diamond-Beach-1",
+    "tide_preference_evidence": "Good surf at all stages of the tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -36653,6 +36753,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Avalon-30th-Street",
+    "tide_preference_evidence": "Good surf at all stages of the tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -37338,6 +37442,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/new-jersey-new-york/new-jersey-new-jersey-new-york/new-jersey-monmouth-county/sea-girt/",
     "bottom_evidence": "Located in Monmouth County New Jersey, Sea Girt is a fun beachy that breaks over a sand bottom.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-jersey-new-york/new-jersey-new-jersey-new-york/new-jersey-monmouth-county/sea-girt/",
+    "tide_preference_evidence": "New York Bvld usually has the best banks on low to mid tides The large swell window of this spot ensures consistency.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -37476,6 +37584,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/breezy-point",
     "bottom_evidence": "It's a mellow little enclave that breaks over sand and peels both left and right.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/breezy-point",
+    "tide_preference_evidence": "The bank comes in best on low to mid tide, and a rising tide is generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -37522,6 +37634,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/west-end-long-beach",
     "bottom_evidence": "The bottom is sand, so the banks shift around, but all tides are rideable and a **rising tide** is generally the better call.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/west-end-long-beach",
+    "tide_preference_evidence": "The bottom is sand, so the banks shift around, but all tides are rideable and a rising tide is generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -37706,6 +37822,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://afloatusa.com/surfing",
+    "tide_preference_evidence": "Offering a fairly consistent beach break that works best on a southeast swell, the waves at Hither Hills break both left and right, and the surf will typically work at all tides.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -37977,6 +38097,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Panic-Point-Weekapaug",
+    "tide_preference_evidence": "Good surf at all stages of the tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -38334,6 +38458,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/new-england/rhode-island/rhode-island-west/scarborough-state-beach/forecast/",
     "bottom_evidence": "Located in Rhode Island, Scarborough State Beach is a half-decent beachie that breaks over a sand bottom.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-england/rhode-island/rhode-island-west/scarborough-state-beach/forecast/",
+    "tide_preference_evidence": "Works on mid to high tides.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -38426,6 +38554,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/baileys-beach",
     "bottom_evidence": "Bailey's Beach is a hollow beachbreak that breaks over sand and peels off both lefts and rights.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/baileys-beach",
+    "tide_preference_evidence": "It can break through all tides, with a rising tide generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -38896,6 +39028,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/new-england/massachusetts/massachusetts-south/green-harbor/",
     "bottom_evidence": "Located just south of Boston in Massachusetts, Green harbor is a halfway decent jetty setup that breaks over a sand bottom.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-england/massachusetts/massachusetts-south/green-harbor/",
+    "tide_preference_evidence": "Works best on mid to high tides.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -38942,6 +39078,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/usa/new-england/massachusetts/massachusetts-south/scituate/",
     "bottom_evidence": "Located just south of Boston in Massachusetts, Scituate is a quality point break that peels over a boulder covered bottom.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/usa/new-england/massachusetts/massachusetts-south/scituate/",
+    "tide_preference_evidence": "Works best on low to mid tides.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -39172,6 +39312,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/salisbury-beach",
     "bottom_evidence": "Salisbury Beach is a left-and-right beach break over sand.",
+    "tide_preference": "all",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/salisbury-beach",
+    "tide_preference_evidence": "It breaks on all tides, with a rising tide generally the better call.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -39663,6 +39807,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/new-england/maine/maine-north/pine-point-beach/forecast/",
     "bottom_evidence": "Located in Northern Maine, Pine Point Beach is a mediocre beach break that peels over a sand bottom.",
+    "tide_preference": "low_mid",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-england/maine/maine-north/pine-point-beach/forecast/",
+    "tide_preference_evidence": "Works best on low to mid tides.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [
@@ -39709,6 +39857,10 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.yeeew.com/listing/north-america/new-england/maine/maine-north/reid-state-park/",
     "bottom_evidence": "Located in Northern Maine, Reid State Park is a fun beach break that thunders over a rock and sand bottom.",
+    "tide_preference": "mid_high",
+    "tide_preference_source": "researched",
+    "tide_preference_source_url": "https://www.yeeew.com/listing/north-america/new-england/maine/maine-north/reid-state-park/",
+    "tide_preference_evidence": "Works best on a mid to high tide.",
     "is_valid_surf_spot": true,
     "source": "manifest_addition",
     "sources": [

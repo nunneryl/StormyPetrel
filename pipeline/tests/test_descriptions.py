@@ -43,9 +43,9 @@ STEAMER_PAYLOAD = {"name": "Steamer Lane", "state": "California", "break_type": 
                    "bottom": "rock", "faces": "SE", "orientation_deg": 128,
                    "offshore_wind_from": "NW", "offshore_wind_deg": 308, "tide_preference": "all",
                    "optimal_swell_from": "SW", "optimal_swell_deg": 225}
-# 'v2:' + sha1("t2\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
-STEAMER_V2 = "v2:fb3e7d4f849945e3"
-STEAMER_V2_LEFT_OUT = "v2:380c5caa202c9bf2"   # the same with break_type and bottom left out
+# 'v2:' + sha1("t3\n" + canonical JSON)[:16], computed with hashlib outside the code under test:
+STEAMER_V2 = "v2:79fe0d46fcf5a56a"
+STEAMER_V2_LEFT_OUT = "v2:8a233644f7249b40"   # the same with break_type and bottom left out
 
 
 # --------------------------------------------------------------------------- #
@@ -151,8 +151,8 @@ def test_the_signature_ignores_key_order():
 
 
 def test_the_template_version_is_in_the_signature(monkeypatch):
-    monkeypatch.setattr(Dn, "TEMPLATE_VERSION", "t3")
-    expected = "v2:" + hashlib.sha1(("t3\n" + json.dumps(
+    monkeypatch.setattr(Dn, "TEMPLATE_VERSION", "t4")
+    expected = "v2:" + hashlib.sha1(("t4\n" + json.dumps(
         STEAMER_PAYLOAD, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     ).encode()).hexdigest()[:16]
     assert Dn.description_signature(STEAMER_PAYLOAD) == expected != STEAMER_V2
@@ -160,16 +160,17 @@ def test_the_template_version_is_in_the_signature(monkeypatch):
 
 def template_source():
     parts = (Dn._an, Dn._sentence, Dn._degrees_apart, Dn._swell_behind, Dn._name_holds, Dn._facts,
-             *Dn.PATTERNS)
+             *Dn.PATTERNS, Dn._tide_sentence, Dn.render)
     return ("".join(inspect.getsource(f) for f in parts) + repr(Dn.DIRECTION_WORDS)
-            + repr(Dn.BREAK_WORDS) + Dn.NO_BREAK_TYPE + repr(Dn.SWELL_MAX_OFF_FACING_DEG))
+            + repr(Dn.BREAK_WORDS) + Dn.NO_BREAK_TYPE + repr(Dn.SWELL_MAX_OFF_FACING_DEG)
+            + repr(Dn.TIDE_SENTENCES))
 
 
 def test_the_template_cannot_change_without_a_new_version():
     """Edit the template's wording and this fails: bump TEMPLATE_VERSION, then record the new
     fingerprint. Every description written by the old wording is then rewritten."""
     assert (Dn.TEMPLATE_VERSION, hashlib.sha1(template_source().encode()).hexdigest()[:12]) == (
-        "t2", "28b70373f076")
+        "t3", "c3f766f52937")
 
 
 def test_is_v2():
@@ -211,9 +212,9 @@ def test_each_spot_gets_its_action_and_reason(no_exclusions):
     roster = GD.roster_spots([spot("New"), spot("Old"), spot("Changed"), spot("Same"),
                               spot("Unwritten")])
     same_sig = "v2:" + hashlib.sha1(
-        b't2\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
+        b't3\n{"faces":"NW","name":"Same","orientation_deg":315,"state":"Hawaii"}').hexdigest()[:16]
     unwritten_sig = "v2:" + hashlib.sha1(
-        b't2\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
+        b't3\n{"faces":"NW","name":"Unwritten","orientation_deg":315,"state":"Hawaii"}'
     ).hexdigest()[:16]
     cache = {"old": {"description": "t", "signature": "0123456789abcdef"},
              "changed": {"description": "t", "signature": "v2:0000000000000000"},
@@ -315,7 +316,7 @@ class FakeQuery:
 
 def sig_of(name):
     """The v2 signature of spot(name)'s payload, written out and hashed with hashlib."""
-    return "v2:" + hashlib.sha1(('t2\n{"faces":"NW","name":"%s","orientation_deg":315,'
+    return "v2:" + hashlib.sha1(('t3\n{"faces":"NW","name":"%s","orientation_deg":315,'
                                  '"state":"Hawaii"}' % name).encode()).hexdigest()[:16]
 
 
@@ -625,7 +626,9 @@ def test_the_sample_spots_are_the_cases_they_stand_for():
     assert pick["Pensacola Beach"]["break_type_source"] == "model_recall"
     assert not pick["Agate Beach"].get("break_type")
     assert (pick["Aviones"]["region_hint"], pick["Aviones"]["break_type"]) == ("Puerto Rico", "reef")
-    assert "tide_preference" not in pick["Seaside Reef"]
+    assert (pick["Seaside Reef"]["tide_preference"], pick["Seaside Reef"]["tide_preference_source"]) == (
+        "low_mid", "researched")
+    assert "tide_preference" not in pick["Agate Beach"]
     assert {pick[n]["region_hint"] for n in ("Banzai Pipeline", "Waimea Bay")} == {"Hawaii"}
     assert {pick[n]["region_hint"] for n in ("Steamer Lane", "Malibu Surfrider Beach")} == {
         "California"}
@@ -881,14 +884,68 @@ def test_render_uses_the_slugs_pattern():
     assert Dn.render(FULL, "pensacola-beach") == in_pattern(FULL, 2)
 
 
-def test_the_tide_is_never_stated():
+def test_the_patterns_leave_the_tide_to_its_own_sentence():
     with_tide = dict(FULL, tide_preference="low")
     assert [in_pattern(with_tide, n) for n in range(3)] == [in_pattern(FULL, n) for n in range(3)]
 
 
+# Banzai Pipeline's pattern (1, pinned above), then the tide preference's sentence (template t3).
+BANZAI_1 = ("Banzai Pipeline is a Hawaii reef break with a rock bottom. It faces northwest, and it "
+            "is offshore in southeast winds. The optimal swell comes from the north.")
+
+
+@pytest.mark.parametrize("value, sentence", [
+    ("low", "It works best around low tide."),
+    ("low_mid", "It works best from low to mid tide."),
+    ("mid", "It works best around mid tide."),
+    ("mid_high", "It works best from mid to high tide."),
+    ("high", "It works best around high tide."),
+    ("all", "It works at all stages of the tide."),
+])
+def test_a_stated_tide_adds_one_plain_sentence(value, sentence):
+    payload = dict(FULL, tide_preference=value)
+    text = Dn.render(payload, "banzai-pipeline")
+    assert text == BANZAI_1 + " " + sentence
+    assert GD.check_description(text, payload) == []
+
+
+SPOT_WITH_TIDE = {"name": "Banzai Pipeline", "region_hint": "Hawaii", "break_type": "reef",
+                  "break_type_source": "researched", "bottom": "rock", "bottom_source": "researched",
+                  "orientation_deg": 315, "offshore_wind_deg": 135, "optimal_swell_dir": 0,
+                  "tide_preference": "low"}
+
+
+@pytest.mark.parametrize("source, sentence", [
+    ("reviewed", True), ("researched", True), ("scraped", True),
+    ("model_recall", False), ("unattributed", False), ("derived_from_break_type", False),
+    ("unknown", False), (None, False),
+])
+def test_only_a_verified_tide_is_stated(source, sentence):
+    spot = dict(SPOT_WITH_TIDE, tide_preference_source=source)
+    text = Dn.render(Dn.description_payload(Dn.spot_fields(spot)), "banzai-pipeline")
+    assert text == (BANZAI_1 + " It works best around low tide." if sentence else BANZAI_1)
+
+
+def test_no_source_key_and_an_unknown_tide_state_nothing():
+    no_key = Dn.render(Dn.description_payload(Dn.spot_fields(SPOT_WITH_TIDE)), "banzai-pipeline")
+    unknown = Dn.render(Dn.description_payload(Dn.spot_fields(dict(
+        SPOT_WITH_TIDE, tide_preference="unknown", tide_preference_source="researched"))),
+        "banzai-pipeline")
+    assert no_key == unknown == BANZAI_1
+
+
+def test_the_tide_sentences_are_these():
+    assert Dn.TIDE_SENTENCES == {
+        "low": "It works best around low tide.", "low_mid": "It works best from low to mid tide.",
+        "mid": "It works best around mid tide.", "mid_high": "It works best from mid to high tide.",
+        "high": "It works best around high tide.", "all": "It works at all stages of the tide."}
+    assert Dn.TEMPLATE_VERSION == "t3"
+
+
 def test_every_spot_in_the_committed_roster_passes_the_check():
-    """The template against the real roster: no text the full run would reject, none mentions
-    tide or the swell window, and each names exactly the break type its payload gives."""
+    """The template against the real roster: no text the full run would reject, none mentions the
+    swell window, the tide only in its own closing sentence and only when the payload states one,
+    and each names exactly the break type its payload gives."""
     roster = GD.roster_spots(json.loads(
         (ROOT / "pipeline" / "spots_enriched.json").read_text(encoding="utf-8")))
     assert len(roster) >= 600
@@ -896,7 +953,11 @@ def test_every_spot_in_the_committed_roster_passes_the_check():
         payload = Dn.description_payload(Dn.spot_fields(s))
         text = Dn.render(payload, slug)
         assert GD.check_description(text, payload) == [], (slug, text)
-        assert "tide" not in text.lower() and "window" not in text.lower(), (slug, text)
+        assert "window" not in text.lower(), (slug, text)
+        tide = Dn.TIDE_SENTENCES.get(payload.get("tide_preference"))
+        body = text[:-len(tide) - 1] if tide else text
+        assert (text.endswith(" " + tide) if tide else True), (slug, text)
+        assert "tide" not in body.lower(), (slug, text)
 
 
 

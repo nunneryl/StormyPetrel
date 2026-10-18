@@ -77,9 +77,9 @@ SAMPLE_SPOTS = (
     "Matanzas Inlet",           # jetty, reviewed — its old text said rivermouth
     "Asbury Park",              # a New Jersey beach; its bottom is model_recall, so left out
     "Pensacola Beach",          # break type model_recall: left out
-    "Agate Beach",              # no break type at all
+    "Agate Beach",              # no break type at all, and no tide preference
     "Aviones",                  # a Puerto Rico reef over coral
-    "Seaside Reef",             # tide preference missing
+    "Seaside Reef",             # tide preference researched (low_mid): the t3 tide sentence
 )
 
 GENERATE, PUSH, KEEP = "generate", "push", "keep"

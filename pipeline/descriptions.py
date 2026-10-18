@@ -24,9 +24,11 @@ nothing a template cannot state, and failed at the spots with the fewest facts: 
 samples it twice answered Pensacola Beach with self-talk ("Wait, I need to revise — I was instructed
 not to mention missing fields"). render() states exactly the payload's name, state, break type,
 bottom, facing, optimal swell direction and offshore wind, leaving out whatever is absent, in one of
-PATTERN_COUNT sentence patterns picked by a hash of the slug so the pages do not all read alike. The
-tide preference is in the payload (and so in the signature) but is not stated. Two more facts are
-held back from the sentence while staying in the payload, so that correcting them rewrites the text:
+PATTERN_COUNT sentence patterns picked by a hash of the slug so the pages do not all read alike. A
+tide preference in the payload (so only a reviewed, researched or scraped one) closes the text with
+one plain sentence of its own, TIDE_SENTENCES ("It works best around low tide."); template t3 added
+it. Two more facts are held back from the sentence while staying in the payload, so that correcting
+them rewrites the text:
   the optimal swell direction, when it is more than SWELL_MAX_OFF_FACING_DEG from the direction the
       spot faces — a swell from behind the beach comes from the faulty swell windows or a wrong
       orientation (31 spots on 2026-10-13, e.g. Spoils faces E with an optimal W; 2 after
@@ -52,7 +54,7 @@ import hashlib
 import json
 import re
 
-TEMPLATE_VERSION = "t2"
+TEMPLATE_VERSION = "t3"
 SIGNATURE_PREFIX = "v2:"
 STATED_SOURCES = ("reviewed", "researched", "scraped")
 GATED_FIELDS = ("break_type", "bottom", "tide_preference")  # each stated only from STATED_SOURCES
@@ -222,6 +224,21 @@ def _pattern_2(f):
 
 
 PATTERNS = (_pattern_0, _pattern_1, _pattern_2)
+
+# The one sentence a verified tide preference adds, after the pattern's own sentences.
+TIDE_SENTENCES = {
+    "low": "It works best around low tide.",
+    "low_mid": "It works best from low to mid tide.",
+    "mid": "It works best around mid tide.",
+    "mid_high": "It works best from mid to high tide.",
+    "high": "It works best around high tide.",
+    "all": "It works at all stages of the tide.",
+}
+
+
+def _tide_sentence(payload):
+    """The tide preference's sentence, or None when the payload states no tide preference."""
+    return TIDE_SENTENCES.get(payload.get("tide_preference"))
 PATTERN_COUNT = len(PATTERNS)
 
 
@@ -231,5 +248,7 @@ def pattern_for(slug):
 
 
 def render(payload, slug):
-    """The description of *payload*: every stated fact, nothing else, in the slug's pattern."""
-    return " ".join(s for s in PATTERNS[pattern_for(slug)](_facts(payload)) if s)
+    """The description of *payload*: every stated fact, nothing else, in the slug's pattern, then
+    the tide preference's sentence when there is one."""
+    sentences = PATTERNS[pattern_for(slug)](_facts(payload)) + [_tide_sentence(payload)]
+    return " ".join(s for s in sentences if s)
