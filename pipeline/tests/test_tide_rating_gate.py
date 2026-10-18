@@ -6,6 +6,8 @@ neutral, they raised 6,574 of 83,359 replayed spot-hours (7.9%) at 426 spots, by
 a star, and lowered none. So interpret.rate_spot now reads its preference through
 interpret.rated_tide_preference: the spot's own when tide_preference_source is reviewed,
 researched or scraped, otherwise None, which tide_multiplier scores as the neutral 1.0.
+The free tide pass then gave 126 spots a researched preference; run 16 (2026-10-18) replayed
+them: 1,011 of 85,913 spot-hours (1.2%) at 67 spots half a star lower, none higher.
 
 Every expected value is worked by hand:
   the tide series has min 1.0 ft and max 5.0 ft, and one point at 11:00 local — 18:00Z at
@@ -91,21 +93,32 @@ def test_the_rating_trusts_what_a_description_may_state():
     assert config.TIDE_RATED_SOURCES == descriptions.STATED_SOURCES
 
 
-def test_on_the_committed_roster_no_spot_gets_a_tide_penalty():
-    """Run 15's neutral case is the published rating: the roster's 446 preferences (444 rated
-    spots, 2 invalid) are all 'unattributed', so the rater applies none of them and every
-    hour's tide_mult is 1.0 — the rule run 15 previewed as 'neutral'."""
+def test_on_the_committed_roster_the_rater_applies_exactly_the_researched_preferences():
+    """The free tide pass (0b1c37a) wrote 126 'researched' preferences — low 12, low_mid 23,
+    mid 15, mid_high 13, high 6, all 57 — replacing 88 'unattributed' ones and filling 38 spots
+    that had none. The roster now holds 484 (482 rated spots, 2 invalid): 126 researched, 358
+    unattributed. The rater applies the 126 and nothing else; run 16 previewed this rule
+    ('rated') at 126 spots."""
     with open(os.path.join(ROOT, "pipeline", "spots_enriched.json"), encoding="utf-8") as f:
         spots = json.load(f)
     held = [s for s in spots if s.get("tide_preference") is not None]
-    assert len(held) == 446
-    assert {s.get("tide_preference_source") for s in held} == {"unattributed"}
-    assert [s["name"] for s in spots if interpret.rated_tide_preference(s) is not None] == []
+    assert len(held) == 484
+    sources = [s.get("tide_preference_source") for s in held]
+    assert (sources.count("researched"), sources.count("unattributed")) == (126, 358)
+    applied = [s for s in spots if interpret.rated_tide_preference(s) is not None]
+    assert {s.get("tide_preference_source") for s in applied} == {"researched"}
+    assert all(s.get("is_valid_surf_spot") is not False for s in applied)
+    mix = {v: 0 for v in ("low", "low_mid", "mid", "mid_high", "high", "all")}
+    for s in applied:
+        mix[interpret.rated_tide_preference(s)] += 1
+    assert mix == {"low": 12, "low_mid": 23, "mid": 15, "mid_high": 13, "high": 6, "all": 57}
 
 
 def test_the_methodology_post_states_the_rule_and_the_rosters_counts():
-    """The post's Tide section names the trusted sources and the counts it quotes; the counts
-    are the roster's rated spots (444 with a preference, 365 of them 'mid' — 018's header)."""
+    """The post's Tide section names the trusted sources and the counts it quotes: the 126
+    preferences the rater applies, by value; the 444 estimates held before the free pass (365
+    'mid', 018's header), of which 356 are still on the roster's rated spots; and run 16's
+    replay of the 126 (1,011 of 85,913 spot-hours, 67 spots, all half a star lower)."""
     with open(os.path.join(ROOT, "frontend", "content", "blog", "methodology.md"),
               encoding="utf-8") as f:
         post = f.read()
@@ -113,9 +126,19 @@ def test_the_methodology_post_states_the_rule_and_the_rosters_counts():
     assert "**A preferred tide only counts once it's verified.**" in tide
     assert "a person has reviewed it" in tide and "a source we researched" in tide
     assert "the spot's own surf-forecast.com page" in tide
+    assert ("Today 126 of our spots have a preferred tide that counts, each one stated on a page "
+            "about that spot that we cite: 57 work at all tides, 12 at low, 23 at low to mid, 15 "
+            "at mid, 13 at mid to high and 6 at high.") in tide
+    assert "Every other spot stays neutral on tide until we've researched it." in tide
     assert "every preferred tide we held, 444 of them" in tide
     assert "365 of the 444 said \"mid\"" in tide
+    assert "356 of them are still unverified" in tide
+    assert ("1,011 of 85,913 spot-hours (1.2%), at 67 spots, came out half a star lower, and none "
+            "came out higher") in tide
+    assert "only the other 69 could" in tide
+    working = post[post.index("## What we're still working on"):]
+    assert "Only 126 of our spots have a verified preferred tide so far" in working
     with open(os.path.join(ROOT, "pipeline", "spots_enriched.json"), encoding="utf-8") as f:
         rated = [s for s in json.load(f) if s.get("is_valid_surf_spot") is not False]
-    held = [s["tide_preference"] for s in rated if s.get("tide_preference") is not None]
-    assert (len(held), held.count("mid")) == (444, 365)
+    sources = [s.get("tide_preference_source") for s in rated if s.get("tide_preference") is not None]
+    assert (sources.count("researched"), sources.count("unattributed")) == (126, 356)

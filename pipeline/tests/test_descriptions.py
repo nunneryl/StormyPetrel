@@ -626,7 +626,9 @@ def test_the_sample_spots_are_the_cases_they_stand_for():
     assert pick["Pensacola Beach"]["break_type_source"] == "model_recall"
     assert not pick["Agate Beach"].get("break_type")
     assert (pick["Aviones"]["region_hint"], pick["Aviones"]["break_type"]) == ("Puerto Rico", "reef")
-    assert "tide_preference" not in pick["Seaside Reef"]
+    assert (pick["Seaside Reef"]["tide_preference"], pick["Seaside Reef"]["tide_preference_source"]) == (
+        "low_mid", "researched")
+    assert "tide_preference" not in pick["Agate Beach"]
     assert {pick[n]["region_hint"] for n in ("Banzai Pipeline", "Waimea Bay")} == {"Hawaii"}
     assert {pick[n]["region_hint"] for n in ("Steamer Lane", "Malibu Surfrider Beach")} == {
         "California"}
