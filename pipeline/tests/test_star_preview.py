@@ -418,3 +418,318 @@ def test_rated_reapplies_a_reviewed_preference_the_live_table_calls_unattributed
     roster = dict(ROSTER_AS_LIVE, A=dict(ROSTER_AS_LIVE["A"], tide_preference_source="reviewed"))
     assert _rated(roster)["changed_spot_hours"] == 0
 
+
+
+# --------------------------------------------------------------------------- #
+# --nwps-shelter: the window's cut on NWPS rows                               #
+# --------------------------------------------------------------------------- #
+# Two spots, both WEST (open 250-290, pad 0, optimal 270): S in California with its node 1.5 km
+# out, T in Hawaii with its node 0.6 km out. Each row has the dominant partition's hs = 2.0, so
+# R = swell_hs / 2. Worked by hand:
+#
+#   S, 9-13 s inside:  r1 R 0.5, r2 R 0.7                 -> reference median 0.6
+#   T, 9-13 s inside:  t1 R 0.5                           -> reference 0.5
+#   r3  300 (10 out, 0.40)  R 0.30 -> R_rel 0.5   real (the boundary is inclusive)
+#   r4  340 (50 out, 0.15)  R 0.06 -> R_rel 0.1
+#   r5  300 + a 305 partition of hs 1.1: share 4 / 5.21 = 0.768 -> not attributable
+#   r6  300 at 8 s (<=9 s band): R 0.4, no inside <=9 s reference at S -> no R_rel
+#   r9  300 + a 305 partition of hs 1.0: share 4 / 5 = 0.8 -> attributable; R 0.18 -> R_rel 0.3
+#       (its wind sea, hs 0.5, is not swell: counted, the share would be 4 / 5.25 = 0.762)
+#   r12 300, no node swell height -> not attributable
+#   r13 150 (100 out): no partition keeps gain
+#   t2  300 (0.40)  R 0.45 -> R_rel 0.9   real
+# Outside, attributable: r3 r4 r6 r9 t2; with a reference r3 r4 r9 t2, R_rel 0.5 0.1 0.3 0.9:
+# median (0.3 + 0.5)/2 = 0.4, real 2 of 4.
+
+SHELTER_NAMES = {1: ("S", "California"), 2: ("T", "Hawaii")}
+SHELTER_SPOTS = {"S": dict(WEST, nwps_node_distance_m=1500.0),
+                 "T": dict(WEST, nwps_node_distance_m=600.0)}
+
+
+def _sh(sid, p1_dp, swell_hs, dirpw=None, tp=12.0, swell_dp=None, **kw):
+    row = {"spot_id": sid, "swell_source": "nwps_height_ww3_dir", "swell_hs": swell_hs,
+           "dp": dirpw, "swell_1_hs": 2.0, "swell_1_tp": tp, "swell_1_dp": p1_dp,
+           "swell_dp": p1_dp if swell_dp is None else swell_dp}
+    row.update(kw)
+    return row
+
+
+def _shelter_rows():
+    return [
+        _sh(1, 270.0, 1.0, dirpw=275.0),                        # r1
+        _sh(1, 270.0, 1.4, swell_dp=999.0),                     # r2: published on another dir
+        _sh(1, 300.0, 0.6, dirpw=280.0),                        # r3
+        _sh(1, 340.0, 0.12, dirpw=330.0),                       # r4
+        _sh(1, 300.0, 1.0, swell_2_hs=1.1, swell_2_tp=12.0, swell_2_dp=305.0),   # r5
+        _sh(1, 300.0, 0.8, dirpw=300.0, tp=8.0),                # r6
+        {"spot_id": 1, "swell_source": "nwps"},                 # r7: dirpw fallback
+        {"spot_id": 1, "swell_source": "ww3"},                  # r8: not NWPS
+        _sh(1, 300.0, 0.36, dirpw=299.0, swell_2_hs=1.0, swell_2_tp=12.0, swell_2_dp=305.0,
+            wind_wave_hs=0.5, wind_wave_tp=4.0, wind_wave_dp=270.0),  # r9: wind sea not counted
+        _sh(1, 300.0, None),                                    # r12
+        _sh(1, 150.0, 1.0),                                     # r13
+        _sh(2, 270.0, 1.0),                                     # t1
+        _sh(2, 300.0, 0.9, dirpw=285.0),                        # t2
+        {"spot_id": 9, "swell_source": "nwps"},                 # a spot the baseline lacks
+    ]
+
+
+def _shelter():
+    return SP.shelter_report(_shelter_rows(), SHELTER_SPOTS, SHELTER_NAMES)
+
+
+@pytest.mark.parametrize("tp, band", [(8.0, "<=9 s"), (9.0, "<=9 s"), (9.1, "9-13 s"),
+                                      (13.0, "9-13 s"), (13.5, ">13 s")])
+def test_period_band(tp, band):
+    assert SP.period_band(tp) == band
+
+
+@pytest.mark.parametrize("m, band", [(None, "unknown"), (999.0, "<1 km"), (1000.0, "1-2.5 km"),
+                                     (2500.0, "1-2.5 km"), (2501.0, ">2.5 km")])
+def test_node_band(m, band):
+    assert SP.node_band(m) == band
+
+
+@pytest.mark.parametrize("dp, rung", [(270.0, "inside"), (290.0, "inside"), (300.0, "0.40"),
+                                      (334.9, "0.40"), (335.0, "0.15"), (150.0, "blocked")])
+def test_window_rung(dp, rung):
+    # 335 is 45 past 290: the 0.15 rung starts there, as in directional_gain. 150 is 100 out.
+    assert SP.window_rung(dp, WEST["swell_window_arcs"]) == rung
+
+
+def test_window_rung_with_no_window():
+    assert SP.window_rung(10.0, []) == "no window"
+
+
+def test_shelter_counts():
+    rep = _shelter()
+    assert rep["rows"] == 14
+    assert rep["by_swell_source"] == {"nwps": 2, "nwps_height_ww3_dir": 11, "ww3": 1}
+    assert rep["nwps_rows_without_a_spot"] == 1
+    assert (rep["ww3_dir_rows"], rep["no_partition_keeps_gain"]) == (11, 1)
+    assert rep["dominant_matches_published_direction"] == {False: 1, True: 9}
+    assert rep["by_rung"] == {"0.15": 1, "0.40": 6, "inside": 3}
+    assert rep["outside_not_attributable"] == {"share below 0.80": 1, "no node swell height": 1}
+
+
+def test_shelter_inside_reference():
+    # S: R 0.5 and 0.7; T: 0.5. Pairs (S, 9-13 s) and (T, 9-13 s); median of 0.5, 0.7, 0.5 = 0.5
+    assert _shelter()["inside_reference"] == {"hours": 3, "spot_bands": 2, "median_R": 0.5}
+
+
+def test_shelter_outside_overall_and_by_band():
+    out = _shelter()["outside"]
+    assert out["all"] == {"hours": 5, "with_reference": 4, "median_R_rel": 0.4,
+                          "real_energy": 2, "real_share": 0.5}
+    assert out["by_period_band"] == {
+        "9-13 s": {"hours": 4, "with_reference": 4, "median_R_rel": 0.4, "real_energy": 2,
+                   "real_share": 0.5},
+        "<=9 s": {"hours": 1, "with_reference": 0, "median_R_rel": None, "real_energy": 0,
+                  "real_share": None},
+    }
+
+
+def test_shelter_outside_by_state_rung_and_node():
+    out = _shelter()["outside"]
+    # California: r3 r4 r6 r9, R_rel 0.5 0.1 0.3 -> median 0.3, real 1 of 3.
+    assert out["by_state"] == {
+        "California": {"hours": 4, "with_reference": 3, "median_R_rel": 0.3, "real_energy": 1,
+                       "real_share": 0.333},
+        "Hawaii": {"hours": 1, "with_reference": 1, "median_R_rel": 0.9, "real_energy": 1,
+                   "real_share": 1.0},
+    }
+    # 0.40: r3 r6 r9 t2, R_rel 0.5 0.3 0.9 -> median 0.5, real 2 of 3. 0.15: r4 alone.
+    assert out["by_rung"] == {
+        "0.15": {"hours": 1, "with_reference": 1, "median_R_rel": 0.1, "real_energy": 0,
+                 "real_share": 0.0},
+        "0.40": {"hours": 4, "with_reference": 3, "median_R_rel": 0.5, "real_energy": 2,
+                 "real_share": 0.667},
+    }
+    assert out["by_node_distance"]["<1 km"] == out["by_state"]["Hawaii"]
+    assert out["by_node_distance"]["1-2.5 km"] == out["by_state"]["California"]
+
+
+def test_shelter_dirpw_on_outside_hours():
+    # Outside: r3 280 in, r4 330 out, r5 none, r6 300 out, r9 299 out, r12 none, t2 285 in.
+    assert _shelter()["dirpw_inside_window_on_outside_hours"] == {
+        "False": 3, "None": 2, "True": 2}
+
+
+def test_shelter_with_no_outside_hour():
+    rep = SP.shelter_report([_sh(1, 270.0, 1.0)], SHELTER_SPOTS, SHELTER_NAMES)
+    assert rep["outside"]["all"] == {"hours": 0, "with_reference": 0, "median_R_rel": None,
+                                     "real_energy": 0, "real_share": None}
+
+
+def test_no_gate_lifts_the_040_rung_to_the_alignment_term():
+    # _nwps on NW was published at 2.5 on the 0.40 rung (test above). With no window the gain is
+    # cos²((270 - 315)/2) = cos²(22.5°) = 0.853553: eff 8 x 0.853553 = 6.828427, size
+    # 4 + 0.5 x 0.828427/2 = 4.207107, x 0.987258 = 4.153500 -> round(8.307)/2 = 4.0.
+    names = {1: ("A", "Hawaii")}
+    rows = [dict(_nwps(), spot_id=1, valid_time="t", stars=2.5),
+            dict(_ww3(), spot_id=1, valid_time="t", stars=3.0)]    # not NWPS: not replayed
+    rep = SP.no_gate_compare(rows, {"A": NW}, names)
+    assert rep["replay"] == {"NWPS reproduced": 1}
+    assert rep["delta_by_group"] == {"NWPS": {1.5: 1}}
+    ex = rep["top20"][0]["example"]
+    assert (ex["gain_before"], ex["gain_after"], ex["stars_after"]) == (0.4, 0.854, 4.0)
+
+
+def test_ungated_removes_only_the_arcs():
+    spots = {"A": dict(NW, name="A")}
+    assert SP.ungated(spots) == {"A": dict(NW, name="A", swell_window_arcs=[])}
+    assert spots["A"]["swell_window_arcs"] == NW["swell_window_arcs"]      # not mutated
+
+
+def test_nwps_shelter_runs_on_its_own():
+    with pytest.raises(SystemExit):
+        SP.main(["--nwps-shelter", "--tide", "neutral"])
+    with pytest.raises(SystemExit):
+        SP.main(["--nwps-shelter", "--arcs", "x.json"])
+
+
+# --------------------------------------------------------------------------- #
+# The three NWPS replays: A (no window at all), B (the window picks the        #
+# partition, no multiplier on the height), C (B on NWPS dirpw)                  #
+# --------------------------------------------------------------------------- #
+# On NW (open 290-340, optimal 315), face 8.0, every period 12 s (pq**0.25 = 0.987259), wind,
+# tide and chop 1.0, so stars = round(2 x size(8 x gain) x 0.987259) / 2:
+#   gain 1.0 -> size 4.5, 8.885 -> 4.5          gain 0.15 -> size 1.2, 2.369 -> 1.0
+#   cos²(42.5°) = 0.543578 -> size 3.174312, 6.268 -> 3.0
+#   cos²(22.5°) = 0.853553 -> 8.307 -> 4.0      cos²(7.5°) = 0.982963 -> 8.818 -> 4.5
+# R1: one partition at 230, 60° outside the window: the 0.15 rung -> 1.0 published.
+# R2: a 1.0 m partition at 315 (inside, gain 1, energy 1.0) and a 2.0 m one at 230 (energy
+#     4 x 0.15 = 0.6): the window picks 315 -> 4.5 published. With no window the 230 one
+#     weighs 4 x 0.543578 = 2.174 > 1.0 and wins: 3.0.
+
+def _two(**kw):
+    return _nwps(swell_1_hs=1.0, swell_1_dp=315.0, swell_2_hs=2.0, swell_2_tp=12.0,
+                 swell_2_dp=230.0, **kw)
+
+
+VARIANT_NAMES = {1: ("A", "Hawaii")}
+
+
+def _variant_rows():
+    return [dict(_nwps(swell_1_dp=230.0, dp=None), spot_id=1, valid_time="r1", stars=1.0),
+            dict(_two(dp=330.0), spot_id=1, valid_time="r2", stars=4.5),
+            dict(_ww3(), spot_id=1, valid_time="w", stars=3.0)]        # not NWPS: not replayed
+
+
+def test_b_keeps_the_windows_partition_and_drops_only_the_multiplier():
+    # R1: the same partition (230), gain 0.15 -> cos²(42.5°): 1.0 -> 3.0.
+    r = SP._nwps_rescore(_nwps(swell_1_dp=230.0), NW, [])
+    assert (r["stars"], r["dir"], r["path"]) == (3.0, 230.0, "nwps_height_ww3_dir")
+    assert round(r["gain"], 6) == 0.543578
+    # R2: the window still picks 315, so B is today's 4.5.
+    assert SP._nwps_rescore(_two(), NW, [])["stars"] == 4.5
+
+
+def test_a_lets_the_blocked_partition_win_and_its_direction_drive_the_gain():
+    r = SP.rescore(_two(), SP.ungated({"A": NW})["A"])
+    assert (r["stars"], r["dir"]) == (3.0, 230.0)
+
+
+def test_c_reads_nwps_dirpw_when_the_row_has_one():
+    # _nwps: the partition at 270 is published on the 0.40 rung (2.5); its dp 300 is dirpw.
+    c = SP._nwps_rescore(_nwps(), NW, [], use_dirpw=True)
+    assert (c["stars"], c["dir"], c["path"]) == (4.5, 300.0, "nwps_height_ww3_dir+dirpw")
+    assert round(c["gain"], 6) == 0.982963
+    b = SP._nwps_rescore(_nwps(), NW, [])
+    assert (b["stars"], b["dir"]) == (4.0, 270.0)
+    # No dirpw: C is B.
+    assert SP._nwps_rescore(_nwps(dp=None), NW, [], use_dirpw=True) == SP._nwps_rescore(
+        _nwps(dp=None), NW, [])
+
+
+def test_c_on_a_dirpw_row_keeps_its_path():
+    # No partition keeps gain on the window: the row already rates on dirpw (300).
+    c = SP._nwps_rescore(_nwps(swell_1_dp=180.0), NW, [], use_dirpw=True)
+    assert (c["dir"], c["path"]) == (300.0, "nwps")
+
+
+def test_rescore_still_reads_the_window_for_the_gain():
+    assert SP.rescore(_two(), NW)["stars"] == 4.5
+    assert SP.rescore(_nwps(swell_1_dp=230.0), NW)["gain"] == 0.15
+
+
+def test_variant_a_report():
+    rep = SP.no_gate_compare(_variant_rows(), {"A": NW}, VARIANT_NAMES)
+    assert rep["replay"] == {"NWPS reproduced": 2}
+    assert (rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (2, 1, 1)
+    assert rep["change_by_cause"] == {"down: another partition": 1, "up: same direction": 1}
+    assert rep["delta_by_state"] == {"Hawaii": {-1.5: 1, 2.0: 1}}
+    # R1 moves by 2.0 (> 1.5); R2's -1.5 is not more than 1.5.
+    assert rep["spots_moving_over_1_5"] == [{"spot": "A", "state": "Hawaii", "hours_over": 1,
+                                             "largest_up": 2.0, "largest_down": None}]
+
+
+def test_variant_b_report():
+    rep = SP.selected_alignment_compare(_variant_rows(), {"A": NW}, VARIANT_NAMES)
+    assert (rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (1, 1, 0)
+    assert rep["change_by_cause"] == {"up: same direction": 1}
+    ex = rep["top20"][0]["example"]
+    assert (ex["valid_time"], ex["dir_before"], ex["dir_after"], ex["stars_after"]) == (
+        "r1", 230.0, 230.0, 3.0)
+
+
+def test_variant_c_report():
+    # R1 has no dirpw: as B, 1.0 -> 3.0. R2's dirpw is 330: cos²(7.5°) -> 4.5, unchanged.
+    rep = SP.selected_alignment_compare(_variant_rows(), {"A": NW}, VARIANT_NAMES, use_dirpw=True)
+    assert (rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (1, 1, 0)
+    assert rep["delta_by_state"] == {"Hawaii": {0.0: 1, 2.0: 1}}
+
+
+@pytest.mark.parametrize("before, after, cause", [
+    ({"dir": 230.0, "path": "p"}, {"dir": 230.004, "path": "p"}, "same direction"),
+    ({"dir": 359.999, "path": "p"}, {"dir": 0.0, "path": "p"}, "same direction"),
+    ({"dir": 230.0, "path": "p"}, {"dir": 231.0, "path": "p"}, "another partition"),
+    ({"dir": 300.0, "path": "nwps"}, {"dir": 230.0, "path": "nwps_height_ww3_dir"},
+     "nwps -> nwps_height_ww3_dir"),
+])
+def test_change_cause(before, after, cause):
+    assert SP.change_cause(before, after) == cause
+
+
+def test_the_tide_preview_reports_no_direction_change():
+    rep = _tide_compare("neutral")
+    assert rep["change_by_cause"] == {"up: same direction": 2}
+    assert (rep["ups"], rep["downs"], rep["spots_moving_over_1_5"]) == (2, 0, [])
+
+
+def test_nwps_shelter_main_writes_the_measurement_and_all_three_replays(tmp_path, monkeypatch):
+    import sys
+    import types
+    roster = tmp_path / "roster.json"
+    roster.write_text('[{"name": "A", "swell_window_arcs": [{"min": 290, "max": 340, "span": 50}],'
+                      ' "optimal_swell_dir": 315, "orientation_deg": 315.0}]')
+    monkeypatch.setitem(sys.modules, "supabase", types.SimpleNamespace(create_client=lambda u, k: None))
+    monkeypatch.setenv("SUPABASE_URL", "u")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "k")
+    # R4: _nwps on the 0.40 rung (2.5); its dirpw is 300. A and B: cos²(22.5°) -> 4.0 (+1.5);
+    # C: cos²(7.5°) -> 4.5 (+2.0). So B and C differ here.
+    rows = _variant_rows() + [dict(_nwps(), spot_id=1, valid_time="r4", stars=2.5)]
+    monkeypatch.setattr(SP, "_fetch", lambda client, since: (VARIANT_NAMES, rows))
+    out = tmp_path / "out.json"
+    assert SP.main(["--nwps-shelter", "--baseline", str(roster), "--since", "S",
+                    "--out", str(out)]) == 0
+    import json
+    got = json.loads(out.read_text())
+    assert got["since"] == "S"
+    assert got["no_gate"]["change_by_cause"] == {"down: another partition": 1,
+                                                 "up: same direction": 2}
+    assert got["variant_b"]["delta_by_state"] == {"Hawaii": {"0.0": 1, "1.5": 1, "2.0": 1}}
+    assert got["variant_c"]["delta_by_state"] == {"Hawaii": {"0.0": 1, "2.0": 2}}
+    assert got["variant_c"]["change_by_cause"] == {
+        "up: nwps_height_ww3_dir -> nwps_height_ww3_dir+dirpw": 1, "up: same direction": 1}
+    assert got["nwps_shelter"]["by_swell_source"] == {"nwps_height_ww3_dir": 3, "ww3": 1}
+
+
+def test_the_big_movers_list_counts_hours_and_takes_the_largest():
+    # R1 (+2.0) and R3: face 16 on the 0.15 rung, 16 x 0.15 = 2.4 -> size 2.2, 4.344 -> 2.0;
+    # no window 16 x 0.543578 = 8.697 -> size 4.674311, 9.230 -> 4.5: +2.5.
+    rows = [_variant_rows()[0],
+            dict(_nwps(swell_1_dp=230.0, face_ft=16.0), spot_id=1, valid_time="r3", stars=2.0)]
+    rep = SP.no_gate_compare(rows, {"A": NW}, VARIANT_NAMES)
+    assert rep["spots_moving_over_1_5"] == [{"spot": "A", "state": "Hawaii", "hours_over": 2,
+                                             "largest_up": 2.5, "largest_down": None}]

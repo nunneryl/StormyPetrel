@@ -61,6 +61,30 @@ It also prints a census: the live spots' (tide_preference, tide_preference_sourc
 and over the window the stored tide_mult values, by preference, and how many of them the rater's
 rule reproduces from the row's tide_norm and the spot's live preference and source
 (interpret.tide_multiplier of interpret.rated_tide_preference).
+
+THE NWPS SHELTER MEASUREMENT (--nwps-shelter). Does the swell window cut, a second time, energy
+NWPS already delivers? An NWPS row's height is the node's swh, after SWAN has refracted and
+sheltered it; nwps_stars then multiplies it by directional_gain on the dominant WW3 partition's
+deep-water direction. For every nwps_height_ww3_dir row, with the BASELINE geometry:
+
+    rung    where the dominant partition sits: inside the window, or on the 0.40 / 0.15 rung
+    share   that partition's hs² over all the swell partitions' hs²; only hours at
+            SHELTER_SHARE_MIN or more are ATTRIBUTABLE, so the node's swell height is its
+    R       node swell height (the row's swell_hs, NWPS shts) / the partition's deep-water hs
+    R_rel   R on an outside hour / the median R of the same spot's attributable INSIDE hours in
+            the same period band — which cancels shoaling and the node's depth
+    real    R_rel >= SHELTER_REAL_ENERGY: the window cut an hour NWPS delivers with real energy
+
+reported overall and by period band, state, rung and the node's distance from the spot, with
+how often the row's dp (NWPS dirpw at the node) is inside the window on the outside hours. Then
+every NWPS row is replayed with NO window gate (the spot's arcs removed, so directional_gain
+falls to max(0.25, cos²(Δ/2)) about the optimal), against the published stars: A. Two more
+replays keep the window's choice of partition and drop only its multiplier on the height —
+B on that partition's direction, C on NWPS dirpw where the row has one. Each reports ups and
+downs, the change by cause (same direction, another partition, or another source of
+direction), and every spot with an hour moving by more than BIG_MOVE stars. SELECT only.
+
+    python -m pipeline.star_preview --nwps-shelter [--baseline B.json] [--out OUT.json]
 """
 from __future__ import annotations
 
@@ -70,13 +94,16 @@ import os
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from statistics import median
 
 from .config import TIDE_RATED_SOURCES
 from .interpret import (
+    _min_offset_from_arcs,
     combine_ww3_partitions,
     composite_stars,
     directional_gain,
     face_ft,
+    in_any_arc,
     period_factor,
     period_quality,
     rated_tide_preference,
@@ -125,6 +152,35 @@ def _mults(row):
             _num(row.get("chop_mult")) if row.get("chop_mult") is not None else 1.0)
 
 
+def _nwps_rescore(row, spot, gain_arcs, use_dirpw=False):
+    """An NWPS row re-scored as apply_nwps_overrides scores it. The spot's own arcs pick the
+    partition (combine_ww3_partitions); *gain_arcs* are the arcs the height's gain is read
+    against — the spot's own today, [] for no window multiplier. With *use_dirpw* the row's dp
+    (NWPS dirpw) is the direction whenever it is present; the period stays the partition's."""
+    arcs = spot.get("swell_window_arcs") or []
+    optimal = spot.get("optimal_swell_dir")
+    orient = spot.get("orientation_deg")
+    wm, tm, cm = _mults(row)
+    parts = _partitions(row)
+    face = _face(row)
+    comb = combine_ww3_partitions(parts, arcs, optimal, orient) if parts else None
+    if comb is not None:
+        d, per, path = comb["dp"], comb["tp"], "nwps_height_ww3_dir"
+    else:
+        d, per, path = _num(row.get("dp")), _num(row.get("tp")), "nwps"
+    dirpw = _num(row.get("dp"))
+    if use_dirpw and dirpw is not None and comb is not None:
+        d, path = dirpw, path + "+dirpw"
+    old_per = _num(row.get("swell_tp"))
+    if d is None or per is None or face is None or not old_per or orient is None:
+        return {"stars": None, "why": "nwps: direction, period or face missing"}
+    swh = face / (period_factor(old_per, "ww3") * M_TO_FT)
+    new_face = face_ft(swh, per, "ww3")
+    dg = directional_gain(d, gain_arcs, optimal if optimal is not None else orient, orient)
+    return {"stars": composite_stars(new_face * dg, wm, tm, cm, period_quality(per)),
+            "gain": dg, "dir": d, "path": path}
+
+
 def rescore(row, spot):
     """Re-score one published row with *spot*'s geometry.
 
@@ -139,19 +195,7 @@ def rescore(row, spot):
     face = _face(row)
 
     if kind in NWPS_KINDS:
-        comb = combine_ww3_partitions(parts, arcs, optimal, orient) if parts else None
-        if comb is not None:
-            d, per, path = comb["dp"], comb["tp"], "nwps_height_ww3_dir"
-        else:
-            d, per, path = _num(row.get("dp")), _num(row.get("tp")), "nwps"
-        old_per = _num(row.get("swell_tp"))
-        if d is None or per is None or face is None or not old_per or orient is None:
-            return {"stars": None, "why": "nwps: direction, period or face missing"}
-        swh = face / (period_factor(old_per, "ww3") * M_TO_FT)
-        new_face = face_ft(swh, per, "ww3")
-        dg = directional_gain(d, arcs, optimal if optimal is not None else orient, orient)
-        return {"stars": composite_stars(new_face * dg, wm, tm, cm, period_quality(per)),
-                "gain": dg, "dir": d, "path": path}
+        return _nwps_rescore(row, spot, arcs)
 
     if kind in MOP_KINDS:
         sn = spot.get("mop_shore_normal")
@@ -181,11 +225,25 @@ def rescore(row, spot):
             "gain": dg, "dir": _num(d), "path": kind or "none"}
 
 
-def compare(rows, before_spots, after_spots, names, row_after=None):
+BIG_MOVE = 1.5                 # a spot is flagged when any hour moves by more than this
+
+
+def change_cause(before, after):
+    """Why an hour's stars moved: 'same direction', 'another partition' (the direction moved
+    and the path did not), or 'PATH -> PATH' when the direction came from somewhere else."""
+    if abs(((after["dir"] - before["dir"] + 540.0) % 360.0) - 180.0) < 0.01:
+        return "same direction"
+    if after["path"] == before["path"]:
+        return "another partition"
+    return f"{before['path']} -> {after['path']}"
+
+
+def compare(rows, before_spots, after_spots, names, row_after=None, rescore_after=None):
     """Replay every row with BASELINE and with ARCS. *names* maps spot_id -> (name, state).
 
     *row_after*, when given, maps a row to the row the AFTER replay reads (the tide preview
     swaps its tide_mult); each change then also records the tide it was rated on.
+    *rescore_after*, when given, re-scores the AFTER replay in place of rescore.
 
     Returns the report dict (see main for its keys)."""
     replay = Counter()
@@ -210,7 +268,7 @@ def compare(rows, before_spots, after_spots, names, row_after=None):
         if not ok:
             continue
         row_a = row_after(row) if row_after else row
-        ra = rescore(row_a, a)
+        ra = (rescore_after or rescore)(row_a, a)
         if ra["stars"] is None:
             unreplayable[f"{grp} (after): {ra['why']}"] += 1
             continue
@@ -222,7 +280,7 @@ def compare(rows, before_spots, after_spots, names, row_after=None):
                       "group": grp, "dir_before": rb["dir"], "dir_after": ra["dir"],
                       "gain_before": round(rb["gain"], 3), "gain_after": round(ra["gain"], 3),
                       "stars_before": rb["stars"], "stars_after": ra["stars"],
-                      "delta": delta}
+                      "delta": delta, "cause": change_cause(rb, ra)}
             if row_after:
                 change.update(tide_norm=row.get("tide_norm"),
                               tide_mult_before=_mults(row)[1], tide_mult_after=_mults(row_a)[1])
@@ -232,6 +290,15 @@ def compare(rows, before_spots, after_spots, names, row_after=None):
         per_spot[c["spot"]].append(c)
     top = sorted(per_spot.items(),
                  key=lambda kv: (-len(kv[1]), -max(abs(c["delta"]) for c in kv[1]), kv[0]))[:20]
+    big = []
+    for spot, cs in per_spot.items():
+        over = [c for c in cs if abs(c["delta"]) > BIG_MOVE]
+        if over:
+            big.append({"spot": spot, "state": cs[0]["state"], "hours_over": len(over),
+                        "largest_up": max([c["delta"] for c in over if c["delta"] > 0], default=None),
+                        "largest_down": min([c["delta"] for c in over if c["delta"] < 0], default=None)})
+    big.sort(key=lambda r: (-r["hours_over"], r["spot"]))
+    cause = Counter(f"{'up' if c['delta'] > 0 else 'down'}: {c['cause']}" for c in changed)
     return {
         "rows": len(rows),
         "replay": {f"{g} {'reproduced' if ok else 'NOT reproduced'}": n
@@ -240,6 +307,10 @@ def compare(rows, before_spots, after_spots, names, row_after=None):
         "compared": sum(sum(c.values()) for c in by_group.values()),
         "changed_spot_hours": len(changed),
         "changed_spots": len(per_spot),
+        "ups": sum(c["delta"] > 0 for c in changed),
+        "downs": sum(c["delta"] < 0 for c in changed),
+        "change_by_cause": dict(sorted(cause.items())),
+        "spots_moving_over_1_5": big,
         "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
         "delta_by_state": {s: dict(sorted(c.items())) for s, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
         "top20": [{"spot": s, "changed_hours": len(cs),
@@ -247,6 +318,206 @@ def compare(rows, before_spots, after_spots, names, row_after=None):
                    "example": max(cs, key=lambda c: abs(c["delta"]))}
                   for s, cs in top],
     }
+
+
+# --------------------------------------------------------------------------- #
+# --nwps-shelter                                                               #
+# --------------------------------------------------------------------------- #
+SHELTER_SHARE_MIN = 0.8        # the dominant partition's share of the swell energy
+SHELTER_REAL_ENERGY = 0.5      # R_rel at or above this: NWPS delivers the energy the window cut
+SWELL_PARTITIONS = ("swell_1", "swell_2", "swell_3")
+OUTSIDE_RUNGS = ("0.40", "0.15", "blocked")
+
+
+def period_band(tp):
+    return "<=9 s" if tp <= 9.0 else ("9-13 s" if tp <= 13.0 else ">13 s")
+
+
+def node_band(distance_m):
+    """The NWPS node's distance from the spot, in the bands the report splits by."""
+    if distance_m is None:
+        return "unknown"
+    km = float(distance_m) / 1000.0
+    return "<1 km" if km < 1.0 else ("1-2.5 km" if km <= 2.5 else ">2.5 km")
+
+
+def window_rung(dp, arcs):
+    """Where *dp* sits against the window, in directional_gain's own terms."""
+    if not arcs:
+        return "no window"
+    if in_any_arc(dp, arcs):
+        return "inside"
+    off = _min_offset_from_arcs(dp, arcs)
+    return "0.40" if off < 45.0 else ("0.15" if off < 90.0 else "blocked")
+
+
+def _swell_energy(row):
+    """Σ hs² over the swell partitions combine_ww3_partitions would read."""
+    total = 0.0
+    for p in SWELL_PARTITIONS:
+        hs, tp, dp = row.get(f"{p}_hs"), row.get(f"{p}_tp"), row.get(f"{p}_dp")
+        if hs is None or tp is None or dp is None or float(hs) <= 0 or float(tp) <= 0:
+            continue
+        total += float(hs) ** 2
+    return total
+
+
+def shelter_hour(row, spot):
+    """One NWPS row, measured: {"kind"} for a dirpw row; for an nwps_height_ww3_dir row also
+    rung, band, node, share, R, dirpw_in_window and whether the dominant partition is the
+    direction the row was published on. None for a row that is not NWPS."""
+    kind = row.get("swell_source")
+    if kind not in NWPS_KINDS:
+        return None
+    rec = {"kind": kind}
+    if kind != "nwps_height_ww3_dir":
+        return rec
+    arcs = spot.get("swell_window_arcs") or []
+    parts = _partitions(row)
+    comb = combine_ww3_partitions(parts, arcs, spot.get("optimal_swell_dir"),
+                                  spot.get("orientation_deg")) if parts else None
+    if comb is None:
+        rec["status"] = "no partition keeps any gain"
+        return rec
+    hs = float(row[f"{comb['dominant_partition']}_hs"])
+    stored = _num(row.get("swell_dp"))
+    node_hs = _num(row.get("swell_hs"))
+    dirpw = _num(row.get("dp"))
+    rec.update(
+        rung=window_rung(comb["dp"], arcs),
+        band=period_band(comb["tp"]),
+        node=node_band(spot.get("nwps_node_distance_m")),
+        share=hs * hs / _swell_energy(row),
+        R=node_hs / hs if node_hs is not None else None,
+        dirpw_in_window=None if dirpw is None or not arcs else in_any_arc(dirpw, arcs),
+        matches_published=stored is not None and abs(stored - comb["dp"]) < 0.01,
+    )
+    return rec
+
+
+def _shelter_table(hours, key):
+    """{value: {hours, with_reference, median_R_rel, real_energy, real_share}} over *hours*."""
+    groups = defaultdict(list)
+    for h in hours:
+        groups[h[key] if key else "all"].append(h)
+    out = {}
+    for value, hs in sorted(groups.items(), key=lambda kv: str(kv[0])):
+        rel = [h["R_rel"] for h in hs if h["R_rel"] is not None]
+        real = sum(r >= SHELTER_REAL_ENERGY for r in rel)
+        out[value] = {"hours": len(hs), "with_reference": len(rel),
+                      "median_R_rel": round(median(rel), 3) if rel else None,
+                      "real_energy": real,
+                      "real_share": round(real / len(rel), 3) if rel else None}
+    return out
+
+
+def shelter_report(rows, spots, names):
+    """The --nwps-shelter measurement over the published rows (see the module docstring)."""
+    by_source = Counter(row.get("swell_source") or "none" for row in rows)
+    recs, no_spot = [], 0
+    for row in rows:
+        if row.get("swell_source") not in NWPS_KINDS:
+            continue
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None:
+            no_spot += 1
+            continue
+        rec = shelter_hour(row, spot)
+        rec.update(spot=name, state=state)
+        recs.append(rec)
+    ww3_dir = [r for r in recs if r["kind"] == "nwps_height_ww3_dir"]
+    placed = [r for r in ww3_dir if "rung" in r]
+    attributable = [r for r in placed if r["share"] >= SHELTER_SHARE_MIN and r["R"] is not None]
+    inside = defaultdict(list)
+    for r in attributable:
+        if r["rung"] == "inside":
+            inside[(r["spot"], r["band"])].append(r["R"])
+    reference = {k: median(v) for k, v in inside.items()}
+    outside = []
+    for r in attributable:
+        if r["rung"] not in OUTSIDE_RUNGS:
+            continue
+        ref = reference.get((r["spot"], r["band"]))
+        outside.append(dict(r, R_rel=r["R"] / ref if ref else None))
+    placed_outside = [r for r in placed if r["rung"] in OUTSIDE_RUNGS]
+    return {
+        "rows": len(rows),
+        "by_swell_source": dict(sorted(by_source.items())),
+        "nwps_rows_without_a_spot": no_spot,
+        "ww3_dir_rows": len(ww3_dir),
+        "no_partition_keeps_gain": len(ww3_dir) - len(placed),
+        "dominant_matches_published_direction": dict(sorted(
+            Counter(r["matches_published"] for r in placed).items())),
+        "by_rung": dict(sorted(Counter(r["rung"] for r in placed).items())),
+        "outside_not_attributable": {
+            "share below %.2f" % SHELTER_SHARE_MIN:
+                sum(r["share"] < SHELTER_SHARE_MIN for r in placed_outside),
+            "no node swell height":
+                sum(r["share"] >= SHELTER_SHARE_MIN and r["R"] is None for r in placed_outside),
+        },
+        "inside_reference": {"hours": sum(len(v) for v in inside.values()),
+                             "spot_bands": len(reference),
+                             "median_R": round(median([r for v in inside.values() for r in v]), 3)
+                             if inside else None},
+        "outside": {"all": _shelter_table(outside, None)["all"] if outside else
+                    {"hours": 0, "with_reference": 0, "median_R_rel": None, "real_energy": 0,
+                     "real_share": None},
+                    "by_period_band": _shelter_table(outside, "band"),
+                    "by_state": _shelter_table(outside, "state"),
+                    "by_rung": _shelter_table(outside, "rung"),
+                    "by_node_distance": _shelter_table(outside, "node")},
+        "dirpw_inside_window_on_outside_hours": {
+            str(k): n for k, n in sorted(Counter(r["dirpw_in_window"] for r in placed_outside).items(),
+                                         key=lambda kv: str(kv[0]))},
+    }
+
+
+def ungated(spots):
+    """The spots with no window: directional_gain falls to cos² about the optimal, floor 0.25."""
+    return {n: dict(s, swell_window_arcs=[]) for n, s in spots.items()}
+
+
+def _nwps_rows(rows):
+    return [r for r in rows if r.get("swell_source") in NWPS_KINDS]
+
+
+def no_gate_compare(rows, spots, names):
+    """A: every NWPS row replayed with the spot's window removed, against the published stars.
+    The window goes from the partition choice too, so a blocked partition can win it."""
+    return compare(_nwps_rows(rows), spots, ungated(spots), names)
+
+
+def selected_alignment_compare(rows, spots, names, use_dirpw=False):
+    """B (use_dirpw False): the window still picks WHICH partition's direction is used, but
+    the NWPS height takes no window multiplier, only max(0.25, cos²(Δ/2)) on that direction.
+    C (use_dirpw True): as B, with the row's NWPS dirpw as the direction when it has one."""
+    return compare(_nwps_rows(rows), spots, spots, names,
+                   rescore_after=lambda row, spot: _nwps_rescore(row, spot, [], use_dirpw))
+
+
+def _print_shelter(rep):
+    print(f"published window: {rep['rows']} rows, by swell_source: {rep['by_swell_source']}")
+    if rep["nwps_rows_without_a_spot"]:
+        print(f"NWPS rows whose spot is not in the baseline: {rep['nwps_rows_without_a_spot']}")
+    print(f"nwps_height_ww3_dir rows: {rep['ww3_dir_rows']}  (no partition keeps any gain: "
+          f"{rep['no_partition_keeps_gain']})")
+    print(f"dominant partition is the published direction: "
+          f"{rep['dominant_matches_published_direction']}")
+    print(f"dominant partition, by rung: {rep['by_rung']}")
+    print(f"outside hours not attributable: {rep['outside_not_attributable']}")
+    ref = rep["inside_reference"]
+    print(f"inside reference: {ref['hours']} attributable hours over {ref['spot_bands']} "
+          f"spot x period-band pairs, median R {ref['median_R']}")
+    print(f"outside hours (attributable; R_rel >= {SHELTER_REAL_ENERGY} counts as real energy):")
+    print(f"  all: {rep['outside']['all']}")
+    for title, key in (("period band", "by_period_band"), ("state", "by_state"),
+                       ("rung", "by_rung"), ("node distance", "by_node_distance")):
+        print(f"  by {title}:")
+        for value, row in rep["outside"][key].items():
+            print(f"    {value}: {row}")
+    print(f"NWPS dirpw inside the window on outside hours: "
+          f"{rep['dirpw_inside_window_on_outside_hours']}")
 
 
 def tide_mode(spec):
@@ -404,6 +675,10 @@ def _print(rep, since):
         print(f"  not replayable — {k}: {v}")
     print(f"compared (reproduced rows): {rep['compared']}")
     print(f"changed spot-hours: {rep['changed_spot_hours']}   changed spots: {rep['changed_spots']}")
+    print(f"ups: {rep['ups']}   downs: {rep['downs']}")
+    print("change by cause (hours):")
+    for k, v in rep["change_by_cause"].items():
+        print(f"  {k}: {v}")
     print("star change by source (delta: hours):")
     for g, c in rep["delta_by_group"].items():
         print(f"  {g}: {c}")
@@ -417,9 +692,14 @@ def _print(rep, since):
         tide = (f" tide_norm {e['tide_norm']} tide_mult {e['tide_mult_before']}->"
                 f"{e['tide_mult_after']:.3f}" if "tide_mult_before" in e else "")
         print(f"  {t['spot']} ({e['state']}): {t['changed_hours']} h; {e['valid_time']} "
-              f"[{e['group']}] dir {e['dir_before']}->{e['dir_after']} "
+              f"[{e['group']}; {e['cause']}] dir {e['dir_before']}->{e['dir_after']} "
               f"gain {e['gain_before']}->{e['gain_after']}{tide} "
               f"stars {e['stars_before']}->{e['stars_after']}")
+    big = rep["spots_moving_over_1_5"]
+    print(f"spots with an hour moving by more than {BIG_MOVE} stars: {len(big)}")
+    for b in big:
+        print(f"  {b['spot']} ({b['state']}): {b['hours_over']} h, largest up {b['largest_up']}, "
+              f"largest down {b['largest_down']}")
 
 
 def main(argv=None):
@@ -433,11 +713,16 @@ def main(argv=None):
     p.add_argument("--tide-roster", default=None,
                    help="spots file whose tide preference and source the 'rated' mode reads "
                         "(default: --baseline)")
+    p.add_argument("--nwps-shelter", action="store_true",
+                   help="measure the window's cut on NWPS rows, and replay them with no window")
     p.add_argument("--since", default=None, help="ISO start of the window (default: now)")
     p.add_argument("--out", default=None, help="write the report as JSON here")
     args = p.parse_args(argv)
-    if args.arcs is None and args.tide is None:
-        p.error("give --arcs (a swell-window preview) or --tide (a tide preview), or both")
+    if args.nwps_shelter and (args.arcs is not None or args.tide is not None):
+        p.error("--nwps-shelter runs on its own, with --baseline")
+    if args.arcs is None and args.tide is None and not args.nwps_shelter:
+        p.error("give --arcs (a swell-window preview), --tide (a tide preview), or both; "
+                "or --nwps-shelter")
     specs = [m.strip() for m in args.tide.split(",")] if args.tide else []
     modes = [(m, None) if m == "rated" else tide_mode(m) for m in specs]
     from supabase import create_client
@@ -447,7 +732,21 @@ def main(argv=None):
     before = _by_name(args.baseline)
     after = _by_name(args.arcs) if args.arcs else before
     out = {"since": since}
-    if not modes:
+    if args.nwps_shelter:
+        out["nwps_shelter"] = shelter_report(rows, before, names)
+        _print_shelter(out["nwps_shelter"])
+        print("\n=== A: NWPS rows with no window gate, in the partition choice too (cos² about the "
+              "optimal, floor 0.25) ===")
+        out["no_gate"] = no_gate_compare(rows, before, names)
+        _print(out["no_gate"], since)
+        print("\n=== B: the window picks the partition; the NWPS height takes the alignment term "
+              "only, on that partition's direction ===")
+        out["variant_b"] = selected_alignment_compare(rows, before, names)
+        _print(out["variant_b"], since)
+        print("\n=== C: as B, with NWPS dirpw as the direction where the row has one ===")
+        out["variant_c"] = selected_alignment_compare(rows, before, names, use_dirpw=True)
+        _print(out["variant_c"], since)
+    elif not modes:
         rep = compare(rows, before, after, names)
         _print(rep, since)
         out.update(rep)
