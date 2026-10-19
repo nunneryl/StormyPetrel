@@ -14,7 +14,7 @@ Run: python -m pipeline.tests.test_swell_window   (or pytest)
 """
 from __future__ import annotations
 
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 from shapely.strtree import STRtree
 
 from pipeline.enrichment import swell_window as sw
@@ -68,12 +68,19 @@ def _blocked_near(open_b, bearing=90, halfwidth=2):
 
 
 def test_area_filter_demotes_small_island():
-    # 194 km² (Catalina) island at 45 km — must NOT wall off its bearing.
-    open_small, _ = _open([_square(194, 45)])
-    assert 90 in open_small, "sub-500 km² island should stop hard-blocking"
-    # 600 km² island, same spot — above threshold, still a hard wall.
+    """A 194 km² (Catalina-sized) island centred 45 km due east is not a wall but a partial
+    blocker: only the core of its shadow stays shut (the Fresnel edge). Side 13.928 km, near
+    face 38.036 km out, half-height 6.918 km on the ground: half-angle atan(6.918/38.036) =
+    10.31°, so rays 80..100 meet it. N on ray 90 = 13.835² / (0.224829 × 38.036) = 22.4 ≥ 10,
+    so each ray needs only its penumbra √(L/r) inside both ends: ray 84 (φ 6°, r 38.245 km)
+    needs 4.393°, offset 4 — open; ray 86 (φ 4°) needs 4.40° and has 6 — blocked. Core
+    86..94. The same spot with a 600 km² island is a wall on every ray it meets."""
+    dr, _, hard, blocked = _debug_cast([_square(194, 45)])
+    assert not hard and sorted(blocked) == list(range(86, 95, 2))
+    assert round(dr[90]["partials"][0]["fresnel_n"], 1) == 22.4
+    assert sorted(b for b in dr if dr[b]["result"] == "small") == list(range(80, 101, 2))
     open_big, _ = _open([_square(600, 45)])
-    assert _blocked_near(open_big, 90), "≥500 km² island must still hard-block"
+    assert _blocked_near(open_big, 90, halfwidth=10), "≥500 km² island must still hard-block"
 
 
 def test_local_landmass_always_blocks():
@@ -108,33 +115,41 @@ _BAND_THIRDS = [Polygon([(45 * _KM, lo * _KM), (50 * _KM, lo * _KM), (50 * _KM, 
 def test_one_long_island_keeps_its_interior_blocked():
     """By hand, at the 2° step. A ray φ off due east meets the band's face (x = 45 km) at
     y = 45·tan φ, inside ±29.799 km while φ <= atan(29.799/45) = 33.51°: rays 58..122 (φ 32
-    in, 34 out). A member's distance is 45/cos φ and its wrap 16 + 8·d/100; it stays blocked
-    when it is at least its wrap from both ends of the run. Ray 78 (φ 12): d = 46.005 km,
-    wrap 19.680°; 78 - 58 = 20 and 122 - 78 = 44, blocked. Ray 76 (φ 14): 76 - 58 = 18 < 19.7,
-    open. By symmetry 102 is blocked and 104 open: core 78..102. Open 104..76 round north,
-    shrunk 5° each end: [109-71], span 71 + 360 - 109 + 2 = 324; optimal 270 by symmetry."""
+    in, 34 out), at r = 45/cos φ. Seen broadside the band is ~55 km across every ray, N in
+    the hundreds, so each ray needs only its penumbra √(L/r) inside both ends (the Fresnel
+    edge). Ray 62 (φ 28°): r = 50.965 km, √(0.224829/50.965) = 3.806°, offset 4 — blocked.
+    Ray 60 (φ 30°): offset 2 < 3.769° — open. By symmetry 118 is blocked and 120 open: core
+    62..118. Open 120..60 round north, shrunk 5° each end: [125-55], span 55 + 360 - 125 + 2
+    = 292; optimal 270 by symmetry. (The wrap, 16 + 8·r/100 ≈ 19.7°, kept only 78..102.)"""
     open_b, r = _open([_BAND])
-    assert r["swell_window_arcs"] == [{"min": 109, "max": 71, "span": 324}], r["swell_window_arcs"]
+    assert r["swell_window_arcs"] == [{"min": 125, "max": 55, "span": 292}], r["swell_window_arcs"]
     assert r["optimal_swell_dir"] == 270
     assert _blocked_near(open_b, 90)
 
 
 def test_three_islands_side_by_side_are_judged_each_on_its_own():
-    """R3: the band cut into three islands at y = ±10 km (±9.933 km on the ground).
-    The middle one is met by rays with 45·tan φ <= 9.933, φ <= 12.45°: 78..102, a 26° run; no
-    member is 19.6° from both ends, so it opens. The northern one is met by rays 58..78 (ray 78
-    enters it at x = 9.933/tan 12° = 46.73 km, after crossing the middle one), a 22° run: its
-    middle, 68, is 10° from each end, short of the 19.6° wrap — open. The southern one, 102..122,
-    the same. Every ray is open: [0-358], span 360.
+    """R3: the band cut into three islands at y = ±10 km (±9.933 km on the ground). Each is
+    ~20 km across, N ≈ 38 at 45 km, so each keeps its own Fresnel-edge core, and no core
+    reaches across the joins:
+      middle, rays 78..102 (45·tan φ <= 9.933, φ <= 12.45°): ray 82 (φ 8°, r 45.442 km) needs
+        4.030° and has 4 — open; ray 84 (φ 6°) needs 4.039° and has 6 — blocked. Core 84..96.
+      north, rays 58..78 (ray 78 enters it at x = 9.933/tan 12° = 46.73 km, behind the middle
+        one): ray 62 (φ 28°) needs 3.806°, has 4 — blocked; ray 74 (φ 16°, r 46.813 km) needs
+        3.971°, has 4 from 78 — blocked; 76 has 2 — open. Core 62..74. South: 106..118.
+    The joins 76..82 and 98..104 stay open, each 8° wide, which the 5° shrink drops, so the
+    arcs match the single band's: [125-55], span 292.
 
-    Fused into one chain, as before R3, the same nearest distances as the single band keep the
-    core 78..102 (test_one_long_island_keeps_its_interior_blocked)."""
+    Fused into one chain, as before R3, the nearest distances of the single band give its
+    one core, 62..118 (test_one_long_island_keeps_its_interior_blocked)."""
     _, r = _open(_BAND_THIRDS)
-    assert r["swell_window_arcs"] == [{"min": 0, "max": 358, "span": 360}], r["swell_window_arcs"]
-    _, _, _, _, partial = _debug_cast_partial(_BAND_THIRDS)
-    fused = {b: min(hits.values()) for b, hits in partial.items()}
+    assert r["swell_window_arcs"] == [{"min": 125, "max": 55, "span": 292}], r["swell_window_arcs"]
+    _, _, _, blocked, partial = _debug_cast_partial(_BAND_THIRDS)
+    assert sorted(blocked) == (list(range(62, 75, 2)) + list(range(84, 97, 2))
+                               + list(range(106, 119, 2)))
+    fused = {b: min(h.dist_km for h in hits.values()) for b, hits in partial.items()}
+    fused_n = {b: max(h.fresnel_n for h in hits.values()) for b, hits in partial.items()}
     assert sorted(fused) == list(range(58, 123, 2))
-    assert sorted(sw._island_shadow(fused, 2)) == list(range(78, 103, 2))
+    assert sorted(sw._island_shadow(fused, 2, fresnel_n=fused_n)) == list(range(62, 119, 2))
 
 
 def _debug_cast_partial(polys, step=None):
@@ -180,14 +195,15 @@ def test_debug_blockers_attribution():
     # one long island: a BLOCKED-core chain record (wrap-distance rule) naming the island,
     # matching test_one_long_island_keeps_its_interior_blocked.
     _, dcc, _, sb_chain = _debug_cast([_BAND])
-    assert [(c["lo"], c["hi"], c["decision"], c["core"]) for c in dcc] == [
-        (58, 122, "blocked_core", [78, 102])]
-    assert sb_chain == set(range(78, 103, 2))
-    # the same footprint as three islands: three records, one per island, all open
+    assert [(c["lo"], c["hi"], c["decision"], c["core"], c["edge_rays"]) for c in dcc] == [
+        (58, 122, "blocked_core", [62, 118], 33)]
+    assert sb_chain == set(range(62, 119, 2))
+    # the same footprint as three islands: three records, one per island, each its own core
     _, dcc3, _, sb3 = _debug_cast(_BAND_THIRDS)
-    assert sorted((c["lo"], c["hi"], c["decision"]) for c in dcc3) == [
-        (58, 78, "open_wrapped"), (78, 102, "open_wrapped"), (102, 122, "open_wrapped")]
-    assert len({c["island"] for c in dcc3}) == 3 and not sb3
+    assert sorted((c["lo"], c["hi"], c["decision"], c["core"]) for c in dcc3) == [
+        (58, 78, "blocked_core", [62, 74]), (78, 102, "blocked_core", [84, 96]),
+        (102, 122, "blocked_core", [106, 118])]
+    assert len({c["island"] for c in dcc3}) == 3
 
     # far small island: 108 km² at 80 km wraps clean → an OPEN chain record, no block
     # (matches test_distance_aware_partial_block).
@@ -425,11 +441,12 @@ def test_own_coast_skipped_but_offshore_reentry_still_blocks():
 def test_distant_large_landmass_wraps_open():
     # The min-fetch relaxation: a ≥500 km² landmass at 45 km is a solid wall (within
     # SWELL_MAINLAND_SOLID_KM); the SAME compact landmass BEYOND that distance is demoted
-    # to a partial blocker and wraps clean open instead of hard-blocking downrange.
+    # to a partial blocker. At 400 km (near face 387.75 km) it subtends atan(12.165/387.75)
+    # = 1.80° each side: ray 90 alone, under SWELL_MIN_SHADOW_DEG, so it opens.
     near, _ = _open([_square(600, 45)])          # ~33 km — inside the solid range
     assert _blocked_near(near, 90), "≥500 km² wall within SWELL_MAINLAND_SOLID_KM still hard-blocks"
-    far, _ = _open([_square(600, 200)])          # ~188 km — beyond the 100 km default
-    assert 90 in far, "the same wall beyond SWELL_MAINLAND_SOLID_KM must wrap open, not hard-block"
+    _, _, hard, blocked = _debug_cast([_square(600, 400)])
+    assert not hard and not blocked, "the same wall beyond SWELL_MAINLAND_SOLID_KM is no wall"
 
 
 def test_near_mainland_across_strait_still_blocks():
@@ -448,7 +465,7 @@ def test_island_spot_with_mainland_behind_stays_bounded():
     # landward side; only the distant seaward landmass is relaxed (wraps open).
     island = Polygon([(-0.06, -0.04), (0.06, -0.04), (0.06, 0.06), (-0.06, 0.06)])  # spot inside, ~148 km²
     mainland = Polygon([(-40, 0.45), (40, 0.45), (40, 40), (-40, 40)])              # large; south coast ~50 km N
-    distant = _square(600, 250, 180)                                                # ≥500 km², ~240 km S -> relaxed
+    distant = _square(600, 400, 180)                                                # ≥500 km², ~388 km S -> relaxed
     _, r = _open([island, mainland, distant])
     arcs = r["swell_window_arcs"]
     assert arcs, "the seaward (south) side must be open"
@@ -740,27 +757,29 @@ def test_r3_a_near_islet_fused_with_a_far_coast_is_judged_separately():
     _, _, hard, small_blocked, partial = _debug_cast_partial(polys)
     assert not hard and not small_blocked
     assert [b for b in partial if len(partial[b]) == 2] == [86, 88, 90, 92, 94]
-    assert round(min(partial[90].values()), 2) == 23.00 and max(partial[90].values()) > 1400
+    dists = sorted(h.dist_km for h in partial[90].values())
+    assert round(dists[0], 2) == 23.00 and dists[1] > 1400
     assert 68 in partial and 112 in partial
     _, r = _open(polys)
     assert r["swell_window_arcs"] == _FULLY_OPEN, r["swell_window_arcs"]
-    fused = {b: min(hits.values()) for b, hits in partial.items()}
+    fused = {b: min(h.dist_km for h in hits.values()) for b, hits in partial.items()}
     assert sorted(sw._island_shadow(fused, 2)) == [86, 88, 90, 92, 94]
 
 
 def test_r3_a_near_islet_that_would_block_alone_still_does_behind_a_far_coast():
     """The long band of test_one_long_island_keeps_its_interior_blocked, with _FAR_COAST
-    behind it: R3 judges the band on its own run, so its core 78..102 stands, exactly as
+    behind it: R3 judges the band on its own run, so its core 62..118 stands, exactly as
     without the coast."""
     _, _, _, small_blocked, partial = _debug_cast_partial([_BAND, _FAR_COAST])
-    assert small_blocked == set(range(78, 103, 2))
+    assert small_blocked == set(range(62, 119, 2))
     assert all(len(partial[b]) == 2 for b in range(58, 123, 2))
 
 
 def test_r3_never_blocks_a_ray_the_fused_chain_would_not():
-    """Per island against one chain on the nearest hit, over random partial hits: an island's
-    run lies inside the fused run and its distance on a ray is never nearer than the nearest,
-    so its wrap is never smaller. Any ray it blocks, the fused chain blocks."""
+    """Per island against one chain on the nearest hit, over random partial hits judged by
+    the wrap (no Fresnel numbers): an island's run lies inside the fused run and its distance
+    on a ray is never nearer than the nearest, so its wrap is never smaller. Any ray it
+    blocks, the fused chain blocks."""
     import random
     rng = random.Random(20261019)
     for _ in range(300):
@@ -769,6 +788,150 @@ def test_r3_never_blocks_a_ray_the_fused_chain_would_not():
             lo = rng.randrange(0, 360, 2)
             dist = rng.choice([8.0, 25.0, 40.0, 90.0, 400.0, 2500.0])
             for b in range(lo, lo + rng.randrange(2, 140, 2), 2):
-                partial.setdefault(b % 360, {})[island] = dist * rng.uniform(1.0, 1.3)
-        fused = {b: min(h.values()) for b, h in partial.items()}
+                partial.setdefault(b % 360, {})[island] = sw.IslandHit(dist * rng.uniform(1.0, 1.3))
+        fused = {b: min(x.dist_km for x in h.values()) for b, h in partial.items()}
         assert sw._islands_shadow(partial, 2) <= sw._island_shadow(fused, 2)
+
+
+# --------------------------------------------------------------------------- #
+# The Fresnel edge beyond 30 km                                                #
+# --------------------------------------------------------------------------- #
+# A Kaua'i-sized island (1,453 km²) centred 155 km due east: side 38.118 km, near face
+# 135.940 km out, half-height 18.931 km on the ground.
+_KAUAI = _square(1453, 155, 90)
+
+
+def test_fresnel_edge_by_hand():
+    """√(L/r) in degrees, L = 0.224829 km: at 33 km √(0.0068130) = 0.082541 rad = 4.7292°;
+    at 136 km √(0.0016532) = 0.040659 rad = 2.3296°; at 8 s (L = 0.099924 km), 136 km:
+    √(0.00073473) = 0.027106 rad = 1.5531°."""
+    assert round(sw.fresnel_edge_deg(33.0), 4) == 4.7292
+    assert round(sw.fresnel_edge_deg(136.0), 4) == 2.3296
+    assert round(sw.fresnel_edge_deg(136.0, period_s=8.0), 4) == 1.5531
+
+
+def test_a_broad_island_beyond_100_km_keeps_its_core():
+    """Past SWELL_MAINLAND_SOLID_KM a 1,453 km² island is a partial blocker. Half-angle
+    atan(18.931/135.940) = 7.93°: rays 84..96. N on ray 90 = 37.865² / (0.224829 × 135.940)
+    = 46.9 ≥ 10, so the Fresnel edge: ray 88 (φ 2°, r 136.023 km) needs 2.329° and has 4 —
+    blocked; ray 86 has 2 — open. Core 88..92. Open 94..86 round north, shrunk:
+    [99-81], span 81 + 360 - 99 + 2 = 344. The wrap (16 + 8 × 1.36 = 26.9°) opens it all."""
+    dr, dc, hard, blocked = _debug_cast([_KAUAI])
+    assert not hard and sorted(blocked) == [88, 90, 92]
+    assert round(dr[90]["partials"][0]["fresnel_n"], 1) == 46.9
+    assert [(c["lo"], c["hi"], c["core"], c["edge_rays"]) for c in dc] == [(84, 96, [88, 92], 7)]
+    _, r = _open([_KAUAI])
+    assert r["swell_window_arcs"] == [{"min": 99, "max": 81, "span": 344}], r["swell_window_arcs"]
+
+
+def test_above_the_island_cap_the_wrap_still_applies():
+    """Cuba, Hispaniola and the continents keep the wrap: with the cap lowered below the
+    island's 1,453 km² it records no Fresnel number and opens (wrap 26.9° > its 12° run)."""
+    saved = sw.SWELL_FRESNEL_ISLAND_MAX_KM2
+    try:
+        sw.SWELL_FRESNEL_ISLAND_MAX_KM2 = 1000.0
+        dr, dc, hard, blocked = _debug_cast([_KAUAI])
+        _, r = _open([_KAUAI])
+    finally:
+        sw.SWELL_FRESNEL_ISLAND_MAX_KM2 = saved
+    assert not hard and not blocked
+    assert dr[90]["partials"][0]["fresnel_n"] is None and dc[0]["edge_rays"] == 0
+    assert r["swell_window_arcs"] == _FULLY_OPEN
+
+
+def test_beyond_30_km_an_island_with_n_below_10_keeps_the_wrap():
+    """108 km² centred 80 km due east: side 10.392 km, near face 74.804 km, width across
+    ray 90 10.3227 km: N = 10.3227² / (0.224829 × 74.804) = 6.34 < 10, so the wrap; its run
+    is 8° wide (half-angle atan(5.161/74.804) = 3.95°: rays 88..92), it opens."""
+    dr, dc, hard, blocked = _debug_cast([_square(108, 80, 90)])
+    assert round(dr[90]["partials"][0]["fresnel_n"], 2) == 6.34
+    assert not hard and not blocked and dc[0]["edge_rays"] == 0
+
+
+# --------------------------------------------------------------------------- #
+# Rays across the antimeridian                                                 #
+# --------------------------------------------------------------------------- #
+# A spot 0.1° west of 180°, a 600 km² island centred 45 km due east of it (so wholly east of
+# 180°: lng -179.806 to -179.586), and a decoy of the same size on the prime meridian,
+# 20,000 km away. The near face is 45 - 12.247 = 32.753 km out (32.752 km on the ground):
+# beyond 30 km, within SWELL_MAINLAND_SOLID_KM, ≥ 500 km² — a wall. Half-angle
+# atan(12.165/32.752) = 20.38°: rays 70..110. Open 112..68 round north, shrunk: [117-63],
+# span 63 + 360 - 117 + 2 = 308, optimal 270.
+#
+# Before the split, a ray crossing 180° jumped from +179.9 to -179.9 and its chord ran the
+# width of the map: every eastward ray "hit" the decoy, and ray 90 met the island's FAR side
+# first (65 km) from the wrong end of that chord.
+def _antimeridian_land(east):
+    """The island 45 km east of a spot at lng 179.9 (centre 179.9 + 45/111.32 - 360 =
+    -179.696), or 45 km west of one at -179.9 (centre +179.696), plus the decoy."""
+    h = 600 ** 0.5 / 2 / KM_PER_DEG
+    c = 179.9 + 45 / KM_PER_DEG - 360
+    c = c if east else -c
+    island = Polygon([(c - h, -h), (c + h, -h), (c + h, h), (c - h, h)])
+    return _index([island, _square(600, 0.0, 90)])
+
+
+def _cast_at(lng, land):
+    sw._AREA_CACHE.clear(); sw._PREPARED_CACHE.clear(); sw._DEPTH_CACHE.clear()
+    sw._NEAREST_CACHE.clear(); sw._POLAR_CACHE.clear()
+    dr: dict = {}
+    hard, partial = sw._classify_bearings(0.0, lng, land, 2, debug=dr)
+    return dr, hard, partial, sw.compute_swell_window({"name": "t", "lat": 0.0, "lng": lng}, land=land)
+
+
+def test_a_ray_keeps_its_longitudes_continuous_across_180():
+    xs = [x for x, _ in sw._ray_linestring(0.0, 179.9, 90.0).coords]
+    assert max(xs) > 180.0 and max(abs(b - a) for a, b in zip(xs, xs[1:])) < 1.0
+    pieces = sw._ray_pieces(sw._ray_linestring(0.0, 179.9, 90.0), Point(179.9, 0.0))
+    assert [round(p.x, 1) for _, p in pieces] == [179.9, -180.1]
+
+
+def test_an_island_across_180_to_the_east():
+    dr, hard, partial, r = _cast_at(179.9, _antimeridian_land(east=True))
+    assert sorted(hard) == list(range(70, 111, 2)) and not partial
+    assert (dr[90]["rule"], round(dr[90]["dist_km"], 2)) == ("mainland_solid", 32.75)
+    assert all(rec["result"] != "small" for rec in dr.values()), "no hit on the decoy"
+    assert r["swell_window_arcs"] == [{"min": 117, "max": 63, "span": 308}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 270
+
+
+def test_an_island_across_180_to_the_west():
+    """The mirror image: spot at -179.9, island 45 km due west at +179.586..+179.806. Rays
+    250..290 walled, [297-243], span 243 + 360 - 297 + 2 = 308, optimal 90."""
+    dr, hard, partial, r = _cast_at(-179.9, _antimeridian_land(east=False))
+    assert sorted(hard) == list(range(250, 291, 2)) and not partial
+    assert round(dr[270]["dist_km"], 2) == 32.75
+    assert r["swell_window_arcs"] == [{"min": 297, "max": 243, "span": 308}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 90
+
+
+def test_the_fresnel_edge_is_only_for_n_of_10_or_more():
+    """A strip 1 km deep (x 60–61 km) and 10.330 km across (y ±5.2 in _square's units): on
+    ray 90 N = 10.330² / (0.224829 × 59.9997) = 7.91 < 10. Half-angle atan(5.165/60.0) =
+    4.92°: rays 86..94. Ray 90 is 4° from each end — past its penumbra √(L/r) = 3.51°, short
+    of the wrap 16 + 8 × 0.6 = 20.8°. With N below 10 it takes the wrap and opens."""
+    strip = Polygon([(60 * _KM, -5.2 * _KM), (61 * _KM, -5.2 * _KM),
+                     (61 * _KM, 5.2 * _KM), (60 * _KM, 5.2 * _KM)])
+    dr, dc, hard, blocked = _debug_cast([strip])
+    assert round(dr[90]["partials"][0]["fresnel_n"], 2) == 7.91
+    assert sorted(b for b in dr if dr[b]["result"] == "small") == [86, 88, 90, 92, 94]
+    assert not hard and not blocked and dc[0]["edge_rays"] == 0
+
+
+def test_the_blocker_dump_prints_each_rays_distance_and_n(capsys):
+    """The Kaua'i-sized island at the 4° step: rays 84, 88, 92, 96 (φ 6°, 2°, 2°, 6°), at
+    135.940/cos φ = 136.7 and 136.0 km. Width across a ray φ off the square's axis is
+    38.118 × (0.993301·cos φ + 0.999995·sin φ): 41.640 km at 6°, 39.170 km at 2°, so
+    N = 41.640² / (0.224829 × 136.689) = 56.4 and 39.170² / (0.224829 × 136.023) = 50.2."""
+    from pipeline import sw1_raycast as R
+    land = _index([_KAUAI])
+    saved = R.load_land_index
+    R.load_land_index = lambda: land
+    try:
+        R.run_validate(debug_blockers=True, spots=[("T", 0.0, 0.0, 90, None, None, "")])
+    finally:
+        R.load_land_index = saved
+    out = capsys.readouterr().out
+    assert ("per ray (bearing dist N): 84 136.7km N=56.4 · 88 136.0km N=50.2 · "
+            "92 136.0km N=50.2 · 96 136.7km N=56.4") in out
+    assert "→ BLOCKED core 88–92" in out and "Fresnel edge on 4 of the rays" in out

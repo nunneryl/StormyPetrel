@@ -142,6 +142,14 @@ SWELL_FRESNEL_PERIOD_S = 12.0
 SWELL_FRESNEL_GRAVITY = 9.81
 SWELL_FRESNEL_TRANSPARENT_N = 1.0
 SWELL_FRESNEL_WALL_N = 10.0
+# The Fresnel edge — beyond the near field, an island (a polygon under this area) that is
+# a partial blocker with N ≥ SWELL_FRESNEL_WALL_N on a ray keeps that ray blocked when it
+# lies at least the 12 s penumbra, √(L/r) in degrees (4.7° at 33 km, 2.3° at 136 km),
+# inside both ends of the island's own run, instead of the fixed wrap below, which erased
+# the whole shadow of a broad island (Santa Cruz at Pitas Point, Kaua'i at Pipeline).
+# Islands with N < SWELL_FRESNEL_WALL_N keep the wrap. 10,000 km² takes in every Hawaiian
+# island and the Channel Islands and leaves Cuba, Hispaniola and the continents on the wrap.
+SWELL_FRESNEL_ISLAND_MAX_KM2 = 10_000.0
 # How much MORE of its own landmass a ray may cross than the spot's distance to that
 # landmass's nearest coast, and still count as open. A ray whose start point (2 km out) lies
 # inside the land the spot sits on is the own-coast case: #64 let it through whenever it

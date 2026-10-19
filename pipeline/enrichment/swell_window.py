@@ -29,10 +29,17 @@ blockers. R3 — every partial hit on a ray is kept, not just the nearest, and t
 are grouped by island: each island's own run of rays is trimmed inward on both edges by
 a distance-aware diffraction wrap-in (SWELL_DIFFRACTION_WRAP_DEG +
 SWELL_DIFFRACTION_WRAP_PER_100KM·distance, each ray on that island's own distance). A
-lone small island has open water on both edges and wraps away to nothing (Catalina
-stops walling off Huntington); a long island keeps its interior blocked. A near islet is
-never fused with a far coast behind it: each is judged on its own run. Anything
-subtending less than SWELL_MIN_SHADOW_DEG is ignored outright.
+lone small island has open water on both edges and wraps away to nothing; a long island
+keeps its interior blocked. An island under SWELL_FRESNEL_ISLAND_MAX_KM2 that is broad
+for its distance (Fresnel N ≥ SWELL_FRESNEL_WALL_N on a ray) is trimmed instead by only
+its penumbra at the design period, √(L/r) — the Fresnel edge — so Santa Cruz Island keeps
+a core at Pitas Point, Kaua'i at Pipeline and Catalina at Huntington; Cuba, Hispaniola
+and the continents keep the wrap. Islands are never fused: a near islet is not joined to
+a far coast behind it, nor to a neighbour beside it. Anything subtending less than
+SWELL_MIN_SHADOW_DEG is ignored outright.
+
+Rays keep continuous longitudes and are mapped back across the antimeridian
+(_ray_pieces), so a Hawaii spot's westward ray meets what lies past 180° and nothing else.
 
 Surviving open bearings are merged into arcs and shrunk inward by
 SWELL_ARC_SHRINK_DEG on each end for diffraction. optimal_swell_dir is the
@@ -44,9 +51,11 @@ from __future__ import annotations
 
 import logging
 import math
+from typing import NamedTuple
 
 from pyproj import Geod
 from shapely.geometry import LineString, Point, box
+from shapely.affinity import translate
 from shapely.ops import nearest_points
 from shapely.prepared import prep
 from shapely.strtree import STRtree
@@ -57,6 +66,7 @@ from ..config import (
     SWELL_DIFFRACTION_WRAP_DEG,
     SWELL_DIFFRACTION_WRAP_PER_100KM,
     SWELL_FRESNEL_GRAVITY,
+    SWELL_FRESNEL_ISLAND_MAX_KM2,
     SWELL_FRESNEL_PERIOD_S,
     SWELL_FRESNEL_TRANSPARENT_N,
     SWELL_FRESNEL_WALL_N,
@@ -109,7 +119,30 @@ def _ray_linestring(lat: float, lng: float, bearing_deg: float) -> LineString:
     intermediate = _GEOD.npts(start_lon, start_lat, end_lon, end_lat, n - 1)
     pts.extend((lon, la) for lon, la in intermediate)
     pts.append((end_lon, end_lat))
-    return LineString(pts)
+    # pyproj returns longitudes in [-180, 180], so a ray crossing the antimeridian would jump
+    # from +179.9 to -179.9 and its planar chord would span the whole map: every Hawaii spot's
+    # westward rays then "hit" the Americas, Eurasia and Africa thousands of km beyond the
+    # fetch. Keep the longitudes continuous instead (they may run past ±180);
+    # _ray_pieces maps the part beyond back onto the land.
+    unwrapped = [pts[0]]
+    for lon, la in pts[1:]:
+        prev = unwrapped[-1][0]
+        lon += 360.0 * round((prev - lon) / 360.0)
+        unwrapped.append((lon, la))
+    return LineString(unwrapped)
+
+
+def _ray_pieces(ray: LineString, spot_ll: Point) -> list[tuple[LineString, Point]]:
+    """The ray as the land sees it: [(ray, spot)] for a ray within ±180° longitude; for one
+    that runs past the antimeridian, also the whole ray and spot shifted by ∓360°, so the
+    part beyond lands on the polygons there. Each piece is paired with the spot shifted the
+    same way, which keeps planar nearest-point searches on the near side of the line."""
+    pieces = [(ray, spot_ll)]
+    minx, _, maxx, _ = ray.bounds
+    for dx, beyond in ((-360.0, maxx > 180.0), (360.0, minx < -180.0)):
+        if beyond:
+            pieces.append((translate(ray, xoff=dx), Point(spot_ll.x + dx, spot_ll.y)))
+    return pieces
 
 
 def _poly_area_km2(poly) -> float:
@@ -262,6 +295,18 @@ def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float
     Polygons the ray enters from open water (islands, the far continent) are hits at
     the true water→land crossing, as before.
     """
+    best: dict[int, tuple[object, float]] = {}
+    for piece, near_ll in _ray_pieces(ray, spot_ll):
+        for poly, dist_km in _piece_hits(piece, land, spot_ll, near_ll):
+            if id(poly) not in best or dist_km < best[id(poly)][1]:
+                best[id(poly)] = (poly, dist_km)
+    return list(best.values())
+
+
+def _piece_hits(ray: LineString, land, spot_ll: Point, near_ll: Point) -> list[tuple[object, float]]:
+    """_ray_hits for one piece of the ray: *near_ll* is the spot shifted with the piece (for
+    planar nearest-point searches), *spot_ll* the spot itself (for geodesic distances and the
+    spot's depth inside its own land)."""
     try:
         candidates = land.polygon_tree.query(ray)
     except Exception:
@@ -302,7 +347,7 @@ def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float
         else:
             # Spot is seaward of this polygon: the nearest intersection point is the
             # real water→land coastline crossing.
-            closest_on_inter, _ = nearest_points(inter, spot_ll)
+            closest_on_inter, _ = nearest_points(inter, near_ll)
         _, _, dist_m = _GEOD.inv(spot_ll.x, spot_ll.y, closest_on_inter.x, closest_on_inter.y)
         hits.append((poly, dist_m / 1000.0))
     return hits
@@ -336,7 +381,8 @@ def _merge_runs(blocked: list[int], step_deg: int, gap_bridge_deg: float) -> lis
     return intervals
 
 
-def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) -> set[int]:
+def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
+                  fresnel_n: dict[int, float] | None = None) -> set[int]:
     """Bearings that stay blocked after a run of partial hits is wrap-trimmed.
 
     The production path (_islands_shadow) calls this once per island, with that island's
@@ -350,6 +396,13 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) 
     wrap even mid-run — a chain that fuses a near headland with distant mainland no longer
     keeps the far core wrongly blocked. This reduces EXACTLY to the old single-wrap core
     when a run's members are all at one distance.
+
+    THE FRESNEL EDGE. *fresnel_n* ({bearing: N}, from _classify_bearings) gives a member's
+    Fresnel number where it was measured. A member with N ≥ SWELL_FRESNEL_WALL_N is broad
+    enough for its distance to cast a real shadow at the design period, and needs only the
+    penumbra, fresnel_edge_deg(d), inside both ends instead of the wrap: the wrap was built
+    for small, distant islands and erased a broad island's whole shadow. Members without an
+    N, or with N below the wall, keep the wrap.
 
     *debug* (diagnostic only; None on the production/full path, so behaviour and cost are
     unchanged): a list appended with one record per merged chain —
@@ -370,13 +423,18 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) 
         # OWN distance, so a far member (huge wrap) wraps open even mid-run while a near
         # member persists. Uniform-distance runs give the same core as the old single wrap.
         core_lo = core_hi = None
-        n_core = 0
+        n_core = n_edge = 0
         for b in range(lo, hi + 1, step_deg):
             d = small_hit_dist.get(b % 360)
             if d is None:
                 continue
-            wrap_b = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (d / 100.0)
-            if (b - lo) >= wrap_b and (hi - b) >= wrap_b:
+            n = (fresnel_n or {}).get(b % 360)
+            if n is not None and fresnel_verdict(n) == "wall":
+                need = fresnel_edge_deg(d)
+                n_edge += 1
+            else:
+                need = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (d / 100.0)
+            if (b - lo) >= need and (hi - b) >= need:
                 blocked.add(b % 360)
                 core_lo = b if core_lo is None else core_lo
                 core_hi = b
@@ -385,41 +443,55 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) 
             dmin = min(small_hit_dist[b % 360] for b in range(lo, hi + 1, step_deg)
                        if (b % 360) in small_hit_dist)
             wnear = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (dmin / 100.0)
+            how = (f"Fresnel edge on {n_edge} of the rays (N ≥ {SWELL_FRESNEL_WALL_N:g}, "
+                   f"{fresnel_edge_deg(dmin):.1f}° at {dmin:.0f}km), wrap on the rest"
+                   if n_edge else f"per-member wrap (nearest {dmin:.0f}km → {wnear:.0f}°)")
             if core_lo is None:
                 debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
-                              "dmin_km": dmin, "wrap_deg": wnear, "decision": "open_wrapped",
-                              "reason": f"per-member wrap: every member wraps open on its own "
-                                        f"distance (nearest {dmin:.0f}km → {wnear:.0f}°)"})
+                              "dmin_km": dmin, "wrap_deg": wnear, "edge_rays": n_edge,
+                              "decision": "open_wrapped",
+                              "reason": f"{how}: every member opens"})
             else:
                 debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
-                              "dmin_km": dmin, "wrap_deg": wnear, "decision": "blocked_core",
+                              "dmin_km": dmin, "wrap_deg": wnear, "edge_rays": n_edge,
+                              "decision": "blocked_core",
                               "core": [core_lo % 360, core_hi % 360],
-                              "reason": f"per-member wrap: {n_core} near-member ray(s) "
-                                        f"{core_lo % 360}–{core_hi % 360}° stay blocked (nearest "
-                                        f"{dmin:.0f}km → {wnear:.0f}°); far members wrap open on own distance"})
+                              "reason": f"{how}: {n_core} ray(s) "
+                                        f"{core_lo % 360}–{core_hi % 360}° stay blocked"})
     return blocked
 
 
-def _islands_shadow(partial_hits: dict[int, dict[int, float]], step_deg: int,
+class IslandHit(NamedTuple):
+    """One partial hit on a ray: the distance to it and, where measured, its Fresnel number
+    (None for a polygon of SWELL_FRESNEL_ISLAND_MAX_KM2 or more, which keeps the wrap)."""
+    dist_km: float
+    fresnel_n: float | None = None
+
+
+def _islands_shadow(partial_hits: dict[int, dict[int, IslandHit]], step_deg: int,
                     debug=None) -> set[int]:
     """R3 — bearings that stay blocked when each island is judged on its own.
 
-    *partial_hits* is _classify_bearings' {bearing: {island_key: dist_km}}. The hits are
+    *partial_hits* is _classify_bearings' {bearing: {island_key: IslandHit}}. The hits are
     regrouped by island and every island's own rays go through _island_shadow on their own
-    distances; a bearing is blocked if any island blocks it. Two islands that sit side by
-    side, or one behind the other, are never fused into one run, so a near islet cannot
-    lend a far coast its small wrap, nor a far coast lend a near islet its long run.
+    distances and Fresnel numbers; a bearing is blocked if any island blocks it. Two islands
+    that sit side by side, or one behind the other, are never fused into one run, so a near
+    islet cannot lend a far coast its small wrap, nor a far coast lend a near islet its long
+    run.
 
     *debug*: as _island_shadow, with each record also carrying its "island" key; islands
     are taken in order of their lowest bearing, so the dump reads round the compass."""
-    by_island: dict[int, dict[int, float]] = {}
+    by_island: dict[int, dict[int, IslandHit]] = {}
     for b, hits in partial_hits.items():
-        for key, d in hits.items():
-            by_island.setdefault(key, {})[b] = d
+        for key, hit in hits.items():
+            by_island.setdefault(key, {})[b] = hit
     blocked: set[int] = set()
     for key in sorted(by_island, key=lambda k: (min(by_island[k]), k)):
+        rays = by_island[key]
         records: list | None = [] if debug is not None else None
-        blocked |= _island_shadow(by_island[key], step_deg, debug=records)
+        blocked |= _island_shadow({b: h.dist_km for b, h in rays.items()}, step_deg, debug=records,
+                                  fresnel_n={b: h.fresnel_n for b, h in rays.items()
+                                             if h.fresnel_n is not None})
         if debug is not None:
             for r in records:
                 r["island"] = key
@@ -456,6 +528,13 @@ def local_land_index(global_land: LandIndex, lat: float, lng: float) -> LandInde
     )
 
 
+def fresnel_edge_deg(dist_km: float, period_s: float = SWELL_FRESNEL_PERIOD_S) -> float:
+    """The penumbra of an obstacle *dist_km* away at a swell of *period_s*, in degrees:
+    √(L/r) radians, the first Fresnel zone's half-width √(L·r) seen from the spot."""
+    wavelength_km = SWELL_FRESNEL_GRAVITY * period_s ** 2 / (2.0 * math.pi) / 1000.0
+    return math.degrees(math.sqrt(wavelength_km / dist_km))
+
+
 def fresnel_verdict(n: float) -> str:
     """R2 on a Fresnel number: "wall" at SWELL_FRESNEL_WALL_N or more, "pass" below
     SWELL_FRESNEL_TRANSPARENT_N, "partial" in between (both lower ends inclusive)."""
@@ -474,9 +553,12 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     SWELL_MAINLAND_SOLID_KM, or by land within SWELL_LOCAL_LANDMASS_KM that R1 (the own
     coast, or ≥ SWELL_BLOCKER_AREA_KM2) or R2 (Fresnel N ≥ SWELL_FRESNEL_WALL_N) calls a
     wall. Otherwise EVERY partial hit on the ray is recorded (R3), keyed by island:
-    partial_hits = {bearing: {island_key: dist_km}}, island_key being id(polygon), so the
-    shadow pass can judge each island on its own run. A near-field island with Fresnel
-    N < SWELL_FRESNEL_TRANSPARENT_N is passed: the ray goes on to whatever lies behind it.
+    partial_hits = {bearing: {island_key: IslandHit(dist_km, fresnel_n)}}, island_key being
+    id(polygon), so the shadow pass can judge each island on its own run. fresnel_n is
+    measured for every polygon under SWELL_FRESNEL_ISLAND_MAX_KM2 (None for larger ones), so
+    the shadow pass can give a broad island the Fresnel edge. A near-field island with
+    Fresnel N < SWELL_FRESNEL_TRANSPARENT_N is passed: the ray goes on to whatever lies
+    behind it.
     A hard-blocked bearing records no partial hits. Shared by compute_swell_window and the
     validate harness (which also reads `hard_blocked` for the ceiling).
 
@@ -488,7 +570,7 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     (R2) or "mainland_solid". ``own`` is R1's own-coast test: the blocking polygon's
     nearest point lies within SWELL_OWN_COAST_KM of the spot. A "small" record carries the
     nearest partial hit's dist/area/centroid plus ``partials``, one entry per island hit
-    ({"island","dist_km","area_km2","centroid"[,"fresnel_n"]}); ``passed`` lists the
+    ({"island","dist_km","area_km2","centroid","fresnel_n"}); ``passed`` lists the
     near-field islands the ray went through (R2, N < SWELL_FRESNEL_TRANSPARENT_N).
 
     *mainland_solid_km* overrides SWELL_MAINLAND_SOLID_KM (the distance within which a
@@ -498,7 +580,7 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     spot_ll = Point(lng, lat)
     solid_km = SWELL_MAINLAND_SOLID_KM if mainland_solid_km is None else mainland_solid_km
     hard_blocked: set[int] = set()
-    partial_hits: dict[int, dict[int, float]] = {}
+    partial_hits: dict[int, dict[int, IslandHit]] = {}
 
     def _rec(poly, dist_km, **extra):
         return {"island": id(poly), "dist_km": dist_km, "area_km2": _poly_area_km2(poly),
@@ -507,7 +589,7 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     for bearing in range(0, 360, step_deg):
         ray = _ray_linestring(lat, lng, float(bearing))
         hard = None                       # (rule, poly, dist_km, fresnel_n | None)
-        partial: dict[int, float] = {}
+        partial: dict[int, IslandHit] = {}
         partial_rec: list[dict] = []
         passed: list[dict] = []
         for poly, dist_km in _ray_hits(ray, land, spot_ll):
@@ -527,7 +609,7 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
                     if debug is not None:
                         passed.append(_rec(poly, dist_km, fresnel_n=n))
                     continue              # too small for its distance: the ray goes on
-                partial[id(poly)] = dist_km
+                partial[id(poly)] = IslandHit(dist_km, n)
                 if debug is not None:
                     partial_rec.append(_rec(poly, dist_km, fresnel_n=n))
                 continue
@@ -539,9 +621,13 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
             if area >= SWELL_BLOCKER_AREA_KM2 and dist_km <= solid_km:
                 hard = ("mainland_solid", poly, dist_km, None)
                 break
-            partial[id(poly)] = dist_km
+            # Beyond the near field an island's Fresnel number decides how it wraps (the
+            # Fresnel edge, in _island_shadow); a continent, Cuba or Hispaniola keeps the wrap.
+            n = (fresnel_number(_cross_width_km(poly, spot_ll, float(bearing)), dist_km)
+                 if area < SWELL_FRESNEL_ISLAND_MAX_KM2 else None)
+            partial[id(poly)] = IslandHit(dist_km, n)
             if debug is not None:
-                partial_rec.append(_rec(poly, dist_km))
+                partial_rec.append(_rec(poly, dist_km, fresnel_n=n))
         if hard is not None:
             hard_blocked.add(bearing)
             if debug is not None:

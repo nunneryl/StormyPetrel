@@ -75,38 +75,31 @@ def _slug(n):
     return re.sub(r"[^a-z0-9]+", "-", (n or "").lower()).strip("-")
 
 
-def _stored_arcs() -> dict[str, list]:
-    """{slug: swell_window_arcs} as spots_enriched.json stores them now; {} if unreadable."""
-    try:
-        roster = json.loads(DEFAULT_ENRICHED_OUTPUT.read_text())
-    except Exception:  # noqa: BLE001
-        return {}
-    return {_slug(s.get("name")): s.get("swell_window_arcs") or [] for s in roster}
-
-
 # ---- regression checks (validate) --------------------------------------------
 # Real shadows the island rules must keep, read from the validate run's own debug records.
 # A check runs only when its spot is in the run (the 5-spot gate, or --spots).
-#   island    every ray that meets the island (matched by centroid within tol_deg on both
-#             axes and area in range) must be blocked; "report" prints whether its own run
-#             stays or opens, and why, instead of passing or failing.
+#   island    the island's core must stay blocked: every ray that meets it (matched by
+#             centroid within tol_deg on both axes and area in range) and lies at least
+#             core_deg inside both ends of its run. The rays nearer the ends are the
+#             penumbra, which may open. There must be at least one core ray to test.
 #   sector    every ray between the bearings to the named points must be blocked.
 #   bounded   the open window must total no more than max_width degrees.
-#   unchanged the open arcs must equal the arcs spots_enriched.json stores now.
+_SANTA_CRUZ = {"label": "Santa Cruz Island's core", "kind": "island", "core_deg": 8,
+               "centroid": (34.015, -119.747), "tol_deg": 0.1, "area_km2": (200.0, 320.0)}
 REGRESSION_CHECKS = (
-    {"slug": "big-beach-makena", "label": "Kaho'olawe", "kind": "island", "expect": "blocked",
+    {"slug": "big-beach-makena", "label": "Kaho'olawe's core", "kind": "island", "core_deg": 8,
      "centroid": (20.55, -156.61), "tol_deg": 0.1, "area_km2": (80.0, 200.0)},
-    {"slug": "lahaina-breakwall", "label": "Lāna'i", "kind": "island", "expect": "blocked",
+    {"slug": "lahaina-breakwall", "label": "Lāna'i's core", "kind": "island", "core_deg": 8,
      "centroid": (20.83, -156.92), "tol_deg": 0.1, "area_km2": (250.0, 500.0)},
-    {"slug": "pitas-point", "label": "Santa Cruz Island", "kind": "island", "expect": "report",
-     "centroid": (34.0, -119.72), "tol_deg": 0.1, "area_km2": (200.0, 320.0)},
-    {"slug": "mondos", "label": "Santa Cruz Island", "kind": "island", "expect": "report",
-     "centroid": (34.0, -119.72), "tol_deg": 0.1, "area_km2": (200.0, 320.0)},
+    *({"slug": slug, **_SANTA_CRUZ} for slug in ("pitas-point", "mondos", "ventura-point",
+                                                 "emma-wood-state-beach", "rincon",
+                                                 "leadbetter-beach")),
+    {"slug": "banzai-pipeline", "label": "Kaua'i's core", "kind": "island", "core_deg": 4,
+     "centroid": (22.06, -159.526), "tol_deg": 0.1, "area_km2": (1000.0, 2000.0)},
     {"slug": "canoes-waikiki", "label": "Diamond Head", "kind": "sector",
      "points": ((21.2614, -157.8053), (21.2555, -157.8097))},
     {"slug": "second-beach-newport", "label": "Second Beach RI bounded", "kind": "bounded",
      "max_width": 180},
-    {"slug": "banzai-pipeline", "label": "Pipeline's window", "kind": "unchanged"},
 )
 
 
@@ -138,14 +131,18 @@ def _sector_rays(lat: float, lng: float, points, step: int) -> list[int]:
     return sorted(set(rays))
 
 
+def _core_rays(rays: list[int], step: int, core_deg: float) -> list[int]:
+    """The rays at least *core_deg* inside both ends of their contiguous run."""
+    core = []
+    for lo, hi in sw._merge_runs(rays, step, 0):
+        core += [b % 360 for b in range(lo, hi + 1, step) if min(b - lo, hi - b) >= core_deg]
+    return sorted(core)
+
+
 def regression_verdict(check: dict, lat: float, lng: float, debug_rays: dict,
-                       debug_chains: list, open_b: set, arcs: list, stored_arcs, step: int):
-    """(status, detail) for one check: status PASS / FAIL, or STAYS / OPENS for "report"."""
+                       debug_chains: list, open_b: set, arcs: list, step: int):
+    """(status, detail) for one check: status PASS or FAIL."""
     kind = check["kind"]
-    if kind == "unchanged":
-        same = stored_arcs is not None and arcs == stored_arcs
-        return ("PASS" if same else "FAIL",
-                f"now [{_fmt_arcs(arcs)}], stored [{_fmt_arcs(stored_arcs or [])}]")
     if kind == "bounded":
         width = sum(a["span"] for a in arcs)
         return ("PASS" if 0 < width <= check["max_width"] else "FAIL",
@@ -164,24 +161,27 @@ def regression_verdict(check: dict, lat: float, lng: float, debug_rays: dict,
     rays = sorted(b for b, ms in hits.items() if ms)
     if not rays:
         return "FAIL", "no ray meets an island matching the centroid/area given (cannot verify)"
-    opened = [b for b in rays if b in open_b]
+    core = _core_rays(rays, step, check["core_deg"])
+    opened = [b for b in core if b in open_b]
     ms = [m for b in rays for m in hits[b]]
     how = sorted({debug_rays[b].get("rule", debug_rays[b]["result"]) for b in rays})
     detail = (f"{ms[0]['area_km2']:.0f} km² @({ms[0]['centroid'][0]:.3f},{ms[0]['centroid'][1]:.3f}), "
               f"{min(m['dist_km'] for m in ms):.1f}–{max(m['dist_km'] for m in ms):.1f} km, "
-              f"rays {_fmt_ranges(rays, step)} ({', '.join(how)}); open {_fmt_ranges(opened, step)}")
+              f"rays {_fmt_ranges(rays, step)} ({', '.join(how)}); core (≥{check['core_deg']}° in) "
+              f"{_fmt_ranges(core, step)}, open in core {_fmt_ranges(opened, step)}, "
+              f"open overall {_fmt_ranges([b for b in rays if b in open_b], step)}")
     keys = {m["island"] for m in ms}
     for c in debug_chains:
         if c.get("island") in keys:
-            core = f", core {c['core'][0]}–{c['core'][1]}" if c.get("core") else ""
-            wrap = f", wrap {c['wrap_deg']:.1f}°" if "wrap_deg" in c else ""
-            detail += f"; own run {c['lo']}–{c['hi']} ({c['width']}°){wrap} → {c['decision']}{core}"
-    if check["expect"] == "report":
-        return ("OPENS" if opened else "STAYS"), detail
+            kept = f", core {c['core'][0]}–{c['core'][1]}" if c.get("core") else ""
+            detail += (f"; own run {c['lo']}–{c['hi']} ({c['width']}°), Fresnel edge on "
+                       f"{c.get('edge_rays', 0)} ray(s) → {c['decision']}{kept}")
+    if not core:
+        return "FAIL", detail + "; no ray far enough inside the run to test"
     return ("FAIL" if opened else "PASS"), detail
 
 
-def print_regression_checks(cast: dict, stored: dict, step: int) -> bool:
+def print_regression_checks(cast: dict, step: int) -> bool:
     """Print every regression check whose spot was cast; True when none FAILed."""
     ok = True
     print("\nRegression checks — real shadows the island rules must keep:")
@@ -190,8 +190,7 @@ def print_regression_checks(cast: dict, stored: dict, step: int) -> bool:
             print(f"  {'—':6} {check['slug']:22} {check['label']}: not in this run")
             continue
         lat, lng, dr, dc, open_b, arcs = cast[check["slug"]]
-        status, detail = regression_verdict(check, lat, lng, dr, dc, open_b, arcs,
-                                            stored.get(check["slug"]), step)
+        status, detail = regression_verdict(check, lat, lng, dr, dc, open_b, arcs, step)
         ok = ok and status != "FAIL"
         print(f"  {status:6} {check['slug']:22} {check['label']}: {detail}")
     return ok
@@ -245,7 +244,9 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
     n_fresnel = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "fresnel_wall")
     ceil = (360 // step - len(hard_sorted)) * step
     print(f"   R1 own coast ≤{sw.SWELL_OWN_COAST_KM:.0f}km · R2 Fresnel at {sw.SWELL_FRESNEL_PERIOD_S:.0f}s: "
-          f"pass N<{sw.SWELL_FRESNEL_TRANSPARENT_N:g}, wall N≥{sw.SWELL_FRESNEL_WALL_N:g} · R3 each island on its own run")
+          f"pass N<{sw.SWELL_FRESNEL_TRANSPARENT_N:g}, wall N≥{sw.SWELL_FRESNEL_WALL_N:g} · R3 each island on its own run"
+          f" · beyond, islands <{sw.SWELL_FRESNEL_ISLAND_MAX_KM2:.0f}km² with N≥{sw.SWELL_FRESNEL_WALL_N:g}: "
+          f"Fresnel edge √(L/r)")
     print(f"   HARD-blocked {len(hard_sorted)} rays → ceiling {ceil}°  (local-coast {n_local}, "
           f"Fresnel wall {n_fresnel}, mainland-solid {n_solid})  — bearing / rule / area / dist / centroid:")
     for b in hard_sorted:
@@ -279,6 +280,13 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
                 m0 = members[0]
                 print(f"        island {m0['area_km2']:.0f}km²@({m0['centroid'][0]:.3f},{m0['centroid'][1]:.3f}) · "
                       f"{len(members)} rays · dist {min(dists):.0f}–{max(dists):.0f}km")
+                rays = [(b, m) for b in _chain_member_bearings(c["lo"], c["hi"], step)
+                        for m in debug_rays.get(b, {}).get("partials", [])
+                        if m["island"] == c.get("island")]
+                print("        per ray (bearing dist N): " + " · ".join(
+                    f"{b} {m['dist_km']:.1f}km " + ("N=—" if m.get("fresnel_n") is None
+                                                    else f"N={m['fresnel_n']:.1f}")
+                    for b, m in rays))
     else:
         print("   ISLAND chains 0 — no sub-threshold island shadows (every non-hard bearing is fully open).")
 
@@ -405,7 +413,7 @@ def run_validate(debug_blockers: bool = False, spots=None) -> int:
         for name, lat, lng, normal, hard_sorted, dbg_rays, dbg_chains, sb_sorted, ob in detail:
             _print_blocker_detail(name, lat, lng, normal, hard_sorted, dbg_rays, dbg_chains, RUN_STEP_DEG)
             _print_bucket_summary(name, dbg_rays, sb_sorted, ob, RUN_STEP_DEG)
-    return 0 if print_regression_checks(cast, _stored_arcs(), RUN_STEP_DEG) else 1
+    return 0 if print_regression_checks(cast, RUN_STEP_DEG) else 1
 
 
 def run_sweep_mainland_solid(values, spots=None) -> int:
