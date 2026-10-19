@@ -5,7 +5,8 @@ Sibling of pipeline/forecast/mop.py. For spots tagged
 ``pipeline.apply_nwps_assignments`` once placement + the buoy trust check pass),
 override the spot's swell rating with its NWPS CG1 nearshore-field node, run
 through the SAME break-response chain as the normal path (interpret.py: face_ft ×
-directional_gain in the nearshore frame, period quality, chop), while KEEPING the
+the alignment term on the direction the swell window chose — no window rung, since
+SWAN has already sheltered the node's height — period quality, chop), while KEEPING the
 per-hour wind and tide multipliers the normal rater already computed. Spots
 without a fresh NWPS read this cycle are left exactly as the orientation path
 produced them.
@@ -775,10 +776,10 @@ def nwps_series_by_hour(spot, cycle):
 # Rating + override (mirror mop_stars / apply_mop_overrides)                   #
 # --------------------------------------------------------------------------- #
 def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0,
-               arcs=None, optimal=None, chop=None):
+               optimal=None, chop=None):
     """Nearshore-frame star rating for one NWPS hour, reusing interpret.py exactly
-    (face_ft from swh × directional_gain(swell_dir vs orientation), period quality
-    from the swell period), with per-hour wind/tide injected from the normal rater.
+    (face_ft from swh × the ALIGNMENT term on swell_dir, period quality from the swell
+    period), with per-hour wind/tide injected from the normal rater.
     Chop is derived from the windsea split (swh vs shts); if shts is missing, chop
     falls to neutral (the entry's wind-based texture still applies via wind_mult).
     Returns (stars, face_ft, dir_gain, chop_mult, period_quality) or (None, …).
@@ -790,14 +791,20 @@ def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mu
     and that naming is why the substitution read as intentional for so long."""
     if hs is None or per is None or swell_dir is None or orientation is None:
         return None, None, None, None, None
-    # SAME GEOMETRIC FRAME the partition was SELECTED in. combine_ww3_partitions picks the
-    # winning partition with the spot's real arcs and optimal_swell_dir; this used to rescore
-    # it with `[], orientation, orientation` — empty arcs, orientation in the optimal slot —
-    # and overwrite the selection value, so the partition was chosen in one frame and scored
-    # in another, and directional_gain's arc branch was unreachable for every nwps spot.
-    # arcs/optimal default to the old behaviour so a caller with no spot geometry (the
-    # selftest, the placement harness) is unchanged.
-    dg = directional_gain(swell_dir, arcs or [],
+    # THE WINDOW CHOOSES, IT DOES NOT CUT. NWPS is SWAN run nearshore: the node's swh
+    # already carries the island and headland sheltering the swell window approximates, so
+    # multiplying it by the window's rung (0.40 / 0.15 / 0 outside) cut that energy twice.
+    # The window still does one job here, upstream: combine_ww3_partitions weighs the WW3
+    # partitions by hs² x directional_gain with the spot's real arcs and picks the
+    # dominant one, and its direction arrives as *swell_dir*. This scores only how well that
+    # direction lines up with the spot — max(0.25, cos²(Δ/2)) about optimal_swell_dir
+    # (orientation_deg without one), directional_gain's no-arcs branch — and never a rung.
+    #
+    # MEASURED, sw1-raycast run 19 (2026-10-19, window from 12:58Z, 78,817 reproduced NWPS
+    # spot-hours): 7,162 change, 6,875 up and 287 down, every one on the direction the
+    # window chose. Taking the window out of the CHOICE as well (run 19's variant A) let a
+    # blocked partition win it; 2,053 hours then dropped on "another partition".
+    dg = directional_gain(swell_dir, [],
                           optimal if optimal is not None else orientation,
                           orientation)
     face = face_ft(hs, per, RATING_SOURCE)
@@ -1059,6 +1066,9 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None,
             # (the P3-4 direction), the frame flips and a nearshore refracted direction
             # — dirpw, or an NWPS partition — becomes the RIGHT input instead. Revisit
             # this decision then; do not treat the WW3 preference as unconditional.
+            # The window's part here is the CHOICE of partition (made upstream, in that same
+            # deep-water frame); nwps_stars scores the chosen direction's alignment only and
+            # never multiplies the NWPS height by a window rung — see nwps_stars.
             ww3_dir, ww3_per = _ww3_swell_identity(e)
             if ww3_dir is not None:
                 dir_eff, per_eff, src = ww3_dir, ww3_per, SWELL_SOURCE_NWPS_WW3
@@ -1089,7 +1099,6 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None,
                 wm_eff = wind_multiplier(float(wdir), float(wspd), offshore, cr)
             st, face, dg, cm, pq = nwps_stars(swh, per_eff, dir_eff, shts, orient,
                                               wm_eff, e.get("tide_mult", 1.0),
-                                              arcs=s.get("swell_window_arcs"),
                                               optimal=s.get("optimal_swell_dir"),
                                               chop=(cr, cm_pair))
             if st is None:
@@ -2125,7 +2134,6 @@ def validate_batch(batch=None, wfo=None):
                 wm, tm, fbstar = e.get("wind_mult", 1.0), e.get("tide_mult", 1.0), e.get("stars")
                 break
         st, *_ = nwps_stars(swh, per, dpw, shts, s.get("orientation_deg"), wm, tm,
-                            arcs=s.get("swell_window_arcs"),
                             optimal=s.get("optimal_swell_dir"))
         sval = f"{st:.1f}" if st is not None else "—"
         fval = f"{fbstar:.1f}" if fbstar is not None else "—"

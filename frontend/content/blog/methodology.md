@@ -6,7 +6,7 @@ author: 'Stormy Petrel'
 tag: 'methodology'
 ---
 
-*Last updated: 18 October 2026.*
+*Last updated: 19 October 2026.*
 
 ## TL;DR
 
@@ -117,6 +117,10 @@ Now each swell gets a direction gain:
 | 90° or more outside | 0 |
 
 Inside the window, the offset is the angle between the swell and the spot's best swell direction. A swell straight down that line gets 1.00, and one 60° off it gets 0.75. Outside the window, the angle is measured from the window's edge. Swell from outside the window isn't impossible: it wraps in at reduced strength.
+
+**Where the height comes from NWPS, the window chooses the swell but doesn't cut the height.** NWPS models the water near the coast, so the height we read from it already carries the sheltering by islands and headlands that the window stands for. Multiplying that height by the outside-the-window gains above cut the same energy a second time. So for NWPS heights the window now does one job: it weighs the WW3 swells, as described below, and picks the one whose direction we score. The height is then scaled only by how well that direction lines up with the spot: cos²(offset ÷ 2) from the best swell direction, never below 0.25, inside the window or out. Heights from WW3 and MOP still take the window's gain in full.
+
+When we replayed the forecast published on 19 October 2026 this way, 7,162 of 78,817 NWPS spot-hours (9.1%), at 230 of our spots, changed: 6,875 came out higher and 287 lower, each one scored on the swell the window had chosen. The lower ones are swells more than about 100° from the spot's best direction, which now score below the 0.40 the window gave them. We also tried leaving the window out of the choice. Then a swell from outside the window could be picked instead, and 2,053 spot-hours came out lower on its direction.
 
 ## Wind
 
