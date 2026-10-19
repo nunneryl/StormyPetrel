@@ -34,7 +34,9 @@ name: sw1-raycast
 #   mode = nwps-shelter: READ-ONLY. On the published NWPS rows, how often the swell window
 #       cuts a partition the NWPS node already delivers with real energy (R_rel by period
 #       band, state, rung and node distance), and the stars with no window gate on NWPS rows
-#       (pipeline/star_preview.py --nwps-shelter). Geometry from baseline_ref. SELECT only.
+#       (pipeline/star_preview.py --nwps-shelter), then replays B and C: the window picks the
+#       partition but the height takes the alignment term only (C: on NWPS dirpw), all three
+#       on the same rows read once. Geometry from baseline_ref. SELECT only.
 
 on:
   workflow_dispatch:

@@ -586,3 +586,150 @@ def test_nwps_shelter_runs_on_its_own():
         SP.main(["--nwps-shelter", "--tide", "neutral"])
     with pytest.raises(SystemExit):
         SP.main(["--nwps-shelter", "--arcs", "x.json"])
+
+
+# --------------------------------------------------------------------------- #
+# The three NWPS replays: A (no window at all), B (the window picks the        #
+# partition, no multiplier on the height), C (B on NWPS dirpw)                  #
+# --------------------------------------------------------------------------- #
+# On NW (open 290-340, optimal 315), face 8.0, every period 12 s (pq**0.25 = 0.987259), wind,
+# tide and chop 1.0, so stars = round(2 x size(8 x gain) x 0.987259) / 2:
+#   gain 1.0 -> size 4.5, 8.885 -> 4.5          gain 0.15 -> size 1.2, 2.369 -> 1.0
+#   cos²(42.5°) = 0.543578 -> size 3.174312, 6.268 -> 3.0
+#   cos²(22.5°) = 0.853553 -> 8.307 -> 4.0      cos²(7.5°) = 0.982963 -> 8.818 -> 4.5
+# R1: one partition at 230, 60° outside the window: the 0.15 rung -> 1.0 published.
+# R2: a 1.0 m partition at 315 (inside, gain 1, energy 1.0) and a 2.0 m one at 230 (energy
+#     4 x 0.15 = 0.6): the window picks 315 -> 4.5 published. With no window the 230 one
+#     weighs 4 x 0.543578 = 2.174 > 1.0 and wins: 3.0.
+
+def _two(**kw):
+    return _nwps(swell_1_hs=1.0, swell_1_dp=315.0, swell_2_hs=2.0, swell_2_tp=12.0,
+                 swell_2_dp=230.0, **kw)
+
+
+VARIANT_NAMES = {1: ("A", "Hawaii")}
+
+
+def _variant_rows():
+    return [dict(_nwps(swell_1_dp=230.0, dp=None), spot_id=1, valid_time="r1", stars=1.0),
+            dict(_two(dp=330.0), spot_id=1, valid_time="r2", stars=4.5),
+            dict(_ww3(), spot_id=1, valid_time="w", stars=3.0)]        # not NWPS: not replayed
+
+
+def test_b_keeps_the_windows_partition_and_drops_only_the_multiplier():
+    # R1: the same partition (230), gain 0.15 -> cos²(42.5°): 1.0 -> 3.0.
+    r = SP._nwps_rescore(_nwps(swell_1_dp=230.0), NW, [])
+    assert (r["stars"], r["dir"], r["path"]) == (3.0, 230.0, "nwps_height_ww3_dir")
+    assert round(r["gain"], 6) == 0.543578
+    # R2: the window still picks 315, so B is today's 4.5.
+    assert SP._nwps_rescore(_two(), NW, [])["stars"] == 4.5
+
+
+def test_a_lets_the_blocked_partition_win_and_its_direction_drive_the_gain():
+    r = SP.rescore(_two(), SP.ungated({"A": NW})["A"])
+    assert (r["stars"], r["dir"]) == (3.0, 230.0)
+
+
+def test_c_reads_nwps_dirpw_when_the_row_has_one():
+    # _nwps: the partition at 270 is published on the 0.40 rung (2.5); its dp 300 is dirpw.
+    c = SP._nwps_rescore(_nwps(), NW, [], use_dirpw=True)
+    assert (c["stars"], c["dir"], c["path"]) == (4.5, 300.0, "nwps_height_ww3_dir+dirpw")
+    assert round(c["gain"], 6) == 0.982963
+    b = SP._nwps_rescore(_nwps(), NW, [])
+    assert (b["stars"], b["dir"]) == (4.0, 270.0)
+    # No dirpw: C is B.
+    assert SP._nwps_rescore(_nwps(dp=None), NW, [], use_dirpw=True) == SP._nwps_rescore(
+        _nwps(dp=None), NW, [])
+
+
+def test_c_on_a_dirpw_row_keeps_its_path():
+    # No partition keeps gain on the window: the row already rates on dirpw (300).
+    c = SP._nwps_rescore(_nwps(swell_1_dp=180.0), NW, [], use_dirpw=True)
+    assert (c["dir"], c["path"]) == (300.0, "nwps")
+
+
+def test_rescore_still_reads_the_window_for_the_gain():
+    assert SP.rescore(_two(), NW)["stars"] == 4.5
+    assert SP.rescore(_nwps(swell_1_dp=230.0), NW)["gain"] == 0.15
+
+
+def test_variant_a_report():
+    rep = SP.no_gate_compare(_variant_rows(), {"A": NW}, VARIANT_NAMES)
+    assert rep["replay"] == {"NWPS reproduced": 2}
+    assert (rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (2, 1, 1)
+    assert rep["change_by_cause"] == {"down: another partition": 1, "up: same direction": 1}
+    assert rep["delta_by_state"] == {"Hawaii": {-1.5: 1, 2.0: 1}}
+    # R1 moves by 2.0 (> 1.5); R2's -1.5 is not more than 1.5.
+    assert rep["spots_moving_over_1_5"] == [{"spot": "A", "state": "Hawaii", "hours_over": 1,
+                                             "largest_up": 2.0, "largest_down": None}]
+
+
+def test_variant_b_report():
+    rep = SP.selected_alignment_compare(_variant_rows(), {"A": NW}, VARIANT_NAMES)
+    assert (rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (1, 1, 0)
+    assert rep["change_by_cause"] == {"up: same direction": 1}
+    ex = rep["top20"][0]["example"]
+    assert (ex["valid_time"], ex["dir_before"], ex["dir_after"], ex["stars_after"]) == (
+        "r1", 230.0, 230.0, 3.0)
+
+
+def test_variant_c_report():
+    # R1 has no dirpw: as B, 1.0 -> 3.0. R2's dirpw is 330: cos²(7.5°) -> 4.5, unchanged.
+    rep = SP.selected_alignment_compare(_variant_rows(), {"A": NW}, VARIANT_NAMES, use_dirpw=True)
+    assert (rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (1, 1, 0)
+    assert rep["delta_by_state"] == {"Hawaii": {0.0: 1, 2.0: 1}}
+
+
+@pytest.mark.parametrize("before, after, cause", [
+    ({"dir": 230.0, "path": "p"}, {"dir": 230.004, "path": "p"}, "same direction"),
+    ({"dir": 359.999, "path": "p"}, {"dir": 0.0, "path": "p"}, "same direction"),
+    ({"dir": 230.0, "path": "p"}, {"dir": 231.0, "path": "p"}, "another partition"),
+    ({"dir": 300.0, "path": "nwps"}, {"dir": 230.0, "path": "nwps_height_ww3_dir"},
+     "nwps -> nwps_height_ww3_dir"),
+])
+def test_change_cause(before, after, cause):
+    assert SP.change_cause(before, after) == cause
+
+
+def test_the_tide_preview_reports_no_direction_change():
+    rep = _tide_compare("neutral")
+    assert rep["change_by_cause"] == {"up: same direction": 2}
+    assert (rep["ups"], rep["downs"], rep["spots_moving_over_1_5"]) == (2, 0, [])
+
+
+def test_nwps_shelter_main_writes_the_measurement_and_all_three_replays(tmp_path, monkeypatch):
+    import sys
+    import types
+    roster = tmp_path / "roster.json"
+    roster.write_text('[{"name": "A", "swell_window_arcs": [{"min": 290, "max": 340, "span": 50}],'
+                      ' "optimal_swell_dir": 315, "orientation_deg": 315.0}]')
+    monkeypatch.setitem(sys.modules, "supabase", types.SimpleNamespace(create_client=lambda u, k: None))
+    monkeypatch.setenv("SUPABASE_URL", "u")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "k")
+    # R4: _nwps on the 0.40 rung (2.5); its dirpw is 300. A and B: cos²(22.5°) -> 4.0 (+1.5);
+    # C: cos²(7.5°) -> 4.5 (+2.0). So B and C differ here.
+    rows = _variant_rows() + [dict(_nwps(), spot_id=1, valid_time="r4", stars=2.5)]
+    monkeypatch.setattr(SP, "_fetch", lambda client, since: (VARIANT_NAMES, rows))
+    out = tmp_path / "out.json"
+    assert SP.main(["--nwps-shelter", "--baseline", str(roster), "--since", "S",
+                    "--out", str(out)]) == 0
+    import json
+    got = json.loads(out.read_text())
+    assert got["since"] == "S"
+    assert got["no_gate"]["change_by_cause"] == {"down: another partition": 1,
+                                                 "up: same direction": 2}
+    assert got["variant_b"]["delta_by_state"] == {"Hawaii": {"0.0": 1, "1.5": 1, "2.0": 1}}
+    assert got["variant_c"]["delta_by_state"] == {"Hawaii": {"0.0": 1, "2.0": 2}}
+    assert got["variant_c"]["change_by_cause"] == {
+        "up: nwps_height_ww3_dir -> nwps_height_ww3_dir+dirpw": 1, "up: same direction": 1}
+    assert got["nwps_shelter"]["by_swell_source"] == {"nwps_height_ww3_dir": 3, "ww3": 1}
+
+
+def test_the_big_movers_list_counts_hours_and_takes_the_largest():
+    # R1 (+2.0) and R3: face 16 on the 0.15 rung, 16 x 0.15 = 2.4 -> size 2.2, 4.344 -> 2.0;
+    # no window 16 x 0.543578 = 8.697 -> size 4.674311, 9.230 -> 4.5: +2.5.
+    rows = [_variant_rows()[0],
+            dict(_nwps(swell_1_dp=230.0, face_ft=16.0), spot_id=1, valid_time="r3", stars=2.0)]
+    rep = SP.no_gate_compare(rows, {"A": NW}, VARIANT_NAMES)
+    assert rep["spots_moving_over_1_5"] == [{"spot": "A", "state": "Hawaii", "hours_over": 2,
+                                             "largest_up": 2.5, "largest_down": None}]

@@ -54,3 +54,13 @@ def test_the_measurement_reads_the_baseline_ref():
     job = _jobs()["nwps-shelter"]
     assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job
     assert 'git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"' in job
+
+
+def test_at_most_ten_dispatch_inputs():
+    """GitHub has long documented ten as the most workflow_dispatch inputs; more and no mode
+    can be dispatched. Ten is the count today."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    block = text.split("    inputs:\n", 1)[1].split("\nenv:", 1)[0]
+    names = re.findall(r"(?m)^      ([a-z_]+):$", block)
+    assert names == ["mode", "workers", "debug_blockers", "sweep_mainland_solid", "spots",
+                     "then_enrich", "then_preview", "arcs_ref", "baseline_ref", "tide_modes"]
