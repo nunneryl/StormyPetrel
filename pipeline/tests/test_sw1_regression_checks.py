@@ -17,6 +17,7 @@ from pipeline.config import DEFAULT_ENRICHED_OUTPUT
 KAHO = next(c for c in R.REGRESSION_CHECKS if c["slug"] == "big-beach-makena")
 SANTA_CRUZ = next(c for c in R.REGRESSION_CHECKS if c["slug"] == "pitas-point")
 KAUAI = next(c for c in R.REGRESSION_CHECKS if c["slug"] == "banzai-pipeline")
+HUNTINGTON = next(c for c in R.REGRESSION_CHECKS if c["slug"] == "huntington-beach-pier")
 CANOES = next(c for c in R.REGRESSION_CHECKS if c["slug"] == "canoes-waikiki")
 
 
@@ -44,8 +45,10 @@ def test_every_check_names_a_roster_spot():
     assert [c["slug"] for c in R.REGRESSION_CHECKS] == [
         "big-beach-makena", "lahaina-breakwall", "pitas-point", "mondos", "ventura-point",
         "emma-wood-state-beach", "rincon", "leadbetter-beach", "banzai-pipeline",
-        "canoes-waikiki", "second-beach-newport"]
-    assert [c["core_deg"] for c in R.REGRESSION_CHECKS if c["kind"] == "island"] == [8] * 8 + [4]
+        "huntington-beach-pier", "canoes-waikiki", "second-beach-newport"]
+    assert [c.get("core_deg") for c in R.REGRESSION_CHECKS if c["kind"] == "island"] == [8] * 8 + [None]
+    assert KAUAI["expect"] == "open"
+    assert (HUNTINGTON["blocked"], HUNTINGTON["open"]) == ((228, 244), (196, 224))
     assert {c["slug"] for c in R.REGRESSION_CHECKS} <= slugs
 
 
@@ -105,15 +108,33 @@ def test_santa_cruz_core_with_the_fresnel_edge():
     assert status == "FAIL" and "open in core 212-232" in detail
 
 
-def test_kauais_core_at_pipeline():
-    """Kaua'i at Pipeline, run 280..292 at 136-143 km: the core 4° in from both ends is
-    284..288 (the 12 s penumbra there is 2.3°)."""
+def test_kauai_opens_at_pipeline():
+    """Kaua'i at Pipeline, rays 280..292 at 136-143 km: every one must lie inside an arc.
+    [257-31] (padded 255-33) holds them; [257-275, 297-31] leaves 280-292 outside."""
     k = {"island": 5, "area_km2": 1453.0, "centroid": (22.06, -159.526)}
     rays = {b: {"result": "small", "partials": [dict(k, dist_km=136.0, fresnel_n=47.0)],
                 "passed": []} for b in range(280, 293, 4)}
-    assert R.regression_verdict(KAUAI, 21.664, -158.054, rays, [], {280, 292}, [], 4)[0] == "PASS"
-    status, detail = R.regression_verdict(KAUAI, 21.664, -158.054, rays, [], {280, 284, 292}, [], 4)
-    assert status == "FAIL" and "core (≥4° in) 284-288, open in core 284" in detail
+    opened = [{"min": 257, "max": 31, "span": 138}]
+    status, detail = R.regression_verdict(KAUAI, 21.664, -158.054, rays, [], set(), opened, 4)
+    assert status == "PASS" and "outside every arc —" in detail, detail
+    shut = [{"min": 257, "max": 275, "span": 22}, {"min": 297, "max": 31, "span": 98}]
+    status, detail = R.regression_verdict(KAUAI, 21.664, -158.054, rays, [], set(), shut, 4)
+    assert status == "FAIL" and "outside every arc 280-292" in detail
+
+
+def test_huntingtons_window():
+    """Run 22 gave [145-195, 253-275] (padded 143-197, 251-277): 200-224 outside every arc
+    (FAIL; 196 is inside the padded 143-197). With the shrink fix
+    and San Clemente open, [145-224, 248-275] (padded 143-226, 246-277): 196-224 inside, and
+    228-244 outside both."""
+    run22 = [{"min": 145, "max": 195, "span": 54}, {"min": 253, "max": 275, "span": 26}]
+    status, detail = R.regression_verdict(HUNTINGTON, 0, 0, {}, [], set(), run22, 4)
+    assert status == "FAIL" and detail.endswith("outside every arc of the open 196–224: 200-224")
+    fixed = [{"min": 145, "max": 224, "span": 83}, {"min": 248, "max": 275, "span": 31}]
+    assert R.regression_verdict(HUNTINGTON, 0, 0, {}, [], set(), fixed, 4)[0] == "PASS"
+    leaky = [{"min": 145, "max": 228, "span": 87}, {"min": 248, "max": 275, "span": 31}]
+    status, detail = R.regression_verdict(HUNTINGTON, 0, 0, {}, [], set(), leaky, 4)
+    assert status == "FAIL" and "inside an arc of the blocked 228–244: 228;" in detail
 
 
 def test_diamond_heads_rays_from_canoes():

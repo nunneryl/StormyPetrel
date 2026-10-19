@@ -76,6 +76,8 @@ from ..config import (
     SWELL_MAINLAND_SOLID_KM,
     SWELL_MIN_FETCH_KM,
     SWELL_MIN_SHADOW_DEG,
+    SWELL_NARROW_CORE_MAX_DEG,
+    SWELL_NARROW_CORE_MIN_KM,
     SWELL_OWN_COAST_KM,
     SWELL_OWN_LAND_CROSSING_KM,
     SWELL_RAY_STEP_DEG,
@@ -404,6 +406,11 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
     for small, distant islands and erased a broad island's whole shadow. Members without an
     N, or with N below the wall, keep the wrap.
 
+    A NARROW, DISTANT CORE DOES NOT BLOCK. When the core (the rays kept blocked) spans a
+    sector under SWELL_NARROW_CORE_MAX_DEG and every ray in it meets the island beyond
+    SWELL_NARROW_CORE_MIN_KM, it opens (decision "open_narrow_core"): a real swell's
+    directional spread fills it, and the soft window will handle partial shadows.
+
     *debug* (diagnostic only; None on the production/full path, so behaviour and cost are
     unchanged): a list appended with one record per merged chain —
     {"lo","hi","width","dmin_km","wrap_deg","decision","reason","core"} — so the validate
@@ -422,8 +429,8 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
         # sits ≥ wrap(d) inside BOTH open edges of the run. wrap grows with the member's
         # OWN distance, so a far member (huge wrap) wraps open even mid-run while a near
         # member persists. Uniform-distance runs give the same core as the old single wrap.
-        core_lo = core_hi = None
-        n_core = n_edge = 0
+        core: list[int] = []
+        n_edge = 0
         for b in range(lo, hi + 1, step_deg):
             d = small_hit_dist.get(b % 360)
             if d is None:
@@ -435,10 +442,16 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
             else:
                 need = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (d / 100.0)
             if (b - lo) >= need and (hi - b) >= need:
-                blocked.add(b % 360)
-                core_lo = b if core_lo is None else core_lo
-                core_hi = b
-                n_core += 1
+                core.append(b)
+        # A narrow, distant core does not block: a sector under SWELL_NARROW_CORE_MAX_DEG
+        # whose every ray meets the island beyond SWELL_NARROW_CORE_MIN_KM is filled by the
+        # swell's directional spread (San Clemente at Huntington, Kaua'i at Pipeline).
+        core_width = (core[-1] - core[0] + step_deg) if core else 0
+        core_dmin = min((small_hit_dist[b % 360] for b in core), default=0.0)
+        narrow = (bool(core) and core_width < SWELL_NARROW_CORE_MAX_DEG
+                  and core_dmin > SWELL_NARROW_CORE_MIN_KM)
+        if not narrow:
+            blocked.update(b % 360 for b in core)
         if debug is not None:
             dmin = min(small_hit_dist[b % 360] for b in range(lo, hi + 1, step_deg)
                        if (b % 360) in small_hit_dist)
@@ -446,18 +459,21 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
             how = (f"Fresnel edge on {n_edge} of the rays (N ≥ {SWELL_FRESNEL_WALL_N:g}, "
                    f"{fresnel_edge_deg(dmin):.1f}° at {dmin:.0f}km), wrap on the rest"
                    if n_edge else f"per-member wrap (nearest {dmin:.0f}km → {wnear:.0f}°)")
-            if core_lo is None:
-                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
-                              "dmin_km": dmin, "wrap_deg": wnear, "edge_rays": n_edge,
-                              "decision": "open_wrapped",
-                              "reason": f"{how}: every member opens"})
+            rec = {"lo": lo % 360, "hi": hi % 360, "width": width, "dmin_km": dmin,
+                   "wrap_deg": wnear, "edge_rays": n_edge}
+            if not core:
+                rec.update(decision="open_wrapped", reason=f"{how}: every member opens")
+            elif narrow:
+                rec.update(decision="open_narrow_core", core=[core[0] % 360, core[-1] % 360],
+                           reason=f"{how}: core {core[0] % 360}–{core[-1] % 360}° is "
+                                  f"{core_width}° wide (< {SWELL_NARROW_CORE_MAX_DEG:g}°), all "
+                                  f"beyond {SWELL_NARROW_CORE_MIN_KM:g} km (nearest "
+                                  f"{core_dmin:.0f} km): opens")
             else:
-                debug.append({"lo": lo % 360, "hi": hi % 360, "width": width,
-                              "dmin_km": dmin, "wrap_deg": wnear, "edge_rays": n_edge,
-                              "decision": "blocked_core",
-                              "core": [core_lo % 360, core_hi % 360],
-                              "reason": f"{how}: {n_core} ray(s) "
-                                        f"{core_lo % 360}–{core_hi % 360}° stay blocked"})
+                rec.update(decision="blocked_core", core=[core[0] % 360, core[-1] % 360],
+                           reason=f"{how}: {len(core)} ray(s) "
+                                  f"{core[0] % 360}–{core[-1] % 360}° stay blocked")
+            debug.append(rec)
     return blocked
 
 
@@ -667,15 +683,24 @@ def _make_arc(lo: int, hi: int, step_deg: int) -> dict:
     return {"min": lo % 360, "max": hi % 360, "span": hi - lo + step_deg}
 
 
-def _merge_open_arcs(open_bearings: list[int], step_deg: int) -> list[dict]:
+def _merge_open_arcs(open_bearings: list[int], step_deg: int,
+                     island_blocked: set[int] | frozenset = frozenset()) -> list[dict]:
     """Collapse a sorted list of open bearings into [min, max, span] arcs.
 
     Handles wraparound: if 358 and 0 are both open they belong to the same arc. Each arc is
-    shrunk SWELL_ARC_SHRINK_DEG inward on both ends for diffraction; a run that shrinks to
-    <= one ray step is noise (not a window) and is DROPPED — this is what stops the old
-    degenerate sub-step arc (e.g. a 12° run shrinking to {min:165, max:163, span:2}, which
-    interpret._in_any_arc mis-read as a ~358° wraparound). Every emitted arc's span agrees
-    with its min/max by construction (see _make_arc / _implied_span).
+    shrunk SWELL_ARC_SHRINK_DEG inward for diffraction at an end that touches a hard wall
+    (the own coast, a mainland, a Fresnel wall); a run that shrinks to <= one ray step is
+    noise (not a window) and is DROPPED — this is what stops the old degenerate sub-step arc
+    (e.g. a 12° run shrinking to {min:165, max:163, span:2}, which interpret._in_any_arc
+    mis-read as a ~358° wraparound). Every emitted arc's span agrees with its min/max by
+    construction (see _make_arc / _implied_span).
+
+    *island_blocked* is the set of rays an island core blocks (_islands_shadow). An end that
+    touches one of those is NOT shrunk: the core is already trimmed inside the island's own
+    edges by its penumbra or wrap, so shrinking again counted that diffraction twice and
+    closed the gaps between neighbouring islands (Huntington's 216-224 between San Clemente
+    and Catalina). A run with island cores at both ends is kept at any width, a single ray
+    included.
     """
     if not open_bearings:
         return []
@@ -703,9 +728,11 @@ def _merge_open_arcs(open_bearings: list[int], step_deg: int) -> list[dict]:
 
     out: list[dict] = []
     for lo, hi in arcs:
-        lo_s = lo + SWELL_ARC_SHRINK_DEG
-        hi_s = hi - SWELL_ARC_SHRINK_DEG
-        if hi_s - lo_s + step_deg <= step_deg:
+        lo_core = (lo - step_deg) % 360 in island_blocked
+        hi_core = (hi + step_deg) % 360 in island_blocked
+        lo_s = lo if lo_core else lo + SWELL_ARC_SHRINK_DEG
+        hi_s = hi if hi_core else hi - SWELL_ARC_SHRINK_DEG
+        if not (lo_core and hi_core) and hi_s - lo_s + step_deg <= step_deg:
             continue  # <= one ray step after diffraction shrink → noise, not a window
         out.append(_make_arc(lo_s, hi_s, step_deg))
 
@@ -778,7 +805,7 @@ def compute_swell_window(spot: dict, land: LandIndex | None = None,
 
     open_bearings = [b for b in range(0, 360, step) if b not in hard_blocked and b not in small_blocked]
 
-    arcs = _merge_open_arcs(open_bearings, step)
+    arcs = _merge_open_arcs(open_bearings, step, small_blocked)
     optimal = _open_window_center(open_bearings)
     # Confidence: how much of the compass is open (span-weighted).
     total_open = sum(a["span"] for a in arcs)

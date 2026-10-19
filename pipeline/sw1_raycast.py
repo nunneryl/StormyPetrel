@@ -43,6 +43,7 @@ from .enrichment import swell_window as sw
 from .enrichment.geodata import load_land_index
 from .enrichment.swell_window_fallback import compute_swell_window_fallback
 from .enrichment.swell_window_holds import apply_hold, load_holds
+from .interpret import in_any_arc
 
 log = logging.getLogger("pipeline.sw1_raycast")
 
@@ -82,6 +83,10 @@ def _slug(n):
 #             centroid within tol_deg on both axes and area in range) and lies at least
 #             core_deg inside both ends of its run. The rays nearer the ends are the
 #             penumbra, which may open. There must be at least one core ray to test.
+#             With "expect": "open", every ray that meets the island must lie inside an
+#             arc instead (a narrow, distant core that opens).
+#   rays      every bearing in "blocked" must lie outside every arc and every bearing in
+#             "open" inside one: the window the rater reads, not just the open rays.
 #   sector    every ray between the bearings to the named points must be blocked.
 #   bounded   the open window must total no more than max_width degrees.
 _SANTA_CRUZ = {"label": "Santa Cruz Island's core", "kind": "island", "core_deg": 8,
@@ -94,8 +99,10 @@ REGRESSION_CHECKS = (
     *({"slug": slug, **_SANTA_CRUZ} for slug in ("pitas-point", "mondos", "ventura-point",
                                                  "emma-wood-state-beach", "rincon",
                                                  "leadbetter-beach")),
-    {"slug": "banzai-pipeline", "label": "Kaua'i's core", "kind": "island", "core_deg": 4,
+    {"slug": "banzai-pipeline", "label": "Kaua'i opens", "kind": "island", "expect": "open",
      "centroid": (22.06, -159.526), "tol_deg": 0.1, "area_km2": (1000.0, 2000.0)},
+    {"slug": "huntington-beach-pier", "label": "Catalina's core 228–244 stays blocked; "
+     "196–224 open", "kind": "rays", "blocked": (228, 244), "open": (196, 224)},
     {"slug": "canoes-waikiki", "label": "Diamond Head", "kind": "sector",
      "points": ((21.2614, -157.8053), (21.2555, -157.8097))},
     {"slug": "second-beach-newport", "label": "Second Beach RI bounded", "kind": "bounded",
@@ -147,6 +154,15 @@ def regression_verdict(check: dict, lat: float, lng: float, debug_rays: dict,
         width = sum(a["span"] for a in arcs)
         return ("PASS" if 0 < width <= check["max_width"] else "FAIL",
                 f"width {width}° (bound {check['max_width']}°), [{_fmt_arcs(arcs)}]")
+    if kind == "rays":
+        shut = [b for b in range(check["blocked"][0], check["blocked"][1] + 1, step)
+                if in_any_arc(b, arcs)]
+        unopened = [b for b in range(check["open"][0], check["open"][1] + 1, step)
+                    if not in_any_arc(b, arcs)]
+        return ("FAIL" if shut or unopened else "PASS",
+                f"[{_fmt_arcs(arcs)}] — inside an arc of the blocked {check['blocked'][0]}–"
+                f"{check['blocked'][1]}: {_fmt_ranges(shut, step)}; outside every arc of the open "
+                f"{check['open'][0]}–{check['open'][1]}: {_fmt_ranges(unopened, step)}")
     if kind == "sector":
         rays = _sector_rays(lat, lng, check["points"], step)
         opened = [b for b in rays if b in open_b]
@@ -161,6 +177,13 @@ def regression_verdict(check: dict, lat: float, lng: float, debug_rays: dict,
     rays = sorted(b for b, ms in hits.items() if ms)
     if not rays:
         return "FAIL", "no ray meets an island matching the centroid/area given (cannot verify)"
+    if check.get("expect") == "open":
+        shut = [b for b in rays if not in_any_arc(b, arcs)]
+        ms = [m for b in rays for m in hits[b]]
+        return ("FAIL" if shut else "PASS",
+                f"{ms[0]['area_km2']:.0f} km², {min(m['dist_km'] for m in ms):.1f}–"
+                f"{max(m['dist_km'] for m in ms):.1f} km, rays {_fmt_ranges(rays, step)}; "
+                f"outside every arc {_fmt_ranges(shut, step)}; [{_fmt_arcs(arcs)}]")
     core = _core_rays(rays, step, check["core_deg"])
     opened = [b for b in core if b in open_b]
     ms = [m for b in rays for m in hits[b]]
@@ -268,7 +291,8 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
                 continue
             tail = "" if c["decision"] == "open_wrapped" else \
                 f" core {'–'.join(map(str, c['core'])) if c.get('core') else '(none)'}"
-            verb = "OPEN" if c["decision"] == "open_wrapped" else "BLOCKED"
+            verb = {"open_wrapped": "OPEN", "open_narrow_core": "OPEN narrow"}.get(c["decision"],
+                                                                                 "BLOCKED")
             print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  dmin={c['dmin_km']:5.0f}km  "
                   f"wrap={c['wrap_deg']:4.1f}°  → {verb}{tail}   [{c['reason']}]")
             # which island: R3 judges each on its own run, so a chain is one polygon's rays.
@@ -347,9 +371,10 @@ def _print_bucket_summary(name, debug_rays, small_blocked_sorted, open_b, step) 
         print(f"     {k}) {labels[k]:52} {n:3d} rays · {n * step:3d}° blocked  [{_fmt_ranges(buckets[k], step)}]")
 
     # read-only what-if: window width if bucket B (distant-mainland min-fetch) were open
-    cur_arcs = sw._merge_open_arcs(sorted(open_b), step)
+    cur_arcs = sw._merge_open_arcs(sorted(open_b), step, set(small_blocked_sorted))
     cur_w = sum(a["span"] for a in cur_arcs)
-    wif_arcs = sw._merge_open_arcs(sorted(set(open_b) | set(buckets["B"])), step)
+    wif_arcs = sw._merge_open_arcs(sorted(set(open_b) | set(buckets["B"])), step,
+                                   set(small_blocked_sorted))
     wif_w = sum(a["span"] for a in wif_arcs)
     print(f"     what-if: width {cur_w}° → {wif_w}°  (+{wif_w - cur_w}°) if bucket B were open "
           f"— SWELL_MIN_FETCH_KM unchanged, read-only estimate")
@@ -392,7 +417,7 @@ def run_validate(debug_blockers: bool = False, spots=None) -> int:
         open_b = [b for b in range(0, 360, RUN_STEP_DEG)
                   if b not in hard and b not in small_blocked]
         ceil_b = [b for b in range(0, 360, RUN_STEP_DEG) if b not in hard]
-        arcs = sw._merge_open_arcs(open_b, RUN_STEP_DEG)
+        arcs = sw._merge_open_arcs(open_b, RUN_STEP_DEG, small_blocked)
         optimal = sw._open_window_center(open_b)
         width = sum(a["span"] for a in arcs)
         ceil = len(ceil_b) * RUN_STEP_DEG
@@ -446,7 +471,8 @@ def run_sweep_mainland_solid(values, spots=None) -> int:
             hard, partial = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, mainland_solid_km=v)
             small_blocked = sw._islands_shadow(partial, RUN_STEP_DEG)
             open_b = [b for b in range(0, 360, RUN_STEP_DEG) if b not in hard and b not in small_blocked]
-            matrix[v].append(sum(a["span"] for a in sw._merge_open_arcs(open_b, RUN_STEP_DEG)))
+            matrix[v].append(sum(a["span"] for a in sw._merge_open_arcs(open_b, RUN_STEP_DEG,
+                                                                         small_blocked)))
 
     print("\nSWELL_MAINLAND_SOLID_KM sweep — open-window width per spot (°)")
     print(f"committed default = {default:g} km; this run changes nothing (per-call override, read-only).")
