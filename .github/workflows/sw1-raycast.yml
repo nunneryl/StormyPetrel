@@ -31,6 +31,10 @@ name: sw1-raycast
 #       the published window re-scored with every unverified tide preference (no cited
 #       source) treated as neutral, or damped (pipeline/star_preview.py --tide). The swell
 #       window is held at main's roster, the one the window was rated with. SELECT only.
+#   mode = nwps-shelter: READ-ONLY. On the published NWPS rows, how often the swell window
+#       cuts a partition the NWPS node already delivers with real energy (R_rel by period
+#       band, state, rung and node distance), and the stars with no window gate on NWPS rows
+#       (pipeline/star_preview.py --nwps-shelter). Geometry from baseline_ref. SELECT only.
 
 on:
   workflow_dispatch:
@@ -45,6 +49,7 @@ on:
           - full
           - star-preview
           - tide-preview
+          - nwps-shelter
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -81,7 +86,7 @@ on:
         default: ''
         type: string
       baseline_ref:
-        description: (star-preview and tide-preview) git ref whose roster the published window was rated with
+        description: (star-preview, tide-preview and nwps-shelter) git ref whose roster the published window was rated with
         required: false
         default: main
         type: string
@@ -101,7 +106,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -368,4 +373,56 @@ jobs:
         with:
           name: tide-preview-${{ github.run_number }}
           path: tide_preview.json
+          if-no-files-found: warn
+
+  nwps-shelter:
+    name: sw1 NWPS shelter measurement (read-only)
+    if: ${{ inputs.mode == 'nwps-shelter' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Resolve the roster the window was rated with
+        env:
+          BASELINE_REF: ${{ inputs.baseline_ref }}
+        run: |
+          set -euo pipefail
+          base="${BASELINE_REF:-main}"
+          git rev-parse --verify --quiet "$base^{commit}" >/dev/null || base="origin/$base"
+          git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
+          echo "baseline: $base ($(git rev-parse "$base"))"
+
+      - name: Measure the window's cut on NWPS rows, and replay them with no window (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -m pipeline.star_preview --nwps-shelter \
+            --baseline "$RUNNER_TEMP/baseline.json" --out nwps_shelter.json
+
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: nwps-shelter-${{ github.run_number }}
+          path: nwps_shelter.json
           if-no-files-found: warn
