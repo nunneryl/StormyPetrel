@@ -1,0 +1,166 @@
+{
+  "_comment": "Swell windows HELD at their stored arcs and optimal_swell_dir: the ray-cast does not write these spots. Applied by pipeline/sw1_raycast.py (_apply_raycast_result, mode=full) and by pipeline/enrich.py (Algo 2a, after the ray-cast or the carried-forward arcs), so neither a full ray-cast nor a re-enrich moves them. Each entry is the window the spot carried on main when the hold was set (2026-10-19, main 7839cc0), copied verbatim; nothing here is authored.\n\nWHY THESE TEN. The R1-R3 island rules (pipeline/enrichment/swell_window.py) judge each island on its own run of rays, so the Bimini group (1-23 km2 at 90-114 km) no longer borrows Cuba's run 600-700 km behind it, and on the land data alone every one of these spots would open its south-east gap (run 18: Hillsboro Beach [17-127, 145-175] -> [17-175]). The land data is not the whole obstacle here: the Great Bahama Bank is a shallow platform a few metres deep that breaks and refracts swell long before it reaches the islands GSHHG draws, so it shelters south-east Florida more than its islands do. Until that sheltering is measured (NWPS or the answer key), these spots keep the windows they had.\n\nTO RELEASE A SPOT, delete its entry; the next full ray-cast writes its R1-R3 window. Keys are slugs as pipeline/db_import._slugify makes them; `name` is for the reader and is checked against the roster by pipeline/tests/test_swell_window_holds.py.",
+  "note": "SE Florida, Hillsboro Beach to Hobe Beach: the Great Bahama Bank's shallow water shelters more than the land data shows.",
+  "holds": {
+    "hillsboro-beach": {
+      "name": "Hillsboro Beach",
+      "swell_window_arcs": [
+        {
+          "min": 17,
+          "max": 127,
+          "span": 114
+        },
+        {
+          "min": 145,
+          "max": 175,
+          "span": 34
+        }
+      ],
+      "optimal_swell_dir": 96
+    },
+    "hillsboro-inlet": {
+      "name": "Hillsboro Inlet",
+      "swell_window_arcs": [
+        {
+          "min": 21,
+          "max": 119,
+          "span": 102
+        },
+        {
+          "min": 141,
+          "max": 179,
+          "span": 42
+        }
+      ],
+      "optimal_swell_dir": 96
+    },
+    "deerfield-beach-pier": {
+      "name": "Deerfield Beach Pier",
+      "swell_window_arcs": [
+        {
+          "min": 17,
+          "max": 127,
+          "span": 114
+        },
+        {
+          "min": 145,
+          "max": 175,
+          "span": 34
+        }
+      ],
+      "optimal_swell_dir": 96
+    },
+    "pompano-beach-pier": {
+      "name": "Pompano Beach Pier",
+      "swell_window_arcs": [
+        {
+          "min": 25,
+          "max": 123,
+          "span": 102
+        },
+        {
+          "min": 145,
+          "max": 175,
+          "span": 34
+        }
+      ],
+      "optimal_swell_dir": 96
+    },
+    "dania-beach-pier": {
+      "name": "Dania Beach Pier",
+      "swell_window_arcs": [
+        {
+          "min": 13,
+          "max": 123,
+          "span": 114
+        },
+        {
+          "min": 141,
+          "max": 175,
+          "span": 38
+        }
+      ],
+      "optimal_swell_dir": 92
+    },
+    "delray-beach": {
+      "name": "Delray Beach",
+      "swell_window_arcs": [
+        {
+          "min": 17,
+          "max": 127,
+          "span": 114
+        },
+        {
+          "min": 153,
+          "max": 179,
+          "span": 30
+        }
+      ],
+      "optimal_swell_dir": 96
+    },
+    "lake-worth-pier": {
+      "name": "Lake Worth Pier",
+      "swell_window_arcs": [
+        {
+          "min": 9,
+          "max": 131,
+          "span": 126
+        },
+        {
+          "min": 157,
+          "max": 175,
+          "span": 22
+        }
+      ],
+      "optimal_swell_dir": 88
+    },
+    "boynton-beach-inlet": {
+      "name": "Boynton Beach Inlet",
+      "swell_window_arcs": [
+        {
+          "min": 21,
+          "max": 111,
+          "span": 94
+        },
+        {
+          "min": 153,
+          "max": 179,
+          "span": 30
+        }
+      ],
+      "optimal_swell_dir": 92
+    },
+    "jupiter-inlet": {
+      "name": "Jupiter Inlet",
+      "swell_window_arcs": [
+        {
+          "min": 145,
+          "max": 159,
+          "span": 18
+        },
+        {
+          "min": 353,
+          "max": 111,
+          "span": 122
+        }
+      ],
+      "optimal_swell_dir": 72
+    },
+    "hobe-beach": {
+      "name": "Hobe Beach",
+      "swell_window_arcs": [
+        {
+          "min": 121,
+          "max": 155,
+          "span": 38
+        },
+        {
+          "min": 349,
+          "max": 103,
+          "span": 118
+        }
+      ],
+      "optimal_swell_dir": 72
+    }
+  }
+}

@@ -159,6 +159,7 @@ jobs:
           fi
           ls -lh pipeline/geodata/GSHHS_f_L1.*
 
+      # Exits 1 when a regression check (sw1_raycast.REGRESSION_CHECKS) fails for a cast spot.
       - name: Validate — 5-spot gate against GSHHG (no writes)
         if: ${{ inputs.mode == 'validate' }}
         env:
@@ -237,7 +238,9 @@ jobs:
             --after pipeline/spots_enriched.json --facing-outside)"
           echo "facing outside every arc: ${SLUGS:-none}"
           if [[ -n "$SLUGS" ]]; then
-            python -m pipeline.sw1_raycast --mode validate --debug-blockers --spots "$SLUGS"
+            # A failed regression check is reported, not fatal: the star preview still runs.
+            python -m pipeline.sw1_raycast --mode validate --debug-blockers --spots "$SLUGS" \
+              || echo "::warning::a regression check failed for a facing-outside spot (see above)"
           fi
 
       - name: Star preview of the new roster (SELECT only)

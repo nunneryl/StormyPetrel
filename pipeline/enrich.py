@@ -39,6 +39,7 @@ from .enrichment.geodata import load_land_index
 from .enrichment.orientation import compute_orientation
 from .enrichment.swell_window import compute_swell_window
 from .enrichment.swell_window_fallback import compute_swell_window_fallback
+from .enrichment.swell_window_holds import apply_hold, load_holds
 from .enrichment.tides import compute_nearest_tide_station, resolve_tide_station_override
 
 log = logging.getLogger("pipeline.enrich")
@@ -178,6 +179,10 @@ def _load_spot_swell_windows() -> dict[str, float]:
 
 
 _SPOT_SWELL_WINDOWS = _load_spot_swell_windows()
+
+# Swell windows held at their stored values (spot_swell_window_holds.json), applied as Algo 2a.
+# load_holds raises on a file it cannot read: running on without it would open every held window.
+_SWELL_WINDOW_HOLDS = load_holds()
 
 
 def _load_spot_tide_stations() -> dict[str, dict]:
@@ -567,6 +572,13 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
             enriched["swell_window_arcs"] = []
             _set("optimal_swell_dir", None)
             confidence["swell_window"] = 0.0
+
+    # Algo 2a — held windows (spot_swell_window_holds.json): a held spot keeps the arcs and
+    # optimal it carried when it was held, whatever the ray-cast or the carried-forward arcs
+    # say. Direct assignment, like Algo 2d: the held value is the decision.
+    if apply_hold(enriched, _SWELL_WINDOW_HOLDS):
+        log.debug("%s: swell window held at %s, optimal %s", spot.get("name"),
+                  enriched["swell_window_arcs"], enriched["optimal_swell_dir"])
 
     # Algo 2b — orientation-derived fallback for spots whose arcs are still
     # empty. Already-populated arcs (raycast or carried-forward) are a no-op.

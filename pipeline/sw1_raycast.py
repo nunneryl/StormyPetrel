@@ -9,6 +9,10 @@ egress to fetch GSHHG and the headroom to run longer.
               the all-islands-removed CEILING, the open arcs, and
               optimal_swell_dir. Writes nothing. This is the gate that must
               pass (thresholds re-checked against GSHHG) before a full run.
+              Then the regression checks (REGRESSION_CHECKS) for any of their
+              spots in the run — real shadows the island rules must keep — and
+              exit 1 if one fails. Held spots (spot_swell_window_holds.json)
+              are marked: a full run keeps their stored window.
 
   full      — cast the whole roster with the Phase-0 blocker-geometry fix and
               the perf path (4° / 90 rays, prepared geometries, per-spot bbox
@@ -38,6 +42,7 @@ from .config import DEFAULT_ENRICHED_OUTPUT
 from .enrichment import swell_window as sw
 from .enrichment.geodata import load_land_index
 from .enrichment.swell_window_fallback import compute_swell_window_fallback
+from .enrichment.swell_window_holds import apply_hold, load_holds
 
 log = logging.getLogger("pipeline.sw1_raycast")
 
@@ -66,6 +71,132 @@ def _short_label(name):
     return (name or "?").split(" (")[0].split(",")[0][:12]
 
 
+def _slug(n):
+    return re.sub(r"[^a-z0-9]+", "-", (n or "").lower()).strip("-")
+
+
+def _stored_arcs() -> dict[str, list]:
+    """{slug: swell_window_arcs} as spots_enriched.json stores them now; {} if unreadable."""
+    try:
+        roster = json.loads(DEFAULT_ENRICHED_OUTPUT.read_text())
+    except Exception:  # noqa: BLE001
+        return {}
+    return {_slug(s.get("name")): s.get("swell_window_arcs") or [] for s in roster}
+
+
+# ---- regression checks (validate) --------------------------------------------
+# Real shadows the island rules must keep, read from the validate run's own debug records.
+# A check runs only when its spot is in the run (the 5-spot gate, or --spots).
+#   island    every ray that meets the island (matched by centroid within tol_deg on both
+#             axes and area in range) must be blocked; "report" prints whether its own run
+#             stays or opens, and why, instead of passing or failing.
+#   sector    every ray between the bearings to the named points must be blocked.
+#   bounded   the open window must total no more than max_width degrees.
+#   unchanged the open arcs must equal the arcs spots_enriched.json stores now.
+REGRESSION_CHECKS = (
+    {"slug": "big-beach-makena", "label": "Kaho'olawe", "kind": "island", "expect": "blocked",
+     "centroid": (20.55, -156.61), "tol_deg": 0.1, "area_km2": (80.0, 200.0)},
+    {"slug": "lahaina-breakwall", "label": "Lāna'i", "kind": "island", "expect": "blocked",
+     "centroid": (20.83, -156.92), "tol_deg": 0.1, "area_km2": (250.0, 500.0)},
+    {"slug": "pitas-point", "label": "Santa Cruz Island", "kind": "island", "expect": "report",
+     "centroid": (34.0, -119.72), "tol_deg": 0.1, "area_km2": (200.0, 320.0)},
+    {"slug": "mondos", "label": "Santa Cruz Island", "kind": "island", "expect": "report",
+     "centroid": (34.0, -119.72), "tol_deg": 0.1, "area_km2": (200.0, 320.0)},
+    {"slug": "canoes-waikiki", "label": "Diamond Head", "kind": "sector",
+     "points": ((21.2614, -157.8053), (21.2555, -157.8097))},
+    {"slug": "second-beach-newport", "label": "Second Beach RI bounded", "kind": "bounded",
+     "max_width": 180},
+    {"slug": "banzai-pipeline", "label": "Pipeline's window", "kind": "unchanged"},
+)
+
+
+def _ray_islands(rec: dict) -> list[dict]:
+    """Every island a ray's debug record names: the wall, the partial hits, the islets passed."""
+    if rec.get("result") == "hard":
+        return [rec]
+    return list(rec.get("partials", [])) + list(rec.get("passed", []))
+
+
+def _matches(m: dict, check: dict) -> bool:
+    (clat, clng), tol = check["centroid"], check["tol_deg"]
+    lo, hi = check["area_km2"]
+    return (abs(m["centroid"][0] - clat) <= tol and abs(m["centroid"][1] - clng) <= tol
+            and lo <= m["area_km2"] <= hi)
+
+
+def _sector_rays(lat: float, lng: float, points, step: int) -> list[int]:
+    """Ray bearings (multiples of *step*) between the bearings from the spot to *points*,
+    taking the shorter way round; the nearest ray when no multiple falls inside."""
+    azs = [sw._GEOD.inv(lng, lat, plng, plat)[0] % 360.0 for plat, plng in points]
+    lo, hi = min(azs), max(azs)
+    if hi - lo > 180.0:                       # the short way round crosses north
+        lo, hi = hi, lo + 360.0
+    rays = [b % 360 for b in range(0, 720, step) if lo <= b <= hi]
+    if not rays:
+        mid = (lo + hi) / 2.0
+        rays = [int(round(mid / step) * step) % 360]
+    return sorted(set(rays))
+
+
+def regression_verdict(check: dict, lat: float, lng: float, debug_rays: dict,
+                       debug_chains: list, open_b: set, arcs: list, stored_arcs, step: int):
+    """(status, detail) for one check: status PASS / FAIL, or STAYS / OPENS for "report"."""
+    kind = check["kind"]
+    if kind == "unchanged":
+        same = stored_arcs is not None and arcs == stored_arcs
+        return ("PASS" if same else "FAIL",
+                f"now [{_fmt_arcs(arcs)}], stored [{_fmt_arcs(stored_arcs or [])}]")
+    if kind == "bounded":
+        width = sum(a["span"] for a in arcs)
+        return ("PASS" if 0 < width <= check["max_width"] else "FAIL",
+                f"width {width}° (bound {check['max_width']}°), [{_fmt_arcs(arcs)}]")
+    if kind == "sector":
+        rays = _sector_rays(lat, lng, check["points"], step)
+        opened = [b for b in rays if b in open_b]
+        rules = sorted({debug_rays.get(b, {}).get("rule", debug_rays.get(b, {}).get("result", "?"))
+                        for b in rays})
+        return ("FAIL" if opened else "PASS",
+                f"rays {_fmt_ranges(rays, step)} — open {_fmt_ranges(opened, step)}; "
+                f"blocked by {', '.join(rules)}")
+    # island
+    hits = {b: [m for m in _ray_islands(debug_rays.get(b, {})) if _matches(m, check)]
+            for b in range(0, 360, step)}
+    rays = sorted(b for b, ms in hits.items() if ms)
+    if not rays:
+        return "FAIL", "no ray meets an island matching the centroid/area given (cannot verify)"
+    opened = [b for b in rays if b in open_b]
+    ms = [m for b in rays for m in hits[b]]
+    how = sorted({debug_rays[b].get("rule", debug_rays[b]["result"]) for b in rays})
+    detail = (f"{ms[0]['area_km2']:.0f} km² @({ms[0]['centroid'][0]:.3f},{ms[0]['centroid'][1]:.3f}), "
+              f"{min(m['dist_km'] for m in ms):.1f}–{max(m['dist_km'] for m in ms):.1f} km, "
+              f"rays {_fmt_ranges(rays, step)} ({', '.join(how)}); open {_fmt_ranges(opened, step)}")
+    keys = {m["island"] for m in ms}
+    for c in debug_chains:
+        if c.get("island") in keys:
+            core = f", core {c['core'][0]}–{c['core'][1]}" if c.get("core") else ""
+            wrap = f", wrap {c['wrap_deg']:.1f}°" if "wrap_deg" in c else ""
+            detail += f"; own run {c['lo']}–{c['hi']} ({c['width']}°){wrap} → {c['decision']}{core}"
+    if check["expect"] == "report":
+        return ("OPENS" if opened else "STAYS"), detail
+    return ("FAIL" if opened else "PASS"), detail
+
+
+def print_regression_checks(cast: dict, stored: dict, step: int) -> bool:
+    """Print every regression check whose spot was cast; True when none FAILed."""
+    ok = True
+    print("\nRegression checks — real shadows the island rules must keep:")
+    for check in REGRESSION_CHECKS:
+        if check["slug"] not in cast:
+            print(f"  {'—':6} {check['slug']:22} {check['label']}: not in this run")
+            continue
+        lat, lng, dr, dc, open_b, arcs = cast[check["slug"]]
+        status, detail = regression_verdict(check, lat, lng, dr, dc, open_b, arcs,
+                                            stored.get(check["slug"]), step)
+        ok = ok and status != "FAIL"
+        print(f"  {status:6} {check['slug']:22} {check['label']}: {detail}")
+    return ok
+
+
 def _load_spots_by_slug(slugs):
     """VALIDATION_SPOTS-shaped tuples for *slugs*, loaded from spots_enriched.json with their
     EXACT prod lat/lng/orientation — so `--spots` debugs the real reported spots against GSHHG.
@@ -75,9 +206,6 @@ def _load_spots_by_slug(slugs):
     except Exception as e:  # noqa: BLE001
         log.error("--spots: cannot read %s (%s)", DEFAULT_ENRICHED_OUTPUT, e)
         return []
-
-    def _slug(n):
-        return re.sub(r"[^a-z0-9]+", "-", (n or "").lower()).strip("-")
 
     by = {_slug(s.get("name")): s for s in roster}
     out, missing = [], []
@@ -114,13 +242,23 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
           f"+{sw.SWELL_DIFFRACTION_WRAP_PER_100KM:.0f}°/100km")
     n_local = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "local_coast_30km")
     n_solid = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "mainland_solid")
+    n_fresnel = sum(1 for b in hard_sorted if debug_rays[b].get("rule") == "fresnel_wall")
     ceil = (360 // step - len(hard_sorted)) * step
+    print(f"   R1 own coast ≤{sw.SWELL_OWN_COAST_KM:.0f}km · R2 Fresnel at {sw.SWELL_FRESNEL_PERIOD_S:.0f}s: "
+          f"pass N<{sw.SWELL_FRESNEL_TRANSPARENT_N:g}, wall N≥{sw.SWELL_FRESNEL_WALL_N:g} · R3 each island on its own run")
     print(f"   HARD-blocked {len(hard_sorted)} rays → ceiling {ceil}°  (local-coast {n_local}, "
-          f"mainland-solid {n_solid})  — bearing / rule / area / dist / centroid:")
+          f"Fresnel wall {n_fresnel}, mainland-solid {n_solid})  — bearing / rule / area / dist / centroid:")
     for b in hard_sorted:
         r = debug_rays[b]
+        n = f"  N={r['fresnel_n']:.1f}" if "fresnel_n" in r else ""
         print(f"     b={b:3d}  {r['rule']:18} area≈{r['area_km2']:>11.0f} km²  dist={r['dist_km']:6.1f} km  "
-              f"centroid({r['centroid'][0]:.3f},{r['centroid'][1]:.3f})")
+              f"centroid({r['centroid'][0]:.3f},{r['centroid'][1]:.3f}){n}")
+    passed = [(b, m) for b in sorted(debug_rays) for m in debug_rays[b].get("passed", [])]
+    if passed:
+        print(f"   PASSED (R2, N<{sw.SWELL_FRESNEL_TRANSPARENT_N:g}) {len(passed)} — the ray goes on behind these islets:")
+        for b, m in passed:
+            print(f"     b={b:3d}  area≈{m['area_km2']:>6.0f} km²  dist={m['dist_km']:6.1f} km  "
+                  f"centroid({m['centroid'][0]:.3f},{m['centroid'][1]:.3f})  N={m['fresnel_n']:.2f}")
     if debug_chains:
         print(f"   ISLAND chains {len(debug_chains)} — subtend / nearest dist / wrap-in / decision:")
         for c in debug_chains:
@@ -132,19 +270,15 @@ def _print_blocker_detail(name, lat, lng, normal, hard_sorted, debug_rays, debug
             verb = "OPEN" if c["decision"] == "open_wrapped" else "BLOCKED"
             print(f"     chain {c['lo']:3d}–{c['hi']:3d} (w={c['width']:>3}°)  dmin={c['dmin_km']:5.0f}km  "
                   f"wrap={c['wrap_deg']:4.1f}°  → {verb}{tail}   [{c['reason']}]")
-            # member composition: is this ONE landmass or near+far fused across a bay mouth?
-            # Reads the per-bearing 'small' records — area/centroid identify mainland vs island.
-            members = [debug_rays[b] for b in _chain_member_bearings(c["lo"], c["hi"], step)
-                       if debug_rays.get(b, {}).get("result") == "small"]
+            # which island: R3 judges each on its own run, so a chain is one polygon's rays.
+            members = [m for b in _chain_member_bearings(c["lo"], c["hi"], step)
+                       for m in debug_rays.get(b, {}).get("partials", [])
+                       if m["island"] == c.get("island")]
             if members:
                 dists = [m["dist_km"] for m in members]
-                near = min(members, key=lambda m: m["dist_km"])
-                far = max(members, key=lambda m: m["dist_km"])
-                fused = "  ← NEAR+FAR fused (one wrap from dmin over both)" \
-                    if max(dists) > 3 * max(1.0, min(dists)) else ""
-                print(f"        members {len(members)}: dist {min(dists):.0f}–{max(dists):.0f}km · "
-                      f"near {near['area_km2']:.0f}km²@({near['centroid'][0]:.1f},{near['centroid'][1]:.1f}) · "
-                      f"far {far['area_km2']:.0f}km²@({far['centroid'][0]:.1f},{far['centroid'][1]:.1f}){fused}")
+                m0 = members[0]
+                print(f"        island {m0['area_km2']:.0f}km²@({m0['centroid'][0]:.3f},{m0['centroid'][1]:.3f}) · "
+                      f"{len(members)} rays · dist {min(dists):.0f}–{max(dists):.0f}km")
     else:
         print("   ISLAND chains 0 — no sub-threshold island shadows (every non-hard bearing is fully open).")
 
@@ -235,15 +369,18 @@ def run_validate(debug_blockers: bool = False, spots=None) -> int:
              len(land.polygons), len(src), RUN_STEP_DEG, 360 // RUN_STEP_DEG,
              "  [--debug-blockers ON]" if debug_blockers else "")
 
+    holds = load_holds()
+    cast: dict[str, tuple] = {}
     print(f"\n{'spot':20}{'width':>6}{'ceil':>6}{'target':>9}{'opt':>5}{'nrm':>5}  source    arcs")
     print("-" * 96)
     detail: list[tuple] = []
     for name, lat, lng, normal, tlo, thi, note in src:
         local = sw.local_land_index(land, lat, lng)
-        debug_rays = {} if debug_blockers else None
-        debug_chains: list | None = [] if debug_blockers else None
-        hard, small = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, debug=debug_rays)
-        small_blocked = sw._island_shadow(small, RUN_STEP_DEG, debug=debug_chains)
+        # Debug records are kept for every spot: the regression checks below read them.
+        debug_rays: dict = {}
+        debug_chains: list = []
+        hard, partial = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, debug=debug_rays)
+        small_blocked = sw._islands_shadow(partial, RUN_STEP_DEG, debug=debug_chains)
         open_b = [b for b in range(0, 360, RUN_STEP_DEG)
                   if b not in hard and b not in small_blocked]
         ceil_b = [b for b in range(0, 360, RUN_STEP_DEG) if b not in hard]
@@ -253,7 +390,10 @@ def run_validate(debug_blockers: bool = False, spots=None) -> int:
         ceil = len(ceil_b) * RUN_STEP_DEG
         source = "raycast" if arcs else "(empty→fallback)"
         tgt = f"{tlo}-{'+' if thi is None else thi}" if tlo is not None else "—"
-        print(f"{name[:20]:20}{width:6d}{ceil:6d}{tgt:>9}{str(optimal):>5}{normal:>5}  {source:9} [{_fmt_arcs(arcs)}]")
+        held = "  HELD: a full run keeps the stored window" if _slug(name) in holds else ""
+        print(f"{name[:20]:20}{width:6d}{ceil:6d}{tgt:>9}{str(optimal):>5}{normal:>5}  {source:9} "
+              f"[{_fmt_arcs(arcs)}]{held}")
+        cast[_slug(name)] = (lat, lng, debug_rays, debug_chains, set(open_b), arcs)
         if debug_blockers:
             detail.append((name, lat, lng, normal, sorted(hard), debug_rays, debug_chains,
                            sorted(small_blocked), open_b))
@@ -265,7 +405,7 @@ def run_validate(debug_blockers: bool = False, spots=None) -> int:
         for name, lat, lng, normal, hard_sorted, dbg_rays, dbg_chains, sb_sorted, ob in detail:
             _print_blocker_detail(name, lat, lng, normal, hard_sorted, dbg_rays, dbg_chains, RUN_STEP_DEG)
             _print_bucket_summary(name, dbg_rays, sb_sorted, ob, RUN_STEP_DEG)
-    return 0
+    return 0 if print_regression_checks(cast, _stored_arcs(), RUN_STEP_DEG) else 1
 
 
 def run_sweep_mainland_solid(values, spots=None) -> int:
@@ -295,8 +435,8 @@ def run_sweep_mainland_solid(values, spots=None) -> int:
     for lat, lng, _lbl in cols:
         local = sw.local_land_index(land, lat, lng)
         for v in values:
-            hard, small = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, mainland_solid_km=v)
-            small_blocked = sw._island_shadow(small, RUN_STEP_DEG)
+            hard, partial = sw._classify_bearings(lat, lng, local, RUN_STEP_DEG, mainland_solid_km=v)
+            small_blocked = sw._islands_shadow(partial, RUN_STEP_DEG)
             open_b = [b for b in range(0, 360, RUN_STEP_DEG) if b not in hard and b not in small_blocked]
             matrix[v].append(sum(a["span"] for a in sw._merge_open_arcs(open_b, RUN_STEP_DEG)))
 
@@ -340,7 +480,7 @@ def _arc_width(arcs: list[dict]) -> int:
 _PRESERVE_SOURCES = ("nwps", "cdip_mop")
 
 
-def _apply_raycast_result(spot: dict, r: dict | None) -> str:
+def _apply_raycast_result(spot: dict, r: dict | None, holds: dict | None = None) -> str:
     """Write a raycast result onto *spot* IN PLACE and return a category tag for the summary.
 
     swell_window_arcs / optimal_swell_dir are refreshed from the raycast (better geometry,
@@ -348,7 +488,12 @@ def _apply_raycast_result(spot: dict, r: dict | None) -> str:
     KEEPS its swell_window_source — the raycast never demotes it. A better-tier spot the
     raycast can't solve is left entirely untouched (never downgraded to an orientation
     fallback). Every other spot follows the prior behaviour: 'raycast' on a solve, the
-    orientation-derived fallback otherwise (orientation_deg is read, never written)."""
+    orientation-derived fallback otherwise (orientation_deg is read, never written).
+
+    A spot on the hold list (*holds*, spot_swell_window_holds.json) is not written from the
+    ray-cast at all: it keeps the arcs and optimal the list holds for it, and returns "held"."""
+    if holds and apply_hold(spot, holds):
+        return "held"
     preserve = spot.get("swell_window_source") in _PRESERVE_SOURCES
     if r and r.get("swell_window_arcs"):
         spot["swell_window_arcs"] = r["swell_window_arcs"]
@@ -397,15 +542,19 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
         results = [_raycast_worker(it) for it in items]
     elapsed = time.time() - t0
 
+    holds = load_holds()
     raycast_n = fallback_n = empty_n = preserved_n = 0
     preserved_names: list[str] = []
+    held_names: list[str] = []
     ca_widths: list[int] = []
     ri_widths: list[int] = []
     for idx, r in results:
         s = spots[idx]
         region = s.get("region_hint") or ""
-        cat = _apply_raycast_result(s, r)   # preserves NWPS/MOP source; never demotes a better tier
-        if cat == "raycast":
+        cat = _apply_raycast_result(s, r, holds)   # preserves NWPS/MOP source; never demotes a better tier
+        if cat == "held":
+            held_names.append(s.get("name") or f"#{idx}")
+        elif cat == "raycast":
             raycast_n += 1
             w = _arc_width(s["swell_window_arcs"])
             if region == "California":
@@ -431,6 +580,9 @@ def run_full(input_path: Path, output_path: Path, workers: int) -> int:
           "the stored arcs and optimal are KEPT, not recomputed)")
     for name in sorted(preserved_names):
         print(f"    kept stored window:  {name}")
+    print(f"  held (not written):    {len(held_names)}  (spot_swell_window_holds.json)")
+    for name in sorted(held_names):
+        print(f"    held window:         {name}")
     print(f"  source=orientation:    {fallback_n}  (no open arc; fallback kept)")
     print(f"  unresolved (no arcs):  {empty_n}")
     if ca_widths:

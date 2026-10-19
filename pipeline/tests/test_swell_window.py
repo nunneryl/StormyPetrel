@@ -7,7 +7,8 @@ behaviours are tested independently of any real coastline data set:
   * local-landmass     — a small island AT the spot still blocks;
   * angular ignore     — an obstacle subtending < 5° is ignored;
   * distance-aware      — the same small island blocks near, wraps far;
-  * chain partial block — a contiguous island wall keeps an interior shadow.
+  * island partial block — one long island keeps an interior shadow;
+  * R1–R3               — the near-field rules (see the section at the end).
 
 Run: python -m pipeline.tests.test_swell_window   (or pytest)
 """
@@ -43,6 +44,8 @@ def _open(polys):
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
     sw._DEPTH_CACHE.clear()
+    sw._NEAREST_CACHE.clear()
+    sw._POLAR_CACHE.clear()
     orig = sw.load_land_index
     sw.load_land_index = lambda: land
     try:
@@ -92,29 +95,70 @@ def test_angular_shadow_ignored_under_5deg():
     assert 90 in open_tiny, "obstacle subtending < 5° must be ignored"
 
 
-def test_chain_keeps_interior_blocked():
-    # A contiguous wall of three abutting 300 km² islands (~50°+ of shadow) keeps
-    # its interior blocked even though each island is individually sub-threshold.
-    polys = [_square(300, 45, b) for b in (74, 90, 106)]
-    open_chain, r = _open(polys)
-    assert _blocked_near(open_chain, 90), "interior of an island chain stays blocked"
-    assert r["swell_window_arcs"], "the rest of the compass is still open"
+# One long island, and the same footprint as three islands. A band at the equator from
+# x 45 to 50 km east, y ±30 km (in the 111.32 km/deg units _square uses; a degree of
+# latitude at the equator is 110.574 km, so the band reaches ±29.799 km). ~298 km², under
+# SWELL_BLOCKER_AREA_KM2, and beyond 30 km, so every hit is partial.
+_KM = 1.0 / KM_PER_DEG
+_BAND = Polygon([(45 * _KM, -30 * _KM), (50 * _KM, -30 * _KM), (50 * _KM, 30 * _KM), (45 * _KM, 30 * _KM)])
+_BAND_THIRDS = [Polygon([(45 * _KM, lo * _KM), (50 * _KM, lo * _KM), (50 * _KM, hi * _KM), (45 * _KM, hi * _KM)])
+                for lo, hi in ((-30, -10), (-10, 10), (10, 30))]
 
 
-def _debug_cast(polys, step=None):
+def test_one_long_island_keeps_its_interior_blocked():
+    """By hand, at the 2° step. A ray φ off due east meets the band's face (x = 45 km) at
+    y = 45·tan φ, inside ±29.799 km while φ <= atan(29.799/45) = 33.51°: rays 58..122 (φ 32
+    in, 34 out). A member's distance is 45/cos φ and its wrap 16 + 8·d/100; it stays blocked
+    when it is at least its wrap from both ends of the run. Ray 78 (φ 12): d = 46.005 km,
+    wrap 19.680°; 78 - 58 = 20 and 122 - 78 = 44, blocked. Ray 76 (φ 14): 76 - 58 = 18 < 19.7,
+    open. By symmetry 102 is blocked and 104 open: core 78..102. Open 104..76 round north,
+    shrunk 5° each end: [109-71], span 71 + 360 - 109 + 2 = 324; optimal 270 by symmetry."""
+    open_b, r = _open([_BAND])
+    assert r["swell_window_arcs"] == [{"min": 109, "max": 71, "span": 324}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 270
+    assert _blocked_near(open_b, 90)
+
+
+def test_three_islands_side_by_side_are_judged_each_on_its_own():
+    """R3: the band cut into three islands at y = ±10 km (±9.933 km on the ground).
+    The middle one is met by rays with 45·tan φ <= 9.933, φ <= 12.45°: 78..102, a 26° run; no
+    member is 19.6° from both ends, so it opens. The northern one is met by rays 58..78 (ray 78
+    enters it at x = 9.933/tan 12° = 46.73 km, after crossing the middle one), a 22° run: its
+    middle, 68, is 10° from each end, short of the 19.6° wrap — open. The southern one, 102..122,
+    the same. Every ray is open: [0-358], span 360.
+
+    Fused into one chain, as before R3, the same nearest distances as the single band keep the
+    core 78..102 (test_one_long_island_keeps_its_interior_blocked)."""
+    _, r = _open(_BAND_THIRDS)
+    assert r["swell_window_arcs"] == [{"min": 0, "max": 358, "span": 360}], r["swell_window_arcs"]
+    _, _, _, _, partial = _debug_cast_partial(_BAND_THIRDS)
+    fused = {b: min(hits.values()) for b, hits in partial.items()}
+    assert sorted(fused) == list(range(58, 123, 2))
+    assert sorted(sw._island_shadow(fused, 2)) == list(range(78, 103, 2))
+
+
+def _debug_cast_partial(polys, step=None):
     """Run the two classifier passes with debug collectors attached — mirrors the
-    validate harness's --debug-blockers path. Returns (debug_rays, debug_chains,
-    hard, small_blocked) for a spot at (0,0)."""
+    validate harness's --debug-blockers path. Returns (debug_rays, debug_chains, hard,
+    small_blocked, partial_hits) for a spot at (0,0)."""
     step = step or sw.SWELL_RAY_STEP_DEG
     land = _index(polys)
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
     sw._DEPTH_CACHE.clear()
+    sw._NEAREST_CACHE.clear()
+    sw._POLAR_CACHE.clear()
     debug_rays: dict = {}
-    hard, small = sw._classify_bearings(0.0, 0.0, land, step, debug=debug_rays)
+    hard, partial = sw._classify_bearings(0.0, 0.0, land, step, debug=debug_rays)
     debug_chains: list = []
-    small_blocked = sw._island_shadow(small, step, debug=debug_chains)
-    return debug_rays, debug_chains, hard, small_blocked
+    small_blocked = sw._islands_shadow(partial, step, debug=debug_chains)
+    return debug_rays, debug_chains, hard, small_blocked, partial
+
+
+def _debug_cast(polys, step=None):
+    """_debug_cast_partial without the partial hits: (debug_rays, debug_chains, hard,
+    small_blocked)."""
+    return _debug_cast_partial(polys, step)[:4]
 
 
 def test_debug_blockers_attribution():
@@ -133,11 +177,17 @@ def test_debug_blockers_attribution():
     assert dr2[90]["result"] == "hard" and dr2[90]["rule"] == "local_coast_30km"
     assert dr2[90]["dist_km"] <= sw.SWELL_LOCAL_LANDMASS_KM
 
-    # island chain: three abutting 300 km² islands → a BLOCKED-core chain record
-    # (wrap-distance rule), matching test_chain_keeps_interior_blocked.
-    _, dcc, _, sb_chain = _debug_cast([_square(300, 45, b) for b in (74, 90, 106)])
-    assert any(c["decision"] == "blocked_core" for c in dcc), "chain interior stays blocked"
-    assert sb_chain, "the chain contributes blocked bearings"
+    # one long island: a BLOCKED-core chain record (wrap-distance rule) naming the island,
+    # matching test_one_long_island_keeps_its_interior_blocked.
+    _, dcc, _, sb_chain = _debug_cast([_BAND])
+    assert [(c["lo"], c["hi"], c["decision"], c["core"]) for c in dcc] == [
+        (58, 122, "blocked_core", [78, 102])]
+    assert sb_chain == set(range(78, 103, 2))
+    # the same footprint as three islands: three records, one per island, all open
+    _, dcc3, _, sb3 = _debug_cast(_BAND_THIRDS)
+    assert sorted((c["lo"], c["hi"], c["decision"]) for c in dcc3) == [
+        (58, 78, "open_wrapped"), (78, 102, "open_wrapped"), (102, 122, "open_wrapped")]
+    assert len({c["island"] for c in dcc3}) == 3 and not sb3
 
     # far small island: 108 km² at 80 km wraps clean → an OPEN chain record, no block
     # (matches test_distance_aware_partial_block).
@@ -224,6 +274,8 @@ def _cast_island(lat_lng, skip_km=None, allowance_km=None):
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
     sw._DEPTH_CACHE.clear()
+    sw._NEAREST_CACHE.clear()
+    sw._POLAR_CACHE.clear()
     saved = sw.SWELL_LOCAL_COAST_EXCLUSION_KM, sw.SWELL_OWN_LAND_CROSSING_KM
     try:
         if skip_km is not None:
@@ -287,6 +339,8 @@ def test_a_ray_across_the_island_is_blocked_at_its_start_by_the_local_coast_rule
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
     sw._DEPTH_CACHE.clear()
+    sw._NEAREST_CACHE.clear()
+    sw._POLAR_CACHE.clear()
     dr = {}
     lat, lng = _OFFSHORE
     sw._classify_bearings(lat, lng, _index([_ISLAND]), 4, debug=dr)
@@ -415,6 +469,8 @@ def test_mainland_solid_km_override_sweeps():
     sw._AREA_CACHE.clear()
     sw._PREPARED_CACHE.clear()
     sw._DEPTH_CACHE.clear()
+    sw._NEAREST_CACHE.clear()
+    sw._POLAR_CACHE.clear()
     hard_hi, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG, mainland_solid_km=150.0)
     hard_lo, _ = sw._classify_bearings(0.0, 0.0, idx, sw.SWELL_RAY_STEP_DEG, mainland_solid_km=100.0)
     assert 90 in hard_hi, "≥500 km² wall at ~128 km is SOLID when the solid range is 150 km"
@@ -555,3 +611,164 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+# --------------------------------------------------------------------------- #
+# R1–R3: the near-field island rules                                           #
+# --------------------------------------------------------------------------- #
+# Hand arithmetic shared by the tests below (calculator, not the code under test):
+#   L at 12 s = 9.81 × 144 / (2π) = 224.8286 m
+#   on the ground at the equator a degree of longitude is 111.3195 km and of latitude
+#   110.5743 km, so a polygon side of s km in _square's 111.32 km/deg units spans
+#   s × 111.3195/111.32 east-west and s × 110.5743/111.32 = 0.993301·s north-south.
+#   For a ray due east the width across it is the north-south extent.
+# Old arcs are the rules before R1–R3: any land within 30 km a wall, and only the nearest
+# partial hit on a ray, fused into one chain with its neighbours.
+_FULLY_OPEN = [{"min": 0, "max": 358, "span": 360}]
+_ONE_RAY_SHUT = [{"min": 97, "max": 83, "span": 348}]   # ray 90 shut: 92..88 open, shrunk 5°
+
+
+def test_fresnel_number_by_hand():
+    """1 km wide at 20 km: 1000² / (224.8286 × 20000) = 0.222392. At 8 s, L = 9.81 × 64 /
+    (2π) = 99.9238 m: 1000² / (99.9238 × 20000) = 0.500381. 3 km at 20 km: 9e6 / 4,496,573
+    = 2.001524."""
+    assert round(sw.fresnel_number(1.0, 20.0), 6) == 0.222392
+    assert round(sw.fresnel_number(1.0, 20.0, period_s=8.0), 6) == 0.500381
+    assert round(sw.fresnel_number(3.0, 20.0), 6) == 2.001524
+
+
+def test_fresnel_verdict_boundaries():
+    assert [sw.fresnel_verdict(n) for n in (0.999999, 1.0, 9.999999, 10.0, 62.7)] == [
+        "pass", "partial", "partial", "wall", "wall"]
+
+
+def test_r2_a_tiny_islet_at_20_km_opens():
+    """A 1 km² islet centred 20 km due east. Its near face is 19.5 km out (19.49991 km on the
+    ground), its nearest point too, so it is not the own coast (> 5 km). Width across ray 90:
+    0.993301 km. N = 993.301² / (224.8286 × 19499.91) = 0.225049 < 1: the ray passes it.
+    It is met by ray 90 alone (ray 88 is at y = 19.5·tan 2° = 0.681 km > 0.497 at its face).
+    Before R2 it walled ray 90: [97-83], span 348. Now nothing blocks: [0-358], span 360."""
+    dr, _, hard, _ = _debug_cast([_square(1, 20, 90)])
+    assert not hard
+    assert dr[90]["result"] == "open"
+    (islet,) = dr[90]["passed"]
+    assert round(islet["fresnel_n"], 3) == 0.225 and round(islet["dist_km"], 2) == 19.50
+    assert [b for b in dr if dr[b].get("passed")] == [90]
+    _, r = _open([_square(1, 20, 90)])
+    assert r["swell_window_arcs"] == _FULLY_OPEN, r["swell_window_arcs"]
+
+
+def test_r2_a_large_island_at_12_km_stays_a_wall():
+    """A 100 km² island centred 12 km due east: side 10 km, near face 7 km out (6.99997 km),
+    nearest point 7 km, so not the own coast, and under 500 km², so R1 does not wall it.
+    Ray 90: width 9.93301 km, N = 9933.01² / (224.8286 × 6999.97) = 62.69 ≥ 10: a wall.
+    Half-angle of the near face, atan(4.9665/7.0) = 35.36°: rays 56..124 (34° in, 36° out);
+    every one of them meets at least this width within 12.2 km (N > 50), all walls. Open
+    126..54 round north, shrunk: [131-49], span 49 + 360 - 131 + 2 = 280, optimal 270."""
+    dr, _, hard, _ = _debug_cast([_square(100, 12, 90)])
+    assert sorted(hard) == list(range(56, 125, 2))
+    assert (dr[90]["rule"], dr[90]["own"], round(dr[90]["fresnel_n"], 1)) == ("fresnel_wall", False, 62.7)
+    _, r = _open([_square(100, 12, 90)])
+    assert r["swell_window_arcs"] == [{"min": 131, "max": 49, "span": 280}], r["swell_window_arcs"]
+    assert r["optimal_swell_dir"] == 270
+
+
+# A thin strip lying along ray 90, 0.2 km wide (0.198660 km on the ground).
+def _strip(x0_km, x1_km, width_km=0.2):
+    h = width_km / 2.0 * _KM
+    return Polygon([(x0_km * _KM, -h), (x1_km * _KM, -h), (x1_km * _KM, h), (x0_km * _KM, h)])
+
+
+def test_r1_the_own_coast_is_a_wall_however_thin():
+    """The strip from 4 to 14 km: nearest point 4 km, within SWELL_OWN_COAST_KM, so R1 walls
+    it although its Fresnel number is tiny (198.66² / (224.8286 × 4000) = 0.0439). Only ray 90
+    meets it (ray 88 is at y = 4·tan 2° = 0.140 km > 0.0993 at x = 4 and moving away):
+    [97-83], span 348."""
+    dr, _, hard, _ = _debug_cast([_strip(4, 14)])
+    assert sorted(hard) == [90]
+    assert (dr[90]["rule"], dr[90]["own"]) == ("local_coast_30km", True)
+    assert "fresnel_n" not in dr[90]
+    _, r = _open([_strip(4, 14)])
+    assert r["swell_window_arcs"] == _ONE_RAY_SHUT, r["swell_window_arcs"]
+
+
+def test_r1_the_same_strip_6_km_out_is_not_the_own_coast():
+    """Moved to 6–16 km its nearest point is 6 km, past SWELL_OWN_COAST_KM, so R2 judges it:
+    N = 198.66² / (224.8286 × 6000) = 0.0293 < 1, passed. [0-358], span 360."""
+    dr, _, hard, _ = _debug_cast([_strip(6, 16)])
+    assert not hard
+    assert round(dr[90]["passed"][0]["fresnel_n"], 4) == 0.0293
+    _, r = _open([_strip(6, 16)])
+    assert r["swell_window_arcs"] == _FULLY_OPEN, r["swell_window_arcs"]
+
+
+def test_r1_a_landmass_of_500_km2_within_30_km_is_a_wall_end_on():
+    """A strip 0.5 km wide from 10 to 1110 km along ray 90: 0.496651 × 1100 × 111.3195/111.32
+    = 546.3 km² as a rectangle (a little more measured on geodesic edges, which bow out),
+    at least SWELL_BLOCKER_AREA_KM2, so R1 walls it at 10 km although end-on its N is
+    496.651² / (224.8286 × 10000) = 0.1097. Cut to 10–910 km (447.0 km² as a rectangle) it
+    is an island, N the same, and the ray passes."""
+    dr, _, hard, _ = _debug_cast([_strip(10, 1110, 0.5)])
+    assert sorted(hard) == [90] and dr[90]["rule"] == "local_coast_30km" and not dr[90]["own"]
+    assert 546 <= dr[90]["area_km2"] < 550
+    dr2, _, hard2, _ = _debug_cast([_strip(10, 910, 0.5)])
+    assert 447 <= dr2[90]["passed"][0]["area_km2"] < 450
+    assert not hard2 and round(dr2[90]["passed"][0]["fresnel_n"], 3) == 0.110
+
+
+# A broad far coast: x 1500–1600 km east, y ±1000 km in _square's units. Beyond
+# SWELL_MAINLAND_SOLID_KM, so a partial blocker whatever its size; its wrap at 1500 km is
+# 16 + 8 × 15 = 136° per edge, more than half of any run it can make, so alone it opens.
+_FAR_COAST = Polygon([(1500 * _KM, -1000 * _KM), (1600 * _KM, -1000 * _KM),
+                      (1600 * _KM, 1000 * _KM), (1500 * _KM, 1000 * _KM)])
+
+
+def test_r3_a_near_islet_fused_with_a_far_coast_is_judged_separately():
+    """A 16 km² islet centred 25 km due east in front of _FAR_COAST. Islet: side 4 km, near
+    face 23 km out (22.99989 km), width across ray 90 3.973204 km, N = 3973.204² /
+    (224.8286 × 22999.89) = 3.053: partial (R2). Rays 86..94 meet it (half-angle
+    atan(1.98660/23.0) = 4.94°; ray 84 is at y = 23·tan 6° = 2.417 km at its face, outside).
+
+    Every one of those rays meets the far coast too, and R3 keeps both hits. Judged alone the
+    islet's run is 86..94, 10° wide, and its wrap at 23 km is 16 + 1.84 = 17.84°: open. The
+    coast alone opens (wrap 136°+). So the whole compass is open: [0-358], span 360.
+
+    Fused, as before R3, the islet lends the chain its 23 km distance: with the coast's run
+    reaching at least 68..112 (it does), each islet ray 86..94 sits ≥ 28° inside both ends,
+    past 17.84°, and stays blocked — the old core, [101-79], span 340."""
+    polys = [_square(16, 25, 90), _FAR_COAST]
+    _, _, hard, small_blocked, partial = _debug_cast_partial(polys)
+    assert not hard and not small_blocked
+    assert [b for b in partial if len(partial[b]) == 2] == [86, 88, 90, 92, 94]
+    assert round(min(partial[90].values()), 2) == 23.00 and max(partial[90].values()) > 1400
+    assert 68 in partial and 112 in partial
+    _, r = _open(polys)
+    assert r["swell_window_arcs"] == _FULLY_OPEN, r["swell_window_arcs"]
+    fused = {b: min(hits.values()) for b, hits in partial.items()}
+    assert sorted(sw._island_shadow(fused, 2)) == [86, 88, 90, 92, 94]
+
+
+def test_r3_a_near_islet_that_would_block_alone_still_does_behind_a_far_coast():
+    """The long band of test_one_long_island_keeps_its_interior_blocked, with _FAR_COAST
+    behind it: R3 judges the band on its own run, so its core 78..102 stands, exactly as
+    without the coast."""
+    _, _, _, small_blocked, partial = _debug_cast_partial([_BAND, _FAR_COAST])
+    assert small_blocked == set(range(78, 103, 2))
+    assert all(len(partial[b]) == 2 for b in range(58, 123, 2))
+
+
+def test_r3_never_blocks_a_ray_the_fused_chain_would_not():
+    """Per island against one chain on the nearest hit, over random partial hits: an island's
+    run lies inside the fused run and its distance on a ray is never nearer than the nearest,
+    so its wrap is never smaller. Any ray it blocks, the fused chain blocks."""
+    import random
+    rng = random.Random(20261019)
+    for _ in range(300):
+        partial: dict = {}
+        for island in range(rng.randint(1, 4)):
+            lo = rng.randrange(0, 360, 2)
+            dist = rng.choice([8.0, 25.0, 40.0, 90.0, 400.0, 2500.0])
+            for b in range(lo, lo + rng.randrange(2, 140, 2), 2):
+                partial.setdefault(b % 360, {})[island] = dist * rng.uniform(1.0, 1.3)
+        fused = {b: min(h.values()) for b, h in partial.items()}
+        assert sw._islands_shadow(partial, 2) <= sw._island_shadow(fused, 2)

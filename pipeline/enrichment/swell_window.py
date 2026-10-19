@@ -10,23 +10,28 @@ either:
 
   * a landmass at or above SWELL_BLOCKER_AREA_KM2 *within* SWELL_MAINLAND_SOLID_KM
     — continents and big islands in the near-to-mid field are walls; or
-  * ANY land within SWELL_LOCAL_LANDMASS_KM — the coast / headland the spot
-    sits on. This stays a blocker even when the local landmass is itself a
-    small island (e.g. Aquidneck Is. for a Newport RI spot), which is why the
-    area filter alone can't own the "is this blocked" decision.
+  * land within SWELL_LOCAL_LANDMASS_KM that is a wall by R1 or R2:
+      R1 — the spot's OWN coast (the polygon's nearest point within SWELL_OWN_COAST_KM
+           of the spot) or a landmass of SWELL_BLOCKER_AREA_KM2 or more. The own coast
+           stays a blocker even when it is itself a small island (e.g. Aquidneck Is. for
+           a Newport RI spot), which is why the area filter alone can't own the decision.
+      R2 — any other island there by its Fresnel number at a SWELL_FRESNEL_PERIOD_S swell,
+           N = w² / (L·r) (w its width across the ray, r the hit distance, L the
+           deep-water wavelength): N ≥ SWELL_FRESNEL_WALL_N is a wall; below
+           SWELL_FRESNEL_TRANSPARENT_N the ray passes it and goes on to whatever lies
+           behind; in between it is a partial blocker.
 
 A large landmass hit BEYOND SWELL_MAINLAND_SOLID_KM is NOT a wall — a coast merely
 grazed far downrange under the SWELL_MIN_FETCH_KM fetch diffracts around, so it is
 demoted to a *partial* blocker and wraps open by distance the same way a distant
 island does (below). Sub-threshold islands beyond the local landmass are *partial*
-blockers. Their
-per-bearing shadows are unioned, adjacent shadows separated by less than
-SWELL_ISLAND_GAP_BRIDGE_DEG are merged into a "chain", and each chain is
-trimmed inward on both edges by a distance-aware diffraction wrap-in
-(SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM·distance). A
-lone small island has open water on both edges and wraps away to nothing
-(Catalina stops walling off Huntington); a long island chain keeps its
-interior blocked (the Channel Islands keep Rincon's window narrow). Anything
+blockers. R3 — every partial hit on a ray is kept, not just the nearest, and the hits
+are grouped by island: each island's own run of rays is trimmed inward on both edges by
+a distance-aware diffraction wrap-in (SWELL_DIFFRACTION_WRAP_DEG +
+SWELL_DIFFRACTION_WRAP_PER_100KM·distance, each ray on that island's own distance). A
+lone small island has open water on both edges and wraps away to nothing (Catalina
+stops walling off Huntington); a long island keeps its interior blocked. A near islet is
+never fused with a far coast behind it: each is judged on its own run. Anything
 subtending less than SWELL_MIN_SHADOW_DEG is ignored outright.
 
 Surviving open bearings are merged into arcs and shrunk inward by
@@ -51,12 +56,17 @@ from ..config import (
     SWELL_BLOCKER_AREA_KM2,
     SWELL_DIFFRACTION_WRAP_DEG,
     SWELL_DIFFRACTION_WRAP_PER_100KM,
+    SWELL_FRESNEL_GRAVITY,
+    SWELL_FRESNEL_PERIOD_S,
+    SWELL_FRESNEL_TRANSPARENT_N,
+    SWELL_FRESNEL_WALL_N,
     SWELL_ISLAND_GAP_BRIDGE_DEG,
     SWELL_LOCAL_COAST_EXCLUSION_KM,
     SWELL_LOCAL_LANDMASS_KM,
     SWELL_MAINLAND_SOLID_KM,
     SWELL_MIN_FETCH_KM,
     SWELL_MIN_SHADOW_DEG,
+    SWELL_OWN_COAST_KM,
     SWELL_OWN_LAND_CROSSING_KM,
     SWELL_RAY_STEP_DEG,
 )
@@ -76,6 +86,11 @@ _PREPARED_CACHE: dict[int, object] = {}
 # asks the same question of the same landmass, and the answer needs a nearest-point search
 # along the whole coastline.
 _DEPTH_CACHE: dict[tuple[int, float, float], float] = {}
+# How far the polygon's nearest point is from the spot (R1's own-coast test), and the
+# polygon's vertices as (azimuth, distance) from the spot (R2's width across a ray): both
+# asked once per spot and polygon, keyed like _DEPTH_CACHE.
+_NEAREST_CACHE: dict[tuple[int, float, float], float] = {}
+_POLAR_CACHE: dict[tuple[int, float, float], tuple] = {}
 
 
 def _ray_linestring(lat: float, lng: float, bearing_deg: float) -> LineString:
@@ -187,6 +202,49 @@ def _depth_inside_km(poly, spot_ll: Point) -> float:
     return d
 
 
+def _nearest_km(poly, spot_ll: Point) -> float:
+    """Geodesic distance from the spot to the nearest point of *poly*, in km; 0 when the
+    spot is on or inside it. R1's own-coast test reads this. Cached."""
+    key = (id(poly), spot_ll.x, spot_ll.y)
+    d = _NEAREST_CACHE.get(key)
+    if d is None:
+        if _prepared(poly).intersects(spot_ll):
+            d = 0.0
+        else:
+            near, _ = nearest_points(poly, spot_ll)
+            d = _GEOD.inv(spot_ll.x, spot_ll.y, near.x, near.y)[2] / 1000.0
+        _NEAREST_CACHE[key] = d
+    return d
+
+
+def _cross_width_km(poly, spot_ll: Point, bearing_deg: float) -> float:
+    """The polygon's width across a ray from the spot on *bearing_deg*, in km: the spread of
+    its outline's offsets from the ray line, each vertex's offset being s·sin(az − bearing)
+    for its geodesic distance s and azimuth az from the spot (exact on the spot's azimuthal
+    equidistant plane). The vertex (az, s) pairs are cached per spot and polygon."""
+    key = (id(poly), spot_ll.x, spot_ll.y)
+    polar = _POLAR_CACHE.get(key)
+    if polar is None:
+        lons: list[float] = []
+        lats: list[float] = []
+        for part in getattr(poly, "geoms", [poly]):
+            xs, ys = part.exterior.coords.xy
+            lons.extend(xs)
+            lats.extend(ys)
+        az, _, dist = _GEOD.inv([spot_ll.x] * len(lons), [spot_ll.y] * len(lats), lons, lats)
+        polar = (list(az), [m / 1000.0 for m in dist])
+        _POLAR_CACHE[key] = polar
+    offsets = [s * math.sin(math.radians(a - bearing_deg)) for a, s in zip(*polar)]
+    return max(offsets) - min(offsets)
+
+
+def fresnel_number(width_km: float, dist_km: float, period_s: float = SWELL_FRESNEL_PERIOD_S) -> float:
+    """N = w² / (L·r) for an obstacle *width_km* across, *dist_km* away, at a swell of
+    *period_s*: L = g·T²/(2π), the deep-water wavelength (224.83 m at 12 s)."""
+    wavelength_m = SWELL_FRESNEL_GRAVITY * period_s ** 2 / (2.0 * math.pi)
+    return (width_km * 1000.0) ** 2 / (wavelength_m * dist_km * 1000.0)
+
+
 def _ray_hits(ray: LineString, land, spot_ll: Point) -> list[tuple[object, float]]:
     """Return [(polygon, nearest_seaward_hit_km), …] for land the outbound ray runs
     INTO from open water.
@@ -279,7 +337,11 @@ def _merge_runs(blocked: list[int], step_deg: int, gap_bridge_deg: float) -> lis
 
 
 def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) -> set[int]:
-    """Bearings that stay blocked after small-island chains are wrap-trimmed.
+    """Bearings that stay blocked after a run of partial hits is wrap-trimmed.
+
+    The production path (_islands_shadow) calls this once per island, with that island's
+    rays only, so a "chain" here is one island's contiguous run. Called directly with a
+    single {bearing: dist} map it treats every hit as one obstacle, as before R3.
 
     Each chain member's diffraction wrap-in is governed by ITS OWN obstacle distance,
     not one chain-wide nearest distance: a member stays blocked only if it lies deeper
@@ -338,6 +400,33 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None) 
     return blocked
 
 
+def _islands_shadow(partial_hits: dict[int, dict[int, float]], step_deg: int,
+                    debug=None) -> set[int]:
+    """R3 — bearings that stay blocked when each island is judged on its own.
+
+    *partial_hits* is _classify_bearings' {bearing: {island_key: dist_km}}. The hits are
+    regrouped by island and every island's own rays go through _island_shadow on their own
+    distances; a bearing is blocked if any island blocks it. Two islands that sit side by
+    side, or one behind the other, are never fused into one run, so a near islet cannot
+    lend a far coast its small wrap, nor a far coast lend a near islet its long run.
+
+    *debug*: as _island_shadow, with each record also carrying its "island" key; islands
+    are taken in order of their lowest bearing, so the dump reads round the compass."""
+    by_island: dict[int, dict[int, float]] = {}
+    for b, hits in partial_hits.items():
+        for key, d in hits.items():
+            by_island.setdefault(key, {})[b] = d
+    blocked: set[int] = set()
+    for key in sorted(by_island, key=lambda k: (min(by_island[k]), k)):
+        records: list | None = [] if debug is not None else None
+        blocked |= _island_shadow(by_island[key], step_deg, debug=records)
+        if debug is not None:
+            for r in records:
+                r["island"] = key
+            debug.extend(records)
+    return blocked
+
+
 def local_land_index(global_land: LandIndex, lat: float, lng: float) -> LandIndex:
     """Subset *global_land* to polygons within one fetch radius of the spot.
 
@@ -367,22 +456,40 @@ def local_land_index(global_land: LandIndex, lat: float, lng: float) -> LandInde
     )
 
 
+def fresnel_verdict(n: float) -> str:
+    """R2 on a Fresnel number: "wall" at SWELL_FRESNEL_WALL_N or more, "pass" below
+    SWELL_FRESNEL_TRANSPARENT_N, "partial" in between (both lower ends inclusive)."""
+    if n >= SWELL_FRESNEL_WALL_N:
+        return "wall"
+    if n < SWELL_FRESNEL_TRANSPARENT_N:
+        return "pass"
+    return "partial"
+
+
 def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, debug=None,
                        mainland_solid_km=None):
-    """Pass 1 — for every bearing return (hard_blocked set, small_hit_dist map).
+    """Pass 1 — for every bearing return (hard_blocked set, partial_hits map).
 
-    A bearing is hard-blocked by a landmass ≥ SWELL_BLOCKER_AREA_KM2 or any land
-    within SWELL_LOCAL_LANDMASS_KM; otherwise the nearest small-island hit (if
-    any) is recorded for the partial-shadow pass. Shared by compute_swell_window
-    and the validate harness (which also reads `hard_blocked` for the ceiling).
+    A bearing is hard-blocked by a landmass ≥ SWELL_BLOCKER_AREA_KM2 within
+    SWELL_MAINLAND_SOLID_KM, or by land within SWELL_LOCAL_LANDMASS_KM that R1 (the own
+    coast, or ≥ SWELL_BLOCKER_AREA_KM2) or R2 (Fresnel N ≥ SWELL_FRESNEL_WALL_N) calls a
+    wall. Otherwise EVERY partial hit on the ray is recorded (R3), keyed by island:
+    partial_hits = {bearing: {island_key: dist_km}}, island_key being id(polygon), so the
+    shadow pass can judge each island on its own run. A near-field island with Fresnel
+    N < SWELL_FRESNEL_TRANSPARENT_N is passed: the ray goes on to whatever lies behind it.
+    A hard-blocked bearing records no partial hits. Shared by compute_swell_window and the
+    validate harness (which also reads `hard_blocked` for the ceiling).
 
     *debug* (diagnostic only; None on the production/full path, so behaviour and
     cost are unchanged): a dict filled per bearing with the block decision —
     {bearing: {"result": "hard"|"small"|"open", ["rule","area_km2","dist_km",
-    "centroid","own"]}} — for the validate harness's --debug-blockers culprit dump.
-    ``own`` (hard blocks) reuses the own-coast test: True when the ray origin sits
-    inside the blocking polygon (the landmass the spot is on), letting the harness
-    separate own-coast near field from distant-mainland min-fetch clipping.
+    "centroid","own","fresnel_n","partials","passed"]}} — for the validate harness's
+    --debug-blockers culprit dump. ``rule`` is "local_coast_30km" (R1), "fresnel_wall"
+    (R2) or "mainland_solid". ``own`` is R1's own-coast test: the blocking polygon's
+    nearest point lies within SWELL_OWN_COAST_KM of the spot. A "small" record carries the
+    nearest partial hit's dist/area/centroid plus ``partials``, one entry per island hit
+    ({"island","dist_km","area_km2","centroid"[,"fresnel_n"]}); ``passed`` lists the
+    near-field islands the ray went through (R2, N < SWELL_FRESNEL_TRANSPARENT_N).
 
     *mainland_solid_km* overrides SWELL_MAINLAND_SOLID_KM (the distance within which a
     large landmass hard-blocks) for this call only — used by the validate harness's
@@ -391,44 +498,72 @@ def _classify_bearings(lat: float, lng: float, land: LandIndex, step_deg: int, d
     spot_ll = Point(lng, lat)
     solid_km = SWELL_MAINLAND_SOLID_KM if mainland_solid_km is None else mainland_solid_km
     hard_blocked: set[int] = set()
-    small_hit_dist: dict[int, float] = {}
+    partial_hits: dict[int, dict[int, float]] = {}
+
+    def _rec(poly, dist_km, **extra):
+        return {"island": id(poly), "dist_km": dist_km, "area_km2": _poly_area_km2(poly),
+                "centroid": _poly_centroid(poly), **extra}
+
     for bearing in range(0, 360, step_deg):
         ray = _ray_linestring(lat, lng, float(bearing))
-        is_hard = False
-        nearest_small: float | None = None
-        nearest_small_poly = None
+        hard = None                       # (rule, poly, dist_km, fresnel_n | None)
+        partial: dict[int, float] = {}
+        partial_rec: list[dict] = []
+        passed: list[dict] = []
         for poly, dist_km in _ray_hits(ray, land, spot_ll):
+            area = _poly_area_km2(poly)
+            if dist_km <= SWELL_LOCAL_LANDMASS_KM:
+                # R1: the spot's own coast, or a big landmass, is a wall in the near field.
+                if area >= SWELL_BLOCKER_AREA_KM2 or _nearest_km(poly, spot_ll) <= SWELL_OWN_COAST_KM:
+                    hard = ("local_coast_30km", poly, dist_km, None)
+                    break
+                # R2: any other near-field island by its Fresnel number at the design period.
+                n = fresnel_number(_cross_width_km(poly, spot_ll, float(bearing)), dist_km)
+                verdict = fresnel_verdict(n)
+                if verdict == "wall":
+                    hard = ("fresnel_wall", poly, dist_km, n)
+                    break
+                if verdict == "pass":
+                    if debug is not None:
+                        passed.append(_rec(poly, dist_km, fresnel_n=n))
+                    continue              # too small for its distance: the ray goes on
+                partial[id(poly)] = dist_km
+                if debug is not None:
+                    partial_rec.append(_rec(poly, dist_km, fresnel_n=n))
+                continue
             # A large landmass is SOLID only in the near/mid field; BEYOND
-            # SWELL_MAINLAND_SOLID_KM it falls through to the small-shadow pass, so the
+            # SWELL_MAINLAND_SOLID_KM it falls through to the partial-shadow pass, so the
             # distance-aware diffraction wrap graduates it (a coast grazed far downrange
             # under SWELL_MIN_FETCH_KM diffracts around instead of walling off the bearing,
             # while a near coast / bay-strait crossing still hard-blocks).
-            if dist_km <= SWELL_LOCAL_LANDMASS_KM or (
-                    _poly_area_km2(poly) >= SWELL_BLOCKER_AREA_KM2
-                    and dist_km <= solid_km):
-                is_hard = True
-                if debug is not None:
-                    rule = ("local_coast_30km" if dist_km <= SWELL_LOCAL_LANDMASS_KM
-                            else "mainland_solid")
-                    debug[bearing] = {"result": "hard", "rule": rule,
-                                      "area_km2": _poly_area_km2(poly), "dist_km": dist_km,
-                                      "centroid": _poly_centroid(poly),
-                                      "own": _prepared(poly).contains(Point(ray.coords[0]))}
+            if area >= SWELL_BLOCKER_AREA_KM2 and dist_km <= solid_km:
+                hard = ("mainland_solid", poly, dist_km, None)
                 break
-            if nearest_small is None or dist_km < nearest_small:
-                nearest_small = dist_km
-                nearest_small_poly = poly
-        if is_hard:
-            hard_blocked.add(bearing)
-        elif nearest_small is not None:
-            small_hit_dist[bearing] = nearest_small
+            partial[id(poly)] = dist_km
             if debug is not None:
-                debug[bearing] = {"result": "small", "dist_km": nearest_small,
-                                  "area_km2": _poly_area_km2(nearest_small_poly),
-                                  "centroid": _poly_centroid(nearest_small_poly)}
+                partial_rec.append(_rec(poly, dist_km))
+        if hard is not None:
+            hard_blocked.add(bearing)
+            if debug is not None:
+                rule, poly, dist_km, n = hard
+                debug[bearing] = {"result": "hard", "rule": rule, "island": id(poly),
+                                  "area_km2": _poly_area_km2(poly), "dist_km": dist_km,
+                                  "centroid": _poly_centroid(poly),
+                                  "own": _nearest_km(poly, spot_ll) <= SWELL_OWN_COAST_KM}
+                if n is not None:
+                    debug[bearing]["fresnel_n"] = n
+        elif partial:
+            partial_hits[bearing] = partial
+            if debug is not None:
+                nearest = min(partial_rec, key=lambda r: r["dist_km"])
+                debug[bearing] = {"result": "small", "dist_km": nearest["dist_km"],
+                                  "area_km2": nearest["area_km2"],
+                                  "centroid": nearest["centroid"],
+                                  "partials": sorted(partial_rec, key=lambda r: r["dist_km"]),
+                                  "passed": passed}
         elif debug is not None:
-            debug[bearing] = {"result": "open"}
-    return hard_blocked, small_hit_dist
+            debug[bearing] = {"result": "open", "passed": passed}
+    return hard_blocked, partial_hits
 
 
 def _implied_span(lo: int, hi: int, step_deg: int) -> int:
@@ -550,10 +685,10 @@ def compute_swell_window(spot: dict, land: LandIndex | None = None,
             spot.get("name"), lat, lng, SWELL_MIN_FETCH_KM, SWELL_LOCAL_COAST_EXCLUSION_KM, step,
         )
 
-    # Pass 1 — hard-block vs small-island shadow vs open.
-    hard_blocked, small_hit_dist = _classify_bearings(lat, lng, land, step)
-    # Pass 2 — small-island chains, wrap-trimmed.
-    small_blocked = _island_shadow(small_hit_dist, step)
+    # Pass 1 — hard-block vs partial (island) hit vs open.
+    hard_blocked, partial_hits = _classify_bearings(lat, lng, land, step)
+    # Pass 2 — each island's own run of rays, wrap-trimmed on its own distance (R3).
+    small_blocked = _islands_shadow(partial_hits, step)
 
     open_bearings = [b for b in range(0, 360, step) if b not in hard_blocked and b not in small_blocked]
 
