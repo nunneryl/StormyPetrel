@@ -16,11 +16,15 @@ face, the WW3 partitions and the direction it was rated on. Only the swell windo
 here, so each row is replayed through the path that wrote it — read from its swell_source —
 with the geometry swapped:
 
-  nwps_height_ww3_dir, nwps   apply_nwps_overrides / nwps_stars. Direction and period come
-                              from combine_ww3_partitions over the row's partitions, and
-                              fall back to NWPS dirpw/perpw (the row's dp/tp) when no
-                              partition has any gain. The face scales with period_factor
+  nwps_height_ww3_dir, nwps   apply_nwps_overrides, through the rater's own nwps_stars.
+                              Direction and period come from combine_ww3_partitions over
+                              the row's partitions (the window chooses), and fall back to
+                              NWPS dirpw/perpw (the row's dp/tp) when no partition has any
+                              gain. The height takes the alignment term only, no window
+                              rung (since run 19). The face scales with period_factor
                               when the dominant partition, and so the period, changes.
+                              legacy_rescore keeps the rule rows were published under
+                              before that: the window's gain, rung and all.
   cdip_mop                    apply_mop_overrides / mop_stars: the MOP direction against the
                               MOP shore normal; the face does not depend on the window.
   ww3                         rate_spot's WW3 path: the combined height and the dominant
@@ -82,7 +86,11 @@ falls to max(0.25, cos²(Δ/2)) about the optimal), against the published stars:
 replays keep the window's choice of partition and drop only its multiplier on the height —
 B on that partition's direction, C on NWPS dirpw where the row has one. Each reports ups and
 downs, the change by cause (same direction, another partition, or another source of
-direction), and every spot with an hour moving by more than BIG_MOVE stars. SELECT only.
+direction), and every spot with an hour moving by more than BIG_MOVE stars. Last, R: the
+rater on this checkout replayed (nwps_stars), and checked against B hour for hour. All four
+take legacy_rescore as their baseline, the rule the published rows carried until the
+alignment-only rater ships; once its rows are published, the hours it changed read as not
+reproduced against that baseline. SELECT only.
 
     python -m pipeline.star_preview --nwps-shelter [--baseline B.json] [--out OUT.json]
 """
@@ -97,6 +105,7 @@ from datetime import datetime, timezone
 from statistics import median
 
 from .config import TIDE_RATED_SOURCES
+from .forecast.nwps_nearshore import nwps_stars
 from .interpret import (
     _min_offset_from_arcs,
     combine_ww3_partitions,
@@ -152,15 +161,15 @@ def _mults(row):
             _num(row.get("chop_mult")) if row.get("chop_mult") is not None else 1.0)
 
 
-def _nwps_rescore(row, spot, gain_arcs, use_dirpw=False):
-    """An NWPS row re-scored as apply_nwps_overrides scores it. The spot's own arcs pick the
-    partition (combine_ww3_partitions); *gain_arcs* are the arcs the height's gain is read
-    against — the spot's own today, [] for no window multiplier. With *use_dirpw* the row's dp
-    (NWPS dirpw) is the direction whenever it is present; the period stays the partition's."""
+def _nwps_inputs(row, spot, use_dirpw=False):
+    """(direction, period, path, swh) for an NWPS row as apply_nwps_overrides reads it: the
+    spot's own arcs pick the partition (combine_ww3_partitions) and NWPS dirpw/perpw stand in
+    when none keeps any gain. swh is recovered from the stored face. With *use_dirpw* the
+    row's dp (NWPS dirpw) is the direction whenever it is present; the period stays the
+    partition's. None when the row cannot be replayed."""
     arcs = spot.get("swell_window_arcs") or []
     optimal = spot.get("optimal_swell_dir")
     orient = spot.get("orientation_deg")
-    wm, tm, cm = _mults(row)
     parts = _partitions(row)
     face = _face(row)
     comb = combine_ww3_partitions(parts, arcs, optimal, orient) if parts else None
@@ -173,12 +182,46 @@ def _nwps_rescore(row, spot, gain_arcs, use_dirpw=False):
         d, path = dirpw, path + "+dirpw"
     old_per = _num(row.get("swell_tp"))
     if d is None or per is None or face is None or not old_per or orient is None:
+        return None
+    return d, per, path, face / (period_factor(old_per, "ww3") * M_TO_FT)
+
+
+def _nwps_rescore(row, spot, gain_arcs, use_dirpw=False):
+    """An NWPS row re-scored with its height's gain read against *gain_arcs*: the spot's own
+    arcs for the rule the window published under until run 19 (the rung), [] for the
+    alignment term alone (run 19's B; C with *use_dirpw*)."""
+    got = _nwps_inputs(row, spot, use_dirpw)
+    if got is None:
         return {"stars": None, "why": "nwps: direction, period or face missing"}
-    swh = face / (period_factor(old_per, "ww3") * M_TO_FT)
-    new_face = face_ft(swh, per, "ww3")
+    d, per, path, swh = got
+    optimal, orient = spot.get("optimal_swell_dir"), spot.get("orientation_deg")
+    wm, tm, cm = _mults(row)
     dg = directional_gain(d, gain_arcs, optimal if optimal is not None else orient, orient)
-    return {"stars": composite_stars(new_face * dg, wm, tm, cm, period_quality(per)),
+    return {"stars": composite_stars(face_ft(swh, per, "ww3") * dg, wm, tm, cm,
+                                     period_quality(per)),
             "gain": dg, "dir": d, "path": path}
+
+
+def _rater_nwps(row, spot):
+    """An NWPS row replayed through the RATER ITSELF: nwps_nearshore.nwps_stars, given the
+    direction and period the window chose and the stored wind, tide and chop multipliers."""
+    got = _nwps_inputs(row, spot)
+    if got is None:
+        return {"stars": None, "why": "nwps: direction, period or face missing"}
+    d, per, path, swh = got
+    wm, tm, cm = _mults(row)
+    stars, _, dg, _, _ = nwps_stars(swh, per, d, None, spot.get("orientation_deg"), wm, tm,
+                                    optimal=spot.get("optimal_swell_dir"),
+                                    chop=(_num(row.get("chop_ratio")), cm))
+    return {"stars": stars, "gain": dg, "dir": d, "path": path}
+
+
+def legacy_rescore(row, spot):
+    """rescore under the rule NWPS rows were published with until run 19: the NWPS height took
+    the window's gain, rung and all. Every other row as rescore."""
+    if row.get("swell_source") in NWPS_KINDS:
+        return _nwps_rescore(row, spot, spot.get("swell_window_arcs") or [])
+    return rescore(row, spot)
 
 
 def rescore(row, spot):
@@ -195,7 +238,7 @@ def rescore(row, spot):
     face = _face(row)
 
     if kind in NWPS_KINDS:
-        return _nwps_rescore(row, spot, arcs)
+        return _rater_nwps(row, spot)
 
     if kind in MOP_KINDS:
         sn = spot.get("mop_shore_normal")
@@ -238,12 +281,14 @@ def change_cause(before, after):
     return f"{before['path']} -> {after['path']}"
 
 
-def compare(rows, before_spots, after_spots, names, row_after=None, rescore_after=None):
+def compare(rows, before_spots, after_spots, names, row_after=None, rescore_after=None,
+            rescore_before=None):
     """Replay every row with BASELINE and with ARCS. *names* maps spot_id -> (name, state).
 
     *row_after*, when given, maps a row to the row the AFTER replay reads (the tide preview
     swaps its tide_mult); each change then also records the tide it was rated on.
-    *rescore_after*, when given, re-scores the AFTER replay in place of rescore.
+    *rescore_after*, when given, re-scores the AFTER replay in place of rescore, and
+    *rescore_before* the BASELINE replay (the one checked against the published stars).
 
     Returns the report dict (see main for its keys)."""
     replay = Counter()
@@ -259,7 +304,7 @@ def compare(rows, before_spots, after_spots, names, row_after=None, rescore_afte
         if b is None or a is None or row.get("stars") is None:
             unreplayable[f"{grp}: spot not in both spots files or no published stars"] += 1
             continue
-        rb = rescore(row, b)
+        rb = (rescore_before or rescore)(row, b)
         if rb["stars"] is None:
             unreplayable[f"{grp}: {rb['why']}"] += 1
             continue
@@ -485,7 +530,8 @@ def _nwps_rows(rows):
 def no_gate_compare(rows, spots, names):
     """A: every NWPS row replayed with the spot's window removed, against the published stars.
     The window goes from the partition choice too, so a blocked partition can win it."""
-    return compare(_nwps_rows(rows), spots, ungated(spots), names)
+    return compare(_nwps_rows(rows), spots, ungated(spots), names,
+                   rescore_before=legacy_rescore)
 
 
 def selected_alignment_compare(rows, spots, names, use_dirpw=False):
@@ -493,7 +539,36 @@ def selected_alignment_compare(rows, spots, names, use_dirpw=False):
     the NWPS height takes no window multiplier, only max(0.25, cos²(Δ/2)) on that direction.
     C (use_dirpw True): as B, with the row's NWPS dirpw as the direction when it has one."""
     return compare(_nwps_rows(rows), spots, spots, names,
-                   rescore_after=lambda row, spot: _nwps_rescore(row, spot, [], use_dirpw))
+                   rescore_after=lambda row, spot: _nwps_rescore(row, spot, [], use_dirpw),
+                   rescore_before=legacy_rescore)
+
+
+def rater_compare(rows, spots, names):
+    """R: every NWPS row replayed through the rater itself (rescore -> nwps_stars) against
+    the published stars, from the window-rung baseline the window was published under."""
+    return compare(_nwps_rows(rows), spots, spots, names, rescore_before=legacy_rescore)
+
+
+def rater_against_b(rows, spots, names):
+    """The rater (nwps_stars) and B, hour for hour, on every NWPS row both can replay:
+    {hours, equal, different, not_replayable, examples (up to 20 differences)}."""
+    equal, examples, skipped, hours = 0, [], 0, 0
+    for row in _nwps_rows(rows):
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        r = _rater_nwps(row, spot) if spot else {"stars": None}
+        b = _nwps_rescore(row, spot, []) if spot else {"stars": None}
+        if r["stars"] is None or b["stars"] is None:
+            skipped += 1
+            continue
+        hours += 1
+        if (r["stars"], r["gain"], r["dir"]) == (b["stars"], b["gain"], b["dir"]):
+            equal += 1
+        elif len(examples) < 20:
+            examples.append({"spot": name, "state": state, "valid_time": row.get("valid_time"),
+                             "rater": r, "b": b})
+    return {"hours": hours, "equal": equal, "different": hours - equal,
+            "not_replayable": skipped, "examples": examples}
 
 
 def _print_shelter(rep):
@@ -746,6 +821,15 @@ def main(argv=None):
         print("\n=== C: as B, with NWPS dirpw as the direction where the row has one ===")
         out["variant_c"] = selected_alignment_compare(rows, before, names, use_dirpw=True)
         _print(out["variant_c"], since)
+        print("\n=== R: the rater on this checkout (nwps_stars), replayed ===")
+        out["rater"] = rater_compare(rows, before, names)
+        _print(out["rater"], since)
+        out["rater_against_b"] = rater_against_b(rows, before, names)
+        m = out["rater_against_b"]
+        print(f"the rater against B, hour for hour: equal on {m['equal']} of {m['hours']} hours, "
+              f"different on {m['different']} (not replayable: {m['not_replayable']})")
+        for e in m["examples"]:
+            print(f"  {e['spot']} ({e['state']}) {e['valid_time']}: rater {e['rater']} B {e['b']}")
     elif not modes:
         rep = compare(rows, before, after, names)
         _print(rep, since)

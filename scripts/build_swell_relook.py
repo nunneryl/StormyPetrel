@@ -8,13 +8,16 @@ Open the page in a browser (double-click it, or `open scripts/swell_relook.html`
 satellite map needs the internet (Leaflet from unpkg, Esri imagery); without it the page still
 works from the compass rose and the table.
 
-WHAT IT SHOWS, for each flagged spot (FLAGGED below):
+WHAT IT SHOWS, for each flagged spot (the five RUN_19 spots first, then HEADLANDS, REGRESSIONS
+and every spot facing outside every arc):
   - the window as the rater reads it today (each arc's padded sector, cyan) and the geometric
     window the candidate uses (padded + the ray-cast's 5° shrink put back, orange);
   - the facing (blue) and the optimal swell direction (green);
   - 36 wedges, one per 10° bin centred on 0, 10, ... 350, whose length is the HEIGHT factor at
-    the bin's centre for the function picked: today's directional_gain (as the NWPS path uses
-    it, face x gain), or the candidate (pipeline/swell_window_soft.py) at 8, 12 or 18 s.
+    the bin's centre for the function picked: the window's directional_gain as it stands (the
+    gain WW3 and MOP heights take, and the weight that chooses an NWPS hour's swell); the
+    alignment alone, max(0.25, cos²(Δ/2)), which is all an NWPS height takes since run 19; or
+    the candidate soft window (pipeline/swell_window_soft.py) at 8, 12 or 18 s.
 
 WHAT YOU MARK: click a wedge (on the map, the rose or the table) to cycle it
 works -> blocked -> unsure -> unmarked. Marks are kept in the browser between visits.
@@ -41,7 +44,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
 from pipeline.db_import import _slugify                                    # noqa: E402
-from pipeline.interpret import in_any_arc                                  # noqa: E402
+from pipeline.interpret import directional_gain, in_any_arc                # noqa: E402
 from pipeline.swell_window_soft import (                                   # noqa: E402
     PERIODS_S, candidate_height_factor, geometric_sectors, padded_sectors,
     today_height_factor, union_edges,
@@ -51,6 +54,10 @@ ROSTER = os.path.join(ROOT, "pipeline", "spots_enriched.json")
 OUT_HTML = os.path.join(HERE, "swell_relook.html")
 BIN_DEG = 10
 
+# The spots run 19 moved most when the NWPS height stopped taking the window's rung: Doran,
+# Carmel and Dillon by more than 1.5 stars (variant B), Honolua and Flemings down to the 0.25
+# floor on swells far from their best direction. First on the page, to check by eye.
+RUN_19 = ("doran-beach", "carmel-beach", "dillon-beach", "honolua-bay", "flemings-beach")
 # The headlands named for the answer key.
 HEADLANDS = ("lovers-point", "table-tops-aguadilla", "dogmans-rincon", "hanalei-bay",
              "waimea-bay", "tunnels-beach")
@@ -69,7 +76,7 @@ REGRESSIONS = (
     ("sunset-beach-hawaii", 4), ("banyans", 3.5), ("chuns-reef", 3.5),
     ("electric-beach", 2.5), ("kaisers", 1.5),
 )
-GROUP_ORDER = ("headland", "hi_pr_regression", "facing_outside")
+GROUP_ORDER = ("run_19", "headland", "hi_pr_regression", "facing_outside")
 # The roster fields the page draws: the page is stale when any of them changes.
 DRAWN_FIELDS = ("name", "lat", "lng", "region_hint", "is_valid_surf_spot", "orientation_deg",
                 "optimal_swell_dir", "swell_window_arcs")
@@ -86,10 +93,13 @@ def facing_outside(spot):
 
 
 def flagged(roster):
-    """[(spot, [groups])] in GROUP_ORDER, each spot once: the headlands in HEADLANDS' order, the
-    regressions in the report's order, then the rest facing outside by state and name."""
+    """[(spot, [groups])] in GROUP_ORDER, each spot once: run 19's spots in RUN_19's order, the
+    headlands in HEADLANDS' order, the regressions in the report's order, then the rest facing
+    outside by state and name."""
     by_slug = {_slugify(s["name"]): s for s in rated(roster)}
     groups = {}
+    for slug in RUN_19:
+        groups.setdefault(slug, []).append("run_19")
     for slug in HEADLANDS:
         groups.setdefault(slug, []).append("headland")
     for slug, _ in REGRESSIONS:
@@ -117,7 +127,8 @@ def spot_record(spot, groups, lost=None):
     bins = []
     for c in range(0, 360, BIN_DEG):
         d = float(c)
-        bins.append([c, round(today_height_factor(d, arcs, opt, ori), 3)]
+        bins.append([c, round(today_height_factor(d, arcs, opt, ori), 3),
+                     round(directional_gain(d, [], opt if opt is not None else ori, ori), 3)]
                     + [round(candidate_height_factor(d, t, arcs, opt, ori), 3) for t in PERIODS_S])
     padded, geometric = padded_sectors(arcs), geometric_sectors(arcs)
     return {
@@ -204,13 +215,14 @@ TEMPLATE = r"""<!doctype html>
       <button class="btn" onclick="go(1)">next &rarr;</button>
       <select id="filter" class="btn" onchange="setFilter(this.value)">
         <option value="all">all flagged</option>
+        <option value="run_19">run 19: Doran, Carmel, Dillon, Honolua, Flemings</option>
         <option value="headland">headlands</option>
         <option value="hi_pr_regression">Hawaii / Puerto Rico regressions</option>
         <option value="facing_outside">facing outside every arc</option>
         <option value="unmarked">not marked yet</option>
       </select>
     </div>
-    <div class="sub"><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> spot, <kbd>1</kbd>-<kbd>4</kbd> function</div>
+    <div class="sub"><kbd>&larr;</kbd>/<kbd>&rarr;</kbd> spot, <kbd>1</kbd>-<kbd>5</kbd> function</div>
     <table id="tbl"></table>
     <button class="btn" style="width:100%;margin-top:6px" onclick="doExport()">export labels &darr;</button>
     <label class="btn" style="display:block;text-align:center;margin-top:6px">import labels
@@ -266,9 +278,9 @@ let labels = {};
 try { labels = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { labels = {}; }
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(labels)); } catch (e) {} }
 
-let fn = 0;                        // 0 today, 1..3 the candidate at PERIODS
+let fn = 0;                        // 0 the window today, 1 NWPS alignment, 2..4 the candidate
 let filter = "all", order = SPOTS.map((_, j) => j), pos = 0;
-const FN_NAMES = ["today"].concat(PERIODS.map(t => "candidate " + t + " s"));
+const FN_NAMES = ["window today", "NWPS alignment"].concat(PERIODS.map(t => "candidate " + t + " s"));
 const COLOR = {works: "#5fd38a", blocked: "#f06c6c", unsure: "#d9c35a"};
 const SVGNS = "http://www.w3.org/2000/svg";
 const R0 = 22, R1 = 128;           // rose: gain 0 at R0, gain 1 at R1
@@ -329,7 +341,7 @@ function drawRose() {
 
 function drawTable() {
   const s = spot();
-  let h = "<tr><th>bin</th><th>mark</th><th>today</th>" + PERIODS.map(t => `<th>${t} s</th>`).join("") + "</tr>";
+  let h = "<tr><th>bin</th><th>mark</th><th>window</th><th>NWPS</th>" + PERIODS.map(t => `<th>${t} s</th>`).join("") + "</tr>";
   for (const b of s.bins) {
     const m = mark(s, b[0]);
     h += `<tr><td>${b[0]}&deg;</td><td class="lab ${m || ""}" onclick="cycle(${b[0]})">${m || "&middot;"}</td>`
@@ -407,7 +419,7 @@ function doImport(input) {
 }
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") go(1); else if (e.key === "ArrowLeft") go(-1);
-  else if ("1234".includes(e.key) && e.key.length === 1) { fn = Number(e.key) - 1; render(); }
+  else if ("12345".includes(e.key) && e.key.length === 1) { fn = Number(e.key) - 1; render(); }
 });
 render();
 </script>

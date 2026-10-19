@@ -213,78 +213,51 @@ def test_the_in_window_floor_is_still_zero_point_two_five():
 
 
 # --------------------------------------------------------------------------- #
-# 2 — nwps_stars scores in the ARC frame                                       #
+# 2 — nwps_stars scores the ALIGNMENT about the optimal, never a window rung     #
 # --------------------------------------------------------------------------- #
-def test_nwps_stars_scores_with_the_spots_arcs_and_optimal():
-    """THE FIX. Steamer Lane, live geometry, at the WW3 partition bearing dp = 220.56.
+# Since sw1-raycast run 19 (2026-10-19) the swell window CHOOSES the NWPS hour's partition
+# upstream (combine_ww3_partitions, unchanged) but no longer multiplies the NWPS height: SWAN
+# has already sheltered the node. So nwps_stars takes no arcs and scores
+# max(0.25, cos²(Δ/2)) about optimal_swell_dir — directional_gain's no-arcs branch.
+def test_nwps_stars_scores_about_the_spots_optimal():
+    """Steamer Lane (frozen geometry), at the WW3 partition bearing dp = 220.56.
 
-    NEW — arc branch, target = optimal 244:
-        220.56 is inside arc1's sector [179, 253]
+    Target = optimal 244:
         diff = ((220.56 - 244 + 540) mod 360) - 180 = -23.44
         cos(-23.44/2°) = cos(-11.72°) = 0.979152476, squared = 0.958738570261
-        floor max(0.25, 0.958738570261) does not bite
-
-    OLD — no-arcs branch, target = orientation 128 (arcs were []):
-        diff = ((220.56 - 128 + 540) mod 360) - 180 = 92.56
-        cos²(46.28°) = 0.477667217946
-
-    A swell 23° off the spot's true optimal was being scored as though it were 93° off,
-    because it was measured against the shore orientation instead. 0.959 vs 0.478 — the
-    partition combine_ww3_partitions had already chosen ON THAT SAME 244 TARGET."""
+    Before the frame fix it was measured against orientation 128 instead:
+        diff 92.56 -> cos²(46.28°) = 0.477667217946"""
     hs, per, swell_hs = 2.0, 14.0, 1.8
-    _, _, dg, _, _ = nwps_stars(hs, per, 220.56, swell_hs, SL_ORIENT,
-                                arcs=SL_ARCS, optimal=SL_OPTIMAL)
+    _, _, dg, _, _ = nwps_stars(hs, per, 220.56, swell_hs, SL_ORIENT, optimal=SL_OPTIMAL)
     assert _close(dg, 0.958738570261), dg
-    assert abs(dg - 0.477667217946) > 0.4, dg          # unmistakably not the old frame
+    assert abs(dg - 0.477667217946) > 0.4, dg
 
 
-def test_nwps_stars_without_geometry_still_behaves_exactly_as_before():
-    """The new parameters default to None so a caller that has no spot geometry — the
-    module selftest, any diagnostic — is bit-for-bit unchanged. Same inputs as above:
-        arcs default [] -> no-arcs branch, target = orientation 128
-        diff 92.56 -> cos²(46.28°) = 0.477667217946
-    This is the legacy value, pinned so the defaults can never silently drift into the
-    new frame for callers that never opted in."""
+def test_nwps_stars_without_an_optimal_targets_the_orientation():
+    """A caller with no spot geometry (the selftest, the placement harness):
+        diff vs orientation 128 = 92.56 -> cos²(46.28°) = 0.477667217946"""
     hs, per, swell_hs = 2.0, 14.0, 1.8
     _, _, dg, _, _ = nwps_stars(hs, per, 220.56, swell_hs, SL_ORIENT)
     assert _close(dg, 0.477667217946), dg
 
 
-def test_nwps_stars_passes_arcs_through_and_not_an_empty_list():
-    """Distinguishes "the arcs reached directional_gain" from "the arcs were accepted and
-    dropped". A bearing OUTSIDE every Steamer Lane arc must land on the soft-outside
-    ladder, which is unreachable when arcs are [].
-        dp 273: 20° past arc1's padded edge 253; arc2's edge 315 is 42° away
-                min offset 20 -> band <45° -> 0.40 exactly
-        with arcs=[] the same dp takes the no-arcs branch instead:
-                diff = ((273 - 128 + 540) mod 360) - 180 = 145
-                cos²(72.5°) = 0.090423977856 -> floored to 0.25
-    0.40 is a ladder constant and 0.25 is the floor; neither can be reached by accident
-    from the other branch."""
-    hs, per, swell_hs = 2.0, 14.0, 1.8
-    _, _, with_arcs, _, _ = nwps_stars(hs, per, 273.0, swell_hs, SL_ORIENT,
-                                       arcs=SL_ARCS, optimal=SL_OPTIMAL)
-    _, _, no_arcs, _, _ = nwps_stars(hs, per, 273.0, swell_hs, SL_ORIENT)
-    assert with_arcs == 0.40, with_arcs
-    assert no_arcs == 0.25, no_arcs
+def test_nwps_stars_takes_no_arcs_at_all():
+    """No parameter for a window, so no caller can pass one and have it silently ignored."""
+    import inspect
+    assert "arcs" not in inspect.signature(nwps_stars).parameters
 
 
-def test_apply_nwps_overrides_hands_the_spots_geometry_to_the_scorer():
-    """THE CALL SITE, which is where the defect actually lived. nwps_stars gaining two
-    parameters fixes nothing if apply_nwps_overrides does not pass them, so drive the real
-    override over a Steamer-Lane-shaped spot and read dir_gain off the entry it writes.
-
-    Both entries carry a WW3-resolved direction (swell_source "ww3", so
+def test_apply_nwps_overrides_scores_the_chosen_direction_without_a_rung():
+    """THE CALL SITE. Both entries carry a WW3-resolved direction (swell_source "ww3", so
     _ww3_swell_identity returns it and the NWPS dirpw of 255 is not substituted).
 
     HOUR 0, dp 220.56, INSIDE arc1's sector [179, 253] — proves `optimal` arrives:
         diff vs optimal 244 = -23.44 -> cos²(-11.72°) = 0.958738570261 -> round 0.959
-        before this change: diff vs orientation 128 = 92.56 -> 0.477667217946 -> 0.478
+        (against orientation 128 it would be 0.477667217946 -> 0.478)
 
-    HOUR 1, dp 273.0, OUTSIDE every arc — proves `arcs` arrives too, which hour 0 alone
-    cannot: with the arcs dropped but optimal still passed, 273 takes the no-arcs branch
-    about 244 and scores cos²(14.5°) = 0.937309853570 -> 0.937. Only the ladder gives 0.4.
-        20° past arc1's padded edge 253 -> band <45° -> 0.40"""
+    HOUR 1, dp 273.0, 20° past arc1's padded edge 253 — the window's 0.40 rung, which the
+    NWPS height no longer takes:
+        diff vs optimal 244 = 29 -> cos²(14.5°) = 0.937309853570 -> 0.937"""
     spot = {"name": "T", "swell_window_source": "nwps", "nwps_wfo": "mtr",
             "orientation_deg": SL_ORIENT,
             "swell_window_arcs": SL_ARCS, "optimal_swell_dir": SL_OPTIMAL}
@@ -299,17 +272,14 @@ def test_apply_nwps_overrides_hands_the_spots_geometry_to_the_scorer():
 
     assert stats["fed"] == 1, stats
     assert inside["dir_gain"] == 0.959, inside["dir_gain"]
-    assert inside["dir_gain"] != 0.478, "the call site is still scoring in the orientation frame"
-    assert outside["dir_gain"] == 0.40, outside["dir_gain"]
-    assert outside["dir_gain"] != 0.937, "the call site is not passing the arcs through"
+    assert inside["dir_gain"] != 0.478, "the call site is scoring in the orientation frame"
+    assert outside["dir_gain"] == 0.937, outside["dir_gain"]
+    assert outside["dir_gain"] != 0.40, "the NWPS height took the window's rung"
 
 
-def test_nwps_stars_optimal_alone_moves_the_target_even_with_no_arcs():
-    """The two new parameters are independent. optimal without arcs still retargets the
-    no-arcs branch from orientation to optimal:
-        dp 220.56 vs optimal 244 -> diff -23.44 -> cos²(-11.72°) = 0.958738570261
-    Same value as the arc case here only because 220.56 is well inside the window; what
-    it proves is that `optimal` is not being ignored when arcs are absent."""
+def test_nwps_stars_optimal_moves_the_target():
+    """optimal retargets the score from orientation to optimal:
+        dp 220.56 vs optimal 244 -> diff -23.44 -> cos²(-11.72°) = 0.958738570261"""
     hs, per, swell_hs = 2.0, 14.0, 1.8
     _, _, dg, _, _ = nwps_stars(hs, per, 220.56, swell_hs, SL_ORIENT, optimal=SL_OPTIMAL)
     assert _close(dg, 0.958738570261), dg
@@ -334,9 +304,8 @@ def test_optimal_equal_to_orientation_is_unaffected_in_window():
     old_equivalent = directional_gain(200.0, [], SS_ORIENT, SS_ORIENT)
     assert _close(new, 0.969846310393), new
     assert new == old_equivalent, (new, old_equivalent)
-    # through nwps_stars, the path that actually changed
-    _, _, dg, _, _ = nwps_stars(1.5, 12.0, 200.0, 1.4, SS_ORIENT,
-                                arcs=SS_ARCS, optimal=SS_OPTIMAL)
+    # through nwps_stars: optimal 220 == orientation 220, so passing it or not agrees
+    _, _, dg, _, _ = nwps_stars(1.5, 12.0, 200.0, 1.4, SS_ORIENT, optimal=SS_OPTIMAL)
     _, _, dg_legacy, _, _ = nwps_stars(1.5, 12.0, 200.0, 1.4, SS_ORIENT)
     assert dg == dg_legacy == new, (dg, dg_legacy, new)
 
@@ -368,7 +337,7 @@ def test_optimal_equal_to_orientation_still_changes_outside_the_window():
 
 
 # --------------------------------------------------------------------------- #
-# 4 — the soft-outside ladder is untouched, and now reachable                   #
+# 4 — the soft-outside ladder is untouched (WW3 and MOP rows still take it)     #
 # --------------------------------------------------------------------------- #
 def test_the_soft_outside_ladder_fires_unchanged_well_outside_every_arc():
     """0.40 / 0.15 / 0.0 and their 45° / 90° band edges are all forbidden to move by this
@@ -388,23 +357,19 @@ def test_the_soft_outside_ladder_fires_unchanged_well_outside_every_arc():
     assert directional_gain(76.0, SL_ARCS, SL_OPTIMAL, SL_ORIENT) == 0.0
 
 
-def test_the_ladder_is_now_reachable_from_nwps_stars_at_all_three_rungs():
-    """Before the fix nwps_stars passed [], so NO nwps spot-hour could ever take the
-    ladder — the outside-the-window concept did not exist on that path. All three rungs
-    now arrive intact, and each is far from what the old no-arcs branch returned:
-        dp 273: ladder 0.40  vs old cos²(72.5°) = 0.090423977856 -> floored 0.25
-        dp 100: ladder 0.15  vs old diff -28 -> cos²(-14°) = 0.941473796429
-        dp  76: ladder 0.00  vs old diff -52 -> cos²(-26°) = 0.807830737663
+def test_nwps_stars_never_takes_the_ladder_where_the_window_would():
+    """The window's own gain at three bearings outside every Steamer Lane arc, and what
+    nwps_stars scores there instead — the alignment about optimal 244, floor 0.25:
+        dp 273: window 0.40; diff  29 -> cos²(14.5°) = 0.937309853570
+        dp 100: window 0.15; diff -144 -> cos²(-72°) = 0.095491502813 -> floor 0.25
+        dp  76: window 0.00; diff -168 -> cos²(-84°) = 0.010926199633 -> floor 0.25
     """
     hs, per, swell_hs = 2.0, 14.0, 1.8
-    expected = {273.0: (0.40, 0.25), 100.0: (0.15, 0.941473796429),
-                76.0: (0.0, 0.807830737663)}
-    for dp, (rung, legacy) in expected.items():
-        _, _, dg, _, _ = nwps_stars(hs, per, dp, swell_hs, SL_ORIENT,
-                                    arcs=SL_ARCS, optimal=SL_OPTIMAL)
-        _, _, old, _, _ = nwps_stars(hs, per, dp, swell_hs, SL_ORIENT)
-        assert dg == rung, (dp, dg, rung)
-        assert _close(old, legacy), (dp, old, legacy)
+    expected = {273.0: (0.40, 0.937309853570), 100.0: (0.15, 0.25), 76.0: (0.0, 0.25)}
+    for dp, (window, aligned) in expected.items():
+        assert directional_gain(dp, SL_ARCS, SL_OPTIMAL, SL_ORIENT) == window, dp
+        _, _, dg, _, _ = nwps_stars(hs, per, dp, swell_hs, SL_ORIENT, optimal=SL_OPTIMAL)
+        assert _close(dg, aligned), (dp, dg, aligned)
 
 
 def test_the_ladder_band_edges_have_not_moved():

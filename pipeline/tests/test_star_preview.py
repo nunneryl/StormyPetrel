@@ -88,10 +88,14 @@ def test_nwps_row_same_partition_same_window():
 
 
 def test_nwps_row_partition_on_the_040_rung():
-    # 270 is 20 outside [290-340]: gain 0.40, eff 3.2 -> size 2.6, x 0.987258 = 2.5669
-    # -> round(5.134)/2 = 2.5
-    r = SP.rescore(_nwps(), NW)
+    # 270 is 20 outside [290-340]. Published under the window (legacy): gain 0.40, eff 3.2
+    # -> size 2.6, x 0.987258 = 2.5669 -> round(5.134)/2 = 2.5. The rater now scores the
+    # alignment only: cos²((270 - 315)/2) = cos²(22.5°) = 0.853553, eff 6.828427 -> size
+    # 4.207107 x 0.987258 = 4.153500 -> round(8.307)/2 = 4.0.
+    r = SP.legacy_rescore(_nwps(), NW)
     assert (r["stars"], r["gain"]) == (2.5, 0.40)
+    r = SP.rescore(_nwps(), NW)
+    assert (r["stars"], round(r["gain"], 6)) == (4.0, 0.853553)
 
 
 def test_nwps_row_falls_back_to_dirpw_when_no_partition_keeps_gain():
@@ -648,9 +652,13 @@ def test_c_on_a_dirpw_row_keeps_its_path():
     assert (c["dir"], c["path"]) == (300.0, "nwps")
 
 
-def test_rescore_still_reads_the_window_for_the_gain():
-    assert SP.rescore(_two(), NW)["stars"] == 4.5
-    assert SP.rescore(_nwps(swell_1_dp=230.0), NW)["gain"] == 0.15
+def test_the_legacy_rule_reads_the_window_for_the_gain_and_the_rater_does_not():
+    # Both pick 315 for R2 (the window chooses): 4.5 either way. At 230 alone (the 0.15
+    # rung) the legacy gain is 0.15, the rater's cos²(42.5°) = 0.543578 -> 3.0 (see above).
+    assert SP.legacy_rescore(_two(), NW)["stars"] == SP.rescore(_two(), NW)["stars"] == 4.5
+    assert SP.legacy_rescore(_nwps(swell_1_dp=230.0), NW)["gain"] == 0.15
+    r = SP.rescore(_nwps(swell_1_dp=230.0), NW)
+    assert (r["stars"], round(r["gain"], 6), r["dir"]) == (3.0, 0.543578, 230.0)
 
 
 def test_variant_a_report():
@@ -723,6 +731,8 @@ def test_nwps_shelter_main_writes_the_measurement_and_all_three_replays(tmp_path
     assert got["variant_c"]["change_by_cause"] == {
         "up: nwps_height_ww3_dir -> nwps_height_ww3_dir+dirpw": 1, "up: same direction": 1}
     assert got["nwps_shelter"]["by_swell_source"] == {"nwps_height_ww3_dir": 3, "ww3": 1}
+    assert got["rater"]["delta_by_state"] == got["variant_b"]["delta_by_state"]
+    assert (got["rater_against_b"]["hours"], got["rater_against_b"]["equal"]) == (3, 3)
 
 
 def test_the_big_movers_list_counts_hours_and_takes_the_largest():
@@ -733,3 +743,56 @@ def test_the_big_movers_list_counts_hours_and_takes_the_largest():
     rep = SP.no_gate_compare(rows, {"A": NW}, VARIANT_NAMES)
     assert rep["spots_moving_over_1_5"] == [{"spot": "A", "state": "Hawaii", "hours_over": 2,
                                              "largest_up": 2.5, "largest_down": None}]
+
+
+# --------------------------------------------------------------------------- #
+# R: the rater replayed, against B                                             #
+# --------------------------------------------------------------------------- #
+
+def test_the_rater_replay_is_b_hour_for_hour():
+    """R1 (0.15 rung, +2.0), R2 (the window picks 315, unchanged), R4 (0.40 rung, +1.5):
+    the rater replayed through nwps_stars gives exactly B's stars, gains and directions."""
+    rows = _variant_rows() + [dict(_nwps(), spot_id=1, valid_time="r4", stars=2.5)]
+    m = SP.rater_against_b(rows, {"A": NW}, VARIANT_NAMES)
+    assert (m["hours"], m["equal"], m["different"], m["not_replayable"]) == (3, 3, 0, 0)
+    rep = SP.rater_compare(rows, {"A": NW}, VARIANT_NAMES)
+    b = SP.selected_alignment_compare(rows, {"A": NW}, VARIANT_NAMES)
+    assert rep["delta_by_state"] == b["delta_by_state"] == {"Hawaii": {0.0: 1, 1.5: 1, 2.0: 1}}
+    assert rep["replay"] == {"NWPS reproduced": 3}
+
+
+def test_the_rater_check_skips_rows_it_cannot_replay():
+    """A spot the baseline lacks, and a row with no published swell period, are counted as
+    not replayable and compared on neither side."""
+    rows = [dict(_nwps(), spot_id=1, valid_time="r4", stars=2.5),
+            dict(_nwps(), spot_id=9, valid_time="x", stars=2.5),
+            dict(_nwps(swell_tp=None), spot_id=1, valid_time="y", stars=2.5)]
+    m = SP.rater_against_b(rows, {"A": NW}, {**VARIANT_NAMES, 9: ("Z", "Hawaii")})
+    assert (m["hours"], m["equal"], m["different"], m["not_replayable"]) == (1, 1, 0, 2)
+
+
+def test_the_rater_check_lists_a_rater_that_disagrees_with_b(monkeypatch):
+    """A stand-in rater that scores 1.0 everywhere disagrees with B on R4 (B: 4.0)."""
+    monkeypatch.setattr(SP, "nwps_stars", lambda *a, **k: (1.0, 0.0, 0.853553, 1.0, 1.0))
+    rows = [dict(_nwps(), spot_id=1, valid_time="r4", stars=2.5)]
+    m = SP.rater_against_b(rows, {"A": NW}, VARIANT_NAMES)
+    assert (m["hours"], m["equal"], m["different"]) == (1, 0, 1)
+    ex, = m["examples"]
+    assert (ex["spot"], ex["valid_time"], ex["rater"]["stars"], ex["b"]["stars"]) == (
+        "A", "r4", 1.0, 4.0)
+
+
+def test_the_rater_replay_calls_nwps_stars(monkeypatch):
+    """Replaying the RATER means calling it: a stand-in nwps_stars is what rescore returns."""
+    monkeypatch.setattr(SP, "nwps_stars", lambda *a, **k: (1.5, 0.0, 0.123, 1.0, 1.0))
+    r = SP.rescore(_nwps(), NW)
+    assert (r["stars"], r["gain"]) == (1.5, 0.123)
+
+
+def test_the_rater_replay_aims_at_the_optimal_not_the_facing():
+    """NW's window with the facing moved to 270 (optimal still 315). The partition at 270:
+    about the optimal, cos²(22.5°) = 0.853553 -> 4.0 (see above); about the facing it would
+    be cos²(0°) = 1.0."""
+    spot = dict(NW, orientation_deg=270.0)
+    r = SP.rescore(_nwps(), spot)
+    assert (round(r["gain"], 6), r["stars"]) == (0.853553, 4.0)
