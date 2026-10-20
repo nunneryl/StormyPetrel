@@ -1,11 +1,12 @@
 """scripts/build_swell_relook.py: the swell-window answer-key page.
 
-The flagged counts come from docs/swell_window_recompute_report.md (68 facing outside every arc,
-the 36 Hawaii / Puerto Rico regressions in its table) and the six headlands named for the key;
-three spots are in both of the first two lists (dogmans-rincon, honolua-bay and
-table-tops-aguadilla) and every headland is already in one of them, so 68 + 36 - 3 = 101.
-Run 19's five come first: Doran, Honolua and Flemings are already among the 101, Carmel and
-Dillon are not, so 103.
+The flagged spots: those facing outside every arc in the committed roster (58 since the
+island-rules ray-cast of sw1-raycast run 27; 68 before it), the 36 Hawaii / Puerto Rico
+regressions in docs/swell_window_recompute_report.md's table, and the six headlands named for
+the key. One spot is in both of the first two lists (honolua-bay; run 27 brought dogmans-rincon
+and table-tops-aguadilla inside an arc) and every headland is already in one of them, so
+58 + 36 - 1 = 93. Run 19's five come first: Doran, Honolua and Flemings are already among the
+93, Carmel and Dillon are not, so 95.
 The bin values for Lovers Point are the hand arithmetic in test_swell_window_soft.py.
 """
 from __future__ import annotations
@@ -44,15 +45,15 @@ def test_the_regressions_are_the_reports_table():
 def test_the_flagged_spots():
     flagged = B.flagged(_roster())
     slugs = [B._slugify(s["name"]) for s, _ in flagged]
-    assert len(slugs) == len(set(slugs)) == 103
+    assert len(slugs) == len(set(slugs)) == 95
     count = {g: sum(g in groups for _, groups in flagged) for g in B.GROUP_ORDER}
-    assert count == {"run_19": 5, "headland": 6, "hi_pr_regression": 36, "facing_outside": 68}
+    assert count == {"run_19": 5, "headland": 6, "hi_pr_regression": 36, "facing_outside": 58}
     assert slugs[:5] == ["doran-beach", "carmel-beach", "dillon-beach", "honolua-bay",
                          "flemings-beach"]
     assert slugs[5:11] == list(B.HEADLANDS)
     both = sorted(B._slugify(s["name"]) for s, g in flagged
                   if "hi_pr_regression" in g and "facing_outside" in g)
-    assert both == ["dogmans-rincon", "honolua-bay", "table-tops-aguadilla"]
+    assert both == ["honolua-bay"]
     groups = dict((B._slugify(s["name"]), g) for s, g in flagged)
     assert groups["lovers-point"] == ["headland", "facing_outside"]
     assert groups["doran-beach"] == ["run_19", "facing_outside"]
