@@ -579,14 +579,18 @@ KT_TO_MS = 0.514444
 #   10-15 kt  "junky on most beach breaks under onshore"
 #   15-25 kt  "Onshore: blown out at almost every exposed spot"
 #   >25 kt    "Generally unsurfable, even when offshore"
-# Each row is (above this many knots, cap). Cross-shore runs a half star to one star
-# milder than onshore below 25 kt: it makes chop but does not push the lip over.
-WIND_CAP_ONSHORE = ((13.0, 3.0), (15.0, 2.0), (20.0, 1.5), (25.0, 1.0))
-WIND_CAP_CROSS = ((13.0, 3.5), (15.0, 2.5), (20.0, 2.0), (25.0, 1.0))
+# Each row is (above this many knots after the period allowance, cap). Cross-shore is half
+# a star milder than onshore from 15 to 20 kt only (decided after rating-preview run 29).
+WIND_CAP_ONSHORE = ((13.0, 3.0), (15.0, 2.0), (20.0, 1.5))
+WIND_CAP_CROSS = ((13.0, 3.0), (15.0, 2.5), (20.0, 1.5))
 # "Rough rule: one extra knot of tolerance per second of period above 8" (/learn/wind).
-# It shifts every rung but the last; the page gives "above 25 kt" for any swell.
+# It shifts the rungs above; the page gives "above 25 kt" for any swell, so that is measured.
 WIND_CAP_PERIOD_BASE_S = 8.0
 WIND_CAP_UNSURFABLE_KT = 25.0
+# Above 25 kt measured: cross-shore and onshore 1.0, offshore 2.0 ("Generally unsurfable,
+# even when offshore"; an offshore gale still holds the faces up better than one onshore).
+WIND_CAP_UNSURFABLE = 1.0
+WIND_CAP_UNSURFABLE_OFFSHORE = 2.0
 
 
 def wind_class(wind_dir: float, offshore_wind_deg: float) -> str:
@@ -605,19 +609,19 @@ def wind_star_cap(
     offshore_wind_deg: float | None,
     period_s: float | None,
 ) -> float:
-    """The most stars an hour can have in this wind: 5.0 (no cap) unless the wind is
-    cross-shore or onshore and above 13 kt once the period's tolerance is taken off.
+    """The most stars an hour can have in this wind; 5.0 is no cap.
 
-    The speed read against the ladder is knots - max(0, period - 8); above 25 kt
-    measured, the cap is 1.0 whatever the period."""
+    Above 25 kt measured, whatever the period: 1.0 cross-shore or onshore, 2.0 offshore.
+    Otherwise offshore is never capped, and cross-shore and onshore read
+    knots - max(0, period - 8) against their ladder, capping above 13 kt."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return 5.0
     cls = wind_class(wind_dir, offshore_wind_deg)
-    if cls == "offshore":
-        return 5.0
     kt = wind_speed_ms / KT_TO_MS
     if kt > WIND_CAP_UNSURFABLE_KT:
-        return 1.0
+        return WIND_CAP_UNSURFABLE_OFFSHORE if cls == "offshore" else WIND_CAP_UNSURFABLE
+    if cls == "offshore":
+        return 5.0
     tol = max(0.0, (period_s or 0.0) - WIND_CAP_PERIOD_BASE_S)
     cap = 5.0
     for above, c in (WIND_CAP_ONSHORE if cls == "onshore" else WIND_CAP_CROSS):

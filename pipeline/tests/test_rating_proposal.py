@@ -5,9 +5,12 @@ Every expected value is worked by hand, never read back from the functions under
 
   knots            m/s / 0.514444: 12.5 m/s = 24.298 kt, 13.4 m/s = 26.048 kt, 8 m/s = 15.551 kt;
                    6.687772 m/s = 13.0 kt and 12.8611 m/s = 25.0 kt exactly (13 and 25 x 0.514444)
-  tolerance        max(0, period - 8) knots off the speed, every rung but "above 25 kt"
-  ladder           onshore >13: 3.0, >15: 2.0, >20: 1.5, >25: 1.0
-                   cross   >13: 3.5, >15: 2.5, >20: 2.0, >25: 1.0
+                   7.2 m/s = 13.996 kt, 20 m/s = 38.877 kt
+  tolerance        max(0, period - 8) knots off the speed, on the ladder only
+  ladder           onshore >13: 3.0, >15: 2.0, >20: 1.5
+                   cross   >13: 3.0, >15: 2.5, >20: 1.5
+  above 25 kt      measured, any period: 1.0 cross-shore and onshore, 2.0 offshore
+  rules            cap; ceiling (beach and jetty over sand); both
   classes          angle off the offshore bearing: < 60 offshore, 60-120 cross, >= 120 onshore
   beach size       as size_score to 8 ft (4.5), 10 ft 4.5, 12 ft 3.5, 15 ft 2.5, 20 ft+ 1.5
   0.8**0.35        exp(0.35 x ln 0.8) = 0.924872
@@ -44,13 +47,16 @@ def test_wind_class_at_jennettes(wind_dir, expected):
 @pytest.mark.parametrize("speed, period, expected", [
     (13.4, 11.0, 1.0),     # 26.05 kt > 25: 1.0 whatever the period
     (13.4, 16.0, 1.0),     # still 1.0 with 8 kt of tolerance
-    (12.5, 11.0, 2.0),     # 24.30 - 3 = 21.30 > 20: cross 2.0
-    (12.5, 8.0, 2.0),      # 24.30 > 20: 2.0
+    (12.5, 11.0, 1.5),     # 24.30 - 3 = 21.30 > 20: cross 1.5, as onshore
+    (12.5, 8.0, 1.5),      # 24.30 > 20: 1.5
     (12.5, 16.0, 2.5),     # 24.30 - 8 = 16.30 > 15: 2.5
-    (12.5, 7.0, 2.0),      # period under 8 gives no negative tolerance
-    (12.5, None, 2.0),     # no period: no tolerance
+    (12.5, 7.0, 1.5),      # period under 8 gives no negative tolerance
+    (12.5, None, 1.5),     # no period: no tolerance
+    (8.0, 8.0, 2.5),       # 15.55 kt > 15: cross 2.5 where onshore is 2.0
+    (7.2, 8.0, 3.0),       # 14.00 kt > 13: 3.0
     (6.687772, 8.0, 5.0),  # exactly 13 kt is not above 13
-    (12.8611, 8.0, 2.0),   # exactly 25 kt: not the top rung, > 20: 2.0
+    (6.687772, 7.0, 5.0),  # 13 kt at 7 s: no negative tolerance to push it over 13
+    (12.8611, 8.0, 1.5),   # exactly 25 kt: not above 25, > 20: 1.5
 ])
 def test_cross_shore_cap(speed, period, expected):
     assert I.wind_star_cap(0.0, speed, 245.0, period) == expected
@@ -68,8 +74,14 @@ def test_onshore_cap(speed, period, expected):
     assert I.wind_star_cap(65.0, speed, 245.0, period) == expected
 
 
-def test_offshore_is_never_capped_even_above_25_kt():
-    assert I.wind_star_cap(245.0, 20.0, 245.0, 8.0) == 5.0
+@pytest.mark.parametrize("speed, period, expected", [
+    (20.0, 8.0, 2.0),      # 38.88 kt > 25: 2.0
+    (13.4, 16.0, 2.0),     # 26.05 kt measured > 25: 2.0, the period does not shift it
+    (12.8611, 8.0, 5.0),   # exactly 25 kt: no cap
+    (12.5, 8.0, 5.0),      # 24.30 kt: offshore has no ladder
+])
+def test_offshore_is_capped_only_above_25_kt(speed, period, expected):
+    assert I.wind_star_cap(245.0, speed, 245.0, period) == expected
 
 
 @pytest.mark.parametrize("args", [(None, 12.5, 245.0, 8.0), (0.0, None, 245.0, 8.0),
@@ -174,8 +186,8 @@ def _row(**kw):
     ("ceiling", WEST_BEACH, (3.5, "beach ceiling")),
     ("both", WEST_BEACH, (2.5, "beach ceiling + wind cap")),
     ("ceiling", WEST_REEF, (4.5, "")),
-    ("ceiling", WEST_JETTY, (4.5, "")),
-    ("both+jetty", WEST_JETTY, (2.5, "beach ceiling + wind cap")),
+    ("ceiling", WEST_JETTY, (3.5, "beach ceiling")),
+    ("both", WEST_JETTY, (2.5, "beach ceiling + wind cap")),
 ])
 def test_rating_after(rule, spot, expected):
     row = _row()
@@ -215,6 +227,27 @@ def test_rating_compare_counts_reproduced_rows_by_source_and_cause():
     assert rep["change_by_cause"] == {"beach ceiling + wind cap": 1}
     assert rep["change_by_wind"] == {"cross <=25 kt": 1}
     assert rep["ceiling_hours_by_provenance"] == {"model recall or unattributed": 1}
+    assert rep["ceiling_unverified_spots"] == [{
+        "spot": "A", "state": "North Carolina", "break_type": "beach", "break_type_source": None,
+        "bottom": "sand", "bottom_source": None, "hours": 1, "largest_drop": -2.0,
+        "largest_eff_ft": 11.0}]
+
+
+def test_a_cited_spot_is_not_on_the_unverified_list():
+    spots = dict(SPOTS, A=dict(WEST_BEACH, break_type_source="researched",
+                               bottom_source="reviewed"))
+    rep = SP.rating_compare(_rows(), spots, NAMES, "both")
+    assert rep["ceiling_hours_by_provenance"] == {"cited": 1}
+    assert rep["ceiling_unverified_spots"] == []
+
+
+def test_the_unverified_list_counts_hours_and_keeps_the_largest_drop():
+    # Two A hours: 15 ft (size 5.0 x 0.924872 = 4.5 -> 2.5 x 0.924872 = 2.312 -> 2.5, a 2.0
+    # drop), then 11 ft (4.5 -> 3.5 on the ceiling alone). The larger drop comes first.
+    rows = [_row(face_ft=15.0), _row(valid_time="2026-10-20T16:00:00+00:00")]
+    rep = SP.rating_compare(rows, SPOTS, NAMES, "ceiling")
+    (u,) = rep["ceiling_unverified_spots"]
+    assert (u["hours"], u["largest_drop"], u["largest_eff_ft"]) == (2, -2.0, 15.0)
     ex = rep["top20"][0]["example"]
     assert (ex["spot"], ex["stars_before"], ex["stars_after"], ex["wind_kt"]) == ("A", 4.5, 2.5, 24.3)
 

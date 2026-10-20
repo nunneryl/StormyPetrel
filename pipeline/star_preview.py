@@ -99,10 +99,11 @@ every row that reproduces its published stars with BASELINE:
 
     cap         interpret.wind_star_cap: cross-shore or onshore wind above 13 kt, less a knot
                 per second of period above 8 s, caps the stars (the /learn/wind ladder);
-                above 25 kt measured the cap is 1.0
-    ceiling     interpret.beach_size_score in place of size_score on sand beach breaks
-                (is_sand_beach_break): size credit holds from 8 to 10 ft, then falls
-    both        the two together; both+jetty also puts jetty breaks over sand on the ceiling
+                above 25 kt measured the cap is 1.0, and 2.0 offshore
+    ceiling     interpret.beach_size_score in place of size_score on beach and jetty breaks
+                over sand (is_sand_beach_break): size credit holds from 8 to 10 ft, then
+                falls. Every spot it moves whose break type or bottom is unverified is listed
+    both        the two together
 
 Each reports the star change by source, state, cause and wind band, the 20 most-changed spots,
 and the homepage's "Best conditions right now" before and after. --explain prints every rating
@@ -409,12 +410,12 @@ def compare(rows, before_spots, after_spots, names, row_after=None, rescore_afte
 # --------------------------------------------------------------------------- #
 # --rating: the strong-wind cap and the beach-break ceiling                    #
 # --------------------------------------------------------------------------- #
-# Each rule is (wind cap, beach ceiling, the ceiling also on jetty breaks over sand).
+# Each rule is (wind cap, beach ceiling, the ceiling also on jetty breaks over sand). Jetty
+# breaks over sand are on the ceiling (decided after rating-preview run 29).
 RATING_RULES = {
     "cap": (True, False, False),
-    "ceiling": (False, True, False),
-    "both": (True, True, False),
-    "both+jetty": (True, True, True),
+    "ceiling": (False, True, True),
+    "both": (True, True, True),
 }
 
 
@@ -473,6 +474,7 @@ def rating_compare(rows, spots, names, rule):
     replay, unreplayable = Counter(), Counter()
     by_group, by_state = defaultdict(Counter), defaultdict(Counter)
     by_cause, by_wind, by_prov, changed = Counter(), Counter(), Counter(), []
+    unverified = {}
     for row in rows:
         name, state = names.get(row["spot_id"], (None, None))
         spot = spots.get(name)
@@ -498,6 +500,15 @@ def rating_compare(rows, spots, names, rule):
             by_wind[f"{cls or 'no wind'} {_kt_band(kt)}"] += 1
             if "beach ceiling" in cause:
                 by_prov["cited" if cited(spot) else "model recall or unattributed"] += 1
+                if not cited(spot):
+                    u = unverified.setdefault(name, {
+                        "spot": name, "state": state, "break_type": spot.get("break_type"),
+                        "break_type_source": spot.get("break_type_source"),
+                        "bottom": spot.get("bottom"), "bottom_source": spot.get("bottom_source"),
+                        "hours": 0, "largest_drop": 0.0, "largest_eff_ft": 0.0})
+                    u["hours"] += 1
+                    u["largest_drop"] = min(u["largest_drop"], delta)
+                    u["largest_eff_ft"] = max(u["largest_eff_ft"], round(rb["eff"], 2))
             changed.append({"spot": name, "state": state, "valid_time": row["valid_time"],
                             "group": grp, "stars_before": rb["stars"], "stars_after": after,
                             "delta": delta, "cause": cause, "wind": cls,
@@ -522,6 +533,10 @@ def rating_compare(rows, spots, names, rule):
         "change_by_cause": dict(sorted(by_cause.items())),
         "change_by_wind": dict(sorted(by_wind.items())),
         "ceiling_hours_by_provenance": dict(sorted(by_prov.items())),
+        # Every spot the ceiling moved whose break type or bottom is not from a trusted source,
+        # most hours first: the list to check for a reef or point mislabelled as a beach.
+        "ceiling_unverified_spots": sorted(unverified.values(),
+                                           key=lambda u: (-u["hours"], u["spot"])),
         "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
         "delta_by_state": {s: dict(sorted(c.items()))
                            for s, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
@@ -654,6 +669,12 @@ def _print_rating(rep, lb, since):
     print(f"change by wind (hours): {rep['change_by_wind']}")
     print("hours the beach ceiling moved, by the source of break type and bottom: "
           f"{rep['ceiling_hours_by_provenance']}")
+    unv = rep["ceiling_unverified_spots"]
+    print(f"spots the ceiling moved whose break type or bottom is unverified: {len(unv)}")
+    for u in unv:
+        print(f"  {u['spot']} ({u['state']}): {u['break_type']} [{u['break_type_source']}] / "
+              f"{u['bottom']} [{u['bottom_source']}]; {u['hours']} h, largest drop "
+              f"{u['largest_drop']}, largest effective face {u['largest_eff_ft']} ft")
     print("star change by source (delta: hours):")
     for g, c in rep["delta_by_group"].items():
         print(f"  {g}: {c}")

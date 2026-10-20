@@ -482,7 +482,7 @@ jobs:
           # Through the environment, never interpolated into the shell command.
           SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.star_preview --rating cap,ceiling,both,both+jetty \
+          python -m pipeline.star_preview --rating cap,ceiling,both \
             --explain "${SPOTS:-jennettes-pier,avalon-pier,avon-pier,kill-devil-hills,humboldt-bay-jetty,huntington-beach-pier,steamer-lane,tres-palmas}" \
             --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
 
