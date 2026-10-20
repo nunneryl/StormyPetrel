@@ -37,12 +37,13 @@ name: sw1-raycast
 #       (pipeline/star_preview.py --nwps-shelter), then replays B and C: the window picks the
 #       partition but the height takes the alignment term only (C: on NWPS dirpw), all three
 #       on the same rows read once. Geometry from baseline_ref. SELECT only.
-#   mode = rating-preview: READ-ONLY. The strong-wind cap and sand beach-break size ceiling
-#       replayed over the published window, by source, with the homepage's "Best conditions
-#       right now" before and after; the wired rater checked against the preview hour for hour
-#       (the merge gate); every hour where the ceiling at the calibrated face differs from the
-#       raw one; and every rating factor of the soonest hour at the spots in `spots`
-#       (pipeline/star_preview.py --rating --explain). Geometry from baseline_ref. SELECT only.
+#   mode = rating-preview: READ-ONLY. Variants of the live rater (the wind cap and beach-break
+#       ceiling of #266) replayed over the published window: stars on the calibrated face
+#       (cal-median, cal-all) and NWPS heights from the swell alone (swell-height), each by
+#       source and state with the homepage's "Best conditions right now" before and after; and
+#       every rating factor of the soonest hour at the spots in `spots`, with the live cap,
+#       ceiling, partitions and NWPS total and swell heights (pipeline/star_preview.py
+#       --variants --explain). Geometry from baseline_ref. SELECT only.
 
 on:
   workflow_dispatch:
@@ -475,15 +476,15 @@ jobs:
           git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
           echo "baseline: $base ($(git rev-parse "$base"))"
 
-      - name: Rating factors, the wind cap and beach ceiling, and the wired rater check (SELECT only)
+      - name: Rating factors, and variants of the live rater (SELECT only)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           # Through the environment, never interpolated into the shell command.
           SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.star_preview --rating cap,ceiling,both \
-            --explain "${SPOTS:-jennettes-pier,avalon-pier,avon-pier,kill-devil-hills,humboldt-bay-jetty,huntington-beach-pier,steamer-lane,tres-palmas,doran-beach}" \
+          python -m pipeline.star_preview --variants cal-median,cal-all,swell-height \
+            --explain "${SPOTS:-jennettes-pier,avalon-pier,avon-pier,kill-devil-hills,humboldt-bay-jetty,huntington-beach-pier,steamer-lane,tres-palmas,doran-beach,cowell-s-beach-children-s-surfing-area,caspar,avalon-nj,juno-beach-pier,ocean-reef-park}" \
             --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
 
       - name: Upload the report
