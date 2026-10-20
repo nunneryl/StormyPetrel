@@ -119,13 +119,48 @@ SWELL_MIN_FETCH_KM = 3_000  # a bearing is "open" iff the first land hit is beyo
 # A bearing is hard-blocked (the swell genuinely can't get there) iff a ray hits
 # either (a) a landmass at or above SWELL_BLOCKER_AREA_KM2 *within* the near/mid
 # field (SWELL_MAINLAND_SOLID_KM) — continents / big islands the swell can't get
-# around — or (b) ANY land within SWELL_LOCAL_LANDMASS_KM, which is the coast /
-# headland the spot itself sits on (this must keep blocking even when the local
-# landmass is a small island, e.g. Aquidneck Is. for Newport RI). A large landmass
+# around — or (b) land within SWELL_LOCAL_LANDMASS_KM that R1 or R2 below calls a
+# wall: the coast / headland the spot itself sits on (this must keep blocking even when
+# the local landmass is a small island, e.g. Aquidneck Is. for Newport RI), or an island
+# too broad for its distance to diffract around. A large landmass
 # hit BEYOND SWELL_MAINLAND_SOLID_KM is a distance-graduated partial blocker, not a
 # wall — it wraps open by distance through the diffraction machinery below.
 SWELL_BLOCKER_AREA_KM2 = 500.0   # land below this is a partial blocker, not a wall
-SWELL_LOCAL_LANDMASS_KM = 30.0   # any land nearer than this always hard-blocks (local coast)
+SWELL_LOCAL_LANDMASS_KM = 30.0   # the near field: land this close is judged by R1/R2 below
+# R1 — within SWELL_LOCAL_LANDMASS_KM a polygon is a wall outright only if it is at least
+# SWELL_BLOCKER_AREA_KM2 or it is the spot's OWN coast: its nearest point lies within
+# SWELL_OWN_COAST_KM of the spot. Any other land there is an island, judged by R2.
+SWELL_OWN_COAST_KM = 5.0
+# R2 — an island in the near field is judged by its Fresnel number at a 12 s swell,
+# N = w² / (L · r): w its width across the ray, r the distance to the hit, L the deep-water
+# wavelength g·T²/(2π) = 9.81 × 144 / (2π) = 224.83 m. Below N = 1 the island is too small,
+# for its distance, to cast a shadow at that wavelength and the ray passes it; from 1 to 10
+# it is a partial blocker (the wrap rule below); at 10 or more it is a wall. The rule is
+# applied inside SWELL_LOCAL_LANDMASS_KM only: carried out to 100 km it would wall off Santa
+# Cruz Island (N ≈ 120 at 33 km) for the Ventura spots, a call left to the answer key.
+SWELL_FRESNEL_PERIOD_S = 12.0
+SWELL_FRESNEL_GRAVITY = 9.81
+SWELL_FRESNEL_TRANSPARENT_N = 1.0
+SWELL_FRESNEL_WALL_N = 10.0
+# The Fresnel edge — beyond the near field, an island (a polygon under this area) that is
+# a partial blocker with N ≥ SWELL_FRESNEL_WALL_N on a ray keeps that ray blocked when it
+# lies at least the 12 s penumbra, √(L/r) in degrees (4.7° at 33 km, 2.3° at 136 km),
+# inside both ends of the island's own run, instead of the fixed wrap below, which erased
+# the whole shadow of a broad island (Santa Cruz at Pitas Point, Kaua'i at Pipeline).
+# Islands with N < SWELL_FRESNEL_WALL_N keep the wrap. 10,000 km² takes in every Hawaiian
+# island and the Channel Islands and leaves Cuba, Hispaniola and the continents on the wrap.
+SWELL_FRESNEL_ISLAND_MAX_KM2 = 10_000.0
+# A narrow, distant island core does not block. When the rays an island keeps blocked (its
+# core, by the Fresnel edge or the wrap) span a sector of SWELL_NARROW_CORE_MAX_DEG or less
+# (last ray - first ray + one step) and every one of them meets the island beyond
+# SWELL_NARROW_CORE_MIN_KM, the core opens: a swell's directional spread fills a shadow that
+# narrow, and the soft window will handle partial shadows later. Set so as not to block
+# swells we are unsure about: 2026-10-19 at "under 16°, beyond 60 km"; 2026-10-20, after
+# validate run 25, at "16° or less, beyond 45 km". Cores of 20° or more, or with a ray
+# within 45 km, stay blocked: Catalina at Huntington, Lunada Bay, Newport and Corona del
+# Mar; Santa Cruz and Santa Rosa at El Capitán and Refugio; Kaho'olawe; Lāna'i.
+SWELL_NARROW_CORE_MAX_DEG = 16.0
+SWELL_NARROW_CORE_MIN_KM = 45.0
 # How much MORE of its own landmass a ray may cross than the spot's distance to that
 # landmass's nearest coast, and still count as open. A ray whose start point (2 km out) lies
 # inside the land the spot sits on is the own-coast case: #64 let it through whenever it
@@ -149,20 +184,19 @@ SWELL_OWN_LAND_CROSSING_KM = 2.0
 # that dominated the too-narrow windows wrap open instead. The wrap machinery graduates
 # the demoted set further by distance + subtend, so a broad near-ish coast keeps its core.
 SWELL_MAINLAND_SOLID_KM = 100.0
-# Sub-threshold islands cast a *partial* shadow. Adjacent island shadows
-# separated by a gap narrower than the bridge merge into one "chain" (swell
-# can't squeeze a useful amount of energy through a narrow slot between
-# islands), and the merged shadow is trimmed inward by a diffraction wrap-in
-# on each edge. A lone small island (free water on both edges) wraps away to
-# nothing; a long chain keeps its interior blocked. The wrap-in grows with
-# obstacle distance (more room for energy to diffract back in behind a far
-# island), making the block distance-aware.
+# Sub-threshold islands cast a *partial* shadow. R3 — every partial hit on a ray is kept
+# (not just the nearest) and the hits are grouped by island: each island's own run of rays
+# is trimmed inward by a diffraction wrap-in on each edge, on its own distance, so a near
+# islet is never fused with a far coast behind it. A lone small island (free water on both
+# edges) wraps away to nothing; a long island keeps its interior blocked. The wrap-in grows
+# with obstacle distance (more room for energy to diffract back in behind a far island),
+# making the block distance-aware.
 SWELL_MIN_SHADOW_DEG = 5.0          # ignore any obstacle subtending less than this
-# Extra gap-bridging is OFF by default: true island chains already merge because
-# their per-bearing shadows are contiguous, while the open slots between a
-# spread chain (e.g. the gaps between the northern Channel Islands as seen from
-# Rincon) genuinely pass swell and should stay open. Raise this only if a finer
-# land mask (GSHHG full-res, Phase 1) leaves spurious 1-step holes in a wall.
+# Extra gap-bridging is OFF by default. It applies within one island's run of rays (R3
+# judges islands separately, so it never joins two islands); the open slots between a
+# spread chain (e.g. the gaps between the northern Channel Islands as seen from Rincon)
+# genuinely pass swell and should stay open. Raise this only if a finer land mask (GSHHG
+# full-res, Phase 1) leaves spurious 1-step holes in one island's shadow.
 SWELL_ISLAND_GAP_BRIDGE_DEG = 0.0
 SWELL_DIFFRACTION_WRAP_DEG = 16.0   # per-edge wrap-in trimmed off a small-island shadow
 SWELL_DIFFRACTION_WRAP_PER_100KM = 8.0  # extra per-edge wrap-in per 100 km of obstacle distance
@@ -728,6 +762,12 @@ SPOT_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "spot_orientations.json"
 # NOT guarded against sw1_raycast.py:353, which writes optimal_swell_dir outside enrich —
 # see the file's own _comment for that known limit.
 SPOT_SWELL_WINDOWS_FILE = PIPELINE_DIR / "data" / "spot_swell_windows.json"
+# Slug-keyed swell windows HELD at their stored arcs and optimal: neither a full ray-cast
+# (sw1_raycast._apply_raycast_result) nor enrich (Algo 2a) writes them. Set 2026-10-19 for
+# ten SE Florida spots the R1-R3 island rules would open, extended 2026-10-20 to twenty-one
+# (South Beach Miami to Bathtub Beach) after full run 24: the Great Bahama Bank's shallow
+# water shelters them more than its islands in the land data do.
+SPOT_SWELL_WINDOW_HOLDS_FILE = PIPELINE_DIR / "data" / "spot_swell_window_holds.json"
 # ARC PRUNING, applied by enrich Algo 2d to OVERRIDDEN SPOTS ONLY. After a corrected optimal
 # lands, the raycast's other arcs may sit right around the compass — Honolua Bay's window was
 # [77-91] [161-211] [265-271] [341-47] with the corrected optimal at 350. An arc whose nearest
