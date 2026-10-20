@@ -44,9 +44,12 @@ def test_every_check_names_a_roster_spot():
     slugs = {re.sub(r"[^a-z0-9]+", "-", s["name"].lower()).strip("-") for s in roster}
     assert [c["slug"] for c in R.REGRESSION_CHECKS] == [
         "big-beach-makena", "lahaina-breakwall", "pitas-point", "mondos", "ventura-point",
-        "emma-wood-state-beach", "rincon", "leadbetter-beach", "banzai-pipeline",
+        "emma-wood-state-beach", "rincon", "leadbetter-beach", "lunada-bay", "newport-jetties",
+        "el-capitan-state-beach", "el-capitan-state-beach", "banzai-pipeline",
         "huntington-beach-pier", "canoes-waikiki", "second-beach-newport"]
-    assert [c.get("core_deg") for c in R.REGRESSION_CHECKS if c["kind"] == "island"] == [8] * 8 + [None]
+    assert [c.get("core_deg") for c in R.REGRESSION_CHECKS if c["kind"] == "island"] == [8] * 12 + [None]
+    assert [c["label"] for c in R.REGRESSION_CHECKS[8:12]] == [
+        "Catalina's core", "Catalina's core", "Santa Cruz Island's core", "Santa Rosa Island's core"]
     assert KAUAI["expect"] == "open"
     assert (HUNTINGTON["blocked"], HUNTINGTON["open"]) == ((228, 244), (196, 224))
     assert {c["slug"] for c in R.REGRESSION_CHECKS} <= slugs
@@ -171,3 +174,23 @@ def test_print_returns_false_on_a_failure_and_skips_spots_not_cast(capsys):
     assert "—      lahaina-breakwall      Lāna'i's core: not in this run" in out
     cast = {"big-beach-makena": (20.63, -156.45, _rays(), [], set(), [])}
     assert R.print_regression_checks(cast, 4) is True
+
+
+def test_the_firm_shadows_from_run_25():
+    """Run 25's dumps, transcribed: Catalina (201 km² @ 33.382, -118.435) at Lunada Bay meets
+    rays 168..204 at 35.0-39.3 km and keeps 176..196 blocked; with core_deg 8 the checked core
+    is 176..196. Santa Rosa (222 km² @ 33.967, -120.106) at El Capitán meets 176..200 and
+    keeps 180..196; the checked core is 184..192."""
+    cat = next(c for c in R.REGRESSION_CHECKS if c["slug"] == "lunada-bay")
+    k = {"island": 4, "area_km2": 201.0, "centroid": (33.382, -118.435)}
+    rays = {b: {"result": "small", "partials": [dict(k, dist_km=37.0, fresnel_n=100.0)],
+                "passed": []} for b in range(168, 205, 4)}
+    status, detail = R.regression_verdict(cat, 33.77, -118.42, rays, [], {168, 172, 200, 204}, [], 4)
+    assert status == "PASS" and "core (≥8° in) 176-196" in detail, detail
+    assert R.regression_verdict(cat, 33.77, -118.42, rays, [], {196}, [], 4)[0] == "FAIL"
+    rosa = [c for c in R.REGRESSION_CHECKS if c["slug"] == "el-capitan-state-beach"][1]
+    k = {"island": 6, "area_km2": 222.0, "centroid": (33.967, -120.106)}
+    rays = {b: {"result": "small", "partials": [dict(k, dist_km=50.0, fresnel_n=60.0)],
+                "passed": []} for b in range(176, 201, 4)}
+    status, detail = R.regression_verdict(rosa, 34.46, -120.03, rays, [], {176, 200}, [], 4)
+    assert status == "PASS" and "core (≥8° in) 184-192" in detail, detail

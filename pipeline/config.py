@@ -151,15 +151,16 @@ SWELL_FRESNEL_WALL_N = 10.0
 # island and the Channel Islands and leaves Cuba, Hispaniola and the continents on the wrap.
 SWELL_FRESNEL_ISLAND_MAX_KM2 = 10_000.0
 # A narrow, distant island core does not block. When the rays an island keeps blocked (its
-# core, by the Fresnel edge or the wrap) span a sector narrower than SWELL_NARROW_CORE_MAX_DEG
-# and every one of them meets the island beyond SWELL_NARROW_CORE_MIN_KM, the core opens:
-# a real swell's directional spread fills a shadow that narrow that far off, and the soft
-# window will handle partial shadows later. Set 2026-10-19 so as not to block swells we are
-# unsure about: it opens San Clemente Island at Huntington (12° at 90-95 km), Santa Rosa's
-# single-ray cores at Ventura and Pitas Point, and Kaua'i at Pipeline (8° at 136 km);
-# Catalina at Huntington (44-51 km), Santa Cruz, Kaho'olawe and Lāna'i stay blocked.
+# core, by the Fresnel edge or the wrap) span a sector of SWELL_NARROW_CORE_MAX_DEG or less
+# (last ray - first ray + one step) and every one of them meets the island beyond
+# SWELL_NARROW_CORE_MIN_KM, the core opens: a swell's directional spread fills a shadow that
+# narrow, and the soft window will handle partial shadows later. Set so as not to block
+# swells we are unsure about: 2026-10-19 at "under 16°, beyond 60 km"; 2026-10-20, after
+# validate run 25, at "16° or less, beyond 45 km". Cores of 20° or more, or with a ray
+# within 45 km, stay blocked: Catalina at Huntington, Lunada Bay, Newport and Corona del
+# Mar; Santa Cruz and Santa Rosa at El Capitán and Refugio; Kaho'olawe; Lāna'i.
 SWELL_NARROW_CORE_MAX_DEG = 16.0
-SWELL_NARROW_CORE_MIN_KM = 60.0
+SWELL_NARROW_CORE_MIN_KM = 45.0
 # How much MORE of its own landmass a ray may cross than the spot's distance to that
 # landmass's nearest coast, and still count as open. A ray whose start point (2 km out) lies
 # inside the land the spot sits on is the own-coast case: #64 let it through whenever it

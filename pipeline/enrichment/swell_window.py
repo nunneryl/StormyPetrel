@@ -407,7 +407,7 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
     N, or with N below the wall, keep the wrap.
 
     A NARROW, DISTANT CORE DOES NOT BLOCK. When the core (the rays kept blocked) spans a
-    sector under SWELL_NARROW_CORE_MAX_DEG and every ray in it meets the island beyond
+    sector of SWELL_NARROW_CORE_MAX_DEG or less and every ray in it meets the island beyond
     SWELL_NARROW_CORE_MIN_KM, it opens (decision "open_narrow_core"): a real swell's
     directional spread fills it, and the soft window will handle partial shadows.
 
@@ -443,12 +443,12 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
                 need = SWELL_DIFFRACTION_WRAP_DEG + SWELL_DIFFRACTION_WRAP_PER_100KM * (d / 100.0)
             if (b - lo) >= need and (hi - b) >= need:
                 core.append(b)
-        # A narrow, distant core does not block: a sector under SWELL_NARROW_CORE_MAX_DEG
+        # A narrow, distant core does not block: a sector of SWELL_NARROW_CORE_MAX_DEG or less
         # whose every ray meets the island beyond SWELL_NARROW_CORE_MIN_KM is filled by the
         # swell's directional spread (San Clemente at Huntington, Kaua'i at Pipeline).
         core_width = (core[-1] - core[0] + step_deg) if core else 0
         core_dmin = min((small_hit_dist[b % 360] for b in core), default=0.0)
-        narrow = (bool(core) and core_width < SWELL_NARROW_CORE_MAX_DEG
+        narrow = (bool(core) and core_width <= SWELL_NARROW_CORE_MAX_DEG
                   and core_dmin > SWELL_NARROW_CORE_MIN_KM)
         if not narrow:
             blocked.update(b % 360 for b in core)
@@ -466,7 +466,7 @@ def _island_shadow(small_hit_dist: dict[int, float], step_deg: int, debug=None,
             elif narrow:
                 rec.update(decision="open_narrow_core", core=[core[0] % 360, core[-1] % 360],
                            reason=f"{how}: core {core[0] % 360}–{core[-1] % 360}° is "
-                                  f"{core_width}° wide (< {SWELL_NARROW_CORE_MAX_DEG:g}°), all "
+                                  f"{core_width}° wide (≤ {SWELL_NARROW_CORE_MAX_DEG:g}°), all "
                                   f"beyond {SWELL_NARROW_CORE_MIN_KM:g} km (nearest "
                                   f"{core_dmin:.0f} km): opens")
             else:

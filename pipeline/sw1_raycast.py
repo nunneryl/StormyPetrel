@@ -91,6 +91,10 @@ def _slug(n):
 #   bounded   the open window must total no more than max_width degrees.
 _SANTA_CRUZ = {"label": "Santa Cruz Island's core", "kind": "island", "core_deg": 8,
                "centroid": (34.015, -119.747), "tol_deg": 0.1, "area_km2": (200.0, 320.0)}
+_SANTA_ROSA = {"label": "Santa Rosa Island's core", "kind": "island", "core_deg": 8,
+               "centroid": (33.967, -120.106), "tol_deg": 0.1, "area_km2": (180.0, 260.0)}
+_CATALINA = {"label": "Catalina's core", "kind": "island", "core_deg": 8,
+             "centroid": (33.382, -118.435), "tol_deg": 0.1, "area_km2": (150.0, 260.0)}
 REGRESSION_CHECKS = (
     {"slug": "big-beach-makena", "label": "Kaho'olawe's core", "kind": "island", "core_deg": 8,
      "centroid": (20.55, -156.61), "tol_deg": 0.1, "area_km2": (80.0, 200.0)},
@@ -99,6 +103,11 @@ REGRESSION_CHECKS = (
     *({"slug": slug, **_SANTA_CRUZ} for slug in ("pitas-point", "mondos", "ventura-point",
                                                  "emma-wood-state-beach", "rincon",
                                                  "leadbetter-beach")),
+    # Firm shadows (cores 20° or wider, or within 45 km) that must stay blocked.
+    {"slug": "lunada-bay", **_CATALINA},
+    {"slug": "newport-jetties", **_CATALINA},
+    {"slug": "el-capitan-state-beach", **_SANTA_CRUZ},
+    {"slug": "el-capitan-state-beach", **_SANTA_ROSA},
     {"slug": "banzai-pipeline", "label": "Kaua'i opens", "kind": "island", "expect": "open",
      "centroid": (22.06, -159.526), "tol_deg": 0.1, "area_km2": (1000.0, 2000.0)},
     {"slug": "huntington-beach-pier", "label": "Catalina's core 228–244 stays blocked; "

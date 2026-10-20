@@ -103,58 +103,61 @@ def test_angular_shadow_ignored_under_5deg():
 
 
 # One long island, and the same footprint as three islands. A band at the equator from
-# x 45 to 50 km east, y ±30 km (in the 111.32 km/deg units _square uses; a degree of
-# latitude at the equator is 110.574 km, so the band reaches ±29.799 km). ~298 km², under
-# SWELL_BLOCKER_AREA_KM2, and beyond 30 km, so every hit is partial.
+# x 40 to 45 km east, y ±30 km (in the 111.32 km/deg units _square uses; a degree of
+# latitude at the equator is 110.574 km, so the band reaches ±29.799 km, and its face is
+# 39.9998 km out). ~298 km², under SWELL_BLOCKER_AREA_KM2, and beyond 30 km, so every hit
+# is partial. A ray φ off due east meets the face at r = 40/cos φ:
+#   φ    0      6      12     14     20     26     28     30     32     34     36
+#   r  40.000 40.220 40.893 41.224 42.567 44.504 45.303 46.188 47.167 48.248 49.442
+#   √(L/r)° 4.296 4.284 4.248 4.231 4.164 4.072 4.036 3.998 3.956 3.911 3.864
 _KM = 1.0 / KM_PER_DEG
-_BAND = Polygon([(45 * _KM, -30 * _KM), (50 * _KM, -30 * _KM), (50 * _KM, 30 * _KM), (45 * _KM, 30 * _KM)])
-_BAND_THIRDS = [Polygon([(45 * _KM, lo * _KM), (50 * _KM, lo * _KM), (50 * _KM, hi * _KM), (45 * _KM, hi * _KM)])
+_BAND = Polygon([(40 * _KM, -30 * _KM), (45 * _KM, -30 * _KM), (45 * _KM, 30 * _KM), (40 * _KM, 30 * _KM)])
+_BAND_THIRDS = [Polygon([(40 * _KM, lo * _KM), (45 * _KM, lo * _KM), (45 * _KM, hi * _KM), (40 * _KM, hi * _KM)])
                 for lo, hi in ((-30, -10), (-10, 10), (10, 30))]
 
 
 def test_one_long_island_keeps_its_interior_blocked():
-    """By hand, at the 2° step. A ray φ off due east meets the band's face (x = 45 km) at
-    y = 45·tan φ, inside ±29.799 km while φ <= atan(29.799/45) = 33.51°: rays 58..122 (φ 32
-    in, 34 out), at r = 45/cos φ. Seen broadside the band is ~55 km across every ray, N in
-    the hundreds, so each ray needs only its penumbra √(L/r) inside both ends (the Fresnel
-    edge). Ray 62 (φ 28°): r = 50.965 km, √(0.224829/50.965) = 3.806°, offset 4 — blocked.
-    Ray 60 (φ 30°): offset 2 < 3.769° — open. By symmetry 118 is blocked and 120 open: core
-    62..118, within 60 km, so it blocks. Open 120..60 round north; both its ends touch the
-    island's core, so it is not shrunk: [120-60], span 60 + 360 - 120 + 2 = 302; optimal 270
-    by symmetry. (The wrap, 16 + 8·r/100 ≈ 19.7°, kept only 78..102.)"""
+    """By hand, at the 2° step. The face crossing y = 40·tan φ is inside ±29.799 km while
+    φ <= atan(29.799/40) = 36.69°: rays 54..126 (φ 36 in, 38 out). Seen broadside the band is
+    ~55 km across every ray, N in the hundreds, so each ray needs only its penumbra √(L/r)
+    inside both ends (the Fresnel edge). Ray 58 (φ 32°, r 47.167 km) needs 3.956° and has 4 —
+    blocked; ray 56 (φ 34°) needs 3.911° and has 2 — open. Core 58..122, 66° wide: it blocks.
+    Open 124..56 round north; both its ends touch the island's core, so it is not shrunk:
+    [124-56], span 56 + 360 - 124 + 2 = 294; optimal 270 by symmetry."""
     open_b, r = _open([_BAND])
-    assert r["swell_window_arcs"] == [{"min": 120, "max": 60, "span": 302}], r["swell_window_arcs"]
+    assert r["swell_window_arcs"] == [{"min": 124, "max": 56, "span": 294}], r["swell_window_arcs"]
     assert r["optimal_swell_dir"] == 270
     assert _blocked_near(open_b, 90)
 
 
 def test_three_islands_side_by_side_are_judged_each_on_its_own():
     """R3: the band cut into three islands at y = ±10 km (±9.933 km on the ground). Each is
-    ~20 km across, N ≈ 38 at 45 km, so each keeps its own Fresnel-edge core, and no core
-    reaches across the joins:
-      middle, rays 78..102 (45·tan φ <= 9.933, φ <= 12.45°): ray 82 (φ 8°, r 45.442 km) needs
-        4.030° and has 4 — open; ray 84 (φ 6°) needs 4.039° and has 6 — blocked. Core 84..96.
-      north, rays 58..78 (ray 78 enters it at x = 9.933/tan 12° = 46.73 km, behind the middle
-        one): ray 62 (φ 28°) needs 3.806°, has 4 — blocked; ray 74 (φ 16°, r 46.813 km) needs
-        3.971°, has 4 from 78 — blocked; 76 has 2 — open. Core 62..74. South: 106..118.
-    Every core is within 60 km, so all three block, the northern one though it is only 14°
-    wide (74 - 62 + 2). The joins 76..82 and 98..104 stay open: each lies between two island
-    cores, so neither end is shrunk and they are kept as arcs, 8° each. Arcs: [76-82],
-    [98-104] and [120-60] (span 302, as the single band).
+    ~20 km across, N ≈ 37-44, so each keeps its own Fresnel-edge core, and no core reaches
+    across the joins:
+      middle, rays 78..102 (40·tan 12° = 8.502 <= 9.933; at 14° 9.973 is past it): ray 84
+        (φ 6°) needs 4.284° and has 6 — core; ray 82 (φ 8°) needs 4.275° and has 4 — not.
+        Core 84..96.
+      north, rays 54..76 (φ 14..36): ray 70 (φ 20°) needs 4.164° and has 6 from 76 — core;
+        ray 72 (φ 18°) has 4 < 4.189° — not; ray 58 (φ 32°) needs 3.956° and has 4 from 54
+        — core. Core 58..70. South: 110..122.
+    Each core is 14° wide — 16° or less — but each has rays within 45 km (the middle one at
+    40.0 km, the northern one at 42.567 km on ray 70), so all three block. The joins 72..82
+    and 98..108 stay open: each lies between two island cores, so neither end is shrunk.
+    Arcs: [72-82], [98-108] (12° each) and [124-56] (span 294, as the single band).
 
     Fused into one chain, as before R3, the nearest distances of the single band give its
-    one core, 62..118 (test_one_long_island_keeps_its_interior_blocked)."""
+    one core, 58..122 (test_one_long_island_keeps_its_interior_blocked)."""
     _, r = _open(_BAND_THIRDS)
-    assert r["swell_window_arcs"] == [{"min": 76, "max": 82, "span": 8},
-                                      {"min": 98, "max": 104, "span": 8},
-                                      {"min": 120, "max": 60, "span": 302}], r["swell_window_arcs"]
+    assert r["swell_window_arcs"] == [{"min": 72, "max": 82, "span": 12},
+                                      {"min": 98, "max": 108, "span": 12},
+                                      {"min": 124, "max": 56, "span": 294}], r["swell_window_arcs"]
     _, _, _, blocked, partial = _debug_cast_partial(_BAND_THIRDS)
-    assert sorted(blocked) == (list(range(62, 75, 2)) + list(range(84, 97, 2))
-                               + list(range(106, 119, 2)))
+    assert sorted(blocked) == (list(range(58, 71, 2)) + list(range(84, 97, 2))
+                               + list(range(110, 123, 2)))
     fused = {b: min(h.dist_km for h in hits.values()) for b, hits in partial.items()}
     fused_n = {b: max(h.fresnel_n for h in hits.values()) for b, hits in partial.items()}
-    assert sorted(fused) == list(range(58, 123, 2))
-    assert sorted(sw._island_shadow(fused, 2, fresnel_n=fused_n)) == list(range(62, 119, 2))
+    assert sorted(fused) == list(range(54, 127, 2))
+    assert sorted(sw._island_shadow(fused, 2, fresnel_n=fused_n)) == list(range(58, 123, 2))
 
 
 def _debug_cast_partial(polys, step=None):
@@ -201,13 +204,13 @@ def test_debug_blockers_attribution():
     # matching test_one_long_island_keeps_its_interior_blocked.
     _, dcc, _, sb_chain = _debug_cast([_BAND])
     assert [(c["lo"], c["hi"], c["decision"], c["core"], c["edge_rays"]) for c in dcc] == [
-        (58, 122, "blocked_core", [62, 118], 33)]
-    assert sb_chain == set(range(62, 119, 2))
+        (54, 126, "blocked_core", [58, 122], 37)]
+    assert sb_chain == set(range(58, 123, 2))
     # the same footprint as three islands: three records, one per island, each its own core
     _, dcc3, _, sb3 = _debug_cast(_BAND_THIRDS)
     assert sorted((c["lo"], c["hi"], c["decision"], c["core"]) for c in dcc3) == [
-        (58, 78, "blocked_core", [62, 74]), (78, 102, "blocked_core", [84, 96]),
-        (102, 122, "blocked_core", [106, 118])]
+        (54, 76, "blocked_core", [58, 70]), (78, 102, "blocked_core", [84, 96]),
+        (104, 126, "blocked_core", [110, 122])]
     assert len({c["island"] for c in dcc3}) == 3
 
     # far small island: 108 km² at 80 km wraps clean → an OPEN chain record, no block
@@ -773,11 +776,11 @@ def test_r3_a_near_islet_fused_with_a_far_coast_is_judged_separately():
 
 def test_r3_a_near_islet_that_would_block_alone_still_does_behind_a_far_coast():
     """The long band of test_one_long_island_keeps_its_interior_blocked, with _FAR_COAST
-    behind it: R3 judges the band on its own run, so its core 62..118 stands, exactly as
+    behind it: R3 judges the band on its own run, so its core 58..122 stands, exactly as
     without the coast."""
     _, _, _, small_blocked, partial = _debug_cast_partial([_BAND, _FAR_COAST])
-    assert small_blocked == set(range(62, 119, 2))
-    assert all(len(partial[b]) == 2 for b in range(58, 123, 2))
+    assert small_blocked == set(range(58, 123, 2))
+    assert all(len(partial[b]) == 2 for b in range(68, 113, 2))   # the coast spans 68..112 at least
 
 
 def test_r3_never_blocks_a_ray_the_fused_chain_would_not():
@@ -815,12 +818,12 @@ def test_fresnel_edge_by_hand():
     assert round(sw.fresnel_edge_deg(136.0, period_s=8.0), 4) == 1.5531
 
 
-def test_a_narrow_core_beyond_60_km_opens():
+def test_a_narrow_core_beyond_45_km_opens():
     """Past SWELL_MAINLAND_SOLID_KM a 1,453 km² island is a partial blocker. Half-angle
     atan(18.931/135.940) = 7.93°: rays 84..96. N on ray 90 = 37.865² / (0.224829 × 135.940)
     = 46.9 ≥ 10, so the Fresnel edge: ray 88 (φ 2°, r 136.023 km) needs 2.329° and has 4 —
-    in the core; ray 86 has 2 — not. Core 88..92: 92 - 88 + 2 = 6° wide, under 16°, every
-    ray of it 136.0 km out, beyond 60 km — it does not block. The compass is open."""
+    in the core; ray 86 has 2 — not. Core 88..92: 92 - 88 + 2 = 6° wide, 16° or less, every
+    ray of it 136.0 km out, beyond 45 km — it does not block. The compass is open."""
     dr, dc, hard, blocked = _debug_cast([_KAUAI])
     assert not hard and not blocked
     assert round(dr[90]["partials"][0]["fresnel_n"], 1) == 46.9
@@ -941,16 +944,16 @@ def test_the_blocker_dump_prints_each_rays_distance_and_n(capsys):
     assert ("per ray (bearing dist N): 84 136.7km N=56.4 · 88 136.0km N=50.2 · "
             "92 136.0km N=50.2 · 96 136.7km N=56.4") in out
     assert "→ OPEN narrow core 88–92" in out and "Fresnel edge on 4 of the rays" in out
-    assert "core 88–92° is 8° wide (< 16°), all beyond 60 km (nearest 136 km): opens" in out
+    assert "core 88–92° is 8° wide (≤ 16°), all beyond 45 km (nearest 136 km): opens" in out
 
 
 # --------------------------------------------------------------------------- #
 # A narrow, distant core does not block                                        #
 # --------------------------------------------------------------------------- #
 # _island_shadow on one island's rays at the 4° step, every ray with N = 50 (the Fresnel
-# edge). √(L/r): at 61 km √(0.224829/61) = 0.060710 rad = 3.478°; at 59 km 0.061730 rad =
-# 3.537°; at 60 km 3.507°. Each is under 4, so a run lo..hi has core lo+4 .. hi-4, and the
-# core's width is its sector, (hi - 4) - (lo + 4) + 4.
+# edge). √(L/r), L = 0.224829 km: at 44 km √(0.00510975) = 0.0714825 rad = 4.0957°; at 45 km
+# 0.0706838 rad = 4.0499°; at 46 km 0.0699113 rad = 4.0056°. Each is over 4, so a run
+# lo..hi has core lo+8 .. hi-8, and the core's width is its sector, last - first + 4.
 
 def _core(run_hi, dists):
     rays = list(range(100, run_hi + 1, 4))
@@ -958,29 +961,30 @@ def _core(run_hi, dists):
     return sorted(sw._island_shadow(d, 4, fresnel_n={b: 50.0 for b in rays}))
 
 
-def test_a_12_degree_core_at_61_km_opens():
-    """Run 100..116: core 104..112, 12° wide, all at 61 km — narrower than 16°, beyond 60 km."""
-    assert _core(116, 61.0) == []
+def test_a_16_degree_core_at_46_km_opens():
+    """Run 100..128: core 108..120, 120 - 108 + 4 = 16° — 16° or less, all beyond 45 km."""
+    assert _core(128, 46.0) == []
 
 
-def test_a_12_degree_core_at_59_km_blocks():
-    """The same core at 59 km is not beyond 60 km."""
-    assert _core(116, 59.0) == [104, 108, 112]
+def test_a_16_degree_core_at_44_km_blocks():
+    """The same core at 44 km is not beyond 45 km."""
+    assert _core(128, 44.0) == [108, 112, 116, 120]
 
 
-def test_a_12_degree_core_at_exactly_60_km_blocks():
-    """"Beyond 60 km" is strict."""
-    assert _core(116, 60.0) == [104, 108, 112]
+def test_a_16_degree_core_at_exactly_45_km_blocks():
+    """"Beyond 45 km" is strict."""
+    assert _core(128, 45.0) == [108, 112, 116, 120]
 
 
-def test_a_16_degree_core_at_61_km_blocks():
-    """Run 100..120: core 104..116, 16° wide — not narrower than 16°."""
-    assert _core(120, 61.0) == [104, 108, 112, 116]
+def test_a_20_degree_core_at_46_km_blocks():
+    """Run 100..132: core 108..124, 124 - 108 + 4 = 20° — wider than 16°."""
+    assert _core(132, 46.0) == [108, 112, 116, 120, 124]
 
 
-def test_a_narrow_core_with_one_ray_within_60_km_blocks():
-    """Core 104..112 at 61, 59, 61 km: not every ray of it is beyond 60 km."""
-    assert _core(116, [61.0, 61.0, 59.0, 61.0, 61.0]) == [104, 108, 112]
+def test_a_narrow_core_with_one_ray_within_45_km_blocks():
+    """Core 108..120 with ray 112 at 44 km and the rest at 46: not every ray of it is beyond
+    45 km. (Ray 112 is 12° from the run's start, past its 4.096° penumbra.)"""
+    assert _core(128, [46.0, 46.0, 46.0, 44.0, 46.0, 46.0, 46.0, 46.0]) == [108, 112, 116, 120]
 
 
 # --------------------------------------------------------------------------- #
@@ -1033,16 +1037,17 @@ def test_a_run_shrunk_to_one_step_at_its_wall_end_is_dropped():
 
 
 def test_validate_reads_the_island_cores_too(capsys):
-    """The long band in the validate table, at the 4° step: rays 60..120 meet it (φ 30 in,
-    34 out); ray 64 (φ 26°, r = 45/cos 26° = 50.067 km) needs √(0.224829/50.067) = 3.840°
-    and has 4 — core 64..116, within 60 km. Open 120..60 touches the core at both ends:
-    unshrunk, [120-60], span 60 + 360 - 120 + 4 = 304."""
+    """The 194 km² island of test_area_filter_demotes_small_island in the validate table, at
+    the 4° step: half-angle 10.31°, rays 80..100. Ray 84 (φ 6°, r 38.245 km) needs 4.393° and
+    has 4 — not core; ray 88 (φ 2°) has 8 — core. Core 88..92, 8° wide but at 38 km, within
+    45: it blocks. Rays 96, 100, every ray round north and 80, 84 are open: one run 96..84,
+    both ends touching the core, unshrunk: [96-84], span 84 + 360 - 96 + 4 = 352."""
     from pipeline import sw1_raycast as R
-    land = _index([_BAND])
+    land = _index([_square(194, 45)])
     saved = R.load_land_index
     R.load_land_index = lambda: land
     try:
         R.run_validate(spots=[("T", 0.0, 0.0, 90, None, None, "")])
     finally:
         R.load_land_index = saved
-    assert "[120–60(304)]" in capsys.readouterr().out
+    assert "[96–84(352)]" in capsys.readouterr().out
