@@ -69,7 +69,7 @@
   },
   "antonio-s": {
     "description": "Facing north, Antonio's is a beach break in Puerto Rico over a mixed bottom. The optimal swell comes from the northwest, and the offshore wind is from the south. It works best from low to mid tide.",
-    "signature": "v2:d4179f6c09c3d85a"
+    "signature": "v2:f1e9c55c670a582a"
   },
   "asbury-park": {
     "description": "Asbury Park is a New Jersey beach break. It faces east, and it is offshore in west winds. The optimal swell comes from the east.",
@@ -133,7 +133,7 @@
   },
   "backdoor-pipeline": {
     "description": "Backdoor Pipeline is a Hawaii reef break with a rock bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest.",
-    "signature": "v2:2174d1bc8345b46f"
+    "signature": "v2:3eb8a458803ffd78"
   },
   "baileys-beach": {
     "description": "Baileys Beach is a beach break in Rhode Island over a sand bottom. It faces southwest, and its optimal swell direction is south. Offshore winds blow from the northeast. It works at all stages of the tide.",
@@ -149,7 +149,7 @@
   },
   "banzai-pipeline": {
     "description": "Banzai Pipeline is a Hawaii reef break with a rock bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest.",
-    "signature": "v2:e4c83b8aad4ffc7b"
+    "signature": "v2:76d931fef7f3c785"
   },
   "barbers-point": {
     "description": "Barbers Point is a Hawaii reef break with a coral bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
@@ -181,7 +181,7 @@
   },
   "bellows-beach": {
     "description": "Bellows Beach is a beach break in Hawaii. It faces east, and its optimal swell direction is northeast. Offshore winds blow from the west. It works at all stages of the tide.",
-    "signature": "v2:a6bfb9d6e9b46463"
+    "signature": "v2:fe7449278b51c6a0"
   },
   "belmar": {
     "description": "Belmar is a beach break in New Jersey over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
@@ -217,7 +217,7 @@
   },
   "blackies": {
     "description": "Blackies is a California beach break with a sand bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:4334e729e349ca74"
+    "signature": "v2:0a375cbbe30b1cb1"
   },
   "bob-hall-pier": {
     "description": "Bob Hall Pier is a Texas surf spot. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the east.",
@@ -232,8 +232,8 @@
     "signature": "v2:ee88c7aee0c299a4"
   },
   "bolsa-chica-state-beach": {
-    "description": "Bolsa Chica State Beach is a California surf spot. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:d33754202b5cf1e7"
+    "description": "Bolsa Chica State Beach is a California surf spot. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south.",
+    "signature": "v2:334eef8558194820"
   },
   "bombora": {
     "description": "Bombora is a Hawaii reef break. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
@@ -285,27 +285,27 @@
   },
   "c-street-ventura": {
     "description": "C Street Ventura is a point break in California over a mixed bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
-    "signature": "v2:ce3b2925a974bc8b"
+    "signature": "v2:0bbeed225625f987"
   },
   "cable-landing": {
     "description": "Cable Landing is a surf spot in California. It faces west, and its optimal swell direction is west. Offshore winds blow from the east.",
     "signature": "v2:b53793510fd06b12"
   },
   "cabrillo-beach": {
-    "description": "Facing south, Cabrillo Beach is a beach break in California over a sand bottom. The optimal swell comes from the southwest, and the offshore wind is from the north.",
-    "signature": "v2:5f3b7bf6bae7f4b0"
+    "description": "Facing south, Cabrillo Beach is a beach break in California over a sand bottom. The optimal swell comes from the south, and the offshore wind is from the north.",
+    "signature": "v2:b035365156508f56"
   },
   "caesars-pier": {
     "description": "Caesars Pier is a New Jersey surf spot. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
     "signature": "v2:d9d6d1694b7e363c"
   },
   "campus-point-ucsb": {
-    "description": "Campus Point UCSB is a point break in California over a sand bottom. It faces southeast. Offshore winds blow from the northwest.",
-    "signature": "v2:0cb938849515e165"
+    "description": "Campus Point UCSB is a point break in California over a sand bottom. It faces southeast, and its optimal swell direction is south. Offshore winds blow from the northwest.",
+    "signature": "v2:8e10bff60c34eeaa"
   },
   "cannon-beach": {
     "description": "Cannon Beach is an Oregon beach break. It faces west, and it is offshore in east winds. The optimal swell comes from the west.",
-    "signature": "v2:ddb864779f2a8ab1"
+    "signature": "v2:fe79abaa23629325"
   },
   "canoes-waikiki": {
     "description": "Canoes Waikiki is a reef break in Hawaii over a mixed bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -357,7 +357,7 @@
   },
   "carpinteria-state-beach": {
     "description": "Carpinteria State Beach is a California beach break with a sand bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south.",
-    "signature": "v2:9656ef9e0c3378bd"
+    "signature": "v2:64e0139fe39d110e"
   },
   "caspar": {
     "description": "Caspar is a beach break in California over a sand bottom. It faces northwest, and its optimal swell direction is west. Offshore winds blow from the southeast.",
@@ -381,7 +381,7 @@
   },
   "chuns-reef": {
     "description": "Chuns Reef is a reef break in Hawaii over a rock bottom. It faces northwest, and its optimal swell direction is northwest. Offshore winds blow from the southeast.",
-    "signature": "v2:bb786b3c938568f9"
+    "signature": "v2:340fbfa360c8e9d7"
   },
   "church": {
     "description": "Church is a point break in California over a mixed bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -405,7 +405,7 @@
   },
   "conant-ave": {
     "description": "Facing east, Conant Ave is a reef break in Rhode Island over a rock bottom. The optimal swell comes from the south, and the offshore wind is from the west.",
-    "signature": "v2:4d4599e29a1636c0"
+    "signature": "v2:f1ad614f302072a0"
   },
   "coolidge": {
     "description": "Coolidge is a surf spot in Florida. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -417,7 +417,7 @@
   },
   "corona-del-mar": {
     "description": "Corona Del Mar is a California beach break. It faces south, and it is offshore in north winds. The optimal swell comes from the southwest.",
-    "signature": "v2:71569d7ec7270081"
+    "signature": "v2:9b24f5fc7e7ef63e"
   },
   "coronado-shores": {
     "description": "Coronado Shores is a beach break in California over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -521,7 +521,7 @@
   },
   "devereux": {
     "description": "Devereux is a reef break in California over a mixed bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
-    "signature": "v2:a64507292a555203"
+    "signature": "v2:aced0f08d5bba08f"
   },
   "dewees-island": {
     "description": "Dewees Island is a South Carolina beach break. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -589,11 +589,11 @@
   },
   "ehukai-beach-park": {
     "description": "Ehukai Beach Park is a reef break in Hawaii over a rock bottom. It faces northwest, and its optimal swell direction is northwest. Offshore winds blow from the southeast.",
-    "signature": "v2:b66cd6e9bed9da5c"
+    "signature": "v2:43ef91ba73a8ed51"
   },
   "el-capitan-state-beach": {
-    "description": "El Capitan State Beach is a point break in California over a mixed bottom. It faces southwest, and its optimal swell direction is south. Offshore winds blow from the northeast. It works best from low to mid tide.",
-    "signature": "v2:1169f4bd23dde469"
+    "description": "El Capitan State Beach is a point break in California over a mixed bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast. It works best from low to mid tide.",
+    "signature": "v2:bdc23f2d3bff2548"
   },
   "el-porto": {
     "description": "El Porto is a beach break in California over a sand bottom. It faces west, and its optimal swell direction is southwest. Offshore winds blow from the east.",
@@ -601,7 +601,7 @@
   },
   "electric-beach": {
     "description": "Electric Beach is a Hawaii reef break with a rock bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:f8dabbc5c4c0f2e9"
+    "signature": "v2:e1c8440cec966270"
   },
   "emerald-isle": {
     "description": "Emerald Isle is a surf spot in North Carolina. It faces south, and its optimal swell direction is southeast. Offshore winds blow from the north.",
@@ -609,7 +609,7 @@
   },
   "emma-wood-state-beach": {
     "description": "Emma Wood State Beach is a California beach break with a rock bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:f265c0ac1e915b18"
+    "signature": "v2:5aa26be3390516c6"
   },
   "englewood": {
     "description": "Englewood is a surf spot in Florida. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -617,7 +617,7 @@
   },
   "faria-beach": {
     "description": "Facing southwest, Faria Beach is a beach break in California over a cobble bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
-    "signature": "v2:78d2321c92d6f0a8"
+    "signature": "v2:3e267bc87acc0204"
   },
   "fenwick-island": {
     "description": "Facing east, Fenwick Island is a beach break in Delaware. The optimal swell comes from the east, and the offshore wind is from the west.",
@@ -713,7 +713,7 @@
   },
   "garbage-beach": {
     "description": "Garbage Beach is a California reef break with a rock bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the west.",
-    "signature": "v2:407d3bd8119c1321"
+    "signature": "v2:913d82ad2f6fdd6a"
   },
   "garden-city-pier": {
     "description": "Facing southeast, Garden City Pier is a surf spot in South Carolina. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",
@@ -725,7 +725,7 @@
   },
   "gasparilla": {
     "description": "Facing southwest, Gasparilla is a surf spot in Florida. The optimal swell comes from the west, and the offshore wind is from the northeast.",
-    "signature": "v2:8b3c691656da7291"
+    "signature": "v2:d9a958fcf0ef0548"
   },
   "georgica-beach": {
     "description": "Facing southeast, Georgica Beach is a surf spot in New York. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",
@@ -781,7 +781,7 @@
   },
   "hammonds": {
     "description": "Hammonds is a reef break in California over a mixed bottom. It faces south, and its optimal swell direction is south. Offshore winds blow from the north.",
-    "signature": "v2:4f7043bb57f40a6a"
+    "signature": "v2:8e7e5d668920c852"
   },
   "hampton-beach": {
     "description": "Hampton Beach is a beach break in New Hampshire over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west. It works best from mid to high tide.",
@@ -889,27 +889,27 @@
   },
   "huntington-beach-california": {
     "description": "Huntington Beach, California is a beach break. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest. It works at all stages of the tide.",
-    "signature": "v2:503e5aab892faecf"
+    "signature": "v2:c84111469093834d"
   },
   "huntington-beach-pier": {
     "description": "Huntington Beach Pier is a beach break in California over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
-    "signature": "v2:68b80938bb942cff"
+    "signature": "v2:ef90ee92538df7e9"
   },
   "huntington-cliffs": {
-    "description": "Huntington Cliffs is a beach break in California over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
-    "signature": "v2:7a862c4750217816"
+    "description": "Huntington Cliffs is a beach break in California over a sand bottom. It faces southwest, and its optimal swell direction is south. Offshore winds blow from the northeast.",
+    "signature": "v2:eb4c01ccfd3e4326"
   },
   "imperial-beach-california": {
-    "description": "Imperial Beach, California is a beach break. It faces west, and its optimal swell direction is west. Offshore winds blow from the east.",
-    "signature": "v2:5c3411acb79c93b8"
+    "description": "Imperial Beach, California is a beach break. It faces west, and its optimal swell direction is southwest. Offshore winds blow from the east.",
+    "signature": "v2:3e986382f005565a"
   },
   "imperial-beach-pier": {
-    "description": "Imperial Beach Pier is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the west. It works best around mid tide.",
-    "signature": "v2:e96c1a761857587f"
+    "description": "Imperial Beach Pier is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the southwest. It works best around mid tide.",
+    "signature": "v2:1c8c4b7a91fe919d"
   },
   "indian-beach-ecola": {
     "description": "Facing west, Indian Beach Ecola is a beach break in Oregon. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:d8abb4c23b76bfd3"
+    "signature": "v2:31c437ac14a1f7f1"
   },
   "indian-river-inlet": {
     "description": "Facing east, Indian River Inlet is a jetty break in Delaware over a sand bottom. The optimal swell comes from the east, and the offshore wind is from the west. It works best from low to mid tide.",
@@ -917,7 +917,7 @@
   },
   "indian-rocks-beach": {
     "description": "Facing west, Indian Rocks Beach is a surf spot in Florida. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:3b275e798b697697"
+    "signature": "v2:e170debcdce94fa2"
   },
   "indiatlantic": {
     "description": "Indiatlantic is a surf spot in Florida. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
@@ -925,7 +925,7 @@
   },
   "indicators": {
     "description": "Facing west, Indicators is a point break in Puerto Rico over a rock bottom. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:ee646a285214e19a"
+    "signature": "v2:b5fe3a34c85e6395"
   },
   "isla-blanca-park": {
     "description": "Isla Blanca Park is a beach break in Texas over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
@@ -1013,11 +1013,11 @@
   },
   "keaau-beach": {
     "description": "Keaau Beach is a beach break in Hawaii. It faces west, and its optimal swell direction is southwest. Offshore winds blow from the east.",
-    "signature": "v2:d31c3b39620253c3"
+    "signature": "v2:9d9785aba93429da"
   },
   "key-west": {
-    "description": "Key West is a surf spot in Florida. It faces southeast, and its optimal swell direction is southwest. Offshore winds blow from the northwest.",
-    "signature": "v2:15c5a211149b59aa"
+    "description": "Key West is a surf spot in Florida. It faces southeast, and its optimal swell direction is southeast. Offshore winds blow from the northwest.",
+    "signature": "v2:2f52ed7b8879e79b"
   },
   "keyes-beach": {
     "description": "Keyes Beach is a Massachusetts surf spot. It faces south, and it is offshore in north winds. The optimal swell comes from the south.",
@@ -1045,7 +1045,7 @@
   },
   "kure-beach": {
     "description": "Facing east, Kure Beach is a beach break in North Carolina. The optimal swell comes from the southeast, and the offshore wind is from the west.",
-    "signature": "v2:117444694f6bc70c"
+    "signature": "v2:7a93bf656f1de50e"
   },
   "la-jolla-shores": {
     "description": "La Jolla Shores is a beach break in California over a sand bottom. It faces west, and its optimal swell direction is west. Offshore winds blow from the east.",
@@ -1053,7 +1053,7 @@
   },
   "la-pared-luquillo": {
     "description": "Facing northeast, La Pared Luquillo is a surf spot in Puerto Rico over a sand bottom. The optimal swell comes from the north, and the offshore wind is from the southwest.",
-    "signature": "v2:08ea6a8fc02a8f5d"
+    "signature": "v2:6c48f3c1cdf1bb92"
   },
   "la-push-first-beach": {
     "description": "La Push First Beach is a beach break in Washington. It faces south, and its optimal swell direction is west. Offshore winds blow from the north.",
@@ -1069,7 +1069,7 @@
   },
   "lahaina-breakwall": {
     "description": "Lahaina Breakwall is a Hawaii reef break with a coral bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south.",
-    "signature": "v2:483692132b07f30c"
+    "signature": "v2:d519c29b06da1e02"
   },
   "lake-worth-pier": {
     "description": "Lake Worth Pier is a beach break in Florida. It faces east, and its optimal swell direction is east. Offshore winds blow from the west. It works at all stages of the tide.",
@@ -1077,7 +1077,7 @@
   },
   "laniakea": {
     "description": "Facing northwest, Laniakea is a reef break in Hawaii over a rock bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
-    "signature": "v2:e2ec9326761dd006"
+    "signature": "v2:9a2c5a333c4ed6cb"
   },
   "launiupoko": {
     "description": "Launiupoko is a Hawaii reef break with a rock bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
@@ -1088,8 +1088,8 @@
     "signature": "v2:15a39f79548939ee"
   },
   "leadbetter-beach": {
-    "description": "Facing southeast, Leadbetter Beach is a point break in California over a mixed bottom. The optimal swell comes from the south, and the offshore wind is from the northwest. It works best from low to mid tide.",
-    "signature": "v2:3752b9bfd0f1963f"
+    "description": "Facing southeast, Leadbetter Beach is a point break in California over a mixed bottom. The optimal swell comes from the southwest, and the offshore wind is from the northwest. It works best from low to mid tide.",
+    "signature": "v2:7d81c1f7e9159233"
   },
   "leo-carrillo-state-beach": {
     "description": "Leo Carrillo State Beach is a reef break in California over a rock bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
@@ -1113,7 +1113,7 @@
   },
   "log-cabins": {
     "description": "Log Cabins is a Hawaii reef break with a mixed bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest. It works at all stages of the tide.",
-    "signature": "v2:3751d28b69b51477"
+    "signature": "v2:85dc035b198ef867"
   },
   "long-beach-island": {
     "description": "Long Beach Island is a New Jersey surf spot. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -1161,7 +1161,7 @@
   },
   "lunada-bay": {
     "description": "Lunada Bay is a reef break in California over a rock bottom. It faces west, and its optimal swell direction is southwest. Offshore winds blow from the east. It works at all stages of the tide.",
-    "signature": "v2:133dc7bb96e9b153"
+    "signature": "v2:7be9f6a1ffa5d1a2"
   },
   "lymans": {
     "description": "Lymans is a Hawaii reef break with a rock bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the southwest.",
@@ -1181,7 +1181,7 @@
   },
   "madeira-beach": {
     "description": "Madeira Beach is a Florida beach break with a sand bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:07fbd7289ae25075"
+    "signature": "v2:8dc43188600ef4bd"
   },
   "main-beach-east-hampton": {
     "description": "Facing southeast, Main Beach East Hampton is a beach break in New York over a sand bottom. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",
@@ -1189,11 +1189,11 @@
   },
   "makaha": {
     "description": "Facing southwest, Makaha is a beach break in Hawaii over a rock bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast. It works at all stages of the tide.",
-    "signature": "v2:a69fed6b9df443ae"
+    "signature": "v2:aed6352dd83da02a"
   },
   "makapuu-beach-park": {
     "description": "Facing northeast, Makapuu Beach Park is a beach break in Hawaii. The optimal swell comes from the east, and the offshore wind is from the southwest.",
-    "signature": "v2:ca8fdee984409c13"
+    "signature": "v2:191a16a5d6f64c35"
   },
   "malibu-point": {
     "description": "Malibu Point is a point break in California over a mixed bottom. It faces south, and its optimal swell direction is south. Offshore winds blow from the north.",
@@ -1233,7 +1233,7 @@
   },
   "maria-s": {
     "description": "Maria's is a Puerto Rico reef break. It faces west, and it is offshore in east winds. The optimal swell comes from the west.",
-    "signature": "v2:a6f4bf6b2798b906"
+    "signature": "v2:1cfcee9e004fc529"
   },
   "marina-state-beach": {
     "description": "Marina State Beach is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the west. It works best from mid to high tide.",
@@ -1277,7 +1277,7 @@
   },
   "mesa-lane": {
     "description": "Facing south, Mesa Lane is a beach break in California. The optimal swell comes from the southwest, and the offshore wind is from the north.",
-    "signature": "v2:5eeb97d8223a813c"
+    "signature": "v2:08c2ba3c4cba0fb4"
   },
   "mexico-beach": {
     "description": "Facing southwest, Mexico Beach is a surf spot in Florida. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
@@ -1297,11 +1297,11 @@
   },
   "miramar": {
     "description": "Facing south, Miramar is a point break in California over a mixed bottom. The optimal swell comes from the south, and the offshore wind is from the north. It works best from low to mid tide.",
-    "signature": "v2:0ca33b33755f7422"
+    "signature": "v2:d168d56de4b378d7"
   },
   "misquamicut-state-beach": {
-    "description": "Misquamicut State Beach is a Rhode Island beach break. It faces south, and it is offshore in north winds. The optimal swell comes from the south. It works at all stages of the tide.",
-    "signature": "v2:bb2589954adebf76"
+    "description": "Misquamicut State Beach is a Rhode Island beach break. It faces south, and it is offshore in north winds. The optimal swell comes from the southeast. It works at all stages of the tide.",
+    "signature": "v2:9fe88425af5a0512"
   },
   "mission-beach": {
     "description": "Facing west, Mission Beach is a beach break in California over a sand bottom. The optimal swell comes from the west, and the offshore wind is from the east. It works best around high tide.",
@@ -1321,7 +1321,7 @@
   },
   "mondos": {
     "description": "Mondos is a beach break in California over a mixed bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
-    "signature": "v2:6afd8a653c806e5a"
+    "signature": "v2:87fbb51798a7c363"
   },
   "monmouth": {
     "description": "Facing east, Monmouth is a beach break in New Jersey over a sand bottom. The optimal swell comes from the southeast, and the offshore wind is from the west.",
@@ -1368,8 +1368,8 @@
     "signature": "v2:bf8029e001ab8aff"
   },
   "mussel-shoals": {
-    "description": "Facing southwest, Mussel Shoals is a point break in California over a mixed bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast. It works best from low to mid tide.",
-    "signature": "v2:3895abfaba6f926a"
+    "description": "Facing southwest, Mussel Shoals is a point break in California over a mixed bottom. The optimal swell comes from the south, and the offshore wind is from the northeast. It works best from low to mid tide.",
+    "signature": "v2:717f48698f03e351"
   },
   "mustang-island": {
     "description": "Mustang Island is a surf spot in Texas. It faces southeast, and its optimal swell direction is southeast. Offshore winds blow from the northwest.",
@@ -1433,15 +1433,15 @@
   },
   "newport-beach-california": {
     "description": "Newport Beach, California is a beach break. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest. It works at all stages of the tide.",
-    "signature": "v2:72d3fc8100ae619d"
+    "signature": "v2:79f5b54949ba51f5"
   },
   "newport-jetties": {
     "description": "Facing southwest, Newport Jetties is a jetty break in California over a sand bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
-    "signature": "v2:18bd5ce1d180b6c5"
+    "signature": "v2:558c9563423b76ac"
   },
   "newport-point": {
     "description": "Facing southwest, Newport Point is a beach break in California over a sand bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast. It works best around mid tide.",
-    "signature": "v2:5d4de02913a98004"
+    "signature": "v2:6ef7dd72397a11da"
   },
   "nobadeer": {
     "description": "Nobadeer is a Massachusetts surf spot. It faces south, and it is offshore in north winds. The optimal swell comes from the south.",
@@ -1541,7 +1541,7 @@
   },
   "off-the-wall": {
     "description": "Facing northwest, Off The Wall is a reef break in Hawaii over a mixed bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
-    "signature": "v2:da8fea80fd68b7a5"
+    "signature": "v2:5a064bd5bb7fb62f"
   },
   "ogunquit": {
     "description": "Ogunquit is a rivermouth break in Maine over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
@@ -1569,11 +1569,11 @@
   },
   "oxnard-beach": {
     "description": "Oxnard Beach is a beach break in California over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast. It works at all stages of the tide.",
-    "signature": "v2:90a77bfdb924adec"
+    "signature": "v2:476f9d6700d6f56e"
   },
   "p-p-kea-hawaii": {
     "description": "Pūpūkea, Hawaii is a beach break with a mixed bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest.",
-    "signature": "v2:01eae2ec65f091d9"
+    "signature": "v2:9dd70570a82dd445"
   },
   "pacific-beach": {
     "description": "Facing west, Pacific Beach is a beach break in California. The optimal swell comes from the west, and the offshore wind is from the east.",
@@ -1585,7 +1585,7 @@
   },
   "pacific-city-beach": {
     "description": "Pacific City Beach is an Oregon beach break. It faces west, and it is offshore in east winds. The optimal swell comes from the west. It works at all stages of the tide.",
-    "signature": "v2:0e86ac2fc414b715"
+    "signature": "v2:d9cbdc44035ab472"
   },
   "pacifica-linda-mar": {
     "description": "Facing northwest, Pacifica Linda Mar is a beach break in California over a sand bottom. The optimal swell comes from the west, and the offshore wind is from the southeast.",
@@ -1593,7 +1593,7 @@
   },
   "pakala": {
     "description": "Pakala is a Hawaii point break with a coral bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:cd1845c99d51fa5a"
+    "signature": "v2:634f13d33aaaaa99"
   },
   "palm-beach": {
     "description": "Palm Beach is a beach break in Florida over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
@@ -1685,7 +1685,7 @@
   },
   "pitas-point": {
     "description": "Pitas Point is a California point break with a mixed bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:648f7c920681a838"
+    "signature": "v2:97913ccf7c097b81"
   },
   "playa-guajataca": {
     "description": "Playa Guajataca is a beach break in Puerto Rico over a sand bottom. It faces north, and its optimal swell direction is north. Offshore winds blow from the south.",
@@ -1720,12 +1720,12 @@
     "signature": "v2:14ebc4fdbae70777"
   },
   "point-judith": {
-    "description": "Point Judith is a point break in Rhode Island over a rock bottom. It faces southeast, and its optimal swell direction is southeast. Offshore winds blow from the northwest.",
-    "signature": "v2:b2b900d77ea3d8dc"
+    "description": "Point Judith is a point break in Rhode Island over a rock bottom. It faces southeast, and its optimal swell direction is south. Offshore winds blow from the northwest.",
+    "signature": "v2:4dde6b70f0663c0c"
   },
   "point-judith-south": {
-    "description": "Point Judith South is a point break in Rhode Island over a rock bottom. It faces southeast, and its optimal swell direction is southeast. Offshore winds blow from the northwest.",
-    "signature": "v2:84c1c461b0374b06"
+    "description": "Point Judith South is a point break in Rhode Island over a rock bottom. It faces southeast, and its optimal swell direction is south. Offshore winds blow from the northwest.",
+    "signature": "v2:1b099a4b1727aa31"
   },
   "point-lookout": {
     "description": "Facing south, Point Lookout is a surf spot in New York. The optimal swell comes from the south, and the offshore wind is from the north.",
@@ -1773,7 +1773,7 @@
   },
   "pools": {
     "description": "Facing northwest, Pools is a reef break in Puerto Rico over a rock bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
-    "signature": "v2:25c5119b129da4d1"
+    "signature": "v2:db2f36eaba253e15"
   },
   "port-a-beach": {
     "description": "Facing southeast, Port A Beach is a surf spot in Texas. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",
@@ -1793,7 +1793,7 @@
   },
   "puaena-point": {
     "description": "Puaena Point is a reef break in Hawaii over a mixed bottom. It faces northwest, and its optimal swell direction is northwest. Offshore winds blow from the southeast.",
-    "signature": "v2:166278e0ff44bfc9"
+    "signature": "v2:3c2a9a17c1c6bb85"
   },
   "publics-waikiki": {
     "description": "Publics Waikiki is a Hawaii reef break with a coral bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south.",
@@ -1833,7 +1833,7 @@
   },
   "refugio-state-beach": {
     "description": "Facing south, Refugio State Beach is a point break in California over a mixed bottom. The optimal swell comes from the south, and the offshore wind is from the north.",
-    "signature": "v2:27dbb0022ada9b93"
+    "signature": "v2:4d44a7f87a5824d0"
   },
   "rehoboth-beach": {
     "description": "Facing east, Rehoboth Beach is a surf spot in Delaware. The optimal swell comes from the east, and the offshore wind is from the west.",
@@ -1857,11 +1857,11 @@
   },
   "rincon": {
     "description": "Rincon is a surf spot in California. It faces southwest, and its optimal swell direction is south. Offshore winds blow from the northeast.",
-    "signature": "v2:c05169b5e052b785"
+    "signature": "v2:a887dc43bd0f30bf"
   },
   "rincon-domes": {
     "description": "Facing west, Rincon Domes is a point break in Puerto Rico over a rock bottom. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:cb91d46f2e00bdeb"
+    "signature": "v2:10a6f4660392cf0d"
   },
   "river-jetties": {
     "description": "River Jetties is a jetty break in California over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -1893,7 +1893,7 @@
   },
   "rockpile": {
     "description": "Rockpile is a reef break in California over a rock bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north.",
-    "signature": "v2:8d0ec17e07d00d19"
+    "signature": "v2:fa3ca366676d3090"
   },
   "rockpile-laguna": {
     "description": "Rockpile (Laguna) is a surf spot in California over a rock bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -1901,7 +1901,7 @@
   },
   "rocky-point": {
     "description": "Facing northwest, Rocky Point is a reef break in Hawaii over a rock bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
-    "signature": "v2:89167c49b682f536"
+    "signature": "v2:6a72d8bb6892d528"
   },
   "rodanthe": {
     "description": "Rodanthe is a North Carolina surf spot. It faces east, and it is offshore in west winds. The optimal swell comes from the east.",
@@ -1913,7 +1913,7 @@
   },
   "s-turns": {
     "description": "S-Turns is a surf spot in North Carolina. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
-    "signature": "v2:480c3eb387afe30c"
+    "signature": "v2:ae035a72e214b848"
   },
   "salisbury": {
     "description": "Facing east, Salisbury is a beach break in Massachusetts over a sand bottom. The optimal swell comes from the east, and the offshore wind is from the west. It works at all stages of the tide.",
@@ -1969,11 +1969,11 @@
   },
   "sandspit": {
     "description": "Sandspit is a jetty break in California over a sand bottom. It faces east, and its optimal swell direction is south. Offshore winds blow from the west.",
-    "signature": "v2:8c36256f3d310560"
+    "signature": "v2:653c3c36839c5cb4"
   },
   "sandy-beach": {
     "description": "Facing north, Sandy Beach is a beach break in Puerto Rico over a sand bottom. The optimal swell comes from the northwest, and the offshore wind is from the south.",
-    "signature": "v2:af8d439059ebdb35"
+    "signature": "v2:dbd5ead240feb400"
   },
   "sandy-beach-oahu": {
     "description": "Facing south, Sandy Beach Oahu is a beach break in Hawaii over a mixed bottom. The optimal swell comes from the southeast, and the offshore wind is from the north.",
@@ -2009,7 +2009,7 @@
   },
   "scotts-creek": {
     "description": "Scotts Creek is a California reef break with a rock bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
-    "signature": "v2:62acf368855056d4"
+    "signature": "v2:11b27f64ed8ecb64"
   },
   "scripps-pier": {
     "description": "Scripps Pier is a beach break in California over a sand bottom. It faces west, and its optimal swell direction is west. Offshore winds blow from the east.",
@@ -2037,11 +2037,11 @@
   },
   "seal-beach-jetty": {
     "description": "Seal Beach Jetty is a California jetty break with a sand bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south. It works at all stages of the tide.",
-    "signature": "v2:9361891aa2fb2fb4"
+    "signature": "v2:bf4189cd310b4de3"
   },
   "seal-beach-pier": {
     "description": "Seal Beach Pier is a California beach break. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south. It works at all stages of the tide.",
-    "signature": "v2:33d371d7a0b772b2"
+    "signature": "v2:706410dcc7f411ed"
   },
   "seaside-cove": {
     "description": "Facing northwest, Seaside Cove is a beach break in Oregon over a mixed bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
@@ -2180,8 +2180,8 @@
     "signature": "v2:23156d395d678f51"
   },
   "spring-ave": {
-    "description": "Spring Ave is a surf spot in Florida. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
-    "signature": "v2:ff013d9425b6680f"
+    "description": "Spring Ave is a surf spot in Florida. It faces southwest, and its optimal swell direction is west. Offshore winds blow from the northeast.",
+    "signature": "v2:5c056614b56fe844"
   },
   "spring-lake": {
     "description": "Spring Lake is a beach break in New Jersey over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
@@ -2204,8 +2204,8 @@
     "signature": "v2:9bde1360e2fc3e95"
   },
   "st-pete-beach": {
-    "description": "St. Pete Beach is a Florida beach break with a sand bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the west.",
-    "signature": "v2:40ab4319a6cd9b26"
+    "description": "St. Pete Beach is a Florida beach break with a sand bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
+    "signature": "v2:041e6f4283c920c6"
   },
   "st-simons-island": {
     "description": "Facing southeast, St Simons Island is a beach break in Georgia. The optimal swell comes from the east, and the offshore wind is from the northwest.",
@@ -2217,7 +2217,7 @@
   },
   "steps-beach-rincon": {
     "description": "Facing west, Steps Beach Rincon is a surf spot in Puerto Rico. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:5c699a59c3b89905"
+    "signature": "v2:06b6e8918de82b1d"
   },
   "stinson-beach": {
     "description": "Facing southwest, Stinson Beach is a beach break in California over a sand bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast. It works at all stages of the tide.",
@@ -2253,7 +2253,7 @@
   },
   "sunset-beach-hawaii": {
     "description": "Sunset Beach Hawaii is a reef break with a rock bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest.",
-    "signature": "v2:76f64d14f3ddedd7"
+    "signature": "v2:cdfa9eca31e8143a"
   },
   "sunset-beach-nc": {
     "description": "Sunset Beach NC is a North Carolina surf spot. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -2280,8 +2280,8 @@
     "signature": "v2:4b489af74df53d8c"
   },
   "surfers-beach-aguadilla": {
-    "description": "Facing northwest, Surfers Beach Aguadilla is a reef break in Puerto Rico over a rock bottom. The optimal swell comes from the north, and the offshore wind is from the southeast.",
-    "signature": "v2:6c4575756bfa45fe"
+    "description": "Facing northwest, Surfers Beach Aguadilla is a reef break in Puerto Rico over a rock bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
+    "signature": "v2:db9ebd11836488ca"
   },
   "surfside-beach-sc": {
     "description": "Surfside Beach SC is a South Carolina beach break with a sand bottom. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -2293,11 +2293,11 @@
   },
   "surfside-california": {
     "description": "Surfside, California is a jetty break. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south.",
-    "signature": "v2:0cd7b7b6e9049f91"
+    "signature": "v2:b72698071f77d207"
   },
   "surfside-jetty": {
     "description": "Facing southwest, Surfside Jetty is a jetty break in California. The optimal swell comes from the south, and the offshore wind is from the northeast.",
-    "signature": "v2:86fabccbc8b373dd"
+    "signature": "v2:2f37166587061916"
   },
   "swamis": {
     "description": "Swamis is a reef break in California over a rock bottom. It faces southwest, and its optimal swell direction is west. Offshore winds blow from the northeast.",
@@ -2317,7 +2317,7 @@
   },
   "tarpits": {
     "description": "Tarpits is a California beach break with a mixed bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the south. It works best from low to mid tide.",
-    "signature": "v2:cd24bae243712b60"
+    "signature": "v2:868c3c1c0123820b"
   },
   "ten-mile-beach": {
     "description": "Ten Mile Beach is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the west.",
@@ -2341,7 +2341,7 @@
   },
   "the-k-s": {
     "description": "The K's is a Rhode Island reef break with a rock bottom. It faces south, and it is offshore in north winds. The optimal swell comes from the south.",
-    "signature": "v2:7b3ea5c5e8bf581d"
+    "signature": "v2:6da0878fe6701eb8"
   },
   "the-pier-beach": {
     "description": "Facing southwest, The Pier Beach is a surf spot in California. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
@@ -2361,7 +2361,7 @@
   },
   "the-wedge": {
     "description": "Facing southwest, The Wedge is a jetty break in California over a sand bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
-    "signature": "v2:e1ac68ceaa833359"
+    "signature": "v2:4bfd7de4951f87a4"
   },
   "third-beach-newport": {
     "description": "Third Beach Newport is a surf spot in Rhode Island over a sand bottom. It faces east, and its optimal swell direction is south. Offshore winds blow from the west.",
@@ -2372,8 +2372,8 @@
     "signature": "v2:533cfbdf33d07814"
   },
   "tijuana-slough": {
-    "description": "Facing west, Tijuana Slough is a beach break in California over a rock bottom. The optimal swell comes from the west, and the offshore wind is from the east.",
-    "signature": "v2:54d8c146cb2b3ce0"
+    "description": "Facing west, Tijuana Slough is a beach break in California over a rock bottom. The optimal swell comes from the southwest, and the offshore wind is from the east.",
+    "signature": "v2:cd2e1850542d1ade"
   },
   "toes-over": {
     "description": "Facing south, Toes Over is a reef break in California over a rock bottom. The optimal swell comes from the southwest, and the offshore wind is from the north. It works best around low tide.",
@@ -2409,11 +2409,11 @@
   },
   "treasure-island-fl": {
     "description": "Treasure Island FL is a surf spot in Florida. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
-    "signature": "v2:91715ffd79af84d1"
+    "signature": "v2:47fe548b0d1be4cc"
   },
   "tres-palmas": {
     "description": "Tres Palmas is a reef break in Puerto Rico over a mixed bottom. It faces southwest, and its optimal swell direction is west. Offshore winds blow from the northeast.",
-    "signature": "v2:aabffcb49fb573b0"
+    "signature": "v2:2cb380f648849183"
   },
   "trestles": {
     "description": "Trestles is a California point break with a cobble bottom. It faces southwest, and it is offshore in northeast winds. The optimal swell comes from the southwest.",
@@ -2428,8 +2428,8 @@
     "signature": "v2:bad4a81f030bd728"
   },
   "turtle-bay": {
-    "description": "Turtle Bay is a beach break in Hawaii over a mixed bottom. It faces northwest, and its optimal swell direction is north. Offshore winds blow from the southeast.",
-    "signature": "v2:d4a8c8f195e8c057"
+    "description": "Turtle Bay is a beach break in Hawaii over a mixed bottom. It faces northwest, and its optimal swell direction is northwest. Offshore winds blow from the southeast.",
+    "signature": "v2:cb9de98b0bdafff3"
   },
   "turtle-cove-montauk": {
     "description": "Turtle Cove Montauk is a New York point break with a rock bottom. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -2449,7 +2449,7 @@
   },
   "velzyland": {
     "description": "Facing northwest, Velzyland is a reef break in Hawaii over a coral bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
-    "signature": "v2:68f17ce94ebf613f"
+    "signature": "v2:1f61e835223fdff6"
   },
   "venice-beach-breakwater": {
     "description": "Venice Beach Breakwater is a beach break in California over a mixed bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast. It works best around low tide.",
@@ -2469,11 +2469,11 @@
   },
   "ventura-harbor": {
     "description": "Ventura Harbor is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the southwest. It works at all stages of the tide.",
-    "signature": "v2:b1711d94d124c026"
+    "signature": "v2:96cf586041e69b57"
   },
   "ventura-point": {
     "description": "Ventura Point is a point break in California over a mixed bottom. It faces south, and its optimal swell direction is southwest. Offshore winds blow from the north. It works at all stages of the tide.",
-    "signature": "v2:66adb8aec85526ed"
+    "signature": "v2:306ec922de8e087d"
   },
   "vero-pier": {
     "description": "Vero Pier is a beach break in Florida over a sand bottom. It faces east, and its optimal swell direction is east. Offshore winds blow from the west. It works best around high tide.",
@@ -2493,11 +2493,11 @@
   },
   "waimea-bay": {
     "description": "Facing northwest, Waimea Bay is a reef break in Hawaii over a mixed bottom. The optimal swell comes from the northwest, and the offshore wind is from the southeast.",
-    "signature": "v2:45c8a78d39509afe"
+    "signature": "v2:c2430fb2344a4a72"
   },
   "weekapaug": {
     "description": "Facing south, Weekapaug is a point break in Rhode Island. The optimal swell comes from the south, and the offshore wind is from the north. It works at all stages of the tide.",
-    "signature": "v2:a98d2cc724c6d6a2"
+    "signature": "v2:bd36f88d25da22fa"
   },
   "wells-beach": {
     "description": "Wells Beach is a Maine beach break with a sand bottom. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -2528,8 +2528,8 @@
     "signature": "v2:48cb5d819fa0fe30"
   },
   "white-point": {
-    "description": "Facing southwest, White Point is a point break in California over a rock bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
-    "signature": "v2:07e8ad4b1b15c4f0"
+    "description": "Facing southwest, White Point is a point break in California over a rock bottom. The optimal swell comes from the south, and the offshore wind is from the northeast.",
+    "signature": "v2:37c0f87d0eb2d26b"
   },
   "whitney-beach": {
     "description": "Whitney Beach is a surf spot in Florida over a sand bottom. It faces southwest, and its optimal swell direction is southwest. Offshore winds blow from the northeast.",
@@ -2544,8 +2544,8 @@
     "signature": "v2:6f22628edb36639f"
   },
   "wilderness": {
-    "description": "Wilderness is a Puerto Rico reef break with a rock bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the north.",
-    "signature": "v2:2bda2ed1e782a00c"
+    "description": "Wilderness is a Puerto Rico reef break with a rock bottom. It faces northwest, and it is offshore in southeast winds. The optimal swell comes from the northwest.",
+    "signature": "v2:b0fcd957155439a1"
   },
   "wildwood": {
     "description": "Wildwood is a surf spot in New Jersey. It faces southeast, and its optimal swell direction is southeast. Offshore winds blow from the northwest.",
