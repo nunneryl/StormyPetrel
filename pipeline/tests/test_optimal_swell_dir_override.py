@@ -419,6 +419,34 @@ EXPECTED_PRUNE = {
 }
 
 
+# The committed roster's arcs for the ten, from the island-rules ray-cast (sw1-raycast run
+# 27), after Algo 2d's pruning. Pruning dropped nothing: every arc's padded edge is within
+# 90 degrees of the corrected optimal.
+COMMITTED_ARCS = {
+    # optimal 350: [263-273]: 350-273 = 77; [339-49] holds 350.
+    "honolua-bay": [[265, 271], [341, 47]],
+    # held at main's window (spot_swell_window_holds.json); optimal 40 inside [11-85].
+    "spoils": [[13, 83]],
+    # one arc now, [235-313]: optimal 280 inside.
+    "hapuna-beach": [[237, 311]],
+    # [243-317]: optimal 292 inside.
+    "suicide-s": [[245, 315]],
+    # optimal 200: [147-161]: 39; [203-253]: 3.
+    "thousand-peaks-maui": [[149, 159], [205, 251]],
+    # [231-341]: optimal 305 inside.
+    "crash-boat-beach": [[233, 339]],
+    # [231-353]: optimal 315 inside.
+    "gas-chambers-aguadilla": [[233, 351]],
+    # [243-329]: 350-329 = 21. The arc [245-251] that pruning dropped in run 13 is now the
+    # start of one arc reaching 327, so it is kept with it.
+    "table-tops-aguadilla": [[245, 327]],
+    # optimal 315 on the padded edge of [315-321].
+    "lovers-point": [[317, 319]],
+    # still no window.
+    "monterey-beach": [],
+}
+
+
 def _pairs(arcs):
     return [[a["min"], a["max"]] for a in arcs]
 
@@ -457,7 +485,8 @@ def test_every_override_is_applied_in_the_committed_roster():
     values reached spots_enriched.json: enrich, the only thing that applies them, had not been
     run and committed since, and every test above runs enrich in memory. This reads the
     committed roster itself and fails for any entry in the file that is not applied there:
-    the researched degrees, the override stamp, and the arcs exactly as pruned."""
+    the researched degrees, the override stamp, and the arcs exactly as pruned
+    (COMMITTED_ARCS)."""
     roster = _roster()
     doc = json.loads(SPOT_SWELL_WINDOWS_FILE.read_text())
     assert set(doc["windows"]) == set(EXPECTED), sorted(set(doc["windows"]) ^ set(EXPECTED))
@@ -467,7 +496,7 @@ def test_every_override_is_applied_in_the_committed_roster():
             (slug, s.get("optimal_swell_dir"), rec["optimal_swell_dir"])
         assert s.get("optimal_swell_dir") == EXPECTED[slug], slug
         assert s.get("swell_window_source_override") == "manual", slug
-        assert _pairs(s.get("swell_window_arcs") or []) == EXPECTED_PRUNE[slug][0], \
+        assert _pairs(s.get("swell_window_arcs") or []) == COMMITTED_ARCS[slug], \
             (slug, _pairs(s.get("swell_window_arcs") or []))
 
 
