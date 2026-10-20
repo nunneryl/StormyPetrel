@@ -43,7 +43,7 @@ import numpy as np
 
 from ..interpret import (
     M_TO_FT, chop_factors, composite_stars, directional_gain,
-    period_quality, wind_multiplier,
+    period_quality, rule_keywords, wind_multiplier,
 )
 from urllib.error import HTTPError, URLError
 
@@ -149,12 +149,18 @@ def pull_mop_window(url, t0, t1):
 
 
 def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
-              arcs=None, optimal=None, chop=None):
+              arcs=None, optimal=None, chop=None, *, spot=None, wind_dir=None,
+              wind_speed=None):
     """Nearshore-frame star rating for one MOP hour, reusing interpret.py exactly
     (face_ft × directional_gain(dp vs shore-normal), chop from the MOP spectrum,
     period quality), with the per-hour wind/tide multipliers injected from the
     normal rater. Returns (stars, face_ft, dir_gain, chop_mult, period_quality)
-    or (None, …) if inputs are unusable."""
+    or (None, …) if inputs are unusable.
+
+    With *spot*, the strong-wind cap and the beach-break ceiling apply (interpret.rule_keywords)
+    from the hour's *wind_dir* / *wind_speed* (m/s) at period *tp*. The ceiling reads the raw
+    face: the MOP tier has no face factor (face_correction.spot_factor), its face being MOP's
+    own height."""
     if hs is None or tp is None or dp is None or shore_normal is None:
         return None, None, None, None, None
     # SAME GEOMETRIC FRAME as the selection, matching nwps_stars. This used to pass
@@ -197,7 +203,8 @@ def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
     # scored a present-but-zero swell_hs as mult 1.00 where rate_spot gave 0.30.
     cr, cm = chop if chop is not None else chop_factors(hs, swell_hs)
     pq = period_quality(tp)
-    stars = composite_stars(eff, wind_mult, tide_mult, cm, pq)
+    rules = {} if spot is None else rule_keywords(spot, wind_dir, wind_speed, tp, eff)
+    stars = composite_stars(eff, wind_mult, tide_mult, cm, pq, **rules)
     return stars, face, dg, cm, pq
 
 
@@ -274,7 +281,8 @@ def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_
                                              wm_eff, e.get("tide_mult", 1.0),
                                              arcs=s.get("swell_window_arcs"),
                                              optimal=s.get("optimal_swell_dir"),
-                                             chop=(cr, cm_pair))
+                                             chop=(cr, cm_pair), spot=s,
+                                             wind_dir=wdir, wind_speed=wspd)
             if st is None:
                 continue
             if not dry_run:

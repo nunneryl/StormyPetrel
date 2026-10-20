@@ -6,18 +6,20 @@ author: 'Stormy Petrel'
 tag: 'methodology'
 ---
 
-*Last updated: 19 October 2026.*
+*Last updated: 20 October 2026.*
 
 ## TL;DR
 
-Every spot gets a star rating for each forecast hour, from 0 (FLAT) to 5 (EPIC). It takes three steps:
+Every spot gets a star rating for each forecast hour, from 0 (FLAT) to 5 (EPIC). It takes four steps:
 
-1. **Size.** The wave height, adjusted for swell direction, gives a size score.
+1. **Size.** The wave height, adjusted for swell direction, gives a size score. At sand beach and jetty breaks it falls again once the waves are big enough to close out.
 2. **Quality.** Four scores adjust the size score: wind, chop, period and tide. They are blended with weights, not simply multiplied together.
 3. **Rounding.** The result is rounded to the nearest half star and kept between 1 and 5. A height under half a foot, after the direction adjustment, is FLAT: 0 stars.
+4. **Strong wind.** Strong cross-shore or onshore wind caps the rating, however good the rest is.
 
 ```
 stars = size_score × wind^0.35 × chop^0.25 × period^0.25 × tide^0.15
+        rounded, then capped by the wind
 ```
 
 ## How the stars are built
@@ -38,6 +40,22 @@ The size score comes from the wave height after the swell-direction adjustment (
 | 10 ft or more | 5.0 |
 
 Between rows, the score moves in a straight line. Under half a foot, the spot is FLAT whatever else is going on.
+
+### Big beach breaks
+
+A beach or jetty break over sand doesn't keep getting better as the swell grows. Past about 8 ft the sandbars can't hold the waves, and they close out. So at these spots the size score stops rising at 8 ft and falls past 10 ft:
+
+| Height | Size score at a sand beach or jetty break |
+|--------|-----------|
+| up to 8 ft | as above |
+| 8 to 10 ft | 4.5 |
+| 12 ft | 3.5 |
+| 15 ft | 2.5 |
+| 20 ft or more | 1.5 |
+
+These numbers are our judgement, checked against storm days like the one under Wind; no study we know of pins them down.
+
+Closing out depends on how big the waves really are, so at the 141 calibrated California spots we judge it at the calibrated height. The size score itself still comes from the model's height, as everywhere else: it keeps the same share of its value that the table above keeps at the calibrated height. A spot whose model height is 12 ft but whose calibrated height is 6 ft doesn't close out; one whose calibrated height is 12 ft does, whatever the model says.
 
 ### Quality
 
@@ -130,6 +148,25 @@ We use HRRR for the first 48 hours of each run, and NWPS wind after that. HRRR o
 
 The wind score depends on the wind's angle to the spot's offshore direction: offshore scores best, onshore worst. Light wind matters less, strong offshore wind loses its bonus, and very strong wind costs extra.
 
+### Strong wind caps the rating
+
+The weighted blend shrinks even a bad wind score. Cross-shore wind scores 0.80, and the 0.35 weight turns that into a 7.5% cut. On 20 October 2026 that left Jennettes Pier, Avalon Pier, Avon Pier and Kill Devil Hills on the Outer Banks at 4.5 stars in a 24–26 kt north wind on 11–12 ft storm surf, which Surfline rated "Very Poor".
+
+So strong wind now sets a ceiling on the rating, whatever the other scores are. It follows the wind speed ladder in [our wind article](/learn/wind): junky above about 13 kt, blown out from 15 kt, and generally unsurfable above 25 kt, even offshore.
+
+| Wind | Onshore | Cross-shore | Offshore |
+|------|---------|-------------|----------|
+| over 13 kt | 3 stars | 3 stars | no cap |
+| over 15 kt | 2 | 2.5 | no cap |
+| over 20 kt | 1.5 | 1.5 | no cap |
+| over 25 kt | 1 | 1 | 2 |
+
+Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° to 120°, and onshore more than 120°.
+
+Long-period swell stands up to wind better, so up to 25 kt the wind is read a knot lighter for every second of period above 8 s: a 12 s swell in an 18 kt wind is read at 14 kt. Above 25 kt there's no allowance.
+
+When we replayed the forecast published on 20 October 2026 with the cap and the beach-break limit together, 9,058 of 84,738 spot-hours (10.7%), at 261 of our spots, came out lower, and none came out higher. 6,836 moved for the wind alone, 772 for the beach-break limit alone, and 1,450 for both. Most were windy East Coast hours, above all the 25–30 kt onshore days in Florida's forecast; California moved by 90 hours. That replay judged closing out at the model's height everywhere.
+
 ## Period
 
 Long-period swell usually makes better surf than short-period wind swell of the same height. The period score:
@@ -211,6 +248,7 @@ Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On 
 4. **Height calibration drifts.** Each spot's factor comes from a single four-week window, and it moves with the swell mix: between two of the earlier two-week windows, about a third of spots shifted by more than 10%.
 5. **Uncalibrated heights can run high.** Outside the 141 calibrated California spots, heights aren't corrected, and that includes all the hours you can see at the 48 MOP spots. They include the period boost and can read higher than nearshore swell height, which is why they're marked as model estimates. At the California spots where we measured it, the uncorrected height was typically about 1.6 times MOP's.
 6. **Calibrated spots used to rate lower.** We used to work out stars at the calibrated spots from the calibrated height. The calibration in use then covered 130 California spots, measured from 18 August to 1 September 2026, and at all but two of them that height was smaller than the uncalibrated one, so in the same swell they rated lower than everywhere else. In the forecast published on 4 October 2026, 0.4% of those spots' daylight hours rated 3 stars or more, against 9.1% at uncalibrated spots; rated on the model's height instead, they came to 10.3%. Now the calibration corrects only the swell height we show, and the rating uses the same input at every spot.
-7. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
+7. **Break types.** The beach-break limit applies at 404 of our spots, every beach or jetty break over sand. At 223 of them the break type or the bottom is still a language model's recollection rather than a source we cite. We apply it anyway, because every one it changed when we checked was a genuine sand beach or jetty, and we're citing the rest spot by spot.
+8. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
 
 The code is on [GitHub](https://github.com/nunneryl/StormyPetrel). The rating is in [`pipeline/interpret.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/interpret.py), and the NWPS, MOP and calibration steps are in [`nwps_nearshore.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/nwps_nearshore.py), [`mop.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/mop.py) and [`face_correction.py`](https://github.com/nunneryl/StormyPetrel/blob/main/pipeline/forecast/face_correction.py). File an issue if you spot a bug, or send a PR if you want to fix one.

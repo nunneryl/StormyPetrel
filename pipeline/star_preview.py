@@ -94,8 +94,9 @@ reproduced against that baseline. SELECT only.
 
     python -m pipeline.star_preview --nwps-shelter [--baseline B.json] [--out OUT.json]
 
-THE RATING PREVIEW (--rating). Two proposed rules that the rater does not apply yet, replayed on
-every row that reproduces its published stars with BASELINE:
+THE RATING PREVIEW (--rating). The strong-wind cap and the beach-break ceiling, replayed on every
+row that reproduces its published stars with BASELINE (rows rated before the rules were wired;
+once rows rated with them are published, the hours they changed read as not reproduced):
 
     cap         interpret.wind_star_cap: cross-shore or onshore wind above 13 kt, less a knot
                 per second of period above 8 s, caps the stars (the /learn/wind ladder);
@@ -109,8 +110,12 @@ every row that reproduces its published stars with BASELINE:
     both        the two together
 
 Each reports the star change by source, state, cause and wind band, the 20 most-changed spots,
-and the homepage's "Best conditions right now" before and after. --explain prints every rating
-factor of each named spot's soonest hour and how the composite combines them. SELECT only.
+and the homepage's "Best conditions right now" before and after; the ceiling rules list every
+hour where the ceiling at the calibrated face differs from the raw one. THE MERGE GATE for wiring
+them into the rater: rater_check replays every reproduced row through the rater's own code
+(wired_rater) and counts the hours where it differs from 'both', which must be none. --explain
+prints every rating factor of each named spot's soonest hour, how the composite combines them,
+and where its NWPS node sits. SELECT only.
 
     python -m pipeline.star_preview --rating cap,both [--explain slug,slug] [--baseline B.json]
         [--out OUT.json]
@@ -128,7 +133,7 @@ from statistics import median
 
 from .config import TIDE_RATED_SOURCES
 from .forecast.face_correction import load_face_factors, spot_factor
-from .forecast.nwps_nearshore import nwps_stars
+from .forecast.nwps_nearshore import _bearing, _haversine_km, nwps_stars
 from .interpret import (
     _min_offset_from_arcs,
     combine_ww3_partitions,
@@ -143,6 +148,7 @@ from .interpret import (
     closeout_factor,
     period_quality,
     rated_tide_preference,
+    rule_keywords,
     size_score,
     wind_class,
     wind_star_cap,
@@ -628,6 +634,74 @@ def calibration_diff(rows, spots, names, rule, factors):
             "spots": sorted({h["spot"] for h in hours}), "changes": hours}
 
 
+def wired_rater(row, spot, rb, factor):
+    """The stars the WIRED rater gives a replayed row, through the rater's own code: an NWPS
+    row through nwps_stars with the spot, the hour's wind and *factor* (as apply_nwps_overrides
+    calls it); any other row through composite_stars with interpret.rule_keywords (as rate_spot
+    and mop_stars call it). The preview's own rules (rating_after) build the same two rules
+    independently, from wind_star_cap, is_sand_beach_break and closeout_face here."""
+    wm, tm, cm = _mults(row)
+    wd, ws = _num(row.get("wind_dir")), _num(row.get("wind_speed"))
+    if row.get("swell_source") in NWPS_KINDS:
+        d, per, _, swh = _nwps_inputs(row, spot)
+        return nwps_stars(swh, per, d, None, spot.get("orientation_deg"), wm, tm,
+                          optimal=spot.get("optimal_swell_dir"),
+                          chop=(_num(row.get("chop_ratio")), cm), spot=spot,
+                          wind_dir=wd, wind_speed=ws, face_factor=factor)[0]
+    return composite_stars(rb["eff"], wm, tm, cm, rb["pq"],
+                           **rule_keywords(spot, wd, ws, rb["tp"], rb["eff"], factor))
+
+
+def rater_check(rows, spots, names, factors):
+    """The merge gate: the wired rater against the preview's 'both', hour for hour, on every row
+    that reproduces its published stars. Also the wired rater's own change against the
+    published stars, by source, which must equal 'both'."""
+    same = differ = 0
+    examples, by_group = [], defaultdict(Counter)
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None or row.get("stars") is None:
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None or rb["stars"] != float(row["stars"]):
+            continue
+        preview = rating_after(row, spot, rb, "both", factors)[0]
+        wired = wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug))
+        by_group[group_of(row.get("swell_source") or "none")][round(wired - rb["stars"], 1)] += 1
+        if wired == preview:
+            same += 1
+        else:
+            differ += 1
+            if len(examples) < 20:
+                examples.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                                 "published": rb["stars"], "preview": preview, "wired": wired})
+    return {"hours": same + differ, "same": same, "different": differ, "examples": examples,
+            "wired_delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())}}
+
+
+def _print_rater_check(c):
+    print(f"\n=== Wired rater vs preview 'both': {c['different']} differences in {c['hours']} "
+          f"reproduced hours ({c['same']} equal) ===")
+    for e in c["examples"]:
+        print(f"  {e['spot']} ({e['state']}) {e['valid_time']}: published {e['published']}, "
+              f"preview {e['preview']}, wired {e['wired']}")
+    print("wired rater against the published stars, by source (delta: hours):")
+    for g, d in c["wired_delta_by_group"].items():
+        print(f"  {g}: {d}")
+
+
+def node_position(spot):
+    """Where the spot's NWPS node sits: its coordinates, and its distance (km) and bearing
+    (degrees) from the spot, or None when the roster has no node."""
+    nlat, nlng = spot.get("nwps_node_lat"), spot.get("nwps_node_lng")
+    if nlat is None or nlng is None:
+        return None
+    return {"lat": nlat, "lng": nlng,
+            "km": _haversine_km(spot["lat"], spot["lng"], nlat, nlng),
+            "bearing": _bearing(spot["lat"], spot["lng"], nlat, nlng)}
+
+
 def explain(row, spot, rules=tuple(RATING_RULES), factors=None):
     """Every factor of one published row, how the composite combines them, and the stars
     under each proposed rule. Pure: reads the row and the spot only."""
@@ -651,6 +725,10 @@ def explain(row, spot, rules=tuple(RATING_RULES), factors=None):
         "chop_ratio": _num(row.get("chop_ratio")), "chop_mult": cm,
         "period_quality": _num(row.get("period_quality")),
         "break_type": spot.get("break_type"), "bottom": spot.get("bottom"),
+        "orientation_deg": spot.get("orientation_deg"),
+        "optimal_swell_dir": spot.get("optimal_swell_dir"),
+        "swell_window_arcs": spot.get("swell_window_arcs"),
+        "nwps_node": node_position(spot) if spot.get("lat") is not None else None,
     }
     if rb["stars"] is None:
         out["replay"] = rb["why"]
@@ -691,6 +769,12 @@ def _print_explain(name, x):
     print(f"  tide_norm {_f(x['tide_norm'], '{:.3f}')} tide_mult {_f(x['tide_mult'], '{:.3f}')}; "
           f"chop_ratio {_f(x['chop_ratio'], '{:.3f}')} chop_mult {_f(x['chop_mult'], '{:.3f}')}; "
           f"period_quality {_f(x['period_quality'], '{:.3f}')}; {x['break_type']} / {x['bottom']}")
+    n = x.get("nwps_node")
+    print(f"  faces {_f(x['orientation_deg'], '{:.0f}')}°, optimal swell "
+          f"{_f(x['optimal_swell_dir'], '{:.0f}')}°, window "
+          + ", ".join(f"{a['min']}-{a['max']}" for a in x.get("swell_window_arcs") or [])
+          + ("; NWPS node " + (f"{n['lat']:.5f}, {n['lng']:.5f}: {n['km']:.2f} km at "
+                               f"{n['bearing']:.0f}° from the spot" if n else "none")))
     if "terms" not in x:
         print(f"  not replayable: {x['replay']}")
         return
@@ -1225,6 +1309,8 @@ def main(argv=None):
                 continue
             out["explain"][sl] = explain(row, before[name], rules, factors)
             _print_explain(name, out["explain"][sl])
+        out["rater_check"] = rater_check(rows, before, names, factors)
+        _print_rater_check(out["rater_check"])
         out["rating"] = {}
         for r in rules:
             rep = rating_compare(rows, before, names, r, factors)

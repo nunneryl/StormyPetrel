@@ -566,11 +566,17 @@ def size_score(effective_face_ft: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# PROPOSED, NOT WIRED: the strong-wind cap and the beach-break size ceiling.
+# The strong-wind cap and the sand beach-break size ceiling.
 #
-# Nothing in the rater calls these yet. star_preview --rating replays the published
-# window through them so the change can be seen by source before it is connected;
-# composite_stars' star_cap and closeout_face_ft keywords default to no change.
+# Decided 2026-10-20 after rating-preview runs 29 and 30: Jennettes Pier, Avalon Pier,
+# Avon Pier and Kill Devil Hills rated 4.5 stars in 24-26 kt cross-shore wind on 11-12 ft
+# storm surf, which Surfline called "Very Poor". The geometric mean shrank the cross-shore
+# wind score (0.8) to a 7.5% cut, and size credit stayed at 5.0 however big a beach break got.
+#
+# Every rater applies both through rule_keywords: rate_spot, and the NWPS and MOP overrides
+# through nwps_stars and mop_stars. composite_stars' star_cap and closeout_face_ft keywords
+# default to no change, which is what star_preview's replays of rows published before this
+# rely on.
 # ---------------------------------------------------------------------------
 
 KT_TO_MS = 0.514444
@@ -633,8 +639,7 @@ def wind_star_cap(
 # Sand beach breaks close out as they get big: size credit follows _SIZE_POINTS to 8 ft,
 # holds 4.5 to 10 ft, then falls. No research doc gives the numbers; the shape is the
 # proposal and the preview shows what it does. Which spots are sand beach breaks is read
-# from the roster by star_preview.is_sand_beach_break; the rater reads neither the break
-# type nor the bottom (a test in the break-type research suite pins that).
+# from the roster by is_sand_beach_break.
 _BEACH_SIZE_POINTS = [
     (0.0, 0.0), (1.0, 1.0), (2.0, 2.0), (3.0, 2.5), (4.0, 3.0),
     (5.0, 3.5), (6.0, 4.0), (8.0, 4.5), (10.0, 4.5), (12.0, 3.5),
@@ -677,6 +682,48 @@ _CHOP_POINTS = [
 # chop_multiplier(stored_ratio) reproduce stored_mult exactly. Not a calibration knob:
 # changing it changes storage precision, not the curve.
 _CHOP_ROUND_DP = 3
+
+
+# Break types the ceiling applies to over a sand bottom. Jetty breaks were added after
+# rating-preview run 29: a jetty's sandbar closes out like a beach's.
+SAND_CEILING_BREAK_TYPES = ("beach", "jetty")
+
+
+def is_sand_beach_break(spot: dict) -> bool:
+    """A beach or jetty break over sand: the spots the size ceiling applies to.
+
+    Whatever the source of break_type and bottom, model recall included (decided after
+    run 30, where all 56 unverified spots it touched were sand beaches and jetties)."""
+    return (spot.get("break_type") in SAND_CEILING_BREAK_TYPES
+            and spot.get("bottom") == "sand")
+
+
+def _float_or_none(v) -> float | None:
+    return None if v is None else float(v)
+
+
+def rule_keywords(
+    spot: dict,
+    wind_dir,
+    wind_speed_ms,
+    period_s,
+    effective_face_ft: float,
+    face_factor: float | None = None,
+) -> dict:
+    """composite_stars' star_cap and closeout_face_ft for one hour at *spot*.
+
+    star_cap is wind_star_cap of the hour's wind against the spot's offshore bearing, at the
+    period the hour is rated on. closeout_face_ft is None (no ceiling) unless the spot is a
+    sand beach or jetty break; then it is the effective face divided by the spot's MOP face
+    factor where it has one (face_correction.spot_factor), else the effective face itself:
+    the ceiling models real closeouts, so it reads the calibrated height, while the size
+    credit stays on the raw face like every other spot's."""
+    cap = wind_star_cap(_float_or_none(wind_dir), _float_or_none(wind_speed_ms),
+                        spot.get("offshore_wind_deg"), _float_or_none(period_s))
+    face = None
+    if is_sand_beach_break(spot):
+        face = effective_face_ft / face_factor if face_factor else effective_face_ft
+    return {"star_cap": cap, "closeout_face_ft": face}
 
 
 def chop_ratio(hs: float | None, swell_hs: float | None) -> float | None:
@@ -859,8 +906,8 @@ def composite_stars(
 
     *star_cap* (wind_star_cap) caps the stars, and *closeout_face_ft* puts a sand beach
     break on the size ceiling: size_score(effective) x closeout_factor(closeout_face_ft),
-    the calibrated effective face where the spot has one. These are the proposed rules;
-    their defaults change nothing.
+    the calibrated effective face where the spot has one; rule_keywords builds both. Their
+    defaults change nothing.
 
     raw = size_score(effective_size)
         × wind_mult**a × tide_mult**b × chop_mult**c × period_quality**d
@@ -1404,8 +1451,12 @@ def rate_spot(
     tide_series: dict | None,
     buoy_swell: dict | None = None,
     ww3_series: list[dict] | None = None,
+    face_factor: float | None = None,
 ) -> list[dict]:
     """Rate a single spot's hourly forecast.
+
+    *face_factor* is the spot's MOP face factor (face_correction.spot_factor), or None; only
+    the beach-break ceiling reads it (rule_keywords).
 
     Direction / period resolution chain (highest priority first):
       1. WAVEWATCH III best in-window swell partition (proper spectral
@@ -1586,7 +1637,9 @@ def rate_spot(
         else:
             effective = (fft or 0.0) * dg
         stars = (
-            composite_stars(effective, wm, tm, cm, pq) if fft is not None else 0.0
+            composite_stars(effective, wm, tm, cm, pq,
+                            **rule_keywords(spot, wdir, wspd, size_tp, effective, face_factor))
+            if fft is not None else 0.0
         )
 
         # Resolved swell direction / period — what the rater actually used.
@@ -1661,8 +1714,12 @@ def compute_ratings(
     tides: dict[str, dict],
     buoys: dict[str, dict] | None = None,
     ww3: dict[str, list[dict]] | None = None,
+    ceiling_factors: dict[str, float | None] | None = None,
 ) -> dict[str, list[dict]]:
     """Rate every spot that has NWPS forecast data.
+
+    *ceiling_factors* maps a spot name to its MOP face factor or None (face_factors_by_name);
+    the beach-break ceiling reads the calibrated face where there is one.
 
     Buckets every spot by how its tide source resolved so the dominant
     failure mode is visible in the log:
@@ -1754,7 +1811,8 @@ def compute_ratings(
         else:
             swell_no_source += 1
 
-        series = rate_spot(spot, forecast, tide_series, buoy_snapshot, ww3_series)
+        series = rate_spot(spot, forecast, tide_series, buoy_snapshot, ww3_series,
+                           face_factor=(ceiling_factors or {}).get(name))
         if series:
             results[name] = series
             rated += 1
@@ -1781,6 +1839,14 @@ def compute_ratings(
         log.info("interpret: station_missing sample: %s", ", ".join(missing_examples))
     _ww3_diag_log()      # TEMP INSTRUMENTATION (remove with the _ww3_diag_* block)
     return results
+
+
+def face_factors_by_name(spots: list[dict], factors: dict) -> dict[str, float | None]:
+    """{spot name: MOP face factor or None}, by the correction seam's own rule
+    (face_correction.spot_factor): the MOP tier and spots with no record get None."""
+    from .enrich import _slug_for                    # noqa: PLC0415 - avoids a cycle
+    from .forecast.face_correction import spot_factor  # noqa: PLC0415
+    return {s["name"]: spot_factor(s, factors, _slug_for) for s in spots if s.get("name")}
 
 
 def _star_histogram(ratings: dict[str, list[dict]]) -> Counter:
@@ -2033,7 +2099,13 @@ def main(argv: list[str] | None = None) -> int:
             n_hours_overwritten, n_hours_kept,
         )
 
-    ratings = compute_ratings(spots, nwps, tides, buoys, ww3)
+    # ONE READ OF THE FACE FACTORS for the run: the beach-break ceiling in all three raters
+    # reads them (the calibrated face), and the correction seam below divides by the same
+    # dict, so the height shown and the face the ceiling reads cannot come from two files.
+    from .forecast.face_correction import load_face_factors
+    face_factors = load_face_factors()
+    ceiling_factors = face_factors_by_name(spots, face_factors)
+    ratings = compute_ratings(spots, nwps, tides, buoys, ww3, ceiling_factors=ceiling_factors)
 
     # CDIP MOP integration (Stage 2) — additive + reversible. For spots tagged
     # swell_window_source="cdip_mop", override the swell rating with their MOP
@@ -2059,7 +2131,8 @@ def main(argv: list[str] | None = None) -> int:
         # series rather than downloading the cycle a second time, and handing it the very
         # dict compute_ratings rated from is what makes hs/tp/dp and face_ft/swell_*/chop_*
         # provably one read. See nwps_nearshore._make_artifact_fetch.
-        nwps_stats = apply_nwps_overrides(ratings, spots, nwps=nwps)
+        nwps_stats = apply_nwps_overrides(ratings, spots, nwps=nwps,
+                                          ceiling_factors=ceiling_factors)
         if (nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]
                 or nwps_stats.get("not_in_artifact")):
             log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored, "
@@ -2111,7 +2184,7 @@ def main(argv: list[str] | None = None) -> int:
     # believe is corrected is not — and shipping that silently is the thing the explicit
     # None lookup exists to prevent. It fails the run.
     from .forecast.face_correction import apply_face_corrections
-    face_stats = apply_face_corrections(ratings, spots)
+    face_stats = apply_face_corrections(ratings, spots, factors=face_factors)
     if face_stats["corrected_spots"]:
         log.info("interpret: face correction — %d spot(s) / %d spot-hours scaled by their "
                  "measured MOP factor; %d spot(s) had no factor, %d skipped on the MOP tier",

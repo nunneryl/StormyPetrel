@@ -397,3 +397,75 @@ def test_the_leaderboard_reads_the_calibrated_face():
     # A: 11 ft with factor 1.5 keeps 4.5 under the ceiling (3.5 at the raw face).
     lb = SP.leaderboard([_row()], NAMED, NAMES, "ceiling", n=1, factors=FACTORS)
     assert lb["after"] == [{"spot": "A", "state": "North Carolina", "stars": 4.5, "replayed": True}]
+
+
+# --------------------------------------------------------------------------- #
+# The merge gate: the wired rater against the preview's 'both'                  #
+# --------------------------------------------------------------------------- #
+
+def test_the_rater_check_on_rate_spot_path_rows():
+    # The three reproduced rows of _rows(): A 4.5 -> 2.5, B 5.0, C 3.5, through
+    # composite_stars with interpret.rule_keywords; no difference from 'both'.
+    c = SP.rater_check(_rows(), SPOTS, NAMES, None)
+    assert (c["hours"], c["same"], c["different"], c["examples"]) == (3, 3, 0, [])
+    assert c["wired_delta_by_group"] == {"MOP": {-2.0: 1, 0.0: 2}}
+
+
+# An NWPS row: one partition from 270 at 12 s, face 8.0 ft (the period is unchanged, so the
+# face stays 8.0), gain 1: size(8) 4.5 x 0.95**0.25 0.987259 = 4.443 -> 4.5 published.
+def _nwps_row(**kw):
+    row = {"swell_source": "nwps_height_ww3_dir", "face_ft": 8.0, "face_ft_raw": None,
+           "swell_tp": 12.0, "dp": 300.0, "tp": 12.0, "swell_1_hs": 2.0, "swell_1_tp": 12.0,
+           "swell_1_dp": 270.0, "wind_mult": 1.0, "tide_mult": 1.0, "chop_mult": 1.0,
+           "stars": 4.5, "spot_id": 1, "valid_time": "2026-10-20T15:00:00+00:00",
+           "wind_dir": 0.0, "wind_speed": 12.5}
+    row.update(kw)
+    return row
+
+
+def test_the_wired_nwps_rater_caps_a_cross_shore_gale():
+    # 24.30 kt - (12 - 8) = 20.30 > 20: cross 1.5; 8 ft keeps all its size credit
+    rb = SP.rescore(_nwps_row(), WEST_BEACH)
+    assert rb["stars"] == 4.5
+    assert SP.wired_rater(_nwps_row(), WEST_BEACH, rb, None) == 1.5
+    c = SP.rater_check([_nwps_row()], {"A": WEST_BEACH}, NAMES, None)
+    assert (c["same"], c["different"], c["wired_delta_by_group"]) == (1, 0, {"NWPS": {-3.0: 1}})
+
+
+def test_the_wired_nwps_rater_reads_the_face_factor():
+    # Light offshore wind, factor 0.75: the ceiling reads 8 / 0.75 = 10.667 ft and keeps
+    # (4.5 - 0.5 x 0.667) / 5 = 0.833333: 4.5 x 0.833333 x 0.987259 = 3.702 -> 3.5
+    row = _nwps_row(wind_dir=90.0, wind_speed=2.0)
+    rb = SP.rescore(row, NAMED["C"])
+    assert SP.wired_rater(row, NAMED["C"], rb, 0.75) == 3.5
+    assert SP.wired_rater(row, NAMED["C"], rb, None) == 4.5
+    c = SP.rater_check([dict(row, spot_id=3)], NAMED, NAMES, FACTORS)
+    assert (c["same"], c["different"]) == (1, 0)
+
+
+def test_the_rater_check_reports_a_difference():
+    # The two cannot disagree on a real row; force the preview's answer to see one reported.
+    row = _nwps_row(wind_dir=90.0, wind_speed=2.0)
+    real = SP.rating_after
+    SP.rating_after = lambda *a, **k: (4.5, "")
+    try:
+        c = SP.rater_check([row], {"A": WEST_BEACH}, NAMES, None)
+    finally:
+        SP.rating_after = real
+    # wired: 8 ft on the beach curve keeps everything -> 4.5; preview forced to 4.5: equal.
+    assert c["different"] == 0
+    SP.rating_after = lambda *a, **k: (3.0, "")
+    try:
+        c = SP.rater_check([row], {"A": WEST_BEACH}, NAMES, None)
+    finally:
+        SP.rating_after = real
+    assert c["different"] == 1
+    assert c["examples"] == [{"spot": "A", "state": "North Carolina",
+                              "valid_time": "2026-10-20T15:00:00+00:00", "published": 4.5,
+                              "preview": 3.0, "wired": 4.5}]
+
+
+def test_node_position():
+    n = SP.node_position({"lat": 0.0, "lng": 0.0, "nwps_node_lat": 0.01, "nwps_node_lng": 0.0})
+    assert (round(n["km"], 4), round(n["bearing"], 6)) == (1.1119, 0.0)
+    assert SP.node_position({"lat": 0.0, "lng": 0.0}) is None
