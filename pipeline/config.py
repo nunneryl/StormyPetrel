@@ -763,8 +763,9 @@ SPOT_ORIENTATIONS_FILE = PIPELINE_DIR / "data" / "spot_orientations.json"
 SPOT_SWELL_WINDOWS_FILE = PIPELINE_DIR / "data" / "spot_swell_windows.json"
 # Slug-keyed swell windows HELD at their stored arcs and optimal: neither a full ray-cast
 # (sw1_raycast._apply_raycast_result) nor enrich (Algo 2a) writes them. Set 2026-10-19 for
-# the ten SE Florida spots the R1-R3 island rules would open: the Great Bahama Bank's
-# shallow water shelters them more than its islands in the land data do.
+# ten SE Florida spots the R1-R3 island rules would open, extended 2026-10-20 to twenty-one
+# (South Beach Miami to Bathtub Beach) after full run 24: the Great Bahama Bank's shallow
+# water shelters them more than its islands in the land data do.
 SPOT_SWELL_WINDOW_HOLDS_FILE = PIPELINE_DIR / "data" / "spot_swell_window_holds.json"
 # ARC PRUNING, applied by enrich Algo 2d to OVERRIDDEN SPOTS ONLY. After a corrected optimal
 # lands, the raycast's other arcs may sit right around the compass — Honolua Bay's window was

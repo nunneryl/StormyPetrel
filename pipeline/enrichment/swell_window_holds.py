@@ -6,7 +6,7 @@ in the file's note. Both writers of a ray-cast window apply it: sw1_raycast's fu
 (_apply_raycast_result) and enrich (Algo 2a), so a held spot keeps its window through a full
 ray-cast and through a re-enrich alike.
 
-A hold is a decision about ten spots' ratings, so a file that cannot be read is an error, not
+A hold is a decision about held spots' ratings, so a file that cannot be read is an error, not
 "no holds": letting a full run go ahead without it would quietly open every held window.
 """
 from __future__ import annotations

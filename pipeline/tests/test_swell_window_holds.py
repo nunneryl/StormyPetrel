@@ -1,10 +1,11 @@
 """The SE Florida hold (pipeline/data/spot_swell_window_holds.json).
 
 The R1–R3 island rules judge the Bimini group on its own run instead of borrowing Cuba's,
-which on the land data alone opens the south-east gap at ten SE Florida spots. The Great
-Bahama Bank's shallow water shelters them more than its islands do, so these ten keep the
-windows they had. Every expected value is transcribed from main's spots_enriched.json at
-7839cc0, not read back from the loader.
+which on the land data alone opens or reshuffles the south-east gap at SE Florida spots. The
+Great Bahama Bank's shallow water shelters them more than its islands do, so they keep the
+windows they had: ten from Hillsboro Beach to Hobe Beach (2026-10-19), and eleven more from
+South Beach Miami to Bathtub Beach after full run 24 (2026-10-20). Every expected value is
+transcribed from main's spots_enriched.json at 7839cc0, not read back from the loader.
 """
 from __future__ import annotations
 
@@ -34,13 +35,25 @@ HELD = {
     "boynton-beach-inlet": ("Boynton Beach Inlet", _arcs((21, 111, 94), (153, 179, 30)), 92),
     "jupiter-inlet": ("Jupiter Inlet", _arcs((145, 159, 18), (353, 111, 122)), 72),
     "hobe-beach": ("Hobe Beach", _arcs((121, 155, 38), (349, 103, 118)), 72),
+    # added after full run 24
+    "south-beach-miami": ("South Beach Miami", _arcs((17, 75, 62), (141, 183, 46)), 80),
+    "haulover-inlet": ("Haulover Inlet", _arcs((13, 79, 70), (137, 167, 34)), 80),
+    "sunny-isles": ("Sunny Isles", _arcs((13, 171, 162)), 92),
+    "spoils": ("Spoils", _arcs((13, 83, 74)), 40.0),
+    "fort-lauderdale-beach": ("Fort Lauderdale Beach", _arcs((17, 87, 74), (145, 175, 34)), 84),
+    "commercial-pier": ("Commercial Pier", _arcs((17, 87, 74), (145, 175, 34)), 84),
+    "boca-raton-inlet": ("Boca Raton Inlet", _arcs((13, 91, 82), (145, 179, 38)), 84),
+    "palmetto-pavilion": ("Palmetto Pavilion", _arcs((13, 91, 82), (149, 179, 34)), 84),
+    "palm-beach": ("Palm Beach", _arcs((9, 107, 102), (153, 175, 26)), 80),
+    "ocean-reef-park": ("Ocean Reef Park", _arcs((5, 111, 110), (157, 171, 18)), 80),
+    "bathtub-beach": ("Bathtub Beach", _arcs((349, 155, 170)), 72),
 }
 
 # What R1–R3 would give Hillsboro Beach on run 18's rays: the south-east gap open.
 OPENED = _arcs((17, 175, 162))
 
 
-def test_the_ten_held_spots_and_their_windows():
+def test_the_twenty_one_held_spots_and_their_windows():
     holds = load_holds()
     assert {k: (v["name"], v["swell_window_arcs"], v["optimal_swell_dir"]) for k, v in holds.items()} == HELD
 
@@ -56,8 +69,9 @@ def test_the_hold_is_main_s_window_today():
 def test_the_note_says_why():
     doc = json.loads(SPOT_SWELL_WINDOW_HOLDS_FILE.read_text())
     assert "Great Bahama Bank" in doc["_comment"] and "TO RELEASE A SPOT" in doc["_comment"]
-    assert doc["note"] == ("SE Florida, Hillsboro Beach to Hobe Beach: the Great Bahama Bank's "
-                           "shallow water shelters more than the land data shows.")
+    assert doc["note"] == ("SE Florida, South Beach Miami to Bathtub Beach: the Great Bahama "
+                           "Bank's shallow water shelters more than the land data shows.")
+    assert "Eleven more were held on 2026-10-20 after full run 24" in doc["_comment"]
 
 
 def test_a_full_raycast_does_not_write_a_held_spot():
@@ -112,3 +126,18 @@ def test_a_file_that_cannot_be_read_stops_the_run(tmp_path):
     bad.write_text(json.dumps({"holds": {"x": {"swell_window_arcs": _arcs((1, 9, 12))}}}))
     with pytest.raises(ValueError, match="'x'"):
         load_holds(bad)
+
+
+def test_spoils_keeps_its_hand_set_optimal_through_enrich():
+    """Spoils is held AND has an optimal override (spot_swell_windows.json, 40). Algo 2a writes
+    the held [13-83] and 40; Algo 2d writes 40 and prunes arcs further than 90° from it:
+    [13-83] reaches 13 - 2 (pad) = 11°, 29° from 40, so it is kept. Carried forward here are
+    run 24's arcs for Spoils, [13-72, 92-175]."""
+    spot = {"name": "Spoils", "lat": 26.0956, "lng": -80.1, "orientation_deg": 95.0,
+            "swell_window_source": "nwps", "swell_window_arcs": _arcs((13, 72, 63), (92, 175, 87)),
+            "optimal_swell_dir": 40.0}
+    prior = {"Spoils": {"swell_window_arcs": _arcs((13, 72, 63), (92, 175, 87)),
+                        "optimal_swell_dir": 40.0, "swell_window_source": "nwps",
+                        "swell_window_confidence": 0.5}}
+    out = E._enrich_one(spot, skip_raycast=True, prior_arcs=prior)
+    assert (out["swell_window_arcs"], out["optimal_swell_dir"]) == (_arcs((13, 83, 74)), 40.0)
