@@ -570,7 +570,7 @@ def size_score(effective_face_ft: float) -> float:
 #
 # Nothing in the rater calls these yet. star_preview --rating replays the published
 # window through them so the change can be seen by source before it is connected;
-# composite_stars' star_cap and beach_break keywords default to no change.
+# composite_stars' star_cap and closeout_face_ft keywords default to no change.
 # ---------------------------------------------------------------------------
 
 KT_TO_MS = 0.514444
@@ -644,6 +644,25 @@ _BEACH_SIZE_POINTS = [
 
 def beach_size_score(effective_face_ft: float) -> float:
     return _interp(effective_face_ft, _BEACH_SIZE_POINTS)
+
+
+# The ceiling starts here: below it a beach break's size credit is size_score's.
+CLOSEOUT_START_FT = 8.0
+
+
+def closeout_factor(face_ft: float) -> float:
+    """The share of size credit a sand beach break keeps at *face_ft*: 1.0 up to 8 ft, then
+    beach_size_score / size_score (0.9 at 10 ft, 0.7 at 12, 0.5 at 15, 0.3 from 20).
+
+    THE CEILING READS THE CALIBRATED FACE, THE SIZE CREDIT READS THE RAW ONE. Stars stay on the
+    raw face at every spot (one yardstick; see forecast/face_correction.py), but the ceiling
+    models real closeouts, so it is read at the height the waves actually are: the calibrated
+    face where the spot has a MOP factor, the raw face elsewhere. The credit is then
+    size_score(raw) x closeout_factor(calibrated). Where the two faces are equal this is
+    beach_size_score(raw), up to float rounding."""
+    if face_ft <= CLOSEOUT_START_FT:
+        return 1.0
+    return beach_size_score(face_ft) / size_score(face_ft)
 
 
 # Chop penalty — the more of total Hs that's wind sea (vs swell), the more
@@ -834,12 +853,14 @@ def composite_stars(
     chop_mult: float = 1.0,
     period_q: float = 1.0,
     star_cap: float = 5.0,
-    beach_break: bool = False,
+    closeout_face_ft: float | None = None,
 ) -> float:
     """0 if flat (< 0.5 ft effective), else 1–5 in 0.5 increments.
 
-    *star_cap* (wind_star_cap) and *beach_break* (beach_size_score in place of
-    size_score) are the proposed rules; their defaults change nothing.
+    *star_cap* (wind_star_cap) caps the stars, and *closeout_face_ft* puts a sand beach
+    break on the size ceiling: size_score(effective) x closeout_factor(closeout_face_ft),
+    the calibrated effective face where the spot has one. These are the proposed rules;
+    their defaults change nothing.
 
     raw = size_score(effective_size)
         × wind_mult**a × tide_mult**b × chop_mult**c × period_quality**d
@@ -866,7 +887,8 @@ def composite_stars(
         return 0.0
     e = COMPOSITE_FACTOR_EXPONENTS
     raw = (
-        (beach_size_score if beach_break else size_score)(effective_face_ft)
+        size_score(effective_face_ft)
+        * (1.0 if closeout_face_ft is None else closeout_factor(closeout_face_ft))
         * max(_FACTOR_EPSILON, wind_mult) ** e["wind_mult"]
         * max(_FACTOR_EPSILON, tide_mult) ** e["tide_mult"]
         * max(_FACTOR_EPSILON, chop_mult) ** e["chop_mult"]

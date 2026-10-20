@@ -303,6 +303,20 @@ def face_range(face_ft_value, rec):
     return face / p75, face / p25
 
 
+def spot_factor(spot, factors, slug_for):
+    """The divisor apply_face_corrections uses at *spot*, or None where it corrects nothing.
+
+    The same two exclusions: the MOP tier by swell_window_source, and a spot with no record
+    (held out, or never measured). ABSENT IS NOT 1.0 here either. The proposed beach-break
+    ceiling (interpret.closeout_factor) reads the calibrated face, face / this, where it is
+    not None, and the raw face where it is.
+    """
+    if spot.get("swell_window_source") in MOP_TIER_SOURCES:
+        return None
+    rec = factors.get(slug_for(spot.get("name")))
+    return None if rec is None else rec["factor"]
+
+
 def _stalest(factors, now):
     """(days, slug) for the oldest measured_on among *factors*, or None.
 

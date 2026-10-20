@@ -100,9 +100,12 @@ every row that reproduces its published stars with BASELINE:
     cap         interpret.wind_star_cap: cross-shore or onshore wind above 13 kt, less a knot
                 per second of period above 8 s, caps the stars (the /learn/wind ladder);
                 above 25 kt measured the cap is 1.0, and 2.0 offshore
-    ceiling     interpret.beach_size_score in place of size_score on beach and jetty breaks
-                over sand (is_sand_beach_break): size credit holds from 8 to 10 ft, then
-                falls. Every spot it moves whose break type or bottom is unverified is listed
+    ceiling     beach and jetty breaks over sand (is_sand_beach_break) keep
+                interpret.closeout_factor of their size credit: all of it to 8 ft, then less,
+                read at the CALIBRATED face where the spot has a MOP factor
+                (face_correction.spot_factor) and the raw face elsewhere; the size credit
+                itself stays on the raw face. Every spot it moves whose break type or bottom
+                is unverified is listed
     both        the two together
 
 Each reports the star change by source, state, cause and wind band, the 20 most-changed spots,
@@ -124,6 +127,7 @@ from datetime import datetime, timezone
 from statistics import median
 
 from .config import TIDE_RATED_SOURCES
+from .forecast.face_correction import load_face_factors, spot_factor
 from .forecast.nwps_nearshore import nwps_stars
 from .interpret import (
     _min_offset_from_arcs,
@@ -136,6 +140,7 @@ from .interpret import (
     COMPOSITE_FACTOR_EXPONENTS,
     _angle_off,
     beach_size_score,
+    closeout_factor,
     period_quality,
     rated_tide_preference,
     size_score,
@@ -441,18 +446,30 @@ def _kt_band(kt):
     return ">25 kt"
 
 
-def rating_after(row, spot, rb, rule):
+def closeout_face(spot, rb, factors, calibrated=True):
+    """The face the ceiling reads for a replayed hour: the effective face divided by the
+    spot's MOP factor where it has one (and *calibrated*), else the effective face itself."""
+    f = spot_factor(spot, factors or {}, _slug) if calibrated else None
+    return rb["eff"] if f is None else rb["eff"] / f
+
+
+def rating_after(row, spot, rb, rule, factors=None, calibrated=True):
     """The stars *rb* (a reproduced replay of *row*) gets under *rule*, and why it moved.
 
+    *factors* are the MOP face factors (face_correction.load_face_factors); the ceiling reads
+    the calibrated face where the spot has one, unless *calibrated* is False (the raw face
+    everywhere, as rating-preview run 30 did).
+
     Returns (stars, cause): cause lists "wind cap" when the cap is below the stars the hour
-    would otherwise get, and "beach ceiling" when the beach size curve changes them."""
+    would otherwise get, and "beach ceiling" when the ceiling changes them."""
     cap_on, ceiling_on, jetty = RATING_RULES[rule]
     wm, tm, cm = _mults(row)
     cap = (wind_star_cap(_num(row.get("wind_dir")), _num(row.get("wind_speed")),
                          spot.get("offshore_wind_deg"), rb["tp"]) if cap_on else 5.0)
     beach = ceiling_on and is_sand_beach_break(spot, jetty)
-    uncapped = composite_stars(rb["eff"], wm, tm, cm, rb["pq"], beach_break=beach)
-    stars = composite_stars(rb["eff"], wm, tm, cm, rb["pq"], star_cap=cap, beach_break=beach)
+    face = closeout_face(spot, rb, factors, calibrated) if beach else None
+    uncapped = composite_stars(rb["eff"], wm, tm, cm, rb["pq"], closeout_face_ft=face)
+    stars = composite_stars(rb["eff"], wm, tm, cm, rb["pq"], star_cap=cap, closeout_face_ft=face)
     cause = []
     if beach and uncapped != rb["stars"]:
         cause.append("beach ceiling")
@@ -469,7 +486,7 @@ def _wind(row, spot):
     return wind_class(wd, off), ws / KT_TO_MS
 
 
-def rating_compare(rows, spots, names, rule):
+def rating_compare(rows, spots, names, rule, factors=None):
     """Every reproduced row before and after *rule*, by source, state, cause and wind."""
     replay, unreplayable = Counter(), Counter()
     by_group, by_state = defaultdict(Counter), defaultdict(Counter)
@@ -490,7 +507,7 @@ def rating_compare(rows, spots, names, rule):
         replay[(grp, ok)] += 1
         if not ok:
             continue
-        after, cause = rating_after(row, spot, rb, rule)
+        after, cause = rating_after(row, spot, rb, rule, factors)
         delta = round(after - rb["stars"], 1)
         by_group[grp][delta] += 1
         by_state[state][delta] += 1
@@ -545,7 +562,7 @@ def rating_compare(rows, spots, names, rule):
     }
 
 
-def leaderboard(rows, spots, names, rule, n=10):
+def leaderboard(rows, spots, names, rule, n=10, factors=None):
     """The homepage's "Best conditions right now" before and after *rule*.
 
     The page (frontend/app/page.tsx) takes each spot's soonest row at or after now, sorts by
@@ -564,7 +581,7 @@ def leaderboard(rows, spots, names, rule, n=10):
         spot = spots.get(name)
         rb = rescore(row, spot) if spot is not None else {"stars": None}
         replayed = rb["stars"] == pub
-        new = rating_after(row, spot, rb, rule)[0] if replayed else pub
+        new = rating_after(row, spot, rb, rule, factors)[0] if replayed else pub
         before.append((pub, sid, name, state, row["valid_time"]))
         after.append((new, sid, name, state, row["valid_time"], replayed))
     before.sort(key=lambda r: (-r[0], r[1]))
@@ -583,7 +600,35 @@ def leaderboard(rows, spots, names, rule, n=10):
     }
 
 
-def explain(row, spot, rules=tuple(RATING_RULES)):
+def calibration_diff(rows, spots, names, rule, factors):
+    """Every reproduced hour whose stars under *rule* differ between the ceiling read at the
+    raw face (rating-preview run 30) and at the calibrated face, time order within spot."""
+    hours = []
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None or row.get("stars") is None:
+            continue
+        if spot_factor(spot, factors, _slug) is None or not is_sand_beach_break(spot, True):
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None or rb["stars"] != float(row["stars"]):
+            continue
+        raw = rating_after(row, spot, rb, rule, factors, calibrated=False)[0]
+        cal = rating_after(row, spot, rb, rule, factors)[0]
+        if raw != cal:
+            hours.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                          "eff_ft": round(rb["eff"], 2),
+                          "calibrated_ft": round(closeout_face(spot, rb, factors), 2),
+                          "factor": spot_factor(spot, factors, _slug),
+                          "stars_published": rb["stars"], "stars_raw_ceiling": raw,
+                          "stars_calibrated_ceiling": cal})
+    return {"rule": rule, "hours": len(hours), "ups": sum(h["stars_calibrated_ceiling"] >
+                                                          h["stars_raw_ceiling"] for h in hours),
+            "spots": sorted({h["spot"] for h in hours}), "changes": hours}
+
+
+def explain(row, spot, rules=tuple(RATING_RULES), factors=None):
     """Every factor of one published row, how the composite combines them, and the stars
     under each proposed rule. Pure: reads the row and the spot only."""
     rb = rescore(row, spot)
@@ -621,8 +666,11 @@ def explain(row, spot, rules=tuple(RATING_RULES)):
                terms=terms, raw=raw, replay_stars=rb["stars"],
                reproduced=rb["stars"] == out["published_stars"],
                beach_size_score=beach_size_score(rb["eff"]),
+               face_factor=spot_factor(spot, factors or {}, _slug),
+               closeout_face_ft=closeout_face(spot, rb, factors),
+               closeout_factor=closeout_factor(closeout_face(spot, rb, factors)),
                wind_cap=wind_star_cap(wd, ws, off, rb["tp"]),
-               proposed={r: rating_after(row, spot, rb, r) for r in rules})
+               proposed={r: rating_after(row, spot, rb, r, factors) for r in rules})
     return out
 
 
@@ -652,8 +700,19 @@ def _print_explain(name, x):
           f" x period^0.25 {t['period']:.3f} (pq {x['replay_pq']:.3f} at {x['replay_tp']:.1f} s)"
           f" = {x['raw']:.3f} -> {x['replay_stars']} stars "
           f"({'reproduces' if x['reproduced'] else 'DOES NOT reproduce'} the published value)")
+    print(f"  ceiling reads {x['closeout_face_ft']:.2f} ft (MOP factor {x['face_factor']}), "
+          f"keeps {x['closeout_factor']:.3f} of the size credit")
     print(f"  proposed: wind cap {x['wind_cap']}, beach size score {x['beach_size_score']:.3f}; "
           + "; ".join(f"{r} {s} ({c or 'no change'})" for r, (s, c) in x["proposed"].items()))
+
+
+def _print_calibration_diff(d):
+    print(f"ceiling at the calibrated face against the raw face ({d['rule']}): {d['hours']} hours "
+          f"differ, {d['ups']} up, at {len(d['spots'])} spots")
+    for h in d["changes"]:
+        print(f"  {h['spot']} ({h['state']}) {h['valid_time']}: effective {h['eff_ft']} ft / "
+              f"factor {h['factor']} = {h['calibrated_ft']} ft; published {h['stars_published']}, "
+              f"raw ceiling {h['stars_raw_ceiling']} -> calibrated {h['stars_calibrated_ceiling']}")
 
 
 def _print_rating(rep, lb, since):
@@ -1153,6 +1212,7 @@ def main(argv=None):
     after = _by_name(args.arcs) if args.arcs else before
     out = {"since": since}
     if rules:
+        factors = load_face_factors()
         out["explain"] = {}
         slugs = [x.strip() for x in args.explain.split(",") if x.strip()]
         by_slug = {_slug(n): sid for sid, (n, _) in names.items()}
@@ -1163,14 +1223,18 @@ def main(argv=None):
             if row is None or before.get(name) is None:
                 print(f"\n--- {sl}: no published row from {since} or not in the spots file")
                 continue
-            out["explain"][sl] = explain(row, before[name], rules)
+            out["explain"][sl] = explain(row, before[name], rules, factors)
             _print_explain(name, out["explain"][sl])
         out["rating"] = {}
         for r in rules:
-            rep = rating_compare(rows, before, names, r)
-            lb = leaderboard(rows, before, names, r)
+            rep = rating_compare(rows, before, names, r, factors)
+            lb = leaderboard(rows, before, names, r, factors=factors)
             _print_rating(rep, lb, since)
             out["rating"][r] = dict(rep, leaderboard=lb)
+            if RATING_RULES[r][1]:
+                d = calibration_diff(rows, before, names, r, factors)
+                out["rating"][r]["calibration_diff"] = d
+                _print_calibration_diff(d)
     elif args.nwps_shelter:
         out["nwps_shelter"] = shelter_report(rows, before, names)
         _print_shelter(out["nwps_shelter"])

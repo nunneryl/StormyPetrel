@@ -13,6 +13,8 @@ Every expected value is worked by hand, never read back from the functions under
   rules            cap; ceiling (beach and jetty over sand); both
   classes          angle off the offshore bearing: < 60 offshore, 60-120 cross, >= 120 onshore
   beach size       as size_score to 8 ft (4.5), 10 ft 4.5, 12 ft 3.5, 15 ft 2.5, 20 ft+ 1.5
+  closeout         1.0 to 8 ft, then beach / size: 9 ft 4.5/4.75 = 0.947368, 10 ft 0.9,
+                   12 ft 0.7, 25 ft 0.3; the ceiling reads the calibrated face (raw / factor)
   0.8**0.35        exp(0.35 x ln 0.8) = 0.924872
 """
 from __future__ import annotations
@@ -144,13 +146,32 @@ def test_the_cap_never_raises_a_rating():
     assert I.composite_stars(2.0, 0.8, 1.0, star_cap=3.0) == 2.0
 
 
-def test_the_beach_curve_replaces_size_score():
-    # 11 ft on the beach curve: 4.0 x 0.924872 = 3.699 -> round(7.399)/2 = 3.5
-    assert I.composite_stars(11.0, 0.8, 1.0, beach_break=True) == 3.5
+@pytest.mark.parametrize("face, expected", [
+    (7.0, 1.0), (8.0, 1.0), (9.0, 0.947368), (10.0, 0.9), (12.0, 0.7), (25.0, 0.3),
+])
+def test_closeout_factor(face, expected):
+    assert round(I.closeout_factor(face), 6) == expected
+
+
+def test_the_ceiling_at_the_raw_face_is_the_beach_curve():
+    # 11 ft read at 11 ft: 5.0 x 0.8 = 4.0 x 0.924872 = 3.699 -> round(7.399)/2 = 3.5
+    assert I.composite_stars(11.0, 0.8, 1.0, closeout_face_ft=11.0) == 3.5
+
+
+def test_a_calibrated_face_under_8_ft_lifts_the_ceiling():
+    # 11 ft raw, factor 1.5: the ceiling reads 7.33 ft, keeps all of size 5.0 -> 4.5
+    assert I.composite_stars(11.0, 0.8, 1.0, closeout_face_ft=11.0 / 1.5) == 4.5
+
+
+def test_a_calibrated_face_above_the_raw_one_closes_out_harder():
+    # 9 ft raw (size 4.75) read at 12 ft (factor 0.75): 4.75 x 0.7 = 3.325 x 0.924872 = 3.075
+    # -> round(6.15)/2 = 3.0. At the raw face it keeps 0.947368: 4.5 x 0.924872 = 4.162 -> 4.0
+    assert I.composite_stars(9.0, 0.8, 1.0, closeout_face_ft=12.0) == 3.0
+    assert I.composite_stars(9.0, 0.8, 1.0, closeout_face_ft=9.0) == 4.0
 
 
 def test_both_rules_and_the_floor():
-    assert I.composite_stars(11.0, 0.8, 1.0, star_cap=1.0, beach_break=True) == 1.0
+    assert I.composite_stars(11.0, 0.8, 1.0, star_cap=1.0, closeout_face_ft=11.0) == 1.0
 
 
 # --------------------------------------------------------------------------- #
@@ -314,3 +335,65 @@ def test_equal_stars_keep_spot_id_order_on_the_leaderboard():
     lb = SP.leaderboard(rows, spots, NAMES, "both", n=2)
     assert [r["spot"] for r in lb["before"]] == ["A", "C"]
     assert [r["spot"] for r in lb["after"]] == ["A", "C"]
+
+
+
+# --------------------------------------------------------------------------- #
+# The ceiling at the calibrated face                                           #
+# --------------------------------------------------------------------------- #
+# Spot A's MOP factor 1.5 makes the 11 ft hour read 7.33 ft (no closeout): 4.5 stays 4.5
+# under the ceiling alone, where the raw face gave 3.5. A factor of 0.75 makes a 9 ft hour
+# (published 4.75 x 0.924872 = 4.393 -> 4.5) read 12 ft: 3.0, where the raw face gave 4.0.
+
+FACTORS = {"a": {"factor": 1.5}, "c": {"factor": 0.75}}
+NAMED = {"A": dict(WEST_BEACH, name="A"), "B": dict(WEST_REEF, name="B"),
+         "C": dict(WEST_BEACH, name="C")}
+
+
+@pytest.mark.parametrize("spot, row, calibrated, expected", [
+    ("A", {}, True, (4.5, "")),
+    ("A", {}, False, (3.5, "beach ceiling")),
+    ("C", {"face_ft": 9.0}, True, (3.0, "beach ceiling")),
+    ("C", {"face_ft": 9.0}, False, (4.0, "beach ceiling")),
+])
+def test_rating_after_reads_the_calibrated_face(spot, row, calibrated, expected):
+    r = _row(**row)
+    rb = SP.rescore(r, NAMED[spot])
+    assert SP.rating_after(r, NAMED[spot], rb, "ceiling", FACTORS, calibrated) == expected
+
+
+def test_the_mop_tier_is_never_calibrated():
+    spot = dict(NAMED["A"], swell_window_source="cdip_mop")
+    r = _row()
+    assert SP.rating_after(r, spot, SP.rescore(r, spot), "ceiling", FACTORS) == (3.5, "beach ceiling")
+
+
+def test_no_factor_reads_the_raw_face():
+    r = _row()
+    spot = dict(WEST_BEACH, name="Z")
+    assert SP.rating_after(r, spot, SP.rescore(r, spot), "ceiling", FACTORS) == (3.5, "beach ceiling")
+
+
+def test_the_calibration_diff_lists_every_hour_that_moves():
+    rows = [
+        _row(),                                            # A 11 ft: 3.5 raw -> 4.5 calibrated
+        _row(spot_id=2, wind_dir=90.0, wind_speed=3.0, wind_mult=1.0, stars=5.0),  # B reef
+        _row(spot_id=3, face_ft=9.0, valid_time="2026-10-20T16:00:00+00:00"),       # C 4.0 -> 3.0
+        _row(spot_id=3, face_ft=6.0, stars=3.5),           # C 6 ft reads 8 ft: no closeout
+    ]
+    d = SP.calibration_diff(rows, NAMED, NAMES, "ceiling", FACTORS)
+    assert (d["hours"], d["ups"], d["spots"]) == (2, 1, ["A", "C"])
+    assert [(h["spot"], h["stars_raw_ceiling"], h["stars_calibrated_ceiling"], h["calibrated_ft"])
+            for h in d["changes"]] == [("A", 3.5, 4.5, 7.33), ("C", 4.0, 3.0, 12.0)]
+
+
+def test_explain_shows_the_face_the_ceiling_reads():
+    x = SP.explain(_row(), NAMED["A"], ("ceiling",), FACTORS)
+    assert (x["face_factor"], round(x["closeout_face_ft"], 2), x["closeout_factor"]) == (1.5, 7.33, 1.0)
+    assert x["proposed"] == {"ceiling": (4.5, "")}
+
+
+def test_the_leaderboard_reads_the_calibrated_face():
+    # A: 11 ft with factor 1.5 keeps 4.5 under the ceiling (3.5 at the raw face).
+    lb = SP.leaderboard([_row()], NAMED, NAMES, "ceiling", n=1, factors=FACTORS)
+    assert lb["after"] == [{"spot": "A", "state": "North Carolina", "stars": 4.5, "replayed": True}]
