@@ -19,8 +19,8 @@ earlier calibration's 130 spots and the "all but two" whose calibrated height wa
 (item 6 quotes them as history: that file was measured 18 August to 1 September 2026 and has
 been replaced, so nothing in the repo can check them), and that MOP's nowcast ends before the
 current hour (a property of CDIP's feed, seen on live rows), and the replay of the forecast
-published on 20 October 2026 under the wind cap and beach-break limit (9,058 of 84,738
-spot-hours, a rating-preview measurement dated in the post). None is a number the code owns. What
+published on 20 October 2026 under the wind cap and beach-break limit (8,844 of 83,446
+spot-hours, rating-preview run 31, dated in the post). None is a number the code owns. What
 the code does own about these — that every spot's stars come from the same model height whatever
 its calibration, that item 6 describes a calibration older than the current file, and that MOP is
 read from its nowcast — is pinned below.

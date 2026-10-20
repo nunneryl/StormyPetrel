@@ -165,7 +165,7 @@ Offshore means within 60° of the spot's straight-offshore direction, cross-shor
 
 Long-period swell stands up to wind better, so up to 25 kt the wind is read a knot lighter for every second of period above 8 s: a 12 s swell in an 18 kt wind is read at 14 kt. Above 25 kt there's no allowance.
 
-When we replayed the forecast published on 20 October 2026 with the cap and the beach-break limit together, 9,058 of 84,738 spot-hours (10.7%), at 261 of our spots, came out lower, and none came out higher. 6,836 moved for the wind alone, 772 for the beach-break limit alone, and 1,450 for both. Most were windy East Coast hours, above all the 25–30 kt onshore days in Florida's forecast; California moved by 90 hours. That replay judged closing out at the model's height everywhere.
+When we replayed the forecast published on 20 October 2026 with the cap and the beach-break limit together, 8,844 of 83,446 spot-hours (10.6%), at 257 of our spots, came out lower, and none came out higher. 6,697 moved for the wind alone, 736 for the beach-break limit alone, and 1,411 for both. Most were windy East Coast hours, above all the 25–30 kt onshore days in Florida's forecast; California moved by 72 hours. Judging closing out at the calibrated height kept 12 California hours, at Caspar, Jug Handle and Carmel Beach, from dropping half a star.
 
 ## Period
 
