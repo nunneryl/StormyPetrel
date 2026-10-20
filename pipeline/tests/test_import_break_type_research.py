@@ -490,7 +490,9 @@ def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
     # and the NWPS trust diagnostic's tier — none of them in the forecast run's rating or
     # row code. The bottom is read only by the descriptions (pipeline/descriptions.py).
     # tide_free_pass.py names both keys only to find, in the research results, the pages whose
-    # location check passed; it reads neither value from the roster.
+    # location check passed; it reads neither value from the roster. star_preview.py reads
+    # both for the read-only preview of the proposed beach-break ceiling, which the rater
+    # does not apply.
     readers = []
     for folder in ("pipeline", os.path.join("pipeline", "forecast")):
         for name in sorted(os.listdir(os.path.join(ROOT, folder))):
@@ -503,7 +505,7 @@ def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
         "pipeline/audit_review_queue.py", "pipeline/config.py",
         "pipeline/db_import.py", "pipeline/descriptions.py", "pipeline/generate_descriptions.py",
         "pipeline/import_break_type_research.py", "pipeline/research_break_type.py",
-        "pipeline/scrape_surf_forecast.py", "pipeline/tide_free_pass.py",
+        "pipeline/scrape_surf_forecast.py", "pipeline/star_preview.py", "pipeline/tide_free_pass.py",
         "pipeline/verify_spots.py", "pipeline/forecast/nwps_nearshore.py"]
     for name in ("interpret.py", "run_all.py"):
         path = os.path.join(ROOT, "pipeline", name)

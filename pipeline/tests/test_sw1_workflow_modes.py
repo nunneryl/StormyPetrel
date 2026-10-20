@@ -1,4 +1,4 @@
-"""sw1-raycast.yml: mode=nwps-shelter runs only the read-only measurement job.
+"""sw1-raycast.yml: mode=nwps-shelter and mode=rating-preview each run only their read-only job.
 
 Read as text: PyYAML is not among the pipeline's requirements. Each job is the block under
 `jobs:` that starts at two spaces of indent.
@@ -26,18 +26,31 @@ def test_nwps_shelter_is_a_mode():
     text = WORKFLOW.read_text(encoding="utf-8")
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
-        "validate", "full", "star-preview", "tide-preview", "nwps-shelter"]
+        "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
-    assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter"}
+    assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
+                         "rating-preview"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
-        "&& inputs.mode != 'nwps-shelter' }}")
+        "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
+    assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
+
+
+def test_the_rating_preview_only_reads():
+    job = _jobs()["rating-preview"]
+    assert "    permissions:\n      contents: read\n" in job
+    assert "python -m pipeline.star_preview --rating cap,ceiling,both,both+jetty \\\n" in job
+    assert '--baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json' in job
+    assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job
+    assert "SPOTS: ${{ inputs.spots }}" in job
+    for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
 
 
 def test_the_measurement_job_only_reads():

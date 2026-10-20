@@ -565,6 +565,83 @@ def size_score(effective_face_ft: float) -> float:
     return _interp(effective_face_ft, _SIZE_POINTS)
 
 
+# ---------------------------------------------------------------------------
+# PROPOSED, NOT WIRED: the strong-wind cap and the beach-break size ceiling.
+#
+# Nothing in the rater calls these yet. star_preview --rating replays the published
+# window through them so the change can be seen by source before it is connected;
+# composite_stars' star_cap and beach_break keywords default to no change.
+# ---------------------------------------------------------------------------
+
+KT_TO_MS = 0.514444
+
+# The wind speed ladder on /learn/wind, in knots, read as a ceiling on the stars:
+#   10-15 kt  "junky on most beach breaks under onshore"
+#   15-25 kt  "Onshore: blown out at almost every exposed spot"
+#   >25 kt    "Generally unsurfable, even when offshore"
+# Each row is (above this many knots, cap). Cross-shore runs a half star to one star
+# milder than onshore below 25 kt: it makes chop but does not push the lip over.
+WIND_CAP_ONSHORE = ((13.0, 3.0), (15.0, 2.0), (20.0, 1.5), (25.0, 1.0))
+WIND_CAP_CROSS = ((13.0, 3.5), (15.0, 2.5), (20.0, 2.0), (25.0, 1.0))
+# "Rough rule: one extra knot of tolerance per second of period above 8" (/learn/wind).
+# It shifts every rung but the last; the page gives "above 25 kt" for any swell.
+WIND_CAP_PERIOD_BASE_S = 8.0
+WIND_CAP_UNSURFABLE_KT = 25.0
+
+
+def wind_class(wind_dir: float, offshore_wind_deg: float) -> str:
+    """'offshore', 'cross' or 'onshore', on wind_multiplier's own band edges: under 60°
+    off the offshore bearing is offshore (its 1.2 and 1.0 bands), 60–120° is cross-shore
+    (0.8), 120° and over is onshore (0.6 and 0.55)."""
+    ang = _angle_off(wind_dir, offshore_wind_deg)
+    if ang < 60.0:
+        return "offshore"
+    return "cross" if ang < 120.0 else "onshore"
+
+
+def wind_star_cap(
+    wind_dir: float | None,
+    wind_speed_ms: float | None,
+    offshore_wind_deg: float | None,
+    period_s: float | None,
+) -> float:
+    """The most stars an hour can have in this wind: 5.0 (no cap) unless the wind is
+    cross-shore or onshore and above 13 kt once the period's tolerance is taken off.
+
+    The speed read against the ladder is knots - max(0, period - 8); above 25 kt
+    measured, the cap is 1.0 whatever the period."""
+    if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
+        return 5.0
+    cls = wind_class(wind_dir, offshore_wind_deg)
+    if cls == "offshore":
+        return 5.0
+    kt = wind_speed_ms / KT_TO_MS
+    if kt > WIND_CAP_UNSURFABLE_KT:
+        return 1.0
+    tol = max(0.0, (period_s or 0.0) - WIND_CAP_PERIOD_BASE_S)
+    cap = 5.0
+    for above, c in (WIND_CAP_ONSHORE if cls == "onshore" else WIND_CAP_CROSS):
+        if kt - tol > above:
+            cap = c
+    return cap
+
+
+# Sand beach breaks close out as they get big: size credit follows _SIZE_POINTS to 8 ft,
+# holds 4.5 to 10 ft, then falls. No research doc gives the numbers; the shape is the
+# proposal and the preview shows what it does. Which spots are sand beach breaks is read
+# from the roster by star_preview.is_sand_beach_break; the rater reads neither the break
+# type nor the bottom (a test in the break-type research suite pins that).
+_BEACH_SIZE_POINTS = [
+    (0.0, 0.0), (1.0, 1.0), (2.0, 2.0), (3.0, 2.5), (4.0, 3.0),
+    (5.0, 3.5), (6.0, 4.0), (8.0, 4.5), (10.0, 4.5), (12.0, 3.5),
+    (15.0, 2.5), (20.0, 1.5), (50.0, 1.5),
+]
+
+
+def beach_size_score(effective_face_ft: float) -> float:
+    return _interp(effective_face_ft, _BEACH_SIZE_POINTS)
+
+
 # Chop penalty — the more of total Hs that's wind sea (vs swell), the more
 # textured / less clean the lineup, regardless of size.
 #   chop_ratio = (hs_total - swell_hs) / hs_total
@@ -752,8 +829,13 @@ def composite_stars(
     tide_mult: float,
     chop_mult: float = 1.0,
     period_q: float = 1.0,
+    star_cap: float = 5.0,
+    beach_break: bool = False,
 ) -> float:
     """0 if flat (< 0.5 ft effective), else 1–5 in 0.5 increments.
+
+    *star_cap* (wind_star_cap) and *beach_break* (beach_size_score in place of
+    size_score) are the proposed rules; their defaults change nothing.
 
     raw = size_score(effective_size)
         × wind_mult**a × tide_mult**b × chop_mult**c × period_quality**d
@@ -780,14 +862,14 @@ def composite_stars(
         return 0.0
     e = COMPOSITE_FACTOR_EXPONENTS
     raw = (
-        size_score(effective_face_ft)
+        (beach_size_score if beach_break else size_score)(effective_face_ft)
         * max(_FACTOR_EPSILON, wind_mult) ** e["wind_mult"]
         * max(_FACTOR_EPSILON, tide_mult) ** e["tide_mult"]
         * max(_FACTOR_EPSILON, chop_mult) ** e["chop_mult"]
         * max(_FACTOR_EPSILON, period_q) ** e["period_quality"]
     )
     stars = round(raw * 2.0) / 2.0
-    return max(1.0, min(5.0, stars))
+    return max(1.0, min(5.0, star_cap, stars))
 
 
 # ---------------------------------------------------------------------------
