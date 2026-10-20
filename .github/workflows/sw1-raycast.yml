@@ -37,6 +37,12 @@ name: sw1-raycast
 #       (pipeline/star_preview.py --nwps-shelter), then replays B and C: the window picks the
 #       partition but the height takes the alignment term only (C: on NWPS dirpw), all three
 #       on the same rows read once. Geometry from baseline_ref. SELECT only.
+#   mode = rating-preview: READ-ONLY. The strong-wind cap and sand beach-break size ceiling
+#       replayed over the published window, by source, with the homepage's "Best conditions
+#       right now" before and after; the wired rater checked against the preview hour for hour
+#       (the merge gate); every hour where the ceiling at the calibrated face differs from the
+#       raw one; and every rating factor of the soonest hour at the spots in `spots`
+#       (pipeline/star_preview.py --rating --explain). Geometry from baseline_ref. SELECT only.
 
 on:
   workflow_dispatch:
@@ -52,6 +58,7 @@ on:
           - star-preview
           - tide-preview
           - nwps-shelter
+          - rating-preview
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -68,7 +75,7 @@ on:
         default: false
         type: boolean
       spots:
-        description: (validate only) comma-separated spot slugs to debug instead of the 5-spot gate (e.g. sunset-cliffs,ocracoke-beach)
+        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print. Comma-separated
         required: false
         default: ''
         type: string
@@ -108,7 +115,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -430,4 +437,59 @@ jobs:
         with:
           name: nwps-shelter-${{ github.run_number }}
           path: nwps_shelter.json
+          if-no-files-found: warn
+
+  rating-preview:
+    name: sw1 rating preview (read-only)
+    if: ${{ inputs.mode == 'rating-preview' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Resolve the roster the window was rated with
+        env:
+          BASELINE_REF: ${{ inputs.baseline_ref }}
+        run: |
+          set -euo pipefail
+          base="${BASELINE_REF:-main}"
+          git rev-parse --verify --quiet "$base^{commit}" >/dev/null || base="origin/$base"
+          git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
+          echo "baseline: $base ($(git rev-parse "$base"))"
+
+      - name: Rating factors, the wind cap and beach ceiling, and the wired rater check (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Through the environment, never interpolated into the shell command.
+          SPOTS: ${{ inputs.spots }}
+        run: |
+          python -m pipeline.star_preview --rating cap,ceiling,both \
+            --explain "${SPOTS:-jennettes-pier,avalon-pier,avon-pier,kill-devil-hills,humboldt-bay-jetty,huntington-beach-pier,steamer-lane,tres-palmas,doran-beach}" \
+            --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
+
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rating-preview-${{ github.run_number }}
+          path: rating_preview.json
           if-no-files-found: warn

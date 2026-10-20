@@ -47,7 +47,7 @@ import numpy as np
 
 from ..interpret import (
     chop_factors, composite_stars, directional_gain, face_ft,
-    in_any_arc, period_quality, wind_multiplier,
+    in_any_arc, period_quality, rule_keywords, wind_multiplier,
 )
 from ..config import NWPS_FORECAST_FILE, WFO_TO_REGION
 # ONE cutoff, both sides of the comparison. Importing the constant (rather than restating 8.0)
@@ -776,13 +776,19 @@ def nwps_series_by_hour(spot, cycle):
 # Rating + override (mirror mop_stars / apply_mop_overrides)                   #
 # --------------------------------------------------------------------------- #
 def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0,
-               optimal=None, chop=None):
+               optimal=None, chop=None, *, spot=None, wind_dir=None, wind_speed=None,
+               face_factor=None):
     """Nearshore-frame star rating for one NWPS hour, reusing interpret.py exactly
     (face_ft from swh × the ALIGNMENT term on swell_dir, period quality from the swell
     period), with per-hour wind/tide injected from the normal rater.
     Chop is derived from the windsea split (swh vs shts); if shts is missing, chop
     falls to neutral (the entry's wind-based texture still applies via wind_mult).
     Returns (stars, face_ft, dir_gain, chop_mult, period_quality) or (None, …).
+
+    With *spot*, the strong-wind cap and the beach-break ceiling apply (interpret.rule_keywords)
+    from the hour's *wind_dir* / *wind_speed* (m/s), at period *per*, with the spot's MOP
+    *face_factor* for the ceiling. Without it they do not: star_preview replays rows published
+    before the rules that way.
 
     *swell_dir* and *per* describe the SWELL TRAIN, not the whole spectrum. The
     caller passes the WW3 partition direction/period whenever rate_spot resolved
@@ -823,7 +829,9 @@ def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mu
     # unknown (ratio None -> mult 1.0) rather than by pretending the swell equals total.
     cr, cm = chop if chop is not None else chop_factors(hs, swell_hs)
     pq = period_quality(per)
-    stars = composite_stars(eff, wind_mult, tide_mult, cm, pq)
+    rules = ({} if spot is None
+             else rule_keywords(spot, wind_dir, wind_speed, per, eff, face_factor))
+    stars = composite_stars(eff, wind_mult, tide_mult, cm, pq, **rules)
     return stars, face, dg, cm, pq
 
 
@@ -958,7 +966,8 @@ def _make_default_fetch():
     return fetch
 
 
-def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None, _fetch=None):
+def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None, _fetch=None,
+                         ceiling_factors=None):
     """Override the swell rating of every swell_window_source=="nwps" spot with its
     NWPS node HEIGHT, keeping each hour's wind/tide AND the WW3-derived swell
     direction/period that rate_spot already resolved. Mutates *ratings* in place
@@ -1097,10 +1106,14 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None,
             wm_eff = e.get("wind_mult", 1.0)
             if wdir is not None and wspd is not None and offshore is not None:
                 wm_eff = wind_multiplier(float(wdir), float(wspd), offshore, cr)
+            # The strong-wind cap and the beach-break ceiling, from this hour's wind at the
+            # period it is rated on; *ceiling_factors* is interpret.face_factors_by_name.
             st, face, dg, cm, pq = nwps_stars(swh, per_eff, dir_eff, shts, orient,
                                               wm_eff, e.get("tide_mult", 1.0),
                                               optimal=s.get("optimal_swell_dir"),
-                                              chop=(cr, cm_pair))
+                                              chop=(cr, cm_pair), spot=s,
+                                              wind_dir=wdir, wind_speed=wspd,
+                                              face_factor=(ceiling_factors or {}).get(name))
             if st is None:
                 continue
             if not dry_run:

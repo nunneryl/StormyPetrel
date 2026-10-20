@@ -485,12 +485,20 @@ def test_it_imports_no_database_client_and_nothing_that_rates():
                         ".geo"}
 
 
-def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
+def test_the_rating_reads_them_only_for_the_beach_break_ceiling():
     # Where break_type is read at all, outside its writers: descriptions, the review queue,
-    # and the NWPS trust diagnostic's tier — none of them in the forecast run's rating or
-    # row code. The bottom is read only by the descriptions (pipeline/descriptions.py).
-    # tide_free_pass.py names both keys only to find, in the research results, the pages whose
-    # location check passed; it reads neither value from the roster.
+    # the NWPS trust diagnostic's tier, star_preview (the read-only rating preview), and the
+    # rater, in ONE place: interpret.is_sand_beach_break.
+    #
+    # THE RATER READS BOTH NOW, DELIBERATELY. Until 2026-10-20 this test asserted that neither
+    # value reached the rating. The sand beach-break size ceiling (decided after
+    # rating-preview runs 29 and 30) needs them: a beach or jetty break over sand closes out
+    # as it gets big. It reads them whatever their source, model recall included, because
+    # all 56 unverified spots it moved in run 30 were sand beaches and jetties. Any other
+    # use of either value in the rating is still a change to argue for, so the rater's
+    # reads are pinned to that one function. The bottom is otherwise read only by the
+    # descriptions (pipeline/descriptions.py). tide_free_pass.py names both keys only to
+    # find, in the research results, the pages whose location check passed.
     readers = []
     for folder in ("pipeline", os.path.join("pipeline", "forecast")):
         for name in sorted(os.listdir(os.path.join(ROOT, folder))):
@@ -502,15 +510,21 @@ def test_neither_value_is_read_by_the_ratings_or_the_forecast_rows():
     assert readers == [
         "pipeline/audit_review_queue.py", "pipeline/config.py",
         "pipeline/db_import.py", "pipeline/descriptions.py", "pipeline/generate_descriptions.py",
-        "pipeline/import_break_type_research.py", "pipeline/research_break_type.py",
-        "pipeline/scrape_surf_forecast.py", "pipeline/tide_free_pass.py",
+        "pipeline/import_break_type_research.py", "pipeline/interpret.py",
+        "pipeline/research_break_type.py", "pipeline/scrape_surf_forecast.py",
+        "pipeline/star_preview.py", "pipeline/tide_free_pass.py",
         "pipeline/verify_spots.py", "pipeline/forecast/nwps_nearshore.py"]
-    for name in ("interpret.py", "run_all.py"):
-        path = os.path.join(ROOT, "pipeline", name)
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as fh:
-                text = fh.read()
-            assert "break_type" not in text and "bottom\"" not in text, name
+    with open(os.path.join(ROOT, "pipeline", "interpret.py"), encoding="utf-8") as fh:
+        text = fh.read()
+    body = text.split("def is_sand_beach_break(", 1)[1].split("\ndef ", 1)[0]
+    outside = text.replace(body, "")
+    assert '"break_type"' in body and '"bottom"' in body
+    assert "break_type" not in outside.replace("is_sand_beach_break", "") and '"bottom"' not in outside
+    path = os.path.join(ROOT, "pipeline", "run_all.py")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+        assert "break_type" not in text and "bottom\"" not in text
 
 
 # --- reviewed break types ------------------------------------------------------------------------

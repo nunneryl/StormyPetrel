@@ -18,7 +18,9 @@ and uncalibrated spots before and after the rating stopped using the calibrated 
 earlier calibration's 130 spots and the "all but two" whose calibrated height was the smaller
 (item 6 quotes them as history: that file was measured 18 August to 1 September 2026 and has
 been replaced, so nothing in the repo can check them), and that MOP's nowcast ends before the
-current hour (a property of CDIP's feed, seen on live rows). None is a number the code owns. What
+current hour (a property of CDIP's feed, seen on live rows), and the replay of the forecast
+published on 20 October 2026 under the wind cap and beach-break limit (8,844 of 83,446
+spot-hours, rating-preview run 31, dated in the post). None is a number the code owns. What
 the code does own about these — that every spot's stars come from the same model height whatever
 its calibration, that item 6 describes a calibration older than the current file, and that MOP is
 read from its nowcast — is pinned below.
@@ -570,3 +572,68 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+# --------------------------------------------------------------------------- #
+# The beach-break limit and the strong-wind cap                                #
+# --------------------------------------------------------------------------- #
+def test_the_beach_break_table_is_the_beach_curve():
+    rows = dict(_table(["Height", "Size score at a sand beach or jetty break"]))
+    assert rows["up to 8 ft"] == "as above", rows
+    for ft in (0.0, 1.0, 2.5, 4.0, 6.5, 8.0):
+        assert I.beach_size_score(ft) == I.size_score(ft), ft
+    assert {k: v for k, v in rows.items() if k != "up to 8 ft"} == {
+        "8 to 10 ft": "4.5", "12 ft": "3.5", "15 ft": "2.5", "20 ft or more": "1.5"}, rows
+    for ft in (8.0, 9.0, 10.0):
+        assert I.beach_size_score(ft) == 4.5, ft
+    assert (I.beach_size_score(12.0), I.beach_size_score(15.0)) == (3.5, 2.5)
+    assert all(I.beach_size_score(ft) == 1.5 for ft in (20.0, 30.0, 50.0, 80.0))
+    _says(r"Past about 8 ft the sandbars can't hold the waves", "where the limit starts")
+    assert I.CLOSEOUT_START_FT == 8.0
+    assert I.SAND_CEILING_BREAK_TYPES == ("beach", "jetty")
+
+
+def test_closing_out_is_judged_at_the_calibrated_height():
+    _says(r"A spot whose model height is 12 ft but whose calibrated height is 6 ft doesn't close "
+          r"out; one whose calibrated height is 12 ft does", "the calibrated-height example")
+    assert I.closeout_factor(6.0) == 1.0 and I.closeout_factor(12.0) < 1.0
+    spot = {"break_type": "beach", "bottom": "sand"}
+    assert I.rule_keywords(spot, None, None, None, 12.0, 2.0)["closeout_face_ft"] == 6.0
+
+
+def _cap_cell(cell):
+    if cell == "no cap":
+        return 5.0
+    m = re.fullmatch(rf"{_N}(?: stars)?", cell)
+    assert m, f"cannot read the cap cell {cell!r}; update this test with the post"
+    return float(m.group(1))
+
+
+def test_the_wind_cap_table_is_the_cap():
+    # Offshore bearing 0: offshore wind from 0, cross-shore from 90, onshore from 180. At 8 s
+    # there is no allowance, so each row is read half a knot above its threshold.
+    rows = _table(["Wind", "Onshore", "Cross-shore", "Offshore"])
+    assert [r[0] for r in rows] == ["over 13 kt", "over 15 kt", "over 20 kt", "over 25 kt"], rows
+    for label, onshore, cross, offshore in rows:
+        kt = float(re.fullmatch(r"over (\d+) kt", label).group(1)) + 0.5
+        ms = kt * I.KT_TO_MS
+        got = tuple(I.wind_star_cap(d, ms, 0.0, 8.0) for d in (180.0, 90.0, 0.0))
+        assert got == tuple(map(_cap_cell, (onshore, cross, offshore))), (label, got)
+
+
+def test_the_wind_classes_are_the_posts():
+    _says(r"Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° "
+          r"to 120°, and onshore more than 120°\.", "the wind classes")
+    assert [I.wind_class(d, 0.0) for d in (59.0, 60.0, 119.0, 120.0)] == [
+        "offshore", "cross", "cross", "onshore"]
+
+
+def test_the_period_allowance_example():
+    m = _says(r"a (\d+) s swell in an (\d+) kt wind is read at (\d+) kt", "the allowance example")
+    period, wind, read = (float(g) for g in m.groups())
+    assert wind - (period - 8.0) == read
+    # cross-shore: read at 14 kt the cap is the over-13 rung, not the over-15 one at 18 kt
+    assert I.wind_star_cap(90.0, wind * I.KT_TO_MS, 0.0, period) == \
+        I.wind_star_cap(90.0, read * I.KT_TO_MS, 0.0, 8.0)
+    _says(r"Above 25 kt there's no allowance\.", "the measured top rung")
+    assert I.wind_star_cap(90.0, 26.0 * I.KT_TO_MS, 0.0, 16.0) == 1.0

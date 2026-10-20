@@ -60,23 +60,26 @@ const outsideTables = (html: string) =>
 const post = await getPost('methodology');
 const html = post?.contentHtml ?? '';
 const found = tables(html);
-check('the methodology post renders its seven tables as tables', found.length === 7, `${found.length}`);
+check('the methodology post renders its nine tables as tables', found.length === 9, `${found.length}`);
 check('no table is left as a paragraph of pipes', !/<p>\|/.test(html));
-check('the tables are the seven the post writes, in order', JSON.stringify(found.map((t) => t.headers)) ===
-  JSON.stringify([['Height', 'Size score'], ['Quality score', 'Weight'], ['What', 'Source', 'Notes'],
-    ['Swell direction', 'Direction gain'], ['Period', 'Score'], ['chop_ratio', 'Score'], ['Condition', 'Label']]),
+check('the tables are the nine the post writes, in order', JSON.stringify(found.map((t) => t.headers)) ===
+  JSON.stringify([['Height', 'Size score'], ['Height', 'Size score at a sand beach or jetty break'],
+    ['Quality score', 'Weight'], ['What', 'Source', 'Notes'], ['Swell direction', 'Direction gain'],
+    ['Wind', 'Onshore', 'Cross-shore', 'Offshore'], ['Period', 'Score'], ['chop_ratio', 'Score'],
+    ['Condition', 'Label']]),
   JSON.stringify(found.map((t) => t.headers)));
-check('every row arrives', JSON.stringify(found.map((t) => t.rows)) === JSON.stringify([8, 4, 6, 4, 9, 6, 5]),
+check('every row arrives', JSON.stringify(found.map((t) => t.rows)) === JSON.stringify([8, 5, 4, 6, 4, 4, 9, 6, 5]),
   JSON.stringify(found.map((t) => t.rows)));
 // A column goes right only when every body cell is a number: "10 ft or more", "6 s or less" and the
-// cos² formula keep their columns left, and the all-number columns go right.
+// cos² formula keep their columns left, and the all-number columns go right. The beach-break table's
+// "as above" and the wind-cap table's "3 stars" and "no cap" keep theirs left too.
 check('numeric columns are right-aligned, text columns are not', JSON.stringify(found.map((t) => t.aligns)) ===
-  JSON.stringify([[null, 'right'], [null, 'right'], [null, null, null], [null, null], [null, 'right'],
-    ['right', 'right'], [null, null]]),
+  JSON.stringify([[null, 'right'], [null, null], [null, 'right'], [null, null, null], [null, null],
+    [null, null, null, null], [null, 'right'], ['right', 'right'], [null, null]]),
   JSON.stringify(found.map((t) => t.aligns)));
 check('each table sits in a box that scrolls on its own, reachable by keyboard and labelled',
   found.every((t) => t.box.includes('role="region"') && t.box.includes('tabindex="0"')) &&
-  found[4]?.box.includes('aria-label="Table: Period, Score"') === true, found[4]?.box);
+  found[6]?.box.includes('aria-label="Table: Period, Score"') === true, found[6]?.box);
 
 // --------------------------------------------------------------------------- //
 // 2 — nothing but the tables changed, in any post                             //
