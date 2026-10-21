@@ -37,13 +37,13 @@ name: sw1-raycast
 #       (pipeline/star_preview.py --nwps-shelter), then replays B and C: the window picks the
 #       partition but the height takes the alignment term only (C: on NWPS dirpw), all three
 #       on the same rows read once. Geometry from baseline_ref. SELECT only.
-#   mode = rating-preview: READ-ONLY. Variants of the live rater (the wind cap and beach-break
-#       ceiling of #266) replayed over the published window: stars on the calibrated face
-#       (cal-median, cal-all) and NWPS heights from the swell alone (swell-height), each by
-#       source and state with the homepage's "Best conditions right now" before and after; and
-#       every rating factor of the soonest hour at the spots in `spots`, with the live cap,
-#       ceiling, partitions and NWPS total and swell heights (pipeline/star_preview.py
-#       --variants --explain). Geometry from baseline_ref. SELECT only.
+#   mode = rating-preview: READ-ONLY. Two proposed wind-cap changes against the live rater
+#       (cap, ceiling and cal-median), replayed over the window from 2026-10-21 00:00Z (the
+#       evidence day): no period allowance above 20 kt measured, a 3.0 cap on offshore wind
+#       above 20 kt measured, and both; each by source, state and wind band, with every changed
+#       hour at the spots in `spots`, and the homepage's "Best conditions right now" (from now)
+#       before and after; plus every rating factor of the next hour at those spots
+#       (pipeline/star_preview.py --wind --explain). Geometry from baseline_ref. SELECT only.
 
 on:
   workflow_dispatch:
@@ -476,15 +476,16 @@ jobs:
           git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
           echo "baseline: $base ($(git rev-parse "$base"))"
 
-      - name: Rating factors, and variants of the live rater (SELECT only)
+      - name: Rating factors, and proposed wind-cap changes against the live rater (SELECT only)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           # Through the environment, never interpolated into the shell command.
           SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.star_preview --variants cal-median \
-            --explain "${SPOTS:-jennettes-pier,avalon-pier,avon-pier,kill-devil-hills,humboldt-bay-jetty,huntington-beach-pier,steamer-lane,tres-palmas,doran-beach,cowell-s-beach-children-s-surfing-area,caspar,avalon-nj,juno-beach-pier,ocean-reef-park}" \
+          python -m pipeline.star_preview --wind no-allowance-20,offshore-20,wind-both \
+            --since 2026-10-21T00:00:00+00:00 \
+            --explain "${SPOTS:-jennettes-pier,ocean-city-nj,atlantic-city,manasquan-inlet}" \
             --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
 
       - name: Upload the report
