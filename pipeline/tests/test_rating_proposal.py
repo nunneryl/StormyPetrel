@@ -469,3 +469,160 @@ def test_node_position():
     n = SP.node_position({"lat": 0.0, "lng": 0.0, "nwps_node_lat": 0.01, "nwps_node_lng": 0.0})
     assert (round(n["km"], 4), round(n["bearing"], 6)) == (1.1119, 0.0)
     assert SP.node_position({"lat": 0.0, "lng": 0.0}) is None
+
+
+# --------------------------------------------------------------------------- #
+# --variants: against the live rater                                           #
+# --------------------------------------------------------------------------- #
+# An NWPS row, 8 ft at 12 s, light offshore wind (no cap), wind/tide/chop 1.0:
+#   live    size(8) 4.5 x 0.987259 = 4.443 -> 4.5 (the ceiling keeps all of 8 ft or less)
+# Spot A has a MOP factor of 3.0, spot B none; M = 1.6.
+#   cal-median  A: 8 x 1.6 / 3 = 4.2667 ft, size 3.1333 x 0.987259 = 3.093 -> 3.0;  B: 4.5
+#   cal-all     A: 8 / 3 = 2.6667 ft, size 2.3333 x 0.987259 = 2.304 -> 2.5
+#               B: 8 / 1.6 = 5.0 ft, size 3.5 x 0.987259 = 3.455 -> 3.5
+#   swell-height  swh = 8 / (1.15 x 3.281) = 2.12024 m; shts 1.0 m: 8 x 1.0 / 2.12024 = 3.7731 ft,
+#               size 2.8866 x 0.987259 = 2.850 -> 3.0
+FACTORS3 = {"a": {"factor": 3.0}}
+LIGHT = {"wind_dir": 90.0, "wind_speed": 2.0}
+SPOTS_V = {"A": dict(WEST_BEACH, name="A"), "B": dict(WEST_BEACH, name="B")}
+
+
+@pytest.mark.parametrize("spot, variant, expected", [
+    ("A", "cal-median", 3.0), ("B", "cal-median", 4.5),
+    ("A", "cal-all", 2.5), ("B", "cal-all", 3.5),
+])
+def test_calibration_variants(spot, variant, expected):
+    row = _nwps_row(**LIGHT)
+    rb = SP.rescore(row, SPOTS_V[spot])
+    assert SP.live_stars(row, SPOTS_V[spot], rb, FACTORS3) == 4.5
+    assert SP.variant_stars(row, SPOTS_V[spot], rb, FACTORS3, variant, 1.6) == expected
+
+
+def test_swell_height_variant():
+    row = _nwps_row(swell_hs=1.0, **LIGHT)
+    rb = SP.rescore(row, SPOTS_V["B"])
+    assert round(SP.variant_scale(row, SPOTS_V["B"], FACTORS3, "swell-height", 1.6), 6) == 0.471644
+    assert SP.variant_stars(row, SPOTS_V["B"], rb, FACTORS3, "swell-height", 1.6) == 3.0
+    assert SP.variant_stars(_nwps_row(**LIGHT), SPOTS_V["B"], rb, FACTORS3, "swell-height", 1.6) is None
+
+
+def test_a_mop_row_counts_as_factor_one_and_ww3_rows_keep_their_height():
+    mop_row = _row()
+    assert SP.variant_scale(mop_row, SPOTS_V["A"], FACTORS3, "cal-median", 1.6) == 1.6
+    assert SP.variant_scale(mop_row, SPOTS_V["A"], FACTORS3, "cal-all", 1.6) == 1.0
+    assert SP.variant_scale(mop_row, SPOTS_V["A"], FACTORS3, "swell-height", 1.6) == 1.0
+
+
+def test_median_factor():
+    assert SP.median_factor({"a": {"factor": 1.2}, "b": {"factor": 3.0}, "c": {"factor": 1.5}}) == 1.5
+    assert SP.median_factor({}) is None
+
+
+def test_variant_compare():
+    rows = [_nwps_row(**LIGHT),                                         # A 4.5 -> 3.0
+            _nwps_row(spot_id=2, **LIGHT),                              # B 4.5, unchanged
+            _nwps_row(spot_id=2, stars=2.0, valid_time="2026-10-20T16:00:00+00:00", **LIGHT)]
+    names = {1: ("A", "California"), 2: ("B", "North Carolina")}
+    rep = SP.variant_compare(rows, SPOTS_V, names, FACTORS3, "cal-median", 1.6, n=1)
+    assert rep["replay"] == {"NWPS NOT reproduced": 1, "NWPS reproduced": 2}
+    assert (rep["compared"], rep["changed_spot_hours"], rep["ups"], rep["downs"]) == (2, 1, 0, 1)
+    assert rep["delta_by_group"] == {"NWPS": {-1.5: 1, 0.0: 1}}
+    assert rep["delta_by_state"] == {"California": {-1.5: 1}, "North Carolina": {0.0: 1}}
+    assert rep["calibrated"] == {"calibrated hours": 1, "calibrated hours down": 1}
+    lb = rep["leaderboard"]
+    assert lb["before"] == [{"spot": "A", "state": "California", "stars": 4.5}]
+    assert lb["after"] == [{"spot": "B", "state": "North Carolina", "stars": 4.5}]
+    assert lb["drop_out"] == [{"spot": "A", "stars_before": 4.5, "stars_after": 3.0}]
+    assert lb["come_in"] == [{"spot": "B", "stars": 4.5}]
+
+
+def test_live_explain():
+    row = _nwps_row(swell_hs=1.0, wind_wave_hs=2.0, wind_wave_tp=5.0, wind_wave_dp=30.0, **LIGHT)
+    x = SP.live_explain(row, SPOTS_V["A"], FACTORS3, 1.6)
+    assert (x["star_cap"], round(x["closeout_face_ft"], 4), x["stars"], x["reproduced"]) == (
+        5.0, 2.6667, 4.5, True)
+    assert (x["period_s"], round(x["swh_m"], 5), x["shts_m"]) == (12.0, 2.12024, 1.0)
+    assert x["partitions"]["swell_1"] == (2.0, 12.0, 270.0)
+    assert x["partitions"]["wind_wave"] == (2.0, 5.0, 30.0)
+    assert x["variants"] == {"cal-median": 3.0, "cal-all": 2.5, "swell-height": 3.0}
+
+
+def test_calibration_keeps_the_live_ceiling_face():
+    # Factor 0.75, M 1.6: sized on 8 x 1.6 / 0.75 = 17.07 ft (size 5.0); the ceiling still reads
+    # the calibrated 8 / 0.75 = 10.667 ft and keeps (4.5 - 0.5 x 0.667) / 5 = 0.833333:
+    # 5.0 x 0.833333 x 0.987259 = 4.114 -> 4.0. (Live: 4.5 x 0.833333 x 0.987259 = 3.702 -> 3.5.)
+    spot = dict(WEST_BEACH, name="C")
+    row = _nwps_row(**LIGHT)
+    rb = SP.rescore(row, spot)
+    factors = {"c": {"factor": 0.75}}
+    assert SP.live_stars(row, spot, rb, factors) == 3.5
+    assert SP.variant_stars(row, spot, rb, factors, "cal-median", 1.6) == 4.0
+
+
+def test_the_baseline_is_the_live_rater():
+    # Published 1.5 under the cap (cross-shore 24.3 kt at 12 s); the replay without rules is 4.5.
+    rep = SP.variant_compare([_nwps_row(stars=1.5)], SPOTS_V, {1: ("A", "California")},
+                             FACTORS3, "cal-median", 1.6)
+    assert rep["replay"] == {"NWPS reproduced": 1}
+
+
+def test_a_spot_whose_factor_is_below_the_median_goes_up_and_ties_keep_id_order():
+    # A: factor 1.0, M 1.6 -> 12.8 ft, size 5.0, ceiling reads 8 ft: 5.0 x 0.987259 = 4.936 -> 5.0
+    # B (no factor) and a second unchanged spot C tie at 4.5 and keep id order.
+    spots = {"A": dict(WEST_BEACH, name="A"), "B": dict(WEST_REEF, name="B"),
+             "C": dict(WEST_REEF, name="C")}
+    rows = [_nwps_row(spot_id=3, **LIGHT), _nwps_row(spot_id=2, **LIGHT), _nwps_row(**LIGHT)]
+    names = {1: ("A", "California"), 2: ("B", "Oregon"), 3: ("C", "Hawaii")}
+    rep = SP.variant_compare(rows, spots, names, {"a": {"factor": 1.0}}, "cal-median", 1.6, n=3)
+    assert rep["calibrated"] == {"calibrated hours": 1, "calibrated hours up": 1}
+    assert [(r["spot"], r["stars"]) for r in rep["leaderboard"]["after"]] == [
+        ("A", 5.0), ("B", 4.5), ("C", 4.5)]
+
+
+def test_live_explain_reports_a_row_that_does_not_reproduce():
+    x = SP.live_explain(_nwps_row(stars=2.0, **LIGHT), SPOTS_V["A"], FACTORS3, 1.6)
+    assert (x["stars"], x["reproduced"]) == (4.5, False)
+
+
+# --------------------------------------------------------------------------- #
+# The cal-median merge gate                                                    #
+# --------------------------------------------------------------------------- #
+
+def test_the_cal_median_gate_on_nwps_rows():
+    # A (factor 3.0): live 4.5, cal-median 3.0 both ways; B (no factor): 4.5 both ways.
+    rows = [_nwps_row(**LIGHT), _nwps_row(spot_id=2, **LIGHT)]
+    names = {1: ("A", "California"), 2: ("B", "North Carolina")}
+    c = SP.cal_rater_check(rows, SPOTS_V, names, FACTORS3, 1.6)
+    assert (c["hours"], c["same"], c["different"], c["examples"]) == (2, 2, 0, [])
+    rb = SP.rescore(rows[0], SPOTS_V["A"])
+    assert SP.wired_rater(rows[0], SPOTS_V["A"], rb, 3.0, 1.6) == 3.0
+
+
+def test_the_gate_counts_a_mop_row_as_factor_one():
+    # A MOP row on a reef, 3 ft, light offshore wind, period quality 1.0: live size(3) = 2.5.
+    # On the yardstick (F = 1, M = 1.6): 4.8 ft, size 3.4 -> round(6.8)/2 = 3.5, both ways.
+    row = _row(face_ft=3.0, wind_mult=1.0, stars=2.5, **LIGHT)
+    rb = SP.rescore(row, WEST_REEF)
+    assert SP.wired_rater(row, WEST_REEF, rb, None, 1.6) == 3.5
+    c = SP.cal_rater_check([row], {"A": WEST_REEF}, NAMES, FACTORS3, 1.6)
+    assert (c["same"], c["different"]) == (1, 0)
+
+
+def test_the_cal_median_gate_reports_a_difference():
+    row = _nwps_row(**LIGHT)
+    real = SP.variant_stars
+    SP.variant_stars = lambda *a, **k: 4.5
+    try:
+        c = SP.cal_rater_check([row], SPOTS_V, {1: ("A", "California")}, FACTORS3, 1.6)
+    finally:
+        SP.variant_stars = real
+    assert c["different"] == 1
+    assert c["examples"] == [{"spot": "A", "state": "California",
+                              "valid_time": "2026-10-20T15:00:00+00:00", "published": 4.5,
+                              "preview": 4.5, "wired": 3.0}]
+
+
+def test_the_gate_skips_rows_the_live_rater_does_not_reproduce():
+    c = SP.cal_rater_check([_nwps_row(stars=2.0, **LIGHT)], SPOTS_V, {1: ("A", "California")},
+                           FACTORS3, 1.6)
+    assert c["hours"] == 0

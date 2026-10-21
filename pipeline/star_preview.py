@@ -119,6 +119,20 @@ and where its NWPS node sits. SELECT only.
 
     python -m pipeline.star_preview --rating cap,both [--explain slug,slug] [--baseline B.json]
         [--out OUT.json]
+
+VARIANTS OF THE LIVE RATER (--variants). Since #266 the published stars carry the cap and the
+ceiling, so the baseline replay is the live rater (rescore, then 'both'), and each variant keeps
+both rules and changes one input: cal-median and cal-all rate on the calibrated face (see
+VARIANTS), swell-height sizes NWPS rows on the node's swell height instead of its total. Each
+reports the change by source and state, what the spots with a MOP factor did, and the homepage
+list; --explain adds the live cap, the face the ceiling reads, the period the allowance used,
+the WW3 partitions and the NWPS node's total and swell heights. With cal-median it also runs THE
+MERGE GATE for rating on the calibrated face: cal_rater_check replays every reproduced row through
+the rater's own code with M (wired_rater) and counts the hours where it differs from the
+cal-median variant, which must be none. SELECT only.
+
+    python -m pipeline.star_preview --variants cal-median,swell-height [--explain slug,slug]
+        [--baseline B.json] [--out OUT.json]
 """
 from __future__ import annotations
 
@@ -634,12 +648,15 @@ def calibration_diff(rows, spots, names, rule, factors):
             "spots": sorted({h["spot"] for h in hours}), "changes": hours}
 
 
-def wired_rater(row, spot, rb, factor):
+def wired_rater(row, spot, rb, factor, median_factor=None):
     """The stars the WIRED rater gives a replayed row, through the rater's own code: an NWPS
     row through nwps_stars with the spot, the hour's wind and *factor* (as apply_nwps_overrides
     calls it); any other row through composite_stars with interpret.rule_keywords (as rate_spot
     and mop_stars call it). The preview's own rules (rating_after) build the same two rules
-    independently, from wind_star_cap, is_sand_beach_break and closeout_face here."""
+    independently, from wind_star_cap, is_sand_beach_break and closeout_face here.
+
+    With *median_factor* the rater sizes on the calibrated face (cal-median), as interpret.main
+    runs it once the cal-median rater is merged: an MOP row as factor 1.0, as mop_stars does."""
     wm, tm, cm = _mults(row)
     wd, ws = _num(row.get("wind_dir")), _num(row.get("wind_speed"))
     if row.get("swell_source") in NWPS_KINDS:
@@ -647,9 +664,13 @@ def wired_rater(row, spot, rb, factor):
         return nwps_stars(swh, per, d, None, spot.get("orientation_deg"), wm, tm,
                           optimal=spot.get("optimal_swell_dir"),
                           chop=(_num(row.get("chop_ratio")), cm), spot=spot,
-                          wind_dir=wd, wind_speed=ws, face_factor=factor)[0]
+                          wind_dir=wd, wind_speed=ws, face_factor=factor,
+                          median_factor=median_factor)[0]
+    if row.get("swell_source") in MOP_KINDS:
+        factor = 1.0
     return composite_stars(rb["eff"], wm, tm, cm, rb["pq"],
-                           **rule_keywords(spot, wd, ws, rb["tp"], rb["eff"], factor))
+                           **rule_keywords(spot, wd, ws, rb["tp"], rb["eff"], factor,
+                                           median_factor))
 
 
 def rater_check(rows, spots, names, factors):
@@ -678,6 +699,41 @@ def rater_check(rows, spots, names, factors):
                                  "published": rb["stars"], "preview": preview, "wired": wired})
     return {"hours": same + differ, "same": same, "different": differ, "examples": examples,
             "wired_delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())}}
+
+
+def cal_rater_check(rows, spots, names, factors, m):
+    """THE MERGE GATE for rating on the calibrated face: on every row that reproduces its
+    published stars under the live rater, the wired rater (wired_rater with M) against the
+    preview's cal-median variant (variant_stars), hour for hour. Must be 0 differences."""
+    same = differ = 0
+    examples = []
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None or row.get("stars") is None:
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None or live_stars(row, spot, rb, factors) != float(row["stars"]):
+            continue
+        preview = variant_stars(row, spot, rb, factors, "cal-median", m)
+        wired = wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug), m)
+        if wired == preview:
+            same += 1
+        else:
+            differ += 1
+            if len(examples) < 20:
+                examples.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                                 "published": float(row["stars"]), "preview": preview,
+                                 "wired": wired})
+    return {"hours": same + differ, "same": same, "different": differ, "examples": examples}
+
+
+def _print_cal_rater_check(c):
+    print(f"\n=== Wired rater vs preview 'cal-median': {c['different']} differences in "
+          f"{c['hours']} reproduced hours ({c['same']} equal) ===")
+    for e in c["examples"]:
+        print(f"  {e['spot']} ({e['state']}) {e['valid_time']}: published {e['published']}, "
+              f"preview {e['preview']}, wired {e['wired']}")
 
 
 def _print_rater_check(c):
@@ -839,6 +895,219 @@ def _print_rating(rep, lb, since):
               f"{'' if r['replayed'] else '  (not replayed: published stars)'}")
     print(f"drop out: {[(d['spot'], d['stars_before'], d['stars_after']) for d in lb['drop_out']]}")
     print(f"come in: {[(d['spot'], d['stars']) for d in lb['come_in']]}")
+
+
+# --------------------------------------------------------------------------- #
+# --variants: against the LIVE rater (the cap and ceiling of #266)              #
+# --------------------------------------------------------------------------- #
+# Since #266 the published stars carry the wind cap and the beach-break ceiling, so the
+# BEFORE replay is the live rater: rescore, then the two rules exactly as the raters apply
+# them (interpret.rule_keywords with the spot's face factor). A variant changes one input and
+# keeps both rules.
+#
+#   cal-median    stars on the calibrated face, on the yardstick of the median factor M: a
+#                 spot with a MOP factor F is sized on effective x M / F; every other spot
+#                 is unchanged. Same as dividing every spot by its own factor (or M) and
+#                 sliding the size curve up by M, so the curve keeps its tuning.
+#   cal-all       stars on the calibrated face, size curve unchanged: F where the spot has
+#                 one, M everywhere else, so every rating moves.
+#   swell-height  NWPS rows sized on the node's SWELL height (shts) instead of its total
+#                 (swh), as rate_spot's own NWPS path already does; WW3 and MOP rows unchanged.
+#
+# A MOP row's face is MOP's own height, the reference the factors were measured against, so it
+# counts as factor 1.0 (cal-median sizes it at x M, cal-all leaves it). The ceiling reads what
+# it reads live in every variant: the calibrated face where the spot has a factor.
+VARIANTS = ("cal-median", "cal-all", "swell-height")
+
+
+def median_factor(factors):
+    """M: the median MOP face factor over the factors file (1.5907 in the file of 2026-10-06)."""
+    vals = sorted(r["factor"] for r in (factors or {}).values())
+    return median(vals) if vals else None
+
+
+def live_stars(row, spot, rb, factors):
+    """The stars the live rater gives a replayed row: the preview's own 'both' rule."""
+    return rating_after(row, spot, rb, "both", factors)[0]
+
+
+def variant_scale(row, spot, factors, variant, m):
+    """The multiplier a variant puts on the effective face before size_score, or None when the
+    row cannot be read for it."""
+    f = spot_factor(spot, factors or {}, _slug)
+    if row.get("swell_source") in MOP_KINDS:
+        f = 1.0
+    if variant == "cal-median":
+        return 1.0 if f is None else m / f
+    if variant == "cal-all":
+        return 1.0 / (f if f is not None else m)
+    if variant == "swell-height":
+        if row.get("swell_source") not in NWPS_KINDS:
+            return 1.0
+        got = _nwps_inputs(row, spot)
+        shts = _num(row.get("swell_hs"))
+        if got is None or shts is None or not got[3]:
+            return None
+        return shts / got[3]
+    raise ValueError(variant)
+
+
+def variant_stars(row, spot, rb, factors, variant, m):
+    """A replayed row under *variant*, with the live cap and ceiling."""
+    scale = variant_scale(row, spot, factors, variant, m)
+    if scale is None:
+        return None
+    wm, tm, cm = _mults(row)
+    f = spot_factor(spot, factors or {}, _slug)
+    wd, ws = _num(row.get("wind_dir")), _num(row.get("wind_speed"))
+    # The ceiling reads the calibrated face, as live. swell-height changes the face itself,
+    # so its ceiling reads the swell face (calibrated where the spot has a factor).
+    ceiling_eff = rb["eff"] * scale if variant == "swell-height" else rb["eff"]
+    rules = rule_keywords(spot, wd, ws, rb["tp"], ceiling_eff, f)
+    return composite_stars(rb["eff"] * scale, wm, tm, cm, rb["pq"], **rules)
+
+
+def variant_compare(rows, spots, names, factors, variant, m, n=10):
+    """Every row that reproduces its published stars under the live rater, before and after
+    *variant*: by source and state, the most-changed spots, the homepage list, and what the
+    calibrated spots did."""
+    replay, unreplayable = Counter(), Counter()
+    by_group, by_state, changed = defaultdict(Counter), defaultdict(Counter), []
+    first, cal = {}, Counter()
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        grp = group_of(row.get("swell_source") or "none")
+        if spot is None or row.get("stars") is None:
+            unreplayable[f"{grp}: spot not in the spots file or no published stars"] += 1
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None:
+            unreplayable[f"{grp}: {rb['why']}"] += 1
+            continue
+        live = live_stars(row, spot, rb, factors)
+        ok = live == float(row["stars"])
+        replay[(grp, ok)] += 1
+        after = variant_stars(row, spot, rb, factors, variant, m) if ok else None
+        if row["spot_id"] not in first:
+            first[row["spot_id"]] = (float(row["stars"]), after, row["valid_time"])
+        if not ok:
+            continue
+        if after is None:
+            unreplayable[f"{grp} (after): no swell height on the row"] += 1
+            continue
+        delta = round(after - live, 1)
+        by_group[grp][delta] += 1
+        by_state[state][delta] += 1
+        if spot_factor(spot, factors or {}, _slug) is not None:
+            cal["calibrated hours"] += 1
+            cal["calibrated hours up" if delta > 0 else
+                "calibrated hours down" if delta < 0 else "calibrated hours same"] += 1
+        if delta:
+            changed.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                            "group": grp, "stars_before": live, "stars_after": after,
+                            "delta": delta, "eff_ft": round(rb["eff"], 2)})
+    per_spot = defaultdict(list)
+    for c in changed:
+        per_spot[c["spot"]].append(c)
+    top = sorted(per_spot.items(), key=lambda kv: (-len(kv[1]), kv[0]))[:20]
+    before = sorted(((v[0], sid) for sid, v in first.items()), key=lambda r: (-r[0], r[1]))
+    after = sorted(((v[1] if v[1] is not None else v[0], sid) for sid, v in first.items()),
+                   key=lambda r: (-r[0], r[1]))
+    top_b, top_a = before[:n], after[:n]
+    nm = lambda sid: names.get(sid, (None, None))
+    a_ids, b_ids = {sid for _, sid in top_a}, {sid for _, sid in top_b}
+    new = {sid: st for st, sid in after}
+    return {
+        "variant": variant, "median_factor": m, "rows": len(rows),
+        "replay": {f"{g} {'reproduced' if ok else 'NOT reproduced'}": k
+                   for (g, ok), k in sorted(replay.items())},
+        "unreplayable": dict(sorted(unreplayable.items())),
+        "compared": sum(sum(c.values()) for c in by_group.values()),
+        "changed_spot_hours": len(changed), "changed_spots": len(per_spot),
+        "ups": sum(c["delta"] > 0 for c in changed),
+        "downs": sum(c["delta"] < 0 for c in changed),
+        "calibrated": dict(sorted(cal.items())),
+        "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
+        "delta_by_state": {s_: dict(sorted(c.items()))
+                           for s_, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
+        "top20": [{"spot": sp, "changed_hours": len(cs),
+                   "example": max(cs, key=lambda c: abs(c["delta"]))} for sp, cs in top],
+        "leaderboard": {
+            "before": [{"spot": nm(sid)[0], "state": nm(sid)[1], "stars": st} for st, sid in top_b],
+            "after": [{"spot": nm(sid)[0], "state": nm(sid)[1], "stars": st} for st, sid in top_a],
+            "drop_out": [{"spot": nm(sid)[0], "stars_before": st, "stars_after": new[sid]}
+                         for st, sid in top_b if sid not in a_ids],
+            "come_in": [{"spot": nm(sid)[0], "stars": st} for st, sid in top_a if sid not in b_ids],
+        },
+    }
+
+
+def _print_variant(rep, since):
+    print(f"\n=== variant: {rep['variant']} (median factor {rep['median_factor']}) — window from "
+          f"{since}: {rep['rows']} rows; before = the live rater ===")
+    for k, v in rep["replay"].items():
+        print(f"  {k}: {v}")
+    for k, v in rep["unreplayable"].items():
+        print(f"  not replayable — {k}: {v}")
+    print(f"compared: {rep['compared']}   changed spot-hours: {rep['changed_spot_hours']}   "
+          f"changed spots: {rep['changed_spots']}   ups: {rep['ups']}   downs: {rep['downs']}")
+    print(f"at spots with a MOP factor: {rep['calibrated']}")
+    print("star change by source (delta: hours):")
+    for g, c in rep["delta_by_group"].items():
+        print(f"  {g}: {c}")
+    print("star change by state (delta: hours):")
+    for s_, c in rep["delta_by_state"].items():
+        print(f"  {s_}: {c}")
+    print("20 most-changed spots (changed hours; largest change):")
+    for t in rep["top20"]:
+        e = t["example"]
+        print(f"  {t['spot']} ({e['state']}): {t['changed_hours']} h; {e['valid_time']} [{e['group']}] "
+              f"{e['stars_before']}->{e['stars_after']} (effective {e['eff_ft']} ft)")
+    lb = rep["leaderboard"]
+    print("homepage 'Best conditions right now', before (published):")
+    for i, r in enumerate(lb["before"], 1):
+        print(f"  {i}. {r['spot']} ({r['state']}) {r['stars']}")
+    print("after:")
+    for i, r in enumerate(lb["after"], 1):
+        print(f"  {i}. {r['spot']} ({r['state']}) {r['stars']}")
+    print(f"drop out: {[(d['spot'], d['stars_before'], d['stars_after']) for d in lb['drop_out']]}")
+    print(f"come in: {[(d['spot'], d['stars']) for d in lb['come_in']]}")
+
+
+def live_explain(row, spot, factors, m, variants=VARIANTS):
+    """The live rater's view of one row, for --explain: its cap and the face its ceiling reads,
+    the period the allowance used, the WW3 partitions and the NWPS node's total and swell
+    heights, and the stars under each variant. None when the row cannot be replayed."""
+    rb = rescore(row, spot)
+    if rb["stars"] is None:
+        return None
+    f = spot_factor(spot, factors or {}, _slug)
+    rules = rule_keywords(spot, _num(row.get("wind_dir")), _num(row.get("wind_speed")),
+                          rb["tp"], rb["eff"], f)
+    live = live_stars(row, spot, rb, factors)
+    got = _nwps_inputs(row, spot) if row.get("swell_source") in NWPS_KINDS else None
+    return {"star_cap": rules["star_cap"], "closeout_face_ft": rules["closeout_face_ft"],
+            "stars": live, "reproduced": live == _num(row.get("stars")), "period_s": rb["tp"],
+            "partitions": {p: tuple(_num(row.get(f"{p}_{k}")) for k in ("hs", "tp", "dp"))
+                           for p in ("swell_1", "swell_2", "swell_3", "wind_wave")},
+            "swh_m": got[3] if got else None, "shts_m": _num(row.get("swell_hs")),
+            "variants": {v: variant_stars(row, spot, rb, factors, v, m) for v in variants}}
+
+
+def _print_live_explain(name, x):
+    """The live breakdown --variants adds to --explain."""
+    lv = x.get("live")
+    if not lv:
+        return
+    print(f"  live: cap {lv['star_cap']}, ceiling reads {_f(lv['closeout_face_ft'])} ft; live stars "
+          f"{lv['stars']} ({'reproduces' if lv['reproduced'] else 'DOES NOT reproduce'} the "
+          f"published value); allowance read at {_f(lv['period_s'], '{:.1f}')} s")
+    parts = "; ".join(f"{p} {_f(v[0])} m {_f(v[1], '{:.1f}')} s {_f(v[2], '{:.0f}')}°"
+                      for p, v in lv["partitions"].items() if v[0] is not None)
+    print(f"  WW3 partitions: {parts or 'none'}; NWPS node total swh {_f(lv['swh_m'])} m, swell "
+          f"shts {_f(lv['shts_m'])} m")
+    print("  variants: " + "; ".join(f"{k} {v}" for k, v in lv["variants"].items()))
 
 
 # --------------------------------------------------------------------------- #
@@ -1269,23 +1538,31 @@ def main(argv=None):
     p.add_argument("--rating", default=None,
                    help="comma-separated proposed rating rules to preview: "
                         + ", ".join(RATING_RULES))
+    p.add_argument("--variants", default=None,
+                   help="comma-separated variants of the live rater to preview: "
+                        + ", ".join(VARIANTS))
     p.add_argument("--explain", default="",
-                   help="(with --rating) comma-separated spot slugs: print every rating factor "
-                        "of each one's soonest published hour")
+                   help="(with --rating or --variants) comma-separated spot slugs: print every "
+                        "rating factor of each one's soonest published hour")
     p.add_argument("--since", default=None, help="ISO start of the window (default: now)")
     p.add_argument("--out", default=None, help="write the report as JSON here")
     args = p.parse_args(argv)
     if args.nwps_shelter and (args.arcs is not None or args.tide is not None):
         p.error("--nwps-shelter runs on its own, with --baseline")
     rules = [r.strip() for r in args.rating.split(",") if r.strip()] if args.rating else []
-    if rules and (args.arcs is not None or args.tide is not None or args.nwps_shelter):
-        p.error("--rating runs on its own, with --baseline")
+    variants = [v.strip() for v in args.variants.split(",") if v.strip()] if args.variants else []
+    if (rules or variants) and (args.arcs is not None or args.tide is not None or args.nwps_shelter):
+        p.error("--rating and --variants run on their own, with --baseline")
     for r in rules:
         if r not in RATING_RULES:
             p.error(f"unknown rating rule {r!r}: {', '.join(RATING_RULES)}")
-    if args.arcs is None and args.tide is None and not args.nwps_shelter and not rules:
+    for v in variants:
+        if v not in VARIANTS:
+            p.error(f"unknown variant {v!r}: {', '.join(VARIANTS)}")
+    if (args.arcs is None and args.tide is None and not args.nwps_shelter and not rules
+            and not variants):
         p.error("give --arcs (a swell-window preview), --tide (a tide preview), or both; "
-                "or --nwps-shelter, or --rating")
+                "or --nwps-shelter, --rating or --variants")
     specs = [m.strip() for m in args.tide.split(",")] if args.tide else []
     modes = [(m, None) if m == "rated" else tide_mode(m) for m in specs]
     from supabase import create_client
@@ -1295,8 +1572,9 @@ def main(argv=None):
     before = _by_name(args.baseline)
     after = _by_name(args.arcs) if args.arcs else before
     out = {"since": since}
-    if rules:
+    if rules or variants:
         factors = load_face_factors()
+        m = median_factor(factors)
         out["explain"] = {}
         slugs = [x.strip() for x in args.explain.split(",") if x.strip()]
         by_slug = {_slug(n): sid for sid, (n, _) in names.items()}
@@ -1307,10 +1585,21 @@ def main(argv=None):
             if row is None or before.get(name) is None:
                 print(f"\n--- {sl}: no published row from {since} or not in the spots file")
                 continue
-            out["explain"][sl] = explain(row, before[name], rules, factors)
+            out["explain"][sl] = explain(row, before[name], rules or ("both",), factors)
+            if variants:
+                out["explain"][sl]["live"] = live_explain(row, before[name], factors, m, variants)
             _print_explain(name, out["explain"][sl])
-        out["rater_check"] = rater_check(rows, before, names, factors)
-        _print_rater_check(out["rater_check"])
+            _print_live_explain(name, out["explain"][sl])
+        if "cal-median" in variants:
+            out["cal_rater_check"] = cal_rater_check(rows, before, names, factors, m)
+            _print_cal_rater_check(out["cal_rater_check"])
+        out["variants"] = {}
+        for v in variants:
+            out["variants"][v] = variant_compare(rows, before, names, factors, v, m)
+            _print_variant(out["variants"][v], since)
+        if rules:
+            out["rater_check"] = rater_check(rows, before, names, factors)
+            _print_rater_check(out["rater_check"])
         out["rating"] = {}
         for r in rules:
             rep = rating_compare(rows, before, names, r, factors)

@@ -20,9 +20,10 @@ earlier calibration's 130 spots and the "all but two" whose calibrated height wa
 been replaced, so nothing in the repo can check them), and that MOP's nowcast ends before the
 current hour (a property of CDIP's feed, seen on live rows), and the replay of the forecast
 published on 20 October 2026 under the wind cap and beach-break limit (8,844 of 83,446
-spot-hours, rating-preview run 31, dated in the post). None is a number the code owns. What
-the code does own about these — that every spot's stars come from the same model height whatever
-its calibration, that item 6 describes a calibration older than the current file, and that MOP is
+spot-hours, rating-preview run 31, dated in the post), and the replay on the calibrated height
+(8,673 of 85,470 spot-hours, rating-preview run 32, dated in the post). None is a number the
+code owns. What the code does own about these — that a calibrated spot's stars read its calibrated height times the
+median ratio while every other spot's read the model height, that item 6 describes a calibration older than the current file, and that MOP is
 read from its nowcast — is pinned below.
 
 NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. Every expected number is read out of the post;
@@ -500,19 +501,33 @@ def test_mop_is_read_from_its_nowcast():
     assert asked == ["x/D0045_nowcast.nc"], asked
 
 
-def test_every_spot_is_rated_on_the_model_height_whatever_its_calibration():
-    """The post says it three times — in the size section, under calibration, and in what we
-    changed — so all three are read, and the code is held to them: the seam divides the height
-    shown and leaves the rating's input and the stars exactly as the producer computed them,
-    so a calibrated spot and an uncalibrated one with identical inputs get identical stars."""
-    # The count in each sentence is held to the factor file by
-    # test_every_mop_and_calibrated_count_in_the_post_is_the_datas; here only the claim is read.
-    _says(r"It's the model's height at every spot: at the \d+ calibrated California spots the page "
-          r"shows a calibrated height, but the rating uses the model's, as everywhere else\.",
-          "that the size score uses the model's height at every spot")
-    _says(r"and now divide the height we show by each spot's typical ratio\. The star rating isn't "
-          r"divided: it comes from the model's height, the same input every other spot is rated on\.",
-          "that the calibration divides the height shown and not the rating")
+def _median_factor():
+    ratios = sorted(rec["factor"] for rec in _factors()["factors"].values())
+    mid = len(ratios) // 2
+    return ratios[mid] if len(ratios) % 2 else (ratios[mid - 1] + ratios[mid]) / 2.0
+
+
+def test_calibrated_spots_are_rated_on_the_calibrated_height_times_the_median_ratio():
+    """The post says it under Size, under calibration, and in item 6, so all three are read,
+    and the code is held to them: a calibrated spot is sized at its calibrated height x M, i.e.
+    model height x M / F (interpret.rule_keywords' size_scale), every other spot on the model's
+    height, and the seam itself still divides only the height shown."""
+    m = _says(r"At the \d+ calibrated California spots it reads the calibrated height times "
+              rf"{_N}, the median of those spots' ratios between our model height and MOP's",
+              "that calibrated spots are sized on the calibrated height times the median")
+    published_m = float(m.group(1))
+    # "1.59" is the factor file's median to the post's two decimals.
+    assert abs(_median_factor() - published_m) <= 0.005, (_median_factor(), published_m)
+    ex = _says(rf"one that runs higher, like Steamer Lane at {_N}, rates lower, and one that runs "
+               rf"lower, like Pacifica Linda Mar at {_N}, rates higher\.", "the two examples")
+    factors = _factors()["factors"]
+    assert round(factors["steamer-lane"]["factor"], 2) == float(ex.group(1))
+    assert round(factors["pacifica-linda-mar"]["factor"], 2) == float(ex.group(2))
+    assert float(ex.group(1)) > published_m > float(ex.group(2))
+    _says(r"At every other spot the size score reads the model's height: there's nothing to "
+          r"calibrate it against\.", "that uncalibrated spots keep the model's height")
+    _says(rf"The star rating reads the calibrated height too, times {_N}, so these spots are rated "
+          r"on the same scale as everywhere else", "the calibration paragraph")
     then = _says(r"We used to work out stars at the calibrated spots from the calibrated height\. The "
                  r"calibration in use then covered \d+ California spots, measured from (\d+) (\w+) to (\d+) (\w+) "
                  r"(\d{4}), and at all but \w+ of them that height was smaller than the uncalibrated one",
@@ -521,21 +536,25 @@ def test_every_spot_is_rated_on_the_model_height_whatever_its_calibration():
                    r"hours rated 3 stars or more, against " + _N + r"% at uncalibrated spots; rated on the "
                    r"model's height instead, they came to " + _N + r"%\.",
                    "the 3-star shares, dated to the forecast they were measured on")
-    _says(r"Now the calibration corrects only the swell height we show, and the rating uses the same "
-          r"input at every spot", "what we changed")
-    # Item 6's numbers describe an EARLIER factor file, so they must read as history, never as the
-    # current calibration: its window ended before the current file's began, and the forecast the
-    # shares were measured on was published before the current file was generated. (The count
-    # and the "all but N" are that file's, and that file is gone; see the module docstring.)
+    _says(rf"Now the rating reads their calibrated height times {_N} \(see Size\)\.", "what we changed")
+    # Item 6's earlier numbers describe an EARLIER factor file, so they must read as history: its
+    # window ended before the current file's began, and the forecast the shares were measured on
+    # was published before the current file was generated.
     _date = lambda d, mon, y: datetime.datetime.strptime(f"{d} {mon} {y}", "%d %B %Y").date()  # noqa: E731
     measurement = _factors()["measurement"]
     assert _date(then.group(3), then.group(4), then.group(5)) < \
         datetime.date.fromisoformat(measurement["window"]["t0"]), (then.groups(), measurement["window"])
     assert _date(*shares.group(1, 2, 3)) < \
         datetime.date.fromisoformat(measurement["generated_at"][:10]), (shares.groups(), measurement)
-    # And the code. Expected values are read off the post's size table: with every quality
-    # score at 1 the rating is the size score, and 3.0 is already a whole star. The hour carries
-    # the 3.0 stars the producer gives 4 ft; rating the 2 ft shown instead would give 2.0.
+    # The code. The rater sizes a calibrated spot at model height x M / F, which is calibrated
+    # height x M; with F = M that is the model height, so it "rates exactly as" on the model's.
+    reef = {"break_type": "reef", "bottom": "rock"}
+    assert I.rule_keywords(reef, None, None, None, 4.0, published_m, published_m)["size_scale"] == 1.0
+    assert I.rule_keywords(reef, None, None, None, 4.0, 3.11, published_m)["size_scale"] < 1.0
+    assert I.rule_keywords(reef, None, None, None, 4.0, 0.88, published_m)["size_scale"] > 1.0
+    assert I.rule_keywords(reef, None, None, None, 4.0, None, published_m)["size_scale"] == 1.0
+    # And the seam stays display-only: it divides the height shown and leaves the producer's
+    # effective size and stars alone. Expected values are read off the post's size table.
     size = {x: y for x, y, _ in _curve_rows(["Height", "Size score"], "ft")}
     from pipeline.forecast import face_correction as F
     spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
@@ -547,16 +566,14 @@ def test_every_spot_is_rated_on_the_model_height_whatever_its_calibration():
                              slug_for=lambda name: name.lower(), now=datetime.date(2026, 10, 4))
     cal, unc = ratings["Calibrated"][0], ratings["Uncalibrated"][0]
     assert (cal["face_ft"], unc["face_ft"]) == (4.0 / 2.0, 4.0)          # "the height we show"
-    assert cal["effective_size_ft"] == unc["effective_size_ft"] == 4.0   # "the same input"
-    assert cal["stars"] == unc["stars"] == size[4.0] != size[2.0]        # rated on 4 ft, not 2 ft
+    assert cal["effective_size_ft"] == unc["effective_size_ft"] == 4.0   # the seam leaves it
+    assert cal["stars"] == unc["stars"] == size[4.0]                     # the seam leaves it
 
 
 def test_the_uncorrected_height_ratio_is_the_measured_median():
     m = _says(rf"At the California spots where we measured it, the uncorrected height was typically about "
               rf"{_N} times MOP's\.", "how far the uncorrected height ran above MOP's")
-    ratios = sorted(rec["factor"] for rec in _factors()["factors"].values())
-    mid = len(ratios) // 2
-    median = ratios[mid] if len(ratios) % 2 else (ratios[mid - 1] + ratios[mid]) / 2.0
+    median = _median_factor()
     # "About X times" is read literally, so it has to be X to the nearest tenth. Rounding to the
     # post's own precision is too loose here: it would let a median of 1.54 be called "about 2".
     assert abs(median - float(m.group(1))) <= 0.05, (median, m.group(1))

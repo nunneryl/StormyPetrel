@@ -6,7 +6,7 @@ author: 'Stormy Petrel'
 tag: 'methodology'
 ---
 
-*Last updated: 20 October 2026.*
+*Last updated: 21 October 2026.*
 
 ## TL;DR
 
@@ -26,7 +26,7 @@ stars = size_score × wind^0.35 × chop^0.25 × period^0.25 × tide^0.15
 
 ### Size
 
-The size score comes from the wave height after the swell-direction adjustment (see the swell window, below). It's the model's height at every spot: at the 141 calibrated California spots the page shows a calibrated height, but the rating uses the model's, as everywhere else.
+The size score comes from the wave height after the swell-direction adjustment (see the swell window, below). At the 141 calibrated California spots it reads the calibrated height times 1.59, the median of those spots' ratios between our model height and MOP's (see Calibration, below). That keeps them on the same scale as everywhere else: a spot whose model height runs 1.59 times MOP's rates exactly as it would on the model's height, one that runs higher, like Steamer Lane at 3.11, rates lower, and one that runs lower, like Pacifica Linda Mar at 0.88, rates higher. At every other spot the size score reads the model's height: there's nothing to calibrate it against.
 
 | Height | Size score |
 |--------|-----------|
@@ -55,7 +55,7 @@ A beach or jetty break over sand doesn't keep getting better as the swell grows.
 
 These numbers are our judgement, checked against storm days like the one under Wind; no study we know of pins them down.
 
-Closing out depends on how big the waves really are, so at the 141 calibrated California spots we judge it at the calibrated height. The size score itself still comes from the model's height, as everywhere else: it keeps the same share of its value that the table above keeps at the calibrated height. A spot whose model height is 12 ft but whose calibrated height is 6 ft doesn't close out; one whose calibrated height is 12 ft does, whatever the model says.
+Closing out depends on how big the waves really are, so at the 141 calibrated California spots we judge it at the calibrated height itself. The size score, read as described under Size, keeps the same share of its value that the table above keeps at the calibrated height. A spot whose model height is 12 ft but whose calibrated height is 6 ft doesn't close out; one whose calibrated height is 12 ft does, whatever the model says.
 
 ### Quality
 
@@ -97,7 +97,7 @@ The model behind the height depends on the spot and the hour:
 - **48 California spots: CDIP MOP, for past hours only.** MOP is the Coastal Data Information Program's model of points along the California coast, just outside the surf zone. We read its nowcast, and the nowcast ends before the current hour, even right after a forecast run. So at the 48 MOP spots, the hours you can see, the current one included, are handled like any other hour, below.
 - **Any other hour: WAVEWATCH III.** The WW3 swells are combined as described below. If WW3 has nothing usable for that hour either, we fall back to NWPS's own height.
 
-**Calibration at 141 California spots.** For these spots we compared our height with MOP's over four weeks, 8 September to 6 October 2026, and now divide the height we show by each spot's typical ratio. The star rating isn't divided: it comes from the model's height, the same input every other spot is rated on.
+**Calibration at 141 California spots.** For these spots we compared our height with MOP's over four weeks, 8 September to 6 October 2026, and now divide the height we show by each spot's typical ratio. The star rating reads the calibrated height too, times 1.59, so these spots are rated on the same scale as everywhere else (see Size).
 
 **What the number is.** The height we publish is labelled nearshore swell height: the significant height of the waves just outside the surf zone, roughly the average of the bigger waves. It is not the face of a breaking wave, which is often bigger. The label holds at the 141 calibrated California spots, which are scaled so their typical height matches MOP's. Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, so it can read higher than nearshore swell height. That includes all the hours you can see at the 48 MOP spots: MOP's own height, which carries no boost, never reaches the page. On the site, each spot's current height is marked with which it is: "Calibrated to CDIP's nearshore model" or "Model estimate".
 
@@ -246,8 +246,8 @@ Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On 
 2. **Crowds aren't modelled.** Two spots with the same conditions can be very different sessions.
 3. **Tide preference.** Only 126 of our spots have a verified preferred tide so far (see Tide); at every other spot the tide doesn't change the rating. We're researching the rest spot by spot, each from a source we cite.
 4. **Height calibration drifts.** Each spot's factor comes from a single four-week window, and it moves with the swell mix: between two of the earlier two-week windows, about a third of spots shifted by more than 10%.
-5. **Uncalibrated heights can run high.** Outside the 141 calibrated California spots, heights aren't corrected, and that includes all the hours you can see at the 48 MOP spots. They include the period boost and can read higher than nearshore swell height, which is why they're marked as model estimates. At the California spots where we measured it, the uncorrected height was typically about 1.6 times MOP's.
-6. **Calibrated spots used to rate lower.** We used to work out stars at the calibrated spots from the calibrated height. The calibration in use then covered 130 California spots, measured from 18 August to 1 September 2026, and at all but two of them that height was smaller than the uncalibrated one, so in the same swell they rated lower than everywhere else. In the forecast published on 4 October 2026, 0.4% of those spots' daylight hours rated 3 stars or more, against 9.1% at uncalibrated spots; rated on the model's height instead, they came to 10.3%. Now the calibration corrects only the swell height we show, and the rating uses the same input at every spot.
+5. **Uncalibrated heights can run high.** Outside the 141 calibrated California spots, heights aren't corrected, and that includes all the hours you can see at the 48 MOP spots. They include the period boost and can read higher than nearshore swell height, which is why they're marked as model estimates. At the California spots where we measured it, the uncorrected height was typically about 1.6 times MOP's. Whether heights elsewhere run high by the same amount hasn't been measured, so the rating leaves them as the model makes them.
+6. **Rating the calibrated spots.** We used to work out stars at the calibrated spots from the calibrated height. The calibration in use then covered 130 California spots, measured from 18 August to 1 September 2026, and at all but two of them that height was smaller than the uncalibrated one, so in the same swell they rated lower than everywhere else. In the forecast published on 4 October 2026, 0.4% of those spots' daylight hours rated 3 stars or more, against 9.1% at uncalibrated spots; rated on the model's height instead, they came to 10.3%. From then until 21 October 2026 the rating used the model's height at every spot, and that overrated the calibrated spots whose model height runs well above MOP's: six of the ten spots in "Best conditions right now" were calibrated California spots shown at 1 to 4 ft and rated 4 to 4.5 stars. Now the rating reads their calibrated height times 1.59 (see Size). When we replayed the forecast published on 20 October 2026 that way, 8,673 of 85,470 spot-hours (10.1%), all in California, changed: 4,585 came out higher and 4,088 lower.
 7. **Break types.** The beach-break limit applies at 404 of our spots, every beach or jetty break over sand. At 223 of them the break type or the bottom is still a language model's recollection rather than a source we cite. We apply it anyway, because every one it changed when we checked was a genuine sand beach or jetty, and we're citing the rest spot by spot.
 8. **Refresh delay.** Forecasts are {{FORECAST_UPDATES}}, not continuously. If a swell builds faster than that, the rating lags until the next update. Buoy readings arrive {{BUOY_UPDATES}}, and we show the latest one next to each spot.
 
