@@ -813,9 +813,12 @@ SPOT_FACE_FACTORS_FILE = PIPELINE_DIR / "data" / "spot_face_factors.json"
 # A spot whose within-spot face_ratio p75/p25 exceeds this is NOT corrected. STRICTLY
 # GREATER: a spot at exactly 1.7 is KEPT, matching every other threshold in this file.
 #
-# EXCLUDE ON THE STATISTIC YOU PUBLISH. This was p90/p10 > 2.5 and it was wrong — not
-# mis-tuned, wrong in kind. We publish the p25/p75 band (migration 016), so excluding on
-# p90/p10 throws a spot out for a tail no reader ever sees. The old rule PREDATES p25/p75
+# EXCLUDE ON THE MIDDLE OF THE SCATTER, NOT ITS TAIL. This was p90/p10 > 2.5 and it was
+# wrong — not mis-tuned, wrong in kind. When this was written the site published the
+# p25/p75 band (migration 016), so excluding on p90/p10 threw a spot out for a tail no reader
+# ever saw. The band is retired (migration 023: the site prints a fixed ladder step around
+# face_ft instead), but the reasoning stands: a few anomalous hours in the bottom decile say
+# nothing about whether one constant per spot holds for the hours in between. The old rule PREDATES p25/p75
 # existing at all: _stats emitted only p10/p90 when it was written, so p90/p10 was the only
 # spread available. It was never compared against p75/p25 and chosen; it was the only
 # option. That is the whole reason it survived.

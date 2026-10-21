@@ -26,7 +26,7 @@ import {
 } from '@/lib/ratings';
 import {
   degToCardinal,
-  fmtFtRange,
+  fmtHeightRange,
   fmtMph,
   fmtSec,
   pickSwell,
@@ -121,7 +121,7 @@ export function CurrentConditions({
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <BigTile
         label="Swell height"
-        value={fmtFtRange(current?.face_lo_ft, current?.face_hi_ft, current?.face_ft)}
+        value={fmtHeightRange(current?.face_ft)}
         sub={
           basis && (
             <span className="font-medium" style={{ color: HEIGHT_BASIS_COLOR[basis] }}>

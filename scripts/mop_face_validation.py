@@ -142,7 +142,7 @@ OUT = os.path.join(HERE, "mop_face_validation_out.json")
 # into the factor and the correction still lands. What a bad pairing costs is  #
 # not offset but INSTABILITY as the swell direction moves through the window — #
 # and this harness already measures that, as the p25/p75 the factor file       #
-# carries and face_range publishes as the band. The angle gate was a           #
+# carries and the p75/p25 exclusion gate reads. The angle gate was a           #
 # pre-filter for a defect the run quantifies afterwards anyway, which argues   #
 # for a backstop rather than a tolerance.                                      #
 #                                                                             #

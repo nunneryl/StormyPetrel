@@ -119,13 +119,16 @@ const VERIFIED_TIDE = {
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
-// Every hour has its own height: 2.0 ft twelve hours back, rising 0.1 ft an hour. The Swell
-// height tile shows one decimal, so the tile's text names exactly one row.
+// The Swell height tile shows the reading range, the standard step the height falls in
+// (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
+// 3.5, 4.5, 5.5 ft from twelve hours back, reading "1-2ft" ... "5-6ft". Neighbouring hours
+// always read differently, so the tile still says which row it shows, to within five hours.
 function heightAt(offsetHours: number): number {
-  return 2 + (offsetHours + 12) / 10;
+  return 1.5 + ((offsetHours + 12) % 5);
 }
 function tileText(offsetHours: number): string {
-  return `${heightAt(offsetHours).toFixed(1)}ft`;
+  const n = 1 + ((offsetHours + 12) % 5);
+  return `${n}-${n + 1}ft`;
 }
 
 function row(spotId: number, offsetHours: number): Record<string, unknown> {
@@ -141,7 +144,7 @@ function row(spotId: number, offsetHours: number): Record<string, unknown> {
     swell_3_hs: null, swell_3_tp: null, swell_3_dp: null,
     wind_wave_hs: null, wind_wave_tp: null, wind_wave_dp: null,
     swell_source: 'nwps', wind_speed: 4, wind_dir: 0,
-    face_ft: face, face_ft_raw: face, face_lo_ft: null, face_hi_ft: null,
+    face_ft: face, face_ft_raw: face,
     dir_gain: 1, wind_mult: 1, tide_mult: 1, chop_ratio: 0.1, chop_mult: 1,
     period_quality: 1, effective_size_ft: face, stars: 3, tide_level_ft: 2.5,
   };

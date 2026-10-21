@@ -766,11 +766,12 @@ def import_forecasts(client, ratings_path: Path = RATINGS_FILE,
                 "tide_level_ft": h.get("tide_level_ft"),
                 "tide_norm": h.get("tide_norm"),
                 "face_ft": h.get("face_ft"),
-                # The published band (migration 016). .get() yields None for every spot
-                # without a measured spread, which is the intended value — see
-                # face_correction.face_range. Do not coalesce these to face_ft.
-                "face_lo_ft": h.get("face_lo_ft"),
-                "face_hi_ft": h.get("face_hi_ft"),
+                # RETIRED (migration 023; 024 drops them). The site prints the ladder step
+                # face_ft falls in, at every spot. EXPLICIT None, not a missing key: the
+                # upsert would keep the band an earlier run wrote for this hour, and a stale
+                # band beside a fresh face_ft is the two-meanings problem this retired.
+                "face_lo_ft": None,
+                "face_hi_ft": None,
                 # Provenance (migration 017). PASSED THROUGH, NEVER DERIVED: it would be easy
                 # to write `h.get("face_ft_raw", h.get("face_ft"))` and have the column always
                 # populated, and that is exactly the bug this pair exists to prevent — a seam

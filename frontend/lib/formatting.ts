@@ -43,126 +43,41 @@ export function fmtFt(v: number | null | undefined): string {
 }
 
 /**
- * The published SWELL HEIGHT, as a whole-foot band when one was measured and as the point
- * estimate when one was not.
+ * The swell height as a READING RANGE: the standard step of a fixed ladder that the height
+ * falls in. One meaning everywhere, at every spot:
  *
- * THE LABEL IS "SWELL HEIGHT", NOT "FACE". No row is a breaking face and none is called one.
- * But the rows are NOT all on one scale, and this string does not say which one it is on —
- * lib/heightBasis.ts does, and every surface that prints this string puts that label beside it:
+ *   under 1 · 1-2 · 2-3 · 3-4 · 4-5 · 5-6 · 6-8 · 8-10 · 10-12 · 12-15 · 15-20 · 20-25 ·
+ *   25-30, then 5 ft steps (30-35, 35-40, ...)
  *
- *   calibrated  141 California spots: the model's height divided by the spot's measured factor,
- *               so its typical value matches CDIP MOP significant wave height at the 10-15 m
- *               contour, which CDIP states is generally outside the surf zone.
- *   cdip        a MOP-fed hour: MOP's own height, on that same scale.
- *   model       every other spot: the wave models' height with the long-period boost and no
- *               correction, which can read well above MOP's — about 1.6 times, at the
- *               California spots where the two were compared.
+ * A height exactly on a boundary goes to the HIGHER step: 6.0 ft reads "6-8ft", 5.99 "5-6ft".
  *
- * Only the DISPLAY changed: face_ft / face_lo_ft / face_hi_ft keep their names in the database,
- * the API and every query, because those are parsed and this is not.
+ * THE HEIGHT IS face_ft, THE ONE THE PAGE SHOWS. That is the calibrated height at the
+ * calibrated California spots, CDIP's own on a MOP-fed hour and the model's everywhere else;
+ * lib/heightBasis.ts says which, beside every height this string is printed with.
  *
- * WHOLE FEET. The measured band is roughly +/-20%, so a tenth of a foot is precision the
- * measurement does not have; "3-5 ft" is the honest resolution and "3.3-4.9 ft" is not.
+ * WHAT IT IS NOT. Until October 2026 this printed face_lo_ft-face_hi_ft, a band divided out of
+ * each calibrated spot's measured p25/p75 face ratio, and the 500-odd spots without one printed
+ * a bare "4.3ft". Two meanings, and most spots had no range at all. A step on a fixed ladder is
+ * a reading convention, not a measurement: individual waves in an hour vary more than any one
+ * step. The pipeline writes NULL to face_lo_ft / face_hi_ft (migration 023 retires them) and
+ * nothing here reads them.
  *
- * EXPAND OUTWARD, NEVER TO NEAREST — floor the low end, ceiling the high end.
- *
- *   WHAT WENT WRONG. This rounded both ends to nearest, so the two ends could land on the
- *   same whole foot and the band VANISHED. Measured over 17,030 banded future hours, 5,566
- *   collapsed — 32.7%. Steamer Lane rendered a bare "2ft" from a real 2.52-2.87 band, and a
- *   reader could not tell it from one of the 516 spots that have no measured band at all. The
- *   collapse was worst exactly where the band is narrowest, which is where a reader most
- *   needs to be told the number is soft.
- *
- *   WHY OUTWARD IS THE RIGHT DIRECTION, and this is the part not to revert: expanding
- *   outward can only ever OVERSTATE the uncertainty, never understate it. For a quantity
- *   published with a measured +/-20% median spread, which we have been careful not to
- *   overclaim, erring wide is erring correctly. Round-to-nearest does the opposite — it can
- *   make the published band NARROWER than the one that was measured, and at 32.7% of hours
- *   it made it disappear.
- *
- *   THE COST, STATED. Floor+ceiling adds up to a foot at each end, so the displayed width is
- *   the measured width plus up to two feet, against plus-or-minus one before. At the roster
- *   median band a 4 ft face is unchanged ("3-5 ft" either way); a 6 ft face goes from
- *   "5-7 ft" to "4-8 ft". That is the price of never collapsing, and it is paid in a
- *   direction the reader can trust.
- *
- *   HALF-FOOT STEPS WERE CONSIDERED AND REJECTED. They still collapse to "2.5-2.5 ft" on
- *   ~3.5% of hours — a visibly fake range — and a decimal implies six-inch precision that
- *   the measurement does not have.
- *
- * SUB-FOOT BANDS READ "under N ft", NOT "0-N ft". A floored low end of 0 says "possibly
- * flat", and the measurement does not support that for a low end of, say, 0.95 ft. The site
- * already made this call once: StarRating refuses to draw zero stars and prints the word
- * FLAT instead, because a numeric zero at the bottom of a scale reads as missing data rather
- * than as a small value. Same reasoning, same answer — a word, not a zero. It stays an
- * outward expansion, since "under N" contains [0, N]. Given the p75/p25 <= 1.7 exclusion
- * rule the band's own ratio is at most 1.7, so a floored-to-zero low end forces a high end
- * under 1.7 and this form can only ever be "under 1ft" or "under 2ft".
- *
- * NO BAND MEANS NO BAND. 516 of 646 spots have no measured spread, and they fall through
- * to the point estimate rather than to a default width. A default would be indistinguishable
- * from a measured one to anybody reading the site, which is precisely why there isn't one.
- * The two states ARE distinguishable on the page, and after the outward-expansion change
- * that distinction is now EXACT rather than approximate: a measured spot always renders a
- * range, an unmeasured one always renders a bare "4.0ft". Before, a measured spot whose band
- * was tighter than a foot also rendered a bare point, and the three states were two.
+ * '—' when there is no height.
  */
-export function fmtFtRange(
-  lo: number | null | undefined,
-  hi: number | null | undefined,
-  point: number | null | undefined,
-): string {
-  if (lo === null || lo === undefined || hi === null || hi === undefined) {
-    return fmtFt(point);
+export const HEIGHT_STEPS_FT: readonly number[] = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30];
+
+export function fmtHeightRange(point: number | null | undefined): string {
+  if (point === null || point === undefined || Number.isNaN(point)) return '—';
+  if (point < HEIGHT_STEPS_FT[0]) return `under ${HEIGHT_STEPS_FT[0]}ft`;
+  const top = HEIGHT_STEPS_FT[HEIGHT_STEPS_FT.length - 1];
+  if (point >= top) {
+    const lo = top + 5 * Math.floor((point - top) / 5);
+    return `${lo}-${lo + 5}ft`;
   }
-  if (Number.isNaN(lo) || Number.isNaN(hi)) return fmtFt(point);
-  // THE INVARIANT, AS A BACKSTOP. lo <= point <= hi is guaranteed by construction upstream
-  // (all three divide one raw face by three quantiles of one distribution), and the
-  // pipeline now asserts it at the point of writing. It is re-checked here because these
-  // arrive as three independent database columns and a stale row from an older pipeline
-  // run carries an older arithmetic.
-  //
-  // WHAT WENT WRONG WITHOUT IT: the band was computed from the already-corrected face and
-  // so divided twice. Steamer Lane published face 1.45 with lo 0.45 and hi 0.65, and this
-  // function rendered "0-1ft" — a well-ordered band, so the lo>hi swap below never fired,
-  // and nothing else looked. It took a manual SQL query to find. LOUD, not silent: a band
-  // that cannot contain its own point is dropped and the point published alone, and the
-  // violation is logged with the numbers so it shows up in the server log rather than
-  // only on the page.
-  if (point !== null && point !== undefined && !Number.isNaN(point)) {
-    const lowest = Math.min(lo, hi);
-    const highest = Math.max(lo, hi);
-    if (point < lowest || point > highest) {
-      console.error(
-        `fmtFtRange: band [${lo}, ${hi}] does not contain its point ${point} — ` +
-          `publishing the point alone. The three values must divide one raw face by ` +
-          `p75 / median / p25; a band that misses its point means they did not.`,
-      );
-      return fmtFt(point);
-    }
-  }
-  // ORDER FIRST, THEN EXPAND — and that order matters. The pipeline divides by p75 and p25
-  // so lo <= hi holds by construction, but this function is fed straight from database
-  // columns and a swapped pair must still render low-to-high. Swapping AFTER rounding would
-  // silently narrow such a pair: [5.2, 3.1] would floor/ceil to 5 and 4, swap to "4-5ft",
-  // and publish a band INSIDE the measured one — the exact understatement this change exists
-  // to remove. Ordering first gives "3-6ft".
-  const lowest = Math.min(lo, hi);
-  const highest = Math.max(lo, hi);
-  const a = Math.floor(lowest);
-  // THREE FLOORS ON THE HIGH END, in one expression because they interact:
-  //   Math.ceil(highest)  the outward expansion itself;
-  //   a + 1               the minimum publishable width. floor(x) <= ceil(y) for x <= y so
-  //                       b < a is impossible, but b === a is reachable when both ends are
-  //                       the SAME whole number (p25 === p75 — a record with no measured
-  //                       spread, which no committed factor has, so a guard not a case);
-  //   1                   because a negative bound must not reach the string. A wholly
-  //                       negative band floors and ceilings to negatives and rendered
-  //                       "under -1ft" without this — found by a test written for the
-  //                       neighbouring case, not by reading.
-  const b = Math.max(Math.ceil(highest), a + 1, 1);
-  if (a <= 0) return `under ${b}ft`;
-  return `${a}-${b}ft`;
+  // The largest step at or below the height: a boundary belongs to the step it starts.
+  let i = 0;
+  while (point >= HEIGHT_STEPS_FT[i + 1]) i++;
+  return `${HEIGHT_STEPS_FT[i]}-${HEIGHT_STEPS_FT[i + 1]}ft`;
 }
 
 export function fmtSec(v: number | null | undefined): string {

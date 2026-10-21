@@ -10,7 +10,9 @@
  * rules on a grid that lands on, just under and just over every threshold the post names. A
  * moved threshold, a flipped < / <=, or a reordered check fails, on either side.
  *
- * The post's opening line, "from 0 (FLAT) to 5 (EPIC)", is held against tierFromStars here too.
+ * The post's opening line, "from 0 (FLAT) to 5 (EPIC)", is held against tierFromStars here too,
+ * and its "The range we show" paragraph against HEIGHT_STEPS_FT and fmtHeightRange: the ladder
+ * it lists, the 5 ft steps past the top, and its two boundary examples.
  * Every number the post takes from the PIPELINE (weights, curves, gains, horizons, spot counts)
  * is held in pipeline/tests/test_methodology_tables.py.
  *
@@ -27,6 +29,7 @@ import { remark } from 'remark';
 import remarkGfm from 'remark-gfm';
 import type { Nodes, PhrasingContent, TableCell } from 'mdast';
 import { chopLabel, classifySurface, tierFromStars } from './ratings.ts';
+import { HEIGHT_STEPS_FT, fmtHeightRange } from './formatting.ts';
 
 const POST = join(dirname(fileURLToPath(import.meta.url)), '..', 'content', 'blog', 'methodology.md');
 
@@ -165,6 +168,38 @@ if (ends) {
     tierFromStars(Number(bottom)).label);
   check(`${top} stars is ${topLabel} on the site`, tierFromStars(Number(top)).label === topLabel,
     tierFromStars(Number(top)).label);
+}
+
+// --------------------------------------------------------------------------- //
+// The reading range: the ladder the post lists is the one the site prints      //
+// --------------------------------------------------------------------------- //
+{
+  const para = /\*\*The range we show\.\*\*([^\n]+)/.exec(readFileSync(POST, 'utf8'));
+  check('the post still has its "The range we show" paragraph', para !== null);
+  if (para) {
+    const body = para[1];
+    const listed = /The steps are under (\d+) ft, ([^.]+?) ft, then (\d+) ft at a time\./.exec(body);
+    check('the paragraph still lists the steps in its own words', listed !== null, body.slice(0, 160));
+    if (listed) {
+      // "1–2, 2–3, …, 20–25 and 25–30" → every number named, in order, deduplicated.
+      const named = [Number(listed[1])];
+      for (const m of listed[2].matchAll(/(\d+)–(\d+)/g)) {
+        for (const n of [Number(m[1]), Number(m[2])]) if (named[named.length - 1] !== n) named.push(n);
+      }
+      check(`the post's ladder [${named.join(', ')}] is HEIGHT_STEPS_FT`,
+        named.join(',') === HEIGHT_STEPS_FT.join(','), HEIGHT_STEPS_FT.join(','));
+      const step = Number(listed[3]);
+      const top = named[named.length - 1];
+      check(`past ${top} ft the site steps by the post's ${step} ft`,
+        fmtHeightRange(top + 0.5) === `${top}-${top + step}ft`, fmtHeightRange(top + 0.5));
+    }
+    const examples = [...body.matchAll(/(\d+\.\d+) ft reads (\d+)–(\d+) ft/g)];
+    check(`the paragraph still gives its boundary examples (${examples.length} found)`, examples.length >= 2);
+    for (const [, h, lo, hi] of examples) {
+      check(`${h} ft reads ${lo}-${hi}ft on the site, as the post says`,
+        fmtHeightRange(Number(h)) === `${lo}-${hi}ft`, fmtHeightRange(Number(h)));
+    }
+  }
 }
 
 if (failures > 0) {

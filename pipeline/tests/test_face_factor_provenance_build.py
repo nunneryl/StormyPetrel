@@ -235,10 +235,11 @@ def test_the_prose_span_is_computed_not_assumed():
 
 def test_the_prose_says_only_the_displayed_height_is_scaled():
     """The file describes what face_correction does with its factors, and that changed: the
-    seam divides face_ft and its band and no longer touches effective_size_ft or stars
-    (FACE_CORRECTION_VERSION 2). A regenerated file must not go on claiming the old recompute."""
+    seam divides face_ft only and no longer touches effective_size_ft or stars
+    (FACE_CORRECTION_VERSION 2), and since migration 023 it writes no band either. A regenerated file must not go on claiming the old recompute."""
     comment = _written(_artifact())[0]["_comment"]
-    assert "Only the displayed height is scaled: face_ft and its published band." in comment
+    assert "Only the displayed height is scaled: face_ft. effective_size_ft" in comment
+    assert "published band" not in comment
     assert ("effective_size_ft and stars are left as the producer computed them, so a "
             "calibrated spot is rated on the same input as every other spot.") in comment
     assert "stars is recomputed" not in comment
