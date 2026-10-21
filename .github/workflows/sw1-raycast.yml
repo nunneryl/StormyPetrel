@@ -487,7 +487,7 @@ jobs:
         run: |
           python -m pipeline.star_preview --wind no-allowance-20,offshore-20,wind-both \
             --since 2026-10-21T00:00:00+00:00 \
-            --explain "${SPOTS:-jennettes-pier,ocean-city-nj,atlantic-city,manasquan-inlet,margate-pier,ventor-pier}" \
+            --explain "${SPOTS:-jennettes-pier,ocean-city-nj,atlantic-city,manasquan-inlet,margate-pier,ventnor-pier}" \
             --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
 
       - name: Upload the report

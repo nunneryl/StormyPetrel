@@ -39,7 +39,8 @@ TEXT = {
 RUNTIME_FILES = ("pipeline/data/llm_spots.json", "pipeline/spots_enriched.json",
                  "pipeline/data/spot_orientations.json", "pipeline/data/spot_descriptions.json",
                  "pipeline/data/spot_break_research_summary.json",
-                 "scripts/nwps_okx_assignments.json", "scripts/find_missing_roster_spots.sql")
+                 "scripts/nwps_okx_assignments.json", "scripts/find_missing_roster_spots.sql",
+                 ".github/workflows/sw1-raycast.yml")
 
 
 def _read(rel):
