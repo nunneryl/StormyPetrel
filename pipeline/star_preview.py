@@ -98,9 +98,10 @@ THE RATING PREVIEW (--rating). The strong-wind cap and the beach-break ceiling, 
 row that reproduces its published stars with BASELINE (rows rated before the rules were wired;
 once rows rated with them are published, the hours they changed read as not reproduced):
 
-    cap         interpret.wind_star_cap: cross-shore or onshore wind above 13 kt, less a knot
-                per second of period above 8 s, caps the stars (the /learn/wind ladder);
-                above 25 kt measured the cap is 1.0, and 2.0 offshore
+    cap         previous_wind_cap, the cap as published from #266 until the 20 kt changes:
+                cross-shore or onshore wind above 13 kt, less a knot per second of period
+                above 8 s, caps the stars (the /learn/wind ladder); above 25 kt measured the
+                cap is 1.0, and 2.0 offshore
     ceiling     beach and jetty breaks over sand (is_sand_beach_break) keep
                 interpret.closeout_factor of their size credit: all of it to 8 ft, then less,
                 read at the CALIBRATED face where the spot has a MOP factor
@@ -133,6 +134,19 @@ cal-median variant, which must be none. SELECT only.
 
     python -m pipeline.star_preview --variants cal-median,swell-height [--explain slug,slug]
         [--baseline B.json] [--out OUT.json]
+
+THE 20 KT WIND-CAP CHANGES (--wind), against the published rater (see WIND_RULES): no period
+allowance above 20 kt measured (no-allowance-20), a 3.0 cap on offshore wind above 20 kt
+measured (offshore-20), and the two together (wind-both), which interpret.wind_star_cap now
+applies. Each reports the change by source, state and wind band, the 20 most-changed spots and
+the homepage list; --explain adds each named spot's wind class, measured knots, allowance, the
+published and wired caps, and the cap and stars under each rule. With wind-both it runs THE
+MERGE GATE: wind_rater_check replays every reproduced row through the rater's own code
+(wired_rater with M) and counts the hours where it differs from wind-both, which must be none.
+SELECT only.
+
+    python -m pipeline.star_preview --wind no-allowance-20,offshore-20,wind-both
+        [--explain slug,slug] [--baseline B.json] [--out OUT.json]
 """
 from __future__ import annotations
 
@@ -167,6 +181,12 @@ from .interpret import (
     wind_class,
     wind_star_cap,
     KT_TO_MS,
+    WIND_CAP_CROSS,
+    WIND_CAP_ONSHORE,
+    WIND_CAP_PERIOD_BASE_S,
+    WIND_CAP_UNSURFABLE,
+    WIND_CAP_UNSURFABLE_KT,
+    WIND_CAP_UNSURFABLE_OFFSHORE,
     tide_multiplier,
     M_TO_FT,
 )
@@ -473,19 +493,23 @@ def closeout_face(spot, rb, factors, calibrated=True):
     return rb["eff"] if f is None else rb["eff"] / f
 
 
-def rating_after(row, spot, rb, rule, factors=None, calibrated=True):
+def rating_after(row, spot, rb, rule, factors=None, calibrated=True, cap_fn=None):
     """The stars *rb* (a reproduced replay of *row*) gets under *rule*, and why it moved.
 
     *factors* are the MOP face factors (face_correction.load_face_factors); the ceiling reads
     the calibrated face where the spot has one, unless *calibrated* is False (the raw face
     everywhere, as rating-preview run 30 did).
 
+    The cap is *cap_fn*, by default previous_wind_cap: the cap the published rows carry,
+    before the 20 kt changes (run 34). rater_check passes interpret.wind_star_cap.
+
     Returns (stars, cause): cause lists "wind cap" when the cap is below the stars the hour
     would otherwise get, and "beach ceiling" when the ceiling changes them."""
     cap_on, ceiling_on, jetty = RATING_RULES[rule]
     wm, tm, cm = _mults(row)
-    cap = (wind_star_cap(_num(row.get("wind_dir")), _num(row.get("wind_speed")),
-                         spot.get("offshore_wind_deg"), rb["tp"]) if cap_on else 5.0)
+    cap = ((cap_fn or previous_wind_cap)(_num(row.get("wind_dir")), _num(row.get("wind_speed")),
+                                         spot.get("offshore_wind_deg"), rb["tp"])
+           if cap_on else 5.0)
     beach = ceiling_on and is_sand_beach_break(spot, jetty)
     face = closeout_face(spot, rb, factors, calibrated) if beach else None
     uncapped = composite_stars(rb["eff"], wm, tm, cm, rb["pq"], closeout_face_ft=face)
@@ -687,7 +711,9 @@ def rater_check(rows, spots, names, factors):
         rb = rescore(row, spot)
         if rb["stars"] is None or rb["stars"] != float(row["stars"]):
             continue
-        preview = rating_after(row, spot, rb, "both", factors)[0]
+        # The wired rater carries the CURRENT cap (the 20 kt changes since run 34), so 'both'
+        # is built with it here; the replays elsewhere read published rows with the previous.
+        preview = rating_after(row, spot, rb, "both", factors, cap_fn=wind_star_cap)[0]
         wired = wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug))
         by_group[group_of(row.get("swell_source") or "none")][round(wired - rb["stars"], 1)] += 1
         if wired == preview:
@@ -715,7 +741,7 @@ def cal_rater_check(rows, spots, names, factors, m):
         rb = rescore(row, spot)
         if rb["stars"] is None or live_stars(row, spot, rb, factors) != float(row["stars"]):
             continue
-        preview = variant_stars(row, spot, rb, factors, "cal-median", m)
+        preview = variant_stars(row, spot, rb, factors, "cal-median", m, cap_fn=wind_star_cap)
         wired = wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug), m)
         if wired == preview:
             same += 1
@@ -802,7 +828,7 @@ def explain(row, spot, rules=tuple(RATING_RULES), factors=None):
                face_factor=spot_factor(spot, factors or {}, _slug),
                closeout_face_ft=closeout_face(spot, rb, factors),
                closeout_factor=closeout_factor(closeout_face(spot, rb, factors)),
-               wind_cap=wind_star_cap(wd, ws, off, rb["tp"]),
+               wind_cap=previous_wind_cap(wd, ws, off, rb["tp"]),
                proposed={r: rating_after(row, spot, rb, r, factors) for r in rules})
     return out
 
@@ -950,8 +976,10 @@ def variant_scale(row, spot, factors, variant, m):
     raise ValueError(variant)
 
 
-def variant_stars(row, spot, rb, factors, variant, m):
-    """A replayed row under *variant*, with the live cap and ceiling."""
+def variant_stars(row, spot, rb, factors, variant, m, cap_fn=None):
+    """A replayed row under *variant*, with the ceiling and the cap *cap_fn* (default
+    previous_wind_cap, the cap the published rows carry; cal_rater_check passes
+    interpret.wind_star_cap, the wired rater's)."""
     scale = variant_scale(row, spot, factors, variant, m)
     if scale is None:
         return None
@@ -962,6 +990,8 @@ def variant_stars(row, spot, rb, factors, variant, m):
     # so its ceiling reads the swell face (calibrated where the spot has a factor).
     ceiling_eff = rb["eff"] * scale if variant == "swell-height" else rb["eff"]
     rules = rule_keywords(spot, wd, ws, rb["tp"], ceiling_eff, f)
+    rules["star_cap"] = (cap_fn or previous_wind_cap)(wd, ws, spot.get("offshore_wind_deg"),
+                                                      rb["tp"])
     return composite_stars(rb["eff"] * scale, wm, tm, cm, rb["pq"], **rules)
 
 
@@ -1085,7 +1115,8 @@ def live_explain(row, spot, factors, m, variants=VARIANTS):
                           rb["tp"], rb["eff"], f)
     live = live_stars(row, spot, rb, factors)
     got = _nwps_inputs(row, spot) if row.get("swell_source") in NWPS_KINDS else None
-    return {"star_cap": rules["star_cap"], "closeout_face_ft": rules["closeout_face_ft"],
+    return {"star_cap": previous_wind_cap(_num(row.get("wind_dir")), _num(row.get("wind_speed")),
+                                          spot.get("offshore_wind_deg"), rb["tp"]), "closeout_face_ft": rules["closeout_face_ft"],
             "stars": live, "reproduced": live == _num(row.get("stars")), "period_s": rb["tp"],
             "partitions": {p: tuple(_num(row.get(f"{p}_{k}")) for k in ("hs", "tp", "dp"))
                            for p in ("swell_1", "swell_2", "swell_3", "wind_wave")},
@@ -1106,6 +1137,323 @@ def _print_live_explain(name, x):
     print(f"  WW3 partitions: {parts or 'none'}; NWPS node total swh {_f(lv['swh_m'])} m, swell "
           f"shts {_f(lv['shts_m'])} m")
     print("  variants: " + "; ".join(f"{k} {v}" for k, v in lv["variants"].items()))
+
+
+# --------------------------------------------------------------------------- #
+# --wind: the 20 kt changes to the strong-wind cap, against the published rater #
+# --------------------------------------------------------------------------- #
+# WIRED after rating-preview run 34: interpret.wind_star_cap is now 'wind-both'. The preview
+# keeps its own copy of the rule (proposed_wind_cap) and of the cap every row published before
+# it carries (previous_wind_cap), so the merge gate (wind_rater_check) compares the wired rater
+# with an independent build, and the replays still reproduce the published window.
+#
+# Evidence of 2026-10-21. Jennettes Pier: 26 mph (22.6 kt) north wind, cross-shore, at 12 s
+# reads 22.6 - 4 = 18.6 kt on the ladder and is capped at 2.5; Surfline "Very Poor". Ocean City
+# NJ: 4.5 stars at 8-10 ft in a 25 mph NNE offshore wind, where offshore is uncapped below
+# 25 kt; Surfline "Fair" (about 3), the forecaster "solid but unruly, target protected spots".
+#
+#   no-allowance-20  above 20 kt MEASURED, the period allowance stops: cross-shore and onshore
+#                    read the measured speed, so anything over 20 kt is capped at 1.5
+#   offshore-20      offshore above 20 kt measured is capped at 3.0 (above 25 kt stays 2.0)
+#   wind-both        the two together
+#
+# THE BASELINE IS THE PUBLISHED RATER, which since #267 sizes a calibrated spot on face x M / F
+# (the cal-median variant). A row published before that rater ran reproduces only under the
+# one before it (rescore, then 'both'); each row is replayed with whichever rater reproduces
+# its published stars, the counts of each are reported, and the change is applied on that
+# rater. A row neither reproduces is not compared.
+WIND_RULES = {
+    # (no allowance above WIND_NO_ALLOWANCE_ABOVE_KT, offshore cap above WIND_OFFSHORE_CAP_KT)
+    "no-allowance-20": (True, False),
+    "offshore-20": (False, True),
+    "wind-both": (True, True),
+}
+WIND_NO_ALLOWANCE_ABOVE_KT = 20.0
+WIND_OFFSHORE_CAP_KT = 20.0
+WIND_OFFSHORE_CAP = 3.0
+
+
+def proposed_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, rule):
+    """The previous cap with *rule*'s changes (WIND_RULES); 5.0 is no cap."""
+    return _ladder_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, *WIND_RULES[rule])
+
+
+def previous_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
+    """The cap every row published before the 20 kt changes carries (#266 to run 34): the
+    period allowance up to 25 kt measured, offshore uncapped up to 25 kt."""
+    return _ladder_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, False, False)
+
+
+def _ladder_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, no_allowance, offshore_cap):
+    """The wind cap built here, independently of interpret.wind_star_cap, with or without each
+    20 kt change."""
+    if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
+        return 5.0
+    cls = wind_class(wind_dir, offshore_wind_deg)
+    kt = wind_speed_ms / KT_TO_MS
+    if kt > WIND_CAP_UNSURFABLE_KT:
+        return WIND_CAP_UNSURFABLE_OFFSHORE if cls == "offshore" else WIND_CAP_UNSURFABLE
+    if cls == "offshore":
+        return WIND_OFFSHORE_CAP if offshore_cap and kt > WIND_OFFSHORE_CAP_KT else 5.0
+    if no_allowance and kt > WIND_NO_ALLOWANCE_ABOVE_KT:
+        tol = 0.0
+    else:
+        tol = max(0.0, (period_s or 0.0) - WIND_CAP_PERIOD_BASE_S)
+    cap = 5.0
+    for above, c in (WIND_CAP_ONSHORE if cls == "onshore" else WIND_CAP_CROSS):
+        if kt - tol > above:
+            cap = c
+    return cap
+
+
+def _wind_stars(row, spot, rb, factors, scale, cap):
+    """The published rater on a replayed row, sized at eff x *scale*, with the wind cap *cap*
+    (None: previous_wind_cap, the published cap). Mirrors variant_stars' cal-median arm."""
+    wm, tm, cm = _mults(row)
+    f = spot_factor(spot, factors or {}, _slug)
+    rules = rule_keywords(spot, _num(row.get("wind_dir")), _num(row.get("wind_speed")),
+                          rb["tp"], rb["eff"], f)
+    rules["star_cap"] = cap if cap is not None else previous_wind_cap(
+        _num(row.get("wind_dir")), _num(row.get("wind_speed")), spot.get("offshore_wind_deg"),
+        rb["tp"])
+    return composite_stars(rb["eff"] * scale, wm, tm, cm, rb["pq"], **rules)
+
+
+def wind_baseline(row, spot, rb, factors, m):
+    """(rater, scale, stars) for the rater that reproduces *row*'s published stars: the live
+    cal-median rater first, then the one before #267; None when neither does."""
+    published = _num(row.get("stars"))
+    scale = variant_scale(row, spot, factors, "cal-median", m)
+    live = _wind_stars(row, spot, rb, factors, scale, None)
+    if live == published:
+        return "cal-median", scale, live
+    before = live_stars(row, spot, rb, factors)
+    if before == published:
+        return "before #267", 1.0, before
+    return None
+
+
+def wind_stars(row, spot, rb, factors, rule, m):
+    """(baseline stars, stars under *rule*, rater) for a replayed row; None when no rater
+    reproduces it."""
+    base = wind_baseline(row, spot, rb, factors, m)
+    if base is None:
+        return None
+    rater, scale, live = base
+    cap = proposed_wind_cap(_num(row.get("wind_dir")), _num(row.get("wind_speed")),
+                            spot.get("offshore_wind_deg"), rb["tp"], rule)
+    return live, _wind_stars(row, spot, rb, factors, scale, cap), rater
+
+
+def _at_or_after(valid_time, board_from):
+    return board_from is None or (datetime.fromisoformat(str(valid_time).replace("Z", "+00:00"))
+                                  >= datetime.fromisoformat(board_from.replace("Z", "+00:00")))
+
+
+def wind_compare(rows, spots, names, factors, rule, m, n=10, board_from=None, focus=()):
+    """Every row a rater reproduces, before and after *rule*: by source, state and wind band,
+    the most-changed spots and the homepage list.
+
+    The homepage list reads each spot's first row at or after *board_from* (default: the first
+    in the window), so the window can reach back to the evidence while the list stays current.
+    *focus* names spots whose every compared hour is listed with its wind and stars."""
+    replay, unreplayable, raters = Counter(), Counter(), Counter()
+    by_group, by_state, by_wind, changed = defaultdict(Counter), defaultdict(Counter), Counter(), []
+    first = {}
+    focused = {f: {"compared": 0, "changed": []} for f in focus}
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        grp = group_of(row.get("swell_source") or "none")
+        if spot is None or row.get("stars") is None:
+            unreplayable[f"{grp}: spot not in the spots file or no published stars"] += 1
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None:
+            unreplayable[f"{grp}: {rb['why']}"] += 1
+            continue
+        got = wind_stars(row, spot, rb, factors, rule, m)
+        replay[(grp, got is not None)] += 1
+        if row["spot_id"] not in first and _at_or_after(row["valid_time"], board_from):
+            first[row["spot_id"]] = (float(row["stars"]), got[1] if got else None)
+        if got is None:
+            continue
+        live, after, rater = got
+        raters[rater] += 1
+        delta = round(after - live, 1)
+        by_group[grp][delta] += 1
+        by_state[state][delta] += 1
+        if name in focused:
+            focused[name]["compared"] += 1
+        if delta:
+            cls, kt = _wind(row, spot)
+            by_wind[f"{cls or 'no wind'} {_kt_band(kt)}"] += 1
+            c = {"spot": name, "state": state, "valid_time": row["valid_time"],
+                 "group": grp, "stars_before": live, "stars_after": after,
+                 "delta": delta, "wind": cls, "wind_kt": None if kt is None else round(kt, 1),
+                 "tp": rb["tp"], "eff_ft": round(rb["eff"], 2)}
+            changed.append(c)
+            if name in focused:
+                focused[name]["changed"].append(c)
+    per_spot = defaultdict(list)
+    for c in changed:
+        per_spot[c["spot"]].append(c)
+    top = sorted(per_spot.items(), key=lambda kv: (-len(kv[1]), kv[0]))[:20]
+    before = sorted(((v[0], sid) for sid, v in first.items()), key=lambda r: (-r[0], r[1]))
+    after = sorted(((v[1] if v[1] is not None else v[0], sid) for sid, v in first.items()),
+                   key=lambda r: (-r[0], r[1]))
+    top_b, top_a = before[:n], after[:n]
+    nm = lambda sid: names.get(sid, (None, None))
+    a_ids, b_ids = {sid for _, sid in top_a}, {sid for _, sid in top_b}
+    new = {sid: st for st, sid in after}
+    return {
+        "rule": rule, "median_factor": m, "rows": len(rows),
+        "replay": {f"{g} {'reproduced' if ok else 'NOT reproduced'}": k
+                   for (g, ok), k in sorted(replay.items())},
+        "reproduced_by": dict(sorted(raters.items())),
+        "unreplayable": dict(sorted(unreplayable.items())),
+        "compared": sum(sum(c.values()) for c in by_group.values()),
+        "changed_spot_hours": len(changed), "changed_spots": len(per_spot),
+        "ups": sum(c["delta"] > 0 for c in changed),
+        "downs": sum(c["delta"] < 0 for c in changed),
+        "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
+        "delta_by_state": {s_: dict(sorted(c.items()))
+                           for s_, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
+        "changed_by_wind": dict(sorted(by_wind.items())),
+        "focus": focused,
+        "top20": [{"spot": sp, "changed_hours": len(cs),
+                   "example": max(cs, key=lambda c: abs(c["delta"]))} for sp, cs in top],
+        "leaderboard": {
+            "before": [{"spot": nm(sid)[0], "state": nm(sid)[1], "stars": st} for st, sid in top_b],
+            "after": [{"spot": nm(sid)[0], "state": nm(sid)[1], "stars": st} for st, sid in top_a],
+            "drop_out": [{"spot": nm(sid)[0], "stars_before": st, "stars_after": new[sid]}
+                         for st, sid in top_b if sid not in a_ids],
+            "come_in": [{"spot": nm(sid)[0], "stars": st} for st, sid in top_a if sid not in b_ids],
+        },
+    }
+
+
+def _print_wind(rep, since):
+    print(f"\n=== wind: {rep['rule']} — window from {since}: {rep['rows']} rows; before = the "
+          f"live rater (median factor {rep['median_factor']}) ===")
+    for k, v in rep["replay"].items():
+        print(f"  {k}: {v}")
+    print(f"  reproduced by: {rep['reproduced_by']}")
+    for k, v in rep["unreplayable"].items():
+        print(f"  not replayable — {k}: {v}")
+    print(f"compared: {rep['compared']}   changed spot-hours: {rep['changed_spot_hours']}   "
+          f"changed spots: {rep['changed_spots']}   ups: {rep['ups']}   downs: {rep['downs']}")
+    print("star change by source (delta: hours):")
+    for g, c in rep["delta_by_group"].items():
+        print(f"  {g}: {c}")
+    print("star change by state (delta: hours):")
+    for s_, c in rep["delta_by_state"].items():
+        print(f"  {s_}: {c}")
+    print(f"changed hours by wind (class, measured kt): {rep['changed_by_wind']}")
+    print("20 most-changed spots (changed hours; largest change):")
+    for t in rep["top20"]:
+        e = t["example"]
+        print(f"  {t['spot']} ({e['state']}): {t['changed_hours']} h; {e['valid_time']} [{e['group']}] "
+              f"{e['stars_before']}->{e['stars_after']} ({e['wind']} {e['wind_kt']} kt, "
+              f"{_f(e['tp'], '{:.1f}')} s, effective {e['eff_ft']} ft)")
+    lb = rep["leaderboard"]
+    print("homepage 'Best conditions right now', before (published):")
+    for i, r in enumerate(lb["before"], 1):
+        print(f"  {i}. {r['spot']} ({r['state']}) {r['stars']}")
+    print("after:")
+    for i, r in enumerate(lb["after"], 1):
+        print(f"  {i}. {r['spot']} ({r['state']}) {r['stars']}")
+    print(f"drop out: {[(d['spot'], d['stars_before'], d['stars_after']) for d in lb['drop_out']]}")
+    print(f"come in: {[(d['spot'], d['stars']) for d in lb['come_in']]}")
+    for name, f in rep["focus"].items():
+        print(f"{name}: {len(f['changed'])} of {f['compared']} compared hours change")
+        for c in f["changed"][:48]:
+            print(f"  {c['valid_time']} {c['wind']} {c['wind_kt']} kt, {_f(c['tp'], '{:.1f}')} s, "
+                  f"effective {c['eff_ft']} ft: {c['stars_before']} -> {c['stars_after']}")
+        if len(f["changed"]) > 48:
+            print(f"  ... and {len(f['changed']) - 48} more (in the JSON)")
+
+
+def wind_explain(row, spot, factors, m, rules=tuple(WIND_RULES)):
+    """One row's wind under the live cap and each proposed rule, for --explain: class,
+    measured knots, period, the allowance, the caps and the stars. None when no rater
+    reproduces the row."""
+    rb = rescore(row, spot)
+    if rb["stars"] is None:
+        return None
+    base = wind_baseline(row, spot, rb, factors, m)
+    if base is None:
+        return None
+    wd, ws, off = _num(row.get("wind_dir")), _num(row.get("wind_speed")), spot.get("offshore_wind_deg")
+    cls, kt = _wind(row, spot)
+    out = {"rater": base[0], "stars": base[2], "wind": cls,
+           "wind_kt": None if kt is None else round(kt, 2), "period_s": rb["tp"],
+           "allowance_kt": max(0.0, (rb["tp"] or 0.0) - WIND_CAP_PERIOD_BASE_S),
+           "published_cap": previous_wind_cap(wd, ws, off, rb["tp"]),
+           "wired_cap": wind_star_cap(wd, ws, off, rb["tp"]), "rules": {}}
+    for r in rules:
+        _, after, _ = wind_stars(row, spot, rb, factors, r, m)
+        out["rules"][r] = {"cap": proposed_wind_cap(wd, ws, off, rb["tp"], r), "stars": after}
+    return out
+
+
+def _print_wind_explain(name, x):
+    w = x.get("wind")
+    if w is None:
+        print(f"\n--- {name}: the soonest row does not reproduce under either rater")
+        return
+    print(f"\n--- {name} @ {x['valid_time']}: {w['stars']} stars ({w['rater']} rater); "
+          f"{w['wind']} {_f(w['wind_kt'], '{:.1f}')} kt measured, {_f(w['period_s'], '{:.1f}')} s "
+          f"(allowance {w['allowance_kt']:.1f} kt); published cap {w['published_cap']}, wired "
+          f"cap {w['wired_cap']}")
+    print("  " + "; ".join(f"{r}: cap {v['cap']} -> {v['stars']} stars" for r, v in w["rules"].items()))
+
+
+def wind_rater_check(rows, spots, names, factors, m):
+    """THE MERGE GATE for the 20 kt changes: on every row the published cal-median rater
+    reproduces, the wired rater (wired_rater with M, interpret's new cap) against the
+    preview's wind-both (proposed_wind_cap, built here), hour for hour. Must be 0 differences.
+    Rows reproduced only by the rater before #267 are counted and skipped: the wired rater
+    sizes calibrated spots on the cal-median scale, which those rows were not published on."""
+    same = differ = skipped = 0
+    examples, by_group = [], defaultdict(Counter)
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None or row.get("stars") is None:
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None:
+            continue
+        got = wind_stars(row, spot, rb, factors, "wind-both", m)
+        if got is None:
+            continue
+        live, preview, rater = got
+        if rater != "cal-median":
+            skipped += 1
+            continue
+        wired = wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug), m)
+        by_group[group_of(row.get("swell_source") or "none")][round(wired - live, 1)] += 1
+        if wired == preview:
+            same += 1
+        else:
+            differ += 1
+            if len(examples) < 20:
+                examples.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                                 "published": live, "preview": preview, "wired": wired})
+    return {"hours": same + differ, "same": same, "different": differ,
+            "skipped_before_267": skipped, "examples": examples,
+            "wired_delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())}}
+
+
+def _print_wind_rater_check(c):
+    print(f"\n=== merge gate: wired rater vs preview wind-both, hour for hour ===\n"
+          f"hours {c['hours']}: same {c['same']}, DIFFERENT {c['different']} (must be 0); "
+          f"skipped (published before #267) {c['skipped_before_267']}")
+    print(f"wired rater against the published stars, by source: {c['wired_delta_by_group']}")
+    for e in c["examples"]:
+        print(f"  {e['spot']} ({e['state']}) {e['valid_time']}: published {e['published']} "
+              f"preview {e['preview']} wired {e['wired']}")
 
 
 # --------------------------------------------------------------------------- #
@@ -1539,6 +1887,9 @@ def main(argv=None):
     p.add_argument("--variants", default=None,
                    help="comma-separated variants of the live rater to preview: "
                         + ", ".join(VARIANTS))
+    p.add_argument("--wind", default=None,
+                   help="comma-separated proposed wind-cap rules to preview against the live "
+                        "rater: " + ", ".join(WIND_RULES))
     p.add_argument("--explain", default="",
                    help="(with --rating or --variants) comma-separated spot slugs: print every "
                         "rating factor of each one's soonest published hour")
@@ -1549,8 +1900,13 @@ def main(argv=None):
         p.error("--nwps-shelter runs on its own, with --baseline")
     rules = [r.strip() for r in args.rating.split(",") if r.strip()] if args.rating else []
     variants = [v.strip() for v in args.variants.split(",") if v.strip()] if args.variants else []
-    if (rules or variants) and (args.arcs is not None or args.tide is not None or args.nwps_shelter):
-        p.error("--rating and --variants run on their own, with --baseline")
+    winds = [w.strip() for w in args.wind.split(",") if w.strip()] if args.wind else []
+    if (rules or variants or winds) and (args.arcs is not None or args.tide is not None
+                                         or args.nwps_shelter):
+        p.error("--rating, --variants and --wind run on their own, with --baseline")
+    for w in winds:
+        if w not in WIND_RULES:
+            p.error(f"unknown wind rule {w!r}: {', '.join(WIND_RULES)}")
     for r in rules:
         if r not in RATING_RULES:
             p.error(f"unknown rating rule {r!r}: {', '.join(RATING_RULES)}")
@@ -1558,9 +1914,9 @@ def main(argv=None):
         if v not in VARIANTS:
             p.error(f"unknown variant {v!r}: {', '.join(VARIANTS)}")
     if (args.arcs is None and args.tide is None and not args.nwps_shelter and not rules
-            and not variants):
+            and not variants and not winds):
         p.error("give --arcs (a swell-window preview), --tide (a tide preview), or both; "
-                "or --nwps-shelter, --rating or --variants")
+                "or --nwps-shelter, --rating, --variants or --wind")
     specs = [m.strip() for m in args.tide.split(",")] if args.tide else []
     modes = [(m, None) if m == "rated" else tide_mode(m) for m in specs]
     from supabase import create_client
@@ -1570,27 +1926,44 @@ def main(argv=None):
     before = _by_name(args.baseline)
     after = _by_name(args.arcs) if args.arcs else before
     out = {"since": since}
-    if rules or variants:
+    if rules or variants or winds:
         factors = load_face_factors()
         m = median_factor(factors)
         out["explain"] = {}
         slugs = [x.strip() for x in args.explain.split(",") if x.strip()]
         by_slug = {_slug(n): sid for sid, (n, _) in names.items()}
+        # With --wind the window may reach back to the evidence (--since); the explained hour
+        # and the homepage list are still the first at or after now.
+        now = datetime.now(timezone.utc).replace(microsecond=0).isoformat() if winds else None
         for sl in slugs:
             sid = by_slug.get(sl)
-            row = next((r for r in rows if r["spot_id"] == sid), None) if sid else None
+            row = next((r for r in rows if r["spot_id"] == sid
+                        and _at_or_after(r["valid_time"], now)), None) if sid else None
             name = names[sid][0] if sid else sl
             if row is None or before.get(name) is None:
-                print(f"\n--- {sl}: no published row from {since} or not in the spots file")
+                print(f"\n--- {sl}: no published row from {now or since} or not in the spots file")
                 continue
             out["explain"][sl] = explain(row, before[name], rules or ("both",), factors)
             if variants:
                 out["explain"][sl]["live"] = live_explain(row, before[name], factors, m, variants)
+            if winds:
+                out["explain"][sl]["wind"] = wind_explain(row, before[name], factors, m, winds)
             _print_explain(name, out["explain"][sl])
             _print_live_explain(name, out["explain"][sl])
+            if winds:
+                _print_wind_explain(name, out["explain"][sl])
         if "cal-median" in variants:
             out["cal_rater_check"] = cal_rater_check(rows, before, names, factors, m)
             _print_cal_rater_check(out["cal_rater_check"])
+        if "wind-both" in winds:
+            out["wind_rater_check"] = wind_rater_check(rows, before, names, factors, m)
+            _print_wind_rater_check(out["wind_rater_check"])
+        out["wind"] = {}
+        for w in winds:
+            out["wind"][w] = wind_compare(rows, before, names, factors, w, m, board_from=now,
+                                          focus=[names[by_slug[sl]][0] for sl in slugs
+                                                 if sl in by_slug])
+            _print_wind(out["wind"][w], since)
         out["variants"] = {}
         for v in variants:
             out["variants"][v] = variant_compare(rows, before, names, factors, v, m)

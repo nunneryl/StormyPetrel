@@ -6,10 +6,13 @@ Every expected value is worked by hand, never read back from the functions under
   knots            m/s / 0.514444: 12.5 m/s = 24.298 kt, 13.4 m/s = 26.048 kt, 8 m/s = 15.551 kt;
                    6.687772 m/s = 13.0 kt and 12.8611 m/s = 25.0 kt exactly (13 and 25 x 0.514444)
                    7.2 m/s = 13.996 kt, 20 m/s = 38.877 kt
-  tolerance        max(0, period - 8) knots off the speed, on the ladder only
+  tolerance        max(0, period - 8) knots off the speed, on the ladder only, and only up to
+                   20 kt measured (since rating-preview run 34): above 20 kt the ladder reads
+                   the measured speed. 10.2 m/s = 19.827 kt, 10.4 m/s = 20.216 kt
   ladder           onshore >13: 3.0, >15: 2.0, >20: 1.5
                    cross   >13: 3.0, >15: 2.5, >20: 1.5
   above 25 kt      measured, any period: 1.0 cross-shore and onshore, 2.0 offshore
+  offshore >20 kt  measured: 3.0 (since run 34); otherwise offshore is not capped
   rules            cap; ceiling (beach and jetty over sand); both
   classes          angle off the offshore bearing: < 60 offshore, 60-120 cross, >= 120 onshore
   beach size       as size_score to 8 ft (4.5), 10 ft 4.5, 12 ft 3.5, 15 ft 2.5, 20 ft+ 1.5
@@ -49,9 +52,11 @@ def test_wind_class_at_jennettes(wind_dir, expected):
 @pytest.mark.parametrize("speed, period, expected", [
     (13.4, 11.0, 1.0),     # 26.05 kt > 25: 1.0 whatever the period
     (13.4, 16.0, 1.0),     # still 1.0 with 8 kt of tolerance
-    (12.5, 11.0, 1.5),     # 24.30 - 3 = 21.30 > 20: cross 1.5, as onshore
+    (12.5, 11.0, 1.5),     # 24.30 > 20 measured: no allowance, cross 1.5, as onshore
     (12.5, 8.0, 1.5),      # 24.30 > 20: 1.5
-    (12.5, 16.0, 2.5),     # 24.30 - 8 = 16.30 > 15: 2.5
+    (12.5, 16.0, 1.5),     # 24.30 > 20 measured: no allowance, 1.5 (was 24.30 - 8 = 16.30: 2.5)
+    (10.4, 12.0, 1.5),     # 20.22 > 20 measured: no allowance, 1.5 (was 16.22: 2.5)
+    (10.2, 12.0, 2.5),     # 19.83 kt keeps the allowance: 15.83 > 15: 2.5
     (12.5, 7.0, 1.5),      # period under 8 gives no negative tolerance
     (12.5, None, 1.5),     # no period: no tolerance
     (8.0, 8.0, 2.5),       # 15.55 kt > 15: cross 2.5 where onshore is 2.0
@@ -68,7 +73,8 @@ def test_cross_shore_cap(speed, period, expected):
     (8.0, 8.0, 2.0),       # 15.55 kt > 15: 2.0
     (8.0, 10.0, 3.0),      # 13.55 kt > 13: 3.0
     (8.0, 11.0, 5.0),      # 12.55 kt: no cap
-    (12.5, 11.0, 1.5),     # 21.30 kt > 20: 1.5
+    (12.5, 11.0, 1.5),     # 24.30 kt > 20 measured: no allowance, 1.5
+    (10.4, 16.0, 1.5),     # 20.22 kt > 20 measured: no allowance, 1.5 (was 12.22: no cap)
     (12.8611, 8.0, 1.5),   # exactly 25 kt: > 20: 1.5
     (13.4, 8.0, 1.0),      # 26.05 kt: 1.0
 ])
@@ -79,10 +85,12 @@ def test_onshore_cap(speed, period, expected):
 @pytest.mark.parametrize("speed, period, expected", [
     (20.0, 8.0, 2.0),      # 38.88 kt > 25: 2.0
     (13.4, 16.0, 2.0),     # 26.05 kt measured > 25: 2.0, the period does not shift it
-    (12.8611, 8.0, 5.0),   # exactly 25 kt: no cap
-    (12.5, 8.0, 5.0),      # 24.30 kt: offshore has no ladder
+    (12.8611, 8.0, 3.0),   # exactly 25 kt: not above 25, above 20: 3.0
+    (12.5, 16.0, 3.0),     # 24.30 kt > 20: 3.0, the period does not shift it
+    (10.4, 8.0, 3.0),      # 20.22 kt > 20: 3.0
+    (10.2, 8.0, 5.0),      # 19.83 kt: no cap
 ])
-def test_offshore_is_capped_only_above_25_kt(speed, period, expected):
+def test_offshore_cap(speed, period, expected):
     assert I.wind_star_cap(245.0, speed, 245.0, period) == expected
 
 
@@ -404,11 +412,12 @@ def test_the_leaderboard_reads_the_calibrated_face():
 # --------------------------------------------------------------------------- #
 
 def test_the_rater_check_on_rate_spot_path_rows():
-    # The three reproduced rows of _rows(): A 4.5 -> 2.5, B 5.0, C 3.5, through
-    # composite_stars with interpret.rule_keywords; no difference from 'both'.
+    # The three reproduced rows of _rows(): A 4.5 -> 1.5 under the wired cap (24.30 kt cross >
+    # 20 measured: no allowance, 1.5; the ceiling's 3.5 is higher), B 5.0, C 3.5, through
+    # composite_stars with interpret.rule_keywords; no difference from 'both' at that cap.
     c = SP.rater_check(_rows(), SPOTS, NAMES, None)
     assert (c["hours"], c["same"], c["different"], c["examples"]) == (3, 3, 0, [])
-    assert c["wired_delta_by_group"] == {"MOP": {-2.0: 1, 0.0: 2}}
+    assert c["wired_delta_by_group"] == {"MOP": {-3.0: 1, 0.0: 2}}
 
 
 # An NWPS row: one partition from 270 at 12 s, face 8.0 ft (the period is unchanged, so the
