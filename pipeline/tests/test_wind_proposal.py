@@ -1,4 +1,5 @@
-"""Two proposed changes to the strong-wind cap, and their read-only preview (star_preview --wind).
+"""The 20 kt changes to the strong-wind cap: wired into interpret.wind_star_cap after
+rating-preview run 34, previewed by star_preview --wind, and the merge gate between the two.
 
   no-allowance-20  above 20 kt MEASURED the period allowance stops (cross-shore and onshore)
   offshore-20      offshore above 20 kt measured is capped at 3.0; above 25 kt stays 2.0
@@ -20,6 +21,7 @@ from __future__ import annotations
 
 import pytest
 
+from pipeline import interpret as I
 from pipeline import star_preview as SP
 
 RULES = ("no-allowance-20", "offshore-20", "wind-both")
@@ -52,8 +54,11 @@ RULES = ("no-allowance-20", "offshore-20", "wind-both")
     (65.0, 13.4, 8.0, 1.0, {"no-allowance-20": 1.0, "offshore-20": 1.0, "wind-both": 1.0}),
 ])
 def test_proposed_wind_cap(wind_dir, speed, period, live, expected):
-    assert SP.wind_star_cap(wind_dir, speed, 245.0, period) == live
+    # *live* is the cap the rows published before the change carry; the wired rater is now
+    # wind-both.
+    assert SP.previous_wind_cap(wind_dir, speed, 245.0, period) == live
     assert {r: SP.proposed_wind_cap(wind_dir, speed, 245.0, period, r) for r in RULES} == expected
+    assert I.wind_star_cap(wind_dir, speed, 245.0, period) == expected["wind-both"]
 
 
 @pytest.mark.parametrize("args", [(None, 11.0, 245.0, 12.0), (0.0, None, 245.0, 12.0),
@@ -62,14 +67,17 @@ def test_missing_wind_or_bearing_is_still_no_cap(args):
     assert {SP.proposed_wind_cap(*args, r) for r in RULES} == {5.0}
 
 
-def test_no_rule_ever_raises_the_live_cap_and_each_moves_only_its_own_case():
+def test_no_rule_ever_raises_the_previous_cap_and_each_moves_only_its_own_case():
     """A property over a grid, not an expected value: every direction in 5° steps, 0-30 kt
-    in quarter knots, periods 6-18 s."""
+    in quarter knots, periods 6-18 s. The wired cap and the preview's wind-both, built
+    independently, agree everywhere on it."""
     for d in range(0, 360, 5):
         for q in range(0, 121):
             ms = q / 4 * 0.514444
             for tp in (6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0):
-                live = SP.wind_star_cap(float(d), ms, 245.0, tp)
+                live = SP.previous_wind_cap(float(d), ms, 245.0, tp)
+                assert I.wind_star_cap(float(d), ms, 245.0, tp) == \
+                    SP.proposed_wind_cap(float(d), ms, 245.0, tp, "wind-both"), (d, q, tp)
                 cls, kt = SP.wind_class(float(d), 245.0), ms / 0.514444
                 for r in RULES:
                     assert SP.proposed_wind_cap(float(d), ms, 245.0, tp, r) <= live, (d, q, tp, r)
@@ -183,7 +191,8 @@ def test_wind_explain():
     row = _row(spot_id=2, stars=2.5, **CROSS_21)
     x = SP.wind_explain(row, SPOTS["B"], FACTORS, 1.6)
     assert (x["rater"], x["stars"], x["wind"], x["wind_kt"], x["period_s"], x["allowance_kt"],
-            x["live_cap"]) == ("cal-median", 2.5, "cross", 21.38, 12.0, 4.0, 2.5)
+            x["published_cap"], x["wired_cap"]) == ("cal-median", 2.5, "cross", 21.38, 12.0,
+                                                    4.0, 2.5, 1.5)
     assert x["rules"] == {"no-allowance-20": {"cap": 1.5, "stars": 1.5},
                           "offshore-20": {"cap": 2.5, "stars": 2.5},
                           "wind-both": {"cap": 1.5, "stars": 1.5}}
@@ -206,7 +215,37 @@ def test_wind_runs_on_its_own():
         SP.main(["--wind", "wind-both", "--tide", "neutral"])
 
 
-def test_the_rater_is_untouched():
-    """A preview: interpret's live cap still gives Jennettes 2.5 and Ocean City no cap."""
-    assert SP.wind_star_cap(0.0, 11.623, 245.0, 12.0) == 2.5
-    assert SP.wind_star_cap(245.0, 11.176, 245.0, 10.0) == 5.0
+def test_the_rater_now_applies_both_changes():
+    """Jennettes' 22.594 kt cross-shore at 12 s: 1.5 wired, 2.5 as published before. Ocean
+    City NJ's 21.725 kt offshore: 3.0 wired, no cap before."""
+    assert (I.wind_star_cap(0.0, 11.623, 245.0, 12.0),
+            SP.previous_wind_cap(0.0, 11.623, 245.0, 12.0)) == (1.5, 2.5)
+    assert (I.wind_star_cap(245.0, 11.176, 245.0, 10.0),
+            SP.previous_wind_cap(245.0, 11.176, 245.0, 10.0)) == (3.0, 5.0)
+
+
+# --------------------------------------------------------------------------- #
+# The merge gate                                                               #
+# --------------------------------------------------------------------------- #
+
+def test_the_wind_gate_finds_no_difference_and_skips_rows_published_before_267():
+    # _rows(): B 2.5 -> 1.5 (wired: nwps_stars with the wind, 21.382 kt cross > 20 measured,
+    # 1.5), B 4.5 and A 3.0 unchanged, A 2.0 reproduced by neither rater (not counted); plus A
+    # published 4.5, reproduced only by the rater before #267: skipped.
+    rows = _rows() + [_row(spot_id=1, stars=4.5, valid_time="2026-10-20T17:00:00+00:00", **LIGHT)]
+    c = SP.wind_rater_check(rows, SPOTS, NAMES, FACTORS, 1.6)
+    assert (c["hours"], c["same"], c["different"], c["skipped_before_267"], c["examples"]) == (
+        3, 3, 0, 1, [])
+    assert c["wired_delta_by_group"] == {"NWPS": {-1.0: 1, 0.0: 2}}
+
+
+def test_the_wind_gate_reports_a_difference():
+    real = SP.wired_rater
+    SP.wired_rater = lambda *a, **k: 2.5
+    try:
+        c = SP.wind_rater_check(_rows()[:1], SPOTS, NAMES, FACTORS, 1.6)
+    finally:
+        SP.wired_rater = real
+    assert (c["hours"], c["same"], c["different"]) == (1, 0, 1)
+    assert c["examples"] == [{"spot": "B", "state": "North Carolina", "valid_time": T0,
+                              "published": 2.5, "preview": 1.5, "wired": 2.5}]

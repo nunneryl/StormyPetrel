@@ -15,7 +15,7 @@ Every spot gets a star rating for each forecast hour, from 0 (FLAT) to 5 (EPIC).
 1. **Size.** The wave height, adjusted for swell direction, gives a size score. At sand beach and jetty breaks it falls again once the waves are big enough to close out.
 2. **Quality.** Four scores adjust the size score: wind, chop, period and tide. They are blended with weights, not simply multiplied together.
 3. **Rounding.** The result is rounded to the nearest half star and kept between 1 and 5. A height under half a foot, after the direction adjustment, is FLAT: 0 stars.
-4. **Strong wind.** Strong cross-shore or onshore wind caps the rating, however good the rest is.
+4. **Strong wind.** Strong wind caps the rating, however good the rest is: cross-shore or onshore from 13 kt, offshore from 20 kt.
 
 ```
 stars = size_score × wind^0.35 × chop^0.25 × period^0.25 × tide^0.15
@@ -160,14 +160,16 @@ So strong wind now sets a ceiling on the rating, whatever the other scores are. 
 |------|---------|-------------|----------|
 | over 13 kt | 3 stars | 3 stars | no cap |
 | over 15 kt | 2 | 2.5 | no cap |
-| over 20 kt | 1.5 | 1.5 | no cap |
+| over 20 kt | 1.5 | 1.5 | 3 |
 | over 25 kt | 1 | 1 | 2 |
 
 Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° to 120°, and onshore more than 120°.
 
-Long-period swell stands up to wind better, so up to 25 kt the wind is read a knot lighter for every second of period above 8 s: a 12 s swell in an 18 kt wind is read at 14 kt. Above 25 kt there's no allowance.
+Long-period swell stands up to wind better, so up to 20 kt the wind is read a knot lighter for every second of period above 8 s: a 12 s swell in an 18 kt wind is read at 14 kt. Above 20 kt there's no allowance.
 
 When we replayed the forecast published on 20 October 2026 with the cap and the beach-break limit together, 8,844 of 83,446 spot-hours (10.6%), at 257 of our spots, came out lower, and none came out higher. 6,697 moved for the wind alone, 736 for the beach-break limit alone, and 1,411 for both. Most were windy East Coast hours, above all the 25–30 kt onshore days in Florida's forecast; California moved by 72 hours. Judging closing out at the calibrated height kept 12 California hours, at Caspar, Jug Handle and Carmel Beach, from dropping half a star.
+
+On 21 October 2026 we tightened two rungs. Jennettes Pier read a 21.8 kt cross-shore wind at 11.9 s as 17.9 kt and kept 2.5 stars on a day Surfline rated "Very Poor"; now the allowance stops at 20 kt. Ocean City NJ rated 4.5 stars in a 22 kt offshore wind that Surfline rated "Fair", and Atlantic City 4.5 in 21–24 kt; offshore that strong holds the lip up so long that drops go late and vertical, so it's now capped at 3 stars. Replaying the forecast published that day, 2,612 of 95,107 spot-hours (2.7%), at 259 of our spots, came out lower, and none came out higher: 2,256 because the allowance stops at 20 kt, and 356 for the offshore cap. Ocean City NJ and Atlantic City went from 4.5 to 3 stars.
 
 ## Period
 

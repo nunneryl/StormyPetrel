@@ -589,14 +589,27 @@ KT_TO_MS = 0.514444
 # a star milder than onshore from 15 to 20 kt only (decided after rating-preview run 29).
 WIND_CAP_ONSHORE = ((13.0, 3.0), (15.0, 2.0), (20.0, 1.5))
 WIND_CAP_CROSS = ((13.0, 3.0), (15.0, 2.5), (20.0, 1.5))
-# "Rough rule: one extra knot of tolerance per second of period above 8" (/learn/wind).
-# It shifts the rungs above; the page gives "above 25 kt" for any swell, so that is measured.
+# "Rough rule: one extra knot of tolerance per second of period above 8, up to about 20 kt"
+# (/learn/wind). It shifts the rungs above, and only up to 20 kt MEASURED: above that the
+# ladder reads the measured speed. The page gives "above 25 kt" for any swell, so that is
+# measured too.
 WIND_CAP_PERIOD_BASE_S = 8.0
+WIND_CAP_NO_ALLOWANCE_ABOVE_KT = 20.0
 WIND_CAP_UNSURFABLE_KT = 25.0
 # Above 25 kt measured: cross-shore and onshore 1.0, offshore 2.0 ("Generally unsurfable,
 # even when offshore"; an offshore gale still holds the faces up better than one onshore).
 WIND_CAP_UNSURFABLE = 1.0
 WIND_CAP_UNSURFABLE_OFFSHORE = 2.0
+# Offshore above 20 kt measured: 3.0 ("15-25 kt: Stiff. Offshore this strong holds the lip
+# up so long that drops go vertical and late, and paddling against it is hard").
+WIND_CAP_OFFSHORE_STRONG_KT = 20.0
+WIND_CAP_OFFSHORE_STRONG = 3.0
+#
+# THE 20 KT CHANGES, decided 2026-10-21 after rating-preview run 34 (2,612 of 95,107
+# spot-hours lower, none higher). Jennettes Pier read a 21.8 kt cross-shore wind at 11.9 s as
+# 17.9 kt and kept 2.5 stars; Surfline called it "Very Poor". Ocean City NJ and Atlantic City
+# rated 4.5 in a 22-24 kt offshore wind on 8-10 ft; Surfline "Fair", the forecaster "solid
+# but unruly, target protected spots". The step at 20 kt is deliberate, like the rungs.
 
 
 def wind_class(wind_dir: float, offshore_wind_deg: float) -> str:
@@ -618,8 +631,9 @@ def wind_star_cap(
     """The most stars an hour can have in this wind; 5.0 is no cap.
 
     Above 25 kt measured, whatever the period: 1.0 cross-shore or onshore, 2.0 offshore.
-    Otherwise offshore is never capped, and cross-shore and onshore read
-    knots - max(0, period - 8) against their ladder, capping above 13 kt."""
+    Offshore above 20 kt measured: 3.0; offshore is otherwise never capped. Cross-shore and
+    onshore read their ladder, capping above 13 kt, at knots - max(0, period - 8) up to 20 kt
+    measured and at the measured knots above it."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return 5.0
     cls = wind_class(wind_dir, offshore_wind_deg)
@@ -627,8 +641,9 @@ def wind_star_cap(
     if kt > WIND_CAP_UNSURFABLE_KT:
         return WIND_CAP_UNSURFABLE_OFFSHORE if cls == "offshore" else WIND_CAP_UNSURFABLE
     if cls == "offshore":
-        return 5.0
-    tol = max(0.0, (period_s or 0.0) - WIND_CAP_PERIOD_BASE_S)
+        return WIND_CAP_OFFSHORE_STRONG if kt > WIND_CAP_OFFSHORE_STRONG_KT else 5.0
+    tol = (0.0 if kt > WIND_CAP_NO_ALLOWANCE_ABOVE_KT
+           else max(0.0, (period_s or 0.0) - WIND_CAP_PERIOD_BASE_S))
     cap = 5.0
     for above, c in (WIND_CAP_ONSHORE if cls == "onshore" else WIND_CAP_CROSS):
         if kt - tol > above:

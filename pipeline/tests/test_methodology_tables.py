@@ -20,8 +20,10 @@ earlier calibration's 130 spots and the "all but two" whose calibrated height wa
 been replaced, so nothing in the repo can check them), and that MOP's nowcast ends before the
 current hour (a property of CDIP's feed, seen on live rows), and the replay of the forecast
 published on 20 October 2026 under the wind cap and beach-break limit (8,844 of 83,446
-spot-hours, rating-preview run 31, dated in the post), and the replay on the calibrated height
-(8,673 of 85,470 spot-hours, rating-preview run 32, dated in the post). None is a number the
+spot-hours, rating-preview run 31, dated in the post), the replay on the calibrated height
+(8,673 of 85,470 spot-hours, rating-preview run 32, dated in the post), and the replay of the
+forecast published on 21 October 2026 under the 20 kt changes (2,612 of 95,107 spot-hours,
+2,256 and 356 by change, rating-preview run 34, dated in the post). None is a number the
 code owns. What the code does own about these — that a calibrated spot's stars read its calibrated height times the
 median ratio while every other spot's read the model height, that item 6 describes a calibration older than the current file, and that MOP is
 read from its nowcast — is pinned below.
@@ -652,5 +654,13 @@ def test_the_period_allowance_example():
     # cross-shore: read at 14 kt the cap is the over-13 rung, not the over-15 one at 18 kt
     assert I.wind_star_cap(90.0, wind * I.KT_TO_MS, 0.0, period) == \
         I.wind_star_cap(90.0, read * I.KT_TO_MS, 0.0, 8.0)
-    _says(r"Above 25 kt there's no allowance\.", "the measured top rung")
+    m = _says(r"so up to (\d+) kt the wind is read a knot lighter", "where the allowance stops")
+    _says(rf"Above {m.group(1)} kt there's no allowance\.", "the measured rungs")
+    top = float(m.group(1))
+    # Cross-shore 1 kt above where the post says the allowance stops, at 16 s: read at the
+    # measured speed it is over 20 kt (1.5); with 8 kt of allowance it would be under 13 (no cap).
+    assert top == 20.0
+    assert I.wind_star_cap(90.0, (top + 1.0) * I.KT_TO_MS, 0.0, 16.0) == 1.5
+    # ...and 1 kt below it the allowance still applies: 19 - 8 = 11 kt, no cap.
+    assert I.wind_star_cap(90.0, (top - 1.0) * I.KT_TO_MS, 0.0, 16.0) == 5.0
     assert I.wind_star_cap(90.0, 26.0 * I.KT_TO_MS, 0.0, 16.0) == 1.0

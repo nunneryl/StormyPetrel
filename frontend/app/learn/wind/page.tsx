@@ -283,7 +283,8 @@ export default function WindArticle() {
           <li>
             <strong>Calibrate your wind tolerance to the period.</strong>{' '}
             Longer-period swells handle more onshore wind. Rough rule: one
-            extra knot of tolerance per second of period above 8.
+            extra knot of tolerance per second of period above 8, up to about
+            20 kt.
           </li>
           <li>
             <strong>Drive to the spot whose orientation matches the
