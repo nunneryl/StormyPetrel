@@ -9,7 +9,7 @@ import { SwellCompass } from './SwellCompass';
 import { CamBadge } from './CamBadge';
 import { HeightBasisMark } from './HeightBasisMark';
 import { Sparkline } from './Sparkline';
-import { degToCardinal, fmtFtRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
+import { degToCardinal, fmtHeightRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
 import { heightBasis } from '@/lib/heightBasis';
 import { fmtBreakType } from '@/lib/provenance';
 import { tierFromStars } from '@/lib/ratings';
@@ -100,7 +100,7 @@ export function RegionList({
                   <div className="mt-1 flex items-center gap-3 text-xs text-text-secondary flex-wrap">
                     <span className="inline-flex items-baseline gap-1">
                       <span className="font-bold text-text-primary tabular-nums">
-                        {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                        {fmtHeightRange(f?.face_ft ?? null)}
                       </span>
                       <HeightBasisMark basis={heightBasis(f)} />
                     </span>

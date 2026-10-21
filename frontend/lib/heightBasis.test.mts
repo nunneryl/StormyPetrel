@@ -16,7 +16,7 @@
  *      a raw value can be missing, a model-estimate row gets 'model', the label "Model
  *      estimate", the mark "model" — and never the word calibrated or CDIP.
  *   4. The words themselves, and the methodology post quoting the same two labels.
- *   5. STRUCTURE: every component that prints a height with fmtFtRange prints a basis beside it,
+ *   5. STRUCTURE: every component that prints a height with fmtHeightRange prints a basis beside it,
  *      from a value, never a hard-coded one; and the two queries those rows come from select the
  *      columns the basis is read from.
  *   6. STORED BASES. A daily report's top_spots carries the basis daily_report.py stored with each
@@ -160,7 +160,7 @@ if (quoted) {
 // --------------------------------------------------------------------------- //
 type Tally = { heights: number; marks: number; literalBasis: string[] };
 
-/** Heights printed with fmtFtRange, basis markers beside them, and markers fed a literal. */
+/** Heights printed with fmtHeightRange, basis markers beside them, and markers fed a literal. */
 function tally(fileName: string, source: string): Tally {
   const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const out: Tally = { heights: 0, marks: 0, literalBasis: [] };
@@ -169,7 +169,7 @@ function tally(fileName: string, source: string): Tally {
   const line = (n: ts.Node) => sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
   const visit = (n: ts.Node): void => {
     if (ts.isCallExpression(n) && ts.isIdentifier(n.expression)) {
-      if (n.expression.text === 'fmtFtRange') out.heights += 1;
+      if (n.expression.text === 'fmtHeightRange') out.heights += 1;
       if (n.expression.text === 'heightBasisMarkHtml') {
         out.marks += 1;
         if (isLiteral(n.arguments[0])) out.literalBasis.push(`${fileName}:${line(n)}`);
@@ -200,15 +200,15 @@ function tally(fileName: string, source: string): Tally {
 }
 
 // The scanner, on hand-written input first: one that finds nothing would pass everything below.
-const bare = tally('a.tsx', 'const A = () => <span>{fmtFtRange(lo, hi, f)}</span>;');
+const bare = tally('a.tsx', 'const A = () => <span>{fmtHeightRange(f)}</span>;');
 check('a height printed with no basis is seen as one', bare.heights === 1 && bare.marks === 0, JSON.stringify(bare));
-const marked = tally('b.tsx', 'const A = () => <><span>{fmtFtRange(lo, hi, f)}</span><HeightBasisMark basis={heightBasis(row)} /></>;');
+const marked = tally('b.tsx', 'const A = () => <><span>{fmtHeightRange(f)}</span><HeightBasisMark basis={heightBasis(row)} /></>;');
 check('...and with its basis beside it, as marked', marked.heights === 1 && marked.marks === 1
   && marked.literalBasis.length === 0, JSON.stringify(marked));
 const fixed = tally('c.tsx', 'const A = () => <><HeightBasisMark basis="calibrated" /><HeightBasisMark basis={\'cdip\'} /></>;'
   + 'const h = heightBasisMarkHtml("model"); const l = HEIGHT_BASIS_LABEL["calibrated"];');
 check('a hard-coded basis is caught in every form', fixed.literalBasis.length === 4, JSON.stringify(fixed));
-const twice = tally('d.tsx', 'const A = () => <><b>{fmtFtRange(a, b, c)}</b><i>{fmtFtRange(a, b, c)}</i><HeightBasisMark basis={x} /></>;');
+const twice = tally('d.tsx', 'const A = () => <><b>{fmtHeightRange(c)}</b><i>{fmtHeightRange(c)}</i><HeightBasisMark basis={x} /></>;');
 check('two heights with one marker are one short', twice.heights === 2 && twice.marks === 1, JSON.stringify(twice));
 
 const files = ['app', 'components'].flatMap((d) => walk(join(FRONTEND, d)))
@@ -221,7 +221,7 @@ check('the scan reaches every surface that prints a height: home, cams, spot pag
   MUST_PRINT.every((f) => printing.some((p) => p.rel === f)),
   MUST_PRINT.filter((f) => !printing.some((p) => p.rel === f)).join(', '));
 const short = printing.filter((p) => p.t.marks < p.t.heights);
-check('every height printed with fmtFtRange has its basis beside it',
+check('every height printed with fmtHeightRange has its basis beside it',
   short.length === 0, short.map((p) => `${p.rel}: ${p.t.heights} heights, ${p.t.marks} markers`).join('; '));
 const literal = files.flatMap((rel) => tally(rel, read(rel)).literalBasis);
 check('no marker or label is fed a hard-coded basis', literal.length === 0, literal.join(', '));

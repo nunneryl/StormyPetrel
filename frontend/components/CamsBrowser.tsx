@@ -13,7 +13,7 @@ import {
   providerLabel,
 } from '@/lib/cam-utils';
 // Pure string helper, no Supabase client — safe in a client component.
-import { fmtFtRange } from '@/lib/formatting';
+import { fmtHeightRange } from '@/lib/formatting';
 // Pure too: the type and the label tables, nothing that reaches the database.
 import type { HeightBasis } from '@/lib/heightBasis';
 import { HeightBasisMark } from './HeightBasisMark';
@@ -34,8 +34,6 @@ export type CamSpot = {
   state: string | null;
   stars: number | null;
   face_ft: number | null;
-  face_lo_ft: number | null;
-  face_hi_ft: number | null;
   /** heightBasis() of the same latest row — see app/cams/page.tsx. */
   height_basis: HeightBasis | null;
 };
@@ -195,8 +193,6 @@ function CamCard({ row }: { row: CamRow }) {
       <RatingSwellRow
         stars={spot?.stars ?? null}
         faceFt={spot?.face_ft ?? null}
-        loFt={spot?.face_lo_ft ?? null}
-        hiFt={spot?.face_hi_ft ?? null}
         basis={spot?.height_basis ?? null}
       />
 
@@ -226,14 +222,10 @@ function CamCard({ row }: { row: CamRow }) {
 function RatingSwellRow({
   stars,
   faceFt,
-  loFt,
-  hiFt,
   basis,
 }: {
   stars: number | null;
   faceFt: number | null;
-  loFt: number | null;
-  hiFt: number | null;
   basis: HeightBasis | null;
 }) {
   if (stars === null && faceFt === null) return null;
@@ -242,7 +234,7 @@ function RatingSwellRow({
       {stars !== null && <StarRating score={stars} size="xs" />}
       {faceFt !== null && (
         <span className="font-bold text-text-primary tabular-nums">
-          {fmtFtRange(loFt, hiFt, faceFt)}
+          {fmtHeightRange(faceFt)}
         </span>
       )}
       {faceFt !== null && <HeightBasisMark basis={basis} />}

@@ -14,7 +14,7 @@ the committed artifact can be regenerated and diffed rather than trusted.
 INPUT (Mac-local, GITIGNORED — never committed)
     scripts/mop_face_validation_out.json   <- WHAT THE HARNESS ACTUALLY WRITES
         by_spot[].slug, .face_ratio.median, .face_ratio.n,
-        .face_ratio.p25, .face_ratio.p75   <- the exclusion statistic AND the published band
+        .face_ratio.p25, .face_ratio.p75   <- the exclusion statistic (and diff_face_factors' drift check)
         .face_ratio.p10, .face_ratio.p90   <- diagnostic only; excludes nothing
         window.{t0,t1}                     <- THE DATES THIS FILE STAMPS (see below)
         generated_at                       <- the freshness check compares this to window.t1
@@ -153,8 +153,8 @@ _COMMENT_TEMPLATE = (
     "a DIVISOR: corrected_face = published_face / factor, so 2.87 means we publish 2.87x "
     "what MOP implies. Applied by pipeline/forecast/face_correction.py at the single seam in "
     "interpret.main AFTER apply_mop_overrides and apply_nwps_overrides, which is where the "
-    "four face_ft producers actually converge. Only the displayed height is scaled: face_ft "
-    "and its published band. effective_size_ft and stars are left as the producer computed "
+    "four face_ft producers actually converge. Only the displayed height is scaled: "
+    "face_ft. effective_size_ft and stars are left as the producer computed "
     "them, so a calibrated spot is rated on the same input as every other spot.\n\n"
 
     "GENERATED, NOT TRANSCRIBED. Regenerate with `python3 scripts/build_face_factors.py "
@@ -353,8 +353,8 @@ def population_gates(doc):
 def _iqr_ratio(rec):
     """p75 / p25, or None when either quartile is missing or p25 is non-positive.
 
-    THE STATISTIC WE EXCLUDE ON IS THE ONE WE PUBLISH — see FACE_FACTOR_MAX_IQR_RATIO for
-    the full argument and the Steamer Lane worked example. The p90/p10 form this replaces
+    THE MIDDLE OF THE SCATTER, NOT ITS TAIL — see FACE_FACTOR_MAX_IQR_RATIO for the full
+    argument and the Steamer Lane worked example. The p90/p10 form this replaces
     is still computed as `spread_p90_p10` and carried on every record, because it is a
     genuinely useful diagnostic of the tails; it is simply no longer what decides anything.
 
@@ -481,11 +481,11 @@ def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_iqr=FACE_FACTOR_MAX_I
                 "factor": round(float(fr["median"]), 4),
                 "hours": fr.get("n"),
                 "p10": fr.get("p10"),
-                # THE PUBLISHED BAND. face_correction.face_range divides the corrected face
-                # by these to get hi and lo. .get() rather than [] because a spread file
-                # generated before mop_face_validation carried them has neither, and the
-                # right behaviour then is a factor with no range — not a crash, and not a
-                # substituted p10/p90, which would silently double the published width.
+                # THE SPREAD, kept for the record and for diff_face_factors' drift check.
+                # Until migration 023 face_correction divided the face by these to publish a
+                # band; the site now prints a fixed ladder step around face_ft and nothing in
+                # the pipeline reads them. Exclusion (above) judges p75/p25 from the spread
+                # file itself, so a record that lost these would still be gated correctly.
                 "p25": fr.get("p25"),
                 "p75": fr.get("p75"),
                 "p90": fr.get("p90"),
@@ -515,7 +515,8 @@ def build(spread_path=SPREAD_PATH, roster_path=ROSTER, max_iqr=FACE_FACTOR_MAX_I
             "window_from": provenance,
             "reference": "CDIP MOP alongshore nowcast at the 10 m contour",
             "statistic": "median of face_ft / (MOP Hs * 3.281) over the joined hours",
-            "published_band": "p25/p75 of the same ratio; lo = face/p75, hi = face/p25",
+            "spread": "p25/p75 of the same ratio: the exclusion gate (p75/p25) and drift "
+                      "checks; not displayed (the site prints a ladder step, migration 023)",
             "regenerate": "python3 scripts/mop_face_validation.py"
                           " && python3 scripts/build_face_factors.py --apply",
             "max_iqr_ratio_p75_p25": max_iqr,
@@ -728,10 +729,10 @@ def run_selftest():
           _spread({"face_ratio": {"p10": 0.0, "p90": 2.0}}) is None)
     check("_spread computes p90/p10", _spread({"face_ratio": {"p10": 2.0, "p90": 5.0}}) == 2.5)
 
-    # --- the published band survives into the factor record ------------------- #
-    # p25/p75 are what face_correction.face_range divides by. Dropping them here would
-    # regenerate a file with no band and ship the feature inert with nothing else failing,
-    # so the carry-through is pinned end to end on a fixture rather than assumed.
+    # --- the p25/p75 spread survives into the factor record ------------------- #
+    # Nothing displays them any more (migration 023), but diff_face_factors compares them
+    # across regenerations and KEPT_FACE_RATIO_FIELDS requires them, so the carry-through
+    # is still pinned end to end on a fixture rather than assumed.
     import json as _json
     import os as _os
     import tempfile as _tf

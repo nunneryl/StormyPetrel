@@ -21,8 +21,8 @@ to prevent. The convergence point is in main, after line 1892 — which is where
 The intent is honoured; the address was wrong.
 
 THE SEAM IS DISPLAY-ONLY: IT DIVIDES THE HEIGHT, NOT THE RATING. The seam writes face_ft (the
-corrected height) and, where the spread was measured, face_lo_ft / face_hi_ft.
-effective_size_ft and stars are left EXACTLY as the producer computed them. Nothing here calls
+corrected height) and nothing else of the rating's. effective_size_ft and stars are left
+EXACTLY as the producer computed them. Nothing here calls
 composite_stars, so there is no star chain to keep in step with interpret.
 
   THE RATERS READ THE SAME FACTORS, since 2026-10-21 (rating-preview run 32). Each producer
@@ -70,33 +70,14 @@ SEASONALITY. See the data file's own header. Each file's factors come from a sin
 measurement window (its measurement.window) and are not validated across a season change;
 the run summary warns past FACE_FACTOR_MAX_AGE_DAYS.
 
-THE PUBLISHED RANGE, and why p25/p75 rather than p10/p90. The same measurement that gives
-the median gives the scatter around it. p10/p90 is roughly -18% / +23% and rounds a 4 ft
-number to 2-6 ft: honest, and wide enough to be right about everything and useful for
-nothing. p25/p75 is roughly +/-20% before rounding, puts about half the measured hours
-inside the band, and rounds 4.0 to 3-5. A range wide enough always to be right is a range
-nobody reads.
-
-  ALL THREE NUMBERS DIVIDE THE SAME RAW FACE. The stored quantiles are quantiles of the
-  RATIO face_ft / (MOP Hs x 3.281) and the factor is a DIVISOR, so:
-
-      lo    = raw_face / p75
-      point = raw_face / median      (this is `factor`)
-      hi    = raw_face / p25
-
-  Dividing by the larger quantile gives the smaller height, so the ordering follows from
-  p25 <= median <= p75 and needs no sort. THE INVARIANT lo <= point <= hi IS A CONSEQUENCE
-  OF THAT STRUCTURE, not a separate calculation — which is exactly why it must be written
-  this way. Passing the ALREADY-CORRECTED face to face_range divides twice and puts both
-  ends below the point; that shipped, and Steamer Lane published face 1.45 with a band of
-  0.45-0.65 until it was found by hand in SQL. apply_face_corrections now also asserts the
-  invariant at the point of writing and drops the band, loudly, if it ever fails again.
-
-  NO SPREAD MEANS NO RANGE. A record without both p25 and p75 gets lo = hi = None and the
-  spot publishes the point estimate alone. This is the same rule as the factor itself —
-  absent is not a default — and it matters more here, not less: a default range invents a
-  measurement that was never taken, and no reader could tell it from a measured one. See
-  face_range.
+THE RANGE THE SITE SHOWS IS NOT MADE HERE. Until 2026-10-21 this seam also wrote face_lo_ft /
+face_hi_ft, the corrected face divided by the factor record's p75 and p25: a band at the 141
+calibrated spots and nothing at the rest, so a range meant two different things. The site now
+prints the step of one fixed ladder that face_ft falls in (frontend/lib/formatting.ts,
+fmtHeightRange), at every spot alike, and db_import writes NULL to both columns (migration
+023; 024 drops them). The record's p25/p75 stay in the factor file: build_face_factors gates
+on p75/p25 (FACE_FACTOR_MAX_IQR_RATIO) and diff_face_factors watches them drift. Nothing here
+reads them any more.
 """
 from __future__ import annotations
 
@@ -113,14 +94,17 @@ from ..config import (
 log = logging.getLogger("pipeline.forecast.face_correction")
 
 # THE SEAM'S ARITHMETIC VERSION. Bump this when what the seam DOES to a row changes — the
-# divisor form, which columns it writes, the band formula. Do NOT bump it when the factor file
+# divisor form, what it does to face_ft. Do NOT bump it when the factor file
 # is regenerated: that moves the fingerprint instead, and the two are deliberately separate
 # because they mean different things to a reader of the stamp. See face_correction_stamp.
 #
 #   1  divided face_ft AND effective_size_ft, and re-rated stars from the divided size
-#   2  divides face_ft and its band only; effective_size_ft and stars are the producer's
+#   2  divides face_ft only; effective_size_ft and stars are the producer's
 #
-# face_ft_raw means the same under both: the face before anything divided it.
+# face_ft_raw means the same under both: the face before anything divided it. Version 2 also
+# wrote the p25/p75 band until 2026-10-21. Dropping it did NOT bump the version: face_ft and
+# face_ft_raw are unchanged, and migration 017 defines <code> as the face ARITHMETIC, so a MOP
+# measurement spanning that date is still one measurement.
 FACE_CORRECTION_VERSION = 2
 
 # The two provenance keys the seam writes on every rated hour. Named once so the tests, the
@@ -275,39 +259,6 @@ def validate_factor_slugs(factors, spots, slug_for):
         )
 
 
-def face_range(face_ft_value, rec):
-    """(lo, hi) in feet for one hour's face, or (None, None) when unmeasured.
-
-    Pure, so the test can pin it against literals. *rec* is a factor record; the quantiles
-    it needs are p25 and p75 of the face-ratio distribution, which the committed file does
-    NOT yet carry — see the module docstring and build_face_factors. Until it is
-    regenerated this returns (None, None) for every spot, and the site publishes points
-    only. That is the intended degradation: shipping the code inert is correct, shipping a
-    fabricated band is not.
-
-    Both quantiles must be present, numeric and positive. A partial record is treated as
-    absent rather than half-used, because a band with one measured end and one invented one
-    is worse than no band — it looks measured.
-    """
-    if face_ft_value is None or rec is None:
-        return None, None
-    try:
-        p25, p75 = float(rec["p25"]), float(rec["p75"])
-        face = float(face_ft_value)
-    except (KeyError, TypeError, ValueError):
-        return None, None
-    if not (p25 > 0.0 and p75 > 0.0):
-        return None, None
-    if p25 > p75:
-        # Quantiles out of order means the record was hand-edited or written by something
-        # other than build_face_factors. Report and decline rather than silently swapping:
-        # a swap would hide the corruption and publish a band nobody could trace.
-        log.warning("face factor record has p25 %r > p75 %r; publishing no range", p25, p75)
-        return None, None
-    # DIVISORS, so the larger quantile makes the SMALLER height. See the module docstring.
-    return face / p75, face / p25
-
-
 def spot_factor(spot, factors, slug_for):
     """The divisor apply_face_corrections uses at *spot*, or None where it corrects nothing.
 
@@ -359,16 +310,15 @@ def _stalest(factors, now):
 
 
 def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None):
-    """Divide face_ft by the spot's factor and write its band, in place. The display only.
+    """Divide face_ft by the spot's factor, in place. The display only.
 
     Mutates *ratings*. Returns a stats dict for the run summary.
 
     effective_size_ft AND stars ARE NEVER WRITTEN, at any spot. They stay exactly as the
     producer computed them, so a corrected spot is rated on the same input as every other
-    spot — see the module docstring. At a corrected spot the seam writes face_ft and, when
-    the spread was measured, face_lo_ft and face_hi_ft. Every spot without a factor, on the
-    MOP tier, or held out has every RATING field left byte-identical — face_ft, face_lo_ft
-    and face_hi_ft are not written, not even unchanged.
+    spot — see the module docstring. At a corrected spot the seam writes face_ft and nothing
+    else of the rating's. Every spot without a factor, on the MOP tier, or held out has every
+    RATING field left byte-identical — face_ft is not written, not even unchanged.
 
     THE GUARANTEE USED TO BE "the entry is byte-identical", full stop, and it is now
     "every rating field is byte-identical". The two PROVENANCE_KEYS are written on every
@@ -401,7 +351,6 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
     if not factors:
         return {"corrected_spots": 0, "corrected_hours": 0, "no_factor": len(spots),
                 "mop_tier_skipped": 0, "unrateable_hours": 0, "stale": None,
-                "ranged_hours": 0, "spots_without_spread": 0, "bad_band_spots": 0,
                 "stamp": stamp}
 
     now = now or datetime.date.today()
@@ -424,7 +373,7 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
 
     by_name = {s.get("name"): s for s in spots}
     corrected_spots = corrected_hours = mop_skipped = unrateable = 0
-    no_factor = ranged_hours = no_spread = bad_band = 0
+    no_factor = 0
     for name, entries in ratings.items():
         spot = by_name.get(name)
         if spot is None:
@@ -440,12 +389,6 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             no_factor += 1
             continue
         factor = rec["factor"]
-        # Probed ONCE per spot, not per hour: the quantiles are a property of the record.
-        # A spot whose record carries no spread is counted here so the run summary can say
-        # how many spots publish a point only, rather than leaving it to be inferred.
-        has_spread = face_range(1.0, rec) != (None, None)
-        if not has_spread:
-            no_spread += 1
         touched = 0
         for e in entries:
             face = e.get("face_ft")
@@ -457,46 +400,7 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             # they are the producer's, undivided, the input every uncorrected spot is rated
             # on. Version 1 divided effective_size_ft here as well and re-rated stars from
             # it, which rated these spots on a different yardstick — see the module docstring.
-            new_face = float(face) / factor
-            e["face_ft"] = round(new_face, 2)
-            # THE BAND DIVIDES THE RAW FACE, exactly as the point does.
-            #
-            # This passed `new_face` and so divided twice: face_lo_ft came out as
-            # (raw/factor)/p75, which is smaller than the published face rather than
-            # bracketing it. Steamer Lane published face 1.45 with a band of 0.45-0.65 —
-            # BOTH ends below the point — and the site rendered "0-1ft" for a 1.45 ft spot.
-            #
-            # The three published numbers are ONE raw face divided by THREE quantiles of the
-            # same distribution:  lo = raw/p75,  point = raw/median,  hi = raw/p25.
-            # Written that way the invariant lo <= point <= hi is a consequence of
-            # p25 <= median <= p75 and needs no separate arithmetic to hold. The equivalent
-            # form new_face * (factor/p75) is algebraically identical but re-derives the raw
-            # face implicitly, giving a second expression of the same relationship that can
-            # drift from this one; passing the raw value keeps there being only one.
-            #
-            # Keys are written ONLY when the spread was measured — see face_range. A spot
-            # without one keeps the byte-identical no-op the rest of this module is built on.
-            if has_spread:
-                lo, hi = face_range(float(face), rec)
-                # THE INVARIANT, CHECKED AT THE POINT OF WRITING. It can only fail on a
-                # hand-edited record whose quantiles do not bracket its own median, and the
-                # cost of not checking was this bug reaching production and needing a manual
-                # SQL query to find. Loud, and the band is dropped rather than published
-                # known-wrong: a suppressed band costs a reader nothing, a wrong one lies.
-                if not (lo <= new_face <= hi):
-                    log.error(
-                        "face band for %r violates lo <= face <= hi (%.4f, %.4f, %.4f) "
-                        "from factor %.4f p25 %r p75 %r — band DROPPED for this spot, "
-                        "point estimate still published. The quantiles must bracket the "
-                        "median they were measured with; regenerate with %s",
-                        slug_for(name), lo, new_face, hi, factor,
-                        rec.get("p25"), rec.get("p75"), REGEN_COMMAND)
-                    bad_band += 1
-                    has_spread = False
-                else:
-                    e["face_lo_ft"] = round(lo, 2)
-                    e["face_hi_ft"] = round(hi, 2)
-                    ranged_hours += 1
+            e["face_ft"] = round(float(face) / factor, 2)
             touched += 1
         if touched:
             corrected_spots += 1
@@ -505,5 +409,4 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             "no_factor": no_factor, "mop_tier_skipped": mop_skipped,
             "unrateable_hours": unrateable,
             "stale": {"days": stale[0], "slug": stale[1]} if stale else None,
-            "ranged_hours": ranged_hours, "spots_without_spread": no_spread,
-            "bad_band_spots": bad_band, "stamp": stamp}
+            "stamp": stamp}

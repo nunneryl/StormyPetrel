@@ -301,6 +301,24 @@ def test_db_import_does_NOT_coalesce_a_missing_raw_to_the_published_face():
     assert "face_ft_raw" in rows[0] and "face_correction_version" in rows[0]
 
 
+def test_db_import_writes_NULL_to_the_retired_band_whatever_the_hour_carries():
+    """Migration 023. EXPLICIT None on every row, not a dropped key: a key left out of every
+    row of the upsert would leave the band an earlier run wrote for the same hour in place,
+    beside a fresh face_ft. A ratings.json from before the change still carries one; it must
+    not reach the table."""
+    import tempfile
+    rows = _import_rows({"Steamer Lane": [
+        {"valid_time": "2026-09-07T10:00:00Z", "face_ft": 4.0, "face_lo_ft": 3.2,
+         "face_hi_ft": 5.0, "effective_size_ft": 3.0},
+        {"valid_time": "2026-09-07T11:00:00Z", "face_ft": 4.1, "effective_size_ft": 3.0},
+    ]}, tempfile.mkdtemp())
+    assert len(rows) == 2, rows
+    for r in rows:
+        assert "face_lo_ft" in r and "face_hi_ft" in r, sorted(r)
+        assert r["face_lo_ft"] is None and r["face_hi_ft"] is None, r
+    assert [r["face_ft"] for r in rows] == [4.0, 4.1]
+
+
 # --------------------------------------------------------------------------- #
 # 5 — the harness prefers raw, and is loud about a mixture                      #
 # --------------------------------------------------------------------------- #

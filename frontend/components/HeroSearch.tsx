@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { tierFromStars } from '@/lib/ratings';
-import { fmtFtRange } from '@/lib/formatting';
+import { fmtHeightRange } from '@/lib/formatting';
 import type { HeightBasis } from '@/lib/heightBasis';
 import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 import { HeightBasisMark } from './HeightBasisMark';
@@ -16,8 +16,6 @@ export type HeroSearchItem = {
   stars: number | null;
   /** ft — used to render the inline size. */
   face_ft: number | null;
-  face_lo_ft: number | null;
-  face_hi_ft: number | null;
   /** heightBasis() of the same latest row, derived on the server so the client payload
    *  carries one word rather than the two columns it is read from. */
   height_basis: HeightBasis | null;
@@ -128,7 +126,7 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-bold tabular-nums text-text-primary text-sm">
-                    {fmtFtRange(r.face_lo_ft, r.face_hi_ft, r.face_ft)}
+                    {fmtHeightRange(r.face_ft)}
                   </span>
                   <HeightBasisMark basis={r.height_basis} />
                   <span

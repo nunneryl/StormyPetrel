@@ -9,7 +9,7 @@ import { CamBadge } from '@/components/CamBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { HeightBasisMark } from '@/components/HeightBasisMark';
-import { fmtFtRange, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
+import { fmtHeightRange, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
 import { heightBasis } from '@/lib/heightBasis';
 import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
@@ -74,8 +74,6 @@ export default async function HomePage() {
     state: s.state,
     stars: s.latest?.stars ?? null,
     face_ft: s.latest?.face_ft ?? null,
-    face_lo_ft: s.latest?.face_lo_ft ?? null,
-    face_hi_ft: s.latest?.face_hi_ft ?? null,
     height_basis: heightBasis(s.latest),
   }));
 
@@ -180,7 +178,7 @@ export default async function HomePage() {
                 </div>
                 <div className="hidden md:flex flex-col items-end justify-center gap-0.5">
                   <span className="font-bold tabular-nums text-text-primary">
-                    {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                    {fmtHeightRange(f?.face_ft ?? null)}
                   </span>
                   <HeightBasisMark basis={basis} />
                 </div>
@@ -197,7 +195,7 @@ export default async function HomePage() {
                 <div className="md:hidden flex items-center gap-2 shrink-0 self-start">
                   <span className="flex flex-col items-end gap-0.5">
                     <span className="font-bold tabular-nums text-text-primary">
-                      {fmtFtRange(f?.face_lo_ft ?? null, f?.face_hi_ft ?? null, f?.face_ft ?? null)}
+                      {fmtHeightRange(f?.face_ft ?? null)}
                     </span>
                     <HeightBasisMark basis={basis} />
                   </span>

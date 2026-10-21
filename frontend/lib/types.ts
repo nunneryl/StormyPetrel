@@ -87,10 +87,6 @@ export type Forecast = {
    *  wherever nothing divided; lib/heightBasis reads the difference to label the height.
    *  NULL on a row written before the migration. */
   face_ft_raw: number | null;
-  // The published swell-height band (migration 016). NULL for the 516 spots with no
-  // measured spread; fmtFtRange falls through to face_ft for those. Never defaulted.
-  face_lo_ft: number | null;
-  face_hi_ft: number | null;
   dir_gain: number | null;
   wind_mult: number | null;
   tide_mult: number | null;

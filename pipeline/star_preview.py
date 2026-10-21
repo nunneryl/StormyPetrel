@@ -183,7 +183,7 @@ FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_hs, swell_tp, swell_dp,
                  + ", ".join(PARTITION_COLS)
                  + ", swell_source, face_ft, face_ft_raw, dir_gain, wind_mult, tide_mult, "
                    "chop_mult, period_quality, effective_size_ft, stars, tide_norm, "
-                   "wind_speed, wind_dir, chop_ratio, face_lo_ft, face_hi_ft")
+                   "wind_speed, wind_dir, chop_ratio")
 
 
 def group_of(kind):
@@ -768,7 +768,6 @@ def explain(row, spot, rules=tuple(RATING_RULES), factors=None):
         "valid_time": row["valid_time"], "source": row.get("swell_source"),
         "published_stars": _num(row.get("stars")),
         "face_ft": _num(row.get("face_ft")), "face_ft_raw": _num(row.get("face_ft_raw")),
-        "face_lo_ft": _num(row.get("face_lo_ft")), "face_hi_ft": _num(row.get("face_hi_ft")),
         "dir_gain": _num(row.get("dir_gain")), "effective_size_ft": _num(row.get("effective_size_ft")),
         "swell_dp": _num(row.get("swell_dp")), "swell_tp": _num(row.get("swell_tp")),
         "wind_dir": wd, "wind_ms": ws,
@@ -814,8 +813,7 @@ def _f(v, fmt="{:.2f}"):
 
 def _print_explain(name, x):
     print(f"\n--- {name} @ {x['valid_time']} [{x['source']}]  published {x['published_stars']} stars")
-    print(f"  face {_f(x['face_ft'])} ft (raw {_f(x['face_ft_raw'])}, band {_f(x['face_lo_ft'])}-"
-          f"{_f(x['face_hi_ft'])}), dir_gain {_f(x['dir_gain'], '{:.3f}')}, effective "
+    print(f"  face {_f(x['face_ft'])} ft (raw {_f(x['face_ft_raw'])}), dir_gain {_f(x['dir_gain'], '{:.3f}')}, effective "
           f"{_f(x['effective_size_ft'])} ft; swell {_f(x['swell_dp'], '{:.0f}')}° "
           f"{_f(x['swell_tp'], '{:.1f}')} s")
     print(f"  wind {_f(x['wind_dir'], '{:.0f}')}° {_f(x['wind_ms'], '{:.1f}')} m/s = "

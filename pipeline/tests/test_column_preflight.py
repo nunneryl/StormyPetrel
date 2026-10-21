@@ -250,7 +250,8 @@ FORECAST_ROW = {
     "swell_2_tp": 9.0, "swell_2_dp": 200.0, "swell_3_hs": None, "swell_3_tp": None,
     "swell_3_dp": None, "wind_wave_hs": 0.2, "wind_wave_tp": 4.0, "wind_wave_dp": 40.0,
     "swell_source": "nwps", "tide_level_ft": 3.4, "tide_norm": 0.6, "face_ft": 4.5,
-    "face_lo_ft": 4.0, "face_hi_ft": 5.0, "face_ft_raw": 4.2, "face_correction_version": "v3",
+    # The hour above still carries a band; db_import sends NULL for it (migration 023).
+    "face_lo_ft": None, "face_hi_ft": None, "face_ft_raw": 4.2, "face_correction_version": "v3",
     "dir_gain": 0.95, "wind_mult": 1.0, "tide_mult": 0.98, "chop_ratio": 0.1, "chop_mult": 1.0,
     "period_quality": 0.9, "effective_size_ft": 4.3, "stars": 3.5,
     "nwps_cycle": "2026-09-24T00:00:00Z", "source": "nwps",

@@ -80,17 +80,6 @@ const tickLabel = (ms: number) => fmtDayTimeTick(new Date(ms).toISOString());
 export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
   const data = buildSeries(forecasts);
 
-  // THE NOTE BELOW IS CONDITIONAL BECAUSE THE BAND IS. Only spots with a
-  // measured face-ratio spread get face_lo_ft/face_hi_ft written
-  // (pipeline/forecast/face_correction.py, guarded by has_spread); the rest
-  // publish a point and the tile renders one number via fmtFt. Explaining a
-  // range on a page that shows no range would be worse than saying nothing, so
-  // the note appears only where this window actually carries one.
-  const hasBand = forecasts.some(
-    (r) => r.face_lo_ft !== null && r.face_lo_ft !== undefined
-        && r.face_hi_ft !== null && r.face_hi_ft !== undefined,
-  );
-
   return (
     <>
       <div className="h-48 w-full">
@@ -187,12 +176,10 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
           reader took it for an uncertainty band; the range has always lived in the
           Swell height tile at the top of the page, never in this plot. Nothing is
           above the line in this variant, so the caption says where to look. */}
-      {hasBand && (
-        <p className="mt-1.5 text-[10px] leading-snug text-text-muted">
-          Swell height is a single best estimate; the tile at the top of the page
-          gives its range.
-        </p>
-      )}
+      <p className="mt-1.5 text-[10px] leading-snug text-text-muted">
+        Swell height is a single best estimate; the tile at the top of the page
+        gives the standard range it falls in.
+      </p>
     </>
   );
 }
