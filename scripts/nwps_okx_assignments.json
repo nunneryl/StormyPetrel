@@ -2442,8 +2442,8 @@
       "nwps_buoy_id": null
     },
     {
-      "slug": "indiatlantic",
-      "name": "Indiatlantic",
+      "slug": "indialantic",
+      "name": "Indialantic",
       "nwps_wfo": "mlb",
       "nwps_grid": "CG1",
       "nwps_node_lat": 28.1042,
@@ -3592,8 +3592,8 @@
       "nwps_buoy_id": "44091"
     },
     {
-      "slug": "ventor-pier",
-      "name": "Ventor Pier",
+      "slug": "ventnor-pier",
+      "name": "Ventnor Pier",
       "nwps_wfo": "phi",
       "nwps_grid": "CG1",
       "nwps_node_lat": 39.33512,
@@ -6809,7 +6809,7 @@
           "fort-pierce-inlet",
           "jensen-beach",
           "vero-pier",
-          "indiatlantic",
+          "indialantic",
           "monster-hole",
           "ocean-ave",
           "sebastian-inlet",

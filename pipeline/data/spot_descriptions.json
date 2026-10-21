@@ -907,6 +907,10 @@
     "description": "Imperial Beach Pier is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the southwest. It works best around mid tide.",
     "signature": "v2:1c8c4b7a91fe919d"
   },
+  "indialantic": {
+    "description": "Indialantic is a surf spot in Florida. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
+    "signature": "v2:f6bfe509bd2e9a55"
+  },
   "indian-beach-ecola": {
     "description": "Facing west, Indian Beach Ecola is a beach break in Oregon. The optimal swell comes from the west, and the offshore wind is from the east.",
     "signature": "v2:31c437ac14a1f7f1"
@@ -918,10 +922,6 @@
   "indian-rocks-beach": {
     "description": "Facing west, Indian Rocks Beach is a surf spot in Florida. The optimal swell comes from the west, and the offshore wind is from the east.",
     "signature": "v2:e170debcdce94fa2"
-  },
-  "indiatlantic": {
-    "description": "Indiatlantic is a surf spot in Florida. It faces east, and its optimal swell direction is east. Offshore winds blow from the west.",
-    "signature": "v2:6afa2725115ca62f"
   },
   "indicators": {
     "description": "Facing west, Indicators is a point break in Puerto Rico over a rock bottom. The optimal swell comes from the west, and the offshore wind is from the east.",
@@ -2463,9 +2463,9 @@
     "description": "Facing southwest, Venice Beach Pier is a beach break in California over a sand bottom. The optimal swell comes from the southwest, and the offshore wind is from the northeast. It works at all stages of the tide.",
     "signature": "v2:3a3bdf096a7e7f72"
   },
-  "ventor-pier": {
-    "description": "Facing southeast, Ventor Pier is a beach break in New Jersey. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",
-    "signature": "v2:a7d8dfda534b4b61"
+  "ventnor-pier": {
+    "description": "Facing southeast, Ventnor Pier is a beach break in New Jersey. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",
+    "signature": "v2:d3366e883d461d37"
   },
   "ventura-harbor": {
     "description": "Ventura Harbor is a California beach break with a sand bottom. It faces west, and it is offshore in east winds. The optimal swell comes from the southwest. It works at all stages of the tide.",

@@ -25,6 +25,9 @@ const nextConfig = {
       { source: '/spot/pools-rincon', destination: '/spot/pools', permanent: true },
       { source: '/spot/marias-rincon', destination: '/spot/maria-s', permanent: true },
       { source: '/spot/indicators-rincon', destination: '/spot/indicators', permanent: true },
+      // Misspelt roster names fixed in place (pipeline/migrations/025).
+      { source: '/spot/indiatlantic', destination: '/spot/indialantic', permanent: true },
+      { source: '/spot/ventor-pier', destination: '/spot/ventnor-pier', permanent: true },
     ];
   },
 };
