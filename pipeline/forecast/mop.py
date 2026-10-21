@@ -150,7 +150,7 @@ def pull_mop_window(url, t0, t1):
 
 def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
               arcs=None, optimal=None, chop=None, *, spot=None, wind_dir=None,
-              wind_speed=None):
+              wind_speed=None, median_factor=None):
     """Nearshore-frame star rating for one MOP hour, reusing interpret.py exactly
     (face_ft × directional_gain(dp vs shore-normal), chop from the MOP spectrum,
     period quality), with the per-hour wind/tide multipliers injected from the
@@ -158,9 +158,10 @@ def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
     or (None, …) if inputs are unusable.
 
     With *spot*, the strong-wind cap and the beach-break ceiling apply (interpret.rule_keywords)
-    from the hour's *wind_dir* / *wind_speed* (m/s) at period *tp*. The ceiling reads the raw
-    face: the MOP tier has no face factor (face_correction.spot_factor), its face being MOP's
-    own height."""
+    from the hour's *wind_dir* / *wind_speed* (m/s) at period *tp*. The face here is MOP's own
+    height, so it counts as calibrated with factor 1.0: the ceiling reads it as it is, and with
+    *median_factor* M the size credit reads it at x M, the yardstick every calibrated spot is
+    sized on."""
     if hs is None or tp is None or dp is None or shore_normal is None:
         return None, None, None, None, None
     # SAME GEOMETRIC FRAME as the selection, matching nwps_stars. This used to pass
@@ -203,7 +204,10 @@ def mop_stars(hs, tp, dp, swell_hs, shore_normal, wind_mult=1.0, tide_mult=1.0,
     # scored a present-but-zero swell_hs as mult 1.00 where rate_spot gave 0.30.
     cr, cm = chop if chop is not None else chop_factors(hs, swell_hs)
     pq = period_quality(tp)
-    rules = {} if spot is None else rule_keywords(spot, wind_dir, wind_speed, tp, eff)
+    # FACTOR 1.0: this face is MOP's own height, the reference every factor was measured
+    # against, so on the calibrated yardstick it is sized at x M (rule_keywords).
+    rules = ({} if spot is None
+             else rule_keywords(spot, wind_dir, wind_speed, tp, eff, 1.0, median_factor))
     stars = composite_stars(eff, wind_mult, tide_mult, cm, pq, **rules)
     return stars, face, dg, cm, pq
 
@@ -223,7 +227,8 @@ def mop_swell_by_hour(spot, days_back=2, days_fwd=8):
     return out or None
 
 
-def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_swell_by_hour):
+def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_swell_by_hour,
+                        median_factor=None):
     """Override the swell rating of every cdip_mop spot with its MOP nowcast, for
     the hours MOP covers, keeping each hour's wind/tide. Mutates *ratings* in
     place unless dry_run. *only* = a set of slugs to restrict to (batch). *_fetch*
@@ -282,7 +287,8 @@ def apply_mop_overrides(ratings, spots, *, dry_run=False, only=None, _fetch=mop_
                                              arcs=s.get("swell_window_arcs"),
                                              optimal=s.get("optimal_swell_dir"),
                                              chop=(cr, cm_pair), spot=s,
-                                             wind_dir=wdir, wind_speed=wspd)
+                                             wind_dir=wdir, wind_speed=wspd,
+                                             median_factor=median_factor)
             if st is None:
                 continue
             if not dry_run:

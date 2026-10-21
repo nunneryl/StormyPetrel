@@ -731,23 +731,30 @@ def test_the_seam_runs_after_both_overrides_in_interpret_main():
     assert e["face_ft"] == 2.57, ("the seam did not run, or ran before an override", e["face_ft"])
 
 
-def test_through_interpret_main_a_calibrated_spot_rates_like_its_uncalibrated_twin():
+def test_through_interpret_main_a_calibrated_spot_is_sized_on_its_calibrated_face():
     """THE DECISION, end to end: rate_spot, both overrides and the seam, on fixture files.
 
     Two spots with IDENTICAL geometry and an identical NWPS hour; only Steamer Lane has a
-    factor (3.0). Everything the producer computed must come out identical on both — the
-    rating included — and only the height shown may differ.
+    factor (3.0). A third roster spot carries the file's other factor (1.0), so the median
+    factor M is (1.0 + 3.0) / 2 = 2.0.
 
-    Hand-computed, as in the test above. The NWPS override rates the hour: no WW3 series, so
-    direction 220 and period 13.0 come from NWPS; 220 is the optimal bearing inside the
-    180..260 window, so dir_gain = cos^2(0) = 1.0.
+    SINCE 2026-10-21 (rating-preview run 32, cal-median) a calibrated spot is SIZED on its
+    calibrated face, on the yardstick of M: effective x M / F. The uncalibrated twin is rated
+    exactly as before. Until then the two rated identically (version 2, below), which put
+    calibrated California spots shown at 1-4 ft at 4-4.5 stars on the homepage.
+
+    Hand-computed. The NWPS override rates the hour: no WW3 series, so direction 220 and
+    period 13.0 come from NWPS; 220 is the optimal bearing inside the 180..260 window, so
+    dir_gain = cos^2(0) = 1.0.
         face  = 2.0 * period_factor(13.0, "ww3") * 3.281 = 2.0 * 1.175 * 3.281 = 7.71035
-        eff   = face * 1.0 = 7.71035 -> stored 7.71
-        stars : wind, tide, chop (2.0 of 2.0 is swell) and period (13 s) all score 1.0, so
-                raw = size_score(7.71035) = 4.0 + (1.71035 / 2) * 0.5 = 4.42759
-                round(8.85518) / 2 = 9 / 2 = 4.5
+        eff   = face * 1.0 = 7.71035 -> stored 7.71 on both (the producer's own size input)
+        twin  : wind, tide, chop (2.0 of 2.0 is swell) and period (13 s) all score 1.0, so
+                size_score(7.71035) = 4.0 + (1.71035 / 2) * 0.5 = 4.42759 -> 4.5 stars
+        Steamer Lane: sized on 7.71035 * 2.0 / 3.0 = 5.14023 ft,
+                size_score = 3.5 + (0.14023 / 2) * 0.5 = 3.53506 -> round(7.07) / 2 = 3.5 stars
         shown : Steamer Lane 7.71 / 3.0 = 2.57; the twin 7.71
-    Version 1 re-rated Steamer Lane from eff 2.57: size_score 2.285 -> round(4.57) / 2 = 2.5.
+    Version 1 re-rated Steamer Lane from eff 2.57 on the unshifted curve: 2.5 stars. Version 2
+    rated both 4.5.
     """
     import contextlib, io, tempfile
     from pathlib import Path as _P
@@ -761,13 +768,14 @@ def test_through_interpret_main_a_calibrated_spot_rates_like_its_uncalibrated_tw
             "swell_hs": 2.0}
     (tmp / "spots.json").write_text(json.dumps([
         dict(geometry, name="Steamer Lane", slug="steamer-lane"),
-        dict(geometry, name="Steamer Twin", slug="steamer-twin")]))
+        dict(geometry, name="Steamer Twin", slug="steamer-twin"),
+        dict(geometry, name="Other Spot", slug="other-spot")]))
     (tmp / "nwps.json").write_text(json.dumps({"Steamer Lane": [dict(hour)],
                                                "Steamer Twin": [dict(hour)]}))
     (tmp / "tides.json").write_text(json.dumps({}))
-    (tmp / "factors.json").write_text(json.dumps({"factors": {"steamer-lane": {
-        "factor": 3.0, "hours": 334, "measured_on": "2026-09-01",
-        "source": "scripts/mop_face_validation.py"}}}))
+    rec = {"hours": 334, "measured_on": "2026-09-01", "source": "scripts/mop_face_validation.py"}
+    (tmp / "factors.json").write_text(json.dumps({"factors": {
+        "steamer-lane": dict(rec, factor=3.0), "other-spot": dict(rec, factor=1.0)}}))
 
     saved = FC.SPOT_FACE_FACTORS_FILE
     try:
@@ -791,10 +799,10 @@ def test_through_interpret_main_a_calibrated_spot_rates_like_its_uncalibrated_tw
     assert (cal["face_ft"], twin["face_ft"]) == (2.57, 7.71), (cal["face_ft"], twin["face_ft"])
     assert cal["face_ft_raw"] == twin["face_ft_raw"] == 7.71
     assert cal["effective_size_ft"] == twin["effective_size_ft"] == 7.71
-    assert cal["stars"] == twin["stars"] == 4.5, (cal["stars"], twin["stars"])
+    assert (cal["stars"], twin["stars"]) == (3.5, 4.5), (cal["stars"], twin["stars"])
     # Field for field, nothing else differs: the producer's work is the same on both.
-    assert {k: v for k, v in cal.items() if k != "face_ft"} == \
-        {k: v for k, v in twin.items() if k != "face_ft"}, (cal, twin)
+    assert {k: v for k, v in cal.items() if k not in ("face_ft", "stars")} == \
+        {k: v for k, v in twin.items() if k not in ("face_ft", "stars")}, (cal, twin)
 
 
 
@@ -1182,3 +1190,68 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+def test_interpret_main_hands_the_median_factor_to_every_rater():
+    """main reads the factor file once and passes M to compute_ratings (rate_spot) and to both
+    overrides. A spot off the NWPS tier is rated by rate_spot itself, so its stars show whether
+    compute_ratings got M; the MOP override is replaced by a recorder, since its real fetch
+    reads CDIP over the network.
+
+    Hand-computed. Factors 3.0 (Steamer Lane) and 1.0 (Other Spot): M = 2.0. rate_spot's NWPS
+    path sizes on swell_hs 2.0 m at 13 s on the NWPS table, period_factor(13) = 1.5 + 0.5 x 0.05
+    = 1.525: face = 2.0 x 1.525 x 3.281 = 10.00705 ft, gain 1.0 (220 is the optimal), every
+    quality score 1.0 (13 s scores 1.0).
+        twin          size_score(10.00705) = 5.0 -> 5.0 stars
+        Steamer Lane  10.00705 x 2.0 / 3.0 = 6.67137 ft, size 4.0 + 0.67137 / 2 x 0.5 = 4.16784
+                      -> round(8.34) / 2 = 4.0 stars
+    """
+    import contextlib, io, tempfile
+    from pathlib import Path as _P
+    from pipeline import interpret
+    from pipeline.forecast import mop
+
+    tmp = _P(tempfile.mkdtemp())
+    geometry = {"lat": 36.9515, "lng": -122.0256, "swell_window_source": "orientation",
+                "orientation_deg": 220.0, "optimal_swell_dir": 220,
+                "swell_window_arcs": [{"min": 180, "max": 260, "span": 84}]}
+    hour = {"valid_time": "2026-09-01T00:00:00Z", "hs": 2.0, "tp": 13.0, "dp": 220.0,
+            "swell_hs": 2.0, "swell_tp": 13.0, "swell_dp": 220.0}
+    (tmp / "spots.json").write_text(json.dumps([
+        dict(geometry, name="Steamer Lane", slug="steamer-lane"),
+        dict(geometry, name="Steamer Twin", slug="steamer-twin"),
+        dict(geometry, name="Other Spot", slug="other-spot")]))
+    (tmp / "nwps.json").write_text(json.dumps({"Steamer Lane": [dict(hour)],
+                                               "Steamer Twin": [dict(hour)]}))
+    (tmp / "tides.json").write_text(json.dumps({}))
+    rec = {"hours": 334, "measured_on": "2026-09-01", "source": "scripts/mop_face_validation.py"}
+    (tmp / "factors.json").write_text(json.dumps({"factors": {
+        "steamer-lane": dict(rec, factor=3.0), "other-spot": dict(rec, factor=1.0)}}))
+
+    seen = {}
+
+    def recorder(ratings, spots, **kw):
+        seen.update(kw)
+        return {"fed": 0, "fell_back": 0, "errored": 0, "details": []}
+
+    saved, saved_mop = FC.SPOT_FACE_FACTORS_FILE, mop.apply_mop_overrides
+    try:
+        FC.SPOT_FACE_FACTORS_FILE = tmp / "factors.json"
+        mop.apply_mop_overrides = recorder
+        logging.disable(logging.CRITICAL)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = interpret.main(["--spots", str(tmp / "spots.json"),
+                                 "--nwps", str(tmp / "nwps.json"),
+                                 "--tides", str(tmp / "tides.json"),
+                                 "--output", str(tmp / "out.json")])
+        out = json.loads((tmp / "out.json").read_text())
+    finally:
+        logging.disable(logging.NOTSET)
+        FC.SPOT_FACE_FACTORS_FILE, mop.apply_mop_overrides = saved, saved_mop
+        for f in tmp.iterdir():
+            f.unlink()
+        tmp.rmdir()
+
+    assert rc == 0, rc
+    assert seen.get("median_factor") == 2.0, seen
+    assert (out["Steamer Lane"][0]["stars"], out["Steamer Twin"][0]["stars"]) == (4.0, 5.0)

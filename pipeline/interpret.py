@@ -709,21 +709,34 @@ def rule_keywords(
     period_s,
     effective_face_ft: float,
     face_factor: float | None = None,
+    median_factor: float | None = None,
 ) -> dict:
-    """composite_stars' star_cap and closeout_face_ft for one hour at *spot*.
+    """composite_stars' star_cap, closeout_face_ft and size_scale for one hour at *spot*.
 
     star_cap is wind_star_cap of the hour's wind against the spot's offshore bearing, at the
     period the hour is rated on. closeout_face_ft is None (no ceiling) unless the spot is a
     sand beach or jetty break; then it is the effective face divided by the spot's MOP face
     factor where it has one (face_correction.spot_factor), else the effective face itself:
-    the ceiling models real closeouts, so it reads the calibrated height, while the size
-    credit stays on the raw face like every other spot's."""
+    the ceiling models real closeouts, so it reads the calibrated height.
+
+    size_scale puts the size credit on the calibrated face, ON THE YARDSTICK OF THE MEDIAN
+    FACTOR (cal-median): *median_factor* / *face_factor* where the spot has a factor, 1.0
+    where it has none, so an uncalibrated spot is rated exactly as before. Dividing every spot
+    by its own factor would move every rating in the country with nothing measured outside
+    California to justify it (rating-preview run 32, cal-all: 70,007 of 85,470 hours lower);
+    sizing a calibrated spot at face x M / F is the same as calibrating it and sliding the size
+    curve up by M, so the curve keeps its tuning. The MOP override passes F = 1.0: its face is
+    MOP's own height, the reference the factors were measured against.
+
+    Decided 2026-10-21 after run 32: six of the ten homepage spots were calibrated California
+    spots shown at 1-4 ft and rated 4-4.5 stars on raw faces up to 3.2 times that."""
     cap = wind_star_cap(_float_or_none(wind_dir), _float_or_none(wind_speed_ms),
                         spot.get("offshore_wind_deg"), _float_or_none(period_s))
     face = None
     if is_sand_beach_break(spot):
         face = effective_face_ft / face_factor if face_factor else effective_face_ft
-    return {"star_cap": cap, "closeout_face_ft": face}
+    scale = median_factor / face_factor if (median_factor and face_factor) else 1.0
+    return {"star_cap": cap, "closeout_face_ft": face, "size_scale": scale}
 
 
 def chop_ratio(hs: float | None, swell_hs: float | None) -> float | None:
@@ -901,12 +914,14 @@ def composite_stars(
     period_q: float = 1.0,
     star_cap: float = 5.0,
     closeout_face_ft: float | None = None,
+    size_scale: float = 1.0,
 ) -> float:
-    """0 if flat (< 0.5 ft effective), else 1–5 in 0.5 increments.
+    """0 if flat (< 0.5 ft effective, after *size_scale*), else 1–5 in 0.5 increments.
 
-    *star_cap* (wind_star_cap) caps the stars, and *closeout_face_ft* puts a sand beach
-    break on the size ceiling: size_score(effective) x closeout_factor(closeout_face_ft),
-    the calibrated effective face where the spot has one; rule_keywords builds both. Their
+    *star_cap* (wind_star_cap) caps the stars, *closeout_face_ft* puts a sand beach break on
+    the size ceiling: size_score(effective) x closeout_factor(closeout_face_ft), the calibrated
+    effective face where the spot has one, and *size_scale* multiplies the effective face
+    before size_score (M / F at a calibrated spot). rule_keywords builds all three. Their
     defaults change nothing.
 
     raw = size_score(effective_size)
@@ -930,11 +945,12 @@ def composite_stars(
     1.5★, matching ground truth. Those figures describe the PRODUCT form;
     under the geometric mean the same hour lands higher.
     """
-    if effective_face_ft < 0.5:
+    sized = effective_face_ft * size_scale
+    if sized < 0.5:
         return 0.0
     e = COMPOSITE_FACTOR_EXPONENTS
     raw = (
-        size_score(effective_face_ft)
+        size_score(sized)
         * (1.0 if closeout_face_ft is None else closeout_factor(closeout_face_ft))
         * max(_FACTOR_EPSILON, wind_mult) ** e["wind_mult"]
         * max(_FACTOR_EPSILON, tide_mult) ** e["tide_mult"]
@@ -1452,11 +1468,13 @@ def rate_spot(
     buoy_swell: dict | None = None,
     ww3_series: list[dict] | None = None,
     face_factor: float | None = None,
+    median_factor: float | None = None,
 ) -> list[dict]:
     """Rate a single spot's hourly forecast.
 
-    *face_factor* is the spot's MOP face factor (face_correction.spot_factor), or None; only
-    the beach-break ceiling reads it (rule_keywords).
+    *face_factor* is the spot's MOP face factor (face_correction.spot_factor), or None, and
+    *median_factor* the median over the factor file; rule_keywords reads both, for the
+    beach-break ceiling and for sizing on the calibrated face.
 
     Direction / period resolution chain (highest priority first):
       1. WAVEWATCH III best in-window swell partition (proper spectral
@@ -1638,7 +1656,8 @@ def rate_spot(
             effective = (fft or 0.0) * dg
         stars = (
             composite_stars(effective, wm, tm, cm, pq,
-                            **rule_keywords(spot, wdir, wspd, size_tp, effective, face_factor))
+                            **rule_keywords(spot, wdir, wspd, size_tp, effective, face_factor,
+                                            median_factor))
             if fft is not None else 0.0
         )
 
@@ -1715,11 +1734,13 @@ def compute_ratings(
     buoys: dict[str, dict] | None = None,
     ww3: dict[str, list[dict]] | None = None,
     ceiling_factors: dict[str, float | None] | None = None,
+    median_factor: float | None = None,
 ) -> dict[str, list[dict]]:
     """Rate every spot that has NWPS forecast data.
 
     *ceiling_factors* maps a spot name to its MOP face factor or None (face_factors_by_name);
-    the beach-break ceiling reads the calibrated face where there is one.
+    the beach-break ceiling reads the calibrated face where there is one, and with
+    *median_factor* the size credit is read on it too (rule_keywords).
 
     Buckets every spot by how its tide source resolved so the dominant
     failure mode is visible in the log:
@@ -1812,7 +1833,8 @@ def compute_ratings(
             swell_no_source += 1
 
         series = rate_spot(spot, forecast, tide_series, buoy_snapshot, ww3_series,
-                           face_factor=(ceiling_factors or {}).get(name))
+                           face_factor=(ceiling_factors or {}).get(name),
+                           median_factor=median_factor)
         if series:
             results[name] = series
             rated += 1
@@ -2102,10 +2124,14 @@ def main(argv: list[str] | None = None) -> int:
     # ONE READ OF THE FACE FACTORS for the run: the beach-break ceiling in all three raters
     # reads them (the calibrated face), and the correction seam below divides by the same
     # dict, so the height shown and the face the ceiling reads cannot come from two files.
-    from .forecast.face_correction import load_face_factors
+    from .forecast.face_correction import load_face_factors, median_face_factor
     face_factors = load_face_factors()
     ceiling_factors = face_factors_by_name(spots, face_factors)
-    ratings = compute_ratings(spots, nwps, tides, buoys, ww3, ceiling_factors=ceiling_factors)
+    median_factor = median_face_factor(face_factors)
+    log.info("interpret: rating on the calibrated face — %d spot(s) with a MOP factor, median "
+             "factor M = %s", sum(f is not None for f in ceiling_factors.values()), median_factor)
+    ratings = compute_ratings(spots, nwps, tides, buoys, ww3, ceiling_factors=ceiling_factors,
+                              median_factor=median_factor)
 
     # CDIP MOP integration (Stage 2) — additive + reversible. For spots tagged
     # swell_window_source="cdip_mop", override the swell rating with their MOP
@@ -2114,7 +2140,7 @@ def main(argv: list[str] | None = None) -> int:
     # intact. Wrapped so MOP can never break the pipeline.
     try:
         from .forecast.mop import apply_mop_overrides
-        mop_stats = apply_mop_overrides(ratings, spots)
+        mop_stats = apply_mop_overrides(ratings, spots, median_factor=median_factor)
         if mop_stats["fed"] or mop_stats["fell_back"] or mop_stats["errored"]:
             log.info("interpret: MOP — %d spots MOP-fed, %d fell back, %d errored",
                      mop_stats["fed"], mop_stats["fell_back"], mop_stats["errored"])
@@ -2132,7 +2158,8 @@ def main(argv: list[str] | None = None) -> int:
         # dict compute_ratings rated from is what makes hs/tp/dp and face_ft/swell_*/chop_*
         # provably one read. See nwps_nearshore._make_artifact_fetch.
         nwps_stats = apply_nwps_overrides(ratings, spots, nwps=nwps,
-                                          ceiling_factors=ceiling_factors)
+                                          ceiling_factors=ceiling_factors,
+                                          median_factor=median_factor)
         if (nwps_stats["fed"] or nwps_stats["fell_back"] or nwps_stats["errored"]
                 or nwps_stats.get("not_in_artifact")):
             log.info("interpret: NWPS — %d spots NWPS-fed, %d fell back, %d errored, "

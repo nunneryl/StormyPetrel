@@ -20,13 +20,17 @@ producing exactly the corrected/uncorrected adjacent-hour jump the single-seam d
 to prevent. The convergence point is in main, after line 1892 — which is where this runs.
 The intent is honoured; the address was wrong.
 
-THE CORRECTION IS DISPLAY-ONLY: THE HEIGHT IS DIVIDED, THE RATING IS NOT. The seam writes
-face_ft (the corrected height) and, where the spread was measured, face_lo_ft / face_hi_ft.
-effective_size_ft and stars are left EXACTLY as the producer computed them — undivided —
-which is what every uncalibrated spot is rated on. A corrected spot and an uncorrected one
-with identical inputs therefore publish identical effective sizes and identical stars, and
-differ only in the height shown. Nothing here calls composite_stars, so there is no star
-chain to keep in step with interpret.
+THE SEAM IS DISPLAY-ONLY: IT DIVIDES THE HEIGHT, NOT THE RATING. The seam writes face_ft (the
+corrected height) and, where the spread was measured, face_lo_ft / face_hi_ft.
+effective_size_ft and stars are left EXACTLY as the producer computed them. Nothing here calls
+composite_stars, so there is no star chain to keep in step with interpret.
+
+  THE RATERS READ THE SAME FACTORS, since 2026-10-21 (rating-preview run 32). Each producer
+  sizes a calibrated spot on face x M / F (interpret.rule_keywords; M = median_face_factor,
+  F = spot_factor), and its beach-break ceiling reads face / F. An uncalibrated spot is rated
+  exactly as before. So a corrected spot and an uncorrected one with identical inputs publish
+  identical effective sizes but different stars, unless F = M. interpret.main reads the file
+  once and hands the same dict to the raters and to this seam.
 
   WHY, AND WHAT IT REPLACED. FACE_CORRECTION_VERSION 1 also divided effective_size_ft by the
   factor and re-rated stars from the divided size. That rated the calibrated spots on a
@@ -39,8 +43,9 @@ chain to keep in step with interpret.
   spots, and 10.3% when rated from the undivided size. No other spot changes.
 
   WHAT THE COLUMNS MEAN AT A CORRECTED SPOT. face_ft is the calibrated height;
-  effective_size_ft is the rating's size input on the same scale as everywhere else, so it
-  no longer follows face_ft by the producer's rule (eff = face * dir_gain on the NWPS and
+  effective_size_ft is the producer's effective face on the model's scale, as everywhere else
+  (the rating sizes it at x M / F, which is not stored), so it no longer follows face_ft by
+  the producer's rule (eff = face * dir_gain on the NWPS and
   MOP paths, eff = face on the WW3 path). face_ft_raw is the face that rule applies to, and
   it means exactly what it meant under version 1: the face before anything divided it.
 
@@ -315,6 +320,20 @@ def spot_factor(spot, factors, slug_for):
         return None
     rec = factors.get(slug_for(spot.get("name")))
     return None if rec is None else rec["factor"]
+
+
+def median_face_factor(factors):
+    """M: the median factor over *factors* ({slug: record}), or None when there are none.
+
+    The yardstick the rating sizes calibrated spots on (interpret.rule_keywords): a spot with
+    factor F is sized at face x M / F. 1.5907 in the file measured 2026-09-08 to 2026-10-06;
+    it moves when the file is regenerated, which is the point: one number, from one file,
+    read once per run."""
+    vals = sorted(rec["factor"] for rec in factors.values())
+    if not vals:
+        return None
+    mid = len(vals) // 2
+    return vals[mid] if len(vals) % 2 else (vals[mid - 1] + vals[mid]) / 2.0
 
 
 def _stalest(factors, now):

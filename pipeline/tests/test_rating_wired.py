@@ -176,11 +176,14 @@ def test_mop_stars_without_a_spot_applies_neither_rule():
 
 def test_rule_keywords():
     assert I.rule_keywords(_spot(BEACH), 0.0, 12.5, 12.0, 11.0, 1.1) == {
-        "star_cap": 1.5, "closeout_face_ft": 10.0}
+        "star_cap": 1.5, "closeout_face_ft": 10.0, "size_scale": 1.0}
     assert I.rule_keywords(_spot(REEF), 90.0, 2.0, 12.0, 11.0, 1.1) == {
-        "star_cap": 5.0, "closeout_face_ft": None}
+        "star_cap": 5.0, "closeout_face_ft": None, "size_scale": 1.0}
     assert I.rule_keywords(_spot(BEACH), None, None, None, 11.0) == {
-        "star_cap": 5.0, "closeout_face_ft": 11.0}
+        "star_cap": 5.0, "closeout_face_ft": 11.0, "size_scale": 1.0}
+    # cal-median: M / F where the spot has a factor, 1.0 where it has none
+    assert I.rule_keywords(_spot(REEF), 90.0, 2.0, 12.0, 11.0, 2.0, 1.6)["size_scale"] == 0.8
+    assert I.rule_keywords(_spot(REEF), 90.0, 2.0, 12.0, 11.0, None, 1.6)["size_scale"] == 1.0
 
 
 # --------------------------------------------------------------------------- #
@@ -207,3 +210,72 @@ def test_mop_override_reads_the_period_allowance():
 
 def test_a_beach_over_rock_is_not_on_the_ceiling():
     assert _rate(_spot({"break_type": "beach", "bottom": "rock"}), LIGHT_OFFSHORE)["stars"] == 5.0
+
+
+# --------------------------------------------------------------------------- #
+# cal-median: a calibrated spot is sized on face x M / F                       #
+# --------------------------------------------------------------------------- #
+# Light offshore wind (1.027302), period 12 s (0.987259), chop and tide 1.0. M = 1.6:
+#   rate_spot     9.843 ft, F 3.0: 9.843 x 1.6 / 3 = 5.2496 ft, size 3.6248
+#                 -> 3.6248 x 1.027302 x 0.987259 = 3.676 -> 3.5 (5.0 uncalibrated)
+#   NWPS override 11.31945 ft, F 3.0: 6.03704 ft, size 4.00926 -> 4.066 -> 4.0
+#   MOP override  1.0 m = 3.281 ft, F 1.0: x 1.6 = 5.2496 ft -> 3.676 -> 3.5;
+#                 on the raw face 3.281 ft, size 2.6405 -> 2.678 -> round(5.356)/2 = 2.5
+
+def test_rate_spot_sizes_a_calibrated_spot_on_the_median_yardstick():
+    spot = _spot()
+    entry = {"valid_time": ISO, "hs": 2.0, "swell_hs": 2.0, "tp": 12.0, "swell_tp": 12.0,
+             "dp": 270.0, "swell_dp": 270.0, **LIGHT_OFFSHORE}
+    (cal,) = I.rate_spot(spot, [dict(entry)], None, face_factor=3.0, median_factor=1.6)
+    (plain,) = I.rate_spot(spot, [dict(entry)], None, face_factor=None, median_factor=1.6)
+    assert (cal["stars"], plain["stars"]) == (3.5, 5.0)
+    assert cal["effective_size_ft"] == plain["effective_size_ft"] == 9.84
+
+
+def test_compute_ratings_passes_the_median_factor():
+    forecast = [{"valid_time": ISO, "hs": 2.0, "swell_hs": 2.0, "tp": 12.0, "swell_tp": 12.0,
+                 "dp": 270.0, "swell_dp": 270.0, **LIGHT_OFFSHORE}]
+    out = I.compute_ratings([_spot()], {"T": forecast}, {}, ceiling_factors={"T": 3.0},
+                            median_factor=1.6)
+    assert out["T"][0]["stars"] == 3.5
+
+
+def test_nwps_override_sizes_a_calibrated_spot_on_the_median_yardstick():
+    spot = _spot(REEF, swell_window_source="nwps", nwps_wfo="lox")
+    e = {"valid_time": ISO, "stars": 1.0, "wind_mult": 1.0, "tide_mult": 1.0,
+         "swell_source": "ww3", "swell_dp": 270.0, "swell_tp": 12.0, **LIGHT_OFFSHORE}
+    nn.apply_nwps_overrides({"T": [e]}, [spot], _fetch=lambda _s: {HR: (3.0, 12.0, 270.0, 3.0)},
+                            ceiling_factors={"T": 3.0}, median_factor=1.6)
+    assert (e["face_ft"], e["stars"]) == (11.32, 4.0)
+
+
+def _mop_small(median_factor):
+    spot = _spot(REEF, swell_window_source="cdip_mop", mop_shore_normal=270.0)
+    e = {"valid_time": ISO, "stars": 1.0, "wind_mult": 1.0, "tide_mult": 1.0, **LIGHT_OFFSHORE}
+    mop.apply_mop_overrides({"T": [e]}, [spot], _fetch=lambda _s: {HR: (1.0, 12.0, 270.0, 1.0)},
+                            median_factor=median_factor)
+    return e
+
+
+def test_mop_override_counts_as_factor_one():
+    assert (_mop_small(None)["stars"], _mop_small(1.6)["stars"]) == (2.5, 3.5)
+
+
+def test_flat_is_judged_on_the_sized_face():
+    # 0.6 ft x 1.6 / 3 = 0.32 ft: flat. Unscaled 0.6 ft: size 0.6 -> round(1.2)/2 = 0.5 -> 1.0
+    assert I.composite_stars(0.6, 1.0, 1.0, size_scale=1.6 / 3.0) == 0.0
+    assert I.composite_stars(0.6, 1.0, 1.0) == 1.0
+
+
+def test_median_face_factor():
+    from pipeline.forecast.face_correction import median_face_factor
+    rec = lambda f: {"factor": f}
+    assert median_face_factor({"a": rec(1.2), "b": rec(3.0), "c": rec(1.5)}) == 1.5
+    assert median_face_factor({"a": rec(1.2), "b": rec(1.6), "c": rec(2.0), "d": rec(3.0)}) == 1.8
+    assert median_face_factor({}) is None
+
+
+def test_the_committed_factor_file_gives_m_1_5907():
+    # The value rating-preview run 32 printed for the file measured 2026-09-08 to 2026-10-06.
+    from pipeline.forecast.face_correction import load_face_factors, median_face_factor
+    assert median_face_factor(load_face_factors()) == 1.5907

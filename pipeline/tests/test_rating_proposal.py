@@ -582,3 +582,47 @@ def test_a_spot_whose_factor_is_below_the_median_goes_up_and_ties_keep_id_order(
 def test_live_explain_reports_a_row_that_does_not_reproduce():
     x = SP.live_explain(_nwps_row(stars=2.0, **LIGHT), SPOTS_V["A"], FACTORS3, 1.6)
     assert (x["stars"], x["reproduced"]) == (4.5, False)
+
+
+# --------------------------------------------------------------------------- #
+# The cal-median merge gate                                                    #
+# --------------------------------------------------------------------------- #
+
+def test_the_cal_median_gate_on_nwps_rows():
+    # A (factor 3.0): live 4.5, cal-median 3.0 both ways; B (no factor): 4.5 both ways.
+    rows = [_nwps_row(**LIGHT), _nwps_row(spot_id=2, **LIGHT)]
+    names = {1: ("A", "California"), 2: ("B", "North Carolina")}
+    c = SP.cal_rater_check(rows, SPOTS_V, names, FACTORS3, 1.6)
+    assert (c["hours"], c["same"], c["different"], c["examples"]) == (2, 2, 0, [])
+    rb = SP.rescore(rows[0], SPOTS_V["A"])
+    assert SP.wired_rater(rows[0], SPOTS_V["A"], rb, 3.0, 1.6) == 3.0
+
+
+def test_the_gate_counts_a_mop_row_as_factor_one():
+    # A MOP row on a reef, 3 ft, light offshore wind, period quality 1.0: live size(3) = 2.5.
+    # On the yardstick (F = 1, M = 1.6): 4.8 ft, size 3.4 -> round(6.8)/2 = 3.5, both ways.
+    row = _row(face_ft=3.0, wind_mult=1.0, stars=2.5, **LIGHT)
+    rb = SP.rescore(row, WEST_REEF)
+    assert SP.wired_rater(row, WEST_REEF, rb, None, 1.6) == 3.5
+    c = SP.cal_rater_check([row], {"A": WEST_REEF}, NAMES, FACTORS3, 1.6)
+    assert (c["same"], c["different"]) == (1, 0)
+
+
+def test_the_cal_median_gate_reports_a_difference():
+    row = _nwps_row(**LIGHT)
+    real = SP.variant_stars
+    SP.variant_stars = lambda *a, **k: 4.5
+    try:
+        c = SP.cal_rater_check([row], SPOTS_V, {1: ("A", "California")}, FACTORS3, 1.6)
+    finally:
+        SP.variant_stars = real
+    assert c["different"] == 1
+    assert c["examples"] == [{"spot": "A", "state": "California",
+                              "valid_time": "2026-10-20T15:00:00+00:00", "published": 4.5,
+                              "preview": 4.5, "wired": 3.0}]
+
+
+def test_the_gate_skips_rows_the_live_rater_does_not_reproduce():
+    c = SP.cal_rater_check([_nwps_row(stars=2.0, **LIGHT)], SPOTS_V, {1: ("A", "California")},
+                           FACTORS3, 1.6)
+    assert c["hours"] == 0

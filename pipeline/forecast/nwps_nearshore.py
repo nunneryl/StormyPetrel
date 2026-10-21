@@ -777,7 +777,7 @@ def nwps_series_by_hour(spot, cycle):
 # --------------------------------------------------------------------------- #
 def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mult=1.0,
                optimal=None, chop=None, *, spot=None, wind_dir=None, wind_speed=None,
-               face_factor=None):
+               face_factor=None, median_factor=None):
     """Nearshore-frame star rating for one NWPS hour, reusing interpret.py exactly
     (face_ft from swh × the ALIGNMENT term on swell_dir, period quality from the swell
     period), with per-hour wind/tide injected from the normal rater.
@@ -787,8 +787,8 @@ def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mu
 
     With *spot*, the strong-wind cap and the beach-break ceiling apply (interpret.rule_keywords)
     from the hour's *wind_dir* / *wind_speed* (m/s), at period *per*, with the spot's MOP
-    *face_factor* for the ceiling. Without it they do not: star_preview replays rows published
-    before the rules that way.
+    *face_factor* for the ceiling and, with *median_factor*, for sizing on the calibrated face.
+    Without it they do not: star_preview replays rows published before the rules that way.
 
     *swell_dir* and *per* describe the SWELL TRAIN, not the whole spectrum. The
     caller passes the WW3 partition direction/period whenever rate_spot resolved
@@ -830,7 +830,8 @@ def nwps_stars(hs, per, swell_dir, swell_hs, orientation, wind_mult=1.0, tide_mu
     cr, cm = chop if chop is not None else chop_factors(hs, swell_hs)
     pq = period_quality(per)
     rules = ({} if spot is None
-             else rule_keywords(spot, wind_dir, wind_speed, per, eff, face_factor))
+             else rule_keywords(spot, wind_dir, wind_speed, per, eff, face_factor,
+                                median_factor))
     stars = composite_stars(eff, wind_mult, tide_mult, cm, pq, **rules)
     return stars, face, dg, cm, pq
 
@@ -967,7 +968,7 @@ def _make_default_fetch():
 
 
 def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None, _fetch=None,
-                         ceiling_factors=None):
+                         ceiling_factors=None, median_factor=None):
     """Override the swell rating of every swell_window_source=="nwps" spot with its
     NWPS node HEIGHT, keeping each hour's wind/tide AND the WW3-derived swell
     direction/period that rate_spot already resolved. Mutates *ratings* in place
@@ -1113,7 +1114,8 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None,
                                               optimal=s.get("optimal_swell_dir"),
                                               chop=(cr, cm_pair), spot=s,
                                               wind_dir=wdir, wind_speed=wspd,
-                                              face_factor=(ceiling_factors or {}).get(name))
+                                              face_factor=(ceiling_factors or {}).get(name),
+                                              median_factor=median_factor)
             if st is None:
                 continue
             if not dry_run:

@@ -126,7 +126,10 @@ both rules and changes one input: cal-median and cal-all rate on the calibrated 
 VARIANTS), swell-height sizes NWPS rows on the node's swell height instead of its total. Each
 reports the change by source and state, what the spots with a MOP factor did, and the homepage
 list; --explain adds the live cap, the face the ceiling reads, the period the allowance used,
-the WW3 partitions and the NWPS node's total and swell heights. SELECT only.
+the WW3 partitions and the NWPS node's total and swell heights. With cal-median it also runs THE
+MERGE GATE for rating on the calibrated face: cal_rater_check replays every reproduced row through
+the rater's own code with M (wired_rater) and counts the hours where it differs from the
+cal-median variant, which must be none. SELECT only.
 
     python -m pipeline.star_preview --variants cal-median,swell-height [--explain slug,slug]
         [--baseline B.json] [--out OUT.json]
@@ -645,12 +648,15 @@ def calibration_diff(rows, spots, names, rule, factors):
             "spots": sorted({h["spot"] for h in hours}), "changes": hours}
 
 
-def wired_rater(row, spot, rb, factor):
+def wired_rater(row, spot, rb, factor, median_factor=None):
     """The stars the WIRED rater gives a replayed row, through the rater's own code: an NWPS
     row through nwps_stars with the spot, the hour's wind and *factor* (as apply_nwps_overrides
     calls it); any other row through composite_stars with interpret.rule_keywords (as rate_spot
     and mop_stars call it). The preview's own rules (rating_after) build the same two rules
-    independently, from wind_star_cap, is_sand_beach_break and closeout_face here."""
+    independently, from wind_star_cap, is_sand_beach_break and closeout_face here.
+
+    With *median_factor* the rater sizes on the calibrated face (cal-median), as interpret.main
+    runs it once the cal-median rater is merged: an MOP row as factor 1.0, as mop_stars does."""
     wm, tm, cm = _mults(row)
     wd, ws = _num(row.get("wind_dir")), _num(row.get("wind_speed"))
     if row.get("swell_source") in NWPS_KINDS:
@@ -658,9 +664,13 @@ def wired_rater(row, spot, rb, factor):
         return nwps_stars(swh, per, d, None, spot.get("orientation_deg"), wm, tm,
                           optimal=spot.get("optimal_swell_dir"),
                           chop=(_num(row.get("chop_ratio")), cm), spot=spot,
-                          wind_dir=wd, wind_speed=ws, face_factor=factor)[0]
+                          wind_dir=wd, wind_speed=ws, face_factor=factor,
+                          median_factor=median_factor)[0]
+    if row.get("swell_source") in MOP_KINDS:
+        factor = 1.0
     return composite_stars(rb["eff"], wm, tm, cm, rb["pq"],
-                           **rule_keywords(spot, wd, ws, rb["tp"], rb["eff"], factor))
+                           **rule_keywords(spot, wd, ws, rb["tp"], rb["eff"], factor,
+                                           median_factor))
 
 
 def rater_check(rows, spots, names, factors):
@@ -689,6 +699,41 @@ def rater_check(rows, spots, names, factors):
                                  "published": rb["stars"], "preview": preview, "wired": wired})
     return {"hours": same + differ, "same": same, "different": differ, "examples": examples,
             "wired_delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())}}
+
+
+def cal_rater_check(rows, spots, names, factors, m):
+    """THE MERGE GATE for rating on the calibrated face: on every row that reproduces its
+    published stars under the live rater, the wired rater (wired_rater with M) against the
+    preview's cal-median variant (variant_stars), hour for hour. Must be 0 differences."""
+    same = differ = 0
+    examples = []
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None or row.get("stars") is None:
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None or live_stars(row, spot, rb, factors) != float(row["stars"]):
+            continue
+        preview = variant_stars(row, spot, rb, factors, "cal-median", m)
+        wired = wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug), m)
+        if wired == preview:
+            same += 1
+        else:
+            differ += 1
+            if len(examples) < 20:
+                examples.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                                 "published": float(row["stars"]), "preview": preview,
+                                 "wired": wired})
+    return {"hours": same + differ, "same": same, "different": differ, "examples": examples}
+
+
+def _print_cal_rater_check(c):
+    print(f"\n=== Wired rater vs preview 'cal-median': {c['different']} differences in "
+          f"{c['hours']} reproduced hours ({c['same']} equal) ===")
+    for e in c["examples"]:
+        print(f"  {e['spot']} ({e['state']}) {e['valid_time']}: published {e['published']}, "
+              f"preview {e['preview']}, wired {e['wired']}")
 
 
 def _print_rater_check(c):
@@ -1545,6 +1590,9 @@ def main(argv=None):
                 out["explain"][sl]["live"] = live_explain(row, before[name], factors, m, variants)
             _print_explain(name, out["explain"][sl])
             _print_live_explain(name, out["explain"][sl])
+        if "cal-median" in variants:
+            out["cal_rater_check"] = cal_rater_check(rows, before, names, factors, m)
+            _print_cal_rater_check(out["cal_rater_check"])
         out["variants"] = {}
         for v in variants:
             out["variants"][v] = variant_compare(rows, before, names, factors, v, m)
