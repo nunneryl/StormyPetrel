@@ -34401,7 +34401,7 @@
     "nwps_buoy_id": null
   },
   {
-    "name": "Indiatlantic",
+    "name": "Indialantic",
     "lat": 28.090382,
     "lng": -80.564139,
     "region_hint": "Florida",
@@ -36814,7 +36814,7 @@
     "nwps_buoy_id": "44091"
   },
   {
-    "name": "Ventor Pier",
+    "name": "Ventnor Pier",
     "lat": 39.33536,
     "lng": -74.476876,
     "region_hint": "New Jersey",

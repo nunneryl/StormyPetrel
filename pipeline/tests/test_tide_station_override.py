@@ -425,6 +425,11 @@ def test_no_other_spot_changed_station():
     the digest over the remaining 638 is byte-identical between origin/main and this tree.
     This test has fired on every one of those changes the moment it landed, which is what it
     is for.
+
+    THE RENAME OF 2026-10-21 (migration 025): Indiatlantic -> Indialantic and Ventor Pier ->
+    Ventnor Pier change two names in the digest and no station. Verified: with the two old
+    names put back, the digest over the same 638 spots is the previous pin,
+    ec21a9773b5415ee23a41726043bd5464bf8cdb92e9fe415fbce9adc19839e69.
     """
     roster = _roster()
     assert len(roster) == 648, len(roster)
@@ -432,7 +437,7 @@ def test_no_other_spot_changed_station():
                    for s in roster if s.get("name") not in _HAND_SET)
     assert len(pairs) == 638, len(pairs)
     digest = hashlib.sha256("\n".join(f"{a}\t{b}" for a, b in pairs).encode()).hexdigest()
-    assert digest == "ec21a9773b5415ee23a41726043bd5464bf8cdb92e9fe415fbce9adc19839e69", digest
+    assert digest == "9a5317b4b03976e2547073d9b0e59cba26dbeb448c6c2d00f4b7864ab11d631b", digest
 
 
 def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():

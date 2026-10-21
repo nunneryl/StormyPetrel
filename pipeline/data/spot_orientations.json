@@ -1140,10 +1140,10 @@
       "cardinal": "W",
       "name": "Indian Rocks Beach"
     },
-    "indiatlantic": {
+    "indialantic": {
       "orientation_deg": 70.0,
       "cardinal": "ENE",
-      "name": "Indiatlantic"
+      "name": "Indialantic"
     },
     "indicators": {
       "orientation_deg": 272.0,
@@ -2989,10 +2989,10 @@
       "cardinal": "SW",
       "name": "Venice Beach Pier"
     },
-    "ventor-pier": {
+    "ventnor-pier": {
       "orientation_deg": 145.0,
       "cardinal": "SE",
-      "name": "Ventor Pier"
+      "name": "Ventnor Pier"
     },
     "ventura-harbor": {
       "orientation_deg": 252.0,
