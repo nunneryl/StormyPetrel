@@ -10,6 +10,7 @@ import {
   msToMph,
   pickSwell,
 } from '@/lib/formatting';
+import { basemap } from '@/lib/basemap';
 import { heightBasis, heightBasisMarkHtml } from '@/lib/heightBasis';
 import { fmtBreakType } from '@/lib/provenance';
 import { camBadgeHtml } from './CamBadge';
@@ -120,15 +121,10 @@ export function SpotMap({
       L.control.zoom({ position: 'bottomright' }).addTo(map);
       mapRef.current = map;
 
-      L.tileLayer(
-        'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          maxZoom: 19,
-          subdomains: 'abcd',
-        },
-      ).addTo(map);
+      // CARTO with a key, OpenStreetMap without one — see lib/basemap.ts. The env var must be
+      // named in full here: Next inlines NEXT_PUBLIC_* only where it appears literally.
+      const tiles = basemap(process.env.NEXT_PUBLIC_CARTO_BASEMAPS_KEY);
+      L.tileLayer(tiles.url, tiles.options).addTo(map);
 
       // Cluster group (optional — falls back to plain markers if the
       // plugin didn't load). The cluster's own CSS mistakenly hides
