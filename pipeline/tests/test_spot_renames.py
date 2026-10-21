@@ -71,13 +71,33 @@ def test_the_slugs_are_the_new_ones():
 
 def test_the_description_cache_and_the_migration_carry_the_same_texts():
     cache = json.loads(_read("pipeline/data/spot_descriptions.json"))
-    rows = {slug: (text, sig) for slug, text, sig in re.findall(
+    rows = {slug: (text, sig, old) for slug, text, sig, old in re.findall(
         r"\('(?:indiatlantic|ventor-pier)', '([a-z-]+)', '[^']+',\s*'([^']+)',\s*"
-        r"'(v2:[0-9a-f]{16})'\)", MIGRATION.read_text())}
+        r"'(v2:[0-9a-f]{16})', '(v2:[0-9a-f]{16})'\)", MIGRATION.read_text())}
     assert set(rows) == set(NEW)
     for slug, text in TEXT.items():
         assert cache[slug]["description"] == text == rows[slug][0], slug
         assert cache[slug]["signature"] == rows[slug][1], slug
+    # The signatures the two spots carried before the rename (the cache entries it replaced).
+    assert rows["indialantic"][2] == "v2:6afa2725115ca62f"
+    assert rows["ventnor-pier"][2] == "v2:a7d8dfda534b4b61"
+
+
+def _code():
+    """The migration with its comment lines removed."""
+    return "\n".join(ln for ln in MIGRATION.read_text().splitlines()
+                     if not ln.lstrip().startswith("--")).strip()
+
+
+def test_the_migration_is_one_statement_with_no_temp_table():
+    """The first 025 used BEGIN ... COMMIT and two ON COMMIT DROP temp tables; in the Supabase
+    SQL editor one execution failed with 42P01 (relation "_spot_renames" does not exist). A
+    single DO block runs atomically as one statement however the client splits or wraps it."""
+    code = _code()
+    assert code.startswith("DO $migration_025$") and code.endswith("$migration_025$;"), code[:80]
+    assert code.count("$migration_025$") == 2
+    assert "TEMP" not in code.upper() and "COMMIT" not in code.upper()
+    assert "_spot_rename" not in code
 
 
 def test_the_import_keeps_the_migrations_description():
@@ -108,7 +128,8 @@ def test_the_old_urls_redirect():
 # docs/spot_delete_workflow.sql left it, and no ON UPDATE.
 TABLES = """
 CREATE TABLE spots (id SERIAL PRIMARY KEY, slug TEXT UNIQUE NOT NULL, name TEXT,
-                    description TEXT, description_signature TEXT);
+                    description TEXT, description_signature TEXT,
+                    created_at TIMESTAMPTZ DEFAULT now());
 CREATE TABLE forecasts (id SERIAL PRIMARY KEY,
                         spot_id INTEGER REFERENCES spots(id) ON DELETE CASCADE,
                         valid_time TIMESTAMPTZ NOT NULL);
@@ -226,3 +247,54 @@ def test_it_is_a_no_op_where_neither_spot_exists(conn):
     _spot(conn, "vero-pier", "Vero Pier")
     _migrate(conn)
     assert [r[1:3] for r in _state(conn)] == [("vero-pier", "Vero Pier")]
+
+
+def _spot_with(conn, slug, name, description, signature):
+    return _q(conn, "INSERT INTO spots (slug, name, description, description_signature) "
+                    "VALUES (%s, %s, %s, %s) RETURNING id",
+              (slug, name, description, signature))[0][0]
+
+
+@needs_db
+def test_a_renamed_row_still_carrying_the_old_signature_gets_the_new_description(conn):
+    i = _spot_with(conn, "indialantic", "Indiatlantic", "old text", "v2:6afa2725115ca62f")
+    _migrate(conn)
+    assert _state(conn) == [(i, "indialantic", "Indialantic", TEXT["indialantic"],
+                             "v2:f6bfe509bd2e9a55")]
+
+
+@needs_db
+def test_a_re_run_never_overwrites_a_newer_description(conn):
+    i = _spot_with(conn, "ventnor-pier", "Ventnor Pier", "a newer text", "v2:1111111111111111")
+    _migrate(conn)
+    assert _state(conn) == [(i, "ventnor-pier", "Ventnor Pier", "a newer text",
+                             "v2:1111111111111111")]
+
+
+def _check_query():
+    """The CHECK QUERY from 025's header, comment markers removed."""
+    lines = MIGRATION.read_text().splitlines()
+    start = next(i for i, ln in enumerate(lines) if ln.startswith("--   WITH want"))
+    end = next(i for i in range(start, len(lines)) if lines[i].rstrip().endswith(";"))
+    return "\n".join(ln[5:] for ln in lines[start:end + 1])
+
+
+@needs_db
+def test_the_check_query_reports_ids_signatures_counts_and_cams(conn):
+    ids = {slug: _spot(conn, slug, name) for slug, name in OLD.items()}
+    _q(conn, "INSERT INTO forecasts (spot_id, valid_time) VALUES (%s, %s), (%s, %s)",
+       (ids["indiatlantic"], H1, ids["indiatlantic"], H2))
+    _q(conn, "INSERT INTO surf_reports (spot_id, observed_hour, reporter_hash) "
+             "VALUES (%s, %s, 'r1')", (ids["ventor-pier"], H1))
+    _q(conn, "INSERT INTO cams (spot_slug, cam_name) VALUES ('ventor-pier', 'Pier cam')")
+    _migrate(conn)
+    rows = _q(conn, _check_query())
+    got = {r[0]: (r[1], r[2], r[4], r[5], r[6], r[8], r[9], r[10]) for r in rows}
+    cam = _q(conn, "SELECT id FROM cams")[0][0]
+    assert got == {
+        "indialantic": (ids["indiatlantic"], "Indialantic", True, True, 2, 0, None, 0),
+        "indiatlantic": (None, None, False, None, 0, 0, None, 0),
+        "ventnor-pier": (ids["ventor-pier"], "Ventnor Pier", True, True, 0, 1,
+                         f"{cam} Pier cam -> ventnor-pier", 0),
+        "ventor-pier": (None, None, False, None, 0, 0, None, 0),
+    }
