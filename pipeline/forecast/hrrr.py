@@ -41,9 +41,13 @@ from ..config import (
     HRRR_GRIB_FILTER_URL,
     HRRR_GRIB_LEVEL,
     HRRR_GRIB_VARS,
+    HRRR_LAND_LEVEL,
+    HRRR_LAND_VAR,
     HRRR_LONG_CYCLES,
     HRRR_NOMADS_BASE,
+    HRRR_SEAWARD_HALF_ANGLE,
     HRRR_STEP_HOURS,
+    HRRR_WATER_SEARCH_DEG,
 )
 from ..http import session
 
@@ -127,13 +131,14 @@ def _step_cache_path(date_ymd: str, hh: str, fh: int) -> Path:
     return HRRR_CACHE_DIR / f"{date_ymd}_{hh}_f{fh:02d}.grib2"
 
 
-def _filter_params(date_ymd: str, hh: str, fh: int) -> dict:
+def _filter_params(date_ymd: str, hh: str, fh: int,
+                   variables=HRRR_GRIB_VARS, level: str = HRRR_GRIB_LEVEL) -> dict:
     params = {
         "file": _step_filename(hh, fh),
         "dir": f"/hrrr.{date_ymd}/conus",
-        HRRR_GRIB_LEVEL: "on",
+        level: "on",
     }
-    for var in HRRR_GRIB_VARS:
+    for var in variables:
         params[f"var_{var}"] = "on"
     lat_min, lat_max, lng_min, lng_max = HRRR_CONUS_BBOX
     params.update({
@@ -146,8 +151,9 @@ def _filter_params(date_ymd: str, hh: str, fh: int) -> dict:
     return params
 
 
-def _download_step(date_ymd: str, hh: str, fh: int, dest: Path) -> bool:
-    params = _filter_params(date_ymd, hh, fh)
+def _download_step(date_ymd: str, hh: str, fh: int, dest: Path, params: dict | None = None,
+                   min_bytes: int = 50_000) -> bool:
+    params = params or _filter_params(date_ymd, hh, fh)
     try:
         with session().get(HRRR_GRIB_FILTER_URL, params=params, stream=True, timeout=180) as resp:
             if resp.status_code != 200:
@@ -164,8 +170,9 @@ def _download_step(date_ymd: str, hh: str, fh: int, dest: Path) -> bool:
                         written += len(chunk)
             # An empty filter response is a tiny HTML error page; a real
             # subset of UGRD/VGRD over the CONUS bbox is at least a few
-            # hundred KB. Floor at 50 KB to be safe.
-            if written < 50_000:
+            # hundred KB. Floor at 50 KB to be safe. (The land mask alone is ~50 KB over the
+            # whole grid, so it passes its own, lower floor.)
+            if written < min_bytes:
                 tmp.unlink(missing_ok=True)
                 return False
             tmp.replace(dest)
@@ -348,6 +355,73 @@ def _wind_speed_dir(u: "np.ndarray", v: "np.ndarray") -> tuple["np.ndarray", "np
     return speed, direction
 
 
+# A spot on a LAND cell reads the nearest seaward water cell (config: HRRR_LAND_VAR and below).
+
+def _land_cache_path(date_ymd: str, hh: str) -> Path:
+    return HRRR_CACHE_DIR / f"{date_ymd}_{hh}_land.grib2"
+
+
+def _download_land(date_ymd: str, hh: str, use_cache: bool) -> Path | None:
+    """The cycle's f00 LAND:surface over the same subregion as the wind, or None."""
+    p = _land_cache_path(date_ymd, hh)
+    if use_cache and p.exists() and p.stat().st_size > 0:
+        return p
+    params = _filter_params(date_ymd, hh, 0, (HRRR_LAND_VAR,), HRRR_LAND_LEVEL)
+    return p if _download_step(date_ymd, hh, 0, p, params=params, min_bytes=1_000) else None
+
+
+def _land_mask(path: Path):
+    """The LAND field (1 land, 0 water) as a 2-D array, or None when it does not decode."""
+    import numpy as np
+    try:
+        datasets = _open_grib_dataset(path)
+    except Exception as e:  # noqa: BLE001
+        log.warning("hrrr: land mask %s did not open: %s", path.name, e)
+        return None
+    try:
+        for ds in datasets:
+            for v in ds.data_vars:
+                if str(v).lower() in ("lsm", "land"):
+                    return np.squeeze(np.asarray(ds[v].values, dtype=float))
+        return None
+    finally:
+        _close_datasets(datasets)
+
+
+def _haversine_km(lat1, lng1, lat2, lng2) -> float:
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = p2 - p1, math.radians(lng2 - lng1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * 6371.0088 * math.asin(math.sqrt(a))
+
+
+def _bearing_deg(lat1, lng1, lat2, lng2) -> float:
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dl = math.radians(lng2 - lng1)
+    x = math.sin(dl) * math.cos(p2)
+    y = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
+    return (math.degrees(math.atan2(x, y)) + 360.0) % 360.0
+
+
+def _seaward_water_cell(tree, flat_mask, flat_lat, flat_lng, lat, lng, orientation):
+    """The nearest water cell within HRRR_WATER_SEARCH_DEG whose bearing from the spot is within
+    HRRR_SEAWARD_HALF_ANGLE of *orientation* (any bearing when it is None); None if there is
+    none. The first of equally near cells, in the tree's order, wins."""
+    best = None
+    for k in tree.query_ball_point([lat, lng], HRRR_WATER_SEARCH_DEG):
+        if flat_mask[k] >= 0.5:
+            continue
+        brg = _bearing_deg(lat, lng, float(flat_lat[k]), float(flat_lng[k]))
+        if orientation is not None:
+            off = abs(((brg - float(orientation) + 540.0) % 360.0) - 180.0)
+            if off > HRRR_SEAWARD_HALF_ANGLE:
+                continue
+        km = _haversine_km(lat, lng, float(flat_lat[k]), float(flat_lng[k]))
+        if best is None or km < best[1]:
+            best = (int(k), km)
+    return None if best is None else best[0]
+
+
 def _spots_in_conus(spots: list[dict]) -> list[dict]:
     lat_min, lat_max, lng_min, lng_max = HRRR_CONUS_BBOX
     out: list[dict] = []
@@ -362,11 +436,13 @@ def _spots_in_conus(spots: list[dict]) -> list[dict]:
     return out
 
 
-def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]]):
-    """Per-spot hourly wind from the step files: the nearest grid cell's u/v, turned to true
-    north when the file says they are grid-relative. Returns (records by spot name, step files
-    that failed to parse, {"grid_relative": bool | None, "cells": {name: flat index}}).
-    Separate from fetch() so the data-quality gate runs exactly this on archive files."""
+def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]], land_mask=None):
+    """Per-spot hourly wind from the step files: the nearest grid cell's u/v, or, where that
+    cell is land in *land_mask*, the nearest seaward water cell's (_seaward_water_cell); turned
+    to true north when the file says they are grid-relative. Returns (records by spot name,
+    step files that failed to parse, {"grid_relative": bool | None, "cells": {name: flat
+    index read}, "water": {name: [land flat, water flat]}}). Separate from fetch() so the
+    data-quality gate runs exactly this on archive files."""
     import numpy as np
 
     spot_names: list[str] = [s["name"] for s in conus_spots]
@@ -379,6 +455,7 @@ def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]]):
     flat_idx: "np.ndarray" | None = None
     grid_shape: tuple[int, int] | None = None
     axis_deg: "np.ndarray" | None = None      # each spot's grid x-axis angle; None: earth-relative
+    water: dict[str, list[int]] = {}
 
     try:
         from tqdm import tqdm
@@ -421,6 +498,27 @@ def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]]):
                     continue
                 tree, grid_shape, lats, lngs = tree_pack
                 _, flat_idx = tree.query(spot_pts)
+                flat_idx = np.asarray(flat_idx, dtype=int)
+                if land_mask is not None and np.shape(land_mask) != grid_shape:
+                    log.warning("hrrr: land mask %s does not match the wind grid %s; spots keep "
+                                "their nearest cell", np.shape(land_mask), grid_shape)
+                elif land_mask is not None:
+                    flat_mask = np.asarray(land_mask, dtype=float).ravel()
+                    flat_lat, flat_lng = lats.ravel(), lngs.ravel()
+                    for n, (s, k) in enumerate(zip(conus_spots, flat_idx)):
+                        if flat_mask[k] < 0.5:
+                            continue
+                        orientation = s.get("orientation_deg")
+                        w = _seaward_water_cell(
+                            tree, flat_mask, flat_lat, flat_lng, float(s["lat"]),
+                            float(s["lng"]), None if orientation is None else float(orientation))
+                        if w is not None:
+                            water[s["name"]] = [int(k), w]
+                            flat_idx[n] = w
+                    log.info("hrrr: %d spots on a land cell read the nearest seaward water cell "
+                             "(%d land-cell spots have none within %.1f deg and keep theirs)",
+                             len(water), int(sum(flat_mask[k] >= 0.5 for k in flat_idx)),
+                             HRRR_WATER_SEARCH_DEG)
                 if _uv_relative_to_grid(path):
                     nx = grid_shape[1]
                     axis_deg = np.asarray([_grid_x_axis_deg(lats, lngs, *divmod(int(k), nx))
@@ -462,7 +560,7 @@ def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]]):
     cells = ({} if flat_idx is None
              else {name: int(k) for name, k in zip(spot_names, flat_idx)})
     grid_relative = None if flat_idx is None else axis_deg is not None
-    return out, parse_failed, {"grid_relative": grid_relative, "cells": cells}
+    return out, parse_failed, {"grid_relative": grid_relative, "cells": cells, "water": water}
 
 
 # ---------------------------------------------------------------------------
@@ -499,7 +597,12 @@ def fetch(
         len(steps), len(conus_spots), date_ymd, hh,
     )
 
-    out, parse_failed, _ = extract_steps(conus_spots, steps)
+    land_path = _download_land(date_ymd, hh, use_cache)
+    land_mask = _land_mask(land_path) if land_path is not None else None
+    if land_mask is None:
+        log.warning("hrrr: no land mask for cycle %s %sZ; every spot reads its nearest cell, "
+                    "land or water", date_ymd, hh)
+    out, parse_failed, _ = extract_steps(conus_spots, steps, land_mask)
 
     # Order each series by valid_time so consumers can iterate forward.
     for series in out.values():

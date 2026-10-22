@@ -11,12 +11,13 @@ SECTIONS
               each cell: HRRR's 10 m winds are GRID-RELATIVE (uvRelativeToGrid = 1), and
               forecast/hrrr.py read them as if they were earth-relative until its true-north
               fix (see the true-north section).
-  true-north  The merge gate for forecast/hrrr.py's true-north fix: the newest cycle's u/v step
-              files run through hrrr.extract_steps (the code the pipeline runs) and compared,
-              spot by spot and hour by hour, with the hrrr section's own true-north wind (the
-              cell's u/v turned by grid_to_earth). PASS needs every spot on the same cell, the
-              files read as grid-relative, and 0 directions or speeds apart by more than
-              GATE_TOLERANCE.
+  true-north  The merge gate for forecast/hrrr.py's wind: the newest cycle's u/v step files and
+              its land mask run through hrrr.extract_steps (the code the pipeline runs) and
+              compared, spot by spot and hour by hour, with the hrrr section's own wind: the
+              seaward water cell's where the spot's cell is land and the sweep found one, else
+              the spot's cell, turned by grid_to_earth at that cell. PASS needs every spot on
+              the same cell, the files read as grid-relative, and 0 directions or speeds apart
+              by more than GATE_TOLERANCE.
   wind-preview  (Supabase) Every published hour whose wind is HRRR's, matched exactly to a cycle,
               reproduced by the rater it was published with (the live rater with the #270
               cap, published_wind_cap) and re-rated with the wind from: the water cell
@@ -24,8 +25,9 @@ SECTIONS
               the published cap; and true-north on the WIRED rater, whose cap counts
               cross-offshore (60-90 deg off) as offshore, with THE CAP90 GATE: the wired
               rater against the rule built here (cap90_star_cap), hour for hour, must be 0
-              differences. A published hour is matched to the UNROTATED wind, so this
-              previews hours published before forecast/hrrr.py's true-north fix.
+              differences; and water+true-north on the wired rater too. A published hour is
+              matched in whichever frame it was published (match_published: unturned, turned,
+              or the water cell turned) and reproduced on #270's cap or the wired one.
   partitions  (Supabase) The swell partitions behind the Swell breakdown card, hour by hour, for
               the --explain spots: the card is hidden when at most one component is above
               0.05 m (frontend/components/SwellPartitions.tsx).
@@ -329,7 +331,8 @@ def hrrr_section(spots, cycles, session, workdir, log=print):
         if "water_flat" in r:
             r["wind"] = wind_summary(newest[r["flat"]], newest[r["water_flat"]])
     return {"cycles": cycles, "spots": len(rows), "rows": rows,
-            "land_cell_spots": [r for r in rows if r["cell_is_land"]], "_winds": winds}
+            "land_cell_spots": [r for r in rows if r["cell_is_land"]], "_winds": winds,
+            "_mask": mask}
 
 
 def _print_hrrr(rep):
@@ -361,15 +364,17 @@ def compare_true_north(cells, sweep, published, meta):
     """forecast/hrrr.py's records (*published*, by spot) against the sweep's true-north wind
     (*sweep*: {flat: [(valid_iso, u, v)]} grid-relative), for every spot in *cells*."""
     differences, missing, compared, worst_dir, worst_speed = [], [], 0, 0.0, 0.0
-    cell_moved = [r["spot"] for r in cells if meta["cells"].get(r["spot"]) != r["flat"]]
+    want_flat = {r["spot"]: r.get("water_flat", r["flat"]) for r in cells}
+    cell_moved = [r["spot"] for r in cells if meta["cells"].get(r["spot"]) != want_flat[r["spot"]]]
     for r in cells:
         got = {_iso(rec["valid_time"]): rec for rec in published.get(r["spot"], ())}
-        for valid, u, v in sweep.get(r["flat"], ()):
+        axis = r.get("water_x_axis_deg", r["x_axis_deg"])
+        for valid, u, v in sweep.get(want_flat[r["spot"]], ()):
             rec = got.get(_iso(valid))
             if rec is None:
                 missing.append([r["spot"], valid])
                 continue
-            ue, ve = grid_to_earth(u, v, r["x_axis_deg"])
+            ue, ve = grid_to_earth(u, v, axis)
             want_dir, want_speed = met_dir(ue, ve), math.hypot(ue, ve)
             d_dir = angle_off(want_dir, float(rec["wind_dir"]))
             d_speed = abs(want_speed - float(rec["wind_speed"]))
@@ -384,6 +389,7 @@ def compare_true_north(cells, sweep, published, meta):
           and compared > 0)
     return {"verdict": "PASS" if ok else "FAIL", "grid_relative": meta["grid_relative"],
             "spots": len(cells), "spot_hours": compared, "cell_moved": cell_moved,
+            "water_cells": len(meta.get("water", {})),
             "missing": missing, "differences": differences,
             "max_dir_diff": round(worst_dir, 6), "max_speed_diff": round(worst_speed, 6)}
 
@@ -396,7 +402,7 @@ def true_north_gate(spots, rep, session, workdir, log=print):
     steps = [(fh, fetch_fields(session, cycle, fh, [("UGRD", "10 m above ground"),
                                                      ("VGRD", "10 m above ground")],
                                workdir / f"gate{cycle}{fh:02d}.grib2")) for fh in HRRR_STEPS]
-    published, failed, meta = extract_steps(_spots_in_conus(spots), steps)
+    published, failed, meta = extract_steps(_spots_in_conus(spots), steps, rep["_mask"])
     for _, p in steps:
         p.unlink()
     out = compare_true_north(rep["rows"], rep["_winds"][cycle], published, meta)
@@ -407,9 +413,10 @@ def true_north_gate(spots, rep, session, workdir, log=print):
 
 
 def _print_true_north(rep):
-    print(f"\n=== True-north gate — cycle {rep['cycle']}: {rep['verdict']} ===")
+    print(f"\n=== HRRR wind gate (water cell, true north) — cycle {rep['cycle']}: "
+          f"{rep['verdict']} ===")
     print(f"files read as grid-relative: {rep['grid_relative']}; step files that failed to "
-          f"parse: {rep['parse_failed']}")
+          f"parse: {rep['parse_failed']}; spots moved to a water cell: {rep['water_cells']}")
     print(f"{rep['spots']} spots, {rep['spot_hours']} spot-hours compared; spots on a different "
           f"cell: {len(rep['cell_moved'])}; spot-hours missing: {len(rep['missing'])}; "
           f"DIFFERENT (over {GATE_TOLERANCE}): {len(rep['differences'])}")
@@ -448,10 +455,12 @@ def cap90_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
     return published_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
 
 
-def match_cycle(row, flat, winds):
+def match_cycle(row, flat, winds, axis_deg=None):
     """(cycle, step index, u, v) of the HRRR step that published *row*'s wind at *flat*, by
     exact match of speed and direction to the 3 decimals forecast/hrrr.py stores; None when the
-    hour's wind is not HRRR's (NWPS beyond 48 h) or came from a cycle not fetched."""
+    hour's wind is not HRRR's (NWPS beyond 48 h) or came from a cycle not fetched. With
+    *axis_deg* the step's wind is turned to true north (grid_to_earth) before matching; u, v
+    are returned as HRRR ships them either way."""
     ws, wd = row.get("wind_speed"), row.get("wind_dir")
     if ws is None or wd is None:
         return None
@@ -460,9 +469,24 @@ def match_cycle(row, flat, winds):
         for n, (valid, u, v) in enumerate(cells.get(flat, ())):
             if _iso(valid) != vt:
                 continue
-            if (abs(round(math.hypot(u, v), 3) - float(ws)) <= 0.0015
-                    and angle_off(round(met_dir(u, v), 3), float(wd)) <= 0.0015):
+            eu, ev = (u, v) if axis_deg is None else grid_to_earth(u, v, axis_deg)
+            if (abs(round(math.hypot(eu, ev), 3) - float(ws)) <= 0.0015
+                    and angle_off(round(met_dir(eu, ev), 3), float(wd)) <= 0.0015):
                 return cycle, n, u, v
+    return None
+
+
+def match_published(row, cell, winds):
+    """(cycle, step index, frame) of the HRRR step behind *row*, whichever way it was published:
+    'grid' (the cell's wind unturned, before #274), 'true-north' (turned, #274) or
+    'water+true-north' (the seaward water cell's, turned). None when no frame matches."""
+    tries = [("grid", cell["flat"], None), ("true-north", cell["flat"], cell["x_axis_deg"])]
+    if "water_flat" in cell:
+        tries.append(("water+true-north", cell["water_flat"], cell["water_x_axis_deg"]))
+    for frame, flat, axis in tries:
+        hit = match_cycle(row, flat, winds, axis)
+        if hit is not None:
+            return hit[0], hit[1], frame
     return None
 
 
@@ -515,7 +539,7 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
     cap90 gate against cap90_star_cap; the other variants keep the published cap."""
     from .interpret import wind_class, wind_multiplier, wind_star_cap
     by_name = {c["spot"]: c for c in cells}
-    counts = Counter()
+    counts, frames = Counter(), Counter()
     rep = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
                "class_moves": Counter()} for v in WIND_VARIANTS}
     first = {}
@@ -524,10 +548,14 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
         spot, cell = spots.get(name), by_name.get(name)
         if spot is None or cell is None or row.get("stars") is None:
             continue
-        hit = match_cycle(row, cell["flat"], winds)
-        if hit is None:
+        found = match_published(row, cell, winds)
+        if found is None:
             counts["not HRRR (or an unfetched cycle)"] += 1
             continue
+        cycle, step, frame = found
+        _, u, v = winds[cycle][cell["flat"]][step]          # the spot's own cell, unturned
+        hit = (cycle, step, u, v)
+        frames[frame] += 1
         off = spot.get("offshore_wind_deg")
         wm = row.get("wind_mult")
         if off is None or wm is None or round(wind_multiplier(
@@ -535,9 +563,12 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                 row.get("chop_ratio")), 3) != round(float(wm), 3):
             counts["HRRR, but wind_mult not reproduced"] += 1
             continue
-        live = rerate(row, spot, factors, m, float(row["wind_speed"]), float(row["wind_dir"]),
-                      cap_fn=published_wind_cap)
-        if live is None or live != float(row["stars"]):
+        # Published before the cap90 rule on #270's cap, after it on the wired one.
+        live = next((s for s in (rerate(row, spot, factors, m, float(row["wind_speed"]),
+                                        float(row["wind_dir"]), cap_fn=c)
+                                 for c in (published_wind_cap, None))
+                     if s is not None and s == float(row["stars"])), None)
+        if live is None:
             counts["HRRR, stars not reproduced"] += 1
             continue
         counts["HRRR, reproduced"] += 1
@@ -546,12 +577,12 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             w = variant_wind(variant, cell, winds, *hit)
             if w is None:
                 continue
-            wired = variant == "true-north+cap90"
+            wired = variant in ("true-north+cap90", "water+true-north")
             after = rerate(row, spot, factors, m, *w,
                            cap_fn=None if wired else published_wind_cap)
             if after is None:
                 continue
-            if wired:
+            if variant == "true-north+cap90":
                 # THE CAP90 GATE: the wired rater (interpret.wind_star_cap, cap90 in it) against
                 # the rule built here (cap90_star_cap), hour for hour. And the construction
                 # check: the cap route with the wired cap must equal wired_rater too, or the
@@ -576,7 +607,7 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                                      "wind_after": f"{after_cls} {w[0] * KT_PER_MS:.1f} kt from {w[1]:.0f}°"})
         if row["spot_id"] not in first and _iso(row["valid_time"]) >= now:
             first[row["spot_id"]] = (live, afters)
-    out = {"replay": dict(counts), "variants": {}}
+    out = {"replay": dict(counts), "published_frames": dict(frames), "variants": {}}
     for variant, r in rep.items():
         per_spot = Counter(c["spot"] for c in r["changed"])
         board_b = sorted(((b, sid) for sid, (b, _) in first.items()), key=lambda x: (-x[0], x[1]))
@@ -601,6 +632,7 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
 
 def _print_wind_preview(rep):
     print(f"\n=== Re-rating published HRRR hours: {rep['replay']} ===")
+    print(f"published as: {rep['published_frames']}")
     for variant, r in rep["variants"].items():
         print(f"\n--- {variant}: {r['changed']} of {r['compared']} hours change "
               f"(up {r['ups']}, down {r['downs']}); wind class changed on {r['wind_class_changed']} h")

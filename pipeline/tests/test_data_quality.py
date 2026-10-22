@@ -290,6 +290,43 @@ def test_the_gate_fails_when_the_files_were_not_read_as_grid_relative():
     assert rep["verdict"] == "FAIL"
 
 
+# A land-cell spot: its cell 7, water cell 9 with x-axis +15.3 and grid wind (0, -5) there:
+# from 344.7 at 5 m/s (worked in test_hrrr_true_north's California test).
+WATER_CELLS = [{"spot": "A", "flat": 7, "x_axis_deg": -14.3, "water_flat": 9,
+                "water_x_axis_deg": 15.3}]
+WATER_SWEEP = {7: [("2026-10-22T06:00:00+00:00", 0.0, -1.0)],
+               9: [("2026-10-22T06:00:00+00:00", 0.0, -5.0)]}
+
+
+def test_the_gate_follows_the_water_cell():
+    rep = DQ.compare_true_north(WATER_CELLS, WATER_SWEEP, _published(wind_dir=344.7),
+                                {"grid_relative": True, "cells": {"A": 9}, "water": {"A": [7, 9]}})
+    assert (rep["verdict"], rep["spot_hours"], rep["water_cells"]) == ("PASS", 1, 1)
+
+
+def test_the_gate_fails_when_the_pipeline_keeps_the_land_cell():
+    # The land cell turned: (0, -1) at -14.3 is from 14.3 at 1 m/s; the cell is 7, not 9.
+    rep = DQ.compare_true_north(WATER_CELLS, WATER_SWEEP, _published(wind_dir=14.3, wind_speed=1.0),
+                                {"grid_relative": True, "cells": {"A": 7}, "water": {}})
+    assert (rep["verdict"], rep["cell_moved"], len(rep["differences"])) == ("FAIL", ["A"], 1)
+
+
+@pytest.mark.parametrize("wind_dir, wind_speed, frame", [
+    (0.0, 1.0, "grid"),                    # the land cell's (0, -1) unturned: from 0
+    (14.3, 1.0, "true-north"),             # turned at -14.3: from 14.3
+    (344.7, 5.0, "water+true-north"),      # the water cell's (0, -5) turned at +15.3
+])
+def test_a_published_hour_is_matched_in_whichever_frame_it_was_published(wind_dir, wind_speed, frame):
+    row = {"valid_time": "2026-10-22T06:00:00+00:00", "wind_speed": wind_speed,
+           "wind_dir": wind_dir}
+    assert DQ.match_published(row, WATER_CELLS[0], {"c": WATER_SWEEP}) == ("c", 0, frame)
+
+
+def test_an_hour_in_no_frame_is_not_matched():
+    row = {"valid_time": "2026-10-22T06:00:00+00:00", "wind_speed": 5.0, "wind_dir": 0.0}
+    assert DQ.match_published(row, WATER_CELLS[0], {"c": WATER_SWEEP}) is None
+
+
 def test_the_gate_fails_with_nothing_compared():
     rep = DQ.compare_true_north([], GATE_SWEEP, _published(), GATE_META)
     assert (rep["verdict"], rep["spot_hours"]) == ("FAIL", 0)
@@ -430,6 +467,48 @@ def test_the_cap90_variant_is_the_wired_rater_and_the_gate_passes():
     assert rep["variants"]["true-north"]["changed"] == 0
     cap90 = rep["variants"]["true-north+cap90"]
     assert cap90["changed"] == 1 and cap90["focus"]["B"][0]["after"] == 3.0
+
+
+def test_an_hour_published_on_the_wired_cap_is_reproduced_on_it():
+    # The same hour published after the cap90 rule: 3.0 (wired). It reproduces on the wired cap,
+    # and the true-north variant (x-axis 0, #270 cap) re-rates it 1.5.
+    spot, row, cells, winds = _cap90_fixture()
+    row = dict(row, stars=3.0)
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["replay"] == {"HRRR, reproduced": 1}
+    assert rep["published_frames"] == {"grid": 1}
+    assert rep["variants"]["true-north"]["focus"]["B"][0]["after"] == 1.5
+    assert rep["variants"]["true-north+cap90"]["changed"] == 0
+
+
+def test_an_hour_published_on_the_water_cell_is_re_rated_from_the_spots_own_cell():
+    # Published from the water cell (x-axis 0): 11.0 m/s from 0, 90 off, cross-shore over 20 kt,
+    # 1.5 on either cap (4.0 uncapped). The true-north variant is the spot's OWN cell turned:
+    # 2 m/s from 90, light offshore, back to the fixture's 4.5.
+    from pipeline.interpret import wind_multiplier
+    spot, row, cells, winds = _preview_fixture()
+    row = dict(row, wind_speed=11.0, wind_dir=0.0, stars=1.5,
+               wind_mult=round(wind_multiplier(0.0, 11.0, 90.0, None), 3))
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["replay"] == {"HRRR, reproduced": 1}
+    assert rep["published_frames"] == {"water+true-north": 1}
+    assert rep["variants"]["true-north"]["focus"]["B"][0]["after"] == 4.5
+
+
+def test_water_plus_true_north_is_on_the_wired_rater():
+    # The water cell's wind from 20 deg at 11.0 m/s (21.382 kt), 70 off: #270 caps it 1.5 (the
+    # water variant), the wired cap 3.0 (water+true-north; x-axis 0 turns nothing). Uncapped
+    # 4.443 x 0.8**0.35 = 4.109 -> 4.0, so 1.5 and 3.0. Published 4.5 (light offshore).
+    import math as _m
+    spot, row, cells, winds = _preview_fixture()
+    u, v = -11.0 * _m.sin(_m.radians(20.0)), -11.0 * _m.cos(_m.radians(20.0))
+    winds = {"c": {5: winds["c"][5], 6: [(row["valid_time"], u, v)]}}
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["variants"]["water"]["focus"]["B"][0]["after"] == 1.5
+    assert rep["variants"]["water+true-north"]["focus"]["B"][0]["after"] == 3.0
 
 
 def test_the_cap90_gate_counts_a_wired_rater_that_differs_from_the_rule(monkeypatch):

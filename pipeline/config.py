@@ -702,6 +702,15 @@ HRRR_STEP_HOURS = tuple(range(0, HRRR_MAX_FORECAST_HOURS + 1))
 # speed + meteorological direction; the rater never sees the raw U/V.
 HRRR_GRIB_VARS = ("UGRD", "VGRD")
 HRRR_GRIB_LEVEL = "lev_10_m_above_ground"
+# HRRR's land mask (LAND:surface, 1 land / 0 water), fetched once per cycle from f00. A spot
+# whose nearest cell is land reads the nearest WATER cell on its seaward side instead: within
+# HRRR_WATER_SEARCH_DEG of the spot, bearing within HRRR_SEAWARD_HALF_ANGLE of orientation_deg
+# (which keeps back-bay and lagoon cells out). A land cell's wind is slowed by land roughness:
+# data-quality run 36 found 168 of 569 CONUS spots reading their wind over land.
+HRRR_LAND_VAR = "LAND"
+HRRR_LAND_LEVEL = "lev_surface"
+HRRR_WATER_SEARCH_DEG = 0.3
+HRRR_SEAWARD_HALF_ANGLE = 90.0
 # CONUS bbox used to skip non-CONUS spots at extract time. The HRRR
 # Lambert grid extends further (roughly 21–53 N, –134 to –60 W) but we
 # clip to the conservative interior so spots near the edge don't pick
