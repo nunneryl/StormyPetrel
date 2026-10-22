@@ -70,14 +70,16 @@ def test_missing_wind_or_bearing_is_still_no_cap(args):
 def test_no_rule_ever_raises_the_previous_cap_and_each_moves_only_its_own_case():
     """A property over a grid, not an expected value: every direction in 5° steps, 0-30 kt
     in quarter knots, periods 6-18 s. The wired cap and the preview's wind-both, built
-    independently, agree everywhere on it."""
+    independently, agree everywhere on it except cross-offshore (60-90° off), where since the
+    cap90 rule the wired cap reads the offshore rungs (test_data_quality holds it there)."""
     for d in range(0, 360, 5):
         for q in range(0, 121):
             ms = q / 4 * 0.514444
             for tp in (6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0):
                 live = SP.previous_wind_cap(float(d), ms, 245.0, tp)
-                assert I.wind_star_cap(float(d), ms, 245.0, tp) == \
-                    SP.proposed_wind_cap(float(d), ms, 245.0, tp, "wind-both"), (d, q, tp)
+                if not 60.0 <= I._angle_off(float(d), 245.0) < 90.0:
+                    assert I.wind_star_cap(float(d), ms, 245.0, tp) == \
+                        SP.proposed_wind_cap(float(d), ms, 245.0, tp, "wind-both"), (d, q, tp)
                 cls, kt = SP.wind_class(float(d), 245.0), ms / 0.514444
                 for r in RULES:
                     assert SP.proposed_wind_cap(float(d), ms, 245.0, tp, r) <= live, (d, q, tp, r)

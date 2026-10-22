@@ -604,6 +604,12 @@ WIND_CAP_UNSURFABLE_OFFSHORE = 2.0
 # up so long that drops go vertical and late, and paddling against it is hard").
 WIND_CAP_OFFSHORE_STRONG_KT = 20.0
 WIND_CAP_OFFSHORE_STRONG = 3.0
+# For the CAP, cross-offshore wind (60-90 deg off the offshore bearing) counts as offshore: it
+# reads the offshore rungs, not the cross-shore ladder. The wind SCORE keeps wind_class's 60/120
+# bands. Decided 2026-10-22 with the true-north fix to HRRR's wind (data-quality run 37): turned
+# to true north, Ocean City NJ's 21 Oct 16Z wind moved from 58 deg off (offshore, 3.0) to 72 deg
+# off (cross-shore), where the cross-shore ladder put a wind blowing partly offshore at 1.5.
+WIND_CAP_OFFSHORE_SIDE_DEG = 90.0
 #
 # THE 20 KT CHANGES, decided 2026-10-21 after rating-preview run 34 (2,612 of 95,107
 # spot-hours lower, none higher). Jennettes Pier read a 21.8 kt cross-shore wind at 11.9 s as
@@ -630,13 +636,16 @@ def wind_star_cap(
 ) -> float:
     """The most stars an hour can have in this wind; 5.0 is no cap.
 
+    Offshore here is under 90 deg off the offshore bearing (WIND_CAP_OFFSHORE_SIDE_DEG), so
+    cross-offshore counts as offshore; 90-120 is cross-shore and 120 and over onshore.
     Above 25 kt measured, whatever the period: 1.0 cross-shore or onshore, 2.0 offshore.
     Offshore above 20 kt measured: 3.0; offshore is otherwise never capped. Cross-shore and
     onshore read their ladder, capping above 13 kt, at knots - max(0, period - 8) up to 20 kt
     measured and at the measured knots above it."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return 5.0
-    cls = wind_class(wind_dir, offshore_wind_deg)
+    cls = ("offshore" if _angle_off(wind_dir, offshore_wind_deg) < WIND_CAP_OFFSHORE_SIDE_DEG
+           else wind_class(wind_dir, offshore_wind_deg))
     kt = wind_speed_ms / KT_TO_MS
     if kt > WIND_CAP_UNSURFABLE_KT:
         return WIND_CAP_UNSURFABLE_OFFSHORE if cls == "offshore" else WIND_CAP_UNSURFABLE

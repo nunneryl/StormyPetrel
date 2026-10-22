@@ -18,10 +18,14 @@ SECTIONS
               files read as grid-relative, and 0 directions or speeds apart by more than
               GATE_TOLERANCE.
   wind-preview  (Supabase) Every published hour whose wind is HRRR's, matched exactly to a cycle,
-              re-rated by the live rater (wired_rater) with the wind from: the water cell
-              (land-cell spots only), the same cell turned to true north, and both. A
-              published hour is matched to the UNROTATED wind, so this previews hours
-              published before forecast/hrrr.py's true-north fix.
+              reproduced by the rater it was published with (the live rater with the #270
+              cap, published_wind_cap) and re-rated with the wind from: the water cell
+              (land-cell spots only), the same cell turned to true north, and both, all on
+              the published cap; and true-north on the WIRED rater, whose cap counts
+              cross-offshore (60-90 deg off) as offshore, with THE CAP90 GATE: the wired
+              rater against the rule built here (cap90_star_cap), hour for hour, must be 0
+              differences. A published hour is matched to the UNROTATED wind, so this
+              previews hours published before forecast/hrrr.py's true-north fix.
   partitions  (Supabase) The swell partitions behind the Swell breakdown card, hour by hour, for
               the --explain spots: the card is hidden when at most one component is above
               0.05 m (frontend/components/SwellPartitions.tsx).
@@ -422,22 +426,26 @@ def _print_true_north(rep):
 WIND_VARIANTS = ("water", "true-north", "water+true-north", "true-north+cap90")
 
 
+def published_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
+    """The cap every hour published before the cap90 rule carries (#270, star_preview's own
+    copy 'wind-both'): offshore under 60 deg off, cross-shore 60-120, onshore 120 and over."""
+    from .star_preview import proposed_wind_cap
+    return proposed_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, "wind-both")
+
+
 def cap90_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
-    """interpret.wind_star_cap with the cross-offshore half (60-90 deg off) capped like offshore:
-    under 90 deg off the offshore rungs (over 25 kt 2.0, over 20 kt 3.0, else none); from 90 deg
-    the live ladder, which reads 90-120 as cross-shore and 120+ as onshore. The wind SCORE is
-    untouched (wind_multiplier keeps its 60/120 bands); only the cap moves."""
-    from .interpret import (KT_TO_MS, WIND_CAP_OFFSHORE_STRONG, WIND_CAP_OFFSHORE_STRONG_KT,
-                            WIND_CAP_UNSURFABLE_KT, WIND_CAP_UNSURFABLE_OFFSHORE, _angle_off,
-                            wind_star_cap)
+    """The cap90 rule built here, independently of interpret.wind_star_cap: under 90 deg off
+    the offshore rungs (over 25 kt 2.0, over 20 kt 3.0, else none); from 90 deg the published
+    ladder (published_wind_cap), which reads 90-120 as cross-shore and 120+ as onshore. The
+    wind SCORE is untouched (wind_multiplier keeps its 60/120 bands); only the cap moves."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return 5.0
-    if _angle_off(wind_dir, offshore_wind_deg) < 90.0:
-        kt = wind_speed_ms / KT_TO_MS
-        if kt > WIND_CAP_UNSURFABLE_KT:
-            return WIND_CAP_UNSURFABLE_OFFSHORE
-        return WIND_CAP_OFFSHORE_STRONG if kt > WIND_CAP_OFFSHORE_STRONG_KT else 5.0
-    return wind_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
+    if angle_off(wind_dir, offshore_wind_deg) < 90.0:
+        kt = wind_speed_ms * KT_PER_MS
+        if kt > 25.0:
+            return 2.0
+        return 3.0 if kt > 20.0 else 5.0
+    return published_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
 
 
 def match_cycle(row, flat, winds):
@@ -501,14 +509,13 @@ def rerate(row, spot, factors, m, speed, direction, cap_fn=None):
 
 
 def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=()):
-    """Every published hour whose wind is HRRR's and which the live rater reproduces, re-rated
-    under each of WIND_VARIANTS; by state, wind class change, and the homepage list."""
-    from .forecast.face_correction import spot_factor
-    from .interpret import wind_class, wind_multiplier
-    from .star_preview import _slug, rescore, wired_rater
+    """Every published hour whose wind is HRRR's and which the published rater (the live rater
+    with published_wind_cap) reproduces, re-rated under each of WIND_VARIANTS; by state, wind
+    class change, and the homepage list. 'true-north+cap90' is the WIRED rater, with the
+    cap90 gate against cap90_star_cap; the other variants keep the published cap."""
+    from .interpret import wind_class, wind_multiplier, wind_star_cap
     by_name = {c["spot"]: c for c in cells}
     counts = Counter()
-    from .interpret import wind_star_cap
     rep = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
                "class_moves": Counter()} for v in WIND_VARIANTS}
     first = {}
@@ -528,9 +535,8 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                 row.get("chop_ratio")), 3) != round(float(wm), 3):
             counts["HRRR, but wind_mult not reproduced"] += 1
             continue
-        rb = rescore(row, spot)
-        live = (wired_rater(row, spot, rb, spot_factor(spot, factors or {}, _slug), m)
-                if rb["stars"] is not None else None)
+        live = rerate(row, spot, factors, m, float(row["wind_speed"]), float(row["wind_dir"]),
+                      cap_fn=published_wind_cap)
         if live is None or live != float(row["stars"]):
             counts["HRRR, stars not reproduced"] += 1
             continue
@@ -540,13 +546,18 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             w = variant_wind(variant, cell, winds, *hit)
             if w is None:
                 continue
+            wired = variant == "true-north+cap90"
             after = rerate(row, spot, factors, m, *w,
-                           cap_fn=cap90_star_cap if variant == "true-north+cap90" else None)
+                           cap_fn=None if wired else published_wind_cap)
             if after is None:
                 continue
-            if variant == "true-north":
-                # The construction check: the cap90 route with the LIVE cap must equal
-                # wired_rater, or the cap90 numbers measure the construction, not the rule.
+            if wired:
+                # THE CAP90 GATE: the wired rater (interpret.wind_star_cap, cap90 in it) against
+                # the rule built here (cap90_star_cap), hour for hour. And the construction
+                # check: the cap route with the wired cap must equal wired_rater too, or the
+                # gate measures the construction, not the rule.
+                if rerate(row, spot, factors, m, *w, cap_fn=cap90_star_cap) != after:
+                    counts["cap90 gate: DIFFERENT (must be 0)"] += 1
                 if rerate(row, spot, factors, m, *w, cap_fn=wind_star_cap) != after:
                     counts["construction check: DIFFERENT (must be 0)"] += 1
             afters[variant] = after

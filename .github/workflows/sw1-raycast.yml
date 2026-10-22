@@ -52,7 +52,9 @@ name: sw1-raycast
 #       pipeline's forecast/hrrr.py on the newest cycle against the sweep's own true-north
 #       wind, spot by spot and hour by hour (must be 0 differences); the published HRRR hours
 #       re-rated with the water cell's wind and with the wind turned from HRRR's grid to true
-#       north; the Swell breakdown card hour by hour at the spots in `spots`; every spot's tide
+#       north, and on the wired rater, whose cap reads cross-offshore as offshore, with THE
+#       CAP90 GATE, the wired rater against the rule built in the sweep (must be 0
+#       differences); the Swell breakdown card hour by hour at the spots in `spots`; every spot's tide
 #       station against the stations within 30 km (damped stations flagged, re-rated where the
 #       spot has a rated preference); and the cams with no spot. Window from 2026-10-21 00:00Z.
 #       Geometry from baseline_ref. SELECT only.
