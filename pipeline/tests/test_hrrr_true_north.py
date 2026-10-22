@@ -66,7 +66,8 @@ def test_new_jersey_turns_14_3_degrees_clockwise(run):
     rec, meta = run(-14.3, 0.0, -5.0)
     assert rec["wind_dir"] == 14.3
     assert rec["wind_speed"] == 5.0
-    assert meta == {"grid_relative": True, "cells": {"Spot": 5}, "water": {}}   # (1, 1): 1 x 4 + 1
+    assert meta == {"grid_relative": True, "cells": {"Spot": 5}, "water": {},   # (1, 1): 1 x 4 + 1
+                    "kept_land": []}
 
 
 def test_california_turns_15_3_degrees_anticlockwise(run):

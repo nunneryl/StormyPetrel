@@ -268,10 +268,23 @@ def cell_winds(session, cycle, flats, workdir):
     return out
 
 
-def hrrr_cells(spots, tree, shape, lats, lngs, mask):
+def land_cell_spots(path=None):
+    """The slugs in the land-cell spot list (config.HRRR_LAND_CELL_SPOTS_FILE), read here on
+    its own so the gate does not take forecast/hrrr.py's reading of it on trust."""
+    from .config import HRRR_LAND_CELL_SPOTS_FILE
+    return set(json.loads(Path(path or HRRR_LAND_CELL_SPOTS_FILE).read_text())["spots"])
+
+
+def _slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+
+def hrrr_cells(spots, tree, shape, lats, lngs, mask, keep_land=None):
     """Every CONUS spot's cell, its land flag and 3x3 share, its grid x-axis angle, and for a
-    land cell the nearest seaward water cell."""
+    land cell the nearest seaward water cell, with keeps_land_cell set where the spot is in
+    the land-cell spot list (*keep_land*, default land_cell_spots())."""
     from .forecast.hrrr import _spots_in_conus
+    keep_land = land_cell_spots() if keep_land is None else keep_land
     flat_mask = mask.ravel()
     flat_lat, flat_lng = lats.ravel(), lngs.ravel()
     nx = shape[1]
@@ -292,6 +305,7 @@ def hrrr_cells(spots, tree, shape, lats, lngs, mask):
                "cell_is_land": bool(flat_mask[flat] >= 0.5),
                "land_share_3x3": round(neighbour_land_share(mask, i, j), 3),
                "x_axis_deg": round(grid_x_axis_deg(lats, lngs, i, j), 3)}
+        row["keeps_land_cell"] = row["cell_is_land"] and _slug(s["name"]) in keep_land
         if row["cell_is_land"]:
             near = tree.query_ball_point([lat, lng], WATER_SEARCH_DEG)
             cands = [(int(k), float(flat_lat[k]), float(flat_lng[k]), float(flat_mask[k]))
@@ -370,11 +384,13 @@ def compare_true_north(cells, sweep, published, meta):
     """forecast/hrrr.py's records (*published*, by spot) against the sweep's true-north wind
     (*sweep*: {flat: [(valid_iso, u, v)]} grid-relative), for every spot in *cells*."""
     differences, missing, compared, worst_dir, worst_speed = [], [], 0, 0.0, 0.0
-    want_flat = {r["spot"]: r.get("water_flat", r["flat"]) for r in cells}
+    want_flat = {r["spot"]: (r["flat"] if r.get("keeps_land_cell")
+                             else r.get("water_flat", r["flat"])) for r in cells}
     cell_moved = [r["spot"] for r in cells if meta["cells"].get(r["spot"]) != want_flat[r["spot"]]]
     for r in cells:
         got = {_iso(rec["valid_time"]): rec for rec in published.get(r["spot"], ())}
-        axis = r.get("water_x_axis_deg", r["x_axis_deg"])
+        axis = (r["x_axis_deg"] if r.get("keeps_land_cell")
+                else r.get("water_x_axis_deg", r["x_axis_deg"]))
         for valid, u, v in sweep.get(want_flat[r["spot"]], ()):
             rec = got.get(_iso(valid))
             if rec is None:
@@ -396,6 +412,7 @@ def compare_true_north(cells, sweep, published, meta):
     return {"verdict": "PASS" if ok else "FAIL", "grid_relative": meta["grid_relative"],
             "spots": len(cells), "spot_hours": compared, "cell_moved": cell_moved,
             "water_cells": len(meta.get("water", {})),
+            "kept_land": sorted(meta.get("kept_land", [])),
             "missing": missing, "differences": differences,
             "max_dir_diff": round(worst_dir, 6), "max_speed_diff": round(worst_speed, 6)}
 
@@ -422,7 +439,8 @@ def _print_true_north(rep):
     print(f"\n=== HRRR wind gate (water cell, true north) — cycle {rep['cycle']}: "
           f"{rep['verdict']} ===")
     print(f"files read as grid-relative: {rep['grid_relative']}; step files that failed to "
-          f"parse: {rep['parse_failed']}; spots moved to a water cell: {rep['water_cells']}")
+          f"parse: {rep['parse_failed']}; spots moved to a water cell: {rep['water_cells']}; "
+          f"kept on their land cell by the list: {len(rep['kept_land'])} {rep['kept_land']}")
     print(f"{rep['spots']} spots, {rep['spot_hours']} spot-hours compared; spots on a different "
           f"cell: {len(rep['cell_moved'])}; spot-hours missing: {len(rep['missing'])}; "
           f"DIFFERENT (over {GATE_TOLERANCE}): {len(rep['differences'])}")
@@ -502,7 +520,8 @@ def _iso(t):
 
 def variant_wind(variant, cell, winds, cycle, n, u, v):
     """(speed m/s, direction) of *variant* for one matched hour, or None when it has no value."""
-    if variant in ("true-north", "true-north+cap90"):
+    if variant in ("true-north", "true-north+cap90") or (
+            variant == "water+true-north" and cell.get("keeps_land_cell")):
         ue, ve = grid_to_earth(u, v, cell["x_axis_deg"])
         return math.hypot(ue, ve), met_dir(ue, ve)
     if "water_flat" not in cell:

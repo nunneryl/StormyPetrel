@@ -7,8 +7,10 @@ function under test.
 """
 from __future__ import annotations
 
+import json
 import math
 
+import numpy as np
 import pytest
 
 from pipeline import data_quality as DQ
@@ -671,3 +673,56 @@ def test_a_rise_is_not_a_drop():
     water = rep["land_cells"]["water"]
     assert water["by_state"] == {"North Carolina": {3.0: 1}}
     assert (water["ups"], water["downs"], water["biggest_drops"]) == (1, 0, [])
+
+
+
+# --------------------------------------------------------------------------- #
+# The land-cell spot list in the gate and the preview                          #
+# --------------------------------------------------------------------------- #
+
+def test_the_gate_expects_a_listed_spot_on_its_own_cell():
+    # Listed: the gate wants the land cell 7 turned at -14.3: (0, -1) is from 14.3 at 1 m/s.
+    cells = [dict(WATER_CELLS[0], keeps_land_cell=True)]
+    published = _published(wind_dir=14.3, wind_speed=1.0)
+    kept = {"grid_relative": True, "cells": {"A": 7}, "water": {}, "kept_land": ["A"]}
+    rep = DQ.compare_true_north(cells, WATER_SWEEP, published, kept)
+    assert (rep["verdict"], rep["kept_land"], rep["water_cells"]) == ("PASS", ["A"], 0)
+    # The pipeline moving it to the water cell anyway fails the gate.
+    moved = {"grid_relative": True, "cells": {"A": 9}, "water": {"A": [7, 9]}, "kept_land": []}
+    rep = DQ.compare_true_north(cells, WATER_SWEEP, _published(wind_dir=344.7), moved)
+    assert (rep["verdict"], rep["cell_moved"]) == ("FAIL", ["A"])
+
+
+def test_the_preview_rates_a_listed_spot_on_its_own_cell():
+    # x-axis 0, land (-2, 0): 2 m/s from 90; the water cell (0, -11) is not used.
+    cell = {"flat": 5, "x_axis_deg": 0.0, "water_flat": 6, "water_x_axis_deg": 0.0,
+            "keeps_land_cell": True}
+    winds = {"c": {5: [("t", -2.0, 0.0)], 6: [("t", 0.0, -11.0)]}}
+    assert DQ.variant_wind("water+true-north", cell, winds, "c", 0, -2.0, 0.0) == (2.0, 90.0)
+    # The pure water variant still shows the water cell: 11 m/s from 0.
+    assert DQ.variant_wind("water", cell, winds, "c", 0, -2.0, 0.0) == (11.0, 0.0)
+
+
+def test_hrrr_cells_marks_only_listed_spots_on_a_land_cell():
+    # A 3 x 4 grid at 40 N, 0.01 deg apart, land everywhere but (1, 2), 0.01 deg east of (1, 1).
+    # Both spots sit on (1, 1), flat 5, facing east, so both find water cell 6; only the listed
+    # one keeps its land cell. A listed spot on a water cell (the third, on (1, 2)) is not marked.
+    from scipy.spatial import cKDTree
+    lats = np.array([[40.0 + (i - 1) * 0.01] * 4 for i in range(3)])
+    lngs = np.array([[-74.0 + (j - 1) * 0.01 for j in range(4)] for _ in range(3)])
+    mask = np.ones((3, 4))
+    mask[1, 2] = 0.0
+    tree = cKDTree(np.column_stack([lats.ravel(), lngs.ravel()]))
+    spots = [{"name": "Cannon Beach", "lat": 40.0, "lng": -74.0, "orientation_deg": 90.0},
+             {"name": "Other", "lat": 40.0, "lng": -74.0, "orientation_deg": 90.0},
+             {"name": "Wet", "lat": 40.0, "lng": -73.99, "orientation_deg": 90.0}]
+    rows = DQ.hrrr_cells(spots, tree, (3, 4), lats, lngs, mask,
+                         keep_land={"cannon-beach", "wet"})
+    got = {r["spot"]: (r["flat"], r.get("water_flat"), r["keeps_land_cell"]) for r in rows}
+    assert got == {"Cannon Beach": (5, 6, True), "Other": (5, 6, False), "Wet": (6, None, False)}
+
+
+def test_the_sweep_reads_the_list_itself(tmp_path):
+    p = tmp_path / "list.json"
+    p.write_text(json.dumps({"spots": {"cannon-beach": "x", "bastendorff-beach": "y"}}))
+    assert DQ.land_cell_spots(p) == {"cannon-beach", "bastendorff-beach"}

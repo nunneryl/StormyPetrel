@@ -11,6 +11,8 @@ function under test.
 """
 from __future__ import annotations
 
+import json
+
 from pathlib import Path
 
 import numpy as np
@@ -107,15 +109,16 @@ def _dataset(u, v):
 @pytest.fixture
 def run(monkeypatch):
     """extract_steps on one step: grid wind (0, -1) everywhere but (0, -5) at (1, 2)."""
-    def _run(land_mask, orientation=90.0):
+    def _run(land_mask, orientation=90.0, keep_land=None, name="Spot"):
         u, v = np.zeros((3, 4)), np.full((3, 4), -1.0)
         v[1, 2] = -5.0
         monkeypatch.setattr(H, "_open_grib_dataset", lambda p: [_dataset(u, v)])
         monkeypatch.setattr(H, "_uv_relative_to_grid", lambda p: True)
-        spot = {"name": "Spot", "lat": 0.0, "lng": 0.0, "orientation_deg": orientation}
-        out, failed, meta = H.extract_steps([spot], [(0, Path("step.grib2"))], land_mask)
+        spot = {"name": name, "lat": 0.0, "lng": 0.0, "orientation_deg": orientation}
+        out, failed, meta = H.extract_steps([spot], [(0, Path("step.grib2"))], land_mask,
+                                            keep_land)
         assert failed == 0
-        (rec,) = out["Spot"]
+        (rec,) = out[name]
         return rec, meta
     return _run
 
@@ -180,3 +183,66 @@ def test_the_land_mask_is_fetched_with_the_wind_subregion():
     assert "var_UGRD" not in p and "lev_10_m_above_ground" not in p
     assert (p["leftlon"], p["rightlon"], p["toplat"], p["bottomlat"]) == \
         ("-130.00", "-65.00", "50.00", "22.00")
+
+
+# --------------------------------------------------------------------------- #
+# The land-cell spot list: spots in the lee of a headland keep their own cell  #
+# --------------------------------------------------------------------------- #
+
+def test_a_listed_spot_on_a_land_cell_keeps_it(run):
+    # The same land cell (1, 1) with water east at (1, 2), but the spot is listed: it reads its
+    # own cell, x-axis 0, grid wind (0, -1): from 0 at 1 m/s.
+    rec, meta = run(_mask(), keep_land={"spot": "in a cove"})
+    assert (rec["wind_speed"], rec["wind_dir"]) == (1.0, 0.0)
+    assert (meta["cells"], meta["water"], meta["kept_land"]) == ({"Spot": 5}, {}, ["Spot"])
+
+
+def test_a_listed_spot_on_a_water_cell_is_not_counted_as_kept(run):
+    rec, meta = run(_mask(water=((1, 1), (1, 2))), keep_land={"spot": "in a cove"})
+    assert (meta["cells"], meta["kept_land"]) == ({"Spot": 5}, [])
+
+
+def test_an_unlisted_spot_still_reads_the_water_cell(run):
+    rec, meta = run(_mask(), keep_land={"another-spot": "in a cove"})
+    assert (rec["wind_speed"], rec["wind_dir"]) == (5.0, 345.964)
+    assert meta["kept_land"] == []
+
+
+@pytest.mark.parametrize("name, slug", [("La Push Third Beach", "la-push-third-beach"),
+                                        ("Indian Beach Ecola", "indian-beach-ecola"),
+                                        ("Spot's  Name!", "spot-s-name")])
+def test_the_list_is_keyed_by_slug(name, slug):
+    assert H._slug(name) == slug
+
+
+def test_an_entry_with_no_reason_is_dropped(tmp_path):
+    p = tmp_path / "list.json"
+    p.write_text(json.dumps({"spots": {"a": "behind a headland", "b": "", "c": "  ", "d": None}}))
+    assert H.load_land_cell_spots(p) == {"a": "behind a headland"}
+
+
+def test_a_missing_list_keeps_no_land_cell(tmp_path):
+    assert H.load_land_cell_spots(tmp_path / "absent.json") == {}
+
+
+def test_the_committed_list_is_the_five_decided_spots():
+    # Decided 2026-10-22 from data-quality run 41. South Beach Newport and Westport were
+    # reviewed and read their water cell.
+    listed = H.load_land_cell_spots()
+    assert set(listed) == {"trinidad-state-beach", "indian-beach-ecola", "la-push-third-beach",
+                           "cannon-beach", "bastendorff-beach"}
+    assert "south-beach-newport" not in listed and "westport" not in listed
+    roster = json.loads((Path(H.__file__).parents[1] / "spots_enriched.json").read_text())
+    names = {H._slug(s["name"]): s["name"] for s in roster}
+    assert {names[k] for k in listed} == {"Trinidad State Beach", "Indian Beach Ecola",
+                                          "La Push Third Beach", "Cannon Beach",
+                                          "Bastendorff Beach"}
+
+
+def test_with_no_list_given_the_committed_list_is_read(run):
+    # Cannon Beach is in pipeline/data/hrrr_land_cell_spots.json: on the land cell it keeps it
+    # (from 0 at 1 m/s); an unlisted name on the same cell reads the water cell (345.964).
+    rec, meta = run(_mask(), name="Cannon Beach")
+    assert (rec["wind_speed"], rec["wind_dir"], meta["kept_land"]) == (1.0, 0.0, ["Cannon Beach"])
+    rec, meta = run(_mask(), name="Seaside")
+    assert (rec["wind_speed"], rec["wind_dir"], meta["kept_land"]) == (5.0, 345.964, [])

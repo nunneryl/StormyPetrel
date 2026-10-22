@@ -711,6 +711,8 @@ HRRR_LAND_VAR = "LAND"
 HRRR_LAND_LEVEL = "lev_surface"
 HRRR_WATER_SEARCH_DEG = 0.3
 HRRR_SEAWARD_HALF_ANGLE = 90.0
+# Spots in the lee of a headland or in a cove keep their own cell even when it is land.
+HRRR_LAND_CELL_SPOTS_FILE = PIPELINE_DIR / "data" / "hrrr_land_cell_spots.json"
 # CONUS bbox used to skip non-CONUS spots at extract time. The HRRR
 # Lambert grid extends further (roughly 21–53 N, –134 to –60 W) but we
 # clip to the conservative interior so spots near the edge don't pick

@@ -41,6 +41,7 @@ from ..config import (
     HRRR_GRIB_FILTER_URL,
     HRRR_GRIB_LEVEL,
     HRRR_GRIB_VARS,
+    HRRR_LAND_CELL_SPOTS_FILE,
     HRRR_LAND_LEVEL,
     HRRR_LAND_VAR,
     HRRR_LONG_CYCLES,
@@ -422,6 +423,34 @@ def _seaward_water_cell(tree, flat_mask, flat_lat, flat_lng, lat, lng, orientati
     return None if best is None else best[0]
 
 
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slug(name):
+    return _SLUG_RE.sub("-", (name or "").lower()).strip("-")
+
+
+def load_land_cell_spots(path: Path = HRRR_LAND_CELL_SPOTS_FILE) -> dict[str, str]:
+    """{slug: reason} of the spots that keep their own cell even when HRRR counts it as land
+    (config.HRRR_LAND_CELL_SPOTS_FILE). An entry with no reason is dropped with a warning, so
+    every exception carries its why. A missing or unreadable file is logged and gives no
+    exceptions: every land-cell spot then reads its water cell."""
+    try:
+        doc = json.loads(Path(path).read_text())
+        spots = doc["spots"]
+    except Exception as e:  # noqa: BLE001
+        log.warning("hrrr: land-cell spot list %s unreadable (%s); no spot keeps its land cell",
+                    path, e)
+        return {}
+    out = {}
+    for slug, reason in spots.items():
+        if not isinstance(reason, str) or not reason.strip():
+            log.warning("hrrr: land-cell spot %r has no reason; ignored", slug)
+            continue
+        out[slug] = reason
+    return out
+
+
 def _spots_in_conus(spots: list[dict]) -> list[dict]:
     lat_min, lat_max, lng_min, lng_max = HRRR_CONUS_BBOX
     out: list[dict] = []
@@ -436,14 +465,18 @@ def _spots_in_conus(spots: list[dict]) -> list[dict]:
     return out
 
 
-def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]], land_mask=None):
+def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]], land_mask=None,
+                  keep_land=None):
     """Per-spot hourly wind from the step files: the nearest grid cell's u/v, or, where that
-    cell is land in *land_mask*, the nearest seaward water cell's (_seaward_water_cell); turned
-    to true north when the file says they are grid-relative. Returns (records by spot name,
-    step files that failed to parse, {"grid_relative": bool | None, "cells": {name: flat
-    index read}, "water": {name: [land flat, water flat]}}). Separate from fetch() so the
-    data-quality gate runs exactly this on archive files."""
+    cell is land in *land_mask*, the nearest seaward water cell's (_seaward_water_cell) unless
+    the spot's slug is in *keep_land* (default: load_land_cell_spots()); turned to true north
+    when the file says they are grid-relative. Returns (records by spot name, step files that
+    failed to parse, {"grid_relative": bool | None, "cells": {name: flat index read}, "water":
+    {name: [land flat, water flat]}, "kept_land": [names on a land cell kept by keep_land]}).
+    Separate from fetch() so the data-quality gate runs exactly this on archive files."""
     import numpy as np
+    keep_land = load_land_cell_spots() if keep_land is None else keep_land
+    kept_land: list[str] = []
 
     spot_names: list[str] = [s["name"] for s in conus_spots]
     spot_lats = np.asarray([float(s["lat"]) for s in conus_spots], dtype=float)
@@ -508,6 +541,9 @@ def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]], land_m
                     for n, (s, k) in enumerate(zip(conus_spots, flat_idx)):
                         if flat_mask[k] < 0.5:
                             continue
+                        if _slug(s["name"]) in keep_land:
+                            kept_land.append(s["name"])
+                            continue
                         orientation = s.get("orientation_deg")
                         w = _seaward_water_cell(
                             tree, flat_mask, flat_lat, flat_lng, float(s["lat"]),
@@ -515,10 +551,16 @@ def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]], land_m
                         if w is not None:
                             water[s["name"]] = [int(k), w]
                             flat_idx[n] = w
-                    log.info("hrrr: %d spots on a land cell read the nearest seaward water cell "
-                             "(%d land-cell spots have none within %.1f deg and keep theirs)",
-                             len(water), int(sum(flat_mask[k] >= 0.5 for k in flat_idx)),
+                    log.info("hrrr: %d spots on a land cell read the nearest seaward water cell; "
+                             "%d keep their land cell by the land-cell spot list (%s); %d have "
+                             "no seaward water cell within %.1f deg", len(water), len(kept_land),
+                             ", ".join(kept_land),
+                             int(sum(flat_mask[k] >= 0.5 for k in flat_idx)) - len(kept_land),
                              HRRR_WATER_SEARCH_DEG)
+                    unmatched = set(keep_land) - {_slug(s["name"]) for s in conus_spots}
+                    if unmatched:
+                        log.warning("hrrr: land-cell spot list names no CONUS spot: %s",
+                                    ", ".join(sorted(unmatched)))
                 if _uv_relative_to_grid(path):
                     nx = grid_shape[1]
                     axis_deg = np.asarray([_grid_x_axis_deg(lats, lngs, *divmod(int(k), nx))
@@ -560,7 +602,8 @@ def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]], land_m
     cells = ({} if flat_idx is None
              else {name: int(k) for name, k in zip(spot_names, flat_idx)})
     grid_relative = None if flat_idx is None else axis_deg is not None
-    return out, parse_failed, {"grid_relative": grid_relative, "cells": cells, "water": water}
+    return out, parse_failed, {"grid_relative": grid_relative, "cells": cells, "water": water,
+                               "kept_land": kept_land}
 
 
 # ---------------------------------------------------------------------------
