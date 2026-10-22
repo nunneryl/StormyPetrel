@@ -560,22 +560,6 @@
       "display_mode": "link",
       "attribution": "Rehoboth Beach Cam",
       "attribution_url": "http://www.rehobothbeachcam.com/"
-    },
-    {
-      "spot_slug": "frankfort-beach",
-      "cam_name": "Frankfort Beach",
-      "provider": "webcam",
-      "display_mode": "link",
-      "attribution": "Pixelcaster",
-      "attribution_url": "https://pixelcaster.com/live/gotks/frankfort2/"
-    },
-    {
-      "spot_slug": "edgewater-beach-cleveland",
-      "cam_name": "Edgewater Beach",
-      "provider": "webcam",
-      "display_mode": "link",
-      "attribution": "AngelCam",
-      "attribution_url": "https://v.angelcam.com/iframe?v=91yx8ek0ro"
     }
   ]
 }
