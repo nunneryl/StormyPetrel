@@ -28,6 +28,12 @@ SECTIONS
               differences; and water+true-north on the wired rater too. A published hour is
               matched in whichever frame it was published (match_published: unturned, turned,
               or the water cell turned) and reproduced on #270's cap or the wired one.
+              LAND-CELL HOURS AGAINST THE NEW RULES: every land-cell hour re-rated on the
+              water cell and on the BLEND (the mean of the land-cell and water-cell winds as
+              vectors, on true north), both against the same hour on the spot's own cell
+              turned to true north, all on the wired rater (#275's cap); by state, the spots
+              that lose the most stars, and every hour 'water' drops by BIG_DROP or more with
+              both winds, their classes and caps, and the cell geometry.
   partitions  (Supabase) The swell partitions behind the Swell breakdown card, hour by hour, for
               the --explain spots: the card is hidden when at most one component is above
               0.05 m (frontend/components/SwellPartitions.tsx).
@@ -508,6 +514,30 @@ def variant_wind(variant, cell, winds, cycle, n, u, v):
     return math.hypot(ue, ve), met_dir(ue, ve)
 
 
+def earth_wind(cell, winds, cycle, n, which="land"):
+    """(east, north) m/s at the spot's own cell ('land') or its water cell ('water'), turned
+    to true north at that cell."""
+    flat, axis = ((cell["flat"], cell["x_axis_deg"]) if which == "land"
+                  else (cell["water_flat"], cell["water_x_axis_deg"]))
+    _, u, v = winds[cycle][flat][n]
+    return grid_to_earth(u, v, axis)
+
+
+def blend_wind(cell, winds, cycle, n):
+    """(speed m/s, direction) of the mean of the land-cell and water-cell winds, as vectors
+    on true north."""
+    le, ln = earth_wind(cell, winds, cycle, n, "land")
+    we, wn = earth_wind(cell, winds, cycle, n, "water")
+    e, nn = (le + we) / 2.0, (ln + wn) / 2.0
+    return math.hypot(e, nn), met_dir(e, nn)
+
+
+# Land-cell hours measured against the NEW rules: the baseline is the spot's own cell on true
+# north and the wired rater (#275's cap), not what was published.
+LAND_CELL_VARIANTS = ("water", "blend")
+BIG_DROP = -1.5                    # every hour dropping this much or more under 'water' is listed
+
+
 def rerate(row, spot, factors, m, speed, direction, cap_fn=None):
     """The live rater on *row* with the wind replaced: wind_mult recomputed by the rater's own
     wind_multiplier from the row's chop_ratio, then wired_rater. With *cap_fn* the stars are
@@ -542,6 +572,9 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
     counts, frames = Counter(), Counter()
     rep = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
                "class_moves": Counter()} for v in WIND_VARIANTS}
+    land = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
+                "class_moves": Counter()} for v in LAND_CELL_VARIANTS}
+    drops = []
     first = {}
     for row in rows:
         name, state = names.get(row["spot_id"], (None, None))
@@ -572,6 +605,9 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             counts["HRRR, stars not reproduced"] += 1
             continue
         counts["HRRR, reproduced"] += 1
+        if "water_flat" in cell:
+            land_cell_hour(row, spot, name, state, cell, winds, cycle, step, factors, m,
+                           land, drops)
         afters = {}
         for variant in WIND_VARIANTS:
             w = variant_wind(variant, cell, winds, *hit)
@@ -607,7 +643,9 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                                      "wind_after": f"{after_cls} {w[0] * KT_PER_MS:.1f} kt from {w[1]:.0f}°"})
         if row["spot_id"] not in first and _iso(row["valid_time"]) >= now:
             first[row["spot_id"]] = (live, afters)
-    out = {"replay": dict(counts), "published_frames": dict(frames), "variants": {}}
+    out = {"replay": dict(counts), "published_frames": dict(frames), "variants": {},
+           "land_cells": {v: _land_summary(r) for v, r in land.items()},
+           "water_drops": sorted(drops, key=lambda d: (d["delta"], d["spot"], d["valid_time"]))}
     for variant, r in rep.items():
         per_spot = Counter(c["spot"] for c in r["changed"])
         board_b = sorted(((b, sid) for sid, (b, _) in first.items()), key=lambda x: (-x[0], x[1]))
@@ -628,6 +666,88 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             "focus": {f: [c for c in r["changed"] if c["spot"] == f] for f in focus},
         }
     return out
+
+
+def land_cell_hour(row, spot, name, state, cell, winds, cycle, n, factors, m, land, drops):
+    """One land-cell hour under LAND_CELL_VARIANTS against the same hour on the spot's own cell
+    turned to true north, all on the wired rater (#275's cap)."""
+    from .interpret import wind_class, wind_star_cap
+    from .star_preview import rescore
+    off = spot.get("offshore_wind_deg")
+    tp = rescore(row, spot)["tp"]
+    le, ln = earth_wind(cell, winds, cycle, n, "land")
+    base_w = (math.hypot(le, ln), met_dir(le, ln))
+    base = rerate(row, spot, factors, m, *base_w)
+    if base is None:
+        return
+    we, wn = earth_wind(cell, winds, cycle, n, "water")
+    ws = {"water": (math.hypot(we, wn), met_dir(we, wn)), "blend": blend_wind(cell, winds, cycle, n)}
+
+    def describe(w):
+        return {"kt": round(w[0] * KT_PER_MS, 1), "from": round(w[1]),
+                "class": wind_class(w[1], off), "cap": wind_star_cap(w[1], w[0], off, tp)}
+
+    for variant, w in ws.items():
+        after = rerate(row, spot, factors, m, *w)
+        if after is None:
+            continue
+        r = land[variant]
+        delta = round(after - base, 1)
+        r["by_state"][state][delta] += 1
+        b_cls, a_cls = wind_class(base_w[1], off), wind_class(w[1], off)
+        if b_cls != a_cls:
+            r["class_changed"] += 1
+            r["class_moves"][f"{b_cls} -> {a_cls}"] += 1
+        if delta:
+            r["changed"].append({"spot": name, "state": state, "delta": delta})
+        if variant == "water" and delta <= BIG_DROP:
+            drops.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                          "before": base, "after": after, "delta": delta,
+                          "land": describe(base_w), "water": describe(w),
+                          "orientation_deg": spot.get("orientation_deg"),
+                          "offshore_wind_deg": off,
+                          "land_share_3x3": cell.get("land_share_3x3"),
+                          "water_km": cell.get("water_km"),
+                          "water_bearing": cell.get("water_bearing")})
+
+
+def _land_summary(r):
+    """Totals, by state, and the spots that lose the most stars, for one land-cell variant."""
+    lost, hours = Counter(), Counter()
+    for c in r["changed"]:
+        if c["delta"] < 0:
+            lost[c["spot"]] += -c["delta"]
+            hours[c["spot"]] += 1
+    return {"compared": sum(sum(c.values()) for c in r["by_state"].values()),
+            "changed": len(r["changed"]), "ups": sum(c["delta"] > 0 for c in r["changed"]),
+            "downs": sum(c["delta"] < 0 for c in r["changed"]),
+            "wind_class_changed": r["class_changed"],
+            "class_moves": dict(r["class_moves"].most_common()),
+            "by_state": {s: dict(sorted(c.items())) for s, c in
+                         sorted(r["by_state"].items(), key=lambda kv: str(kv[0]))},
+            "biggest_drops": [(s, round(lost[s], 1), hours[s])
+                              for s, _ in sorted(lost.items(), key=lambda kv: (-kv[1], kv[0]))[:15]]}
+
+
+def _print_land_cells(rep):
+    print("\n=== Land-cell hours against the NEW rules: each hour on the water cell (or the "
+          "land/water blend) vs the same hour on the spot's own cell, true north, #275 cap ===")
+    for variant, r in rep["land_cells"].items():
+        print(f"\n--- {variant}: {r['changed']} of {r['compared']} hours change (up {r['ups']}, "
+              f"down {r['downs']}); wind class changed on {r['wind_class_changed']} h")
+        print(f"  class moves: {r['class_moves']}")
+        for s, c in r["by_state"].items():
+            print(f"  {s}: {c}")
+        print(f"  biggest drops (spot, stars lost, hours down): {r['biggest_drops']}")
+    drops = rep["water_drops"]
+    print(f"\n--- water: {len(drops)} hours drop {-BIG_DROP} stars or more")
+    for d in drops:
+        lw, ww = d["land"], d["water"]
+        print(f"  {d['spot']} ({d['state']}) {d['valid_time']}: {d['before']} -> {d['after']} | "
+              f"land {lw['kt']} kt from {lw['from']}° {lw['class']} cap {lw['cap']} | "
+              f"water {ww['kt']} kt from {ww['from']}° {ww['class']} cap {ww['cap']} | "
+              f"faces {d['orientation_deg']}, offshore {d['offshore_wind_deg']}, 3x3 land "
+              f"{d['land_share_3x3']}, water cell {d['water_km']} km at {d['water_bearing']}°")
 
 
 def _print_wind_preview(rep):
@@ -934,6 +1054,7 @@ def main(argv=None):
         out["wind_preview"] = wind_preview(rows, spots, names, factors, m, out["hrrr"]["rows"],
                                            out["hrrr"]["_winds"], now, focus=focus)
         _print_wind_preview(out["wind_preview"])
+        _print_land_cells(out["wind_preview"])
     if "partitions" in sections:
         out["partitions"] = partitions_section(rows, names, focus)
         _print_partitions(out["partitions"])
