@@ -18,7 +18,8 @@ at 10 m above ground level the per-step download drops to ~5 MB. A full
 
 Output: ``pipeline/forecast_data/hrrr.json`` keyed by spot name with
 hourly records {valid_time, wind_speed (m/s), wind_dir (deg, met
-convention — direction wind is *coming from*)}. Spots outside the
+convention — direction wind is *coming from*, from TRUE north: HRRR
+ships grid-relative u/v, turned here to earth-relative)}. Spots outside the
 CONUS bbox (Hawaii / Puerto Rico / Alaska) are skipped — interpret.py
 falls back to NWPS wind for them.
 """
@@ -286,6 +287,54 @@ def _build_kdtree_for_grid(ds):
     return tree, lats.shape, lats, lngs
 
 
+# HRRR'S 10 M WIND IS GRID-RELATIVE. Its GRIB messages carry uvRelativeToGrid = 1: u runs
+# along the Lambert grid's x-axis and v along its y-axis, which are turned from true east and
+# north by up to ~17 deg at our spots (anticlockwise in the west, clockwise in the east of the
+# grid). Until 2026-10-22 the direction was computed from u/v as if they were earth-relative,
+# so every HRRR hour published a direction ~14 deg off in New Jersey and ~15 deg off in
+# California (data-quality runs 36 and 37: 2,525 of 27,813 HRRR hours re-rated, 4,680 changed
+# wind class). The fix turns u/v to earth-relative before the direction is taken; the speed
+# is unchanged by a rotation.
+
+
+def _uv_relative_to_grid(path: Path) -> bool:
+    """The GRIB flag on the step file's first message: True when u/v follow the grid's axes.
+    Read, so a file that ever ships earth-relative winds is left alone. A file whose flag
+    cannot be read is taken as grid-relative, which every HRRR wrfsfc file is."""
+    try:
+        import eccodes
+        with open(path, "rb") as f:
+            gid = eccodes.codes_grib_new_from_file(f)
+            if gid is None:
+                raise ValueError("no GRIB message")
+            try:
+                return bool(eccodes.codes_get(gid, "uvRelativeToGrid"))
+            finally:
+                eccodes.codes_release(gid)
+    except Exception as e:  # noqa: BLE001
+        log.warning("hrrr: uvRelativeToGrid unreadable in %s (%s); taking u/v as grid-relative",
+                    path.name, e)
+        return True
+
+
+def _grid_x_axis_deg(lats, lngs, i: int, j: int) -> float:
+    """The grid x-axis's angle at (i, j), anticlockwise from true east, from the grid's own
+    coordinates (the neighbours along j), so no projection constant is assumed. HRRR's grid is
+    right-handed: y is x turned 90 deg anticlockwise, rows running northward."""
+    nj = lats.shape[1]
+    a, b = max(0, j - 1), min(nj - 1, j + 1)
+    north = float(lats[i, b] - lats[i, a])
+    east = float(lngs[i, b] - lngs[i, a]) * math.cos(math.radians(float(lats[i, j])))
+    return math.degrees(math.atan2(north, east))
+
+
+def _to_earth(u: "np.ndarray", v: "np.ndarray", axis_deg: "np.ndarray"):
+    """Grid-relative (u along x, v along y) to earth-relative (east, north), per spot."""
+    import numpy as np
+    a = np.radians(axis_deg)
+    return u * np.cos(a) - v * np.sin(a), u * np.sin(a) + v * np.cos(a)
+
+
 def _wind_speed_dir(u: "np.ndarray", v: "np.ndarray") -> tuple["np.ndarray", "np.ndarray"]:
     """U/V (m/s, mathematical convention) → speed (m/s), direction (deg met).
 
@@ -313,40 +362,11 @@ def _spots_in_conus(spots: list[dict]) -> list[dict]:
     return out
 
 
-# ---------------------------------------------------------------------------
-# Public entrypoint
-# ---------------------------------------------------------------------------
-
-def fetch(
-    spots: list[dict],
-    use_cache: bool = True,
-    wfo_filter: list[str] | None = None,  # accepted for fetch_all signature parity
-    input_path: Path | None = None,        # ditto; not used here
-) -> dict[str, list[dict]]:
-    """Fetch the latest long HRRR cycle and extract per-spot hourly wind.
-
-    Returns a dict keyed by spot name with hourly records — same shape as
-    nwps.json so interpret.py can join the two trivially.
-    """
-    conus_spots = _spots_in_conus(spots)
-    log.info(
-        "hrrr: %d / %d spots inside CONUS bbox — non-CONUS spots fall back "
-        "to NWPS wind",
-        len(conus_spots), len(spots),
-    )
-    if not conus_spots:
-        return {}
-
-    located = _locate_cycle(use_cache)
-    if located is None:
-        log.warning("hrrr: no usable cycle; returning empty result")
-        return {}
-    date_ymd, hh, steps = located
-    log.info(
-        "hrrr: extracting %d steps × %d CONUS spots from cycle %s %sZ",
-        len(steps), len(conus_spots), date_ymd, hh,
-    )
-
+def extract_steps(conus_spots: list[dict], steps: list[tuple[int, Path]]):
+    """Per-spot hourly wind from the step files: the nearest grid cell's u/v, turned to true
+    north when the file says they are grid-relative. Returns (records by spot name, step files
+    that failed to parse, {"grid_relative": bool | None, "cells": {name: flat index}}).
+    Separate from fetch() so the data-quality gate runs exactly this on archive files."""
     import numpy as np
 
     spot_names: list[str] = [s["name"] for s in conus_spots]
@@ -358,6 +378,7 @@ def fetch(
     parse_failed = 0
     flat_idx: "np.ndarray" | None = None
     grid_shape: tuple[int, int] | None = None
+    axis_deg: "np.ndarray" | None = None      # each spot's grid x-axis angle; None: earth-relative
 
     try:
         from tqdm import tqdm
@@ -398,8 +419,15 @@ def fetch(
                 if tree_pack is None:
                     parse_failed += 1
                     continue
-                tree, grid_shape, _, _ = tree_pack
+                tree, grid_shape, lats, lngs = tree_pack
                 _, flat_idx = tree.query(spot_pts)
+                if _uv_relative_to_grid(path):
+                    nx = grid_shape[1]
+                    axis_deg = np.asarray([_grid_x_axis_deg(lats, lngs, *divmod(int(k), nx))
+                                           for k in flat_idx], dtype=float)
+                    log.info("hrrr: u/v are grid-relative; turning them to true north (grid "
+                             "x-axis at the spots: %.1f to %.1f deg from east)",
+                             float(axis_deg.min()), float(axis_deg.max()))
 
             valid_time = _resolve_valid_time(ds)
             if valid_time is None:
@@ -414,6 +442,8 @@ def fetch(
             v_flat = v_arr.ravel()
             u_at_spots = u_flat[flat_idx]
             v_at_spots = v_flat[flat_idx]
+            if axis_deg is not None:
+                u_at_spots, v_at_spots = _to_earth(u_at_spots, v_at_spots, axis_deg)
             speed_at_spots, dir_at_spots = _wind_speed_dir(u_at_spots, v_at_spots)
 
             for i, name in enumerate(spot_names):
@@ -428,6 +458,48 @@ def fetch(
                 })
         finally:
             _close_datasets(datasets)
+
+    cells = ({} if flat_idx is None
+             else {name: int(k) for name, k in zip(spot_names, flat_idx)})
+    grid_relative = None if flat_idx is None else axis_deg is not None
+    return out, parse_failed, {"grid_relative": grid_relative, "cells": cells}
+
+
+# ---------------------------------------------------------------------------
+# Public entrypoint
+# ---------------------------------------------------------------------------
+
+def fetch(
+    spots: list[dict],
+    use_cache: bool = True,
+    wfo_filter: list[str] | None = None,  # accepted for fetch_all signature parity
+    input_path: Path | None = None,        # ditto; not used here
+) -> dict[str, list[dict]]:
+    """Fetch the latest long HRRR cycle and extract per-spot hourly wind.
+
+    Returns a dict keyed by spot name with hourly records — same shape as
+    nwps.json so interpret.py can join the two trivially.
+    """
+    conus_spots = _spots_in_conus(spots)
+    log.info(
+        "hrrr: %d / %d spots inside CONUS bbox — non-CONUS spots fall back "
+        "to NWPS wind",
+        len(conus_spots), len(spots),
+    )
+    if not conus_spots:
+        return {}
+
+    located = _locate_cycle(use_cache)
+    if located is None:
+        log.warning("hrrr: no usable cycle; returning empty result")
+        return {}
+    date_ymd, hh, steps = located
+    log.info(
+        "hrrr: extracting %d steps × %d CONUS spots from cycle %s %sZ",
+        len(steps), len(conus_spots), date_ymd, hh,
+    )
+
+    out, parse_failed, _ = extract_steps(conus_spots, steps)
 
     # Order each series by valid_time so consumers can iterate forward.
     for series in out.values():
