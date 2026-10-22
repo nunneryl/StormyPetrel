@@ -343,7 +343,25 @@ def _print_hrrr(rep):
 # Re-rating published hours with another wind                                  #
 # --------------------------------------------------------------------------- #
 
-WIND_VARIANTS = ("water", "true-north", "water+true-north")
+WIND_VARIANTS = ("water", "true-north", "water+true-north", "true-north+cap90")
+
+
+def cap90_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
+    """interpret.wind_star_cap with the cross-offshore half (60-90 deg off) capped like offshore:
+    under 90 deg off the offshore rungs (over 25 kt 2.0, over 20 kt 3.0, else none); from 90 deg
+    the live ladder, which reads 90-120 as cross-shore and 120+ as onshore. The wind SCORE is
+    untouched (wind_multiplier keeps its 60/120 bands); only the cap moves."""
+    from .interpret import (KT_TO_MS, WIND_CAP_OFFSHORE_STRONG, WIND_CAP_OFFSHORE_STRONG_KT,
+                            WIND_CAP_UNSURFABLE_KT, WIND_CAP_UNSURFABLE_OFFSHORE, _angle_off,
+                            wind_star_cap)
+    if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
+        return 5.0
+    if _angle_off(wind_dir, offshore_wind_deg) < 90.0:
+        kt = wind_speed_ms / KT_TO_MS
+        if kt > WIND_CAP_UNSURFABLE_KT:
+            return WIND_CAP_UNSURFABLE_OFFSHORE
+        return WIND_CAP_OFFSHORE_STRONG if kt > WIND_CAP_OFFSHORE_STRONG_KT else 5.0
+    return wind_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
 
 
 def match_cycle(row, flat, winds):
@@ -370,7 +388,7 @@ def _iso(t):
 
 def variant_wind(variant, cell, winds, cycle, n, u, v):
     """(speed m/s, direction) of *variant* for one matched hour, or None when it has no value."""
-    if variant == "true-north":
+    if variant in ("true-north", "true-north+cap90"):
         ue, ve = grid_to_earth(u, v, cell["x_axis_deg"])
         return math.hypot(ue, ve), met_dir(ue, ve)
     if "water_flat" not in cell:
@@ -382,19 +400,28 @@ def variant_wind(variant, cell, winds, cycle, n, u, v):
     return math.hypot(ue, ve), met_dir(ue, ve)
 
 
-def rerate(row, spot, factors, m, speed, direction):
+def rerate(row, spot, factors, m, speed, direction, cap_fn=None):
     """The live rater on *row* with the wind replaced: wind_mult recomputed by the rater's own
-    wind_multiplier from the row's chop_ratio, then wired_rater."""
+    wind_multiplier from the row's chop_ratio, then wired_rater. With *cap_fn* the stars are
+    built from interpret.rule_keywords with that cap in place of the live one (the construction
+    the #267 and #270 gates matched to wired_rater hour for hour)."""
     from .forecast.face_correction import spot_factor
-    from .interpret import wind_multiplier
-    from .star_preview import _slug, rescore, wired_rater
+    from .interpret import composite_stars, rule_keywords, wind_multiplier
+    from .star_preview import _mults, _slug, rescore, wired_rater
     off = spot.get("offshore_wind_deg")
     new = dict(row, wind_speed=speed, wind_dir=direction,
                wind_mult=round(wind_multiplier(direction, speed, off, row.get("chop_ratio")), 3))
     rb = rescore(new, spot)
     if rb["stars"] is None:
         return None
-    return wired_rater(new, spot, rb, spot_factor(spot, factors or {}, _slug), m)
+    f = spot_factor(spot, factors or {}, _slug)
+    if cap_fn is None:
+        return wired_rater(new, spot, rb, f, m)
+    rules = rule_keywords(spot, direction, speed, rb["tp"], rb["eff"],
+                          1.0 if row.get("swell_source") == "cdip_mop" else f, m)
+    rules["star_cap"] = cap_fn(direction, speed, off, rb["tp"])
+    wm, tm, cm = _mults(new)
+    return composite_stars(rb["eff"], wm, tm, cm, rb["pq"], **rules)
 
 
 def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=()):
@@ -405,8 +432,9 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
     from .star_preview import _slug, rescore, wired_rater
     by_name = {c["spot"]: c for c in cells}
     counts = Counter()
-    rep = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0}
-           for v in WIND_VARIANTS}
+    from .interpret import wind_star_cap
+    rep = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
+               "class_moves": Counter()} for v in WIND_VARIANTS}
     first = {}
     for row in rows:
         name, state = names.get(row["spot_id"], (None, None))
@@ -436,9 +464,15 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             w = variant_wind(variant, cell, winds, *hit)
             if w is None:
                 continue
-            after = rerate(row, spot, factors, m, *w)
+            after = rerate(row, spot, factors, m, *w,
+                           cap_fn=cap90_star_cap if variant == "true-north+cap90" else None)
             if after is None:
                 continue
+            if variant == "true-north":
+                # The construction check: the cap90 route with the LIVE cap must equal
+                # wired_rater, or the cap90 numbers measure the construction, not the rule.
+                if rerate(row, spot, factors, m, *w, cap_fn=wind_star_cap) != after:
+                    counts["construction check: DIFFERENT (must be 0)"] += 1
             afters[variant] = after
             r = rep[variant]
             delta = round(after - live, 1)
@@ -447,6 +481,7 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             after_cls = wind_class(w[1], off)
             if before_cls != after_cls:
                 r["class_changed"] += 1
+                r["class_moves"][f"{before_cls} -> {after_cls}"] += 1
             if delta:
                 r["changed"].append({"spot": name, "state": state, "valid_time": row["valid_time"],
                                      "before": live, "after": after, "delta": delta,
@@ -466,6 +501,7 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             "changed": len(r["changed"]), "ups": sum(c["delta"] > 0 for c in r["changed"]),
             "downs": sum(c["delta"] < 0 for c in r["changed"]),
             "wind_class_changed": r["class_changed"],
+            "class_moves": dict(r["class_moves"].most_common()),
             "by_state": {s: dict(sorted(c.items())) for s, c in
                          sorted(r["by_state"].items(), key=lambda kv: str(kv[0]))},
             "top_spots": per_spot.most_common(20),
@@ -481,6 +517,7 @@ def _print_wind_preview(rep):
     for variant, r in rep["variants"].items():
         print(f"\n--- {variant}: {r['changed']} of {r['compared']} hours change "
               f"(up {r['ups']}, down {r['downs']}); wind class changed on {r['wind_class_changed']} h")
+        print(f"  class moves: {r['class_moves']}")
         for s, c in r["by_state"].items():
             print(f"  {s}: {c}")
         print(f"  most changed: {r['top_spots']}")

@@ -301,3 +301,53 @@ def test_the_wind_score_is_recomputed_for_the_new_wind_not_kept():
     assert row["stars"] == 4.5
     after = rep["variants"]["water"]["focus"]["B"][0]["after"]
     assert after < 4.5, after
+
+
+# --------------------------------------------------------------------------- #
+# Cross-offshore capped like offshore (true-north+cap90)                        #
+# --------------------------------------------------------------------------- #
+# Offshore bearing 90. From 20 deg is 70 off (cross-offshore), from 350 is 100 off
+# (cross-onshore), from 300 is 150 off (onshore). 11.0 m/s = 21.382 kt, 13.4 = 26.048 kt,
+# 10.2 = 19.827 kt.
+
+@pytest.mark.parametrize("wind_dir, speed, period, want", [
+    (20.0, 11.0, 12.0, 3.0),    # 70 off, > 20 kt: the offshore rung (live: cross, 1.5)
+    (20.0, 13.4, 12.0, 2.0),    # 70 off, > 25 kt: offshore 2.0 (live: 1.0)
+    (20.0, 10.2, 8.0, 5.0),     # 70 off, <= 20 kt: offshore has no lower rung (live: 2.5)
+    (350.0, 11.0, 12.0, 1.5),   # 100 off: cross-shore ladder, as live
+    (300.0, 10.2, 16.0, 5.0),   # 150 off, 19.83 - 8 = 11.83 kt: no onshore rung, as live
+    (None, 11.0, 12.0, 5.0),
+])
+def test_cap90(wind_dir, speed, period, want):
+    assert DQ.cap90_star_cap(wind_dir, speed, 90.0, period) == want
+
+
+def test_the_cap90_variant_and_the_construction_check():
+    # Published: 11.0 m/s from 20 deg grid (u = -11 sin 20 = -3.7622, v = -11 cos 20 = -10.3366),
+    # 70 off: cross-shore over 20 kt, capped 1.5 live. An x-axis of 0 turns nothing, so the
+    # true-north variant changes no hour, and its cap90 twin lifts the cap to 3.0: the uncapped
+    # 4.443 x 0.8**0.35 (0.924872) = 4.109 -> 4.0 is above it, so 3.0.
+    from pipeline.interpret import wind_multiplier
+    from pipeline.star_preview import rescore, wired_rater
+    spot, row, cells, winds = _preview_fixture()
+    u, v = -11.0 * math.sin(math.radians(20.0)), -11.0 * math.cos(math.radians(20.0))
+    ws, wd = round(math.hypot(u, v), 3), round(DQ.met_dir(u, v), 3)
+    row = dict(row, wind_speed=ws, wind_dir=wd,
+               wind_mult=round(wind_multiplier(wd, ws, 90.0, None), 3))
+    row["stars"] = wired_rater(row, spot, rescore(row, spot), None, None)
+    assert row["stars"] == 1.5
+    winds = {"c": {5: [(row["valid_time"], u, v)], 6: winds["c"][6]}}
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["replay"] == {"HRRR, reproduced": 1}            # no construction mismatch
+    assert rep["variants"]["true-north"]["changed"] == 0
+    cap90 = rep["variants"]["true-north+cap90"]
+    assert cap90["changed"] == 1 and cap90["focus"]["B"][0]["after"] == 3.0
+
+
+def test_class_moves_are_counted_by_kind():
+    # The water-cell fixture: light offshore (from 90) -> 21.4 kt from 0, 90 off: cross.
+    spot, row, cells, winds = _preview_fixture()
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"))
+    assert rep["variants"]["water"]["class_moves"] == {"offshore -> cross": 1}
