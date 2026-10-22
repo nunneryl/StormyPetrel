@@ -226,6 +226,75 @@ def test_the_wind_preview_needs_the_hrrr_section():
         DQ.main(["--sections", "wind-preview"])
 
 
+def test_the_true_north_gate_needs_the_hrrr_section():
+    with pytest.raises(SystemExit):
+        DQ.main(["--sections", "true-north"])
+
+
+# --------------------------------------------------------------------------- #
+# The true-north gate                                                          #
+# --------------------------------------------------------------------------- #
+# Atlantic City's cell, x-axis -14.3, grid wind (0, -5): unrotated "from 0", true from 14.3 at
+# 5 m/s (worked in test_hrrr_true_north: ue = -1.234995, ve = -4.845080).
+GATE_CELLS = [{"spot": "A", "flat": 7, "x_axis_deg": -14.3}]
+GATE_SWEEP = {7: [("2026-10-22T06:00:00+00:00", 0.0, -5.0)]}
+GATE_META = {"grid_relative": True, "cells": {"A": 7}}
+
+
+def _published(wind_dir=14.3, wind_speed=5.0):
+    return {"A": [{"valid_time": "2026-10-22T06:00:00Z", "wind_speed": wind_speed,
+                   "wind_dir": wind_dir}]}
+
+
+def test_the_gate_passes_when_the_pipeline_turns_the_wind_as_the_sweep_does():
+    rep = DQ.compare_true_north(GATE_CELLS, GATE_SWEEP, _published(), GATE_META)
+    assert rep["verdict"] == "PASS"
+    assert (rep["spot_hours"], rep["differences"], rep["missing"], rep["cell_moved"]) == (1, [], [], [])
+
+
+def test_the_gate_fails_on_the_unrotated_direction():
+    rep = DQ.compare_true_north(GATE_CELLS, GATE_SWEEP, _published(wind_dir=0.0), GATE_META)
+    assert rep["verdict"] == "FAIL"
+    assert len(rep["differences"]) == 1
+    assert round(rep["max_dir_diff"], 3) == 14.3
+
+
+@pytest.mark.parametrize("wind_dir, wind_speed, verdict", [
+    (14.301, 5.0, "PASS"),     # 0.001 apart: within the 3-decimal storage tolerance (0.0015)
+    (14.302, 5.0, "FAIL"),     # 0.002 apart
+    (14.3, 5.002, "FAIL"),     # the speed 0.002 apart
+])
+def test_the_gate_tolerance(wind_dir, wind_speed, verdict):
+    rep = DQ.compare_true_north(GATE_CELLS, GATE_SWEEP, _published(wind_dir, wind_speed),
+                                GATE_META)
+    assert rep["verdict"] == verdict
+
+
+def test_the_gate_fails_when_a_spot_reads_another_cell():
+    rep = DQ.compare_true_north(GATE_CELLS, GATE_SWEEP, _published(),
+                                {"grid_relative": True, "cells": {"A": 8}})
+    assert (rep["verdict"], rep["cell_moved"]) == ("FAIL", ["A"])
+
+
+def test_the_gate_fails_on_a_missing_hour():
+    # 06Z published and matching, 07Z (same grid wind) never published.
+    sweep = {7: GATE_SWEEP[7] + [("2026-10-22T07:00:00+00:00", 0.0, -5.0)]}
+    rep = DQ.compare_true_north(GATE_CELLS, sweep, _published(), GATE_META)
+    assert (rep["verdict"], rep["spot_hours"], rep["differences"]) == ("FAIL", 1, [])
+    assert rep["missing"] == [["A", "2026-10-22T07:00:00+00:00"]]
+
+
+def test_the_gate_fails_when_the_files_were_not_read_as_grid_relative():
+    rep = DQ.compare_true_north(GATE_CELLS, GATE_SWEEP, _published(),
+                                {"grid_relative": False, "cells": {"A": 7}})
+    assert rep["verdict"] == "FAIL"
+
+
+def test_the_gate_fails_with_nothing_compared():
+    rep = DQ.compare_true_north([], GATE_SWEEP, _published(), GATE_META)
+    assert (rep["verdict"], rep["spot_hours"]) == ("FAIL", 0)
+
+
 # --------------------------------------------------------------------------- #
 # Re-rating a published HRRR hour                                              #
 # --------------------------------------------------------------------------- #

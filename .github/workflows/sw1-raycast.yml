@@ -48,7 +48,9 @@ name: sw1-raycast
 #       SELECT only.
 #   mode = data-quality: READ-ONLY. The data-quality sweep (pipeline/data_quality.py): every
 #       CONUS spot's HRRR cell and whether HRRR classes it as land, with the nearest seaward water
-#       cell and the wind at both (HRRR from NOAA's AWS archive), and the published HRRR hours
+#       cell and the wind at both (HRRR from NOAA's AWS archive); THE TRUE-NORTH GATE, the
+#       pipeline's forecast/hrrr.py on the newest cycle against the sweep's own true-north
+#       wind, spot by spot and hour by hour (must be 0 differences); the published HRRR hours
 #       re-rated with the water cell's wind and with the wind turned from HRRR's grid to true
 #       north; the Swell breakdown card hour by hour at the spots in `spots`; every spot's tide
 #       station against the stations within 30 km (damped stations flagged, re-rated where the
@@ -555,7 +557,7 @@ jobs:
           # Through the environment, never interpolated into the shell command.
           SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.data_quality --sections hrrr,wind-preview,partitions,tides,cams \
+          python -m pipeline.data_quality --sections hrrr,true-north,wind-preview,partitions,tides,cams \
             --since 2026-10-21T00:00:00+00:00 \
             --explain "${SPOTS:-ventnor-pier,indialantic,atlantic-city,margate-pier,ocean-city-nj}" \
             --baseline "$RUNNER_TEMP/baseline.json" --workdir "$RUNNER_TEMP/dq" --out data_quality.json

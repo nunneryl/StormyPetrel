@@ -8,11 +8,20 @@ SECTIONS
               share of land in its 3x3 neighbourhood, and, for a land cell, the nearest water
               cell on the seaward side (bearing within 90 deg of the spot's orientation_deg), with
               the wind at both over one full 48 h cycle. Also the angle of HRRR's grid x-axis at
-              each cell: HRRR's 10 m winds are GRID-RELATIVE (uvRelativeToGrid = 1) and
-              forecast/hrrr.py reads them as if they were earth-relative.
+              each cell: HRRR's 10 m winds are GRID-RELATIVE (uvRelativeToGrid = 1), and
+              forecast/hrrr.py read them as if they were earth-relative until its true-north
+              fix (see the true-north section).
+  true-north  The merge gate for forecast/hrrr.py's true-north fix: the newest cycle's u/v step
+              files run through hrrr.extract_steps (the code the pipeline runs) and compared,
+              spot by spot and hour by hour, with the hrrr section's own true-north wind (the
+              cell's u/v turned by grid_to_earth). PASS needs every spot on the same cell, the
+              files read as grid-relative, and 0 directions or speeds apart by more than
+              GATE_TOLERANCE.
   wind-preview  (Supabase) Every published hour whose wind is HRRR's, matched exactly to a cycle,
               re-rated by the live rater (wired_rater) with the wind from: the water cell
-              (land-cell spots only), the same cell turned to true north, and both.
+              (land-cell spots only), the same cell turned to true north, and both. A
+              published hour is matched to the UNROTATED wind, so this previews hours
+              published before forecast/hrrr.py's true-north fix.
   partitions  (Supabase) The swell partitions behind the Swell breakdown card, hour by hour, for
               the --explain spots: the card is hidden when at most one component is above
               0.05 m (frontend/components/SwellPartitions.tsx).
@@ -33,7 +42,7 @@ HRRR files come from NOAA's archive on AWS (noaa-hrrr-bdp-pds), by byte range fr
 .idx, so only the fields used are downloaded.
 
     python -m pipeline.data_quality --sections hrrr [--cycle 2026102206] [--out report.json]
-    python -m pipeline.data_quality --sections hrrr,wind-preview,partitions,tides,cams \\
+    python -m pipeline.data_quality --sections hrrr,true-north,wind-preview,partitions,tides,cams \\
         --since ISO --explain slug,slug --baseline spots.json --out report.json
 """
 from __future__ import annotations
@@ -62,6 +71,7 @@ TIDE_DAMPED_SHARE = 0.6         # a station under this share of the widest nearb
 TIDE_NEAR_WIDEST_SHARE = 0.8    # the proposed station's range is at least this share of the widest
 COOPS_STATIONS = ("https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json"
                   "?type=tidepredictions")
+GATE_TOLERANCE = 0.0015        # deg and m/s: 3-decimal storage plus the 3-decimal x-axis angle
 CAM_SEED = PIPELINE_DIR / "data" / "cam_seed.json"
 
 
@@ -336,7 +346,73 @@ def _print_hrrr(rep):
                   f"where land is not: {w['hours_water_over_20_land_not']} h")
     turns = [abs(r["x_axis_deg"]) for r in rep["rows"]]
     print(f"grid x-axis angle from true east at the spots' cells: median {median(turns):.1f}°, "
-          f"max {max(turns):.1f}° — HRRR winds are grid-relative and published unrotated")
+          f"max {max(turns):.1f}° — HRRR winds are grid-relative")
+
+
+# --------------------------------------------------------------------------- #
+# The true-north gate                                                          #
+# --------------------------------------------------------------------------- #
+
+def compare_true_north(cells, sweep, published, meta):
+    """forecast/hrrr.py's records (*published*, by spot) against the sweep's true-north wind
+    (*sweep*: {flat: [(valid_iso, u, v)]} grid-relative), for every spot in *cells*."""
+    differences, missing, compared, worst_dir, worst_speed = [], [], 0, 0.0, 0.0
+    cell_moved = [r["spot"] for r in cells if meta["cells"].get(r["spot"]) != r["flat"]]
+    for r in cells:
+        got = {_iso(rec["valid_time"]): rec for rec in published.get(r["spot"], ())}
+        for valid, u, v in sweep.get(r["flat"], ()):
+            rec = got.get(_iso(valid))
+            if rec is None:
+                missing.append([r["spot"], valid])
+                continue
+            ue, ve = grid_to_earth(u, v, r["x_axis_deg"])
+            want_dir, want_speed = met_dir(ue, ve), math.hypot(ue, ve)
+            d_dir = angle_off(want_dir, float(rec["wind_dir"]))
+            d_speed = abs(want_speed - float(rec["wind_speed"]))
+            worst_dir, worst_speed = max(worst_dir, d_dir), max(worst_speed, d_speed)
+            compared += 1
+            if d_dir > GATE_TOLERANCE or d_speed > GATE_TOLERANCE:
+                differences.append({"spot": r["spot"], "valid_time": valid,
+                                    "want_dir": round(want_dir, 3), "got_dir": rec["wind_dir"],
+                                    "want_speed": round(want_speed, 3),
+                                    "got_speed": rec["wind_speed"]})
+    ok = (meta["grid_relative"] is True and not cell_moved and not missing and not differences
+          and compared > 0)
+    return {"verdict": "PASS" if ok else "FAIL", "grid_relative": meta["grid_relative"],
+            "spots": len(cells), "spot_hours": compared, "cell_moved": cell_moved,
+            "missing": missing, "differences": differences,
+            "max_dir_diff": round(worst_dir, 6), "max_speed_diff": round(worst_speed, 6)}
+
+
+def true_north_gate(spots, rep, session, workdir, log=print):
+    """Run hrrr.extract_steps on the newest cycle's u/v files and compare (compare_true_north)."""
+    from .forecast.hrrr import _spots_in_conus, extract_steps
+    cycle = rep["cycles"][0]
+    log(f"true-north gate: hrrr.extract_steps on cycle {cycle}, 49 steps")
+    steps = [(fh, fetch_fields(session, cycle, fh, [("UGRD", "10 m above ground"),
+                                                     ("VGRD", "10 m above ground")],
+                               workdir / f"gate{cycle}{fh:02d}.grib2")) for fh in HRRR_STEPS]
+    published, failed, meta = extract_steps(_spots_in_conus(spots), steps)
+    for _, p in steps:
+        p.unlink()
+    out = compare_true_north(rep["rows"], rep["_winds"][cycle], published, meta)
+    out.update(cycle=cycle, parse_failed=failed)
+    if failed:
+        out["verdict"] = "FAIL"
+    return out
+
+
+def _print_true_north(rep):
+    print(f"\n=== True-north gate — cycle {rep['cycle']}: {rep['verdict']} ===")
+    print(f"files read as grid-relative: {rep['grid_relative']}; step files that failed to "
+          f"parse: {rep['parse_failed']}")
+    print(f"{rep['spots']} spots, {rep['spot_hours']} spot-hours compared; spots on a different "
+          f"cell: {len(rep['cell_moved'])}; spot-hours missing: {len(rep['missing'])}; "
+          f"DIFFERENT (over {GATE_TOLERANCE}): {len(rep['differences'])}")
+    print(f"largest direction difference {rep['max_dir_diff']} deg, largest speed difference "
+          f"{rep['max_speed_diff']} m/s")
+    for d in rep["differences"][:20]:
+        print(f"  {d}")
 
 
 # --------------------------------------------------------------------------- #
@@ -746,7 +822,7 @@ def _print_cams(rep):
 # CLI                                                                          #
 # --------------------------------------------------------------------------- #
 
-SECTIONS = ("hrrr", "wind-preview", "partitions", "tides", "cams")
+SECTIONS = ("hrrr", "true-north", "wind-preview", "partitions", "tides", "cams")
 
 
 def _strip(obj):
@@ -775,8 +851,9 @@ def main(argv=None):
     for s in sections:
         if s not in SECTIONS:
             p.error(f"unknown section {s!r}: {', '.join(SECTIONS)}")
-    if "wind-preview" in sections and "hrrr" not in sections:
-        p.error("wind-preview needs the hrrr section")
+    for s in ("true-north", "wind-preview"):
+        if s in sections and "hrrr" not in sections:
+            p.error(f"{s} needs the hrrr section")
     roster = json.loads(Path(args.baseline).read_text())
     spots = {s["name"]: s for s in roster if s.get("name")}
     session = requests.Session()
@@ -791,6 +868,9 @@ def main(argv=None):
                   else full_cycles(session, n=2))
         out["hrrr"] = hrrr_section(roster, cycles, session, workdir)
         _print_hrrr(out["hrrr"])
+    if "true-north" in sections:
+        out["true_north"] = true_north_gate(roster, out["hrrr"], session, workdir)
+        _print_true_north(out["true_north"])
 
     client = rows = names = None
     if any(s in sections for s in ("wind-preview", "partitions", "cams", "tides")):

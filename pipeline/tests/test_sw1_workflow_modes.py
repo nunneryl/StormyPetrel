@@ -86,7 +86,7 @@ def test_the_data_quality_sweep_only_reads():
     job = _jobs()["data-quality"]
     assert _if(job) == "${{ inputs.mode == 'data-quality' }}"
     assert "    permissions:\n      contents: read\n" in job
-    assert "python -m pipeline.data_quality --sections hrrr,wind-preview,partitions,tides,cams \\\n" in job
+    assert "python -m pipeline.data_quality --sections hrrr,true-north,wind-preview,partitions,tides,cams \\\n" in job
     assert "SPOTS: ${{ inputs.spots }}" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
