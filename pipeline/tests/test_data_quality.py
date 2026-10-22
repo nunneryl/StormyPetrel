@@ -380,38 +380,79 @@ def test_the_wind_score_is_recomputed_for_the_new_wind_not_kept():
 # 10.2 = 19.827 kt.
 
 @pytest.mark.parametrize("wind_dir, speed, period, want", [
-    (20.0, 11.0, 12.0, 3.0),    # 70 off, > 20 kt: the offshore rung (live: cross, 1.5)
-    (20.0, 13.4, 12.0, 2.0),    # 70 off, > 25 kt: offshore 2.0 (live: 1.0)
-    (20.0, 10.2, 8.0, 5.0),     # 70 off, <= 20 kt: offshore has no lower rung (live: 2.5)
-    (350.0, 11.0, 12.0, 1.5),   # 100 off: cross-shore ladder, as live
-    (300.0, 10.2, 16.0, 5.0),   # 150 off, 19.83 - 8 = 11.83 kt: no onshore rung, as live
+    (20.0, 11.0, 12.0, 3.0),    # 70 off, > 20 kt: the offshore rung (#270: cross, 1.5)
+    (20.0, 13.4, 12.0, 2.0),    # 70 off, > 25 kt: offshore 2.0 (#270: 1.0)
+    (20.0, 10.2, 8.0, 5.0),     # 70 off, <= 20 kt: offshore has no lower rung (#270: 2.5)
+    (1.0, 11.0, 12.0, 3.0),     # 89 off: still under 90, the offshore rung
+    (0.0, 11.0, 12.0, 1.5),     # 90 off exactly: cross-shore ladder, > 20 kt measured, 1.5
+    (65.0, 11.0, 12.0, 3.0),    # 25 off: offshore, as #270
+    (350.0, 11.0, 12.0, 1.5),   # 100 off: cross-shore ladder, as #270
+    (300.0, 10.2, 16.0, 5.0),   # 150 off, 19.83 - 8 = 11.83 kt: no onshore rung, as #270
     (None, 11.0, 12.0, 5.0),
 ])
 def test_cap90(wind_dir, speed, period, want):
+    from pipeline.interpret import wind_star_cap
     assert DQ.cap90_star_cap(wind_dir, speed, 90.0, period) == want
+    assert wind_star_cap(wind_dir, speed, 90.0, period) == want      # wired
 
 
-def test_the_cap90_variant_and_the_construction_check():
+def _cap90_fixture():
     # Published: 11.0 m/s from 20 deg grid (u = -11 sin 20 = -3.7622, v = -11 cos 20 = -10.3366),
-    # 70 off: cross-shore over 20 kt, capped 1.5 live. An x-axis of 0 turns nothing, so the
-    # true-north variant changes no hour, and its cap90 twin lifts the cap to 3.0: the uncapped
-    # 4.443 x 0.8**0.35 (0.924872) = 4.109 -> 4.0 is above it, so 3.0.
+    # 70 off: cross-shore over 20 kt (21.382 kt), so the published (#270) cap is 1.5; the
+    # uncapped 4.443 x 0.8**0.35 (0.924872) = 4.109 -> 4.0 is above it: published 1.5 stars.
     from pipeline.interpret import wind_multiplier
-    from pipeline.star_preview import rescore, wired_rater
     spot, row, cells, winds = _preview_fixture()
     u, v = -11.0 * math.sin(math.radians(20.0)), -11.0 * math.cos(math.radians(20.0))
     ws, wd = round(math.hypot(u, v), 3), round(DQ.met_dir(u, v), 3)
-    row = dict(row, wind_speed=ws, wind_dir=wd,
+    row = dict(row, wind_speed=ws, wind_dir=wd, stars=1.5,
                wind_mult=round(wind_multiplier(wd, ws, 90.0, None), 3))
-    row["stars"] = wired_rater(row, spot, rescore(row, spot), None, None)
-    assert row["stars"] == 1.5
     winds = {"c": {5: [(row["valid_time"], u, v)], 6: winds["c"][6]}}
+    return spot, row, cells, winds
+
+
+def test_the_published_cap_is_270s_and_the_wired_cap_is_cap90():
+    # 70 off at 21.382 kt: #270 reads it cross-shore over 20 kt, 1.5; the wired cap counts
+    # 60-90 off as offshore, over 20 kt, 3.0.
+    _, row, _, _ = _cap90_fixture()
+    args = (row["wind_dir"], row["wind_speed"], 90.0, 12.0)
+    assert DQ.published_wind_cap(*args) == 1.5
+    from pipeline.interpret import wind_star_cap
+    assert wind_star_cap(*args) == 3.0
+
+
+def test_the_cap90_variant_is_the_wired_rater_and_the_gate_passes():
+    # An x-axis of 0 turns nothing, so the true-north variant (published cap) changes no hour,
+    # and the wired rater lifts the cap to 3.0: 4.0 uncapped, so 3.0.
+    spot, row, cells, winds = _cap90_fixture()
     rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
                           winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
-    assert rep["replay"] == {"HRRR, reproduced": 1}            # no construction mismatch
+    assert rep["replay"] == {"HRRR, reproduced": 1}     # no cap90 gate or construction mismatch
     assert rep["variants"]["true-north"]["changed"] == 0
     cap90 = rep["variants"]["true-north+cap90"]
     assert cap90["changed"] == 1 and cap90["focus"]["B"][0]["after"] == 3.0
+
+
+def test_the_cap90_gate_counts_a_wired_rater_that_differs_from_the_rule(monkeypatch):
+    # The rule built here held at the #270 cap (1.5) while the wired rater gives 3.0.
+    spot, row, cells, winds = _cap90_fixture()
+    monkeypatch.setattr(DQ, "cap90_star_cap", DQ.published_wind_cap)
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"))
+    assert rep["replay"] == {"HRRR, reproduced": 1, "cap90 gate: DIFFERENT (must be 0)": 1}
+
+
+@pytest.mark.parametrize("d", range(0, 360, 5))
+def test_the_wired_cap_is_the_cap90_rule_everywhere(d):
+    """A property over a grid, not an expected value: every direction in 5 deg steps, 0-30 kt
+    in quarter knots, periods 6-18 s, offshore bearing 245. The wired cap and the rule built
+    here independently agree everywhere, and the rule never lowers the #270 cap."""
+    from pipeline.interpret import wind_star_cap
+    for q in range(0, 121):
+        ms = q / 4 * 0.514444
+        for tp in (6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0):
+            rule = DQ.cap90_star_cap(float(d), ms, 245.0, tp)
+            assert wind_star_cap(float(d), ms, 245.0, tp) == rule, (d, q, tp)
+            assert rule >= DQ.published_wind_cap(float(d), ms, 245.0, tp), (d, q, tp)
 
 
 def test_class_moves_are_counted_by_kind():

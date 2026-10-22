@@ -165,11 +165,15 @@ So strong wind now sets a ceiling on the rating, whatever the other scores are. 
 
 Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° to 120°, and onshore more than 120°.
 
+For the cap, cross-offshore wind, 60° to 90° off, counts as offshore: it blows partly offshore, so it gets the offshore column, not the cross-shore one.
+
 Long-period swell stands up to wind better, so up to 20 kt the wind is read a knot lighter for every second of period above 8 s: a 12 s swell in an 18 kt wind is read at 14 kt. Above 20 kt there's no allowance.
 
 When we replayed the forecast published on 20 October 2026 with the cap and the beach-break limit together, 8,844 of 83,446 spot-hours (10.6%), at 257 of our spots, came out lower, and none came out higher. 6,697 moved for the wind alone, 736 for the beach-break limit alone, and 1,411 for both. Most were windy East Coast hours, above all the 25–30 kt onshore days in Florida's forecast; California moved by 72 hours. Judging closing out at the calibrated height kept 12 California hours, at Caspar, Jug Handle and Carmel Beach, from dropping half a star.
 
 On 21 October 2026 we tightened two rungs. Jennettes Pier read a 21.8 kt cross-shore wind at 11.9 s as 17.9 kt and kept 2.5 stars on a day Surfline rated "Very Poor"; now the allowance stops at 20 kt. Ocean City NJ rated 4.5 stars in a 22 kt offshore wind that Surfline rated "Fair", and Atlantic City 4.5 in 21–24 kt; offshore that strong holds the lip up so long that drops go late and vertical, so it's now capped at 3 stars. Replaying the forecast published that day, 2,612 of 95,107 spot-hours (2.7%), at 259 of our spots, came out lower, and none came out higher: 2,256 because the allowance stops at 20 kt, and 356 for the offshore cap. Ocean City NJ and Atlantic City went from 4.5 to 3 stars.
+
+On 22 October 2026 we found that HRRR's wind direction had been read off its map grid rather than true north, about 14° out in New Jersey. Turned to true north, Ocean City NJ's 20-plus-knot wind at 16:00 UTC on 21 October moved from 58° to 72° off its offshore direction, from offshore to cross-shore, and the cross-shore column cut it from 3 stars to 1.5 for a wind still blowing partly offshore. So cross-offshore wind now reads the offshore column. Replaying 27,813 published HRRR hours with both changes, 2,605 moved: 726 up and 1,879 down.
 
 ## Period
 
