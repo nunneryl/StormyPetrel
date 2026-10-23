@@ -24,7 +24,7 @@ SECTIONS
               (land-cell spots only), the same cell turned to true north, and both, all on
               the published cap; and true-north on the WIRED rater, whose cap counts
               cross-offshore (60-90 deg off) as offshore, with THE CAP90 GATE: the wired
-              rater against the rule built here (cap90_star_cap), hour for hour, must be 0
+              rater against the rule built here (wired_cap_here), hour for hour, must be 0
               differences; and water+true-north on the wired rater too. A published hour is
               matched in whichever frame it was published (match_published: unturned, turned,
               or the water cell turned) and reproduced on #270's cap or the wired one.
@@ -479,6 +479,17 @@ def cap90_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
     return published_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
 
 
+def wired_cap_here(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
+    """The wired cap built here: the cap90 rule (cap90_star_cap) and, since 2026-10-23,
+    onshore (120 deg off or more) at 6 m/s measured or more at most 2.5, the "Blown out"
+    label's threshold with no period allowance."""
+    cap = cap90_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
+    if (wind_dir is not None and wind_speed_ms is not None and offshore_wind_deg is not None
+            and angle_off(wind_dir, offshore_wind_deg) >= 120.0 and wind_speed_ms >= 6.0):
+        cap = min(cap, 2.5)
+    return cap
+
+
 def match_cycle(row, flat, winds, axis_deg=None):
     """(cycle, step index, u, v) of the HRRR step that published *row*'s wind at *flat*, by
     exact match of speed and direction to the 3 decimals forecast/hrrr.py stores; None when the
@@ -615,7 +626,9 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                 row.get("chop_ratio")), 3) != round(float(wm), 3):
             counts["HRRR, but wind_mult not reproduced"] += 1
             continue
-        # Published before the cap90 rule on #270's cap, after it on the wired one.
+        # Published before the cap90 rule on #270's cap, after it on the wired one. (An hour
+        # published between cap90 and the onshore 6 m/s rung needs no cap of its own: where
+        # cap90 differs from #270, 60-90 off, it is the wired cap.)
         live = next((s for s in (rerate(row, spot, factors, m, float(row["wind_speed"]),
                                         float(row["wind_dir"]), cap_fn=c)
                                  for c in (published_wind_cap, None))
@@ -638,11 +651,11 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
             if after is None:
                 continue
             if variant == "true-north+cap90":
-                # THE CAP90 GATE: the wired rater (interpret.wind_star_cap, cap90 in it) against
-                # the rule built here (cap90_star_cap), hour for hour. And the construction
+                # THE CAP90 GATE: the wired rater (interpret.wind_star_cap, cap90 and the onshore
+                # 6 m/s rung in it) against the rule built here (wired_cap_here), hour for hour. And the construction
                 # check: the cap route with the wired cap must equal wired_rater too, or the
                 # gate measures the construction, not the rule.
-                if rerate(row, spot, factors, m, *w, cap_fn=cap90_star_cap) != after:
+                if rerate(row, spot, factors, m, *w, cap_fn=wired_cap_here) != after:
                     counts["cap90 gate: DIFFERENT (must be 0)"] += 1
                 if rerate(row, spot, factors, m, *w, cap_fn=wind_star_cap) != after:
                     counts["construction check: DIFFERENT (must be 0)"] += 1

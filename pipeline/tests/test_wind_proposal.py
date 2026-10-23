@@ -58,7 +58,10 @@ def test_proposed_wind_cap(wind_dir, speed, period, live, expected):
     # wind-both.
     assert SP.previous_wind_cap(wind_dir, speed, 245.0, period) == live
     assert {r: SP.proposed_wind_cap(wind_dir, speed, 245.0, period, r) for r in RULES} == expected
-    assert I.wind_star_cap(wind_dir, speed, 245.0, period) == expected["wind-both"]
+    # Wired is wind-both, except the onshore 6 m/s rung (since 2026-10-23): onshore 8.0 m/s
+    # at 11 s, uncapped under wind-both, is 2.5.
+    wired = 2.5 if (wind_dir, speed, period) == (65.0, 8.0, 11.0) else expected["wind-both"]
+    assert I.wind_star_cap(wind_dir, speed, 245.0, period) == wired
 
 
 @pytest.mark.parametrize("args", [(None, 11.0, 245.0, 12.0), (0.0, None, 245.0, 12.0),
@@ -71,13 +74,16 @@ def test_no_rule_ever_raises_the_previous_cap_and_each_moves_only_its_own_case()
     """A property over a grid, not an expected value: every direction in 5° steps, 0-30 kt
     in quarter knots, periods 6-18 s. The wired cap and the preview's wind-both, built
     independently, agree everywhere on it except cross-offshore (60-90° off), where since the
-    cap90 rule the wired cap reads the offshore rungs (test_data_quality holds it there)."""
+    cap90 rule the wired cap reads the offshore rungs (test_data_quality holds it there), and
+    onshore at 6 m/s or more, where the onshore 6 m/s rung caps it at 2.5 (since 2026-10-23;
+    test_onshore_rung_preview holds it there)."""
     for d in range(0, 360, 5):
         for q in range(0, 121):
             ms = q / 4 * 0.514444
             for tp in (6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0):
                 live = SP.previous_wind_cap(float(d), ms, 245.0, tp)
-                if not 60.0 <= I._angle_off(float(d), 245.0) < 90.0:
+                ang = I._angle_off(float(d), 245.0)
+                if not 60.0 <= ang < 90.0 and not (ang >= 120.0 and ms >= 6.0):
                     assert I.wind_star_cap(float(d), ms, 245.0, tp) == \
                         SP.proposed_wind_cap(float(d), ms, 245.0, tp, "wind-both"), (d, q, tp)
                 cls, kt = SP.wind_class(float(d), 245.0), ms / 0.514444

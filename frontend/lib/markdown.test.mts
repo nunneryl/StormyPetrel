@@ -68,7 +68,8 @@ check('the tables are the nine the post writes, in order', JSON.stringify(found.
     ['Wind', 'Onshore', 'Cross-shore', 'Offshore'], ['Period', 'Score'], ['chop_ratio', 'Score'],
     ['Condition', 'Label']]),
   JSON.stringify(found.map((t) => t.headers)));
-check('every row arrives', JSON.stringify(found.map((t) => t.rows)) === JSON.stringify([8, 5, 4, 6, 4, 4, 9, 6, 5]),
+// The wind cap table has five rows since 2026-10-23: the onshore 6 m/s row came first.
+check('every row arrives', JSON.stringify(found.map((t) => t.rows)) === JSON.stringify([8, 5, 4, 6, 4, 5, 9, 6, 5]),
   JSON.stringify(found.map((t) => t.rows)));
 // A column goes right only when every body cell is a number: "10 ft or more", "6 s or less" and the
 // cos² formula keep their columns left, and the all-number columns go right. The beach-break table's
