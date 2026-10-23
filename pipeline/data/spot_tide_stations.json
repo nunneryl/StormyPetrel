@@ -384,6 +384,284 @@
         "on the roster at (50.0, 51.0] km from 8720086. That is no longer the binding fact — the",
         "station it now uses is 8.3 km away and well inside any plausible cap."
       ]
+    },
+    "indialantic": {
+      "station_id": "8721804",
+      "station_name": "Canova Beach",
+      "expect_km": 5.5,
+      "replaces": "8721843",
+      "replaces_km": 2.47,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8721843 Melbourne Causeway is on the Indian River Lagoon side: mean range 0.16 ft. 8721804",
+        "Canova Beach is on the ocean beach: 3.37 ft, against 3.44 ft at 8721727 Patrick Air Force",
+        "Base, the widest within 30 km. Spessard has a researched low_mid preference, so its rating",
+        "moves: in run 37's tide preview 11 of 169 hours changed (10 down half a star, 1 up).",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "ocean-ave": {
+      "station_id": "8721804",
+      "station_name": "Canova Beach",
+      "expect_km": 8.1,
+      "replaces": "8721843",
+      "replaces_km": 0.48,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8721843 Melbourne Causeway is on the Indian River Lagoon side: mean range 0.16 ft. 8721804",
+        "Canova Beach is on the ocean beach: 3.37 ft, against 3.44 ft at 8721727 Patrick Air Force",
+        "Base, the widest within 30 km. Spessard has a researched low_mid preference, so its rating",
+        "moves: in run 37's tide preview 11 of 169 hours changed (10 down half a star, 1 up).",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "spessard": {
+      "station_id": "8721804",
+      "station_name": "Canova Beach",
+      "expect_km": 10.9,
+      "replaces": "8721843",
+      "replaces_km": 3.02,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8721843 Melbourne Causeway is on the Indian River Lagoon side: mean range 0.16 ft. 8721804",
+        "Canova Beach is on the ocean beach: 3.37 ft, against 3.44 ft at 8721727 Patrick Air Force",
+        "Base, the widest within 30 km. Spessard has a researched low_mid preference, so its rating",
+        "moves: in run 37's tide preview 11 of 169 hours changed (10 down half a star, 1 up).",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "bay-head": {
+      "station_id": "8532591",
+      "station_name": "Manasquan Inlet, USCG Station",
+      "expect_km": 2.8,
+      "replaces": "8532715",
+      "replaces_km": 2.18,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8532715 Beaverdam Creek entrance is in Barnegat Bay: mean range 0.17 ft. 8532591 Manasquan",
+        "Inlet is at the ocean inlet: 3.89 ft, against 4.34 ft at 8532337 Belmar, the widest within 30 km.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "mantoloking": {
+      "station_id": "8532591",
+      "station_name": "Manasquan Inlet, USCG Station",
+      "expect_km": 7.1,
+      "replaces": "8532715",
+      "replaces_km": 4.27,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8532715 Beaverdam Creek entrance is in Barnegat Bay: mean range 0.17 ft. 8532591 Manasquan",
+        "Inlet is at the ocean inlet: 3.89 ft, against 4.34 ft at 8532337 Belmar, the widest within 30 km.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "island-beach-state-park": {
+      "station_id": "8533071",
+      "station_name": "Seaside Heights, ocean",
+      "expect_km": 5.7,
+      "replaces": "8533135",
+      "replaces_km": 1.96,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8533135 Seaside Park is on the bay side of the barrier: mean range 0.36 ft. 8533071 is the",
+        "ocean gauge at Seaside Heights: 4.21 ft.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "seaside-heights": {
+      "station_id": "8533071",
+      "station_name": "Seaside Heights, ocean",
+      "expect_km": 2.8,
+      "replaces": "8533135",
+      "replaces_km": 2.76,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8533135 Seaside Park is on the bay side of the barrier: mean range 0.36 ft. 8533071 is the",
+        "ocean gauge at Seaside Heights: 4.21 ft.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "seaside-park": {
+      "station_id": "8533071",
+      "station_name": "Seaside Heights, ocean",
+      "expect_km": 3.2,
+      "replaces": "8533135",
+      "replaces_km": 1.82,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8533135 Seaside Park is on the bay side of the barrier: mean range 0.36 ft. 8533071 is the",
+        "ocean gauge at Seaside Heights: 4.21 ft.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "avon-pier": {
+      "station_id": "8654400",
+      "station_name": "CAPE HATTERAS FISHING PIER",
+      "expect_km": 18.5,
+      "replaces": "8653951",
+      "replaces_km": 1.17,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8653951 Peter's Ditch is on Pamlico Sound: mean range 0.27 ft. 8654400 Cape Hatteras Fishing",
+        "Pier is on the ocean: 3.0 ft, the widest within 30 km (run 36's proposal). Run 37 proposed",
+        "TEC2789 Cape Hatteras, nearer at 12.8 km with 2.97 ft; the fishing pier was kept as decided.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "rodanthe": {
+      "station_id": "8652678",
+      "station_name": "Oregon Inlet (USCG Station)",
+      "expect_km": 20.2,
+      "replaces": "8653215",
+      "replaces_km": 0.77,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8653215 Rodanthe, Pamlico Sound is on the sound side: mean range 0.34 ft. 8652678 Oregon",
+        "Inlet is the nearest station open to the ocean: 2.08 ft, the widest within 30 km.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "s-turns": {
+      "station_id": "8652678",
+      "station_name": "Oregon Inlet (USCG Station)",
+      "expect_km": 18.7,
+      "replaces": "8653215",
+      "replaces_km": 1.88,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8653215 Rodanthe, Pamlico Sound is on the sound side: mean range 0.34 ft. 8652678 Oregon",
+        "Inlet is the nearest station open to the ocean: 2.08 ft, the widest within 30 km.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "salvo": {
+      "station_id": "8652678",
+      "station_name": "Oregon Inlet (USCG Station)",
+      "expect_km": 26.4,
+      "replaces": "8653215",
+      "replaces_km": 6.73,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8653215 Rodanthe, Pamlico Sound is on the sound side: mean range 0.34 ft. 8652678 Oregon",
+        "Inlet is the nearest station open to the ocean: 2.08 ft, the widest within 30 km.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "assateague-island-md": {
+      "station_id": "8570280",
+      "station_name": "OCEAN CITY (FISHING PIER)",
+      "expect_km": 14.5,
+      "replaces": "8570536",
+      "replaces_km": 3.48,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8570536 South Point, Sinepuxent Neck is in Sinepuxent Bay: mean range 0.39 ft. 8570280 Ocean",
+        "City (Fishing Pier) is on the ocean: 3.45 ft (run 37). Run 36 proposed 8570283 Ocean City",
+        "Inlet, 14.4 km, 2.04 ft; the fishing pier faces the open coast, as Assateague does.",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "port-a-beach": {
+      "station_id": "8775270",
+      "station_name": "Port Aransas (H. Caldwell Pier)",
+      "expect_km": 3.7,
+      "replaces": "8775237",
+      "replaces_km": 1.22,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8775237 Port Aransas is in the ship channel: mean range 0.37 ft. 8775270 H. Caldwell Pier is",
+        "on the Gulf beach: 0.69 ft, the widest within 30 km (the Texas Gulf range is small).",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
+    },
+    "port-aransas-jetty": {
+      "station_id": "8775270",
+      "station_name": "Port Aransas (H. Caldwell Pier)",
+      "expect_km": 0.9,
+      "replaces": "8775237",
+      "replaces_km": 1.27,
+      "reason": [
+        "DAMPED STATION, FLAGGED BY THE DATA-QUALITY SWEEP (pipeline/data_quality.py, tides section, runs 36 and 37 of 2026-10-21/22): the nearest station's mean range over the next three days was under 0.6 of the widest range among the stations within 30 km, the signature of a gauge behind an inlet or up a lagoon rather than on the spot's open coast.",
+        "",
+        "8775237 Port Aransas is in the ship channel: mean range 0.37 ft. 8775270 H. Caldwell Pier is",
+        "on the Gulf beach: 0.69 ft, the widest within 30 km (the Texas Gulf range is small).",
+        "",
+        "expect_km, replaces_km and the roster's distance are the sweep's, from CO-OPS station",
+        "coordinates, to one decimal (replaces_km to two, as the roster carried it); the next",
+        "enrich recomputes the distance to two decimals from the station file, inside",
+        "TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM and COORD_DERIVED_DIST_TOLERANCE_KM."
+      ]
     }
   },
   "unassigned": {
