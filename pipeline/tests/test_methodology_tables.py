@@ -630,14 +630,34 @@ def _cap_cell(cell):
 
 def test_the_wind_cap_table_is_the_cap():
     # Offshore bearing 0: offshore wind from 0, cross-shore from 90, onshore from 180. At 8 s
-    # there is no allowance, so each row is read half a knot above its threshold.
+    # there is no allowance, so each "over" row is read half a knot above its threshold.
     rows = _table(["Wind", "Onshore", "Cross-shore", "Offshore"])
-    assert [r[0] for r in rows] == ["over 13 kt", "over 15 kt", "over 20 kt", "over 25 kt"], rows
-    for label, onshore, cross, offshore in rows:
+    assert [r[0] for r in rows] == ["6 m/s (11.7 kt) or more", "over 13 kt", "over 15 kt",
+                                    "over 20 kt", "over 25 kt"], rows
+    # The 6 m/s row reads the MEASURED speed: exactly 6 m/s (6 / 0.514444 = 11.663 kt, the
+    # post's 11.7) at 16 s, where the allowance would read 3.663 kt, is still capped onshore.
+    label, onshore, cross, offshore = rows[0]
+    assert I.WIND_CAP_BLOWN_OUT_MS == 6.0 and round(6.0 / I.KT_TO_MS, 1) == 11.7
+    got = tuple(I.wind_star_cap(d, 6.0, 0.0, 16.0) for d in (180.0, 90.0, 0.0))
+    assert got == tuple(map(_cap_cell, (onshore, cross, offshore))), (label, got)
+    assert I.wind_star_cap(180.0, 5.99, 0.0, 8.0) == 5.0       # just under 6 m/s: no cap
+    for label, onshore, cross, offshore in rows[1:]:
         kt = float(re.fullmatch(r"over (\d+) kt", label).group(1)) + 0.5
         ms = kt * I.KT_TO_MS
         got = tuple(I.wind_star_cap(d, ms, 0.0, 8.0) for d in (180.0, 90.0, 0.0))
         assert got == tuple(map(_cap_cell, (onshore, cross, offshore))), (label, got)
+
+
+def test_the_onshore_6_ms_row_is_the_blown_out_label():
+    _says(r"The onshore 6 m/s row is the exception: it reads the measured wind, with no allowance "
+          r"for the period\. 6 m/s onshore is where the forecast labels the surface \"Blown out\"",
+          "why the 6 m/s row reads the measured wind")
+    # The label's threshold is the rung's: classifySurface reads "Blown out" onshore (more than
+    # 120 off) from 6 m/s, "choppy" below it.
+    ts = open(os.path.join(ROOT, "frontend", "lib", "ratings.ts"), encoding="utf-8").read()
+    assert "if (windSpeedMs < 6) return 'choppy';" in ts
+    assert "if (off <= 120) return 'mixed';" in ts
+    assert I.WIND_CAP_BLOWN_OUT_MS == 6.0 and I.WIND_CAP_BLOWN_OUT == 2.5
 
 
 def test_the_wind_classes_are_the_posts():

@@ -158,7 +158,8 @@ So strong wind now sets a ceiling on the rating, whatever the other scores are. 
 
 | Wind | Onshore | Cross-shore | Offshore |
 |------|---------|-------------|----------|
-| over 13 kt | 3 stars | 3 stars | no cap |
+| 6 m/s (11.7 kt) or more | 2.5 stars | no cap | no cap |
+| over 13 kt | 2.5 | 3 stars | no cap |
 | over 15 kt | 2 | 2.5 | no cap |
 | over 20 kt | 1.5 | 1.5 | 3 |
 | over 25 kt | 1 | 1 | 2 |
@@ -169,11 +170,15 @@ For the cap, cross-offshore wind, 60° to 90° off, counts as offshore: it blows
 
 Long-period swell stands up to wind better, so up to 20 kt the wind is read a knot lighter for every second of period above 8 s: a 12 s swell in an 18 kt wind is read at 14 kt. Above 20 kt there's no allowance.
 
+The onshore 6 m/s row is the exception: it reads the measured wind, with no allowance for the period. 6 m/s onshore is where the forecast labels the surface "Blown out", so a blown-out hour never rates above 2.5 stars.
+
 When we replayed the forecast published on 20 October 2026 with the cap and the beach-break limit together, 8,844 of 83,446 spot-hours (10.6%), at 257 of our spots, came out lower, and none came out higher. 6,697 moved for the wind alone, 736 for the beach-break limit alone, and 1,411 for both. Most were windy East Coast hours, above all the 25–30 kt onshore days in Florida's forecast; California moved by 72 hours. Judging closing out at the calibrated height kept 12 California hours, at Caspar, Jug Handle and Carmel Beach, from dropping half a star.
 
 On 21 October 2026 we tightened two rungs. Jennettes Pier read a 21.8 kt cross-shore wind at 11.9 s as 17.9 kt and kept 2.5 stars on a day Surfline rated "Very Poor"; now the allowance stops at 20 kt. Ocean City NJ rated 4.5 stars in a 22 kt offshore wind that Surfline rated "Fair", and Atlantic City 4.5 in 21–24 kt; offshore that strong holds the lip up so long that drops go late and vertical, so it's now capped at 3 stars. Replaying the forecast published that day, 2,612 of 95,107 spot-hours (2.7%), at 259 of our spots, came out lower, and none came out higher: 2,256 because the allowance stops at 20 kt, and 356 for the offshore cap. Ocean City NJ and Atlantic City went from 4.5 to 3 stars.
 
 On 22 October 2026 we found that HRRR's wind direction had been read off its map grid rather than true north, about 14° out in New Jersey. Turned to true north, Ocean City NJ's 20-plus-knot wind at 16:00 UTC on 21 October moved from 58° to 72° off its offshore direction, from offshore to cross-shore, and the cross-shore column cut it from 3 stars to 1.5 for a wind still blowing partly offshore. So cross-offshore wind now reads the offshore column. Replaying 27,813 published HRRR hours with both changes, 2,605 moved: 726 up and 1,879 down.
+
+On 23 October 2026 we lined the cap up with that label. Indialantic showed "Blown out" at 3 stars in a 15.5 kt onshore wind on a 12.2 s swell: the allowance read it at 11.3 kt, under the first rung. Replaying the forecast published that day, 1,783 of 94,913 spot-hours came out lower, and none came out higher, most of them onshore hours in Florida and North Carolina. Blown-out hours above 2.5 stars went from 1,777 to none.
 
 ## Period
 

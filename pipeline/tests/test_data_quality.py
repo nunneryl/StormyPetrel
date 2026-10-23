@@ -432,7 +432,11 @@ def test_the_wind_score_is_recomputed_for_the_new_wind_not_kept():
 def test_cap90(wind_dir, speed, period, want):
     from pipeline.interpret import wind_star_cap
     assert DQ.cap90_star_cap(wind_dir, speed, 90.0, period) == want
-    assert wind_star_cap(wind_dir, speed, 90.0, period) == want      # wired
+    # Wired: the same, except the onshore hour (150 off at 10.2 m/s, 6 m/s or more measured),
+    # which the onshore 6 m/s rung caps at 2.5 since 2026-10-23.
+    wired = 2.5 if (wind_dir, speed) == (300.0, 10.2) else want
+    assert wind_star_cap(wind_dir, speed, 90.0, period) == wired
+    assert DQ.wired_cap_here(wind_dir, speed, 90.0, period) == wired
 
 
 def _cap90_fixture():
@@ -526,14 +530,19 @@ def test_the_cap90_gate_counts_a_wired_rater_that_differs_from_the_rule(monkeypa
 def test_the_wired_cap_is_the_cap90_rule_everywhere(d):
     """A property over a grid, not an expected value: every direction in 5 deg steps, 0-30 kt
     in quarter knots, periods 6-18 s, offshore bearing 245. The wired cap and the rule built
-    here independently agree everywhere, and the rule never lowers the #270 cap."""
+    here independently (wired_cap_here) agree everywhere; the cap90 rule never lowers the
+    #270 cap; and the wired cap differs from cap90's only onshore at 6 m/s or more, at 2.5."""
     from pipeline.interpret import wind_star_cap
     for q in range(0, 121):
         ms = q / 4 * 0.514444
         for tp in (6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0):
             rule = DQ.cap90_star_cap(float(d), ms, 245.0, tp)
-            assert wind_star_cap(float(d), ms, 245.0, tp) == rule, (d, q, tp)
+            wired = wind_star_cap(float(d), ms, 245.0, tp)
+            assert wired == DQ.wired_cap_here(float(d), ms, 245.0, tp), (d, q, tp)
             assert rule >= DQ.published_wind_cap(float(d), ms, 245.0, tp), (d, q, tp)
+            if wired != rule:
+                assert DQ.angle_off(float(d), 245.0) >= 120.0 and ms >= 6.0, (d, q, tp)
+                assert wired == 2.5, (d, q, tp)
 
 
 def test_class_moves_are_counted_by_kind():
@@ -726,3 +735,19 @@ def test_the_sweep_reads_the_list_itself(tmp_path):
     p = tmp_path / "list.json"
     p.write_text(json.dumps({"spots": {"cannon-beach": "x", "bastendorff-beach": "y"}}))
     assert DQ.land_cell_spots(p) == {"cannon-beach", "bastendorff-beach"}
+
+
+
+def test_the_cap90_gate_holds_on_an_onshore_6_ms_hour():
+    # The spot's own cell 8.231 m/s from 270 (16.000 kt), 180 off: onshore at 6 m/s or more,
+    # so the wired cap is 2.5 (cap90 alone: 16 - 4 = 12 kt at 12 s, no rung, 5.0). wind_mult
+    # 0.55 (150 off and more, over 5 m/s): uncapped 4.443 x 0.55**0.35 (0.811200) = 3.604 ->
+    # 3.5, so published (wired) 2.5. The gate rebuilds the wired cap here (wired_cap_here):
+    # 2.5 again, no difference; on cap90 alone it would be 3.5 and counted.
+    spot, row, cells, winds = _with_winds((8.231, 0.0), (8.231, 0.0))
+    assert row["stars"] == 2.5
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"))
+    assert rep["replay"] == {"HRRR, reproduced": 1}
+    assert DQ.wired_cap_here(270.0, 8.231, 90.0, 12.0) == 2.5
+    assert DQ.cap90_star_cap(270.0, 8.231, 90.0, 12.0) == 5.0

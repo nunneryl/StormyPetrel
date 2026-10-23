@@ -610,6 +610,16 @@ WIND_CAP_OFFSHORE_STRONG = 3.0
 # to true north, Ocean City NJ's 21 Oct 16Z wind moved from 58 deg off (offshore, 3.0) to 72 deg
 # off (cross-shore), where the cross-shore ladder put a wind blowing partly offshore at 1.5.
 WIND_CAP_OFFSHORE_SIDE_DEG = 90.0
+# Onshore at 6 m/s MEASURED or more: 2.5. The Conditions tile reads "Blown out" from 6 m/s
+# onshore (frontend/lib/ratings.ts classifySurface, more than 120 off); this rung starts there
+# and reads the same measured speed, with no period allowance, so a "Blown out" hour never
+# rates above 2.5 stars. The rungs over 15 and 20 kt keep the allowance; the over-13 3.0 rung
+# of WIND_CAP_ONSHORE no longer binds onshore (anything over 13 kt is over 6 m/s). Decided
+# 2026-10-23 after rating-preview run 44 (1,783 of 94,913 spot-hours lower, none higher;
+# "Blown out" hours above 2.5 stars 1,777 -> 0): Indialantic showed "Blown out" at 3.0 stars
+# in a 15.5 kt onshore wind on a 12.2 s swell, read at 11.3 kt after the allowance.
+WIND_CAP_BLOWN_OUT_MS = 6.0
+WIND_CAP_BLOWN_OUT = 2.5
 #
 # THE 20 KT CHANGES, decided 2026-10-21 after rating-preview run 34 (2,612 of 95,107
 # spot-hours lower, none higher). Jennettes Pier read a 21.8 kt cross-shore wind at 11.9 s as
@@ -641,7 +651,8 @@ def wind_star_cap(
     Above 25 kt measured, whatever the period: 1.0 cross-shore or onshore, 2.0 offshore.
     Offshore above 20 kt measured: 3.0; offshore is otherwise never capped. Cross-shore and
     onshore read their ladder, capping above 13 kt, at knots - max(0, period - 8) up to 20 kt
-    measured and at the measured knots above it."""
+    measured and at the measured knots above it. Onshore at 6 m/s MEASURED or more is also
+    capped at 2.5 (WIND_CAP_BLOWN_OUT), the "Blown out" label's threshold, with no allowance."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return 5.0
     cls = ("offshore" if _angle_off(wind_dir, offshore_wind_deg) < WIND_CAP_OFFSHORE_SIDE_DEG
@@ -657,6 +668,8 @@ def wind_star_cap(
     for above, c in (WIND_CAP_ONSHORE if cls == "onshore" else WIND_CAP_CROSS):
         if kt - tol > above:
             cap = c
+    if cls == "onshore" and wind_speed_ms >= WIND_CAP_BLOWN_OUT_MS:
+        cap = min(cap, WIND_CAP_BLOWN_OUT)
     return cap
 
 

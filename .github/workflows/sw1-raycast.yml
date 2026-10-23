@@ -38,14 +38,17 @@ name: sw1-raycast
 #       partition but the height takes the alignment term only (C: on NWPS dirpw), all three
 #       on the same rows read once. Geometry from baseline_ref. SELECT only.
 #   mode = rating-preview: READ-ONLY. An onshore cap rung at the "Blown out" label's threshold
-#       (6 m/s), against the wired rater, replayed over the window from 2026-10-23 00:00Z:
+#       (6 m/s), against the rater the window was published with, replayed over the window
+#       from 2026-10-23 00:00Z:
 #       blown-2.5 (2.5 from 6 m/s, over 15 kt 2.0, over 20 kt 1.5, with the period allowance as
 #       today) and blown-2.5-measured (the 6 m/s rung read at the measured speed; the rungs
 #       over 15 and 20 kt keep the allowance); each by state and wind band, the "Blown out"
 #       hours above 2.5 stars under today's label (6 m/s) and a 15 kt label, the hours whose
 #       label would change, every changed hour at the spots in `spots`, the next hour's caps
 #       and labels there, and the homepage's "Best conditions right now" (from now) before and
-#       after (pipeline/star_preview.py --onshore --explain).
+#       after; and THE MERGE GATE, the wired rater (blown-2.5-measured wired into
+#       interpret.wind_star_cap) against the preview's blown-2.5-measured hour for hour (must
+#       be 0 differences) (pipeline/star_preview.py --onshore --explain).
 #       Geometry from baseline_ref. SELECT only.
 #   mode = data-quality: READ-ONLY. The data-quality sweep (pipeline/data_quality.py): every
 #       CONUS spot's HRRR cell and whether HRRR classes it as land, with the nearest seaward water
@@ -493,7 +496,7 @@ jobs:
           git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
           echo "baseline: $base ($(git rev-parse "$base"))"
 
-      - name: An onshore cap rung at the Blown out label's threshold (SELECT only)
+      - name: The onshore 6 m/s rung and its merge gate (SELECT only)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

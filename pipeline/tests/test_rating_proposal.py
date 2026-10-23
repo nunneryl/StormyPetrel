@@ -9,7 +9,8 @@ Every expected value is worked by hand, never read back from the functions under
   tolerance        max(0, period - 8) knots off the speed, on the ladder only, and only up to
                    20 kt measured (since rating-preview run 34): above 20 kt the ladder reads
                    the measured speed. 10.2 m/s = 19.827 kt, 10.4 m/s = 20.216 kt
-  ladder           onshore >13: 3.0, >15: 2.0, >20: 1.5
+  ladder           onshore >13: 3.0, >15: 2.0, >20: 1.5; and onshore at 6 m/s MEASURED or more
+                   at most 2.5, no allowance (since 2026-10-23, rating-preview run 44)
                    cross   >13: 3.0, >15: 2.5, >20: 1.5
   above 25 kt      measured, any period: 1.0 cross-shore and onshore, 2.0 offshore
   offshore >20 kt  measured: 3.0 (since run 34); otherwise offshore is not capped
@@ -71,8 +72,9 @@ def test_cross_shore_cap(speed, period, expected):
 
 @pytest.mark.parametrize("speed, period, expected", [
     (8.0, 8.0, 2.0),       # 15.55 kt > 15: 2.0
-    (8.0, 10.0, 3.0),      # 13.55 kt > 13: 3.0
-    (8.0, 11.0, 5.0),      # 12.55 kt: no cap
+    (8.0, 10.0, 2.5),      # 13.55 kt > 13: 3.0; 8 m/s measured >= 6: 2.5
+    (8.0, 11.0, 2.5),      # 12.55 kt: no ladder rung; 8 m/s measured >= 6: 2.5
+    (5.9, 8.0, 5.0),       # 11.47 kt, under 6 m/s: no cap
     (12.5, 11.0, 1.5),     # 24.30 kt > 20 measured: no allowance, 1.5
     (10.4, 16.0, 1.5),     # 20.22 kt > 20 measured: no allowance, 1.5 (was 12.22: no cap)
     (12.8611, 8.0, 1.5),   # exactly 25 kt: > 20: 1.5

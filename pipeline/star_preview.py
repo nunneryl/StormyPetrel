@@ -1476,10 +1476,15 @@ def _print_wind_rater_check(c):
 # (the same direction at 15 kt or more measured; below it, over 2.5 m/s, the tile reads
 # "Choppy").
 #
-# Baseline: the WIRED rater (true north, #275 and #276 in the published wind), which must
-# reproduce the published stars; the rule is applied by putting its cap in place of
-# interpret.wind_star_cap for the replay, so every rater path (rate_spot, NWPS, MOP), which
-# all take the cap through interpret.rule_keywords, reads it.
+# Baseline: the rater the window was published with, i.e. the wired rater with the cap as it
+# stood before blown-2.5-measured was wired (published_cap, built here: #275's cap); it must
+# reproduce the published stars. A rule is applied by putting its cap in place of
+# interpret.wind_star_cap for the replay, so every rater path (rate_spot, NWPS, MOP), which all
+# take the cap through interpret.rule_keywords, reads it.
+#
+# WIRED 2026-10-23: interpret.wind_star_cap is now blown-2.5-measured (WIND_CAP_BLOWN_OUT_MS).
+# THE MERGE GATE (onshore_rater_check): the wired rater against this preview's
+# blown-2.5-measured, built here independently, hour for hour; must be 0 differences.
 BLOWN_OUT_MS = 6.0
 # rule: (the first onshore rung's cap, whether that rung reads the measured speed)
 ONSHORE_RULES = {"blown-2.5": (2.5, False), "blown-3.0": (3.0, False),
@@ -1509,12 +1514,27 @@ def _surface(wind_dir, wind_speed_ms, offshore_wind_deg):
     return "Clean" if off <= 60.0 else "Mixed" if off <= 120.0 else "Choppy"
 
 
+def published_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
+    """The cap the rows published before blown-2.5-measured carry (#275), built here: under
+    90 deg off the offshore rungs (over 25 kt 2.0, over 20 kt 3.0, else none); from 90 deg the
+    #270 ladder (proposed_wind_cap 'wind-both': 90-120 cross-shore, 120 and over onshore)."""
+    if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
+        return 5.0
+    if _angle_off(wind_dir, offshore_wind_deg) < 90.0:
+        kt = wind_speed_ms / KT_TO_MS
+        if kt > WIND_CAP_UNSURFABLE_KT:
+            return WIND_CAP_UNSURFABLE_OFFSHORE
+        return WIND_OFFSHORE_CAP if kt > WIND_OFFSHORE_CAP_KT else 5.0
+    return proposed_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, "wind-both")
+
+
 def onshore_rung_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, rule):
-    """The wired cap with *rule*'s first onshore rung (ONSHORE_RULES) at BLOWN_OUT_MS, read
-    at the speed less the period allowance as today; the onshore rungs below that cap keep
-    their thresholds. Anything not onshore, or over 25 kt, is the wired cap."""
+    """The published cap (published_cap) with *rule*'s first onshore rung (ONSHORE_RULES) at
+    BLOWN_OUT_MS, read at the measured speed or the speed less the period allowance as the
+    rule says; the onshore rungs below that cap keep their thresholds and the allowance.
+    Anything not onshore, or over 25 kt, is the published cap."""
     from .interpret import WIND_CAP_NO_ALLOWANCE_ABOVE_KT
-    cap = wind_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
+    cap = published_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return cap
     if wind_class(wind_dir, offshore_wind_deg) != "onshore":
@@ -1551,12 +1571,55 @@ class _cap_in_place:
 
 
 def onshore_stars(row, spot, rb, factors, m, rule=None):
-    """The wired rater's stars for *row*; with *rule*, under onshore_rung_cap(rule)."""
+    """The wired rater's stars for *row* with the cap in place: *rule* None, the published cap
+    (published_cap); "wired", interpret.wind_star_cap as it is; else onshore_rung_cap(rule)."""
     f = spot_factor(spot, factors or {}, _slug)
-    if rule is None:
+    if rule == "wired":
         return wired_rater(row, spot, rb, f, m)
-    with _cap_in_place(lambda wd, ws, off, tp: onshore_rung_cap(wd, ws, off, tp, rule)):
+    cap = (published_cap if rule is None
+           else lambda wd, ws, off, tp: onshore_rung_cap(wd, ws, off, tp, rule))
+    with _cap_in_place(cap):
         return wired_rater(row, spot, rb, f, m)
+
+
+def onshore_rater_check(rows, spots, names, factors, m, rule="blown-2.5-measured"):
+    """THE MERGE GATE for blown-2.5-measured: on every row the published rater reproduces, the
+    wired rater (interpret.wind_star_cap as it is) against this preview's *rule*, built here,
+    hour for hour. Must be 0 differences."""
+    same = differ = 0
+    examples, by_state = [], defaultdict(Counter)
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        spot = spots.get(name)
+        if spot is None or row.get("stars") is None:
+            continue
+        rb = rescore(row, spot)
+        if rb["stars"] is None or onshore_stars(row, spot, rb, factors, m) != float(row["stars"]):
+            continue
+        preview = onshore_stars(row, spot, rb, factors, m, rule)
+        wired = onshore_stars(row, spot, rb, factors, m, "wired")
+        by_state[state][round(wired - float(row["stars"]), 1)] += 1
+        if wired == preview:
+            same += 1
+        else:
+            differ += 1
+            if len(examples) < 20:
+                examples.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                                 "published": float(row["stars"]), "preview": preview,
+                                 "wired": wired})
+    return {"rule": rule, "hours": same + differ, "same": same, "different": differ,
+            "examples": examples,
+            "wired_delta_by_state": {s_: dict(sorted(c.items())) for s_, c in
+                                     sorted(by_state.items(), key=lambda kv: str(kv[0]))}}
+
+
+def _print_onshore_rater_check(c):
+    print(f"\n=== merge gate: wired rater vs preview {c['rule']}, hour for hour ===\n"
+          f"hours {c['hours']}: same {c['same']}, DIFFERENT {c['different']} (must be 0)")
+    print(f"wired rater against the published stars, by state: {c['wired_delta_by_state']}")
+    for e in c["examples"]:
+        print(f"  {e['spot']} ({e['state']}) {e['valid_time']}: published {e['published']} "
+              f"preview {e['preview']} wired {e['wired']}")
 
 
 def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None, focus=()):
@@ -1580,9 +1643,9 @@ def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None,
             continue
         live = onshore_stars(row, spot, rb, factors, m)
         if live != float(row["stars"]):
-            replay["wired rater does NOT reproduce"] += 1
+            replay["published rater does NOT reproduce"] += 1
             continue
-        replay["wired rater reproduces"] += 1
+        replay["published rater reproduces"] += 1
         after = onshore_stars(row, spot, rb, factors, m, rule)
         delta = round(after - live, 1)
         by_state[state][delta] += 1
@@ -1605,7 +1668,7 @@ def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None,
                  "stars_before": live, "stars_after": after, "delta": delta, "wind": cls,
                  "wind_kt": None if kt is None else round(kt, 1), "tp": rb["tp"],
                  "blown_out": blown_out(wd, ws, off),
-                 "cap_before": wind_star_cap(wd, ws, off, rb["tp"]),
+                 "cap_before": published_cap(wd, ws, off, rb["tp"]),
                  "cap_after": onshore_rung_cap(wd, ws, off, rb["tp"], rule)}
             changed.append(c)
             if name in focused:
@@ -1631,7 +1694,8 @@ def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None,
 
 
 def _print_onshore(rep, since):
-    print(f"\n=== onshore rung {rep['rule']} — window from {since}; before = the wired rater ===")
+    print(f"\n=== onshore rung {rep['rule']} — window from {since}; before = the published "
+          f"rater (the cap before blown-2.5-measured was wired) ===")
     print(f"  replay: {rep['replay']}")
     print(f"compared: {rep['compared']}   changed: {rep['changed']}   ups: {rep['ups']}   "
           f"downs: {rep['downs']}")
@@ -1661,7 +1725,7 @@ def _print_onshore(rep, since):
 
 def onshore_explain(row, spot, factors, m, rules=tuple(ONSHORE_RULES)):
     """One row's wind, label, allowance and caps, and the stars before and under each rule;
-    None when the wired rater does not reproduce it."""
+    None when the published rater does not reproduce it."""
     rb = rescore(row, spot)
     if rb["stars"] is None or onshore_stars(row, spot, rb, factors, m) != _num(row.get("stars")):
         return None
@@ -1673,6 +1737,7 @@ def onshore_explain(row, spot, factors, m, rules=tuple(ONSHORE_RULES)):
             "blown_out": blown_out(wd, ws, off),
             "label": {lb: "Blown out" if blown_out(wd, ws, off, lb) else _surface(wd, ws, off)
                       for lb in LABELS},
+            "published_cap": published_cap(wd, ws, off, rb["tp"]),
             "wired_cap": wind_star_cap(wd, ws, off, rb["tp"]),
             "rules": {r: {"cap": onshore_rung_cap(wd, ws, off, rb["tp"], r),
                           "stars": onshore_stars(row, spot, rb, factors, m, r)} for r in rules}}
@@ -1680,12 +1745,12 @@ def onshore_explain(row, spot, factors, m, rules=tuple(ONSHORE_RULES)):
 
 def _print_onshore_explain(name, x):
     if x is None:
-        print(f"\n--- {name}: the soonest row does not reproduce under the wired rater")
+        print(f"\n--- {name}: the soonest row does not reproduce under the published rater")
         return
     print(f"\n--- {name} @ {x['valid_time']}: {x['stars']} stars; {x['wind']} "
           f"{_f(x['wind_kt'], '{:.1f}')} kt, {_f(x['period_s'], '{:.1f}')} s (allowance "
           f"{x['allowance_kt']:.1f} kt); label {x['label']['6ms']} (6 m/s), "
-          f"{x['label']['15kt']} (15 kt); wired cap "
+          f"{x['label']['15kt']} (15 kt); published cap {x['published_cap']}, wired cap "
           f"{x['wired_cap']}")
     print("  " + "; ".join(f"{r}: cap {v['cap']} -> {v['stars']} stars" for r, v in x["rules"].items()))
 
@@ -2187,6 +2252,9 @@ def main(argv=None):
                 continue
             out["explain"][sl] = onshore_explain(row, before[name], factors, m, onshores)
             _print_onshore_explain(name, out["explain"][sl])
+        if "blown-2.5-measured" in onshores:
+            out["onshore_rater_check"] = onshore_rater_check(rows, before, names, factors, m)
+            _print_onshore_rater_check(out["onshore_rater_check"])
         out["onshore"] = {}
         for o in onshores:
             out["onshore"][o] = onshore_compare(rows, before, names, factors, m, o, board_from=now,
