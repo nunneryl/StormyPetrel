@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "SPOTS THAT KEEP THEIR OWN HRRR CELL WHEN HRRR COUNTS IT AS LAND. Read by",
+    "pipeline/forecast/hrrr.py (load_land_cell_spots). Every other spot whose nearest HRRR cell",
+    "is land reads the nearest seaward water cell instead (#276): at an exposed beach the air",
+    "reaching the lineup has come over water, and the land cell is HRRR slowing it over its own",
+    "land surface. These spots sit in the lee of a headland or in a cove, where the water cell,",
+    "out beyond the headland, overstates the wind the lineup feels.",
+    "",
+    "Decided 2026-10-22 from data-quality run 41: every hour the water cell cost a spot 1.5",
+    "stars or more was reviewed spot by spot. The calls are geographic judgment, not checked",
+    "against observed wind; validating land vs water wind against coastal observations",
+    "(NDBC C-MAN or similar) at a few of these spots is on the backlog.",
+    "",
+    "Keyed by slug (the name lower-cased, non-alphanumerics to '-'); the value is the reason."
+  ],
+  "spots": {
+    "trinidad-state-beach": "Between Trinidad Head and Elk Head (CA); the water cell, 2.8 km WSW beyond both, read 20-26 kt in N wind where the land cell read 13-15 kt.",
+    "indian-beach-ecola": "A cove under Tillamook Head (OR), sheltered from N-NW wind; land 5-11 kt against water 17-23 kt in run 41.",
+    "la-push-third-beach": "A south-facing cove between Taylor Point and Teahwhit Head (WA); NW wind reaches it offshore over forested headland.",
+    "cannon-beach": "Reads the same land and water cells as Indian Beach Ecola, so its point sits at the north end under Ecola Point (OR).",
+    "bastendorff-beach": "Tucked behind the Coos Bay south jetty and Coos Head (OR), with shelter from north wind."
+  }
+}

@@ -647,6 +647,18 @@ def test_the_wind_classes_are_the_posts():
         "offshore", "cross", "cross", "onshore"]
 
 
+def test_cross_offshore_reads_the_offshore_column():
+    m = _says(r"For the cap, cross-offshore wind, (\d+)° to (\d+)° off, counts as offshore",
+              "the cross-offshore cap")
+    lo, hi = (float(g) for g in m.groups())
+    assert (lo, hi) == (60.0, I.WIND_CAP_OFFSHORE_SIDE_DEG)
+    # Offshore bearing 0, at 8 s. 75 off reads the offshore column of the table (3 over 20 kt,
+    # 2 over 25, none over 13 or 15); 90 off is cross-shore (1.5 over 20 kt).
+    for kt, offshore in ((13.5, 5.0), (15.5, 5.0), (20.5, 3.0), (25.5, 2.0)):
+        assert I.wind_star_cap(75.0, kt * I.KT_TO_MS, 0.0, 8.0) == offshore, kt
+    assert I.wind_star_cap(90.0, 20.5 * I.KT_TO_MS, 0.0, 8.0) == 1.5
+
+
 def test_the_period_allowance_example():
     m = _says(r"a (\d+) s swell in an (\d+) kt wind is read at (\d+) kt", "the allowance example")
     period, wind, read = (float(g) for g in m.groups())
