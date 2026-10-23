@@ -3,11 +3,14 @@ out" label's threshold, 6 m/s = 11.663 kt, read with the period allowance as tod
 
   blown-2.5   from 6 m/s 2.5; over 15 kt 2.0; over 20 kt 1.5 (the over-13 3.0 rung no longer binds)
   blown-3.0   the existing first rung (3.0) moved down from over 13 kt to 6 m/s
+  blown-2.5-measured   blown-2.5 with the 6 m/s rung read at the measured speed (no allowance)
+  label 15kt  "Blown out" from 15 kt measured (7.717 m/s); below it onshore reads "Choppy"
 
 Every expected value is worked by hand, never read back from the functions under test:
 
   knots       m/s / 0.514444: 6.0 = 11.663   5.99 = 11.644   6.7 = 13.024   8.0 = 15.551
-              8.231 = 16.000   11.0 = 21.382   13.4 = 26.048
+              8.231 = 16.000   11.0 = 21.382   13.4 = 26.048   6.2586 = 12.166 (14 mph)
+              6.5 = 12.635   9.5 = 18.467   7.72 = 15.007   7.71 = 14.987
   allowance   max(0, period - 8) knots off the speed, up to 20 kt measured
   wired       onshore over 13: 3.0, over 15: 2.0, over 20: 1.5; over 25: 1.0
   classes     offshore bearing 90: wind from 270 is 180 off (onshore), from 0 is 90 off (cross)
@@ -20,7 +23,7 @@ import pytest
 from pipeline import interpret as I
 from pipeline import star_preview as SP
 
-RULES = ("blown-2.5", "blown-3.0")
+RULES = ("blown-2.5", "blown-3.0")      # the rules that read the rung after the allowance
 
 
 @pytest.mark.parametrize("wind_dir, speed, period, wired, b25, b30", [
@@ -53,6 +56,44 @@ def test_blown_out_is_the_labels_rule(wind_dir, speed, want):
     assert SP.blown_out(wind_dir, speed, 90.0) is want
 
 
+@pytest.mark.parametrize("speed, period, b25, measured", [
+    (6.2586, 10.0, 5.0, 2.5),   # 12.166 kt at 10 s: read at 10.166 after the allowance (no rung);
+                                # measured 12.166 >= 11.663: 2.5
+    (6.2586, 18.0, 5.0, 2.5),   # the measured rung ignores the period entirely
+    (5.99, 8.0, 5.0, 5.0),      # 11.644 kt: under 6 m/s either way
+    (9.5, 12.0, 2.5, 2.5),      # 18.467 kt at 12 s: 14.467 after the allowance, not over 15: 2.5
+    (8.0, 8.0, 2.0, 2.0),       # 15.551 kt at 8 s: over 15, 2.0
+    (8.0, 12.0, 5.0, 2.5),      # ...at 12 s read at 11.551: under 11.663 and not over 15, so
+                                # blown-2.5 has no rung (5.0); measured 15.551 >= 11.663: 2.5
+    (11.0, 16.0, 1.5, 1.5),     # 21.382 kt: over 20, no allowance, 1.5
+])
+def test_the_measured_rung(speed, period, b25, measured):
+    assert SP.onshore_rung_cap(270.0, speed, 90.0, period, "blown-2.5-measured") == measured
+    assert SP.onshore_rung_cap(270.0, speed, 90.0, period, "blown-2.5") == b25
+
+
+@pytest.mark.parametrize("wind_dir, speed, six, fifteen", [
+    (270.0, 7.72, True, True),     # 15.007 kt
+    (270.0, 7.71, True, False),    # 14.987 kt: "Blown out" today, "Choppy" from 15 kt
+    (270.0, 6.5, True, False),
+    (270.0, 5.99, False, False),
+    (0.0, 9.0, False, False),      # 90 off: "Mixed" under both
+])
+def test_the_two_labels(wind_dir, speed, six, fifteen):
+    assert SP.blown_out(wind_dir, speed, 90.0, "6ms") is six
+    assert SP.blown_out(wind_dir, speed, 90.0, "15kt") is fifteen
+
+
+@pytest.mark.parametrize("wind_dir, speed, want", [
+    (270.0, 6.5, "Choppy"), (0.0, 6.5, "Mixed"), (90.0, 6.5, "Clean"), (270.0, 2.0, "Clean"),
+    (210.0, 6.5, "Mixed"),     # exactly 120 off: classifySurface's "off <= 120" is mixed
+    (150.0, 6.5, "Clean"),     # exactly 60 off: "off <= 60" is clean
+    (None, 6.5, "unknown"),
+])
+def test_the_label_below_blown_out(wind_dir, speed, want):
+    assert SP._surface(wind_dir, speed, 90.0) == want
+
+
 def test_a_rule_only_ever_lowers_the_wired_cap_and_only_onshore():
     """A property over a grid, not an expected value: every 5 deg, 0-30 kt in quarter knots,
     periods 6-18 s. Each rule's cap is never above the wired cap, and differs only onshore
@@ -70,6 +111,13 @@ def test_a_rule_only_ever_lowers_the_wired_cap_and_only_onshore():
                     if got != wired:
                         assert I.wind_class(float(d), 90.0) == "onshore", (d, q, tp, r)
                         assert 11.663 <= read <= 15.0 + 1e-9, (d, q, tp, r, read)
+                # The measured rung is never above blown-2.5, and differs from it only onshore
+                # at 6 m/s measured or more.
+                got = SP.onshore_rung_cap(float(d), ms, 90.0, tp, "blown-2.5-measured")
+                b25 = SP.onshore_rung_cap(float(d), ms, 90.0, tp, "blown-2.5")
+                assert got <= b25, (d, q, tp)
+                if got != b25:
+                    assert I.wind_class(float(d), 90.0) == "onshore" and kt >= 11.663, (d, q, tp)
 
 
 def test_the_cap_goes_back_after_the_replay():
@@ -97,7 +145,9 @@ FACTORS = {"a": {"factor": 3.0}}
 NAMES = {1: ("A", "California"), 2: ("B", "North Carolina")}
 LIGHT = {"wind_dir": 90.0, "wind_speed": 2.0}
 ONSHORE_16 = {"wind_dir": 270.0, "wind_speed": 8.231}      # 16.000 kt, read at 12.000 at 12 s
-T0, T1 = "2026-10-23T15:00:00+00:00", "2026-10-23T16:00:00+00:00"
+ONSHORE_12 = {"wind_dir": 270.0, "wind_speed": 6.5}         # 12.635 kt, read at 8.635 at 12 s
+T0, T1, T2 = ("2026-10-23T15:00:00+00:00", "2026-10-23T16:00:00+00:00",
+              "2026-10-23T17:00:00+00:00")
 
 
 def _row(**kw):
@@ -115,18 +165,23 @@ def _rows():
         _row(spot_id=2, stars=4.5, valid_time=T1, **LIGHT),       # B 4.5, unchanged
         _row(spot_id=1, stars=2.0, valid_time=T0, **LIGHT),       # A: the wired rater gives 3.0
         _row(spot_id=1, stars=3.0, valid_time=T1, **LIGHT),       # A 3.0, unchanged
+        _row(spot_id=2, stars=4.5, valid_time=T2, **ONSHORE_12),  # B 4.5; measured rung 2.5
     ]
 
 
 def test_onshore_compare():
     rep = SP.onshore_compare(_rows(), SPOTS, NAMES, FACTORS, 1.6, "blown-2.5", n=2,
                              board_from=T1, focus=["B"])
-    assert rep["replay"] == {"wired rater reproduces": 3, "wired rater does NOT reproduce": 1}
-    assert (rep["compared"], rep["changed"], rep["ups"], rep["downs"]) == (3, 1, 0, 1)
-    assert rep["delta_by_state"] == {"California": {0.0: 1}, "North Carolina": {-2.0: 1, 0.0: 1}}
+    # B at T2, 12.635 kt at 12 s: read at 8.635, no rung under blown-2.5, 4.5 stays.
+    assert rep["replay"] == {"wired rater reproduces": 4, "wired rater does NOT reproduce": 1}
+    assert (rep["compared"], rep["changed"], rep["ups"], rep["downs"]) == (4, 1, 0, 1)
+    assert rep["delta_by_state"] == {"California": {0.0: 1}, "North Carolina": {-2.0: 1, 0.0: 2}}
     assert rep["changed_by_wind"] == {"onshore <=20 kt": 1}
-    assert rep["blown_out_hours"] == 1
-    assert rep["blown_out_above_2_5"] == {"before": 1, "after": 0}
+    # "Blown out" today: T0 (16 kt) and T2 (12.6 kt), both 4.5; under blown-2.5 T0 is 2.5.
+    # From 15 kt only T0 is "Blown out"; T2 reads "Choppy", the one label change.
+    assert rep["blown_out"] == {"6ms": {"hours": 2, "above_2_5_before": 2, "above_2_5_after": 1},
+                                "15kt": {"hours": 1, "above_2_5_before": 1, "above_2_5_after": 0}}
+    assert rep["label_15kt_changes"] == 1
     assert rep["homepage_before"] == [("B", "North Carolina", 4.5), ("A", "California", 3.0)]
     assert rep["homepage_after"] == rep["homepage_before"]
     (c,) = rep["focus"]["B"]["changed"]
@@ -134,8 +189,12 @@ def test_onshore_compare():
             c["cap_after"], c["stars_before"], c["stars_after"]) == (
         T0, "onshore", 16.0, 12.0, True, 5.0, 2.5, 4.5, 2.5)
     rep = SP.onshore_compare(_rows(), SPOTS, NAMES, FACTORS, 1.6, "blown-3.0")
-    assert rep["delta_by_state"]["North Carolina"] == {-1.5: 1, 0.0: 1}
-    assert rep["blown_out_above_2_5"] == {"before": 1, "after": 1}
+    assert rep["delta_by_state"]["North Carolina"] == {-1.5: 1, 0.0: 2}
+    assert rep["blown_out"]["6ms"] == {"hours": 2, "above_2_5_before": 2, "above_2_5_after": 2}
+    # The measured rung catches T2 too: 4.5 -> 2.5, and no "Blown out" hour stays above 2.5.
+    rep = SP.onshore_compare(_rows(), SPOTS, NAMES, FACTORS, 1.6, "blown-2.5-measured")
+    assert rep["delta_by_state"]["North Carolina"] == {-2.0: 2, 0.0: 1}
+    assert rep["blown_out"]["6ms"] == {"hours": 2, "above_2_5_before": 2, "above_2_5_after": 0}
 
 
 def test_the_homepage_reads_the_first_hour_at_or_after_board_from():
@@ -150,8 +209,14 @@ def test_onshore_explain():
     x = SP.onshore_explain(_row(**ONSHORE_16), SPOTS["B"], FACTORS, 1.6)
     assert (x["stars"], x["wind"], x["wind_kt"], x["period_s"], x["allowance_kt"],
             x["blown_out"], x["wired_cap"]) == (4.5, "onshore", 16.0, 12.0, 4.0, True, 5.0)
+    assert x["label"] == {"6ms": "Blown out", "15kt": "Blown out"}
     assert x["rules"] == {"blown-2.5": {"cap": 2.5, "stars": 2.5},
-                          "blown-3.0": {"cap": 3.0, "stars": 3.0}}
+                          "blown-3.0": {"cap": 3.0, "stars": 3.0},
+                          "blown-2.5-measured": {"cap": 2.5, "stars": 2.5}}
+    x = SP.onshore_explain(_row(**ONSHORE_12), SPOTS["B"], FACTORS, 1.6)
+    assert x["label"] == {"6ms": "Blown out", "15kt": "Choppy"}
+    assert x["rules"]["blown-2.5"] == {"cap": 5.0, "stars": 4.5}
+    assert x["rules"]["blown-2.5-measured"] == {"cap": 2.5, "stars": 2.5}
     assert SP.onshore_explain(_row(stars=2.0, **ONSHORE_16), SPOTS["B"], FACTORS, 1.6) is None
 
 

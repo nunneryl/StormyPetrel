@@ -1468,21 +1468,45 @@ def _print_wind_rater_check(c):
 #   blown-2.5   from 6 m/s 2.5; over 15 kt 2.0, over 20 kt 1.5 (the over-13 3.0 rung is above
 #               2.5, so it no longer binds)
 #   blown-3.0   the existing first rung (3.0) moved down from over 13 kt to 6 m/s
+#   blown-2.5-measured   blown-2.5 with the 6 m/s rung read at the MEASURED speed (no period
+#               allowance); the rungs over 15 and 20 kt keep the allowance
+#
+# Two "Blown out" labels are counted beside each rule (display only, the rater never reads
+# them): LABELS["6ms"], today's (more than 120 off at 6 m/s or more), and LABELS["15kt"]
+# (the same direction at 15 kt or more measured; below it, over 2.5 m/s, the tile reads
+# "Choppy").
 #
 # Baseline: the WIRED rater (true north, #275 and #276 in the published wind), which must
 # reproduce the published stars; the rule is applied by putting its cap in place of
 # interpret.wind_star_cap for the replay, so every rater path (rate_spot, NWPS, MOP), which
 # all take the cap through interpret.rule_keywords, reads it.
 BLOWN_OUT_MS = 6.0
-ONSHORE_RULES = {"blown-2.5": 2.5, "blown-3.0": 3.0}
+# rule: (the first onshore rung's cap, whether that rung reads the measured speed)
+ONSHORE_RULES = {"blown-2.5": (2.5, False), "blown-3.0": (3.0, False),
+                 "blown-2.5-measured": (2.5, True)}
+# label: the measured speed (m/s) "Blown out" starts at, more than 120 off the offshore bearing
+LABELS = {"6ms": BLOWN_OUT_MS, "15kt": 15.0 * KT_TO_MS}
 
 
-def blown_out(wind_dir, wind_speed_ms, offshore_wind_deg):
-    """The Conditions tile's "Blown out": more than 120 off the offshore bearing at 6 m/s or
-    more (classifySurface; under 2.5 m/s it reads clean whatever the direction)."""
+def blown_out(wind_dir, wind_speed_ms, offshore_wind_deg, label="6ms"):
+    """The Conditions tile's "Blown out" under *label* (LABELS): more than 120 off the
+    offshore bearing at the label's measured speed or more (classifySurface: under 2.5 m/s it
+    reads clean whatever the direction; between, onshore reads "Choppy")."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return False
-    return _angle_off(wind_dir, offshore_wind_deg) > 120.0 and wind_speed_ms >= BLOWN_OUT_MS
+    return (_angle_off(wind_dir, offshore_wind_deg) > 120.0
+            and wind_speed_ms >= LABELS[label])
+
+
+def _surface(wind_dir, wind_speed_ms, offshore_wind_deg):
+    """classifySurface below "Blown out": unknown, clean (under 2.5 m/s, or up to 60 off),
+    mixed (up to 120 off), else choppy."""
+    if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
+        return "unknown"
+    if wind_speed_ms < 2.5:
+        return "Clean"
+    off = _angle_off(wind_dir, offshore_wind_deg)
+    return "Clean" if off <= 60.0 else "Mixed" if off <= 120.0 else "Choppy"
 
 
 def onshore_rung_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, rule):
@@ -1500,9 +1524,9 @@ def onshore_rung_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s, rule)
         return cap
     tol = (0.0 if kt > WIND_CAP_NO_ALLOWANCE_ABOVE_KT
            else max(0.0, (period_s or 0.0) - WIND_CAP_PERIOD_BASE_S))
-    first = ONSHORE_RULES[rule]
+    first, measured = ONSHORE_RULES[rule]
     new = 5.0
-    if kt - tol >= BLOWN_OUT_MS / KT_TO_MS:
+    if (kt if measured else kt - tol) >= BLOWN_OUT_MS / KT_TO_MS:
         new = first
     for above, c in WIND_CAP_ONSHORE:
         if c < first and kt - tol > above:
@@ -1540,7 +1564,8 @@ def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None,
     the most-changed spots, the homepage list, every changed hour at *focus*, and the
     "Blown out" hours still above 2.5 stars before and after."""
     replay, by_state, by_wind, changed = Counter(), defaultdict(Counter), Counter(), []
-    blown_above = Counter()
+    blown = {lb: Counter() for lb in LABELS}
+    label_changes = 0
     first = {}
     focused = {f: {"compared": 0, "changed": []} for f in focus}
     for row in rows:
@@ -1562,10 +1587,12 @@ def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None,
         delta = round(after - live, 1)
         by_state[state][delta] += 1
         wd, ws, off = _num(row.get("wind_dir")), _num(row.get("wind_speed")), spot.get("offshore_wind_deg")
-        if blown_out(wd, ws, off):
-            blown_above["before"] += live > 2.5
-            blown_above["after"] += after > 2.5
-            blown_above["hours"] += 1
+        for lb, c in blown.items():
+            if blown_out(wd, ws, off, lb):
+                c["hours"] += 1
+                c["before"] += live > 2.5
+                c["after"] += after > 2.5
+        label_changes += blown_out(wd, ws, off, "6ms") != blown_out(wd, ws, off, "15kt")
         if row["spot_id"] not in first and _at_or_after(row["valid_time"], board_from):
             first[row["spot_id"]] = (live, after)
         if name in focused:
@@ -1594,8 +1621,9 @@ def onshore_compare(rows, spots, names, factors, m, rule, n=10, board_from=None,
             "delta_by_state": {s_: dict(sorted(c.items()))
                                for s_, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
             "changed_by_wind": dict(sorted(by_wind.items())),
-            "blown_out_hours": blown_above["hours"],
-            "blown_out_above_2_5": {"before": blown_above["before"], "after": blown_above["after"]},
+            "blown_out": {lb: {"hours": c["hours"], "above_2_5_before": c["before"],
+                               "above_2_5_after": c["after"]} for lb, c in blown.items()},
+            "label_15kt_changes": label_changes,
             "top20": per_spot.most_common(20),
             "homepage_before": [(nm(sid)[0], nm(sid)[1], st) for st, sid in b[:n]],
             "homepage_after": [(nm(sid)[0], nm(sid)[1], st) for st, sid in a[:n]],
@@ -1611,9 +1639,11 @@ def _print_onshore(rep, since):
     for s_, c in rep["delta_by_state"].items():
         print(f"  {s_}: {c}")
     print(f"changed hours by wind (class, measured kt): {rep['changed_by_wind']}")
-    print(f"'Blown out' hours: {rep['blown_out_hours']}; above 2.5 stars before "
-          f"{rep['blown_out_above_2_5']['before']}, after {rep['blown_out_above_2_5']['after']} "
-          f"(the period allowance can still leave one uncapped)")
+    for lb, b in rep["blown_out"].items():
+        print(f"'Blown out' from {lb}: {b['hours']} h; above 2.5 stars today "
+              f"{b['above_2_5_before']}, under {rep['rule']} {b['above_2_5_after']}")
+    print(f"hours whose label changes from 'Blown out' to 'Choppy' with the 15 kt label: "
+          f"{rep['label_15kt_changes']}")
     print(f"20 most-changed spots: {rep['top20']}")
     print("homepage 'Best conditions right now', before:")
     for i, r in enumerate(rep["homepage_before"], 1):
@@ -1640,7 +1670,10 @@ def onshore_explain(row, spot, factors, m, rules=tuple(ONSHORE_RULES)):
     return {"valid_time": row["valid_time"], "stars": _num(row.get("stars")), "wind": cls,
             "wind_kt": None if kt is None else round(kt, 2), "period_s": rb["tp"],
             "allowance_kt": max(0.0, (rb["tp"] or 0.0) - WIND_CAP_PERIOD_BASE_S),
-            "blown_out": blown_out(wd, ws, off), "wired_cap": wind_star_cap(wd, ws, off, rb["tp"]),
+            "blown_out": blown_out(wd, ws, off),
+            "label": {lb: "Blown out" if blown_out(wd, ws, off, lb) else _surface(wd, ws, off)
+                      for lb in LABELS},
+            "wired_cap": wind_star_cap(wd, ws, off, rb["tp"]),
             "rules": {r: {"cap": onshore_rung_cap(wd, ws, off, rb["tp"], r),
                           "stars": onshore_stars(row, spot, rb, factors, m, r)} for r in rules}}
 
@@ -1651,7 +1684,8 @@ def _print_onshore_explain(name, x):
         return
     print(f"\n--- {name} @ {x['valid_time']}: {x['stars']} stars; {x['wind']} "
           f"{_f(x['wind_kt'], '{:.1f}')} kt, {_f(x['period_s'], '{:.1f}')} s (allowance "
-          f"{x['allowance_kt']:.1f} kt){', Blown out' if x['blown_out'] else ''}; wired cap "
+          f"{x['allowance_kt']:.1f} kt); label {x['label']['6ms']} (6 m/s), "
+          f"{x['label']['15kt']} (15 kt); wired cap "
           f"{x['wired_cap']}")
     print("  " + "; ".join(f"{r}: cap {v['cap']} -> {v['stars']} stars" for r, v in x["rules"].items()))
 

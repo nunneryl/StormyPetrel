@@ -47,7 +47,7 @@ def test_only_the_measurement_job_runs_for_nwps_shelter():
 def test_the_rating_preview_only_reads():
     job = _jobs()["rating-preview"]
     assert "    permissions:\n      contents: read\n" in job
-    assert "python -m pipeline.star_preview --onshore blown-2.5,blown-3.0 \\\n" in job
+    assert "python -m pipeline.star_preview --onshore blown-2.5,blown-2.5-measured \\\n" in job
     assert "--since 2026-10-23T00:00:00+00:00 \\\n" in job
     assert '--baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json' in job
     assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job

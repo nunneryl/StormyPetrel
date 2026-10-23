@@ -39,11 +39,13 @@ name: sw1-raycast
 #       on the same rows read once. Geometry from baseline_ref. SELECT only.
 #   mode = rating-preview: READ-ONLY. An onshore cap rung at the "Blown out" label's threshold
 #       (6 m/s), against the wired rater, replayed over the window from 2026-10-23 00:00Z:
-#       blown-2.5 (2.5 from 6 m/s, over 15 kt 2.0, over 20 kt 1.5) and blown-3.0 (the 3.0 rung
-#       moved down from over 13 kt to 6 m/s), both with the period allowance as today; each by
-#       state and wind band, the "Blown out" hours still above 2.5 stars, every changed hour at
-#       the spots in `spots`, the next hour's caps there, and the homepage's "Best conditions
-#       right now" (from now) before and after (pipeline/star_preview.py --onshore --explain).
+#       blown-2.5 (2.5 from 6 m/s, over 15 kt 2.0, over 20 kt 1.5, with the period allowance as
+#       today) and blown-2.5-measured (the 6 m/s rung read at the measured speed; the rungs
+#       over 15 and 20 kt keep the allowance); each by state and wind band, the "Blown out"
+#       hours above 2.5 stars under today's label (6 m/s) and a 15 kt label, the hours whose
+#       label would change, every changed hour at the spots in `spots`, the next hour's caps
+#       and labels there, and the homepage's "Best conditions right now" (from now) before and
+#       after (pipeline/star_preview.py --onshore --explain).
 #       Geometry from baseline_ref. SELECT only.
 #   mode = data-quality: READ-ONLY. The data-quality sweep (pipeline/data_quality.py): every
 #       CONUS spot's HRRR cell and whether HRRR classes it as land, with the nearest seaward water
@@ -498,7 +500,7 @@ jobs:
           # Through the environment, never interpolated into the shell command.
           SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.star_preview --onshore blown-2.5,blown-3.0 \
+          python -m pipeline.star_preview --onshore blown-2.5,blown-2.5-measured \
             --since 2026-10-23T00:00:00+00:00 \
             --explain "${SPOTS:-indialantic,cocoa-beach-pier,jacksonville-beach-pier,kitty-hawk-pier,ocean-city-nj}" \
             --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
