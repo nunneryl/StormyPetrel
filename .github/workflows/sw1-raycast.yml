@@ -48,9 +48,10 @@ name: sw1-raycast
 #       SELECT only.
 #   mode = data-quality: READ-ONLY. The data-quality sweep (pipeline/data_quality.py): every
 #       CONUS spot's HRRR cell and whether HRRR classes it as land, with the nearest seaward water
-#       cell and the wind at both (HRRR from NOAA's AWS archive); THE TRUE-NORTH GATE, the
-#       pipeline's forecast/hrrr.py on the newest cycle against the sweep's own true-north
-#       wind, spot by spot and hour by hour (must be 0 differences); the published HRRR hours
+#       cell and the wind at both (HRRR from NOAA's AWS archive); THE HRRR WIND GATE, the
+#       pipeline's forecast/hrrr.py on the newest cycle (land-cell spots on the seaward water
+#       cell, turned to true north) against the sweep's own wind, spot by spot and hour by hour
+#       (must be 0 differences); the published HRRR hours
 #       re-rated with the water cell's wind and with the wind turned from HRRR's grid to true
 #       north, and on the wired rater, whose cap reads cross-offshore as offshore, with THE
 #       CAP90 GATE, the wired rater against the rule built in the sweep (must be 0

@@ -11,12 +11,13 @@ SECTIONS
               each cell: HRRR's 10 m winds are GRID-RELATIVE (uvRelativeToGrid = 1), and
               forecast/hrrr.py read them as if they were earth-relative until its true-north
               fix (see the true-north section).
-  true-north  The merge gate for forecast/hrrr.py's true-north fix: the newest cycle's u/v step
-              files run through hrrr.extract_steps (the code the pipeline runs) and compared,
-              spot by spot and hour by hour, with the hrrr section's own true-north wind (the
-              cell's u/v turned by grid_to_earth). PASS needs every spot on the same cell, the
-              files read as grid-relative, and 0 directions or speeds apart by more than
-              GATE_TOLERANCE.
+  true-north  The merge gate for forecast/hrrr.py's wind: the newest cycle's u/v step files and
+              its land mask run through hrrr.extract_steps (the code the pipeline runs) and
+              compared, spot by spot and hour by hour, with the hrrr section's own wind: the
+              seaward water cell's where the spot's cell is land and the sweep found one, else
+              the spot's cell, turned by grid_to_earth at that cell. PASS needs every spot on
+              the same cell, the files read as grid-relative, and 0 directions or speeds apart
+              by more than GATE_TOLERANCE.
   wind-preview  (Supabase) Every published hour whose wind is HRRR's, matched exactly to a cycle,
               reproduced by the rater it was published with (the live rater with the #270
               cap, published_wind_cap) and re-rated with the wind from: the water cell
@@ -24,8 +25,15 @@ SECTIONS
               the published cap; and true-north on the WIRED rater, whose cap counts
               cross-offshore (60-90 deg off) as offshore, with THE CAP90 GATE: the wired
               rater against the rule built here (cap90_star_cap), hour for hour, must be 0
-              differences. A published hour is matched to the UNROTATED wind, so this
-              previews hours published before forecast/hrrr.py's true-north fix.
+              differences; and water+true-north on the wired rater too. A published hour is
+              matched in whichever frame it was published (match_published: unturned, turned,
+              or the water cell turned) and reproduced on #270's cap or the wired one.
+              LAND-CELL HOURS AGAINST THE NEW RULES: every land-cell hour re-rated on the
+              water cell and on the BLEND (the mean of the land-cell and water-cell winds as
+              vectors, on true north), both against the same hour on the spot's own cell
+              turned to true north, all on the wired rater (#275's cap); by state, the spots
+              that lose the most stars, and every hour 'water' drops by BIG_DROP or more with
+              both winds, their classes and caps, and the cell geometry.
   partitions  (Supabase) The swell partitions behind the Swell breakdown card, hour by hour, for
               the --explain spots: the card is hidden when at most one component is above
               0.05 m (frontend/components/SwellPartitions.tsx).
@@ -260,10 +268,23 @@ def cell_winds(session, cycle, flats, workdir):
     return out
 
 
-def hrrr_cells(spots, tree, shape, lats, lngs, mask):
+def land_cell_spots(path=None):
+    """The slugs in the land-cell spot list (config.HRRR_LAND_CELL_SPOTS_FILE), read here on
+    its own so the gate does not take forecast/hrrr.py's reading of it on trust."""
+    from .config import HRRR_LAND_CELL_SPOTS_FILE
+    return set(json.loads(Path(path or HRRR_LAND_CELL_SPOTS_FILE).read_text())["spots"])
+
+
+def _slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+
+def hrrr_cells(spots, tree, shape, lats, lngs, mask, keep_land=None):
     """Every CONUS spot's cell, its land flag and 3x3 share, its grid x-axis angle, and for a
-    land cell the nearest seaward water cell."""
+    land cell the nearest seaward water cell, with keeps_land_cell set where the spot is in
+    the land-cell spot list (*keep_land*, default land_cell_spots())."""
     from .forecast.hrrr import _spots_in_conus
+    keep_land = land_cell_spots() if keep_land is None else keep_land
     flat_mask = mask.ravel()
     flat_lat, flat_lng = lats.ravel(), lngs.ravel()
     nx = shape[1]
@@ -284,6 +305,7 @@ def hrrr_cells(spots, tree, shape, lats, lngs, mask):
                "cell_is_land": bool(flat_mask[flat] >= 0.5),
                "land_share_3x3": round(neighbour_land_share(mask, i, j), 3),
                "x_axis_deg": round(grid_x_axis_deg(lats, lngs, i, j), 3)}
+        row["keeps_land_cell"] = row["cell_is_land"] and _slug(s["name"]) in keep_land
         if row["cell_is_land"]:
             near = tree.query_ball_point([lat, lng], WATER_SEARCH_DEG)
             cands = [(int(k), float(flat_lat[k]), float(flat_lng[k]), float(flat_mask[k]))
@@ -329,7 +351,8 @@ def hrrr_section(spots, cycles, session, workdir, log=print):
         if "water_flat" in r:
             r["wind"] = wind_summary(newest[r["flat"]], newest[r["water_flat"]])
     return {"cycles": cycles, "spots": len(rows), "rows": rows,
-            "land_cell_spots": [r for r in rows if r["cell_is_land"]], "_winds": winds}
+            "land_cell_spots": [r for r in rows if r["cell_is_land"]], "_winds": winds,
+            "_mask": mask}
 
 
 def _print_hrrr(rep):
@@ -361,15 +384,19 @@ def compare_true_north(cells, sweep, published, meta):
     """forecast/hrrr.py's records (*published*, by spot) against the sweep's true-north wind
     (*sweep*: {flat: [(valid_iso, u, v)]} grid-relative), for every spot in *cells*."""
     differences, missing, compared, worst_dir, worst_speed = [], [], 0, 0.0, 0.0
-    cell_moved = [r["spot"] for r in cells if meta["cells"].get(r["spot"]) != r["flat"]]
+    want_flat = {r["spot"]: (r["flat"] if r.get("keeps_land_cell")
+                             else r.get("water_flat", r["flat"])) for r in cells}
+    cell_moved = [r["spot"] for r in cells if meta["cells"].get(r["spot"]) != want_flat[r["spot"]]]
     for r in cells:
         got = {_iso(rec["valid_time"]): rec for rec in published.get(r["spot"], ())}
-        for valid, u, v in sweep.get(r["flat"], ()):
+        axis = (r["x_axis_deg"] if r.get("keeps_land_cell")
+                else r.get("water_x_axis_deg", r["x_axis_deg"]))
+        for valid, u, v in sweep.get(want_flat[r["spot"]], ()):
             rec = got.get(_iso(valid))
             if rec is None:
                 missing.append([r["spot"], valid])
                 continue
-            ue, ve = grid_to_earth(u, v, r["x_axis_deg"])
+            ue, ve = grid_to_earth(u, v, axis)
             want_dir, want_speed = met_dir(ue, ve), math.hypot(ue, ve)
             d_dir = angle_off(want_dir, float(rec["wind_dir"]))
             d_speed = abs(want_speed - float(rec["wind_speed"]))
@@ -384,6 +411,8 @@ def compare_true_north(cells, sweep, published, meta):
           and compared > 0)
     return {"verdict": "PASS" if ok else "FAIL", "grid_relative": meta["grid_relative"],
             "spots": len(cells), "spot_hours": compared, "cell_moved": cell_moved,
+            "water_cells": len(meta.get("water", {})),
+            "kept_land": sorted(meta.get("kept_land", [])),
             "missing": missing, "differences": differences,
             "max_dir_diff": round(worst_dir, 6), "max_speed_diff": round(worst_speed, 6)}
 
@@ -396,7 +425,7 @@ def true_north_gate(spots, rep, session, workdir, log=print):
     steps = [(fh, fetch_fields(session, cycle, fh, [("UGRD", "10 m above ground"),
                                                      ("VGRD", "10 m above ground")],
                                workdir / f"gate{cycle}{fh:02d}.grib2")) for fh in HRRR_STEPS]
-    published, failed, meta = extract_steps(_spots_in_conus(spots), steps)
+    published, failed, meta = extract_steps(_spots_in_conus(spots), steps, rep["_mask"])
     for _, p in steps:
         p.unlink()
     out = compare_true_north(rep["rows"], rep["_winds"][cycle], published, meta)
@@ -407,9 +436,11 @@ def true_north_gate(spots, rep, session, workdir, log=print):
 
 
 def _print_true_north(rep):
-    print(f"\n=== True-north gate — cycle {rep['cycle']}: {rep['verdict']} ===")
+    print(f"\n=== HRRR wind gate (water cell, true north) — cycle {rep['cycle']}: "
+          f"{rep['verdict']} ===")
     print(f"files read as grid-relative: {rep['grid_relative']}; step files that failed to "
-          f"parse: {rep['parse_failed']}")
+          f"parse: {rep['parse_failed']}; spots moved to a water cell: {rep['water_cells']}; "
+          f"kept on their land cell by the list: {len(rep['kept_land'])} {rep['kept_land']}")
     print(f"{rep['spots']} spots, {rep['spot_hours']} spot-hours compared; spots on a different "
           f"cell: {len(rep['cell_moved'])}; spot-hours missing: {len(rep['missing'])}; "
           f"DIFFERENT (over {GATE_TOLERANCE}): {len(rep['differences'])}")
@@ -448,10 +479,12 @@ def cap90_star_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):
     return published_wind_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s)
 
 
-def match_cycle(row, flat, winds):
+def match_cycle(row, flat, winds, axis_deg=None):
     """(cycle, step index, u, v) of the HRRR step that published *row*'s wind at *flat*, by
     exact match of speed and direction to the 3 decimals forecast/hrrr.py stores; None when the
-    hour's wind is not HRRR's (NWPS beyond 48 h) or came from a cycle not fetched."""
+    hour's wind is not HRRR's (NWPS beyond 48 h) or came from a cycle not fetched. With
+    *axis_deg* the step's wind is turned to true north (grid_to_earth) before matching; u, v
+    are returned as HRRR ships them either way."""
     ws, wd = row.get("wind_speed"), row.get("wind_dir")
     if ws is None or wd is None:
         return None
@@ -460,9 +493,24 @@ def match_cycle(row, flat, winds):
         for n, (valid, u, v) in enumerate(cells.get(flat, ())):
             if _iso(valid) != vt:
                 continue
-            if (abs(round(math.hypot(u, v), 3) - float(ws)) <= 0.0015
-                    and angle_off(round(met_dir(u, v), 3), float(wd)) <= 0.0015):
+            eu, ev = (u, v) if axis_deg is None else grid_to_earth(u, v, axis_deg)
+            if (abs(round(math.hypot(eu, ev), 3) - float(ws)) <= 0.0015
+                    and angle_off(round(met_dir(eu, ev), 3), float(wd)) <= 0.0015):
                 return cycle, n, u, v
+    return None
+
+
+def match_published(row, cell, winds):
+    """(cycle, step index, frame) of the HRRR step behind *row*, whichever way it was published:
+    'grid' (the cell's wind unturned, before #274), 'true-north' (turned, #274) or
+    'water+true-north' (the seaward water cell's, turned). None when no frame matches."""
+    tries = [("grid", cell["flat"], None), ("true-north", cell["flat"], cell["x_axis_deg"])]
+    if "water_flat" in cell:
+        tries.append(("water+true-north", cell["water_flat"], cell["water_x_axis_deg"]))
+    for frame, flat, axis in tries:
+        hit = match_cycle(row, flat, winds, axis)
+        if hit is not None:
+            return hit[0], hit[1], frame
     return None
 
 
@@ -472,7 +520,8 @@ def _iso(t):
 
 def variant_wind(variant, cell, winds, cycle, n, u, v):
     """(speed m/s, direction) of *variant* for one matched hour, or None when it has no value."""
-    if variant in ("true-north", "true-north+cap90"):
+    if variant in ("true-north", "true-north+cap90") or (
+            variant == "water+true-north" and cell.get("keeps_land_cell")):
         ue, ve = grid_to_earth(u, v, cell["x_axis_deg"])
         return math.hypot(ue, ve), met_dir(ue, ve)
     if "water_flat" not in cell:
@@ -482,6 +531,30 @@ def variant_wind(variant, cell, winds, cycle, n, u, v):
         return math.hypot(wu, wv), met_dir(wu, wv)
     ue, ve = grid_to_earth(wu, wv, cell["water_x_axis_deg"])
     return math.hypot(ue, ve), met_dir(ue, ve)
+
+
+def earth_wind(cell, winds, cycle, n, which="land"):
+    """(east, north) m/s at the spot's own cell ('land') or its water cell ('water'), turned
+    to true north at that cell."""
+    flat, axis = ((cell["flat"], cell["x_axis_deg"]) if which == "land"
+                  else (cell["water_flat"], cell["water_x_axis_deg"]))
+    _, u, v = winds[cycle][flat][n]
+    return grid_to_earth(u, v, axis)
+
+
+def blend_wind(cell, winds, cycle, n):
+    """(speed m/s, direction) of the mean of the land-cell and water-cell winds, as vectors
+    on true north."""
+    le, ln = earth_wind(cell, winds, cycle, n, "land")
+    we, wn = earth_wind(cell, winds, cycle, n, "water")
+    e, nn = (le + we) / 2.0, (ln + wn) / 2.0
+    return math.hypot(e, nn), met_dir(e, nn)
+
+
+# Land-cell hours measured against the NEW rules: the baseline is the spot's own cell on true
+# north and the wired rater (#275's cap), not what was published.
+LAND_CELL_VARIANTS = ("water", "blend")
+BIG_DROP = -1.5                    # every hour dropping this much or more under 'water' is listed
 
 
 def rerate(row, spot, factors, m, speed, direction, cap_fn=None):
@@ -515,19 +588,26 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
     cap90 gate against cap90_star_cap; the other variants keep the published cap."""
     from .interpret import wind_class, wind_multiplier, wind_star_cap
     by_name = {c["spot"]: c for c in cells}
-    counts = Counter()
+    counts, frames = Counter(), Counter()
     rep = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
                "class_moves": Counter()} for v in WIND_VARIANTS}
+    land = {v: {"by_state": defaultdict(Counter), "changed": [], "class_changed": 0,
+                "class_moves": Counter()} for v in LAND_CELL_VARIANTS}
+    drops = []
     first = {}
     for row in rows:
         name, state = names.get(row["spot_id"], (None, None))
         spot, cell = spots.get(name), by_name.get(name)
         if spot is None or cell is None or row.get("stars") is None:
             continue
-        hit = match_cycle(row, cell["flat"], winds)
-        if hit is None:
+        found = match_published(row, cell, winds)
+        if found is None:
             counts["not HRRR (or an unfetched cycle)"] += 1
             continue
+        cycle, step, frame = found
+        _, u, v = winds[cycle][cell["flat"]][step]          # the spot's own cell, unturned
+        hit = (cycle, step, u, v)
+        frames[frame] += 1
         off = spot.get("offshore_wind_deg")
         wm = row.get("wind_mult")
         if off is None or wm is None or round(wind_multiplier(
@@ -535,23 +615,29 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                 row.get("chop_ratio")), 3) != round(float(wm), 3):
             counts["HRRR, but wind_mult not reproduced"] += 1
             continue
-        live = rerate(row, spot, factors, m, float(row["wind_speed"]), float(row["wind_dir"]),
-                      cap_fn=published_wind_cap)
-        if live is None or live != float(row["stars"]):
+        # Published before the cap90 rule on #270's cap, after it on the wired one.
+        live = next((s for s in (rerate(row, spot, factors, m, float(row["wind_speed"]),
+                                        float(row["wind_dir"]), cap_fn=c)
+                                 for c in (published_wind_cap, None))
+                     if s is not None and s == float(row["stars"])), None)
+        if live is None:
             counts["HRRR, stars not reproduced"] += 1
             continue
         counts["HRRR, reproduced"] += 1
+        if "water_flat" in cell:
+            land_cell_hour(row, spot, name, state, cell, winds, cycle, step, factors, m,
+                           land, drops)
         afters = {}
         for variant in WIND_VARIANTS:
             w = variant_wind(variant, cell, winds, *hit)
             if w is None:
                 continue
-            wired = variant == "true-north+cap90"
+            wired = variant in ("true-north+cap90", "water+true-north")
             after = rerate(row, spot, factors, m, *w,
                            cap_fn=None if wired else published_wind_cap)
             if after is None:
                 continue
-            if wired:
+            if variant == "true-north+cap90":
                 # THE CAP90 GATE: the wired rater (interpret.wind_star_cap, cap90 in it) against
                 # the rule built here (cap90_star_cap), hour for hour. And the construction
                 # check: the cap route with the wired cap must equal wired_rater too, or the
@@ -576,7 +662,9 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
                                      "wind_after": f"{after_cls} {w[0] * KT_PER_MS:.1f} kt from {w[1]:.0f}°"})
         if row["spot_id"] not in first and _iso(row["valid_time"]) >= now:
             first[row["spot_id"]] = (live, afters)
-    out = {"replay": dict(counts), "variants": {}}
+    out = {"replay": dict(counts), "published_frames": dict(frames), "variants": {},
+           "land_cells": {v: _land_summary(r) for v, r in land.items()},
+           "water_drops": sorted(drops, key=lambda d: (d["delta"], d["spot"], d["valid_time"]))}
     for variant, r in rep.items():
         per_spot = Counter(c["spot"] for c in r["changed"])
         board_b = sorted(((b, sid) for sid, (b, _) in first.items()), key=lambda x: (-x[0], x[1]))
@@ -599,8 +687,91 @@ def wind_preview(rows, spots, names, factors, m, cells, winds, now, n=10, focus=
     return out
 
 
+def land_cell_hour(row, spot, name, state, cell, winds, cycle, n, factors, m, land, drops):
+    """One land-cell hour under LAND_CELL_VARIANTS against the same hour on the spot's own cell
+    turned to true north, all on the wired rater (#275's cap)."""
+    from .interpret import wind_class, wind_star_cap
+    from .star_preview import rescore
+    off = spot.get("offshore_wind_deg")
+    tp = rescore(row, spot)["tp"]
+    le, ln = earth_wind(cell, winds, cycle, n, "land")
+    base_w = (math.hypot(le, ln), met_dir(le, ln))
+    base = rerate(row, spot, factors, m, *base_w)
+    if base is None:
+        return
+    we, wn = earth_wind(cell, winds, cycle, n, "water")
+    ws = {"water": (math.hypot(we, wn), met_dir(we, wn)), "blend": blend_wind(cell, winds, cycle, n)}
+
+    def describe(w):
+        return {"kt": round(w[0] * KT_PER_MS, 1), "from": round(w[1]),
+                "class": wind_class(w[1], off), "cap": wind_star_cap(w[1], w[0], off, tp)}
+
+    for variant, w in ws.items():
+        after = rerate(row, spot, factors, m, *w)
+        if after is None:
+            continue
+        r = land[variant]
+        delta = round(after - base, 1)
+        r["by_state"][state][delta] += 1
+        b_cls, a_cls = wind_class(base_w[1], off), wind_class(w[1], off)
+        if b_cls != a_cls:
+            r["class_changed"] += 1
+            r["class_moves"][f"{b_cls} -> {a_cls}"] += 1
+        if delta:
+            r["changed"].append({"spot": name, "state": state, "delta": delta})
+        if variant == "water" and delta <= BIG_DROP:
+            drops.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                          "before": base, "after": after, "delta": delta,
+                          "land": describe(base_w), "water": describe(w),
+                          "orientation_deg": spot.get("orientation_deg"),
+                          "offshore_wind_deg": off,
+                          "land_share_3x3": cell.get("land_share_3x3"),
+                          "water_km": cell.get("water_km"),
+                          "water_bearing": cell.get("water_bearing")})
+
+
+def _land_summary(r):
+    """Totals, by state, and the spots that lose the most stars, for one land-cell variant."""
+    lost, hours = Counter(), Counter()
+    for c in r["changed"]:
+        if c["delta"] < 0:
+            lost[c["spot"]] += -c["delta"]
+            hours[c["spot"]] += 1
+    return {"compared": sum(sum(c.values()) for c in r["by_state"].values()),
+            "changed": len(r["changed"]), "ups": sum(c["delta"] > 0 for c in r["changed"]),
+            "downs": sum(c["delta"] < 0 for c in r["changed"]),
+            "wind_class_changed": r["class_changed"],
+            "class_moves": dict(r["class_moves"].most_common()),
+            "by_state": {s: dict(sorted(c.items())) for s, c in
+                         sorted(r["by_state"].items(), key=lambda kv: str(kv[0]))},
+            "biggest_drops": [(s, round(lost[s], 1), hours[s])
+                              for s, _ in sorted(lost.items(), key=lambda kv: (-kv[1], kv[0]))[:15]]}
+
+
+def _print_land_cells(rep):
+    print("\n=== Land-cell hours against the NEW rules: each hour on the water cell (or the "
+          "land/water blend) vs the same hour on the spot's own cell, true north, #275 cap ===")
+    for variant, r in rep["land_cells"].items():
+        print(f"\n--- {variant}: {r['changed']} of {r['compared']} hours change (up {r['ups']}, "
+              f"down {r['downs']}); wind class changed on {r['wind_class_changed']} h")
+        print(f"  class moves: {r['class_moves']}")
+        for s, c in r["by_state"].items():
+            print(f"  {s}: {c}")
+        print(f"  biggest drops (spot, stars lost, hours down): {r['biggest_drops']}")
+    drops = rep["water_drops"]
+    print(f"\n--- water: {len(drops)} hours drop {-BIG_DROP} stars or more")
+    for d in drops:
+        lw, ww = d["land"], d["water"]
+        print(f"  {d['spot']} ({d['state']}) {d['valid_time']}: {d['before']} -> {d['after']} | "
+              f"land {lw['kt']} kt from {lw['from']}° {lw['class']} cap {lw['cap']} | "
+              f"water {ww['kt']} kt from {ww['from']}° {ww['class']} cap {ww['cap']} | "
+              f"faces {d['orientation_deg']}, offshore {d['offshore_wind_deg']}, 3x3 land "
+              f"{d['land_share_3x3']}, water cell {d['water_km']} km at {d['water_bearing']}°")
+
+
 def _print_wind_preview(rep):
     print(f"\n=== Re-rating published HRRR hours: {rep['replay']} ===")
+    print(f"published as: {rep['published_frames']}")
     for variant, r in rep["variants"].items():
         print(f"\n--- {variant}: {r['changed']} of {r['compared']} hours change "
               f"(up {r['ups']}, down {r['downs']}); wind class changed on {r['wind_class_changed']} h")
@@ -902,6 +1073,7 @@ def main(argv=None):
         out["wind_preview"] = wind_preview(rows, spots, names, factors, m, out["hrrr"]["rows"],
                                            out["hrrr"]["_winds"], now, focus=focus)
         _print_wind_preview(out["wind_preview"])
+        _print_land_cells(out["wind_preview"])
     if "partitions" in sections:
         out["partitions"] = partitions_section(rows, names, focus)
         _print_partitions(out["partitions"])

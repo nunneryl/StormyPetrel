@@ -7,8 +7,10 @@ function under test.
 """
 from __future__ import annotations
 
+import json
 import math
 
+import numpy as np
 import pytest
 
 from pipeline import data_quality as DQ
@@ -290,6 +292,43 @@ def test_the_gate_fails_when_the_files_were_not_read_as_grid_relative():
     assert rep["verdict"] == "FAIL"
 
 
+# A land-cell spot: its cell 7, water cell 9 with x-axis +15.3 and grid wind (0, -5) there:
+# from 344.7 at 5 m/s (worked in test_hrrr_true_north's California test).
+WATER_CELLS = [{"spot": "A", "flat": 7, "x_axis_deg": -14.3, "water_flat": 9,
+                "water_x_axis_deg": 15.3}]
+WATER_SWEEP = {7: [("2026-10-22T06:00:00+00:00", 0.0, -1.0)],
+               9: [("2026-10-22T06:00:00+00:00", 0.0, -5.0)]}
+
+
+def test_the_gate_follows_the_water_cell():
+    rep = DQ.compare_true_north(WATER_CELLS, WATER_SWEEP, _published(wind_dir=344.7),
+                                {"grid_relative": True, "cells": {"A": 9}, "water": {"A": [7, 9]}})
+    assert (rep["verdict"], rep["spot_hours"], rep["water_cells"]) == ("PASS", 1, 1)
+
+
+def test_the_gate_fails_when_the_pipeline_keeps_the_land_cell():
+    # The land cell turned: (0, -1) at -14.3 is from 14.3 at 1 m/s; the cell is 7, not 9.
+    rep = DQ.compare_true_north(WATER_CELLS, WATER_SWEEP, _published(wind_dir=14.3, wind_speed=1.0),
+                                {"grid_relative": True, "cells": {"A": 7}, "water": {}})
+    assert (rep["verdict"], rep["cell_moved"], len(rep["differences"])) == ("FAIL", ["A"], 1)
+
+
+@pytest.mark.parametrize("wind_dir, wind_speed, frame", [
+    (0.0, 1.0, "grid"),                    # the land cell's (0, -1) unturned: from 0
+    (14.3, 1.0, "true-north"),             # turned at -14.3: from 14.3
+    (344.7, 5.0, "water+true-north"),      # the water cell's (0, -5) turned at +15.3
+])
+def test_a_published_hour_is_matched_in_whichever_frame_it_was_published(wind_dir, wind_speed, frame):
+    row = {"valid_time": "2026-10-22T06:00:00+00:00", "wind_speed": wind_speed,
+           "wind_dir": wind_dir}
+    assert DQ.match_published(row, WATER_CELLS[0], {"c": WATER_SWEEP}) == ("c", 0, frame)
+
+
+def test_an_hour_in_no_frame_is_not_matched():
+    row = {"valid_time": "2026-10-22T06:00:00+00:00", "wind_speed": 5.0, "wind_dir": 0.0}
+    assert DQ.match_published(row, WATER_CELLS[0], {"c": WATER_SWEEP}) is None
+
+
 def test_the_gate_fails_with_nothing_compared():
     rep = DQ.compare_true_north([], GATE_SWEEP, _published(), GATE_META)
     assert (rep["verdict"], rep["spot_hours"]) == ("FAIL", 0)
@@ -432,6 +471,48 @@ def test_the_cap90_variant_is_the_wired_rater_and_the_gate_passes():
     assert cap90["changed"] == 1 and cap90["focus"]["B"][0]["after"] == 3.0
 
 
+def test_an_hour_published_on_the_wired_cap_is_reproduced_on_it():
+    # The same hour published after the cap90 rule: 3.0 (wired). It reproduces on the wired cap,
+    # and the true-north variant (x-axis 0, #270 cap) re-rates it 1.5.
+    spot, row, cells, winds = _cap90_fixture()
+    row = dict(row, stars=3.0)
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["replay"] == {"HRRR, reproduced": 1}
+    assert rep["published_frames"] == {"grid": 1}
+    assert rep["variants"]["true-north"]["focus"]["B"][0]["after"] == 1.5
+    assert rep["variants"]["true-north+cap90"]["changed"] == 0
+
+
+def test_an_hour_published_on_the_water_cell_is_re_rated_from_the_spots_own_cell():
+    # Published from the water cell (x-axis 0): 11.0 m/s from 0, 90 off, cross-shore over 20 kt,
+    # 1.5 on either cap (4.0 uncapped). The true-north variant is the spot's OWN cell turned:
+    # 2 m/s from 90, light offshore, back to the fixture's 4.5.
+    from pipeline.interpret import wind_multiplier
+    spot, row, cells, winds = _preview_fixture()
+    row = dict(row, wind_speed=11.0, wind_dir=0.0, stars=1.5,
+               wind_mult=round(wind_multiplier(0.0, 11.0, 90.0, None), 3))
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["replay"] == {"HRRR, reproduced": 1}
+    assert rep["published_frames"] == {"water+true-north": 1}
+    assert rep["variants"]["true-north"]["focus"]["B"][0]["after"] == 4.5
+
+
+def test_water_plus_true_north_is_on_the_wired_rater():
+    # The water cell's wind from 20 deg at 11.0 m/s (21.382 kt), 70 off: #270 caps it 1.5 (the
+    # water variant), the wired cap 3.0 (water+true-north; x-axis 0 turns nothing). Uncapped
+    # 4.443 x 0.8**0.35 = 4.109 -> 4.0, so 1.5 and 3.0. Published 4.5 (light offshore).
+    import math as _m
+    spot, row, cells, winds = _preview_fixture()
+    u, v = -11.0 * _m.sin(_m.radians(20.0)), -11.0 * _m.cos(_m.radians(20.0))
+    winds = {"c": {5: winds["c"][5], 6: [(row["valid_time"], u, v)]}}
+    rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                          winds, DQ._iso("2099-01-01T00:00:00+00:00"), focus=["B"])
+    assert rep["variants"]["water"]["focus"]["B"][0]["after"] == 1.5
+    assert rep["variants"]["water+true-north"]["focus"]["B"][0]["after"] == 3.0
+
+
 def test_the_cap90_gate_counts_a_wired_rater_that_differs_from_the_rule(monkeypatch):
     # The rule built here held at the #270 cap (1.5) while the wired rater gives 3.0.
     spot, row, cells, winds = _cap90_fixture()
@@ -461,3 +542,187 @@ def test_class_moves_are_counted_by_kind():
     rep = DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
                           winds, DQ._iso("2099-01-01T00:00:00+00:00"))
     assert rep["variants"]["water"]["class_moves"] == {"offshore -> cross": 1}
+
+
+# --------------------------------------------------------------------------- #
+# Land-cell hours against the NEW rules: water and blend                        #
+# --------------------------------------------------------------------------- #
+
+def test_the_blend_is_the_mean_of_the_two_winds_as_vectors():
+    # Land (-2, 0): 2 m/s from 90. Water (0, -11): 11 m/s from 0. Axes 0, so no turn.
+    # Mean (-1, -5.5): sqrt(1 + 30.25) = 5.590170 m/s, from atan2(1, 5.5) = 10.3048 deg.
+    cell = {"flat": 5, "x_axis_deg": 0.0, "water_flat": 6, "water_x_axis_deg": 0.0}
+    winds = {"c": {5: [("t", -2.0, 0.0)], 6: [("t", 0.0, -11.0)]}}
+    speed, direction = DQ.blend_wind(cell, winds, "c", 0)
+    assert (round(speed, 6), round(direction, 4)) == (5.590170, 10.3048)
+
+
+def test_each_cell_is_turned_at_its_own_axis_before_the_blend():
+    # Land cell x-axis 90: grid (1, 0) points true north, earth (0, 1). Water cell x-axis 0:
+    # grid (0, 1) is earth (0, 1). Mean (0, 1): 1 m/s blowing north, so from 180.
+    cell = {"flat": 5, "x_axis_deg": 90.0, "water_flat": 6, "water_x_axis_deg": 0.0}
+    winds = {"c": {5: [("t", 1.0, 0.0)], 6: [("t", 0.0, 1.0)]}}
+    speed, direction = DQ.blend_wind(cell, winds, "c", 0)
+    assert (round(speed, 6), round(direction, 6) % 360.0) == (1.0, 180.0)
+
+
+def _land_report(spot, row, cells, winds):
+    return DQ.wind_preview([row], {"B": spot}, {2: ("B", "North Carolina")}, None, None, cells,
+                           winds, DQ._iso("2099-01-01T00:00:00+00:00"))
+
+
+def test_water_and_blend_against_the_land_cell_on_the_new_rules():
+    # The fixture: the spot's own cell 2 m/s from 90 (3.888 kt, offshore, light): 4.5. The water
+    # cell 11 m/s from 0 (21.382 kt), 90 off: cross-shore over 20 kt, cap 1.5; wind_mult 0.8,
+    # uncapped 4.443 x 0.8**0.35 = 4.109 -> 4.0, so 1.5: -3.0. The blend, 5.590 m/s (10.866
+    # kt) from 10.30, 79.70 off: under 90 so the offshore rungs, no cap at 10.9 kt; wind_mult
+    # 0.8 (cross band, over 5 m/s) -> 4.0: -0.5.
+    spot, row, cells, winds = _preview_fixture()
+    rep = _land_report(spot, row, cells, winds)
+    water, blend = rep["land_cells"]["water"], rep["land_cells"]["blend"]
+    assert water["by_state"] == {"North Carolina": {-3.0: 1}}
+    assert blend["by_state"] == {"North Carolina": {-0.5: 1}}
+    assert water["biggest_drops"] == [("B", 3.0, 1)]
+    assert water["class_moves"] == {"offshore -> cross": 1}
+    (d,) = rep["water_drops"]
+    assert (d["before"], d["after"], d["delta"]) == (4.5, 1.5, -3.0)
+    assert d["land"] == {"kt": 3.9, "from": 90, "class": "offshore", "cap": 5.0}
+    assert d["water"] == {"kt": 21.4, "from": 0, "class": "cross", "cap": 1.5}
+
+
+def test_the_baseline_is_the_new_rules_not_the_published_stars():
+    # The cap90 fixture: the spot's own cell 11 m/s from 20, 70 off, published 1.5 on #270's
+    # cap; on the new rules (#275, under 90 off reads the offshore rungs) it is 3.0. The water
+    # cell 11 m/s from 0, 90 off, cross over 20 kt: 1.5. Against the new rules -1.5 (against
+    # the published stars it would be 0).
+    spot, row, cells, winds = _cap90_fixture()
+    rep = _land_report(spot, row, cells, winds)
+    assert rep["land_cells"]["water"]["by_state"] == {"North Carolina": {-1.5: 1}}
+    (d,) = rep["water_drops"]
+    assert (d["before"], d["after"], d["land"]["cap"], d["water"]["cap"]) == (3.0, 1.5, 3.0, 1.5)
+
+
+def test_a_drop_under_one_and_a_half_stars_is_not_listed():
+    # The blend's -0.5 above is counted by state but never listed; only 'water' drops of 1.5
+    # or more are.
+    spot, row, cells, winds = _preview_fixture()
+    winds = {"c": {5: winds["c"][5], 6: [(row["valid_time"], -1.0, -5.5)]}}
+    rep = _land_report(spot, row, cells, winds)
+    assert rep["land_cells"]["water"]["by_state"] == {"North Carolina": {-0.5: 1}}
+    assert rep["water_drops"] == []
+
+
+def test_a_spot_on_a_water_cell_has_no_land_cell_hours():
+    spot, row, cells, winds = _preview_fixture()
+    cells = [{"spot": "B", "flat": 5, "x_axis_deg": 0.0}]
+    rep = _land_report(spot, row, cells, winds)
+    assert rep["land_cells"]["water"]["compared"] == 0
+    assert rep["land_cells"]["blend"]["compared"] == 0
+
+
+def _with_winds(land, water):
+    """The fixture with the two cells' grid winds replaced (axes 0), and the row republished
+    on the land cell's wind: its wind, wind_mult and the fixture's own stars."""
+    from pipeline.interpret import wind_multiplier
+    from pipeline.star_preview import rescore, wired_rater
+    spot, row, cells, winds = _preview_fixture()
+    vt = row["valid_time"]
+    ws, wd = round(math.hypot(*land), 3), round(DQ.met_dir(*land), 3)
+    row = dict(row, wind_speed=ws, wind_dir=wd,
+               wind_mult=round(wind_multiplier(wd, ws, 90.0, None), 3))
+    row["stars"] = wired_rater(row, spot, rescore(row, spot), None, None)
+    return spot, row, cells, {"c": {5: [(vt, *land)], 6: [(vt, *water)]}}
+
+
+def test_the_water_cell_is_rated_on_the_new_cap():
+    # Water 11 m/s from 20 (u = -11 sin 20, v = -11 cos 20), 70 off, 21.382 kt: #275 reads it
+    # on the offshore rungs, cap 3.0 (on #270's cap it would be cross-shore, 1.5). Uncapped
+    # 4.109 -> 4.0, so 3.0, against the land cell's 4.5: -1.5.
+    a = math.radians(20.0)
+    spot, row, cells, winds = _with_winds((-2.0, 0.0), (-11.0 * math.sin(a), -11.0 * math.cos(a)))
+    rep = _land_report(spot, row, cells, winds)
+    assert rep["land_cells"]["water"]["by_state"] == {"North Carolina": {-1.5: 1}}
+    assert rep["water_drops"][0]["water"]["cap"] == 3.0
+
+
+def test_a_one_star_drop_is_counted_but_not_listed():
+    # Land 6 m/s from 0 (11.663 kt), 90 off, cross-shore; at 12 s read at 7.663 kt, no cap;
+    # wind_mult 0.8: 4.0. Water 11 m/s from 20, 70 off, 21.382 kt: offshore rung 3.0 -> 3.0.
+    a = math.radians(20.0)
+    spot, row, cells, winds = _with_winds((0.0, -6.0), (-11.0 * math.sin(a), -11.0 * math.cos(a)))
+    rep = _land_report(spot, row, cells, winds)
+    assert rep["land_cells"]["water"]["by_state"] == {"North Carolina": {-1.0: 1}}
+    assert rep["water_drops"] == []
+
+
+def test_only_water_drops_are_listed():
+    # Water 30 m/s from 0 (58.3 kt), cross-shore over 25 kt: cap 1.0, so 1.0: -3.5. The blend,
+    # (-1, -15): 15.033 m/s (29.2 kt) from 3.81, 86.19 off: offshore rung over 25 kt, cap 2.0,
+    # so at most 2.0: a drop of 2.5 or more, counted by state but not listed.
+    spot, row, cells, winds = _with_winds((-2.0, 0.0), (0.0, -30.0))
+    rep = _land_report(spot, row, cells, winds)
+    assert [d["delta"] for d in rep["water_drops"]] == [-3.5]
+    assert min(rep["land_cells"]["blend"]["by_state"]["North Carolina"]) <= -2.5
+
+
+def test_a_rise_is_not_a_drop():
+    # The fixture the other way round: land 11 m/s from 0 (cross, over 20 kt, 1.5), water
+    # 2 m/s from 90 (light offshore, 4.5): +3.0, and no spot in biggest_drops.
+    spot, row, cells, winds = _with_winds((0.0, -11.0), (-2.0, 0.0))
+    rep = _land_report(spot, row, cells, winds)
+    water = rep["land_cells"]["water"]
+    assert water["by_state"] == {"North Carolina": {3.0: 1}}
+    assert (water["ups"], water["downs"], water["biggest_drops"]) == (1, 0, [])
+
+
+
+# --------------------------------------------------------------------------- #
+# The land-cell spot list in the gate and the preview                          #
+# --------------------------------------------------------------------------- #
+
+def test_the_gate_expects_a_listed_spot_on_its_own_cell():
+    # Listed: the gate wants the land cell 7 turned at -14.3: (0, -1) is from 14.3 at 1 m/s.
+    cells = [dict(WATER_CELLS[0], keeps_land_cell=True)]
+    published = _published(wind_dir=14.3, wind_speed=1.0)
+    kept = {"grid_relative": True, "cells": {"A": 7}, "water": {}, "kept_land": ["A"]}
+    rep = DQ.compare_true_north(cells, WATER_SWEEP, published, kept)
+    assert (rep["verdict"], rep["kept_land"], rep["water_cells"]) == ("PASS", ["A"], 0)
+    # The pipeline moving it to the water cell anyway fails the gate.
+    moved = {"grid_relative": True, "cells": {"A": 9}, "water": {"A": [7, 9]}, "kept_land": []}
+    rep = DQ.compare_true_north(cells, WATER_SWEEP, _published(wind_dir=344.7), moved)
+    assert (rep["verdict"], rep["cell_moved"]) == ("FAIL", ["A"])
+
+
+def test_the_preview_rates_a_listed_spot_on_its_own_cell():
+    # x-axis 0, land (-2, 0): 2 m/s from 90; the water cell (0, -11) is not used.
+    cell = {"flat": 5, "x_axis_deg": 0.0, "water_flat": 6, "water_x_axis_deg": 0.0,
+            "keeps_land_cell": True}
+    winds = {"c": {5: [("t", -2.0, 0.0)], 6: [("t", 0.0, -11.0)]}}
+    assert DQ.variant_wind("water+true-north", cell, winds, "c", 0, -2.0, 0.0) == (2.0, 90.0)
+    # The pure water variant still shows the water cell: 11 m/s from 0.
+    assert DQ.variant_wind("water", cell, winds, "c", 0, -2.0, 0.0) == (11.0, 0.0)
+
+
+def test_hrrr_cells_marks_only_listed_spots_on_a_land_cell():
+    # A 3 x 4 grid at 40 N, 0.01 deg apart, land everywhere but (1, 2), 0.01 deg east of (1, 1).
+    # Both spots sit on (1, 1), flat 5, facing east, so both find water cell 6; only the listed
+    # one keeps its land cell. A listed spot on a water cell (the third, on (1, 2)) is not marked.
+    from scipy.spatial import cKDTree
+    lats = np.array([[40.0 + (i - 1) * 0.01] * 4 for i in range(3)])
+    lngs = np.array([[-74.0 + (j - 1) * 0.01 for j in range(4)] for _ in range(3)])
+    mask = np.ones((3, 4))
+    mask[1, 2] = 0.0
+    tree = cKDTree(np.column_stack([lats.ravel(), lngs.ravel()]))
+    spots = [{"name": "Cannon Beach", "lat": 40.0, "lng": -74.0, "orientation_deg": 90.0},
+             {"name": "Other", "lat": 40.0, "lng": -74.0, "orientation_deg": 90.0},
+             {"name": "Wet", "lat": 40.0, "lng": -73.99, "orientation_deg": 90.0}]
+    rows = DQ.hrrr_cells(spots, tree, (3, 4), lats, lngs, mask,
+                         keep_land={"cannon-beach", "wet"})
+    got = {r["spot"]: (r["flat"], r.get("water_flat"), r["keeps_land_cell"]) for r in rows}
+    assert got == {"Cannon Beach": (5, 6, True), "Other": (5, 6, False), "Wet": (6, None, False)}
+
+
+def test_the_sweep_reads_the_list_itself(tmp_path):
+    p = tmp_path / "list.json"
+    p.write_text(json.dumps({"spots": {"cannon-beach": "x", "bastendorff-beach": "y"}}))
+    assert DQ.land_cell_spots(p) == {"cannon-beach", "bastendorff-beach"}
