@@ -37,15 +37,14 @@ name: sw1-raycast
 #       (pipeline/star_preview.py --nwps-shelter), then replays B and C: the window picks the
 #       partition but the height takes the alignment term only (C: on NWPS dirpw), all three
 #       on the same rows read once. Geometry from baseline_ref. SELECT only.
-#   mode = rating-preview: READ-ONLY. The 20 kt wind-cap changes against the published rater
-#       (cap, ceiling and cal-median), replayed over the window from 2026-10-21 00:00Z (the
-#       evidence day): no period allowance above 20 kt measured, a 3.0 cap on offshore wind
-#       above 20 kt measured, and both; each by source, state and wind band, with every changed
-#       hour at the spots in `spots`, and the homepage's "Best conditions right now" (from now)
-#       before and after; every rating factor of the next hour at those spots; and THE MERGE
-#       GATE, the wired rater against the preview's wind-both hour for hour (must be 0
-#       differences) (pipeline/star_preview.py --wind --explain). Geometry from baseline_ref.
-#       SELECT only.
+#   mode = rating-preview: READ-ONLY. An onshore cap rung at the "Blown out" label's threshold
+#       (6 m/s), against the wired rater, replayed over the window from 2026-10-23 00:00Z:
+#       blown-2.5 (2.5 from 6 m/s, over 15 kt 2.0, over 20 kt 1.5) and blown-3.0 (the 3.0 rung
+#       moved down from over 13 kt to 6 m/s), both with the period allowance as today; each by
+#       state and wind band, the "Blown out" hours still above 2.5 stars, every changed hour at
+#       the spots in `spots`, the next hour's caps there, and the homepage's "Best conditions
+#       right now" (from now) before and after (pipeline/star_preview.py --onshore --explain).
+#       Geometry from baseline_ref. SELECT only.
 #   mode = data-quality: READ-ONLY. The data-quality sweep (pipeline/data_quality.py): every
 #       CONUS spot's HRRR cell and whether HRRR classes it as land, with the nearest seaward water
 #       cell and the wind at both (HRRR from NOAA's AWS archive); THE HRRR WIND GATE, the
@@ -492,16 +491,16 @@ jobs:
           git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
           echo "baseline: $base ($(git rev-parse "$base"))"
 
-      - name: Rating factors, the 20 kt wind-cap changes and their merge gate (SELECT only)
+      - name: An onshore cap rung at the Blown out label's threshold (SELECT only)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           # Through the environment, never interpolated into the shell command.
           SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.star_preview --wind no-allowance-20,offshore-20,wind-both \
-            --since 2026-10-21T00:00:00+00:00 \
-            --explain "${SPOTS:-jennettes-pier,ocean-city-nj,atlantic-city,manasquan-inlet,margate-pier,ventnor-pier}" \
+          python -m pipeline.star_preview --onshore blown-2.5,blown-3.0 \
+            --since 2026-10-23T00:00:00+00:00 \
+            --explain "${SPOTS:-indialantic,cocoa-beach-pier,jacksonville-beach-pier,kitty-hawk-pier,ocean-city-nj}" \
             --baseline "$RUNNER_TEMP/baseline.json" --out rating_preview.json
 
       - name: Upload the report
