@@ -403,9 +403,15 @@ def test_the_roster_carries_point_grenvilles_measured_distance():
 #                                         upper bounds over the wrong candidate set
 #   St Simons Island, Jekyll Island       8677344 at the mouth of St Simons Sound, 1.4 and
 #                                         8.3 km — same correction, Georgia coast
+#   the fifteen DAMPED-STATION swaps      a lagoon, bay or sound gauge replaced by the
+#                                         ocean-side one (data-quality runs 36 and 37)
+_DAMPED_SWAPS = {"Indialantic", "Ocean Ave", "Spessard", "Bay Head", "Mantoloking",
+                 "Island Beach State Park", "Seaside Heights", "Seaside Park", "Avon Pier",
+                 "Rodanthe", "S-Turns", "Salvo", "Assateague Island MD", "Port A Beach",
+                 "Port Aransas Jetty"}
 _HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach",
              "Key West", "Captiva", "Reid State Park",
-             "St Simons Island", "Jekyll Island"}
+             "St Simons Island", "Jekyll Island"} | _DAMPED_SWAPS
 
 
 def test_no_other_spot_changed_station():
@@ -430,14 +436,19 @@ def test_no_other_spot_changed_station():
     Ventnor Pier change two names in the digest and no station. Verified: with the two old
     names put back, the digest over the same 638 spots is the previous pin,
     ec21a9773b5415ee23a41726043bd5464bf8cdb92e9fe415fbce9adc19839e69.
+
+    THE DAMPED-STATION SWAPS OF 2026-10-22 (_DAMPED_SWAPS): the fifteen spots that differ from
+    origin/main (25c5c03) are exactly those fifteen, and the digest over the remaining 623 is
+    byte-identical between origin/main's roster and this tree. Over the 638 the pin was
+    9a5317b4b03976e2547073d9b0e59cba26dbeb448c6c2d00f4b7864ab11d631b.
     """
     roster = _roster()
     assert len(roster) == 648, len(roster)
     pairs = sorted((str(s.get("name")), str(s.get("nearest_tide_station_id")))
                    for s in roster if s.get("name") not in _HAND_SET)
-    assert len(pairs) == 638, len(pairs)
+    assert len(pairs) == 623, len(pairs)
     digest = hashlib.sha256("\n".join(f"{a}\t{b}" for a, b in pairs).encode()).hexdigest()
-    assert digest == "9a5317b4b03976e2547073d9b0e59cba26dbeb448c6c2d00f4b7864ab11d631b", digest
+    assert digest == "e859b67d354ac43dd366fc371479fe9e57ec35da20dbe809c09a697282265344", digest
 
 
 def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
@@ -451,7 +462,10 @@ def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
     # for Pacific Beach WA, so that was a net loss of one: 233. Arena Cove 9416841 arrived with
     # the Mendocino four (236 after the three local reference stations 8724580 / 8725383 /
     # 8417177). St Simons and Jekyll then added ONE between them — they share 8677344 — so 237.
-    assert len({i for i in ids if i}) == 237, len({i for i in ids if i})
+    # The damped-station swaps left seven stations with no spot (8721843, 8532715, 8533135,
+    # 8653951, 8653215, 8570536, 8775237) and brought in three not yet in service (8533071,
+    # 8652678, 8570280): 237 - 7 + 3 = 233.
+    assert len({i for i in ids if i}) == 233, len({i for i in ids if i})
 
 
 def test_the_entry_records_that_point_grenville_is_a_SUBORDINATE():

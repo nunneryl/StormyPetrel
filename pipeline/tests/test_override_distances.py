@@ -53,6 +53,23 @@ MEASURED = {
     "Reid State Park":  ("reid-state-park",  "8417177",  5.1),
     "St Simons Island": ("st-simons-island", "8677344",  1.4),
     "Jekyll Island":    ("jekyll-island",    "8677344",  8.3),
+    # The damped-station swaps: distances from data-quality runs 36 (Avon Pier) and 37 (the
+    # rest), measured on CO-OPS station coordinates, one decimal.
+    "Indialantic":             ("indialantic",             "8721804",  5.5),
+    "Ocean Ave":               ("ocean-ave",               "8721804",  8.1),
+    "Spessard":                ("spessard",                "8721804", 10.9),
+    "Bay Head":                ("bay-head",                "8532591",  2.8),
+    "Mantoloking":             ("mantoloking",             "8532591",  7.1),
+    "Island Beach State Park": ("island-beach-state-park", "8533071",  5.7),
+    "Seaside Heights":         ("seaside-heights",         "8533071",  2.8),
+    "Seaside Park":            ("seaside-park",            "8533071",  3.2),
+    "Avon Pier":               ("avon-pier",               "8654400", 18.5),
+    "Rodanthe":                ("rodanthe",                "8652678", 20.2),
+    "S-Turns":                 ("s-turns",                 "8652678", 18.7),
+    "Salvo":                   ("salvo",                   "8652678", 26.4),
+    "Assateague Island MD":    ("assateague-island-md",    "8570280", 14.5),
+    "Port A Beach":            ("port-a-beach",            "8775270",  3.7),
+    "Port Aransas Jetty":      ("port-aransas-jetty",      "8775270",  0.9),
 }
 
 # The four that deliberately exceed the 50 km cap.
@@ -109,7 +126,8 @@ def test_the_override_file_expect_km_matches_the_roster():
     station file — and were corrected with the same measurement."""
     st = _doc()["stations"]
     by = _by_name()
-    for name, (slug, _sid, km) in MEASURED.items():
+    for name, (slug, sid, km) in MEASURED.items():
+        assert st[slug]["station_id"] == sid, (slug, st[slug].get("station_id"), sid)
         assert st[slug]["expect_km"] == km, (slug, st[slug].get("expect_km"), km)
         assert by[name]["nearest_tide_station_dist_km"] == st[slug]["expect_km"], name
 
