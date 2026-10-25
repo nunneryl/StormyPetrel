@@ -71,6 +71,12 @@ name: sw1-raycast
 #       stars, hour for hour (0 differences); then every hour's stars, face, height and period at
 #       the old and the new node, each new node checked as a wet cell centre in every cycle read,
 #       and the homepage's "Best conditions right now" before and after. SELECT only.
+#   mode = face-sources: READ-ONLY, no secrets. Whether this runner reaches the face-height
+#       validation sources (pipeline/face_sources.py): the FRF Duck 8 m array and lidar
+#       transect on the CHL THREDDS server (OPeNDAP, and plain HTTP as the fallback), the NWS
+#       Surf Zone Forecast archive at the Iowa Environmental Mesonet (newest SRFMHX parsed for
+#       Duck's zone, and a past date range), CDIP's Cape Canaveral nearshore buoy, and
+#       api.weather.gov's outline for that zone. Fails the run if any source is unreachable.
 
 on:
   workflow_dispatch:
@@ -89,6 +95,7 @@ on:
           - rating-preview
           - data-quality
           - node-preview
+          - face-sources
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -145,7 +152,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'face-sources' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -643,4 +650,39 @@ jobs:
           path: |
             node_preview.json
             node_preview_hours.csv
+          if-no-files-found: warn
+
+  face-sources:
+    name: sw1 face-height sources (read-only)
+    if: ${{ inputs.mode == 'face-sources' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Reach the face-height sources (no secrets, writes nothing)
+        run: python -m pipeline.face_sources --out face_sources.json
+
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: face-sources-${{ github.run_number }}
+          path: face_sources.json
           if-no-files-found: warn

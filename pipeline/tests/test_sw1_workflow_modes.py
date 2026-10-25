@@ -27,18 +27,19 @@ def test_nwps_shelter_is_a_mode():
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
-        "data-quality", "node-preview"]
+        "data-quality", "node-preview", "face-sources"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
-                         "rating-preview", "data-quality", "node-preview"}
+                         "rating-preview", "data-quality", "node-preview", "face-sources"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
-        "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' }}")
+        "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
+        "&& inputs.mode != 'face-sources' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -88,6 +89,16 @@ def test_the_data_quality_sweep_only_reads():
     assert "    permissions:\n      contents: read\n" in job
     assert "python -m pipeline.data_quality --sections hrrr,true-north,wind-preview,partitions,tides,cams \\\n" in job
     assert "SPOTS: ${{ inputs.spots }}" in job
+    for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
+
+
+def test_the_face_sources_check_only_reads_and_holds_no_secrets():
+    job = _jobs()["face-sources"]
+    assert _if(job) == "${{ inputs.mode == 'face-sources' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert "python -m pipeline.face_sources --out face_sources.json" in job
+    assert "secrets." not in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
 
