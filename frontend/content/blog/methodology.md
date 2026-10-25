@@ -164,7 +164,7 @@ So strong wind now sets a ceiling on the rating, whatever the other scores are. 
 | over 20 kt | 1.5 | 1.5 | 3 |
 | over 25 kt | 1 | 1 | 2 |
 
-Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° to 120°, and onshore more than 120°.
+Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° up to 120°, and onshore 120° or more.
 
 For the cap, cross-offshore wind, 60° to 90° off, counts as offshore: it blows partly offshore, so it gets the offshore column, not the cross-shore one.
 
@@ -245,11 +245,13 @@ The label now comes from the wind's angle off the spot's straight-offshore direc
 |-----------|-------|
 | wind under 2.5 m/s | Clean (glassy — direction stops mattering) |
 | off_angle ≤ 60° | Clean (offshore) |
-| off_angle ≤ 120° | Mixed (cross-shore) |
-| off_angle > 120°, wind under 6 m/s | Choppy (light onshore) |
-| off_angle > 120°, wind 6 m/s or more | Blown out |
+| off_angle < 120° | Mixed (cross-shore) |
+| off_angle ≥ 120°, wind under 6 m/s | Choppy (light onshore) |
+| off_angle ≥ 120°, wind 6 m/s or more | Blown out |
 
-Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On the same August 2026 hours, this gives Clean 43.5%, Mixed 23.8%, Choppy 28.3% and Blown out 4.4%.
+Speed is checked first: a 1 m/s straight-onshore hour is glassy, not choppy. On the same August 2026 hours, this gave Clean 43.5%, Mixed 23.8%, Choppy 28.3% and Blown out 4.4%.
+
+Exactly 120° counts as onshore, as it does in the wind cap. Until 25 October 2026 the label read 120° as Mixed (the August shares above were measured that way), so an hour the cap held to 2.5 stars as onshore could still read "Mixed".
 
 `chop_ratio` still appears on the spot page, as the "swell mix" figure under the word.
 

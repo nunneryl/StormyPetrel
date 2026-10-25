@@ -1459,7 +1459,7 @@ def _print_wind_rater_check(c):
 # --------------------------------------------------------------------------- #
 # --onshore: an onshore cap rung at the "Blown out" label's threshold           #
 # --------------------------------------------------------------------------- #
-# The Conditions tile reads "Blown out" from more than 120 deg off the offshore bearing at
+# The Conditions tile reads "Blown out" from 120 deg off the offshore bearing or more at
 # 6 m/s or more (frontend/lib/ratings.ts classifySurface); the onshore cap's first rung is
 # over 13 kt. Indialantic showed "Blown out" at 2.5 stars in 14 mph (12.2 kt) onshore. Each
 # rule puts a first onshore rung at the label's threshold, 6 m/s = 11.663 kt, read with the
@@ -1472,7 +1472,7 @@ def _print_wind_rater_check(c):
 #               allowance); the rungs over 15 and 20 kt keep the allowance
 #
 # Two "Blown out" labels are counted beside each rule (display only, the rater never reads
-# them): LABELS["6ms"], today's (more than 120 off at 6 m/s or more), and LABELS["15kt"]
+# them): LABELS["6ms"], today's (120 off or more at 6 m/s or more), and LABELS["15kt"]
 # (the same direction at 15 kt or more measured; below it, over 2.5 m/s, the tile reads
 # "Choppy").
 #
@@ -1489,29 +1489,29 @@ BLOWN_OUT_MS = 6.0
 # rule: (the first onshore rung's cap, whether that rung reads the measured speed)
 ONSHORE_RULES = {"blown-2.5": (2.5, False), "blown-3.0": (3.0, False),
                  "blown-2.5-measured": (2.5, True)}
-# label: the measured speed (m/s) "Blown out" starts at, more than 120 off the offshore bearing
+# label: the measured speed (m/s) "Blown out" starts at, 120 off the offshore bearing or more
 LABELS = {"6ms": BLOWN_OUT_MS, "15kt": 15.0 * KT_TO_MS}
 
 
 def blown_out(wind_dir, wind_speed_ms, offshore_wind_deg, label="6ms"):
-    """The Conditions tile's "Blown out" under *label* (LABELS): more than 120 off the
-    offshore bearing at the label's measured speed or more (classifySurface: under 2.5 m/s it
+    """The Conditions tile's "Blown out" under *label* (LABELS): 120 off the offshore
+    bearing or more (120 itself is onshore, as in the cap) at the label's measured speed or more (classifySurface: under 2.5 m/s it
     reads clean whatever the direction; between, onshore reads "Choppy")."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return False
-    return (_angle_off(wind_dir, offshore_wind_deg) > 120.0
+    return (_angle_off(wind_dir, offshore_wind_deg) >= 120.0
             and wind_speed_ms >= LABELS[label])
 
 
 def _surface(wind_dir, wind_speed_ms, offshore_wind_deg):
     """classifySurface below "Blown out": unknown, clean (under 2.5 m/s, or up to 60 off),
-    mixed (up to 120 off), else choppy."""
+    mixed (under 120 off), else choppy."""
     if wind_dir is None or wind_speed_ms is None or offshore_wind_deg is None:
         return "unknown"
     if wind_speed_ms < 2.5:
         return "Clean"
     off = _angle_off(wind_dir, offshore_wind_deg)
-    return "Clean" if off <= 60.0 else "Mixed" if off <= 120.0 else "Choppy"
+    return "Clean" if off <= 60.0 else "Mixed" if off < 120.0 else "Choppy"
 
 
 def published_cap(wind_dir, wind_speed_ms, offshore_wind_deg, period_s):

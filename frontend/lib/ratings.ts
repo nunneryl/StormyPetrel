@@ -127,9 +127,12 @@ export function offAngleDeg(
  *   wind_speed / wind_dir / offshore_wind_deg missing  -> unknown
  *   wind_speed < 2.5 m/s                              -> clean   (glassy; direction stops mattering)
  *   off_angle <= 60                                    -> clean   (offshore)
- *   off_angle <= 120                                   -> mixed   (cross-shore)
- *   off_angle > 120 and wind_speed < 6 m/s             -> choppy  (light onshore)
- *   off_angle > 120 and wind_speed >= 6 m/s            -> blown   (moderate-to-strong onshore)
+ *   off_angle < 120                                    -> mixed   (cross-shore)
+ *   off_angle >= 120 and wind_speed < 6 m/s            -> choppy  (light onshore)
+ *   off_angle >= 120 and wind_speed >= 6 m/s           -> blown   (moderate-to-strong onshore)
+ *
+ * 120 itself is ONSHORE, as in the wind cap (pipeline/interpret.py wind_class: 120 and over),
+ * so an hour the cap holds to 2.5 stars as onshore at 6 m/s is never labelled "Mixed".
  *
  * SPEED IS TESTED BEFORE DIRECTION, deliberately: a 1 m/s straight-onshore hour is
  * glassy, not choppy, and the glassy case has to win or dawn patrol reads wrong.
@@ -152,7 +155,7 @@ export function classifySurface(
   if (windSpeedMs < 2.5) return 'clean';
   const off = offAngleDeg(windDirDeg, offshoreDeg);
   if (off <= 60) return 'clean';
-  if (off <= 120) return 'mixed';
+  if (off < 120) return 'mixed';
   if (windSpeedMs < 6) return 'choppy';
   return 'blown';
 }
