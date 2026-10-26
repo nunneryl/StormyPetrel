@@ -5,10 +5,16 @@ multiplier is chosen, whether the Hs it would multiply is biased.
 WHAT IS COMPARED
 
   ours      the published forecasts row for the spot and hour (source 'nwps', the rated row):
-            hs, the total significant height the rater sizes from, with swell_hs, tp and
-            swell_source (which model fed the hour: nwps, nwps_height_ww3_dir, cdip_mop, ww3)
-            carried beside it. A past hour keeps the LAST value published for it, so this is
-            the shortest-lead forecast each hour had, not a fixed lead.
+            hs, NWPS's total significant height at the spot's sample point, with swell_hs, tp
+            and swell_source carried beside it. A past hour keeps the LAST value published for
+            it, so this is the shortest-lead forecast each hour had, not a fixed lead.
+            hs IS THE HEIGHT THE FACE IS SIZED FROM ONLY ON THE NWPS OVERRIDE'S HOURS. The
+            rater that fed an hour, read off swell_source (RATER):
+              NWPS override  (nwps, nwps_height_ww3_dir)  face from this hs
+              MOP            (cdip_mop)                   face from MOP's Hs, not stored
+              WW3 path       (ww3)                        face from the WW3 partitions, not stored
+              base           (anything else)              face from NWPS's swell_hs or this hs
+            so on MOP and WW3-path hours this measures NWPS's height beside the one rated.
   measured  the instrument's Hs over the hour: every reading flagged good whose time is within
             30 minutes of the hour, averaged (FRF's 8 m array reads hourly; CDIP buoys every
             30 minutes, so a reading at :30 counts toward both hours it sits between).
@@ -21,7 +27,8 @@ WHAT IS COMPARED
     Jetty Park Cocoa Beach  CDIP 143 Cape Canaveral nearshore (9.8 m), 5.5 km
     Cocoa Beach Pier        CDIP 143 Cape Canaveral nearshore (9.8 m), 7.5 km
 
-STATISTICS, per spot, per spot and period band (the MEASURED peak period), and over all pairs
+STATISTICS, per spot, per spot and period band (the MEASURED peak period), per spot and rater,
+by band, by rater, and over all pairs
 
   n             paired hours
   bias_m        mean(ours - measured), metres
@@ -65,6 +72,10 @@ PAIRS = [
 ]
 BANDS = [(8.0, "<8 s"), (10.0, "8-10 s"), (12.0, "10-12 s"), (14.0, "12-14 s"), (math.inf, "14+ s")]
 HALF_HOUR = 1800.0
+RATER = {"nwps": "NWPS override", "nwps_height_ww3_dir": "NWPS override", "cdip_mop": "MOP",
+         "ww3": "WW3 path"}
+RATERS = ["NWPS override", "MOP", "WW3 path", "base"]
+SHELTERED_TP_S = 3.0       # our peak period under this: a sound or harbour cell, not the ocean
 FORECAST_COLS = "spot_id, valid_time, hs, tp, swell_hs, swell_tp, swell_source, nwps_cycle"
 
 
@@ -147,12 +158,19 @@ def pair_rows(spot: str, instrument: str, forecasts: list[dict], obs: dict) -> l
     return out
 
 
+def rater_of(swell_source) -> str:
+    """Which rater fed an hour, from its swell_source (RATER; anything else is 'base')."""
+    return RATER.get(swell_source, "base")
+
+
 def summarize(pairs: list[dict]) -> dict:
     by_spot: dict[str, list] = {}
     by_band: dict[tuple, list] = {}
+    by_rater: dict[tuple, list] = {}
     for p in pairs:
         by_spot.setdefault(p["spot"], []).append(p)
         by_band.setdefault((p["spot"], p["band"]), []).append(p)
+        by_rater.setdefault((p["spot"], rater_of(p.get("swell_source"))), []).append(p)
     band_order = [b for _, b in BANDS] + [None]
     return {
         "all": stats(pairs),
@@ -161,6 +179,10 @@ def summarize(pairs: list[dict]) -> dict:
                          for s in by_spot},
         "by_band": {str(b): stats([p for p in pairs if p["band"] == b])
                     for b in band_order if any(p["band"] == b for p in pairs)},
+        "by_spot_rater": {s: {r: stats(by_rater[(s, r)]) for r in RATERS if (s, r) in by_rater}
+                          for s in by_spot},
+        "by_rater": {r: stats([p for p in pairs if rater_of(p.get("swell_source")) == r])
+                     for r in RATERS if any(rater_of(p.get("swell_source")) == r for p in pairs)},
         "swell_source": {s: _count(p["swell_source"] for p in v) for s, v in by_spot.items()},
     }
 
@@ -195,12 +217,21 @@ def months(since: datetime, until: datetime) -> list[str]:
 
 
 def frf_8m_hourly(since, until, open_nc=_open_nc) -> tuple[dict, list[str]]:
-    """The FRF 8 m array's hourly Hs and Tp (qcFlagE == 1, 'passed'), and the months read."""
+    """The FRF 8 m array's hourly Hs and Tp (qcFlagE == 1, 'passed'), and the months: each
+    read, or 'unread YYYYMM: error' for one that failed twice (run 47 lost September and
+    October 2026 this way, silently, though both open)."""
     times, hs, tp, good, read = [], [], [], [], []
     for ym in months(since, until):
-        try:
-            ds = open_nc(f"{FRF_DODS}8m-array/{ym[:4]}/FRF-ocean_waves_8m-array_{ym}.nc")
-        except OSError:
+        url = f"{FRF_DODS}8m-array/{ym[:4]}/FRF-ocean_waves_8m-array_{ym}.nc"
+        ds, err = None, None
+        for _ in range(2):
+            try:
+                ds = open_nc(url)
+                break
+            except OSError as e:
+                err = e
+        if ds is None:
+            read.append(f"unread {ym}: {err}"[:120])
             continue
         read.append(ym)
         times += _arr(ds, "time")
@@ -259,7 +290,8 @@ def print_report(report: dict) -> None:
     for c in report["coverage"]:
         print(f"  {c['spot']:24s} <- {c['instrument']:40s} {c['km']:.1f} km, {c['depth_m']} m: "
               f"forecast hours {c['forecast_hours']} (from {c['first_forecast']}), measured hours "
-              f"{c['measured_hours']} ({c['measured_span']}), paired {c['paired']}")
+              f"{c['measured_hours']} ({c['measured_span']}), paired {c['paired']}, "
+              f"our period under 3 s (a sheltered sample) {c['our_tp_under_3s']}")
     s = report["summary"]
     print(f"\nall pairs: {_fmt(s['all'])}")
     print("\nby spot (ours - measured; ratio = ours / measured):")
@@ -270,6 +302,13 @@ def print_report(report: dict) -> None:
     for spot, bands in s["by_spot_band"].items():
         for band, v in bands.items():
             print(f"  {spot:24s} {band:8s} {_fmt(v)}")
+    print("\nby spot and the rater that fed the hour:")
+    for spot, raters in s["by_spot_rater"].items():
+        for rater, v in raters.items():
+            print(f"  {spot:24s} {rater:14s} {_fmt(v)}")
+    print("\nall spots by the rater that fed the hour:")
+    for rater, v in s["by_rater"].items():
+        print(f"  {rater:14s} {_fmt(v)}")
     print("\nall spots by measured peak period:")
     for band, v in s["by_band"].items():
         print(f"  {band:8s} {_fmt(v)}")
@@ -304,7 +343,9 @@ def run(client, since, until, open_nc=_open_nc) -> dict:
             "spot": name, "instrument": INSTRUMENTS[inst]["name"], "depth_m": INSTRUMENTS[inst]["depth_m"],
             "km": _km(spot["lat"], spot["lng"], *INSTRUMENT_POS[inst]) if spot else float("nan"),
             "forecast_hours": len(rows), "first_forecast": rows[0]["valid_time"][:16] if rows else None,
-            "measured_hours": len(obs), "measured_span": span, "paired": len(p)})
+            "measured_hours": len(obs), "measured_span": span, "paired": len(p),
+            "our_tp_under_3s": sum(1 for r in p if r["ours_tp"] is not None
+                                   and r["ours_tp"] < SHELTERED_TP_S)})
     return {"since": since.isoformat(), "until": until.isoformat(), "coverage": coverage,
             "summary": summarize(pairs), "pairs": pairs}
 

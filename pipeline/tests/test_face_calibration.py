@@ -103,6 +103,11 @@ def test_summarize():
     assert {k: v["n"] for k, v in s["by_band"].items()} == {"8-10 s": 2, "12-14 s": 1}
     assert s["by_band"]["8-10 s"]["bias_m"] == 0.35                    # (0.2 + 0.5) / 2
     assert s["swell_source"] == {"A": {"nwps": 2}, "B": {"cdip_mop": 1}}
+    assert {sp: list(v) for sp, v in s["by_spot_rater"].items()} == {
+        "A": ["NWPS override"], "B": ["MOP"]}
+    assert s["by_spot_rater"]["A"]["NWPS override"]["bias_m"] == 0.05      # (0.2 - 0.1) / 2
+    assert {r: v["n"] for r, v in s["by_rater"].items()} == {"NWPS override": 2, "MOP": 1}
+    assert s["by_rater"]["MOP"]["bias_m"] == 0.5
 
 
 def test_months():
@@ -132,8 +137,29 @@ def test_frf_8m_hourly_keeps_passed_readings_and_skips_missing_months():
                    qcFlagE=[1, 3])                      # the second is 'questionable'
     got, read = C.frf_8m_hourly(datetime(2026, 9, 1, tzinfo=timezone.utc),
                                 datetime(2026, 10, 25, tzinfo=timezone.utc), open_nc)
-    assert read == ["202610"]
+    assert read == ["unread 202609: 404", "202610"]          # failed twice, and said so
     assert got == {H0: (1.5, 10.0, 1)}
+
+
+def test_frf_8m_hourly_retries_a_month_once():
+    calls = []
+
+    def open_nc(url):
+        calls.append(url)
+        if len(calls) == 1:
+            raise OSError("NetCDF: DAP failure")
+        return _DS(time=[float(H0)], waveHs=[1.5], waveTp=[10.0], qcFlagE=[1])
+    got, read = C.frf_8m_hourly(datetime(2026, 10, 1, tzinfo=timezone.utc),
+                                datetime(2026, 10, 25, tzinfo=timezone.utc), open_nc)
+    assert len(calls) == 2 and read == ["202610"] and got == {H0: (1.5, 10.0, 1)}
+
+
+@pytest.mark.parametrize("source, rater", [
+    ("nwps", "NWPS override"), ("nwps_height_ww3_dir", "NWPS override"), ("cdip_mop", "MOP"),
+    ("ww3", "WW3 path"), ("buoy", "base"), ("nwps_total", "base"), (None, "base"), ("", "base"),
+])
+def test_rater_of(source, rater):
+    assert C.rater_of(source) == rater
 
 
 def test_cdip_hourly_reads_the_realtime_file_with_good_flags():
@@ -218,8 +244,8 @@ def test_run_pairs_each_spot_with_its_instrument(monkeypatch):
     monkeypatch.setattr(C, "PAIRS", [("Duck Pier", "frf-8m"), ("Bethany Beach", "cdip-263")])
     spots = [{"id": 1, "name": "Duck Pier", "lat": 36.1872331, "lng": -75.7428842},
              {"id": 2, "name": "Bethany Beach", "lat": 38.537, "lng": -75.044}]
-    fc = {1: [{"valid_time": "2026-10-25T00:00:00+00:00", "hs": 1.2, "tp": 10.0}],
-          2: [{"valid_time": "2026-10-25T00:00:00+00:00", "hs": 2.5, "tp": 10.0}]}
+    fc = {1: [{"valid_time": "2026-10-25T00:00:00+00:00", "hs": 1.2, "tp": 3.0}],     # at the edge
+          2: [{"valid_time": "2026-10-25T00:00:00+00:00", "hs": 2.5, "tp": 2.9}]}   # sheltered
 
     def open_nc(url):
         if "8m-array" in url:
@@ -234,6 +260,8 @@ def test_run_pairs_each_spot_with_its_instrument(monkeypatch):
     cov = {c["spot"]: c for c in rep["coverage"]}
     assert cov["Duck Pier"]["km"] == 0.0 and cov["Duck Pier"]["measured_span"] == ["202610"]
     assert cov["Bethany Beach"]["paired"] == 1 and cov["Bethany Beach"]["depth_m"] == 10.6
+    # Our period 2.9 s is under 3 s at Bethany; exactly 3.0 s at Duck Pier is not.
+    assert cov["Bethany Beach"]["our_tp_under_3s"] == 1 and cov["Duck Pier"]["our_tp_under_3s"] == 0
     assert rep["summary"]["by_spot"]["Bethany Beach"]["bias_m"] == 0.5
 
 

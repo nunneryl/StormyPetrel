@@ -1,0 +1,343 @@
+{
+ "derived_from": "face_calibration_pairs.csv (run 47) with pipeline.face_calibration.summarize/stats at the commit that adds this file",
+ "by_spot_rater": {
+  "Duck Pier": {
+   "NWPS override": {
+    "n": 797,
+    "bias_m": -0.238,
+    "ratio_median": 0.238,
+    "rmse_m": 0.332,
+    "scatter_index": 0.72,
+    "mean_measured_m": 0.461,
+    "mean_ours_m": 0.222,
+    "within_20": 0.142,
+    "within_30": 0.202,
+    "r": 0.306
+   },
+   "WW3 path": {
+    "n": 1284,
+    "bias_m": -0.569,
+    "ratio_median": 0.133,
+    "rmse_m": 0.666,
+    "scatter_index": 1.019,
+    "mean_measured_m": 0.654,
+    "mean_ours_m": 0.085,
+    "within_20": 0.0,
+    "within_30": 0.0,
+    "r": 0.038
+   },
+   "base": {
+    "n": 627,
+    "bias_m": -0.598,
+    "ratio_median": 0.124,
+    "rmse_m": 0.709,
+    "scatter_index": 1.032,
+    "mean_measured_m": 0.687,
+    "mean_ours_m": 0.089,
+    "within_20": 0.0,
+    "within_30": 0.0,
+    "r": 0.077
+   }
+  },
+  "Bethany Beach": {
+   "NWPS override": {
+    "n": 1624,
+    "bias_m": 0.101,
+    "ratio_median": 1.031,
+    "rmse_m": 0.359,
+    "scatter_index": 0.382,
+    "mean_measured_m": 0.938,
+    "mean_ours_m": 1.039,
+    "within_20": 0.638,
+    "within_30": 0.807,
+    "r": 0.93
+   },
+   "WW3 path": {
+    "n": 2472,
+    "bias_m": 0.014,
+    "ratio_median": 1.032,
+    "rmse_m": 0.131,
+    "scatter_index": 0.185,
+    "mean_measured_m": 0.706,
+    "mean_ours_m": 0.72,
+    "within_20": 0.79,
+    "within_30": 0.926,
+    "r": 0.877
+   },
+   "base": {
+    "n": 370,
+    "bias_m": -0.078,
+    "ratio_median": 0.972,
+    "rmse_m": 0.296,
+    "scatter_index": 0.319,
+    "mean_measured_m": 0.927,
+    "mean_ours_m": 0.848,
+    "within_20": 0.732,
+    "within_30": 0.824,
+    "r": 0.771
+   }
+  },
+  "Doheny State Beach": {
+   "MOP": {
+    "n": 2333,
+    "bias_m": -0.068,
+    "ratio_median": 0.962,
+    "rmse_m": 0.203,
+    "scatter_index": 0.206,
+    "mean_measured_m": 0.983,
+    "mean_ours_m": 0.915,
+    "within_20": 0.758,
+    "within_30": 0.925,
+    "r": 0.754
+   },
+   "WW3 path": {
+    "n": 1187,
+    "bias_m": -0.081,
+    "ratio_median": 0.949,
+    "rmse_m": 0.22,
+    "scatter_index": 0.226,
+    "mean_measured_m": 0.973,
+    "mean_ours_m": 0.892,
+    "within_20": 0.751,
+    "within_30": 0.927,
+    "r": 0.687
+   },
+   "base": {
+    "n": 862,
+    "bias_m": -0.068,
+    "ratio_median": 0.957,
+    "rmse_m": 0.193,
+    "scatter_index": 0.206,
+    "mean_measured_m": 0.937,
+    "mean_ours_m": 0.869,
+    "within_20": 0.847,
+    "within_30": 0.958,
+    "r": 0.781
+   }
+  },
+  "Avila Beach": {
+   "NWPS override": {
+    "n": 836,
+    "bias_m": -0.028,
+    "ratio_median": 0.964,
+    "rmse_m": 0.128,
+    "scatter_index": 0.229,
+    "mean_measured_m": 0.56,
+    "mean_ours_m": 0.531,
+    "within_20": 0.724,
+    "within_30": 0.86,
+    "r": 0.558
+   }
+  },
+  "Jetty Park Cocoa Beach": {
+   "NWPS override": {
+    "n": 2273,
+    "bias_m": -0.094,
+    "ratio_median": 0.95,
+    "rmse_m": 0.236,
+    "scatter_index": 0.397,
+    "mean_measured_m": 0.594,
+    "mean_ours_m": 0.5,
+    "within_20": 0.537,
+    "within_30": 0.723,
+    "r": 0.812
+   },
+   "WW3 path": {
+    "n": 1370,
+    "bias_m": -0.13,
+    "ratio_median": 0.864,
+    "rmse_m": 0.227,
+    "scatter_index": 0.388,
+    "mean_measured_m": 0.586,
+    "mean_ours_m": 0.456,
+    "within_20": 0.537,
+    "within_30": 0.685,
+    "r": 0.653
+   },
+   "base": {
+    "n": 838,
+    "bias_m": -0.152,
+    "ratio_median": 0.789,
+    "rmse_m": 0.238,
+    "scatter_index": 0.383,
+    "mean_measured_m": 0.622,
+    "mean_ours_m": 0.471,
+    "within_20": 0.416,
+    "within_30": 0.635,
+    "r": 0.681
+   }
+  },
+  "Cocoa Beach Pier": {
+   "NWPS override": {
+    "n": 2273,
+    "bias_m": 0.008,
+    "ratio_median": 1.082,
+    "rmse_m": 0.147,
+    "scatter_index": 0.247,
+    "mean_measured_m": 0.594,
+    "mean_ours_m": 0.601,
+    "within_20": 0.573,
+    "within_30": 0.759,
+    "r": 0.905
+   },
+   "WW3 path": {
+    "n": 1370,
+    "bias_m": 0.004,
+    "ratio_median": 1.038,
+    "rmse_m": 0.094,
+    "scatter_index": 0.161,
+    "mean_measured_m": 0.586,
+    "mean_ours_m": 0.589,
+    "within_20": 0.778,
+    "within_30": 0.921,
+    "r": 0.924
+   },
+   "base": {
+    "n": 838,
+    "bias_m": -0.025,
+    "ratio_median": 0.994,
+    "rmse_m": 0.119,
+    "scatter_index": 0.191,
+    "mean_measured_m": 0.622,
+    "mean_ours_m": 0.597,
+    "within_20": 0.754,
+    "within_30": 0.889,
+    "r": 0.888
+   }
+  }
+ },
+ "by_rater": {
+  "NWPS override": {
+   "n": 7803,
+   "bias_m": -0.031,
+   "ratio_median": 0.994,
+   "rmse_m": 0.249,
+   "scatter_index": 0.385,
+   "mean_measured_m": 0.648,
+   "mean_ours_m": 0.617,
+   "within_20": 0.548,
+   "within_30": 0.712,
+   "r": 0.855
+  },
+  "MOP": {
+   "n": 2333,
+   "bias_m": -0.068,
+   "ratio_median": 0.962,
+   "rmse_m": 0.203,
+   "scatter_index": 0.206,
+   "mean_measured_m": 0.983,
+   "mean_ours_m": 0.915,
+   "within_20": 0.758,
+   "within_30": 0.925,
+   "r": 0.754
+  },
+  "WW3 path": {
+   "n": 7683,
+   "bias_m": -0.125,
+   "ratio_median": 0.945,
+   "rmse_m": 0.313,
+   "scatter_index": 0.45,
+   "mean_measured_m": 0.696,
+   "mean_ours_m": 0.57,
+   "within_20": 0.605,
+   "within_30": 0.728,
+   "r": 0.575
+  },
+  "base": {
+   "n": 3535,
+   "bias_m": -0.173,
+   "ratio_median": 0.888,
+   "rmse_m": 0.352,
+   "scatter_index": 0.475,
+   "mean_measured_m": 0.742,
+   "mean_ours_m": 0.569,
+   "within_20": 0.561,
+   "within_30": 0.681,
+   "r": 0.575
+  }
+ },
+ "duck_pier_our_tp_3s_plus": {
+  "n": 222,
+  "bias_m": 0.078,
+  "ratio_median": 1.183,
+  "rmse_m": 0.123,
+  "scatter_index": 0.242,
+  "mean_measured_m": 0.511,
+  "mean_ours_m": 0.589,
+  "within_20": 0.509,
+  "within_30": 0.725,
+  "r": 0.442
+ },
+ "all_without_duck_pier_sheltered_hours": {
+  "all": {
+   "n": 18868,
+   "bias_m": -0.035,
+   "ratio_median": 0.986,
+   "rmse_m": 0.206,
+   "scatter_index": 0.282,
+   "mean_measured_m": 0.731,
+   "mean_ours_m": 0.696,
+   "within_20": 0.672,
+   "within_30": 0.833,
+   "r": 0.84
+  },
+  "by_rater": {
+   "NWPS override": {
+    "n": 7228,
+    "bias_m": -0.005,
+    "ratio_median": 1.017,
+    "rmse_m": 0.236,
+    "scatter_index": 0.355,
+    "mean_measured_m": 0.664,
+    "mean_ours_m": 0.659,
+    "within_20": 0.592,
+    "within_30": 0.769,
+    "r": 0.865
+   },
+   "MOP": {
+    "n": 2333,
+    "bias_m": -0.068,
+    "ratio_median": 0.962,
+    "rmse_m": 0.203,
+    "scatter_index": 0.206,
+    "mean_measured_m": 0.983,
+    "mean_ours_m": 0.915,
+    "within_20": 0.758,
+    "within_30": 0.925,
+    "r": 0.754
+   },
+   "WW3 path": {
+    "n": 6399,
+    "bias_m": -0.036,
+    "ratio_median": 0.991,
+    "rmse_m": 0.169,
+    "scatter_index": 0.24,
+    "mean_measured_m": 0.704,
+    "mean_ours_m": 0.668,
+    "within_20": 0.726,
+    "within_30": 0.874,
+    "r": 0.827
+   },
+   "base": {
+    "n": 2908,
+    "bias_m": -0.081,
+    "ratio_median": 0.941,
+    "rmse_m": 0.206,
+    "scatter_index": 0.274,
+    "mean_measured_m": 0.754,
+    "mean_ours_m": 0.673,
+    "within_20": 0.682,
+    "within_30": 0.828,
+    "r": 0.816
+   }
+  }
+ },
+ "our_tp_under_3s_by_spot": {
+  "Duck Pier": 2471,
+  "Bethany Beach": 1,
+  "Doheny State Beach": 0,
+  "Avila Beach": 0,
+  "Jetty Park Cocoa Beach": 23,
+  "Cocoa Beach Pier": 6
+ }
+}
