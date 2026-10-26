@@ -1,0 +1,17 @@
+spot,state,hours,hours_under_3s,share_under_3s,median_tp_s,nwps_wfo,node_lat,node_lng,node_km,bearing_deg,orientation_deg,off_orientation_deg,seaward_km,ocean_side
+Mexico Beach,Florida,336,257,0.765,1.68,tae,29.92014,-85.39845,1.24,163.0,224.0,61.0,0.6,True
+Spring Ave,Florida,336,229,0.682,2.22,tbw,27.51007,-82.7375,1.67,179.9,239.0,59.1,0.86,True
+St. Pete Beach,Florida,336,228,0.679,2.16,tbw,27.73716,-82.77337,1.31,237.0,240.0,3.0,1.3,True
+Treasure Island FL,Florida,336,223,0.664,1.94,tbw,27.75338,-82.77337,1.01,191.6,230.0,38.4,0.8,True
+Madeira Beach,Florida,336,211,0.628,2.27,tbw,27.78582,-82.80924,1.83,192.5,225.0,32.5,1.54,True
+Whitney Beach,Florida,336,201,0.598,2.65,tbw,27.42896,-82.70163,1.47,259.1,240.0,19.1,1.39,True
+Oak Island Pier,North Carolina,336,194,0.577,2.44,ilm,33.89804,-78.07603,0.8,134.2,200.0,65.8,0.33,True
+Coolidge,Florida,336,170,0.506,2.94,tbw,27.29919,-82.57609,1.06,181.2,240.0,58.8,0.55,True
+Siesta Key,Florida,336,162,0.482,3.13,tbw,27.25053,-82.55815,1.52,199.6,222.0,22.4,1.41,True
+Gasparilla,Florida,336,131,0.39,3.57,tbw,26.79634,-82.28913,0.95,223.7,231.0,7.3,0.95,True
+Navarre Beach,Florida,336,125,0.372,3.29,tae,30.37337,-86.85291,1.01,123.2,172.0,48.8,0.67,True
+Twin Piers,Florida,336,110,0.327,3.81,tbw,27.4614,-82.70163,0.29,281.3,254.0,27.3,0.26,True
+Naples Pier,Florida,336,109,0.324,3.35,tbw,26.13128,-81.82283,1.45,268.0,265.0,3.0,1.45,True
+St Andrews Park,Florida,336,100,0.298,4.3,tae,30.11438,-85.72984,1.12,146.5,230.0,83.5,0.13,True
+Redington Pier,Florida,336,95,0.283,3.71,tbw,27.80205,-82.82717,1.37,215.1,235.0,19.9,1.29,True
+Destin Jetty,Florida,336,90,0.268,4.52,tae,30.37337,-86.5031,0.91,161.7,184.0,22.3,0.85,True

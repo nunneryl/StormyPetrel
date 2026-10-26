@@ -1,0 +1,288 @@
+{
+ "derived_from": "face_calibration_pairs.csv (run 48) with pipeline.face_calibration.stats; NDBC realtime2 standard-meteorological files fetched 2026-10-26 for the buoy rows",
+ "duck_pier_ocean_hours": {
+  "rule": "our stored period 3 s or more (the sample read the ocean from 2026-08-22 12:00Z)",
+  "all": {
+   "n": 1543,
+   "bias_m": -0.149,
+   "ratio_median": 1.132,
+   "rmse_m": 0.59,
+   "scatter_index": 0.562,
+   "mean_measured_m": 1.05,
+   "mean_ours_m": 0.901,
+   "within_20": 0.376,
+   "within_30": 0.554,
+   "r": 0.919
+  },
+  "by_measured_period_band": {
+   "<8 s": {
+    "n": 521,
+    "bias_m": -0.017,
+    "ratio_median": 1.057,
+    "rmse_m": 0.248,
+    "scatter_index": 0.321,
+    "mean_measured_m": 0.775,
+    "mean_ours_m": 0.757,
+    "within_20": 0.589,
+    "within_30": 0.756,
+    "r": 0.862
+   },
+   "8-10 s": {
+    "n": 496,
+    "bias_m": 0.028,
+    "ratio_median": 1.265,
+    "rmse_m": 0.383,
+    "scatter_index": 0.51,
+    "mean_measured_m": 0.752,
+    "mean_ours_m": 0.78,
+    "within_20": 0.294,
+    "within_30": 0.532,
+    "r": 0.898
+   },
+   "10-12 s": {
+    "n": 187,
+    "bias_m": -0.177,
+    "ratio_median": 1.337,
+    "rmse_m": 0.72,
+    "scatter_index": 0.581,
+    "mean_measured_m": 1.239,
+    "mean_ours_m": 1.062,
+    "within_20": 0.187,
+    "within_30": 0.257,
+    "r": 0.873
+   },
+   "12-14 s": {
+    "n": 294,
+    "bias_m": -0.493,
+    "ratio_median": 0.896,
+    "rmse_m": 0.882,
+    "scatter_index": 0.53,
+    "mean_measured_m": 1.664,
+    "mean_ours_m": 1.171,
+    "within_20": 0.306,
+    "within_30": 0.486,
+    "r": 0.936
+   },
+   "14+ s": {
+    "n": 45,
+    "bias_m": -1.25,
+    "ratio_median": 0.549,
+    "rmse_m": 1.544,
+    "scatter_index": 0.567,
+    "mean_measured_m": 2.725,
+    "mean_ours_m": 1.475,
+    "within_20": 0.044,
+    "within_30": 0.133,
+    "r": 0.944
+   }
+  },
+  "by_measured_height": {
+   "0-0.5 m": {
+    "n": 529,
+    "bias_m": 0.165,
+    "ratio_median": 1.374,
+    "rmse_m": 0.181,
+    "scatter_index": 0.449,
+    "mean_measured_m": 0.402,
+    "mean_ours_m": 0.567,
+    "within_20": 0.132,
+    "within_30": 0.35,
+    "r": 0.516
+   },
+   "0.5-1.0 m": {
+    "n": 562,
+    "bias_m": 0.077,
+    "ratio_median": 1.111,
+    "rmse_m": 0.168,
+    "scatter_index": 0.245,
+    "mean_measured_m": 0.686,
+    "mean_ours_m": 0.763,
+    "within_20": 0.662,
+    "within_30": 0.806,
+    "r": 0.595
+   },
+   "1.0-1.5 m": {
+    "n": 121,
+    "bias_m": -0.088,
+    "ratio_median": 0.938,
+    "rmse_m": 0.246,
+    "scatter_index": 0.214,
+    "mean_measured_m": 1.149,
+    "mean_ours_m": 1.06,
+    "within_20": 0.727,
+    "within_30": 0.868,
+    "r": 0.395
+   },
+   "1.5-9 m": {
+    "n": 331,
+    "bias_m": -1.055,
+    "ratio_median": 0.588,
+    "rmse_m": 1.226,
+    "scatter_index": 0.46,
+    "mean_measured_m": 2.666,
+    "mean_ours_m": 1.611,
+    "within_20": 0.151,
+    "within_30": 0.338,
+    "r": 0.644
+   }
+  }
+ },
+ "mop_at_doheny_vs_cdip_284": {
+  "all": {
+   "n": 1037,
+   "bias_m": -0.194,
+   "ratio_median": 0.816,
+   "rmse_m": 0.236,
+   "scatter_index": 0.237,
+   "mean_measured_m": 0.997,
+   "mean_ours_m": 0.803,
+   "within_20": 0.581,
+   "within_30": 0.901,
+   "r": 0.916
+  },
+  "by_measured_period_band": {
+   "8-10 s": {
+    "n": 7,
+    "bias_m": -0.121,
+    "ratio_median": 0.866,
+    "rmse_m": 0.138,
+    "scatter_index": 0.155,
+    "mean_measured_m": 0.889,
+    "mean_ours_m": 0.767,
+    "within_20": 0.857,
+    "within_30": 1.0,
+    "r": 0.971
+   },
+   "10-12 s": {
+    "n": 80,
+    "bias_m": -0.151,
+    "ratio_median": 0.873,
+    "rmse_m": 0.165,
+    "scatter_index": 0.139,
+    "mean_measured_m": 1.186,
+    "mean_ours_m": 1.035,
+    "within_20": 0.825,
+    "within_30": 1.0,
+    "r": 0.983
+   },
+   "12-14 s": {
+    "n": 205,
+    "bias_m": -0.135,
+    "ratio_median": 0.848,
+    "rmse_m": 0.165,
+    "scatter_index": 0.184,
+    "mean_measured_m": 0.893,
+    "mean_ours_m": 0.758,
+    "within_20": 0.751,
+    "within_30": 0.956,
+    "r": 0.92
+   },
+   "14+ s": {
+    "n": 745,
+    "bias_m": -0.216,
+    "ratio_median": 0.801,
+    "rmse_m": 0.259,
+    "scatter_index": 0.257,
+    "mean_measured_m": 1.007,
+    "mean_ours_m": 0.791,
+    "within_20": 0.506,
+    "within_30": 0.874,
+    "r": 0.922
+   }
+  },
+  "by_measured_height": {
+   "0-0.75 m": {
+    "n": 247,
+    "bias_m": -0.084,
+    "ratio_median": 0.873,
+    "rmse_m": 0.098,
+    "scatter_index": 0.146,
+    "mean_measured_m": 0.673,
+    "mean_ours_m": 0.59,
+    "within_20": 0.854,
+    "within_30": 1.0,
+    "r": 0.54
+   },
+   "0.75-1.0 m": {
+    "n": 366,
+    "bias_m": -0.151,
+    "ratio_median": 0.825,
+    "rmse_m": 0.165,
+    "scatter_index": 0.193,
+    "mean_measured_m": 0.855,
+    "mean_ours_m": 0.704,
+    "within_20": 0.642,
+    "within_30": 0.945,
+    "r": 0.63
+   },
+   "1.0-1.5 m": {
+    "n": 329,
+    "bias_m": -0.275,
+    "ratio_median": 0.776,
+    "rmse_m": 0.3,
+    "scatter_index": 0.248,
+    "mean_measured_m": 1.21,
+    "mean_ours_m": 0.935,
+    "within_20": 0.371,
+    "within_30": 0.833,
+    "r": 0.646
+   },
+   "1.5-9 m": {
+    "n": 95,
+    "bias_m": -0.365,
+    "ratio_median": 0.75,
+    "rmse_m": 0.408,
+    "scatter_index": 0.247,
+    "mean_measured_m": 1.652,
+    "mean_ours_m": 1.287,
+    "within_20": 0.368,
+    "within_30": 0.705,
+    "r": 0.729
+   }
+  }
+ },
+ "buoy_periods_same_window": {
+  "window": [
+   "2026-10-12T17:00:00+00:00",
+   "2026-10-26T17:00:00+00:00"
+  ],
+  "buoys": {
+   "42098": {
+    "name": "Egmont Channel Entrance FL (CDIP 214), 14 m",
+    "readings": 623,
+    "share_dpd_under_3s": 0.027,
+    "median_dpd_s": 4.0
+   },
+   "42099": {
+    "name": "Offshore St. Petersburg FL",
+    "readings": 666,
+    "share_dpd_under_3s": 0.0,
+    "median_dpd_s": 6.0
+   },
+   "42036": {
+    "name": "West Tampa FL",
+    "readings": 662,
+    "share_dpd_under_3s": 0.006,
+    "median_dpd_s": 5.0
+   },
+   "42012": {
+    "name": "Orange Beach AL",
+    "readings": 537,
+    "share_dpd_under_3s": 0.0,
+    "median_dpd_s": 6.0
+   },
+   "42039": {
+    "name": "Pensacola FL",
+    "readings": 642,
+    "share_dpd_under_3s": 0.009,
+    "median_dpd_s": 6.0
+   },
+   "41110": {
+    "name": "Masonboro Inlet NC (CDIP 150)",
+    "readings": 653,
+    "share_dpd_under_3s": 0.0,
+    "median_dpd_s": 6.0
+   }
+  }
+ }
+}
