@@ -1,0 +1,217 @@
+{
+ "source": "ETOPO 2022 v1 15 arc-second, coastwatch.pfeg.noaa.gov ERDDAP",
+ "deep_m": 10.0,
+ "half_deg": 30.0,
+ "spots": {
+  "Mexico Beach": {
+   "node_depth_m": 6.8,
+   "spot_cell_depth_m": 5.4,
+   "nearest_10m_within_30deg": {
+    "lat": 29.87708333333333,
+    "lng": -85.46875,
+    "km": 8.77,
+    "depth_m": 10.2,
+    "bearing_deg": 227.0
+   }
+  },
+  "Spring Ave": {
+   "node_depth_m": 6.2,
+   "spot_cell_depth_m": -0.1,
+   "nearest_10m_within_30deg": {
+    "lat": 27.50208333333333,
+    "lng": -82.77291666666667,
+    "km": 4.33,
+    "depth_m": 10.0,
+    "bearing_deg": 233.8
+   }
+  },
+  "St. Pete Beach": {
+   "node_depth_m": 6.5,
+   "spot_cell_depth_m": 1.2,
+   "nearest_10m_within_30deg": {
+    "lat": 27.714583333333334,
+    "lng": -82.85625,
+    "km": 9.8,
+    "depth_m": 10.2,
+    "bearing_deg": 250.8
+   }
+  },
+  "Treasure Island FL": {
+   "node_depth_m": 5.3,
+   "spot_cell_depth_m": 4.5,
+   "nearest_10m_within_30deg": {
+    "lat": 27.735416666666666,
+    "lng": -82.86458333333333,
+    "km": 9.66,
+    "depth_m": 10.3,
+    "bearing_deg": 252.0
+   }
+  },
+  "Madeira Beach": {
+   "node_depth_m": 6.1,
+   "spot_cell_depth_m": 2.0,
+   "nearest_10m_within_30deg": {
+    "lat": 27.735416666666666,
+    "lng": -82.86458333333333,
+    "km": 9.42,
+    "depth_m": 10.3,
+    "bearing_deg": 218.3
+   }
+  },
+  "Whitney Beach": {
+   "node_depth_m": 8.6,
+   "spot_cell_depth_m": 0.7,
+   "nearest_10m_within_30deg": {
+    "lat": 27.422916666666666,
+    "lng": -82.71041666666667,
+    "km": 2.5,
+    "depth_m": 10.0,
+    "bearing_deg": 247.6
+   }
+  },
+  "Oak Island Pier": {
+   "node_depth_m": 5.9,
+   "spot_cell_depth_m": 2.0,
+   "nearest_10m_within_30deg": {
+    "lat": 33.885416666666664,
+    "lng": -78.09791666666666,
+    "km": 2.44,
+    "depth_m": 10.2,
+    "bearing_deg": 216.5
+   }
+  },
+  "Coolidge": {
+   "node_depth_m": 5.0,
+   "spot_cell_depth_m": 1.3,
+   "nearest_10m_within_30deg": {
+    "lat": 27.28125,
+    "lng": -82.59791666666666,
+    "km": 3.76,
+    "depth_m": 10.0,
+    "bearing_deg": 215.5
+   }
+  },
+  "Siesta Key": {
+   "node_depth_m": 8.0,
+   "spot_cell_depth_m": -0.4,
+   "nearest_10m_within_30deg": {
+    "lat": 27.23125,
+    "lng": -82.56875,
+    "km": 3.9,
+    "depth_m": 10.1,
+    "bearing_deg": 203.6
+   }
+  },
+  "Gasparilla": {
+   "node_depth_m": 6.2,
+   "spot_cell_depth_m": -0.5,
+   "nearest_10m_within_30deg": {
+    "lat": 26.785416666666666,
+    "lng": -82.30625,
+    "km": 3.03,
+    "depth_m": 10.2,
+    "bearing_deg": 231.1
+   }
+  },
+  "Navarre Beach": {
+   "node_depth_m": 14.6,
+   "spot_cell_depth_m": 5.3,
+   "nearest_10m_within_30deg": {
+    "lat": 30.372916666666665,
+    "lng": -86.86041666666667,
+    "km": 0.62,
+    "depth_m": 13.1,
+    "bearing_deg": 168.0
+   }
+  },
+  "Twin Piers": {
+   "node_depth_m": 7.2,
+   "spot_cell_depth_m": 1.0,
+   "nearest_10m_within_30deg": {
+    "lat": 27.43541666666667,
+    "lng": -82.73125,
+    "km": 4.28,
+    "depth_m": 10.1,
+    "bearing_deg": 228.6
+   }
+  },
+  "Naples Pier": {
+   "node_depth_m": 6.6,
+   "spot_cell_depth_m": 0.0,
+   "nearest_10m_within_30deg": {
+    "lat": 26.09375,
+    "lng": -81.91458333333333,
+    "km": 11.42,
+    "depth_m": 10.0,
+    "bearing_deg": 248.3
+   }
+  },
+  "St Andrews Park": {
+   "node_depth_m": 6.4,
+   "spot_cell_depth_m": 1.6,
+   "nearest_10m_within_30deg": {
+    "lat": 30.114583333333332,
+    "lng": -85.74375,
+    "km": 1.16,
+    "depth_m": 10.3,
+    "bearing_deg": 218.3
+   }
+  },
+  "Redington Pier": {
+   "node_depth_m": 4.8,
+   "spot_cell_depth_m": 2.5,
+   "nearest_10m_within_30deg": {
+    "lat": 27.789583333333333,
+    "lng": -82.90208333333334,
+    "km": 8.53,
+    "depth_m": 10.3,
+    "bearing_deg": 252.9
+   }
+  },
+  "Destin Jetty": {
+   "node_depth_m": 15.7,
+   "spot_cell_depth_m": 1.6,
+   "nearest_10m_within_30deg": {
+    "lat": 30.372916666666665,
+    "lng": -86.50625,
+    "km": 0.92,
+    "depth_m": 13.7,
+    "bearing_deg": 181.0
+   }
+  },
+  "Duck Pier": {
+   "node_depth_m": 7.4,
+   "spot_cell_depth_m": 3.0,
+   "nearest_10m_within_30deg": {
+    "lat": 36.18958333333333,
+    "lng": -75.73958333333333,
+    "km": 1.07,
+    "depth_m": 10.1,
+    "bearing_deg": 45.9
+   }
+  },
+  "Jetty Park Cocoa Beach": {
+   "node_depth_m": 8.2,
+   "spot_cell_depth_m": 0.3,
+   "nearest_10m_within_30deg": {
+    "lat": 28.40625,
+    "lng": -80.57708333333333,
+    "km": 1.17,
+    "depth_m": 10.4,
+    "bearing_deg": 96.0
+   }
+  }
+ },
+ "seaward_cells": {
+  "Duck Pier": {
+   "lat": 36.19331,
+   "lng": -75.72892,
+   "depth_m": 15.0
+  },
+  "Jetty Park Cocoa Beach": {
+   "lat": 28.41207,
+   "lng": -80.5639,
+   "depth_m": 10.1
+  }
+ }
+}

@@ -1,0 +1,1936 @@
+{
+ "window": [
+  "2026-10-12T17:02:13.194287+00:00",
+  "2026-10-26T17:02:13.194287+00:00"
+ ],
+ "errors": {},
+ "suspects": [
+  {
+   "spot": "Mexico Beach",
+   "state": "Florida",
+   "buoy": "42039",
+   "buoy_km": 142.7,
+   "paired_hours": 336,
+   "our_hs_median_m": 0.13,
+   "buoy_hs_median_m": 0.9,
+   "hs_ratio_median": 0.11,
+   "our_tp_median_s": 1.68,
+   "buoy_dpd_median_s": 6.0,
+   "our_share_under_3s": 0.765,
+   "buoy_share_under_3s": 0.012
+  },
+  {
+   "spot": "Spring Ave",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 20.4,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.34,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.45,
+   "our_tp_median_s": 2.22,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.681,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "St. Pete Beach",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 23.8,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.31,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.39,
+   "our_tp_median_s": 2.16,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.681,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Treasure Island FL",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 24.8,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.24,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.32,
+   "our_tp_median_s": 1.94,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.666,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Madeira Beach",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 26.6,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.31,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.41,
+   "our_tp_median_s": 2.27,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.63,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Whitney Beach",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 29.8,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.41,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.56,
+   "our_tp_median_s": 2.65,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.597,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Oak Island Pier",
+   "state": "North Carolina",
+   "buoy": "41110",
+   "buoy_km": 43.2,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.37,
+   "buoy_hs_median_m": 1.0,
+   "hs_ratio_median": 0.26,
+   "our_tp_median_s": 2.44,
+   "buoy_dpd_median_s": 6.67,
+   "our_share_under_3s": 0.576,
+   "buoy_share_under_3s": 0.0
+  },
+  {
+   "spot": "Coolidge",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 47.0,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.25,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.33,
+   "our_tp_median_s": 2.94,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.504,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Siesta Key",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 52.1,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.32,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.46,
+   "our_tp_median_s": 3.13,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.481,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Gasparilla",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 108.5,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.35,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.45,
+   "our_tp_median_s": 3.58,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.391,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Navarre Beach",
+   "state": "Florida",
+   "buoy": "42012",
+   "buoy_km": 74.7,
+   "paired_hours": 336,
+   "our_hs_median_m": 0.46,
+   "buoy_hs_median_m": 0.8,
+   "hs_ratio_median": 0.62,
+   "our_tp_median_s": 3.29,
+   "buoy_dpd_median_s": 6.0,
+   "our_share_under_3s": 0.372,
+   "buoy_share_under_3s": 0.0
+  },
+  {
+   "spot": "Twin Piers",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 27.0,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.27,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.36,
+   "our_tp_median_s": 3.81,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.325,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Naples Pier",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 196.7,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.38,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.44,
+   "our_tp_median_s": 3.36,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.322,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "St Andrews Park",
+   "state": "Florida",
+   "buoy": "42039",
+   "buoy_km": 153.2,
+   "paired_hours": 336,
+   "our_hs_median_m": 0.23,
+   "buoy_hs_median_m": 0.9,
+   "hs_ratio_median": 0.2,
+   "our_tp_median_s": 4.3,
+   "buoy_dpd_median_s": 6.0,
+   "our_share_under_3s": 0.298,
+   "buoy_share_under_3s": 0.012
+  },
+  {
+   "spot": "Redington Pier",
+   "state": "Florida",
+   "buoy": "42098",
+   "buoy_km": 27.0,
+   "paired_hours": 335,
+   "our_hs_median_m": 0.34,
+   "buoy_hs_median_m": 0.83,
+   "hs_ratio_median": 0.45,
+   "our_tp_median_s": 3.72,
+   "buoy_dpd_median_s": 4.0,
+   "our_share_under_3s": 0.284,
+   "buoy_share_under_3s": 0.046
+  },
+  {
+   "spot": "Destin Jetty",
+   "state": "Florida",
+   "buoy": "42012",
+   "buoy_km": 106.2,
+   "paired_hours": 336,
+   "our_hs_median_m": 0.38,
+   "buoy_hs_median_m": 0.8,
+   "hs_ratio_median": 0.48,
+   "our_tp_median_s": 4.52,
+   "buoy_dpd_median_s": 6.0,
+   "our_share_under_3s": 0.268,
+   "buoy_share_under_3s": 0.0
+  }
+ ],
+ "coastline": [
+  {
+   "spot": "Mexico Beach",
+   "node_lat": 29.92014,
+   "node_lng": -85.39845,
+   "orientation_deg": 224.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 100,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.24,
+   "nearest_open_ocean": {
+    "lat": 29.92921,
+    "lng": -85.40402,
+    "km": 0.25,
+    "bearing_deg": 224.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Spring Ave",
+   "node_lat": 27.51007,
+   "node_lng": -82.7375,
+   "orientation_deg": 239.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 180,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.67,
+   "nearest_open_ocean": {
+    "lat": 27.52393,
+    "lng": -82.73969,
+    "km": 0.25,
+    "bearing_deg": 239.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "St. Pete Beach",
+   "node_lat": 27.73716,
+   "node_lng": -82.77337,
+   "orientation_deg": 240.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 170,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.31,
+   "nearest_open_ocean": {
+    "lat": 27.74243,
+    "lng": -82.76444,
+    "km": 0.25,
+    "bearing_deg": 240.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Treasure Island FL",
+   "node_lat": 27.75338,
+   "node_lng": -82.77337,
+   "orientation_deg": 230.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 170,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.01,
+   "nearest_open_ocean": {
+    "lat": 27.76086,
+    "lng": -82.77324,
+    "km": 0.25,
+    "bearing_deg": 230.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Madeira Beach",
+   "node_lat": 27.78582,
+   "node_lng": -82.80924,
+   "orientation_deg": 225.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 200,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.83,
+   "nearest_open_ocean": {
+    "lat": 27.80028,
+    "lng": -82.807,
+    "km": 0.25,
+    "bearing_deg": 225.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Whitney Beach",
+   "node_lat": 27.42896,
+   "node_lng": -82.70163,
+   "orientation_deg": 240.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 210,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.47,
+   "nearest_open_ocean": {
+    "lat": 27.43034,
+    "lng": -82.6892,
+    "km": 0.25,
+    "bearing_deg": 240.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Oak Island Pier",
+   "node_lat": 33.89804,
+   "node_lng": -78.07603,
+   "orientation_deg": 200.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 160,
+   "node_depth_m": null,
+   "node_km_from_spot": 0.8,
+   "nearest_open_ocean": {
+    "lat": 33.90091,
+    "lng": -78.08314,
+    "km": 0.25,
+    "bearing_deg": 200.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Coolidge",
+   "node_lat": 27.29919,
+   "node_lng": -82.57609,
+   "orientation_deg": 240.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 160,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.06,
+   "nearest_open_ocean": {
+    "lat": 27.30762,
+    "lng": -82.57805,
+    "km": 0.25,
+    "bearing_deg": 240.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Siesta Key",
+   "node_lat": 27.25053,
+   "node_lng": -82.55815,
+   "orientation_deg": 222.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 190,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.52,
+   "nearest_open_ocean": {
+    "lat": 27.26176,
+    "lng": -82.55466,
+    "km": 0.25,
+    "bearing_deg": 222.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Gasparilla",
+   "node_lat": 26.79634,
+   "node_lng": -82.28913,
+   "orientation_deg": 231.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 170,
+   "node_depth_m": null,
+   "node_km_from_spot": 0.95,
+   "nearest_open_ocean": {
+    "lat": 26.80112,
+    "lng": -82.28445,
+    "km": 0.25,
+    "bearing_deg": 231.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Navarre Beach",
+   "node_lat": 30.37337,
+   "node_lng": -86.85291,
+   "orientation_deg": 172.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 190,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.01,
+   "nearest_open_ocean": {
+    "lat": 30.37613,
+    "lng": -86.8614,
+    "km": 0.25,
+    "bearing_deg": 172.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Twin Piers",
+   "node_lat": 27.4614,
+   "node_lng": -82.70163,
+   "orientation_deg": 254.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 170,
+   "node_depth_m": null,
+   "node_km_from_spot": 0.29,
+   "nearest_open_ocean": {
+    "lat": 27.46027,
+    "lng": -82.70118,
+    "km": 0.25,
+    "bearing_deg": 254.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Naples Pier",
+   "node_lat": 26.13128,
+   "node_lng": -81.82283,
+   "orientation_deg": 265.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 210,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.45,
+   "nearest_open_ocean": {
+    "lat": 26.13155,
+    "lng": -81.81077,
+    "km": 0.25,
+    "bearing_deg": 265.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "St Andrews Park",
+   "node_lat": 30.11438,
+   "node_lng": -85.72984,
+   "orientation_deg": 230.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 190,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.12,
+   "nearest_open_ocean": {
+    "lat": 30.12133,
+    "lng": -85.73826,
+    "km": 0.25,
+    "bearing_deg": 230.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Redington Pier",
+   "node_lat": 27.80205,
+   "node_lng": -82.82717,
+   "orientation_deg": 235.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 200,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.37,
+   "nearest_open_ocean": {
+    "lat": 27.81081,
+    "lng": -82.82125,
+    "km": 0.25,
+    "bearing_deg": 235.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Destin Jetty",
+   "node_lat": 30.37337,
+   "node_lng": -86.5031,
+   "orientation_deg": 184.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 200,
+   "node_depth_m": null,
+   "node_km_from_spot": 0.91,
+   "nearest_open_ocean": {
+    "lat": 30.37891,
+    "lng": -86.50627,
+    "km": 0.25,
+    "bearing_deg": 184.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Duck Pier",
+   "node_lat": 36.19317,
+   "node_lng": -75.74849,
+   "orientation_deg": 72.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 190,
+   "node_depth_m": null,
+   "node_km_from_spot": 1.14,
+   "nearest_open_ocean": {
+    "lat": 36.18362,
+    "lng": -75.74547,
+    "km": 0.25,
+    "bearing_deg": 72.0,
+    "depth_m": null
+   }
+  },
+  {
+   "spot": "Jetty Park Cocoa Beach",
+   "node_lat": 28.41207,
+   "node_lng": -80.58208,
+   "orientation_deg": 90.0,
+   "class": "open ocean",
+   "facing_land_km": null,
+   "open_width_deg": 140,
+   "node_depth_m": null,
+   "node_km_from_spot": 0.85,
+   "nearest_open_ocean": {
+    "lat": 28.40735,
+    "lng": -80.58641,
+    "km": 0.25,
+    "bearing_deg": 90.0,
+    "depth_m": null
+   }
+  }
+ ],
+ "mop": {
+  "153": {
+   "buoy_span": [
+    "2025-08-12",
+    "2026-10-26"
+   ],
+   "mop_at_buoy": {
+    "all": {
+     "n": 10555,
+     "bias_m": -0.04,
+     "ratio_median": 0.957,
+     "rmse_m": 0.104,
+     "scatter_index": 0.124,
+     "mean_measured_m": 0.841,
+     "mean_ours_m": 0.801,
+     "within_20": 0.933,
+     "within_30": 0.985,
+     "r": 0.934
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 447,
+      "bias_m": -0.009,
+      "ratio_median": 0.982,
+      "rmse_m": 0.039,
+      "scatter_index": 0.09,
+      "mean_measured_m": 0.43,
+      "mean_ours_m": 0.421,
+      "within_20": 0.971,
+      "within_30": 0.998,
+      "r": 0.863
+     },
+     "0.5-1.0 m": {
+      "n": 7686,
+      "bias_m": -0.027,
+      "ratio_median": 0.962,
+      "rmse_m": 0.077,
+      "scatter_index": 0.104,
+      "mean_measured_m": 0.744,
+      "mean_ours_m": 0.717,
+      "within_20": 0.951,
+      "within_30": 0.988,
+      "r": 0.845
+     },
+     "1.0-1.5 m": {
+      "n": 2186,
+      "bias_m": -0.081,
+      "ratio_median": 0.936,
+      "rmse_m": 0.153,
+      "scatter_index": 0.13,
+      "mean_measured_m": 1.17,
+      "mean_ours_m": 1.089,
+      "within_20": 0.874,
+      "within_30": 0.978,
+      "r": 0.654
+     },
+     "1.5-99.0 m": {
+      "n": 236,
+      "bias_m": -0.147,
+      "ratio_median": 0.928,
+      "rmse_m": 0.266,
+      "scatter_index": 0.152,
+      "mean_measured_m": 1.749,
+      "mean_ours_m": 1.602,
+      "within_20": 0.843,
+      "within_30": 0.928,
+      "r": 0.681
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 415,
+      "bias_m": -0.04,
+      "ratio_median": 0.978,
+      "rmse_m": 0.11,
+      "scatter_index": 0.107,
+      "mean_measured_m": 1.029,
+      "mean_ours_m": 0.988,
+      "within_20": 0.94,
+      "within_30": 0.976,
+      "r": 0.962
+     },
+     "8-10 s": {
+      "n": 549,
+      "bias_m": -0.034,
+      "ratio_median": 0.97,
+      "rmse_m": 0.081,
+      "scatter_index": 0.079,
+      "mean_measured_m": 1.03,
+      "mean_ours_m": 0.997,
+      "within_20": 0.991,
+      "within_30": 1.0,
+      "r": 0.978
+     },
+     "10-12 s": {
+      "n": 1188,
+      "bias_m": -0.039,
+      "ratio_median": 0.955,
+      "rmse_m": 0.083,
+      "scatter_index": 0.097,
+      "mean_measured_m": 0.853,
+      "mean_ours_m": 0.814,
+      "within_20": 0.979,
+      "within_30": 0.998,
+      "r": 0.962
+     },
+     "12-14 s": {
+      "n": 2727,
+      "bias_m": -0.035,
+      "ratio_median": 0.957,
+      "rmse_m": 0.099,
+      "scatter_index": 0.129,
+      "mean_measured_m": 0.772,
+      "mean_ours_m": 0.737,
+      "within_20": 0.922,
+      "within_30": 0.987,
+      "r": 0.926
+     },
+     "14+ s": {
+      "n": 5676,
+      "bias_m": -0.043,
+      "ratio_median": 0.955,
+      "rmse_m": 0.112,
+      "scatter_index": 0.133,
+      "mean_measured_m": 0.84,
+      "mean_ours_m": 0.797,
+      "within_20": 0.924,
+      "within_30": 0.981,
+      "r": 0.906
+     }
+    }
+   },
+   "our_mop_spot": {
+    "spot": "15th Street Del Mar",
+    "km": 1.0,
+    "all": {
+     "n": 1039,
+     "bias_m": -0.012,
+     "ratio_median": 0.989,
+     "rmse_m": 0.079,
+     "scatter_index": 0.088,
+     "mean_measured_m": 0.892,
+     "mean_ours_m": 0.88,
+     "within_20": 0.976,
+     "within_30": 0.994,
+     "r": 0.946
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 1,
+      "bias_m": 0.177,
+      "ratio_median": 1.362,
+      "rmse_m": 0.177,
+      "scatter_index": 0.362,
+      "mean_measured_m": 0.49,
+      "mean_ours_m": 0.667,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": null
+     },
+     "0.5-1.0 m": {
+      "n": 777,
+      "bias_m": 0.001,
+      "ratio_median": 0.997,
+      "rmse_m": 0.065,
+      "scatter_index": 0.083,
+      "mean_measured_m": 0.783,
+      "mean_ours_m": 0.784,
+      "within_20": 0.979,
+      "within_30": 0.994,
+      "r": 0.842
+     },
+     "1.0-1.5 m": {
+      "n": 237,
+      "bias_m": -0.049,
+      "ratio_median": 0.967,
+      "rmse_m": 0.109,
+      "scatter_index": 0.093,
+      "mean_measured_m": 1.168,
+      "mean_ours_m": 1.119,
+      "within_20": 0.966,
+      "within_30": 1.0,
+      "r": 0.697
+     },
+     "1.5-99.0 m": {
+      "n": 24,
+      "bias_m": -0.07,
+      "ratio_median": 0.951,
+      "rmse_m": 0.116,
+      "scatter_index": 0.067,
+      "mean_measured_m": 1.737,
+      "mean_ours_m": 1.667,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.869
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 21,
+      "bias_m": -0.01,
+      "ratio_median": 0.982,
+      "rmse_m": 0.073,
+      "scatter_index": 0.067,
+      "mean_measured_m": 1.094,
+      "mean_ours_m": 1.084,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.927
+     },
+     "8-10 s": {
+      "n": 86,
+      "bias_m": -0.005,
+      "ratio_median": 0.992,
+      "rmse_m": 0.07,
+      "scatter_index": 0.065,
+      "mean_measured_m": 1.071,
+      "mean_ours_m": 1.066,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.964
+     },
+     "10-12 s": {
+      "n": 109,
+      "bias_m": -0.021,
+      "ratio_median": 0.983,
+      "rmse_m": 0.083,
+      "scatter_index": 0.085,
+      "mean_measured_m": 0.968,
+      "mean_ours_m": 0.947,
+      "within_20": 0.982,
+      "within_30": 1.0,
+      "r": 0.923
+     },
+     "12-14 s": {
+      "n": 189,
+      "bias_m": -0.007,
+      "ratio_median": 0.991,
+      "rmse_m": 0.071,
+      "scatter_index": 0.086,
+      "mean_measured_m": 0.835,
+      "mean_ours_m": 0.828,
+      "within_20": 0.963,
+      "within_30": 0.989,
+      "r": 0.958
+     },
+     "14+ s": {
+      "n": 634,
+      "bias_m": -0.013,
+      "ratio_median": 0.988,
+      "rmse_m": 0.081,
+      "scatter_index": 0.094,
+      "mean_measured_m": 0.865,
+      "mean_ours_m": 0.853,
+      "within_20": 0.975,
+      "within_30": 0.994,
+      "r": 0.934
+     }
+    }
+   }
+  },
+  "262": {
+   "buoy_span": [
+    "2025-05-15",
+    "2026-10-26"
+   ],
+   "mop_at_buoy": {
+    "all": {
+     "n": 12687,
+     "bias_m": -0.029,
+     "ratio_median": 0.968,
+     "rmse_m": 0.09,
+     "scatter_index": 0.112,
+     "mean_measured_m": 0.805,
+     "mean_ours_m": 0.776,
+     "within_20": 0.947,
+     "within_30": 0.994,
+     "r": 0.935
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 597,
+      "bias_m": 0.007,
+      "ratio_median": 1.006,
+      "rmse_m": 0.051,
+      "scatter_index": 0.118,
+      "mean_measured_m": 0.432,
+      "mean_ours_m": 0.439,
+      "within_20": 0.913,
+      "within_30": 0.99,
+      "r": 0.808
+     },
+     "0.5-1.0 m": {
+      "n": 9976,
+      "bias_m": -0.022,
+      "ratio_median": 0.971,
+      "rmse_m": 0.075,
+      "scatter_index": 0.101,
+      "mean_measured_m": 0.744,
+      "mean_ours_m": 0.722,
+      "within_20": 0.957,
+      "within_30": 0.995,
+      "r": 0.852
+     },
+     "1.0-1.5 m": {
+      "n": 1919,
+      "bias_m": -0.071,
+      "ratio_median": 0.941,
+      "rmse_m": 0.131,
+      "scatter_index": 0.115,
+      "mean_measured_m": 1.143,
+      "mean_ours_m": 1.072,
+      "within_20": 0.917,
+      "within_30": 0.997,
+      "r": 0.688
+     },
+     "1.5-99.0 m": {
+      "n": 195,
+      "bias_m": -0.103,
+      "ratio_median": 0.952,
+      "rmse_m": 0.253,
+      "scatter_index": 0.144,
+      "mean_measured_m": 1.762,
+      "mean_ours_m": 1.659,
+      "within_20": 0.815,
+      "within_30": 0.944,
+      "r": 0.685
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 551,
+      "bias_m": -0.038,
+      "ratio_median": 0.964,
+      "rmse_m": 0.116,
+      "scatter_index": 0.119,
+      "mean_measured_m": 0.974,
+      "mean_ours_m": 0.935,
+      "within_20": 0.947,
+      "within_30": 0.975,
+      "r": 0.958
+     },
+     "8-10 s": {
+      "n": 695,
+      "bias_m": -0.035,
+      "ratio_median": 0.967,
+      "rmse_m": 0.093,
+      "scatter_index": 0.095,
+      "mean_measured_m": 0.976,
+      "mean_ours_m": 0.942,
+      "within_20": 0.97,
+      "within_30": 0.99,
+      "r": 0.961
+     },
+     "10-12 s": {
+      "n": 1216,
+      "bias_m": -0.051,
+      "ratio_median": 0.94,
+      "rmse_m": 0.102,
+      "scatter_index": 0.12,
+      "mean_measured_m": 0.85,
+      "mean_ours_m": 0.799,
+      "within_20": 0.931,
+      "within_30": 0.993,
+      "r": 0.945
+     },
+     "12-14 s": {
+      "n": 3260,
+      "bias_m": -0.029,
+      "ratio_median": 0.966,
+      "rmse_m": 0.087,
+      "scatter_index": 0.118,
+      "mean_measured_m": 0.74,
+      "mean_ours_m": 0.711,
+      "within_20": 0.933,
+      "within_30": 0.994,
+      "r": 0.929
+     },
+     "14+ s": {
+      "n": 6965,
+      "bias_m": -0.025,
+      "ratio_median": 0.973,
+      "rmse_m": 0.087,
+      "scatter_index": 0.109,
+      "mean_measured_m": 0.798,
+      "mean_ours_m": 0.773,
+      "within_20": 0.954,
+      "within_30": 0.996,
+      "r": 0.912
+     }
+    }
+   },
+   "our_mop_spot": {
+    "spot": "Leucadia",
+    "km": 1.0,
+    "all": {
+     "n": 1040,
+     "bias_m": 0.031,
+     "ratio_median": 1.045,
+     "rmse_m": 0.087,
+     "scatter_index": 0.102,
+     "mean_measured_m": 0.855,
+     "mean_ours_m": 0.885,
+     "within_20": 0.932,
+     "within_30": 0.991,
+     "r": 0.935
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 811,
+      "bias_m": 0.038,
+      "ratio_median": 1.053,
+      "rmse_m": 0.079,
+      "scatter_index": 0.104,
+      "mean_measured_m": 0.759,
+      "mean_ours_m": 0.797,
+      "within_20": 0.926,
+      "within_30": 0.993,
+      "r": 0.841
+     },
+     "1.0-1.5 m": {
+      "n": 214,
+      "bias_m": 0.008,
+      "ratio_median": 1.014,
+      "rmse_m": 0.112,
+      "scatter_index": 0.097,
+      "mean_measured_m": 1.151,
+      "mean_ours_m": 1.159,
+      "within_20": 0.949,
+      "within_30": 0.986,
+      "r": 0.635
+     },
+     "1.5-99.0 m": {
+      "n": 15,
+      "bias_m": -0.074,
+      "ratio_median": 0.962,
+      "rmse_m": 0.095,
+      "scatter_index": 0.053,
+      "mean_measured_m": 1.787,
+      "mean_ours_m": 1.712,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.904
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 8,
+      "bias_m": -0.035,
+      "ratio_median": 0.988,
+      "rmse_m": 0.09,
+      "scatter_index": 0.067,
+      "mean_measured_m": 1.333,
+      "mean_ours_m": 1.298,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.991
+     },
+     "8-10 s": {
+      "n": 69,
+      "bias_m": 0.002,
+      "ratio_median": 1.016,
+      "rmse_m": 0.094,
+      "scatter_index": 0.096,
+      "mean_measured_m": 0.973,
+      "mean_ours_m": 0.976,
+      "within_20": 0.971,
+      "within_30": 1.0,
+      "r": 0.899
+     },
+     "10-12 s": {
+      "n": 105,
+      "bias_m": 0.043,
+      "ratio_median": 1.038,
+      "rmse_m": 0.103,
+      "scatter_index": 0.105,
+      "mean_measured_m": 0.983,
+      "mean_ours_m": 1.025,
+      "within_20": 0.876,
+      "within_30": 1.0,
+      "r": 0.93
+     },
+     "12-14 s": {
+      "n": 215,
+      "bias_m": 0.011,
+      "ratio_median": 1.028,
+      "rmse_m": 0.089,
+      "scatter_index": 0.107,
+      "mean_measured_m": 0.825,
+      "mean_ours_m": 0.836,
+      "within_20": 0.949,
+      "within_30": 0.986,
+      "r": 0.933
+     },
+     "14+ s": {
+      "n": 643,
+      "bias_m": 0.039,
+      "ratio_median": 1.053,
+      "rmse_m": 0.083,
+      "scatter_index": 0.1,
+      "mean_measured_m": 0.825,
+      "mean_ours_m": 0.864,
+      "within_20": 0.93,
+      "within_30": 0.991,
+      "r": 0.93
+     }
+    }
+   }
+  },
+  "264": {
+   "buoy_span": [
+    "2026-01-14",
+    "2026-10-26"
+   ],
+   "mop_at_buoy": {
+    "all": {
+     "n": 6833,
+     "bias_m": -0.038,
+     "ratio_median": 0.962,
+     "rmse_m": 0.093,
+     "scatter_index": 0.106,
+     "mean_measured_m": 0.872,
+     "mean_ours_m": 0.834,
+     "within_20": 0.968,
+     "within_30": 0.995,
+     "r": 0.954
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 313,
+      "bias_m": 0.012,
+      "ratio_median": 1.018,
+      "rmse_m": 0.041,
+      "scatter_index": 0.092,
+      "mean_measured_m": 0.449,
+      "mean_ours_m": 0.461,
+      "within_20": 0.965,
+      "within_30": 1.0,
+      "r": 0.683
+     },
+     "0.5-1.0 m": {
+      "n": 4687,
+      "bias_m": -0.026,
+      "ratio_median": 0.968,
+      "rmse_m": 0.067,
+      "scatter_index": 0.088,
+      "mean_measured_m": 0.761,
+      "mean_ours_m": 0.735,
+      "within_20": 0.979,
+      "within_30": 0.997,
+      "r": 0.886
+     },
+     "1.0-1.5 m": {
+      "n": 1641,
+      "bias_m": -0.07,
+      "ratio_median": 0.938,
+      "rmse_m": 0.122,
+      "scatter_index": 0.104,
+      "mean_measured_m": 1.166,
+      "mean_ours_m": 1.097,
+      "within_20": 0.956,
+      "within_30": 0.995,
+      "r": 0.728
+     },
+     "1.5-99.0 m": {
+      "n": 192,
+      "bias_m": -0.163,
+      "ratio_median": 0.923,
+      "rmse_m": 0.259,
+      "scatter_index": 0.146,
+      "mean_measured_m": 1.775,
+      "mean_ours_m": 1.612,
+      "within_20": 0.833,
+      "within_30": 0.927,
+      "r": 0.775
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 174,
+      "bias_m": -0.052,
+      "ratio_median": 0.966,
+      "rmse_m": 0.124,
+      "scatter_index": 0.102,
+      "mean_measured_m": 1.214,
+      "mean_ours_m": 1.162,
+      "within_20": 0.96,
+      "within_30": 0.989,
+      "r": 0.98
+     },
+     "8-10 s": {
+      "n": 150,
+      "bias_m": -0.002,
+      "ratio_median": 1.002,
+      "rmse_m": 0.077,
+      "scatter_index": 0.078,
+      "mean_measured_m": 0.992,
+      "mean_ours_m": 0.99,
+      "within_20": 0.987,
+      "within_30": 1.0,
+      "r": 0.978
+     },
+     "10-12 s": {
+      "n": 439,
+      "bias_m": -0.03,
+      "ratio_median": 0.969,
+      "rmse_m": 0.096,
+      "scatter_index": 0.107,
+      "mean_measured_m": 0.897,
+      "mean_ours_m": 0.867,
+      "within_20": 0.948,
+      "within_30": 0.998,
+      "r": 0.961
+     },
+     "12-14 s": {
+      "n": 1583,
+      "bias_m": -0.028,
+      "ratio_median": 0.975,
+      "rmse_m": 0.092,
+      "scatter_index": 0.123,
+      "mean_measured_m": 0.752,
+      "mean_ours_m": 0.724,
+      "within_20": 0.958,
+      "within_30": 0.986,
+      "r": 0.934
+     },
+     "14+ s": {
+      "n": 4487,
+      "bias_m": -0.044,
+      "ratio_median": 0.955,
+      "rmse_m": 0.091,
+      "scatter_index": 0.102,
+      "mean_measured_m": 0.895,
+      "mean_ours_m": 0.852,
+      "within_20": 0.974,
+      "within_30": 0.998,
+      "r": 0.944
+     }
+    }
+   },
+   "our_mop_spot": null
+  },
+  "284": {
+   "buoy_span": [
+    "2025-07-09",
+    "2026-10-26"
+   ],
+   "mop_at_buoy": {
+    "all": {
+     "n": 11369,
+     "bias_m": -0.015,
+     "ratio_median": 0.987,
+     "rmse_m": 0.106,
+     "scatter_index": 0.123,
+     "mean_measured_m": 0.863,
+     "mean_ours_m": 0.848,
+     "within_20": 0.909,
+     "within_30": 0.98,
+     "r": 0.933
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 762,
+      "bias_m": 0.046,
+      "ratio_median": 1.099,
+      "rmse_m": 0.077,
+      "scatter_index": 0.18,
+      "mean_measured_m": 0.427,
+      "mean_ours_m": 0.473,
+      "within_20": 0.749,
+      "within_30": 0.898,
+      "r": 0.784
+     },
+     "0.5-1.0 m": {
+      "n": 7557,
+      "bias_m": -0.003,
+      "ratio_median": 0.995,
+      "rmse_m": 0.086,
+      "scatter_index": 0.115,
+      "mean_measured_m": 0.754,
+      "mean_ours_m": 0.751,
+      "within_20": 0.925,
+      "within_30": 0.983,
+      "r": 0.793
+     },
+     "1.0-1.5 m": {
+      "n": 2658,
+      "bias_m": -0.047,
+      "ratio_median": 0.96,
+      "rmse_m": 0.132,
+      "scatter_index": 0.113,
+      "mean_measured_m": 1.168,
+      "mean_ours_m": 1.122,
+      "within_20": 0.916,
+      "within_30": 0.994,
+      "r": 0.644
+     },
+     "1.5-99.0 m": {
+      "n": 392,
+      "bias_m": -0.142,
+      "ratio_median": 0.923,
+      "rmse_m": 0.229,
+      "scatter_index": 0.132,
+      "mean_measured_m": 1.734,
+      "mean_ours_m": 1.592,
+      "within_20": 0.865,
+      "within_30": 0.992,
+      "r": 0.707
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 128,
+      "bias_m": -0.002,
+      "ratio_median": 0.987,
+      "rmse_m": 0.195,
+      "scatter_index": 0.154,
+      "mean_measured_m": 1.26,
+      "mean_ours_m": 1.259,
+      "within_20": 0.711,
+      "within_30": 0.875,
+      "r": 0.927
+     },
+     "8-10 s": {
+      "n": 128,
+      "bias_m": 0.032,
+      "ratio_median": 1.032,
+      "rmse_m": 0.135,
+      "scatter_index": 0.146,
+      "mean_measured_m": 0.925,
+      "mean_ours_m": 0.957,
+      "within_20": 0.789,
+      "within_30": 0.922,
+      "r": 0.933
+     },
+     "10-12 s": {
+      "n": 618,
+      "bias_m": 0.012,
+      "ratio_median": 1.014,
+      "rmse_m": 0.113,
+      "scatter_index": 0.126,
+      "mean_measured_m": 0.899,
+      "mean_ours_m": 0.911,
+      "within_20": 0.825,
+      "within_30": 0.942,
+      "r": 0.952
+     },
+     "12-14 s": {
+      "n": 3347,
+      "bias_m": -0.01,
+      "ratio_median": 0.994,
+      "rmse_m": 0.102,
+      "scatter_index": 0.135,
+      "mean_measured_m": 0.759,
+      "mean_ours_m": 0.749,
+      "within_20": 0.879,
+      "within_30": 0.969,
+      "r": 0.926
+     },
+     "14+ s": {
+      "n": 7148,
+      "bias_m": -0.021,
+      "ratio_median": 0.982,
+      "rmse_m": 0.104,
+      "scatter_index": 0.116,
+      "mean_measured_m": 0.9,
+      "mean_ours_m": 0.88,
+      "within_20": 0.936,
+      "within_30": 0.992,
+      "r": 0.926
+     }
+    }
+   },
+   "our_mop_spot": {
+    "spot": "Doheny State Beach",
+    "km": 1.9,
+    "all": {
+     "n": 1040,
+     "bias_m": -0.194,
+     "ratio_median": 0.816,
+     "rmse_m": 0.236,
+     "scatter_index": 0.236,
+     "mean_measured_m": 0.998,
+     "mean_ours_m": 0.805,
+     "within_20": 0.585,
+     "within_30": 0.9,
+     "r": 0.916
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 614,
+      "bias_m": -0.124,
+      "ratio_median": 0.844,
+      "rmse_m": 0.142,
+      "scatter_index": 0.182,
+      "mean_measured_m": 0.782,
+      "mean_ours_m": 0.658,
+      "within_20": 0.728,
+      "within_30": 0.967,
+      "r": 0.772
+     },
+     "1.0-1.5 m": {
+      "n": 329,
+      "bias_m": -0.275,
+      "ratio_median": 0.776,
+      "rmse_m": 0.3,
+      "scatter_index": 0.248,
+      "mean_measured_m": 1.21,
+      "mean_ours_m": 0.935,
+      "within_20": 0.374,
+      "within_30": 0.83,
+      "r": 0.646
+     },
+     "1.5-99.0 m": {
+      "n": 97,
+      "bias_m": -0.357,
+      "ratio_median": 0.752,
+      "rmse_m": 0.404,
+      "scatter_index": 0.245,
+      "mean_measured_m": 1.651,
+      "mean_ours_m": 1.294,
+      "within_20": 0.392,
+      "within_30": 0.711,
+      "r": 0.712
+     }
+    },
+    "by_measured_period": {
+     "8-10 s": {
+      "n": 7,
+      "bias_m": -0.121,
+      "ratio_median": 0.866,
+      "rmse_m": 0.137,
+      "scatter_index": 0.155,
+      "mean_measured_m": 0.889,
+      "mean_ours_m": 0.768,
+      "within_20": 0.857,
+      "within_30": 1.0,
+      "r": 0.971
+     },
+     "10-12 s": {
+      "n": 82,
+      "bias_m": -0.148,
+      "ratio_median": 0.876,
+      "rmse_m": 0.163,
+      "scatter_index": 0.136,
+      "mean_measured_m": 1.197,
+      "mean_ours_m": 1.049,
+      "within_20": 0.829,
+      "within_30": 0.988,
+      "r": 0.983
+     },
+     "12-14 s": {
+      "n": 205,
+      "bias_m": -0.135,
+      "ratio_median": 0.849,
+      "rmse_m": 0.165,
+      "scatter_index": 0.184,
+      "mean_measured_m": 0.893,
+      "mean_ours_m": 0.758,
+      "within_20": 0.751,
+      "within_30": 0.956,
+      "r": 0.92
+     },
+     "14+ s": {
+      "n": 746,
+      "bias_m": -0.215,
+      "ratio_median": 0.802,
+      "rmse_m": 0.259,
+      "scatter_index": 0.257,
+      "mean_measured_m": 1.007,
+      "mean_ours_m": 0.791,
+      "within_20": 0.509,
+      "within_30": 0.874,
+      "r": 0.921
+     }
+    }
+   }
+  }
+ },
+ "seaward": {
+  "Duck Pier": {
+   "spot": "Duck Pier",
+   "wfo": "mhx",
+   "orientation_deg": 72.0,
+   "node": {
+    "lat": 36.19317,
+    "lng": -75.74849,
+    "km": 1.14,
+    "bearing_deg": 358.3,
+    "depth_m": null
+   },
+   "cycles_listed": [
+    "2026102400",
+    "2026102412",
+    "2026102500",
+    "2026102512",
+    "2026102600",
+    "2026102612"
+   ],
+   "cycles_read": 6,
+   "seaward_cell": {
+    "li": 144,
+    "lj": 116,
+    "lat": 36.19331,
+    "lng": -75.72892,
+    "km": 2.07,
+    "bearing_deg": 56.1,
+    "depth_m": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 66,
+     "bias_m": -0.476,
+     "ratio_median": 0.749,
+     "rmse_m": 0.513,
+     "scatter_index": 0.266,
+     "mean_measured_m": 1.929,
+     "mean_ours_m": 1.453,
+     "within_20": 0.182,
+     "within_30": 0.742,
+     "r": 0.167
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 0
+     },
+     "1.0-1.5 m": {
+      "n": 3,
+      "bias_m": 0.009,
+      "ratio_median": 1.001,
+      "rmse_m": 0.024,
+      "scatter_index": 0.017,
+      "mean_measured_m": 1.385,
+      "mean_ours_m": 1.394,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.902
+     },
+     "1.5-99.0 m": {
+      "n": 63,
+      "bias_m": -0.499,
+      "ratio_median": 0.745,
+      "rmse_m": 0.525,
+      "scatter_index": 0.269,
+      "mean_measured_m": 1.955,
+      "mean_ours_m": 1.456,
+      "within_20": 0.143,
+      "within_30": 0.73,
+      "r": 0.039
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 16,
+      "bias_m": -0.611,
+      "ratio_median": 0.693,
+      "rmse_m": 0.619,
+      "scatter_index": 0.299,
+      "mean_measured_m": 2.07,
+      "mean_ours_m": 1.459,
+      "within_20": 0.0,
+      "within_30": 0.438,
+      "r": 0.009
+     },
+     "8-10 s": {
+      "n": 4,
+      "bias_m": -0.432,
+      "ratio_median": 0.728,
+      "rmse_m": 0.497,
+      "scatter_index": 0.269,
+      "mean_measured_m": 1.849,
+      "mean_ours_m": 1.416,
+      "within_20": 0.25,
+      "within_30": 0.75,
+      "r": 0.537
+     },
+     "10-12 s": {
+      "n": 6,
+      "bias_m": -0.603,
+      "ratio_median": 0.701,
+      "rmse_m": 0.609,
+      "scatter_index": 0.296,
+      "mean_measured_m": 2.056,
+      "mean_ours_m": 1.454,
+      "within_20": 0.0,
+      "within_30": 0.5,
+      "r": -0.661
+     },
+     "12-14 s": {
+      "n": 37,
+      "bias_m": -0.409,
+      "ratio_median": 0.767,
+      "rmse_m": 0.452,
+      "scatter_index": 0.242,
+      "mean_measured_m": 1.866,
+      "mean_ours_m": 1.457,
+      "within_20": 0.27,
+      "within_30": 0.892,
+      "r": 0.147
+     },
+     "14+ s": {
+      "n": 3,
+      "bias_m": -0.39,
+      "ratio_median": 0.782,
+      "rmse_m": 0.394,
+      "scatter_index": 0.219,
+      "mean_measured_m": 1.801,
+      "mean_ours_m": 1.411,
+      "within_20": 0.333,
+      "within_30": 1.0,
+      "r": -0.517
+     }
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 66,
+     "bias_m": -0.239,
+     "ratio_median": 0.866,
+     "rmse_m": 0.278,
+     "scatter_index": 0.144,
+     "mean_measured_m": 1.929,
+     "mean_ours_m": 1.69,
+     "within_20": 0.985,
+     "within_30": 1.0,
+     "r": 0.888
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 0
+     },
+     "1.0-1.5 m": {
+      "n": 3,
+      "bias_m": 0.153,
+      "ratio_median": 1.108,
+      "rmse_m": 0.154,
+      "scatter_index": 0.111,
+      "mean_measured_m": 1.385,
+      "mean_ours_m": 1.538,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.876
+     },
+     "1.5-99.0 m": {
+      "n": 63,
+      "bias_m": -0.258,
+      "ratio_median": 0.865,
+      "rmse_m": 0.282,
+      "scatter_index": 0.144,
+      "mean_measured_m": 1.955,
+      "mean_ours_m": 1.697,
+      "within_20": 0.984,
+      "within_30": 1.0,
+      "r": 0.839
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 16,
+      "bias_m": -0.336,
+      "ratio_median": 0.833,
+      "rmse_m": 0.342,
+      "scatter_index": 0.165,
+      "mean_measured_m": 2.07,
+      "mean_ours_m": 1.735,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.464
+     },
+     "8-10 s": {
+      "n": 4,
+      "bias_m": -0.181,
+      "ratio_median": 0.86,
+      "rmse_m": 0.263,
+      "scatter_index": 0.142,
+      "mean_measured_m": 1.849,
+      "mean_ours_m": 1.667,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.996
+     },
+     "10-12 s": {
+      "n": 6,
+      "bias_m": -0.329,
+      "ratio_median": 0.844,
+      "rmse_m": 0.332,
+      "scatter_index": 0.161,
+      "mean_measured_m": 2.056,
+      "mean_ours_m": 1.728,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": -0.172
+     },
+     "12-14 s": {
+      "n": 37,
+      "bias_m": -0.195,
+      "ratio_median": 0.88,
+      "rmse_m": 0.243,
+      "scatter_index": 0.13,
+      "mean_measured_m": 1.866,
+      "mean_ours_m": 1.671,
+      "within_20": 0.973,
+      "within_30": 1.0,
+      "r": 0.847
+     },
+     "14+ s": {
+      "n": 3,
+      "bias_m": -0.166,
+      "ratio_median": 0.903,
+      "rmse_m": 0.168,
+      "scatter_index": 0.093,
+      "mean_measured_m": 1.801,
+      "mean_ours_m": 1.635,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": -0.466
+     }
+    }
+   },
+   "hours": 66
+  },
+  "Jetty Park Cocoa Beach": {
+   "spot": "Jetty Park Cocoa Beach",
+   "wfo": "mlb",
+   "orientation_deg": 90.0,
+   "node": {
+    "lat": 28.41207,
+    "lng": -80.58208,
+    "km": 0.85,
+    "bearing_deg": 52.1,
+    "depth_m": null
+   },
+   "cycles_listed": [
+    "2026102400",
+    "2026102412",
+    "2026102500",
+    "2026102512",
+    "2026102600",
+    "2026102612"
+   ],
+   "cycles_read": 6,
+   "seaward_cell": {
+    "li": 118,
+    "lj": 46,
+    "lat": 28.41207,
+    "lng": -80.5639,
+    "km": 2.51,
+    "bearing_deg": 77.9,
+    "depth_m": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 67,
+     "bias_m": -0.547,
+     "ratio_median": 0.623,
+     "rmse_m": 0.574,
+     "scatter_index": 0.405,
+     "mean_measured_m": 1.418,
+     "mean_ours_m": 0.871,
+     "within_20": 0.0,
+     "within_30": 0.03,
+     "r": 0.933
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 10,
+      "bias_m": -0.312,
+      "ratio_median": 0.671,
+      "rmse_m": 0.316,
+      "scatter_index": 0.332,
+      "mean_measured_m": 0.95,
+      "mean_ours_m": 0.637,
+      "within_20": 0.0,
+      "within_30": 0.2,
+      "r": 0.228
+     },
+     "1.0-1.5 m": {
+      "n": 26,
+      "bias_m": -0.468,
+      "ratio_median": 0.605,
+      "rmse_m": 0.473,
+      "scatter_index": 0.396,
+      "mean_measured_m": 1.194,
+      "mean_ours_m": 0.726,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.903
+     },
+     "1.5-99.0 m": {
+      "n": 31,
+      "bias_m": -0.689,
+      "ratio_median": 0.623,
+      "rmse_m": 0.701,
+      "scatter_index": 0.399,
+      "mean_measured_m": 1.757,
+      "mean_ours_m": 1.068,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.393
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 20,
+      "bias_m": -0.479,
+      "ratio_median": 0.581,
+      "rmse_m": 0.499,
+      "scatter_index": 0.433,
+      "mean_measured_m": 1.153,
+      "mean_ours_m": 0.674,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.911
+     },
+     "8-10 s": {
+      "n": 12,
+      "bias_m": -0.475,
+      "ratio_median": 0.62,
+      "rmse_m": 0.505,
+      "scatter_index": 0.407,
+      "mean_measured_m": 1.243,
+      "mean_ours_m": 0.768,
+      "within_20": 0.0,
+      "within_30": 0.083,
+      "r": 0.944
+     },
+     "10-12 s": {
+      "n": 31,
+      "bias_m": -0.619,
+      "ratio_median": 0.644,
+      "rmse_m": 0.638,
+      "scatter_index": 0.387,
+      "mean_measured_m": 1.65,
+      "mean_ours_m": 1.031,
+      "within_20": 0.0,
+      "within_30": 0.032,
+      "r": 0.791
+     },
+     "12-14 s": {
+      "n": 4,
+      "bias_m": -0.55,
+      "ratio_median": 0.64,
+      "rmse_m": 0.585,
+      "scatter_index": 0.398,
+      "mean_measured_m": 1.471,
+      "mean_ours_m": 0.921,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.996
+     }
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 67,
+     "bias_m": -0.458,
+     "ratio_median": 0.686,
+     "rmse_m": 0.488,
+     "scatter_index": 0.344,
+     "mean_measured_m": 1.418,
+     "mean_ours_m": 0.96,
+     "within_20": 0.03,
+     "within_30": 0.358,
+     "r": 0.943
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 10,
+      "bias_m": -0.224,
+      "ratio_median": 0.766,
+      "rmse_m": 0.231,
+      "scatter_index": 0.243,
+      "mean_measured_m": 0.95,
+      "mean_ours_m": 0.726,
+      "within_20": 0.2,
+      "within_30": 0.8,
+      "r": 0.237
+     },
+     "1.0-1.5 m": {
+      "n": 26,
+      "bias_m": -0.378,
+      "ratio_median": 0.685,
+      "rmse_m": 0.385,
+      "scatter_index": 0.322,
+      "mean_measured_m": 1.194,
+      "mean_ours_m": 0.816,
+      "within_20": 0.0,
+      "within_30": 0.385,
+      "r": 0.895
+     },
+     "1.5-99.0 m": {
+      "n": 31,
+      "bias_m": -0.6,
+      "ratio_median": 0.671,
+      "rmse_m": 0.611,
+      "scatter_index": 0.348,
+      "mean_measured_m": 1.757,
+      "mean_ours_m": 1.157,
+      "within_20": 0.0,
+      "within_30": 0.194,
+      "r": 0.535
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 20,
+      "bias_m": -0.39,
+      "ratio_median": 0.663,
+      "rmse_m": 0.414,
+      "scatter_index": 0.359,
+      "mean_measured_m": 1.153,
+      "mean_ours_m": 0.763,
+      "within_20": 0.0,
+      "within_30": 0.3,
+      "r": 0.92
+     },
+     "8-10 s": {
+      "n": 12,
+      "bias_m": -0.371,
+      "ratio_median": 0.7,
+      "rmse_m": 0.411,
+      "scatter_index": 0.33,
+      "mean_measured_m": 1.243,
+      "mean_ours_m": 0.872,
+      "within_20": 0.083,
+      "within_30": 0.5,
+      "r": 0.946
+     },
+     "10-12 s": {
+      "n": 31,
+      "bias_m": -0.535,
+      "ratio_median": 0.686,
+      "rmse_m": 0.555,
+      "scatter_index": 0.336,
+      "mean_measured_m": 1.65,
+      "mean_ours_m": 1.115,
+      "within_20": 0.032,
+      "within_30": 0.323,
+      "r": 0.84
+     },
+     "12-14 s": {
+      "n": 4,
+      "bias_m": -0.454,
+      "ratio_median": 0.706,
+      "rmse_m": 0.493,
+      "scatter_index": 0.336,
+      "mean_measured_m": 1.471,
+      "mean_ours_m": 1.017,
+      "within_20": 0.0,
+      "within_30": 0.5,
+      "r": 0.997
+     }
+    }
+   },
+   "hours": 67
+  }
+ }
+}

@@ -1,0 +1,17 @@
+spot,state,buoy,buoy_km,paired_hours,our_hs_median_m,buoy_hs_median_m,hs_ratio_median,our_tp_median_s,buoy_dpd_median_s,our_share_under_3s,buoy_share_under_3s
+Mexico Beach,Florida,42039,142.7,336,0.13,0.9,0.11,1.68,6.0,0.765,0.012
+Spring Ave,Florida,42098,20.4,335,0.34,0.83,0.45,2.22,4.0,0.681,0.046
+St. Pete Beach,Florida,42098,23.8,335,0.31,0.83,0.39,2.16,4.0,0.681,0.046
+Treasure Island FL,Florida,42098,24.8,335,0.24,0.83,0.32,1.94,4.0,0.666,0.046
+Madeira Beach,Florida,42098,26.6,335,0.31,0.83,0.41,2.27,4.0,0.63,0.046
+Whitney Beach,Florida,42098,29.8,335,0.41,0.83,0.56,2.65,4.0,0.597,0.046
+Oak Island Pier,North Carolina,41110,43.2,335,0.37,1.0,0.26,2.44,6.67,0.576,0.0
+Coolidge,Florida,42098,47.0,335,0.25,0.83,0.33,2.94,4.0,0.504,0.046
+Siesta Key,Florida,42098,52.1,335,0.32,0.83,0.46,3.13,4.0,0.481,0.046
+Gasparilla,Florida,42098,108.5,335,0.35,0.83,0.45,3.58,4.0,0.391,0.046
+Navarre Beach,Florida,42012,74.7,336,0.46,0.8,0.62,3.29,6.0,0.372,0.0
+Twin Piers,Florida,42098,27.0,335,0.27,0.83,0.36,3.81,4.0,0.325,0.046
+Naples Pier,Florida,42098,196.7,335,0.38,0.83,0.44,3.36,4.0,0.322,0.046
+St Andrews Park,Florida,42039,153.2,336,0.23,0.9,0.2,4.3,6.0,0.298,0.012
+Redington Pier,Florida,42098,27.0,335,0.34,0.83,0.45,3.72,4.0,0.284,0.046
+Destin Jetty,Florida,42012,106.2,336,0.38,0.8,0.48,4.52,6.0,0.268,0.0
