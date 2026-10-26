@@ -80,8 +80,12 @@ name: sw1-raycast
 #   mode = face-calibration: READ-ONLY. Our published nearshore Hs against measured Hs in
 #       shallow water (pipeline/face_calibration.py): Duck Pier against the FRF 8 m array,
 #       Bethany Beach, Doheny, Avila and the Cape Canaveral area against CDIP 263, 284, 285
-#       and 143; bias, ratio and scatter by spot and measured period band. Supabase SELECT
-#       only. The summary and every paired hour are kept as the run's artifact for 90 days.
+#       and 143; bias, ratio and scatter by spot, measured period band and the rater that fed
+#       the hour, for NWPS's stored height and for the height each face was sized from
+#       (recovered from face_ft_raw: MOP's own Hs, the WW3 path's); and a roster-wide
+#       sheltered-water check (spots whose stored period sits under 3 s, with their NWPS
+#       sample point and whether it is on the ocean side). Supabase SELECT only. The summary,
+#       every paired hour and the suspects are kept as the run's artifact for 90 days.
 
 on:
   workflow_dispatch:
@@ -723,7 +727,8 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python -m pipeline.face_calibration --since 2025-06-01T00:00:00+00:00 \
-            --out face_calibration.json --csv face_calibration_pairs.csv
+            --out face_calibration.json --csv face_calibration_pairs.csv \
+            --sheltered-csv face_sheltered.csv
 
       - name: Keep the results
         if: ${{ always() }}
@@ -733,5 +738,6 @@ jobs:
           path: |
             face_calibration.json
             face_calibration_pairs.csv
+            face_sheltered.csv
           retention-days: 90
           if-no-files-found: warn

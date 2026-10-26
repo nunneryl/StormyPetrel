@@ -109,7 +109,9 @@ def test_the_face_calibration_only_reads_and_keeps_its_results():
     assert _if(job) == "${{ inputs.mode == 'face-calibration' }}"
     assert "    permissions:\n      contents: read\n" in job
     assert "python -m pipeline.face_calibration --since 2025-06-01T00:00:00+00:00 \\\n" in job
-    assert "--out face_calibration.json --csv face_calibration_pairs.csv" in job
+    assert "--out face_calibration.json --csv face_calibration_pairs.csv \\\n" in job
+    assert "--sheltered-csv face_sheltered.csv" in job
+    assert "            face_sheltered.csv\n" in job                      # kept in the artifact
     assert "retention-days: 90" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
