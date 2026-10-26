@@ -27,19 +27,20 @@ def test_nwps_shelter_is_a_mode():
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
-        "data-quality", "node-preview", "face-sources"]
+        "data-quality", "node-preview", "face-sources", "face-calibration"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
-                         "rating-preview", "data-quality", "node-preview", "face-sources"}
+                         "rating-preview", "data-quality", "node-preview", "face-sources", "face-calibration"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
-        "&& inputs.mode != 'face-sources' }}")
+        "&& inputs.mode != 'face-sources' "
+        "&& inputs.mode != 'face-calibration' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -99,6 +100,17 @@ def test_the_face_sources_check_only_reads_and_holds_no_secrets():
     assert "    permissions:\n      contents: read\n" in job
     assert "python -m pipeline.face_sources --out face_sources.json" in job
     assert "secrets." not in job
+    for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
+
+
+def test_the_face_calibration_only_reads_and_keeps_its_results():
+    job = _jobs()["face-calibration"]
+    assert _if(job) == "${{ inputs.mode == 'face-calibration' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert "python -m pipeline.face_calibration --since 2025-06-01T00:00:00+00:00 \\\n" in job
+    assert "--out face_calibration.json --csv face_calibration_pairs.csv" in job
+    assert "retention-days: 90" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
 

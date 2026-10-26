@@ -77,6 +77,11 @@ name: sw1-raycast
 #       Surf Zone Forecast archive at the Iowa Environmental Mesonet (newest SRFMHX parsed for
 #       Duck's zone, and a past date range), CDIP's Cape Canaveral nearshore buoy, and
 #       api.weather.gov's outline for that zone. Fails the run if any source is unreachable.
+#   mode = face-calibration: READ-ONLY. Our published nearshore Hs against measured Hs in
+#       shallow water (pipeline/face_calibration.py): Duck Pier against the FRF 8 m array,
+#       Bethany Beach, Doheny, Avila and the Cape Canaveral area against CDIP 263, 284, 285
+#       and 143; bias, ratio and scatter by spot and measured period band. Supabase SELECT
+#       only. The summary and every paired hour are kept as the run's artifact for 90 days.
 
 on:
   workflow_dispatch:
@@ -96,6 +101,7 @@ on:
           - data-quality
           - node-preview
           - face-sources
+          - face-calibration
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -152,7 +158,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'face-sources' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'face-sources' && inputs.mode != 'face-calibration' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -685,4 +691,47 @@ jobs:
         with:
           name: face-sources-${{ github.run_number }}
           path: face_sources.json
+          if-no-files-found: warn
+
+  face-calibration:
+    name: sw1 face-height calibration of nearshore Hs (read-only)
+    if: ${{ inputs.mode == 'face-calibration' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Our nearshore Hs against FRF and CDIP (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -m pipeline.face_calibration --since 2025-06-01T00:00:00+00:00 \
+            --out face_calibration.json --csv face_calibration_pairs.csv
+
+      - name: Keep the results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: face-calibration-${{ github.run_number }}
+          path: |
+            face_calibration.json
+            face_calibration_pairs.csv
+          retention-days: 90
           if-no-files-found: warn
