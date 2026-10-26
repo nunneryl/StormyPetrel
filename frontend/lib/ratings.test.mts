@@ -95,7 +95,7 @@ eq('null speed with dead-onshore direction is still unknown',
 // --------------------------------------------------------------------------- //
 // Held at dead onshore (off = 180) so ONLY the speed cut can produce 'clean'.
 //   speed <  2.5 -> clean   (strict <, so 2.5 itself does NOT take this branch)
-//   speed >= 2.5 -> falls through to the angle ladder; off 180 > 120, and
+//   speed >= 2.5 -> falls through to the angle ladder; off 180 >= 120, and
 //                   2.5 < 6 -> choppy
 eq('2.49 m/s dead onshore -> clean (glassy)', classifySurface(180, 2.49, 0), 'clean');
 eq('2.5 m/s dead onshore -> choppy (boundary is NOT glassy)',
@@ -117,7 +117,7 @@ eq('off_angle 170 at 8.0 m/s -> blown (same direction, real wind)',
 // --------------------------------------------------------------------------- //
 // Speed held at 8 m/s, above both speed cuts, so only the angle decides.
 //   off <= 60 -> clean          (INCLUSIVE, so 60 itself is clean)
-//   off  > 60 -> mixed (up to 120)
+//   off  > 60 -> mixed (under 120)
 // offshore = 0, so off_angle == wind_dir for dir in [0, 180].
 eq('off 59 -> clean', classifySurface(59, 8, 0), 'clean');
 eq('off 60 -> clean (inclusive boundary)', classifySurface(60, 8, 0), 'clean');
@@ -127,10 +127,25 @@ eq('off 0 (straight offshore) -> clean', classifySurface(0, 8, 0), 'clean');
 // --------------------------------------------------------------------------- //
 // 6 — the 120-degree cross/onshore cut, both sides                             //
 // --------------------------------------------------------------------------- //
-//   off <= 120 -> mixed          (INCLUSIVE, so 120 itself is mixed)
-//   off  > 120 -> the speed ladder decides choppy vs blown
+//   off <  120 -> mixed          (strict <, so 120 itself is ONSHORE, as in the wind cap)
+//   off >= 120 -> the speed ladder decides choppy vs blown
+// offshore 0: off = |((dir + 540) mod 360) - 180|
+//   dir 119.9: 659.9 mod 360 = 299.9; |299.9 - 180| = 119.9 -> under 120 -> mixed
+//   dir 120  : 660   mod 360 = 300  ; |300   - 180| = 120   -> onshore
+//   dir 120.1: 660.1 mod 360 = 300.1; |300.1 - 180| = 120.1 -> onshore
 eq('off 119 -> mixed', classifySurface(119, 8, 0), 'mixed');
-eq('off 120 -> mixed (inclusive boundary)', classifySurface(120, 8, 0), 'mixed');
+eq('off 119.9 at 8 m/s -> mixed', classifySurface(119.9, 8, 0), 'mixed');
+eq('off 119.9 at 5 m/s -> mixed', classifySurface(119.9, 5, 0), 'mixed');
+eq('off 120 at 8 m/s -> blown (120 is onshore, as in the wind cap)', classifySurface(120, 8, 0), 'blown');
+eq('off 120 at 5 m/s -> choppy', classifySurface(120, 5, 0), 'choppy');
+eq('off 120.1 at 8 m/s -> blown', classifySurface(120.1, 8, 0), 'blown');
+eq('off 120.1 at 5 m/s -> choppy', classifySurface(120.1, 5, 0), 'choppy');
+// From the other side of an offshore bearing of 250: dir 130 -> (130 - 250 + 540) mod 360 = 60;
+// |60 - 180| = 120 -> onshore. dir 130.1 -> 60.1 -> 119.9 -> mixed.
+eq('off 120 from the other side (dir 130, offshore 250) at 8 m/s -> blown',
+   classifySurface(130, 8, 250), 'blown');
+eq('off 119.9 from the other side (dir 130.1, offshore 250) at 8 m/s -> mixed',
+   classifySurface(130.1, 8, 250), 'mixed');
 eq('off 121 at 8 m/s -> blown', classifySurface(121, 8, 0), 'blown');
 eq('off 121 at 5 m/s -> choppy', classifySurface(121, 5, 0), 'choppy');
 eq('off 90 (pure cross-shore) -> mixed', classifySurface(90, 8, 0), 'mixed');
@@ -151,7 +166,7 @@ eq('20 m/s dead onshore -> blown', classifySurface(180, 20, 0), 'blown');
 // --------------------------------------------------------------------------- //
 // The single case that separates the two orderings. At 1.0 m/s dead onshore:
 //   speed-first  -> 1.0 < 2.5           -> clean          (what ships)
-//   angle-first  -> off 180 > 120, 1.0 < 6 -> choppy      (the inversion)
+//   angle-first  -> off 180 >= 120, 1.0 < 6 -> choppy     (the inversion)
 eq('1.0 m/s dead onshore is clean, not choppy — speed is checked first',
    classifySurface(180, 1.0, 0), 'clean');
 // and above the glassy cut the direction ladder does take over
@@ -161,12 +176,13 @@ eq('3.0 m/s dead onshore is choppy — above glassy, below 6',
 // onshore cases above do NOT: at off 180 both orderings fall through to the speed test
 // and agree on 'clean'. Only inside the cross-shore band do they diverge —
 //   correct (speed first): 1.0 < 2.5                  -> clean
-//   inverted (angle first): off 90 <= 120             -> mixed
+//   inverted (angle first): off 90 < 120              -> mixed
 // so a version that computed the angle ladder before the glassy cut would pass every
 // other assertion in this file and fail only here.
 eq('1.0 m/s CROSS-SHORE (off 90) is clean, not mixed', classifySurface(90, 1.0, 0), 'clean');
 eq('1.0 m/s at off 61 (just into cross) is clean', classifySurface(61, 1.0, 0), 'clean');
-eq('1.0 m/s at off 120 (top of cross) is clean', classifySurface(120, 1.0, 0), 'clean');
+eq('1.0 m/s at off 119.9 (top of cross) is clean', classifySurface(119.9, 1.0, 0), 'clean');
+eq('1.0 m/s at off 120 (onshore) is clean', classifySurface(120, 1.0, 0), 'clean');
 // ...and at 3.0 m/s the same three directions land in the cross-shore band as expected
 eq('3.0 m/s at off 90 is mixed', classifySurface(90, 3.0, 0), 'mixed');
 

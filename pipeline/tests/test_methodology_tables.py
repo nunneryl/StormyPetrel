@@ -652,17 +652,17 @@ def test_the_onshore_6_ms_row_is_the_blown_out_label():
     _says(r"The onshore 6 m/s row is the exception: it reads the measured wind, with no allowance "
           r"for the period\. 6 m/s onshore is where the forecast labels the surface \"Blown out\"",
           "why the 6 m/s row reads the measured wind")
-    # The label's threshold is the rung's: classifySurface reads "Blown out" onshore (more than
-    # 120 off) from 6 m/s, "choppy" below it.
+    # The label's threshold is the rung's: classifySurface reads "Blown out" onshore (120 off
+    # or more, the cap's onshore class) from 6 m/s, "choppy" below it.
     ts = open(os.path.join(ROOT, "frontend", "lib", "ratings.ts"), encoding="utf-8").read()
     assert "if (windSpeedMs < 6) return 'choppy';" in ts
-    assert "if (off <= 120) return 'mixed';" in ts
+    assert "if (off < 120) return 'mixed';" in ts
     assert I.WIND_CAP_BLOWN_OUT_MS == 6.0 and I.WIND_CAP_BLOWN_OUT == 2.5
 
 
 def test_the_wind_classes_are_the_posts():
     _says(r"Offshore means within 60° of the spot's straight-offshore direction, cross-shore 60° "
-          r"to 120°, and onshore more than 120°\.", "the wind classes")
+          r"up to 120°, and onshore 120° or more\.", "the wind classes")
     assert [I.wind_class(d, 0.0) for d in (59.0, 60.0, 119.0, 120.0)] == [
         "offshore", "cross", "cross", "onshore"]
 

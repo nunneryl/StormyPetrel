@@ -17,7 +17,9 @@ Every expected value is worked by hand, never read back from the functions under
   wired       since 2026-10-23 the published cap, and onshore at 6 m/s measured or more at most
               2.5: blown-2.5-measured
   classes     offshore bearing 90: wind from 270 is 180 off (onshore), from 0 is 90 off (cross)
-  label       "Blown out": more than 120 off and 6 m/s or more (classifySurface)
+  label       "Blown out": 120 off or more and 6 m/s or more (classifySurface; 120 itself is
+              onshore, as in the cap). Offshore bearing 90: from 209.9 is 119.9 off, from 210
+              is 120.0, from 210.1 is 120.1
 """
 from __future__ import annotations
 
@@ -53,7 +55,10 @@ def test_onshore_rung_cap(wind_dir, speed, period, published, b25, b30, wired):
 
 @pytest.mark.parametrize("wind_dir, speed, want", [
     (270.0, 6.0, True), (270.0, 5.99, False),
-    (210.0, 6.5, False),     # exactly 120 off: the label reads "mixed"
+    (209.9, 6.5, False),     # 119.9 off: the label reads "Mixed"
+    (210.0, 6.5, True),      # exactly 120 off: onshore, as in the cap
+    (210.1, 6.5, True),      # 120.1 off
+    (210.0, 5.99, False),    # 120 off under 6 m/s: "Choppy"
     (211.0, 6.5, True),      # 121 off
     (None, 6.5, False),
 ])
@@ -91,12 +96,38 @@ def test_the_two_labels(wind_dir, speed, six, fifteen):
 
 @pytest.mark.parametrize("wind_dir, speed, want", [
     (270.0, 6.5, "Choppy"), (0.0, 6.5, "Mixed"), (90.0, 6.5, "Clean"), (270.0, 2.0, "Clean"),
-    (210.0, 6.5, "Mixed"),     # exactly 120 off: classifySurface's "off <= 120" is mixed
+    (209.9, 5.0, "Mixed"),     # 119.9 off: classifySurface's "off < 120" is mixed
+    (210.0, 5.0, "Choppy"),    # exactly 120 off: onshore, as in the cap
+    (210.1, 5.0, "Choppy"),    # 120.1 off
     (150.0, 6.5, "Clean"),     # exactly 60 off: "off <= 60" is clean
     (None, 6.5, "unknown"),
 ])
 def test_the_label_below_blown_out(wind_dir, speed, want):
     assert SP._surface(wind_dir, speed, 90.0) == want
+
+
+@pytest.mark.parametrize("wind_dir, cap", [
+    # 6.5 m/s = 12.635 kt at 8 s (no allowance), offshore bearing 90
+    (209.9, 5.0),    # 119.9 off: cross-shore, not over 13 kt: no cap; the label reads "Mixed"
+    (210.0, 2.5),    # 120 off: onshore at 6 m/s or more: 2.5; the label reads "Blown out"
+    (210.1, 2.5),    # 120.1 off: the same
+])
+def test_the_label_and_the_cap_agree_at_120(wind_dir, cap):
+    assert I.wind_star_cap(wind_dir, 6.5, 90.0, 8.0) == cap
+    assert SP.blown_out(wind_dir, 6.5, 90.0) is (cap == 2.5)
+
+
+def test_a_blown_out_hour_is_always_capped_at_2_5():
+    """A property over a grid, not an expected value: every 0.1 deg from 115 to 125 off and
+    every 5 deg around, 0-30 kt in quarter knots, periods 6-18 s. Wherever the label reads
+    "Blown out", the wired cap is 2.5 or less."""
+    dirs = [90.0 + a / 10 for a in range(1150, 1251)] + [float(d) for d in range(0, 360, 5)]
+    for d in dirs:
+        for q in range(0, 121):
+            ms = q / 4 * 0.514444
+            for tp in (6.0, 8.0, 12.0, 18.0):
+                if SP.blown_out(d, ms, 90.0):
+                    assert I.wind_star_cap(d, ms, 90.0, tp) <= 2.5, (d, ms, tp)
 
 
 def test_a_rule_only_ever_lowers_the_published_cap_and_only_onshore():

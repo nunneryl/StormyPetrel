@@ -611,7 +611,7 @@ WIND_CAP_OFFSHORE_STRONG = 3.0
 # off (cross-shore), where the cross-shore ladder put a wind blowing partly offshore at 1.5.
 WIND_CAP_OFFSHORE_SIDE_DEG = 90.0
 # Onshore at 6 m/s MEASURED or more: 2.5. The Conditions tile reads "Blown out" from 6 m/s
-# onshore (frontend/lib/ratings.ts classifySurface, more than 120 off); this rung starts there
+# onshore (frontend/lib/ratings.ts classifySurface, 120 off or more); this rung starts there
 # and reads the same measured speed, with no period allowance, so a "Blown out" hour never
 # rates above 2.5 stars. The rungs over 15 and 20 kt keep the allowance; the over-13 3.0 rung
 # of WIND_CAP_ONSHORE no longer binds onshore (anything over 13 kt is over 6 m/s). Decided
