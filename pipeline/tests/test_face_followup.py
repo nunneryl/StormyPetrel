@@ -148,6 +148,15 @@ def test_seaward_cell():
     assert F.seaward_cell(cells, 36.0, -75.70, 90.0, is_open=lambda la, ln: False) is None
 
 
+def test_seaward_cell_deep_enough():
+    cells = [(0, 2, 36.0, -75.68, lambda: True), (0, 3, 36.0, -75.67, lambda: True)]
+    got = F.seaward_cell(cells, 36.0, -75.70, 90.0, deep=lambda la, ln: ln > -75.675)
+    assert (got["lj"], got["km"]) == (3, 2.7)
+    # depth is tested before wetness: a dry deep cell is still dry
+    dry = [(0, 2, 36.0, -75.68, lambda: False)]
+    assert F.seaward_cell(dry, 36.0, -75.70, 90.0, deep=lambda la, ln: True) is None
+
+
 def test_seaward_cell_within_30_deg():
     # A cell 0.01 deg north and 0.01 deg east: bearing atan2(0.9006, 1.1119) about 39 deg
     # (39 x 1 = off the facing by 51) is out; one 0.002 deg north and 0.02 deg east is about
@@ -209,9 +218,44 @@ def test_etopo_depth():
     csv_text = "latitude,longitude,z\ndegrees_north,degrees_east,\n36.19375,-75.74791666666667,-7.43439\n"
     assert F.etopo_depth_m(36.193, -75.7485, text=lambda url: csv_text) == 7.4
 
+
+def test_etopo_depth_names_its_failure():
     def down(url):
         raise OSError("timeout")
-    assert F.etopo_depth_m(36.193, -75.7485, text=down) is None
+    with pytest.raises(F.DepthUnavailable, match="ERDDAP request failed: OSError: timeout"):
+        F.etopo_depth_m(36.193, -75.7485, text=down)
+    with pytest.raises(F.DepthUnavailable, match="ERDDAP answer is not a depth: 'Error {'"):
+        F.etopo_depth_m(36.193, -75.7485, text=lambda url: "Error {")
+
+
+# A 2 x 3 extract: rows at 36.0 and 36.1 N, columns at -75.8, -75.7, -75.6 E
+GRIDS = F.EtopoGrids({"grids": {"G": {"lat0": 36.0, "lng0": -75.8, "dlat": 0.1, "dlng": 0.1,
+                                      "nlat": 2, "nlng": 3, "depth_m": [[1.0, 2.0, 3.0],
+                                                                        [4.0, 5.0, 6.0]]}}})
+
+
+@pytest.mark.parametrize("lat, lng, want", [
+    (36.1, -75.6, 6.0),       # row 1, column 2
+    (36.04, -75.76, 1.0),     # 0.4 of a step from each: rounds to row 0, column 0
+    (36.26, -75.8, None),     # 2.6 steps north: row 3, beyond the 2 rows
+    (36.2, -75.8, None),      # 2 steps north: row 2, one past the last
+    (35.9, -75.8, None),      # row -1
+])
+def test_etopo_grids(lat, lng, want):
+    assert GRIDS.depth(lat, lng) == want
+
+
+def test_depth_record():
+    assert F.depth_record(36.1, -75.6, GRIDS, live=lambda a, b: 99.0) == {
+        "depth_m": 6.0, "depth_source": "etopo extract", "depth_error": None}
+    assert F.depth_record(40.0, -70.0, GRIDS, live=lambda a, b: 12.3) == {
+        "depth_m": 12.3, "depth_source": "erddap", "depth_error": None}
+
+    def fail(a, b):
+        raise F.DepthUnavailable("ERDDAP request failed: HTTPError: 403")
+    assert F.depth_record(40.0, -70.0, GRIDS, live=fail) == {
+        "depth_m": None, "depth_source": None, "depth_error": "ERDDAP request failed: HTTPError: 403"}
+    assert F.depth_record(36.1, -75.6, None, live=fail)["depth_error"].endswith("403")
 
 
 # --------------------------------------------------------------------------- #
@@ -293,6 +337,9 @@ class _Index:
         self.polygon_tree = STRtree(self.polygons)
 
 
+_D35 = {"depth_m": 3.5, "depth_source": "etopo extract", "depth_error": None}
+
+
 def test_section_coastline_on_drawn_coasts():
     idx = _Index([(-76.5, 35.0, -75.70, 37.0), (-75.68, 35.0, -75.67, 37.0)])
     roster = {
@@ -300,7 +347,7 @@ def test_section_coastline_on_drawn_coasts():
                    "nwps_node_lat": 36.0, "nwps_node_lng": -75.69},
         "No Node": {"lat": 36.0, "lng": -75.695, "orientation_deg": 90.0},
     }
-    got = F.section_coastline(idx, roster, ["Lagoon", "No Node"], depth=lambda la, ln: 3.5)
+    got = F.section_coastline(idx, roster, ["Lagoon", "No Node"], depth=lambda la, ln: _D35)
     lag, none = got
     assert (lag["class"], lag["facing_land_km"], lag["node_depth_m"]) == ("behind land", 1.0, 3.5)
     # 0.005 deg of longitude from the spot: 0.5 x 0.8996 km = 0.45 km
@@ -308,7 +355,8 @@ def test_section_coastline_on_drawn_coasts():
     # From the spot at -75.695, the island ends 0.025 deg east = 2.2515 km: the 2.25 km ring
     # reaches -75.695 + 2.25 / 90.0598 = -75.670017 (island); 2.5 km reaches -75.667241.
     assert lag["nearest_open_ocean"] == {"lat": 36.0, "lng": -75.66724, "km": 2.5,
-                                         "bearing_deg": 90.0, "depth_m": 3.5}
+                                         "bearing_deg": 90.0, **_D35}
+    assert (lag["node_depth_source"], lag["node_depth_error"]) == ("etopo extract", None)
     assert none["class"] == "no baked node"
 
 
@@ -407,7 +455,8 @@ def test_section_seaward(monkeypatch, tmp_path):
                         lambda a, b, o: ({H0: (1.0, 9.0, 1), H0 + 3600: (1.0, 9.0, 1)}, ["202610"]))
     got = F.section_seaward(roster, None, datetime(2026, 10, 21, tzinfo=timezone.utc),
                             datetime(2026, 10, 26, tzinfo=timezone.utc), tmp_path,
-                            depth=lambda la, ln: 8.0)["Duck Pier"]
+                            depth=lambda la, ln: {"depth_m": 8.0, "depth_source": "etopo extract",
+                                                  "depth_error": None})["Duck Pier"]
     assert downloaded == [("er", "mhx", "20261025", "00")] and not list(tmp_path.iterdir())
     assert (got["cycles_read"], got["hours"]) == (1, 1)
     # node 0.01 deg north: 1.1119 km at bearing 0
@@ -437,3 +486,122 @@ def test_run48_inputs_are_on_the_branch():
     assert len(sus) == 16 and sus[0]["spot"] == "Mexico Beach"
     a, b = F.run48_window()
     assert (a.isoformat()[:16], b.isoformat()[:16]) == ("2026-10-12T17:02", "2026-10-26T17:02")
+
+
+def test_period_summary():
+    s = {H0: (1.0, 2.0), H0 + 3600: (1.0, 6.0), H0 + 7200: (1.0, None)}
+    # periods 2.0 and 6.0: median 4.0; one of two under 3 s
+    assert F.period_summary(s, [H0, H0 + 3600, H0 + 7200]) == {"tp_median_s": 4.0, "share_under_3s": 0.5}
+    assert F.period_summary(s, [H0 + 7200]) == {"tp_median_s": None, "share_under_3s": None}
+
+
+def test_section_deeper(monkeypatch, tmp_path):
+    """Two Tampa spots share one office (one download per cycle serves both); Duck Pier is on
+    another and is measured by FRF."""
+    from pipeline.forecast import nwps
+    spots = (("Spot A", None), ("Spot B", None), ("Duck Pier", "frf-8m"))
+    base = {"orientation_deg": 90.0}
+    roster = {
+        "Spot A": {**base, "lat": 27.75, "lng": -82.77, "nwps_wfo": "tbw", "nwps_node_lat": 27.75, "nwps_node_lng": -82.76},
+        "Spot B": {**base, "lat": 27.75, "lng": -82.77, "nwps_wfo": "tbw", "nwps_node_lat": 27.75, "nwps_node_lng": -82.76},
+        "Duck Pier": {**base, "lat": 36.0, "lng": -75.70, "nwps_wfo": "mhx", "nwps_node_lat": 36.01, "nwps_node_lng": -75.70},
+    }
+    monkeypatch.setattr(F, "list_all_cycles", lambda wfo: ("r", [("20261025", "00"), ("20261025", "06")]))
+    downloads, searched = [], []
+
+    def download(region, wfo, d, hh, path):
+        downloads.append(wfo)
+        path.write_bytes(b"x")
+        return True
+    monkeypatch.setattr(nwps, "_download_filtered", download)
+    monkeypatch.setattr(nwps, "_open_grib_datasets", lambda path: ["ds"])
+    # Tampa: a shallow cell 0.01 deg east, a deep one 0.02 deg east. Duck: one deep cell.
+    def cells(ds, la, ln, pad_deg=0.15):
+        searched.append((la, ln))
+        return [(0, 0, la, ln + 0.01, lambda: True), (0, 1, la, ln + 0.02, lambda: True)]
+    monkeypatch.setattr(F, "nwps_cells", cells)
+    depths = {-82.76: 5.0, -82.75: 11.0, -75.69: 9.0, -75.68: 15.0, -75.70: 7.0}
+
+    def live(la, ln):
+        return depths[round(ln, 2)]
+
+    def series(ds, lat, lng):
+        if round(lng, 2) in (-82.75, -75.68):  # the deep cells: 00Z only
+            return [{"valid_time": "2026-10-25T00:00:00Z", "hs": 0.8, "tp": 4.0}]
+        hs, tp = (0.5, 9.0) if lat > 36.005 else (0.3, 2.0)    # Duck's current point is north
+        return [{"valid_time": "2026-10-25T00:00:00Z", "hs": hs, "tp": tp},
+                {"valid_time": "2026-10-25T01:00:00Z", "hs": hs, "tp": tp}]
+    monkeypatch.setattr(nwps, "_extract_time_series_from_datasets", series)
+    monkeypatch.setattr(F, "frf_8m_hourly",
+                        lambda a, b, o: ({H0: (1.0, 9.0, 1), H0 + 3600: (1.0, 9.0, 1)}, ["202610"]))
+    pages = {F.NDBC_STATIONS: '<station id="42098" lat="27.59" lon="-82.93"/>',
+             F.NDBC_REALTIME.format("42098"):
+             "#YY MM DD hh mm WVHT DPD\n#yr mo dy hr mn m sec\n2026 10 25 00 00 1.0 4\n"
+             "2026 10 25 01 00 1.0 4\n"}
+    got = F.section_deeper(roster, None, None, datetime(2026, 10, 26, tzinfo=timezone.utc), tmp_path,
+                           text=pages.__getitem__, live=live, spots=spots)
+    # two cycles per office, each downloaded once for all its spots; one cell search per spot
+    assert sorted(downloads) == ["mhx", "mhx", "tbw", "tbw"] and not list(tmp_path.iterdir())
+    assert len(searched) == 3
+    # 01Z has the current point and the buoy but not the deeper cell: only 00Z is compared
+    a, duck = got["Spot A"], got["Duck Pier"]
+    # Spot A: the 0.01 deg cell is 5 m deep, the 0.02 deg one 11 m: that one
+    assert (a["cell"]["lng"], a["cell"]["depth_m"], a["cell"]["depth_source"]) == (-82.75, 11.0, "erddap")
+    assert (a["node"]["depth_m"], a["measured_by"], a["hours"]) == (5.0, "NDBC 42098, 23.8 km", 1)
+    assert a["node_vs_measured"]["all"]["ratio_median"] == 0.3
+    assert a["node_vs_measured"]["period"] == {"tp_median_s": 2.0, "share_under_3s": 1.0}
+    assert a["cell_vs_measured"]["all"]["ratio_median"] == 0.8
+    assert a["cell_vs_measured"]["period"] == {"tp_median_s": 4.0, "share_under_3s": 0.0}
+    assert a["measured_period"] == {"tp_median_s": 4.0, "share_under_3s": 0.0}
+    assert got["Spot B"]["cell"]["lng"] == -82.75
+    # Duck: the 0.01 deg cell is 9 m, the 0.02 deg one 15 m
+    assert (duck["cell"]["lng"], duck["cell"]["depth_m"], duck["measured_by"]) == (-75.68, 15.0, "FRF 8 m array")
+    assert (duck["node_vs_measured"]["all"]["ratio_median"], duck["cell_vs_measured"]["all"]["ratio_median"]) == (0.5, 0.8)
+    row = F.deeper_row(a)
+    assert (row["node_ratio"], row["cell_ratio"], row["cell_depth_m"], row["node_under_3s"]) == (0.3, 0.8, 11.0, 1.0)
+    F.write_csvs({"deeper": got}, str(tmp_path / "csv"))
+    import csv as _csv
+    assert [r["spot"] for r in _csv.DictReader(open(tmp_path / "csv" / "deeper.csv"))] == [
+        "Spot A", "Spot B", "Duck Pier"]
+
+
+def test_a_spot_with_no_deep_cell(monkeypatch, tmp_path):
+    from pipeline.forecast import nwps
+    roster = {"Spot A": {"orientation_deg": 90.0, "lat": 27.75, "lng": -82.77, "nwps_wfo": "tbw",
+                         "nwps_node_lat": 27.75, "nwps_node_lng": -82.76}}
+    monkeypatch.setattr(F, "list_all_cycles", lambda wfo: ("r", [("20261025", "00")]))
+    monkeypatch.setattr(nwps, "_download_filtered", lambda *a: a[-1].write_bytes(b"x") or True)
+    monkeypatch.setattr(nwps, "_open_grib_datasets", lambda path: ["ds"])
+    monkeypatch.setattr(F, "nwps_cells", lambda ds, la, ln, pad_deg=0.15: [(0, 0, la, ln + 0.01, lambda: True)])
+    monkeypatch.setattr(nwps, "_extract_time_series_from_datasets",
+                        lambda ds, la, ln: [{"valid_time": "2026-10-25T00:00:00Z", "hs": 0.3, "tp": 2.0}])
+
+    def fail(a, b):
+        raise F.DepthUnavailable("ERDDAP request failed: HTTPError: 403")
+    pages = {F.NDBC_STATIONS: '<station id="42098" lat="27.59" lon="-82.93"/>',
+             F.NDBC_REALTIME.format("42098"):
+             "#YY MM DD hh mm WVHT DPD\n#yr mo dy hr mn m sec\n2026 10 25 00 00 1.0 4\n"}
+    got = F.section_deeper(roster, None, None, datetime(2026, 10, 26, tzinfo=timezone.utc), tmp_path,
+                           text=pages.__getitem__, live=fail, spots=(("Spot A", None),))["Spot A"]
+    # no depth anywhere: no cell; the current point still compared, its depth error named
+    assert got["cell"] is None and got["cell_vs_measured"] is None and got["hours"] == 1
+    assert got["node"]["depth_m"] is None and got["node"]["depth_error"].endswith("403")
+    row = F.deeper_row(got)
+    assert row["cell_ratio"] is None and row["node_ratio"] == 0.3
+
+
+def test_the_report_names_an_unreadable_depth(capsys):
+    F.print_report({"depth_probe": {"depth_m": None, "depth_source": None,
+                                    "depth_error": "ERDDAP request failed: HTTPError: 403"}})
+    assert "live ERDDAP from this runner: unreadable (ERDDAP request failed: HTTPError: 403)" in capsys.readouterr().out
+
+
+def test_the_bundled_extract_covers_every_spot_measured():
+    g = F.EtopoGrids.load()
+    roster = {s["name"]: s for s in json.load(open(F.DEFAULT_ENRICHED_OUTPUT))}
+    for name, _ in F.DEEPER_SPOTS:
+        s = roster[name]
+        assert g.depth(s["nwps_node_lat"], s["nwps_node_lng"]) is not None, name
+    # Duck Pier's node, 7.4 m in run 49's depths.json (read live then, from the same source)
+    d = roster["Duck Pier"]
+    assert g.depth(d["nwps_node_lat"], d["nwps_node_lng"]) == 7.4

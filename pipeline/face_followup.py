@@ -31,6 +31,18 @@ SECTIONS (each runs on its own; one that fails is reported and the others still 
              instrument. NWPS is read with forecast/nwps.py's own listing, download, wet-cell
              and extraction functions.
 
+  deeper     (run 50; not in the default sections) the 11 sheltered-water suspects most likely
+             to be real and Duck Pier: the nearest NWPS CG1 cell within SEAWARD_HALF_DEG of the
+             spot's facing that is at least DEEP_M deep, wet and open ocean, against the baked
+             node, both against the nearest NDBC buoy (Duck Pier: the FRF 8 m array) over every
+             cycle NOMADS holds: height ratio, period, share of hours under 3 s.
+
+DEPTH. Read from docs/face_validation/etopo/etopo_15s.json (ETOPO 2022 15 arc-second around each
+spot, built by build_etopo.py beside it) and, outside those grids, live from NOAA's ERDDAP. Every
+depth carries its source, and a depth that cannot be read carries the error that stopped it:
+never a bare None. (In run 49 every ERDDAP request from the runner failed and was reported only
+as a depth of None.)
+
 The statistics are face_calibration.stats: n, bias, median ratio (ours / measured), RMSE,
 scatter index, r, and the share within 20% and 30%.
 """
@@ -76,6 +88,14 @@ SEAWARD_HALF_DEG = 30      # the seaward NWPS cell: within this of the spot's fa
 SEAWARD_MAX_KM = 15.0
 SEAWARD_SPOTS = (("Duck Pier", "frf-8m"), ("Jetty Park Cocoa Beach", "cdip-143"))
 HEIGHT_BANDS = ((0.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 99.0))
+ETOPO_GRIDS = REPO / "docs" / "face_validation" / "etopo" / "etopo_15s.json"
+DEEP_M = 10.0
+DEEPER_SPOTS = (
+    ("Mexico Beach", None), ("Spring Ave", None), ("St. Pete Beach", None),
+    ("Treasure Island FL", None), ("Madeira Beach", None), ("Whitney Beach", None),
+    ("Oak Island Pier", None), ("Coolidge", None), ("Siesta Key", None), ("Gasparilla", None),
+    ("Twin Piers", None), ("Duck Pier", "frf-8m"),
+)   # None: the nearest of BUOYS
 
 
 # --------------------------------------------------------------------------- #
@@ -197,10 +217,10 @@ def off_angle(a, b):
     return abs(((a - b + 180.0) % 360.0) - 180.0)
 
 
-def seaward_cell(cells, spot_lat, spot_lng, facing_deg, is_open=None):
+def seaward_cell(cells, spot_lat, spot_lng, facing_deg, is_open=None, deep=None):
     """The nearest cell (from *cells*, [(li, lj, lat, lng, is_wet)]) within SEAWARD_HALF_DEG of
-    the facing and SEAWARD_MAX_KM of the spot that is wet and, when *is_open* is given,
-    open ocean by it. {li, lj, lat, lng, km, bearing_deg} or None."""
+    the facing and SEAWARD_MAX_KM of the spot that is wet and, when given, deep enough by
+    *deep* and open ocean by *is_open*. {li, lj, lat, lng, km, bearing_deg} or None."""
     cand = []
     for li, lj, lat, lng, wet in cells:
         km = _haversine_km(spot_lat, spot_lng, lat, lng)
@@ -208,7 +228,7 @@ def seaward_cell(cells, spot_lat, spot_lng, facing_deg, is_open=None):
         if km <= SEAWARD_MAX_KM and off_angle(brg, facing_deg) <= SEAWARD_HALF_DEG:
             cand.append((km, li, lj, lat, lng, brg, wet))
     for km, li, lj, lat, lng, brg, wet in sorted(cand):
-        if wet() and (is_open is None or is_open(lat, lng)):
+        if (deep is None or deep(lat, lng)) and wet() and (is_open is None or is_open(lat, lng)):
             return {"li": li, "lj": lj, "lat": round(lat, 5), "lng": round(lng, 5),
                     "km": round(km, 2), "bearing_deg": round(brg, 1)}
     return None
@@ -283,14 +303,55 @@ def _text(url, timeout=60):
     return r.text
 
 
-def etopo_depth_m(lat, lng, text=_text) -> float | None:
-    """Water depth (m, positive) at the ETOPO 2022 15 arc-second cell nearest (lat, lng); a
-    land elevation comes back negative. None when ERDDAP does not answer."""
+class DepthUnavailable(Exception):
+    """A depth that could not be read, with what stopped it."""
+
+
+def etopo_depth_m(lat, lng, text=_text) -> float:
+    """Water depth (m, positive) at the ETOPO 2022 15 arc-second cell nearest (lat, lng), live
+    from ERDDAP; a land elevation comes back negative. Raises DepthUnavailable naming the failure
+    (the request, or an answer that is not a depth); never returns None."""
     try:
-        lines = text(ETOPO.format(lat=round(lat, 5), lng=round(lng, 5))).strip().splitlines()
-        return round(-float(lines[2].split(",")[2]), 1)
-    except Exception:  # noqa: BLE001
+        body = text(ETOPO.format(lat=round(lat, 5), lng=round(lng, 5)))
+    except Exception as e:  # noqa: BLE001
+        raise DepthUnavailable(f"ERDDAP request failed: {type(e).__name__}: {e}"[:300]) from e
+    try:
+        return round(-float(body.strip().splitlines()[2].split(",")[2]), 1)
+    except (IndexError, ValueError) as e:
+        raise DepthUnavailable(f"ERDDAP answer is not a depth: {body[:120]!r}") from e
+
+
+class EtopoGrids:
+    """The bundled ETOPO extract (ETOPO_GRIDS): depth(lat, lng) from the first grid holding the
+    point, its nearest cell; None only when no grid covers it."""
+
+    def __init__(self, data: dict):
+        self.grids = list(data.get("grids", {}).values())
+
+    @classmethod
+    def load(cls, path=ETOPO_GRIDS):
+        return cls(json.load(open(path)))
+
+    def depth(self, lat, lng):
+        for g in self.grids:
+            i = round((lat - g["lat0"]) / g["dlat"])
+            j = round((lng - g["lng0"]) / g["dlng"])
+            if 0 <= i < g["nlat"] and 0 <= j < g["nlng"]:
+                return g["depth_m"][i][j]
         return None
+
+
+def depth_record(lat, lng, grids=None, live=etopo_depth_m) -> dict:
+    """{depth_m, depth_source, depth_error}: the bundled extract when it covers the point, else
+    live ERDDAP; when neither gives a depth, depth_m is None AND depth_error says why."""
+    if grids is not None:
+        d = grids.depth(lat, lng)
+        if d is not None:
+            return {"depth_m": d, "depth_source": "etopo extract", "depth_error": None}
+    try:
+        return {"depth_m": live(lat, lng), "depth_source": "erddap", "depth_error": None}
+    except DepthUnavailable as e:
+        return {"depth_m": None, "depth_source": None, "depth_error": str(e)}
 
 
 def buoy_hourly(bid, text=_text) -> dict:
@@ -376,7 +437,13 @@ def section_suspects(client, roster, suspects, since, until, text=_text) -> list
     return out
 
 
-def section_coastline(index, roster, names, depth=etopo_depth_m) -> list[dict]:
+def _put_depth(rec: dict, prefix: str, d: dict) -> None:
+    rec[f"{prefix}depth_m"] = d["depth_m"]
+    rec[f"{prefix}depth_source"] = d["depth_source"]
+    rec[f"{prefix}depth_error"] = d["depth_error"]
+
+
+def section_coastline(index, roster, names, depth=depth_record) -> list[dict]:
     out = []
     for name in names:
         s = roster.get(name, {})
@@ -388,12 +455,12 @@ def section_coastline(index, roster, names, depth=etopo_depth_m) -> list[dict]:
             continue
         land = Land.around(index, nl, ng)
         rec.update(classify(land, nl, ng, facing))
-        rec["node_depth_m"] = depth(nl, ng)
+        _put_depth(rec, "node_", depth(nl, ng))
         rec["node_km_from_spot"] = round(_haversine_km(s["lat"], s["lng"], nl, ng), 2)
         near = nearest_open_ocean(Land.around(index, s["lat"], s["lng"]), s["lat"], s["lng"], facing)
         rec["nearest_open_ocean"] = near
         if near:
-            near["depth_m"] = depth(near["lat"], near["lng"])
+            _put_depth(near, "", depth(near["lat"], near["lng"]))
         out.append(rec)
     return out
 
@@ -447,6 +514,14 @@ def list_all_cycles(wfo):
     return region, sorted(cycles)
 
 
+def period_summary(series: dict, hours) -> dict:
+    """The median period and the share of hours under SHELTERED_TP_S of {hour: (hs, tp, ...)}
+    over *hours*."""
+    tps = [float(series[h][1]) for h in hours if series[h][1] is not None]
+    return {"tp_median_s": round(median(tps), 2) if tps else None,
+            "share_under_3s": round(sum(t < SHELTERED_TP_S for t in tps) / len(tps), 3) if tps else None}
+
+
 def nwps_cells(datasets, spot_lat, spot_lng, pad_deg=0.15):
     """[(li, lj, lat, lng, is_wet)] for the cells of the wave grid within *pad_deg* of the spot;
     is_wet is forecast/nwps.py's own _cell_is_water, deferred."""
@@ -465,7 +540,7 @@ def nwps_cells(datasets, spot_lat, spot_lng, pad_deg=0.15):
     return out
 
 
-def section_seaward(roster, index, since, until, workdir, open_nc=_open_nc, depth=etopo_depth_m):
+def section_seaward(roster, index, since, until, workdir, open_nc=_open_nc, depth=depth_record):
     from .forecast import nwps
     out = {}
     for name, inst in SEAWARD_SPOTS:
@@ -475,7 +550,7 @@ def section_seaward(roster, index, since, until, workdir, open_nc=_open_nc, dept
                "node": {"lat": s.get("nwps_node_lat"), "lng": s.get("nwps_node_lng")}}
         rec["node"]["km"] = round(_haversine_km(s["lat"], s["lng"], s["nwps_node_lat"], s["nwps_node_lng"]), 2)
         rec["node"]["bearing_deg"] = round(_bearing(s["lat"], s["lng"], s["nwps_node_lat"], s["nwps_node_lng"]), 1)
-        rec["node"]["depth_m"] = depth(s["nwps_node_lat"], s["nwps_node_lng"])
+        _put_depth(rec["node"], "", depth(s["nwps_node_lat"], s["nwps_node_lng"]))
         region, cycles = list_all_cycles(wfo)
         rec["cycles_listed"] = [f"{d}{hh}" for d, hh in cycles]
         node_series, cell_series, cell = [], [], None
@@ -502,7 +577,7 @@ def section_seaward(roster, index, since, until, workdir, open_nc=_open_nc, dept
                 path.unlink(missing_ok=True)
         rec["cycles_read"] = len(node_series)
         if cell is not None:
-            cell["depth_m"] = depth(cell["lat"], cell["lng"])
+            _put_depth(cell, "", depth(cell["lat"], cell["lng"]))
             cell["coastline_checked"] = index is not None
         rec["seaward_cell"] = cell
         measured = (frf_8m_hourly(since, until, open_nc)[0] if inst == "frf-8m"
@@ -516,6 +591,90 @@ def section_seaward(roster, index, since, until, workdir, open_nc=_open_nc, dept
     return out
 
 
+def section_deeper(roster, index, grids, until, workdir, text=_text, open_nc=_open_nc,
+                   live=etopo_depth_m, spots=None) -> dict:
+    """The deeper section (module docstring). Each office's cycles are downloaded once and every
+    spot it serves is read from the same file."""
+    from .forecast import nwps
+    spots = DEEPER_SPOTS if spots is None else spots
+    positions = parse_stations(text(NDBC_STATIONS))
+
+    def depth(la, ln):
+        return depth_record(la, ln, grids, live)
+
+    by_wfo: dict = {}
+    for name, inst in spots:
+        by_wfo.setdefault(roster[name]["nwps_wfo"], []).append((name, inst))
+    out, buoys = {}, {}
+    for wfo, members in by_wfo.items():
+        region, cycles = list_all_cycles(wfo)
+        st = {name: {"cell": None, "searched": False, "node": [], "cellser": []} for name, _ in members}
+        read = 0
+        for d, hh in cycles:
+            path = Path(workdir) / f"{wfo}_{d}_{hh}.grib2"
+            if not nwps._download_filtered(region, wfo, d, hh, path):
+                continue
+            try:
+                ds = nwps._open_grib_datasets(path)
+                read += 1
+                cyc = datetime(int(d[:4]), int(d[4:6]), int(d[6:]), int(hh), tzinfo=timezone.utc).timestamp()
+                for name, _ in members:
+                    s, x = roster[name], st[name]
+                    if not x["searched"]:
+                        x["searched"] = True
+                        facing = float(s["orientation_deg"])
+                        land = Land.around(index, s["lat"], s["lng"]) if index is not None else None
+                        is_open = (None if land is None else
+                                   lambda la, ln, land=land, facing=facing:
+                                   classify(land, la, ln, facing)["class"] == "open ocean")
+                        x["cell"] = seaward_cell(
+                            nwps_cells(ds, s["lat"], s["lng"], pad_deg=0.2), s["lat"], s["lng"], facing,
+                            is_open, deep=lambda la, ln: (depth(la, ln)["depth_m"] or -1e9) >= DEEP_M)
+                        x["coastline_checked"] = land is not None
+                    x["node"].append((cyc, nwps._extract_time_series_from_datasets(
+                        ds, s["nwps_node_lat"], s["nwps_node_lng"])))
+                    if x["cell"] is not None:
+                        x["cellser"].append((cyc, nwps._extract_time_series_from_datasets(
+                            ds, x["cell"]["lat"], x["cell"]["lng"])))
+            finally:
+                path.unlink(missing_ok=True)
+        for name, inst in members:
+            s, x = roster[name], st[name]
+            if inst == "frf-8m":
+                measured = frf_8m_hourly(until - timedelta(days=5), until, open_nc)[0]
+                by = "FRF 8 m array"
+            else:
+                bid, km = nearest_buoy(s["lat"], s["lng"], positions)
+                if bid not in buoys:
+                    buoys[bid] = buoy_hourly(bid, text)
+                measured, by = buoys[bid], f"NDBC {bid}, {round(km, 1)} km"
+            node = {"lat": s["nwps_node_lat"], "lng": s["nwps_node_lng"],
+                    "km": round(_haversine_km(s["lat"], s["lng"], s["nwps_node_lat"], s["nwps_node_lng"]), 2),
+                    "bearing_deg": round(_bearing(s["lat"], s["lng"], s["nwps_node_lat"], s["nwps_node_lng"]), 1)}
+            _put_depth(node, "", depth(node["lat"], node["lng"]))
+            cell = x["cell"]
+            if cell is not None:
+                _put_depth(cell, "", depth(cell["lat"], cell["lng"]))
+                cell["coastline_checked"] = x["coastline_checked"]
+            node_h, cell_h = shortest_lead(x["node"]), shortest_lead(x["cellser"])
+            hours = set(node_h) & set(measured)
+            if cell is not None:
+                hours &= set(cell_h)
+            hours = sorted(hours)
+            out[name] = {
+                "spot": name, "wfo": wfo, "measured_by": by, "orientation_deg": s["orientation_deg"],
+                "cycles_listed": len(cycles), "cycles_read": read, "hours": len(hours),
+                "node": node, "cell": cell,
+                "node_vs_measured": {**banded(pairs_vs({h: node_h[h] for h in hours}, measured)),
+                                     "period": period_summary(node_h, hours)},
+                "cell_vs_measured": (None if cell is None else
+                                     {**banded(pairs_vs({h: cell_h[h] for h in hours}, measured)),
+                                      "period": period_summary(cell_h, hours)}),
+                "measured_period": period_summary(measured, hours),
+            }
+    return out
+
+
 # --------------------------------------------------------------------------- #
 # Report                                                                        #
 # --------------------------------------------------------------------------- #
@@ -525,6 +684,12 @@ def _fmt(s):
     return (f"n {s['n']:5d}  ratio {s['ratio_median']:.2f}  bias {s['bias_m']:+.2f} m  "
             f"within 20% {s['within_20']:.0%}  30% {s['within_30']:.0%}  r {s['r']}  "
             f"(measured {s['mean_measured_m']:.2f} m, ours {s['mean_ours_m']:.2f} m)")
+
+
+def _depth_str(r, prefix=""):
+    if r.get(f"{prefix}depth_m") is not None:
+        return f"{r[f'{prefix}depth_m']} m ({r.get(f'{prefix}depth_source')})"
+    return f"unreadable ({r.get(f'{prefix}depth_error')})"
 
 
 def _print_banded(label, b):
@@ -549,10 +714,10 @@ def print_report(rep):
         for r in rep["coastline"]:
             n = r.get("nearest_open_ocean")
             print(f"  {r['spot']:22s} {r.get('class')}: node ({r.get('node_lat')}, {r.get('node_lng')}) "
-                  f"{r.get('node_km_from_spot')} km from the spot, depth {r.get('node_depth_m')} m, "
+                  f"{r.get('node_km_from_spot')} km from the spot, depth {_depth_str(r, 'node_')}, "
                   f"facing ray land at {r.get('facing_land_km')} km, open sector {r.get('open_width_deg')} deg; "
                   f"nearest open ocean: " + ("none within 10 km" if not n else
-                  f"({n['lat']}, {n['lng']}) {n['km']} km at {n['bearing_deg']} deg, depth {n.get('depth_m')} m"))
+                  f"({n['lat']}, {n['lng']}) {n['km']} km at {n['bearing_deg']} deg, depth {_depth_str(n)}"))
     if "mop" in rep:
         print("\n=== 3. MOP's own height against CDIP ===")
         for st, r in rep["mop"].items():
@@ -572,18 +737,46 @@ def print_report(rep):
             c, n = r.get("seaward_cell"), r["node"]
             print(f"  {name} ({r['wfo']}, facing {r['orientation_deg']}): cycles listed {len(r['cycles_listed'])}, "
                   f"read {r['cycles_read']}, paired hours {r['hours']}")
-            print(f"    baked node ({n['lat']}, {n['lng']}) {n['km']} km at {n['bearing_deg']} deg, depth {n['depth_m']} m")
+            print(f"    baked node ({n['lat']}, {n['lng']}) {n['km']} km at {n['bearing_deg']} deg, depth {_depth_str(n)}")
             print("    seaward cell " + ("none found" if not c else
-                  f"({c['lat']}, {c['lng']}) {c['km']} km at {c['bearing_deg']} deg, depth {c['depth_m']} m, "
+                  f"({c['lat']}, {c['lng']}) {c['km']} km at {c['bearing_deg']} deg, depth {_depth_str(c)}, "
                   f"coastline checked {c['coastline_checked']}"))
             _print_banded("baked node vs measured", r["node_vs_measured"])
             _print_banded("seaward cell vs measured", r["cell_vs_measured"])
+    if "depth_probe" in rep:
+        print(f"\nlive ERDDAP from this runner: {_depth_str(rep['depth_probe'])}")
+    if "deeper" in rep:
+        print(f"\n=== 5. the nearest NWPS cell {DEEP_M:g} m deep or more within {SEAWARD_HALF_DEG} deg of "
+              f"facing, against the current point ===")
+        for name, r in rep["deeper"].items():
+            n, c, mp = r["node"], r["cell"], r["measured_period"]
+            print(f"  {name} ({r['wfo']}, facing {r['orientation_deg']}; {r['measured_by']}): cycles "
+                  f"{r['cycles_read']} of {r['cycles_listed']}, paired hours {r['hours']}; measured period "
+                  f"{mp['tp_median_s']} s, under 3 s {mp['share_under_3s']}")
+            nv = r["node_vs_measured"]
+            print(f"    current point ({n['lat']}, {n['lng']}) {n['km']} km at {n['bearing_deg']} deg, depth "
+                  f"{_depth_str(n)}: period {nv['period']['tp_median_s']} s, under 3 s "
+                  f"{nv['period']['share_under_3s']}")
+            _print_banded("    current point vs measured", nv)
+            if c is None:
+                print("    no cell found")
+                continue
+            cv = r["cell_vs_measured"]
+            print(f"    deeper cell ({c['lat']}, {c['lng']}) {c['km']} km at {c['bearing_deg']} deg, depth "
+                  f"{_depth_str(c)}, coastline checked {c['coastline_checked']}: period "
+                  f"{cv['period']['tp_median_s']} s, under 3 s {cv['period']['share_under_3s']}")
+            _print_banded("    deeper cell vs measured", cv)
     for k, v in rep.get("errors", {}).items():
         print(f"\nSECTION {k} FAILED: {v}")
 
 
 def write_csvs(rep, d):
     os.makedirs(d, exist_ok=True)
+    if rep.get("deeper"):
+        with open(os.path.join(d, "deeper.csv"), "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=DEEPER_COLUMNS)
+            w.writeheader()
+            w.writerows(deeper_row(r) for r in rep["deeper"].values())
     if rep.get("suspects"):
         with open(os.path.join(d, "suspects_vs_buoys.csv"), "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rep["suspects"][0]))
@@ -603,12 +796,38 @@ def write_csvs(rep, d):
                             "open_bearing_deg": n.get("bearing_deg"), "open_depth_m": n.get("depth_m")})
 
 
-SECTIONS = ("suspects", "coastline", "mop", "seaward")
+DEEPER_COLUMNS = ["spot", "wfo", "measured_by", "hours", "measured_tp_s", "measured_under_3s",
+                  "node_lat", "node_lng", "node_km", "node_depth_m", "node_ratio", "node_within_20",
+                  "node_within_30", "node_tp_s", "node_under_3s", "cell_lat", "cell_lng", "cell_km",
+                  "cell_bearing_deg", "cell_depth_m", "cell_ratio", "cell_within_20", "cell_within_30",
+                  "cell_tp_s", "cell_under_3s"]
+
+
+def deeper_row(r: dict) -> dict:
+    n, c, nv, cv = r["node"], r["cell"] or {}, r["node_vs_measured"], r["cell_vs_measured"] or {}
+    na, ca = nv["all"], (cv.get("all") or {})
+    return {"spot": r["spot"], "wfo": r["wfo"], "measured_by": r["measured_by"], "hours": r["hours"],
+            "measured_tp_s": r["measured_period"]["tp_median_s"],
+            "measured_under_3s": r["measured_period"]["share_under_3s"],
+            "node_lat": n["lat"], "node_lng": n["lng"], "node_km": n["km"], "node_depth_m": n["depth_m"],
+            "node_ratio": na.get("ratio_median"), "node_within_20": na.get("within_20"),
+            "node_within_30": na.get("within_30"), "node_tp_s": nv["period"]["tp_median_s"],
+            "node_under_3s": nv["period"]["share_under_3s"],
+            "cell_lat": c.get("lat"), "cell_lng": c.get("lng"), "cell_km": c.get("km"),
+            "cell_bearing_deg": c.get("bearing_deg"), "cell_depth_m": c.get("depth_m"),
+            "cell_ratio": ca.get("ratio_median"), "cell_within_20": ca.get("within_20"),
+            "cell_within_30": ca.get("within_30"),
+            "cell_tp_s": (cv.get("period") or {}).get("tp_median_s"),
+            "cell_under_3s": (cv.get("period") or {}).get("share_under_3s")}
+
+
+SECTIONS = ("suspects", "coastline", "mop", "seaward", "deeper")
+DEFAULT_SECTIONS = ("suspects", "coastline", "mop", "seaward")
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--sections", default=",".join(SECTIONS))
+    ap.add_argument("--sections", default=",".join(DEFAULT_SECTIONS))
     ap.add_argument("--out")
     ap.add_argument("--csv-dir")
     ap.add_argument("--roster", default=str(DEFAULT_ENRICHED_OUTPUT))
@@ -622,8 +841,11 @@ def main(argv=None) -> int:
     suspects = load_suspects()
     since, until = run48_window()
     rep = {"window": [since.isoformat(), until.isoformat()], "errors": {}}
+    grids = EtopoGrids.load()
+    rep["depth_probe"] = depth_record(roster["Duck Pier"]["nwps_node_lat"],
+                                      roster["Duck Pier"]["nwps_node_lng"])     # live, no extract
     index = None
-    if "coastline" in wanted or "seaward" in wanted:
+    if "coastline" in wanted or "seaward" in wanted or "deeper" in wanted:
         from .enrichment.geodata import load_land_index
         index = load_land_index()
         if index is None:
@@ -631,10 +853,14 @@ def main(argv=None) -> int:
     jobs = {
         "suspects": lambda: section_suspects(client, roster, suspects, since, until),
         "coastline": lambda: section_coastline(
-            index, roster, [s["spot"] for s in suspects] + [n for n, _ in SEAWARD_SPOTS]),
+            index, roster, [s["spot"] for s in suspects] + [n for n, _ in SEAWARD_SPOTS],
+            depth=lambda la, ln: depth_record(la, ln, grids)),
         "mop": lambda: section_mop(client, roster, datetime.fromisoformat(args.mop_since)),
         "seaward": lambda: section_seaward(roster, index, datetime.now(timezone.utc) - timedelta(days=5),
-                                           datetime.now(timezone.utc), tempfile.mkdtemp()),
+                                           datetime.now(timezone.utc), tempfile.mkdtemp(),
+                                           depth=lambda la, ln: depth_record(la, ln, grids)),
+        "deeper": lambda: section_deeper(roster, index, grids, datetime.now(timezone.utc),
+                                         tempfile.mkdtemp()),
     }
     for name in wanted:
         if name == "coastline" and index is None:

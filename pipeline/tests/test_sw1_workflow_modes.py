@@ -27,21 +27,22 @@ def test_nwps_shelter_is_a_mode():
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
-        "data-quality", "node-preview", "face-sources", "face-calibration", "face-followup"]
+        "data-quality", "node-preview", "face-sources", "face-calibration", "face-followup", "face-seaward"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
                          "rating-preview", "data-quality", "node-preview", "face-sources", "face-calibration",
-                         "face-followup"}
+                         "face-followup", "face-seaward"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
         "&& inputs.mode != 'face-sources' "
-        "&& inputs.mode != 'face-calibration' && inputs.mode != 'face-followup' }}")
+        "&& inputs.mode != 'face-calibration' && inputs.mode != 'face-followup' "
+        "&& inputs.mode != 'face-seaward' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -124,6 +125,18 @@ def test_the_face_followup_only_reads_and_keeps_its_results():
     assert "    permissions:\n      contents: read\n" in job
     assert "run: python -m pipeline.face_followup --out face_followup.json --csv-dir face_followup" in job
     assert "key: geodata-v1-${{ hashFiles('pipeline/download_geodata.sh') }}" in job   # the raycast's cache
+    assert "libeccodes0" in job and "retention-days: 90" in job
+    for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
+
+
+def test_the_face_seaward_run_only_reads_and_keeps_its_results():
+    job = _jobs()["face-seaward"]
+    assert _if(job) == "${{ inputs.mode == 'face-seaward' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert ("run: python -m pipeline.face_followup --sections deeper --out face_seaward.json "
+            "--csv-dir face_seaward") in job
+    assert "key: geodata-v1-${{ hashFiles('pipeline/download_geodata.sh') }}" in job
     assert "libeccodes0" in job and "retention-days: 90" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
