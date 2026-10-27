@@ -1,0 +1,45 @@
+{
+  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point.",
+  "overrides": {
+    "duck-pier": {
+      "nwps_wfo": "mhx",
+      "nwps_node_lat": 36.19331,
+      "nwps_node_lng": -75.72892,
+      "replaces": [36.19317, -75.74849],
+      "reason": "The current point (1.14 km N, 7.4 m) read 0.76 of the FRF 8 m array, 25% of hours within 20%, r 0.38; the 15 m cell 2.07 km at 56 deg read 0.87, 98.6% within 20%, r 0.93 (72 h). Run 49 found the same over 66 h: 0.75, 18% within 20%, r 0.17 at the current point against 0.87, 98.5%, r 0.89 at the cell.",
+      "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 72 h against FRF 8 m; run 49 (face-followup, 538be6d), 66 h"
+    },
+    "spring-ave": {
+      "nwps_wfo": "tbw",
+      "nwps_node_lat": 27.51019,
+      "nwps_node_lng": -82.80924,
+      "replaces": [27.51007, -82.7375],
+      "reason": "The current point (5.3 m) read 0.48 of NDBC 42098 with a 2.29 s median period, 64% of hours under 3 s; the 11 m cell 7.26 km at 257 deg read 0.96, 93% within 20%, 4.0 s, no hour under 3 s (buoy 5.0 s).",
+      "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 20.4 km"
+    },
+    "st-pete-beach": {
+      "nwps_wfo": "tbw",
+      "nwps_node_lat": 27.7373,
+      "nwps_node_lng": -82.86304,
+      "replaces": [27.73716, -82.77337],
+      "reason": "The current point (6.5 m) read 0.43 of NDBC 42098 with a 2.34 s median period, 69% of hours under 3 s; the 10.3 m cell 9.94 km at 266 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. Treasure Island FL and Madeira Beach share this cell.",
+      "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 23.8 km"
+    },
+    "treasure-island-fl": {
+      "nwps_wfo": "tbw",
+      "nwps_node_lat": 27.7373,
+      "nwps_node_lng": -82.86304,
+      "replaces": [27.75338, -82.77337],
+      "reason": "The current point (5.3 m) read 0.34 of NDBC 42098 with a 2.01 s median period, 66% of hours under 3 s; the 10.3 m cell 9.45 km at 253 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. St. Pete Beach and Madeira Beach share this cell.",
+      "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 24.8 km"
+    },
+    "madeira-beach": {
+      "nwps_wfo": "tbw",
+      "nwps_node_lat": 27.7373,
+      "nwps_node_lng": -82.86304,
+      "replaces": [27.78582, -82.80924],
+      "reason": "The current point (6.1 m) read 0.45 of NDBC 42098 with a 2.25 s median period, 63% of hours under 3 s; the 10.3 m cell 9.16 km at 218 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. St. Pete Beach and Treasure Island FL share this cell.",
+      "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 26.6 km"
+    }
+  }
+}

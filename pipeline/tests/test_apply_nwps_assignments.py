@@ -558,6 +558,161 @@ def test_promotion_two_source_files_one_buoy_46215_grid_crossing():
     assert len(rows) == 4 and held == [] and all(r["direction_status"] == "pending" for r in rows)
 
 
+# --------------------------------------------------------------------------- #
+# Node overrides — pipeline/data/nwps_node_overrides.json                       #
+# --------------------------------------------------------------------------- #
+# Two spots on the equator and at 60 N. 0.01 deg of longitude on the equator, and 0.02 deg at
+# 60 N, are both 6371 x pi/180 x 0.01 = 1.111949 km on the great circle -> 1112 m.
+_GEO = [{"name": "Steamer Lane", "lat": 0.0, "lng": 0.0},
+        {"name": "Pleasure Point", "lat": 60.0, "lng": 0.0}]
+_OV_DOC = _doc(spots=[dict(_node(nwps_node_lat=0.0, nwps_node_lng=0.005, nwps_node_distance_m=556),
+                           slug="steamer-lane", name="Steamer Lane", nwps_wfo="mtr",
+                           nwps_buoy_id="46240"),
+                      dict(_node(nwps_node_lat=60.0, nwps_node_lng=0.001, nwps_node_distance_m=56),
+                           slug="pleasure-point", name="Pleasure Point", nwps_wfo="mtr",
+                           nwps_buoy_id="46240")],
+               pending=[{"zone": "mtr/46240", "wfo": "mtr", "buoy": "46240"}])
+
+
+def _ov(**kw):
+    base = {"nwps_wfo": "mtr", "nwps_node_lat": 0.0, "nwps_node_lng": 0.01,
+            "replaces": [0.0, 0.005], "reason": "r", "evidence": "e"}
+    base.update(kw)
+    return base
+
+
+def test_node_override_moves_the_node_and_measures_its_distance():
+    rows, *_ = ap.build_plan(doc=_OV_DOC, enriched=_GEO, overrides={"steamer-lane": _ov()})
+    f = {r["slug"]: r for r in rows}["steamer-lane"]
+    assert f["node_override"] is True
+    assert (f["fields"]["nwps_node_lat"], f["fields"]["nwps_node_lng"],
+            f["fields"]["nwps_node_distance_m"]) == (0.0, 0.01, 1112)
+    assert f["fields"]["nwps_wfo"] == "mtr" and f["fields"]["nwps_buoy_id"] == "46240"
+    assert f["direction_status"] == "pending"
+
+
+def test_node_override_distance_at_60_north():
+    ov = _ov(nwps_node_lat=60.0, nwps_node_lng=0.02, replaces=[60.0, 0.001])
+    rows, *_ = ap.build_plan(doc=_OV_DOC, enriched=_GEO, overrides={"pleasure-point": ov})
+    f = {r["slug"]: r for r in rows}["pleasure-point"]["fields"]
+    assert f["nwps_node_distance_m"] == 1112
+
+
+def test_a_spot_without_an_override_keeps_its_assigned_node():
+    rows, *_ = ap.build_plan(doc=_OV_DOC, enriched=_GEO, overrides={"steamer-lane": _ov()})
+    r = {r["slug"]: r for r in rows}["pleasure-point"]
+    assert r["node_override"] is False
+    assert (r["fields"]["nwps_node_lat"], r["fields"]["nwps_node_lng"],
+            r["fields"]["nwps_node_distance_m"]) == (60.0, 0.001, 56)
+
+
+def _raises(**kw):
+    try:
+        ap.build_plan(doc=_OV_DOC, enriched=_GEO, **kw)
+    except ValueError as e:
+        return str(e)
+    raise AssertionError("expected ValueError")
+
+
+def test_node_override_on_another_wfo_stops():
+    msg = _raises(overrides={"steamer-lane": _ov(nwps_wfo="lox")})
+    assert "steamer-lane" in msg and "'lox'" in msg and "'mtr'" in msg
+
+
+def test_node_override_of_a_node_the_assignment_no_longer_names_stops():
+    msg = _raises(overrides={"steamer-lane": _ov(replaces=[0.0, 0.004])})
+    assert "steamer-lane" in msg and "re-placed" in msg
+    assert "[0.0, 0.005]" in msg
+    msg = _raises(overrides={"steamer-lane": _ov(replaces=[0.001, 0.005])})
+    assert "re-placed" in msg
+
+
+def test_node_override_with_no_replaces_stops():
+    ov = _ov()
+    del ov["replaces"]
+    assert "re-placed" in _raises(overrides={"steamer-lane": ov})
+
+
+def test_node_override_for_a_spot_no_assignment_places_stops():
+    msg = _raises(overrides={"waddell-creek": _ov()})
+    assert "['waddell-creek']" in msg and "no assignment places" in msg
+    held = _doc(spots=[dict(_node(), slug="steamer-lane", name="Steamer Lane", nwps_wfo="mtr",
+                            nwps_buoy_id="46240")])
+    try:
+        ap.build_plan(doc=held, enriched=_GEO, overrides={"steamer-lane": _ov()})
+    except ValueError as e:
+        assert "['steamer-lane']" in str(e)
+    else:
+        raise AssertionError("a HELD spot's override must stop the plan")
+
+
+def test_an_injected_doc_reads_no_override_file():
+    # The live file moves duck-pier, which this doc does not place; with no override file read
+    # the plan builds.
+    rows, *_ = ap.build_plan(doc=_OV_DOC, enriched=_GEO)
+    assert all(r["node_override"] is False for r in rows) and len(rows) == 2
+
+
+def test_load_node_overrides_with_no_file_is_empty():
+    from pathlib import Path
+    assert ap.load_node_overrides(Path(_REPO) / "no-such-overrides.json") == {}
+
+
+def test_the_dry_run_marks_an_overridden_node():
+    import contextlib
+    import io
+    rows, problems, held, trust, *_ = ap.build_plan(doc=_OV_DOC, enriched=_GEO,
+                                                    overrides={"steamer-lane": _ov()})
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        ap.print_dry_run(rows, problems, held, trust)
+    lines = buf.getvalue().splitlines()
+    assert [ln.split()[0] for ln in lines if ln.endswith("(node override)")] == ["steamer-lane"]
+
+
+# Run 50's cells, copied by hand from docs/face_validation/run-50/face_seaward/deeper.csv
+# (cell_lat, cell_lng, cell_km) and the current points they replace (node_lat, node_lng).
+_RUN50 = {"duck-pier": ((36.19331, -75.72892), 2.07, (36.19317, -75.74849)),
+          "spring-ave": ((27.51019, -82.80924), 7.26, (27.51007, -82.7375)),
+          "st-pete-beach": ((27.7373, -82.86304), 9.94, (27.73716, -82.77337)),
+          "treasure-island-fl": ((27.7373, -82.86304), 9.45, (27.75338, -82.77337)),
+          "madeira-beach": ((27.7373, -82.86304), 9.16, (27.78582, -82.80924))}
+
+
+def test_live_overrides_are_run_50s_cells():
+    ov = ap.load_node_overrides()
+    assert set(ov) == set(_RUN50)
+    for slug, (cell, _km, was) in _RUN50.items():
+        assert (ov[slug]["nwps_node_lat"], ov[slug]["nwps_node_lng"]) == cell, slug
+        assert ov[slug]["replaces"] == list(was), slug
+        assert ov[slug]["reason"] and ov[slug]["evidence"], slug
+
+
+def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
+    by_slug = {ap._slug(s["name"]): s for s in _real_enriched()}
+    assigned = {a["slug"]: a for a in _real_doc()["spots"]}
+    for slug, (cell, km, was) in _RUN50.items():
+        s = by_slug[slug]
+        assert (s["nwps_node_lat"], s["nwps_node_lng"]) == cell, slug
+        # run 50 printed the km to 2 decimals, so the metres agree to within 5
+        assert abs(s["nwps_node_distance_m"] - km * 1000) <= 5, slug
+        assert (assigned[slug]["nwps_node_lat"], assigned[slug]["nwps_node_lng"]) == was, slug
+
+
+def test_live_rebake_writes_what_the_roster_already_holds():
+    # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
+    # spot's node fields, the moved five included, already read what apply would write.
+    enriched = _real_enriched()
+    by_slug = {ap._slug(s["name"]): s for s in enriched}
+    rows, problems, held, *_ = ap.build_plan()
+    assert not problems and not held
+    assert sorted(r["slug"] for r in rows if r["node_override"]) == sorted(_RUN50)
+    for r in rows:
+        spot = by_slug[r["slug"]]
+        for k, v in r["fields"].items():
+            assert spot.get(k) == v, f"{r['slug']}.{k}: roster {spot.get(k)!r}, re-bake {v!r}"
+
+
 def _run_all():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

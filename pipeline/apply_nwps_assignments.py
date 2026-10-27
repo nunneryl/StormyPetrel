@@ -32,7 +32,13 @@ DRY RUN by default; --apply to write. A spot is PLACED (height-live) if ANY of:
   (b) its (nwps_wfo, nwps_buoy_id) is in buoy_reference.pending[] -> "pending" (OPTION-B:
       NWPS HEIGHT now, direction NOT yet buoy-verified, awaiting a swell + --trustcheck).
 HEIGHT placement is identical for (a)/(b)/(c). A buoy in buoy_reference.retired[] never
-auto-places via the pending path. None of the above -> HELD. --force places held spots
+auto-places via the pending path.
+
+A spot listed in pipeline/data/nwps_node_overrides.json gets its node from there instead of
+from the assignments file (nwps_node_lat/lng, and nwps_node_distance_m measured from the spot),
+so a re-bake keeps a sample point moved on measured evidence. Each override names the node it
+replaces; if the assignment names any other node, or another WFO, this stops rather than
+override a placement nobody measured. None of the above -> HELD. --force places held spots
 anyway (testing only). db_import folds nwps_direction_status into
 data_sources.nwps_direction_status so a later reader can tell buoy-verified direction from
 still-pending from never-verifiable.
@@ -47,6 +53,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -54,6 +61,7 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[1]
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
 ASSIGNMENTS = _ROOT / "scripts" / "nwps_okx_assignments.json"
+NODE_OVERRIDES = _ROOT / "pipeline" / "data" / "nwps_node_overrides.json"
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 _FIELDS = ("nwps_wfo", "nwps_grid", "nwps_node_lat", "nwps_node_lng",
@@ -64,7 +72,46 @@ def _slug(name):
     return _SLUG_RE.sub("-", (name or "").lower()).strip("-")
 
 
-def build_plan(force=False, doc=None, enriched=None):
+def load_node_overrides(path=None):
+    """{slug: override} from nwps_node_overrides.json, or {} when the file is absent."""
+    path = NODE_OVERRIDES if path is None else path
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text()).get("overrides") or {}
+
+
+def _distance_m(lat, lng, node_lat, node_lng):
+    """Spot to node in whole metres: the great circle on a 6371 km sphere, rounded, as the
+    placement pass writes nwps_node_distance_m (nwps_nearshore._haversine_km, restated here so
+    this script keeps needing no numpy)."""
+    p1, p2 = math.radians(float(lat)), math.radians(float(node_lat))
+    dphi = p2 - p1
+    dl = math.radians(float(node_lng) - float(lng))
+    x = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return round(2 * 6371.0 * math.asin(min(1, math.sqrt(x))) * 1000)
+
+
+def override_node(fields, slug, spot, override):
+    """*fields* with the override's node and its distance from *spot*, after checking that the
+    assignment still names the node and WFO the override was measured against. Raises
+    ValueError otherwise."""
+    if override.get("nwps_wfo") != fields.get("nwps_wfo"):
+        raise ValueError(
+            f"{slug}: nwps_node_overrides.json moves a {override.get('nwps_wfo')!r} node but the "
+            f"assignment is on {fields.get('nwps_wfo')!r}. Re-measure the move on the new grid "
+            "or remove the override.")
+    was = [fields.get("nwps_node_lat"), fields.get("nwps_node_lng")]
+    if was != list(override.get("replaces") or []):
+        raise ValueError(
+            f"{slug}: nwps_node_overrides.json replaces node {override.get('replaces')} but the "
+            f"assignment now names {was}. The spot was re-placed after the move was measured; "
+            "re-measure, then update or remove the override.")
+    lat, lng = override["nwps_node_lat"], override["nwps_node_lng"]
+    return dict(fields, nwps_node_lat=lat, nwps_node_lng=lng,
+                nwps_node_distance_m=_distance_m(spot["lat"], spot["lng"], lat, lng))
+
+
+def build_plan(force=False, doc=None, enriched=None, overrides=None):
     """(rows, problems, held, trust_by_zone, enriched, by_slug). A spot is PLACED
     (swell_window_source=nwps + the NWPS node fields) if ANY of:
       (c) its slug is in buoy_reference.unverifiable[] -> direction_status "unverifiable"
@@ -90,7 +137,14 @@ def build_plan(force=False, doc=None, enriched=None):
     settled phi zone silently direction-verified akq's three spots on evidence earned in a
     different WFO. Raises ValueError on any older shape — a whole buoy-keyed file, or a
     HALF-migrated one — rather than accepting either, since a file where some keys are scoped
-    and some are not would be worse than one that stops."""
+    and some are not would be worse than one that stops.
+
+    *overrides* ({slug: override}) replaces the node of the spots it lists; see override_node.
+    It defaults to nwps_node_overrides.json when the assignments are read from disk, and to
+    none with an injected *doc*. An override for a slug no assignment places raises
+    ValueError, so a stale entry cannot sit there unread."""
+    if overrides is None:
+        overrides = load_node_overrides() if doc is None else {}
     doc = json.loads(ASSIGNMENTS.read_text()) if doc is None else doc
     if "trust_by_zone" not in doc:
         legacy = ", ".join(f"{k}={doc[k]!r}" for k in ("trust", "trust_by_buoy") if k in doc)
@@ -172,10 +226,18 @@ def build_plan(force=False, doc=None, enriched=None):
             fields[k] = a.get(k)
         fields["nwps_grid"] = fields.get("nwps_grid") or "CG1"
         fields["nwps_buoy_id"] = buoy_out       # B2: None for unverifiable[]; unchanged otherwise
+        moved = slug in overrides
+        if moved:
+            fields = override_node(fields, slug, spot, overrides[slug])
         rows.append({"slug": slug, "name": spot.get("name"),
                      "old_source": spot.get("swell_window_source"), "fields": fields,
                      "buoy": buoy_out, "direction_status": direction_status,
-                     "forced": direction_status == "forced"})
+                     "forced": direction_status == "forced", "node_override": moved})
+    unplaced = sorted(set(overrides) - {r["slug"] for r in rows})
+    if unplaced:
+        raise ValueError(
+            f"nwps_node_overrides.json moves {unplaced}, which no assignment places. Remove "
+            "the stale override, or place the spot first.")
     return rows, problems, held, trust_by_zone, enriched, by_slug
 
 
@@ -203,7 +265,8 @@ def print_dry_run(rows, problems, held, trust_by_zone):
         node = f"{f['nwps_node_lat']:.4f},{f['nwps_node_lng']:.4f}"
         print(f"  {r['slug']:24}{(f['nwps_wfo'] or '—'):5}{(f['nwps_grid'] or '—'):5}{node:22}"
               f"{(f['nwps_node_distance_m'] or 0):>7}{str(f['nwps_buoy_id'] or '—'):>7}{r['direction_status']:>14}"
-              f"  {r['old_source'] or '(none)'} → nwps")
+              f"  {r['old_source'] or '(none)'} → nwps"
+              f"{'  (node override)' if r.get('node_override') else ''}")
     if rows:
         print(f"\n  fields written per spot: swell_window_source, nwps_direction_status, {', '.join(_FIELDS)}")
         print("  direction_status: 'verified' (this ZONE is PASS in trust_by_zone), 'pending' (buoy in "

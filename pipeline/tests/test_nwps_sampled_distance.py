@@ -28,6 +28,7 @@ Run: python -m pipeline.tests.test_nwps_sampled_distance   (or pytest)
 """
 from __future__ import annotations
 
+import json
 import logging
 import math
 from pathlib import Path
@@ -526,6 +527,107 @@ def test_both_paths_in_one_run_are_each_measured_and_counted():
     assert "over-far-cap=2" in cap.text(), cap.text()
     w = cap.warnings()
     assert "Baked, Walker" in w, w        # named, sorted, in the summary
+
+
+# --------------------------------------------------------------------------- #
+# Deliberate moves — nwps_node_overrides.json                                  #
+# --------------------------------------------------------------------------- #
+_TMP = Path("/tmp/claude-0/-home-user-StormyPetrel/c0d14651-f350-5987-84e1-cf8ad55860d6/scratchpad")
+
+
+def _with_overrides(overrides, fn):
+    """Run *fn* with nwps.NWPS_NODE_OVERRIDES pointing at a file holding *overrides*."""
+    _TMP.mkdir(parents=True, exist_ok=True)
+    path = _TMP / "sampled_distance_overrides.json"
+    path.write_text(json.dumps({"overrides": overrides}))
+    saved = nwps.NWPS_NODE_OVERRIDES
+    nwps.NWPS_NODE_OVERRIDES = path
+    try:
+        return fn()
+    finally:
+        nwps.NWPS_NODE_OVERRIDES = saved
+
+
+def _wedge_override(lat, lng):
+    return {"the-wedge": {"nwps_wfo": "mtr", "nwps_node_lat": lat, "nwps_node_lng": lng,
+                          "replaces": [36.0, -75.85], "reason": "r", "evidence": "e"}}
+
+
+def test_a_deliberate_move_over_cap_is_logged_not_warned():
+    """The Wedge's baked node is FAR_BAKED, 10.0075 km out against the 6.7889 km cap, and
+    nwps_node_overrides.json lists exactly that node: published at the same cell, no
+    warning, counted apart from the over-cap defects, and named at INFO."""
+    spot = _spot(name="The Wedge", baked=FAR_BAKED)
+    _, seen, cap = _with_overrides(_wedge_override(*FAR_BAKED),
+                                   lambda: _run_fetch([spot], "deliberate.json", _coarse()))
+    assert seen == [FAR_BAKED], seen
+    assert "OVER" not in cap.warnings() and "BEYOND" not in cap.warnings(), cap.warnings()
+    assert "over-far-cap=0, over-far-cap-by-design=1" in cap.text(), cap.text()
+    assert ("The Wedge — sampled cell (36.0900, -75.8500) is 10.01 km away, over this "
+            "grid's 6.79 km cap by design: a move listed in nwps_node_overrides.json."
+            ) in cap.text(), cap.text()
+
+
+def test_an_override_naming_another_node_still_warns():
+    """The roster's baked node is not the node the override names (a roster that was not
+    re-baked): the exemption does not apply."""
+    spot = _spot(name="The Wedge", baked=FAR_BAKED)
+    _, _, cap = _with_overrides(_wedge_override(36.09, -75.805),
+                                lambda: _run_fetch([spot], "stale.json", _coarse()))
+    assert "The Wedge" in cap.warnings() and "OVER" in cap.warnings(), cap.warnings()
+    assert "over-far-cap=1, over-far-cap-by-design=0" in cap.text(), cap.text()
+
+
+def test_a_listed_spot_on_the_ring_walk_still_warns():
+    """A listed spot whose sample came from the ring walk (no baked node here), radius 2 at
+    WALK2 = 12.8754 km over the 6.7889 km cap: a walk is never a deliberate move, even when
+    it lands on the override's own coordinates."""
+    grid = [[NAN] * 5 for _ in range(5)]
+    grid[0][0] = 1.2
+    spot = _spot(name="The Wedge", orientation=225.0)
+    _, seen, cap = _with_overrides(_wedge_override(*WALK2),
+                                   lambda: _run_fetch([spot], "walk.json", _coarse(grid)))
+    assert seen == [WALK2], seen
+    assert "The Wedge" in cap.warnings() and "OVER" in cap.warnings(), cap.warnings()
+    assert "over-far-cap=1, over-far-cap-by-design=0" in cap.text(), cap.text()
+
+
+def test_an_unlisted_spot_over_cap_still_warns_beside_a_listed_one():
+    listed = _spot(name="The Wedge", baked=FAR_BAKED)
+    other = _spot(name="Other", baked=FAR_BAKED)
+    _, _, cap = _with_overrides(_wedge_override(*FAR_BAKED),
+                                lambda: _run_fetch([listed, other], "mixed.json", _coarse()))
+    assert "over-far-cap=1, over-far-cap-by-design=1" in cap.text(), cap.text()
+    beyond = cap.warnings().split("sampled BEYOND")[1]
+    assert "Other" in beyond and "The Wedge" not in beyond, beyond
+
+
+def test_a_deliberate_move_within_cap_is_not_called_over_it():
+    """Listed, but 5.0038 km against the 6.7889 km cap: nothing to explain."""
+    spot = _spot(name="The Wedge", baked=(36.045, -75.850))
+    _, _, cap = _with_overrides(_wedge_override(36.045, -75.850),
+                                lambda: _run_fetch([spot], "within.json", _coarse()))
+    assert "over-far-cap=0, over-far-cap-by-design=0" in cap.text(), cap.text()
+    assert "by design" not in cap.text().replace("over-far-cap-by-design", ""), cap.text()
+
+
+def test_deliberate_nodes_without_a_file_is_empty():
+    assert nwps.deliberate_nodes(Path("/nonexistent/nwps_node_overrides.json")) == {}
+
+
+def test_the_live_overrides_are_the_nodes_the_roster_bakes():
+    """In production the exemption applies only if spots_enriched.json carries each
+    override's node exactly. Run 50's cells, copied by hand."""
+    live = nwps.deliberate_nodes()
+    assert live == {"duck-pier": (36.19331, -75.72892), "spring-ave": (27.51019, -82.80924),
+                    "st-pete-beach": (27.7373, -82.86304),
+                    "treasure-island-fl": (27.7373, -82.86304),
+                    "madeira-beach": (27.7373, -82.86304)}
+    roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
+    baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
+             for s in roster}
+    for slug, node in live.items():
+        assert baked[slug] == node, slug
 
 
 def _run_all():
