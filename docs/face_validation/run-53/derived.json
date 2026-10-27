@@ -1,0 +1,285 @@
+{
+ "srf_rows": 234159,
+ "flat_k": {
+  "Carolinas and Georgia": {
+   "n": 25380,
+   "published": {
+    "inside": 0.779,
+    "below": 0.034,
+    "above": 0.187
+   },
+   "k 0.66": {
+    "inside": 0.813,
+    "below": 0.099,
+    "above": 0.088
+   },
+   "k 0.7": {
+    "inside": 0.814,
+    "below": 0.071,
+    "above": 0.115
+   },
+   "k 0.75": {
+    "inside": 0.796,
+    "below": 0.046,
+    "above": 0.158
+   },
+   "k 0.79": {
+    "inside": 0.76,
+    "below": 0.029,
+    "above": 0.211
+   }
+  },
+  "Florida Atlantic": {
+   "n": 29223,
+   "published": {
+    "inside": 0.743,
+    "below": 0.044,
+    "above": 0.213
+   },
+   "k 0.66": {
+    "inside": 0.756,
+    "below": 0.145,
+    "above": 0.1
+   },
+   "k 0.7": {
+    "inside": 0.776,
+    "below": 0.103,
+    "above": 0.122
+   },
+   "k 0.75": {
+    "inside": 0.781,
+    "below": 0.063,
+    "above": 0.156
+   },
+   "k 0.79": {
+    "inside": 0.756,
+    "below": 0.048,
+    "above": 0.196
+   }
+  },
+  "Gulf": {
+   "n": 10560,
+   "published": {
+    "inside": 0.738,
+    "below": 0.209,
+    "above": 0.053
+   },
+   "k 0.66": {
+    "inside": 0.664,
+    "below": 0.304,
+    "above": 0.032
+   },
+   "k 0.7": {
+    "inside": 0.702,
+    "below": 0.259,
+    "above": 0.04
+   },
+   "k 0.75": {
+    "inside": 0.742,
+    "below": 0.206,
+    "above": 0.052
+   },
+   "k 0.79": {
+    "inside": 0.775,
+    "below": 0.162,
+    "above": 0.063
+   }
+  },
+  "Mid-Atlantic": {
+   "n": 25090,
+   "published": {
+    "inside": 0.711,
+    "below": 0.062,
+    "above": 0.228
+   },
+   "k 0.66": {
+    "inside": 0.8,
+    "below": 0.145,
+    "above": 0.055
+   },
+   "k 0.7": {
+    "inside": 0.789,
+    "below": 0.122,
+    "above": 0.088
+   },
+   "k 0.75": {
+    "inside": 0.755,
+    "below": 0.097,
+    "above": 0.147
+   },
+   "k 0.79": {
+    "inside": 0.723,
+    "below": 0.078,
+    "above": 0.199
+   }
+  },
+  "New England": {
+   "n": 34808,
+   "published": {
+    "inside": 0.411,
+    "below": 0.583,
+    "above": 0.006
+   },
+   "k 0.66": {
+    "inside": 0.287,
+    "below": 0.71,
+    "above": 0.002
+   },
+   "k 0.7": {
+    "inside": 0.337,
+    "below": 0.656,
+    "above": 0.007
+   },
+   "k 0.75": {
+    "inside": 0.399,
+    "below": 0.588,
+    "above": 0.013
+   },
+   "k 0.79": {
+    "inside": 0.449,
+    "below": 0.528,
+    "above": 0.023
+   }
+  },
+  "Northern California": {
+   "n": 32361,
+   "published": {
+    "inside": 0.342,
+    "below": 0.642,
+    "above": 0.016
+   },
+   "k 0.66": {
+    "inside": 0.495,
+    "below": 0.503,
+    "above": 0.002
+   },
+   "k 0.7": {
+    "inside": 0.546,
+    "below": 0.447,
+    "above": 0.007
+   },
+   "k 0.75": {
+    "inside": 0.603,
+    "below": 0.384,
+    "above": 0.012
+   },
+   "k 0.79": {
+    "inside": 0.638,
+    "below": 0.339,
+    "above": 0.023
+   }
+  },
+  "Pacific Northwest": {
+   "n": 11451,
+   "published": {
+    "inside": 0.416,
+    "below": 0.577,
+    "above": 0.008
+   },
+   "k 0.66": {
+    "inside": 0.13,
+    "below": 0.87,
+    "above": 0.0
+   },
+   "k 0.7": {
+    "inside": 0.17,
+    "below": 0.829,
+    "above": 0.0
+   },
+   "k 0.75": {
+    "inside": 0.241,
+    "below": 0.758,
+    "above": 0.001
+   },
+   "k 0.79": {
+    "inside": 0.303,
+    "below": 0.695,
+    "above": 0.002
+   }
+  },
+  "Puerto Rico": {
+   "n": 12096,
+   "published": {
+    "inside": 0.175,
+    "below": 0.814,
+    "above": 0.011
+   },
+   "k 0.66": {
+    "inside": 0.055,
+    "below": 0.945,
+    "above": 0.0
+   },
+   "k 0.7": {
+    "inside": 0.094,
+    "below": 0.906,
+    "above": 0.0
+   },
+   "k 0.75": {
+    "inside": 0.146,
+    "below": 0.852,
+    "above": 0.001
+   },
+   "k 0.79": {
+    "inside": 0.196,
+    "below": 0.797,
+    "above": 0.006
+   }
+  },
+  "Southern California": {
+   "n": 53190,
+   "published": {
+    "inside": 0.819,
+    "below": 0.168,
+    "above": 0.013
+   },
+   "k 0.66": {
+    "inside": 0.919,
+    "below": 0.069,
+    "above": 0.012
+   },
+   "k 0.7": {
+    "inside": 0.933,
+    "below": 0.047,
+    "above": 0.02
+   },
+   "k 0.75": {
+    "inside": 0.935,
+    "below": 0.028,
+    "above": 0.036
+   },
+   "k 0.79": {
+    "inside": 0.919,
+    "below": 0.021,
+    "above": 0.06
+   }
+  },
+  "all": {
+   "n": 234159,
+   "published": {
+    "inside": 0.61,
+    "below": 0.309,
+    "above": 0.081
+   },
+   "k 0.66": {
+    "inside": 0.627,
+    "below": 0.34,
+    "above": 0.033
+   },
+   "k 0.7": {
+    "inside": 0.652,
+    "below": 0.303,
+    "above": 0.045
+   },
+   "k 0.75": {
+    "inside": 0.673,
+    "below": 0.261,
+    "above": 0.067
+   },
+   "k 0.79": {
+    "inside": 0.678,
+    "below": 0.23,
+    "above": 0.092
+   }
+  }
+ }
+}
