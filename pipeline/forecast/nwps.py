@@ -49,6 +49,27 @@ from ..http import session
 
 log = logging.getLogger(__name__)
 
+# Sample points moved on purpose, measured against a buoy (apply_nwps_assignments writes them
+# into spots_enriched.json). A baked node listed here is sampled beyond the far cap by design,
+# so the fetcher logs it at INFO instead of warning on every run.
+NWPS_NODE_OVERRIDES = Path(__file__).resolve().parents[1] / "data" / "nwps_node_overrides.json"
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def deliberate_nodes(path: Path | None = None) -> dict[str, tuple[float, float]]:
+    """{slug: (node lat, node lng)} of the moves in nwps_node_overrides.json, or {} when the
+    file is absent."""
+    path = NWPS_NODE_OVERRIDES if path is None else path
+    if not path.exists():
+        return {}
+    overrides = json.loads(path.read_text()).get("overrides") or {}
+    return {slug: (float(o["nwps_node_lat"]), float(o["nwps_node_lng"]))
+            for slug, o in overrides.items()}
+
+
+def _spot_slug(name: str | None) -> str:
+    return _SLUG_RE.sub("-", (name or "").lower()).strip("-")
+
 
 # ---------------------------------------------------------------------------
 # WFO assignment
@@ -1179,6 +1200,8 @@ def fetch(
     impossible_pair_spots: list[str] = []
     far_sampled = 0            # sampled cell beyond this grid's far cap — reported, NEVER refused
     far_sampled_names: list[str] = []
+    far_deliberate = 0         # ...at a baked node moved on purpose (nwps_node_overrides.json)
+    deliberate = deliberate_nodes()
     out_of_domain = 0          # node not on the loaded grid at all — reported, NEVER refused
     out_of_domain_names: list[str] = []
 
@@ -1239,9 +1262,11 @@ def fetch(
             # while swh carries local ripple. That is the source of swell_hs > hs.
             nlat, nlng = spot.get("nwps_node_lat"), spot.get("nwps_node_lng")
             corr_lat = corr_lng = None
+            from_baked = False
             if nlat is not None and nlng is not None:
                 if _baked_node_is_water(datasets, float(nlat), float(nlng)):
                     corr_lat, corr_lng = float(nlat), float(nlng)
+                    from_baked = True
                     nodes_baked += 1
                     log.info(
                         "nwps: %s: using baked seaward node (%.4f, %.4f) — %.2f km away",
@@ -1325,7 +1350,18 @@ def fetch(
             # orientation stub. A slightly-wrong forecast beats a blank page, so an
             # over-cap sample is published and made loud, not withheld.
             sampled_km = _sampled_distance_km(spot_lat, spot_lng, corr_lat, corr_lng)
-            if sampled_km > far_cap_km:
+            # A DELIBERATE MOVE IS NOT A DEFECT. Only the baked node itself, and only while it
+            # is the very node nwps_node_overrides.json names: a ring walk, or a roster that no
+            # longer carries the override's node, still warns.
+            if (sampled_km > far_cap_km and from_baked
+                    and deliberate.get(_spot_slug(spot["name"])) == (corr_lat, corr_lng)):
+                far_deliberate += 1
+                log.info(
+                    "nwps: %s — sampled cell (%.4f, %.4f) is %.2f km away, over this grid's "
+                    "%.2f km cap by design: a move listed in nwps_node_overrides.json.",
+                    spot["name"], corr_lat, corr_lng, sampled_km, far_cap_km,
+                )
+            elif sampled_km > far_cap_km:
                 far_sampled += 1
                 far_sampled_names.append(spot["name"])
                 log.warning(
@@ -1396,9 +1432,10 @@ def fetch(
     log.info(
         "nwps: node-selection summary — baked-node=%d, baked-node-rejected-as-land=%d, "
         "ring-walk-seaward=%d, ring-walk-LANDWARD=%d, ring-walk-no-orientation=%d, "
-        "ring-walk-no-seaward-cell=%d, over-far-cap=%d, out-of-domain=%d",
+        "ring-walk-no-seaward-cell=%d, over-far-cap=%d, over-far-cap-by-design=%d, "
+        "out-of-domain=%d",
         nodes_baked, nodes_baked_land, walk_seaward, walk_landward, walk_no_orientation,
-        walk_no_seaward, far_sampled, out_of_domain,
+        walk_no_seaward, far_sampled, far_deliberate, out_of_domain,
     )
     # NAME the bad ones. A bare count is easy to scroll past, and both of these are
     # conditions someone has to act on rather than watch.
