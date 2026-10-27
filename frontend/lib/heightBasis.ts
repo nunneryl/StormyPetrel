@@ -9,15 +9,23 @@
  *               matches CDIP's nearshore height. The 141 spots in
  *               pipeline/data/spot_face_factors.json.
  *   cdip        CDIP MOP's own nearshore height, from its nowcast (pipeline/forecast/mop.py).
- *   model       everything else: the wave models' height with the period boost, uncorrected.
- *               It can read well above the other two — about 1.6 times MOP's at the
- *               California spots where it was measured.
+ *   model       everything else: the wave models' height, not calibrated to anything. At an
+ *               uncalibrated spot's NWPS hours it is the surf height
+ *               (pipeline/forecast/surf_height.py, since 2026-10-27): the NWPS height carried
+ *               to its breaking point and scaled to 0.70. On the other hours it is the height
+ *               with the period boost, which read about 1.6 times MOP's at the California spots
+ *               where the two were compared.
  *
  * DERIVED PER ROW, FROM TWO COLUMNS, WITH NO NEW ONE. face_correction.stamp_provenance copies
  * face_ft into face_ft_raw on every rated hour BEFORE anything divides, nothing writes face_ft
  * after the correction step, and db_import passes both through untouched. So an hour the
  * correction never touched carries two identical values, and one it divided carries two
  * different ones. apply_mop_overrides tags every hour it writes with swell_source 'cdip_mop'.
+ *
+ * EXCEPT THE SURF HEIGHT, which a third column names. apply_surf_height runs after the
+ * correction and rewrites face_ft at spots it never divided, so those rows too carry two different
+ * values — and are model estimates. It appends SURF_MARK_TAG to face_correction_version on every
+ * row it writes, and a row carrying that mark is a model estimate whatever its other columns say.
  *
  * "DIFFERS", NOT "IS LARGER". A factor is usually above 1, so a calibrated height is usually
  * the smaller of the two, but five spots' factors are below 1 — point-arena's 0.812 the lowest,
@@ -56,19 +64,30 @@ export const HEADLINE_HEIGHT_LABEL = 'Surf height';
 /** The same name in a column header, where the unit follows: "Surf (ft)". */
 export const HEADLINE_HEIGHT_COLUMN = 'Surf (ft)';
 
-/** The columns the derivation reads. Every reader query selects all three. */
+/** The columns the derivation reads. Every reader query selects all four. */
 export type HeightBasisRow = {
   face_ft: number | null | undefined;
   face_ft_raw: number | null | undefined;
   swell_source: string | null | undefined;
+  face_correction_version?: string | null | undefined;
 };
 
 /** The swell_source apply_mop_overrides writes on every hour it feeds. */
 export const CDIP_MOP_SWELL_SOURCE = 'cdip_mop';
 
+/** The mark pipeline/forecast/surf_height.py appends to face_correction_version on every row whose
+ *  face_ft it wrote ("+surf:k0.70:d10:g0.78"); its SURF_MARK_TAG. The colon is part of the test. */
+export const SURF_MARK_TAG = '+surf';
+
+/** Did apply_surf_height write this row's height? */
+export function isSurfRow(version: string | null | undefined): boolean {
+  return typeof version === 'string' && version.includes(`${SURF_MARK_TAG}:`);
+}
+
 /** What the row's height is, or null when there is no height to describe. */
 export function heightBasis(row: HeightBasisRow | null | undefined): HeightBasis | null {
   if (!row || row.face_ft === null || row.face_ft === undefined) return null;
+  if (isSurfRow(row.face_correction_version)) return 'model';
   const face = row.face_ft;
   const raw = row.face_ft_raw;
   if (
@@ -118,7 +137,7 @@ export const HEIGHT_BASIS_MARK: Record<HeightBasis, string> = {
 export const HEIGHT_BASIS_NOTE: Record<HeightBasis, string> = {
   calibrated: "Scaled so its typical height matches CDIP's nearshore height at this spot.",
   cdip: "CDIP's own nearshore height for this hour.",
-  model: "Not calibrated against CDIP, so it can read higher than CDIP's nearshore height.",
+  model: "A model estimate, not calibrated against CDIP's nearshore height.",
 };
 
 /** Where the note links: the post that explains all three. */

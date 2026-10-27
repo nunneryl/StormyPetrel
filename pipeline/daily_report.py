@@ -34,6 +34,7 @@ from typing import Callable
 import anthropic
 
 from .db_import import get_client
+from .forecast.surf_height import is_surf_row
 
 log = logging.getLogger("pipeline.daily_report")
 
@@ -99,24 +100,25 @@ SYSTEM_PROMPT = (
     "onshore, and mention what's coming in the next 2-3 days. Sound "
     "like a knowledgeable surfer, not a weather robot. Keep it under "
     "100 words. No hashtags, no emojis. "
-    # THE HEIGHTS ARE NOT BREAKING FACES. The site labels them "Swell height", and without
-    # this the model writes "4 ft faces" from a 4 ft swell height and contradicts the tile
-    # the reader is looking at.
-    "The heights you are given are SWELL HEIGHT, not the height of a breaking "
-    "wave face. Call it swell or swell height. Never call it face height, and "
-    "never describe it as how big the waves break. "
+    # THE HEIGHTS ARE SURF HEIGHT, AND NOT THE BIGGEST SETS. The site has labelled them "Surf
+    # height" since 2026-10-27 ("Swell height" before, which this said too). Without this the
+    # model writes "4 ft faces" or "sets to 6 ft" and contradicts the tile the reader is looking
+    # at: the number describes the bigger waves on average, not the largest of them.
+    "The heights you are given are SURF HEIGHT, the number the site shows "
+    "under that name: the bigger waves on average, not the biggest sets. Call "
+    "it surf or surf height. Never call it face height, and never describe it "
+    "as the size of the sets or of the biggest waves. "
     # NOR ARE THEY ALL ON ONE SCALE, AND NONE IS A MEASUREMENT. This used to say every height
     # was significant wave height "measured" offshore of the surf zone — CDIP MOP's, by the
     # comment above it. That was true of none of them: the 141 calibrated spots are model
     # heights scaled to CDIP, MOP's own rows never reach the report's hours, and every other
-    # spot is an uncalibrated model estimate that can read well above CDIP's height. Each
+    # spot is an uncalibrated model estimate. Each
     # spot's height now arrives tagged with which it is (height_basis, below), and the site
     # shows the same tag beside the same number (frontend/lib/heightBasis.ts).
     "Each height is tagged with what it is. 'calibrated to CDIP': our model "
     "height, scaled to match CDIP's nearshore height at that spot. 'CDIP "
-    "nearshore height': CDIP's own. 'model estimate': straight from the wave "
-    "models, not calibrated, and it can read higher than nearshore swell "
-    "height. None of them is a measurement: never describe a height as "
+    "nearshore height': CDIP's own. 'model estimate': from the wave models, "
+    "not calibrated to anything. None of them is a measurement: never describe a height as "
     "measured or observed, and never describe a model estimate as calibrated "
     "or as CDIP's."
 )
@@ -161,7 +163,8 @@ _SPOT_COLS = (
 
 _FCAST_COLS = (
     "spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, "
-    "wind_speed, wind_dir, face_ft, face_ft_raw, swell_source, stars, tide_level_ft"
+    "wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, swell_source, stars, "
+    "tide_level_ft"
 )
 
 
@@ -185,10 +188,14 @@ def height_basis(row: dict | None) -> str | None:
     copies face_ft into face_ft_raw on every hour before it divides anything, so the two differ
     exactly where the spot was calibrated — in EITHER direction, since point-arena's factor is
     below 1. apply_mop_overrides tags the hours it feeds 'cdip_mop'. A row with no raw value,
-    or one that is not a finite number, is a model estimate: no evidence, no claim.
+    or one that is not a finite number, is a model estimate: no evidence, no claim. A row
+    apply_surf_height wrote (its mark on face_correction_version) is a model estimate first:
+    its two faces differ too, and nothing calibrated it.
     """
     if not row or row.get("face_ft") is None:
         return None
+    if is_surf_row(row.get("face_correction_version")):
+        return "model"
     face, raw = row["face_ft"], row.get("face_ft_raw")
     if (raw is not None and math.isfinite(raw) and math.isfinite(face) and raw != face):
         return "calibrated"
@@ -313,7 +320,7 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
     it needs to write the summary without burning tokens on prose."""
     lines = [
         f"REGION: {region_label}",
-        f"TREND (next 24h, avg swell height change across top spots): {trend}",
+        f"TREND (next 24h, avg surf height change across top spots): {trend}",
         "",
         "TOP SPOTS (by current rating):",
     ]
@@ -331,11 +338,11 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
         # LABELLED IN THE PAYLOAD, not left bare. The model receives a number and a system
         # prompt telling it to write a surf report, so an unlabelled height reads as "the
         # size of the waves" and the prose comes back talking about faces while the site
-        # says swell height. Naming the quantity here is what keeps the two agreeing — and
-        # the tag after it says WHICH swell height, the same one the site shows beside it.
+        # says surf height. Naming the quantity here is what keeps the two agreeing — and
+        # the tag after it says WHICH surf height, the same one the site shows beside it.
         basis = height_basis(latest)
         face_str = (
-            f"{face:.1f}ft swell height ({HEIGHT_BASIS_TAG[basis]})"
+            f"{face:.1f}ft surf height ({HEIGHT_BASIS_TAG[basis]})"
             if face is not None and basis is not None else "—"
         )
         tp_str = f"{tp:.0f}s" if tp is not None else "—"
