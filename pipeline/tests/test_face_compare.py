@@ -766,3 +766,25 @@ def test_lidar_months_retry_once_then_name_the_month():
     assert got == {int(_DS.t): {"hs_max": 0.9, "x_peak": 100.0, "x_seaward": 110.0,
                                 "small": True}}
     assert cov == {"202610": {"flag 1": 1, "maximum inside the transect": 1}}
+
+
+def test_assess_display_is_the_surf_height_only_where_the_site_will_show_it():
+    """display: 0.70 x typical on an NWPS-override hour at a spot with no factor, published
+    elsewhere. face_ft_raw 4.27 at 500 s is Hs 4.27 / (1.3 x 3.281) = 1.0011 -> 1.00 m, typical
+    1.508057 x 3.281 = 4.947935 -> 4.95, display 0.70 x 4.947935 = 3.4636 -> 3.46 (from the
+    unrounded typical, as apply_surf_height computes it)."""
+    spot = {"name": "Rockaway", "nwps_wfo": "okx"}
+    rows = [{"valid_time": "2026-10-01T15:00:00+00:00", "swell_source": src, "face_ft_raw": 4.27,
+             "face_ft": 4.27, "swell_tp": 500.0, "tp": 9.0, "hs": 0.7}
+            for src in ("nwps", "nwps_height_ww3_dir", "cdip_mop", "ww3", "nwps_swell")]
+    got = F.assess(rows, spot, "New York")
+    assert [g["display"] for g in got] == [3.46, 3.46, 4.27, 4.27, 4.27]
+    assert [g["source"] for g in got][:2] == ["nwps", "nwps_height_ww3_dir"]
+    assert got[0]["typical"] == 4.95 and got[0]["calibrated"] is False
+    # Hs 8.10 m is already breaking at 10 m: typical 8.10 x 3.281 = 26.5761 (26.58 shown), and
+    # display 0.70 x 26.5761 = 18.6033 -> 18.60, where 0.70 x the rounded 26.58 would give 18.61.
+    # face_ft_raw 8.10 x 4.2653 = 34.549 -> 34.55, which sizes back to 34.55 / 4.2653 = 8.1003 -> 8.10.
+    big = F.assess([dict(rows[0], face_ft_raw=34.55, face_ft=34.55)], spot, "New York")[0]
+    assert (big["typical"], big["display"]) == (26.58, 18.6)
+    cal = F.assess(rows, spot, "New York", calibrated=True)
+    assert [g["display"] for g in cal] == [4.27] * 5 and cal[0]["calibrated"] is True

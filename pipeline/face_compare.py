@@ -19,6 +19,10 @@ THE CANDIDATES, from each archived forecast hour since 2026-09-07 (when face_ft_
   sets      typical x SETS (1.27): the mean of the highest tenth over the highest third for
             Rayleigh-distributed heights.
   published the face_ft the site showed for the hour, as the baseline.
+  display   what the site shows once forecast/surf_height.py ships: SURF_K x typical on an
+            NWPS-override hour (swell_source nwps / nwps_height_ww3_dir) at a spot with no MOP
+            factor (face_correction.spot_factor None), computed as apply_surf_height computes
+            it (unrounded typical, then 2 dp); published everywhere else. surf_preview reads it.
 
 WHAT EACH IS COMPARED WITH
 
@@ -90,10 +94,10 @@ from .face_calibration import BANDS, FRF_DODS, _open_nc, frf_8m_hourly, months, 
 from .face_sources import USER_AGENT, ZONE_TOLERANCE_KM, _UGC_LINE, _ugc_codes, \
     parse_surf_height
 
-M_TO_FT = 3.281
-G = 9.81
-D0_M = 10.0
-GAMMA = 0.78
+from .forecast.surf_height import (D0_M, GAMMA, M_TO_FT, NWPS_OVERRIDE_SOURCES,  # noqa: F401
+                                   SURF_K, breaking_height, group_velocity, typical_face_ft,
+                                   wavenumber)
+
 SETS = 1.27
 SINCE = datetime(2026, 9, 7, tzinfo=timezone.utc)
 MOVED_AT = datetime(2026, 10, 27, 13, 39, tzinfo=timezone.utc)   # #280 merged
@@ -139,83 +143,14 @@ TZ_HOURS = {"EDT": -4, "EST": -5, "CDT": -5, "CST": -6, "MDT": -6, "MST": -7, "P
 WEEKDAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 TODAY_PERIODS = ("TODAY", "REST OF TODAY", "THIS MORNING", "THIS AFTERNOON",
                  "REST OF THIS AFTERNOON")
-CANDIDATES = ("published", "typical", "sets")
+CANDIDATES = ("published", "display", "typical", "sets")
 FORECAST_COLS = "spot_id, valid_time, hs, tp, swell_tp, swell_source, face_ft, face_ft_raw"
-
-
-# --------------------------------------------------------------------------- #
-# Linear shoaling to breaking (pure, numpy)                                    #
-# --------------------------------------------------------------------------- #
-def wavenumber(period, depth):
-    """k (rad/m) from the linear dispersion relation w^2 = g k tanh(k h), by Newton's method
-    from the Fenton-McKee approximation; elementwise over arrays."""
-    import numpy as np
-    t = np.asarray(period, dtype=float)
-    h = np.asarray(depth, dtype=float)
-    kh0 = (2 * math.pi / t) ** 2 / G * h
-    kh = kh0 / np.tanh(kh0 ** 0.75) ** (2.0 / 3.0)
-    for _ in range(6):
-        th = np.tanh(kh)
-        kh = kh - (kh * th - kh0) / (th + kh * (1 - th * th))
-    return kh / h
-
-
-def group_velocity(period, depth):
-    """Cg (m/s) = n c, n = (1 + 2kh / sinh 2kh) / 2; elementwise."""
-    import numpy as np
-    t = np.asarray(period, dtype=float)
-    h = np.asarray(depth, dtype=float)
-    k = wavenumber(t, h)
-    kh = k * h
-    n = 0.5 * (1 + np.where(kh < 20, 2 * kh / np.sinh(np.minimum(2 * kh, 40)), 0.0))
-    return n * (2 * math.pi / t) / k
-
-
-def breaking_height(hs, period, d0=D0_M, gamma=GAMMA, levels=240, iterations=40):
-    """The height (m) at breaking of a wave of height *hs* at depth *d0*, carried shoreward by
-    linear shoaling until it reaches *gamma* x the depth: the deepest such depth on a
-    geometric scan from d0 to 1 mm, refined by bisection. hs at or above gamma x d0 is already
-    breaking (returned as is); hs or period not above 0 gives 0. Elementwise."""
-    import numpy as np
-    H = np.atleast_1d(np.asarray(hs, dtype=float))
-    T = np.atleast_1d(np.asarray(period, dtype=float))
-    out = np.zeros_like(H)
-    live = (H > 0) & (T > 0) & np.isfinite(H) & np.isfinite(T)
-    already = live & (H >= gamma * d0)
-    out[already] = H[already]
-    todo = np.where(live & ~already)[0]
-    if todo.size:
-        h_scan = d0 * (0.001 / d0) ** (np.arange(levels + 1) / levels)     # d0 .. 1 mm
-        Hc, Tc = H[todo][:, None], T[todo][:, None]
-        cg0 = group_velocity(Tc, d0)
-
-        def excess(h):
-            return Hc * np.sqrt(cg0 / group_velocity(Tc, h)) - gamma * h
-
-        f = excess(np.broadcast_to(h_scan, (todo.size, levels + 1)))
-        first = np.argmax(f >= 0, axis=1)                  # first depth where it breaks
-        hi = h_scan[np.maximum(first - 1, 0)]              # deeper: not yet breaking
-        lo = h_scan[first]
-        hi, lo = hi[:, None], lo[:, None]
-        for _ in range(iterations):
-            mid = 0.5 * (hi + lo)
-            brk = excess(mid) >= 0
-            lo = np.where(brk, mid, lo)
-            hi = np.where(brk, hi, mid)
-        out[todo] = (gamma * lo)[:, 0]
-    return out
 
 
 def candidate_faces(hs, period, d0=D0_M):
     """(typical ft, sets ft) arrays for heights *hs* (m) at periods *period* (s), solved once per
-    pair rounded to 0.01 m and 0.1 s."""
-    import numpy as np
-    H = np.round(np.asarray(hs, dtype=float), 2)
-    T = np.round(np.asarray(period, dtype=float), 1)
-    pairs = np.stack([H, T], axis=1)
-    uniq, inv = np.unique(pairs, axis=0, return_inverse=True)
-    hb = breaking_height(uniq[:, 0], uniq[:, 1], d0=d0)
-    typical = hb[np.ravel(inv)] * M_TO_FT
+    pair rounded to 0.01 m and 0.1 s: forecast.surf_height.typical_face_ft, the pipeline's own."""
+    typical = typical_face_ft(hs, period, d0=d0)
     return typical, typical * SETS
 
 
@@ -619,8 +554,9 @@ def _epoch(iso: str) -> int:
     return int(datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp())
 
 
-def assess(rows: list[dict], spot: dict, state: str | None) -> list[dict]:
-    """Every archived hour of one spot with its group, Hs, period and the three faces."""
+def assess(rows: list[dict], spot: dict, state: str | None, calibrated: bool = False) -> list[dict]:
+    """Every archived hour of one spot with its group, Hs, period, swell_source and the faces;
+    *calibrated* says whether the spot has a MOP factor (no display surf height there)."""
     s = slug(spot.get("name"))
     base = []
     for r in rows:
@@ -632,6 +568,7 @@ def assess(rows: list[dict], spot: dict, state: str | None) -> list[dict]:
                      "office": (spot.get("nwps_wfo") or "").upper(),
                      "facing": facing(spot.get("orientation_deg")),
                      "hour": int(t.timestamp()), "group": group_of(s, r.get("swell_source"), t),
+                     "source": r.get("swell_source"), "calibrated": calibrated,
                      "hs": h, "period": None if per is None else float(per),
                      "published": None if r.get("face_ft") is None else float(r["face_ft"])})
     ok = [i for i, b in enumerate(base) if b["hs"] is not None and b["period"]]
@@ -640,9 +577,12 @@ def assess(rows: list[dict], spot: dict, state: str | None) -> list[dict]:
         for j, i in enumerate(ok):
             base[i]["typical"] = round(float(typ[j]), 2)
             base[i]["sets"] = round(float(sets[j]), 2)
+            if not calibrated and base[i]["source"] in NWPS_OVERRIDE_SOURCES:
+                base[i]["display"] = round(SURF_K * float(typ[j]), 2)
     for b in base:
         b.setdefault("typical", None)
         b.setdefault("sets", None)
+        b.setdefault("display", b["published"])
         if b["group"] == "headline" and b["typical"] is None:
             b["group"] = "no face"
     return base
@@ -701,11 +641,12 @@ def compare_srf(hours: list[dict], srf: dict) -> list[dict]:
         mid = (lo + hi) / 2.0
         rec = {k: h[k] for k in ("spot", "slug", "state", "region", "type", "office", "group",
                                  "hour")}
-        rec.update(lo=lo, hi=hi, hs=h["hs"], period=h["period"], band=period_band(h["period"]))
+        rec.update(lo=lo, hi=hi, hs=h["hs"], period=h["period"], band=period_band(h["period"]),
+                   source=h.get("source"), calibrated=h.get("calibrated"))
         for c in CANDIDATES:
-            rec[c] = h[c]
-            rec[f"{c}_side"] = classify(h[c], lo, hi)
-            rec[f"{c}_ratio"] = _ratio(h[c], mid)
+            rec[c] = h.get(c)
+            rec[f"{c}_side"] = classify(rec[c], lo, hi)
+            rec[f"{c}_ratio"] = _ratio(rec[c], mid)
         out.append(rec)
     return out
 
@@ -854,9 +795,9 @@ def compare_reports(reports: list[dict], by_hour: dict, names: dict) -> list[dic
         rec = {k: h[k] for k in ("spot", "state", "region", "type", "office", "group", "hour")}
         rec.update(bucket=rp["size_bucket"], bucket_ft=ref)
         for c in CANDIDATES:
-            rec[c] = h[c]
-            rec[f"{c}_side"] = bucket_side(h[c], rp["size_bucket"])
-            rec[f"{c}_ratio"] = _ratio(h[c], ref)
+            rec[c] = h.get(c)
+            rec[f"{c}_side"] = bucket_side(rec[c], rp["size_bucket"])
+            rec[f"{c}_ratio"] = _ratio(rec[c], ref)
         out.append(rec)
     return out
 
@@ -909,7 +850,10 @@ def compare_frf(duck: list[dict], lidar: dict, frf8: dict) -> dict:
 
 
 def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_get,
-        open_nc=_open_nc) -> dict:
+        open_nc=_open_nc, factors=None) -> dict:
+    from .enrich import _slug_for
+    from .forecast.face_correction import load_face_factors, spot_factor
+    factors = load_face_factors() if factors is None else factors
     by_name = {s["name"]: s for s in roster}
     spots = fetch_spots(client)
     names = {s["id"]: s["name"] for s in spots}
@@ -962,7 +906,8 @@ def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_ge
             errors[f"forecasts {s['name']}"] = f"{type(e).__name__}: {e}"[:200]
             continue
         kept = []
-        for h in assess(rows, spot, s.get("state")):
+        calibrated = spot_factor(spot, factors, _slug_for) is not None
+        for h in assess(rows, spot, s.get("state"), calibrated):
             groups[h["group"]] += 1
             h["zone"] = zone_of[s["name"]]
             if best is not None:
@@ -992,7 +937,8 @@ def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_ge
     rep_head = [r for r in rep_rows if r["group"] == "headline" and r["state"] != "Hawaii"]
     return {
         "window": [since.isoformat(), until.isoformat()],
-        "definitions": {"D0_m": D0_M, "gamma": GAMMA, "sets": SETS, "moved_at": MOVED_AT.isoformat(),
+        "definitions": {"D0_m": D0_M, "gamma": GAMMA, "sets": SETS, "surf_k": SURF_K,
+                        "moved_at": MOVED_AT.isoformat(),
                         "day_hours_local": [DAY_HOURS.start, DAY_HOURS.stop - 1],
                         "zone_tolerance_km": ZONE_TOLERANCE_KM},
         "errors": errors,

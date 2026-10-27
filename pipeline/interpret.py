@@ -2240,7 +2240,8 @@ def main(argv: list[str] | None = None) -> int:
     # inside rate_spot would be overwritten by both overrides on every hour they cover, so a
     # spot's face would jump between corrected and uncorrected on adjacent hours, which is
     # the exact failure one seam exists to prevent. Everything above has finished writing
-    # face_ft by this line; nothing below writes it.
+    # face_ft by this line; below it only apply_surf_height writes it, at the spots this
+    # seam leaves alone.
     #
     # NOT wrapped in try/except, deliberately, unlike the two override steps above. Those
     # degrade to a coarser rating when they fail, which is a worse forecast but a valid one.
@@ -2259,6 +2260,27 @@ def main(argv: list[str] | None = None) -> int:
     # the day it happens rather than the next time someone measures.
     log.info("interpret: face provenance stamp %s — written on every rated hour; "
              "face_ft_raw carries the pre-correction face", face_stats["stamp"])
+
+    # THE SURF HEIGHT, at the spots the seam above did not calibrate: NWPS-override hours only,
+    # face_ft and a mark on face_correction_version, nothing the rating reads (see
+    # forecast/surf_height.py). AFTER the seam, so face_ft_raw is already the producer's face.
+    # Wrapped, like the override steps and unlike the seam: every value is computed before any
+    # row is written, so a failure leaves the producer's face, which is what shipped before.
+    try:
+        from .forecast.surf_height import SURF_MARK, apply_surf_height
+        surf_stats = apply_surf_height(ratings, spots, face_factors)
+        if surf_stats["factors_missing"]:
+            log.warning("interpret: surf height NOT applied — no face factors, so the "
+                        "calibrated spots cannot be told apart; every face is the producer's")
+        else:
+            log.info("interpret: surf height %s — %d spot-hours at %d uncalibrated spot(s); "
+                     "%d spot(s) calibrated, %d hour(s) kept (not an NWPS override), %d "
+                     "NWPS hour(s) without a face or period", SURF_MARK,
+                     surf_stats["hours_rewritten"], surf_stats["spots_rewritten"],
+                     surf_stats["spots_calibrated"], surf_stats["hours_kept_by_source"],
+                     surf_stats["hours_without_inputs"])
+    except Exception:  # noqa: BLE001
+        log.exception("interpret: surf height step failed — keeping the producer's face")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(ratings, ensure_ascii=False))
