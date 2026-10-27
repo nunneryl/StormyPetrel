@@ -13,6 +13,7 @@ import {
   msToMph,
   pickSwell,
 } from '@/lib/formatting';
+import { HEADLINE_HEIGHT_COLUMN } from '@/lib/heightBasis';
 import { CompassArrow } from './CompassArrow';
 import { StarRating, ratingCellBg } from './StarRating';
 import { SwellCompass } from './SwellCompass';
@@ -91,7 +92,7 @@ export function ForecastGrid({
           <div className="grid grid-cols-[80px_120px_minmax(56px,1fr)_minmax(56px,1fr)_minmax(140px,2.2fr)_minmax(160px,2.8fr)_minmax(80px,1.2fr)] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
             <div className="sticky left-0 z-10 bg-ink-900 -ml-3 pl-3">Time</div>
             <div className="sticky left-[80px] z-10 bg-ink-900">Rating</div>
-            <div className="text-right">Swell (ft)</div>
+            <div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>
             <div className="text-right">Period</div>
             <div>Swell</div>
             <div>Wind</div>

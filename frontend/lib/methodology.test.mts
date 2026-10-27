@@ -12,7 +12,13 @@
  *
  * The post's opening line, "from 0 (FLAT) to 5 (EPIC)", is held against tierFromStars here too,
  * and its "The range we show" paragraph against HEIGHT_STEPS_FT and fmtHeightRange: the ladder
- * it lists, the 5 ft steps past the top, and its two boundary examples.
+ * it lists, the 5 ft steps past the top, and its two boundary examples. Its "How our height
+ * compares" paragraph is held to sw1-raycast run 52's figures, copied by hand from the run's report
+ * (docs/face_validation/run-52 on claude/practical-dirac-bshfbr-face): published face inside the
+ * NWS Surf Zone Forecast range on 61% of daytime hours overall (233,790 hours, 7 September to 27
+ * October 2026); 71% Mid-Atlantic, 74% Florida Atlantic, 78% Carolinas and Georgia, 82% Southern
+ * California; below the range on 58 to 81% of hours in New England, Northern California, the
+ * Pacific Northwest and Puerto Rico.
  * Every number the post takes from the PIPELINE (weights, curves, gains, horizons, spot counts)
  * is held in pipeline/tests/test_methodology_tables.py.
  *
@@ -199,6 +205,39 @@ if (ends) {
       check(`${h} ft reads ${lo}-${hi}ft on the site, as the post says`,
         fmtHeightRange(Number(h)) === `${lo}-${hi}ft`, fmtHeightRange(Number(h)));
     }
+  }
+}
+
+// --------------------------------------------------------------------------- //
+// The headline height's name, and how it compares (run 52)                     //
+// --------------------------------------------------------------------------- //
+{
+  const post = readFileSync(POST, 'utf8');
+  check('the post names the height "Surf height"', post.includes('The height we publish is labelled Surf height.'));
+  check('...and its tile the "Surf height tile"', post.includes('On the Surf height tile,'));
+  check('...and never the old way', !/Swell height|nearshore swell height/.test(post));
+  const section = post.split('## Where the wave height comes from')[1]?.split('\n## ')[0] ?? '';
+  const para = /\*\*How our height compares\.\*\*([^\n]+)/.exec(section);
+  check('"How our height compares" sits in "Where the wave height comes from"', para !== null);
+  check('...right after "The range we show"',
+    /\*\*The range we show\.\*\*[^\n]+\n\n\*\*How our height compares\.\*\*/.test(section));
+  if (para) {
+    const body = para[1];
+    check('it names its window, 7 September to 27 October 2026',
+      body.includes('From 7 September to 27 October 2026'));
+    check("run 52's overall share: 61% of daytime hours", /inside the NWS range on 61% of daytime hours overall/.test(body));
+    // 71 (Mid-Atlantic), 74 (Florida Atlantic), 78 (Carolinas and Georgia), 82 (Southern California)
+    check("run 52's range over SoCal and the East Coast south of New England: 71 to 82%",
+      /on 71 to 82% in Southern California and on the East Coast from New York to Florida/.test(body));
+    for (const region of ['Northern California', 'the Pacific Northwest', 'New England', 'Puerto Rico']) {
+      check(`it says the height reads low against the NWS in ${region}`,
+        new RegExp(`tends to read low in [^.]*${region}`).test(body));
+    }
+    check("it says we don't raise it there without measurements",
+      /We don't raise it there: [^.]*we change our height only on measurements\./.test(body));
+    check('it says it is usually smaller than forecasts that report the biggest sets',
+      body.includes('usually smaller than forecasts that report the biggest sets'));
+    check('it makes no claim to a measured surf height of its own', !/\bmeasured\b/i.test(body));
   }
 }
 

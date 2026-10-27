@@ -1,8 +1,9 @@
 /**
  * WHAT A PUBLISHED HEIGHT IS, read off the row that carries it.
  *
- * Three different things reach readers under the one "Swell height" heading, and until this
- * file nothing on the page said which one a number was:
+ * Three different things reach readers under the one headline-height heading (HEADLINE_HEIGHT_LABEL,
+ * "Surf height"; "Swell height" until 2026-10-27), and until this file nothing on the page said
+ * which one a number was:
  *
  *   calibrated  the model's height divided by the spot's measured factor, so its typical value
  *               matches CDIP's nearshore height. The 141 spots in
@@ -42,6 +43,18 @@
  */
 
 export type HeightBasis = 'calibrated' | 'cdip' | 'model';
+
+/**
+ * THE NAME OF THE HEADLINE HEIGHT, everywhere the site names it: the spot page's tile, the chart
+ * of it and that chart's card, and the height columns of the home page and the forecast grid
+ * ("Surf (ft)"). "Surf height" since 2026-10-27, when sw1-raycast run 52 (the face-height
+ * comparison) found the number inside the NWS Surf Zone Forecast's surf-height range on 61% of
+ * daytime hours: it is read as surf, so it is named as surf. Only the name changed; the number,
+ * its basis badges and the stars are as they were.
+ */
+export const HEADLINE_HEIGHT_LABEL = 'Surf height';
+/** The same name in a column header, where the unit follows: "Surf (ft)". */
+export const HEADLINE_HEIGHT_COLUMN = 'Surf (ft)';
 
 /** The columns the derivation reads. Every reader query selects all three. */
 export type HeightBasisRow = {
@@ -105,7 +118,7 @@ export const HEIGHT_BASIS_MARK: Record<HeightBasis, string> = {
 export const HEIGHT_BASIS_NOTE: Record<HeightBasis, string> = {
   calibrated: "Scaled so its typical height matches CDIP's nearshore height at this spot.",
   cdip: "CDIP's own nearshore height for this hour.",
-  model: 'Not calibrated against CDIP, so it can read higher than nearshore swell height.',
+  model: "Not calibrated against CDIP, so it can read higher than CDIP's nearshore height.",
 };
 
 /** Where the note links: the post that explains all three. */
