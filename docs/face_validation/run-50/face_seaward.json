@@ -1,0 +1,2144 @@
+{
+ "window": [
+  "2026-10-12T17:02:13.194287+00:00",
+  "2026-10-26T17:02:13.194287+00:00"
+ ],
+ "errors": {},
+ "depth_probe": {
+  "depth_m": 7.4,
+  "depth_source": "erddap",
+  "depth_error": null
+ },
+ "deeper": {
+  "Mexico Beach": {
+   "spot": "Mexico Beach",
+   "wfo": "tae",
+   "measured_by": "NDBC 42039, 142.7 km",
+   "orientation_deg": 224.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 72,
+   "node": {
+    "lat": 29.92014,
+    "lng": -85.39845,
+    "km": 1.24,
+    "bearing_deg": 163.0,
+    "depth_m": 6.8,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 94,
+    "lj": 102,
+    "lat": 29.87167,
+    "lng": -85.47209,
+    "km": 9.42,
+    "bearing_deg": 225.7,
+    "depth_m": 10.0,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 72,
+     "bias_m": -1.726,
+     "ratio_median": 0.084,
+     "rmse_m": 1.781,
+     "scatter_index": 0.943,
+     "mean_measured_m": 1.888,
+     "mean_ours_m": 0.161,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.598
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 3,
+      "bias_m": -0.791,
+      "ratio_median": 0.113,
+      "rmse_m": 0.792,
+      "scatter_index": 0.885,
+      "mean_measured_m": 0.894,
+      "mean_ours_m": 0.103,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.5
+     },
+     "1.0-1.5 m": {
+      "n": 14,
+      "bias_m": -1.196,
+      "ratio_median": 0.115,
+      "rmse_m": 1.2,
+      "scatter_index": 0.89,
+      "mean_measured_m": 1.349,
+      "mean_ours_m": 0.153,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.82
+     },
+     "1.5-99.0 m": {
+      "n": 55,
+      "bias_m": -1.912,
+      "ratio_median": 0.079,
+      "rmse_m": 1.936,
+      "scatter_index": 0.932,
+      "mean_measured_m": 2.079,
+      "mean_ours_m": 0.166,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.407
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 62,
+      "bias_m": -1.65,
+      "ratio_median": 0.092,
+      "rmse_m": 1.703,
+      "scatter_index": 0.942,
+      "mean_measured_m": 1.808,
+      "mean_ours_m": 0.158,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.542
+     },
+     "8-10 s": {
+      "n": 10,
+      "bias_m": -2.201,
+      "ratio_median": 0.078,
+      "rmse_m": 2.203,
+      "scatter_index": 0.925,
+      "mean_measured_m": 2.382,
+      "mean_ours_m": 0.181,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.648
+     }
+    },
+    "period": {
+     "tp_median_s": 1.41,
+     "share_under_3s": 0.972
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 72,
+     "bias_m": -1.399,
+     "ratio_median": 0.261,
+     "rmse_m": 1.448,
+     "scatter_index": 0.767,
+     "mean_measured_m": 1.888,
+     "mean_ours_m": 0.489,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.878
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 3,
+      "bias_m": -0.616,
+      "ratio_median": 0.323,
+      "rmse_m": 0.617,
+      "scatter_index": 0.689,
+      "mean_measured_m": 0.894,
+      "mean_ours_m": 0.278,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.779
+     },
+     "1.0-1.5 m": {
+      "n": 14,
+      "bias_m": -0.923,
+      "ratio_median": 0.313,
+      "rmse_m": 0.927,
+      "scatter_index": 0.687,
+      "mean_measured_m": 1.349,
+      "mean_ours_m": 0.426,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.829
+     },
+     "1.5-99.0 m": {
+      "n": 55,
+      "bias_m": -1.562,
+      "ratio_median": 0.253,
+      "rmse_m": 1.583,
+      "scatter_index": 0.762,
+      "mean_measured_m": 2.079,
+      "mean_ours_m": 0.516,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.823
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 62,
+      "bias_m": -1.336,
+      "ratio_median": 0.261,
+      "rmse_m": 1.385,
+      "scatter_index": 0.766,
+      "mean_measured_m": 1.808,
+      "mean_ours_m": 0.472,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.862
+     },
+     "8-10 s": {
+      "n": 10,
+      "bias_m": -1.788,
+      "ratio_median": 0.256,
+      "rmse_m": 1.79,
+      "scatter_index": 0.751,
+      "mean_measured_m": 2.382,
+      "mean_ours_m": 0.594,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.628
+     }
+    },
+    "period": {
+     "tp_median_s": 2.64,
+     "share_under_3s": 0.931
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 7.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Spring Ave": {
+   "spot": "Spring Ave",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 20.4 km",
+   "orientation_deg": 239.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.51007,
+    "lng": -82.7375,
+    "km": 1.67,
+    "bearing_deg": 179.9,
+    "depth_m": 5.3,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 127,
+    "lj": 111,
+    "lat": 27.51019,
+    "lng": -82.80924,
+    "km": 7.26,
+    "bearing_deg": 256.8,
+    "depth_m": 11.0,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.573,
+     "ratio_median": 0.476,
+     "rmse_m": 0.578,
+     "scatter_index": 0.535,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.507,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.798
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.51,
+      "ratio_median": 0.452,
+      "rmse_m": 0.513,
+      "scatter_index": 0.56,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.407,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.499
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.584,
+      "ratio_median": 0.478,
+      "rmse_m": 0.588,
+      "scatter_index": 0.531,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.525,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.73
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.573,
+      "ratio_median": 0.476,
+      "rmse_m": 0.578,
+      "scatter_index": 0.535,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.507,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.798
+     }
+    },
+    "period": {
+     "tp_median_s": 2.29,
+     "share_under_3s": 0.644
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.036,
+     "ratio_median": 0.956,
+     "rmse_m": 0.12,
+     "scatter_index": 0.111,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 1.044,
+     "within_20": 0.932,
+     "within_30": 0.986,
+     "r": 0.711
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.072,
+      "ratio_median": 0.917,
+      "rmse_m": 0.138,
+      "scatter_index": 0.151,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.845,
+      "within_20": 0.818,
+      "within_30": 1.0,
+      "r": 0.509
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.029,
+      "ratio_median": 0.981,
+      "rmse_m": 0.116,
+      "scatter_index": 0.105,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 1.079,
+      "within_20": 0.952,
+      "within_30": 0.984,
+      "r": 0.612
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.036,
+      "ratio_median": 0.956,
+      "rmse_m": 0.12,
+      "scatter_index": 0.111,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 1.044,
+      "within_20": 0.932,
+      "within_30": 0.986,
+      "r": 0.711
+     }
+    },
+    "period": {
+     "tp_median_s": 4.0,
+     "share_under_3s": 0.0
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "St. Pete Beach": {
+   "spot": "St. Pete Beach",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 23.8 km",
+   "orientation_deg": 240.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.73716,
+    "lng": -82.77337,
+    "km": 1.31,
+    "bearing_deg": 237.0,
+    "depth_m": 6.5,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 141,
+    "lj": 108,
+    "lat": 27.7373,
+    "lng": -82.86304,
+    "km": 9.94,
+    "bearing_deg": 266.0,
+    "depth_m": 10.3,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.611,
+     "ratio_median": 0.434,
+     "rmse_m": 0.615,
+     "scatter_index": 0.57,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.469,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.85
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.53,
+      "ratio_median": 0.407,
+      "rmse_m": 0.532,
+      "scatter_index": 0.58,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.386,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.671
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.625,
+      "ratio_median": 0.435,
+      "rmse_m": 0.629,
+      "scatter_index": 0.567,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.484,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.804
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.611,
+      "ratio_median": 0.434,
+      "rmse_m": 0.615,
+      "scatter_index": 0.57,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.469,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.85
+     }
+    },
+    "period": {
+     "tp_median_s": 2.34,
+     "share_under_3s": 0.685
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.18,
+     "ratio_median": 0.838,
+     "rmse_m": 0.196,
+     "scatter_index": 0.182,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.9,
+     "within_20": 0.658,
+     "within_30": 0.945,
+     "r": 0.817
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.174,
+      "ratio_median": 0.796,
+      "rmse_m": 0.188,
+      "scatter_index": 0.205,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.742,
+      "within_20": 0.455,
+      "within_30": 0.909,
+      "r": 0.582
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.181,
+      "ratio_median": 0.846,
+      "rmse_m": 0.198,
+      "scatter_index": 0.178,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.928,
+      "within_20": 0.694,
+      "within_30": 0.952,
+      "r": 0.762
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.18,
+      "ratio_median": 0.838,
+      "rmse_m": 0.196,
+      "scatter_index": 0.182,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.9,
+      "within_20": 0.658,
+      "within_30": 0.945,
+      "r": 0.817
+     }
+    },
+    "period": {
+     "tp_median_s": 3.76,
+     "share_under_3s": 0.068
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Treasure Island FL": {
+   "spot": "Treasure Island FL",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 24.8 km",
+   "orientation_deg": 230.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.75338,
+    "lng": -82.77337,
+    "km": 1.01,
+    "bearing_deg": 191.6,
+    "depth_m": 5.3,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 141,
+    "lj": 108,
+    "lat": 27.7373,
+    "lng": -82.86304,
+    "km": 9.45,
+    "bearing_deg": 252.9,
+    "depth_m": 10.3,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.705,
+     "ratio_median": 0.343,
+     "rmse_m": 0.709,
+     "scatter_index": 0.657,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.375,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.857
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.608,
+      "ratio_median": 0.328,
+      "rmse_m": 0.61,
+      "scatter_index": 0.665,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.309,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.574
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.722,
+      "ratio_median": 0.348,
+      "rmse_m": 0.726,
+      "scatter_index": 0.655,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.386,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.819
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.705,
+      "ratio_median": 0.343,
+      "rmse_m": 0.709,
+      "scatter_index": 0.657,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.375,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.857
+     }
+    },
+    "period": {
+     "tp_median_s": 2.01,
+     "share_under_3s": 0.658
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.18,
+     "ratio_median": 0.838,
+     "rmse_m": 0.196,
+     "scatter_index": 0.182,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.9,
+     "within_20": 0.658,
+     "within_30": 0.945,
+     "r": 0.817
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.174,
+      "ratio_median": 0.796,
+      "rmse_m": 0.188,
+      "scatter_index": 0.205,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.742,
+      "within_20": 0.455,
+      "within_30": 0.909,
+      "r": 0.582
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.181,
+      "ratio_median": 0.846,
+      "rmse_m": 0.198,
+      "scatter_index": 0.178,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.928,
+      "within_20": 0.694,
+      "within_30": 0.952,
+      "r": 0.762
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.18,
+      "ratio_median": 0.838,
+      "rmse_m": 0.196,
+      "scatter_index": 0.182,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.9,
+      "within_20": 0.658,
+      "within_30": 0.945,
+      "r": 0.817
+     }
+    },
+    "period": {
+     "tp_median_s": 3.76,
+     "share_under_3s": 0.068
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Madeira Beach": {
+   "spot": "Madeira Beach",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 26.6 km",
+   "orientation_deg": 225.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.78582,
+    "lng": -82.80924,
+    "km": 1.83,
+    "bearing_deg": 192.5,
+    "depth_m": 6.1,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 141,
+    "lj": 108,
+    "lat": 27.7373,
+    "lng": -82.86304,
+    "km": 9.16,
+    "bearing_deg": 218.4,
+    "depth_m": 10.3,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.594,
+     "ratio_median": 0.453,
+     "rmse_m": 0.598,
+     "scatter_index": 0.554,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.486,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.842
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.515,
+      "ratio_median": 0.442,
+      "rmse_m": 0.517,
+      "scatter_index": 0.564,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.401,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.697
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.608,
+      "ratio_median": 0.454,
+      "rmse_m": 0.611,
+      "scatter_index": 0.551,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.501,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.797
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.594,
+      "ratio_median": 0.453,
+      "rmse_m": 0.598,
+      "scatter_index": 0.554,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.486,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.842
+     }
+    },
+    "period": {
+     "tp_median_s": 2.25,
+     "share_under_3s": 0.63
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.18,
+     "ratio_median": 0.838,
+     "rmse_m": 0.196,
+     "scatter_index": 0.182,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.9,
+     "within_20": 0.658,
+     "within_30": 0.945,
+     "r": 0.817
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.174,
+      "ratio_median": 0.796,
+      "rmse_m": 0.188,
+      "scatter_index": 0.205,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.742,
+      "within_20": 0.455,
+      "within_30": 0.909,
+      "r": 0.582
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.181,
+      "ratio_median": 0.846,
+      "rmse_m": 0.198,
+      "scatter_index": 0.178,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.928,
+      "within_20": 0.694,
+      "within_30": 0.952,
+      "r": 0.762
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.18,
+      "ratio_median": 0.838,
+      "rmse_m": 0.196,
+      "scatter_index": 0.182,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.9,
+      "within_20": 0.658,
+      "within_30": 0.945,
+      "r": 0.817
+     }
+    },
+    "period": {
+     "tp_median_s": 3.76,
+     "share_under_3s": 0.068
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Whitney Beach": {
+   "spot": "Whitney Beach",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 29.8 km",
+   "orientation_deg": 240.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.42896,
+    "lng": -82.70163,
+    "km": 1.47,
+    "bearing_deg": 259.1,
+    "depth_m": 8.6,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 121,
+    "lj": 116,
+    "lat": 27.41286,
+    "lng": -82.71957,
+    "km": 3.82,
+    "bearing_deg": 237.2,
+    "depth_m": 10.4,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.445,
+     "ratio_median": 0.599,
+     "rmse_m": 0.453,
+     "scatter_index": 0.419,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.635,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.734
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.402,
+      "ratio_median": 0.559,
+      "rmse_m": 0.409,
+      "scatter_index": 0.446,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.514,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.413
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.452,
+      "ratio_median": 0.608,
+      "rmse_m": 0.46,
+      "scatter_index": 0.415,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.656,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.653
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.445,
+      "ratio_median": 0.599,
+      "rmse_m": 0.453,
+      "scatter_index": 0.419,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.635,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.734
+     }
+    },
+    "period": {
+     "tp_median_s": 3.11,
+     "share_under_3s": 0.438
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.281,
+     "ratio_median": 0.737,
+     "rmse_m": 0.297,
+     "scatter_index": 0.275,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.799,
+     "within_20": 0.288,
+     "within_30": 0.699,
+     "r": 0.694
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.274,
+      "ratio_median": 0.703,
+      "rmse_m": 0.29,
+      "scatter_index": 0.317,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.643,
+      "within_20": 0.182,
+      "within_30": 0.545,
+      "r": 0.432
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.282,
+      "ratio_median": 0.754,
+      "rmse_m": 0.298,
+      "scatter_index": 0.269,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.826,
+      "within_20": 0.306,
+      "within_30": 0.726,
+      "r": 0.586
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.281,
+      "ratio_median": 0.737,
+      "rmse_m": 0.297,
+      "scatter_index": 0.275,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.799,
+      "within_20": 0.288,
+      "within_30": 0.699,
+      "r": 0.694
+     }
+    },
+    "period": {
+     "tp_median_s": 3.47,
+     "share_under_3s": 0.205
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Coolidge": {
+   "spot": "Coolidge",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 47.0 km",
+   "orientation_deg": 240.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.29919,
+    "lng": -82.57609,
+    "km": 1.06,
+    "bearing_deg": 181.2,
+    "depth_m": 5.0,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 114,
+    "lj": 122,
+    "lat": 27.29931,
+    "lng": -82.61196,
+    "km": 3.72,
+    "bearing_deg": 253.6,
+    "depth_m": 10.0,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.668,
+     "ratio_median": 0.393,
+     "rmse_m": 0.673,
+     "scatter_index": 0.623,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.412,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.765
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.59,
+      "ratio_median": 0.37,
+      "rmse_m": 0.593,
+      "scatter_index": 0.647,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.327,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.364
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.682,
+      "ratio_median": 0.399,
+      "rmse_m": 0.686,
+      "scatter_index": 0.619,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.427,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.705
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.668,
+      "ratio_median": 0.393,
+      "rmse_m": 0.673,
+      "scatter_index": 0.623,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.412,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.765
+     }
+    },
+    "period": {
+     "tp_median_s": 4.04,
+     "share_under_3s": 0.123
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.392,
+     "ratio_median": 0.64,
+     "rmse_m": 0.402,
+     "scatter_index": 0.372,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.688,
+     "within_20": 0.0,
+     "within_30": 0.233,
+     "r": 0.698
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.37,
+      "ratio_median": 0.585,
+      "rmse_m": 0.379,
+      "scatter_index": 0.414,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.547,
+      "within_20": 0.0,
+      "within_30": 0.182,
+      "r": 0.447
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.396,
+      "ratio_median": 0.657,
+      "rmse_m": 0.406,
+      "scatter_index": 0.366,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.713,
+      "within_20": 0.0,
+      "within_30": 0.242,
+      "r": 0.586
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.392,
+      "ratio_median": 0.64,
+      "rmse_m": 0.402,
+      "scatter_index": 0.372,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.688,
+      "within_20": 0.0,
+      "within_30": 0.233,
+      "r": 0.698
+     }
+    },
+    "period": {
+     "tp_median_s": 3.03,
+     "share_under_3s": 0.479
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Siesta Key": {
+   "spot": "Siesta Key",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 52.1 km",
+   "orientation_deg": 222.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.25053,
+    "lng": -82.55815,
+    "km": 1.52,
+    "bearing_deg": 199.6,
+    "depth_m": 8.0,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 111,
+    "lj": 123,
+    "lat": 27.25064,
+    "lng": -82.59402,
+    "km": 4.3,
+    "bearing_deg": 250.7,
+    "depth_m": 10.0,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.556,
+     "ratio_median": 0.5,
+     "rmse_m": 0.565,
+     "scatter_index": 0.523,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.524,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.592
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.484,
+      "ratio_median": 0.497,
+      "rmse_m": 0.493,
+      "scatter_index": 0.538,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.433,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.247
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.568,
+      "ratio_median": 0.501,
+      "rmse_m": 0.576,
+      "scatter_index": 0.52,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.54,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.515
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.556,
+      "ratio_median": 0.5,
+      "rmse_m": 0.565,
+      "scatter_index": 0.523,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.524,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.592
+     }
+    },
+    "period": {
+     "tp_median_s": 3.84,
+     "share_under_3s": 0.274
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.368,
+     "ratio_median": 0.668,
+     "rmse_m": 0.381,
+     "scatter_index": 0.353,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.712,
+     "within_20": 0.0,
+     "within_30": 0.342,
+     "r": 0.662
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.352,
+      "ratio_median": 0.619,
+      "rmse_m": 0.364,
+      "scatter_index": 0.397,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.564,
+      "within_20": 0.0,
+      "within_30": 0.182,
+      "r": 0.411
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.371,
+      "ratio_median": 0.677,
+      "rmse_m": 0.384,
+      "scatter_index": 0.346,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.738,
+      "within_20": 0.0,
+      "within_30": 0.371,
+      "r": 0.533
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.368,
+      "ratio_median": 0.668,
+      "rmse_m": 0.381,
+      "scatter_index": 0.353,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.712,
+      "within_20": 0.0,
+      "within_30": 0.342,
+      "r": 0.662
+     }
+    },
+    "period": {
+     "tp_median_s": 3.43,
+     "share_under_3s": 0.164
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Gasparilla": {
+   "spot": "Gasparilla",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 108.5 km",
+   "orientation_deg": 231.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 26.79634,
+    "lng": -82.28913,
+    "km": 0.95,
+    "bearing_deg": 223.7,
+    "depth_m": 6.2,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 82,
+    "lj": 139,
+    "lat": 26.7802,
+    "lng": -82.30707,
+    "km": 3.48,
+    "bearing_deg": 224.5,
+    "depth_m": 10.2,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.541,
+     "ratio_median": 0.511,
+     "rmse_m": 0.556,
+     "scatter_index": 0.515,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.538,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.345
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.453,
+      "ratio_median": 0.521,
+      "rmse_m": 0.463,
+      "scatter_index": 0.505,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.464,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.325
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.557,
+      "ratio_median": 0.51,
+      "rmse_m": 0.571,
+      "scatter_index": 0.515,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.552,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.199
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.541,
+      "ratio_median": 0.511,
+      "rmse_m": 0.556,
+      "scatter_index": 0.515,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.538,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.345
+     }
+    },
+    "period": {
+     "tp_median_s": 4.17,
+     "share_under_3s": 0.137
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.39,
+     "ratio_median": 0.665,
+     "rmse_m": 0.415,
+     "scatter_index": 0.385,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.689,
+     "within_20": 0.082,
+     "within_30": 0.356,
+     "r": 0.34
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.332,
+      "ratio_median": 0.636,
+      "rmse_m": 0.353,
+      "scatter_index": 0.385,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.584,
+      "within_20": 0.182,
+      "within_30": 0.182,
+      "r": 0.392
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.401,
+      "ratio_median": 0.67,
+      "rmse_m": 0.425,
+      "scatter_index": 0.384,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.708,
+      "within_20": 0.065,
+      "within_30": 0.387,
+      "r": 0.164
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.39,
+      "ratio_median": 0.665,
+      "rmse_m": 0.415,
+      "scatter_index": 0.385,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.689,
+      "within_20": 0.082,
+      "within_30": 0.356,
+      "r": 0.34
+     }
+    },
+    "period": {
+     "tp_median_s": 3.1,
+     "share_under_3s": 0.384
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Twin Piers": {
+   "spot": "Twin Piers",
+   "wfo": "tbw",
+   "measured_by": "NDBC 42098, 27.0 km",
+   "orientation_deg": 254.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 73,
+   "node": {
+    "lat": 27.4614,
+    "lng": -82.70163,
+    "km": 0.29,
+    "bearing_deg": 281.3,
+    "depth_m": 7.2,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 123,
+    "lj": 115,
+    "lat": 27.44531,
+    "lng": -82.7375,
+    "km": 4.2,
+    "bearing_deg": 245.6,
+    "depth_m": 9.9,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.641,
+     "ratio_median": 0.411,
+     "rmse_m": 0.646,
+     "scatter_index": 0.599,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.438,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.747
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.56,
+      "ratio_median": 0.396,
+      "rmse_m": 0.563,
+      "scatter_index": 0.615,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.356,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.367
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.656,
+      "ratio_median": 0.42,
+      "rmse_m": 0.66,
+      "scatter_index": 0.595,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.453,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.702
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.641,
+      "ratio_median": 0.411,
+      "rmse_m": 0.646,
+      "scatter_index": 0.599,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.438,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.747
+     }
+    },
+    "period": {
+     "tp_median_s": 5.18,
+     "share_under_3s": 0.041
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -0.283,
+     "ratio_median": 0.739,
+     "rmse_m": 0.298,
+     "scatter_index": 0.276,
+     "mean_measured_m": 1.08,
+     "mean_ours_m": 0.797,
+     "within_20": 0.26,
+     "within_30": 0.712,
+     "r": 0.705
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 11,
+      "bias_m": -0.273,
+      "ratio_median": 0.703,
+      "rmse_m": 0.288,
+      "scatter_index": 0.315,
+      "mean_measured_m": 0.917,
+      "mean_ours_m": 0.644,
+      "within_20": 0.182,
+      "within_30": 0.545,
+      "r": 0.443
+     },
+     "1.0-1.5 m": {
+      "n": 62,
+      "bias_m": -0.285,
+      "ratio_median": 0.757,
+      "rmse_m": 0.3,
+      "scatter_index": 0.27,
+      "mean_measured_m": 1.109,
+      "mean_ours_m": 0.824,
+      "within_20": 0.274,
+      "within_30": 0.742,
+      "r": 0.602
+     },
+     "1.5-99.0 m": {
+      "n": 0
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 73,
+      "bias_m": -0.283,
+      "ratio_median": 0.739,
+      "rmse_m": 0.298,
+      "scatter_index": 0.276,
+      "mean_measured_m": 1.08,
+      "mean_ours_m": 0.797,
+      "within_20": 0.26,
+      "within_30": 0.712,
+      "r": 0.705
+     }
+    },
+    "period": {
+     "tp_median_s": 3.38,
+     "share_under_3s": 0.205
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 5.0,
+    "share_under_3s": 0.0
+   }
+  },
+  "Oak Island Pier": {
+   "spot": "Oak Island Pier",
+   "wfo": "ilm",
+   "measured_by": "NDBC 41110, 43.2 km",
+   "orientation_deg": 200.0,
+   "cycles_listed": 12,
+   "cycles_read": 12,
+   "hours": 73,
+   "node": {
+    "lat": 33.89804,
+    "lng": -78.07603,
+    "km": 0.8,
+    "bearing_deg": 134.2,
+    "depth_m": 5.9,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 61,
+    "lj": 86,
+    "lat": 33.87555,
+    "lng": -78.10274,
+    "km": 3.6,
+    "bearing_deg": 211.8,
+    "depth_m": 11.4,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -1.341,
+     "ratio_median": 0.247,
+     "rmse_m": 1.357,
+     "scatter_index": 0.765,
+     "mean_measured_m": 1.773,
+     "mean_ours_m": 0.432,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.658
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 0
+     },
+     "1.0-1.5 m": {
+      "n": 10,
+      "bias_m": -0.901,
+      "ratio_median": 0.289,
+      "rmse_m": 0.903,
+      "scatter_index": 0.714,
+      "mean_measured_m": 1.265,
+      "mean_ours_m": 0.363,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.46
+     },
+     "1.5-99.0 m": {
+      "n": 63,
+      "bias_m": -1.411,
+      "ratio_median": 0.244,
+      "rmse_m": 1.416,
+      "scatter_index": 0.764,
+      "mean_measured_m": 1.854,
+      "mean_ours_m": 0.443,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.634
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 52,
+      "bias_m": -1.436,
+      "ratio_median": 0.244,
+      "rmse_m": 1.439,
+      "scatter_index": 0.765,
+      "mean_measured_m": 1.881,
+      "mean_ours_m": 0.446,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.721
+     },
+     "8-10 s": {
+      "n": 10,
+      "bias_m": -1.076,
+      "ratio_median": 0.281,
+      "rmse_m": 1.104,
+      "scatter_index": 0.756,
+      "mean_measured_m": 1.46,
+      "mean_ours_m": 0.384,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.791
+     },
+     "10-12 s": {
+      "n": 11,
+      "bias_m": -1.137,
+      "ratio_median": 0.272,
+      "rmse_m": 1.149,
+      "scatter_index": 0.743,
+      "mean_measured_m": 1.545,
+      "mean_ours_m": 0.409,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.128
+     }
+    },
+    "period": {
+     "tp_median_s": 2.39,
+     "share_under_3s": 0.808
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 73,
+     "bias_m": -1.073,
+     "ratio_median": 0.391,
+     "rmse_m": 1.095,
+     "scatter_index": 0.617,
+     "mean_measured_m": 1.773,
+     "mean_ours_m": 0.7,
+     "within_20": 0.0,
+     "within_30": 0.0,
+     "r": 0.456
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 0
+     },
+     "1.0-1.5 m": {
+      "n": 10,
+      "bias_m": -0.636,
+      "ratio_median": 0.51,
+      "rmse_m": 0.644,
+      "scatter_index": 0.509,
+      "mean_measured_m": 1.265,
+      "mean_ours_m": 0.629,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.107
+     },
+     "1.5-99.0 m": {
+      "n": 63,
+      "bias_m": -1.143,
+      "ratio_median": 0.389,
+      "rmse_m": 1.15,
+      "scatter_index": 0.62,
+      "mean_measured_m": 1.854,
+      "mean_ours_m": 0.711,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.439
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 52,
+      "bias_m": -1.18,
+      "ratio_median": 0.375,
+      "rmse_m": 1.183,
+      "scatter_index": 0.629,
+      "mean_measured_m": 1.881,
+      "mean_ours_m": 0.702,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.703
+     },
+     "8-10 s": {
+      "n": 10,
+      "bias_m": -0.79,
+      "ratio_median": 0.5,
+      "rmse_m": 0.825,
+      "scatter_index": 0.565,
+      "mean_measured_m": 1.46,
+      "mean_ours_m": 0.67,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.856
+     },
+     "10-12 s": {
+      "n": 11,
+      "bias_m": -0.828,
+      "ratio_median": 0.469,
+      "rmse_m": 0.844,
+      "scatter_index": 0.546,
+      "mean_measured_m": 1.545,
+      "mean_ours_m": 0.717,
+      "within_20": 0.0,
+      "within_30": 0.0,
+      "r": 0.243
+     }
+    },
+    "period": {
+     "tp_median_s": 3.19,
+     "share_under_3s": 0.356
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 6.67,
+    "share_under_3s": 0.0
+   }
+  },
+  "Duck Pier": {
+   "spot": "Duck Pier",
+   "wfo": "mhx",
+   "measured_by": "FRF 8 m array",
+   "orientation_deg": 72.0,
+   "cycles_listed": 6,
+   "cycles_read": 6,
+   "hours": 72,
+   "node": {
+    "lat": 36.19317,
+    "lng": -75.74849,
+    "km": 1.14,
+    "bearing_deg": 358.3,
+    "depth_m": 7.4,
+    "depth_source": "etopo extract",
+    "depth_error": null
+   },
+   "cell": {
+    "li": 144,
+    "lj": 116,
+    "lat": 36.19331,
+    "lng": -75.72892,
+    "km": 2.07,
+    "bearing_deg": 56.1,
+    "depth_m": 15.0,
+    "depth_source": "etopo extract",
+    "depth_error": null,
+    "coastline_checked": true
+   },
+   "node_vs_measured": {
+    "all": {
+     "n": 72,
+     "bias_m": -0.435,
+     "ratio_median": 0.757,
+     "rmse_m": 0.492,
+     "scatter_index": 0.261,
+     "mean_measured_m": 1.88,
+     "mean_ours_m": 1.445,
+     "within_20": 0.25,
+     "within_30": 0.764,
+     "r": 0.379
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 0
+     },
+     "1.0-1.5 m": {
+      "n": 9,
+      "bias_m": 0.012,
+      "ratio_median": 1.001,
+      "rmse_m": 0.054,
+      "scatter_index": 0.039,
+      "mean_measured_m": 1.36,
+      "mean_ours_m": 1.372,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.003
+     },
+     "1.5-99.0 m": {
+      "n": 63,
+      "bias_m": -0.499,
+      "ratio_median": 0.745,
+      "rmse_m": 0.525,
+      "scatter_index": 0.269,
+      "mean_measured_m": 1.955,
+      "mean_ours_m": 1.456,
+      "within_20": 0.143,
+      "within_30": 0.73,
+      "r": 0.039
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 16,
+      "bias_m": -0.611,
+      "ratio_median": 0.693,
+      "rmse_m": 0.619,
+      "scatter_index": 0.299,
+      "mean_measured_m": 2.07,
+      "mean_ours_m": 1.459,
+      "within_20": 0.0,
+      "within_30": 0.438,
+      "r": 0.009
+     },
+     "8-10 s": {
+      "n": 4,
+      "bias_m": -0.432,
+      "ratio_median": 0.728,
+      "rmse_m": 0.497,
+      "scatter_index": 0.269,
+      "mean_measured_m": 1.849,
+      "mean_ours_m": 1.416,
+      "within_20": 0.25,
+      "within_30": 0.75,
+      "r": 0.537
+     },
+     "10-12 s": {
+      "n": 6,
+      "bias_m": -0.603,
+      "ratio_median": 0.701,
+      "rmse_m": 0.609,
+      "scatter_index": 0.296,
+      "mean_measured_m": 2.056,
+      "mean_ours_m": 1.454,
+      "within_20": 0.0,
+      "within_30": 0.5,
+      "r": -0.661
+     },
+     "12-14 s": {
+      "n": 43,
+      "bias_m": -0.35,
+      "ratio_median": 0.775,
+      "rmse_m": 0.42,
+      "scatter_index": 0.234,
+      "mean_measured_m": 1.794,
+      "mean_ours_m": 1.444,
+      "within_20": 0.372,
+      "within_30": 0.907,
+      "r": 0.479
+     },
+     "14+ s": {
+      "n": 3,
+      "bias_m": -0.39,
+      "ratio_median": 0.782,
+      "rmse_m": 0.394,
+      "scatter_index": 0.219,
+      "mean_measured_m": 1.801,
+      "mean_ours_m": 1.411,
+      "within_20": 0.333,
+      "within_30": 1.0,
+      "r": -0.517
+     }
+    },
+    "period": {
+     "tp_median_s": 7.94,
+     "share_under_3s": 0.0
+    }
+   },
+   "cell_vs_measured": {
+    "all": {
+     "n": 72,
+     "bias_m": -0.213,
+     "ratio_median": 0.868,
+     "rmse_m": 0.267,
+     "scatter_index": 0.142,
+     "mean_measured_m": 1.88,
+     "mean_ours_m": 1.668,
+     "within_20": 0.986,
+     "within_30": 1.0,
+     "r": 0.927
+    },
+    "by_measured_height": {
+     "0.0-0.5 m": {
+      "n": 0
+     },
+     "0.5-1.0 m": {
+      "n": 0
+     },
+     "1.0-1.5 m": {
+      "n": 9,
+      "bias_m": 0.105,
+      "ratio_median": 1.089,
+      "rmse_m": 0.115,
+      "scatter_index": 0.084,
+      "mean_measured_m": 1.36,
+      "mean_ours_m": 1.465,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.691
+     },
+     "1.5-99.0 m": {
+      "n": 63,
+      "bias_m": -0.258,
+      "ratio_median": 0.865,
+      "rmse_m": 0.282,
+      "scatter_index": 0.144,
+      "mean_measured_m": 1.955,
+      "mean_ours_m": 1.697,
+      "within_20": 0.984,
+      "within_30": 1.0,
+      "r": 0.839
+     }
+    },
+    "by_measured_period": {
+     "<8 s": {
+      "n": 16,
+      "bias_m": -0.336,
+      "ratio_median": 0.833,
+      "rmse_m": 0.342,
+      "scatter_index": 0.165,
+      "mean_measured_m": 2.07,
+      "mean_ours_m": 1.735,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.464
+     },
+     "8-10 s": {
+      "n": 4,
+      "bias_m": -0.181,
+      "ratio_median": 0.86,
+      "rmse_m": 0.263,
+      "scatter_index": 0.142,
+      "mean_measured_m": 1.849,
+      "mean_ours_m": 1.667,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": 0.996
+     },
+     "10-12 s": {
+      "n": 6,
+      "bias_m": -0.329,
+      "ratio_median": 0.844,
+      "rmse_m": 0.332,
+      "scatter_index": 0.161,
+      "mean_measured_m": 2.056,
+      "mean_ours_m": 1.728,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": -0.172
+     },
+     "12-14 s": {
+      "n": 43,
+      "bias_m": -0.157,
+      "ratio_median": 0.887,
+      "rmse_m": 0.228,
+      "scatter_index": 0.127,
+      "mean_measured_m": 1.794,
+      "mean_ours_m": 1.637,
+      "within_20": 0.977,
+      "within_30": 1.0,
+      "r": 0.916
+     },
+     "14+ s": {
+      "n": 3,
+      "bias_m": -0.166,
+      "ratio_median": 0.903,
+      "rmse_m": 0.168,
+      "scatter_index": 0.093,
+      "mean_measured_m": 1.801,
+      "mean_ours_m": 1.635,
+      "within_20": 1.0,
+      "within_30": 1.0,
+      "r": -0.466
+     }
+    },
+    "period": {
+     "tp_median_s": 7.3,
+     "share_under_3s": 0.0
+    }
+   },
+   "measured_period": {
+    "tp_median_s": 12.58,
+    "share_under_3s": 0.0
+   }
+  }
+ }
+}
