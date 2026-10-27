@@ -451,7 +451,7 @@ def test_every_mop_and_calibrated_count_in_the_post_is_the_datas():
 def test_only_mops_own_hours_skip_the_period_boost():
     _says(r"MOP's own height, which carries no boost, never reaches the page\.", "that MOP's own height carries no boost")
     _says(r"Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, "
-          r"so it can read higher than nearshore swell height\.", "the uncorrected, boosted height")
+          r"so it can read higher than CDIP's nearshore height\.", "the uncorrected, boosted height")
     from pipeline.forecast import mop
     hs = 1.5
     for tp in (8.0, 12.0, 16.0):

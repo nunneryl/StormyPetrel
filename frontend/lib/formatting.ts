@@ -43,7 +43,7 @@ export function fmtFt(v: number | null | undefined): string {
 }
 
 /**
- * The swell height as a READING RANGE: the standard step of a fixed ladder that the height
+ * The surf height (the headline height) as a READING RANGE: the standard step of a fixed ladder that the height
  * falls in. One meaning everywhere, at every spot:
  *
  *   under 1 · 1-2 · 2-3 · 3-4 · 4-5 · 5-6 · 6-8 · 8-10 · 10-12 · 12-15 · 15-20 · 20-25 ·

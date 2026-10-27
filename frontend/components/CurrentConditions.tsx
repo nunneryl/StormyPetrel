@@ -16,7 +16,7 @@ import { SwellCompass } from './SwellCompass';
 import { selectCurrentHour } from '@/lib/currentHour';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import {
-  heightBasis, HEIGHT_BASIS_COLOR, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_NOTE,
+  heightBasis, HEADLINE_HEIGHT_LABEL, HEIGHT_BASIS_COLOR, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_NOTE,
   HEIGHT_METHOD_HREF, HEIGHT_METHOD_LINK_TEXT,
 } from '@/lib/heightBasis';
 import type { Forecast } from '@/lib/types';
@@ -72,7 +72,7 @@ export function CurrentConditions({
 
   const selection = selectCurrentHour(rows, nowMs);
   const current = selection.row;
-  // What the height in the Swell height tile IS — calibrated, CDIP's own, or a model
+  // What the height in the Surf height tile IS — calibrated, CDIP's own, or a model
   // estimate — read off the same row, so it moves with the row when the hour turns over.
   const basis = heightBasis(current);
   // The NEXT hour, for the tide trend arrow — relative to the selected hour, not to
@@ -120,7 +120,7 @@ export function CurrentConditions({
       )}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <BigTile
-        label="Swell height"
+        label={HEADLINE_HEIGHT_LABEL}
         value={fmtHeightRange(current?.face_ft)}
         sub={
           basis && (
@@ -228,7 +228,7 @@ function BigTile({
           {value}
         </span>
       </div>
-      {/* A line about the value itself, directly under it — the Swell height tile's basis. */}
+      {/* A line about the value itself, directly under it — the Surf height tile's basis. */}
       {sub && <div className="mt-0.5 text-xs leading-snug">{sub}</div>}
       {(hint || rightSpark || action) && (
         <div className="mt-1 flex items-center justify-between gap-2 text-xs text-text-muted">

@@ -20,6 +20,7 @@ import {
   SurfReportPanel,
 } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
+import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
 import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
 import { breakTypeShown, spotInfoRows, tidePreferenceShown } from '@/lib/spotInfo';
 import { HOUR_PICKER_SPAN } from '@/lib/surfReport';
@@ -164,7 +165,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   //   sp-rendered-at    `nowMs`, this render's own clock. A cached copy carries the moment it
   //                     was built, never the moment it was requested.
   //   sp-headline-hour  the valid_time of `current`: the same rows, selector and clock that
-  //                     CurrentConditions renders the Swell height tile's first paint from, so
+  //                     CurrentConditions renders the Surf height tile's first paint from, so
   //                     it names the row this HTML's headline height came from. The viewer's
   //                     clock re-picks after mount; this records the copy, not the re-pick.
   // With no current row the tiles say so, and sp-headline-hour is left out rather than filled
@@ -294,7 +295,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         {/* Titled for the quantity it plots. It said "Swell components" while the
             chart drew a partition stack; that chart now draws the published swell
             height only, and the components are in the Swell breakdown panel above. */}
-        <ChartCard title="Swell height (ft) · next 48h">
+        <ChartCard title={`${HEADLINE_HEIGHT_LABEL} (ft) · next 48h`}>
           <SwellChart forecasts={chartForecasts} />
         </ChartCard>
         <ChartCard title="Wind speed (mph) · next 48h">
@@ -389,7 +390,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
           A CREDIT, NOT A CLAIM ABOUT THE NUMBERS ABOVE. It read "Nearshore forecast from
           CDIP MOP", but MOP's nowcast ends before the current hour, so every hour this page
-          shows is a model estimate and the Swell height tile says so. The pipeline still
+          shows is a model estimate and the Surf height tile says so. The pipeline still
           reads MOP for this spot's past hours, which is what the credit is for. */}
       {spot.swell_window_source === 'cdip_mop' && (
         <p className="pt-1 text-xs text-text-muted">

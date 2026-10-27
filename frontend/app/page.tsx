@@ -10,7 +10,7 @@ import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { HeightBasisMark } from '@/components/HeightBasisMark';
 import { fmtHeightRange, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
-import { heightBasis } from '@/lib/heightBasis';
+import { HEADLINE_HEIGHT_COLUMN, heightBasis } from '@/lib/heightBasis';
 import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
 import { fetchCamSlugSet } from '@/lib/cams';
@@ -143,7 +143,7 @@ export default async function HomePage() {
             <div>Spot</div>
             <div>State</div>
             <div>Rating</div>
-            <div className="text-right">Swell (ft)</div>
+            <div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>
             <div className="text-right">Period</div>
             <div>Wind</div>
           </div>
@@ -158,7 +158,7 @@ export default async function HomePage() {
                 href={`/spot/${s.slug}`}
                 className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_120px_72px_72px_120px] gap-3 px-4 py-2.5 border-b border-ink-600 last:border-b-0 hover:bg-ink-800 transition group"
               >
-                {/* Centred on desktop: the Swell cell is two lines now (height, then its
+                {/* Centred on desktop: the Surf cell is two lines now (height, then its
                     basis), and every other cell already centres itself in the row. */}
                 <div className="min-w-0 md:self-center">
                   <div className="font-bold text-text-primary group-hover:text-cyan-600 truncate flex items-center gap-1.5">

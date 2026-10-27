@@ -18,7 +18,7 @@
  *      later request gets the same value back.
  *   4. A regenerated copy carries ITS render time: after an on-demand revalidation the stamp
  *      moves to a moment after that revalidation was asked for.
- *   5. sp-headline-hour is the hour containing sp-rendered-at, and it is the row the Swell height
+ *   5. sp-headline-hour is the hour containing sp-rendered-at, and it is the row the Surf height
  *      tile shows: every fixture hour has its own height, so the tile's text names the row.
  *   6. With no row for the current hour the page says so, and sp-headline-hour is absent.
  *   7. The grep pattern given for reading the tags with curl finds exactly the two tags.
@@ -119,7 +119,7 @@ const VERIFIED_TIDE = {
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
-// The Swell height tile shows the reading range, the standard step the height falls in
+// The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
 // 3.5, 4.5, 5.5 ft from twelve hours back, reading "1-2ft" ... "5-6ft". Neighbouring hours
 // always read differently, so the tile still says which row it shows, to within five hours.
@@ -205,9 +205,9 @@ function metaTags(html: string, name: string): Tag[] {
   return out;
 }
 
-/** The value in the Swell height tile: the page's headline height. */
-function swellHeightTile(html: string): string | null {
-  const m = /Swell height<\/span>[\s\S]*?<span class="text-2xl[^"]*">([^<]*)<\/span>/.exec(html);
+/** The value in the Surf height tile: the page's headline height. */
+function surfHeightTile(html: string): string | null {
+  const m = /Surf height<\/span>[\s\S]*?<span class="text-2xl[^"]*">([^<]*)<\/span>/.exec(html);
   return m ? m[1] : null;
 }
 
@@ -255,7 +255,7 @@ function asTimestamp(label: string, value: string | undefined): number {
 
 /**
  * sp-headline-hour against sp-rendered-at and against the tile: the hour that contains the render
- * time, and the fixture row whose height the Swell height tile shows.
+ * time, and the fixture row whose height the Surf height tile shows.
  */
 function checkHeadline(label: string, html: string, renderedMs: number): string | undefined {
   const headline = oneTagInHead(label, html, 'sp-headline-hour');
@@ -264,8 +264,8 @@ function checkHeadline(label: string, html: string, renderedMs: number): string 
   eq(`${label}: sp-headline-hour is the hour containing sp-rendered-at`,
     headline, new Date(containingHour).toISOString());
   const offset = (headlineMs - T0) / HOUR;
-  eq(`${label}: the Swell height tile shows that hour's row (${tileText(offset)})`,
-    swellHeightTile(html), tileText(offset));
+  eq(`${label}: the Surf height tile shows that hour's row (${tileText(offset)})`,
+    surfHeightTile(html), tileText(offset));
   return headline;
 }
 

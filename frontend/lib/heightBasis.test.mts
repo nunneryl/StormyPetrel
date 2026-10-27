@@ -25,6 +25,9 @@
  *   7. THE REPORT CARDS print that stored height with the stored basis beside it, read from the
  *      entry's own height_basis and never derived: the row the height came from is gone, so any
  *      other source would be a guess about a different number.
+ *   9. THE NAME. The headline height is "Surf height" ("Surf (ft)" in a column) since
+ *      2026-10-27, wherever the site names it, through the two constants, and no copy says
+ *      "Swell height", "Swell (ft)" or "nearshore swell height" again.
  *   8. NO COPY CALLS MOP A MEASUREMENT. MOP is CDIP's nearshore model; "Calibrated to CDIP
  *      measurements" was the one place that said otherwise, and this keeps it from coming back.
  *
@@ -39,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { copyOf, copyStrings, scannedFiles, walk } from './copyScan.ts';
 import {
+  HEADLINE_HEIGHT_COLUMN, HEADLINE_HEIGHT_LABEL,
   heightBasis, heightBasisMarkHtml, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_MARK, HEIGHT_BASIS_NOTE,
   HEIGHT_METHOD_HREF, storedHeightBasis, type HeightBasisRow,
 } from './heightBasis.ts';
@@ -344,6 +348,39 @@ check("the site's own wording passes: the new label, CDIP's buoys, and a measure
 const claims = scannedFiles(FRONTEND).flatMap((rel) => copyOf(rel, read(rel))
   .filter((c) => says(c.text)).map((c) => `${rel}:${c.line}  ${JSON.stringify(c.text.trim().slice(0, 100))}`));
 check('no copy calls MOP a measurement', claims.length === 0, claims.join('; '));
+
+// --------------------------------------------------------------------------- //
+// 9 — the name of the headline height                                          //
+// --------------------------------------------------------------------------- //
+check('the headline height is called "Surf height"', HEADLINE_HEIGHT_LABEL === 'Surf height',
+  HEADLINE_HEIGHT_LABEL);
+check('...and "Surf (ft)" at the head of a column', HEADLINE_HEIGHT_COLUMN === 'Surf (ft)',
+  HEADLINE_HEIGHT_COLUMN);
+check("the model note compares with CDIP's nearshore height, by that name",
+  HEIGHT_BASIS_NOTE.model === "Not calibrated against CDIP, so it can read higher than CDIP's nearshore height.",
+  HEIGHT_BASIS_NOTE.model);
+// Every place that names the headline height reads the constant, never a literal.
+for (const [rel, use] of [
+  ['components/CurrentConditions.tsx', 'label={HEADLINE_HEIGHT_LABEL}'],
+  ['components/SwellChart.tsx', 'face: HEADLINE_HEIGHT_LABEL,'],
+  ['components/SwellChart.tsx', '{HEADLINE_HEIGHT_LABEL} is a single best estimate'],
+  ['app/spot/[slug]/page.tsx', '<ChartCard title={`${HEADLINE_HEIGHT_LABEL} (ft) · next 48h`}>'],
+  ['components/ForecastGrid.tsx', '<div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>'],
+  ['app/page.tsx', '<div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>'],
+] as const) {
+  check(`${rel} names the headline height with the constant: ${use}`, read(rel).includes(use));
+}
+const OLD_NAMES = [/\bSwell height\b/, /\bSwell \(ft\)/, /\bnearshore swell height\b/i];
+for (const t of ['Swell height', 'Swell (ft)', 'than nearshore swell height.']) {
+  check(`an old name is caught: ${JSON.stringify(t)}`,
+    copyStrings('o.tsx', `const s = ${JSON.stringify(t)};`).some((c) => OLD_NAMES.some((re) => re.test(c.text))));
+}
+check('the chop paragraph\'s "no swell height" (the model\'s swell part) is not the old name',
+  !OLD_NAMES.some((re) => re.test('no total height, no swell height, or a swell height above the total')));
+const oldNames = scannedFiles(FRONTEND).flatMap((rel) => copyOf(rel, read(rel))
+  .filter((c) => OLD_NAMES.some((re) => re.test(c.text)))
+  .map((c) => `${rel}:${c.line}  ${JSON.stringify(c.text.trim().slice(0, 100))}`));
+check('no copy names the headline height the old way', oldNames.length === 0, oldNames.join('; '));
 
 if (failures > 0) {
   throw new Error(`heightBasis: ${failures} FAILURE(S)`);

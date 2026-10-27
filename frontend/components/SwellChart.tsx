@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import type { Forecast } from '@/lib/types';
 import { fmtDay, fmtDayTimeTick, fmtShortTime, metersToFeet } from '@/lib/formatting';
+import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
 
 type Pt = {
   t: number;
@@ -56,7 +57,7 @@ const COLOR = {
  *  agree: a reader seeing "P2 (secondary)" in the panel and "p2" in the chart
  *  has no way to know they are the same thing. */
 const LABEL = {
-  face: 'Swell height',
+  face: HEADLINE_HEIGHT_LABEL,
   p1:   'P1 (primary)',
   p2:   'P2 (secondary)',
   p3:   'P3 (tertiary)',
@@ -166,18 +167,18 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
               fill="url(#face-fill)"
               isAnimationActive={false}
             />
-            {/* No <Legend>. A one-entry legend reading "Swell height" under a card
-                already titled "Swell height (ft)" is the same word twice. */}
+            {/* No <Legend>. A one-entry legend reading "Surf height" under a card
+                already titled "Surf height (ft)" is the same word twice. */}
           </AreaChart>
         </ResponsiveContainer>
       </div>
       {/* The old copy said "The range shown above it spans the uncertainty in that
           estimate". With the stack drawn there WAS something above the line and a
           reader took it for an uncertainty band; the range has always lived in the
-          Swell height tile at the top of the page, never in this plot. Nothing is
+          Surf height tile at the top of the page, never in this plot. Nothing is
           above the line in this variant, so the caption says where to look. */}
       <p className="mt-1.5 text-[10px] leading-snug text-text-muted">
-        Swell height is a single best estimate; the tile at the top of the page
+        {HEADLINE_HEIGHT_LABEL} is a single best estimate; the tile at the top of the page
         gives the standard range it falls in.
       </p>
     </>
