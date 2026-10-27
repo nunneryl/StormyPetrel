@@ -723,3 +723,46 @@ def test_frf_at_band_scales():
              {"frf8_tp": 9.0, "frf8_typical": None, "observed_ft": 4.0}]
     got = F.frf_at_scales(pairs, {"8-10 s": 0.8})
     assert got["n"] == 1 and got["ratio_median"] == 1.0
+
+
+def test_lidar_months_retry_once_then_name_the_month():
+    calls = []
+
+    def flaky(url):
+        calls.append(url)
+        raise OSError("NetCDF: DAP server error")
+
+    got, cov = F.lidar_hourly(datetime(2026, 10, 1, tzinfo=timezone.utc),
+                              datetime(2026, 10, 2, tzinfo=timezone.utc), open_nc=flaky)
+    assert got == {} and len(calls) == 2                     # one month, read twice
+    assert cov == {"202610": "unread: NetCDF: DAP server error"}
+
+    class _Var:
+        def __init__(self, v):
+            self.v = v
+
+        def __getitem__(self, _):
+            import numpy as np
+            return np.ma.masked_invalid(np.asarray(self.v, dtype=float))
+
+    class _DS:
+        # one hour, 2026-10-01 14:00Z, flag 1, peak 0.9 at x 100, seaward cell x 110
+        t = datetime(2026, 10, 1, 14, tzinfo=timezone.utc).timestamp()
+        variables = {"xFRF": _Var([100.0, 110.0]), "time": _Var([t]),
+                     "waveHs": _Var([[0.9, 0.5]]), "percentTimeSeriesMissing": _Var([[0.0, 0.0]]),
+                     "hydrodynamicsFlag": _Var([1.0])}
+
+    tries = []
+
+    def second_time(url):
+        tries.append(url)
+        if len(tries) == 1:
+            raise OSError("File is truncated")
+        return _DS()
+
+    got, cov = F.lidar_hourly(datetime(2026, 10, 1, tzinfo=timezone.utc),
+                              datetime(2026, 10, 2, tzinfo=timezone.utc), open_nc=second_time)
+    assert len(tries) == 2
+    assert got == {int(_DS.t): {"hs_max": 0.9, "x_peak": 100.0, "x_seaward": 110.0,
+                                "small": True}}
+    assert cov == {"202610": {"flag 1": 1, "maximum inside the transect": 1}}

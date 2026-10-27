@@ -490,10 +490,15 @@ def lidar_hourly(since: datetime, until: datetime, open_nc=_open_nc) -> tuple[di
     for ym in months(since, until):
         url = (f"{FRF_DODS}lidarHydrodynamics/{ym[:4]}/"
                f"FRF-ocean_waves_lidarHydrodynamics_{ym}.nc")
-        try:
-            ds = open_nc(url)
-        except OSError as e:
-            cov[ym] = f"unread: {e}"[:120]
+        ds, err = None, None
+        for _ in range(2):          # FRF rewrites the current month's file; a read can catch it
+            try:                    # mid-write ("File is truncated", run 53), so retry once
+                ds = open_nc(url)
+                break
+            except OSError as e:
+                err = e
+        if ds is None:
+            cov[ym] = f"unread: {err}"[:120]
             continue
 
         def arr(n):
