@@ -487,7 +487,8 @@ def test_it_imports_no_database_client_and_nothing_that_rates():
 
 def test_the_rating_reads_them_only_for_the_beach_break_ceiling():
     # Where break_type is read at all, outside its writers: descriptions, the review queue,
-    # the NWPS trust diagnostic's tier, star_preview (the read-only rating preview), and the
+    # the NWPS trust diagnostic's tier, star_preview (the read-only rating preview),
+    # face_compare (the read-only face-height comparison, which reports by spot type), and the
     # rater, in ONE place: interpret.is_sand_beach_break.
     #
     # THE RATER READS BOTH NOW, DELIBERATELY. Until 2026-10-20 this test asserted that neither
@@ -509,7 +510,8 @@ def test_the_rating_reads_them_only_for_the_beach_break_ceiling():
                     readers.append(os.path.join(folder, name).replace(os.sep, "/"))
     assert readers == [
         "pipeline/audit_review_queue.py", "pipeline/config.py",
-        "pipeline/db_import.py", "pipeline/descriptions.py", "pipeline/generate_descriptions.py",
+        "pipeline/db_import.py", "pipeline/descriptions.py", "pipeline/face_compare.py",
+        "pipeline/generate_descriptions.py",
         "pipeline/import_break_type_research.py", "pipeline/interpret.py",
         "pipeline/research_break_type.py", "pipeline/scrape_surf_forecast.py",
         "pipeline/star_preview.py", "pipeline/tide_free_pass.py",
