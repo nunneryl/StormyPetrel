@@ -63,6 +63,14 @@ name: sw1-raycast
 #       station against the stations within 30 km (damped stations flagged, re-rated where the
 #       spot has a rated preference); and the cams with no spot. Window from 2026-10-21 00:00Z.
 #       Geometry from baseline_ref. SELECT only.
+#   mode = node-preview: READ-ONLY. THE MERGE GATE for moving NWPS sample points
+#       (pipeline/node_preview.py): every published NWPS-override hour of each spot whose
+#       nwps_node_lat/lng differ between baseline_ref's roster and this ref's, from now, replayed
+#       through apply_nwps_overrides on the NWPS cycle it was rated from (where NOMADS still holds
+#       it). At the old node it must reproduce the stored hs, tp, dp and swell_hs and the published
+#       stars, hour for hour (0 differences); then every hour's stars, face, height and period at
+#       the old and the new node, each new node checked as a wet cell centre in every cycle read,
+#       and the homepage's "Best conditions right now" before and after. SELECT only.
 
 on:
   workflow_dispatch:
@@ -80,6 +88,7 @@ on:
           - nwps-shelter
           - rating-preview
           - data-quality
+          - node-preview
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -136,7 +145,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -575,4 +584,63 @@ jobs:
         with:
           name: data-quality-${{ github.run_number }}
           path: data_quality.json
+          if-no-files-found: warn
+
+  node-preview:
+    name: sw1 node preview (read-only)
+    if: ${{ inputs.mode == 'node-preview' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install eccodes (cfgrib's GRIB-2 backend for the NWPS cycles)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends libeccodes0
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Resolve the roster the window was rated with
+        env:
+          BASELINE_REF: ${{ inputs.baseline_ref }}
+        run: |
+          set -euo pipefail
+          base="${BASELINE_REF:-main}"
+          git rev-parse --verify --quiet "$base^{commit}" >/dev/null || base="origin/$base"
+          git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
+          echo "baseline: $base ($(git rev-parse "$base"))"
+
+      - name: Replay the published window at the old and the new sample points (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \
+            --out node_preview.json --csv node_preview_hours.csv
+
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: node-preview-${{ github.run_number }}
+          path: |
+            node_preview.json
+            node_preview_hours.csv
           if-no-files-found: warn
