@@ -146,6 +146,20 @@ def test_the_prompt_forbids_calling_a_model_estimate_measured_or_calibrated():
     assert "Never call it face height" in system, system
 
 
+def test_the_prompt_names_the_height_surf_height_and_not_the_sets():
+    """The site has called the number "Surf height" since 2026-10-27; the prompt says so, and
+    keeps Claude off the sets, which the number does not describe."""
+    system, _ = _sent([_spot("Uncalibrated", _row(4.4, 4.4, "nwps_height_ww3_dir"))])
+    assert "The heights you are given are SURF HEIGHT" in system, system
+    assert "the bigger waves on average, not the biggest sets" in system, system
+    assert "never describe it as the size of the sets or of the biggest waves" in system, system
+    assert "swell height" not in system.lower(), system
+    # The old model-estimate wording claimed every model height can read higher than CDIP's;
+    # the surf height at uncalibrated spots is scaled down, so that is no longer said.
+    assert "can read higher" not in system, system
+    assert "'model estimate': from the wave models, not calibrated to anything." in system, system
+
+
 # --------------------------------------------------------------------------- #
 # 3 — each spot's line carries its own basis                                   #
 # --------------------------------------------------------------------------- #
@@ -157,18 +171,21 @@ def test_each_spot_line_carries_its_own_tag():
         _spot("A MOP hour", _row(3.28, 3.28, "cdip_mop")),                     # MOP-fed
         _spot("Rockaway", _row(4.4, 4.4, "nwps_height_ww3_dir")),              # uncalibrated
         _spot("Old row", _row(4.0, None, "nwps_height_ww3_dir")),              # before migration 017
+        _spot("Surf row", {**_row(2.9, 4.62, "nwps_height_ww3_dir"),           # surf height
+                           "face_correction_version": "2:2026-10-06:abcd1234+surf:k0.70:d10:g0.78"}),
         _spot("Unrateable", _row(None, None, "none", stars=0.0)),
     ]
     _, user = _sent(top)
-    assert "· 3.3ft swell height (calibrated to CDIP) @" in _line(user, "Point Arena")
-    assert "· 2.3ft swell height (calibrated to CDIP) @" in _line(user, "Steamer Lane")
-    assert "· 5.1ft swell height (model estimate) @" in _line(user, "Asilomar State Beach")
-    assert "· 3.3ft swell height (CDIP nearshore height) @" in _line(user, "A MOP hour")
-    assert "· 4.4ft swell height (model estimate) @" in _line(user, "Rockaway")
-    assert "· 4.0ft swell height (model estimate) @" in _line(user, "Old row")
+    assert "· 3.3ft surf height (calibrated to CDIP) @" in _line(user, "Point Arena")
+    assert "· 2.3ft surf height (calibrated to CDIP) @" in _line(user, "Steamer Lane")
+    assert "· 5.1ft surf height (model estimate) @" in _line(user, "Asilomar State Beach")
+    assert "· 3.3ft surf height (CDIP nearshore height) @" in _line(user, "A MOP hour")
+    assert "· 4.4ft surf height (model estimate) @" in _line(user, "Rockaway")
+    assert "· 4.0ft surf height (model estimate) @" in _line(user, "Old row")
+    assert "· 2.9ft surf height (model estimate) @" in _line(user, "Surf row")
     assert "· — @" in _line(user, "Unrateable")
     # The trend line no longer calls the height a face.
-    assert "TREND (next 24h, avg swell height change across top spots): steady" in user, user
+    assert "TREND (next 24h, avg surf height change across top spots): steady" in user, user
     assert "face" not in user.lower(), user
 
 
@@ -188,7 +205,7 @@ def test_the_tag_reaches_the_prompt_through_build_region_report():
     row = D.build_region_report(norcal, spots, forecasts, fake)
     assert row is not None and row["top_spots"][0]["slug"] == "point-arena", row
     user = fake.sent[0]["messages"][0]["content"]
-    assert "· 3.3ft swell height (calibrated to CDIP) @" in _line(user, "Point Arena"), user
+    assert "· 3.3ft surf height (calibrated to CDIP) @" in _line(user, "Point Arena"), user
     # What is STORED is pinned field by field in section 6.
 
 
@@ -205,7 +222,7 @@ def test_no_model_estimate_row_is_ever_tagged_calibrated_or_cdip():
                 assert D.height_basis(row) == "model", row
                 _, user = _sent([_spot("S", {**_row(h, raw, source)})])
                 line = _line(user, "S")
-                assert f"{h:.1f}ft swell height (model estimate)" in line, line
+                assert f"{h:.1f}ft surf height (model estimate)" in line, line
                 assert "calibrated" not in line.lower() and "cdip" not in line.lower(), line
                 checked += 1
     assert checked == len(NOT_MOP_SOURCES) * len(heights) * 4
@@ -216,7 +233,7 @@ def test_no_model_estimate_row_is_ever_tagged_calibrated_or_cdip():
 # --------------------------------------------------------------------------- #
 def test_the_fetch_selects_the_columns_the_basis_is_read_from():
     cols = [c.strip() for c in D._FCAST_COLS.split(",")]
-    for col in ("face_ft", "face_ft_raw", "swell_source"):
+    for col in ("face_ft", "face_ft_raw", "swell_source", "face_correction_version"):
         assert cols.count(col) == 1, (col, cols)
 
 

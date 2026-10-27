@@ -13,12 +13,15 @@
  * The post's opening line, "from 0 (FLAT) to 5 (EPIC)", is held against tierFromStars here too,
  * and its "The range we show" paragraph against HEIGHT_STEPS_FT and fmtHeightRange: the ladder
  * it lists, the 5 ft steps past the top, and its two boundary examples. Its "How our height
- * compares" paragraph is held to sw1-raycast run 52's figures, copied by hand from the run's report
- * (docs/face_validation/run-52 on claude/practical-dirac-bshfbr-face): published face inside the
- * NWS Surf Zone Forecast range on 61% of daytime hours overall (233,790 hours, 7 September to 27
- * October 2026); 71% Mid-Atlantic, 74% Florida Atlantic, 78% Carolinas and Georgia, 82% Southern
- * California; below the range on 58 to 81% of hours in New England, Northern California, the
- * Pacific Northwest and Puerto Rico.
+ * compares" paragraph is held to sw1-raycast run 54's figures (the surf-preview merge gate for the
+ * surf height), copied by hand from the run's report (docs/face_validation/run-54): the height
+ * the site shows once the surf height ships ('display': 0.70 x typical on uncalibrated spots'
+ * NWPS-override hours, published elsewhere), mainland headline hours, 234,897 hours from 7
+ * September to 27 October 2026. Inside the NWS Surf Zone Forecast range on 59.9% overall (60%);
+ * 77.4% Florida Atlantic, 78.8% Mid-Atlantic, 81.4% Carolinas and Georgia, 82.5% Southern
+ * California (82.465% from the run's CSV, so "82%"); above the range on 4.4% (4%) against 8.1%
+ * (8%) for the published height; below it on 64 to 90% of hours in New England, Northern
+ * California, the Pacific Northwest and Puerto Rico.
  * Every number the post takes from the PIPELINE (weights, curves, gains, horizons, spot counts)
  * is held in pipeline/tests/test_methodology_tables.py.
  *
@@ -209,7 +212,7 @@ if (ends) {
 }
 
 // --------------------------------------------------------------------------- //
-// The headline height's name, and how it compares (run 52)                     //
+// The headline height's name, and how it compares (run 54)                     //
 // --------------------------------------------------------------------------- //
 {
   const post = readFileSync(POST, 'utf8');
@@ -225,10 +228,14 @@ if (ends) {
     const body = para[1];
     check('it names its window, 7 September to 27 October 2026',
       body.includes('From 7 September to 27 October 2026'));
-    check("run 52's overall share: 61% of daytime hours", /inside the NWS range on 61% of daytime hours overall/.test(body));
-    // 71 (Mid-Atlantic), 74 (Florida Atlantic), 78 (Carolinas and Georgia), 82 (Southern California)
-    check("run 52's range over SoCal and the East Coast south of New England: 71 to 82%",
-      /on 71 to 82% in Southern California and on the East Coast from New York to Florida/.test(body));
+    check("it describes the height shown since the surf height, not the one before",
+      body.includes('the height we now show would have fallen inside the NWS range'));
+    check("run 54's overall share: 60% of daytime hours", /inside the NWS range on 60% of daytime hours overall/.test(body));
+    // 77 (Florida Atlantic), 79 (Mid-Atlantic), 81 (Carolinas and Georgia), 82 (Southern California)
+    check("run 54's range over SoCal and the East Coast south of New England: 77 to 82%",
+      /on 77 to 82% in Southern California and on the East Coast from New York to Florida/.test(body));
+    check("run 54's share above the range: 4%, against 8% before",
+      /above the range on 4% of hours, about half as often as the height we showed before \(8%\)/.test(body));
     for (const region of ['Northern California', 'the Pacific Northwest', 'New England', 'Puerto Rico']) {
       check(`it says the height reads low against the NWS in ${region}`,
         new RegExp(`tends to read low in [^.]*${region}`).test(body));

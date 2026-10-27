@@ -87,6 +87,9 @@ export type Forecast = {
    *  wherever nothing divided; lib/heightBasis reads the difference to label the height.
    *  NULL on a row written before the migration. */
   face_ft_raw: number | null;
+  /** The provenance stamp (migration 017), with "+surf:..." appended where
+   *  pipeline/forecast/surf_height.py wrote face_ft; lib/heightBasis reads the mark. */
+  face_correction_version: string | null;
   dir_gain: number | null;
   wind_mult: number | null;
   tide_mult: number | null;

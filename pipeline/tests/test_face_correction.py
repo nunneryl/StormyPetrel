@@ -753,7 +753,11 @@ def test_through_interpret_main_a_calibrated_spot_is_sized_on_its_calibrated_fac
                 size_score(7.71035) = 4.0 + (1.71035 / 2) * 0.5 = 4.42759 -> 4.5 stars
         Steamer Lane: sized on 7.71035 * 2.0 / 3.0 = 5.14023 ft,
                 size_score = 3.5 + (0.14023 / 2) * 0.5 = 3.53506 -> round(7.07) / 2 = 3.5 stars
-        shown : Steamer Lane 7.71 / 3.0 = 2.57; the twin 7.71
+        shown : Steamer Lane 7.71 / 3.0 = 2.57; the twin, with no factor, the surf height
+                (forecast/surf_height.py, since 2026-10-27): Hs 7.71 / (1.175 x 3.281) = 1.99991
+                -> 2.00 m at 13.0 s, shoaled from 10 m to breaking at 0.78 x depth by linear
+                theory: breaks in 3.2583 m at Hb 2.54145 m, 8.33851 ft; 0.70 x 8.33851 =
+                5.83696 -> 5.84. (Solved by a separate scalar bisection, not the code under test.)
     Version 1 re-rated Steamer Lane from eff 2.57 on the unshifted curve: 2.5 stars. Version 2
     rated both 4.5.
     """
@@ -797,13 +801,15 @@ def test_through_interpret_main_a_calibrated_spot_is_sized_on_its_calibrated_fac
 
     assert rc == 0, rc
     cal, twin = out["Steamer Lane"][0], out["Steamer Twin"][0]
-    assert (cal["face_ft"], twin["face_ft"]) == (2.57, 7.71), (cal["face_ft"], twin["face_ft"])
+    assert (cal["face_ft"], twin["face_ft"]) == (2.57, 5.84), (cal["face_ft"], twin["face_ft"])
+    assert twin["face_correction_version"] == cal["face_correction_version"] + "+surf:k0.70:d10:g0.78"
     assert cal["face_ft_raw"] == twin["face_ft_raw"] == 7.71
     assert cal["effective_size_ft"] == twin["effective_size_ft"] == 7.71
     assert (cal["stars"], twin["stars"]) == (3.5, 4.5), (cal["stars"], twin["stars"])
     # Field for field, nothing else differs: the producer's work is the same on both.
-    assert {k: v for k, v in cal.items() if k not in ("face_ft", "stars")} == \
-        {k: v for k, v in twin.items() if k not in ("face_ft", "stars")}, (cal, twin)
+    skip = ("face_ft", "stars", "face_correction_version")
+    assert {k: v for k, v in cal.items() if k not in skip} == \
+        {k: v for k, v in twin.items() if k not in skip}, (cal, twin)
 
 
 

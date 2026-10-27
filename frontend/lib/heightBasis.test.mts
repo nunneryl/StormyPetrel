@@ -44,6 +44,7 @@ import { copyOf, copyStrings, scannedFiles, walk } from './copyScan.ts';
 import {
   HEADLINE_HEIGHT_COLUMN, HEADLINE_HEIGHT_LABEL,
   heightBasis, heightBasisMarkHtml, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_MARK, HEIGHT_BASIS_NOTE,
+  isSurfRow, SURF_MARK_TAG,
   HEIGHT_METHOD_HREF, storedHeightBasis, type HeightBasisRow,
 } from './heightBasis.ts';
 
@@ -131,6 +132,35 @@ for (const src of NOT_MOP_SOURCES) {
 check(`all ${swept} model-estimate rows are labelled "Model estimate" and marked "model", never calibrated or CDIP`,
   leaks.length === 0 && swept === NOT_MOP_SOURCES.length * HEIGHTS.length * 5, leaks.join('; '));
 
+// The surf height: whatever its faces and source, a row carrying the mark is a model estimate.
+// Every source including cdip_mop, and raw values that differ from the face in either direction.
+const SURF_VERSIONS = ['+surf:k0.70:d10:g0.78', '2:2026-10-06:abcd1234+surf:k0.70:d10:g0.78',
+  '2:none:none+surf:k0.70:d10:g0.78'];
+let sweptSurf = 0;
+const surfLeaks: string[] = [];
+for (const src of [...NOT_MOP_SOURCES, 'cdip_mop']) {
+  for (const h of HEIGHTS) {
+    for (const raw of [h, h * 2 + 1, h / 3, null]) {
+      for (const v of SURF_VERSIONS) {
+        sweptSurf += 1;
+        const basis = heightBasis({ face_ft: h, face_ft_raw: raw, swell_source: src, face_correction_version: v });
+        if (basis !== 'model' && surfLeaks.length < 5) surfLeaks.push(`face ${h}, raw ${raw}, ${src}, ${v} -> ${basis}`);
+      }
+    }
+  }
+}
+check(`all ${sweptSurf} surf-height rows are model estimates`,
+  surfLeaks.length === 0 && sweptSurf === (NOT_MOP_SOURCES.length + 1) * HEIGHTS.length * 4 * 3,
+  surfLeaks.join('; '));
+check('the mark test needs the colon, and reads nothing but a string',
+  isSurfRow('2:x:y+surf:k0.70') && !isSurfRow('2:x:y+surf') && !isSurfRow('2:x:y') && !isSurfRow(null)
+  && !isSurfRow(undefined) && !isSurfRow(''));
+// One mark, two languages: the pipeline writes it, this reads it.
+const pySurf = readFileSync(join(FRONTEND, '..', 'pipeline', 'forecast', 'surf_height.py'), 'utf8');
+check('SURF_MARK_TAG is the tag pipeline/forecast/surf_height.py writes',
+  /^SURF_MARK_TAG = "\+surf"$/m.test(pySurf) && SURF_MARK_TAG === '+surf'
+  && /^SURF_MARK = f"\{SURF_MARK_TAG\}:k/m.test(pySurf), SURF_MARK_TAG);
+
 // --------------------------------------------------------------------------- //
 // 4 — the words                                                                //
 // --------------------------------------------------------------------------- //
@@ -140,9 +170,12 @@ check('the spot-page labels', HEIGHT_BASIS_LABEL.calibrated === "Calibrated to C
 check('the compact marks', HEIGHT_BASIS_MARK.calibrated === 'calibrated'
   && HEIGHT_BASIS_MARK.model === 'model' && HEIGHT_BASIS_MARK.cdip === 'CDIP',
   JSON.stringify(HEIGHT_BASIS_MARK));
-check('the model note says it is uncalibrated and can read high, and claims no measurement',
-  /not calibrated/i.test(HEIGHT_BASIS_NOTE.model) && /read higher/.test(HEIGHT_BASIS_NOTE.model)
-  && !/measur/i.test(HEIGHT_BASIS_NOTE.model), HEIGHT_BASIS_NOTE.model);
+// It no longer says the height "can read higher" than CDIP's: at an uncalibrated spot's NWPS hours
+// the model estimate is the surf height, scaled to 0.70, which reads lower than the old one did.
+check('the model note says it is a model estimate, uncalibrated, and claims no measurement',
+  /model estimate/i.test(HEIGHT_BASIS_NOTE.model) && /not calibrated/i.test(HEIGHT_BASIS_NOTE.model)
+  && !/read higher/.test(HEIGHT_BASIS_NOTE.model) && !/measur/i.test(HEIGHT_BASIS_NOTE.model),
+  HEIGHT_BASIS_NOTE.model);
 check('the note links to the methodology post', HEIGHT_METHOD_HREF === '/blog/methodology');
 check('the map marker is the mark, with the label as its tooltip',
   heightBasisMarkHtml('model').includes('title="Model estimate"') && heightBasisMarkHtml('model').includes('>model</span>')
@@ -241,8 +274,9 @@ for (const { file, fn } of SELECTS) {
   const body = src.slice(src.indexOf(`function ${fn}`));
   const select = /\.select\(\s*'([^']+)'/.exec(body)?.[1] ?? '';
   const cols = select.split(',').map((c) => c.trim());
-  check(`${fn} selects face_ft, face_ft_raw and swell_source`,
-    ['face_ft', 'face_ft_raw', 'swell_source'].every((c) => cols.includes(c)), select);
+  check(`${fn} selects face_ft, face_ft_raw, swell_source and face_correction_version`,
+    ['face_ft', 'face_ft_raw', 'swell_source', 'face_correction_version'].every((c) => cols.includes(c)),
+    select);
 }
 
 // --------------------------------------------------------------------------- //
@@ -357,7 +391,7 @@ check('the headline height is called "Surf height"', HEADLINE_HEIGHT_LABEL === '
 check('...and "Surf (ft)" at the head of a column', HEADLINE_HEIGHT_COLUMN === 'Surf (ft)',
   HEADLINE_HEIGHT_COLUMN);
 check("the model note compares with CDIP's nearshore height, by that name",
-  HEIGHT_BASIS_NOTE.model === "Not calibrated against CDIP, so it can read higher than CDIP's nearshore height.",
+  HEIGHT_BASIS_NOTE.model === "A model estimate, not calibrated against CDIP's nearshore height.",
   HEIGHT_BASIS_NOTE.model);
 // Every place that names the headline height reads the constant, never a literal.
 for (const [rel, use] of [

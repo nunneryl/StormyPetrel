@@ -450,8 +450,9 @@ def test_every_mop_and_calibrated_count_in_the_post_is_the_datas():
 
 def test_only_mops_own_hours_skip_the_period_boost():
     _says(r"MOP's own height, which carries no boost, never reaches the page\.", "that MOP's own height carries no boost")
-    _says(r"Everywhere else, the model height gets a boost for longer-period swell and isn't corrected, "
-          r"so it can read higher than CDIP's nearshore height\.", "the uncorrected, boosted height")
+    _says(r"\*\*On the remaining hours\*\*, from WAVEWATCH III or our fallbacks, the model height gets a "
+          r"boost for longer-period swell and isn't corrected, so it can read higher than CDIP's nearshore "
+          r"height\.", "the uncorrected, boosted height")
     from pipeline.forecast import mop
     hs = 1.5
     for tp in (8.0, 12.0, 16.0):
@@ -467,8 +468,8 @@ def test_only_mops_own_hours_skip_the_period_boost():
 def test_calibrated_spots_are_divided_and_everything_else_is_left_as_the_model_made_it():
     # The calibrated count is held to the factor file by
     # test_every_mop_and_calibrated_count_in_the_post_is_the_datas.
-    _says(r"Outside the \d+ calibrated California spots, heights aren't corrected, and that includes all the "
-          r"hours you can see at the 48 MOP spots\.", "which heights aren't corrected")
+    _says(r"Outside the \d+ calibrated California spots, heights aren't calibrated against measurements, and "
+          r"that includes all the hours you can see at the 48 MOP spots", "which heights aren't corrected")
     from pipeline.forecast import face_correction as F
     spots = [{"name": "Calibrated", "swell_window_source": "nwps"},
              {"name": "Uncalibrated", "swell_window_source": "nwps"},
@@ -482,6 +483,32 @@ def test_calibrated_spots_are_divided_and_everything_else_is_left_as_the_model_m
     assert ratings["Calibrated"][0]["face_ft"] == 4.0 / 2.0      # "divide our height by each spot's typical ratio"
     assert ratings["Uncalibrated"][0]["face_ft"] == 4.0          # "aren't corrected"
     assert ratings["Mop"][0]["face_ft"] == 4.0                   # MOP's own height, never divided
+
+
+def test_the_surf_height_paragraph_is_the_codes():
+    """"What the number is" states the surf height's constants and where it applies; they are
+    pipeline/forecast/surf_height.py's, and the step leaves the stars alone."""
+    from pipeline.forecast import surf_height as S
+    _says(r"\*\*At every other spot, on the hours NWPS feeds\*\*, we take NWPS's height at its point off the "
+          r"spot as the height in 10 m of water, carry it in to where the waves break, and take 70% of that\.",
+          "the surf height's recipe")
+    _says(r"it breaks once it is about 0\.78 times as high as the water is deep", "the breaking ratio")
+    _says(r"70% is about one over 1\.4", "where 70% comes from")
+    assert (S.SURF_K, S.D0_M, S.GAMMA) == (0.70, 10.0, 0.78)
+    assert S.NWPS_OVERRIDE_SOURCES == {"nwps", "nwps_height_ww3_dir"}
+    # 1 / 1.42 (run 52's FRF ratio) = 0.704, "about" 0.70
+    assert round(1 / 1.42, 2) == 0.70
+    _says(r"on the hours NWPS feeds, we show the surf height described under What the number is, and the "
+          r"stars stay on the model's height\.", "that the stars don't read the surf height")
+    spots = [{"name": "Uncalibrated", "swell_window_source": "nwps"}]
+    # Hs 1.0 m at 500 s: face 1.0 x 1.3 x 3.281 = 4.2653 -> 4.27 (period_factor 'ww3' is 1.3 past 99 s)
+    hour = {"face_ft": 4.27, "face_ft_raw": 4.27, "face_correction_version": "2:x:y", "swell_tp": 500.0,
+            "swell_source": "nwps", "effective_size_ft": 4.0, "stars": 3.0}
+    ratings = {"Uncalibrated": [dict(hour)]}
+    S.apply_surf_height(ratings, spots, {"someone-else": {"factor": 2.0}}, lambda n: n.lower())
+    # 0.70 x 1.508057 m (Green's-law breaking height of 1.0 m from 10 m) x 3.281 = 3.4636 -> 3.46
+    assert ratings["Uncalibrated"][0]["face_ft"] == 3.46
+    assert ratings["Uncalibrated"][0]["stars"] == 3.0 and ratings["Uncalibrated"][0]["effective_size_ft"] == 4.0
 
 
 def test_mop_is_read_from_its_nowcast():
@@ -526,8 +553,9 @@ def test_calibrated_spots_are_rated_on_the_calibrated_height_times_the_median_ra
     assert round(factors["steamer-lane"]["factor"], 2) == float(ex.group(1))
     assert round(factors["pacifica-linda-mar"]["factor"], 2) == float(ex.group(2))
     assert float(ex.group(1)) > published_m > float(ex.group(2))
-    _says(r"At every other spot the size score reads the model's height: there's nothing to "
-          r"calibrate it against\.", "that uncalibrated spots keep the model's height")
+    _says(r"At every other spot the size score reads the model's height with the boost for longer-period "
+          r"swell \(see What the number is\): there's nothing to calibrate it against\.",
+          "that uncalibrated spots keep the model's height")
     _says(rf"The star rating reads the calibrated height too, times {_N}, so these spots are rated "
           r"on the same scale as everywhere else", "the calibration paragraph")
     then = _says(r"We used to work out stars at the calibrated spots from the calibrated height\. The "

@@ -1,0 +1,5307 @@
+{
+ "window": {
+  "replay_since": "2026-10-27T18:07:03+00:00",
+  "archive": [
+   "2026-09-07T00:00:00+00:00",
+   "2026-10-27T18:00:00+00:00"
+  ]
+ },
+ "surf_k": 0.7,
+ "gate": {
+  "pass": true,
+  "hours": 82784,
+  "rewritten": 58393,
+  "star_differences": 0,
+  "other_field_differences": 0,
+  "unexpected": 0,
+  "uncalibrated_but_divided": 0,
+  "became_calibrated": 0,
+  "lost_calibrated": 0,
+  "reproduction_ok": true
+ },
+ "apply_stats": {
+  "spots_calibrated": 141,
+  "spots_rewritten": 457,
+  "hours_rewritten": 58393,
+  "hours_kept_by_source": 6235,
+  "hours_without_inputs": 0,
+  "factors_missing": false
+ },
+ "badges": {
+  "before": {
+   "model": 64628,
+   "calibrated": 18156
+  },
+  "after": {
+   "model": 64628,
+   "calibrated": 18156
+  }
+ },
+ "transitions": {
+  "calibrated -> calibrated": 18156,
+  "model -> model": 64628
+ },
+ "examples": {},
+ "heights": {
+  "by_region": {
+   "all": {
+    "n": 58393,
+    "median_before": 2.77,
+    "median_after": 2.59,
+    "mean_before": 3.27,
+    "mean_after": 2.87,
+    "median_ratio": 0.922,
+    "lower": 0.742,
+    "higher": 0.233
+   },
+   "Carolinas and Georgia": {
+    "n": 8175,
+    "median_before": 3.57,
+    "median_after": 3.16,
+    "mean_before": 3.51,
+    "mean_after": 3.11,
+    "median_ratio": 0.892,
+    "lower": 0.939,
+    "higher": 0.059
+   },
+   "Florida Atlantic": {
+    "n": 7434,
+    "median_before": 5.22,
+    "median_after": 4.28,
+    "mean_before": 5.8,
+    "mean_after": 4.64,
+    "median_ratio": 0.822,
+    "lower": 0.976,
+    "higher": 0.021
+   },
+   "Gulf": {
+    "n": 4401,
+    "median_before": 1.72,
+    "median_after": 1.64,
+    "mean_before": 1.69,
+    "mean_after": 1.58,
+    "median_ratio": 0.947,
+    "lower": 0.75,
+    "higher": 0.222
+   },
+   "Hawaii": {
+    "n": 6930,
+    "median_before": 4.9,
+    "median_after": 4.09,
+    "mean_before": 4.91,
+    "mean_after": 4.05,
+    "median_ratio": 0.838,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Mid-Atlantic": {
+    "n": 13104,
+    "median_before": 2.04,
+    "median_after": 2.01,
+    "mean_before": 2.18,
+    "mean_after": 2.12,
+    "median_ratio": 0.986,
+    "lower": 0.623,
+    "higher": 0.307
+   },
+   "New England": {
+    "n": 9510,
+    "median_before": 1.61,
+    "median_after": 1.65,
+    "mean_before": 1.58,
+    "mean_after": 1.62,
+    "median_ratio": 1.03,
+    "lower": 0.273,
+    "higher": 0.693
+   },
+   "Northern California": {
+    "n": 630,
+    "median_before": 2.88,
+    "median_after": 2.61,
+    "mean_before": 3.03,
+    "mean_after": 2.7,
+    "median_ratio": 0.91,
+    "lower": 0.817,
+    "higher": 0.171
+   },
+   "Pacific Northwest": {
+    "n": 4275,
+    "median_before": 4.44,
+    "median_after": 3.77,
+    "mean_before": 4.59,
+    "mean_after": 3.86,
+    "median_ratio": 0.85,
+    "lower": 0.962,
+    "higher": 0.037
+   },
+   "Puerto Rico": {
+    "n": 3168,
+    "median_before": 3.56,
+    "median_after": 3.21,
+    "mean_before": 3.27,
+    "mean_after": 2.94,
+    "median_ratio": 0.901,
+    "lower": 0.72,
+    "higher": 0.268
+   },
+   "Southern California": {
+    "n": 766,
+    "median_before": 2.42,
+    "median_after": 2.26,
+    "mean_before": 2.57,
+    "mean_after": 2.33,
+    "median_ratio": 0.925,
+    "lower": 0.661,
+    "higher": 0.328
+   }
+  },
+  "by_spot": {
+   "16th Street South": {
+    "n": 126,
+    "median_before": 5.24,
+    "median_after": 4.21,
+    "mean_before": 6.04,
+    "mean_after": 4.84,
+    "median_ratio": 0.817,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "30th Street Pier": {
+    "n": 132,
+    "median_before": 2.17,
+    "median_after": 2.12,
+    "mean_before": 2.42,
+    "mean_after": 2.32,
+    "median_ratio": 0.972,
+    "lower": 0.97,
+    "higher": 0.0
+   },
+   "32nd Street": {
+    "n": 132,
+    "median_before": 1.98,
+    "median_after": 1.98,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.99,
+    "lower": 0.636,
+    "higher": 0.174
+   },
+   "56th Street": {
+    "n": 132,
+    "median_before": 2.12,
+    "median_after": 2.08,
+    "mean_before": 2.36,
+    "mean_after": 2.27,
+    "median_ratio": 0.981,
+    "lower": 0.818,
+    "higher": 0.098
+   },
+   "61st Street Galveston": {
+    "n": 126,
+    "median_before": 2.24,
+    "median_after": 2.11,
+    "mean_before": 2.16,
+    "mean_after": 2.04,
+    "median_ratio": 0.956,
+    "lower": 0.873,
+    "higher": 0.119
+   },
+   "A Street": {
+    "n": 126,
+    "median_before": 5.91,
+    "median_after": 4.76,
+    "mean_before": 6.61,
+    "mean_after": 5.18,
+    "median_ratio": 0.792,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Abalone Street": {
+    "n": 126,
+    "median_before": 3.49,
+    "median_after": 3.06,
+    "mean_before": 3.54,
+    "mean_after": 3.15,
+    "median_ratio": 0.899,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Agate Beach Newport": {
+    "n": 128,
+    "median_before": 4.56,
+    "median_after": 3.89,
+    "mean_before": 4.47,
+    "mean_after": 3.82,
+    "median_ratio": 0.855,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ala Moana Bowls": {
+    "n": 126,
+    "median_before": 3.71,
+    "median_after": 3.24,
+    "mean_before": 3.72,
+    "mean_after": 3.23,
+    "median_ratio": 0.87,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Amelia Island": {
+    "n": 126,
+    "median_before": 5.43,
+    "median_after": 4.41,
+    "mean_before": 5.4,
+    "mean_after": 4.4,
+    "median_ratio": 0.816,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Anahola Bay": {
+    "n": 126,
+    "median_before": 5.22,
+    "median_after": 4.38,
+    "mean_before": 5.33,
+    "mean_after": 4.4,
+    "median_ratio": 0.839,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Antonio's": {
+    "n": 132,
+    "median_before": 3.38,
+    "median_after": 3.09,
+    "mean_before": 3.81,
+    "mean_after": 3.36,
+    "median_ratio": 0.911,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Asbury Park": {
+    "n": 132,
+    "median_before": 1.81,
+    "median_after": 1.82,
+    "mean_before": 1.99,
+    "mean_after": 1.97,
+    "median_ratio": 1.006,
+    "lower": 0.348,
+    "higher": 0.553
+   },
+   "Assateague Island MD": {
+    "n": 126,
+    "median_before": 2.66,
+    "median_after": 2.5,
+    "mean_before": 2.77,
+    "mean_after": 2.58,
+    "median_ratio": 0.943,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Atlantic Beach": {
+    "n": 126,
+    "median_before": 6.24,
+    "median_after": 4.95,
+    "mean_before": 6.21,
+    "mean_after": 4.94,
+    "median_ratio": 0.796,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Atlantic Beach NC": {
+    "n": 132,
+    "median_before": 2.22,
+    "median_after": 2.13,
+    "mean_before": 2.26,
+    "mean_after": 2.17,
+    "median_ratio": 0.969,
+    "lower": 0.773,
+    "higher": 0.182
+   },
+   "Atlantic Blvd": {
+    "n": 126,
+    "median_before": 6.21,
+    "median_after": 4.92,
+    "mean_before": 6.2,
+    "mean_after": 4.93,
+    "median_ratio": 0.797,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Atlantic City": {
+    "n": 132,
+    "median_before": 2.0,
+    "median_after": 1.97,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.995,
+    "lower": 0.568,
+    "higher": 0.242
+   },
+   "Avalon Jetty": {
+    "n": 132,
+    "median_before": 2.25,
+    "median_after": 2.19,
+    "mean_before": 2.5,
+    "mean_after": 2.37,
+    "median_ratio": 0.968,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Avalon NJ": {
+    "n": 132,
+    "median_before": 2.24,
+    "median_after": 2.17,
+    "mean_before": 2.43,
+    "mean_after": 2.32,
+    "median_ratio": 0.968,
+    "lower": 0.902,
+    "higher": 0.023
+   },
+   "Avalon Pier": {
+    "n": 126,
+    "median_before": 3.55,
+    "median_after": 3.12,
+    "mean_before": 3.53,
+    "mean_after": 3.15,
+    "median_ratio": 0.897,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Aviones": {
+    "n": 132,
+    "median_before": 3.77,
+    "median_after": 3.37,
+    "mean_before": 4.05,
+    "mean_after": 3.54,
+    "median_ratio": 0.894,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Avon Pier": {
+    "n": 126,
+    "median_before": 3.92,
+    "median_after": 3.43,
+    "mean_before": 4.02,
+    "mean_after": 3.5,
+    "median_ratio": 0.869,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Avon-by-the-Sea": {
+    "n": 132,
+    "median_before": 1.88,
+    "median_after": 1.88,
+    "mean_before": 2.04,
+    "mean_after": 2.02,
+    "median_ratio": 1.005,
+    "lower": 0.409,
+    "higher": 0.523
+   },
+   "Backdoor Pipeline": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Baileys Beach": {
+    "n": 126,
+    "median_before": 1.77,
+    "median_after": 1.79,
+    "mean_before": 1.84,
+    "mean_after": 1.83,
+    "median_ratio": 1.015,
+    "lower": 0.365,
+    "higher": 0.603
+   },
+   "Bandon Beach": {
+    "n": 110,
+    "median_before": 2.06,
+    "median_after": 2.04,
+    "mean_before": 2.06,
+    "mean_after": 2.02,
+    "median_ratio": 0.991,
+    "lower": 0.527,
+    "higher": 0.455
+   },
+   "Banyans": {
+    "n": 126,
+    "median_before": 4.23,
+    "median_after": 3.54,
+    "mean_before": 4.17,
+    "mean_after": 3.51,
+    "median_ratio": 0.841,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Banzai Pipeline": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Barbers Point": {
+    "n": 126,
+    "median_before": 5.16,
+    "median_after": 4.15,
+    "mean_before": 5.13,
+    "mean_after": 4.14,
+    "median_ratio": 0.808,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Barnegat Light": {
+    "n": 132,
+    "median_before": 2.19,
+    "median_after": 2.14,
+    "mean_before": 2.38,
+    "mean_after": 2.28,
+    "median_ratio": 0.977,
+    "lower": 0.833,
+    "higher": 0.083
+   },
+   "Bastendorff Beach": {
+    "n": 126,
+    "median_before": 5.91,
+    "median_after": 4.81,
+    "mean_before": 5.64,
+    "mean_after": 4.63,
+    "median_ratio": 0.821,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bath House": {
+    "n": 126,
+    "median_before": 3.58,
+    "median_after": 3.17,
+    "mean_before": 3.6,
+    "mean_after": 3.2,
+    "median_ratio": 0.895,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bathtub Beach": {
+    "n": 126,
+    "median_before": 4.51,
+    "median_after": 3.84,
+    "mean_before": 4.77,
+    "mean_after": 4.01,
+    "median_ratio": 0.845,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bay Head": {
+    "n": 132,
+    "median_before": 1.88,
+    "median_after": 1.88,
+    "mean_before": 2.06,
+    "mean_after": 2.04,
+    "median_ratio": 1.005,
+    "lower": 0.394,
+    "higher": 0.53
+   },
+   "Beach Haven": {
+    "n": 132,
+    "median_before": 2.24,
+    "median_after": 2.17,
+    "mean_before": 2.4,
+    "mean_after": 2.31,
+    "median_ratio": 0.974,
+    "lower": 0.841,
+    "higher": 0.068
+   },
+   "Bellows Beach": {
+    "n": 126,
+    "median_before": 5.62,
+    "median_after": 4.54,
+    "mean_before": 5.47,
+    "mean_after": 4.44,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Belmar": {
+    "n": 132,
+    "median_before": 1.9,
+    "median_after": 1.9,
+    "mean_before": 2.06,
+    "mean_after": 2.03,
+    "median_ratio": 1.0,
+    "lower": 0.417,
+    "higher": 0.432
+   },
+   "Berts Bar": {
+    "n": 132,
+    "median_before": 3.86,
+    "median_after": 3.33,
+    "mean_before": 3.77,
+    "mean_after": 3.31,
+    "median_ratio": 0.883,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bethany Beach": {
+    "n": 132,
+    "median_before": 2.51,
+    "median_after": 2.36,
+    "mean_before": 2.65,
+    "mean_after": 2.49,
+    "median_ratio": 0.948,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Big Beach Makena": {
+    "n": 126,
+    "median_before": 4.85,
+    "median_after": 4.08,
+    "mean_before": 4.81,
+    "mean_after": 4.02,
+    "median_ratio": 0.839,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Black Pelican": {
+    "n": 126,
+    "median_before": 3.59,
+    "median_after": 3.16,
+    "mean_before": 3.58,
+    "mean_after": 3.18,
+    "median_ratio": 0.895,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Black Rock Point": {
+    "n": 126,
+    "median_before": 2.14,
+    "median_after": 2.1,
+    "mean_before": 2.14,
+    "mean_after": 2.09,
+    "median_ratio": 0.978,
+    "lower": 0.651,
+    "higher": 0.31
+   },
+   "Blackbeard Island": {
+    "n": 132,
+    "median_before": 3.66,
+    "median_after": 3.23,
+    "mean_before": 3.85,
+    "mean_after": 3.36,
+    "median_ratio": 0.876,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bob Hall Pier": {
+    "n": 126,
+    "median_before": 2.24,
+    "median_after": 2.14,
+    "mean_before": 2.14,
+    "mean_after": 2.07,
+    "median_ratio": 0.968,
+    "lower": 0.746,
+    "higher": 0.23
+   },
+   "Boca Raton Inlet": {
+    "n": 126,
+    "median_before": 3.29,
+    "median_after": 3.0,
+    "mean_before": 4.91,
+    "mean_after": 4.05,
+    "median_ratio": 0.909,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bolinas": {
+    "n": 126,
+    "median_before": 2.45,
+    "median_after": 2.28,
+    "mean_before": 2.75,
+    "mean_after": 2.49,
+    "median_ratio": 0.927,
+    "lower": 0.96,
+    "higher": 0.032
+   },
+   "Bombora": {
+    "n": 126,
+    "median_before": 3.33,
+    "median_after": 2.95,
+    "mean_before": 3.35,
+    "mean_after": 2.97,
+    "median_ratio": 0.885,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Boynton Beach Inlet": {
+    "n": 126,
+    "median_before": 3.16,
+    "median_after": 2.91,
+    "mean_before": 4.35,
+    "mean_after": 3.69,
+    "median_ratio": 0.907,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Bradley Beach": {
+    "n": 132,
+    "median_before": 1.88,
+    "median_after": 1.88,
+    "mean_before": 2.04,
+    "mean_after": 2.02,
+    "median_ratio": 1.005,
+    "lower": 0.409,
+    "higher": 0.523
+   },
+   "Breachway": {
+    "n": 126,
+    "median_before": 1.71,
+    "median_after": 1.76,
+    "mean_before": 1.7,
+    "mean_after": 1.73,
+    "median_ratio": 1.017,
+    "lower": 0.222,
+    "higher": 0.706
+   },
+   "Breezy Point": {
+    "n": 126,
+    "median_before": 1.69,
+    "median_after": 1.64,
+    "mean_before": 1.73,
+    "mean_after": 1.71,
+    "median_ratio": 1.018,
+    "lower": 0.238,
+    "higher": 0.698
+   },
+   "Brigantine": {
+    "n": 132,
+    "median_before": 2.02,
+    "median_after": 2.0,
+    "mean_before": 2.23,
+    "mean_after": 2.17,
+    "median_ratio": 0.99,
+    "lower": 0.636,
+    "higher": 0.273
+   },
+   "Brigantine Jetty": {
+    "n": 132,
+    "median_before": 2.04,
+    "median_after": 2.01,
+    "mean_before": 2.25,
+    "mean_after": 2.18,
+    "median_ratio": 0.99,
+    "lower": 0.826,
+    "higher": 0.068
+   },
+   "Broadway Beach": {
+    "n": 132,
+    "median_before": 2.04,
+    "median_after": 1.96,
+    "mean_before": 2.23,
+    "mean_after": 2.15,
+    "median_ratio": 0.979,
+    "lower": 0.758,
+    "higher": 0.159
+   },
+   "Brookings Beach": {
+    "n": 126,
+    "median_before": 5.2,
+    "median_after": 4.14,
+    "mean_before": 5.02,
+    "mean_after": 4.09,
+    "median_ratio": 0.814,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Caesars Pier": {
+    "n": 132,
+    "median_before": 2.0,
+    "median_after": 1.97,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.995,
+    "lower": 0.568,
+    "higher": 0.242
+   },
+   "Cannon Beach": {
+    "n": 128,
+    "median_before": 4.5,
+    "median_after": 3.87,
+    "mean_before": 4.64,
+    "mean_after": 3.92,
+    "median_ratio": 0.856,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Canoes Waikiki": {
+    "n": 126,
+    "median_before": 3.72,
+    "median_after": 3.24,
+    "mean_before": 3.73,
+    "mean_after": 3.24,
+    "median_ratio": 0.869,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Canova Beach Park": {
+    "n": 126,
+    "median_before": 5.96,
+    "median_after": 4.63,
+    "mean_before": 6.99,
+    "mean_after": 5.45,
+    "median_ratio": 0.795,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Cape Disappointment": {
+    "n": 128,
+    "median_before": 5.2,
+    "median_after": 4.29,
+    "mean_before": 5.52,
+    "mean_after": 4.47,
+    "median_ratio": 0.833,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Cape Hatteras Lighthouse": {
+    "n": 126,
+    "median_before": 3.37,
+    "median_after": 2.99,
+    "mean_before": 3.36,
+    "mean_after": 3.02,
+    "median_ratio": 0.901,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Cape Kiwanda": {
+    "n": 128,
+    "median_before": 5.06,
+    "median_after": 4.21,
+    "mean_before": 5.21,
+    "mean_after": 4.3,
+    "median_ratio": 0.831,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Cape San Blas": {
+    "n": 126,
+    "median_before": 1.19,
+    "median_after": 1.24,
+    "mean_before": 1.3,
+    "mean_after": 1.26,
+    "median_ratio": 1.01,
+    "lower": 0.429,
+    "higher": 0.548
+   },
+   "Captiva": {
+    "n": 126,
+    "median_before": 1.04,
+    "median_after": 0.96,
+    "mean_before": 1.09,
+    "mean_after": 1.03,
+    "median_ratio": 0.961,
+    "lower": 0.738,
+    "higher": 0.19
+   },
+   "Carolina Beach": {
+    "n": 132,
+    "median_before": 4.46,
+    "median_after": 3.83,
+    "mean_before": 4.38,
+    "mean_after": 3.76,
+    "median_ratio": 0.862,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Carolina Beach Pier": {
+    "n": 132,
+    "median_before": 4.62,
+    "median_after": 3.95,
+    "mean_before": 4.51,
+    "mean_after": 3.84,
+    "median_ratio": 0.855,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Charlestown Town Beach": {
+    "n": 126,
+    "median_before": 1.71,
+    "median_after": 1.76,
+    "mean_before": 1.7,
+    "mean_after": 1.74,
+    "median_ratio": 1.02,
+    "lower": 0.198,
+    "higher": 0.73
+   },
+   "Cherry Grove Pier": {
+    "n": 132,
+    "median_before": 2.85,
+    "median_after": 2.68,
+    "mean_before": 2.83,
+    "mean_after": 2.63,
+    "median_ratio": 0.932,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Chuns Reef": {
+    "n": 126,
+    "median_before": 5.31,
+    "median_after": 4.33,
+    "mean_before": 5.56,
+    "mean_after": 4.51,
+    "median_ratio": 0.821,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Cisco Beach": {
+    "n": 126,
+    "median_before": 1.73,
+    "median_after": 1.77,
+    "mean_before": 1.84,
+    "mean_after": 1.83,
+    "median_ratio": 1.028,
+    "lower": 0.294,
+    "higher": 0.675
+   },
+   "Coast Guard Beach": {
+    "n": 126,
+    "median_before": 1.83,
+    "median_after": 1.77,
+    "mean_before": 1.99,
+    "mean_after": 1.94,
+    "median_ratio": 1.005,
+    "lower": 0.444,
+    "higher": 0.532
+   },
+   "Cocoa Beach Pier": {
+    "n": 126,
+    "median_before": 4.58,
+    "median_after": 3.79,
+    "mean_before": 4.94,
+    "mean_after": 4.11,
+    "median_ratio": 0.852,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Commercial Pier": {
+    "n": 126,
+    "median_before": 2.89,
+    "median_after": 2.69,
+    "mean_before": 4.51,
+    "mean_after": 3.77,
+    "median_ratio": 0.929,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Conant Ave": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.9,
+    "mean_before": 1.93,
+    "mean_after": 1.93,
+    "median_ratio": 1.0,
+    "lower": 0.492,
+    "higher": 0.476
+   },
+   "Coolidge": {
+    "n": 126,
+    "median_before": 0.83,
+    "median_after": 0.75,
+    "mean_before": 0.84,
+    "mean_after": 0.84,
+    "median_ratio": 1.007,
+    "lower": 0.381,
+    "higher": 0.508
+   },
+   "Corolla Beach": {
+    "n": 126,
+    "median_before": 2.81,
+    "median_after": 2.58,
+    "mean_before": 2.83,
+    "mean_after": 2.62,
+    "median_ratio": 0.931,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Costellos": {
+    "n": 132,
+    "median_before": 1.44,
+    "median_after": 1.4,
+    "mean_before": 1.32,
+    "mean_after": 1.39,
+    "median_ratio": 1.055,
+    "lower": 0.144,
+    "higher": 0.826
+   },
+   "Crash Boat Beach": {
+    "n": 132,
+    "median_before": 1.52,
+    "median_after": 1.61,
+    "mean_before": 1.65,
+    "mean_after": 1.71,
+    "median_ratio": 1.057,
+    "lower": 0.174,
+    "higher": 0.773
+   },
+   "Crescent Beach": {
+    "n": 132,
+    "median_before": 1.44,
+    "median_after": 1.47,
+    "mean_before": 1.44,
+    "mean_after": 1.49,
+    "median_ratio": 1.06,
+    "lower": 0.273,
+    "higher": 0.712
+   },
+   "Croatan Beach": {
+    "n": 126,
+    "median_before": 2.58,
+    "median_after": 2.41,
+    "mean_before": 2.74,
+    "mean_after": 2.53,
+    "median_ratio": 0.927,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Cupsogue Beach": {
+    "n": 126,
+    "median_before": 1.98,
+    "median_after": 1.97,
+    "mean_before": 2.01,
+    "mean_after": 1.98,
+    "median_ratio": 0.995,
+    "lower": 0.508,
+    "higher": 0.46
+   },
+   "Dania Beach Pier": {
+    "n": 126,
+    "median_before": 2.55,
+    "median_after": 2.44,
+    "mean_before": 3.82,
+    "mean_after": 3.3,
+    "median_ratio": 0.953,
+    "lower": 0.976,
+    "higher": 0.008
+   },
+   "Davis Park": {
+    "n": 126,
+    "median_before": 2.06,
+    "median_after": 2.05,
+    "mean_before": 2.04,
+    "mean_after": 2.01,
+    "median_ratio": 0.986,
+    "lower": 0.563,
+    "higher": 0.405
+   },
+   "Daytona Beach": {
+    "n": 126,
+    "median_before": 5.98,
+    "median_after": 4.91,
+    "mean_before": 7.11,
+    "mean_after": 5.49,
+    "median_ratio": 0.78,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Deal": {
+    "n": 132,
+    "median_before": 1.81,
+    "median_after": 1.82,
+    "mean_before": 1.99,
+    "mean_after": 1.97,
+    "median_ratio": 1.006,
+    "lower": 0.348,
+    "higher": 0.553
+   },
+   "Deep Hole": {
+    "n": 126,
+    "median_before": 1.88,
+    "median_after": 1.89,
+    "mean_before": 1.87,
+    "mean_after": 1.87,
+    "median_ratio": 1.006,
+    "lower": 0.421,
+    "higher": 0.524
+   },
+   "Deerfield Beach Pier": {
+    "n": 126,
+    "median_before": 3.3,
+    "median_after": 3.0,
+    "mean_before": 4.83,
+    "mean_after": 4.0,
+    "median_ratio": 0.907,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Delray Beach": {
+    "n": 126,
+    "median_before": 3.54,
+    "median_after": 3.18,
+    "mean_before": 5.13,
+    "mean_after": 4.2,
+    "median_ratio": 0.892,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Destin Jetty": {
+    "n": 126,
+    "median_before": 1.6,
+    "median_after": 1.57,
+    "mean_before": 1.72,
+    "mean_after": 1.63,
+    "median_ratio": 0.952,
+    "lower": 0.73,
+    "higher": 0.222
+   },
+   "Devereaux": {
+    "n": 126,
+    "median_before": 1.59,
+    "median_after": 1.61,
+    "mean_before": 1.41,
+    "mean_after": 1.48,
+    "median_ratio": 1.04,
+    "lower": 0.079,
+    "higher": 0.921
+   },
+   "Dewees Island": {
+    "n": 132,
+    "median_before": 3.94,
+    "median_after": 3.41,
+    "mean_before": 3.83,
+    "mean_after": 3.36,
+    "median_ratio": 0.879,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Dewey Beach": {
+    "n": 132,
+    "median_before": 2.29,
+    "median_after": 2.22,
+    "mean_before": 2.51,
+    "mean_after": 2.38,
+    "median_ratio": 0.961,
+    "lower": 0.955,
+    "higher": 0.0
+   },
+   "Diamond Beach": {
+    "n": 132,
+    "median_before": 2.19,
+    "median_after": 2.14,
+    "mean_before": 2.39,
+    "mean_after": 2.29,
+    "median_ratio": 0.972,
+    "lower": 0.97,
+    "higher": 0.008
+   },
+   "Diamond Head Cliffs": {
+    "n": 126,
+    "median_before": 4.29,
+    "median_after": 3.63,
+    "mean_before": 4.36,
+    "mean_after": 3.68,
+    "median_ratio": 0.846,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ditch Plains": {
+    "n": 126,
+    "median_before": 1.96,
+    "median_after": 1.9,
+    "mean_before": 2.03,
+    "mean_after": 1.99,
+    "median_ratio": 0.995,
+    "lower": 0.532,
+    "higher": 0.437
+   },
+   "Dogmans Rincon": {
+    "n": 132,
+    "median_before": 0.77,
+    "median_after": 0.93,
+    "mean_before": 0.98,
+    "mean_after": 1.1,
+    "median_ratio": 1.209,
+    "lower": 0.076,
+    "higher": 0.917
+   },
+   "Drakes Island": {
+    "n": 132,
+    "median_before": 1.52,
+    "median_after": 1.53,
+    "mean_before": 1.48,
+    "mean_after": 1.53,
+    "median_ratio": 1.043,
+    "lower": 0.205,
+    "higher": 0.72
+   },
+   "Duck Pier": {
+    "n": 126,
+    "median_before": 3.37,
+    "median_after": 3.01,
+    "mean_before": 3.39,
+    "mean_after": 3.04,
+    "median_ratio": 0.905,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Dunes Park": {
+    "n": 126,
+    "median_before": 1.53,
+    "median_after": 1.6,
+    "mean_before": 1.54,
+    "mean_after": 1.6,
+    "median_ratio": 1.052,
+    "lower": 0.159,
+    "higher": 0.817
+   },
+   "East Beach": {
+    "n": 126,
+    "median_before": 1.73,
+    "median_after": 1.77,
+    "mean_before": 1.7,
+    "mean_after": 1.74,
+    "median_ratio": 1.019,
+    "lower": 0.262,
+    "higher": 0.651
+   },
+   "East Matunuck State Beach": {
+    "n": 126,
+    "median_before": 1.88,
+    "median_after": 1.9,
+    "mean_before": 1.87,
+    "mean_after": 1.88,
+    "median_ratio": 1.005,
+    "lower": 0.413,
+    "higher": 0.532
+   },
+   "Edisto Beach": {
+    "n": 132,
+    "median_before": 3.95,
+    "median_after": 3.38,
+    "mean_before": 3.82,
+    "mean_after": 3.35,
+    "median_ratio": 0.877,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ehukai Beach Park": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Electric Beach": {
+    "n": 126,
+    "median_before": 3.9,
+    "median_after": 3.26,
+    "mean_before": 3.85,
+    "mean_after": 3.29,
+    "median_ratio": 0.853,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Emerald Isle": {
+    "n": 132,
+    "median_before": 2.99,
+    "median_after": 2.75,
+    "mean_before": 3.08,
+    "mean_after": 2.8,
+    "median_ratio": 0.923,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Englewood": {
+    "n": 126,
+    "median_before": 0.94,
+    "median_after": 0.92,
+    "mean_before": 1.0,
+    "mean_after": 0.96,
+    "median_ratio": 0.969,
+    "lower": 0.698,
+    "higher": 0.238
+   },
+   "Fenwick Island": {
+    "n": 132,
+    "median_before": 2.54,
+    "median_after": 2.41,
+    "mean_before": 2.73,
+    "mean_after": 2.55,
+    "median_ratio": 0.948,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fiji": {
+    "n": 132,
+    "median_before": 3.89,
+    "median_after": 3.46,
+    "mean_before": 4.12,
+    "mean_after": 3.59,
+    "median_ratio": 0.887,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fire Island": {
+    "n": 126,
+    "median_before": 2.0,
+    "median_after": 1.98,
+    "mean_before": 1.96,
+    "mean_after": 1.96,
+    "median_ratio": 0.995,
+    "lower": 0.516,
+    "higher": 0.405
+   },
+   "First Beach": {
+    "n": 126,
+    "median_before": 1.61,
+    "median_after": 1.66,
+    "mean_before": 1.68,
+    "mean_after": 1.71,
+    "median_ratio": 1.032,
+    "lower": 0.254,
+    "higher": 0.722
+   },
+   "First Street Jetty VB": {
+    "n": 126,
+    "median_before": 2.6,
+    "median_after": 2.42,
+    "mean_before": 2.75,
+    "mean_after": 2.54,
+    "median_ratio": 0.927,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Flagler Ave": {
+    "n": 126,
+    "median_before": 5.95,
+    "median_after": 4.88,
+    "mean_before": 7.18,
+    "mean_after": 5.53,
+    "median_ratio": 0.78,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Flagler Beach Pier": {
+    "n": 126,
+    "median_before": 5.98,
+    "median_after": 4.91,
+    "mean_before": 7.02,
+    "mean_after": 5.43,
+    "median_ratio": 0.782,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Flemings Beach": {
+    "n": 126,
+    "median_before": 5.45,
+    "median_after": 4.46,
+    "mean_before": 5.43,
+    "mean_after": 4.46,
+    "median_ratio": 0.825,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Florence South Jetty": {
+    "n": 128,
+    "median_before": 3.23,
+    "median_after": 2.94,
+    "mean_before": 3.22,
+    "mean_after": 2.91,
+    "median_ratio": 0.908,
+    "lower": 0.844,
+    "higher": 0.156
+   },
+   "Flying Point Beach": {
+    "n": 126,
+    "median_before": 1.99,
+    "median_after": 1.98,
+    "mean_before": 2.04,
+    "mean_after": 2.0,
+    "median_ratio": 0.991,
+    "lower": 0.532,
+    "higher": 0.429
+   },
+   "Folly Beach Pier": {
+    "n": 132,
+    "median_before": 4.14,
+    "median_after": 3.54,
+    "mean_before": 4.03,
+    "mean_after": 3.5,
+    "median_ratio": 0.868,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Folly Beach Washout": {
+    "n": 132,
+    "median_before": 4.47,
+    "median_after": 3.75,
+    "mean_before": 4.32,
+    "mean_after": 3.71,
+    "median_ratio": 0.858,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fort Clinch": {
+    "n": 126,
+    "median_before": 5.81,
+    "median_after": 4.78,
+    "mean_before": 5.96,
+    "mean_after": 4.77,
+    "median_ratio": 0.803,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fort Fisher": {
+    "n": 132,
+    "median_before": 4.36,
+    "median_after": 3.74,
+    "mean_before": 4.29,
+    "mean_after": 3.69,
+    "median_ratio": 0.866,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fort Lauderdale Beach": {
+    "n": 126,
+    "median_before": 2.88,
+    "median_after": 2.69,
+    "mean_before": 4.55,
+    "mean_after": 3.79,
+    "median_ratio": 0.929,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fort Pierce Inlet": {
+    "n": 126,
+    "median_before": 5.69,
+    "median_after": 4.46,
+    "mean_before": 6.87,
+    "mean_after": 5.38,
+    "median_ratio": 0.795,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Fort Point": {
+    "n": 126,
+    "median_before": 2.62,
+    "median_after": 2.43,
+    "mean_before": 2.78,
+    "mean_after": 2.55,
+    "median_ratio": 0.922,
+    "lower": 0.976,
+    "higher": 0.0
+   },
+   "Fortunes Rocks": {
+    "n": 132,
+    "median_before": 1.77,
+    "median_after": 1.75,
+    "mean_before": 1.65,
+    "mean_after": 1.67,
+    "median_ratio": 1.005,
+    "lower": 0.447,
+    "higher": 0.515
+   },
+   "Fox Hill": {
+    "n": 132,
+    "median_before": 1.53,
+    "median_after": 1.51,
+    "mean_before": 1.39,
+    "mean_after": 1.45,
+    "median_ratio": 1.039,
+    "lower": 0.167,
+    "higher": 0.773
+   },
+   "Fripp Island": {
+    "n": 132,
+    "median_before": 3.5,
+    "median_after": 3.09,
+    "mean_before": 3.55,
+    "mean_after": 3.15,
+    "median_ratio": 0.891,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Frisco Pier": {
+    "n": 126,
+    "median_before": 2.75,
+    "median_after": 2.55,
+    "mean_before": 2.73,
+    "mean_after": 2.56,
+    "median_ratio": 0.939,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Galveston Seawall": {
+    "n": 117,
+    "median_before": 1.6,
+    "median_after": 1.59,
+    "mean_before": 1.55,
+    "mean_after": 1.55,
+    "median_ratio": 1.012,
+    "lower": 0.325,
+    "higher": 0.658
+   },
+   "Garden City Pier": {
+    "n": 132,
+    "median_before": 3.71,
+    "median_after": 3.31,
+    "mean_before": 3.6,
+    "mean_after": 3.2,
+    "median_ratio": 0.894,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Gas Chambers Aguadilla": {
+    "n": 132,
+    "median_before": 1.52,
+    "median_after": 1.61,
+    "mean_before": 1.65,
+    "mean_after": 1.71,
+    "median_ratio": 1.057,
+    "lower": 0.174,
+    "higher": 0.773
+   },
+   "Gasparilla": {
+    "n": 126,
+    "median_before": 1.07,
+    "median_after": 1.0,
+    "mean_before": 1.13,
+    "mean_after": 1.06,
+    "median_ratio": 0.932,
+    "lower": 0.833,
+    "higher": 0.135
+   },
+   "Georgica Beach": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.85,
+    "mean_before": 1.96,
+    "mean_after": 1.93,
+    "median_ratio": 1.0,
+    "lower": 0.492,
+    "higher": 0.484
+   },
+   "Gilgo Beach": {
+    "n": 126,
+    "median_before": 1.86,
+    "median_after": 1.87,
+    "mean_before": 1.82,
+    "mean_after": 1.84,
+    "median_ratio": 1.011,
+    "lower": 0.254,
+    "higher": 0.659
+   },
+   "Gold Beach": {
+    "n": 126,
+    "median_before": 4.79,
+    "median_after": 4.06,
+    "mean_before": 4.73,
+    "mean_after": 4.0,
+    "median_ratio": 0.844,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Gooch's Beach": {
+    "n": 132,
+    "median_before": 1.65,
+    "median_after": 1.69,
+    "mean_before": 1.61,
+    "mean_after": 1.64,
+    "median_ratio": 1.031,
+    "lower": 0.371,
+    "higher": 0.591
+   },
+   "Good Harbor Beach": {
+    "n": 126,
+    "median_before": 1.47,
+    "median_after": 1.53,
+    "mean_before": 1.47,
+    "mean_after": 1.53,
+    "median_ratio": 1.043,
+    "lower": 0.254,
+    "higher": 0.706
+   },
+   "Gordon Pond": {
+    "n": 132,
+    "median_before": 2.25,
+    "median_after": 2.17,
+    "mean_before": 2.45,
+    "mean_after": 2.34,
+    "median_ratio": 0.965,
+    "lower": 0.955,
+    "higher": 0.0
+   },
+   "Grant Street": {
+    "n": 132,
+    "median_before": 2.04,
+    "median_after": 1.96,
+    "mean_before": 2.23,
+    "mean_after": 2.15,
+    "median_ratio": 0.979,
+    "lower": 0.758,
+    "higher": 0.159
+   },
+   "Green Harbor": {
+    "n": 126,
+    "median_before": 0.96,
+    "median_after": 1.11,
+    "mean_before": 1.22,
+    "mean_after": 1.3,
+    "median_ratio": 1.14,
+    "lower": 0.175,
+    "higher": 0.825
+   },
+   "Haleiwa Ali'i Beach": {
+    "n": 126,
+    "median_before": 5.11,
+    "median_after": 4.25,
+    "mean_before": 5.35,
+    "mean_after": 4.37,
+    "median_ratio": 0.825,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hampton Beach": {
+    "n": 132,
+    "median_before": 1.25,
+    "median_after": 1.33,
+    "mean_before": 1.27,
+    "mean_after": 1.34,
+    "median_ratio": 1.062,
+    "lower": 0.189,
+    "higher": 0.795
+   },
+   "Hanalei Bay": {
+    "n": 126,
+    "median_before": 3.22,
+    "median_after": 2.9,
+    "mean_before": 3.31,
+    "mean_after": 2.96,
+    "median_ratio": 0.91,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hapuna Beach": {
+    "n": 126,
+    "median_before": 4.3,
+    "median_after": 3.55,
+    "mean_before": 4.25,
+    "mean_after": 3.55,
+    "median_ratio": 0.824,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Harbor Beach": {
+    "n": 132,
+    "median_before": 1.67,
+    "median_after": 1.67,
+    "mean_before": 1.48,
+    "mean_after": 1.54,
+    "median_ratio": 1.034,
+    "lower": 0.174,
+    "higher": 0.75
+   },
+   "Harvey Cedars": {
+    "n": 132,
+    "median_before": 2.16,
+    "median_after": 2.12,
+    "mean_before": 2.32,
+    "mean_after": 2.24,
+    "median_ratio": 0.981,
+    "lower": 0.773,
+    "higher": 0.174
+   },
+   "Hatteras Ferry Docks": {
+    "n": 126,
+    "median_before": 2.99,
+    "median_after": 2.73,
+    "mean_before": 2.99,
+    "mean_after": 2.74,
+    "median_ratio": 0.922,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Haulover Inlet": {
+    "n": 126,
+    "median_before": 2.35,
+    "median_after": 2.29,
+    "mean_before": 4.02,
+    "mean_after": 3.41,
+    "median_ratio": 0.965,
+    "lower": 0.937,
+    "higher": 0.048
+   },
+   "Higgins Beach": {
+    "n": 132,
+    "median_before": 1.61,
+    "median_after": 1.63,
+    "mean_before": 1.48,
+    "mean_after": 1.53,
+    "median_ratio": 1.035,
+    "lower": 0.242,
+    "higher": 0.72
+   },
+   "Hillsboro Beach": {
+    "n": 126,
+    "median_before": 3.3,
+    "median_after": 3.0,
+    "mean_before": 4.83,
+    "mean_after": 4.0,
+    "median_ratio": 0.907,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hillsboro Inlet": {
+    "n": 126,
+    "median_before": 3.22,
+    "median_after": 2.95,
+    "mean_before": 4.73,
+    "mean_after": 3.93,
+    "median_ratio": 0.913,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hilton Head Island": {
+    "n": 132,
+    "median_before": 3.66,
+    "median_after": 3.18,
+    "mean_before": 3.67,
+    "mean_after": 3.24,
+    "median_ratio": 0.88,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hither Hills": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.83,
+    "mean_before": 1.95,
+    "mean_after": 1.93,
+    "median_ratio": 1.002,
+    "lower": 0.46,
+    "higher": 0.5
+   },
+   "Hobe Beach": {
+    "n": 126,
+    "median_before": 5.15,
+    "median_after": 4.14,
+    "mean_before": 6.64,
+    "mean_after": 5.24,
+    "median_ratio": 0.826,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hobuck Beach": {
+    "n": 126,
+    "median_before": 3.74,
+    "median_after": 3.21,
+    "mean_before": 3.96,
+    "mean_after": 3.36,
+    "median_ratio": 0.864,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Holden Beach": {
+    "n": 132,
+    "median_before": 2.5,
+    "median_after": 2.38,
+    "mean_before": 2.51,
+    "mean_after": 2.39,
+    "median_ratio": 0.956,
+    "lower": 0.924,
+    "higher": 0.038
+   },
+   "Holyoke": {
+    "n": 132,
+    "median_before": 2.19,
+    "median_after": 2.15,
+    "mean_before": 2.36,
+    "mean_after": 2.27,
+    "median_ratio": 0.977,
+    "lower": 0.758,
+    "higher": 0.106
+   },
+   "Honoli\u2018i": {
+    "n": 126,
+    "median_before": 4.24,
+    "median_after": 3.69,
+    "mean_before": 4.25,
+    "mean_after": 3.7,
+    "median_ratio": 0.872,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Honolua Bay": {
+    "n": 126,
+    "median_before": 5.42,
+    "median_after": 4.46,
+    "mean_before": 5.4,
+    "mean_after": 4.45,
+    "median_ratio": 0.827,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Horace Caldwell Pier": {
+    "n": 126,
+    "median_before": 2.49,
+    "median_after": 2.34,
+    "mean_before": 2.38,
+    "mean_after": 2.25,
+    "median_ratio": 0.95,
+    "lower": 0.857,
+    "higher": 0.135
+   },
+   "Horseneck Beach": {
+    "n": 126,
+    "median_before": 1.17,
+    "median_after": 1.25,
+    "mean_before": 1.32,
+    "mean_after": 1.38,
+    "median_ratio": 1.1,
+    "lower": 0.262,
+    "higher": 0.73
+   },
+   "Ho\u02bbokipa": {
+    "n": 126,
+    "median_before": 5.91,
+    "median_after": 4.82,
+    "mean_before": 6.03,
+    "mean_after": 4.86,
+    "median_ratio": 0.814,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Hubbard Creek": {
+    "n": 106,
+    "median_before": 1.92,
+    "median_after": 1.88,
+    "mean_before": 1.92,
+    "mean_after": 1.86,
+    "median_ratio": 0.979,
+    "lower": 0.575,
+    "higher": 0.415
+   },
+   "Hunting Island": {
+    "n": 132,
+    "median_before": 3.97,
+    "median_after": 3.33,
+    "mean_before": 3.87,
+    "mean_after": 3.39,
+    "median_ratio": 0.872,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Indialantic": {
+    "n": 126,
+    "median_before": 6.03,
+    "median_after": 4.69,
+    "mean_before": 7.22,
+    "mean_after": 5.6,
+    "median_ratio": 0.789,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Indian Beach Ecola": {
+    "n": 128,
+    "median_before": 4.95,
+    "median_after": 4.13,
+    "mean_before": 5.13,
+    "mean_after": 4.24,
+    "median_ratio": 0.831,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Indian River Inlet": {
+    "n": 132,
+    "median_before": 2.5,
+    "median_after": 2.35,
+    "mean_before": 2.63,
+    "mean_after": 2.44,
+    "median_ratio": 0.944,
+    "lower": 0.992,
+    "higher": 0.0
+   },
+   "Indian Rocks Beach": {
+    "n": 126,
+    "median_before": 1.56,
+    "median_after": 1.31,
+    "mean_before": 1.51,
+    "mean_after": 1.36,
+    "median_ratio": 0.919,
+    "lower": 0.897,
+    "higher": 0.103
+   },
+   "Indicators": {
+    "n": 132,
+    "median_before": 1.72,
+    "median_after": 1.77,
+    "mean_before": 1.79,
+    "mean_after": 1.83,
+    "median_ratio": 1.034,
+    "lower": 0.265,
+    "higher": 0.712
+   },
+   "Isla Blanca Park": {
+    "n": 126,
+    "median_before": 2.95,
+    "median_after": 2.71,
+    "mean_before": 2.8,
+    "mean_after": 2.6,
+    "median_ratio": 0.922,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Island Beach State Park": {
+    "n": 132,
+    "median_before": 2.0,
+    "median_after": 1.98,
+    "mean_before": 2.17,
+    "mean_after": 2.12,
+    "median_ratio": 0.995,
+    "lower": 0.576,
+    "higher": 0.348
+   },
+   "Isle of Palms": {
+    "n": 132,
+    "median_before": 3.73,
+    "median_after": 3.26,
+    "mean_before": 3.66,
+    "mean_after": 3.24,
+    "median_ratio": 0.886,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "JP Luby Surf Park": {
+    "n": 126,
+    "median_before": 2.31,
+    "median_after": 2.19,
+    "mean_before": 2.21,
+    "mean_after": 2.12,
+    "median_ratio": 0.962,
+    "lower": 0.794,
+    "higher": 0.183
+   },
+   "Jacksonville Beach Pier": {
+    "n": 126,
+    "median_before": 6.34,
+    "median_after": 4.98,
+    "mean_before": 6.21,
+    "mean_after": 4.94,
+    "median_ratio": 0.796,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jekyll Island": {
+    "n": 132,
+    "median_before": 3.96,
+    "median_after": 3.45,
+    "mean_before": 4.11,
+    "mean_after": 3.52,
+    "median_ratio": 0.863,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jenness Beach": {
+    "n": 132,
+    "median_before": 1.49,
+    "median_after": 1.47,
+    "mean_before": 1.36,
+    "mean_after": 1.42,
+    "median_ratio": 1.045,
+    "lower": 0.205,
+    "higher": 0.788
+   },
+   "Jennettes Pier": {
+    "n": 126,
+    "median_before": 3.33,
+    "median_after": 2.98,
+    "mean_before": 3.46,
+    "mean_after": 3.09,
+    "median_ratio": 0.9,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jensen Beach": {
+    "n": 126,
+    "median_before": 5.57,
+    "median_after": 4.38,
+    "mean_before": 6.66,
+    "mean_after": 5.24,
+    "median_ratio": 0.802,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jetty Park Cocoa Beach": {
+    "n": 126,
+    "median_before": 3.22,
+    "median_after": 2.88,
+    "mean_before": 3.34,
+    "mean_after": 2.97,
+    "median_ratio": 0.905,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jobos Beach Isabela": {
+    "n": 132,
+    "median_before": 4.39,
+    "median_after": 3.8,
+    "mean_before": 4.58,
+    "mean_after": 3.92,
+    "median_ratio": 0.867,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jolly Roger Pier": {
+    "n": 132,
+    "median_before": 3.92,
+    "median_after": 3.46,
+    "mean_before": 3.87,
+    "mean_after": 3.39,
+    "median_ratio": 0.884,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jones Beach": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.9,
+    "mean_before": 1.89,
+    "mean_after": 1.9,
+    "median_ratio": 1.0,
+    "lower": 0.46,
+    "higher": 0.492
+   },
+   "Juno Beach Pier": {
+    "n": 126,
+    "median_before": 4.72,
+    "median_after": 3.87,
+    "mean_before": 6.4,
+    "mean_after": 5.06,
+    "median_ratio": 0.841,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Jupiter Inlet": {
+    "n": 126,
+    "median_before": 5.22,
+    "median_after": 4.21,
+    "mean_before": 5.67,
+    "mean_after": 4.64,
+    "median_ratio": 0.823,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kaisers": {
+    "n": 126,
+    "median_before": 3.71,
+    "median_after": 3.24,
+    "mean_before": 3.72,
+    "mean_after": 3.23,
+    "median_ratio": 0.87,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kalaloch Beach": {
+    "n": 126,
+    "median_before": 4.1,
+    "median_after": 3.48,
+    "mean_before": 4.41,
+    "mean_after": 3.74,
+    "median_ratio": 0.849,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kanaha Beach": {
+    "n": 126,
+    "median_before": 5.75,
+    "median_after": 4.71,
+    "mean_before": 5.71,
+    "mean_after": 4.68,
+    "median_ratio": 0.821,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Keaau Beach": {
+    "n": 126,
+    "median_before": 5.2,
+    "median_after": 4.19,
+    "mean_before": 5.24,
+    "mean_after": 4.24,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Key West": {
+    "n": 126,
+    "median_before": 0.98,
+    "median_after": 0.95,
+    "mean_before": 1.21,
+    "mean_after": 1.17,
+    "median_ratio": 1.0,
+    "lower": 0.484,
+    "higher": 0.468
+   },
+   "Keyes Beach": {
+    "n": 126,
+    "median_before": 0.75,
+    "median_after": 0.81,
+    "mean_before": 0.85,
+    "mean_after": 0.95,
+    "median_ratio": 1.189,
+    "lower": 0.095,
+    "higher": 0.905
+   },
+   "Kiahuna Beach": {
+    "n": 126,
+    "median_before": 3.85,
+    "median_after": 3.34,
+    "mean_before": 3.82,
+    "mean_after": 3.31,
+    "median_ratio": 0.867,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kiawah Island Beach": {
+    "n": 132,
+    "median_before": 3.59,
+    "median_after": 3.08,
+    "mean_before": 3.49,
+    "mean_after": 3.11,
+    "median_ratio": 0.894,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kill Devil Hills": {
+    "n": 126,
+    "median_before": 3.62,
+    "median_after": 3.18,
+    "mean_before": 3.62,
+    "mean_after": 3.21,
+    "median_ratio": 0.894,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kitty Hawk Pier": {
+    "n": 126,
+    "median_before": 3.35,
+    "median_after": 3.0,
+    "mean_before": 3.38,
+    "mean_after": 3.04,
+    "median_ratio": 0.906,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kolekole Beach Park": {
+    "n": 126,
+    "median_before": 4.93,
+    "median_after": 4.18,
+    "mean_before": 4.92,
+    "mean_after": 4.15,
+    "median_ratio": 0.847,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Kure Beach": {
+    "n": 132,
+    "median_before": 4.62,
+    "median_after": 3.94,
+    "mean_before": 4.52,
+    "mean_after": 3.85,
+    "median_ratio": 0.856,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "La Pared Luquillo": {
+    "n": 132,
+    "median_before": 3.53,
+    "median_after": 3.2,
+    "mean_before": 3.87,
+    "mean_after": 3.41,
+    "median_ratio": 0.902,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "La Push First Beach": {
+    "n": 126,
+    "median_before": 4.53,
+    "median_after": 3.7,
+    "mean_before": 4.9,
+    "mean_after": 4.04,
+    "median_ratio": 0.831,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "La Push Second Beach": {
+    "n": 126,
+    "median_before": 4.38,
+    "median_after": 3.61,
+    "mean_before": 4.76,
+    "mean_after": 3.98,
+    "median_ratio": 0.838,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "La Push Third Beach": {
+    "n": 126,
+    "median_before": 4.49,
+    "median_after": 3.74,
+    "mean_before": 4.79,
+    "mean_after": 4.0,
+    "median_ratio": 0.833,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Lahaina Breakwall": {
+    "n": 126,
+    "median_before": 3.49,
+    "median_after": 3.02,
+    "mean_before": 3.46,
+    "mean_after": 3.0,
+    "median_ratio": 0.865,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Lake Worth Pier": {
+    "n": 126,
+    "median_before": 3.85,
+    "median_after": 3.41,
+    "mean_before": 5.67,
+    "mean_after": 4.56,
+    "median_ratio": 0.877,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Laniakea": {
+    "n": 126,
+    "median_before": 5.3,
+    "median_after": 4.33,
+    "mean_before": 5.56,
+    "mean_after": 4.51,
+    "median_ratio": 0.823,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Launiupoko": {
+    "n": 126,
+    "median_before": 2.6,
+    "median_after": 2.4,
+    "mean_before": 2.62,
+    "mean_after": 2.4,
+    "median_ratio": 0.914,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Lido Beach": {
+    "n": 126,
+    "median_before": 1.56,
+    "median_after": 1.63,
+    "mean_before": 1.54,
+    "mean_after": 1.61,
+    "median_ratio": 1.045,
+    "lower": 0.024,
+    "higher": 0.968
+   },
+   "Lincoln City Beach": {
+    "n": 128,
+    "median_before": 4.98,
+    "median_after": 4.16,
+    "mean_before": 4.99,
+    "mean_after": 4.16,
+    "median_ratio": 0.844,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Log Cabins": {
+    "n": 126,
+    "median_before": 5.24,
+    "median_after": 4.35,
+    "mean_before": 5.45,
+    "mean_after": 4.44,
+    "median_ratio": 0.833,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Long Beach Island": {
+    "n": 132,
+    "median_before": 2.19,
+    "median_after": 2.13,
+    "mean_before": 2.35,
+    "mean_after": 2.26,
+    "median_ratio": 0.976,
+    "lower": 0.765,
+    "higher": 0.144
+   },
+   "Long Beach NY": {
+    "n": 126,
+    "median_before": 1.83,
+    "median_after": 1.79,
+    "mean_before": 1.8,
+    "mean_after": 1.81,
+    "median_ratio": 1.012,
+    "lower": 0.198,
+    "higher": 0.738
+   },
+   "Long Beach Township": {
+    "n": 132,
+    "median_before": 2.25,
+    "median_after": 2.19,
+    "mean_before": 2.42,
+    "mean_after": 2.32,
+    "median_ratio": 0.972,
+    "lower": 0.924,
+    "higher": 0.0
+   },
+   "Long Beach WA": {
+    "n": 128,
+    "median_before": 4.76,
+    "median_after": 3.99,
+    "mean_before": 5.18,
+    "mean_after": 4.24,
+    "median_ratio": 0.843,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Long Branch": {
+    "n": 132,
+    "median_before": 1.78,
+    "median_after": 1.79,
+    "mean_before": 1.95,
+    "mean_after": 1.94,
+    "median_ratio": 1.011,
+    "lower": 0.303,
+    "higher": 0.591
+   },
+   "Long Point": {
+    "n": 126,
+    "median_before": 1.72,
+    "median_after": 1.73,
+    "mean_before": 1.78,
+    "mean_after": 1.78,
+    "median_ratio": 1.028,
+    "lower": 0.302,
+    "higher": 0.69
+   },
+   "Long Sands Beach": {
+    "n": 132,
+    "median_before": 1.28,
+    "median_after": 1.35,
+    "mean_before": 1.32,
+    "mean_after": 1.4,
+    "median_ratio": 1.069,
+    "lower": 0.227,
+    "higher": 0.75
+   },
+   "Lori Wilson Park": {
+    "n": 126,
+    "median_before": 4.98,
+    "median_after": 4.04,
+    "mean_before": 5.58,
+    "mean_after": 4.53,
+    "median_ratio": 0.83,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Lucy Vincent": {
+    "n": 126,
+    "median_before": 1.64,
+    "median_after": 1.64,
+    "mean_before": 1.69,
+    "mean_after": 1.71,
+    "median_ratio": 1.031,
+    "lower": 0.23,
+    "higher": 0.746
+   },
+   "Lymans": {
+    "n": 126,
+    "median_before": 4.23,
+    "median_after": 3.54,
+    "mean_before": 4.17,
+    "mean_after": 3.51,
+    "median_ratio": 0.841,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Lynn Beach": {
+    "n": 126,
+    "median_before": 1.1,
+    "median_after": 1.21,
+    "mean_before": 1.0,
+    "mean_after": 1.12,
+    "median_ratio": 1.096,
+    "lower": 0.032,
+    "higher": 0.96
+   },
+   "Madaket": {
+    "n": 126,
+    "median_before": 1.75,
+    "median_after": 1.79,
+    "mean_before": 1.87,
+    "mean_after": 1.86,
+    "median_ratio": 1.028,
+    "lower": 0.333,
+    "higher": 0.635
+   },
+   "Madeira Beach": {
+    "n": 126,
+    "median_before": 1.92,
+    "median_after": 1.55,
+    "mean_before": 1.91,
+    "mean_after": 1.65,
+    "median_ratio": 0.862,
+    "lower": 0.968,
+    "higher": 0.016
+   },
+   "Main Beach East Hampton": {
+    "n": 126,
+    "median_before": 1.92,
+    "median_after": 1.87,
+    "mean_before": 1.97,
+    "mean_after": 1.95,
+    "median_ratio": 1.005,
+    "lower": 0.484,
+    "higher": 0.508
+   },
+   "Makaha": {
+    "n": 126,
+    "median_before": 4.17,
+    "median_after": 3.51,
+    "mean_before": 4.17,
+    "mean_after": 3.52,
+    "median_ratio": 0.844,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Makapuu Beach Park": {
+    "n": 126,
+    "median_before": 6.72,
+    "median_after": 5.21,
+    "mean_before": 6.54,
+    "mean_after": 5.12,
+    "median_ratio": 0.777,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Manasquan Inlet": {
+    "n": 132,
+    "median_before": 1.94,
+    "median_after": 1.94,
+    "mean_before": 2.14,
+    "mean_after": 2.1,
+    "median_ratio": 0.995,
+    "lower": 0.576,
+    "higher": 0.311
+   },
+   "Mantoloking": {
+    "n": 132,
+    "median_before": 1.99,
+    "median_after": 1.98,
+    "mean_before": 2.15,
+    "mean_after": 2.11,
+    "median_ratio": 0.995,
+    "lower": 0.576,
+    "higher": 0.326
+   },
+   "Marconi Beach": {
+    "n": 126,
+    "median_before": 1.85,
+    "median_after": 1.7,
+    "mean_before": 1.97,
+    "mean_after": 1.91,
+    "median_ratio": 1.01,
+    "lower": 0.421,
+    "higher": 0.556
+   },
+   "Margate": {
+    "n": 132,
+    "median_before": 1.98,
+    "median_after": 1.98,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.99,
+    "lower": 0.636,
+    "higher": 0.174
+   },
+   "Margate Pier": {
+    "n": 132,
+    "median_before": 1.98,
+    "median_after": 1.97,
+    "mean_before": 2.19,
+    "mean_after": 2.14,
+    "median_ratio": 0.994,
+    "lower": 0.606,
+    "higher": 0.197
+   },
+   "Maria's": {
+    "n": 132,
+    "median_before": 1.73,
+    "median_after": 1.79,
+    "mean_before": 1.94,
+    "mean_after": 1.93,
+    "median_ratio": 1.035,
+    "lower": 0.333,
+    "higher": 0.629
+   },
+   "Marineland": {
+    "n": 126,
+    "median_before": 5.91,
+    "median_after": 4.86,
+    "mean_before": 6.81,
+    "mean_after": 5.31,
+    "median_ratio": 0.787,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Marys": {
+    "n": 126,
+    "median_before": 1.87,
+    "median_after": 1.88,
+    "mean_before": 1.86,
+    "mean_after": 1.87,
+    "median_ratio": 1.005,
+    "lower": 0.421,
+    "higher": 0.54
+   },
+   "Matagorda Beach": {
+    "n": 126,
+    "median_before": 2.71,
+    "median_after": 2.53,
+    "mean_before": 2.6,
+    "mean_after": 2.41,
+    "median_ratio": 0.93,
+    "lower": 0.905,
+    "higher": 0.048
+   },
+   "Matanzas Inlet": {
+    "n": 126,
+    "median_before": 6.09,
+    "median_after": 4.97,
+    "mean_before": 6.85,
+    "mean_after": 5.33,
+    "median_ratio": 0.787,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Matunuck": {
+    "n": 126,
+    "median_before": 1.88,
+    "median_after": 1.89,
+    "mean_before": 1.87,
+    "mean_after": 1.87,
+    "median_ratio": 1.006,
+    "lower": 0.421,
+    "higher": 0.524
+   },
+   "Mayport Poles": {
+    "n": 126,
+    "median_before": 7.08,
+    "median_after": 5.45,
+    "mean_before": 6.81,
+    "mean_after": 5.33,
+    "median_ratio": 0.787,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Mecox Beach": {
+    "n": 126,
+    "median_before": 2.01,
+    "median_after": 1.94,
+    "mean_before": 2.05,
+    "mean_after": 2.01,
+    "median_ratio": 0.993,
+    "lower": 0.54,
+    "higher": 0.405
+   },
+   "Mexico Beach": {
+    "n": 126,
+    "median_before": 0.46,
+    "median_after": 0.55,
+    "mean_before": 0.48,
+    "mean_after": 0.56,
+    "median_ratio": 1.225,
+    "lower": 0.048,
+    "higher": 0.937
+   },
+   "Miacomet": {
+    "n": 126,
+    "median_before": 1.84,
+    "median_after": 1.85,
+    "mean_before": 1.96,
+    "mean_after": 1.93,
+    "median_ratio": 1.013,
+    "lower": 0.357,
+    "higher": 0.579
+   },
+   "Middles Isabela": {
+    "n": 132,
+    "median_before": 4.39,
+    "median_after": 3.81,
+    "mean_before": 4.6,
+    "mean_after": 3.93,
+    "median_ratio": 0.869,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Misquamicut State Beach": {
+    "n": 126,
+    "median_before": 1.55,
+    "median_after": 1.6,
+    "mean_before": 1.53,
+    "mean_after": 1.6,
+    "median_ratio": 1.051,
+    "lower": 0.095,
+    "higher": 0.881
+   },
+   "Monahans": {
+    "n": 126,
+    "median_before": 1.79,
+    "median_after": 1.81,
+    "mean_before": 1.76,
+    "mean_after": 1.79,
+    "median_ratio": 1.02,
+    "lower": 0.151,
+    "higher": 0.754
+   },
+   "Monmouth": {
+    "n": 132,
+    "median_before": 1.77,
+    "median_after": 1.79,
+    "mean_before": 1.97,
+    "mean_after": 1.94,
+    "median_ratio": 1.006,
+    "lower": 0.386,
+    "higher": 0.553
+   },
+   "Monster Hole": {
+    "n": 126,
+    "median_before": 5.81,
+    "median_after": 4.54,
+    "mean_before": 6.93,
+    "mean_after": 5.42,
+    "median_ratio": 0.798,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Montauk Point": {
+    "n": 126,
+    "median_before": 1.67,
+    "median_after": 1.72,
+    "mean_before": 1.92,
+    "mean_after": 1.92,
+    "median_ratio": 1.024,
+    "lower": 0.286,
+    "higher": 0.675
+   },
+   "Moody Point": {
+    "n": 132,
+    "median_before": 1.5,
+    "median_after": 1.55,
+    "mean_before": 1.46,
+    "mean_after": 1.51,
+    "median_ratio": 1.053,
+    "lower": 0.242,
+    "higher": 0.712
+   },
+   "Moonstone Beach Humboldt": {
+    "n": 126,
+    "median_before": 1.45,
+    "median_after": 1.53,
+    "mean_before": 1.5,
+    "mean_after": 1.56,
+    "median_ratio": 1.055,
+    "lower": 0.151,
+    "higher": 0.825
+   },
+   "Moonstone Beach RI": {
+    "n": 126,
+    "median_before": 1.84,
+    "median_after": 1.84,
+    "mean_before": 1.82,
+    "mean_after": 1.84,
+    "median_ratio": 1.01,
+    "lower": 0.397,
+    "higher": 0.54
+   },
+   "Mustang Island": {
+    "n": 126,
+    "median_before": 2.23,
+    "median_after": 2.13,
+    "mean_before": 2.12,
+    "mean_after": 2.05,
+    "median_ratio": 0.969,
+    "lower": 0.746,
+    "higher": 0.246
+   },
+   "Myrtle Beach State Park": {
+    "n": 132,
+    "median_before": 3.45,
+    "median_after": 3.12,
+    "mean_before": 3.39,
+    "mean_after": 3.05,
+    "median_ratio": 0.901,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Nags Head Pier": {
+    "n": 126,
+    "median_before": 3.49,
+    "median_after": 3.06,
+    "mean_before": 3.54,
+    "mean_after": 3.15,
+    "median_ratio": 0.899,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Nahant Beach": {
+    "n": 126,
+    "median_before": 1.1,
+    "median_after": 1.25,
+    "mean_before": 1.12,
+    "mean_after": 1.21,
+    "median_ratio": 1.089,
+    "lower": 0.103,
+    "higher": 0.897
+   },
+   "Nantasket Beach": {
+    "n": 126,
+    "median_before": 1.02,
+    "median_after": 1.1,
+    "mean_before": 1.17,
+    "mean_after": 1.23,
+    "median_ratio": 1.121,
+    "lower": 0.222,
+    "higher": 0.778
+   },
+   "Nantucket Surf": {
+    "n": 126,
+    "median_before": 1.81,
+    "median_after": 1.79,
+    "mean_before": 1.98,
+    "mean_after": 1.95,
+    "median_ratio": 1.011,
+    "lower": 0.413,
+    "higher": 0.54
+   },
+   "Naples Pier": {
+    "n": 126,
+    "median_before": 0.84,
+    "median_after": 0.73,
+    "mean_before": 1.04,
+    "mean_after": 0.98,
+    "median_ratio": 0.956,
+    "lower": 0.643,
+    "higher": 0.317
+   },
+   "Narragansett Beach": {
+    "n": 126,
+    "median_before": 1.79,
+    "median_after": 1.81,
+    "mean_before": 1.76,
+    "mean_after": 1.79,
+    "median_ratio": 1.018,
+    "lower": 0.151,
+    "higher": 0.746
+   },
+   "Narrow River": {
+    "n": 126,
+    "median_before": 1.79,
+    "median_after": 1.81,
+    "mean_before": 1.76,
+    "mean_after": 1.79,
+    "median_ratio": 1.018,
+    "lower": 0.151,
+    "higher": 0.746
+   },
+   "Nauset Beach": {
+    "n": 126,
+    "median_before": 1.96,
+    "median_after": 1.91,
+    "mean_before": 2.12,
+    "mean_after": 2.05,
+    "median_ratio": 0.995,
+    "lower": 0.548,
+    "higher": 0.405
+   },
+   "Navarre Beach": {
+    "n": 126,
+    "median_before": 2.02,
+    "median_after": 1.88,
+    "mean_before": 2.05,
+    "mean_after": 1.88,
+    "median_ratio": 0.92,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Nelscott Reef": {
+    "n": 128,
+    "median_before": 5.2,
+    "median_after": 4.32,
+    "mean_before": 5.35,
+    "mean_after": 4.41,
+    "median_ratio": 0.832,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "New Brighton Reef": {
+    "n": 126,
+    "median_before": 3.04,
+    "median_after": 2.71,
+    "mean_before": 3.01,
+    "mean_after": 2.69,
+    "median_ratio": 0.89,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "New Smyrna Beach Inlet": {
+    "n": 126,
+    "median_before": 6.77,
+    "median_after": 5.38,
+    "mean_before": 7.08,
+    "mean_after": 5.49,
+    "median_ratio": 0.773,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Nobadeer": {
+    "n": 126,
+    "median_before": 1.81,
+    "median_after": 1.85,
+    "mean_before": 1.91,
+    "mean_after": 1.9,
+    "median_ratio": 1.017,
+    "lower": 0.349,
+    "higher": 0.603
+   },
+   "North Beach Rye": {
+    "n": 132,
+    "median_before": 1.49,
+    "median_after": 1.47,
+    "mean_before": 1.36,
+    "mean_after": 1.41,
+    "median_ratio": 1.038,
+    "lower": 0.227,
+    "higher": 0.765
+   },
+   "North Buxton": {
+    "n": 126,
+    "median_before": 3.93,
+    "median_after": 3.42,
+    "mean_before": 4.04,
+    "mean_after": 3.52,
+    "median_ratio": 0.868,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "North End Virginia Beach": {
+    "n": 126,
+    "median_before": 2.58,
+    "median_after": 2.41,
+    "mean_before": 2.73,
+    "mean_after": 2.54,
+    "median_ratio": 0.94,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "North Jetty": {
+    "n": 126,
+    "median_before": 5.81,
+    "median_after": 4.54,
+    "mean_before": 6.93,
+    "mean_after": 5.42,
+    "median_ratio": 0.798,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "North Pea Island": {
+    "n": 126,
+    "median_before": 3.62,
+    "median_after": 3.19,
+    "mean_before": 3.76,
+    "mean_after": 3.3,
+    "median_ratio": 0.888,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "North Wildwood": {
+    "n": 132,
+    "median_before": 2.22,
+    "median_after": 2.16,
+    "mean_before": 2.41,
+    "mean_after": 2.31,
+    "median_ratio": 0.972,
+    "lower": 0.97,
+    "higher": 0.0
+   },
+   "Nye Beach": {
+    "n": 128,
+    "median_before": 4.56,
+    "median_after": 3.89,
+    "mean_before": 4.47,
+    "mean_after": 3.82,
+    "median_ratio": 0.855,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Oak Island Pier": {
+    "n": 132,
+    "median_before": 1.63,
+    "median_after": 1.71,
+    "mean_before": 1.63,
+    "mean_after": 1.67,
+    "median_ratio": 1.038,
+    "lower": 0.182,
+    "higher": 0.803
+   },
+   "Ocean Ave": {
+    "n": 126,
+    "median_before": 6.07,
+    "median_after": 4.69,
+    "mean_before": 7.16,
+    "mean_after": 5.57,
+    "median_ratio": 0.79,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ocean Bay Park": {
+    "n": 126,
+    "median_before": 2.14,
+    "median_after": 2.09,
+    "mean_before": 2.09,
+    "mean_after": 2.06,
+    "median_ratio": 0.986,
+    "lower": 0.595,
+    "higher": 0.349
+   },
+   "Ocean City MD 28th Street": {
+    "n": 126,
+    "median_before": 2.62,
+    "median_after": 2.47,
+    "mean_before": 2.71,
+    "mean_after": 2.54,
+    "median_ratio": 0.946,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ocean City MD Inlet": {
+    "n": 126,
+    "median_before": 2.62,
+    "median_after": 2.47,
+    "mean_before": 2.71,
+    "mean_after": 2.54,
+    "median_ratio": 0.946,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ocean City NJ": {
+    "n": 132,
+    "median_before": 2.0,
+    "median_after": 1.99,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.995,
+    "lower": 0.568,
+    "higher": 0.288
+   },
+   "Ocean Grove": {
+    "n": 132,
+    "median_before": 1.84,
+    "median_after": 1.85,
+    "mean_before": 2.01,
+    "mean_after": 1.99,
+    "median_ratio": 1.005,
+    "lower": 0.356,
+    "higher": 0.553
+   },
+   "Ocean Isle Beach": {
+    "n": 132,
+    "median_before": 2.71,
+    "median_after": 2.53,
+    "mean_before": 2.71,
+    "mean_after": 2.54,
+    "median_ratio": 0.94,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ocean Reef Park": {
+    "n": 126,
+    "median_before": 4.33,
+    "median_after": 3.69,
+    "mean_before": 6.13,
+    "mean_after": 4.9,
+    "median_ratio": 0.849,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ocean Shores": {
+    "n": 126,
+    "median_before": 4.4,
+    "median_after": 3.76,
+    "mean_before": 4.79,
+    "mean_after": 3.99,
+    "median_ratio": 0.843,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Oceanside Harbor": {
+    "n": 126,
+    "median_before": 4.75,
+    "median_after": 3.84,
+    "mean_before": 4.84,
+    "mean_after": 3.9,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ocracoke Beach": {
+    "n": 126,
+    "median_before": 3.51,
+    "median_after": 3.1,
+    "mean_before": 3.49,
+    "mean_after": 3.11,
+    "median_ratio": 0.896,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Off The Wall": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ogunquit": {
+    "n": 132,
+    "median_before": 1.55,
+    "median_after": 1.61,
+    "mean_before": 1.5,
+    "mean_after": 1.54,
+    "median_ratio": 1.022,
+    "lower": 0.333,
+    "higher": 0.621
+   },
+   "Okaloosa Island Pier": {
+    "n": 126,
+    "median_before": 1.5,
+    "median_after": 1.48,
+    "mean_before": 1.59,
+    "mean_after": 1.52,
+    "median_ratio": 0.963,
+    "lower": 0.69,
+    "higher": 0.294
+   },
+   "Old Orchard Beach": {
+    "n": 132,
+    "median_before": 1.46,
+    "median_after": 1.48,
+    "mean_before": 1.36,
+    "mean_after": 1.42,
+    "median_ratio": 1.054,
+    "lower": 0.167,
+    "higher": 0.803
+   },
+   "Oregon Inlet": {
+    "n": 126,
+    "median_before": 3.23,
+    "median_after": 2.88,
+    "mean_before": 3.28,
+    "mean_after": 2.96,
+    "median_ratio": 0.907,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Otter Rock": {
+    "n": 128,
+    "median_before": 5.48,
+    "median_after": 4.51,
+    "mean_before": 5.42,
+    "mean_after": 4.47,
+    "median_ratio": 0.827,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Outer Banks Fishing Pier": {
+    "n": 126,
+    "median_before": 3.52,
+    "median_after": 3.12,
+    "mean_before": 3.65,
+    "mean_after": 3.23,
+    "median_ratio": 0.893,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pacific Beach WA": {
+    "n": 126,
+    "median_before": 4.26,
+    "median_after": 3.55,
+    "mean_before": 4.52,
+    "mean_after": 3.81,
+    "median_ratio": 0.842,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pacific City Beach": {
+    "n": 128,
+    "median_before": 5.01,
+    "median_after": 4.2,
+    "mean_before": 5.15,
+    "mean_after": 4.26,
+    "median_ratio": 0.832,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pakala": {
+    "n": 126,
+    "median_before": 4.14,
+    "median_after": 3.52,
+    "mean_before": 4.15,
+    "mean_after": 3.52,
+    "median_ratio": 0.851,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Palm Beach": {
+    "n": 126,
+    "median_before": 4.15,
+    "median_after": 3.6,
+    "mean_before": 5.95,
+    "mean_after": 4.77,
+    "median_ratio": 0.855,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Palmetto Pavilion": {
+    "n": 126,
+    "median_before": 2.53,
+    "median_after": 2.42,
+    "mean_before": 2.99,
+    "mean_after": 2.73,
+    "median_ratio": 0.957,
+    "lower": 0.881,
+    "higher": 0.071
+   },
+   "Panama City Beach Pier": {
+    "n": 126,
+    "median_before": 0.64,
+    "median_after": 0.76,
+    "mean_before": 0.88,
+    "mean_after": 0.92,
+    "median_ratio": 1.155,
+    "lower": 0.278,
+    "higher": 0.714
+   },
+   "Patrick Air Force Base Beach": {
+    "n": 126,
+    "median_before": 5.6,
+    "median_after": 4.44,
+    "mean_before": 6.37,
+    "mean_after": 5.05,
+    "median_ratio": 0.8,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pawleys Island": {
+    "n": 132,
+    "median_before": 3.88,
+    "median_after": 3.42,
+    "mean_before": 3.77,
+    "mean_after": 3.32,
+    "median_ratio": 0.886,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Peahi Jaws": {
+    "n": 126,
+    "median_before": 6.11,
+    "median_after": 4.96,
+    "mean_before": 6.25,
+    "mean_after": 5.02,
+    "median_ratio": 0.808,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pelican Beach": {
+    "n": 126,
+    "median_before": 5.83,
+    "median_after": 4.58,
+    "mean_before": 6.99,
+    "mean_after": 5.45,
+    "median_ratio": 0.792,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pensacola Beach": {
+    "n": 126,
+    "median_before": 2.08,
+    "median_after": 1.94,
+    "mean_before": 2.13,
+    "mean_after": 1.94,
+    "median_ratio": 0.915,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pier Village": {
+    "n": 132,
+    "median_before": 1.78,
+    "median_after": 1.79,
+    "mean_before": 1.95,
+    "mean_after": 1.94,
+    "median_ratio": 1.011,
+    "lower": 0.303,
+    "higher": 0.591
+   },
+   "Pilgrim Ave": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.9,
+    "mean_before": 1.93,
+    "mean_after": 1.93,
+    "median_ratio": 1.0,
+    "lower": 0.492,
+    "higher": 0.476
+   },
+   "Pine Grove Beach": {
+    "n": 132,
+    "median_before": 3.82,
+    "median_after": 3.4,
+    "mean_before": 4.13,
+    "mean_after": 3.6,
+    "median_ratio": 0.889,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pine Point Beach": {
+    "n": 132,
+    "median_before": 1.33,
+    "median_after": 1.39,
+    "mean_before": 1.26,
+    "mean_after": 1.34,
+    "median_ratio": 1.084,
+    "lower": 0.159,
+    "higher": 0.841
+   },
+   "Pine Trees Hawaii": {
+    "n": 126,
+    "median_before": 5.3,
+    "median_after": 4.29,
+    "mean_before": 5.4,
+    "mean_after": 4.31,
+    "median_ratio": 0.798,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pirates Cove": {
+    "n": 132,
+    "median_before": 1.59,
+    "median_after": 1.61,
+    "mean_before": 1.4,
+    "mean_after": 1.48,
+    "median_ratio": 1.04,
+    "lower": 0.083,
+    "higher": 0.886
+   },
+   "Playa Guajataca": {
+    "n": 132,
+    "median_before": 4.12,
+    "median_after": 3.62,
+    "mean_before": 4.38,
+    "mean_after": 3.78,
+    "median_ratio": 0.875,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Playa Kikita": {
+    "n": 132,
+    "median_before": 4.13,
+    "median_after": 3.63,
+    "mean_before": 4.32,
+    "mean_after": 3.74,
+    "median_ratio": 0.877,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Playa Manati": {
+    "n": 132,
+    "median_before": 4.17,
+    "median_after": 3.62,
+    "mean_before": 4.28,
+    "mean_after": 3.71,
+    "median_ratio": 0.876,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Playalinda Beach": {
+    "n": 126,
+    "median_before": 5.71,
+    "median_after": 4.62,
+    "mean_before": 7.0,
+    "mean_after": 5.4,
+    "median_ratio": 0.788,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Plum Island": {
+    "n": 126,
+    "median_before": 1.12,
+    "median_after": 1.23,
+    "mean_before": 1.27,
+    "mean_after": 1.33,
+    "median_ratio": 1.095,
+    "lower": 0.19,
+    "higher": 0.77
+   },
+   "Point Judith": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.9,
+    "mean_before": 1.93,
+    "mean_after": 1.93,
+    "median_ratio": 1.0,
+    "lower": 0.492,
+    "higher": 0.476
+   },
+   "Point Judith South": {
+    "n": 126,
+    "median_before": 1.9,
+    "median_after": 1.9,
+    "mean_before": 1.93,
+    "mean_after": 1.93,
+    "median_ratio": 1.0,
+    "lower": 0.492,
+    "higher": 0.476
+   },
+   "Point Lookout": {
+    "n": 126,
+    "median_before": 1.59,
+    "median_after": 1.65,
+    "mean_before": 1.6,
+    "mean_after": 1.65,
+    "median_ratio": 1.039,
+    "lower": 0.024,
+    "higher": 0.937
+   },
+   "Point Pleasant Beach": {
+    "n": 132,
+    "median_before": 1.88,
+    "median_after": 1.88,
+    "mean_before": 2.06,
+    "mean_after": 2.04,
+    "median_ratio": 1.005,
+    "lower": 0.394,
+    "higher": 0.53
+   },
+   "Poipu Beach": {
+    "n": 126,
+    "median_before": 4.0,
+    "median_after": 3.38,
+    "mean_before": 3.94,
+    "mean_after": 3.34,
+    "median_ratio": 0.846,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Poles": {
+    "n": 126,
+    "median_before": 1.96,
+    "median_after": 1.9,
+    "mean_before": 2.03,
+    "mean_after": 1.99,
+    "median_ratio": 0.995,
+    "lower": 0.532,
+    "higher": 0.437
+   },
+   "Polihale Beach": {
+    "n": 126,
+    "median_before": 5.03,
+    "median_after": 4.19,
+    "mean_before": 5.59,
+    "mean_after": 4.48,
+    "median_ratio": 0.828,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pompano Beach Pier": {
+    "n": 126,
+    "median_before": 2.62,
+    "median_after": 2.5,
+    "mean_before": 3.25,
+    "mean_after": 2.92,
+    "median_ratio": 0.946,
+    "lower": 0.984,
+    "higher": 0.016
+   },
+   "Ponce Inlet": {
+    "n": 126,
+    "median_before": 5.99,
+    "median_after": 4.91,
+    "mean_before": 7.07,
+    "mean_after": 5.47,
+    "median_ratio": 0.784,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Ponquogue Beach": {
+    "n": 126,
+    "median_before": 2.0,
+    "median_after": 1.98,
+    "mean_before": 2.01,
+    "mean_after": 1.99,
+    "median_ratio": 0.998,
+    "lower": 0.5,
+    "higher": 0.444
+   },
+   "Ponte Vedra Beach": {
+    "n": 126,
+    "median_before": 6.41,
+    "median_after": 5.05,
+    "mean_before": 6.43,
+    "mean_after": 5.09,
+    "median_ratio": 0.793,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Pools": {
+    "n": 132,
+    "median_before": 3.25,
+    "median_after": 2.98,
+    "mean_before": 3.6,
+    "mean_after": 3.21,
+    "median_ratio": 0.916,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Port A Beach": {
+    "n": 126,
+    "median_before": 2.56,
+    "median_after": 2.4,
+    "mean_before": 2.44,
+    "mean_after": 2.3,
+    "median_ratio": 0.945,
+    "lower": 0.873,
+    "higher": 0.127
+   },
+   "Port Aransas Jetty": {
+    "n": 126,
+    "median_before": 2.49,
+    "median_after": 2.34,
+    "mean_before": 2.38,
+    "mean_after": 2.25,
+    "median_ratio": 0.95,
+    "lower": 0.857,
+    "higher": 0.135
+   },
+   "Poverty Beach": {
+    "n": 132,
+    "median_before": 2.08,
+    "median_after": 1.99,
+    "mean_before": 2.3,
+    "mean_after": 2.2,
+    "median_ratio": 0.976,
+    "lower": 0.917,
+    "higher": 0.008
+   },
+   "Puaena Point": {
+    "n": 126,
+    "median_before": 5.08,
+    "median_after": 4.21,
+    "mean_before": 5.35,
+    "mean_after": 4.37,
+    "median_ratio": 0.825,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Publics Waikiki": {
+    "n": 126,
+    "median_before": 3.71,
+    "median_after": 3.24,
+    "mean_before": 3.72,
+    "mean_after": 3.23,
+    "median_ratio": 0.87,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "P\u016bp\u016bkea, Hawaii": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Queen Street": {
+    "n": 132,
+    "median_before": 1.96,
+    "median_after": 1.9,
+    "mean_before": 2.15,
+    "mean_after": 2.09,
+    "median_ratio": 0.989,
+    "lower": 0.652,
+    "higher": 0.25
+   },
+   "Queens Waikiki": {
+    "n": 126,
+    "median_before": 3.71,
+    "median_after": 3.24,
+    "mean_before": 3.72,
+    "mean_after": 3.24,
+    "median_ratio": 0.87,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Quincy Ave": {
+    "n": 132,
+    "median_before": 1.98,
+    "median_after": 1.98,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.99,
+    "lower": 0.636,
+    "higher": 0.174
+   },
+   "Radars": {
+    "n": 126,
+    "median_before": 1.98,
+    "median_after": 1.96,
+    "mean_before": 2.12,
+    "mean_after": 2.08,
+    "median_ratio": 0.99,
+    "lower": 0.579,
+    "higher": 0.349
+   },
+   "Redington Pier": {
+    "n": 126,
+    "median_before": 1.15,
+    "median_after": 1.02,
+    "mean_before": 1.15,
+    "mean_after": 1.08,
+    "median_ratio": 0.946,
+    "lower": 0.889,
+    "higher": 0.079
+   },
+   "Rehoboth Beach": {
+    "n": 132,
+    "median_before": 2.29,
+    "median_after": 2.22,
+    "mean_before": 2.5,
+    "mean_after": 2.38,
+    "median_ratio": 0.96,
+    "lower": 0.962,
+    "higher": 0.0
+   },
+   "Reid State Park": {
+    "n": 132,
+    "median_before": 1.73,
+    "median_after": 1.73,
+    "mean_before": 1.71,
+    "mean_after": 1.72,
+    "median_ratio": 1.028,
+    "lower": 0.341,
+    "higher": 0.636
+   },
+   "Revere Beach": {
+    "n": 100,
+    "median_before": 0.67,
+    "median_after": 0.78,
+    "mean_before": 0.71,
+    "mean_after": 0.84,
+    "median_ratio": 1.201,
+    "lower": 0.0,
+    "higher": 1.0
+   },
+   "Rialto Beach": {
+    "n": 126,
+    "median_before": 4.53,
+    "median_after": 3.7,
+    "mean_before": 4.9,
+    "mean_after": 4.04,
+    "median_ratio": 0.831,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Richardson Beach": {
+    "n": 126,
+    "median_before": 4.75,
+    "median_after": 4.04,
+    "mean_before": 4.7,
+    "mean_after": 4.01,
+    "median_ratio": 0.852,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Rincon": {
+    "n": 122,
+    "median_before": 1.26,
+    "median_after": 1.34,
+    "mean_before": 1.17,
+    "mean_after": 1.25,
+    "median_ratio": 1.061,
+    "lower": 0.041,
+    "higher": 0.943
+   },
+   "Rincon Domes": {
+    "n": 132,
+    "median_before": 1.72,
+    "median_after": 1.77,
+    "mean_before": 1.79,
+    "mean_after": 1.83,
+    "median_ratio": 1.034,
+    "lower": 0.265,
+    "higher": 0.712
+   },
+   "Roads End": {
+    "n": 128,
+    "median_before": 4.81,
+    "median_after": 4.07,
+    "mean_before": 4.98,
+    "mean_after": 4.15,
+    "median_ratio": 0.847,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Robert Moses State Park": {
+    "n": 126,
+    "median_before": 1.83,
+    "median_after": 1.87,
+    "mean_before": 1.8,
+    "mean_after": 1.82,
+    "median_ratio": 1.016,
+    "lower": 0.206,
+    "higher": 0.73
+   },
+   "Rockaway 67th Street": {
+    "n": 126,
+    "median_before": 1.6,
+    "median_after": 1.63,
+    "mean_before": 1.6,
+    "mean_after": 1.64,
+    "median_ratio": 1.029,
+    "lower": 0.095,
+    "higher": 0.897
+   },
+   "Rockaway 90th Street": {
+    "n": 126,
+    "median_before": 1.73,
+    "median_after": 1.73,
+    "mean_before": 1.75,
+    "mean_after": 1.76,
+    "median_ratio": 1.016,
+    "lower": 0.19,
+    "higher": 0.762
+   },
+   "Rockaway Beach": {
+    "n": 126,
+    "median_before": 1.6,
+    "median_after": 1.63,
+    "mean_before": 1.6,
+    "mean_after": 1.64,
+    "median_ratio": 1.029,
+    "lower": 0.095,
+    "higher": 0.897
+   },
+   "Rocky Point": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Rodanthe": {
+    "n": 123,
+    "median_before": 0.61,
+    "median_after": 0.75,
+    "mean_before": 0.63,
+    "mean_after": 0.76,
+    "median_ratio": 1.239,
+    "lower": 0.0,
+    "higher": 1.0
+   },
+   "Ruggles": {
+    "n": 126,
+    "median_before": 1.61,
+    "median_after": 1.66,
+    "mean_before": 1.68,
+    "mean_after": 1.71,
+    "median_ratio": 1.032,
+    "lower": 0.254,
+    "higher": 0.722
+   },
+   "S-Turns": {
+    "n": 126,
+    "median_before": 0.69,
+    "median_after": 0.84,
+    "mean_before": 0.71,
+    "mean_after": 0.84,
+    "median_ratio": 1.216,
+    "lower": 0.0,
+    "higher": 1.0
+   },
+   "Salisbury": {
+    "n": 126,
+    "median_before": 1.21,
+    "median_after": 1.34,
+    "mean_before": 1.37,
+    "mean_after": 1.42,
+    "median_ratio": 1.076,
+    "lower": 0.278,
+    "higher": 0.698
+   },
+   "Saltaire": {
+    "n": 126,
+    "median_before": 2.0,
+    "median_after": 1.98,
+    "mean_before": 1.95,
+    "mean_after": 1.95,
+    "median_ratio": 0.998,
+    "lower": 0.5,
+    "higher": 0.437
+   },
+   "Salty Brine": {
+    "n": 126,
+    "median_before": 1.88,
+    "median_after": 1.87,
+    "mean_before": 1.87,
+    "mean_after": 1.88,
+    "median_ratio": 1.005,
+    "lower": 0.437,
+    "higher": 0.508
+   },
+   "Salvo": {
+    "n": 126,
+    "median_before": 1.52,
+    "median_after": 1.58,
+    "mean_before": 1.52,
+    "mean_after": 1.58,
+    "median_ratio": 1.046,
+    "lower": 0.19,
+    "higher": 0.77
+   },
+   "Sandbridge Beach": {
+    "n": 126,
+    "median_before": 2.58,
+    "median_after": 2.39,
+    "mean_before": 2.79,
+    "mean_after": 2.57,
+    "median_ratio": 0.925,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sandspit": {
+    "n": 132,
+    "median_before": 2.26,
+    "median_after": 2.16,
+    "mean_before": 2.41,
+    "mean_after": 2.27,
+    "median_ratio": 0.957,
+    "lower": 0.841,
+    "higher": 0.106
+   },
+   "Sandy Beach": {
+    "n": 132,
+    "median_before": 3.25,
+    "median_after": 2.98,
+    "mean_before": 3.6,
+    "mean_after": 3.21,
+    "median_ratio": 0.916,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sandy Beach Oahu": {
+    "n": 126,
+    "median_before": 5.11,
+    "median_after": 4.16,
+    "mean_before": 5.01,
+    "mean_after": 4.11,
+    "median_ratio": 0.819,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sandy Hook": {
+    "n": 132,
+    "median_before": 1.79,
+    "median_after": 1.8,
+    "mean_before": 1.88,
+    "mean_after": 1.85,
+    "median_ratio": 1.002,
+    "lower": 0.394,
+    "higher": 0.5
+   },
+   "Satellite Beach": {
+    "n": 126,
+    "median_before": 5.83,
+    "median_after": 4.58,
+    "mean_before": 6.99,
+    "mean_after": 5.45,
+    "median_ratio": 0.792,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Scarborough": {
+    "n": 126,
+    "median_before": 1.77,
+    "median_after": 1.79,
+    "mean_before": 1.79,
+    "mean_after": 1.81,
+    "median_ratio": 1.017,
+    "lower": 0.27,
+    "higher": 0.667
+   },
+   "Scarborough Beach": {
+    "n": 132,
+    "median_before": 1.61,
+    "median_after": 1.63,
+    "mean_before": 1.48,
+    "mean_after": 1.53,
+    "median_ratio": 1.035,
+    "lower": 0.242,
+    "higher": 0.72
+   },
+   "Scituate": {
+    "n": 126,
+    "median_before": 1.11,
+    "median_after": 1.23,
+    "mean_before": 1.27,
+    "mean_after": 1.33,
+    "median_ratio": 1.111,
+    "lower": 0.214,
+    "higher": 0.778
+   },
+   "Sea Bright": {
+    "n": 132,
+    "median_before": 1.88,
+    "median_after": 1.88,
+    "mean_before": 2.08,
+    "mean_after": 2.03,
+    "median_ratio": 1.0,
+    "lower": 0.492,
+    "higher": 0.409
+   },
+   "Sea Girt": {
+    "n": 132,
+    "median_before": 1.88,
+    "median_after": 1.9,
+    "mean_before": 2.06,
+    "mean_after": 2.01,
+    "median_ratio": 0.995,
+    "lower": 0.523,
+    "higher": 0.424
+   },
+   "Sea Island": {
+    "n": 132,
+    "median_before": 4.41,
+    "median_after": 3.74,
+    "mean_before": 4.42,
+    "mean_after": 3.74,
+    "median_ratio": 0.848,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sea Isle City": {
+    "n": 132,
+    "median_before": 2.1,
+    "median_after": 2.07,
+    "mean_before": 2.31,
+    "mean_after": 2.24,
+    "median_ratio": 0.985,
+    "lower": 0.742,
+    "higher": 0.136
+   },
+   "Seal Beach Pier": {
+    "n": 132,
+    "median_before": 2.9,
+    "median_after": 2.56,
+    "mean_before": 2.91,
+    "mean_after": 2.61,
+    "median_ratio": 0.898,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Seaside Cove": {
+    "n": 128,
+    "median_before": 4.39,
+    "median_after": 3.76,
+    "mean_before": 4.48,
+    "mean_after": 3.81,
+    "median_ratio": 0.865,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Seaside Heights": {
+    "n": 132,
+    "median_before": 2.04,
+    "median_after": 2.01,
+    "mean_before": 2.19,
+    "mean_after": 2.14,
+    "median_ratio": 0.99,
+    "lower": 0.659,
+    "higher": 0.273
+   },
+   "Seaside Park": {
+    "n": 132,
+    "median_before": 2.05,
+    "median_after": 2.02,
+    "mean_before": 2.21,
+    "mean_after": 2.15,
+    "median_ratio": 0.985,
+    "lower": 0.705,
+    "higher": 0.25
+   },
+   "Seaside Road": {
+    "n": 132,
+    "median_before": 2.04,
+    "median_after": 2.02,
+    "mean_before": 2.25,
+    "mean_after": 2.19,
+    "median_ratio": 0.99,
+    "lower": 0.773,
+    "higher": 0.121
+   },
+   "Seaview Pier": {
+    "n": 132,
+    "median_before": 3.04,
+    "median_after": 2.79,
+    "mean_before": 3.12,
+    "mean_after": 2.84,
+    "median_ratio": 0.922,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sebastian Inlet": {
+    "n": 126,
+    "median_before": 5.81,
+    "median_after": 4.54,
+    "mean_before": 6.93,
+    "mean_after": 5.42,
+    "median_ratio": 0.798,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Second Beach Newport": {
+    "n": 126,
+    "median_before": 1.67,
+    "median_after": 1.68,
+    "mean_before": 1.78,
+    "mean_after": 1.78,
+    "median_ratio": 1.026,
+    "lower": 0.341,
+    "higher": 0.643
+   },
+   "Shacks Beach": {
+    "n": 132,
+    "median_before": 4.42,
+    "median_after": 3.83,
+    "mean_before": 4.61,
+    "mean_after": 3.94,
+    "median_ratio": 0.867,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Shi Shi Beach": {
+    "n": 126,
+    "median_before": 3.87,
+    "median_after": 3.39,
+    "mean_before": 4.37,
+    "mean_after": 3.69,
+    "median_ratio": 0.877,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Shinnecock Inlet": {
+    "n": 126,
+    "median_before": 2.0,
+    "median_after": 1.98,
+    "mean_before": 2.01,
+    "mean_after": 1.99,
+    "median_ratio": 0.998,
+    "lower": 0.5,
+    "higher": 0.444
+   },
+   "Ship Bottom": {
+    "n": 132,
+    "median_before": 2.22,
+    "median_after": 2.16,
+    "mean_before": 2.37,
+    "mean_after": 2.28,
+    "median_ratio": 0.974,
+    "lower": 0.811,
+    "higher": 0.106
+   },
+   "Short Sands Beach Oswald West": {
+    "n": 128,
+    "median_before": 5.15,
+    "median_after": 4.28,
+    "mean_before": 5.37,
+    "mean_after": 4.42,
+    "median_ratio": 0.832,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Short Sands Beach York": {
+    "n": 80,
+    "median_before": 1.33,
+    "median_after": 1.39,
+    "mean_before": 1.32,
+    "mean_after": 1.37,
+    "median_ratio": 1.043,
+    "lower": 0.263,
+    "higher": 0.688
+   },
+   "Siesta Key": {
+    "n": 126,
+    "median_before": 1.06,
+    "median_after": 0.94,
+    "mean_before": 1.09,
+    "mean_after": 1.04,
+    "median_ratio": 0.953,
+    "lower": 0.833,
+    "higher": 0.143
+   },
+   "Smith Point Beach": {
+    "n": 126,
+    "median_before": 2.02,
+    "median_after": 2.0,
+    "mean_before": 2.02,
+    "mean_after": 1.99,
+    "median_ratio": 0.995,
+    "lower": 0.508,
+    "higher": 0.429
+   },
+   "South Beach Miami": {
+    "n": 126,
+    "median_before": 1.71,
+    "median_after": 1.76,
+    "mean_before": 2.56,
+    "mean_after": 2.39,
+    "median_ratio": 1.023,
+    "lower": 0.381,
+    "higher": 0.603
+   },
+   "South Beach Newport": {
+    "n": 128,
+    "median_before": 5.18,
+    "median_after": 4.31,
+    "mean_before": 5.13,
+    "mean_after": 4.28,
+    "median_ratio": 0.839,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "South Beach State Park": {
+    "n": 126,
+    "median_before": 1.53,
+    "median_after": 1.6,
+    "mean_before": 1.66,
+    "mean_after": 1.69,
+    "median_ratio": 1.054,
+    "lower": 0.238,
+    "higher": 0.762
+   },
+   "South End": {
+    "n": 132,
+    "median_before": 2.06,
+    "median_after": 2.03,
+    "mean_before": 2.3,
+    "mean_after": 2.22,
+    "median_ratio": 0.985,
+    "lower": 0.758,
+    "higher": 0.076
+   },
+   "South Island": {
+    "n": 132,
+    "median_before": 3.66,
+    "median_after": 3.26,
+    "mean_before": 3.62,
+    "mean_after": 3.21,
+    "median_ratio": 0.894,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "South Padre Island": {
+    "n": 126,
+    "median_before": 2.95,
+    "median_after": 2.71,
+    "mean_before": 2.8,
+    "mean_after": 2.6,
+    "median_ratio": 0.922,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Spessard": {
+    "n": 126,
+    "median_before": 6.09,
+    "median_after": 4.72,
+    "mean_before": 7.32,
+    "mean_after": 5.67,
+    "median_ratio": 0.787,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Spoils": {
+    "n": 126,
+    "median_before": 2.83,
+    "median_after": 2.65,
+    "mean_before": 4.42,
+    "mean_after": 3.72,
+    "median_ratio": 0.935,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Spring Ave": {
+    "n": 126,
+    "median_before": 2.05,
+    "median_after": 1.74,
+    "mean_before": 2.17,
+    "mean_after": 1.84,
+    "median_ratio": 0.846,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Spring Lake": {
+    "n": 132,
+    "median_before": 1.86,
+    "median_after": 1.88,
+    "mean_before": 2.04,
+    "mean_after": 2.01,
+    "median_ratio": 1.005,
+    "lower": 0.386,
+    "higher": 0.515
+   },
+   "Squibnocket": {
+    "n": 126,
+    "median_before": 1.84,
+    "median_after": 1.81,
+    "mean_before": 1.9,
+    "mean_after": 1.89,
+    "median_ratio": 1.011,
+    "lower": 0.405,
+    "higher": 0.556
+   },
+   "St Andrews Park": {
+    "n": 126,
+    "median_before": 0.74,
+    "median_after": 0.85,
+    "mean_before": 0.96,
+    "mean_after": 0.99,
+    "median_ratio": 1.106,
+    "lower": 0.286,
+    "higher": 0.683
+   },
+   "St Simons Island": {
+    "n": 132,
+    "median_before": 4.25,
+    "median_after": 3.7,
+    "mean_before": 4.3,
+    "mean_after": 3.65,
+    "median_ratio": 0.852,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "St. Augustine Beach Pier": {
+    "n": 126,
+    "median_before": 6.04,
+    "median_after": 4.86,
+    "mean_before": 6.71,
+    "mean_after": 5.25,
+    "median_ratio": 0.79,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "St. Catherines Island": {
+    "n": 132,
+    "median_before": 4.29,
+    "median_after": 3.69,
+    "mean_before": 4.39,
+    "mean_after": 3.75,
+    "median_ratio": 0.855,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "St. Pete Beach": {
+    "n": 126,
+    "median_before": 1.92,
+    "median_after": 1.55,
+    "mean_before": 1.92,
+    "mean_after": 1.65,
+    "median_ratio": 0.862,
+    "lower": 0.968,
+    "higher": 0.016
+   },
+   "Steps Beach Rincon": {
+    "n": 132,
+    "median_before": 1.73,
+    "median_after": 1.79,
+    "mean_before": 1.94,
+    "mean_after": 1.93,
+    "median_ratio": 1.035,
+    "lower": 0.333,
+    "higher": 0.629
+   },
+   "Stone Harbor": {
+    "n": 132,
+    "median_before": 2.14,
+    "median_after": 2.1,
+    "mean_before": 2.37,
+    "mean_after": 2.27,
+    "median_ratio": 0.974,
+    "lower": 0.917,
+    "higher": 0.023
+   },
+   "Strathmere": {
+    "n": 132,
+    "median_before": 2.08,
+    "median_after": 2.05,
+    "mean_before": 2.3,
+    "mean_after": 2.23,
+    "median_ratio": 0.985,
+    "lower": 0.75,
+    "higher": 0.136
+   },
+   "Straws Point": {
+    "n": 132,
+    "median_before": 1.49,
+    "median_after": 1.47,
+    "mean_before": 1.36,
+    "mean_after": 1.42,
+    "median_ratio": 1.045,
+    "lower": 0.205,
+    "higher": 0.788
+   },
+   "Suicide's": {
+    "n": 126,
+    "median_before": 4.2,
+    "median_after": 3.49,
+    "mean_before": 4.11,
+    "mean_after": 3.48,
+    "median_ratio": 0.853,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sunny Isles": {
+    "n": 126,
+    "median_before": 2.39,
+    "median_after": 2.31,
+    "mean_before": 4.04,
+    "mean_after": 3.42,
+    "median_ratio": 0.962,
+    "lower": 0.929,
+    "higher": 0.04
+   },
+   "Sunset Beach Hawaii": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Sunset Beach NC": {
+    "n": 132,
+    "median_before": 2.87,
+    "median_after": 2.66,
+    "mean_before": 2.86,
+    "mean_after": 2.65,
+    "median_ratio": 0.931,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Surf City NC": {
+    "n": 132,
+    "median_before": 3.67,
+    "median_after": 3.25,
+    "mean_before": 3.64,
+    "mean_after": 3.22,
+    "median_ratio": 0.894,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Surf City NJ": {
+    "n": 132,
+    "median_before": 2.16,
+    "median_after": 2.1,
+    "mean_before": 2.32,
+    "mean_after": 2.24,
+    "median_ratio": 0.978,
+    "lower": 0.735,
+    "higher": 0.144
+   },
+   "Surfers Beach Aguadilla": {
+    "n": 132,
+    "median_before": 4.44,
+    "median_after": 3.83,
+    "mean_before": 4.7,
+    "mean_after": 4.0,
+    "median_ratio": 0.867,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Surfside Beach SC": {
+    "n": 132,
+    "median_before": 3.77,
+    "median_after": 3.37,
+    "mean_before": 3.67,
+    "mean_after": 3.25,
+    "median_ratio": 0.89,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Surfside Beach TX": {
+    "n": 126,
+    "median_before": 2.56,
+    "median_after": 2.35,
+    "mean_before": 2.4,
+    "mean_after": 2.24,
+    "median_ratio": 0.941,
+    "lower": 0.873,
+    "higher": 0.111
+   },
+   "Surfside Jetty": {
+    "n": 132,
+    "median_before": 2.9,
+    "median_after": 2.56,
+    "mean_before": 2.91,
+    "mean_after": 2.61,
+    "median_ratio": 0.898,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Table Tops Aguadilla": {
+    "n": 132,
+    "median_before": 1.79,
+    "median_after": 1.83,
+    "mean_before": 1.89,
+    "mean_after": 1.9,
+    "median_ratio": 1.025,
+    "lower": 0.333,
+    "higher": 0.652
+   },
+   "Tarpits": {
+    "n": 122,
+    "median_before": 1.17,
+    "median_after": 1.29,
+    "mean_before": 1.11,
+    "mean_after": 1.21,
+    "median_ratio": 1.105,
+    "lower": 0.0,
+    "higher": 1.0
+   },
+   "Terrace": {
+    "n": 126,
+    "median_before": 1.92,
+    "median_after": 1.85,
+    "mean_before": 1.98,
+    "mean_after": 1.95,
+    "median_ratio": 1.0,
+    "lower": 0.484,
+    "higher": 0.452
+   },
+   "The Cove": {
+    "n": 132,
+    "median_before": 1.68,
+    "median_after": 1.71,
+    "mean_before": 1.79,
+    "mean_after": 1.79,
+    "median_ratio": 1.018,
+    "lower": 0.265,
+    "higher": 0.682
+   },
+   "The K's": {
+    "n": 126,
+    "median_before": 1.88,
+    "median_after": 1.87,
+    "mean_before": 1.87,
+    "mean_after": 1.88,
+    "median_ratio": 1.005,
+    "lower": 0.437,
+    "higher": 0.508
+   },
+   "The Point Buxton": {
+    "n": 126,
+    "median_before": 3.94,
+    "median_after": 3.41,
+    "mean_before": 4.03,
+    "mean_after": 3.51,
+    "median_ratio": 0.868,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "The Rocks": {
+    "n": 132,
+    "median_before": 2.2,
+    "median_after": 2.14,
+    "mean_before": 2.39,
+    "mean_after": 2.29,
+    "median_ratio": 0.972,
+    "lower": 0.97,
+    "higher": 0.015
+   },
+   "The Wall Hampton": {
+    "n": 132,
+    "median_before": 1.42,
+    "median_after": 1.41,
+    "mean_before": 1.32,
+    "mean_after": 1.4,
+    "median_ratio": 1.064,
+    "lower": 0.121,
+    "higher": 0.848
+   },
+   "Third Beach Newport": {
+    "n": 126,
+    "median_before": 1.14,
+    "median_after": 1.25,
+    "mean_before": 1.24,
+    "mean_after": 1.31,
+    "median_ratio": 1.098,
+    "lower": 0.206,
+    "higher": 0.762
+   },
+   "Thousand Peaks Maui": {
+    "n": 126,
+    "median_before": 2.74,
+    "median_after": 2.55,
+    "mean_before": 2.71,
+    "mean_after": 2.51,
+    "median_ratio": 0.923,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Tokeland": {
+    "n": 121,
+    "median_before": 2.08,
+    "median_after": 2.01,
+    "mean_before": 2.12,
+    "mean_after": 2.03,
+    "median_ratio": 0.973,
+    "lower": 0.612,
+    "higher": 0.38
+   },
+   "Topsail Beach": {
+    "n": 132,
+    "median_before": 3.92,
+    "median_after": 3.46,
+    "mean_before": 3.87,
+    "mean_after": 3.39,
+    "median_ratio": 0.884,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Treasure Island FL": {
+    "n": 126,
+    "median_before": 1.92,
+    "median_after": 1.55,
+    "mean_before": 1.91,
+    "mean_after": 1.64,
+    "median_ratio": 0.862,
+    "lower": 0.968,
+    "higher": 0.016
+   },
+   "Tres Palmas": {
+    "n": 132,
+    "median_before": 1.73,
+    "median_after": 1.79,
+    "mean_before": 1.94,
+    "mean_after": 1.93,
+    "median_ratio": 1.035,
+    "lower": 0.333,
+    "higher": 0.629
+   },
+   "Trinidad State Beach": {
+    "n": 126,
+    "median_before": 5.14,
+    "median_after": 4.31,
+    "mean_before": 5.11,
+    "mean_after": 4.22,
+    "median_ratio": 0.837,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Tunnels Beach": {
+    "n": 126,
+    "median_before": 5.9,
+    "median_after": 4.74,
+    "mean_before": 6.38,
+    "mean_after": 5.02,
+    "median_ratio": 0.82,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Turtle Bay": {
+    "n": 126,
+    "median_before": 6.1,
+    "median_after": 4.91,
+    "mean_before": 6.37,
+    "mean_after": 5.04,
+    "median_ratio": 0.796,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Turtle Cove Montauk": {
+    "n": 126,
+    "median_before": 1.98,
+    "median_after": 1.96,
+    "mean_before": 2.12,
+    "mean_after": 2.08,
+    "median_ratio": 0.99,
+    "lower": 0.579,
+    "higher": 0.349
+   },
+   "Twin Piers": {
+    "n": 126,
+    "median_before": 0.89,
+    "median_after": 0.86,
+    "mean_before": 0.89,
+    "mean_after": 0.88,
+    "median_ratio": 1.0,
+    "lower": 0.421,
+    "higher": 0.46
+   },
+   "Tybee Island": {
+    "n": 132,
+    "median_before": 4.49,
+    "median_after": 3.75,
+    "mean_before": 4.63,
+    "mean_after": 3.92,
+    "median_ratio": 0.839,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Velzyland": {
+    "n": 126,
+    "median_before": 5.64,
+    "median_after": 4.58,
+    "mean_before": 6.19,
+    "mean_after": 4.92,
+    "median_ratio": 0.81,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Venice Beach FL": {
+    "n": 126,
+    "median_before": 1.04,
+    "median_after": 0.96,
+    "mean_before": 1.04,
+    "mean_after": 0.99,
+    "median_ratio": 0.967,
+    "lower": 0.698,
+    "higher": 0.206
+   },
+   "Ventnor Pier": {
+    "n": 132,
+    "median_before": 1.93,
+    "median_after": 1.92,
+    "mean_before": 2.13,
+    "mean_after": 2.09,
+    "median_ratio": 1.0,
+    "lower": 0.462,
+    "higher": 0.356
+   },
+   "Vero Pier": {
+    "n": 126,
+    "median_before": 5.53,
+    "median_after": 4.42,
+    "mean_before": 6.72,
+    "mean_after": 5.28,
+    "median_ratio": 0.799,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Vilano Beach": {
+    "n": 126,
+    "median_before": 6.61,
+    "median_after": 5.08,
+    "mean_before": 6.74,
+    "mean_after": 5.29,
+    "median_ratio": 0.792,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Virginia Beach Oceanfront": {
+    "n": 126,
+    "median_before": 2.6,
+    "median_after": 2.42,
+    "mean_before": 2.75,
+    "mean_after": 2.54,
+    "median_ratio": 0.927,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Waimea Bay": {
+    "n": 126,
+    "median_before": 5.24,
+    "median_after": 4.35,
+    "mean_before": 5.45,
+    "mean_after": 4.44,
+    "median_ratio": 0.83,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Weekapaug": {
+    "n": 126,
+    "median_before": 1.53,
+    "median_after": 1.6,
+    "mean_before": 1.54,
+    "mean_after": 1.6,
+    "median_ratio": 1.052,
+    "lower": 0.159,
+    "higher": 0.817
+   },
+   "Wells Beach": {
+    "n": 132,
+    "median_before": 1.44,
+    "median_after": 1.47,
+    "mean_before": 1.44,
+    "mean_after": 1.49,
+    "median_ratio": 1.06,
+    "lower": 0.273,
+    "higher": 0.712
+   },
+   "West End Long Beach": {
+    "n": 126,
+    "median_before": 1.6,
+    "median_after": 1.6,
+    "mean_before": 1.61,
+    "mean_after": 1.65,
+    "median_ratio": 1.034,
+    "lower": 0.095,
+    "higher": 0.865
+   },
+   "Westport Jetty": {
+    "n": 126,
+    "median_before": 3.92,
+    "median_after": 3.29,
+    "mean_before": 4.14,
+    "mean_after": 3.54,
+    "median_ratio": 0.861,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Westport Light State Park": {
+    "n": 126,
+    "median_before": 3.92,
+    "median_after": 3.29,
+    "mean_before": 4.14,
+    "mean_after": 3.54,
+    "median_ratio": 0.861,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Whiskey Run Beach": {
+    "n": 126,
+    "median_before": 5.46,
+    "median_after": 4.51,
+    "mean_before": 5.23,
+    "mean_after": 4.35,
+    "median_ratio": 0.83,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "White Plains Beach": {
+    "n": 126,
+    "median_before": 4.29,
+    "median_after": 3.56,
+    "mean_before": 4.23,
+    "mean_after": 3.54,
+    "median_ratio": 0.837,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Whitney Beach": {
+    "n": 126,
+    "median_before": 1.31,
+    "median_after": 1.2,
+    "mean_before": 1.36,
+    "mean_after": 1.25,
+    "median_ratio": 0.923,
+    "lower": 0.976,
+    "higher": 0.0
+   },
+   "Wilbur by the Sea": {
+    "n": 126,
+    "median_before": 6.08,
+    "median_after": 4.98,
+    "mean_before": 7.21,
+    "mean_after": 5.56,
+    "median_ratio": 0.779,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Wild Dunes": {
+    "n": 132,
+    "median_before": 4.07,
+    "median_after": 3.55,
+    "mean_before": 3.96,
+    "mean_after": 3.45,
+    "median_ratio": 0.871,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Wilderness": {
+    "n": 132,
+    "median_before": 3.89,
+    "median_after": 3.45,
+    "mean_before": 4.17,
+    "mean_after": 3.63,
+    "median_ratio": 0.886,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Wildwood": {
+    "n": 132,
+    "median_before": 2.19,
+    "median_after": 2.14,
+    "mean_before": 2.38,
+    "mean_after": 2.28,
+    "median_ratio": 0.974,
+    "lower": 0.977,
+    "higher": 0.0
+   },
+   "Windjammer": {
+    "n": 132,
+    "median_before": 3.73,
+    "median_after": 3.26,
+    "mean_before": 3.66,
+    "mean_after": 3.24,
+    "median_ratio": 0.886,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Winthrop Jetty": {
+    "n": 126,
+    "median_before": 0.92,
+    "median_after": 1.06,
+    "mean_before": 1.05,
+    "mean_after": 1.15,
+    "median_ratio": 1.114,
+    "lower": 0.111,
+    "higher": 0.889
+   },
+   "Wooden Jetty": {
+    "n": 132,
+    "median_before": 2.22,
+    "median_after": 2.16,
+    "mean_before": 2.42,
+    "mean_after": 2.32,
+    "median_ratio": 0.973,
+    "lower": 0.932,
+    "higher": 0.008
+   },
+   "Wrightsville Beach": {
+    "n": 132,
+    "median_before": 4.25,
+    "median_after": 3.67,
+    "mean_before": 4.16,
+    "mean_after": 3.59,
+    "median_ratio": 0.871,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Wrightsville Beach South": {
+    "n": 132,
+    "median_before": 4.36,
+    "median_after": 3.75,
+    "mean_before": 4.23,
+    "mean_after": 3.64,
+    "median_ratio": 0.866,
+    "lower": 1.0,
+    "higher": 0.0
+   },
+   "Yokohama Bay": {
+    "n": 126,
+    "median_before": 4.53,
+    "median_after": 3.75,
+    "mean_before": 4.52,
+    "mean_after": 3.74,
+    "median_ratio": 0.83,
+    "lower": 1.0,
+    "higher": 0.0
+   }
+  }
+ },
+ "homepage": [
+  {
+   "spot": "Backdoor Pipeline",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Banzai Pipeline",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Ehukai Beach Park",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Off The Wall",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "P\u016bp\u016bkea, Hawaii",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Rocky Point",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Sunset Beach Hawaii",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Tunnels Beach",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.16,
+   "face_after": 6.07,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Turtle Bay",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.27,
+   "face_after": 6.12,
+   "basis_before": "model",
+   "basis_after": "model"
+  },
+  {
+   "spot": "Velzyland",
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "stars_before": 4.5,
+   "stars_after": 4.5,
+   "face_before": 8.06,
+   "face_after": 5.98,
+   "basis_before": "model",
+   "basis_after": "model"
+  }
+ ],
+ "reproduction": {
+  "by_region": {
+   "all": {
+    "got": [
+     171534,
+     0.604,
+     0.34,
+     0.056
+    ],
+    "want": [
+     171534,
+     0.604,
+     0.34,
+     0.056
+    ],
+    "ok": true
+   },
+   "Carolinas and Georgia": {
+    "got": [
+     25380,
+     0.814,
+     0.071,
+     0.115
+    ],
+    "want": [
+     25380,
+     0.814,
+     0.071,
+     0.115
+    ],
+    "ok": true
+   },
+   "Florida Atlantic": {
+    "got": [
+     29223,
+     0.776,
+     0.103,
+     0.122
+    ],
+    "want": [
+     29223,
+     0.776,
+     0.103,
+     0.122
+    ],
+    "ok": true
+   },
+   "Gulf": {
+    "got": [
+     10560,
+     0.702,
+     0.259,
+     0.04
+    ],
+    "want": [
+     10560,
+     0.702,
+     0.259,
+     0.04
+    ],
+    "ok": true
+   },
+   "Mid-Atlantic": {
+    "got": [
+     25090,
+     0.789,
+     0.122,
+     0.088
+    ],
+    "want": [
+     25090,
+     0.789,
+     0.122,
+     0.088
+    ],
+    "ok": true
+   },
+   "New England": {
+    "got": [
+     34808,
+     0.337,
+     0.656,
+     0.007
+    ],
+    "want": [
+     34808,
+     0.337,
+     0.656,
+     0.007
+    ],
+    "ok": true
+   },
+   "Northern California": {
+    "got": [
+     5808,
+     0.411,
+     0.589,
+     0.0
+    ],
+    "want": [
+     5808,
+     0.411,
+     0.589,
+     0.0
+    ],
+    "ok": true
+   },
+   "Pacific Northwest": {
+    "got": [
+     11451,
+     0.17,
+     0.829,
+     0.0
+    ],
+    "want": [
+     11451,
+     0.17,
+     0.829,
+     0.0
+    ],
+    "ok": true
+   },
+   "Puerto Rico": {
+    "got": [
+     12096,
+     0.094,
+     0.906,
+     0.0
+    ],
+    "want": [
+     12096,
+     0.094,
+     0.906,
+     0.0
+    ],
+    "ok": true
+   },
+   "Southern California": {
+    "got": [
+     17118,
+     0.931,
+     0.059,
+     0.01
+    ],
+    "want": [
+     17118,
+     0.931,
+     0.059,
+     0.01
+    ],
+    "ok": true
+   }
+  },
+  "ok": true
+ },
+ "nws": {
+  "all_spots": {
+   "all": {
+    "published": [
+     234897,
+     0.61,
+     0.309,
+     0.081
+    ],
+    "display": [
+     234897,
+     0.599,
+     0.357,
+     0.044
+    ]
+   },
+   "Carolinas and Georgia": {
+    "published": [
+     25482,
+     0.779,
+     0.034,
+     0.187
+    ],
+    "display": [
+     25482,
+     0.814,
+     0.07,
+     0.117
+    ]
+   },
+   "Florida Atlantic": {
+    "published": [
+     29339,
+     0.742,
+     0.044,
+     0.214
+    ],
+    "display": [
+     29339,
+     0.774,
+     0.103,
+     0.123
+    ]
+   },
+   "Gulf": {
+    "published": [
+     10610,
+     0.737,
+     0.209,
+     0.054
+    ],
+    "display": [
+     10610,
+     0.705,
+     0.253,
+     0.042
+    ]
+   },
+   "Mid-Atlantic": {
+    "published": [
+     25090,
+     0.711,
+     0.062,
+     0.228
+    ],
+    "display": [
+     25090,
+     0.788,
+     0.122,
+     0.09
+    ]
+   },
+   "New England": {
+    "published": [
+     34912,
+     0.41,
+     0.584,
+     0.006
+    ],
+    "display": [
+     34912,
+     0.339,
+     0.654,
+     0.007
+    ]
+   },
+   "Northern California": {
+    "published": [
+     32477,
+     0.342,
+     0.642,
+     0.016
+    ],
+    "display": [
+     32477,
+     0.341,
+     0.644,
+     0.014
+    ]
+   },
+   "Pacific Northwest": {
+    "published": [
+     11497,
+     0.414,
+     0.579,
+     0.007
+    ],
+    "display": [
+     11497,
+     0.171,
+     0.829,
+     0.0
+    ]
+   },
+   "Puerto Rico": {
+    "published": [
+     12144,
+     0.174,
+     0.815,
+     0.011
+    ],
+    "display": [
+     12144,
+     0.096,
+     0.904,
+     0.0
+    ]
+   },
+   "Southern California": {
+    "published": [
+     53346,
+     0.819,
+     0.168,
+     0.013
+    ],
+    "display": [
+     53346,
+     0.825,
+     0.168,
+     0.008
+    ]
+   }
+  },
+  "uncalibrated": {
+   "all": {
+    "published": [
+     172022,
+     0.618,
+     0.276,
+     0.107
+    ],
+    "display": [
+     172022,
+     0.603,
+     0.34,
+     0.057
+    ]
+   },
+   "Carolinas and Georgia": {
+    "published": [
+     25482,
+     0.779,
+     0.034,
+     0.187
+    ],
+    "display": [
+     25482,
+     0.814,
+     0.07,
+     0.117
+    ]
+   },
+   "Florida Atlantic": {
+    "published": [
+     29339,
+     0.742,
+     0.044,
+     0.214
+    ],
+    "display": [
+     29339,
+     0.774,
+     0.103,
+     0.123
+    ]
+   },
+   "Gulf": {
+    "published": [
+     10610,
+     0.737,
+     0.209,
+     0.054
+    ],
+    "display": [
+     10610,
+     0.705,
+     0.253,
+     0.042
+    ]
+   },
+   "Mid-Atlantic": {
+    "published": [
+     25090,
+     0.711,
+     0.062,
+     0.228
+    ],
+    "display": [
+     25090,
+     0.788,
+     0.122,
+     0.09
+    ]
+   },
+   "New England": {
+    "published": [
+     34912,
+     0.41,
+     0.584,
+     0.006
+    ],
+    "display": [
+     34912,
+     0.339,
+     0.654,
+     0.007
+    ]
+   },
+   "Northern California": {
+    "published": [
+     5818,
+     0.422,
+     0.561,
+     0.017
+    ],
+    "display": [
+     5818,
+     0.42,
+     0.573,
+     0.007
+    ]
+   },
+   "Pacific Northwest": {
+    "published": [
+     11497,
+     0.414,
+     0.579,
+     0.007
+    ],
+    "display": [
+     11497,
+     0.171,
+     0.829,
+     0.0
+    ]
+   },
+   "Puerto Rico": {
+    "published": [
+     12144,
+     0.174,
+     0.815,
+     0.011
+    ],
+    "display": [
+     12144,
+     0.096,
+     0.904,
+     0.0
+    ]
+   },
+   "Southern California": {
+    "published": [
+     17130,
+     0.895,
+     0.075,
+     0.03
+    ],
+    "display": [
+     17130,
+     0.911,
+     0.074,
+     0.014
+    ]
+   }
+  },
+  "hawaii": {
+   "all": {
+    "published": [
+     27500,
+     0.4,
+     0.061,
+     0.539
+    ],
+    "display": [
+     27500,
+     0.53,
+     0.133,
+     0.337
+    ]
+   },
+   "Hawaii": {
+    "published": [
+     27500,
+     0.4,
+     0.061,
+     0.539
+    ],
+    "display": [
+     27500,
+     0.53,
+     0.133,
+     0.337
+    ]
+   }
+  }
+ },
+ "compare_errors": {
+  "zone CAZ364": "HTTPError: 404 Client Error: Not Found for url: https://api.weather.gov/zones/forecast/CAZ364"
+ }
+}

@@ -102,6 +102,42 @@
       "row": {"face_ft": 1.5, "face_ft_raw": 3.0, "swell_source": "cdip_mop"},
       "basis": "calibrated",
       "note": "the order the rule is stated in: a divided height is not CDIP's own any more"
+    },
+    {
+      "name": "surf height at an uncalibrated spot (apply_surf_height wrote it)",
+      "row": {"face_ft": 2.9, "face_ft_raw": 4.62, "swell_source": "nwps_height_ww3_dir", "face_correction_version": "2:2026-10-06:abcd1234+surf:k0.70:d10:g0.78"},
+      "basis": "model",
+      "note": "raw and face differ, as at a calibrated spot, but the +surf: mark says nothing divided by a factor: a model estimate"
+    },
+    {
+      "name": "surf height that happens to equal the raw face",
+      "row": {"face_ft": 3.1, "face_ft_raw": 3.1, "swell_source": "nwps", "face_correction_version": "2:2026-10-06:abcd1234+surf:k0.70:d10:g0.78"},
+      "basis": "model",
+      "note": "the mark alone decides; equal faces would say model anyway"
+    },
+    {
+      "name": "the surf mark on a MOP-fed row (cannot happen: the step only writes NWPS hours)",
+      "row": {"face_ft": 1.5, "face_ft_raw": 3.0, "swell_source": "cdip_mop", "face_correction_version": "+surf:k0.70:d10:g0.78"},
+      "basis": "model",
+      "note": "the mark is read first, so a surf-height row is never called calibrated or CDIP"
+    },
+    {
+      "name": "calibrated, stamped, no surf mark",
+      "row": {"face_ft": 2.31, "face_ft_raw": 4.62, "swell_source": "nwps_height_ww3_dir", "face_correction_version": "2:2026-10-06:abcd1234"},
+      "basis": "calibrated",
+      "note": "4.62 / 2.0 = 2.31; the stamp without the mark changes nothing"
+    },
+    {
+      "name": "'+surf' without its colon is not the mark",
+      "row": {"face_ft": 2.31, "face_ft_raw": 4.62, "swell_source": "nwps_height_ww3_dir", "face_correction_version": "2:2026-10-06:abcd1234+surf"},
+      "basis": "calibrated",
+      "note": "the mark is '+surf:' followed by its constants; a bare '+surf' is not one"
+    },
+    {
+      "name": "a model row with no version at all (before migration 017)",
+      "row": {"face_ft": 4.4, "face_ft_raw": 4.4, "swell_source": "nwps_height_ww3_dir", "face_correction_version": null},
+      "basis": "model",
+      "note": "null version, equal faces: model, as before"
     }
   ]
 }
