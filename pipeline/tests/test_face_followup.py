@@ -602,6 +602,8 @@ def test_the_bundled_extract_covers_every_spot_measured():
     for name, _ in F.DEEPER_SPOTS:
         s = roster[name]
         assert g.depth(s["nwps_node_lat"], s["nwps_node_lng"]) is not None, name
-    # Duck Pier's node, 7.4 m in run 49's depths.json (read live then, from the same source)
+    # Duck Pier's node since #280 is run 50's 15 m cell (36.19331, -75.72892); its old node
+    # (36.19317, -75.74849) read 7.4 m in run 49's depths.json, live, from the same source
     d = roster["Duck Pier"]
-    assert g.depth(d["nwps_node_lat"], d["nwps_node_lng"]) == 7.4
+    assert g.depth(d["nwps_node_lat"], d["nwps_node_lng"]) == 15.0
+    assert g.depth(36.19317, -75.74849) == 7.4
