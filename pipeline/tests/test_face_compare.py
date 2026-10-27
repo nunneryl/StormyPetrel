@@ -421,7 +421,7 @@ def test_compare_srf_by_facing_and_ratio_to_the_middle():
     t = _utc(2026, 9, 15, 15)
     srf = {("NCZ203", None, t): (2.0, 4.0, "MHX"), ("HIZ003", "N", t): (9.0, 12.0, "HFO")}
     base = {"slug": "x", "state": "S", "region": "R", "type": "beach", "group": "headline",
-            "hour": t}
+            "hour": t, "hs": 1.0, "period": 9.0}
     hours = [dict(base, spot="A", office="MHX", zone="NCZ203", facing="E",
                   published=3.0, typical=1.2, sets=4.6),
              dict(base, spot="B", office="HFO", zone="HIZ003", facing="N",
@@ -436,6 +436,7 @@ def test_compare_srf_by_facing_and_ratio_to_the_middle():
     assert (a["published_side"], a["typical_side"], a["sets_side"]) == ("inside", "below", "above")
     assert (a["typical_ratio"], a["sets_ratio"]) == (0.4, 1.533)          # mid 3.0
     assert (b["typical_side"], b["typical_ratio"]) == ("below", 0.762)    # mid 10.5
+    assert (a["hs"], a["period"], a["band"]) == (1.0, 9.0, "8-10 s")
 
 
 def test_compare_reports():
@@ -609,3 +610,116 @@ def test_run_end_to_end_on_stand_ins():
     assert (r["typical"]["above"], r["sets"]["above"], r["published"]["below"]) == (1.0, 1.0, 1.0)
     assert rep["frf"]["small_day_hours"] == 0
     assert rep["frf_8m_months"] == ["unread 202609: no FRF here"]
+
+
+# --------------------------------------------------------------------------- #
+# The scale on typical by period band (run 53)                                 #
+# --------------------------------------------------------------------------- #
+def test_side_counts_by_hand():
+    # typical 2.0 and 4.0 against 2 to 3 ft (inside 1.5 <= face < 3.5):
+    #   k 0.5 -> 1.0 below, 2.0 inside; k 1.0 -> 2.0 inside, 4.0 above; k 1.5 -> 3.0 in, 6.0 above
+    n, inside, below, above = F.side_counts([2.0, 4.0], [2.0, 2.0], [3.0, 3.0], (0.5, 1.0, 1.5))
+    assert n == 2
+    assert (inside.tolist(), below.tolist(), above.tolist()) == ([1, 1, 1], [1, 0, 0], [0, 1, 1])
+    # the edges: 3.5 (= hi + 0.5) is above, 1.5 (= lo - 0.5) is inside
+    n, inside, below, above = F.side_counts([3.5, 1.5], [2.0, 2.0], [3.0, 3.0], (1.0,))
+    assert (inside.tolist(), below.tolist(), above.tolist()) == ([1], [0], [1])
+
+
+def test_fit_scale_honours_the_cap_on_hours_above():
+    # 8 hours at typical 2.0 and 2 at 4.4, all against 2 to 3 ft (inside 1.5 <= face < 3.5):
+    #   k 0.7 -> 1.4 (below) x8, 3.08 (inside) x2   inside 2, below 8, above 0
+    #   k 0.8 -> 1.6 (inside) x8, 3.52 (above) x2   inside 8, above 2 (20%)
+    #   k 1.0 -> 2.0 (inside) x8, 4.4 (above) x2    inside 8, above 2
+    typ = [2.0] * 8 + [4.4] * 2
+    got = F.fit_scale(typ, [2.0] * 10, [3.0] * 10, ks=(0.7, 0.8, 1.0))
+    assert got == {"n": 10, "k": 0.7, "inside": 0.2, "below": 0.8, "above": 0.0,
+                   "best_k": 0.8, "best_inside": 0.8, "balanced_k": 0.8}
+    # a 20% cap admits 0.8 (ties to the smaller k)
+    assert F.fit_scale(typ, [2.0] * 10, [3.0] * 10, cap=0.2, ks=(0.7, 0.8, 1.0))["k"] == 0.8
+
+
+def test_fit_scale_strict_holds_every_group_to_the_cap():
+    # Group A: 9 hours at typical 2.0, group B: 1 hour at 3.4, all against 2-3 ft
+    # (inside 1.5 <= face < 3.5).
+    #   k 1.1: A 2.2 inside x9; B 3.74 above. Pooled: 1 of 10 above = 10%, meets the cap;
+    #          B alone: 1 of 1 above = 100%, fails it.
+    #   k 1.2: A 2.4 inside x9; B 4.08 above. The same.
+    typ, lo, hi = [2.0] * 9 + [3.4], [2.0] * 10, [3.0] * 10
+    groups = ["A"] * 9 + ["B"]
+    assert F.fit_scale(typ, lo, hi, ks=(1.1, 1.2))["k"] == 1.1     # pooled, ties to the smaller
+    assert F.fit_scale(typ, lo, hi, groups=groups, ks=(1.1, 1.2))["k"] is None
+    # k 1.0: B 3.4 inside, so every group meets the cap and all 10 hours are inside
+    strict = F.fit_scale(typ, lo, hi, groups=groups, ks=(1.0, 1.1))
+    assert (strict["k"], strict["inside"]) == (1.0, 1.0)
+
+
+def test_fit_scale_with_no_rows():
+    assert F.fit_scale([], [], []) == {"n": 0, "k": None}
+
+
+def test_sides_at():
+    rows = [{"typical": 2.0, "lo": 2.0, "hi": 3.0}, {"typical": 4.0, "lo": 2.0, "hi": 3.0}]
+    assert F.sides_at(rows, lambda r: 1.0) == {"n": 2, "inside": 0.5, "below": 0.0, "above": 0.5}
+    assert F.sides_at(rows, lambda r: 0.5) == {"n": 2, "inside": 0.5, "below": 0.5, "above": 0.0}
+    assert F.sides_at([], lambda r: 1.0) == {"n": 0}
+
+
+def _srf(band_period, typical, lo, hi, region, office="MHX", group="headline", hs=1.0):
+    return {"group": group, "office": office, "region": region, "typical": typical, "lo": lo,
+            "hi": hi, "hs": hs, "period": band_period, "band": F.period_band(band_period)}
+
+
+def test_fit_one_scale_per_band_for_every_region():
+    # Against 2-3 ft, inside is 1.5 <= k x typical < 3.5.
+    # Band "<8 s": 200 hours at typical 4.0. Inside for k 0.50 to 0.87 (3.48), above from 0.88
+    #   (3.52); never below (4 x 0.50 = 2.0). Capped k: the smallest with all inside, 0.50. The
+    #   balanced k is the first with above >= below: 0 >= 0 at 0.50.
+    # Band "12-14 s": 100 hours in region X at 2.0 and 100 in region Y at 3.0. X needs k >= 0.75,
+    #   Y needs k < 1.1667; the smallest k with all 200 inside is 0.75.
+    rows = ([_srf(6.0, 4.0, 2.0, 3.0, "X")] * 200
+            + [_srf(13.0, 2.0, 2.0, 3.0, "X")] * 100 + [_srf(13.0, 3.0, 2.0, 3.0, "Y")] * 100
+            + [_srf(9.0, 2.0, 2.0, 3.0, "X")] * 5                      # a band too small to fit
+            + [_srf(13.0, 2.0, 2.0, 3.0, "Hawaii", office="HFO")] * 50   # left out
+            + [_srf(13.0, 9.0, 2.0, 3.0, "X", group="moved (old point)")] * 50)
+    got = F.fit(rows)
+    assert got["hours"] == 405
+    lt8 = got["by_band"]["<8 s"]["capped"]
+    assert (lt8["k"], lt8["inside"], lt8["above"], lt8["best_k"], lt8["balanced_k"]) == (
+        0.5, 1.0, 0.0, 0.5, 0.5)
+    assert got["by_band"]["<8 s"]["face_over_hs_median"] == round(0.5 * 4.0 / 3.281, 3)
+    b12 = got["by_band"]["12-14 s"]["capped"]
+    assert (b12["k"], b12["inside"]) == (0.75, 1.0)
+    assert got["by_band"]["8-10 s"] == {"n": 5}
+    assert got["k_by_band"] == {"<8 s": 0.5, "12-14 s": 0.75}
+    assert got["by_region"]["Y"]["at_band_k"] == {"n": 100, "inside": 1.0, "below": 0.0,
+                                                  "above": 0.0}
+    assert set(got["office_band"]["MHX"]) == {"<8 s", "12-14 s"}         # 5 hours: not fitted
+    assert got["flat"]["capped"]["n"] == 405
+
+
+def test_fit_strict_differs_from_capped_when_one_region_runs_high():
+    # Band "8-10 s", against 2-3 ft (inside 1.5 <= face < 3.5): region X 190 hours at typical
+    # 1.2 (inside from k 1.25), region Y 10 hours at 3.4 (inside for k 0.50 to 1.02, above from
+    # 1.03).
+    #   capped: k 1.25 puts X's 190 inside and Y's 10 above: 10 of 200 = 5% above, under the cap.
+    #   strict: Y alone must be at most 10% above, so k <= 1.02, where X is below; the most
+    #   inside is then Y's 10, from k 0.50 (the smallest).
+    rows = [_srf(9.0, 1.2, 2.0, 3.0, "X")] * 190 + [_srf(9.0, 3.4, 2.0, 3.0, "Y")] * 10
+    got = F.fit(rows)
+    b = got["by_band"]["8-10 s"]
+    assert (b["capped"]["k"], b["capped"]["inside"], b["capped"]["above"]) == (1.25, 0.95, 0.05)
+    assert (b["strict"]["k"], b["strict"]["inside"], b["strict"]["below"]) == (0.5, 0.05, 0.95)
+    assert got["k_strict_by_band"] == {"8-10 s": 0.5}
+    assert got["by_region"]["Y"]["at_band_k"]["above"] == 1.0
+    assert got["by_region"]["Y"]["at_strict_k"]["inside"] == 1.0
+
+
+def test_frf_at_band_scales():
+    # 8 m period 9 s (8-10 s band, k 0.8): 0.8 x 5.0 = 4.0 vs 4.0 observed -> ratio 1.0;
+    # 13 s (no k for that band): left out; no typical: left out.
+    pairs = [{"frf8_tp": 9.0, "frf8_typical": 5.0, "observed_ft": 4.0},
+             {"frf8_tp": 13.0, "frf8_typical": 5.0, "observed_ft": 4.0},
+             {"frf8_tp": 9.0, "frf8_typical": None, "observed_ft": 4.0}]
+    got = F.frf_at_scales(pairs, {"8-10 s": 0.8})
+    assert got["n"] == 1 and got["ratio_median"] == 1.0

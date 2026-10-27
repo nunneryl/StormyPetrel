@@ -64,6 +64,15 @@ HOURS LEFT OUT, and counted
     Destin Jetty) are kept, and listed apart as well.
 
 REGIONS are the spot's NWS office's (REGION_OF); spot type is its break_type.
+
+THE SCALE ON TYPICAL (run 53, fit). Each Surf Zone Forecast hour carries the Hs it was sized
+from, its rated period and the period's band. For each band, ONE scale k on typical for every
+region: the k (0.50 to 1.30 by 0.01) that puts the most headline hours inside the NWS range
+while at most ABOVE_CAP (10%) of the band's hours sit above it; and a strict k with at most 10%
+above in EVERY region. No region is fitted on its own, so a region whose NWS office writes
+bigger numbers does not raise anyone's height. Beside it, per office and band, the uncapped
+best and balanced k: whether the scale moves with period inside one office. The FRF small-day
+pairs are shown at the band scales too. All of this is display-side: the stars are not touched.
 """
 from __future__ import annotations
 
@@ -687,13 +696,147 @@ def compare_srf(hours: list[dict], srf: dict) -> list[dict]:
         mid = (lo + hi) / 2.0
         rec = {k: h[k] for k in ("spot", "slug", "state", "region", "type", "office", "group",
                                  "hour")}
-        rec.update(lo=lo, hi=hi)
+        rec.update(lo=lo, hi=hi, hs=h["hs"], period=h["period"], band=period_band(h["period"]))
         for c in CANDIDATES:
             rec[c] = h[c]
             rec[f"{c}_side"] = classify(h[c], lo, hi)
             rec[f"{c}_ratio"] = _ratio(h[c], mid)
         out.append(rec)
     return out
+
+
+# --------------------------------------------------------------------------- #
+# The scale on typical, fitted to the NWS ranges by period band (run 53)       #
+# --------------------------------------------------------------------------- #
+SCALE_GRID = tuple(round(0.50 + 0.01 * i, 2) for i in range(81))     # 0.50 .. 1.30
+ABOVE_CAP = 0.10            # at most this share of a band's hours above the NWS range
+FIT_MIN_HOURS = 200         # a group with fewer hours is listed, not fitted
+
+
+def side_counts(typical, lo, hi, ks=SCALE_GRID):
+    """(n, inside[k], below[k], above[k]) of k x typical against the ranges lo..hi, for every k
+    in *ks*, by classify's rule (inside when it rounds to a whole foot within the range)."""
+    import numpy as np
+    v = np.asarray(typical, dtype=float)[:, None] * np.asarray(ks, dtype=float)[None, :]
+    below = (v < (np.asarray(lo, dtype=float) - 0.5)[:, None]).sum(axis=0)
+    above = (v >= (np.asarray(hi, dtype=float) + 0.5)[:, None]).sum(axis=0)
+    n = v.shape[0]
+    return n, n - below - above, below, above
+
+
+def fit_scale(typical, lo, hi, groups=None, cap=ABOVE_CAP, ks=SCALE_GRID):
+    """The k on *ks* that puts the most hours inside the range while at most *cap* of the hours
+    sit above it, ties to the smaller k; with *groups* (a label per hour), at most *cap* of EACH
+    group's hours above. Also the k with the most hours inside under no cap, and the balanced k:
+    the smallest k with as many hours above as below. None for a k no grid point meets."""
+    import numpy as np
+    n, inside, below, above = side_counts(typical, lo, hi, ks)
+    if n == 0:
+        return {"n": 0, "k": None}
+    ok = above / n <= cap
+    if groups is not None:
+        labels = np.asarray(groups)
+        for g in sorted(set(groups)):
+            sel = labels == g
+            gn, _, _, ga = side_counts(np.asarray(typical)[sel], np.asarray(lo)[sel],
+                                       np.asarray(hi)[sel], ks)
+            ok &= ga / gn <= cap
+    out = {"n": n, "k": None}
+    if ok.any():
+        i = int(np.argmax(np.where(ok, inside, -1)))
+        out.update(k=ks[i], inside=round(inside[i] / n, 3), below=round(below[i] / n, 3),
+                   above=round(above[i] / n, 3))
+    best = int(np.argmax(inside))
+    bal = np.where(above >= below)[0]
+    out.update(best_k=ks[best], best_inside=round(inside[best] / n, 3),
+               balanced_k=ks[int(bal[0])] if bal.size else None)
+    return out
+
+
+def _cols(rows):
+    return ([r["typical"] for r in rows], [r["lo"] for r in rows], [r["hi"] for r in rows])
+
+
+def sides_at(rows, scale_of) -> dict:
+    """inside / below / above shares with each row's typical times scale_of(row)."""
+    if not rows:
+        return {"n": 0}
+    s = Counter(classify(r["typical"] * scale_of(r), r["lo"], r["hi"]) for r in rows)
+    n = len(rows)
+    return {"n": n, "inside": round(s["inside"] / n, 3), "below": round(s["below"] / n, 3),
+            "above": round(s["above"] / n, 3)}
+
+
+def fit(srf_rows: list[dict]) -> dict:
+    """The scale on typical by period band, ONE scale per band for every region (no region is
+    fitted on its own), from the headline hours outside Hawaii; and the diagnostics beside it.
+
+      by_band     per band: the capped fit (at most ABOVE_CAP of the band's hours above), the
+                  strict fit (at most ABOVE_CAP of EACH region's hours above), the uncapped best
+                  and balanced k, and the median face over Hs (ft) at the capped k
+      flat        the same with one k for every band
+      by_region   each region's inside / below / above with every hour at its band's capped k
+                  (and at the strict k), to show what one scale for all does where
+      office_band per office and band with at least FIT_MIN_HOURS hours: the uncapped best and
+                  balanced k, which shows whether the scale moves with period inside one office
+                  (one office's own habit held fixed)
+    """
+    rows = [r for r in srf_rows if r["group"] == "headline" and r["office"] != "HFO"
+            and r.get("typical") is not None and r.get("hs") and r.get("band")]
+    out = {"hours": len(rows), "cap": ABOVE_CAP, "grid": [SCALE_GRID[0], SCALE_GRID[-1]],
+           "by_band": {}, "office_band": {}}
+    bands = [b for _, b in BANDS]
+    by_band = defaultdict(list)
+    for r in rows:
+        by_band[r["band"]].append(r)
+    k_of, k_strict = {}, {}
+    for b in bands:
+        rs = by_band.get(b, [])
+        if len(rs) < FIT_MIN_HOURS:
+            out["by_band"][b] = {"n": len(rs)}
+            continue
+        capped = fit_scale(*_cols(rs))
+        strict = fit_scale(*_cols(rs), groups=[r["region"] for r in rs])
+        e = {"n": len(rs), "capped": capped, "strict": strict}
+        if capped["k"] is not None:
+            k_of[b] = capped["k"]
+            e["face_over_hs_median"] = round(median(capped["k"] * r["typical"] / (r["hs"] * M_TO_FT)
+                                                    for r in rs), 3)
+        if strict["k"] is not None:
+            k_strict[b] = strict["k"]
+        out["by_band"][b] = e
+    out["flat"] = {"capped": fit_scale(*_cols(rows)),
+                   "strict": fit_scale(*_cols(rows), groups=[r["region"] for r in rows])}
+    fitted = [r for r in rows if r["band"] in k_of]
+    regions = defaultdict(list)
+    for r in fitted:
+        regions[r["region"]].append(r)
+    regions["all"] = fitted
+    out["by_region"] = {g: {"at_band_k": sides_at(rs, lambda r: k_of[r["band"]]),
+                            "at_strict_k": sides_at([r for r in rs if r["band"] in k_strict],
+                                                    lambda r: k_strict[r["band"]])}
+                        for g, rs in sorted(regions.items())}
+    ob = defaultdict(list)
+    for r in rows:
+        ob[(r["office"], r["band"])].append(r)
+    for (o, b), rs in sorted(ob.items()):
+        if len(rs) >= FIT_MIN_HOURS:
+            f = fit_scale(*_cols(rs))
+            out["office_band"].setdefault(o, {})[b] = {"n": len(rs), "best_k": f["best_k"],
+                                                       "balanced_k": f["balanced_k"]}
+    out["k_by_band"], out["k_strict_by_band"] = k_of, k_strict
+    return out
+
+
+def frf_at_scales(pairs: list[dict], k_by_band: dict) -> dict:
+    """The FRF small-day pairs with typical from the 8 m array scaled by its period band's k."""
+    got = []
+    for p in pairs:
+        k = k_by_band.get(period_band(p.get("frf8_tp")))
+        if p.get("frf8_typical") is None or k is None:
+            continue
+        got.append({"ours": k * p["frf8_typical"], "measured": p["observed_ft"]})
+    return stats(got)
 
 
 def compare_reports(reports: list[dict], by_hour: dict, names: dict) -> list[dict]:
@@ -838,6 +981,7 @@ def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_ge
     frf8, frf8_read = frf_8m_hourly(since, until, open_nc)
     frf = compare_frf(duck, lidar, frf8)
 
+    fitted = fit(srf_rows)
     head = [r for r in srf_rows if r["group"] == "headline"]
     mainland = [r for r in head if r["office"] != "HFO"]
     rep_head = [r for r in rep_rows if r["group"] == "headline" and r["state"] != "Hawaii"]
@@ -849,7 +993,10 @@ def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_ge
         "errors": errors,
         "hours_by_group": dict(groups),
         "multiplier": multiplier_spread(mult["hs"], mult["typical"], mult["period"]),
-        "frf": {k: v for k, v in frf.items() if k != "pairs"},
+        "frf": {**{k: v for k, v in frf.items() if k != "pairs"},
+                "frf8_typical_at_band_k_vs_lidar_ft": frf_at_scales(frf["pairs"],
+                                                                     fitted["k_by_band"])},
+        "fit": fitted,
         "frf_lidar_months": lidar_cov, "frf_8m_months": frf8_read,
         "srf_coverage": srf_cov,
         "zones": {"named": sum(len(z) for z in zones_named.values()),
@@ -942,6 +1089,42 @@ def print_report(rep: dict) -> None:
     _table("by region", r["by_region"])
     _table("by spot type", r["by_type"])
     _table("by reported bucket", r["by_bucket"])
+    f = rep["fit"]
+    print(f"\n=== 5. The scale on typical by period band: one k for every region, at most "
+          f"{100 * f['cap']:.0f}% of hours above the NWS range ({f['hours']} headline hours, "
+          f"Hawaii apart) ===")
+    print(f"  {'band':9}{'n':>8}  {'k':>5} {'in':>5} {'lo':>5} {'hi':>5}  face/Hs  | strict k (every "
+          f"region <= 10% above) in/hi | uncapped best k (in) | balanced k")
+    for band, e in f["by_band"].items():
+        c, s = e.get("capped"), e.get("strict")
+        if not c:
+            print(f"  {band:9}{e['n']:>8}  too few hours to fit")
+            continue
+        cap_txt = (f"{c['k']:>5} {_pct(c['inside']):>5} {_pct(c['below']):>5} {_pct(c['above']):>5}"
+                   if c["k"] is not None else f"{'none':>5} {'':>17}")
+        st_txt = (f"{s['k']} {_pct(s['inside'])}/{_pct(s['above'])}" if s["k"] is not None
+                  else "none")
+        print(f"  {band:9}{e['n']:>8}  {cap_txt}  {e.get('face_over_hs_median', '-'):>7}  | "
+              f"{st_txt:>31} | {c['best_k']} ({_pct(c['best_inside'])}) | {c['balanced_k']}")
+    fl = f["flat"]
+    print(f"  one k for every band: capped {fl['capped']['k']} (in {_pct(fl['capped'].get('inside'))}, "
+          f"hi {_pct(fl['capped'].get('above'))}); strict {fl['strict']['k']} "
+          f"(in {_pct(fl['strict'].get('inside'))}, hi {_pct(fl['strict'].get('above'))})")
+    print("\n  each region with every hour at its band's k (strict k after the bar):")
+    for g, e in f["by_region"].items():
+        a, s = e["at_band_k"], e["at_strict_k"]
+        print(f"    {g:24} n {a['n']:6}  in {_pct(a.get('inside'))} lo {_pct(a.get('below'))} "
+              f"hi {_pct(a.get('above'))} | in {_pct(s.get('inside'))} lo {_pct(s.get('below'))} "
+              f"hi {_pct(s.get('above'))}")
+    print("\n  inside one office, the uncapped best k (balanced k) by band:")
+    bands = [b for _, b in BANDS]
+    print("    " + f"{'office':7}" + "".join(f"{b:>14}" for b in bands))
+    for o, row in f["office_band"].items():
+        cells = "".join(f"{(str(row[b]['best_k']) + ' (' + str(row[b]['balanced_k']) + ')') if b in row else '-':>14}"
+                        for b in bands)
+        print(f"    {o:7}{cells}")
+    print("\n" + _st("FRF small days, typical from the 8 m array at its band's k",
+                     rep["frf"]["frf8_typical_at_band_k_vs_lidar_ft"]))
 
 
 def write_csvs(rep: dict, prefix: str) -> None:

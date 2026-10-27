@@ -105,8 +105,11 @@ name: sw1-raycast
 #       the published face, against the FRF Duck lidar transect on small days, the NWS Surf Zone
 #       Forecast's daytime ranges (IEM archive; zones from api.weather.gov) by office, region and
 #       spot type, and visitor surf_reports (Hawaii held out). Held spots, WW3-path hours and
-#       the spots #280 moved are kept out of the headline. Supabase SELECT only. Kept as the
-#       run's artifact for 90 days.
+#       the spots #280 moved are kept out of the headline. Since run 53 each NWS hour carries its
+#       Hs and rated period, and the scale on typical is fitted per period band, one scale for
+#       every region, at most 10% of hours above the NWS range (and a strict fit, at most 10%
+#       in every region), with each office's own best scale by band beside it; display only, the
+#       stars are untouched. Supabase SELECT only. Kept as the run's artifact for 90 days.
 
 on:
   workflow_dispatch:
