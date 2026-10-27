@@ -71,6 +71,14 @@ name: sw1-raycast
 #       stars, hour for hour (0 differences); then every hour's stars, face, height and period at
 #       the old and the new node, each new node checked as a wet cell centre in every cycle read,
 #       and the homepage's "Best conditions right now" before and after. SELECT only.
+#   mode = surf-preview: READ-ONLY. THE MERGE GATE for the surf height at uncalibrated spots
+#       (pipeline/surf_preview.py): every published hour from now replayed through
+#       apply_surf_height (0 star and 0 other-field differences, face_ft moved only on the
+#       NWPS-override hours of spots with no MOP factor, no badge becomes or stops being
+#       'calibrated'), the height before and after by region and spot, the badge counts and the
+#       homepage; then face_compare over the archive since 2026-09-07: run 53's K = 0.70 figures
+#       reproduced on the uncalibrated spots, and the displayed height against the NWS Surf Zone
+#       Forecast ranges by region beside today's. SELECT only.
 
 on:
   workflow_dispatch:
@@ -89,6 +97,7 @@ on:
           - rating-preview
           - data-quality
           - node-preview
+          - surf-preview
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -145,7 +154,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -643,4 +652,49 @@ jobs:
           path: |
             node_preview.json
             node_preview_hours.csv
+          if-no-files-found: warn
+
+  surf-preview:
+    name: sw1 surf height preview (read-only)
+    if: ${{ inputs.mode == 'surf-preview' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Replay the published window and compare the archive with the NWS (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -m pipeline.surf_preview --out surf_preview.json --csv surf_preview_hours.csv \
+            --compare-out face_compare.json --srf-prefix face_compare
+
+      - name: Keep the results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: surf-preview-${{ github.run_number }}
+          path: |
+            surf_preview.json
+            surf_preview_hours.csv
+            face_compare.json
+            face_compare_*.csv
+          retention-days: 90
           if-no-files-found: warn
