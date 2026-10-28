@@ -14,7 +14,8 @@ and fallback hours keep the producer's face.
 
 typical. Hs carried from D0_M = 10 m to its breaking point by linear shoaling — Green's energy flux, H = Hs x sqrt(Cg(D0)
 / Cg(h)) — breaking where H reaches GAMMA = 0.78 x the depth h, at the hour's rated period
-(swell_tp). Solved once per (Hs, period) pair rounded to 0.01 m and 0.1 s. Hs is the NWPS
+(swell_tp), or at the wind sea's where the wind sea is bigger and longer-period than the rated
+partition (shown_period.py; since 2026-10-28, marked WIND_SEA_MARK). Solved once per (Hs, period) pair rounded to 0.01 m and 0.1 s. Hs is the NWPS
 node's height the override sized the hour's face from, recovered from that face (face_ft_raw)
 by inverting the override's formula, face = Hs x period_factor(swell_tp, 'ww3') x 3.281: the row's
 own hs is rate_spot's and is not always the height the override used. It is how the validation
@@ -44,6 +45,10 @@ NWPS_OVERRIDE_SOURCES = frozenset({"nwps", "nwps_height_ww3_dir"})
 # ':' is what readers test for; the rest names the constants, so a row says how it was made.
 SURF_MARK_TAG = "+surf"
 SURF_MARK = f"{SURF_MARK_TAG}:k{SURF_K:.2f}:d{D0_M:g}:g{GAMMA:g}"
+# Added after SURF_MARK on a row shoaled at the WIND SEA's period, not the rated swell's
+# (forecast/shown_period.py): the hours where the wind sea is bigger and longer-period than
+# the rated partition. Every other row's mark is SURF_MARK alone, as #283 wrote it.
+WIND_SEA_MARK = ":windsea"
 
 
 def is_surf_row(version) -> bool:
@@ -157,15 +162,30 @@ def sized_hs(entry):
     return face / (period_factor(tp, "ww3") * M_TO_FT)
 
 
+def surf_period(entry):
+    """(period s, wind_sea) the hour is shoaled at: the shown train's period
+    (shown_period.shown_train), which is the rated swell_tp unless the wind sea is bigger and
+    longer-period than the rated partition."""
+    from .shown_period import shown_train
+    tp, _dp, which = shown_train(entry)
+    return tp, which == "wind_sea"
+
+
 def apply_surf_height(ratings, spots, factors, slug_for=None):
     """Rewrite face_ft on every NWPS-override hour at an uncalibrated spot, in place, and mark the
     row (see the module docstring). Runs after apply_face_corrections; writes nothing but
     face_ft and face_correction_version. Every new value is computed before any row is
     written, so a failure leaves every row as it was.
 
-    Returns {spots_calibrated, spots_rewritten, hours_rewritten, hours_kept_by_source,
-    hours_without_inputs}: hours kept because another rater fed them, and NWPS-override hours
-    with no face or no rated period (they keep their face and get no mark).
+    THE PERIOD IT SHOALS AT is surf_period's: the rated swell_tp, or the wind sea's period
+    where the wind sea is bigger and longer-period than the rated partition (those rows get
+    WIND_SEA_MARK after SURF_MARK). Hs is still recovered at swell_tp, the period the
+    override's face was sized at.
+
+    Returns {spots_calibrated, spots_rewritten, hours_rewritten, hours_wind_sea,
+    hours_kept_by_source, hours_without_inputs}: the hours shoaled at the wind sea's period,
+    hours kept because another rater fed them, and NWPS-override hours with no face or no
+    rated period (they keep their face and get no mark).
 
     NO FACTORS, NO STEP. With no factors file every spot reads as uncalibrated, and the
     California spots the factors exist for would get this height in place of the one they are
@@ -175,7 +195,7 @@ def apply_surf_height(ratings, spots, factors, slug_for=None):
         from ..enrich import _slug_for as slug_for      # noqa: PLC0415 - avoids a cycle
     by_name = {s.get("name"): s for s in spots if s.get("name")}
     todo, stats = [], {"spots_calibrated": 0, "spots_rewritten": 0, "hours_rewritten": 0,
-                       "hours_kept_by_source": 0, "hours_without_inputs": 0,
+                       "hours_wind_sea": 0, "hours_kept_by_source": 0, "hours_without_inputs": 0,
                        "factors_missing": not factors}
     if not factors:
         return stats
@@ -195,13 +215,16 @@ def apply_surf_height(ratings, spots, factors, slug_for=None):
             if e.get("face_ft") is None or hs is None:
                 stats["hours_without_inputs"] += 1
                 continue
-            todo.append((e, hs, float(e["swell_tp"])))
+            tp, wind_sea = surf_period(e)
+            todo.append((e, hs, tp, wind_sea))
         stats["spots_rewritten"] += len(todo) > n0
     if todo:
-        faces = surf_face_ft([hs for _, hs, _ in todo], [tp for _, _, tp in todo])
-        for (e, _, _), f in zip(todo, faces):
+        faces = surf_face_ft([t[1] for t in todo], [t[2] for t in todo])
+        for (e, _, _, wind_sea), f in zip(todo, faces):
             e["face_ft"] = round(float(f), 2)
+            mark = SURF_MARK + (WIND_SEA_MARK if wind_sea else "")
             v = e.get("face_correction_version")
-            e["face_correction_version"] = f"{v}{SURF_MARK}" if v else SURF_MARK
+            e["face_correction_version"] = f"{v}{mark}" if v else mark
     stats["hours_rewritten"] = len(todo)
+    stats["hours_wind_sea"] = sum(1 for t in todo if t[3])
     return stats

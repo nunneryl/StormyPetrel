@@ -788,3 +788,22 @@ def test_assess_display_is_the_surf_height_only_where_the_site_will_show_it():
     assert (big["typical"], big["display"]) == (26.58, 18.6)
     cal = F.assess(rows, spot, "New York", calibrated=True)
     assert [g["display"] for g in cal] == [4.27] * 5 and cal[0]["calibrated"] is True
+
+
+def test_assess_display_shoals_at_the_wind_seas_period_where_the_site_will():
+    """A storm hour (shown_period's Jacksonville case): face_ft_raw 4.27 at swell_tp 3 s
+    (period_factor 'ww3' 1.0) is Hs 4.27 / 3.281 = 1.30143 -> 1.30 m. With a 2.4 m wind sea at
+    500 s the display shoals at 500 s (Green's law): 0.70 x 1.508057 x 1.30^0.8 x 3.281 =
+    0.70 x 1.860248 x 3.281 = 4.2724 -> 4.27. A 0.2 m wind sea does not take over, and the
+    display is then the rated-period one."""
+    spot = {"name": "Jacksonville Beach Pier", "nwps_wfo": "jax"}
+    row = {"valid_time": "2026-10-27T15:00:00+00:00", "swell_source": "nwps_height_ww3_dir",
+           "face_ft_raw": 4.27, "face_ft": 4.27, "swell_tp": 3.0, "swell_dp": 80.0, "tp": 9.0,
+           "hs": 2.0, "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+           "wind_wave_hs": 2.4, "wind_wave_tp": 500.0, "wind_wave_dp": 70.0}
+    storm, calm = F.assess([row, dict(row, wind_wave_hs=0.2)], spot, "Florida")
+    assert storm["switched"] is True and storm["display"] == 4.27
+    assert storm["display_rated"] != storm["display"]
+    assert calm["switched"] is False and calm["display"] == calm["display_rated"]
+    cal = F.assess([row], spot, "Florida", calibrated=True)[0]
+    assert cal["switched"] is False and cal["display"] == cal["display_rated"] == 4.27

@@ -136,7 +136,7 @@ def test_it_rewrites_face_ft_on_uncalibrated_nwps_override_hours_only():
     assert ratings["Not in the roster"] == before["Not in the roster"]
     assert ratings["Montauk"] == before["Montauk"]
     assert stats == {"spots_calibrated": 1, "spots_rewritten": 2, "hours_rewritten": 3,
-                     "hours_kept_by_source": 5, "hours_without_inputs": 2,
+                     "hours_wind_sea": 0, "hours_kept_by_source": 5, "hours_without_inputs": 2,
                      "factors_missing": False}
 
 
@@ -218,3 +218,43 @@ def test_the_comparison_tool_uses_this_solver():
     from pipeline import face_compare as F
     assert F.breaking_height is S.breaking_height and F.typical_face_ft is S.typical_face_ft
     assert (F.D0_M, F.GAMMA, F.M_TO_FT) == (S.D0_M, S.GAMMA, S.M_TO_FT)
+
+
+# --------------------------------------------------------------------------- #
+# 5 — the period it shoals at: the wind sea's, when it is bigger and longer    #
+# --------------------------------------------------------------------------- #
+def _storm_hour(wind_hs, wind_tp, **kw):
+    """A nor'easter hour like Jacksonville's on 2026-10-27: the rated swell partition is a
+    0.24 m, 3 s scrap (swell_2), the wind sea carries the energy. At swell_tp 3 s
+    period_factor('ww3') is 1.0, so the published face 4.27 ft sizes back to Hs 4.27 / 3.281 =
+    1.30143 -> 1.30 m."""
+    e = _hour(4.27, 3.0, "nwps_height_ww3_dir", swell_dp=80.0,
+              swell_1_hs=0.1, swell_1_tp=11.0, swell_1_dp=120.0,
+              swell_2_hs=0.24, swell_2_tp=3.0, swell_2_dp=80.0,
+              wind_wave_hs=wind_hs, wind_wave_tp=wind_tp, wind_wave_dp=70.0)
+    e.update(kw)
+    return e
+
+
+def test_a_bigger_longer_wind_sea_sets_the_shoaling_period_and_marks_the_row():
+    """Shoaled at the wind sea's 500 s (Green's law): Hb = 1.508057 x 1.30^0.8 = 1.508057 x
+    exp(0.8 x 0.262364) = 1.508057 x 1.233540 = 1.860248 m; 0.70 x 1.860248 x 3.281 = 4.2724
+    -> 4.27 ft."""
+    ratings = {"Rockaway": [_storm_hour(2.4, 500.0)]}
+    stats = S.apply_surf_height(ratings, [{"name": "Rockaway"}],
+                                {"steamer-lane": {"factor": 2.0}}, _slug)
+    e = ratings["Rockaway"][0]
+    assert e["face_ft"] == 4.27
+    assert e["face_correction_version"] == STAMP + MARK + ":windsea"
+    assert S.is_surf_row(e["face_correction_version"])
+    assert stats["hours_wind_sea"] == 1 and stats["hours_rewritten"] == 1
+    assert S.surf_period(_storm_hour(2.4, 500.0)) == (500.0, True)
+
+
+def test_a_wind_sea_that_is_bigger_but_shorter_or_longer_but_smaller_does_not():
+    for wind_hs, wind_tp in ((2.4, 2.9), (0.2, 9.0), (0.24, 9.0), (2.4, 3.0)):
+        e = _storm_hour(wind_hs, wind_tp)
+        assert S.surf_period(e) == (3.0, False), (wind_hs, wind_tp)
+        ratings = {"Rockaway": [e]}
+        S.apply_surf_height(ratings, [{"name": "Rockaway"}], {"x": {"factor": 2.0}}, _slug)
+        assert ratings["Rockaway"][0]["face_correction_version"] == STAMP + MARK
