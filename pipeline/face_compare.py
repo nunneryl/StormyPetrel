@@ -147,7 +147,8 @@ CANDIDATES = ("published", "display", "typical", "sets")
 FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_tp, swell_dp, swell_source, face_ft, "
                  "face_ft_raw, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, "
                  "swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, "
-                 "wind_wave_dp")
+                 "wind_wave_dp, swell_hs, dir_gain, effective_size_ft, stars, nwps_cycle, "
+                 "wind_speed, wind_dir, wind_mult, chop_mult")
 
 
 def candidate_faces(hs, period, d0=D0_M):

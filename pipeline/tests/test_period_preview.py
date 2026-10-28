@@ -61,15 +61,29 @@ def _published():
 # --------------------------------------------------------------------------- #
 def test_classify_hour_labels():
     storm = _row(13, 2.95, 4.27, STAMP, swell_tp=3.0, wind_hs=2.4, wind_tp=9.0)
+    longer = {3.0: "longer", 4.0: "longer", 6.0: "longer"}
     assert P.classify_hour(storm) == {"unmatched": False, "big_wind_sea": True, "switched": True,
-                                      "bigger_shorter": False, "rated_hs": 0.24}
-    # 0.4 m wind sea: bigger than 0.24 and longer, but not 2x (0.48)
+                                      "case": "longer", "cases": longer, "bigger_shorter": False,
+                                      "marginal": False, "rated_hs": 0.24}
+    # 0.4 m wind sea: bigger than 0.24 and 6 s longer, but not 2x (0.48)
     assert P.classify_hour(dict(storm, wind_wave_hs=0.4))["big_wind_sea"] is False
-    assert P.classify_hour(dict(storm, wind_wave_hs=0.4))["switched"] is True
-    # bigger but shorter: the plain rule would lower the period
-    trestles = dict(storm, swell_tp=15.1, swell_1_tp=15.1, wind_wave_tp=5.2)
-    assert P.classify_hour(trestles) == {"unmatched": False, "big_wind_sea": False,
-                                         "switched": False, "bigger_shorter": True, "rated_hs": 0.24}
+    assert P.classify_hour(dict(storm, wind_wave_hs=0.4))["case"] == "longer"
+    # 10x the rated swell and shorter: DOMINANT at every K (2.4 >= 6 x 0.24 = 1.44)
+    scrap = dict(storm, swell_tp=15.1, swell_1_tp=15.1, wind_wave_tp=5.2)
+    assert P.classify_hour(scrap) == {"unmatched": False, "big_wind_sea": False, "switched": True,
+                                      "case": "dominant",
+                                      "cases": {3.0: "dominant", 4.0: "dominant", 6.0: "dominant"},
+                                      "bigger_shorter": True, "marginal": False, "rated_hs": 0.24}
+    # Lower Trestles, 2x and shorter: bigger_shorter, switched at no K (0.48 < 3 x 0.24 = 0.72)
+    trestles = dict(scrap, wind_wave_hs=0.48)
+    lab = P.classify_hour(trestles)
+    assert (lab["switched"], lab["cases"], lab["bigger_shorter"]) == (
+        False, {3.0: None, 4.0: None, 6.0: None}, True)
+    # 3.2x and shorter: DOMINANT at K 3 only (0.768 >= 0.72; < 0.96)
+    assert P.classify_hour(dict(scrap, wind_wave_hs=0.768))["cases"] == {3.0: "dominant", 4.0: None, 6.0: None}
+    # bigger and 0.3 s longer, 2.1x: marginal, no longer switched
+    m = P.classify_hour(dict(storm, wind_wave_hs=0.5, wind_wave_tp=3.3))
+    assert (m["marginal"], m["switched"], m["bigger_shorter"]) == (True, False, False)
     assert P.classify_hour(dict(storm, swell_1_tp=4.0)) == {"unmatched": True}
     assert P.classify_hour(dict(storm, swell_source="nwps")) is None
 
@@ -86,8 +100,13 @@ def test_the_archive_counts_by_state_and_keeps_the_switched_hours():
       [_row(12, 2.13, 4.27, STAMP, swell_tp=400.0, wind_hs=2.4, wind_tp=500.0)], True)
     a.finish()
     t = a.table()
+    # the switched hour is LONGER (500 - 400 s) and 10x (2.4 / 0.24) on an NWPS-override hour
+    # with no stored alignment term
     assert t["Florida"] == {"hours": 4, "ww3_identity": 3, "unmatched": 1, "big_wind_sea": 1,
-                            "switched": 1, "bigger_shorter": 0}
+                            "switched": 1, "switched_longer": 1, "switched_dominant": 0,
+                            "bigger_shorter": 0, "marginal": 0, "nwps_ratio_over_4": 1,
+                            "nwps_ratio_over_4_alignment_under_half": 0,
+                            "switched_k3": 1, "switched_k4": 1, "switched_k6": 1}
     assert t["all"]["switched"] == 2 and t["all"]["hours"] == 5
     jx, sl = a.records
     # 4.27 at 400 s and at 500 s are both in the long-wave limit: Hs 1.00 m, 3.46 ft either way
@@ -379,7 +398,10 @@ def test_bigger_shorter_distribution_by_state():
     a = _lopsided_archive()
     t = a.bigger_shorter_table()
     f = t["Florida"]
-    assert t["all"] == f and f["hours"] == 3 and len(a.records) == 1
+    # the 16x and 10x hours now switch (DOMINANT) and stay in the bigger-but-shorter tally;
+    # with the LONGER 3 s / 9 s hour, three records
+    assert t["all"] == f and f["hours"] == 3 and len(a.records) == 3
+    assert sorted(r["case"] for r in a.records) == ["dominant", "dominant", "longer"]
     # ratios 16.0, 1.5, 10.0 (2.4 / 0.24) -> sorted 1.5, 10, 16
     assert f["ratio"] == {"0.5": 10.0, "0.9": 16.0, "0.99": 16.0, "1.0": 16.0}
     assert f["ratio_bands"] == {"1-2": 1, "2-4": 0, "4-8": 0, "over 8": 2}
@@ -439,13 +461,15 @@ def _run_new_fields(monkeypatch, calibrated_switch):
              {"id": 3, "name": "Jacksonville Beach Pier", "state": "Florida"}]
     ids = {s["name"]: s["id"] for s in spots}
     pubs = _published()
-    # a bigger-but-shorter hour at Jacksonville: a 2.4 m wind sea at 500 s over the 0.24 m swell
-    # rated at 600 s; #283 published 3.46 (Hs 1.00 m, the long-wave limit), and nothing switches
+    # a bigger-but-shorter hour at Jacksonville: a 0.9 m wind sea at 500 s over the 0.24 m swell
+    # rated at 600 s (3.75x, under 4); #283 published 3.46 (Hs 1.00 m, the long-wave limit), and
+    # at the site's K nothing switches
     pubs["Jacksonville Beach Pier"].append(
-        _row(14, 3.46, 4.27, STAMP + MARK, swell_tp=600.0, wind_hs=2.4, wind_tp=500.0))
+        _row(14, 3.46, 4.27, STAMP + MARK, swell_tp=600.0, wind_hs=0.9, wind_tp=500.0))
     # and one at calibrated Steamer Lane (4.27 / 2.0 = 2.135 -> 2.13), whose buoy (46284) no
     # switched hour reads: the examples' buoys are fetched as well
-    pubs["Steamer Lane"].append(_row(14, 2.13, 4.27, STAMP, swell_tp=600.0, wind_hs=2.4,
+    # (2.5x, 0.6 / 0.24: switched at no K, so its buoy is fetched and joined for the examples alone)
+    pubs["Steamer Lane"].append(_row(14, 2.13, 4.27, STAMP, swell_tp=600.0, wind_hs=0.6,
                                      wind_tp=500.0, stars=4.0))
     if calibrated_switch:
         # a switched hour at calibrated Steamer Lane: 2.13 ft at 3 s (period_factor 1.0) would
@@ -454,7 +478,9 @@ def _run_new_fields(monkeypatch, calibrated_switch):
                                          wind_tp=500.0, stars=4.0))
     fc = [{**r, "spot_id": ids[n], "source": "nwps"} for n, rs in pubs.items() for r in rs]
     obs = [{"buoy_id": "46284", "observed_at": "2026-10-28T14:05:00+00:00", "hs": 1.0, "tp": 12.0,
-            "swell_hs": 0.9, "swell_tp": 13.0}]
+            "swell_hs": 0.9, "swell_tp": 13.0},
+           {"buoy_id": "41117", "observed_at": "2026-10-28T12:05:00+00:00", "hs": 2.7, "tp": 9.0,
+            "swell_hs": 1.0, "swell_tp": 11.0}]
     client = _Client({"spots": spots, "forecasts": fc, "buoy_observations": obs})
     monkeypatch.setattr(P, "RUN54_DISPLAY", {"all": (2, 0.5, 0.5, 0.0)})
 
@@ -474,13 +500,17 @@ def _run_new_fields(monkeypatch, calibrated_switch):
 
 def test_run_reports_the_lopsided_hours_with_their_own_buoys_and_the_gate_is_unchanged(monkeypatch):
     rep = _run_new_fields(monkeypatch, calibrated_switch=False)
+    # at the site's K 4: Jacksonville's storm hour and Kure Beach's WW3 hour; at K 3 also
+    # Jacksonville's 3.75x hour (Steamer Lane's is 2.5x)
+    assert rep["switched_vs_buoy"]["all"]["hours"] == 2
+    assert [rep["by_k"][k]["switched"]["all"]["hours"] for k in ("3", "4", "6")] == [3, 2, 2]
     assert rep["bigger_shorter_by_state"]["Florida"]["hours"] == 1
     assert rep["bigger_shorter_by_state"]["California"]["surf_hours"] == 0     # calibrated
-    # equal ratios (2.4 / 0.24 = 10), same hour: the spot name breaks the tie, Steamer Lane first
+    # most lopsided first: Jacksonville 3.75x (0.9 / 0.24), then Steamer Lane 2.5x
     ex = rep["lopsided_examples"]
-    assert [(x["spot"], x["ratio"], x["path"]) for x in ex] == [
-        ("Steamer Lane", 10.0, "calibrated"), ("Jacksonville Beach Pier", 10.0, "surf")]
-    assert (ex[0]["buoy"], ex[0]["buoy_hs_ft"], ex[0]["buoy_dpd"]) == ("46284", 3.28, 12.0)  # 1.0 x 3.281
+    assert [(x["spot"], x["ratio"], x["path"], x["switched"]) for x in ex] == [
+        ("Jacksonville Beach Pier", 3.75, "surf", None), ("Steamer Lane", 2.5, "calibrated", None)]
+    assert (ex[1]["buoy"], ex[1]["buoy_hs_ft"], ex[1]["buoy_dpd"]) == ("46284", 3.28, 12.0)  # 1.0 x 3.281
     assert "46284" in rep["buoys_read"]
     # switched, published window: Jacksonville's storm hour (surf) and Kure Beach's WW3 hour
     # (other: 3.0 ft at 3 s -> 3.0 x 1.3 / 1.0 = 3.9 at the wind sea's 500 s)
@@ -521,3 +551,168 @@ def test_tiles_put_a_calibrated_spots_switched_hour_on_the_calibrated_path():
     _t, hours = P.tiles(pub, after, {}, frozenset({"Kure Beach"}))
     assert {h["spot"]: h["path"] for h in hours} == {"Jacksonville Beach Pier": "surf",
                                                     "Kure Beach": "calibrated"}
+
+
+# --------------------------------------------------------------------------- #
+# 6 — run 56: K, the window, Jacksonville and Hatteras (report only)           #
+# --------------------------------------------------------------------------- #
+ARCS = [{"min": 60.0, "max": 120.0, "span": 64.0}]     # pad 2: the true sector is 58..122
+
+
+def test_switch_reason_in_words():
+    storm = _row(13, 2.95, 4.27, STAMP, swell_tp=3.0, wind_hs=2.4, wind_tp=9.0)
+    assert P.switch_reason(storm) == ("LONGER: wind sea 2.40 m over the rated 0.24 m, and 6.00 s "
+                                      "longer (>= 0.5)")
+    assert P.switch_reason(dict(storm, wind_wave_tp=2.0)) == ("DOMINANT: wind sea 10.0x the rated "
+                                                              "swell (>= 4x), -1.00 s")
+    assert P.switch_reason(dict(storm, wind_wave_hs=0.2)) == "wind sea 0.20 m is not bigger than the rated 0.24 m"
+    assert P.switch_reason(dict(storm, wind_wave_hs=0.6, wind_wave_tp=3.3)) == (
+        "wind sea bigger (2.5x, under 4x) but +0.30 s against the rated period (needs +0.5)")
+    assert P.switch_reason(dict(storm, wind_wave_dp=None)) == "no wind sea height, period or direction"
+    assert P.switch_reason(dict(storm, swell_1_tp=4.0)) == "no swell partition matches the rated period and direction"
+    assert P.switch_reason(dict(storm, swell_source="nwps")) == "not rated on a WW3 swell partition (swell_source nwps)"
+    # at K 3 a 3.2x shorter wind sea switches; at K 4 it does not
+    r = dict(storm, wind_wave_hs=0.768, wind_wave_tp=2.0)
+    assert P.switch_reason(r, 3).startswith("DOMINANT: wind sea 3.2x the rated swell (>= 3x)")
+    assert P.switch_reason(r).startswith("wind sea bigger (3.2x, under 4x)")
+
+
+def test_in_window_reads_the_spots_arcs():
+    spot = {"swell_window_arcs": ARCS}
+    assert P.in_window(90.0, spot) is True and P.in_window(58.0, spot) is True
+    assert P.in_window(57.0, spot) is False and P.in_window(200.0, spot) is False
+    assert P.in_window(90.0, {}) is None and P.in_window(None, spot) is None
+
+
+def test_the_jacksonville_hour():
+    spot = dict(ROSTER[0], swell_window_arcs=ARCS)
+    # rated 0.24 m at 600 s (dp 80), a 1.0 m wind sea at 500 s from 70: 4.17x, DOMINANT
+    r = _row(20, 4.27, 4.27, STAMP + MARK, swell_tp=600.0, wind_hs=1.0, wind_tp=500.0)
+    h = P.jacksonville_hour(r, spot, False)
+    assert (h["rated"], h["rated_tp"], h["shown"], h["shown_tp"], h["shown_dp"], h["case"]) == (
+        "swell_1", 600.0, "wind_sea", 500.0, 70.0, "dominant")
+    assert h["trains"] == {"swell_1": {"hs_ft": 0.79, "tp": 600.0, "dp": 80.0},     # 0.24 x 3.281
+                           "wind_wave": {"hs_ft": 3.28, "tp": 500.0, "dp": 70.0}}   # 1.0 x 3.281
+    # Hs 4.27 / 4.2653 -> 1.00 m: 3.46 ft at either long period; the row's own face_ft is 4.27
+    assert (h["surf_at_rated"], h["surf_at_shown"], h["published_ft"]) == (3.46, 3.46, 4.27)
+    assert h["why"].startswith("DOMINANT: wind sea 4.2x") and h["wind_in_window"] is True
+    assert P.jacksonville_hour(r, spot, True)["surf_at_rated"] is None          # calibrated: no surf
+
+
+def test_the_hatteras_trace():
+    """Rodanthe-shaped: orientation 90, no optimal direction, so the alignment axis is 90. NWPS Hs
+    0.15 m; the rated 0.06 m scrap at 12.97 s from 180 (90 off: cos^2(45) = 0.5); the wind sea
+    3.55 m at 10.2 s from 270 (180 off: cos^2(90) = 0, floored at 0.25). period_factor('ww3') at
+    12.97 s = 1.15 + (0.97 / 2) x 0.05 = 1.17425, so the face is 0.15 x 1.17425 x 3.281 = 0.5779
+    -> 0.58 ft."""
+    spot = {"name": "Rodanthe", "orientation_deg": 90.0, "swell_window_arcs": ARCS,
+            "break_type": "beach", "offshore_wind_deg": 270.0}
+    r = _row(17, 0.58, 0.58, STAMP, swell_tp=12.97, swell_dp=180.0, swell_1_hs=0.06,
+             swell_1_tp=12.97, swell_1_dp=180.0, wind_hs=3.55, wind_tp=10.2, wind_wave_dp=270.0,
+             hs=0.15, dir_gain=0.5, effective_size_ft=0.29, stars=1.0, wind_speed=10.0,
+             wind_dir=60.0, wind_mult=0.7, chop_mult=0.4, valid_time="2026-09-23T17:00:00+00:00")
+    h = P.hatteras_hour(r, spot, None, 1.59)
+    assert (h["nwps_hs_m"], h["nwps_hs_ft"], h["period_factor"], h["face_from_hs"]) == (0.15, 0.49, 1.17425, 0.58)
+    assert (h["axis_deg"], h["rated_offset_deg"], h["alignment_rated"], h["alignment_wind_sea"]) == (90.0, 90.0, 0.5, 0.25)
+    assert (h["alignment_stored"], h["published_ft"], h["rated"], h["shown"]) == (0.5, 0.58, "swell_1", "wind_sea")
+    assert (h["rated_in_window"], h["wind_in_window"]) == (False, False)
+    assert h["why"].startswith("DOMINANT: wind sea 59.2x")                  # 3.55 / 0.06
+    assert "star_cap" in h or "rules_error" in h
+    # with an optimal direction of 180 the axis is 180: the scrap is on it (1.0), and the wind sea
+    # from 270 is 90 off (cos^2(45) = 0.5)
+    o = P.hatteras_hour(r, dict(spot, optimal_swell_dir=180.0), None, 1.59)
+    assert (o["axis_deg"], o["rated_offset_deg"], o["alignment_rated"], o["alignment_wind_sea"]) == (180.0, 0.0, 1.0, 0.5)
+
+
+def test_by_k_counts_cases_window_and_examples():
+    def rec(state, k3, k4, k6, wind_in, hs, hour, spot="S"):
+        return {"spot": spot, "state": state, "valid_time": f"t{hour}", "hour": hour, "source": "ww3",
+                "path": "other", "cases": {"3.0": k3, "4.0": k4, "6.0": k6}, "bigger_shorter": k3 == "dominant",
+                "rated_hs_m": 0.1, "rated_tp": 12.0, "rated_dp": 300.0, "wind_hs_m": hs, "wind_tp": 8.0,
+                "wind_dp": 60.0, "rated_in_window": True, "wind_in_window": wind_in, "buoy": None,
+                "buoy_hs_m": None, "buoy_tp": None, "buoy_swell_tp": None, "hs_m": 1.0,
+                "published": 3.0, "surf": False, "surf_before": None, "surf_after": None}
+    rs = [rec("Hawaii", "dominant", "dominant", None, False, 0.5, 1),
+          rec("Hawaii", "dominant", None, None, False, 0.35, 2),
+          rec("Hawaii", "longer", "longer", "longer", True, 0.2, 3),
+          rec("California", "dominant", "dominant", "dominant", None, 0.9, 4)]
+    b = P.by_k(rs)
+    assert b["3"]["cases"] == {"California": {"dominant": 1}, "Hawaii": {"dominant": 2, "longer": 1},
+                               "all": {"dominant": 3, "longer": 1}}
+    assert b["4"]["window"]["Hawaii"] == {"switched": 2, "wind_outside": 1, "no_window": 0, "rated_outside": 0}
+    assert b["6"]["window"]["all"] == {"switched": 2, "wind_outside": 0, "no_window": 1, "rated_outside": 0}
+    # outside-window examples, biggest wind sea first: 0.5 m (hour 1) before 0.35 m (hour 2)
+    assert [x["valid_time"] for x in b["3"]["window_examples"]["Hawaii"]] == ["t1", "t2"]
+    assert b["3"]["window_examples"]["California"] == []
+    assert b["4"]["switched"]["all"]["hours"] == 3
+    # 3.0 ft at 12 s (period_factor 1.15) would read 3.0 x 1.05 / 1.15 = 2.739 at 8 s
+    assert b["6"]["paths"]["other"]["headline_if_shown_period"] == 2.74
+    assert b["3"]["paths_bigger_shorter"]["other"]["hours"] == 3
+
+
+def test_the_archive_keeps_jacksonville_and_hatteras_and_counts_the_alignment():
+    a = P.Archive({s["name"]: s for s in ROSTER}, factors=FACTORS, median_factor=1.59)
+    jax = {"name": "Jacksonville Beach Pier", "state": "Florida"}
+    rows = [_row(12, 4.27, 4.27, STAMP, valid_time="2026-10-25T23:00:00+00:00"),
+            _row(12, 4.27, 4.27, STAMP, valid_time="2026-10-26T00:00:00+00:00"),
+            _row(12, 4.27, 4.27, STAMP, valid_time="2026-10-28T23:00:00+00:00"),
+            _row(12, 4.27, 4.27, STAMP, valid_time="2026-10-29T00:00:00+00:00")]
+    a(jax, ROSTER[0], rows, False)
+    hat = {"name": "Rodanthe", "state": "North Carolina"}
+    spot = {"name": "Rodanthe", "orientation_deg": 90.0, "nearest_buoy_id": "44095"}
+    hrows = [_row(17, 0.58, 0.58, STAMP, swell_tp=12.97, swell_1_tp=12.97, wind_hs=3.55, wind_tp=10.2,
+                  hs=0.15, dir_gain=0.3, valid_time=f"2026-09-23T{h:02d}:00:00+00:00") for h in (16, 17, 19, 20)]
+    hrows.append(dict(hrows[0], valid_time="2026-09-24T17:00:00+00:00", dir_gain=0.6))
+    # 3.2x (0.768 / 0.24) and shorter: switched at K 3 only; and NOT over 4x, so not counted
+    hrows.append(dict(hrows[0], valid_time="2026-09-25T17:00:00+00:00", wind_wave_hs=0.768,
+                      dir_gain=0.1))
+    a(hat, spot, hrows, False)
+    a.finish()
+    assert [h["valid_time"][:13] for h in a.jacksonville] == ["2026-10-26T00", "2026-10-28T23"]
+    assert [h["valid_time"][:13] for h in a.hatteras] == ["2026-09-23T17", "2026-09-23T19"]
+    # every Rodanthe hour is an NWPS-override hour with the wind sea 14.8x (3.55 / 0.24); four of
+    # the five have dir_gain 0.3, under 0.5
+    c = a.table()["North Carolina"]
+    assert (c["nwps_ratio_over_4"], c["nwps_ratio_over_4_alignment_under_half"]) == (5, 4)
+    assert (c["switched_k3"], c["switched_k4"], c["switched_k6"]) == (6, 5, 5)    # 14.8x: all K
+    # the archive keeps the K-3-only hour; the site's rule (K 4) leaves it out
+    assert len(a.records) == 6 and len(a.switched()) == 5
+    assert [r["valid_time"][:10] for r in a.records if not r["cases"]["4.0"]] == ["2026-09-25"]
+
+
+def test_run_lists_jacksonvilles_published_hours_after_the_archive(monkeypatch):
+    rep = _run_new_fields(monkeypatch, calibrated_switch=False)
+    jx = [h for h in rep["jacksonville"]]
+    # the archive (the fake compare passes every row) already holds the 28 Oct hours: none is
+    # taken twice
+    assert [h["valid_time"][:13] for h in jx] == ["2026-10-28T12", "2026-10-28T13", "2026-10-28T14"]
+    assert not any(h.get("from_published_window") for h in jx)
+    assert [h["shown"] for h in jx] == ["swell", "wind_sea", "swell"]
+    # buoy 41117 at 12:05 joins the 12:00 hour: 2.7 m, 9 s
+    assert (jx[0]["buoy_hs_m"], jx[0]["buoy_tp"], jx[1]["buoy_hs_m"]) == (2.7, 9.0, None)
+
+
+def test_run_takes_jacksonvilles_hours_past_the_archive_from_the_published_window(monkeypatch):
+    """The archive ends at the run's hour; Jacksonville's later 26-28 Oct hours come from the
+    published window, marked as such, and are not taken twice."""
+    spots = [{"id": 3, "name": "Jacksonville Beach Pier", "state": "Florida"}]
+    pubs = _published()["Jacksonville Beach Pier"]
+    fc = [{**r, "spot_id": 3, "source": "nwps"} for r in pubs]
+    # the archive's only hour (12:00) switches at no K, so buoy 41117 is fetched for Jacksonville's
+    # listing alone
+    obs = [{"buoy_id": "41117", "observed_at": "2026-10-28T12:05:00+00:00", "hs": 2.7, "tp": 9.0,
+            "swell_hs": 1.0, "swell_tp": 11.0}]
+    client = _Client({"spots": spots, "forecasts": fc, "buoy_observations": obs})
+    monkeypatch.setattr(P, "RUN54_DISPLAY", {"all": (2, 0.5, 0.5, 0.0)})
+
+    def compare(cl, since, until, roster, factors=None, on_rows=None):
+        # the archive holds only the 12:00 hour
+        on_rows(spots[0], ROSTER[0], [fc[0]], False)
+        return {"_pairs": {"srf": [_srf(1.0, 2.0, switched=True), _srf(2.0, 2.0)]}, "errors": {}}
+
+    rep = P.run(client, ROSTER, "2026-10-28T00:00:00+00:00", datetime(2026, 9, 7, tzinfo=timezone.utc),
+                datetime(2026, 10, 29, tzinfo=timezone.utc), factors=FACTORS, compare=compare)
+    jx = rep["jacksonville"]
+    assert [(h["valid_time"][:13], bool(h.get("from_published_window"))) for h in jx] == [
+        ("2026-10-28T12", False), ("2026-10-28T13", True)]
+    assert rep["_records"] == [] and (jx[0]["buoy_hs_m"], jx[0]["buoy_tp"]) == (2.7, 9.0)
