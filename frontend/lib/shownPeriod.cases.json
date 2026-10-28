@@ -25,7 +25,7 @@
    "tp": 9.0,
    "dp": 70.0,
    "which": "wind_sea",
-   "note": "rated partition swell_2 (tp 3.0, dp 80.0 match); wind sea 2.4 > 0.24 and 9.0 > 3.0"
+   "note": "rated partition swell_2 (tp 3.0, dp 80.0 match); LONGER: 2.4 > 0.24 and 9.0 - 3.0 = 6.0 >= 0.5"
   },
   {
    "name": "Lower Trestles: a bigger wind sea with a SHORTER period does not take over",
@@ -51,7 +51,7 @@
    "tp": 15.1,
    "dp": 200.0,
    "which": "swell",
-   "note": "1.0 > 0.5 but 5.2 < 15.1: the shown period may only go up"
+   "note": "1.0 > 0.5 but 5.2 < 15.1, and 1.0 < 4 x 0.5 = 2.0: the groundswell stays"
   },
   {
    "name": "a longer but SMALLER wind sea does not take over",
@@ -106,7 +106,7 @@
    "note": "the wind sea must be strictly bigger"
   },
   {
-   "name": "equal periods: no switch",
+   "name": "equal periods, but 10x the rated swell: the DOMINANT case",
    "row": {
     "swell_source": "nwps_height_ww3_dir",
     "swell_tp": 3.0,
@@ -127,9 +127,9 @@
     "wind_wave_dp": 70.0
    },
    "tp": 3.0,
-   "dp": 80.0,
-   "which": "swell",
-   "note": "the wind sea must be strictly longer"
+   "dp": 70.0,
+   "which": "wind_sea",
+   "note": "3.0 - 3.0 = 0 s is under 0.5, so not LONGER; 2.4 >= 4 x 0.24 = 0.96, so DOMINANT"
   },
   {
    "name": "the WW3 path (swell_source ww3) follows the same rule",
@@ -374,6 +374,136 @@
    "dp": null,
    "which": "swell",
    "note": "no period and no direction to show"
+  },
+  {
+   "name": "a bigger wind sea only 0.4 s longer, under 4x: no switch",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 8.0,
+    "swell_dp": 90.0,
+    "tp": 9.1,
+    "dp": 72.0,
+    "swell_1_hs": 0.1,
+    "swell_1_tp": 11.0,
+    "swell_1_dp": 120.0,
+    "swell_2_hs": 1.0,
+    "swell_2_tp": 8.0,
+    "swell_2_dp": 90.0,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.5,
+    "wind_wave_tp": 8.4,
+    "wind_wave_dp": 60.0
+   },
+   "tp": 8.0,
+   "dp": 90.0,
+   "which": "swell",
+   "note": "8.4 - 8.0 = 0.4 < 0.5, and 1.5 < 4 x 1.0"
+  },
+  {
+   "name": "a bigger wind sea exactly 0.5 s longer: the LONGER case",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 8.0,
+    "swell_dp": 90.0,
+    "tp": 9.1,
+    "dp": 72.0,
+    "swell_1_hs": 0.1,
+    "swell_1_tp": 11.0,
+    "swell_1_dp": 120.0,
+    "swell_2_hs": 1.0,
+    "swell_2_tp": 8.0,
+    "swell_2_dp": 90.0,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.5,
+    "wind_wave_tp": 8.5,
+    "wind_wave_dp": 60.0
+   },
+   "tp": 8.5,
+   "dp": 60.0,
+   "which": "wind_sea",
+   "note": "8.5 - 8.0 = 0.5 >= 0.5 and 1.5 > 1.0"
+  },
+  {
+   "name": "a wind sea exactly 4x a long-period scrap: the DOMINANT case, and the period goes DOWN",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 14.0,
+    "swell_dp": 100.0,
+    "tp": 9.1,
+    "dp": 72.0,
+    "swell_1_hs": 0.1,
+    "swell_1_tp": 11.0,
+    "swell_1_dp": 120.0,
+    "swell_2_hs": 0.5,
+    "swell_2_tp": 14.0,
+    "swell_2_dp": 100.0,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 2.0,
+    "wind_wave_tp": 8.0,
+    "wind_wave_dp": 60.0
+   },
+   "tp": 8.0,
+   "dp": 60.0,
+   "which": "wind_sea",
+   "note": "2.0 >= 4 x 0.5 = 2.0; shown 8.0 s, down from the scrap's 14.0 s"
+  },
+  {
+   "name": "a wind sea 3.9x a long-period scrap: no switch",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 14.0,
+    "swell_dp": 100.0,
+    "tp": 9.1,
+    "dp": 72.0,
+    "swell_1_hs": 0.1,
+    "swell_1_tp": 11.0,
+    "swell_1_dp": 120.0,
+    "swell_2_hs": 0.5,
+    "swell_2_tp": 14.0,
+    "swell_2_dp": 100.0,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.95,
+    "wind_wave_tp": 8.0,
+    "wind_wave_dp": 60.0
+   },
+   "tp": 14.0,
+   "dp": 100.0,
+   "which": "swell",
+   "note": "1.95 < 2.0, and 8.0 is shorter than 14.0"
+  },
+  {
+   "name": "Hatteras, 2026-09-23: an 11.65 ft, 10.2 s wind sea over a 0.2 ft, 13 s scrap",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 12.97,
+    "swell_dp": 130.94,
+    "tp": 9.1,
+    "dp": 72.0,
+    "swell_1_hs": 0.1,
+    "swell_1_tp": 11.0,
+    "swell_1_dp": 120.0,
+    "swell_2_hs": 0.06,
+    "swell_2_tp": 12.97,
+    "swell_2_dp": 130.94,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 3.55,
+    "wind_wave_tp": 10.2,
+    "wind_wave_dp": 59.42
+   },
+   "tp": 10.2,
+   "dp": 59.42,
+   "which": "wind_sea",
+   "note": "3.55 >= 4 x 0.06 = 0.24 (59x): DOMINANT; shown 10.2 s from 59 deg, not 13 s from 131 deg"
   }
  ]
 }

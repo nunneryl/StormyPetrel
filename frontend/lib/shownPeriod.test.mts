@@ -4,8 +4,9 @@
  * every period and direction the site shows read through it.
  *
  *   1. THE SHARED CASES. Every row in the table gets the period, direction and train written there.
- *   2. THE RULE'S EDGES. A wind sea takes over only when it is strictly bigger and strictly longer
- *      than the rated partition; the shown period never goes down.
+ *   2. THE RULE'S EDGES. A wind sea takes over when it is bigger and at least 0.5 s longer than the
+ *      rated partition, or at least 4x its height; only the second can lower the shown period.
+ *      The two constants are the pipeline's.
  *   3. EVERY DISPLAY READS IT. The six places that show a period or swell direction call shownTrain,
  *      and no page or component reads swell_tp / swell_dp itself.
  *
@@ -17,7 +18,9 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { walk } from './copyScan.ts';
-import { ratedPartition, shownTrain, windSeaDominates, type ShownTrainRow } from './shownPeriod.ts';
+import {
+  DOMINANCE_K, MIN_LONGER_S, ratedPartition, shownTrain, switchCase, windSeaDominates, type ShownTrainRow,
+} from './shownPeriod.ts';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = ''): void {
@@ -57,24 +60,30 @@ const base: ShownTrainRow = {
 check('the rated partition is found by its period and direction',
   JSON.stringify(ratedPartition(base)) === JSON.stringify([1.0, 6.0, 90.0]));
 check('no shown train for no row', JSON.stringify(shownTrain(null)) === '{"tp":null,"dp":null,"which":"swell"}');
-// A sweep around the rated 1.0 m / 6 s partition: the wind sea takes over exactly when it is
-// above both, and the shown period is never below the rated one.
+// A sweep around the rated 1.0 m / 6 s partition: LONGER when the wind sea is above 1.0 m and at
+// least 6.5 s; DOMINANT at 4.0 m or more, whatever its period. Only DOMINANT can lower the period.
 let swept = 0;
 const wrong: string[] = [];
-for (const wh of [0.5, 0.99, 1.0, 1.01, 2.0, 5.0]) {
-  for (const wt of [3.0, 5.99, 6.0, 6.01, 9.0, 16.0]) {
+for (const wh of [0.5, 0.99, 1.0, 1.01, 2.0, 3.99, 4.0, 5.0]) {
+  for (const wt of [3.0, 5.99, 6.0, 6.49, 6.5, 9.0, 16.0]) {
     swept += 1;
     const row = { ...base, wind_wave_hs: wh, wind_wave_tp: wt };
-    const want = wh > 1.0 && wt > 6.0;
+    const want = wh > 1.0 && wt >= 6.5 ? 'longer' : (wh >= 4.0 ? 'dominant' : null);
     const got = shownTrain(row);
-    if (windSeaDominates(row) !== want || (got.which === 'wind_sea') !== want
-        || (got.tp ?? 0) < 6.0) {
-      wrong.push(`${wh} m ${wt} s -> ${JSON.stringify(got)}`);
+    if (switchCase(row) !== want || windSeaDominates(row) !== (want !== null)
+        || (got.which === 'wind_sea') !== (want !== null)
+        || ((got.tp ?? 0) < 6.0 && want !== 'dominant')) {
+      wrong.push(`${wh} m ${wt} s -> ${switchCase(row)} ${JSON.stringify(got)}`);
     }
   }
 }
-check(`across ${swept} wind seas, it takes over exactly when bigger and longer, and the period never drops`,
-  wrong.length === 0 && swept === 36, wrong.slice(0, 5).join('; '));
+check(`across ${swept} wind seas, it switches exactly on its two cases, and only DOMINANT lowers the period`,
+  wrong.length === 0 && swept === 56, wrong.slice(0, 5).join('; '));
+// One rule, two languages: the constants are the pipeline's.
+const pyRule = readFileSync(join(FRONTEND, '..', 'pipeline', 'forecast', 'shown_period.py'), 'utf8');
+check('MIN_LONGER_S and DOMINANCE_K are pipeline/forecast/shown_period.py\'s',
+  /^MIN_LONGER_S = 0\.5$/m.test(pyRule) && /^DOMINANCE_K = 4\.0$/m.test(pyRule)
+  && MIN_LONGER_S === 0.5 && DOMINANCE_K === 4, `${MIN_LONGER_S} ${DOMINANCE_K}`);
 
 // --------------------------------------------------------------------------- //
 // 3 — every display reads it                                                   //

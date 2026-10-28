@@ -251,10 +251,25 @@ def test_a_bigger_longer_wind_sea_sets_the_shoaling_period_and_marks_the_row():
     assert S.surf_period(_storm_hour(2.4, 500.0)) == (500.0, True)
 
 
-def test_a_wind_sea_that_is_bigger_but_shorter_or_longer_but_smaller_does_not():
-    for wind_hs, wind_tp in ((2.4, 2.9), (0.2, 9.0), (0.24, 9.0), (2.4, 3.0)):
+def test_a_wind_sea_that_is_neither_longer_by_half_a_second_nor_4x_does_not():
+    # against the rated 0.24 m / 3 s: 0.9 m is 3.75x (under 4); 2.9 s is shorter, 3.4 s only 0.4 s
+    # longer; 0.2 m and 0.24 m are not bigger
+    for wind_hs, wind_tp in ((0.9, 2.9), (0.2, 9.0), (0.24, 9.0), (0.9, 3.4), (0.9, 3.0)):
         e = _storm_hour(wind_hs, wind_tp)
         assert S.surf_period(e) == (3.0, False), (wind_hs, wind_tp)
         ratings = {"Rockaway": [e]}
         S.apply_surf_height(ratings, [{"name": "Rockaway"}], {"x": {"factor": 2.0}}, _slug)
         assert ratings["Rockaway"][0]["face_correction_version"] == STAMP + MARK
+
+
+def test_a_wind_sea_4x_the_rated_swell_sets_a_shorter_shoaling_period():
+    """DOMINANT: a 1.0 m wind sea at 500 s over a 0.24 m swell rated at 600 s (4.17x) is shoaled at
+    500 s. Both periods are in the long-wave limit, so the height is the Green's-law 3.46 ft from
+    Hs 1.00 m (4.27 ft at period_factor 1.3); the row is marked as shoaled at the wind sea's period."""
+    e = _storm_hour(1.0, 500.0, swell_tp=600.0, swell_2_tp=600.0, face_ft=4.27, face_ft_raw=4.27)
+    assert S.surf_period(e) == (500.0, True)
+    ratings = {"Rockaway": [e]}
+    stats = S.apply_surf_height(ratings, [{"name": "Rockaway"}], {"x": {"factor": 2.0}}, _slug)
+    assert ratings["Rockaway"][0]["face_ft"] == 3.46
+    assert ratings["Rockaway"][0]["face_correction_version"] == STAMP + MARK + ":windsea"
+    assert stats["hours_wind_sea"] == 1

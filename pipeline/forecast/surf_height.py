@@ -14,8 +14,9 @@ and fallback hours keep the producer's face.
 
 typical. Hs carried from D0_M = 10 m to its breaking point by linear shoaling — Green's energy flux, H = Hs x sqrt(Cg(D0)
 / Cg(h)) — breaking where H reaches GAMMA = 0.78 x the depth h, at the hour's rated period
-(swell_tp), or at the wind sea's where the wind sea is bigger and longer-period than the rated
-partition (shown_period.py; since 2026-10-28, marked WIND_SEA_MARK). Solved once per (Hs, period) pair rounded to 0.01 m and 0.1 s. Hs is the NWPS
+(swell_tp), or at the wind sea's where shown_period shows the wind sea: bigger and at least 0.5 s
+longer than the rated partition, or at least 4x its height whatever its period (since
+2026-10-28, marked WIND_SEA_MARK). Solved once per (Hs, period) pair rounded to 0.01 m and 0.1 s. Hs is the NWPS
 node's height the override sized the hour's face from, recovered from that face (face_ft_raw)
 by inverting the override's formula, face = Hs x period_factor(swell_tp, 'ww3') x 3.281: the row's
 own hs is rate_spot's and is not always the height the override used. It is how the validation
@@ -46,8 +47,8 @@ NWPS_OVERRIDE_SOURCES = frozenset({"nwps", "nwps_height_ww3_dir"})
 SURF_MARK_TAG = "+surf"
 SURF_MARK = f"{SURF_MARK_TAG}:k{SURF_K:.2f}:d{D0_M:g}:g{GAMMA:g}"
 # Added after SURF_MARK on a row shoaled at the WIND SEA's period, not the rated swell's
-# (forecast/shown_period.py): the hours where the wind sea is bigger and longer-period than
-# the rated partition. Every other row's mark is SURF_MARK alone, as #283 wrote it.
+# (forecast/shown_period.py): the hours whose shown train is the wind sea. Every other row's
+# mark is SURF_MARK alone, as #283 wrote it.
 WIND_SEA_MARK = ":windsea"
 
 
@@ -164,8 +165,7 @@ def sized_hs(entry):
 
 def surf_period(entry):
     """(period s, wind_sea) the hour is shoaled at: the shown train's period
-    (shown_period.shown_train), which is the rated swell_tp unless the wind sea is bigger and
-    longer-period than the rated partition."""
+    (shown_period.shown_train), the rated swell_tp unless the wind sea is shown."""
     from .shown_period import shown_train
     tp, _dp, which = shown_train(entry)
     return tp, which == "wind_sea"
@@ -178,8 +178,7 @@ def apply_surf_height(ratings, spots, factors, slug_for=None):
     written, so a failure leaves every row as it was.
 
     THE PERIOD IT SHOALS AT is surf_period's: the rated swell_tp, or the wind sea's period
-    where the wind sea is bigger and longer-period than the rated partition (those rows get
-    WIND_SEA_MARK after SURF_MARK). Hs is still recovered at swell_tp, the period the
+    where the shown train is the wind sea (those rows get WIND_SEA_MARK after SURF_MARK). Hs is still recovered at swell_tp, the period the
     override's face was sized at.
 
     Returns {spots_calibrated, spots_rewritten, hours_rewritten, hours_wind_sea,

@@ -7,10 +7,12 @@
  * 0.8 ft "swell" beside a 7.8 ft, 9 s wind sea.
  *
  * So on an hour rated on a WW3 swell partition (swell_source 'ww3' or 'nwps_height_ww3_dir'),
- * the wind sea is shown instead when it is both BIGGER than the rated partition and
- * LONGER-PERIOD than it. "Longer" as well, so a fat short-period chop never replaces a lean
- * groundswell: the shown period can only go up. The rated partition is the swell_N whose tp and
- * dp equal swell_tp and swell_dp to within 0.001; no match, no switch.
+ * the wind sea is shown instead when either
+ *   LONGER    it is bigger than the rated partition AND at least MIN_LONGER_S (0.5 s) longer;
+ *   DOMINANT  its height is at least DOMINANCE_K (4) times the rated partition's, whatever its
+ *             period — the rated "swell" is then a scrap, and the shown period can go down.
+ * A lean groundswell under a moderate chop (2x) stays the swell. The rated partition is the
+ * swell_N whose tp and dp equal swell_tp and swell_dp to within 0.001; no match, no switch.
  *
  * The stars are untouched: they stay on the rated partition. pipeline/forecast/shown_period.py is
  * the same rule (it also sets the period the surf height is shoaled at), and both are held to
@@ -33,6 +35,10 @@ export type ShownTrain = { tp: number | null; dp: number | null; which: 'swell' 
 
 export const WW3_IDENTITY_SOURCES: readonly string[] = ['ww3', 'nwps_height_ww3_dir'];
 const MATCH_TOL = 0.001;
+/** The rule's two constants: the same values as pipeline/forecast/shown_period.py, whose test
+ *  reads them from that file. */
+export const MIN_LONGER_S = 0.5;
+export const DOMINANCE_K = 4;
 
 function num(v: number | null | undefined): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
@@ -55,15 +61,22 @@ export function ratedPartition(row: ShownTrainRow): [number, number, number] | n
   return null;
 }
 
-/** Is the wind sea bigger AND longer-period than the rated swell partition? */
-export function windSeaDominates(row: ShownTrainRow): boolean {
-  if (!WW3_IDENTITY_SOURCES.includes(row.swell_source ?? '')) return false;
+/** 'longer' or 'dominant' when the wind sea is shown ('longer' first when both hold), else null. */
+export function switchCase(row: ShownTrainRow): 'longer' | 'dominant' | null {
+  if (!WW3_IDENTITY_SOURCES.includes(row.swell_source ?? '')) return null;
   const rated = ratedPartition(row);
   const wh = num(row.wind_wave_hs);
   const wt = num(row.wind_wave_tp);
   const wd = num(row.wind_wave_dp);
-  if (rated === null || wh === null || wt === null || wd === null) return false;
-  return wh > rated[0] && wt > rated[1];
+  if (rated === null || wh === null || wt === null || wd === null) return null;
+  if (wh > rated[0] && wt - rated[1] >= MIN_LONGER_S) return 'longer';
+  if (wh >= DOMINANCE_K * rated[0]) return 'dominant';
+  return null;
+}
+
+/** Is the wind sea shown for the row? */
+export function windSeaDominates(row: ShownTrainRow): boolean {
+  return switchCase(row) !== null;
 }
 
 /** The period and direction to show for the row, and which train they belong to. */
