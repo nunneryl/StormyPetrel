@@ -310,3 +310,40 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+
+# --------------------------------------------------------------------------- #
+# 7 — the period and direction are the train the site shows                    #
+# --------------------------------------------------------------------------- #
+def test_a_storm_hour_reports_the_wind_seas_period_and_direction():
+    """Jacksonville, 2026-10-27: rated on a 0.24 m, 3 s, 80 deg swell partition beside a 2.4 m,
+    9 s wind sea from 70 deg. The report says 9s from ENE (70 deg), as the period tile does."""
+    storm = {**_row(4.4, 4.4, "nwps_height_ww3_dir"), "swell_tp": 3.0, "swell_dp": 80.0,
+             "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+             "wind_wave_hs": 2.4, "wind_wave_tp": 9.0, "wind_wave_dp": 70.0}
+    calm = {**storm, "wind_wave_hs": 0.2}
+    _, user = _sent([_spot("Jacksonville Beach Pier", storm), _spot("Calm", calm)])
+    assert "@ 9s from ENE" in _line(user, "Jacksonville Beach Pier"), user
+    assert "@ 3s from E" in _line(user, "Calm"), user
+
+
+def test_the_report_reads_the_spots_window():
+    """The same storm hour at a spot whose window is 180-270 (span 94: sector 178-272): the wind
+    sea from 70 is 178 - 70 = 108 deg outside it, so the report gives the rated 3s from E, as the
+    page does. The spots fetch selects the window."""
+    storm = {**_row(4.4, 4.4, "nwps_height_ww3_dir"), "swell_tp": 3.0, "swell_dp": 80.0,
+             "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+             "wind_wave_hs": 2.4, "wind_wave_tp": 9.0, "wind_wave_dp": 70.0}
+    behind = dict(_spot("Behind", storm), swell_window_arcs=[{"min": 180, "max": 270, "span": 94}])
+    _, user = _sent([behind, _spot("Open", storm)])
+    assert "@ 3s from E" in _line(user, "Behind"), user
+    assert "@ 9s from ENE" in _line(user, "Open"), user
+    assert "swell_window_arcs" in [c.strip() for c in D._SPOT_COLS.split(",")]
+
+
+def test_the_fetch_selects_the_partitions_the_shown_train_reads():
+    cols = [c.strip() for c in D._FCAST_COLS.split(",")]
+    for p in ("swell_1", "swell_2", "swell_3", "wind_wave"):
+        for f in ("hs", "tp", "dp"):
+            assert cols.count(f"{p}_{f}") == 1, (p, f, cols)

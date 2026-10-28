@@ -788,3 +788,52 @@ def test_assess_display_is_the_surf_height_only_where_the_site_will_show_it():
     assert (big["typical"], big["display"]) == (26.58, 18.6)
     cal = F.assess(rows, spot, "New York", calibrated=True)
     assert [g["display"] for g in cal] == [4.27] * 5 and cal[0]["calibrated"] is True
+
+
+def test_assess_display_shoals_at_the_wind_seas_period_where_the_site_will():
+    """A storm hour (shown_period's Jacksonville case): face_ft_raw 4.27 at swell_tp 3 s
+    (period_factor 'ww3' 1.0) is Hs 4.27 / 3.281 = 1.30143 -> 1.30 m. With a 2.4 m wind sea at
+    500 s the display shoals at 500 s (Green's law): 0.70 x 1.508057 x 1.30^0.8 x 3.281 =
+    0.70 x 1.860248 x 3.281 = 4.2724 -> 4.27. A 0.2 m wind sea does not take over, and the
+    display is then the rated-period one."""
+    spot = {"name": "Jacksonville Beach Pier", "nwps_wfo": "jax"}
+    row = {"valid_time": "2026-10-27T15:00:00+00:00", "swell_source": "nwps_height_ww3_dir",
+           "face_ft_raw": 4.27, "face_ft": 4.27, "swell_tp": 3.0, "swell_dp": 80.0, "tp": 9.0,
+           "hs": 2.0, "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+           "wind_wave_hs": 2.4, "wind_wave_tp": 500.0, "wind_wave_dp": 70.0}
+    storm, calm = F.assess([row, dict(row, wind_wave_hs=0.2)], spot, "Florida")
+    assert storm["switched"] is True and storm["display"] == 4.27
+    assert storm["display_rated"] != storm["display"]
+    assert calm["switched"] is False and calm["display"] == calm["display_rated"]
+    cal = F.assess([row], spot, "Florida", calibrated=True)[0]
+    assert cal["switched"] is False and cal["display"] == cal["display_rated"] == 4.27
+    # the case, and the comparison variant: LONGER keeps the fix's height
+    assert (storm["case"], storm["display_variant"]) == ("longer", 4.27)
+    assert (calm["case"], calm["display_variant"]) == (None, calm["display_rated"])
+    assert (cal["case"], cal["display_variant"]) == (None, 4.27)
+
+
+def test_assess_reads_the_spots_window_and_keeps_dominant_at_the_rated_period_in_the_variant():
+    """The storm hour's wind sea from 70 at a spot whose window is 180-270 (span 94: sector
+    178-272) is 108 deg outside it: not switched, display at the rated period. A DOMINANT hour (a
+    0.24 m swell rated at 600 s under a 1.0 m wind sea at 500 s, 4.17x; 4.27 ft raw at 600 s is
+    Hs 1.00 m, 3.46 ft at either long period) is switched, and its variant is the rated-period
+    display, here the same 3.46."""
+    spot = {"name": "Jacksonville Beach Pier", "nwps_wfo": "jax",
+            "swell_window_arcs": [{"min": 180, "max": 270, "span": 94}]}
+    row = {"valid_time": "2026-10-27T15:00:00+00:00", "swell_source": "nwps_height_ww3_dir",
+           "face_ft_raw": 4.27, "face_ft": 4.27, "swell_tp": 3.0, "swell_dp": 80.0, "tp": 9.0,
+           "hs": 2.0, "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+           "wind_wave_hs": 2.4, "wind_wave_tp": 500.0, "wind_wave_dp": 70.0}
+    behind = F.assess([row], spot, "Florida")[0]
+    assert (behind["switched"], behind["case"]) == (False, None)
+    assert behind["display"] == behind["display_rated"] == behind["display_variant"]
+    dom = dict(row, swell_tp=600.0, swell_2_tp=600.0, wind_wave_hs=1.0, wind_wave_dp=200.0)
+    d = F.assess([dom], spot, "Florida")[0]
+    assert (d["switched"], d["case"], d["display"], d["display_rated"], d["display_variant"]) == (
+        True, "dominant", 3.46, 3.46, 3.46)
+    # the same DOMINANT wind sea at 8 s: the fix shoals at 8 s, under the long-wave 3.46; the
+    # variant stays at the rated period's 3.46
+    d8 = F.assess([dict(dom, wind_wave_tp=8.0)], spot, "Florida")[0]
+    assert (d8["case"], d8["display_rated"], d8["display_variant"]) == ("dominant", 3.46, 3.46)
+    assert d8["display"] < 3.46

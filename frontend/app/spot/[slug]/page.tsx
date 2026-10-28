@@ -282,6 +282,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           rows={forecasts}
           serverNowMs={nowMs}
           offshoreDeg={spot.offshore_wind_deg}
+          windowArcs={spot.swell_window_arcs}
           faceAction={<SurfReportTrigger />}
         />
         <SurfReportPanel />
@@ -356,7 +357,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           to the next 48 hours with an in-grid expand button. */}
       <section>
         <SectionHeader title={`${CLAIMED_FORECAST_LABEL} forecast`} />
-        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} />
+        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} windowArcs={spot.swell_window_arcs} />
       </section>
 
       {/* Footer breadcrumbs */}

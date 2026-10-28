@@ -8,8 +8,8 @@ import {
   fmtHeightRange,
   fmtSec,
   msToMph,
-  pickSwell,
 } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 import { basemap } from '@/lib/basemap';
 import { heightBasis, heightBasisMarkHtml } from '@/lib/heightBasis';
 import { fmtBreakType } from '@/lib/provenance';
@@ -323,8 +323,7 @@ function starsHtml(score: number | null | undefined, size = 14): string {
 function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
   const f = s.latest;
 
-  const swellDir = pickSwell(f?.swell_dp ?? null, f?.dp ?? null);
-  const swellPeriod = pickSwell(f?.swell_tp ?? null, f?.tp ?? null);
+  const { tp: swellPeriod, dp: swellDir } = shownTrain(f, s.swell_window_arcs);
   const swellArrow =
     swellDir !== null && swellDir !== undefined
       ? `${arrowSvg(swellDir, '#0369A1')}&nbsp;${escapeHtml(degToCardinal(swellDir))}`

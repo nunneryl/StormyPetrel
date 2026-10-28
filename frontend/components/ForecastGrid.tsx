@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Forecast } from '@/lib/types';
+import type { Forecast, Spot } from '@/lib/types';
 import { CLAIMED_FORECAST_DAYS, CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from '@/lib/ratings';
 import {
@@ -11,8 +11,8 @@ import {
   fmtSec,
   fmtShortTime,
   msToMph,
-  pickSwell,
 } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 import { HEADLINE_HEIGHT_COLUMN } from '@/lib/heightBasis';
 import { CompassArrow } from './CompassArrow';
 import { StarRating, ratingCellBg } from './StarRating';
@@ -60,9 +60,12 @@ const COLLAPSED_HOURS = 48;
 export function ForecastGrid({
   forecasts,
   offshoreDeg,
+  windowArcs,
 }: {
   forecasts: Forecast[];
   offshoreDeg: number | null | undefined;
+  /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
+  windowArcs: Spot['swell_window_arcs'];
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -106,8 +109,7 @@ export function ForecastGrid({
               </div>
               {rows.map((r, idx) => {
                 const tier = tierFromStars(r.stars);
-                const dp = pickSwell(r.swell_dp, r.dp);
-                const tp = pickSwell(r.swell_tp, r.tp);
+                const { tp, dp } = shownTrain(r, windowArcs);
                 const wMph = msToMph(r.wind_speed);
                 const wQ = classifyWind(r.wind_dir, offshoreDeg ?? null);
                 const tideUp = idx + 1 < rows.length

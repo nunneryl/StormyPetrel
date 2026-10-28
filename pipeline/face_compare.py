@@ -95,8 +95,9 @@ from .face_sources import USER_AGENT, ZONE_TOLERANCE_KM, _UGC_LINE, _ugc_codes, 
     parse_surf_height
 
 from .forecast.surf_height import (D0_M, GAMMA, M_TO_FT, NWPS_OVERRIDE_SOURCES,  # noqa: F401
-                                   SURF_K, breaking_height, group_velocity, typical_face_ft,
-                                   wavenumber)
+                                   SURF_K, breaking_height, group_velocity, surf_period,
+                                   typical_face_ft, wavenumber)
+from .forecast.shown_period import switch_case
 
 SETS = 1.27
 SINCE = datetime(2026, 9, 7, tzinfo=timezone.utc)
@@ -144,7 +145,11 @@ WEEKDAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", 
 TODAY_PERIODS = ("TODAY", "REST OF TODAY", "THIS MORNING", "THIS AFTERNOON",
                  "REST OF THIS AFTERNOON")
 CANDIDATES = ("published", "display", "typical", "sets")
-FORECAST_COLS = "spot_id, valid_time, hs, tp, swell_tp, swell_source, face_ft, face_ft_raw"
+FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_tp, swell_dp, swell_source, face_ft, "
+                 "face_ft_raw, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, "
+                 "swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, "
+                 "wind_wave_dp, swell_hs, dir_gain, effective_size_ft, stars, nwps_cycle, "
+                 "wind_speed, wind_dir, wind_mult, chop_mult")
 
 
 def candidate_faces(hs, period, d0=D0_M):
@@ -574,15 +579,36 @@ def assess(rows: list[dict], spot: dict, state: str | None, calibrated: bool = F
     ok = [i for i, b in enumerate(base) if b["hs"] is not None and b["period"]]
     if ok:
         typ, sets = candidate_faces([base[i]["hs"] for i in ok], [base[i]["period"] for i in ok])
+        surf = []                                   # (base index, typical at the rated period)
         for j, i in enumerate(ok):
             base[i]["typical"] = round(float(typ[j]), 2)
             base[i]["sets"] = round(float(sets[j]), 2)
             if not calibrated and base[i]["source"] in NWPS_OVERRIDE_SOURCES:
-                base[i]["display"] = round(SURF_K * float(typ[j]), 2)
+                surf.append((i, float(typ[j])))
+        # display: the surf height shoaled at the period apply_surf_height uses (the wind sea's
+        # where shown_period shows it); display_rated: at the rated period, as #283 shipped it;
+        # case: shown_period's switch case; display_variant: a comparison only, the wind sea's
+        # period for the LONGER case and the rated period for the DOMINANT case.
+        arcs = spot.get("swell_window_arcs")
+        switched = [(i, tp) for i, _ in surf for tp, ws in [surf_period(rows[i], arcs)] if ws]
+        at_wind = dict(zip([i for i, _ in switched],
+                           typical_face_ft([base[i]["hs"] for i, _ in switched],
+                                           [tp for _, tp in switched]))) if switched else {}
+        for i, typ_rated in surf:
+            base[i]["display_rated"] = round(SURF_K * typ_rated, 2)
+            base[i]["switched"] = i in at_wind
+            base[i]["display"] = round(SURF_K * float(at_wind.get(i, typ_rated)), 2)
+            base[i]["case"] = switch_case(rows[i], arcs) if i in at_wind else None
+            base[i]["display_variant"] = (base[i]["display"] if base[i]["case"] == "longer"
+                                          else base[i]["display_rated"])
     for b in base:
         b.setdefault("typical", None)
         b.setdefault("sets", None)
         b.setdefault("display", b["published"])
+        b.setdefault("display_rated", b["display"])
+        b.setdefault("display_variant", b["display"])
+        b.setdefault("switched", False)
+        b.setdefault("case", None)
         if b["group"] == "headline" and b["typical"] is None:
             b["group"] = "no face"
     return base
@@ -642,7 +668,9 @@ def compare_srf(hours: list[dict], srf: dict) -> list[dict]:
         rec = {k: h[k] for k in ("spot", "slug", "state", "region", "type", "office", "group",
                                  "hour")}
         rec.update(lo=lo, hi=hi, hs=h["hs"], period=h["period"], band=period_band(h["period"]),
-                   source=h.get("source"), calibrated=h.get("calibrated"))
+                   source=h.get("source"), calibrated=h.get("calibrated"),
+                   switched=h.get("switched"), case=h.get("case"),
+                   display_rated=h.get("display_rated"), display_variant=h.get("display_variant"))
         for c in CANDIDATES:
             rec[c] = h.get(c)
             rec[f"{c}_side"] = classify(rec[c], lo, hi)
@@ -850,7 +878,10 @@ def compare_frf(duck: list[dict], lidar: dict, frf8: dict) -> dict:
 
 
 def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_get,
-        open_nc=_open_nc, factors=None) -> dict:
+        open_nc=_open_nc, factors=None, on_rows=None) -> dict:
+    """The comparison over every spot's archived hours from *since* to *until* (the module
+    docstring). *on_rows*(spot row, roster spot, archived rows, calibrated), when given, sees
+    each spot's archived rows as they are read, so period_preview counts from the same read."""
     from .enrich import _slug_for
     from .forecast.face_correction import load_face_factors, spot_factor
     factors = load_face_factors() if factors is None else factors
@@ -907,6 +938,8 @@ def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_ge
             continue
         kept = []
         calibrated = spot_factor(spot, factors, _slug_for) is not None
+        if on_rows is not None:
+            on_rows(s, spot, rows, calibrated)
         for h in assess(rows, spot, s.get("state"), calibrated):
             groups[h["group"]] += 1
             h["zone"] = zone_of[s["name"]]

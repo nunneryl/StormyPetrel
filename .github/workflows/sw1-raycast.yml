@@ -79,6 +79,14 @@ name: sw1-raycast
 #       homepage; then face_compare over the archive since 2026-09-07: run 53's K = 0.70 figures
 #       reproduced on the uncalibrated spots, and the displayed height against the NWS Surf Zone
 #       Forecast ranges by region beside today's. SELECT only.
+#   mode = period-preview: READ-ONLY. THE MERGE GATE for the swell train the site shows
+#       (pipeline/period_preview.py, forecast/shown_period.py): over the archive since 2026-09-07,
+#       how often by state the rated swell partition is small beside a bigger, longer-period wind
+#       sea, and on those hours the period and surf height before and after beside the nearest
+#       buoy; every published hour from now replayed through apply_surf_height (0 star and 0
+#       other-field differences, #283's surf rows reproduced byte for byte where nothing
+#       switches, no badge flips), the stars if the rating used the wind sea (informational), and
+#       run 54's NWS display table reproduced before the display with the fix. SELECT only.
 
 on:
   workflow_dispatch:
@@ -98,6 +106,7 @@ on:
           - data-quality
           - node-preview
           - surf-preview
+          - period-preview
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -154,7 +163,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -696,5 +705,50 @@ jobs:
             surf_preview_hours.csv
             face_compare.json
             face_compare_*.csv
+          retention-days: 90
+          if-no-files-found: warn
+
+  period-preview:
+    name: sw1 shown swell train preview (read-only)
+    if: ${{ inputs.mode == 'period-preview' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Diagnose the archive, replay the published window, compare with the NWS (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -m pipeline.period_preview --out period_preview.json --csv period_preview_hours.csv \
+            --archive-csv period_preview_archive.csv --compare-out face_compare.json
+
+      - name: Keep the results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: period-preview-${{ github.run_number }}
+          path: |
+            period_preview.json
+            period_preview_hours.csv
+            period_preview_archive.csv
+            face_compare.json
           retention-days: 90
           if-no-files-found: warn

@@ -34,6 +34,7 @@ from typing import Callable
 import anthropic
 
 from .db_import import get_client
+from .forecast.shown_period import shown_train
 from .forecast.surf_height import is_surf_row
 
 log = logging.getLogger("pipeline.daily_report")
@@ -158,11 +159,13 @@ def _ms_to_mph(ms: float | None) -> float | None:
 # ---------------------------------------------------------------------------
 
 _SPOT_COLS = (
-    "id, slug, name, state, lat, lng, offshore_wind_deg"
+    "id, slug, name, state, lat, lng, offshore_wind_deg, swell_window_arcs"
 )
 
 _FCAST_COLS = (
     "spot_id, valid_time, hs, swell_hs, tp, dp, swell_tp, swell_dp, "
+    "swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, "
+    "swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, "
     "wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, swell_source, stars, "
     "tide_level_ft"
 )
@@ -329,8 +332,9 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
         plus24 = s.get("plus24") or {}
         stars = latest.get("stars") or 0
         face = latest.get("face_ft")
-        tp = latest.get("swell_tp") or latest.get("tp")
-        dp = latest.get("swell_dp") or latest.get("dp")
+        # The train the site shows (forecast/shown_period.py): the rated swell, or the wind sea
+        # where that rule shows it, so the report and the page give one period.
+        tp, dp, _which = shown_train(latest, s.get("swell_window_arcs"))
         wind_dir = latest.get("wind_dir")
         wind_mph = _ms_to_mph(latest.get("wind_speed"))
         wind_q = _classify_wind(wind_dir, s.get("offshore_wind_deg"))
