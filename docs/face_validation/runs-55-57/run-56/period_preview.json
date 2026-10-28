@@ -1,0 +1,8032 @@
+{
+ "window": {
+  "published_since": "2026-10-28T16:57:13+00:00",
+  "archive": [
+   "2026-09-07T00:00:00+00:00",
+   "2026-10-28T16:00:00+00:00"
+  ]
+ },
+ "gate": {
+  "pass": true,
+  "hours": 84184,
+  "badge_flips": 0,
+  "surf_unswitched": 53661,
+  "switched": 5767,
+  "switched_face_moved": 5758,
+  "star_differences": 0,
+  "other_field_differences": 0,
+  "unexpected": 0,
+  "unswitched_mismatch": 0,
+  "run54_reproduced": true
+ },
+ "apply_stats": {
+  "spots_calibrated": 141,
+  "spots_rewritten": 457,
+  "hours_rewritten": 59428,
+  "hours_wind_sea": 5767,
+  "hours_kept_by_source": 6318,
+  "hours_without_inputs": 0,
+  "factors_missing": false
+ },
+ "badges": {
+  "calibrated -> calibrated": 18438,
+  "model -> model": 65746
+ },
+ "examples": {},
+ "archive_by_state": {
+  "California": {
+   "hours": 248000,
+   "ww3_identity": 124519,
+   "unmatched": 0,
+   "big_wind_sea": 7,
+   "switched": 3651,
+   "switched_longer": 15,
+   "switched_dominant": 3636,
+   "bigger_shorter": 32401,
+   "marginal": 5,
+   "nwps_ratio_over_4": 3455,
+   "nwps_ratio_over_4_alignment_under_half": 153,
+   "switched_k3": 7254,
+   "switched_k4": 3651,
+   "switched_k6": 946
+  },
+  "Delaware": {
+   "hours": 7440,
+   "ww3_identity": 7404,
+   "unmatched": 0,
+   "big_wind_sea": 160,
+   "switched": 1228,
+   "switched_longer": 115,
+   "switched_dominant": 1113,
+   "bigger_shorter": 3175,
+   "marginal": 312,
+   "nwps_ratio_over_4": 1192,
+   "nwps_ratio_over_4_alignment_under_half": 173,
+   "switched_k3": 1470,
+   "switched_k4": 1228,
+   "switched_k6": 923
+  },
+  "Florida": {
+   "hours": 101680,
+   "ww3_identity": 62622,
+   "unmatched": 0,
+   "big_wind_sea": 2389,
+   "switched": 11688,
+   "switched_longer": 1985,
+   "switched_dominant": 9703,
+   "bigger_shorter": 28734,
+   "marginal": 1916,
+   "nwps_ratio_over_4": 11133,
+   "nwps_ratio_over_4_alignment_under_half": 2308,
+   "switched_k3": 14885,
+   "switched_k4": 11688,
+   "switched_k6": 8386
+  },
+  "Georgia": {
+   "hours": 7440,
+   "ww3_identity": 6023,
+   "unmatched": 0,
+   "big_wind_sea": 108,
+   "switched": 935,
+   "switched_longer": 202,
+   "switched_dominant": 733,
+   "bigger_shorter": 2499,
+   "marginal": 349,
+   "nwps_ratio_over_4": 760,
+   "nwps_ratio_over_4_alignment_under_half": 30,
+   "switched_k3": 1166,
+   "switched_k4": 935,
+   "switched_k6": 751
+  },
+  "Hawaii": {
+   "hours": 68200,
+   "ww3_identity": 38113,
+   "unmatched": 0,
+   "big_wind_sea": 564,
+   "switched": 6706,
+   "switched_longer": 595,
+   "switched_dominant": 6111,
+   "bigger_shorter": 23542,
+   "marginal": 339,
+   "nwps_ratio_over_4": 6091,
+   "nwps_ratio_over_4_alignment_under_half": 1918,
+   "switched_k3": 10486,
+   "switched_k4": 6706,
+   "switched_k6": 2472
+  },
+  "Maine": {
+   "hours": 18600,
+   "ww3_identity": 14025,
+   "unmatched": 0,
+   "big_wind_sea": 238,
+   "switched": 991,
+   "switched_longer": 8,
+   "switched_dominant": 983,
+   "bigger_shorter": 5038,
+   "marginal": 393,
+   "nwps_ratio_over_4": 952,
+   "nwps_ratio_over_4_alignment_under_half": 35,
+   "switched_k3": 1420,
+   "switched_k4": 991,
+   "switched_k6": 664
+  },
+  "Maryland": {
+   "hours": 3720,
+   "ww3_identity": 2610,
+   "unmatched": 0,
+   "big_wind_sea": 102,
+   "switched": 364,
+   "switched_longer": 61,
+   "switched_dominant": 303,
+   "bigger_shorter": 1048,
+   "marginal": 180,
+   "nwps_ratio_over_4": 336,
+   "nwps_ratio_over_4_alignment_under_half": 0,
+   "switched_k3": 465,
+   "switched_k4": 364,
+   "switched_k6": 278
+  },
+  "Massachusetts": {
+   "hours": 31000,
+   "ww3_identity": 16430,
+   "unmatched": 0,
+   "big_wind_sea": 242,
+   "switched": 3111,
+   "switched_longer": 117,
+   "switched_dominant": 2994,
+   "bigger_shorter": 9422,
+   "marginal": 269,
+   "nwps_ratio_over_4": 2935,
+   "nwps_ratio_over_4_alignment_under_half": 550,
+   "switched_k3": 4270,
+   "switched_k4": 3111,
+   "switched_k6": 2000
+  },
+  "New Hampshire": {
+   "hours": 9920,
+   "ww3_identity": 7480,
+   "unmatched": 0,
+   "big_wind_sea": 128,
+   "switched": 600,
+   "switched_longer": 0,
+   "switched_dominant": 600,
+   "bigger_shorter": 2773,
+   "marginal": 224,
+   "nwps_ratio_over_4": 600,
+   "nwps_ratio_over_4_alignment_under_half": 0,
+   "switched_k3": 896,
+   "switched_k4": 600,
+   "switched_k6": 400
+  },
+  "New Jersey": {
+   "hours": 70680,
+   "ww3_identity": 70440,
+   "unmatched": 0,
+   "big_wind_sea": 2175,
+   "switched": 13537,
+   "switched_longer": 1313,
+   "switched_dominant": 12224,
+   "bigger_shorter": 31144,
+   "marginal": 2546,
+   "nwps_ratio_over_4": 12978,
+   "nwps_ratio_over_4_alignment_under_half": 154,
+   "switched_k3": 16547,
+   "switched_k4": 13537,
+   "switched_k6": 10513
+  },
+  "New York": {
+   "hours": 37200,
+   "ww3_identity": 22260,
+   "unmatched": 0,
+   "big_wind_sea": 921,
+   "switched": 4002,
+   "switched_longer": 457,
+   "switched_dominant": 3545,
+   "bigger_shorter": 10693,
+   "marginal": 864,
+   "nwps_ratio_over_4": 3819,
+   "nwps_ratio_over_4_alignment_under_half": 57,
+   "switched_k3": 5355,
+   "switched_k4": 4002,
+   "switched_k6": 2381
+  },
+  "North Carolina": {
+   "hours": 48360,
+   "ww3_identity": 34976,
+   "unmatched": 0,
+   "big_wind_sea": 680,
+   "switched": 5203,
+   "switched_longer": 749,
+   "switched_dominant": 4454,
+   "bigger_shorter": 14523,
+   "marginal": 1071,
+   "nwps_ratio_over_4": 4815,
+   "nwps_ratio_over_4_alignment_under_half": 446,
+   "switched_k3": 6176,
+   "switched_k4": 5203,
+   "switched_k6": 3801
+  },
+  "Oregon": {
+   "hours": 24800,
+   "ww3_identity": 21254,
+   "unmatched": 0,
+   "big_wind_sea": 6,
+   "switched": 420,
+   "switched_longer": 6,
+   "switched_dominant": 414,
+   "bigger_shorter": 3905,
+   "marginal": 25,
+   "nwps_ratio_over_4": 412,
+   "nwps_ratio_over_4_alignment_under_half": 14,
+   "switched_k3": 818,
+   "switched_k4": 420,
+   "switched_k6": 138
+  },
+  "Puerto Rico": {
+   "hours": 29760,
+   "ww3_identity": 19368,
+   "unmatched": 0,
+   "big_wind_sea": 158,
+   "switched": 891,
+   "switched_longer": 58,
+   "switched_dominant": 833,
+   "bigger_shorter": 7516,
+   "marginal": 115,
+   "nwps_ratio_over_4": 850,
+   "nwps_ratio_over_4_alignment_under_half": 225,
+   "switched_k3": 1800,
+   "switched_k4": 891,
+   "switched_k6": 478
+  },
+  "Rhode Island": {
+   "hours": 33480,
+   "ww3_identity": 17820,
+   "unmatched": 0,
+   "big_wind_sea": 41,
+   "switched": 2445,
+   "switched_longer": 8,
+   "switched_dominant": 2437,
+   "bigger_shorter": 11085,
+   "marginal": 48,
+   "nwps_ratio_over_4": 2342,
+   "nwps_ratio_over_4_alignment_under_half": 214,
+   "switched_k3": 4314,
+   "switched_k4": 2445,
+   "switched_k6": 885
+  },
+  "South Carolina": {
+   "hours": 22320,
+   "ww3_identity": 18658,
+   "unmatched": 0,
+   "big_wind_sea": 126,
+   "switched": 2803,
+   "switched_longer": 204,
+   "switched_dominant": 2599,
+   "bigger_shorter": 8920,
+   "marginal": 624,
+   "nwps_ratio_over_4": 2627,
+   "nwps_ratio_over_4_alignment_under_half": 41,
+   "switched_k3": 3537,
+   "switched_k4": 2803,
+   "switched_k6": 2277
+  },
+  "Texas": {
+   "hours": 14880,
+   "ww3_identity": 8548,
+   "unmatched": 0,
+   "big_wind_sea": 524,
+   "switched": 2379,
+   "switched_longer": 324,
+   "switched_dominant": 2055,
+   "bigger_shorter": 4360,
+   "marginal": 665,
+   "nwps_ratio_over_4": 2166,
+   "nwps_ratio_over_4_alignment_under_half": 84,
+   "switched_k3": 2853,
+   "switched_k4": 2379,
+   "switched_k6": 1786
+  },
+  "Virginia": {
+   "hours": 6200,
+   "ww3_identity": 4355,
+   "unmatched": 0,
+   "big_wind_sea": 188,
+   "switched": 567,
+   "switched_longer": 143,
+   "switched_dominant": 424,
+   "bigger_shorter": 1817,
+   "marginal": 169,
+   "nwps_ratio_over_4": 515,
+   "nwps_ratio_over_4_alignment_under_half": 46,
+   "switched_k3": 735,
+   "switched_k4": 567,
+   "switched_k6": 404
+  },
+  "Washington": {
+   "hours": 17360,
+   "ww3_identity": 10256,
+   "unmatched": 0,
+   "big_wind_sea": 32,
+   "switched": 258,
+   "switched_longer": 15,
+   "switched_dominant": 243,
+   "bigger_shorter": 1431,
+   "marginal": 41,
+   "nwps_ratio_over_4": 240,
+   "nwps_ratio_over_4_alignment_under_half": 14,
+   "switched_k3": 429,
+   "switched_k4": 258,
+   "switched_k6": 160
+  },
+  "all": {
+   "hours": 801040,
+   "ww3_identity": 507161,
+   "unmatched": 0,
+   "big_wind_sea": 8789,
+   "switched": 61779,
+   "switched_longer": 6375,
+   "switched_dominant": 55404,
+   "bigger_shorter": 204026,
+   "marginal": 10155,
+   "nwps_ratio_over_4": 58218,
+   "nwps_ratio_over_4_alignment_under_half": 6462,
+   "switched_k3": 84876,
+   "switched_k4": 61779,
+   "switched_k6": 39643
+  }
+ },
+ "switched_vs_buoy": {
+  "all": {
+   "hours": 61779,
+   "with_buoy": 35613,
+   "period_before": 9.83,
+   "period_after": 6.17,
+   "buoy_dpd": 7.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.284,
+   "near_buoy_dpd_after": 0.842,
+   "rated_hs_ft": 0.52,
+   "wind_sea_hs_ft": 4.07,
+   "model_hs_ft": 3.46,
+   "buoy_hs_ft": 4.92,
+   "surf_hours": 58418,
+   "surf_before": 3.31,
+   "surf_after": 2.92,
+   "surf_over_buoy_hs_before": 0.7,
+   "surf_over_buoy_hs_after": 0.62
+  },
+  "California": {
+   "hours": 3651,
+   "with_buoy": 1424,
+   "period_before": 14.32,
+   "period_after": 6.87,
+   "buoy_dpd": 9.0,
+   "buoy_swell_tp": 11.1,
+   "near_buoy_dpd_before": 0.138,
+   "near_buoy_dpd_after": 0.815,
+   "rated_hs_ft": 0.98,
+   "wind_sea_hs_ft": 5.38,
+   "model_hs_ft": 4.0,
+   "buoy_hs_ft": 6.56,
+   "surf_hours": 343,
+   "surf_before": 2.67,
+   "surf_after": 2.3,
+   "surf_over_buoy_hs_before": 0.59,
+   "surf_over_buoy_hs_after": 0.53
+  },
+  "Delaware": {
+   "hours": 1228,
+   "with_buoy": 606,
+   "period_before": 10.23,
+   "period_after": 6.15,
+   "buoy_dpd": 7.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.323,
+   "near_buoy_dpd_after": 0.939,
+   "rated_hs_ft": 0.46,
+   "wind_sea_hs_ft": 4.33,
+   "model_hs_ft": 4.17,
+   "buoy_hs_ft": 4.92,
+   "surf_hours": 1228,
+   "surf_before": 3.88,
+   "surf_after": 3.5,
+   "surf_over_buoy_hs_before": 0.83,
+   "surf_over_buoy_hs_after": 0.73
+  },
+  "Florida": {
+   "hours": 11688,
+   "with_buoy": 5627,
+   "period_before": 7.59,
+   "period_after": 5.11,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 11.1,
+   "near_buoy_dpd_before": 0.26,
+   "near_buoy_dpd_after": 0.828,
+   "rated_hs_ft": 0.33,
+   "wind_sea_hs_ft": 3.45,
+   "model_hs_ft": 2.77,
+   "buoy_hs_ft": 4.27,
+   "surf_hours": 11687,
+   "surf_before": 2.72,
+   "surf_after": 2.33,
+   "surf_over_buoy_hs_before": 0.87,
+   "surf_over_buoy_hs_after": 0.77
+  },
+  "Georgia": {
+   "hours": 935,
+   "with_buoy": 909,
+   "period_before": 10.99,
+   "period_after": 6.35,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.118,
+   "near_buoy_dpd_after": 0.784,
+   "rated_hs_ft": 0.3,
+   "wind_sea_hs_ft": 3.08,
+   "model_hs_ft": 3.39,
+   "buoy_hs_ft": 4.92,
+   "surf_hours": 935,
+   "surf_before": 3.35,
+   "surf_after": 2.91,
+   "surf_over_buoy_hs_before": 0.67,
+   "surf_over_buoy_hs_after": 0.6
+  },
+  "Hawaii": {
+   "hours": 6706,
+   "with_buoy": 1246,
+   "period_before": 11.72,
+   "period_after": 7.64,
+   "buoy_dpd": 9.0,
+   "buoy_swell_tp": 11.1,
+   "near_buoy_dpd_before": 0.399,
+   "near_buoy_dpd_after": 0.763,
+   "rated_hs_ft": 1.18,
+   "wind_sea_hs_ft": 6.04,
+   "model_hs_ft": 6.05,
+   "buoy_hs_ft": 5.91,
+   "surf_hours": 6706,
+   "surf_before": 5.38,
+   "surf_after": 5.06,
+   "surf_over_buoy_hs_before": 0.88,
+   "surf_over_buoy_hs_after": 0.83
+  },
+  "Maine": {
+   "hours": 991,
+   "with_buoy": 782,
+   "period_before": 9.56,
+   "period_after": 7.68,
+   "buoy_dpd": 7.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.48,
+   "near_buoy_dpd_after": 0.976,
+   "rated_hs_ft": 0.66,
+   "wind_sea_hs_ft": 5.48,
+   "model_hs_ft": 3.92,
+   "buoy_hs_ft": 7.22,
+   "surf_hours": 963,
+   "surf_before": 3.65,
+   "surf_after": 3.56,
+   "surf_over_buoy_hs_before": 0.53,
+   "surf_over_buoy_hs_after": 0.47
+  },
+  "Maryland": {
+   "hours": 364,
+   "with_buoy": 0,
+   "period_before": 9.67,
+   "period_after": 7.19,
+   "buoy_dpd": null,
+   "buoy_swell_tp": null,
+   "near_buoy_dpd_before": null,
+   "near_buoy_dpd_after": null,
+   "rated_hs_ft": 0.59,
+   "wind_sea_hs_ft": 5.28,
+   "model_hs_ft": 4.84,
+   "buoy_hs_ft": null,
+   "surf_hours": 364,
+   "surf_before": 4.33,
+   "surf_after": 4.2,
+   "surf_over_buoy_hs_before": null,
+   "surf_over_buoy_hs_after": null
+  },
+  "Massachusetts": {
+   "hours": 3111,
+   "with_buoy": 1629,
+   "period_before": 9.38,
+   "period_after": 5.85,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.338,
+   "near_buoy_dpd_after": 0.808,
+   "rated_hs_ft": 0.49,
+   "wind_sea_hs_ft": 3.94,
+   "model_hs_ft": 3.08,
+   "buoy_hs_ft": 4.27,
+   "surf_hours": 3099,
+   "surf_before": 3.03,
+   "surf_after": 2.67,
+   "surf_over_buoy_hs_before": 0.79,
+   "surf_over_buoy_hs_after": 0.69
+  },
+  "New Hampshire": {
+   "hours": 600,
+   "with_buoy": 450,
+   "period_before": 9.55,
+   "period_after": 7.68,
+   "buoy_dpd": 8.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.52,
+   "near_buoy_dpd_after": 0.987,
+   "rated_hs_ft": 0.79,
+   "wind_sea_hs_ft": 5.12,
+   "model_hs_ft": 4.66,
+   "buoy_hs_ft": 8.2,
+   "surf_hours": 600,
+   "surf_before": 4.27,
+   "surf_after": 4.21,
+   "surf_over_buoy_hs_before": 0.54,
+   "surf_over_buoy_hs_after": 0.49
+  },
+  "New Jersey": {
+   "hours": 13537,
+   "with_buoy": 10795,
+   "period_before": 10.28,
+   "period_after": 6.51,
+   "buoy_dpd": 7.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.333,
+   "near_buoy_dpd_after": 0.805,
+   "rated_hs_ft": 0.52,
+   "wind_sea_hs_ft": 4.66,
+   "model_hs_ft": 3.93,
+   "buoy_hs_ft": 6.23,
+   "surf_hours": 13537,
+   "surf_before": 3.67,
+   "surf_after": 3.35,
+   "surf_over_buoy_hs_before": 0.64,
+   "surf_over_buoy_hs_after": 0.58
+  },
+  "New York": {
+   "hours": 4002,
+   "with_buoy": 2660,
+   "period_before": 9.45,
+   "period_after": 5.49,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.286,
+   "near_buoy_dpd_after": 0.901,
+   "rated_hs_ft": 0.52,
+   "wind_sea_hs_ft": 3.74,
+   "model_hs_ft": 3.08,
+   "buoy_hs_ft": 4.92,
+   "surf_hours": 4002,
+   "surf_before": 2.95,
+   "surf_after": 2.58,
+   "surf_over_buoy_hs_before": 0.6,
+   "surf_over_buoy_hs_after": 0.52
+  },
+  "North Carolina": {
+   "hours": 5203,
+   "with_buoy": 3830,
+   "period_before": 10.49,
+   "period_after": 6.22,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.157,
+   "near_buoy_dpd_after": 0.891,
+   "rated_hs_ft": 0.49,
+   "wind_sea_hs_ft": 3.84,
+   "model_hs_ft": 2.99,
+   "buoy_hs_ft": 4.59,
+   "surf_hours": 5202,
+   "surf_before": 3.01,
+   "surf_after": 2.62,
+   "surf_over_buoy_hs_before": 0.67,
+   "surf_over_buoy_hs_after": 0.61
+  },
+  "Oregon": {
+   "hours": 420,
+   "with_buoy": 30,
+   "period_before": 13.64,
+   "period_after": 7.25,
+   "buoy_dpd": 9.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.1,
+   "near_buoy_dpd_after": 0.933,
+   "rated_hs_ft": 0.98,
+   "wind_sea_hs_ft": 5.12,
+   "model_hs_ft": 4.3,
+   "buoy_hs_ft": 10.17,
+   "surf_hours": 419,
+   "surf_before": 4.1,
+   "surf_after": 3.76,
+   "surf_over_buoy_hs_before": 0.58,
+   "surf_over_buoy_hs_after": 0.56
+  },
+  "Puerto Rico": {
+   "hours": 891,
+   "with_buoy": 58,
+   "period_before": 8.66,
+   "period_after": 4.97,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.224,
+   "near_buoy_dpd_after": 1.0,
+   "rated_hs_ft": 0.52,
+   "wind_sea_hs_ft": 3.31,
+   "model_hs_ft": 2.15,
+   "buoy_hs_ft": 2.95,
+   "surf_hours": 891,
+   "surf_before": 2.24,
+   "surf_after": 1.83,
+   "surf_over_buoy_hs_before": 1.08,
+   "surf_over_buoy_hs_after": 0.94
+  },
+  "Rhode Island": {
+   "hours": 2445,
+   "with_buoy": 1910,
+   "period_before": 9.29,
+   "period_after": 3.71,
+   "buoy_dpd": 4.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.224,
+   "near_buoy_dpd_after": 0.879,
+   "rated_hs_ft": 0.36,
+   "wind_sea_hs_ft": 2.13,
+   "model_hs_ft": 2.19,
+   "buoy_hs_ft": 2.62,
+   "surf_hours": 2445,
+   "surf_before": 2.29,
+   "surf_after": 1.64,
+   "surf_over_buoy_hs_before": 0.85,
+   "surf_over_buoy_hs_after": 0.63
+  },
+  "South Carolina": {
+   "hours": 2803,
+   "with_buoy": 2229,
+   "period_before": 9.04,
+   "period_after": 5.92,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": null,
+   "near_buoy_dpd_before": 0.258,
+   "near_buoy_dpd_after": 0.817,
+   "rated_hs_ft": 0.26,
+   "wind_sea_hs_ft": 3.48,
+   "model_hs_ft": 3.12,
+   "buoy_hs_ft": 4.27,
+   "surf_hours": 2803,
+   "surf_before": 3.05,
+   "surf_after": 2.69,
+   "surf_over_buoy_hs_before": 0.74,
+   "surf_over_buoy_hs_after": 0.66
+  },
+  "Texas": {
+   "hours": 2379,
+   "with_buoy": 747,
+   "period_before": 7.18,
+   "period_after": 4.93,
+   "buoy_dpd": 6.0,
+   "buoy_swell_tp": 10.0,
+   "near_buoy_dpd_before": 0.529,
+   "near_buoy_dpd_after": 0.996,
+   "rated_hs_ft": 0.33,
+   "wind_sea_hs_ft": 2.59,
+   "model_hs_ft": 2.01,
+   "buoy_hs_ft": 3.61,
+   "surf_hours": 2369,
+   "surf_before": 1.97,
+   "surf_after": 1.76,
+   "surf_over_buoy_hs_before": 0.59,
+   "surf_over_buoy_hs_after": 0.53
+  },
+  "Virginia": {
+   "hours": 567,
+   "with_buoy": 567,
+   "period_before": 10.1,
+   "period_after": 6.85,
+   "buoy_dpd": 7.0,
+   "buoy_swell_tp": 11.1,
+   "near_buoy_dpd_before": 0.185,
+   "near_buoy_dpd_after": 0.827,
+   "rated_hs_ft": 0.43,
+   "wind_sea_hs_ft": 4.17,
+   "model_hs_ft": 3.37,
+   "buoy_hs_ft": 5.25,
+   "surf_hours": 567,
+   "surf_before": 3.3,
+   "surf_after": 3.06,
+   "surf_over_buoy_hs_before": 0.73,
+   "surf_over_buoy_hs_after": 0.67
+  },
+  "Washington": {
+   "hours": 258,
+   "with_buoy": 114,
+   "period_before": 15.13,
+   "period_after": 8.9,
+   "buoy_dpd": 9.0,
+   "buoy_swell_tp": 10.5,
+   "near_buoy_dpd_before": 0.035,
+   "near_buoy_dpd_after": 0.877,
+   "rated_hs_ft": 1.41,
+   "wind_sea_hs_ft": 8.6,
+   "model_hs_ft": 8.18,
+   "buoy_hs_ft": 8.53,
+   "surf_hours": 258,
+   "surf_before": 7.03,
+   "surf_after": 6.72,
+   "surf_over_buoy_hs_before": 0.86,
+   "surf_over_buoy_hs_after": 0.82
+  }
+ },
+ "by_k": {
+  "3": {
+   "switched": {
+    "all": {
+     "hours": 84876,
+     "with_buoy": 46995,
+     "period_before": 9.66,
+     "period_after": 5.89,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.289,
+     "near_buoy_dpd_after": 0.822,
+     "rated_hs_ft": 0.62,
+     "wind_sea_hs_ft": 3.84,
+     "model_hs_ft": 3.25,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 78256,
+     "surf_before": 3.13,
+     "surf_after": 2.73,
+     "surf_over_buoy_hs_before": 0.7,
+     "surf_over_buoy_hs_after": 0.61
+    },
+    "California": {
+     "hours": 7254,
+     "with_buoy": 2849,
+     "period_before": 13.96,
+     "period_after": 6.52,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 13.3,
+     "near_buoy_dpd_before": 0.177,
+     "near_buoy_dpd_after": 0.736,
+     "rated_hs_ft": 1.12,
+     "wind_sea_hs_ft": 4.56,
+     "model_hs_ft": 3.53,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 698,
+     "surf_before": 2.45,
+     "surf_after": 2.14,
+     "surf_over_buoy_hs_before": 0.61,
+     "surf_over_buoy_hs_after": 0.54
+    },
+    "Delaware": {
+     "hours": 1470,
+     "with_buoy": 724,
+     "period_before": 9.87,
+     "period_after": 5.97,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.336,
+     "near_buoy_dpd_after": 0.934,
+     "rated_hs_ft": 0.56,
+     "wind_sea_hs_ft": 4.15,
+     "model_hs_ft": 4.01,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 1470,
+     "surf_before": 3.72,
+     "surf_after": 3.28,
+     "surf_over_buoy_hs_before": 0.85,
+     "surf_over_buoy_hs_after": 0.73
+    },
+    "Florida": {
+     "hours": 14885,
+     "with_buoy": 6862,
+     "period_before": 7.4,
+     "period_after": 4.74,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.28,
+     "near_buoy_dpd_after": 0.833,
+     "rated_hs_ft": 0.36,
+     "wind_sea_hs_ft": 3.02,
+     "model_hs_ft": 2.27,
+     "buoy_hs_ft": 3.94,
+     "surf_hours": 14884,
+     "surf_before": 2.24,
+     "surf_after": 1.93,
+     "surf_over_buoy_hs_before": 0.85,
+     "surf_over_buoy_hs_after": 0.75
+    },
+    "Georgia": {
+     "hours": 1166,
+     "with_buoy": 1133,
+     "period_before": 9.54,
+     "period_after": 6.26,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.8,
+     "near_buoy_dpd_before": 0.148,
+     "near_buoy_dpd_after": 0.789,
+     "rated_hs_ft": 0.36,
+     "wind_sea_hs_ft": 2.95,
+     "model_hs_ft": 3.36,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 1166,
+     "surf_before": 3.29,
+     "surf_after": 2.85,
+     "surf_over_buoy_hs_before": 0.68,
+     "surf_over_buoy_hs_after": 0.6
+    },
+    "Hawaii": {
+     "hours": 10486,
+     "with_buoy": 1956,
+     "period_before": 11.76,
+     "period_after": 7.46,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 11.8,
+     "near_buoy_dpd_before": 0.416,
+     "near_buoy_dpd_after": 0.661,
+     "rated_hs_ft": 1.31,
+     "wind_sea_hs_ft": 5.81,
+     "model_hs_ft": 5.75,
+     "buoy_hs_ft": 5.25,
+     "surf_hours": 10486,
+     "surf_before": 5.16,
+     "surf_after": 4.83,
+     "surf_over_buoy_hs_before": 0.92,
+     "surf_over_buoy_hs_after": 0.86
+    },
+    "Maine": {
+     "hours": 1420,
+     "with_buoy": 1128,
+     "period_before": 9.21,
+     "period_after": 6.1,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.416,
+     "near_buoy_dpd_after": 0.965,
+     "rated_hs_ft": 0.82,
+     "wind_sea_hs_ft": 4.86,
+     "model_hs_ft": 3.07,
+     "buoy_hs_ft": 5.58,
+     "surf_hours": 1383,
+     "surf_before": 3.07,
+     "surf_after": 2.71,
+     "surf_over_buoy_hs_before": 0.54,
+     "surf_over_buoy_hs_after": 0.47
+    },
+    "Maryland": {
+     "hours": 465,
+     "with_buoy": 0,
+     "period_before": 9.47,
+     "period_after": 6.69,
+     "buoy_dpd": null,
+     "buoy_swell_tp": null,
+     "near_buoy_dpd_before": null,
+     "near_buoy_dpd_after": null,
+     "rated_hs_ft": 0.62,
+     "wind_sea_hs_ft": 4.43,
+     "model_hs_ft": 4.18,
+     "buoy_hs_ft": null,
+     "surf_hours": 465,
+     "surf_before": 3.78,
+     "surf_after": 3.55,
+     "surf_over_buoy_hs_before": null,
+     "surf_over_buoy_hs_after": null
+    },
+    "Massachusetts": {
+     "hours": 4270,
+     "with_buoy": 2282,
+     "period_before": 9.06,
+     "period_after": 5.12,
+     "buoy_dpd": 5.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.281,
+     "near_buoy_dpd_after": 0.811,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 3.23,
+     "model_hs_ft": 2.51,
+     "buoy_hs_ft": 3.28,
+     "surf_hours": 4256,
+     "surf_before": 2.54,
+     "surf_after": 2.04,
+     "surf_over_buoy_hs_before": 0.79,
+     "surf_over_buoy_hs_after": 0.67
+    },
+    "New Hampshire": {
+     "hours": 896,
+     "with_buoy": 672,
+     "period_before": 9.12,
+     "period_after": 5.94,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.429,
+     "near_buoy_dpd_after": 0.982,
+     "rated_hs_ft": 0.72,
+     "wind_sea_hs_ft": 4.08,
+     "model_hs_ft": 2.94,
+     "buoy_hs_ft": 5.74,
+     "surf_hours": 896,
+     "surf_before": 2.93,
+     "surf_after": 2.55,
+     "surf_over_buoy_hs_before": 0.55,
+     "surf_over_buoy_hs_after": 0.47
+    },
+    "New Jersey": {
+     "hours": 16547,
+     "with_buoy": 13106,
+     "period_before": 9.71,
+     "period_after": 6.02,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.339,
+     "near_buoy_dpd_after": 0.795,
+     "rated_hs_ft": 0.59,
+     "wind_sea_hs_ft": 4.17,
+     "model_hs_ft": 3.6,
+     "buoy_hs_ft": 5.91,
+     "surf_hours": 16547,
+     "surf_before": 3.42,
+     "surf_after": 3.03,
+     "surf_over_buoy_hs_before": 0.64,
+     "surf_over_buoy_hs_after": 0.57
+    },
+    "New York": {
+     "hours": 5355,
+     "with_buoy": 3590,
+     "period_before": 9.31,
+     "period_after": 5.25,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.325,
+     "near_buoy_dpd_after": 0.882,
+     "rated_hs_ft": 0.59,
+     "wind_sea_hs_ft": 3.51,
+     "model_hs_ft": 2.87,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 5355,
+     "surf_before": 2.8,
+     "surf_after": 2.41,
+     "surf_over_buoy_hs_before": 0.61,
+     "surf_over_buoy_hs_after": 0.52
+    },
+    "North Carolina": {
+     "hours": 6176,
+     "with_buoy": 4534,
+     "period_before": 10.22,
+     "period_after": 6.11,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.189,
+     "near_buoy_dpd_after": 0.873,
+     "rated_hs_ft": 0.56,
+     "wind_sea_hs_ft": 3.81,
+     "model_hs_ft": 2.92,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 6175,
+     "surf_before": 2.93,
+     "surf_after": 2.56,
+     "surf_over_buoy_hs_before": 0.67,
+     "surf_over_buoy_hs_after": 0.6
+    },
+    "Oregon": {
+     "hours": 818,
+     "with_buoy": 43,
+     "period_before": 13.64,
+     "period_after": 6.85,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.14,
+     "near_buoy_dpd_after": 0.767,
+     "rated_hs_ft": 1.05,
+     "wind_sea_hs_ft": 4.76,
+     "model_hs_ft": 4.03,
+     "buoy_hs_ft": 9.51,
+     "surf_hours": 817,
+     "surf_before": 3.95,
+     "surf_after": 3.44,
+     "surf_over_buoy_hs_before": 0.62,
+     "surf_over_buoy_hs_after": 0.57
+    },
+    "Puerto Rico": {
+     "hours": 1800,
+     "with_buoy": 121,
+     "period_before": 8.64,
+     "period_after": 5.09,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.24,
+     "near_buoy_dpd_after": 0.934,
+     "rated_hs_ft": 0.79,
+     "wind_sea_hs_ft": 3.45,
+     "model_hs_ft": 2.38,
+     "buoy_hs_ft": 2.95,
+     "surf_hours": 1800,
+     "surf_before": 2.46,
+     "surf_after": 1.99,
+     "surf_over_buoy_hs_before": 1.04,
+     "surf_over_buoy_hs_after": 0.88
+    },
+    "Rhode Island": {
+     "hours": 4314,
+     "with_buoy": 3371,
+     "period_before": 9.03,
+     "period_after": 3.64,
+     "buoy_dpd": 4.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.212,
+     "near_buoy_dpd_after": 0.822,
+     "rated_hs_ft": 0.43,
+     "wind_sea_hs_ft": 2.03,
+     "model_hs_ft": 2.11,
+     "buoy_hs_ft": 2.62,
+     "surf_hours": 4314,
+     "surf_before": 2.22,
+     "surf_after": 1.58,
+     "surf_over_buoy_hs_before": 0.83,
+     "surf_over_buoy_hs_after": 0.59
+    },
+    "South Carolina": {
+     "hours": 3537,
+     "with_buoy": 2840,
+     "period_before": 9.04,
+     "period_after": 5.72,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": null,
+     "near_buoy_dpd_before": 0.236,
+     "near_buoy_dpd_after": 0.8,
+     "rated_hs_ft": 0.33,
+     "wind_sea_hs_ft": 3.28,
+     "model_hs_ft": 2.9,
+     "buoy_hs_ft": 3.94,
+     "surf_hours": 3537,
+     "surf_before": 2.89,
+     "surf_after": 2.5,
+     "surf_over_buoy_hs_before": 0.74,
+     "surf_over_buoy_hs_after": 0.64
+    },
+    "Texas": {
+     "hours": 2853,
+     "with_buoy": 854,
+     "period_before": 7.07,
+     "period_after": 4.93,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.561,
+     "near_buoy_dpd_after": 0.994,
+     "rated_hs_ft": 0.39,
+     "wind_sea_hs_ft": 2.62,
+     "model_hs_ft": 2.01,
+     "buoy_hs_ft": 3.61,
+     "surf_hours": 2843,
+     "surf_before": 1.97,
+     "surf_after": 1.75,
+     "surf_over_buoy_hs_before": 0.58,
+     "surf_over_buoy_hs_after": 0.52
+    },
+    "Virginia": {
+     "hours": 735,
+     "with_buoy": 735,
+     "period_before": 9.56,
+     "period_after": 5.91,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.195,
+     "near_buoy_dpd_after": 0.835,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 3.48,
+     "model_hs_ft": 3.09,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 735,
+     "surf_before": 3.1,
+     "surf_after": 2.68,
+     "surf_over_buoy_hs_before": 0.74,
+     "surf_over_buoy_hs_after": 0.66
+    },
+    "Washington": {
+     "hours": 429,
+     "with_buoy": 195,
+     "period_before": 14.25,
+     "period_after": 8.64,
+     "buoy_dpd": 8.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.133,
+     "near_buoy_dpd_after": 0.831,
+     "rated_hs_ft": 1.48,
+     "wind_sea_hs_ft": 7.87,
+     "model_hs_ft": 7.36,
+     "buoy_hs_ft": 8.2,
+     "surf_hours": 429,
+     "surf_before": 6.42,
+     "surf_after": 6.16,
+     "surf_over_buoy_hs_before": 0.84,
+     "surf_over_buoy_hs_after": 0.79
+    }
+   },
+   "cases": {
+    "California": {
+     "dominant": 7239,
+     "longer": 15
+    },
+    "Delaware": {
+     "dominant": 1355,
+     "longer": 115
+    },
+    "Florida": {
+     "dominant": 12900,
+     "longer": 1985
+    },
+    "Georgia": {
+     "dominant": 964,
+     "longer": 202
+    },
+    "Hawaii": {
+     "longer": 595,
+     "dominant": 9891
+    },
+    "Maine": {
+     "dominant": 1412,
+     "longer": 8
+    },
+    "Maryland": {
+     "dominant": 404,
+     "longer": 61
+    },
+    "Massachusetts": {
+     "dominant": 4153,
+     "longer": 117
+    },
+    "New Hampshire": {
+     "dominant": 896
+    },
+    "New Jersey": {
+     "dominant": 15234,
+     "longer": 1313
+    },
+    "New York": {
+     "dominant": 4898,
+     "longer": 457
+    },
+    "North Carolina": {
+     "dominant": 5427,
+     "longer": 749
+    },
+    "Oregon": {
+     "dominant": 812,
+     "longer": 6
+    },
+    "Puerto Rico": {
+     "dominant": 1742,
+     "longer": 58
+    },
+    "Rhode Island": {
+     "dominant": 4306,
+     "longer": 8
+    },
+    "South Carolina": {
+     "dominant": 3333,
+     "longer": 204
+    },
+    "Texas": {
+     "dominant": 2529,
+     "longer": 324
+    },
+    "Virginia": {
+     "dominant": 592,
+     "longer": 143
+    },
+    "Washington": {
+     "dominant": 414,
+     "longer": 15
+    },
+    "all": {
+     "dominant": 78501,
+     "longer": 6375
+    }
+   },
+   "window": {
+    "California": {
+     "switched": 7254,
+     "wind_outside": 5306,
+     "no_window": 20,
+     "rated_outside": 1153
+    },
+    "Delaware": {
+     "switched": 1470,
+     "wind_outside": 267,
+     "no_window": 0,
+     "rated_outside": 194
+    },
+    "Florida": {
+     "switched": 14885,
+     "wind_outside": 5740,
+     "no_window": 0,
+     "rated_outside": 3538
+    },
+    "Georgia": {
+     "switched": 1166,
+     "wind_outside": 123,
+     "no_window": 0,
+     "rated_outside": 33
+    },
+    "Hawaii": {
+     "switched": 10486,
+     "wind_outside": 8986,
+     "no_window": 0,
+     "rated_outside": 3922
+    },
+    "Maine": {
+     "switched": 1420,
+     "wind_outside": 297,
+     "no_window": 0,
+     "rated_outside": 66
+    },
+    "Maryland": {
+     "switched": 465,
+     "wind_outside": 24,
+     "no_window": 0,
+     "rated_outside": 0
+    },
+    "Massachusetts": {
+     "switched": 4270,
+     "wind_outside": 1865,
+     "no_window": 0,
+     "rated_outside": 916
+    },
+    "New Hampshire": {
+     "switched": 896,
+     "wind_outside": 84,
+     "no_window": 0,
+     "rated_outside": 0
+    },
+    "New Jersey": {
+     "switched": 16547,
+     "wind_outside": 3311,
+     "no_window": 0,
+     "rated_outside": 185
+    },
+    "New York": {
+     "switched": 5355,
+     "wind_outside": 1377,
+     "no_window": 0,
+     "rated_outside": 73
+    },
+    "North Carolina": {
+     "switched": 6176,
+     "wind_outside": 1263,
+     "no_window": 0,
+     "rated_outside": 586
+    },
+    "Oregon": {
+     "switched": 818,
+     "wind_outside": 176,
+     "no_window": 0,
+     "rated_outside": 51
+    },
+    "Puerto Rico": {
+     "switched": 1800,
+     "wind_outside": 979,
+     "no_window": 0,
+     "rated_outside": 591
+    },
+    "Rhode Island": {
+     "switched": 4314,
+     "wind_outside": 2352,
+     "no_window": 0,
+     "rated_outside": 411
+    },
+    "South Carolina": {
+     "switched": 3537,
+     "wind_outside": 802,
+     "no_window": 0,
+     "rated_outside": 42
+    },
+    "Texas": {
+     "switched": 2853,
+     "wind_outside": 130,
+     "no_window": 0,
+     "rated_outside": 178
+    },
+    "Virginia": {
+     "switched": 735,
+     "wind_outside": 87,
+     "no_window": 0,
+     "rated_outside": 46
+    },
+    "Washington": {
+     "switched": 429,
+     "wind_outside": 70,
+     "no_window": 0,
+     "rated_outside": 24
+    },
+    "all": {
+     "switched": 84876,
+     "wind_outside": 33239,
+     "no_window": 20,
+     "rated_outside": 12009
+    }
+   },
+   "window_examples": {
+    "California": [
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T23:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 7.87,
+      "rated": {
+       "hs_ft": 1.71,
+       "tp": 14.41,
+       "dp": 205.55
+      },
+      "wind_sea": {
+       "hs_ft": 13.42,
+       "tp": 9.08,
+       "dp": 320.43
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 3.44,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T20:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 5.44,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T21:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.84,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T22:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.12,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-11T23:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 3.34,
+      "rated": {
+       "hs_ft": 3.58,
+       "tp": 20.26,
+       "dp": 298.01
+      },
+      "wind_sea": {
+       "hs_ft": 11.94,
+       "tp": 9.49,
+       "dp": 319.37
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.17,
+      "case": "dominant",
+      "rated_in_window": true
+     }
+    ],
+    "Hawaii": [
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T08:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 21.11,
+      "case": "dominant",
+      "rated_in_window": false
+     },
+     {
+      "spot": "Polihale Beach",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T08:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 9.3,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T09:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 23.93,
+      "case": "dominant",
+      "rated_in_window": false
+     },
+     {
+      "spot": "Polihale Beach",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T09:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 10.77,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T10:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 25.87,
+      "case": "dominant",
+      "rated_in_window": false
+     }
+    ]
+   },
+   "paths": {
+    "surf": {
+     "hours": 78256,
+     "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+     "headline_before": 3.13,
+     "headline_if_shown_period": 2.73,
+     "ratio": {
+      "0.5": 0.889,
+      "0.9": 1.003,
+      "1.0": 1.628
+     },
+     "changed": 77576
+    },
+    "calibrated": {
+     "hours": 6489,
+     "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+     "headline_before": 2.52,
+     "headline_if_shown_period": 2.16,
+     "ratio": {
+      "0.5": 0.849,
+      "0.9": 0.925,
+      "1.0": 1.025
+     },
+     "changed": 6489
+    },
+    "mop": {
+     "hours": 0,
+     "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+     "headline_before": null,
+     "headline_if_shown_period": null,
+     "ratio": {
+      "0.5": null,
+      "0.9": null,
+      "1.0": null
+     },
+     "changed": 0
+    },
+    "other": {
+     "hours": 131,
+     "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+     "headline_before": 1.1,
+     "headline_if_shown_period": 1.05,
+     "ratio": {
+      "0.5": 0.908,
+      "0.9": 0.995,
+      "1.0": 1.011
+     },
+     "changed": 123
+    }
+   },
+   "paths_bigger_shorter": {
+    "surf": {
+     "hours": 69616,
+     "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+     "headline_before": 3.04,
+     "headline_if_shown_period": 2.58,
+     "ratio": {
+      "0.5": 0.872,
+      "0.9": 0.98,
+      "1.0": 1.0
+     },
+     "changed": 69208
+    },
+    "calibrated": {
+     "hours": 6474,
+     "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+     "headline_before": 2.52,
+     "headline_if_shown_period": 2.16,
+     "ratio": {
+      "0.5": 0.849,
+      "0.9": 0.925,
+      "1.0": 0.996
+     },
+     "changed": 6474
+    },
+    "mop": {
+     "hours": 0,
+     "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+     "headline_before": null,
+     "headline_if_shown_period": null,
+     "ratio": {
+      "0.5": null,
+      "0.9": null,
+      "1.0": null
+     },
+     "changed": 0
+    },
+    "other": {
+     "hours": 122,
+     "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+     "headline_before": 1.19,
+     "headline_if_shown_period": 1.09,
+     "ratio": {
+      "0.5": 0.9,
+      "0.9": 0.977,
+      "1.0": 0.997
+     },
+     "changed": 117
+    }
+   }
+  },
+  "4": {
+   "switched": {
+    "all": {
+     "hours": 61779,
+     "with_buoy": 35613,
+     "period_before": 9.83,
+     "period_after": 6.17,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.284,
+     "near_buoy_dpd_after": 0.842,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 4.07,
+     "model_hs_ft": 3.46,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 58418,
+     "surf_before": 3.31,
+     "surf_after": 2.92,
+     "surf_over_buoy_hs_before": 0.7,
+     "surf_over_buoy_hs_after": 0.62
+    },
+    "California": {
+     "hours": 3651,
+     "with_buoy": 1424,
+     "period_before": 14.32,
+     "period_after": 6.87,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.138,
+     "near_buoy_dpd_after": 0.815,
+     "rated_hs_ft": 0.98,
+     "wind_sea_hs_ft": 5.38,
+     "model_hs_ft": 4.0,
+     "buoy_hs_ft": 6.56,
+     "surf_hours": 343,
+     "surf_before": 2.67,
+     "surf_after": 2.3,
+     "surf_over_buoy_hs_before": 0.59,
+     "surf_over_buoy_hs_after": 0.53
+    },
+    "Delaware": {
+     "hours": 1228,
+     "with_buoy": 606,
+     "period_before": 10.23,
+     "period_after": 6.15,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.323,
+     "near_buoy_dpd_after": 0.939,
+     "rated_hs_ft": 0.46,
+     "wind_sea_hs_ft": 4.33,
+     "model_hs_ft": 4.17,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 1228,
+     "surf_before": 3.88,
+     "surf_after": 3.5,
+     "surf_over_buoy_hs_before": 0.83,
+     "surf_over_buoy_hs_after": 0.73
+    },
+    "Florida": {
+     "hours": 11688,
+     "with_buoy": 5627,
+     "period_before": 7.59,
+     "period_after": 5.11,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.26,
+     "near_buoy_dpd_after": 0.828,
+     "rated_hs_ft": 0.33,
+     "wind_sea_hs_ft": 3.45,
+     "model_hs_ft": 2.77,
+     "buoy_hs_ft": 4.27,
+     "surf_hours": 11687,
+     "surf_before": 2.72,
+     "surf_after": 2.33,
+     "surf_over_buoy_hs_before": 0.87,
+     "surf_over_buoy_hs_after": 0.77
+    },
+    "Georgia": {
+     "hours": 935,
+     "with_buoy": 909,
+     "period_before": 10.99,
+     "period_after": 6.35,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.118,
+     "near_buoy_dpd_after": 0.784,
+     "rated_hs_ft": 0.3,
+     "wind_sea_hs_ft": 3.08,
+     "model_hs_ft": 3.39,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 935,
+     "surf_before": 3.35,
+     "surf_after": 2.91,
+     "surf_over_buoy_hs_before": 0.67,
+     "surf_over_buoy_hs_after": 0.6
+    },
+    "Hawaii": {
+     "hours": 6706,
+     "with_buoy": 1246,
+     "period_before": 11.72,
+     "period_after": 7.64,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.399,
+     "near_buoy_dpd_after": 0.763,
+     "rated_hs_ft": 1.18,
+     "wind_sea_hs_ft": 6.04,
+     "model_hs_ft": 6.05,
+     "buoy_hs_ft": 5.91,
+     "surf_hours": 6706,
+     "surf_before": 5.38,
+     "surf_after": 5.06,
+     "surf_over_buoy_hs_before": 0.88,
+     "surf_over_buoy_hs_after": 0.83
+    },
+    "Maine": {
+     "hours": 991,
+     "with_buoy": 782,
+     "period_before": 9.56,
+     "period_after": 7.68,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.48,
+     "near_buoy_dpd_after": 0.976,
+     "rated_hs_ft": 0.66,
+     "wind_sea_hs_ft": 5.48,
+     "model_hs_ft": 3.92,
+     "buoy_hs_ft": 7.22,
+     "surf_hours": 963,
+     "surf_before": 3.65,
+     "surf_after": 3.56,
+     "surf_over_buoy_hs_before": 0.53,
+     "surf_over_buoy_hs_after": 0.47
+    },
+    "Maryland": {
+     "hours": 364,
+     "with_buoy": 0,
+     "period_before": 9.67,
+     "period_after": 7.19,
+     "buoy_dpd": null,
+     "buoy_swell_tp": null,
+     "near_buoy_dpd_before": null,
+     "near_buoy_dpd_after": null,
+     "rated_hs_ft": 0.59,
+     "wind_sea_hs_ft": 5.28,
+     "model_hs_ft": 4.84,
+     "buoy_hs_ft": null,
+     "surf_hours": 364,
+     "surf_before": 4.33,
+     "surf_after": 4.2,
+     "surf_over_buoy_hs_before": null,
+     "surf_over_buoy_hs_after": null
+    },
+    "Massachusetts": {
+     "hours": 3111,
+     "with_buoy": 1629,
+     "period_before": 9.38,
+     "period_after": 5.85,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.338,
+     "near_buoy_dpd_after": 0.808,
+     "rated_hs_ft": 0.49,
+     "wind_sea_hs_ft": 3.94,
+     "model_hs_ft": 3.08,
+     "buoy_hs_ft": 4.27,
+     "surf_hours": 3099,
+     "surf_before": 3.03,
+     "surf_after": 2.67,
+     "surf_over_buoy_hs_before": 0.79,
+     "surf_over_buoy_hs_after": 0.69
+    },
+    "New Hampshire": {
+     "hours": 600,
+     "with_buoy": 450,
+     "period_before": 9.55,
+     "period_after": 7.68,
+     "buoy_dpd": 8.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.52,
+     "near_buoy_dpd_after": 0.987,
+     "rated_hs_ft": 0.79,
+     "wind_sea_hs_ft": 5.12,
+     "model_hs_ft": 4.66,
+     "buoy_hs_ft": 8.2,
+     "surf_hours": 600,
+     "surf_before": 4.27,
+     "surf_after": 4.21,
+     "surf_over_buoy_hs_before": 0.54,
+     "surf_over_buoy_hs_after": 0.49
+    },
+    "New Jersey": {
+     "hours": 13537,
+     "with_buoy": 10795,
+     "period_before": 10.28,
+     "period_after": 6.51,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.333,
+     "near_buoy_dpd_after": 0.805,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 4.66,
+     "model_hs_ft": 3.93,
+     "buoy_hs_ft": 6.23,
+     "surf_hours": 13537,
+     "surf_before": 3.67,
+     "surf_after": 3.35,
+     "surf_over_buoy_hs_before": 0.64,
+     "surf_over_buoy_hs_after": 0.58
+    },
+    "New York": {
+     "hours": 4002,
+     "with_buoy": 2660,
+     "period_before": 9.45,
+     "period_after": 5.49,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.286,
+     "near_buoy_dpd_after": 0.901,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 3.74,
+     "model_hs_ft": 3.08,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 4002,
+     "surf_before": 2.95,
+     "surf_after": 2.58,
+     "surf_over_buoy_hs_before": 0.6,
+     "surf_over_buoy_hs_after": 0.52
+    },
+    "North Carolina": {
+     "hours": 5203,
+     "with_buoy": 3830,
+     "period_before": 10.49,
+     "period_after": 6.22,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.157,
+     "near_buoy_dpd_after": 0.891,
+     "rated_hs_ft": 0.49,
+     "wind_sea_hs_ft": 3.84,
+     "model_hs_ft": 2.99,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 5202,
+     "surf_before": 3.01,
+     "surf_after": 2.62,
+     "surf_over_buoy_hs_before": 0.67,
+     "surf_over_buoy_hs_after": 0.61
+    },
+    "Oregon": {
+     "hours": 420,
+     "with_buoy": 30,
+     "period_before": 13.64,
+     "period_after": 7.25,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.1,
+     "near_buoy_dpd_after": 0.933,
+     "rated_hs_ft": 0.98,
+     "wind_sea_hs_ft": 5.12,
+     "model_hs_ft": 4.3,
+     "buoy_hs_ft": 10.17,
+     "surf_hours": 419,
+     "surf_before": 4.1,
+     "surf_after": 3.76,
+     "surf_over_buoy_hs_before": 0.58,
+     "surf_over_buoy_hs_after": 0.56
+    },
+    "Puerto Rico": {
+     "hours": 891,
+     "with_buoy": 58,
+     "period_before": 8.66,
+     "period_after": 4.97,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.224,
+     "near_buoy_dpd_after": 1.0,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 3.31,
+     "model_hs_ft": 2.15,
+     "buoy_hs_ft": 2.95,
+     "surf_hours": 891,
+     "surf_before": 2.24,
+     "surf_after": 1.83,
+     "surf_over_buoy_hs_before": 1.08,
+     "surf_over_buoy_hs_after": 0.94
+    },
+    "Rhode Island": {
+     "hours": 2445,
+     "with_buoy": 1910,
+     "period_before": 9.29,
+     "period_after": 3.71,
+     "buoy_dpd": 4.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.224,
+     "near_buoy_dpd_after": 0.879,
+     "rated_hs_ft": 0.36,
+     "wind_sea_hs_ft": 2.13,
+     "model_hs_ft": 2.19,
+     "buoy_hs_ft": 2.62,
+     "surf_hours": 2445,
+     "surf_before": 2.29,
+     "surf_after": 1.64,
+     "surf_over_buoy_hs_before": 0.85,
+     "surf_over_buoy_hs_after": 0.63
+    },
+    "South Carolina": {
+     "hours": 2803,
+     "with_buoy": 2229,
+     "period_before": 9.04,
+     "period_after": 5.92,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": null,
+     "near_buoy_dpd_before": 0.258,
+     "near_buoy_dpd_after": 0.817,
+     "rated_hs_ft": 0.26,
+     "wind_sea_hs_ft": 3.48,
+     "model_hs_ft": 3.12,
+     "buoy_hs_ft": 4.27,
+     "surf_hours": 2803,
+     "surf_before": 3.05,
+     "surf_after": 2.69,
+     "surf_over_buoy_hs_before": 0.74,
+     "surf_over_buoy_hs_after": 0.66
+    },
+    "Texas": {
+     "hours": 2379,
+     "with_buoy": 747,
+     "period_before": 7.18,
+     "period_after": 4.93,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.529,
+     "near_buoy_dpd_after": 0.996,
+     "rated_hs_ft": 0.33,
+     "wind_sea_hs_ft": 2.59,
+     "model_hs_ft": 2.01,
+     "buoy_hs_ft": 3.61,
+     "surf_hours": 2369,
+     "surf_before": 1.97,
+     "surf_after": 1.76,
+     "surf_over_buoy_hs_before": 0.59,
+     "surf_over_buoy_hs_after": 0.53
+    },
+    "Virginia": {
+     "hours": 567,
+     "with_buoy": 567,
+     "period_before": 10.1,
+     "period_after": 6.85,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.185,
+     "near_buoy_dpd_after": 0.827,
+     "rated_hs_ft": 0.43,
+     "wind_sea_hs_ft": 4.17,
+     "model_hs_ft": 3.37,
+     "buoy_hs_ft": 5.25,
+     "surf_hours": 567,
+     "surf_before": 3.3,
+     "surf_after": 3.06,
+     "surf_over_buoy_hs_before": 0.73,
+     "surf_over_buoy_hs_after": 0.67
+    },
+    "Washington": {
+     "hours": 258,
+     "with_buoy": 114,
+     "period_before": 15.13,
+     "period_after": 8.9,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.035,
+     "near_buoy_dpd_after": 0.877,
+     "rated_hs_ft": 1.41,
+     "wind_sea_hs_ft": 8.6,
+     "model_hs_ft": 8.18,
+     "buoy_hs_ft": 8.53,
+     "surf_hours": 258,
+     "surf_before": 7.03,
+     "surf_after": 6.72,
+     "surf_over_buoy_hs_before": 0.86,
+     "surf_over_buoy_hs_after": 0.82
+    }
+   },
+   "cases": {
+    "California": {
+     "dominant": 3636,
+     "longer": 15
+    },
+    "Delaware": {
+     "dominant": 1113,
+     "longer": 115
+    },
+    "Florida": {
+     "dominant": 9703,
+     "longer": 1985
+    },
+    "Georgia": {
+     "dominant": 733,
+     "longer": 202
+    },
+    "Hawaii": {
+     "longer": 595,
+     "dominant": 6111
+    },
+    "Maine": {
+     "dominant": 983,
+     "longer": 8
+    },
+    "Maryland": {
+     "dominant": 303,
+     "longer": 61
+    },
+    "Massachusetts": {
+     "dominant": 2994,
+     "longer": 117
+    },
+    "New Hampshire": {
+     "dominant": 600
+    },
+    "New Jersey": {
+     "dominant": 12224,
+     "longer": 1313
+    },
+    "New York": {
+     "dominant": 3545,
+     "longer": 457
+    },
+    "North Carolina": {
+     "dominant": 4454,
+     "longer": 749
+    },
+    "Oregon": {
+     "dominant": 414,
+     "longer": 6
+    },
+    "Puerto Rico": {
+     "dominant": 833,
+     "longer": 58
+    },
+    "Rhode Island": {
+     "dominant": 2437,
+     "longer": 8
+    },
+    "South Carolina": {
+     "dominant": 2599,
+     "longer": 204
+    },
+    "Texas": {
+     "dominant": 2055,
+     "longer": 324
+    },
+    "Virginia": {
+     "dominant": 424,
+     "longer": 143
+    },
+    "Washington": {
+     "dominant": 243,
+     "longer": 15
+    },
+    "all": {
+     "dominant": 55404,
+     "longer": 6375
+    }
+   },
+   "window": {
+    "California": {
+     "switched": 3651,
+     "wind_outside": 2680,
+     "no_window": 7,
+     "rated_outside": 577
+    },
+    "Delaware": {
+     "switched": 1228,
+     "wind_outside": 164,
+     "no_window": 0,
+     "rated_outside": 182
+    },
+    "Florida": {
+     "switched": 11688,
+     "wind_outside": 4277,
+     "no_window": 0,
+     "rated_outside": 2920
+    },
+    "Georgia": {
+     "switched": 935,
+     "wind_outside": 87,
+     "no_window": 0,
+     "rated_outside": 33
+    },
+    "Hawaii": {
+     "switched": 6706,
+     "wind_outside": 5682,
+     "no_window": 0,
+     "rated_outside": 2342
+    },
+    "Maine": {
+     "switched": 991,
+     "wind_outside": 165,
+     "no_window": 0,
+     "rated_outside": 52
+    },
+    "Maryland": {
+     "switched": 364,
+     "wind_outside": 9,
+     "no_window": 0,
+     "rated_outside": 0
+    },
+    "Massachusetts": {
+     "switched": 3111,
+     "wind_outside": 1201,
+     "no_window": 0,
+     "rated_outside": 700
+    },
+    "New Hampshire": {
+     "switched": 600,
+     "wind_outside": 38,
+     "no_window": 0,
+     "rated_outside": 0
+    },
+    "New Jersey": {
+     "switched": 13537,
+     "wind_outside": 2239,
+     "no_window": 0,
+     "rated_outside": 182
+    },
+    "New York": {
+     "switched": 4002,
+     "wind_outside": 942,
+     "no_window": 0,
+     "rated_outside": 64
+    },
+    "North Carolina": {
+     "switched": 5203,
+     "wind_outside": 1088,
+     "no_window": 0,
+     "rated_outside": 516
+    },
+    "Oregon": {
+     "switched": 420,
+     "wind_outside": 88,
+     "no_window": 0,
+     "rated_outside": 33
+    },
+    "Puerto Rico": {
+     "switched": 891,
+     "wind_outside": 509,
+     "no_window": 0,
+     "rated_outside": 353
+    },
+    "Rhode Island": {
+     "switched": 2445,
+     "wind_outside": 1076,
+     "no_window": 0,
+     "rated_outside": 239
+    },
+    "South Carolina": {
+     "switched": 2803,
+     "wind_outside": 429,
+     "no_window": 0,
+     "rated_outside": 42
+    },
+    "Texas": {
+     "switched": 2379,
+     "wind_outside": 75,
+     "no_window": 0,
+     "rated_outside": 171
+    },
+    "Virginia": {
+     "switched": 567,
+     "wind_outside": 41,
+     "no_window": 0,
+     "rated_outside": 46
+    },
+    "Washington": {
+     "switched": 258,
+     "wind_outside": 42,
+     "no_window": 0,
+     "rated_outside": 22
+    },
+    "all": {
+     "switched": 61779,
+     "wind_outside": 20832,
+     "no_window": 7,
+     "rated_outside": 8474
+    }
+   },
+   "window_examples": {
+    "California": [
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T23:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 7.87,
+      "rated": {
+       "hs_ft": 1.71,
+       "tp": 14.41,
+       "dp": 205.55
+      },
+      "wind_sea": {
+       "hs_ft": 13.42,
+       "tp": 9.08,
+       "dp": 320.43
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 3.44,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T20:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 5.44,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T21:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.84,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T22:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.12,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Jenner Beach",
+      "state": "California",
+      "valid_time": "2026-10-10T23:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.59,
+      "rated": {
+       "hs_ft": 1.77,
+       "tp": 14.35,
+       "dp": 207.33
+      },
+      "wind_sea": {
+       "hs_ft": 11.68,
+       "tp": 9.33,
+       "dp": 313.26
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 10.51,
+      "case": "dominant",
+      "rated_in_window": true
+     }
+    ],
+    "Hawaii": [
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T08:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 21.11,
+      "case": "dominant",
+      "rated_in_window": false
+     },
+     {
+      "spot": "Polihale Beach",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T08:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 9.3,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T09:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 23.93,
+      "case": "dominant",
+      "rated_in_window": false
+     },
+     {
+      "spot": "Polihale Beach",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T09:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 10.77,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T10:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 25.87,
+      "case": "dominant",
+      "rated_in_window": false
+     }
+    ]
+   },
+   "paths": {
+    "surf": {
+     "hours": 58418,
+     "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+     "headline_before": 3.31,
+     "headline_if_shown_period": 2.92,
+     "ratio": {
+      "0.5": 0.899,
+      "0.9": 1.011,
+      "1.0": 1.628
+     },
+     "changed": 57933
+    },
+    "calibrated": {
+     "hours": 3269,
+     "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+     "headline_before": 2.77,
+     "headline_if_shown_period": 2.37,
+     "ratio": {
+      "0.5": 0.849,
+      "0.9": 0.908,
+      "1.0": 1.025
+     },
+     "changed": 3269
+    },
+    "mop": {
+     "hours": 0,
+     "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+     "headline_before": null,
+     "headline_if_shown_period": null,
+     "ratio": {
+      "0.5": null,
+      "0.9": null,
+      "1.0": null
+     },
+     "changed": 0
+    },
+    "other": {
+     "hours": 92,
+     "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+     "headline_before": 1.0,
+     "headline_if_shown_period": 0.96,
+     "ratio": {
+      "0.5": 0.908,
+      "0.9": 0.997,
+      "1.0": 1.011
+     },
+     "changed": 84
+    }
+   },
+   "paths_bigger_shorter": {
+    "surf": {
+     "hours": 50497,
+     "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+     "headline_before": 3.22,
+     "headline_if_shown_period": 2.78,
+     "ratio": {
+      "0.5": 0.883,
+      "0.9": 0.987,
+      "1.0": 1.0
+     },
+     "changed": 50191
+    },
+    "calibrated": {
+     "hours": 3254,
+     "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+     "headline_before": 2.77,
+     "headline_if_shown_period": 2.37,
+     "ratio": {
+      "0.5": 0.849,
+      "0.9": 0.908,
+      "1.0": 0.965
+     },
+     "changed": 3254
+    },
+    "mop": {
+     "hours": 0,
+     "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+     "headline_before": null,
+     "headline_if_shown_period": null,
+     "ratio": {
+      "0.5": null,
+      "0.9": null,
+      "1.0": null
+     },
+     "changed": 0
+    },
+    "other": {
+     "hours": 83,
+     "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+     "headline_before": 1.06,
+     "headline_if_shown_period": 0.96,
+     "ratio": {
+      "0.5": 0.903,
+      "0.9": 0.984,
+      "1.0": 0.997
+     },
+     "changed": 78
+    }
+   }
+  },
+  "6": {
+   "switched": {
+    "all": {
+     "hours": 39643,
+     "with_buoy": 24333,
+     "period_before": 9.96,
+     "period_after": 6.58,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.297,
+     "near_buoy_dpd_after": 0.847,
+     "rated_hs_ft": 0.39,
+     "wind_sea_hs_ft": 4.43,
+     "model_hs_ft": 3.76,
+     "buoy_hs_ft": 5.58,
+     "surf_hours": 38761,
+     "surf_before": 3.57,
+     "surf_after": 3.23,
+     "surf_over_buoy_hs_before": 0.69,
+     "surf_over_buoy_hs_after": 0.63
+    },
+    "California": {
+     "hours": 946,
+     "with_buoy": 297,
+     "period_before": 14.45,
+     "period_after": 7.41,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.013,
+     "near_buoy_dpd_after": 0.939,
+     "rated_hs_ft": 0.89,
+     "wind_sea_hs_ft": 6.17,
+     "model_hs_ft": 4.46,
+     "buoy_hs_ft": 7.22,
+     "surf_hours": 105,
+     "surf_before": 2.78,
+     "surf_after": 2.33,
+     "surf_over_buoy_hs_before": 0.57,
+     "surf_over_buoy_hs_after": 0.5
+    },
+    "Delaware": {
+     "hours": 923,
+     "with_buoy": 456,
+     "period_before": 10.02,
+     "period_after": 6.49,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.322,
+     "near_buoy_dpd_after": 0.95,
+     "rated_hs_ft": 0.36,
+     "wind_sea_hs_ft": 4.76,
+     "model_hs_ft": 4.47,
+     "buoy_hs_ft": 5.58,
+     "surf_hours": 923,
+     "surf_before": 4.04,
+     "surf_after": 3.69,
+     "surf_over_buoy_hs_before": 0.82,
+     "surf_over_buoy_hs_after": 0.73
+    },
+    "Florida": {
+     "hours": 8386,
+     "with_buoy": 4258,
+     "period_before": 8.36,
+     "period_after": 6.58,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 11.1,
+     "near_buoy_dpd_before": 0.251,
+     "near_buoy_dpd_after": 0.812,
+     "rated_hs_ft": 0.3,
+     "wind_sea_hs_ft": 4.17,
+     "model_hs_ft": 3.68,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 8386,
+     "surf_before": 3.59,
+     "surf_after": 3.2,
+     "surf_over_buoy_hs_before": 0.88,
+     "surf_over_buoy_hs_after": 0.82
+    },
+    "Georgia": {
+     "hours": 751,
+     "with_buoy": 729,
+     "period_before": 12.67,
+     "period_after": 6.57,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.103,
+     "near_buoy_dpd_after": 0.774,
+     "rated_hs_ft": 0.26,
+     "wind_sea_hs_ft": 3.02,
+     "model_hs_ft": 3.35,
+     "buoy_hs_ft": 5.25,
+     "surf_hours": 751,
+     "surf_before": 3.33,
+     "surf_after": 2.9,
+     "surf_over_buoy_hs_before": 0.66,
+     "surf_over_buoy_hs_after": 0.6
+    },
+    "Hawaii": {
+     "hours": 2472,
+     "with_buoy": 553,
+     "period_before": 11.47,
+     "period_after": 7.73,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.441,
+     "near_buoy_dpd_after": 0.868,
+     "rated_hs_ft": 0.89,
+     "wind_sea_hs_ft": 5.84,
+     "model_hs_ft": 6.38,
+     "buoy_hs_ft": 7.22,
+     "surf_hours": 2472,
+     "surf_before": 5.62,
+     "surf_after": 5.29,
+     "surf_over_buoy_hs_before": 0.81,
+     "surf_over_buoy_hs_after": 0.78
+    },
+    "Maine": {
+     "hours": 664,
+     "with_buoy": 522,
+     "period_before": 9.66,
+     "period_after": 6.81,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.441,
+     "near_buoy_dpd_after": 0.987,
+     "rated_hs_ft": 0.52,
+     "wind_sea_hs_ft": 5.48,
+     "model_hs_ft": 3.85,
+     "buoy_hs_ft": 7.22,
+     "surf_hours": 643,
+     "surf_before": 3.6,
+     "surf_after": 3.32,
+     "surf_over_buoy_hs_before": 0.53,
+     "surf_over_buoy_hs_after": 0.49
+    },
+    "Maryland": {
+     "hours": 278,
+     "with_buoy": 0,
+     "period_before": 9.67,
+     "period_after": 7.2,
+     "buoy_dpd": null,
+     "buoy_swell_tp": null,
+     "near_buoy_dpd_before": null,
+     "near_buoy_dpd_after": null,
+     "rated_hs_ft": 0.49,
+     "wind_sea_hs_ft": 6.1,
+     "model_hs_ft": 5.0,
+     "buoy_hs_ft": null,
+     "surf_hours": 278,
+     "surf_before": 4.46,
+     "surf_after": 4.31,
+     "surf_over_buoy_hs_before": null,
+     "surf_over_buoy_hs_after": null
+    },
+    "Massachusetts": {
+     "hours": 2000,
+     "with_buoy": 1010,
+     "period_before": 9.63,
+     "period_after": 7.01,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.395,
+     "near_buoy_dpd_after": 0.77,
+     "rated_hs_ft": 0.43,
+     "wind_sea_hs_ft": 5.1,
+     "model_hs_ft": 4.09,
+     "buoy_hs_ft": 4.92,
+     "surf_hours": 1992,
+     "surf_before": 3.82,
+     "surf_after": 3.54,
+     "surf_over_buoy_hs_before": 0.77,
+     "surf_over_buoy_hs_after": 0.71
+    },
+    "New Hampshire": {
+     "hours": 400,
+     "with_buoy": 300,
+     "period_before": 9.6,
+     "period_after": 8.07,
+     "buoy_dpd": 8.5,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.6,
+     "near_buoy_dpd_after": 0.98,
+     "rated_hs_ft": 0.92,
+     "wind_sea_hs_ft": 7.22,
+     "model_hs_ft": 5.62,
+     "buoy_hs_ft": 9.35,
+     "surf_hours": 400,
+     "surf_before": 4.88,
+     "surf_after": 4.89,
+     "surf_over_buoy_hs_before": 0.53,
+     "surf_over_buoy_hs_after": 0.5
+    },
+    "New Jersey": {
+     "hours": 10513,
+     "with_buoy": 8305,
+     "period_before": 10.55,
+     "period_after": 6.93,
+     "buoy_dpd": 7.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.357,
+     "near_buoy_dpd_after": 0.824,
+     "rated_hs_ft": 0.49,
+     "wind_sea_hs_ft": 5.12,
+     "model_hs_ft": 4.46,
+     "buoy_hs_ft": 6.89,
+     "surf_hours": 10513,
+     "surf_before": 4.15,
+     "surf_after": 3.84,
+     "surf_over_buoy_hs_before": 0.64,
+     "surf_over_buoy_hs_after": 0.59
+    },
+    "New York": {
+     "hours": 2381,
+     "with_buoy": 1506,
+     "period_before": 9.29,
+     "period_after": 5.94,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.28,
+     "near_buoy_dpd_after": 0.908,
+     "rated_hs_ft": 0.46,
+     "wind_sea_hs_ft": 4.07,
+     "model_hs_ft": 3.34,
+     "buoy_hs_ft": 6.23,
+     "surf_hours": 2381,
+     "surf_before": 3.18,
+     "surf_after": 2.83,
+     "surf_over_buoy_hs_before": 0.58,
+     "surf_over_buoy_hs_after": 0.52
+    },
+    "North Carolina": {
+     "hours": 3801,
+     "with_buoy": 2790,
+     "period_before": 11.46,
+     "period_after": 6.52,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.161,
+     "near_buoy_dpd_after": 0.883,
+     "rated_hs_ft": 0.33,
+     "wind_sea_hs_ft": 4.07,
+     "model_hs_ft": 3.15,
+     "buoy_hs_ft": 4.59,
+     "surf_hours": 3800,
+     "surf_before": 3.16,
+     "surf_after": 2.78,
+     "surf_over_buoy_hs_before": 0.67,
+     "surf_over_buoy_hs_after": 0.61
+    },
+    "Oregon": {
+     "hours": 138,
+     "with_buoy": 19,
+     "period_before": 13.65,
+     "period_after": 8.8,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.158,
+     "near_buoy_dpd_after": 0.895,
+     "rated_hs_ft": 0.95,
+     "wind_sea_hs_ft": 8.4,
+     "model_hs_ft": 7.61,
+     "buoy_hs_ft": 11.81,
+     "surf_hours": 137,
+     "surf_before": 6.55,
+     "surf_after": 6.37,
+     "surf_over_buoy_hs_before": 0.55,
+     "surf_over_buoy_hs_after": 0.55
+    },
+    "Puerto Rico": {
+     "hours": 478,
+     "with_buoy": 37,
+     "period_before": 9.46,
+     "period_after": 4.98,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.162,
+     "near_buoy_dpd_after": 1.0,
+     "rated_hs_ft": 0.43,
+     "wind_sea_hs_ft": 3.31,
+     "model_hs_ft": 2.36,
+     "buoy_hs_ft": 2.95,
+     "surf_hours": 478,
+     "surf_before": 2.5,
+     "surf_after": 2.04,
+     "surf_over_buoy_hs_before": 1.07,
+     "surf_over_buoy_hs_after": 0.9
+    },
+    "Rhode Island": {
+     "hours": 885,
+     "with_buoy": 692,
+     "period_before": 9.59,
+     "period_after": 4.13,
+     "buoy_dpd": 4.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.227,
+     "near_buoy_dpd_after": 0.905,
+     "rated_hs_ft": 0.26,
+     "wind_sea_hs_ft": 2.33,
+     "model_hs_ft": 2.34,
+     "buoy_hs_ft": 3.28,
+     "surf_hours": 885,
+     "surf_before": 2.42,
+     "surf_after": 1.82,
+     "surf_over_buoy_hs_before": 0.78,
+     "surf_over_buoy_hs_after": 0.59
+    },
+    "South Carolina": {
+     "hours": 2277,
+     "with_buoy": 1840,
+     "period_before": 10.05,
+     "period_after": 6.08,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": null,
+     "near_buoy_dpd_before": 0.285,
+     "near_buoy_dpd_after": 0.816,
+     "rated_hs_ft": 0.23,
+     "wind_sea_hs_ft": 3.51,
+     "model_hs_ft": 3.3,
+     "buoy_hs_ft": 4.27,
+     "surf_hours": 2277,
+     "surf_before": 3.18,
+     "surf_after": 2.87,
+     "surf_over_buoy_hs_before": 0.75,
+     "surf_over_buoy_hs_after": 0.67
+    },
+    "Texas": {
+     "hours": 1786,
+     "with_buoy": 535,
+     "period_before": 7.19,
+     "period_after": 4.91,
+     "buoy_dpd": 6.0,
+     "buoy_swell_tp": 10.0,
+     "near_buoy_dpd_before": 0.508,
+     "near_buoy_dpd_after": 1.0,
+     "rated_hs_ft": 0.3,
+     "wind_sea_hs_ft": 2.59,
+     "model_hs_ft": 1.98,
+     "buoy_hs_ft": 3.61,
+     "surf_hours": 1776,
+     "surf_before": 1.96,
+     "surf_after": 1.73,
+     "surf_over_buoy_hs_before": 0.59,
+     "surf_over_buoy_hs_after": 0.53
+    },
+    "Virginia": {
+     "hours": 404,
+     "with_buoy": 404,
+     "period_before": 10.14,
+     "period_after": 7.02,
+     "buoy_dpd": 8.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.228,
+     "near_buoy_dpd_after": 0.834,
+     "rated_hs_ft": 0.36,
+     "wind_sea_hs_ft": 5.81,
+     "model_hs_ft": 5.42,
+     "buoy_hs_ft": 7.55,
+     "surf_hours": 404,
+     "surf_before": 4.41,
+     "surf_after": 4.53,
+     "surf_over_buoy_hs_before": 0.72,
+     "surf_over_buoy_hs_after": 0.67
+    },
+    "Washington": {
+     "hours": 160,
+     "with_buoy": 80,
+     "period_before": 15.13,
+     "period_after": 9.0,
+     "buoy_dpd": 9.0,
+     "buoy_swell_tp": 10.5,
+     "near_buoy_dpd_before": 0.037,
+     "near_buoy_dpd_after": 0.95,
+     "rated_hs_ft": 1.41,
+     "wind_sea_hs_ft": 9.29,
+     "model_hs_ft": 8.66,
+     "buoy_hs_ft": 9.19,
+     "surf_hours": 160,
+     "surf_before": 7.34,
+     "surf_after": 7.07,
+     "surf_over_buoy_hs_before": 0.82,
+     "surf_over_buoy_hs_after": 0.8
+    }
+   },
+   "cases": {
+    "California": {
+     "dominant": 931,
+     "longer": 15
+    },
+    "Delaware": {
+     "dominant": 808,
+     "longer": 115
+    },
+    "Florida": {
+     "dominant": 6401,
+     "longer": 1985
+    },
+    "Georgia": {
+     "dominant": 549,
+     "longer": 202
+    },
+    "Hawaii": {
+     "longer": 595,
+     "dominant": 1877
+    },
+    "Maine": {
+     "dominant": 656,
+     "longer": 8
+    },
+    "Maryland": {
+     "dominant": 217,
+     "longer": 61
+    },
+    "Massachusetts": {
+     "dominant": 1883,
+     "longer": 117
+    },
+    "New Hampshire": {
+     "dominant": 400
+    },
+    "New Jersey": {
+     "dominant": 9200,
+     "longer": 1313
+    },
+    "New York": {
+     "dominant": 1924,
+     "longer": 457
+    },
+    "North Carolina": {
+     "dominant": 3052,
+     "longer": 749
+    },
+    "Oregon": {
+     "dominant": 132,
+     "longer": 6
+    },
+    "Puerto Rico": {
+     "dominant": 420,
+     "longer": 58
+    },
+    "Rhode Island": {
+     "dominant": 877,
+     "longer": 8
+    },
+    "South Carolina": {
+     "dominant": 2073,
+     "longer": 204
+    },
+    "Texas": {
+     "dominant": 1462,
+     "longer": 324
+    },
+    "Virginia": {
+     "dominant": 261,
+     "longer": 143
+    },
+    "Washington": {
+     "dominant": 145,
+     "longer": 15
+    },
+    "all": {
+     "dominant": 33268,
+     "longer": 6375
+    }
+   },
+   "window": {
+    "California": {
+     "switched": 946,
+     "wind_outside": 668,
+     "no_window": 0,
+     "rated_outside": 143
+    },
+    "Delaware": {
+     "switched": 923,
+     "wind_outside": 120,
+     "no_window": 0,
+     "rated_outside": 174
+    },
+    "Florida": {
+     "switched": 8386,
+     "wind_outside": 2423,
+     "no_window": 0,
+     "rated_outside": 2292
+    },
+    "Georgia": {
+     "switched": 751,
+     "wind_outside": 50,
+     "no_window": 0,
+     "rated_outside": 33
+    },
+    "Hawaii": {
+     "switched": 2472,
+     "wind_outside": 2008,
+     "no_window": 0,
+     "rated_outside": 1118
+    },
+    "Maine": {
+     "switched": 664,
+     "wind_outside": 93,
+     "no_window": 0,
+     "rated_outside": 47
+    },
+    "Maryland": {
+     "switched": 278,
+     "wind_outside": 9,
+     "no_window": 0,
+     "rated_outside": 0
+    },
+    "Massachusetts": {
+     "switched": 2000,
+     "wind_outside": 720,
+     "no_window": 0,
+     "rated_outside": 489
+    },
+    "New Hampshire": {
+     "switched": 400,
+     "wind_outside": 16,
+     "no_window": 0,
+     "rated_outside": 0
+    },
+    "New Jersey": {
+     "switched": 10513,
+     "wind_outside": 1235,
+     "no_window": 0,
+     "rated_outside": 169
+    },
+    "New York": {
+     "switched": 2381,
+     "wind_outside": 462,
+     "no_window": 0,
+     "rated_outside": 61
+    },
+    "North Carolina": {
+     "switched": 3801,
+     "wind_outside": 718,
+     "no_window": 0,
+     "rated_outside": 419
+    },
+    "Oregon": {
+     "switched": 138,
+     "wind_outside": 25,
+     "no_window": 0,
+     "rated_outside": 15
+    },
+    "Puerto Rico": {
+     "switched": 478,
+     "wind_outside": 247,
+     "no_window": 0,
+     "rated_outside": 152
+    },
+    "Rhode Island": {
+     "switched": 885,
+     "wind_outside": 314,
+     "no_window": 0,
+     "rated_outside": 102
+    },
+    "South Carolina": {
+     "switched": 2277,
+     "wind_outside": 264,
+     "no_window": 0,
+     "rated_outside": 42
+    },
+    "Texas": {
+     "switched": 1786,
+     "wind_outside": 44,
+     "no_window": 0,
+     "rated_outside": 171
+    },
+    "Virginia": {
+     "switched": 404,
+     "wind_outside": 0,
+     "no_window": 0,
+     "rated_outside": 46
+    },
+    "Washington": {
+     "switched": 160,
+     "wind_outside": 21,
+     "no_window": 0,
+     "rated_outside": 10
+    },
+    "all": {
+     "switched": 39643,
+     "wind_outside": 9437,
+     "no_window": 0,
+     "rated_outside": 5483
+    }
+   },
+   "window_examples": {
+    "California": [
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T23:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 7.87,
+      "rated": {
+       "hs_ft": 1.71,
+       "tp": 14.41,
+       "dp": 205.55
+      },
+      "wind_sea": {
+       "hs_ft": 13.42,
+       "tp": 9.08,
+       "dp": 320.43
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 3.44,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T20:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 5.44,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T21:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.84,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Point Arena",
+      "state": "California",
+      "valid_time": "2026-10-10T22:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.84,
+      "rated": {
+       "hs_ft": 1.8,
+       "tp": 14.48,
+       "dp": 205.12
+      },
+      "wind_sea": {
+       "hs_ft": 12.34,
+       "tp": 8.91,
+       "dp": 320.77
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 4.12,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Jenner Beach",
+      "state": "California",
+      "valid_time": "2026-10-10T23:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "calibrated",
+      "ratio": 6.59,
+      "rated": {
+       "hs_ft": 1.77,
+       "tp": 14.35,
+       "dp": 207.33
+      },
+      "wind_sea": {
+       "hs_ft": 11.68,
+       "tp": 9.33,
+       "dp": 313.26
+      },
+      "buoy": "46013",
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 10.51,
+      "case": "dominant",
+      "rated_in_window": true
+     }
+    ],
+    "Hawaii": [
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T08:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 21.11,
+      "case": "dominant",
+      "rated_in_window": false
+     },
+     {
+      "spot": "Polihale Beach",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T08:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 9.3,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T09:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 23.93,
+      "case": "dominant",
+      "rated_in_window": false
+     },
+     {
+      "spot": "Polihale Beach",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T09:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 10.77,
+      "case": "dominant",
+      "rated_in_window": true
+     },
+     {
+      "spot": "Pakala",
+      "state": "Hawaii",
+      "valid_time": "2026-09-08T10:00:00+00:00",
+      "source": "nwps_height_ww3_dir",
+      "path": "surf",
+      "ratio": 22.4,
+      "rated": {
+       "hs_ft": 1.38,
+       "tp": 12.41,
+       "dp": 327.98
+      },
+      "wind_sea": {
+       "hs_ft": 30.87,
+       "tp": 11.71,
+       "dp": 142.27
+      },
+      "buoy": null,
+      "buoy_hs_ft": null,
+      "buoy_dpd": null,
+      "published_ft": 25.87,
+      "case": "dominant",
+      "rated_in_window": false
+     }
+    ]
+   },
+   "paths": {
+    "surf": {
+     "hours": 38761,
+     "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+     "headline_before": 3.57,
+     "headline_if_shown_period": 3.23,
+     "ratio": {
+      "0.5": 0.914,
+      "0.9": 1.036,
+      "1.0": 1.628
+     },
+     "changed": 38460
+    },
+    "calibrated": {
+     "hours": 835,
+     "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+     "headline_before": 2.99,
+     "headline_if_shown_period": 2.59,
+     "ratio": {
+      "0.5": 0.851,
+      "0.9": 0.902,
+      "1.0": 1.025
+     },
+     "changed": 835
+    },
+    "mop": {
+     "hours": 0,
+     "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+     "headline_before": null,
+     "headline_if_shown_period": null,
+     "ratio": {
+      "0.5": null,
+      "0.9": null,
+      "1.0": null
+     },
+     "changed": 0
+    },
+    "other": {
+     "hours": 47,
+     "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+     "headline_before": 0.71,
+     "headline_if_shown_period": 0.72,
+     "ratio": {
+      "0.5": 0.965,
+      "0.9": 1.008,
+      "1.0": 1.011
+     },
+     "changed": 39
+    }
+   },
+   "paths_bigger_shorter": {
+    "surf": {
+     "hours": 31430,
+     "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+     "headline_before": 3.44,
+     "headline_if_shown_period": 3.03,
+     "ratio": {
+      "0.5": 0.895,
+      "0.9": 0.993,
+      "1.0": 1.0
+     },
+     "changed": 31233
+    },
+    "calibrated": {
+     "hours": 820,
+     "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+     "headline_before": 3.04,
+     "headline_if_shown_period": 2.6,
+     "ratio": {
+      "0.5": 0.851,
+      "0.9": 0.902,
+      "1.0": 0.932
+     },
+     "changed": 820
+    },
+    "mop": {
+     "hours": 0,
+     "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+     "headline_before": null,
+     "headline_if_shown_period": null,
+     "ratio": {
+      "0.5": null,
+      "0.9": null,
+      "1.0": null
+     },
+     "changed": 0
+    },
+    "other": {
+     "hours": 39,
+     "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+     "headline_before": 0.68,
+     "headline_if_shown_period": 0.56,
+     "ratio": {
+      "0.5": 0.939,
+      "0.9": 0.995,
+      "1.0": 0.997
+     },
+     "changed": 34
+    }
+   }
+  }
+ },
+ "bigger_shorter_by_state": {
+  "California": {
+   "hours": 32401,
+   "ratio": {
+    "0.5": 1.925,
+    "0.9": 4.135,
+    "0.99": 7.297,
+    "1.0": 13.364
+   },
+   "ratio_bands": {
+    "1-2": 17321,
+    "2-4": 11589,
+    "4-8": 3336,
+    "over 8": 155
+   },
+   "rated_hs_ft": {
+    "0.1": 0.722,
+    "0.5": 1.411,
+    "0.9": 2.887
+   },
+   "surf_hours": 2650,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.19,
+    "0.9": 1.44,
+    "1.0": 1.715
+   },
+   "surf_hours_ratio_4_up": 343,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.148,
+    "0.9": 1.318,
+    "1.0": 1.528
+   }
+  },
+  "Delaware": {
+   "hours": 3175,
+   "ratio": {
+    "0.5": 2.433,
+    "0.9": 16.944,
+    "0.99": 40.4,
+    "1.0": 51.0
+   },
+   "ratio_bands": {
+    "1-2": 1303,
+    "2-4": 792,
+    "4-8": 485,
+    "over 8": 595
+   },
+   "rated_hs_ft": {
+    "0.1": 0.328,
+    "0.5": 0.82,
+    "0.9": 2.001
+   },
+   "surf_hours": 3175,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.239,
+    "0.9": 1.453,
+    "1.0": 1.674
+   },
+   "surf_hours_ratio_4_up": 1095,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.113,
+    "0.9": 1.31,
+    "1.0": 1.486
+   }
+  },
+  "Florida": {
+   "hours": 28734,
+   "ratio": {
+    "0.5": 2.552,
+    "0.9": 12.455,
+    "0.99": 28.6,
+    "1.0": 55.6
+   },
+   "ratio_bands": {
+    "1-2": 11375,
+    "2-4": 8070,
+    "4-8": 4496,
+    "over 8": 4793
+   },
+   "rated_hs_ft": {
+    "0.1": 0.197,
+    "0.5": 0.656,
+    "0.9": 2.198
+   },
+   "surf_hours": 28725,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.229,
+    "0.9": 1.508,
+    "1.0": 2.054
+   },
+   "surf_hours_ratio_4_up": 9478,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.149,
+    "0.9": 1.418,
+    "1.0": 1.77
+   }
+  },
+  "Georgia": {
+   "hours": 2499,
+   "ratio": {
+    "0.5": 2.108,
+    "0.9": 12.556,
+    "0.99": 21.714,
+    "1.0": 25.2
+   },
+   "ratio_bands": {
+    "1-2": 1180,
+    "2-4": 600,
+    "4-8": 260,
+    "over 8": 459
+   },
+   "rated_hs_ft": {
+    "0.1": 0.23,
+    "0.5": 0.722,
+    "0.9": 2.133
+   },
+   "surf_hours": 2499,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.19,
+    "0.9": 1.556,
+    "1.0": 1.838
+   },
+   "surf_hours_ratio_4_up": 728,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.147,
+    "0.9": 1.287,
+    "1.0": 1.484
+   }
+  },
+  "Hawaii": {
+   "hours": 23542,
+   "ratio": {
+    "0.5": 2.651,
+    "0.9": 5.714,
+    "0.99": 14.765,
+    "1.0": 34.0
+   },
+   "ratio_bands": {
+    "1-2": 8331,
+    "2-4": 9208,
+    "4-8": 5292,
+    "over 8": 711
+   },
+   "rated_hs_ft": {
+    "0.1": 0.787,
+    "0.5": 1.706,
+    "0.9": 3.084
+   },
+   "surf_hours": 23542,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.097,
+    "0.9": 1.253,
+    "1.0": 1.718
+   },
+   "surf_hours_ratio_4_up": 6095,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.07,
+    "0.9": 1.158,
+    "1.0": 1.448
+   }
+  },
+  "Maine": {
+   "hours": 5038,
+   "ratio": {
+    "0.5": 2.027,
+    "0.9": 6.104,
+    "0.99": 21.0,
+    "1.0": 28.4
+   },
+   "ratio_bands": {
+    "1-2": 2503,
+    "2-4": 1791,
+    "4-8": 380,
+    "over 8": 364
+   },
+   "rated_hs_ft": {
+    "0.1": 0.525,
+    "0.5": 0.886,
+    "0.9": 1.772
+   },
+   "surf_hours": 4925,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.38,
+    "0.9": 1.605,
+    "1.0": 1.878
+   },
+   "surf_hours_ratio_4_up": 730,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.136,
+    "0.9": 1.353,
+    "1.0": 1.51
+   }
+  },
+  "Maryland": {
+   "hours": 1048,
+   "ratio": {
+    "0.5": 2.25,
+    "0.9": 13.5,
+    "0.99": 43.6,
+    "1.0": 55.4
+   },
+   "ratio_bands": {
+    "1-2": 460,
+    "2-4": 329,
+    "4-8": 122,
+    "over 8": 137
+   },
+   "rated_hs_ft": {
+    "0.1": 0.427,
+    "0.5": 1.05,
+    "0.9": 2.33
+   },
+   "surf_hours": 1048,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.249,
+    "0.9": 1.451,
+    "1.0": 1.636
+   },
+   "surf_hours_ratio_4_up": 261,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.089,
+    "0.9": 1.231,
+    "1.0": 1.483
+   }
+  },
+  "Massachusetts": {
+   "hours": 9422,
+   "ratio": {
+    "0.5": 2.529,
+    "0.9": 10.571,
+    "0.99": 29.0,
+    "1.0": 46.8
+   },
+   "ratio_bands": {
+    "1-2": 3557,
+    "2-4": 3088,
+    "4-8": 1447,
+    "over 8": 1330
+   },
+   "rated_hs_ft": {
+    "0.1": 0.328,
+    "0.5": 0.689,
+    "0.9": 2.001
+   },
+   "surf_hours": 9369,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.312,
+    "0.9": 1.588,
+    "1.0": 2.317
+   },
+   "surf_hours_ratio_4_up": 2857,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.156,
+    "0.9": 1.451,
+    "1.0": 1.772
+   }
+  },
+  "New Hampshire": {
+   "hours": 2773,
+   "ratio": {
+    "0.5": 1.97,
+    "0.9": 6.213,
+    "0.99": 24.6,
+    "1.0": 28.0
+   },
+   "ratio_bands": {
+    "1-2": 1389,
+    "2-4": 912,
+    "4-8": 256,
+    "over 8": 216
+   },
+   "rated_hs_ft": {
+    "0.1": 0.459,
+    "0.5": 0.755,
+    "0.9": 1.345
+   },
+   "surf_hours": 2773,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.415,
+    "0.9": 1.66,
+    "1.0": 1.81
+   },
+   "surf_hours_ratio_4_up": 472,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.118,
+    "0.9": 1.404,
+    "1.0": 1.572
+   }
+  },
+  "New Jersey": {
+   "hours": 31144,
+   "ratio": {
+    "0.5": 2.786,
+    "0.9": 15.286,
+    "0.99": 41.0,
+    "1.0": 52.2
+   },
+   "ratio_bands": {
+    "1-2": 11052,
+    "2-4": 8353,
+    "4-8": 6004,
+    "over 8": 5735
+   },
+   "rated_hs_ft": {
+    "0.1": 0.23,
+    "0.5": 0.82,
+    "0.9": 1.706
+   },
+   "surf_hours": 31144,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.238,
+    "0.9": 1.516,
+    "1.0": 1.89
+   },
+   "surf_hours_ratio_4_up": 11880,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.109,
+    "0.9": 1.391,
+    "1.0": 1.718
+   }
+  },
+  "New York": {
+   "hours": 10693,
+   "ratio": {
+    "0.5": 2.423,
+    "0.9": 8.429,
+    "0.99": 32.2,
+    "1.0": 42.8
+   },
+   "ratio_bands": {
+    "1-2": 4536,
+    "2-4": 2902,
+    "4-8": 2126,
+    "over 8": 1129
+   },
+   "rated_hs_ft": {
+    "0.1": 0.394,
+    "0.5": 0.787,
+    "0.9": 2.165
+   },
+   "surf_hours": 10690,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.293,
+    "0.9": 1.546,
+    "1.0": 1.808
+   },
+   "surf_hours_ratio_4_up": 3286,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.183,
+    "0.9": 1.406,
+    "1.0": 1.573
+   }
+  },
+  "North Carolina": {
+   "hours": 14523,
+   "ratio": {
+    "0.5": 2.258,
+    "0.9": 12.0,
+    "0.99": 35.857,
+    "1.0": 59.167
+   },
+   "ratio_bands": {
+    "1-2": 6264,
+    "2-4": 3882,
+    "4-8": 2089,
+    "over 8": 2288
+   },
+   "rated_hs_ft": {
+    "0.1": 0.295,
+    "0.5": 1.083,
+    "0.9": 3.248
+   },
+   "surf_hours": 14516,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.162,
+    "0.9": 1.447,
+    "1.0": 1.797
+   },
+   "surf_hours_ratio_4_up": 4416,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.141,
+    "0.9": 1.293,
+    "1.0": 1.476
+   }
+  },
+  "Oregon": {
+   "hours": 3905,
+   "ratio": {
+    "0.5": 1.757,
+    "0.9": 4.156,
+    "0.99": 9.659,
+    "1.0": 12.857
+   },
+   "ratio_bands": {
+    "1-2": 2336,
+    "2-4": 1156,
+    "4-8": 313,
+    "over 8": 100
+   },
+   "rated_hs_ft": {
+    "0.1": 0.984,
+    "0.5": 2.067,
+    "0.9": 3.576
+   },
+   "surf_hours": 3891,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.127,
+    "0.9": 1.283,
+    "1.0": 1.514
+   },
+   "surf_hours_ratio_4_up": 413,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.079,
+    "0.9": 1.207,
+    "1.0": 1.288
+   }
+  },
+  "Puerto Rico": {
+   "hours": 7516,
+   "ratio": {
+    "0.5": 2.161,
+    "0.9": 4.15,
+    "0.99": 9.857,
+    "1.0": 24.8
+   },
+   "ratio_bands": {
+    "1-2": 3371,
+    "2-4": 3329,
+    "4-8": 600,
+    "over 8": 216
+   },
+   "rated_hs_ft": {
+    "0.1": 0.689,
+    "0.5": 1.214,
+    "0.9": 1.87
+   },
+   "surf_hours": 7516,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.246,
+    "0.9": 1.402,
+    "1.0": 1.602
+   },
+   "surf_hours_ratio_4_up": 821,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.223,
+    "0.9": 1.303,
+    "1.0": 1.543
+   }
+  },
+  "Rhode Island": {
+   "hours": 11085,
+   "ratio": {
+    "0.5": 2.333,
+    "0.9": 5.462,
+    "0.99": 13.0,
+    "1.0": 28.6
+   },
+   "ratio_bands": {
+    "1-2": 4713,
+    "2-4": 4030,
+    "4-8": 1941,
+    "over 8": 401
+   },
+   "rated_hs_ft": {
+    "0.1": 0.295,
+    "0.5": 0.623,
+    "0.9": 2.494
+   },
+   "surf_hours": 11085,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.402,
+    "0.9": 1.661,
+    "1.0": 2.348
+   },
+   "surf_hours_ratio_4_up": 2437,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.385,
+    "0.9": 1.552,
+    "1.0": 1.775
+   }
+  },
+  "South Carolina": {
+   "hours": 8920,
+   "ratio": {
+    "0.5": 2.133,
+    "0.9": 16.6,
+    "0.99": 25.0,
+    "1.0": 31.6
+   },
+   "ratio_bands": {
+    "1-2": 4092,
+    "2-4": 2240,
+    "4-8": 823,
+    "over 8": 1765
+   },
+   "rated_hs_ft": {
+    "0.1": 0.197,
+    "0.5": 0.82,
+    "0.9": 2.559
+   },
+   "surf_hours": 8920,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.2,
+    "0.9": 1.463,
+    "1.0": 1.754
+   },
+   "surf_hours_ratio_4_up": 2599,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.155,
+    "0.9": 1.319,
+    "1.0": 1.649
+   }
+  },
+  "Texas": {
+   "hours": 4360,
+   "ratio": {
+    "0.5": 3.467,
+    "0.9": 10.167,
+    "0.99": 15.5,
+    "1.0": 22.6
+   },
+   "ratio_bands": {
+    "1-2": 1357,
+    "2-4": 1068,
+    "4-8": 1142,
+    "over 8": 793
+   },
+   "rated_hs_ft": {
+    "0.1": 0.23,
+    "0.5": 0.755,
+    "0.9": 2.428
+   },
+   "surf_hours": 4332,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.13,
+    "0.9": 1.269,
+    "1.0": 1.526
+   },
+   "surf_hours_ratio_4_up": 1935,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.195,
+    "0.9": 1.298,
+    "1.0": 1.526
+   }
+  },
+  "Virginia": {
+   "hours": 1817,
+   "ratio": {
+    "0.5": 2.034,
+    "0.9": 9.6,
+    "0.99": 39.5,
+    "1.0": 48.0
+   },
+   "ratio_bands": {
+    "1-2": 882,
+    "2-4": 539,
+    "4-8": 175,
+    "over 8": 221
+   },
+   "rated_hs_ft": {
+    "0.1": 0.361,
+    "0.5": 1.05,
+    "0.9": 2.69
+   },
+   "surf_hours": 1817,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.216,
+    "0.9": 1.432,
+    "1.0": 1.58
+   },
+   "surf_hours_ratio_4_up": 408,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.153,
+    "0.9": 1.293,
+    "1.0": 1.403
+   }
+  },
+  "Washington": {
+   "hours": 1431,
+   "ratio": {
+    "0.5": 1.867,
+    "0.9": 6.047,
+    "0.99": 10.393,
+    "1.0": 10.92
+   },
+   "ratio_bands": {
+    "1-2": 796,
+    "2-4": 398,
+    "4-8": 200,
+    "over 8": 37
+   },
+   "rated_hs_ft": {
+    "0.1": 1.017,
+    "0.5": 1.805,
+    "0.9": 3.412
+   },
+   "surf_hours": 1431,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.092,
+    "0.9": 1.366,
+    "1.0": 1.614
+   },
+   "surf_hours_ratio_4_up": 243,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.041,
+    "0.9": 1.073,
+    "1.0": 1.098
+   }
+  },
+  "all": {
+   "hours": 204026,
+   "ratio": {
+    "0.5": 2.303,
+    "0.9": 8.455,
+    "0.99": 29.6,
+    "1.0": 59.167
+   },
+   "ratio_bands": {
+    "1-2": 86818,
+    "2-4": 64276,
+    "4-8": 31487,
+    "over 8": 21445
+   },
+   "rated_hs_ft": {
+    "0.1": 0.295,
+    "0.5": 1.05,
+    "0.9": 2.592
+   },
+   "surf_hours": 174048,
+   "shown_over_wind_sea_height": {
+    "0.5": 1.209,
+    "0.9": 1.507,
+    "1.0": 2.348
+   },
+   "surf_hours_ratio_4_up": 50497,
+   "shown_over_wind_sea_height_ratio_4_up": {
+    "0.5": 1.132,
+    "0.9": 1.389,
+    "1.0": 1.775
+   }
+  }
+ },
+ "lopsided_examples": [
+  {
+   "spot": "Salvo",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": null,
+   "buoy_hs_ft": null,
+   "buoy_dpd": null,
+   "published_ft": 1.71,
+   "switched": "dominant"
+  },
+  {
+   "spot": "S-Turns",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": "44095",
+   "buoy_hs_ft": 12.14,
+   "buoy_dpd": 10.0,
+   "published_ft": 0.76,
+   "switched": "dominant"
+  },
+  {
+   "spot": "Rodanthe",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": "44095",
+   "buoy_hs_ft": 12.14,
+   "buoy_dpd": 10.0,
+   "published_ft": 0.55,
+   "switched": "dominant"
+  },
+  {
+   "spot": "Salvo",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": null,
+   "buoy_hs_ft": null,
+   "buoy_dpd": null,
+   "published_ft": 1.94,
+   "switched": "dominant"
+  },
+  {
+   "spot": "S-Turns",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": "44095",
+   "buoy_hs_ft": 12.14,
+   "buoy_dpd": 8.0,
+   "published_ft": 0.92,
+   "switched": "dominant"
+  },
+  {
+   "spot": "Rodanthe",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": "44095",
+   "buoy_hs_ft": 12.14,
+   "buoy_dpd": 8.0,
+   "published_ft": 0.72,
+   "switched": "dominant"
+  },
+  {
+   "spot": "Salvo",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": null,
+   "buoy_hs_ft": null,
+   "buoy_dpd": null,
+   "published_ft": 2.24,
+   "switched": "dominant"
+  },
+  {
+   "spot": "S-Turns",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": "44095",
+   "buoy_hs_ft": 12.14,
+   "buoy_dpd": 12.0,
+   "published_ft": 1.13,
+   "switched": "dominant"
+  },
+  {
+   "spot": "Rodanthe",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 59.17,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.65,
+    "tp": 10.2,
+    "dp": 59.42
+   },
+   "buoy": "44095",
+   "buoy_hs_ft": 12.14,
+   "buoy_dpd": 12.0,
+   "published_ft": 0.94,
+   "switched": "dominant"
+  },
+  {
+   "spot": "Outer Banks Fishing Pier",
+   "state": "North Carolina",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "path": "surf",
+   "ratio": 56.83,
+   "rated": {
+    "hs_ft": 0.2,
+    "tp": 12.97,
+    "dp": 130.94
+   },
+   "wind_sea": {
+    "hs_ft": 11.19,
+    "tp": 9.95,
+    "dp": 57.01
+   },
+   "buoy": "44086",
+   "buoy_hs_ft": 12.8,
+   "buoy_dpd": 11.0,
+   "published_ft": 11.91,
+   "switched": "dominant"
+  }
+ ],
+ "paths_archive": {
+  "surf": {
+   "hours": 58418,
+   "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+   "headline_before": 3.31,
+   "headline_if_shown_period": 2.92,
+   "ratio": {
+    "0.5": 0.899,
+    "0.9": 1.011,
+    "1.0": 1.628
+   },
+   "changed": 57933
+  },
+  "calibrated": {
+   "hours": 3269,
+   "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+   "headline_before": 2.77,
+   "headline_if_shown_period": 2.37,
+   "ratio": {
+    "0.5": 0.849,
+    "0.9": 0.908,
+    "1.0": 1.025
+   },
+   "changed": 3269
+  },
+  "mop": {
+   "hours": 0,
+   "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+   "headline_before": null,
+   "headline_if_shown_period": null,
+   "ratio": {
+    "0.5": null,
+    "0.9": null,
+    "1.0": null
+   },
+   "changed": 0
+  },
+  "other": {
+   "hours": 92,
+   "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+   "headline_before": 1.0,
+   "headline_if_shown_period": 0.96,
+   "ratio": {
+    "0.5": 0.908,
+    "0.9": 0.997,
+    "1.0": 1.011
+   },
+   "changed": 84
+  }
+ },
+ "paths_published": {
+  "surf": {
+   "hours": 5767,
+   "depends_on_rated_period": "no: since this change #283's surf height is shoaled at the shown period; the rated period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+   "headline_before": 3.19,
+   "headline_if_shown_period": 3.05,
+   "ratio": {
+    "0.5": 0.909,
+    "0.9": 1.042,
+    "1.0": 1.381
+   },
+   "changed": 5758
+  },
+  "calibrated": {
+   "hours": 0,
+   "depends_on_rated_period": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by the spot's MOP factor",
+   "headline_before": null,
+   "headline_if_shown_period": null,
+   "ratio": {
+    "0.5": null,
+    "0.9": null,
+    "1.0": null
+   },
+   "changed": 0
+  },
+  "mop": {
+   "hours": 0,
+   "depends_on_rated_period": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours (swell_source cdip_mop) are never switched",
+   "headline_before": null,
+   "headline_if_shown_period": null,
+   "ratio": {
+    "0.5": null,
+    "0.9": null,
+    "1.0": null
+   },
+   "changed": 0
+  },
+  "other": {
+   "hours": 8,
+   "depends_on_rated_period": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's WW3 path at an uncalibrated spot)",
+   "headline_before": 0.42,
+   "headline_if_shown_period": 0.41,
+   "ratio": {
+    "0.5": 0.958,
+    "0.9": 0.968,
+    "1.0": 0.968
+   },
+   "changed": 8
+  }
+ },
+ "jacksonville": [
+  {
+   "valid_time": "2026-10-26T00:00:00+00:00",
+   "hour": 1792972800,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 8.745,
+   "rated_dp": 74.999,
+   "shown_tp": 8.745,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.87,
+   "surf_at_rated": 7.45,
+   "surf_at_shown": 7.45,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 3.1,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-26T01:00:00+00:00",
+   "hour": 1792976400,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 8.743,
+   "rated_dp": 74.999,
+   "shown_tp": 8.743,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.91,
+   "surf_at_rated": 7.47,
+   "surf_at_shown": 7.47,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 3.3,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-26T02:00:00+00:00",
+   "hour": 1792980000,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 8.774,
+   "rated_dp": 74.999,
+   "shown_tp": 8.774,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.88,
+   "surf_at_rated": 7.46,
+   "surf_at_shown": 7.46,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 3.3,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-26T03:00:00+00:00",
+   "hour": 1792983600,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 8.826,
+   "rated_dp": 74.999,
+   "shown_tp": 8.826,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.76,
+   "surf_at_rated": 7.37,
+   "surf_at_shown": 7.37,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 3.3,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-26T04:00:00+00:00",
+   "hour": 1792987200,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 8.889,
+   "rated_dp": 74.999,
+   "shown_tp": 8.889,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.5,
+   "surf_at_rated": 7.2,
+   "surf_at_shown": 7.2,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 3.3,
+   "buoy_tp": 11.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T05:00:00+00:00",
+   "hour": 1792990800,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.79,
+     "tp": 10.61,
+     "dp": 70.01
+    }
+   },
+   "rated": null,
+   "rated_tp": 8.938,
+   "rated_dp": 74.999,
+   "shown_tp": 8.938,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.21,
+   "surf_at_rated": 7.0,
+   "surf_at_shown": 7.0,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.3,
+   "buoy_tp": 12.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T06:00:00+00:00",
+   "hour": 1792994400,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.79,
+     "tp": 10.61,
+     "dp": 70.01
+    }
+   },
+   "rated": null,
+   "rated_tp": 8.983,
+   "rated_dp": 74.999,
+   "shown_tp": 8.983,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 8.81,
+   "surf_at_rated": 6.77,
+   "surf_at_shown": 6.77,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 12.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T07:00:00+00:00",
+   "hour": 1792998000,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.79,
+     "tp": 10.61,
+     "dp": 70.01
+    }
+   },
+   "rated": null,
+   "rated_tp": 9.001,
+   "rated_dp": 74.999,
+   "shown_tp": 9.001,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 8.76,
+   "surf_at_rated": 6.72,
+   "surf_at_shown": 6.72,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 11.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-26T08:00:00+00:00",
+   "hour": 1793001600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.15,
+     "tp": 10.37,
+     "dp": 88.46
+    },
+    "wind_wave": {
+     "hs_ft": 8.24,
+     "tp": 10.64,
+     "dp": 70.38
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.37,
+   "rated_dp": 88.46,
+   "shown_tp": 10.37,
+   "shown_dp": 88.46,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.6x, under 4x) but +0.27 s against the rated period (needs +0.5)",
+   "published_ft": 9.18,
+   "surf_at_rated": 6.92,
+   "surf_at_shown": 6.92,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 12.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T09:00:00+00:00",
+   "hour": 1793005200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.15,
+     "tp": 10.37,
+     "dp": 88.46
+    },
+    "wind_wave": {
+     "hs_ft": 8.24,
+     "tp": 10.64,
+     "dp": 70.38
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.37,
+   "rated_dp": 88.46,
+   "shown_tp": 10.37,
+   "shown_dp": 88.46,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.6x, under 4x) but +0.27 s against the rated period (needs +0.5)",
+   "published_ft": 9.37,
+   "surf_at_rated": 7.04,
+   "surf_at_shown": 7.04,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 13.0,
+   "buoy_swell_tp": 12.5
+  },
+  {
+   "valid_time": "2026-10-26T10:00:00+00:00",
+   "hour": 1793008800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.15,
+     "tp": 10.37,
+     "dp": 88.46
+    },
+    "wind_wave": {
+     "hs_ft": 8.24,
+     "tp": 10.64,
+     "dp": 70.38
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.37,
+   "rated_dp": 88.46,
+   "shown_tp": 10.37,
+   "shown_dp": 88.46,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.6x, under 4x) but +0.27 s against the rated period (needs +0.5)",
+   "published_ft": 9.58,
+   "surf_at_rated": 7.17,
+   "surf_at_shown": 7.17,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.1,
+   "buoy_tp": 11.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T11:00:00+00:00",
+   "hour": 1793012400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.02,
+     "tp": 10.25,
+     "dp": 90.25
+    },
+    "wind_wave": {
+     "hs_ft": 8.92,
+     "tp": 10.37,
+     "dp": 59.53
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.25,
+   "rated_dp": 90.25,
+   "shown_tp": 10.25,
+   "shown_dp": 90.25,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (3.0x, under 4x) but +0.12 s against the rated period (needs +0.5)",
+   "published_ft": 9.69,
+   "surf_at_rated": 7.25,
+   "surf_at_shown": 7.25,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T12:00:00+00:00",
+   "hour": 1793016000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 2.82,
+     "tp": 10.06,
+     "dp": 107.24
+    },
+    "wind_wave": {
+     "hs_ft": 8.73,
+     "tp": 10.41,
+     "dp": 60.16
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.06,
+   "rated_dp": 107.24,
+   "shown_tp": 10.06,
+   "shown_dp": 107.24,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (3.1x, under 4x) but +0.35 s against the rated period (needs +0.5)",
+   "published_ft": 9.68,
+   "surf_at_rated": 7.26,
+   "surf_at_shown": 7.26,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.8,
+   "buoy_tp": 12.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T13:00:00+00:00",
+   "hour": 1793019600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 2.82,
+     "tp": 10.06,
+     "dp": 107.24
+    },
+    "wind_wave": {
+     "hs_ft": 8.73,
+     "tp": 10.41,
+     "dp": 60.16
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.06,
+   "rated_dp": 107.24,
+   "shown_tp": 10.06,
+   "shown_dp": 107.24,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (3.1x, under 4x) but +0.35 s against the rated period (needs +0.5)",
+   "published_ft": 9.75,
+   "surf_at_rated": 7.31,
+   "surf_at_shown": 7.31,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T14:00:00+00:00",
+   "hour": 1793023200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 4.33,
+     "dp": 325.33
+    },
+    "wind_wave": {
+     "hs_ft": 8.96,
+     "tp": 10.22,
+     "dp": 58.73
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 4.33,
+   "rated_dp": 325.33,
+   "shown_tp": 10.22,
+   "shown_dp": 58.73,
+   "shown": "wind_sea",
+   "case": "longer",
+   "why": "LONGER: wind sea 2.73 m over the rated 0.06 m, and 5.89 s longer (>= 0.5)",
+   "published_ft": 8.85,
+   "surf_at_rated": 5.94,
+   "surf_at_shown": 7.32,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T15:00:00+00:00",
+   "hour": 1793026800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 4.33,
+     "dp": 325.33
+    },
+    "wind_wave": {
+     "hs_ft": 8.96,
+     "tp": 10.22,
+     "dp": 58.73
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 4.33,
+   "rated_dp": 325.33,
+   "shown_tp": 10.22,
+   "shown_dp": 58.73,
+   "shown": "wind_sea",
+   "case": "longer",
+   "why": "LONGER: wind sea 2.73 m over the rated 0.06 m, and 5.89 s longer (>= 0.5)",
+   "published_ft": 8.81,
+   "surf_at_rated": 5.92,
+   "surf_at_shown": 7.29,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T16:00:00+00:00",
+   "hour": 1793030400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 4.33,
+     "dp": 325.33
+    },
+    "wind_wave": {
+     "hs_ft": 8.96,
+     "tp": 10.22,
+     "dp": 58.73
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 4.33,
+   "rated_dp": 325.33,
+   "shown_tp": 10.22,
+   "shown_dp": 58.73,
+   "shown": "wind_sea",
+   "case": "longer",
+   "why": "LONGER: wind sea 2.73 m over the rated 0.06 m, and 5.89 s longer (>= 0.5)",
+   "published_ft": 8.75,
+   "surf_at_rated": 5.88,
+   "surf_at_shown": 7.25,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T17:00:00+00:00",
+   "hour": 1793034000,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.66,
+     "tp": 10.07,
+     "dp": 60.06
+    }
+   },
+   "rated": null,
+   "rated_tp": 10.225,
+   "rated_dp": 74.999,
+   "shown_tp": 10.225,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.55,
+   "surf_at_rated": 7.16,
+   "surf_at_shown": 7.16,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T18:00:00+00:00",
+   "hour": 1793037600,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.43,
+     "tp": 10.12,
+     "dp": 59.7
+    }
+   },
+   "rated": null,
+   "rated_tp": 10.374,
+   "rated_dp": 74.999,
+   "shown_tp": 10.374,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.46,
+   "surf_at_rated": 7.1,
+   "surf_at_shown": 7.1,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 11.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T19:00:00+00:00",
+   "hour": 1793041200,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.43,
+     "tp": 10.12,
+     "dp": 59.7
+    }
+   },
+   "rated": null,
+   "rated_tp": 10.478,
+   "rated_dp": 74.999,
+   "shown_tp": 10.478,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.18,
+   "surf_at_rated": 6.93,
+   "surf_at_shown": 6.93,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.8,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T20:00:00+00:00",
+   "hour": 1793044800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.82,
+     "tp": 3.19,
+     "dp": 357.13
+    },
+    "wind_wave": {
+     "hs_ft": 8.14,
+     "tp": 9.92,
+     "dp": 59.57
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 3.19,
+   "rated_dp": 357.13,
+   "shown_tp": 9.92,
+   "shown_dp": 59.57,
+   "shown": "wind_sea",
+   "case": "longer",
+   "why": "LONGER: wind sea 2.48 m over the rated 0.25 m, and 6.73 s longer (>= 0.5)",
+   "published_ft": 8.23,
+   "surf_at_rated": 5.29,
+   "surf_at_shown": 6.87,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.8,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T21:00:00+00:00",
+   "hour": 1793048400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.82,
+     "tp": 3.19,
+     "dp": 357.13
+    },
+    "wind_wave": {
+     "hs_ft": 8.14,
+     "tp": 9.92,
+     "dp": 59.57
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 3.19,
+   "rated_dp": 357.13,
+   "shown_tp": 9.92,
+   "shown_dp": 59.57,
+   "shown": "wind_sea",
+   "case": "longer",
+   "why": "LONGER: wind sea 2.48 m over the rated 0.25 m, and 6.73 s longer (>= 0.5)",
+   "published_ft": 8.34,
+   "surf_at_rated": 5.35,
+   "surf_at_shown": 6.93,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-26T22:00:00+00:00",
+   "hour": 1793052000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.82,
+     "tp": 3.19,
+     "dp": 357.13
+    },
+    "wind_wave": {
+     "hs_ft": 8.14,
+     "tp": 9.92,
+     "dp": 59.57
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 3.19,
+   "rated_dp": 357.13,
+   "shown_tp": 9.92,
+   "shown_dp": 59.57,
+   "shown": "wind_sea",
+   "case": "longer",
+   "why": "LONGER: wind sea 2.48 m over the rated 0.25 m, and 6.73 s longer (>= 0.5)",
+   "published_ft": 8.52,
+   "surf_at_rated": 5.49,
+   "surf_at_shown": 7.07,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-26T23:00:00+00:00",
+   "hour": 1793055600,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 8.07,
+     "tp": 9.67,
+     "dp": 62.58
+    }
+   },
+   "rated": null,
+   "rated_tp": 10.189,
+   "rated_dp": 74.999,
+   "shown_tp": 10.189,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.61,
+   "surf_at_rated": 7.2,
+   "surf_at_shown": 7.2,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.9,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T00:00:00+00:00",
+   "hour": 1793059200,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 10.084,
+   "rated_dp": 74.999,
+   "shown_tp": 10.084,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.67,
+   "surf_at_rated": 7.24,
+   "surf_at_shown": 7.24,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 3.0,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T01:00:00+00:00",
+   "hour": 1793062800,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.989,
+   "rated_dp": 74.999,
+   "shown_tp": 9.989,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.66,
+   "surf_at_rated": 7.26,
+   "surf_at_shown": 7.26,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T02:00:00+00:00",
+   "hour": 1793066400,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.911,
+   "rated_dp": 74.999,
+   "shown_tp": 9.911,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.62,
+   "surf_at_rated": 7.23,
+   "surf_at_shown": 7.23,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T03:00:00+00:00",
+   "hour": 1793070000,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.864,
+   "rated_dp": 74.999,
+   "shown_tp": 9.864,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.44,
+   "surf_at_rated": 7.11,
+   "surf_at_shown": 7.11,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-27T04:00:00+00:00",
+   "hour": 1793073600,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.839,
+   "rated_dp": 74.999,
+   "shown_tp": 9.839,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 9.13,
+   "surf_at_rated": 6.93,
+   "surf_at_shown": 6.93,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T05:00:00+00:00",
+   "hour": 1793077200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 2.89,
+     "tp": 10.05,
+     "dp": 84.55
+    },
+    "wind_wave": {
+     "hs_ft": 7.12,
+     "tp": 9.77,
+     "dp": 68.03
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.05,
+   "rated_dp": 84.55,
+   "shown_tp": 10.05,
+   "shown_dp": 84.55,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.5x, under 4x) but -0.28 s against the rated period (needs +0.5)",
+   "published_ft": 8.81,
+   "surf_at_rated": 6.72,
+   "surf_at_shown": 6.72,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.8,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T06:00:00+00:00",
+   "hour": 1793080800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 2.89,
+     "tp": 10.05,
+     "dp": 84.55
+    },
+    "wind_wave": {
+     "hs_ft": 7.12,
+     "tp": 9.77,
+     "dp": 68.03
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.05,
+   "rated_dp": 84.55,
+   "shown_tp": 10.05,
+   "shown_dp": 84.55,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.5x, under 4x) but -0.28 s against the rated period (needs +0.5)",
+   "published_ft": 8.32,
+   "surf_at_rated": 6.4,
+   "surf_at_shown": 6.4,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 6.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T07:00:00+00:00",
+   "hour": 1793084400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 2.89,
+     "tp": 10.05,
+     "dp": 84.55
+    },
+    "wind_wave": {
+     "hs_ft": 7.12,
+     "tp": 9.77,
+     "dp": 68.03
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.05,
+   "rated_dp": 84.55,
+   "shown_tp": 10.05,
+   "shown_dp": 84.55,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.5x, under 4x) but -0.28 s against the rated period (needs +0.5)",
+   "published_ft": 8.13,
+   "surf_at_rated": 6.28,
+   "surf_at_shown": 6.28,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T08:00:00+00:00",
+   "hour": 1793088000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.12,
+     "tp": 10.16,
+     "dp": 90.36
+    },
+    "wind_wave": {
+     "hs_ft": 7.32,
+     "tp": 9.98,
+     "dp": 65.0
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.16,
+   "rated_dp": 90.36,
+   "shown_tp": 10.16,
+   "shown_dp": 90.36,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.4x, under 4x) but -0.18 s against the rated period (needs +0.5)",
+   "published_ft": 8.14,
+   "surf_at_rated": 6.29,
+   "surf_at_shown": 6.29,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.4,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T09:00:00+00:00",
+   "hour": 1793091600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.12,
+     "tp": 10.16,
+     "dp": 90.36
+    },
+    "wind_wave": {
+     "hs_ft": 7.32,
+     "tp": 9.98,
+     "dp": 65.0
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.16,
+   "rated_dp": 90.36,
+   "shown_tp": 10.16,
+   "shown_dp": 90.36,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.4x, under 4x) but -0.18 s against the rated period (needs +0.5)",
+   "published_ft": 8.25,
+   "surf_at_rated": 6.36,
+   "surf_at_shown": 6.36,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.4,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T10:00:00+00:00",
+   "hour": 1793095200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.12,
+     "tp": 10.16,
+     "dp": 90.36
+    },
+    "wind_wave": {
+     "hs_ft": 7.32,
+     "tp": 9.98,
+     "dp": 65.0
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.16,
+   "rated_dp": 90.36,
+   "shown_tp": 10.16,
+   "shown_dp": 90.36,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.4x, under 4x) but -0.18 s against the rated period (needs +0.5)",
+   "published_ft": 8.36,
+   "surf_at_rated": 6.43,
+   "surf_at_shown": 6.43,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 10.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T11:00:00+00:00",
+   "hour": 1793098800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.95,
+     "tp": 10.04,
+     "dp": 87.41
+    },
+    "wind_wave": {
+     "hs_ft": 6.63,
+     "tp": 7.87,
+     "dp": 49.83
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 10.04,
+   "rated_dp": 87.41,
+   "shown_tp": 10.04,
+   "shown_dp": 87.41,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -2.17 s against the rated period (needs +0.5)",
+   "published_ft": 8.36,
+   "surf_at_rated": 6.42,
+   "surf_at_shown": 6.42,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.4,
+   "buoy_tp": 11.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T12:00:00+00:00",
+   "hour": 1793102400,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.711,
+   "rated_dp": 74.999,
+   "shown_tp": 9.711,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.37,
+   "surf_at_rated": 6.37,
+   "surf_at_shown": 6.37,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-27T13:00:00+00:00",
+   "hour": 1793106000,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.726,
+   "rated_dp": 74.999,
+   "shown_tp": 9.726,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.35,
+   "surf_at_rated": 6.35,
+   "surf_at_shown": 6.35,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T14:00:00+00:00",
+   "hour": 1793109600,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.761,
+   "rated_dp": 74.999,
+   "shown_tp": 9.761,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.34,
+   "surf_at_rated": 6.34,
+   "surf_at_shown": 6.34,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T15:00:00+00:00",
+   "hour": 1793113200,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.804,
+   "rated_dp": 74.999,
+   "shown_tp": 9.804,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.34,
+   "surf_at_rated": 6.34,
+   "surf_at_shown": 6.34,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T16:00:00+00:00",
+   "hour": 1793116800,
+   "source": "nwps",
+   "trains": {},
+   "rated": null,
+   "rated_tp": 9.848,
+   "rated_dp": 74.999,
+   "shown_tp": 9.848,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.36,
+   "surf_at_rated": 6.36,
+   "surf_at_shown": 6.36,
+   "wind_in_window": null,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T17:00:00+00:00",
+   "hour": 1793120400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.89,
+     "tp": 9.91,
+     "dp": 88.02
+    },
+    "wind_wave": {
+     "hs_ft": 6.46,
+     "tp": 7.82,
+     "dp": 47.62
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.91,
+   "rated_dp": 88.02,
+   "shown_tp": 9.91,
+   "shown_dp": 88.02,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -2.09 s against the rated period (needs +0.5)",
+   "published_ft": 6.37,
+   "surf_at_rated": 6.37,
+   "surf_at_shown": 6.37,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.4,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-27T18:00:00+00:00",
+   "hour": 1793124000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.89,
+     "tp": 9.91,
+     "dp": 88.02
+    },
+    "wind_wave": {
+     "hs_ft": 6.46,
+     "tp": 7.82,
+     "dp": 47.62
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.91,
+   "rated_dp": 88.02,
+   "shown_tp": 9.91,
+   "shown_dp": 88.02,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -2.09 s against the rated period (needs +0.5)",
+   "published_ft": 6.32,
+   "surf_at_rated": 6.32,
+   "surf_at_shown": 6.32,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.3,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-27T19:00:00+00:00",
+   "hour": 1793127600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.89,
+     "tp": 9.91,
+     "dp": 88.02
+    },
+    "wind_wave": {
+     "hs_ft": 6.46,
+     "tp": 7.82,
+     "dp": 47.62
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.91,
+   "rated_dp": 88.02,
+   "shown_tp": 9.91,
+   "shown_dp": 88.02,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -2.09 s against the rated period (needs +0.5)",
+   "published_ft": 6.18,
+   "surf_at_rated": 6.18,
+   "surf_at_shown": 6.18,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.2,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T20:00:00+00:00",
+   "hour": 1793131200,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 7.64,
+     "tp": 9.61,
+     "dp": 62.32
+    }
+   },
+   "rated": null,
+   "rated_tp": 9.981,
+   "rated_dp": 74.999,
+   "shown_tp": 9.981,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.19,
+   "surf_at_rated": 6.19,
+   "surf_at_shown": 6.19,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.3,
+   "buoy_tp": 6.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-27T21:00:00+00:00",
+   "hour": 1793134800,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 7.64,
+     "tp": 9.61,
+     "dp": 62.32
+    }
+   },
+   "rated": null,
+   "rated_tp": 9.955,
+   "rated_dp": 74.999,
+   "shown_tp": 9.955,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.26,
+   "surf_at_rated": 6.26,
+   "surf_at_shown": 6.26,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.4,
+   "buoy_tp": 6.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T22:00:00+00:00",
+   "hour": 1793138400,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 7.64,
+     "tp": 9.61,
+     "dp": 62.32
+    }
+   },
+   "rated": null,
+   "rated_tp": 9.874,
+   "rated_dp": 74.999,
+   "shown_tp": 9.874,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.34,
+   "surf_at_rated": 6.34,
+   "surf_at_shown": 6.34,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-27T23:00:00+00:00",
+   "hour": 1793142000,
+   "source": "nwps",
+   "trains": {
+    "wind_wave": {
+     "hs_ft": 7.87,
+     "tp": 9.44,
+     "dp": 63.96
+    }
+   },
+   "rated": null,
+   "rated_tp": 9.253,
+   "rated_dp": 74.999,
+   "shown_tp": 9.253,
+   "shown_dp": 74.999,
+   "shown": "swell",
+   "case": null,
+   "why": "not rated on a WW3 swell partition (swell_source nwps)",
+   "published_ft": 6.41,
+   "surf_at_rated": 6.41,
+   "surf_at_shown": 6.41,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-28T00:00:00+00:00",
+   "hour": 1793145600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 1.71,
+     "tp": 9.97,
+     "dp": 115.2
+    },
+    "wind_wave": {
+     "hs_ft": 7.68,
+     "tp": 9.54,
+     "dp": 63.69
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.97,
+   "rated_dp": 115.2,
+   "shown_tp": 9.54,
+   "shown_dp": 63.69,
+   "shown": "wind_sea",
+   "case": "dominant",
+   "why": "DOMINANT: wind sea 4.5x the rated swell (>= 4x), -0.43 s",
+   "published_ft": 6.51,
+   "surf_at_rated": 6.51,
+   "surf_at_shown": 6.47,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T01:00:00+00:00",
+   "hour": 1793149200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 1.71,
+     "tp": 9.97,
+     "dp": 115.2
+    },
+    "wind_wave": {
+     "hs_ft": 7.68,
+     "tp": 9.54,
+     "dp": 63.69
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.97,
+   "rated_dp": 115.2,
+   "shown_tp": 9.54,
+   "shown_dp": 63.69,
+   "shown": "wind_sea",
+   "case": "dominant",
+   "why": "DOMINANT: wind sea 4.5x the rated swell (>= 4x), -0.43 s",
+   "published_ft": 6.51,
+   "surf_at_rated": 6.51,
+   "surf_at_shown": 6.47,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 10.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T02:00:00+00:00",
+   "hour": 1793152800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.51,
+     "tp": 9.45,
+     "dp": 101.69
+    },
+    "wind_wave": {
+     "hs_ft": 7.64,
+     "tp": 9.55,
+     "dp": 67.27
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.45,
+   "rated_dp": 101.69,
+   "shown_tp": 9.45,
+   "shown_dp": 101.69,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.2x, under 4x) but +0.10 s against the rated period (needs +0.5)",
+   "published_ft": 6.46,
+   "surf_at_rated": 6.46,
+   "surf_at_shown": 6.46,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-28T03:00:00+00:00",
+   "hour": 1793156400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.51,
+     "tp": 9.45,
+     "dp": 101.69
+    },
+    "wind_wave": {
+     "hs_ft": 7.64,
+     "tp": 9.55,
+     "dp": 67.27
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.45,
+   "rated_dp": 101.69,
+   "shown_tp": 9.45,
+   "shown_dp": 101.69,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.2x, under 4x) but +0.10 s against the rated period (needs +0.5)",
+   "published_ft": 6.46,
+   "surf_at_rated": 6.46,
+   "surf_at_shown": 6.46,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T04:00:00+00:00",
+   "hour": 1793160000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.51,
+     "tp": 9.45,
+     "dp": 101.69
+    },
+    "wind_wave": {
+     "hs_ft": 7.64,
+     "tp": 9.55,
+     "dp": 67.27
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.45,
+   "rated_dp": 101.69,
+   "shown_tp": 9.45,
+   "shown_dp": 101.69,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.2x, under 4x) but +0.10 s against the rated period (needs +0.5)",
+   "published_ft": 6.42,
+   "surf_at_rated": 6.42,
+   "surf_at_shown": 6.42,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 7.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T05:00:00+00:00",
+   "hour": 1793163600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.67,
+     "tp": 9.25,
+     "dp": 102.68
+    },
+    "wind_wave": {
+     "hs_ft": 7.51,
+     "tp": 9.62,
+     "dp": 72.84
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.25,
+   "rated_dp": 102.68,
+   "shown_tp": 9.25,
+   "shown_dp": 102.68,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.0x, under 4x) but +0.37 s against the rated period (needs +0.5)",
+   "published_ft": 6.33,
+   "surf_at_rated": 6.33,
+   "surf_at_shown": 6.33,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.4,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-28T06:00:00+00:00",
+   "hour": 1793167200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.54,
+     "tp": 9.33,
+     "dp": 102.39
+    },
+    "wind_wave": {
+     "hs_ft": 7.42,
+     "tp": 9.66,
+     "dp": 72.85
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.33,
+   "rated_dp": 102.39,
+   "shown_tp": 9.33,
+   "shown_dp": 102.39,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.1x, under 4x) but +0.33 s against the rated period (needs +0.5)",
+   "published_ft": 6.16,
+   "surf_at_rated": 6.16,
+   "surf_at_shown": 6.16,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 9.0,
+   "buoy_swell_tp": 11.8
+  },
+  {
+   "valid_time": "2026-10-28T07:00:00+00:00",
+   "hour": 1793170800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 3.54,
+     "tp": 9.33,
+     "dp": 102.39
+    },
+    "wind_wave": {
+     "hs_ft": 7.42,
+     "tp": 9.66,
+     "dp": 72.85
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.33,
+   "rated_dp": 102.39,
+   "shown_tp": 9.33,
+   "shown_dp": 102.39,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (2.1x, under 4x) but +0.33 s against the rated period (needs +0.5)",
+   "published_ft": 6.04,
+   "surf_at_rated": 6.04,
+   "surf_at_shown": 6.04,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T08:00:00+00:00",
+   "hour": 1793174400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.4,
+     "tp": 9.64,
+     "dp": 96.14
+    },
+    "wind_wave": {
+     "hs_ft": 7.32,
+     "tp": 9.61,
+     "dp": 76.45
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.64,
+   "rated_dp": 96.14,
+   "shown_tp": 9.64,
+   "shown_dp": 96.14,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.7x, under 4x) but -0.03 s against the rated period (needs +0.5)",
+   "published_ft": 6.09,
+   "surf_at_rated": 6.09,
+   "surf_at_shown": 6.09,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 10.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-28T09:00:00+00:00",
+   "hour": 1793178000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.4,
+     "tp": 9.64,
+     "dp": 96.14
+    },
+    "wind_wave": {
+     "hs_ft": 7.32,
+     "tp": 9.61,
+     "dp": 76.45
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.64,
+   "rated_dp": 96.14,
+   "shown_tp": 9.64,
+   "shown_dp": 96.14,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.7x, under 4x) but -0.03 s against the rated period (needs +0.5)",
+   "published_ft": 6.16,
+   "surf_at_rated": 6.16,
+   "surf_at_shown": 6.16,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.8,
+   "buoy_tp": 10.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T10:00:00+00:00",
+   "hour": 1793181600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.4,
+     "tp": 9.64,
+     "dp": 96.14
+    },
+    "wind_wave": {
+     "hs_ft": 7.32,
+     "tp": 9.61,
+     "dp": 76.45
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.64,
+   "rated_dp": 96.14,
+   "shown_tp": 9.64,
+   "shown_dp": 96.14,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.7x, under 4x) but -0.03 s against the rated period (needs +0.5)",
+   "published_ft": 6.3,
+   "surf_at_rated": 6.3,
+   "surf_at_shown": 6.3,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 10.0,
+   "buoy_swell_tp": 11.1
+  },
+  {
+   "valid_time": "2026-10-28T11:00:00+00:00",
+   "hour": 1793185200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.53,
+     "tp": 9.57,
+     "dp": 95.5
+    },
+    "wind_wave": {
+     "hs_ft": 7.35,
+     "tp": 9.52,
+     "dp": 75.47
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.57,
+   "rated_dp": 95.5,
+   "shown_tp": 9.57,
+   "shown_dp": 95.5,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.6x, under 4x) but -0.05 s against the rated period (needs +0.5)",
+   "published_ft": 6.41,
+   "surf_at_rated": 6.41,
+   "surf_at_shown": 6.41,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 9.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T12:00:00+00:00",
+   "hour": 1793188800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.53,
+     "tp": 9.57,
+     "dp": 95.5
+    },
+    "wind_wave": {
+     "hs_ft": 7.35,
+     "tp": 9.52,
+     "dp": 75.47
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.57,
+   "rated_dp": 95.5,
+   "shown_tp": 9.57,
+   "shown_dp": 95.5,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.6x, under 4x) but -0.05 s against the rated period (needs +0.5)",
+   "published_ft": 6.5,
+   "surf_at_rated": 6.5,
+   "surf_at_shown": 6.5,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 8.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T13:00:00+00:00",
+   "hour": 1793192400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.53,
+     "tp": 9.57,
+     "dp": 95.5
+    },
+    "wind_wave": {
+     "hs_ft": 7.35,
+     "tp": 9.52,
+     "dp": 75.47
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.57,
+   "rated_dp": 95.5,
+   "shown_tp": 9.57,
+   "shown_dp": 95.5,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.6x, under 4x) but -0.05 s against the rated period (needs +0.5)",
+   "published_ft": 6.59,
+   "surf_at_rated": 6.59,
+   "surf_at_shown": 6.59,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.7,
+   "buoy_tp": 10.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T14:00:00+00:00",
+   "hour": 1793196000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.45,
+     "tp": 9.45,
+     "dp": 88.99
+    },
+    "wind_wave": {
+     "hs_ft": 6.23,
+     "tp": 7.36,
+     "dp": 49.05
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.45,
+   "rated_dp": 88.99,
+   "shown_tp": 9.45,
+   "shown_dp": 88.99,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.1x, under 4x) but -2.09 s against the rated period (needs +0.5)",
+   "published_ft": 6.64,
+   "surf_at_rated": 6.64,
+   "surf_at_shown": 6.64,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.6,
+   "buoy_tp": 11.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T15:00:00+00:00",
+   "hour": 1793199600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.45,
+     "tp": 9.45,
+     "dp": 88.99
+    },
+    "wind_wave": {
+     "hs_ft": 6.23,
+     "tp": 7.36,
+     "dp": 49.05
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.45,
+   "rated_dp": 88.99,
+   "shown_tp": 9.45,
+   "shown_dp": 88.99,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.1x, under 4x) but -2.09 s against the rated period (needs +0.5)",
+   "published_ft": 6.69,
+   "surf_at_rated": 6.69,
+   "surf_at_shown": 6.69,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "buoy_hs_m": 2.5,
+   "buoy_tp": 9.0,
+   "buoy_swell_tp": 10.5
+  },
+  {
+   "valid_time": "2026-10-28T17:00:00+00:00",
+   "hour": 1793206800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.15,
+     "tp": 9.28,
+     "dp": 89.63
+    },
+    "wind_wave": {
+     "hs_ft": 6.63,
+     "tp": 7.48,
+     "dp": 47.82
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.28,
+   "rated_dp": 89.63,
+   "shown_tp": 9.28,
+   "shown_dp": 89.63,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -1.80 s against the rated period (needs +0.5)",
+   "published_ft": 6.64,
+   "surf_at_rated": 6.64,
+   "surf_at_shown": 6.64,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  },
+  {
+   "valid_time": "2026-10-28T18:00:00+00:00",
+   "hour": 1793210400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.15,
+     "tp": 9.28,
+     "dp": 89.63
+    },
+    "wind_wave": {
+     "hs_ft": 6.63,
+     "tp": 7.48,
+     "dp": 47.82
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.28,
+   "rated_dp": 89.63,
+   "shown_tp": 9.28,
+   "shown_dp": 89.63,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -1.80 s against the rated period (needs +0.5)",
+   "published_ft": 6.57,
+   "surf_at_rated": 6.57,
+   "surf_at_shown": 6.57,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  },
+  {
+   "valid_time": "2026-10-28T19:00:00+00:00",
+   "hour": 1793214000,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.15,
+     "tp": 9.28,
+     "dp": 89.63
+    },
+    "wind_wave": {
+     "hs_ft": 6.63,
+     "tp": 7.48,
+     "dp": 47.82
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.28,
+   "rated_dp": 89.63,
+   "shown_tp": 9.28,
+   "shown_dp": 89.63,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -1.80 s against the rated period (needs +0.5)",
+   "published_ft": 6.48,
+   "surf_at_rated": 6.48,
+   "surf_at_shown": 6.48,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  },
+  {
+   "valid_time": "2026-10-28T20:00:00+00:00",
+   "hour": 1793217600,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.09,
+     "tp": 9.17,
+     "dp": 88.94
+    },
+    "wind_wave": {
+     "hs_ft": 6.59,
+     "tp": 7.51,
+     "dp": 47.38
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.17,
+   "rated_dp": 88.94,
+   "shown_tp": 9.17,
+   "shown_dp": 88.94,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -1.66 s against the rated period (needs +0.5)",
+   "published_ft": 6.31,
+   "surf_at_rated": 6.31,
+   "surf_at_shown": 6.31,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  },
+  {
+   "valid_time": "2026-10-28T21:00:00+00:00",
+   "hour": 1793221200,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.09,
+     "tp": 9.17,
+     "dp": 88.94
+    },
+    "wind_wave": {
+     "hs_ft": 6.59,
+     "tp": 7.51,
+     "dp": 47.38
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.17,
+   "rated_dp": 88.94,
+   "shown_tp": 9.17,
+   "shown_dp": 88.94,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -1.66 s against the rated period (needs +0.5)",
+   "published_ft": 6.29,
+   "surf_at_rated": 6.29,
+   "surf_at_shown": 6.29,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  },
+  {
+   "valid_time": "2026-10-28T22:00:00+00:00",
+   "hour": 1793224800,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 5.09,
+     "tp": 9.17,
+     "dp": 88.94
+    },
+    "wind_wave": {
+     "hs_ft": 6.59,
+     "tp": 7.51,
+     "dp": 47.38
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 9.17,
+   "rated_dp": 88.94,
+   "shown_tp": 9.17,
+   "shown_dp": 88.94,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.3x, under 4x) but -1.66 s against the rated period (needs +0.5)",
+   "published_ft": 6.38,
+   "surf_at_rated": 6.38,
+   "surf_at_shown": 6.38,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  },
+  {
+   "valid_time": "2026-10-28T23:00:00+00:00",
+   "hour": 1793228400,
+   "source": "nwps_height_ww3_dir",
+   "trains": {
+    "swell_1": {
+     "hs_ft": 4.69,
+     "tp": 8.78,
+     "dp": 110.34
+    },
+    "wind_wave": {
+     "hs_ft": 6.99,
+     "tp": 9.09,
+     "dp": 70.35
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 8.78,
+   "rated_dp": 110.34,
+   "shown_tp": 8.78,
+   "shown_dp": 110.34,
+   "shown": "swell",
+   "case": null,
+   "why": "wind sea bigger (1.5x, under 4x) but +0.31 s against the rated period (needs +0.5)",
+   "published_ft": 6.43,
+   "surf_at_rated": 6.43,
+   "surf_at_shown": 6.43,
+   "wind_in_window": true,
+   "buoy": "41117",
+   "from_published_window": true,
+   "buoy_hs_m": null,
+   "buoy_tp": null,
+   "buoy_swell_tp": null
+  }
+ ],
+ "hatteras": [
+  {
+   "spot": "Outer Banks Fishing Pier",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 3.092,
+   "nwps_hs_ft": 10.14,
+   "nwps_swell_hs_m": 1.008,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.19,
+     "tp": 9.95,
+     "dp": 57.01
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 68,
+   "rated_offset_deg": 62.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 11.91,
+   "face_ft_raw": 11.91,
+   "published_ft": 11.91,
+   "alignment_stored": 0.758,
+   "alignment_rated": 0.727,
+   "alignment_wind_sea": 0.991,
+   "effective_size_ft": 9.03,
+   "stars": 3.5,
+   "wind_speed": 13.633,
+   "wind_dir": 39.5,
+   "wind_mult": 0.55,
+   "chop_mult": 0.576,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 8.32,
+   "surf_at_shown_period": 8.17,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 56.8x the rated swell (>= 4x), -3.02 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 9.03
+  },
+  {
+   "spot": "Rodanthe",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.143,
+   "nwps_hs_ft": 0.47,
+   "nwps_swell_hs_m": 0.058,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 100,
+   "rated_offset_deg": 30.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 0.55,
+   "face_ft_raw": 0.55,
+   "published_ft": 0.55,
+   "alignment_stored": 0.946,
+   "alignment_rated": 0.929,
+   "alignment_wind_sea": 0.88,
+   "effective_size_ft": 0.52,
+   "stars": 1,
+   "wind_speed": 14.035,
+   "wind_dir": 37.844,
+   "wind_mult": 0.6,
+   "chop_mult": 0.656,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 0.69,
+   "surf_at_shown_period": 0.67,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 0.52
+  },
+  {
+   "spot": "S-Turns",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.197,
+   "nwps_hs_ft": 0.65,
+   "nwps_swell_hs_m": 0.07,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 100,
+   "rated_offset_deg": 30.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 0.76,
+   "face_ft_raw": 0.76,
+   "published_ft": 0.76,
+   "alignment_stored": 0.946,
+   "alignment_rated": 0.929,
+   "alignment_wind_sea": 0.88,
+   "effective_size_ft": 0.72,
+   "stars": 1,
+   "wind_speed": 14.07,
+   "wind_dir": 37.984,
+   "wind_mult": 0.6,
+   "chop_mult": 0.605,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 0.91,
+   "surf_at_shown_period": 0.89,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 0.72
+  },
+  {
+   "spot": "Salvo",
+   "valid_time": "2026-09-23T17:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.445,
+   "nwps_hs_ft": 1.46,
+   "nwps_swell_hs_m": 0.189,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 96,
+   "rated_offset_deg": 34.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 1.71,
+   "face_ft_raw": 1.71,
+   "published_ft": 1.71,
+   "alignment_stored": 0.96,
+   "alignment_rated": 0.91,
+   "alignment_wind_sea": 0.902,
+   "effective_size_ft": 1.65,
+   "stars": 1.5,
+   "wind_speed": 13.734,
+   "wind_dir": 36.906,
+   "wind_mult": 0.8,
+   "chop_mult": 0.675,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 1.72,
+   "surf_at_shown_period": 1.67,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 1.65
+  },
+  {
+   "spot": "Outer Banks Fishing Pier",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 3.191,
+   "nwps_hs_ft": 10.47,
+   "nwps_swell_hs_m": 1.121,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.19,
+     "tp": 9.95,
+     "dp": 57.01
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 68,
+   "rated_offset_deg": 62.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 12.29,
+   "face_ft_raw": 12.29,
+   "published_ft": 12.29,
+   "alignment_stored": 0.758,
+   "alignment_rated": 0.727,
+   "alignment_wind_sea": 0.991,
+   "effective_size_ft": 9.32,
+   "stars": 3.5,
+   "wind_speed": 10.663,
+   "wind_dir": 29.466,
+   "wind_mult": 0.6,
+   "chop_mult": 0.601,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 8.54,
+   "surf_at_shown_period": 8.38,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 56.8x the rated swell (>= 4x), -3.02 s",
+   "star_cap": 1.5,
+   "closeout_face_ft": 9.32
+  },
+  {
+   "spot": "Rodanthe",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.186,
+   "nwps_hs_ft": 0.61,
+   "nwps_swell_hs_m": 0.084,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 100,
+   "rated_offset_deg": 30.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 0.72,
+   "face_ft_raw": 0.72,
+   "published_ft": 0.72,
+   "alignment_stored": 0.946,
+   "alignment_rated": 0.929,
+   "alignment_wind_sea": 0.88,
+   "effective_size_ft": 0.68,
+   "stars": 1,
+   "wind_speed": 11.774,
+   "wind_dir": 28.511,
+   "wind_mult": 0.8,
+   "chop_mult": 0.702,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 0.88,
+   "surf_at_shown_period": 0.85,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.5,
+   "closeout_face_ft": 0.68
+  },
+  {
+   "spot": "S-Turns",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.238,
+   "nwps_hs_ft": 0.78,
+   "nwps_swell_hs_m": 0.097,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 100,
+   "rated_offset_deg": 30.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 0.92,
+   "face_ft_raw": 0.92,
+   "published_ft": 0.92,
+   "alignment_stored": 0.946,
+   "alignment_rated": 0.929,
+   "alignment_wind_sea": 0.88,
+   "effective_size_ft": 0.87,
+   "stars": 1,
+   "wind_speed": 11.774,
+   "wind_dir": 28.511,
+   "wind_mult": 0.6,
+   "chop_mult": 0.658,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 1.06,
+   "surf_at_shown_period": 1.03,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.5,
+   "closeout_face_ft": 0.87
+  },
+  {
+   "spot": "Salvo",
+   "valid_time": "2026-09-23T18:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.504,
+   "nwps_hs_ft": 1.65,
+   "nwps_swell_hs_m": 0.229,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 96,
+   "rated_offset_deg": 34.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 1.94,
+   "face_ft_raw": 1.94,
+   "published_ft": 1.94,
+   "alignment_stored": 0.96,
+   "alignment_rated": 0.91,
+   "alignment_wind_sea": 0.902,
+   "effective_size_ft": 1.86,
+   "stars": 1.5,
+   "wind_speed": 12.634,
+   "wind_dir": 26.731,
+   "wind_mult": 0.8,
+   "chop_mult": 0.704,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 1.91,
+   "surf_at_shown_period": 1.85,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.5,
+   "closeout_face_ft": 1.86
+  },
+  {
+   "spot": "Outer Banks Fishing Pier",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 3.277,
+   "nwps_hs_ft": 10.75,
+   "nwps_swell_hs_m": 1.241,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.19,
+     "tp": 9.95,
+     "dp": 57.01
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 68,
+   "rated_offset_deg": 62.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 12.63,
+   "face_ft_raw": 12.63,
+   "published_ft": 12.63,
+   "alignment_stored": 0.758,
+   "alignment_rated": 0.727,
+   "alignment_wind_sea": 0.991,
+   "effective_size_ft": 9.57,
+   "stars": 3.5,
+   "wind_speed": 12.806,
+   "wind_dir": 33.871,
+   "wind_mult": 0.6,
+   "chop_mult": 0.629,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 8.74,
+   "surf_at_shown_period": 8.58,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 56.8x the rated swell (>= 4x), -3.02 s",
+   "star_cap": 1.5,
+   "closeout_face_ft": 9.57
+  },
+  {
+   "spot": "Rodanthe",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.244,
+   "nwps_hs_ft": 0.8,
+   "nwps_swell_hs_m": 0.121,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 100,
+   "rated_offset_deg": 30.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 0.94,
+   "face_ft_raw": 0.94,
+   "published_ft": 0.94,
+   "alignment_stored": 0.946,
+   "alignment_rated": 0.929,
+   "alignment_wind_sea": 0.88,
+   "effective_size_ft": 0.89,
+   "stars": 1,
+   "wind_speed": 13.572,
+   "wind_dir": 27.777,
+   "wind_mult": 0.8,
+   "chop_mult": 0.746,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 1.06,
+   "surf_at_shown_period": 1.03,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 0.89
+  },
+  {
+   "spot": "S-Turns",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.293,
+   "nwps_hs_ft": 0.96,
+   "nwps_swell_hs_m": 0.136,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 100,
+   "rated_offset_deg": 30.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 1.13,
+   "face_ft_raw": 1.13,
+   "published_ft": 1.13,
+   "alignment_stored": 0.946,
+   "alignment_rated": 0.929,
+   "alignment_wind_sea": 0.88,
+   "effective_size_ft": 1.07,
+   "stars": 1,
+   "wind_speed": 13.572,
+   "wind_dir": 27.777,
+   "wind_mult": 0.6,
+   "chop_mult": 0.714,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 1.23,
+   "surf_at_shown_period": 1.2,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 1.07
+  },
+  {
+   "spot": "Salvo",
+   "valid_time": "2026-09-23T19:00:00+00:00",
+   "source": "nwps_height_ww3_dir",
+   "nwps_cycle": "2026-09-23T12:00:00+00:00",
+   "nwps_hs_m": 0.582,
+   "nwps_hs_ft": 1.91,
+   "nwps_swell_hs_m": 0.285,
+   "trains": {
+    "swell_1": {
+     "hs_ft": 0.2,
+     "tp": 12.97,
+     "dp": 130.94
+    },
+    "wind_wave": {
+     "hs_ft": 11.65,
+     "tp": 10.2,
+     "dp": 59.42
+    }
+   },
+   "rated": "swell_1",
+   "rated_tp": 12.97,
+   "rated_dp": 130.94,
+   "axis_deg": 96,
+   "rated_offset_deg": 34.9,
+   "period_factor": 1.17425,
+   "face_from_hs": 2.24,
+   "face_ft_raw": 2.24,
+   "published_ft": 2.24,
+   "alignment_stored": 0.96,
+   "alignment_rated": 0.91,
+   "alignment_wind_sea": 0.902,
+   "effective_size_ft": 2.15,
+   "stars": 2,
+   "wind_speed": 13.346,
+   "wind_dir": 27.077,
+   "wind_mult": 0.8,
+   "chop_mult": 0.74,
+   "rated_in_window": true,
+   "wind_in_window": true,
+   "surf_at_rated_period": 2.15,
+   "surf_at_shown_period": 2.09,
+   "shown": "wind_sea",
+   "why": "DOMINANT: wind sea 59.2x the rated swell (>= 4x), -2.77 s",
+   "star_cap": 1.0,
+   "closeout_face_ft": 2.15
+  }
+ ],
+ "buoys_read": {
+  "41067": 4276,
+  "41070": 1237,
+  "41076": 1236,
+  "41110": 2475,
+  "41112": 2479,
+  "41113": 2474,
+  "41115": 1119,
+  "41117": 2480,
+  "41121": 2471,
+  "41122": 2473,
+  "41159": 2437,
+  "42012": 9682,
+  "42035": 7315,
+  "42039": 7319,
+  "42092": 2343,
+  "42098": 2473,
+  "44013": 7310,
+  "44056": 2470,
+  "44084": 2422,
+  "44085": 2472,
+  "44086": 2475,
+  "44091": 2474,
+  "44095": 2477,
+  "44097": 2474,
+  "44098": 2474,
+  "44099": 2478,
+  "46012": 1236,
+  "46013": 7323,
+  "46015": 7339,
+  "46029": 7334,
+  "46050": 7313,
+  "46053": 5940,
+  "46206": 1118,
+  "46211": 2477,
+  "46214": 2479,
+  "46218": 2470,
+  "46221": 2477,
+  "46236": 2472,
+  "46237": 1231,
+  "46239": 2302,
+  "46243": 2470,
+  "46244": 2471,
+  "46251": 2125,
+  "46253": 2479,
+  "46256": 2479,
+  "46259": 2479,
+  "46268": 2434,
+  "46278": 2471,
+  "51202": 2479,
+  "51205": 1766,
+  "51206": 2479,
+  "51208": 107,
+  "51211": 2474,
+  "51212": 2472,
+  "ssbn7": 4597
+ },
+ "tiles": {
+  "all": {
+   "hours": 5775,
+   "period_before": 11.07,
+   "period_after": 6.85,
+   "surf_hours": 5758,
+   "face_before": 3.19,
+   "face_after": 3.05
+  },
+  "Delaware": {
+   "hours": 24,
+   "period_before": 8.75,
+   "period_after": 5.32,
+   "surf_hours": 24,
+   "face_before": 2.3,
+   "face_after": 1.93
+  },
+  "Florida": {
+   "hours": 2082,
+   "period_before": 6.85,
+   "period_after": 7.76,
+   "surf_hours": 2073,
+   "face_before": 3.8,
+   "face_after": 4.03
+  },
+  "Georgia": {
+   "hours": 204,
+   "period_before": 14.65,
+   "period_after": 8.03,
+   "surf_hours": 204,
+   "face_before": 3.62,
+   "face_after": 3.39
+  },
+  "Hawaii": {
+   "hours": 242,
+   "period_before": 12.84,
+   "period_after": 6.4,
+   "surf_hours": 242,
+   "face_before": 5.37,
+   "face_after": 4.75
+  },
+  "Maine": {
+   "hours": 192,
+   "period_before": 7.89,
+   "period_after": 5.41,
+   "surf_hours": 188,
+   "face_before": 2.03,
+   "face_after": 1.69
+  },
+  "Maryland": {
+   "hours": 9,
+   "period_before": 9.31,
+   "period_after": 5.34,
+   "surf_hours": 9,
+   "face_before": 2.67,
+   "face_after": 2.25
+  },
+  "Massachusetts": {
+   "hours": 513,
+   "period_before": 7.48,
+   "period_after": 3.73,
+   "surf_hours": 509,
+   "face_before": 1.38,
+   "face_after": 1.0
+  },
+  "New Hampshire": {
+   "hours": 48,
+   "period_before": 7.22,
+   "period_after": 3.19,
+   "surf_hours": 48,
+   "face_before": 1.11,
+   "face_after": 0.77
+  },
+  "New York": {
+   "hours": 30,
+   "period_before": 6.94,
+   "period_after": 5.06,
+   "surf_hours": 30,
+   "face_before": 1.95,
+   "face_after": 1.52
+  },
+  "North Carolina": {
+   "hours": 1303,
+   "period_before": 14.19,
+   "period_after": 7.09,
+   "surf_hours": 1303,
+   "face_before": 3.4,
+   "face_after": 3.09
+  },
+  "Puerto Rico": {
+   "hours": 6,
+   "period_before": 12.59,
+   "period_after": 9.02,
+   "surf_hours": 6,
+   "face_before": 3.56,
+   "face_after": 3.38
+  },
+  "Rhode Island": {
+   "hours": 447,
+   "period_before": 7.06,
+   "period_after": 3.9,
+   "surf_hours": 447,
+   "face_before": 2.02,
+   "face_after": 1.53
+  },
+  "South Carolina": {
+   "hours": 483,
+   "period_before": 14.81,
+   "period_after": 7.59,
+   "surf_hours": 483,
+   "face_before": 3.97,
+   "face_after": 3.62
+  },
+  "Texas": {
+   "hours": 65,
+   "period_before": 6.96,
+   "period_after": 5.49,
+   "surf_hours": 65,
+   "face_before": 2.41,
+   "face_after": 2.22
+  },
+  "Virginia": {
+   "hours": 127,
+   "period_before": 12.79,
+   "period_after": 6.22,
+   "surf_hours": 127,
+   "face_before": 2.49,
+   "face_after": 2.4
+  }
+ },
+ "homepage": [
+  {
+   "spot": "Turtle Bay",
+   "stars": 4.5,
+   "period_before": 12.55,
+   "period_after": 12.55,
+   "train_after": "swell",
+   "face_before": 5.9,
+   "face_after": 5.9
+  },
+  {
+   "spot": "Agate Beach",
+   "stars": 4.5,
+   "period_before": 14.31,
+   "period_after": 14.31,
+   "train_after": "swell",
+   "face_before": 5.69,
+   "face_after": 5.69
+  },
+  {
+   "spot": "Humboldt Bay Jetty",
+   "stars": 4,
+   "period_before": 14.31,
+   "period_after": 14.31,
+   "train_after": "swell",
+   "face_before": 7.19,
+   "face_after": 7.19
+  },
+  {
+   "spot": "Pacifica Linda Mar",
+   "stars": 4,
+   "period_before": 8.38,
+   "period_after": 8.38,
+   "train_after": "swell",
+   "face_before": 4.76,
+   "face_after": 4.76
+  },
+  {
+   "spot": "Rockaway Beach Pacifica",
+   "stars": 4,
+   "period_before": 8.38,
+   "period_after": 8.38,
+   "train_after": "swell",
+   "face_before": 5.03,
+   "face_after": 5.03
+  },
+  {
+   "spot": "Trinidad State Beach",
+   "stars": 4,
+   "period_before": 14.36,
+   "period_after": 14.36,
+   "train_after": "swell",
+   "face_before": 4.98,
+   "face_after": 4.98
+  },
+  {
+   "spot": "Backdoor Pipeline",
+   "stars": 4,
+   "period_before": 12.55,
+   "period_after": 12.55,
+   "train_after": "swell",
+   "face_before": 5.54,
+   "face_after": 5.54
+  },
+  {
+   "spot": "Banzai Pipeline",
+   "stars": 4,
+   "period_before": 12.55,
+   "period_after": 12.55,
+   "train_after": "swell",
+   "face_before": 5.54,
+   "face_after": 5.54
+  },
+  {
+   "spot": "Barbers Point",
+   "stars": 4,
+   "period_before": 14.73,
+   "period_after": 14.73,
+   "train_after": "swell",
+   "face_before": 4.51,
+   "face_after": 4.51
+  },
+  {
+   "spot": "Ehukai Beach Park",
+   "stars": 4,
+   "period_before": 12.55,
+   "period_after": 12.55,
+   "train_after": "swell",
+   "face_before": 5.54,
+   "face_after": 5.54
+  }
+ ],
+ "stars_on_the_wind_sea": {
+  "counts": {
+   "replayed": 77866,
+   "reproduced": 77730,
+   "switched": 5767,
+   "switched_not_reproduced": 9
+  },
+  "star_change_on_switched": {
+   "-2.5": 19,
+   "-2.0": 39,
+   "-1.5": 28,
+   "-1.0": 607,
+   "-0.5": 1628,
+   "0.0": 2564,
+   "0.5": 633,
+   "1.0": 189,
+   "1.5": 1,
+   "2.0": 8,
+   "2.5": 42
+  },
+  "by_state": {
+   "Delaware": {
+    "hours": 24,
+    "up": 4,
+    "down": 3
+   },
+   "Florida": {
+    "hours": 2082,
+    "up": 630,
+    "down": 518
+   },
+   "Georgia": {
+    "hours": 204,
+    "up": 35,
+    "down": 37
+   },
+   "Hawaii": {
+    "hours": 242,
+    "up": 67,
+    "down": 147
+   },
+   "Maine": {
+    "hours": 188,
+    "up": 0,
+    "down": 115
+   },
+   "Maryland": {
+    "hours": 9,
+    "up": 0,
+    "down": 0
+   },
+   "Massachusetts": {
+    "hours": 504,
+    "up": 31,
+    "down": 322
+   },
+   "New Hampshire": {
+    "hours": 48,
+    "up": 0,
+    "down": 48
+   },
+   "New York": {
+    "hours": 30,
+    "up": 0,
+    "down": 12
+   },
+   "North Carolina": {
+    "hours": 1303,
+    "up": 72,
+    "down": 717
+   },
+   "Puerto Rico": {
+    "hours": 6,
+    "up": 0,
+    "down": 1
+   },
+   "Rhode Island": {
+    "hours": 444,
+    "up": 0,
+    "down": 230
+   },
+   "South Carolina": {
+    "hours": 483,
+    "up": 13,
+    "down": 103
+   },
+   "Texas": {
+    "hours": 65,
+    "up": 0,
+    "down": 14
+   },
+   "Virginia": {
+    "hours": 126,
+    "up": 21,
+    "down": 54
+   }
+  }
+ },
+ "nws": {
+  "reproduction": {
+   "all": {
+    "got": [
+     235014,
+     0.599,
+     0.357,
+     0.044
+    ],
+    "want": [
+     234897,
+     0.599,
+     0.357,
+     0.044
+    ],
+    "ok": true
+   },
+   "Carolinas and Georgia": {
+    "got": [
+     25482,
+     0.813,
+     0.07,
+     0.117
+    ],
+    "want": [
+     25482,
+     0.814,
+     0.07,
+     0.117
+    ],
+    "ok": true
+   },
+   "Florida Atlantic": {
+    "got": [
+     29339,
+     0.774,
+     0.103,
+     0.123
+    ],
+    "want": [
+     29339,
+     0.774,
+     0.103,
+     0.123
+    ],
+    "ok": true
+   },
+   "Gulf": {
+    "got": [
+     10610,
+     0.705,
+     0.254,
+     0.041
+    ],
+    "want": [
+     10610,
+     0.705,
+     0.253,
+     0.042
+    ],
+    "ok": true
+   },
+   "Mid-Atlantic": {
+    "got": [
+     25090,
+     0.788,
+     0.122,
+     0.09
+    ],
+    "want": [
+     25090,
+     0.788,
+     0.122,
+     0.09
+    ],
+    "ok": true
+   },
+   "New England": {
+    "got": [
+     34912,
+     0.339,
+     0.654,
+     0.007
+    ],
+    "want": [
+     34912,
+     0.339,
+     0.654,
+     0.007
+    ],
+    "ok": true
+   },
+   "Northern California": {
+    "got": [
+     32501,
+     0.342,
+     0.644,
+     0.014
+    ],
+    "want": [
+     32477,
+     0.341,
+     0.644,
+     0.014
+    ],
+    "ok": true
+   },
+   "Pacific Northwest": {
+    "got": [
+     11497,
+     0.171,
+     0.829,
+     0.0
+    ],
+    "want": [
+     11497,
+     0.171,
+     0.829,
+     0.0
+    ],
+    "ok": true
+   },
+   "Puerto Rico": {
+    "got": [
+     12144,
+     0.096,
+     0.904,
+     0.0
+    ],
+    "want": [
+     12144,
+     0.096,
+     0.904,
+     0.0
+    ],
+    "ok": true
+   },
+   "Southern California": {
+    "got": [
+     53439,
+     0.825,
+     0.168,
+     0.007
+    ],
+    "want": [
+     53346,
+     0.825,
+     0.168,
+     0.008
+    ],
+    "ok": true
+   }
+  },
+  "ok": true,
+  "fixed": {
+   "all": {
+    "display_rated": [
+     235014,
+     0.599,
+     0.357,
+     0.044
+    ],
+    "display": [
+     235014,
+     0.597,
+     0.362,
+     0.041
+    ]
+   },
+   "Carolinas and Georgia": {
+    "display_rated": [
+     25482,
+     0.813,
+     0.07,
+     0.117
+    ],
+    "display": [
+     25482,
+     0.823,
+     0.071,
+     0.107
+    ]
+   },
+   "Florida Atlantic": {
+    "display_rated": [
+     29339,
+     0.774,
+     0.103,
+     0.123
+    ],
+    "display": [
+     29339,
+     0.779,
+     0.103,
+     0.118
+    ]
+   },
+   "Gulf": {
+    "display_rated": [
+     10610,
+     0.705,
+     0.254,
+     0.041
+    ],
+    "display": [
+     10610,
+     0.696,
+     0.266,
+     0.038
+    ]
+   },
+   "Mid-Atlantic": {
+    "display_rated": [
+     25090,
+     0.788,
+     0.122,
+     0.09
+    ],
+    "display": [
+     25090,
+     0.787,
+     0.133,
+     0.081
+    ]
+   },
+   "New England": {
+    "display_rated": [
+     34912,
+     0.339,
+     0.654,
+     0.007
+    ],
+    "display": [
+     34912,
+     0.317,
+     0.677,
+     0.006
+    ]
+   },
+   "Northern California": {
+    "display_rated": [
+     32501,
+     0.342,
+     0.644,
+     0.014
+    ],
+    "display": [
+     32501,
+     0.341,
+     0.644,
+     0.014
+    ]
+   },
+   "Pacific Northwest": {
+    "display_rated": [
+     11497,
+     0.171,
+     0.829,
+     0.0
+    ],
+    "display": [
+     11497,
+     0.17,
+     0.83,
+     0.0
+    ]
+   },
+   "Puerto Rico": {
+    "display_rated": [
+     12144,
+     0.096,
+     0.904,
+     0.0
+    ],
+    "display": [
+     12144,
+     0.092,
+     0.908,
+     0.0
+    ]
+   },
+   "Southern California": {
+    "display_rated": [
+     53439,
+     0.825,
+     0.168,
+     0.007
+    ],
+    "display": [
+     53439,
+     0.825,
+     0.168,
+     0.007
+    ]
+   }
+  },
+  "switched": {
+   "all": {
+    "display_rated": [
+     16397,
+     0.652,
+     0.264,
+     0.084
+    ],
+    "display": [
+     16397,
+     0.617,
+     0.342,
+     0.041
+    ]
+   },
+   "Carolinas and Georgia": {
+    "display_rated": [
+     3091,
+     0.803,
+     0.027,
+     0.17
+    ],
+    "display": [
+     3091,
+     0.877,
+     0.035,
+     0.087
+    ]
+   },
+   "Florida Atlantic": {
+    "display_rated": [
+     2793,
+     0.694,
+     0.204,
+     0.102
+    ],
+    "display": [
+     2793,
+     0.743,
+     0.205,
+     0.052
+    ]
+   },
+   "Gulf": {
+    "display_rated": [
+     1700,
+     0.708,
+     0.253,
+     0.039
+    ],
+    "display": [
+     1700,
+     0.649,
+     0.33,
+     0.021
+    ]
+   },
+   "Mid-Atlantic": {
+    "display_rated": [
+     4656,
+     0.76,
+     0.143,
+     0.097
+    ],
+    "display": [
+     4656,
+     0.753,
+     0.201,
+     0.046
+    ]
+   },
+   "New England": {
+    "display_rated": [
+     3311,
+     0.405,
+     0.587,
+     0.008
+    ],
+    "display": [
+     3311,
+     0.178,
+     0.821,
+     0.002
+    ]
+   },
+   "Northern California": {
+    "display_rated": [
+     98,
+     0.214,
+     0.786,
+     0.0
+    ],
+    "display": [
+     98,
+     0.194,
+     0.806,
+     0.0
+    ]
+   },
+   "Pacific Northwest": {
+    "display_rated": [
+     299,
+     0.134,
+     0.866,
+     0.0
+    ],
+    "display": [
+     299,
+     0.104,
+     0.896,
+     0.0
+    ]
+   },
+   "Puerto Rico": {
+    "display_rated": [
+     357,
+     0.174,
+     0.826,
+     0.0
+    ],
+    "display": [
+     357,
+     0.039,
+     0.961,
+     0.0
+    ]
+   },
+   "Southern California": {
+    "display_rated": [
+     92,
+     0.707,
+     0.13,
+     0.163
+    ],
+    "display": [
+     92,
+     0.761,
+     0.207,
+     0.033
+    ]
+   }
+  }
+ },
+ "compare_errors": {
+  "zone CAZ364": "HTTPError: 404 Client Error: Not Found for url: https://api.weather.gov/zones/forecast/CAZ364"
+ }
+}
