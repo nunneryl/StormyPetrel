@@ -11,8 +11,8 @@ import {
   fmtSec,
   fmtShortTime,
   msToMph,
-  pickSwell,
 } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 import { HEADLINE_HEIGHT_COLUMN } from '@/lib/heightBasis';
 import { CompassArrow } from './CompassArrow';
 import { StarRating, ratingCellBg } from './StarRating';
@@ -106,8 +106,7 @@ export function ForecastGrid({
               </div>
               {rows.map((r, idx) => {
                 const tier = tierFromStars(r.stars);
-                const dp = pickSwell(r.swell_dp, r.dp);
-                const tp = pickSwell(r.swell_tp, r.tp);
+                const { tp, dp } = shownTrain(r);
                 const wMph = msToMph(r.wind_speed);
                 const wQ = classifyWind(r.wind_dir, offshoreDeg ?? null);
                 const tideUp = idx + 1 < rows.length

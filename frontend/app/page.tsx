@@ -9,7 +9,8 @@ import { CamBadge } from '@/components/CamBadge';
 import { CompassArrow } from '@/components/CompassArrow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { HeightBasisMark } from '@/components/HeightBasisMark';
-import { fmtHeightRange, fmtSec, msToMph, pickSwell } from '@/lib/formatting';
+import { fmtHeightRange, fmtSec, msToMph } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 import { HEADLINE_HEIGHT_COLUMN, heightBasis } from '@/lib/heightBasis';
 import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
@@ -150,7 +151,7 @@ export default async function HomePage() {
           {top10.map((s) => {
             const f = s.latest;
             const basis = heightBasis(f);
-            const tp = pickSwell(f?.swell_tp ?? null, f?.tp ?? null);
+            const { tp } = shownTrain(f);
             const wMph = msToMph(f?.wind_speed ?? null);
             return (
               <Link

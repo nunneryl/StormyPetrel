@@ -29,8 +29,8 @@ import {
   fmtHeightRange,
   fmtMph,
   fmtSec,
-  pickSwell,
 } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 
 type Tile = {
   label: string;
@@ -79,8 +79,9 @@ export function CurrentConditions({
   // whatever happened to be second in the array.
   const forecasts =
     selection.state === 'current' ? rows.slice(selection.index) : [];
-  const tp = pickSwell(current?.swell_tp ?? null, current?.tp ?? null);
-  const dp = pickSwell(current?.swell_dp ?? null, current?.dp ?? null);
+  // The train shown: the rated swell, or the wind sea when it is bigger and longer-period
+  // (lib/shownPeriod.ts). The stars stay on the rated swell either way.
+  const { tp, dp } = shownTrain(current);
 
   const wQ = classifyWind(current?.wind_dir ?? null, offshoreDeg ?? null);
   // Conditions is WIND-DERIVED. It reads the same wind_dir/offshore_wind_deg the Wind

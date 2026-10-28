@@ -4,7 +4,8 @@ import { StarRating } from './StarRating';
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
 import { HeightBasisMark } from './HeightBasisMark';
-import { fmtHeightRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
+import { fmtHeightRange, fmtMph, fmtSec } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 import { heightBasis } from '@/lib/heightBasis';
 import { fmtBreakType } from '@/lib/provenance';
 import { tierFromStars } from '@/lib/ratings';
@@ -58,10 +59,10 @@ export function SpotCard({
           <HeightBasisMark basis={heightBasis(f)} />
         </span>
         <span className="text-text-muted tabular-nums">
-          {fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}
+          {fmtSec(shownTrain(f).tp)}
         </span>
         <SwellCompass
-          deg={pickSwell(f?.swell_dp ?? null, f?.dp ?? null)}
+          deg={shownTrain(f).dp}
           size={16}
         />
         <span className="ml-auto flex items-center gap-1 text-text-muted">

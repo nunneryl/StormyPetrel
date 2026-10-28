@@ -9,7 +9,8 @@ import { SwellCompass } from './SwellCompass';
 import { CamBadge } from './CamBadge';
 import { HeightBasisMark } from './HeightBasisMark';
 import { Sparkline } from './Sparkline';
-import { degToCardinal, fmtHeightRange, fmtMph, fmtSec, pickSwell } from '@/lib/formatting';
+import { degToCardinal, fmtHeightRange, fmtMph, fmtSec } from '@/lib/formatting';
+import { shownTrain } from '@/lib/shownPeriod';
 import { heightBasis } from '@/lib/heightBasis';
 import { fmtBreakType } from '@/lib/provenance';
 import { tierFromStars } from '@/lib/ratings';
@@ -105,15 +106,15 @@ export function RegionList({
                       <HeightBasisMark basis={heightBasis(f)} />
                     </span>
                     <span className="tabular-nums">
-                      {fmtSec(pickSwell(f?.swell_tp ?? null, f?.tp ?? null))}
+                      {fmtSec(shownTrain(f).tp)}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <SwellCompass
-                        deg={pickSwell(f?.swell_dp ?? null, f?.dp ?? null)}
+                        deg={shownTrain(f).dp}
                         size={16}
                       />
                       <span className="font-mono text-[11px] text-text-secondary tabular-nums">
-                        {degToCardinal(pickSwell(f?.swell_dp ?? null, f?.dp ?? null))}
+                        {degToCardinal(shownTrain(f).dp)}
                       </span>
                     </span>
                     <span className="flex items-center gap-1 text-text-muted">
