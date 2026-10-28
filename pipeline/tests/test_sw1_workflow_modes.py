@@ -27,19 +27,20 @@ def test_nwps_shelter_is_a_mode():
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
-        "data-quality", "node-preview", "surf-preview"]
+        "data-quality", "node-preview", "surf-preview", "period-preview"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
-                         "rating-preview", "data-quality", "node-preview", "surf-preview"}
+                         "rating-preview", "data-quality", "node-preview", "surf-preview",
+                         "period-preview"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
-        "&& inputs.mode != 'surf-preview' }}")
+        "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -114,5 +115,16 @@ def test_the_surf_preview_only_reads():
             "            --compare-out face_compare.json --srf-prefix face_compare") in job
     assert "SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}" in job
     assert "name: surf-preview-${{ github.run_number }}" in job
+    for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
+
+
+def test_the_period_preview_only_reads():
+    job = _jobs()["period-preview"]
+    assert _if(job) == "${{ inputs.mode == 'period-preview' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert ("python -m pipeline.period_preview --out period_preview.json --csv period_preview_hours.csv \\\n"
+            "            --archive-csv period_preview_archive.csv --compare-out face_compare.json") in job
+    assert "name: period-preview-${{ github.run_number }}" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
