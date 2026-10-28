@@ -333,3 +333,191 @@ def test_a_badge_that_flips_fails():
     # Steamer Lane's calibrated face put back to its raw value: calibrated -> model
     c = _counts(mutate_after=lambda a: a["Steamer Lane"][0].update(face_ft=4.27))
     assert c["badge_flips"] == 1 and c["unexpected"] == 1
+
+
+# --------------------------------------------------------------------------- #
+# 5 — bigger-but-shorter wind seas, and the headline paths (report only)       #
+# --------------------------------------------------------------------------- #
+def test_quantiles_are_nearest_rank():
+    xs = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+    # ranks: ceil(0.5 x 10) = 5 -> 5; ceil(9) = 9 -> 9; ceil(9.9) = 10 -> 10; 10 -> 10
+    assert P.quantiles(xs, (0.5, 0.9, 0.99, 1.0)) == {"0.5": 5, "0.9": 9, "0.99": 10, "1.0": 10}
+    assert P.quantiles([], (0.5,)) == {"0.5": None}
+
+
+def test_headline_path():
+    assert P.headline_path("nwps_height_ww3_dir", True) == "calibrated"
+    assert P.headline_path("ww3", True) == "calibrated"
+    assert P.headline_path("cdip_mop", False) == "mop"
+    assert P.headline_path("nwps_height_ww3_dir", False) == "surf"
+    assert P.headline_path("nwps", False) == "surf"
+    assert P.headline_path("ww3", False) == "other"
+    assert P.headline_path(None, False) == "other"
+
+
+def _lopsided_archive():
+    """Florida: an 8 ft / 8 s wind sea over a 0.5 ft / 14 s scrap (2.4 m over 0.15 m, x16), a
+    1.5 m / 6 s wind sea over a 1.0 m / 12 s swell (x1.5), and an uncalibrated surf hour rated at
+    600 s beside a 2.4 m wind sea at 500 s (x10; both periods in the long-wave limit). One
+    switched hour, so the switched records are kept apart."""
+    a = P.Archive({s["name"]: s for s in ROSTER}, top=2)
+    jax = {"name": "Jacksonville Beach Pier", "state": "Florida"}
+    rows = [
+        _row(12, 4.27, 4.27, STAMP, swell_tp=14.0, swell_dp=100.0, swell_1_hs=0.15, swell_1_tp=14.0,
+             swell_1_dp=100.0, wind_hs=2.4, wind_tp=8.0),
+        _row(13, 4.27, 4.27, STAMP, swell_tp=12.0, swell_1_hs=1.0, swell_1_tp=12.0,
+             wind_hs=1.5, wind_tp=6.0),
+        _row(14, 4.27, 4.27, STAMP, swell_tp=600.0, swell_1_tp=600.0, wind_hs=2.4, wind_tp=500.0),
+        _row(15, 4.27, 4.27, STAMP, swell_tp=3.0, wind_hs=2.4, wind_tp=9.0),         # switched
+    ]
+    a(jax, ROSTER[0], rows, False)
+    a.finish()
+    return a
+
+
+def test_bigger_shorter_distribution_by_state():
+    a = _lopsided_archive()
+    t = a.bigger_shorter_table()
+    f = t["Florida"]
+    assert t["all"] == f and f["hours"] == 3 and len(a.records) == 1
+    # ratios 16.0, 1.5, 10.0 (2.4 / 0.24) -> sorted 1.5, 10, 16
+    assert f["ratio"] == {"0.5": 10.0, "0.9": 16.0, "0.99": 16.0, "1.0": 16.0}
+    assert f["ratio_bands"] == {"1-2": 1, "2-4": 0, "4-8": 0, "over 8": 2}
+    # rated Hs 0.15, 1.0, 0.24 m = 0.49215, 3.281, 0.78744 ft -> sorted 0.492, 0.787, 3.281
+    assert f["rated_hs_ft"] == {"0.1": 0.492, "0.5": 0.787, "0.9": 3.281}
+    # every row is uncalibrated nwps_height_ww3_dir, so all three are surf hours; the 600 s / 500 s
+    # one is the long-wave limit at both periods: shown / at the wind sea's period = 1.0
+    assert f["surf_hours"] == 3 and f["surf_hours_ratio_4_up"] == 2
+    o = dict(zip(("16", "1.5", "10"), (x for _st, _r, x in a.bs_overstate)))
+    assert round(o["10"], 3) == 1.0
+    # shoaled at 14 s rather than 8 s, and at 12 s rather than 6 s: the shown period overstates
+    assert o["16"] > 1.0 and o["1.5"] > 1.0
+
+
+def test_the_most_lopsided_examples_with_the_buoy():
+    a = _lopsided_archive()
+    ex = a.lopsided_examples()
+    assert [round(r["wind_hs_m"] / r["rated_hs_m"], 2) for r in ex] == [16.0, 10.0]   # top 2
+    h = P._epoch(ex[0]["valid_time"])
+    P.join_buoys(ex, {"41117": [(h + 600, {"hs": 2.7, "tp": 8.0, "swell_tp": 13.0})]})
+    e = P.example(ex[0])
+    assert e == {"spot": "Jacksonville Beach Pier", "state": "Florida",
+                 "valid_time": "2026-10-28T12:00:00+00:00", "source": "nwps_height_ww3_dir",
+                 "path": "surf", "ratio": 16.0,
+                 "rated": {"hs_ft": 0.49, "tp": 14.0, "dp": 100.0},       # 0.15 x 3.281 = 0.492
+                 "wind_sea": {"hs_ft": 7.87, "tp": 8.0, "dp": 70.0},      # 2.4 x 3.281 = 7.874
+                 "buoy": "41117", "buoy_hs_ft": 8.86, "buoy_dpd": 8.0,     # 2.7 x 3.281 = 8.859
+                 "published_ft": 4.27}
+
+
+def test_paths_report_the_headline_at_the_shown_period():
+    """period_factor 'ww3': 1.0 to 6 s, 1.05 at 8, 1.1 at 10, 1.25 at 16."""
+    recs = [{"path": "calibrated", "published": 2.0, "rated_tp": 3.0, "wind_tp": 16.0},
+            {"path": "other", "published": 4.0, "rated_tp": 8.0, "wind_tp": 10.0},
+            {"path": "surf", "surf_before": 2.95, "surf_after": 4.27, "rated_tp": 3.0, "wind_tp": 9.0},
+            {"path": "other", "published": None, "rated_tp": 8.0, "wind_tp": 10.0}]
+    p = P.paths(recs)
+    # 2.0 x 1.25 / 1.0 = 2.5
+    assert {k: p["calibrated"][k] for k in ("hours", "headline_before", "headline_if_shown_period",
+                                            "changed")} == {"hours": 1, "headline_before": 2.0,
+                                                            "headline_if_shown_period": 2.5, "changed": 1}
+    assert p["calibrated"]["ratio"]["0.5"] == 1.25
+    # 4.0 x 1.1 / 1.05 = 4.190476 -> 4.19, ratio 1.047619 -> 1.048; the hour with no face is counted
+    assert (p["other"]["hours"], p["other"]["headline_if_shown_period"], p["other"]["ratio"]["1.0"]) == (2, 4.19, 1.048)
+    # the surf path's after is the fix's own height: 4.27 / 2.95 = 1.447458 -> 1.447
+    assert (p["surf"]["headline_before"], p["surf"]["headline_if_shown_period"], p["surf"]["ratio"]["0.5"]) == (2.95, 4.27, 1.447)
+    assert p["mop"] == {"hours": 0, "depends_on_rated_period": P.PATH_DEPENDS["mop"],
+                        "headline_before": None, "headline_if_shown_period": None,
+                        "ratio": {"0.5": None, "0.9": None, "1.0": None}, "changed": 0}
+    assert {k: v.split(":")[0] for k, v in P.PATH_DEPENDS.items()} == {
+        "surf": "no", "calibrated": "yes", "mop": "no", "other": "yes"}
+
+
+def _run_new_fields(monkeypatch, calibrated_switch):
+    spots = [{"id": 1, "name": "Kure Beach", "state": "North Carolina"},
+             {"id": 2, "name": "Steamer Lane", "state": "California"},
+             {"id": 3, "name": "Jacksonville Beach Pier", "state": "Florida"}]
+    ids = {s["name"]: s["id"] for s in spots}
+    pubs = _published()
+    # a bigger-but-shorter hour at Jacksonville: a 2.4 m wind sea at 500 s over the 0.24 m swell
+    # rated at 600 s; #283 published 3.46 (Hs 1.00 m, the long-wave limit), and nothing switches
+    pubs["Jacksonville Beach Pier"].append(
+        _row(14, 3.46, 4.27, STAMP + MARK, swell_tp=600.0, wind_hs=2.4, wind_tp=500.0))
+    # and one at calibrated Steamer Lane (4.27 / 2.0 = 2.135 -> 2.13), whose buoy (46284) no
+    # switched hour reads: the examples' buoys are fetched as well
+    pubs["Steamer Lane"].append(_row(14, 2.13, 4.27, STAMP, swell_tp=600.0, wind_hs=2.4,
+                                     wind_tp=500.0, stars=4.0))
+    if calibrated_switch:
+        # a switched hour at calibrated Steamer Lane: 2.13 ft at 3 s (period_factor 1.0) would
+        # read 2.13 x 1.3 = 2.769 -> 2.77 at the wind sea's 500 s
+        pubs["Steamer Lane"].append(_row(15, 2.13, 4.27, STAMP, swell_tp=3.0, wind_hs=2.4,
+                                         wind_tp=500.0, stars=4.0))
+    fc = [{**r, "spot_id": ids[n], "source": "nwps"} for n, rs in pubs.items() for r in rs]
+    obs = [{"buoy_id": "46284", "observed_at": "2026-10-28T14:05:00+00:00", "hs": 1.0, "tp": 12.0,
+            "swell_hs": 0.9, "swell_tp": 13.0}]
+    client = _Client({"spots": spots, "forecasts": fc, "buoy_observations": obs})
+    monkeypatch.setattr(P, "RUN54_DISPLAY", {"all": (2, 0.5, 0.5, 0.0)})
+
+    def compare(cl, since, until, roster, factors=None, on_rows=None):
+        for s in spots:
+            on_rows(s, next(x for x in roster if x["name"] == s["name"]),
+                    [r for r in fc if r["spot_id"] == s["id"]], s["name"] == "Steamer Lane")
+        return {"_pairs": {"srf": [_srf(1.0, 2.0, switched=True), _srf(2.0, 2.0)]}, "errors": {}}
+
+    rep = P.run(client, ROSTER, "2026-10-28T00:00:00+00:00", datetime(2026, 9, 7, tzinfo=timezone.utc),
+                datetime(2026, 10, 29, tzinfo=timezone.utc), factors=FACTORS, compare=compare)
+    g = rep["gate"]
+    assert g["pass"] is True and g["star_differences"] == g["other_field_differences"] == 0
+    assert g["unswitched_mismatch"] == g["badge_flips"] == 0
+    return rep
+
+
+def test_run_reports_the_lopsided_hours_with_their_own_buoys_and_the_gate_is_unchanged(monkeypatch):
+    rep = _run_new_fields(monkeypatch, calibrated_switch=False)
+    assert rep["bigger_shorter_by_state"]["Florida"]["hours"] == 1
+    assert rep["bigger_shorter_by_state"]["California"]["surf_hours"] == 0     # calibrated
+    # equal ratios (2.4 / 0.24 = 10), same hour: the spot name breaks the tie, Steamer Lane first
+    ex = rep["lopsided_examples"]
+    assert [(x["spot"], x["ratio"], x["path"]) for x in ex] == [
+        ("Steamer Lane", 10.0, "calibrated"), ("Jacksonville Beach Pier", 10.0, "surf")]
+    assert (ex[0]["buoy"], ex[0]["buoy_hs_ft"], ex[0]["buoy_dpd"]) == ("46284", 3.28, 12.0)  # 1.0 x 3.281
+    assert "46284" in rep["buoys_read"]
+    # switched, published window: Jacksonville's storm hour (surf) and Kure Beach's WW3 hour
+    # (other: 3.0 ft at 3 s -> 3.0 x 1.3 / 1.0 = 3.9 at the wind sea's 500 s)
+    pp = rep["paths_published"]
+    assert (pp["surf"]["hours"], pp["other"]["hours"], pp["calibrated"]["hours"]) == (1, 1, 0)
+    assert pp["other"]["headline_if_shown_period"] == 3.9
+    assert (rep["paths_archive"]["other"]["hours"], rep["paths_archive"]["calibrated"]["hours"]) == (1, 0)
+
+
+def test_run_puts_a_calibrated_spots_switched_hour_on_the_calibrated_path(monkeypatch):
+    rep = _run_new_fields(monkeypatch, calibrated_switch=True)
+    pp = rep["paths_published"]
+    assert (pp["surf"]["hours"], pp["other"]["hours"], pp["calibrated"]["hours"]) == (1, 1, 1)
+    assert pp["calibrated"]["headline_if_shown_period"] == 2.77
+    assert rep["paths_archive"]["calibrated"]["hours"] == 1
+
+
+def test_ratio_bands_include_their_upper_edge():
+    """A wind sea exactly 2x the rated swell (1.0 m over 0.5 m, shorter) is in the 1-2 band;
+    exactly 4x (2.0 over 0.5) in 2-4; exactly 8x (4.0 over 0.5) in 4-8."""
+    a = P.Archive({s["name"]: s for s in ROSTER})
+    rows = [_row(12 + i, 4.27, 4.27, STAMP, swell_tp=12.0, swell_1_hs=0.5, swell_1_tp=12.0,
+                 wind_hs=w, wind_tp=6.0) for i, w in enumerate((1.0, 2.0, 4.0))]
+    a({"name": "Jacksonville Beach Pier", "state": "Florida"}, ROSTER[0], rows, False)
+    a.finish()
+    assert a.bigger_shorter_table()["Florida"]["ratio_bands"] == {"1-2": 1, "2-4": 1, "4-8": 1, "over 8": 0}
+
+
+def test_paths_count_only_headlines_that_change():
+    # 3 s and 5 s both read period_factor 1.0: the headline would not change
+    recs = [{"path": "other", "published": 4.0, "rated_tp": 3.0, "wind_tp": 5.0},
+            {"path": "other", "published": 4.0, "rated_tp": 8.0, "wind_tp": 10.0}]
+    assert P.paths(recs)["other"]["changed"] == 1
+
+
+def test_tiles_put_a_calibrated_spots_switched_hour_on_the_calibrated_path():
+    pub, after, _ = P.replay(_published(), ROSTER, FACTORS, _slug)
+    _t, hours = P.tiles(pub, after, {}, frozenset({"Kure Beach"}))
+    assert {h["spot"]: h["path"] for h in hours} == {"Jacksonville Beach Pier": "surf",
+                                                    "Kure Beach": "calibrated"}

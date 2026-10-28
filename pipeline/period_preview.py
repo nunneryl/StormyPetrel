@@ -25,6 +25,15 @@ the daily report, its period for the surf height's shoaling. Stars stay on the r
    On the switched hours: the period shown before and after, the surf height before and after
    (uncalibrated spots' NWPS-override hours), and the nearest buoy's (roster nearest_buoy_id)
    observation within 30 minutes of the hour: its Hs, dominant period (DPD) and swell period.
+   On the bigger_shorter hours, which still show the rated (longer) period: by state, the wind
+   sea / rated swell Hs ratio and the rated swell's Hs; on their surf hours, the height shoaled at
+   the rated period over the height at the wind sea's (does the scrap's period overstate it?),
+   all and at a ratio of 4 or more; and the TOP_LOPSIDED most lopsided hours, both trains and
+   the buoy.
+   The switched hours split by the path that produced the headline (headline_path: #283's surf
+   shoal, calibrated, MOP, other), here and in the published window: whether each path still
+   reads the rated period through the face's period factor (PATH_DEPENDS, from the code), and
+   the headline if that factor used the shown period. Report only: those paths are unchanged.
 
 2. THE PUBLISHED WINDOW (every published hour from --since, default now) — THE GATE. Each row is
    taken back to before the surf step (face_ft_raw, the stamp without its surf mark) and run
@@ -51,9 +60,10 @@ the daily report, its period for the surf height's shoaling. Stars stay on the r
 from __future__ import annotations
 
 import argparse
-import copy
 import csv
+import heapq
 import json
+import math
 import os
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -73,6 +83,22 @@ PUB_COLS = ("spot_id, valid_time, hs, tp, dp, swell_hs, swell_tp, swell_dp, swel
 ALLOWED = {"face_ft", "face_correction_version"}
 BUOY_WINDOW_S = 1800
 PERIOD_NEAR_S = 2.0
+TOP_LOPSIDED = 10
+LOPSIDED_RATIO = 4.0        # "lopsided": the wind sea at least 4x the rated swell's Hs
+
+# Question 3: does each headline path still read the rated period through the face's period
+# factor? From the code, not inferred from rows.
+PATH_DEPENDS = {
+    "surf": "no: since this change #283's surf height is shoaled at the shown period; the rated "
+            "period only recovers Hs (surf_height.sized_hs inverts the override's own face)",
+    "calibrated": "yes: face_ft_raw = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 "
+                  "(interpret.rate_spot's WW3 path, or nwps_nearshore.nwps_stars), then divided by "
+                  "the spot's MOP factor",
+    "mop": "no: MOP's face is its Hs x 3.281 with no period factor (mop.mop_stars); and MOP hours "
+           "(swell_source cdip_mop) are never switched",
+    "other": "yes: face_ft = Hs x period_factor(rated swell_tp, 'ww3') x 3.281 (interpret.rate_spot's "
+             "WW3 path at an uncalibrated spot)",
+}
 
 # Run 54 (sw1-raycast, 4036ad5): the display at the rated period, mainland headline hours,
 # 2026-09-07 to 2026-10-27 18:00Z, by region: (n, inside, below, above). From
@@ -142,10 +168,18 @@ class Archive:
 
     KEYS = ("hours", "ww3_identity", "unmatched", "big_wind_sea", "switched", "bigger_shorter")
 
-    def __init__(self, roster_by_name):
+    def __init__(self, roster_by_name, top=TOP_LOPSIDED):
         self.by_state = defaultdict(Counter)
         self.records = []
         self.roster = roster_by_name
+        # The bigger-but-shorter hours (the plain rule would switch them to a SHORTER period):
+        # per state, each hour's wind-sea / rated-swell Hs ratio and the rated swell's Hs (ft);
+        # the uncalibrated NWPS-override ones' (state, ratio, Hs, rated tp, wind tp) for the
+        # shoaled height at each period; and the TOP most lopsided as full records.
+        self.bs_ratio = defaultdict(list)
+        self.bs_rated_ft = defaultdict(list)
+        self.bs_surf = []
+        self.top, self.top_n = [], top
 
     def __call__(self, s, spot, rows, calibrated):
         st = s.get("state") or "?"
@@ -163,6 +197,25 @@ class Archive:
                 c[k] += lab[k]
             if lab["switched"]:
                 self.records.append(self.record(s, spot, r, calibrated, lab))
+            elif lab["bigger_shorter"]:
+                self.lopsided(s, spot, r, calibrated, lab)
+
+    def lopsided(self, s, spot, r, calibrated, lab):
+        st = s.get("state") or "?"
+        wh = _num(r.get("wind_wave_hs"))
+        if not lab["rated_hs"] or lab["rated_hs"] <= 0:
+            return
+        ratio = wh / lab["rated_hs"]
+        self.bs_ratio[st].append(ratio)
+        self.bs_rated_ft[st].append(lab["rated_hs"] * M_TO_FT)
+        rec = self.record(s, spot, r, calibrated, lab)
+        if rec["surf"] and rec["wind_tp"] is not None and rec["wind_tp"] > 0:
+            self.bs_surf.append((st, ratio, rec["hs_m"], rec["rated_tp"], rec["wind_tp"]))
+        key = (ratio, -rec["hour"], rec["spot"])
+        if len(self.top) < self.top_n:
+            heapq.heappush(self.top, (key, rec))
+        elif key > self.top[0][0]:
+            heapq.heapreplace(self.top, (key, rec))
 
     def record(self, s, spot, r, calibrated, lab):
         nwps = r.get("swell_source") in NWPS_OVERRIDE_SOURCES
@@ -170,8 +223,11 @@ class Archive:
         return {"spot": s["name"], "state": s.get("state") or "?", "valid_time": r["valid_time"],
                 "hour": _epoch(r["valid_time"]), "source": r.get("swell_source"),
                 "calibrated": calibrated, "buoy": spot.get("nearest_buoy_id"),
+                "path": headline_path(r.get("swell_source"), calibrated),
                 "rated_hs_m": lab["rated_hs"], "rated_tp": _num(r.get("swell_tp")),
+                "rated_dp": _num(r.get("swell_dp")),
                 "wind_hs_m": _num(r.get("wind_wave_hs")), "wind_tp": _num(r.get("wind_wave_tp")),
+                "wind_dp": _num(r.get("wind_wave_dp")),
                 "hs_m": hs, "published": _num(r.get("face_ft")),
                 "surf": nwps and not calibrated and hs is not None}
 
@@ -187,6 +243,52 @@ class Archive:
         for r in self.records:
             r.setdefault("surf_before", None)
             r.setdefault("surf_after", None)
+        # The bigger-but-shorter surf hours: the height shoaled at the rated (longer) period, as
+        # shown, against at the wind sea's (shorter) period, where the energy is.
+        self.bs_overstate = []
+        if self.bs_surf:
+            at_rated = typical_face_ft([x[2] for x in self.bs_surf], [x[3] for x in self.bs_surf])
+            at_wind = typical_face_ft([x[2] for x in self.bs_surf], [x[4] for x in self.bs_surf])
+            for (st, ratio, *_), a, b in zip(self.bs_surf, at_rated, at_wind):
+                if b > 0:
+                    self.bs_overstate.append((st, ratio, float(a) / float(b)))
+
+    def lopsided_examples(self):
+        """The TOP most lopsided bigger-but-shorter hours, most lopsided first."""
+        return [rec for _k, rec in sorted(self.top, key=lambda kr: kr[0], reverse=True)]
+
+    def bigger_shorter_table(self):
+        """By state: the wind-sea / rated-swell Hs ratio and the rated swell's Hs (ft) on the
+        bigger-but-shorter hours, and on their surf hours the height shoaled at the rated period
+        over the height at the wind sea's."""
+        states = sorted(self.bs_ratio)
+        over = defaultdict(list)
+        over4 = defaultdict(list)
+        for st, ratio, x in getattr(self, "bs_overstate", []):
+            for k in (st, "all"):
+                over[k].append(x)
+                if ratio >= LOPSIDED_RATIO:
+                    over4[k].append(x)
+        out = {}
+        for st in states + ["all"]:
+            ratios = (self.bs_ratio[st] if st != "all"
+                      else [x for s in states for x in self.bs_ratio[s]])
+            rated = (self.bs_rated_ft[st] if st != "all"
+                     else [x for s in states for x in self.bs_rated_ft[s]])
+            out[st] = {
+                "hours": len(ratios),
+                "ratio": quantiles(ratios, (0.5, 0.9, 0.99, 1.0)),
+                "ratio_bands": {"1-2": sum(1 < x <= 2 for x in ratios),
+                                "2-4": sum(2 < x <= 4 for x in ratios),
+                                "4-8": sum(4 < x <= 8 for x in ratios),
+                                "over 8": sum(x > 8 for x in ratios)},
+                "rated_hs_ft": quantiles(rated, (0.1, 0.5, 0.9)),
+                "surf_hours": len(over[st]),
+                "shown_over_wind_sea_height": quantiles(over[st], (0.5, 0.9, 1.0)),
+                "surf_hours_ratio_4_up": len(over4[st]),
+                "shown_over_wind_sea_height_ratio_4_up": quantiles(over4[st], (0.5, 0.9, 1.0)),
+            }
+        return out
 
     def table(self):
         out = {}
@@ -196,6 +298,61 @@ class Archive:
             out[st] = {k: c[k] for k in self.KEYS}
         out["all"] = {k: tot[k] for k in self.KEYS}
         return out
+
+
+def quantiles(xs, ps):
+    """{p: nearest-rank quantile of *xs*, 3 dp} for each p in *ps* (1.0 is the maximum);
+    None for each when *xs* is empty."""
+    s = sorted(xs)
+    if not s:
+        return {str(p): None for p in ps}
+    return {str(p): round(s[max(0, math.ceil(p * len(s)) - 1)], 3) for p in ps}
+
+
+def headline_path(source, calibrated):
+    """What produced an hour's headline height: 'calibrated' (the MOP factor divided it),
+    'mop' (MOP's own Hs), 'surf' (#283's shoal on an NWPS-override hour) or 'other' (the
+    producer's face: the WW3 path and the fallbacks)."""
+    if calibrated:
+        return "calibrated"
+    if source == "cdip_mop":
+        return "mop"
+    if source in NWPS_OVERRIDE_SOURCES:
+        return "surf"
+    return "other"
+
+
+def paths(records):
+    """Question 3's split of the switched hours by headline path. For each path: whether the
+    headline still reads the rated period (PATH_DEPENDS), and what the headline would be if its
+    face period factor used the shown period: face x period_factor(shown, 'ww3') /
+    period_factor(rated, 'ww3'), the table both the WW3 path and the NWPS override size with.
+    The surf path's after is the fix's own height (surf_after)."""
+    from .interpret import period_factor
+    by = defaultdict(list)
+    for r in records:
+        by[r["path"]].append(r)
+    out = {}
+    for path in ("surf", "calibrated", "mop", "other"):
+        rs = by.get(path, [])
+        pairs = []
+        for r in rs:
+            b = r.get("published") if path != "surf" else r.get("surf_before")
+            if b is None or r.get("rated_tp") is None or r.get("wind_tp") is None:
+                continue
+            if path == "surf":
+                a = r.get("surf_after")
+            else:
+                a = b * period_factor(r["wind_tp"], "ww3") / period_factor(r["rated_tp"], "ww3")
+            if a is not None:
+                pairs.append((b, a))
+        ratios = [a / b for b, a in pairs if b]
+        out[path] = {"hours": len(rs), "depends_on_rated_period": PATH_DEPENDS[path],
+                     "headline_before": _med(b for b, _ in pairs),
+                     "headline_if_shown_period": _med(a for _, a in pairs),
+                     "ratio": quantiles(ratios, (0.5, 0.9, 1.0)),
+                     "changed": sum(abs(a - b) >= 0.005 for b, a in pairs)}
+    return out
 
 
 def join_buoys(records, obs_by_buoy, window=BUOY_WINDOW_S):
@@ -218,6 +375,18 @@ def join_buoys(records, obs_by_buoy, window=BUOY_WINDOW_S):
         r.update(buoy_hs_m=_num(o.get("hs")), buoy_tp=_num(o.get("tp")),
                  buoy_swell_tp=_num(o.get("swell_tp")))
     return records
+
+
+def example(r):
+    """One lopsided hour for the report: both trains (Hs in ft) and the buoy."""
+    ft = lambda m: None if m is None else round(m * M_TO_FT, 2)      # noqa: E731
+    return {"spot": r["spot"], "state": r["state"], "valid_time": r["valid_time"],
+            "source": r["source"], "path": r["path"],
+            "ratio": round(r["wind_hs_m"] / r["rated_hs_m"], 2),
+            "rated": {"hs_ft": ft(r["rated_hs_m"]), "tp": r["rated_tp"], "dp": r["rated_dp"]},
+            "wind_sea": {"hs_ft": ft(r["wind_hs_m"]), "tp": r["wind_tp"], "dp": r["wind_dp"]},
+            "buoy": r["buoy"], "buoy_hs_ft": ft(r.get("buoy_hs_m")), "buoy_dpd": r.get("buoy_tp"),
+            "published_ft": r["published"]}
 
 
 def summarize_switched(records):
@@ -321,7 +490,7 @@ def gate_rows(pub, after):
             "examples": {k: v[:10] for k, v in examples.items()}}
 
 
-def tiles(pub, after, state_by_name):
+def tiles(pub, after, state_by_name, calibrated=frozenset()):
     """The period tile before (the rated period, as pickSwell showed it) and after, by state, on
     the hours whose shown train switches; and every switched hour for the CSV."""
     by = defaultdict(list)
@@ -332,12 +501,17 @@ def tiles(pub, after, state_by_name):
             if which != "wind_sea":
                 continue
             old_tp = _num(b.get("swell_tp"))
+            path = headline_path(b.get("swell_source"), name in calibrated)
+            fb, fa = _num(b.get("face_ft")), _num(a.get("face_ft"))
             rec = {"spot": name, "state": state_by_name.get(name, "?"),
                    "valid_time": b.get("valid_time"), "source": b.get("swell_source"),
-                   "period_before": old_tp, "period_after": tp,
+                   "path": path, "period_before": old_tp, "period_after": tp,
                    "dir_before": _num(b.get("swell_dp")), "dir_after": dp,
-                   "face_before": _num(b.get("face_ft")), "face_after": _num(a.get("face_ft")),
-                   "stars": b.get("stars")}
+                   "face_before": fb, "face_after": fa, "stars": b.get("stars"),
+                   # the fields paths() reads
+                   "published": fb, "rated_tp": old_tp, "wind_tp": tp,
+                   "surf_before": fb if path == "surf" else None,
+                   "surf_after": fa if path == "surf" else None}
             by[rec["state"]].append(rec)
             by["all"].append(rec)
             hours.append(rec)
@@ -531,7 +705,9 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
             states[s["name"]] = s.get("state") or "?"
     pub, after, stats = replay(pub_rows, roster, factors, _slug_for)
     g = gate_rows(pub, after)
-    tile, tile_hours = tiles(pub, after, states)
+    from .forecast.face_correction import spot_factor
+    cal = {n for n in pub if spot_factor(by_name[n], factors, _slug_for) is not None}
+    tile, tile_hours = tiles(pub, after, states, cal)
     q3 = stars_on_the_wind_sea(pub, {n: dict(by_name[n], state=states.get(n)) for n in pub},
                                factors)
 
@@ -539,8 +715,11 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
     arch = Archive(by_name)
     comp = compare(client, archive_since, until, roster, factors=factors, on_rows=arch)
     arch.finish()
-    buoys = fetch_buoys(client, {r["buoy"] for r in arch.records}, archive_since.isoformat())
+    examples = arch.lopsided_examples()
+    buoys = fetch_buoys(client, {r["buoy"] for r in arch.records + examples},
+                        archive_since.isoformat())
     join_buoys(arch.records, buoys)
+    join_buoys(examples, buoys)
     nws = nws_tables(comp["_pairs"]["srf"])
 
     c = g["counts"]
@@ -554,6 +733,9 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
         "apply_stats": stats, "badges": g["transitions"], "examples": g["examples"],
         "archive_by_state": arch.table(),
         "switched_vs_buoy": summarize_switched(arch.records),
+        "bigger_shorter_by_state": arch.bigger_shorter_table(),
+        "lopsided_examples": [example(r) for r in examples],
+        "paths_archive": paths(arch.records), "paths_published": paths(tile_hours),
         "buoys_read": {b: len(v) for b, v in buoys.items()},
         "tiles": tile, "homepage": homepage(pub, after, ids),
         "stars_on_the_wind_sea": q3,
@@ -601,6 +783,27 @@ def print_report(rep):
               f"model {e['model_hs_ft']}, buoy {e['buoy_hs_ft']} | surf (n {e['surf_hours']}) "
               f"{e['surf_before']} -> {e['surf_after']} ft, x buoy Hs {e['surf_over_buoy_hs_before']}"
               f" -> {e['surf_over_buoy_hs_after']}")
+
+    print("\n2b. Archive: bigger-but-SHORTER wind seas (the plain rule would lower the period)")
+    for st, e in rep["bigger_shorter_by_state"].items():
+        print(f"  {st:22} n {e['hours']:7}  wind/rated Hs {e['ratio']}  bands {e['ratio_bands']}  "
+              f"rated Hs ft {e['rated_hs_ft']}")
+        print(f"  {'':22} surf n {e['surf_hours']:6}: shown / at wind-sea period "
+              f"{e['shown_over_wind_sea_height']}; ratio >= 4: n {e['surf_hours_ratio_4_up']} "
+              f"{e['shown_over_wind_sea_height_ratio_4_up']}")
+    print("  most lopsided:")
+    for x in rep["lopsided_examples"]:
+        print(f"    {x['spot']:28} {x['valid_time']}  x{x['ratio']}  rated {x['rated']}  "
+              f"wind sea {x['wind_sea']}  buoy {x['buoy']} {x['buoy_hs_ft']} ft {x['buoy_dpd']} s  "
+              f"shown {x['published_ft']} ft ({x['path']})")
+
+    for part in ("paths_archive", "paths_published"):
+        print(f"\n2c. Switched hours by headline path ({part}): the headline if its period factor "
+              f"used the shown period")
+        for path, e in rep[part].items():
+            print(f"  {path:11} n {e['hours']:7}  {e['headline_before']} -> "
+                  f"{e['headline_if_shown_period']} ft, ratio {e['ratio']}, changed {e['changed']}")
+            print(f"  {'':11} depends on the rated period: {e['depends_on_rated_period']}")
 
     print("\n3. Published window: the period tile and the surf height on switched hours (medians)")
     for st, e in rep["tiles"].items():
