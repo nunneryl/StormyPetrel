@@ -328,6 +328,20 @@ def test_a_storm_hour_reports_the_wind_seas_period_and_direction():
     assert "@ 3s from E" in _line(user, "Calm"), user
 
 
+def test_the_report_reads_the_spots_window():
+    """The same storm hour at a spot whose window is 180-270 (span 94: sector 178-272): the wind
+    sea from 70 is 178 - 70 = 108 deg outside it, so the report gives the rated 3s from E, as the
+    page does. The spots fetch selects the window."""
+    storm = {**_row(4.4, 4.4, "nwps_height_ww3_dir"), "swell_tp": 3.0, "swell_dp": 80.0,
+             "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+             "wind_wave_hs": 2.4, "wind_wave_tp": 9.0, "wind_wave_dp": 70.0}
+    behind = dict(_spot("Behind", storm), swell_window_arcs=[{"min": 180, "max": 270, "span": 94}])
+    _, user = _sent([behind, _spot("Open", storm)])
+    assert "@ 3s from E" in _line(user, "Behind"), user
+    assert "@ 9s from ENE" in _line(user, "Open"), user
+    assert "swell_window_arcs" in [c.strip() for c in D._SPOT_COLS.split(",")]
+
+
 def test_the_fetch_selects_the_partitions_the_shown_train_reads():
     cols = [c.strip() for c in D._FCAST_COLS.split(",")]
     for p in ("swell_1", "swell_2", "swell_3", "wind_wave"):

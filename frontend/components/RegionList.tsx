@@ -106,15 +106,15 @@ export function RegionList({
                       <HeightBasisMark basis={heightBasis(f)} />
                     </span>
                     <span className="tabular-nums">
-                      {fmtSec(shownTrain(f).tp)}
+                      {fmtSec(shownTrain(f, s.swell_window_arcs).tp)}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <SwellCompass
-                        deg={shownTrain(f).dp}
+                        deg={shownTrain(f, s.swell_window_arcs).dp}
                         size={16}
                       />
                       <span className="font-mono text-[11px] text-text-secondary tabular-nums">
-                        {degToCardinal(shownTrain(f).dp)}
+                        {degToCardinal(shownTrain(f, s.swell_window_arcs).dp)}
                       </span>
                     </span>
                     <span className="flex items-center gap-1 text-text-muted">

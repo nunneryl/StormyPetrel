@@ -159,7 +159,7 @@ def _ms_to_mph(ms: float | None) -> float | None:
 # ---------------------------------------------------------------------------
 
 _SPOT_COLS = (
-    "id, slug, name, state, lat, lng, offshore_wind_deg"
+    "id, slug, name, state, lat, lng, offshore_wind_deg, swell_window_arcs"
 )
 
 _FCAST_COLS = (
@@ -333,8 +333,8 @@ def _build_user_prompt(region_label: str, trend: str, top: list[dict]) -> str:
         stars = latest.get("stars") or 0
         face = latest.get("face_ft")
         # The train the site shows (forecast/shown_period.py): the rated swell, or the wind sea
-        # when it is bigger and longer-period, so the report and the page give one period.
-        tp, dp, _which = shown_train(latest)
+        # where that rule shows it, so the report and the page give one period.
+        tp, dp, _which = shown_train(latest, s.get("swell_window_arcs"))
         wind_dir = latest.get("wind_dir")
         wind_mph = _ms_to_mph(latest.get("wind_speed"))
         wind_q = _classify_wind(wind_dir, s.get("offshore_wind_deg"))

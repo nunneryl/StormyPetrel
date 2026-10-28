@@ -323,7 +323,7 @@ function starsHtml(score: number | null | undefined, size = 14): string {
 function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
   const f = s.latest;
 
-  const { tp: swellPeriod, dp: swellDir } = shownTrain(f);
+  const { tp: swellPeriod, dp: swellDir } = shownTrain(f, s.swell_window_arcs);
   const swellArrow =
     swellDir !== null && swellDir !== undefined
       ? `${arrowSvg(swellDir, '#0369A1')}&nbsp;${escapeHtml(degToCardinal(swellDir))}`

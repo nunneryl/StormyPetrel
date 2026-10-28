@@ -513,24 +513,33 @@ def test_the_surf_height_paragraph_is_the_codes():
 
 def test_the_wind_sea_paragraph_is_the_codes_rule():
     """"When the wind sea is the surf" states shown_period's rule: its two cases, with the code's
-    two constants, and that the stars keep the rated swell."""
+    constants, the window exclusion, and that the stars keep the rated swell."""
     from pipeline.forecast import shown_period as SP
     m = _says(r"when it is bigger than the swell we rate on and at least half a second longer-period, or "
               rf"when it is at least {_N} times that swell's height, whatever its period\.", "the two cases")
     assert float(m.group(1)) == SP.DOMINANCE_K == 4.0 and SP.MIN_LONGER_S == 0.5
     _says(r"In the second case the period we show can go down", "that the shown period can go down")
+    _says(r"Neither case applies when the wind sea comes from 90° or more outside the spot's window, "
+          r"where it can't reach the break and the rating gives a swell nothing\.", "the window exclusion")
+    assert SP.BLOCKED_OUTSIDE_DEG == 90.0
+    window = [{"min": 30, "max": 150, "span": 124}]            # sector 28-152
+    from pipeline.interpret import directional_gain
+    assert directional_gain(242.0, window, None, 90.0) == 0.0    # 242 - 152 = 90: nothing
     _says(r"The stars still use the swell we rate on", "that the stars keep the rated swell")
     row = {"swell_source": "nwps_height_ww3_dir", "swell_tp": 3.0, "swell_dp": 80.0,
            "swell_1_hs": 0.24, "swell_1_tp": 3.0, "swell_1_dp": 80.0,
            "wind_wave_hs": 2.4, "wind_wave_tp": 9.0, "wind_wave_dp": 70.0}
-    assert SP.shown_train(row) == (9.0, 70.0, "wind_sea")                       # bigger and longer
-    assert SP.shown_train(dict(row, wind_wave_tp=3.4))[2] == "wind_sea"          # 10x: dominant
-    assert SP.shown_train(dict(row, wind_wave_hs=0.5, wind_wave_tp=3.4))[2] == "swell"   # 2x, 0.4 s
+    assert SP.shown_train(row, None) == (9.0, 70.0, "wind_sea")                       # bigger and longer
+    assert SP.shown_train(dict(row, wind_wave_tp=3.4), None)[2] == "wind_sea"          # 10x: dominant
+    assert SP.shown_train(dict(row, wind_wave_hs=0.5, wind_wave_tp=3.4), None)[2] == "swell"   # 2x, 0.4 s
     # The Hatteras hour the paragraph names: 3.55 m (11.65 ft) at 10.2 s over 0.06 m (0.2 ft) at 12.97 s
     hat = dict(row, swell_tp=12.97, swell_dp=130.94, swell_1_hs=0.06, swell_1_tp=12.97,
                swell_1_dp=130.94, wind_wave_hs=3.55, wind_wave_tp=10.2, wind_wave_dp=59.42)
-    assert SP.shown_train(hat) == (10.2, 59.42, "wind_sea")
+    assert SP.shown_train(hat, None) == (10.2, 59.42, "wind_sea")
     _says(r"an 11\.65 ft, 10\.2 s wind sea sat over a 0\.2 ft, 13 s swell", "the Hatteras example")
+    # ... and the same Jacksonville wind sea from 242, 90 past that window, is not shown
+    assert SP.shown_train(dict(row, wind_wave_dp=242.0), window) == (3.0, 80.0, "swell")
+    assert SP.shown_train(dict(row, wind_wave_dp=241.0), window) == (9.0, 241.0, "wind_sea")
 
 
 def test_mop_is_read_from_its_nowcast():

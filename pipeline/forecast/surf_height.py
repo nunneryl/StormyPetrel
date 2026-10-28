@@ -15,8 +15,8 @@ and fallback hours keep the producer's face.
 typical. Hs carried from D0_M = 10 m to its breaking point by linear shoaling — Green's energy flux, H = Hs x sqrt(Cg(D0)
 / Cg(h)) — breaking where H reaches GAMMA = 0.78 x the depth h, at the hour's rated period
 (swell_tp), or at the wind sea's where shown_period shows the wind sea: bigger and at least 0.5 s
-longer than the rated partition, or at least 4x its height whatever its period (since
-2026-10-28, marked WIND_SEA_MARK). Solved once per (Hs, period) pair rounded to 0.01 m and 0.1 s. Hs is the NWPS
+longer than the rated partition, or at least 4x its height whatever its period, unless it comes
+from 90 degrees or more outside the spot's swell window (since 2026-10-28, marked WIND_SEA_MARK). Solved once per (Hs, period) pair rounded to 0.01 m and 0.1 s. Hs is the NWPS
 node's height the override sized the hour's face from, recovered from that face (face_ft_raw)
 by inverting the override's formula, face = Hs x period_factor(swell_tp, 'ww3') x 3.281: the row's
 own hs is rate_spot's and is not always the height the override used. It is how the validation
@@ -163,11 +163,12 @@ def sized_hs(entry):
     return face / (period_factor(tp, "ww3") * M_TO_FT)
 
 
-def surf_period(entry):
-    """(period s, wind_sea) the hour is shoaled at: the shown train's period
-    (shown_period.shown_train), the rated swell_tp unless the wind sea is shown."""
+def surf_period(entry, arcs):
+    """(period s, wind_sea) the hour is shoaled at, at a spot whose swell window is *arcs*: the
+    shown train's period (shown_period.shown_train), the rated swell_tp unless the wind sea is
+    shown."""
     from .shown_period import shown_train
-    tp, _dp, which = shown_train(entry)
+    tp, _dp, which = shown_train(entry, arcs)
     return tp, which == "wind_sea"
 
 
@@ -214,7 +215,7 @@ def apply_surf_height(ratings, spots, factors, slug_for=None):
             if e.get("face_ft") is None or hs is None:
                 stats["hours_without_inputs"] += 1
                 continue
-            tp, wind_sea = surf_period(e)
+            tp, wind_sea = surf_period(e, spot.get("swell_window_arcs"))
             todo.append((e, hs, tp, wind_sea))
         stats["spots_rewritten"] += len(todo) > n0
     if todo:

@@ -23,6 +23,14 @@ nwps_height_ww3_dir), the shown train is the WIND SEA when either
               see interpret.combine_ww3_partitions.
 otherwise it is the rated train (swell_tp / swell_dp, else the row's tp / dp, as before).
 
+NOT FROM BEHIND THE COAST. Neither case switches when the wind sea comes from BLOCKED_OUTSIDE_DEG
+(90) or more outside the spot's swell window: the rating's blocked rung (interpret.directional_gain
+gives a swell there 0, measured the same way, from the window's padded edge). Sw1-raycast run 56:
+on those 2,422 hours at K 4 the shown period's agreement with the buoy did not improve (46.8% of
+hours within 2 s before, 45.3% after; New Jersey 71% to 23%), while wind seas under 45° outside
+the window agreed well (26.3% to 80.3%), so only the blocked rung is excluded. A spot with no
+window arcs has no rung to read, and switches as before.
+
 The rated partition is the swell_N whose tp and dp equal swell_tp and swell_dp (to 0.001; the
 row stores swell_tp / swell_dp rounded to 3 decimals). No match, no switch.
 
@@ -30,7 +38,7 @@ STARS ARE NOT TOUCHED. The rating keeps the rated partition's period and directi
 quality, the face's period factor, the alignment term); this only changes what the period and
 direction tiles, the lists, the map and the daily report show, and the period #283's surf height
 is shoaled at (forecast/surf_height.py). frontend/lib/shownPeriod.ts is the same rule with the
-same two constants, held to the same cases (frontend/lib/shownPeriod.cases.json).
+same constants, held to the same cases (frontend/lib/shownPeriod.cases.json).
 """
 from __future__ import annotations
 
@@ -39,10 +47,11 @@ import math
 WW3_IDENTITY_SOURCES = frozenset({"ww3", "nwps_height_ww3_dir"})
 SWELL_PREFIXES = ("swell_1", "swell_2", "swell_3")
 MATCH_TOL = 0.001
-# The two constants of the rule. frontend/lib/shownPeriod.ts declares the same two values, and
-# its test reads them from this file, so the site and the pipeline cannot drift apart.
+# The rule's constants. frontend/lib/shownPeriod.ts declares the same values, and its test reads
+# them from this file, so the site and the pipeline cannot drift apart.
 MIN_LONGER_S = 0.5
 DOMINANCE_K = 4.0
+BLOCKED_OUTSIDE_DEG = 90.0
 
 
 def _num(v):
@@ -67,15 +76,28 @@ def rated_partition(row):
     return None
 
 
-def switch_case(row, k=DOMINANCE_K):
+def wind_sea_blocked(dp, arcs) -> bool:
+    """Does bearing *dp* come from BLOCKED_OUTSIDE_DEG or more outside the window *arcs* (a spot's
+    swell_window_arcs)? The rating's blocked rung: interpret.directional_gain's offset from the
+    padded edge. False when there are no arcs."""
+    from ..interpret import _min_offset_from_arcs, in_any_arc
+    if not arcs or in_any_arc(dp, arcs):
+        return False
+    return _min_offset_from_arcs(dp, arcs) >= BLOCKED_OUTSIDE_DEG
+
+
+def switch_case(row, arcs, k=DOMINANCE_K):
     """'longer' or 'dominant' when the wind sea is shown for *row* (see the module docstring;
-    'longer' first when both hold), else None. *k* is the dominance ratio; the preview varies it,
-    the site uses DOMINANCE_K."""
+    'longer' first when both hold), else None. *arcs* are the spot's swell_window_arcs (None or
+    empty: no window to read). *k* is the dominance ratio; the preview varies it, the site uses
+    DOMINANCE_K."""
     if row.get("swell_source") not in WW3_IDENTITY_SOURCES:
         return None
     rated = rated_partition(row)
     wh, wt, wd = (_num(row.get(f"wind_wave_{x}")) for x in ("hs", "tp", "dp"))
     if rated is None or wh is None or wt is None or wd is None:
+        return None
+    if wind_sea_blocked(wd, arcs):
         return None
     if wh > rated[0] and wt - rated[1] >= MIN_LONGER_S:
         return "longer"
@@ -84,15 +106,16 @@ def switch_case(row, k=DOMINANCE_K):
     return None
 
 
-def wind_sea_dominates(row, k=DOMINANCE_K) -> bool:
+def wind_sea_dominates(row, arcs, k=DOMINANCE_K) -> bool:
     """Is the wind sea shown for *row*? (switch_case is not None)"""
-    return switch_case(row, k) is not None
+    return switch_case(row, arcs, k) is not None
 
 
-def shown_train(row, k=DOMINANCE_K):
-    """(tp, dp, which) shown for *row*: 'wind_sea' when switch_case holds, else 'swell' with
-    swell_tp / swell_dp, each falling back to the row's tp / dp when absent (as pickSwell did)."""
-    if wind_sea_dominates(row, k):
+def shown_train(row, arcs, k=DOMINANCE_K):
+    """(tp, dp, which) shown for *row* at a spot whose window is *arcs*: 'wind_sea' when
+    switch_case holds, else 'swell' with swell_tp / swell_dp, each falling back to the row's
+    tp / dp when absent (as pickSwell did)."""
+    if wind_sea_dominates(row, arcs, k):
         return _num(row["wind_wave_tp"]), _num(row["wind_wave_dp"]), "wind_sea"
     tp = _num(row.get("swell_tp"))
     dp = _num(row.get("swell_dp"))

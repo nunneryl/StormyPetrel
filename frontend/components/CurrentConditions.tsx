@@ -19,7 +19,7 @@ import {
   heightBasis, HEADLINE_HEIGHT_LABEL, HEIGHT_BASIS_COLOR, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_NOTE,
   HEIGHT_METHOD_HREF, HEIGHT_METHOD_LINK_TEXT,
 } from '@/lib/heightBasis';
-import type { Forecast } from '@/lib/types';
+import type { Forecast, Spot } from '@/lib/types';
 import {
   classifySurface, surfaceTextClass, chopLabel,
   classifyWind, windQualityClass, windQualityLabel,
@@ -48,6 +48,7 @@ export function CurrentConditions({
   rows,
   serverNowMs,
   offshoreDeg,
+  windowArcs,
   faceAction,
 }: {
   /** The spot's forecast rows, INCLUDING the recent past. The current hour's row is the one
@@ -58,6 +59,8 @@ export function CurrentConditions({
    *  markup matches, then replaced by the viewer's clock in the effect below. */
   serverNowMs: number;
   offshoreDeg: number | null | undefined;
+  /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
+  windowArcs: Spot['swell_window_arcs'];
   faceAction?: React.ReactNode;
 }) {
   // Server render and first client render both use serverNowMs — no hydration mismatch.
@@ -79,9 +82,9 @@ export function CurrentConditions({
   // whatever happened to be second in the array.
   const forecasts =
     selection.state === 'current' ? rows.slice(selection.index) : [];
-  // The train shown: the rated swell, or the wind sea when it is bigger and longer-period
-  // (lib/shownPeriod.ts). The stars stay on the rated swell either way.
-  const { tp, dp } = shownTrain(current);
+  // The train shown: the rated swell, or the wind sea where lib/shownPeriod.ts shows it. The
+  // stars stay on the rated swell either way.
+  const { tp, dp } = shownTrain(current, windowArcs);
 
   const wQ = classifyWind(current?.wind_dir ?? null, offshoreDeg ?? null);
   // Conditions is WIND-DERIVED. It reads the same wind_dir/offshore_wind_deg the Wind

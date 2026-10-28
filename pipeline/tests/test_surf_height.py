@@ -248,7 +248,7 @@ def test_a_bigger_longer_wind_sea_sets_the_shoaling_period_and_marks_the_row():
     assert e["face_correction_version"] == STAMP + MARK + ":windsea"
     assert S.is_surf_row(e["face_correction_version"])
     assert stats["hours_wind_sea"] == 1 and stats["hours_rewritten"] == 1
-    assert S.surf_period(_storm_hour(2.4, 500.0)) == (500.0, True)
+    assert S.surf_period(_storm_hour(2.4, 500.0), None) == (500.0, True)
 
 
 def test_a_wind_sea_that_is_neither_longer_by_half_a_second_nor_4x_does_not():
@@ -256,7 +256,7 @@ def test_a_wind_sea_that_is_neither_longer_by_half_a_second_nor_4x_does_not():
     # longer; 0.2 m and 0.24 m are not bigger
     for wind_hs, wind_tp in ((0.9, 2.9), (0.2, 9.0), (0.24, 9.0), (0.9, 3.4), (0.9, 3.0)):
         e = _storm_hour(wind_hs, wind_tp)
-        assert S.surf_period(e) == (3.0, False), (wind_hs, wind_tp)
+        assert S.surf_period(e, None) == (3.0, False), (wind_hs, wind_tp)
         ratings = {"Rockaway": [e]}
         S.apply_surf_height(ratings, [{"name": "Rockaway"}], {"x": {"factor": 2.0}}, _slug)
         assert ratings["Rockaway"][0]["face_correction_version"] == STAMP + MARK
@@ -267,9 +267,32 @@ def test_a_wind_sea_4x_the_rated_swell_sets_a_shorter_shoaling_period():
     500 s. Both periods are in the long-wave limit, so the height is the Green's-law 3.46 ft from
     Hs 1.00 m (4.27 ft at period_factor 1.3); the row is marked as shoaled at the wind sea's period."""
     e = _storm_hour(1.0, 500.0, swell_tp=600.0, swell_2_tp=600.0, face_ft=4.27, face_ft_raw=4.27)
-    assert S.surf_period(e) == (500.0, True)
+    assert S.surf_period(e, None) == (500.0, True)
     ratings = {"Rockaway": [e]}
     stats = S.apply_surf_height(ratings, [{"name": "Rockaway"}], {"x": {"factor": 2.0}}, _slug)
     assert ratings["Rockaway"][0]["face_ft"] == 3.46
     assert ratings["Rockaway"][0]["face_correction_version"] == STAMP + MARK + ":windsea"
     assert stats["hours_wind_sea"] == 1
+
+
+def test_a_wind_sea_from_90_degrees_outside_the_window_keeps_the_rated_period():
+    """The spot's window from apply_surf_height's spots: the storm hour's wind sea comes from 70.
+    Window 180-270, span 94: pad 2, sector 178-272, and 178 - 70 = 108 >= 90, so the hour is
+    shoaled at the rated 3 s with no wind-sea mark. Window 161-270, span 113: pad 2, sector
+    159-272, and 159 - 70 = 89, so it is shoaled at the wind sea's 500 s: 4.27 ft, as above."""
+    blocked = [{"min": 180, "max": 270, "span": 94}]
+    near = [{"min": 161, "max": 270, "span": 113}]
+    assert S.surf_period(_storm_hour(2.4, 500.0), blocked) == (3.0, False)
+    assert S.surf_period(_storm_hour(2.4, 500.0), near) == (500.0, True)
+    ratings = {"Rockaway": [_storm_hour(2.4, 500.0)], "Long Beach": [_storm_hour(2.4, 500.0)],
+               "Lido": [_storm_hour(2.4, 500.0)]}
+    stats = S.apply_surf_height(ratings, [{"name": "Rockaway", "swell_window_arcs": blocked},
+                                          {"name": "Long Beach", "swell_window_arcs": near},
+                                          {"name": "Lido", "swell_window_arcs": None}],
+                                {"x": {"factor": 2.0}}, _slug)
+    assert ratings["Rockaway"][0]["face_correction_version"] == STAMP + MARK
+    assert ratings["Rockaway"][0]["face_ft"] != 4.27
+    for name in ("Long Beach", "Lido"):
+        assert ratings[name][0]["face_correction_version"] == STAMP + MARK + ":windsea"
+        assert ratings[name][0]["face_ft"] == 4.27
+    assert stats["hours_wind_sea"] == 2 and stats["hours_rewritten"] == 3

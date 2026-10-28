@@ -151,7 +151,7 @@ export default async function HomePage() {
           {top10.map((s) => {
             const f = s.latest;
             const basis = heightBasis(f);
-            const { tp } = shownTrain(f);
+            const { tp } = shownTrain(f, s.swell_window_arcs);
             const wMph = msToMph(f?.wind_speed ?? null);
             return (
               <Link
