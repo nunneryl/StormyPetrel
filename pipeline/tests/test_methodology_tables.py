@@ -511,6 +511,24 @@ def test_the_surf_height_paragraph_is_the_codes():
     assert ratings["Uncalibrated"][0]["stars"] == 3.0 and ratings["Uncalibrated"][0]["effective_size_ft"] == 4.0
 
 
+def test_the_wind_sea_paragraph_is_the_codes_rule():
+    """"When the wind sea is the surf" states shown_period's rule: bigger AND longer-period than
+    the rated swell, display only, and never a shorter period."""
+    from pipeline.forecast import shown_period as SP
+    _says(r"So when the wind sea is both bigger and longer-period than the swell we rate on, the period "
+          r"and direction we show are the wind sea's, and the surf height is worked out at its period\.",
+          "the shown-train rule")
+    _says(r"We never switch to a wind sea with a shorter period, so the period we show can only go up\.",
+          "that the shown period only goes up")
+    _says(r"The stars still use the swell we rate on", "that the stars keep the rated swell")
+    row = {"swell_source": "nwps_height_ww3_dir", "swell_tp": 3.0, "swell_dp": 80.0,
+           "swell_1_hs": 0.24, "swell_1_tp": 3.0, "swell_1_dp": 80.0,
+           "wind_wave_hs": 2.4, "wind_wave_tp": 9.0, "wind_wave_dp": 70.0}
+    assert SP.shown_train(row) == (9.0, 70.0, "wind_sea")            # bigger and longer
+    assert SP.shown_train(dict(row, wind_wave_tp=2.0))[2] == "swell"  # bigger, shorter: no
+    assert SP.shown_train(dict(row, wind_wave_hs=0.2))[2] == "swell"  # longer, smaller: no
+
+
 def test_mop_is_read_from_its_nowcast():
     """"For past hours only" rests on what we read: MOP's NOWCAST, which stops before the present.
     That the feed stops short of the current hour is CDIP's, measured on live rows and not pinned;
