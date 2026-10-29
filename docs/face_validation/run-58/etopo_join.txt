@@ -1,0 +1,87 @@
+etopo points 13848 indexed 13644
+pier sample cell Hs mean by cycle {'mhx 20261029 00Z': 1.037, 'mhx 20261028 12Z': 1.192, 'mhx 20261028 00Z': 1.157, 'mhx 20261027 12Z': 1.068}
+
+== rodanthe: spot 35.594524,-75.46217 facing 90.0 node [35.5911, -75.45482] dist None
+  di+0 dj-1 35.59110,-75.47440 1.17km@251 wet=True  Hs 0.14 m  vs pier 0.12 (cycles 0.13, 0.12, 0.12, 0.12)  Tp  1.4s Dir   182  ETOPO centre 1.0 m, cell {'n': 16, 'land': 0.25, 'med_depth': 0.8}
+  di+0 dj+0 35.59110,-75.45482 0.77km@120 wet=True  Hs 0.20 m  vs pier 0.18 (cycles 0.18, 0.17, 0.17, 0.18)  Tp  8.0s Dir   104  ETOPO centre 10.3 m, cell {'n': 20, 'land': 0.2, 'med_depth': 12.0}
+  di+0 dj+1 35.59110,-75.43524 2.47km@ 99 wet=True  Hs 1.22 m  vs pier 1.09 (cycles 1.09, 1.10, 1.09, 1.09)  Tp  7.4s Dir    93  ETOPO centre 16.9 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.2}
+  di+0 dj+2 35.59110,-75.41566 4.23km@ 95 wet=True  Hs 1.24 m  vs pier 1.11 (cycles 1.11, 1.13, 1.11, 1.11)  Tp  7.3s Dir    93  ETOPO centre 15.4 m, cell {'n': 20, 'land': 0.0, 'med_depth': 15.7}
+  di+0 dj+3 35.59110,-75.39608 5.99km@ 94 wet=True  Hs 1.26 m  vs pier 1.13 (cycles 1.12, 1.15, 1.13, 1.13)  Tp  7.3s Dir    94  ETOPO centre 15.2 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.7}
+  di-1 dj-1 35.57483,-75.47440 2.44km@207 wet=True  Hs 0.12 m  vs pier 0.10 (cycles 0.11, 0.10, 0.10, 0.11)  Tp  1.4s Dir   196  ETOPO centre 1.0 m, cell {'n': 16, 'land': 0.25, 'med_depth': 0.9}
+  di-1 dj+0 35.57483,-75.45482 2.28km@163 wet=True  Hs 0.32 m  vs pier 0.29 (cycles 0.30, 0.27, 0.28, 0.29)  Tp  8.0s Dir    97  ETOPO centre 10.1 m, cell {'n': 20, 'land': 0.2, 'med_depth': 10.3}
+  di-1 dj+1 35.57483,-75.43524 3.27km@132 wet=True  Hs 1.21 m  vs pier 1.09 (cycles 1.08, 1.10, 1.09, 1.09)  Tp  7.5s Dir    94  ETOPO centre 15.9 m, cell {'n': 20, 'land': 0.0, 'med_depth': 15.0}
+  di-1 dj+2 35.57483,-75.41566 4.74km@118 wet=True  Hs 1.24 m  vs pier 1.11 (cycles 1.10, 1.13, 1.11, 1.11)  Tp  7.4s Dir    94  ETOPO centre 13.8 m, cell {'n': 20, 'land': 0.0, 'med_depth': 14.1}
+  di-1 dj+3 35.57483,-75.39608 6.37km@110 wet=True  Hs 1.27 m  vs pier 1.14 (cycles 1.14, 1.16, 1.14, 1.14)  Tp  7.3s Dir    93  ETOPO centre 11.8 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.2}
+  di+1 dj-1 35.60738,-75.47440 1.80km@322 wet=True  Hs 0.11 m  vs pier 0.10 (cycles 0.10, 0.10, 0.10, 0.10)  Tp  1.3s Dir   146  ETOPO centre 0.7 m, cell {'n': 16, 'land': 0.25, 'med_depth': 0.8}
+  di+1 dj+0 35.60738,-75.45482 1.57km@ 25 wet=True  Hs 0.21 m  vs pier 0.19 (cycles 0.20, 0.18, 0.18, 0.19)  Tp  8.0s Dir    99  ETOPO centre 13.2 m, cell {'n': 20, 'land': 0.05, 'med_depth': 12.6}
+  di+1 dj+1 35.60738,-75.43524 2.82km@ 60 wet=True  Hs 1.22 m  vs pier 1.10 (cycles 1.09, 1.11, 1.09, 1.10)  Tp  7.4s Dir    93  ETOPO centre 16.5 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.7}
+  di+1 dj+2 35.60738,-75.41566 4.44km@ 71 wet=True  Hs 1.25 m  vs pier 1.13 (cycles 1.12, 1.14, 1.12, 1.12)  Tp  7.3s Dir    94  ETOPO centre 16.7 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.7}
+  di+1 dj+3 35.60738,-75.39608 6.15km@ 77 wet=True  Hs 1.27 m  vs pier 1.14 (cycles 1.13, 1.15, 1.14, 1.14)  Tp  7.3s Dir    94  ETOPO centre 16.7 m, cell {'n': 16, 'land': 0.0, 'med_depth': 16.6}
+
+== salvo: spot 35.536277,-75.46586 facing 100.0 node [35.54229, -75.45482] dist None
+  di+0 dj-1 35.54229,-75.47440 1.02km@311 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre -0.8 m, cell {'n': 16, 'land': 0.44, 'med_depth': 0.6}
+  di+0 dj+0 35.54229,-75.45482 1.20km@ 56 wet=True  Hs 0.45 m  vs pier 0.40 (cycles 0.42, 0.38, 0.39, 0.41)  Tp  8.0s Dir   103  ETOPO centre 11.1 m, cell {'n': 20, 'land': 0.1, 'med_depth': 10.5}
+  di+0 dj+1 35.54229,-75.43524 2.85km@ 76 wet=True  Hs 1.21 m  vs pier 1.09 (cycles 1.08, 1.10, 1.09, 1.08)  Tp  7.6s Dir    95  ETOPO centre 9.3 m, cell {'n': 20, 'land': 0.0, 'med_depth': 11.3}
+  di+0 dj+2 35.54229,-75.41566 4.60km@ 82 wet=True  Hs 1.25 m  vs pier 1.12 (cycles 1.12, 1.14, 1.12, 1.12)  Tp  7.5s Dir    94  ETOPO centre 13.5 m, cell {'n': 20, 'land': 0.0, 'med_depth': 13.9}
+  di+0 dj+3 35.54229,-75.39608 6.36km@ 84 wet=True  Hs 1.29 m  vs pier 1.16 (cycles 1.15, 1.17, 1.15, 1.15)  Tp  7.3s Dir    93  ETOPO centre 12.5 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.7}
+  di-1 dj-1 35.52602,-75.47440 1.37km@214 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre -1.9 m, cell {'n': 16, 'land': 0.75, 'med_depth': 1.3}
+  di-1 dj+0 35.52602,-75.45482 1.51km@139 wet=True  Hs 1.06 m  vs pier 0.96 (cycles 0.97, 0.93, 0.95, 0.97)  Tp  7.9s Dir   101  ETOPO centre 10.1 m, cell {'n': 20, 'land': 0.0, 'med_depth': 10.3}
+  di-1 dj+1 35.52602,-75.43524 3.00km@112 wet=True  Hs 1.23 m  vs pier 1.10 (cycles 1.09, 1.12, 1.10, 1.10)  Tp  7.6s Dir    96  ETOPO centre 10.9 m, cell {'n': 20, 'land': 0.0, 'med_depth': 11.2}
+  di-1 dj+2 35.52602,-75.41566 4.69km@104 wet=True  Hs 1.27 m  vs pier 1.14 (cycles 1.13, 1.15, 1.14, 1.13)  Tp  7.4s Dir    94  ETOPO centre 13.7 m, cell {'n': 20, 'land': 0.0, 'med_depth': 14.0}
+  di-1 dj+3 35.52602,-75.39608 6.42km@100 wet=True  Hs 1.30 m  vs pier 1.16 (cycles 1.16, 1.18, 1.16, 1.15)  Tp  7.3s Dir    93  ETOPO centre 16.4 m, cell {'n': 16, 'land': 0.0, 'med_depth': 17.3}
+  di+1 dj-1 35.55856,-75.47440 2.58km@343 wet=True  Hs 0.06 m  vs pier 0.06 (cycles 0.06, 0.05, 0.05, 0.06)  Tp  1.1s Dir   196  ETOPO centre -0.0 m, cell {'n': 16, 'land': 0.31, 'med_depth': 0.6}
+  di+1 dj+0 35.55856,-75.45482 2.66km@ 22 wet=True  Hs 0.33 m  vs pier 0.29 (cycles 0.31, 0.28, 0.29, 0.30)  Tp  8.0s Dir    95  ETOPO centre 8.8 m, cell {'n': 20, 'land': 0.2, 'med_depth': 9.7}
+  di+1 dj+1 35.55856,-75.43524 3.71km@ 48 wet=True  Hs 1.21 m  vs pier 1.09 (cycles 1.08, 1.10, 1.09, 1.09)  Tp  7.6s Dir    95  ETOPO centre 14.9 m, cell {'n': 20, 'land': 0.0, 'med_depth': 13.6}
+  di+1 dj+2 35.55856,-75.41566 5.17km@ 61 wet=True  Hs 1.24 m  vs pier 1.12 (cycles 1.11, 1.13, 1.11, 1.11)  Tp  7.5s Dir    94  ETOPO centre 14.5 m, cell {'n': 20, 'land': 0.0, 'med_depth': 14.3}
+  di+1 dj+3 35.55856,-75.39608 6.78km@ 69 wet=True  Hs 1.28 m  vs pier 1.15 (cycles 1.14, 1.17, 1.15, 1.14)  Tp  7.3s Dir    94  ETOPO centre 13.8 m, cell {'n': 16, 'land': 0.0, 'med_depth': 13.2}
+
+== s-turns: spot 35.607662,-75.46483 facing 78.0 node [35.60738, -75.45482] dist None
+  di+0 dj-1 35.60738,-75.47440 0.87km@268 wet=True  Hs 0.11 m  vs pier 0.10 (cycles 0.10, 0.10, 0.10, 0.10)  Tp  1.3s Dir   146  ETOPO centre 0.7 m, cell {'n': 16, 'land': 0.25, 'med_depth': 0.8}
+  di+0 dj+0 35.60738,-75.45482 0.91km@ 92 wet=True  Hs 0.21 m  vs pier 0.19 (cycles 0.20, 0.18, 0.18, 0.19)  Tp  8.0s Dir    99  ETOPO centre 13.2 m, cell {'n': 20, 'land': 0.05, 'med_depth': 12.6}
+  di+0 dj+1 35.60738,-75.43524 2.68km@ 91 wet=True  Hs 1.22 m  vs pier 1.10 (cycles 1.09, 1.11, 1.09, 1.10)  Tp  7.4s Dir    93  ETOPO centre 16.5 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.7}
+  di+0 dj+2 35.60738,-75.41566 4.45km@ 90 wet=True  Hs 1.25 m  vs pier 1.13 (cycles 1.12, 1.14, 1.12, 1.12)  Tp  7.3s Dir    94  ETOPO centre 16.7 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.7}
+  di+0 dj+3 35.60738,-75.39608 6.22km@ 90 wet=True  Hs 1.27 m  vs pier 1.14 (cycles 1.13, 1.15, 1.14, 1.14)  Tp  7.3s Dir    94  ETOPO centre 16.7 m, cell {'n': 16, 'land': 0.0, 'med_depth': 16.6}
+  di-1 dj-1 35.59110,-75.47440 2.03km@205 wet=True  Hs 0.14 m  vs pier 0.12 (cycles 0.13, 0.12, 0.12, 0.12)  Tp  1.4s Dir   182  ETOPO centre 1.0 m, cell {'n': 16, 'land': 0.25, 'med_depth': 0.8}
+  di-1 dj+0 35.59110,-75.45482 2.04km@154 wet=True  Hs 0.20 m  vs pier 0.18 (cycles 0.18, 0.17, 0.17, 0.18)  Tp  8.0s Dir   104  ETOPO centre 10.3 m, cell {'n': 20, 'land': 0.2, 'med_depth': 12.0}
+  di-1 dj+1 35.59110,-75.43524 3.24km@125 wet=True  Hs 1.22 m  vs pier 1.09 (cycles 1.09, 1.10, 1.09, 1.09)  Tp  7.4s Dir    93  ETOPO centre 16.9 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.2}
+  di-1 dj+2 35.59110,-75.41566 4.81km@113 wet=True  Hs 1.24 m  vs pier 1.11 (cycles 1.11, 1.13, 1.11, 1.11)  Tp  7.3s Dir    93  ETOPO centre 15.4 m, cell {'n': 20, 'land': 0.0, 'med_depth': 15.7}
+  di-1 dj+3 35.59110,-75.39608 6.49km@107 wet=True  Hs 1.26 m  vs pier 1.13 (cycles 1.12, 1.15, 1.13, 1.13)  Tp  7.3s Dir    94  ETOPO centre 15.2 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.7}
+  di+1 dj-1 35.62365,-75.47440 1.97km@334 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre 0.2 m, cell {'n': 16, 'land': 0.38, 'med_depth': 0.5}
+  di+1 dj+0 35.62365,-75.45482 1.99km@ 27 wet=True  Hs 0.31 m  vs pier 0.28 (cycles 0.29, 0.26, 0.27, 0.29)  Tp  8.0s Dir    96  ETOPO centre 13.4 m, cell {'n': 20, 'land': 0.0, 'med_depth': 12.9}
+  di+1 dj+1 35.62365,-75.43524 3.21km@ 56 wet=True  Hs 1.23 m  vs pier 1.10 (cycles 1.10, 1.11, 1.10, 1.10)  Tp  7.3s Dir    94  ETOPO centre 17.4 m, cell {'n': 20, 'land': 0.0, 'med_depth': 17.1}
+  di+1 dj+2 35.62365,-75.41566 4.79km@ 68 wet=True  Hs 1.26 m  vs pier 1.13 (cycles 1.12, 1.14, 1.13, 1.13)  Tp  7.2s Dir    94  ETOPO centre 18.7 m, cell {'n': 20, 'land': 0.0, 'med_depth': 17.8}
+  di+1 dj+3 35.62365,-75.39608 6.47km@ 74 wet=True  Hs 1.28 m  vs pier 1.15 (cycles 1.14, 1.16, 1.14, 1.14)  Tp  7.2s Dir    94  ETOPO centre 17.3 m, cell {'n': 16, 'land': 0.0, 'med_depth': 18.2}
+
+== outer-banks-fishing-pier: spot 35.885469,-75.581667 facing 66.0 node [35.884, -75.57229] dist None
+  di+0 dj-1 35.88400,-75.59187 0.93km@260 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre -0.3 m, cell {'n': 16, 'land': 1.0, 'med_depth': None}
+  di+0 dj+0 35.88400,-75.57229 0.86km@101 wet=True  Hs 1.11 m  vs pier 1.00 (cycles 1.00, 1.00, 1.00, 1.00)  Tp  7.1s Dir    96  ETOPO centre 11.8 m, cell {'n': 20, 'land': 0.1, 'med_depth': 12.3}
+  di+0 dj+1 35.88400,-75.55271 2.62km@ 94 wet=True  Hs 1.14 m  vs pier 1.03 (cycles 1.03, 1.03, 1.03, 1.02)  Tp  7.1s Dir    96  ETOPO centre 18.3 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.6}
+  di+0 dj+2 35.88400,-75.53313 4.38km@ 92 wet=True  Hs 1.15 m  vs pier 1.04 (cycles 1.04, 1.04, 1.04, 1.03)  Tp  7.1s Dir    97  ETOPO centre 12.3 m, cell {'n': 16, 'land': 0.0, 'med_depth': 12.9}
+  di+0 dj+3 35.88400,-75.51355 6.15km@ 92 wet=True  Hs 1.17 m  vs pier 1.05 (cycles 1.05, 1.06, 1.05, 1.05)  Tp  7.1s Dir    96  ETOPO centre 18.6 m, cell {'n': 20, 'land': 0.0, 'med_depth': 18.7}
+  di-1 dj-1 35.86773,-75.59187 2.17km@205 wet=False Hs 0.06 m  vs pier 0.05 (cycles 0.06, 0.05, 0.05)  Tp  1.3s Dir   202  ETOPO centre -0.4 m, cell {'n': 16, 'land': 0.88, 'med_depth': 0.6}
+  di-1 dj+0 35.86773,-75.57229 2.14km@157 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre 0.2 m, cell {'n': 20, 'land': 0.5, 'med_depth': 6.6}
+  di-1 dj+1 35.86773,-75.55271 3.27km@127 wet=True  Hs 1.13 m  vs pier 1.02 (cycles 1.02, 1.02, 1.02, 1.02)  Tp  7.1s Dir    97  ETOPO centre 16.5 m, cell {'n': 20, 'land': 0.0, 'med_depth': 16.0}
+  di-1 dj+2 35.86773,-75.53313 4.80km@114 wet=True  Hs 1.15 m  vs pier 1.03 (cycles 1.03, 1.04, 1.03, 1.03)  Tp  7.1s Dir    97  ETOPO centre 13.1 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.2}
+  di-1 dj+3 35.86773,-75.51355 6.45km@108 wet=True  Hs 1.17 m  vs pier 1.05 (cycles 1.05, 1.06, 1.05, 1.05)  Tp  7.1s Dir    96  ETOPO centre 20.0 m, cell {'n': 20, 'land': 0.0, 'med_depth': 18.9}
+  di+1 dj-1 35.90027,-75.59187 1.88km@331 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre -1.8 m, cell {'n': 16, 'land': 0.62, 'med_depth': 6.6}
+  di+1 dj+0 35.90027,-75.57229 1.84km@ 27 wet=True  Hs 1.13 m  vs pier 1.01 (cycles 1.01, 1.01, 1.01, 1.01)  Tp  7.1s Dir    96  ETOPO centre 15.8 m, cell {'n': 20, 'land': 0.0, 'med_depth': 15.3}
+  di+1 dj+1 35.90027,-75.55271 3.08km@ 58 wet=True  Hs 1.15 m  vs pier 1.03 (cycles 1.03, 1.03, 1.03, 1.03)  Tp  7.1s Dir    96  ETOPO centre 16.6 m, cell {'n': 20, 'land': 0.0, 'med_depth': 17.1}
+  di+1 dj+2 35.90027,-75.53313 4.67km@ 69 wet=True  Hs 1.16 m  vs pier 1.04 (cycles 1.04, 1.04, 1.04, 1.04)  Tp  7.1s Dir    97  ETOPO centre 14.6 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.5}
+  di+1 dj+3 35.90027,-75.51355 6.36km@ 75 wet=True  Hs 1.17 m  vs pier 1.05 (cycles 1.05, 1.06, 1.05, 1.05)  Tp  7.1s Dir    97  ETOPO centre 20.6 m, cell {'n': 20, 'land': 0.0, 'med_depth': 19.8}
+
+== frisco-pier: spot 35.228181,-75.623896 facing 163.0 node [35.21685, -75.63102] dist None
+  di+0 dj-1 35.21685,-75.65060 2.73km@243 wet=True  Hs 0.87 m  vs pier 0.78 (cycles 0.77, 0.81, 0.79, 0.77)  Tp  7.9s Dir   117  ETOPO centre 2.5 m, cell {'n': 16, 'land': 0.19, 'med_depth': 11.5}
+  di+0 dj+0 35.21685,-75.63102 1.41km@207 wet=True  Hs 0.86 m  vs pier 0.77 (cycles 0.76, 0.79, 0.77, 0.76)  Tp  7.8s Dir   117  ETOPO centre 12.0 m, cell {'n': 20, 'land': 0.0, 'med_depth': 12.0}
+  di+0 dj+1 35.21685,-75.61145 1.69km@138 wet=True  Hs 0.86 m  vs pier 0.77 (cycles 0.76, 0.79, 0.77, 0.76)  Tp  7.8s Dir   116  ETOPO centre 12.2 m, cell {'n': 20, 'land': 0.0, 'med_depth': 12.8}
+  di+0 dj+2 35.21685,-75.59187 3.17km@113 wet=True  Hs 0.85 m  vs pier 0.77 (cycles 0.76, 0.78, 0.77, 0.76)  Tp  7.8s Dir   115  ETOPO centre 12.9 m, cell {'n': 16, 'land': 0.0, 'med_depth': 13.5}
+  di+0 dj+3 35.21685,-75.57229 4.86km@105 wet=True  Hs 0.85 m  vs pier 0.76 (cycles 0.75, 0.77, 0.76, 0.75)  Tp  7.8s Dir   113  ETOPO centre 13.1 m, cell {'n': 20, 'land': 0.0, 'med_depth': 13.7}
+  di-1 dj-1 35.20058,-75.65060 3.90km@218 wet=True  Hs 0.95 m  vs pier 0.85 (cycles 0.84, 0.87, 0.85, 0.84)  Tp  7.8s Dir   114  ETOPO centre 14.1 m, cell {'n': 16, 'land': 0.0, 'med_depth': 14.7}
+  di-1 dj+0 35.20058,-75.63102 3.12km@192 wet=True  Hs 0.96 m  vs pier 0.86 (cycles 0.85, 0.88, 0.86, 0.85)  Tp  7.8s Dir   113  ETOPO centre 15.4 m, cell {'n': 20, 'land': 0.0, 'med_depth': 15.3}
+  di-1 dj+1 35.20058,-75.61145 3.25km@160 wet=True  Hs 0.97 m  vs pier 0.87 (cycles 0.86, 0.89, 0.87, 0.86)  Tp  7.8s Dir   113  ETOPO centre 14.1 m, cell {'n': 20, 'land': 0.0, 'med_depth': 14.6}
+  di-1 dj+2 35.20058,-75.59187 4.22km@137 wet=True  Hs 0.99 m  vs pier 0.89 (cycles 0.88, 0.90, 0.89, 0.88)  Tp  7.8s Dir   111  ETOPO centre 15.9 m, cell {'n': 16, 'land': 0.0, 'med_depth': 16.2}
+  di-1 dj+3 35.20058,-75.57229 5.60km@123 wet=True  Hs 1.01 m  vs pier 0.91 (cycles 0.90, 0.92, 0.91, 0.90)  Tp  7.8s Dir   108  ETOPO centre 15.6 m, cell {'n': 20, 'land': 0.0, 'med_depth': 15.8}
+  di+1 dj-1 35.23312,-75.65060 2.49km@283 wet=True  Hs 0.18 m  vs pier 0.17 (cycles 0.17, 0.16, 0.16, 0.17)  Tp  1.9s Dir    19  ETOPO centre 1.3 m, cell {'n': 16, 'land': 0.06, 'med_depth': 1.3}
+  di+1 dj+0 35.23312,-75.63102 0.85km@310 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre -0.8 m, cell {'n': 20, 'land': 0.55, 'med_depth': 1.0}
+  di+1 dj+1 35.23312,-75.61145 1.26km@ 64 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre -0.7 m, cell {'n': 20, 'land': 0.7, 'med_depth': 6.9}
+  di+1 dj+2 35.23312,-75.59187 2.96km@ 79 wet=False Hs  nan m  vs pier  nan (cycles )  Tp  nans Dir   nan  ETOPO centre 4.8 m, cell {'n': 16, 'land': 0.5, 'med_depth': 10.5}
+  di+1 dj+3 35.23312,-75.57229 4.72km@ 83 wet=True  Hs 0.62 m  vs pier 0.56 (cycles 0.56, 0.59, 0.56, 0.54)  Tp  7.7s Dir   127  ETOPO centre 6.4 m, cell {'n': 20, 'land': 0.5, 'med_depth': 10.1}

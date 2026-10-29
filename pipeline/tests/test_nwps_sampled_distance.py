@@ -617,12 +617,14 @@ def test_deliberate_nodes_without_a_file_is_empty():
 
 def test_the_live_overrides_are_the_nodes_the_roster_bakes():
     """In production the exemption applies only if spots_enriched.json carries each
-    override's node exactly. Run 50's cells, copied by hand."""
+    override's node exactly. Run 50's and run 58's cells, copied by hand."""
     live = nwps.deliberate_nodes()
     assert live == {"duck-pier": (36.19331, -75.72892), "spring-ave": (27.51019, -82.80924),
                     "st-pete-beach": (27.7373, -82.86304),
                     "treasure-island-fl": (27.7373, -82.86304),
-                    "madeira-beach": (27.7373, -82.86304)}
+                    "madeira-beach": (27.7373, -82.86304),
+                    "rodanthe": (35.5911, -75.43524), "salvo": (35.52602, -75.43524),
+                    "s-turns": (35.60738, -75.43524)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}
