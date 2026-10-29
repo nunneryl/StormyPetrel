@@ -111,7 +111,8 @@ def test_the_node_preview_only_reads():
     assert _if(job) == "${{ inputs.mode == 'node-preview' }}"
     assert "    permissions:\n      contents: read\n" in job
     assert 'python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \\\n' in job
-    assert "--out node_preview.json --csv node_preview_hours.csv" in job
+    assert '--reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv' in job
+    assert "SPOTS: ${{ inputs.spots }}" in job
     assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job
     assert 'git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"' in job
     assert "libeccodes0" in job

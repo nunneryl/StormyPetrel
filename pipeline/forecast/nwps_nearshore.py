@@ -749,6 +749,22 @@ def _node_value(cycle, short, fh, i, j):
     return None if v != v else v   # NaN (land/missing) → None
 
 
+SERIES_FILL = (0, -1, 1)     # the hour itself, else the hour before, else the hour after
+
+
+def series_hour(series, k):
+    """The values apply_nwps_overrides rates hour bucket *k* from, and the offset of the bucket
+    that held them: *k* itself, else the hour before, else the hour after, so an hour the
+    cycle's file leaves blank (nwps_series_by_hour drops it) is filled from a neighbour.
+    (values, offset) with offset 0, -1 or 1; (None, None) when none of the three holds one.
+    node_preview's merge gate calls this too, so it checks the hour the override rated from."""
+    for off in SERIES_FILL:
+        m = series.get(k + off)
+        if m:
+            return m, off
+    return None, None
+
+
 def nwps_series_by_hour(spot, cycle):
     """{valid_hour_bucket: (swh, perpw, dirpw, shts)} for the spot's node across
     the full f000..f144 horizon, or None. hour_bucket = floor(valid_epoch/3600).
@@ -1057,7 +1073,7 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None,
             if t is None:
                 continue
             k = int(t // 3600)
-            m = series.get(k) or series.get(k - 1) or series.get(k + 1)
+            m, _ = series_hour(series, k)
             if not m:
                 continue   # hour beyond f144 or missing → keep orientation path for it
             swh, per, dpw, shts = m

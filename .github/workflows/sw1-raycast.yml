@@ -70,7 +70,10 @@ name: sw1-raycast
 #       it). At the old node it must reproduce the stored hs, tp, dp and swell_hs and the published
 #       stars, hour for hour (0 differences); then every hour's stars, face, height and period at
 #       the old and the new node, each new node checked as a wet cell centre in every cycle read,
-#       and the homepage's "Best conditions right now" before and after. SELECT only.
+#       and the homepage's "Best conditions right now" before and after. A neighbouring hour's
+#       values stand in only where the hour is blank in the cycle's file (the override's own
+#       fill, nwps_nearshore.series_hour); the gate line counts those hours. The spots in
+#       `spots` are shown beside the moved ones on the same hours. SELECT only.
 #   mode = surf-preview: READ-ONLY. THE MERGE GATE for the surf height at uncalibrated spots
 #       (pipeline/surf_preview.py): every published hour from now replayed through
 #       apply_surf_height (0 star and 0 other-field differences, face_ft moved only on the
@@ -131,7 +134,7 @@ on:
         default: false
         type: boolean
       spots:
-        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read. Comma-separated
+        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones. Comma-separated
         required: false
         default: ''
         type: string
@@ -655,11 +658,12 @@ jobs:
 
       - name: Replay the published window at the old and the new sample points (SELECT only)
         env:
+          SPOTS: ${{ inputs.spots }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \
-            --out node_preview.json --csv node_preview_hours.csv
+            --reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv
 
       - name: Upload the report
         if: ${{ always() }}

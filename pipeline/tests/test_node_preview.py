@@ -211,14 +211,14 @@ def test_replay_hands_the_override_the_series_and_the_factors():
 def test_gate_passes_only_with_hours_and_no_difference():
     ok = {"inputs_match": True, "stars_old": 2.0, "stars_published": 2.0}
     assert NP.gate([ok, ok]) == {"hours": 2, "input_differences": 0, "star_differences": 0,
-                                 "pass": True}
+                                 "filled": 0, "pass": True}
     assert NP.gate([])["pass"] is False
     bad_in = dict(ok, inputs_match=False)
     assert NP.gate([ok, bad_in]) == {"hours": 2, "input_differences": 1, "star_differences": 0,
-                                     "pass": False}
+                                     "filled": 0, "pass": False}
     bad_st = dict(ok, stars_old=2.5)
     assert NP.gate([bad_st, ok]) == {"hours": 2, "input_differences": 0, "star_differences": 1,
-                                     "pass": False}
+                                     "filled": 0, "pass": False}
     assert NP.gate([dict(ok, stars_old=None)])["star_differences"] == 1
 
 
@@ -361,7 +361,7 @@ def test_run_replays_the_hours_on_a_listed_cycle_and_counts_the_rest():
         "another rater (ww3)": 1, "cycle 2026-10-26T06:00:00Z not on NOMADS": 1, "no stars": 1}}
     assert [h["valid_time"] for h in rep["hours"]] == [_vt(0), _vt(1)]
     assert rep["gate"] == {"hours": 2, "input_differences": 0, "star_differences": 0,
-                           "pass": True}
+                           "filled": 0, "pass": True}
     assert rep["moved"] == [{"spot": "Duck Pier", "wfo": "mhx", "old": [36.19, -75.75],
                              "new": [36.19, -75.73], "new_distance_m": 2074}]
     assert rep["node_checks"] == {"Duck Pier": {"2026102612": {"wet": True, "same_cell": True,
@@ -410,8 +410,10 @@ def test_run_homepage_keeps_published_stars_when_the_soonest_hour_does_not_repro
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         NP.print_report(rep)
-    assert "0 input differences (hs, tp, dp, swell_hs), 2 star differences -> FAIL ===" in buf.getvalue()
-    assert f"    Duck Pier {_vt(0)}: inputs ok, published 1.235 replayed 1.735" in buf.getvalue()
+    assert ("0 input differences (hs, tp, dp, swell_hs), 2 star differences, 0 filled from a "
+            "neighbouring hour (the hour blank in the file) -> FAIL ===") in buf.getvalue()
+    assert (f"    Duck Pier {_vt(0)}: inputs ok (series hour the hour, hour blank in the file "
+            "False), published 1.235 replayed 1.735") in buf.getvalue()
     assert rep["homepage"]["moved_soonest_replayed"] == []
     assert [(r["spot"], r["stars"]) for r in rep["homepage"]["after"]] == [
         ("Other", 1.5), ("Duck Pier", 1.235)]
@@ -448,7 +450,7 @@ def test_the_gate_passes_on_hours_the_override_itself_wrote():
                      "stars": e["stars"], "face_ft_raw": e["face_ft"]})
     hours, _ = NP.replay_cycle([(old, new)], {old["name"]: rows}, cyc, {}, None)
     assert NP.gate(hours) == {"hours": 3, "input_differences": 0, "star_differences": 0,
-                              "pass": True}
+                              "filled": 0, "pass": True}
     assert [h["face_old"] for h in hours] == [r["face_ft_raw"] for r in rows]
     assert all(h["stars_new"] is not None for h in hours)
 
@@ -462,7 +464,8 @@ def test_the_report_prints_the_gate_and_every_hour():
         NP.print_report(rep)
     out = buf.getvalue()
     assert ("=== MERGE GATE: the old points against the published window: 2 hours, "
-            "0 input differences (hs, tp, dp, swell_hs), 0 star differences -> PASS ===") in out
+            "0 input differences (hs, tp, dp, swell_hs), 0 star differences, 0 filled from a "
+            "neighbouring hour (the hour blank in the file) -> PASS ===") in out
     assert "  Duck Pier (mhx): (36.19, -75.75) -> (36.19, -75.73), 2074 m from the spot" in out
     assert "  mhx: NOMADS lists 1 cycles 2026102612; read 2026102612" in out
     hours = [ln for ln in out.splitlines() if ln.startswith("  Duck Pier ") and "stars " in ln]
@@ -481,3 +484,181 @@ def test_the_hours_csv_has_one_row_per_replayed_hour(tmp_path):
     assert [r["valid_time"] for r in rows] == [_vt(0), _vt(1)]
     assert rows[0]["stars_old"] == "1.235" and rows[0]["stars_new"] == "2.0"
     assert rows[0]["wind_new"] == "[6.25, 210.0]"
+
+
+# --------------------------------------------------------------------------- #
+# A blank hour: the override's own fill (nwps_nearshore.series_hour)           #
+# --------------------------------------------------------------------------- #
+def test_series_hour_takes_the_hour_then_the_one_before_then_the_one_after():
+    from pipeline.forecast.nwps_nearshore import series_hour
+    a, b, c = (1.0, 7.0, 90.0, 0.5), (2.0, 8.0, 95.0, 0.6), (3.0, 9.0, 100.0, None)
+    assert series_hour({9: a, 10: b, 11: c}, 10) == (b, 0)
+    assert series_hour({9: a, 11: c}, 10) == (a, -1)
+    assert series_hour({11: c}, 10) == (c, 1)
+    assert series_hour({8: a, 12: c}, 10) == (None, None)
+
+
+def test_the_gate_and_the_override_fill_through_one_function():
+    import inspect
+    from pipeline.forecast import nwps_nearshore as NN
+    assert NP.series_hour is NN.series_hour
+    src = inspect.getsource(NN.apply_nwps_overrides)
+    assert "series_hour(series, k)" in src and "series.get(k - 1)" not in src
+
+
+def _gappy_cycle(present_f1=None):
+    """The stand-in cycle with a fourth step, f003, and the OLD cell's swh by step:
+    f000 1.1, f001 blank (NaN), f002 blank (NaN), f003 1.4. With *present_f1*, f001 holds that
+    swh instead of a blank. perpw 7.9, dirpw 75.0 at every step; shts 1.0, NaN at f002 and f003
+    (f003's fields are copies of f002's)."""
+    c = _cycle()
+    for short in ("swh", "perpw", "dirpw", "shts", "ws", "wdir"):
+        c["fields"][(short, 3)] = c["fields"][(short, 2)].copy()
+    c["steps"] = [0, 1, 2, 3]
+    for fh, v in ((0, 1.1), (1, np.nan if present_f1 is None else present_f1), (2, np.nan),
+                  (3, 1.4)):
+        c["fields"][("swh", fh)][1, 1] = v
+    return c
+
+
+def _published(old, cyc, stored):
+    """Publish hours f000..f003 through the override itself from the OLD node's series, with
+    *stored* {fh: (hs, tp, dp)} as the stored inputs; swell_hs, stars and face as it wrote them."""
+    series = NP.node_series(old, cyc)
+    entries = [{"valid_time": _vt(fh), "swell_source": "ww3", "swell_dp": 70.0,
+                "swell_tp": 11.0, "wind_speed": 5.5 if fh != 1 else 7.0, "wind_dir": 200.0,
+                "wind_mult": 1.0, "tide_mult": 0.95} for fh in (0, 1, 2, 3)]
+    apply_nwps_overrides({old["name"]: entries}, [old], _fetch=lambda _s: series)
+    rows = []
+    for fh, e in zip((0, 1, 2, 3), entries):
+        hs, tp, dp = stored[fh]
+        rows.append({"valid_time": e["valid_time"], "nwps_cycle": STAMP, "hs": hs, "tp": tp,
+                     "dp": dp, "swell_hs": e.get("swell_hs"), "swell_source": e["swell_source"],
+                     "swell_dp": e["swell_dp"], "swell_tp": e["swell_tp"],
+                     "wind_speed": e["wind_speed"], "wind_dir": e["wind_dir"],
+                     "wind_mult": e["wind_mult"], "tide_mult": e["tide_mult"],
+                     "stars": e["stars"], "face_ft_raw": e["face_ft"]})
+    return rows
+
+
+def _duck_pair():
+    old = dict(_duck(), nwps_node_lat=36.19, nwps_node_lng=-75.75)
+    return old, dict(old, nwps_node_lng=-75.73)
+
+
+# f001 is rated from f000 (1.1, 7.9, 75.0, shts 1.0); f002 from f003 (1.4, 7.9, 75.0, no shts).
+FILLED = {0: (1.1, 7.9, 75.0), 1: (1.1, 7.9, 75.0), 2: (1.4, 7.9, 75.0), 3: (1.4, 7.9, 75.0)}
+
+
+def test_a_blank_hour_filled_from_the_hour_before_and_one_from_the_hour_after_pass():
+    old, new = _duck_pair()
+    cyc = _gappy_cycle()
+    rows = _published(old, cyc, FILLED)
+    assert [r["swell_hs"] for r in rows] == [1.0, 1.0, None, None]
+    hours, _ = NP.replay_cycle([(old, new)], {old["name"]: rows}, cyc, {}, None)
+    assert [h["filled_from"] for h in hours] == [0, -1, 1, 0]
+    assert [h["exact_hour_blank"] for h in hours] == [False, True, True, False]
+    assert [h["hs_old"] for h in hours] == [1.1, 1.1, 1.4, 1.4]
+    assert all(h["inputs_match"] for h in hours)
+    assert NP.gate(hours) == {"hours": 4, "input_differences": 0, "star_differences": 0,
+                              "filled": 2, "pass": True}
+
+
+def test_an_hour_the_file_holds_is_not_filled_even_when_the_row_carries_the_hour_before():
+    # f001 holds 1.25 in the file; the row stores f000's 1.1 there. The gate compares with
+    # 1.25, the hour itself, and fails. f002 is still blank and is rated from f001 (1.25).
+    old, new = _duck_pair()
+    cyc = _gappy_cycle(present_f1=1.25)
+    rows = _published(old, cyc, {**FILLED, 2: (1.25, 7.9, 75.0)})
+    hours, _ = NP.replay_cycle([(old, new)], {old["name"]: rows}, cyc, {}, None)
+    assert hours[1]["filled_from"] == 0 and hours[1]["exact_hour_blank"] is False
+    assert hours[1]["hs_old"] == 1.25 and hours[1]["inputs_match"] is False
+    g = NP.gate(hours)
+    assert g["pass"] is False and g["input_differences"] == 1 and g["filled"] == 1
+
+
+def test_a_fill_over_an_hour_the_file_holds_is_a_difference(monkeypatch):
+    # A series missing f001 while the file holds it there (1.25): the neighbour's values match
+    # the row, but the hour is not blank in the file, so the gate does not take the fill.
+    old, new = _duck_pair()
+    cyc = _gappy_cycle(present_f1=1.25)
+    rows = _published(old, _gappy_cycle(), FILLED)
+    real = NP.node_series
+
+    def without_f001(spot, cycle):
+        got = real(spot, cycle)
+        if spot is old:
+            got.pop(_k(1))
+        return got
+    monkeypatch.setattr(NP, "node_series", without_f001)
+    hours, _ = NP.replay_cycle([(old, new)], {old["name"]: rows}, cyc, {}, None)
+    assert hours[1]["filled_from"] == -1 and hours[1]["exact_hour_blank"] is False
+    assert hours[1]["inputs_match"] is False
+    # f002 (blank) still comes from f003 and matches; the refused f001 is not counted as filled
+    assert NP.gate(hours) == {"hours": 4, "input_differences": 1, "star_differences": 0,
+                              "filled": 1, "pass": False}
+
+
+def test_exact_hour_blank_reads_the_file():
+    c = _gappy_cycle()
+    assert [NP.exact_hour_blank(c, (1, 1), CDT.timestamp() + 3600 * fh) for fh in (0, 1, 2, 3)] \
+        == [False, True, True, False]
+    assert NP.exact_hour_blank(c, (1, 1), CDT.timestamp() + 3600 * 4) is True   # no f004
+    assert NP.exact_hour_blank(c, (1, 3), CDT.timestamp() + 3600) is False      # NEW cell
+    c["fields"][("perpw", 0)][1, 1] = np.nan                       # swh there, perpw blank
+    assert NP.exact_hour_blank(c, (1, 1), CDT.timestamp()) is True
+    c = _gappy_cycle()
+    c["fields"][("dirpw", 3)][1, 1] = np.nan                       # swh there, dirpw blank
+    assert NP.exact_hour_blank(c, (1, 1), CDT.timestamp() + 3 * 3600) is True
+
+
+def test_the_report_prints_the_filled_hours():
+    import contextlib
+    import io
+    old, new = _duck_pair()
+    cyc = _gappy_cycle()
+    hours, _ = NP.replay_cycle([(old, new)], {old["name"]: _published(old, cyc, FILLED)}, cyc,
+                               {}, None)
+    rep = {"since": STAMP, "moved": [], "cycles": {}, "node_checks": {}, "gate": NP.gate(hours),
+           "hours": hours, "not_replayed": {}, "by_spot": NP.spot_summary(hours),
+           "homepage": {"before": [], "after": [], "drop_out": [], "come_in": [],
+                        "moved_soonest_replayed": []}}
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    out = buf.getvalue()
+    assert ("4 hours, 0 input differences (hs, tp, dp, swell_hs), 0 star differences, 2 filled "
+            "from a neighbouring hour (the hour blank in the file) -> PASS ===") in out
+    assert f"    filled: Duck Pier {_vt(1)} from the hour before" in out
+    assert f"    filled: Duck Pier {_vt(2)} from the hour after" in out
+
+
+# --------------------------------------------------------------------------- #
+# Reference spots                                                              #
+# --------------------------------------------------------------------------- #
+def test_reference_summary_means_on_the_moved_spots_hours():
+    hours = [{"spot": "A", "valid_time": "t1", "stars_old": 1.0, "stars_new": 2.0,
+              "face_old": 1.0, "face_new": 4.0},
+             {"spot": "A", "valid_time": "t2", "stars_old": 0.0, "stars_new": 3.0,
+              "face_old": 0.5, "face_new": 5.0},
+             {"spot": "A", "valid_time": "t3", "stars_old": 2.0, "stars_new": 2.0,
+              "face_old": 2.0, "face_new": 2.0}]
+    refs = {"Pier": {"t1": {"stars": 2.5, "face_ft_raw": 4.5}, "t2": {"stars": 1.5,
+                                                                      "face_ft_raw": 3.5}}}
+    # t3 has no reference row; over t1 and t2: old 0.5, new 2.5, ref 2.0; face 0.75, 4.5, 4.0
+    assert NP.reference_summary(hours, refs) == {"A": {"Pier": {
+        "hours": 2, "stars_old": 0.5, "stars_new": 2.5, "stars_reference": 2.0,
+        "face_old": 0.75, "face_new": 4.5, "face_reference": 4.0}}}
+
+
+def test_run_shows_the_reference_spots_on_the_moved_spots_hours():
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub,
+                 references=["other", "nowhere"])
+    # Other has one published hour, f000, stars 1.5 and no face. Duck Pier's f000 through the
+    # stub: stars 1.235 at the old node, 2.0 at the new; face 5.5 and 6.25 (the NWPS winds).
+    assert rep["references"] == {"Duck Pier": {"Other": {
+        "hours": 1, "stars_old": 1.235, "stars_new": 2.0, "stars_reference": 1.5,
+        "face_old": 5.5, "face_new": 6.25, "face_reference": None}}}
+    assert rep["references_missing"] == ["nowhere"]
