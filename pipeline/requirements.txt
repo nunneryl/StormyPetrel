@@ -4,6 +4,13 @@ tenacity>=8.2,<9
 tqdm>=4.66,<5
 reverse_geocoder>=1.5.1,<2
 
+# Each spot's IANA time zone, from its coordinates (pipeline/enrichment/time_zone.py; enrich
+# only, the forecast run never calls it). Two lines because 8.x needs Python 3.11 and the
+# 6.6 line, which CI's Python 3.9 job gets, pins cffi below 2, which would pull cryptography
+# back from 50 to 46 on the runners' 3.12. Both give the same zone for every roster spot.
+timezonefinder>=8.2,<9; python_version >= "3.11"
+timezonefinder>=6.6,<7; python_version < "3.11"
+
 # Phase 0C — LLM tide classification
 anthropic>=0.40,<1
 

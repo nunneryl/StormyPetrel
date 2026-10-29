@@ -59,6 +59,9 @@ export default async function BlogPostPage({
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest2 text-text-muted">
           <time>
             {new Date(post.date).toLocaleDateString('en-US', {
+              // The post's date is a calendar date, read as UTC midnight: shown in UTC it is
+              // that date for every reader; in a US time zone it was the day before.
+              timeZone: 'UTC',
               year: 'numeric',
               month: 'long',
               day: 'numeric',

@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+
+import { fmtShortTime, zoneAbbr } from '@/lib/spotTime';
 import {
   SIZE_BUCKETS,
   SIZE_BUCKET_LABELS,
@@ -46,6 +48,9 @@ type Ctx = {
    *  warn the reporter that a chosen hour will not be joinable; never to block a report —
    *  an observation of an hour we failed to forecast is still worth having. */
   forecastHours: string[];
+  /** The spot's IANA time zone (lib/spotTime.ts): the hours are offered in the spot's local
+   *  time, the clock the reporter surfed by, not the browser's. */
+  timeZone: string;
 };
 
 const SurfReportCtx = createContext<Ctx | null>(null);
@@ -59,16 +64,18 @@ function useSurfReport(): Ctx {
 export function SurfReportProvider({
   slug,
   forecastHours,
+  timeZone,
   children,
 }: {
   slug: string;
   forecastHours: string[];
+  timeZone: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   return (
-    <SurfReportCtx.Provider value={{ open, setOpen, submitted, setSubmitted, slug, forecastHours }}>
+    <SurfReportCtx.Provider value={{ open, setOpen, submitted, setSubmitted, slug, forecastHours, timeZone }}>
       {children}
     </SurfReportCtx.Provider>
   );
@@ -110,7 +117,7 @@ export function SurfReportTrigger() {
 }
 
 export function SurfReportPanel() {
-  const { open, setOpen, submitted, setSubmitted, slug, forecastHours } = useSurfReport();
+  const { open, setOpen, submitted, setSubmitted, slug, forecastHours, timeZone } = useSurfReport();
 
   const [hours, setHours] = useState<string[]>([]);
   const [hour, setHour] = useState<string>('');
@@ -199,7 +206,7 @@ export function SurfReportPanel() {
           {hours.length === 0 && <option>Loading…</option>}
           {hours.map((iso, i) => (
             <option key={iso} value={iso}>
-              {new Date(iso).toLocaleTimeString([], { hour: 'numeric' })}
+              {fmtShortTime(iso, timeZone)} {zoneAbbr(iso, timeZone)}
               {i === 0 ? ' (this hour)' : ''}
               {known.size > 0 && !known.has(iso) ? ' · no forecast' : ''}
             </option>

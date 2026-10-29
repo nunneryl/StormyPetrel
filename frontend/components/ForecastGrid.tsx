@@ -4,14 +4,8 @@ import { useState } from 'react';
 import type { Forecast, Spot } from '@/lib/types';
 import { CLAIMED_FORECAST_DAYS, CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from '@/lib/ratings';
-import {
-  dayKey,
-  degToCardinal,
-  fmtDay,
-  fmtSec,
-  fmtShortTime,
-  msToMph,
-} from '@/lib/formatting';
+import { degToCardinal, fmtSec, msToMph } from '@/lib/formatting';
+import { dayKey, fmtDay, fmtShortTime, isThreeHourMark, zoneAbbrs } from '@/lib/spotTime';
 import { shownTrain } from '@/lib/shownPeriod';
 import { HEADLINE_HEIGHT_COLUMN } from '@/lib/heightBasis';
 import { CompassArrow } from './CompassArrow';
@@ -19,15 +13,16 @@ import { StarRating, ratingCellBg } from './StarRating';
 import { SwellCompass } from './SwellCompass';
 
 // 3-hour buckets matching MSW's row density. interpret writes hourly
-// rows; sample every 3rd so the grid is scannable, not overwhelming.
-function bucket3hr(rows: Forecast[]): Forecast[] {
-  return rows.filter((r) => new Date(r.valid_time).getUTCHours() % 3 === 0);
+// rows; sample every 3rd LOCAL hour (midnight, 3am, 6am, ... at the spot) so the grid is
+// scannable, not overwhelming. Sampling on UTC hours gave 1am, 4am, 7am in Central time.
+function bucket3hr(rows: Forecast[], timeZone: string): Forecast[] {
+  return rows.filter((r) => isThreeHourMark(r.valid_time, timeZone));
 }
 
-function groupByDay(rows: Forecast[]): Array<{ day: string; rows: Forecast[] }> {
+function groupByDay(rows: Forecast[], timeZone: string): Array<{ day: string; rows: Forecast[] }> {
   const groups = new Map<string, Forecast[]>();
   for (const r of rows) {
-    const k = dayKey(r.valid_time);
+    const k = dayKey(r.valid_time, timeZone);
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k)!.push(r);
   }
@@ -61,23 +56,26 @@ export function ForecastGrid({
   forecasts,
   offshoreDeg,
   windowArcs,
+  timeZone,
 }: {
   forecasts: Forecast[];
   offshoreDeg: number | null | undefined;
   /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
   windowArcs: Spot['swell_window_arcs'];
+  /** The spot's IANA time zone (lib/spotTime.ts): every time in the grid is local to it. */
+  timeZone: string;
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const sampled = bucket3hr(forecasts);
-  const fullDays = groupByDay(sampled).slice(0, 7);
+  const sampled = bucket3hr(forecasts, timeZone);
+  const fullDays = groupByDay(sampled, timeZone).slice(0, 7);
   const visibleSampled = expanded
     ? sampled
     : sampled.filter((r) => {
         const dt = new Date(r.valid_time).getTime() - Date.now();
         return dt <= COLLAPSED_HOURS * 3600_000;
       });
-  const days = expanded ? fullDays : groupByDay(visibleSampled);
+  const days = expanded ? fullDays : groupByDay(visibleSampled, timeZone);
 
   if (days.length === 0) {
     return (
@@ -105,7 +103,9 @@ export function ForecastGrid({
           {days.map(({ day, rows }) => (
             <div key={day}>
               <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest2 text-text-secondary bg-ink-800 border-b border-ink-600 sticky top-0 z-[5]">
-                {fmtDay(rows[0].valid_time)}
+                {fmtDay(rows[0].valid_time, timeZone)}
+                {' · '}
+                {zoneAbbrs(rows.map((r) => r.valid_time), timeZone).join(' / ')}
               </div>
               {rows.map((r, idx) => {
                 const tier = tierFromStars(r.stars);
@@ -144,7 +144,7 @@ export function ForecastGrid({
                     }
                   >
                     <div className={`sticky left-0 z-10 ${rowBg} -ml-3 pl-3 text-text-secondary font-mono flex items-center`}>
-                      {fmtShortTime(r.valid_time)}
+                      {fmtShortTime(r.valid_time, timeZone)}
                     </div>
                     <div className={`sticky left-[80px] z-10 ${rowBg} flex items-center`}>
                       <span

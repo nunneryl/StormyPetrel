@@ -10,7 +10,8 @@ import {
   YAxis,
 } from 'recharts';
 import type { Forecast } from '@/lib/types';
-import { degToCardinal, fmtDayTimeTick, msToMph } from '@/lib/formatting';
+import { degToCardinal, msToMph } from '@/lib/formatting';
+import { fmtDayTimeTick, fmtTooltipTime } from '@/lib/spotTime';
 import { classifyWind } from '@/lib/ratings';
 
 type Pt = {
@@ -53,9 +54,12 @@ const FILL = {
 export function WindChart({
   forecasts,
   offshoreDeg,
+  timeZone,
 }: {
   forecasts: Forecast[];
   offshoreDeg: number | null | undefined;
+  /** The spot's IANA time zone (lib/spotTime.ts). */
+  timeZone: string;
 }) {
   const data = buildSeries(forecasts, offshoreDeg ?? null);
 
@@ -83,7 +87,7 @@ export function WindChart({
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
-            tickFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString())}
+            tickFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString(), timeZone)}
             stroke="#94A3B8"
             tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
@@ -107,7 +111,7 @@ export function WindChart({
               color: '#0F172A',
               boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
-            labelFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString())}
+            labelFormatter={(v) => fmtTooltipTime(new Date(v as number).toISOString(), timeZone)}
             formatter={(value, _key, item) => {
               const dir = (item?.payload as Pt | undefined)?.dir;
               return [`${(value as number).toFixed(0)} mph ${degToCardinal(dir)}`, 'Wind'];

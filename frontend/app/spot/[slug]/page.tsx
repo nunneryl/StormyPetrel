@@ -20,6 +20,7 @@ import {
   SurfReportPanel,
 } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
+import { fmtStamp, spotTimeZone } from '@/lib/spotTime';
 import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
 import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
 import { breakTypeShown, spotInfoRows, tidePreferenceShown } from '@/lib/spotInfo';
@@ -136,6 +137,8 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   const { slug } = await params;
   const spot = await fetchSpotBySlug(slug);
   if (!spot) notFound();
+  // Every time on the page is the spot's local time (lib/spotTime.ts).
+  const timeZone = spotTimeZone(spot);
 
   const [forecasts, buoy, cams] = await Promise.all([
     loadForecasts(spot.id),
@@ -270,14 +273,14 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           render an iframe each; link-mode rows render a banner card
           with a Watch-live button. CamSection no-ops when cams is
           empty so the section disappears cleanly. */}
-      <CamSection cams={cams} lat={spot.lat} lng={spot.lng} />
+      <CamSection cams={cams} lat={spot.lat} lng={spot.lng} timeZone={timeZone} />
 
       {/* Hero tiles + the surf-report control. The provider is a client component taking a
           SERVER subtree as children, which is what keeps CurrentConditions (and this page)
           server components — nothing here reads cookies or headers, so all 648 routes keep
           their prerender and their 1-hour revalidate. The trigger sits in the Face tile's
           footer, against the number it reports on; the panel gets full width below it. */}
-      <SurfReportProvider slug={spot.slug} forecastHours={forecastHours}>
+      <SurfReportProvider slug={spot.slug} forecastHours={forecastHours} timeZone={timeZone}>
         <CurrentConditions
           rows={forecasts}
           serverNowMs={nowMs}
@@ -297,13 +300,13 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
             chart drew a partition stack; that chart now draws the published swell
             height only, and the components are in the Swell breakdown panel above. */}
         <ChartCard title={`${HEADLINE_HEIGHT_LABEL} (ft) · next 48h`}>
-          <SwellChart forecasts={chartForecasts} />
+          <SwellChart forecasts={chartForecasts} timeZone={timeZone} />
         </ChartCard>
         <ChartCard title="Wind speed (mph) · next 48h">
-          <WindChart forecasts={chartForecasts} offshoreDeg={spot.offshore_wind_deg} />
+          <WindChart forecasts={chartForecasts} offshoreDeg={spot.offshore_wind_deg} timeZone={timeZone} />
         </ChartCard>
         <ChartCard title="Tide (ft) · next 48h">
-          <TideChart forecasts={chartForecasts} />
+          <TideChart forecasts={chartForecasts} timeZone={timeZone} />
         </ChartCard>
       </section>
 
@@ -336,7 +339,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
                     : '—'
                 }
               />
-              <Row k="Reading" v={new Date(buoy.observed_at).toLocaleString()} />
+              <Row k="Reading" v={fmtStamp(buoy.observed_at, timeZone)} />
               <a
                 href={`https://www.ndbc.noaa.gov/station_page.php?station=${buoy.buoy_id}`}
                 target="_blank"
@@ -357,7 +360,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           to the next 48 hours with an in-grid expand button. */}
       <section>
         <SectionHeader title={`${CLAIMED_FORECAST_LABEL} forecast`} />
-        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} windowArcs={spot.swell_window_arcs} />
+        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} windowArcs={spot.swell_window_arcs} timeZone={timeZone} />
       </section>
 
       {/* Footer breadcrumbs */}

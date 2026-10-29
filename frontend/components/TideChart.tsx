@@ -10,7 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { Forecast } from '@/lib/types';
-import { fmtDayTimeTick, fmtDay, fmtShortTime } from '@/lib/formatting';
+import { fmtDayTimeTick, fmtTooltipTime } from '@/lib/spotTime';
 
 type Pt = { t: number; iso: string; level: number | null };
 
@@ -38,7 +38,14 @@ function buildSeries(rows: Forecast[]): Pt[] {
   return out;
 }
 
-export function TideChart({ forecasts }: { forecasts: Forecast[] }) {
+export function TideChart({
+  forecasts,
+  timeZone,
+}: {
+  forecasts: Forecast[];
+  /** The spot's IANA time zone (lib/spotTime.ts). */
+  timeZone: string;
+}) {
   const data = buildSeries(forecasts);
   if (data.length === 0) {
     return (
@@ -64,7 +71,7 @@ export function TideChart({ forecasts }: { forecasts: Forecast[] }) {
             type="number"
             scale="time"
             domain={['dataMin', 'dataMax']}
-            tickFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString())}
+            tickFormatter={(v) => fmtDayTimeTick(new Date(v as number).toISOString(), timeZone)}
             stroke="#94A3B8"
             tick={{ fill: '#475569', fontSize: 10 }}
             axisLine={false}
@@ -88,9 +95,7 @@ export function TideChart({ forecasts }: { forecasts: Forecast[] }) {
               color: '#0F172A',
               boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
             }}
-            labelFormatter={(v) =>
-              `${fmtDay(new Date(v as number).toISOString())} ${fmtShortTime(new Date(v as number).toISOString())}`
-            }
+            labelFormatter={(v) => fmtTooltipTime(new Date(v as number).toISOString(), timeZone)}
             formatter={(value) => [`${(value as number).toFixed(1)} ft`, 'Tide']}
           />
           <Area

@@ -6,6 +6,7 @@ import {
   fetchReport,
   isAfterToday,
   prettyDate,
+  REGION_TIME_ZONE,
   REGION_TITLE_PREFIX,
   todayIso,
   truncateAt,
@@ -16,6 +17,7 @@ import { StarText } from '@/components/StarText';
 import { ShareButton } from '@/components/ShareButton';
 import { siteUrl } from '@/lib/site-url';
 import { storedHeightBasis } from '@/lib/heightBasis';
+import { FALLBACK_TIME_ZONE, fmtStamp } from '@/lib/spotTime';
 
 export const revalidate = 1800;
 
@@ -197,13 +199,8 @@ export default async function ReportPage({
       </section>
 
       <footer className="pt-4 text-xs text-text-muted">
-        Generated{' '}
-        {new Date(report.generated_at).toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-          timeZone: 'America/Los_Angeles',
-        })}{' '}
-        PT · written by Claude from the latest NOAA/NDBC forecast data.
+        Generated {fmtStamp(report.generated_at, REGION_TIME_ZONE[report.region] ?? FALLBACK_TIME_ZONE)}
+        {' '}· written by Claude from the latest NOAA/NDBC forecast data.
       </footer>
     </div>
   );

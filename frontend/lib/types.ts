@@ -12,6 +12,9 @@ export type Spot = {
   /** Inclusive bearing arcs (0..360) where this break still works.
    *  An arc wraps when min > max (e.g. {min: 350, max: 30}). */
   swell_window_arcs: { min: number; max: number; span?: number }[] | null;
+  /** The spot's IANA time zone (migration 026), from its coordinates: every time shown for
+   *  the spot is in it (lib/spotTime.ts). null until the pipeline first uploads it. */
+  time_zone: string | null;
   break_type: string | null;
   /** Where break_type came from (migration 020). Shown plainly only when reviewed, researched
    *  or scraped; otherwise marked "(unverified)" — lib/provenance.fmtBreakType. */

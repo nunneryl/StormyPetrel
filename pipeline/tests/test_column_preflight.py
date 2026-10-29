@@ -58,7 +58,8 @@ WRITTEN = {
         "tide_preference_source", "tide_preference_source_url", "tide_preference_evidence",
         "crowd_factor", "hazards", "nearest_buoy_id",
         "nearest_buoy_dist_km", "nearest_tide_station_id",
-        "nearest_tide_station_dist_km", "nwps_wfo", "fallback_buoy_ids", "swell_window_source",
+        "nearest_tide_station_dist_km", "nwps_wfo", "time_zone", "fallback_buoy_ids",
+        "swell_window_source",
         "review_status", "description", "description_signature",
     ],
     "forecasts": [
@@ -211,7 +212,8 @@ ENRICHED = [
      "tide_preference_evidence": "best around mid tide", "crowd_factor": "high", "hazards": ["rocks"],
      "nearest_buoy_id": "46042", "nearest_buoy_dist_km": 30.1,
      "nearest_tide_station_id": "9413745", "nearest_tide_station_dist_km": 1.2,
-     "nwps_wfo": "mtr", "fallback_buoy_ids": ["46236"], "swell_window_source": "cdip_mop"},
+     "nwps_wfo": "mtr", "time_zone": "America/Los_Angeles", "fallback_buoy_ids": ["46236"],
+     "swell_window_source": "cdip_mop"},
     {"name": "Mavericks", "lat": 37.4936, "lng": -122.4966, "region_hint": "California",
      "is_valid_surf_spot": True},
 ]
