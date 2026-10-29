@@ -147,7 +147,7 @@ def test_check_query_1_flags_a_zone_postgres_does_not_know(db):
 @needs_db
 def test_check_query_2_lists_each_zone_with_the_panhandle_split(db):
     """After an upload: one row per zone, the Florida Central spots named west to east; a row
-    the upload missed shows as (none)."""
+    the upload missed shows as (none), after every zone with as many spots."""
     with db.cursor() as c:
         c.execute("UPDATE spots SET time_zone = 'America/Chicago' "
                   "WHERE slug IN ('pensacola-beach', 'mexico-beach')")
@@ -155,6 +155,6 @@ def test_check_query_2_lists_each_zone_with_the_panhandle_split(db):
     rows = _rows(db, check_query(CHECK_2))
     assert rows == [
         ("America/Chicago", 2, "Pensacola Beach, Mexico Beach", ["Mexico Beach", "Pensacola Beach"]),
-        ("(none)", 1, None, ["Banzai Pipeline"]),
         ("America/New_York", 1, None, ["Cape San Blas"]),
+        ("(none)", 1, None, ["Banzai Pipeline"]),
     ]

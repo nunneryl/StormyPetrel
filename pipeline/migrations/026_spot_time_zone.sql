@@ -44,8 +44,8 @@
 --     ) AS c(check_name, expected, actual);
 --
 -- CHECK QUERY 2 — run after the first pipeline run following the merge. One row per zone,
--- with how many spots are in it and a few of their names; expect the five zones above and no
--- '(none)' row. Rows without a zone would show as '(none)'.
+-- most spots first, with how many spots are in it and a few of their names; expect the five
+-- zones above and no '(none)' row. Rows without a zone would show as '(none)', last.
 --
 --   SELECT coalesce(time_zone, '(none)') AS time_zone, count(*) AS spots,
 --          string_agg(name, ', ' ORDER BY lng) FILTER (WHERE state = 'Florida'
@@ -53,7 +53,7 @@
 --          (array_agg(name ORDER BY name))[1:3] AS e_g
 --     FROM spots
 --    GROUP BY 1
---    ORDER BY 2 DESC;
+--    ORDER BY 2 DESC, min(time_zone) NULLS LAST;
 --
 -- Run in the Supabase SQL editor.
 
