@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabaseUncached } from '@/lib/supabase';
 import { fetchAllSpots, fetchSpotBySlug } from '@/lib/queries';
 import type { Forecast, BuoyObservation } from '@/lib/types';
 import { ForecastGrid } from '@/components/ForecastGrid';
@@ -31,6 +31,16 @@ import { FORECAST_UPDATES } from '@/lib/updateCadence';
 import { siteUrl } from '@/lib/site-url';
 
 export const revalidate = 3600;
+
+// ONE CACHE: THIS PAGE'S. Every Supabase read below goes past Next's fetch cache (the Vercel Data
+// Cache; lib/supabase.ts supabaseUncached), so a render, a deploy's build included, reads the
+// database as it is now; the copy of the page this renders is what is kept for `revalidate`.
+// Before, a deploy was handed whatever the Data Cache held for the spot row, however old: after
+// migration 026 a redeploy without build cache still showed Los Angeles times, from a row cached
+// before the column existed. force-static is what lets a 'no-store' read keep the page static
+// (prerendered, regenerated hourly) instead of turning it into a per-request render. The page
+// reads no cookies, headers or search params, which force-static would empty.
+export const dynamic = 'force-static';
 
 type Params = { slug: string };
 
@@ -91,7 +101,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 // Everything downstream that means "from now on" now reads `upcoming`, not this array.
 async function loadForecasts(spotId: number): Promise<Forecast[]> {
   const nowIso = new Date(Date.now() - HOUR_PICKER_SPAN * 3600_000).toISOString();
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUncached
     .from('forecasts')
     .select(
       'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
@@ -115,7 +125,7 @@ async function loadForecasts(spotId: number): Promise<Forecast[]> {
 
 async function loadLatestBuoy(buoyId: string | null): Promise<BuoyObservation | null> {
   if (!buoyId) return null;
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUncached
     .from('buoy_observations')
     .select('*')
     .eq('buoy_id', buoyId)

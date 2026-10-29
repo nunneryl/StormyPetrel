@@ -1,13 +1,16 @@
-import { supabase } from './supabase';
+import { supabase, supabaseUncached } from './supabase';
 import type { Forecast, Spot, SpotWithLatest } from './types';
 
 /**
  * Single-spot lookup by slug. Used by /spot/[slug] for both the page
  * body and generateMetadata — calling it twice per render is fine
  * because both call sites land inside the same RSC and Next dedupes.
+ *
+ * Read past the Data Cache (lib/supabase.ts supabaseUncached), so every render of the page,
+ * a deploy's included, has the row as the database holds it now; /spot/[slug] is force-static.
  */
 export async function fetchSpotBySlug(slug: string): Promise<Spot | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUncached
     .from('spots')
     .select('*')
     .eq('slug', slug)

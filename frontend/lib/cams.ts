@@ -8,7 +8,7 @@
 // '@/lib/cam-utils' directly — re-exports here STILL trigger the
 // supabase module-init when bundled.
 
-import { supabase } from './supabase';
+import { supabase, supabaseUncached } from './supabase';
 import { CAM_SELECT, type Cam } from './cam-utils';
 
 export type {
@@ -19,9 +19,10 @@ export type {
 } from './cam-utils';
 export { providerLabel, camWatchUrl, solarTimesUTC, camDarkness } from './cam-utils';
 
-/** Active cams for one spot, oldest first. */
+/** Active cams for one spot, oldest first. For /spot/[slug] only, so read past the Data Cache
+ *  like the page's other reads (lib/supabase.ts supabaseUncached). */
 export async function fetchCamsForSpot(spotSlug: string): Promise<Cam[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUncached
     .from('cams')
     .select(CAM_SELECT)
     .eq('spot_slug', spotSlug)
