@@ -756,12 +756,13 @@ def _enrich_one(spot: dict, skip_raycast: bool, prior_arcs: dict | None = None,
         enriched.pop("tide_height_suppressed", None)
         confidence["nearest_tide_station"] = 0.0
 
-    # Algo 6 — time zone, from the spot's own coordinates (enrichment/time_zone.py). A failed
-    # lookup keeps whatever zone the spot already had; test_time_zone.py fails the suite on a
-    # valid spot left without one.
+    # Algo 6 — time zone, from the spot's own coordinates (enrichment/time_zone.py). A spot
+    # with no zone in reach keeps whatever zone it already had; test_time_zone.py fails the
+    # suite on a valid spot left without one. A missing timezonefinder is not caught: enrich
+    # stops (pip install -r pipeline/requirements-enrich.txt).
     try:
         enriched["time_zone"] = time_zone_for(spot["lat"], spot["lng"])
-    except Exception as e:  # noqa: BLE001
+    except ValueError as e:
         log.warning("%s: time zone failed: %s", spot.get("name"), e)
 
     enriched["sources"] = spot.get("sources", {})

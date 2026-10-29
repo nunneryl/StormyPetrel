@@ -210,3 +210,19 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+def test_a_stored_time_zone_is_sent_back_when_the_roster_record_has_none():
+    """Migration 026 fills spots.time_zone before the code that uploads it is merged: main's
+    roster records carry no time_zone, and the preserve merge must send the stored one back
+    (moved or not: a zone is not a coordinate-derived field the merge clears). A record that
+    carries a zone sends its own."""
+    row = {"slug": "mexico-beach", "name": "Mexico Beach", "lat": 29.930837, "lng": -85.402222,
+           "state": "Florida", "time_zone": "America/Chicago"}
+    spot = {"name": "Mexico Beach", "lat": 29.930837, "lng": -85.402222, "region_hint": "Florida",
+            "is_valid_surf_spot": True}
+    assert _run_import([row], [spot])["mexico-beach"]["time_zone"] == "America/Chicago"
+    moved = dict(spot, lat=29.5)
+    assert _run_import([row], [moved])["mexico-beach"]["time_zone"] == "America/Chicago"
+    own = dict(spot, time_zone="America/New_York")
+    assert _run_import([row], [own])["mexico-beach"]["time_zone"] == "America/New_York"

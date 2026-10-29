@@ -147,3 +147,34 @@ def test_enrich_writes_each_spot_s_zone_and_keeps_the_old_one_when_the_lookup_fa
                     "time_zone": "America/Chicago"})
     assert kept["time_zone"] == "America/Chicago"
     assert "time_zone" not in _enrich({"name": "Mexico Beach", "lat": 29.930837, "lng": -85.402222})
+
+
+def test_only_the_enrich_step_and_the_tests_install_the_lookup():
+    """timezonefinder is about 50 MB: requirements.txt, which every workflow installs, does not
+    carry it; requirements-enrich.txt does, and only sw1-raycast's enrich step and
+    requirements-dev.txt read that file."""
+    req = lambda name: open(os.path.join(ROOT, "pipeline", name), encoding="utf-8").read()  # noqa: E731
+    assert "timezonefinder" not in req("requirements.txt")
+    lines = [ln for ln in req("requirements-enrich.txt").splitlines() if ln and not ln.startswith("#")]
+    assert lines == ['timezonefinder>=8.2,<9; python_version >= "3.11"',
+                     'timezonefinder>=6.6,<7; python_version < "3.11"']
+    assert "-r requirements-enrich.txt" in req("requirements-dev.txt").splitlines()
+    workflows = os.path.join(ROOT, ".github", "workflows")
+    users = sorted(f for f in os.listdir(workflows)
+                   if "requirements-enrich.txt" in open(os.path.join(workflows, f), encoding="utf-8").read())
+    assert users == ["sw1-raycast.yml"]
+    wf = open(os.path.join(workflows, "sw1-raycast.yml"), encoding="utf-8").read()
+    step = wf[wf.index("- name: Install the enrich / report / preview dependencies"):]
+    step = step[:step.index("- name: Enrich --skip-raycast")]
+    assert "run: pip install -r pipeline/requirements.txt -r pipeline/requirements-enrich.txt" in step
+
+
+def test_enrich_stops_when_the_lookup_is_not_installed(monkeypatch):
+    from pipeline import enrich
+    from pipeline.tests.test_break_type_provenance import _enrich
+
+    def missing(lat, lng):
+        raise ModuleNotFoundError("No module named 'timezonefinder'")
+    monkeypatch.setattr(enrich, "time_zone_for", missing)
+    with pytest.raises(ModuleNotFoundError):
+        _enrich({"name": "Mexico Beach", "lat": 29.930837, "lng": -85.402222})
