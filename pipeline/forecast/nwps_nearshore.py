@@ -537,6 +537,11 @@ def _parse_cycle_file(path, url, date, cc):
             "steps": sorted(steps), "fields": fields}
 
 
+def cycle_path(wfo, date, cc):
+    """Where load_cycle keeps a cycle's CG1 GRIB on disk."""
+    return os.path.join("/tmp", f"nwps_{wfo}_{date}_{cc}_CG1.grib2")
+
+
 def load_cycle(wfo, cycle=None):
     """Fetch + parse the latest (or given) CG1 cycle. Returns a dict:
       {lats, lons, mask, cycle_dt, steps, fields:{(short,fh): float32 grid}}
@@ -561,7 +566,7 @@ def load_cycle(wfo, cycle=None):
             raise OSError(f"no recent CG1 cycle for {wfo}")
     date, cc, url = cycle
     key = (wfo, date, cc)
-    path = os.path.join("/tmp", f"nwps_{wfo}_{date}_{cc}_CG1.grib2")
+    path = cycle_path(wfo, date, cc)
     _CYCLE_STATS["requested"] += 1
 
     hit = _CYCLE_PARSED.get(key)

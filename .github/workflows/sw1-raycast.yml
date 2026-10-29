@@ -87,6 +87,13 @@ name: sw1-raycast
 #       other-field differences, #283's surf rows reproduced byte for byte where nothing
 #       switches, no badge flips), the stars if the rating used the wind sea (informational), and
 #       run 54's NWS display table reproduced before the display with the fix. SELECT only.
+#   mode = nwps-cells: READ-ONLY (pipeline/nwps_cells.py), run 58 onward. Over the archive since
+#       2026-09-07: Rodanthe, Salvo and S-Turns against Outer Banks Fishing Pier hour for hour
+#       (how often under 40% of the pier's NWPS Hs), and every NWPS spot against the median of
+#       its neighbours within 30 km on the same office grid. Then, from the 4 most recent NOMADS
+#       cycles, the CG1 cells around the sample cell of each spot in `spots` (default the four
+#       Hatteras spots) and of the most often low flagged spots: wet or dry, NWPS Hs, peak period
+#       and direction, and every field the GRIB carries. SELECT only.
 
 on:
   workflow_dispatch:
@@ -107,6 +114,7 @@ on:
           - node-preview
           - surf-preview
           - period-preview
+          - nwps-cells
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -123,7 +131,7 @@ on:
         default: false
         type: boolean
       spots:
-        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print. Comma-separated
+        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read. Comma-separated
         required: false
         default: ''
         type: string
@@ -163,7 +171,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -750,5 +758,53 @@ jobs:
             period_preview_hours.csv
             period_preview_archive.csv
             face_compare.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  nwps-cells:
+    name: sw1 NWPS cells around the sample points (read-only)
+    if: ${{ inputs.mode == 'nwps-cells' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install eccodes (cfgrib's GRIB-2 backend for the NWPS cycles)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends libeccodes0
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Compare the archive's NWPS heights and read the grid around the sample points (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SPOTS: ${{ inputs.spots }}
+        run: |
+          python -m pipeline.nwps_cells --spots "$SPOTS" --out nwps_cells.json --csv nwps_cells.csv
+
+      - name: Keep the results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: nwps-cells-${{ github.run_number }}
+          path: |
+            nwps_cells.json
+            nwps_cells.csv
           retention-days: 90
           if-no-files-found: warn

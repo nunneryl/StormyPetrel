@@ -228,3 +228,13 @@ def apply_surf_height(ratings, spots, factors, slug_for=None):
     stats["hours_rewritten"] = len(todo)
     stats["hours_wind_sea"] = sum(1 for t in todo if t[3])
     return stats
+
+
+def surf_log_line(stats) -> str:
+    """interpret's log line for apply_surf_height's *stats*, with the hours shoaled at the wind
+    sea's period (WIND_SEA_MARK) beside the hours rewritten."""
+    return (f"interpret: surf height {SURF_MARK} — {stats['hours_rewritten']} spot-hours at "
+            f"{stats['spots_rewritten']} uncalibrated spot(s), {stats['hours_wind_sea']} of them "
+            f"shoaled at the wind sea's period ({WIND_SEA_MARK}); {stats['spots_calibrated']} "
+            f"spot(s) calibrated, {stats['hours_kept_by_source']} hour(s) kept (not an NWPS "
+            f"override), {stats['hours_without_inputs']} NWPS hour(s) without a face or period")
