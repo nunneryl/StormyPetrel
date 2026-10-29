@@ -13,6 +13,7 @@
 # accident. requirements.txt stays the production list; nothing here ships to a runner
 # that only moves data.
 -r requirements.txt
+-r requirements-enrich.txt
 
 # Pinned to a major. Unpinned, CI would pick up pytest 9 the day it lands while the Mac
 # stayed on 8, which is exactly the invisible-difference problem this file exists to end.

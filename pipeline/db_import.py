@@ -66,7 +66,7 @@ WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
         "tide_preference_evidence", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
-        "nwps_wfo", "fallback_buoy_ids", "swell_window_source",
+        "nwps_wfo", "time_zone", "fallback_buoy_ids", "swell_window_source",
         "review_status", "description", "description_signature",
     ),
     "forecasts": (
@@ -254,7 +254,7 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
         "tide_preference_evidence", "crowd_factor", "hazards",
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
-        "nwps_wfo",
+        "nwps_wfo", "time_zone",
     ):
         if k in spot:
             rec[k] = spot[k]

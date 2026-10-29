@@ -41,6 +41,23 @@ export const REGION_ORDER: string[] = [
   'puerto_rico',
 ];
 
+/** The time zone a region's report time is shown in: the zone most of the region's spots are
+ *  in (pipeline/daily_report.py REGIONS, spots.time_zone). Florida's panhandle spots are
+ *  Central but most of Florida's are Eastern. pipeline/tests/test_time_zone.py holds this
+ *  table to the roster. A region not listed shows FALLBACK_TIME_ZONE. */
+export const REGION_TIME_ZONE: Record<string, string> = {
+  northeast: 'America/New_York',
+  mid_atlantic: 'America/New_York',
+  southeast: 'America/New_York',
+  florida: 'America/New_York',
+  gulf: 'America/Chicago',
+  socal: 'America/Los_Angeles',
+  norcal: 'America/Los_Angeles',
+  pacific_northwest: 'America/Los_Angeles',
+  hawaii: 'Pacific/Honolulu',
+  puerto_rico: 'America/Puerto_Rico',
+};
+
 function sortByRegion(rows: DailyReport[]): DailyReport[] {
   const idx = new Map(REGION_ORDER.map((k, i) => [k, i]));
   return [...rows].sort(

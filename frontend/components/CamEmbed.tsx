@@ -18,10 +18,13 @@ export function CamSection({
   cams,
   lat,
   lng,
+  timeZone,
 }: {
   cams: Cam[];
   lat: number | null;
   lng: number | null;
+  /** The spot's IANA time zone (lib/spotTime.ts), for the sunrise time. */
+  timeZone: string;
 }) {
   if (cams.length === 0) return null;
   const embeds = cams.filter((c) => c.display_mode === 'embed');
@@ -29,7 +32,7 @@ export function CamSection({
   return (
     <section className="space-y-3">
       {embeds.map((c) => (
-        <CamEmbedCard key={c.id} cam={c} lat={lat} lng={lng} />
+        <CamEmbedCard key={c.id} cam={c} lat={lat} lng={lng} timeZone={timeZone} />
       ))}
       {links.map((c) => (
         <CamLinkCard key={c.id} cam={c} />
@@ -42,17 +45,19 @@ function CamEmbedCard({
   cam,
   lat,
   lng,
+  timeZone,
 }: {
   cam: Cam;
   lat: number | null;
   lng: number | null;
+  timeZone: string;
 }) {
   // YouTube cams stay status='active' even when the channel isn't
   // broadcasting; isCamLive() reads resolved_video_id for those, and
   // status + embed_url for everyone else.
   const live = isCamLive(cam);
   const channelUrl = youtubeChannelUrl(cam);
-  const { isDark, sunriseLabel } = camDarkness(lat, lng);
+  const { isDark, sunriseLabel } = camDarkness(lat, lng, timeZone);
   return (
     <div className="rounded-xl overflow-hidden border border-ink-600 bg-black shadow-card">
       {live ? (

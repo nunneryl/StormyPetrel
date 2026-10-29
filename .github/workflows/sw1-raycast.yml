@@ -251,7 +251,7 @@ jobs:
 
       - name: Install the enrich / report / preview dependencies
         if: ${{ inputs.mode == 'full' && (inputs.then_enrich || inputs.then_preview) }}
-        run: pip install -r pipeline/requirements.txt
+        run: pip install -r pipeline/requirements.txt -r pipeline/requirements-enrich.txt
 
       - name: Enrich --skip-raycast over the new arcs (hand overrides + pruning)
         if: ${{ inputs.mode == 'full' && inputs.then_enrich }}

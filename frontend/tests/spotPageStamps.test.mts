@@ -29,6 +29,15 @@
  *      (reef, researched; low tide, unattributed), Pensacola Beach (beach, model_recall; mid
  *      tide, unattributed) and Sunset Point (no break type, no tide), and a fourth carries a
  *      researched tide, so the chip is seen to render when it should.
+ *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
+ *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
+ *      no time_zone in the first build (the shape of a row read before migration 026), shows the
+ *      Los Angeles fallback, labelled, with its buoy reading 13:50Z as "Oct 29, 6:50am PDT".
+ *      Then the stand-in gains its time_zone and the site is built AGAIN WITHOUT CLEARING
+ *      .next/cache: the second build must ask the stand-in for that spot's row rather than take
+ *      the copy the first build cached, and show "Oct 29, 9:50am EDT" and Eastern abbreviations
+ *      only. That second build is the 2026-10-29 preview: migration 026 applied, a redeploy
+ *      without build cache, and still Los Angeles times, from a spot row the Data Cache held.
  *
  * NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. The expected hour is this file's own
  * arithmetic (the render time floored to the hour), the expected height is looked up in this
@@ -41,6 +50,7 @@ import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -116,7 +126,21 @@ const VERIFIED_TIDE = {
   break_type: 'point', break_type_source: 'reviewed',
   tide_preference: 'low_mid', tide_preference_source: 'researched',
 };
-const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE];
+// 9: time zones. Pensacola carries its zone from the start; Jacksonville's is added between the
+// two builds (`delete`d until then, as a row read before the column existed has no such key).
+Object.assign(PENSACOLA, { time_zone: 'America/Chicago' });
+const JACKSONVILLE: typeof SPOT_FIELDS & Record<string, unknown> = {
+  ...SPOT_FIELDS, id: 990007, slug: 'jacksonville-beach-pier', name: 'Jacksonville Beach Pier',
+  lat: 30.294, lng: -81.388, state: 'Florida', region: 'Northeast Florida',
+  break_type: null, break_type_source: null, nearest_buoy_id: '41112',
+};
+// A fixed reading, so its local time is worked by hand: 2026-10-29 13:50Z is 9:50am EDT (UTC-4,
+// before the 1 Nov change) and 6:50am PDT (UTC-7).
+const BUOY = {
+  buoy_id: '41112', observed_at: '2026-10-29T13:50:00+00:00', hs: 1.1, tp: 9, dp: 95,
+  wind_speed: 4, wind_dir: 250, water_temp: 22.5,
+};
+const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
@@ -163,9 +187,14 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
     [number, Record<string, unknown>[]]),
 ]);
 
-// Enough of PostgREST for this site: the two spots, their rows, and an empty list for anything
-// else (every other page then renders its empty state, which is all the build needs).
+// Every request the stand-in answers, as "table?query", so a check can see what a build asked.
+const asked: string[] = [];
+
+// Enough of PostgREST for this site: the spots, their rows, the one buoy reading, and an empty
+// list for anything else (every other page then renders its empty state, which is all the build
+// needs).
 function answer(table: string, q: URLSearchParams): unknown[] {
+  if (table === 'buoy_observations') return q.get('buoy_id') === `eq.${BUOY.buoy_id}` ? [BUOY] : [];
   if (table === 'spots') {
     const slug = q.get('slug');
     if (slug !== null) return SPOTS.filter((s) => slug === `eq.${s.slug}`);
@@ -182,6 +211,7 @@ function answer(table: string, q: URLSearchParams): unknown[] {
 const stub = http.createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://stub');
   const table = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname)?.[1];
+  asked.push(`${table}?${url.searchParams.toString()}`);
   res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(table ? answer(table, url.searchParams) : []));
 });
@@ -229,6 +259,18 @@ function sourcedFacts(html: string) {
     infoBreak: text(infoRow('Break')), infoTide: text(infoRow('Tide preference')),
     optimalTide: text(optimalRow('Tide')), optimalBreak: text(optimalRow('Break')),
   };
+}
+
+/** Every US zone abbreviation the page shows, sorted: which zone its times are in. */
+function zonesOn(html: string): string {
+  return [...new Set(html.replace(/<!-- -->/g, '').match(/\b(PDT|PST|MDT|MST|CDT|CST|EDT|EST|HST|AST)\b/g) ?? [])]
+    .sort().join(',');
+}
+
+/** The Nearest buoy card's Reading row. */
+function buoyReading(html: string): string | null {
+  return /<span class="text-text-secondary shrink-0">Reading<\/span><span class="text-text-primary text-right truncate">([^<]*)<\/span>/
+    .exec(html)?.[1] ?? null;
 }
 
 /** Checks one tag is there exactly once, inside <head>, and returns its content. */
@@ -311,33 +353,46 @@ async function main(): Promise<void> {
     no_proxy: '127.0.0.1,localhost',
   };
 
-  console.log('Building the site against the stand-in Supabase…');
-  const buildStart = Date.now();
-  const build = await nextCommand(['build']);
-  const buildEnd = Date.now();
-  if (build.code !== 0) {
-    console.log(build.log.split('\n').slice(-80).join('\n'));
-    throw new Error(`next build exited ${build.code}`);
-  }
-  console.log(`Built in ${((buildEnd - buildStart) / 1000).toFixed(0)} s.\n`);
+  // 9 needs the first build to start with no fetch cache, so the spot rows it caches are the
+  // ones this fixture serves now; the second build then keeps what the first one left.
+  fs.rmSync(path.join(FRONTEND, '.next', 'cache', 'fetch-cache'), { recursive: true, force: true });
 
-  const port = await freePort();
-  const site = `http://127.0.0.1:${port}`;
-  server = spawn(process.execPath, [NEXT_BIN, 'start', '-p', String(port), '-H', '127.0.0.1'], {
-    cwd: FRONTEND, env, stdio: ['ignore', 'pipe', 'pipe'], detached: true,
-  });
-  server.stdout?.on('data', (d) => { serverLog += d; });
-  server.stderr?.on('data', (d) => { serverLog += d; });
-  const upBy = Date.now() + 60_000;
-  for (;;) {
-    try {
-      if ((await fetch(`${site}/robots.txt`)).ok) break;
-    } catch {
-      // not listening yet
+  async function buildSite(label: string): Promise<{ buildStart: number; buildEnd: number }> {
+    console.log(`Building the site against the stand-in Supabase (${label})…`);
+    const buildStart = Date.now();
+    const build = await nextCommand(['build']);
+    const buildEnd = Date.now();
+    if (build.code !== 0) {
+      console.log(build.log.split('\n').slice(-80).join('\n'));
+      throw new Error(`next build exited ${build.code}`);
     }
-    if (Date.now() > upBy) throw new Error(`next start never answered:\n${serverLog}`);
-    await sleep(250);
+    console.log(`Built in ${((buildEnd - buildStart) / 1000).toFixed(0)} s.\n`);
+    return { buildStart, buildEnd };
   }
+
+  let site = '';
+  async function startSite(): Promise<void> {
+    const port = await freePort();
+    site = `http://127.0.0.1:${port}`;
+    server = spawn(process.execPath, [NEXT_BIN, 'start', '-p', String(port), '-H', '127.0.0.1'], {
+      cwd: FRONTEND, env, stdio: ['ignore', 'pipe', 'pipe'], detached: true,
+    });
+    server.stdout?.on('data', (d) => { serverLog += d; });
+    server.stderr?.on('data', (d) => { serverLog += d; });
+    const upBy = Date.now() + 60_000;
+    for (;;) {
+      try {
+        if ((await fetch(`${site}/robots.txt`)).ok) break;
+      } catch {
+        // not listening yet
+      }
+      if (Date.now() > upBy) throw new Error(`next start never answered:\n${serverLog}`);
+      await sleep(250);
+    }
+  }
+
+  const { buildStart, buildEnd } = await buildSite('first build');
+  await startSite();
 
   async function load(slug: string) {
     const res = await fetch(`${site}/spot/${slug}`);
@@ -445,6 +500,46 @@ async function main(): Promise<void> {
     const freshHeadline = checkHeadline('regenerated copy', fresh.html, freshMs);
     console.log(`        (sp-rendered-at ${fresh.stamp}; sp-headline-hour ${freshHeadline})`);
   }
+
+  // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard
+  // time), so they are held to the zone's pair; the buoy reading is a fixed instant.
+  const centralZones = new Set(['CDT', 'CST', 'CDT,CST']);
+  const easternZones = new Set(['EDT', 'EST', 'EDT,EST']);
+  const pacificZones = new Set(['PDT', 'PST', 'PDT,PST']);
+  const pensacola = await load(PENSACOLA.slug);
+  console.log(`        ${PENSACOLA.slug} zones: ${zonesOn(pensacola.html)}`);
+  check(`${PENSACOLA.slug} (America/Chicago): Central time only`, centralZones.has(zonesOn(pensacola.html)),
+    zonesOn(pensacola.html));
+  const jaxBefore = await load(JACKSONVILLE.slug);
+  console.log(`        ${JACKSONVILLE.slug}, no time_zone: ${zonesOn(jaxBefore.html)}; `
+    + `Reading ${JSON.stringify(buoyReading(jaxBefore.html))}`);
+  check(`${JACKSONVILLE.slug} with no time_zone: the Los Angeles fallback, labelled`,
+    pacificZones.has(zonesOn(jaxBefore.html)), zonesOn(jaxBefore.html));
+  eq(`${JACKSONVILLE.slug} with no time_zone: buoy reading`, buoyReading(jaxBefore.html), 'Oct 29, 6:50am PDT');
+
+  // Migration 026 applied between deploys; the second build keeps the first one's .next/cache.
+  const pid = server?.pid;
+  if (pid !== undefined) {
+    const closed = new Promise((resolve) => server?.on('close', resolve));
+    process.kill(-pid, 'SIGTERM');
+    await closed;
+  }
+  server = null;
+  JACKSONVILLE.time_zone = 'America/New_York';
+  const askedBefore = asked.length;
+  await buildSite('second build, Jacksonville Beach Pier now has its time_zone, .next/cache kept');
+  const rowRead = `spots?select=*&slug=eq.${JACKSONVILLE.slug}`;
+  check(`the second build asked the stand-in for ${rowRead}, not the fetch cache`,
+    asked.slice(askedBefore).includes(rowRead), `${asked.length - askedBefore} requests`);
+  await startSite();
+  const jaxAfter = await load(JACKSONVILLE.slug);
+  console.log(`        ${JACKSONVILLE.slug}, America/New_York: ${zonesOn(jaxAfter.html)}; `
+    + `Reading ${JSON.stringify(buoyReading(jaxAfter.html))}`);
+  eq(`${JACKSONVILLE.slug} after the second build: answers 200`, jaxAfter.status, 200);
+  check(`${JACKSONVILLE.slug} (America/New_York) after the second build: Eastern time only`,
+    easternZones.has(zonesOn(jaxAfter.html)), zonesOn(jaxAfter.html));
+  eq(`${JACKSONVILLE.slug} (America/New_York) after the second build: buoy reading`,
+    buoyReading(jaxAfter.html), 'Oct 29, 9:50am EDT');
 }
 
 // A hung build or server fails the run instead of holding CI open.

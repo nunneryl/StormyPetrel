@@ -1,3 +1,5 @@
+import { fmtClock } from './spotTime.ts';
+
 // Pure types + helpers shared between server queries and client UI.
 // Deliberately does NOT import the Supabase client — keeping this
 // file Supabase-free is what lets <CamsBrowser> and other client
@@ -82,71 +84,81 @@ export function isCamLive(cam: Cam): boolean {
 }
 
 /**
- * Rough sunrise / sunset (UTC) using a NOAA-style approximation. Good
- * to ~5 minutes at temperate latitudes, which is plenty for "cam may
- * be dark" messaging. Returns hours past UTC midnight; null at the
- * polar circles where the sun doesn't rise/set.
+ * Sunrise and sunset (UTC) on *date*'s UTC day, from NOAA's general solar position formulas:
+ * the declination and the equation of time from the fractional year, and the sun's centre
+ * 0.833 degrees below the horizon (refraction and the sun's radius). Good to a few minutes at
+ * these latitudes. The approximation this replaced (2026-10-29) left out the equation of time
+ * and refraction and put late-October sunrises about 20 minutes late. Returns hours past UTC
+ * midnight; null at the polar circles where the sun doesn't rise/set.
  */
 export function solarTimesUTC(
   date: Date,
   lat: number,
   lng: number,
 ): { sunriseUtcH: number | null; sunsetUtcH: number | null } {
-  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
-  const dayOfYear = Math.floor((date.getTime() - start) / 86_400_000);
+  const start = Date.UTC(date.getUTCFullYear(), 0, 1);
+  const dayOfYear = Math.floor((date.getTime() - start) / 86_400_000) + 1;
+  const g = ((2 * Math.PI) / 365) * (dayOfYear - 1);          // the fractional year at noon
+  const eqTimeMin =
+    229.18 *
+    (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) -
+      0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
   const decl =
-    23.45 * Math.sin((2 * Math.PI * (dayOfYear + 284)) / 365);
+    0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) -
+    0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) -
+    0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
   const latRad = (lat * Math.PI) / 180;
-  const declRad = (decl * Math.PI) / 180;
-  const cosH = -Math.tan(latRad) * Math.tan(declRad);
+  const cosH =
+    Math.cos((90.833 * Math.PI) / 180) / (Math.cos(latRad) * Math.cos(decl)) -
+    Math.tan(latRad) * Math.tan(decl);
   if (cosH > 1 || cosH < -1) {
     return { sunriseUtcH: null, sunsetUtcH: null };
   }
-  const hourAngleH = (Math.acos(cosH) * 180) / Math.PI / 15;
-  const solarNoonUtcH = 12 - lng / 15;
+  const haDeg = (Math.acos(cosH) * 180) / Math.PI;
   return {
-    sunriseUtcH: solarNoonUtcH - hourAngleH,
-    sunsetUtcH: solarNoonUtcH + hourAngleH,
+    sunriseUtcH: (720 - 4 * (lng + haDeg) - eqTimeMin) / 60,
+    sunsetUtcH: (720 - 4 * (lng - haDeg) - eqTimeMin) / 60,
   };
 }
 
-/** Format an "hours past UTC midnight" value as a local clock string
- *  ("6:42am") at the spot's longitude. Approximate — uses 15°/hour as
- *  the timezone offset, which is fine for "sunrise at ~X" messaging. */
-function fmtLocalClock(utcHours: number, lng: number): string {
-  let h = utcHours + lng / 15;
-  h = ((h % 24) + 24) % 24;
-  const hh = Math.floor(h);
-  const mm = Math.round((h - hh) * 60);
-  const period = hh < 12 ? 'am' : 'pm';
-  const display = hh % 12 === 0 ? 12 : hh % 12;
-  const pad = mm.toString().padStart(2, '0');
-  return `${display}:${pad}${period}`;
-}
+const DAY_MS = 86_400_000;
 
 /** Decide whether to show the "cam may be dark — sunrise at X" hint,
  *  and produce the matching label. Computed server-side so the page
- *  doesn't need a hydration shim. */
+ *  doesn't need a hydration shim.
+ *
+ *  DARK means outside every daylight span from yesterday's, today's and tomorrow's sunrise
+ *  to the same day's sunset (UTC days). Comparing the UTC hour with one UTC day's sunrise and
+ *  sunset, as this did until 2026-10-29, called a Hawaii or West Coast cam dark through the
+ *  late afternoon: there the sunset falls on the next UTC day. The sunrise is shown on the
+ *  spot's own clock (*timeZone*, lib/spotTime.ts), not a longitude estimate, which was over
+ *  an hour off at Jacksonville and ignored daylight saving. */
 export function camDarkness(
   lat: number | null,
   lng: number | null,
+  timeZone: string,
   now: Date = new Date(),
 ): { isDark: boolean; sunriseLabel: string | null } {
   if (lat === null || lng === null) {
     return { isDark: false, sunriseLabel: null };
   }
-  const { sunriseUtcH, sunsetUtcH } = solarTimesUTC(now, lat, lng);
-  if (sunriseUtcH === null || sunsetUtcH === null) {
+  const base = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const t = now.getTime();
+  const spans: { rise: number; set: number }[] = [];
+  for (const k of [-1, 0, 1, 2]) {
+    const day = base + k * DAY_MS;
+    const { sunriseUtcH, sunsetUtcH } = solarTimesUTC(new Date(day), lat, lng);
+    if (sunriseUtcH === null || sunsetUtcH === null) {
+      return { isDark: false, sunriseLabel: null };
+    }
+    spans.push({ rise: day + sunriseUtcH * 3_600_000, set: day + sunsetUtcH * 3_600_000 });
+  }
+  if (spans.some((s) => s.rise <= t && t <= s.set)) {
     return { isDark: false, sunriseLabel: null };
   }
-  const nowUtcH = now.getUTCHours() + now.getUTCMinutes() / 60;
-  const isDark = nowUtcH < sunriseUtcH || nowUtcH > sunsetUtcH;
-  if (!isDark) return { isDark: false, sunriseLabel: null };
-  // If we're past sunset today, the next sunrise is on the next UTC day.
-  const nextSunriseUtcH =
-    nowUtcH > sunsetUtcH ? sunriseUtcH + 24 : sunriseUtcH;
+  const next = Math.min(...spans.map((s) => s.rise).filter((r) => r > t));
   return {
     isDark: true,
-    sunriseLabel: fmtLocalClock(nextSunriseUtcH, lng),
+    sunriseLabel: fmtClock(new Date(next).toISOString(), timeZone),
   };
 }

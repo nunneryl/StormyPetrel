@@ -1,0 +1,17 @@
+# What building the roster needs beyond requirements.txt: enrich (pipeline/enrich.py) only.
+#
+# WHY A FILE OF ITS OWN. timezonefinder carries the time-zone polygons, a wheel of about 50 MB.
+# In requirements.txt every workflow would install it, the hourly buoy update and the four
+# daily forecast runs among them, though only enrich calls it: on PR #286 it lengthened the
+# tests job's install from 19 s to 36 s (Python 3.12) and from 22 s to 43 s (3.9). It is
+# installed where enrich runs (sw1-raycast.yml's enrich step) and by requirements-dev.txt for
+# the test suite.
+#
+#     pip install -r pipeline/requirements.txt -r pipeline/requirements-enrich.txt
+#
+# Each spot's IANA time zone, from its coordinates (pipeline/enrichment/time_zone.py). Two
+# lines because 8.x needs Python 3.11 and the 6.6 line, which CI's Python 3.9 job gets, pins
+# cffi below 2, which would pull cryptography back from 50 to 46 on 3.12. Both give the same
+# zone for every roster spot.
+timezonefinder>=8.2,<9; python_version >= "3.11"
+timezonefinder>=6.6,<7; python_version < "3.11"

@@ -10,7 +10,8 @@ import {
   YAxis,
 } from 'recharts';
 import type { Forecast } from '@/lib/types';
-import { fmtDay, fmtDayTimeTick, fmtShortTime, metersToFeet } from '@/lib/formatting';
+import { metersToFeet } from '@/lib/formatting';
+import { fmtDayTimeTick, fmtTooltipTime } from '@/lib/spotTime';
 import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
 
 type Pt = {
@@ -76,10 +77,16 @@ function buildSeries(rows: Forecast[]): Pt[] {
   }));
 }
 
-const tickLabel = (ms: number) => fmtDayTimeTick(new Date(ms).toISOString());
-
-export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
+export function SwellChart({
+  forecasts,
+  timeZone,
+}: {
+  forecasts: Forecast[];
+  /** The spot's IANA time zone (lib/spotTime.ts). */
+  timeZone: string;
+}) {
   const data = buildSeries(forecasts);
+  const tickLabel = (ms: number) => fmtDayTimeTick(new Date(ms).toISOString(), timeZone);
 
   return (
     <>
@@ -125,7 +132,7 @@ export function SwellChart({ forecasts }: { forecasts: Forecast[] }) {
                 boxShadow: '0 8px 24px -8px rgba(15,23,42,0.18)',
               }}
               labelStyle={{ color: '#475569', fontWeight: 600 }}
-              labelFormatter={(v) => tickLabel(v as number)}
+              labelFormatter={(v) => fmtTooltipTime(new Date(v as number).toISOString(), timeZone)}
               formatter={(value, name) => [
                 // `name` is the series' name= prop, i.e. LABEL - recharts passes
                 // it here as the second argument. It used to be the dataKey,
