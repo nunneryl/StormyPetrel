@@ -61,4 +61,4 @@ Depth alone would keep the current points.
 | S-Turns | 35.60738, -75.45482 | 35.60738, -75.43524 | 2.68 km at 91 deg | 16.5 m | 1.10 (1.09 to 1.11) | 0.98 |
 
 - **Salvo's same-row cell seaward** is 9.3 m at its centre, so the next row south is used.
-- **Gate:** sw1-raycast mode node-preview, with `baseline_ref` main.
+- **Gate:** sw1-raycast mode node-preview, with `baseline_ref` main. Passed in run 62 (`docs/face_validation/run-62/`).
