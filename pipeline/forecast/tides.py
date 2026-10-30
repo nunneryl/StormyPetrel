@@ -48,6 +48,7 @@ from ..config import (
     TIDE_CACHE_HORIZON_MIN_HOURS,
     TIDE_CACHE_REFETCH_WITHIN_HOURS,
     TIDE_FETCH_MAX_CONSECUTIVE_FAILURES,
+    TIDE_KNOWN_BAD_PROBE_HOURS,
     TIDE_KNOWN_BAD_TTL_DAYS,
     TIDE_PREDICTION_RANGE_HOURS,
     TIDE_STAGE_DEADLINE_S,
@@ -454,6 +455,31 @@ def _fetch_station_30d(station_id: str, begin_yyyymmdd: str, horizon_hours: int,
     return (hilo or []), (hourly or [])
 
 
+def _recheck_short_horizon(fetch_station, station_id: str, begin_yyyymmdd: str,
+                           pacer: "_Pacer | None", skip_hourly: bool) -> tuple[int | None, list, list]:
+    """Before a station is marked known-bad, ask again over SHORTER horizons: the 7-day output
+    window (TIDE_PREDICTION_RANGE_HOURS), then TIDE_KNOWN_BAD_PROBE_HOURS. Returns
+    (hours, hilo, hourly) for the first that returns rows, else (None, [], []); only then is the
+    station marked.
+
+    WHY. A known-bad mark silences a station for TIDE_KNOWN_BAD_TTL_DAYS. The 2026-10-09 10:47Z
+    run marked 8665387 (Hamlin Creek, Isle of Palms) on one interval: hilo over its 643 h horizon
+    from 20261009, every datum answering "No Predictions data was found. Please make sure the
+    Datum input is valid." (hourly was not asked; the station was cached hilo-only). Five spots
+    then published no tide for three weeks, while from the same runner on 2026-10-30
+    (sw1-raycast run 63) the 72 h hilo request on MLLW returned 11 high/low tides. A station
+    NOAA still serves for the next three days is not a station with no predictions.
+
+    Goes through the same *fetch_station* seam as the main fetch, so each probe is
+    _fetch_interval_once (MLLW first) in production and a stubbed network stubs this too. A
+    transport failure raises _TideOutage exactly as the main fetch does."""
+    for hours in (TIDE_PREDICTION_RANGE_HOURS, TIDE_KNOWN_BAD_PROBE_HOURS):
+        hilo, hourly = fetch_station(station_id, begin_yyyymmdd, hours, pacer, skip_hourly)
+        if hilo or hourly:
+            return hours, hilo, hourly
+    return None, [], []
+
+
 # --------------------------------------------------------------------------- #
 # visibility: a station that produces nothing must SAY SO, by name               #
 # --------------------------------------------------------------------------- #
@@ -723,6 +749,10 @@ def fetch(spots: list[dict], use_cache: bool = True,
             skip_hourly = bool(cache and cache.get("hilo_only"))   # subordinate: skip the always-empty hourly
             try:
                 hilo, hourly = _fetch_station(sid, begin_yyyymmdd, horizon_h, pacer, skip_hourly)  # (C) single attempt, paced
+                recheck_h = None
+                if not hilo and not hourly:
+                    recheck_h, hilo, hourly = _recheck_short_horizon(
+                        _fetch_station, sid, begin_yyyymmdd, pacer, skip_hourly)
             except _TideOutage as e:
                 consecutive_failures += 1
                 log.debug("tides: %s unreachable (%s) [%d in a row]", sid, e, consecutive_failures)
@@ -738,13 +768,32 @@ def fetch(spots: list[dict], use_cache: bool = True,
             consecutive_failures = 0
             if not hilo and not hourly:
                 # Reached only when BOTH intervals returned a GENUINE 'no predictions' answer on every
-                # datum (a throttle/non-200/non-JSON would have raised _TideOutage above, not landed
-                # here). Only then is a permanent known-bad mark warranted.
+                # datum, over the station's horizon AND over both shorter re-checks (a throttle/
+                # non-200/non-JSON would have raised _TideOutage above, not landed here). Only then
+                # is a known-bad mark warranted.
                 new_bad.append(sid)
                 part.put(sid, "no-predictions")   # THE PATH THAT USED TO INCREMENT NOTHING
-                log.info("tides: %s — genuine no-predictions on both hilo+hourly, all datums — "
-                         "marking known-bad", sid)
+                log.info("tides: %s — genuine no-predictions on both hilo+hourly, all datums, over "
+                         "%dh, %dh and %dh — marking known-bad", sid, horizon_h,
+                         TIDE_PREDICTION_RANGE_HOURS, TIDE_KNOWN_BAD_PROBE_HOURS)
                 continue
+
+            if recheck_h is not None:
+                # NOAA had nothing over the long horizon but does over a shorter one: NOT known-bad.
+                if recheck_h < TIDE_PREDICTION_RANGE_HOURS:
+                    # Shorter than the 7-day output window, so too short to serve (_stale_entry's
+                    # all-or-nothing rule): serve what the cache still covers and ask again next run.
+                    log.warning("tides: %s answered 'no predictions' over %dh and %dh but returned "
+                                "%d hilo rows over %dh — NOT marking known-bad; too short to serve, "
+                                "asking again next run", sid, horizon_h, TIDE_PREDICTION_RANGE_HOURS,
+                                len(hilo), recheck_h)
+                    out[sid] = _serve_stale(sid, cache)
+                    continue
+                log.warning("tides: %s answered 'no predictions' over %dh but returned %d hilo + %d "
+                            "hourly rows over %dh — NOT marking known-bad; serving those and asking "
+                            "for the full horizon again next run", sid, horizon_h, len(hilo),
+                            len(hourly), recheck_h)
+                horizon_h = recheck_h   # coverage and shortfall below are measured against what was asked
 
             # covers_until MUST be data-derived (see _coverage_from_series): a station returning fewer
             # days than requested must not be cached as fully covered. coverage is None ONLY when both

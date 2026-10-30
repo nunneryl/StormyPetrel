@@ -1,0 +1,3423 @@
+{
+ "begin": "20261030",
+ "probe_hours": 72,
+ "near_km": 30.0,
+ "prediction_list_size": 3502,
+ "stations": {
+  "8665387": {
+   "in_prediction_list": true,
+   "list_entry": {
+    "state": "SC",
+    "tidepredoffsets": {
+     "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/tidepredoffsets.json"
+    },
+    "type": "S",
+    "timemeridian": -75,
+    "reference_id": "8665530",
+    "timezonecorr": -5,
+    "id": "8665387",
+    "name": "Hamlin Creek, Isle of Palms",
+    "lat": 32.7867,
+    "lng": -79.7917,
+    "affiliations": "",
+    "portscode": "",
+    "products": null,
+    "disclaimers": null,
+    "notices": null,
+    "self": null,
+    "expand": null,
+    "tideType": ""
+   },
+   "mdapi_record": {
+    "count": 1,
+    "units": null,
+    "stations": [
+     {
+      "tidal": true,
+      "greatlakes": false,
+      "shefcode": "",
+      "details": {
+       "id": "8665387",
+       "established": "1975-01-28 00:00:00",
+       "removed": "1977-01-10 23:59:00",
+       "noaachart": "11523",
+       "timemeridian": -75,
+       "timezone": -5.0,
+       "origyear": "1975-01-28 00:00:00",
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/details.json"
+      },
+      "sensors": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/sensors.json"
+      },
+      "floodlevels": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/floodlevels.json"
+      },
+      "datums": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/datums.json"
+      },
+      "supersededdatums": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/supersededdatums.json"
+      },
+      "harmonicConstituents": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/harcon.json"
+      },
+      "benchmarks": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/benchmarks.json"
+      },
+      "tidePredOffsets": {
+       "refStationId": "8665530",
+       "type": "S",
+       "heightOffsetHighTide": 0.97,
+       "heightOffsetLowTide": 1.0,
+       "timeOffsetHighTide": 6,
+       "timeOffsetLowTide": -12,
+       "heightAdjustedType": "R",
+       "self": null
+      },
+      "ofsMapOffsets": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/ofsmapoffsets.json"
+      },
+      "state": "SC",
+      "timezone": "EST",
+      "timezonecorr": -5,
+      "observedst": true,
+      "stormsurge": false,
+      "nearby": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/nearby.json"
+      },
+      "forecast": false,
+      "outlook": false,
+      "HTFhistorical": false,
+      "HTFmonthly": false,
+      "nonNavigational": false,
+      "inundationdb": false,
+      "id": "8665387",
+      "name": "HAMLIN CREEK, ISLE OF PALMS",
+      "lat": 32.7867,
+      "lng": -79.7917,
+      "affiliations": "",
+      "portscode": null,
+      "products": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/products.json"
+      },
+      "disclaimers": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/disclaimers.json"
+      },
+      "notices": {
+       "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387/notices.json"
+      },
+      "self": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/8665387.json",
+      "expand": "details,sensors,floodlevels,datums,harcon,tidepredoffsets,ofsmapoffsets,products,disclaimers,notices",
+      "tideType": ""
+     }
+    ],
+    "self": null
+   },
+   "answers": {
+    "hilo MLLW": {
+     "result": "rows",
+     "rows": 11
+    },
+    "hilo STND": {
+     "result": "no_predictions",
+     "message": "No Predictions data was found. Please make sure the Datum input is valid."
+    },
+    "hilo MSL": {
+     "result": "no_predictions",
+     "message": "No Predictions data was found. Please make sure the Datum input is valid."
+    },
+    "h MLLW": {
+     "result": "no_predictions",
+     "message": "No Predictions data was found. Please make sure the Datum input is valid."
+    },
+    "h STND": {
+     "result": "no_predictions",
+     "message": "No Predictions data was found. Please make sure the Datum input is valid."
+    },
+    "h MSL": {
+     "result": "no_predictions",
+     "message": "No Predictions data was found. Please make sure the Datum input is valid."
+    }
+   },
+   "roster_spots": 5
+  }
+ },
+ "spots": [
+  {
+   "spot": "Berts Bar",
+   "slug": "berts-bar",
+   "lat": 32.757505,
+   "lng": -79.835029,
+   "station": "8665387",
+   "station_km": 6.15,
+   "candidates": [
+    {
+     "id": "TEC3047",
+     "name": "Sullivans Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 1.03,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665567",
+     "name": "Ben Sawyer Bridge, ICWW",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 1.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665637",
+     "name": "The Cove, Fort Moultrie",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 2.13,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8665552",
+     "name": "Breach Inlet, Isle of Palms",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 3.05,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.92
+     }
+    },
+    {
+     "id": "8665728",
+     "name": "Fort Sumter",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 3.92,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8665494",
+     "name": "Isle of Palms Pier",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 5.49,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8665426",
+     "name": "Shem Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 5.91,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665726",
+     "name": "Fort Johnson",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 5.95,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665530",
+     "name": "CHARLESTON (Customhouse Wharf)",
+     "type": "R",
+     "reference_id": "",
+     "km": 8.68,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.24
+     }
+    },
+    {
+     "id": "8665167",
+     "name": "Hamlin Sound",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 8.92,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665192",
+     "name": "Hobcaw Point",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.37,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8665775",
+     "name": "James Island Creek, 1 mi. above ent.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 10.68,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8665495",
+     "name": "South Ashley Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 11.73,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.27
+     }
+    },
+    {
+     "id": "8666467",
+     "name": "Folly River, north, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.37,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8665613",
+     "name": "Wappoo Creek, highway bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.97,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.19
+     }
+    },
+    {
+     "id": "8665111",
+     "name": "South Dewees Island, Dewees Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.17,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.96
+     }
+    },
+    {
+     "id": "TEC3061",
+     "name": "Shipyard Creek, 0.8 mile above entrance.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.66,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8664782",
+     "name": "Parker Island, Horlbeck Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.21,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.7
+     }
+    },
+    {
+     "id": "8665424",
+     "name": "Folly Creek, Hwy. 171 bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.26,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.48
+     }
+    },
+    {
+     "id": "8665145",
+     "name": "Duck Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.71,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.56
+     }
+    },
+    {
+     "id": "8666652",
+     "name": "Folly River Bridge, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.81,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8664945",
+     "name": "Clouter Creek, south entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.93,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.36
+     }
+    },
+    {
+     "id": "TEC3127",
+     "name": "Folly Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.08,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.13
+     }
+    },
+    {
+     "id": "8665641",
+     "name": "Elliott Cut entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.6,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.08
+     }
+    },
+    {
+     "id": "8664992",
+     "name": "North Dewees Island, Capers Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.04,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.75
+     }
+    },
+    {
+     "id": "8664941",
+     "name": "Capers Creek, South Capers Island",
+     "type": "R",
+     "reference_id": "",
+     "km": 16.29,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8665101",
+     "name": "Cosgrove Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.59,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.62
+     }
+    },
+    {
+     "id": "8664701",
+     "name": "Nowell Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.97,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.96
+     }
+    },
+    {
+     "id": "8666283",
+     "name": "Abbapoola Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.4,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8664878",
+     "name": "Old Capers Landing, Santee Pass, Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.67,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.99
+     }
+    },
+    {
+     "id": "8664545",
+     "name": "Cainhoy",
+     "type": "R",
+     "reference_id": "",
+     "km": 18.82,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8664688",
+     "name": "Clouter Creek, north entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.04,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.47
+     }
+    },
+    {
+     "id": "8664611",
+     "name": "Big Paradise Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.36,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.57
+     }
+    },
+    {
+     "id": "8665099",
+     "name": "I-526 bridge",
+     "type": "R",
+     "reference_id": "",
+     "km": 19.54,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8664662",
+     "name": "Goose Creek entrance",
+     "type": "R",
+     "reference_id": "",
+     "km": 20.16,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.64
+     }
+    },
+    {
+     "id": "8664582",
+     "name": "Woodville",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.42,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.23
+     }
+    },
+    {
+     "id": "8666767",
+     "name": "Snake Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.31,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8665589",
+     "name": "Sandblasters, Pennys Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.39,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8664801",
+     "name": "Price Creek, North Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.53,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.84
+     }
+    },
+    {
+     "id": "8665599",
+     "name": "Pennys Creek, west entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.0,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.22
+     }
+    },
+    {
+     "id": "8665002",
+     "name": "Drayton, Bee's Ferry",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.63,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8664515",
+     "name": "Snow Point, 0.4 mi. North of",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.06,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.32
+     }
+    },
+    {
+     "id": "8664541",
+     "name": "Yeamans Hall, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.4,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8664589",
+     "name": "Hanahan, Turkey Creek, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.33,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.78
+     }
+    },
+    {
+     "id": "8666029",
+     "name": "Church Creek bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.47,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.98
+     }
+    },
+    {
+     "id": "8665475",
+     "name": "Limehouse Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 25.45,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.65
+     }
+    },
+    {
+     "id": "8666282",
+     "name": "Oak Branch, Bohicket Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 25.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.66
+     }
+    },
+    {
+     "id": "8664442",
+     "name": "Moores Landing, ICWW, Sewee Bay",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.07,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.01
+     }
+    },
+    {
+     "id": "8664841",
+     "name": "Magnolia Gardens",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.72,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.79
+     }
+    },
+    {
+     "id": "8664621",
+     "name": "Wharf Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.76,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664131",
+     "name": "Back River Reservoir, West Branch",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 28.06,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 0.55
+     }
+    },
+    {
+     "id": "8664022",
+     "name": "General Dynamics Pier",
+     "type": "R",
+     "reference_id": "",
+     "km": 29.08,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.4
+     }
+    }
+   ]
+  },
+  {
+   "spot": "Dewees Island",
+   "slug": "dewees-island",
+   "lat": 32.834056,
+   "lng": -79.708428,
+   "station": "8665387",
+   "station_km": 9.03,
+   "candidates": [
+    {
+     "id": "8665111",
+     "name": "South Dewees Island, Dewees Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 1.71,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.96
+     }
+    },
+    {
+     "id": "8664992",
+     "name": "North Dewees Island, Capers Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 1.84,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.75
+     }
+    },
+    {
+     "id": "8664941",
+     "name": "Capers Creek, South Capers Island",
+     "type": "R",
+     "reference_id": "",
+     "km": 2.52,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8664878",
+     "name": "Old Capers Landing, Santee Pass, Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 4.48,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.99
+     }
+    },
+    {
+     "id": "8664801",
+     "name": "Price Creek, North Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 7.07,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.84
+     }
+    },
+    {
+     "id": "8665167",
+     "name": "Hamlin Sound",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 7.36,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665494",
+     "name": "Isle of Palms Pier",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.11,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8664611",
+     "name": "Big Paradise Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.68,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.57
+     }
+    },
+    {
+     "id": "8664582",
+     "name": "Woodville",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.23
+     }
+    },
+    {
+     "id": "8665552",
+     "name": "Breach Inlet, Isle of Palms",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 11.57,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.92
+     }
+    },
+    {
+     "id": "8664621",
+     "name": "Wharf Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.29,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664442",
+     "name": "Moores Landing, ICWW, Sewee Bay",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.46,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.01
+     }
+    },
+    {
+     "id": "TEC3047",
+     "name": "Sullivans Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.87,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8664782",
+     "name": "Parker Island, Horlbeck Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.96,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.7
+     }
+    },
+    {
+     "id": "8665567",
+     "name": "Ben Sawyer Bridge, ICWW",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.17,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8664545",
+     "name": "Cainhoy",
+     "type": "R",
+     "reference_id": "",
+     "km": 15.33,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8665637",
+     "name": "The Cove, Fort Moultrie",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.94,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "TEC3023",
+     "name": "Jack Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.07,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8665426",
+     "name": "Shem Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.81,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665192",
+     "name": "Hobcaw Point",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.95,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8665728",
+     "name": "Fort Sumter",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.11,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664701",
+     "name": "Nowell Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.34,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.96
+     }
+    },
+    {
+     "id": "8665726",
+     "name": "Fort Johnson",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.97,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665530",
+     "name": "CHARLESTON (Customhouse Wharf)",
+     "type": "R",
+     "reference_id": "",
+     "km": 20.96,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.24
+     }
+    },
+    {
+     "id": "8664945",
+     "name": "Clouter Creek, south entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.67,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.36
+     }
+    },
+    {
+     "id": "TEC3061",
+     "name": "Shipyard Creek, 0.8 mile above entrance.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.57,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8664688",
+     "name": "Clouter Creek, north entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.65,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.47
+     }
+    },
+    {
+     "id": "8665495",
+     "name": "South Ashley Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.88,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.27
+     }
+    },
+    {
+     "id": "8665145",
+     "name": "Duck Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.14,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.56
+     }
+    },
+    {
+     "id": "8664662",
+     "name": "Goose Creek entrance",
+     "type": "R",
+     "reference_id": "",
+     "km": 24.24,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.64
+     }
+    },
+    {
+     "id": "8664515",
+     "name": "Snow Point, 0.4 mi. North of",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.41,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.32
+     }
+    },
+    {
+     "id": "8665775",
+     "name": "James Island Creek, 1 mi. above ent.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.51,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8665613",
+     "name": "Wappoo Creek, highway bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 25.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.19
+     }
+    },
+    {
+     "id": "8665101",
+     "name": "Cosgrove Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.0,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.62
+     }
+    },
+    {
+     "id": "8666467",
+     "name": "Folly River, north, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.69,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8663858",
+     "name": "Buck Hall, Awendaw Creek",
+     "type": "R",
+     "reference_id": "",
+     "km": 26.76,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.01
+     }
+    },
+    {
+     "id": "8664099",
+     "name": "Five Fathom Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.04,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.86
+     }
+    },
+    {
+     "id": "8663899",
+     "name": "Harbor River entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.44,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.86
+     }
+    },
+    {
+     "id": "8664131",
+     "name": "Back River Reservoir, West Branch",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 0.55
+     }
+    },
+    {
+     "id": "8664541",
+     "name": "Yeamans Hall, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.88,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8664022",
+     "name": "General Dynamics Pier",
+     "type": "R",
+     "reference_id": "",
+     "km": 27.89,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.4
+     }
+    },
+    {
+     "id": "8665641",
+     "name": "Elliott Cut entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 28.52,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.08
+     }
+    },
+    {
+     "id": "8665424",
+     "name": "Folly Creek, Hwy. 171 bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 28.82,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.48
+     }
+    },
+    {
+     "id": "8665099",
+     "name": "I-526 bridge",
+     "type": "R",
+     "reference_id": "",
+     "km": 29.27,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8666652",
+     "name": "Folly River Bridge, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.27,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8663781",
+     "name": "Blessing Plantation, East Branch",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.32,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 2.49
+     }
+    },
+    {
+     "id": "TEC3127",
+     "name": "Folly Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.35,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.13
+     }
+    },
+    {
+     "id": "8664589",
+     "name": "Hanahan, Turkey Creek, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.78
+     }
+    }
+   ]
+  },
+  {
+   "spot": "Isle of Palms",
+   "slug": "isle-of-palms",
+   "lat": 32.787491,
+   "lng": -79.777672,
+   "station": "8665387",
+   "station_km": 1.91,
+   "candidates": [
+    {
+     "id": "8665494",
+     "name": "Isle of Palms Pier",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 0.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8665552",
+     "name": "Breach Inlet, Isle of Palms",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 3.4,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.92
+     }
+    },
+    {
+     "id": "8665167",
+     "name": "Hamlin Sound",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 4.44,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "TEC3047",
+     "name": "Sullivans Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 5.7,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665567",
+     "name": "Ben Sawyer Bridge, ICWW",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 6.19,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665111",
+     "name": "South Dewees Island, Dewees Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 6.97,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.96
+     }
+    },
+    {
+     "id": "8665637",
+     "name": "The Cove, Fort Moultrie",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 7.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8665426",
+     "name": "Shem Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.75,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8664992",
+     "name": "North Dewees Island, Capers Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.75
+     }
+    },
+    {
+     "id": "8665728",
+     "name": "Fort Sumter",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 10.01,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664941",
+     "name": "Capers Creek, South Capers Island",
+     "type": "R",
+     "reference_id": "",
+     "km": 10.16,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8665726",
+     "name": "Fort Johnson",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 11.96,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665192",
+     "name": "Hobcaw Point",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.05,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8664878",
+     "name": "Old Capers Landing, Santee Pass, Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.51,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.99
+     }
+    },
+    {
+     "id": "8664782",
+     "name": "Parker Island, Horlbeck Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.54,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.7
+     }
+    },
+    {
+     "id": "8665530",
+     "name": "CHARLESTON (Customhouse Wharf)",
+     "type": "R",
+     "reference_id": "",
+     "km": 13.66,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.24
+     }
+    },
+    {
+     "id": "8664611",
+     "name": "Big Paradise Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.47,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.57
+     }
+    },
+    {
+     "id": "8664801",
+     "name": "Price Creek, North Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.3,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.84
+     }
+    },
+    {
+     "id": "8664582",
+     "name": "Woodville",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.31,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.23
+     }
+    },
+    {
+     "id": "8664545",
+     "name": "Cainhoy",
+     "type": "R",
+     "reference_id": "",
+     "km": 16.23,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8665775",
+     "name": "James Island Creek, 1 mi. above ent.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.64,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8665495",
+     "name": "South Ashley Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.74,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.27
+     }
+    },
+    {
+     "id": "TEC3061",
+     "name": "Shipyard Creek, 0.8 mile above entrance.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.89,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8664701",
+     "name": "Nowell Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.94,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.96
+     }
+    },
+    {
+     "id": "8664945",
+     "name": "Clouter Creek, south entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.04,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.36
+     }
+    },
+    {
+     "id": "8665145",
+     "name": "Duck Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.29,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.56
+     }
+    },
+    {
+     "id": "8665613",
+     "name": "Wappoo Creek, highway bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.43,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.19
+     }
+    },
+    {
+     "id": "8666467",
+     "name": "Folly River, north, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.43,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8664688",
+     "name": "Clouter Creek, north entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.79,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.47
+     }
+    },
+    {
+     "id": "8664442",
+     "name": "Moores Landing, ICWW, Sewee Bay",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.16,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.01
+     }
+    },
+    {
+     "id": "8665101",
+     "name": "Cosgrove Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.24,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.62
+     }
+    },
+    {
+     "id": "8665424",
+     "name": "Folly Creek, Hwy. 171 bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.53,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.48
+     }
+    },
+    {
+     "id": "8664621",
+     "name": "Wharf Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.54,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8666652",
+     "name": "Folly River Bridge, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.99,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "TEC3127",
+     "name": "Folly Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.11,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.13
+     }
+    },
+    {
+     "id": "8665641",
+     "name": "Elliott Cut entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.12,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.08
+     }
+    },
+    {
+     "id": "8664662",
+     "name": "Goose Creek entrance",
+     "type": "R",
+     "reference_id": "",
+     "km": 21.21,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.64
+     }
+    },
+    {
+     "id": "8664515",
+     "name": "Snow Point, 0.4 mi. North of",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.95,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.32
+     }
+    },
+    {
+     "id": "8665099",
+     "name": "I-526 bridge",
+     "type": "R",
+     "reference_id": "",
+     "km": 23.45,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "TEC3023",
+     "name": "Jack Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.34,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8666283",
+     "name": "Abbapoola Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.71,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8664541",
+     "name": "Yeamans Hall, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.8,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8664589",
+     "name": "Hanahan, Turkey Creek, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.26,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.78
+     }
+    },
+    {
+     "id": "8665002",
+     "name": "Drayton, Bee's Ferry",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.49,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8665589",
+     "name": "Sandblasters, Pennys Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.77,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8665599",
+     "name": "Pennys Creek, west entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.41,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.22
+     }
+    },
+    {
+     "id": "8664131",
+     "name": "Back River Reservoir, West Branch",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.44,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 0.55
+     }
+    },
+    {
+     "id": "8666767",
+     "name": "Snake Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.6,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8664022",
+     "name": "General Dynamics Pier",
+     "type": "R",
+     "reference_id": "",
+     "km": 28.07,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.4
+     }
+    }
+   ]
+  },
+  {
+   "spot": "Wild Dunes",
+   "slug": "wild-dunes",
+   "lat": 32.797412,
+   "lng": -79.747267,
+   "station": "8665387",
+   "station_km": 4.76,
+   "candidates": [
+    {
+     "id": "8665494",
+     "name": "Isle of Palms Pier",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 3.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8665111",
+     "name": "South Dewees Island, Dewees Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 4.43,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.96
+     }
+    },
+    {
+     "id": "8665167",
+     "name": "Hamlin Sound",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 4.92,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665552",
+     "name": "Breach Inlet, Isle of Palms",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 6.45,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.92
+     }
+    },
+    {
+     "id": "8664992",
+     "name": "North Dewees Island, Capers Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 7.15,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.75
+     }
+    },
+    {
+     "id": "8664941",
+     "name": "Capers Creek, South Capers Island",
+     "type": "R",
+     "reference_id": "",
+     "km": 7.6,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "TEC3047",
+     "name": "Sullivans Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 8.74,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665567",
+     "name": "Ben Sawyer Bridge, ICWW",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.23,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8664878",
+     "name": "Old Capers Landing, Santee Pass, Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.99
+     }
+    },
+    {
+     "id": "8665637",
+     "name": "The Cove, Fort Moultrie",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 10.91,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664801",
+     "name": "Price Creek, North Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.53,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.84
+     }
+    },
+    {
+     "id": "8665426",
+     "name": "Shem Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.57,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665728",
+     "name": "Fort Sumter",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.06,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664611",
+     "name": "Big Paradise Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.08,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.57
+     }
+    },
+    {
+     "id": "8664782",
+     "name": "Parker Island, Horlbeck Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.35,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.7
+     }
+    },
+    {
+     "id": "8664582",
+     "name": "Woodville",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.69,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.23
+     }
+    },
+    {
+     "id": "8665192",
+     "name": "Hobcaw Point",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.53,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8665726",
+     "name": "Fort Johnson",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.01,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8664545",
+     "name": "Cainhoy",
+     "type": "R",
+     "reference_id": "",
+     "km": 16.32,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8665530",
+     "name": "CHARLESTON (Customhouse Wharf)",
+     "type": "R",
+     "reference_id": "",
+     "km": 16.59,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.24
+     }
+    },
+    {
+     "id": "8664442",
+     "name": "Moores Landing, ICWW, Sewee Bay",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.72,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.01
+     }
+    },
+    {
+     "id": "8664621",
+     "name": "Wharf Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.74,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664701",
+     "name": "Nowell Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 18.27,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.96
+     }
+    },
+    {
+     "id": "8664945",
+     "name": "Clouter Creek, south entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.16,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.36
+     }
+    },
+    {
+     "id": "TEC3061",
+     "name": "Shipyard Creek, 0.8 mile above entrance.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.36,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8665495",
+     "name": "South Ashley Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.64,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.27
+     }
+    },
+    {
+     "id": "8665775",
+     "name": "James Island Creek, 1 mi. above ent.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.68,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8665145",
+     "name": "Duck Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.82,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.56
+     }
+    },
+    {
+     "id": "8666467",
+     "name": "Folly River, north, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.26,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8664688",
+     "name": "Clouter Creek, north entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.34,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.47
+     }
+    },
+    {
+     "id": "8665613",
+     "name": "Wappoo Creek, highway bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.41,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.19
+     }
+    },
+    {
+     "id": "TEC3023",
+     "name": "Jack Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.51,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8665101",
+     "name": "Cosgrove Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.76,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.62
+     }
+    },
+    {
+     "id": "8664662",
+     "name": "Goose Creek entrance",
+     "type": "R",
+     "reference_id": "",
+     "km": 22.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.64
+     }
+    },
+    {
+     "id": "8665424",
+     "name": "Folly Creek, Hwy. 171 bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.47,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.48
+     }
+    },
+    {
+     "id": "8666652",
+     "name": "Folly River Bridge, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.87,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "TEC3127",
+     "name": "Folly Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.91,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.13
+     }
+    },
+    {
+     "id": "8664515",
+     "name": "Snow Point, 0.4 mi. North of",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.05,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.32
+     }
+    },
+    {
+     "id": "8665641",
+     "name": "Elliott Cut entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.09,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.08
+     }
+    },
+    {
+     "id": "8665099",
+     "name": "I-526 bridge",
+     "type": "R",
+     "reference_id": "",
+     "km": 26.01,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8664541",
+     "name": "Yeamans Hall, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.48,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8666283",
+     "name": "Abbapoola Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.73,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8664589",
+     "name": "Hanahan, Turkey Creek, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 28.12,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.78
+     }
+    },
+    {
+     "id": "8664131",
+     "name": "Back River Reservoir, West Branch",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 28.21,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 0.55
+     }
+    },
+    {
+     "id": "8664022",
+     "name": "General Dynamics Pier",
+     "type": "R",
+     "reference_id": "",
+     "km": 28.64,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.4
+     }
+    },
+    {
+     "id": "8665002",
+     "name": "Drayton, Bee's Ferry",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.0,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8665589",
+     "name": "Sandblasters, Pennys Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.7,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.34
+     }
+    }
+   ]
+  },
+  {
+   "spot": "Windjammer",
+   "slug": "windjammer",
+   "lat": 32.784731,
+   "lng": -79.785526,
+   "station": "8665387",
+   "station_km": 2.34,
+   "candidates": [
+    {
+     "id": "8665494",
+     "name": "Isle of Palms Pier",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 0.17,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "8665552",
+     "name": "Breach Inlet, Isle of Palms",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 2.6,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.92
+     }
+    },
+    {
+     "id": "8665167",
+     "name": "Hamlin Sound",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 4.67,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "TEC3047",
+     "name": "Sullivans Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 4.9,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665567",
+     "name": "Ben Sawyer Bridge, ICWW",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 5.4,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665637",
+     "name": "The Cove, Fort Moultrie",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 7.07,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8665111",
+     "name": "South Dewees Island, Dewees Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 7.71,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.96
+     }
+    },
+    {
+     "id": "8665426",
+     "name": "Shem Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.04,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.18
+     }
+    },
+    {
+     "id": "8665728",
+     "name": "Fort Sumter",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 9.21,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664992",
+     "name": "North Dewees Island, Capers Inlet",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 10.57,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.75
+     }
+    },
+    {
+     "id": "8664941",
+     "name": "Capers Creek, South Capers Island",
+     "type": "R",
+     "reference_id": "",
+     "km": 10.88,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8665726",
+     "name": "Fort Johnson",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 11.17,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.07
+     }
+    },
+    {
+     "id": "8665192",
+     "name": "Hobcaw Point",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 11.46,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8664782",
+     "name": "Parker Island, Horlbeck Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 12.46,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.7
+     }
+    },
+    {
+     "id": "8665530",
+     "name": "CHARLESTON (Customhouse Wharf)",
+     "type": "R",
+     "reference_id": "",
+     "km": 12.92,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.24
+     }
+    },
+    {
+     "id": "8664878",
+     "name": "Old Capers Landing, Santee Pass, Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 13.24,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.99
+     }
+    },
+    {
+     "id": "8664611",
+     "name": "Big Paradise Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 14.93,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.57
+     }
+    },
+    {
+     "id": "8664582",
+     "name": "Woodville",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.81,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.23
+     }
+    },
+    {
+     "id": "8665775",
+     "name": "James Island Creek, 1 mi. above ent.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 15.85,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8665495",
+     "name": "South Ashley Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.0,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.27
+     }
+    },
+    {
+     "id": "8664801",
+     "name": "Price Creek, North Capers Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.05,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.84
+     }
+    },
+    {
+     "id": "TEC3061",
+     "name": "Shipyard Creek, 0.8 mile above entrance.",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.29,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8664545",
+     "name": "Cainhoy",
+     "type": "R",
+     "reference_id": "",
+     "km": 16.32,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8664945",
+     "name": "Clouter Creek, south entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.55,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.36
+     }
+    },
+    {
+     "id": "8664701",
+     "name": "Nowell Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 16.69,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.96
+     }
+    },
+    {
+     "id": "8665145",
+     "name": "Duck Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.66,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.56
+     }
+    },
+    {
+     "id": "8665613",
+     "name": "Wappoo Creek, highway bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.67,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.19
+     }
+    },
+    {
+     "id": "8666467",
+     "name": "Folly River, north, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 17.7,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.45
+     }
+    },
+    {
+     "id": "8664688",
+     "name": "Clouter Creek, north entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.47,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.47
+     }
+    },
+    {
+     "id": "8665101",
+     "name": "Cosgrove Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.61,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.62
+     }
+    },
+    {
+     "id": "8665424",
+     "name": "Folly Creek, Hwy. 171 bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 19.76,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.48
+     }
+    },
+    {
+     "id": "8666652",
+     "name": "Folly River Bridge, Folly Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.24,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8665641",
+     "name": "Elliott Cut entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.35,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.08
+     }
+    },
+    {
+     "id": "TEC3127",
+     "name": "Folly Island (outer coast)",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.39,
+     "roster_spots": 1,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.13
+     }
+    },
+    {
+     "id": "8664442",
+     "name": "Moores Landing, ICWW, Sewee Bay",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 20.84,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.01
+     }
+    },
+    {
+     "id": "8664662",
+     "name": "Goose Creek entrance",
+     "type": "R",
+     "reference_id": "",
+     "km": 20.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.64
+     }
+    },
+    {
+     "id": "8664621",
+     "name": "Wharf Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 21.29,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.1
+     }
+    },
+    {
+     "id": "8664515",
+     "name": "Snow Point, 0.4 mi. North of",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 22.74,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.32
+     }
+    },
+    {
+     "id": "8665099",
+     "name": "I-526 bridge",
+     "type": "R",
+     "reference_id": "",
+     "km": 22.82,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8666283",
+     "name": "Abbapoola Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 23.92,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.33
+     }
+    },
+    {
+     "id": "8664541",
+     "name": "Yeamans Hall, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 24.42,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.02
+     }
+    },
+    {
+     "id": "TEC3023",
+     "name": "Jack Creek entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 25.09,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 4.98
+     }
+    },
+    {
+     "id": "8664589",
+     "name": "Hanahan, Turkey Creek, Goose Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 25.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.78
+     }
+    },
+    {
+     "id": "8665002",
+     "name": "Drayton, Bee's Ferry",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 25.86,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.73
+     }
+    },
+    {
+     "id": "8665589",
+     "name": "Sandblasters, Pennys Creek",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.02,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.34
+     }
+    },
+    {
+     "id": "8665599",
+     "name": "Pennys Creek, west entrance",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.66,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.22
+     }
+    },
+    {
+     "id": "8666767",
+     "name": "Snake Island",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 26.83,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 5.3
+     }
+    },
+    {
+     "id": "8664131",
+     "name": "Back River Reservoir, West Branch",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 27.31,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 11,
+      "mean_range_ft": 0.55
+     }
+    },
+    {
+     "id": "8664022",
+     "name": "General Dynamics Pier",
+     "type": "R",
+     "reference_id": "",
+     "km": 27.99,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 4.4
+     }
+    },
+    {
+     "id": "8664841",
+     "name": "Magnolia Gardens",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.64,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.79
+     }
+    },
+    {
+     "id": "8666029",
+     "name": "Church Creek bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.66,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 6.98
+     }
+    },
+    {
+     "id": "8665475",
+     "name": "Limehouse Bridge",
+     "type": "S",
+     "reference_id": "8665530",
+     "km": 29.87,
+     "roster_spots": 0,
+     "hilo": {
+      "result": "rows",
+      "rows": 12,
+      "mean_range_ft": 5.65
+     }
+    }
+   ]
+  }
+ ],
+ "errors": {},
+ "generated_at": "2026-10-30T14:01:25.214719+00:00"
+}

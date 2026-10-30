@@ -570,6 +570,11 @@ TIDE_KNOWN_BAD_TTL_DAYS = 30           # a station CONFIRMED to have no predicti
                                        #   long, then re-verified — so one that comes back online (or was
                                        #   wrongly classified) recovers on its own, no CLI needed. The
                                        #   permanent verdict must not rest solely on our classification.
+TIDE_KNOWN_BAD_PROBE_HOURS = 72        # before marking a station known-bad, ask for it again over the
+                                       #   7-day output window and then over this short horizon; rows on
+                                       #   either and it is NOT marked (tides._recheck_short_horizon).
+                                       #   8665387 was marked on 2026-10-09 by a 643 h request while a
+                                       #   72 h request returned its high/low tides.
 TIDE_STAGE_DEADLINE_S = 1200.0         # whole-stage wall-clock budget (20 min); on expiry, bail with
                                        #   what we have and mark the rest stale (Fix E). Only binds on a
                                        #   slow-but-ALIVE backend — a true outage trips the breaker in

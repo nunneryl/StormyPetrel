@@ -97,6 +97,14 @@ name: sw1-raycast
 #       cycles, the CG1 cells around the sample cell of each spot in `spots` (default the four
 #       Hatteras spots) and of the most often low flagged spots: wet or dry, NWPS Hs, peak period
 #       and direction, and every field the GRIB carries. SELECT only.
+#   mode = tide-station: READ-ONLY (pipeline/tide_station.py), run 63 onward. NOAA CO-OPS only, no
+#       Supabase. For each spot in `spots` (default the five on station 8665387: Berts Bar, Dewees
+#       Island, Isle of Palms, Wild Dunes, Windjammer): whether NOAA's prediction-station list
+#       carries the assigned station (type, reference station), its mdapi record, and the
+#       pipeline's own predictions request on every datum, hilo and hourly, classified as
+#       forecast/tides.py classifies it; then every prediction station within 30 km, nearest
+#       first, with its type, distance, a 72 h hilo request from this runner and its mean range,
+#       and how many roster spots already use it.
 
 on:
   workflow_dispatch:
@@ -118,6 +126,7 @@ on:
           - surf-preview
           - period-preview
           - nwps-cells
+          - tide-station
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -134,7 +143,7 @@ on:
         default: false
         type: boolean
       spots:
-        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones. Comma-separated
+        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones; (tide-station) spot slugs whose tide stations to check. Comma-separated
         required: false
         default: ''
         type: string
@@ -174,7 +183,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -810,5 +819,44 @@ jobs:
           path: |
             nwps_cells.json
             nwps_cells.csv
+          retention-days: 90
+          if-no-files-found: warn
+
+  tide-station:
+    name: sw1 tide stations from the runner (read-only)
+    if: ${{ inputs.mode == 'tide-station' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Ask NOAA CO-OPS about the spots' tide stations and the stations near them
+        env:
+          SPOTS: ${{ inputs.spots }}
+        run: |
+          python -m pipeline.tide_station --spots "$SPOTS" --out tide_station.json
+
+      - name: Keep the results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: tide-station-${{ github.run_number }}
+          path: tide_station.json
           retention-days: 90
           if-no-files-found: warn
