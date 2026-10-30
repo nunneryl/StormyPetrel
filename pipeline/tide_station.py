@@ -5,9 +5,11 @@ It reads the roster and NOAA CO-OPS and writes nothing but its own report (--out
 
     python -m pipeline.tide_station [--spots SLUG,...] [--roster ROSTER.json] [--out OUT.json]
 
-THE QUESTION. Since at least 2026-10-14 every full pipeline run has skipped station 8665387 as
-known-bad (pipeline/forecast/tides.py: every datum answered "No Predictions data was found"), so
-Berts Bar, Dewees Island, Isle of Palms, Wild Dunes and Windjammer publish no tide. Is the station
+THE QUESTION. Since the 2026-10-09 10:47Z run every full pipeline run has skipped station 8665387
+as known-bad (pipeline/forecast/tides.py: every datum answered "No Predictions data was found"),
+so Berts Bar, Dewees Island, Isle of Palms, Wild Dunes and Windjammer published no tide. Run 63
+answered it; docs/face_validation/run-63/README.md has the result, and the five now use the
+ocean-side stations it found. Is the station
 retired, a station NOAA publishes no predictions for, or one that fails only from GitHub's
 runners, as TWC0965 did for Kalaloch Beach (pipeline/data/spot_tide_stations.json)? And which
 working station is nearest each spot?
@@ -190,7 +192,7 @@ def print_report(rep):
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--roster", default="pipeline/spots_enriched.json")
-    p.add_argument("--spots", default="", help="comma-separated slugs (default: the five on 8665387)")
+    p.add_argument("--spots", default="", help="comma-separated slugs (default: the five Isle of Palms spots once on 8665387)")
     p.add_argument("--out", default=None)
     a = p.parse_args(argv)
     from .http import session

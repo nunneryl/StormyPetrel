@@ -28,3 +28,25 @@ Every station listed answered with 11 or 12 extremes. All are subordinate to 866
 | Isle of Palms | 8665494 Isle of Palms Pier, 0.83 km, 5.02 ft | 8665552 Breach Inlet, 3.40 km |
 | Wild Dunes | 8665494 Isle of Palms Pier, 3.86 km, 5.02 ft | 8665111 South Dewees Island, Dewees Inlet, 4.43 km |
 | Windjammer | 8665494 Isle of Palms Pier, 0.17 km, 5.02 ft | 8665552 Breach Inlet, 2.60 km |
+
+## When 8665387 was marked, and by which request (forecast-pipeline logs)
+
+Read from the full-pipeline job logs (downloaded whole, searched for `pipeline.forecast.tides`):
+
+| Run (UTC start) | Known-bad skipped | 8665387 |
+|---|---|---|
+| 2026-10-04 15:53 | 0 | cached |
+| 2026-10-08 17:55 | 0 | cached |
+| 2026-10-08 23:49 | 0 | cached |
+| **2026-10-09 10:47** (run 37919710629) | 0 | **marked** |
+| 2026-10-09 17:29 | 1 | skipped |
+| 2026-10-10 10:02 | 1 | skipped |
+| 2026-10-11 10:12 | 1 | skipped |
+| 2026-10-30 13:45 | 1 | skipped (the only known-bad station; the other 232 were cached) |
+
+- **The request.** At 10:48:17Z on 2026-10-09 the station's cache had run out, so the fetcher asked NOAA for `product=predictions`, `interval=hilo`, `begin_date=20261009` and its own horizon of 643 h, on MLLW, then STND, then MSL.
+  - All three answered HTTP 200: "No Predictions data was found. Please make sure the Datum input is valid."
+  - Hourly was not asked: the cache said hilo-only. So the 30-day mark rested on those three requests.
+- **The same station answers today.** On 2026-10-30, `interval=hilo`, MLLW, 72 h returned 11 rows from the runner (this run).
+- **Why NOAA answered that way on Oct 9 is not in the log.** It answered "no predictions" (not a throttle or an error) to the long request. An earlier fetch over the same 643 h horizon (fixed per station) had worked: the station was served from cache through 2026-10-08. Run 63 did not repeat the Oct 9 request (643 h from 20261009), so this does not establish whether the long range or the day was the cause.
+- **What changed.** `forecast/tides.py` now asks again before marking: the 7-day output window (168 h), then 72 h. Rows on either and the station is not marked (`test_tide_known_bad_recheck.py`). The five spots move to the stations above, so none of them uses 8665387.

@@ -134,13 +134,62 @@ def test_the_report_names_the_station_and_its_neighbours(capsys):
            "mean range 4.6 ft" in out
 
 
-def test_the_default_spots_are_the_five_on_8665387():
-    assert TS.DEFAULT_SPOTS == ("berts-bar", "dewees-island", "isle-of-palms", "wild-dunes",
-                                "windjammer")
+# The five spots the tool was written for, and where they went after run 63. Station, name and
+# distance written out from docs/face_validation/run-63/tide_station.json (NOAA's prediction
+# list, read from the runner on 2026-10-30; distances in km to 2 decimals as enrich writes them).
+ISLE_OF_PALMS = {
+    "berts-bar":     ("TEC3047", "Sullivans Island (outer coast)", 1.03),
+    "dewees-island": ("8665111", "South Dewees Island, Dewees Inlet", 1.71),
+    "isle-of-palms": ("8665494", "Isle of Palms Pier", 0.83),
+    "wild-dunes":    ("8665494", "Isle of Palms Pier", 3.86),
+    "windjammer":    ("8665494", "Isle of Palms Pier", 0.17),
+}
+
+
+def _roster_by_slug():
     import json
     import os
     from pipeline.db_import import _slugify
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     with open(os.path.join(root, "pipeline", "spots_enriched.json")) as f:
-        roster = {_slugify(s["name"]): s for s in json.load(f)}
-    assert {str(roster[s]["nearest_tide_station_id"]) for s in TS.DEFAULT_SPOTS} == {"8665387"}
+        return {_slugify(s["name"]): s for s in json.load(f)}
+
+
+def _run_63():
+    import json
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    with open(os.path.join(root, "docs", "face_validation", "run-63", "tide_station.json")) as f:
+        return {s["slug"]: s for s in json.load(f)["spots"]}
+
+
+def test_the_default_spots_are_the_five_isle_of_palms_spots():
+    assert TS.DEFAULT_SPOTS == ("berts-bar", "dewees-island", "isle-of-palms", "wild-dunes",
+                                "windjammer")
+    assert tuple(ISLE_OF_PALMS) == TS.DEFAULT_SPOTS
+
+
+def test_the_five_are_on_the_ocean_side_stations_at_their_measured_distances():
+    roster = _roster_by_slug()
+    for slug, (sid, _name, km) in ISLE_OF_PALMS.items():
+        assert roster[slug]["nearest_tide_station_id"] == sid, (slug, roster[slug])
+        assert roster[slug]["nearest_tide_station_dist_km"] == km, (slug, roster[slug])
+        # Not an override: each is the nearest station, so enrich's own rule picks it.
+        assert "nearest_tide_station_source" not in roster[slug], (slug, roster[slug])
+
+
+def test_no_spot_is_left_on_8665387():
+    assert [s for s, r in _roster_by_slug().items()
+            if str(r.get("nearest_tide_station_id")) == "8665387"] == []
+
+
+def test_each_station_is_the_nearest_in_run_63_and_answered_its_72_h_request():
+    """The evidence the choice rests on, checked against the committed artifact: the chosen
+    station is the first (nearest) candidate, at the distance the roster carries, and its
+    72 h hilo request on MLLW returned 11 high/low tides from the runner."""
+    run = _run_63()
+    for slug, (sid, name, km) in ISLE_OF_PALMS.items():
+        first = run[slug]["candidates"][0]
+        assert (first["id"], first["name"], first["km"]) == (sid, name, km), (slug, first)
+        assert first["hilo"]["result"] == "rows" and first["hilo"]["rows"] == 11, (slug, first)
+        assert run[slug]["station"] == "8665387", slug

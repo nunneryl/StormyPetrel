@@ -405,6 +405,12 @@ def test_the_roster_carries_point_grenvilles_measured_distance():
 #                                         8.3 km — same correction, Georgia coast
 #   the fifteen DAMPED-STATION swaps      a lagoon, bay or sound gauge replaced by the
 #                                         ocean-side one (data-quality runs 36 and 37)
+#   the five Isle of Palms spots          off 8665387, a Hamlin Creek gauge behind the
+#                                         island, onto the nearest ocean-side stations
+#                                         (sw1-raycast run 63; test_tide_known_bad_recheck.py
+#                                         and the five-spot pins in test_tide_station.py).
+#                                         Not overrides: each is the nearest station in
+#                                         NOAA's current prediction list.
 _DAMPED_SWAPS = {"Indialantic", "Ocean Ave", "Spessard", "Bay Head", "Mantoloking",
                  "Island Beach State Park", "Seaside Heights", "Seaside Park", "Avon Pier",
                  "Rodanthe", "S-Turns", "Salvo", "Assateague Island MD", "Port A Beach",
@@ -412,6 +418,7 @@ _DAMPED_SWAPS = {"Indialantic", "Ocean Ave", "Spessard", "Bay Head", "Mantolokin
 _HAND_SET = {"Kalaloch Beach", "Caspar", "Jug Handle", "Mackerricher", "Ten Mile Beach",
              "Key West", "Captiva", "Reid State Park",
              "St Simons Island", "Jekyll Island"} | _DAMPED_SWAPS
+_ISLE_OF_PALMS = {"Berts Bar", "Dewees Island", "Isle of Palms", "Wild Dunes", "Windjammer"}
 
 
 def test_no_other_spot_changed_station():
@@ -441,14 +448,19 @@ def test_no_other_spot_changed_station():
     origin/main (25c5c03) are exactly those fifteen, and the digest over the remaining 623 is
     byte-identical between origin/main's roster and this tree. Over the 638 the pin was
     9a5317b4b03976e2547073d9b0e59cba26dbeb448c6c2d00f4b7864ab11d631b.
+
+    THE ISLE OF PALMS FIVE OF 2026-10-30 (_ISLE_OF_PALMS): the five spots that differ from
+    origin/main (6ecc9a5) are exactly those five, and the digest over the remaining 618 is
+    byte-identical between origin/main's roster and this tree. Over the 623 the pin was
+    e859b67d354ac43dd366fc371479fe9e57ec35da20dbe809c09a697282265344.
     """
     roster = _roster()
     assert len(roster) == 648, len(roster)
     pairs = sorted((str(s.get("name")), str(s.get("nearest_tide_station_id")))
-                   for s in roster if s.get("name") not in _HAND_SET)
-    assert len(pairs) == 623, len(pairs)
+                   for s in roster if s.get("name") not in _HAND_SET | _ISLE_OF_PALMS)
+    assert len(pairs) == 618, len(pairs)
     digest = hashlib.sha256("\n".join(f"{a}\t{b}" for a, b in pairs).encode()).hexdigest()
-    assert digest == "e859b67d354ac43dd366fc371479fe9e57ec35da20dbe809c09a697282265344", digest
+    assert digest == "65f4e49a765ba14238797ca0868d211c70adf3fa3f15ef9f180085acf12aae83", digest
 
 
 def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
@@ -464,8 +476,9 @@ def test_TWC0965_is_off_the_roster_and_point_grenville_now_serves_two_spots():
     # 8417177). St Simons and Jekyll then added ONE between them — they share 8677344 — so 237.
     # The damped-station swaps left seven stations with no spot (8721843, 8532715, 8533135,
     # 8653951, 8653215, 8570536, 8775237) and brought in three not yet in service (8533071,
-    # 8652678, 8570280): 237 - 7 + 3 = 233.
-    assert len({i for i in ids if i}) == 233, len({i for i in ids if i})
+    # 8652678, 8570280): 237 - 7 + 3 = 233. The Isle of Palms five left 8665387 with no spot
+    # and brought in three not yet in service (TEC3047, 8665111, 8665494): 233 - 1 + 3 = 235.
+    assert len({i for i in ids if i}) == 235, len({i for i in ids if i})
 
 
 def test_the_entry_records_that_point_grenville_is_a_SUBORDINATE():
