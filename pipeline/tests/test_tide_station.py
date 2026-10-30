@@ -174,8 +174,9 @@ def test_the_five_are_on_the_ocean_side_stations_at_their_measured_distances():
     for slug, (sid, _name, km) in ISLE_OF_PALMS.items():
         assert roster[slug]["nearest_tide_station_id"] == sid, (slug, roster[slug])
         assert roster[slug]["nearest_tide_station_dist_km"] == km, (slug, roster[slug])
-        # Not an override: each is the nearest station, so enrich's own rule picks it.
-        assert "nearest_tide_station_source" not in roster[slug], (slug, roster[slug])
+        # Pinned in spot_tide_stations.json (test_tide_override_isle_of_palms.py), as Algo 5b
+        # stamps it.
+        assert roster[slug]["nearest_tide_station_source"] == "override", (slug, roster[slug])
 
 
 def test_no_spot_is_left_on_8665387():

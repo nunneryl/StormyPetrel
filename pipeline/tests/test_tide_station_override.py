@@ -408,9 +408,9 @@ def test_the_roster_carries_point_grenvilles_measured_distance():
 #   the five Isle of Palms spots          off 8665387, a Hamlin Creek gauge behind the
 #                                         island, onto the nearest ocean-side stations
 #                                         (sw1-raycast run 63; test_tide_known_bad_recheck.py
-#                                         and the five-spot pins in test_tide_station.py).
-#                                         Not overrides: each is the nearest station in
-#                                         NOAA's current prediction list.
+#                                         and test_tide_override_isle_of_palms.py), pinned
+#                                         as overrides because the station list the roster
+#                                         was built from does not have them.
 _DAMPED_SWAPS = {"Indialantic", "Ocean Ave", "Spessard", "Bay Head", "Mantoloking",
                  "Island Beach State Park", "Seaside Heights", "Seaside Park", "Avon Pier",
                  "Rodanthe", "S-Turns", "Salvo", "Assateague Island MD", "Port A Beach",
