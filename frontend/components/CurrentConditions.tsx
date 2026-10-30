@@ -49,7 +49,6 @@ export function CurrentConditions({
   serverNowMs,
   offshoreDeg,
   windowArcs,
-  faceAction,
 }: {
   /** The spot's forecast rows, INCLUDING the recent past. The current hour's row is the one
    *  whose bucket contains now, so a window starting at `now` would exclude it the moment
@@ -61,7 +60,6 @@ export function CurrentConditions({
   offshoreDeg: number | null | undefined;
   /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
   windowArcs: Spot['swell_window_arcs'];
-  faceAction?: React.ReactNode;
 }) {
   // Server render and first client render both use serverNowMs — no hydration mismatch.
   // The effect then corrects to the reader's clock, and the interval keeps a page that is
@@ -134,7 +132,6 @@ export function CurrentConditions({
           )
         }
         hint={tp ? `${fmtSec(tp)} period` : null}
-        action={faceAction}
       />
       <BigTile
         label="Swell"

@@ -52,10 +52,13 @@ WHAT EACH IS COMPARED WITH
               the spot's orientation) and AM / PM; whether its numbers are face heights is not
               established here, so Hawaii is reported apart. A spot belongs to the zone whose
               api.weather.gov outline is nearest, within ZONE_TOLERANCE_KM.
-  reports     visitor surf_reports (size_bucket, 'the average of the sets ridden') against the
-              archived hour, on frontend/lib/surfReport.ts's BUCKET_FACE_FT scale; a face is
-              inside a bucket when it is nearer that bucket's face than either neighbour's.
-              Hawaii is held out, as that file says.
+  reports     visitor surf_reports against the archived hour, on frontend/lib/surfReport.ts's
+              BUCKET_FACE_FT scale; a face is inside a bucket when it is nearer that bucket's
+              face than either neighbour's. Hawaii is held out, as that file says. SPLIT BY
+              question_version (migration 027), never pooled: version 1 asked 'the average of
+              the sets you rode', version 2 'How big were most waves?'. public_totals is the
+              only summary fit for a public page: per version and region, a count and three
+              shares, and only for regions with at least MIN_PUBLIC_REPORTS reports.
 
 HOURS LEFT OUT, and counted
   - held spots: Mexico Beach, Oak Island Pier, and the Gulf suspects held after run 50
@@ -145,6 +148,9 @@ WEEKDAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", 
 TODAY_PERIODS = ("TODAY", "REST OF TODAY", "THIS MORNING", "THIS AFTERNOON",
                  "REST OF THIS AFTERNOON")
 CANDIDATES = ("published", "display", "typical", "sets")
+# The fewest reports a region needs before public_totals shows it: under this, one or two
+# reporters' habits would be the figure. Smaller regions are counted as suppressed, not shown.
+MIN_PUBLIC_REPORTS = 20
 FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_tp, swell_dp, swell_source, face_ft, "
                  "face_ft_raw, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, "
                  "swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, "
@@ -551,7 +557,7 @@ def fetch_rows(client, spot_id, since, until) -> list[dict]:
 
 def fetch_reports(client, since) -> list[dict]:
     return _page(lambda: client.table("surf_reports")
-                 .select("spot_id, observed_hour, size_bucket")
+                 .select("spot_id, observed_hour, size_bucket, sets_bucket, question_version")
                  .gte("observed_hour", since.isoformat()).order("id"))
 
 
@@ -821,12 +827,50 @@ def compare_reports(reports: list[dict], by_hour: dict, names: dict) -> list[dic
             continue
         ref = BUCKET_FACE_FT.get(rp["size_bucket"])
         rec = {k: h[k] for k in ("spot", "state", "region", "type", "office", "group", "hour")}
-        rec.update(bucket=rp["size_bucket"], bucket_ft=ref)
+        # A row from before migration 027 has no version: it answered version 1.
+        rec.update(bucket=rp["size_bucket"], bucket_ft=ref,
+                   question_version=rp.get("question_version") or 1,
+                   sets_bucket=rp.get("sets_bucket"))
         for c in CANDIDATES:
             rec[c] = h.get(c)
             rec[f"{c}_side"] = bucket_side(rec[c], rp["size_bucket"])
             rec[f"{c}_ratio"] = _ratio(rec[c], ref)
         out.append(rec)
+    return out
+
+
+def reports_by_version(rows: list[dict]) -> dict:
+    """{version: {n, by_region, by_type, by_bucket}} over headline, non-Hawaii report rows, one
+    entry per question_version and never pooled."""
+    by = defaultdict(list)
+    for r in rows:
+        by[r["question_version"]].append(r)
+    return {str(v): {"n": len(rs), "by_region": tally(rs, "region"),
+                     "by_type": tally(rs, "type"), "by_bucket": tally(rs, "bucket")}
+            for v, rs in sorted(by.items())}
+
+
+def public_totals(rows: list[dict], min_reports: int = MIN_PUBLIC_REPORTS) -> dict:
+    """Totals fit for a public page, per question_version and region: how many reports and the
+    shares whose published height was inside, below or above the reported bucket. A region with
+    fewer than *min_reports* is not shown; it is counted under 'suppressed'. No spot, hour or
+    report appears. *rows*: headline, non-Hawaii report rows."""
+    out = {"min_reports": min_reports, "by_version": {}}
+    by = defaultdict(lambda: defaultdict(list))
+    for r in rows:
+        by[r["question_version"]][r["region"]].append(r)
+    for v, regions in sorted(by.items()):
+        shown, hidden = {}, {"regions": 0, "reports": 0}
+        for region, rs in sorted(regions.items(), key=lambda kv: str(kv[0])):
+            if len(rs) < min_reports:
+                hidden["regions"] += 1
+                hidden["reports"] += len(rs)
+                continue
+            sides = Counter(r.get("published_side") for r in rs if r.get("published_side"))
+            n = sum(sides.values())
+            shown[str(region)] = {"n": len(rs), **{k: round(sides[k] / n, 3) if n else None
+                                                   for k in ("inside", "below", "above")}}
+        out["by_version"][str(v)] = {"regions": shown, "suppressed": hidden}
     return out
 
 
@@ -997,8 +1041,8 @@ def run(client, since: datetime, until: datetime, roster: list[dict], *, get=_ge
                 "by_spot": tally(head, "spot")},
         "reports": {"n_reports": len(reports), "n_paired": len(rep_rows),
                     "hawaii_held_out": sum(1 for r in rep_rows if r["state"] == "Hawaii"),
-                    "by_region": tally(rep_head, "region"), "by_type": tally(rep_head, "type"),
-                    "by_bucket": tally(rep_head, "bucket")},
+                    "by_version": reports_by_version(rep_head),
+                    "public_totals": public_totals(rep_head)},
         "_pairs": {"frf": frf["pairs"], "srf": srf_rows, "reports": rep_rows},
     }
 
@@ -1070,9 +1114,20 @@ def print_report(rep: dict) -> None:
     r = rep["reports"]
     print(f"\n=== 4. Visitor surf reports: {r['n_reports']} reports, {r['n_paired']} with an "
           f"archived hour, {r['hawaii_held_out']} Hawaii held out ===")
-    _table("by region", r["by_region"])
-    _table("by spot type", r["by_type"])
-    _table("by reported bucket", r["by_bucket"])
+    for v, e in r["by_version"].items():
+        print(f"\n  question version {v} ({e['n']} reports; never pooled with another version)")
+        _table("by region", e["by_region"])
+        _table("by spot type", e["by_type"])
+        _table("by reported bucket", e["by_bucket"])
+    pt = r["public_totals"]
+    print(f"\n  public totals (regions with at least {pt['min_reports']} reports; published height "
+          f"inside / below / above the reported bucket)")
+    for v, e in pt["by_version"].items():
+        for region, t in e["regions"].items():
+            print(f"    v{v} {region:24} n {t['n']:>5}  {_pct(t['inside']):>5} {_pct(t['below']):>5} "
+                  f"{_pct(t['above']):>5}")
+        print(f"    v{v} suppressed: {e['suppressed']['regions']} region(s), "
+              f"{e['suppressed']['reports']} report(s)")
     f = rep["fit"]
     print(f"\n=== 5. The scale on typical by period band: one k for every region, at most "
           f"{100 * f['cap']:.0f}% of hours above the NWS range ({f['hours']} headline hours, "

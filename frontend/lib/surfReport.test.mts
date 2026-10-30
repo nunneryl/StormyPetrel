@@ -41,6 +41,11 @@ import {
   isRatingVerdict,
   validateReport,
   submitReport,
+  BUCKET_HINT_FT,
+  DAILY_REPORT_CAP,
+  HONEYPOT_FIELD,
+  QUESTION_VERSION,
+  saltDay,
   type ReportDb,
   type ReportRow,
   type ReportKey,
@@ -104,6 +109,8 @@ type FakeOpts = {
   updateError?: string | null;
   /** Drop the row after the insert conflicts, to simulate a lost race. */
   vanishOnLookup?: boolean;
+  /** What countByReporter answers: a number, null (unreadable), or (default) the real count. */
+  count?: number | null;
 };
 
 /** A stand-in ReportDb. `spots` maps slug -> id; `forecasts` maps "id|hour" -> snapshot.
@@ -149,6 +156,8 @@ function fake(spots: Record<string, number>, opts: FakeOpts = {}): Fake {
       if (!row) return null;
       return {
         size_bucket: row.size_bucket,
+        sets_bucket: row.sets_bucket,
+        question_version: row.question_version,
         rating_verdict: row.rating_verdict,
         revision: row.revision,
       };
@@ -160,6 +169,10 @@ function fake(spots: Record<string, number>, opts: FakeOpts = {}): Fake {
       if (!row) return { ok: false as const, message: 'no such row' };
       Object.assign(row, patch);
       return { ok: true as const };
+    },
+    async countByReporter(hash) {
+      if (opts.count !== undefined) return opts.count;
+      return rows.filter((r) => r.reporter_hash === hash).length;
     },
   };
   return { db, rows, forecastLookups, spotLookups, patches };
@@ -300,7 +313,7 @@ console.log('\n4 — submit');
 // -- unknown slug -----------------------------------------------------------
 {
   const f = fake({ 'steamer-lane': 7 });
-  const out = await submitReport(f.db, body({ slug: 'not-a-spot' }), NOW, HASH);
+  const out = await submitReport(f.db, body({ slug: 'not-a-spot' }), NOW, () => HASH);
   eq('an unknown slug is rejected with 404', out.status, 404);
   eq('an unknown slug returns the unknown-spot error', out.body, { ok: false, error: 'unknown spot' });
   eq('an unknown slug writes no row', f.rows.length, 0);
@@ -310,14 +323,14 @@ console.log('\n4 — submit');
 // -- validation failures short-circuit before any database work --------------
 {
   const f = fake({ 'steamer-lane': 7 });
-  const out = await submitReport(f.db, body({ observed_hour: HOUR_NEXT }), NOW, HASH);
+  const out = await submitReport(f.db, body({ observed_hour: HOUR_NEXT }), NOW, () => HASH);
   eq('a future hour is rejected with 400', out.status, 400);
   eq('a future hour never looks a spot up', f.spotLookups.length, 0);
   eq('a future hour writes no row', f.rows.length, 0);
 }
 {
   const f = fake({ 'steamer-lane': 7 });
-  const out = await submitReport(f.db, body({ size_bucket: 'gigantic' }), NOW, HASH);
+  const out = await submitReport(f.db, body({ size_bucket: 'gigantic' }), NOW, () => HASH);
   eq('an invalid size_bucket is rejected with 400', out.status, 400);
   eq('an invalid size_bucket writes no row', f.rows.length, 0);
 }
@@ -332,7 +345,7 @@ console.log('\n4 — submit');
       [`7|${HOUR_NOW}`]: { face_ft: 9.9, stars: 5 },
     },
   });
-  const out = await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, HASH);
+  const out = await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, () => HASH);
   eq('a good report returns 200', out.status, 200);
   eq('a good report is not flagged duplicate or revised', out.body,
      { ok: true, duplicate: false, revised: false });
@@ -342,8 +355,13 @@ console.log('\n4 — submit');
     observed_hour: HOUR_BACK_1,
     reporter_hash: HASH,
     size_bucket: 'chest',
+    sets_bucket: null,
+    question_version: 1,
     forecast_face_ft: 4.7,
     forecast_stars: 2.5,
+    forecast_band: null,
+    forecast_basis: null,
+    forecast_nwps_cycle: null,
     rating_verdict: null,
     revision: 0,
     reported_at: NOW_ISO,
@@ -360,7 +378,7 @@ console.log('\n4 — submit');
     // "whatever we have now", these are the numbers that would show up on the row.
     forecasts: { [`7|${HOUR_NOW}`]: { face_ft: 9.9, stars: 5 } },
   });
-  const out = await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, HASH);
+  const out = await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, () => HASH);
   eq('a hour with no forecast still returns 200', out.status, 200);
   eq('a hour with no forecast stores NULL face', f.rows[0].forecast_face_ft, null);
   eq('a hour with no forecast stores NULL stars', f.rows[0].forecast_stars, null);
@@ -372,7 +390,7 @@ console.log('\n4 — submit');
 // A real zero is a measurement, not an absence.
 {
   const f = fake({ 'steamer-lane': 7 }, { forecasts: { [`7|${HOUR_BACK_1}`]: { face_ft: 0, stars: 0 } } });
-  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, HASH);
+  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, () => HASH);
   eq('a forecast of 0 ft is stored as 0, not nulled', f.rows[0].forecast_face_ft, 0);
   eq('a rating of 0 stars is stored as 0, not nulled', f.rows[0].forecast_stars, 0);
 }
@@ -380,26 +398,26 @@ console.log('\n4 — submit');
 // A row that exists but carries nulls is still "we had a forecast row"; both columns null.
 {
   const f = fake({ 'steamer-lane': 7 }, { forecasts: { [`7|${HOUR_BACK_1}`]: { face_ft: null, stars: null } } });
-  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, HASH);
+  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, () => HASH);
   eq('a forecast row of nulls stores nulls', f.rows[0].forecast_face_ft, null);
 }
 
 // -- the optional verdict ---------------------------------------------------
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ rating_verdict: 'too_high' }), NOW, HASH);
+  await submitReport(f.db, body({ rating_verdict: 'too_high' }), NOW, () => HASH);
   eq('a supplied verdict is stored', f.rows[0].rating_verdict, 'too_high');
 }
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body(), NOW, HASH);
+  await submitReport(f.db, body(), NOW, () => HASH);
   eq('an omitted verdict is stored as null, not as about_right', f.rows[0].rating_verdict, null);
 }
 
 // -- the size label, not feet -----------------------------------------------
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ size_bucket: 'well_overhead' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'well_overhead' }), NOW, () => HASH);
   eq('the BUCKET LABEL is stored', f.rows[0].size_bucket, 'well_overhead');
   check('no feet value is written anywhere on the row',
         !Object.values(f.rows[0]).includes(9));
@@ -408,7 +426,7 @@ console.log('\n4 — submit');
 // -- the mid-hour timestamp is floored before storage ------------------------
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ observed_hour: '2026-08-30T13:44:21.500Z' }), NOW, HASH);
+  await submitReport(f.db, body({ observed_hour: '2026-08-30T13:44:21.500Z' }), NOW, () => HASH);
   eq('a mid-hour timestamp is stored as the top of that hour',
      f.rows[0].observed_hour, '2026-08-30T13:00:00.000Z');
 }
@@ -416,8 +434,8 @@ console.log('\n4 — submit');
 // -- the duplicate -----------------------------------------------------------
 {
   const f = fake({ 'steamer-lane': 7 });
-  const first = await submitReport(f.db, body(), NOW, HASH);
-  const second = await submitReport(f.db, body(), NOW, HASH);
+  const first = await submitReport(f.db, body(), NOW, () => HASH);
+  const second = await submitReport(f.db, body(), NOW, () => HASH);
   eq('the first submission succeeds', first.body, { ok: true, duplicate: false, revised: false });
   eq('a repeat submission reads as SUCCESS to the user', second.status, 200);
   eq('a repeat submission with the SAME answer is not a revision', second.body,
@@ -427,8 +445,8 @@ console.log('\n4 — submit');
 {
   // Same spot-hour, DIFFERENT reporter — two distinct labels, both wanted.
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body(), NOW, HASH);
-  const other = await submitReport(f.db, body(), NOW, '00112233445566ff');
+  await submitReport(f.db, body(), NOW, () => HASH);
+  const other = await submitReport(f.db, body(), NOW, () => '00112233445566ff');
   eq('a different reporter for the same spot-hour is not a duplicate',
      other.body, { ok: true, duplicate: false, revised: false });
   eq('a different reporter adds a second row', f.rows.length, 2);
@@ -436,8 +454,8 @@ console.log('\n4 — submit');
 {
   // Same reporter, DIFFERENT hour — also not a duplicate.
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, HASH);
-  const later = await submitReport(f.db, body({ observed_hour: HOUR_NOW }), NOW, HASH);
+  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1 }), NOW, () => HASH);
+  const later = await submitReport(f.db, body({ observed_hour: HOUR_NOW }), NOW, () => HASH);
   eq('the same reporter on a different hour is not a duplicate',
      later.body, { ok: true, duplicate: false, revised: false });
   eq('the same reporter on a different hour adds a second row', f.rows.length, 2);
@@ -446,7 +464,7 @@ console.log('\n4 — submit');
 // -- a genuine insert failure is NOT reported as success ---------------------
 {
   const f = fake({ 'steamer-lane': 7 }, { insertError: 'connection reset' });
-  const out = await submitReport(f.db, body(), NOW, HASH);
+  const out = await submitReport(f.db, body(), NOW, () => HASH);
   eq('a non-duplicate insert failure returns 500', out.status, 500);
   eq('a non-duplicate insert failure returns an error body',
      out.body, { ok: false, error: 'could not save the report' });
@@ -465,10 +483,10 @@ console.log('\n5 — revisions');
     [`7|${HOUR_BACK_1}`]: { face_ft: 4.7, stars: 2.5 },
   };
   const f = fake({ 'steamer-lane': 7 }, { forecasts: fc });
-  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
   // A pipeline run lands between the two submissions and rewrites that hour.
   fc[`7|${HOUR_BACK_1}`] = { face_ft: 1.2, stars: 1 };
-  const out = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, HASH);
+  const out = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, () => HASH);
 
   eq('a corrected size returns 200', out.status, 200);
   eq('a corrected size is reported as a revision', out.body,
@@ -488,14 +506,16 @@ console.log('\n5 — revisions');
 // if a forecast column ever appears here, the frozen half stops being frozen.
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, HASH);
-  await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
+  await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, () => HASH);
   eq('exactly one update was issued', f.patches.length, 1);
   eq('the update patch carries ONLY the mutable columns',
      Object.keys(f.patches[0]).sort(),
-     ['rating_verdict', 'reported_at', 'revision', 'size_bucket']);
+     ['question_version', 'rating_verdict', 'reported_at', 'revision', 'sets_bucket',
+      'size_bucket']);
   eq('the update patch is the new answer', f.patches[0],
-     { size_bucket: 'waist', rating_verdict: null, revision: 1, reported_at: LATER_ISO });
+     { size_bucket: 'waist', sets_bucket: null, question_version: 1, rating_verdict: null,
+       revision: 1, reported_at: LATER_ISO });
 }
 
 // Idempotence: the same answer twice changes nothing observable but reported_at.
@@ -503,9 +523,9 @@ console.log('\n5 — revisions');
   const f = fake({ 'steamer-lane': 7 }, {
     forecasts: { [`7|${HOUR_BACK_1}`]: { face_ft: 4.7, stars: 2.5 } },
   });
-  await submitReport(f.db, body({ size_bucket: 'knee', rating_verdict: 'too_high' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee', rating_verdict: 'too_high' }), NOW, () => HASH);
   const again = await submitReport(
-    f.db, body({ size_bucket: 'knee', rating_verdict: 'too_high' }), LATER, HASH);
+    f.db, body({ size_bucket: 'knee', rating_verdict: 'too_high' }), LATER, () => HASH);
   eq('a same-answer resubmit is not a revision', again.body,
      { ok: true, duplicate: true, revised: false });
   eq('a same-answer resubmit leaves one row', f.rows.length, 1);
@@ -521,13 +541,13 @@ console.log('\n5 — revisions');
 // The counter counts CORRECTIONS, not submissions.
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
   eq('a first report is revision 0', f.rows[0].revision, 0);
-  await submitReport(f.db, body({ size_bucket: 'waist' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'waist' }), NOW, () => HASH);
   eq('the first correction is revision 1', f.rows[0].revision, 1);
-  await submitReport(f.db, body({ size_bucket: 'waist' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'waist' }), NOW, () => HASH);
   eq('an unchanged resubmit in between does not advance it', f.rows[0].revision, 1);
-  await submitReport(f.db, body({ size_bucket: 'chest' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'chest' }), NOW, () => HASH);
   eq('the second correction is revision 2', f.rows[0].revision, 2);
   eq('four submissions still leave ONE row', f.rows.length, 1);
   eq('the last answer is the one standing', f.rows[0].size_bucket, 'chest');
@@ -536,9 +556,9 @@ console.log('\n5 — revisions');
 // A verdict-only change is still a correction — the size question is not the only answer.
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ size_bucket: 'knee', rating_verdict: 'too_high' }), NOW, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee', rating_verdict: 'too_high' }), NOW, () => HASH);
   const out = await submitReport(
-    f.db, body({ size_bucket: 'knee', rating_verdict: 'about_right' }), LATER, HASH);
+    f.db, body({ size_bucket: 'knee', rating_verdict: 'about_right' }), LATER, () => HASH);
   eq('changing only the verdict is a revision', out.body,
      { ok: true, duplicate: true, revised: true });
   eq('changing only the verdict advances the counter', f.rows[0].revision, 1);
@@ -548,8 +568,8 @@ console.log('\n5 — revisions');
 // Clearing a verdict is a change too: null (skipped) is not the same answer as a verdict.
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ size_bucket: 'knee', rating_verdict: 'too_low' }), NOW, HASH);
-  const out = await submitReport(f.db, body({ size_bucket: 'knee' }), LATER, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee', rating_verdict: 'too_low' }), NOW, () => HASH);
+  const out = await submitReport(f.db, body({ size_bucket: 'knee' }), LATER, () => HASH);
   eq('dropping the verdict is a revision', out.body,
      { ok: true, duplicate: true, revised: true });
   eq('the verdict is cleared to null', f.rows[0].rating_verdict, null);
@@ -559,8 +579,8 @@ console.log('\n5 — revisions');
 // The other two keys of the constraint still separate rows, unchanged by any of this.
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, HASH);
-  const other = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, '00112233445566ff');
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
+  const other = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, () => '00112233445566ff');
   eq('a different reporter with a different answer is NOT a revision',
      other.body, { ok: true, duplicate: false, revised: false });
   eq('a different reporter still gets its own row', f.rows.length, 2);
@@ -569,9 +589,9 @@ console.log('\n5 — revisions');
 }
 {
   const f = fake({ 'steamer-lane': 7 });
-  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1, size_bucket: 'knee' }), NOW, HASH);
+  await submitReport(f.db, body({ observed_hour: HOUR_BACK_1, size_bucket: 'knee' }), NOW, () => HASH);
   const later = await submitReport(
-    f.db, body({ observed_hour: HOUR_NOW, size_bucket: 'waist' }), LATER, HASH);
+    f.db, body({ observed_hour: HOUR_NOW, size_bucket: 'waist' }), LATER, () => HASH);
   eq('the same reporter on a different HOUR is not a revision',
      later.body, { ok: true, duplicate: false, revised: false });
   eq('a different hour still gets its own row', f.rows.length, 2);
@@ -581,8 +601,8 @@ console.log('\n5 — revisions');
 // -- revision-path failures are not reported as success ----------------------
 {
   const f = fake({ 'steamer-lane': 7 }, { updateError: 'connection reset' });
-  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, HASH);
-  const out = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
+  const out = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, () => HASH);
   eq('a failed update returns 500', out.status, 500);
   eq('a failed update returns an error body', out.body,
      { ok: false, error: 'could not save the report' });
@@ -592,10 +612,171 @@ console.log('\n5 — revisions');
   // The row conflicted a moment ago and is gone now. We cannot compute the next revision,
   // and guessing 0 would erase a correction history — so this is a failure, not a success.
   const f = fake({ 'steamer-lane': 7 }, { vanishOnLookup: true });
-  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, HASH);
-  const out = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, HASH);
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
+  const out = await submitReport(f.db, body({ size_bucket: 'waist' }), LATER, () => HASH);
   eq('a vanished row on the revision path returns 500', out.status, 500);
   eq('a vanished row attempts no update', f.patches.length, 0);
+}
+
+// --------------------------------------------------------------------------- //
+// 6 — question version 2: most waves, the optional sets, the hints, the guards //
+// --------------------------------------------------------------------------- //
+console.log('\n6 — question version 2');
+
+eq('the form asks question version 2', QUESTION_VERSION, 2);
+eq('each chip\'s feet hint, written out', { ...BUCKET_HINT_FT }, {
+  ankle: 'under 1 ft', knee: '1–2 ft', thigh: '2–2.5 ft', waist: '2.5–3.5 ft',
+  chest: '3.5–4.5 ft', shoulder: '4.5–5.5 ft', head: '5.5–6.5 ft', overhead: '6.5–8 ft',
+  well_overhead: '8–10 ft', double_overhead: '10–13 ft', triple_overhead_plus: '13 ft +',
+});
+// Each hint brackets its own bucket's feet (0.5, 1.5, 2.25, 3, 4, 5, 6, 7, 9, 11, 15), and
+// neighbouring hints meet: [lo, hi] by hand from the strings above.
+const HINT_BOUNDS: Array<[string, number, number]> = [
+  ['ankle', 0, 1], ['knee', 1, 2], ['thigh', 2, 2.5], ['waist', 2.5, 3.5], ['chest', 3.5, 4.5],
+  ['shoulder', 4.5, 5.5], ['head', 5.5, 6.5], ['overhead', 6.5, 8], ['well_overhead', 8, 10],
+  ['double_overhead', 10, 13], ['triple_overhead_plus', 13, Infinity],
+];
+check('every hint brackets its bucket\'s feet value',
+      HINT_BOUNDS.every(([b, lo, hi]) =>
+        lo <= BUCKET_FACE_FT[b as keyof typeof BUCKET_FACE_FT]
+        && BUCKET_FACE_FT[b as keyof typeof BUCKET_FACE_FT] < hi));
+check('neighbouring hints meet with no gap',
+      HINT_BOUNDS.every(([, , hi], i) => i === HINT_BOUNDS.length - 1 || HINT_BOUNDS[i + 1][1] === hi));
+
+eq('the salt day is the observed hour\'s UTC date', saltDay('2026-10-30T23:00:00.000Z'), '2026-10-30');
+eq('an hour after midnight UTC is the next day', saltDay('2026-10-31T00:00:00.000Z'), '2026-10-31');
+eq('the bot field is named website', HONEYPOT_FIELD, 'website');
+eq('the daily cap is 30 new reports', DAILY_REPORT_CAP, 30);
+
+// -- validation ----------------------------------------------------------------
+{
+  const v2 = validateReport(body({ question_version: 2, sets_bucket: 'head' }), NOW);
+  eq('version 2 with a sets answer validates', v2.ok ? [v2.value.questionVersion, v2.value.setsBucket] : v2.error,
+     [2, 'head']);
+  const v1 = validateReport(body(), NOW);
+  eq('a body with no version is the version 1 question', v1.ok ? v1.value.questionVersion : 0, 1);
+  eq('no sets answer is null', v1.ok ? v1.value.setsBucket : 'unset', null);
+}
+eq('version 3 is rejected', err(body({ question_version: 3 })),
+   'question_version is not one of the allowed values');
+eq('a string version is rejected', err(body({ question_version: '2' })),
+   'question_version is not one of the allowed values');
+eq('a sets answer on version 1 is rejected', err(body({ sets_bucket: 'head' })),
+   'sets_bucket is only asked in question_version 2');
+eq('an unlisted sets answer is rejected', err(body({ question_version: 2, sets_bucket: 'giant' })),
+   'sets_bucket is not one of the allowed values');
+eq('a null sets answer on version 2 is accepted',
+   err(body({ question_version: 2, sets_bucket: null })), '(accepted)');
+
+// -- the stored row --------------------------------------------------------------
+{
+  const f = fake({ 'steamer-lane': 7 }, {
+    forecasts: { [`7|${HOUR_BACK_1}`]: { face_ft: 3.4, stars: 2, band: '3-4ft', basis: 'model',
+                                        nwps_cycle: '2026-08-30T00:00:00+00:00' } },
+  });
+  await submitReport(f.db, body({ question_version: 2, size_bucket: 'waist', sets_bucket: 'chest' }),
+                     NOW, () => HASH);
+  const r = f.rows[0];
+  eq('version 2 is stored', r.question_version, 2);
+  eq('most waves is stored in size_bucket', r.size_bucket, 'waist');
+  eq('the sets answer is stored', r.sets_bucket, 'chest');
+  eq('the tile range shown is stored', r.forecast_band, '3-4ft');
+  eq('the height basis is stored', r.forecast_basis, 'model');
+  eq('the NWPS cycle is stored', r.forecast_nwps_cycle, '2026-08-30T00:00:00+00:00');
+}
+{
+  const f = fake({ 'steamer-lane': 7 });
+  await submitReport(f.db, body({ question_version: 2, size_bucket: 'waist' }), NOW, () => HASH);
+  eq('with no forecast row every snapshot column is null',
+     [f.rows[0].forecast_band, f.rows[0].forecast_basis, f.rows[0].forecast_nwps_cycle],
+     [null, null, null]);
+}
+
+// -- the hash is asked for the OBSERVED hour --------------------------------------
+{
+  const f = fake({ 'steamer-lane': 7 });
+  const asked: string[] = [];
+  await submitReport(f.db, body({ observed_hour: '2026-08-29T23:20:00.000Z' }), NOW,
+                     (iso) => { asked.push(iso); return HASH; });
+  eq('the hash is keyed on the validated observed hour, not the clock',
+     asked, ['2026-08-29T23:00:00.000Z']);
+}
+{
+  const f = fake({ 'steamer-lane': 7 });
+  const out = await submitReport(f.db, body(), NOW, () => null);
+  eq('with no salt the report is refused with 503', out.status, 503);
+  eq('with no salt nothing is looked up or written', [f.spotLookups.length, f.rows.length], [0, 0]);
+}
+{
+  const f = fake({ 'steamer-lane': 7 });
+  const out = await submitReport(f.db, body({ observed_hour: HOUR_NEXT }), NOW, () => null);
+  eq('a bad body is a 400 even with no salt', out.status, 400);
+}
+
+// -- the bot field --------------------------------------------------------------
+{
+  const f = fake({ 'steamer-lane': 7 });
+  const out = await submitReport(f.db, body({ [HONEYPOT_FIELD]: 'http://spam.example' }), NOW,
+                                 () => HASH);
+  eq('a filled bot field is answered as a success', out.body,
+     { ok: true, duplicate: false, revised: false });
+  eq('a filled bot field writes nothing and looks nothing up',
+     [f.rows.length, f.spotLookups.length, f.forecastLookups.length], [0, 0, 0]);
+}
+{
+  const f = fake({ 'steamer-lane': 7 });
+  await submitReport(f.db, body({ [HONEYPOT_FIELD]: '' }), NOW, () => HASH);
+  eq('an empty bot field is a person: the report is written', f.rows.length, 1);
+}
+
+// -- the daily cap ----------------------------------------------------------------
+{
+  const f = fake({ 'steamer-lane': 7 }, { count: 30 });
+  const out = await submitReport(f.db, body(), NOW, () => HASH);
+  eq('a 31st new report is refused with 429', out.status, 429);
+  eq('the refusal says why', out.body, { ok: false, error: 'daily report limit reached' });
+  eq('the refused report is not written', f.rows.length, 0);
+}
+{
+  const f = fake({ 'steamer-lane': 7 }, { count: 29 });
+  await submitReport(f.db, body(), NOW, () => HASH);
+  eq('the 30th report is written', f.rows.length, 1);
+}
+{
+  // At the cap, a correction to a report already filed still goes through.
+  const f = fake({ 'steamer-lane': 7 });
+  await submitReport(f.db, body({ size_bucket: 'knee' }), NOW, () => HASH);
+  const capped = fake({ 'steamer-lane': 7 }, { count: 30 });
+  capped.rows.push({ ...f.rows[0] });
+  const out = await submitReport(capped.db, body({ size_bucket: 'waist' }), LATER, () => HASH);
+  eq('at the cap a revision is still accepted', out.body, { ok: true, duplicate: true, revised: true });
+  eq('at the cap the revision replaces the answer', capped.rows[0].size_bucket, 'waist');
+}
+{
+  const f = fake({ 'steamer-lane': 7 }, { count: null });
+  await submitReport(f.db, body(), NOW, () => HASH);
+  eq('an unreadable count does not block a report', f.rows.length, 1);
+}
+
+// -- revisions of the new answers ----------------------------------------------------
+{
+  const f = fake({ 'steamer-lane': 7 });
+  await submitReport(f.db, body({ question_version: 2, size_bucket: 'waist', sets_bucket: 'chest' }),
+                     NOW, () => HASH);
+  const out = await submitReport(
+    f.db, body({ question_version: 2, size_bucket: 'waist', sets_bucket: 'head' }), LATER, () => HASH);
+  eq('changing only the sets answer is a revision', out.body, { ok: true, duplicate: true, revised: true });
+  eq('the new sets answer survives', f.rows[0].sets_bucket, 'head');
+}
+{
+  // A tab from before the change answered version 1; the same person answers version 2 later.
+  const f = fake({ 'steamer-lane': 7 });
+  await submitReport(f.db, body({ size_bucket: 'waist' }), NOW, () => HASH);
+  const out = await submitReport(f.db, body({ question_version: 2, size_bucket: 'waist' }), LATER,
+                                 () => HASH);
+  eq('the same size under a new question is a revision', out.body,
+     { ok: true, duplicate: true, revised: true });
+  eq('the row now says which question it answers', f.rows[0].question_version, 2);
 }
 
 // Throw rather than process.exit: a thrown error still gives node a non-zero exit code,

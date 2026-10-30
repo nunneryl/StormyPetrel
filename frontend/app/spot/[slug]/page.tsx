@@ -14,11 +14,7 @@ import { CurrentHero } from '@/components/CurrentHero';
 import { OptimalConditions } from '@/components/OptimalConditions';
 import { CamSection } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
-import {
-  SurfReportProvider,
-  SurfReportTrigger,
-  SurfReportPanel,
-} from '@/components/SurfReport';
+import { SurfReportProvider, SurfReportPanel } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { fmtStamp, spotTimeZone } from '@/lib/spotTime';
 import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
@@ -288,15 +284,15 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
       {/* Hero tiles + the surf-report control. The provider is a client component taking a
           SERVER subtree as children, which is what keeps CurrentConditions (and this page)
           server components — nothing here reads cookies or headers, so all 648 routes keep
-          their prerender and their 1-hour revalidate. The trigger sits in the Face tile's
-          footer, against the number it reports on; the panel gets full width below it. */}
-      <SurfReportProvider slug={spot.slug} forecastHours={forecastHours} timeZone={timeZone}>
+          their prerender and their 1-hour revalidate. The report card sits right under the
+          tiles, always visible, asking "How big were most waves?" (components/SurfReport). */}
+      <SurfReportProvider slug={spot.slug} forecastHours={forecastHours} timeZone={timeZone}
+                          hawaii={spot.state === 'Hawaii'}>
         <CurrentConditions
           rows={forecasts}
           serverNowMs={nowMs}
           offshoreDeg={spot.offshore_wind_deg}
           windowArcs={spot.swell_window_arcs}
-          faceAction={<SurfReportTrigger />}
         />
         <SurfReportPanel />
       </SurfReportProvider>

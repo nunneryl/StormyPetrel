@@ -91,6 +91,65 @@ export const BUCKET_FACE_FT: Record<SizeBucket, number> = {
   triple_overhead_plus: 15,
 };
 
+/**
+ * A small feet hint beside each chip. The chips are the body scale (#282): the hint helps a
+ * reader who thinks in feet without turning the question into "which of our feet ranges",
+ * which would echo the Surf height tile just above and anchor answers to our own forecast.
+ *
+ * The ranges meet halfway between neighbouring BUCKET_FACE_FT values, rounded to the nearest
+ * half foot (knee 1.5 | thigh 2.25 meet at 1.875, shown as 2), so each range brackets its
+ * bucket's own value. They are NOT the tile's ladder (lib/formatting.ts HEIGHT_STEPS_FT), on
+ * purpose. Change BUCKET_FACE_FT and these must be re-derived by hand; a test holds them to it.
+ */
+export const BUCKET_HINT_FT: Record<SizeBucket, string> = {
+  ankle: 'under 1 ft',
+  knee: '1–2 ft',
+  thigh: '2–2.5 ft',
+  waist: '2.5–3.5 ft',
+  chest: '3.5–4.5 ft',
+  shoulder: '4.5–5.5 ft',
+  head: '5.5–6.5 ft',
+  overhead: '6.5–8 ft',
+  well_overhead: '8–10 ft',
+  double_overhead: '10–13 ft',
+  triple_overhead_plus: '13 ft +',
+};
+
+/**
+ * WHICH QUESTION AN ANSWER REPLIED TO (surf_reports.question_version, migration 027).
+ *
+ *   1  "How big was it? — the average of the sets you rode". Every row before 027.
+ *   2  "How big were most waves?" in size_bucket, and optionally "How big were the sets?" in
+ *      sets_bucket. #282: the site's height is closer to most of the bigger waves than to the
+ *      sets, so version 1 answers measure a different statistic from the one we publish.
+ *
+ * The two are never pooled. A body without question_version is a page from before this change,
+ * still open in a tab, asking the version 1 question, and is stored as 1.
+ */
+export const QUESTION_VERSION = 2;
+export const QUESTION_VERSIONS = [1, 2] as const;
+export type QuestionVersion = (typeof QUESTION_VERSIONS)[number];
+
+/** New reports one reporter fingerprint may file for one observed UTC day. Revising a report
+ *  already filed is always allowed. A visitor reporting a dawn and an evening session at three
+ *  spots files six; thirty is far past honest use and well short of a bulk dump. */
+export const DAILY_REPORT_CAP = 30;
+
+/** The hidden field a person never sees and a form-filling bot fills in. A body that carries
+ *  anything in it is answered as a success and written nowhere. */
+export const HONEYPOT_FIELD = 'website';
+
+/**
+ * The UTC day the reporter-hash salt is keyed on: the OBSERVED hour's date, not the submission
+ * date. Keyed on submission, an evening session in the US reported after 00:00 UTC hashed
+ * differently from one reported before it, so one person could report the same spot-hour
+ * twice. Keyed on the observed date, every report about one hour gets one hash per person,
+ * whenever it is sent; reports about different days still cannot be linked.
+ */
+export function saltDay(observedHourIso: string): string {
+  return new Date(observedHourIso).toISOString().slice(0, 10);
+}
+
 export const RATING_VERDICTS = ['too_low', 'about_right', 'too_high'] as const;
 export type RatingVerdict = (typeof RATING_VERDICTS)[number];
 
@@ -157,6 +216,9 @@ export type ReportInput = {
   slug: string;
   observedHourIso: string;
   sizeBucket: SizeBucket;
+  /** Version 2's optional sets answer; always null on version 1. */
+  setsBucket: SizeBucket | null;
+  questionVersion: QuestionVersion;
   ratingVerdict: RatingVerdict | null;
 };
 
@@ -203,6 +265,23 @@ export function validateReport(raw: unknown, nowMs: number): ValidationResult {
     return { ok: false, error: 'size_bucket is not one of the allowed values' };
   }
 
+  // Absent means a page from before question_version existed: the version 1 question.
+  const rawVersion = body.question_version ?? 1;
+  if (!(QUESTION_VERSIONS as readonly unknown[]).includes(rawVersion)) {
+    return { ok: false, error: 'question_version is not one of the allowed values' };
+  }
+  const questionVersion = rawVersion as QuestionVersion;
+  // Optional, like the verdict: absent and null both mean skipped.
+  let setsBucket: SizeBucket | null = null;
+  if (body.sets_bucket !== undefined && body.sets_bucket !== null) {
+    if (!isSizeBucket(body.sets_bucket)) {
+      return { ok: false, error: 'sets_bucket is not one of the allowed values' };
+    }
+    if (questionVersion !== 2) {
+      return { ok: false, error: 'sets_bucket is only asked in question_version 2' };
+    }
+    setsBucket = body.sets_bucket;
+  }
   // Absent and null both mean "skipped" — the question is optional and never blocks submit.
   const rawVerdict = body.rating_verdict;
   let ratingVerdict: RatingVerdict | null = null;
@@ -219,6 +298,8 @@ export function validateReport(raw: unknown, nowMs: number): ValidationResult {
       slug,
       observedHourIso: new Date(hourMs).toISOString(),
       sizeBucket: body.size_bucket,
+      setsBucket,
+      questionVersion,
       ratingVerdict,
     },
   };
@@ -228,7 +309,17 @@ export function validateReport(raw: unknown, nowMs: number): ValidationResult {
 // Submit                                                                       //
 // --------------------------------------------------------------------------- //
 
-export type ForecastSnapshot = { face_ft: number | null; stars: number | null };
+/** What the forecast said for the reported hour, as the page showed it: the height, the stars,
+ *  the Surf height tile's range (lib/formatting.ts fmtHeightRange), what the height was
+ *  (lib/heightBasis.ts), and the NWPS cycle the hour was rated from. Built by the route
+ *  (lib/reportSnapshot.ts) so this module keeps no imports. */
+export type ForecastSnapshot = {
+  face_ft: number | null;
+  stars: number | null;
+  band?: string | null;
+  basis?: string | null;
+  nwps_cycle?: string | null;
+};
 
 /** Identifies one report: the UNIQUE constraint from migration 014, as a value. */
 export type ReportKey = {
@@ -241,6 +332,8 @@ export type ReportKey = {
  *  Everything absent from this type is frozen at first insert; see ReportRow. */
 export type ReportUpdate = {
   size_bucket: SizeBucket;
+  sets_bucket: SizeBucket | null;
+  question_version: QuestionVersion;
   rating_verdict: RatingVerdict | null;
   revision: number;
   reported_at: string;
@@ -249,6 +342,8 @@ export type ReportUpdate = {
 /** What we need to read back off an existing row to decide what a repeat means. */
 export type ExistingReport = {
   size_bucket: SizeBucket;
+  sets_bucket?: SizeBucket | null;
+  question_version?: QuestionVersion;
   rating_verdict: RatingVerdict | null;
   revision: number;
 };
@@ -266,6 +361,9 @@ export type ReportDb = {
   findExisting(key: ReportKey): Promise<ExistingReport | null>;
   /** Write ONLY the mutable columns of the row at *key*. */
   updateAnswer(key: ReportKey, patch: ReportUpdate): Promise<{ ok: true } | { ok: false; message: string }>;
+  /** Rows already filed under *reporterHash* (one observed UTC day's reports by one person);
+   *  null when the count could not be read. */
+  countByReporter(reporterHash: string): Promise<number | null>;
 };
 
 /**
@@ -273,8 +371,10 @@ export type ReportDb = {
  *
  * THE ROW HAS TWO HALVES, and which is which is the whole design of the revision path:
  *
- *   ORIGINAL, frozen at first insert:  forecast_face_ft, forecast_stars, first_reported_at
- *   ANSWER, replaced by a revision:    size_bucket, rating_verdict, reported_at, revision
+ *   ORIGINAL, frozen at first insert:  forecast_face_ft, forecast_stars, forecast_band,
+ *                                      forecast_basis, forecast_nwps_cycle, first_reported_at
+ *   ANSWER, replaced by a revision:    size_bucket, sets_bucket, question_version,
+ *                                      rating_verdict, reported_at, revision
  *
  * so the snapshot a row carries is always the one taken at first_reported_at. See
  * pipeline/migrations/015_surf_report_revisions.sql for the argument.
@@ -283,9 +383,14 @@ export type ReportRow = {
   spot_id: number;
   observed_hour: string;
   size_bucket: SizeBucket;
+  sets_bucket: SizeBucket | null;
+  question_version: QuestionVersion;
   reporter_hash: string;
   forecast_face_ft: number | null;
   forecast_stars: number | null;
+  forecast_band: string | null;
+  forecast_basis: string | null;
+  forecast_nwps_cycle: string | null;
   rating_verdict: RatingVerdict | null;
   revision: number;
   reported_at: string;
@@ -305,6 +410,8 @@ export type SubmitOutcome = {
 function answerChanged(existing: ExistingReport, next: ReportInput): boolean {
   return (
     existing.size_bucket !== next.sizeBucket ||
+    (existing.sets_bucket ?? null) !== next.setsBucket ||
+    (existing.question_version ?? 1) !== next.questionVersion ||
     existing.rating_verdict !== next.ratingVerdict
   );
 }
@@ -339,13 +446,26 @@ export async function submitReport(
   db: ReportDb,
   raw: unknown,
   nowMs: number,
-  reporterHash: string,
+  hashFor: (observedHourIso: string) => string | null,
 ): Promise<SubmitOutcome> {
+  // THE BOT FIELD. Answered as a success so a bot learns nothing, and nothing is read or written.
+  if (raw !== null && typeof raw === 'object') {
+    const trap = (raw as Record<string, unknown>)[HONEYPOT_FIELD];
+    if (trap !== undefined && trap !== null && trap !== '') {
+      return { status: 200, body: { ok: true, duplicate: false, revised: false } };
+    }
+  }
   const parsed = validateReport(raw, nowMs);
   if (!parsed.ok) {
     return { status: 400, body: { ok: false, error: parsed.error } };
   }
   const input = parsed.value;
+
+  // The hash is keyed on the OBSERVED hour's day (saltDay), so it needs the validated hour.
+  const reporterHash = hashFor(input.observedHourIso);
+  if (reporterHash === null) {
+    return { status: 503, body: { ok: false, error: 'reporting is temporarily unavailable' } };
+  }
 
   const spotId = await db.findSpotId(input.slug);
   if (spotId === null) {
@@ -358,13 +478,26 @@ export async function submitReport(
     reporter_hash: reporterHash,
   };
   const nowIso = new Date(nowMs).toISOString();
+
+  // THE DAILY CAP. Past it a NEW report is refused; revising one already filed is not, so a
+  // reporter at the cap can still correct themselves. An unreadable count does not block.
+  const filed = await db.countByReporter(reporterHash);
+  if (filed !== null && filed >= DAILY_REPORT_CAP && (await db.findExisting(key)) === null) {
+    return { status: 429, body: { ok: false, error: 'daily report limit reached' } };
+  }
+
   const snapshot = await db.findForecast(spotId, input.observedHourIso);
 
   const written = await db.insert({
     ...key,
     size_bucket: input.sizeBucket,
+    sets_bucket: input.setsBucket,
+    question_version: input.questionVersion,
     forecast_face_ft: snapshot ? snapshot.face_ft : null,
     forecast_stars: snapshot ? snapshot.stars : null,
+    forecast_band: snapshot ? snapshot.band ?? null : null,
+    forecast_basis: snapshot ? snapshot.basis ?? null : null,
+    forecast_nwps_cycle: snapshot ? snapshot.nwps_cycle ?? null : null,
     rating_verdict: input.ratingVerdict,
     revision: 0,
     reported_at: nowIso,
@@ -389,6 +522,8 @@ export async function submitReport(
   const changed = answerChanged(existing, input);
   const updated = await db.updateAnswer(key, {
     size_bucket: input.sizeBucket,
+    sets_bucket: input.setsBucket,
+    question_version: input.questionVersion,
     rating_verdict: input.ratingVerdict,
     // Only a CHANGED answer advances the counter. Read-then-write, so two genuinely
     // concurrent revisions of one row could both read the same value and undercount by one.
