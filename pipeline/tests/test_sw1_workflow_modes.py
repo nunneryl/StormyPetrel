@@ -27,21 +27,22 @@ def test_nwps_shelter_is_a_mode():
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
-        "data-quality", "node-preview", "surf-preview", "period-preview", "nwps-cells"]
+        "data-quality", "node-preview", "surf-preview", "period-preview", "nwps-cells",
+        "tide-station"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
                          "rating-preview", "data-quality", "node-preview", "surf-preview",
-                         "period-preview", "nwps-cells"}
+                         "period-preview", "nwps-cells", "tide-station"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
         "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' "
-        "&& inputs.mode != 'nwps-cells' }}")
+        "&& inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -55,6 +56,16 @@ def test_the_nwps_cells_job_only_reads():
             '--csv nwps_cells.csv') in job
     assert "SPOTS: ${{ inputs.spots }}" in job and "libeccodes0" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
+
+
+def test_the_tide_station_job_only_reads():
+    job = _jobs()["tide-station"]
+    assert _if(job) == "${{ inputs.mode == 'tide-station' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert 'python -m pipeline.tide_station --spots "$SPOTS" --out tide_station.json' in job
+    assert "SPOTS: ${{ inputs.spots }}" in job
+    for verb in ("git push", "git commit", "db_import", "--write", "SUPABASE"):
         assert verb not in job, verb
 
 
