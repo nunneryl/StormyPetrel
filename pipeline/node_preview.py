@@ -24,15 +24,20 @@ apply_nwps_overrides itself, the code that wrote it, with its fetch given that c
        wind equals the old node's NWPS wind; HRRR's replaces it inside 48 h), the new node's
        NWPS wind replaces it too.
 
-THE MERGE GATE. At the old node the replay must give, hour for hour:
-  inputs  the stored hs, tp, dp and swell_hs: the old node's swh, perpw, dirpw and shts at
-          the hour the override rated from (the cycle and cell the row was rated from);
-  stars   the published stars.
-Both must have 0 differences on at least one hour. The hour the override rated from is the one
+THE MERGE GATE. At the old node (the cycle and cell the row was rated from) the replay must give,
+hour for hour, the row as the pipeline stored it:
+  hs, tp, dp  the file's own swh, perpw and dirpw at the EXACT hour, to 3 decimals: nwps.fetch
+              writes them into the hour's record and leaves a blank one out, and interpret
+              stores the record as it is, so a blank value is stored empty;
+  swell_hs    the shts of the hour the override rated from, which it writes over the record's;
+  stars, face the published stars and face_ft_raw, from that same hour.
+All must have 0 differences on at least one hour. The hour the override rated from is the one
 nwps_nearshore.series_hour gives, the function apply_nwps_overrides itself calls: the hour, else
-the hour before, else the hour after. A neighbour's values are accepted only where the hour's
-own swh, perpw or dirpw is blank in the cycle's file at the old node's cell; a fill over an hour
-the file holds is a difference. The gate line counts the filled hours. Then every replayed hour is listed with its
+the hour before, else the hour after. A neighbour's values count only where the hour is blank
+in the cycle's file at the old node's cell (no step, or swh, perpw or dirpw NaN); a fill over
+an hour the file holds is a difference, and so is a stored value where the file is blank. Every
+difference is printed with the stored and the expected values. The gate line counts the filled
+hours. Then every replayed hour is listed with its
 stars, face, height and period at the old and the new node, and the homepage's "Best
 conditions right now" (each spot's soonest hour from --since, ten highest) before and after.
 Each new node is also checked against every cycle read: a wet cell centre, and the same cell
@@ -40,7 +45,7 @@ nwps.fetch samples (nearest grid row and column), not a neighbour.
 
 REFERENCE SPOTS (--reference, comma-separated slugs). Spots that did not move, shown beside the
 moved ones: their published stars and face (face_ft_raw, the face the replay gives) on the same
-hours as each moved spot's replayed ones.
+hours as each moved spot's replayed ones, averaged and hour by hour.
 
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
@@ -63,6 +68,8 @@ NWPS_KINDS = ("nwps_height_ww3_dir", "nwps")
 NODE_FIELDS = ("nwps_node_lat", "nwps_node_lng")
 CYCLES_LISTED = 16            # more than NOMADS keeps of any office (run 50: 6, ilm 12)
 INPUT_TOL = 5e-4              # stored values carry 3 decimals
+FACE_TOL = 5e-3               # face_ft_raw is stored to 2 decimals
+INPUT_COLS = ("hs", "tp", "dp", "swell_hs")
 SAME_CELL_KM = 0.01
 FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_hs, swell_tp, swell_dp, swell_source, "
                  "face_ft, face_ft_raw, wind_speed, wind_dir, wind_mult, tide_mult, stars, "
@@ -126,14 +133,21 @@ def node_cell(cycle, spot):
     return None if cell is None else (cell[0], cell[1])
 
 
+def exact_hour_values(cycle, cell, epoch):
+    """(swh, perpw, dirpw) in the cycle's file at *cell* for the hour at *epoch*, each to 3
+    decimals as nwps.fetch writes it into the hour's record; None where blank (NaN), all three
+    None when the file has no step for the hour."""
+    fh = round((epoch - cycle["cycle_dt"].timestamp()) / 3600)
+    if fh not in cycle["steps"]:
+        return None, None, None
+    vals = (_node_value(cycle, short, fh, cell[0], cell[1]) for short in ("swh", "perpw", "dirpw"))
+    return tuple(None if v is None else round(v, 3) for v in vals)
+
+
 def exact_hour_blank(cycle, cell, epoch):
     """Is the hour at *epoch* blank in the cycle's file at *cell*: no step for it, or its swh,
     perpw or dirpw NaN there (the hours nwps_series_by_hour leaves out)?"""
-    fh = round((epoch - cycle["cycle_dt"].timestamp()) / 3600)
-    if fh not in cycle["steps"]:
-        return True
-    return any(_node_value(cycle, short, fh, cell[0], cell[1]) is None
-               for short in ("swh", "perpw", "dirpw"))
+    return any(v is None for v in exact_hour_values(cycle, cell, epoch))
 
 
 def node_check(cycle, lat, lng):
@@ -173,17 +187,31 @@ def wind_was_nwps(row, wind):
             and abs(float(row["wind_dir"]) - wind[1]) <= INPUT_TOL)
 
 
-def inputs_match(row, vals):
-    """Do the stored hs, tp, dp and swell_hs equal the node's (swh, perpw, dirpw, shts)?"""
-    if vals is None:
-        return False
-    for col, v in zip(("hs", "tp", "dp", "swell_hs"), vals):
-        stored = row.get(col)
-        if (stored is None) != (v is None):
-            return False
-        if v is not None and abs(float(stored) - v) > INPUT_TOL:
-            return False
-    return True
+def expected_inputs(exact, rated):
+    """The stored inputs as the pipeline writes them for an hour: hs, tp and dp the file's own
+    values at the exact hour (*exact*, from exact_hour_values; empty where blank), swell_hs the
+    shts of the series values the override rated from (*rated*, from series_hour)."""
+    return {"hs": exact[0], "tp": exact[1], "dp": exact[2],
+            "swell_hs": None if rated is None else rated[3]}
+
+
+def input_diffs(row, expected):
+    """The columns of INPUT_COLS whose stored value differs from *expected*: one empty and the
+    other not, or both set and more than INPUT_TOL apart."""
+    out = []
+    for col in INPUT_COLS:
+        stored, want = _num(row.get(col)), expected[col]
+        if (stored is None) != (want is None) or (
+                want is not None and abs(stored - want) > INPUT_TOL):
+            out.append(col)
+    return out
+
+
+def face_differs(published, replayed):
+    """Do the published and replayed faces differ: one empty, or more than FACE_TOL apart?"""
+    if published is None or replayed is None:
+        return (published is None) != (replayed is None)
+    return abs(published - replayed) > FACE_TOL
 
 
 def replay(spot, entries, series, ceiling_factors, median_factor, apply=apply_nwps_overrides):
@@ -200,9 +228,11 @@ def gate(hours):
     n = len(hours)
     bad_inputs = sum(not h["inputs_match"] for h in hours)
     bad_stars = sum(h["stars_old"] != h["stars_published"] for h in hours)
+    bad_face = sum(face_differs(h["face_published"], h["face_old"]) for h in hours)
     filled = sum(h["inputs_match"] and h.get("filled_from") in (-1, 1) for h in hours)
     return {"hours": n, "input_differences": bad_inputs, "star_differences": bad_stars,
-            "filled": filled, "pass": n > 0 and bad_inputs == 0 and bad_stars == 0}
+            "face_differences": bad_face, "filled": filled,
+            "pass": n > 0 and bad_inputs == 0 and bad_stars == 0 and bad_face == 0}
 
 
 def spot_summary(hours):
@@ -309,15 +339,20 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
             k = int(epoch // 3600)
             vo, off = series_hour(s_old or {}, k)
             vn, _ = series_hour(s_new or {}, k)
+            exact = exact_hour_values(cycle, c_old, epoch) if c_old else (None, None, None)
+            blank = any(v is None for v in exact)
             # a neighbour's values stand for the hour only where the file leaves it blank
-            blank = exact_hour_blank(cycle, c_old, epoch) if c_old else True
             fill_ok = off == 0 or (off in (-1, 1) and blank)
+            want = expected_inputs(exact, vo)
+            diffs = input_diffs(row, want) if vo is not None else list(INPUT_COLS)
             hours.append({
                 "spot": new["name"], "valid_time": row["valid_time"],
                 "nwps_cycle": row.get("nwps_cycle"), "swell_source": row.get("swell_source"),
                 "wind": wind, "wind_old": [a["wind_speed"], a["wind_dir"]],
                 "wind_new": [b["wind_speed"], b["wind_dir"]],
-                "inputs_match": fill_ok and inputs_match(row, vo),
+                "inputs_match": fill_ok and not diffs,
+                "input_diffs": diffs if fill_ok else diffs + ["fill over an hour the file holds"],
+                "stored": {c: _num(row.get(c)) for c in INPUT_COLS}, "expected": want,
                 "filled_from": off, "exact_hour_blank": blank,
                 "stars_published": float(row["stars"]),
                 "stars_old": a.get("stars"), "stars_new": b.get("stars"),
@@ -423,6 +458,10 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
             refs[n] = {row["valid_time"]: row for row in fetch_rows(client, sid, since)
                        if row.get("stars") is not None}
     report["references"] = reference_summary(hours, refs)
+    for h in hours:
+        h["reference"] = {n: {"stars": _num(rows[h["valid_time"]].get("stars")),
+                              "face": _num(rows[h["valid_time"]].get("face_ft_raw"))}
+                          for n, rows in refs.items() if h["valid_time"] in rows}
     report["hours"] = hours
     first = {}
     for sid in sorted(names):
@@ -444,7 +483,8 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
 # Report                                                                       #
 # --------------------------------------------------------------------------- #
 HOUR_COLUMNS = ("spot", "valid_time", "nwps_cycle", "swell_source", "wind", "wind_old",
-                "wind_new", "inputs_match", "filled_from", "exact_hour_blank",
+                "wind_new", "inputs_match", "input_diffs", "stored", "expected", "filled_from",
+                "exact_hour_blank", "reference",
                 "stars_published", "stars_old", "stars_new", "face_published", "face_old",
                 "face_new", "hs_old", "hs_new", "tp_old", "tp_new", "swell_hs_old",
                 "swell_hs_new", "rated_tp_old", "rated_tp_new")
@@ -484,14 +524,21 @@ def print_report(rep):
     g = rep["gate"]
     print(f"\n=== MERGE GATE: the old points against the published window: {g['hours']} hours, "
           f"{g['input_differences']} input differences (hs, tp, dp, swell_hs), "
-          f"{g['star_differences']} star differences, {g['filled']} filled from a neighbouring "
-          f"hour (the hour blank in the file) -> {'PASS' if g['pass'] else 'FAIL'} ===")
+          f"{g['star_differences']} star differences, {g['face_differences']} face differences, "
+          f"{g['filled']} filled from a neighbouring hour (the hour blank in the file) -> "
+          f"{'PASS' if g['pass'] else 'FAIL'} ===")
     for h in rep["hours"]:
-        if not h["inputs_match"] or h["stars_old"] != h["stars_published"]:
-            print(f"    {h['spot']} {h['valid_time']}: inputs {'ok' if h['inputs_match'] else 'DIFFER'}"
+        if (not h["inputs_match"] or h["stars_old"] != h["stars_published"]
+                or face_differs(h["face_published"], h["face_old"])):
+            print(f"    {h['spot']} {h['valid_time']}: inputs "
+                  f"{'ok' if h['inputs_match'] else 'DIFFER ' + ', '.join(h.get('input_diffs') or [])}"
                   f" (series hour {_offset(h.get('filled_from'))}, hour blank in the file "
-                  f"{h.get('exact_hour_blank')}), published {h['stars_published']} replayed "
-                  f"{h['stars_old']}")
+                  f"{h.get('exact_hour_blank')}); stars published {h['stars_published']} replayed "
+                  f"{h['stars_old']}; face published {_v(h['face_published'])} replayed "
+                  f"{_v(h['face_old'])}")
+            st, ex = h.get("stored") or {}, h.get("expected") or {}
+            print("      stored   " + "  ".join(f"{c} {_v(st.get(c), '{:.3f}')}" for c in INPUT_COLS))
+            print("      expected " + "  ".join(f"{c} {_v(ex.get(c), '{:.3f}')}" for c in INPUT_COLS))
     for h in rep["hours"]:
         if h["inputs_match"] and h.get("filled_from") in (-1, 1):
             print(f"    filled: {h['spot']} {h['valid_time']} from the hour "
@@ -522,7 +569,10 @@ def print_report(rep):
               f"{_v(h['stars_new'], '{:.1f}')}  face {_v(h['face_old'])} -> {_v(h['face_new'])}  "
               f"hs {_v(h['hs_old'])} -> {_v(h['hs_new'])}  tp {_v(h['tp_old'])} -> "
               f"{_v(h['tp_new'])} ({_v(h['rated_tp_old'])} -> {_v(h['rated_tp_new'])})  "
-              f"wind {h['wind']}{mark}")
+              f"wind {h['wind']}"
+              + "".join(f"  | {n} stars {_v(r['stars'], '{:.1f}')} face {_v(r['face'])}"
+                        for n, r in (h.get("reference") or {}).items())
+              + mark)
     hp = rep["homepage"]
     print("\n=== Homepage, Best conditions right now: before | after ===")
     for i in range(max(len(hp["before"]), len(hp["after"]))):
