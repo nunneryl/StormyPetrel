@@ -1,7 +1,9 @@
 import { createHmac } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { SNAPSHOT_COLUMNS, snapshotFromRow, type SnapshotRow } from '@/lib/reportSnapshot';
 import {
+  saltDay,
   submitReport,
   type ReportDb,
   type ReportRow,
@@ -23,7 +25,11 @@ import {
 //
 // This is the site's FIRST unauthenticated write endpoint. There is no middleware, no WAF
 // rule in vercel.json, and no rate-limiting dependency, so the abuse controls are the ones
-// below plus the UNIQUE constraint, which is the only one a client cannot bypass.
+// below plus the UNIQUE constraint, which is the only one a client cannot bypass:
+//   * one row per (spot, hour, reporter hash), a repeat replacing the answer;
+//   * DAILY_REPORT_CAP new reports per reporter hash, i.e. per person per observed UTC day;
+//   * the hidden HONEYPOT_FIELD, which a person never fills in.
+// None of them stores anything new about the visitor.
 
 export const runtime = 'nodejs'; // node:crypto for the HMAC
 
@@ -33,7 +39,7 @@ export const runtime = 'nodejs'; // node:crypto for the HMAC
 const HASH_LENGTH = 16;
 
 /**
- * Non-identifying reporter fingerprint.
+ * Non-identifying reporter fingerprint, keyed on the OBSERVED hour's UTC day (saltDay).
  *
  * ROTATION IS WHAT MAKES IT NON-IDENTIFYING, and it is the whole design. A fixed salt would
  * give every visitor one stable pseudonym for life — a durable identifier, i.e. exactly the
@@ -46,10 +52,13 @@ const HASH_LENGTH = 16;
  * The secret never leaves the server, and the value is truncated, so the hash is not
  * reversible to an IP. No raw IP and no cookie id is stored anywhere.
  */
-function reporterHash(ip: string, userAgent: string, nowMs: number): string | null {
+function reporterHash(ip: string, userAgent: string, observedHourIso: string): string | null {
   const secret = process.env.SURF_REPORT_SALT;
   if (!secret) return null;
-  const day = new Date(nowMs).toISOString().slice(0, 10); // UTC calendar day
+  // The OBSERVED hour's UTC day, not today's: one person's reports about one hour share one
+  // hash however late they are sent, so a report sent after 00:00 UTC cannot duplicate one
+  // sent before it. Reports about different days still cannot be linked.
+  const day = saltDay(observedHourIso);
   const dailyKey = createHmac('sha256', secret).update(day).digest();
   return createHmac('sha256', dailyKey)
     .update(`${ip}\n${userAgent}`)
@@ -90,7 +99,7 @@ const db: ReportDb = {
     // genuine "we had no forecast".
     const { data, error } = await supabase
       .from('forecasts')
-      .select('face_ft, stars')
+      .select(SNAPSHOT_COLUMNS)
       .eq('spot_id', spotId)
       .eq('source', 'nwps')
       .eq('valid_time', observedHourIso)
@@ -100,8 +109,7 @@ const db: ReportDb = {
       return null;
     }
     if (!data) return null;
-    const row = data as { face_ft: number | null; stars: number | null };
-    return { face_ft: row.face_ft ?? null, stars: row.stars ?? null };
+    return snapshotFromRow(data as SnapshotRow);
   },
 
   async insert(row: ReportRow) {
@@ -118,7 +126,7 @@ const db: ReportDb = {
   async findExisting(key: ReportKey) {
     const { data, error } = await supabase
       .from('surf_reports')
-      .select('size_bucket, rating_verdict, revision')
+      .select('size_bucket, sets_bucket, question_version, rating_verdict, revision')
       .eq('spot_id', key.spot_id)
       .eq('observed_hour', key.observed_hour)
       .eq('reporter_hash', key.reporter_hash)
@@ -146,6 +154,19 @@ const db: ReportDb = {
     }
     return { ok: true as const };
   },
+
+  async countByReporter(hash: string) {
+    // The hash is per person per observed UTC day, so this counts that day's reports.
+    const { count, error } = await supabase
+      .from('surf_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('reporter_hash', hash);
+    if (error) {
+      console.error('reports.countByReporter', error);
+      return null;
+    }
+    return count ?? 0;
+  },
 };
 
 export async function POST(req: NextRequest) {
@@ -156,19 +177,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'invalid json' }, { status: 400 });
   }
 
-  const now = Date.now();
-  const hash = reporterHash(clientIp(req), req.headers.get('user-agent') ?? '', now);
-  if (hash === null) {
-    // Refuse rather than degrade. Without the salt the only options are a fixed-salt hash (a
-    // durable identifier) or a constant (which would collapse every reporter onto one bucket
-    // and let the UNIQUE constraint reject everyone else's first report for that spot-hour).
-    console.error('reports: SURF_REPORT_SALT is not set — refusing to write');
-    return NextResponse.json(
-      { ok: false, error: 'reporting is temporarily unavailable' },
-      { status: 503 },
-    );
-  }
+  const ip = clientIp(req);
+  const userAgent = req.headers.get('user-agent') ?? '';
+  // Refuse rather than degrade when the salt is missing (submitReport answers 503). Without it
+  // the only options are a fixed-salt hash (a durable identifier) or a constant (which would
+  // collapse every reporter onto one bucket and let the UNIQUE constraint reject everyone
+  // else's first report for that spot-hour).
+  const hashFor = (observedHourIso: string) => {
+    const h = reporterHash(ip, userAgent, observedHourIso);
+    if (h === null) console.error('reports: SURF_REPORT_SALT is not set — refusing to write');
+    return h;
+  };
 
-  const outcome = await submitReport(db, raw, now, hash);
+  const outcome = await submitReport(db, raw, Date.now(), hashFor);
   return NextResponse.json(outcome.body, { status: outcome.status });
 }

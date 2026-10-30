@@ -454,6 +454,39 @@ def test_compare_reports():
     assert (g["bucket"], g["bucket_ft"], g["state"]) == ("waist", 3.0, "Hawaii")
     assert (g["published_side"], g["typical_side"], g["sets_side"]) == ("inside", "below", "above")
     assert g["typical_ratio"] == 0.667
+    assert (g["question_version"], g["sets_bucket"]) == (1, None)   # no version: version 1
+
+
+def _rep(version, region, side, bucket="waist"):
+    return {"question_version": version, "region": region, "type": "beach", "bucket": bucket,
+            "published_side": side}
+
+
+def test_reports_by_version_never_pools():
+    rows = [_rep(1, "NC", "inside"), _rep(2, "NC", "below"), _rep(2, "SC", "above", "head")]
+    got = F.reports_by_version(rows)
+    assert list(got) == ["1", "2"]
+    assert (got["1"]["n"], got["2"]["n"]) == (1, 2)
+    assert got["1"]["by_region"]["all"]["published"]["inside"] == 1.0
+    # version 2: one below and one above, so half each, and none inside
+    v2 = got["2"]["by_region"]["all"]["published"]
+    assert (v2["inside"], v2["below"], v2["above"]) == (0.0, 0.5, 0.5)
+    assert set(got["2"]["by_bucket"]) == {"all", "head", "waist"}
+
+
+def test_public_totals_show_only_regions_with_enough_reports():
+    # version 2: NC has 4 reports (3 inside, 1 above); SC has 2; version 1: NC has 1
+    rows = ([_rep(2, "NC", "inside")] * 3 + [_rep(2, "NC", "above")]
+            + [_rep(2, "SC", "below")] * 2 + [_rep(1, "NC", "inside")])
+    got = F.public_totals(rows, min_reports=3)
+    assert got == {"min_reports": 3, "by_version": {
+        "1": {"regions": {}, "suppressed": {"regions": 1, "reports": 1}},
+        "2": {"regions": {"NC": {"n": 4, "inside": 0.75, "below": 0.0, "above": 0.25}},
+              "suppressed": {"regions": 1, "reports": 2}}}}
+    assert F.MIN_PUBLIC_REPORTS == 20
+    assert F.public_totals(rows)["by_version"]["2"]["regions"] == {}      # 4 < 20
+    # totals only: nothing names a spot, an hour or a reporter
+    assert "spot" not in str(got) and "hour" not in str(got)
 
 
 def test_compare_frf_small_days_only_and_the_ideal_input():
@@ -606,7 +639,8 @@ def test_run_end_to_end_on_stand_ins():
     assert rep["reports"]["n_paired"] == 1
     # reported chest (4 ft): typical 4.95 is nearest shoulder (5), above; sets 6.28 nearest
     # head (6), above; published 3.0 is waist, below
-    r = rep["reports"]["by_region"]["all"]
+    assert list(rep["reports"]["by_version"]) == ["1"]   # a row with no version answered 1
+    r = rep["reports"]["by_version"]["1"]["by_region"]["all"]
     assert (r["typical"]["above"], r["sets"]["above"], r["published"]["below"]) == (1.0, 1.0, 1.0)
     assert rep["frf"]["small_day_hours"] == 0
     assert rep["frf_8m_months"] == ["unread 202609: no FRF here"]

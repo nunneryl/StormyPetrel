@@ -29,6 +29,10 @@
  *      (reef, researched; low tide, unattributed), Pensacola Beach (beach, model_recall; mid
  *      tide, unattributed) and Sunset Point (no break type, no tide), and a fourth carries a
  *      researched tide, so the chip is seen to render when it should.
+ *  10. The surf-report card (components/SurfReport) is in the served HTML, not behind a link:
+ *      the question "Surfed here today? How big were most waves?", the eleven body-scale chips
+ *      each with its feet hint, and no "Was this right?" link. Neither a California spot nor
+ *      Banzai Pipeline (Hawaii) carries a Hawaiian-scale note.
  *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
  *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
  *      no time_zone in the first build (the shape of a row read before migration 026), shows the
@@ -499,6 +503,26 @@ async function main(): Promise<void> {
       freshMs <= fresh.doneAt, `${fresh.stamp} vs ${new Date(fresh.doneAt).toISOString()}`);
     const freshHeadline = checkHeadline('regenerated copy', fresh.html, freshMs);
     console.log(`        (sp-rendered-at ${fresh.stamp}; sp-headline-hour ${freshHeadline})`);
+  }
+
+  // 10: the surf-report card, server-rendered.
+  const CHIPS: Array<[string, string]> = [
+    ['Ankle', 'under 1 ft'], ['Knee', '1–2 ft'], ['Thigh', '2–2.5 ft'], ['Waist', '2.5–3.5 ft'],
+    ['Chest', '3.5–4.5 ft'], ['Shoulder', '4.5–5.5 ft'], ['Head high', '5.5–6.5 ft'],
+    ['Overhead', '6.5–8 ft'], ['Well overhead', '8–10 ft'], ['Double overhead', '10–13 ft'],
+    ['Triple overhead +', '13 ft +'],
+  ];
+  for (const slug of [WITH_ROW.slug, PIPELINE.slug]) {
+    const html = (await load(slug)).html.replace(/<!-- -->/g, '');
+    check(`${slug}: the card asks "Surfed here today? How big were most waves?"`,
+      html.includes('Surfed here today? How big were most waves?'));
+    const chips = [...html.matchAll(
+      /<span class="block">([^<]*)<\/span><span class="block text-\[10px\] text-text-muted">([^<]*)<\/span>/g,
+    )].map((m) => [m[1], m[2]]);
+    eq(`${slug}: the eleven chips with their feet hints, in order`, JSON.stringify(chips),
+      JSON.stringify(CHIPS));
+    check(`${slug}: no "Was this right?" link`, !html.includes('Was this right?'));
+    check(`${slug}: no Hawaiian-scale note`, !html.includes('Hawaiian scale'));
   }
 
   // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard

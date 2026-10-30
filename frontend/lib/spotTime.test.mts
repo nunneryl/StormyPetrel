@@ -159,7 +159,8 @@ const USES: [string, string[]][] = [
     'fmtTooltipTime(new Date(v as number).toISOString(), timeZone)']],
   ['components/SwellChart.tsx', ['fmtDayTimeTick(new Date(ms).toISOString(), timeZone)',
     'fmtTooltipTime(new Date(v as number).toISOString(), timeZone)']],
-  ['components/SurfReport.tsx', ['{fmtShortTime(iso, timeZone)} {zoneAbbr(iso, timeZone)}']],
+  ['components/SurfReport.tsx', ['{hourOptionLabel(iso, i, timeZone)}']],
+  ['lib/reportUi.ts', ['${fmtShortTime(iso, timeZone)} ${zoneAbbr(iso, timeZone)}']],
   ['components/CamEmbed.tsx', ['camDarkness(lat, lng, timeZone)']],
 ];
 for (const [rel, uses] of USES) {
