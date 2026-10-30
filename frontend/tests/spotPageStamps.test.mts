@@ -31,8 +31,8 @@
  *      researched tide, so the chip is seen to render when it should.
  *  10. The surf-report card (components/SurfReport) is in the served HTML, not behind a link:
  *      the question "Surfed here today? How big were most waves?", the eleven body-scale chips
- *      each with its feet hint, and no "Was this right?" link. Banzai Pipeline (Hawaii) adds
- *      "Face height, not the Hawaiian scale."; a California spot does not.
+ *      each with its feet hint, and no "Was this right?" link. Neither a California spot nor
+ *      Banzai Pipeline (Hawaii) carries a Hawaiian-scale note.
  *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
  *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
  *      no time_zone in the first build (the shape of a row read before migration 026), shows the
@@ -512,7 +512,7 @@ async function main(): Promise<void> {
     ['Overhead', '6.5–8 ft'], ['Well overhead', '8–10 ft'], ['Double overhead', '10–13 ft'],
     ['Triple overhead +', '13 ft +'],
   ];
-  for (const [slug, hawaii] of [[WITH_ROW.slug, false], [PIPELINE.slug, true]] as const) {
+  for (const slug of [WITH_ROW.slug, PIPELINE.slug]) {
     const html = (await load(slug)).html.replace(/<!-- -->/g, '');
     check(`${slug}: the card asks "Surfed here today? How big were most waves?"`,
       html.includes('Surfed here today? How big were most waves?'));
@@ -522,8 +522,7 @@ async function main(): Promise<void> {
     eq(`${slug}: the eleven chips with their feet hints, in order`, JSON.stringify(chips),
       JSON.stringify(CHIPS));
     check(`${slug}: no "Was this right?" link`, !html.includes('Was this right?'));
-    eq(`${slug}: the Hawaiian-scale note ${hawaii ? 'is' : 'is not'} there`,
-      html.includes('Face height, not the Hawaiian scale.'), hawaii);
+    check(`${slug}: no Hawaiian-scale note`, !html.includes('Hawaiian scale'));
   }
 
   // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard

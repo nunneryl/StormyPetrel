@@ -2,7 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-import { fmtShortTime, zoneAbbr } from '@/lib/spotTime';
+import {
+  CHIP_HINT_IDLE,
+  CHIP_HINT_SELECTED,
+  CHIP_IDLE,
+  CHIP_SELECTED,
+  hourOptionLabel,
+} from '@/lib/reportUi';
 import {
   SIZE_BUCKETS,
   SIZE_BUCKET_LABELS,
@@ -27,8 +33,11 @@ import {
  * THE QUESTION (question_version 2, #282). "How big were most waves?" on the body scale, with
  * a small feet hint per chip (BUCKET_HINT_FT). Not feet chips that echo the tile just above:
  * that would anchor answers to our own forecast and flatter any accuracy figure. Optional:
- * "How big were the sets?" on the same scale, and the star verdict. Hawaii says the chips are
- * face height, not the Hawaiian scale.
+ * "How big were the sets?" on the same scale, and the star verdict.
+ *
+ * WHAT THE ANSWERS ARE FOR. Checking the forecast, and nothing else: no rating, height or
+ * forecast the site shows ever reads them (docs/face_validation/README.md, enforced by
+ * pipeline/tests/test_reports_never_feed_forecasts.py).
  *
  * SERVER/ISR CONTRACT. The spot page and CurrentConditions stay server components; the
  * provider takes them as `children`. Nothing here reads cookies() or headers(), so the routes
@@ -42,15 +51,9 @@ import {
 
 type Ctx = {
   slug: string;
-  /** UTC-hour ISO strings the page actually holds an NWPS forecast row for. Used only to
-   *  warn the reporter that a chosen hour will not be joinable; never to block a report —
-   *  an observation of an hour we failed to forecast is still worth having. */
-  forecastHours: string[];
   /** The spot's IANA time zone (lib/spotTime.ts): the hours are offered in the spot's local
    *  time, the clock the reporter surfed by, not the browser's. */
   timeZone: string;
-  /** Hawaii's chips say face height, since Hawaiian-scale answers would read about half. */
-  hawaii: boolean;
 };
 
 const SurfReportCtx = createContext<Ctx | null>(null);
@@ -63,19 +66,15 @@ function useSurfReport(): Ctx {
 
 export function SurfReportProvider({
   slug,
-  forecastHours,
   timeZone,
-  hawaii = false,
   children,
 }: {
   slug: string;
-  forecastHours: string[];
   timeZone: string;
-  hawaii?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <SurfReportCtx.Provider value={{ slug, forecastHours, timeZone, hawaii }}>
+    <SurfReportCtx.Provider value={{ slug, timeZone }}>
       {children}
     </SurfReportCtx.Provider>
   );
@@ -99,13 +98,13 @@ function Chips({
           onClick={() => onPick(value === b ? null : b)}
           aria-pressed={value === b}
           className={`px-2.5 py-1 rounded-md border text-xs transition text-left leading-tight ${
-            value === b
-              ? 'border-cyan-500 bg-cyan-500/15 text-cyan-300'
-              : 'border-ink-600 bg-ink-900 text-text-secondary hover:border-ink-500 hover:text-text-primary'
+            value === b ? CHIP_SELECTED : CHIP_IDLE
           }`}
         >
           <span className="block">{SIZE_BUCKET_LABELS[b]}</span>
-          <span className="block text-[10px] text-text-muted">{BUCKET_HINT_FT[b]}</span>
+          <span className={`block text-[10px] ${value === b ? CHIP_HINT_SELECTED : CHIP_HINT_IDLE}`}>
+            {BUCKET_HINT_FT[b]}
+          </span>
         </button>
       ))}
     </div>
@@ -113,7 +112,7 @@ function Chips({
 }
 
 export function SurfReportPanel() {
-  const { slug, forecastHours, timeZone, hawaii } = useSurfReport();
+  const { slug, timeZone } = useSurfReport();
 
   const [hours, setHours] = useState<string[]>([]);
   const [hour, setHour] = useState<string>('');
@@ -131,8 +130,6 @@ export function SurfReportPanel() {
     setHours(opts);
     setHour(opts[0]);
   }, []);
-
-  const known = new Set(forecastHours);
 
   async function send() {
     if (!size || !hour) return;
@@ -193,9 +190,7 @@ export function SurfReportPanel() {
           Surfed here today? How big were most waves?
         </h2>
         <p className="mt-0.5 text-xs text-text-muted max-w-prose">
-          Most of the waves, not the biggest sets.
-          {hawaii ? ' Face height, not the Hawaiian scale.' : ''} Your answer is how we check
-          our forecast.
+          Most of the waves, not the biggest sets. Your answer is how we check our forecast.
         </p>
       </div>
 
@@ -219,9 +214,7 @@ export function SurfReportPanel() {
               {hours.length === 0 && <option>Loading…</option>}
               {hours.map((iso, i) => (
                 <option key={iso} value={iso}>
-                  {fmtShortTime(iso, timeZone)} {zoneAbbr(iso, timeZone)}
-                  {i === 0 ? ' (this hour)' : ''}
-                  {known.size > 0 && !known.has(iso) ? ' · no forecast' : ''}
+                  {hourOptionLabel(iso, i, timeZone)}
                 </option>
               ))}
             </select>
@@ -248,9 +241,7 @@ export function SurfReportPanel() {
                   onClick={() => setVerdict(verdict === v ? null : v)}
                   aria-pressed={verdict === v}
                   className={`px-2.5 py-1 rounded-md border text-xs transition ${
-                    verdict === v
-                      ? 'border-cyan-500 bg-cyan-500/15 text-cyan-300'
-                      : 'border-ink-600 bg-ink-900 text-text-secondary hover:border-ink-500 hover:text-text-primary'
+                    verdict === v ? CHIP_SELECTED : CHIP_IDLE
                   }`}
                 >
                   {RATING_VERDICT_LABELS[v]}

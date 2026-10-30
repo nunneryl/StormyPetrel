@@ -88,11 +88,11 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 //
 // THE WINDOW REACHES BACKWARDS. It used to start at `now`, which meant a past hour was not
 // on the page at all — and the surf-report control asks people about hours that have already
-// happened (a dawn session reported at 4pm). It now starts HOUR_PICKER_SPAN hours back so
-// every hour the picker offers has its forecast row in memory, which is what lets the panel
-// tell a reporter that a chosen hour has no forecast behind it. The SNAPSHOT itself is still
-// taken server-side in /api/reports against the database — the client is never trusted for
-// it — so this widening is for the UI, not for the label.
+// happened (a dawn session reported at 4pm). It now starts HOUR_PICKER_SPAN hours back, and
+// the tiles rely on that too: selectCurrentHour needs the hour containing "now", which on a
+// prerendered copy can be an hour behind the render. The report's forecast SNAPSHOT is taken
+// server-side by the report route, against the database — the client is never trusted for it —
+// and the card no longer reads these rows at all.
 //
 // Everything downstream that means "from now on" now reads `upcoming`, not this array.
 async function loadForecasts(spotId: number): Promise<Forecast[]> {
@@ -184,19 +184,6 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   const renderedAt = new Date(nowMs).toISOString();
   const headlineHour = current ? new Date(current.valid_time).toISOString() : null;
 
-  // The UTC hours we actually hold an NWPS row for, over the picker's window. The panel uses
-  // this only to warn that a chosen hour will not be joinable; it never blocks a report.
-  // Bounded at BOTH ends: this list crosses into the client payload, and the picker only
-  // ever offers hours from HOUR_PICKER_SPAN ago up to the current one. Without the upper
-  // bound every future hour on the page — up to 180 of them — would be serialised too.
-  const oldestReportable = nowMs - HOUR_PICKER_SPAN * 3600_000;
-  const forecastHours = forecasts
-    .filter((r) => {
-      const t = new Date(r.valid_time).getTime();
-      return t >= oldestReportable && t <= nowMs;
-    })
-    .map((r) => new Date(r.valid_time).toISOString());
-
   // Charts get a 48h slice — the full forecast window made the curves
   // too compressed to read. The grid below still shows everything.
   // UNCHANGED semantics, extracted so a test can pin them: >= now, <= now + 48h. The
@@ -286,8 +273,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           server components — nothing here reads cookies or headers, so all 648 routes keep
           their prerender and their 1-hour revalidate. The report card sits right under the
           tiles, always visible, asking "How big were most waves?" (components/SurfReport). */}
-      <SurfReportProvider slug={spot.slug} forecastHours={forecastHours} timeZone={timeZone}
-                          hawaii={spot.state === 'Hawaii'}>
+      <SurfReportProvider slug={spot.slug} timeZone={timeZone}>
         <CurrentConditions
           rows={forecasts}
           serverNowMs={nowMs}
