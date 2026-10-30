@@ -1,5 +1,5 @@
 {
-  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point.",
+  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read.",
   "overrides": {
     "duck-pier": {
       "nwps_wfo": "mhx",
@@ -40,6 +40,30 @@
       "replaces": [27.78582, -82.80924],
       "reason": "The current point (6.1 m) read 0.45 of NDBC 42098 with a 2.25 s median period, 63% of hours under 3 s; the 10.3 m cell 9.16 km at 218 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. St. Pete Beach and Treasure Island FL share this cell.",
       "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 26.6 km"
+    },
+    "rodanthe": {
+      "nwps_wfo": "mhx",
+      "nwps_node_lat": 35.5911,
+      "nwps_node_lng": -75.43524,
+      "replaces": [35.5911, -75.45482],
+      "reason": "The current point (10.3 m by ETOPO) is the beach column beside the stretch where MHX's grid has no island (Pamlico Sound water at -75.4744 from 35.559 to 35.607): NWPS read 0.18 of the pier there (0.17 to 0.18 in each of 4 cycles), 0.16 of the cell one column seaward, at an ocean-like 8.0 s. Against the pier since 2026-09-07 it read under 0.4 in 1189 of 1294 hours, and in all 630 hours with the pier at 1 m or more (median 0.11). The 16.9 m cell 2.46 km at 99 deg read 1.09 of the pier in every cycle and 0.98 of the cell beyond it.",
+      "evidence": "sw1-raycast run 58 (nwps-cells, e244d2a), artifact nwps-cells-58: archive since 2026-09-07 against Outer Banks Fishing Pier, and the MHX CG1 cells from 4 NOMADS cycles (2026-10-27 12Z to 10-29 00Z); ETOPO 2022 joined afterwards"
+    },
+    "salvo": {
+      "nwps_wfo": "mhx",
+      "nwps_node_lat": 35.52602,
+      "nwps_node_lng": -75.43524,
+      "replaces": [35.54229, -75.45482],
+      "reason": "The current point (11.1 m by ETOPO) is the beach column one row south of the stretch where MHX's grid has no island: NWPS read 0.40 of the pier there (0.38 to 0.42 in each of 4 cycles), 0.37 of the cell one column seaward. Against the pier since 2026-09-07 it read under 0.4 in 678 of 1393 hours, and in 534 of the 674 hours with the pier at 1 m or more (median 0.26). The same-row cell seaward is 9.3 m at its centre; the 10.9 m cell 3.00 km at 112 deg read 1.10 of the pier (1.09 to 1.12) and 0.97 of the cell beyond it.",
+      "evidence": "sw1-raycast run 58 (nwps-cells, e244d2a), artifact nwps-cells-58: archive since 2026-09-07 against Outer Banks Fishing Pier, and the MHX CG1 cells from 4 NOMADS cycles (2026-10-27 12Z to 10-29 00Z); ETOPO 2022 joined afterwards"
+    },
+    "s-turns": {
+      "nwps_wfo": "mhx",
+      "nwps_node_lat": 35.60738,
+      "nwps_node_lng": -75.43524,
+      "replaces": [35.60738, -75.45482],
+      "reason": "The current point (13.2 m by ETOPO) is the beach column beside the stretch where MHX's grid has no island: NWPS read 0.19 of the pier there (0.18 to 0.20 in each of 4 cycles), 0.17 of the cell one column seaward, at an ocean-like 8.0 s. Against the pier since 2026-09-07 it read under 0.4 in 1237 of 1378 hours, and in all 672 hours with the pier at 1 m or more (median 0.13). The 16.5 m cell 2.68 km at 91 deg read 1.10 of the pier in every cycle and 0.98 of the cell beyond it.",
+      "evidence": "sw1-raycast run 58 (nwps-cells, e244d2a), artifact nwps-cells-58: archive since 2026-09-07 against Outer Banks Fishing Pier, and the MHX CG1 cells from 4 NOMADS cycles (2026-10-27 12Z to 10-29 00Z); ETOPO 2022 joined afterwards"
     }
   }
 }

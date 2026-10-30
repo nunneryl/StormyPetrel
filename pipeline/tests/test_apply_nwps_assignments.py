@@ -677,12 +677,19 @@ _RUN50 = {"duck-pier": ((36.19331, -75.72892), 2.07, (36.19317, -75.74849)),
           "st-pete-beach": ((27.7373, -82.86304), 9.94, (27.73716, -82.77337)),
           "treasure-island-fl": ((27.7373, -82.86304), 9.45, (27.75338, -82.77337)),
           "madeira-beach": ((27.7373, -82.86304), 9.16, (27.78582, -82.80924))}
+# Run 58 (nwps-cells): the Hatteras beach column beside the stretch where MHX's grid has no
+# island, moved one column seaward. km to 3 decimals: the great circle from the roster spot to
+# the cell, worked separately from apply_nwps_assignments.
+_RUN58 = {"rodanthe": ((35.5911, -75.43524), 2.465, (35.5911, -75.45482)),
+          "salvo": ((35.52602, -75.43524), 2.996, (35.54229, -75.45482)),
+          "s-turns": ((35.60738, -75.43524), 2.675, (35.60738, -75.45482))}
+_MOVES = {**_RUN50, **_RUN58}
 
 
-def test_live_overrides_are_run_50s_cells():
+def test_live_overrides_are_run_50s_and_run_58s_cells():
     ov = ap.load_node_overrides()
-    assert set(ov) == set(_RUN50)
-    for slug, (cell, _km, was) in _RUN50.items():
+    assert set(ov) == set(_MOVES)
+    for slug, (cell, _km, was) in _MOVES.items():
         assert (ov[slug]["nwps_node_lat"], ov[slug]["nwps_node_lng"]) == cell, slug
         assert ov[slug]["replaces"] == list(was), slug
         assert ov[slug]["reason"] and ov[slug]["evidence"], slug
@@ -691,7 +698,7 @@ def test_live_overrides_are_run_50s_cells():
 def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
     by_slug = {ap._slug(s["name"]): s for s in _real_enriched()}
     assigned = {a["slug"]: a for a in _real_doc()["spots"]}
-    for slug, (cell, km, was) in _RUN50.items():
+    for slug, (cell, km, was) in _MOVES.items():
         s = by_slug[slug]
         assert (s["nwps_node_lat"], s["nwps_node_lng"]) == cell, slug
         # run 50 printed the km to 2 decimals, so the metres agree to within 5
@@ -701,12 +708,12 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the moved five included, already read what apply would write.
+    # spot's node fields, the moved eight included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()
     assert not problems and not held
-    assert sorted(r["slug"] for r in rows if r["node_override"]) == sorted(_RUN50)
+    assert sorted(r["slug"] for r in rows if r["node_override"]) == sorted(_MOVES)
     for r in rows:
         spot = by_slug[r["slug"]]
         for k, v in r["fields"].items():

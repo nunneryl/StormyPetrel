@@ -296,3 +296,18 @@ def test_a_wind_sea_from_90_degrees_outside_the_window_keeps_the_rated_period():
         assert ratings[name][0]["face_correction_version"] == STAMP + MARK + ":windsea"
         assert ratings[name][0]["face_ft"] == 4.27
     assert stats["hours_wind_sea"] == 2 and stats["hours_rewritten"] == 3
+
+
+def test_the_log_line_counts_the_wind_sea_hours():
+    """interpret logs this line after the step: run 2767's numbers (66,122 hours at 457 spots,
+    141 calibrated, 7,103 kept) with a wind-sea count of 5,501."""
+    line = S.surf_log_line({"hours_rewritten": 66122, "spots_rewritten": 457, "hours_wind_sea": 5501,
+                            "spots_calibrated": 141, "hours_kept_by_source": 7103,
+                            "hours_without_inputs": 0, "factors_missing": False})
+    assert line == ("interpret: surf height +surf:k0.70:d10:g0.78 — 66122 spot-hours at 457 "
+                    "uncalibrated spot(s), 5501 of them shoaled at the wind sea's period "
+                    "(:windsea); 141 spot(s) calibrated, 7103 hour(s) kept (not an NWPS "
+                    "override), 0 NWPS hour(s) without a face or period")
+    import inspect
+    from pipeline import interpret
+    assert "log.info(surf_log_line(surf_stats))" in inspect.getsource(interpret.main)

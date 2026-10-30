@@ -27,23 +27,35 @@ def test_nwps_shelter_is_a_mode():
     options = text.split("options:", 1)[1].split("workers:", 1)[0]
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
-        "data-quality", "node-preview", "surf-preview", "period-preview"]
+        "data-quality", "node-preview", "surf-preview", "period-preview", "nwps-cells"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
                          "rating-preview", "data-quality", "node-preview", "surf-preview",
-                         "period-preview"}
+                         "period-preview", "nwps-cells"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
-        "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' }}")
+        "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' "
+        "&& inputs.mode != 'nwps-cells' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
+
+
+def test_the_nwps_cells_job_only_reads():
+    job = _jobs()["nwps-cells"]
+    assert _if(job) == "${{ inputs.mode == 'nwps-cells' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert ('python -m pipeline.nwps_cells --spots "$SPOTS" --out nwps_cells.json '
+            '--csv nwps_cells.csv') in job
+    assert "SPOTS: ${{ inputs.spots }}" in job and "libeccodes0" in job
+    for verb in ("git push", "git commit", "db_import", "--write"):
+        assert verb not in job, verb
 
 
 def test_the_rating_preview_only_reads():
@@ -99,7 +111,8 @@ def test_the_node_preview_only_reads():
     assert _if(job) == "${{ inputs.mode == 'node-preview' }}"
     assert "    permissions:\n      contents: read\n" in job
     assert 'python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \\\n' in job
-    assert "--out node_preview.json --csv node_preview_hours.csv" in job
+    assert '--reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv' in job
+    assert "SPOTS: ${{ inputs.spots }}" in job
     assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job
     assert 'git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"' in job
     assert "libeccodes0" in job

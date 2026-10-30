@@ -2267,18 +2267,13 @@ def main(argv: list[str] | None = None) -> int:
     # Wrapped, like the override steps and unlike the seam: every value is computed before any
     # row is written, so a failure leaves the producer's face, which is what shipped before.
     try:
-        from .forecast.surf_height import SURF_MARK, apply_surf_height
+        from .forecast.surf_height import apply_surf_height, surf_log_line
         surf_stats = apply_surf_height(ratings, spots, face_factors)
         if surf_stats["factors_missing"]:
             log.warning("interpret: surf height NOT applied — no face factors, so the "
                         "calibrated spots cannot be told apart; every face is the producer's")
         else:
-            log.info("interpret: surf height %s — %d spot-hours at %d uncalibrated spot(s); "
-                     "%d spot(s) calibrated, %d hour(s) kept (not an NWPS override), %d "
-                     "NWPS hour(s) without a face or period", SURF_MARK,
-                     surf_stats["hours_rewritten"], surf_stats["spots_rewritten"],
-                     surf_stats["spots_calibrated"], surf_stats["hours_kept_by_source"],
-                     surf_stats["hours_without_inputs"])
+            log.info(surf_log_line(surf_stats))
     except Exception:  # noqa: BLE001
         log.exception("interpret: surf height step failed — keeping the producer's face")
 

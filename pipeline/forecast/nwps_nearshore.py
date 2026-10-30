@@ -537,6 +537,11 @@ def _parse_cycle_file(path, url, date, cc):
             "steps": sorted(steps), "fields": fields}
 
 
+def cycle_path(wfo, date, cc):
+    """Where load_cycle keeps a cycle's CG1 GRIB on disk."""
+    return os.path.join("/tmp", f"nwps_{wfo}_{date}_{cc}_CG1.grib2")
+
+
 def load_cycle(wfo, cycle=None):
     """Fetch + parse the latest (or given) CG1 cycle. Returns a dict:
       {lats, lons, mask, cycle_dt, steps, fields:{(short,fh): float32 grid}}
@@ -561,7 +566,7 @@ def load_cycle(wfo, cycle=None):
             raise OSError(f"no recent CG1 cycle for {wfo}")
     date, cc, url = cycle
     key = (wfo, date, cc)
-    path = os.path.join("/tmp", f"nwps_{wfo}_{date}_{cc}_CG1.grib2")
+    path = cycle_path(wfo, date, cc)
     _CYCLE_STATS["requested"] += 1
 
     hit = _CYCLE_PARSED.get(key)
@@ -742,6 +747,22 @@ def _node_value(cycle, short, fh, i, j):
         return None
     v = float(arr[i, j])
     return None if v != v else v   # NaN (land/missing) → None
+
+
+SERIES_FILL = (0, -1, 1)     # the hour itself, else the hour before, else the hour after
+
+
+def series_hour(series, k):
+    """The values apply_nwps_overrides rates hour bucket *k* from, and the offset of the bucket
+    that held them: *k* itself, else the hour before, else the hour after, so an hour the
+    cycle's file leaves blank (nwps_series_by_hour drops it) is filled from a neighbour.
+    (values, offset) with offset 0, -1 or 1; (None, None) when none of the three holds one.
+    node_preview's merge gate calls this too, so it checks the hour the override rated from."""
+    for off in SERIES_FILL:
+        m = series.get(k + off)
+        if m:
+            return m, off
+    return None, None
 
 
 def nwps_series_by_hour(spot, cycle):
@@ -1052,7 +1073,7 @@ def apply_nwps_overrides(ratings, spots, *, dry_run=False, only=None, nwps=None,
             if t is None:
                 continue
             k = int(t // 3600)
-            m = series.get(k) or series.get(k - 1) or series.get(k + 1)
+            m, _ = series_hour(series, k)
             if not m:
                 continue   # hour beyond f144 or missing → keep orientation path for it
             swh, per, dpw, shts = m
