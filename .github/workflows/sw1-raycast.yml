@@ -105,6 +105,14 @@ name: sw1-raycast
 #       forecast/tides.py classifies it; then every prediction station within 30 km, nearest
 #       first, with its type, distance, a 72 h hilo request from this runner and its mean range,
 #       and how many roster spots already use it.
+#   mode = buoy-assign: READ-ONLY (pipeline/buoy_assign.py), run 64 onward. No Supabase. Reruns
+#       enrich's buoy rule (enrichment/buoys.compute_nearest_buoy: from the seaward-adjusted point,
+#       NDBC wave stations only, the 10 nearest, the region's cap, line of sight over GSHHG land)
+#       for every spot whose buoy db_import drops (stored distance more than 5 km from the
+#       snapshot's great-circle) and every spot with no buoy. For each: the current buoy and its
+#       real distance, the cap, the rule's choice and distance or why there is none (beyond the
+#       cap, no line of sight, no wave stations), and whether it changes. Twice: on NDBC's files
+#       downloaded for this run, and on the runner's cached copy. Takes no inputs.
 
 on:
   workflow_dispatch:
@@ -127,6 +135,7 @@ on:
           - period-preview
           - nwps-cells
           - tide-station
+          - buoy-assign
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -183,7 +192,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' && inputs.mode != 'buoy-assign' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -858,5 +867,72 @@ jobs:
         with:
           name: tide-station-${{ github.run_number }}
           path: tide_station.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  buoy-assign:
+    name: sw1 buoy assignment from the runner (read-only)
+    if: ${{ inputs.mode == 'buoy-assign' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Restore geodata cache
+        id: geodata-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: pipeline/geodata
+          key: geodata-v1-${{ hashFiles('pipeline/download_geodata.sh') }}
+
+      - name: Download geodata (only if cache missed)
+        if: steps.geodata-cache.outputs.cache-hit != 'true'
+        run: bash pipeline/download_geodata.sh
+
+      - name: Verify GSHHG L1 and the cached NDBC files are present
+        run: |
+          for f in GSHHS_f_L1.shp ndbc_stations.xml ndbc_latest_obs.txt; do
+            if [[ ! -s "pipeline/geodata/$f" ]]; then
+              echo "::error::pipeline/geodata/$f missing"; exit 1
+            fi
+          done
+          ls -l --time-style=+%Y-%m-%dT%H:%MZ pipeline/geodata/ndbc_*
+
+      - name: Download NDBC's station lists for this run
+        run: |
+          mkdir -p "$RUNNER_TEMP/ndbc"
+          curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_stations.xml" \
+            https://www.ndbc.noaa.gov/activestations.xml
+          curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" \
+            https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt
+
+      - name: Rerun the buoy rule for the dropped spots and the spots with no buoy
+        run: |
+          python -m pipeline.buoy_assign --out buoy_assign.json \
+            --fresh-xml "$RUNNER_TEMP/ndbc/ndbc_stations.xml" \
+            --fresh-obs "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt"
+
+      - name: Keep the results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: buoy-assign-${{ github.run_number }}
+          path: buoy_assign.json
           retention-days: 90
           if-no-files-found: warn

@@ -1,0 +1,213 @@
+spot,group,region,cap_km,current_buoy,stored_km,current_real_km,current_is_wave_station,fresh_choice,fresh_km,fresh_reason,cached_choice,cached_km,recommend,proposed_buoy,proposed_km,over_60_km,note
+Church,dropped,California,150,46285,4.16,11.92,True,46277,8.77,,46277,8.77,fresh,46277,8.77,False,
+Lower Trestles,dropped,California,150,46285,6.18,11.26,True,46277,8.23,,46277,8.23,fresh,46277,8.23,False,
+Miramar,dropped,California,150,46053,21.18,27.44,False,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Newport Point,dropped,California,150,46253,29.99,23.69,True,46253,23.69,,46253,23.69,fresh,46253,23.69,False,
+Pescadero,dropped,California,150,46012,54.91,42.51,True,46012,42.51,,46012,42.51,fresh,46012,42.51,False,
+Point Reyes North,dropped,California,150,46214,25.67,45.54,True,46214,45.54,,46214,45.54,fresh,46214,45.54,False,
+Stone Steps,dropped,California,150,46266,8.7,16.5,True,46274,4.39,,46274,4.39,fresh,46274,4.39,False,
+Ventura Harbor,dropped,California,150,46053,57.93,52.55,False,46218,140.46,,46054,110.11,hold,,,False,"lists disagree (fresh 46218 140.46, cached 46054 110.11); the cached buoy's liveness is unchecked"
+Captiva,dropped,Florida,150,42098,69.97,139.9,True,42098,139.9,,42098,139.9,fresh,42098,139.9,True,
+Englewood,dropped,Florida,150,42098,18.86,90.09,True,42098,90.09,,42098,90.09,fresh,42098,90.09,True,
+Fort Clinch,dropped,Florida,150,41112,21.05,12.87,True,41112,12.87,,41112,12.87,fresh,41112,12.87,False,
+Gasparilla,dropped,Florida,150,42098,37.44,108.54,True,42098,108.54,,42098,108.54,fresh,42098,108.54,True,
+Mayport Poles,dropped,Florida,150,41112,42.82,37.59,True,41112,37.59,,41112,37.59,fresh,41112,37.59,False,
+Monster Hole,dropped,Florida,150,41113,36.56,59.8,True,41114,40.78,,41113,59.8,fresh,41114,40.78,False,cached gives 41113 59.8
+Playalinda Beach,dropped,Florida,150,41070,69.59,61.78,True,41070,61.78,,41070,61.78,fresh,41070,61.78,True,
+Wilbur by the Sea,dropped,Florida,150,41070,16.54,22.75,True,41070,22.75,,41070,22.75,fresh,41070,22.75,False,
+Blackbeard Island,dropped,Georgia,150,41112,103.07,88.59,True,41112,88.59,,41112,88.59,fresh,41112,88.59,True,
+Jekyll Island,dropped,Georgia,150,41112,49.77,40.23,True,41112,40.23,,41112,40.23,fresh,41112,40.23,False,
+Sea Island,dropped,Georgia,150,41112,67.98,55.08,True,41112,55.08,,41112,55.08,fresh,41112,55.08,False,
+St Simons Island,dropped,Georgia,150,41112,58.51,48.19,True,41112,48.19,,41112,48.19,fresh,41112,48.19,False,
+Devereaux,dropped,Massachusetts,150,44013,33.97,23.26,False,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Green Harbor,dropped,Massachusetts,150,44013,41.22,29.91,False,44090,36.95,,44090,36.95,fresh,44090,36.95,False,
+Revere Beach,dropped,Massachusetts,150,44013,21.5,28.54,False,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Scituate,dropped,Massachusetts,150,44013,31.24,18.47,False,44090,50.08,,44090,50.08,fresh,44090,50.08,False,
+Winthrop Jetty,dropped,Massachusetts,150,44013,17.21,25.76,False,44098,81.07,,44098,81.07,fresh,44098,81.07,True,
+Montauk Point,dropped,New York,100,44097,72.78,62.48,True,44097,62.48,,44097,62.38,fresh,44097,62.48,True,cached gives 44097 62.38
+Turtle Cove Montauk,dropped,New York,100,44097,68.86,62.95,True,44097,62.95,,44097,62.85,fresh,44097,62.95,True,cached gives 44097 62.85
+Carolina Beach Pier,dropped,North Carolina,150,41110,8.39,18.1,True,41110,18.1,,41110,18.1,fresh,41110,18.1,False,
+Fort Fisher,dropped,North Carolina,150,41110,1.91,26.92,True,41110,26.92,,41110,26.92,fresh,41110,26.92,False,
+Jolly Roger Pier,dropped,North Carolina,150,41110,49.55,25.76,True,41110,25.76,,41110,25.76,fresh,41110,25.76,False,
+Oak Island Pier,dropped,North Carolina,150,41110,18.34,43.17,True,ssbn7,37.79,,ssbn7,37.79,fresh,ssbn7,37.79,False,
+Oregon Inlet,dropped,North Carolina,150,44086,18.73,25.85,True,44095,19.04,,44095,19.04,fresh,44095,19.04,False,
+Wrightsville Beach South,dropped,North Carolina,150,41110,24.56,9.68,True,41110,9.68,,41110,9.68,fresh,41110,9.68,False,
+Berts Bar,dropped,South Carolina,150,41076,19.28,29.64,True,41065,20.79,,41065,20.79,fresh,41065,20.79,False,
+Dewees Island,dropped,South Carolina,150,41076,14.69,33.4,True,41065,9.05,,41065,9.05,fresh,41065,9.05,False,
+South Island,dropped,South Carolina,150,41076,61.63,79.56,True,41076,79.56,,41076,79.56,fresh,41076,79.56,True,
+Wild Dunes,dropped,South Carolina,150,41076,13.8,30.22,True,41065,12.0,,41065,12.0,fresh,41065,12.0,False,
+Windjammer,dropped,South Carolina,150,41076,15.99,30.09,True,41065,15.68,,41065,15.68,fresh,41065,15.68,False,
+Galveston Seawall,dropped,Texas,350,42035,42.79,37.55,False,42092,283.77,,42358,183.61,hold,,,False,"lists disagree (fresh 42092 283.77, cached 42358 183.61); the cached buoy's liveness is unchecked"
+C Street Ventura,none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Campus Point UCSB,none,California,150,,,,,46221,126.15,,46221,126.15,fresh,46221,126.15,True,
+Cardiff Reef,none,California,150,,,,,46225,13.4,,46225,13.4,fresh,46225,13.4,False,
+Carmel Beach,none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Crescent City Beach,none,California,150,,,,,46244,95.2,,46244,95.2,fresh,46244,95.2,True,
+Garbage Beach,none,California,150,,,,,46258,24.56,,46258,24.56,fresh,46258,24.56,False,
+Hammonds,none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Humboldt Bay Jetty,none,California,150,,,,,46244,17.54,,46244,17.54,fresh,46244,17.54,False,
+"Huntington Beach, California",none,California,150,,,,,46253,19.5,,46253,19.5,fresh,46253,19.5,False,
+Huntington Cliffs,none,California,150,,,,,46256,17.03,,46256,17.03,fresh,46256,17.03,False,
+Leadbetter Beach,none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Lovers Point,none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Ocean Beach Pier SD,none,California,150,,,,,46258,23.06,,46258,23.06,fresh,46258,23.06,False,
+"Redondo Beach, California",none,California,150,,,,,46221,23.02,,46221,23.02,fresh,46221,23.02,False,
+Salt Creek,none,California,150,,,,,46253,43.78,,46253,43.78,fresh,46253,43.78,False,
+San Onofre,none,California,150,,,,,46277,9.38,,46277,9.38,fresh,46277,9.38,False,
+Scotts Creek,none,California,150,,,,,46012,67.18,,46012,67.18,fresh,46012,67.18,True,
+"Seal Beach, California",none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Shelter Cove,none,California,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Surf Beach Vandenberg,none,California,150,,,,,46218,30.3,,46218,30.3,fresh,46218,30.3,False,
+The Wedge,none,California,150,,,,,46253,27.75,,46253,27.75,fresh,46253,27.75,False,
+Tourmaline,none,California,150,,,,,46258,23.11,,46258,23.11,fresh,46258,23.11,False,
+Ventura Point,none,California,150,,,,,46219,128.32,,46054,106.89,hold,,,False,"lists disagree (fresh 46219 128.32, cached 46054 106.89); the cached buoy's liveness is unchecked"
+Dewey Beach,none,Delaware,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Indian River Inlet,none,Delaware,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Rehoboth Beach,none,Delaware,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Atlantic Beach,none,Florida,150,,,,,41112,42.78,,41112,42.78,fresh,41112,42.78,False,
+Bathtub Beach,none,Florida,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Boca Raton Inlet,none,Florida,150,,,,,41122,37.25,,41122,37.25,fresh,41122,37.25,False,
+Boynton Beach Inlet,none,Florida,150,,,,,41122,58.74,,41122,58.74,fresh,41122,58.74,False,
+Daytona Beach,none,Florida,150,,,,,41070,21.12,,41070,21.12,fresh,41070,21.12,False,
+Delray Beach,none,Florida,150,,,,,41122,51.16,,41122,51.16,fresh,41122,51.16,False,
+Fort Pierce Inlet,none,Florida,150,,,,,41114,12.36,,41113,105.7,fresh,41114,12.36,False,cached gives 41113 105.7
+Haulover Inlet,none,Florida,150,,,,,41122,11.22,,41122,11.22,fresh,41122,11.22,False,
+Hobe Beach,none,Florida,150,,,,,41114,60.71,,,,fresh,41114,60.71,True,cached gives None None
+Indian Rocks Beach,none,Florida,150,,,,,42098,35.51,,42098,35.51,fresh,42098,35.51,False,
+Juno Beach Pier,none,Florida,150,,,,,41114,76.22,,,,fresh,41114,76.22,True,cached gives None None
+Jupiter Inlet,none,Florida,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Lake Worth Pier,none,Florida,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Naples Pier,none,Florida,150,,,,,,,beyond_cap,,,fresh,,,False,none: beyond_cap
+New Smyrna Beach Inlet,none,Florida,150,,,,,41070,26.35,,41070,26.35,fresh,41070,26.35,False,
+Ocean Reef Park,none,Florida,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Patrick Air Force Base Beach,none,Florida,150,,,,,41113,17.12,,41113,17.12,fresh,41113,17.12,False,
+Ponce Inlet,none,Florida,150,,,,,41070,23.43,,41070,23.43,fresh,41070,23.43,False,
+Satellite Beach,none,Florida,150,,,,,41113,25.75,,41113,25.75,fresh,41113,25.75,False,
+Sebastian Inlet,none,Florida,150,,,,,41114,40.3,,41113,60.32,fresh,41114,40.3,False,cached gives 41113 60.32
+South Beach Miami,none,Florida,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+St. Pete Beach,none,Florida,150,,,,,42098,23.83,,42098,23.83,fresh,42098,23.83,False,
+Treasure Island FL,none,Florida,150,,,,,42098,24.79,,42098,24.79,fresh,42098,24.79,False,
+Vilano Beach,none,Florida,150,,,,,41117,22.11,,41117,22.11,fresh,41117,22.11,False,
+Anahola Bay,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Backdoor Pipeline,none,Hawaii,150,,,,,51201,6.37,,51201,6.37,fresh,51201,6.37,False,
+Banyans,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Banzai Pipeline,none,Hawaii,150,,,,,51201,6.42,,51201,6.42,fresh,51201,6.42,False,
+Big Beach Makena,none,Hawaii,150,,,,,,,beyond_cap,,,fresh,,,False,none: beyond_cap
+Chuns Reef,none,Hawaii,150,,,,,51201,6.21,,51201,6.21,fresh,51201,6.21,False,
+Diamond Head Cliffs,none,Hawaii,150,,,,,51211,16.45,,51211,16.45,fresh,51211,16.45,False,
+Ehukai Beach Park,none,Hawaii,150,,,,,51201,6.62,,51201,6.62,fresh,51201,6.62,False,
+Flemings Beach,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Haleiwa Ali'i Beach,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Hapuna Beach,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Honolua Bay,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Kaisers,none,Hawaii,150,,,,,51211,12.39,,51211,12.39,fresh,51211,12.39,False,
+Keaau Beach,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Kiahuna Beach,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Kolekole Beach Park,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Laniakea,none,Hawaii,150,,,,,51201,6.3,,51201,6.3,fresh,51201,6.3,False,
+Log Cabins,none,Hawaii,150,,,,,51201,5.78,,51201,5.78,fresh,51201,5.78,False,
+Lymans,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Makapuu Beach Park,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Off The Wall,none,Hawaii,150,,,,,51201,6.29,,51201,6.29,fresh,51201,6.29,False,
+Pakala,none,Hawaii,150,,,,,,,beyond_cap,,,fresh,,,False,none: beyond_cap
+Peahi Jaws,none,Hawaii,150,,,,,,,beyond_cap,51205,16.15,decide,51205,16.15,False,51205's last reading is Oct 13; neighbours Hookipa and Kanaha already use it
+Pine Trees Hawaii,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Poipu Beach,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Polihale Beach,none,Hawaii,150,,,,,,,beyond_cap,,,fresh,,,False,none: beyond_cap
+Puaena Point,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Publics Waikiki,none,Hawaii,150,,,,,51211,14.34,,51211,14.34,fresh,51211,14.34,False,
+"Pūpūkea, Hawaii",none,Hawaii,150,,,,,51201,6.82,,51201,6.82,fresh,51201,6.82,False,
+Rocky Point,none,Hawaii,150,,,,,51201,7.16,,51201,7.16,fresh,51201,7.16,False,
+Sandy Beach Oahu,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Suicide's,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Sunset Beach Hawaii,none,Hawaii,150,,,,,51201,7.83,,51201,7.83,fresh,51201,7.83,False,
+Thousand Peaks Maui,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Turtle Bay,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Velzyland,none,Hawaii,150,,,,,51201,8.78,,51201,8.78,fresh,51201,8.78,False,
+Waimea Bay,none,Hawaii,150,,,,,51201,6.1,,51201,6.1,fresh,51201,6.1,False,
+Yokohama Bay,none,Hawaii,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Gooch's Beach,none,Maine,150,,,,,44098,65.83,,44098,65.83,fresh,44098,65.83,True,
+Old Orchard Beach,none,Maine,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Short Sands Beach York,none,Maine,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Assateague Island MD,none,Maryland,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Ocean City MD 28th Street,none,Maryland,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Ocean City MD Inlet,none,Maryland,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Good Harbor Beach,none,Massachusetts,150,,,,,44090,90.0,,44090,90.0,fresh,44090,90.0,True,
+Horseneck Beach,none,Massachusetts,150,,,,,44085,13.0,,44085,13.0,fresh,44085,13.0,False,
+Nantucket Surf,none,Massachusetts,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Nauset Beach,none,Massachusetts,150,,,,,44098,112.58,,44098,112.58,fresh,44098,112.58,True,
+Plum Island,none,Massachusetts,150,,,,,44098,52.0,,44098,52.0,fresh,44098,52.0,False,
+Hampton Beach,none,New Hampshire,150,,,,,44098,53.27,,44098,53.27,fresh,44098,53.27,False,
+The Wall Hampton,none,New Hampshire,150,,,,,44098,53.04,,44098,53.04,fresh,44098,53.04,False,
+Atlantic City,none,New Jersey,150,,,,,,,no_line_of_sight,44084,105.77,cached,44084,105.77,True,"44084 is reporting today (Bethany Beach page, Oct 31); the fresh list missed it"
+Avalon NJ,none,New Jersey,150,,,,,44091,110.78,,44084,68.17,cached,44084,68.17,True,"44084 is reporting today (Bethany Beach page, Oct 31); the fresh list missed it"
+Brigantine,none,New Jersey,150,,,,,44091,64.75,,44091,64.75,fresh,44091,64.75,True,
+Deal,none,New Jersey,150,,,,,44091,54.32,,44091,54.32,fresh,44091,54.32,False,
+Harvey Cedars,none,New Jersey,150,,,,,44091,31.95,,44091,31.95,fresh,44091,31.95,False,
+Manasquan Inlet,none,New Jersey,150,,,,,44091,43.07,,44091,43.07,fresh,44091,43.07,False,
+Margate,none,New Jersey,150,,,,,,,no_line_of_sight,44084,98.86,cached,44084,98.86,True,"44084 is reporting today (Bethany Beach page, Oct 31); the fresh list missed it"
+Ocean City NJ,none,New Jersey,150,,,,,,,no_line_of_sight,44084,92.33,cached,44084,92.33,True,"44084 is reporting today (Bethany Beach page, Oct 31); the fresh list missed it"
+Sandy Hook,none,New Jersey,150,,,,,44025,71.62,,44025,71.62,fresh,44025,71.62,True,
+Seaside Heights,none,New Jersey,150,,,,,44091,31.95,,44091,31.95,fresh,44091,31.95,False,
+Seaside Park,none,New Jersey,150,,,,,44091,31.46,,44091,31.46,fresh,44091,31.46,False,
+Stone Harbor,none,New Jersey,150,,,,,44091,117.74,,44084,61.25,cached,44084,61.25,True,"44084 is reporting today (Bethany Beach page, Oct 31); the fresh list missed it"
+Cupsogue Beach,none,New York,100,,,,,44025,67.89,,44025,67.89,fresh,44025,67.89,True,
+Fire Island,none,New York,100,,,,,44025,41.11,,44025,41.11,fresh,44025,41.11,False,
+Flying Point Beach,none,New York,100,,,,,44025,95.41,,44025,95.41,fresh,44025,95.41,True,
+Jones Beach,none,New York,100,,,,,44025,47.13,,44025,47.13,fresh,44025,47.13,False,
+Long Beach NY,none,New York,100,,,,,44025,54.85,,44025,54.85,fresh,44025,54.85,False,
+Mecox Beach,none,New York,100,,,,,,,beyond_cap,,,fresh,,,False,none: beyond_cap
+Ponquogue Beach,none,New York,100,,,,,44025,86.09,,44025,86.09,fresh,44025,86.09,True,
+Robert Moses State Park,none,New York,100,,,,,44025,41.26,,44025,41.26,fresh,44025,41.26,False,
+Shinnecock Inlet,none,New York,100,,,,,44025,87.46,,44025,87.46,fresh,44025,87.46,True,
+Smith Point Beach,none,New York,100,,,,,44025,58.84,,44025,58.84,fresh,44025,58.84,False,
+Cape Hatteras Lighthouse,none,North Carolina,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Carolina Beach,none,North Carolina,150,,,,,41110,20.12,,41110,20.12,fresh,41110,20.12,False,
+Frisco Pier,none,North Carolina,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Ocean Isle Beach,none,North Carolina,150,,,,,ssbn7,6.9,,ssbn7,6.9,fresh,ssbn7,6.9,False,
+Ocracoke Beach,none,North Carolina,150,,,,,41120,64.63,,41120,64.63,fresh,41120,64.63,True,
+Salvo,none,North Carolina,150,,,,,44095,26.75,,44095,26.75,fresh,44095,26.75,False,
+Sunset Beach NC,none,North Carolina,150,,,,,ssbn7,3.49,,ssbn7,3.49,fresh,ssbn7,3.49,False,
+Surf City NC,none,North Carolina,150,,,,,41110,34.85,,41110,34.85,fresh,41110,34.85,False,
+The Point Buxton,none,North Carolina,150,,,,,41120,21.83,,41120,21.83,fresh,41120,21.83,False,
+Wrightsville Beach,none,North Carolina,150,,,,,41110,9.91,,41110,9.91,fresh,41110,9.91,False,
+Florence South Jetty,none,Oregon,200,,,,,46229,42.47,,,,fresh,46229,42.47,False,cached gives None None
+Hubbard Creek,none,Oregon,200,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+South Beach Newport,none,Oregon,200,,,,,46229,99.7,,46248,175.99,fresh,46229,99.7,True,cached gives 46248 175.99
+Aviones,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Dogmans Rincon,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Fiji,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Gas Chambers Aguadilla,none,Puerto Rico,250,,,,,41115,14.89,,41115,14.89,fresh,41115,14.89,False,
+La Pared Luquillo,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Middles Isabela,none,Puerto Rico,250,,,,,41121,28.27,,41121,28.27,fresh,41121,28.27,False,
+Pine Grove Beach,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Playa Guajataca,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Playa Kikita,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Playa Manati,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Rincon Domes,none,Puerto Rico,250,,,,,41115,1.59,,41115,1.59,fresh,41115,1.59,False,
+Shacks Beach,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Steps Beach Rincon,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Surfers Beach Aguadilla,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Table Tops Aguadilla,none,Puerto Rico,250,,,,,41115,14.32,,41115,14.32,fresh,41115,14.32,False,
+Tres Palmas,none,Puerto Rico,250,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Charlestown Town Beach,none,Rhode Island,150,,,,,44097,60.86,,44097,60.72,fresh,44097,60.86,True,cached gives 44097 60.72
+Marys,none,Rhode Island,150,,,,,44097,57.3,,44097,57.16,fresh,44097,57.3,False,cached gives 44097 57.16
+Misquamicut State Beach,none,Rhode Island,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Moonstone Beach RI,none,Rhode Island,150,,,,,44097,58.46,,44097,58.33,fresh,44097,58.46,False,cached gives 44097 58.33
+Point Judith,none,Rhode Island,150,,,,,44085,37.47,,44085,37.47,fresh,44085,37.47,False,
+Third Beach Newport,none,Rhode Island,150,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Hilton Head Island,none,South Carolina,150,,,,,41067,33.52,,41067,33.52,fresh,41067,33.52,False,
+Isle of Palms,none,South Carolina,150,,,,,41065,14.92,,41065,14.92,fresh,41065,14.92,False,
+61st Street Galveston,none,Texas,350,,,,,42092,278.9,,42358,183.48,hold,,,False,"lists disagree (fresh 42092 278.9, cached 42358 183.48); the cached buoy's liveness is unchecked"
+JP Luby Surf Park,none,Texas,350,,,,,42092,16.9,,42092,16.9,fresh,42092,16.9,False,
+Mustang Island,none,Texas,350,,,,,phct2,9.08,,42092,16.39,fresh,phct2,9.08,False,cached gives 42092 16.39
+Port A Beach,none,Texas,350,,,,,phct2,3.54,,42092,18.9,fresh,phct2,3.54,False,cached gives 42092 18.9
+Port Aransas Jetty,none,Texas,350,,,,,phct2,1.05,,42092,21.82,fresh,phct2,1.05,False,cached gives 42092 21.82
+South Padre Island,none,Texas,350,,,,,42092,172.38,,42092,172.38,fresh,42092,172.38,True,
+Hobuck Beach,none,Washington,200,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
+Kalaloch Beach,none,Washington,200,,,,,46248,163.34,,46453,16.23,hold,,,False,"lists disagree (fresh 46248 163.34, cached 46453 16.23); the cached buoy's liveness is unchecked"
+La Push First Beach,none,Washington,200,,,,,46243,191.88,,46041,61.99,hold,,,False,"lists disagree (fresh 46243 191.88, cached 46041 61.99); the cached buoy's liveness is unchecked"
+La Push Second Beach,none,Washington,200,,,,,46211,117.71,,46453,50.36,hold,,,False,"lists disagree (fresh 46211 117.71, cached 46453 50.36); the cached buoy's liveness is unchecked"
+La Push Third Beach,none,Washington,200,,,,,46211,116.2,,46453,48.78,hold,,,False,"lists disagree (fresh 46211 116.2, cached 46453 48.78); the cached buoy's liveness is unchecked"
+Ocean Shores,none,Washington,200,,,,,46211,15.92,,46211,15.92,fresh,46211,15.92,False,
+Tokeland,none,Washington,200,,,,,,,no_line_of_sight,,,fresh,,,False,none: no_line_of_sight
