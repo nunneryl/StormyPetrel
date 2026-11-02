@@ -1,0 +1,10 @@
+spot,region,cap_km,current_buoy,stored_km,fresh7d_buoy,fresh7d_km,fresh7d_fallbacks,cached7d_buoy,cached7d_km,fresh_buoy,fresh_km,cached_buoy,cached_km,variants_agree,any_variant_over_150_km,proposed_buoy,proposed_km,proposed_confidence,note
+Ventura Point,California,150,,,46053,49.46,46025 46054 46219,46053,49.46,46219,128.32,46054,106.89,False,False,46053,49.46,1.0,
+Mecox Beach,New York,150,,,44097,100.89,44025,44097,100.82,44097,100.89,44097,100.82,True,False,44097,100.89,0.75,
+61st Street Galveston,Texas,350,,,42035,41.3,42092,42035,41.3,42092,278.9,42358,183.48,False,True,42035,41.3,1.0,
+Galveston Seawall,Texas,350,42035,42.79,42035,37.55,42092,42035,37.55,42092,283.77,42358,183.61,False,True,42035,37.55,1.0,same buoy; stored 42.79 km was more than 5 km out
+Kalaloch Beach,Washington,200,,,46041,38.51,46099 46029 46248,46453,16.23,46248,163.34,46453,16.23,False,True,46041,38.51,1.0,"cached lists pick 46453, silent since 2026-09-28"
+La Push First Beach,Washington,200,,,46041,62.12,46099 46243,46041,61.99,46243,191.88,46041,61.99,False,True,46041,62.12,1.0,
+La Push Second Beach,Washington,200,,,46041,59.92,46099 46211 46243,46453,50.36,46211,117.71,46453,50.36,False,False,46041,59.92,1.0,"cached lists pick 46453, silent since 2026-09-28"
+La Push Third Beach,Washington,200,,,46099,98.68,46211 46243,46453,48.78,46211,116.2,46453,48.78,False,False,46099,98.68,1.0,"46041 (59.39 km) fails line of sight from this spot; 46099 is the first clear one; cached lists pick 46453, silent since 2026-09-28"
+Ventura Harbor,California,150,46053,57.93,46053,52.55,46054,46053,52.55,46218,140.46,46054,110.11,False,False,46053,52.55,1.0,same buoy; stored 57.93 km was more than 5 km out
