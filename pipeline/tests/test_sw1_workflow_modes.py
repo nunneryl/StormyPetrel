@@ -92,6 +92,20 @@ def test_full_mode_lists_recent_wave_stations_before_enrich():
     assert listing < job.index("python -m pipeline.enrich --skip-raycast")
 
 
+def test_full_mode_refreshes_ndbcs_files_before_the_list_and_enrich():
+    # The cached copy kept 46453, silent since 2026-09-28, as a wave station (run 65).
+    job = _jobs()["raycast"]
+    xml = job.index('mv "$RUNNER_TEMP/ndbc/ndbc_stations.xml" pipeline/geodata/ndbc_stations.xml')
+    obs = job.index('mv "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" pipeline/geodata/ndbc_latest_obs.txt')
+    listing = job.index("python -m pipeline.ndbc_recent_wave --out pipeline/geodata/ndbc_recent_wave.json")
+    assert max(xml, obs) < listing < job.index("python -m pipeline.enrich --skip-raycast")
+    start = job.index("- name: Download NDBC's station list and latest observations for this run")
+    step = job[start:job.index("- name:", start + 1)]
+    assert "if: ${{ inputs.mode == 'full' && inputs.then_enrich }}" in step
+    assert "set -euo pipefail" in step
+    assert step.count("curl -fsSL --retry 4 --retry-delay 5") == 2
+
+
 def test_the_rating_preview_only_reads():
     job = _jobs()["rating-preview"]
     assert "    permissions:\n      contents: read\n" in job

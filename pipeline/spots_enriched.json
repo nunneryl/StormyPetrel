@@ -10324,7 +10324,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -10372,7 +10372,14 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Ventura-Point-California-Street",
     "tide_preference_evidence": "Good surf at all stages of the tide.",
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46053",
+    "nearest_buoy_dist_km": 49.46,
+    "fallback_buoy_ids": [
+      "46025",
+      "46054",
+      "46219"
+    ]
   },
   {
     "name": "Waddell Creek",
@@ -22151,7 +22158,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "orientation_source": "manual",
@@ -22184,7 +22191,12 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "44097",
+    "nearest_buoy_dist_km": 100.89,
+    "fallback_buoy_ids": [
+      "44025"
+    ]
   },
   {
     "name": "Montauk Point",
@@ -29082,7 +29094,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "mid",
@@ -29115,7 +29127,12 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Chicago"
+    "time_zone": "America/Chicago",
+    "nearest_buoy_id": "42035",
+    "nearest_buoy_dist_km": 41.3,
+    "fallback_buoy_ids": [
+      "42092"
+    ]
   },
   {
     "name": "Bob Hall Pier",
@@ -29235,7 +29252,7 @@
     "nearest_tide_station_id": "8771510",
     "nearest_tide_station_dist_km": 4.25,
     "nearest_buoy_id": "42035",
-    "nearest_buoy_dist_km": 42.79,
+    "nearest_buoy_dist_km": 37.55,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 29.28476,
@@ -29245,7 +29262,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Chicago"
+    "time_zone": "America/Chicago",
+    "fallback_buoy_ids": [
+      "42092"
+    ]
   },
   {
     "name": "Horace Caldwell Pier",
@@ -30271,11 +30291,12 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
+    "nearest_buoy_id": "46041",
+    "nearest_buoy_dist_km": 38.51,
     "fallback_buoy_ids": [
-      "46248",
-      "46206"
+      "46099",
+      "46029",
+      "46248"
     ],
     "sources": {
       "osm_id": null,
@@ -30340,7 +30361,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/La-Push",
@@ -30378,7 +30399,13 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46041",
+    "nearest_buoy_dist_km": 62.12,
+    "fallback_buoy_ids": [
+      "46099",
+      "46243"
+    ]
   },
   {
     "name": "La Push Second Beach",
@@ -30408,7 +30435,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/La-Push",
@@ -30441,7 +30468,14 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46041",
+    "nearest_buoy_dist_km": 59.92,
+    "fallback_buoy_ids": [
+      "46099",
+      "46211",
+      "46243"
+    ]
   },
   {
     "name": "La Push Third Beach",
@@ -30471,7 +30505,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/La-Push",
@@ -30504,7 +30538,13 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46099",
+    "nearest_buoy_dist_km": 98.68,
+    "fallback_buoy_ids": [
+      "46211",
+      "46243"
+    ]
   },
   {
     "name": "Long Beach WA",
@@ -32675,7 +32715,7 @@
     "nearest_tide_station_id": "9411189",
     "nearest_tide_station_dist_km": 2.75,
     "nearest_buoy_id": "46053",
-    "nearest_buoy_dist_km": 57.93,
+    "nearest_buoy_dist_km": 52.55,
     "nwps_wfo": "lox",
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
@@ -32683,7 +32723,10 @@
     "nwps_node_lng": -119.27702,
     "nwps_node_distance_m": 2480,
     "nwps_buoy_id": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "fallback_buoy_ids": [
+      "46054"
+    ]
   },
   {
     "name": "Pitas Point",
