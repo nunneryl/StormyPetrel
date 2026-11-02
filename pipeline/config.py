@@ -59,6 +59,11 @@ GSHHG_L1_SHP = GEODATA_DIR / "GSHHS_f_L1.shp"
 CUSP_DIR = GEODATA_DIR  # CUSP shoreline files (optional; falls back to GSHHG)
 NDBC_STATIONS_XML = GEODATA_DIR / "ndbc_stations.xml"
 NDBC_LATEST_OBS_TXT = GEODATA_DIR / "ndbc_latest_obs.txt"
+# Stations that reported a wave height at any point in the last NDBC_RECENT_WAVE_DAYS, from each
+# station's realtime2 file (pipeline/ndbc_recent_wave.py). latest_obs.txt holds one moment only, so a
+# live buoy missing a reading that moment dropped out of the buoy rule (44084, sw1-raycast run 64).
+NDBC_RECENT_WAVE_JSON = GEODATA_DIR / "ndbc_recent_wave.json"
+NDBC_RECENT_WAVE_DAYS = 7
 TIDE_STATIONS_JSON = GEODATA_DIR / "tide_stations.json"
 # Durable, COMMITTED id->lat/lng snapshot of NDBC buoys. The activestations.xml above is downloaded
 # and ephemeral; this snapshot lets buoy assignments be validated at import time and audited in SQL

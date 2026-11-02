@@ -74,12 +74,22 @@ def test_the_buoy_assign_job_only_reads():
     job = _jobs()["buoy-assign"]
     assert _if(job) == "${{ inputs.mode == 'buoy-assign' }}"
     assert "    permissions:\n      contents: read\n" in job
-    assert "python -m pipeline.buoy_assign --out buoy_assign.json" in job
+    assert ('python -m pipeline.buoy_assign --out buoy_assign.json --spots "$SPOTS" '
+            '--recent-days 7') in job
+    assert "SPOTS: ${{ inputs.spots }}" in job
     assert '--fresh-xml "$RUNNER_TEMP/ndbc/ndbc_stations.xml"' in job
+    assert "buoy_assign_recent_wave.json" in job
     assert "uses: actions/cache/restore@v6" in job       # restores the geodata cache, never saves it
     assert "name: buoy-assign-${{ github.run_number }}" in job
+    rest = job.replace("inputs.mode == 'buoy-assign'", "").replace("${{ inputs.spots }}", "")
     for verb in ("git push", "git commit", "db_import", "--write", "SUPABASE", "inputs."):
-        assert verb not in job.replace("inputs.mode == 'buoy-assign'", ""), verb
+        assert verb not in rest, verb
+
+
+def test_full_mode_lists_recent_wave_stations_before_enrich():
+    job = _jobs()["raycast"]
+    listing = job.index("python -m pipeline.ndbc_recent_wave --out pipeline/geodata/ndbc_recent_wave.json")
+    assert listing < job.index("python -m pipeline.enrich --skip-raycast")
 
 
 def test_the_rating_preview_only_reads():
