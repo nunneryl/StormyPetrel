@@ -17,6 +17,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { SurfReportProvider, SurfReportPanel } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { fmtStamp, spotTimeZone } from '@/lib/spotTime';
+import { buoyBox } from '@/lib/buoyDisplay';
 import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
 import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
 import { breakTypeShown, spotInfoRows, tidePreferenceShown } from '@/lib/spotInfo';
@@ -156,6 +157,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // forecasts[0] is no longer "now" — it is up to 12 hours ago. Split once, here, and let
   // every existing consumer keep its old meaning by reading `upcoming`.
   const nowMs = Date.now();
+  const buoyShown = buoyBox(spot.nearest_buoy_id, spot.nearest_buoy_dist_km, buoy, nowMs, timeZone);
   const upcoming = forecasts.filter((r) => new Date(r.valid_time).getTime() >= nowMs);
   // THE TILES NO LONGER USE `upcoming[0]`. That is the next hour BOUNDARY at server-render
   // time, and these routes are statically generated with `revalidate = 3600` below, so it
@@ -316,33 +318,39 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
         <OptimalConditions spot={spot} />
 
+        {/* What the box says comes from lib/buoyDisplay: the distance always, no reading past
+            BUOY_DISPLAY_LIMIT_KM, and no stale reading shown as current. */}
         <InfoBlock title="Nearest buoy">
-          {buoy ? (
+          {buoyShown.kind === 'none' ? (
+            <div className="text-text-muted text-sm">No nearby buoy.</div>
+          ) : buoyShown.kind === 'far' ? (
             <>
-              <Row k="Buoy" v={`NDBC ${buoy.buoy_id}`} />
-              <Row k="Hs" v={buoy.hs !== null ? `${(buoy.hs * 3.28084).toFixed(1)} ft` : '—'} />
-              <Row k="Tp" v={fmtSec(buoy.tp)} />
-              <Row k="Dir" v={degToCardinal(buoy.dp)} />
+              <div className="text-text-muted text-sm">{buoyShown.text}</div>
+              <NdbcLink id={buoyShown.id} />
+            </>
+          ) : buoyShown.kind === 'stale' ? (
+            <>
+              <Row k="Buoy" v={buoyShown.title} />
+              <div className="text-text-muted text-sm">{buoyShown.text}</div>
+              <NdbcLink id={buoyShown.id} />
+            </>
+          ) : (
+            <>
+              <Row k="Buoy" v={buoyShown.title} />
+              <Row k="Hs" v={buoyShown.reading.hs !== null ? `${(buoyShown.reading.hs * 3.28084).toFixed(1)} ft` : '—'} />
+              <Row k="Tp" v={fmtSec(buoyShown.reading.tp)} />
+              <Row k="Dir" v={degToCardinal(buoyShown.reading.dp)} />
               <Row
                 k="Water"
                 v={
-                  buoy.water_temp !== null
-                    ? `${(buoy.water_temp * 9 / 5 + 32).toFixed(0)}°F`
+                  buoyShown.reading.water_temp !== null
+                    ? `${(buoyShown.reading.water_temp * 9 / 5 + 32).toFixed(0)}°F`
                     : '—'
                 }
               />
-              <Row k="Reading" v={fmtStamp(buoy.observed_at, timeZone)} />
-              <a
-                href={`https://www.ndbc.noaa.gov/station_page.php?station=${buoy.buoy_id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-2 text-xs text-cyan-400 hover:underline"
-              >
-                View NDBC station page →
-              </a>
+              <Row k="Reading" v={fmtStamp(buoyShown.reading.observed_at, timeZone)} />
+              <NdbcLink id={buoyShown.id} />
             </>
-          ) : (
-            <div className="text-text-muted text-sm">No nearby buoy.</div>
           )}
         </InfoBlock>
       </section>
@@ -425,6 +433,19 @@ function InfoBlock({ title, children }: { title: string; children: React.ReactNo
       </div>
       <div className="space-y-1.5">{children}</div>
     </div>
+  );
+}
+
+function NdbcLink({ id }: { id: string }) {
+  return (
+    <a
+      href={`https://www.ndbc.noaa.gov/station_page.php?station=${id}`}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-block mt-2 text-xs text-cyan-400 hover:underline"
+    >
+      View NDBC station page →
+    </a>
   );
 }
 

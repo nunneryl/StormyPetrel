@@ -33,14 +33,20 @@
  *      the question "Surfed here today? How big were most waves?", the eleven body-scale chips
  *      each with its feet hint, and no "Was this right?" link. Neither a California spot nor
  *      Banzai Pipeline (Hawaii) carries a Hawaiian-scale note.
+ *  11. The Nearest buoy box (lib/buoyDisplay): Pensacola Beach's buoy, 41.0 km away with a reading
+ *      an hour old, reads "NDBC 42012 · 41 km away" with the reading; Sunset Point's, 380.99 km
+ *      away, reads "No buoy within 150 km (nearest: NDBC 46221, 381 km)" with the station link
+ *      and no reading; Jacksonville Beach Pier's has no distance on its row, reads "NDBC 41112",
+ *      and its Oct 29 reading is "No recent reading"; a spot with no buoy says "No nearby buoy.".
  *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
  *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
  *      no time_zone in the first build (the shape of a row read before migration 026), shows the
- *      Los Angeles fallback, labelled, with its buoy reading 13:50Z as "Oct 29, 6:50am PDT".
+ *      Los Angeles fallback, labelled, with its buoy's last reading, 13:50Z on Oct 29, as
+ *      "No recent reading (last: Oct 29, 6:50am PDT)" (more than a day old: item 11).
  *      Then the stand-in gains its time_zone and the site is built AGAIN WITHOUT CLEARING
  *      .next/cache: the second build must ask the stand-in for that spot's row rather than take
- *      the copy the first build cached, and show "Oct 29, 9:50am EDT" and Eastern abbreviations
- *      only. That second build is the 2026-10-29 preview: migration 026 applied, a redeploy
+ *      the copy the first build cached, and show "(last: Oct 29, 9:50am EDT)" and Eastern
+ *      abbreviations only. That second build is the 2026-10-29 preview: migration 026 applied, a redeploy
  *      without build cache, and still Los Angeles times, from a spot row the Data Cache held.
  *
  * NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. The expected hour is this file's own
@@ -119,11 +125,13 @@ const PENSACOLA = {
   lat: 30.329, lng: -87.140, state: 'Florida', region: 'Panhandle',
   break_type: 'beach', break_type_source: 'model_recall',
   tide_preference: 'mid', tide_preference_source: 'unattributed',
+  nearest_buoy_id: '42012', nearest_buoy_dist_km: 41.0,
 };
 const SUNSET_POINT = {
   ...SPOT_FIELDS, id: 990005, slug: 'sunset-point', name: 'Sunset Point',
   lat: 34.037, lng: -118.554, state: 'California', region: 'Malibu',
   break_type: null, break_type_source: null, tide_preference: null, tide_preference_source: null,
+  nearest_buoy_id: '46221', nearest_buoy_dist_km: 380.99,
 };
 const VERIFIED_TIDE = {
   ...SPOT_FIELDS, id: 990006, slug: 'stamp-test-verified-tide', name: 'Stamp Test Verified Tide',
@@ -144,6 +152,12 @@ const BUOY = {
   buoy_id: '41112', observed_at: '2026-10-29T13:50:00+00:00', hs: 1.1, tp: 9, dp: 95,
   wind_speed: 4, wind_dir: 250, water_temp: 22.5,
 };
+// 11: a reading an hour before this run's hour, so it is never more than a day old.
+const FRESH_BUOY = {
+  buoy_id: '42012', observed_at: new Date(T0 - HOUR).toISOString(), hs: 0.8, tp: 6, dp: 160,
+  wind_speed: 5, wind_dir: 180, water_temp: 24.0,
+};
+const READINGS: Record<string, unknown> = { [BUOY.buoy_id]: BUOY, [FRESH_BUOY.buoy_id]: FRESH_BUOY };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
@@ -198,7 +212,10 @@ const asked: string[] = [];
 // list for anything else (every other page then renders its empty state, which is all the build
 // needs).
 function answer(table: string, q: URLSearchParams): unknown[] {
-  if (table === 'buoy_observations') return q.get('buoy_id') === `eq.${BUOY.buoy_id}` ? [BUOY] : [];
+  if (table === 'buoy_observations') {
+    const reading = READINGS[(q.get('buoy_id') ?? '').replace(/^eq\./, '')];
+    return reading ? [reading] : [];
+  }
   if (table === 'spots') {
     const slug = q.get('slug');
     if (slug !== null) return SPOTS.filter((s) => slug === `eq.${s.slug}`);
@@ -275,6 +292,17 @@ function zonesOn(html: string): string {
 function buoyReading(html: string): string | null {
   return /<span class="text-text-secondary shrink-0">Reading<\/span><span class="text-text-primary text-right truncate">([^<]*)<\/span>/
     .exec(html)?.[1] ?? null;
+}
+
+/** The Nearest buoy card's Buoy row. */
+function buoyTitle(html: string): string | null {
+  return /<span class="text-text-secondary shrink-0">Buoy<\/span><span class="text-text-primary text-right truncate">([^<]*)<\/span>/
+    .exec(html)?.[1] ?? null;
+}
+
+/** The Nearest buoy card's "No recent reading (last: ...)" date. */
+function buoyLast(html: string): string | null {
+  return /No recent reading \(last: ([^)]*)\)/.exec(html)?.[1] ?? null;
 }
 
 /** Checks one tag is there exactly once, inside <head>, and returns its content. */
@@ -525,6 +553,23 @@ async function main(): Promise<void> {
     check(`${slug}: no Hawaiian-scale note`, !html.includes('Hawaiian scale'));
   }
 
+  // 11: the Nearest buoy box (lib/buoyDisplay).
+  const pens = (await load(PENSACOLA.slug)).html.replace(/<!-- -->/g, '');
+  eq(`${PENSACOLA.slug}: the buoy with its distance`, buoyTitle(pens), 'NDBC 42012 · 41 km away');
+  check(`${PENSACOLA.slug}: an hour-old reading is shown`, buoyReading(pens) !== null);
+  const sunset = (await load(SUNSET_POINT.slug)).html.replace(/<!-- -->/g, '');
+  check(`${SUNSET_POINT.slug}: past 150 km, no reading, the nearest named`,
+    sunset.includes('No buoy within 150 km (nearest: NDBC 46221, 381 km)'));
+  eq(`${SUNSET_POINT.slug}: no Buoy or Reading row`,
+    JSON.stringify([buoyTitle(sunset), buoyReading(sunset)]), '[null,null]');
+  check(`${SUNSET_POINT.slug}: the station link`,
+    sunset.includes('https://www.ndbc.noaa.gov/station_page.php?station=46221'));
+  const jax11 = (await load(JACKSONVILLE.slug)).html.replace(/<!-- -->/g, '');
+  eq(`${JACKSONVILLE.slug}: no distance on the row, so the id alone`, buoyTitle(jax11), 'NDBC 41112');
+  eq(`${JACKSONVILLE.slug}: an Oct 29 reading is not shown as current`, buoyReading(jax11), null);
+  const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
+  check(`${WITH_ROW.slug}: no buoy, "No nearby buoy."`, plain.includes('No nearby buoy.'));
+
   // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard
   // time), so they are held to the zone's pair; the buoy reading is a fixed instant.
   const centralZones = new Set(['CDT', 'CST', 'CDT,CST']);
@@ -536,10 +581,10 @@ async function main(): Promise<void> {
     zonesOn(pensacola.html));
   const jaxBefore = await load(JACKSONVILLE.slug);
   console.log(`        ${JACKSONVILLE.slug}, no time_zone: ${zonesOn(jaxBefore.html)}; `
-    + `Reading ${JSON.stringify(buoyReading(jaxBefore.html))}`);
+    + `last reading ${JSON.stringify(buoyLast(jaxBefore.html))}`);
   check(`${JACKSONVILLE.slug} with no time_zone: the Los Angeles fallback, labelled`,
     pacificZones.has(zonesOn(jaxBefore.html)), zonesOn(jaxBefore.html));
-  eq(`${JACKSONVILLE.slug} with no time_zone: buoy reading`, buoyReading(jaxBefore.html), 'Oct 29, 6:50am PDT');
+  eq(`${JACKSONVILLE.slug} with no time_zone: buoy's last reading`, buoyLast(jaxBefore.html), 'Oct 29, 6:50am PDT');
 
   // Migration 026 applied between deploys; the second build keeps the first one's .next/cache.
   const pid = server?.pid;
@@ -558,12 +603,12 @@ async function main(): Promise<void> {
   await startSite();
   const jaxAfter = await load(JACKSONVILLE.slug);
   console.log(`        ${JACKSONVILLE.slug}, America/New_York: ${zonesOn(jaxAfter.html)}; `
-    + `Reading ${JSON.stringify(buoyReading(jaxAfter.html))}`);
+    + `last reading ${JSON.stringify(buoyLast(jaxAfter.html))}`);
   eq(`${JACKSONVILLE.slug} after the second build: answers 200`, jaxAfter.status, 200);
   check(`${JACKSONVILLE.slug} (America/New_York) after the second build: Eastern time only`,
     easternZones.has(zonesOn(jaxAfter.html)), zonesOn(jaxAfter.html));
-  eq(`${JACKSONVILLE.slug} (America/New_York) after the second build: buoy reading`,
-    buoyReading(jaxAfter.html), 'Oct 29, 9:50am EDT');
+  eq(`${JACKSONVILLE.slug} (America/New_York) after the second build: buoy's last reading`,
+    buoyLast(jaxAfter.html), 'Oct 29, 9:50am EDT');
 }
 
 // A hung build or server fails the run instead of holding CI open.
