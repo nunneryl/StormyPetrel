@@ -162,6 +162,7 @@ const USES: [string, string[]][] = [
   ['components/SurfReport.tsx', ['{hourOptionLabel(iso, i, timeZone)}']],
   ['lib/reportUi.ts', ['${fmtShortTime(iso, timeZone)} ${zoneAbbr(iso, timeZone)}']],
   ['components/CamEmbed.tsx', ['camDarkness(lat, lng, timeZone)']],
+  ['lib/buoyDisplay.ts', ['fmtStamp(reading.observed_at, timeZone)']],
 ];
 for (const [rel, uses] of USES) {
   const text = read(rel);
@@ -172,7 +173,7 @@ const page = read('app/spot/[slug]/page.tsx');
 check('the spot page hands its zone to every component that shows a time',
   ['<CamSection', '<SurfReportProvider', '<SwellChart', '<WindChart', '<TideChart', '<ForecastGrid']
     .every((tag) => new RegExp(`${tag}[^>]*timeZone=\\{timeZone\\}`).test(page))
-  && page.includes('fmtStamp(buoy.observed_at, timeZone)')
+  && page.includes('fmtStamp(buoyShown.reading.observed_at, timeZone)')
   && page.includes('const timeZone = spotTimeZone(spot);'));
 check('the report footer is in the region\'s zone',
   read('app/reports/[date]/[region]/page.tsx').includes('fmtStamp(report.generated_at, REGION_TIME_ZONE[report.region] ?? FALLBACK_TIME_ZONE)'));
