@@ -28,21 +28,22 @@ def test_nwps_shelter_is_a_mode():
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
         "data-quality", "node-preview", "surf-preview", "period-preview", "nwps-cells",
-        "tide-station"]
+        "tide-station", "buoy-assign"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
                          "rating-preview", "data-quality", "node-preview", "surf-preview",
-                         "period-preview", "nwps-cells", "tide-station"}
+                         "period-preview", "nwps-cells", "tide-station", "buoy-assign"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
         "&& inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' "
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
         "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' "
-        "&& inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' }}")
+        "&& inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' "
+        "&& inputs.mode != 'buoy-assign' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -67,6 +68,18 @@ def test_the_tide_station_job_only_reads():
     assert "SPOTS: ${{ inputs.spots }}" in job
     for verb in ("git push", "git commit", "db_import", "--write", "SUPABASE"):
         assert verb not in job, verb
+
+
+def test_the_buoy_assign_job_only_reads():
+    job = _jobs()["buoy-assign"]
+    assert _if(job) == "${{ inputs.mode == 'buoy-assign' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert "python -m pipeline.buoy_assign --out buoy_assign.json" in job
+    assert '--fresh-xml "$RUNNER_TEMP/ndbc/ndbc_stations.xml"' in job
+    assert "uses: actions/cache/restore@v6" in job       # restores the geodata cache, never saves it
+    assert "name: buoy-assign-${{ github.run_number }}" in job
+    for verb in ("git push", "git commit", "db_import", "--write", "SUPABASE", "inputs."):
+        assert verb not in job.replace("inputs.mode == 'buoy-assign'", ""), verb
 
 
 def test_the_rating_preview_only_reads():

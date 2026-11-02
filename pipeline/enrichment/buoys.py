@@ -24,13 +24,20 @@ _GREAT_LAKES_STATES = frozenset({
     "Michigan", "Wisconsin", "Minnesota", "Illinois", "Indiana", "Ohio",
     "Pennsylvania", "New York",
 })
+# New York has two coasts. Its Great Lakes shore runs from Lake Erie at Barcelona (42.3 N) to
+# Lake Ontario (43.2-43.5 N); its Atlantic coast, the city beaches, Long Island and Montauk, lies
+# between 40.5 and 41.3 N. Only a New York spot at or north of this latitude takes the lake cap.
+# Before 2026-11-02 every New York spot north of 40 N did, so Mecox Beach's nearest buoy
+# (44097, 100.89 km) fell outside a 100 km cap meant for the lakes (sw1-raycast run 64).
+_NY_GREAT_LAKES_MIN_LAT = 42.0
 
 
 def _regional_cap_km(spot: dict) -> float:
     region = (spot.get("region_hint") or "").strip()
     # Great Lakes override: the eight bordering states surf the lakes.
     if region in _GREAT_LAKES_STATES and spot.get("lat", 0) > 40 and spot.get("lng", 0) < -70:
-        return BUOY_CAP_KM["Great Lakes"]
+        if not (region == "New York" and spot.get("lat", 0) < _NY_GREAT_LAKES_MIN_LAT):
+            return BUOY_CAP_KM["Great Lakes"]
     if region == "Florida" and spot.get("lng", 0) < -83:
         return BUOY_CAP_GULF_FLORIDA
     if region in BUOY_CAP_KM:
