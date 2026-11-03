@@ -291,15 +291,27 @@ jobs:
       # gave Kalaloch Beach and La Push Second and Third Beach 46453, silent since 2026-09-28.
       # Fetch both now, into the temp dir first so a failed download never leaves half a file.
       # The cache is not saved on a hit, so this never changes it.
+      # If either download fails, or a file comes back but does not look like NDBC's
+      # (pipeline/ndbc_fresh.py), the job fails here with an ::error:: line: enrich, the 7-day
+      # list and the push are skipped, and the cached copy is never used in their place.
       - name: Download NDBC's station list and latest observations for this run
         if: ${{ inputs.mode == 'full' && inputs.then_enrich }}
         run: |
           set -euo pipefail
+          fail() {
+            echo "::error::$1 The full run stops here instead of picking every spot's buoy from the cached copy (pipeline/geodata, restored from the geodata cache). Rerun when NDBC is reachable."
+            exit 1
+          }
           mkdir -p "$RUNNER_TEMP/ndbc"
           curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_stations.xml" \
-            https://www.ndbc.noaa.gov/activestations.xml
+            https://www.ndbc.noaa.gov/activestations.xml \
+            || fail "Could not download NDBC's activestations.xml."
           curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" \
-            https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt
+            https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt \
+            || fail "Could not download NDBC's latest_obs.txt."
+          python -m pipeline.ndbc_fresh --xml "$RUNNER_TEMP/ndbc/ndbc_stations.xml" \
+            --obs "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" \
+            || fail "NDBC's files downloaded but do not look right (see above)."
           mv "$RUNNER_TEMP/ndbc/ndbc_stations.xml" pipeline/geodata/ndbc_stations.xml
           mv "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" pipeline/geodata/ndbc_latest_obs.txt
           ls -l --time-style=+%Y-%m-%dT%H:%MZ pipeline/geodata/ndbc_*

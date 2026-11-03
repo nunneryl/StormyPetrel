@@ -106,6 +106,98 @@ def test_full_mode_refreshes_ndbcs_files_before_the_list_and_enrich():
     assert step.count("curl -fsSL --retry 4 --retry-delay 5") == 2
 
 
+def _refresh_step():
+    job = _jobs()["raycast"]
+    start = job.index("- name: Download NDBC's station list and latest observations for this run")
+    return job, job[start:job.index("- name:", start + 1)]
+
+
+def _refresh_script():
+    _job, step = _refresh_step()
+    lines = []
+    for ln in step.split("run: |\n", 1)[1].splitlines():
+        if ln.strip() and not ln.startswith(" " * 10):
+            break                           # the next step's comments
+        lines.append(ln[10:])
+    return "\n".join(lines) + "\n"
+
+
+def test_a_failed_refresh_stops_the_job_and_nothing_after_it_runs():
+    job, step = _refresh_step()
+    assert "continue-on-error" not in job
+    assert '|| fail "Could not download NDBC\'s activestations.xml."' in step
+    assert '|| fail "Could not download NDBC\'s latest_obs.txt."' in step
+    check = step.index("python -m pipeline.ndbc_fresh")
+    assert check < step.index('mv "$RUNNER_TEMP/ndbc/ndbc_stations.xml"')
+    assert check < step.index('mv "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt"')
+    # The steps that would use the files run only when every step before them passed.
+    after = job[job.index(step) + len(step):job.index("- name: Push the review branch")]
+    nxt = job.index("- name:", job.index("- name: Push the review branch") + 1)
+    for chunk in (after, job[job.index("- name: Push the review branch"):nxt]):
+        for cond in re.findall(r"(?m)^        if: (.+)$", chunk):
+            assert "always()" not in cond and "failure()" not in cond, cond
+
+
+# The step's own script, run with a stand-in curl. Each case starts from cached files that say
+# CACHED; a failed or broken download must leave them as they were and exit 1 with an ::error::.
+_GOOD_XML = "<stations>" + "".join(
+    f'<station id="s{i}" lat="{i % 80}.5" lon="-{i % 170}.5" name="n{i}"/>' for i in range(500)
+) + "</stations>\n"
+_GOOD_OBS = ("#STN LAT LON WVHT\n#text deg deg m\n"
+             + "".join(f"s{i} 1.0 2.0 {'MM' if i % 2 else '1.2'}\n" for i in range(200)))
+
+
+def _run_refresh(tmp_path, curl_body):
+    import os
+    import subprocess
+    import sys
+    work, bin_, temp = tmp_path / "work", tmp_path / "bin", tmp_path / "temp"
+    (work / "pipeline" / "geodata").mkdir(parents=True)
+    bin_.mkdir(); temp.mkdir()
+    for f in ("ndbc_stations.xml", "ndbc_latest_obs.txt"):
+        (work / "pipeline" / "geodata" / f).write_text("CACHED\n")
+    (tmp_path / "good.xml").write_text(_GOOD_XML)
+    (tmp_path / "good.txt").write_text(_GOOD_OBS)
+    curl = bin_ / "curl"
+    curl.write_text("#!/usr/bin/env bash\nout=\nwhile [[ $# -gt 0 ]]; do\n"
+                    '  if [[ "$1" == -o ]]; then out="$2"; shift; fi; url="$1"; shift\ndone\n'
+                    + curl_body.format(good=tmp_path))
+    curl.chmod(0o755)
+    (bin_ / "python").symlink_to(sys.executable)
+    env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "RUNNER_TEMP": str(temp),
+           "PYTHONPATH": str(WORKFLOW.parents[2])}
+    r = subprocess.run(["bash", "-c", _refresh_script()], cwd=work, env=env,
+                       capture_output=True, text=True)
+    cached = [(work / "pipeline" / "geodata" / f).read_text()
+              for f in ("ndbc_stations.xml", "ndbc_latest_obs.txt")]
+    return r, cached
+
+
+def test_a_download_that_fails_stops_the_run_and_keeps_nothing(tmp_path):
+    r, cached = _run_refresh(tmp_path, 'echo "curl: (22) The requested URL returned error: 503" >&2\nexit 22\n')
+    assert r.returncode == 1
+    assert "::error::Could not download NDBC's activestations.xml. The full run stops here" in r.stdout
+    assert cached == ["CACHED\n", "CACHED\n"]
+
+
+def test_a_200_with_the_wrong_body_stops_the_run_and_keeps_nothing(tmp_path):
+    r, cached = _run_refresh(tmp_path, 'echo "<html>Service unavailable</html>" > "$out"\n')
+    assert r.returncode == 1
+    assert "::error::NDBC activestations.xml lists 0 stations with coordinates" in r.stdout
+    assert "::error::NDBC latest_obs.txt has no header row naming STN and WVHT." in r.stdout
+    assert "::error::NDBC's files downloaded but do not look right (see above)." in r.stdout
+    assert cached == ["CACHED\n", "CACHED\n"]
+
+
+def test_good_files_replace_the_cached_copies(tmp_path):
+    body = ('case "$url" in *activestations*) cp {good}/good.xml "$out";; '
+            '*) cp {good}/good.txt "$out";; esac\n')
+    r, cached = _run_refresh(tmp_path, body)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "ndbc_fresh: both NDBC files look right" in r.stdout
+    assert cached == [_GOOD_XML, _GOOD_OBS]
+
+
 def test_the_rating_preview_only_reads():
     job = _jobs()["rating-preview"]
     assert "    permissions:\n      contents: read\n" in job
