@@ -11,11 +11,10 @@ checks against, so every roster buoy distance is checked here. sw1-raycast run 6
 buoy-assign, 2026-10-31) reran the buoy rule for the 39 dropped spots and the 173 with no buoy,
 and the user approved its result on 2026-11-02 (docs/face_validation/run-64/proposal.csv): the
 fresh NDBC list's choice for 198 spots, 44084 from the runner's cached list for five New Jersey
-spots (it reports, though the fresh list missed it), and 51205 for Peahi Jaws. Eight are HELD
-for a follow-up check of buoys 46453, 46041, 42358 and 46054 (run 65); two of them still carry a
-stale buoy, so the mismatch list is exactly those two, and the check fails on any other.
-Mecox Beach is held too: the New York cap fix brings its nearest buoy within the cap, but run 64
-never tested line of sight past the old 100 km cap.
+spots (it reports, though the fresh list missed it), and 51205 for Peahi Jaws. Nine were held for
+run 65 (2026-11-02, docs/face_validation/run-65/), which reran the rule for them on NDBC's list as
+downloaded plus every station with a wave height in the last 7 days: all nine get a buoy within
+the cap and in line of sight (RUN_65). Every roster buoy distance now matches the snapshot.
 
 TIDE STATIONS. The station list db_import checks against is a download the runner caches
 (pipeline/geodata/tide_stations.json, not in the repo). The 17 dropped spots now carry the
@@ -34,11 +33,21 @@ from pipeline.geo import haversine_m
 
 TOL = config.COORD_DERIVED_DIST_TOLERANCE_KM
 
-HELD_FOR_RUN_65 = {
-    "Kalaloch Beach", "La Push First Beach", "La Push Second Beach", "La Push Third Beach",
-    "Galveston Seawall", "61st Street Galveston", "Ventura Harbor", "Ventura Point",
+# Run 65's headline answer, written out from the artifact: name: (buoy, km, fallbacks, confidence).
+# Confidence is 1.0 within half the cap, else 0.75 (California and New York 150, Washington 200,
+# Texas 350): only Mecox Beach, 100.89 km against 75, is past half. Ventura Harbor's record has no
+# confidence for its buoy.
+RUN_65 = {
+    "Kalaloch Beach":        ("46041", 38.51, ["46099", "46029", "46248"], 1.0),
+    "La Push First Beach":   ("46041", 62.12, ["46099", "46243"], 1.0),
+    "La Push Second Beach":  ("46041", 59.92, ["46099", "46211", "46243"], 1.0),
+    "La Push Third Beach":   ("46099", 98.68, ["46211", "46243"], 1.0),   # 46041 out of sight
+    "Galveston Seawall":     ("42035", 37.55, ["42092"], 1.0),            # was 42.79 km
+    "61st Street Galveston": ("42035", 41.3, ["42092"], 1.0),
+    "Ventura Harbor":        ("46053", 52.55, ["46054"], None),           # was 57.93 km
+    "Ventura Point":         ("46053", 49.46, ["46025", "46054", "46219"], 1.0),
+    "Mecox Beach":           ("44097", 100.89, ["44025"], 0.75),
 }
-STILL_STALE = {"Galveston Seawall", "Ventura Harbor"}     # held, with their old buoy
 
 # Run 64's result as approved, written out from the artifact. name: (buoy, km)
 CHANGED = {     # was: Berts Bar, Dewees Island, Wild Dunes, Windjammer 41076; Church, Lower
@@ -110,16 +119,28 @@ def _buoy_mismatches(roster, snapshot):
     return out
 
 
-def test_every_roster_buoy_distance_matches_the_snapshot_but_the_two_held_stale():
+def test_every_roster_buoy_distance_matches_the_snapshot():
     got = _buoy_mismatches(_roster(), G.load_buoy_snapshot())
-    assert got == STILL_STALE, f"new: {sorted(got - STILL_STALE)}; now agree: {sorted(STILL_STALE - got)}"
-    assert STILL_STALE <= HELD_FOR_RUN_65 and len(HELD_FOR_RUN_65) == 8
+    assert got == set(), sorted(got)
 
 
-def test_the_other_six_held_and_mecox_still_have_no_buoy():
-    by = {s["name"]: s for s in _roster()}
-    for name in (HELD_FOR_RUN_65 - STILL_STALE) | {"Mecox Beach"}:
-        assert by[name].get("nearest_buoy_id") is None, (name, by[name].get("nearest_buoy_id"))
+@pytest.mark.parametrize("name", sorted(RUN_65))
+def test_run_65s_assignments(name):
+    bid, km, fallbacks, conf = RUN_65[name]
+    s = next(r for r in _roster() if r["name"] == name)
+    assert (s["nearest_buoy_id"], s["nearest_buoy_dist_km"], s["fallback_buoy_ids"]) == (bid, km, fallbacks)
+    assert (s.get("enrichment_confidence") or {}).get("nearest_buoy") == conf
+
+
+def test_galveston_seawalls_distance_by_hand():
+    # Spot 29.284396 N, 94.792893 W; 42035 in the snapshot 29.235 N, 94.41 W. By hand: 0.049396 deg
+    # of latitude is 5.49 km; 0.382893 deg of longitude at 29.26 N (cos 0.8725) is 37.15 km;
+    # together 37.55 km. The roster carried 42.79, more than 5 km out, so db_import dropped it.
+    snap = G.load_buoy_snapshot()["42035"]
+    assert (snap["lat"], snap["lng"]) == (29.235, -94.41)
+    km = haversine_m(29.284396, -94.792893, 29.235, -94.41) / 1000.0
+    assert abs(km - 37.55) < 0.05
+    assert abs(km - 42.79) > TOL
 
 
 @pytest.mark.parametrize("table", ["CHANGED", "KEPT", "FROM_CACHED"])
@@ -163,15 +184,15 @@ def test_the_check_would_catch_a_drifted_distance():
     assert _buoy_mismatches([{**berts, "nearest_buoy_dist_km": 24.6}], snap) == {"Berts Bar"}
 
 
-def test_db_imports_own_check_drops_only_the_two_held_buoys_and_no_tide(monkeypatch):
+def test_db_imports_own_check_drops_no_buoy_and_no_tide(monkeypatch):
     # The tide list is the runner's download; without it db_import checks buoys only, as here.
     monkeypatch.setattr(G, "load_tide_stations", lambda: [])
     recs = [{k: s.get(k) for k in ("name", "lat", "lng", "nearest_buoy_id", "nearest_buoy_dist_km",
                                    "fallback_buoy_ids", "nearest_tide_station_id",
                                    "nearest_tide_station_dist_km")} for s in _roster()]
     before = {r["name"] for r in recs if r["nearest_buoy_id"]}
-    assert db_import._validate_coord_derived(recs) == 2
-    assert before - {r["name"] for r in recs if r["nearest_buoy_id"]} == STILL_STALE
+    assert db_import._validate_coord_derived(recs) == 0
+    assert {r["name"] for r in recs if r["nearest_buoy_id"]} == before
 
 
 @pytest.mark.parametrize("name", sorted(TIDE_FIXED))

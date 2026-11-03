@@ -112,7 +112,10 @@ name: sw1-raycast
 #       snapshot's great-circle) and every spot with no buoy. For each: the current buoy and its
 #       real distance, the cap, the rule's choice and distance or why there is none (beyond the
 #       cap, no line of sight, no wave stations), and whether it changes. Twice: on NDBC's files
-#       downloaded for this run, and on the runner's cached copy. Takes no inputs.
+#       downloaded for this run, and on the runner's cached copy. Run 65 onward: `spots` names the
+#       spots to check instead (blank = the default scope), and every list is also run counting a
+#       station that reported a wave height in the last 7 days (each nearby station's realtime2
+#       file, pipeline/ndbc_recent_wave.py), with each station's 7-day record in the report.
 
 on:
   workflow_dispatch:
@@ -152,7 +155,7 @@ on:
         default: false
         type: boolean
       spots:
-        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones; (tide-station) spot slugs whose tide stations to check. Comma-separated
+        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones; (tide-station) spot slugs whose tide stations to check; (buoy-assign) spot names or slugs to rerun the buoy rule for. Comma-separated
         required: false
         default: ''
         type: string
@@ -281,6 +284,31 @@ jobs:
       - name: Install the enrich / report / preview dependencies
         if: ${{ inputs.mode == 'full' && (inputs.then_enrich || inputs.then_preview) }}
         run: pip install -r pipeline/requirements.txt -r pipeline/requirements-enrich.txt
+
+      # The geodata cache holds NDBC's station list and latest observations as they were when the
+      # cache was built (2026-07-20 as of run 65), and enrich picks every spot's buoy from them. A
+      # buoy that has since died stays a wave station in that copy: in run 65 the cached list
+      # gave Kalaloch Beach and La Push Second and Third Beach 46453, silent since 2026-09-28.
+      # Fetch both now, into the temp dir first so a failed download never leaves half a file.
+      # The cache is not saved on a hit, so this never changes it.
+      - name: Download NDBC's station list and latest observations for this run
+        if: ${{ inputs.mode == 'full' && inputs.then_enrich }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ndbc"
+          curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_stations.xml" \
+            https://www.ndbc.noaa.gov/activestations.xml
+          curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" \
+            https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt
+          mv "$RUNNER_TEMP/ndbc/ndbc_stations.xml" pipeline/geodata/ndbc_stations.xml
+          mv "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" pipeline/geodata/ndbc_latest_obs.txt
+          ls -l --time-style=+%Y-%m-%dT%H:%MZ pipeline/geodata/ndbc_*
+
+      # The buoy rule counts a station that reported a wave height in the last 7 days, not only at
+      # the moment latest_obs.txt was downloaded (geodata.load_ndbc_wave_stations).
+      - name: List the NDBC stations with a wave height in the last 7 days
+        if: ${{ inputs.mode == 'full' && inputs.then_enrich }}
+        run: python -m pipeline.ndbc_recent_wave --out pipeline/geodata/ndbc_recent_wave.json
 
       - name: Enrich --skip-raycast over the new arcs (hand overrides + pruning)
         if: ${{ inputs.mode == 'full' && inputs.then_enrich }}
@@ -922,9 +950,11 @@ jobs:
           curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" \
             https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt
 
-      - name: Rerun the buoy rule for the dropped spots and the spots with no buoy
+      - name: Rerun the buoy rule (the spots named, or the dropped and buoy-less spots)
+        env:
+          SPOTS: ${{ inputs.spots }}
         run: |
-          python -m pipeline.buoy_assign --out buoy_assign.json \
+          python -m pipeline.buoy_assign --out buoy_assign.json --spots "$SPOTS" --recent-days 7 \
             --fresh-xml "$RUNNER_TEMP/ndbc/ndbc_stations.xml" \
             --fresh-obs "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt"
 
@@ -933,6 +963,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: buoy-assign-${{ github.run_number }}
-          path: buoy_assign.json
+          path: |
+            buoy_assign.json
+            buoy_assign_recent_wave.json
           retention-days: 90
           if-no-files-found: warn

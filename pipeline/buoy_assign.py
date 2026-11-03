@@ -44,6 +44,7 @@ from .enrichment import buoys as B
 from .enrichment import geodata as G
 from .enrichment.adjust import seaward_adjust
 from .geo import haversine_m
+from . import ndbc_recent_wave as RW
 
 K_CANDIDATES = 10          # compute_nearest_buoy's default
 
@@ -111,10 +112,22 @@ def algo_point(spot, land):
     return {**spot, "_algo_lat": lat, "_algo_lng": lng}, adjusted
 
 
-def use_wave_files(xml_path, obs_path):
-    """Point the rule at these NDBC files and drop the cached station list and KD-tree."""
+_NO_RECENT = Path("/nonexistent/ndbc_recent_wave.json")
+
+
+def pick(roster, names):
+    """[(spot, 'held')] for the spots named (names or slugs, as db_import slugs them)."""
+    from .db_import import _slugify
+    want = {_slugify(n.strip()) for n in names if n.strip()}
+    return [(s, "held") for s in roster if _slugify(s["name"]) in want]
+
+
+def use_wave_files(xml_path, obs_path, recent_path=None):
+    """Point the rule at these NDBC files (and recent-wave list, or none) and drop the cached
+    station list and KD-tree."""
     G.NDBC_STATIONS_XML = Path(xml_path)
     G.NDBC_LATEST_OBS_TXT = Path(obs_path)
+    G.NDBC_RECENT_WAVE_JSON = Path(recent_path) if recent_path else _NO_RECENT
     G.load_ndbc_wave_stations.cache_clear()
     B._build_kdtree.cache_clear()
     return G.load_ndbc_wave_stations()
@@ -168,7 +181,7 @@ def caps():
 
 def summarise(rows):
     out = {}
-    for g in ("dropped", "none"):
+    for g in sorted({r["group"] for r in rows}):
         rs = [r for r in rows if r["group"] == g]
         out[g] = {"spots": len(rs),
                   "rule_picks_a_buoy": sum(1 for r in rs if r["choice"]),
@@ -188,13 +201,14 @@ def _age(path):
     return datetime.fromtimestamp(t, tz=timezone.utc).isoformat()
 
 
-def run(roster, snapshot, land, lists, rule=None):
-    """*lists*: [(label, stations)] — the first is the headline."""
-    sc = scope(roster, snapshot)
+def run(roster, snapshot, land, lists, rule=None, sc=None):
+    """*lists*: [(label, stations)] — the first is the headline. *sc*: the scope, default scope()."""
+    sc = scope(roster, snapshot) if sc is None else sc
+    groups = {}
+    for _s, g in sc:
+        groups[g] = groups.get(g, 0) + 1
     report = {"caps_km": caps(), "tolerance_km": COORD_DERIVED_DIST_TOLERANCE_KM,
-              "k_candidates": K_CANDIDATES, "scope": {"dropped": sum(1 for _s, g in sc if g == "dropped"),
-                                                     "none": sum(1 for _s, g in sc if g == "none")},
-              "lists": {}}
+              "k_candidates": K_CANDIDATES, "scope": groups, "lists": {}}
     for label, stations in lists:
         rows = [assess(s, g, land, stations, snapshot, rule) for s, g in sc]
         report["lists"][label] = {"wave_stations": len(stations), "summary": summarise(rows),
@@ -203,10 +217,17 @@ def run(roster, snapshot, land, lists, rule=None):
 
 
 def print_report(rep):
-    print(f"buoy-assign: {rep['scope']['dropped']} spots whose buoy db_import drops, "
-          f"{rep['scope']['none']} with no buoy; tolerance {rep['tolerance_km']} km, "
+    print(f"buoy-assign: scope {json.dumps(rep['scope'])}; tolerance {rep['tolerance_km']} km, "
           f"the {rep['k_candidates']} nearest wave stations")
     print(f"caps (km): {json.dumps(rep['caps_km'])}")
+    rw = rep.get("recent_wave")
+    if rw:
+        print(f"\nrecent wave heights, last {rw['days']:g} days: {len(rw['stations'])} of "
+              f"{len(rw['checked'])} stations checked")
+        for sid, c in sorted(rw["checked"].items()):
+            print(f"  {sid}: " + (c["error"] if "error" in c else "no realtime2 file" if c.get("no_file")
+                  else f"{c['wave_rows_in_window']} wave rows, last wave {c['last_wave']}, "
+                       f"newest row {c['newest_row']}"))
     for label, L in rep["lists"].items():
         print(f"\n== {label}: {L['wave_stations']} wave stations ==")
         print(json.dumps(L["summary"]))
@@ -226,6 +247,10 @@ def main(argv=None):
     p.add_argument("--roster", default=str(DEFAULT_ENRICHED_OUTPUT))
     p.add_argument("--fresh-xml", default="")
     p.add_argument("--fresh-obs", default="")
+    p.add_argument("--spots", default="", help="comma-separated spot names or slugs (default: the "
+                   "spots db_import drops and the spots with no buoy)")
+    p.add_argument("--recent-days", type=float, default=0.0,
+                   help="also count a station that reported a wave height in the last N days")
     p.add_argument("--out", default="buoy_assign.json")
     a = p.parse_args(argv)
     with open(a.roster, encoding="utf-8") as f:
@@ -234,15 +259,28 @@ def main(argv=None):
     land = G.load_land_index()
     if land is None:
         raise SystemExit("buoy-assign: no GSHHG land index; the rule cannot test line of sight")
+    sc = pick(roster, a.spots.split(",")) if a.spots.strip() else scope(roster, snapshot)
     cached = (G.NDBC_STATIONS_XML, G.NDBC_LATEST_OBS_TXT)
-    files = [("fresh", (a.fresh_xml, a.fresh_obs))] if a.fresh_xml and a.fresh_obs else []
-    files.append(("cached", cached))
+    base = [("fresh", (a.fresh_xml, a.fresh_obs))] if a.fresh_xml and a.fresh_obs else []
+    base.append(("cached", cached))
     report = {"generated_at": datetime.now(timezone.utc).isoformat(),
               "files": {label: {"xml": str(x), "xml_mtime": _age(x), "obs": str(o),
-                                "obs_mtime": _age(o)} for label, (x, o) in files}}
+                                "obs_mtime": _age(o)} for label, (x, o) in base}}
+    files = [(label, x, o, None) for label, (x, o) in base]
+    if a.recent_days > 0:
+        # The recent-wave list, for every active station within the cap of a spot in scope, read
+        # from the headline station list; then each list is run with it and without it.
+        x0 = base[0][1][0]
+        ids = RW.candidates([s for s, _g in sc], RW.active_stations(x0), B._regional_cap_km)
+        recent = RW.build(ids, datetime.now(timezone.utc), a.recent_days)
+        recent_path = os.path.splitext(a.out)[0] + "_recent_wave.json"
+        with open(recent_path, "w", encoding="utf-8") as f:
+            json.dump(recent, f, indent=1)
+        report["recent_wave"] = recent
+        files = [(f"{label}+{a.recent_days:g}d", x, o, recent_path) for label, (x, o) in base] + files
     # compute_nearest_buoy reads whichever files are set, so each list runs with its own.
-    for label, (x, o) in files:
-        part = run(roster, snapshot, land, [(label, use_wave_files(x, o))])
+    for label, x, o, rp in files:
+        part = run(roster, snapshot, land, [(label, use_wave_files(x, o, rp))], sc=sc)
         report.update({k: part[k] for k in ("caps_km", "tolerance_km", "k_candidates", "scope")})
         report.setdefault("lists", {})[label] = part["lists"][label]
     with open(a.out, "w", encoding="utf-8") as f:

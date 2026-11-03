@@ -111,15 +111,16 @@ def test_scope_keeps_a_spot_exactly_at_the_tolerance():
     assert [(s["name"], g) for s, g in A.scope(roster, snapshot)] == [("past", "dropped")]
 
 
-def test_the_real_roster_after_run_64():
+def test_the_real_roster_after_run_65():
     # Before run 64's change: 39 dropped and 173 with no buoy. After it: the two held spots that
-    # keep a stale buoy, and 173 - 103 newly assigned + 3 cleared = 73 with none.
+    # kept a stale buoy, and 173 - 103 newly assigned + 3 cleared = 73 with none. Run 65 corrects
+    # the two stale distances and gives the other seven held spots a buoy: 0 dropped, 73 - 7 = 66.
     import json
     from pipeline import config
     from pipeline.enrichment.geodata import load_buoy_snapshot
     roster = json.loads(config.DEFAULT_ENRICHED_OUTPUT.read_text())
     groups = [g for _s, g in A.scope(roster, load_buoy_snapshot())]
-    assert (groups.count("dropped"), groups.count("none")) == (2, 73)
+    assert (groups.count("dropped"), groups.count("none")) == (0, 66)
 
 
 # --------------------------------------------------------------------------- #

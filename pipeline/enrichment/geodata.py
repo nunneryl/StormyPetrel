@@ -14,6 +14,7 @@ from ..config import (
     GSHHG_L1_SHP,
     NDBC_BUOY_SNAPSHOT_FILE,
     NDBC_LATEST_OBS_TXT,
+    NDBC_RECENT_WAVE_JSON,
     NDBC_STATIONS_XML,
     TIDE_STATIONS_JSON,
 )
@@ -102,13 +103,43 @@ def load_coastlines_for_orientation() -> list | None:
     return land.coastlines if land else None
 
 
+def recent_wave_ids(now: "datetime | None" = None) -> set[str]:
+    """Station ids (lower-case) that reported a wave height within the file's window of days, from
+    NDBC_RECENT_WAVE_JSON ({"generated_at", "days", "stations": [...]}, pipeline/ndbc_recent_wave.py).
+
+    An empty set when the file is missing or unreadable, and when it is older than its own window:
+    a list built more than `days` ago says nothing about the last `days`, and keeping it would hold
+    a buoy that has since died in the rule."""
+    import json
+    from datetime import datetime, timedelta, timezone
+    if not NDBC_RECENT_WAVE_JSON.exists():
+        return set()
+    try:
+        blob = json.loads(NDBC_RECENT_WAVE_JSON.read_text())
+        built = datetime.fromisoformat(blob["generated_at"])
+        days = float(blob["days"])
+        ids = {str(i).lower() for i in blob["stations"]}
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        log.warning("NDBC recent-wave list %s unreadable (%s); using latest_obs only",
+                    NDBC_RECENT_WAVE_JSON, e)
+        return set()
+    now = now or datetime.now(timezone.utc)
+    if now - built > timedelta(days=days):
+        log.warning("NDBC recent-wave list %s was built %s, more than %g days ago; using "
+                    "latest_obs only", NDBC_RECENT_WAVE_JSON, blob["generated_at"], days)
+        return set()
+    return ids
+
+
 @lru_cache(maxsize=1)
 def load_ndbc_wave_stations() -> list[dict]:
     """Parse NDBC activestations.xml + latest_obs.txt to produce the wave-reporting station list.
 
-    Returns a list of {"id", "lat", "lng", "name"} for stations that reported
-    non-missing WVHT in the most recent observations file. If either file is
-    missing, returns [].
+    Returns a list of {"id", "lat", "lng", "name"} for active stations that reported a wave height
+    (WVHT not 'MM') in the most recent observations file OR at any point in the last
+    NDBC_RECENT_WAVE_DAYS (recent_wave_ids, from NDBC_RECENT_WAVE_JSON when it is present and fresh).
+    latest_obs.txt is one moment: a live buoy that missed that one reading used to drop out of the
+    rule (44084, sw1-raycast run 64). If either NDBC file is missing, returns [].
     """
     if not NDBC_STATIONS_XML.exists() or not NDBC_LATEST_OBS_TXT.exists():
         log.warning(
@@ -143,6 +174,11 @@ def load_ndbc_wave_stations() -> list[dict]:
                 wave_reporters.add(stn.lower())
 
     log.info("NDBC: %d stations reporting wave height", len(wave_reporters))
+    recent = recent_wave_ids()
+    if recent:
+        log.info("NDBC: %d more that reported a wave height in the last few days (%s)",
+                 len(recent - wave_reporters), NDBC_RECENT_WAVE_JSON)
+        wave_reporters |= recent
 
     # activestations.xml: <stations> containing <station id=".." lat=".." lon=".." name=".." .../>
     import xml.etree.ElementTree as ET
