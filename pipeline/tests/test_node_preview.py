@@ -743,3 +743,104 @@ def test_an_hour_blank_only_in_its_period_is_filled_and_keeps_its_own_height():
     assert hours[1]["expected"] == {"hs": 1.25, "tp": None, "dp": 75.0, "swell_hs": 1.0}
     assert hours[1]["inputs_match"] is True
     assert NP.gate(hours)["filled"] == 2 and NP.gate(hours)["pass"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Buoy references (SLUG=BUOY in --reference)                                   #
+# --------------------------------------------------------------------------- #
+def test_parse_references_splits_spots_from_buoys():
+    assert NP.parse_references(" lido-beach,hubbard-creek=46015 , galveston-seawall = 42035X,,bad=") == (
+        ["lido-beach"], {"hubbard-creek": "46015", "galveston-seawall": "42035x"})
+    assert NP.parse_references("") == ([], {})
+
+
+def test_buoy_pairs_takes_the_nearest_reading_within_30_minutes_of_a_past_hour():
+    t0 = CDT.timestamp()
+    hours = [{"valid_time": _vt(h)} for h in (0, 1, 2, 5)]
+    obs = [(t0 + 70 * 60, 2.0), (t0 + 20 * 60, 1.0), (t0 + 5 * 3600, 9.9)]   # out of order
+    NP.buoy_pairs(hours, obs, now_epoch=t0 + 3 * 3600)
+    # 12Z: 20 min off -> 1.0. 13Z: 10 min off -> 2.0. 14Z: 50 min from 13:10 -> none.
+    # 17Z: a reading at the very hour, but the hour is after "now" -> none.
+    assert [h["buoy_hs"] for h in hours] == [1.0, 2.0, None, None]
+
+
+def test_buoy_pairs_at_exactly_30_minutes_and_a_tie():
+    t0 = CDT.timestamp()
+    h = [{"valid_time": _vt(0)}]
+    NP.buoy_pairs(h, [(t0 + 30 * 60, 1.5)], now_epoch=t0 + 3600)
+    assert h[0]["buoy_hs"] == 1.5
+    NP.buoy_pairs(h, [(t0 + 31 * 60, 1.5)], now_epoch=t0 + 3600)
+    assert h[0]["buoy_hs"] is None
+    NP.buoy_pairs(h, [(t0 + 20 * 60, 2.5), (t0 - 20 * 60, 0.5)], now_epoch=t0 + 3600)
+    assert h[0]["buoy_hs"] == 0.5                             # the earlier of two equally near
+
+
+def test_buoy_summary_counts_only_hours_the_cell_holds():
+    hours = [
+        {"buoy_hs": 2.0, "hs_old": 1.0, "filled_from": 0, "hs_new": 2.2, "filled_from_new": 0},
+        {"buoy_hs": 1.0, "hs_old": 0.9, "filled_from": 0, "hs_new": 1.3, "filled_from_new": 0},
+        {"buoy_hs": 1.0, "hs_old": 0.5, "filled_from": -1, "hs_new": 1.0, "filled_from_new": 0},
+        {"buoy_hs": None, "hs_old": 1.0, "filled_from": 0, "hs_new": 1.0, "filled_from_new": 0},
+    ]
+    # old: 0.5 and 0.9 (the filled hour left out): median 0.7, one of two within 20%.
+    # new: 1.1, 1.3, 1.0: median 1.1, two of three within 20%. Buoy mean (2 + 1 + 1) / 3.
+    assert NP.buoy_summary(hours, "46015") == {
+        "buoy": "46015", "hours": 3, "buoy_mean": 1.333,
+        "old": {"hours": 2, "median": 0.7, "within_20": 0.5},
+        "new": {"hours": 3, "median": 1.1, "within_20": 0.667}}
+    assert NP.buoy_summary([], "46015")["old"] == {"hours": 0, "median": None, "within_20": None}
+
+
+def test_run_with_a_buoy_replays_from_48_hours_back_and_sets_the_buoy_beside_both_nodes():
+    t0 = CDT.timestamp()
+    asked = []
+
+    def buoy_obs(b, start):
+        asked.append((b, start))
+        return [(t0, 2.0), (t0 + 3600 + 600, 4.0)]
+
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, c: _cycle(), apply=_stub,
+                 buoys={"duck-pier": "44100", "nowhere": "41001"},
+                 now=CDT + datetime.timedelta(hours=3), buoy_obs=buoy_obs)
+    assert rep["replayed_from"] == "2026-10-24T12:00:00+00:00"
+    assert asked == [("44100", "2026-10-24T12:00:00+00:00")]
+    # 12Z and 13Z replay: old node 1.235 m, new 2.0 m; buoy 2.0 and 4.0.
+    # old 0.6175 and 0.30875: median 0.463, none within 20%. new 1.0 and 0.5: median 0.75, one.
+    assert rep["buoys"] == {"Duck Pier": {
+        "buoy": "44100", "hours": 2, "buoy_mean": 3.0,
+        "old": {"hours": 2, "median": 0.463, "within_20": 0.0},
+        "new": {"hours": 2, "median": 0.75, "within_20": 0.5}}}
+    assert rep["buoys_missing"] == ["nowhere"]
+    assert [h["buoy_hs"] for h in rep["hours"]] == [2.0, 4.0]
+
+
+def test_run_without_a_buoy_replays_from_since():
+    rep, _ = _run()
+    assert rep["replayed_from"] == rep["since"] == _vt(0)
+    assert rep["buoys"] == {} and rep["buoys_missing"] == []
+
+
+def test_with_a_buoy_the_rows_come_from_48_hours_back_and_the_homepage_from_since(monkeypatch):
+    seen = {"rows": [], "first": set()}
+    real_rows, real_first = NP.fetch_rows, NP.fetch_first
+
+    def rows(client, sid, since):
+        seen["rows"].append((sid, since))
+        return real_rows(client, sid, since)
+
+    def first(client, sid, since):
+        seen["first"].add(since)
+        return real_first(client, sid, since)
+
+    monkeypatch.setattr(NP, "fetch_rows", rows)
+    monkeypatch.setattr(NP, "fetch_first", first)
+    NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+           list_cycles=lambda w: {("20261026", "12"): "url-12"},
+           open_cycle=lambda w, c: _cycle(), apply=_stub, references=["other"],
+           buoys={"duck-pier": "44100"}, now=CDT + datetime.timedelta(hours=3),
+           buoy_obs=lambda b, start: [])
+    back = "2026-10-24T12:00:00+00:00"
+    assert seen["rows"] == [(1, back), (2, back)]          # the moved spot, then the reference
+    assert seen["first"] == {_vt(0)}

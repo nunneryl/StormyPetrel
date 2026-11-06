@@ -47,6 +47,15 @@ REFERENCE SPOTS (--reference, comma-separated slugs). Spots that did not move, s
 moved ones: their published stars and face (face_ft_raw, the face the replay gives) on the same
 hours as each moved spot's replayed ones, averaged and hour by hour.
 
+BUOY REFERENCES (a token SLUG=BUOY in --reference, e.g. hubbard-creek=46015). For a moved spot
+with no NWPS neighbour to stand beside, an NDBC buoy: the published hours are replayed from
+BUOY_LOOKBACK_H hours before --since instead of from --since (NOMADS keeps about two days of
+cycles), and on every replayed hour already past, the buoy's reading from buoy_observations
+nearest the hour within BUOY_PAIR_MIN minutes is set beside the old and the new node's NWPS Hs.
+Only hours the cell itself holds count (not ones filled from a neighbouring hour). Per spot: the
+paired hours, the buoy's mean Hs, and for each node the median of node / buoy and the share of
+hours within 20% of the buoy. The homepage list still starts at --since.
+
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
 """
@@ -71,6 +80,8 @@ INPUT_TOL = 5e-4              # stored values carry 3 decimals
 FACE_TOL = 5e-3               # face_ft_raw is stored to 2 decimals
 INPUT_COLS = ("hs", "tp", "dp", "swell_hs")
 SAME_CELL_KM = 0.01
+BUOY_LOOKBACK_H = 48          # NOMADS keeps about two days of cycles
+BUOY_PAIR_MIN = 30            # a buoy reading within 30 minutes of the hour
 FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_hs, swell_tp, swell_dp, swell_source, "
                  "face_ft, face_ft_raw, wind_speed, wind_dir, wind_mult, tide_mult, stars, "
                  "nwps_cycle")
@@ -285,6 +296,71 @@ def reference_summary(hours, refs):
     return out
 
 
+def parse_references(text):
+    """(reference spot slugs, {moved spot slug: buoy id}) from --reference: a token SLUG=BUOY
+    names a buoy for a moved spot, any other token a reference spot."""
+    spots, buoys = [], {}
+    for tok in (t.strip() for t in (text or "").split(",")):
+        if not tok:
+            continue
+        if "=" in tok:
+            sl, b = (x.strip() for x in tok.split("=", 1))
+            if sl and b:
+                buoys[sl] = b.lower()
+        else:
+            spots.append(tok)
+    return spots, buoys
+
+
+def buoy_pairs(hours, obs, now_epoch):
+    """Sets h["buoy_hs"] on each of *hours* already past at *now_epoch*: the buoy Hs nearest the
+    hour within BUOY_PAIR_MIN minutes, else None. *obs*: [(epoch, hs)] with hs set, any order."""
+    obs = sorted(obs)
+    for h in hours:
+        t = _iso_to_epoch(h["valid_time"])
+        h["buoy_hs"] = None
+        if t is None or t > now_epoch or not obs:
+            continue
+        best = min(obs, key=lambda o: (abs(o[0] - t), o[0]))
+        if abs(best[0] - t) <= BUOY_PAIR_MIN * 60:
+            h["buoy_hs"] = best[1]
+    return hours
+
+
+def buoy_summary(hours, buoy):
+    """The paired hours of one moved spot against its buoy: the buoy's mean Hs, and for each
+    node the hours it holds itself (not filled from a neighbouring hour), the median of
+    node / buoy and the share within 20% of the buoy."""
+    paired = [h for h in hours if h.get("buoy_hs")]
+
+    def node(key, off_key):
+        r = sorted(h[key] / h["buoy_hs"] for h in paired
+                   if h.get(key) is not None and h.get(off_key) == 0)
+        if not r:
+            return {"hours": 0, "median": None, "within_20": None}
+        mid = len(r) // 2
+        med = r[mid] if len(r) % 2 else (r[mid - 1] + r[mid]) / 2
+        return {"hours": len(r), "median": round(med, 3),
+                "within_20": round(sum(abs(x - 1) <= 0.2 for x in r) / len(r), 3)}
+    return {"buoy": buoy, "hours": len(paired),
+            "buoy_mean": _mean([h["buoy_hs"] for h in paired]),
+            "old": node("hs_old", "filled_from"), "new": node("hs_new", "filled_from_new")}
+
+
+def fetch_buoy_obs(client, buoy, since):
+    """[(epoch, hs)] from buoy_observations for *buoy* since *since*, hs set."""
+    out, frm = [], 0
+    while True:
+        page = (client.table("buoy_observations").select("observed_at, hs").eq("buoy_id", buoy)
+                .gte("observed_at", since).order("observed_at").range(frm, frm + 999).execute().data
+                or [])
+        out.extend((_iso_to_epoch(r["observed_at"]), float(r["hs"])) for r in page
+                   if r.get("hs") is not None and _iso_to_epoch(r["observed_at"]) is not None)
+        if len(page) < 1000:
+            return out
+        frm += 1000
+
+
 def homepage(first_rows, names, new_stars, n=10):
     """The homepage's "Best conditions right now" before and after: each spot's soonest
     published hour, stars highest first, equal stars in spot id order, ten shown
@@ -338,7 +414,7 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
             epoch = _iso_to_epoch(row["valid_time"])
             k = int(epoch // 3600)
             vo, off = series_hour(s_old or {}, k)
-            vn, _ = series_hour(s_new or {}, k)
+            vn, off_new = series_hour(s_new or {}, k)
             exact = exact_hour_values(cycle, c_old, epoch) if c_old else (None, None, None)
             blank = any(v is None for v in exact)
             # a neighbour's values stand for the hour only where the file leaves it blank
@@ -353,7 +429,7 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
                 "inputs_match": fill_ok and not diffs,
                 "input_diffs": diffs if fill_ok else diffs + ["fill over an hour the file holds"],
                 "stored": {c: _num(row.get(c)) for c in INPUT_COLS}, "expected": want,
-                "filled_from": off, "exact_hour_blank": blank,
+                "filled_from": off, "filled_from_new": off_new, "exact_hour_blank": blank,
                 "stars_published": float(row["stars"]),
                 "stars_old": a.get("stars"), "stars_new": b.get("stars"),
                 "face_published": _num(row.get("face_ft_raw")),
@@ -400,7 +476,7 @@ def fetch_first(client, sid, since):
 
 
 def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open_cycle=None,
-        apply=apply_nwps_overrides, references=()):
+        apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None):
     from .forecast.face_correction import load_face_factors, median_face_factor
     from .interpret import face_factors_by_name
     factors = load_face_factors() if factors is None else factors
@@ -412,7 +488,14 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
     pairs = moved_spots(baseline, roster)
     names = fetch_names(client)
     ids = {n: sid for sid, (n, _) in names.items()}
-    report = {"since": since, "moved": [], "not_replayed": {}, "cycles": {}, "node_checks": {}}
+    buoys = buoys or {}
+    now_epoch = (now or datetime.now(timezone.utc)).timestamp()
+    replay_since = since
+    if buoys:
+        start = datetime.fromtimestamp(_iso_to_epoch(since) - BUOY_LOOKBACK_H * 3600, timezone.utc)
+        replay_since = start.isoformat()
+    report = {"since": since, "replayed_from": replay_since, "moved": [], "not_replayed": {},
+              "cycles": {}, "node_checks": {}}
     hours = []
     for old, new in pairs:
         report["moved"].append({"spot": new["name"], "wfo": new.get("nwps_wfo"),
@@ -428,7 +511,7 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         by_cycle = defaultdict(lambda: defaultdict(list))
         for old, new in wpairs:
             skipped = report["not_replayed"].setdefault(new["name"], Counter())
-            for row in fetch_rows(client, ids[new["name"]], since):
+            for row in fetch_rows(client, ids[new["name"]], replay_since):
                 if row.get("stars") is None:
                     skipped["no stars"] += 1
                 elif row.get("swell_source") not in NWPS_KINDS:
@@ -455,13 +538,22 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
     for r in references:
         if r in by_slug:
             sid, n = by_slug[r]
-            refs[n] = {row["valid_time"]: row for row in fetch_rows(client, sid, since)
+            refs[n] = {row["valid_time"]: row for row in fetch_rows(client, sid, replay_since)
                        if row.get("stars") is not None}
     report["references"] = reference_summary(hours, refs)
     for h in hours:
         h["reference"] = {n: {"stars": _num(rows[h["valid_time"]].get("stars")),
                               "face": _num(rows[h["valid_time"]].get("face_ft_raw"))}
                           for n, rows in refs.items() if h["valid_time"] in rows}
+    report["buoys"] = {}
+    buoy_obs = buoy_obs or (lambda b, start: fetch_buoy_obs(client, b, start))
+    for old, new in pairs:
+        b = buoys.get(_slug(new["name"]))
+        if b:
+            mine = [h for h in hours if h["spot"] == new["name"]]
+            buoy_pairs(mine, buoy_obs(b, replay_since), now_epoch)
+            report["buoys"][new["name"]] = buoy_summary(mine, b)
+    report["buoys_missing"] = sorted(set(buoys) - {_slug(new["name"]) for _o, new in pairs})
     report["hours"] = hours
     first = {}
     for sid in sorted(names):
@@ -484,7 +576,7 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
 # --------------------------------------------------------------------------- #
 HOUR_COLUMNS = ("spot", "valid_time", "nwps_cycle", "swell_source", "wind", "wind_old",
                 "wind_new", "inputs_match", "input_diffs", "stored", "expected", "filled_from",
-                "exact_hour_blank", "reference",
+                "exact_hour_blank", "filled_from_new", "buoy_hs", "reference",
                 "stars_published", "stars_old", "stars_new", "face_published", "face_old",
                 "face_new", "hs_old", "hs_new", "tp_old", "tp_new", "swell_hs_old",
                 "swell_hs_new", "rated_tp_old", "rated_tp_new")
@@ -507,7 +599,9 @@ def _offset(off):
 
 
 def print_report(rep):
-    print(f"\nNode preview of the published window from {rep['since']}")
+    print(f"\nNode preview of the published window from {rep['since']}"
+          + (f" (replayed from {rep['replayed_from']} for the buoys)"
+             if rep.get("replayed_from") not in (None, rep["since"]) else ""))
     for m in rep["moved"]:
         print(f"  {m['spot']} ({m['wfo']}): ({m['old'][0]}, {m['old'][1]}) -> "
               f"({m['new'][0]}, {m['new'][1]}), {m['new_distance_m']} m from the spot")
@@ -552,6 +646,16 @@ def print_report(rep):
               f"same {s['stars_same']}; mean stars {_v(s['mean_stars_old'])} -> "
               f"{_v(s['mean_stars_new'])}, face {_v(s['mean_face_old'])} -> "
               f"{_v(s['mean_face_new'])} ft, hs {_v(s['mean_hs_old'])} -> {_v(s['mean_hs_new'])} m")
+    if rep.get("buoys") or rep.get("buoys_missing"):
+        print("\n=== Beside the buoys, on the replayed hours already past: node / buoy ===")
+        for name, b in rep.get("buoys", {}).items():
+            o, n = b["old"], b["new"]
+            print(f"  {name} vs NDBC {b['buoy']}: {b['hours']} paired hours, buoy mean "
+                  f"{_v(b['buoy_mean'])} m; old node median {_v(o['median'])} "
+                  f"({o['hours']} h, {_v(o['within_20'])} within 20%); new node median "
+                  f"{_v(n['median'])} ({n['hours']} h, {_v(n['within_20'])} within 20%)")
+        if rep.get("buoys_missing"):
+            print(f"  not a moved spot: {', '.join(rep['buoys_missing'])}")
     if rep.get("references") or rep.get("references_missing"):
         print("\n=== Beside the reference spots (published), on the same hours: old / new / "
               "reference ===")
@@ -595,7 +699,8 @@ def main(argv=None):
                    help="spots file with the moved nodes (default: this checkout's)")
     p.add_argument("--since", default=None, help="ISO start of the window (default: now)")
     p.add_argument("--reference", default="",
-                   help="comma-separated slugs of spots to show beside the moved ones")
+                   help="comma-separated slugs of spots to show beside the moved ones, and "
+                        "SLUG=BUOY for a moved spot's NDBC buoy")
     p.add_argument("--out", default=None, help="write the report as JSON here")
     p.add_argument("--csv", default=None, help="write every replayed hour as CSV here")
     args = p.parse_args(argv)
@@ -606,8 +711,8 @@ def main(argv=None):
         baseline = json.load(f)
     with open(args.roster) as f:
         roster = json.load(f)
-    refs = [r.strip() for r in args.reference.split(",") if r.strip()]
-    rep = run(client, baseline, roster, since, references=refs)
+    refs, buoys = parse_references(args.reference)
+    rep = run(client, baseline, roster, since, references=refs, buoys=buoys)
     print_report(rep)
     if args.out:
         with open(args.out, "w") as f:
