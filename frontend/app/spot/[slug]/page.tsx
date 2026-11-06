@@ -17,7 +17,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { SurfReportProvider, SurfReportPanel } from '@/components/SurfReport';
 import { degToCardinal, fmtSec } from '@/lib/formatting';
 import { fmtStamp, spotTimeZone } from '@/lib/spotTime';
-import { buoyBox } from '@/lib/buoyDisplay';
+import { buoyBox, kmBetween, recentSince, type BackupBuoy, type BuoyReading } from '@/lib/buoyDisplay';
 import { HEADLINE_HEIGHT_LABEL } from '@/lib/heightBasis';
 import { chartWindow, selectCurrentHour } from '@/lib/currentHour';
 import { breakTypeShown, spotInfoRows, tidePreferenceShown } from '@/lib/spotInfo';
@@ -136,6 +136,49 @@ async function loadLatestBuoy(buoyId: string | null): Promise<BuoyObservation | 
   return data as BuoyObservation | null;
 }
 
+// A buoy's latest reading that has a wave height: however old with no `since` (the main buoy's
+// "Last wave reading", or the date in "No recent wave reading (last: ...)"), else no older than
+// `since` (a fallback buoy's). Uncached like every read on this page.
+async function loadLatestWave(buoyId: string, since?: string): Promise<BuoyObservation | null> {
+  let q = supabaseUncached
+    .from('buoy_observations')
+    .select('*')
+    .eq('buoy_id', buoyId)
+    .not('hs', 'is', null);
+  if (since) q = q.gte('observed_at', since);
+  const { data, error } = await q.order('observed_at', { ascending: false }).limit(1).maybeSingle();
+  if (error) {
+    console.error('loadLatestWave', error);
+    return null;
+  }
+  return data as BuoyObservation | null;
+}
+
+// The spot's fallback buoys, in the roster's order: each one's distance from the spot (from the
+// buoys table's position; null when the buoy is not in it) and its latest recent wave reading.
+async function loadBackups(
+  spot: { lat: number; lng: number; fallback_buoy_ids?: string[] | null },
+  nowMs: number,
+): Promise<BackupBuoy[]> {
+  const ids = (spot.fallback_buoy_ids ?? []).filter((id): id is string => Boolean(id));
+  if (ids.length === 0) return [];
+  const since = recentSince(nowMs);
+  const [positions, waves] = await Promise.all([
+    supabaseUncached.from('buoys').select('id, lat, lng').in('id', ids),
+    Promise.all(ids.map((id) => loadLatestWave(id, since))),
+  ]);
+  if (positions.error) console.error('loadBackups', positions.error);
+  const at = new Map((positions.data ?? []).map((b) => [String(b.id), b as { lat: number; lng: number }]));
+  return ids.map((id, i) => {
+    const pos = at.get(id);
+    return {
+      id,
+      km: pos ? kmBetween(spot.lat, spot.lng, pos.lat, pos.lng) : null,
+      wave: waves[i] as BuoyReading | null,
+    };
+  });
+}
+
 // freshnessLabel MOVED to components/CurrentHero. It measured `Date.now() - valid_time` at
 // RENDER time, so a statically-served page an hour old still announced "Updated 0 min ago".
 // It now measures against the same clock that selects the row, on the client.
@@ -147,9 +190,10 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // Every time on the page is the spot's local time (lib/spotTime.ts).
   const timeZone = spotTimeZone(spot);
 
-  const [forecasts, buoy, cams] = await Promise.all([
+  const [forecasts, buoy, lastWave, cams] = await Promise.all([
     loadForecasts(spot.id),
     loadLatestBuoy(spot.nearest_buoy_id),
+    spot.nearest_buoy_id ? loadLatestWave(spot.nearest_buoy_id) : Promise.resolve(null),
     fetchCamsForSpot(spot.slug),
   ]);
 
@@ -157,7 +201,16 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // forecasts[0] is no longer "now" — it is up to 12 hours ago. Split once, here, and let
   // every existing consumer keep its old meaning by reading `upcoming`.
   const nowMs = Date.now();
-  const buoyShown = buoyBox(spot.nearest_buoy_id, spot.nearest_buoy_dist_km, buoy, nowMs, timeZone);
+  // The box (lib/buoyDisplay): the fallback buoys are read only when the main buoy has no recent
+  // wave reading, the one case that can show one.
+  const buoyInput = {
+    buoyId: spot.nearest_buoy_id, distKm: spot.nearest_buoy_dist_km, latest: buoy, lastWave,
+    backups: [] as BackupBuoy[], nowMs, timeZone,
+  };
+  let buoyShown = buoyBox(buoyInput);
+  if (buoyShown.kind === 'stale') {
+    buoyShown = buoyBox({ ...buoyInput, backups: await loadBackups(spot, nowMs) });
+  }
   const upcoming = forecasts.filter((r) => new Date(r.valid_time).getTime() >= nowMs);
   // THE TILES NO LONGER USE `upcoming[0]`. That is the next hour BOUNDARY at server-render
   // time, and these routes are statically generated with `revalidate = 3600` below, so it
@@ -319,7 +372,8 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         <OptimalConditions spot={spot} />
 
         {/* What the box says comes from lib/buoyDisplay: the distance always, no reading past
-            BUOY_DISPLAY_LIMIT_KM, and no stale reading shown as current. */}
+            BUOY_DISPLAY_LIMIT_KM, and only a wave reading from the last 24 hours, from the main
+            buoy or else a fallback buoy, labelled. */}
         <InfoBlock title="Nearest buoy">
           {buoyShown.kind === 'none' ? (
             <div className="text-text-muted text-sm">No nearby buoy.</div>
@@ -348,7 +402,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
                     : '—'
                 }
               />
-              <Row k="Reading" v={fmtStamp(buoyShown.reading.observed_at, timeZone)} />
+              <Row k={buoyShown.label} v={fmtStamp(buoyShown.reading.observed_at, timeZone)} />
               <NdbcLink id={buoyShown.id} />
             </>
           )}

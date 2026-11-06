@@ -1,6 +1,7 @@
 """NDBC realtime observation fetcher.
 
-For each unique nearest_buoy_id in spots_enriched.json, fetch:
+For each unique nearest_buoy_id in spots_enriched.json, then each fallback_buoy_id that is not
+already some spot's nearest buoy, fetch:
 
 - {STATION}.txt  — standard meteorological (wind, pressure, temps, and if
                    the buoy reports waves: WVHT, DPD, APD, MWD)
@@ -163,13 +164,21 @@ def _filter_last_24h(observations: list[dict]) -> list[dict]:
 
 
 def _unique_buoy_ids(spots: list[dict]) -> list[str]:
+    """Every spot's nearest buoy, in roster order, then every fallback buoy not already listed.
+
+    The fallbacks are fetched for the spot page's Nearest buoy box: when the nearest buoy has no
+    wave height in the last 24 hours, it shows a fallback within 150 km that has one
+    (frontend/lib/buoyDisplay.ts). The ratings read only the nearest buoy (interpret.py).
+    """
     seen: set[str] = set()
     ordered: list[str] = []
-    for s in spots:
-        bid = s.get("nearest_buoy_id")
-        if bid and bid not in seen:
-            seen.add(bid)
-            ordered.append(bid)
+    for key in ("nearest_buoy_id", "fallback_buoy_ids"):
+        for s in spots:
+            ids = s.get(key)
+            for bid in (ids or []) if isinstance(ids, list) else [ids]:
+                if bid and bid not in seen:
+                    seen.add(bid)
+                    ordered.append(bid)
     return ordered
 
 

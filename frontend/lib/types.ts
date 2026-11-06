@@ -39,6 +39,9 @@ export type Spot = {
   hazards: string[] | null;
   nearest_buoy_id: string | null;
   nearest_buoy_dist_km: number | null;
+  /** Up to three more wave buoys, nearest first (migration 013); the Nearest buoy box falls back
+   *  to one of them (lib/buoyDisplay). Absent on a row read before that column existed. */
+  fallback_buoy_ids?: string[] | null;
   nearest_tide_station_id: string | null;
   /** 2-3 sentence factual blurb seeded by generate_descriptions and
    *  edited manually thereafter. Null until generation runs. */
