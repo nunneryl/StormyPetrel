@@ -162,7 +162,7 @@ const USES: [string, string[]][] = [
   ['components/SurfReport.tsx', ['{hourOptionLabel(iso, i, timeZone)}']],
   ['lib/reportUi.ts', ['${fmtShortTime(iso, timeZone)} ${zoneAbbr(iso, timeZone)}']],
   ['components/CamEmbed.tsx', ['camDarkness(lat, lng, timeZone)']],
-  ['lib/buoyDisplay.ts', ['fmtStamp(reading.observed_at, timeZone)']],
+  ['lib/buoyDisplay.ts', ['fmtStamp(lastWave.observed_at, timeZone)']],
 ];
 for (const [rel, uses] of USES) {
   const text = read(rel);

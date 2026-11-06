@@ -37,12 +37,17 @@
  *      an hour old, reads "NDBC 42012 · 41 km away" with the reading; Sunset Point's, 380.99 km
  *      away, reads "No buoy within 150 km (nearest: NDBC 46221, 381 km)" with the station link
  *      and no reading; Jacksonville Beach Pier's has no distance on its row, reads "NDBC 41112",
- *      and its Oct 29 reading is "No recent reading"; a spot with no buoy says "No nearby buoy.".
+ *      and its Oct 29 reading is "No recent wave reading"; a spot with no buoy says "No nearby buoy.".
+ *      A buoy whose latest reading has no wave height shows its last one that did, three hours
+ *      old, as "Last wave reading" (0.9 m reads "3.0 ft"). A spot whose buoy has had no wave
+ *      height since Oct 13 shows its first fallback within 150 km with a recent one: of 51001
+ *      (55.6 km, 30 hours old), 51002 (166.8 km, recent) and 51003 (111.2 km, recent), 51003:
+ *      "Backup buoy NDBC 51003 · 111 km away", 2.0 m reading "6.6 ft", and 51003's station link.
  *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
  *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
  *      no time_zone in the first build (the shape of a row read before migration 026), shows the
  *      Los Angeles fallback, labelled, with its buoy's last reading, 13:50Z on Oct 29, as
- *      "No recent reading (last: Oct 29, 6:50am PDT)" (more than a day old: item 11).
+ *      "No recent wave reading (last: Oct 29, 6:50am PDT)" (more than a day old: item 11).
  *      Then the stand-in gains its time_zone and the site is built AGAIN WITHOUT CLEARING
  *      .next/cache: the second build must ask the stand-in for that spot's row rather than take
  *      the copy the first build cached, and show "(last: Oct 29, 9:50am EDT)" and Eastern
@@ -157,8 +162,42 @@ const FRESH_BUOY = {
   buoy_id: '42012', observed_at: new Date(T0 - HOUR).toISOString(), hs: 0.8, tp: 6, dp: 160,
   wind_speed: 5, wind_dir: 180, water_temp: 24.0,
 };
-const READINGS: Record<string, unknown> = { [BUOY.buoy_id]: BUOY, [FRESH_BUOY.buoy_id]: FRESH_BUOY };
-const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE];
+// 11: case 2. 46041's latest reading, an hour back, has no wave height; the one two hours
+// before it does (0.9 m, 2.9528 ft, "3.0 ft").
+const LAST_WAVE = {
+  ...SPOT_FIELDS, id: 990008, slug: 'stamp-test-last-wave', name: 'Stamp Test Last Wave',
+  lat: 47.59, lng: -124.368, state: 'Washington', region: 'Olympic Peninsula',
+  time_zone: 'America/Los_Angeles', nearest_buoy_id: '46041', nearest_buoy_dist_km: 38.51,
+};
+// 11: case 3. 51205's last wave height is Oct 13; its fallbacks lie due north of the spot, one
+// degree of latitude being 111.1949 km: 51001 0.5 deg (55.6 km) with only a 30-hour-old reading,
+// 51002 1.5 deg (166.8 km), 51003 1.0 deg (111.2 km, "111 km") with a 2.0 m reading
+// (6.5617 ft, "6.6 ft") two hours back.
+const BACKUP = {
+  ...SPOT_FIELDS, id: 990009, slug: 'stamp-test-backup', name: 'Stamp Test Backup',
+  lat: 20.0, lng: -156.0, state: 'Hawaii', region: 'Maui', time_zone: 'Pacific/Honolulu',
+  nearest_buoy_id: '51205', nearest_buoy_dist_km: 12.81, fallback_buoy_ids: ['51001', '51002', '51003'],
+};
+const obs = (buoy_id: string, at: number | string, hs: number | null) => ({
+  buoy_id, observed_at: typeof at === 'string' ? at : new Date(at).toISOString(), hs, tp: 10, dp: 300,
+  wind_speed: 3, wind_dir: 60, water_temp: 25.0,
+});
+// Every buoy's readings. The stand-in filters and orders them as PostgREST would.
+const OBS: Record<string, Record<string, unknown>[]> = {
+  [BUOY.buoy_id]: [BUOY],
+  [FRESH_BUOY.buoy_id]: [FRESH_BUOY],
+  '46041': [obs('46041', T0 - HOUR, null), obs('46041', T0 - 3 * HOUR, 0.9)],
+  '51205': [obs('51205', '2026-10-13T18:56:00+00:00', 1.5)],
+  '51001': [obs('51001', T0 - 30 * HOUR, 1.0)],
+  '51002': [obs('51002', T0 - HOUR, 1.4)],
+  '51003': [obs('51003', T0 - 2 * HOUR, 2.0)],
+};
+const BUOY_POSITIONS = [
+  { id: '51001', lat: 20.5, lng: -156.0 },
+  { id: '51002', lat: 21.5, lng: -156.0 },
+  { id: '51003', lat: 21.0, lng: -156.0 },
+];
+const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
@@ -213,8 +252,18 @@ const asked: string[] = [];
 // needs).
 function answer(table: string, q: URLSearchParams): unknown[] {
   if (table === 'buoy_observations') {
-    const reading = READINGS[(q.get('buoy_id') ?? '').replace(/^eq\./, '')];
-    return reading ? [reading] : [];
+    let rows = [...(OBS[(q.get('buoy_id') ?? '').replace(/^eq\./, '')] ?? [])];
+    if (q.get('hs') === 'not.is.null') rows = rows.filter((r) => r.hs !== null);
+    const since = q.get('observed_at');
+    if (since?.startsWith('gte.')) {
+      rows = rows.filter((r) => Date.parse(String(r.observed_at)) >= Date.parse(since.slice(4)));
+    }
+    rows.sort((a, b) => Date.parse(String(b.observed_at)) - Date.parse(String(a.observed_at)));
+    return rows.slice(0, Number(q.get('limit') ?? rows.length));
+  }
+  if (table === 'buoys') {
+    const ids = (/^in\.\((.*)\)$/.exec(q.get('id') ?? '')?.[1] ?? '').split(',').map((v) => v.replace(/^"|"$/g, ''));
+    return BUOY_POSITIONS.filter((b) => ids.includes(b.id));
   }
   if (table === 'spots') {
     const slug = q.get('slug');
@@ -300,9 +349,15 @@ function buoyTitle(html: string): string | null {
     .exec(html)?.[1] ?? null;
 }
 
-/** The Nearest buoy card's "No recent reading (last: ...)" date. */
+/** The Nearest buoy card's "No recent wave reading (last: ...)" date. */
 function buoyLast(html: string): string | null {
-  return /No recent reading \(last: ([^)]*)\)/.exec(html)?.[1] ?? null;
+  return /No recent wave reading \(last: ([^)]*)\)/.exec(html)?.[1] ?? null;
+}
+
+/** A Nearest buoy card row by its label: "Hs", "Last wave reading", ... */
+function buoyRow(html: string, k: string): string | null {
+  return new RegExp(`<span class="text-text-secondary shrink-0">${k}</span><span class="text-text-primary text-right truncate">([^<]*)</span>`)
+    .exec(html)?.[1] ?? null;
 }
 
 /** Checks one tag is there exactly once, inside <head>, and returns its content. */
@@ -567,6 +622,22 @@ async function main(): Promise<void> {
   const jax11 = (await load(JACKSONVILLE.slug)).html.replace(/<!-- -->/g, '');
   eq(`${JACKSONVILLE.slug}: no distance on the row, so the id alone`, buoyTitle(jax11), 'NDBC 41112');
   eq(`${JACKSONVILLE.slug}: an Oct 29 reading is not shown as current`, buoyReading(jax11), null);
+  check(`${JACKSONVILLE.slug}: "No recent wave reading" with the last one's date`, buoyLast(jax11) !== null);
+  const last = (await load(LAST_WAVE.slug)).html.replace(/<!-- -->/g, '');
+  eq(`${LAST_WAVE.slug}: the main buoy`, buoyTitle(last), 'NDBC 46041 · 39 km away');
+  eq(`${LAST_WAVE.slug}: the last reading with a wave height`, buoyRow(last, 'Hs'), '3.0 ft');
+  check(`${LAST_WAVE.slug}: labelled "Last wave reading", in Pacific time`,
+    /^[A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2}(am|pm) P[DS]T$/.test(buoyRow(last, 'Last wave reading') ?? ''),
+    String(buoyRow(last, 'Last wave reading')));
+  eq(`${LAST_WAVE.slug}: no plain Reading row`, buoyReading(last), null);
+  const backup = (await load(BACKUP.slug)).html.replace(/<!-- -->/g, '');
+  eq(`${BACKUP.slug}: the first fallback within 150 km with a recent wave height`,
+    buoyTitle(backup), 'Backup buoy NDBC 51003 · 111 km away');
+  eq(`${BACKUP.slug}: its reading`, buoyRow(backup, 'Hs'), '6.6 ft');
+  check(`${BACKUP.slug}: its time, in Hawaii time`, /HST$/.test(buoyReading(backup) ?? ''), String(buoyReading(backup)));
+  check(`${BACKUP.slug}: its station link`,
+    backup.includes('https://www.ndbc.noaa.gov/station_page.php?station=51003'));
+  check(`${BACKUP.slug}: not the main buoy's Oct 13 date`, !backup.includes('No recent wave reading'));
   const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
   check(`${WITH_ROW.slug}: no buoy, "No nearby buoy."`, plain.includes('No nearby buoy.'));
 
