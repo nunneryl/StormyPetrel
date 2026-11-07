@@ -844,3 +844,61 @@ def test_with_a_buoy_the_rows_come_from_48_hours_back_and_the_homepage_from_sinc
     back = "2026-10-24T12:00:00+00:00"
     assert seen["rows"] == [(1, back), (2, back)]          # the moved spot, then the reference
     assert seen["first"] == {_vt(0)}
+
+
+# --------------------------------------------------------------------------- #
+# A cell on the wet/dry line: blank at f000, wet afterwards (run 68)           #
+# --------------------------------------------------------------------------- #
+def _dry_at_f000():
+    """_cycle() with the old node's cell (1, 1) blank in every field at f000 only, as a cell
+    that dries at low water reads in a cycle starting at low tide. The f000 land mask then
+    calls it land; its later hours still carry OLD_CELL's values."""
+    c = _cycle()
+    for short in ("swh", "perpw", "dirpw", "shts", "ws", "wdir"):
+        c["fields"][(short, 0)][1, 1] = np.nan
+    c["mask"] = np.isnan(c["fields"][("swh", 0)])
+    return c
+
+
+def test_a_cell_blank_at_f000_is_still_the_cell_replayed():
+    c = _dry_at_f000()
+    assert bool(c["mask"][1, 1]) is True                       # the f000 mask calls it land
+    assert NP.node_cell(c, OLD) == (1, 1)
+    # f001 and f002 from the cell itself (OLD_CELL, swh 1.23456 -> 1.235); f000 left out,
+    # as nwps.fetch's record leaves a blank hour out; not a neighbour's 0.5.
+    assert NP.node_series(OLD, c) == {_k(1): (1.235, 7.9, 75.0, 1.0),
+                                      _k(2): (1.235, 7.9, 75.0, None)}
+    assert NP.exact_hour_blank(c, (1, 1), CDT.timestamp()) is True
+    assert NP.exact_hour_blank(c, (1, 1), (CDT + datetime.timedelta(hours=1)).timestamp()) is False
+
+
+def test_node_check_on_a_cell_blank_at_f000():
+    # 36.19 N, 75.75 W is cell (1, 1): dry by the f000 mask, but the cell replayed.
+    assert NP.node_check(_dry_at_f000(), 36.19, -75.75) == {"wet": False, "same_cell": True,
+                                                            "offset_km": 0.0}
+
+
+def test_a_cell_with_no_wave_value_at_any_step_falls_back_to_the_nearest_wet_cell():
+    # (1, 1) land in every step: the nearest cell wet at f000. 0.01 deg of longitude at 36.19 N
+    # is 6371 x pi/180 x 0.01 x cos(36.19) = 0.897 km, nearer than 0.01 deg of latitude
+    # (1.112 km), so (1, 0) and (1, 2) tie; the first in grid order, (1, 0).
+    c = _cycle(land=[(1, 1)])
+    assert NP.node_cell(c, OLD) == (1, 0)
+    assert NP.node_series(OLD, c)[_k(0)] == (0.5, 0.5, 0.5, 0.5)
+
+
+def test_wind_alone_is_not_water():
+    # (1, 1) has no wave value at any step but keeps its wind: nwps._cell_is_water tests wave
+    # variables only, so it is land and the nearest cell wet at f000, (1, 0), is replayed.
+    c = _cycle()
+    for fh in (0, 1, 2):
+        for short in ("swh", "perpw", "dirpw", "shts"):
+            c["fields"][(short, fh)][1, 1] = np.nan
+    c["mask"] = np.isnan(c["fields"][("swh", 0)])
+    assert NP.node_cell(c, OLD) == (1, 0)
+
+
+def test_an_hour_without_a_direction_is_left_out():
+    c = _cycle()
+    c["fields"][("dirpw", 1)][1, 1] = np.nan
+    assert sorted(NP.node_series(OLD, c)) == [_k(0), _k(2)]

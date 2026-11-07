@@ -66,11 +66,11 @@ import csv
 import json
 import os
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .forecast.nwps_nearshore import (_haversine_km, _iso_to_epoch, _nearest_cell,
                                       _node_value, _region_for, apply_nwps_overrides,
-                                      load_cycle, nwps_series_by_hour, recent_cycles,
+                                      load_cycle, recent_cycles,
                                       series_hour)
 
 NWPS_KINDS = ("nwps_height_ww3_dir", "nwps")
@@ -116,13 +116,47 @@ def cycle_key(stamp):
     return dt.strftime("%Y%m%d"), dt.strftime("%H")
 
 
+WAVE_FIELDS = ("swh", "shts")   # the wave variables a cycle holds; nwps._cell_is_water tests them
+
+
+def _grid_cell(cycle, lat, lng):
+    """(i, j): the nearest grid row and column to (lat, lng), an argmin on each axis, as
+    nwps.fetch's .sel(method="nearest") takes them."""
+    lats, lons = cycle["lats"], cycle["lons"]
+    li = min(range(lats.shape[0]), key=lambda r: abs(float(lats[r, 0]) - lat))
+    lj = min(range(lons.shape[1]), key=lambda c: abs(float(lons[0, c]) - lng))
+    return li, lj
+
+
+def _cell_has_water(cycle, i, j):
+    """nwps._cell_is_water's test: a wave value at the cell at ANY step of the cycle. A cell on
+    the wet/dry line can be blank at f000 (the cycle's land mask) and wet at later hours."""
+    for (short, _fh), arr in cycle["fields"].items():
+        if short in WAVE_FIELDS:
+            v = float(arr[i, j])
+            if v == v:
+                return True
+    return False
+
+
 def node_series(spot, cycle):
-    """{hour_bucket: (swh, perpw, dirpw, shts)} at the spot's node, every value rounded to 3
-    decimals as nwps.fetch writes them, or None."""
-    raw = nwps_series_by_hour(spot, cycle)
-    if not raw:
+    """{hour_bucket: (swh, perpw, dirpw, shts)} at the cell nwps.fetch reads for the spot's
+    node (node_cell), every value rounded to 3 decimals as nwps.fetch writes them; an hour
+    missing swh, perpw or dirpw is left out, as nwps.fetch's record leaves it. None when there
+    is no cell or no complete hour."""
+    cell = node_cell(cycle, spot)
+    if cell is None:
         return None
-    return {k: tuple(None if v is None else round(v, 3) for v in vals) for k, vals in raw.items()}
+    i, j = cell
+    out = {}
+    for fh in cycle["steps"]:
+        swh, per, dpw = (_node_value(cycle, sh, fh, i, j) for sh in ("swh", "perpw", "dirpw"))
+        if swh is None or per is None or dpw is None:
+            continue
+        shts = _node_value(cycle, "shts", fh, i, j)
+        k = int((cycle["cycle_dt"] + timedelta(hours=fh)).timestamp() // 3600)
+        out[k] = tuple(None if v is None else round(v, 3) for v in (swh, per, dpw, shts))
+    return out or None
 
 
 def node_wind(cycle, i, j, epoch):
@@ -139,8 +173,21 @@ def node_wind(cycle, i, j, epoch):
 
 
 def node_cell(cycle, spot):
-    """(i, j) of the cell nwps_series_by_hour samples for the spot's baked node, or None."""
-    cell = _nearest_cell(cycle, spot["nwps_node_lat"], spot["nwps_node_lng"])
+    """(i, j) of the cell nwps.fetch reads for the spot's baked node: the nearest grid row and
+    column whenever that cell has water at any step of the cycle (nwps._baked_node_is_water,
+    through nwps._cell_is_water). Only when it has none, the nearest cell wet at f000, as
+    nwps_series_by_hour takes it (nwps.fetch would then walk to a cell this does not replay).
+
+    WHY NOT nwps_series_by_hour's cell. It takes the nearest cell wet at f000, the cycle's land
+    mask. A cell that dries at low tide is blank at f000 in a cycle that starts at low water, so
+    the old node was replayed from its neighbour while nwps.fetch, and the published row, read
+    the cell itself: sw1-raycast run 68's gate failed on every such cycle of Bandon Beach,
+    Hubbard Creek and Short Sands Beach York and on no other spot."""
+    lat, lng = spot["nwps_node_lat"], spot["nwps_node_lng"]
+    li, lj = _grid_cell(cycle, lat, lng)
+    if _cell_has_water(cycle, li, lj):
+        return li, lj
+    cell = _nearest_cell(cycle, lat, lng)
     return None if cell is None else (cell[0], cell[1])
 
 
@@ -163,12 +210,11 @@ def exact_hour_blank(cycle, cell, epoch):
 
 def node_check(cycle, lat, lng):
     """{wet, same_cell, offset_km} for a baked node in one cycle: is the cell nwps.fetch takes
-    (nearest grid row and column) wet, is it the cell nwps_series_by_hour takes (nearest wet
-    cell), and how far is the node from that cell's centre."""
+    (nearest grid row and column) wet at f000, is it the cell replayed here (node_cell), and
+    how far is the node from that cell's centre."""
     lats, lons, mask = cycle["lats"], cycle["lons"], cycle["mask"]
-    li = min(range(lats.shape[0]), key=lambda r: abs(float(lats[r, 0]) - lat))
-    lj = min(range(lons.shape[1]), key=lambda c: abs(float(lons[0, c]) - lng))
-    near = _nearest_cell(cycle, lat, lng)
+    li, lj = _grid_cell(cycle, lat, lng)
+    near = node_cell(cycle, {"nwps_node_lat": lat, "nwps_node_lng": lng})
     return {"wet": not bool(mask[li, lj]),
             "same_cell": near is not None and (near[0], near[1]) == (li, lj),
             "offset_km": round(_haversine_km(lat, lng, float(lats[li, lj]),
