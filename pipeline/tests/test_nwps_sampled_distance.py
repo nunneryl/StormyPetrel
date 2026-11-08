@@ -628,10 +628,10 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "bandon-beach": (43.09531, -124.46111),
                     "moonstone-beach-humboldt": (41.04194, -124.18429),
                     "short-sands-beach-york": (43.18921, -70.56172),
-                    "point-lookout": (40.55051, -73.58416),
+                    "point-lookout": (40.55051, -73.60528),
                     "revere-beach": (42.38296, -70.93571),
                     "hubbard-creek": (42.71598, -124.50882),
-                    "galveston-seawall": (29.25236, -94.75588)}
+                    "galveston-seawall": (29.25236, -94.82882)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}
