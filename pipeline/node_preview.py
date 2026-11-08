@@ -56,6 +56,12 @@ Only hours the cell itself holds count (not ones filled from a neighbouring hour
 paired hours, the buoy's mean Hs, and for each node the median of node / buoy and the share of
 hours within 20% of the buoy. The homepage list still starts at --since.
 
+THE CYCLE FILES. For each cycle read, a HEAD request to NOMADS right after the download gives
+the file's Last-Modified time and Content-Length, set beside the size of the file read and the
+time of the check (report["cycles"][wfo]["files"]). A Last-Modified later than the time the
+pipeline read a cycle means NOMADS re-posted it since, and the published rows were rated from an
+earlier copy. A failed HEAD is recorded as an error and does not stop the replay.
+
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
 """
@@ -65,12 +71,13 @@ import argparse
 import csv
 import json
 import os
+from email.utils import parsedate_to_datetime
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 from .forecast.nwps_nearshore import (_haversine_km, _iso_to_epoch, _nearest_cell,
                                       _node_value, _region_for, apply_nwps_overrides,
-                                      load_cycle, recent_cycles,
+                                      cycle_path, load_cycle, recent_cycles,
                                       series_hour)
 
 NWPS_KINDS = ("nwps_height_ww3_dir", "nwps")
@@ -490,6 +497,52 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
 # --------------------------------------------------------------------------- #
 # Supabase (SELECT only) and NOMADS                                            #
 # --------------------------------------------------------------------------- #
+def http_date_iso(value):
+    """An HTTP date (Last-Modified) as ISO UTC to the second, or None when absent or unreadable."""
+    if not value:
+        return None
+    try:
+        dt = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def nomads_head(url, timeout=60):
+    """The response headers of a HEAD request to *url* (case-insensitive mapping)."""
+    import urllib.request
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "stormy-petrel-nwps"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.headers
+
+
+def file_stamp(url, path, *, head=nomads_head, now=None):
+    """What NOMADS says of a cycle file just read: {url, last_modified, content_length,
+    size_read, checked_at}, and {error} in place of the first two when the HEAD fails.
+    size_read is the size of the file on disk at *path* (None when absent)."""
+    out = {"url": url, "checked_at": (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "size_read": os.path.getsize(path) if path and os.path.exists(path) else None}
+    try:
+        h = head(url)
+    except Exception as e:  # noqa: BLE001  a report line, never a reason to stop the replay
+        out.update(last_modified=None, content_length=None, error=f"{type(e).__name__}: {e}")
+        return out
+    length = h.get("Content-Length")
+    out.update(last_modified=http_date_iso(h.get("Last-Modified")),
+               content_length=int(length) if length and str(length).isdigit() else None)
+    return out
+
+
+def stat_nomads_cycle(wfo, cycle):
+    """file_stamp for a (date, cc, url) cycle load_cycle has just read for *wfo*."""
+    date, cc, url = cycle
+    return file_stamp(url, cycle_path(wfo, date, cc))
+
+
 def fetch_names(client):
     names, frm = {}, 0
     while True:
@@ -522,7 +575,8 @@ def fetch_first(client, sid, since):
 
 
 def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open_cycle=None,
-        apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None):
+        apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None,
+        stat_cycle=None):
     from .forecast.face_correction import load_face_factors, median_face_factor
     from .interpret import face_factors_by_name
     factors = load_face_factors() if factors is None else factors
@@ -553,7 +607,8 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         by_wfo[pair[1].get("nwps_wfo")].append(pair)
     for wfo, wpairs in sorted(by_wfo.items()):
         listed = list_cycles(wfo)
-        report["cycles"][wfo] = {"listed": sorted(f"{d}{c}" for d, c in listed), "read": []}
+        report["cycles"][wfo] = {"listed": sorted(f"{d}{c}" for d, c in listed), "read": [],
+                                 "files": {}}
         by_cycle = defaultdict(lambda: defaultdict(list))
         for old, new in wpairs:
             skipped = report["not_replayed"].setdefault(new["name"], Counter())
@@ -569,6 +624,9 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         for key in sorted(by_cycle):
             cycle = open_cycle(wfo, (key[0], key[1], listed[key]))
             report["cycles"][wfo]["read"].append("".join(key))
+            if stat_cycle is not None:
+                report["cycles"][wfo]["files"]["".join(key)] = stat_cycle(
+                    wfo, (key[0], key[1], listed[key]))
             got, checks = replay_cycle(wpairs, by_cycle[key], cycle, ceiling_factors, m, apply)
             hours.extend(got)
             for name, c in checks.items():
@@ -644,6 +702,24 @@ def _offset(off):
     return {0: "the hour", -1: "the hour before", 1: "the hour after"}.get(off, "none")
 
 
+def file_line(wfo, key, st):
+    """One report line for a cycle file's stamp."""
+    head = f"{wfo} {key}: "
+    if st.get("error"):
+        return head + f"NOMADS HEAD failed ({st['error']}); read {_size(st.get('size_read'))} " \
+                      f"at {st['checked_at']}"
+    same = ("" if st.get("content_length") is None or st.get("size_read") is None
+            else "; same size" if st["content_length"] == st["size_read"]
+            else "; SIZE DIFFERS from the file read")
+    return head + (f"last modified {st.get('last_modified') or 'not given'}, "
+                   f"{_size(st.get('content_length'))} on NOMADS; read {_size(st.get('size_read'))} "
+                   f"at {st['checked_at']}{same}")
+
+
+def _size(n):
+    return "size unknown" if n is None else f"{n} bytes"
+
+
 def print_report(rep):
     print(f"\nNode preview of the published window from {rep['since']}"
           + (f" (replayed from {rep['replayed_from']} for the buoys)"
@@ -654,6 +730,8 @@ def print_report(rep):
     for wfo, c in rep["cycles"].items():
         print(f"  {wfo}: NOMADS lists {len(c['listed'])} cycles {', '.join(c['listed'])}; "
               f"read {', '.join(c['read']) or 'none'}")
+        for key, st in (c.get("files") or {}).items():
+            print("    " + file_line(wfo, key, st))
     for name, checks in rep["node_checks"].items():
         bad = [k for k, c in checks.items() if not (c["wet"] and c["same_cell"])]
         offs = sorted({c["offset_km"] for c in checks.values()})
@@ -758,7 +836,8 @@ def main(argv=None):
     with open(args.roster) as f:
         roster = json.load(f)
     refs, buoys = parse_references(args.reference)
-    rep = run(client, baseline, roster, since, references=refs, buoys=buoys)
+    rep = run(client, baseline, roster, since, references=refs, buoys=buoys,
+              stat_cycle=stat_nomads_cycle)
     print_report(rep)
     if args.out:
         with open(args.out, "w") as f:

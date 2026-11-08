@@ -376,7 +376,8 @@ def _run(apply=_stub):
 def test_run_replays_the_hours_on_a_listed_cycle_and_counts_the_rest():
     rep, opened = _run()
     assert opened == [("mhx", ("20261026", "12", "url-12"))]
-    assert rep["cycles"] == {"mhx": {"listed": ["2026102612"], "read": ["2026102612"]}}
+    assert rep["cycles"] == {"mhx": {"listed": ["2026102612"], "read": ["2026102612"],
+                                     "files": {}}}
     assert rep["not_replayed"] == {"Duck Pier": {
         "another rater (ww3)": 1, "cycle 2026-10-26T06:00:00Z not on NOMADS": 1, "no stars": 1}}
     assert [h["valid_time"] for h in rep["hours"]] == [_vt(0), _vt(1)]
@@ -902,3 +903,149 @@ def test_an_hour_without_a_direction_is_left_out():
     c = _cycle()
     c["fields"][("dirpw", 1)][1, 1] = np.nan
     assert sorted(NP.node_series(OLD, c)) == [_k(0), _k(2)]
+
+
+# --- The cycle files: NOMADS's Last-Modified and size beside the file read --------------------
+_CHECKED = datetime.datetime(2026, 11, 8, 19, 3, 4, tzinfo=datetime.timezone.utc)
+
+
+def test_an_http_date_in_utc():
+    assert NP.http_date_iso("Sun, 08 Nov 2026 05:12:33 GMT") == "2026-11-08T05:12:33Z"
+    # 06:12:33 at +01:00 is 05:12:33 UTC; 23:30 at -05:00 on Nov 7 is 04:30 UTC on Nov 8
+    assert NP.http_date_iso("Sun, 08 Nov 2026 06:12:33 +0100") == "2026-11-08T05:12:33Z"
+    assert NP.http_date_iso("Sat, 07 Nov 2026 23:30:00 -0500") == "2026-11-08T04:30:00Z"
+    assert NP.http_date_iso(None) is None
+    assert NP.http_date_iso("") is None
+    assert NP.http_date_iso("not a date") is None
+
+
+def test_a_file_stamp_beside_the_file_read(tmp_path):
+    f = tmp_path / "c.grib2"
+    f.write_bytes(b"GRIB" + b"x" * 8)                       # 12 bytes
+    seen = []
+
+    def head(url):
+        seen.append(url)
+        return {"Last-Modified": "Sun, 08 Nov 2026 05:12:33 GMT", "Content-Length": "12"}
+    assert NP.file_stamp("u-00", str(f), head=head, now=_CHECKED) == {
+        "url": "u-00", "checked_at": "2026-11-08T19:03:04Z", "size_read": 12,
+        "last_modified": "2026-11-08T05:12:33Z", "content_length": 12}
+    assert seen == ["u-00"]
+
+
+def test_a_file_stamp_without_the_headers_or_the_file(tmp_path):
+    got = NP.file_stamp("u", str(tmp_path / "none.grib2"), head=lambda u: {}, now=_CHECKED)
+    assert got == {"url": "u", "checked_at": "2026-11-08T19:03:04Z", "size_read": None,
+                   "last_modified": None, "content_length": None}
+    got = NP.file_stamp("u", None, head=lambda u: {"Content-Length": "12x"}, now=_CHECKED)
+    assert got["content_length"] is None
+
+
+def test_a_failed_head_is_recorded_not_raised(tmp_path):
+    f = tmp_path / "c.grib2"
+    f.write_bytes(b"GRIB")
+
+    def head(url):
+        raise OSError("timed out")
+    assert NP.file_stamp("u", str(f), head=head, now=_CHECKED) == {
+        "url": "u", "checked_at": "2026-11-08T19:03:04Z", "size_read": 4,
+        "last_modified": None, "content_length": None, "error": "OSError: timed out"}
+
+
+def test_the_stamp_of_a_cycle_is_taken_of_the_file_load_cycle_wrote(monkeypatch):
+    got = []
+    monkeypatch.setattr(NP, "file_stamp", lambda url, path: got.append((url, path)) or "st")
+    assert NP.stat_nomads_cycle("mfr", ("20261108", "00", "https://n/mfr.grib2")) == "st"
+    assert got == [("https://n/mfr.grib2", "/tmp/nwps_mfr_20261108_00_CG1.grib2")]
+
+
+def test_run_records_each_cycle_files_stamp_once():
+    calls = []
+
+    def stat(wfo, cyc):
+        calls.append((wfo, cyc))
+        return {"last_modified": "2026-10-26T15:00:00Z"}
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub, stat_cycle=stat)
+    assert calls == [(NEW["nwps_wfo"], ("20261026", "12", "url-12"))]
+    assert rep["cycles"][NEW["nwps_wfo"]]["files"] == {
+        "2026102612": {"last_modified": "2026-10-26T15:00:00Z"}}
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub)
+    assert rep["cycles"][NEW["nwps_wfo"]]["files"] == {}
+
+
+def test_the_file_lines():
+    base = {"checked_at": "2026-11-08T19:03:04Z", "last_modified": "2026-11-08T05:12:33Z"}
+    assert NP.file_line("mfr", "2026110800", {**base, "content_length": 12, "size_read": 12}) == (
+        "mfr 2026110800: last modified 2026-11-08T05:12:33Z, 12 bytes on NOMADS; read 12 bytes "
+        "at 2026-11-08T19:03:04Z; same size")
+    assert NP.file_line("mfr", "2026110800", {**base, "content_length": 13, "size_read": 12}) == (
+        "mfr 2026110800: last modified 2026-11-08T05:12:33Z, 13 bytes on NOMADS; read 12 bytes "
+        "at 2026-11-08T19:03:04Z; SIZE DIFFERS from the file read")
+    assert NP.file_line("eka", "2026110812", {"checked_at": "2026-11-08T19:03:04Z",
+                                              "last_modified": None, "content_length": None,
+                                              "size_read": None}) == (
+        "eka 2026110812: last modified not given, size unknown on NOMADS; read size unknown "
+        "at 2026-11-08T19:03:04Z")
+    assert NP.file_line("okx", "2026110800", {"checked_at": "2026-11-08T19:03:04Z",
+                                              "size_read": 4, "error": "OSError: timed out"}) == (
+        "okx 2026110800: NOMADS HEAD failed (OSError: timed out); read 4 bytes "
+        "at 2026-11-08T19:03:04Z")
+
+
+def test_the_report_prints_the_file_lines():
+    import contextlib
+    import io
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub,
+                 stat_cycle=lambda w, c: {"checked_at": "2026-11-08T19:03:04Z",
+                                          "last_modified": "2026-10-26T15:00:00Z",
+                                          "content_length": 7, "size_read": 7})
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    assert (f"    {NEW['nwps_wfo']} 2026102612: last modified 2026-10-26T15:00:00Z, 7 bytes on "
+            "NOMADS; read 7 bytes at 2026-11-08T19:03:04Z; same size") in buf.getvalue().splitlines()
+
+
+def test_main_stamps_the_cycle_files(monkeypatch, tmp_path):
+    import sys
+    import types
+    seen = {}
+    monkeypatch.setitem(sys.modules, "supabase",
+                        types.SimpleNamespace(create_client=lambda url, key: "client"))
+    monkeypatch.setenv("SUPABASE_URL", "u")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "k")
+    monkeypatch.setattr(NP, "run", lambda *a, **kw: seen.update(kw) or {"gate": {"pass": True},
+                                                                        "hours": []})
+    monkeypatch.setattr(NP, "print_report", lambda rep: None)
+    b = tmp_path / "b.json"
+    b.write_text("[]")
+    assert NP.main(["--baseline", str(b), "--roster", str(b), "--since", "2026-11-08T19:00:00Z"]) == 0
+    assert seen["stat_cycle"] is NP.stat_nomads_cycle
+
+
+def test_the_stamp_asks_nomads_for_the_headers_only(monkeypatch):
+    # A HEAD, not a GET: a CG1 file is tens of megabytes and has just been downloaded.
+    import urllib.request
+    sent = []
+
+    class _Resp:
+        headers = {"Last-Modified": "Sun, 08 Nov 2026 05:12:33 GMT"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def urlopen(req, timeout):
+        sent.append((req.get_method(), req.full_url, req.get_header("User-agent"), timeout))
+        return _Resp()
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    assert NP.nomads_head("https://n/f.grib2") == {"Last-Modified": "Sun, 08 Nov 2026 05:12:33 GMT"}
+    assert sent == [("HEAD", "https://n/f.grib2", "stormy-petrel-nwps", 60)]
