@@ -376,12 +376,15 @@ def _run(apply=_stub):
 def test_run_replays_the_hours_on_a_listed_cycle_and_counts_the_rest():
     rep, opened = _run()
     assert opened == [("mhx", ("20261026", "12", "url-12"))]
-    assert rep["cycles"] == {"mhx": {"listed": ["2026102612"], "read": ["2026102612"]}}
+    assert rep["cycles"] == {"mhx": {"listed": ["2026102612"], "read": ["2026102612"],
+                                     "files": {}}}
     assert rep["not_replayed"] == {"Duck Pier": {
         "another rater (ww3)": 1, "cycle 2026-10-26T06:00:00Z not on NOMADS": 1, "no stars": 1}}
     assert [h["valid_time"] for h in rep["hours"]] == [_vt(0), _vt(1)]
     assert rep["gate"] == {"hours": 2, "input_differences": 0, "star_differences": 0,
-                           "face_differences": 0, "filled": 0, "pass": True}
+                           "face_differences": 0, "filled": 0, "pass": True,
+                           "excluded_cycles": []}
+    assert rep["excluded"] == {}
     assert rep["moved"] == [{"spot": "Duck Pier", "wfo": "mhx", "old": [36.19, -75.75],
                              "new": [36.19, -75.73], "new_distance_m": 2074}]
     assert rep["node_checks"] == {"Duck Pier": {"2026102612": {"wet": True, "same_cell": True,
@@ -743,3 +746,479 @@ def test_an_hour_blank_only_in_its_period_is_filled_and_keeps_its_own_height():
     assert hours[1]["expected"] == {"hs": 1.25, "tp": None, "dp": 75.0, "swell_hs": 1.0}
     assert hours[1]["inputs_match"] is True
     assert NP.gate(hours)["filled"] == 2 and NP.gate(hours)["pass"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Buoy references (SLUG=BUOY in --reference)                                   #
+# --------------------------------------------------------------------------- #
+def test_parse_references_splits_spots_from_buoys():
+    assert NP.parse_references(" lido-beach,hubbard-creek=46015 , galveston-seawall = 42035X,,bad=") == (
+        ["lido-beach"], {"hubbard-creek": "46015", "galveston-seawall": "42035x"})
+    assert NP.parse_references("") == ([], {})
+
+
+def test_buoy_pairs_takes_the_nearest_reading_within_30_minutes_of_a_past_hour():
+    t0 = CDT.timestamp()
+    hours = [{"valid_time": _vt(h)} for h in (0, 1, 2, 5)]
+    obs = [(t0 + 70 * 60, 2.0), (t0 + 20 * 60, 1.0), (t0 + 5 * 3600, 9.9)]   # out of order
+    NP.buoy_pairs(hours, obs, now_epoch=t0 + 3 * 3600)
+    # 12Z: 20 min off -> 1.0. 13Z: 10 min off -> 2.0. 14Z: 50 min from 13:10 -> none.
+    # 17Z: a reading at the very hour, but the hour is after "now" -> none.
+    assert [h["buoy_hs"] for h in hours] == [1.0, 2.0, None, None]
+
+
+def test_buoy_pairs_at_exactly_30_minutes_and_a_tie():
+    t0 = CDT.timestamp()
+    h = [{"valid_time": _vt(0)}]
+    NP.buoy_pairs(h, [(t0 + 30 * 60, 1.5)], now_epoch=t0 + 3600)
+    assert h[0]["buoy_hs"] == 1.5
+    NP.buoy_pairs(h, [(t0 + 31 * 60, 1.5)], now_epoch=t0 + 3600)
+    assert h[0]["buoy_hs"] is None
+    NP.buoy_pairs(h, [(t0 + 20 * 60, 2.5), (t0 - 20 * 60, 0.5)], now_epoch=t0 + 3600)
+    assert h[0]["buoy_hs"] == 0.5                             # the earlier of two equally near
+
+
+def test_buoy_summary_counts_only_hours_the_cell_holds():
+    hours = [
+        {"buoy_hs": 2.0, "hs_old": 1.0, "filled_from": 0, "hs_new": 2.2, "filled_from_new": 0},
+        {"buoy_hs": 1.0, "hs_old": 0.9, "filled_from": 0, "hs_new": 1.3, "filled_from_new": 0},
+        {"buoy_hs": 1.0, "hs_old": 0.5, "filled_from": -1, "hs_new": 1.0, "filled_from_new": 0},
+        {"buoy_hs": None, "hs_old": 1.0, "filled_from": 0, "hs_new": 1.0, "filled_from_new": 0},
+    ]
+    # old: 0.5 and 0.9 (the filled hour left out): median 0.7, one of two within 20%.
+    # new: 1.1, 1.3, 1.0: median 1.1, two of three within 20%. Buoy mean (2 + 1 + 1) / 3.
+    assert NP.buoy_summary(hours, "46015") == {
+        "buoy": "46015", "hours": 3, "buoy_mean": 1.333,
+        "old": {"hours": 2, "median": 0.7, "within_20": 0.5},
+        "new": {"hours": 3, "median": 1.1, "within_20": 0.667}}
+    assert NP.buoy_summary([], "46015")["old"] == {"hours": 0, "median": None, "within_20": None}
+
+
+def test_run_with_a_buoy_replays_from_48_hours_back_and_sets_the_buoy_beside_both_nodes():
+    t0 = CDT.timestamp()
+    asked = []
+
+    def buoy_obs(b, start):
+        asked.append((b, start))
+        return [(t0, 2.0), (t0 + 3600 + 600, 4.0)]
+
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, c: _cycle(), apply=_stub,
+                 buoys={"duck-pier": "44100", "nowhere": "41001"},
+                 now=CDT + datetime.timedelta(hours=3), buoy_obs=buoy_obs)
+    assert rep["replayed_from"] == "2026-10-24T12:00:00+00:00"
+    assert asked == [("44100", "2026-10-24T12:00:00+00:00")]
+    # 12Z and 13Z replay: old node 1.235 m, new 2.0 m; buoy 2.0 and 4.0.
+    # old 0.6175 and 0.30875: median 0.463, none within 20%. new 1.0 and 0.5: median 0.75, one.
+    assert rep["buoys"] == {"Duck Pier": {
+        "buoy": "44100", "hours": 2, "buoy_mean": 3.0,
+        "old": {"hours": 2, "median": 0.463, "within_20": 0.0},
+        "new": {"hours": 2, "median": 0.75, "within_20": 0.5}}}
+    assert rep["buoys_missing"] == ["nowhere"]
+    assert [h["buoy_hs"] for h in rep["hours"]] == [2.0, 4.0]
+
+
+def test_run_without_a_buoy_replays_from_since():
+    rep, _ = _run()
+    assert rep["replayed_from"] == rep["since"] == _vt(0)
+    assert rep["buoys"] == {} and rep["buoys_missing"] == []
+
+
+def test_with_a_buoy_the_rows_come_from_48_hours_back_and_the_homepage_from_since(monkeypatch):
+    seen = {"rows": [], "first": set()}
+    real_rows, real_first = NP.fetch_rows, NP.fetch_first
+
+    def rows(client, sid, since):
+        seen["rows"].append((sid, since))
+        return real_rows(client, sid, since)
+
+    def first(client, sid, since):
+        seen["first"].add(since)
+        return real_first(client, sid, since)
+
+    monkeypatch.setattr(NP, "fetch_rows", rows)
+    monkeypatch.setattr(NP, "fetch_first", first)
+    NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+           list_cycles=lambda w: {("20261026", "12"): "url-12"},
+           open_cycle=lambda w, c: _cycle(), apply=_stub, references=["other"],
+           buoys={"duck-pier": "44100"}, now=CDT + datetime.timedelta(hours=3),
+           buoy_obs=lambda b, start: [])
+    back = "2026-10-24T12:00:00+00:00"
+    assert seen["rows"] == [(1, back), (2, back)]          # the moved spot, then the reference
+    assert seen["first"] == {_vt(0)}
+
+
+# --------------------------------------------------------------------------- #
+# A cell on the wet/dry line: blank at f000, wet afterwards (run 68)           #
+# --------------------------------------------------------------------------- #
+def _dry_at_f000():
+    """_cycle() with the old node's cell (1, 1) blank in every field at f000 only, as a cell
+    that dries at low water reads in a cycle starting at low tide. The f000 land mask then
+    calls it land; its later hours still carry OLD_CELL's values."""
+    c = _cycle()
+    for short in ("swh", "perpw", "dirpw", "shts", "ws", "wdir"):
+        c["fields"][(short, 0)][1, 1] = np.nan
+    c["mask"] = np.isnan(c["fields"][("swh", 0)])
+    return c
+
+
+def test_a_cell_blank_at_f000_is_still_the_cell_replayed():
+    c = _dry_at_f000()
+    assert bool(c["mask"][1, 1]) is True                       # the f000 mask calls it land
+    assert NP.node_cell(c, OLD) == (1, 1)
+    # f001 and f002 from the cell itself (OLD_CELL, swh 1.23456 -> 1.235); f000 left out,
+    # as nwps.fetch's record leaves a blank hour out; not a neighbour's 0.5.
+    assert NP.node_series(OLD, c) == {_k(1): (1.235, 7.9, 75.0, 1.0),
+                                      _k(2): (1.235, 7.9, 75.0, None)}
+    assert NP.exact_hour_blank(c, (1, 1), CDT.timestamp()) is True
+    assert NP.exact_hour_blank(c, (1, 1), (CDT + datetime.timedelta(hours=1)).timestamp()) is False
+
+
+def test_node_check_on_a_cell_blank_at_f000():
+    # 36.19 N, 75.75 W is cell (1, 1): dry by the f000 mask, but the cell replayed.
+    assert NP.node_check(_dry_at_f000(), 36.19, -75.75) == {"wet": False, "same_cell": True,
+                                                            "offset_km": 0.0}
+
+
+def test_a_cell_with_no_wave_value_at_any_step_falls_back_to_the_nearest_wet_cell():
+    # (1, 1) land in every step: the nearest cell wet at f000. 0.01 deg of longitude at 36.19 N
+    # is 6371 x pi/180 x 0.01 x cos(36.19) = 0.897 km, nearer than 0.01 deg of latitude
+    # (1.112 km), so (1, 0) and (1, 2) tie; the first in grid order, (1, 0).
+    c = _cycle(land=[(1, 1)])
+    assert NP.node_cell(c, OLD) == (1, 0)
+    assert NP.node_series(OLD, c)[_k(0)] == (0.5, 0.5, 0.5, 0.5)
+
+
+def test_wind_alone_is_not_water():
+    # (1, 1) has no wave value at any step but keeps its wind: nwps._cell_is_water tests wave
+    # variables only, so it is land and the nearest cell wet at f000, (1, 0), is replayed.
+    c = _cycle()
+    for fh in (0, 1, 2):
+        for short in ("swh", "perpw", "dirpw", "shts"):
+            c["fields"][(short, fh)][1, 1] = np.nan
+    c["mask"] = np.isnan(c["fields"][("swh", 0)])
+    assert NP.node_cell(c, OLD) == (1, 0)
+
+
+def test_an_hour_without_a_direction_is_left_out():
+    c = _cycle()
+    c["fields"][("dirpw", 1)][1, 1] = np.nan
+    assert sorted(NP.node_series(OLD, c)) == [_k(0), _k(2)]
+
+
+# --- The cycle files: NOMADS's Last-Modified and size beside the file read --------------------
+_CHECKED = datetime.datetime(2026, 11, 8, 19, 3, 4, tzinfo=datetime.timezone.utc)
+
+
+def test_an_http_date_in_utc():
+    assert NP.http_date_iso("Sun, 08 Nov 2026 05:12:33 GMT") == "2026-11-08T05:12:33Z"
+    # 06:12:33 at +01:00 is 05:12:33 UTC; 23:30 at -05:00 on Nov 7 is 04:30 UTC on Nov 8
+    assert NP.http_date_iso("Sun, 08 Nov 2026 06:12:33 +0100") == "2026-11-08T05:12:33Z"
+    assert NP.http_date_iso("Sat, 07 Nov 2026 23:30:00 -0500") == "2026-11-08T04:30:00Z"
+    assert NP.http_date_iso(None) is None
+    assert NP.http_date_iso("") is None
+    assert NP.http_date_iso("not a date") is None
+
+
+def test_a_file_stamp_beside_the_file_read(tmp_path):
+    f = tmp_path / "c.grib2"
+    f.write_bytes(b"GRIB" + b"x" * 8)                       # 12 bytes
+    seen = []
+
+    def head(url):
+        seen.append(url)
+        return {"Last-Modified": "Sun, 08 Nov 2026 05:12:33 GMT", "Content-Length": "12"}
+    assert NP.file_stamp("u-00", str(f), head=head, now=_CHECKED) == {
+        "url": "u-00", "checked_at": "2026-11-08T19:03:04Z", "size_read": 12,
+        "last_modified": "2026-11-08T05:12:33Z", "content_length": 12}
+    assert seen == ["u-00"]
+
+
+def test_a_file_stamp_without_the_headers_or_the_file(tmp_path):
+    got = NP.file_stamp("u", str(tmp_path / "none.grib2"), head=lambda u: {}, now=_CHECKED)
+    assert got == {"url": "u", "checked_at": "2026-11-08T19:03:04Z", "size_read": None,
+                   "last_modified": None, "content_length": None}
+    got = NP.file_stamp("u", None, head=lambda u: {"Content-Length": "12x"}, now=_CHECKED)
+    assert got["content_length"] is None
+
+
+def test_a_failed_head_is_recorded_not_raised(tmp_path):
+    f = tmp_path / "c.grib2"
+    f.write_bytes(b"GRIB")
+
+    def head(url):
+        raise OSError("timed out")
+    assert NP.file_stamp("u", str(f), head=head, now=_CHECKED) == {
+        "url": "u", "checked_at": "2026-11-08T19:03:04Z", "size_read": 4,
+        "last_modified": None, "content_length": None, "error": "OSError: timed out"}
+
+
+def test_the_stamp_of_a_cycle_is_taken_of_the_file_load_cycle_wrote(monkeypatch):
+    got = []
+    monkeypatch.setattr(NP, "file_stamp", lambda url, path: got.append((url, path)) or "st")
+    assert NP.stat_nomads_cycle("mfr", ("20261108", "00", "https://n/mfr.grib2")) == "st"
+    assert got == [("https://n/mfr.grib2", "/tmp/nwps_mfr_20261108_00_CG1.grib2")]
+
+
+def test_run_records_each_cycle_files_stamp_once():
+    calls = []
+
+    def stat(wfo, cyc):
+        calls.append((wfo, cyc))
+        return {"last_modified": "2026-10-26T15:00:00Z"}
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub, stat_cycle=stat)
+    assert calls == [(NEW["nwps_wfo"], ("20261026", "12", "url-12"))]
+    assert rep["cycles"][NEW["nwps_wfo"]]["files"] == {
+        "2026102612": {"last_modified": "2026-10-26T15:00:00Z"}}
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub)
+    assert rep["cycles"][NEW["nwps_wfo"]]["files"] == {}
+
+
+def test_the_file_lines():
+    base = {"checked_at": "2026-11-08T19:03:04Z", "last_modified": "2026-11-08T05:12:33Z"}
+    assert NP.file_line("mfr", "2026110800", {**base, "content_length": 12, "size_read": 12}) == (
+        "mfr 2026110800: last modified 2026-11-08T05:12:33Z, 12 bytes on NOMADS; read 12 bytes "
+        "at 2026-11-08T19:03:04Z; same size")
+    assert NP.file_line("mfr", "2026110800", {**base, "content_length": 13, "size_read": 12}) == (
+        "mfr 2026110800: last modified 2026-11-08T05:12:33Z, 13 bytes on NOMADS; read 12 bytes "
+        "at 2026-11-08T19:03:04Z; SIZE DIFFERS from the file read")
+    assert NP.file_line("eka", "2026110812", {"checked_at": "2026-11-08T19:03:04Z",
+                                              "last_modified": None, "content_length": None,
+                                              "size_read": None}) == (
+        "eka 2026110812: last modified not given, size unknown on NOMADS; read size unknown "
+        "at 2026-11-08T19:03:04Z")
+    assert NP.file_line("okx", "2026110800", {"checked_at": "2026-11-08T19:03:04Z",
+                                              "size_read": 4, "error": "OSError: timed out"}) == (
+        "okx 2026110800: NOMADS HEAD failed (OSError: timed out); read 4 bytes "
+        "at 2026-11-08T19:03:04Z")
+
+
+def test_the_report_prints_the_file_lines():
+    import contextlib
+    import io
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc: _cycle(), apply=_stub,
+                 stat_cycle=lambda w, c: {"checked_at": "2026-11-08T19:03:04Z",
+                                          "last_modified": "2026-10-26T15:00:00Z",
+                                          "content_length": 7, "size_read": 7})
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    assert (f"    {NEW['nwps_wfo']} 2026102612: last modified 2026-10-26T15:00:00Z, 7 bytes on "
+            "NOMADS; read 7 bytes at 2026-11-08T19:03:04Z; same size") in buf.getvalue().splitlines()
+
+
+def test_main_stamps_the_cycle_files(monkeypatch, tmp_path):
+    import sys
+    import types
+    seen = {}
+    monkeypatch.setitem(sys.modules, "supabase",
+                        types.SimpleNamespace(create_client=lambda url, key: "client"))
+    monkeypatch.setenv("SUPABASE_URL", "u")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "k")
+    monkeypatch.setattr(NP, "run", lambda *a, **kw: seen.update(kw) or {"gate": {"pass": True},
+                                                                        "hours": []})
+    monkeypatch.setattr(NP, "print_report", lambda rep: None)
+    b = tmp_path / "b.json"
+    b.write_text("[]")
+    assert NP.main(["--baseline", str(b), "--roster", str(b), "--since", "2026-11-08T19:00:00Z"]) == 0
+    assert seen["stat_cycle"] is NP.stat_nomads_cycle
+
+
+def test_the_stamp_asks_nomads_for_the_headers_only(monkeypatch):
+    # A HEAD, not a GET: a CG1 file is tens of megabytes and has just been downloaded.
+    import urllib.request
+    sent = []
+
+    class _Resp:
+        headers = {"Last-Modified": "Sun, 08 Nov 2026 05:12:33 GMT"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def urlopen(req, timeout):
+        sent.append((req.get_method(), req.full_url, req.get_header("User-agent"), timeout))
+        return _Resp()
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    assert NP.nomads_head("https://n/f.grib2") == {"Last-Modified": "Sun, 08 Nov 2026 05:12:33 GMT"}
+    assert sent == [("HEAD", "https://n/f.grib2", "stormy-petrel-nwps", 60)]
+
+
+# --- The double-post rule: a cycle NOMADS serves in two versions is kept out of the gate -------
+_PUB = "NWPSPUB "
+
+
+def _pub(**kw):
+    rec = {"kind": "file", "status": 200, "wfo": "mfr", "date": "20261107", "cycle": "12"}
+    rec.update(kw)
+    return "log\tLog publication times\t2026-11-07T22:24:06Z " + _PUB + json.dumps(rec) + "\n"
+
+
+# Run 70's MFR 2026-11-07 12Z, as the logger saw it (docs/face_validation/run-70/).
+_A = dict(bytes=55879399, last_modified="2026-11-07T19:07:09Z")
+_B = dict(bytes=43017313, last_modified="2026-11-07T20:01:05Z")
+
+
+def test_the_logger_lines_give_each_version_once_in_the_order_first_seen():
+    lines = [_pub(checked_at="2026-11-08T06:48:06Z", **_B),
+             _pub(checked_at="2026-11-07T22:24:06Z", **_A),
+             _pub(checked_at="2026-11-08T18:11:02Z", **_B),
+             _pub(checked_at="2026-11-08T22:35:15Z", **_B),
+             _pub(checked_at="2026-11-07T22:20:15Z", wfo="eka", bytes=12492532,
+                  last_modified="2026-11-07T18:40:05Z"),
+             _pub(checked_at="2026-11-07T22:23:00Z", kind="listing", bytes=1,
+                  last_modified="2026-11-07T22:00:00Z"),                           # not a file
+             _pub(checked_at="2026-11-07T22:23:01Z", status=403, **_A),            # refused
+             _pub(checked_at="2026-11-07T22:23:02Z", bytes=None,
+                  last_modified="2026-11-07T19:00:00Z"),                           # no size
+             "log\tstep\t" + _PUB + "{not json\n",
+             "an ordinary log line\n"]
+    assert NP.parse_logger_lines(lines) == {
+        ("mfr", "2026110712"): [
+            {"bytes": 55879399, "last_modified": "2026-11-07T19:07:09Z",
+             "first_seen": "2026-11-07T22:24:06Z"},
+            {"bytes": 43017313, "last_modified": "2026-11-07T20:01:05Z",
+             "first_seen": "2026-11-08T06:48:06Z"}],
+        ("eka", "2026110712"): [
+            {"bytes": 12492532, "last_modified": "2026-11-07T18:40:05Z",
+             "first_seen": "2026-11-07T22:20:15Z"}]}
+
+
+def test_a_later_sighting_does_not_move_first_seen_and_an_earlier_one_does():
+    lines = [_pub(checked_at="2026-11-08T06:48:06Z", **_B),
+             _pub(checked_at="2026-11-08T22:35:15Z", **_B),
+             _pub(checked_at="2026-11-08T01:00:00Z", **_B)]
+    assert NP.parse_logger_lines(lines)[("mfr", "2026110712")] == [
+        {"bytes": 43017313, "last_modified": "2026-11-07T20:01:05Z",
+         "first_seen": "2026-11-08T01:00:00Z"}]
+
+
+_V2 = [{"bytes": 55879399, "last_modified": "2026-11-07T19:07:09Z", "first_seen": "2026-11-07T22:24:06Z"},
+       {"bytes": 43017313, "last_modified": "2026-11-07T20:01:05Z", "first_seen": "2026-11-08T06:48:06Z"}]
+_STAMP70 = {"size_read": 55879399, "content_length": 43017313,
+            "last_modified": "2026-11-07T20:01:05Z", "checked_at": "2026-11-08T21:15:59Z"}
+_SIZE_REASON = ("downloaded 55879399 bytes; NOMADS's HEAD gave 43017313 bytes, last modified "
+                "2026-11-07T20:01:05Z")
+_LOGGER_REASON = ("the publication logger saw 2 versions: 55879399 bytes, last modified "
+                  "2026-11-07T19:07:09Z (first seen 2026-11-07T22:24:06Z); 43017313 bytes, last "
+                  "modified 2026-11-07T20:01:05Z (first seen 2026-11-08T06:48:06Z)")
+
+
+def test_the_reasons_a_cycle_is_double_posted():
+    assert NP.double_post_reasons(_STAMP70, _V2) == [_SIZE_REASON, _LOGGER_REASON]
+    assert NP.double_post_reasons(_STAMP70, None) == [_SIZE_REASON]
+    assert NP.double_post_reasons(None, _V2) == [_LOGGER_REASON]
+    # run 70's MFR 2026-11-08 00Z: one size, two last-modified times, by the logger alone
+    same_size = [{"bytes": 43017415, "last_modified": "2026-11-08T03:37:29Z", "first_seen": "a"},
+                 {"bytes": 43017415, "last_modified": "2026-11-08T07:05:08Z", "first_seen": "b"}]
+    assert len(NP.double_post_reasons({"size_read": 43017415, "content_length": 43017415},
+                                      same_size)) == 1
+
+
+def test_one_version_and_matching_sizes_are_not_double_posted():
+    assert NP.double_post_reasons({"size_read": 12, "content_length": 12}, _V2[:1]) == []
+    assert NP.double_post_reasons(None, None) == []
+    assert NP.double_post_reasons({"size_read": None, "content_length": 12}, []) == []
+    assert NP.double_post_reasons({"size_read": 12, "content_length": None}, None) == []
+    assert NP.double_post_reasons({"error": "OSError: timed out", "size_read": 12}, None) == []
+
+
+def _stars5(ratings, spots, *, _fetch, ceiling_factors, median_factor):
+    """A rater that disagrees with every published hour: stars 5.0."""
+    _stub(ratings, spots, _fetch=_fetch, ceiling_factors=ceiling_factors,
+          median_factor=median_factor)
+    for e in ratings[spots[0]["name"]]:
+        e["stars"] = 5.0
+
+
+def _run_with(stat=None, logger=None, apply=_stub):
+    return NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                  list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                  open_cycle=lambda w, cyc: _cycle(), apply=apply, stat_cycle=stat,
+                  logger_versions=logger)
+
+
+def test_a_double_posted_cycle_is_kept_out_of_the_gate_and_reported_apart():
+    # Duck Pier's two replayed hours are on mhx 2026-10-26 12Z; with stars 5.0 both differ.
+    rep = _run_with(logger={("mhx", "2026102612"): _V2}, apply=_stars5)
+    assert rep["excluded"] == {"mhx 2026102612": {
+        "reasons": [_LOGGER_REASON], "hours": 2, "input_differences": 0, "star_differences": 2,
+        "face_differences": 0, "filled": 0}}
+    assert rep["gate"] == {"hours": 0, "input_differences": 0, "star_differences": 0,
+                           "face_differences": 0, "filled": 0, "pass": False,
+                           "excluded_cycles": ["mhx 2026102612"]}
+    assert [(h["cycle_file"], h["gate_excluded"]) for h in rep["hours"]] == [
+        ("mhx 2026102612", True), ("mhx 2026102612", True)]
+    assert rep["logger_log"] is True
+    # still in the per-spot figures
+    assert rep["by_spot"]["Duck Pier"]["hours"] == 2
+
+
+def test_a_size_mismatch_alone_excludes_the_cycle():
+    rep = _run_with(stat=lambda w, c: dict(_STAMP70))
+    assert rep["excluded"]["mhx 2026102612"]["reasons"] == [_SIZE_REASON]
+    assert rep["gate"]["hours"] == 0
+    assert rep["logger_log"] is False
+
+
+def test_a_single_version_cycle_stays_in_the_gate():
+    rep = _run_with(stat=lambda w, c: {"size_read": 7, "content_length": 7},
+                    logger={("mhx", "2026102612"): _V2[:1], ("mfr", "2026110712"): _V2},
+                    apply=_stars5)
+    assert rep["excluded"] == {}
+    assert rep["gate"]["hours"] == 2 and rep["gate"]["star_differences"] == 2
+    assert rep["gate"]["pass"] is False
+    assert [h["gate_excluded"] for h in rep["hours"]] == [False, False]
+
+
+def test_the_report_names_the_excluded_cycle_and_its_evidence():
+    import contextlib
+    import io
+    rep = _run_with(stat=lambda w, c: dict(_STAMP70), logger={("mhx", "2026102612"): _V2},
+                    apply=_stars5)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    lines = buf.getvalue().splitlines()
+    i = lines.index("  EXCLUDED from the gate, double-posted on NOMADS: mhx 2026102612: 2 hours, "
+                    "0 input, 2 star and 0 face differences")
+    assert lines[i + 1:i + 3] == ["    - " + _SIZE_REASON, "    - " + _LOGGER_REASON]
+    assert any(ln.startswith(f"    Duck Pier {_vt(0)} [mhx 2026102612, excluded]: inputs ok")
+               for ln in lines)
+    rep = _run_with()
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    assert "  (no publication-logger log given: only the size test applied)" in buf.getvalue()
+
+
+def test_main_reads_the_logger_log(monkeypatch, tmp_path):
+    import sys
+    import types
+    seen = {}
+    monkeypatch.setitem(sys.modules, "supabase",
+                        types.SimpleNamespace(create_client=lambda url, key: "client"))
+    monkeypatch.setenv("SUPABASE_URL", "u")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "k")
+    monkeypatch.setattr(NP, "run", lambda *a, **kw: seen.update(kw) or {"gate": {"pass": False},
+                                                                        "hours": []})
+    monkeypatch.setattr(NP, "print_report", lambda rep: None)
+    b = tmp_path / "b.json"
+    b.write_text("[]")
+    log = tmp_path / "pub.log"
+    log.write_text(_pub(checked_at="2026-11-07T22:24:06Z", **_A)
+                   + _pub(checked_at="2026-11-08T06:48:06Z", **_B))
+    assert NP.main(["--baseline", str(b), "--roster", str(b), "--logger-log", str(log)]) == 1
+    assert seen["logger_versions"] == {("mfr", "2026110712"): _V2}
+    seen.clear()
+    NP.main(["--baseline", str(b), "--roster", str(b)])
+    assert seen["logger_versions"] is None

@@ -43,6 +43,13 @@
  *      height since Oct 13 shows its first fallback within 150 km with a recent one: of 51001
  *      (55.6 km, 30 hours old), 51002 (166.8 km, recent) and 51003 (111.2 km, recent), 51003:
  *      "Backup buoy NDBC 51003 · 111 km away", 2.0 m reading "6.6 ft", and 51003's station link.
+ *  12. A blank NWPS hour (the sample cell had no wave height, period or direction, so the rater
+ *      filled it from a neighbouring hour, nwps_nearshore.series_hour): every row of one spot has
+ *      hs, tp and dp empty and stars, face_ft and swell_hs/swell_tp/swell_dp set, period 11 s and
+ *      direction 280 deg where every other fixture row has 12 s and 270 deg. The page shows it as
+ *      any other hour: the Surf height tile and sp-headline-hour as in 5, and the grid's period
+ *      "11s" and direction "280°" (W), from swell_tp/swell_dp. Nothing on the page says the hour
+ *      was blank.
  *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
  *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
  *      no time_zone in the first build (the shape of a row read before migration 026), shows the
@@ -197,7 +204,13 @@ const BUOY_POSITIONS = [
   { id: '51002', lat: 21.5, lng: -156.0 },
   { id: '51003', lat: 21.0, lng: -156.0 },
 ];
-const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP];
+// 12: a spot whose every hour is a blank NWPS hour, filled by the rater.
+const BLANK_HOUR = {
+  ...SPOT_FIELDS, id: 990010, slug: 'stamp-test-blank-hour', name: 'Stamp Test Blank Hour',
+  time_zone: 'America/Los_Angeles',
+};
+const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
+  BLANK_HOUR];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
@@ -237,10 +250,13 @@ function hours(from: number, to: number): number[] {
   return out;
 }
 
+const BLANK = { hs: null, tp: null, dp: null, swell_hs: 1.1, swell_tp: 11, swell_dp: 280,
+  swell_source: 'nwps_height_ww3_dir' };
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
-  ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) => row(sp.id, h))] as
+  ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) =>
+    (sp.id === BLANK_HOUR.id ? { ...row(sp.id, h), ...BLANK } : row(sp.id, h)))] as
     [number, Record<string, unknown>[]]),
 ]);
 
@@ -638,6 +654,20 @@ async function main(): Promise<void> {
   check(`${BACKUP.slug}: its station link`,
     backup.includes('https://www.ndbc.noaa.gov/station_page.php?station=51003'));
   check(`${BACKUP.slug}: not the main buoy's Oct 13 date`, !backup.includes('No recent wave reading'));
+  // 12: a blank NWPS hour, filled by the rater.
+  const blankPage = await load(BLANK_HOUR.slug);
+  const blankHtml = blankPage.html.replace(/<!-- -->/g, '');
+  const blankStamp = oneTagInHead(BLANK_HOUR.slug, blankPage.html, 'sp-rendered-at');
+  checkHeadline(BLANK_HOUR.slug, blankPage.html, asTimestamp(`${BLANK_HOUR.slug}: sp-rendered-at`, blankStamp));
+  check(`${BLANK_HOUR.slug}: the grid's period is swell_tp's, 11s`, blankHtml.includes('>11s<'));
+  check(`${BLANK_HOUR.slug}: the grid's direction is swell_dp's, 280°`, blankHtml.includes('280°'));
+  check(`${BLANK_HOUR.slug}: no 12 s period from anywhere`, !blankHtml.includes('>12s<'));
+  // The page's visible text: scripts, styles and tags out, the fixture's own name too.
+  const blankText = blankHtml.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, ' ').replace(/Stamp Test Blank Hour/g, '');
+  const said = /\b(blank|filled|missing|estimated|interpolated)\b|neighbou?ring hour/i.exec(blankText);
+  check(`${BLANK_HOUR.slug}: nothing in the page's text says the hour was blank or filled`, said === null,
+    said ? blankText.slice(Math.max(0, said.index - 60), said.index + 60) : '');
   const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
   check(`${WITH_ROW.slug}: no buoy, "No nearby buoy."`, plain.includes('No nearby buoy.'));
 

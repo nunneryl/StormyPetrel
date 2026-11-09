@@ -28,14 +28,15 @@ def test_nwps_shelter_is_a_mode():
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
         "data-quality", "node-preview", "surf-preview", "period-preview", "nwps-cells",
-        "tide-station", "buoy-assign"]
+        "tide-station", "buoy-assign", "nwps-blank"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
     jobs = _jobs()
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
                          "rating-preview", "data-quality", "node-preview", "surf-preview",
-                         "period-preview", "nwps-cells", "tide-station", "buoy-assign"}
+                         "period-preview", "nwps-cells", "tide-station", "buoy-assign",
+                         "nwps-blank"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
@@ -43,7 +44,7 @@ def test_only_the_measurement_job_runs_for_nwps_shelter():
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
         "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' "
         "&& inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' "
-        "&& inputs.mode != 'buoy-assign' }}")
+        "&& inputs.mode != 'buoy-assign' && inputs.mode != 'nwps-blank' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"
@@ -58,6 +59,20 @@ def test_the_nwps_cells_job_only_reads():
     assert "SPOTS: ${{ inputs.spots }}" in job and "libeccodes0" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb
+
+
+def test_the_nwps_blank_job_only_reads():
+    job = _jobs()["nwps-blank"]
+    assert _if(job) == "${{ inputs.mode == 'nwps-blank' }}"
+    assert "    permissions:\n      contents: read\n" in job
+    assert ('python -m pipeline.nwps_blank --spots "$SPOTS" --out nwps_blank.json '
+            '--csv nwps_blank.csv') in job
+    assert "SPOTS: ${{ inputs.spots }}" in job and "libeccodes0" in job
+    assert "timeout-minutes: 150" in job
+    assert "name: nwps-blank-${{ github.run_number }}" in job
+    rest = job.replace("inputs.mode == 'nwps-blank'", "").replace("${{ inputs.spots }}", "")
+    for verb in ("git push", "git commit", "db_import", "--write", "inputs."):
+        assert verb not in rest, verb
 
 
 def test_the_tide_station_job_only_reads():
@@ -249,9 +264,17 @@ def test_the_data_quality_sweep_only_reads():
 def test_the_node_preview_only_reads():
     job = _jobs()["node-preview"]
     assert _if(job) == "${{ inputs.mode == 'node-preview' }}"
-    assert "    permissions:\n      contents: read\n" in job
+    assert "    permissions:\n      contents: read\n      actions: read " in job
+    assert "write" not in job.split("    permissions:")[1].split("    env:")[0]
     assert 'python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \\\n' in job
-    assert '--reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv' in job
+    assert ('--reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv \\\n'
+            '            --logger-log "$RUNNER_TEMP/nwps_pub.log"') in job
+    # the double-post rule's evidence: the publication logger's last 12 successful runs, read-only
+    assert "GH_TOKEN: ${{ github.token }}" in job
+    assert ("gh run list --repo \"$GITHUB_REPOSITORY\" --workflow nwps-publication-log.yml \\\n"
+            "                  --status success --limit 12 --json databaseId") in job
+    assert 'gh run view "$id" --repo "$GITHUB_REPOSITORY" --log >> "$RUNNER_TEMP/nwps_pub.log" || true' in job
+    assert job.index("--logger-log") > job.index("gh run view")
     assert "SPOTS: ${{ inputs.spots }}" in job
     assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job
     assert 'git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"' in job

@@ -683,16 +683,52 @@ _RUN50 = {"duck-pier": ((36.19331, -75.72892), 2.07, (36.19317, -75.74849)),
 _RUN58 = {"rodanthe": ((35.5911, -75.43524), 2.465, (35.5911, -75.45482)),
           "salvo": ((35.52602, -75.43524), 2.996, (35.54229, -75.45482)),
           "s-turns": ((35.60738, -75.43524), 2.675, (35.60738, -75.45482))}
-_MOVES = {**_RUN50, **_RUN58}
+# Run 67 (nwps-cells, with run 66's blank hours): each cell the nearest within 30 deg of the
+# facing, at least 10 m deep by ETOPO 2022 at its centre, at least 0.9 of the next cell seaward
+# and wet every hour, in every one of 4 cycles; copied by hand from docs/face_validation/run-67/.
+# After run 68 (node-preview): Galveston Seawall shares 61st Street Galveston's cell (-2,-2),
+# wet every hour of every cycle but outside the rule. Point Lookout is held (run 69: 1.191 of its
+# neighbours) and is not in this table.
+# km to 3 decimals: the great circle from the roster spot to the cell, worked separately.
+_RUN67 = {"bandon-beach": ((43.09531, -124.46111), 2.120, (43.09531, -124.43725)),
+          "moonstone-beach-humboldt": ((41.04194, -124.18429), 6.363, (41.04194, -124.13794)),
+          "short-sands-beach-york": ((43.18921, -70.56172), 3.954, (43.16667, -70.59219)),
+          "revere-beach": ((42.38296, -70.93571), 5.745, (42.41909, -70.98312)),
+          "hubbard-creek": ((42.71598, -124.50882), 3.290, (42.73405, -124.48497)),
+          "galveston-seawall": ((29.25236, -94.82882), 4.983, (29.28476, -94.79235))}
+_MOVES = {**_RUN50, **_RUN58, **_RUN67}
 
 
-def test_live_overrides_are_run_50s_and_run_58s_cells():
+def test_live_overrides_are_run_50s_58s_and_67s_cells():
     ov = ap.load_node_overrides()
     assert set(ov) == set(_MOVES)
     for slug, (cell, _km, was) in _MOVES.items():
         assert (ov[slug]["nwps_node_lat"], ov[slug]["nwps_node_lng"]) == cell, slug
         assert ov[slug]["replaces"] == list(was), slug
         assert ov[slug]["reason"] and ov[slug]["evidence"], slug
+
+
+def test_galveston_seawall_shares_61st_street_galvestons_cell():
+    # 61st Street Galveston is not moved: its own placed node, 1.013 km from it (worked
+    # separately), is the cell Galveston Seawall now reads, 4.983 km away.
+    by_slug = {ap._slug(s["name"]): s for s in _real_enriched()}
+    for slug, km in (("61st-street-galveston", 1.013), ("galveston-seawall", 4.983)):
+        s = by_slug[slug]
+        assert (s["nwps_wfo"], s["nwps_node_lat"], s["nwps_node_lng"]) == ("hgx", 29.25236, -94.82882), slug
+        assert abs(s["nwps_node_distance_m"] - km * 1000) <= 1, slug
+    assert "61st-street-galveston" not in ap.load_node_overrides()
+
+
+def test_point_lookout_is_held_at_its_placed_cell():
+    # Run 69 put the qualifying cell beside run 67's at 1.191 of Lido and Jones, so no override:
+    # the roster carries the assignment's own node and distance, 392 m as placed (the great circle
+    # from today's spot coordinates is 391.4 m, worked separately), the values main carries.
+    assert "point-lookout" not in ap.load_node_overrides()
+    s = {ap._slug(x["name"]): x for x in _real_enriched()}["point-lookout"]
+    a = {x["slug"]: x for x in _real_doc()["spots"]}["point-lookout"]
+    assert (s["nwps_node_lat"], s["nwps_node_lng"]) == (40.58319, -73.58416)
+    assert (a["nwps_node_lat"], a["nwps_node_lng"]) == (40.58319, -73.58416)
+    assert s["nwps_node_distance_m"] == a["nwps_node_distance_m"] == 392
 
 
 def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
@@ -708,7 +744,7 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the moved eight included, already read what apply would write.
+    # spot's node fields, the fourteen moved included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()

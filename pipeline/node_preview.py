@@ -47,6 +47,31 @@ REFERENCE SPOTS (--reference, comma-separated slugs). Spots that did not move, s
 moved ones: their published stars and face (face_ft_raw, the face the replay gives) on the same
 hours as each moved spot's replayed ones, averaged and hour by hour.
 
+BUOY REFERENCES (a token SLUG=BUOY in --reference, e.g. hubbard-creek=46015). For a moved spot
+with no NWPS neighbour to stand beside, an NDBC buoy: the published hours are replayed from
+BUOY_LOOKBACK_H hours before --since instead of from --since (NOMADS keeps about two days of
+cycles), and on every replayed hour already past, the buoy's reading from buoy_observations
+nearest the hour within BUOY_PAIR_MIN minutes is set beside the old and the new node's NWPS Hs.
+Only hours the cell itself holds count (not ones filled from a neighbouring hour). Per spot: the
+paired hours, the buoy's mean Hs, and for each node the median of node / buoy and the share of
+hours within 20% of the buoy. The homepage list still starts at --since.
+
+THE CYCLE FILES. For each cycle read, a HEAD request to NOMADS right after the download gives
+the file's Last-Modified time and Content-Length, set beside the size of the file read and the
+time of the check (report["cycles"][wfo]["files"]). A Last-Modified later than the time the
+pipeline read a cycle means NOMADS re-posted it since, and the published rows were rated from an
+earlier copy. A failed HEAD is recorded as an error and does not stop the replay.
+
+DOUBLE-POSTED CYCLES. A WFO can post a cycle twice, and NOMADS then serves either copy from the
+same URL for days (MFR 2026-11-07 12Z: 55,879,399 bytes last modified 19:07:09Z, and 43,017,313
+bytes last modified 20:01:05Z; run 70). The pipeline does not record which copy it read, so the
+replay cannot be held to the published hours of such a cycle. A cycle is EXCLUDED from the gate,
+and reported apart with its evidence and its own difference counts, when either
+  * the file node-preview downloaded differs in size from what NOMADS's HEAD gave for it, or
+  * the NOMADS publication logger (workflow nwps-publication-log; its NWPSPUB lines, passed with
+    --logger-log) saw the file with more than one (size, last modified) pair.
+Its hours are still replayed and listed, and still count in the per-spot and reference figures.
+
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
 """
@@ -56,12 +81,13 @@ import argparse
 import csv
 import json
 import os
+from email.utils import parsedate_to_datetime
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .forecast.nwps_nearshore import (_haversine_km, _iso_to_epoch, _nearest_cell,
                                       _node_value, _region_for, apply_nwps_overrides,
-                                      load_cycle, nwps_series_by_hour, recent_cycles,
+                                      cycle_path, load_cycle, recent_cycles,
                                       series_hour)
 
 NWPS_KINDS = ("nwps_height_ww3_dir", "nwps")
@@ -71,6 +97,8 @@ INPUT_TOL = 5e-4              # stored values carry 3 decimals
 FACE_TOL = 5e-3               # face_ft_raw is stored to 2 decimals
 INPUT_COLS = ("hs", "tp", "dp", "swell_hs")
 SAME_CELL_KM = 0.01
+BUOY_LOOKBACK_H = 48          # NOMADS keeps about two days of cycles
+BUOY_PAIR_MIN = 30            # a buoy reading within 30 minutes of the hour
 FORECAST_COLS = ("spot_id, valid_time, hs, tp, dp, swell_hs, swell_tp, swell_dp, swell_source, "
                  "face_ft, face_ft_raw, wind_speed, wind_dir, wind_mult, tide_mult, stars, "
                  "nwps_cycle")
@@ -105,13 +133,47 @@ def cycle_key(stamp):
     return dt.strftime("%Y%m%d"), dt.strftime("%H")
 
 
+WAVE_FIELDS = ("swh", "shts")   # the wave variables a cycle holds; nwps._cell_is_water tests them
+
+
+def _grid_cell(cycle, lat, lng):
+    """(i, j): the nearest grid row and column to (lat, lng), an argmin on each axis, as
+    nwps.fetch's .sel(method="nearest") takes them."""
+    lats, lons = cycle["lats"], cycle["lons"]
+    li = min(range(lats.shape[0]), key=lambda r: abs(float(lats[r, 0]) - lat))
+    lj = min(range(lons.shape[1]), key=lambda c: abs(float(lons[0, c]) - lng))
+    return li, lj
+
+
+def _cell_has_water(cycle, i, j):
+    """nwps._cell_is_water's test: a wave value at the cell at ANY step of the cycle. A cell on
+    the wet/dry line can be blank at f000 (the cycle's land mask) and wet at later hours."""
+    for (short, _fh), arr in cycle["fields"].items():
+        if short in WAVE_FIELDS:
+            v = float(arr[i, j])
+            if v == v:
+                return True
+    return False
+
+
 def node_series(spot, cycle):
-    """{hour_bucket: (swh, perpw, dirpw, shts)} at the spot's node, every value rounded to 3
-    decimals as nwps.fetch writes them, or None."""
-    raw = nwps_series_by_hour(spot, cycle)
-    if not raw:
+    """{hour_bucket: (swh, perpw, dirpw, shts)} at the cell nwps.fetch reads for the spot's
+    node (node_cell), every value rounded to 3 decimals as nwps.fetch writes them; an hour
+    missing swh, perpw or dirpw is left out, as nwps.fetch's record leaves it. None when there
+    is no cell or no complete hour."""
+    cell = node_cell(cycle, spot)
+    if cell is None:
         return None
-    return {k: tuple(None if v is None else round(v, 3) for v in vals) for k, vals in raw.items()}
+    i, j = cell
+    out = {}
+    for fh in cycle["steps"]:
+        swh, per, dpw = (_node_value(cycle, sh, fh, i, j) for sh in ("swh", "perpw", "dirpw"))
+        if swh is None or per is None or dpw is None:
+            continue
+        shts = _node_value(cycle, "shts", fh, i, j)
+        k = int((cycle["cycle_dt"] + timedelta(hours=fh)).timestamp() // 3600)
+        out[k] = tuple(None if v is None else round(v, 3) for v in (swh, per, dpw, shts))
+    return out or None
 
 
 def node_wind(cycle, i, j, epoch):
@@ -128,8 +190,21 @@ def node_wind(cycle, i, j, epoch):
 
 
 def node_cell(cycle, spot):
-    """(i, j) of the cell nwps_series_by_hour samples for the spot's baked node, or None."""
-    cell = _nearest_cell(cycle, spot["nwps_node_lat"], spot["nwps_node_lng"])
+    """(i, j) of the cell nwps.fetch reads for the spot's baked node: the nearest grid row and
+    column whenever that cell has water at any step of the cycle (nwps._baked_node_is_water,
+    through nwps._cell_is_water). Only when it has none, the nearest cell wet at f000, as
+    nwps_series_by_hour takes it (nwps.fetch would then walk to a cell this does not replay).
+
+    WHY NOT nwps_series_by_hour's cell. It takes the nearest cell wet at f000, the cycle's land
+    mask. A cell that dries at low tide is blank at f000 in a cycle that starts at low water, so
+    the old node was replayed from its neighbour while nwps.fetch, and the published row, read
+    the cell itself: sw1-raycast run 68's gate failed on every such cycle of Bandon Beach,
+    Hubbard Creek and Short Sands Beach York and on no other spot."""
+    lat, lng = spot["nwps_node_lat"], spot["nwps_node_lng"]
+    li, lj = _grid_cell(cycle, lat, lng)
+    if _cell_has_water(cycle, li, lj):
+        return li, lj
+    cell = _nearest_cell(cycle, lat, lng)
     return None if cell is None else (cell[0], cell[1])
 
 
@@ -152,12 +227,11 @@ def exact_hour_blank(cycle, cell, epoch):
 
 def node_check(cycle, lat, lng):
     """{wet, same_cell, offset_km} for a baked node in one cycle: is the cell nwps.fetch takes
-    (nearest grid row and column) wet, is it the cell nwps_series_by_hour takes (nearest wet
-    cell), and how far is the node from that cell's centre."""
+    (nearest grid row and column) wet at f000, is it the cell replayed here (node_cell), and
+    how far is the node from that cell's centre."""
     lats, lons, mask = cycle["lats"], cycle["lons"], cycle["mask"]
-    li = min(range(lats.shape[0]), key=lambda r: abs(float(lats[r, 0]) - lat))
-    lj = min(range(lons.shape[1]), key=lambda c: abs(float(lons[0, c]) - lng))
-    near = _nearest_cell(cycle, lat, lng)
+    li, lj = _grid_cell(cycle, lat, lng)
+    near = node_cell(cycle, {"nwps_node_lat": lat, "nwps_node_lng": lng})
     return {"wet": not bool(mask[li, lj]),
             "same_cell": near is not None and (near[0], near[1]) == (li, lj),
             "offset_km": round(_haversine_km(lat, lng, float(lats[li, lj]),
@@ -285,6 +359,71 @@ def reference_summary(hours, refs):
     return out
 
 
+def parse_references(text):
+    """(reference spot slugs, {moved spot slug: buoy id}) from --reference: a token SLUG=BUOY
+    names a buoy for a moved spot, any other token a reference spot."""
+    spots, buoys = [], {}
+    for tok in (t.strip() for t in (text or "").split(",")):
+        if not tok:
+            continue
+        if "=" in tok:
+            sl, b = (x.strip() for x in tok.split("=", 1))
+            if sl and b:
+                buoys[sl] = b.lower()
+        else:
+            spots.append(tok)
+    return spots, buoys
+
+
+def buoy_pairs(hours, obs, now_epoch):
+    """Sets h["buoy_hs"] on each of *hours* already past at *now_epoch*: the buoy Hs nearest the
+    hour within BUOY_PAIR_MIN minutes, else None. *obs*: [(epoch, hs)] with hs set, any order."""
+    obs = sorted(obs)
+    for h in hours:
+        t = _iso_to_epoch(h["valid_time"])
+        h["buoy_hs"] = None
+        if t is None or t > now_epoch or not obs:
+            continue
+        best = min(obs, key=lambda o: (abs(o[0] - t), o[0]))
+        if abs(best[0] - t) <= BUOY_PAIR_MIN * 60:
+            h["buoy_hs"] = best[1]
+    return hours
+
+
+def buoy_summary(hours, buoy):
+    """The paired hours of one moved spot against its buoy: the buoy's mean Hs, and for each
+    node the hours it holds itself (not filled from a neighbouring hour), the median of
+    node / buoy and the share within 20% of the buoy."""
+    paired = [h for h in hours if h.get("buoy_hs")]
+
+    def node(key, off_key):
+        r = sorted(h[key] / h["buoy_hs"] for h in paired
+                   if h.get(key) is not None and h.get(off_key) == 0)
+        if not r:
+            return {"hours": 0, "median": None, "within_20": None}
+        mid = len(r) // 2
+        med = r[mid] if len(r) % 2 else (r[mid - 1] + r[mid]) / 2
+        return {"hours": len(r), "median": round(med, 3),
+                "within_20": round(sum(abs(x - 1) <= 0.2 for x in r) / len(r), 3)}
+    return {"buoy": buoy, "hours": len(paired),
+            "buoy_mean": _mean([h["buoy_hs"] for h in paired]),
+            "old": node("hs_old", "filled_from"), "new": node("hs_new", "filled_from_new")}
+
+
+def fetch_buoy_obs(client, buoy, since):
+    """[(epoch, hs)] from buoy_observations for *buoy* since *since*, hs set."""
+    out, frm = [], 0
+    while True:
+        page = (client.table("buoy_observations").select("observed_at, hs").eq("buoy_id", buoy)
+                .gte("observed_at", since).order("observed_at").range(frm, frm + 999).execute().data
+                or [])
+        out.extend((_iso_to_epoch(r["observed_at"]), float(r["hs"])) for r in page
+                   if r.get("hs") is not None and _iso_to_epoch(r["observed_at"]) is not None)
+        if len(page) < 1000:
+            return out
+        frm += 1000
+
+
 def homepage(first_rows, names, new_stars, n=10):
     """The homepage's "Best conditions right now" before and after: each spot's soonest
     published hour, stars highest first, equal stars in spot id order, ten shown
@@ -338,7 +477,7 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
             epoch = _iso_to_epoch(row["valid_time"])
             k = int(epoch // 3600)
             vo, off = series_hour(s_old or {}, k)
-            vn, _ = series_hour(s_new or {}, k)
+            vn, off_new = series_hour(s_new or {}, k)
             exact = exact_hour_values(cycle, c_old, epoch) if c_old else (None, None, None)
             blank = any(v is None for v in exact)
             # a neighbour's values stand for the hour only where the file leaves it blank
@@ -353,7 +492,7 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
                 "inputs_match": fill_ok and not diffs,
                 "input_diffs": diffs if fill_ok else diffs + ["fill over an hour the file holds"],
                 "stored": {c: _num(row.get(c)) for c in INPUT_COLS}, "expected": want,
-                "filled_from": off, "exact_hour_blank": blank,
+                "filled_from": off, "filled_from_new": off_new, "exact_hour_blank": blank,
                 "stars_published": float(row["stars"]),
                 "stars_old": a.get("stars"), "stars_new": b.get("stars"),
                 "face_published": _num(row.get("face_ft_raw")),
@@ -368,6 +507,99 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
 # --------------------------------------------------------------------------- #
 # Supabase (SELECT only) and NOMADS                                            #
 # --------------------------------------------------------------------------- #
+def http_date_iso(value):
+    """An HTTP date (Last-Modified) as ISO UTC to the second, or None when absent or unreadable."""
+    if not value:
+        return None
+    try:
+        dt = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def nomads_head(url, timeout=60):
+    """The response headers of a HEAD request to *url* (case-insensitive mapping)."""
+    import urllib.request
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "stormy-petrel-nwps"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.headers
+
+
+def file_stamp(url, path, *, head=nomads_head, now=None):
+    """What NOMADS says of a cycle file just read: {url, last_modified, content_length,
+    size_read, checked_at}, and {error} in place of the first two when the HEAD fails.
+    size_read is the size of the file on disk at *path* (None when absent)."""
+    out = {"url": url, "checked_at": (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "size_read": os.path.getsize(path) if path and os.path.exists(path) else None}
+    try:
+        h = head(url)
+    except Exception as e:  # noqa: BLE001  a report line, never a reason to stop the replay
+        out.update(last_modified=None, content_length=None, error=f"{type(e).__name__}: {e}")
+        return out
+    length = h.get("Content-Length")
+    out.update(last_modified=http_date_iso(h.get("Last-Modified")),
+               content_length=int(length) if length and str(length).isdigit() else None)
+    return out
+
+
+def parse_logger_lines(lines):
+    """{(wfo, 'YYYYMMDDCC'): [{bytes, last_modified, first_seen}, ...]} from the publication
+    logger's NWPSPUB lines: each distinct (bytes, last_modified) a file was seen with, in the order
+    first seen. Only file HEADs that answered 200 with both values count."""
+    seen = {}
+    for line in lines:
+        i = line.find("NWPSPUB ")
+        if i < 0:
+            continue
+        try:
+            rec = json.loads(line[i + len("NWPSPUB "):])
+        except ValueError:
+            continue
+        if (not isinstance(rec, dict) or rec.get("kind") != "file" or rec.get("status") != 200
+                or rec.get("bytes") is None or not rec.get("last_modified")):
+            continue
+        key = (rec.get("wfo"), f"{rec.get('date')}{rec.get('cycle')}")
+        versions = seen.setdefault(key, [])
+        pair = (rec["bytes"], rec["last_modified"])
+        known = next((v for v in versions if (v["bytes"], v["last_modified"]) == pair), None)
+        if known is None:
+            versions.append({"bytes": pair[0], "last_modified": pair[1],
+                             "first_seen": rec.get("checked_at")})
+        elif rec.get("checked_at") and (known["first_seen"] is None
+                                        or rec["checked_at"] < known["first_seen"]):
+            known["first_seen"] = rec["checked_at"]
+    for versions in seen.values():
+        versions.sort(key=lambda v: v["first_seen"] or "")
+    return seen
+
+
+def double_post_reasons(stamp, versions):
+    """Why a cycle file is excluded from the gate: [] when it is not. *stamp* is file_stamp's
+    record (or None), *versions* the logger's list for the same file (or None)."""
+    out = []
+    st = stamp or {}
+    if (st.get("size_read") is not None and st.get("content_length") is not None
+            and st["size_read"] != st["content_length"]):
+        out.append(f"downloaded {st['size_read']} bytes; NOMADS's HEAD gave "
+                   f"{st['content_length']} bytes, last modified {st.get('last_modified') or 'not given'}")
+    if versions and len(versions) > 1:
+        out.append(f"the publication logger saw {len(versions)} versions: " + "; ".join(
+            f"{v['bytes']} bytes, last modified {v['last_modified']} (first seen "
+            f"{v['first_seen'] or 'unknown'})" for v in versions))
+    return out
+
+
+def stat_nomads_cycle(wfo, cycle):
+    """file_stamp for a (date, cc, url) cycle load_cycle has just read for *wfo*."""
+    date, cc, url = cycle
+    return file_stamp(url, cycle_path(wfo, date, cc))
+
+
 def fetch_names(client):
     names, frm = {}, 0
     while True:
@@ -400,7 +632,8 @@ def fetch_first(client, sid, since):
 
 
 def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open_cycle=None,
-        apply=apply_nwps_overrides, references=()):
+        apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None,
+        stat_cycle=None, logger_versions=None):
     from .forecast.face_correction import load_face_factors, median_face_factor
     from .interpret import face_factors_by_name
     factors = load_face_factors() if factors is None else factors
@@ -412,7 +645,15 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
     pairs = moved_spots(baseline, roster)
     names = fetch_names(client)
     ids = {n: sid for sid, (n, _) in names.items()}
-    report = {"since": since, "moved": [], "not_replayed": {}, "cycles": {}, "node_checks": {}}
+    buoys = buoys or {}
+    now_epoch = (now or datetime.now(timezone.utc)).timestamp()
+    replay_since = since
+    if buoys:
+        start = datetime.fromtimestamp(_iso_to_epoch(since) - BUOY_LOOKBACK_H * 3600, timezone.utc)
+        replay_since = start.isoformat()
+    report = {"since": since, "replayed_from": replay_since, "moved": [], "not_replayed": {},
+              "cycles": {}, "node_checks": {}, "excluded": {},
+              "logger_log": logger_versions is not None}
     hours = []
     for old, new in pairs:
         report["moved"].append({"spot": new["name"], "wfo": new.get("nwps_wfo"),
@@ -424,11 +665,12 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         by_wfo[pair[1].get("nwps_wfo")].append(pair)
     for wfo, wpairs in sorted(by_wfo.items()):
         listed = list_cycles(wfo)
-        report["cycles"][wfo] = {"listed": sorted(f"{d}{c}" for d, c in listed), "read": []}
+        report["cycles"][wfo] = {"listed": sorted(f"{d}{c}" for d, c in listed), "read": [],
+                                 "files": {}}
         by_cycle = defaultdict(lambda: defaultdict(list))
         for old, new in wpairs:
             skipped = report["not_replayed"].setdefault(new["name"], Counter())
-            for row in fetch_rows(client, ids[new["name"]], since):
+            for row in fetch_rows(client, ids[new["name"]], replay_since):
                 if row.get("stars") is None:
                     skipped["no stars"] += 1
                 elif row.get("swell_source") not in NWPS_KINDS:
@@ -440,13 +682,28 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         for key in sorted(by_cycle):
             cycle = open_cycle(wfo, (key[0], key[1], listed[key]))
             report["cycles"][wfo]["read"].append("".join(key))
+            stamp = None
+            if stat_cycle is not None:
+                stamp = report["cycles"][wfo]["files"]["".join(key)] = stat_cycle(
+                    wfo, (key[0], key[1], listed[key]))
+            name = f"{wfo} {''.join(key)}"
+            reasons = double_post_reasons(stamp, (logger_versions or {}).get((wfo, "".join(key))))
+            if reasons:
+                report["excluded"][name] = {"reasons": reasons}
             got, checks = replay_cycle(wpairs, by_cycle[key], cycle, ceiling_factors, m, apply)
+            for h in got:
+                h["cycle_file"] = name
+                h["gate_excluded"] = bool(reasons)
             hours.extend(got)
             for name, c in checks.items():
                 report["node_checks"].setdefault(name, {})["".join(key)] = c
     hours.sort(key=lambda h: (h["spot"], h["valid_time"]))
     report["not_replayed"] = {k: dict(v) for k, v in report["not_replayed"].items()}
-    report["gate"] = gate(hours)
+    report["gate"] = gate([h for h in hours if not h.get("gate_excluded")])
+    report["gate"]["excluded_cycles"] = sorted(report["excluded"])
+    for name, ex in report["excluded"].items():
+        ex.update(gate([h for h in hours if h.get("cycle_file") == name]))
+        ex.pop("pass")
     report["by_spot"] = spot_summary(hours)
     from .apply_nwps_assignments import _slug
     by_slug = {_slug(n): (sid, n) for sid, (n, _) in names.items()}
@@ -455,13 +712,22 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
     for r in references:
         if r in by_slug:
             sid, n = by_slug[r]
-            refs[n] = {row["valid_time"]: row for row in fetch_rows(client, sid, since)
+            refs[n] = {row["valid_time"]: row for row in fetch_rows(client, sid, replay_since)
                        if row.get("stars") is not None}
     report["references"] = reference_summary(hours, refs)
     for h in hours:
         h["reference"] = {n: {"stars": _num(rows[h["valid_time"]].get("stars")),
                               "face": _num(rows[h["valid_time"]].get("face_ft_raw"))}
                           for n, rows in refs.items() if h["valid_time"] in rows}
+    report["buoys"] = {}
+    buoy_obs = buoy_obs or (lambda b, start: fetch_buoy_obs(client, b, start))
+    for old, new in pairs:
+        b = buoys.get(_slug(new["name"]))
+        if b:
+            mine = [h for h in hours if h["spot"] == new["name"]]
+            buoy_pairs(mine, buoy_obs(b, replay_since), now_epoch)
+            report["buoys"][new["name"]] = buoy_summary(mine, b)
+    report["buoys_missing"] = sorted(set(buoys) - {_slug(new["name"]) for _o, new in pairs})
     report["hours"] = hours
     first = {}
     for sid in sorted(names):
@@ -484,10 +750,10 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
 # --------------------------------------------------------------------------- #
 HOUR_COLUMNS = ("spot", "valid_time", "nwps_cycle", "swell_source", "wind", "wind_old",
                 "wind_new", "inputs_match", "input_diffs", "stored", "expected", "filled_from",
-                "exact_hour_blank", "reference",
+                "exact_hour_blank", "filled_from_new", "buoy_hs", "reference",
                 "stars_published", "stars_old", "stars_new", "face_published", "face_old",
                 "face_new", "hs_old", "hs_new", "tp_old", "tp_new", "swell_hs_old",
-                "swell_hs_new", "rated_tp_old", "rated_tp_new")
+                "swell_hs_new", "rated_tp_old", "rated_tp_new", "cycle_file", "gate_excluded")
 
 
 def write_csv(path, hours):
@@ -506,14 +772,36 @@ def _offset(off):
     return {0: "the hour", -1: "the hour before", 1: "the hour after"}.get(off, "none")
 
 
+def file_line(wfo, key, st):
+    """One report line for a cycle file's stamp."""
+    head = f"{wfo} {key}: "
+    if st.get("error"):
+        return head + f"NOMADS HEAD failed ({st['error']}); read {_size(st.get('size_read'))} " \
+                      f"at {st['checked_at']}"
+    same = ("" if st.get("content_length") is None or st.get("size_read") is None
+            else "; same size" if st["content_length"] == st["size_read"]
+            else "; SIZE DIFFERS from the file read")
+    return head + (f"last modified {st.get('last_modified') or 'not given'}, "
+                   f"{_size(st.get('content_length'))} on NOMADS; read {_size(st.get('size_read'))} "
+                   f"at {st['checked_at']}{same}")
+
+
+def _size(n):
+    return "size unknown" if n is None else f"{n} bytes"
+
+
 def print_report(rep):
-    print(f"\nNode preview of the published window from {rep['since']}")
+    print(f"\nNode preview of the published window from {rep['since']}"
+          + (f" (replayed from {rep['replayed_from']} for the buoys)"
+             if rep.get("replayed_from") not in (None, rep["since"]) else ""))
     for m in rep["moved"]:
         print(f"  {m['spot']} ({m['wfo']}): ({m['old'][0]}, {m['old'][1]}) -> "
               f"({m['new'][0]}, {m['new'][1]}), {m['new_distance_m']} m from the spot")
     for wfo, c in rep["cycles"].items():
         print(f"  {wfo}: NOMADS lists {len(c['listed'])} cycles {', '.join(c['listed'])}; "
               f"read {', '.join(c['read']) or 'none'}")
+        for key, st in (c.get("files") or {}).items():
+            print("    " + file_line(wfo, key, st))
     for name, checks in rep["node_checks"].items():
         bad = [k for k, c in checks.items() if not (c["wet"] and c["same_cell"])]
         offs = sorted({c["offset_km"] for c in checks.values()})
@@ -527,10 +815,20 @@ def print_report(rep):
           f"{g['star_differences']} star differences, {g['face_differences']} face differences, "
           f"{g['filled']} filled from a neighbouring hour (the hour blank in the file) -> "
           f"{'PASS' if g['pass'] else 'FAIL'} ===")
+    if not rep.get("logger_log"):
+        print("  (no publication-logger log given: only the size test applied)")
+    for name, ex in (rep.get("excluded") or {}).items():
+        print(f"  EXCLUDED from the gate, double-posted on NOMADS: {name}: {ex['hours']} hours, "
+              f"{ex['input_differences']} input, {ex['star_differences']} star and "
+              f"{ex['face_differences']} face differences")
+        for r in ex["reasons"]:
+            print(f"    - {r}")
     for h in rep["hours"]:
         if (not h["inputs_match"] or h["stars_old"] != h["stars_published"]
                 or face_differs(h["face_published"], h["face_old"])):
-            print(f"    {h['spot']} {h['valid_time']}: inputs "
+            print(f"    {h['spot']} {h['valid_time']}"
+                  + (f" [{h.get('cycle_file')}, excluded]" if h.get("gate_excluded") else "")
+                  + ": inputs "
                   f"{'ok' if h['inputs_match'] else 'DIFFER ' + ', '.join(h.get('input_diffs') or [])}"
                   f" (series hour {_offset(h.get('filled_from'))}, hour blank in the file "
                   f"{h.get('exact_hour_blank')}); stars published {h['stars_published']} replayed "
@@ -552,6 +850,16 @@ def print_report(rep):
               f"same {s['stars_same']}; mean stars {_v(s['mean_stars_old'])} -> "
               f"{_v(s['mean_stars_new'])}, face {_v(s['mean_face_old'])} -> "
               f"{_v(s['mean_face_new'])} ft, hs {_v(s['mean_hs_old'])} -> {_v(s['mean_hs_new'])} m")
+    if rep.get("buoys") or rep.get("buoys_missing"):
+        print("\n=== Beside the buoys, on the replayed hours already past: node / buoy ===")
+        for name, b in rep.get("buoys", {}).items():
+            o, n = b["old"], b["new"]
+            print(f"  {name} vs NDBC {b['buoy']}: {b['hours']} paired hours, buoy mean "
+                  f"{_v(b['buoy_mean'])} m; old node median {_v(o['median'])} "
+                  f"({o['hours']} h, {_v(o['within_20'])} within 20%); new node median "
+                  f"{_v(n['median'])} ({n['hours']} h, {_v(n['within_20'])} within 20%)")
+        if rep.get("buoys_missing"):
+            print(f"  not a moved spot: {', '.join(rep['buoys_missing'])}")
     if rep.get("references") or rep.get("references_missing"):
         print("\n=== Beside the reference spots (published), on the same hours: old / new / "
               "reference ===")
@@ -595,9 +903,12 @@ def main(argv=None):
                    help="spots file with the moved nodes (default: this checkout's)")
     p.add_argument("--since", default=None, help="ISO start of the window (default: now)")
     p.add_argument("--reference", default="",
-                   help="comma-separated slugs of spots to show beside the moved ones")
+                   help="comma-separated slugs of spots to show beside the moved ones, and "
+                        "SLUG=BUOY for a moved spot's NDBC buoy")
     p.add_argument("--out", default=None, help="write the report as JSON here")
     p.add_argument("--csv", default=None, help="write every replayed hour as CSV here")
+    p.add_argument("--logger-log", default=None,
+                   help="text holding the NWPS publication logger's NWPSPUB lines (its run logs)")
     args = p.parse_args(argv)
     from supabase import create_client
     client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
@@ -606,8 +917,13 @@ def main(argv=None):
         baseline = json.load(f)
     with open(args.roster) as f:
         roster = json.load(f)
-    refs = [r.strip() for r in args.reference.split(",") if r.strip()]
-    rep = run(client, baseline, roster, since, references=refs)
+    refs, buoys = parse_references(args.reference)
+    logger = None
+    if args.logger_log:
+        with open(args.logger_log, encoding="utf-8", errors="replace") as f:
+            logger = parse_logger_lines(f)
+    rep = run(client, baseline, roster, since, references=refs, buoys=buoys,
+              stat_cycle=stat_nomads_cycle, logger_versions=logger)
     print_report(rep)
     if args.out:
         with open(args.out, "w") as f:

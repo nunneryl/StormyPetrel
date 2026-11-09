@@ -1,11 +1,14 @@
 {
-  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read.",
+  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/).",
   "overrides": {
     "duck-pier": {
       "nwps_wfo": "mhx",
       "nwps_node_lat": 36.19331,
       "nwps_node_lng": -75.72892,
-      "replaces": [36.19317, -75.74849],
+      "replaces": [
+        36.19317,
+        -75.74849
+      ],
       "reason": "The current point (1.14 km N, 7.4 m) read 0.76 of the FRF 8 m array, 25% of hours within 20%, r 0.38; the 15 m cell 2.07 km at 56 deg read 0.87, 98.6% within 20%, r 0.93 (72 h). Run 49 found the same over 66 h: 0.75, 18% within 20%, r 0.17 at the current point against 0.87, 98.5%, r 0.89 at the cell.",
       "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 72 h against FRF 8 m; run 49 (face-followup, 538be6d), 66 h"
     },
@@ -13,7 +16,10 @@
       "nwps_wfo": "tbw",
       "nwps_node_lat": 27.51019,
       "nwps_node_lng": -82.80924,
-      "replaces": [27.51007, -82.7375],
+      "replaces": [
+        27.51007,
+        -82.7375
+      ],
       "reason": "The current point (5.3 m) read 0.48 of NDBC 42098 with a 2.29 s median period, 64% of hours under 3 s; the 11 m cell 7.26 km at 257 deg read 0.96, 93% within 20%, 4.0 s, no hour under 3 s (buoy 5.0 s).",
       "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 20.4 km"
     },
@@ -21,7 +27,10 @@
       "nwps_wfo": "tbw",
       "nwps_node_lat": 27.7373,
       "nwps_node_lng": -82.86304,
-      "replaces": [27.73716, -82.77337],
+      "replaces": [
+        27.73716,
+        -82.77337
+      ],
       "reason": "The current point (6.5 m) read 0.43 of NDBC 42098 with a 2.34 s median period, 69% of hours under 3 s; the 10.3 m cell 9.94 km at 266 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. Treasure Island FL and Madeira Beach share this cell.",
       "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 23.8 km"
     },
@@ -29,7 +38,10 @@
       "nwps_wfo": "tbw",
       "nwps_node_lat": 27.7373,
       "nwps_node_lng": -82.86304,
-      "replaces": [27.75338, -82.77337],
+      "replaces": [
+        27.75338,
+        -82.77337
+      ],
       "reason": "The current point (5.3 m) read 0.34 of NDBC 42098 with a 2.01 s median period, 66% of hours under 3 s; the 10.3 m cell 9.45 km at 253 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. St. Pete Beach and Madeira Beach share this cell.",
       "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 24.8 km"
     },
@@ -37,7 +49,10 @@
       "nwps_wfo": "tbw",
       "nwps_node_lat": 27.7373,
       "nwps_node_lng": -82.86304,
-      "replaces": [27.78582, -82.80924],
+      "replaces": [
+        27.78582,
+        -82.80924
+      ],
       "reason": "The current point (6.1 m) read 0.45 of NDBC 42098 with a 2.25 s median period, 63% of hours under 3 s; the 10.3 m cell 9.16 km at 218 deg read 0.84, 66% within 20% (94.5% within 30%), 3.76 s, 7% under 3 s. St. Pete Beach and Treasure Island FL share this cell.",
       "evidence": "sw1-raycast run 50 (face-seaward, 133cde0), 73 h against NDBC 42098 at 26.6 km"
     },
@@ -45,7 +60,10 @@
       "nwps_wfo": "mhx",
       "nwps_node_lat": 35.5911,
       "nwps_node_lng": -75.43524,
-      "replaces": [35.5911, -75.45482],
+      "replaces": [
+        35.5911,
+        -75.45482
+      ],
       "reason": "The current point (10.3 m by ETOPO) is the beach column beside the stretch where MHX's grid has no island (Pamlico Sound water at -75.4744 from 35.559 to 35.607): NWPS read 0.18 of the pier there (0.17 to 0.18 in each of 4 cycles), 0.16 of the cell one column seaward, at an ocean-like 8.0 s. Against the pier since 2026-09-07 it read under 0.4 in 1189 of 1294 hours, and in all 630 hours with the pier at 1 m or more (median 0.11). The 16.9 m cell 2.46 km at 99 deg read 1.09 of the pier in every cycle and 0.98 of the cell beyond it.",
       "evidence": "sw1-raycast run 58 (nwps-cells, e244d2a), artifact nwps-cells-58: archive since 2026-09-07 against Outer Banks Fishing Pier, and the MHX CG1 cells from 4 NOMADS cycles (2026-10-27 12Z to 10-29 00Z); ETOPO 2022 joined afterwards"
     },
@@ -53,7 +71,10 @@
       "nwps_wfo": "mhx",
       "nwps_node_lat": 35.52602,
       "nwps_node_lng": -75.43524,
-      "replaces": [35.54229, -75.45482],
+      "replaces": [
+        35.54229,
+        -75.45482
+      ],
       "reason": "The current point (11.1 m by ETOPO) is the beach column one row south of the stretch where MHX's grid has no island: NWPS read 0.40 of the pier there (0.38 to 0.42 in each of 4 cycles), 0.37 of the cell one column seaward. Against the pier since 2026-09-07 it read under 0.4 in 678 of 1393 hours, and in 534 of the 674 hours with the pier at 1 m or more (median 0.26). The same-row cell seaward is 9.3 m at its centre; the 10.9 m cell 3.00 km at 112 deg read 1.10 of the pier (1.09 to 1.12) and 0.97 of the cell beyond it.",
       "evidence": "sw1-raycast run 58 (nwps-cells, e244d2a), artifact nwps-cells-58: archive since 2026-09-07 against Outer Banks Fishing Pier, and the MHX CG1 cells from 4 NOMADS cycles (2026-10-27 12Z to 10-29 00Z); ETOPO 2022 joined afterwards"
     },
@@ -61,9 +82,78 @@
       "nwps_wfo": "mhx",
       "nwps_node_lat": 35.60738,
       "nwps_node_lng": -75.43524,
-      "replaces": [35.60738, -75.45482],
+      "replaces": [
+        35.60738,
+        -75.45482
+      ],
       "reason": "The current point (13.2 m by ETOPO) is the beach column beside the stretch where MHX's grid has no island: NWPS read 0.19 of the pier there (0.18 to 0.20 in each of 4 cycles), 0.17 of the cell one column seaward, at an ocean-like 8.0 s. Against the pier since 2026-09-07 it read under 0.4 in 1237 of 1378 hours, and in all 672 hours with the pier at 1 m or more (median 0.13). The 16.5 m cell 2.68 km at 91 deg read 1.10 of the pier in every cycle and 0.98 of the cell beyond it.",
       "evidence": "sw1-raycast run 58 (nwps-cells, e244d2a), artifact nwps-cells-58: archive since 2026-09-07 against Outer Banks Fishing Pier, and the MHX CG1 cells from 4 NOMADS cycles (2026-10-27 12Z to 10-29 00Z); ETOPO 2022 joined afterwards"
+    },
+    "bandon-beach": {
+      "nwps_wfo": "mfr",
+      "nwps_node_lat": 43.09531,
+      "nwps_node_lng": -124.46111,
+      "replaces": [
+        43.09531,
+        -124.43725
+      ],
+      "reason": "The current point (1.4 m by ETOPO at the cell centre, 33% of the cell land) is blank (no Hs, period or direction) in 62 of 435 hours over run 66's 3 cycles, at low tide; it is wet 120 to 127 of 145 hours per cycle, and its NWPS Hs is 0.24 to 0.26 of the next cell seaward in each of 4 cycles; against its NWPS neighbours within 30 km since 2026-09-07 it read a median 0.331, under 0.4 in 69% of hours. The 33.0 m cell 2.12 km at 266 deg (13 deg off the spot's facing of 279) is wet every hour of every cycle, reads 0.98 of the next cell seaward, and 3.85 to 4.15 times the current point's Hs.",
+      "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the MFR CG1 cells from 4 NOMADS cycles (20261105 00Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/"
+    },
+    "moonstone-beach-humboldt": {
+      "nwps_wfo": "eka",
+      "nwps_node_lat": 41.04194,
+      "nwps_node_lng": -124.18429,
+      "replaces": [
+        41.04194,
+        -124.13794
+      ],
+      "reason": "The current point (2.4 m by ETOPO at the cell centre, 25% of the cell land) is never blank in run 66's 3 cycles; it is wet every hour, and its NWPS Hs is 0.35 to 0.36 of the next cell seaward in each of 4 cycles; against its NWPS neighbours within 30 km since 2026-09-07 it read a median 0.272, under 0.4 in 92% of hours. The 29.0 m cell 6.36 km at 283 deg (28 deg off the spot's facing of 255) is wet every hour of every cycle, reads 0.97 to 0.98 of the next cell seaward, and 2.76 to 2.85 times the current point's Hs.",
+      "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the EKA CG1 cells from 4 NOMADS cycles (20261105 00Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/"
+    },
+    "short-sands-beach-york": {
+      "nwps_wfo": "gyx",
+      "nwps_node_lat": 43.18921,
+      "nwps_node_lng": -70.56172,
+      "replaces": [
+        43.16667,
+        -70.59219
+      ],
+      "reason": "The current point (-0.8 m by ETOPO at the cell centre, 17% of the cell land) is blank (no Hs, period or direction) in 215 of 435 hours over run 66's 3 cycles, at low tide; it is wet 72 to 75 of 145 hours per cycle, and its NWPS Hs is 0.78 to 0.81 of the next cell seaward in each of 4 cycles; against its NWPS neighbours within 30 km since 2026-09-07 it read a median 0.759, under 0.4 in 0% of hours. The 35.8 m cell 3.95 km at 66 deg (10 deg off the spot's facing of 56) is wet every hour of every cycle, reads 0.95 to 0.96 of the next cell seaward, and 1.24 to 1.29 times the current point's Hs.",
+      "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the GYX CG1 cells from 4 NOMADS cycles (20261105 18Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/"
+    },
+    "revere-beach": {
+      "nwps_wfo": "box",
+      "nwps_node_lat": 42.38296,
+      "nwps_node_lng": -70.93571,
+      "replaces": [
+        42.41909,
+        -70.98312
+      ],
+      "reason": "The current point (2.3 m by ETOPO at the cell centre, 47% of the cell land) is blank (no Hs, period or direction) in 147 of 435 hours over run 66's 3 cycles, at low tide; it is wet 95 to 99 of 145 hours per cycle, and its NWPS Hs is 0.78 to 0.81 of the next cell seaward in each of 4 cycles; against its NWPS neighbours within 30 km since 2026-09-07 it read a median 0.416, under 0.4 in 46% of hours. The 14.1 m cell 5.75 km at 134 deg (23 deg off the spot's facing of 111) is wet every hour of every cycle, reads 0.91 to 0.93 of the next cell seaward, and 1.71 to 2.09 times the current point's Hs.",
+      "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the BOX CG1 cells from 4 NOMADS cycles (20261105 00Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/"
+    },
+    "hubbard-creek": {
+      "nwps_wfo": "mfr",
+      "nwps_node_lat": 42.71598,
+      "nwps_node_lng": -124.50882,
+      "replaces": [
+        42.73405,
+        -124.48497
+      ],
+      "reason": "The current point (1.7 m by ETOPO at the cell centre, 20% of the cell land) is blank (no Hs, period or direction) in 101 of 435 hours over run 66's 3 cycles, at low tide; it is wet 110 to 112 of 145 hours per cycle, and its NWPS Hs is 0.24 to 0.26 of the next cell seaward in each of 4 cycles; it has no NWPS neighbour within 30 km to compare with. The 37.3 m cell 3.29 km at 234 deg (1 deg off the spot's facing of 235) is wet every hour of every cycle, reads 0.93 to 0.94 of the next cell seaward, and 3.90 to 4.24 times the current point's Hs.",
+      "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the MFR CG1 cells from 4 NOMADS cycles (20261105 00Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/"
+    },
+    "galveston-seawall": {
+      "nwps_wfo": "hgx",
+      "nwps_node_lat": 29.25236,
+      "nwps_node_lng": -94.82882,
+      "replaces": [
+        29.28476,
+        -94.79235
+      ],
+      "reason": "The current point (-1.9 m by ETOPO at the cell centre, 31% of the cell land) is blank (no Hs, period or direction) in 85 of 435 hours over run 66's 3 cycles, at low tide; it is wet 115 to 120 of 145 hours per cycle, and its NWPS Hs is 0.62 to 0.65 of the next cell seaward in each of 4 cycles; its one NWPS neighbour within 30 km (61st Street Galveston, 5.0 km) is too few for run 58's neighbour comparison, which needs two. The cell that passes the rule, 5.06 km at 135 deg (10.3 m), read 1.155 of 61st Street Galveston's cell in run 68 (node-preview), over the 1.15 limit. Instead it shares 61st Street Galveston's cell, as Rincon and Tarpits share one: 4.98 km at 224 deg, 6.4 m at the centre (cell median 5.5 m, 6% land), wet every hour of every cycle (145 of 145 in each of run 67's 4 cycles; 0 of 435 hours blank in run 66), 1.40 to 1.48 times the current point's Hs. It does not meet run 58's rule (87 deg off the facing, under 10 m, 0.86 of the next cell seaward); its check is buoy 42035 in run 69.",
+      "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the HGX CG1 cells from 4 NOMADS cycles (20261105 18Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/; run 68 (node-preview, be56d23) for the 1.155 of the first cell, saved under docs/face_validation/run-68/"
     }
   }
 }
