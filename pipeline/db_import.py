@@ -32,6 +32,7 @@ from .config import (
     BUOYS_FORECAST_FILE,
     COORD_DERIVED_DIST_TOLERANCE_KM,
     DEFAULT_ENRICHED_OUTPUT,
+    NWPS_READS_FILE,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
 )
@@ -84,6 +85,9 @@ WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
         "wind_speed", "wind_dir", "water_temp",
     ),
     "tide_predictions": ("station_id", "predicted_at", "level_ft", "type"),
+    "nwps_cycle_reads": ("wfo", "nwps_cycle", "read_at", "run_id", "subset_bytes",
+                         "subset_sha256", "filter_headers", "file_last_modified", "file_bytes",
+                         "head_error"),
 }
 
 # The ON CONFLICT key of each upsert. A key column can never be left out: the upsert has
@@ -94,6 +98,7 @@ UPSERT_KEYS: dict[str, tuple[str, ...]] = {
     "forecasts": ("spot_id", "valid_time", "source"),
     "buoy_observations": ("buoy_id", "observed_at"),
     "tide_predictions": ("station_id", "predicted_at"),
+    "nwps_cycle_reads": ("wfo", "nwps_cycle", "read_at"),
 }
 
 # Names the column preflight's result file. Only when it is set does db_import leave anything
@@ -992,6 +997,24 @@ def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
     return written
 
 
+def import_nwps_reads(client, reads_path: Path = NWPS_READS_FILE, leave_out=None) -> int:
+    """Upsert this run's NWPS cycle reads (nwps.fetch's nwps_reads.json) into nwps_cycle_reads:
+    one row per office and cycle read, keyed on (wfo, nwps_cycle, read_at), so a published
+    forecast row can be traced to the copy of its cycle that was read (migration 028)."""
+    reads = _read_forecast_json(reads_path, "nwps_reads")
+    if reads is None:
+        return 0
+    cols = WRITTEN_COLUMNS["nwps_cycle_reads"]
+    records = [{c: r.get(c) for c in cols} for r in reads
+               if r.get("wfo") and r.get("nwps_cycle") and r.get("read_at")]
+    log.info("nwps_cycle_reads: upserting %d rows", len(records))
+    if records:
+        client.table("nwps_cycle_reads").upsert(
+            _without(records, leave_out, "nwps_cycle_reads"),
+            on_conflict="wfo,nwps_cycle,read_at").execute()
+    return len(records)
+
+
 # ---------------------------------------------------------------------------
 # Buoy coordinate snapshot (durable id -> lat/lng, for SQL audit + import validation)
 # ---------------------------------------------------------------------------
@@ -1026,7 +1049,8 @@ def tables_written(spots: bool = True, forecasts: bool = True, buoys: bool = Tru
     return ((("buoys", "spots") if spots else ())
             + (("forecasts",) if forecasts else ())
             + (("buoy_observations",) if buoys else ())
-            + (("tide_predictions",) if tides else ()))
+            + (("tide_predictions",) if tides else ())
+            + (("nwps_cycle_reads",) if forecasts else ()))
 
 
 def run_all(
@@ -1064,6 +1088,9 @@ def run_all(
         stats["buoy_observations"] = import_buoys(client, leave_out=leave_out)
     if tides:
         stats["tide_predictions"] = import_tides(client, leave_out=leave_out)
+    if forecasts:
+        # Last, so a problem with this record can never hold back a forecast, buoy or tide row.
+        stats["nwps_cycle_reads"] = import_nwps_reads(client, leave_out=leave_out)
     return stats
 
 

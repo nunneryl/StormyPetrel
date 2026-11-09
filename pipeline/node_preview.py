@@ -69,7 +69,12 @@ replay cannot be held to the published hours of such a cycle. A cycle is EXCLUDE
 and reported apart with its evidence and its own difference counts, when either
   * the file node-preview downloaded differs in size from what NOMADS's HEAD gave for it, or
   * the NOMADS publication logger (workflow nwps-publication-log; its NWPSPUB lines, passed with
-    --logger-log) saw the file with more than one (size, last modified) pair.
+    --logger-log) saw the file in two different versions: two sightings whose sizes differ, or
+    whose last-modified times are REPOST_MIN_GAP_S (10 minutes) or more apart.
+The 10 minutes: over the logger's cycles of 2026-10-30 to 11-09, 46 files were seen with the
+same size and last-modified times 1 to 62 seconds apart (NOMADS servers each holding their own
+copy of one post), and 5 were re-posted, 25 minutes to 6 h 20 min apart, 4 of them at a new
+size (EKA 11-03 12Z, HGX 11-03 00Z, TAE 11-03 12Z, MFR 11-07 12Z, MFR 11-08 00Z).
 Its hours are still replayed and listed, and still count in the per-spot and reference figures.
 
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
@@ -578,6 +583,28 @@ def parse_logger_lines(lines):
     return seen
 
 
+REPOST_MIN_GAP_S = 600       # last-modified times this far apart are two posts, not two copies
+
+
+def distinct_versions(versions):
+    """Did the logger see two different posts of a file: two sightings with different sizes,
+    or last-modified times REPOST_MIN_GAP_S or more apart? Sightings of one size seconds apart
+    are NOMADS servers' copies of one post. An unreadable time counts as different."""
+    vs = list(versions or [])
+    for i, a in enumerate(vs):
+        for b in vs[i + 1:]:
+            if a["bytes"] != b["bytes"]:
+                return True
+            try:
+                ta = datetime.fromisoformat(str(a["last_modified"]).replace("Z", "+00:00"))
+                tb = datetime.fromisoformat(str(b["last_modified"]).replace("Z", "+00:00"))
+            except ValueError:
+                return True
+            if abs((ta - tb).total_seconds()) >= REPOST_MIN_GAP_S:
+                return True
+    return False
+
+
 def double_post_reasons(stamp, versions):
     """Why a cycle file is excluded from the gate: [] when it is not. *stamp* is file_stamp's
     record (or None), *versions* the logger's list for the same file (or None)."""
@@ -587,7 +614,7 @@ def double_post_reasons(stamp, versions):
             and st["size_read"] != st["content_length"]):
         out.append(f"downloaded {st['size_read']} bytes; NOMADS's HEAD gave "
                    f"{st['content_length']} bytes, last modified {st.get('last_modified') or 'not given'}")
-    if versions and len(versions) > 1:
+    if versions and len(versions) > 1 and distinct_versions(versions):
         out.append(f"the publication logger saw {len(versions)} versions: " + "; ".join(
             f"{v['bytes']} bytes, last modified {v['last_modified']} (first seen "
             f"{v['first_seen'] or 'unknown'})" for v in versions))
