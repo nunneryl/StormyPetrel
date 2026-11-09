@@ -689,6 +689,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+      actions: read           # the publication logger's run logs, for the double-post rule
     env:
       PYTHONUNBUFFERED: '1'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
@@ -723,6 +724,21 @@ jobs:
           git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"
           echo "baseline: $base ($(git rev-parse "$base"))"
 
+      - name: Read the NWPS publication logger's last 12 runs (read-only)
+        # NWPSPUB lines: each NOMADS file's size and last-modified time, every 6 hours. A file
+        # seen in two versions is double-posted and node_preview keeps it out of the gate. A
+        # failed read leaves the file empty, and node_preview then applies the size test alone.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          : > "$RUNNER_TEMP/nwps_pub.log"
+          ids=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow nwps-publication-log.yml \
+                  --status success --limit 12 --json databaseId --jq '.[].databaseId') || ids=""
+          for id in $ids; do
+            gh run view "$id" --repo "$GITHUB_REPOSITORY" --log >> "$RUNNER_TEMP/nwps_pub.log" || true
+          done
+          echo "publication logger: $(echo $ids | wc -w) runs, $(grep -c NWPSPUB "$RUNNER_TEMP/nwps_pub.log" || true) NWPSPUB lines"
+
       - name: Replay the published window at the old and the new sample points (SELECT only)
         env:
           SPOTS: ${{ inputs.spots }}
@@ -730,7 +746,8 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \
-            --reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv
+            --reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv \
+            --logger-log "$RUNNER_TEMP/nwps_pub.log"
 
       - name: Upload the report
         if: ${{ always() }}

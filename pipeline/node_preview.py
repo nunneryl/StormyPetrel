@@ -62,6 +62,16 @@ time of the check (report["cycles"][wfo]["files"]). A Last-Modified later than t
 pipeline read a cycle means NOMADS re-posted it since, and the published rows were rated from an
 earlier copy. A failed HEAD is recorded as an error and does not stop the replay.
 
+DOUBLE-POSTED CYCLES. A WFO can post a cycle twice, and NOMADS then serves either copy from the
+same URL for days (MFR 2026-11-07 12Z: 55,879,399 bytes last modified 19:07:09Z, and 43,017,313
+bytes last modified 20:01:05Z; run 70). The pipeline does not record which copy it read, so the
+replay cannot be held to the published hours of such a cycle. A cycle is EXCLUDED from the gate,
+and reported apart with its evidence and its own difference counts, when either
+  * the file node-preview downloaded differs in size from what NOMADS's HEAD gave for it, or
+  * the NOMADS publication logger (workflow nwps-publication-log; its NWPSPUB lines, passed with
+    --logger-log) saw the file with more than one (size, last modified) pair.
+Its hours are still replayed and listed, and still count in the per-spot and reference figures.
+
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
 """
@@ -537,6 +547,53 @@ def file_stamp(url, path, *, head=nomads_head, now=None):
     return out
 
 
+def parse_logger_lines(lines):
+    """{(wfo, 'YYYYMMDDCC'): [{bytes, last_modified, first_seen}, ...]} from the publication
+    logger's NWPSPUB lines: each distinct (bytes, last_modified) a file was seen with, in the order
+    first seen. Only file HEADs that answered 200 with both values count."""
+    seen = {}
+    for line in lines:
+        i = line.find("NWPSPUB ")
+        if i < 0:
+            continue
+        try:
+            rec = json.loads(line[i + len("NWPSPUB "):])
+        except ValueError:
+            continue
+        if (not isinstance(rec, dict) or rec.get("kind") != "file" or rec.get("status") != 200
+                or rec.get("bytes") is None or not rec.get("last_modified")):
+            continue
+        key = (rec.get("wfo"), f"{rec.get('date')}{rec.get('cycle')}")
+        versions = seen.setdefault(key, [])
+        pair = (rec["bytes"], rec["last_modified"])
+        known = next((v for v in versions if (v["bytes"], v["last_modified"]) == pair), None)
+        if known is None:
+            versions.append({"bytes": pair[0], "last_modified": pair[1],
+                             "first_seen": rec.get("checked_at")})
+        elif rec.get("checked_at") and (known["first_seen"] is None
+                                        or rec["checked_at"] < known["first_seen"]):
+            known["first_seen"] = rec["checked_at"]
+    for versions in seen.values():
+        versions.sort(key=lambda v: v["first_seen"] or "")
+    return seen
+
+
+def double_post_reasons(stamp, versions):
+    """Why a cycle file is excluded from the gate: [] when it is not. *stamp* is file_stamp's
+    record (or None), *versions* the logger's list for the same file (or None)."""
+    out = []
+    st = stamp or {}
+    if (st.get("size_read") is not None and st.get("content_length") is not None
+            and st["size_read"] != st["content_length"]):
+        out.append(f"downloaded {st['size_read']} bytes; NOMADS's HEAD gave "
+                   f"{st['content_length']} bytes, last modified {st.get('last_modified') or 'not given'}")
+    if versions and len(versions) > 1:
+        out.append(f"the publication logger saw {len(versions)} versions: " + "; ".join(
+            f"{v['bytes']} bytes, last modified {v['last_modified']} (first seen "
+            f"{v['first_seen'] or 'unknown'})" for v in versions))
+    return out
+
+
 def stat_nomads_cycle(wfo, cycle):
     """file_stamp for a (date, cc, url) cycle load_cycle has just read for *wfo*."""
     date, cc, url = cycle
@@ -576,7 +633,7 @@ def fetch_first(client, sid, since):
 
 def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open_cycle=None,
         apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None,
-        stat_cycle=None):
+        stat_cycle=None, logger_versions=None):
     from .forecast.face_correction import load_face_factors, median_face_factor
     from .interpret import face_factors_by_name
     factors = load_face_factors() if factors is None else factors
@@ -595,7 +652,8 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         start = datetime.fromtimestamp(_iso_to_epoch(since) - BUOY_LOOKBACK_H * 3600, timezone.utc)
         replay_since = start.isoformat()
     report = {"since": since, "replayed_from": replay_since, "moved": [], "not_replayed": {},
-              "cycles": {}, "node_checks": {}}
+              "cycles": {}, "node_checks": {}, "excluded": {},
+              "logger_log": logger_versions is not None}
     hours = []
     for old, new in pairs:
         report["moved"].append({"spot": new["name"], "wfo": new.get("nwps_wfo"),
@@ -624,16 +682,28 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         for key in sorted(by_cycle):
             cycle = open_cycle(wfo, (key[0], key[1], listed[key]))
             report["cycles"][wfo]["read"].append("".join(key))
+            stamp = None
             if stat_cycle is not None:
-                report["cycles"][wfo]["files"]["".join(key)] = stat_cycle(
+                stamp = report["cycles"][wfo]["files"]["".join(key)] = stat_cycle(
                     wfo, (key[0], key[1], listed[key]))
+            name = f"{wfo} {''.join(key)}"
+            reasons = double_post_reasons(stamp, (logger_versions or {}).get((wfo, "".join(key))))
+            if reasons:
+                report["excluded"][name] = {"reasons": reasons}
             got, checks = replay_cycle(wpairs, by_cycle[key], cycle, ceiling_factors, m, apply)
+            for h in got:
+                h["cycle_file"] = name
+                h["gate_excluded"] = bool(reasons)
             hours.extend(got)
             for name, c in checks.items():
                 report["node_checks"].setdefault(name, {})["".join(key)] = c
     hours.sort(key=lambda h: (h["spot"], h["valid_time"]))
     report["not_replayed"] = {k: dict(v) for k, v in report["not_replayed"].items()}
-    report["gate"] = gate(hours)
+    report["gate"] = gate([h for h in hours if not h.get("gate_excluded")])
+    report["gate"]["excluded_cycles"] = sorted(report["excluded"])
+    for name, ex in report["excluded"].items():
+        ex.update(gate([h for h in hours if h.get("cycle_file") == name]))
+        ex.pop("pass")
     report["by_spot"] = spot_summary(hours)
     from .apply_nwps_assignments import _slug
     by_slug = {_slug(n): (sid, n) for sid, (n, _) in names.items()}
@@ -683,7 +753,7 @@ HOUR_COLUMNS = ("spot", "valid_time", "nwps_cycle", "swell_source", "wind", "win
                 "exact_hour_blank", "filled_from_new", "buoy_hs", "reference",
                 "stars_published", "stars_old", "stars_new", "face_published", "face_old",
                 "face_new", "hs_old", "hs_new", "tp_old", "tp_new", "swell_hs_old",
-                "swell_hs_new", "rated_tp_old", "rated_tp_new")
+                "swell_hs_new", "rated_tp_old", "rated_tp_new", "cycle_file", "gate_excluded")
 
 
 def write_csv(path, hours):
@@ -745,10 +815,20 @@ def print_report(rep):
           f"{g['star_differences']} star differences, {g['face_differences']} face differences, "
           f"{g['filled']} filled from a neighbouring hour (the hour blank in the file) -> "
           f"{'PASS' if g['pass'] else 'FAIL'} ===")
+    if not rep.get("logger_log"):
+        print("  (no publication-logger log given: only the size test applied)")
+    for name, ex in (rep.get("excluded") or {}).items():
+        print(f"  EXCLUDED from the gate, double-posted on NOMADS: {name}: {ex['hours']} hours, "
+              f"{ex['input_differences']} input, {ex['star_differences']} star and "
+              f"{ex['face_differences']} face differences")
+        for r in ex["reasons"]:
+            print(f"    - {r}")
     for h in rep["hours"]:
         if (not h["inputs_match"] or h["stars_old"] != h["stars_published"]
                 or face_differs(h["face_published"], h["face_old"])):
-            print(f"    {h['spot']} {h['valid_time']}: inputs "
+            print(f"    {h['spot']} {h['valid_time']}"
+                  + (f" [{h.get('cycle_file')}, excluded]" if h.get("gate_excluded") else "")
+                  + ": inputs "
                   f"{'ok' if h['inputs_match'] else 'DIFFER ' + ', '.join(h.get('input_diffs') or [])}"
                   f" (series hour {_offset(h.get('filled_from'))}, hour blank in the file "
                   f"{h.get('exact_hour_blank')}); stars published {h['stars_published']} replayed "
@@ -827,6 +907,8 @@ def main(argv=None):
                         "SLUG=BUOY for a moved spot's NDBC buoy")
     p.add_argument("--out", default=None, help="write the report as JSON here")
     p.add_argument("--csv", default=None, help="write every replayed hour as CSV here")
+    p.add_argument("--logger-log", default=None,
+                   help="text holding the NWPS publication logger's NWPSPUB lines (its run logs)")
     args = p.parse_args(argv)
     from supabase import create_client
     client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
@@ -836,8 +918,12 @@ def main(argv=None):
     with open(args.roster) as f:
         roster = json.load(f)
     refs, buoys = parse_references(args.reference)
+    logger = None
+    if args.logger_log:
+        with open(args.logger_log, encoding="utf-8", errors="replace") as f:
+            logger = parse_logger_lines(f)
     rep = run(client, baseline, roster, since, references=refs, buoys=buoys,
-              stat_cycle=stat_nomads_cycle)
+              stat_cycle=stat_nomads_cycle, logger_versions=logger)
     print_report(rep)
     if args.out:
         with open(args.out, "w") as f:

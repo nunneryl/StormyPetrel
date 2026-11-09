@@ -264,9 +264,17 @@ def test_the_data_quality_sweep_only_reads():
 def test_the_node_preview_only_reads():
     job = _jobs()["node-preview"]
     assert _if(job) == "${{ inputs.mode == 'node-preview' }}"
-    assert "    permissions:\n      contents: read\n" in job
+    assert "    permissions:\n      contents: read\n      actions: read " in job
+    assert "write" not in job.split("    permissions:")[1].split("    env:")[0]
     assert 'python -m pipeline.node_preview --baseline "$RUNNER_TEMP/baseline.json" \\\n' in job
-    assert '--reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv' in job
+    assert ('--reference "$SPOTS" --out node_preview.json --csv node_preview_hours.csv \\\n'
+            '            --logger-log "$RUNNER_TEMP/nwps_pub.log"') in job
+    # the double-post rule's evidence: the publication logger's last 12 successful runs, read-only
+    assert "GH_TOKEN: ${{ github.token }}" in job
+    assert ("gh run list --repo \"$GITHUB_REPOSITORY\" --workflow nwps-publication-log.yml \\\n"
+            "                  --status success --limit 12 --json databaseId") in job
+    assert 'gh run view "$id" --repo "$GITHUB_REPOSITORY" --log >> "$RUNNER_TEMP/nwps_pub.log" || true' in job
+    assert job.index("--logger-log") > job.index("gh run view")
     assert "SPOTS: ${{ inputs.spots }}" in job
     assert "BASELINE_REF: ${{ inputs.baseline_ref }}" in job
     assert 'git show "$base:pipeline/spots_enriched.json" > "$RUNNER_TEMP/baseline.json"' in job

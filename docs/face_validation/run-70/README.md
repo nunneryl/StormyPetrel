@@ -9,12 +9,24 @@
   - neighbours: Whiskey Run, Bastendorff, Trinidad State Beach, Agate Beach, Long Sands, Harbor Beach, Nahant, Winthrop Jetty, Lynn Beach;
   - buoys: 46015 (Bandon Beach, Hubbard Creek), 46244 (Moonstone Beach Humboldt), 42035 (Galveston Seawall).
 
-## The gate: FAIL, on one MFR cycle that NOMADS serves in two versions
+## The gate: PASS under the double-post rule; MFR 2026-11-07 12Z excluded
 
-- **Totals:** 940 hours replayed. 23 input differences, 4 star differences, 21 face differences; 97 hours filled from a neighbouring hour.
+- **The rule** (pipeline/node_preview.py, added after this run and applied to its artifact): a cycle is excluded from the gate, and reported apart with its evidence, when either
+  - the file node-preview downloaded differs in size from NOMADS's HEAD for it, or
+  - the NOMADS publication logger saw that file in more than one (size, last modified) version.
+- **Excluded: MFR 2026-11-07 12Z** (Bandon Beach and Hubbard Creek, 24 hours). It meets both tests:
+  - node-preview downloaded 55,879,399 bytes, and NOMADS's HEAD gave 43,017,313 bytes, last modified 2026-11-07 20:01:05Z;
+  - the logger saw 55,879,399 bytes, last modified 19:07:09Z (first on 11-07 22:24Z), and 43,017,313 bytes, last modified 20:01:05Z (first on 11-08 06:48Z).
+  - In those 24 hours: 23 input, 4 star and 21 face differences.
+  - The logger runs used are the three that finished before run 70 started: 11-07 22:17Z, 11-08 06:41Z and 18:04Z.
+- **The gate on the rest: PASS.** 916 hours, 0 input, 0 star and 0 face differences; 97 filled from a neighbouring hour.
+- **Not excluded: MFR 2026-11-08 00Z.**
+  - Its second last-modified time (07:05:08Z) was first seen by the logger at 11-08 22:35Z, after run 70, and every one of its hours matched in run 70.
+  - It would be excluded in a run made after that logger check.
+- As run, the artifact's own gate line reads FAIL: 940 hours, 23 input differences, 4 star differences, 21 face differences; 97 hours filled from a neighbouring hour.
 - **Cell choice:** every new node is a wet cell, and the cell `nwps.fetch` samples, in every cycle read.
 - **Where:** all 23, 21 and 4 are on MFR's 2026-11-07 12Z cycle: Bandon Beach (11 hours) and Hubbard Creek (12), from 11-07 12Z to 23Z.
-  - Every other hour matches: 917 of 940, at all five offices, on every other cycle, MFR's included.
+  - Every other hour matches: 917 of 940. That is all 916 hours outside that cycle, at all five offices and on every other cycle (MFR's included), plus one of its own 24.
 - **Examples, stored → expected:**
 
 | Spot, hour | hs | tp | dp | swell_hs | stars |
