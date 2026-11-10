@@ -3,7 +3,8 @@
 NOAA's operational SWAN wave model produces forecaster-triggered runs at each
 coastal Weather Forecast Office (WFO). WFOs are grouped under an NWS region
 (er/sr/wr/pr/ar) on NOMADS, so the download path is
-``{region}.{YYYYMMDD}/{wfo}/{HH}/CG1/<wfo>_nwps_CG1_{YYYYMMDD}_{HH}00.grib2``.
+``{region}.{YYYYMMDD}/{wfo}/{HH}/CG1/nwps.t{HH}z.cg1.{wfo}.grib2`` (NWPS v1.5's name, from
+2026-11-09 12Z; see _grib_filename).
 
 Downloads flow through NOMADS's grib_filter CGI (``filter_{region}nwps.pl``)
 so we pull only a handful of variables — HTSGW, PERPW, DIRPW, SWELL, SWPER,
@@ -27,6 +28,11 @@ the subset's size and SHA-256 (what was read, whichever server answered), the fi
 response's headers, and a HEAD on the full CG1 file just after (Last-Modified and size; it may
 reach another server, so it is context, not proof). One ``NWPSREAD {json}`` log line per read,
 and ``pipeline/forecast_data/nwps_reads.json`` for db_import's nwps_cycle_reads (migration 028).
+
+HOW FRESH. One ``NWPSFRESH {json}`` line per office: the newest cycle listed, the cycle read,
+hours behind, its age, and the newer cycles that failed and why. Any office behind, without a
+cycle, or reading a cycle 24 h old or more gets a log warning, and the run prints one
+``::warning::`` line naming them all (see freshness / report_freshness).
 
 Requires the eccodes system lib (``apt install libeccodes0`` on Debian/Ubuntu;
 ``brew install eccodes`` on macOS).
@@ -212,7 +218,15 @@ def apply_wfos(spots: list[dict]) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 def _grib_filename(wfo: str, date_ymd: str, hh: str) -> str:
-    return f"{wfo}_nwps_CG1_{date_ymd}_{hh}00.grib2"
+    """The CG1 file's name inside its cycle folder (the folder carries the date).
+
+    NWPS v1.5 (NWS SCN 26-91, from the 2026-11-09 12Z run) renamed every output file, and
+    NOMADS renamed the cycles it still holds to match. The old name,
+    ``{wfo}_nwps_CG1_{YYYYMMDD}_{HH}00.grib2``, now gets a 404 from the file server and a 500
+    from grib_filter ("Filename does not match legal pattern"); every run from 2026-11-09
+    23:23Z fell back to older cycles or got none because of it.
+    """
+    return f"nwps.t{hh}z.cg1.{wfo}.grib2"
 
 
 def _grib_dir_path(region: str, wfo: str, date_ymd: str, hh: str) -> str:
@@ -493,6 +507,96 @@ def write_reads(path: Path | None = None) -> int:
     return len(_READS)
 
 
+# --------------------------------------------------------------------------- #
+# HOW FRESH EACH OFFICE'S CYCLE IS. A stale publish must never be silent: from #
+# 2026-11-09 23:23Z every run fell back to cycles up to 30 h old (NWPS v1.5     #
+# renamed the files) and nothing but per-attempt "returned 500" lines said so.  #
+# fetch() logs one NWPSFRESH line per office and one ::warning:: for the run.   #
+# --------------------------------------------------------------------------- #
+NWPS_STALE_AGE_H = 24.0   # a cycle this old at fetch time warns even when it is NOMADS's newest.
+                          # Normal runs read cycles 8 to 20.3 h old (2026-10-25 to 11-09 17:41Z).
+_CANDIDATES: dict[str, list[tuple[str, str]] | None] = {}   # wfo -> candidate_cycles' answer
+_FAILURES: dict[str, list[tuple[str, str, str]]] = {}       # wfo -> [(date, hh, reason)]
+_CACHE_HITS: set[str] = set()
+
+
+def _note_failure(wfo: str, date_ymd: str, hh: str, reason: str) -> None:
+    _FAILURES.setdefault(wfo, []).append((date_ymd, hh, reason))
+
+
+def _short_body(resp) -> str:
+    """An error body's text, tags stripped, on one line, to 200 characters; "" if none. Never
+    raises. grib_filter's 500 says why here ("Filename does not match legal pattern: ...")."""
+    try:
+        return " ".join(re.sub(r"<[^>]*>", " ", resp.text or "").split())[:200]
+    except Exception:  # noqa: BLE001  diagnosis only
+        return ""
+
+
+def _cycle_dt(date_ymd: str, hh: str) -> datetime:
+    return datetime(int(date_ymd[:4]), int(date_ymd[4:6]), int(date_ymd[6:]), int(hh),
+                    tzinfo=timezone.utc)
+
+
+def freshness(wfo: str, candidates, used, failures, now: datetime, cached: bool = False) -> dict:
+    """One office's freshness this run.
+
+    candidates: candidate_cycles' answer (newest first; None = a listing went unanswered).
+    used: the (date, hh) read, or None. failures: [(date, hh, reason)] for failed downloads.
+    hours_behind is the newest listed cycle minus the one read; age_h is fetch time minus the
+    cycle read. failed lists only the cycles NEWER than the one read (all of them when none was).
+    """
+    newest = candidates[0] if candidates else None
+    rec = {"wfo": wfo,
+           "listing": "unanswered" if candidates is None else ("empty" if not candidates else "ok"),
+           "newest_listed": cycle_timestamp(*newest) if newest else None,
+           "cycle_used": cycle_timestamp(*used) if used else None,
+           "source": None if used is None else ("cache" if cached else "download"),
+           "hours_behind": None, "age_h": None, "failed": []}
+    if used is not None:
+        rec["age_h"] = round((now - _cycle_dt(*used)).total_seconds() / 3600, 1)
+        if newest is not None:
+            rec["hours_behind"] = round((_cycle_dt(*newest) - _cycle_dt(*used)).total_seconds()
+                                        / 3600, 1)
+    cutoff = _cycle_dt(*used) if used is not None else None
+    rec["failed"] = [{"cycle": cycle_timestamp(d, h), "reason": r} for d, h, r in failures or []
+                     if cutoff is None or _cycle_dt(d, h) > cutoff]
+    return rec
+
+
+def stale_reason(rec: dict) -> str | None:
+    """Why this office's NWPS is stale this run, in a few words, or None when it is fresh."""
+    reasons = sorted({f["reason"] for f in rec["failed"]})
+    why = f" ({len(rec['failed'])} failed: {', '.join(reasons)})" if reasons else ""
+    if rec["cycle_used"] is None:
+        if rec["listing"] == "unanswered":
+            return "no cycle read — NOMADS listing unanswered"
+        if rec["listing"] == "empty":
+            return "no cycle read — none listed"
+        return f"no cycle read, newest listed {rec['newest_listed']}{why}"
+    if rec["hours_behind"]:
+        return f"{rec['hours_behind']:g} h behind the newest listed{why}"
+    if rec["age_h"] is not None and rec["age_h"] >= NWPS_STALE_AGE_H:
+        return f"newest listed cycle is {rec['age_h']:g} h old"
+    return None
+
+
+def report_freshness(records: list[dict]) -> str | None:
+    """Log one NWPSFRESH line per office and return the run's single ::warning:: line (None
+    when every office read a fresh cycle). The caller prints it to stdout for Actions."""
+    stale = []
+    for rec in records:
+        log.info("NWPSFRESH %s", json.dumps(rec, sort_keys=True))
+        why = stale_reason(rec)
+        if why:
+            log.warning("nwps: %s NWPS is stale this run: %s", rec["wfo"], why)
+            stale.append(f"{rec['wfo']} {why}")
+    if not stale:
+        return None
+    return (f"::warning::NWPS stale this run for {len(stale)} of {len(records)} offices "
+            f"(forecast rows keep older cycles): " + "; ".join(stale))
+
+
 def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path) -> bool:
     """Stream-download the subsetted GRIB via grib_filter to *dest*, and record the read."""
     url = _filter_url(region)
@@ -501,10 +605,12 @@ def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path
         s = session()
         with s.get(url, params=params, stream=True, timeout=300) as resp:
             if resp.status_code != 200:
+                body = _short_body(resp)
                 log.warning(
-                    "nwps: grib_filter %s/%s/%s%sZ returned %d",
-                    region, wfo, date_ymd, hh, resp.status_code,
+                    "nwps: grib_filter %s/%s/%s%sZ returned %d%s",
+                    region, wfo, date_ymd, hh, resp.status_code, f": {body}" if body else "",
                 )
+                _note_failure(wfo, date_ymd, hh, f"HTTP {resp.status_code}")
                 return False
             read_at = _utc_iso(datetime.now(timezone.utc))
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -524,6 +630,7 @@ def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path
                     bytes_written, region, wfo, date_ymd, hh,
                 )
                 tmp.unlink(missing_ok=True)
+                _note_failure(wfo, date_ymd, hh, f"{bytes_written}-byte body")
                 return False
             tmp.replace(dest)
             try:
@@ -536,6 +643,7 @@ def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path
     except Exception as e:  # noqa: BLE001
         log.warning("nwps: grib_filter download %s/%s/%s%sZ failed: %s",
                     region, wfo, date_ymd, hh, e)
+        _note_failure(wfo, date_ymd, hh, type(e).__name__)
         return False
 
 
@@ -552,6 +660,7 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
         return None
 
     cycles = candidate_cycles(wfo)
+    _CANDIDATES[wfo] = cycles
     if cycles is None:
         return None      # a listing went unanswered — logged; the office sits this run out
     if not cycles:
@@ -571,6 +680,7 @@ def _locate_cycle(wfo: str, use_cache: bool) -> tuple[Path, str, str] | None:
         path = _grib_path(wfo, date_ymd, hh)
         if path.exists() and path.stat().st_size > 0 and use_cache:
             log.info("nwps: %s/%s %sZ — cache hit (%s)", wfo, date_ymd, hh, path.name)
+            _CACHE_HITS.add(wfo)
             return path, date_ymd, hh
 
     # Download the newest cycle that exists. A download that fails falls through to the next
@@ -1261,6 +1371,10 @@ def fetch(
 
     NWPS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     _READS.clear()
+    _CANDIDATES.clear()
+    _FAILURES.clear()
+    _CACHE_HITS.clear()
+    fresh: list[dict] = []
     out: dict[str, list[dict]] = {}
     wfos_ok = 0
     wfos_missing = 0
@@ -1298,6 +1412,10 @@ def fetch(
 
     for wfo in iterator:
         located = _locate_cycle(wfo, use_cache)
+        if wfo in _CANDIDATES:   # absent only when a test stubs _locate_cycle
+            fresh.append(freshness(wfo, _CANDIDATES[wfo], located[1:] if located else None,
+                                   _FAILURES.get(wfo), datetime.now(timezone.utc),
+                                   cached=wfo in _CACHE_HITS))
         if located is None:
             wfos_missing += 1
             log.warning("nwps: no cycle used for WFO %s this run — its existing rows stay "
@@ -1507,6 +1625,9 @@ def fetch(
     NWPS_FORECAST_FILE.parent.mkdir(parents=True, exist_ok=True)
     NWPS_FORECAST_FILE.write_text(json.dumps(out, ensure_ascii=False))  # no indent — large
     log.info("nwps: %d cycle reads recorded to %s", write_reads(), NWPS_READS_FILE)
+    warning = report_freshness(fresh)
+    if warning:
+        print(warning, flush=True)
     log.info(
         "nwps: wrote %d spots to %s (WFOs ok=%d, missing=%d, parse_failed=%d)",
         spots_with_data, NWPS_FORECAST_FILE, wfos_ok, wfos_missing, wfos_parse_failed,

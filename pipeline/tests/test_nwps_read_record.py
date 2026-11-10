@@ -15,7 +15,7 @@ from pipeline.forecast import nwps
 MILLION_A_SHA256 = "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
 READ_AT = datetime(2026, 11, 8, 8, 23, 50, 400000, tzinfo=timezone.utc)
 FULL_URL = ("https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod/wr.20261108/mfr/00/CG1/"
-            "mfr_nwps_CG1_20261108_0000.grib2")
+            "nwps.t00z.cg1.mfr.grib2")
 
 
 class _Resp:
@@ -53,7 +53,7 @@ class _Now(datetime):
 
 
 FILTER_HEADERS = {"Content-Type": "application/octet-stream",
-                  "Content-Disposition": "attachment; filename=mfr_nwps_CG1_20261108_0000.grib2",
+                  "Content-Disposition": "attachment; filename=\"nwps.t00z.cg1.mfr.grib2\"",
                   "Set-Cookie": "session=xyz"}
 BODY = [b"a" * 400000, b"", b"a" * 600000]          # 1,000,000 bytes in two chunks
 
@@ -76,7 +76,7 @@ def test_a_read_is_recorded_with_the_subset_and_the_full_files_head(monkeypatch,
     want = {"wfo": "mfr", "nwps_cycle": "2026-11-08T00:00:00Z", "read_at": "2026-11-08T08:23:50Z",
             "run_id": "42667013127", "subset_bytes": 1000000, "subset_sha256": MILLION_A_SHA256,
             "filter_headers": {"Content-Type": "application/octet-stream",
-                               "Content-Disposition": "attachment; filename=mfr_nwps_CG1_20261108_0000.grib2"},
+                               "Content-Disposition": "attachment; filename=\"nwps.t00z.cg1.mfr.grib2\""},
             "file_last_modified": "2026-11-08T07:05:08Z", "file_bytes": 43017415, "head_error": None}
     assert nwps._READS == [want]
     assert sess.heads == [(FULL_URL, 60, True)]

@@ -7,7 +7,8 @@ wind-chop when chop > swell). NWPS *also* publishes a wave-system **tracking**
 file we had never parsed, which DOES carry per-system swell direction/period/
 height (SWAN-refracted, nearshore):
 
-    {region}.{YYYYMMDD}/{wfo}/{HH}/CG0/{wfo}_nwps_CG0_Trkng_{YYYYMMDD}_{HH}00.grib2
+    {region}.{YYYYMMDD}/{wfo}/{HH}/CG0/nwps.t{HH}z.cg0_trkng.{wfo}.grib2
+    (until NWPS v1.5, 2026-11-09 12Z: {wfo}_nwps_CG0_Trkng_{YYYYMMDD}_{HH}00.grib2)
 
 Exactly three fields, GRIB `level` = tracked-system index (1,2,3…), `step` =
 forecast hour (hourly):
@@ -61,10 +62,20 @@ def _trkng_url(wfo, date, cc, region):
     filename (robust to naming quirks); falls back to the verified deterministic
     pattern if the listing is unavailable."""
     cg0 = f"{nn.NOMADS}{region}.{date}/{wfo}/{cc}/CG0/"
-    hits = [n for n in nn._listdir(cg0) if "_CG0_Trkng_" in n and n.endswith(".grib2")]
+    hits = [n for n in nn._listdir(cg0) if is_trkng_file(n)]
     if hits:
         return cg0 + sorted(hits)[-1]
-    return cg0 + f"{wfo}_nwps_CG0_Trkng_{date}_{cc}00.grib2"
+    return cg0 + f"nwps.t{cc}z.cg0_trkng.{wfo}.grib2"
+
+
+def is_trkng_file(name):
+    """The CG0 tracking file under either naming: NWPS v1.5's ``nwps.t00z.cg0_trkng.mfr.grib2``
+    (as NOMADS lists it; NWS SCN 26-91 writes ``cg0.trkng``), or the old
+    ``mfr_nwps_CG0_Trkng_20261108_0000.grib2``."""
+    if not name.endswith(".grib2"):
+        return False
+    low = name.lower()
+    return "cg0_trkng" in low or "cg0.trkng" in low
 
 
 # --------------------------------------------------------------------------- #

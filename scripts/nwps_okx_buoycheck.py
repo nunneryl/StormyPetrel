@@ -66,8 +66,10 @@ def recent_cycles(n):
         wfo_url = f"{PROD}{REGION}.{date}/{WFO}/"
         for cc in sorted({c for x in listdir(wfo_url) for c in re.findall(r'^(\d\d)/$', x)},
                          reverse=True):
+            # NWPS v1.5 (2026-11-09 12Z) names it nwps.tCCz.cg1.okx.grib2; before, okx_nwps_CG1_...
             files = [x for x in listdir(f"{wfo_url}{cc}/CG1/")
-                     if x.endswith(".grib2") and "Trkng" not in x and "CG1" in x]
+                     if x.endswith(".grib2") and "trkng" not in x.lower()
+                     and (".cg1." in x or "_CG1_" in x)]
             if files:
                 cyc.append((date, cc, f"{wfo_url}{cc}/CG1/{sorted(files)[-1]}"))
             if len(cyc) >= n: return cyc
