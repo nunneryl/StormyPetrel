@@ -381,9 +381,15 @@ def _region_for(wfo):
 
 def _cycle_files(wfo, date, cc, region="er"):
     cg1 = f"{NOMADS}{region}.{date}/{wfo}/{cc}/CG1/"
-    files = [n for n in _listdir(cg1)
-             if n.endswith(".grib2") and "Trkng" not in n and "CG1" in n]   # field file, NOT CG0 tracking
+    files = [n for n in _listdir(cg1) if is_cg1_field_file(n)]
     return cg1, sorted(files)
+
+
+def is_cg1_field_file(name):
+    """A CG1 field file, under either naming: NWPS v1.5's ``nwps.t00z.cg1.box.grib2`` (NWS SCN
+    26-91, from 2026-11-09 12Z) or the old ``box_nwps_CG1_20261108_0000.grib2``. Not CG0
+    tracking, CG2/CG3, or the ripprob/runup/spc2d text files beside it."""
+    return name.endswith(".grib2") and (".cg1." in name or "_CG1_" in name)
 
 
 def find_latest_cycle(wfo, region="er", lookback_days=4):

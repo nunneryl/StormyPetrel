@@ -149,9 +149,9 @@ def _run(fake, offices):
     return got, statuses, pacer
 
 
-LOX_00 = f"{BASE}/wr.20260922/lox/00/CG1/lox_nwps_CG1_20260922_0000.grib2"
-LOX_06 = f"{BASE}/wr.20260922/lox/06/CG1/lox_nwps_CG1_20260922_0600.grib2"
-LOX_18 = f"{BASE}/wr.20260922/lox/18/CG1/lox_nwps_CG1_20260922_1800.grib2"
+LOX_00 = f"{BASE}/wr.20260922/lox/00/CG1/nwps.t00z.cg1.lox.grib2"
+LOX_06 = f"{BASE}/wr.20260922/lox/06/CG1/nwps.t06z.cg1.lox.grib2"
+LOX_18 = f"{BASE}/wr.20260922/lox/18/CG1/nwps.t18z.cg1.lox.grib2"
 
 
 def _table():
