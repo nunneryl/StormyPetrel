@@ -20,17 +20,28 @@ For every spot we:
    the nearest grid point's full time series per spot.
 4. Write ``pipeline/forecast_data/nwps.json`` keyed by spot name.
 
+WHICH COPY WAS READ. An office can post a cycle twice, and NOMADS then serves either copy from
+the same URL for a day or more (MFR 2026-11-07 12Z: 55,879,399 bytes last modified 19:07:09Z,
+and 43,017,313 bytes last modified 20:01:05Z). Each filter download is therefore recorded:
+the subset's size and SHA-256 (what was read, whichever server answered), the filter
+response's headers, and a HEAD on the full CG1 file just after (Last-Modified and size; it may
+reach another server, so it is context, not proof). One ``NWPSREAD {json}`` log line per read,
+and ``pipeline/forecast_data/nwps_reads.json`` for db_import's nwps_cycle_reads (migration 028).
+
 Requires the eccodes system lib (``apt install libeccodes0`` on Debian/Ubuntu;
 ``brew install eccodes`` on macOS).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import math
+import os
 import re
 import time
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import NamedTuple
 
@@ -43,6 +54,7 @@ from ..config import (
     NWPS_GRIB_FILTER_BASE,
     NWPS_GRIB_VARS,
     NWPS_NOMADS_BASE,
+    NWPS_READS_FILE,
     WFO_TO_REGION,
 )
 from ..http import session
@@ -418,8 +430,71 @@ def cycle_timestamp(date_ymd: str, hh: str) -> str:
     return f"{date_ymd[:4]}-{date_ymd[4:6]}-{date_ymd[6:]}T{hh}:00:00Z"
 
 
+# The cycles read this run, one record each, in the order read (see WHICH COPY WAS READ).
+# fetch() clears it at the start and writes it to NWPS_READS_FILE at the end.
+_READS: list[dict] = []
+
+
+def _utc_iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _http_date(value) -> str | None:
+    """An HTTP date header as ISO UTC to the second, or None when absent or unreadable."""
+    if not value:
+        return None
+    try:
+        dt = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return _utc_iso(dt)
+
+
+def _full_file_head(s, region: str, wfo: str, date_ymd: str, hh: str) -> dict:
+    """{file_last_modified, file_bytes, head_error} from a HEAD on the full CG1 file. Never
+    raises: a failure is recorded in head_error and the read stands."""
+    out = {"file_last_modified": None, "file_bytes": None, "head_error": None}
+    try:
+        r = s.head(_direct_grib_url(region, wfo, date_ymd, hh), timeout=60, allow_redirects=True)
+    except Exception as e:  # noqa: BLE001  context only; never a reason to drop the read
+        out["head_error"] = f"{type(e).__name__}: {e}"
+        return out
+    if r.status_code != 200:
+        out["head_error"] = f"HTTP {r.status_code}"
+        return out
+    length = r.headers.get("Content-Length")
+    out["file_last_modified"] = _http_date(r.headers.get("Last-Modified"))
+    out["file_bytes"] = int(length) if length and str(length).isdigit() else None
+    return out
+
+
+def _record_read(s, region, wfo, date_ymd, hh, read_at, headers, size, digest) -> dict:
+    """Record one filter download (see WHICH COPY WAS READ), log it, and keep it for fetch()."""
+    rec = {"wfo": wfo, "nwps_cycle": cycle_timestamp(date_ymd, hh), "read_at": read_at,
+           "run_id": os.environ.get("GITHUB_RUN_ID") or None,
+           "subset_bytes": size, "subset_sha256": digest,
+           "filter_headers": {k: v for k, v in dict(headers or {}).items()
+                              if k.lower() != "set-cookie"}}
+    rec.update(_full_file_head(s, region, wfo, date_ymd, hh))
+    log.info("NWPSREAD %s", json.dumps(rec, sort_keys=True))
+    _READS.append(rec)
+    return rec
+
+
+def write_reads(path: Path | None = None) -> int:
+    """Write this run's read records for db_import (NWPS_READS_FILE); the number written."""
+    path = Path(path) if path is not None else NWPS_READS_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(_READS, indent=1, sort_keys=True))
+    return len(_READS)
+
+
 def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path) -> bool:
-    """Stream-download the subsetted GRIB via grib_filter to *dest*."""
+    """Stream-download the subsetted GRIB via grib_filter to *dest*, and record the read."""
     url = _filter_url(region)
     params = _filter_download_params(region, wfo, date_ymd, hh)
     try:
@@ -431,13 +506,16 @@ def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path
                     region, wfo, date_ymd, hh, resp.status_code,
                 )
                 return False
+            read_at = _utc_iso(datetime.now(timezone.utc))
             dest.parent.mkdir(parents=True, exist_ok=True)
             tmp = dest.with_suffix(dest.suffix + ".partial")
             bytes_written = 0
+            digest = hashlib.sha256()
             with tmp.open("wb") as f:
                 for chunk in resp.iter_content(chunk_size=1 << 20):
                     if chunk:
                         f.write(chunk)
+                        digest.update(chunk)
                         bytes_written += len(chunk)
             if bytes_written < 1024:
                 # A 0-variable filter or an error-page render returns a tiny body.
@@ -448,6 +526,12 @@ def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path
                 tmp.unlink(missing_ok=True)
                 return False
             tmp.replace(dest)
+            try:
+                _record_read(s, region, wfo, date_ymd, hh, read_at, resp.headers,
+                             bytes_written, digest.hexdigest())
+            except Exception as e:  # noqa: BLE001  a record must never cost the read itself
+                log.warning("nwps: could not record the read of %s/%s %sZ: %s",
+                            wfo, date_ymd, hh, e)
         return True
     except Exception as e:  # noqa: BLE001
         log.warning("nwps: grib_filter download %s/%s/%s%sZ failed: %s",
@@ -1176,6 +1260,7 @@ def fetch(
         return {}
 
     NWPS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _READS.clear()
     out: dict[str, list[dict]] = {}
     wfos_ok = 0
     wfos_missing = 0
@@ -1421,6 +1506,7 @@ def fetch(
 
     NWPS_FORECAST_FILE.parent.mkdir(parents=True, exist_ok=True)
     NWPS_FORECAST_FILE.write_text(json.dumps(out, ensure_ascii=False))  # no indent — large
+    log.info("nwps: %d cycle reads recorded to %s", write_reads(), NWPS_READS_FILE)
     log.info(
         "nwps: wrote %d spots to %s (WFOs ok=%d, missing=%d, parse_failed=%d)",
         spots_with_data, NWPS_FORECAST_FILE, wfos_ok, wfos_missing, wfos_parse_failed,

@@ -601,6 +601,9 @@ NWPS_NOMADS_BASE = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/nwps/prod"
 NWPS_GRIB_FILTER_BASE = "https://nomads.ncep.noaa.gov/cgi-bin"
 NWPS_CACHE_DIR = CACHE_DIR / "nwps"
 NWPS_FORECAST_FILE = FORECAST_DATA_DIR / "nwps.json"
+# One record per NWPS cycle read this run (nwps._download_filtered); db_import uploads it to
+# nwps_cycle_reads (migration 028).
+NWPS_READS_FILE = FORECAST_DATA_DIR / "nwps_reads.json"
 NWPS_CYCLE_LOOKBACK = 4  # number of (day, cycle) candidates to try, newest first
 # Variables we pull through the NOMADS grib_filter for subsetting. Keeping the
 # list tight drops per-WFO download from ~100–300 MB to ~30–50 MB.
