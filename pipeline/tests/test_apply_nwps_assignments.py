@@ -696,7 +696,15 @@ _RUN67 = {"bandon-beach": ((43.09531, -124.46111), 2.120, (43.09531, -124.43725)
           "revere-beach": ((42.38296, -70.93571), 5.745, (42.41909, -70.98312)),
           "hubbard-creek": ((42.71598, -124.50882), 3.290, (42.73405, -124.48497)),
           "galveston-seawall": ((29.25236, -94.82882), 4.983, (29.28476, -94.79235))}
-_MOVES = {**_RUN50, **_RUN58, **_RUN67}
+# NWPS v1.5 (2026-11-09): the cell the rule picks on the new mtr and sew grids, with the km
+# from the spot as the scan printed it (2 decimals); node-preview run 71 is their gate.
+_V15 = {"pacifica-linda-mar": ((37.61754, -122.5275), 2.870, (37.61754, -122.5)),
+        "rockaway-beach-pacifica": ((37.61754, -122.5275), 2.700, (37.61754, -122.5)),
+        "avila-beach": ((35.13539, -120.7675), 5.610, (35.15796, -120.74)),
+        "hobuck-beach": ((48.32843, -124.68872), 1.830, (48.33739, -124.71469)),
+        "westport-jetty": ((46.90296, -124.16934), 2.380, (46.89391, -124.14337)),
+        "westport-light-state-park": ((46.89394, -124.15635), 1.890, (46.89391, -124.14337))}
+_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15}
 
 
 def test_live_overrides_are_run_50s_58s_and_67s_cells():
@@ -744,7 +752,7 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the fourteen moved included, already read what apply would write.
+    # spot's node fields, the twenty moved included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()

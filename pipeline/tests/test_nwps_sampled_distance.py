@@ -617,7 +617,7 @@ def test_deliberate_nodes_without_a_file_is_empty():
 
 def test_the_live_overrides_are_the_nodes_the_roster_bakes():
     """In production the exemption applies only if spots_enriched.json carries each
-    override's node exactly. Run 50's, run 58's and run 67's cells, copied by hand."""
+    override's node exactly. Run 50's, run 58's, run 67's and the v1.5 cells, copied by hand."""
     live = nwps.deliberate_nodes()
     assert live == {"duck-pier": (36.19331, -75.72892), "spring-ave": (27.51019, -82.80924),
                     "st-pete-beach": (27.7373, -82.86304),
@@ -630,7 +630,14 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "short-sands-beach-york": (43.18921, -70.56172),
                     "revere-beach": (42.38296, -70.93571),
                     "hubbard-creek": (42.71598, -124.50882),
-                    "galveston-seawall": (29.25236, -94.82882)}
+                    "galveston-seawall": (29.25236, -94.82882),
+                    # NWPS v1.5's grids (2026-11-10), node-preview run 71
+                    "pacifica-linda-mar": (37.61754, -122.5275),
+                    "rockaway-beach-pacifica": (37.61754, -122.5275),
+                    "avila-beach": (35.13539, -120.7675),
+                    "hobuck-beach": (48.32843, -124.68872),
+                    "westport-jetty": (46.90296, -124.16934),
+                    "westport-light-state-park": (46.89394, -124.15635)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}
