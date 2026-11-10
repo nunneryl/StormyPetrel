@@ -520,3 +520,83 @@ def test_a_run_that_recorded_no_publication_time_fails_loudly(monkeypatch, capsy
 def test_an_unknown_office_is_refused_rather_than_guessed(capsys):
     assert P.main(["--offices", "lox,zzz"]) == 2
     assert "zzz" in capsys.readouterr().err
+
+
+# --------------------------------------------------------------------------- #
+# 7 — the product-change alarm                                                 #
+# --------------------------------------------------------------------------- #
+# The counts are the saved runs': 2026-11-08 22:28Z, 440 of 440 file requests 200; 2026-11-09
+# 22:41Z, the first run after NWPS v1.5 renamed the files, 419 404s and 25 200s of 444.
+
+def _files(*groups):
+    """File records, one per url, from (count, status) groups; urls are unique per record."""
+    out, i = [], 0
+    for count, status in groups:
+        for _ in range(count):
+            out.append({"kind": "file", "url": f"{BASE}/f{i}", "method": "HEAD", "status": status})
+            i += 1
+    return out
+
+
+def test_the_rename_run_alarms_with_its_counts():
+    assert P.file_alarm(_files((419, 404), (25, 200))) == (
+        "419 of 444 NWPS file requests (94%) did not return 200 (404: 419). The usual cause is a "
+        "NOAA product change such as a file rename (NWPS v1.5 did this on 2026-11-09): check the "
+        "NWS service change notices and the pipeline's NWPS fetch.")
+
+
+def test_an_ordinary_run_does_not():
+    assert P.file_alarm(_files((440, 200))) is None
+    assert P.file_alarm(_files((384, 200), (2, 404))) is None      # 2026-11-08 06:41Z
+
+
+def test_the_line_is_more_than_a_fifth_of_at_least_fifty_files():
+    assert (P.ALARM_MIN_FILES, P.ALARM_BAD_FRACTION) == (50, 0.20)
+    assert P.file_alarm(_files((40, 200), (10, 404))) is None       # 10 of 50 = 20%: not more
+    assert P.file_alarm(_files((39, 200), (11, 404))).startswith(
+        "11 of 50 NWPS file requests (22%) did not return 200 (404: 11).")
+    assert P.file_alarm(_files((49, 404))) is None                  # 49 files: too few to say
+
+
+def test_each_file_counts_once_by_its_last_answer_and_no_answer_is_an_error():
+    refused = [{"kind": "file", "url": f"{BASE}/g{i}", "method": "HEAD", "status": 405}
+               for i in range(30)]
+    ranged = [{"kind": "file", "url": f"{BASE}/g{i}", "method": "GET", "status": 206 if i < 10 else 200}
+              for i in range(30)]
+    timeouts = _files((20, None))
+    # 50 files: the 30 refused HEADs count by their GET (10 x 206, 20 x 200), plus 20 timeouts
+    assert P.file_alarm(refused + ranged + timeouts).startswith(
+        "30 of 50 NWPS file requests (60%) did not return 200 (206: 10, error: 20).")
+    listings = [{"kind": "listing", "url": f"{BASE}/l{i}", "status": 403} for i in range(60)]
+    assert P.file_alarm(listings + _files((50, 200))) is None, "a listing is not a file"
+
+
+def test_an_alarm_fails_the_run_after_everything_is_logged(monkeypatch, capsys):
+    recs = [dict(r, last_modified="2026-11-09T07:16:07Z") if r["status"] == 200 else r
+            for r in _files((419, 404), (25, 200))]
+
+    def fake_observe(offices, fetch, pacer, emit, now=None):
+        for r in recs:
+            emit(r)
+        return Counter({"404": 419, "200": 25})
+    monkeypatch.setattr(P, "observe", fake_observe)
+    monkeypatch.setattr(P, "make_fetch", lambda timeout_s: None)
+    assert P.main(["--offices", "lox"]) == 1
+    cap = capsys.readouterr()
+    out = cap.out.splitlines()
+    assert sum(1 for ln in out if ln.startswith("NWPSPUB ")) == 444, "every record is logged first"
+    assert out[-1].startswith("::error::419 of 444 NWPS file requests (94%)")
+    assert "# 419 of 444 NWPS file requests" in cap.err
+
+
+def test_a_run_without_an_alarm_still_passes(monkeypatch, capsys):
+    recs = [dict(r, last_modified="2026-11-08T07:05:08Z") for r in _files((440, 200))]
+
+    def fake_observe(offices, fetch, pacer, emit, now=None):
+        for r in recs:
+            emit(r)
+        return Counter({"200": 440})
+    monkeypatch.setattr(P, "observe", fake_observe)
+    monkeypatch.setattr(P, "make_fetch", lambda timeout_s: None)
+    assert P.main(["--offices", "lox"]) == 0
+    assert "::error::" not in capsys.readouterr().out
