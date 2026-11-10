@@ -105,6 +105,10 @@ export type Forecast = {
   effective_size_ft: number | null;
   stars: number | null;
   tide_level_ft: number | null;
+  /** The NWPS cycle this hour was read from (migration 019), as PostgREST returns a timestamptz;
+   *  null on an hour no NWPS cycle supplied. lib/modelRunAge reads it for the "Wave model run is
+   *  N h old" note; nothing rated reads it. */
+  nwps_cycle: string | null;
 };
 
 export type BuoyObservation = {

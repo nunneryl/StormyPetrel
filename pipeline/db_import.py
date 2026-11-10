@@ -32,6 +32,7 @@ from .config import (
     BUOYS_FORECAST_FILE,
     COORD_DERIVED_DIST_TOLERANCE_KM,
     DEFAULT_ENRICHED_OUTPUT,
+    NWPS_FRESHNESS_FILE,
     NWPS_READS_FILE,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
@@ -88,6 +89,9 @@ WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
     "nwps_cycle_reads": ("wfo", "nwps_cycle", "read_at", "run_id", "subset_bytes",
                          "subset_sha256", "filter_headers", "file_last_modified", "file_bytes",
                          "head_error"),
+    "nwps_office_freshness": ("fetched_at", "wfo", "run_id", "listing", "newest_listed",
+                              "cycle_used", "source", "hours_behind", "age_h", "failed",
+                              "stale_reason", "spots", "spots_written"),
 }
 
 # The ON CONFLICT key of each upsert. A key column can never be left out: the upsert has
@@ -99,6 +103,7 @@ UPSERT_KEYS: dict[str, tuple[str, ...]] = {
     "buoy_observations": ("buoy_id", "observed_at"),
     "tide_predictions": ("station_id", "predicted_at"),
     "nwps_cycle_reads": ("wfo", "nwps_cycle", "read_at"),
+    "nwps_office_freshness": ("wfo", "fetched_at"),
 }
 
 # Names the column preflight's result file. Only when it is set does db_import leave anything
@@ -1015,6 +1020,24 @@ def import_nwps_reads(client, reads_path: Path = NWPS_READS_FILE, leave_out=None
     return len(records)
 
 
+def import_nwps_freshness(client, freshness_path: Path = NWPS_FRESHNESS_FILE,
+                          leave_out=None) -> int:
+    """Upsert this run's office freshness (nwps.fetch's nwps_freshness.json) into
+    nwps_office_freshness: one row per office per run, offices that read no cycle included,
+    keyed on (wfo, fetched_at) (migration 029)."""
+    rows = _read_forecast_json(freshness_path, "nwps_freshness")
+    if rows is None:
+        return 0
+    cols = WRITTEN_COLUMNS["nwps_office_freshness"]
+    records = [{c: r.get(c) for c in cols} for r in rows if r.get("wfo") and r.get("fetched_at")]
+    log.info("nwps_office_freshness: upserting %d rows", len(records))
+    if records:
+        client.table("nwps_office_freshness").upsert(
+            _without(records, leave_out, "nwps_office_freshness"),
+            on_conflict="wfo,fetched_at").execute()
+    return len(records)
+
+
 # ---------------------------------------------------------------------------
 # Buoy coordinate snapshot (durable id -> lat/lng, for SQL audit + import validation)
 # ---------------------------------------------------------------------------
@@ -1050,7 +1073,7 @@ def tables_written(spots: bool = True, forecasts: bool = True, buoys: bool = Tru
             + (("forecasts",) if forecasts else ())
             + (("buoy_observations",) if buoys else ())
             + (("tide_predictions",) if tides else ())
-            + (("nwps_cycle_reads",) if forecasts else ()))
+            + (("nwps_cycle_reads", "nwps_office_freshness") if forecasts else ()))
 
 
 def run_all(
@@ -1091,6 +1114,7 @@ def run_all(
     if forecasts:
         # Last, so a problem with this record can never hold back a forecast, buoy or tide row.
         stats["nwps_cycle_reads"] = import_nwps_reads(client, leave_out=leave_out)
+        stats["nwps_office_freshness"] = import_nwps_freshness(client, leave_out=leave_out)
     return stats
 
 

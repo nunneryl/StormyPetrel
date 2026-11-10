@@ -50,6 +50,11 @@
  *      any other hour: the Surf height tile and sp-headline-hour as in 5, and the grid's period
  *      "11s" and direction "280°" (W), from swell_tp/swell_dp. Nothing on the page says the hour
  *      was blank.
+ *  13. "Wave model run is N h old" (lib/modelRunAge): every fixture row carries an NWPS cycle six
+ *      hours before the hour the test starts in, and no page says anything about it; one spot's
+ *      rows carry a cycle 30 hours before instead, and its page says "Wave model run is N h old"
+ *      with N the whole hours from that cycle to the page's own sp-rendered-at (30, or 31 if the
+ *      build crossed an hour), worked out here, and the run's time in Pacific time.
  *   9. A spot row's time_zone reaches the page's times (lib/spotTime): Pensacola Beach, stored as
  *      America/Chicago, shows Central abbreviations only; Jacksonville Beach Pier, whose row has
  *      no time_zone in the first build (the shape of a row read before migration 026), shows the
@@ -209,8 +214,14 @@ const BLANK_HOUR = {
   ...SPOT_FIELDS, id: 990010, slug: 'stamp-test-blank-hour', name: 'Stamp Test Blank Hour',
   time_zone: 'America/Los_Angeles',
 };
+// 13: a spot whose rows come from an NWPS cycle 30 hours before the test's hour.
+const OLD_RUN = {
+  ...SPOT_FIELDS, id: 990011, slug: 'stamp-test-old-run', name: 'Stamp Test Old Run',
+  time_zone: 'America/Los_Angeles',
+};
+const OLD_CYCLE_MS = T0 - 30 * HOUR;
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
-  BLANK_HOUR];
+  BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
@@ -241,6 +252,8 @@ function row(spotId: number, offsetHours: number): Record<string, unknown> {
     face_ft: face, face_ft_raw: face,
     dir_gain: 1, wind_mult: 1, tide_mult: 1, chop_ratio: 0.1, chop_mult: 1,
     period_quality: 1, effective_size_ft: face, stars: 3, tide_level_ft: 2.5,
+    // 13: an NWPS cycle six hours before the test's hour, too young for the note.
+    nwps_cycle: new Date(T0 - 6 * HOUR).toISOString().replace('.000Z', '+00:00'),
   };
 }
 
@@ -256,7 +269,10 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
   ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) =>
-    (sp.id === BLANK_HOUR.id ? { ...row(sp.id, h), ...BLANK } : row(sp.id, h)))] as
+    (sp.id === BLANK_HOUR.id ? { ...row(sp.id, h), ...BLANK }
+      : sp.id === OLD_RUN.id
+        ? { ...row(sp.id, h), nwps_cycle: new Date(OLD_CYCLE_MS).toISOString().replace('.000Z', '+00:00') }
+        : row(sp.id, h)))] as
     [number, Record<string, unknown>[]]),
 ]);
 
@@ -670,6 +686,26 @@ async function main(): Promise<void> {
     said ? blankText.slice(Math.max(0, said.index - 60), said.index + 60) : '');
   const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
   check(`${WITH_ROW.slug}: no buoy, "No nearby buoy."`, plain.includes('No nearby buoy.'));
+  // 13: the model-run note, only on the spot whose cycle is 30 hours old.
+  check(`${WITH_ROW.slug}: a cycle six hours old, no model-run note`,
+    !plain.includes('Wave model run') && !plain.includes('data-model-run-age'));
+  const oldPage = await load(OLD_RUN.slug);
+  const oldHtml = oldPage.html.replace(/<!-- -->/g, '');
+  const oldRendered = asTimestamp(`${OLD_RUN.slug}: sp-rendered-at`,
+    oneTagInHead(OLD_RUN.slug, oldPage.html, 'sp-rendered-at'));
+  const wantHours = Math.floor((oldRendered - OLD_CYCLE_MS) / HOUR);
+  check(`${OLD_RUN.slug}: the cycle is 30 h old, 31 if the build crossed an hour`,
+    wantHours === 30 || wantHours === 31, String(wantHours));
+  check(`${OLD_RUN.slug}: "Wave model run is ${wantHours} h old"`,
+    oldHtml.includes(`data-model-run-age="${wantHours}"`)
+      && oldHtml.includes(`Wave model run is ${wantHours} h old`));
+  check(`${OLD_RUN.slug}: the run's time, in Pacific time`,
+    /Wave model run is \d+ h old · NOAA NWPS run of [A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2}(am|pm) P[DS]T/
+      .test(oldHtml), (/Wave model run[^<]*/.exec(oldHtml) ?? [''])[0]);
+  for (const sp of [PIPELINE, PENSACOLA, BLANK_HOUR]) {
+    const other = (await load(sp.slug)).html;
+    check(`${sp.slug}: a cycle six hours old, no model-run note`, !other.includes('Wave model run'));
+  }
 
   // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard
   // time), so they are held to the zone's pair; the buoy reading is a fixed instant.

@@ -11,6 +11,7 @@ import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
 import { CurrentHero } from '@/components/CurrentHero';
+import { ModelRunAge } from '@/components/ModelRunAge';
 import { OptimalConditions } from '@/components/OptimalConditions';
 import { CamSection } from '@/components/CamEmbed';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -101,7 +102,7 @@ async function loadForecasts(spotId: number): Promise<Forecast[]> {
   const { data, error } = await supabaseUncached
     .from('forecasts')
     .select(
-      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft',
+      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft, nwps_cycle',
     )
     .eq('spot_id', spotId)
     .eq('source', 'nwps')
@@ -307,6 +308,10 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </div>
         <CurrentHero rows={forecasts} serverNowMs={nowMs} />
       </header>
+
+      {/* "Wave model run is N h old", only when the newest NWPS cycle behind these rows is 24 h
+          old or more (lib/modelRunAge). Display only: no rating reads it. */}
+      <ModelRunAge rows={forecasts} serverNowMs={nowMs} timeZone={timeZone} />
 
       {/* Factual blurb from pipeline.generate_descriptions. Renders
           nothing (no placeholder) when the column is still null so
