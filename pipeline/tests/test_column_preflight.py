@@ -77,19 +77,24 @@ WRITTEN = {
     "nwps_cycle_reads": ["wfo", "nwps_cycle", "read_at", "run_id", "subset_bytes",
                          "subset_sha256", "filter_headers", "file_last_modified", "file_bytes",
                          "head_error"],
+    "nwps_office_freshness": ["fetched_at", "wfo", "run_id", "listing", "newest_listed",
+                              "cycle_used", "source", "hours_behind", "age_h", "failed",
+                              "stale_reason", "spots", "spots_written"],
 }
 KEYS = {"buoys": ("id",), "spots": ("slug",), "forecasts": ("spot_id", "valid_time", "source"),
         "buoy_observations": ("buoy_id", "observed_at"),
         "tide_predictions": ("station_id", "predicted_at"),
-        "nwps_cycle_reads": ("wfo", "nwps_cycle", "read_at")}
+        "nwps_cycle_reads": ("wfo", "nwps_cycle", "read_at"),
+        "nwps_office_freshness": ("wfo", "fetched_at")}
 # Columns the live tables have that db_import never sends. break_type_confidence is generated
 # from break_type_source by migration 020, so it is read back but never written.
 DB_ONLY = {"buoys": [], "spots": ["id", "geom", "aka_names", "created_at", "updated_at",
                                   "break_type_confidence", "bottom_confidence"],
            "forecasts": ["id", "fetched_at"], "buoy_observations": ["id"],
-           "tide_predictions": ["id"], "nwps_cycle_reads": ["id"]}
+           "tide_predictions": ["id"], "nwps_cycle_reads": ["id"],
+           "nwps_office_freshness": ["id"]}
 ALL_TABLES = ("buoys", "spots", "forecasts", "buoy_observations", "tide_predictions",
-              "nwps_cycle_reads")
+              "nwps_cycle_reads", "nwps_office_freshness")
 
 
 def live(*missing: str) -> dict[str, list[str]]:
@@ -277,6 +282,12 @@ READ = {"wfo": "mtr", "nwps_cycle": "2026-09-24T00:00:00Z", "read_at": "2026-09-
         "filter_headers": {"Content-Type": "application/octet-stream"},
         "file_last_modified": "2026-09-24T01:58:00Z", "file_bytes": 210000000, "head_error": None}
 READ_ROW = dict(READ)
+# One office's freshness as nwps.fetch records it, and the row it becomes (column order).
+FRESH = {"fetched_at": "2026-09-24T02:05:00Z", "wfo": "mtr", "run_id": "123", "listing": "ok",
+         "newest_listed": "2026-09-24T00:00:00Z", "cycle_used": "2026-09-24T00:00:00Z",
+         "source": "download", "hours_behind": 0.0, "age_h": 2.1, "failed": [],
+         "stale_reason": None, "spots": 1, "spots_written": 1}
+FRESH_ROW = dict(FRESH)
 
 # The line the run ends on when nwps_cycle is missing, exactly.
 NWPS_CYCLE_LINE = ("Missing database columns: forecasts.nwps_cycle "
@@ -294,13 +305,16 @@ def run(tmp_path, monkeypatch):
     waits = []
     monkeypatch.setattr(P, "_sleep", waits.append)
     for name, data in (("spots", ENRICHED), ("ratings", {"Steamer Lane": [HOUR]}),
-                       ("buoys", BUOYS), ("tides", TIDES), ("nwps_reads", [READ])):
+                       ("buoys", BUOYS), ("tides", TIDES), ("nwps_reads", [READ]),
+                       ("nwps_freshness", [FRESH])):
         (tmp_path / f"{name}.json").write_text(json.dumps(data))
     for fn, kw in (("import_spots", "spots_path"), ("import_forecasts", "ratings_path"),
                    ("import_buoys", "buoys_path"), ("import_tides", "tides_path"),
-                   ("import_nwps_reads", "reads_path")):
+                   ("import_nwps_reads", "reads_path"),
+                   ("import_nwps_freshness", "freshness_path")):
         stem = {"spots_path": "spots", "ratings_path": "ratings", "buoys_path": "buoys",
-                "tides_path": "tides", "reads_path": "nwps_reads"}[kw]
+                "tides_path": "tides", "reads_path": "nwps_reads",
+                "freshness_path": "nwps_freshness"}[kw]
         monkeypatch.setattr(D, fn, functools.partial(getattr(D, fn), **{kw: tmp_path / f"{stem}.json"}))
     monkeypatch.setattr(D, "_excluded_slugs", lambda: set())
     monkeypatch.setattr(D, "_load_tide_freshness", lambda *a, **k: {})
@@ -481,6 +495,7 @@ def test_with_every_column_present_a_run_sends_exactly_todays_rows_and_ends_gree
     assert fake.text_sent("tide_predictions") == [json.dumps(TIDE_ROWS)]
     assert fake.text_sent("buoys") == [json.dumps([BUOYS_META_ROW])]
     assert fake.text_sent("nwps_cycle_reads") == [json.dumps([READ_ROW])]
+    assert fake.text_sent("nwps_office_freshness") == [json.dumps([FRESH_ROW])]
     capsys.readouterr()
     assert run.finish() == 0
     assert capsys.readouterr().out == "", "a green run's last step says nothing"
@@ -495,7 +510,7 @@ def test_the_check_changes_nothing_about_what_is_sent(run):
     assert checked.sent == unchecked.sent
     assert [t for t, _k, _x in checked.sent] == ["buoys", "spots", "forecasts",
                                                  "buoy_observations", "tide_predictions",
-                                                 "nwps_cycle_reads"]
+                                                 "nwps_cycle_reads", "nwps_office_freshness"]
 
 
 def test_the_preflight_asks_for_the_description_once_through_the_clients_own_session(run):
@@ -677,7 +692,7 @@ def test_every_builder_sends_exactly_its_declared_columns(run):
     fake = FakePostgrest(live())
     run.go(fake)
     for table in ("buoys", "forecasts", "buoy_observations", "tide_predictions",
-                  "nwps_cycle_reads"):
+                  "nwps_cycle_reads", "nwps_office_freshness"):
         for row in fake.rows_sent(table):
             assert list(row) == WRITTEN[table], table
     # break_type_confidence is read back with the row and must not be sent back: migration
@@ -695,16 +710,17 @@ def test_every_upsert_matches_on_its_declared_key(run):
     assert {t: k for t, k, _x in fake.sent} == {
         "buoys": "id", "spots": "slug", "forecasts": "spot_id,valid_time,source",
         "buoy_observations": "buoy_id,observed_at", "tide_predictions": "station_id,predicted_at",
-        "nwps_cycle_reads": "wfo,nwps_cycle,read_at"}
+        "nwps_cycle_reads": "wfo,nwps_cycle,read_at",
+        "nwps_office_freshness": "wfo,fetched_at"}
 
 
 @pytest.mark.parametrize("flag, tables", [
     ("--all", ("buoys", "spots", "forecasts", "buoy_observations", "tide_predictions",
-               "nwps_cycle_reads")),
+               "nwps_cycle_reads", "nwps_office_freshness")),
     ("--buoys-only", ("buoy_observations",)),
     ("--spots-only", ("buoys", "spots")),
     ("--forecasts-only", ("forecasts", "buoy_observations", "tide_predictions",
-                          "nwps_cycle_reads")),
+                          "nwps_cycle_reads", "nwps_office_freshness")),
     ("--tides-only", ("tide_predictions",)),
 ])
 def test_the_preflight_checks_exactly_the_tables_that_mode_writes(run, flag, tables):

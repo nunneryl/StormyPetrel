@@ -57,6 +57,7 @@ from ..config import (
     NWPS_CACHE_DIR,
     NWPS_CYCLE_LOOKBACK,
     NWPS_FORECAST_FILE,
+    NWPS_FRESHNESS_FILE,
     NWPS_GRIB_FILTER_BASE,
     NWPS_GRIB_VARS,
     NWPS_NOMADS_BASE,
@@ -595,6 +596,28 @@ def report_freshness(records: list[dict]) -> str | None:
         return None
     return (f"::warning::NWPS stale this run for {len(stale)} of {len(records)} offices "
             f"(forecast rows keep older cycles): " + "; ".join(stale))
+
+
+def freshness_rows(records: list[dict], fetched_at: str, run_id: str | None,
+                   spots_by_wfo: dict[str, int], written_by_wfo: dict[str, int]) -> list[dict]:
+    """This run's nwps_office_freshness rows (migration 029): one per office fetch() tried,
+    whether or not it read a cycle. fetched_at (the fetch's start) is the same on every row of
+    a run, so (wfo, fetched_at) is one office in one run. spots is how many spots the office
+    serves; spots_written how many of them got a forecast series this run."""
+    return [{"fetched_at": fetched_at, "wfo": r["wfo"], "run_id": run_id,
+             "listing": r["listing"], "newest_listed": r["newest_listed"],
+             "cycle_used": r["cycle_used"], "source": r["source"],
+             "hours_behind": r["hours_behind"], "age_h": r["age_h"], "failed": r["failed"],
+             "stale_reason": stale_reason(r), "spots": spots_by_wfo.get(r["wfo"], 0),
+             "spots_written": written_by_wfo.get(r["wfo"], 0)} for r in records]
+
+
+def write_freshness(rows: list[dict], path: Path | None = None) -> int:
+    """Write this run's freshness rows for db_import (NWPS_FRESHNESS_FILE); the number written."""
+    path = Path(path) if path is not None else NWPS_FRESHNESS_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(rows, indent=1, sort_keys=True))
+    return len(rows)
 
 
 def _download_filtered(region: str, wfo: str, date_ymd: str, hh: str, dest: Path) -> bool:
@@ -1375,6 +1398,7 @@ def fetch(
     _FAILURES.clear()
     _CACHE_HITS.clear()
     fresh: list[dict] = []
+    fetched_at = _utc_iso(datetime.now(timezone.utc))
     out: dict[str, list[dict]] = {}
     wfos_ok = 0
     wfos_missing = 0
@@ -1628,6 +1652,14 @@ def fetch(
     warning = report_freshness(fresh)
     if warning:
         print(warning, flush=True)
+    wfo_of = {s["name"]: s.get("nwps_wfo") for s in spots}
+    written_by_wfo: dict[str, int] = {}
+    for name in out:
+        written_by_wfo[wfo_of.get(name)] = written_by_wfo.get(wfo_of.get(name), 0) + 1
+    log.info("nwps: %d office freshness rows recorded to %s",
+             write_freshness(freshness_rows(fresh, fetched_at, os.environ.get("GITHUB_RUN_ID") or None,
+                                            dict(wfo_counts), written_by_wfo)),
+             NWPS_FRESHNESS_FILE)
     log.info(
         "nwps: wrote %d spots to %s (WFOs ok=%d, missing=%d, parse_failed=%d)",
         spots_with_data, NWPS_FORECAST_FILE, wfos_ok, wfos_missing, wfos_parse_failed,
