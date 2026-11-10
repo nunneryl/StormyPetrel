@@ -250,6 +250,15 @@ jobs:
       - name: Revalidate ISR cache (home + map + regions + CHANGED spot pages only)
         run: python -m pipeline.revalidate --scope full --diff-from pipeline/forecast_data/ratings_snapshot.json
 
+      - name: Fail the run if NWPS is stale for many offices
+        # An early warning of a NOAA product change or a broken NWPS fetch: 5 or more offices
+        # with no cycle, a cycle behind the newest listed, or one 24 h old (pipeline/
+        # nwps_stale_gate.py, from the freshness file nwps.fetch writes). After every upload and
+        # the revalidation, so it can never stop one of them; !cancelled() so it still reports
+        # after an earlier step failed. Its ::error:: line names each office and why.
+        if: ${{ !cancelled() }}
+        run: python -m pipeline.nwps_stale_gate
+
       - name: Fail the run if a database column was missing
         # The LAST step that does anything, after every upload and the revalidation, so it can
         # never stop one of them. !cancelled() so it still reports after an earlier step failed.

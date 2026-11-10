@@ -165,7 +165,9 @@ def test_the_scan_catches_a_rating_module_that_reads_reports():
 WORKFLOWS = {
     ".github/workflows/forecast-pipeline.yml": {
         "pipeline.column_preflight", "pipeline.forecast.fetch_all", "pipeline.interpret",
-        "pipeline.revalidate", "pipeline.db_import"},
+        "pipeline.revalidate", "pipeline.db_import",
+        # reads nwps_freshness.json and imports only pipeline.config; never a report
+        "pipeline.nwps_stale_gate"},
     ".github/workflows/daily-report.yml": {"pipeline.daily_report", "pipeline.revalidate"},
     ".github/workflows/ecmwf-wam.yml": {"pipeline.ecmwf_wam"},
 }
