@@ -77,6 +77,19 @@ copy of one post), and 5 were re-posted, 25 minutes to 6 h 20 min apart, 4 of th
 size (EKA 11-03 12Z, HGX 11-03 00Z, TAE 11-03 12Z, MFR 11-07 12Z, MFR 11-08 00Z).
 Its hours are still replayed and listed, and still count in the per-spot and reference figures.
 
+OLD NODE ON LAND. nwps.fetch reads a spot's fixed (baseline) node only while that node's cell
+holds a wave value (swh or shts) at some step of the cycle (nwps._cell_is_water); when the cell
+has none, it walks seaward from the spot (_find_offshore_point) and the published rows come from
+the cell the walk reaches. This replay does not follow the walk: it reads the nearest cell wet
+at f000 (node_cell), a different cell. From NWPS v1.5 (2026-11-09 12Z) MTR's cells at the
+Pacifica Linda Mar / Rockaway Beach Pacifica node (37.61754, -122.5) and at Avila Beach's
+(35.15796, -120.74) hold no wave value at any step, so the replay at the old node cannot be held
+to their published hours. For each cycle, a spot whose old node's cell holds no wave value at any
+step is EXCLUDED from the gate for that cycle and reported apart, with the evidence (the node,
+its cell and that cell's centre, the steps read, and the cell replayed instead) and its own
+difference counts. Its hours are still replayed and listed, and still count in the per-spot and
+reference figures. Every other spot's hours must match exactly, as before.
+
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
 """
@@ -211,6 +224,43 @@ def node_cell(cycle, spot):
         return li, lj
     cell = _nearest_cell(cycle, lat, lng)
     return None if cell is None else (cell[0], cell[1])
+
+
+def old_node_on_land(cycle, spot):
+    """The evidence that *spot*'s fixed node is land in this cycle, or None when its cell (the
+    nearest grid row and column) holds a wave value at some step, the cell nwps.fetch then reads:
+    {node, cell, cell_centre, offset_km, steps, replayed_cell, replayed_centre, replayed_km}.
+    replayed_* is the cell node_cell falls back to (None when the grid has no wet cell)."""
+    lat, lng = spot["nwps_node_lat"], spot["nwps_node_lng"]
+    i, j = _grid_cell(cycle, lat, lng)
+    if _cell_has_water(cycle, i, j):
+        return None
+
+    def centre(a, b):
+        return [round(float(cycle["lats"][a, b]), 5), round(float(cycle["lons"][a, b]), 5)]
+
+    def km(a, b):
+        return round(_haversine_km(lat, lng, float(cycle["lats"][a, b]),
+                                   float(cycle["lons"][a, b])), 3)
+    rep = node_cell(cycle, spot)
+    return {"node": [lat, lng], "cell": [i, j], "cell_centre": centre(i, j),
+            "offset_km": km(i, j), "steps": len(cycle["steps"]),
+            "replayed_cell": None if rep is None else [rep[0], rep[1]],
+            "replayed_centre": None if rep is None else centre(*rep),
+            "replayed_km": None if rep is None else km(*rep)}
+
+
+def land_evidence_line(ev):
+    """One report line for old_node_on_land's evidence."""
+    out = (f"node ({ev['node'][0]}, {ev['node'][1]}) is cell ({ev['cell'][0]}, {ev['cell'][1]}), "
+           f"centre ({ev['cell_centre'][0]}, {ev['cell_centre'][1]}), {ev['offset_km']} km away: "
+           f"no wave value (swh or shts) there at any of the cycle's {ev['steps']} steps, so "
+           f"nwps.fetch walked seaward and the published hours are not from this node; ")
+    if ev["replayed_cell"] is None:
+        return out + "the replay found no wet cell to read instead"
+    return out + (f"the replay read cell ({ev['replayed_cell'][0]}, {ev['replayed_cell'][1]}), "
+                  f"centre ({ev['replayed_centre'][0]}, {ev['replayed_centre'][1]}), "
+                  f"{ev['replayed_km']} km away, instead")
 
 
 def exact_hour_values(cycle, cell, epoch):
@@ -679,7 +729,7 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
         start = datetime.fromtimestamp(_iso_to_epoch(since) - BUOY_LOOKBACK_H * 3600, timezone.utc)
         replay_since = start.isoformat()
     report = {"since": since, "replayed_from": replay_since, "moved": [], "not_replayed": {},
-              "cycles": {}, "node_checks": {}, "excluded": {},
+              "cycles": {}, "node_checks": {}, "excluded": {}, "excluded_land": {},
               "logger_log": logger_versions is not None}
     hours = []
     for old, new in pairs:
@@ -717,10 +767,19 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
             reasons = double_post_reasons(stamp, (logger_versions or {}).get((wfo, "".join(key))))
             if reasons:
                 report["excluded"][name] = {"reasons": reasons}
+            on_land = set()
+            for old, new in wpairs:
+                ev = old_node_on_land(cycle, old) if by_cycle[key].get(new["name"]) else None
+                if ev is not None:
+                    on_land.add(new["name"])
+                    report["excluded_land"][f"{new['name']}, {name}"] = {
+                        "spot": new["name"], "cycle_file": name, "evidence": ev}
             got, checks = replay_cycle(wpairs, by_cycle[key], cycle, ceiling_factors, m, apply)
             for h in got:
                 h["cycle_file"] = name
-                h["gate_excluded"] = bool(reasons)
+                h["excluded_for"] = ((["double-posted"] if reasons else [])
+                                     + (["old node on land"] if h["spot"] in on_land else []))
+                h["gate_excluded"] = bool(h["excluded_for"])
             hours.extend(got)
             for name, c in checks.items():
                 report["node_checks"].setdefault(name, {})["".join(key)] = c
@@ -730,6 +789,11 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
     report["gate"]["excluded_cycles"] = sorted(report["excluded"])
     for name, ex in report["excluded"].items():
         ex.update(gate([h for h in hours if h.get("cycle_file") == name]))
+        ex.pop("pass")
+    report["gate"]["excluded_land"] = sorted(report["excluded_land"])
+    for ex in report["excluded_land"].values():
+        ex.update(gate([h for h in hours if h.get("cycle_file") == ex["cycle_file"]
+                        and h["spot"] == ex["spot"]]))
         ex.pop("pass")
     report["by_spot"] = spot_summary(hours)
     from .apply_nwps_assignments import _slug
@@ -780,7 +844,8 @@ HOUR_COLUMNS = ("spot", "valid_time", "nwps_cycle", "swell_source", "wind", "win
                 "exact_hour_blank", "filled_from_new", "buoy_hs", "reference",
                 "stars_published", "stars_old", "stars_new", "face_published", "face_old",
                 "face_new", "hs_old", "hs_new", "tp_old", "tp_new", "swell_hs_old",
-                "swell_hs_new", "rated_tp_old", "rated_tp_new", "cycle_file", "gate_excluded")
+                "swell_hs_new", "rated_tp_old", "rated_tp_new", "cycle_file", "gate_excluded",
+                "excluded_for")
 
 
 def write_csv(path, hours):
@@ -850,6 +915,11 @@ def print_report(rep):
               f"{ex['face_differences']} face differences")
         for r in ex["reasons"]:
             print(f"    - {r}")
+    for name, ex in (rep.get("excluded_land") or {}).items():
+        print(f"  EXCLUDED from the gate, old node on land in this cycle: {name}: "
+              f"{ex['hours']} hours, {ex['input_differences']} input, "
+              f"{ex['star_differences']} star and {ex['face_differences']} face differences")
+        print(f"    - {land_evidence_line(ex['evidence'])}")
     for h in rep["hours"]:
         if (not h["inputs_match"] or h["stars_old"] != h["stars_published"]
                 or face_differs(h["face_published"], h["face_old"])):
