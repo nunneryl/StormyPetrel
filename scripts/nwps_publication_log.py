@@ -30,12 +30,15 @@ measurement. pipeline.forecast.nwps is IMPORTED for its URL builder and listing 
 called for its fetch path.
 
 AN EARLY WARNING OF A PRODUCT CHANGE. A run ends FAILED, so this workflow's failure issue
-opens, when more than ALARM_BAD_FRACTION of its file requests (at least ALARM_MIN_FILES of them)
-did not return 200. NWPS v1.5 (NWS SCN 26-91) renamed every file from the 2026-11-09 12Z run:
-the 22:41Z run that day got 419 of 444 file requests back as 404, 42 minutes before the first
-full pipeline run that could not read a current cycle, and nothing failed. In the seven runs
-saved from 2026-11-03 to 11-08, at most 2 of 368 to 440 file requests failed (under 1%).
-Everything is still logged first; the alarm only decides the exit status.
+opens, when more than ALARM_BAD_FRACTION of its requests for cycles from the last ALARM_RECENT_H
+hours (at least ALARM_MIN_FILES of them) did not return 200. NWPS v1.5 (NWS SCN 26-91) renamed
+every file from the 2026-11-09 12Z run: the 22:41Z run that day got 159 of its 175 recent-cycle
+files back as 404 (419 of 444 in all), 42 minutes before the first full pipeline run that could
+not read a current cycle, and nothing failed. In the seven runs saved from 2026-11-03 to 11-08,
+at most 2 of 147 to 175 recent-cycle files failed. Only recent cycles count because NOMADS's
+oldest days can lag a change: after the rename it still listed the 11-06 to 11-08 06Z cycles
+with no file under either name. Everything is still logged first; the alarm only decides the
+exit status.
 
 POLITE. One request at a time, each starting at least --min-interval seconds after the last
 (default 1 s, never below 0.5 s). NOMADS blocks clients that hammer it. A full run is a few
@@ -93,8 +96,9 @@ MIN_INTERVAL_FLOOR_S = 0.5  # never faster than this, whatever the flag says
 TIMEOUT_S = 30.0
 SETTLE_HOURS = 12.0         # a date is settled once a 200 listing is this long past its end
 NORMAL_FRACTION = 0.5       # a cycle hour is "normal" for an office on >= this share of dates
-ALARM_MIN_FILES = 50        # the product-change alarm needs at least this many file requests...
-ALARM_BAD_FRACTION = 0.20   # ...and more than this share of them not answered 200
+ALARM_RECENT_H = 48.0       # the product-change alarm reads files of cycles this recent...
+ALARM_MIN_FILES = 50        # ...needs at least this many of them...
+ALARM_BAD_FRACTION = 0.20   # ...and more than this share not answered 200
 
 
 # --------------------------------------------------------------------------- #
@@ -294,15 +298,26 @@ def observe(offices, fetch, pacer, emit, now=_utcnow) -> Counter:
     return statuses
 
 
+def _recent(r: dict, hours: float) -> bool:
+    """Was the record's cycle at most *hours* old when it was checked? False when unreadable."""
+    try:
+        cycle = datetime.strptime(r["date"] + r["cycle"], "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        at = datetime.fromisoformat(str(r["checked_at"]).replace("Z", "+00:00"))
+    except (KeyError, TypeError, ValueError):
+        return False
+    return at - cycle <= timedelta(hours=hours)
+
+
 def file_alarm(records: list[dict], min_files: int = ALARM_MIN_FILES,
-               bad_fraction: float = ALARM_BAD_FRACTION) -> str | None:
-    """The product-change alarm: one line when more than *bad_fraction* of this run's file
-    requests did not return 200, else None. Each file counts once, by its last answer (the
-    one-byte GET when a server refused HEAD). A run with fewer than *min_files* files (the PR
-    smoke run, a run whose listings failed) never alarms: too few to say anything."""
+               bad_fraction: float = ALARM_BAD_FRACTION,
+               recent_h: float = ALARM_RECENT_H) -> str | None:
+    """The product-change alarm: one line when more than *bad_fraction* of this run's requests
+    for cycles at most *recent_h* hours old did not return 200, else None. Each file counts
+    once, by its last answer (the one-byte GET when a server refused HEAD). Fewer than
+    *min_files* recent files (the PR smoke run, a run whose listings failed) never alarms."""
     last: dict[str, dict] = {}
     for r in records:
-        if r.get("kind") == "file":
+        if r.get("kind") == "file" and _recent(r, recent_h):
             last[r["url"]] = r
     n = len(last)
     bad = Counter("error" if r.get("status") is None else str(r["status"])
@@ -310,7 +325,8 @@ def file_alarm(records: list[dict], min_files: int = ALARM_MIN_FILES,
     n_bad = sum(bad.values())
     if n < min_files or n_bad <= bad_fraction * n:
         return None
-    return (f"{n_bad} of {n} NWPS file requests ({100 * n_bad / n:.0f}%) did not return 200 "
+    return (f"{n_bad} of {n} NWPS files from the last {recent_h:g} h of cycles "
+            f"({100 * n_bad / n:.0f}%) did not return 200 "
             f"({', '.join(f'{k}: {v}' for k, v in sorted(bad.items()))}). The usual cause is a NOAA "
             f"product change such as a file rename (NWPS v1.5 did this on 2026-11-09): check the "
             f"NWS service change notices and the pipeline's NWPS fetch.")
