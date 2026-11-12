@@ -2,6 +2,7 @@
 
 - **Run:** sw1-raycast run 69 (Actions run 42512876919), branch `claude/practical-dirac-bshfbr` at `15ab506`, 2026-11-08 19:01Z, `baseline_ref` main.
 - **Artifact:** `node-preview-69`, zip sha256 `99dfdd54bac22e4145e6a7f84f7aeb0541207ff892c2a573a26bb8415f6cfa1e`. `node_preview.json` is saved here byte for byte; `node_preview_hours.csv` is gzipped.
+- **Stored gzipped since 2026-11-12:** `node_preview.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **Window:** the published forecasts from 19:02Z, replayed from 48 hours earlier because buoys were named.
 - **Changed since run 68:**
   - Point Lookout reads the qualifying cell beside run 67's (4.37 km at 209 deg).

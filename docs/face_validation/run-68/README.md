@@ -2,6 +2,7 @@
 
 - **Run:** sw1-raycast run 68 (Actions run 42381611960), branch `claude/practical-dirac-bshfbr` at `be56d23`, 2026-11-07 14:26Z, `baseline_ref` main.
 - **Artifact:** `node-preview-68`, zip sha256 `3c046667ca8db5b19ecde0f64bd13f36f9070faa3c35d0992ef5e4591a4292d4`. `node_preview.json` is saved here byte for byte; `node_preview_hours.csv` is gzipped.
+- **Stored gzipped since 2026-11-12:** `node_preview.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **Window:** the published forecasts from 14:27Z, replayed from 48 hours earlier because buoys were named.
 - **References:**
   - neighbours: Whiskey Run, Bastendorff, Trinidad State Beach, Agate Beach, Long Sands, Harbor Beach, Lido, Jones Beach, Nahant, Winthrop Jetty, Lynn Beach, 61st Street Galveston;

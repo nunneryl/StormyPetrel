@@ -2,6 +2,7 @@
 
 - **Run:** sw1-raycast run 66 (Actions run 42251731785), branch `claude/practical-dirac-bshfbr` at `33962cd`, 2026-11-06 16:22–17:27Z.
 - **Artifact:** `nwps-blank-66`, zip sha256 `4e7addeca671232065c012f8e92ccf792d76e6dc15e7bc1e04db0cd10ce121dd`. `nwps_blank.json` and `nwps_blank.csv` are saved here byte for byte.
+- **Stored gzipped since 2026-11-12:** `nwps_blank.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **What it read:**
   - **Cycles:** the 3 newest NOMADS cycles of each office (Nov 5 to Nov 6), each read by the pipeline's own NWPS reader with only that cycle on offer.
   - **Stored forecasts:** every NWPS-rated hour since Oct 7, 736 hours a spot.

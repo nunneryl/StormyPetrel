@@ -10,6 +10,7 @@
 ## Files
 
 - `surf_preview.json` and `face_compare.json`: the artifact's JSON, byte for byte.
+- **Stored gzipped since 2026-11-12:** `face_compare.json`, `surf_preview.json` are kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - `face_compare_frf.csv`: the artifact's file, byte for byte.
 - `surf_preview_hours.csv.gz` and `face_compare_srf.csv.gz`: the artifact's CSVs, gzipped. Each
   decompresses to the artifact's file byte for byte.
