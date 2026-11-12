@@ -26,6 +26,14 @@ choice and distance or the reason there is none, and whether the choice changes.
 from DIAGNOSE, which walks the same 10 candidates with the rule's own cap and line-of-sight
 helpers; its choice is checked against compute_nearest_buoy's on every spot.
 
+ALL SPOTS (--spots all, run 72 onward). Every roster spot, each in its group: 'dropped' and
+'none' as above, 'kept' for a spot whose buoy db_import keeps. Each spot's OUTCOME compares its
+roster buoy (nearest_buoy_id) with the rule's choice:
+  gain    no buoy now, the rule picks one        loss    a buoy now, the rule picks none
+  change  a buoy now, the rule picks another     same    the rule picks the same buoy
+  none    no buoy now and none picked
+and each list reports the counts over every spot (report["lists"][label]["outcomes"]).
+
 TWO STATION LISTS. The runner's cached copy (the geodata cache, what an enrich on the runner
 would use) and, with --fresh-xml/--fresh-obs, a copy downloaded for this run. The fresh one is the
 headline; the cached one's choices are given beside it.
@@ -71,6 +79,32 @@ def scope(roster, snapshot, tol=COORD_DERIVED_DIST_TOLERANCE_KM):
         if abs(_km(s["lat"], s["lng"], b["lat"], b["lng"]) - stored) > tol:
             out.append((s, "dropped"))
     return out
+
+
+def everyone(roster, snapshot, tol=COORD_DERIVED_DIST_TOLERANCE_KM):
+    """[(spot, group)] for EVERY roster spot, in roster order: scope()'s 'dropped' and 'none',
+    and 'kept' for every other spot (its buoy db_import keeps, or one it does not check)."""
+    grouped = {id(s): g for s, g in scope(roster, snapshot, tol)}
+    return [(s, grouped.get(id(s), "kept")) for s in roster]
+
+
+OUTCOMES = ("gain", "loss", "change", "same", "none")
+
+
+def outcome(current_id, choice):
+    """The spot's roster buoy against the rule's choice: gain, loss, change, same or none."""
+    cur = str(current_id).lower() if current_id else None
+    new = str(choice).lower() if choice else None
+    if cur is None:
+        return "gain" if new else "none"
+    if new is None:
+        return "loss"
+    return "same" if new == cur else "change"
+
+
+def outcome_counts(rows):
+    """{outcome: spots} over *rows*, every outcome listed."""
+    return {k: sum(1 for r in rows if r["outcome"] == k) for k in OUTCOMES}
 
 
 def diagnose(spot_for_algo, stations, land, cap_km, los=None, k=K_CANDIDATES):
@@ -171,6 +205,7 @@ def assess(spot, group, land, stations, snapshot, rule=None):
         "diagnose_agrees": (d["choice"] == choice
                             and (choice is None or d["fallbacks"] == r["fallback_buoy_ids"])),
         "changes": (str(choice).lower() if choice else None) != cur_l,
+        "outcome": outcome(cur, choice),
     }
 
 
@@ -212,7 +247,7 @@ def run(roster, snapshot, land, lists, rule=None, sc=None):
     for label, stations in lists:
         rows = [assess(s, g, land, stations, snapshot, rule) for s, g in sc]
         report["lists"][label] = {"wave_stations": len(stations), "summary": summarise(rows),
-                                  "spots": rows}
+                                  "outcomes": outcome_counts(rows), "spots": rows}
     return report
 
 
@@ -231,6 +266,8 @@ def print_report(rep):
     for label, L in rep["lists"].items():
         print(f"\n== {label}: {L['wave_stations']} wave stations ==")
         print(json.dumps(L["summary"]))
+        if L.get("outcomes"):
+            print("outcomes: " + ", ".join(f"{k} {v}" for k, v in L["outcomes"].items()))
         for r in L["spots"]:
             cur = r["current"]
             c = (f"{cur['id']} stored {cur['stored_km']} real {cur['km_from_rule_point']}"
@@ -238,7 +275,7 @@ def print_report(rep):
             pick = (f"{r['choice']} {r['choice_km']} km fb {r['fallbacks']}" if r["choice"]
                     else f"none ({r['reason']})")
             print(f"  [{r['group']}] {r['name']} ({r['region']}, cap {r['cap_km']}): {c} -> {pick}"
-                  f"{'  CHANGES' if r['changes'] else ''}"
+                  f"  {r.get('outcome', '').upper()}"
                   f"{'' if r['diagnose_agrees'] else '  DIAGNOSE-DISAGREES'}")
 
 
@@ -247,8 +284,9 @@ def main(argv=None):
     p.add_argument("--roster", default=str(DEFAULT_ENRICHED_OUTPUT))
     p.add_argument("--fresh-xml", default="")
     p.add_argument("--fresh-obs", default="")
-    p.add_argument("--spots", default="", help="comma-separated spot names or slugs (default: the "
-                   "spots db_import drops and the spots with no buoy)")
+    p.add_argument("--spots", default="", help="comma-separated spot names or slugs, or 'all' for "
+                   "every roster spot (default: the spots db_import drops and the spots with no "
+                   "buoy)")
     p.add_argument("--recent-days", type=float, default=0.0,
                    help="also count a station that reported a wave height in the last N days")
     p.add_argument("--out", default="buoy_assign.json")
@@ -259,7 +297,12 @@ def main(argv=None):
     land = G.load_land_index()
     if land is None:
         raise SystemExit("buoy-assign: no GSHHG land index; the rule cannot test line of sight")
-    sc = pick(roster, a.spots.split(",")) if a.spots.strip() else scope(roster, snapshot)
+    if a.spots.strip().lower() == "all":
+        sc = everyone(roster, snapshot)
+    elif a.spots.strip():
+        sc = pick(roster, a.spots.split(","))
+    else:
+        sc = scope(roster, snapshot)
     cached = (G.NDBC_STATIONS_XML, G.NDBC_LATEST_OBS_TXT)
     base = [("fresh", (a.fresh_xml, a.fresh_obs))] if a.fresh_xml and a.fresh_obs else []
     base.append(("cached", cached))

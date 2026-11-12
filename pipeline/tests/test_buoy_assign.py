@@ -267,4 +267,82 @@ def test_the_command_end_to_end_on_stand_in_files(tmp_path, monkeypatch, capsys)
     assert all(r["diagnose_agrees"] for L in rep["lists"].values() for r in L["spots"])
     printed = capsys.readouterr().out
     assert "[dropped] Dropped (South Carolina, cap 150): w3 stored 10.0 real 33.36 -> " \
-           "w2 22.24 km fb ['w3']  CHANGES" in printed
+           "w2 22.24 km fb ['w3']  CHANGE" in printed
+
+
+
+# --------------------------------------------------------------------------- #
+# --spots all (run 72): every spot, and each spot's outcome                     #
+# --------------------------------------------------------------------------- #
+
+def test_everyone_is_every_spot_in_roster_order_with_its_group():
+    snapshot = {"b1": {"lat": 30.2, "lng": -80.0}}          # 22.24 km north, as in the scope test
+    roster = [
+        {"name": "ok", "lat": 30.0, "lng": -80.0, "nearest_buoy_id": "B1", "nearest_buoy_dist_km": 22.24},
+        {"name": "off", "lat": 30.0, "lng": -80.0, "nearest_buoy_id": "b1", "nearest_buoy_dist_km": 17.2},
+        {"name": "none", "lat": 30.0, "lng": -80.0, "nearest_buoy_id": None},
+        {"name": "unknown", "lat": 30.0, "lng": -80.0, "nearest_buoy_id": "zz", "nearest_buoy_dist_km": 1.0},
+    ]
+    assert [(s["name"], g) for s, g in A.everyone(roster, snapshot)] == [
+        ("ok", "kept"), ("off", "dropped"), ("none", "none"), ("unknown", "kept")]
+
+
+@pytest.mark.parametrize("current, choice, expected", [
+    (None, "w2", "gain"), ("W2", None, "loss"), ("w2", "w3", "change"), ("W2", "w2", "same"),
+    (None, None, "none"), ("", "w2", "gain")])
+def test_outcome(current, choice, expected):
+    assert A.outcome(current, choice) == expected
+
+
+def test_assess_gives_each_outcome(world):
+    gain = A.assess(SPOT, "none", object(), world, {})                        # w2 picked
+    loss = A.assess({**SPOT, "lat": 20.0, "nearest_buoy_id": "w2"}, "kept", object(), world, {})
+    change = A.assess({**SPOT, "nearest_buoy_id": "w3"}, "kept", object(), world, {})
+    same = A.assess({**SPOT, "nearest_buoy_id": "W2"}, "kept", object(), world, {})
+    none = A.assess({**SPOT, "lat": 20.0}, "none", object(), world, {})
+    assert [r["outcome"] for r in (gain, loss, change, same, none)] == \
+        ["gain", "loss", "change", "same", "none"]
+    assert A.outcome_counts([gain, loss, change, same, none, gain]) == \
+        {"gain": 2, "loss": 1, "change": 1, "same": 1, "none": 1}
+
+
+def test_the_command_with_all_checks_every_spot_and_counts_the_outcomes(tmp_path, monkeypatch, capsys):
+    import json
+    from pipeline.enrichment import geodata as G
+    xml, obs = tmp_path / "s.xml", tmp_path / "o.txt"
+    xml.write_text("<stations>" + "".join(
+        f'<station id="{i}" lat="{30 + d}" lon="-80.0" name="{i}"/>'
+        for i, d in (("w2", 0.2), ("w3", 0.3))) + "</stations>")
+    obs.write_text("#STN LAT LON WVHT\n#text deg deg m\nW2 0 0 1.0\nW3 0 0 1.0\n")
+    roster = tmp_path / "roster.json"
+    roster.write_text(json.dumps([
+        {**SPOT, "name": "Dropped", "nearest_buoy_id": "w3", "nearest_buoy_dist_km": 10.0},
+        {**SPOT, "name": "Bare", "nearest_buoy_id": None},
+        {**SPOT, "name": "Fine", "nearest_buoy_id": "w2", "nearest_buoy_dist_km": 22.24},
+        {**SPOT, "name": "Far", "lat": 20.0, "nearest_buoy_id": "w2", "nearest_buoy_dist_km": 1134.2}]))
+    saved = (G.NDBC_STATIONS_XML, G.NDBC_LATEST_OBS_TXT)
+    monkeypatch.setattr(G, "load_buoy_snapshot",
+                        lambda: {"w2": {"lat": 30.2, "lng": -80.0}, "w3": {"lat": 30.3, "lng": -80.0}})
+    monkeypatch.setattr(G, "load_land_index", lambda: object())
+    monkeypatch.setattr(B, "load_land_index", lambda: object())
+    monkeypatch.setattr(B, "_los_clear", los)
+    monkeypatch.setattr(A, "seaward_adjust", lambda lat, lng, land: (lat, lng, False))
+    out = tmp_path / "out.json"
+    try:
+        A.main(["--roster", str(roster), "--fresh-xml", str(xml), "--fresh-obs", str(obs),
+                "--out", str(out), "--spots", "ALL"])
+    finally:
+        A.use_wave_files(*saved)
+    rep = json.loads(out.read_text())
+    # Dropped: w3 33.36 km stored as 10.0, so dropped; Far: 10 deg south, w2 is 1134.2 km away
+    # (1111.95 km to 30.0 N plus 22.24), kept by db_import, beyond the 150 km cap for the rule.
+    assert rep["scope"] == {"dropped": 1, "none": 1, "kept": 2}
+    fresh = rep["lists"]["fresh"]
+    assert [(r["name"], r["choice"], r["outcome"]) for r in fresh["spots"]] == [
+        ("Dropped", "w2", "change"), ("Bare", "w2", "gain"), ("Fine", "w2", "same"),
+        ("Far", None, "loss")]
+    assert fresh["outcomes"] == {"gain": 1, "loss": 1, "change": 1, "same": 1, "none": 0}
+    printed = capsys.readouterr().out
+    assert "outcomes: gain 1, loss 1, change 1, same 1, none 0" in printed
+    assert "[kept] Far (South Carolina, cap 150): w2 stored 1134.2 real 1134.19 -> none " \
+           "(beyond_cap)  LOSS" in printed

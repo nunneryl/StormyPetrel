@@ -124,6 +124,8 @@ name: sw1-raycast
 #       spots to check instead (blank = the default scope), and every list is also run counting a
 #       station that reported a wave height in the last 7 days (each nearby station's realtime2
 #       file, pipeline/ndbc_recent_wave.py), with each station's 7-day record in the report.
+#       Run 72 onward: `spots` = all checks every roster spot, and each list counts the outcomes
+#       (gain, loss, change, same, none) of the roster buoy against the rule's choice.
 
 on:
   workflow_dispatch:
@@ -164,7 +166,7 @@ on:
         default: false
         type: boolean
       spots:
-        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones; (tide-station) spot slugs whose tide stations to check; (buoy-assign) spot names or slugs to rerun the buoy rule for; (nwps-blank) spot slugs listed hour by hour beside Moonstone Beach Humboldt, Bandon Beach and Rodanthe. Comma-separated
+        description: (validate) spot slugs to debug instead of the 5-spot gate; (rating-preview) spot slugs whose rating factors to print; (nwps-cells) spot slugs whose grid cells to read; (node-preview) unmoved spot slugs shown beside the moved ones; (tide-station) spot slugs whose tide stations to check; (buoy-assign) spot names or slugs to rerun the buoy rule for, or all for every spot; (nwps-blank) spot slugs listed hour by hour beside Moonstone Beach Humboldt, Bandon Beach and Rodanthe. Comma-separated
         required: false
         default: ''
         type: string
@@ -1036,7 +1038,7 @@ jobs:
           curl -fsSL --retry 4 --retry-delay 5 -o "$RUNNER_TEMP/ndbc/ndbc_latest_obs.txt" \
             https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt
 
-      - name: Rerun the buoy rule (the spots named, or the dropped and buoy-less spots)
+      - name: Rerun the buoy rule (the spots named, all, or the dropped and buoy-less spots)
         env:
           SPOTS: ${{ inputs.spots }}
         run: |
