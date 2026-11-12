@@ -1,0 +1,145 @@
+name: noaa-notices
+
+# A WEEKLY READ of the NWS service change notices (https://www.weather.gov/notification/) for
+# the sources the pipeline reads: NWPS, WAVEWATCH III / GFS, NDBC, CO-OPS, HRRR / RRFS and
+# NOMADS. Each notice dated in the last 14 days that names one opens an issue under the
+# 'noaa-notice' label, once. NWPS v1.5 renamed every NWPS file on 2026-11-09 and NWS had said so
+# 34 days before (SCN 26-91); nothing here was reading it.
+#
+# Guardrails, by construction: one request to weather.gov per run, no secrets, no pipeline, no
+# database. The watch job may write issues and nothing else; the failure-issue job reports a
+# run that could not read the page (scripts/noaa_notice_watch.py fails when it finds fewer than
+# 50 dated notices, so a changed layout is a red run, not a quiet "nothing new").
+
+on:
+  schedule:
+    # Mondays at 14:23 UTC, off the hour.
+    - cron: '23 14 * * 1'
+  workflow_dispatch: {}
+  pull_request:
+    # A change to the watch reads the page on its own PR, with no issue step, because nothing
+    # else can exercise it before it is merged.
+    paths:
+      - .github/workflows/noaa-notices.yml
+      - scripts/noaa_notice_watch.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: noaa-notices-${{ github.event_name }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  PYTHONUNBUFFERED: '1'
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  watch:
+    name: read the NWS notices (one request)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read              # checkout of the script
+      issues: write               # one issue per new notice, under its own label
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Read the notices (standard library only)
+        id: watch
+        run: python scripts/noaa_notice_watch.py
+
+      - name: Open an issue for each new notice
+        # Only on the schedule or a manual run, and only after the read succeeded. Each notice
+        # is keyed by its id and date in a hidden marker; one already in an open or closed
+        # 'noaa-notice' issue is skipped, so a weekly overlap never repeats one.
+        if: github.event_name != 'pull_request' && steps.watch.outcome == 'success'
+        uses: actions/github-script@v9
+        env:
+          NOTICES: ${{ steps.watch.outputs.notices }}     # via env (no template injection)
+        with:
+          script: |
+            const LABEL = 'noaa-notice';
+            const { owner, repo } = context.repo;
+            const notices = JSON.parse(process.env.NOTICES || '[]');
+            core.info(`${notices.length} notice(s) in the window`);
+            if (notices.length === 0) return;
+
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: LABEL });
+            } catch (e) {
+              if (e.status !== 404) throw e;
+              await github.rest.issues.createLabel({
+                owner, repo, name: LABEL, color: '0e8a16',
+                description: 'An NWS service change notice that names a source the pipeline reads',
+              });
+            }
+
+            const open = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: LABEL, per_page: 100 });
+            const closed = await github.rest.issues.listForRepo({
+              owner, repo, state: 'closed', labels: LABEL, per_page: 100 });
+            const seen = new Set();
+            const markerRe = /<!-- noaa-notice:([^>]+?) -->/;
+            for (const i of [...open.data, ...closed.data]) {
+              if (i.pull_request) continue;
+              const m = (i.body || '').match(markerRe);
+              if (m) seen.add(m[1]);
+            }
+
+            for (const n of notices) {
+              if (seen.has(n.key)) { core.info(`already reported: ${n.key}`); continue; }
+              const body = [
+                `NWS posted **${n.id}** on ${n.date}: ${n.title}`,
+                ``,
+                `It names a source the pipeline reads: ${n.topics.join(', ')}.`,
+                ``,
+                `Notice: ${n.url}`,
+                ``,
+                `Read it for file names, URLs, grids, variables or dates that change, and check `
+                  + `the fetcher that reads this source before the effective date. NWPS v1.5 `
+                  + `(SCN 26-91) renamed every NWPS file and the pipeline read stale cycles for a `
+                  + `day before anyone looked.`,
+                ``,
+                `<!-- noaa-notice:${n.key} -->`,
+              ].join('\n');
+              const issue = await github.rest.issues.create({
+                owner, repo, title: `NOAA notice ${n.id}: ${n.title}`.slice(0, 250), body,
+                labels: [LABEL] });
+              core.info(`opened #${issue.data.number} for ${n.key}`);
+            }
+
+  failure-issue:
+    # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
+    # every other job whatever their result, so a timeout is reported too; on a pull_request
+    # run it reports nothing.
+    needs: [watch]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # the failing step's name, from the run's job list
+      contents: read              # checkout of the shared action
+      issues: write               # open, comment on and close the failure issue
+    concurrency:
+      # One report at a time per workflow, so two runs failing together cannot open two.
+      group: failure-issue-${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the shared action
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions/failure-issue
+          persist-credentials: false
+
+      - name: Report to the failure issue
+        uses: ./.github/actions/failure-issue
+        with:
+          needs: ${{ toJSON(needs) }}

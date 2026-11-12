@@ -635,8 +635,9 @@ ISSUE_OPENERS = {
      "Manage 'buoy-liveness' issues (per buoy — detect & report only)"),
     (".github/workflows/reverify-trust-accumulate.yml", "reverify",
      "Open/update issue for SETTLED zones (manual tagging — never auto-applied)"),
+    (".github/workflows/noaa-notices.yml", "watch", "Open an issue for each new notice"),
 }
-ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled"}
+ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled", "noaa-notice"}
 
 # How code opens an issue: the octokit call github-script uses, the GitHub CLI, the GraphQL
 # mutation and PyGithub's method, and the REST path itself. A comment naming one is prose.
