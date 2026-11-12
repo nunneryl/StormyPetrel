@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
-      actions: read               # this workflow's runs list
+      actions: read               # this workflow's runs list, and a failed run's jobs
       contents: read              # checkout of the gate script
     outputs:
       run: ${{ steps.decide.outputs.run }}
@@ -155,9 +155,9 @@ jobs:
           cache-dependency-path: pipeline/requirements.txt
 
       - name: Install eccodes (cfgrib's GRIB-2 backend)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libeccodes0 unzip
+        # Retried (4 attempts, 10 / 30 / 60 s apart): a runner's DNS failure on the Ubuntu
+        # mirror sank the 2026-11-11 16:28Z run here. scripts/apt_install.sh says how.
+        run: bash scripts/apt_install.sh libeccodes0 unzip
 
       - name: Install Python dependencies
         run: pip install -r pipeline/requirements.txt

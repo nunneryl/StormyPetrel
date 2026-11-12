@@ -20,8 +20,13 @@ THE RULE, for a run of job J (full-pipeline or buoy-update):
     The run is skipped when another run of J, with a LOWER run id, was created inside the
     window and is queued, in progress, or completed successfully. Otherwise it goes ahead.
   A run that failed or was cancelled covers nothing, so a late cron run after a failed
-  dispatch is a retry. The lower-id rule settles a tie: of two runs for one slot, the
-  earlier one runs and the later one skips, never both skipping.
+  dispatch is a retry, UNLESS its own job J succeeded: a completed run that did not succeed
+  is looked up job by job, and when the job of J in it (the job whose name begins with J)
+  completed successfully, the slot's work was done and the run covers it, whatever a side
+  job did. On 2026-11-11 the 20:15 dispatch's full-pipeline job succeeded and its
+  failure-issue job never got a runner, so the run was marked failed and the 20:35 fallback
+  ran the whole pipeline again at 21:17. The lower-id rule settles a tie: of two runs for one
+  slot, the earlier one runs and the later one skips, never both skipping.
 
 FAIL OPEN. When anything goes wrong — the API, the environment, a slot list that does not
 parse — the run goes ahead. A duplicate run costs runner minutes; a missed run costs a cycle.
@@ -98,16 +103,31 @@ def parse_time(s):
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
 
 
-def covers(run):
-    """Whether a run counts as having done (or doing) its slot's work."""
+def covers(run, job=None, jobs_of=None):
+    """Whether a run counts as having done (or doing) its slot's work. A completed run that did
+    not succeed still covers when `jobs_of(run id)`, its jobs as the REST API lists them, holds
+    the job of `job` (its name begins with it) completed successfully."""
     status = run.get("status")
     if status in COVERING_STATUSES:
         return True
-    return status == "completed" and run.get("conclusion") == "success"
+    if status != "completed":
+        return False
+    if run.get("conclusion") == "success":
+        return True
+    return job is not None and jobs_of is not None and job_succeeded(jobs_of(run["id"]), job)
 
 
-def decide(job, event, trigger, now, own_id, slots, runs, margin=MARGIN):
-    """(go, reason). `runs` are the workflow's runs as the REST API lists them."""
+def job_succeeded(jobs, job):
+    """Whether `jobs` (a run's jobs) hold the job of `job` with conclusion success (GitHub sets
+    a conclusion only on a completed job). The workflow names each job after its logical job:
+    'full-pipeline (NWPS + WW3 + ...)'."""
+    return any(job_of_title(j.get("name")) == job and j.get("conclusion") == "success"
+               for j in jobs or [])
+
+
+def decide(job, event, trigger, now, own_id, slots, runs, margin=MARGIN, jobs_of=None):
+    """(go, reason). `runs` are the workflow's runs as the REST API lists them; `jobs_of(run
+    id)` lists a run's jobs, asked only of a completed run in the window that did not succeed."""
     if event == "workflow_dispatch" and trigger != "external":
         return True, "a manual run always goes ahead"
     if event not in ("schedule", "workflow_dispatch"):
@@ -119,11 +139,15 @@ def decide(job, event, trigger, now, own_id, slots, runs, margin=MARGIN):
         if r.get("id") is not None and int(r["id"]) < int(own_id)
         and job_of_title(r.get("display_title")) == job
         and r.get("created_at") and parse_time(r["created_at"]) >= since
-        and covers(r))
+        and covers(r, job, jobs_of))
     slot = a.strftime("%Y-%m-%d %H:%M UTC")
     if covering:
+        first = next(r for r in runs if r.get("id") == covering[0])
+        note = ("" if first.get("status") != "completed" or first.get("conclusion") == "success"
+                else f"; its {job} job succeeded, though the run is marked "
+                     f"{first.get('conclusion')}")
         return False, (f"skipped: run {covering[0]} already covers the {job} slot of {slot} "
-                       f"(created since {since.strftime('%H:%M')})")
+                       f"(created since {since.strftime('%H:%M')}){note}")
     return True, f"no earlier run covers the {job} slot of {slot}"
 
 
@@ -161,10 +185,24 @@ def list_runs(api_url, token, repo, wf_file, since, timeout=20):
     return runs
 
 
-def run(env, now, fetch=None):
-    """(go, reason) for this run, from the runner's environment. Never raises. `fetch` stands
-    in for list_runs in tests; it is looked up when called, not when this is defined."""
+def list_jobs(api_url, token, repo, run_id, timeout=20):
+    """The jobs of one run (its latest attempt), as the REST API lists them."""
+    req = urllib.request.Request(
+        f"{api_url.rstrip('/')}/repos/{repo}/actions/runs/{int(run_id)}/jobs?per_page=100",
+        headers={"Accept": "application/vnd.github+json",
+                 "Authorization": f"Bearer {token}",
+                 "X-GitHub-Api-Version": "2022-11-28",
+                 "User-Agent": "StormyPetrel-dispatch-gate"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return list((json.loads(r.read() or b"{}")).get("jobs") or [])
+
+
+def run(env, now, fetch=None, fetch_jobs=None):
+    """(go, reason) for this run, from the runner's environment. Never raises. `fetch` and
+    `fetch_jobs` stand in for list_runs and list_jobs in tests; they are looked up when
+    called, not when this is defined."""
     fetch = fetch or list_runs
+    fetch_jobs = fetch_jobs or list_jobs
     try:
         job, event = env.get("GATE_JOB") or "", env.get("GITHUB_EVENT_NAME") or ""
         trigger = env.get("GATE_TRIGGER") or ""
@@ -174,10 +212,11 @@ def run(env, now, fetch=None):
             return decide(job, event, trigger, now, 0, [], [])
         slots = parse_slots(env.get("DISPATCH_SLOTS"))
         since = anchor(job, slots, now) - MARGIN
-        runs = fetch(env.get("GITHUB_API_URL") or "https://api.github.com",
-                     env.get("GITHUB_TOKEN") or "", env["GITHUB_REPOSITORY"],
-                     workflow_file(env.get("GITHUB_WORKFLOW_REF")), since)
-        return decide(job, event, trigger, now, int(env["GITHUB_RUN_ID"]), slots, runs)
+        api = env.get("GITHUB_API_URL") or "https://api.github.com"
+        token, repo = env.get("GITHUB_TOKEN") or "", env["GITHUB_REPOSITORY"]
+        runs = fetch(api, token, repo, workflow_file(env.get("GITHUB_WORKFLOW_REF")), since)
+        return decide(job, event, trigger, now, int(env["GITHUB_RUN_ID"]), slots, runs,
+                      jobs_of=lambda run_id: fetch_jobs(api, token, repo, run_id))
     except (ValueError, KeyError, TypeError, OSError, urllib.error.URLError) as e:
         return True, f"going ahead: the gate could not decide ({type(e).__name__}: {e})"
 

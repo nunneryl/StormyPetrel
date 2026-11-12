@@ -598,3 +598,209 @@ def test_the_docs_request_bodies_are_the_dispatches_the_workflow_accepts():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+# --------------------------------------------------------------------------- #
+# 7 — a run marked failed by a side job still covers its slot                   #
+# --------------------------------------------------------------------------- #
+# Run 43094815754 (2026-11-11 20:15 dispatch) as the jobs list returned it: its full-pipeline
+# job succeeded and its failure-issue job never got a runner (no runner, no steps), so the run
+# was marked failure and the 20:35 fallback ran the whole pipeline again at 21:17. The same
+# slot on this module's day: run 100 dispatched at 20:15:37, the fallback (105) at 21:17.
+JOBS_2015 = [
+    {"name": "gate (skip a run another run already covers)", "status": "completed",
+     "conclusion": "success"},
+    {"name": "full-pipeline (NWPS + WW3 + HRRR + buoys + tides)", "status": "completed",
+     "conclusion": "success"},
+    {"name": "buoy-update (hourly NDBC refresh)", "status": "completed", "conclusion": "skipped"},
+    {"name": "failure-issue", "status": "completed", "conclusion": "failure",
+     "runner_name": None, "steps": []}]
+# Run 43058613815 (2026-11-11 16:28): its full-pipeline job failed installing eccodes.
+JOBS_1628 = [
+    {"name": "gate (skip a run another run already covers)", "status": "completed",
+     "conclusion": "success"},
+    {"name": "full-pipeline (NWPS + WW3 + HRRR + buoys + tides)", "status": "completed",
+     "conclusion": "failure"},
+    {"name": "buoy-update (hourly NDBC refresh)", "status": "completed", "conclusion": "skipped"},
+    {"name": "failure-issue", "status": "completed", "conclusion": "success"}]
+FAILED_2015 = gh_run(100, "full-pipeline (external)", "2026-10-13T20:15:37Z", conclusion="failure")
+
+
+class JobsOf:
+    def __init__(self, jobs):
+        self.jobs, self.calls = jobs, []
+
+    def __call__(self, run_id):
+        self.calls.append(run_id)
+        return self.jobs
+
+
+def test_a_run_whose_pipeline_job_passed_covers_the_slot_though_failure_issue_had_no_runner():
+    jobs_of = JobsOf(JOBS_2015)
+    assert G.decide("full-pipeline", "schedule", "", at(21, 17), 105, SLOTS, [FAILED_2015],
+                    jobs_of=jobs_of) == (
+        False, "skipped: run 100 already covers the full-pipeline slot of 2026-10-13 20:15 UTC "
+               "(created since 20:10); its full-pipeline job succeeded, though the run is "
+               "marked failure")
+    assert jobs_of.calls == [100]
+
+
+def test_a_run_whose_pipeline_job_failed_is_still_a_retry():
+    jobs_of = JobsOf(JOBS_1628)
+    assert G.decide("full-pipeline", "schedule", "", at(21, 17), 105, SLOTS, [FAILED_2015],
+                    jobs_of=jobs_of) == (
+        True, "no earlier run covers the full-pipeline slot of 2026-10-13 20:15 UTC")
+    assert jobs_of.calls == [100]
+
+
+def test_a_cancelled_run_whose_pipeline_job_passed_covers_too():
+    run = dict(FAILED_2015, conclusion="cancelled")
+    go, reason = G.decide("full-pipeline", "schedule", "", at(21, 17), 105, SLOTS, [run],
+                          jobs_of=JobsOf(JOBS_2015))
+    assert go is False
+    assert reason.endswith("; its full-pipeline job succeeded, though the run is marked cancelled")
+
+
+@pytest.mark.parametrize("status, conclusion", [
+    ("completed", "failure"), ("completed", "cancelled"), ("completed", "skipped"),
+    ("completed", "timed_out"), ("completed", None), ("in_progress", None), ("queued", None)])
+def test_only_a_completed_successful_pipeline_job_counts(status, conclusion):
+    jobs = [dict(JOBS_2015[1], status=status, conclusion=conclusion), JOBS_2015[3]]
+    assert G.job_succeeded(jobs, "full-pipeline") is False
+
+
+def test_the_job_is_matched_by_its_name():
+    jobs = [{"name": "buoy-update (hourly NDBC refresh)", "status": "completed",
+             "conclusion": "success"},
+            {"name": "full-pipeline (NWPS + WW3 + HRRR + buoys + tides)", "status": "completed",
+             "conclusion": "failure"},
+            {"name": "failure-issue", "status": "completed", "conclusion": "success"},
+            {"name": None, "status": "completed", "conclusion": "success"}]
+    assert G.job_succeeded(jobs, "full-pipeline") is False
+    assert G.job_succeeded(jobs, "buoy-update") is True
+    assert G.job_succeeded([], "full-pipeline") is False
+    assert G.job_succeeded(None, "full-pipeline") is False
+
+
+@pytest.mark.parametrize("status", [None, "action_required", "stale"])
+def test_a_run_that_never_completed_is_not_looked_up(status):
+    jobs_of = JobsOf(JOBS_2015)
+    assert G.covers(dict(FAILED_2015, status=status), "full-pipeline", jobs_of) is False
+    assert jobs_of.calls == []
+
+
+def test_a_failed_run_without_a_job_lookup_covers_nothing_as_before():
+    assert G.covers(FAILED_2015) is False
+    assert G.covers(FAILED_2015, "full-pipeline") is False
+    assert G.covers(FAILED_2015, None, JobsOf(JOBS_2015)) is False
+
+
+def test_jobs_are_asked_only_of_a_completed_run_in_the_window_that_did_not_succeed():
+    runs = [gh_run(100, "full-pipeline (external)", "2026-10-13T20:15:37Z"),            # success
+            gh_run(101, "full-pipeline (external)", "2026-10-13T20:16:00Z",
+                   status="in_progress", conclusion=None),                               # running
+            gh_run(102, "buoy-update (external)", "2026-10-13T21:01:00Z",
+                   conclusion="failure"),                                                # other job
+            gh_run(110, "full-pipeline (external)", "2026-10-13T21:20:00Z",
+                   conclusion="failure"),                                                # later id
+            gh_run(90, "full-pipeline (external)", "2026-10-13T13:45:00Z",
+                   conclusion="failure")]                                                # earlier slot
+    jobs_of = JobsOf(JOBS_2015)
+    assert G.decide("full-pipeline", "schedule", "", at(21, 17), 105, SLOTS, runs,
+                    jobs_of=jobs_of) == (
+        False, "skipped: run 100 already covers the full-pipeline slot of 2026-10-13 20:15 UTC "
+               "(created since 20:10)")
+    assert jobs_of.calls == []
+
+
+def test_the_buoy_gate_reads_the_buoy_job():
+    run = gh_run(200, "buoy-update (external)", "2026-10-13T21:01:08Z", conclusion="failure")
+    jobs = [{"name": "buoy-update (hourly NDBC refresh)", "status": "completed",
+             "conclusion": "success"},
+            {"name": "failure-issue", "status": "completed", "conclusion": "failure"}]
+    go, reason = G.decide("buoy-update", "schedule", "", at(21, 20), 205, SLOTS, [run],
+                          jobs_of=JobsOf(jobs))
+    assert (go, reason) == (
+        False, "skipped: run 200 already covers the buoy-update slot of 2026-10-13 21:00 UTC "
+               "(created since 20:55); its buoy-update job succeeded, though the run is marked "
+               "failure")
+
+
+class FetchJobs:
+    def __init__(self, jobs=(), error=None):
+        self.jobs, self.error, self.calls = list(jobs), error, []
+
+    def __call__(self, api_url, token, repo, run_id):
+        self.calls.append((api_url, token, repo, run_id))
+        if self.error:
+            raise self.error
+        return self.jobs
+
+
+def test_run_asks_the_api_for_the_failed_runs_jobs():
+    fetch_jobs = FetchJobs(JOBS_2015)
+    go, _ = G.run(ENV, at(21, 17), Fetch([FAILED_2015]), fetch_jobs)
+    assert go is False
+    assert fetch_jobs.calls == [("https://api.example", "t0ken", "o/r", 100)]
+
+
+def test_a_failed_jobs_lookup_answers_run():
+    err = urllib.error.HTTPError("u", 403, "Forbidden", None, None)
+    go, reason = G.run(ENV, at(21, 17), Fetch([FAILED_2015]), FetchJobs(error=err))
+    assert go is True
+    assert reason.startswith("going ahead: the gate could not decide (HTTPError: "), reason
+
+
+class _JobsServer:
+    def __init__(self, jobs):
+        self.seen = []
+        outer = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                u = urlsplit(self.path)
+                outer.seen.append({"path": u.path, "query": dict(parse_qsl(u.query)),
+                                   "headers": dict(self.headers)})
+                body = json.dumps({"total_count": len(jobs), "jobs": jobs}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.url = "http://127.0.0.1:%d" % self.httpd.server_address[1]
+        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.httpd.shutdown()
+        self.httpd.server_close()
+
+
+def test_list_jobs_reads_one_runs_jobs_with_the_right_path_and_headers(no_proxy):
+    s = _JobsServer(JOBS_2015)
+    try:
+        got = G.list_jobs(s.url, "t0ken", "o/r", 43094815754)
+    finally:
+        s.close()
+    assert [j["name"] for j in got] == [
+        "gate (skip a run another run already covers)",
+        "full-pipeline (NWPS + WW3 + HRRR + buoys + tides)",
+        "buoy-update (hourly NDBC refresh)", "failure-issue"]
+    assert [(r["path"], r["query"]) for r in s.seen] == [
+        ("/repos/o/r/actions/runs/43094815754/jobs", {"per_page": "100"})]
+    h = {k.lower(): v for k, v in s.seen[0]["headers"].items()}
+    assert h["authorization"] == "Bearer t0ken"
+    assert h["accept"] == "application/vnd.github+json"
+    assert h["x-github-api-version"] == "2022-11-28"
+
+
+def test_each_pipeline_job_is_named_after_its_logical_job(wf):
+    """The gate finds a run's pipeline job by the first word of its name."""
+    jobs = jobs_of(wf)
+    assert job_key(jobs["full-pipeline"], "name")[0] == \
+        "full-pipeline (NWPS + WW3 + HRRR + buoys + tides)"
+    assert job_key(jobs["buoy-update"], "name")[0] == "buoy-update (hourly NDBC refresh)"
+    assert "actions: read" in job_key(jobs["gate"], "permissions")[1]

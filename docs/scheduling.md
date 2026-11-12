@@ -72,6 +72,10 @@ The `gate` job runs first in every run. The rule is in `scripts/dispatch_gate.py
     succeeded.
   - A run that failed or was cancelled covers nothing, so a late cron run after a failed
     dispatch acts as a retry.
+  - The exception: a run marked failed or cancelled still covers its slot when its own job
+    (`full-pipeline` or `buoy-update`) succeeded. On 2026-11-11 the 20:15 dispatch's pipeline
+    job succeeded but its failure-issue job never got a runner, so the 20:35 fallback ran the
+    whole pipeline again. The gate now reads that run's jobs and skips.
 - The gate **fails open**. If it cannot decide, the run goes ahead: a duplicate run costs
   runner minutes, while a missed run costs a cycle.
 
