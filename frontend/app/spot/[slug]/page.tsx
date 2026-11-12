@@ -10,6 +10,7 @@ import { WindChart } from '@/components/WindChart';
 import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
 import { CurrentConditions } from '@/components/CurrentConditions';
+import { CurrentHourProvider } from '@/components/CurrentHour';
 import { CurrentHero } from '@/components/CurrentHero';
 import { ModelRunAge } from '@/components/ModelRunAge';
 import { OptimalConditions } from '@/components/OptimalConditions';
@@ -333,18 +334,20 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           server components — nothing here reads cookies or headers, so all 648 routes keep
           their prerender and their 1-hour revalidate. The report card sits right under the
           tiles, always visible, asking "How big were most waves?" (components/SurfReport). */}
-      <SurfReportProvider slug={spot.slug} timeZone={timeZone}>
-        <CurrentConditions
-          rows={forecasts}
-          serverNowMs={nowMs}
-          offshoreDeg={spot.offshore_wind_deg}
-          windowArcs={spot.swell_window_arcs}
-        />
-        <SurfReportPanel />
-      </SurfReportProvider>
+      {/* One current hour for the tiles and the swell breakdown (components/CurrentHour.tsx):
+          the server's clock at first paint, the viewer's after mount, the same row for both. */}
+      <CurrentHourProvider rows={forecasts} serverNowMs={nowMs}>
+        <SurfReportProvider slug={spot.slug} timeZone={timeZone}>
+          <CurrentConditions
+            offshoreDeg={spot.offshore_wind_deg}
+            windowArcs={spot.swell_window_arcs}
+          />
+          <SurfReportPanel />
+        </SurfReportProvider>
 
-      {/* Spectral swell components */}
-      {current && <SwellPartitions forecast={current} />}
+        {/* Spectral swell components */}
+        <SwellPartitions windowArcs={spot.swell_window_arcs} />
+      </CurrentHourProvider>
 
       {/* Charts — next 48h only so curves stay legible */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
