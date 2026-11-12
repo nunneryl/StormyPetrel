@@ -286,8 +286,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413375",
     "nearest_tide_station_dist_km": 27.99,
-    "nearest_buoy_id": "46239",
-    "nearest_buoy_dist_km": 24.86,
+    "nearest_buoy_id": "46028",
+    "nearest_buoy_dist_km": 56.88,
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
     "nwps_node_lat": 36.26364,
@@ -297,7 +297,8 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Andrew-Molera-State-Park",
     "tide_preference_evidence": "Prevailing right breaking waves at the beach break Best around low tide when the tide is rising.",
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Asilomar State Beach",
@@ -850,7 +851,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -897,7 +898,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46025",
+    "nearest_buoy_dist_km": 60.02,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Campus Point UCSB",
@@ -1981,7 +1985,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.75,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -2015,8 +2019,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 15.23,
-    "nearest_buoy_id": "46239",
-    "nearest_buoy_dist_km": 75.56,
+    "nearest_buoy_id": "46042",
+    "nearest_buoy_dist_km": 31.0,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 37.00829,
@@ -2026,7 +2030,11 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.yeeew.com/listing/usa/california/davenport-landing/",
     "tide_preference_evidence": "It will work best on lower tides.",
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "fallback_buoy_ids": [
+      "46236",
+      "46028"
+    ]
   },
   {
     "name": "Del Mar Beach",
@@ -2984,7 +2992,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 0.0
     },
     "verification_confidence": "high",
@@ -3029,7 +3037,12 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46053",
+    "nearest_buoy_dist_km": 26.51,
+    "fallback_buoy_ids": [
+      "46025"
+    ]
   },
   {
     "name": "Hermosa Beach Pier",
@@ -3914,8 +3927,8 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surfnerd.com/surf-forecast/leadbetter-beach",
     "bottom_evidence": "The wave breaks over a mix of rock ledge and sand, and its easygoing character makes it a natural fit for beginners and longboarders.",
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
+    "nearest_buoy_id": "46025",
+    "nearest_buoy_dist_km": 90.98,
     "fallback_buoy_ids": [],
     "sources": {
       "osm_id": null,
@@ -3930,7 +3943,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -7509,8 +7522,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9412802",
     "nearest_tide_station_dist_km": 3.1,
-    "nearest_buoy_id": "46239",
-    "nearest_buoy_dist_km": 73.97,
+    "nearest_buoy_id": "46028",
+    "nearest_buoy_dist_km": 42.65,
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
     "nwps_node_lat": 35.92517,
@@ -7520,7 +7533,8 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Sandspit",
@@ -8234,7 +8248,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -8277,7 +8291,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "nearest_buoy_id": "46014",
+    "nearest_buoy_dist_km": 89.13,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Solana Beach",
@@ -10409,7 +10426,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.75,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -10444,8 +10461,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413878",
     "nearest_tide_station_dist_km": 5.69,
-    "nearest_buoy_id": "46239",
-    "nearest_buoy_dist_km": 85.71,
+    "nearest_buoy_id": "46042",
+    "nearest_buoy_dist_km": 36.12,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 37.07598,
@@ -10455,7 +10472,8 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Windansea Beach",
@@ -11135,7 +11153,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "verification_confidence": "high",
@@ -11178,7 +11196,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "41009",
+    "nearest_buoy_dist_km": 147.03,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Boca Raton Inlet",
@@ -15483,7 +15504,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Hanalei-Bay",
@@ -15507,8 +15528,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611683",
     "nearest_tide_station_dist_km": 0.92,
-    "nearest_buoy_id": "51208",
-    "nearest_buoy_dist_km": 10.68,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 22.21273,
@@ -15518,7 +15539,8 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Hanalei-Bay",
     "tide_preference_evidence": "There is a right hand reef break Good surf at all stages of the tide.",
-    "time_zone": "Pacific/Honolulu"
+    "time_zone": "Pacific/Honolulu",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Hapuna Beach",
@@ -15745,7 +15767,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "all",
@@ -15769,8 +15791,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
     "nearest_tide_station_dist_km": 12.34,
-    "nearest_buoy_id": "51205",
-    "nearest_buoy_dist_km": 10.65,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 20.94554,
@@ -15780,7 +15802,8 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Hookipa",
     "tide_preference_evidence": "Surfable at all stages of the tide.",
-    "time_zone": "Pacific/Honolulu"
+    "time_zone": "Pacific/Honolulu",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Kaisers",
@@ -15876,7 +15899,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Kanaha",
@@ -15900,8 +15923,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1615680",
     "nearest_tide_station_dist_km": 2.87,
-    "nearest_buoy_id": "51205",
-    "nearest_buoy_dist_km": 12.81,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 20.92117,
@@ -15911,7 +15934,8 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/kanaha",
     "tide_preference_evidence": "It can work across low, mid, and high tide, with a rising tide generally the better call.",
-    "time_zone": "Pacific/Honolulu"
+    "time_zone": "Pacific/Honolulu",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Keaau Beach",
@@ -16732,7 +16756,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
     "orientation_source": "manual",
@@ -16767,8 +16791,8 @@
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
     "time_zone": "Pacific/Honolulu",
-    "nearest_buoy_id": "51205",
-    "nearest_buoy_dist_km": 16.15,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
     "fallback_buoy_ids": []
   },
   {
@@ -17578,7 +17602,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Tunnels",
@@ -17602,8 +17626,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "1611683",
     "nearest_tide_station_dist_km": 6.14,
-    "nearest_buoy_id": "51208",
-    "nearest_buoy_dist_km": 6.53,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 22.2371,
@@ -17613,7 +17637,8 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Tunnels",
     "tide_preference_evidence": "Surfable at all stages of the tide.",
-    "time_zone": "Pacific/Honolulu"
+    "time_zone": "Pacific/Honolulu",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Turtle Bay",
@@ -18228,7 +18253,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Old-Orchard-Beach",
@@ -18261,7 +18286,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "44007",
+    "nearest_buoy_dist_km": 18.78,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Scarborough Beach",
@@ -18356,7 +18384,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "mid",
@@ -18393,7 +18421,13 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "44030",
+    "nearest_buoy_dist_km": 14.62,
+    "fallback_buoy_ids": [
+      "44007",
+      "44032"
+    ]
   },
   {
     "name": "Assateague Island MD",
@@ -19077,7 +19111,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "mid",
@@ -19114,7 +19148,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "44008",
+    "nearest_buoy_dist_km": 109.92,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Nauset Beach",
@@ -23073,7 +23110,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "low_mid",
@@ -23105,7 +23142,10 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surfnerd.com/surf-forecast/cape-hatteras-lighthouse",
     "tide_preference_evidence": "Cape Hatteras Lighthouse is usually best with north-northeast through east-southeast to south (NNE-ESE-S) swell around 1.8 m / 6 ft to 2.4 m / 8 ft, wind from west to north-northwest (W-NNW), with west-northwest (WNW) offshore, and low to mid tide.",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "41025",
+    "nearest_buoy_dist_km": 26.61,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Carolina Beach",
@@ -23401,7 +23441,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Frisco-Pier",
@@ -23434,7 +23474,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "nearest_buoy_id": "41025",
+    "nearest_buoy_dist_km": 31.41,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Holden Beach",
@@ -23488,8 +23531,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8659665",
     "nearest_tide_station_dist_km": 6.66,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 18.64,
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 35.22,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 33.89804,
@@ -23499,7 +23542,10 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": [
+      "41013"
+    ]
   },
   {
     "name": "Jennettes Pier",
@@ -23908,9 +23954,11 @@
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
     "time_zone": "America/New_York",
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 6.9,
-    "fallback_buoy_ids": []
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 42.93,
+    "fallback_buoy_ids": [
+      "41013"
+    ]
   },
   {
     "name": "Ocracoke Beach",
@@ -24255,9 +24303,11 @@
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
     "time_zone": "America/New_York",
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 3.49,
-    "fallback_buoy_ids": []
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 48.0,
+    "fallback_buoy_ids": [
+      "41013"
+    ]
   },
   {
     "name": "Surf City NC",
@@ -26536,8 +26586,8 @@
     "bottom_confidence": "medium",
     "bottom_source_url": "https://www.surf-forecast.com/breaks/Pine-Grove",
     "bottom_evidence": "The sandbar breaks offer lefts and rights.",
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
+    "nearest_buoy_id": "41053",
+    "nearest_buoy_dist_km": 9.57,
     "fallback_buoy_ids": [],
     "sources": {
       "osm_id": null,
@@ -26552,7 +26602,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "mid",
@@ -26663,7 +26713,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "orientation_source": "manual",
@@ -26696,7 +26746,10 @@
     "tide_preference_source": "researched",
     "tide_preference_source_url": "https://www.surf-forecast.com/breaks/Playa-Kikitas",
     "tide_preference_evidence": "Good surf at all stages of the tide.",
-    "time_zone": "America/Puerto_Rico"
+    "time_zone": "America/Puerto_Rico",
+    "nearest_buoy_id": "41053",
+    "nearest_buoy_dist_km": 17.71,
+    "fallback_buoy_ids": []
   },
   {
     "name": "Playa Manati",
@@ -28300,10 +28353,10 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 13.77,
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 58.29,
     "fallback_buoy_ids": [
-      "41108"
+      "41013"
     ],
     "sources": {
       "osm_id": null,
@@ -28564,10 +28617,11 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 55.7,
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 92.2,
     "fallback_buoy_ids": [
-      "41108"
+      "41013",
+      "41004"
     ],
     "sources": {
       "osm_id": null,
@@ -28582,7 +28636,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Garden-City-Pier",
@@ -28897,7 +28951,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "surf_forecast_url": "https://www.surf-forecast.com/breaks/Myrtle-Beach",
@@ -28921,8 +28975,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8661070",
     "nearest_tide_station_dist_km": 1.29,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 46.36,
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 84.68,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 33.65,
@@ -28932,7 +28986,11 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": [
+      "41013",
+      "41004"
+    ]
   },
   {
     "name": "Pawleys Island",
@@ -28963,10 +29021,11 @@
     "bottom_confidence": "low",
     "bottom_source_url": null,
     "bottom_evidence": null,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 75.08,
+    "nearest_buoy_id": "41004",
+    "nearest_buoy_dist_km": 102.45,
     "fallback_buoy_ids": [
-      "41108"
+      "41108",
+      "41013"
     ],
     "sources": {
       "osm_id": null,
@@ -29030,7 +29089,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 1.0,
+      "nearest_buoy": 0.75,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "mid",
@@ -29053,8 +29112,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8661437",
     "nearest_tide_station_dist_km": 4.05,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 52.0,
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 89.3,
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
     "nwps_node_lat": 33.58,
@@ -29064,7 +29123,11 @@
     "tide_preference_source": "unattributed",
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": [
+      "41013",
+      "41004"
+    ]
   },
   {
     "name": "61st Street Galveston",
@@ -29598,10 +29661,12 @@
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
     "time_zone": "America/Chicago",
-    "nearest_buoy_id": "phct2",
-    "nearest_buoy_dist_km": 9.08,
+    "nearest_buoy_id": "42033",
+    "nearest_buoy_dist_km": 13.68,
     "fallback_buoy_ids": [
-      "42092"
+      "42034",
+      "42092",
+      "42032"
     ]
   },
   {
@@ -29665,10 +29730,12 @@
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
     "time_zone": "America/Chicago",
-    "nearest_buoy_id": "phct2",
-    "nearest_buoy_dist_km": 3.54,
+    "nearest_buoy_id": "42033",
+    "nearest_buoy_dist_km": 8.36,
     "fallback_buoy_ids": [
-      "42092"
+      "42034",
+      "42092",
+      "42032"
     ]
   },
   {
@@ -29733,10 +29800,12 @@
     "tide_preference_source_url": null,
     "tide_preference_evidence": null,
     "time_zone": "America/Chicago",
-    "nearest_buoy_id": "phct2",
-    "nearest_buoy_dist_km": 1.05,
+    "nearest_buoy_id": "42033",
+    "nearest_buoy_dist_km": 4.4,
     "fallback_buoy_ids": [
-      "42092"
+      "42034",
+      "42092",
+      "42032"
     ]
   },
   {
@@ -31089,8 +31158,8 @@
     "break_type_confidence": "medium",
     "break_type_source_url": "https://www.discoverpuertorico.com/profile/little-fiji-surf-spot/9237",
     "break_type_evidence": "This surf spot is found at Escambrón Beach has an exposes reef break with reliable surf.",
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
+    "nearest_buoy_id": "41053",
+    "nearest_buoy_dist_km": 1.11,
     "fallback_buoy_ids": [],
     "sources": {
       "osm_id": "node/4545892157",
@@ -31103,7 +31172,7 @@
     "enrichment_confidence": {
       "orientation": 1.0,
       "swell_window": 0.0,
-      "nearest_buoy": 0.0,
+      "nearest_buoy": 1.0,
       "nearest_tide_station": 1.0
     },
     "tide_preference": "mid",
@@ -32989,8 +33058,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9411340",
     "nearest_tide_station_dist_km": 6.15,
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
+    "nearest_buoy_id": "46053",
+    "nearest_buoy_dist_km": 27.44,
     "nwps_wfo": "lox",
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
@@ -32999,7 +33068,9 @@
     "nwps_node_distance_m": 1616,
     "nwps_buoy_id": null,
     "time_zone": "America/Los_Angeles",
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [
+      "46025"
+    ]
   },
   {
     "name": "Mesa Lane",
@@ -34136,8 +34207,8 @@
     ],
     "optimal_swell_dir": 268,
     "swell_window_source": "nwps",
-    "nearest_buoy_id": "46013",
-    "nearest_buoy_dist_km": 149.81,
+    "nearest_buoy_id": "46213",
+    "nearest_buoy_dist_km": 117.85,
     "nwps_wfo": "eka",
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
@@ -34149,7 +34220,8 @@
     "nearest_tide_station_dist_km": 69.6,
     "nearest_tide_station_source": "override",
     "tide_height_suppressed": true,
-    "time_zone": "America/Los_Angeles"
+    "time_zone": "America/Los_Angeles",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Westport",
@@ -34355,8 +34427,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8726494",
     "nearest_tide_station_dist_km": 7.61,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 332.7,
+    "nearest_buoy_id": "42098",
+    "nearest_buoy_dist_km": 26.89,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34364,7 +34436,8 @@
     "nwps_node_lng": -82.82717,
     "nwps_node_distance_m": 1368,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Madeira Beach",
@@ -34402,8 +34475,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8726494",
     "nearest_tide_station_dist_km": 5.84,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 334.37,
+    "nearest_buoy_id": "42098",
+    "nearest_buoy_dist_km": 26.45,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34411,7 +34484,8 @@
     "nwps_node_lng": -82.86304,
     "nwps_node_distance_m": 9162,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Spring Ave",
@@ -34449,8 +34523,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC4271",
     "nearest_tide_station_dist_km": 20.51,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 352.01,
+    "nearest_buoy_id": "42098",
+    "nearest_buoy_dist_km": 20.37,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34458,7 +34532,8 @@
     "nwps_node_lng": -82.80924,
     "nwps_node_distance_m": 7264,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Twin Piers",
@@ -34491,8 +34566,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC4271",
     "nearest_tide_station_dist_km": 27.76,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 358.45,
+    "nearest_buoy_id": "42098",
+    "nearest_buoy_dist_km": 26.86,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34500,7 +34575,8 @@
     "nwps_node_lng": -82.70163,
     "nwps_node_distance_m": 290,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Whitney Beach",
@@ -34533,8 +34609,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "TEC4271",
     "nearest_tide_station_dist_km": 31.14,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 360.88,
+    "nearest_buoy_id": "42098",
+    "nearest_buoy_dist_km": 29.83,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34542,7 +34618,8 @@
     "nwps_node_lng": -82.70163,
     "nwps_node_distance_m": 1470,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Coolidge",
@@ -34575,8 +34652,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8725889",
     "nearest_tide_station_dist_km": 25.91,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 376.71,
+    "nearest_buoy_id": "42098",
+    "nearest_buoy_dist_km": 46.9,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34584,7 +34661,8 @@
     "nwps_node_lng": -82.57609,
     "nwps_node_distance_m": 1063,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Siesta Key",
@@ -34622,8 +34700,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8725889",
     "nearest_tide_station_dist_km": 20.39,
-    "nearest_buoy_id": "42039",
-    "nearest_buoy_dist_km": 380.99,
+    "nearest_buoy_id": null,
+    "nearest_buoy_dist_km": null,
     "nwps_wfo": "tbw",
     "nwps_direction_status": "pending",
     "nwps_grid": "CG1",
@@ -34631,7 +34709,8 @@
     "nwps_node_lng": -82.55815,
     "nwps_node_distance_m": 1524,
     "nwps_buoy_id": "42098",
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Englewood",
@@ -34807,8 +34886,8 @@
     ],
     "optimal_swell_dir": 148,
     "swell_window_source": "nwps",
-    "nearest_buoy_id": "41122",
-    "nearest_buoy_dist_km": 231.07,
+    "nearest_buoy_id": "42095",
+    "nearest_buoy_dist_km": 24.87,
     "nwps_wfo": "mfl",
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
@@ -34819,7 +34898,8 @@
     "nearest_tide_station_source": "override",
     "nearest_tide_station_id": "8724580",
     "nearest_tide_station_dist_km": 3.1,
-    "time_zone": "America/New_York"
+    "time_zone": "America/New_York",
+    "fallback_buoy_ids": []
   },
   {
     "name": "Sunny Isles",
@@ -36503,8 +36583,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8658715",
     "nearest_tide_station_dist_km": 18.34,
-    "nearest_buoy_id": "ssbn7",
-    "nearest_buoy_dist_km": 37.79,
+    "nearest_buoy_id": "41108",
+    "nearest_buoy_dist_km": 21.36,
     "nwps_wfo": "ilm",
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",
@@ -36513,7 +36593,9 @@
     "nwps_node_distance_m": 797,
     "nwps_buoy_id": null,
     "time_zone": "America/New_York",
-    "fallback_buoy_ids": []
+    "fallback_buoy_ids": [
+      "41013"
+    ]
   },
   {
     "name": "Fort Fisher",
@@ -40155,8 +40237,8 @@
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "8443187",
     "nearest_tide_station_dist_km": 4.87,
-    "nearest_buoy_id": null,
-    "nearest_buoy_dist_km": null,
+    "nearest_buoy_id": "44013",
+    "nearest_buoy_dist_km": 28.54,
     "nwps_wfo": "box",
     "nwps_direction_status": "unverifiable",
     "nwps_grid": "CG1",

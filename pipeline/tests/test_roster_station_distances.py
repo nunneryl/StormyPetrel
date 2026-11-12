@@ -57,7 +57,8 @@ CHANGED = {     # was: Berts Bar, Dewees Island, Wild Dunes, Windjammer 41076; C
     "Wild Dunes": ("41065", 12.0), "Windjammer": ("41065", 15.68),
     "Church": ("46277", 8.77), "Lower Trestles": ("46277", 8.23),
     "Stone Steps": ("46274", 4.39), "Oregon Inlet": ("44095", 19.04),
-    "Oak Island Pier": ("ssbn7", 37.79), "Monster Hole": ("41114", 40.78),
+    "Oak Island Pier": ("41108", 21.36),    # run 74: ssbn7 silent since 2026-11-04
+    "Monster Hole": ("41114", 40.78),
     "Green Harbor": ("44090", 36.95), "Scituate": ("44090", 50.08),
     "Winthrop Jetty": ("44098", 81.07),
 }
@@ -74,11 +75,15 @@ KEPT = {        # same buoy, the distance corrected
     "Turtle Cove Montauk": ("44097", 62.95), "Wilbur by the Sea": ("41070", 22.75),
     "Wrightsville Beach South": ("41110", 9.68),
 }
-CLEARED = {"Devereaux", "Miramar", "Revere Beach"}   # 44013 / 46053 report no waves; nothing else in sight
+# Run 64 cleared Devereaux, Miramar and Revere Beach (44013 / 46053 reported no waves); run 74
+# gives Miramar 46053 and Revere Beach 44013 back (both report again), and clears the five Hawaii
+# spots on silent 51205 / 51208 and Siesta Key (42039 at 381 km, past the cap, nothing in sight).
+CLEARED = {"Devereaux", "Kanaha Beach", "Hoʻokipa", "Peahi Jaws", "Hanalei Bay", "Tunnels Beach",
+           "Siesta Key"}
 FROM_CACHED = {
     "Atlantic City": ("44084", 105.77), "Margate": ("44084", 98.86),
     "Ocean City NJ": ("44084", 92.33), "Avalon NJ": ("44084", 68.17),
-    "Stone Harbor": ("44084", 61.25), "Peahi Jaws": ("51205", 16.15),
+    "Stone Harbor": ("44084", 61.25),   # Peahi Jaws' 51205, from this list, cleared by run 74
 }
 
 # name: (station, distance the runner measured, the distance the roster carried before)
@@ -150,7 +155,7 @@ def test_the_approved_assignments(table):
         assert (by[name]["nearest_buoy_id"], by[name]["nearest_buoy_dist_km"]) == (bid, km), name
 
 
-def test_the_three_cleared_spots_have_no_buoy_and_no_fallbacks():
+def test_the_cleared_spots_have_no_buoy_and_no_fallbacks():
     by = {s["name"]: s for s in _roster()}
     for name in CLEARED:
         s = by[name]
@@ -161,12 +166,12 @@ def test_the_three_cleared_spots_have_no_buoy_and_no_fallbacks():
 def test_fallbacks_and_confidence_follow_the_rule():
     # buoy_confidence is 1.0 within half the cap, else 0.75 (enrichment/buoys.compute_nearest_buoy).
     # Cupsogue Beach, New York, 67.89 km: the cap is now 150 (it was the lakes' 100), so 1.0.
-    # Flying Point Beach, 95.41 km: 0.75. Peahi Jaws, Hawaii (cap 150), 16.15 km: 1.0.
+    # Flying Point Beach, 95.41 km: 0.75. Peahi Jaws, cleared by run 74: 0.0.
     by = {s["name"]: s for s in _roster()}
     assert (by["Cupsogue Beach"]["nearest_buoy_id"], by["Cupsogue Beach"]["nearest_buoy_dist_km"],
             by["Cupsogue Beach"]["enrichment_confidence"]["nearest_buoy"]) == ("44025", 67.89, 1.0)
     assert by["Flying Point Beach"]["enrichment_confidence"]["nearest_buoy"] == 0.75
-    assert by["Peahi Jaws"]["enrichment_confidence"]["nearest_buoy"] == 1.0
+    assert by["Peahi Jaws"]["enrichment_confidence"]["nearest_buoy"] == 0.0
     assert by["Oregon Inlet"]["fallback_buoy_ids"] == ["44086", "44100", "44088"]
     assert by["Berts Bar"]["fallback_buoy_ids"] == ["41076"]
 

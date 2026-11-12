@@ -115,12 +115,15 @@ def test_the_real_roster_after_run_65():
     # Before run 64's change: 39 dropped and 173 with no buoy. After it: the two held spots that
     # kept a stale buoy, and 173 - 103 newly assigned + 3 cleared = 73 with none. Run 65 corrects
     # the two stale distances and gives the other seven held spots a buoy: 0 dropped, 73 - 7 = 66.
+    # Run 74's roster change (2026-11-12) gives 15 of them a buoy and clears six on a silent or
+    # out-of-cap buoy (Kanaha Beach, Hoʻokipa, Peahi Jaws, Hanalei Bay, Tunnels Beach, Siesta Key):
+    # 66 - 15 + 6 = 57.
     import json
     from pipeline import config
     from pipeline.enrichment.geodata import load_buoy_snapshot
     roster = json.loads(config.DEFAULT_ENRICHED_OUTPUT.read_text())
     groups = [g for _s, g in A.scope(roster, load_buoy_snapshot())]
-    assert (groups.count("dropped"), groups.count("none")) == (0, 66)
+    assert (groups.count("dropped"), groups.count("none")) == (0, 57)
 
 
 # --------------------------------------------------------------------------- #
