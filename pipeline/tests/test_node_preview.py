@@ -814,7 +814,8 @@ def test_run_with_a_buoy_replays_from_48_hours_back_and_sets_the_buoy_beside_bot
     assert rep["buoys"] == {"Duck Pier": {
         "buoy": "44100", "hours": 2, "buoy_mean": 3.0,
         "old": {"hours": 2, "median": 0.463, "within_20": 0.0},
-        "new": {"hours": 2, "median": 0.75, "within_20": 0.5}}}
+        "new": {"hours": 2, "median": 0.75, "within_20": 0.5},
+        "source": "buoy_observations"}}
     assert rep["buoys_missing"] == ["nowhere"]
     assert [h["buoy_hs"] for h in rep["hours"]] == [2.0, 4.0]
 
@@ -1474,3 +1475,112 @@ def test_a_land_node_with_no_hours_in_the_cycle_is_not_listed():
                  open_cycle=lambda w, c: cyc, apply=_stub)
     assert rep["excluded_land"] == {}
     assert rep["gate"]["hours"] == 1 and rep["gate"]["pass"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Buoy readings for a buoy no spot is assigned: NDBC realtime2                  #
+# --------------------------------------------------------------------------- #
+# The head of NDBC's realtime2 file for 46087 (Neah Bay) as read on 2026-11-12. Run 71 paired
+# 0 hours for Hobuck Beach with it: buoy_observations holds only the buoys spots are assigned,
+# and 46087 is none's.
+NDBC_46087 = """#YY  MM DD hh mm WDIR WSPD GST  WVHT   DPD   APD MWD   PRES  ATMP  WTMP  DEWP  VIS PTDY  TIDE
+#yr  mo dy hr mn degT m/s  m/s     m   sec   sec degT   hPa  degC  degC  degC  nmi  hPa    ft
+2026 11 12 01 20 200  7.0  8.0   3.0    11   8.7 235 1010.9  12.4  12.1    MM   MM   MM    MM
+2026 11 12 01 10 200  7.0  8.0    MM    MM    MM  MM 1010.8  12.4  12.0    MM   MM   MM    MM
+2026 11 12 01 00 200  7.0  9.0   3.0    MM   8.7 235 1011.1  12.4  12.0    MM   MM +1.5    MM
+2026 11 12 00 50 200  8.0  9.0   3.1    11   8.6 240 1011.0  12.4    MM    MM   MM   MM    MM
+"""
+
+
+def _utc(*a):
+    return datetime.datetime(*a, tzinfo=datetime.timezone.utc).timestamp()
+
+
+def test_ndbc_wave_heights_keeps_every_row_with_a_wave_height():
+    assert NP.ndbc_wave_heights(NDBC_46087) == [
+        (_utc(2026, 11, 12, 1, 20), 3.0), (_utc(2026, 11, 12, 1, 0), 3.0),
+        (_utc(2026, 11, 12, 0, 50), 3.1)]
+    assert NP.ndbc_wave_heights("") == []
+
+
+def test_fetch_ndbc_obs_reads_the_buoys_realtime2_file_from_since():
+    urls = []
+
+    def get(url):
+        urls.append(url)
+        return type("R", (), {"text": NDBC_46087})()
+    got = NP.fetch_ndbc_obs("sisw1", "2026-11-12T01:00:00+00:00", get=get)
+    assert urls == ["https://www.ndbc.noaa.gov/data/realtime2/SISW1.txt"]
+    assert got == [(_utc(2026, 11, 12, 1, 20), 3.0), (_utc(2026, 11, 12, 1, 0), 3.0)]
+
+
+def _run_buoy(stored, ndbc):
+    return NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                  list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                  open_cycle=lambda w, c: _cycle(), apply=_stub, buoys={"duck-pier": "44100"},
+                  now=CDT + datetime.timedelta(hours=3), buoy_obs=stored, ndbc_obs=ndbc)
+
+
+def test_a_buoy_buoy_observations_lacks_is_read_from_ndbc():
+    t0 = CDT.timestamp()
+    asked = []
+
+    def ndbc(b, start):
+        asked.append((b, start))
+        return [(t0, 2.0), (t0 + 3600 + 600, 4.0)]
+    rep = _run_buoy(lambda b, start: [], ndbc)
+    assert asked == [("44100", "2026-10-24T12:00:00+00:00")]
+    # the same readings as the buoy_observations test above, so the same figures
+    assert rep["buoys"]["Duck Pier"] == {
+        "buoy": "44100", "hours": 2, "buoy_mean": 3.0,
+        "old": {"hours": 2, "median": 0.463, "within_20": 0.0},
+        "new": {"hours": 2, "median": 0.75, "within_20": 0.5},
+        "source": "NDBC realtime2 (buoy_observations has none: no spot is assigned this buoy)"}
+
+
+def test_ndbc_is_not_asked_when_buoy_observations_has_readings():
+    t0 = CDT.timestamp()
+    asked = []
+    rep = _run_buoy(lambda b, start: [(t0, 2.0)], lambda b, start: asked.append(b) or [])
+    assert asked == []
+    assert rep["buoys"]["Duck Pier"]["source"] == "buoy_observations"
+    assert rep["buoys"]["Duck Pier"]["hours"] == 1
+
+
+def test_a_failed_or_empty_ndbc_read_says_why_and_pairs_nothing():
+    def down(b, start):
+        raise OSError("down")
+    rep = _run_buoy(lambda b, start: [], down)
+    assert rep["buoys"]["Duck Pier"]["hours"] == 0
+    assert rep["buoys"]["Duck Pier"]["source"] == (
+        "none: buoy_observations has no 44100 readings and NDBC realtime2 failed (OSError: down)")
+    rep = _run_buoy(lambda b, start: [], lambda b, start: [])
+    assert rep["buoys"]["Duck Pier"]["hours"] == 0
+    assert rep["buoys"]["Duck Pier"]["source"] == (
+        "none: no 44100 wave height in buoy_observations or NDBC realtime2")
+
+
+def test_the_report_names_where_the_buoy_readings_came_from():
+    import contextlib
+    import io
+    t0 = CDT.timestamp()
+    rep = _run_buoy(lambda b, start: [], lambda b, start: [(t0, 2.0), (t0 + 3600 + 600, 4.0)])
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    assert ("  Duck Pier vs NDBC 44100: 2 paired hours, buoy mean 3.00 m; old node median 0.46 "
+            "(2 h, 0.00 within 20%); new node median 0.75 (2 h, 0.50 within 20%); readings: NDBC "
+            "realtime2 (buoy_observations has none: no spot is assigned this buoy)"
+            ) in buf.getvalue().splitlines()
+
+
+def test_run_reads_ndbc_by_default(monkeypatch):
+    t0 = CDT.timestamp()
+    asked = []
+    monkeypatch.setattr(NP, "fetch_ndbc_obs", lambda b, start: asked.append((b, start)) or [(t0, 2.0)])
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, c: _cycle(), apply=_stub, buoys={"duck-pier": "44100"},
+                 now=CDT + datetime.timedelta(hours=3), buoy_obs=lambda b, start: [])
+    assert asked == [("44100", "2026-10-24T12:00:00+00:00")]
+    assert rep["buoys"]["Duck Pier"]["hours"] == 1

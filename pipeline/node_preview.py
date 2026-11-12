@@ -55,6 +55,11 @@ nearest the hour within BUOY_PAIR_MIN minutes is set beside the old and the new 
 Only hours the cell itself holds count (not ones filled from a neighbouring hour). Per spot: the
 paired hours, the buoy's mean Hs, and for each node the median of node / buoy and the share of
 hours within 20% of the buoy. The homepage list still starts at --since.
+The readings come from buoy_observations, which holds only the buoys some spot is assigned
+(nearest_buoy_id or fallback_buoy_ids: the ones the pipeline fetches). For any other buoy it holds
+nothing, so the readings are then read from NDBC's realtime2 file for it (45 days), the file the
+pipeline itself reads; report["buoys"][spot]["source"] names where they came from. Run 71's
+Hobuck Beach and 46087 (Neah Bay) got 0 paired hours this way: 46087 is no spot's buoy.
 
 THE CYCLE FILES. For each cycle read, a HEAD request to NOMADS right after the download gives
 the file's Last-Modified time and Content-Length, set beside the size of the file read and the
@@ -465,6 +470,42 @@ def buoy_summary(hours, buoy):
             "old": node("hs_old", "filled_from"), "new": node("hs_new", "filled_from_new")}
 
 
+def ndbc_wave_heights(text):
+    """[(epoch, hs)] from an NDBC realtime2 standard-meteorological file: every row with a wave
+    height (WVHT), parsed by the pipeline's own reader (forecast/buoys._parse_realtime2)."""
+    from .forecast.buoys import _STD_FIELDS, _parse_realtime2
+    return [(datetime.fromisoformat(o["time"]).timestamp(), o["wave_height_m"])
+            for o in _parse_realtime2(text or "", _STD_FIELDS)
+            if o.get("wave_height_m") is not None]
+
+
+def fetch_ndbc_obs(buoy, since, get=None):
+    """[(epoch, hs)] at or after *since* from NDBC's realtime2 file for *buoy*."""
+    from .config import NDBC_REALTIME2_BASE
+    if get is None:
+        from .http import get
+    t0 = _iso_to_epoch(since)
+    resp = get(f"{NDBC_REALTIME2_BASE}/{str(buoy).upper()}.txt")
+    return [(t, hs) for t, hs in ndbc_wave_heights(resp.text) if t >= t0]
+
+
+def buoy_readings(buoy, since, stored, ndbc):
+    """(readings, source) for one buoy: *stored*(buoy, since) from buoy_observations, and when
+    that has none, *ndbc*(buoy, since) from NDBC's realtime2 file. A failed NDBC read gives no
+    readings and says why; it does not stop the report."""
+    obs = stored(buoy, since)
+    if obs:
+        return obs, "buoy_observations"
+    try:
+        obs = ndbc(buoy, since)
+    except Exception as e:  # noqa: BLE001  a report line, never a reason to stop
+        return [], (f"none: buoy_observations has no {buoy} readings and NDBC realtime2 "
+                    f"failed ({type(e).__name__}: {e})")
+    if obs:
+        return obs, "NDBC realtime2 (buoy_observations has none: no spot is assigned this buoy)"
+    return [], f"none: no {buoy} wave height in buoy_observations or NDBC realtime2"
+
+
 def fetch_buoy_obs(client, buoy, since):
     """[(epoch, hs)] from buoy_observations for *buoy* since *since*, hs set."""
     out, frm = [], 0
@@ -710,7 +751,7 @@ def fetch_first(client, sid, since):
 
 def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open_cycle=None,
         apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None,
-        stat_cycle=None, logger_versions=None):
+        stat_cycle=None, logger_versions=None, ndbc_obs=None):
     from .forecast.face_correction import load_face_factors, median_face_factor
     from .interpret import face_factors_by_name
     factors = load_face_factors() if factors is None else factors
@@ -812,12 +853,14 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
                           for n, rows in refs.items() if h["valid_time"] in rows}
     report["buoys"] = {}
     buoy_obs = buoy_obs or (lambda b, start: fetch_buoy_obs(client, b, start))
+    ndbc_obs = ndbc_obs or fetch_ndbc_obs
     for old, new in pairs:
         b = buoys.get(_slug(new["name"]))
         if b:
             mine = [h for h in hours if h["spot"] == new["name"]]
-            buoy_pairs(mine, buoy_obs(b, replay_since), now_epoch)
-            report["buoys"][new["name"]] = buoy_summary(mine, b)
+            obs, source = buoy_readings(b, replay_since, buoy_obs, ndbc_obs)
+            buoy_pairs(mine, obs, now_epoch)
+            report["buoys"][new["name"]] = dict(buoy_summary(mine, b), source=source)
     report["buoys_missing"] = sorted(set(buoys) - {_slug(new["name"]) for _o, new in pairs})
     report["hours"] = hours
     first = {}
@@ -954,7 +997,8 @@ def print_report(rep):
             print(f"  {name} vs NDBC {b['buoy']}: {b['hours']} paired hours, buoy mean "
                   f"{_v(b['buoy_mean'])} m; old node median {_v(o['median'])} "
                   f"({o['hours']} h, {_v(o['within_20'])} within 20%); new node median "
-                  f"{_v(n['median'])} ({n['hours']} h, {_v(n['within_20'])} within 20%)")
+                  f"{_v(n['median'])} ({n['hours']} h, {_v(n['within_20'])} within 20%)"
+                  + (f"; readings: {b['source']}" if b.get("source") else ""))
         if rep.get("buoys_missing"):
             print(f"  not a moved spot: {', '.join(rep['buoys_missing'])}")
     if rep.get("references") or rep.get("references_missing"):
