@@ -5,6 +5,10 @@ import { BreakerComparison } from '@/components/learn/BreakerComparison';
 import { SpectrumViewer } from '@/components/learn/SpectrumViewer';
 
 export const revalidate = 86400;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: { absolute: 'Understanding swell period | Stormy Petrel' },

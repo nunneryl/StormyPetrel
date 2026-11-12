@@ -34,7 +34,7 @@ export async function fetchSpotBySlug(slug: string): Promise<Spot | null> {
  */
 export async function fetchSpotsBySlug(slugs: string[]): Promise<Spot[]> {
   if (slugs.length === 0) return [];
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUncached
     .from('spots')
     .select('*')
     .in('slug', slugs);
@@ -49,13 +49,20 @@ export async function fetchSpotsBySlug(slugs: string[]): Promise<Spot[]> {
 
 /**
  * Fetch every spot, paginated past Supabase's default 1000-row REST cap.
+ *
+ * Read past the Data Cache (supabaseUncached): `select('*')` keeps the same URL across a
+ * migration, so a cached copy would keep pre-migration rows (a renamed spot's old name and slug,
+ * migration 025; no time_zone, 026; old provenance, 020-022) through a redeploy. Every page that
+ * reaches this (the root layout's nav search, so every page) sets dynamic = 'force-static', so the
+ * uncached read keeps them static and regenerated on their revalidate period
+ * (lib/dataCache.test.mts holds both).
  */
 export async function fetchAllSpots(): Promise<Spot[]> {
   const all: Spot[] = [];
   const page = 1000;
   let from = 0;
   while (true) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseUncached
       .from('spots')
       .select('*')
       .order('id', { ascending: true })

@@ -3,6 +3,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { adjacentPosts, getPost, listPosts } from '@/lib/blog';
 
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
+
 type Params = { slug: string };
 
 export async function generateStaticParams() {

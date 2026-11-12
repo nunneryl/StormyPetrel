@@ -5,6 +5,10 @@ import { PointVsBay } from '@/components/learn/PointVsBay';
 import { LEARN_SPOT_PRESETS } from '@/lib/learn-spots';
 
 export const revalidate = 86400;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: { absolute: 'Why swell direction matters | Stormy Petrel' },

@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { LEARN_ARTICLES } from '@/lib/learn';
 
 export const revalidate = 3600;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: { absolute: 'Learn to read the forecast | Stormy Petrel' },
