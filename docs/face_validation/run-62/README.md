@@ -3,6 +3,7 @@
 - **Run:** sw1-raycast run 62, mode node-preview, `baseline_ref` main, `spots` outer-banks-fishing-pier.
 - **Commit:** `5b0da4d` (before the rebase onto main), dispatched 2026-10-30 11:37Z.
 - **Artifact:** `node-preview-62`; `node_preview.json` and `node_preview_hours.csv` saved here byte for byte (the CSV gzipped).
+- **Stored gzipped since 2026-11-12:** `node_preview.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **What it read:** the published window from 2026-10-30 11:37Z, rated from the MHX cycle 2026-10-30 00Z. NOMADS listed 9 cycles; that is the only one the window was rated from, so it is the only one read.
 
 ## The gate: PASS
