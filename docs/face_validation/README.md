@@ -1,6 +1,6 @@
 # Face validation
 
-This folder holds the evidence for how the site's surf heights compare with what surfers and the National Weather Service (NWS) report. Each `run-NN/` folder keeps a sw1-raycast artifact byte for byte, with a note. This page sets the rules for surf reports.
+This folder holds the evidence for how the site's surf heights compare with what surfers and the National Weather Service (NWS) report. Each `run-NN/` folder keeps a sw1-raycast artifact, with a note (how it is stored: below). This page sets the rules for surf reports.
 
 ## Design rule: surf reports never feed the forecast
 
@@ -42,3 +42,19 @@ No code does this yet. The rule above forbids it. If that decision is ever rever
   - Hold suspect answers out of calibration, and count them, rather than deleting them.
 - **Look for one-sided reporters.** A reporter hash whose answers sit always above, or always below, the forecast, by more than chance allows, is either a systematic reader or someone pushing the number. Weight it down or hold it out, and report how many were.
 - **Watch spots with few reporters.** A spot where one or two reporters make up most of the answers can be moved by them alone. Name those spots rather than calibrating them.
+
+## Saving run evidence
+
+From 2026-11-12, every run's files are saved with `scripts/save_run_evidence.py`:
+
+```
+python3 scripts/save_run_evidence.py docs/face_validation/run-NN FILE ...
+python3 scripts/save_run_evidence.py --verify
+```
+
+- **A file of 100 KB or more is stored gzipped** as `NAME.gz` (level 9, no name or time in the header, so the same file always gives the same bytes). A smaller file is stored as it is.
+- **The sha256 of every original file** is in `CHECKSUMS.sha256`, so `gunzip -c NAME.gz | sha256sum` can be checked against the artifact downloaded again by its run id.
+- **Each run's README names the run id, the artifact and its zip's sha256.** A run whose artifact would be too big even gzipped keeps a summary instead, with that reference.
+- The 18 files of 100 KB or more saved before this rule were gzipped on 2026-11-12, their checksums recorded and checked against the decompressed copies (25 MB of checkout down to 13 MB). Git history keeps the old copies; nothing in the evidence changed.
+- `pipeline/tests/test_face_validation_evidence.py` fails on an uncompressed file of 100 KB or more here, and on a checksum that does not hold.
+

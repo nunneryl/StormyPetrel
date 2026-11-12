@@ -3,6 +3,7 @@
 - **Run:** sw1-raycast run 70 (Actions run 42523943497), branch `claude/practical-dirac-bshfbr` at `5bc80e9`, 2026-11-08 21:11Z, `baseline_ref` main.
   - It ran after the full pipeline runs at 20:15Z and 20:41Z (manual) had published the 2026-11-08 12Z cycles.
 - **Artifact:** `node-preview-70`, zip sha256 `c097b4cce5f9dd80bf12f999cb22aa67fa827b564ba9eec71da59e47ff6d7589`. `node_preview.json` is saved here byte for byte; `node_preview_hours.csv` is gzipped.
+- **Stored gzipped since 2026-11-12:** `node_preview.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **Moved spots:** Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall. Point Lookout is held (run 69).
 - **Window:** the published forecasts from 21:12Z, replayed from 48 hours earlier because buoys were named.
 - **References:**
