@@ -7,9 +7,11 @@
  *   - the wind sea read "not surfable" while lib/shownPeriod.ts (#284) showed it as the surf.
  *
  * Now every row shows its share of the total wave height, on the same measure as the Conditions
- * tile: the wind sea's share IS the hour's chop_ratio, the wind-sea fraction of total Hs that the
- * tile prints, and the swell partitions split the rest in proportion to their energy (Hs²).
- * Where chop_ratio is unknown, every row's share is its energy over all rows' energy.
+ * tile: the wind sea's share IS windSeaShare(row), the hour's chop_ratio (the wind-sea fraction of
+ * total Hs), and the tile prints that same number through the same sharePercent; the swell
+ * partitions split the rest in proportion to their energy (Hs²). Where chop_ratio is unknown,
+ * every row's share is its energy over all rows' energy. Both read the same hour's row too:
+ * components/CurrentHour.tsx.
  *
  * The wind sea row is labelled "Wind sea", or "Wind sea · shown as the surf" when the #284 rule
  * shows it instead of the rated swell (windSeaDominates); then it is not greyed out either.
@@ -41,6 +43,13 @@ function num(v: number | null | undefined): number | null {
   return v === null || v === undefined || !Number.isFinite(v) ? null : v;
 }
 
+/** The wind sea's share of the hour's wave height (its chop_ratio), or null when unknown or not
+ *  a fraction. The Conditions tile's "% wind sea" and the breakdown's wind sea row both print it. */
+export function windSeaShare(f: { chop_ratio?: number | null } | null | undefined): number | null {
+  const chop = num(f?.chop_ratio);
+  return chop !== null && chop >= 0 && chop <= 1 ? chop : null;
+}
+
 /** The rows to show for an hour at a spot whose swell window is *arcs*, biggest first. */
 export function breakdownRows(
   f: BreakdownInput, arcs: readonly WindowArc[] | null | undefined,
@@ -60,14 +69,13 @@ export function breakdownRows(
     .sort((a, b) => (b.hs ?? 0) - (a.hs ?? 0));
 
   const energy = (r: { hs: number | null }) => (r.hs ?? 0) ** 2;
-  const chop = num(f.chop_ratio);
-  const known = chop !== null && chop >= 0 && chop <= 1;
+  const chop = windSeaShare(f);
   const swellEnergy = raw.filter((r) => !r.windSea).reduce((a, r) => a + energy(r), 0);
   const allEnergy = raw.reduce((a, r) => a + energy(r), 0);
 
   return raw.map((r) => {
     let share: number;
-    if (known) {
+    if (chop !== null) {
       share = r.windSea ? chop : swellEnergy > 0 ? (1 - chop) * energy(r) / swellEnergy : 0;
     } else {
       share = allEnergy > 0 ? energy(r) / allEnergy : 0;

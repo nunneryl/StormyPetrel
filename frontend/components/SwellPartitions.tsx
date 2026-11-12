@@ -1,7 +1,10 @@
+'use client';
+
+import { useCurrentHour } from './CurrentHour';
 import { SwellCompass } from './SwellCompass';
 import { degToCardinal, fmtSec, metersToFeet } from '@/lib/formatting';
 import { breakdownRows, sharePercent } from '@/lib/swellBreakdown';
-import type { Forecast, Spot } from '@/lib/types';
+import type { Spot } from '@/lib/types';
 
 const SOURCE_LABEL: Record<string, string> = {
   ww3:                 'WAVEWATCH III',
@@ -16,12 +19,13 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 export function SwellPartitions({
-  forecast,
   windowArcs,
 }: {
-  forecast: Forecast;
   windowArcs: Spot['swell_window_arcs'];
 }) {
+  // The hour the Conditions tiles show: one clock, one row (components/CurrentHour.tsx).
+  const forecast = useCurrentHour().selection.row;
+  if (!forecast) return null;
   // Every row's share of the total wave height, the measure the Conditions tile's "% wind sea"
   // uses (lib/swellBreakdown.ts).
   const all = breakdownRows(forecast, windowArcs);

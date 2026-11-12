@@ -4,22 +4,22 @@
 // with the SERVER's clock, and the spot routes are statically generated with
 // `revalidate = 3600` — so the row could have been picked up to an hour before anyone read
 // it. `'use client'` does NOT opt the route out of prerendering: the initial HTML is still
-// server-rendered from `serverNowMs` (identical bytes to before, so crawlers and first
-// paint are unchanged), and the effect below re-picks with the reader's own clock on mount
-// and once a minute after.
-import { useEffect, useState } from 'react';
+// server-rendered from the server's clock (identical bytes to before, so crawlers and first
+// paint are unchanged), and the reader's own clock re-picks on mount and once a minute after.
+// That clock and the row it picks live in CurrentHourProvider (components/CurrentHour.tsx),
+// which the swell breakdown reads too, so the two always show the same hour.
 
 import Link from 'next/link';
 
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
-import { selectCurrentHour } from '@/lib/currentHour';
+import { useCurrentHour } from './CurrentHour';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import {
   heightBasis, HEADLINE_HEIGHT_LABEL, HEIGHT_BASIS_COLOR, HEIGHT_BASIS_LABEL, HEIGHT_BASIS_NOTE,
   HEIGHT_METHOD_HREF, HEIGHT_METHOD_LINK_TEXT,
 } from '@/lib/heightBasis';
-import type { Forecast, Spot } from '@/lib/types';
+import type { Spot } from '@/lib/types';
 import {
   classifySurface, surfaceTextClass, chopLabel,
   classifyWind, windQualityClass, windQualityLabel,
@@ -31,6 +31,7 @@ import {
   fmtSec,
 } from '@/lib/formatting';
 import { shownTrain } from '@/lib/shownPeriod';
+import { sharePercent, windSeaShare } from '@/lib/swellBreakdown';
 
 type Tile = {
   label: string;
@@ -45,33 +46,15 @@ type Tile = {
 };
 
 export function CurrentConditions({
-  rows,
-  serverNowMs,
   offshoreDeg,
   windowArcs,
 }: {
-  /** The spot's forecast rows, INCLUDING the recent past. The current hour's row is the one
-   *  whose bucket contains now, so a window starting at `now` would exclude it the moment
-   *  the server clock crossed the hour — see selectCurrentHour. */
-  rows: Forecast[];
-  /** The server's clock at render time. Used for the first paint on BOTH sides so the
-   *  markup matches, then replaced by the viewer's clock in the effect below. */
-  serverNowMs: number;
   offshoreDeg: number | null | undefined;
   /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
   windowArcs: Spot['swell_window_arcs'];
 }) {
-  // Server render and first client render both use serverNowMs — no hydration mismatch.
-  // The effect then corrects to the reader's clock, and the interval keeps a page that is
-  // left open from drifting into a stale hour the way the static HTML did.
-  const [nowMs, setNowMs] = useState(serverNowMs);
-  useEffect(() => {
-    setNowMs(Date.now());
-    const id = setInterval(() => setNowMs(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const selection = selectCurrentHour(rows, nowMs);
+  // The hour the swell breakdown shows too: one clock, one row (components/CurrentHour.tsx).
+  const { rows, selection } = useCurrentHour();
   const current = selection.row;
   // What the height in the Surf height tile IS — calibrated, CDIP's own, or a model
   // estimate — read off the same row, so it moves with the row when the hour turns over.
@@ -83,6 +66,8 @@ export function CurrentConditions({
   // The train shown: the rated swell, or the wind sea where lib/shownPeriod.ts shows it. The
   // stars stay on the rated swell either way.
   const { tp, dp } = shownTrain(current, windowArcs);
+  // The wind sea's share of the wave height: the very number the breakdown's wind sea row prints.
+  const windSea = windSeaShare(current);
 
   const wQ = classifyWind(current?.wind_dir ?? null, offshoreDeg ?? null);
   // Conditions is WIND-DERIVED. It reads the same wind_dir/offshore_wind_deg the Wind
@@ -184,11 +169,7 @@ export function CurrentConditions({
         label="Conditions"
         value={chopLabel(cQ)}
         valueClass={surfaceTextClass(cQ)}
-        hint={
-          current?.chop_ratio !== null && current?.chop_ratio !== undefined
-            ? `swell mix · ${(current.chop_ratio * 100).toFixed(0)}% wind sea`
-            : null
-        }
+        hint={windSea !== null ? `swell mix · ${sharePercent(windSea)} wind sea` : null}
       />
       </section>
       {/* What the height above is, in one line, and where that is explained. */}
