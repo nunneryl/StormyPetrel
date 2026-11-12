@@ -8,7 +8,7 @@
 // '@/lib/cam-utils' directly — re-exports here STILL trigger the
 // supabase module-init when bundled.
 
-import { supabase, supabaseUncached } from './supabase';
+import { supabaseUncached } from './supabase';
 import { CAM_SELECT, type Cam } from './cam-utils';
 
 export type {
@@ -37,9 +37,10 @@ export async function fetchCamsForSpot(spotSlug: string): Promise<Cam[]> {
 }
 
 /** All active cams across the site, used for /cams and the cam-badge
- *  join on listings. */
+ *  join on listings. Read past the Data Cache: migration 025 re-pointed cams.spot_slug when it
+ *  renamed two spots, and a cached copy would keep the old slugs. */
 export async function fetchAllActiveCams(): Promise<Cam[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUncached
     .from('cams')
     .select(CAM_SELECT)
     .eq('status', 'active')
@@ -56,7 +57,8 @@ export async function fetchAllActiveCams(): Promise<Cam[]> {
  *  saves dragging the whole iframe/embed payload across the boundary
  *  just to know "does this spot have a cam?". */
 export async function fetchCamSlugSet(): Promise<Set<string>> {
-  const { data, error } = await supabase
+  // Past the Data Cache, as fetchAllActiveCams.
+  const { data, error } = await supabaseUncached
     .from('cams')
     .select('spot_slug')
     .eq('status', 'active')

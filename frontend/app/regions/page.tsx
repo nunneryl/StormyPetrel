@@ -3,6 +3,10 @@ import type { Metadata } from 'next';
 import { fetchAllSpots } from '@/lib/queries';
 
 export const revalidate = 3600;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: { absolute: 'Browse Surf Forecasts by Region | Stormy Petrel' },
