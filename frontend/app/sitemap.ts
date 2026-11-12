@@ -10,6 +10,10 @@ const SITE_URL = siteUrl();
 // Regenerate every hour. Forecast pages themselves are force-dynamic, so
 // the sitemap doesn't need to update faster than spot inventory changes.
 export const revalidate = 3600;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

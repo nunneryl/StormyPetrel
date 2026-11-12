@@ -65,6 +65,10 @@
  *      the copy the first build cached, and show "(last: Oct 29, 9:50am EDT)" and Eastern
  *      abbreviations only. That second build is the 2026-10-29 preview: migration 026 applied, a redeploy
  *      without build cache, and still Los Angeles times, from a spot row the Data Cache held.
+ *  14. The list pages read the spots past the Data Cache as the spot page does: between the two
+ *      builds Pensacola Beach's break type also turns researched (a backfill, the shape of
+ *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
+ *      "beach" without "(unverified)". With the list read cached it kept "beach (unverified)".
  *
  * NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. The expected hour is this file's own
  * arithmetic (the render time floored to the hour), the expected height is looked up in this
@@ -732,6 +736,9 @@ async function main(): Promise<void> {
   }
   server = null;
   JACKSONVILLE.time_zone = 'America/New_York';
+  // And a backfill on another column the list pages show (item 14): Pensacola Beach's break type
+  // turns researched, so the region list must drop its "(unverified)".
+  PENSACOLA.break_type_source = 'researched';
   const askedBefore = asked.length;
   await buildSite('second build, Jacksonville Beach Pier now has its time_zone, .next/cache kept');
   const rowRead = `spots?select=*&slug=eq.${JACKSONVILLE.slug}`;
@@ -746,6 +753,13 @@ async function main(): Promise<void> {
     easternZones.has(zonesOn(jaxAfter.html)), zonesOn(jaxAfter.html));
   eq(`${JACKSONVILLE.slug} (America/New_York) after the second build: buoy's last reading`,
     buoyLast(jaxAfter.html), 'Oct 29, 9:50am EDT');
+
+  // 14: the list pages read the spots past the Data Cache too (lib/queries.ts fetchAllSpots).
+  const fl = await fetch(`${site}/region/florida`);
+  const flHtml = (await fl.text()).replace(/<!-- -->/g, '').replace(/>\s+/g, '>').replace(/\s+</g, '<');
+  eq('/region/florida after the second build answers 200', fl.status, 200);
+  check('/region/florida after the second build: Pensacola Beach reads "beach", no longer unverified',
+    flHtml.includes('>beach<') && !flHtml.includes('>beach (unverified)<'));
 }
 
 // A hung build or server fails the run instead of holding CI open.

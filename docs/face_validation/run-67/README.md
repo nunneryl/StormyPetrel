@@ -3,6 +3,7 @@
 - **Run:** sw1-raycast run 67 (Actions run 42289868236), branch `claude/practical-dirac-bshfbr` at `bf3ca68`, 2026-11-06 20:37–20:45Z.
 - **Spots read:** Bandon Beach, Rincon, Tarpits, Revere Beach, Tokeland, Short Sands Beach York, Hubbard Creek, Galveston Seawall, Point Lookout and Moonstone Beach Humboldt, plus the spots it flags lowest.
 - **Artifact:** `nwps-cells-67`, zip sha256 `ee17c6088f82fe6e70c464418626e58afd7641958688d6c39a5ec7ca824d7a89`. `nwps_cells.json` is saved here byte for byte; `nwps_cells.csv` is gzipped.
+- **Stored gzipped since 2026-11-12:** `etopo_join.txt`, `nwps_cells.json` are kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **What it read:**
   - the 4 newest NOMADS cycles of each office (Nov 5 to Nov 6);
   - every cell within 3 of each spot's sample cell: wet hours, and NWPS's mean Hs, period and direction;

@@ -5,6 +5,10 @@ import { SeaBreezeCycle } from '@/components/learn/SeaBreezeCycle';
 import { siteUrl } from '@/lib/site-url';
 
 export const revalidate = 86400;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 const DESCRIPTION =
   'Why offshore wind makes good waves and onshore ruins them, the daily sea breeze cycle, regional winds like Santa Anas and trades, and how to read a wind forecast.';

@@ -3,6 +3,7 @@
 - **Run:** sw1-raycast run 65 (Actions run 41542268600), branch `claude/practical-dirac-bshfbr` at `d15a605`, 2026-11-02 23:02Z.
 - **Artifact:** `buoy-assign-65`, zip sha256 `e4d69110c93c23318cb9159f0455efe92e2f845094220acc1782f3ec32f4f5eb`. Both files are saved here byte for byte:
   - `buoy_assign.json` (the rule's answers);
+- **Stored gzipped since 2026-11-12:** `buoy_assign.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
   - `buoy_assign_recent_wave.json` (the 7-day check of each station).
 - **Spots:** Kalaloch Beach, La Push First, Second and Third Beach, Galveston Seawall, 61st Street Galveston, Ventura Harbor, Ventura Point and Mecox Beach.
 - **What it did:**

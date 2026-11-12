@@ -6,6 +6,10 @@ import { tierFromStars } from '@/lib/ratings';
 import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
 export const revalidate = 900;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: { absolute: `Surf Spot Map — ${RATED_SPOT_COUNT} US Spots | Stormy Petrel` },

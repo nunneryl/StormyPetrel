@@ -2,6 +2,7 @@
 
 - **Run:** sw1-raycast run 71 (Actions run 43138697054), branch `claude/practical-dirac-bshfbr-nodes` at `9fc0652`, 2026-11-12 02:03Z, `baseline_ref` main.
 - **Artifact:** `node-preview-71`, zip sha256 `c4e18af59f03a4960d46ee029d49c325a793e095390088d879c3761921cf959c`. `node_preview.json` is saved here byte for byte (sha256 `790b43c98d23182a2bb8018316b66938669525f442c65bb88856836ec4b8f27c`); `node_preview_hours.csv` is gzipped.
+- **Stored gzipped since 2026-11-12:** `node_preview.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **Moved spots:** Pacifica Linda Mar and Rockaway Beach Pacifica (one shared node), Avila Beach (mtr); Hobuck Beach, Westport Jetty and Westport Light State Park (sew).
 - **Window:** the published forecasts from 02:04Z, replayed from 48 hours earlier (2026-11-10 02:04Z) because buoys were named. Cycles read: mtr and sew 11-10 00Z, 11-10 12Z, 11-11 00Z, 11-11 12Z.
 - **References:** neighbours Sharp Park, Half Moon Bay Jetty, Half Moon Bay, Cable Landing, Morro Rock, Shi Shi Beach, Ocean Shores, Tokeland; buoys 46237 (Pacifica Linda Mar), 46215 (Avila Beach), 46087 (Hobuck Beach), 46211 (Westport Jetty).

@@ -2,6 +2,7 @@
 
 - **Run:** sw1-raycast run 64 (Actions run 41244809449), branch `claude/practical-dirac-bshfbr` at `b032574`, 2026-10-31 21:42Z.
 - **Artifact:** `buoy-assign-64`, sha256 `0dfa31c2ab0334a4e99f91cdbe2c251309b4959e49b630c3eae3fee06b56bba6`; `buoy_assign.json` saved here byte for byte.
+- **Stored gzipped since 2026-11-12:** `buoy_assign.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **What it did:** reran enrich's buoy rule (`enrichment/buoys.compute_nearest_buoy`) for the 39 spots whose buoy db_import drops and the 173 with no buoy.
   - The rule starts from the seaward-adjusted point and looks only at NDBC wave stations: the 10 nearest, within the region's cap, with line of sight over GSHHG land.
   - It ran on two station lists:

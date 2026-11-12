@@ -34,6 +34,7 @@ The rule changed between runs:
 In `run-55/`, `run-56/` and `run-57/`:
 
 - `period_preview.json` and `face_compare.json`: the artifact's JSON, byte for byte.
+- **Stored gzipped since 2026-11-12:** `run-55/face_compare.json`, `run-56/face_compare.json`, `run-56/period_preview.json`, `run-57/face_compare.json`, `run-57/period_preview.json` are kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - `period_preview_hours.csv.gz`: the published window's switched hours, each with its period,
   direction and surf height before and after.
 

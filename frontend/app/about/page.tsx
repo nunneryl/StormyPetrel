@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { BUOY_UPDATES, FORECAST_UPDATES } from '@/lib/updateCadence';
 
 export const revalidate = 86400; // 24h — content is essentially static
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: { absolute: 'About | Stormy Petrel' },

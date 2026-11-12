@@ -6,6 +6,10 @@ import { BuoyMap } from '@/components/learn/BuoyMap';
 import { siteUrl } from '@/lib/site-url';
 
 export const revalidate = 86400;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 const DESCRIPTION =
   'How to read an NDBC buoy report the way a forecaster does. What WVHT, DPD, APD, and MWD actually mean, why the gap between DPD and APD is the most useful single diagnostic, why you should always read two buoys, and how to calculate lead time from a deep-water station.';

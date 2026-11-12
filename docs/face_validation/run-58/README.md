@@ -2,6 +2,7 @@
 
 - **Run:** sw1-raycast run 58, commit `e244d2a`, dispatched 2026-10-29 13:29Z.
 - **Artifact:** `nwps-cells-58`; `nwps_cells.json` and `nwps_cells.csv` saved here byte for byte (the CSV gzipped).
+- **Stored gzipped since 2026-11-12:** `nwps_cells.json` is kept as `.gz` (`gunzip -c` gives the artifact's file byte for byte; the sha256 of each is in `../CHECKSUMS.sha256`). Nothing else changed.
 - **What it read (read-only):**
   - the NWPS-sized hours since 2026-09-07;
   - the MHX CG1 grid from the cycles 2026-10-27 12Z, 10-28 00Z, 10-28 12Z and 10-29 00Z;

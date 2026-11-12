@@ -6,6 +6,10 @@ import { ForecastSkillCurve } from '@/components/learn/ForecastSkillCurve';
 import { siteUrl } from '@/lib/site-url';
 
 export const revalidate = 86400;
+// Static, and regenerated on the revalidate period where there is one: the root layout reads the
+// spots past the Data Cache (lib/queries.ts fetchAllSpots), which would otherwise render this
+// page on every request.
+export const dynamic = 'force-static';
 
 const DESCRIPTION =
   'A surf forecast is a stack of nested models: weather model → global wave model → nearshore transformation → wind and tide blend → human overlay → star rating. How each layer works, what star ratings actually mean, and why forecast accuracy drops off after 3 days.';
