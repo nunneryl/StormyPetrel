@@ -119,7 +119,7 @@ check('MIN_LONGER_S, DOMINANCE_K and BLOCKED_OUTSIDE_DEG are pipeline/forecast/s
 // --------------------------------------------------------------------------- //
 // 3 — every display reads it                                                   //
 // --------------------------------------------------------------------------- //
-// Each with the spot's window: the two components that take rows alone get it from the spot page.
+// Each with the spot's window: the components that take rows alone get it from the spot page.
 const SITES: [string, string][] = [
   ['components/CurrentConditions.tsx', 'const { tp, dp } = shownTrain(current, windowArcs);'],
   ['components/ForecastGrid.tsx', 'const { tp, dp } = shownTrain(r, windowArcs);'],
@@ -130,8 +130,9 @@ const SITES: [string, string][] = [
 ];
 for (const [rel, use] of SITES) check(`${rel} shows the period through shownTrain`, read(rel).includes(use));
 const spotPage = read('app/spot/[slug]/page.tsx');
-check('the spot page hands both components the spot\'s window',
-  (spotPage.match(/windowArcs=\{spot\.swell_window_arcs\}/g) ?? []).length === 2);
+// CurrentConditions, ForecastGrid and SwellPartitions (its wind sea row is labelled by windSeaDominates).
+check('the spot page hands all three components the spot\'s window',
+  (spotPage.match(/windowArcs=\{spot\.swell_window_arcs\}/g) ?? []).length === 3);
 const direct = ['app', 'components'].flatMap((d) => walk(join(FRONTEND, d)))
   .map((abs) => relative(FRONTEND, abs))
   // A query's column list names the columns without showing them; it is left out.

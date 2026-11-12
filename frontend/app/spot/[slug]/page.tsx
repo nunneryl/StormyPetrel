@@ -344,7 +344,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
       </SurfReportProvider>
 
       {/* Spectral swell components */}
-      {current && <SwellPartitions forecast={current} />}
+      {current && <SwellPartitions forecast={current} windowArcs={spot.swell_window_arcs} />}
 
       {/* Charts — next 48h only so curves stay legible */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
