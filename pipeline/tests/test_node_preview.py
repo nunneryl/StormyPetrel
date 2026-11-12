@@ -383,8 +383,8 @@ def test_run_replays_the_hours_on_a_listed_cycle_and_counts_the_rest():
     assert [h["valid_time"] for h in rep["hours"]] == [_vt(0), _vt(1)]
     assert rep["gate"] == {"hours": 2, "input_differences": 0, "star_differences": 0,
                            "face_differences": 0, "filled": 0, "pass": True,
-                           "excluded_cycles": []}
-    assert rep["excluded"] == {}
+                           "excluded_cycles": [], "excluded_land": []}
+    assert rep["excluded"] == {} and rep["excluded_land"] == {}
     assert rep["moved"] == [{"spot": "Duck Pier", "wfo": "mhx", "old": [36.19, -75.75],
                              "new": [36.19, -75.73], "new_distance_m": 2074}]
     assert rep["node_checks"] == {"Duck Pier": {"2026102612": {"wet": True, "same_cell": True,
@@ -814,7 +814,8 @@ def test_run_with_a_buoy_replays_from_48_hours_back_and_sets_the_buoy_beside_bot
     assert rep["buoys"] == {"Duck Pier": {
         "buoy": "44100", "hours": 2, "buoy_mean": 3.0,
         "old": {"hours": 2, "median": 0.463, "within_20": 0.0},
-        "new": {"hours": 2, "median": 0.75, "within_20": 0.5}}}
+        "new": {"hours": 2, "median": 0.75, "within_20": 0.5},
+        "source": "buoy_observations"}}
     assert rep["buoys_missing"] == ["nowhere"]
     assert [h["buoy_hs"] for h in rep["hours"]] == [2.0, 4.0]
 
@@ -1155,7 +1156,7 @@ def test_a_double_posted_cycle_is_kept_out_of_the_gate_and_reported_apart():
         "face_differences": 0, "filled": 0}}
     assert rep["gate"] == {"hours": 0, "input_differences": 0, "star_differences": 0,
                            "face_differences": 0, "filled": 0, "pass": False,
-                           "excluded_cycles": ["mhx 2026102612"]}
+                           "excluded_cycles": ["mhx 2026102612"], "excluded_land": []}
     assert [(h["cycle_file"], h["gate_excluded"]) for h in rep["hours"]] == [
         ("mhx 2026102612", True), ("mhx 2026102612", True)]
     assert rep["logger_log"] is True
@@ -1338,3 +1339,248 @@ def test_server_copies_keep_a_cycle_in_the_gate():
     assert NP.double_post_reasons({"size_read": 7, "content_length": 7}, copies) == []
     rep = _run_with(logger={("mhx", "2026102612"): copies})
     assert rep["excluded"] == {} and rep["gate"]["hours"] == 2
+
+
+# --------------------------------------------------------------------------- #
+# Old node on land: excluded from the gate for that cycle, reported apart      #
+# --------------------------------------------------------------------------- #
+# Duck Pier's old node (36.19, -75.75) is cell (1, 1), made land in every field and step;
+# Kitty Hawk did not change cell: its old node (36.18, -75.76) is cell (0, 0), every value 0.5,
+# and it moves to (36.20, -75.73), cell (2, 3). The replay's fallback for Duck Pier is (1, 0),
+# centre (36.19, -75.76): 0.01 deg of longitude at 36.19 N, 6371 x pi/180 x 0.01 x
+# cos(36.19 deg) = 111.19 x 0.01 x 0.80706 = 0.897 km.
+KH_OLD = {"name": "Kitty Hawk", "swell_window_source": "nwps", "nwps_wfo": "mhx",
+          "nwps_node_lat": 36.18, "nwps_node_lng": -75.76, "nwps_node_distance_m": 900}
+KH_NEW = dict(KH_OLD, nwps_node_lat=36.20, nwps_node_lng=-75.73, nwps_node_distance_m=1500)
+LAND_KEY = "Duck Pier, mhx 2026102612"
+LAND_EVIDENCE = {"node": [36.19, -75.75], "cell": [1, 1], "cell_centre": [36.19, -75.75],
+                 "offset_km": 0.0, "steps": 3, "replayed_cell": [1, 0],
+                 "replayed_centre": [36.19, -75.76], "replayed_km": 0.897}
+
+
+def _kh_row(fh):
+    """A published Kitty Hawk hour rated at its old cell (0, 0): every value 0.5; its wind
+    (4.0 kt from 90) is not NWPS's, and the stand-in rater's face is the wind speed."""
+    return {"spot_id": 3, "source": "nwps", "valid_time": _vt(fh), "nwps_cycle": STAMP,
+            "swell_source": "nwps_height_ww3_dir", "hs": 0.5, "tp": 0.5, "dp": 0.5,
+            "swell_hs": 0.5, "swell_dp": 70.0, "swell_tp": 11.0, "wind_speed": 4.0,
+            "wind_dir": 90.0, "wind_mult": 1.0, "tide_mult": 1.0, "stars": 0.5,
+            "face_ft_raw": 4.0}
+
+
+def _run_land(cycle):
+    # Duck Pier's published hours were rated from the cell nwps.fetch walked to (swh 1.235):
+    # at the fallback cell (1, 0) the replay reads 0.5, so both hours differ in inputs and stars.
+    duck = [_row(0, source="nwps", face_ft_raw=5.5),
+            _row(1, source="nwps", wind_speed=9.0, wind_dir=90.0, face_ft_raw=9.0)]
+    client = _Client([{"id": 1, "name": "Duck Pier", "state": "NC"},
+                      {"id": 3, "name": "Kitty Hawk", "state": "NC"}],
+                     duck + [_kh_row(0), _kh_row(1)])
+    return NP.run(client, [OLD, KH_OLD], [NEW, KH_NEW], _vt(0), factors={},
+                  list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                  open_cycle=lambda w, cyc: cycle, apply=_stub)
+
+
+def test_the_evidence_that_an_old_node_is_land():
+    assert NP.old_node_on_land(_cycle(land=[(1, 1)]), OLD) == LAND_EVIDENCE
+
+
+def test_a_wet_old_node_is_not_land():
+    assert NP.old_node_on_land(_cycle(), OLD) is None
+    # a cell blank at f000 but wet later (one that dries at low water) is still the cell read
+    assert NP.old_node_on_land(_dry_at_f000(), OLD) is None
+    # the rule is about the fixed node: a NEW node on land does not make the old one land
+    assert NP.old_node_on_land(_cycle(land=[(1, 3)]), OLD) is None
+
+
+def test_a_spot_whose_old_node_is_land_is_kept_out_of_the_gate_and_the_rest_must_match():
+    rep = _run_land(_cycle(land=[(1, 1)]))
+    assert rep["excluded_land"] == {LAND_KEY: {
+        "spot": "Duck Pier", "cycle_file": "mhx 2026102612", "evidence": LAND_EVIDENCE,
+        "hours": 2, "input_differences": 2, "star_differences": 2, "face_differences": 0,
+        "filled": 0}}
+    # Kitty Hawk's two hours alone make the gate, and they match exactly
+    assert rep["gate"] == {"hours": 2, "input_differences": 0, "star_differences": 0,
+                           "face_differences": 0, "filled": 0, "pass": True,
+                           "excluded_cycles": [], "excluded_land": [LAND_KEY]}
+    assert rep["excluded"] == {}
+    assert [(h["spot"], h["gate_excluded"], h["excluded_for"]) for h in rep["hours"]] == [
+        ("Duck Pier", True, ["old node on land"]), ("Duck Pier", True, ["old node on land"]),
+        ("Kitty Hawk", False, []), ("Kitty Hawk", False, [])]
+    # still in the per-spot figures
+    assert rep["by_spot"]["Duck Pier"]["hours"] == 2
+
+
+def test_a_difference_on_a_spot_with_a_wet_old_node_still_fails_the_gate():
+    # Kitty Hawk's old node is wet, so a stored height off by 0.1 m is a difference
+    # and the gate fails, though Duck Pier is excluded.
+    cyc = _cycle(land=[(1, 1)])
+    duck = [_row(0, source="nwps", face_ft_raw=5.5)]
+    client = _Client([{"id": 1, "name": "Duck Pier", "state": "NC"},
+                      {"id": 3, "name": "Kitty Hawk", "state": "NC"}],
+                     duck + [dict(_kh_row(0), hs=0.6)])
+    rep = NP.run(client, [OLD, KH_OLD], [NEW, KH_NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, cyc_: cyc, apply=_stub)
+    assert rep["gate"]["hours"] == 1 and rep["gate"]["input_differences"] == 1
+    assert rep["gate"]["pass"] is False
+    assert rep["gate"]["excluded_land"] == [LAND_KEY]
+
+
+def test_with_both_old_nodes_wet_nothing_is_excluded():
+    rep = _run_land(_cycle())
+    assert rep["excluded_land"] == {} and rep["gate"]["excluded_land"] == []
+    # Duck Pier's rows read 1.235 at its own cell, so all four hours are in the gate and match
+    assert rep["gate"]["hours"] == 4 and rep["gate"]["pass"] is True
+
+
+def test_the_report_names_the_land_node_and_its_evidence():
+    import contextlib
+    import io
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(_run_land(_cycle(land=[(1, 1)])))
+    lines = buf.getvalue().splitlines()
+    i = lines.index("  EXCLUDED from the gate, old node on land in this cycle: Duck Pier, "
+                    "mhx 2026102612: 2 hours, 2 input, 2 star and 0 face differences")
+    assert lines[i + 1] == (
+        "    - node (36.19, -75.75) is cell (1, 1), centre (36.19, -75.75), 0.0 km away: no wave "
+        "value (swh or shts) there at any of the cycle's 3 steps, so nwps.fetch walked seaward "
+        "and the published hours are not from this node; the replay read cell (1, 0), centre "
+        "(36.19, -75.76), 0.897 km away, instead")
+    assert any(ln.startswith(f"    Duck Pier {_vt(0)} [mhx 2026102612, excluded]: inputs DIFFER")
+               for ln in lines)
+    assert any(ln.startswith("=== MERGE GATE: the old points against the published window: "
+                             "2 hours, 0 input differences") and ln.endswith("-> PASS ===")
+               for ln in lines)
+
+
+def test_an_all_land_grid_leaves_no_cell_to_replay():
+    every = [(i, j) for i in range(3) for j in range(4)]
+    ev = NP.old_node_on_land(_cycle(land=every), OLD)
+    assert ev["replayed_cell"] is None and ev["replayed_centre"] is None
+    assert ev["replayed_km"] is None
+    assert NP.land_evidence_line(ev).endswith("the replay found no wet cell to read instead")
+
+
+def test_a_land_node_with_no_hours_in_the_cycle_is_not_listed():
+    # Duck Pier's only hour was written by another rater (WW3), so nothing of it is replayed
+    # on this cycle and there is nothing to exclude.
+    client = _Client([{"id": 1, "name": "Duck Pier", "state": "NC"},
+                      {"id": 3, "name": "Kitty Hawk", "state": "NC"}],
+                     [_row(0, source="nwps", swell_source="ww3"), _kh_row(0)])
+    cyc = _cycle(land=[(1, 1)])
+    rep = NP.run(client, [OLD, KH_OLD], [NEW, KH_NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, c: cyc, apply=_stub)
+    assert rep["excluded_land"] == {}
+    assert rep["gate"]["hours"] == 1 and rep["gate"]["pass"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Buoy readings for a buoy no spot is assigned: NDBC realtime2                  #
+# --------------------------------------------------------------------------- #
+# The head of NDBC's realtime2 file for 46087 (Neah Bay) as read on 2026-11-12. Run 71 paired
+# 0 hours for Hobuck Beach with it: buoy_observations holds only the buoys spots are assigned,
+# and 46087 is none's.
+NDBC_46087 = """#YY  MM DD hh mm WDIR WSPD GST  WVHT   DPD   APD MWD   PRES  ATMP  WTMP  DEWP  VIS PTDY  TIDE
+#yr  mo dy hr mn degT m/s  m/s     m   sec   sec degT   hPa  degC  degC  degC  nmi  hPa    ft
+2026 11 12 01 20 200  7.0  8.0   3.0    11   8.7 235 1010.9  12.4  12.1    MM   MM   MM    MM
+2026 11 12 01 10 200  7.0  8.0    MM    MM    MM  MM 1010.8  12.4  12.0    MM   MM   MM    MM
+2026 11 12 01 00 200  7.0  9.0   3.0    MM   8.7 235 1011.1  12.4  12.0    MM   MM +1.5    MM
+2026 11 12 00 50 200  8.0  9.0   3.1    11   8.6 240 1011.0  12.4    MM    MM   MM   MM    MM
+"""
+
+
+def _utc(*a):
+    return datetime.datetime(*a, tzinfo=datetime.timezone.utc).timestamp()
+
+
+def test_ndbc_wave_heights_keeps_every_row_with_a_wave_height():
+    assert NP.ndbc_wave_heights(NDBC_46087) == [
+        (_utc(2026, 11, 12, 1, 20), 3.0), (_utc(2026, 11, 12, 1, 0), 3.0),
+        (_utc(2026, 11, 12, 0, 50), 3.1)]
+    assert NP.ndbc_wave_heights("") == []
+
+
+def test_fetch_ndbc_obs_reads_the_buoys_realtime2_file_from_since():
+    urls = []
+
+    def get(url):
+        urls.append(url)
+        return type("R", (), {"text": NDBC_46087})()
+    got = NP.fetch_ndbc_obs("sisw1", "2026-11-12T01:00:00+00:00", get=get)
+    assert urls == ["https://www.ndbc.noaa.gov/data/realtime2/SISW1.txt"]
+    assert got == [(_utc(2026, 11, 12, 1, 20), 3.0), (_utc(2026, 11, 12, 1, 0), 3.0)]
+
+
+def _run_buoy(stored, ndbc):
+    return NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                  list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                  open_cycle=lambda w, c: _cycle(), apply=_stub, buoys={"duck-pier": "44100"},
+                  now=CDT + datetime.timedelta(hours=3), buoy_obs=stored, ndbc_obs=ndbc)
+
+
+def test_a_buoy_buoy_observations_lacks_is_read_from_ndbc():
+    t0 = CDT.timestamp()
+    asked = []
+
+    def ndbc(b, start):
+        asked.append((b, start))
+        return [(t0, 2.0), (t0 + 3600 + 600, 4.0)]
+    rep = _run_buoy(lambda b, start: [], ndbc)
+    assert asked == [("44100", "2026-10-24T12:00:00+00:00")]
+    # the same readings as the buoy_observations test above, so the same figures
+    assert rep["buoys"]["Duck Pier"] == {
+        "buoy": "44100", "hours": 2, "buoy_mean": 3.0,
+        "old": {"hours": 2, "median": 0.463, "within_20": 0.0},
+        "new": {"hours": 2, "median": 0.75, "within_20": 0.5},
+        "source": "NDBC realtime2 (buoy_observations has none: no spot is assigned this buoy)"}
+
+
+def test_ndbc_is_not_asked_when_buoy_observations_has_readings():
+    t0 = CDT.timestamp()
+    asked = []
+    rep = _run_buoy(lambda b, start: [(t0, 2.0)], lambda b, start: asked.append(b) or [])
+    assert asked == []
+    assert rep["buoys"]["Duck Pier"]["source"] == "buoy_observations"
+    assert rep["buoys"]["Duck Pier"]["hours"] == 1
+
+
+def test_a_failed_or_empty_ndbc_read_says_why_and_pairs_nothing():
+    def down(b, start):
+        raise OSError("down")
+    rep = _run_buoy(lambda b, start: [], down)
+    assert rep["buoys"]["Duck Pier"]["hours"] == 0
+    assert rep["buoys"]["Duck Pier"]["source"] == (
+        "none: buoy_observations has no 44100 readings and NDBC realtime2 failed (OSError: down)")
+    rep = _run_buoy(lambda b, start: [], lambda b, start: [])
+    assert rep["buoys"]["Duck Pier"]["hours"] == 0
+    assert rep["buoys"]["Duck Pier"]["source"] == (
+        "none: no 44100 wave height in buoy_observations or NDBC realtime2")
+
+
+def test_the_report_names_where_the_buoy_readings_came_from():
+    import contextlib
+    import io
+    t0 = CDT.timestamp()
+    rep = _run_buoy(lambda b, start: [], lambda b, start: [(t0, 2.0), (t0 + 3600 + 600, 4.0)])
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        NP.print_report(rep)
+    assert ("  Duck Pier vs NDBC 44100: 2 paired hours, buoy mean 3.00 m; old node median 0.46 "
+            "(2 h, 0.00 within 20%); new node median 0.75 (2 h, 0.50 within 20%); readings: NDBC "
+            "realtime2 (buoy_observations has none: no spot is assigned this buoy)"
+            ) in buf.getvalue().splitlines()
+
+
+def test_run_reads_ndbc_by_default(monkeypatch):
+    t0 = CDT.timestamp()
+    asked = []
+    monkeypatch.setattr(NP, "fetch_ndbc_obs", lambda b, start: asked.append((b, start)) or [(t0, 2.0)])
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda w, c: _cycle(), apply=_stub, buoys={"duck-pier": "44100"},
+                 now=CDT + datetime.timedelta(hours=3), buoy_obs=lambda b, start: [])
+    assert asked == [("44100", "2026-10-24T12:00:00+00:00")]
+    assert rep["buoys"]["Duck Pier"]["hours"] == 1

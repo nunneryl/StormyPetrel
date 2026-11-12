@@ -1,5 +1,5 @@
 {
-  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/).",
+  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/). Pacifica Linda Mar, Rockaway Beach Pacifica, Avila Beach, Hobuck Beach, Westport Jetty and Westport Light State Park are from the NWPS v1.5 grids (2026-11-10): the same rule as the Hatteras three, wet every hour, with ETOPO 2022 read from ERDDAP point by point; node-preview run 71 is their gate.",
   "overrides": {
     "duck-pier": {
       "nwps_wfo": "mhx",
@@ -154,6 +154,72 @@
       ],
       "reason": "The current point (-1.9 m by ETOPO at the cell centre, 31% of the cell land) is blank (no Hs, period or direction) in 85 of 435 hours over run 66's 3 cycles, at low tide; it is wet 115 to 120 of 145 hours per cycle, and its NWPS Hs is 0.62 to 0.65 of the next cell seaward in each of 4 cycles; its one NWPS neighbour within 30 km (61st Street Galveston, 5.0 km) is too few for run 58's neighbour comparison, which needs two. The cell that passes the rule, 5.06 km at 135 deg (10.3 m), read 1.155 of 61st Street Galveston's cell in run 68 (node-preview), over the 1.15 limit. Instead it shares 61st Street Galveston's cell, as Rincon and Tarpits share one: 4.98 km at 224 deg, 6.4 m at the centre (cell median 5.5 m, 6% land), wet every hour of every cycle (145 of 145 in each of run 67's 4 cycles; 0 of 435 hours blank in run 66), 1.40 to 1.48 times the current point's Hs. It does not meet run 58's rule (87 deg off the facing, under 10 m, 0.86 of the next cell seaward); its check is buoy 42035 in run 69.",
       "evidence": "sw1-raycast run 67 (nwps-cells, bf3ca68), artifact nwps-cells-67: the HGX CG1 cells from 4 NOMADS cycles (20261105 18Z to 20261106 12Z); run 66 (nwps-blank, 33962cd) for the blank hours; ETOPO 2022 15 arc-second joined afterwards; saved under docs/face_validation/run-67/; run 68 (node-preview, be56d23) for the 1.155 of the first cell, saved under docs/face_validation/run-68/"
+    },
+    "pacifica-linda-mar": {
+      "nwps_wfo": "mtr",
+      "nwps_node_lat": 37.61754,
+      "nwps_node_lng": -122.5275,
+      "replaces": [
+        37.61754,
+        -122.5
+      ],
+      "reason": "NWPS v1.5 (2026-11-09 12Z) turned the current point dry: it holds no Hs, period or direction in any hour of the mtr 11-09 12Z and 11-10 00Z cycles, so the pipeline has walked to the cell 2.41 km at 251 deg since. Before the upgrade it read 0.68 of the median of its 6 NWPS neighbours within 30 km (sw1-raycast run 67, archive since 2026-09-07). The 21.3 m cell 2.87 km at 307 deg (12 deg off the spot's facing of 295) is wet every hour, reads 0.99 of the next cell seaward in both cycles and 1.13 of its 12 neighbours' median hour by hour. Rockaway Beach Pacifica shares it, as it shared the old point. ACCEPTED EXCEPTION TO THE 1.15 NEIGHBOUR LIMIT (decided 2026-11-12 after run 71): this cell reads 1.25 to 1.36 of Sharp Park, Half Moon Bay Jetty and Half Moon Bay in face (mean 1.323). Half Moon Bay and Half Moon Bay Jetty sit behind Pillar Point; the spot already reads 1.32 to 1.36 of them as published (Pacifica Linda Mar 1.359, Rockaway Beach Pacifica 1.323), and the move does not raise it; the cell reads 0.974 of buoy 46237 (San Francisco Bar), 94% of hours within 20%.",
+      "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); the old point is land in every cycle read, so this spot is excluded by the land-node rule; published -> new: face 13.70 -> 13.35 ft, stars 2.74 -> 2.82; buoy 46237 (San Francisco Bar) 0.996 -> 0.974 of the buoy, 96% -> 94% of hours within 20%. Candidates from the NOMADS NWPS v1.5 cycles mtr 20261109 12Z and 20261110 00Z, every cell within 3 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
+    },
+    "rockaway-beach-pacifica": {
+      "nwps_wfo": "mtr",
+      "nwps_node_lat": 37.61754,
+      "nwps_node_lng": -122.5275,
+      "replaces": [
+        37.61754,
+        -122.5
+      ],
+      "reason": "NWPS v1.5 turned the current point dry (no Hs, period or direction in any hour of mtr 11-09 12Z or 11-10 00Z); the pipeline has walked to this same cell since. 21.3 m at its centre, 2.70 km at 289 deg (0 deg off the facing of 289), wet every hour, 0.99 of the next cell seaward, 1.13 of its 12 neighbours' median. Before the upgrade the old point read 0.68 of its neighbours (run 67). Pacifica Linda Mar shares it. ACCEPTED EXCEPTION TO THE 1.15 NEIGHBOUR LIMIT (decided 2026-11-12 after run 71): this cell reads 1.25 to 1.36 of Sharp Park, Half Moon Bay Jetty and Half Moon Bay in face (mean 1.323). Half Moon Bay and Half Moon Bay Jetty sit behind Pillar Point; the spot already reads 1.32 to 1.36 of them as published (Pacifica Linda Mar 1.359, Rockaway Beach Pacifica 1.323), and the move does not raise it; the cell reads 0.974 of buoy 46237 (San Francisco Bar), 94% of hours within 20%.",
+      "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); the old point is land in every cycle read, so this spot is excluded by the land-node rule, and it matched exactly (the walk already reaches this cell): face 13.35 ft and stars 4.13 unchanged. Candidates from the NOMADS NWPS v1.5 cycles mtr 20261109 12Z and 20261110 00Z, every cell within 3 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
+    },
+    "avila-beach": {
+      "nwps_wfo": "mtr",
+      "nwps_node_lat": 35.13539,
+      "nwps_node_lng": -120.7675,
+      "replaces": [
+        35.15796,
+        -120.74
+      ],
+      "reason": "NWPS v1.5 turned the current point and the three cells south of it dry (run 67's v1.4 cells there were wet every hour); the pipeline has walked to this cell since, 5.61 km at 215 deg (8 deg off the facing of 207), over mtr's 3.71 km cap. It is the nearest cell that meets the rule: 39.3 m at its centre, wet every hour, 0.91 of the next cell seaward in both cycles. It reads 0.90 of its two neighbours (Cable Landing, Morro Rock) hour by hour; the old point read 0.38 of them before the upgrade, and was flagged low (63% of hours under 0.4, run 67).",
+      "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); the old point is land in every cycle read, so this spot is excluded by the land-node rule, and it matched exactly (the walk already reaches this cell): face 11.74 ft and stars 3.43 unchanged; 0.938 of Cable Landing and Morro Rock (face); buoy 46215 1.205 of the buoy, 49% of hours within 20%. Candidates from the NOMADS NWPS v1.5 cycles mtr 20261109 12Z and 20261110 00Z, every cell within 3 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
+    },
+    "hobuck-beach": {
+      "nwps_wfo": "sew",
+      "nwps_node_lat": 48.32843,
+      "nwps_node_lng": -124.68872,
+      "replaces": [
+        48.33739,
+        -124.71469
+      ],
+      "reason": "NWPS v1.5 refined sew's CG1 grid from 3.95 km (93 x 99) to 0.99 km (369 x 393); the current point is still a cell centre and meets the rule (23.0 m, 29 deg off, 0.96 of the next cell seaward) but is 3.60 km from the spot, over the new grid's 3.00 km cap. The 17.6 m cell 1.83 km at 246 deg (1 deg off the facing of 245) is the nearest that meets it: wet every hour, 0.97 of the next cell seaward, 0.96 of the current point's Hs.",
+      "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); in the gate, 0 differences; face 14.94 -> 14.78 ft, stars 2.26 -> 2.31; 0.894 of Shi Shi Beach (face; 0.904 before). Candidates from the NOMADS NWPS v1.5 cycles sew 20261109 12Z and 20261110 00Z, every cell within 6 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
+    },
+    "westport-jetty": {
+      "nwps_wfo": "sew",
+      "nwps_node_lat": 46.90296,
+      "nwps_node_lng": -124.16934,
+      "replaces": [
+        46.89391,
+        -124.14337
+      ],
+      "reason": "On sew's 0.99 km v1.5 grid the current point (shared with Westport Light State Park) reads 0.72 to 0.73 of the next cell seaward. The 13.1 m cell 2.38 km at 268 deg (0 deg off the facing of 268) is the nearest that meets the rule: wet every hour, 0.97 of the next cell seaward; it reads 1.33 of the current point's Hs.",
+      "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); in the gate, 0 differences; face 9.90 -> 13.00 ft, stars 3.05 -> 2.55 (the sand-break closeout ceiling, every hour that drops); 0.884 of Ocean Shores (face; 0.673 before); buoy 46211 (Grays Harbor) 0.678 -> 0.873 of the buoy, 9% -> 81% of hours within 20%. Candidates from the NOMADS NWPS v1.5 cycles sew 20261109 12Z and 20261110 00Z, every cell within 6 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
+    },
+    "westport-light-state-park": {
+      "nwps_wfo": "sew",
+      "nwps_node_lat": 46.89394,
+      "nwps_node_lng": -124.15635,
+      "replaces": [
+        46.89391,
+        -124.14337
+      ],
+      "reason": "On sew's 0.99 km v1.5 grid the current point (shared with Westport Jetty) reads 0.72 to 0.73 of the next cell seaward. The 11.1 m cell 1.89 km at 274 deg (12 deg off the facing of 262) is the nearest that meets the rule: wet every hour, 0.94 of the next cell seaward; it reads 1.39 of the current point's Hs.",
+      "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); in the gate, 0 differences; face 9.90 -> 13.57 ft, stars 2.94 -> 2.34 (the sand-break closeout ceiling, every hour that drops); 0.923 of Ocean Shores (face; 0.673 before). Candidates from the NOMADS NWPS v1.5 cycles sew 20261109 12Z and 20261110 00Z, every cell within 6 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
     }
   }
 }
