@@ -3,7 +3,7 @@
 import { useCurrentHour } from './CurrentHour';
 import { SwellCompass } from './SwellCompass';
 import { degToCardinal, fmtSec, metersToFeet } from '@/lib/formatting';
-import { breakdownRows, sharePercent } from '@/lib/swellBreakdown';
+import { breakdownNote, breakdownRows, sharePercent } from '@/lib/swellBreakdown';
 import type { Spot } from '@/lib/types';
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -90,6 +90,8 @@ export function SwellPartitions({
           );
         })}
       </div>
+      {/* What the two columns measure: they come from two models (lib/swellBreakdown.ts). */}
+      <p className="px-4 pb-3 text-[11px] leading-snug text-text-muted">{breakdownNote(forecast)}</p>
     </section>
   );
 }

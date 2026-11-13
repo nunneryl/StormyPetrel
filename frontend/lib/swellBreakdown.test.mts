@@ -11,7 +11,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  breakdownRows, sharePercent, windSeaShare, WIND_SEA_LABEL, WIND_SEA_SHOWN_LABEL, type BreakdownInput,
+  breakdownNote, breakdownRows, NOTE_ENERGY, NOTE_NEARSHORE, sharePercent, windSeaShare,
+  WIND_SEA_LABEL, WIND_SEA_SHOWN_LABEL, type BreakdownInput,
 } from './swellBreakdown.ts';
 import { selectCurrentHour } from './currentHour.ts';
 import type { Forecast } from './types.ts';
@@ -167,6 +168,26 @@ check('0.571 prints 57%, 0.561 prints 56%', sharePercent(0.571) === '57%' && sha
     && open < at('<CurrentConditions') && at('<CurrentConditions') < close
     && open < at('<SwellPartitions windowArcs={spot.swell_window_arcs} />')
     && at('<SwellPartitions windowArcs={spot.swell_window_arcs} />') < close);
+}
+
+// 9. THE LINE UNDER THE BREAKDOWN. With a wind-sea share the percentages are the nearshore split;
+//    without one they are the energy of the heights shown. Written out in full, by hand.
+check('the nearshore line, word for word', NOTE_NEARSHORE ===
+  'Heights are offshore (WAVEWATCH III); percentages are the nearshore split at the spot, as on the Conditions tile.');
+check('the energy line, word for word', NOTE_ENERGY ===
+  "Heights are offshore (WAVEWATCH III); percentages are each row's share of their energy.");
+check('Steamer Lane 23Z, chop_ratio 0.123: the nearshore line', breakdownNote({ chop_ratio: 0.123 }) === NOTE_NEARSHORE);
+check('chop_ratio 0 is a share: the nearshore line', breakdownNote({ chop_ratio: 0 }) === NOTE_NEARSHORE);
+check('no chop_ratio, or not a fraction: the energy line',
+  breakdownNote({ chop_ratio: null }) === NOTE_ENERGY && breakdownNote({}) === NOTE_ENERGY
+  && breakdownNote({ chop_ratio: 1.2 }) === NOTE_ENERGY);
+{
+  const HERE = dirname(fileURLToPath(import.meta.url));
+  const comp = readFileSync(join(dirname(HERE), 'components/SwellPartitions.tsx'), 'utf8');
+  check('the breakdown prints the line for its hour', comp.includes('{breakdownNote(forecast)}</p>'));
+  check('the line sits after the rows, inside the card',
+    comp.indexOf('{breakdownNote(forecast)}') > comp.indexOf('sharePercent(c.share)')
+    && comp.indexOf('{breakdownNote(forecast)}') < comp.indexOf('</section>'));
 }
 
 if (failures) {
