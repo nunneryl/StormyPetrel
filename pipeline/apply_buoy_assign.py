@@ -2,6 +2,13 @@
 its cap, or missing. Writes pipeline/spots_enriched.json only with --apply.
 
     python -m pipeline.apply_buoy_assign [--report R.json[.gz]] [--list fresh+7d] [--apply]
+    python -m pipeline.apply_buoy_assign --all [--report R.json[.gz]] [--apply]
+
+--all (2026-11-13, after run 75, the 250 m line-of-sight standoff): the rule's choice for EVERY
+spot, with the written exceptions of pipeline/data/buoy_overrides.json applied as the rule
+applies them (enrichment/buoys.buoy_override): a pinned spot keeps its pin, an excluded station
+is skipped. The report is run 75's (docs/face_validation/run-75) unless --report says otherwise.
+This is what enrich and buoy-assign now give with the same station list.
 
 WHICH SPOTS. sw1-raycast run 74 (buoy-assign, spots = all; docs/face_validation/run-74) ran
 enrich's buoy rule over every roster spot against NDBC's fresh station lists plus the 7-day
@@ -33,6 +40,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "docs" / "face_validation" / "run-74" / "buoy_assign.json.gz"
+REPORT_ALL = ROOT / "docs" / "face_validation" / "run-75" / "buoy_assign.json.gz"
 ENRICHED = ROOT / "pipeline" / "spots_enriched.json"
 LIST = "fresh+7d"
 
@@ -80,6 +88,42 @@ def plan(report, label=LIST):
             for r in report["lists"][label]["spots"] if why(r)]
 
 
+def replay(row, override):
+    """(fields, confidence) for *row* under its written exception, from the row's own candidates
+    (each carries the runner's distance, cap and line-of-sight verdict): the rule's choice when
+    there is no exception; the pinned buoy (its candidate distance, the passing others as
+    fallbacks) for a pin; the first passing candidates not excluded for an exclusion."""
+    if not override:
+        return fields(row), confidence(row)
+    excluded = {str(x).lower() for x in override.get("exclude") or []}
+    passing = [c for c in row["candidates"] if c.get("within_cap") and c.get("los")
+               and str(c["id"]).lower() not in excluded]
+    pid = override.get("pin")
+    if pid:
+        pin = next(c for c in row["candidates"] if str(c["id"]).lower() == str(pid).lower())
+        km = round(float(pin["km"]), 2)
+        others = [c["id"] for c in passing if str(c["id"]).lower() != str(pid).lower()][:3]
+        f = {"nearest_buoy_id": pin["id"], "nearest_buoy_dist_km": km, "fallback_buoy_ids": others}
+        return f, (1.0 if km <= float(row["cap_km"]) * 0.5 else 0.75)
+    if not passing:
+        return fields({"choice": None}), 0.0
+    first = passing[0]
+    f = {"nearest_buoy_id": first["id"], "nearest_buoy_dist_km": round(float(first["km"]), 2),
+         "fallback_buoy_ids": [c["id"] for c in passing[1:4]]}
+    return f, (1.0 if float(first["km"]) <= float(row["cap_km"]) * 0.5 else 0.75)
+
+
+def plan_all(report, overrides, label=LIST):
+    """[(name, 'override' | 'rule', fields, confidence)] for every spot in the report."""
+    from .enrichment.buoys import _slug
+    out = []
+    for r in report["lists"][label]["spots"]:
+        ov = overrides.get(_slug(r["name"])) or {}
+        f, conf = replay(r, ov)
+        out.append((r["name"], "override" if ov else "rule", f, conf))
+    return out
+
+
 def apply(enriched, rows):
     """Write each row's fields onto the roster spot of that name. Returns the count written."""
     by_name = {s["name"]: s for s in enriched}
@@ -99,8 +143,15 @@ def main(argv=None):
     ap.add_argument("--report", default=str(REPORT))
     ap.add_argument("--list", default=LIST)
     ap.add_argument("--apply", action="store_true", help="write pipeline/spots_enriched.json")
+    ap.add_argument("--all", action="store_true",
+                    help="every spot, with pipeline/data/buoy_overrides.json (run 75's report)")
     a = ap.parse_args(argv)
-    rows = plan(load_report(a.report), a.list)
+    if a.all:
+        from .enrichment.buoys import load_buoy_overrides
+        report = load_report(a.report if a.report != str(REPORT) else REPORT_ALL)
+        rows = plan_all(report, load_buoy_overrides(), a.list)
+    else:
+        rows = plan(load_report(a.report), a.list)
     enriched = json.loads(ENRICHED.read_text(encoding="utf-8"))
     current = {s["name"]: s for s in enriched}
     for name, reason, f, _conf in rows:

@@ -117,13 +117,15 @@ def test_the_real_roster_after_run_65():
     # the two stale distances and gives the other seven held spots a buoy: 0 dropped, 73 - 7 = 66.
     # Run 74's roster change (2026-11-12) gives 15 of them a buoy and clears six on a silent or
     # out-of-cap buoy (Kanaha Beach, Hoʻokipa, Peahi Jaws, Hanalei Bay, Tunnels Beach, Siesta Key):
-    # 66 - 15 + 6 = 57.
+    # 66 - 15 + 6 = 57. Run 75's roster change (2026-11-13, the 250 m line-of-sight standoff, with
+    # pipeline/data/buoy_overrides.json) gives 11 more a buoy and clears three (Palm Beach, Caspar,
+    # Jug Handle): 57 - 11 + 3 = 49.
     import json
     from pipeline import config
     from pipeline.enrichment.geodata import load_buoy_snapshot
     roster = json.loads(config.DEFAULT_ENRICHED_OUTPUT.read_text())
     groups = [g for _s, g in A.scope(roster, load_buoy_snapshot())]
-    assert (groups.count("dropped"), groups.count("none")) == (0, 57)
+    assert (groups.count("dropped"), groups.count("none")) == (0, 49)
 
 
 # --------------------------------------------------------------------------- #

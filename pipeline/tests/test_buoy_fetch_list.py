@@ -35,4 +35,8 @@ def test_the_real_roster():
     nearest = {s["nearest_buoy_id"] for s in roster if s.get("nearest_buoy_id")}
     assert len(ids) == len(set(ids))
     assert set(ids[:len(nearest)]) == nearest
-    assert (len(nearest), len(ids) - len(nearest)) == (85, 26)
+    # Run 75's roster change (2026-11-13): three stop being any spot's nearest buoy (46029, 46251,
+    # 46254) and eleven start (41008, 42032, 44020, 44029, 44065, 46011, 46027, 46054, 46097,
+    # 46275, 46286): 85 - 3 + 11 = 93. Fallback-only: 26 - 13 + 9 = 22 (thirteen left the
+    # fallback lists or became nearest buoys, among them the silent 46239 and phct2; nine joined).
+    assert (len(nearest), len(ids) - len(nearest)) == (93, 22)
