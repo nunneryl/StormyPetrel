@@ -837,6 +837,9 @@ TIDE_STATION_OVERRIDE_DIST_TOLERANCE_KM = 5.0
 # diff — these are hand-measured constants with no physical derivation, and the only defence
 # against a bad one is that a human can see it change.
 SPOT_FACE_FACTORS_FILE = PIPELINE_DIR / "data" / "spot_face_factors.json"
+# NWPS sample points moved by hand (apply_nwps_assignments). A face factor measured at a spot's
+# old node is not applied once its node has moved (face_correction.suspend_moved_nodes).
+NWPS_NODE_OVERRIDES_FILE = PIPELINE_DIR / "data" / "nwps_node_overrides.json"
 # A spot whose within-spot face_ratio p75/p25 exceeds this is NOT corrected. STRICTLY
 # GREATER: a spot at exactly 1.7 is KEPT, matching every other threshold in this file.
 #

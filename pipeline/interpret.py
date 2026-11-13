@@ -2252,9 +2252,11 @@ def main(argv: list[str] | None = None) -> int:
     face_stats = apply_face_corrections(ratings, spots, factors=face_factors)
     if face_stats["corrected_spots"]:
         log.info("interpret: face correction — %d spot(s) / %d spot-hours scaled by their "
-                 "measured MOP factor; %d spot(s) had no factor, %d skipped on the MOP tier",
+                 "measured MOP factor; %d spot(s) had no factor, %d skipped on the MOP tier, "
+                 "%d with a factor measured before their NWPS node moved",
                  face_stats["corrected_spots"], face_stats["corrected_hours"],
-                 face_stats["no_factor"], face_stats["mop_tier_skipped"])
+                 face_stats["no_factor"], face_stats["mop_tier_skipped"],
+                 face_stats.get("suspended", 0))
     # The stamp on every row this run writes (migration 017). Logged so a run can be tied to
     # the rows it produced without a query, and so a factor regeneration is visible in the log
     # the day it happens rather than the next time someone measures.

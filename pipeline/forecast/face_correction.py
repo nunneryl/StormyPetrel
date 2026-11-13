@@ -61,6 +61,18 @@ WHAT IS EXCLUDED, AND HOW STRUCTURALLY.
   HELD OUT — recorded per spot in the data file with a reason, and simply absent from the
   `factors` map, so this module cannot correct them however it is called.
 
+  SUSPENDED — a factor measured at an NWPS node the spot no longer samples. A factor is the
+  ratio of the face at ONE node to MOP, so it says nothing about another cell: Pacifica Linda
+  Mar's 0.8799 was measured 2026-09-08 to 10-06 at a point that read 0.68 of its neighbours,
+  and #313 moved it to a cell that reads 1.13 of them, where a divisor below 1 raised an
+  already larger height by a further 14%. A spot whose node nwps_node_overrides.json moves keeps
+  its record but is not corrected unless the factor was measured AFTER the move (its
+  measured_on later than the override's moved_on; an override with no moved_on counts as a
+  move after any measurement). spot_factor returns None for it, so every reader treats it as
+  uncalibrated: the display, the raters' size scale and ceiling, and the surf height. The
+  median factor M is still taken over every measured record: the yardstick is the
+  measurement, and a move at one spot must not re-rate the other 138.
+
   NO FACTOR — 511 spots have no MOP coverage. Absent is not 1.0: the lookup returns None
   and the arithmetic does not execute. `.get(slug, 1.0)` would make a typo'd slug
   indistinguishable from a deliberate omission, and would assert "this spot needs no
@@ -88,6 +100,7 @@ import logging
 
 from ..config import (
     FACE_FACTOR_MAX_AGE_DAYS,
+    NWPS_NODE_OVERRIDES_FILE,
     SPOT_FACE_FACTORS_FILE,
 )
 
@@ -134,7 +147,47 @@ class FaceFactorSlugError(ValueError):
     """
 
 
-def load_face_factors(path=None):
+def load_node_moves(path=None):
+    """{slug: moved_on or None} for every spot whose NWPS node nwps_node_overrides.json moves.
+
+    {} when the file is absent. Resolved inside the body, as load_face_factors is, so a test can
+    point it elsewhere."""
+    path = path or NWPS_NODE_OVERRIDES_FILE
+    if not path.exists():
+        return {}
+    overrides = json.loads(path.read_text()).get("overrides") or {}
+    return {slug: (o.get("moved_on") if isinstance(o, dict) else None)
+            for slug, o in overrides.items()}
+
+
+def _iso_date(v):
+    try:
+        return datetime.date.fromisoformat(str(v))
+    except (TypeError, ValueError):
+        return None
+
+
+def suspend_moved_nodes(factors, moves):
+    """*factors* with a "suspended" reason on each record measured before its spot's node moved.
+
+    A record is kept as it is when its spot's node never moved, or when its measured_on is later
+    than the move's moved_on. Otherwise (measured on or before the move day, or either date
+    missing or unreadable) it is returned with "suspended" set, and spot_factor treats the spot
+    as uncalibrated. Nothing is removed, so median_face_factor still reads every measurement.
+    """
+    out = {}
+    for slug, rec in factors.items():
+        if slug in moves:
+            moved, measured = _iso_date(moves[slug]), _iso_date(rec.get("measured_on"))
+            if moved is None or measured is None or measured <= moved:
+                rec = {**rec, "suspended": (
+                    f"measured {rec.get('measured_on')} at the NWPS node it no longer samples; "
+                    f"nwps_node_overrides.json moved it on {moves[slug]}")}
+        out[slug] = rec
+    return out
+
+
+def load_face_factors(path=None, overrides_path=None):
     """{slug: record} from the committed factors file; {} when it is absent.
 
     The path is resolved from the module global INSIDE the body, not bound as a default
@@ -176,6 +229,11 @@ def load_face_factors(path=None):
                         slug, rec.get("factor"))
             continue
         out[slug] = {**rec, "factor": f}
+    out = suspend_moved_nodes(out, load_node_moves(overrides_path))
+    for slug, rec in sorted(out.items()):
+        if rec.get("suspended"):
+            log.warning("face factor for %r (%s) not applied: %s. Re-measure it at the new node: %s",
+                        slug, rec["factor"], rec["suspended"], REGEN_COMMAND)
     return out
 
 
@@ -211,6 +269,7 @@ def face_correction_stamp(factors):
     if not factors:
         return f"{FACE_CORRECTION_VERSION}:none:none"
     lines = "\n".join(f"{slug}={float(rec['factor']):.10g}"
+                      + (" suspended" if rec.get("suspended") else "")
                       for slug, rec in sorted(factors.items()))
     fingerprint = hashlib.sha256(lines.encode("utf-8")).hexdigest()[:8]
     dates = sorted(str(rec.get("measured_on")) for rec in factors.values()
@@ -262,15 +321,16 @@ def validate_factor_slugs(factors, spots, slug_for):
 def spot_factor(spot, factors, slug_for):
     """The divisor apply_face_corrections uses at *spot*, or None where it corrects nothing.
 
-    The same two exclusions: the MOP tier by swell_window_source, and a spot with no record
-    (held out, or never measured). ABSENT IS NOT 1.0 here either. The proposed beach-break
+    The same three exclusions: the MOP tier by swell_window_source, a spot with no record (held
+    out, or never measured), and a record suspended because the spot's node moved after it was
+    measured (suspend_moved_nodes). ABSENT IS NOT 1.0 here either. The proposed beach-break
     ceiling (interpret.closeout_factor) reads the calibrated face, face / this, where it is
     not None, and the raw face where it is.
     """
     if spot.get("swell_window_source") in MOP_TIER_SOURCES:
         return None
     rec = factors.get(slug_for(spot.get("name")))
-    return None if rec is None else rec["factor"]
+    return None if rec is None or rec.get("suspended") else rec["factor"]
 
 
 def median_face_factor(factors):
@@ -350,7 +410,7 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
 
     if not factors:
         return {"corrected_spots": 0, "corrected_hours": 0, "no_factor": len(spots),
-                "mop_tier_skipped": 0, "unrateable_hours": 0, "stale": None,
+                "mop_tier_skipped": 0, "unrateable_hours": 0, "suspended": 0, "stale": None,
                 "stamp": stamp}
 
     now = now or datetime.date.today()
@@ -373,7 +433,7 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
 
     by_name = {s.get("name"): s for s in spots}
     corrected_spots = corrected_hours = mop_skipped = unrateable = 0
-    no_factor = 0
+    no_factor = suspended = 0
     for name, entries in ratings.items():
         spot = by_name.get(name)
         if spot is None:
@@ -387,6 +447,11 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
         if rec is None:
             # ABSENT IS NOT 1.0. No arithmetic runs; the entries are untouched.
             no_factor += 1
+            continue
+        if rec.get("suspended"):
+            # Measured at a node the spot no longer samples (suspend_moved_nodes): no arithmetic,
+            # exactly as for a spot with no record.
+            suspended += 1
             continue
         factor = rec["factor"]
         touched = 0
@@ -407,6 +472,6 @@ def apply_face_corrections(ratings, spots, factors=None, slug_for=None, now=None
             corrected_hours += touched
     return {"corrected_spots": corrected_spots, "corrected_hours": corrected_hours,
             "no_factor": no_factor, "mop_tier_skipped": mop_skipped,
-            "unrateable_hours": unrateable,
+            "unrateable_hours": unrateable, "suspended": suspended,
             "stale": {"days": stale[0], "slug": stale[1]} if stale else None,
             "stamp": stamp}
