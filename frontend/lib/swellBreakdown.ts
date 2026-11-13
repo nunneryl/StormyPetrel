@@ -39,6 +39,26 @@ export const MIN_ROW_HS = 0.05;
 export const WIND_SEA_LABEL = 'Wind sea';
 export const WIND_SEA_SHOWN_LABEL = 'Wind sea · shown as the surf';
 
+/**
+ * THE LINE UNDER THE BREAKDOWN: what its two columns measure, because they come from two models.
+ * The heights are WAVEWATCH III's partitions, offshore (the swell_N_* and wind_wave_* columns,
+ * written only by forecast/ww3.py). The percentages are windSeaShare, the hour's chop_ratio:
+ * (total - swell) / total from the nearshore model at the spot (the NWPS node, or CDIP MOP on
+ * the MOP tier), the same number as the Conditions tile. So they need not follow the heights:
+ * on 2026-11-12 23Z Steamer Lane's P1 read 8.1 ft offshore while the nearshore total was 1.42 m
+ * with 12% wind sea. Where chop_ratio is unknown the rows split the energy of the heights shown,
+ * and the line says that instead.
+ */
+export const NOTE_NEARSHORE =
+  'Heights are offshore (WAVEWATCH III); percentages are the nearshore split at the spot, as on the Conditions tile.';
+export const NOTE_ENERGY =
+  'Heights are offshore (WAVEWATCH III); percentages are each row\'s share of their energy.';
+
+/** The line under the breakdown for an hour. */
+export function breakdownNote(f: { chop_ratio?: number | null }): string {
+  return windSeaShare(f) !== null ? NOTE_NEARSHORE : NOTE_ENERGY;
+}
+
 function num(v: number | null | undefined): number | null {
   return v === null || v === undefined || !Number.isFinite(v) ? null : v;
 }
