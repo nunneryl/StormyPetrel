@@ -167,7 +167,10 @@ WORKFLOWS = {
         "pipeline.column_preflight", "pipeline.forecast.fetch_all", "pipeline.interpret",
         "pipeline.revalidate", "pipeline.db_import",
         # reads nwps_freshness.json and imports only pipeline.config; never a report
-        "pipeline.nwps_stale_gate"},
+        "pipeline.nwps_stale_gate",
+        # writes forecast_leads and model_at_buoys after the push (migration 030); reads
+        # ratings.json, ww3.json, the GRIB cache and the spots table; never a report
+        "pipeline.accuracy_capture"},
     ".github/workflows/daily-report.yml": {"pipeline.daily_report", "pipeline.revalidate"},
     ".github/workflows/ecmwf-wam.yml": {"pipeline.ecmwf_wam"},
 }
