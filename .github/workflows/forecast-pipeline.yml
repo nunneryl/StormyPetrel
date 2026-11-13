@@ -244,6 +244,7 @@ jobs:
         # !cancelled() so a STEP failure above (e.g. the fetch_all step timeout) still ships spot +
         # NWPS + whatever-was-fetched data. db_import skips any missing forecast file rather than
         # crashing (import_forecasts / import_buoys / import_tides guard a missing input).
+        id: push
         if: ${{ !cancelled() }}
         run: python -m pipeline.db_import --all
 
@@ -285,6 +286,17 @@ jobs:
           fi
           curl -fsS -m 10 --retry 5 --retry-all-errors -o /dev/null "$HEALTHCHECKS_URL"
           echo "Pinged healthchecks.io."
+
+      - name: Capture the accuracy scoreboard's forecasts (lead days 1-3, models at the buoys)
+        # forecast_leads and model_at_buoys (migration 030; pipeline/accuracy_capture.py). LAST,
+        # after the upload, the revalidation, both gates and the ping, so it can never stop or
+        # delay one of them. Only when the push succeeded. continue-on-error and its own timeout,
+        # so not even a crash or a hang fails the run; the module itself catches every failure,
+        # prints it as a ::warning:: and exits 0.
+        if: ${{ !cancelled() && steps.push.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python -m pipeline.accuracy_capture
 
       - name: Hand the column check's line to the failure issue
         # Only when the job failed. The preflight's one-line reason, if it found anything,
