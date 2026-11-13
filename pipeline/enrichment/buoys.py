@@ -6,13 +6,15 @@ import math
 from functools import lru_cache
 
 from pyproj import Geod
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
+from shapely.ops import nearest_points
 
 from ..config import (
     BUOY_CAP_DEFAULT,
     BUOY_CAP_DEFAULT_EAST,
     BUOY_CAP_GULF_FLORIDA,
     BUOY_CAP_KM,
+    BUOY_LOS_STANDOFF_M,
 )
 from ..geo import haversine_m
 from .geodata import load_land_index, load_ndbc_wave_stations
@@ -82,9 +84,51 @@ def _geodesic_line(lat1: float, lng1: float, lat2: float, lng2: float, n_interme
     return LineString(pts)
 
 
+def _on_land(lat: float, lng: float, land) -> bool:
+    pt = Point(lng, lat)
+    for c in land.polygon_tree.query(pt):
+        poly = land.polygons[int(c)] if hasattr(c, "__index__") else c
+        if poly.contains(pt):
+            return True
+    return False
+
+
+_LOS_START: dict = {}
+
+
+def _los_start(lat: float, lng: float, land, standoff_m: float = BUOY_LOS_STANDOFF_M):
+    """(lat, lng) the line of sight is drawn from: *standoff_m* beyond the rule's point, away from
+    the nearest coastline (config.BUOY_LOS_STANDOFF_M says why). A point on land is pushed out
+    through the coast. When the pushed point is on land (another island, the far side of a narrow
+    bay) or no coastline direction can be taken, the rule's point itself. Distances are not
+    affected: they are still measured from the rule's point."""
+    key = (id(land), lat, lng, standoff_m)
+    if key in _LOS_START:
+        return _LOS_START[key]
+    out = (lat, lng)
+    pt = Point(lng, lat)
+    try:
+        idx = land.coastline_tree.query_nearest(pt)
+        coast = land.coastlines[int(idx[0])] if len(idx) else None
+    except Exception:
+        coast = None
+    if coast is not None:
+        q = nearest_points(coast, pt)[0]
+        if (q.x, q.y) != (lng, lat):
+            az = _GEOD.inv(q.x, q.y, lng, lat)[0]
+            if _on_land(lat, lng, land):
+                az += 180.0
+            lng2, lat2, _ = _GEOD.fwd(lng, lat, az, standoff_m)
+            if not _on_land(lat2, lng2, land):
+                out = (lat2, lng2)
+    _LOS_START[key] = out
+    return out
+
+
 def _los_clear(spot: dict, station: dict, land) -> bool:
     lat = spot.get("_algo_lat", spot["lat"])
     lng = spot.get("_algo_lng", spot["lng"])
+    lat, lng = _los_start(lat, lng, land, BUOY_LOS_STANDOFF_M)
     line = _geodesic_line(lat, lng, station["lat"], station["lng"])
     try:
         candidates = land.polygon_tree.query(line)

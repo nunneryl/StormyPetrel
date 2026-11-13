@@ -206,6 +206,15 @@ SWELL_ISLAND_GAP_BRIDGE_DEG = 0.0
 SWELL_DIFFRACTION_WRAP_DEG = 16.0   # per-edge wrap-in trimmed off a small-island shadow
 SWELL_DIFFRACTION_WRAP_PER_100KM = 8.0  # extra per-edge wrap-in per 100 km of obstacle distance
 
+# Line of sight to a buoy is drawn from this far (m) beyond the rule's point, away from the
+# nearest coastline (enrichment/buoys._los_start). The rule's point sits only 30 m off GSHHG's
+# shoreline (adjust.seaward_adjust's offset), finer than a 1:250,000-scale coastline, so a line
+# to a buoy along the coast grazed the shore beside the spot: Richardson Beach to 51206 at
+# 6.7 km crossed 220 m of the shore 56 m out, Fenwick Island to 44084 64 m of beach 0.7 km north.
+# 250 m clears 12 of the 62 working buoys run 74 found blocked; a peninsula, island or cape
+# in the way still blocks (the other 50 cross 0.3 to 106 km of land from 250 m out).
+BUOY_LOS_STANDOFF_M = 250.0
+
 # Buoy regional distance caps (km). Matched against region_hint / lat+lng heuristics.
 BUOY_CAP_KM = {
     "California": 150,

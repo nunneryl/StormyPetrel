@@ -1,0 +1,649 @@
+spot,region,group,outcome,why,current_buoy,current_km,current_wave_station,current_within_cap,current_los,new_buoy,new_km,new_fallbacks,reason_none,cached_list_choice
+15th Street Del Mar,California,kept,same,same,46266,0.83,True,True,True,46266,0.83,46254 ljpc1 46225,,46266
+38th Avenue,California,kept,same,same,46236,22.26,True,True,True,46236,22.26,46042,,46236
+56th Street,New Jersey,kept,same,same,44091,106.11,True,True,True,44091,106.11,,,44091
+Andrew Molera State Park,California,kept,same,same,46028,56.88,True,True,True,46028,56.88,,,46239
+Asilomar State Beach,California,kept,change,closer,46012,116.41,True,True,True,46236,14.99,46042 46012,,46236
+Bird Rock,California,kept,change,no line of sight,46254,6.04,True,True,False,46225,17.11,46258 46232 46277,,46225
+Blackies,California,kept,same,same,46253,23.39,True,True,True,46253,23.39,46256 46222 46277,,46253
+Bolinas,California,kept,same,same,46237,13.66,True,True,True,46237,13.66,46026 46012 46042,,46237
+Bolsa Chica State Beach,California,kept,same,same,46256,13.78,True,True,True,46256,13.78,46253 46222 46277,,46256
+Bombora,Hawaii,kept,same,same,51211,11.53,True,True,True,51211,11.53,,,51211
+Brooks Street,California,kept,same,same,46277,24.35,True,True,True,46277,24.35,46253 46256 46222,,46277
+C Street Ventura,California,kept,change,closer,46025,60.02,True,True,True,46053,50.52,46025 46054,,46053
+Campus Point UCSB,California,kept,change,closer,46221,126.15,True,True,True,46053,17.83,46221,,46053
+Cardiff Reef,California,kept,change,closer,46225,13.40,True,True,True,46274,6.02,46266 46225 46254,,46274
+Carlsbad State Beach,California,kept,same,same,46274,10.29,True,True,True,46274,10.29,46224 46275 46266,,46274
+Carmel Beach,California,none,none,none,,,,,,,,,no_line_of_sight,46239
+Carpinteria State Beach,California,kept,same,same,46053,33.42,True,True,True,46053,33.42,46025 46054,,46053
+Cayucos Pier,California,kept,change,closer,46259,91.83,True,True,True,46011,57.39,46259,,46011
+Church,California,kept,same,same,46277,8.77,True,True,True,46277,8.77,46275 46224 46274,,46277
+Coronado Shores,California,kept,same,same,46232,28.85,True,True,True,46232,28.85,,,46232
+Cottons,California,kept,change,closer,46285,9.53,True,True,True,46277,7.92,46285 46275 46224,,46277
+County Line,California,kept,change,closer,46251,63.81,True,True,True,46025,33.37,46221 46251 46222,,46025
+Cowell's Beach Children's Surfing Area,California,kept,same,same,46236,23.35,True,True,True,46236,23.35,46028,,46236
+Crescent City Beach,California,kept,same,same,46244,95.20,True,True,True,46244,95.20,46022,,46244
+D Street Encinitas,California,kept,same,same,46274,2.17,True,True,True,46274,2.17,46266 46225 46254,,46274
+"Dana Point, California",California,kept,change,no line of sight,46285,4.14,True,True,False,46253,44.73,46256 46222,,46253
+Davenport Landing,California,kept,same,same,46042,31.00,True,True,True,46042,31.00,46236 46012 46028,,46042
+Del Mar Beach,California,kept,same,same,46266,1.83,True,True,True,46266,1.83,46274 46254 ljpc1,,46266
+Devereux,California,kept,same,same,46053,18.19,True,True,True,46053,18.19,46054 46218,,46053
+Dillon Beach,California,kept,same,same,46013,30.33,True,True,True,46013,30.33,,,46013
+Doheny State Beach,California,kept,same,same,46285,1.72,True,True,True,46285,1.72,46277 46275 46224,,46285
+Doran Beach,California,kept,loss,no line of sight,46214,54.94,True,True,False,,,,no_line_of_sight,
+El Capitan State Beach,California,kept,same,same,46053,29.00,True,True,True,46053,29.00,46054,,46053
+El Porto,California,kept,same,same,46268,19.31,True,True,True,46268,19.31,46221 46025 46251,,46268
+Emma Wood State Beach,California,kept,same,same,46053,47.91,True,True,True,46053,47.91,46251 46025 46054,,46053
+First Peak,California,kept,same,same,46236,21.83,True,True,True,46236,21.83,46042,,46236
+Fort Point,California,kept,same,same,46237,14.14,True,True,True,46237,14.14,46026,,46237
+Garbage Beach,California,kept,same,same,46258,24.56,True,True,True,46258,24.56,46232 46225 46224,,46258
+Half Moon Bay Jetty,California,kept,same,same,46012,39.46,True,True,True,46012,39.46,46042,,46012
+Hammonds,California,kept,same,same,46053,26.51,True,True,True,46053,26.51,46025,,46053
+Hermosa Beach Pier,California,kept,same,same,46221,21.80,True,True,True,46221,21.80,46268 46025 46251,,46221
+"Hermosa Beach, California",California,kept,same,same,46221,21.57,True,True,True,46221,21.57,46268 46025 46251,,46221
+Humboldt Bay Jetty,California,kept,same,same,46244,17.54,True,True,True,46244,17.54,46022 46213 46027,,46244
+Huntington Beach Pier,California,kept,same,same,46253,18.60,True,True,True,46253,18.60,46256 46222 46277,,46253
+"Huntington Beach, California",California,kept,same,same,46253,19.50,True,True,True,46253,19.50,46256 46222 46277,,46253
+Huntington Cliffs,California,kept,same,same,46256,17.03,True,True,True,46256,17.03,46253 46222 46277,,46256
+Imperial Beach Pier,California,kept,same,same,46232,28.07,True,True,True,46232,28.07,46258 46086,,46232
+"Imperial Beach, California",California,kept,same,same,46232,28.33,True,True,True,46232,28.33,46258 46086,,46232
+Jalama Beach,California,kept,change,closer,46218,26.21,True,True,True,46054,25.98,46218 46259,,46054
+Jenner Beach,California,kept,same,same,46013,28.83,True,True,True,46013,28.83,46214,,46013
+La Jolla Shores,California,kept,same,same,ljpc1,0.90,True,True,True,ljpc1,0.90,46254 46266 46225,,ljpc1
+Leadbetter Beach,California,kept,change,closer,46025,90.98,True,True,True,46053,21.55,46025,,46053
+Leo Carrillo State Beach,California,kept,change,closer,46221,34.15,True,True,True,46025,33.32,46221 46251 46222,,46025
+Leucadia,California,kept,same,same,46274,0.86,True,True,True,46274,0.86,46266 46225 46224,,46274
+Wind and Sea,California,kept,same,same,46236,21.82,True,True,True,46236,21.82,46042,,46236
+Lovers Point,California,none,gain,gain,,,,,,46236,15.16,46012,,46236
+Lower Trestles,California,kept,same,same,46277,8.23,True,True,True,46277,8.23,46275 46224 46274,,46277
+Lunada Bay,California,kept,same,same,46221,22.30,True,True,True,46221,22.30,46025 46251,,46221
+Malibu Surfrider Beach,California,kept,change,closer,46221,19.54,True,True,True,46268,10.30,46221 46025 46222,,46268
+Manhattan Beach Pier,California,kept,same,same,46221,21.10,True,True,True,46221,21.10,46268 46025 46251,,46221
+Manresa State Beach,California,kept,same,same,46236,19.68,True,True,True,46236,19.68,46042,,46236
+Marina State Beach,California,kept,same,same,46236,13.96,True,True,True,46236,13.96,46042 46012,,46236
+"Mavericks, California",California,kept,same,same,46237,34.78,True,True,True,46237,34.78,46012 46026 46042,,46237
+Mission Beach,California,kept,same,same,46225,21.93,True,True,True,46225,21.93,46258 46232 46224,,46225
+Mondos,California,kept,change,closer,46251,63.60,True,True,True,46053,43.61,46251 46025 46054,,46053
+Montara State Beach,California,kept,same,same,46237,28.27,True,True,True,46237,28.27,46026 46012 46214,,46237
+Moonlight Beach,California,kept,same,same,46274,2.11,True,True,True,46274,2.11,46266 46225 46254,,46274
+Moonstone Beach Humboldt,California,kept,same,same,46244,25.30,True,True,True,46244,25.30,46022 46213,,46244
+Morro Rock,California,kept,change,no line of sight,46259,87.62,True,True,False,46028,103.03,,,46028
+Moss Landing,California,kept,same,same,46236,14.99,True,True,True,46236,14.99,46042,,46236
+Natural Bridges,California,kept,same,same,46236,23.28,True,True,True,46236,23.28,46042 46028,,46236
+New Brighton Reef,California,kept,same,same,46236,24.29,True,True,True,46236,24.29,,,46236
+"Newport Beach, California",California,kept,same,same,46253,24.87,True,True,True,46253,24.87,46256 46222 46277,,46253
+Newport Point,California,kept,same,same,46253,23.69,True,True,True,46253,23.69,46256 46222 46277,,46253
+Ocean Beach Pier SD,California,kept,same,same,46258,23.06,True,True,True,46258,23.06,46225 46232 46224,,46258
+Ocean Beach SF,California,kept,same,same,46237,11.33,True,True,True,46237,11.33,46026 46012 46214,,46237
+Oceanside Harbor,California,kept,same,same,46224,7.55,True,True,True,46224,7.55,46275 46274 46277,,46224
+Oceanside Pier,California,kept,same,same,46224,8.07,True,True,True,46224,8.07,46275 46274 46266,,46224
+Pacific Beach,California,kept,change,closer,46258,23.40,True,True,True,46225,19.60,46258 46232,,46225
+Pacifica Linda Mar,California,kept,same,same,46237,23.74,True,True,True,46237,23.74,46026 46214,,46237
+Palos Verdes Cove,California,kept,same,same,46221,22.54,True,True,True,46221,22.54,46268 46025 46251,,46221
+Pismo Beach Pier,California,kept,change,closer,46218,77.31,True,True,True,46286,8.87,46011 46218 46259,,46011
+Pleasure Point,California,kept,same,same,46236,21.77,True,True,True,46236,21.77,46042,,46236
+Point Arena,California,kept,same,same,46013,81.36,True,True,True,46013,81.36,46214,,46013
+Ponto Beach,California,kept,change,closer,46224,17.77,True,True,True,46274,2.61,46266 46224 46225,,46274
+"Redondo Beach, California",California,kept,same,same,46221,23.02,True,True,True,46221,23.02,46268 46025 46251,,46221
+Redondo Breakwater,California,kept,same,same,46221,22.59,True,True,True,46221,22.59,46268 46025 46251,,46221
+Refugio State Beach,California,kept,same,same,46053,30.49,True,True,True,46053,30.49,46054,,46053
+Rincon,California,kept,same,same,46053,36.20,True,True,True,46053,36.20,46025 46054 46218,,46053
+River Jetties,California,kept,same,same,46253,21.48,True,True,True,46253,21.48,46256 46222 46277,,46253
+Rockaway Beach Pacifica,California,kept,change,closer,46012,43.95,True,True,True,46237,23.10,46026 46012 46214,,46237
+Rockpile,California,kept,same,same,46053,20.09,True,True,True,46053,20.09,46054 46218,,46053
+Salmon Creek Beach,California,kept,same,same,46013,24.50,True,True,True,46013,24.50,46214,,46013
+Salt Creek,California,kept,change,closer,46253,43.78,True,True,True,46277,16.71,46253 46256 46222,,46277
+San Diego Blacks Beach,California,kept,same,same,ljpc1,1.46,True,True,True,ljpc1,1.46,46254 46266 46225,,ljpc1
+San Elijo State Beach,California,kept,change,closer,46266,7.10,True,True,True,46274,5.23,46266 46225 46254,,46274
+San Onofre,California,kept,same,same,46277,9.38,True,True,True,46277,9.38,46275 46224 46274,,46277
+San Simeon,California,kept,change,closer,46259,98.30,True,True,True,46028,69.86,46011 46259 46218,,46028
+Sand Dollar Beach,California,kept,same,same,46028,42.65,True,True,True,46028,42.65,,,46028
+Sandspit,California,kept,same,same,46053,22.69,True,True,True,46053,22.69,46025,,46053
+Santa Monica Beach,California,kept,same,same,46268,6.55,True,True,True,46268,6.55,46221 46025 46251,,46268
+Scotts Creek,California,kept,change,closer,46012,67.18,True,True,True,46042,32.16,46012 46028,,46042
+Seal Beach Pier,California,kept,same,same,46256,9.59,True,True,True,46256,9.59,46253 46222 46277,,46256
+"Seal Beach, California",California,none,none,none,,,,,,,,,no_line_of_sight,
+Second Peak,California,kept,same,same,46236,21.93,True,True,True,46236,21.93,46042,,46236
+Sewer Peak,California,kept,same,same,46236,21.73,True,True,True,46236,21.73,46042,,46236
+Sharp Park,California,kept,same,same,46237,21.08,True,True,True,46237,21.08,46026 46012 46214,,46237
+Shell Beach,California,kept,change,closer,46218,78.46,True,True,True,46286,6.51,46011 46218 46259,,46011
+Shelter Cove,California,kept,same,same,46014,89.13,True,True,True,46014,89.13,,,46014
+Solana Beach,California,kept,same,same,46266,3.57,True,True,True,46266,3.57,46274 46225 46254,,46266
+Steamer Lane,California,kept,same,same,46236,22.41,True,True,True,46236,22.41,46042 46028,,46236
+Stinson Beach,California,kept,same,same,46237,12.39,True,True,True,46237,12.39,46026 46012 46042,,46237
+Stone Steps,California,kept,same,same,46274,4.39,True,True,True,46274,4.39,46224 46266 46225,,46274
+Strands Beach,California,kept,change,closer,46253,44.48,True,True,True,46277,15.61,46253 46256 46222,,46277
+Suicide's,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Sunset Cliffs,California,kept,same,same,46258,23.08,True,True,True,46258,23.08,46225 46232 46224,,46258
+Surf Beach Vandenberg,California,kept,same,same,46218,30.30,True,True,True,46218,30.30,46011 46215 46259,,46218
+Surfside Jetty,California,kept,same,same,46256,10.82,True,True,True,46256,10.82,46253 46222 46277,,46256
+"Surfside, California",California,kept,same,same,46256,11.08,True,True,True,46256,11.08,46253 46222 46277,,46256
+Swamis,California,kept,change,closer,46266,8.59,True,True,True,46274,3.66,46266 46225 46254,,46274
+T Street Beach,California,kept,same,same,46285,6.49,True,True,True,46285,6.49,46277 46224 46253,,46285
+Tamarack,California,kept,same,same,46274,9.85,True,True,True,46274,9.85,46224 46275 46266,,46274
+Thalia Street,California,kept,same,same,46277,24.86,True,True,True,46277,24.86,46253 46256 46224,,46277
+The Hook,California,kept,same,same,46236,22.31,True,True,True,46236,22.31,46042,,46236
+The Pier Beach,California,kept,same,same,46285,6.14,True,True,True,46285,6.14,46277 46224 46253,,46285
+The Wedge,California,kept,same,same,46253,27.75,True,True,True,46253,27.75,46277 46222 46224,,46253
+Toes Over,California,kept,same,same,46236,23.61,True,True,True,46236,23.61,,,46236
+Topanga Beach,California,kept,same,same,46268,1.74,True,True,True,46268,1.74,46221 46025 46251,,46268
+Torrance Beach,California,kept,same,same,46221,23.39,True,True,True,46221,23.39,46268 46025 46251,,46221
+Torrey Pines State Beach,California,kept,same,same,46266,3.35,True,True,True,46266,3.35,46254 ljpc1 46225,,46266
+Tourmaline,California,kept,change,closer,46258,23.11,True,True,True,46225,18.57,46258 46232,,46225
+3 Mile,California,kept,same,same,46236,26.71,True,True,True,46236,26.71,46042 46028,,46236
+Trestles,California,kept,same,same,46277,8.06,True,True,True,46277,8.06,46275 46224 46274,,46277
+Trinidad State Beach,California,kept,same,same,46244,25.21,True,True,True,46244,25.21,46022 46213,,46244
+Upper Trestles,California,kept,change,closer,46285,10.53,True,True,True,46277,7.87,46285 46275 46224,,46277
+Venice Beach Breakwater,California,kept,same,same,46268,10.22,True,True,True,46268,10.22,46221 46025 46251,,46268
+Ventura Point,California,kept,same,same,46053,49.46,True,True,True,46053,49.46,46025 46054 46219,,46053
+Waddell Creek,California,kept,same,same,46042,36.12,True,True,True,46042,36.12,,,46042
+Windansea Beach,California,kept,same,same,46225,15.28,True,True,True,46225,15.28,46258 46274 46232,,46225
+Zuma Beach,California,kept,change,closer,46251,73.80,True,True,True,46221,23.38,46025 46222 46251,,46221
+Bethany Beach,Delaware,kept,same,same,44084,0.63,True,True,True,44084,0.63,,,44084
+Dewey Beach,Delaware,none,gain,gain,,,,,,44084,18.05,,,44084
+Indian River Inlet,Delaware,none,none,none,,,,,,,,,no_line_of_sight,
+Lewes Street Surf Beach,Delaware,kept,same,same,44084,7.71,True,True,True,44084,7.71,,,44084
+Rehoboth Beach,Delaware,none,gain,gain,,,,,,44084,19.66,,,44084
+Amelia Island,Florida,kept,same,same,41112,16.95,True,True,True,41112,16.95,41117 41008,,41112
+Atlantic Beach,Florida,kept,same,same,41112,42.78,True,True,True,41112,42.78,41117 41008 41070,,41112
+Bathtub Beach,Florida,kept,change,closer,41009,147.03,True,True,True,41114,42.40,41113 41009,,41114
+Boca Raton Inlet,Florida,kept,same,same,41122,37.25,True,True,True,41122,37.25,,,41122
+Boynton Beach Inlet,Florida,kept,same,same,41122,58.74,True,True,True,41122,58.74,,,41122
+Cocoa Beach Pier,Florida,kept,same,same,41113,7.55,True,True,True,41113,7.55,41009 41114,,41113
+Dania Beach Pier,Florida,kept,same,same,41122,6.52,True,True,True,41122,6.52,,,41122
+Daytona Beach,Florida,kept,same,same,41070,21.12,True,True,True,41070,21.12,41117 41009,,41070
+Deerfield Beach Pier,Florida,kept,same,same,41122,35.15,True,True,True,41122,35.15,,,41122
+Delray Beach,Florida,kept,same,same,41122,51.16,True,True,True,41122,51.16,,,41122
+Destin Jetty,Florida,kept,change,closer,42039,185.34,True,True,True,42012,106.16,42357 42039 42354,,42012
+Flagler Beach Pier,Florida,kept,same,same,41070,37.78,True,True,True,41070,37.78,41117 41112 41009,,41070
+Fort Lauderdale Beach,Florida,kept,same,same,41122,16.24,True,True,True,41122,16.24,,,41122
+Fort Pierce Inlet,Florida,kept,same,same,41114,12.36,True,True,True,41114,12.36,41113 41009,,41114
+Haulover Inlet,Florida,kept,same,same,41122,11.22,True,True,True,41122,11.22,,,41122
+Indian Rocks Beach,Florida,kept,same,same,42098,35.51,True,True,True,42098,35.51,,,42098
+Jacksonville Beach Pier,Florida,kept,same,same,41117,44.20,True,True,True,41117,44.20,41112 41070 41008,,41117
+Jetty Park Cocoa Beach,Florida,kept,same,same,41113,5.53,True,True,True,41113,5.53,41009 41114,,41113
+Juno Beach Pier,Florida,kept,same,same,41114,76.22,True,True,True,41114,76.22,,,41114
+Jupiter Inlet,Florida,none,gain,gain,,,,,,41114,70.21,,,41114
+Lake Worth Pier,Florida,none,gain,gain,,,,,,41122,68.23,,,41122
+Lori Wilson Park,Florida,kept,same,same,41113,10.11,True,True,True,41113,10.11,41009 41114,,41113
+Marineland,Florida,kept,same,same,41117,38.69,True,True,True,41117,38.69,41070 41112,,41117
+Matanzas Inlet,Florida,kept,same,same,41117,35.11,True,True,True,41117,35.11,41070 41112,,41117
+Mayport Poles,Florida,kept,same,same,41112,37.59,True,True,True,41112,37.59,41117 41008 41070,,41112
+Mexico Beach,Florida,kept,same,same,42039,142.65,True,True,True,42039,142.65,42012 42357 42354,,42039
+Monster Hole,Florida,kept,same,same,41114,40.78,True,True,True,41114,40.78,41113 41009,,41114
+Naples Pier,Florida,none,none,none,,,,,,,,,beyond_cap,
+Navarre Beach,Florida,kept,same,same,42012,74.68,True,True,True,42012,74.68,42357 42354 42039,,42012
+New Smyrna Beach Inlet,Florida,kept,same,same,41070,26.35,True,True,True,41070,26.35,41009 41117,,41070
+North Jetty,Florida,kept,change,closer,41113,60.39,True,True,True,41114,40.24,41113 41009,,41114
+Okaloosa Island Pier,Florida,kept,same,same,42012,98.77,True,True,True,42012,98.77,42357 42039 42354,,42012
+Palm Beach,Florida,kept,loss,no line of sight,41122,78.31,True,True,False,,,,no_line_of_sight,
+Panama City Beach Pier,Florida,kept,change,closer,42039,161.49,True,True,True,42012,161.42,42039 42357 42036,,42012
+Patrick Air Force Base Beach,Florida,kept,same,same,41113,17.12,True,True,True,41113,17.12,41009 41114,,41113
+Pensacola Beach,Florida,kept,same,same,42012,49.13,True,True,True,42012,49.13,42357 42354 42039,,42012
+Playalinda Beach,Florida,kept,change,closer,41070,61.78,True,True,True,41009,56.15,41070 41117,,41009
+Pompano Beach Pier,Florida,kept,same,same,41122,26.05,True,True,True,41122,26.05,,,41122
+Ponce Inlet,Florida,kept,same,same,41070,23.43,True,True,True,41070,23.43,41117 41009,,41070
+Ponte Vedra Beach,Florida,kept,same,same,41117,38.65,True,True,True,41117,38.65,41112 41070 41008,,41117
+Satellite Beach,Florida,kept,same,same,41113,25.75,True,True,True,41113,25.75,41009 41114,,41113
+Sebastian Inlet,Florida,kept,same,same,41114,40.30,True,True,True,41114,40.30,41113 41009,,41114
+South Beach Miami,Florida,none,none,none,,,,,,,,,no_line_of_sight,
+St. Augustine Beach Pier,Florida,kept,same,same,41117,23.73,True,True,True,41117,23.73,41070 41112,,41117
+St. Pete Beach,Florida,kept,same,same,42098,23.83,True,True,True,42098,23.83,,,42098
+Treasure Island FL,Florida,kept,same,same,42098,24.79,True,True,True,42098,24.79,,,42098
+Venice Beach FL,Florida,kept,same,same,42098,71.62,True,True,True,42098,71.62,,,42098
+Vilano Beach,Florida,kept,same,same,41117,22.11,True,True,True,41117,22.11,41070 41112,,41117
+Ala Moana Bowls,Hawaii,kept,same,same,51211,12.06,True,True,True,51211,12.06,,,51211
+Anahola Bay,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Backdoor Pipeline,Hawaii,kept,same,same,51201,6.37,True,True,True,51201,6.37,,,51201
+Banyans,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Banzai Pipeline,Hawaii,kept,same,same,51201,6.42,True,True,True,51201,6.42,,,51201
+Barbers Point,Hawaii,kept,change,closer,51211,15.23,True,True,True,51212,5.35,51211,,51212
+Bellows Beach,Hawaii,kept,same,same,51202,6.61,True,True,True,51202,6.61,,,51202
+Big Beach Makena,Hawaii,none,none,none,,,,,,,,,beyond_cap,
+Canoes Waikiki,Hawaii,kept,same,same,51211,13.77,True,True,True,51211,13.77,,,51211
+Chuns Reef,Hawaii,kept,same,same,51201,6.21,True,True,True,51201,6.21,,,51201
+Diamond Head Cliffs,Hawaii,kept,same,same,51211,16.45,True,True,True,51211,16.45,,,51211
+Ehukai Beach Park,Hawaii,kept,same,same,51201,6.62,True,True,True,51201,6.62,,,51201
+Electric Beach,Hawaii,kept,same,same,51212,4.26,True,True,True,51212,4.26,,,51212
+Flemings Beach,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Haleiwa Ali'i Beach,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Hanalei Bay,Hawaii,none,none,none,,,,,,,,,beyond_cap,51208
+Hapuna Beach,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Honoli‘i,Hawaii,kept,same,same,51206,12.90,True,True,True,51206,12.90,,,51206
+Honolua Bay,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Hoʻokipa,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,51205
+Kaisers,Hawaii,kept,same,same,51211,12.39,True,True,True,51211,12.39,,,51211
+Kanaha Beach,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,51205
+Keaau Beach,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Kiahuna Beach,Hawaii,none,gain,gain,,,,,,51212,148.73,,,51212
+Kolekole Beach Park,Hawaii,none,gain,gain,,,,,,51206,19.38,,,51206
+Lahaina Breakwall,Hawaii,kept,same,same,51211,140.83,True,True,True,51211,140.83,,,51211
+Laniakea,Hawaii,kept,same,same,51201,6.30,True,True,True,51201,6.30,,,51201
+Launiupoko,Hawaii,kept,same,same,51211,144.55,True,True,True,51211,144.55,,,51211
+Log Cabins,Hawaii,kept,same,same,51201,5.78,True,True,True,51201,5.78,,,51201
+Lymans,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Makaha,Hawaii,kept,same,same,51212,18.85,True,True,True,51212,18.85,,,51212
+Makapuu Beach Park,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Off The Wall,Hawaii,kept,same,same,51201,6.29,True,True,True,51201,6.29,,,51201
+Pakala,Hawaii,none,none,none,,,,,,,,,beyond_cap,
+Peahi Jaws,Hawaii,none,none,none,,,,,,,,,beyond_cap,51205
+Pine Trees Hawaii,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Poipu Beach,Hawaii,none,gain,gain,,,,,,51212,148.22,,,51212
+Polihale Beach,Hawaii,none,none,none,,,,,,,,,beyond_cap,
+Puaena Point,Hawaii,none,gain,gain,,,,,,51201,7.72,,,51201
+Publics Waikiki,Hawaii,kept,same,same,51211,14.34,True,True,True,51211,14.34,,,51211
+"Pūpūkea, Hawaii",Hawaii,kept,same,same,51201,6.82,True,True,True,51201,6.82,,,51201
+Queens Waikiki,Hawaii,kept,same,same,51211,14.01,True,True,True,51211,14.01,,,51211
+Richardson Beach,Hawaii,kept,same,same,51206,6.68,True,True,True,51206,6.68,,,51206
+Rocky Point,Hawaii,kept,same,same,51201,7.16,True,True,True,51201,7.16,,,51201
+Sandy Beach Oahu,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Sunset Beach Hawaii,Hawaii,kept,same,same,51201,7.83,True,True,True,51201,7.83,,,51201
+Thousand Peaks Maui,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Tunnels Beach,Hawaii,none,none,none,,,,,,,,,beyond_cap,51208
+Turtle Bay,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Velzyland,Hawaii,kept,same,same,51201,8.78,True,True,True,51201,8.78,,,51201
+Waimea Bay,Hawaii,kept,same,same,51201,6.10,True,True,True,51201,6.10,,,51201
+White Plains Beach,Hawaii,kept,same,same,51211,8.93,True,True,True,51211,8.93,,,51211
+Yokohama Bay,Hawaii,none,none,none,,,,,,,,,no_line_of_sight,
+Fortunes Rocks,Maine,kept,change,closer,44098,71.40,True,True,True,44007,22.13,44030 44098 44032,,44007
+Gooch's Beach,Maine,kept,change,closer,44098,65.83,True,True,True,44030,19.14,44098 44029,,44030
+Higgins Beach,Maine,kept,change,closer,44098,84.89,True,True,True,44030,43.94,44098 44029 44013,,44030
+Long Sands Beach,Maine,kept,change,closer,44098,54.36,True,True,True,44030,15.53,44098 44090,,44030
+Old Orchard Beach,Maine,kept,same,same,44007,18.78,True,True,True,44007,18.78,,,44007
+Scarborough Beach,Maine,kept,change,closer,44098,83.24,True,True,True,44007,13.71,44098,,44007
+Short Sands Beach York,Maine,kept,same,same,44030,14.62,True,True,True,44030,14.62,44007 44032,,44030
+Assateague Island MD,Maryland,none,none,none,,,,,,,,,no_line_of_sight,
+Ocean City MD 28th Street,Maryland,none,none,none,,,,,,,,,no_line_of_sight,
+Ocean City MD Inlet,Maryland,none,none,none,,,,,,,,,no_line_of_sight,
+Cisco Beach,Massachusetts,kept,same,same,44097,87.19,True,True,True,44097,87.19,44008,,44097
+Coast Guard Beach,Massachusetts,kept,same,same,44098,107.69,True,True,True,44098,107.69,,,44098
+Good Harbor Beach,Massachusetts,kept,change,closer,44090,90.00,True,True,True,44029,11.80,44013 44090,,44029
+Horseneck Beach,Massachusetts,kept,same,same,44085,13.00,True,True,True,44085,13.00,44097,,44085
+Marconi Beach,Massachusetts,kept,same,same,44098,100.84,True,True,True,44098,100.84,44030,,44098
+Nahant Beach,Massachusetts,kept,same,same,44013,25.86,True,True,True,44013,25.86,44029,,44013
+Nantasket Beach,Massachusetts,kept,same,same,44013,18.52,True,True,True,44013,18.52,44029 44098,,44013
+Nantucket Surf,Massachusetts,kept,same,same,44008,109.92,True,True,True,44008,109.92,,,44008
+Nauset Beach,Massachusetts,kept,same,same,44098,112.58,True,True,True,44098,112.58,,,44098
+Plum Island,Massachusetts,kept,same,same,44098,52.00,True,True,True,44098,52.00,44007,,44098
+Hampton Beach,New Hampshire,kept,change,closer,44098,53.27,True,True,True,44030,43.24,44098 44007 44032,,44030
+Jenness Beach,New Hampshire,kept,change,closer,44098,52.36,True,True,True,44030,34.69,44098 44007 44032,,44030
+North Beach Rye,New Hampshire,kept,change,closer,44098,52.24,True,True,True,44030,35.30,44098 44007 44032,,44030
+The Wall Hampton,New Hampshire,kept,change,closer,44098,53.04,True,True,True,44030,42.13,44098 44032,,44030
+Asbury Park,New Jersey,kept,change,closer,44091,53.10,True,True,True,44065,30.29,44091 44025,,44065
+Atlantic City,New Jersey,kept,change,closer,44084,105.77,True,True,True,44091,72.58,44084 44025,,44091
+Avalon NJ,New Jersey,kept,same,same,44084,68.17,True,True,True,44084,68.17,44091,,44084
+Avon-by-the-Sea,New Jersey,kept,change,closer,44091,50.61,True,True,True,44065,32.70,44091 44025,,44065
+Barnegat Light,New Jersey,kept,same,same,44091,28.21,True,True,True,44091,28.21,44065 44025,,44091
+Bay Head,New Jersey,kept,same,same,44091,40.97,True,True,True,44091,40.97,44065 44025,,44091
+Belmar,New Jersey,kept,change,closer,44091,49.71,True,True,True,44065,33.56,44091 44025,,44065
+Bradley Beach,New Jersey,kept,change,closer,44091,51.49,True,True,True,44065,32.05,44091 44025,,44065
+Brigantine,New Jersey,kept,same,same,44091,64.75,True,True,True,44091,64.75,44084 44025,,44091
+Deal,New Jersey,kept,change,closer,44091,54.32,True,True,True,44065,29.15,44091 44025,,44065
+Harvey Cedars,New Jersey,kept,same,same,44091,31.95,True,True,True,44091,31.95,44065 44025,,44091
+Island Beach State Park,New Jersey,kept,same,same,44091,30.08,True,True,True,44091,30.08,44065 44025,,44091
+Long Beach Island,New Jersey,kept,same,same,44091,38.58,True,True,True,44091,38.58,44025,,44091
+Long Branch,New Jersey,kept,change,closer,44091,61.45,True,True,True,44065,24.49,44091 44025,,44065
+Manasquan Inlet,New Jersey,kept,change,closer,44091,43.07,True,True,True,44065,40.77,44091 44025,,44065
+Margate,New Jersey,kept,same,same,44084,98.86,True,True,True,44084,98.86,,,44084
+Ocean City NJ,New Jersey,kept,same,same,44084,92.33,True,True,True,44084,92.33,,,44084
+Pier Village,New Jersey,kept,change,closer,44091,62.10,True,True,True,44065,24.25,44091 44025,,44065
+Point Pleasant Beach,New Jersey,kept,same,same,44091,41.81,True,True,True,44091,41.81,44065 44025,,44091
+Sandy Hook,New Jersey,kept,change,closer,44025,71.62,True,True,True,44065,25.46,44025 44091,,44065
+Sea Bright,New Jersey,kept,change,closer,44091,67.74,True,True,True,44065,22.78,44091 44025,,44065
+Sea Isle City,New Jersey,kept,same,same,44091,104.82,True,True,True,44091,104.82,,,44091
+Seaside Heights,New Jersey,kept,same,same,44091,31.95,True,True,True,44091,31.95,44065 44025,,44091
+Seaside Park,New Jersey,kept,same,same,44091,31.46,True,True,True,44091,31.46,44065 44025,,44091
+Ship Bottom,New Jersey,kept,same,same,44091,36.88,True,True,True,44091,36.88,44025,,44091
+Spring Lake,New Jersey,kept,change,closer,44091,47.13,True,True,True,44065,36.40,44091 44025,,44065
+Stone Harbor,New Jersey,kept,same,same,44084,61.25,True,True,True,44084,61.25,44091,,44084
+Strathmere,New Jersey,kept,change,closer,44091,99.18,True,True,True,44084,80.83,44091,,44084
+Surf City NJ,New Jersey,kept,same,same,44091,35.98,True,True,True,44091,35.98,44065 44025,,44091
+Wildwood,New Jersey,kept,same,same,44084,53.06,True,True,True,44084,53.06,44091,,44084
+Cupsogue Beach,New York,kept,same,same,44025,67.89,True,True,True,44025,67.89,44065 44097 44091,,44025
+Ditch Plains,New York,kept,same,same,44097,66.88,True,True,True,44097,66.88,44025,,44097
+Fire Island,New York,kept,same,same,44025,41.11,True,True,True,44025,41.11,44065 44091,,44025
+Flying Point Beach,New York,kept,same,same,44025,95.41,True,True,True,44025,95.41,44097 44065,,44025
+Georgica Beach,New York,kept,same,same,44097,92.21,True,True,True,44097,92.21,44025,,44097
+Gilgo Beach,New York,kept,change,closer,44091,99.07,True,True,True,44065,37.80,44025 44091,,44065
+Jones Beach,New York,kept,change,closer,44025,47.13,True,True,True,44065,28.43,44025 44091,,44065
+Lido Beach,New York,kept,change,closer,44091,91.30,True,True,True,44065,25.28,44025 44091,,44065
+Long Beach NY,New York,kept,change,closer,44025,54.85,True,True,True,44065,23.95,44025 44091,,44065
+Main Beach East Hampton,New York,kept,same,same,44097,88.11,True,True,True,44097,88.11,44025,,44097
+Mecox Beach,New York,kept,same,same,44097,100.89,True,True,True,44097,100.89,44025 44065,,44097
+Montauk Point,New York,kept,same,same,44097,62.48,True,True,True,44097,62.48,,,44097
+Point Lookout,New York,kept,change,closer,44091,91.79,True,True,True,44065,26.18,44025 44091,,44065
+Ponquogue Beach,New York,kept,same,same,44025,86.09,True,True,True,44025,86.09,44065 44097,,44025
+Robert Moses State Park,New York,kept,same,same,44025,41.26,True,True,True,44025,41.26,44065 44091,,44025
+Rockaway 67th Street,New York,kept,change,closer,44091,90.50,True,True,True,44065,25.48,44025 44091,,44065
+Rockaway 90th Street,New York,kept,change,closer,44091,89.94,True,True,True,44065,25.69,44025 44091,,44065
+Rockaway Beach,New York,kept,change,closer,44091,90.27,True,True,True,44065,25.56,44025 44091,,44065
+Shinnecock Inlet,New York,kept,same,same,44025,87.46,True,True,True,44025,87.46,44097 44065,,44025
+Smith Point Beach,New York,kept,same,same,44025,58.84,True,True,True,44025,58.84,44065 44091 44097,,44025
+Turtle Cove Montauk,New York,kept,same,same,44097,62.95,True,True,True,44097,62.95,,,44097
+Atlantic Beach NC,North Carolina,kept,same,same,41159,57.03,True,True,True,41159,57.03,41110,,41159
+Avalon Pier,North Carolina,kept,same,same,44056,17.66,True,True,True,44056,17.66,44086 44100 44095,,44056
+Avon Pier,North Carolina,kept,change,closer,44095,47.34,True,True,True,41120,21.86,41025 44095 41083,,41120
+Cape Hatteras Lighthouse,North Carolina,kept,same,same,41025,26.61,True,True,True,41025,26.61,,,41025
+Carolina Beach,North Carolina,kept,same,same,41110,20.12,True,True,True,41110,20.12,41013 41159,,41110
+Corolla Beach,North Carolina,kept,same,same,44056,22.85,True,True,True,44056,22.85,44100 44086 44099,,44056
+Duck Pier,North Carolina,kept,same,same,44056,3.60,True,True,True,44056,3.60,44100 44086 44095,,44056
+Emerald Isle,North Carolina,kept,same,same,41159,50.55,True,True,True,41159,50.55,41110 41108,,41159
+Frisco Pier,North Carolina,kept,same,same,41025,31.41,True,True,True,41025,31.41,,,41025
+Holden Beach,North Carolina,kept,same,same,41108,35.22,True,True,True,41108,35.22,41013,,ssbn7
+Jennettes Pier,North Carolina,kept,same,same,44086,18.58,True,True,True,44086,18.58,44095 44056 44100,,44086
+Kill Devil Hills,North Carolina,kept,same,same,44056,19.27,True,True,True,44056,19.27,44086 44100 44095,,44056
+Kitty Hawk Pier,North Carolina,kept,same,same,44056,10.94,True,True,True,44056,10.94,44100 44086 44095,,44056
+Kure Beach,North Carolina,kept,same,same,41110,25.13,True,True,True,41110,25.13,41013 41159,,41110
+Nags Head Pier,North Carolina,kept,same,same,44086,19.09,True,True,True,44086,19.09,44056 44100 44095,,44086
+Ocean Isle Beach,North Carolina,kept,same,same,41108,42.93,True,True,True,41108,42.93,41013,,ssbn7
+Ocracoke Beach,North Carolina,kept,change,closer,41120,64.63,True,True,True,41025,54.03,41120,,41025
+Oregon Inlet,North Carolina,kept,same,same,44095,19.04,True,True,True,44095,19.04,44086 44056 44100,,44095
+Rodanthe,North Carolina,kept,same,same,44095,20.77,True,True,True,44095,20.77,41120 44086 41083,,44095
+Salvo,North Carolina,kept,same,same,44095,26.75,True,True,True,44095,26.75,41120 44086 41025,,44095
+Sunset Beach NC,North Carolina,kept,same,same,41108,48.00,True,True,True,41108,48.00,41013,,ssbn7
+Surf City NC,North Carolina,kept,same,same,41110,34.85,True,True,True,41110,34.85,41159 41108 41013,,41110
+The Point Buxton,North Carolina,kept,same,same,41120,21.83,True,True,True,41120,21.83,41025 44095 41083,,41120
+Topsail Beach,North Carolina,kept,change,closer,41159,65.57,True,True,True,41110,24.82,41159 41108 41013,,41110
+Wrightsville Beach,North Carolina,kept,same,same,41110,9.91,True,True,True,41110,9.91,41159 41013,,41110
+Agate Beach Newport,Oregon,kept,change,closer,46050,37.14,True,True,True,46097,19.15,46050 46229,,46097
+Bandon Beach,Oregon,kept,same,same,46015,50.34,True,True,True,46015,50.34,46229 46050,,46015
+Bastendorff Beach,Oregon,kept,change,closer,46050,148.82,True,True,True,46229,49.82,46097 46050,,46229
+Brookings Beach,Oregon,kept,change,closer,46244,127.56,True,True,True,46027,24.27,46244 46022 46213,,46027
+Cannon Beach,Oregon,kept,same,same,46243,39.87,True,True,True,46243,39.87,46029 46248 46099,,46243
+Cape Kiwanda,Oregon,kept,same,same,46050,74.37,True,True,True,46050,74.37,46029 46248 46089,,46050
+Florence South Jetty,Oregon,kept,same,same,46229,42.47,True,True,True,46229,42.47,46097 46050 46015,,46229
+Gold Beach,Oregon,kept,same,same,46015,50.48,True,True,True,46015,50.48,46022,,46015
+Hubbard Creek,Oregon,none,gain,gain,,,,,,46015,29.69,,,46015
+Indian Beach Ecola,Oregon,kept,change,closer,46029,50.61,True,True,True,46243,38.21,46029 46248 46099,,46243
+Lincoln City Beach,Oregon,kept,change,closer,46050,54.14,True,True,True,46097,45.96,46050 46029 46248,,46097
+Nelscott Reef,Oregon,kept,change,closer,46050,50.81,True,True,True,46097,41.76,46050 46029 46229,,46097
+Nye Beach,Oregon,kept,change,closer,46050,37.40,True,True,True,46097,19.02,46050 46229 46089,,46097
+Otter Rock,Oregon,kept,change,closer,46050,38.75,True,True,True,46097,25.42,46050 46278 46229,,46097
+Pacific City Beach,Oregon,kept,change,closer,46050,73.00,True,True,True,46097,67.78,46050 46029 46248,,46097
+Roads End,Oregon,kept,change,closer,46050,55.59,True,True,True,46097,47.71,46050 46029 46248,,46097
+Seaside Cove,Oregon,kept,same,same,46243,29.93,True,True,True,46243,29.93,46029 46248 46099,,46243
+Short Sands Beach Oswald West,Oregon,kept,same,same,46278,22.55,True,True,True,46278,22.55,46097 46050,,46278
+South Beach Newport,Oregon,kept,change,closer,46229,99.70,True,True,True,46097,18.74,46050 46229 46029,,46097
+Whiskey Run Beach,Oregon,kept,same,same,46015,62.26,True,True,True,46015,62.26,46229 46050,,46015
+Antonio's,Puerto Rico,kept,same,same,41115,3.74,True,True,True,41115,3.74,,,41115
+Aviones,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Crash Boat Beach,Puerto Rico,kept,same,same,41115,14.77,True,True,True,41115,14.77,,,41115
+Dogmans Rincon,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Gas Chambers Aguadilla,Puerto Rico,kept,same,same,41115,14.89,True,True,True,41115,14.89,,,41115
+Indicators,Puerto Rico,kept,same,same,41115,1.91,True,True,True,41115,1.91,,,41115
+Jobos Beach Isabela,Puerto Rico,kept,same,same,41121,40.79,True,True,True,41121,40.79,,,41121
+La Pared Luquillo,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Maria's,Puerto Rico,kept,same,same,41115,2.03,True,True,True,41115,2.03,,,41115
+Middles Isabela,Puerto Rico,kept,same,same,41121,28.27,True,True,True,41121,28.27,,,41121
+Pine Grove Beach,Puerto Rico,kept,same,same,41053,9.57,True,True,True,41053,9.57,,,41053
+Playa Guajataca,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Playa Kikita,Puerto Rico,kept,same,same,41053,17.71,True,True,True,41053,17.71,,,41053
+Playa Manati,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Pools,Puerto Rico,kept,same,same,41115,2.00,True,True,True,41115,2.00,,,41115
+Rincon Domes,Puerto Rico,kept,same,same,41115,1.59,True,True,True,41115,1.59,,,41115
+Sandy Beach,Puerto Rico,kept,same,same,41115,2.65,True,True,True,41115,2.65,,,41115
+Shacks Beach,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Steps Beach Rincon,Puerto Rico,none,gain,gain,,,,,,41115,2.93,,,41115
+Surfers Beach Aguadilla,Puerto Rico,none,none,none,,,,,,,,,no_line_of_sight,
+Table Tops Aguadilla,Puerto Rico,kept,same,same,41115,14.32,True,True,True,41115,14.32,,,41115
+Tres Palmas,Puerto Rico,none,gain,gain,,,,,,41115,3.64,,,41115
+Wilderness,Puerto Rico,kept,same,same,41115,17.11,True,True,True,41115,17.11,,,41115
+Charlestown Town Beach,Rhode Island,kept,same,same,44097,60.86,True,True,True,44097,60.86,,,44097
+Conant Ave,Rhode Island,kept,same,same,44085,37.59,True,True,True,44085,37.59,44097,,44085
+East Matunuck State Beach,Rhode Island,kept,same,same,44097,56.55,True,True,True,44097,56.55,,,44097
+Marys,Rhode Island,kept,same,same,44097,57.30,True,True,True,44097,57.30,,,44097
+Matunuck,Rhode Island,kept,same,same,44097,56.86,True,True,True,44097,56.86,,,44097
+Misquamicut State Beach,Rhode Island,none,gain,gain,,,,,,44085,64.20,,,44085
+Monahans,Rhode Island,kept,same,same,44085,35.50,True,True,True,44085,35.50,44097,,44085
+Moonstone Beach RI,Rhode Island,kept,same,same,44097,58.46,True,True,True,44097,58.46,,,44097
+Narragansett Beach,Rhode Island,kept,same,same,44085,35.45,True,True,True,44085,35.45,44097,,44085
+Pilgrim Ave,Rhode Island,kept,same,same,44085,37.62,True,True,True,44085,37.62,44097,,44085
+Point Judith,Rhode Island,kept,same,same,44085,37.47,True,True,True,44085,37.47,44097,,44085
+Ruggles,Rhode Island,kept,same,same,44085,23.83,True,True,True,44085,23.83,44097,,44085
+Second Beach Newport,Rhode Island,kept,same,same,44097,58.84,True,True,True,44097,58.84,,,44097
+Third Beach Newport,Rhode Island,none,none,none,,,,,,,,,no_line_of_sight,
+Cherry Grove Pier,South Carolina,kept,same,same,41108,58.29,True,True,True,41108,58.29,41013,,ssbn7
+Edisto Beach,South Carolina,kept,same,same,41067,26.83,True,True,True,41067,26.83,41076 41004 41008,,41067
+Folly Beach Pier,South Carolina,kept,same,same,41076,29.29,True,True,True,41076,29.29,41065 41067 41004,,41076
+Folly Beach Washout,South Carolina,kept,same,same,41076,27.54,True,True,True,41076,27.54,41065 41067 41004,,41076
+Garden City Pier,South Carolina,kept,same,same,41108,92.20,True,True,True,41108,92.20,41013 41004,,ssbn7
+Hilton Head Island,South Carolina,kept,same,same,41067,33.52,True,True,True,41067,33.52,41008 41076 41065,,41067
+Hunting Island,South Carolina,kept,same,same,41067,10.67,True,True,True,41067,10.67,41076 41065 41004,,41067
+Isle of Palms,South Carolina,kept,same,same,41065,14.92,True,True,True,41065,14.92,41076 41004,,41065
+Kiawah Island Beach,South Carolina,kept,change,closer,41067,44.06,True,True,True,41076,43.55,41067 41004 41008,,41076
+Myrtle Beach State Park,South Carolina,kept,same,same,41108,84.68,True,True,True,41108,84.68,41013 41004,,ssbn7
+Pawleys Island,South Carolina,kept,same,same,41004,102.45,True,True,True,41004,102.45,41108 41013,,ssbn7
+Surfside Beach SC,South Carolina,kept,same,same,41108,89.30,True,True,True,41108,89.30,41013 41004,,ssbn7
+61st Street Galveston,Texas,kept,same,same,42035,41.30,True,True,True,42035,41.30,42032 42092,,42035
+Bob Hall Pier,Texas,kept,same,same,42092,21.28,True,True,True,42092,21.28,42033 42034 42032,,42092
+Galveston Seawall,Texas,kept,same,same,42035,37.55,True,True,True,42035,37.55,42032 42092,,42035
+Horace Caldwell Pier,Texas,kept,change,closer,42092,21.28,True,True,True,42033,5.31,42034 42092 42032,,42092
+Isla Blanca Park,Texas,kept,same,same,42092,174.81,True,True,True,42092,174.81,42033 42034 42032,,42092
+JP Luby Surf Park,Texas,kept,same,same,42092,16.90,True,True,True,42092,16.90,42033 42034 42032,,42092
+Matagorda Beach,Texas,kept,change,closer,42092,150.68,True,True,True,42032,101.86,42034 42033 42092,,42092
+Mustang Island,Texas,kept,same,same,42033,13.68,True,True,True,42033,13.68,42034 42092 42032,,42092
+Port A Beach,Texas,kept,same,same,42033,8.36,True,True,True,42033,8.36,42034 42092 42032,,42092
+Port Aransas Jetty,Texas,kept,same,same,42033,4.40,True,True,True,42033,4.40,42034 42092 42032,,42092
+South Padre Island,Texas,kept,same,same,42092,172.38,True,True,True,42092,172.38,42033 42034 42032,,42092
+Surfside Beach TX,Texas,kept,same,same,42035,90.44,True,True,True,42035,90.44,,,42035
+Croatan Beach,Virginia,kept,same,same,44099,24.09,True,True,True,44099,24.09,44100 44056 44088,,44099
+First Street Jetty VB,Virginia,kept,same,same,44099,23.76,True,True,True,44099,23.76,44100 44056 44088,,44099
+Sandbridge Beach,Virginia,kept,same,same,44099,27.15,True,True,True,44099,27.15,44100 44086 44088,,44099
+Virginia Beach Oceanfront,Virginia,kept,same,same,44099,23.48,True,True,True,44099,23.48,44100 44056 44088,,44099
+Cape Disappointment,Washington,kept,change,closer,46029,35.72,True,True,True,46243,8.05,46029 46248 46211,,46243
+Hobuck Beach,Washington,none,none,none,,,,,,,,,no_line_of_sight,
+Kalaloch Beach,Washington,kept,same,same,46041,38.51,True,True,True,46041,38.51,46099 46211 46029,,46453
+La Push First Beach,Washington,kept,same,same,46041,62.12,True,True,True,46041,62.12,46099 46243,,46041
+La Push Second Beach,Washington,kept,same,same,46041,59.92,True,True,True,46041,59.92,46099 46211 46243,,46453
+La Push Third Beach,Washington,kept,same,same,46099,98.68,True,True,True,46099,98.68,46211 46243,,46453
+Long Beach WA,Washington,kept,same,same,46243,16.11,True,True,True,46243,16.11,46029 46248 46211,,46243
+Ocean Shores,Washington,kept,same,same,46211,15.92,True,True,True,46211,15.92,46099 46041 46243,,46211
+Pacific Beach WA,Washington,kept,change,closer,46211,39.34,True,True,True,46099,36.53,46211 46041 46243,,46453
+Rialto Beach,Washington,kept,loss,no line of sight,46206,143.79,True,True,False,,,,no_line_of_sight,
+Shi Shi Beach,Washington,kept,same,same,46206,116.28,True,True,True,46206,116.28,,,46206
+Tokeland,Washington,none,none,none,,,,,,,,,no_line_of_sight,
+Westport Jetty,Washington,kept,same,same,46211,9.48,True,True,True,46211,9.48,46099 46041 46243,,46211
+Westport Light State Park,Washington,kept,same,same,46211,9.35,True,True,True,46211,9.35,46099 46041 46243,,46211
+Fiji,Puerto Rico,kept,same,same,41053,1.11,True,True,True,41053,1.11,,,41053
+Tijuana Slough,California,kept,same,same,46232,27.80,True,True,True,46232,27.80,46258 46086,,46232
+Avalanches,California,kept,change,no line of sight,ljpc1,12.84,True,True,False,46258,23.17,46225 46232 46224,,46258
+PB Point,California,kept,change,no line of sight,ljpc1,6.72,True,True,False,46225,18.09,46258 46232,,46225
+Law Street,California,kept,change,no line of sight,ljpc1,7.26,True,True,False,46225,18.96,46258 46232,,46225
+Scripps Pier,California,kept,same,same,ljpc1,0.08,True,True,True,ljpc1,0.08,46254 46266 46225,,ljpc1
+Seaside Reef,California,kept,same,same,46266,4.66,True,True,True,46266,4.66,46274 46225 46254,,46266
+Pipes,California,kept,same,same,46274,4.69,True,True,True,46274,4.69,46266 46225 46254,,46274
+Trails,California,kept,change,closer,46277,10.63,True,True,True,46275,9.07,46277 46224 46274,,46275
+San Clemente Beach,California,kept,change,closer,46277,8.61,True,True,True,46285,8.35,46277 46224 46225,,46285
+Middles,California,kept,same,same,46277,8.41,True,True,True,46277,8.41,46275 46224 46274,,46277
+Rockpile (Laguna),California,kept,change,no line of sight,46285,14.91,True,True,False,46277,25.95,46253 46256 46222,,46277
+Crystal Cove,California,kept,change,no line of sight,46285,18.25,True,True,False,46277,29.00,46253 46256 46222,,46277
+Corona Del Mar,California,kept,change,no line of sight,46285,24.40,True,True,False,46253,28.49,46277 46222 46224,,46253
+Newport Jetties,California,kept,same,same,46253,22.82,True,True,True,46253,22.82,46256 46222 46277,,46253
+Seal Beach Jetty,California,kept,same,same,46256,8.95,True,True,True,46256,8.95,46253 46222 46277,,46256
+Cabrillo Beach,California,kept,same,same,46256,8.15,True,True,True,46256,8.15,46222 46253 46277,,46256
+White Point,California,kept,same,same,46256,8.72,True,True,True,46256,8.72,46222 46253 46277,,46256
+Haggarty's,California,kept,change,no line of sight,46256,21.96,True,True,False,46221,22.83,46268 46025 46251,,46221
+Rat Beach,California,kept,change,no line of sight,46256,21.59,True,True,False,46221,23.33,46268 46025 46251,,46221
+Bruce's Beach,California,kept,same,same,46268,20.47,True,True,True,46268,20.47,46221 46025 46251,,46268
+Shitpipe,California,kept,same,same,46268,17.21,True,True,True,46268,17.21,46221 46025 46251,,46268
+Dockweiler Beach,California,kept,same,same,46268,15.23,True,True,True,46268,15.23,46221 46025 46251,,46268
+Venice Beach Pier,California,kept,same,same,46268,11.15,True,True,True,46268,11.15,46221 46025 46251,,46268
+Santa Monica Pier,California,kept,same,same,46268,7.35,True,True,True,46268,7.35,46221 46025 46251,,46268
+Will Rogers,California,kept,same,same,46268,3.84,True,True,True,46268,3.84,46221 46025 46251,,46268
+Sunset Point,California,kept,same,same,46268,2.80,True,True,True,46268,2.80,46221 46025 46251,,46268
+Chart House,California,kept,same,same,46268,1.87,True,True,True,46268,1.87,46221 46025 46251,,46268
+Malibu Point,California,kept,same,same,46268,9.34,True,True,True,46268,9.34,46221 46025 46222,,46268
+Point Dume,California,kept,same,same,46268,21.16,True,True,True,46268,21.16,46221 46025 46222,,46268
+Port Hueneme,California,kept,change,no line of sight,46268,58.26,True,True,False,46025,42.92,46251 46053 46069,,46025
+Silver Strand,California,kept,change,no line of sight,46268,61.00,True,True,False,46025,44.73,46251 46053 46222,,46025
+Oxnard Beach,California,kept,change,no line of sight,46268,63.40,True,True,False,46025,48.33,46053 46054,,46025
+Ventura Harbor,California,kept,same,same,46053,52.55,True,True,True,46053,52.55,46054,,46053
+Pitas Point,California,kept,same,same,46053,42.37,True,True,True,46053,42.37,46251 46025 46054,,46053
+Faria Beach,California,kept,same,same,46053,40.98,True,True,True,46053,40.98,46251 46025 46054,,46053
+Mussel Shoals,California,kept,same,same,46053,38.67,True,True,True,46053,38.67,46251 46025 46054,,46053
+Tarpits,California,kept,same,same,46053,34.79,True,True,True,46053,34.79,46025 46054,,46053
+Miramar,California,kept,same,same,46053,27.44,True,True,True,46053,27.44,46025,,46053
+Mesa Lane,California,kept,same,same,46053,19.53,True,True,True,46053,19.53,46054 46025 46218,,46053
+Avila Beach,California,kept,change,closer,46218,80.72,True,True,True,46286,1.49,46011 46218,,46011
+Grover Beach,California,kept,change,closer,46218,75.47,True,True,True,46286,10.28,46011 46218 46259,,46011
+Shell Beach (North),California,kept,change,closer,46218,79.50,True,True,True,46286,4.11,46011 46218 46259,,46011
+Cable Landing,California,kept,same,same,46259,81.58,True,True,True,46259,81.58,46028,,46259
+Piedras Blancas,California,kept,change,closer,46259,100.62,True,True,True,46028,56.28,46215 46011 46259,,46028
+Mole Point,California,kept,same,same,46236,16.54,True,True,True,46236,16.54,46042 46012,,46236
+Boneyard,California,kept,same,same,46236,13.41,True,True,True,46236,13.41,46042 46012,,46236
+Monterey Beach,California,kept,same,same,46236,18.33,True,True,True,46236,18.33,,,46236
+Mitchell's Cove,California,kept,same,same,46236,22.82,True,True,True,46236,22.82,46042 46028,,46236
+4 Mile,California,kept,same,same,46236,27.59,True,True,True,46236,27.59,46042 46028,,46236
+Pigeon Point,California,kept,change,no line of sight,46236,61.30,True,True,False,46042,43.80,46012 46214,,46042
+Pescadero,California,kept,same,same,46012,42.51,True,True,True,46012,42.51,46237 46026 46214,,46012
+Half Moon Bay,California,kept,change,no line of sight,46237,38.12,True,True,False,46012,40.23,46042,,46012
+Pedro Point,California,kept,same,same,46237,23.42,True,True,True,46237,23.42,46026 46012 46214,,46237
+South Ocean Beach,California,kept,same,same,46237,12.31,True,True,True,46237,12.31,46026 46012 46214,,46237
+North Ocean Beach,California,kept,same,same,46237,10.53,True,True,True,46237,10.53,46026 46012 46214,,46237
+Cronkhite,California,kept,same,same,46237,9.58,True,True,True,46237,9.58,46026 46012 46214,,46237
+Point Reyes North,California,kept,change,closer,46214,45.54,True,True,True,46013,34.28,46214,,46013
+Mendocino,California,kept,change,no line of sight,46013,125.59,True,True,False,46014,17.80,,,46014
+Caspar,California,kept,loss,no line of sight,46013,132.52,True,True,False,,,,no_line_of_sight,
+Jug Handle,California,kept,loss,no line of sight,46013,134.23,True,True,False,,,,no_line_of_sight,
+Mackerricher,California,kept,change,no line of sight,46013,145.74,True,True,False,46213,120.32,,,46213
+Ten Mile Beach,California,kept,change,closer,46213,117.85,True,True,True,46014,39.01,46213,,46014
+Westport,California,kept,change,no line of sight,46244,147.86,True,True,False,46014,48.91,46213,,46014
+Agate Beach,California,kept,change,no line of sight,46244,33.24,True,True,False,46027,79.50,,,46027
+St Andrews Park,Florida,kept,same,same,42039,153.20,True,True,True,42039,153.20,42012 42036 42357,,42039
+Cape San Blas,Florida,kept,same,same,42039,119.28,True,True,True,42039,119.28,42036 42012 42357,,42039
+Redington Pier,Florida,kept,same,same,42098,26.89,True,True,True,42098,26.89,,,42098
+Madeira Beach,Florida,kept,same,same,42098,26.45,True,True,True,42098,26.45,,,42098
+Spring Ave,Florida,kept,same,same,42098,20.37,True,True,True,42098,20.37,,,42098
+Twin Piers,Florida,kept,same,same,42098,26.86,True,True,True,42098,26.86,,,42098
+Whitney Beach,Florida,kept,same,same,42098,29.83,True,True,True,42098,29.83,,,42098
+Coolidge,Florida,kept,same,same,42098,46.90,True,True,True,42098,46.90,,,42098
+Siesta Key,Florida,none,none,none,,,,,,,,,no_line_of_sight,
+Englewood,Florida,kept,same,same,42098,90.09,True,True,True,42098,90.09,,,42098
+Gasparilla,Florida,kept,same,same,42098,108.54,True,True,True,42098,108.54,,,42098
+Captiva,Florida,kept,same,same,42098,139.90,True,True,True,42098,139.90,,,42098
+Key West,Florida,kept,same,same,42095,24.87,True,True,True,42095,24.87,,,42095
+Sunny Isles,Florida,kept,same,same,41122,7.62,True,True,True,41122,7.62,,,41122
+Spoils,Florida,kept,same,same,41122,10.55,True,True,True,41122,10.55,,,41122
+Commercial Pier,Florida,kept,same,same,41122,20.95,True,True,True,41122,20.95,,,41122
+Hillsboro Inlet,Florida,kept,same,same,41122,28.50,True,True,True,41122,28.50,,,41122
+Hillsboro Beach,Florida,kept,same,same,41122,33.89,True,True,True,41122,33.89,,,41122
+Palmetto Pavilion,Florida,kept,same,same,41122,38.83,True,True,True,41122,38.83,,,41122
+Ocean Reef Park,Florida,none,none,none,,,,,,,,,no_line_of_sight,
+Hobe Beach,Florida,kept,same,same,41114,60.71,True,True,True,41114,60.71,,,41114
+Jensen Beach,Florida,kept,change,closer,41113,128.82,True,True,True,41114,31.80,41113 41009,,41114
+Vero Pier,Florida,kept,change,closer,41113,82.89,True,True,True,41114,18.53,41113 41009,,41114
+Spessard,Florida,kept,same,same,41113,39.38,True,True,True,41113,39.38,41009 41114,,41113
+Ocean Ave,Florida,kept,same,same,41113,36.91,True,True,True,41113,36.91,41009 41114,,41113
+Indialantic,Florida,kept,same,same,41113,34.56,True,True,True,41113,34.56,41009 41114,,41113
+Canova Beach Park,Florida,kept,same,same,41113,29.49,True,True,True,41113,29.49,41009 41114,,41113
+Pelican Beach,Florida,kept,same,same,41113,26.31,True,True,True,41113,26.31,41009 41114,,41113
+16th Street South,Florida,kept,same,same,41113,13.67,True,True,True,41113,13.67,41009 41114,,41113
+Flagler Ave,Florida,kept,same,same,41070,29.19,True,True,True,41070,29.19,41009 41117,,41070
+Wilbur by the Sea,Florida,kept,same,same,41070,22.75,True,True,True,41070,22.75,41117 41009,,41070
+A Street,Florida,kept,same,same,41117,24.71,True,True,True,41117,24.71,41070 41112,,41117
+Atlantic Blvd,Florida,kept,change,closer,41112,45.61,True,True,True,41117,45.57,41112 41070 41008,,41117
+Fort Clinch,Florida,kept,same,same,41112,12.87,True,True,True,41112,12.87,41117 41008,,41112
+Jekyll Island,Georgia,kept,same,same,41112,40.23,True,True,True,41112,40.23,41008 41117,,41112
+St Simons Island,Georgia,kept,same,same,41112,48.19,True,True,True,41112,48.19,41008 41117,,41112
+Sea Island,Georgia,kept,change,closer,41112,55.08,True,True,True,41008,48.38,41112 41117,,41008
+Blackbeard Island,Georgia,kept,change,closer,41112,88.59,True,True,True,41008,32.81,41112 41067,,41008
+St. Catherines Island,Georgia,kept,change,closer,41067,100.67,True,True,True,41008,35.20,41067 41112,,41008
+Tybee Island,Georgia,kept,same,same,41067,50.49,True,True,True,41067,50.49,41008 41076 41065,,41067
+Fripp Island,South Carolina,kept,same,same,41067,8.08,True,True,True,41067,8.08,41076 41008 41004,,41067
+Berts Bar,South Carolina,kept,same,same,41065,20.79,True,True,True,41065,20.79,41076 41004,,41065
+Windjammer,South Carolina,kept,same,same,41065,15.68,True,True,True,41065,15.68,41076 41004,,41065
+Wild Dunes,South Carolina,kept,same,same,41065,12.00,True,True,True,41065,12.00,41076 41004,,41065
+Dewees Island,South Carolina,kept,same,same,41065,9.05,True,True,True,41065,9.05,41076 41004,,41065
+South Island,South Carolina,kept,change,closer,41076,79.56,True,True,True,41004,72.93,41076 41108 41013,,41004
+Oak Island Pier,North Carolina,kept,same,same,41108,21.36,True,True,True,41108,21.36,41013,,41108
+Fort Fisher,North Carolina,kept,same,same,41110,26.92,True,True,True,41110,26.92,41013 41159,,41110
+Carolina Beach Pier,North Carolina,kept,same,same,41110,18.10,True,True,True,41110,18.10,41013 41159,,41110
+Wrightsville Beach South,North Carolina,kept,same,same,41110,9.68,True,True,True,41110,9.68,41159 41013,,41110
+Jolly Roger Pier,North Carolina,kept,same,same,41110,25.76,True,True,True,41110,25.76,41159 41108 41013,,41110
+Seaview Pier,North Carolina,kept,change,closer,41159,52.68,True,True,True,41110,49.47,41159 41108 41013,,41110
+Hatteras Ferry Docks,North Carolina,kept,change,no line of sight,44095,69.27,True,True,False,41025,35.19,,,41025
+North Buxton,North Carolina,kept,change,closer,44095,56.67,True,True,True,41120,21.12,41025 44095 41083,,41120
+S-Turns,North Carolina,kept,same,same,44095,19.82,True,True,True,44095,19.82,41120 44086 41083,,44095
+North Pea Island,North Carolina,kept,same,same,44095,16.55,True,True,True,44095,16.55,44086 44056 44100,,44095
+Outer Banks Fishing Pier,North Carolina,kept,same,same,44086,19.35,True,True,True,44086,19.35,44095 44056 44100,,44086
+Abalone Street,North Carolina,kept,same,same,44086,19.68,True,True,True,44086,19.68,44056 44100 44095,,44086
+Bath House,North Carolina,kept,change,closer,44086,21.06,True,True,True,44056,21.04,44086 44100 44095,,44056
+Black Pelican,North Carolina,kept,same,same,44056,15.23,True,True,True,44056,15.23,44100 44086 44095,,44056
+North End Virginia Beach,Virginia,kept,same,same,44099,23.64,True,True,True,44099,23.64,44058 44100 44056,,44099
+Fenwick Island,Delaware,kept,same,same,44084,8.85,True,True,True,44084,8.85,,,44084
+Gordon Pond,Delaware,kept,same,same,44084,24.02,True,True,True,44084,24.02,,,44084
+The Cove,New Jersey,kept,same,same,44084,44.59,True,True,True,44084,44.59,,,44084
+Broadway Beach,New Jersey,kept,same,same,44084,44.67,True,True,True,44084,44.67,,,44084
+Grant Street,New Jersey,kept,same,same,44084,44.81,True,True,True,44084,44.81,,,44084
+Queen Street,New Jersey,kept,same,same,44084,45.08,True,True,True,44084,45.08,,,44084
+Poverty Beach,New Jersey,kept,same,same,44084,47.28,True,True,True,44084,47.28,,,44084
+The Rocks,New Jersey,kept,same,same,44084,47.73,True,True,True,44084,47.73,44091,,44084
+Diamond Beach,New Jersey,kept,same,same,44084,49.23,True,True,True,44084,49.23,44091,,44084
+North Wildwood,New Jersey,kept,same,same,44084,56.34,True,True,True,44084,56.34,44091,,44084
+30th Street Pier,New Jersey,kept,same,same,44084,67.84,True,True,True,44084,67.84,44091,,44084
+Avalon Jetty,New Jersey,kept,same,same,44084,69.86,True,True,True,44084,69.86,44091,,44084
+South End,New Jersey,kept,same,same,44084,83.79,True,True,True,44084,83.79,,,44084
+32nd Street,New Jersey,kept,change,no line of sight,44091,82.15,True,True,False,44084,97.49,,,44084
+Quincy Ave,New Jersey,kept,change,no line of sight,44091,81.58,True,True,False,44084,98.01,,,44084
+Margate Pier,New Jersey,kept,change,no line of sight,44091,79.50,True,True,False,44084,99.86,,,44084
+Ventnor Pier,New Jersey,kept,change,no line of sight,44091,77.72,True,True,False,44084,101.42,,,44084
+Caesars Pier,New Jersey,kept,change,no line of sight,44091,73.60,True,True,False,44084,104.95,,,44084
+Brigantine Jetty,New Jersey,kept,same,same,44091,70.24,True,True,True,44091,70.24,44084 44025,,44091
+Seaside Road,New Jersey,kept,same,same,44091,69.51,True,True,True,44091,69.51,44084 44025,,44091
+Wooden Jetty,New Jersey,kept,same,same,44091,50.02,True,True,True,44091,50.02,44025,,44091
+Holyoke,New Jersey,kept,same,same,44091,47.89,True,True,True,44091,47.89,44025,,44091
+Beach Haven,New Jersey,kept,same,same,44091,46.24,True,True,True,44091,46.24,44025,,44091
+Long Beach Township,New Jersey,kept,same,same,44091,40.42,True,True,True,44091,40.42,44025,,44091
+Mantoloking,New Jersey,kept,same,same,44091,38.07,True,True,True,44091,38.07,44065 44025,,44091
+Sea Girt,New Jersey,kept,change,closer,44091,45.72,True,True,True,44065,38.01,44091 44025,,44065
+Ocean Grove,New Jersey,kept,change,closer,44091,52.61,True,True,True,44065,31.01,44091 44025,,44065
+Monmouth,New Jersey,kept,change,closer,44091,65.11,True,True,True,44065,23.20,44091 44025,,44065
+Breezy Point,New York,kept,change,closer,44091,86.83,True,True,True,44065,27.87,44025 44091,,44065
+West End Long Beach,New York,kept,change,closer,44091,90.40,True,True,True,44065,24.30,44025 44091,,44065
+Saltaire,New York,kept,change,closer,44091,107.91,True,True,True,44025,41.99,44065 44091,,44025
+Ocean Bay Park,New York,kept,change,closer,44091,110.96,True,True,True,44025,43.29,44065 44091,,44025
+Davis Park,New York,kept,change,closer,44091,120.38,True,True,True,44025,49.45,44065 44091,,44025
+Hither Hills,New York,kept,same,same,44097,75.88,True,True,True,44097,75.88,44025,,44097
+Terrace,New York,kept,same,same,44097,68.70,True,True,True,44097,68.70,44025,,44097
+Poles,New York,kept,same,same,44097,67.36,True,True,True,44097,67.36,44025,,44097
+Radars,New York,kept,same,same,44097,63.11,True,True,True,44097,63.11,,,44097
+Black Rock Point,Rhode Island,kept,same,same,44097,44.21,True,True,True,44097,44.21,,,44097
+Dunes Park,Rhode Island,kept,loss,no line of sight,44085,61.50,True,True,False,,,,no_line_of_sight,
+Weekapaug,Rhode Island,kept,loss,no line of sight,44085,61.23,True,True,False,,,,no_line_of_sight,
+East Beach,Rhode Island,kept,change,no line of sight,44085,51.76,True,True,False,44097,61.50,,,44097
+Breachway,Rhode Island,kept,change,no line of sight,44085,50.79,True,True,False,44097,61.12,,,44097
+Deep Hole,Rhode Island,kept,change,no line of sight,44085,42.06,True,True,False,44097,56.83,,,44097
+Salty Brine,Rhode Island,kept,loss,no line of sight,44085,40.10,True,True,False,,,,no_line_of_sight,
+The K's,Rhode Island,kept,change,no line of sight,44085,38.80,True,True,False,44097,54.45,,,44097
+Point Judith South,Rhode Island,kept,same,same,44085,37.60,True,True,True,44085,37.60,44097,,44085
+Scarborough,Rhode Island,kept,same,same,44085,36.76,True,True,True,44085,36.76,44097,,44085
+Narrow River,Rhode Island,kept,change,no line of sight,44085,34.71,True,True,False,44097,59.11,,,44097
+Baileys Beach,Rhode Island,kept,change,no line of sight,44085,24.65,True,True,False,44097,56.53,,,44097
+First Beach,Rhode Island,kept,change,no line of sight,44085,24.16,True,True,False,44097,59.47,,,44097
+Squibnocket,Massachusetts,kept,loss,no line of sight,44085,23.68,True,True,False,,,,no_line_of_sight,
+Lucy Vincent,Massachusetts,kept,loss,no line of sight,44085,26.45,True,True,False,,,,no_line_of_sight,
+Long Point,Massachusetts,kept,change,no line of sight,44085,33.84,True,True,False,44097,59.00,44008,,44097
+South Beach State Park,Massachusetts,kept,change,no line of sight,44085,41.94,True,True,False,44097,65.06,44008,,44097
+Madaket,Massachusetts,kept,change,no line of sight,44085,70.20,True,True,False,44097,83.84,44008,,44097
+Miacomet,Massachusetts,kept,change,no line of sight,44085,77.98,True,True,False,44097,89.55,44008,,44097
+Nobadeer,Massachusetts,kept,change,no line of sight,44085,81.96,True,True,False,44097,93.53,44008,,44097
+Keyes Beach,Massachusetts,kept,change,no line of sight,44085,67.59,True,True,False,44020,15.29,,,44020
+Green Harbor,Massachusetts,kept,same,same,44090,36.95,True,True,True,44090,36.95,,,44090
+Scituate,Massachusetts,kept,change,closer,44090,50.08,True,True,True,44013,18.47,44029 44090 44098,,44013
+Winthrop Jetty,Massachusetts,kept,change,closer,44098,81.07,True,True,True,44013,25.76,44029 44098,,44013
+Revere Beach,Massachusetts,kept,same,same,44013,28.54,True,True,True,44013,28.54,,,44013
+Lynn Beach,Massachusetts,kept,same,same,44013,25.83,True,True,True,44013,25.83,44090,,44013
+Devereaux,Massachusetts,none,none,none,,,,,,,,,no_line_of_sight,
+Salisbury,Massachusetts,kept,change,closer,44098,52.87,True,True,True,44030,49.09,44098 44007,,44030
+Costellos,New Hampshire,kept,change,closer,44098,52.39,True,True,True,44030,37.62,44098 44007 44032,,44030
+Fox Hill,New Hampshire,kept,change,closer,44098,52.07,True,True,True,44030,36.65,44098 44007 44032,,44030
+Straws Point,New Hampshire,kept,change,closer,44098,51.86,True,True,True,44030,33.60,44098 44007 44032,,44030
+Pirates Cove,New Hampshire,kept,change,no line of sight,44098,52.01,True,True,False,44030,30.12,44007 44032,,44030
+Harbor Beach,Maine,kept,same,same,44098,53.09,True,True,True,44098,53.09,,,44098
+Ogunquit,Maine,kept,change,closer,44098,60.93,True,True,True,44030,15.66,44007 44098 44032,,44030
+Moody Point,Maine,kept,change,closer,44098,62.99,True,True,True,44030,16.57,44098 44029 44032,,44030
+Crescent Beach,Maine,kept,change,closer,44098,64.14,True,True,True,44030,17.49,44098 44029 44032,,44030
+Wells Beach,Maine,kept,change,closer,44098,65.27,True,True,True,44030,18.40,44098 44029,,44030
+Drakes Island,Maine,kept,change,closer,44098,65.88,True,True,True,44030,18.91,44098 44029,,44030
+Pine Point Beach,Maine,kept,same,same,44098,83.41,True,True,True,44098,83.41,,,44098
+Reid State Park,Maine,kept,change,no line of sight,44098,114.32,True,True,False,44030,87.08,,,44030
