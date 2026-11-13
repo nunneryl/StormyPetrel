@@ -38,15 +38,15 @@ TOL = config.COORD_DERIVED_DIST_TOLERANCE_KM
 # Texas 350): only Mecox Beach, 100.89 km against 75, is past half. Ventura Harbor's record has no
 # confidence for its buoy.
 RUN_65 = {
-    "Kalaloch Beach":        ("46041", 38.51, ["46099", "46029", "46248"], 1.0),
+    "Kalaloch Beach":        ("46041", 38.51, ["46099", "46211", "46029"], 1.0),   # fallbacks: run 75
     "La Push First Beach":   ("46041", 62.12, ["46099", "46243"], 1.0),
     "La Push Second Beach":  ("46041", 59.92, ["46099", "46211", "46243"], 1.0),
     "La Push Third Beach":   ("46099", 98.68, ["46211", "46243"], 1.0),   # 46041 out of sight
-    "Galveston Seawall":     ("42035", 37.55, ["42092"], 1.0),            # was 42.79 km
-    "61st Street Galveston": ("42035", 41.3, ["42092"], 1.0),
+    "Galveston Seawall":     ("42035", 37.55, ["42032", "42092"], 1.0),   # was 42.79 km; fallbacks: run 75
+    "61st Street Galveston": ("42035", 41.3, ["42032", "42092"], 1.0),   # fallbacks: run 75
     "Ventura Harbor":        ("46053", 52.55, ["46054"], None),           # was 57.93 km
     "Ventura Point":         ("46053", 49.46, ["46025", "46054", "46219"], 1.0),
-    "Mecox Beach":           ("44097", 100.89, ["44025"], 0.75),
+    "Mecox Beach":           ("44097", 100.89, ["44025", "44065"], 0.75),  # fallbacks: run 75
 }
 
 # Run 64's result as approved, written out from the artifact. name: (buoy, km)
@@ -59,19 +59,21 @@ CHANGED = {     # was: Berts Bar, Dewees Island, Wild Dunes, Windjammer 41076; C
     "Stone Steps": ("46274", 4.39), "Oregon Inlet": ("44095", 19.04),
     "Oak Island Pier": ("41108", 21.36),    # run 74: ssbn7 silent since 2026-11-04
     "Monster Hole": ("41114", 40.78),
-    "Green Harbor": ("44090", 36.95), "Scituate": ("44090", 50.08),
-    "Winthrop Jetty": ("44098", 81.07),
+    "Green Harbor": ("44090", 36.95),
+    "Scituate": ("44013", 18.47), "Winthrop Jetty": ("44013", 25.76),   # run 75: 44013 nearer, in sight
 }
-KEPT = {        # same buoy, the distance corrected
-    "Blackbeard Island": ("41112", 88.59), "Captiva": ("42098", 139.9),
+KEPT = {        # same buoy, the distance corrected (run 64); five marked run 75 moved to a nearer buoy
+    "Blackbeard Island": ("41008", 32.81),     # run 75: nearer, in sight
+    "Captiva": ("42098", 139.9),
     "Carolina Beach Pier": ("41110", 18.1), "Englewood": ("42098", 90.09),
     "Fort Clinch": ("41112", 12.87), "Fort Fisher": ("41110", 26.92),
     "Gasparilla": ("42098", 108.54), "Jekyll Island": ("41112", 40.23),
     "Jolly Roger Pier": ("41110", 25.76), "Mayport Poles": ("41112", 37.59),
     "Montauk Point": ("44097", 62.48), "Newport Point": ("46253", 23.69),
-    "Pescadero": ("46012", 42.51), "Playalinda Beach": ("41070", 61.78),
-    "Point Reyes North": ("46214", 45.54), "Sea Island": ("41112", 55.08),
-    "South Island": ("41076", 79.56), "St Simons Island": ("41112", 48.19),
+    "Pescadero": ("46012", 42.51),
+    "Playalinda Beach": ("41009", 56.15), "Point Reyes North": ("46013", 34.28),   # run 75
+    "Sea Island": ("41008", 48.38), "South Island": ("41004", 72.93),             # run 75
+    "St Simons Island": ("41112", 48.19),
     "Turtle Cove Montauk": ("44097", 62.95), "Wilbur by the Sea": ("41070", 22.75),
     "Wrightsville Beach South": ("41110", 9.68),
 }
@@ -79,9 +81,13 @@ KEPT = {        # same buoy, the distance corrected
 # gives Miramar 46053 and Revere Beach 44013 back (both report again), and clears the five Hawaii
 # spots on silent 51205 / 51208 and Siesta Key (42039 at 381 km, past the cap, nothing in sight).
 CLEARED = {"Devereaux", "Kanaha Beach", "Hoʻokipa", "Peahi Jaws", "Hanalei Bay", "Tunnels Beach",
-           "Siesta Key"}
+           "Siesta Key",
+           # run 75 (2026-11-13): the line to 41122 / 46013 crosses 14 to 70 km of land and nothing
+           # else is in sight
+           "Palm Beach", "Caspar", "Jug Handle"}
 FROM_CACHED = {
-    "Atlantic City": ("44084", 105.77), "Margate": ("44084", 98.86),
+    "Atlantic City": ("44091", 72.58),   # run 75: 44091 in sight with the 250 m standoff
+    "Margate": ("44084", 98.86),
     "Ocean City NJ": ("44084", 92.33), "Avalon NJ": ("44084", 68.17),
     "Stone Harbor": ("44084", 61.25),   # Peahi Jaws' 51205, from this list, cleared by run 74
 }
@@ -172,8 +178,9 @@ def test_fallbacks_and_confidence_follow_the_rule():
             by["Cupsogue Beach"]["enrichment_confidence"]["nearest_buoy"]) == ("44025", 67.89, 1.0)
     assert by["Flying Point Beach"]["enrichment_confidence"]["nearest_buoy"] == 0.75
     assert by["Peahi Jaws"]["enrichment_confidence"]["nearest_buoy"] == 0.0
-    assert by["Oregon Inlet"]["fallback_buoy_ids"] == ["44086", "44100", "44088"]
-    assert by["Berts Bar"]["fallback_buoy_ids"] == ["41076"]
+    # Fallbacks as run 75 lists them (more pass with the 250 m line-of-sight standoff).
+    assert by["Oregon Inlet"]["fallback_buoy_ids"] == ["44086", "44056", "44100"]
+    assert by["Berts Bar"]["fallback_buoy_ids"] == ["41076", "41004"]
 
 
 def test_the_check_would_catch_a_drifted_distance():

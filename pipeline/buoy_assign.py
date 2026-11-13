@@ -18,7 +18,10 @@ THE RULE is enrichment/buoys.compute_nearest_buoy, run here as enrich runs it:
     height in latest_obs.txt when the files were downloaded (geodata.load_ndbc_wave_stations);
   * the 10 nearest; a candidate passes when it is within the region's cap (BUOY_CAP_KM,
     buoys._regional_cap_km) and the geodesic to it crosses no GSHHG land (buoys._los_clear);
-  * the first that passes is the buoy, the next up to three are its fallbacks.
+  * the first that passes is the buoy, the next up to three are its fallbacks;
+  * from 2026-11-13, the written exceptions in pipeline/data/buoy_overrides.json, as the rule
+    applies them (buoys.buoy_override): a pinned buoy is the choice whatever its line of sight,
+    an excluded station never passes. Each row names its exception's reason ("override").
 
 FOR EACH SPOT the report gives the current buoy (stored distance, the real distance from the
 snapshot, whether it is a wave station now, within the cap, in line of sight), the cap, the rule's
@@ -118,6 +121,10 @@ def diagnose(spot_for_algo, stations, land, cap_km, los=None, k=K_CANDIDATES):
     candidate within the cap, as the rule does."""
     los = los or B._los_clear
     lat, lng = spot_for_algo["_algo_lat"], spot_for_algo["_algo_lng"]
+    # The rule's written exceptions (pipeline/data/buoy_overrides.json), as compute_nearest_buoy
+    # applies them: an excluded station is listed but never passes; a pin is the choice.
+    override = B.buoy_override(spot_for_algo)
+    excluded = {str(x).lower() for x in override.get("exclude") or []}
     if not stations:
         return {"candidates": [], "choice": None, "choice_km": None, "fallbacks": [],
                 "reason": "no_wave_stations"}
@@ -125,11 +132,20 @@ def diagnose(spot_for_algo, stations, land, cap_km, los=None, k=K_CANDIDATES):
                   key=lambda t: t[0])[:k]
     cands, passing = [], []
     for km, s in near:
+        if str(s["id"]).lower() in excluded:
+            cands.append({"id": s["id"], "km": round(km, 2), "within_cap": km <= cap_km,
+                          "los": None, "excluded": True})
+            continue
         within = km <= cap_km
         clear = bool(los(spot_for_algo, s, land)) if within else None
         cands.append({"id": s["id"], "km": round(km, 2), "within_cap": within, "los": clear})
         if within and clear and len(passing) < 4:
             passing.append((s["id"], km))
+    pin = B.pinned(override, stations, lat, lng, cap_km, passing)
+    if pin is not None:
+        return {"candidates": cands, "choice": pin["nearest_buoy_id"],
+                "choice_km": pin["nearest_buoy_dist_km"], "fallbacks": pin["fallback_buoy_ids"],
+                "reason": None}
     if passing:
         return {"candidates": cands, "choice": passing[0][0], "choice_km": round(passing[0][1], 2),
                 "fallbacks": [p[0] for p in passing[1:]], "reason": None}
@@ -201,6 +217,7 @@ def assess(spot, group, land, stations, snapshot, rule=None):
         "current": current,
         "choice": choice, "choice_km": r["nearest_buoy_dist_km"], "fallbacks": r["fallback_buoy_ids"],
         "reason": d["reason"] if choice is None else None,
+        "override": B.buoy_override(sfa).get("reason"),
         "candidates": d["candidates"],
         "diagnose_agrees": (d["choice"] == choice
                             and (choice is None or d["fallbacks"] == r["fallback_buoy_ids"])),

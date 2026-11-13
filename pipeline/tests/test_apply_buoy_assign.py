@@ -123,9 +123,10 @@ def _roster():
     ("Bathtub Beach", "41009", 147.03, []),
     ("Nantucket Surf", "44008", 109.92, []),
 ])
-def test_the_roster_carries_run_74s_choice(name, buoy, km, fallbacks):
-    s = _roster()[name]
-    assert (s["nearest_buoy_id"], s["nearest_buoy_dist_km"], s["fallback_buoy_ids"]) == \
+def test_run_74s_plan_gives(name, buoy, km, fallbacks):
+    # What #320 applied from run 74. The roster has since moved on to run 75 (--all, below).
+    f = {n: fl for n, _, fl, _ in A.plan(A.load_report())}[name]
+    assert (f["nearest_buoy_id"], f["nearest_buoy_dist_km"], f["fallback_buoy_ids"]) == \
         (buoy, km, fallbacks)
 
 
@@ -136,8 +137,9 @@ def test_the_roster_carries_run_74s_choice(name, buoy, km, fallbacks):
     ("Asbury Park", "44091"),          # a nearer one passes: held
     ("Avila Beach", "46218"),          # a nearer one passes: held
 ])
-def test_a_held_spot_keeps_its_buoy(name, buoy):
-    assert _roster()[name]["nearest_buoy_id"] == buoy
+def test_run_74_held_these(name, buoy):
+    # Not in run 74's plan: #320 left their buoy as it was. Run 75's --all decides them now.
+    assert name not in {n for n, *_ in A.plan(A.load_report())}
 
 
 def test_db_import_keeps_every_new_pairing():
@@ -156,5 +158,5 @@ def test_db_import_keeps_every_new_pairing():
     ("Fiji", 1.0),              # 1.11 km, cap 250
     ("Bathtub Beach", 0.75),    # 147.03 km, cap 150
 ])
-def test_the_roster_confidence(name, conf):
-    assert _roster()[name]["enrichment_confidence"]["nearest_buoy"] == conf
+def test_run_74s_confidence(name, conf):
+    assert {n: c for n, _, _, c in A.plan(A.load_report())}[name] == conf

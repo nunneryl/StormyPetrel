@@ -1,8 +1,10 @@
 """Algorithm 4 — nearest NDBC wave buoy with line-of-sight filter + regional caps."""
 from __future__ import annotations
 
+import json
 import logging
 import math
+import re
 from functools import lru_cache
 
 from pyproj import Geod
@@ -15,6 +17,7 @@ from ..config import (
     BUOY_CAP_GULF_FLORIDA,
     BUOY_CAP_KM,
     BUOY_LOS_STANDOFF_M,
+    BUOY_OVERRIDES_FILE,
 )
 from ..geo import haversine_m
 from .geodata import load_land_index, load_ndbc_wave_stations
@@ -141,6 +144,52 @@ def _los_clear(spot: dict, station: dict, land) -> bool:
     return True
 
 
+def _slug(name) -> str:
+    """A spot name as db_import slugs it."""
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+
+@lru_cache(maxsize=1)
+def load_buoy_overrides() -> dict:
+    """{slug: override} from config.BUOY_OVERRIDES_FILE (the module global, read at call time),
+    or {} when the file is absent."""
+    path = BUOY_OVERRIDES_FILE
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8")).get("overrides") or {}
+
+
+def buoy_override(spot: dict) -> dict:
+    """The spot's written exception, {} for none: {"pin": id} keeps that buoy whatever the rule
+    finds; {"exclude": [ids]} keeps those stations out of its buoy and fallbacks."""
+    return load_buoy_overrides().get(_slug(spot.get("name"))) or {}
+
+
+def _confidence(dist_km: float, cap_km: float) -> float:
+    return 1.0 if dist_km <= cap_km * 0.5 else 0.75
+
+
+def pinned(override: dict, stations, algo_lat: float, algo_lng: float, cap_km: float, passing):
+    """compute_nearest_buoy's result for a spot whose override pins a buoy, or None when there is
+    no pin or the pinned station is not on the wave-station list (a pin never holds a silent
+    buoy; the rule then runs as usual). The distance is from the rule's point, as for any buoy;
+    the fallbacks are the rule's passing buoys other than the pin, up to three."""
+    pid = override.get("pin")
+    if not pid:
+        return None
+    st = next((s for s in stations if str(s["id"]).lower() == str(pid).lower()), None)
+    if st is None:
+        log.warning("buoy override pins %s, which is not a wave station on the list: ignored", pid)
+        return None
+    dist_km = haversine_m(algo_lat, algo_lng, st["lat"], st["lng"]) / 1000.0
+    return {
+        "nearest_buoy_id": st["id"],
+        "nearest_buoy_dist_km": round(dist_km, 2),
+        "fallback_buoy_ids": [s for s, _ in passing if str(s).lower() != str(pid).lower()][:3],
+        "buoy_confidence": _confidence(dist_km, cap_km),
+    }
+
+
 def compute_nearest_buoy(spot: dict, k_candidates: int = 10) -> dict:
     tree, stations = _build_kdtree()
     land = load_land_index()
@@ -163,9 +212,13 @@ def compute_nearest_buoy(spot: dict, k_candidates: int = 10) -> dict:
     else:
         idx = list(idx)
 
+    override = buoy_override(spot)
+    excluded = {str(x).lower() for x in override.get("exclude") or []}
     passing: list[tuple[str, float]] = []
     for i in idx:
         s = stations[i]
+        if str(s["id"]).lower() in excluded:
+            continue
         dist_m = haversine_m(algo_lat, algo_lng, s["lat"], s["lng"])
         dist_km = dist_m / 1000.0
         if dist_km > cap_km:
@@ -176,6 +229,9 @@ def compute_nearest_buoy(spot: dict, k_candidates: int = 10) -> dict:
         if len(passing) >= 4:
             break
 
+    pin = pinned(override, stations, algo_lat, algo_lng, cap_km, passing)
+    if pin is not None:
+        return pin
     if not passing:
         return {
             "nearest_buoy_id": None,

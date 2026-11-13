@@ -215,6 +215,11 @@ SWELL_DIFFRACTION_WRAP_PER_100KM = 8.0  # extra per-edge wrap-in per 100 km of o
 # in the way still blocks (the other 50 cross 0.3 to 106 km of land from 250 m out).
 BUOY_LOS_STANDOFF_M = 250.0
 
+# The buoy rule's written exceptions, keyed by spot slug: a buoy pinned whatever the rule finds,
+# or stations a spot must never take (enrichment/buoys.buoy_override). Read by enrich and by
+# sw1-raycast buoy-assign alike, so a full run reproduces the committed roster.
+BUOY_OVERRIDES_FILE = PIPELINE_DIR / "data" / "buoy_overrides.json"
+
 # Buoy regional distance caps (km). Matched against region_hint / lat+lng heuristics.
 BUOY_CAP_KM = {
     "California": 150,

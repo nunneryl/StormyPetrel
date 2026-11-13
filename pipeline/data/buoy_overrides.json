@@ -1,0 +1,111 @@
+{
+  "_comment": "Buoy rule exceptions, keyed by spot slug, honoured by enrichment/buoys.compute_nearest_buoy (enrich) and by pipeline/buoy_assign.py (sw1-raycast buoy-assign), so a full run reproduces the committed roster. 'pin': the spot keeps this buoy whether or not the rule's line of sight passes (its distance is measured from the rule's point as usual, its fallbacks are the rule's passing buoys other than it); a pin to a station that is not a wave station on the list is ignored with a warning, so a pin never holds a silent buoy. 'exclude': these stations are never the spot's buoy or fallbacks. Every entry carries its reason and evidence. Decided 2026-11-13 after run 75.",
+  "overrides": {
+    "baileys-beach": {
+      "name": "Baileys Beach",
+      "pin": "44085",
+      "reason": "Its line to 44085 (24.65 km) crosses 0.60 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 44097 at 56.53 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "breachway": {
+      "name": "Breachway",
+      "pin": "44085",
+      "reason": "Its line to 44085 (50.79 km) crosses 0.74 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 44097 at 61.12 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "dana-point-california": {
+      "name": "Dana Point, California",
+      "pin": "46285",
+      "reason": "Its line to 46285 (4.14 km) crosses 0.90 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 46253 at 44.73 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "doran-beach": {
+      "name": "Doran Beach",
+      "pin": "46214",
+      "reason": "Its line to 46214 (54.94 km) crosses 0.98 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "dunes-park": {
+      "name": "Dunes Park",
+      "pin": "44085",
+      "reason": "Its line to 44085 (61.50 km) crosses 4.68 km of land: 2 to 10 km, and nothing else is in sight, so a partly blocked working buoy is kept rather than none; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "east-beach": {
+      "name": "East Beach",
+      "pin": "44085",
+      "reason": "Its line to 44085 (51.76 km) crosses 0.66 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 44097 at 61.50 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "first-beach": {
+      "name": "First Beach",
+      "pin": "44085",
+      "reason": "Its line to 44085 (24.16 km) crosses 0.46 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 44097 at 59.47 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "kiahuna-beach": {
+      "name": "Kiahuna Beach",
+      "exclude": [
+        "51212"
+      ],
+      "reason": "51212 (off Oahu's south-west corner) is 148.73 km away, just inside Hawaii's 150 km cap: a buoy off another island, not in the water Kauai's south shore faces. Run 75 found its line clear of land; the exclusion is a judgement on distance and exposure, decided 2026-11-13. With it excluded the rule finds no other buoy in sight within the cap (51201 is blocked, the rest are past the cap).",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75); decided 2026-11-13"
+    },
+    "lucy-vincent": {
+      "name": "Lucy Vincent",
+      "pin": "44085",
+      "reason": "Its line to 44085 (26.45 km) crosses 8.81 km of land: 2 to 10 km, and nothing else is in sight, so a partly blocked working buoy is kept rather than none; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "morro-rock": {
+      "name": "Morro Rock",
+      "pin": "46259",
+      "reason": "Its line to 46259 (87.62 km) crosses 0.70 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 46028 at 103.03 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "narrow-river": {
+      "name": "Narrow River",
+      "pin": "44085",
+      "reason": "Its line to 44085 (34.71 km) crosses 0.15 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 44097 at 59.11 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "poipu-beach": {
+      "name": "Poipu Beach",
+      "exclude": [
+        "51212"
+      ],
+      "reason": "51212 (off Oahu's south-west corner) is 148.22 km away, just inside Hawaii's 150 km cap: a buoy off another island, not in the water Kauai's south shore faces. Run 75 found its line clear of land; the exclusion is a judgement on distance and exposure, decided 2026-11-13. With it excluded the rule finds no other buoy in sight within the cap (51201 is blocked, the rest are past the cap).",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75); decided 2026-11-13"
+    },
+    "rialto-beach": {
+      "name": "Rialto Beach",
+      "pin": "46206",
+      "reason": "Its line to 46206 (143.79 km) crosses 0.31 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "salty-brine": {
+      "name": "Salty Brine",
+      "pin": "44085",
+      "reason": "Its line to 44085 (40.10 km) crosses 2.80 km of land: 2 to 10 km, and nothing else is in sight, so a partly blocked working buoy is kept rather than none; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "squibnocket": {
+      "name": "Squibnocket",
+      "pin": "44085",
+      "reason": "Its line to 44085 (23.68 km) crosses 5.21 km of land: 2 to 10 km, and nothing else is in sight, so a partly blocked working buoy is kept rather than none; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "the-k-s": {
+      "name": "The K's",
+      "pin": "44085",
+      "reason": "Its line to 44085 (38.80 km) crosses 1.15 km of land: under 2 km, a point or bar of the same coast, so the nearer working buoy measures the water the spot faces; the rule's choice in sight is 44097 at 54.45 km.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    },
+    "weekapaug": {
+      "name": "Weekapaug",
+      "pin": "44085",
+      "reason": "Its line to 44085 (61.23 km) crosses 2.44 km of land: 2 to 10 km, and nothing else is in sight, so a partly blocked working buoy is kept rather than none; the rule finds no buoy in sight within the cap.",
+      "evidence": "sw1-raycast run 75 (docs/face_validation/run-75), line traced over GSHHG v2.3.7 full resolution; decided 2026-11-13 (group D)"
+    }
+  }
+}
