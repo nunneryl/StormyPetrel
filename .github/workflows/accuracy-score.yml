@@ -1,0 +1,82 @@
+name: accuracy-score
+
+# The accuracy scoreboard's nightly scoring (pipeline/accuracy_score.py): pairs the forecasts the
+# full pipeline captured (forecast_leads, model_at_buoys; migration 030) and the spot nowcasts with
+# the buoy readings, and writes the daily totals to accuracy_daily (migration 031). Scores the
+# three complete UTC days before today; re-scoring a day overwrites it, so a reading that arrived
+# late is counted the next night. After the 02:05 UTC full run; reads only, apart from its table.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Complete UTC days to score, ending yesterday'
+        required: false
+        default: '3'
+  schedule:
+    - cron: '47 4 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  score:
+    name: score the forecasts against the buoys
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      DAYS: ${{ inputs.days || '3' }}
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Score the last days into accuracy_daily
+        run: python -m pipeline.accuracy_score --days "$DAYS"
+
+  failure-issue:
+    # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
+    # every other job whatever their result, so a timeout is reported too.
+    needs: [score]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # the failing step's name, from the run's job list
+      contents: read              # checkout of the shared action
+      issues: write               # open, comment on and close the failure issue
+    concurrency:
+      # One report at a time per workflow, so two runs failing together cannot open two.
+      group: failure-issue-${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the shared action
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions/failure-issue
+          persist-credentials: false
+
+      - name: Report to the failure issue
+        uses: ./.github/actions/failure-issue
+        with:
+          needs: ${{ toJSON(needs) }}
