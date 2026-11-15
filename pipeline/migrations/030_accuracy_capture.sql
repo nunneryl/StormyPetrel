@@ -32,8 +32,10 @@
 --   FROM model_at_buoys GROUP BY source, lead_day
 --   ORDER BY 1, 2;
 --
--- CHECK 3, the tables' size on disk (the scoreboard budget: about 0.5 GB a year for
--- forecast_leads and 0.2 GB a year for model_at_buoys; recheck after a week).
+-- CHECK 3, the tables' size on disk. Expected, from about 248 bytes a row with indexes (measured
+-- on a local Postgres 16): about 0.9 GB a year for forecast_leads (9,720 rows a day) and 0.3 to
+-- 0.6 GB a year for model_at_buoys (3,552 WAVEWATCH III rows a day, plus 32 a day per buoy inside
+-- an NWPS grid). Recheck after a week.
 --   SELECT relname, pg_size_pretty(pg_total_relation_size(oid)) AS total
 --   FROM pg_class WHERE relname IN ('forecast_leads', 'model_at_buoys');
 
