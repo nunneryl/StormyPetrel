@@ -31,14 +31,19 @@ hours within 2 s before, 45.3% after; New Jersey 71% to 23%), while wind seas un
 the window agreed well (26.3% to 80.3%), so only the blocked rung is excluded. A spot with no
 window arcs has no rung to read, and switches as before.
 
-NOT TRAVELLING AWAY FROM THE BEACH (sw1-raycast run 76). Neither case switches either when the
-wind sea comes from FACING_OFF_DEG (90) or more off the spot's facing (orientation_deg, the
-bearing the beach faces): it is then running along the shore or out to sea, not onto the beach.
-St. Pete Beach, 2026-10-28: a 4 s wind sea from 17 deg at a beach facing 240 deg is 137 deg off its
-facing but only 60 deg outside its window (173 to 315 deg), so the window rung let it through.
-Exactly 90 deg off counts as away (no switch): the boundary goes to the adverse side, as the #279
-surface label puts exactly 120 deg off with onshore and the window rung puts exactly 90 deg
-outside with blocked. A spot with no facing switches as the window alone decides.
+NOT TRAVELLING AWAY FROM THE BEACH (sw1-raycast runs 76 and 77). Neither case switches either when
+the wind sea comes from OUTSIDE the spot's window AND from FACING_OFF_DEG (90) or more off its
+facing (orientation_deg, the bearing the beach faces): it is then running along the shore or out
+to sea, not onto the beach. St. Pete Beach, 2026-10-28: a 4.7 s wind sea from 16 deg at a beach
+facing 240 deg is 136 deg off its facing and 59 deg outside its window (sector 171 to 317 deg):
+blocked. Inside the window the switch is decided as before, however far off the facing: where
+swell wraps in from beside the facing (The Hook, facing 149, window 187 to 253) a wind sea from
+245 deg reaches the break. "Outside the window" is the window rung's test, interpret.in_any_arc:
+each arc's stored bounds widened by its half-step pad, both padded edges inclusive, so a wind sea
+exactly on a padded edge is inside. Exactly 90 deg off the facing counts as away, as the #279
+surface label puts exactly 120 deg off with onshore. A spot with no window arcs, or no facing,
+switches as the window alone decides (run 76 measured the facing alone: 18,405 of 75,547 archive
+switches removed, 987 of them from inside the window).
 
 The rated partition is the swell_N whose tp and dp equal swell_tp and swell_dp (to 0.001; the
 row stores swell_tp / swell_dp rounded to 3 decimals). No match, no switch.
@@ -105,9 +110,13 @@ def off_facing_deg(dp, facing):
     return min(d, 360.0 - d)
 
 
-def wind_sea_away(dp, facing) -> bool:
-    """Does a wind sea from *dp* run along the shore or out to sea at a beach facing *facing*
-    (FACING_OFF_DEG or more off it)? False when the spot has no facing."""
+def wind_sea_away(dp, facing, arcs) -> bool:
+    """Does a wind sea from *dp* run along the shore or out to sea at a spot facing *facing* whose
+    window is *arcs*: from outside the window (interpret.in_any_arc, padded edges inclusive) and
+    FACING_OFF_DEG or more off the facing? False with no facing or no arcs."""
+    from ..interpret import in_any_arc
+    if not arcs or in_any_arc(dp, arcs):
+        return False
     off = off_facing_deg(dp, facing)
     return off is not None and off >= FACING_OFF_DEG
 
@@ -123,7 +132,7 @@ def switch_case(row, arcs, facing, k=DOMINANCE_K):
     wh, wt, wd = (_num(row.get(f"wind_wave_{x}")) for x in ("hs", "tp", "dp"))
     if rated is None or wh is None or wt is None or wd is None:
         return None
-    if wind_sea_blocked(wd, arcs) or wind_sea_away(wd, facing):
+    if wind_sea_blocked(wd, arcs) or wind_sea_away(wd, facing, arcs):
         return None
     if wh > rated[0] and wt - rated[1] >= MIN_LONGER_S:
         return "longer"

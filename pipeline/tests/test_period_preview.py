@@ -64,7 +64,7 @@ def test_classify_hour_labels():
     longer = {3.0: "longer", 4.0: "longer", 6.0: "longer"}
     assert P.classify_hour(storm, None, None) == {"unmatched": False, "big_wind_sea": True, "switched": True,
                                             "case": "longer", "cases": longer, "blocked": False,
-                                            "current_case": "longer", "away": False,
+                                            "current_case": "longer", "away": False, "kept_inside": False,
                                             "unblocked_case": "longer", "bigger_shorter": False,
                                             "marginal": False, "rated_hs": 0.24}
     # 0.4 m wind sea: bigger than 0.24 and 6 s longer, but not 2x (0.48)
@@ -76,7 +76,7 @@ def test_classify_hour_labels():
                                             "case": "dominant",
                                             "cases": {3.0: "dominant", 4.0: "dominant", 6.0: "dominant"},
                                             "blocked": False, "unblocked_case": "dominant",
-                                            "current_case": "dominant", "away": False,
+                                            "current_case": "dominant", "away": False, "kept_inside": False,
                                             "bigger_shorter": True, "marginal": False, "rated_hs": 0.24}
     # Lower Trestles, 2x and shorter: bigger_shorter, switched at no K (0.48 < 3 x 0.24 = 0.72)
     trestles = dict(scrap, wind_wave_hs=0.48)
@@ -122,6 +122,7 @@ def test_the_archive_counts_by_state_and_keeps_the_switched_hours():
     assert t["Florida"] == {"hours": 4, "ww3_identity": 3, "unmatched": 1, "big_wind_sea": 1,
                             "switched": 1, "switched_longer": 1, "switched_dominant": 0,
                             "switched_current": 1, "away": 0, "away_longer": 0, "away_dominant": 0,
+                            "kept_inside": 0,
                             "blocked": 0, "blocked_longer": 0, "blocked_dominant": 0,
                             "bigger_shorter": 0, "marginal": 0, "nwps_ratio_over_4": 1,
                             "nwps_ratio_over_4_alignment_under_half": 0,
@@ -774,12 +775,10 @@ def test_the_hatteras_trace():
     # with no window and no facing it is DOMINANT
     w = P.hatteras_hour(r, dict(spot, swell_window_arcs=None, orientation_deg=None), None, 1.59)
     assert w["shown"] == "wind_sea" and w["why"].startswith("DOMINANT: wind sea 59.2x")   # 3.55 / 0.06
-    # with no window but the facing of 90, the wind sea from 270 is 180 deg off it: running out to
-    # sea, run 76 keeps the swell
+    # with no window but the facing of 90 (the wind sea 180 deg off it): no window to be outside
+    # of, so the facing does not count and it is DOMINANT as before
     w = P.hatteras_hour(r, dict(spot, swell_window_arcs=None), None, 1.59)
-    assert w["shown"] == "swell"
-    assert w["why"] == ("AWAY: the wind sea from 270 deg is 180 deg off the facing 90 deg (>= 90): "
-                        "it runs along the shore or out to sea")
+    assert w["shown"] == "wind_sea" and w["why"].startswith("DOMINANT: wind sea 59.2x")
     assert "star_cap" in h or "rules_error" in h
     # with an optimal direction of 180 the axis is 180: the scrap is on it (1.0), and the wind sea
     # from 270 is 90 off (cos^2(45) = 0.5)
@@ -882,41 +881,58 @@ def test_run_takes_jacksonvilles_hours_past_the_archive_from_the_published_windo
 
 
 # --------------------------------------------------------------------------- #
-# Run 76: the facing rule against the rule before it                           #
+# Runs 76-77: the facing rule against the rule before it                       #
 # --------------------------------------------------------------------------- #
-# Jacksonville's storm hour has its wind sea from 70. At a beach facing 250 that is 180 deg off
-# (away: no switch now); at the beach's real-world facing of about 90 it is 20 off (switches).
-STORM = _row(13, 2.95, 4.27, STAMP + MARK, swell_tp=3.0, wind_hs=2.4, wind_tp=500.0)
+# Jacksonville Beach Pier as the roster has it: facing 80, window 5-155 with span 154 (pad 2,
+# sector 3-157). Its storm hour with the wind sea from 230: 230 - 157 = 73 deg outside the window
+# (under 90: the window rung lets it through) and 230 - 80 = 150 deg off the facing: away, no
+# switch now. (A sea from 260 would be 103 outside: the window rung's, not the facing's.) From 150
+# it is inside the window and 70 off the facing: switches; from 176 it is 19 outside and 96 off:
+# away.
+JAX_ARCS = [{"min": 5, "max": 155, "span": 154}]
+JAX = dict(ROSTER[0], orientation_deg=80.0, swell_window_arcs=JAX_ARCS)
+STORM = _row(13, 2.95, 4.27, STAMP + MARK, swell_tp=3.0, wind_hs=2.4, wind_tp=500.0, wind_wave_dp=230.0)
 
 
 def test_classify_hour_marks_a_switch_the_facing_removes():
-    lab = P.classify_hour(STORM, None, 250.0)
+    lab = P.classify_hour(STORM, JAX_ARCS, 80.0)
     assert (lab["switched"], lab["case"], lab["current_case"], lab["away"], lab["blocked"]) == \
         (False, None, "longer", True, False)
     assert lab["cases"] == {3.0: None, 4.0: None, 6.0: None}
-    lab = P.classify_hour(STORM, None, 90.0)
+    lab = P.classify_hour(dict(STORM, wind_wave_dp=150.0), JAX_ARCS, 80.0)
     assert (lab["switched"], lab["current_case"], lab["away"]) == (True, "longer", False)
+    lab = P.classify_hour(dict(STORM, wind_wave_dp=176.0), JAX_ARCS, 80.0)
+    assert (lab["switched"], lab["current_case"], lab["away"]) == (False, "longer", True)
+    # no window: nothing to be outside of, so the facing does not count
+    lab = P.classify_hour(STORM, None, 80.0)
+    assert (lab["switched"], lab["away"], lab["kept_inside"]) == (True, False, False)
+    # The Hook (facing 149, sector 187-253): from 245, inside and 96 off the facing, it switches and
+    # counts as kept inside; from 200, inside and 51 off, it switches but is not counted
+    hook = [{"min": 189, "max": 251, "span": 66}]
+    lab = P.classify_hour(dict(STORM, wind_wave_dp=245.0), hook, 149.0)
+    assert (lab["switched"], lab["away"], lab["kept_inside"]) == (True, False, True)
+    lab = P.classify_hour(dict(STORM, wind_wave_dp=200.0), hook, 149.0)
+    assert (lab["switched"], lab["kept_inside"]) == (True, False)
 
 
 def test_switch_reason_says_away():
-    assert P.switch_reason(STORM, None, 250.0) == (
-        "AWAY: the wind sea from 70 deg is 180 deg off the facing 250 deg (>= 90): it runs along "
-        "the shore or out to sea")
-    assert P.switch_reason(STORM, None, 90.0).startswith("LONGER")
+    assert P.switch_reason(STORM, JAX_ARCS, 80.0) == (
+        "AWAY: the wind sea from 230 deg is 73 deg outside the window and 150 deg off the facing "
+        "80 deg (>= 90): it runs along the shore or out to sea")
+    assert P.switch_reason(dict(STORM, wind_wave_dp=150.0), JAX_ARCS, 80.0).startswith("LONGER")
 
 
 def test_the_archive_counts_switches_before_and_after():
     a = P.Archive({s["name"]: s for s in ROSTER})
-    spot = dict(ROSTER[0], orientation_deg=250.0)
-    a({"name": "Jacksonville Beach Pier", "state": "Florida"}, spot, [STORM, _row(12, 3.46, 4.27, STAMP + MARK)], False)
+    a({"name": "Jacksonville Beach Pier", "state": "Florida"}, JAX, [STORM, _row(12, 3.46, 4.27, STAMP + MARK)], False)
     c = a.by_state["Florida"]
     # the storm hour switched before (LONGER) and not now; the quiet hour (0.1 m wind sea) never
     assert (c["switched_current"], c["switched"], c["away"], c["away_longer"], c["away_dominant"]) == (1, 0, 1, 1, 0)
     assert [r["valid_time"][11:16] for r in a.away()] == ["13:00"]
     r = a.away()[0]
-    assert (r["current_case"], r["facing"], r["wind_off_facing"]) == ("longer", 250.0, 180.0)
-    assert P.switch_totals(a.by_state) == {"Florida": {"current": 1, "new": 0, "removed": 1},
-                                           "all": {"current": 1, "new": 0, "removed": 1}}
+    assert (r["current_case"], r["facing"], r["wind_off_facing"]) == ("longer", 80.0, 150.0)
+    assert P.switch_totals(a.by_state) == {"Florida": {"current": 1, "new": 0, "removed": 1, "kept_inside_window": 0},
+                                           "all": {"current": 1, "new": 0, "removed": 1, "kept_inside_window": 0}}
 
 
 def _away_rec(spot, state, wind_tp, rated_tp, buoy_tp, off=135.0, case="longer", surf=(None, None)):
@@ -955,28 +971,29 @@ def test_published_away_counts_by_state_and_spot():
     pub = {"Jacksonville Beach Pier": [STORM, _row(12, 3.46, 4.27, STAMP + MARK)],
            "Kure Beach": [STORM]}
     out = P.published_away(pub, {"Jacksonville Beach Pier": "Florida", "Kure Beach": "North Carolina"},
-                           {}, {"Jacksonville Beach Pier": 250.0, "Kure Beach": 90.0})
+                           {"Jacksonville Beach Pier": JAX_ARCS}, {"Jacksonville Beach Pier": 80.0, "Kure Beach": 90.0})
     assert out == {"by_state": {"all": 1, "Florida": 1},
                    "by_spot": [{"spot": "Jacksonville Beach Pier", "state": "Florida", "hours": 1}]}
 
 
 def _facing_pub():
-    """The storm hour as published under the rule before run 76: shoaled at the wind sea's 500 s
-    (4.27 ft) and marked :windsea."""
+    """The storm hour, its wind sea from 230, as published under the rule before run 76: shoaled at
+    the wind sea's 500 s (4.27 ft) and marked :windsea."""
     p = _published()
-    p["Jacksonville Beach Pier"][1].update(face_ft=4.27, face_correction_version=STAMP + MARK + ":windsea")
+    p["Jacksonville Beach Pier"][1].update(face_ft=4.27, face_correction_version=STAMP + MARK + ":windsea",
+                                           wind_wave_dp=230.0)
     return p
 
 
 def test_the_gate_accepts_a_row_the_facing_rule_unswitches_and_nothing_else():
-    roster = [dict(ROSTER[0], orientation_deg=250.0), ROSTER[1], ROSTER[2]]
+    roster = [JAX, ROSTER[1], ROSTER[2]]
     pub, after, _ = P.replay(_facing_pub(), roster, FACTORS, _slug)
     jax = after["Jacksonville Beach Pier"][1]
     # back at the rated 3 s: no wind-sea mark, and no longer the 4.27 ft shoaled at the wind sea's
     # 500 s (the 3 s height itself is #283's, tested in test_surf_height)
     assert jax["face_correction_version"] == STAMP + MARK and jax["face_ft"] != 4.27
     away = lambda name, row: name == "Jacksonville Beach Pier" and \
-        P.switch_case(row, None, None) is not None and P.switch_case(row, None, 250.0) is None  # noqa: E731
+        P.switch_case(row, JAX_ARCS, None) is not None and P.switch_case(row, JAX_ARCS, 80.0) is None  # noqa: E731
     c = P.gate_rows(pub, after, away)["counts"]
     assert (c["unswitched_by_facing"], c["unswitched_by_facing_face_moved"], c["unexpected"],
             c["star_differences"], c["other_field_differences"], c["unswitched_mismatch"]) == (1, 1, 0, 0, 0, 0)
@@ -990,13 +1007,12 @@ def test_the_gate_accepts_a_row_the_facing_rule_unswitches_and_nothing_else():
 
 
 def test_run_76_end_to_end(monkeypatch, capsys):
-    """Jacksonville's storm hour (wind sea 2.4 m, 500 s from 70, over the rated 0.24 m 3 s) was
-    published as a wind-sea switch (4.27 ft, :windsea). With the spot facing 250 the wind sea is
-    180 deg off: the new rule removes the switch. The gate passes with that one row unswitched by
+    """Jacksonville's storm hour (wind sea 2.4 m, 500 s from 230, over the rated 0.24 m 3 s) was
+    published as a wind-sea switch (4.27 ft, :windsea). At its real facing of 80 and window 5-155
+    the wind sea is 73 deg outside the window and 150 deg off the facing: the new rule removes it. The gate passes with that one row unswitched by
     the facing and 0 star differences; the archive and the published window each count one
     removed switch in Florida; Kure Beach's WW3 hour (no facing) switches before and after."""
-    roster = [dict(s, orientation_deg=250.0) if s["name"] == "Jacksonville Beach Pier" else s
-              for s in ROSTER]
+    roster = [JAX if s["name"] == "Jacksonville Beach Pier" else s for s in ROSTER]
     spots = [{"id": 1, "name": "Kure Beach", "state": "North Carolina"},
              {"id": 2, "name": "Steamer Lane", "state": "California"},
              {"id": 3, "name": "Jacksonville Beach Pier", "state": "Florida"}]
@@ -1019,8 +1035,8 @@ def test_run_76_end_to_end(monkeypatch, capsys):
     assert (g["unswitched_by_facing"], g["unswitched_by_facing_face_moved"], g["star_differences"],
             g["unexpected"]) == (1, 1, 0, 0)
     f = rep["facing"]
-    assert f["archive_switches"]["Florida"] == {"current": 1, "new": 0, "removed": 1}
-    assert f["archive_switches"]["North Carolina"] == {"current": 1, "new": 1, "removed": 0}
+    assert f["archive_switches"]["Florida"] == {"current": 1, "new": 0, "removed": 1, "kept_inside_window": 0}
+    assert f["archive_switches"]["North Carolina"] == {"current": 1, "new": 1, "removed": 0, "kept_inside_window": 0}
     assert f["archive_removed"]["by_state"]["all"]["hours"] == 1
     assert f["archive_removed"]["by_spot"][0]["spot"] == "Jacksonville Beach Pier"
     assert f["published_removed"] == {"by_state": {"all": 1, "Florida": 1},

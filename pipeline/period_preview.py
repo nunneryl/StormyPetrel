@@ -79,10 +79,11 @@ stay on the rated partition.
    ('display_variant'): the LONGER case shoaled at the wind sea's period as the fix does, the
    DOMINANT case kept at the rated period.
 
-4. RUN 76: THE FACING. Since run 76 neither case switches when the wind sea comes from
-   FACING_OFF_DEG (90) or more off the spot's facing (orientation_deg): it runs along the shore or
-   out to sea (St. Pete Beach, 2026-10-28). Every section above uses the new rule; this one sets it
-   against the rule before it (the window alone, switch_case with no facing) over the same window:
+4. RUNS 76-77: THE FACING. Neither case switches when the wind sea comes from outside the spot's
+   window AND FACING_OFF_DEG (90) or more off its facing (orientation_deg): it runs along the shore
+   or out to sea (St. Pete Beach, 2026-10-28). Run 76 measured the facing alone; run 77 the rule as
+   adopted. Every section above uses the new rule; this one sets it against the rule before it
+   (the window alone, switch_case with no facing) over the same window:
      archive_switches   switched hours before and after, and removed, by state;
      archive_removed    the removed hours by state and the TOP_AWAY_SPOTS spots with the most, and
                         on those with a buoy reading the shown period within PERIOD_NEAR_S (2 s) of
@@ -254,10 +255,23 @@ def classify_hour(row, arcs, facing, ks=KS):
             "switched": case is not None, "case": case,
             "cases": {k: switch_case(row, arcs, facing, k) for k in ks},
             "current_case": current, "away": current is not None and case is None,
+            "kept_inside": kept_inside(row, arcs, facing, case),
             "blocked": current is None and unblocked is not None, "unblocked_case": unblocked,
             "bigger_shorter": bigger and not longer,
             "marginal": bigger and longer and wt - tp < MIN_LONGER_S,
             "rated_hs": rated[0]}
+
+
+def kept_inside(row, arcs, facing, case):
+    """Does *row* switch (case not None) with its wind sea inside the window but FACING_OFF_DEG or
+    more off the facing? The hours run 76's facing-only rule removed and the adopted rule keeps.
+    A switched hour 90 or more off the facing at a spot with a window is inside it by the rule
+    (outside it would be away), so only the window's presence is tested."""
+    wd = _num(row.get("wind_wave_dp"))
+    if case is None or wd is None or not arcs:
+        return False
+    off = off_facing_deg(wd, facing)
+    return off is not None and off >= FACING_OFF_DEG
 
 
 def switch_reason(row, arcs, facing, k=DOMINANCE_K):
@@ -279,9 +293,11 @@ def switch_reason(row, arcs, facing, k=DOMINANCE_K):
                 f"{_min_offset_from_arcs(wd, arcs):.0f} deg outside the window "
                 f"(>= {BLOCKED_OUTSIDE_DEG:g})")
     if case is None and switch_case(row, arcs, None, k) is not None:
-        return (f"AWAY: the wind sea from {wd:.0f} deg is {off_facing_deg(wd, facing):.0f} deg "
-                f"off the facing {float(facing):.0f} deg (>= {FACING_OFF_DEG:g}): it runs along "
-                f"the shore or out to sea")
+        from .interpret import _min_offset_from_arcs
+        return (f"AWAY: the wind sea from {wd:.0f} deg is {_min_offset_from_arcs(wd, arcs):.0f} deg "
+                f"outside the window and {off_facing_deg(wd, facing):.0f} deg off the facing "
+                f"{float(facing):.0f} deg (>= {FACING_OFF_DEG:g}): it runs along the shore or out "
+                f"to sea")
     ratio = wh / rh if rh > 0 else float("inf")
     if case == "longer":
         return (f"LONGER: wind sea {wh:.2f} m over the rated {rh:.2f} m, and {wt - rt:.2f} s "
@@ -404,6 +420,7 @@ class Archive:
 
     KEYS = ("hours", "ww3_identity", "unmatched", "big_wind_sea", "switched", "switched_longer",
             "switched_dominant", "switched_current", "away", "away_longer", "away_dominant",
+            "kept_inside",
             "blocked", "blocked_longer", "blocked_dominant",
             "bigger_shorter", "marginal", "nwps_ratio_over_4",
             "nwps_ratio_over_4_alignment_under_half") + tuple(f"switched_k{k:g}" for k in KS)
@@ -447,7 +464,8 @@ class Archive:
             if lab["unmatched"]:
                 c["unmatched"] += 1
                 continue
-            for key in ("big_wind_sea", "switched", "blocked", "bigger_shorter", "marginal", "away"):
+            for key in ("big_wind_sea", "switched", "blocked", "bigger_shorter", "marginal", "away",
+                        "kept_inside"):
                 c[key] += lab[key]
             c["switched_current"] += lab["current_case"] is not None
             if lab["case"]:
@@ -797,12 +815,14 @@ def facing_summary(records, top=TOP_AWAY_SPOTS):
 
 def switch_totals(archive_by_state):
     """By state: hours switched under the current rule (the window alone), under the new rule
-    (window and facing), and removed (away), from the archive's counters."""
+    (window and facing), removed (away), and kept inside the window though 90 deg or more off the
+    facing (kept_inside_window: run 76's facing-only rule removed them), from the archive's
+    counters."""
     out = {}
     tot = Counter()
     for st, c in sorted(archive_by_state.items()):
         row = {"current": c.get("switched_current", 0), "new": c.get("switched", 0),
-               "removed": c.get("away", 0)}
+               "removed": c.get("away", 0), "kept_inside_window": c.get("kept_inside", 0)}
         out[st] = row
         tot.update(row)
     out["all"] = dict(tot)
@@ -1202,8 +1222,8 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
         "jacksonville": arch.jacksonville, "hatteras": arch.hatteras,
         "buoys_read": {b: len(v) for b, v in buoys.items()},
         "tiles": tile, "homepage": homepage(pub, after, ids, arcs_by_name, facing_by_name),
-        "facing": {"rule": f"no switch when the wind sea comes from {FACING_OFF_DEG:g} deg or more "
-                           f"off the spot's facing (orientation_deg)",
+        "facing": {"rule": f"no switch when the wind sea comes from outside the spot's window and "
+                           f"{FACING_OFF_DEG:g} deg or more off its facing (orientation_deg)",
                    "archive_switches": switch_totals(arch.by_state),
                    "archive_removed": facing_summary(arch.away()),
                    "published_removed": published_away(pub, states, arcs_by_name, facing_by_name),
@@ -1386,7 +1406,8 @@ def print_facing(f):
           f"that lose the wind-sea mark by this rule: {f['published_unswitched_by_facing']}")
     print("\n6a. Archive: switched hours, current rule -> new rule, by state")
     for st, e in f["archive_switches"].items():
-        print(f"  {st:22} {e['current']:8} -> {e['new']:8}  removed {e['removed']:7}")
+        print(f"  {st:22} {e['current']:8} -> {e['new']:8}  removed {e['removed']:7}  "
+              f"kept inside the window though 90+ off the facing {e['kept_inside_window']:6}")
     a = f["archive_removed"]
     print("\n6b. Archive: removed switches, by state: shown period against the buoy's DPD "
           "(within 2 s), current rule (wind sea's period) -> new (rated swell's)")

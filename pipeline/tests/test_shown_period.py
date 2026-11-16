@@ -142,25 +142,58 @@ def test_a_wind_sea_within_90_of_the_facing_still_switches():
 
 def test_exactly_90_off_the_facing_is_away_as_279_puts_its_boundary_on_the_adverse_side():
     # #279: exactly 120 deg off reads onshore (the adverse class takes the boundary). Here exactly
-    # 90 deg off reads away: no switch. 89.9 off switches. Both sides of the facing, no window.
+    # 90 deg off reads away: no switch. 89.9 off switches. Both sides of the facing, at St. Pete,
+    # where every one of these bearings is outside the window (sector 171-317) by under 90.
     for d, want in ((150.0, None), (150.1, "longer"), (330.0, None), (329.9, "longer"),
                     (149.9, None), (330.1, None)):
-        assert P.switch_case(dict(STP, wind_wave_dp=d), None, 240.0) == want, d
-    assert P.wind_sea_away(150.0, 240.0) is True and P.wind_sea_away(150.1, 240.0) is False
+        assert P.switch_case(dict(STP, wind_wave_dp=d), STP_ARCS, 240.0) == want, d
+    assert P.wind_sea_away(150.0, 240.0, STP_ARCS) is True
+    assert P.wind_sea_away(150.1, 240.0, STP_ARCS) is False
 
 
 def test_no_facing_leaves_the_window_to_decide():
     assert P.off_facing_deg(15.98, None) is None
-    assert P.wind_sea_away(15.98, None) is False
+    assert P.wind_sea_away(15.98, None, STP_ARCS) is False
     assert P.switch_case(STP, STP_ARCS, None) == "longer"
     assert P.switch_case(STP, None, None) == "longer"
 
 
 def test_the_short_way_round():
-    # 350 at a beach facing 10: |350 - 10| = 340, the short way 20
+    # 350 at a beach facing 10: |350 - 10| = 340, the short way 20. The window 60-120 (span 64,
+    # sector 58-122) leaves 350 outside it by 68, so only the short way keeps it switching.
     assert P.off_facing_deg(350.0, 10.0) == 20.0
     assert P.off_facing_deg(190.0, 10.0) == 180.0
-    assert P.switch_case(dict(STP, wind_wave_dp=350.0), None, 10.0) == "longer"
+    assert P.switch_case(dict(STP, wind_wave_dp=350.0), [{"min": 60, "max": 120, "span": 64}], 10.0) == "longer"
+
+
+# The Hook (Santa Cruz): facing 149, window 189-251 with span 66: pad (66 - 62) / 2 = 2, sector
+# 187-253. Swell wraps in from beside the facing, so part of the window, 239 to 253, is 90 deg or
+# more off it.
+HOOK_ARCS = [{"min": 189, "max": 251, "span": 66}]
+HOOK = dict(STP, swell_dp=220.0, swell_1_dp=220.0)
+
+
+def test_inside_the_window_the_facing_does_not_count():
+    # 245: inside, 245 - 149 = 96 off: switches as on main
+    r = dict(HOOK, wind_wave_dp=245.0)
+    assert P.wind_sea_away(245.0, 149.0, HOOK_ARCS) is False
+    assert P.switch_case(r, HOOK_ARCS, 149.0) == "longer"
+    assert P.shown_train(r, HOOK_ARCS, 149.0) == (4.69, 245.0, "wind_sea")
+
+
+def test_on_the_window_edge():
+    # The padded edge 253 is inside (inclusive): switches. 253.1 is 0.1 outside and 104.1 off the
+    # facing: does not. At the low edge, 186.9 is 0.1 outside but only 37.9 off the facing: being
+    # outside alone does not block, so it switches, as does 187.0 on the edge.
+    for d, want in ((253.0, "longer"), (253.1, None), (260.0, None), (186.9, "longer"), (187.0, "longer")):
+        assert P.switch_case(dict(HOOK, wind_wave_dp=d), HOOK_ARCS, 149.0) == want, d
+
+
+def test_with_no_window_the_facing_does_not_count():
+    # no arcs: nothing to be outside of; 150 at a beach facing 240 (90 off) switches as on main
+    assert P.wind_sea_away(150.0, 240.0, None) is False and P.wind_sea_away(150.0, 240.0, []) is False
+    assert P.switch_case(dict(STP, wind_wave_dp=150.0), None, 240.0) == "longer"
+
 
 
 def test_every_spot_has_a_facing():

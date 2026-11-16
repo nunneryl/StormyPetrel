@@ -19,11 +19,14 @@
  * (interpret._min_offset_from_arcs, from each arc's padded edge). A spot with no window arcs
  * switches as before.
  *
- * Nor when it comes from FACING_OFF_DEG (90) or more off the spot's facing (orientation_deg): it
- * then runs along the shore or out to sea (sw1-raycast run 76; St. Pete Beach on 2026-10-28, a 4 s
- * wind sea from 17 deg at a beach facing 240, 137 deg off its facing but only 60 deg outside its
- * window). Exactly 90 deg off counts as away, as the surface label puts exactly 120 deg off with
- * onshore (#279). A spot with no facing is decided by the window alone.
+ * Nor when it comes from OUTSIDE the window AND from FACING_OFF_DEG (90) or more off the spot's
+ * facing (orientation_deg): it then runs along the shore or out to sea (sw1-raycast runs 76 and 77;
+ * St. Pete Beach on 2026-10-28, a 4.7 s wind sea from 16 deg at a beach facing 240, 136 deg off its
+ * facing and 59 deg outside its window). Inside the window the switch is decided as before, however
+ * far off the facing (The Hook, facing 149: a wind sea from 245 wraps in). "Outside" is the window
+ * rung's test (bearingInArc: padded edges inclusive, so exactly on an edge is inside). Exactly 90
+ * deg off the facing counts as away, as the surface label puts exactly 120 deg off with onshore
+ * (#279). A spot with no window arcs, or no facing, is decided by the window alone.
  *
  * The stars are untouched: they stay on the rated partition. pipeline/forecast/shown_period.py is
  * the same rule (it also sets the period the surf height is shoaled at), and both are held to
@@ -109,9 +112,13 @@ export function offFacingDeg(dp: number, facing: number | null | undefined): num
   return f === null ? null : angleOff(dp, f);
 }
 
-/** Does a wind sea from dp run along the shore or out to sea at a beach facing `facing`
- *  (FACING_OFF_DEG or more off it)? false with no facing. */
-export function windSeaAway(dp: number, facing: number | null | undefined): boolean {
+/** Does a wind sea from dp run along the shore or out to sea at a spot facing `facing` whose
+ *  window is arcs: from outside the window (padded edges inclusive) and FACING_OFF_DEG or more off
+ *  the facing? false with no facing or no arcs. */
+export function windSeaAway(
+  dp: number, facing: number | null | undefined, arcs: readonly WindowArc[] | null | undefined,
+): boolean {
+  if (!arcs || arcs.length === 0 || arcs.some((a) => bearingInArc(dp, a))) return false;
   const off = offFacingDeg(dp, facing);
   return off !== null && off >= FACING_OFF_DEG;
 }
@@ -145,7 +152,7 @@ export function switchCase(
   const wt = num(row.wind_wave_tp);
   const wd = num(row.wind_wave_dp);
   if (rated === null || wh === null || wt === null || wd === null) return null;
-  if (windSeaBlocked(wd, arcs) || windSeaAway(wd, facing)) return null;
+  if (windSeaBlocked(wd, arcs) || windSeaAway(wd, facing, arcs)) return null;
   if (wh > rated[0] && wt - rated[1] >= MIN_LONGER_S) return 'longer';
   if (wh >= DOMINANCE_K * rated[0]) return 'dominant';
   return null;

@@ -90,9 +90,10 @@ name: sw1-raycast
 #       other-field differences, #283's surf rows reproduced byte for byte where nothing
 #       switches, no badge flips), the stars if the rating used the wind sea (informational), and
 #       run 54's NWS display table reproduced before the display with the fix. Run 76 onward, the
-#       rule before and after the facing exclusion (no switch from 90 deg or more off the spot's
-#       facing): switches removed by state and spot, the shown period against the buoy before and
-#       after on those hours, and 0 star differences. SELECT only.
+#       rule before and after the facing exclusion (run 77 on: no switch when the wind sea is
+#       outside the window and 90 deg or more off the spot's facing): switches removed by state and
+#       spot, those kept inside the window, the shown period against the buoy before and after on
+#       the removed hours, and 0 star differences. SELECT only.
 #   mode = nwps-cells: READ-ONLY (pipeline/nwps_cells.py), run 58 onward. Over the archive since
 #       2026-09-07: Rodanthe, Salvo and S-Turns against Outer Banks Fishing Pier hour for hour
 #       (how often under 40% of the pier's NWPS Hs), and every NWPS spot against the median of

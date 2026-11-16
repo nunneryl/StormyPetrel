@@ -111,20 +111,31 @@ for (let d = 0; d < 360; d += 1) {
 }
 check('on every bearing, both cases switch except 90 deg or more outside the window (242..298); no arcs, always',
   offEdge.length === 0, offEdge.slice(0, 5).join('; '));
-// The facing (run 76): at a beach facing 240 a wind sea from 150 or less, or from 330 or more, is
-// 90 deg or more off it (240 - 90 = 150, 240 + 90 = 330): away, on both cases; 151..329 switch. With
-// no window, so only the facing decides; with no facing, every bearing switches as before.
+// The facing (runs 76-77): no switch when the wind sea is outside the window AND 90 deg or more off
+// the facing. St. Pete Beach: facing 240, window 173-315 span 146 (pad 2, sector 171-317). 90 deg or
+// more off the facing is 150 or less, or 330 or more, all outside the sector: no switch there (47..81
+// is also 90 or more outside the window: the window rung). Switches on 151..329.
+// The Hook: facing 149, window 189-251 span 66 (pad 2, sector 187-253). 90 deg or more off the facing
+// is 59 or less, or 239 or more; of those 239..253 are inside the window and still switch. The window
+// rung blocks 0..97 and 343..359. So it switches on 98..253 and nowhere else.
+const STP: WindowArc[] = [{ min: 173, max: 315, span: 146 }];
+const HOOK: WindowArc[] = [{ min: 189, max: 251, span: 66 }];
 const awayWrong: string[] = [];
 for (let d = 0; d < 360; d += 1) {
-  const away = d <= 150 || d >= 330;
-  if (windSeaAway(d, 240) !== away || windSeaAway(d, null) || windSeaAway(d, undefined)) awayWrong.push(`${d}`);
+  const stpSwitch = d >= 151 && d <= 329;
+  const hookSwitch = d >= 98 && d <= 253;
+  if (windSeaAway(d, 240, STP) !== (d <= 150 || d >= 330)) awayWrong.push(`stp away ${d}`);
+  if (windSeaAway(d, 149, HOOK) !== (d <= 59 || d >= 254)) awayWrong.push(`hook away ${d}`);
+  if (windSeaAway(d, 240, null) || windSeaAway(d, 240, []) || windSeaAway(d, null, STP)) awayWrong.push(`none ${d}`);
   for (const [row, c] of [[longerRow, 'longer'], [dominantRow, 'dominant']] as const) {
     const r = { ...row, wind_wave_dp: d };
-    if (switchCase(r, null, 240) !== (away ? null : c) || switchCase(r, null, null) !== c
-        || shownTrain(r, null, 240).which !== (away ? 'swell' : 'wind_sea')) awayWrong.push(`${c} ${d}`);
+    if (switchCase(r, STP, 240) !== (stpSwitch ? c : null)
+        || switchCase(r, HOOK, 149) !== (hookSwitch ? c : null)
+        || switchCase(r, null, 240) !== c
+        || shownTrain(r, HOOK, 149).which !== (hookSwitch ? 'wind_sea' : 'swell')) awayWrong.push(`${c} ${d}`);
   }
 }
-check('facing 240: both cases switch on 151..329 and not 90 deg or more off it; no facing, always',
+check('St. Pete switches on 151..329, The Hook on 98..253 (inside its window however far off the facing); no window, always',
   awayWrong.length === 0, awayWrong.slice(0, 5).join('; '));
 check('degrees off the facing: 17 at a 240 beach is 137, 330 is 90, 150 is 90, 149.9 is 90.1',
   offFacingDeg(17, 240) === 137 && offFacingDeg(330, 240) === 90 && offFacingDeg(150, 240) === 90
