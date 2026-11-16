@@ -31,6 +31,15 @@ hours within 2 s before, 45.3% after; New Jersey 71% to 23%), while wind seas un
 the window agreed well (26.3% to 80.3%), so only the blocked rung is excluded. A spot with no
 window arcs has no rung to read, and switches as before.
 
+NOT TRAVELLING AWAY FROM THE BEACH (sw1-raycast run 76). Neither case switches either when the
+wind sea comes from FACING_OFF_DEG (90) or more off the spot's facing (orientation_deg, the
+bearing the beach faces): it is then running along the shore or out to sea, not onto the beach.
+St. Pete Beach, 2026-10-28: a 4 s wind sea from 17 deg at a beach facing 240 deg is 137 deg off its
+facing but only 60 deg outside its window (173 to 315 deg), so the window rung let it through.
+Exactly 90 deg off counts as away (no switch): the boundary goes to the adverse side, as the #279
+surface label puts exactly 120 deg off with onshore and the window rung puts exactly 90 deg
+outside with blocked. A spot with no facing switches as the window alone decides.
+
 The rated partition is the swell_N whose tp and dp equal swell_tp and swell_dp (to 0.001; the
 row stores swell_tp / swell_dp rounded to 3 decimals). No match, no switch.
 
@@ -52,6 +61,7 @@ MATCH_TOL = 0.001
 MIN_LONGER_S = 0.5
 DOMINANCE_K = 4.0
 BLOCKED_OUTSIDE_DEG = 90.0
+FACING_OFF_DEG = 90.0
 
 
 def _num(v):
@@ -86,18 +96,34 @@ def wind_sea_blocked(dp, arcs) -> bool:
     return _min_offset_from_arcs(dp, arcs) >= BLOCKED_OUTSIDE_DEG
 
 
-def switch_case(row, arcs, k=DOMINANCE_K):
+def off_facing_deg(dp, facing):
+    """Degrees between bearing *dp* and the spot's facing, 0 to 180; None with no facing."""
+    f = _num(facing)
+    if f is None:
+        return None
+    d = abs(float(dp) - f) % 360.0
+    return min(d, 360.0 - d)
+
+
+def wind_sea_away(dp, facing) -> bool:
+    """Does a wind sea from *dp* run along the shore or out to sea at a beach facing *facing*
+    (FACING_OFF_DEG or more off it)? False when the spot has no facing."""
+    off = off_facing_deg(dp, facing)
+    return off is not None and off >= FACING_OFF_DEG
+
+
+def switch_case(row, arcs, facing, k=DOMINANCE_K):
     """'longer' or 'dominant' when the wind sea is shown for *row* (see the module docstring;
     'longer' first when both hold), else None. *arcs* are the spot's swell_window_arcs (None or
-    empty: no window to read). *k* is the dominance ratio; the preview varies it, the site uses
-    DOMINANCE_K."""
+    empty: no window to read); *facing* its orientation_deg (None: no facing to read). *k* is
+    the dominance ratio; the preview varies it, the site uses DOMINANCE_K."""
     if row.get("swell_source") not in WW3_IDENTITY_SOURCES:
         return None
     rated = rated_partition(row)
     wh, wt, wd = (_num(row.get(f"wind_wave_{x}")) for x in ("hs", "tp", "dp"))
     if rated is None or wh is None or wt is None or wd is None:
         return None
-    if wind_sea_blocked(wd, arcs):
+    if wind_sea_blocked(wd, arcs) or wind_sea_away(wd, facing):
         return None
     if wh > rated[0] and wt - rated[1] >= MIN_LONGER_S:
         return "longer"
@@ -106,16 +132,16 @@ def switch_case(row, arcs, k=DOMINANCE_K):
     return None
 
 
-def wind_sea_dominates(row, arcs, k=DOMINANCE_K) -> bool:
+def wind_sea_dominates(row, arcs, facing, k=DOMINANCE_K) -> bool:
     """Is the wind sea shown for *row*? (switch_case is not None)"""
-    return switch_case(row, arcs, k) is not None
+    return switch_case(row, arcs, facing, k) is not None
 
 
-def shown_train(row, arcs, k=DOMINANCE_K):
-    """(tp, dp, which) shown for *row* at a spot whose window is *arcs*: 'wind_sea' when
-    switch_case holds, else 'swell' with swell_tp / swell_dp, each falling back to the row's
-    tp / dp when absent (as pickSwell did)."""
-    if wind_sea_dominates(row, arcs, k):
+def shown_train(row, arcs, facing, k=DOMINANCE_K):
+    """(tp, dp, which) shown for *row* at a spot whose window is *arcs* and facing *facing*:
+    'wind_sea' when switch_case holds, else 'swell' with swell_tp / swell_dp, each falling back to
+    the row's tp / dp when absent (as pickSwell did)."""
+    if wind_sea_dominates(row, arcs, facing, k):
         return _num(row["wind_wave_tp"]), _num(row["wind_wave_dp"]), "wind_sea"
     tp = _num(row.get("swell_tp"))
     dp = _num(row.get("swell_dp"))

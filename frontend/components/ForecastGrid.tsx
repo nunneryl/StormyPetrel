@@ -56,12 +56,14 @@ export function ForecastGrid({
   forecasts,
   offshoreDeg,
   windowArcs,
+  facingDeg,
   timeZone,
 }: {
   forecasts: Forecast[];
   offshoreDeg: number | null | undefined;
   /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
   windowArcs: Spot['swell_window_arcs'];
+  facingDeg: Spot['orientation_deg'];
   /** The spot's IANA time zone (lib/spotTime.ts): every time in the grid is local to it. */
   timeZone: string;
 }) {
@@ -109,7 +111,7 @@ export function ForecastGrid({
               </div>
               {rows.map((r, idx) => {
                 const tier = tierFromStars(r.stars);
-                const { tp, dp } = shownTrain(r, windowArcs);
+                const { tp, dp } = shownTrain(r, windowArcs, facingDeg);
                 const wMph = msToMph(r.wind_speed);
                 const wQ = classifyWind(r.wind_dir, offshoreDeg ?? null);
                 const tideUp = idx + 1 < rows.length

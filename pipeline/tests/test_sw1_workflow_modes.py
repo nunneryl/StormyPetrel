@@ -300,7 +300,9 @@ def test_the_period_preview_only_reads():
     assert _if(job) == "${{ inputs.mode == 'period-preview' }}"
     assert "    permissions:\n      contents: read\n" in job
     assert ("python -m pipeline.period_preview --out period_preview.json --csv period_preview_hours.csv \\\n"
-            "            --archive-csv period_preview_archive.csv --compare-out face_compare.json") in job
+            "            --archive-csv period_preview_archive.csv --compare-out face_compare.json \\\n"
+            "            --away-csv period_preview_away.csv") in job
+    assert "            period_preview_away.csv\n" in job      # run 76: kept with the rest
     assert "name: period-preview-${{ github.run_number }}" in job
     for verb in ("git push", "git commit", "db_import", "--write"):
         assert verb not in job, verb

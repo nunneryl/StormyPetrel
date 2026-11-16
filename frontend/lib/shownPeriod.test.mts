@@ -20,8 +20,9 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { walk } from './copyScan.ts';
 import {
-  BLOCKED_OUTSIDE_DEG, DOMINANCE_K, MIN_LONGER_S, ratedPartition, shownTrain, switchCase, windSeaBlocked,
-  windSeaDominates, type ShownTrainRow, type WindowArc,
+  BLOCKED_OUTSIDE_DEG, DOMINANCE_K, FACING_OFF_DEG, MIN_LONGER_S, offFacingDeg, ratedPartition,
+  shownTrain, switchCase, windSeaAway, windSeaBlocked, windSeaDominates, type ShownTrainRow,
+  type WindowArc,
 } from './shownPeriod.ts';
 
 let failures = 0;
@@ -42,12 +43,13 @@ const read = (rel: string) => readFileSync(join(FRONTEND, rel), 'utf8');
 // 1 — the shared cases                                                         //
 // --------------------------------------------------------------------------- //
 type Case = {
-  name: string; row: ShownTrainRow; arcs?: WindowArc[] | null; tp: number | null; dp: number | null; which: string;
+  name: string; row: ShownTrainRow; arcs?: WindowArc[] | null; facing?: number | null;
+  tp: number | null; dp: number | null; which: string;
 };
 const cases = (JSON.parse(read('lib/shownPeriod.cases.json')) as { cases: Case[] }).cases;
 check('the shared table is not trivially small', cases.length >= 32, `${cases.length}`);
 for (const c of cases) {
-  const got = shownTrain(c.row, c.arcs ?? null);
+  const got = shownTrain(c.row, c.arcs ?? null, c.facing ?? null);
   check(`${c.name} -> ${c.tp} s / ${c.dp}° (${c.which})`,
     got.tp === c.tp && got.dp === c.dp && got.which === c.which, JSON.stringify(got));
 }
@@ -66,7 +68,7 @@ const base: ShownTrainRow = {
 };
 check('the rated partition is found by its period and direction',
   JSON.stringify(ratedPartition(base)) === JSON.stringify([1.0, 6.0, 90.0]));
-check('no shown train for no row', JSON.stringify(shownTrain(null, null)) === '{"tp":null,"dp":null,"which":"swell"}');
+check('no shown train for no row', JSON.stringify(shownTrain(null, null, null)) === '{"tp":null,"dp":null,"which":"swell"}');
 // A sweep around the rated 1.0 m / 6 s partition: LONGER when the wind sea is above 1.0 m and at
 // least 6.5 s; DOMINANT at 4.0 m or more, whatever its period. Only DOMINANT can lower the period.
 let swept = 0;
@@ -76,11 +78,11 @@ for (const wh of [0.5, 0.99, 1.0, 1.01, 2.0, 3.99, 4.0, 5.0]) {
     swept += 1;
     const row = { ...base, wind_wave_hs: wh, wind_wave_tp: wt };
     const want = wh > 1.0 && wt >= 6.5 ? 'longer' : (wh >= 4.0 ? 'dominant' : null);
-    const got = shownTrain(row, null);
-    if (switchCase(row, null) !== want || windSeaDominates(row, null) !== (want !== null)
+    const got = shownTrain(row, null, null);
+    if (switchCase(row, null, null) !== want || windSeaDominates(row, null, null) !== (want !== null)
         || (got.which === 'wind_sea') !== (want !== null)
         || ((got.tp ?? 0) < 6.0 && want !== 'dominant')) {
-      wrong.push(`${wh} m ${wt} s -> ${switchCase(row, null)} ${JSON.stringify(got)}`);
+      wrong.push(`${wh} m ${wt} s -> ${switchCase(row, null, null)} ${JSON.stringify(got)}`);
     }
   }
 }
@@ -102,37 +104,58 @@ for (let d = 0; d < 360; d += 1) {
   if (windSeaBlocked(d, ONE) !== blocked || windSeaBlocked(d, null) || windSeaBlocked(d, [])) offEdge.push(`${d}`);
   for (const [row, c] of [[longerRow, 'longer'], [dominantRow, 'dominant']] as const) {
     const r = { ...row, wind_wave_dp: d };
-    if (switchCase(r, ONE) !== (blocked ? null : c) || switchCase(r, null) !== c || switchCase(r, []) !== c
-        || shownTrain(r, ONE).which !== (blocked ? 'swell' : 'wind_sea')) offEdge.push(`${c} ${d}`);
+    if (switchCase(r, ONE, null) !== (blocked ? null : c) || switchCase(r, null, null) !== c
+        || switchCase(r, [], null) !== c
+        || shownTrain(r, ONE, null).which !== (blocked ? 'swell' : 'wind_sea')) offEdge.push(`${c} ${d}`);
   }
 }
 check('on every bearing, both cases switch except 90 deg or more outside the window (242..298); no arcs, always',
   offEdge.length === 0, offEdge.slice(0, 5).join('; '));
+// The facing (run 76): at a beach facing 240 a wind sea from 150 or less, or from 330 or more, is
+// 90 deg or more off it (240 - 90 = 150, 240 + 90 = 330): away, on both cases; 151..329 switch. With
+// no window, so only the facing decides; with no facing, every bearing switches as before.
+const awayWrong: string[] = [];
+for (let d = 0; d < 360; d += 1) {
+  const away = d <= 150 || d >= 330;
+  if (windSeaAway(d, 240) !== away || windSeaAway(d, null) || windSeaAway(d, undefined)) awayWrong.push(`${d}`);
+  for (const [row, c] of [[longerRow, 'longer'], [dominantRow, 'dominant']] as const) {
+    const r = { ...row, wind_wave_dp: d };
+    if (switchCase(r, null, 240) !== (away ? null : c) || switchCase(r, null, null) !== c
+        || shownTrain(r, null, 240).which !== (away ? 'swell' : 'wind_sea')) awayWrong.push(`${c} ${d}`);
+  }
+}
+check('facing 240: both cases switch on 151..329 and not 90 deg or more off it; no facing, always',
+  awayWrong.length === 0, awayWrong.slice(0, 5).join('; '));
+check('degrees off the facing: 17 at a 240 beach is 137, 330 is 90, 150 is 90, 149.9 is 90.1',
+  offFacingDeg(17, 240) === 137 && offFacingDeg(330, 240) === 90 && offFacingDeg(150, 240) === 90
+  && Math.abs((offFacingDeg(149.9, 240) ?? 0) - 90.1) < 1e-9 && offFacingDeg(17, null) === null);
 // One rule, two languages: the constants are the pipeline's.
 const pyRule = readFileSync(join(FRONTEND, '..', 'pipeline', 'forecast', 'shown_period.py'), 'utf8');
-check('MIN_LONGER_S, DOMINANCE_K and BLOCKED_OUTSIDE_DEG are pipeline/forecast/shown_period.py\'s',
+check('MIN_LONGER_S, DOMINANCE_K, BLOCKED_OUTSIDE_DEG and FACING_OFF_DEG are pipeline/forecast/shown_period.py\'s',
   /^MIN_LONGER_S = 0\.5$/m.test(pyRule) && /^DOMINANCE_K = 4\.0$/m.test(pyRule)
-  && /^BLOCKED_OUTSIDE_DEG = 90\.0$/m.test(pyRule)
-  && MIN_LONGER_S === 0.5 && DOMINANCE_K === 4 && BLOCKED_OUTSIDE_DEG === 90,
-  `${MIN_LONGER_S} ${DOMINANCE_K} ${BLOCKED_OUTSIDE_DEG}`);
+  && /^BLOCKED_OUTSIDE_DEG = 90\.0$/m.test(pyRule) && /^FACING_OFF_DEG = 90\.0$/m.test(pyRule)
+  && MIN_LONGER_S === 0.5 && DOMINANCE_K === 4 && BLOCKED_OUTSIDE_DEG === 90 && FACING_OFF_DEG === 90,
+  `${MIN_LONGER_S} ${DOMINANCE_K} ${BLOCKED_OUTSIDE_DEG} ${FACING_OFF_DEG}`);
 
 // --------------------------------------------------------------------------- //
 // 3 — every display reads it                                                   //
 // --------------------------------------------------------------------------- //
 // Each with the spot's window: the components that take rows alone get it from the spot page.
 const SITES: [string, string][] = [
-  ['components/CurrentConditions.tsx', 'const { tp, dp } = shownTrain(current, windowArcs);'],
-  ['components/ForecastGrid.tsx', 'const { tp, dp } = shownTrain(r, windowArcs);'],
-  ['components/SpotMap.tsx', 'const { tp: swellPeriod, dp: swellDir } = shownTrain(f, s.swell_window_arcs);'],
-  ['components/SpotCard.tsx', '{fmtSec(shownTrain(f, spot.swell_window_arcs).tp)}'],
-  ['components/RegionList.tsx', '{fmtSec(shownTrain(f, s.swell_window_arcs).tp)}'],
-  ['app/page.tsx', 'const { tp } = shownTrain(f, s.swell_window_arcs);'],
+  ['components/CurrentConditions.tsx', 'const { tp, dp } = shownTrain(current, windowArcs, facingDeg);'],
+  ['components/ForecastGrid.tsx', 'const { tp, dp } = shownTrain(r, windowArcs, facingDeg);'],
+  ['components/SpotMap.tsx', 'const { tp: swellPeriod, dp: swellDir } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
+  ['components/SpotCard.tsx', '{fmtSec(shownTrain(f, spot.swell_window_arcs, spot.orientation_deg).tp)}'],
+  ['components/RegionList.tsx', '{fmtSec(shownTrain(f, s.swell_window_arcs, s.orientation_deg).tp)}'],
+  ['app/page.tsx', 'const { tp } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
 ];
 for (const [rel, use] of SITES) check(`${rel} shows the period through shownTrain`, read(rel).includes(use));
 const spotPage = read('app/spot/[slug]/page.tsx');
 // CurrentConditions, ForecastGrid and SwellPartitions (its wind sea row is labelled by windSeaDominates).
 check('the spot page hands all three components the spot\'s window',
   (spotPage.match(/windowArcs=\{spot\.swell_window_arcs\}/g) ?? []).length === 3);
+check('and its facing',
+  (spotPage.match(/facingDeg=\{spot\.orientation_deg\}/g) ?? []).length === 3);
 const direct = ['app', 'components'].flatMap((d) => walk(join(FRONTEND, d)))
   .map((abs) => relative(FRONTEND, abs))
   // A query's column list names the columns without showing them; it is left out.

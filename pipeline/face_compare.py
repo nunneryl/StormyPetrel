@@ -595,8 +595,8 @@ def assess(rows: list[dict], spot: dict, state: str | None, calibrated: bool = F
         # where shown_period shows it); display_rated: at the rated period, as #283 shipped it;
         # case: shown_period's switch case; display_variant: a comparison only, the wind sea's
         # period for the LONGER case and the rated period for the DOMINANT case.
-        arcs = spot.get("swell_window_arcs")
-        switched = [(i, tp) for i, _ in surf for tp, ws in [surf_period(rows[i], arcs)] if ws]
+        arcs, facing_deg = spot.get("swell_window_arcs"), spot.get("orientation_deg")
+        switched = [(i, tp) for i, _ in surf for tp, ws in [surf_period(rows[i], arcs, facing_deg)] if ws]
         at_wind = dict(zip([i for i, _ in switched],
                            typical_face_ft([base[i]["hs"] for i, _ in switched],
                                            [tp for _, tp in switched]))) if switched else {}
@@ -604,7 +604,7 @@ def assess(rows: list[dict], spot: dict, state: str | None, calibrated: bool = F
             base[i]["display_rated"] = round(SURF_K * typ_rated, 2)
             base[i]["switched"] = i in at_wind
             base[i]["display"] = round(SURF_K * float(at_wind.get(i, typ_rated)), 2)
-            base[i]["case"] = switch_case(rows[i], arcs) if i in at_wind else None
+            base[i]["case"] = switch_case(rows[i], arcs, facing_deg) if i in at_wind else None
             base[i]["display_variant"] = (base[i]["display"] if base[i]["case"] == "longer"
                                           else base[i]["display_rated"])
     for b in base:
