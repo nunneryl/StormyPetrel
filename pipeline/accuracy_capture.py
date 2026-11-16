@@ -417,8 +417,12 @@ def capture_model_at_buoys(client, buoys, ww3_path: Path, nwps_cache: Path, capt
                 for r in buoy_lead_rows(bid, "nwps", cyc, entries, cell, wfo, captured_at, run_id)]
         rows = dedupe(rows, ("buoy_id", "valid_time", "source", "lead_day"))
         sent, applied = upsert(client, "model_at_buoys", rows, "buoy_id,valid_time,source,lead_day")
-        stats["nwps"] = {"buoys": len(found), "sent": sent, "applied": applied,
-                         "by_lead_day": _count(rows), "offices_not_read": not_read}
+        by_office: dict[str, int] = {}
+        for wfo, *_ in found.values():
+            by_office[wfo] = by_office.get(wfo, 0) + 1
+        stats["nwps"] = {"buoys": len(found), "by_office": dict(sorted(by_office.items())),
+                         "sent": sent, "applied": applied, "by_lead_day": _count(rows),
+                         "offices_not_read": not_read}
         log.info("accuracy capture: model_at_buoys nwps %s", stats["nwps"])
         if not_read:
             warn(f"NWPS offices not read (past the time budget): {', '.join(not_read)}")
