@@ -26,7 +26,10 @@ name: sw1-raycast
 #   mode = star-preview: READ-ONLY. Score the published forecast window with
 #       the swell windows in another spots file (pipeline/star_preview.py) and
 #       print stars before vs after. Uses the Supabase secrets to SELECT only;
-#       writes nothing anywhere but the job log and its artifact.
+#       writes nothing anywhere but the job log and its artifact. When a spot's facing
+#       (orientation_deg / offshore_wind_deg) differs between the two files, it also re-rates
+#       every row with the wind multiplier and the wind cap recomputed at each facing, behind
+#       a gate (main's file must reproduce the stored wind_mult and the published stars).
 #   mode = tide-preview: READ-ONLY. A census of spots.tide_preference and its source, and
 #       the published window re-scored with every unverified tide preference (no cited
 #       source) treated as neutral, or damped (pipeline/star_preview.py --tide). The swell
