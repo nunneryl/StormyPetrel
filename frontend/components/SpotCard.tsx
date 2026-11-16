@@ -59,10 +59,10 @@ export function SpotCard({
           <HeightBasisMark basis={heightBasis(f)} />
         </span>
         <span className="text-text-muted tabular-nums">
-          {fmtSec(shownTrain(f, spot.swell_window_arcs).tp)}
+          {fmtSec(shownTrain(f, spot.swell_window_arcs, spot.orientation_deg).tp)}
         </span>
         <SwellCompass
-          deg={shownTrain(f, spot.swell_window_arcs).dp}
+          deg={shownTrain(f, spot.swell_window_arcs, spot.orientation_deg).dp}
           size={16}
         />
         <span className="ml-auto flex items-center gap-1 text-text-muted">

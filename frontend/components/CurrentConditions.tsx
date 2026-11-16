@@ -48,10 +48,12 @@ type Tile = {
 export function CurrentConditions({
   offshoreDeg,
   windowArcs,
+  facingDeg,
 }: {
   offshoreDeg: number | null | undefined;
   /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
   windowArcs: Spot['swell_window_arcs'];
+  facingDeg: Spot['orientation_deg'];
 }) {
   // The hour the swell breakdown shows too: one clock, one row (components/CurrentHour.tsx).
   const { rows, selection } = useCurrentHour();
@@ -65,7 +67,7 @@ export function CurrentConditions({
     selection.state === 'current' ? rows.slice(selection.index) : [];
   // The train shown: the rated swell, or the wind sea where lib/shownPeriod.ts shows it. The
   // stars stay on the rated swell either way.
-  const { tp, dp } = shownTrain(current, windowArcs);
+  const { tp, dp } = shownTrain(current, windowArcs, facingDeg);
   // The wind sea's share of the wave height: the very number the breakdown's wind sea row prints.
   const windSea = windSeaShare(current);
 

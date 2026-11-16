@@ -341,12 +341,13 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           <CurrentConditions
             offshoreDeg={spot.offshore_wind_deg}
             windowArcs={spot.swell_window_arcs}
+            facingDeg={spot.orientation_deg}
           />
           <SurfReportPanel />
         </SurfReportProvider>
 
         {/* Spectral swell components */}
-        <SwellPartitions windowArcs={spot.swell_window_arcs} />
+        <SwellPartitions windowArcs={spot.swell_window_arcs} facingDeg={spot.orientation_deg} />
       </CurrentHourProvider>
 
       {/* Charts — next 48h only so curves stay legible */}
@@ -422,7 +423,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           to the next 48 hours with an in-grid expand button. */}
       <section>
         <SectionHeader title={`${CLAIMED_FORECAST_LABEL} forecast`} />
-        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} windowArcs={spot.swell_window_arcs} timeZone={timeZone} />
+        <ForecastGrid forecasts={upcoming} offshoreDeg={spot.offshore_wind_deg} windowArcs={spot.swell_window_arcs} facingDeg={spot.orientation_deg} timeZone={timeZone} />
       </section>
 
       {/* Footer breadcrumbs */}

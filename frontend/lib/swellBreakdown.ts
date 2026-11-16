@@ -70,11 +70,13 @@ export function windSeaShare(f: { chop_ratio?: number | null } | null | undefine
   return chop !== null && chop >= 0 && chop <= 1 ? chop : null;
 }
 
-/** The rows to show for an hour at a spot whose swell window is *arcs*, biggest first. */
+/** The rows to show for an hour at a spot whose swell window is *arcs* and facing *facing*,
+ *  biggest first. */
 export function breakdownRows(
   f: BreakdownInput, arcs: readonly WindowArc[] | null | undefined,
+  facing: number | null | undefined,
 ): BreakdownRow[] {
-  const shown = windSeaDominates(f, arcs);
+  const shown = windSeaDominates(f, arcs, facing);
   const raw = [
     { label: 'P1 (primary)', hs: f.swell_1_hs, tp: f.swell_1_tp, dp: f.swell_1_dp, windSea: false },
     { label: 'P2 (secondary)', hs: f.swell_2_hs, tp: f.swell_2_tp, dp: f.swell_2_dp, windSea: false },

@@ -20,15 +20,17 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export function SwellPartitions({
   windowArcs,
+  facingDeg,
 }: {
   windowArcs: Spot['swell_window_arcs'];
+  facingDeg: Spot['orientation_deg'];
 }) {
   // The hour the Conditions tiles show: one clock, one row (components/CurrentHour.tsx).
   const forecast = useCurrentHour().selection.row;
   if (!forecast) return null;
   // Every row's share of the total wave height, the measure the Conditions tile's "% wind sea"
   // uses (lib/swellBreakdown.ts).
-  const all = breakdownRows(forecast, windowArcs);
+  const all = breakdownRows(forecast, windowArcs, facingDeg);
   if (all.length === 0) return null;
 
   // If we only have 1 swell partition AND no wind sea worth showing,

@@ -45,7 +45,7 @@ const EMPTY: BreakdownInput = {
     ...EMPTY, swell_tp: 12, swell_dp: 270,
     swell_1_hs: 1.2, swell_1_tp: 12, swell_1_dp: 270,
     wind_wave_hs: 1.5, wind_wave_tp: 6, wind_wave_dp: 250, chop_ratio: 0.64,
-  }, null);
+  }, null, null);
   check('reported hour: two rows, wind sea first (1.5 m over 1.2 m)',
     rows.length === 2 && rows[0].windSea && rows[1].label === 'P1 (primary)');
   check('reported hour: wind sea 64%, as the Conditions tile', near(rows[0].share, 0.64)
@@ -63,7 +63,7 @@ const EMPTY: BreakdownInput = {
     ...EMPTY, swell_1_hs: 1.0, swell_1_tp: 14, swell_1_dp: 280,
     swell_2_hs: 0.5, swell_2_tp: 9, swell_2_dp: 200,
     wind_wave_hs: 0.3, wind_wave_tp: 4, wind_wave_dp: 250, chop_ratio: 0.2,
-  }, null);
+  }, null, null);
   check('two swells: P1 0.64, P2 0.16, wind sea 0.20, summing to 1',
     rows.length === 3 && near(rows[0].share, 0.64) && near(rows[1].share, 0.16)
     && near(rows[2].share, 0.2) && near(rows.reduce((a, r) => a + r.share, 0), 1));
@@ -74,7 +74,7 @@ for (const chop of [null, undefined, Number.NaN, -0.1, 1.2]) {
   const rows = breakdownRows({
     ...EMPTY, swell_1_hs: 0.6, swell_1_tp: 11, swell_1_dp: 270,
     wind_wave_hs: 0.8, wind_wave_tp: 5, wind_wave_dp: 250, chop_ratio: chop as number | null,
-  }, null);
+  }, null, null);
   check(`chop_ratio ${String(chop)}: energy shares, wind sea 0.64 and P1 0.36`,
     near(rows[0].share, 0.64) && near(rows[1].share, 0.36));
 }
@@ -87,7 +87,7 @@ for (const chop of [null, undefined, Number.NaN, -0.1, 1.2]) {
     ...EMPTY, swell_tp: 3, swell_dp: 90,
     swell_1_hs: 0.25, swell_1_tp: 3, swell_1_dp: 90,
     wind_wave_hs: 2.4, wind_wave_tp: 9, wind_wave_dp: 80, chop_ratio: 0.9,
-  }, null);
+  }, null, null);
   check('shown as the surf: labelled so', rows[0].label === WIND_SEA_SHOWN_LABEL
     && WIND_SEA_SHOWN_LABEL === 'Wind sea · shown as the surf');
   check('shown as the surf: not greyed', rows[0].muted === false);
@@ -101,7 +101,7 @@ for (const chop of [null, undefined, Number.NaN, -0.1, 1.2]) {
     ...EMPTY, swell_1_hs: 1.0, swell_1_tp: 12, swell_1_dp: 270,
     swell_2_hs: 0.05, swell_2_tp: 8, swell_2_dp: 200,
     wind_wave_hs: 0.04, wind_wave_tp: 3, wind_wave_dp: 250, chop_ratio: 0.0,
-  }, null);
+  }, null, null);
   check('rows of 0.05 m or less left out', rows.length === 1 && rows[0].label === 'P1 (primary)');
   check('a lone swell with chop 0 is 100%', sharePercent(rows[0].share) === '100%');
 }
@@ -128,7 +128,7 @@ check('0.571 prints 57%, 0.561 prints 56%', sharePercent(0.571) === '57%' && sha
   const jbp = [hour('2026-11-12T17:00:00+00:00', 0.561), hour('2026-11-12T18:00:00+00:00', 0.571)];
   const read = selectCurrentHour(jbp, Date.parse('2026-11-12T18:05:00Z')).row;
   const built = selectCurrentHour(jbp, Date.parse('2026-11-12T17:30:00Z')).row;
-  const ws = (r: Forecast | null) => breakdownRows(r as unknown as BreakdownInput, null).find((x) => x.windSea);
+  const ws = (r: Forecast | null) => breakdownRows(r as unknown as BreakdownInput, null, null).find((x) => x.windSea);
   check('read at 18:05Z: the 18Z row, the wind sea row 57%',
     read?.valid_time === '2026-11-12T18:00:00+00:00' && sharePercent(ws(read)?.share ?? -1) === '57%');
   check('the build\'s 17Z row read 56%: the mismatch the shared hour removes',
@@ -143,8 +143,8 @@ check('0.571 prints 57%, 0.561 prints 56%', sharePercent(0.571) === '57%' && sha
   const tile = read('components/CurrentConditions.tsx');
   const provider = read('components/CurrentHour.tsx');
   const page = read('app/spot/[slug]/page.tsx');
-  check('SwellPartitions reads breakdownRows with the window arcs',
-    comp.includes('breakdownRows(forecast, windowArcs)'));
+  check('SwellPartitions reads breakdownRows with the window arcs and the facing',
+    comp.includes('breakdownRows(forecast, windowArcs, facingDeg)'));
   check('SwellPartitions prints sharePercent', comp.includes('sharePercent(c.share)'));
   check('no "not surfable" left', !comp.includes('not surfable'));
   check('the breakdown takes its row from useCurrentHour',
@@ -166,8 +166,8 @@ check('0.571 prints 57%, 0.561 prints 56%', sharePercent(0.571) === '57%' && sha
   check('the spot page puts the tile and the breakdown inside one provider',
     open >= 0 && (page.match(/<CurrentHourProvider/g) ?? []).length === 1
     && open < at('<CurrentConditions') && at('<CurrentConditions') < close
-    && open < at('<SwellPartitions windowArcs={spot.swell_window_arcs} />')
-    && at('<SwellPartitions windowArcs={spot.swell_window_arcs} />') < close);
+    && open < at('<SwellPartitions windowArcs={spot.swell_window_arcs} facingDeg={spot.orientation_deg} />')
+    && at('<SwellPartitions windowArcs={spot.swell_window_arcs} facingDeg={spot.orientation_deg} />') < close);
 }
 
 // 9. THE LINE UNDER THE BREAKDOWN. With a wind-sea share the percentages are the nearshore split;

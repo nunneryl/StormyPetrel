@@ -1,5 +1,5 @@
 {
- "_comment": "Hand-written rows and the train each must show; \"arcs\" is the spot's swell_window_arcs (absent: none). Read by frontend/lib/shownPeriod.test.mts (shownTrain) and pipeline/tests/test_shown_period.py (shown_period.shown_train), so the site's period and direction and the surf height's shoaling period cannot disagree. Every expected value is written out here, never computed by the code under test.",
+ "_comment": "Hand-written rows and the train each must show; \"arcs\" is the spot's swell_window_arcs (absent: none). Read by frontend/lib/shownPeriod.test.mts (shownTrain) and pipeline/tests/test_shown_period.py (shown_period.shown_train), so the site's period and direction and the surf height's shoaling period cannot disagree. Every expected value is written out here, never computed by the code under test. A 'facing' is the spot's orientation_deg (runs 76-77: no switch when the wind sea is outside the window AND 90 deg or more off the facing); a case without one has no facing.",
  "cases": [
   {
    "name": "Jacksonville, 2026-10-27: a 0.24 m 3 s swell partition beside a 2.4 m 9 s wind sea",
@@ -892,6 +892,442 @@
    "dp": 80.0,
    "which": "swell",
    "note": "no span: pad 0, the sector is 30 to 150; 241 - 150 = 91 (89 with the span-124 arc above)"
+  },
+  {
+   "name": "St. Pete Beach, 2026-10-28 14Z (run 57's archive): a 4.69 s wind sea from 15.98 deg at a beach facing 240",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 15.98
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": 240.0,
+   "tp": 3.86,
+   "dp": 329.68,
+   "which": "swell",
+   "note": "LONGER on size (1.05 > 0.06, 4.69 - 3.86 = 0.83 >= 0.5) and only 58.98 deg outside the window (sector 171-317, pad 2), but |15.98 - 240| = 224.02, i.e. 135.98 deg off the facing >= 90: running out to sea, no switch (run 76)"
+  },
+  {
+   "name": "St. Pete Beach, the same hour with no facing: the window alone decides, as before run 76",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 15.98
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": null,
+   "tp": 4.69,
+   "dp": 15.98,
+   "which": "wind_sea",
+   "note": "58.98 deg outside the window < 90; LONGER"
+  },
+  {
+   "name": "St. Pete Beach, the same wind sea from 300 deg: 60 deg off the facing, inside the window",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 300.0
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": 240.0,
+   "tp": 4.69,
+   "dp": 300.0,
+   "which": "wind_sea",
+   "note": "|300 - 240| = 60 < 90; inside the 171-317 sector; LONGER"
+  },
+  {
+   "name": "Exactly 90 deg off the facing (150 at St. Pete Beach, facing 240), outside the window: away, no switch",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 150.0
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": 240.0,
+   "tp": 3.86,
+   "dp": 329.68,
+   "which": "swell",
+   "note": "St. Pete's window (sector 171-317): 150 is 21 deg outside it, and 240 - 150 = 90 >= 90: the boundary goes to 'away', as #279 puts exactly 120 deg off with onshore"
+  },
+  {
+   "name": "89.9 deg off the facing (150.1 at St. Pete Beach), outside the window: switches",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 150.1
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": 240.0,
+   "tp": 4.69,
+   "dp": 150.1,
+   "which": "wind_sea",
+   "note": "outside the window (20.9 deg) but 240 - 150.1 = 89.9 < 90; LONGER"
+  },
+  {
+   "name": "Exactly 90 deg off on the other side (330 at St. Pete Beach), outside the window: away",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 330.0
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": 240.0,
+   "tp": 3.86,
+   "dp": 329.68,
+   "which": "swell",
+   "note": "13 deg outside the window (317), and 330 - 240 = 90 >= 90"
+  },
+  {
+   "name": "89.9 deg off on the other side (329.9 at St. Pete Beach), outside the window: switches",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 329.9
+   },
+   "arcs": [
+    {
+     "min": 173,
+     "max": 315,
+     "span": 146
+    }
+   ],
+   "facing": 240.0,
+   "tp": 4.69,
+   "dp": 329.9,
+   "which": "wind_sea",
+   "note": "12.9 deg outside the window, and 329.9 - 240 = 89.9 < 90; LONGER"
+  },
+  {
+   "name": "Across north: a wind sea from 350 at a beach facing 10 is 20 deg off (not 340)",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 329.68,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 329.68,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 350.0
+   },
+   "arcs": [
+    {
+     "min": 60,
+     "max": 120,
+     "span": 64
+    }
+   ],
+   "facing": 10.0,
+   "tp": 4.69,
+   "dp": 350.0,
+   "which": "wind_sea",
+   "note": "window sector 58-122: 350 is 68 deg outside it (< 90); |350 - 10| = 340, the short way 20 < 90: switches. Read the long way it would be blocked"
+  },
+  {
+   "name": "No window: a wind sea 90 deg off the facing switches as the window alone decides (no window, no facing rule)",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 220.0,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 220.0,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 150.0
+   },
+   "arcs": null,
+   "facing": 240.0,
+   "tp": 4.69,
+   "dp": 150.0,
+   "which": "wind_sea",
+   "note": "240 - 150 = 90, but there is no window to be outside of; LONGER"
+  },
+  {
+   "name": "The Hook (facing 149, window 189-251 span 66): a wind sea from 245, inside the window, 96 deg off the facing, switches",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 220.0,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 220.0,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 245.0
+   },
+   "arcs": [
+    {
+     "min": 189,
+     "max": 251,
+     "span": 66
+    }
+   ],
+   "facing": 149.0,
+   "tp": 4.69,
+   "dp": 245.0,
+   "which": "wind_sea",
+   "note": "pad (66 - 62) / 2 = 2: sector 187-253; 245 is inside; 245 - 149 = 96 >= 90 but inside the window the facing does not count; LONGER (1.05 > 0.06, 4.69 - 3.86 = 0.83)"
+  },
+  {
+   "name": "The Hook: a wind sea from 253, exactly on the window's padded edge, counts as inside and switches",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 220.0,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 220.0,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 253.0
+   },
+   "arcs": [
+    {
+     "min": 189,
+     "max": 251,
+     "span": 66
+    }
+   ],
+   "facing": 149.0,
+   "tp": 4.69,
+   "dp": 253.0,
+   "which": "wind_sea",
+   "note": "the padded edge 251 + 2 = 253 is inclusive (interpret.bearing_in_arc); 253 - 149 = 104"
+  },
+  {
+   "name": "The Hook: a wind sea from 253.1, just outside the padded edge and 104.1 deg off the facing, does not switch",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 220.0,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 220.0,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 253.1
+   },
+   "arcs": [
+    {
+     "min": 189,
+     "max": 251,
+     "span": 66
+    }
+   ],
+   "facing": 149.0,
+   "tp": 3.86,
+   "dp": 220.0,
+   "which": "swell",
+   "note": "0.1 deg outside the window (< 90: the window rung lets it through), 253.1 - 149 = 104.1 >= 90: away"
+  },
+  {
+   "name": "The Hook: a wind sea from 260, 7 deg outside the window and 111 deg off the facing, does not switch",
+   "row": {
+    "swell_source": "nwps_height_ww3_dir",
+    "swell_tp": 3.86,
+    "swell_dp": 220.0,
+    "tp": 4.69,
+    "dp": 15.98,
+    "swell_1_hs": 0.06,
+    "swell_1_tp": 3.86,
+    "swell_1_dp": 220.0,
+    "swell_2_hs": null,
+    "swell_2_tp": null,
+    "swell_2_dp": null,
+    "swell_3_hs": null,
+    "swell_3_tp": null,
+    "swell_3_dp": null,
+    "wind_wave_hs": 1.05,
+    "wind_wave_tp": 4.69,
+    "wind_wave_dp": 260.0
+   },
+   "arcs": [
+    {
+     "min": 189,
+     "max": 251,
+     "span": 66
+    }
+   ],
+   "facing": 149.0,
+   "tp": 3.86,
+   "dp": 220.0,
+   "which": "swell",
+   "note": "260 - 253 = 7 outside; 260 - 149 = 111 >= 90"
   }
  ]
 }

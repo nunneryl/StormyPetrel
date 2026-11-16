@@ -78,6 +78,29 @@ stay on the rated partition.
    and above. Beside it, for comparison only, a VARIANT the site does not ship
    ('display_variant'): the LONGER case shoaled at the wind sea's period as the fix does, the
    DOMINANT case kept at the rated period.
+
+4. RUNS 76-77: THE FACING. Neither case switches when the wind sea comes from outside the spot's
+   window AND FACING_OFF_DEG (90) or more off its facing (orientation_deg): it runs along the shore
+   or out to sea (St. Pete Beach, 2026-10-28). Run 76 measured the facing alone; run 77 the rule as
+   adopted. Every section above uses the new rule; this one sets it against the rule before it
+   (the window alone, switch_case with no facing) over the same window:
+     archive_switches   switched hours before and after, and removed, by state;
+     archive_removed    the removed hours by state and the TOP_AWAY_SPOTS spots with the most, and
+                        on those with a buoy reading the shown period within PERIOD_NEAR_S (2 s) of
+                        its DPD before (the wind sea's period) and after (the rated swell's);
+     published_removed  the same count in the published window, by state and spot;
+     the gate           a published row the new rule unswitches may lose its wind-sea mark and
+                        move face_ft, and nothing else (unswitched_by_facing); stars 0 differences;
+     St. Pete Beach     every hour of 2026-10-28 UTC, before and after, with the buoy.
+     published_face_change  the surf height's change on the published rows the rule unswitches:
+                        median, p10, p90 (ft and %) and the spots with the largest drops and rises;
+     archive_sensitivity    the removed hours only 90 to 110 deg off the facing (a 20 deg facing
+                        error would flip them), by spot;
+     nws                the surf height against the NWS Surf Zone Forecast range on the headline
+                        hours the rule unswitches, before (shoaled at the wind sea's period,
+                        face_compare's display_current) and after, by region (mainland, as runs
+                        55-57) and by state; the offshore buoys see a departing sea, so the buoy
+                        check cannot judge this change.
 """
 from __future__ import annotations
 
@@ -91,9 +114,10 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from statistics import median
 
-from .forecast.shown_period import (BLOCKED_OUTSIDE_DEG, DOMINANCE_K, MIN_LONGER_S,
-                                    WW3_IDENTITY_SOURCES, rated_partition, shown_train,
-                                    switch_case, wind_sea_dominates)
+from .forecast.shown_period import (BLOCKED_OUTSIDE_DEG, DOMINANCE_K, FACING_OFF_DEG,
+                                    MIN_LONGER_S, WW3_IDENTITY_SOURCES, off_facing_deg,
+                                    rated_partition, shown_train, switch_case,
+                                    wind_sea_dominates)
 from .forecast.surf_height import (M_TO_FT, NWPS_OVERRIDE_SOURCES, SURF_K, SURF_MARK_TAG,
                                    WIND_SEA_MARK, apply_surf_height, is_surf_row, sized_hs,
                                    typical_face_ft)
@@ -116,6 +140,11 @@ JAX_FROM, JAX_TO = "2026-10-26T00:00:00", "2026-10-29T00:00:00"
 # Hatteras, 2026-09-23 17:00 to 19:00Z: the published height traced step by step.
 HATTERAS_SPOTS = ("Rodanthe", "Salvo", "S-Turns", "Outer Banks Fishing Pier")
 HATTERAS_FROM, HATTERAS_TO = "2026-09-23T17:00:00", "2026-09-23T20:00:00"
+# St. Pete Beach, every hour of 2026-10-28 UTC: the offshore-travelling wind sea (run 76).
+STPETE_SPOT = "St. Pete Beach"
+STPETE_FROM, STPETE_TO = "2026-10-28T00:00:00", "2026-10-29T00:00:00"
+TOP_AWAY_SPOTS = 20
+SENSITIVE_UP_TO_DEG = 110.0  # removed hours only 90 to 110 deg off the facing: a 20 deg error flips them
 
 # Question 3: does each headline path still read the rated period through the face's period
 # factor? From the code, not inferred from rows.
@@ -209,14 +238,16 @@ def offset_band(deg):
     return "under 45" if deg < 45 else ("45-90" if deg < BLOCKED_OUTSIDE_DEG else "90 up")
 
 
-def classify_hour(row, arcs, ks=KS):
-    """The archive's labels for one row at a spot whose window is *arcs*: None unless it was
-    rated on a WW3 swell partition, else {'unmatched': True} or the labels: the case the site
-    uses (switch_case at DOMINANCE_K) and the case at each K in *ks*; blocked (it would switch at
-    DOMINANCE_K but for the window), and that case (unblocked_case); big_wind_sea (over 2x and
-    longer, run 55's criterion); bigger_shorter (bigger, NOT longer: run 55's definition, kept
-    so the counts compare); marginal (bigger and longer, but by under MIN_LONGER_S: no longer
-    switched)."""
+def classify_hour(row, arcs, facing, ks=KS):
+    """The archive's labels for one row at a spot whose window is *arcs* and facing *facing*:
+    None unless it was rated on a WW3 swell partition, else {'unmatched': True} or the labels:
+    the case the site uses (switch_case at DOMINANCE_K) and the case at each K in *ks*; blocked
+    (it would switch at DOMINANCE_K but for the window), and that case (unblocked_case);
+    current_case, the case under the rule before run 76 (the window alone, no facing), and away
+    (it switches under that rule and not under this one: the wind sea runs away from the beach);
+    big_wind_sea (over 2x and longer, run 55's criterion); bigger_shorter (bigger, NOT longer:
+    run 55's definition, kept so the counts compare); marginal (bigger and longer, but by under
+    MIN_LONGER_S: no longer switched)."""
     if row.get("swell_source") not in WW3_IDENTITY_SOURCES:
         return None
     rated = rated_partition(row)
@@ -226,19 +257,34 @@ def classify_hour(row, arcs, ks=KS):
     tp = _num(row.get("swell_tp"))
     bigger = wh is not None and wh > rated[0]
     longer = wt is not None and tp is not None and wt > tp
-    case = switch_case(row, arcs)
-    unblocked = switch_case(row, None)
+    case = switch_case(row, arcs, facing)
+    current = switch_case(row, arcs, None)
+    unblocked = switch_case(row, None, None)
     return {"unmatched": False,
             "big_wind_sea": wh is not None and wh > 2 * rated[0] and longer,
             "switched": case is not None, "case": case,
-            "cases": {k: switch_case(row, arcs, k) for k in ks},
-            "blocked": case is None and unblocked is not None, "unblocked_case": unblocked,
+            "cases": {k: switch_case(row, arcs, facing, k) for k in ks},
+            "current_case": current, "away": current is not None and case is None,
+            "kept_inside": kept_inside(row, arcs, facing, case),
+            "blocked": current is None and unblocked is not None, "unblocked_case": unblocked,
             "bigger_shorter": bigger and not longer,
             "marginal": bigger and longer and wt - tp < MIN_LONGER_S,
             "rated_hs": rated[0]}
 
 
-def switch_reason(row, arcs, k=DOMINANCE_K):
+def kept_inside(row, arcs, facing, case):
+    """Does *row* switch (case not None) with its wind sea inside the window but FACING_OFF_DEG or
+    more off the facing? The hours run 76's facing-only rule removed and the adopted rule keeps.
+    A switched hour 90 or more off the facing at a spot with a window is inside it by the rule
+    (outside it would be away), so only the window's presence is tested."""
+    wd = _num(row.get("wind_wave_dp"))
+    if case is None or wd is None or not arcs:
+        return False
+    off = off_facing_deg(wd, facing)
+    return off is not None and off >= FACING_OFF_DEG
+
+
+def switch_reason(row, arcs, facing, k=DOMINANCE_K):
     """Why *row* did or did not switch to the wind sea, in words, with its numbers."""
     if row.get("swell_source") not in WW3_IDENTITY_SOURCES:
         return f"not rated on a WW3 swell partition (swell_source {row.get('swell_source')})"
@@ -249,12 +295,19 @@ def switch_reason(row, arcs, k=DOMINANCE_K):
     if wh is None or wt is None or wd is None:
         return "no wind sea height, period or direction"
     rh, rt = rated[0], rated[1]
-    case = switch_case(row, arcs, k)
-    if case is None and switch_case(row, None, k) is not None:
+    case = switch_case(row, arcs, facing, k)
+    if case is None and switch_case(row, arcs, None, k) is None \
+            and switch_case(row, None, None, k) is not None:
         from .interpret import _min_offset_from_arcs
         return (f"BLOCKED: the wind sea from {wd:.0f} deg is "
                 f"{_min_offset_from_arcs(wd, arcs):.0f} deg outside the window "
                 f"(>= {BLOCKED_OUTSIDE_DEG:g})")
+    if case is None and switch_case(row, arcs, None, k) is not None:
+        from .interpret import _min_offset_from_arcs
+        return (f"AWAY: the wind sea from {wd:.0f} deg is {_min_offset_from_arcs(wd, arcs):.0f} deg "
+                f"outside the window and {off_facing_deg(wd, facing):.0f} deg off the facing "
+                f"{float(facing):.0f} deg (>= {FACING_OFF_DEG:g}): it runs along the shore or out "
+                f"to sea")
     ratio = wh / rh if rh > 0 else float("inf")
     if case == "longer":
         return (f"LONGER: wind sea {wh:.2f} m over the rated {rh:.2f} m, and {wt - rt:.2f} s "
@@ -300,15 +353,20 @@ def jacksonville_hour(row, spot, calibrated):
     """Every field of one Jacksonville hour the report lists, and why it did or didn't switch."""
     nwps = row.get("swell_source") in NWPS_OVERRIDE_SOURCES
     hs = sized_hs(row) if nwps else None
-    arcs = spot.get("swell_window_arcs")
-    tp, dp, which = shown_train(row, arcs)
+    arcs, facing = spot.get("swell_window_arcs"), spot.get("orientation_deg")
+    tp, dp, which = shown_train(row, arcs, facing)
+    cur_tp, _cur_dp, cur_which = shown_train(row, arcs, None)
     surf = nwps and not calibrated
     return {"valid_time": row["valid_time"], "hour": _epoch(row["valid_time"]),
             "source": row.get("swell_source"), "trains": trains(row),
             "rated": rated_name(row), "rated_tp": _num(row.get("swell_tp")),
             "rated_dp": _num(row.get("swell_dp")),
-            "shown_tp": tp, "shown_dp": dp, "shown": which, "case": switch_case(row, arcs),
-            "why": switch_reason(row, arcs), "published_ft": _num(row.get("face_ft")),
+            "shown_tp": tp, "shown_dp": dp, "shown": which, "case": switch_case(row, arcs, facing),
+            "shown_tp_current": cur_tp, "shown_current": cur_which,
+            "wind_dp": _num(row.get("wind_wave_dp")), "facing": _num(facing),
+            "wind_off_facing": (None if row.get("wind_wave_dp") is None
+                                else off_facing_deg(float(row["wind_wave_dp"]), facing)),
+            "why": switch_reason(row, arcs, facing), "published_ft": _num(row.get("face_ft")),
             "surf_at_rated": _surf_at(hs, _num(row.get("swell_tp"))) if surf else None,
             "surf_at_shown": _surf_at(hs, tp) if surf else None,
             "wind_in_window": in_window(_num(row.get("wind_wave_dp")), spot),
@@ -329,7 +387,8 @@ def hatteras_hour(row, spot, factor, median_factor):
     tp, dp = _num(row.get("swell_tp")), _num(row.get("swell_dp"))
     opt = spot.get("optimal_swell_dir")
     axis = opt if opt is not None else spot.get("orientation_deg")
-    shown_tp, shown_dp, which = shown_train(row, spot.get("swell_window_arcs"))
+    shown_tp, shown_dp, which = shown_train(row, spot.get("swell_window_arcs"),
+                                            spot.get("orientation_deg"))
     face_raw = _num(row.get("face_ft_raw")) or _num(row.get("face_ft"))
     pf = period_factor(tp, "ww3") if tp else None
     out = {"spot": spot.get("name"), "valid_time": row["valid_time"],
@@ -351,7 +410,7 @@ def hatteras_hour(row, spot, factor, median_factor):
            "rated_in_window": in_window(dp, spot), "wind_in_window": in_window(_num(row.get("wind_wave_dp")), spot),
            "surf_at_rated_period": _surf_at(sized_hs(row), tp),
            "surf_at_shown_period": _surf_at(sized_hs(row), shown_tp), "shown": which,
-           "why": switch_reason(row, spot.get("swell_window_arcs"))}
+           "why": switch_reason(row, spot.get("swell_window_arcs"), spot.get("orientation_deg"))}
     eff = out["effective_size_ft"]
     if eff is not None and tp and row.get("wind_dir") is not None and row.get("wind_speed") is not None:
         try:
@@ -370,7 +429,9 @@ class Archive:
     Hatteras trace."""
 
     KEYS = ("hours", "ww3_identity", "unmatched", "big_wind_sea", "switched", "switched_longer",
-            "switched_dominant", "blocked", "blocked_longer", "blocked_dominant",
+            "switched_dominant", "switched_current", "away", "away_longer", "away_dominant",
+            "kept_inside",
+            "blocked", "blocked_longer", "blocked_dominant",
             "bigger_shorter", "marginal", "nwps_ratio_over_4",
             "nwps_ratio_over_4_alignment_under_half") + tuple(f"switched_k{k:g}" for k in KS)
 
@@ -390,6 +451,7 @@ class Archive:
         self.top, self.top_n = [], top
         self.jacksonville = []
         self.hatteras = []
+        self.stpete = []
 
     def __call__(self, s, spot, rows, calibrated):
         st = s.get("state") or "?"
@@ -399,21 +461,27 @@ class Archive:
             c["hours"] += 1
             if name == JAX_SPOT and JAX_FROM <= r["valid_time"][:19] < JAX_TO:
                 self.jacksonville.append(jacksonville_hour(r, spot, calibrated))
+            if name == STPETE_SPOT and STPETE_FROM <= r["valid_time"][:19] < STPETE_TO:
+                self.stpete.append(jacksonville_hour(r, spot, calibrated))
             if name in HATTERAS_SPOTS and HATTERAS_FROM <= r["valid_time"][:19] < HATTERAS_TO:
                 from .interpret import face_factors_by_name
                 f = face_factors_by_name([spot], self.factors).get(name)
                 self.hatteras.append(hatteras_hour(r, spot, f, self.median_factor))
-            lab = classify_hour(r, spot.get("swell_window_arcs"))
+            lab = classify_hour(r, spot.get("swell_window_arcs"), spot.get("orientation_deg"))
             if lab is None:
                 continue
             c["ww3_identity"] += 1
             if lab["unmatched"]:
                 c["unmatched"] += 1
                 continue
-            for key in ("big_wind_sea", "switched", "blocked", "bigger_shorter", "marginal"):
+            for key in ("big_wind_sea", "switched", "blocked", "bigger_shorter", "marginal", "away",
+                        "kept_inside"):
                 c[key] += lab[key]
+            c["switched_current"] += lab["current_case"] is not None
             if lab["case"]:
                 c[f"switched_{lab['case']}"] += 1
+            if lab["away"]:
+                c[f"away_{lab['current_case']}"] += 1
             if lab["blocked"]:
                 c[f"blocked_{lab['unblocked_case']}"] += 1
             for k, case in lab["cases"].items():
@@ -425,7 +493,7 @@ class Archive:
                 g = _num(r.get("dir_gain"))
                 c["nwps_ratio_over_4_alignment_under_half"] += g is not None and g < 0.5
             rec = None
-            if any(lab["cases"].values()) or lab["blocked"]:
+            if any(lab["cases"].values()) or lab["blocked"] or lab["away"]:
                 rec = self.record(s, spot, r, calibrated, lab)
                 self.records.append(rec)
             if lab["bigger_shorter"]:
@@ -458,6 +526,10 @@ class Archive:
                 "cases": {str(k): v for k, v in lab["cases"].items()},
                 "case": lab["case"], "blocked": lab["blocked"],
                 "unblocked_case": lab["unblocked_case"], "bigger_shorter": lab["bigger_shorter"],
+                "current_case": lab["current_case"], "away": lab["away"],
+                "facing": _num(spot.get("orientation_deg")),
+                "wind_off_facing": (None if r.get("wind_wave_dp") is None else
+                                    off_facing_deg(float(r["wind_wave_dp"]), spot.get("orientation_deg"))),
                 "rated_hs_m": lab["rated_hs"], "rated_tp": _num(r.get("swell_tp")),
                 "rated_dp": _num(r.get("swell_dp")),
                 "wind_hs_m": _num(r.get("wind_wave_hs")), "wind_tp": _num(r.get("wind_wave_tp")),
@@ -475,6 +547,10 @@ class Archive:
     def blocked(self):
         """The records the window exclusion removed at DOMINANCE_K: they would have switched."""
         return [r for r in self.records if r["blocked"]]
+
+    def away(self):
+        """The records run 76's facing rule removes: switched under the window alone, not now."""
+        return [r for r in self.records if r["away"]]
 
     def finish(self):
         """Surf height before (rated period) and after (wind sea's) on the surf rows."""
@@ -499,6 +575,7 @@ class Archive:
                     self.bs_overstate.append((st, ratio, float(a) / float(b)))
         self.jacksonville.sort(key=lambda h: h["hour"])
         self.hatteras.sort(key=lambda h: (h["valid_time"], h["spot"]))
+        self.stpete.sort(key=lambda h: h["hour"])
 
     def lopsided_examples(self):
         """The TOP most lopsided bigger-but-shorter hours, most lopsided first."""
@@ -704,6 +781,155 @@ def summarize_switched(records):
     return out
 
 
+def facing_summary(records, top=TOP_AWAY_SPOTS):
+    """Run 76: the switches the facing rule removes (records with away), by state and by spot
+    (the *top* spots with the most), and on the hours with a buoy reading the shown period
+    against the buoy's dominant period (DPD), within PERIOD_NEAR_S: under the current rule the
+    wind sea's period is shown (near_buoy_current), under the new rule the rated swell's
+    (near_buoy_new). The surf height at each (surf hours: current = shoaled at the wind sea's
+    period, new = at the rated period)."""
+    by = defaultdict(list)
+    spots = defaultdict(list)
+    for r in records:
+        by[r["state"]].append(r)
+        by["all"].append(r)
+        spots[(r["spot"], r["state"])].append(r)
+    states = {}
+    for st, rs in sorted(by.items(), key=lambda kv: (kv[0] != "all", kv[0])):
+        wb = [r for r in rs if r.get("buoy_tp") is not None]
+        sr = [r for r in rs if r.get("surf_before") is not None]
+        states[st] = {
+            "hours": len(rs), "spots": len({r["spot"] for r in rs}),
+            "longer": sum(r["current_case"] == "longer" for r in rs),
+            "dominant": sum(r["current_case"] == "dominant" for r in rs),
+            "wind_off_facing": _med(r["wind_off_facing"] for r in rs),
+            "period_current": _med(r["wind_tp"] for r in rs),
+            "period_new": _med(r["rated_tp"] for r in rs),
+            "with_buoy": len(wb), "buoy_dpd": _med(r["buoy_tp"] for r in wb),
+            "near_buoy_current": _share(abs(r["wind_tp"] - r["buoy_tp"]) <= PERIOD_NEAR_S for r in wb),
+            "near_buoy_new": _share(abs(r["rated_tp"] - r["buoy_tp"]) <= PERIOD_NEAR_S for r in wb),
+            "surf_hours": len(sr), "surf_current": _med(r["surf_after"] for r in sr),
+            "surf_new": _med(r["surf_before"] for r in sr)}
+    ranked = sorted(spots.items(), key=lambda kv: (-len(kv[1]), kv[0][0]))[:top]
+    by_spot = []
+    for (name, st), rs in ranked:
+        wb = [r for r in rs if r.get("buoy_tp") is not None]
+        by_spot.append({"spot": name, "state": st, "hours": len(rs), "facing": rs[0]["facing"],
+                        "wind_dp": _med(r["wind_dp"] for r in rs),
+                        "wind_off_facing": _med(r["wind_off_facing"] for r in rs),
+                        "with_buoy": len(wb),
+                        "near_buoy_current": _share(abs(r["wind_tp"] - r["buoy_tp"]) <= PERIOD_NEAR_S for r in wb),
+                        "near_buoy_new": _share(abs(r["rated_tp"] - r["buoy_tp"]) <= PERIOD_NEAR_S for r in wb)})
+    return {"by_state": states, "by_spot": by_spot}
+
+
+def switch_totals(archive_by_state):
+    """By state: hours switched under the current rule (the window alone), under the new rule
+    (window and facing), removed (away), and kept inside the window though 90 deg or more off the
+    facing (kept_inside_window: run 76's facing-only rule removed them), from the archive's
+    counters."""
+    out = {}
+    tot = Counter()
+    for st, c in sorted(archive_by_state.items()):
+        row = {"current": c.get("switched_current", 0), "new": c.get("switched", 0),
+               "removed": c.get("away", 0), "kept_inside_window": c.get("kept_inside", 0)}
+        out[st] = row
+        tot.update(row)
+    out["all"] = dict(tot)
+    return out
+
+
+def facing_sensitivity(records, lo=FACING_OFF_DEG, hi=SENSITIVE_UP_TO_DEG, top=TOP_AWAY_SPOTS):
+    """The removed hours (records with away) whose wind sea is only *lo* to *hi* deg off the
+    facing (lo inclusive, hi exclusive): a facing *hi* - *lo* deg off would flip them. Their count
+    of all removed hours, and by spot (the *top* with the most), with each spot's facing."""
+    near = [r for r in records if r.get("wind_off_facing") is not None
+            and lo <= r["wind_off_facing"] < hi]
+    spots = defaultdict(list)
+    for r in near:
+        spots[(r["spot"], r["state"])].append(r)
+    ranked = sorted(spots.items(), key=lambda kv: (-len(kv[1]), kv[0][0]))[:top]
+    return {"band_deg": [lo, hi], "hours": len(near), "of_removed": len(records),
+            "by_spot": [{"spot": n, "state": st, "hours": len(rs), "facing": rs[0]["facing"],
+                         "of_spot_removed": sum(1 for r in records if r["spot"] == n),
+                         "wind_dp": _med(r["wind_dp"] for r in rs),
+                         "wind_off_facing": _med(r["wind_off_facing"] for r in rs)}
+                        for (n, st), rs in ranked]}
+
+
+def facing_nws(srf_rows):
+    """Against the NWS Surf Zone Forecast range, on the headline hours the adopted rule unswitches
+    (face_compare's unswitched_by_facing: switched under the window alone, not now): the surf
+    height's side (n, inside, below, above) under the rule before (display_current, shoaled at the
+    wind sea's period) and after (display, at the rated period), and the hours that moved side.
+    By region (mainland, as runs 55-57 read the NWS) and by state (Hawaii included); the whole
+    archive, not cut at run 54's end."""
+    rows = [r for r in srf_rows if r["group"] == "headline" and r.get("unswitched_by_facing")]
+
+    def two(rs):
+        return {"before": _sides(rs, lambda r: r.get("display_current")),
+                "after": _sides(rs, lambda r: r.get("display")),
+                "moved": transitions(rs, before="display_current", after="display")}
+    order = lambda kv: (kv[0] != "all", kv[0])                     # noqa: E731
+    mainland = _by_region([r for r in rows if r["office"] != "HFO"])
+    by_state = defaultdict(list)
+    for r in rows:
+        by_state[r["state"]].append(r)
+    by_state["all"] = rows
+    return {"by_region": {g: two(rs) for g, rs in sorted(mainland.items(), key=order)},
+            "by_state": {g: two(rs) for g, rs in sorted(by_state.items(), key=order)}}
+
+
+def published_face_change(pub, after, away, state_by_name, top=TOP_AWAY_SPOTS):
+    """On the published rows the adopted rule unswitches (*away*), whose surf height moves: the
+    change after - before in ft and in % of before (median, p10, p90, min, max), and by spot the
+    *top* largest drops and largest rises (by their single biggest move)."""
+    ch = []
+    for name, rows in pub.items():
+        for b, a in zip(rows, after[name]):
+            fb, fa = _num(b.get("face_ft")), _num(a.get("face_ft"))
+            if fb is None or fa is None or fa == fb or not away(name, b):
+                continue
+            ch.append((name, state_by_name.get(name, "?"), b.get("valid_time"), fb, fa))
+    ps = (0.1, 0.5, 0.9)
+    ft = [fa - fb for *_x, fb, fa in ch]
+    pct = [100.0 * (fa - fb) / fb for *_x, fb, fa in ch if fb > 0]
+    per = defaultdict(list)
+    for n, st, vt, fb, fa in ch:
+        per[(n, st)].append((fa - fb, vt, fb, fa))
+
+    def spot_row(k, v, pick):
+        d, vt, fb, fa = pick(v)
+        return {"spot": k[0], "state": k[1], "hours": len(v), "median_ft": _med(x[0] for x in v),
+                "biggest_ft": round(d, 2), "at": vt, "before": fb, "after": fa}
+    drops = sorted(((k, v) for k, v in per.items() if min(v)[0] < 0), key=lambda kv: (min(kv[1])[0], kv[0][0]))
+    rises = sorted(((k, v) for k, v in per.items() if max(v)[0] > 0), key=lambda kv: (-max(kv[1])[0], kv[0][0]))
+    return {"rows": len(ch), "up": sum(1 for x in ft if x > 0), "down": sum(1 for x in ft if x < 0),
+            "ft": {**quantiles(ft, ps), "min": round(min(ft), 2) if ft else None,
+                   "max": round(max(ft), 2) if ft else None},
+            "pct": {**quantiles(pct, ps), "min": round(min(pct), 1) if pct else None,
+                    "max": round(max(pct), 1) if pct else None},
+            "largest_drops": [spot_row(k, v, min) for k, v in drops[:top]],
+            "largest_rises": [spot_row(k, v, max) for k, v in rises[:top]]}
+
+
+def published_away(pub, state_by_name, arcs_by_name, facing_by_name, top=TOP_AWAY_SPOTS):
+    """Run 76 in the published window: hours shown as the wind sea under the current rule and
+    not under the new one, by state and by spot (the *top* with the most)."""
+    by, spots = Counter(), Counter()
+    for name, rows in pub.items():
+        arcs, facing = arcs_by_name.get(name), facing_by_name.get(name)
+        st = state_by_name.get(name, "?")
+        for r in rows:
+            if switch_case(r, arcs, None) is not None and switch_case(r, arcs, facing) is None:
+                by[st] += 1
+                by["all"] += 1
+                spots[(name, st)] += 1
+    return {"by_state": dict(sorted(by.items(), key=lambda kv: (kv[0] != "all", kv[0]))),
+            "by_spot": [{"spot": n, "state": st, "hours": h} for (n, st), h in
+                        sorted(spots.items(), key=lambda kv: (-kv[1], kv[0][0]))[:top]]}
+
+
 # --------------------------------------------------------------------------- #
 # 2. The published window (pure)                                               #
 # --------------------------------------------------------------------------- #
@@ -726,7 +952,11 @@ def replay(rows_by_name, roster, factors, slug_for):
     return pub, after, stats
 
 
-def gate_rows(pub, after):
+def gate_rows(pub, after, away=None):
+    """The published window's gate. *away(name, row)*: does run 76's facing rule remove this
+    row's wind-sea switch (shown under the window alone, not now)? Such a row may lose its
+    WIND_SEA_MARK, and nothing else but face_ft (unswitched_by_facing); any other row that loses
+    it is unexpected."""
     from .daily_report import height_basis
     g = Counter()
     trans = Counter()
@@ -745,6 +975,13 @@ def gate_rows(pub, after):
             if is_surf_row(bv) != is_surf_row(av):
                 g["unexpected"] += 1
                 examples["unexpected"].append((name, b.get("valid_time"), bv, av))
+            elif is_surf_row(bv) and bv.endswith(WIND_SEA_MARK) and not av.endswith(WIND_SEA_MARK):
+                if away is not None and away(name, b) and av + WIND_SEA_MARK == bv:
+                    g["unswitched_by_facing"] += 1
+                    g["unswitched_by_facing_face_moved"] += a.get("face_ft") != b.get("face_ft")
+                else:
+                    g["unexpected"] += 1
+                    examples["unexpected"].append((name, b.get("valid_time"), bv, av))
             elif is_surf_row(av) and av.endswith(WIND_SEA_MARK) and not bv.endswith(WIND_SEA_MARK):
                 g["switched"] += 1
                 if av != bv + WIND_SEA_MARK:
@@ -764,22 +1001,24 @@ def gate_rows(pub, after):
             trans[(bb, ab)] += 1
             g["badge_flips"] += bb != ab
     for k in ("star_differences", "other_field_differences", "unexpected", "switched",
-              "switched_face_moved", "surf_unswitched", "unswitched_mismatch", "badge_flips"):
+              "switched_face_moved", "surf_unswitched", "unswitched_mismatch", "badge_flips",
+              "unswitched_by_facing", "unswitched_by_facing_face_moved"):
         g.setdefault(k, 0)
     return {"counts": dict(g),
             "transitions": {f"{b} -> {a}": n for (b, a), n in sorted(trans.items(), key=str)},
             "examples": {k: v[:10] for k, v in examples.items()}}
 
 
-def tiles(pub, after, state_by_name, arcs_by_name, calibrated=frozenset()):
+def tiles(pub, after, state_by_name, arcs_by_name, facing_by_name, calibrated=frozenset()):
     """The period tile before (the rated period, as pickSwell showed it) and after, by state, on
     the hours whose shown train switches; and every switched hour for the CSV."""
     by = defaultdict(list)
     hours = []
     for name, rows in pub.items():
         arcs = arcs_by_name.get(name)
+        facing = facing_by_name.get(name)
         for b, a in zip(rows, after[name]):
-            tp, dp, which = shown_train(b, arcs)
+            tp, dp, which = shown_train(b, arcs, facing)
             if which != "wind_sea":
                 continue
             old_tp = _num(b.get("swell_tp"))
@@ -808,7 +1047,7 @@ def tiles(pub, after, state_by_name, arcs_by_name, calibrated=frozenset()):
     return out, hours
 
 
-def homepage(pub, after, ids, arcs_by_name, n=10):
+def homepage(pub, after, ids, arcs_by_name, facing_by_name, n=10):
     """"Best conditions right now": each spot's soonest hour with stars, stars highest first,
     equal stars in spot id order (frontend/app/page.tsx), with its period and height."""
     rows = []
@@ -820,7 +1059,7 @@ def homepage(pub, after, ids, arcs_by_name, n=10):
     rows.sort(key=lambda r: (r[0], r[1]))
     out = []
     for _s, _i, name, b, a in rows[:n]:
-        tp_after, _dp, which = shown_train(b, arcs_by_name.get(name))
+        tp_after, _dp, which = shown_train(b, arcs_by_name.get(name), facing_by_name.get(name))
         tp_before = _num(b.get("swell_tp"))
         out.append({"spot": name, "stars": b.get("stars"),
                     "period_before": tp_before if tp_before is not None else _num(b.get("tp")),
@@ -869,7 +1108,7 @@ def stars_on_the_wind_sea(pub, roster_by_name, factors):
                 continue
             same = again is not None and abs(again - float(r["stars"])) < 1e-9
             c["reproduced"] += same
-            if not wind_sea_dominates(r, spot.get("swell_window_arcs")):
+            if not wind_sea_dominates(r, spot.get("swell_window_arcs"), spot.get("orientation_deg")):
                 continue
             c["switched"] += 1
             if not same:
@@ -1012,11 +1251,17 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
             ids[s["name"]] = s["id"]
             states[s["name"]] = s.get("state") or "?"
     pub, after, stats = replay(pub_rows, roster, factors, _slug_for)
-    g = gate_rows(pub, after)
+    arcs_by_name = {n: by_name[n].get("swell_window_arcs") for n in pub}
+    facing_by_name = {n: by_name[n].get("orientation_deg") for n in pub}
+
+    def away(name, row):
+        arcs, facing = arcs_by_name.get(name), facing_by_name.get(name)
+        return switch_case(row, arcs, None) is not None and switch_case(row, arcs, facing) is None
+
+    g = gate_rows(pub, after, away)
     from .forecast.face_correction import spot_factor
     cal = {n for n in pub if spot_factor(by_name[n], factors, _slug_for) is not None}
-    arcs_by_name = {n: by_name[n].get("swell_window_arcs") for n in pub}
-    tile, tile_hours = tiles(pub, after, states, arcs_by_name, cal)
+    tile, tile_hours = tiles(pub, after, states, arcs_by_name, facing_by_name, cal)
     q3 = stars_on_the_wind_sea(pub, {n: dict(by_name[n], state=states.get(n)) for n in pub},
                                factors)
 
@@ -1034,9 +1279,9 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
                                           from_published_window=True))
     arch.jacksonville.sort(key=lambda h: h["hour"])
     examples = arch.lopsided_examples()
-    buoys = fetch_buoys(client, {r["buoy"] for r in arch.records + examples + arch.jacksonville},
-                        archive_since.isoformat())
-    for rs in (arch.records, examples, arch.jacksonville):
+    buoys = fetch_buoys(client, {r["buoy"] for r in arch.records + examples + arch.jacksonville
+                                 + arch.stpete}, archive_since.isoformat())
+    for rs in (arch.records, examples, arch.jacksonville, arch.stpete):
         join_buoys(rs, buoys)
     prod = arch.switched()
     nws = nws_tables(comp["_pairs"]["srf"])
@@ -1060,10 +1305,21 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
         "paths_archive": paths(prod), "paths_published": paths(tile_hours),
         "jacksonville": arch.jacksonville, "hatteras": arch.hatteras,
         "buoys_read": {b: len(v) for b, v in buoys.items()},
-        "tiles": tile, "homepage": homepage(pub, after, ids, arcs_by_name),
+        "tiles": tile, "homepage": homepage(pub, after, ids, arcs_by_name, facing_by_name),
+        "facing": {"rule": f"no switch when the wind sea comes from outside the spot's window and "
+                           f"{FACING_OFF_DEG:g} deg or more off its facing (orientation_deg)",
+                   "archive_switches": switch_totals(arch.by_state),
+                   "archive_removed": facing_summary(arch.away()),
+                   "published_removed": published_away(pub, states, arcs_by_name, facing_by_name),
+                   "published_unswitched_by_facing": c["unswitched_by_facing"],
+                   "published_face_change": published_face_change(pub, after, away, states),
+                   "archive_sensitivity": facing_sensitivity(arch.away()),
+                   "nws": facing_nws(comp["_pairs"]["srf"]),
+                   "star_differences": c["star_differences"],
+                   "st_pete_2026_10_28": arch.stpete},
         "stars_on_the_wind_sea": q3,
         "nws": nws, "compare_errors": comp.get("errors"),
-        "_compare": comp, "_tile_hours": tile_hours, "_records": prod,
+        "_compare": comp, "_tile_hours": tile_hours, "_records": prod, "_away": arch.away(),
     }
 
 
@@ -1083,8 +1339,8 @@ def print_report(rep):
     print(f"\nMERGE GATE {'PASS' if g['pass'] else 'FAIL'}")
     for k in ("hours", "surf_unswitched", "switched", "switched_face_moved", "star_differences",
               "other_field_differences", "unexpected", "unswitched_mismatch", "badge_flips",
-              "run54_reproduced"):
-        print(f"  {k:28} {g[k]}")
+              "unswitched_by_facing", "unswitched_by_facing_face_moved", "run54_reproduced"):
+        print(f"  {k:28} {g.get(k)}")
     print(f"  apply_surf_height stats: {rep['apply_stats']}")
     print(f"  badges: {rep['badges']}")
     for k, v in rep["examples"].items():
@@ -1227,6 +1483,60 @@ def print_report(rep):
             print(f"  {'':33} moved, fix: {e['transitions']}")
     if rep.get("compare_errors"):
         print(f"\n  comparison errors: {rep['compare_errors']}")
+    print_facing(rep["facing"])
+
+
+def print_facing(f):
+    """Run 76: the current rule against the new (no switch from 90 deg or more off the facing)."""
+    print(f"\n6. RUN 76: {f['rule']}")
+    print(f"  star differences in the published window: {f['star_differences']}; published rows "
+          f"that lose the wind-sea mark by this rule: {f['published_unswitched_by_facing']}")
+    print("\n6a. Archive: switched hours, current rule -> new rule, by state")
+    for st, e in f["archive_switches"].items():
+        print(f"  {st:22} {e['current']:8} -> {e['new']:8}  removed {e['removed']:7}  "
+              f"kept inside the window though 90+ off the facing {e['kept_inside_window']:6}")
+    a = f["archive_removed"]
+    print("\n6b. Archive: removed switches, by state: shown period against the buoy's DPD "
+          "(within 2 s), current rule (wind sea's period) -> new (rated swell's)")
+    for st, e in a["by_state"].items():
+        print(f"  {st:22} n {e['hours']:6} ({e['spots']:3} spots; longer {e['longer']}, dominant "
+              f"{e['dominant']}) off facing {e['wind_off_facing']} deg; period {e['period_current']}"
+              f" -> {e['period_new']} s; buoy n {e['with_buoy']} DPD {e['buoy_dpd']} s, within 2 s "
+              f"{_p(e['near_buoy_current'])} -> {_p(e['near_buoy_new'])}; surf (n {e['surf_hours']})"
+              f" {e['surf_current']} -> {e['surf_new']} ft")
+    print(f"\n6c. Archive: removed switches, top {TOP_AWAY_SPOTS} spots")
+    for e in a["by_spot"]:
+        print(f"  {e['spot']:30} {e['state']:16} {e['hours']:6}  facing {e['facing']} wind sea from "
+              f"{e['wind_dp']} ({e['wind_off_facing']} off); buoy n {e['with_buoy']} within 2 s "
+              f"{_p(e['near_buoy_current'])} -> {_p(e['near_buoy_new'])}")
+    p = f["published_removed"]
+    print(f"\n6d. Published window: removed switches by state {p['by_state']}")
+    for e in p["by_spot"]:
+        print(f"  {e['spot']:30} {e['state']:16} {e['hours']:6}")
+    pf = f["published_face_change"]
+    print(f"\n6f. Published window: surf height on the {pf['rows']} unswitched rows whose height moves "
+          f"(up {pf['up']}, down {pf['down']}): change ft {pf['ft']}, % {pf['pct']}")
+    for k in ("largest_drops", "largest_rises"):
+        print(f"  {k}:")
+        for e in pf[k]:
+            print(f"    {e['spot']:30} {e['state']:16} {e['hours']:5} median {e['median_ft']} ft, "
+                  f"biggest {e['biggest_ft']} ft at {e['at']} ({e['before']} -> {e['after']})")
+    se = f["archive_sensitivity"]
+    print(f"\n6g. Archive: removed hours only {se['band_deg'][0]:g}-{se['band_deg'][1]:g} deg off the "
+          f"facing: {se['hours']} of {se['of_removed']}")
+    for e in se["by_spot"]:
+        print(f"  {e['spot']:30} {e['state']:16} {e['hours']:6} of {e['of_spot_removed']:6}  facing "
+              f"{e['facing']} wind sea from {e['wind_dp']} ({e['wind_off_facing']} off)")
+    for part in ("by_region", "by_state"):
+        print(f"\n6h. Against the NWS range, headline hours the rule unswitches, {part}: "
+              f"before (wind sea's period) | after (rated period)")
+        for g, e in f["nws"][part].items():
+            print(f"  {g:24} {_sides_str(e['before'])} | {_sides_str(e['after'])}  moved {e['moved']}")
+    print("\n6e. St. Pete Beach, 2026-10-28 UTC")
+    for h in f["st_pete_2026_10_28"]:
+        print(f"  {h['valid_time'][:16]} shown {h['shown_current']} {h['shown_tp_current']} s -> "
+              f"{h['shown']} {h['shown_tp']} s; wind sea from {h['wind_dp']} ({h['wind_off_facing']} "
+              f"off {h['facing']}); buoy DPD {h.get('buoy_tp')}; {h['why']}")
 
 
 def write_csv(path, rows):
@@ -1250,6 +1560,8 @@ def main(argv=None):
     p.add_argument("--csv", default=None, help="the published window's switched hours")
     p.add_argument("--archive-csv", default=None, help="the archive's switched hours, with the buoy")
     p.add_argument("--compare-out", default=None, help="face_compare's JSON for the archive")
+    p.add_argument("--away-csv", default=None,
+                   help="run 76: the archive's switches the facing rule removes, with the buoy")
     a = p.parse_args(argv)
     from supabase import create_client
     client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
@@ -1262,6 +1574,7 @@ def main(argv=None):
     comp = rep.pop("_compare")
     tile_hours = rep.pop("_tile_hours")
     records = rep.pop("_records")
+    away = rep.pop("_away")
     compare_print(comp)
     print_report(rep)
     if a.out:
@@ -1271,6 +1584,8 @@ def main(argv=None):
         write_csv(a.csv, tile_hours)
     if a.archive_csv:
         write_csv(a.archive_csv, records)
+    if a.away_csv:
+        write_csv(a.away_csv, away)
     if a.compare_out:
         with open(a.compare_out, "w") as fh:
             json.dump({k: v for k, v in comp.items() if k != "_pairs"}, fh, indent=1)

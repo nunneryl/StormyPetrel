@@ -163,12 +163,12 @@ def sized_hs(entry):
     return face / (period_factor(tp, "ww3") * M_TO_FT)
 
 
-def surf_period(entry, arcs):
-    """(period s, wind_sea) the hour is shoaled at, at a spot whose swell window is *arcs*: the
-    shown train's period (shown_period.shown_train), the rated swell_tp unless the wind sea is
-    shown."""
+def surf_period(entry, arcs, facing):
+    """(period s, wind_sea) the hour is shoaled at, at a spot whose swell window is *arcs* and
+    facing *facing* (orientation_deg): the shown train's period (shown_period.shown_train), the
+    rated swell_tp unless the wind sea is shown."""
     from .shown_period import shown_train
-    tp, _dp, which = shown_train(entry, arcs)
+    tp, _dp, which = shown_train(entry, arcs, facing)
     return tp, which == "wind_sea"
 
 
@@ -215,7 +215,7 @@ def apply_surf_height(ratings, spots, factors, slug_for=None):
             if e.get("face_ft") is None or hs is None:
                 stats["hours_without_inputs"] += 1
                 continue
-            tp, wind_sea = surf_period(e, spot.get("swell_window_arcs"))
+            tp, wind_sea = surf_period(e, spot.get("swell_window_arcs"), spot.get("orientation_deg"))
             todo.append((e, hs, tp, wind_sea))
         stats["spots_rewritten"] += len(todo) > n0
     if todo:

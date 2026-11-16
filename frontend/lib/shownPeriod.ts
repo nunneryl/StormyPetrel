@@ -19,6 +19,15 @@
  * (interpret._min_offset_from_arcs, from each arc's padded edge). A spot with no window arcs
  * switches as before.
  *
+ * Nor when it comes from OUTSIDE the window AND from FACING_OFF_DEG (90) or more off the spot's
+ * facing (orientation_deg): it then runs along the shore or out to sea (sw1-raycast runs 76 and 77;
+ * St. Pete Beach on 2026-10-28, a 4.7 s wind sea from 16 deg at a beach facing 240, 136 deg off its
+ * facing and 59 deg outside its window). Inside the window the switch is decided as before, however
+ * far off the facing (The Hook, facing 149: a wind sea from 245 wraps in). "Outside" is the window
+ * rung's test (bearingInArc: padded edges inclusive, so exactly on an edge is inside). Exactly 90
+ * deg off the facing counts as away, as the surface label puts exactly 120 deg off with onshore
+ * (#279). A spot with no window arcs, or no facing, is decided by the window alone.
+ *
  * The stars are untouched: they stay on the rated partition. pipeline/forecast/shown_period.py is
  * the same rule (it also sets the period the surf height is shoaled at), and both are held to
  * lib/shownPeriod.cases.json.
@@ -48,6 +57,7 @@ const MATCH_TOL = 0.001;
 export const MIN_LONGER_S = 0.5;
 export const DOMINANCE_K = 4;
 export const BLOCKED_OUTSIDE_DEG = 90;
+export const FACING_OFF_DEG = 90;
 
 function num(v: number | null | undefined): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
@@ -96,6 +106,23 @@ export function windSeaBlocked(dp: number, arcs: readonly WindowArc[] | null | u
   return outsideWindowDeg(dp, arcs) >= BLOCKED_OUTSIDE_DEG;
 }
 
+/** Degrees between bearing dp and the spot's facing, 0 to 180; null with no facing. */
+export function offFacingDeg(dp: number, facing: number | null | undefined): number | null {
+  const f = num(facing ?? null);
+  return f === null ? null : angleOff(dp, f);
+}
+
+/** Does a wind sea from dp run along the shore or out to sea at a spot facing `facing` whose
+ *  window is arcs: from outside the window (padded edges inclusive) and FACING_OFF_DEG or more off
+ *  the facing? false with no facing or no arcs. */
+export function windSeaAway(
+  dp: number, facing: number | null | undefined, arcs: readonly WindowArc[] | null | undefined,
+): boolean {
+  if (!arcs || arcs.length === 0 || arcs.some((a) => bearingInArc(dp, a))) return false;
+  const off = offFacingDeg(dp, facing);
+  return off !== null && off >= FACING_OFF_DEG;
+}
+
 /** [hs, tp, dp] of the swell partition the hour was rated on, or null. */
 export function ratedPartition(row: ShownTrainRow): [number, number, number] | null {
   const tp = num(row.swell_tp);
@@ -114,9 +141,10 @@ export function ratedPartition(row: ShownTrainRow): [number, number, number] | n
 }
 
 /** 'longer' or 'dominant' when the wind sea is shown ('longer' first when both hold), else null.
- *  arcs: the spot's swell_window_arcs. */
+ *  arcs: the spot's swell_window_arcs; facing: its orientation_deg. */
 export function switchCase(
   row: ShownTrainRow, arcs: readonly WindowArc[] | null | undefined,
+  facing: number | null | undefined,
 ): 'longer' | 'dominant' | null {
   if (!WW3_IDENTITY_SOURCES.includes(row.swell_source ?? '')) return null;
   const rated = ratedPartition(row);
@@ -124,24 +152,28 @@ export function switchCase(
   const wt = num(row.wind_wave_tp);
   const wd = num(row.wind_wave_dp);
   if (rated === null || wh === null || wt === null || wd === null) return null;
-  if (windSeaBlocked(wd, arcs)) return null;
+  if (windSeaBlocked(wd, arcs) || windSeaAway(wd, facing, arcs)) return null;
   if (wh > rated[0] && wt - rated[1] >= MIN_LONGER_S) return 'longer';
   if (wh >= DOMINANCE_K * rated[0]) return 'dominant';
   return null;
 }
 
 /** Is the wind sea shown for the row? */
-export function windSeaDominates(row: ShownTrainRow, arcs: readonly WindowArc[] | null | undefined): boolean {
-  return switchCase(row, arcs) !== null;
+export function windSeaDominates(
+  row: ShownTrainRow, arcs: readonly WindowArc[] | null | undefined,
+  facing: number | null | undefined,
+): boolean {
+  return switchCase(row, arcs, facing) !== null;
 }
 
-/** The period and direction to show for the row at a spot whose window is arcs, and which train
- *  they belong to. */
+/** The period and direction to show for the row at a spot whose window is arcs and facing is
+ *  facing, and which train they belong to. */
 export function shownTrain(
   row: ShownTrainRow | null | undefined, arcs: readonly WindowArc[] | null | undefined,
+  facing: number | null | undefined,
 ): ShownTrain {
   if (!row) return { tp: null, dp: null, which: 'swell' };
-  if (windSeaDominates(row, arcs)) {
+  if (windSeaDominates(row, arcs, facing)) {
     return { tp: num(row.wind_wave_tp), dp: num(row.wind_wave_dp), which: 'wind_sea' };
   }
   return {

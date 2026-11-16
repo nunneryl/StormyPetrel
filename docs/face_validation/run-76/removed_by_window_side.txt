@@ -1,0 +1,86 @@
+rows 18405 Counter({'False': 17418, 'True': 987})
+
+== inside
+state | hours | spots | buoy n | within 2 s current | new | med wind tp | med rated tp | med outside deg
+all | 987 | 46 | 351 | 84.9 | 42.5 | 6.52 | 9.76 | 0.0
+California | 69 | 5 | 13 | 0.0 | 92.3 | 7.29 | 13.73 | 0.0
+Florida | 119 | 6 | 67 | 59.7 | 41.8 | 4.95 | 7.26 | 0.0
+Georgia | 2 | 1 | 2 | 100.0 | 0.0 | 5.15 | 10.57 | 0.0
+Hawaii | 358 | 5 | 59 | 96.6 | 66.1 | 7.41 | 11.34 | 0.0
+Maryland | 12 | 2 | 0 | None | None | 5.6 | 9.33 | 0.0
+New Jersey | 46 | 10 | 34 | 82.4 | 44.1 | 5.98 | 8.19 | 0.0
+New York | 121 | 5 | 92 | 100.0 | 34.8 | 5.91 | 9.29 | 0.0
+North Carolina | 56 | 4 | 10 | 100.0 | 0.0 | 6.88 | 11.88 | 0.0
+Puerto Rico | 1 | 1 | 0 | None | None | 4.53 | 8.9 | 0.0
+Rhode Island | 179 | 5 | 64 | 92.2 | 20.3 | 3.75 | 8.72 | 0.0
+Texas | 10 | 1 | 10 | 100.0 | 100.0 | 5.17 | 5.93 | 0.0
+Washington | 14 | 1 | 0 | None | None | 8.77 | 15.29 | 0.0
+-- top 20 spots
+Sandy Beach Oahu | Hawaii | 160 | facing 169.0 | wind dp med 66 | off facing med 103 | outside med 0.0 | buoy n 0 | None -> None
+Tunnels Beach | Hawaii | 135 | facing 319.0 | wind dp med 70 | off facing med 111 | outside med 0.0 | buoy n 0 | None -> None
+Third Beach Newport | Rhode Island | 115 | facing 90.0 | wind dp med 212 | off facing med 122 | outside med 0.0 | buoy n 0 | None -> None
+Richardson Beach | Hawaii | 59 | facing 345.0 | wind dp med 80 | off facing med 95 | outside med 0.0 | buoy n 59 | 96.6 -> 66.1
+Hillsboro Inlet | Florida | 47 | facing 134.0 | wind dp med 31 | off facing med 103 | outside med 0.0 | buoy n 47 | 48.9 -> 38.3
+Cape Hatteras Lighthouse | North Carolina | 46 | facing 161.0 | wind dp med 62 | off facing med 99 | outside med 0.0 | buoy n 0 | None -> None
+Radars | New York | 36 | facing 115.0 | wind dp med 212 | off facing med 97 | outside med 0.0 | buoy n 35 | 100.0 -> 37.1
+Montauk Point | New York | 35 | facing 90.0 | wind dp med 203 | off facing med 113 | outside med 0.0 | buoy n 34 | 100.0 -> 35.3
+Pigeon Point | California | 27 | facing 203.0 | wind dp med 305 | off facing med 102 | outside med 0.0 | buoy n 0 | None -> None
+South Beach Miami | Florida | 26 | facing 114.0 | wind dp med 21 | off facing med 93 | outside med 0.0 | buoy n 0 | None -> None
+Cape San Blas | Florida | 25 | facing 220.0 | wind dp med 124 | off facing med 96 | outside med 0.0 | buoy n 0 | None -> None
+Conant Ave | Rhode Island | 22 | facing 92.0 | wind dp med 218 | off facing med 126 | outside med 0.0 | buoy n 22 | 90.9 -> 22.7
+Pilgrim Ave | Rhode Island | 22 | facing 92.0 | wind dp med 218 | off facing med 126 | outside med 0.0 | buoy n 22 | 90.9 -> 22.7
+Mendocino | California | 21 | facing 227.0 | wind dp med 318 | off facing med 91 | outside med 0.0 | buoy n 0 | None -> None
+Turtle Cove Montauk | New York | 20 | facing 121.0 | wind dp med 214 | off facing med 93 | outside med 0.0 | buoy n 19 | 100.0 -> 31.6
+Breezy Point | New York | 16 | facing 178.0 | wind dp med 87 | off facing med 91 | outside med 0.0 | buoy n 0 | None -> None
+La Push First Beach | Washington | 14 | facing 197.0 | wind dp med 288 | off facing med 91 | outside med 0.0 | buoy n 0 | None -> None
+Shinnecock Inlet | New York | 14 | facing 176.0 | wind dp med 83 | off facing med 93 | outside med 0.0 | buoy n 4 | 100.0 -> 25.0
+Cabrillo Beach | California | 13 | facing 164.0 | wind dp med 268 | off facing med 104 | outside med 0.0 | buoy n 13 | 0.0 -> 92.3
+Point Judith | Rhode Island | 12 | facing 121.0 | wind dp med 222 | off facing med 101 | outside med 0.0 | buoy n 12 | 91.7 -> 25.0
+
+== outside
+state | hours | spots | buoy n | within 2 s current | new | med wind tp | med rated tp | med outside deg
+all | 17418 | 394 | 8893 | 81.2 | 36.8 | 4.99 | 9.54 | 43.8
+California | 1651 | 34 | 567 | 84.1 | 13.9 | 6.5 | 14.46 | 39.6
+Delaware | 166 | 6 | 148 | 54.1 | 29.7 | 3.99 | 9.5 | 41.9
+Florida | 4077 | 67 | 2783 | 96.4 | 72.6 | 3.72 | 5.57 | 49.2
+Georgia | 137 | 6 | 57 | 77.2 | 0.0 | 3.02 | 9.37 | 40.4
+Hawaii | 5073 | 43 | 1269 | 61.2 | 29.9 | 7.25 | 11.74 | 44.6
+Maine | 142 | 7 | 25 | 88.0 | 48.0 | 5.24 | 8.91 | 22.4
+Maryland | 53 | 3 | 0 | None | None | 3.94 | 11.53 | 35.7
+Massachusetts | 966 | 24 | 660 | 85.3 | 27.9 | 4.38 | 8.83 | 42.0
+New Hampshire | 66 | 7 | 0 | None | None | 3.25 | 7.21 | 77.1
+New Jersey | 1524 | 57 | 1308 | 64.8 | 21.5 | 3.57 | 11.08 | 43.3
+New York | 809 | 30 | 372 | 92.2 | 11.0 | 4.16 | 8.78 | 38.3
+North Carolina | 853 | 37 | 451 | 91.4 | 7.8 | 5.28 | 9.49 | 39.2
+Oregon | 43 | 2 | 0 | None | None | 6.35 | 15.59 | 60.2
+Puerto Rico | 408 | 13 | 71 | 9.9 | 33.8 | 4.91 | 8.74 | 29.7
+Rhode Island | 586 | 27 | 549 | 83.4 | 21.5 | 3.44 | 8.52 | 42.2
+South Carolina | 721 | 18 | 557 | 78.5 | 9.5 | 3.35 | 9.19 | 45.3
+Texas | 57 | 7 | 0 | None | None | 5.26 | 6.38 | 25.2
+Virginia | 76 | 5 | 76 | 100.0 | 0.0 | 3.64 | 9.78 | 36.1
+Washington | 10 | 1 | 0 | None | None | 8.89 | 15.38 | 9.9
+-- top 20 spots
+Thousand Peaks Maui | Hawaii | 442 | facing 210.0 | wind dp med 70 | off facing med 140 | outside med 76.5 | buoy n 0 | None -> None
+Honolua Bay | Hawaii | 437 | facing 278.0 | wind dp med 70 | off facing med 152 | outside med 21.5 | buoy n 0 | None -> None
+Whitney Beach | Florida | 268 | facing 240.0 | wind dp med 46 | off facing med 132 | outside med 43.2 | buoy n 264 | 98.9 -> 74.2
+Spring Ave | Florida | 260 | facing 239.0 | wind dp med 45 | off facing med 134 | outside med 36.9 | buoy n 257 | 98.8 -> 72.4
+St. Pete Beach | Florida | 246 | facing 240.0 | wind dp med 30 | off facing med 133 | outside med 56.1 | buoy n 239 | 98.7 -> 77.0
+Redington Pier | Florida | 245 | facing 235.0 | wind dp med 29 | off facing med 134 | outside med 56.4 | buoy n 237 | 98.7 -> 81.4
+Twin Piers | Florida | 241 | facing 254.0 | wind dp med 39 | off facing med 122 | outside med 47.3 | buoy n 240 | 97.9 -> 77.5
+Indian Rocks Beach | Florida | 230 | facing 278.0 | wind dp med 33 | off facing med 113 | outside med 30.4 | buoy n 228 | 97.8 -> 64.5
+Oak Island Pier | North Carolina | 224 | facing 200.0 | wind dp med 81 | off facing med 119 | outside med 49.5 | buoy n 0 | None -> None
+Treasure Island FL | Florida | 222 | facing 230.0 | wind dp med 25 | off facing med 136 | outside med 62.55 | buoy n 214 | 98.6 -> 83.2
+Madeira Beach | Florida | 218 | facing 225.0 | wind dp med 24 | off facing med 140 | outside med 65.7 | buoy n 210 | 98.6 -> 81.4
+Kaisers | Hawaii | 198 | facing 210.0 | wind dp med 66 | off facing med 144 | outside med 77.3 | buoy n 197 | 66.5 -> 25.4
+Ala Moana Bowls | Hawaii | 197 | facing 210.0 | wind dp med 66 | off facing med 144 | outside med 73.3 | buoy n 196 | 66.8 -> 25.0
+Bombora | Hawaii | 197 | facing 210.0 | wind dp med 66 | off facing med 144 | outside med 73.3 | buoy n 196 | 66.8 -> 25.0
+Captiva | Florida | 197 | facing 258.0 | wind dp med 88 | off facing med 120 | outside med 44.3 | buoy n 197 | 98.0 -> 79.7
+Publics Waikiki | Hawaii | 194 | facing 232.0 | wind dp med 66 | off facing med 166 | outside med 61.1 | buoy n 193 | 66.3 -> 25.9
+Diamond Head Cliffs | Hawaii | 190 | facing 180.0 | wind dp med 66 | off facing med 114 | outside med 49.3 | buoy n 189 | 67.2 -> 25.9
+Kanaha Beach | Hawaii | 189 | facing 337.0 | wind dp med 74 | off facing med 97 | outside med 25.1 | buoy n 0 | None -> None
+Hoʻokipa | Hawaii | 184 | facing 340.0 | wind dp med 78 | off facing med 98 | outside med 32.7 | buoy n 0 | None -> None
+Kiahuna Beach | Hawaii | 177 | facing 217.0 | wind dp med 77 | off facing med 140 | outside med 17.6 | buoy n 0 | None -> None
+
+== no window
+state | hours | spots | buoy n | within 2 s current | new | med wind tp | med rated tp | med outside deg
+-- top 20 spots

@@ -89,7 +89,11 @@ name: sw1-raycast
 #       buoy; every published hour from now replayed through apply_surf_height (0 star and 0
 #       other-field differences, #283's surf rows reproduced byte for byte where nothing
 #       switches, no badge flips), the stars if the rating used the wind sea (informational), and
-#       run 54's NWS display table reproduced before the display with the fix. SELECT only.
+#       run 54's NWS display table reproduced before the display with the fix. Run 76 onward, the
+#       rule before and after the facing exclusion (run 77 on: no switch when the wind sea is
+#       outside the window and 90 deg or more off the spot's facing): switches removed by state and
+#       spot, those kept inside the window, the shown period against the buoy before and after on
+#       the removed hours, and 0 star differences. SELECT only.
 #   mode = nwps-cells: READ-ONLY (pipeline/nwps_cells.py), run 58 onward. Over the archive since
 #       2026-09-07: Rodanthe, Salvo and S-Turns against Outer Banks Fishing Pier hour for hour
 #       (how often under 40% of the pier's NWPS Hs), and every NWPS spot against the median of
@@ -836,7 +840,8 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python -m pipeline.period_preview --out period_preview.json --csv period_preview_hours.csv \
-            --archive-csv period_preview_archive.csv --compare-out face_compare.json
+            --archive-csv period_preview_archive.csv --compare-out face_compare.json \
+            --away-csv period_preview_away.csv
 
       - name: Keep the results
         if: ${{ always() }}
@@ -847,6 +852,7 @@ jobs:
             period_preview.json
             period_preview_hours.csv
             period_preview_archive.csv
+            period_preview_away.csv
             face_compare.json
           retention-days: 90
           if-no-files-found: warn
