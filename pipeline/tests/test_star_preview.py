@@ -796,3 +796,156 @@ def test_the_rater_replay_aims_at_the_optimal_not_the_facing():
     spot = dict(NW, orientation_deg=270.0)
     r = SP.rescore(_nwps(), spot)
     assert (round(r["gain"], 6), r["stars"]) == (0.853553, 4.0)
+
+
+# --------------------------------------------------------------------------- #
+# The facing: the wind multiplier and the wind cap at another offshore bearing #
+# --------------------------------------------------------------------------- #
+# Worked by hand from interpret.wind_multiplier, wind_star_cap and composite_stars (exponent
+# 0.35 on wind_mult, everything else 1.0, no MOP factors so no size scale):
+#
+#   wind from 90 at 8 m/s (15.5508 kt), offshore bearing 90: 0 deg off -> 1.2 (no blend at
+#     5 m/s or more). Cap: offshore under 20 kt -> 5.0. Face 5.0 -> size 3.5;
+#     1.2**0.35 = 1.065893 -> 3.730626 -> round(7.461)/2 = 3.5.
+#   the same wind, offshore bearing 270: 180 deg off -> 0.55, onshore. Cap: 15.5508 kt less
+#     the allowance 13 - 8 = 5 s is 10.55, under the 13 kt rung; but onshore at 8 m/s >= 6 m/s
+#     -> 2.5 (the blown-out rung). 0.55**0.35 = 0.811177 -> 2.839120 -> 3.0, capped -> 2.5.
+#   wind from 90 at 2 m/s (3.888 kt): blend 2/5 = 0.4. Bearing 90: 0.6 + 0.4 x 1.2 = 1.08,
+#     1.08**0.35 = 1.027302 -> 3.595557 -> 3.5. Bearing 270: 0.6 + 0.4 x 0.55 = 0.82,
+#     0.82**0.35 = 0.932899 -> 3.265147 -> 3.5; at 2 m/s neither cap applies.
+#   no wind: wind_mult kept as stored (1.0) -> 3.5, cap 5.0.
+
+FACE_BEFORE = dict(WEST, offshore_wind_deg=90.0)
+FACE_AFTER = dict(WEST, orientation_deg=90.0, offshore_wind_deg=270.0)
+
+
+def _windy(wind_dir=90.0, wind_speed=8.0, wind_mult=1.2, stars=3.5, **kw):
+    row = _mop(face_ft=5.0, wind_dir=wind_dir, wind_speed=wind_speed, wind_mult=wind_mult,
+               chop_ratio=None, stars=stars, valid_time="2026-11-17T00:00:00+00:00")
+    row.update(kw)
+    return row
+
+
+def test_facing_changes_lists_only_spots_whose_facing_or_offshore_bearing_moved():
+    before = {"A": FACE_BEFORE, "B": FACE_BEFORE, "C": dict(FACE_BEFORE), "D": FACE_BEFORE}
+    after = {"A": FACE_AFTER, "B": FACE_BEFORE, "C": dict(FACE_BEFORE, offshore_wind_deg=91.0)}
+    assert SP.facing_changes(before, after) == {
+        "A": {"orientation_deg": [270.0, 90.0], "offshore_wind_deg": [90.0, 270.0]},
+        "C": {"orientation_deg": [270.0, 270.0], "offshore_wind_deg": [90.0, 91.0]}}
+
+
+def test_facing_rerate_recomputes_the_wind_multiplier_and_the_cap():
+    assert SP.facing_rerate(_windy(), FACE_BEFORE, {}, None) == {"stars": 3.5, "wind_mult": 1.2}
+    assert SP.facing_rerate(_windy(), FACE_AFTER, {}, None) == {"stars": 2.5, "wind_mult": 0.55}
+
+
+def test_facing_rerate_blends_light_wind_toward_neutral():
+    row = _windy(wind_speed=2.0, wind_mult=1.08)
+    assert SP.facing_rerate(row, FACE_BEFORE, {}, None) == {"stars": 3.5, "wind_mult": 1.08}
+    assert SP.facing_rerate(row, FACE_AFTER, {}, None) == {"stars": 3.5, "wind_mult": 0.82}
+
+
+def test_facing_rerate_keeps_the_stored_multiplier_without_wind_or_bearing():
+    row = _windy(wind_dir=None, wind_speed=None, wind_mult=1.0)
+    assert SP.facing_rerate(row, FACE_AFTER, {}, None) == {"stars": 3.5, "wind_mult": 1.0}
+    no_bearing = dict(FACE_AFTER, offshore_wind_deg=None)
+    assert SP.facing_rerate(_windy(wind_mult=0.9), no_bearing, {}, None)["wind_mult"] == 0.9
+
+
+def test_facing_rerate_reports_a_row_it_cannot_replay():
+    r = SP.facing_rerate(_windy(swell_dp=None), FACE_BEFORE, {}, None)
+    assert r["stars"] is None and r["why"].startswith("mop:")
+
+
+def _facing_report():
+    names = {1: ("A", "Florida"), 2: ("B", "California"), 3: ("C", "Hawaii")}
+    before = {"A": FACE_BEFORE, "B": FACE_BEFORE}
+    after = {"A": FACE_AFTER, "B": FACE_BEFORE}
+    rows = [
+        dict(_windy(), spot_id=1),                                        # 3.5 -> 2.5
+        dict(_windy(wind_speed=2.0, wind_mult=1.08), spot_id=1),          # 3.5 -> 3.5
+        dict(_windy(wind_mult=1.0), spot_id=1),                           # stale wind_mult
+        dict(_windy(stars=3.0), spot_id=1),                               # stars differ
+        dict(_windy(wind_dir=None, wind_speed=None, wind_mult=1.0), spot_id=1),
+        dict(_windy(), spot_id=2),                                        # facing unchanged
+        dict(_windy(), spot_id=3),                                        # in no spots file
+    ]
+    return SP.facing_compare(rows, before, after, names, {}, None)
+
+
+def test_the_facing_gate_counts_rows_by_reason():
+    rep = _facing_report()
+    assert rep["spots_changed"] == 1
+    assert rep["gate"] == {"MOP": {"not in both spots files or no published stars": 1,
+                                   "reproduced": 4, "stars NOT reproduced": 1,
+                                   "wind_mult NOT reproduced": 1}}
+    assert rep["gate_not_reproduced"] == 2
+    assert rep["gate_by_changed_spot"] == {"A": {"reproduced": 3, "stars NOT reproduced": 1,
+                                                 "wind_mult NOT reproduced": 1}}
+    assert [(e["why"], e["stored_wind_mult"], e["wind_mult"], e["published"], e["stars"])
+            for e in rep["gate_examples"]] == [
+        ("wind_mult NOT reproduced", 1.0, 1.2, 3.5, 3.5),
+        ("stars NOT reproduced", 1.2, 1.2, 3.0, 3.5)]
+
+
+def test_the_facing_change_by_source_state_and_spot():
+    rep = _facing_report()
+    assert rep["delta_by_group"] == {"MOP": {-1.0: 1, 0.0: 3}}
+    assert rep["delta_by_state"] == {"California": {0.0: 1}, "Florida": {-1.0: 1, 0.0: 2}}
+    assert rep["unchanged_spots_moved"] == []
+    assert list(rep["per_spot"]) == ["A"]
+    a = rep["per_spot"]["A"]
+    assert (a["state"], a["hours"], a["ups"], a["downs"]) == ("Florida", 3, 0, 1)
+    assert (a["orientation_deg"], a["offshore_wind_deg"]) == ([270.0, 90.0], [90.0, 270.0])
+    assert a["by_source"] == {"MOP": {-1.0: 1, 0.0: 2}}
+    assert a["by_wind_band"] == {"<=13 kt": {0.0: 1}, "<=20 kt": {-1.0: 1}, "no wind": {0.0: 1}}
+    assert a["wind_class_moves"] == {"offshore -> onshore": 2}
+    assert [(c["wind_kt"], c["wind_mult"], c["stars"], c["delta"]) for c in a["largest"]] == [
+        (15.6, [1.2, 0.55], [3.5, 2.5], -1.0)]
+
+
+def test_a_spot_whose_facing_is_unchanged_but_whose_stars_move_is_flagged():
+    # B keeps its facing but its window moves to NW: 270 is 20 deg outside [290-340], the 0.40
+    # rung (see the MOP tests), eff 5.0 x 0.4 = 2.0 -> size 2.0 x 1.065893 = 2.131786 -> 2.0.
+    names = {2: ("B", "California")}
+    nw_same_facing = dict(NW, orientation_deg=270.0, offshore_wind_deg=90.0)
+    rep = SP.facing_compare([dict(_windy(), spot_id=2)], {"B": FACE_BEFORE, "A": FACE_BEFORE},
+                            {"B": nw_same_facing, "A": FACE_AFTER}, names, {}, None)
+    assert rep["unchanged_spots_moved"] == [
+        {"spot": "B", "valid_time": "2026-11-17T00:00:00+00:00", "delta": -1.5}]
+
+
+def test_star_preview_main_adds_the_facing_only_when_a_facing_moves(tmp_path, monkeypatch):
+    import json
+    import sys
+    import types
+    monkeypatch.setitem(sys.modules, "supabase", types.SimpleNamespace(create_client=lambda u, k: None))
+    monkeypatch.setenv("SUPABASE_URL", "u")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "k")
+    monkeypatch.setattr(SP, "load_face_factors", lambda: {})
+    monkeypatch.setattr(SP, "_fetch", lambda client, since: ({1: ("A", "Florida")},
+                                                             [dict(_windy(), spot_id=1)]))
+    base, moved = tmp_path / "base.json", tmp_path / "moved.json"
+    base.write_text(json.dumps([dict(FACE_BEFORE, name="A")]))
+    moved.write_text(json.dumps([dict(FACE_AFTER, name="A")]))
+    out = tmp_path / "out.json"
+    assert SP.main(["--arcs", str(moved), "--baseline", str(base), "--since", "S",
+                    "--out", str(out)]) == 0
+    got = json.loads(out.read_text())
+    assert got["facing"]["per_spot"]["A"]["by_source"] == {"MOP": {"-1.0": 1}}
+    assert got["delta_by_group"] == {"MOP": {"0.0": 1}}       # the swell window: unchanged
+    assert SP.main(["--arcs", str(base), "--baseline", str(base), "--since", "S",
+                    "--out", str(out)]) == 0
+    assert "facing" not in json.loads(out.read_text())
+
+
+def test_a_reproduced_row_the_new_geometry_cannot_replay_is_counted_apart_from_the_gate():
+    # An MOP row needs a shore normal: with no mop_shore_normal and no facing there is none.
+    names = {1: ("A", "Florida")}
+    no_facing = dict(FACE_AFTER, orientation_deg=None)
+    rep = SP.facing_compare([dict(_windy(), spot_id=1)], {"A": FACE_BEFORE}, {"A": no_facing},
+                            names, {}, None)
+    assert rep["gate_not_reproduced"] == 0
+    assert rep["not_replayable_after"] == {
+        "MOP: mop: direction, face, shore normal or period missing": 1}
+    assert rep["delta_by_group"] == {} and rep["per_spot"]["A"]["hours"] == 0

@@ -1029,8 +1029,8 @@
       "name": "Hillsboro Beach"
     },
     "hillsboro-inlet": {
-      "orientation_deg": 134.0,
-      "cardinal": "SE",
+      "orientation_deg": 108.0,
+      "cardinal": "ESE",
       "name": "Hillsboro Inlet",
       "source": "manual_relook"
     },
@@ -1308,9 +1308,10 @@
       "name": "La Pared Luquillo"
     },
     "la-push-first-beach": {
-      "orientation_deg": 197.0,
-      "cardinal": "SSW",
-      "name": "La Push First Beach"
+      "orientation_deg": 240.0,
+      "cardinal": "WSW",
+      "name": "La Push First Beach",
+      "source": "manual_relook"
     },
     "la-push-second-beach": {
       "orientation_deg": 228.0,
@@ -2887,8 +2888,8 @@
       "name": "Tokeland"
     },
     "topanga-beach": {
-      "orientation_deg": 151.0,
-      "cardinal": "SSE",
+      "orientation_deg": 170.0,
+      "cardinal": "S",
       "name": "Topanga Beach",
       "source": "manual_relook"
     },

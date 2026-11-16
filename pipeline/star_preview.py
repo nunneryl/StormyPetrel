@@ -147,6 +147,23 @@ SELECT only.
 
     python -m pipeline.star_preview --wind no-allowance-20,offshore-20,wind-both
         [--explain slug,slug] [--baseline B.json] [--out OUT.json]
+
+THE FACING (with --arcs, whenever a spot's orientation_deg or offshore_wind_deg differs between
+ARCS and BASELINE). The swell-window replay above keeps each row's stored wind_mult, and the
+wind is where a facing matters most: wind_multiplier and the wind cap both read the hour's wind
+against the spot's offshore bearing. facing_compare re-rates every row with the wind recomputed
+(facing_rerate): wind_mult by interpret.wind_multiplier from the row's stored wind_dir,
+wind_speed and chop_ratio against the spot's offshore_wind_deg, rounded to 3 decimals as the
+row stores it (kept as stored when the row has no wind or the spot no bearing, as the rater
+does), then the row re-scored with the spot's geometry (rescore) and rated by the wired rater
+(wired_rater, with the MOP face factors and their median), whose cap reads the same bearing.
+
+THE GATE. With BASELINE, every row must reproduce both its stored wind_mult and its published
+stars, hour for hour; the rows that do not are counted by source and reason and listed, and
+only the rows that do are compared. Rows at spots whose facing does not change must not move
+(a self-check). The change is reported by source and state, and for each spot whose facing
+changes, by source, by measured wind band and by how the wind's class (offshore, cross,
+onshore) moves. SELECT only.
 """
 from __future__ import annotations
 
@@ -179,6 +196,7 @@ from .interpret import (
     rule_keywords,
     size_score,
     wind_class,
+    wind_multiplier,
     wind_star_cap,
     KT_TO_MS,
     WIND_CAP_CROSS,
@@ -2059,6 +2077,180 @@ def tide_census(rows, tides):
     }
 
 
+# --------------------------------------------------------------------------- #
+# The facing: the wind multiplier and the wind cap at another offshore bearing #
+# --------------------------------------------------------------------------- #
+
+def facing_changes(before, after):
+    """{name: {orientation_deg: [before, after], offshore_wind_deg: [before, after]}} for every
+    spot in both spots files whose orientation_deg or offshore_wind_deg differs."""
+    out = {}
+    for name in sorted(set(before) & set(after)):
+        b, a = before[name], after[name]
+        if (b.get("orientation_deg") != a.get("orientation_deg")
+                or b.get("offshore_wind_deg") != a.get("offshore_wind_deg")):
+            out[name] = {"orientation_deg": [b.get("orientation_deg"), a.get("orientation_deg")],
+                         "offshore_wind_deg": [b.get("offshore_wind_deg"),
+                                               a.get("offshore_wind_deg")]}
+    return out
+
+
+def facing_rerate(row, spot, factors, m):
+    """The live rater on *row* at *spot*'s facing: {"stars", "wind_mult"}, or stars None with
+    "why" when the row cannot be replayed. wind_mult is interpret.wind_multiplier of the row's
+    stored wind_dir, wind_speed and chop_ratio against the spot's offshore_wind_deg, rounded to
+    3 decimals as the row stores it; the stored value where the row has no wind or the spot no
+    bearing (the rater keeps it then too). The row is then re-scored with the spot's geometry
+    (rescore) and rated by wired_rater, whose wind cap reads the same bearing."""
+    wd, ws = _num(row.get("wind_dir")), _num(row.get("wind_speed"))
+    off = spot.get("offshore_wind_deg")
+    wm = row.get("wind_mult")
+    if wd is not None and ws is not None and off is not None:
+        wm = round(wind_multiplier(wd, ws, off, _num(row.get("chop_ratio"))), 3)
+    new = dict(row, wind_mult=wm)
+    rb = rescore(new, spot)
+    if rb["stars"] is None:
+        return {"stars": None, "why": rb["why"], "wind_mult": wm}
+    return {"stars": wired_rater(new, spot, rb, spot_factor(spot, factors or {}, _slug), m),
+            "wind_mult": wm}
+
+
+def _same_mult(stored, recomputed):
+    if stored is None or recomputed is None:
+        return stored is None and recomputed is None
+    return round(float(stored), 3) == round(float(recomputed), 3)
+
+
+def facing_compare(rows, before, after, names, factors, m, examples=20):
+    """THE GATE and the change for a facing preview (see the module docstring)."""
+    changed = facing_changes(before, after)
+    gate = defaultdict(Counter)
+    gate_changed = defaultdict(Counter)
+    misses = []
+    by_group, by_state = defaultdict(Counter), defaultdict(Counter)
+    unchanged_moved = []
+    after_unreplayable = Counter()
+    per = {n: {"state": None, "by_source": defaultdict(Counter),
+               "by_wind_band": defaultdict(Counter), "wind_class_moves": Counter(),
+               "changed": []} for n in changed}
+    for row in rows:
+        name, state = names.get(row["spot_id"], (None, None))
+        b, a = before.get(name), after.get(name)
+        grp = group_of(row.get("swell_source") or "none")
+        if b is None or a is None or row.get("stars") is None:
+            gate[grp]["not in both spots files or no published stars"] += 1
+            continue
+        rb = facing_rerate(row, b, factors, m)
+        if rb["stars"] is None:
+            why = f"not replayable: {rb['why']}"
+        elif not _same_mult(row.get("wind_mult"), rb["wind_mult"]):
+            why = "wind_mult NOT reproduced"
+        elif rb["stars"] != float(row["stars"]):
+            why = "stars NOT reproduced"
+        else:
+            why = "reproduced"
+        gate[grp][why] += 1
+        if name in changed:
+            gate_changed[name][why] += 1
+        if why != "reproduced":
+            if why != "not in both spots files or no published stars" and len(misses) < examples:
+                misses.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+                               "group": grp, "why": why, "stored_wind_mult": row.get("wind_mult"),
+                               "wind_mult": rb["wind_mult"], "published": float(row["stars"]),
+                               "stars": rb["stars"]})
+            continue
+        ra = facing_rerate(row, a, factors, m)
+        if ra["stars"] is None:
+            after_unreplayable[f"{grp}: {ra['why']}"] += 1
+            continue
+        delta = round(ra["stars"] - rb["stars"], 1)
+        by_group[grp][delta] += 1
+        by_state[state][delta] += 1
+        if name not in changed:
+            if delta and len(unchanged_moved) < examples:
+                unchanged_moved.append({"spot": name, "valid_time": row["valid_time"],
+                                        "delta": delta})
+            continue
+        p = per[name]
+        p["state"] = state
+        wd, ws = _num(row.get("wind_dir")), _num(row.get("wind_speed"))
+        band = _kt_band(None if ws is None else ws / KT_TO_MS)
+        p["by_source"][grp][delta] += 1
+        p["by_wind_band"][band][delta] += 1
+        offs = (b.get("offshore_wind_deg"), a.get("offshore_wind_deg"))
+        if wd is not None and None not in offs:
+            p["wind_class_moves"][f"{wind_class(wd, offs[0])} -> {wind_class(wd, offs[1])}"] += 1
+        if delta:
+            p["changed"].append({"valid_time": row["valid_time"], "group": grp,
+                                 "wind_dir": wd, "wind_kt": None if ws is None else round(ws / KT_TO_MS, 1),
+                                 "wind_mult": [rb["wind_mult"], ra["wind_mult"]],
+                                 "stars": [rb["stars"], ra["stars"]], "delta": delta})
+    not_reproduced = sum(n for c in gate.values() for k, n in c.items() if k != "reproduced"
+                         and k != "not in both spots files or no published stars")
+    per_spot = {}
+    for n, p in per.items():
+        ch = p["changed"]
+        per_spot[n] = {
+            "state": p["state"], **changed[n],
+            "hours": sum(sum(c.values()) for c in p["by_source"].values()),
+            "ups": sum(c["delta"] > 0 for c in ch), "downs": sum(c["delta"] < 0 for c in ch),
+            "by_source": {g: dict(sorted(c.items())) for g, c in sorted(p["by_source"].items())},
+            "by_wind_band": {w: dict(sorted(c.items())) for w, c in sorted(p["by_wind_band"].items())},
+            "wind_class_moves": dict(sorted(p["wind_class_moves"].items())),
+            "largest": sorted(ch, key=lambda c: (-abs(c["delta"]), c["valid_time"]))[:examples]}
+    return {
+        "spots_changed": len(changed),
+        "gate": {g: dict(sorted(c.items())) for g, c in sorted(gate.items())},
+        "gate_not_reproduced": not_reproduced,
+        "gate_by_changed_spot": {n: dict(sorted(gate_changed[n].items())) for n in changed},
+        "gate_examples": misses,
+        "not_replayable_after": dict(sorted(after_unreplayable.items())),
+        "unchanged_spots_moved": unchanged_moved,
+        "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
+        "delta_by_state": {s: dict(sorted(c.items()))
+                           for s, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
+        "per_spot": per_spot,
+    }
+
+
+def _print_facing(rep, since):
+    print(f"\n=== The facing: {rep['spots_changed']} spots whose facing changes; every row "
+          f"re-rated with the wind recomputed (published window from {since}) ===")
+    print(f"GATE (BASELINE reproduces the stored wind_mult and the published stars, hour for "
+          f"hour): {rep['gate_not_reproduced']} rows NOT reproduced (must be 0)")
+    for g, c in rep["gate"].items():
+        print(f"  {g}: {c}")
+    for n, c in rep["gate_by_changed_spot"].items():
+        print(f"  at {n}: {c}")
+    for e in rep["gate_examples"]:
+        print(f"  {e['spot']} ({e['state']}) {e['valid_time']} [{e['group']}] {e['why']}: "
+              f"stored wind_mult {e['stored_wind_mult']} -> {e['wind_mult']}, published "
+              f"{e['published']} -> {e['stars']}")
+    for k, v in rep["not_replayable_after"].items():
+        print(f"  reproduced, but not replayable with ARCS — {k}: {v}")
+    print(f"rows at spots whose facing does not change that moved: "
+          f"{len(rep['unchanged_spots_moved'])} (must be 0)")
+    for e in rep["unchanged_spots_moved"]:
+        print(f"  {e['spot']} {e['valid_time']}: {e['delta']}")
+    print("star change by source (delta: hours):")
+    for g, c in rep["delta_by_group"].items():
+        print(f"  {g}: {c}")
+    for n, p in rep["per_spot"].items():
+        print(f"\n--- {n} ({p['state']}): facing {p['orientation_deg'][0]} -> "
+              f"{p['orientation_deg'][1]}, offshore bearing {p['offshore_wind_deg'][0]} -> "
+              f"{p['offshore_wind_deg'][1]}; {p['hours']} hours compared, {p['ups']} up, "
+              f"{p['downs']} down")
+        print(f"  by source (delta: hours): {p['by_source']}")
+        print("  by measured wind band (delta: hours):")
+        for w, c in p["by_wind_band"].items():
+            print(f"    {w}: {c}")
+        print(f"  wind class, before -> after (hours): {p['wind_class_moves']}")
+        for c in p["largest"][:10]:
+            print(f"  {c['valid_time']} [{c['group']}] wind {c['wind_dir']} deg {c['wind_kt']} kt: "
+                  f"wind_mult {c['wind_mult'][0]} -> {c['wind_mult'][1]}, stars "
+                  f"{c['stars'][0]} -> {c['stars'][1]}")
+
+
 def _by_name(path):
     return {s["name"]: s for s in json.load(open(path)) if s.get("name")}
 
@@ -2343,6 +2535,11 @@ def main(argv=None):
         rep = compare(rows, before, after, names)
         _print(rep, since)
         out.update(rep)
+        if facing_changes(before, after):
+            factors = load_face_factors()
+            out["facing"] = facing_compare(rows, before, after, names, factors,
+                                           median_factor(factors))
+            _print_facing(out["facing"], since)
     else:
         tides = _fetch_tides(client)
         out["census"] = tide_census(rows, tides)
