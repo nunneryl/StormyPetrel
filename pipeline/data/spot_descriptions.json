@@ -828,8 +828,9 @@
     "signature": "v2:fc602f8a19a5d06b"
   },
   "hillsboro-inlet": {
-    "description": "Hillsboro Inlet is a Florida jetty break with a sand bottom. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the east.",
-    "signature": "v2:3568f5127260fcb1"
+    "description": "Hillsboro Inlet is a Florida jetty break with a sand bottom. It faces east, and it is offshore in west winds. The optimal swell comes from the east.",
+    "signature": "v2:c41695015eeb5d2a",
+    "pushed": false
   },
   "hilton-head-island": {
     "description": "Hilton Head Island is a South Carolina surf spot. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southeast.",
@@ -1056,8 +1057,9 @@
     "signature": "v2:6c48f3c1cdf1bb92"
   },
   "la-push-first-beach": {
-    "description": "La Push First Beach is a beach break in Washington. It faces south, and its optimal swell direction is west. Offshore winds blow from the north.",
-    "signature": "v2:f6b14159bdbaf99b"
+    "description": "La Push First Beach is a beach break in Washington. It faces southwest, and its optimal swell direction is west. Offshore winds blow from the northeast.",
+    "signature": "v2:52b36eaf39c5bf2c",
+    "pushed": false
   },
   "la-push-second-beach": {
     "description": "Facing southwest, La Push Second Beach is a surf spot in Washington. The optimal swell comes from the southwest, and the offshore wind is from the northeast.",
@@ -2384,8 +2386,9 @@
     "signature": "v2:93a3340b79a08beb"
   },
   "topanga-beach": {
-    "description": "Topanga Beach is a California point break with a cobble bottom. It faces southeast, and it is offshore in northwest winds. The optimal swell comes from the southwest.",
-    "signature": "v2:8a92b571714f136d"
+    "description": "Topanga Beach is a California point break with a cobble bottom. It faces south, and it is offshore in north winds. The optimal swell comes from the southwest.",
+    "signature": "v2:7ec1be9703f800c9",
+    "pushed": false
   },
   "topsail-beach": {
     "description": "Facing southeast, Topsail Beach is a surf spot in North Carolina. The optimal swell comes from the southeast, and the offshore wind is from the northwest.",

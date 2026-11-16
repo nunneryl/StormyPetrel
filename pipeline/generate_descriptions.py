@@ -130,6 +130,21 @@ def plan(roster, cache, force=False):
     return items
 
 
+def stale(spots, cache):
+    """THE CI CHECK (pipeline/tests/test_descriptions_current.py). [(slug, reason)] for every roster
+    spot whose cached description would be regenerated: none yet, written before v2, or its
+    signature no longer matching what the roster states (a facing, offshore bearing, optimal swell
+    direction, break type, bottom, tide preference, name or state changed). db_import blanks such a
+    description on its next run, as #328's facings did at three spots, so a PR that changes any of
+    those fields must regenerate the affected descriptions in the same PR:
+
+        python -m pipeline.generate_descriptions --no-db
+
+    A cached entry marked "pushed": false is current: it waits only for a run with Supabase."""
+    return [(slug, reason) for slug, _s, _p, _sig, action, reason in plan(roster_spots(spots), cache)
+            if action == GENERATE]
+
+
 def orphans(spots, cache):
     """Cache entries whose spot is no longer in the roster file at all. A spot that is still listed
     but skipped (marked invalid, or excluded) keeps its entry: it is neither regenerated nor pruned."""
