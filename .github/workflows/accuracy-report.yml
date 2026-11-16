@@ -1,0 +1,88 @@
+name: accuracy-report
+
+# The accuracy scoreboard's weekly report (pipeline/accuracy_report.py): the last seven UTC days of
+# accuracy_daily, and NWPS's lead skill from partition_archive. The tables go in this run's
+# summary; the full report and its CSVs are the run's artifact. Mondays, after the nightly
+# scoring (accuracy-score.yml, 04:47 UTC). Reads only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'UTC days to report, ending yesterday'
+        required: false
+        default: '7'
+  schedule:
+    - cron: '23 5 * * 1'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: weekly accuracy report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      DAYS: ${{ inputs.days || '7' }}
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Build the report (tables to the run summary)
+        run: python -m pipeline.accuracy_report --days "$DAYS" --out accuracy-report
+
+      - name: Keep the full report and its CSVs
+        uses: actions/upload-artifact@v7
+        with:
+          name: accuracy-report
+          path: accuracy-report/
+          retention-days: 90
+
+  failure-issue:
+    # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
+    # every other job whatever their result, so a timeout is reported too.
+    needs: [report]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read               # the failing step's name, from the run's job list
+      contents: read              # checkout of the shared action
+      issues: write               # open, comment on and close the failure issue
+    concurrency:
+      # One report at a time per workflow, so two runs failing together cannot open two.
+      group: failure-issue-${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the shared action
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions/failure-issue
+          persist-credentials: false
+
+      - name: Report to the failure issue
+        uses: ./.github/actions/failure-issue
+        with:
+          needs: ${{ toJSON(needs) }}

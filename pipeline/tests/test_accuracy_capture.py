@@ -338,6 +338,7 @@ def test_both_tables_written(world):
         ("ww3", "2026-11-13T12:00:00Z"), ("ww3", "2026-11-13T15:00:00Z"),
         ("ww3", "2026-11-17T09:00:00Z"), ("nwps", "2026-11-13T18:00:00Z")]
     assert stats["forecast_leads"]["by_lead_day"] == {1: 1, 3: 2}
+    assert stats["model_at_buoys"]["nwps"]["by_office"] == {"lox": 1}      # one buoy, in lox
 
 
 def test_a_broken_forecast_leads_does_not_stop_the_buoys(world, capsys):
