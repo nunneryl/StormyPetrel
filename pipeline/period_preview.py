@@ -92,6 +92,15 @@ stay on the rated partition.
      the gate           a published row the new rule unswitches may lose its wind-sea mark and
                         move face_ft, and nothing else (unswitched_by_facing); stars 0 differences;
      St. Pete Beach     every hour of 2026-10-28 UTC, before and after, with the buoy.
+     published_face_change  the surf height's change on the published rows the rule unswitches:
+                        median, p10, p90 (ft and %) and the spots with the largest drops and rises;
+     archive_sensitivity    the removed hours only 90 to 110 deg off the facing (a 20 deg facing
+                        error would flip them), by spot;
+     nws                the surf height against the NWS Surf Zone Forecast range on the headline
+                        hours the rule unswitches, before (shoaled at the wind sea's period,
+                        face_compare's display_current) and after, by region (mainland, as runs
+                        55-57) and by state; the offshore buoys see a departing sea, so the buoy
+                        check cannot judge this change.
 """
 from __future__ import annotations
 
@@ -135,6 +144,7 @@ HATTERAS_FROM, HATTERAS_TO = "2026-09-23T17:00:00", "2026-09-23T20:00:00"
 STPETE_SPOT = "St. Pete Beach"
 STPETE_FROM, STPETE_TO = "2026-10-28T00:00:00", "2026-10-29T00:00:00"
 TOP_AWAY_SPOTS = 20
+SENSITIVE_UP_TO_DEG = 110.0  # removed hours only 90 to 110 deg off the facing: a 20 deg error flips them
 
 # Question 3: does each headline path still read the rated period through the face's period
 # factor? From the code, not inferred from rows.
@@ -829,6 +839,80 @@ def switch_totals(archive_by_state):
     return out
 
 
+def facing_sensitivity(records, lo=FACING_OFF_DEG, hi=SENSITIVE_UP_TO_DEG, top=TOP_AWAY_SPOTS):
+    """The removed hours (records with away) whose wind sea is only *lo* to *hi* deg off the
+    facing (lo inclusive, hi exclusive): a facing *hi* - *lo* deg off would flip them. Their count
+    of all removed hours, and by spot (the *top* with the most), with each spot's facing."""
+    near = [r for r in records if r.get("wind_off_facing") is not None
+            and lo <= r["wind_off_facing"] < hi]
+    spots = defaultdict(list)
+    for r in near:
+        spots[(r["spot"], r["state"])].append(r)
+    ranked = sorted(spots.items(), key=lambda kv: (-len(kv[1]), kv[0][0]))[:top]
+    return {"band_deg": [lo, hi], "hours": len(near), "of_removed": len(records),
+            "by_spot": [{"spot": n, "state": st, "hours": len(rs), "facing": rs[0]["facing"],
+                         "of_spot_removed": sum(1 for r in records if r["spot"] == n),
+                         "wind_dp": _med(r["wind_dp"] for r in rs),
+                         "wind_off_facing": _med(r["wind_off_facing"] for r in rs)}
+                        for (n, st), rs in ranked]}
+
+
+def facing_nws(srf_rows):
+    """Against the NWS Surf Zone Forecast range, on the headline hours the adopted rule unswitches
+    (face_compare's unswitched_by_facing: switched under the window alone, not now): the surf
+    height's side (n, inside, below, above) under the rule before (display_current, shoaled at the
+    wind sea's period) and after (display, at the rated period), and the hours that moved side.
+    By region (mainland, as runs 55-57 read the NWS) and by state (Hawaii included); the whole
+    archive, not cut at run 54's end."""
+    rows = [r for r in srf_rows if r["group"] == "headline" and r.get("unswitched_by_facing")]
+
+    def two(rs):
+        return {"before": _sides(rs, lambda r: r.get("display_current")),
+                "after": _sides(rs, lambda r: r.get("display")),
+                "moved": transitions(rs, before="display_current", after="display")}
+    order = lambda kv: (kv[0] != "all", kv[0])                     # noqa: E731
+    mainland = _by_region([r for r in rows if r["office"] != "HFO"])
+    by_state = defaultdict(list)
+    for r in rows:
+        by_state[r["state"]].append(r)
+    by_state["all"] = rows
+    return {"by_region": {g: two(rs) for g, rs in sorted(mainland.items(), key=order)},
+            "by_state": {g: two(rs) for g, rs in sorted(by_state.items(), key=order)}}
+
+
+def published_face_change(pub, after, away, state_by_name, top=TOP_AWAY_SPOTS):
+    """On the published rows the adopted rule unswitches (*away*), whose surf height moves: the
+    change after - before in ft and in % of before (median, p10, p90, min, max), and by spot the
+    *top* largest drops and largest rises (by their single biggest move)."""
+    ch = []
+    for name, rows in pub.items():
+        for b, a in zip(rows, after[name]):
+            fb, fa = _num(b.get("face_ft")), _num(a.get("face_ft"))
+            if fb is None or fa is None or fa == fb or not away(name, b):
+                continue
+            ch.append((name, state_by_name.get(name, "?"), b.get("valid_time"), fb, fa))
+    ps = (0.1, 0.5, 0.9)
+    ft = [fa - fb for *_x, fb, fa in ch]
+    pct = [100.0 * (fa - fb) / fb for *_x, fb, fa in ch if fb > 0]
+    per = defaultdict(list)
+    for n, st, vt, fb, fa in ch:
+        per[(n, st)].append((fa - fb, vt, fb, fa))
+
+    def spot_row(k, v, pick):
+        d, vt, fb, fa = pick(v)
+        return {"spot": k[0], "state": k[1], "hours": len(v), "median_ft": _med(x[0] for x in v),
+                "biggest_ft": round(d, 2), "at": vt, "before": fb, "after": fa}
+    drops = sorted(((k, v) for k, v in per.items() if min(v)[0] < 0), key=lambda kv: (min(kv[1])[0], kv[0][0]))
+    rises = sorted(((k, v) for k, v in per.items() if max(v)[0] > 0), key=lambda kv: (-max(kv[1])[0], kv[0][0]))
+    return {"rows": len(ch), "up": sum(1 for x in ft if x > 0), "down": sum(1 for x in ft if x < 0),
+            "ft": {**quantiles(ft, ps), "min": round(min(ft), 2) if ft else None,
+                   "max": round(max(ft), 2) if ft else None},
+            "pct": {**quantiles(pct, ps), "min": round(min(pct), 1) if pct else None,
+                    "max": round(max(pct), 1) if pct else None},
+            "largest_drops": [spot_row(k, v, min) for k, v in drops[:top]],
+            "largest_rises": [spot_row(k, v, max) for k, v in rises[:top]]}
+
+
 def published_away(pub, state_by_name, arcs_by_name, facing_by_name, top=TOP_AWAY_SPOTS):
     """Run 76 in the published window: hours shown as the wind sea under the current rule and
     not under the new one, by state and by spot (the *top* with the most)."""
@@ -1228,6 +1312,9 @@ def run(client, roster, since, archive_since, until, *, factors=None, compare=No
                    "archive_removed": facing_summary(arch.away()),
                    "published_removed": published_away(pub, states, arcs_by_name, facing_by_name),
                    "published_unswitched_by_facing": c["unswitched_by_facing"],
+                   "published_face_change": published_face_change(pub, after, away, states),
+                   "archive_sensitivity": facing_sensitivity(arch.away()),
+                   "nws": facing_nws(comp["_pairs"]["srf"]),
                    "star_differences": c["star_differences"],
                    "st_pete_2026_10_28": arch.stpete},
         "stars_on_the_wind_sea": q3,
@@ -1426,6 +1513,25 @@ def print_facing(f):
     print(f"\n6d. Published window: removed switches by state {p['by_state']}")
     for e in p["by_spot"]:
         print(f"  {e['spot']:30} {e['state']:16} {e['hours']:6}")
+    pf = f["published_face_change"]
+    print(f"\n6f. Published window: surf height on the {pf['rows']} unswitched rows whose height moves "
+          f"(up {pf['up']}, down {pf['down']}): change ft {pf['ft']}, % {pf['pct']}")
+    for k in ("largest_drops", "largest_rises"):
+        print(f"  {k}:")
+        for e in pf[k]:
+            print(f"    {e['spot']:30} {e['state']:16} {e['hours']:5} median {e['median_ft']} ft, "
+                  f"biggest {e['biggest_ft']} ft at {e['at']} ({e['before']} -> {e['after']})")
+    se = f["archive_sensitivity"]
+    print(f"\n6g. Archive: removed hours only {se['band_deg'][0]:g}-{se['band_deg'][1]:g} deg off the "
+          f"facing: {se['hours']} of {se['of_removed']}")
+    for e in se["by_spot"]:
+        print(f"  {e['spot']:30} {e['state']:16} {e['hours']:6} of {e['of_spot_removed']:6}  facing "
+              f"{e['facing']} wind sea from {e['wind_dp']} ({e['wind_off_facing']} off)")
+    for part in ("by_region", "by_state"):
+        print(f"\n6h. Against the NWS range, headline hours the rule unswitches, {part}: "
+              f"before (wind sea's period) | after (rated period)")
+        for g, e in f["nws"][part].items():
+            print(f"  {g:24} {_sides_str(e['before'])} | {_sides_str(e['after'])}  moved {e['moved']}")
     print("\n6e. St. Pete Beach, 2026-10-28 UTC")
     for h in f["st_pete_2026_10_28"]:
         print(f"  {h['valid_time'][:16]} shown {h['shown_current']} {h['shown_tp_current']} s -> "

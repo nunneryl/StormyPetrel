@@ -600,8 +600,16 @@ def assess(rows: list[dict], spot: dict, state: str | None, calibrated: bool = F
         at_wind = dict(zip([i for i, _ in switched],
                            typical_face_ft([base[i]["hs"] for i, _ in switched],
                                            [tp for _, tp in switched]))) if switched else {}
+        # display_current: the same under the rule before runs 76-77 (the window alone, no
+        # facing), and unswitched_by_facing where that switched and the adopted rule does not
+        cur = [(i, tp) for i, _ in surf for tp, ws in [surf_period(rows[i], arcs, None)] if ws]
+        at_cur = dict(zip([i for i, _ in cur],
+                          typical_face_ft([base[i]["hs"] for i, _ in cur],
+                                          [tp for _, tp in cur]))) if cur else {}
         for i, typ_rated in surf:
             base[i]["display_rated"] = round(SURF_K * typ_rated, 2)
+            base[i]["display_current"] = round(SURF_K * float(at_cur.get(i, typ_rated)), 2)
+            base[i]["unswitched_by_facing"] = i in at_cur and i not in at_wind
             base[i]["switched"] = i in at_wind
             base[i]["display"] = round(SURF_K * float(at_wind.get(i, typ_rated)), 2)
             base[i]["case"] = switch_case(rows[i], arcs, facing_deg) if i in at_wind else None
@@ -613,6 +621,8 @@ def assess(rows: list[dict], spot: dict, state: str | None, calibrated: bool = F
         b.setdefault("display", b["published"])
         b.setdefault("display_rated", b["display"])
         b.setdefault("display_variant", b["display"])
+        b.setdefault("display_current", b["display"])
+        b.setdefault("unswitched_by_facing", False)
         b.setdefault("switched", False)
         b.setdefault("case", None)
         if b["group"] == "headline" and b["typical"] is None:
@@ -676,7 +686,9 @@ def compare_srf(hours: list[dict], srf: dict) -> list[dict]:
         rec.update(lo=lo, hi=hi, hs=h["hs"], period=h["period"], band=period_band(h["period"]),
                    source=h.get("source"), calibrated=h.get("calibrated"),
                    switched=h.get("switched"), case=h.get("case"),
-                   display_rated=h.get("display_rated"), display_variant=h.get("display_variant"))
+                   display_rated=h.get("display_rated"), display_variant=h.get("display_variant"),
+                   display_current=h.get("display_current"),
+                   unswitched_by_facing=h.get("unswitched_by_facing"))
         for c in CANDIDATES:
             rec[c] = h.get(c)
             rec[f"{c}_side"] = classify(rec[c], lo, hi)

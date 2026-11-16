@@ -847,6 +847,31 @@ def test_assess_display_shoals_at_the_wind_seas_period_where_the_site_will():
     assert (cal["case"], cal["display_variant"]) == (None, 4.27)
 
 
+def test_assess_keeps_the_display_before_the_facing_rule():
+    """Runs 76-77: the storm hour above at Jacksonville's real facing (80) and window (5-155 span
+    154: sector 3-157). From 70 the wind sea is inside: switched, display_current = display = the
+    4.27 shoaled at 500 s. From 230 it is 73 outside and 150 off the facing: the adopted rule keeps
+    the rated period (display = display_rated), while the rule before shoaled at 500 s
+    (display_current 4.27): unswitched_by_facing."""
+    spot = {"name": "Jacksonville Beach Pier", "nwps_wfo": "jax", "orientation_deg": 80.0,
+            "swell_window_arcs": [{"min": 5, "max": 155, "span": 154}]}
+    row = {"valid_time": "2026-10-27T15:00:00+00:00", "swell_source": "nwps_height_ww3_dir",
+           "face_ft_raw": 4.27, "face_ft": 4.27, "swell_tp": 3.0, "swell_dp": 80.0, "tp": 9.0,
+           "hs": 2.0, "swell_2_hs": 0.24, "swell_2_tp": 3.0, "swell_2_dp": 80.0,
+           "wind_wave_hs": 2.4, "wind_wave_tp": 500.0, "wind_wave_dp": 70.0}
+    inside, away, calm = F.assess([row, dict(row, wind_wave_dp=230.0), dict(row, wind_wave_hs=0.2)],
+                                  spot, "Florida")
+    # a 0.2 m wind sea switches under neither rule: not "unswitched"
+    assert (calm["switched"], calm["unswitched_by_facing"]) == (False, False)
+    assert calm["display_current"] == calm["display"] == calm["display_rated"]
+    assert (inside["switched"], inside["unswitched_by_facing"], inside["display"], inside["display_current"]) == \
+        (True, False, 4.27, 4.27)
+    assert (away["switched"], away["unswitched_by_facing"], away["display_current"]) == (False, True, 4.27)
+    assert away["display"] == away["display_rated"] != 4.27
+    rec = F.compare_srf([dict(away, zone="FLZ124")], {("FLZ124", None, away["hour"]): (2.0, 3.0, "JAX")})[0]
+    assert (rec["display_current"], rec["unswitched_by_facing"]) == (4.27, True)
+
+
 def test_assess_reads_the_spots_window_and_keeps_dominant_at_the_rated_period_in_the_variant():
     """The storm hour's wind sea from 70 at a spot whose window is 180-270 (span 94: sector
     178-272) is 108 deg outside it: not switched, display at the rated period. A DOMINANT hour (a

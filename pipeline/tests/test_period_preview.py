@@ -1049,3 +1049,55 @@ def test_run_76_end_to_end(monkeypatch, capsys):
     P.print_report(rep)
     out = capsys.readouterr().out
     assert "6. RUN 76" in out and "6a. Archive: switched hours, current rule -> new rule" in out
+
+
+def _nws(before, after, state="Florida", region="Gulf", office="TBW", unswitched=True, group="headline"):
+    return {"state": state, "region": region, "office": office, "group": group, "hour": T0,
+            "lo": 2.0, "hi": 3.0, "display_current": before, "display": after,
+            "unswitched_by_facing": unswitched}
+
+
+def test_facing_nws_before_and_after_on_the_unswitched_hours():
+    # range 2-3 ft: inside from 1.5 to under 3.5 (face_compare.classify)
+    rows = [_nws(1.0, 2.0),                    # below -> inside
+            _nws(2.5, 4.0),                    # inside -> above
+            _nws(2.0, 2.2, region="Florida Atlantic", office="JAX"),   # inside -> inside
+            _nws(1.0, 1.0, state="Hawaii", region="Hawaii", office="HFO"),   # Hawaii: by state only
+            _nws(9.0, 9.0, unswitched=False),  # not unswitched: left out
+            _nws(9.0, 9.0, group="base")]      # not a headline hour: left out
+    out = P.facing_nws(rows)
+    assert out["by_region"]["all"] == {"before": (3, 0.667, 0.333, 0.0), "after": (3, 0.667, 0.0, 0.333),
+                                       "moved": {"below -> inside": 1, "inside -> above": 1}}
+    assert out["by_region"]["Gulf"]["before"] == (2, 0.5, 0.5, 0.0)
+    assert "Hawaii" not in out["by_region"]
+    assert out["by_state"]["all"]["before"] == (4, 0.5, 0.5, 0.0)
+    assert out["by_state"]["Hawaii"] == {"before": (1, 0.0, 1.0, 0.0), "after": (1, 0.0, 1.0, 0.0), "moved": {}}
+
+
+def test_published_face_change():
+    def r(t, face):
+        return {"valid_time": f"2026-11-17T{t:02d}:00:00+00:00", "face_ft": face}
+    pub = {"A": [r(1, 2.0), r(2, 2.0), r(3, 2.0)], "B": [r(1, 4.0)], "C": [r(1, 1.0)]}
+    after = {"A": [r(1, 2.5), r(2, 1.5), r(3, 2.0)], "B": [r(1, 3.0)], "C": [r(1, 1.2)]}
+    away = lambda name, row: name != "C"                     # noqa: E731
+    out = P.published_face_change(pub, after, away, {"A": "Florida", "B": "Hawaii"}, top=5)
+    # moved and away: A 01Z +0.5 (+25%), A 02Z -0.5 (-25%), B -1.0 (-25%); A 03Z did not move; C not away
+    assert (out["rows"], out["up"], out["down"]) == (3, 1, 2)
+    # nearest rank over [-1.0, -0.5, 0.5]: p10 the 1st, p50 the 2nd, p90 the 3rd
+    assert out["ft"] == {"0.1": -1.0, "0.5": -0.5, "0.9": 0.5, "min": -1.0, "max": 0.5}
+    assert out["pct"] == {"0.1": -25.0, "0.5": -25.0, "0.9": 25.0, "min": -25.0, "max": 25.0}
+    assert [(e["spot"], e["biggest_ft"], e["hours"]) for e in out["largest_drops"]] == [("B", -1.0, 1), ("A", -0.5, 2)]
+    assert [(e["spot"], e["biggest_ft"]) for e in out["largest_rises"]] == [("A", 0.5)]
+    assert out["largest_drops"][0]["state"] == "Hawaii"
+
+
+def test_facing_sensitivity_counts_the_hours_only_90_to_110_off():
+    recs = [dict(_away_rec("Kanaha Beach", "Hawaii", 6.0, 9.0, None, off=97.0), facing=337.0),
+            dict(_away_rec("Kanaha Beach", "Hawaii", 6.0, 9.0, None, off=90.0), facing=337.0),
+            dict(_away_rec("Kanaha Beach", "Hawaii", 6.0, 9.0, None, off=110.0), facing=337.0),   # 110: out
+            dict(_away_rec("Hookipa", "Hawaii", 6.0, 9.0, None, off=109.9), facing=340.0),
+            _away_rec("St. Pete Beach", "Florida", 4.7, 3.9, None, off=136.0)]
+    out = P.facing_sensitivity(recs, top=5)
+    assert (out["band_deg"], out["hours"], out["of_removed"]) == ([90.0, 110.0], 3, 5)
+    assert [(e["spot"], e["hours"], e["of_spot_removed"], e["facing"]) for e in out["by_spot"]] == [
+        ("Kanaha Beach", 2, 3, 337.0), ("Hookipa", 1, 1, 340.0)]
