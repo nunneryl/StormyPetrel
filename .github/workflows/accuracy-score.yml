@@ -3,18 +3,26 @@ name: accuracy-score
 # The accuracy scoreboard's nightly scoring (pipeline/accuracy_score.py): pairs the forecasts the
 # full pipeline captured (forecast_leads, model_at_buoys; migration 030) and the spot nowcasts with
 # the buoy readings, and writes the daily totals to accuracy_daily (migration 031). Scores the
-# three complete UTC days before today; re-scoring a day overwrites it, so a reading that arrived
-# late is counted the next night. After the 02:05 UTC full run; reads only, apart from its table.
+# three complete UTC days before today, and before them every earlier day with no rows at all
+# (catch-up, so a night with no run leaves no hole); re-scoring a day overwrites it, so a reading
+# that arrived late is counted the next night. After the 01:45 UTC full run; reads only, apart
+# from its table.
+#
+# WHO STARTS IT. cron-job.org dispatches it at 04:47 UTC (docs/scheduling.md), as it does the
+# pipeline: GitHub's scheduler created no run at all for the 04:47 cron on 2026-11-17. The GitHub
+# cron below is kept as a FALLBACK, 30 minutes later. A second run in a night re-scores the same
+# days with the same result, so no gate is needed; the concurrency group keeps them apart.
 
 on:
   workflow_dispatch:
     inputs:
       days:
-        description: 'Complete UTC days to score, ending yesterday'
+        description: 'Complete UTC days to score, ending yesterday (earlier unscored days are caught up too)'
         required: false
         default: '3'
   schedule:
-    - cron: '47 4 * * *'
+    # FALLBACK ONLY, 30 minutes after the 04:47 dispatch.
+    - cron: '17 5 * * *'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'

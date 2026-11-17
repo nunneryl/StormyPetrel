@@ -271,6 +271,81 @@ def test_write_upserts_on_the_key():
 
 
 # --------------------------------------------------------------------------- #
+# Catch-up: a missed night is scored the next time                             #
+# --------------------------------------------------------------------------- #
+
+def _scored(*days):
+    return FakeClient({"accuracy_daily": [{"day": d} for d in days]})
+
+
+def test_is_scored_asks_for_one_row_of_that_day():
+    c = _scored("2026-11-14")
+    assert S.is_scored(c, date(2026, 11, 14)) is True
+    assert S.is_scored(c, date(2026, 11, 15)) is False
+    q = c.calls[0]
+    assert (q.table, q.filters, q.rng) == ("accuracy_daily", [("day", "=", "2026-11-14")], (0, 0))
+
+
+def test_a_hole_before_the_window_is_scored_first():
+    # 20 Nov, 3 days: the window is 17-19 Nov; 13-16 Nov are checked; 15 Nov has no rows.
+    c = _scored("2026-11-13", "2026-11-14", "2026-11-16")
+    assert S.plan(c, date(2026, 11, 20), 3) == [date(2026, 11, 15), date(2026, 11, 17),
+                                                date(2026, 11, 18), date(2026, 11, 19)]
+    checked = [q.filters[0][2] for q in c.calls]
+    assert checked == ["2026-11-13", "2026-11-14", "2026-11-15", "2026-11-16"]   # not 17-19
+
+
+def test_the_missed_17_november_run_is_covered_by_the_window():
+    # Scored 13-15 Nov on 16 Nov; nothing on 17 Nov. A run on 18 Nov re-scores 15-17 Nov and
+    # finds no hole before them: 13 and 14 Nov hold rows.
+    c = _scored("2026-11-13", "2026-11-14", "2026-11-15")
+    assert S.plan(c, date(2026, 11, 18), 3) == [date(2026, 11, 15), date(2026, 11, 16),
+                                                date(2026, 11, 17)]
+
+
+def test_catch_up_looks_back_45_days_and_scores_10_a_run():
+    # 1 Mar 2027 with an empty table: the check starts 45 days back, 15 Jan (after 13 Nov), and
+    # the ten oldest holes, 15-24 Jan, go before the window 26-28 Feb.
+    got = S.plan(_scored(), date(2027, 3, 1), 3)
+    assert got[:10] == [date(2027, 1, d) for d in range(15, 25)]
+    assert got[10:] == [date(2027, 2, 26), date(2027, 2, 27), date(2027, 2, 28)]
+    assert len(got) == 13
+
+
+def test_catch_up_never_reaches_before_the_scoreboard_began():
+    # 16 Nov: the window 13-15 Nov starts at SCOREBOARD_START, so nothing before it is checked.
+    c = _scored()
+    assert S.plan(c, date(2026, 11, 16), 3) == [date(2026, 11, 13), date(2026, 11, 14),
+                                                date(2026, 11, 15)]
+    assert c.calls == []
+    # 17 Nov with an empty table: 13 Nov, before the window, is a hole; 12 Nov is not checked.
+    c = _scored()
+    assert S.plan(c, date(2026, 11, 17), 3)[0] == date(2026, 11, 13)
+    assert [q.filters[0][2] for q in c.calls] == ["2026-11-13"]
+
+
+def test_no_catch_up_is_the_window_alone():
+    c = _scored()
+    assert S.plan(c, date(2026, 11, 20), 3, catch_up=False) == [
+        date(2026, 11, 17), date(2026, 11, 18), date(2026, 11, 19)]
+    assert c.calls == []
+
+
+def test_main_scores_the_holes_then_the_window(monkeypatch):
+    from pipeline import db_import
+    c = _scored("2026-11-13", "2026-11-14", "2026-11-16")
+    monkeypatch.setattr(db_import, "get_client", lambda: c)
+    monkeypatch.setattr(db_import, "_spot_id_map", lambda client: {})
+    scored = []
+    monkeypatch.setattr(S, "score_day", lambda client, d, spots, ids, at: scored.append(d) or [])
+    assert S.main(["--end", "2026-11-20"]) == 0
+    assert scored == [date(2026, 11, 15), date(2026, 11, 17), date(2026, 11, 18), date(2026, 11, 19)]
+    scored.clear()
+    assert S.main(["--end", "2026-11-20", "--no-catch-up"]) == 0
+    assert scored == [date(2026, 11, 17), date(2026, 11, 18), date(2026, 11, 19)]
+
+
+# --------------------------------------------------------------------------- #
 # The workflow                                                                 #
 # --------------------------------------------------------------------------- #
 
@@ -278,5 +353,5 @@ def test_the_nightly_workflow_scores_three_days():
     text = yaml_code((ROOT / ".github" / "workflows" / "accuracy-score.yml").read_text())
     ss = steps(text, "score")
     assert [s.get("run") for s in ss][-1] == 'python -m pipeline.accuracy_score --days "$DAYS"'
-    assert "- cron: '47 4 * * *'" in text
+    assert "- cron: '17 5 * * *'" in text          # the fallback; cron-job.org dispatches 04:47
     assert "DAYS: ${{ inputs.days || '3' }}" in text

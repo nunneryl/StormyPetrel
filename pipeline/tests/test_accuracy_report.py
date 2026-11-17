@@ -172,4 +172,4 @@ def test_the_weekly_workflow_keeps_the_report_it_writes():
     assert any(s.get("uses", "").startswith("actions/upload-artifact@") for s in ss)
     assert ("        with:\n          name: accuracy-report\n          path: accuracy-report/\n"
             "          retention-days: 90\n") in text
-    assert "- cron: '23 5 * * 1'" in text
+    assert "- cron: '53 5 * * 1'" in text          # the fallback; cron-job.org dispatches 05:23

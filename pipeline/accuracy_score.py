@@ -1,10 +1,17 @@
 """Score the forecasts against the buoys, one UTC day at a time, into accuracy_daily (migration 031).
 
-    python -m pipeline.accuracy_score [--days 3] [--end YYYY-MM-DD]
+    python -m pipeline.accuracy_score [--days 3] [--end YYYY-MM-DD] [--no-catch-up]
 
 Nightly (.github/workflows/accuracy-score.yml). Scores the --days complete UTC days before --end
 (default: today, so yesterday and the days before it); re-scoring a day overwrites its rows, and
 the days before yesterday are re-scored because a buoy reading can arrive late.
+
+CATCH-UP. A night with no run (GitHub dropped the 04:47 cron on 2026-11-17) must not leave a hole.
+Before those --days, every day from SCOREBOARD_START, and at most CATCH_UP_LOOKBACK days back,
+that has no row at all in accuracy_daily is scored too, oldest first, at most CATCH_UP_PER_RUN a
+run (the rest the next night). Older holes need a run by hand with --end and --days; the inputs
+(forecast_leads, model_at_buoys, forecasts, buoy_observations) are kept. --no-catch-up scores the
+--days window alone.
 
 PAIRS. Each forecast hour is paired with the buoy reading nearest it, within 30 minutes, that has
 the measure (buoy_observations):
@@ -46,6 +53,11 @@ MEASURES = ("hs", "swell_hs", "tp", "dp")
 PAGE = 1000
 BATCH = 1000
 SUMS = ("sum_f", "sum_o", "sum_ff", "sum_oo", "sum_fo", "sum_e", "sum_abs_e", "sum_ee")
+# The first day accuracy_daily holds (run 1 of accuracy-score, 2026-11-16, scored 13-15 Nov; the
+# capture of forecast_leads and model_at_buoys began with the 01:45 UTC run on 16 Nov).
+SCOREBOARD_START = date(2026, 11, 13)
+CATCH_UP_LOOKBACK = 45      # days before --end checked for a hole
+CATCH_UP_PER_RUN = 10       # unscored days scored in one run, oldest first
 
 
 # --------------------------------------------------------------------------- #
@@ -290,12 +302,42 @@ def days_to_score(end: date, days: int) -> list[date]:
     return [end - timedelta(days=k) for k in range(days, 0, -1)]
 
 
+def is_scored(client, day: date) -> bool:
+    """Does accuracy_daily hold any row for *day*? One request, one row at most."""
+    rows = (client.table("accuracy_daily").select("day").eq("day", day.isoformat())
+            .range(0, 0).execute().data or [])
+    return bool(rows)
+
+
+def unscored_days(client, end: date, recent: int) -> list[date]:
+    """Days from SCOREBOARD_START (and at most CATCH_UP_LOOKBACK before *end*) up to the --days
+    window, with no row in accuracy_daily, oldest first, at most CATCH_UP_PER_RUN."""
+    first = max(SCOREBOARD_START, end - timedelta(days=CATCH_UP_LOOKBACK))
+    last = end - timedelta(days=recent)                  # the window starts here: not checked
+    out = []
+    d = first
+    while d < last and len(out) < CATCH_UP_PER_RUN:
+        if not is_scored(client, d):
+            out.append(d)
+        d += timedelta(days=1)
+    return out
+
+
+def plan(client, end: date, recent: int, catch_up: bool = True) -> list[date]:
+    """The days this run scores, oldest first: the unscored days (catch-up), then the *recent*
+    complete days before *end*, which are always re-scored."""
+    holes = unscored_days(client, end, recent) if catch_up else []
+    return holes + days_to_score(end, recent)
+
+
 def main(argv=None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--days", type=int, default=3)
     ap.add_argument("--end", type=date.fromisoformat, default=None,
                     help="score the days before this UTC date (default: today)")
+    ap.add_argument("--no-catch-up", action="store_true",
+                    help="score only the --days window, not the earlier days with no rows")
     a = ap.parse_args(argv)
     from .db_import import _spot_id_map, get_client
     client = get_client()
@@ -303,10 +345,16 @@ def main(argv=None) -> int:
     spot_ids = _spot_id_map(client)
     scored_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     end = a.end or datetime.now(timezone.utc).date()
+    days = plan(client, end, a.days, catch_up=not a.no_catch_up)
+    holes = days[:len(days) - a.days]
+    if holes:
+        log.info("accuracy score: catching up %d unscored day(s): %s", len(holes),
+                 ", ".join(d.isoformat() for d in holes))
     total = 0
-    for d in days_to_score(end, a.days):
+    for d in days:
         total += write(client, score_day(client, d, spots, spot_ids, scored_at))
-    log.info("accuracy score: %d rows written for %d days", total, a.days)
+    log.info("accuracy score: %d rows written for %d days (%s to %s)", total, len(days),
+             days[0].isoformat() if days else "-", days[-1].isoformat() if days else "-")
     return 0
 
 
