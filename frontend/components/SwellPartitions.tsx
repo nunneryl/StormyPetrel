@@ -2,8 +2,10 @@
 
 import { useCurrentHour } from './CurrentHour';
 import { SwellCompass } from './SwellCompass';
+import { SwellWindowCompass } from './SwellWindowCompass';
 import { degToCardinal, fmtSec, metersToFeet } from '@/lib/formatting';
 import { breakdownNote, breakdownRows, sharePercent } from '@/lib/swellBreakdown';
+import { NO_WINDOW_NOTE, rowStyles } from '@/lib/swellWindowCompass';
 import type { Spot } from '@/lib/types';
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -18,12 +20,19 @@ const SOURCE_LABEL: Record<string, string> = {
   nwps_total:          'NWPS total',
 };
 
+// The Swell breakdown card: the swell compass on the left (on top on phones) and the rows on the
+// right. Both are drawn from the same rows (breakdownRows) for the hour the Conditions tiles show,
+// and each row's chip is its arrow's colour (lib/swellWindowCompass.ts rowStyles).
 export function SwellPartitions({
   windowArcs,
   facingDeg,
+  optimalDeg,
+  offshoreDeg,
 }: {
   windowArcs: Spot['swell_window_arcs'];
   facingDeg: Spot['orientation_deg'];
+  optimalDeg: Spot['optimal_swell_dir'];
+  offshoreDeg: Spot['offshore_wind_deg'];
 }) {
   // The hour the Conditions tiles show: one clock, one row (components/CurrentHour.tsx).
   const forecast = useCurrentHour().selection.row;
@@ -31,12 +40,8 @@ export function SwellPartitions({
   // Every row's share of the total wave height, the measure the Conditions tile's "% wind sea"
   // uses (lib/swellBreakdown.ts).
   const all = breakdownRows(forecast, windowArcs, facingDeg);
-  if (all.length === 0) return null;
-
-  // If we only have 1 swell partition AND no wind sea worth showing,
-  // skip the whole card — the hero "Swell" tile already covers it.
-  const swells = all.filter((c) => !c.windSea);
-  if (swells.length <= 1 && all.length <= 1) return null;
+  const styles = rowStyles(all, windowArcs);
+  const noWindow = !windowArcs || windowArcs.length === 0;
 
   return (
     <section className="rounded-xl border border-ink-600 bg-white shadow-card">
@@ -48,52 +53,74 @@ export function SwellPartitions({
           {SOURCE_LABEL[forecast.swell_source ?? ''] ?? forecast.swell_source ?? '—'}
         </span>
       </div>
-      <div className="px-4 pb-3 divide-y divide-ink-600">
-        {all.map((c) => {
-          const ft = metersToFeet(c.hs);
-          const barColor = c.windSea ? '#94A3B8' : '#0369A1'; // gray wind sea, dark blue swell
-          return (
-            <div
-              key={c.label}
-              className={`grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:grid-cols-[140px_84px_72px_104px_minmax(0,1fr)_64px] items-center gap-2 sm:gap-3 py-2 ${c.muted ? 'opacity-60' : ''}`}
-            >
-              <div className="text-xs text-text-secondary truncate">{c.label}</div>
-              <div className="flex items-center gap-1.5">
-                <SwellCompass
-                  deg={c.dp}
-                  size={20}
-                  color={c.windSea ? '#94A3B8' : '#0369A1'}
-                />
-                <span className="text-xs text-text-secondary tabular-nums">
-                  {c.dp !== null && c.dp !== undefined ? degToCardinal(c.dp) : '—'}
-                </span>
-              </div>
-              <div className="text-right font-bold tabular-nums text-text-primary text-sm">
-                {ft !== null ? `${ft.toFixed(1)}ft` : '—'}
-              </div>
-              <div className="text-right text-xs text-text-secondary tabular-nums">{fmtSec(c.tp)}</div>
-              {/* Share bar — desktop only. On mobile this cell is hidden so the grid collapses
-                  to 5 columns and the row fits a phone width. */}
-              <div className="hidden sm:block">
-                <div className="relative h-2 rounded-full bg-ink-800 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] md:items-center gap-x-4 px-2 sm:px-4 pb-3">
+        <div className="flex flex-col items-center">
+          <SwellWindowCompass
+            rows={all}
+            windowArcs={windowArcs}
+            facingDeg={facingDeg}
+            optimalDeg={optimalDeg}
+            offshoreDeg={offshoreDeg}
+            windDir={forecast.wind_dir}
+            windSpeed={forecast.wind_speed}
+          />
+          {noWindow && (
+            <p className="text-[11px] text-text-muted" data-compass="no-window-note">{NO_WINDOW_NOTE}</p>
+          )}
+        </div>
+        <div className="px-2 sm:px-0">
+          {all.length === 0 ? (
+            <p className="py-2 text-xs text-text-muted">No swell partitions for this hour.</p>
+          ) : (
+            <div className="divide-y divide-ink-600">
+              {all.map((c, i) => {
+                const ft = metersToFeet(c.hs);
+                const chip = styles[i].colour;
+                return (
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full"
-                    style={{
-                      width: `${Math.max(4, c.share * 100)}%`,
-                      background: barColor,
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="text-right text-xs text-text-muted tabular-nums whitespace-nowrap">
-                {sharePercent(c.share)}
-              </div>
+                    key={c.label}
+                    className={`grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:grid-cols-[150px_84px_64px_40px_minmax(0,1fr)_44px] items-center gap-2 sm:gap-3 py-2 ${c.muted ? 'opacity-60' : ''}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="inline-block h-3 w-3 shrink-0 rounded-sm"
+                        style={chip ? { background: chip } : { border: '1.5px solid #94A3B8' }}
+                        data-chip={chip ?? 'none'}
+                      />
+                      <span className="text-xs text-text-secondary truncate">{c.label}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <SwellCompass deg={c.dp} size={20} color={chip ?? '#94A3B8'} />
+                      <span className="text-xs text-text-secondary tabular-nums">
+                        {c.dp !== null && c.dp !== undefined ? degToCardinal(c.dp) : '—'}
+                      </span>
+                    </div>
+                    <div className="text-right font-bold tabular-nums text-text-primary text-sm">
+                      {ft !== null ? `${ft.toFixed(1)}ft` : '—'}
+                    </div>
+                    <div className="text-right text-xs text-text-secondary tabular-nums">{fmtSec(c.tp)}</div>
+                    {/* Share bar, in the row's colour: desktop only, so a phone row keeps five
+                        columns and fits. */}
+                    <div className="hidden sm:block">
+                      <div className="relative h-2 rounded-full bg-ink-800 overflow-hidden">
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-full"
+                          style={{ width: `${Math.max(4, c.share * 100)}%`, background: chip ?? '#94A3B8' }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-right text-xs text-text-muted tabular-nums whitespace-nowrap">
+                      {sharePercent(c.share)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          )}
+          {/* What the two columns measure: they come from two models (lib/swellBreakdown.ts). */}
+          <p className="pt-2 text-[11px] leading-snug text-text-muted">{breakdownNote(forecast)}</p>
+        </div>
       </div>
-      {/* What the two columns measure: they come from two models (lib/swellBreakdown.ts). */}
-      <p className="px-4 pb-3 text-[11px] leading-snug text-text-muted">{breakdownNote(forecast)}</p>
     </section>
   );
 }

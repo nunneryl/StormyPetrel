@@ -162,7 +162,8 @@ const SITES: [string, string][] = [
 ];
 for (const [rel, use] of SITES) check(`${rel} shows the period through shownTrain`, read(rel).includes(use));
 const spotPage = read('app/spot/[slug]/page.tsx');
-// CurrentConditions, ForecastGrid and SwellPartitions (its wind sea row is labelled by windSeaDominates).
+// CurrentConditions, ForecastGrid and SwellPartitions (its wind sea row is labelled by
+// windSeaDominates; its swell compass draws the same rows).
 check('the spot page hands all three components the spot\'s window',
   (spotPage.match(/windowArcs=\{spot\.swell_window_arcs\}/g) ?? []).length === 3);
 check('and its facing',

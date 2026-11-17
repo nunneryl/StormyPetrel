@@ -346,8 +346,13 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           <SurfReportPanel />
         </SurfReportProvider>
 
-        {/* Spectral swell components */}
-        <SwellPartitions windowArcs={spot.swell_window_arcs} facingDeg={spot.orientation_deg} />
+        {/* The swell breakdown and, drawn from the same rows, the swell compass (one card). */}
+        <SwellPartitions
+          windowArcs={spot.swell_window_arcs}
+          facingDeg={spot.orientation_deg}
+          optimalDeg={spot.optimal_swell_dir}
+          offshoreDeg={spot.offshore_wind_deg}
+        />
       </CurrentHourProvider>
 
       {/* Charts — next 48h only so curves stay legible */}
