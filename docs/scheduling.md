@@ -7,7 +7,7 @@ emails when no full run has succeeded for too long.
 | Piece | What it does | Where it lives |
 |---|---|---|
 | The slots | When the full pipeline should run | `DISPATCH_SLOTS` in `.github/workflows/forecast-pipeline.yml` |
-| cron-job.org | Calls `workflow_dispatch` at each slot, and every hour for buoys | Three jobs on cron-job.org, defined below |
+| cron-job.org | Calls `workflow_dispatch` at each slot, every hour for buoys, nightly for the accuracy scoring and on Mondays for its report | Five jobs on cron-job.org, defined below |
 | GitHub cron | Fallback, 20 minutes after each slot, plus hourly buoys | `on.schedule` in the workflow |
 | The gate | Skips a run that an earlier run already covers | `scripts/dispatch_gate.py`, the workflow's `gate` job |
 | healthchecks.io | Emails when no successful full run has pinged for 8 hours | One check, defined below; its ping URL is the secret `HEALTHCHECKS_FULL_PIPELINE_URL` |
@@ -92,8 +92,8 @@ nor a success, and the gate's own success says nothing about either job.
 
 ## cron-job.org
 
-Set the account's time zone to **UTC**. Create these three jobs. All three use the same URL,
-method and headers:
+Set the account's time zone to **UTC**. Create these five jobs. Jobs 1–3 use the same URL,
+and all five use the same method and headers:
 
 - **URL:** `https://api.github.com/repos/nunneryl/StormyPetrel/actions/workflows/forecast-pipeline.yml/dispatches`
 - **Method:** `POST`
@@ -147,6 +147,38 @@ The token is a fine-grained personal access token, created as follows:
 With this token someone can start, cancel, re-run or delete runs. They cannot read secrets or
 change code. Give it an expiry date and renew it before then: an expired token makes every
 dispatch fail with 401, and then only the fallback cron runs.
+
+### 4. "StormyPetrel accuracy-score 04:47"
+
+The accuracy scoreboard's nightly scoring (`accuracy-score.yml`). GitHub's scheduler created no
+run at all for its 04:47 cron on 2026-11-17, so it is dispatched like the pipeline. Its GitHub
+cron is now a fallback at 05:17. A second run in a night re-scores the same days with the same
+result, so it needs no gate. The scorer also catches up every earlier day with no rows (at most
+45 days back, 10 a run), so a missed night leaves no hole.
+
+- Schedule: every day, hour 4, minute 47 (crontab `47 4 * * *`).
+- URL: `https://api.github.com/repos/nunneryl/StormyPetrel/actions/workflows/accuracy-score.yml/dispatches`
+- Body:
+
+```json
+{"ref":"main"}
+```
+
+### 5. "StormyPetrel accuracy-report Monday 05:23"
+
+The weekly report (`accuracy-report.yml`). Its GitHub cron is a fallback at 05:53 on Mondays;
+when both run, the week gets two identical reports.
+
+- Schedule: Mondays, hour 5, minute 23 (crontab `23 5 * * 1`).
+- URL: `https://api.github.com/repos/nunneryl/StormyPetrel/actions/workflows/accuracy-report.yml/dispatches`
+- Body:
+
+```json
+{"ref":"main"}
+```
+
+Jobs 4 and 5 use the same method, headers and token as jobs 1–3. The token's Actions permission
+covers every workflow in the repository.
 
 ## healthchecks.io
 

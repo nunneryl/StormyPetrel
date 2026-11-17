@@ -4,6 +4,10 @@ name: accuracy-report
 # accuracy_daily, and NWPS's lead skill from partition_archive. The tables go in this run's
 # summary; the full report and its CSVs are the run's artifact. Mondays, after the nightly
 # scoring (accuracy-score.yml, 04:47 UTC). Reads only.
+#
+# WHO STARTS IT. cron-job.org dispatches it on Mondays at 05:23 UTC (docs/scheduling.md); the
+# GitHub cron below is a FALLBACK, 30 minutes later. When both run, the week gets two identical
+# reports.
 
 on:
   workflow_dispatch:
@@ -13,7 +17,8 @@ on:
         required: false
         default: '7'
   schedule:
-    - cron: '23 5 * * 1'
+    # FALLBACK ONLY, 30 minutes after the Monday 05:23 dispatch.
+    - cron: '53 5 * * 1'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'

@@ -591,9 +591,16 @@ def test_the_docs_request_bodies_are_the_dispatches_the_workflow_accepts():
         {"ref": "main", "inputs": {"job": "full-pipeline", "trigger": "external"}},
         {"ref": "main", "inputs": {"job": "full-pipeline", "trigger": "external"}},
         {"ref": "main", "inputs": {"job": "buoy-update", "trigger": "external"}},
+        {"ref": "main"},                       # 4: accuracy-score, its inputs at their defaults
+        {"ref": "main"},                       # 5: accuracy-report
     ]
     assert doc.count("https://api.github.com/repos/nunneryl/StormyPetrel/actions/workflows/"
                      "forecast-pipeline.yml/dispatches") >= 3
+    for wf in ("accuracy-score.yml", "accuracy-report.yml"):
+        assert f"https://api.github.com/repos/nunneryl/StormyPetrel/actions/workflows/{wf}/dispatches" in doc
+        # A dispatch with no inputs is accepted: workflow_dispatch, and no required input.
+        text = (DOC.parents[1] / ".github" / "workflows" / wf).read_text(encoding="utf-8")
+        assert "workflow_dispatch:" in text and "required: true" not in text, wf
 
 
 if __name__ == "__main__":
