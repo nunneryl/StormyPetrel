@@ -158,9 +158,15 @@ row stores it (kept as stored when the row has no wind or the spot no bearing, a
 does), then the row re-scored with the spot's geometry (rescore) and rated by the wired rater
 (wired_rater, with the MOP face factors and their median), whose cap reads the same bearing.
 
-THE GATE. With BASELINE, every row must reproduce both its stored wind_mult and its published
-stars, hour for hour; the rows that do not are counted by source and reason and listed, and
-only the rows that do are compared. Rows at spots whose facing does not change must not move
+THE GATE, on every --arcs preview, facing changed or not (main against main included). With
+BASELINE, every row must reproduce both its stored wind_mult and its published stars, hour for
+hour; the rows that do not are counted by source and reason and listed, and only the rows that
+do are compared. A row whose stars come back only for some reading of its stored face (2
+decimals) and multipliers (3) inside their rounding is "within stored precision"
+(within_stored_precision): counted and listed apart, never hidden, and not compared; any other
+miss is NOT reproduced, which must be 0. The replay recovers an NWPS row's height from its
+stored face without the float round trip that dropped a 0.50 ft face under the flat line
+(_hs_for_face). Rows at spots whose facing does not change must not move
 (a self-check). The change is reported by source and state, and for each spot whose facing
 changes, by source, by measured wind band and by how the wind's class (offshore, cross,
 onshore) moves. SELECT only.
@@ -169,6 +175,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import sys
@@ -284,7 +291,32 @@ def _nwps_inputs(row, spot, use_dirpw=False):
     old_per = _num(row.get("swell_tp"))
     if d is None or per is None or face is None or not old_per or orient is None:
         return None
-    return d, per, path, face / (period_factor(old_per, "ww3") * M_TO_FT)
+    return d, per, path, _hs_for_face(face, old_per)
+
+
+def _hs_for_face(face, tp):
+    """The height whose face_ft(hs, tp, "ww3") is *face* exactly, as near as floats allow.
+
+    face / (period_factor x M_TO_FT) and back through face_ft (hs x period_factor x M_TO_FT,
+    multiplied left to right) is not the identity: for about 15% of stored faces (2 decimals,
+    0.01-20 ft) and periods (4-22 s) it comes back one float step low or high. At the flat line
+    that is a star: a stored 0.50 ft at 4 s comes back 0.49999999999999994, under 0.5, and the
+    hour replays as 0 where it was published at 1.0 (Plum Island, run 78). So the quotient is
+    stepped (math.nextafter) to the smallest height whose face is not below the stored one: the
+    stored face itself where a float gives it (82% of those pairs), else a float step or three
+    above it, never below."""
+    k = period_factor(tp, "ww3") * M_TO_FT
+    hs = face / k
+    for _ in range(8):                      # up until not below
+        if face_ft(hs, tp, "ww3") >= face:
+            break
+        hs = math.nextafter(hs, math.inf)
+    for _ in range(8):                      # down while the step below is still not below
+        lower = math.nextafter(hs, -math.inf)
+        if face_ft(lower, tp, "ww3") < face:
+            break
+        hs = lower
+    return hs
 
 
 def _nwps_rescore(row, spot, gain_arcs, use_dirpw=False):
@@ -2115,6 +2147,46 @@ def facing_rerate(row, spot, factors, m):
             "wind_mult": wm}
 
 
+# How precisely a forecasts row stores what the replay reads back: face_ft (and face_ft_raw) to 2
+# decimals, wind_mult, tide_mult, chop_mult and period_quality to 3 (interpret.rate_spot,
+# mop.apply_mop_overrides, nwps_nearshore.apply_nwps_overrides). The value the rater used lies
+# within half a step of the stored one.
+STORED_FACE_HALF_STEP = 0.005
+STORED_MULT_HALF_STEP = 0.0005
+_FACE_NUDGES = (-1.0, -0.5, 0.0, 0.5, 1.0)       # x STORED_FACE_HALF_STEP
+_MULT_NUDGES = (-1.0, 0.0, 1.0)                  # x STORED_MULT_HALF_STEP, all four together
+
+
+def within_stored_precision(row, spot, factors, m):
+    """Does the wired rater give *row* its published stars for SOME reading of the stored face
+    and multipliers inside their rounding (STORED_FACE_HALF_STEP, STORED_MULT_HALF_STEP)? The
+    stars rise with the face (to the beach ceiling) and with every multiplier, so the face at five
+    points across its half-steps, each with the four multipliers all low, as stored, and all
+    high, spans what the rounding allows. True means a miss is explained by stored precision;
+    False leaves it unexplained."""
+    target = float(row["stars"])
+    face_key = "face_ft_raw" if row.get("face_ft_raw") is not None else "face_ft"
+    face = _num(row.get(face_key))
+    f = spot_factor(spot, factors or {}, _slug)
+    for fn in _FACE_NUDGES:
+        for mn in _MULT_NUDGES:
+            new = dict(row)
+            if face is not None:
+                new[face_key] = face + fn * STORED_FACE_HALF_STEP
+            for k in ("wind_mult", "tide_mult", "chop_mult", "period_quality"):
+                v = _num(row.get(k))
+                if v is not None:
+                    new[k] = v + mn * STORED_MULT_HALF_STEP
+            rb = rescore(new, spot)
+            if rb["stars"] is not None and wired_rater(new, spot, rb, f, m) == target:
+                return True
+    return False
+
+
+WITHIN_PRECISION = "stars within stored precision"
+NOT_IN_FILES = "not in both spots files or no published stars"
+
+
 def _same_mult(stored, recomputed):
     if stored is None or recomputed is None:
         return stored is None and recomputed is None
@@ -2126,7 +2198,7 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
     changed = facing_changes(before, after)
     gate = defaultdict(Counter)
     gate_changed = defaultdict(Counter)
-    misses = []
+    misses, within = [], []
     by_group, by_state = defaultdict(Counter), defaultdict(Counter)
     unchanged_moved = []
     after_unreplayable = Counter()
@@ -2138,7 +2210,7 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
         b, a = before.get(name), after.get(name)
         grp = group_of(row.get("swell_source") or "none")
         if b is None or a is None or row.get("stars") is None:
-            gate[grp]["not in both spots files or no published stars"] += 1
+            gate[grp][NOT_IN_FILES] += 1
             continue
         rb = facing_rerate(row, b, factors, m)
         if rb["stars"] is None:
@@ -2146,15 +2218,17 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
         elif not _same_mult(row.get("wind_mult"), rb["wind_mult"]):
             why = "wind_mult NOT reproduced"
         elif rb["stars"] != float(row["stars"]):
-            why = "stars NOT reproduced"
+            why = (WITHIN_PRECISION if within_stored_precision(row, b, factors, m)
+                   else "stars NOT reproduced")
         else:
             why = "reproduced"
         gate[grp][why] += 1
         if name in changed:
             gate_changed[name][why] += 1
         if why != "reproduced":
-            if why != "not in both spots files or no published stars" and len(misses) < examples:
-                misses.append({"spot": name, "state": state, "valid_time": row["valid_time"],
+            bucket = within if why == WITHIN_PRECISION else misses
+            if len(bucket) < examples:
+                bucket.append({"spot": name, "state": state, "valid_time": row["valid_time"],
                                "group": grp, "why": why, "stored_wind_mult": row.get("wind_mult"),
                                "wind_mult": rb["wind_mult"], "published": float(row["stars"]),
                                "stars": rb["stars"]})
@@ -2185,8 +2259,9 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
                                  "wind_dir": wd, "wind_kt": None if ws is None else round(ws / KT_TO_MS, 1),
                                  "wind_mult": [rb["wind_mult"], ra["wind_mult"]],
                                  "stars": [rb["stars"], ra["stars"]], "delta": delta})
-    not_reproduced = sum(n for c in gate.values() for k, n in c.items() if k != "reproduced"
-                         and k != "not in both spots files or no published stars")
+    not_reproduced = sum(n for c in gate.values() for k, n in c.items()
+                         if k not in ("reproduced", NOT_IN_FILES, WITHIN_PRECISION))
+    within_n = sum(c.get(WITHIN_PRECISION, 0) for c in gate.values())
     per_spot = {}
     for n, p in per.items():
         ch = p["changed"]
@@ -2202,8 +2277,10 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
         "spots_changed": len(changed),
         "gate": {g: dict(sorted(c.items())) for g, c in sorted(gate.items())},
         "gate_not_reproduced": not_reproduced,
+        "gate_within_stored_precision": within_n,
         "gate_by_changed_spot": {n: dict(sorted(gate_changed[n].items())) for n in changed},
         "gate_examples": misses,
+        "gate_within_precision_examples": within,
         "not_replayable_after": dict(sorted(after_unreplayable.items())),
         "unchanged_spots_moved": unchanged_moved,
         "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
@@ -2217,12 +2294,14 @@ def _print_facing(rep, since):
     print(f"\n=== The facing: {rep['spots_changed']} spots whose facing changes; every row "
           f"re-rated with the wind recomputed (published window from {since}) ===")
     print(f"GATE (BASELINE reproduces the stored wind_mult and the published stars, hour for "
-          f"hour): {rep['gate_not_reproduced']} rows NOT reproduced (must be 0)")
+          f"hour): {rep['gate_not_reproduced']} rows NOT reproduced (must be 0); "
+          f"{rep['gate_within_stored_precision']} reproduced only within the stored values' "
+          f"rounding (face 2 decimals, multipliers 3; reported, and left out of the comparison)")
     for g, c in rep["gate"].items():
         print(f"  {g}: {c}")
     for n, c in rep["gate_by_changed_spot"].items():
         print(f"  at {n}: {c}")
-    for e in rep["gate_examples"]:
+    for e in rep["gate_examples"] + rep["gate_within_precision_examples"]:
         print(f"  {e['spot']} ({e['state']}) {e['valid_time']} [{e['group']}] {e['why']}: "
               f"stored wind_mult {e['stored_wind_mult']} -> {e['wind_mult']}, published "
               f"{e['published']} -> {e['stars']}")
@@ -2535,11 +2614,11 @@ def main(argv=None):
         rep = compare(rows, before, after, names)
         _print(rep, since)
         out.update(rep)
-        if facing_changes(before, after):
-            factors = load_face_factors()
-            out["facing"] = facing_compare(rows, before, after, names, factors,
-                                           median_factor(factors))
-            _print_facing(out["facing"], since)
+        # The wired-rater gate runs on every swell-window or facing preview, main against main
+        # included: it says how far the replay can be trusted before anything is compared.
+        factors = load_face_factors()
+        out["facing"] = facing_compare(rows, before, after, names, factors, median_factor(factors))
+        _print_facing(out["facing"], since)
     else:
         tides = _fetch_tides(client)
         out["census"] = tide_census(rows, tides)

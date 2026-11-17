@@ -915,7 +915,7 @@ def test_a_spot_whose_facing_is_unchanged_but_whose_stars_move_is_flagged():
         {"spot": "B", "valid_time": "2026-11-17T00:00:00+00:00", "delta": -1.5}]
 
 
-def test_star_preview_main_adds_the_facing_only_when_a_facing_moves(tmp_path, monkeypatch):
+def test_star_preview_main_runs_the_gate_on_every_preview(tmp_path, monkeypatch):
     import json
     import sys
     import types
@@ -934,9 +934,12 @@ def test_star_preview_main_adds_the_facing_only_when_a_facing_moves(tmp_path, mo
     got = json.loads(out.read_text())
     assert got["facing"]["per_spot"]["A"]["by_source"] == {"MOP": {"-1.0": 1}}
     assert got["delta_by_group"] == {"MOP": {"0.0": 1}}       # the swell window: unchanged
+    # Main against main: no facing moves, and the gate still runs.
     assert SP.main(["--arcs", str(base), "--baseline", str(base), "--since", "S",
                     "--out", str(out)]) == 0
-    assert "facing" not in json.loads(out.read_text())
+    got = json.loads(out.read_text())["facing"]
+    assert (got["spots_changed"], got["per_spot"]) == (0, {})
+    assert got["gate"] == {"MOP": {"reproduced": 1}} and got["gate_not_reproduced"] == 0
 
 
 def test_a_reproduced_row_the_new_geometry_cannot_replay_is_counted_apart_from_the_gate():
@@ -949,3 +952,91 @@ def test_a_reproduced_row_the_new_geometry_cannot_replay_is_counted_apart_from_t
     assert rep["not_replayable_after"] == {
         "MOP: mop: direction, face, shore normal or period missing": 1}
     assert rep["delta_by_group"] == {} and rep["per_spot"]["A"]["hours"] == 0
+
+
+# --------------------------------------------------------------------------- #
+# Replay fidelity: the height round trip and the stored values' rounding       #
+# --------------------------------------------------------------------------- #
+
+def test_the_height_round_trip_no_longer_drops_a_half_foot_face_under_the_flat_line():
+    from pipeline.interpret import M_TO_FT, face_ft, period_factor
+    # The old recovery: 0.5 / (period_factor x M_TO_FT), then face_ft multiplies left to right
+    # and gives 0.49999999999999994 at 4 s, under 0.5 (the flat line: 0 stars).
+    naive = 0.5 / (period_factor(4.0, "ww3") * M_TO_FT)
+    assert face_ft(naive, 4.0, "ww3") == 0.49999999999999994
+    assert face_ft(SP._hs_for_face(0.5, 4.0), 4.0, "ww3") == 0.5
+
+
+def test_the_recovered_face_is_never_below_the_stored_one():
+    from pipeline.interpret import face_ft
+    for face in (0.5, 0.51, 1.25, 2.37, 3.0, 7.83, 12.6):
+        for tp in (4.0, 6.5, 9.0, 11.3, 14.0, 17.9):
+            assert face_ft(SP._hs_for_face(face, tp), tp, "ww3") >= face
+
+
+# A 1.25 ft MOP face with every multiplier 1.0 and no wind: size_score 1.25, raw 1.25,
+# round(2.5) = 2 (Python rounds a half to even) -> 1.0 star. A rater that saw 1.2525 ft
+# (stored as 1.25) got round(2.505) = 3 -> 1.5. Half a stored step up (0.0025) gives 1.5 back.
+EDGE = _mop(face_ft=1.25, wind_dir=None, wind_speed=None, wind_mult=1.0, chop_ratio=None,
+            stars=1.5, valid_time="2026-11-17T01:00:00+00:00")
+
+
+def test_a_miss_on_a_half_star_edge_is_within_stored_precision():
+    assert SP.facing_rerate(EDGE, FACE_BEFORE, {}, None)["stars"] == 1.0
+    assert SP.within_stored_precision(EDGE, FACE_BEFORE, {}, None) is True
+
+
+def test_a_miss_no_rounding_explains_is_not():
+    # 3.5 stars at a 5.0 ft face with wind_mult 1.2 (see the facing tests): 2 x raw = 7.461, so
+    # 3.0 needs 2 x raw under 6.5, far outside half a stored step.
+    assert SP.within_stored_precision(_windy(stars=3.0), FACE_BEFORE, {}, None) is False
+
+
+def test_the_gate_lists_misses_within_stored_precision_apart_and_does_not_fail_on_them():
+    names = {1: ("A", "Florida")}
+    rows = [dict(EDGE, spot_id=1), dict(_windy(stars=3.0), spot_id=1), dict(_windy(), spot_id=1)]
+    rep = SP.facing_compare(rows, {"A": FACE_BEFORE}, {"A": FACE_BEFORE}, names, {}, None)
+    assert rep["gate"] == {"MOP": {"reproduced": 1, "stars NOT reproduced": 1,
+                                   "stars within stored precision": 1}}
+    assert (rep["gate_not_reproduced"], rep["gate_within_stored_precision"]) == (1, 1)
+    assert [(e["why"], e["published"], e["stars"]) for e in rep["gate_within_precision_examples"]] \
+        == [("stars within stored precision", 1.5, 1.0)]
+    assert [(e["why"], e["published"]) for e in rep["gate_examples"]] == [
+        ("stars NOT reproduced", 3.0)]
+    assert rep["delta_by_group"] == {"MOP": {0.0: 1}}         # only the reproduced row compared
+
+
+def test_an_nwps_row_at_half_a_foot_replays_at_one_star_not_zero():
+    # 0.50 ft at 4 s, the partition in the window on the optimal (gain 1): the face comes back
+    # 0.50, not under the flat line, so composite_stars clamps to its 1.0 floor. The old
+    # recovery gave 0.49999999999999994 -> 0.0 stars.
+    row = _nwps(face_ft=0.5, swell_tp=4.0, tp=4.0, dp=270.0, swell_1_hs=0.2, swell_1_tp=4.0,
+                swell_1_dp=270.0, wind_dir=None, wind_speed=None, chop_ratio=None, stars=1.0)
+    assert SP.facing_rerate(row, FACE_BEFORE, {}, None)["stars"] == 1.0
+
+
+def test_the_recovery_steps_down_to_an_exact_height_when_the_quotient_lands_above():
+    from pipeline.interpret import M_TO_FT, face_ft, period_factor
+    # 0.53 ft at 14 s: the plain quotient comes back 0.5300000000000001; one step down is exact.
+    assert face_ft(0.53 / (period_factor(14.0, "ww3") * M_TO_FT), 14.0, "ww3") == 0.5300000000000001
+    assert face_ft(SP._hs_for_face(0.53, 14.0), 14.0, "ww3") == 0.53
+
+
+def test_only_the_face_half_step_explains_this_miss():
+    # Stored 1.247 ft: 2 x raw = 2.494 -> 1.0 star; all four multipliers half a step up only
+    # make it 2.494 x 1.0005 = 2.49525 -> still 1.0; 1.252 ft (half a 2-decimal step up) gives
+    # 2.504 -> 1.5, the published stars.
+    row = _mop(face_ft=1.247, wind_dir=None, wind_speed=None, wind_mult=1.0, chop_ratio=None,
+               stars=1.5)
+    assert SP.facing_rerate(row, FACE_BEFORE, {}, None)["stars"] == 1.0
+    assert SP.within_stored_precision(row, FACE_BEFORE, {}, None) is True
+
+
+def test_only_the_multipliers_half_step_explains_this_miss():
+    # 12 ft is on size_score's plateau (5.0 from 10 ft), so the face's rounding moves nothing.
+    # wind_mult 0.863: 0.863**0.35 = 0.949740 -> 2 x raw = 9.4974 -> 4.5 stars. All four
+    # multipliers half a step up: 0.8635**0.35 x 1.0005**0.65 = 0.950241 -> 9.5024 -> 5.0.
+    row = _mop(face_ft=12.0, wind_dir=None, wind_speed=None, wind_mult=0.863, chop_ratio=None,
+               stars=5.0)
+    assert SP.facing_rerate(row, FACE_BEFORE, {}, None)["stars"] == 4.5
+    assert SP.within_stored_precision(row, FACE_BEFORE, {}, None) is True

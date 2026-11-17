@@ -1,0 +1,395 @@
+{
+  "since": "2026-11-17T00:06:29+00:00",
+  "rows": 85160,
+  "replay": {
+    "NWPS NOT reproduced": 16483,
+    "NWPS reproduced": 61782,
+    "WW3 NOT reproduced": 623,
+    "WW3 reproduced": 6272
+  },
+  "unreplayable": {},
+  "compared": 68054,
+  "changed_spot_hours": 0,
+  "changed_spots": 0,
+  "ups": 0,
+  "downs": 0,
+  "change_by_cause": {},
+  "spots_moving_over_1_5": [],
+  "delta_by_group": {
+    "NWPS": {
+      "0.0": 61782
+    },
+    "WW3": {
+      "0.0": 6272
+    }
+  },
+  "delta_by_state": {
+    "California": {
+      "0.0": 15974
+    },
+    "Delaware": {
+      "0.0": 792
+    },
+    "Florida": {
+      "0.0": 6969
+    },
+    "Georgia": {
+      "0.0": 759
+    },
+    "Hawaii": {
+      "0.0": 6408
+    },
+    "Maine": {
+      "0.0": 1980
+    },
+    "Maryland": {
+      "0.0": 396
+    },
+    "Massachusetts": {
+      "0.0": 3287
+    },
+    "New Hampshire": {
+      "0.0": 1056
+    },
+    "New Jersey": {
+      "0.0": 7516
+    },
+    "New York": {
+      "0.0": 3954
+    },
+    "North Carolina": {
+      "0.0": 4992
+    },
+    "Oregon": {
+      "0.0": 1772
+    },
+    "Puerto Rico": {
+      "0.0": 3160
+    },
+    "Rhode Island": {
+      "0.0": 3563
+    },
+    "South Carolina": {
+      "0.0": 2269
+    },
+    "Texas": {
+      "0.0": 1541
+    },
+    "Virginia": {
+      "0.0": 660
+    },
+    "Washington": {
+      "0.0": 1006
+    }
+  },
+  "top20": [],
+  "facing": {
+    "spots_changed": 0,
+    "gate": {
+      "NWPS": {
+        "reproduced": 78171,
+        "stars within stored precision": 94
+      },
+      "WW3": {
+        "reproduced": 6894,
+        "stars within stored precision": 1
+      }
+    },
+    "gate_not_reproduced": 0,
+    "gate_within_stored_precision": 95,
+    "gate_by_changed_spot": {},
+    "gate_examples": [],
+    "gate_within_precision_examples": [
+      {
+        "spot": "38th Avenue",
+        "state": "California",
+        "valid_time": "2026-11-19T14:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Bolinas",
+        "state": "California",
+        "valid_time": "2026-11-19T05:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.842,
+        "wind_mult": 0.842,
+        "published": 3.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Garbage Beach",
+        "state": "California",
+        "valid_time": "2026-11-19T13:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.734,
+        "wind_mult": 0.734,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Half Moon Bay Jetty",
+        "state": "California",
+        "valid_time": "2026-11-20T19:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1.092,
+        "wind_mult": 1.092,
+        "published": 2.5,
+        "stars": 3.0
+      },
+      {
+        "spot": "Hermosa Beach Pier",
+        "state": "California",
+        "valid_time": "2026-11-17T13:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.716,
+        "wind_mult": 0.716,
+        "published": 3.5,
+        "stars": 4.0
+      },
+      {
+        "spot": "Huntington Beach, California",
+        "state": "California",
+        "valid_time": "2026-11-19T11:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.55,
+        "wind_mult": 0.55,
+        "published": 1.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Huntington Cliffs",
+        "state": "California",
+        "valid_time": "2026-11-21T09:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1.146,
+        "wind_mult": 1.146,
+        "published": 3.5,
+        "stars": 4.0
+      },
+      {
+        "spot": "Mission Beach",
+        "state": "California",
+        "valid_time": "2026-11-22T10:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.895,
+        "wind_mult": 0.895,
+        "published": 2.0,
+        "stars": 1.5
+      },
+      {
+        "spot": "Montara State Beach",
+        "state": "California",
+        "valid_time": "2026-11-19T03:00:00+00:00",
+        "group": "WW3",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.614,
+        "wind_mult": 0.614,
+        "published": 4.0,
+        "stars": 3.5
+      },
+      {
+        "spot": "Palos Verdes Cove",
+        "state": "California",
+        "valid_time": "2026-11-18T22:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.706,
+        "wind_mult": 0.706,
+        "published": 3.5,
+        "stars": 3.0
+      },
+      {
+        "spot": "Ponto Beach",
+        "state": "California",
+        "valid_time": "2026-11-18T21:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.85,
+        "wind_mult": 0.85,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "San Diego Blacks Beach",
+        "state": "California",
+        "valid_time": "2026-11-21T15:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "San Simeon",
+        "state": "California",
+        "valid_time": "2026-11-21T11:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1.081,
+        "wind_mult": 1.081,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Surfside, California",
+        "state": "California",
+        "valid_time": "2026-11-20T14:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.812,
+        "wind_mult": 0.812,
+        "published": 1.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Tamarack",
+        "state": "California",
+        "valid_time": "2026-11-19T14:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.846,
+        "wind_mult": 0.846,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Venice Beach Breakwater",
+        "state": "California",
+        "valid_time": "2026-11-21T09:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Destin Jetty",
+        "state": "Florida",
+        "valid_time": "2026-11-18T11:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.0,
+        "stars": 1.5
+      },
+      {
+        "spot": "Okaloosa Island Pier",
+        "state": "Florida",
+        "valid_time": "2026-11-18T10:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.0,
+        "stars": 1.5
+      },
+      {
+        "spot": "Ala Moana Bowls",
+        "state": "Hawaii",
+        "valid_time": "2026-11-17T16:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1,
+        "wind_mult": 1.0,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Barbers Point",
+        "state": "Hawaii",
+        "valid_time": "2026-11-19T08:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1,
+        "wind_mult": 1.0,
+        "published": 3.0,
+        "stars": 2.5
+      }
+    ],
+    "not_replayable_after": {},
+    "unchanged_spots_moved": [],
+    "delta_by_group": {
+      "NWPS": {
+        "0.0": 78171
+      },
+      "WW3": {
+        "0.0": 6894
+      }
+    },
+    "delta_by_state": {
+      "California": {
+        "0.0": 26373
+      },
+      "Delaware": {
+        "0.0": 792
+      },
+      "Florida": {
+        "0.0": 10819
+      },
+      "Georgia": {
+        "0.0": 790
+      },
+      "Hawaii": {
+        "0.0": 7249
+      },
+      "Maine": {
+        "0.0": 1980
+      },
+      "Maryland": {
+        "0.0": 396
+      },
+      "Massachusetts": {
+        "0.0": 3287
+      },
+      "New Hampshire": {
+        "0.0": 1056
+      },
+      "New Jersey": {
+        "0.0": 7516
+      },
+      "New York": {
+        "0.0": 3954
+      },
+      "North Carolina": {
+        "0.0": 5140
+      },
+      "Oregon": {
+        "0.0": 2668
+      },
+      "Puerto Rico": {
+        "0.0": 3160
+      },
+      "Rhode Island": {
+        "0.0": 3563
+      },
+      "South Carolina": {
+        "0.0": 2373
+      },
+      "Texas": {
+        "0.0": 1582
+      },
+      "Virginia": {
+        "0.0": 660
+      },
+      "Washington": {
+        "0.0": 1707
+      }
+    },
+    "per_spot": {}
+  }
+}
