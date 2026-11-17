@@ -4389,9 +4389,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 317,
-        "max": 319,
-        "span": 6
+        "min": 270,
+        "max": 0,
+        "span": 90
       }
     ],
     "optimal_swell_dir": 315.0,
@@ -16303,9 +16303,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 313,
-        "max": 43,
-        "span": 94
+        "min": 315,
+        "max": 90,
+        "span": 135
       }
     ],
     "optimal_swell_dir": 0,
@@ -16435,9 +16435,9 @@
     "orientation_source": "manual",
     "swell_window_arcs": [
       {
-        "min": 325,
-        "max": 47,
-        "span": 86
+        "min": 315,
+        "max": 90,
+        "span": 135
       }
     ],
     "optimal_swell_dir": 4,
@@ -34693,8 +34693,14 @@
     "orientation_deg": 350.0,
     "offshore_wind_deg": 170.0,
     "orientation_source": "manual",
-    "swell_window_arcs": [],
-    "optimal_swell_dir": 320.0,
+    "swell_window_arcs": [
+      {
+        "min": 270,
+        "max": 0,
+        "span": 90
+      }
+    ],
+    "optimal_swell_dir": 315.0,
     "swell_window_source": "nwps",
     "nearest_tide_station_id": "9413450",
     "nearest_tide_station_dist_km": 1.09,

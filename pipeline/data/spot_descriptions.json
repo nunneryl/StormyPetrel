@@ -1343,7 +1343,8 @@
   },
   "monterey-beach": {
     "description": "Monterey Beach is a California surf spot. It faces north, and it is offshore in south winds. The optimal swell comes from the northwest.",
-    "signature": "v2:3ac95a725b6ca956"
+    "signature": "v2:5c15312a50042896",
+    "pushed": false
   },
   "moody-point": {
     "description": "Moody Point is a reef break in Maine over a rock bottom. It faces southeast, and its optimal swell direction is southeast. Offshore winds blow from the northwest.",

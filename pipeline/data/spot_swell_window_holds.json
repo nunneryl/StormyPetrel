@@ -1,6 +1,6 @@
 {
-  "_comment": "Swell windows HELD at their stored arcs and optimal_swell_dir: the ray-cast does not write these spots. Applied by pipeline/sw1_raycast.py (_apply_raycast_result, mode=full) and by pipeline/enrich.py (Algo 2a, after the ray-cast or the carried-forward arcs), so neither a full ray-cast nor a re-enrich moves them. Each entry is the window the spot carried on main when it was held (main 7839cc0), copied verbatim; nothing here is authored.\n\nWHY THESE TWENTY-ONE. Ten were held on 2026-10-19, Hillsboro Beach to Hobe Beach. The R1-R3 island rules (pipeline/enrichment/swell_window.py) judge each island on its own run of rays, so the Bimini group (1-23 km2 at 90-114 km) no longer borrows Cuba's run 600-700 km behind it, and on the land data alone every one of these spots would open its south-east gap (run 18: Hillsboro Beach [17-127, 145-175] -> [17-175]). The land data is not the whole obstacle here: the Great Bahama Bank is a shallow platform a few metres deep that breaks and refracts swell long before it reaches the islands GSHHG draws, so it shelters south-east Florida more than its islands do. Until that sheltering is measured (NWPS or the answer key), these spots keep the windows they had. Eleven more were held on 2026-10-20 after full run 24 showed the same south-east gaps reshuffling around the Bahamas on either side of the first ten: South Beach Miami, Haulover Inlet, Sunny Isles, Spoils, Fort Lauderdale Beach, Commercial Pier, Boca Raton Inlet, Palmetto Pavilion, Palm Beach, Ocean Reef Park and Bathtub Beach. Spoils also carries a hand-set optimal_swell_dir in spot_swell_windows.json (40); its held optimal is that same value.\n\nTO RELEASE A SPOT, delete its entry; the next full ray-cast writes its R1-R3 window. Keys are slugs as pipeline/db_import._slugify makes them; `name` is for the reader and is checked against the roster by pipeline/tests/test_swell_window_holds.py.",
-  "note": "SE Florida, South Beach Miami to Bathtub Beach: the Great Bahama Bank's shallow water shelters more than the land data shows.",
+  "_comment": "Swell windows HELD at their stored arcs and optimal_swell_dir: the ray-cast does not write these spots. Applied by pipeline/sw1_raycast.py (_apply_raycast_result, mode=full) and by pipeline/enrich.py (Algo 2a, after the ray-cast or the carried-forward arcs), so neither a full ray-cast nor a re-enrich moves them. Two kinds of entry. The twenty-one SE Florida entries are the windows those spots carried on main when they were held (main 7839cc0), copied verbatim, not authored. The four added on 2026-11-17 (kanaha-beach, ho-okipa, lovers-point, monterey-beach) are HAND-SET from cited surf guides, each with its sources in its own `source` field: the straight-ray cast cannot see swell that wraps around a headland or coast (sw1-raycast run 80), and a full run must not overwrite what the guides say.\n\nWHY THE TWENTY-ONE SE FLORIDA SPOTS. Ten were held on 2026-10-19, Hillsboro Beach to Hobe Beach. The R1-R3 island rules (pipeline/enrichment/swell_window.py) judge each island on its own run of rays, so the Bimini group (1-23 km2 at 90-114 km) no longer borrows Cuba's run 600-700 km behind it, and on the land data alone every one of these spots would open its south-east gap (run 18: Hillsboro Beach [17-127, 145-175] -> [17-175]). The land data is not the whole obstacle here: the Great Bahama Bank is a shallow platform a few metres deep that breaks and refracts swell long before it reaches the islands GSHHG draws, so it shelters south-east Florida more than its islands do. Until that sheltering is measured (NWPS or the answer key), these spots keep the windows they had. Eleven more were held on 2026-10-20 after full run 24 showed the same south-east gaps reshuffling around the Bahamas on either side of the first ten: South Beach Miami, Haulover Inlet, Sunny Isles, Spoils, Fort Lauderdale Beach, Commercial Pier, Boca Raton Inlet, Palmetto Pavilion, Palm Beach, Ocean Reef Park and Bathtub Beach. Spoils also carries a hand-set optimal_swell_dir in spot_swell_windows.json (40); its held optimal is that same value.\n\nTO RELEASE A SPOT, delete its entry; the next full ray-cast writes its R1-R3 window. Keys are slugs as pipeline/db_import._slugify makes them; `name` is for the reader and is checked against the roster by pipeline/tests/test_swell_window_holds.py.",
+  "note": "SE Florida, South Beach Miami to Bathtub Beach: the Great Bahama Bank's shallow water shelters more than the land data shows. Kanaha Beach, Ho\u02bbokipa, Lovers Point and Monterey Beach: hand-set windows from cited guides (2026-11-17).",
   "holds": {
     "hillsboro-beach": {
       "name": "Hillsboro Beach",
@@ -322,6 +322,54 @@
         }
       ],
       "optimal_swell_dir": 72
+    },
+    "kanaha-beach": {
+      "name": "Kanaha Beach",
+      "swell_window_arcs": [
+        {
+          "min": 315,
+          "max": 90,
+          "span": 135
+        }
+      ],
+      "optimal_swell_dir": 4,
+      "source": "Hand-set 2026-11-17 from cited guides: surfnerd.com/surf-forecast/kanaha \"Workable swell: NW - NE. Best from N\", exposure \"NW - ENE\"; en.wannasurf.com Kanaha \"Good swell direction: North, NorthWest, East, NorthEast\"; surf-forecast.com/breaks/Kanaha \"the best swell direction is from the north northeast\". Window NW to E (315-90, no pad) takes in the trade swell that wraps around the Spreckelsville-Paia coast; the straight-ray cast stops at 47 (63 even from 600 m offshore: sw1-raycast run 80). Optimal kept at 4, inside the cited N-NNE."
+    },
+    "ho-okipa": {
+      "name": "Ho\u02bbokipa",
+      "swell_window_arcs": [
+        {
+          "min": 315,
+          "max": 90,
+          "span": 135
+        }
+      ],
+      "optimal_swell_dir": 0,
+      "source": "Hand-set 2026-11-17 from cited guides: surfnerd.com/surf-forecast/hookipa \"Workable swell: NW - E. Best from NW\"; tombarefoot.com Hookipa guide \"Best Swell Directions? North, Northwest, Northeast\" and \"catch the surf from the tradewinds swells\"; en.wannasurf.com Hookipa \"Good swell direction: North\"; surf-forecast.com/breaks/Hookipa \"the best swell direction is from the north northeast\". Window NW to E (315-90, no pad) takes in the trade swell; the straight-ray cast stops at 43 (63 even from 600 m offshore: sw1-raycast run 80). Optimal N (0), the middle of the cited NW / N / NNE."
+    },
+    "lovers-point": {
+      "name": "Lovers Point",
+      "swell_window_arcs": [
+        {
+          "min": 270,
+          "max": 0,
+          "span": 90
+        }
+      ],
+      "optimal_swell_dir": 315,
+      "source": "Hand-set 2026-11-17 from cited guides: surfnerd.com/surf-forecast/lovers-point \"Workable swell: W - N. Best from NW\"; surf-forecast.com/breaks/Lovers-Point \"the best swell direction is from the northwest\". Window W to N (270-0, no pad): swell wraps around Point Pinos, which the straight-ray cast cannot see (it opens 317-319 only: sw1-raycast run 80). Optimal 315 as in spot_swell_windows.json (four guides, NW)."
+    },
+    "monterey-beach": {
+      "name": "Monterey Beach",
+      "swell_window_arcs": [
+        {
+          "min": 270,
+          "max": 0,
+          "span": 90
+        }
+      ],
+      "optimal_swell_dir": 315,
+      "source": "Hand-set 2026-11-17 from guides to Del Monte Beach, about 1 km east of this spot (36.6052, -121.8704 per surfnerd; this spot 36.6033, -121.8814), the nearest sourced break, used as a PROXY: surfnerd.com/surf-forecast/del-monte-beach \"Workable swell: W - N\", \"northwest the best match\"; surf-forecast.com/breaks/Del-Monte-Beach \"the best swell direction is from the northwest\". Window W to N (270-0, no pad); the straight-ray cast opens no window here (sw1-raycast run 80). Optimal NW (315), also set in spot_swell_windows.json."
     }
   }
 }
