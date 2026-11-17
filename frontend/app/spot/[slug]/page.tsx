@@ -9,7 +9,6 @@ import { SwellChart } from '@/components/SwellChart';
 import { WindChart } from '@/components/WindChart';
 import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
-import { SwellWindowCompass } from '@/components/SwellWindowCompass';
 import { CurrentConditions } from '@/components/CurrentConditions';
 import { CurrentHourProvider } from '@/components/CurrentHour';
 import { CurrentHero } from '@/components/CurrentHero';
@@ -347,16 +346,13 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           <SurfReportPanel />
         </SurfReportProvider>
 
-        {/* Spectral swell components, and the same rows on the swell compass beside them
-            (lib/swellWindowCompass.ts): one hour, one set of rows. */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-4 items-start">
-          <SwellPartitions windowArcs={spot.swell_window_arcs} facingDeg={spot.orientation_deg} />
-          <SwellWindowCompass
-            windowArcs={spot.swell_window_arcs}
-            facingDeg={spot.orientation_deg}
-            optimalDeg={spot.optimal_swell_dir}
-          />
-        </div>
+        {/* The swell breakdown and, drawn from the same rows, the swell compass (one card). */}
+        <SwellPartitions
+          windowArcs={spot.swell_window_arcs}
+          facingDeg={spot.orientation_deg}
+          optimalDeg={spot.optimal_swell_dir}
+          offshoreDeg={spot.offshore_wind_deg}
+        />
       </CurrentHourProvider>
 
       {/* Charts — next 48h only so curves stay legible */}

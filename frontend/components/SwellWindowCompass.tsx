@@ -1,140 +1,163 @@
-'use client';
+// The swell compass drawn in the Swell breakdown card (components/SwellPartitions.tsx). It takes
+// the card's own rows and draws nothing else for the swells, so the two cannot disagree
+// (lib/swellWindowCompass.ts). Display only.
 
-import { useCurrentHour } from './CurrentHour';
-import { degToCardinal, fmtMph, metersToFeet } from '@/lib/formatting';
-import { breakdownRows } from '@/lib/swellBreakdown';
+import { classifyWind, windQualityClass } from '@/lib/ratings';
+import { degToCardinal, fmtMph } from '@/lib/formatting';
+import type { BreakdownRow } from '@/lib/swellBreakdown';
 import {
-  NO_WINDOW_NOTE,
-  compassArrows,
-  compassPoint,
-  wedgePath,
+  BEACH_R, CX, CY, FONT_PX, HEAD_R, MARK_R, NO_WINDOW_NOTE, RING_R, RING_W, TAIL_R, VIEW_H, VIEW_W,
+  compassArrows, compassPoint, layoutLabels, ringArcPath, type LabelIn,
 } from '@/lib/swellWindowCompass';
 import type { Spot } from '@/lib/types';
 
-// The spot's swell window, its optimal swell direction, the hour's swells and its wind, on one
-// compass. Display only. The arrows are the Swell breakdown's own rows for the hour the Conditions
-// tiles show, so the two cannot disagree (lib/swellWindowCompass.ts).
+const OPEN = '#0EA5E9';
+const BLOCKED = '#E2E8F0';
+const WATER = '#BAE6FD';
+const SAND = '#FCD34D';
+const LAND = '#D6CFB8';
+const INK = '#475569';
 
-const SIZE = 240;
-const C = SIZE / 2;
-const R = 88;            // the ring
-const HEAD_R = 12;       // arrows stop this far from the centre
-const SWELL = '#0369A1'; // as the breakdown: dark blue swell
-const WIND_SEA = '#94A3B8'; // as the breakdown: grey wind sea
-const WIND = '#B45309';
-const OPTIMAL = '#15803D';
-const WEDGE_FILL = 'rgba(3, 105, 161, 0.12)';
-const WEDGE_STROKE = 'rgba(3, 105, 161, 0.35)';
-
-function Arrow({ dp, len, color, opacity, dashed, label, testId }: {
-  dp: number; len: number; color: string; opacity: number; dashed?: boolean; label: string;
-  testId: string;
-}) {
-  const tail = compassPoint(dp, len, C, C);
-  const head = compassPoint(dp, HEAD_R, C, C);
-  // The head: a small triangle at the inner end, pointing at the centre (the way the waves travel).
-  const left = compassPoint(dp - 18, HEAD_R + 9, C, C);
-  const right = compassPoint(dp + 18, HEAD_R + 9, C, C);
-  const text = compassPoint(dp, len + 9, C, C);
-  return (
-    <g opacity={opacity} data-compass={testId}>
-      <line x1={tail.x} y1={tail.y} x2={head.x} y2={head.y} stroke={color} strokeWidth={3}
-        strokeLinecap="round" strokeDasharray={dashed ? '5 4' : undefined} />
-      <polygon points={`${head.x},${head.y} ${left.x},${left.y} ${right.x},${right.y}`} fill={color} />
-      <text x={text.x} y={text.y} fill={color} fontSize={10} fontWeight={700} textAnchor="middle"
-        dominantBaseline="middle">{label}</text>
-    </g>
-  );
+/** The Wind tile's text colour for this wind (lib/ratings.ts windQualityClass). */
+function windTextClass(dir: number, offshore: number | null | undefined): string {
+  return windQualityClass(classifyWind(dir, offshore)).split(' ').find((c) => c.startsWith('text-'))
+    ?? 'text-text-muted';
 }
 
 export function SwellWindowCompass({
+  rows,
   windowArcs,
   facingDeg,
   optimalDeg,
+  offshoreDeg,
+  windDir,
+  windSpeed,
 }: {
+  rows: BreakdownRow[];
   windowArcs: Spot['swell_window_arcs'];
   facingDeg: Spot['orientation_deg'];
   optimalDeg: Spot['optimal_swell_dir'];
+  offshoreDeg: Spot['offshore_wind_deg'];
+  windDir: number | null | undefined;
+  windSpeed: number | null | undefined;
 }) {
-  // The hour the Conditions tiles show: one clock, one row (components/CurrentHour.tsx).
-  const forecast = useCurrentHour().selection.row;
-  if (!forecast) return null;
-  // Exactly the Swell breakdown's rows (lib/swellBreakdown.ts).
-  const rows = breakdownRows(forecast, windowArcs, facingDeg);
-  const { arrows, noDirection } = compassArrows(rows);
   const arcs = windowArcs ?? [];
-  const windDir = forecast.wind_dir;
-  const span = R - HEAD_R - 14;
+  const arrows = compassArrows(rows, arcs);
+  const hasWind = windDir !== null && windDir !== undefined;
+  const hasBest = optimalDeg !== null && optimalDeg !== undefined;
+  const windText = hasWind ? `${degToCardinal(windDir)} ${fmtMph(windSpeed)}` : '';
+
+  const labels: LabelIn[] = [
+    ...arrows.map((a, i) => ({ id: `swell-${i}`, bearing: a.dp, text: a.text })),
+    ...(hasWind ? [{ id: 'wind', bearing: windDir, text: windText }] : []),
+    ...(hasBest ? [{ id: 'best', bearing: optimalDeg, text: 'best' }] : []),
+  ];
+  const placed = new Map(layoutLabels(labels).map((l) => [l.id, l]));
+  const windClass = hasWind ? windTextClass(windDir, offshoreDeg) : '';
 
   const said = [
-    arcs.length ? `${arcs.length === 1 ? 'Swell window' : 'Swell windows'} ${arcs
-      .map((a) => `${Math.round(a.min)}° to ${Math.round(a.max)}°`).join(' and ')}` : NO_WINDOW_NOTE,
-    optimalDeg !== null && optimalDeg !== undefined
-      ? `best swell from ${degToCardinal(optimalDeg)} ${Math.round(optimalDeg)}°` : null,
-    ...arrows.map((a) => `${a.label} ${metersToFeet(a.hs)!.toFixed(1)} ft from ${degToCardinal(a.dp)}`),
-    windDir !== null && windDir !== undefined
-      ? `wind ${fmtMph(forecast.wind_speed)} from ${degToCardinal(windDir)}` : null,
+    arcs.length
+      ? `Swell window ${arcs.map((a) => `${Math.round(a.min)}° to ${Math.round(a.max)}°`).join(' and ')}`
+      : NO_WINDOW_NOTE,
+    hasBest ? `best swell from ${degToCardinal(optimalDeg)}` : null,
+    ...arrows.map((a) => `${a.label}: ${a.text} from ${degToCardinal(a.dp)}${a.inside ? '' : ', outside the window'}`),
+    hasWind ? `wind ${windText}` : null,
   ].filter(Boolean).join('; ');
 
+  function Label({ id, className, fill }: { id: string; className?: string; fill?: string }) {
+    const l = placed.get(id);
+    if (!l) return null;
+    const from = compassPoint(l.bearing, id === 'wind' ? MARK_R + 5 : TAIL_R + 2);
+    return (
+      <g data-compass-label={id}>
+        {l.moved && (
+          <line x1={from.x} y1={from.y} x2={l.x} y2={l.y} stroke="#CBD5E1" strokeWidth={1}
+            data-compass="leader" />
+        )}
+        <text x={l.anchor === 'start' ? l.x + 3 : l.x - 3} y={l.y} fontSize={FONT_PX}
+          fontWeight={600} textAnchor={l.anchor} dominantBaseline="central" className={className}
+          fill={fill ?? 'currentColor'}>{l.text}</text>
+      </g>
+    );
+  }
+
   return (
-    <section className="rounded-xl border border-ink-600 bg-white shadow-card">
-      <div className="px-4 pt-3 pb-1">
-        <h3 className="text-[11px] uppercase tracking-widest2 text-text-secondary">Swell compass</h3>
-      </div>
-      <div className="flex justify-center px-2">
-        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={said}
-          className="max-w-full h-auto">
+    <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} role="img" aria-label={said}
+      className="w-full h-auto max-w-[420px]">
+      <defs>
+        <clipPath id="sp-beach-clip">
+          <circle cx={CX} cy={CY} r={BEACH_R} />
+        </clipPath>
+      </defs>
+
+      {/* The window band: grey all round, blue where open. No window: a faint dashed ring. */}
+      {arcs.length ? (
+        <>
+          <circle cx={CX} cy={CY} r={RING_R} fill="none" stroke={BLOCKED} strokeWidth={RING_W} />
           {arcs.map((a, i) => (
-            <path key={i} d={wedgePath(a, R, C, C)} fill={WEDGE_FILL} stroke={WEDGE_STROKE}
-              strokeWidth={1} data-compass="wedge" />
+            <path key={i} d={ringArcPath(a)} fill="none" stroke={OPEN} strokeWidth={RING_W}
+              data-compass="open" />
           ))}
-          <circle cx={C} cy={C} r={R} fill="none" stroke="#D1D5DB" strokeWidth={1} />
-          {(['N', 'E', 'S', 'W'] as const).map((n, i) => {
-            const p = compassPoint(i * 90, R + 14, C, C);
-            return (
-              <text key={n} x={p.x} y={p.y} fontSize={11} fill="#64748B" textAnchor="middle"
-                dominantBaseline="middle">{n}</text>
-            );
-          })}
-          {optimalDeg !== null && optimalDeg !== undefined && (() => {
-            const tip = compassPoint(optimalDeg, R - 2, C, C);
-            const l = compassPoint(optimalDeg - 5, R + 8, C, C);
-            const r = compassPoint(optimalDeg + 5, R + 8, C, C);
-            return (
-              <polygon points={`${tip.x},${tip.y} ${l.x},${l.y} ${r.x},${r.y}`} fill={OPTIMAL}
-                data-compass="optimal" />
-            );
-          })()}
-          {arrows.map((a) => (
-            <Arrow key={a.label} dp={a.dp} len={HEAD_R + 14 + a.lengthFrac * span}
-              color={a.windSea ? WIND_SEA : SWELL} opacity={a.faded ? 0.4 : a.muted ? 0.6 : 1}
-              label={a.short} testId={a.faded ? 'row-faded' : 'row'} />
-          ))}
-          {windDir !== null && windDir !== undefined && (
-            <Arrow dp={windDir} len={R - 22} color={WIND} opacity={1} dashed label="Wind"
-              testId="wind" />
-          )}
-        </svg>
-      </div>
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 px-4 pb-1 text-[11px] text-text-muted">
-        <li><span style={{ color: SWELL }}>&#9632;</span> Swell</li>
-        <li><span style={{ color: WIND_SEA }}>&#9632;</span> Wind sea</li>
-        <li><span style={{ color: WIND }}>&#9632;</span> Wind</li>
-        {optimalDeg !== null && optimalDeg !== undefined && (
-          <li><span style={{ color: OPTIMAL }}>&#9650;</span> Best swell direction</li>
-        )}
-        {arcs.length > 0 && <li><span style={{ color: WEDGE_STROKE }}>&#9632;</span> Swell window</li>}
-      </ul>
-      <p className="px-4 pb-3 text-[11px] leading-snug text-text-muted">
-        {arcs.length === 0 && <span data-compass="no-window">{NO_WINDOW_NOTE}. </span>}
-        Arrows point the way the waves travel; longer is bigger. Faint arrows are much smaller
-        than the biggest.
-        {noDirection.length > 0 && (
-          <span data-compass="no-direction">
-            {' '}No direction for {noDirection.map((r) => r.label).join(', ')}.
-          </span>
-        )}
-      </p>
-    </section>
+        </>
+      ) : (
+        <circle cx={CX} cy={CY} r={RING_R} fill="none" stroke={BLOCKED} strokeWidth={2}
+          strokeDasharray="4 4" data-compass="no-window" />
+      )}
+
+      {/* The beach: water towards the facing, sand, land behind. */}
+      {facingDeg !== null && facingDeg !== undefined ? (
+        <g clipPath="url(#sp-beach-clip)" transform={`rotate(${facingDeg} ${CX} ${CY})`}
+          data-compass="beach">
+          <rect x={CX - BEACH_R} y={CY - BEACH_R} width={2 * BEACH_R} height={BEACH_R} fill={WATER} />
+          <rect x={CX - BEACH_R} y={CY} width={2 * BEACH_R} height={BEACH_R} fill={LAND} />
+          <rect x={CX - BEACH_R} y={CY - 3} width={2 * BEACH_R} height={7} fill={SAND} />
+        </g>
+      ) : (
+        <circle cx={CX} cy={CY} r={BEACH_R * 0.6} fill={SAND} data-compass="beach" />
+      )}
+
+      {/* Best direction: a tick across the band. */}
+      {hasBest && (() => {
+        const a = compassPoint(optimalDeg, RING_R - RING_W / 2 - 3);
+        const b = compassPoint(optimalDeg, RING_R + RING_W / 2 + 3);
+        return <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={INK} strokeWidth={2.5}
+          data-compass="best" />;
+      })()}
+
+      {/* Swells: in from the ring, all ending at the same radius by the beach. */}
+      {arrows.map((a, i) => {
+        const tail = compassPoint(a.dp, TAIL_R);
+        const headLen = 8 + a.width / 2;
+        const base = compassPoint(a.dp, HEAD_R + headLen);
+        const tip = compassPoint(a.dp, HEAD_R);
+        const half = a.width / 2 + 4;
+        const l = compassPoint(a.dp - 90, half, base.x, base.y);
+        const r = compassPoint(a.dp + 90, half, base.x, base.y);
+        return (
+          <g key={a.label} opacity={a.muted ? 0.6 : 1} data-compass={a.inside ? 'swell-in' : 'swell-out'}>
+            <line x1={tail.x} y1={tail.y} x2={base.x} y2={base.y} stroke={a.colour}
+              strokeWidth={a.width} />
+            <polygon points={`${tip.x},${tip.y} ${l.x},${l.y} ${r.x},${r.y}`} fill={a.colour} />
+          </g>
+        );
+      })}
+
+      {/* Wind: a marker outside the ring, pointing in, in the Wind tile's colour. */}
+      {hasWind && (() => {
+        const tip = compassPoint(windDir, MARK_R - 4);
+        const l = compassPoint(windDir - 6, MARK_R + 6);
+        const r = compassPoint(windDir + 6, MARK_R + 6);
+        return (
+          <polygon points={`${tip.x},${tip.y} ${l.x},${l.y} ${r.x},${r.y}`} className={windClass}
+            fill="currentColor" data-compass="wind" />
+        );
+      })()}
+
+      {/* Label text in a readable shade of the arrow's family: the lightest arrow colours are too
+          pale for text. */}
+      {arrows.map((a, i) => <Label key={i} id={`swell-${i}`} fill={a.inside ? '#075985' : '#475569'} />)}
+      {hasWind && <Label id="wind" className={windClass} />}
+      {hasBest && <Label id="best" fill={INK} />}
+    </svg>
   );
 }

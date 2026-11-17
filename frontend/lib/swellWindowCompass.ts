@@ -1,29 +1,59 @@
 /**
- * THE SPOT PAGE'S SWELL COMPASS (components/SwellWindowCompass.tsx): the spot's swell window as
- * wedges, its optimal swell direction, the hour's swells as arrows and the hour's wind. Display
- * only: nothing rated reads this.
+ * THE SPOT PAGE'S SWELL COMPASS, drawn in the Swell breakdown card (components/SwellPartitions.tsx,
+ * components/SwellWindowCompass.tsx). Display only: nothing rated reads this.
  *
- * IT CANNOT DISAGREE WITH THE TILES. The arrows are breakdownRows (lib/swellBreakdown.ts), the
- * rows the Swell breakdown prints, for the hour the Conditions tiles show (components/CurrentHour):
- * the same rows, labels and order, the wind sea's "shown as the surf" label from lib/shownPeriod.
- * Nothing is dropped: a swell far smaller than the biggest still gets an arrow, at least
- * MIN_LENGTH_FRAC of the longest and faded; a row with no direction cannot be drawn, so it is
- * listed under the compass instead. The wind arrow is the hour's wind_dir, as the Wind tile reads it.
+ * WHAT IT DRAWS
+ *   - The beach at the centre: a sand strip with water on the side the spot faces (orientation_deg)
+ *     and land behind it.
+ *   - The swell window as a band on the ring: blue where open, light grey where blocked. Each open
+ *     stretch is a window arc's padded sector, the sector lib/shownPeriod counts as inside.
+ *   - One arrow per breakdown row, in from the ring to the same inner radius by the beach. Width
+ *     follows height (at least MIN_ARROW_W); blue inside the window, grey outside; labelled with its
+ *     height and period ("8.8 ft · 14 s").
+ *   - "best": a tick on the ring at the optimal swell direction.
+ *   - The wind: a marker outside the ring at its direction, "S 7 mph", in the Wind tile's colour.
  *
- * THE WEDGES are each window arc's padded sector, the sector lib/shownPeriod's bearingInArc counts
- * as inside: from min - pad clockwise to max + pad, pad = arcPadDeg. One wedge per arc; an arc of
- * 360 degrees or more is the whole circle. No arcs: no wedge, and the card says so.
+ * IT CANNOT DISAGREE WITH THE BREAKDOWN. The arrows are breakdownRows (lib/swellBreakdown.ts), the
+ * rows the card prints beside the compass, for the hour the Conditions tiles show
+ * (components/CurrentHour). Each row's chip is its arrow's colour (rowStyles). A row with no
+ * direction gets no arrow and a hollow chip.
  *
- * ANGLES are "from" bearings, 0 = north, clockwise, as the site prints them (degToCardinal). SVG y
- * points down, so north is up: x = cx + r sin(b), y = cy - r cos(b).
+ * LABELS NEVER OVERLAP. layoutLabels puts each label just outside the ring at its bearing, on the
+ * right of the circle for bearings 0-179 and the left for 180-359, then pushes labels on the same
+ * side apart vertically and slides each back to the circle's edge at its new height. A label that
+ * moved gets a leader line.
+ *
+ * ANGLES are "from" bearings, 0 = north, clockwise. SVG y points down, so north is up:
+ * x = cx + r sin(b), y = cy - r cos(b).
  */
 import type { BreakdownRow } from './swellBreakdown.ts';
-import { arcPadDeg, type WindowArc } from './shownPeriod.ts';
+import { arcPadDeg, outsideWindowDeg, type WindowArc } from './shownPeriod.ts';
 
-/** The shortest arrow, as a fraction of the longest. Below it an arrow is drawn at this length
- *  and faded. */
-export const MIN_LENGTH_FRAC = 0.25;
+// Geometry, in the SVG's own units.
+export const VIEW_W = 420;
+export const VIEW_H = 240;
+export const CX = VIEW_W / 2;
+export const CY = VIEW_H / 2;
+export const RING_R = 82;          // the window band's centre line
+export const RING_W = 10;
+export const BEACH_R = 26;
+export const HEAD_R = BEACH_R + 6; // every arrow ends here
+export const TAIL_R = RING_R + RING_W / 2 + 2;
+export const MARK_R = RING_R + RING_W / 2 + 9;  // the wind marker
+export const LABEL_R = RING_R + 28;
+export const LABEL_H = 14;
+export const LABEL_GAP = 2;
+export const FONT_PX = 12;
+/** Width per character at FONT_PX, generous so the boxes over-cover the text. */
+export const CHAR_W = 7;
+
+export const MAX_ARROW_W = 10;
+export const MIN_ARROW_W = 3;
 export const NO_WINDOW_NOTE = 'No swell window set';
+
+/** Arrow and chip colours: blue shades inside the window, greys outside, by order. */
+export const INSIDE_COLOURS = ['#075985', '#0284C7', '#38BDF8', '#7DD3FC'];
+export const OUTSIDE_COLOURS = ['#475569', '#94A3B8', '#B6C2CF', '#CBD5E1'];
 
 export type Point = { x: number; y: number };
 
@@ -32,15 +62,14 @@ function mod360(x: number): number {
 }
 
 /** The point at *bearing* degrees and radius *r* from (cx, cy), north up. */
-export function compassPoint(bearing: number, r: number, cx: number, cy: number): Point {
+export function compassPoint(bearing: number, r: number, cx = CX, cy = CY): Point {
   const rad = (bearing * Math.PI) / 180;
   return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
 }
 
 const f = (v: number) => Number(v.toFixed(3));
 
-/** One arc's padded sector: its start bearing, its sweep in degrees (clockwise), and whether it
- *  is the whole circle. */
+/** One arc's padded sector: start bearing, clockwise sweep, and whether it is the whole circle. */
 export function arcSector(arc: WindowArc): { start: number; sweep: number; full: boolean } {
   const pad = arcPadDeg(arc);
   const sweep = mod360(arc.max - arc.min) + 2 * pad;
@@ -48,57 +77,135 @@ export function arcSector(arc: WindowArc): { start: number; sweep: number; full:
   return { start: mod360(arc.min - pad), sweep, full: false };
 }
 
-/** The SVG path of one arc's wedge, from the centre out to radius *r*. A full circle is drawn as
- *  two half-circle arcs (one SVG arc cannot close on itself). */
-export function wedgePath(arc: WindowArc, r: number, cx: number, cy: number): string {
+/** The SVG path along the ring (radius *r*) for one arc's open stretch: no line to the centre. */
+export function ringArcPath(arc: WindowArc, r = RING_R, cx = CX, cy = CY): string {
   const { start, sweep, full } = arcSector(arc);
   if (full) {
     return `M ${f(cx)} ${f(cy - r)} A ${r} ${r} 0 1 1 ${f(cx)} ${f(cy + r)} ` +
-      `A ${r} ${r} 0 1 1 ${f(cx)} ${f(cy - r)} Z`;
+      `A ${r} ${r} 0 1 1 ${f(cx)} ${f(cy - r)}`;
   }
   const a = compassPoint(start, r, cx, cy);
   const b = compassPoint(start + sweep, r, cx, cy);
-  const large = sweep > 180 ? 1 : 0;
-  return `M ${f(cx)} ${f(cy)} L ${f(a.x)} ${f(a.y)} A ${r} ${r} 0 ${large} 1 ${f(b.x)} ${f(b.y)} Z`;
+  return `M ${f(a.x)} ${f(a.y)} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${f(b.x)} ${f(b.y)}`;
+}
+
+/** Is a direction inside the window? With no window set nothing is outside it. */
+export function insideWindow(dp: number, arcs: readonly WindowArc[] | null | undefined): boolean {
+  return !arcs || arcs.length === 0 || outsideWindowDeg(dp, arcs) === 0;
+}
+
+/** Arrow width: MAX_ARROW_W for the biggest row, in proportion below it, never under MIN_ARROW_W. */
+export function arrowWidth(hs: number, maxHs: number): number {
+  return maxHs > 0 ? Math.max(MIN_ARROW_W, (MAX_ARROW_W * hs) / maxHs) : MIN_ARROW_W;
+}
+
+/** "8.8 ft · 14 s" from metres and seconds; "8.8 ft" with no period. */
+export function arrowLabel(hsM: number, tp: number | null): string {
+  const ft = (hsM * 3.28084).toFixed(1);
+  return tp === null ? `${ft} ft` : `${ft} ft · ${Math.round(tp)} s`;
+}
+
+export type RowStyle = {
+  /** The chip's and arrow's colour; null for a row with no direction (a hollow chip). */
+  colour: string | null;
+  inside: boolean | null;
+};
+
+/** Each breakdown row's colour, in the breakdown's order: inside the window the next blue, outside
+ *  the next grey; no direction, none. */
+export function rowStyles(rows: readonly BreakdownRow[],
+  arcs: readonly WindowArc[] | null | undefined): RowStyle[] {
+  let i = 0;
+  let o = 0;
+  return rows.map((r) => {
+    if (r.dp === null) return { colour: null, inside: null };
+    const inside = insideWindow(r.dp, arcs);
+    const colour = inside
+      ? INSIDE_COLOURS[Math.min(i++, INSIDE_COLOURS.length - 1)]
+      : OUTSIDE_COLOURS[Math.min(o++, OUTSIDE_COLOURS.length - 1)];
+    return { colour, inside };
+  });
 }
 
 export type CompassArrow = {
-  label: string;      // the breakdown row's label
-  short: string;      // the label at the arrow's tail: P1, P2, P3, or WS for the wind sea
+  label: string;      // the breakdown row's label (for the accessible description)
+  text: string;       // drawn on the compass: "8.8 ft · 14 s"
   dp: number;
   hs: number;
-  /** Length as a fraction of the longest arrow: hs over the biggest row's, at least
-   *  MIN_LENGTH_FRAC. */
-  lengthFrac: number;
-  /** Drawn at the minimum length because it is smaller than that. */
-  faded: boolean;
-  windSea: boolean;
-  /** Greyed in the breakdown (the wind sea, unless it is shown as the surf). */
-  muted: boolean;
+  width: number;
+  colour: string;
+  inside: boolean;
+  muted: boolean;     // greyed in the breakdown (the wind sea, unless shown as the surf)
 };
 
-/** The arrows for the breakdown's rows, in its order, and the rows that have no direction. */
-export function compassArrows(rows: readonly BreakdownRow[]):
-  { arrows: CompassArrow[]; noDirection: BreakdownRow[] } {
+/** The arrows for the breakdown's rows, in its order. Every row with a direction has one. */
+export function compassArrows(rows: readonly BreakdownRow[],
+  arcs: readonly WindowArc[] | null | undefined): CompassArrow[] {
   const maxHs = Math.max(0, ...rows.map((r) => r.hs ?? 0));
-  const arrows: CompassArrow[] = [];
-  const noDirection: BreakdownRow[] = [];
-  for (const r of rows) {
-    if (r.dp === null || r.hs === null || !(maxHs > 0)) {
-      noDirection.push(r);
-      continue;
+  const styles = rowStyles(rows, arcs);
+  const out: CompassArrow[] = [];
+  rows.forEach((r, k) => {
+    const s = styles[k];
+    if (r.dp === null || r.hs === null || s.colour === null) return;
+    out.push({
+      label: r.label, text: arrowLabel(r.hs, r.tp), dp: r.dp, hs: r.hs,
+      width: arrowWidth(r.hs, maxHs), colour: s.colour, inside: s.inside === true, muted: r.muted,
+    });
+  });
+  return out;
+}
+
+// --------------------------------------------------------------------------- //
+// Labels                                                                       //
+// --------------------------------------------------------------------------- //
+
+export type LabelIn = { id: string; bearing: number; text: string };
+export type LabelOut = LabelIn & {
+  x: number; y: number;              // the text's anchor point (its vertical middle)
+  anchor: 'start' | 'end';
+  box: { x0: number; x1: number; y0: number; y1: number };
+  moved: boolean;                    // pushed off its bearing: draw a leader line
+};
+
+export function labelWidth(text: string): number {
+  return text.length * CHAR_W;
+}
+
+/** Places every label just outside the ring with none overlapping (see the file header). */
+export function layoutLabels(items: readonly LabelIn[], r = LABEL_R): LabelOut[] {
+  const step = LABEL_H + LABEL_GAP;
+  const top = LABEL_H / 2;
+  const bottom = VIEW_H - LABEL_H / 2;
+  const out: LabelOut[] = [];
+  for (const right of [true, false]) {
+    const side = items
+      .filter((it) => (mod360(it.bearing) < 180) === right)
+      .map((it) => ({ it, ideal: compassPoint(it.bearing, r).y }))
+      .sort((a, b) => a.ideal - b.ideal || a.it.id.localeCompare(b.it.id));
+    const ys = side.map((s) => Math.min(bottom, Math.max(top, s.ideal)));
+    for (let k = 1; k < ys.length; k++) ys[k] = Math.max(ys[k], ys[k - 1] + step);
+    if (ys.length && ys[ys.length - 1] > bottom) {
+      ys[ys.length - 1] = bottom;
+      for (let k = ys.length - 2; k >= 0; k--) ys[k] = Math.min(ys[k], ys[k + 1] - step);
     }
-    const frac = r.hs / maxHs;
-    arrows.push({
-      label: r.label,
-      short: r.windSea ? 'WS' : r.label.slice(0, 2),
-      dp: r.dp,
-      hs: r.hs,
-      lengthFrac: Math.max(MIN_LENGTH_FRAC, frac),
-      faded: frac < MIN_LENGTH_FRAC,
-      windSea: r.windSea,
-      muted: r.muted,
+    side.forEach((s, k) => {
+      const y = ys[k];
+      const dy = y - CY;
+      const half = Math.sqrt(Math.max(0, r * r - dy * dy));
+      const x = right ? CX + half : CX - half;
+      const w = labelWidth(s.it.text);
+      out.push({
+        ...s.it, x, y, anchor: right ? 'start' : 'end',
+        box: right ? { x0: x, x1: x + w, y0: y - LABEL_H / 2, y1: y + LABEL_H / 2 }
+          : { x0: x - w, x1: x, y0: y - LABEL_H / 2, y1: y + LABEL_H / 2 },
+        moved: Math.abs(y - s.ideal) > 1,
+      });
     });
   }
-  return { arrows, noDirection };
+  return out;
+}
+
+/** Do two label boxes overlap (touching edges do not)? */
+export function boxesOverlap(a: LabelOut['box'], b: LabelOut['box']): boolean {
+  return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 }
