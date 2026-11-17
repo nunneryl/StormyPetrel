@@ -111,12 +111,14 @@ def test_pad_is_derived_not_assumed_from_a_step_constant():
 
 
 def test_every_live_arc_yields_one_of_the_known_pads():
-    """Regression net over the real data: 748 arcs, no new convention, no arc without span.
+    """Regression net over the real data: 749 arcs, no new convention, no arc without span.
     A new value here is a finding about the data, not a reason to clamp.
 
-    Three conventions are live: 662 arcs at pad 2.0 (the 4-degree roster cast; 708 before
-    the island-rules ray-cast of sw1-raycast run 27, which merged neighbouring arcs), 72 at
-    0.0 and 14 at 0.5 (swell_window_fallback). The 12 pad-1.0 arcs, from spots cast at the
+    Three conventions are live: 659 arcs at pad 2.0 (the 4-degree roster cast; 662 until the
+    hand-set windows of 2026-11-17 replaced Kanaha Beach's, Hoʻokipa's and Lovers Point's cast
+    arcs; 708 before the island-rules ray-cast of sw1-raycast run 27, which merged neighbouring
+    arcs), 76 at 0.0 (72 before those three plus Monterey Beach's new window, all hand-set with
+    no pad) and 14 at 0.5 (swell_window_fallback). The 12 pad-1.0 arcs, from spots cast at the
     2-degree config step, were re-cast at 4 degrees and are gone; arc_pad_deg still reads
     them correctly (see the test above)."""
     spots = json.load(open(os.path.join(_REPO, "pipeline", "spots_enriched.json")))
@@ -128,8 +130,8 @@ def test_every_live_arc_yields_one_of_the_known_pads():
             seen[p] = seen.get(p, 0) + 1
             assert a.get("span") is not None, f"live arc without span: {s.get('name')} {a}"
     assert set(seen) <= {0.0, 0.5, 1.0, 2.0}, f"unexpected pad convention in live data: {seen}"
-    assert seen == {2.0: 662, 0.0: 72, 0.5: 14}, seen
-    assert n == sum(seen.values()) == 748, n
+    assert seen == {2.0: 659, 0.0: 76, 0.5: 14}, seen
+    assert n == sum(seen.values()) == 749, n
 
 
 # --------------------------------------------------------------------------- #

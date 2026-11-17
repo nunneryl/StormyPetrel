@@ -1,0 +1,644 @@
+{
+  "since": "2026-11-17T01:24:38+00:00",
+  "rows": 84514,
+  "replay": {
+    "NWPS NOT reproduced": 16357,
+    "NWPS reproduced": 61316,
+    "WW3 NOT reproduced": 617,
+    "WW3 reproduced": 6224
+  },
+  "unreplayable": {},
+  "compared": 67540,
+  "changed_spot_hours": 9,
+  "changed_spots": 2,
+  "ups": 1,
+  "downs": 8,
+  "change_by_cause": {
+    "down: nwps -> nwps_height_ww3_dir": 8,
+    "up: same direction": 1
+  },
+  "spots_moving_over_1_5": [
+    {
+      "spot": "Lovers Point",
+      "state": "California",
+      "hours_over": 8,
+      "largest_up": null,
+      "largest_down": -2.5
+    }
+  ],
+  "delta_by_group": {
+    "NWPS": {
+      "-2.5": 8,
+      "0.0": 61307,
+      "0.5": 1
+    },
+    "WW3": {
+      "0.0": 6224
+    }
+  },
+  "delta_by_state": {
+    "California": {
+      "-2.5": 8,
+      "0.0": 15845,
+      "0.5": 1
+    },
+    "Delaware": {
+      "0.0": 786
+    },
+    "Florida": {
+      "0.0": 6910
+    },
+    "Georgia": {
+      "0.0": 753
+    },
+    "Hawaii": {
+      "0.0": 6357
+    },
+    "Maine": {
+      "0.0": 1965
+    },
+    "Maryland": {
+      "0.0": 393
+    },
+    "Massachusetts": {
+      "0.0": 3262
+    },
+    "New Hampshire": {
+      "0.0": 1048
+    },
+    "New Jersey": {
+      "0.0": 7459
+    },
+    "New York": {
+      "0.0": 3924
+    },
+    "North Carolina": {
+      "0.0": 4953
+    },
+    "Oregon": {
+      "0.0": 1763
+    },
+    "Puerto Rico": {
+      "0.0": 3136
+    },
+    "Rhode Island": {
+      "0.0": 3536
+    },
+    "South Carolina": {
+      "0.0": 2251
+    },
+    "Texas": {
+      "0.0": 1531
+    },
+    "Virginia": {
+      "0.0": 655
+    },
+    "Washington": {
+      "0.0": 1004
+    }
+  },
+  "window_changed_spots": {
+    "Ho\u02bbokipa": {
+      "swell_window_arcs": [
+        [
+          {
+            "min": 313,
+            "max": 43,
+            "span": 94
+          }
+        ],
+        [
+          {
+            "min": 315,
+            "max": 90,
+            "span": 135
+          }
+        ]
+      ],
+      "optimal_swell_dir": [
+        0,
+        0
+      ],
+      "hours": 125,
+      "by_source": {
+        "NWPS": {
+          "0.0": 125
+        }
+      }
+    },
+    "Kanaha Beach": {
+      "swell_window_arcs": [
+        [
+          {
+            "min": 325,
+            "max": 47,
+            "span": 86
+          }
+        ],
+        [
+          {
+            "min": 315,
+            "max": 90,
+            "span": 135
+          }
+        ]
+      ],
+      "optimal_swell_dir": [
+        4,
+        4
+      ],
+      "hours": 125,
+      "by_source": {
+        "NWPS": {
+          "0.0": 125
+        }
+      }
+    },
+    "Lovers Point": {
+      "swell_window_arcs": [
+        [
+          {
+            "min": 317,
+            "max": 319,
+            "span": 6
+          }
+        ],
+        [
+          {
+            "min": 270,
+            "max": 0,
+            "span": 90
+          }
+        ]
+      ],
+      "optimal_swell_dir": [
+        315.0,
+        315.0
+      ],
+      "hours": 100,
+      "by_source": {
+        "NWPS": {
+          "-2.5": 8,
+          "0.0": 92
+        }
+      }
+    },
+    "Monterey Beach": {
+      "swell_window_arcs": [
+        [],
+        [
+          {
+            "min": 270,
+            "max": 0,
+            "span": 90
+          }
+        ]
+      ],
+      "optimal_swell_dir": [
+        320.0,
+        315.0
+      ],
+      "hours": 2,
+      "by_source": {
+        "NWPS": {
+          "0.0": 1,
+          "0.5": 1
+        }
+      }
+    }
+  },
+  "top20": [
+    {
+      "spot": "Lovers Point",
+      "changed_hours": 8,
+      "example": {
+        "spot": "Lovers Point",
+        "state": "California",
+        "valid_time": "2026-11-19T05:00:00+00:00",
+        "group": "NWPS",
+        "dir_before": 304.312,
+        "dir_after": 192.94,
+        "gain_before": 0.991,
+        "gain_after": 0.25,
+        "stars_before": 4.5,
+        "stars_after": 2.0,
+        "delta": -2.5,
+        "cause": "nwps -> nwps_height_ww3_dir"
+      }
+    },
+    {
+      "spot": "Monterey Beach",
+      "changed_hours": 1,
+      "example": {
+        "spot": "Monterey Beach",
+        "state": "California",
+        "valid_time": "2026-11-22T10:00:00+00:00",
+        "group": "NWPS",
+        "dir_before": 284.75,
+        "dir_after": 284.75,
+        "gain_before": 0.908,
+        "gain_after": 0.932,
+        "stars_before": 2.5,
+        "stars_after": 3.0,
+        "delta": 0.5,
+        "cause": "same direction"
+      }
+    }
+  ],
+  "facing": {
+    "spots_changed": 0,
+    "gate": {
+      "NWPS": {
+        "reproduced": 77579,
+        "stars within stored precision": 94
+      },
+      "WW3": {
+        "reproduced": 6840,
+        "stars within stored precision": 1
+      }
+    },
+    "gate_not_reproduced": 0,
+    "gate_within_stored_precision": 95,
+    "gate_by_changed_spot": {},
+    "gate_examples": [],
+    "gate_within_precision_examples": [
+      {
+        "spot": "38th Avenue",
+        "state": "California",
+        "valid_time": "2026-11-19T14:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Bolinas",
+        "state": "California",
+        "valid_time": "2026-11-19T05:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.842,
+        "wind_mult": 0.842,
+        "published": 3.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Garbage Beach",
+        "state": "California",
+        "valid_time": "2026-11-19T13:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.734,
+        "wind_mult": 0.734,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Half Moon Bay Jetty",
+        "state": "California",
+        "valid_time": "2026-11-20T19:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1.092,
+        "wind_mult": 1.092,
+        "published": 2.5,
+        "stars": 3.0
+      },
+      {
+        "spot": "Hermosa Beach Pier",
+        "state": "California",
+        "valid_time": "2026-11-17T13:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.716,
+        "wind_mult": 0.716,
+        "published": 3.5,
+        "stars": 4.0
+      },
+      {
+        "spot": "Huntington Beach, California",
+        "state": "California",
+        "valid_time": "2026-11-19T11:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.55,
+        "wind_mult": 0.55,
+        "published": 1.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Huntington Cliffs",
+        "state": "California",
+        "valid_time": "2026-11-21T09:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1.146,
+        "wind_mult": 1.146,
+        "published": 3.5,
+        "stars": 4.0
+      },
+      {
+        "spot": "Mission Beach",
+        "state": "California",
+        "valid_time": "2026-11-22T10:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.895,
+        "wind_mult": 0.895,
+        "published": 2.0,
+        "stars": 1.5
+      },
+      {
+        "spot": "Montara State Beach",
+        "state": "California",
+        "valid_time": "2026-11-19T03:00:00+00:00",
+        "group": "WW3",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.614,
+        "wind_mult": 0.614,
+        "published": 4.0,
+        "stars": 3.5
+      },
+      {
+        "spot": "Palos Verdes Cove",
+        "state": "California",
+        "valid_time": "2026-11-18T22:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.706,
+        "wind_mult": 0.706,
+        "published": 3.5,
+        "stars": 3.0
+      },
+      {
+        "spot": "Ponto Beach",
+        "state": "California",
+        "valid_time": "2026-11-18T21:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.85,
+        "wind_mult": 0.85,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "San Diego Blacks Beach",
+        "state": "California",
+        "valid_time": "2026-11-21T15:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "San Simeon",
+        "state": "California",
+        "valid_time": "2026-11-21T11:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1.081,
+        "wind_mult": 1.081,
+        "published": 2.0,
+        "stars": 2.5
+      },
+      {
+        "spot": "Surfside, California",
+        "state": "California",
+        "valid_time": "2026-11-20T14:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.812,
+        "wind_mult": 0.812,
+        "published": 1.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Tamarack",
+        "state": "California",
+        "valid_time": "2026-11-19T14:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.846,
+        "wind_mult": 0.846,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Venice Beach Breakwater",
+        "state": "California",
+        "valid_time": "2026-11-21T09:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Destin Jetty",
+        "state": "Florida",
+        "valid_time": "2026-11-18T11:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.0,
+        "stars": 1.5
+      },
+      {
+        "spot": "Okaloosa Island Pier",
+        "state": "Florida",
+        "valid_time": "2026-11-18T10:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 0.8,
+        "wind_mult": 0.8,
+        "published": 2.0,
+        "stars": 1.5
+      },
+      {
+        "spot": "Ala Moana Bowls",
+        "state": "Hawaii",
+        "valid_time": "2026-11-17T16:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1,
+        "wind_mult": 1.0,
+        "published": 2.5,
+        "stars": 2.0
+      },
+      {
+        "spot": "Barbers Point",
+        "state": "Hawaii",
+        "valid_time": "2026-11-19T08:00:00+00:00",
+        "group": "NWPS",
+        "why": "stars within stored precision",
+        "stored_wind_mult": 1,
+        "wind_mult": 1.0,
+        "published": 3.0,
+        "stars": 2.5
+      }
+    ],
+    "not_replayable_after": {},
+    "unchanged_spots_moved": [
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T05:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T06:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T07:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T20:00:00+00:00",
+        "delta": -0.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T21:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T22:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-19T23:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-20T00:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Lovers Point",
+        "valid_time": "2026-11-20T01:00:00+00:00",
+        "delta": -2.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-17T12:00:00+00:00",
+        "delta": 0.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-17T16:00:00+00:00",
+        "delta": 0.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-20T23:00:00+00:00",
+        "delta": 0.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-21T11:00:00+00:00",
+        "delta": 0.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-21T14:00:00+00:00",
+        "delta": 0.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-21T23:00:00+00:00",
+        "delta": 0.5
+      },
+      {
+        "spot": "Monterey Beach",
+        "valid_time": "2026-11-22T09:00:00+00:00",
+        "delta": 0.5
+      }
+    ],
+    "delta_by_group": {
+      "NWPS": {
+        "-2.5": 8,
+        "-0.5": 1,
+        "0.0": 77563,
+        "0.5": 7
+      },
+      "WW3": {
+        "0.0": 6840
+      }
+    },
+    "delta_by_state": {
+      "California": {
+        "-2.5": 8,
+        "-0.5": 1,
+        "0.0": 26157,
+        "0.5": 7
+      },
+      "Delaware": {
+        "0.0": 786
+      },
+      "Florida": {
+        "0.0": 10737
+      },
+      "Georgia": {
+        "0.0": 784
+      },
+      "Hawaii": {
+        "0.0": 7194
+      },
+      "Maine": {
+        "0.0": 1965
+      },
+      "Maryland": {
+        "0.0": 393
+      },
+      "Massachusetts": {
+        "0.0": 3262
+      },
+      "New Hampshire": {
+        "0.0": 1048
+      },
+      "New Jersey": {
+        "0.0": 7459
+      },
+      "New York": {
+        "0.0": 3924
+      },
+      "North Carolina": {
+        "0.0": 5101
+      },
+      "Oregon": {
+        "0.0": 2648
+      },
+      "Puerto Rico": {
+        "0.0": 3136
+      },
+      "Rhode Island": {
+        "0.0": 3536
+      },
+      "South Carolina": {
+        "0.0": 2355
+      },
+      "Texas": {
+        "0.0": 1570
+      },
+      "Virginia": {
+        "0.0": 655
+      },
+      "Washington": {
+        "0.0": 1693
+      }
+    },
+    "per_spot": {}
+  }
+}

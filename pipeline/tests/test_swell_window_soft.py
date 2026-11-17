@@ -109,16 +109,18 @@ def test_no_refraction_floor_at_or_below_nine_seconds():
 
 
 # --------------------------------------------------------------------------- #
-# Lovers Point, as the committed roster holds it                               #
+# Lovers Point on its run-27 window                                            #
 # --------------------------------------------------------------------------- #
-# Arc 317..319 span 6 (pad 2): today's window 315..321, geometric 310..326; optimal 315.
+# Arc 317..319 span 6 (pad 2): that window 315..321, geometric 310..326; optimal 315. The roster
+# has carried a hand-set window W to N (270-0) since 2026-11-17; these cases keep the narrow
+# run-27 window, given here explicitly, because it is the one the hand arithmetic is worked on.
+# The optimal and facing are still read from the roster.
 
 def _lovers():
     spots = json.loads((ROOT / "pipeline" / "spots_enriched.json").read_text(encoding="utf-8"))
     s, = [x for x in spots if x.get("name") == "Lovers Point"]
-    assert (s["swell_window_arcs"], s["optimal_swell_dir"], s["orientation_deg"]) == (
-        [RAY], 315, 29.0)
-    return s["swell_window_arcs"], s["optimal_swell_dir"], s["orientation_deg"]
+    assert (s["optimal_swell_dir"], s["orientation_deg"]) == (315, 29.0)
+    return [RAY], s["optimal_swell_dir"], s["orientation_deg"]
 
 
 def test_lovers_point_inside():

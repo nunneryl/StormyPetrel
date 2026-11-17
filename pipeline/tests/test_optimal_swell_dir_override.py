@@ -47,7 +47,7 @@ EXPECTED = {
     "gas-chambers-aguadilla": 315.0,
     "table-tops-aguadilla": 350.0,
     "lovers-point": 315.0,
-    "monterey-beach": 320.0,
+    "monterey-beach": 315.0,
 }
 
 # The roster name each slug must resolve to. Four of the ten were proposed under a shorter
@@ -202,7 +202,7 @@ def test_the_override_beats_the_orientation_derived_fallback():
     runs after it, so the hand value wins rather than being overwritten by the fallback."""
     out = _enriched("Monterey Beach", swell_window_arcs=[], optimal_swell_dir=None,
                     orientation_deg=350.0, swell_window_source="orientation_derived")
-    assert out["optimal_swell_dir"] == 320.0, out["optimal_swell_dir"]
+    assert out["optimal_swell_dir"] == 315.0, out["optimal_swell_dir"]
 
 
 def test_the_override_beats_the_tier_preserve_guard():
@@ -344,11 +344,12 @@ def test_the_file_records_a_source_for_every_value():
         assert rec.get("name"), slug
 
 
-def test_the_weakest_value_is_flagged_as_such():
-    """monterey-beach has no direct source and is carried on regional grounds."""
+def test_monterey_beach_s_proxy_source_is_flagged_as_such():
+    """monterey-beach is sourced from guides to Del Monte Beach, about 1 km east (2026-11-17):
+    the source says it is a proxy and names the break."""
     doc = json.loads(SPOT_SWELL_WINDOWS_FILE.read_text())
-    assert "WEAK" in doc["windows"]["monterey-beach"]["source"], \
-        doc["windows"]["monterey-beach"]["source"]
+    src = doc["windows"]["monterey-beach"]["source"]
+    assert "PROXY" in src and "Del Monte Beach" in src, src
 
 
 def test_the_deep_water_versus_nearshore_frame_caveat_is_recorded():
@@ -440,11 +441,17 @@ COMMITTED_ARCS = {
     # [243-329]: 350-329 = 21. The arc [245-251] that pruning dropped in run 13 is now the
     # start of one arc reaching 327, so it is kept with it.
     "table-tops-aguadilla": [[245, 327]],
-    # optimal 315 on the padded edge of [315-321].
-    "lovers-point": [[317, 319]],
-    # still no window.
-    "monterey-beach": [],
+    # held: the hand-set window W to N (spot_swell_window_holds.json, 2026-11-17); optimal 315
+    # inside [270-0].
+    "lovers-point": [[270, 0]],
+    # held: the hand-set window W to N (2026-11-17); the ray-cast still opens none here.
+    "monterey-beach": [[270, 0]],
 }
+
+# Spots held at a hand-set window (spot_swell_window_holds.json, 2026-11-17): enrich applies the
+# hold (Algo 2a) before Algo 2d prunes, so the enriched record carries the held window, which
+# pruning keeps (optimal 315 is inside [270-0]).
+HELD_WINDOWS = {"lovers-point": [[270, 0]], "monterey-beach": [[270, 0]]}
 
 
 def _pairs(arcs):
@@ -477,7 +484,8 @@ def test_pruning_reaches_the_enriched_record():
                 "swell_window_arcs": arcs,
                 "optimal_swell_dir": s["optimal_swell_dir"],
                 "swell_window_source": "nwps"}})
-        assert _pairs(out["swell_window_arcs"]) == keep, (slug, _pairs(out["swell_window_arcs"]))
+        expected = HELD_WINDOWS.get(slug, keep)
+        assert _pairs(out["swell_window_arcs"]) == expected, (slug, _pairs(out["swell_window_arcs"]))
 
 
 def test_every_override_is_applied_in_the_committed_roster():
@@ -556,11 +564,12 @@ def test_empty_arcs_leave_directional_gain_on_the_optimal_branch():
     assert directional_gain(170.0, [], 350, 278.0) == 0.25      # cos²(90°) = 0, floored
 
 
-def test_monterey_beach_is_the_one_roster_spot_with_empty_arcs():
-    """Pins the claim above, so a second empty window shows up loudly rather than quietly.
-    The run-13 cast blocks 88 of monterey-beach's 90 rays and the two open ones shrink away."""
+def test_no_roster_spot_has_empty_arcs():
+    """Monterey Beach was the one roster spot with empty arcs (the run-13 cast blocks 88 of its
+    90 rays and the two open ones shrink away) until its hand-set window of 2026-11-17. Pinned so
+    an empty window shows up loudly rather than quietly."""
     spots = json.loads(E.DEFAULT_ENRICHED_OUTPUT.read_text())
-    assert [s["name"] for s in spots if not (s.get("swell_window_arcs") or [])] == ["Monterey Beach"]
+    assert [s["name"] for s in spots if not (s.get("swell_window_arcs") or [])] == []
 
 
 def test_pruning_never_changes_the_gain_at_the_corrected_optimal():

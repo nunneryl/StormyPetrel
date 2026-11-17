@@ -1,4 +1,6 @@
-"""The SE Florida hold (pipeline/data/spot_swell_window_holds.json).
+"""The swell-window holds (pipeline/data/spot_swell_window_holds.json).
+
+THE SE FLORIDA HOLD.
 
 The R1–R3 island rules judge the Bimini group on its own run instead of borrowing Cuba's,
 which on the land data alone opens or reshuffles the south-east gap at SE Florida spots. The
@@ -6,6 +8,12 @@ Great Bahama Bank's shallow water shelters them more than its islands do, so the
 windows they had: ten from Hillsboro Beach to Hobe Beach (2026-10-19), and eleven more from
 South Beach Miami to Bathtub Beach after full run 24 (2026-10-20). Every expected value is
 transcribed from main's spots_enriched.json at 7839cc0, not read back from the loader.
+
+THE HAND-SET WINDOWS (2026-11-17). Four spots where the straight-ray cast cannot see swell that
+wraps around a headland or coast (sw1-raycast run 80) carry windows from cited surf guides, held
+so a full run cannot overwrite them: Kanaha Beach and Hoʻokipa NW to E (315-90), Lovers Point
+and Monterey Beach W to N (270-0), each with no pad (span = width). The values are written here
+by hand from the guides' compass points, not read back from the loader.
 """
 from __future__ import annotations
 
@@ -49,13 +57,45 @@ HELD = {
     "bathtub-beach": ("Bathtub Beach", _arcs((349, 155, 170)), 72),
 }
 
+HAND_SET = {
+    "kanaha-beach": ("Kanaha Beach", _arcs((315, 90, 135)), 4),
+    "ho-okipa": ("Hoʻokipa", _arcs((315, 90, 135)), 0),
+    "lovers-point": ("Lovers Point", _arcs((270, 0, 90)), 315),
+    "monterey-beach": ("Monterey Beach", _arcs((270, 0, 90)), 315),
+}
+
 # What R1–R3 would give Hillsboro Beach on run 18's rays: the south-east gap open.
 OPENED = _arcs((17, 175, 162))
 
 
-def test_the_twenty_one_held_spots_and_their_windows():
+def test_the_twenty_five_held_spots_and_their_windows():
     holds = load_holds()
-    assert {k: (v["name"], v["swell_window_arcs"], v["optimal_swell_dir"]) for k, v in holds.items()} == HELD
+    assert len(holds) == 25
+    assert {k: (v["name"], v["swell_window_arcs"], v["optimal_swell_dir"]) for k, v in holds.items()} \
+        == {**HELD, **HAND_SET}
+
+
+def test_every_hand_set_window_cites_its_guides():
+    holds = load_holds()
+    for key in HAND_SET:
+        src = holds[key]["source"]
+        assert "Hand-set 2026-11-17" in src and "surfnerd.com" in src and "surf-forecast.com" in src, key
+    assert "PROXY" in holds["monterey-beach"]["source"]
+    assert "Del Monte Beach" in holds["monterey-beach"]["source"]
+    assert all("source" not in holds[k] for k in HELD)        # the SE Florida entries are copies
+
+
+def test_a_hand_set_window_is_the_roster_s_window():
+    roster = {slug(s["name"]): s for s in json.loads(Path(DEFAULT_ENRICHED_OUTPUT).read_text())}
+    for key, (name, arcs, optimal) in HAND_SET.items():
+        s = roster[key]
+        assert (s["name"], s["swell_window_arcs"], s["optimal_swell_dir"]) == (name, arcs, optimal), key
+
+
+def test_the_hand_set_arcs_have_no_pad():
+    from pipeline.interpret import arc_pad_deg
+    for _name, arcs, _opt in HAND_SET.values():
+        assert [arc_pad_deg(a) for a in arcs] == [0.0]
 
 
 def test_the_hold_is_main_s_window_today():
@@ -70,8 +110,12 @@ def test_the_note_says_why():
     doc = json.loads(SPOT_SWELL_WINDOW_HOLDS_FILE.read_text())
     assert "Great Bahama Bank" in doc["_comment"] and "TO RELEASE A SPOT" in doc["_comment"]
     assert doc["note"] == ("SE Florida, South Beach Miami to Bathtub Beach: the Great Bahama "
-                           "Bank's shallow water shelters more than the land data shows.")
+                           "Bank's shallow water shelters more than the land data shows. Kanaha "
+                           "Beach, Hoʻokipa, Lovers Point and Monterey Beach: hand-set windows "
+                           "from cited guides (2026-11-17).")
     assert "Eleven more were held on 2026-10-20 after full run 24" in doc["_comment"]
+    assert "HAND-SET from cited surf guides" in doc["_comment"]
+    assert "copied verbatim, not authored" in doc["_comment"]
 
 
 def test_a_full_raycast_does_not_write_a_held_spot():
