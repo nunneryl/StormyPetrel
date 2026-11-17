@@ -78,9 +78,9 @@ export function breakdownRows(
 ): BreakdownRow[] {
   const shown = windSeaDominates(f, arcs, facing);
   const raw = [
-    { label: 'P1 (primary)', hs: f.swell_1_hs, tp: f.swell_1_tp, dp: f.swell_1_dp, windSea: false },
-    { label: 'P2 (secondary)', hs: f.swell_2_hs, tp: f.swell_2_tp, dp: f.swell_2_dp, windSea: false },
-    { label: 'P3 (tertiary)', hs: f.swell_3_hs, tp: f.swell_3_tp, dp: f.swell_3_dp, windSea: false },
+    { label: 'Primary swell', hs: f.swell_1_hs, tp: f.swell_1_tp, dp: f.swell_1_dp, windSea: false },
+    { label: 'Secondary swell', hs: f.swell_2_hs, tp: f.swell_2_tp, dp: f.swell_2_dp, windSea: false },
+    { label: 'Tertiary swell', hs: f.swell_3_hs, tp: f.swell_3_tp, dp: f.swell_3_dp, windSea: false },
     {
       label: shown ? WIND_SEA_SHOWN_LABEL : WIND_SEA_LABEL,
       hs: f.wind_wave_hs, tp: f.wind_wave_tp, dp: f.wind_wave_dp, windSea: true,

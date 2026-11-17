@@ -10,11 +10,11 @@
  *
  *     node --experimental-strip-types frontend/lib/swellWindowCompass.test.mts
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CX, CY, LABEL_H, LABEL_R, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
+  CX, CY, HEAD_R, LAND_KM, LAND_R, LABEL_H, LABEL_R, PATH_UNITS, PIN_R, landTransform, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
   VIEW_W, arcSector, arrowLabel, arrowWidth, boxesOverlap, compassArrows, compassPoint,
   insideWindow, layoutLabels, ringArcPath, rowStyles, type LabelIn,
 } from './swellWindowCompass.ts';
@@ -83,8 +83,8 @@ check("no period: '3.3 ft'", arrowLabel(1.0, null) === '3.3 ft');
 const row = (label: string, hs: number, tp: number, dp: number | null, windSea = false): BreakdownRow =>
   ({ label, hs, tp, dp, windSea, share: 0, muted: windSea });
 const KROWS = [
-  row('P1 (primary)', 2.4, 13, 340), row('P2 (secondary)', 0.9, 10, 120),
-  row('Wind sea', 0.15, 5, 70, true), row('P3 (tertiary)', 0.1, 7, null),
+  row('Primary swell', 2.4, 13, 340), row('Secondary swell', 0.9, 10, 120),
+  row('Wind sea', 0.15, 5, 70, true), row('Tertiary swell', 0.1, 7, null),
 ];
 check('chips: dark blue, slate, mid blue, none', JSON.stringify(rowStyles(KROWS, KANAHA).map((s) => s.colour)) ===
   JSON.stringify(['#075985', '#475569', '#0284C7', null]));
@@ -92,7 +92,7 @@ const karrows = compassArrows(KROWS, KANAHA);
 // Widths: 10; 10 x 0.9 / 2.4 = 3.75; 10 x 0.15 / 2.4 = 0.625, so 3. Labels: 2.4 m = 7.874 ft,
 // 0.9 m = 2.953 ft, 0.15 m = 0.492 ft.
 check('arrows: P1, P2, the wind sea; none for the row with no direction',
-  JSON.stringify(karrows.map((a) => a.label)) === JSON.stringify(['P1 (primary)', 'P2 (secondary)', 'Wind sea']));
+  JSON.stringify(karrows.map((a) => a.label)) === JSON.stringify(['Primary swell', 'Secondary swell', 'Wind sea']));
 check('arrow colours are the chips', JSON.stringify(karrows.map((a) => a.colour)) ===
   JSON.stringify(['#075985', '#475569', '#0284C7']));
 check('arrow widths 10, 3.75, 3', JSON.stringify(karrows.map((a) => a.width)) === JSON.stringify([10, 3.75, 3]),
@@ -114,7 +114,7 @@ const hour = {
 const fromHour = compassArrows(breakdownRows(hour, [{ min: 180, max: 350 }], 270), [{ min: 180, max: 350 }]);
 check('an hour: P1 from 290 (blue), P2 from 200 (blue), the wind sea from 60 (grey, outside)',
   JSON.stringify(fromHour.map((a) => [a.label, a.dp, a.colour])) === JSON.stringify([
-    ['P1 (primary)', 290, '#075985'], ['P2 (secondary)', 200, '#0284C7'], ['Wind sea', 60, '#475569']]),
+    ['Primary swell', 290, '#075985'], ['Secondary swell', 200, '#0284C7'], ['Wind sea', 60, '#475569']]),
   JSON.stringify(fromHour.map((a) => [a.label, a.dp, a.colour])));
 
 // 8. Labels never overlap. Geometry: centre (210, 120), labels on a circle of 110, 14 high, 16 apart.
@@ -171,6 +171,7 @@ check('boxesOverlap: touching edges do not overlap, crossing ones do',
 
 // 9. The wiring: one card, the breakdown's rows, the tiles' hour and the Wind tile's colours.
 const card = read('components/SwellPartitions.tsx');
+const page = read('app/spot/[slug]/page.tsx');
 const comp = read('components/SwellWindowCompass.tsx');
 check('the card takes the hour the tiles show', card.includes('const forecast = useCurrentHour().selection.row;'));
 check('the card makes its rows once, with the window and facing',
@@ -193,8 +194,26 @@ check('no legend paragraph and no legend list',
   !/Arrows point|<ul[\s>]|<li[\s>]/.test(comp + card));
 check(`no window: a dashed ring and "${NO_WINDOW_NOTE}"`, NO_WINDOW_NOTE === 'No swell window set' &&
   comp.includes('data-compass="no-window"') && card.includes('{NO_WINDOW_NOTE}'));
-check('the beach is turned to the facing', comp.includes('transform={`rotate(${facingDeg} ${CX} ${CY})`}'));
-const page = read('app/spot/[slug]/page.tsx');
+check('the land is the stored path, scaled into the ring, with a pin at the spot',
+  comp.includes('<path d={coastPath} transform={landTransform()}') && comp.includes('data-compass="pin"') &&
+  !comp.includes('rotate('));
+// 25 km is 100 path units; the land fills the ring's inside: 82 - 10 / 2 - 1 = 76, so scale 0.76.
+check('landTransform: translate to the centre, scale 76 / 100',
+  landTransform() === 'translate(210 120) scale(0.76)' && LAND_R === 76 && PATH_UNITS === 100 && LAND_KM === 25);
+check('arrows end by the pin: 4 + 8 = 12 from the centre', PIN_R === 4 && HEAD_R === 12);
+check('the card passes the server-read path down', card.includes('coastPath={coastPath}'));
+check("the spot page reads the spot's path server-side",
+  page.includes("import { coastlinePath } from '@/lib/coastline';") &&
+  page.includes('coastPath={coastlinePath(spot.slug)}') && !page.startsWith("'use client'"));
+// The whole file (every spot) must never reach the browser: no client module may import it.
+const walkFiles = (dir: string): string[] => readdirSync(join(FRONTEND, dir), { withFileTypes: true })
+  .flatMap((e) => e.isDirectory() ? walkFiles(join(dir, e.name)) : [join(dir, e.name)]);
+const clientImporters = [...walkFiles('app'), ...walkFiles('components'), ...walkFiles('lib')]
+  .filter((f) => /\.tsx?$/.test(f))
+  .filter((f) => /^['"]use client['"]/.test(read(f)))
+  .filter((f) => /lib\/coastline'|coastlines\.json/.test(read(f)));
+check('no client module imports lib/coastline or coastlines.json', clientImporters.length === 0,
+  clientImporters.join(', '));
 const provider = page.slice(page.indexOf('<CurrentHourProvider'), page.indexOf('</CurrentHourProvider>'));
 check('the spot page has one card, inside the current-hour provider, with the spot\'s fields',
   provider.includes('<SwellPartitions') && !page.includes('<SwellWindowCompass') &&

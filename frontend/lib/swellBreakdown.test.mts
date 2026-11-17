@@ -47,7 +47,7 @@ const EMPTY: BreakdownInput = {
     wind_wave_hs: 1.5, wind_wave_tp: 6, wind_wave_dp: 250, chop_ratio: 0.64,
   }, null, null);
   check('reported hour: two rows, wind sea first (1.5 m over 1.2 m)',
-    rows.length === 2 && rows[0].windSea && rows[1].label === 'P1 (primary)');
+    rows.length === 2 && rows[0].windSea && rows[1].label === 'Primary swell');
   check('reported hour: wind sea 64%, as the Conditions tile', near(rows[0].share, 0.64)
     && sharePercent(rows[0].share) === '64%');
   check('reported hour: P1 36%, not 100%', near(rows[1].share, 0.36)
@@ -102,7 +102,7 @@ for (const chop of [null, undefined, Number.NaN, -0.1, 1.2]) {
     swell_2_hs: 0.05, swell_2_tp: 8, swell_2_dp: 200,
     wind_wave_hs: 0.04, wind_wave_tp: 3, wind_wave_dp: 250, chop_ratio: 0.0,
   }, null, null);
-  check('rows of 0.05 m or less left out', rows.length === 1 && rows[0].label === 'P1 (primary)');
+  check('rows of 0.05 m or less left out', rows.length === 1 && rows[0].label === 'Primary swell');
   check('a lone swell with chop 0 is 100%', sharePercent(rows[0].share) === '100%');
 }
 
@@ -188,6 +188,18 @@ check('no chop_ratio, or not a fraction: the energy line',
   check('the line sits after the rows, inside the card',
     comp.indexOf('{breakdownNote(forecast)}') > comp.indexOf('sharePercent(c.share)')
     && comp.indexOf('{breakdownNote(forecast)}') < comp.indexOf('</section>'));
+}
+
+// 10. The rows are named in words, and the swell chart's legend uses the same names.
+{
+  const HERE = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(dirname(HERE), 'lib/swellBreakdown.ts'), 'utf8');
+  const chart = readFileSync(join(dirname(HERE), 'components/SwellChart.tsx'), 'utf8');
+  for (const name of ['Primary swell', 'Secondary swell', 'Tertiary swell']) {
+    check(`the breakdown and the chart both say "${name}"`,
+      src.includes(`label: '${name}'`) && chart.includes(`'${name}'`));
+  }
+  check('no "P1 (primary)" style label left', !/P[123] \(/.test(src + chart));
 }
 
 if (failures) {

@@ -1,21 +1,22 @@
 // The swell compass drawn in the Swell breakdown card (components/SwellPartitions.tsx). It takes
 // the card's own rows and draws nothing else for the swells, so the two cannot disagree
-// (lib/swellWindowCompass.ts). Display only.
+// (lib/swellWindowCompass.ts). The land is the spot's stored GSHHG path (frontend/data/
+// coastlines.json), read server-side by the spot page and passed down as one string. Display only.
 
 import { classifyWind, windQualityClass } from '@/lib/ratings';
 import { degToCardinal, fmtMph } from '@/lib/formatting';
 import type { BreakdownRow } from '@/lib/swellBreakdown';
 import {
-  BEACH_R, CX, CY, FONT_PX, HEAD_R, MARK_R, NO_WINDOW_NOTE, RING_R, RING_W, TAIL_R, VIEW_H, VIEW_W,
-  compassArrows, compassPoint, layoutLabels, ringArcPath, type LabelIn,
+  CX, CY, FONT_PX, HEAD_R, LAND_R, MARK_R, NO_WINDOW_NOTE, PIN_R, RING_R, RING_W, TAIL_R, VIEW_H,
+  VIEW_W, compassArrows, compassPoint, landTransform, layoutLabels, ringArcPath, type LabelIn,
 } from '@/lib/swellWindowCompass';
 import type { Spot } from '@/lib/types';
 
 const OPEN = '#0EA5E9';
 const BLOCKED = '#E2E8F0';
-const WATER = '#BAE6FD';
-const SAND = '#FCD34D';
-const LAND = '#D6CFB8';
+const LAND = '#E8DFC8';      // muted sand; the water is left plain
+const SHORE = '#CBBF9E';
+const PIN = '#0F172A';
 const INK = '#475569';
 
 /** The Wind tile's text colour for this wind (lib/ratings.ts windQualityClass). */
@@ -27,7 +28,7 @@ function windTextClass(dir: number, offshore: number | null | undefined): string
 export function SwellWindowCompass({
   rows,
   windowArcs,
-  facingDeg,
+  coastPath,
   optimalDeg,
   offshoreDeg,
   windDir,
@@ -35,7 +36,8 @@ export function SwellWindowCompass({
 }: {
   rows: BreakdownRow[];
   windowArcs: Spot['swell_window_arcs'];
-  facingDeg: Spot['orientation_deg'];
+  /** The land within 25 km of the spot, radius 100 units, north up; '' or null for none. */
+  coastPath: string | null;
   optimalDeg: Spot['optimal_swell_dir'];
   offshoreDeg: Spot['offshore_wind_deg'];
   windDir: number | null | undefined;
@@ -83,12 +85,20 @@ export function SwellWindowCompass({
 
   return (
     <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} role="img" aria-label={said}
-      className="w-full h-auto max-w-[420px]">
+      className="w-full h-auto">
       <defs>
-        <clipPath id="sp-beach-clip">
-          <circle cx={CX} cy={CY} r={BEACH_R} />
+        <clipPath id="sp-land-clip">
+          <circle cx={CX} cy={CY} r={LAND_R} />
         </clipPath>
       </defs>
+
+      {/* The land within 25 km, inside the ring, north up. */}
+      {coastPath ? (
+        <g clipPath="url(#sp-land-clip)">
+          <path d={coastPath} transform={landTransform()} fill={LAND} stroke={SHORE}
+            strokeWidth={1} vectorEffect="non-scaling-stroke" data-compass="land" />
+        </g>
+      ) : null}
 
       {/* The window band: grey all round, blue where open. No window: a faint dashed ring. */}
       {arcs.length ? (
@@ -104,17 +114,9 @@ export function SwellWindowCompass({
           strokeDasharray="4 4" data-compass="no-window" />
       )}
 
-      {/* The beach: water towards the facing, sand, land behind. */}
-      {facingDeg !== null && facingDeg !== undefined ? (
-        <g clipPath="url(#sp-beach-clip)" transform={`rotate(${facingDeg} ${CX} ${CY})`}
-          data-compass="beach">
-          <rect x={CX - BEACH_R} y={CY - BEACH_R} width={2 * BEACH_R} height={BEACH_R} fill={WATER} />
-          <rect x={CX - BEACH_R} y={CY} width={2 * BEACH_R} height={BEACH_R} fill={LAND} />
-          <rect x={CX - BEACH_R} y={CY - 3} width={2 * BEACH_R} height={7} fill={SAND} />
-        </g>
-      ) : (
-        <circle cx={CX} cy={CY} r={BEACH_R * 0.6} fill={SAND} data-compass="beach" />
-      )}
+      {/* The spot. */}
+      <circle cx={CX} cy={CY} r={PIN_R} fill={PIN} stroke="#FFFFFF" strokeWidth={1.5}
+        data-compass="pin" />
 
       {/* Best direction: a tick across the band. */}
       {hasBest && (() => {

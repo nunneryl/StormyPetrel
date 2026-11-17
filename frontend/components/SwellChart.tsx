@@ -55,13 +55,13 @@ const COLOR = {
  *
  *  Kept identical to the labels in SwellPartitions.tsx, which names the same
  *  four components in the Swell breakdown panel on the same page. The two must
- *  agree: a reader seeing "P2 (secondary)" in the panel and "p2" in the chart
+ *  agree: a reader seeing "Secondary swell" in the panel and "p2" in the chart
  *  has no way to know they are the same thing. */
 const LABEL = {
   face: HEADLINE_HEIGHT_LABEL,
-  p1:   'P1 (primary)',
-  p2:   'P2 (secondary)',
-  p3:   'P3 (tertiary)',
+  p1:   'Primary swell',
+  p2:   'Secondary swell',
+  p3:   'Tertiary swell',
   ws:   'Wind sea',
 } as const;
 

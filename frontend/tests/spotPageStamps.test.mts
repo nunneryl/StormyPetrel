@@ -70,17 +70,21 @@
  *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
  *      "beach" without "(unverified)". With the list read cached it kept "beach (unverified)".
  *  16. The swell compass in the Swell breakdown card (components/SwellPartitions.tsx and
- *      SwellWindowCompass.tsx) on served spot pages, from three fixture spots:
- *        - one window arc (200-320), a 2.7 m 14 s swell from 285 and a 1.0 m 9 s swell from 215,
- *          wind 3.1 m/s from 180: one open band, two blue arrows labelled "8.9 ft · 14 s" and
- *          "3.3 ft · 9 s" (2.7 m = 8.86 ft, 1.0 m = 3.28 ft), the wind "S 7 mph" (6.93 mph), "best";
- *        - Kanaha (window 315-90 across north, facing 337): 2.4 m from 340 and a 0.15 m wind sea
- *          from 70 inside (blue), 0.9 m from 120 outside (grey);
- *        - Rincon (two arcs, 145-192 and 228-267): two swells (255 and 262) and the wind (268)
- *          within 13 degrees: two open bands, two blue arrows, and a leader line for a label
- *          pushed off its bearing.
+ *      SwellWindowCompass.tsx) on served spot pages, from four fixture spots with the roster's
+ *      slugs, positions, facings and windows, so each draws its own land from
+ *      frontend/data/coastlines.json:
+ *        - Haggarty's (one arc, 233-291): a 2.7 m 14 s swell from 285 (inside, blue) and a 1.0 m
+ *          9 s swell from 215 (outside, grey), wind 3.1 m/s from 180: labels "8.9 ft · 14 s" and
+ *          "3.3 ft · 9 s" (2.7 m = 8.86 ft, 1.0 m = 3.28 ft), "S 7 mph" (6.93 mph) and "best";
+ *          its land, the pin, the best tick and the wind marker;
+ *        - Kanaha Beach (315-90, across north): 2.4 m from 340 and a 0.15 m wind sea from 70
+ *          inside (blue), 0.9 m from 120 outside (grey); its land;
+ *        - C Street Ventura (two arcs): two swells (255 and 262) and the wind (268) within 13
+ *          degrees: two open bands, two blue arrows, a leader line; its land;
+ *        - Lovers Point (270-0): 300 inside, 200 outside; its land.
  *      The rows beside each compass are the breakdown's, each with a chip. Stamp Test Point (no
- *      arcs, no partitions): no band, no arrow, a dashed ring and "No swell window set".
+ *      arcs, no partitions, not in coastlines.json): no land but the pin, no band, no arrow, a
+ *      dashed ring and "No swell window set".
  *  15. The unlisted accuracy page (/accuracy, lib/accuracy.ts) on the served HTML: noindex and
  *      nofollow in <head>, not in /sitemap.xml, and its figures from the stand-in's accuracy_daily
  *      rows, worked by hand below. Two tables, NWPS then WAVEWATCH III at the buoys; the spots
@@ -246,23 +250,31 @@ const OLD_RUN = {
   time_zone: 'America/Los_Angeles',
 };
 const OLD_CYCLE_MS = T0 - 30 * HOUR;
-// 16: three spots for the swell compass. Kanaha's and Rincon's fields are the roster's.
+// 16: four spots for the swell compass, with the roster's slugs, positions, facings and windows,
+// so the page finds their land in frontend/data/coastlines.json.
 const COMPASS = {
-  ...SPOT_FIELDS, id: 990012, slug: 'stamp-test-compass', name: 'Stamp Test Compass',
-  time_zone: 'America/Los_Angeles', orientation_deg: 250, offshore_wind_deg: 70, optimal_swell_dir: 270,
-  swell_window_arcs: [{ min: 200, max: 320 }],
+  ...SPOT_FIELDS, id: 990012, slug: 'haggarty-s', name: "Haggarty's",
+  region: 'South Bay', time_zone: 'America/Los_Angeles', lat: 33.802401, lng: -118.402576,
+  orientation_deg: 322, offshore_wind_deg: 142, optimal_swell_dir: 270,
+  swell_window_arcs: [{ min: 233, max: 291, span: 62 }],
 };
 const KANAHA = {
-  ...SPOT_FIELDS, id: 990013, slug: 'stamp-test-kanaha', name: 'Stamp Test Kanaha',
-  state: 'Hawaii', region: 'Maui', time_zone: 'Pacific/Honolulu', lat: 20.9, lng: -156.45,
+  ...SPOT_FIELDS, id: 990013, slug: 'kanaha-beach', name: 'Kanaha Beach',
+  state: 'Hawaii', region: 'Maui', time_zone: 'Pacific/Honolulu', lat: 20.900553, lng: -156.442587,
   orientation_deg: 337, offshore_wind_deg: 157, optimal_swell_dir: 4,
   swell_window_arcs: [{ min: 315, max: 90, span: 135 }],
 };
 const RINCON = {
-  ...SPOT_FIELDS, id: 990014, slug: 'stamp-test-rincon', name: 'Stamp Test Rincon',
-  time_zone: 'America/Los_Angeles', lat: 34.37, lng: -119.48,
-  orientation_deg: 210, offshore_wind_deg: 30, optimal_swell_dir: 192,
-  swell_window_arcs: [{ min: 145, max: 192, span: 51 }, { min: 228, max: 267, span: 43 }],
+  ...SPOT_FIELDS, id: 990014, slug: 'c-street-ventura', name: 'C Street Ventura',
+  region: 'Ventura', time_zone: 'America/Los_Angeles', lat: 34.275216, lng: -119.293349,
+  orientation_deg: 193, offshore_wind_deg: 13, optimal_swell_dir: 255,
+  swell_window_arcs: [{ min: 165, max: 224, span: 63 }, { min: 248, max: 267, span: 23 }],
+};
+const LOVERS = {
+  ...SPOT_FIELDS, id: 990015, slug: 'lovers-point', name: 'Lovers Point',
+  region: 'Monterey', time_zone: 'America/Los_Angeles', lat: 36.626343, lng: -121.914897,
+  orientation_deg: 29, offshore_wind_deg: 209, optimal_swell_dir: 315,
+  swell_window_arcs: [{ min: 270, max: 0, span: 90 }],
 };
 const NO_PARTS = {
   swell_1_hs: null, swell_1_tp: null, swell_1_dp: null, swell_2_hs: null, swell_2_tp: null,
@@ -279,10 +291,13 @@ const COMPASS_HOURS: Record<number, Record<string, unknown>> = {
   [RINCON.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 255,
     swell_1_hs: 1.8, swell_1_tp: 15, swell_1_dp: 255, swell_2_hs: 0.7, swell_2_tp: 12, swell_2_dp: 262,
     wind_dir: 268, wind_speed: 4 },
+  [LOVERS.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 300,
+    swell_1_hs: 2.2, swell_1_tp: 15, swell_1_dp: 300, swell_2_hs: 0.8, swell_2_tp: 8, swell_2_dp: 200,
+    wind_dir: 315, wind_speed: 6 },
 };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
-const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON];
+const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -328,7 +343,7 @@ const BLANK = { hs: null, tp: null, dp: null, swell_hs: 1.1, swell_tp: 11, swell
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
-  ...[COMPASS, KANAHA, RINCON].map((sp) => [sp.id,
+  ...[COMPASS, KANAHA, RINCON, LOVERS].map((sp) => [sp.id,
     hours(-12, 48).map((h) => ({ ...row(sp.id, h), ...COMPASS_HOURS[sp.id] }))] as
     [number, Record<string, unknown>[]]),
   ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) =>
@@ -817,31 +832,38 @@ async function main(): Promise<void> {
   const cp = await load(COMPASS.slug);
   const cpHtml = cp.html.replace(/<!-- -->/g, '');
   eq(`${COMPASS.slug} answers 200`, cp.status, 200);
-  eq('one-arc compass: one open band', count(cpHtml, dc('open')), 1);
-  eqj('one-arc compass: two blue arrows, no grey', [count(cpHtml, dc('swell-in')), count(cpHtml, dc('swell-out'))], [2, 0]);
-  eqj('one-arc compass: labels', [labelText(cpHtml, 'swell-0'), labelText(cpHtml, 'swell-1'),
+  eq("Haggarty's: one open band", count(cpHtml, dc('open')), 1);
+  eqj("Haggarty's: 285 inside (blue), 215 outside (grey)", [count(cpHtml, dc('swell-in')), count(cpHtml, dc('swell-out'))], [1, 1]);
+  eqj("Haggarty's: labels", [labelText(cpHtml, 'swell-0'), labelText(cpHtml, 'swell-1'),
     labelText(cpHtml, 'wind'), labelText(cpHtml, 'best')], ['8.9 ft · 14 s', '3.3 ft · 9 s', 'S 7 mph', 'best']);
-  eqj('one-arc compass: the beach, the best tick and the wind marker',
-    [count(cpHtml, dc('beach')), count(cpHtml, dc('best')), count(cpHtml, dc('wind'))], [1, 1, 1]);
-  check('one-arc card: the rows beside it are P1 and P2, each with a chip',
-    cpText(cpHtml).includes('P1 (primary)') && cpText(cpHtml).includes('P2 (secondary)') &&
+  eqj("Haggarty's: its land, the pin, the best tick and the wind marker",
+    [count(cpHtml, dc('land')), count(cpHtml, dc('pin')), count(cpHtml, dc('best')), count(cpHtml, dc('wind'))], [1, 1, 1, 1]);
+  check("Haggarty's card: the rows beside it are the primary and secondary swell, each with a chip",
+    cpText(cpHtml).includes('Primary swell') && cpText(cpHtml).includes('Secondary swell') &&
     !cpText(cpHtml).includes('Wind sea') && count(cpHtml, 'data-chip="#') === 2);
   const cpCard = cpHtml.slice(cpHtml.indexOf('Swell breakdown'), cpHtml.indexOf('</section>', cpHtml.indexOf('Swell breakdown')));
-  check('one-arc card: no legend in the card', cpCard.length > 0 && !/Arrows point|<ul[\s>]|<li[\s>]/.test(cpCard));
+  check("Haggarty's card: no legend in the card", cpCard.length > 0 && !/Arrows point|<ul[\s>]|<li[\s>]/.test(cpCard));
 
   const kn = (await load(KANAHA.slug)).html.replace(/<!-- -->/g, '');
   eq('Kanaha: one open band across north', count(kn, dc('open')), 1);
   eqj('Kanaha: two arrows inside (340, the wind sea from 70), one outside (120)',
     [count(kn, dc('swell-in')), count(kn, dc('swell-out'))], [2, 1]);
+  eq('Kanaha: its land is drawn', count(kn, dc('land')), 1);
   eqj('Kanaha: chips dark blue, slate, mid blue (the breakdown order: 2.4, 0.9, 0.15 m)',
     [...kn.matchAll(/data-chip="([^"]*)"/g)].map((m) => m[1]), ['#075985', '#475569', '#0284C7']);
 
   const rc = (await load(RINCON.slug)).html.replace(/<!-- -->/g, '');
-  eq('Rincon: two open bands', count(rc, dc('open')), 2);
-  eq('Rincon: two blue arrows', count(rc, dc('swell-in')), 2);
-  check('Rincon: swells at 255 and 262 and the wind at 268 get a leader line', count(rc, dc('leader')) >= 1);
+  eq('C Street: two open bands', count(rc, dc('open')), 2);
+  eq('C Street: its land is drawn', count(rc, dc('land')), 1);
+  const lp = (await load(LOVERS.slug)).html.replace(/<!-- -->/g, '');
+  eqj('Lovers Point: land, one band, 300 inside and 200 outside',
+    [count(lp, dc('land')), count(lp, dc('open')), count(lp, dc('swell-in')), count(lp, dc('swell-out'))], [1, 1, 1, 1]);
+  eq('C Street: two blue arrows', count(rc, dc('swell-in')), 2);
+  check('C Street: swells at 255 and 262 and the wind at 268 get a leader line', count(rc, dc('leader')) >= 1);
 
   const plainCompass = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
+  eq('Stamp Test Point (not in coastlines.json): no land, still the pin',
+    count(plainCompass, dc('land')) * 10 + count(plainCompass, dc('pin')), 1);
   eq('Stamp Test Point: no band, no arrow',
     count(plainCompass, dc('open')) + count(plainCompass, dc('swell-in')) + count(plainCompass, dc('swell-out')), 0);
   eqj('Stamp Test Point: a dashed ring and "No swell window set"',

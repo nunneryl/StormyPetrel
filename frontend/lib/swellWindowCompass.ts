@@ -3,8 +3,9 @@
  * components/SwellWindowCompass.tsx). Display only: nothing rated reads this.
  *
  * WHAT IT DRAWS
- *   - The beach at the centre: a sand strip with water on the side the spot faces (orientation_deg)
- *     and land behind it.
+ *   - The land within 25 km, inside the ring, from the GSHHG shoreline the window ray-cast reads
+ *     (frontend/data/coastlines.json, written by pipeline/coastline_paths.py), with a pin at the
+ *     spot. North up, so the blue stretch of the band faces the open water.
  *   - The swell window as a band on the ring: blue where open, light grey where blocked. Each open
  *     stretch is a window arc's padded sector, the sector lib/shownPeriod counts as inside.
  *   - One arrow per breakdown row, in from the ring to the same inner radius by the beach. Width
@@ -36,8 +37,13 @@ export const CX = VIEW_W / 2;
 export const CY = VIEW_H / 2;
 export const RING_R = 82;          // the window band's centre line
 export const RING_W = 10;
-export const BEACH_R = 26;
-export const HEAD_R = BEACH_R + 6; // every arrow ends here
+/** The land drawing's radius: just inside the band. The stored paths have radius PATH_UNITS
+ *  (pipeline/coastline_paths.py UNITS, for RADIUS_KM = 25 km). */
+export const LAND_R = RING_R - RING_W / 2 - 1;
+export const PATH_UNITS = 100;
+export const LAND_KM = 25;
+export const PIN_R = 4;
+export const HEAD_R = PIN_R + 8;   // every arrow ends here, by the pin
 export const TAIL_R = RING_R + RING_W / 2 + 2;
 export const MARK_R = RING_R + RING_W / 2 + 9;  // the wind marker
 export const LABEL_R = RING_R + 28;
@@ -87,6 +93,12 @@ export function ringArcPath(arc: WindowArc, r = RING_R, cx = CX, cy = CY): strin
   const a = compassPoint(start, r, cx, cy);
   const b = compassPoint(start + sweep, r, cx, cy);
   return `M ${f(a.x)} ${f(a.y)} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${f(b.x)} ${f(b.y)}`;
+}
+
+/** The SVG transform that puts a stored land path (radius PATH_UNITS about the spot) inside the
+ *  ring, centred on the pin. */
+export function landTransform(): string {
+  return `translate(${CX} ${CY}) scale(${LAND_R / PATH_UNITS})`;
 }
 
 /** Is a direction inside the window? With no window set nothing is outside it. */

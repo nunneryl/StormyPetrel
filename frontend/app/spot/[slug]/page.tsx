@@ -9,6 +9,7 @@ import { SwellChart } from '@/components/SwellChart';
 import { WindChart } from '@/components/WindChart';
 import { TideChart } from '@/components/TideChart';
 import { SwellPartitions } from '@/components/SwellPartitions';
+import { coastlinePath } from '@/lib/coastline';
 import { CurrentConditions } from '@/components/CurrentConditions';
 import { CurrentHourProvider } from '@/components/CurrentHour';
 import { CurrentHero } from '@/components/CurrentHero';
@@ -352,6 +353,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           facingDeg={spot.orientation_deg}
           optimalDeg={spot.optimal_swell_dir}
           offshoreDeg={spot.offshore_wind_deg}
+          coastPath={coastlinePath(spot.slug)}
         />
       </CurrentHourProvider>
 
