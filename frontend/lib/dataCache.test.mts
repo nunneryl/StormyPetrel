@@ -16,6 +16,8 @@
  *        fetchLatestReports, fetchReportsForDate,
  *        fetchReportIndex, fetchReport                     daily_reports: written whole each day,
  *                                                          no migration has changed its rows.
+ *      fetchAccuracyRows (lib/accuracy.ts, the /accuracy page) is fresh: accuracy_daily's rows for
+ *      a day are rewritten when the day is re-scored, under the same URL.
  *      A new cached read fails here until it is added to this list with its reason.
  *   3. STATIC. Every page, and the sitemap, sets dynamic = 'force-static': the root layout reads
  *      the spots for the nav search past the cache, and that would otherwise render every page on
@@ -57,9 +59,10 @@ function reads(rel: string): Record<string, string> {
 }
 
 // 1 and 2.
-const all = { ...reads('lib/queries.ts'), ...reads('lib/cams.ts'), ...reads('lib/reports.ts') };
+const all = { ...reads('lib/queries.ts'), ...reads('lib/cams.ts'), ...reads('lib/reports.ts'),
+  ...reads('lib/accuracy.ts') };
 for (const fn of ['fetchSpotBySlug', 'fetchSpotsBySlug', 'fetchAllSpots', 'fetchCamsForSpot',
-  'fetchAllActiveCams', 'fetchCamSlugSet']) {
+  'fetchAllActiveCams', 'fetchCamSlugSet', 'fetchAccuracyRows']) {
   check(`${fn} reads past the Data Cache`, all[fn] === 'fresh', String(all[fn]));
 }
 const CACHED = ['fetchLatestForecastPerSpot', 'fetchSparklineData', 'fetchLatestReports',
@@ -75,7 +78,7 @@ for (const fn of ['fetchLatestForecastPerSpot', 'fetchSparklineData']) {
     body.includes("new Date().toISOString()") && body.includes(".gte('valid_time', nowIso)"));
 }
 check('no other file queries Supabase through the cached client',
-  ['lib/surfReport.ts', 'lib/cams.ts'].every((f) => !/import \{[^}]*\bsupabase\b[^}]*\} from/.test(read(f))));
+  ['lib/surfReport.ts', 'lib/cams.ts', 'lib/accuracy.ts'].every((f) => !/import \{[^}]*\bsupabase\b[^}]*\} from/.test(read(f))));
 
 // 3.
 function walk(dir: string): string[] {
@@ -88,7 +91,7 @@ const pages = walk(join(FRONTEND, 'app'))
   .map((p) => relative(FRONTEND, p))
   .filter((p) => p.endsWith('/page.tsx') || p === 'app/sitemap.ts')
   .sort();
-check('every page is found (19 pages and the sitemap)', pages.length === 20, String(pages.length));
+check('every page is found (20 pages and the sitemap)', pages.length === 21, String(pages.length));
 for (const p of pages) {
   check(`${p} is force-static`, read(p).includes("export const dynamic = 'force-static';"));
 }
