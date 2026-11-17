@@ -69,6 +69,14 @@
  *      builds Pensacola Beach's break type also turns researched (a backfill, the shape of
  *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
  *      "beach" without "(unverified)". With the list read cached it kept "beach (unverified)".
+ *  15. The unlisted accuracy page (/accuracy, lib/accuracy.ts) on the served HTML: noindex and
+ *      nofollow in <head>, not in /sitemap.xml, and its figures from the stand-in's accuracy_daily
+ *      rows, worked by hand below. Florida's spot forecasts, under 24 h ahead, 60 pairs yesterday,
+ *      sum_e 1.8 m and sum_abs_e 15.0 m: "+0.1 ft / 0.8 ft" (0.03 m and 0.25 m), "60 pairs";
+ *      California's 49 pairs: "Too few pairs". Between the two builds California gains 11 pairs
+ *      the day before (sum_e -0.6, sum_abs_e 2.2): 60 pairs, sum_e -5.5 m, sum_abs_e 12.0 m, so
+ *      after the second build, .next/cache kept, "−0.3 ft / 0.7 ft" (-0.0917 m = -0.30 ft,
+ *      0.2 m = 0.66 ft) and "60 pairs". A cached read would keep "Too few pairs".
  *
  * NO EXPECTED VALUE COMES FROM THE CODE UNDER TEST. The expected hour is this file's own
  * arithmetic (the render time floored to the hour), the expected height is looked up in this
@@ -283,6 +291,17 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
 // Every request the stand-in answers, as "table?query", so a check can see what a build asked.
 const asked: string[] = [];
 
+// Item 15: accuracy_daily region totals of wave height (lib/accuracy.ts reads point '' and
+// measure 'hs' for the 28 days before today).
+const isoDay = (offsetDays: number) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+const acc = (day: string, kind: string, source: string, region: string, lead_day: number,
+  n: number, sum_e: number, sum_abs_e: number) => ({ day, kind, source, region, lead_day, n, sum_e, sum_abs_e });
+const ACCURACY = [
+  acc(isoDay(-1), 'spot', 'spot', 'Florida', 0, 60, 1.8, 15.0),
+  acc(isoDay(-1), 'spot', 'spot', 'California', 0, 49, -4.9, 9.8),
+  acc(isoDay(-1), 'buoy', 'ww3', 'Florida', 1, 100, 10.0, 20.0),
+];
+
 // Enough of PostgREST for this site: the spots, their rows, the one buoy reading, and an empty
 // list for anything else (every other page then renders its empty state, which is all the build
 // needs).
@@ -305,6 +324,10 @@ function answer(table: string, q: URLSearchParams): unknown[] {
     const slug = q.get('slug');
     if (slug !== null) return SPOTS.filter((s) => slug === `eq.${s.slug}`);
     return (q.get('offset') ?? '0') === '0' ? SPOTS : [];
+  }
+  if (table === 'accuracy_daily') {
+    const wanted = q.get('point') === 'eq.' && q.get('measure') === 'eq.hs';
+    return wanted && (q.get('offset') ?? '0') === '0' ? ACCURACY : [];
   }
   if (table === 'forecasts') {
     const id = q.get('spot_id');
@@ -727,6 +750,26 @@ async function main(): Promise<void> {
     pacificZones.has(zonesOn(jaxBefore.html)), zonesOn(jaxBefore.html));
   eq(`${JACKSONVILLE.slug} with no time_zone: buoy's last reading`, buoyLast(jaxBefore.html), 'Oct 29, 6:50am PDT');
 
+  // 15: the accuracy page, first build.
+  const acc1 = await accuracyPage();
+  eq('/accuracy answers 200', acc1.status, 200);
+  check('/accuracy is noindex, nofollow in <head>',
+    /<head>.*<meta name="robots" content="noindex, nofollow"\/>.*<\/head>/s.test(acc1.html),
+    (/<meta name="robots"[^>]*>/.exec(acc1.html) ?? ['no robots tag'])[0]);
+  check('/accuracy is not in /sitemap.xml', !(await (await fetch(`${site}/sitemap.xml`)).text())
+    .includes('/accuracy'));
+  const yd = new Date(Date.now() - 86_400_000);
+  const ydText = `${yd.getUTCDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+    'Oct', 'Nov', 'Dec'][yd.getUTCMonth()]}`;
+  eq('/accuracy spot table, Florida, under 24 h', acc1.cell(0, 'Florida', 0),
+    `+0.1 ft / 0.8 ft 60 pairs · ${ydText}`);
+  eq('/accuracy spot table, California, under 24 h: 49 pairs', acc1.cell(0, 'California', 0),
+    `Too few pairs 49 · ${ydText}`);
+  eq('/accuracy WAVEWATCH III table, Florida, 1 day ahead (0.1 m / 0.2 m)', acc1.cell(1, 'Florida', 1),
+    `+0.3 ft / 0.7 ft 100 pairs · ${ydText}`);
+  eq('/accuracy WAVEWATCH III table has no spot rows', acc1.cell(1, 'California', 0), null);
+  eq('/accuracy NWPS table: no pairs yet', acc1.sections[2].includes('No scored pairs yet.'), true);
+
   // Migration 026 applied between deploys; the second build keeps the first one's .next/cache.
   const pid = server?.pid;
   if (pid !== undefined) {
@@ -739,9 +782,13 @@ async function main(): Promise<void> {
   // And a backfill on another column the list pages show (item 14): Pensacola Beach's break type
   // turns researched, so the region list must drop its "(unverified)".
   PENSACOLA.break_type_source = 'researched';
+  // Item 15: California gains 11 pairs the day before yesterday.
+  ACCURACY.push(acc(isoDay(-2), 'spot', 'spot', 'California', 0, 11, -0.6, 2.2));
   const askedBefore = asked.length;
   await buildSite('second build, Jacksonville Beach Pier now has its time_zone, .next/cache kept');
   const rowRead = `spots?select=*&slug=eq.${JACKSONVILLE.slug}`;
+  check('the second build asked the stand-in for accuracy_daily, not the fetch cache',
+    asked.slice(askedBefore).some((a) => a.startsWith('accuracy_daily?')));
   check(`the second build asked the stand-in for ${rowRead}, not the fetch cache`,
     asked.slice(askedBefore).includes(rowRead), `${asked.length - askedBefore} requests`);
   await startSite();
@@ -760,6 +807,27 @@ async function main(): Promise<void> {
   eq('/region/florida after the second build answers 200', fl.status, 200);
   check('/region/florida after the second build: Pensacola Beach reads "beach", no longer unverified',
     flHtml.includes('>beach<') && !flHtml.includes('>beach (unverified)<'));
+
+  // 15, after the second build: California's 60 pairs, read past the Data Cache.
+  const acc2 = await accuracyPage();
+  check('/accuracy after the second build: California shows -0.3 ft / 0.7 ft over 60 pairs',
+    (acc2.cell(0, 'California', 0) ?? '').startsWith('\u22120.3 ft / 0.7 ft 60 pairs · '),
+    String(acc2.cell(0, 'California', 0)));
+
+  /** The served /accuracy page: its HTML, its sections (one per table, in page order), and a
+   *  cell's text (tags to spaces) by table, region and lead day, or null when the row is absent. */
+  async function accuracyPage() {
+    const res = await fetch(`${site}/accuracy`);
+    const html = (await res.text()).replace(/<!-- -->/g, '');
+    const sections = html.split('<h2').slice(1);
+    const cell = (table: number, region: string, lead: number): string | null => {
+      const tr = (sections[table] ?? '').split('<tr').find((r) => r.includes(`>${region}</th>`));
+      if (!tr) return null;
+      const tds = [...tr.matchAll(/<td[^>]*>(.*?)<\/td>/gs)].map((m) => m[1]);
+      return (tds[lead] ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    };
+    return { status: res.status, html, sections, cell };
+  }
 }
 
 // A hung build or server fails the run instead of holding CI open.
