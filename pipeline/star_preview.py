@@ -408,6 +408,23 @@ def rescore(row, spot):
 BIG_MOVE = 1.5                 # a spot is flagged when any hour moves by more than this
 
 
+def window_changes(before, after):
+    """{name: {swell_window_arcs: [before, after], optimal_swell_dir: [before, after]}} for every
+    spot in both spots files whose window or optimal differs."""
+    out = {}
+    for name in sorted(set(before) & set(after)):
+        b, a = before[name], after[name]
+        if (b.get("swell_window_arcs") != a.get("swell_window_arcs")
+                or b.get("optimal_swell_dir") != a.get("optimal_swell_dir")):
+            out[name] = {"swell_window_arcs": [b.get("swell_window_arcs"), a.get("swell_window_arcs")],
+                         "optimal_swell_dir": [b.get("optimal_swell_dir"), a.get("optimal_swell_dir")]}
+    return out
+
+
+def _fmt_arcs(arcs):
+    return ", ".join(f"{x['min']}-{x['max']}" for x in arcs or []) or "none"
+
+
 def change_cause(before, after):
     """Why an hour's stars moved: 'same direction', 'another partition' (the direction moved
     and the path did not), or 'PATH -> PATH' when the direction came from somewhere else."""
@@ -433,6 +450,8 @@ def compare(rows, before_spots, after_spots, names, row_after=None, rescore_afte
     changed = []
     by_group = defaultdict(Counter)
     by_state = defaultdict(Counter)
+    moved = window_changes(before_spots, after_spots)
+    by_moved_spot = {n: defaultdict(Counter) for n in moved}
     for row in rows:
         name, state = names.get(row["spot_id"], (None, None))
         b, a = before_spots.get(name), after_spots.get(name)
@@ -457,6 +476,8 @@ def compare(rows, before_spots, after_spots, names, row_after=None, rescore_afte
         delta = round(ra["stars"] - rb["stars"], 1)
         by_group[grp][delta] += 1
         by_state[state][delta] += 1
+        if name in by_moved_spot:
+            by_moved_spot[name][grp][delta] += 1
         if delta:
             change = {"spot": name, "state": state, "valid_time": row["valid_time"],
                       "group": grp, "dir_before": rb["dir"], "dir_after": ra["dir"],
@@ -495,6 +516,11 @@ def compare(rows, before_spots, after_spots, names, row_after=None, rescore_afte
         "spots_moving_over_1_5": big,
         "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
         "delta_by_state": {s: dict(sorted(c.items())) for s, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
+        "window_changed_spots": {
+            n: {**moved[n],
+                "hours": sum(sum(c.values()) for c in by_moved_spot[n].values()),
+                "by_source": {g: dict(sorted(c.items())) for g, c in sorted(by_moved_spot[n].items())}}
+            for n in sorted(moved)},
         "top20": [{"spot": s, "changed_hours": len(cs),
                    # the largest change; the earliest such hour, since rows come in time order
                    "example": max(cs, key=lambda c: abs(c["delta"]))}
@@ -2431,6 +2457,13 @@ def _print(rep, since):
               f"[{e['group']}; {e['cause']}] dir {e['dir_before']}->{e['dir_after']} "
               f"gain {e['gain_before']}->{e['gain_after']}{tide} "
               f"stars {e['stars_before']}->{e['stars_after']}")
+    if rep.get("window_changed_spots"):
+        print("spots whose window or optimal changes, star change by source on reproduced hours "
+              "(delta: hours):")
+        for n, w in rep["window_changed_spots"].items():
+            print(f"  {n}: window {_fmt_arcs(w['swell_window_arcs'][0])} -> "
+                  f"{_fmt_arcs(w['swell_window_arcs'][1])}, optimal {w['optimal_swell_dir'][0]} -> "
+                  f"{w['optimal_swell_dir'][1]}; {w['hours']} hours: {w['by_source']}")
     big = rep["spots_moving_over_1_5"]
     print(f"spots with an hour moving by more than {BIG_MOVE} stars: {len(big)}")
     for b in big:

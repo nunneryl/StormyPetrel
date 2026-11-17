@@ -1040,3 +1040,29 @@ def test_only_the_multipliers_half_step_explains_this_miss():
                stars=5.0)
     assert SP.facing_rerate(row, FACE_BEFORE, {}, None)["stars"] == 4.5
     assert SP.within_stored_precision(row, FACE_BEFORE, {}, None) is True
+
+
+def test_compare_breaks_down_each_spot_whose_window_moved_by_source():
+    # The rows of test_compare_counts_only_reproduced_rows: A moves WEST -> NW (its one
+    # reproduced hour 3.0 -> 1.5, see there), B keeps WEST and is not listed.
+    names = {1: ("A", "Hawaii"), 2: ("B", "California")}
+    rows = [
+        dict(_mop(), spot_id=1, valid_time="2026-10-15T00:00:00+00:00", stars=3.0),
+        dict(_mop(), spot_id=1, valid_time="2026-10-15T01:00:00+00:00", stars=2.0),
+        dict(_mop(), spot_id=2, valid_time="2026-10-15T00:00:00+00:00", stars=3.0),
+    ]
+    rep = SP.compare(rows, {"A": WEST, "B": WEST}, {"A": NW, "B": WEST}, names)
+    assert list(rep["window_changed_spots"]) == ["A"]
+    a = rep["window_changed_spots"]["A"]
+    assert (a["optimal_swell_dir"], a["hours"], a["by_source"]) == ([270, 315], 1, {"MOP": {-1.5: 1}})
+    assert a["swell_window_arcs"] == [WEST["swell_window_arcs"], NW["swell_window_arcs"]]
+
+
+def test_window_changes_lists_a_spot_whose_optimal_alone_or_window_alone_moves():
+    only_optimal = dict(WEST, optimal_swell_dir=280)
+    only_window = dict(WEST, swell_window_arcs=[{"min": 250, "max": 300, "span": 50}])
+    got = SP.window_changes({"A": WEST, "B": WEST, "C": WEST},
+                            {"A": only_optimal, "B": only_window, "C": dict(WEST)})
+    assert sorted(got) == ["A", "B"]
+    assert got["A"]["optimal_swell_dir"] == [270, 280]
+    assert got["B"]["swell_window_arcs"][1] == [{"min": 250, "max": 300, "span": 50}]
