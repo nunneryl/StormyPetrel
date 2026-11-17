@@ -2,8 +2,11 @@
  * The accuracy page (/accuracy): forecast against buoy, by region and lead day, from accuracy_daily
  * (pipeline/migrations/031_accuracy_daily.sql, written nightly by pipeline/accuracy_score.py).
  *
- * WHAT IS READ. The region totals for wave height only: point '' (the whole region) and measure
- * 'hs', for the WINDOW_DAYS days before today (UTC). Each row holds n and the sums of the error e
+ * WHAT IS READ. The models at the buoys (kind 'buoy': NWPS and WAVEWATCH III read at each buoy's
+ * own position), region totals of wave height only: point '' (the whole region) and measure 'hs',
+ * for the WINDOW_DAYS days before today (UTC). The spots against their nearest buoy (kind 'spot')
+ * are not read: a spot is nearer shore than its buoy, often sheltered, so that gap mixes shelter
+ * with forecast error. It stays in the weekly report (pipeline/accuracy_report.py). Each row holds n and the sums of the error e
  * (forecast minus buoy, metres) and of |e|, so any run of days combines by adding:
  *     bias = sum_e / n            typical error (MAE) = sum_abs_e / n
  * the same figures, from the same sums, as the weekly report (pipeline/accuracy_report.py stats).
@@ -15,8 +18,8 @@
  * the rows of the day it was cached (lib/dataCache.test.mts). The page is force-static and
  * revalidates daily, after the nightly scoring.
  *
- * The numbers the page states (MIN_PAIRS, PAIR_WINDOW_MINUTES, SPOT_BUOY_MAX_KM) are held to the
- * pipeline's in lib/accuracy.test.mts.
+ * The numbers the page states (MIN_PAIRS, PAIR_WINDOW_MINUTES) are held to the pipeline's in
+ * lib/accuracy.test.mts.
  */
 import { metersToFeet } from './formatting.ts';
 
@@ -24,8 +27,6 @@ import { metersToFeet } from './formatting.ts';
 export const MIN_PAIRS = 50;
 /** A forecast hour pairs with the buoy reading nearest it, within this (accuracy_score.py OBS_WINDOW). */
 export const PAIR_WINDOW_MINUTES = 30;
-/** A spot is scored only against a buoy within this distance (accuracy_score.py SPOT_BUOY_MAX_KM). */
-export const SPOT_BUOY_MAX_KM = 25;
 /** The days read: the last four weeks of scored days. */
 export const WINDOW_DAYS = 28;
 
@@ -38,9 +39,9 @@ export const LEAD_LABELS: Record<number, string> = {
   3: '3 days ahead',
 };
 
-/** accuracy_daily's source: 'spot' is always kind 'spot' (the spot forecast against its buoy);
- *  'ww3' and 'nwps' are always kind 'buoy' (the model at the buoy). The source alone picks a table. */
-export type SourceKey = 'spot' | 'ww3' | 'nwps';
+/** accuracy_daily's source for the models at the buoys (kind 'buoy'). The source alone picks a
+ *  table. */
+export type SourceKey = 'ww3' | 'nwps';
 
 /** accuracy_daily's region is the spots' region_hint (a state, or Puerto Rico). North to south
  *  down the East Coast, round the Gulf, then up the West Coast and out. A region not listed
@@ -172,6 +173,7 @@ export async function fetchAccuracyRows(): Promise<AccuracyRow[]> {
     const { data, error } = await supabaseUncached
       .from('accuracy_daily')
       .select('day,kind,source,region,lead_day,n,sum_e,sum_abs_e')
+      .eq('kind', 'buoy')
       .eq('point', '')
       .eq('measure', 'hs')
       .gte('day', start)

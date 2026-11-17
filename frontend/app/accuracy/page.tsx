@@ -5,7 +5,6 @@ import {
   LEAD_LABELS,
   MIN_PAIRS,
   PAIR_WINDOW_MINUTES,
-  SPOT_BUOY_MAX_KM,
   WINDOW_DAYS,
   buildTable,
   fetchAccuracyRows,
@@ -27,8 +26,8 @@ export const revalidate = 86400;
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: { absolute: 'Forecast accuracy | Stormy Petrel' },
-  description: 'How our wave-height forecasts compare with what the buoys measured.',
+  title: { absolute: 'How accurate are our forecasts? | Stormy Petrel' },
+  description: 'Every night we check each forecast hour against what the buoys measured.',
   alternates: { canonical: '/accuracy' },
   robots: {
     index: false,
@@ -37,27 +36,21 @@ export const metadata: Metadata = {
   },
 };
 
+// NWPS first: it sizes most of our spots. Our spot forecasts against their nearest buoy are left
+// out on purpose: a spot is closer to shore than its buoy, often sheltered, so the gap mixes
+// shelter with forecast error. That comparison stays in the weekly report.
 const TABLES: { key: SourceKey; title: string; blurb: string }[] = [
-  {
-    key: 'spot',
-    title: 'Our spot forecasts against the nearest buoy',
-    blurb:
-      `Each spot's forecast wave height against its nearest buoy, only where that buoy is within ` +
-      `${SPOT_BUOY_MAX_KM} km. The spot sits closer to shore than the buoy, so some difference is ` +
-      `expected even from a perfect forecast.`,
-  },
-  {
-    key: 'ww3',
-    title: 'WAVEWATCH III at the buoys',
-    blurb:
-      "NOAA's global wave model, read at each buoy's own position, so forecast and measurement " +
-      'are for the same place.',
-  },
   {
     key: 'nwps',
     title: 'NWPS at the buoys',
     blurb:
-      "The National Weather Service's nearshore wave model, read at each buoy's own position.",
+      "The National Weather Service's nearshore wave model, read at each buoy's own position, so " +
+      'forecast and measurement are for the same place.',
+  },
+  {
+    key: 'ww3',
+    title: 'WAVEWATCH III at the buoys',
+    blurb: "NOAA's global wave model, read at each buoy's own position.",
   },
 ];
 
@@ -145,16 +138,22 @@ export default async function AccuracyPage() {
           Forecast accuracy
         </div>
         <h1 className="mt-1 text-3xl sm:text-4xl font-bold tracking-tightish text-text-primary">
-          How our forecasts compare with the buoys
+          How accurate are our forecasts?
         </h1>
       </header>
 
       <section className="max-w-[700px] space-y-4 text-base text-text-primary leading-relaxed">
         <p>
-          Every night we line up the wave height we forecast with the wave height NOAA&rsquo;s
-          buoys measured, at set hours through each day. A forecast hour is paired with the buoy
-          reading nearest to it, within {PAIR_WINDOW_MINUTES} minutes. This page shows the last {WINDOW_DAYS} days
-          of those pairs.
+          The buoy box on each spot page shows what a buoy is measuring right now. A forecast is
+          different: it predicts the waves hours or days ahead. Every night we go back and check
+          each forecast hour: what we predicted, and what the buoy actually measured when that
+          hour arrived.
+        </p>
+        <p>
+          Our forecasts are built on two wave models, NWPS and WAVEWATCH III. Below, each is read
+          at the buoy&rsquo;s own position, so the forecast and the measurement are for the same
+          place. A forecast hour is paired with the buoy reading nearest to it, within{' '}
+          {PAIR_WINDOW_MINUTES} minutes. This page shows the last {WINDOW_DAYS} days of those pairs.
         </p>
         <p>
           <strong>Buoys measure waves offshore, not surf at the beach.</strong> These figures

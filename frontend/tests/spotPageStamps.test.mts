@@ -71,8 +71,10 @@
  *      "beach" without "(unverified)". With the list read cached it kept "beach (unverified)".
  *  15. The unlisted accuracy page (/accuracy, lib/accuracy.ts) on the served HTML: noindex and
  *      nofollow in <head>, not in /sitemap.xml, and its figures from the stand-in's accuracy_daily
- *      rows, worked by hand below. Florida's spot forecasts, under 24 h ahead, 60 pairs yesterday,
- *      sum_e 1.8 m and sum_abs_e 15.0 m: "+0.1 ft / 0.8 ft" (0.03 m and 0.25 m), "60 pairs";
+ *      rows, worked by hand below. Two tables, NWPS then WAVEWATCH III at the buoys; the spots
+ *      against their buoy are not on the page (a spot row in the fixture must not show). NWPS at
+ *      the Florida buoys, under 24 h ahead, 60 pairs yesterday, sum_e 1.8 m and sum_abs_e 15.0 m:
+ *      "+0.1 ft / 0.8 ft" (0.03 m and 0.25 m), "60 pairs";
  *      California's 49 pairs: "Too few pairs". Between the two builds California gains 11 pairs
  *      the day before (sum_e -0.6, sum_abs_e 2.2): 60 pairs, sum_e -5.5 m, sum_abs_e 12.0 m, so
  *      after the second build, .next/cache kept, "−0.3 ft / 0.7 ft" (-0.0917 m = -0.30 ft,
@@ -297,9 +299,10 @@ const isoDay = (offsetDays: number) => new Date(Date.now() + offsetDays * 86_400
 const acc = (day: string, kind: string, source: string, region: string, lead_day: number,
   n: number, sum_e: number, sum_abs_e: number) => ({ day, kind, source, region, lead_day, n, sum_e, sum_abs_e });
 const ACCURACY = [
-  acc(isoDay(-1), 'spot', 'spot', 'Florida', 0, 60, 1.8, 15.0),
-  acc(isoDay(-1), 'spot', 'spot', 'California', 0, 49, -4.9, 9.8),
+  acc(isoDay(-1), 'buoy', 'nwps', 'Florida', 0, 60, 1.8, 15.0),
+  acc(isoDay(-1), 'buoy', 'nwps', 'California', 0, 49, -4.9, 9.8),
   acc(isoDay(-1), 'buoy', 'ww3', 'Florida', 1, 100, 10.0, 20.0),
+  acc(isoDay(-1), 'spot', 'spot', 'Oregon', 0, 200, -487.7, 493.8),
 ];
 
 // Enough of PostgREST for this site: the spots, their rows, the one buoy reading, and an empty
@@ -327,7 +330,9 @@ function answer(table: string, q: URLSearchParams): unknown[] {
   }
   if (table === 'accuracy_daily') {
     const wanted = q.get('point') === 'eq.' && q.get('measure') === 'eq.hs';
-    return wanted && (q.get('offset') ?? '0') === '0' ? ACCURACY : [];
+    const kind = q.get('kind');
+    const rows = ACCURACY.filter((r) => kind === null || kind === `eq.${r.kind}`);
+    return wanted && (q.get('offset') ?? '0') === '0' ? rows : [];
   }
   if (table === 'forecasts') {
     const id = q.get('spot_id');
@@ -761,14 +766,20 @@ async function main(): Promise<void> {
   const yd = new Date(Date.now() - 86_400_000);
   const ydText = `${yd.getUTCDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
     'Oct', 'Nov', 'Dec'][yd.getUTCMonth()]}`;
-  eq('/accuracy spot table, Florida, under 24 h', acc1.cell(0, 'Florida', 0),
+  eq('/accuracy has two tables, NWPS then WAVEWATCH III',
+    JSON.stringify(acc1.sections.map((x) => x.slice(x.indexOf('>') + 1, x.indexOf('</h2>')))),
+    JSON.stringify(['NWPS at the buoys', 'WAVEWATCH III at the buoys']));
+  eq('/accuracy title', /<title>([^<]*)<\/title>/.exec(acc1.html)?.[1],
+    'How accurate are our forecasts? | Stormy Petrel');
+  eq('/accuracy NWPS table, Florida, under 24 h', acc1.cell(0, 'Florida', 0),
     `+0.1 ft / 0.8 ft 60 pairs · ${ydText}`);
-  eq('/accuracy spot table, California, under 24 h: 49 pairs', acc1.cell(0, 'California', 0),
+  eq('/accuracy NWPS table, California, under 24 h: 49 pairs', acc1.cell(0, 'California', 0),
     `Too few pairs 49 · ${ydText}`);
   eq('/accuracy WAVEWATCH III table, Florida, 1 day ahead (0.1 m / 0.2 m)', acc1.cell(1, 'Florida', 1),
     `+0.3 ft / 0.7 ft 100 pairs · ${ydText}`);
-  eq('/accuracy WAVEWATCH III table has no spot rows', acc1.cell(1, 'California', 0), null);
-  eq('/accuracy NWPS table: no pairs yet', acc1.sections[2].includes('No scored pairs yet.'), true);
+  eq('/accuracy WAVEWATCH III table has no NWPS rows', acc1.cell(1, 'California', 0), null);
+  check('/accuracy shows no spot-against-buoy figures (the fixture has Oregon at -8.0 ft)',
+    !acc1.html.includes('Oregon') && !acc1.html.includes('8.0 ft'));
 
   // Migration 026 applied between deploys; the second build keeps the first one's .next/cache.
   const pid = server?.pid;
@@ -783,7 +794,7 @@ async function main(): Promise<void> {
   // turns researched, so the region list must drop its "(unverified)".
   PENSACOLA.break_type_source = 'researched';
   // Item 15: California gains 11 pairs the day before yesterday.
-  ACCURACY.push(acc(isoDay(-2), 'spot', 'spot', 'California', 0, 11, -0.6, 2.2));
+  ACCURACY.push(acc(isoDay(-2), 'buoy', 'nwps', 'California', 0, 11, -0.6, 2.2));
   const askedBefore = asked.length;
   await buildSite('second build, Jacksonville Beach Pier now has its time_zone, .next/cache kept');
   const rowRead = `spots?select=*&slug=eq.${JACKSONVILLE.slug}`;
@@ -810,7 +821,7 @@ async function main(): Promise<void> {
 
   // 15, after the second build: California's 60 pairs, read past the Data Cache.
   const acc2 = await accuracyPage();
-  check('/accuracy after the second build: California shows -0.3 ft / 0.7 ft over 60 pairs',
+  check('/accuracy after the second build: NWPS California shows -0.3 ft / 0.7 ft over 60 pairs',
     (acc2.cell(0, 'California', 0) ?? '').startsWith('\u22120.3 ft / 0.7 ft 60 pairs · '),
     String(acc2.cell(0, 'California', 0)));
 
