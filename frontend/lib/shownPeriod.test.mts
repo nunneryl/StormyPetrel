@@ -162,11 +162,12 @@ const SITES: [string, string][] = [
 ];
 for (const [rel, use] of SITES) check(`${rel} shows the period through shownTrain`, read(rel).includes(use));
 const spotPage = read('app/spot/[slug]/page.tsx');
-// CurrentConditions, ForecastGrid and SwellPartitions (its wind sea row is labelled by windSeaDominates).
-check('the spot page hands all three components the spot\'s window',
-  (spotPage.match(/windowArcs=\{spot\.swell_window_arcs\}/g) ?? []).length === 3);
+// CurrentConditions, ForecastGrid, SwellPartitions (its wind sea row is labelled by
+// windSeaDominates) and SwellWindowCompass (the breakdown's rows, so the same labels).
+check('the spot page hands all four components the spot\'s window',
+  (spotPage.match(/windowArcs=\{spot\.swell_window_arcs\}/g) ?? []).length === 4);
 check('and its facing',
-  (spotPage.match(/facingDeg=\{spot\.orientation_deg\}/g) ?? []).length === 3);
+  (spotPage.match(/facingDeg=\{spot\.orientation_deg\}/g) ?? []).length === 4);
 const direct = ['app', 'components'].flatMap((d) => walk(join(FRONTEND, d)))
   .map((abs) => relative(FRONTEND, abs))
   // A query's column list names the columns without showing them; it is left out.

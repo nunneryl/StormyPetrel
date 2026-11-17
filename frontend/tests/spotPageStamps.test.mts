@@ -69,6 +69,12 @@
  *      builds Pensacola Beach's break type also turns researched (a backfill, the shape of
  *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
  *      "beach" without "(unverified)". With the list read cached it kept "beach (unverified)".
+ *  16. The swell compass (components/SwellWindowCompass.tsx) on the served spot page. A spot with
+ *      two window arcs (315-90 and 180-240), optimal 0, and every hour carrying a 2.0 m swell from
+ *      300, a 1.0 m swell from 200 and a 0.1 m wind sea from 60 (a twentieth of the biggest, so
+ *      faded), wind from 90: two wedges, three swell arrows of which one faded, one wind arrow,
+ *      the optimal marker, no "No swell window set"; and the Swell breakdown beside it prints the
+ *      same three rows. Stamp Test Point (no arcs, no partitions): no wedge, no arrow, and the note.
  *  15. The unlisted accuracy page (/accuracy, lib/accuracy.ts) on the served HTML: noindex and
  *      nofollow in <head>, not in /sitemap.xml, and its figures from the stand-in's accuracy_daily
  *      rows, worked by hand below. Two tables, NWPS then WAVEWATCH III at the buoys; the spots
@@ -234,9 +240,21 @@ const OLD_RUN = {
   time_zone: 'America/Los_Angeles',
 };
 const OLD_CYCLE_MS = T0 - 30 * HOUR;
+// 16: a spot with two window arcs and three partitions every hour.
+const COMPASS = {
+  ...SPOT_FIELDS, id: 990012, slug: 'stamp-test-compass', name: 'Stamp Test Compass',
+  time_zone: 'America/Los_Angeles', optimal_swell_dir: 0,
+  swell_window_arcs: [{ min: 315, max: 90 }, { min: 180, max: 240 }],
+};
+const COMPASS_HOUR = {
+  swell_source: 'ww3', swell_tp: 14, swell_dp: 300,
+  swell_1_hs: 2.0, swell_1_tp: 14, swell_1_dp: 300,
+  swell_2_hs: 1.0, swell_2_tp: 9, swell_2_dp: 200,
+  wind_wave_hs: 0.1, wind_wave_tp: 4, wind_wave_dp: 60, wind_dir: 90,
+};
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
-const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS];
+const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -282,6 +300,7 @@ const BLANK = { hs: null, tp: null, dp: null, swell_hs: 1.1, swell_tp: 11, swell
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
+  [COMPASS.id, hours(-12, 48).map((h) => ({ ...row(COMPASS.id, h), ...COMPASS_HOUR }))],
   ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) =>
     (sp.id === BLANK_HOUR.id ? { ...row(sp.id, h), ...BLANK }
       : sp.id === OLD_RUN.id
@@ -754,6 +773,27 @@ async function main(): Promise<void> {
   check(`${JACKSONVILLE.slug} with no time_zone: the Los Angeles fallback, labelled`,
     pacificZones.has(zonesOn(jaxBefore.html)), zonesOn(jaxBefore.html));
   eq(`${JACKSONVILLE.slug} with no time_zone: buoy's last reading`, buoyLast(jaxBefore.html), 'Oct 29, 6:50am PDT');
+
+  // 16: the swell compass.
+  const compassCount = (html: string, what: string) =>
+    (html.match(new RegExp(`data-compass="${what}"`, 'g')) ?? []).length;
+  const cp = await load(COMPASS.slug);
+  eq(`${COMPASS.slug} answers 200`, cp.status, 200);
+  eq('compass: two wedges, one per arc', compassCount(cp.html, 'wedge'), 2);
+  eq('compass: two full swell arrows', compassCount(cp.html, 'row'), 2);
+  eq('compass: the 0.1 m wind sea is drawn, faded', compassCount(cp.html, 'row-faded'), 1);
+  eq('compass: one wind arrow', compassCount(cp.html, 'wind'), 1);
+  eq('compass: the optimal marker', compassCount(cp.html, 'optimal'), 1);
+  eq('compass: no "No swell window set" with arcs', compassCount(cp.html, 'no-window'), 0);
+  const cpText = cp.html.replace(/<!-- -->/g, '');
+  check('the breakdown beside it prints the same three rows',
+    ['P1 (primary)', 'P2 (secondary)', 'Wind sea'].every((l) => cpText.includes(`>${l}</div>`)) &&
+    !cpText.includes('>P3 (tertiary)</div>'));
+  const plainCompass = await load(WITH_ROW.slug);
+  eq('Stamp Test Point compass: no wedge', compassCount(plainCompass.html, 'wedge'), 0);
+  eq('Stamp Test Point compass: no swell arrow',
+    compassCount(plainCompass.html, 'row') + compassCount(plainCompass.html, 'row-faded'), 0);
+  eq('Stamp Test Point compass: "No swell window set"', compassCount(plainCompass.html, 'no-window'), 1);
 
   // 15: the accuracy page, first build.
   const acc1 = await accuracyPage();
