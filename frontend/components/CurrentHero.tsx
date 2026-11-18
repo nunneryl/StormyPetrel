@@ -7,23 +7,16 @@
 // beside tiles from another — a visible contradiction on the same screen, and worse than
 // the uniform staleness it replaced. Same selector, same input, so the two cannot disagree.
 //
-// The freshness label is the part that was actively misleading: it computed
-// `Date.now() - valid_time` at RENDER time, so a statically-served page an hour old still
-// announced "Updated 0 min ago". It now measures against the clock that chose the row.
+// The freshness label is the age of the model run behind the forecast ("Model run 8 h ago",
+// lib/modelRunAge.ts), on the viewer's clock. It used to say "Updated N min ago" from the start of
+// the current hour, which an old copy of the page still said with a forecast 36 h old.
 
 import { useEffect, useState } from 'react';
 
 import { StarRating } from './StarRating';
-import { rowAgeMinutes, selectCurrentHour } from '@/lib/currentHour';
+import { selectCurrentHour } from '@/lib/currentHour';
+import { modelRunLabel } from '@/lib/modelRunAge';
 import type { Forecast } from '@/lib/types';
-
-function freshnessLabel(minutes: number | null): string {
-  if (minutes === null) return '—';
-  if (minutes < 60) return `Updated ${minutes} min ago`;
-  const h = Math.round(minutes / 60);
-  if (h < 24) return `Updated ${h}h ago`;
-  return `Updated ${Math.round(h / 24)}d ago`;
-}
 
 export function CurrentHero({
   rows,
@@ -46,7 +39,7 @@ export function CurrentHero({
       <span className="text-[10px] uppercase tracking-widest2 text-text-muted">
         {selection.state === 'absent'
           ? 'No current hour'
-          : freshnessLabel(rowAgeMinutes(selection.row, nowMs))}
+          : modelRunLabel(rows, nowMs)}
       </span>
     </div>
   );

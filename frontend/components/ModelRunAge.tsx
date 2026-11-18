@@ -3,7 +3,7 @@
 // "Wave model run is N h old" under the spot's header, on the VIEWER's clock (lib/modelRunAge).
 //
 // The page is prerendered and kept for an hour, so the age is measured again once mounted, the
-// way CurrentHero measures its "Updated" label: the server's clock for the first paint, then the
+// way CurrentHero measures its "Model run N h ago" label: the server's clock for the first paint, then the
 // viewer's, once a minute. Renders nothing while the newest cycle is under 24 hours old.
 
 import { useEffect, useState } from 'react';

@@ -11,8 +11,11 @@
  *
  *     node --experimental-strip-types frontend/lib/modelRunAge.test.mts
  */
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
-  MODEL_RUN_STALE_H, modelRunAgeHours, modelRunNote, modelRunText, newestNwpsCycle,
+  MODEL_RUN_STALE_H, modelRunAgeHours, modelRunLabel, modelRunNote, modelRunText, newestNwpsCycle,
 } from './modelRunAge.ts';
 
 let failures = 0;
@@ -79,6 +82,24 @@ eq('the newest cycle decides: an old row beside a fresh one says nothing',
 eq('no NWPS cycle on the page: nothing, however late', modelRunNote([r(null)], AT_1407), null);
 
 eq('the words', modelRunText(32), 'Wave model run is 32 h old');
+
+// THE HERO LABEL (components/CurrentHero.tsx): the newest cycle's age, not the current hour's.
+// 18 Nov 00Z read at 08:44:00Z is 8 h 44 min old: "Model run 8 h ago". The same rows at 12:00Z
+// on 19 Nov (36 h) read "Model run 36 h ago", where the old label would still have said
+// "Updated 0 min ago" for the 12:00 row.
+{
+  const rows = [r('2026-11-17T12:00:00+00:00'), r('2026-11-18T00:00:00+00:00'), r(null)];
+  eq('18 Nov 00Z at 08:44Z: Model run 8 h ago',
+    modelRunLabel(rows, Date.parse('2026-11-18T08:44:00Z')), 'Model run 8 h ago');
+  eq('the same rows at 12:00Z the next day: Model run 36 h ago',
+    modelRunLabel(rows, Date.parse('2026-11-19T12:00:00Z')), 'Model run 36 h ago');
+  eq('no row with a cycle: a dash', modelRunLabel([r(null)], Date.parse('2026-11-18T08:44:00Z')), '\u2014');
+  eq('a clock behind the cycle never reads negative',
+    modelRunLabel(rows, Date.parse('2026-11-17T23:00:00Z')), 'Model run 0 h ago');
+  const hero = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'components', 'CurrentHero.tsx'), 'utf8');
+  eq('the hero label is modelRunLabel of the page rows on the viewer clock',
+    hero.includes(': modelRunLabel(rows, nowMs)}') && !hero.includes('rowAgeMinutes') && !/`Updated|'Updated/.test(hero), true);
+}
 
 if (failures > 0) {
   console.log(`\nmodelRunAge: ${failures} FAILED`);

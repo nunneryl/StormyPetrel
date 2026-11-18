@@ -2,12 +2,15 @@
 
 Three scopes mirror the three cron jobs:
 
-    --scope full   Diffs the just-written current-hour rating per spot
-                   against a pre-write snapshot (see --snapshot below).
-                   Posts /, /map, /regions, plus /region/<state> for
-                   each state with at least one changed spot, plus
-                   /spot/<slug> for each spot whose stars or face_ft
-                   moved this cycle.
+    --scope full   Posts /, /map, /regions, /region/<state> for every state
+                   with a spot, and /spot/<slug> for EVERY spot. Since
+                   2026-11-18 a full run refreshes every page it wrote: a
+                   page left out kept its last copy until someone visited,
+                   and that visitor was served the old copy (Dillon Beach
+                   and Scarborough Beach showed a cycle 30-36 h old on
+                   2026-11-18 while the pipeline had written today's). The
+                   diff against the pre-write snapshot (see --snapshot) is
+                   still made and logged: how many spots' ratings moved.
     --scope buoys  Posts /, /map only (3-hourly cron — spot pages can
                    wait for their normal ISR refresh).
     --scope daily  Posts /, /reports, /reports/<today>.
@@ -287,9 +290,12 @@ def build_full_paths(client, snapshot_path: Path | None) -> tuple[list[str], dic
         else:
             unchanged += 1
 
+    # Every spot page and every state's region page, changed or not (see the module docstring).
+    all_slugs = sorted({m["slug"] for m in spot_meta.values() if m.get("slug")})
+    all_states = sorted({m["state"] for m in spot_meta.values() if m.get("state")})
     paths: list[str] = ["/", "/map", "/regions"]
-    paths.extend(f"/region/{st}" for st in sorted(affected_states))
-    paths.extend(f"/spot/{s}" for s in changed_spots)
+    paths.extend(f"/region/{st}" for st in all_states)
+    paths.extend(f"/spot/{s}" for s in all_slugs)
 
     stats = {
         "total_spots": len(new_ratings),
@@ -297,6 +303,7 @@ def build_full_paths(client, snapshot_path: Path | None) -> tuple[list[str], dic
         "unchanged_spots": unchanged,
         "affected_states": len(affected_states),
         "fell_back_to_all": fell_back,
+        "spot_paths": len(all_slugs),
     }
     return paths, stats
 
@@ -362,12 +369,13 @@ def cmd_revalidate(scope: str, snapshot_path: Path | None) -> int:
 
     if stats:
         log.info(
-            "Full diff: %d/%d spots changed (%d unchanged), %d states affected%s",
+            "Full diff: %d/%d spots changed (%d unchanged), %d states affected%s; refreshing all %d spot pages",
             stats["changed_spots"],
             stats["total_spots"],
             stats["unchanged_spots"],
             stats["affected_states"],
-            " [fell back to revalidate-all]" if stats["fell_back_to_all"] else "",
+            " [no snapshot]" if stats["fell_back_to_all"] else "",
+            stats["spot_paths"],
         )
     log.info("Posting %d paths (scope=%s)", len(paths), scope)
 
