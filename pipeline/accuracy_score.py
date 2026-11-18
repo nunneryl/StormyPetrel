@@ -51,6 +51,8 @@ SPOT_BUOY_MAX_KM = 25.0
 DIR_MIN_HS = 0.5
 MEASURES = ("hs", "swell_hs", "tp", "dp")
 PAGE = 1000
+# Spots per forecasts request on lead day 0: 40 spots x 24 hourly NWPS rows = 960, one page.
+SPOT_BATCH = 40
 BATCH = 1000
 SUMS = ("sum_f", "sum_o", "sum_ff", "sum_oo", "sum_fo", "sum_e", "sum_abs_e", "sum_ee")
 # The first day accuracy_daily holds (run 1 of accuracy-score, 2026-11-16, scored 13-15 Nov; the
@@ -266,6 +268,41 @@ def fetch_all(client, table: str, columns: str, time_col: str, start: datetime, 
         lo += PAGE
 
 
+FORECAST_COLS = "spot_id,valid_time,hs,tp,dp,swell_hs,nwps_cycle"
+
+
+def fetch_day0_forecasts(client, spot_ids, start: datetime, end: datetime) -> list[dict]:
+    """forecasts rows (source nwps) for *spot_ids* with start <= valid_time < end, for lead day 0.
+
+    #338: reading the whole day for every spot with OFFSET paging hit the database's statement
+    timeout on the 2.3 GB table (2026-11-18, 15 Nov, the first page). Now only the spots the
+    scorer pairs are read, SPOT_BATCH at a time with .in_("spot_id", ...), each request ONE page
+    from offset 0, ordered (spot_id, valid_time): the order of idx_forecasts_spot_time and of the
+    unique key, so the spot filter and the order are served by one index. A batch that fills a
+    page is split in half and re-read; a single spot that fills one carries on after its last hour
+    (valid_time > the last one read). No request ever pages past its first PAGE rows. Rows come
+    back in (spot_id, valid_time) order."""
+    ids = sorted({int(i) for i in spot_ids})
+
+    def read(batch: list[int], after: str | None = None) -> list[dict]:
+        q = client.table("forecasts").select(FORECAST_COLS).in_("spot_id", batch).eq("source", "nwps")
+        q = q.gt("valid_time", after) if after else q.gte("valid_time", _q(start))
+        rows = (q.lt("valid_time", _q(end)).order("spot_id").order("valid_time")
+                .range(0, PAGE - 1).execute().data or [])
+        if len(rows) < PAGE:
+            return rows
+        if len(batch) == 1:
+            # One spot filled a page: carry on after its last hour (keyset), still from offset 0.
+            return rows + read(batch, after=rows[-1]["valid_time"])
+        mid = len(batch) // 2
+        return read(batch[:mid]) + read(batch[mid:])
+
+    out: list[dict] = []
+    for k in range(0, len(ids), SPOT_BATCH):
+        out.extend(read(ids[k:k + SPOT_BATCH]))
+    return out
+
+
 def score_day(client, day: date, spots: list[dict], spot_ids: dict, scored_at: str) -> list[dict]:
     """accuracy_daily rows for one UTC day."""
     start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
@@ -281,8 +318,8 @@ def score_day(client, day: date, spots: list[dict], spot_ids: dict, scored_at: s
     info, zones = spot_infos(spots, spot_ids)
     leads = fetch_all(client, "forecast_leads", "spot_id,valid_time,lead_day,hs,tp,dp,swell_hs",
                       "valid_time", start, end, ("spot_id", "valid_time", "lead_day"))
-    now = fetch_all(client, "forecasts", "spot_id,valid_time,hs,tp,dp,swell_hs,nwps_cycle",
-                    "valid_time", start, end, ("spot_id", "valid_time"), eq={"source": "nwps"})
+    # Only the paired spots: score_spots drops every other spot's rows (#338).
+    now = fetch_day0_forecasts(client, info.keys(), start, end)
     score_spots(totals, leads + day0_rows(now, zones), info, obs)
     rows = totals.rows(day, scored_at)
     log.info("accuracy score %s: %d model rows, %d lead rows, %d buoy readings -> %d totals",
