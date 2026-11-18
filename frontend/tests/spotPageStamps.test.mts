@@ -84,6 +84,8 @@
  *        - Dillon Beach, Sharp Park (a flat day: 0.5 m) and Scarborough Beach: their land, blue
  *          arrows for swells inside the window and grey stubs for those outside;
  *        - Lovers Point (270-0): 300 inside, 200 outside; its land.
+ *        - Arrows stop where their straight way in first meets the drawn land: at Kanaha the wind
+ *          sea from 70 stops at Maui's coast, while 340 reaches the pin; Hoʻokipa is drawn too.
  *      The rows beside each compass are the breakdown's, each with a chip. Stamp Test Point (no
  *      arcs, no partitions, not in coastlines.json): no land but the pin, no band, no arrow, a
  *      dashed ring and "No swell window set".
@@ -280,6 +282,12 @@ const LOVERS = {
   orientation_deg: 29, offshore_wind_deg: 209, optimal_swell_dir: 315,
   swell_window_arcs: [{ min: 270, max: 0, span: 90 }],
 };
+const HOOKIPA = {
+  ...SPOT_FIELDS, id: 990019, slug: 'ho-okipa', name: 'Hoʻokipa',
+  state: 'Hawaii', region: 'Maui', time_zone: 'Pacific/Honolulu', lat: 20.933945, lng: -156.358216,
+  orientation_deg: 340, offshore_wind_deg: 160, optimal_swell_dir: 0,
+  swell_window_arcs: [{ min: 315, max: 90, span: 135 }],
+};
 const DILLON = {
   ...SPOT_FIELDS, id: 990016, slug: 'dillon-beach', name: 'Dillon Beach',
   region: 'Marin', time_zone: 'America/Los_Angeles', lat: 38.250263, lng: -122.968919,
@@ -313,6 +321,11 @@ const COMPASS_HOURS: Record<number, Record<string, unknown>> = {
   [RINCON.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 255,
     swell_1_hs: 1.8, swell_1_tp: 15, swell_1_dp: 255, swell_2_hs: 0.7, swell_2_tp: 12, swell_2_dp: 262,
     wind_dir: 268, wind_speed: 4 },
+  // Hoʻokipa: 2.4 m 14 s from 330 and a 0.3 m 6 s wind sea from 60, both inside its 315-90
+  // window; 0.8 m 10 s from 150 outside it; trade wind from 70.
+  [HOOKIPA.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 14, swell_dp: 330,
+    swell_1_hs: 2.4, swell_1_tp: 14, swell_1_dp: 330, swell_2_hs: 0.8, swell_2_tp: 10, swell_2_dp: 150,
+    wind_wave_hs: 0.3, wind_wave_tp: 6, wind_wave_dp: 60, wind_dir: 70, wind_speed: 9 },
   // Dillon Beach: 2.6 m 15 s from 285 inside its 253-295 window; 0.6 m 9 s from 200 outside it.
   [DILLON.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 285,
     swell_1_hs: 2.6, swell_1_tp: 15, swell_1_dp: 285, swell_2_hs: 0.6, swell_2_tp: 9, swell_2_dp: 200,
@@ -332,7 +345,7 @@ const COMPASS_HOURS: Record<number, Record<string, unknown>> = {
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
-  SCARBOROUGH];
+  SCARBOROUGH, HOOKIPA];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -378,7 +391,7 @@ const BLANK = { hs: null, tp: null, dp: null, swell_hs: 1.1, swell_tp: 11, swell
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
-  ...[COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK, SCARBOROUGH].map((sp) => [sp.id,
+  ...[COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK, SCARBOROUGH, HOOKIPA].map((sp) => [sp.id,
     hours(-12, 48).map((h) => ({ ...row(sp.id, h), ...COMPASS_HOURS[sp.id] }))] as
     [number, Record<string, unknown>[]]),
   ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) =>
@@ -892,6 +905,17 @@ async function main(): Promise<void> {
   eqj('Kanaha: two arrows inside (340, the wind sea from 70), one outside (120)',
     [count(kn, dc('swell-in')), count(kn, dc('swell-out'))], [2, 1]);
   eq('Kanaha: its land is drawn', count(kn, dc('land')), 1);
+  // Arrows stop at the first land: the tips in breakdown order (2.4 m from 340, 0.9 m from 120,
+  // the 0.15 m wind sea from 70). From 340 the way in is open water, so the tip is by the pin
+  // (12.0); 120 is outside the window, a stub (77.0); from 70 the way in crosses Maui's coast
+  // east of Kahului, so the wind sea stops short of the pin, somewhere between 12 and 77.
+  const tips = [...kn.matchAll(/data-tip-r="([\d.]+)"/g)].map((m) => Number(m[1]));
+  check('Kanaha: 340 reaches the pin, 120 is a stub, the wind sea from 70 stops at the coast',
+    tips.length === 3 && tips[0] === 12 && tips[1] === 77 && tips[2] > 12 && tips[2] < 77, JSON.stringify(tips));
+  const hk = (await load(HOOKIPA.slug)).html.replace(/<!-- -->/g, '');
+  eqj('Hoʻokipa: land, one band, two arrows inside (330, the wind sea from 60), one stub (150)',
+    [count(hk, dc('land')), count(hk, dc('open')), count(hk, dc('swell-in')), count(hk, dc('swell-out'))],
+    [1, 1, 2, 1]);
   eqj('Kanaha: chips blue, grey, blue (2.4 m from 340 inside, 0.9 m from 120 outside, 0.15 m from 70 inside)',
     [...kn.matchAll(/data-chip="([^"]*)"/g)].map((m) => m[1]), ['#0284C7', '#94A3B8', '#0284C7']);
 

@@ -7,7 +7,7 @@ import { classifyWind, windQualityClass } from '@/lib/ratings';
 import { degToCardinal, fmtMph } from '@/lib/formatting';
 import type { BreakdownRow } from '@/lib/swellBreakdown';
 import {
-  CX, CY, FONT_PX, HEAD_R, LAND_R, MARK_R, NO_WINDOW_NOTE, PIN_R, RING_R, RING_W, STUB_OUTER_R,
+  CX, CY, FONT_PX, LAND_R, MARK_R, NO_WINDOW_NOTE, PIN_R, RING_R, RING_W, STUB_OUTER_R,
   STUB_TIP_R, TAIL_R, VIEW_H,
   VIEW_W, compassArrows, compassPoint, landTransform, layoutLabels, ringArcPath, type LabelIn,
 } from '@/lib/swellWindowCompass';
@@ -45,7 +45,7 @@ export function SwellWindowCompass({
   windSpeed: number | null | undefined;
 }) {
   const arcs = windowArcs ?? [];
-  const arrows = compassArrows(rows, arcs);
+  const arrows = compassArrows(rows, arcs, coastPath);
   const hasWind = windDir !== null && windDir !== undefined;
   const hasBest = optimalDeg !== null && optimalDeg !== undefined;
   const windText = hasWind ? `${degToCardinal(windDir)} ${fmtMph(windSpeed)}` : '';
@@ -127,19 +127,22 @@ export function SwellWindowCompass({
           data-compass="best" />;
       })()}
 
-      {/* Swells that can reach the spot: in from the ring, all ending at the same radius by the
-          pin. Swells from outside the window: a short stub across the band, never over the land. */}
+      {/* Swells that can reach the spot: in from the ring to the pin, or to just short of the
+          first land on their straight way in (a.tipR). Swells from outside the window, and any
+          whose way in starts on land: a short stub across the band, never over the land. */}
       {arrows.map((a, i) => {
-        const tail = compassPoint(a.dp, a.stub ? STUB_OUTER_R : TAIL_R);
-        const headLen = (a.stub ? 5 : 8) + a.width / 2;
-        const tipR = a.stub ? STUB_TIP_R : HEAD_R;
+        const short = a.stub || a.tipR >= STUB_TIP_R;
+        const tail = compassPoint(a.dp, short ? STUB_OUTER_R : TAIL_R);
+        const headLen = (short ? 5 : 8) + a.width / 2;
+        const tipR = a.tipR;
         const base = compassPoint(a.dp, tipR + headLen);
         const tip = compassPoint(a.dp, tipR);
         const half = a.width / 2 + 4;
         const l = compassPoint(a.dp - 90, half, base.x, base.y);
         const r = compassPoint(a.dp + 90, half, base.x, base.y);
         return (
-          <g key={a.label} opacity={a.muted ? 0.6 : 1} data-compass={a.inside ? 'swell-in' : 'swell-out'}>
+          <g key={a.label} opacity={a.muted ? 0.6 : 1} data-compass={a.inside ? 'swell-in' : 'swell-out'}
+            data-tip-r={a.tipR.toFixed(1)}>
             <line x1={tail.x} y1={tail.y} x2={base.x} y2={base.y} stroke={a.colour}
               strokeWidth={a.width} />
             <polygon points={`${tip.x},${tip.y} ${l.x},${l.y} ${r.x},${r.y}`} fill={a.colour} />
