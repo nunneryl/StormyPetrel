@@ -81,7 +81,7 @@ export async function fetchAllSpots(): Promise<Spot[]> {
  * the next subsequent row (used to derive tide trend).
  *
  * One query (sorted ascending) — we keep up to 2 rows per spot in JS;
- * Supabase REST has no DISTINCT ON. With ~500 spots and a 6h window
+ * Supabase REST has no DISTINCT ON. With ~650 spots and a 6h window
  * the result set is small.
  *
  * NWPS ROWS ONLY — see loadForecasts in app/spot/[slug]/page.tsx for the full
@@ -164,7 +164,7 @@ export async function fetchSpotsWithLatest(): Promise<SpotWithLatest[]> {
  *
  * The `id` secondary sort matters more here than elsewhere: `.range()` is OFFSET
  * pagination issued as separate queries, and ORDER BY valid_time alone is not a total
- * order across ~500 spots sharing one timestamp, so Postgres is free to break those
+ * order across ~650 spots sharing one timestamp, so Postgres is free to break those
  * ties differently per page and drop or repeat a row at a page boundary. Ordering by
  * the primary key makes the sequence deterministic.
  */
