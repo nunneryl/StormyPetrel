@@ -28,11 +28,14 @@ export function SwellPartitions({
   facingDeg,
   optimalDeg,
   offshoreDeg,
+  coastPath,
 }: {
   windowArcs: Spot['swell_window_arcs'];
   facingDeg: Spot['orientation_deg'];
   optimalDeg: Spot['optimal_swell_dir'];
   offshoreDeg: Spot['offshore_wind_deg'];
+  /** The land around the spot (lib/coastline.ts), read by the server page. */
+  coastPath: string | null;
 }) {
   // The hour the Conditions tiles show: one clock, one row (components/CurrentHour.tsx).
   const forecast = useCurrentHour().selection.row;
@@ -53,12 +56,12 @@ export function SwellPartitions({
           {SOURCE_LABEL[forecast.swell_source ?? ''] ?? forecast.swell_source ?? '—'}
         </span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] md:items-center gap-x-4 px-2 sm:px-4 pb-3">
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,500px)_minmax(0,1fr)] md:items-center gap-x-4 px-2 sm:px-4 pb-3">
         <div className="flex flex-col items-center">
           <SwellWindowCompass
             rows={all}
             windowArcs={windowArcs}
-            facingDeg={facingDeg}
+            coastPath={coastPath}
             optimalDeg={optimalDeg}
             offshoreDeg={offshoreDeg}
             windDir={forecast.wind_dir}
