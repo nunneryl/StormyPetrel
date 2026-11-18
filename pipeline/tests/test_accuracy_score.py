@@ -194,8 +194,16 @@ class FakeQuery:
         self.filters.append((col, "<", v))
         return self
 
+    def gt(self, col, v):
+        self.filters.append((col, ">", v))
+        return self
+
     def eq(self, col, v):
         self.filters.append((col, "=", v))
+        return self
+
+    def in_(self, col, values):
+        self.filters.append((col, "in", list(values)))
         return self
 
     def order(self, col):
@@ -216,9 +224,19 @@ class FakeQuery:
             return _Res([])
         def val(x):
             return S._ts(x) if isinstance(x, str) and "T" in x else x
-        data = [r for r in self.c.data.get(self.table, []) if all(
-            (val(r[col]) >= val(v)) if op == ">=" else (val(r[col]) < val(v)) if op == "<" else r[col] == v
-            for col, op, v in self.filters)]
+        def ok(r, col, op, v):
+            if op == ">=":
+                return val(r[col]) >= val(v)
+            if op == "<":
+                return val(r[col]) < val(v)
+            if op == ">":
+                return val(r[col]) > val(v)
+            if op == "in":
+                return r[col] in v
+            return r[col] == v
+        data = [r for r in self.c.data.get(self.table, []) if all(ok(r, *f) for f in self.filters)]
+        for col in reversed(self.orders):                  # ORDER BY the listed columns, stably
+            data.sort(key=lambda r, c=col: val(r[c]))
         a, b = self.rng
         return _Res(data[a:b + 1])
 
@@ -262,6 +280,93 @@ def test_score_day_end_to_end():
                    ("buoy", "ww3", "", 1, "dp"): 1, ("spot", "spot", "", 3, "hs"): 1}
     forecasts_q = [q for q in c.calls if q.table == "forecasts"][0]
     assert ("source", "=", "nwps") in forecasts_q.filters
+
+
+# --------------------------------------------------------------------------- #
+# #338: lead day 0 read in batches of paired spots, one page each, from offset 0 #
+# --------------------------------------------------------------------------- #
+
+def _fc(sid, t, hs, source="nwps", cycle="2026-11-14T12:00:00+00:00"):
+    return {"spot_id": sid, "valid_time": t, "source": source, "hs": hs, "tp": None, "dp": None,
+            "swell_hs": None, "nwps_cycle": cycle}
+
+
+def test_day0_reads_batches_of_spots_from_offset_zero_in_index_order(monkeypatch):
+    monkeypatch.setattr(S, "SPOT_BATCH", 2)
+    c = FakeClient({"forecasts": [_fc(i, "2026-11-14T20:00:00+00:00", 1.0) for i in (1, 2, 3, 4, 5)]})
+    got = S.fetch_day0_forecasts(c, [5, 3, 1, 4, 2], _t("2026-11-14T00:00:00Z"), _t("2026-11-15T00:00:00Z"))
+    assert [r["spot_id"] for r in got] == [1, 2, 3, 4, 5]
+    # Sorted ids in batches of 2: [1, 2], [3, 4], [5]. Every request: one page from 0, nwps, the
+    # day, ordered (spot_id, valid_time).
+    assert [q.filters for q in c.calls] == [
+        [("spot_id", "in", b), ("source", "=", "nwps"), ("valid_time", ">=", "2026-11-14T00:00:00Z"),
+         ("valid_time", "<", "2026-11-15T00:00:00Z")] for b in ([1, 2], [3, 4], [5])]
+    assert all(q.orders == ["spot_id", "valid_time"] and q.rng == (0, S.PAGE - 1) for q in c.calls)
+
+
+def test_a_full_page_splits_the_batch_and_never_pages_past_it(monkeypatch):
+    # PAGE 3: spots 1 and 2 have 2 rows each, so [1, 2] fills a page (3 of 4 rows) and is re-read
+    # as [1] and [2], each from offset 0.
+    monkeypatch.setattr(S, "PAGE", 3)
+    rows = [_fc(1, "2026-11-14T20:00:00+00:00", 1.0), _fc(1, "2026-11-14T23:00:00+00:00", 1.1),
+            _fc(2, "2026-11-14T20:00:00+00:00", 1.2), _fc(2, "2026-11-14T23:00:00+00:00", 1.3)]
+    c = FakeClient({"forecasts": rows})
+    got = S.fetch_day0_forecasts(c, [1, 2], _t("2026-11-14T00:00:00Z"), _t("2026-11-15T00:00:00Z"))
+    assert [(r["spot_id"], r["hs"]) for r in got] == [(1, 1.0), (1, 1.1), (2, 1.2), (2, 1.3)]
+    assert [(q.filters[0][2], q.rng) for q in c.calls] == [([1, 2], (0, 2)), ([1], (0, 2)), ([2], (0, 2))]
+
+
+def test_one_spot_filling_a_page_carries_on_after_its_last_hour(monkeypatch):
+    # PAGE 2, one spot with 3 rows (10, 11, 12Z): the first request returns 10 and 11Z, the next
+    # asks for valid_time > 11Z, again from offset 0, and returns 12Z; a short page ends it.
+    monkeypatch.setattr(S, "PAGE", 2)
+    c = FakeClient({"forecasts": [_fc(1, f"2026-11-14T1{h}:00:00+00:00", float(h)) for h in range(3)]})
+    got = S.fetch_day0_forecasts(c, [1], _t("2026-11-14T00:00:00Z"), _t("2026-11-15T00:00:00Z"))
+    assert [r["hs"] for r in got] == [0.0, 1.0, 2.0]
+    assert [q.filters[2] for q in c.calls] == [("valid_time", ">=", "2026-11-14T00:00:00Z"),
+                                               ("valid_time", ">", "2026-11-14T11:00:00+00:00")]
+    assert all(q.rng == (0, 1) for q in c.calls)
+
+
+def _day_fixture():
+    # 20:00Z is 12:00 PST, a kept hour; cycle 12Z is 8 h before it: lead day 0. Buoy 46050 reads
+    # 1.5 m at 20:10Z. A (spot 1, 24.9 km) 1.8 m: e = 0.3; B (spot 2, 25.0 km) 1.6 m: e = 0.1.
+    # C (spot 3, 25.1 km) and D (spot 4, no buoy) are not paired. Also: an ecmwf row, a row the
+    # next day, and 21:00Z (13:00 PST, not a kept hour), none of which may count.
+    return {
+        "buoy_observations": [{"buoy_id": "46050", "observed_at": "2026-11-14T20:10:00+00:00", "hs": 1.5,
+                               "tp": None, "dp": None, "swell_hs": None}],
+        "model_at_buoys": [], "forecast_leads": [],
+        "forecasts": [_fc(1, "2026-11-14T20:00:00+00:00", 1.8), _fc(2, "2026-11-14T20:00:00+00:00", 1.6),
+                      _fc(3, "2026-11-14T20:00:00+00:00", 9.0), _fc(4, "2026-11-14T20:00:00+00:00", 9.0),
+                      _fc(1, "2026-11-14T20:00:00+00:00", 5.0, source="ecmwf"),
+                      _fc(1, "2026-11-15T20:00:00+00:00", 5.0), _fc(2, "2026-11-14T21:00:00+00:00", 5.0)],
+    }
+
+
+def test_day0_scores_by_hand():
+    c = FakeClient(_day_fixture())
+    rows = S.score_day(c, date(2026, 11, 14), SPOTS, IDS, "now")
+    assert [(r["kind"], r["region"], r["lead_day"], r["measure"], r["n"]) for r in rows] == [
+        ("spot", "Oregon", 0, "hs", 2)]
+    assert math.isclose(rows[0]["sum_e"], 0.4) and math.isclose(rows[0]["sum_abs_e"], 0.4)
+    reads = [q for q in c.calls if q.table == "forecasts"]
+    assert [q.filters[0] for q in reads] == [("spot_id", "in", [1, 2])]     # only A and B
+    assert all(q.rng[0] == 0 for q in reads)
+
+
+def test_day0_scores_identical_to_the_old_whole_day_read(monkeypatch):
+    """The old read: every spot's nwps rows for the day, OFFSET-paged, ordered (spot_id,
+    valid_time). Same accuracy_daily rows, to the last field, with a page of 2 so the old read
+    pages and the new one splits."""
+    monkeypatch.setattr(S, "PAGE", 2)
+    monkeypatch.setattr(S, "SPOT_BATCH", 3)
+    new = S.score_day(FakeClient(_day_fixture()), date(2026, 11, 14), SPOTS, IDS, "now")
+    monkeypatch.setattr(S, "fetch_day0_forecasts", lambda client, ids, start, end: S.fetch_all(
+        client, "forecasts", S.FORECAST_COLS, "valid_time", start, end, ("spot_id", "valid_time"),
+        eq={"source": "nwps"}))
+    old = S.score_day(FakeClient(_day_fixture()), date(2026, 11, 14), SPOTS, IDS, "now")
+    assert new == old and len(new) == 1
 
 
 def test_write_upserts_on_the_key():
