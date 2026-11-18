@@ -58,8 +58,10 @@ stack (see the ecmwf-wam workflow for the runner setup).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import logging
 import os
+import signal
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -120,6 +122,37 @@ def fetch_spots(client) -> list[dict]:
 # Download
 # ---------------------------------------------------------------------------
 
+# The download's limits (#337). ECMWF's open-data mirror answered 503 Service Unavailable for the
+# whole of the 2026-11-17 23:41Z run; the client's defaults (500 retries, 120 s apart, the count
+# restarting whenever a retry got a little further) kept it trying until the job's 30-minute
+# timeout cancelled it, which opened a failure issue for someone else's outage. Now the client
+# retries at most MAX_RETRIES times, RETRY_AFTER_S apart, and the whole download (the "latest
+# cycle" lookup included) has DOWNLOAD_BUDGET_S. Past that the run skips this cycle with a
+# warning and ends green: these rows are a raw second opinion, rated and shown nowhere, and the
+# next run (12 h later) tries again.
+MAX_RETRIES = 8
+RETRY_AFTER_S = 60
+DOWNLOAD_BUDGET_S = 600
+
+
+class DownloadTimeout(Exception):
+    """The download ran past DOWNLOAD_BUDGET_S."""
+
+
+@contextlib.contextmanager
+def deadline(seconds: int):
+    """Raise DownloadTimeout in the main thread after *seconds* (SIGALRM; Linux runners)."""
+    def _alarm(signum, frame):
+        raise DownloadTimeout(f"download still running after {seconds} s")
+    old = signal.signal(signal.SIGALRM, _alarm)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
+
+
 def download_latest_wave(target: Path) -> datetime:
     """Retrieve the most recent available 00Z/12Z HRES-WAM cycle.
 
@@ -131,7 +164,8 @@ def download_latest_wave(target: Path) -> datetime:
     """
     from ecmwf.opendata import Client
 
-    client = Client(source="aws")
+    client = Client(source="aws", maximum_retries=MAX_RETRIES, retry_after=RETRY_AFTER_S,
+                    use_server_retry_after=False)
 
     request = dict(
         stream="wave",
@@ -420,7 +454,18 @@ def main(argv: list[str] | None = None) -> int:
 
     with tempfile.TemporaryDirectory() as td:
         target = Path(td) / "ecmwf_wave.grib2"
-        base = download_latest_wave(target)
+        try:
+            with deadline(DOWNLOAD_BUDGET_S):
+                base = download_latest_wave(target)
+        except (DownloadTimeout, OSError, ValueError) as e:
+            # The download alone is in the try: the deadline, an HTTP error past the retries or
+            # a refused connection (requests' errors are OSErrors), or no cycle found (the
+            # client's ValueError). Anything else, and parsing and writing below, still fail.
+            msg = (f"ECMWF open data unavailable ({type(e).__name__}: {e}); skipped this cycle, "
+                   f"nothing written. The next run tries again.")
+            log.warning("ecmwf: %s", msg)
+            print(f"::warning title=ecmwf-wam::{msg}")
+            return 0
         ds = open_wave_grib(target)
         ds = prep_grid(ds)
         n_steps = ds.sizes.get("step", 0)

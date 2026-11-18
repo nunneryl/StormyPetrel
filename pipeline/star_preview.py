@@ -166,8 +166,9 @@ decimals) and multipliers (3) inside their rounding is "within stored precision"
 (within_stored_precision): counted and listed apart, never hidden, and not compared; any other
 miss is NOT reproduced, which must be 0. The replay recovers an NWPS row's height from its
 stored face without the float round trip that dropped a 0.50 ft face under the flat line
-(_hs_for_face). Rows at spots whose facing does not change must not move
-(a self-check). The change is reported by source and state, and for each spot whose facing
+(_hs_for_face). Rows at spots whose facing, window and optimal are all unchanged must not move
+(a self-check, every such row listed); rows at spots whose window or optimal changed but whose
+facing did not are expected to move, and are counted by spot apart from it. The change is reported by source and state, and for each spot whose facing
 changes, by source, by measured wind band and by how the wind's class (offshore, cross,
 onshore) moves. SELECT only.
 """
@@ -2226,7 +2227,9 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
     gate_changed = defaultdict(Counter)
     misses, within = [], []
     by_group, by_state = defaultdict(Counter), defaultdict(Counter)
-    unchanged_moved = []
+    unchanged_moved = []                       # every row, no cap: each one is a fault
+    window_moved = Counter()                   # rows moved at spots whose window/optimal changed
+    window_changed = set(window_changes(before, after))
     after_unreplayable = Counter()
     per = {n: {"state": None, "by_source": defaultdict(Counter),
                "by_wind_band": defaultdict(Counter), "wind_class_moves": Counter(),
@@ -2267,7 +2270,9 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
         by_group[grp][delta] += 1
         by_state[state][delta] += 1
         if name not in changed:
-            if delta and len(unchanged_moved) < examples:
+            if delta and name in window_changed:
+                window_moved[name] += 1
+            elif delta:
                 unchanged_moved.append({"spot": name, "valid_time": row["valid_time"],
                                         "delta": delta})
             continue
@@ -2309,6 +2314,7 @@ def facing_compare(rows, before, after, names, factors, m, examples=20):
         "gate_within_precision_examples": within,
         "not_replayable_after": dict(sorted(after_unreplayable.items())),
         "unchanged_spots_moved": unchanged_moved,
+        "window_changed_spots_moved": dict(sorted(window_moved.items())),
         "delta_by_group": {g: dict(sorted(c.items())) for g, c in sorted(by_group.items())},
         "delta_by_state": {s: dict(sorted(c.items()))
                            for s, c in sorted(by_state.items(), key=lambda kv: str(kv[0]))},
@@ -2333,10 +2339,15 @@ def _print_facing(rep, since):
               f"{e['published']} -> {e['stars']}")
     for k, v in rep["not_replayable_after"].items():
         print(f"  reproduced, but not replayable with ARCS — {k}: {v}")
-    print(f"rows at spots whose facing does not change that moved: "
-          f"{len(rep['unchanged_spots_moved'])} (must be 0)")
+    print(f"SELF-CHECK: rows that moved at spots whose facing, window and optimal are all "
+          f"unchanged: {len(rep['unchanged_spots_moved'])} (must be 0)")
     for e in rep["unchanged_spots_moved"]:
         print(f"  {e['spot']} {e['valid_time']}: {e['delta']}")
+    wm = rep.get("window_changed_spots_moved", {})
+    print(f"rows that moved at spots whose window or optimal changed (expected; see "
+          f"window_changed_spots): {sum(wm.values())}")
+    for n, k in wm.items():
+        print(f"  {n}: {k} rows")
     print("star change by source (delta: hours):")
     for g, c in rep["delta_by_group"].items():
         print(f"  {g}: {c}")

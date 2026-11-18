@@ -904,15 +904,51 @@ def test_the_facing_change_by_source_state_and_spot():
         (15.6, [1.2, 0.55], [3.5, 2.5], -1.0)]
 
 
-def test_a_spot_whose_facing_is_unchanged_but_whose_stars_move_is_flagged():
+def test_a_spot_whose_window_changes_but_not_its_facing_is_expected_to_move():
     # B keeps its facing but its window moves to NW: 270 is 20 deg outside [290-340], the 0.40
-    # rung (see the MOP tests), eff 5.0 x 0.4 = 2.0 -> size 2.0 x 1.065893 = 2.131786 -> 2.0.
+    # rung (see the MOP tests), eff 5.0 x 0.4 = 2.0 -> size 2.0 x 1.065893 = 2.131786 -> 2.0, a
+    # drop of 1.5. Its window changed, so the row is counted apart, not as a self-check fault.
     names = {2: ("B", "California")}
     nw_same_facing = dict(NW, orientation_deg=270.0, offshore_wind_deg=90.0)
     rep = SP.facing_compare([dict(_windy(), spot_id=2)], {"B": FACE_BEFORE, "A": FACE_BEFORE},
                             {"B": nw_same_facing, "A": FACE_AFTER}, names, {}, None)
-    assert rep["unchanged_spots_moved"] == [
-        {"spot": "B", "valid_time": "2026-11-17T00:00:00+00:00", "delta": -1.5}]
+    assert rep["unchanged_spots_moved"] == []
+    assert rep["window_changed_spots_moved"] == {"B": 1}
+
+
+def test_a_spot_with_nothing_changed_that_moves_is_flagged_every_row(monkeypatch):
+    # B: facing, window and optimal identical before and after. Its re-rate is made to move by
+    # 0.5 on 25 hours (more than the 20 examples kept elsewhere): all 25 are listed and counted.
+    names = {2: ("B", "California")}
+    real = SP.facing_rerate
+
+    def moved(row, spot, factors, m):
+        out = dict(real(row, spot, factors, m))
+        if spot is FACE_AFTER_B:
+            out["stars"] = out["stars"] - 0.5
+        return out
+    FACE_AFTER_B = dict(FACE_BEFORE)
+    monkeypatch.setattr(SP, "facing_rerate", moved)
+    rows = [dict(_windy(), spot_id=2, valid_time=f"2026-11-{17 + h // 24:02d}T{h % 24:02d}:00:00+00:00")
+            for h in range(25)]
+    rep = SP.facing_compare(rows, {"B": FACE_BEFORE, "A": FACE_BEFORE},
+                            {"B": FACE_AFTER_B, "A": FACE_AFTER}, names, {}, None)
+    assert len(rep["unchanged_spots_moved"]) == 25
+    assert {e["delta"] for e in rep["unchanged_spots_moved"]} == {-0.5}
+    assert rep["window_changed_spots_moved"] == {}
+
+
+def test_the_self_check_line_names_what_must_be_zero(capsys):
+    rep = _facing_report()
+    rep["unchanged_spots_moved"] = [{"spot": f"S{i}", "valid_time": "t", "delta": 0.5} for i in range(25)]
+    rep["window_changed_spots_moved"] = {"Lovers Point": 8}
+    SP._print_facing(rep, "now")
+    out = capsys.readouterr().out
+    assert ("SELF-CHECK: rows that moved at spots whose facing, window and optimal are all "
+            "unchanged: 25 (must be 0)") in out
+    assert out.count("  S") >= 25                              # all 25 listed, none cut at 20
+    assert "rows that moved at spots whose window or optimal changed (expected; see " \
+           "window_changed_spots): 8" in out and "  Lovers Point: 8 rows" in out
 
 
 def test_star_preview_main_runs_the_gate_on_every_preview(tmp_path, monkeypatch):
