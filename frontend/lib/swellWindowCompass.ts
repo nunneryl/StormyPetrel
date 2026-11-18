@@ -8,16 +8,18 @@
  *     spot. North up, so the blue stretch of the band faces the open water.
  *   - The swell window as a band on the ring: blue where open, light grey where blocked. Each open
  *     stretch is a window arc's padded sector, the sector lib/shownPeriod counts as inside.
- *   - One arrow per breakdown row, in from the ring to the same inner radius by the beach. Width
- *     follows height (at least MIN_ARROW_W); blue inside the window, grey outside; labelled with its
- *     height and period ("8.8 ft · 14 s").
+ *   - One mark per breakdown row, labelled with its height and period ("8.8 ft · 14 s"). A swell
+ *     from inside the window (it can reach the spot) is a blue arrow in from the ring to the same
+ *     inner radius by the pin. A swell from outside it is a short grey stub at the ring: it never
+ *     crosses the land to the spot. Width is on one feet scale for every spot (arrowWidth: 0.8
+ *     units a foot, 2 to 12), so a flat day looks flat.
  *   - "best": a tick on the ring at the optimal swell direction.
  *   - The wind: a marker outside the ring at its direction, "S 7 mph", in the Wind tile's colour.
  *
  * IT CANNOT DISAGREE WITH THE BREAKDOWN. The arrows are breakdownRows (lib/swellBreakdown.ts), the
  * rows the card prints beside the compass, for the hour the Conditions tiles show
- * (components/CurrentHour). Each row's chip is its arrow's colour (rowStyles). A row with no
- * direction gets no arrow and a hollow chip.
+ * (components/CurrentHour). One colour rule for marks and row chips (rowStyles): blue inside the
+ * window, grey outside. A row with no direction gets no mark and a hollow chip.
  *
  * LABELS NEVER OVERLAP. layoutLabels puts each label just outside the ring at its bearing, on the
  * right of the circle for bearings 0-179 and the left for 180-359, then pushes labels on the same
@@ -45,6 +47,10 @@ export const LAND_KM = 25;
 export const PIN_R = 4;
 export const HEAD_R = PIN_R + 8;   // every arrow ends here, by the pin
 export const TAIL_R = RING_R + RING_W / 2 + 2;
+/** A swell from outside the window is a stub across the band only: from just outside it to its
+ *  inner edge, never into the land inside the ring. */
+export const STUB_OUTER_R = TAIL_R + 6;
+export const STUB_TIP_R = RING_R - RING_W / 2;
 export const MARK_R = RING_R + RING_W / 2 + 9;  // the wind marker
 export const LABEL_R = RING_R + 28;
 export const LABEL_H = 14;
@@ -53,13 +59,17 @@ export const FONT_PX = 12;
 /** Width per character at FONT_PX, generous so the boxes over-cover the text. */
 export const CHAR_W = 7;
 
-export const MAX_ARROW_W = 10;
-export const MIN_ARROW_W = 3;
+/** Arrow width on one scale for every spot: WIDTH_PER_FT units a foot of height, never under
+ *  MIN_ARROW_W (a foot or two reads as a thin line) nor over MAX_ARROW_W (15 ft and up). */
+export const WIDTH_PER_FT = 0.8;
+export const MAX_ARROW_W = 12;
+export const MIN_ARROW_W = 2;
+
 export const NO_WINDOW_NOTE = 'No swell window set';
 
-/** Arrow and chip colours: blue shades inside the window, greys outside, by order. */
-export const INSIDE_COLOURS = ['#075985', '#0284C7', '#38BDF8', '#7DD3FC'];
-export const OUTSIDE_COLOURS = ['#475569', '#94A3B8', '#B6C2CF', '#CBD5E1'];
+/** Mark and chip colours: blue can reach the spot (inside the window), grey cannot. */
+export const INSIDE_COLOUR = '#0284C7';
+export const OUTSIDE_COLOUR = '#94A3B8';
 
 export type Point = { x: number; y: number };
 
@@ -106,9 +116,11 @@ export function insideWindow(dp: number, arcs: readonly WindowArc[] | null | und
   return !arcs || arcs.length === 0 || outsideWindowDeg(dp, arcs) === 0;
 }
 
-/** Arrow width: MAX_ARROW_W for the biggest row, in proportion below it, never under MIN_ARROW_W. */
-export function arrowWidth(hs: number, maxHs: number): number {
-  return maxHs > 0 ? Math.max(MIN_ARROW_W, (MAX_ARROW_W * hs) / maxHs) : MIN_ARROW_W;
+/** Arrow width from a height in metres, on the one feet scale: WIDTH_PER_FT a foot, clamped to
+ *  MIN_ARROW_W..MAX_ARROW_W. */
+export function arrowWidth(hsM: number): number {
+  const w = WIDTH_PER_FT * hsM * 3.28084;
+  return Math.min(MAX_ARROW_W, Math.max(MIN_ARROW_W, w));
 }
 
 /** "8.8 ft · 14 s" from metres and seconds; "8.8 ft" with no period. */
@@ -123,19 +135,13 @@ export type RowStyle = {
   inside: boolean | null;
 };
 
-/** Each breakdown row's colour, in the breakdown's order: inside the window the next blue, outside
- *  the next grey; no direction, none. */
+/** Each breakdown row's colour: blue inside the window, grey outside; no direction, none. */
 export function rowStyles(rows: readonly BreakdownRow[],
   arcs: readonly WindowArc[] | null | undefined): RowStyle[] {
-  let i = 0;
-  let o = 0;
   return rows.map((r) => {
     if (r.dp === null) return { colour: null, inside: null };
     const inside = insideWindow(r.dp, arcs);
-    const colour = inside
-      ? INSIDE_COLOURS[Math.min(i++, INSIDE_COLOURS.length - 1)]
-      : OUTSIDE_COLOURS[Math.min(o++, OUTSIDE_COLOURS.length - 1)];
-    return { colour, inside };
+    return { colour: inside ? INSIDE_COLOUR : OUTSIDE_COLOUR, inside };
   });
 }
 
@@ -147,13 +153,14 @@ export type CompassArrow = {
   width: number;
   colour: string;
   inside: boolean;
+  /** Outside the window: drawn as a short stub at the ring, not an arrow to the spot. */
+  stub: boolean;
   muted: boolean;     // greyed in the breakdown (the wind sea, unless shown as the surf)
 };
 
 /** The arrows for the breakdown's rows, in its order. Every row with a direction has one. */
 export function compassArrows(rows: readonly BreakdownRow[],
   arcs: readonly WindowArc[] | null | undefined): CompassArrow[] {
-  const maxHs = Math.max(0, ...rows.map((r) => r.hs ?? 0));
   const styles = rowStyles(rows, arcs);
   const out: CompassArrow[] = [];
   rows.forEach((r, k) => {
@@ -161,7 +168,8 @@ export function compassArrows(rows: readonly BreakdownRow[],
     if (r.dp === null || r.hs === null || s.colour === null) return;
     out.push({
       label: r.label, text: arrowLabel(r.hs, r.tp), dp: r.dp, hs: r.hs,
-      width: arrowWidth(r.hs, maxHs), colour: s.colour, inside: s.inside === true, muted: r.muted,
+      width: arrowWidth(r.hs), colour: s.colour, inside: s.inside === true, stub: s.inside !== true,
+      muted: r.muted,
     });
   });
   return out;

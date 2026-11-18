@@ -14,7 +14,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CX, CY, HEAD_R, LAND_KM, LAND_R, LABEL_H, LABEL_R, PATH_UNITS, PIN_R, landTransform, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
+  CX, CY, HEAD_R, INSIDE_COLOUR, OUTSIDE_COLOUR, STUB_OUTER_R, STUB_TIP_R, WIDTH_PER_FT, LAND_KM, LAND_R, LABEL_H, LABEL_R, PATH_UNITS, PIN_R, landTransform, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
   VIEW_W, arcSector, arrowLabel, arrowWidth, boxesOverlap, compassArrows, compassPoint,
   insideWindow, layoutLabels, ringArcPath, rowStyles, type LabelIn,
 } from './swellWindowCompass.ts';
@@ -66,37 +66,49 @@ check('Rincon: 193° inside (padded), 200° between the arcs outside, 250° insi
   !insideWindow(270, RINCON));
 check('no window set: nothing is outside', insideWindow(120, null) && insideWindow(120, []));
 
-// 4. Width follows height: 10 for the biggest, in proportion, at least 3.
-check('widths run from 3 to 10', MIN_ARROW_W === 3 && MAX_ARROW_W === 10);
-check('2.0 of 2.0 m: 10; 1.0: 5; 0.7: 3.5; 0.6: 3 (exactly the minimum); 0.2: 3, not 1',
-  arrowWidth(2.0, 2.0) === 10 && arrowWidth(1.0, 2.0) === 5 && near(arrowWidth(0.7, 2.0), 3.5) &&
-  near(arrowWidth(0.6, 2.0), 3) && arrowWidth(0.2, 2.0) === 3);
+// 4. Width on one feet scale for every spot: 0.8 a foot, from 2 to 12.
+//    2.4 m = 7.874 ft: 6.2992. 1.0 m = 3.2808 ft: 2.6247. 0.762 m = 2.5000 ft: 2.0000, exactly the
+//    minimum. 0.15 m = 0.49 ft: 0.39, so 2. 5.0 m = 16.40 ft: 13.12, so 12.
+check('the scale: 0.8 units a foot, 2 to 12', WIDTH_PER_FT === 0.8 && MIN_ARROW_W === 2 && MAX_ARROW_W === 12);
+check('2.4 m: 6.2992; 1.0 m: 2.6247; 0.762 m: 2.0', near(arrowWidth(2.4), 6.2992) &&
+  near(arrowWidth(1.0), 2.6247) && near(arrowWidth(0.762), 2.0));
+check('0.15 m: the minimum 2; 5.0 m: the maximum 12', arrowWidth(0.15) === 2 && arrowWidth(5.0) === 12);
+// A flat day looks flat: a 1.5 m swell (4.92 ft, width 3.937) is as wide alone as beside a 4 m one.
+const r15 = (extra: BreakdownRow[]) => compassArrows([...extra,
+  { label: 'Secondary swell', hs: 1.5, tp: 10, dp: 0, windSea: false, share: 0, muted: false }], null)
+  .find((a) => a.label === 'Secondary swell')!.width;
+check('a 1.5 m swell is 3.937 wide whether it is the biggest or not',
+  near(r15([]), 3.937) && near(r15([{ label: 'Primary swell', hs: 4, tp: 16, dp: 10, windSea: false,
+    share: 0, muted: false }]), 3.937));
 
 // 5. Labels: 2.6822 m = 8.7999 ft; 1.0 m = 3.2808 ft.
 check("'8.8 ft · 14 s'", arrowLabel(2.6822, 14) === '8.8 ft · 14 s', arrowLabel(2.6822, 14));
 check("'3.3 ft · 9 s' (9.4 s rounds to 9)", arrowLabel(1.0, 9.4) === '3.3 ft · 9 s');
 check("no period: '3.3 ft'", arrowLabel(1.0, null) === '3.3 ft');
 
-// 6. Colours: the chip and the arrow share one, by the breakdown's order. Kanaha's hour: 2.4 m from
-//    340 (inside: the first blue), 0.9 m from 120 (outside: the first grey), a 0.15 m wind sea
-//    from 70 (inside: the second blue), and a row with no direction (no colour, no arrow).
+// 6. One colour rule for marks and chips: blue inside the window, grey outside. Kanaha's hour:
+//    2.4 m from 340 (inside: blue arrow), 0.9 m from 120 (outside: grey stub), a 0.15 m wind sea
+//    from 70 (inside: blue arrow), and a row with no direction (no colour, no mark).
 const row = (label: string, hs: number, tp: number, dp: number | null, windSea = false): BreakdownRow =>
   ({ label, hs, tp, dp, windSea, share: 0, muted: windSea });
 const KROWS = [
   row('Primary swell', 2.4, 13, 340), row('Secondary swell', 0.9, 10, 120),
   row('Wind sea', 0.15, 5, 70, true), row('Tertiary swell', 0.1, 7, null),
 ];
-check('chips: dark blue, slate, mid blue, none', JSON.stringify(rowStyles(KROWS, KANAHA).map((s) => s.colour)) ===
-  JSON.stringify(['#075985', '#475569', '#0284C7', null]));
+check('the two colours', INSIDE_COLOUR === '#0284C7' && OUTSIDE_COLOUR === '#94A3B8');
+check('chips: blue, grey, blue, none', JSON.stringify(rowStyles(KROWS, KANAHA).map((s) => s.colour)) ===
+  JSON.stringify(['#0284C7', '#94A3B8', '#0284C7', null]));
 const karrows = compassArrows(KROWS, KANAHA);
-// Widths: 10; 10 x 0.9 / 2.4 = 3.75; 10 x 0.15 / 2.4 = 0.625, so 3. Labels: 2.4 m = 7.874 ft,
+// Widths: 2.4 m 6.2992; 0.9 m = 2.953 ft, 2.3622; 0.15 m, the minimum 2. Labels: 2.4 m = 7.874 ft,
 // 0.9 m = 2.953 ft, 0.15 m = 0.492 ft.
 check('arrows: P1, P2, the wind sea; none for the row with no direction',
   JSON.stringify(karrows.map((a) => a.label)) === JSON.stringify(['Primary swell', 'Secondary swell', 'Wind sea']));
-check('arrow colours are the chips', JSON.stringify(karrows.map((a) => a.colour)) ===
-  JSON.stringify(['#075985', '#475569', '#0284C7']));
-check('arrow widths 10, 3.75, 3', JSON.stringify(karrows.map((a) => a.width)) === JSON.stringify([10, 3.75, 3]),
-  JSON.stringify(karrows.map((a) => a.width)));
+check('mark colours are the chips', JSON.stringify(karrows.map((a) => a.colour)) ===
+  JSON.stringify(['#0284C7', '#94A3B8', '#0284C7']));
+check('widths 6.2992, 2.3622, 2', near(karrows[0].width, 6.2992) && near(karrows[1].width, 2.3622) &&
+  karrows[2].width === 2, JSON.stringify(karrows.map((a) => a.width)));
+check('only the swell from outside the window (120) is a stub',
+  JSON.stringify(karrows.map((a) => a.stub)) === JSON.stringify([false, true, false]));
 check("labels '7.9 ft · 13 s', '3.0 ft · 10 s', '0.5 ft · 5 s'",
   JSON.stringify(karrows.map((a) => a.text)) ===
     JSON.stringify(['7.9 ft · 13 s', '3.0 ft · 10 s', '0.5 ft · 5 s']));
@@ -112,9 +124,9 @@ const hour = {
   wind_wave_hs: 0.2, wind_wave_tp: 4, wind_wave_dp: 60, chop_ratio: 0.1,
 };
 const fromHour = compassArrows(breakdownRows(hour, [{ min: 180, max: 350 }], 270), [{ min: 180, max: 350 }]);
-check('an hour: P1 from 290 (blue), P2 from 200 (blue), the wind sea from 60 (grey, outside)',
+check('an hour: primary from 290 (blue), secondary from 200 (blue), the wind sea from 60 (grey)',
   JSON.stringify(fromHour.map((a) => [a.label, a.dp, a.colour])) === JSON.stringify([
-    ['Primary swell', 290, '#075985'], ['Secondary swell', 200, '#0284C7'], ['Wind sea', 60, '#475569']]),
+    ['Primary swell', 290, '#0284C7'], ['Secondary swell', 200, '#0284C7'], ['Wind sea', 60, '#94A3B8']]),
   JSON.stringify(fromHour.map((a) => [a.label, a.dp, a.colour])));
 
 // 8. Labels never overlap. Geometry: centre (210, 120), labels on a circle of 110, 14 high, 16 apart.
@@ -201,6 +213,11 @@ check('the land is the stored path, scaled into the ring, with a pin at the spot
 check('landTransform: translate to the centre, scale 76 / 100',
   landTransform() === 'translate(210 120) scale(0.76)' && LAND_R === 76 && PATH_UNITS === 100 && LAND_KM === 25);
 check('arrows end by the pin: 4 + 8 = 12 from the centre', PIN_R === 4 && HEAD_R === 12);
+// A stub runs from 82 + 5 + 2 + 6 = 95 to the band's inner edge, 82 - 5 = 77: it never reaches the
+// land, drawn out to 76.
+check('a stub spans 95 to 77, outside the land (76)', STUB_OUTER_R === 95 && STUB_TIP_R === 77 && STUB_TIP_R > LAND_R);
+check('the compass draws stubs from the stub radii', comp.includes('a.stub ? STUB_OUTER_R : TAIL_R') &&
+  comp.includes('const tipR = a.stub ? STUB_TIP_R : HEAD_R;'));
 check('the card passes the server-read path down', card.includes('coastPath={coastPath}'));
 check("the spot page reads the spot's path server-side",
   page.includes("import { coastlinePath } from '@/lib/coastline';") &&
