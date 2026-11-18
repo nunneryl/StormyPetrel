@@ -7,7 +7,8 @@ import { classifyWind, windQualityClass } from '@/lib/ratings';
 import { degToCardinal, fmtMph } from '@/lib/formatting';
 import type { BreakdownRow } from '@/lib/swellBreakdown';
 import {
-  CX, CY, FONT_PX, HEAD_R, LAND_R, MARK_R, NO_WINDOW_NOTE, PIN_R, RING_R, RING_W, TAIL_R, VIEW_H,
+  CX, CY, FONT_PX, HEAD_R, LAND_R, MARK_R, NO_WINDOW_NOTE, PIN_R, RING_R, RING_W, STUB_OUTER_R,
+  STUB_TIP_R, TAIL_R, VIEW_H,
   VIEW_W, compassArrows, compassPoint, landTransform, layoutLabels, ringArcPath, type LabelIn,
 } from '@/lib/swellWindowCompass';
 import type { Spot } from '@/lib/types';
@@ -126,12 +127,14 @@ export function SwellWindowCompass({
           data-compass="best" />;
       })()}
 
-      {/* Swells: in from the ring, all ending at the same radius by the beach. */}
+      {/* Swells that can reach the spot: in from the ring, all ending at the same radius by the
+          pin. Swells from outside the window: a short stub across the band, never over the land. */}
       {arrows.map((a, i) => {
-        const tail = compassPoint(a.dp, TAIL_R);
-        const headLen = 8 + a.width / 2;
-        const base = compassPoint(a.dp, HEAD_R + headLen);
-        const tip = compassPoint(a.dp, HEAD_R);
+        const tail = compassPoint(a.dp, a.stub ? STUB_OUTER_R : TAIL_R);
+        const headLen = (a.stub ? 5 : 8) + a.width / 2;
+        const tipR = a.stub ? STUB_TIP_R : HEAD_R;
+        const base = compassPoint(a.dp, tipR + headLen);
+        const tip = compassPoint(a.dp, tipR);
         const half = a.width / 2 + 4;
         const l = compassPoint(a.dp - 90, half, base.x, base.y);
         const r = compassPoint(a.dp + 90, half, base.x, base.y);
@@ -155,8 +158,7 @@ export function SwellWindowCompass({
         );
       })()}
 
-      {/* Label text in a readable shade of the arrow's family: the lightest arrow colours are too
-          pale for text. */}
+      {/* Label text a shade darker than its mark, to read as text. */}
       {arrows.map((a, i) => <Label key={i} id={`swell-${i}`} fill={a.inside ? '#075985' : '#475569'} />)}
       {hasWind && <Label id="wind" className={windClass} />}
       {hasBest && <Label id="best" fill={INK} />}

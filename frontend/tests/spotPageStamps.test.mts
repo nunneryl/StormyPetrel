@@ -81,6 +81,8 @@
  *          inside (blue), 0.9 m from 120 outside (grey); its land;
  *        - C Street Ventura (two arcs): two swells (255 and 262) and the wind (268) within 13
  *          degrees: two open bands, two blue arrows, a leader line; its land;
+ *        - Dillon Beach, Sharp Park (a flat day: 0.5 m) and Scarborough Beach: their land, blue
+ *          arrows for swells inside the window and grey stubs for those outside;
  *        - Lovers Point (270-0): 300 inside, 200 outside; its land.
  *      The rows beside each compass are the breakdown's, each with a chip. Stamp Test Point (no
  *      arcs, no partitions, not in coastlines.json): no land but the pin, no band, no arrow, a
@@ -276,6 +278,24 @@ const LOVERS = {
   orientation_deg: 29, offshore_wind_deg: 209, optimal_swell_dir: 315,
   swell_window_arcs: [{ min: 270, max: 0, span: 90 }],
 };
+const DILLON = {
+  ...SPOT_FIELDS, id: 990016, slug: 'dillon-beach', name: 'Dillon Beach',
+  region: 'Marin', time_zone: 'America/Los_Angeles', lat: 38.250263, lng: -122.968919,
+  orientation_deg: 276, offshore_wind_deg: 96, optimal_swell_dir: 272,
+  swell_window_arcs: [{ min: 253, max: 295, span: 46 }],
+};
+const SHARP_PARK = {
+  ...SPOT_FIELDS, id: 990017, slug: 'sharp-park', name: 'Sharp Park',
+  region: 'San Mateo', time_zone: 'America/Los_Angeles', lat: 37.633092, lng: -122.49485,
+  orientation_deg: 269, offshore_wind_deg: 89, optimal_swell_dir: 260,
+  swell_window_arcs: [{ min: 217, max: 303, span: 90 }],
+};
+const SCARBOROUGH = {
+  ...SPOT_FIELDS, id: 990018, slug: 'scarborough-beach', name: 'Scarborough Beach',
+  state: 'Maine', region: 'Southern Maine', time_zone: 'America/New_York', lat: 43.541658, lng: -70.308487,
+  orientation_deg: 121, offshore_wind_deg: 301, optimal_swell_dir: 121,
+  swell_window_arcs: [{ min: 41, max: 201, span: 160 }],
+};
 const NO_PARTS = {
   swell_1_hs: null, swell_1_tp: null, swell_1_dp: null, swell_2_hs: null, swell_2_tp: null,
   swell_2_dp: null, swell_3_hs: null, swell_3_tp: null, swell_3_dp: null,
@@ -291,13 +311,26 @@ const COMPASS_HOURS: Record<number, Record<string, unknown>> = {
   [RINCON.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 255,
     swell_1_hs: 1.8, swell_1_tp: 15, swell_1_dp: 255, swell_2_hs: 0.7, swell_2_tp: 12, swell_2_dp: 262,
     wind_dir: 268, wind_speed: 4 },
+  // Dillon Beach: 2.6 m 15 s from 285 inside its 253-295 window; 0.6 m 9 s from 200 outside it.
+  [DILLON.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 285,
+    swell_1_hs: 2.6, swell_1_tp: 15, swell_1_dp: 285, swell_2_hs: 0.6, swell_2_tp: 9, swell_2_dp: 200,
+    wind_dir: 315, wind_speed: 7 },
+  // Sharp Park, a flat day: 0.5 m (1.6 ft) 11 s from 280 and a 0.3 m wind sea from 300, both inside.
+  [SHARP_PARK.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 11, swell_dp: 280,
+    swell_1_hs: 0.5, swell_1_tp: 11, swell_1_dp: 280, wind_wave_hs: 0.3, wind_wave_tp: 6, wind_wave_dp: 300,
+    wind_dir: 330, wind_speed: 5 },
+  // Scarborough Beach: 1.2 m 8 s from 150 inside its 41-201 window; 0.8 m 6 s from 30 outside it.
+  [SCARBOROUGH.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 8, swell_dp: 150,
+    swell_1_hs: 1.2, swell_1_tp: 8, swell_1_dp: 150, swell_2_hs: 0.8, swell_2_tp: 6, swell_2_dp: 30,
+    wind_dir: 10, wind_speed: 3 },
   [LOVERS.id]: { ...NO_PARTS, swell_source: 'ww3', swell_tp: 15, swell_dp: 300,
     swell_1_hs: 2.2, swell_1_tp: 15, swell_1_dp: 300, swell_2_hs: 0.8, swell_2_tp: 8, swell_2_dp: 200,
     wind_dir: 315, wind_speed: 6 },
 };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
-const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS];
+const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
+  SCARBOROUGH];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -343,7 +376,7 @@ const BLANK = { hs: null, tp: null, dp: null, swell_hs: 1.1, swell_tp: 11, swell
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
-  ...[COMPASS, KANAHA, RINCON, LOVERS].map((sp) => [sp.id,
+  ...[COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK, SCARBOROUGH].map((sp) => [sp.id,
     hours(-12, 48).map((h) => ({ ...row(sp.id, h), ...COMPASS_HOURS[sp.id] }))] as
     [number, Record<string, unknown>[]]),
   ...SOURCE_SPOTS.map((sp) => [sp.id, hours(-12, 48).map((h) =>
@@ -849,8 +882,8 @@ async function main(): Promise<void> {
   eqj('Kanaha: two arrows inside (340, the wind sea from 70), one outside (120)',
     [count(kn, dc('swell-in')), count(kn, dc('swell-out'))], [2, 1]);
   eq('Kanaha: its land is drawn', count(kn, dc('land')), 1);
-  eqj('Kanaha: chips dark blue, slate, mid blue (the breakdown order: 2.4, 0.9, 0.15 m)',
-    [...kn.matchAll(/data-chip="([^"]*)"/g)].map((m) => m[1]), ['#075985', '#475569', '#0284C7']);
+  eqj('Kanaha: chips blue, grey, blue (2.4 m from 340 inside, 0.9 m from 120 outside, 0.15 m from 70 inside)',
+    [...kn.matchAll(/data-chip="([^"]*)"/g)].map((m) => m[1]), ['#0284C7', '#94A3B8', '#0284C7']);
 
   const rc = (await load(RINCON.slug)).html.replace(/<!-- -->/g, '');
   eq('C Street: two open bands', count(rc, dc('open')), 2);
@@ -860,6 +893,12 @@ async function main(): Promise<void> {
     [count(lp, dc('land')), count(lp, dc('open')), count(lp, dc('swell-in')), count(lp, dc('swell-out'))], [1, 1, 1, 1]);
   eq('C Street: two blue arrows', count(rc, dc('swell-in')), 2);
   check('C Street: swells at 255 and 262 and the wind at 268 get a leader line', count(rc, dc('leader')) >= 1);
+
+  for (const [sp, inn, out] of [[DILLON, 1, 1], [SHARP_PARK, 2, 0], [SCARBOROUGH, 1, 1]] as const) {
+    const h = (await load(sp.slug)).html.replace(/<!-- -->/g, '');
+    eqj(`${sp.name}: its land, ${inn} blue arrow(s), ${out} grey stub(s)`,
+      [count(h, dc('land')), count(h, dc('swell-in')), count(h, dc('swell-out'))], [1, inn, out]);
+  }
 
   const plainCompass = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
   eq('Stamp Test Point (not in coastlines.json): no land, still the pin',
