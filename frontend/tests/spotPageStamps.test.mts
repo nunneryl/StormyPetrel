@@ -87,6 +87,8 @@
  *      The rows beside each compass are the breakdown's, each with a chip. Stamp Test Point (no
  *      arcs, no partitions, not in coastlines.json): no land but the pin, no band, no arrow, a
  *      dashed ring and "No swell window set".
+ *  17. The hero's freshness label is the model run's age ("Model run 6 h ago"), not the time since
+ *      the current hour began.
  *  15. The unlisted accuracy page (/accuracy, lib/accuracy.ts) on the served HTML: noindex and
  *      nofollow in <head>, not in /sitemap.xml, and its figures from the stand-in's accuracy_daily
  *      rows, worked by hand below. Two tables, NWPS then WAVEWATCH III at the buoys; the spots
@@ -851,6 +853,14 @@ async function main(): Promise<void> {
   check(`${JACKSONVILLE.slug} with no time_zone: the Los Angeles fallback, labelled`,
     pacificZones.has(zonesOn(jaxBefore.html)), zonesOn(jaxBefore.html));
   eq(`${JACKSONVILLE.slug} with no time_zone: buoy's last reading`, buoyLast(jaxBefore.html), 'Oct 29, 6:50am PDT');
+
+  // 17: the hero's freshness label is the model run's age. Every fixture row's NWPS cycle is six
+  // hours before the hour the test started in, and the page was built within the next hour or so:
+  // "Model run 6 h ago" (or 7, if an hour boundary passed during the build). Not "Updated".
+  const heroText = first.html.replace(/<!-- -->/g, '');
+  check('the hero label says the model run\'s age',
+    /Model run [67] h ago/.test(heroText) && !/Updated \d+ (min|h) ago/.test(heroText),
+    (/Model run[^<]*|Updated[^<]*/.exec(heroText) ?? ['none'])[0]);
 
   // 16: the swell compass.
   const count = (html: string, attr: string) =>

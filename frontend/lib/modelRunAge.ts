@@ -54,3 +54,16 @@ export function modelRunNote(
 export function modelRunText(hours: number): string {
   return `Wave model run is ${hours} h old`;
 }
+
+/** The hero's freshness label: the age of the newest NWPS cycle behind the page's forecast,
+ *  "Model run 8 h ago", the same hours as the note above. It used to measure how long ago the
+ *  current hour began ("Updated 34 min ago"), which an old copy of the page still said on
+ *  2026-11-18 while its forecast came from a cycle 36 h old. "—" when no row has a cycle. */
+export function modelRunLabel(
+  rows: readonly Pick<Forecast, 'nwps_cycle'>[],
+  nowMs: number,
+): string {
+  const cycle = newestNwpsCycle(rows);
+  if (cycle === null) return '\u2014';
+  return `Model run ${Math.max(0, modelRunAgeHours(cycle, nowMs))} h ago`;
+}
