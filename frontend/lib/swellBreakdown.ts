@@ -13,7 +13,7 @@
  * every row's share is its energy over all rows' energy. Both read the same hour's row too:
  * components/CurrentHour.tsx.
  *
- * The wind sea row is labelled "Wind sea", or "Wind sea · shown as the surf" when the #284 rule
+ * The wind sea row is labelled "Wind sea", or "Wind sea (the surf)" when the #284 rule
  * shows it instead of the rated swell (windSeaDominates); then it is not greyed out either.
  * Display only: nothing rated reads this.
  */
@@ -37,7 +37,7 @@ export type BreakdownRow = {
 export const MIN_ROW_HS = 0.05;
 
 export const WIND_SEA_LABEL = 'Wind sea';
-export const WIND_SEA_SHOWN_LABEL = 'Wind sea · shown as the surf';
+export const WIND_SEA_SHOWN_LABEL = 'Wind sea (the surf)';
 
 /**
  * THE LINE UNDER THE BREAKDOWN: what its two columns measure, because they come from two models.

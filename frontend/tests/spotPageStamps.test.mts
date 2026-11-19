@@ -75,8 +75,11 @@
  *      frontend/data/coastlines.json:
  *        - Haggarty's (one arc, 233-291): a 2.7 m 14 s swell from 285 (inside, blue) and a 1.0 m
  *          9 s swell from 215 (outside, grey), wind 3.1 m/s from 180: labels "8.9 ft · 14 s" and
- *          "3.3 ft · 9 s" (2.7 m = 8.86 ft, 1.0 m = 3.28 ft), "S 7 mph" (6.93 mph) and "best";
- *          its land, the pin, the best tick and the wind marker;
+ *          "3.3 ft · 9 s" (2.7 m = 8.86 ft, 1.0 m = 3.28 ft) and "S 7 mph" (6.93 mph), no "best"
+ *          text; its land, the pin, the best notch and the wind marker; under it
+ *          "Best swell W · Window SW–WNW";
+ *        - only the two largest rows by share are labelled (Kanaha: P1 and P2; Hoʻokipa: P1 and
+ *          the wind sea), with "Best swell N · Window NW–E" under both;
  *        - Kanaha Beach (315-90, across north): 2.4 m from 340 and a 0.15 m wind sea from 70
  *          inside (blue), 0.9 m from 120 outside (grey); its land;
  *        - C Street Ventura (two arcs): two swells (255 and 262) and the wind (268) within 13
@@ -885,13 +888,19 @@ async function main(): Promise<void> {
     const m = new RegExp(`data-compass-label="${id}">(?:<line[^>]*>)?<text[^>]*>([^<]*)</text>`).exec(html);
     return m ? m[1] : null;
   };
+  const captionText = (html: string) => /data-compass="caption">([^<]*)</.exec(html)?.[1] ?? null;
+  const labelled = (html: string) => [...html.matchAll(/data-labelled="(yes|no)"/g)].map((m) => m[1]);
   const cp = await load(COMPASS.slug);
   const cpHtml = cp.html.replace(/<!-- -->/g, '');
   eq(`${COMPASS.slug} answers 200`, cp.status, 200);
   eq("Haggarty's: one open band", count(cpHtml, dc('open')), 1);
   eqj("Haggarty's: 285 inside (blue), 215 outside (grey)", [count(cpHtml, dc('swell-in')), count(cpHtml, dc('swell-out'))], [1, 1]);
-  eqj("Haggarty's: labels", [labelText(cpHtml, 'swell-0'), labelText(cpHtml, 'swell-1'),
-    labelText(cpHtml, 'wind'), labelText(cpHtml, 'best')], ['8.9 ft · 14 s', '3.3 ft · 9 s', 'S 7 mph', 'best']);
+  eqj("Haggarty's: labels (no \"best\" text: the notch stays, the line under the compass says it)",
+    [labelText(cpHtml, 'swell-0'), labelText(cpHtml, 'swell-1'), labelText(cpHtml, 'wind'),
+      count(cpHtml, 'data-compass-label="best"')], ['8.9 ft · 14 s', '3.3 ft · 9 s', 'S 7 mph', 0]);
+  // The line under the compass from the stored values: best 270 (W); window 233 to 291 (233 / 22.5
+  // = 10.36: SW; 291 / 22.5 = 12.93: WNW).
+  eq("Haggarty's: the line under the compass", captionText(cpHtml), 'Best swell W · Window SW–WNW');
   eqj("Haggarty's: its land, the pin, the best tick and the wind marker",
     [count(cpHtml, dc('land')), count(cpHtml, dc('pin')), count(cpHtml, dc('best')), count(cpHtml, dc('wind'))], [1, 1, 1, 1]);
   check("Haggarty's card: the rows beside it are the primary and secondary swell, each with a chip",
@@ -912,7 +921,16 @@ async function main(): Promise<void> {
   const tips = [...kn.matchAll(/data-tip-r="([\d.]+)"/g)].map((m) => Number(m[1]));
   check('Kanaha: 340 reaches the pin, 120 is a stub, the wind sea from 70 stops at the coast',
     tips.length === 3 && tips[0] === 12 && tips[1] === 77 && tips[2] > 12 && tips[2] < 77, JSON.stringify(tips));
+  // Only the two largest by share are labelled. Kanaha's hour has chop_ratio 0.1, so the wind sea
+  // is 10%; the swells split 90% by energy, 2.4² = 5.76 and 0.9² = 0.81 of 6.57: P1 78.9%, P2
+  // 11.1%. P1 and P2 labelled, the wind sea thin. Best 4 (N), window 315-90 (NW-E).
+  eqj('Kanaha: P1 and P2 labelled, the wind sea (10%) not', labelled(kn), ['yes', 'yes', 'no']);
+  eq('Kanaha: the line under the compass', captionText(kn), 'Best swell N · Window NW–E');
   const hk = (await load(HOOKIPA.slug)).html.replace(/<!-- -->/g, '');
+  // Hoʻokipa: 2.4² = 5.76 and 0.8² = 0.64 of 6.40: P1 81%, P2 9%; the wind sea 10%. So P1 and the
+  // wind sea are labelled, and the 0.8 m stub from 150 is thin and unlabelled.
+  eqj('Hoʻokipa: P1 and the wind sea labelled, P2 (9%) not', labelled(hk), ['yes', 'no', 'yes']);
+  eq('Hoʻokipa: the line under the compass', captionText(hk), 'Best swell N · Window NW–E');
   eqj('Hoʻokipa: land, one band, two arrows inside (330, the wind sea from 60), one stub (150)',
     [count(hk, dc('land')), count(hk, dc('open')), count(hk, dc('swell-in')), count(hk, dc('swell-out'))],
     [1, 1, 2, 1]);
@@ -939,6 +957,8 @@ async function main(): Promise<void> {
     count(plainCompass, dc('land')) * 10 + count(plainCompass, dc('pin')), 1);
   eq('Stamp Test Point: no band, no arrow',
     count(plainCompass, dc('open')) + count(plainCompass, dc('swell-in')) + count(plainCompass, dc('swell-out')), 0);
+  eq('Stamp Test Point: no window, so the line names the best direction only (270: W)',
+    captionText(plainCompass), 'Best swell W');
   eqj('Stamp Test Point: a dashed ring and "No swell window set"',
     [count(plainCompass, dc('no-window')), count(plainCompass, 'data-compass="no-window-note">No swell window set<')], [1, 1]);
 

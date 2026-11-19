@@ -8,14 +8,17 @@
  *     spot. North up, so the blue stretch of the band faces the open water.
  *   - The swell window as a band on the ring: blue where open, light grey where blocked. Each open
  *     stretch is a window arc's padded sector, the sector lib/shownPeriod counts as inside.
- *   - One mark per breakdown row, labelled with its height and period ("8.8 ft · 14 s"). A swell
+ *   - One mark per breakdown row. The two largest by the breakdown's share (the nearshore split,
+ *     LABELLED_ARROWS) are labelled with height and period ("8.8 ft · 14 s") and drawn at their
+ *     width; the rest are thin and unlabelled, their numbers in the rows beside. A swell
  *     from inside the window (it can reach the spot) is a blue arrow in from the ring to the same
  *     inner radius by the pin, or stops just short of the first land on its straight way in
  *     (firstLandHit, arrowTipR: Kanaha's ENE wind sea stops at Maui's coast). A swell from outside
  *     it is a short grey stub at the ring: it never
  *     crosses the land to the spot. Width is on one feet scale for every spot (arrowWidth: 0.8
  *     units a foot, 2 to 12), so a flat day looks flat.
- *   - "best": a tick on the ring at the optimal swell direction.
+ *   - The best direction: a notch on the ring at the optimal swell direction, no text; the line
+ *     under the compass says it in words ("Best swell N · Window NW–E", compassCaption).
  *   - The wind: a marker outside the ring at its direction, "S 7 mph", in the Wind tile's colour.
  *
  * IT CANNOT DISAGREE WITH THE BREAKDOWN. The arrows are breakdownRows (lib/swellBreakdown.ts), the
@@ -31,6 +34,7 @@
  * ANGLES are "from" bearings, 0 = north, clockwise. SVG y points down, so north is up:
  * x = cx + r sin(b), y = cy - r cos(b).
  */
+import { degToCardinal } from './formatting.ts';
 import type { BreakdownRow } from './swellBreakdown.ts';
 import { arcPadDeg, outsideWindowDeg, type WindowArc } from './shownPeriod.ts';
 
@@ -68,6 +72,9 @@ export const MAX_ARROW_W = 12;
 export const MIN_ARROW_W = 2;
 
 export const NO_WINDOW_NOTE = 'No swell window set';
+/** Arrows labelled and drawn at their width: the largest by share. The rest are THIN_ARROW_W. */
+export const LABELLED_ARROWS = 2;
+export const THIN_ARROW_W = MIN_ARROW_W;
 
 /** Mark and chip colours: blue can reach the spot (inside the window), grey cannot. */
 export const INSIDE_COLOUR = '#0284C7';
@@ -229,6 +236,10 @@ export type CompassArrow = {
   /** Where the tip stops, from the centre in drawing units (arrowTipR). */
   tipR: number;
   muted: boolean;     // greyed in the breakdown (the wind sea, unless shown as the surf)
+  /** The row's share in the breakdown (its percent), 0 to 1. */
+  share: number;
+  /** One of the LABELLED_ARROWS largest by share: labelled, and drawn at its width. */
+  labelled: boolean;
 };
 
 /** The arrows for the breakdown's rows, in its order. Every row with a direction has one. */
@@ -244,10 +255,32 @@ export function compassArrows(rows: readonly BreakdownRow[],
       label: r.label, text: arrowLabel(r.hs, r.tp), dp: r.dp, hs: r.hs,
       width: arrowWidth(r.hs), colour: s.colour, inside: s.inside === true, stub: s.inside !== true,
       tipR: arrowTipR(s.inside !== true, s.inside === true && rings.length ? firstLandHit(r.dp, rings) : null),
-      muted: r.muted,
+      muted: r.muted, share: r.share, labelled: false,
     });
   });
-  return out;
+  // The largest by share, ties to the earlier row (the bigger height: rows come biggest first).
+  const top = out.map((a, i) => i)
+    .sort((i, j) => out[j].share - out[i].share || i - j)
+    .slice(0, LABELLED_ARROWS);
+  return out.map((a, i) => top.includes(i) ? { ...a, labelled: true } : { ...a, width: THIN_ARROW_W });
+}
+
+/** The window's arcs as compass points from their stored bounds: "NW–E", "WSW–NW, S–SW";
+ *  "all round" for a whole circle; null with no window. */
+export function windowText(arcs: readonly WindowArc[] | null | undefined): string | null {
+  if (!arcs || arcs.length === 0) return null;
+  if (arcs.some((a) => (a.span ?? 0) >= 360)) return 'all round';
+  return arcs.map((a) => `${degToCardinal(a.min)}–${degToCardinal(a.max)}`).join(', ');
+}
+
+/** The line under the compass: "Best swell N · Window NW–E", either half alone, or null. */
+export function compassCaption(optimalDeg: number | null | undefined,
+  arcs: readonly WindowArc[] | null | undefined): string | null {
+  const best = optimalDeg === null || optimalDeg === undefined || !Number.isFinite(optimalDeg)
+    ? null : `Best swell ${degToCardinal(optimalDeg)}`;
+  const w = windowText(arcs);
+  const parts = [best, w === null ? null : `Window ${w}`].filter((x): x is string => x !== null);
+  return parts.length ? parts.join(' · ') : null;
 }
 
 // --------------------------------------------------------------------------- //
