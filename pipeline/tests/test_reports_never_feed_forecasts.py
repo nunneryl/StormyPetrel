@@ -168,6 +168,8 @@ WORKFLOWS = {
         "pipeline.revalidate", "pipeline.db_import",
         # reads nwps_freshness.json and imports only pipeline.config; never a report
         "pipeline.nwps_stale_gate",
+        # loads each refreshed page once (GET only); standard library, imports no pipeline module
+        "pipeline.warm_pages",
         # writes forecast_leads and model_at_buoys after the push (migration 030); reads
         # ratings.json, ww3.json, the GRIB cache and the spots table; never a report
         "pipeline.accuracy_capture"},

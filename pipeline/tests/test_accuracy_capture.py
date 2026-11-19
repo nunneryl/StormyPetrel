@@ -386,7 +386,9 @@ def test_the_step_runs_last_after_the_upload_and_can_never_fail_the_run():
     names = [s.get("name", "") for s in ss]
     ping = names.index("Ping the dead-man's switch (healthchecks.io)")
     later = [runs.index("python -m pipeline.revalidate --scope full --diff-from "
-                        "pipeline/forecast_data/ratings_snapshot.json"),
+                        "pipeline/forecast_data/ratings_snapshot.json --paths-out "
+                        "pipeline/forecast_data/revalidated_paths.json"),
+             runs.index("python -m pipeline.warm_pages pipeline/forecast_data/revalidated_paths.json"),
              runs.index("python -m pipeline.nwps_stale_gate"),
              runs.index("python -m pipeline.column_preflight --finish"), ping]
     assert push < min(later) and max(later) < cap, "after the upload, the gates and the ping"

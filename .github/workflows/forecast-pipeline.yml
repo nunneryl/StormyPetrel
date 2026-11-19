@@ -123,9 +123,12 @@ jobs:
     # failure-issue job at the end of this file reports a failure.
     permissions:
       contents: read
-    # The column check's line, for the failure issue (set only when the job failed).
+    # The column check's line, for the failure issue (set only when the job failed), and the
+    # offices whose newest NWPS cycle is 24 h old, for the nwps-stale-issue job.
     outputs:
       failure-note: ${{ steps.failure-note.outputs.note }}
+      nwps-checked: ${{ steps.nwps-old.outputs.nwps-checked }}
+      nwps-old: ${{ steps.nwps-old.outputs.nwps-old }}
     env:
       # supabase-py reads SUPABASE_URL / SUPABASE_SERVICE_KEY; mirror to
       # NEXT_PUBLIC_SUPABASE_URL too so any code that reads either works.
@@ -248,8 +251,19 @@ jobs:
         if: ${{ !cancelled() }}
         run: python -m pipeline.db_import --all
 
-      - name: Revalidate ISR cache (home + map + regions + CHANGED spot pages only)
-        run: python -m pipeline.revalidate --scope full --diff-from pipeline/forecast_data/ratings_snapshot.json
+      - name: Revalidate ISR cache (home + map + regions + every spot page)
+        id: revalidate
+        run: python -m pipeline.revalidate --scope full --diff-from pipeline/forecast_data/ratings_snapshot.json --paths-out pipeline/forecast_data/revalidated_paths.json
+
+      - name: Load each refreshed page once, so no visitor is served the old copy
+        # A refreshed page is rebuilt on its next request, and that request still gets the old
+        # copy (pipeline/warm_pages.py says when that showed). One GET per page, 4 at a time.
+        # Only after the webhook took the paths; continue-on-error and its own timeout, and the
+        # module exits 0 whatever the pages answer, so it can never fail or hold up the run.
+        if: ${{ !cancelled() && steps.revalidate.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python -m pipeline.warm_pages pipeline/forecast_data/revalidated_paths.json
 
       - name: Fail the run if NWPS is stale for many offices
         # An early warning of a NOAA product change or a broken NWPS fetch: 5 or more offices
@@ -259,6 +273,15 @@ jobs:
         # after an earlier step failed. Its ::error:: line names each office and why.
         if: ${{ !cancelled() }}
         run: python -m pipeline.nwps_stale_gate
+
+      - name: Note each office whose newest NWPS cycle is 24 h old, for the nwps-stale issue
+        # One office alone never fails the run (the gate above needs 5); the nwps-stale-issue
+        # job below opens or updates one issue instead (scripts/nwps_stale_issue.py). Reads the
+        # freshness file and writes two job outputs; it always exits 0.
+        id: nwps-old
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: python3 scripts/nwps_stale_issue.py summarise pipeline/forecast_data/nwps_freshness.json
 
       - name: Fail the run if a database column was missing
         # The LAST step that does anything, after every upload and the revalidation, so it can
@@ -388,11 +411,41 @@ jobs:
               print("note=" + " ".join(str(reason).split()))
           PY
 
+  nwps-stale-issue:
+    # One open 'nwps-stale' issue while any office's newest NWPS cycle is 24 h old or more:
+    # opened, commented on when the set of offices changes, closed when all are fresh
+    # (scripts/nwps_stale_issue.py). Its own job because it alone may write issues. Runs after
+    # a failed full-pipeline too (!cancelled()), but only when that run read the freshness file.
+    needs: full-pipeline
+    if: ${{ !cancelled() && needs.full-pipeline.outputs.nwps-checked == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read              # checkout of the script
+      issues: write               # open, comment on and close the nwps-stale issue
+    concurrency:
+      group: nwps-stale-issue
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+
+      - name: Open, update or close the nwps-stale issue
+        env:
+          # Through the environment, never spliced into the script.
+          NWPS_CHECKED: ${{ needs.full-pipeline.outputs.nwps-checked }}
+          NWPS_OLD: ${{ needs.full-pipeline.outputs.nwps-old }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/nwps_stale_issue.py report
+
   failure-issue:
     # This workflow's one failure issue, kept by .github/actions/failure-issue. It runs after
     # every other job whatever their result, so a timeout is reported too.
     # gate succeeding with both jobs skipped (a run the gate turned away) reports nothing.
-    needs: [gate, full-pipeline, buoy-update]
+    needs: [gate, full-pipeline, buoy-update, nwps-stale-issue]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5

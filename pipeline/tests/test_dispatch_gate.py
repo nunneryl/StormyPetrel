@@ -527,7 +527,9 @@ def test_the_gate_job_reads_runs_and_fails_open(wf):
 
 
 def test_the_failure_issue_job_needs_the_gate_and_both_jobs(wf):
-    assert job_key(jobs_of(wf)["failure-issue"], "needs")[0] == "[gate, full-pipeline, buoy-update]"
+    # and the nwps-stale-issue job, so a failure to write that issue is reported too
+    assert job_key(jobs_of(wf)["failure-issue"], "needs")[0] == (
+        "[gate, full-pipeline, buoy-update, nwps-stale-issue]")
 
 
 PING = "Ping the dead-man's switch (healthchecks.io)"
