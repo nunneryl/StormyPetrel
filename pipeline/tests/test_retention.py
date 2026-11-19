@@ -198,8 +198,15 @@ def test_month_bounds_and_completeness():
     assert R.complete("2026-08", datetime(2026, 9, 3, 0, 0, tzinfo=timezone.utc))
     assert not R.complete("2026-08", datetime(2026, 9, 2, 23, 59, tzinfo=timezone.utc))
     assert R.q(datetime(2026, 8, 1, tzinfo=timezone.utc)) == "2026-08-01T00:00:00.000000Z"
+    # Fractions of any length, with the offset's digits left alone (Python 3.9's fromisoformat
+    # takes only 3 or 6 fraction digits; a padding that swallowed "+00:00" broke it there).
     assert R.parse_ts("2026-08-01T00:10:00.12+00:00") == datetime(
         2026, 8, 1, 0, 10, 0, 120000, tzinfo=timezone.utc)
+    assert R.parse_ts("2026-08-01T00:10:00.123456789+00:00") == datetime(
+        2026, 8, 1, 0, 10, 0, 123456, tzinfo=timezone.utc)
+    assert R.parse_ts("2026-08-01T00:10:00Z") == datetime(2026, 8, 1, 0, 10, tzinfo=timezone.utc)
+    assert R.parse_ts("2026-08-01T10:10:00.5-07:00") == datetime(
+        2026, 8, 1, 17, 10, 0, 500000, tzinfo=timezone.utc)
 
 
 # ---- reading ------------------------------------------------------------------------------ #

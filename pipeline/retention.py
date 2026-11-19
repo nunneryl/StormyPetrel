@@ -132,10 +132,14 @@ def parse_ts(v: str) -> datetime:
     s = v.strip().replace(" ", "T")
     if s.endswith("Z"):
         s = s[:-1] + "+00:00"
-    head, _, frac_tz = s.partition(".")
-    if frac_tz:                                   # pad or cut fractions to 6 digits (Python 3.9)
-        digits = "".join(ch for ch in frac_tz if ch.isdigit())
-        s = f"{head}.{(digits + '000000')[:6]}{frac_tz[len(digits):]}"
+    head, dot, rest = s.partition(".")
+    if dot:
+        # Python 3.9's fromisoformat takes exactly 3 or 6 fraction digits (3.11 takes any), so pad
+        # or cut the fraction, the digits up to the offset only, to 6.
+        n = 0
+        while n < len(rest) and rest[n].isdigit():
+            n += 1
+        s = f"{head}.{(rest[:n] + '000000')[:6]}{rest[n:]}"
     dt = datetime.fromisoformat(s)
     return (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
 
