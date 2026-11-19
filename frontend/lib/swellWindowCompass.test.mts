@@ -14,7 +14,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CX, CY, HEAD_R, INSIDE_COLOUR, OUTSIDE_COLOUR, STUB_OUTER_R, STUB_TIP_R, WIDTH_PER_FT, LAND_KM, LAND_R, LABEL_H, LABEL_R, PATH_UNITS, PIN_R, landTransform, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
+  CX, CY, HEAD_R, arrowTipR, firstLandHit, parseLandPath, INSIDE_COLOUR, OUTSIDE_COLOUR, STUB_OUTER_R, STUB_TIP_R, WIDTH_PER_FT, LAND_KM, LAND_R, LABEL_H, LABEL_R, PATH_UNITS, PIN_R, landTransform, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
   VIEW_W, arcSector, arrowLabel, arrowWidth, boxesOverlap, compassArrows, compassPoint,
   insideWindow, layoutLabels, ringArcPath, rowStyles, type LabelIn,
 } from './swellWindowCompass.ts';
@@ -190,7 +190,7 @@ check('the card makes its rows once, with the window and facing',
   (card.match(/breakdownRows\(/g) ?? []).length === 1 &&
   card.includes('const all = breakdownRows(forecast, windowArcs, facingDeg);'));
 check('the compass draws those rows', card.includes('rows={all}') &&
-  comp.includes('const arrows = compassArrows(rows, arcs);') && !comp.includes('breakdownRows('));
+  comp.includes('const arrows = compassArrows(rows, arcs, coastPath);') && !comp.includes('breakdownRows('));
 check('the chips are rowStyles of the same rows', card.includes('const styles = rowStyles(all, windowArcs);') &&
   card.includes('const chip = styles[i].colour;'));
 check('the compass reads no wave column itself', !/swell_[123]_|wind_wave_|chop_ratio|\.hs\b/.test(comp));
@@ -216,8 +216,40 @@ check('arrows end by the pin: 4 + 8 = 12 from the centre', PIN_R === 4 && HEAD_R
 // A stub runs from 82 + 5 + 2 + 6 = 95 to the band's inner edge, 82 - 5 = 77: it never reaches the
 // land, drawn out to 76.
 check('a stub spans 95 to 77, outside the land (76)', STUB_OUTER_R === 95 && STUB_TIP_R === 77 && STUB_TIP_R > LAND_R);
-check('the compass draws stubs from the stub radii', comp.includes('a.stub ? STUB_OUTER_R : TAIL_R') &&
-  comp.includes('const tipR = a.stub ? STUB_TIP_R : HEAD_R;'));
+check('the compass draws short marks from the stub radii, tips where arrowTipR says',
+  comp.includes('const short = a.stub || a.tipR >= STUB_TIP_R;') &&
+  comp.includes('short ? STUB_OUTER_R : TAIL_R') && comp.includes('const tipR = a.tipR;') &&
+  comp.includes('compassArrows(rows, arcs, coastPath)'));
+
+// Arrows stop at the first land (#39). A square of land east of the spot, x 20-60, y -10 to 10
+// (path units, y down): "M20 -10l40 0 0 20-40 0z".
+const SQUARE = 'M20 -10l40 0 0 20-40 0z';
+check('parseLandPath reads M then relative l to absolute points',
+  JSON.stringify(parseLandPath(SQUARE)) === JSON.stringify([[[20, -10], [60, -10], [60, 10], [20, 10]]]));
+check('two rings, negative numbers run together', JSON.stringify(parseLandPath('M1 2l3-4z M-5 -6l1 1z')) ===
+  JSON.stringify([[[1, 2], [4, -2]], [[-5, -6], [-4, -5]]]));
+const sq = parseLandPath(SQUARE);
+// From the east (90): the way in crosses x = 60 first, 60 units out.
+check('from 90: first land 60 out', near(firstLandHit(90, sq)!, 60));
+// From the north (0): straight down x = 0, no land.
+check('from 0: no land', firstLandHit(0, sq) === null);
+// From 80: u = (sin 80, -cos 80) = (0.98481, -0.17365). It meets the top edge y = -10 at
+// t = 10 / 0.17365 = 57.5877 (x = 56.71, inside 20-60) before x = 60 (t = 60.93, y = -10.58, off).
+check('from 80: first land 57.5877 out, through the top edge', near(firstLandHit(80, sq)!, 57.5877));
+// A way in that starts on land: a square at the top edge, x -10 to 10, y -110 to -90.
+check('from 0 with land at the ring: 100 (starts on land)',
+  firstLandHit(0, parseLandPath('M-10 -110l20 0 0 20-20 0z')) === 100);
+// The tip: 60 path units is 60 x 0.76 = 45.6 drawing units, plus 1: 46.6. Starting on land:
+// 76 + 1 = 77, the band's inner edge. Land within the pin's 12 (10 x 0.76 + 1 = 8.6): 12.
+check('arrowTipR: over water 12; land 60 out 46.6; on land 77; the own beach 12; a stub 77',
+  arrowTipR(false, null) === 12 && near(arrowTipR(false, 60), 46.6) && arrowTipR(false, 100) === 77 &&
+  arrowTipR(false, 10) === 12 && arrowTipR(true, null) === 77 && arrowTipR(true, 60) === 77);
+const landRow = (dp: number): BreakdownRow =>
+  ({ label: 'Wind sea', hs: 0.15, tp: 5, dp, windSea: true, share: 0, muted: true });
+check('compassArrows stops an in-window arrow at the land, and only with a coast',
+  near(compassArrows([landRow(90)], null, SQUARE)[0].tipR, 46.6) &&
+  compassArrows([landRow(0)], null, SQUARE)[0].tipR === 12 &&
+  compassArrows([landRow(90)], null, null)[0].tipR === 12);
 check('the card passes the server-read path down', card.includes('coastPath={coastPath}'));
 check("the spot page reads the spot's path server-side",
   page.includes("import { coastlinePath } from '@/lib/coastline';") &&

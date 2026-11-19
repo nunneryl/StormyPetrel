@@ -10,7 +10,9 @@
  *     stretch is a window arc's padded sector, the sector lib/shownPeriod counts as inside.
  *   - One mark per breakdown row, labelled with its height and period ("8.8 ft · 14 s"). A swell
  *     from inside the window (it can reach the spot) is a blue arrow in from the ring to the same
- *     inner radius by the pin. A swell from outside it is a short grey stub at the ring: it never
+ *     inner radius by the pin, or stops just short of the first land on its straight way in
+ *     (firstLandHit, arrowTipR: Kanaha's ENE wind sea stops at Maui's coast). A swell from outside
+ *     it is a short grey stub at the ring: it never
  *     crosses the land to the spot. Width is on one feet scale for every spot (arrowWidth: 0.8
  *     units a foot, 2 to 12), so a flat day looks flat.
  *   - "best": a tick on the ring at the optimal swell direction.
@@ -111,6 +113,75 @@ export function landTransform(): string {
   return `translate(${CX} ${CY}) scale(${LAND_R / PATH_UNITS})`;
 }
 
+/** The rings of a stored land path ("M-12 40l3-4 5 0...z", pipeline/coastline_paths.py) as
+ *  absolute points in path units. */
+export function parseLandPath(d: string): [number, number][][] {
+  const rings: [number, number][][] = [];
+  const tokens = d.match(/[Mlz]|-?\d+(?:\.\d+)?/g) ?? [];
+  let ring: [number, number][] = [];
+  let cmd = '';
+  let x = 0;
+  let y = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t === 'M' || t === 'l') { cmd = t; continue; }
+    if (t === 'z') { if (ring.length) rings.push(ring); ring = []; continue; }
+    const nx = Number(t);
+    const ny = Number(tokens[++i]);
+    if (cmd === 'M') { x = nx; y = ny; } else { x += nx; y += ny; }
+    ring.push([x, y]);
+  }
+  if (ring.length) rings.push(ring);
+  return rings;
+}
+
+function insideRings(px: number, py: number, rings: [number, number][][]): boolean {
+  let inside = false;                                   // even-odd, so holes count out
+  for (const ring of rings) {
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+/** Where a swell from *bearing*, travelling in from the edge of the land drawing (radius
+ *  PATH_UNITS) toward the spot, first meets land: its distance from the spot in path units, or
+ *  null when it reaches the spot over water. PATH_UNITS when it starts on land. */
+export function firstLandHit(bearing: number, rings: [number, number][][]): number | null {
+  const rad = (bearing * Math.PI) / 180;
+  const ux = Math.sin(rad);
+  const uy = -Math.cos(rad);                            // SVG y points down: north is -y
+  if (insideRings(ux * PATH_UNITS, uy * PATH_UNITS, rings)) return PATH_UNITS;
+  let best: number | null = null;
+  for (const ring of rings) {
+    for (let i = 0; i < ring.length; i++) {
+      const [ax, ay] = ring[i];
+      const [bx, by] = ring[(i + 1) % ring.length];
+      const ex = bx - ax;
+      const ey = by - ay;
+      const den = ux * ey - uy * ex;
+      if (Math.abs(den) < 1e-12) continue;              // parallel
+      const t = (ax * ey - ay * ex) / den;              // along the ray from the spot
+      const s = (ax * uy - ay * ux) / den;              // along the edge
+      if (s >= 0 && s <= 1 && t > 0 && t <= PATH_UNITS && (best === null || t > best)) best = t;
+    }
+  }
+  return best;
+}
+
+/** How far from the centre (drawing units) an arrow's tip stops: by the pin over open water,
+ *  just short of the first land on its way in, at the band's inner edge for a stub or for a
+ *  swell whose way in starts on land. Land within HEAD_R of the pin (the spot's own beach) is
+ *  where the arrow stops anyway. */
+export function arrowTipR(stub: boolean, landHit: number | null): number {
+  if (stub) return STUB_TIP_R;
+  if (landHit === null) return HEAD_R;
+  return Math.min(STUB_TIP_R, Math.max(HEAD_R, (landHit * LAND_R) / PATH_UNITS + 1));
+}
+
 /** Is a direction inside the window? With no window set nothing is outside it. */
 export function insideWindow(dp: number, arcs: readonly WindowArc[] | null | undefined): boolean {
   return !arcs || arcs.length === 0 || outsideWindowDeg(dp, arcs) === 0;
@@ -155,13 +226,16 @@ export type CompassArrow = {
   inside: boolean;
   /** Outside the window: drawn as a short stub at the ring, not an arrow to the spot. */
   stub: boolean;
+  /** Where the tip stops, from the centre in drawing units (arrowTipR). */
+  tipR: number;
   muted: boolean;     // greyed in the breakdown (the wind sea, unless shown as the surf)
 };
 
 /** The arrows for the breakdown's rows, in its order. Every row with a direction has one. */
 export function compassArrows(rows: readonly BreakdownRow[],
-  arcs: readonly WindowArc[] | null | undefined): CompassArrow[] {
+  arcs: readonly WindowArc[] | null | undefined, coastPath: string | null = null): CompassArrow[] {
   const styles = rowStyles(rows, arcs);
+  const rings = coastPath ? parseLandPath(coastPath) : [];
   const out: CompassArrow[] = [];
   rows.forEach((r, k) => {
     const s = styles[k];
@@ -169,6 +243,7 @@ export function compassArrows(rows: readonly BreakdownRow[],
     out.push({
       label: r.label, text: arrowLabel(r.hs, r.tp), dp: r.dp, hs: r.hs,
       width: arrowWidth(r.hs), colour: s.colour, inside: s.inside === true, stub: s.inside !== true,
+      tipR: arrowTipR(s.inside !== true, s.inside === true && rings.length ? firstLandHit(r.dp, rings) : null),
       muted: r.muted,
     });
   });
