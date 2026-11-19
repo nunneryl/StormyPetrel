@@ -4,7 +4,8 @@ name: retention
 # listing, and restore (pipeline/retention.py). MANUAL START ONLY, and DRY RUN unless "apply" is
 # ticked. DELETION IS OFF: neither the script nor this workflow can delete a row or a file.
 #
-#   status    each table's complete months, rows per month, archived or not
+#   status    each table's complete months, rows per month (the planner's estimate, marked ~;
+#             tick "exact" for exact counts, per spot / buoy / station and summed), archived or not
 #   archive   one month (or all complete months without a manifest) of one table (or all):
 #             dry run reads everything and builds the files without uploading; apply uploads,
 #             downloads each part again and checks it, then writes the month's manifest
@@ -49,6 +50,11 @@ on:
         required: false
         default: false
         type: boolean
+      exact:
+        description: status only. Exact counts per spot/buoy/station (slower) instead of the estimate
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -79,6 +85,7 @@ jobs:
       RETENTION_TABLE: ${{ inputs.table }}
       RETENTION_MONTH: ${{ inputs.month }}
       RETENTION_APPLY: ${{ inputs.apply }}
+      RETENTION_EXACT: ${{ inputs.exact }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -98,4 +105,5 @@ jobs:
         run: |
           set -- "$RETENTION_ACTION" --table "$RETENTION_TABLE" --month "$RETENTION_MONTH"
           if [ "$RETENTION_APPLY" = "true" ]; then set -- "$@" --apply; fi
+          if [ "$RETENTION_EXACT" = "true" ]; then set -- "$@" --exact; fi
           python -m pipeline.retention "$@"
