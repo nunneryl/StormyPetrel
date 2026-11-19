@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { searchSpots } from '@/lib/spotSearch';
 import type { SpotSearchItem } from './SiteNav';
 
 export function NavSearch({
@@ -19,17 +20,8 @@ export function NavSearch({
   const ref = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const results = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return [];
-    return spots
-      .filter(
-        (s) =>
-          s.name.toLowerCase().includes(term) ||
-          (s.state ?? '').toLowerCase().includes(term),
-      )
-      .slice(0, 8);
-  }, [q, spots]);
+  // Accents and the ʻokina are optional (lib/spotSearch.ts).
+  const results = useMemo(() => searchSpots(spots, q), [q, spots]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
