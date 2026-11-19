@@ -89,7 +89,7 @@ for (const chop of [null, undefined, Number.NaN, -0.1, 1.2]) {
     wind_wave_hs: 2.4, wind_wave_tp: 9, wind_wave_dp: 80, chop_ratio: 0.9,
   }, null, null);
   check('shown as the surf: labelled so', rows[0].label === WIND_SEA_SHOWN_LABEL
-    && WIND_SEA_SHOWN_LABEL === 'Wind sea · shown as the surf');
+    && WIND_SEA_SHOWN_LABEL === 'Wind sea (the surf)');
   check('shown as the surf: not greyed', rows[0].muted === false);
   check('shown as the surf: 90% and 10%', sharePercent(rows[0].share) === '90%'
     && sharePercent(rows[1].share) === '10%');

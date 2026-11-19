@@ -17,6 +17,7 @@ import {
   CX, CY, HEAD_R, arrowTipR, firstLandHit, parseLandPath, INSIDE_COLOUR, OUTSIDE_COLOUR, STUB_OUTER_R, STUB_TIP_R, WIDTH_PER_FT, LAND_KM, LAND_R, LABEL_H, LABEL_R, PATH_UNITS, PIN_R, landTransform, MIN_ARROW_W, MAX_ARROW_W, NO_WINDOW_NOTE, RING_R, RING_W, VIEW_H,
   VIEW_W, arcSector, arrowLabel, arrowWidth, boxesOverlap, compassArrows, compassPoint,
   insideWindow, layoutLabels, ringArcPath, rowStyles, type LabelIn,
+  LABELLED_ARROWS, THIN_ARROW_W, compassCaption, windowText,
 } from './swellWindowCompass.ts';
 import { breakdownRows, type BreakdownRow } from './swellBreakdown.ts';
 
@@ -200,8 +201,11 @@ check("the wind's colour is the Wind tile's: windQualityClass(classifyWind(dir, 
   comp.includes('windQualityClass(classifyWind(dir, offshore))') &&
   read('components/CurrentConditions.tsx').includes('classifyWind(current?.wind_dir ?? null, offshoreDeg ?? null)') &&
   read('components/CurrentConditions.tsx').includes('windQualityClass(wQ)'));
-check('no P1/P2 on the compass: its labels are the height and period',
-  comp.includes("text: a.text }))") && !/'P[123]'/.test(comp));
+check('no P1/P2 on the compass: its labels are the height and period, on the labelled arrows only',
+  comp.includes("a.labelled ? [{ id: `swell-${i}`, bearing: a.dp, text: a.text }] : []") && !/'P[123]'/.test(comp));
+check('no "best" text on the compass: the notch stays, the words go under it',
+  !comp.includes("text: 'best'") && !comp.includes('id="best"') && comp.includes('data-compass="best"') &&
+  card.includes('compassCaption(optimalDeg, windowArcs)') && card.includes('data-compass="caption"'));
 check('no legend paragraph and no legend list',
   !/Arrows point|<ul[\s>]|<li[\s>]/.test(comp + card));
 check(`no window: a dashed ring and "${NO_WINDOW_NOTE}"`, NO_WINDOW_NOTE === 'No swell window set' &&
@@ -267,6 +271,56 @@ const provider = page.slice(page.indexOf('<CurrentHourProvider'), page.indexOf('
 check('the spot page has one card, inside the current-hour provider, with the spot\'s fields',
   provider.includes('<SwellPartitions') && !page.includes('<SwellWindowCompass') &&
   provider.includes('optimalDeg={spot.optimal_swell_dir}') && provider.includes('offshoreDeg={spot.offshore_wind_deg}'));
+
+// 13. Only the two largest by share are labelled and drawn at their width; the rest are thin.
+//     Kanaha's hour with the nearshore split: chop_ratio 0.40, so the wind sea's share is 0.40;
+//     the swells split the other 0.60 by energy: 2.4² = 5.76 and 0.9² = 0.81, 6.57 in all, so
+//     0.60 × 5.76 / 6.57 = 0.5260 and 0.60 × 0.81 / 6.57 = 0.0740. Largest: P1 (0.526), then the
+//     wind sea (0.40); P2 (0.074) is thin and unlabelled though it is the second highest.
+check('two labelled, the rest thin (2 units, the minimum)',
+  LABELLED_ARROWS === 2 && THIN_ARROW_W === 2 && MIN_ARROW_W === 2);
+const shared = (label: string, hs: number, tp: number, dp: number, share: number, windSea = false): BreakdownRow =>
+  ({ label, hs, tp, dp, windSea, share, muted: false });
+const k13 = compassArrows([
+  shared('Primary swell', 2.4, 13, 340, 0.5260), shared('Secondary swell', 0.9, 10, 120, 0.0740),
+  shared('Wind sea (the surf)', 0.15, 5, 70, 0.40, true)], KANAHA);
+check('Kanaha by share: P1 and the wind sea labelled, P2 not',
+  JSON.stringify(k13.map((a) => a.labelled)) === JSON.stringify([true, false, true]));
+// Widths: P1 2.4 m 6.2992 (its own); P2 thin 2 (its own would be 2.3622); the wind sea 0.15 m is
+// 0.39 by the scale, so the minimum 2 either way.
+check('Kanaha widths: 6.2992, 2 (thin), 2',
+  near(k13[0].width, 6.2992) && k13[1].width === 2 && k13[2].width === 2, JSON.stringify(k13.map((a) => a.width)));
+check('every row still has its arrow, its colour and its share',
+  k13.length === 3 && JSON.stringify(k13.map((a) => a.colour)) === JSON.stringify(['#0284C7', '#94A3B8', '#0284C7']) &&
+  JSON.stringify(k13.map((a) => a.share)) === JSON.stringify([0.5260, 0.0740, 0.40]));
+// Four rows, equal shares: the tie goes to the earlier row (rows come biggest first), so P1, P2.
+const tie = compassArrows([shared('Primary swell', 3, 14, 280, 0.25), shared('Secondary swell', 2, 12, 270, 0.25),
+  shared('Tertiary swell', 1.5, 9, 260, 0.25), shared('Wind sea', 1.0, 5, 250, 0.25, true)], null);
+check('a tie goes to the earlier row: P1 and P2 labelled; T3 and the wind sea thin',
+  JSON.stringify(tie.map((a) => a.labelled)) === JSON.stringify([true, true, false, false]) &&
+  tie[2].width === 2 && tie[3].width === 2 && near(tie[1].width, 5.2493), JSON.stringify(tie.map((a) => a.width)));
+// A row with no direction has no arrow and cannot take a label: P2 (share 0.5, no dp) is skipped.
+const nodir = compassArrows([shared('Primary swell', 2, 12, 280, 0.3),
+  { label: 'Secondary swell', hs: 1.8, tp: 9, dp: null, windSea: false, share: 0.5, muted: false },
+  shared('Wind sea', 0.5, 4, 250, 0.2, true)], null);
+check('only arrows are ranked: P1 and the wind sea labelled when P2 has no direction',
+  nodir.length === 2 && nodir.every((a) => a.labelled));
+check('one arrow alone is labelled', compassArrows([shared('Primary swell', 1, 10, 0, 1)], null)[0].labelled);
+
+// 14. The line under the compass, from the stored values. Kanaha: window 315 to 90, best 0.
+//     315 / 22.5 = 14: NW; 90 / 22.5 = 4: E; 0: N. Haggarty's: 233 / 22.5 = 10.36: SW;
+//     291 / 22.5 = 12.93: WNW. C Street's two arcs 200-250 (8.89: SSW; 11.11: WSW) and
+//     260-300 (11.56: W; 13.33: WNW).
+check('Kanaha: "Best swell N · Window NW–E"', compassCaption(0, KANAHA) === 'Best swell N · Window NW–E',
+  String(compassCaption(0, KANAHA)));
+check("Haggarty's window: SW–WNW", windowText([{ min: 233, max: 291 }]) === 'SW–WNW');
+check('two arcs: "SSW–WSW, W–WNW"',
+  windowText([{ min: 200, max: 250 }, { min: 260, max: 300 }]) === 'SSW–WSW, W–WNW');
+check('a whole circle: "all round"', windowText([{ min: 0, max: 360, span: 360 }]) === 'all round');
+check('no best direction: "Window NW–E"', compassCaption(null, KANAHA) === 'Window NW–E');
+check('no window: "Best swell SW" (225 / 22.5 = 10)', compassCaption(225, []) === 'Best swell SW' &&
+  compassCaption(225, null) === 'Best swell SW');
+check('neither: no line', compassCaption(undefined, null) === null);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed`);

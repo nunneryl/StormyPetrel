@@ -5,7 +5,7 @@ import { SwellCompass } from './SwellCompass';
 import { SwellWindowCompass } from './SwellWindowCompass';
 import { degToCardinal, fmtSec, metersToFeet } from '@/lib/formatting';
 import { breakdownNote, breakdownRows, sharePercent } from '@/lib/swellBreakdown';
-import { NO_WINDOW_NOTE, rowStyles } from '@/lib/swellWindowCompass';
+import { NO_WINDOW_NOTE, compassCaption, rowStyles } from '@/lib/swellWindowCompass';
 import type { Spot } from '@/lib/types';
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -45,6 +45,7 @@ export function SwellPartitions({
   const all = breakdownRows(forecast, windowArcs, facingDeg);
   const styles = rowStyles(all, windowArcs);
   const noWindow = !windowArcs || windowArcs.length === 0;
+  const caption = compassCaption(optimalDeg, windowArcs);
 
   return (
     <section className="rounded-xl border border-ink-600 bg-white shadow-card">
@@ -67,6 +68,9 @@ export function SwellPartitions({
             windDir={forecast.wind_dir}
             windSpeed={forecast.wind_speed}
           />
+          {caption && (
+            <p className="text-[11px] text-text-secondary" data-compass="caption">{caption}</p>
+          )}
           {noWindow && (
             <p className="text-[11px] text-text-muted" data-compass="no-window-note">{NO_WINDOW_NOTE}</p>
           )}

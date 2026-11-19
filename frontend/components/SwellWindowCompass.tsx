@@ -50,10 +50,11 @@ export function SwellWindowCompass({
   const hasBest = optimalDeg !== null && optimalDeg !== undefined;
   const windText = hasWind ? `${degToCardinal(windDir)} ${fmtMph(windSpeed)}` : '';
 
+  // Only the LABELLED_ARROWS largest arrows by share carry a label; the best direction is a
+  // notch with no text (the line under the compass names it).
   const labels: LabelIn[] = [
-    ...arrows.map((a, i) => ({ id: `swell-${i}`, bearing: a.dp, text: a.text })),
+    ...arrows.flatMap((a, i) => a.labelled ? [{ id: `swell-${i}`, bearing: a.dp, text: a.text }] : []),
     ...(hasWind ? [{ id: 'wind', bearing: windDir, text: windText }] : []),
-    ...(hasBest ? [{ id: 'best', bearing: optimalDeg, text: 'best' }] : []),
   ];
   const placed = new Map(layoutLabels(labels).map((l) => [l.id, l]));
   const windClass = hasWind ? windTextClass(windDir, offshoreDeg) : '';
@@ -119,7 +120,7 @@ export function SwellWindowCompass({
       <circle cx={CX} cy={CY} r={PIN_R} fill={PIN} stroke="#FFFFFF" strokeWidth={1.5}
         data-compass="pin" />
 
-      {/* Best direction: a tick across the band. */}
+      {/* Best direction: a notch across the band, no label. */}
       {hasBest && (() => {
         const a = compassPoint(optimalDeg, RING_R - RING_W / 2 - 3);
         const b = compassPoint(optimalDeg, RING_R + RING_W / 2 + 3);
@@ -142,7 +143,8 @@ export function SwellWindowCompass({
         const r = compassPoint(a.dp + 90, half, base.x, base.y);
         return (
           <g key={a.label} opacity={a.muted ? 0.6 : 1} data-compass={a.inside ? 'swell-in' : 'swell-out'}
-            data-tip-r={a.tipR.toFixed(1)}>
+            data-tip-r={a.tipR.toFixed(1)} data-labelled={a.labelled ? 'yes' : 'no'}
+            data-width={a.width.toFixed(1)}>
             <line x1={tail.x} y1={tail.y} x2={base.x} y2={base.y} stroke={a.colour}
               strokeWidth={a.width} />
             <polygon points={`${tip.x},${tip.y} ${l.x},${l.y} ${r.x},${r.y}`} fill={a.colour} />
@@ -164,7 +166,6 @@ export function SwellWindowCompass({
       {/* Label text a shade darker than its mark, to read as text. */}
       {arrows.map((a, i) => <Label key={i} id={`swell-${i}`} fill={a.inside ? '#075985' : '#475569'} />)}
       {hasWind && <Label id="wind" className={windClass} />}
-      {hasBest && <Label id="best" fill={INK} />}
     </svg>
   );
 }
