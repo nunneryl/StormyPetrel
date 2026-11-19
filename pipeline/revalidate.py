@@ -15,6 +15,10 @@ Three scopes mirror the three cron jobs:
                    wait for their normal ISR refresh).
     --scope daily  Posts /, /reports, /reports/<today>.
 
+    --paths-out    With --scope full, write the posted paths to this JSON
+                   file once the webhook accepts them, for pipeline/warm_pages.py
+                   to load each page once.
+
     --snapshot     Read current-hour stars + effective_size_ft per spot
                    from Supabase and write to the given JSON file.
                    Run this BEFORE the db_import step so the diff in
@@ -346,7 +350,7 @@ def cmd_snapshot(out_path: Path) -> int:
     return 0
 
 
-def cmd_revalidate(scope: str, snapshot_path: Path | None) -> int:
+def cmd_revalidate(scope: str, snapshot_path: Path | None, paths_out: Path | None = None) -> int:
     url = os.environ.get("REVALIDATE_URL")
     secret = os.environ.get("REVALIDATE_SECRET")
     if not url or not secret:
@@ -389,7 +393,15 @@ def cmd_revalidate(scope: str, snapshot_path: Path | None) -> int:
         return 1
 
     log.info("Webhook response: %s", result)
-    return 0 if result.get("ok") else 1
+    if not result.get("ok"):
+        return 1
+    if paths_out is not None:
+        # Only once the webhook took them: a page loaded before it is marked stale would just
+        # be served its old copy again (pipeline/warm_pages.py).
+        paths_out.parent.mkdir(parents=True, exist_ok=True)
+        paths_out.write_text(json.dumps(paths))
+        log.info("Wrote %d paths to %s", len(paths), paths_out)
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -418,6 +430,13 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="When --scope=full, JSON file written by an earlier --snapshot.",
     )
+    parser.add_argument(
+        "--paths-out",
+        type=Path,
+        metavar="PATHS",
+        default=None,
+        help="Write the posted paths here (JSON list) once the webhook accepts them.",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(
@@ -427,7 +446,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.snapshot:
         return cmd_snapshot(args.snapshot)
-    return cmd_revalidate(args.scope, args.diff_from)
+    return cmd_revalidate(args.scope, args.diff_from, args.paths_out)
 
 
 if __name__ == "__main__":

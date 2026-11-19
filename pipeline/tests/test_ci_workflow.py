@@ -626,18 +626,25 @@ REPORTER_CONCURRENCY = {"group": "failure-issue-${{ github.workflow }}",
                         "cancel-in-progress": "false"}
 
 # EVERYTHING ALLOWED TO OPEN AN ISSUE, and why. The shared step is the only way a failure
-# becomes an issue. The two workflow steps are alert managers, not failure reports: each keeps
+# becomes an issue. The workflow steps are alert managers, not failure reports: each keeps
 # its own issues under its own label, looks for an open one before opening another, and holds
-# issues: write in its own job only. Adding a fourth means adding it here, on purpose.
+# issues: write in its own job only. So does the one script alert manager, run by the one step
+# SCRIPT_ALERT_MANAGERS names. Adding another means adding it here, on purpose.
+NWPS_STALE_SCRIPT = "scripts/nwps_stale_issue.py"
+SCRIPT_ALERT_MANAGERS = {
+    NWPS_STALE_SCRIPT: (".github/workflows/forecast-pipeline.yml", "nwps-stale-issue",
+                        "Open, update or close the nwps-stale issue"),
+}
 ISSUE_OPENERS = {
     (SHARED_SCRIPT, None, None),
+    (NWPS_STALE_SCRIPT, None, None),
     (".github/workflows/buoy-ready-monitor.yml", "buoy-liveness",
      "Manage 'buoy-liveness' issues (per buoy — detect & report only)"),
     (".github/workflows/reverify-trust-accumulate.yml", "reverify",
      "Open/update issue for SETTLED zones (manual tagging — never auto-applied)"),
     (".github/workflows/noaa-notices.yml", "watch", "Open an issue for each new notice"),
 }
-ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled", "noaa-notice"}
+ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled", "noaa-notice", "nwps-stale"}
 
 # How code opens an issue: the octokit call github-script uses, the GitHub CLI, the GraphQL
 # mutation and PyGithub's method, and the REST path itself. A comment naming one is prose.
@@ -824,8 +831,8 @@ def permission_problems(directory):
                 continue
             if not can_write_issues(perms) or is_reporter(text):
                 continue
-            if not any((f".github/workflows/{fn}", j, keys.get("name")) in ISSUE_OPENERS
-                       for keys, _ in steps_of(text)):
+            here = {(f".github/workflows/{fn}", j, keys.get("name")) for keys, _ in steps_of(text)}
+            if not (here & ISSUE_OPENERS or here & set(SCRIPT_ALERT_MANAGERS.values())):
                 problems.append(f"{fn}: {j} can write issues and no step of it does")
     return problems
 
@@ -997,11 +1004,25 @@ def test_nothing_else_opens_an_issue():
 def test_the_alert_managers_look_for_an_open_issue_before_opening_one():
     """What earns them their place in ISSUE_OPENERS: each lists the open issues under its
     own label first, and opens one only when none is there to update."""
-    for path, job, step in sorted(ISSUE_OPENERS - {(SHARED_SCRIPT, None, None)}):
+    for path, job, step in sorted(o for o in ISSUE_OPENERS if o[1] is not None):
         code = yaml_code(open(os.path.join(ROOT, path), encoding="utf-8").read())
         chunk = {keys.get("name"): c for keys, c in steps_of(jobs_of(code)[job])}[step]
         assert re.search(r"listForRepo\(\{\s*owner, repo, state: 'open', labels: LABEL", chunk), path
         assert re.search(r"const LABEL = '([\w-]+)'", chunk).group(1) in ALERT_LABELS, path
+
+
+def test_the_script_alert_manager_lists_open_issues_first_and_runs_from_its_one_step():
+    """The same for the script alert manager: it lists the open issues under its own label
+    before it can open one, and the step SCRIPT_ALERT_MANAGERS names is what runs it."""
+    for script, (wf, job, step) in SCRIPT_ALERT_MANAGERS.items():
+        src = python_code(open(os.path.join(ROOT, script), encoding="utf-8").read())
+        label = re.search(r'^LABEL = "([\w-]+)"$', src, re.M).group(1)
+        assert label in ALERT_LABELS, script
+        listing = src.index('query={"state": "open", "labels": LABEL')
+        assert listing < src.index('api.call("POST", f"/repos/{repo}/issues", body='), script
+        code = yaml_code(open(os.path.join(ROOT, wf), encoding="utf-8").read())
+        chunk = {keys.get("name"): c for keys, c in steps_of(jobs_of(code)[job])}[step]
+        assert f"python3 {script} report" in chunk, (wf, job, step)
 
 
 def test_issues_write_is_held_only_by_jobs_that_write_issues():
@@ -1059,9 +1080,10 @@ def test_the_wiring_check_catches_each_way_a_real_workflow_can_drift():
     cut_job = ("daily-report.yml", None, None, "daily-report.yml: 0 jobs use")
     cases = [
         cut_job,
-        ("forecast-pipeline.yml", "needs: [gate, full-pipeline, buoy-update]",
-         "needs: [full-pipeline, buoy-update]",
-         "forecast-pipeline.yml: failure-issue needs ['full-pipeline', 'buoy-update']"),
+        ("forecast-pipeline.yml", "needs: [gate, full-pipeline, buoy-update, nwps-stale-issue]",
+         "needs: [full-pipeline, buoy-update, nwps-stale-issue]",
+         "forecast-pipeline.yml: failure-issue needs ['full-pipeline', 'buoy-update', "
+         "'nwps-stale-issue']"),
         ("resolve-cams.yml", "    if: always()\n", "    if: failure()\n",
          "resolve-cams.yml: failure-issue runs if 'failure()'"),
         ("ecmwf-wam.yml",
