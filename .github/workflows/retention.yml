@@ -1,0 +1,101 @@
+name: retention
+
+# Monthly archive of the big tables to the private Storage bucket retention-archive, a status
+# listing, and restore (pipeline/retention.py). MANUAL START ONLY, and DRY RUN unless "apply" is
+# ticked. DELETION IS OFF: neither the script nor this workflow can delete a row or a file.
+#
+#   status    each table's complete months, rows per month, archived or not
+#   archive   one month (or all complete months without a manifest) of one table (or all):
+#             dry run reads everything and builds the files without uploading; apply uploads,
+#             downloads each part again and checks it, then writes the month's manifest
+#   restore   one month of one table: checks every part against the manifest; apply inserts
+#             the rows not already in the table
+#
+# Reads and writes through the REST API with the service key, as the pipeline does; no database
+# password. Roughly 5-15 minutes for one month of forecasts (about 650 spots, one or two
+# requests each); the log prints the measured time.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: status, archive or restore
+        required: true
+        default: status
+        type: choice
+        options:
+          - status
+          - archive
+          - restore
+      table:
+        description: Which table (restore needs one)
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - forecasts
+          - buoy_observations
+          - forecast_leads
+          - model_at_buoys
+          - tide_predictions
+      month:
+        description: YYYY-MM, or all (archive only)
+        required: true
+        default: all
+        type: string
+      apply:
+        description: Apply (archive uploads, restore inserts). Unticked is a dry run
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# One at a time: two archives of the same month must never race to write its files.
+concurrency:
+  group: retention
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  retention:
+    name: retention (${{ inputs.action }}, ${{ inputs.table }}, ${{ inputs.month }}${{ inputs.apply && ', apply' || ', dry run' }})
+    runs-on: ubuntu-24.04
+    # Archiving every complete month of every table, the first time: about 7 months x 5 tables.
+    timeout-minutes: 340
+    permissions:
+      contents: read
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      # The inputs, through the environment, never spliced into the script.
+      RETENTION_ACTION: ${{ inputs.action }}
+      RETENTION_TABLE: ${{ inputs.table }}
+      RETENTION_MONTH: ${{ inputs.month }}
+      RETENTION_APPLY: ${{ inputs.apply }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install the two dependencies it uses
+        # supabase and requests at the versions pipeline/requirements.txt pins; nothing else.
+        run: pip install $(grep -E '^(supabase|requests)[<>=]' pipeline/requirements.txt)
+
+      - name: Run pipeline/retention.py
+        run: |
+          set -- "$RETENTION_ACTION" --table "$RETENTION_TABLE" --month "$RETENTION_MONTH"
+          if [ "$RETENTION_APPLY" = "true" ]; then set -- "$@" --apply; fi
+          python -m pipeline.retention "$@"

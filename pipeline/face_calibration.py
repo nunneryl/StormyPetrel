@@ -77,6 +77,10 @@ from .forecast.nwps_nearshore import _ang_within, _bearing, _haversine_km
 from .config import DEFAULT_ENRICHED_OUTPUT
 from .interpret import M_TO_FT, period_factor
 
+# --since's default: the day face_ft_raw began (see "sized" above). Was 2025-06-01, which read
+# every forecasts row back to April for the calibration spots.
+DEFAULT_SINCE = "2026-09-07T00:00:00+00:00"
+
 FRF_DODS = "https://chldata.erdc.dren.mil/thredds/dodsC/frf/oceanography/waves/"
 CDIP_DODS = "https://thredds.cdip.ucsd.edu/thredds/dodsC/cdip/realtime/"
 
@@ -538,7 +542,11 @@ def write_sheltered_csv(path: str, suspects: list[dict]) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--since", default="2025-06-01T00:00:00+00:00")
+    # From 2026-09-07, when face_ft_raw began: earlier rows cannot be recovered to the height
+    # they were sized from, and forecasts rows older than the retention window are archived to
+    # Storage (pipeline/retention.py) rather than kept live. Pass an earlier --since to reach
+    # back over a restored month.
+    ap.add_argument("--since", default=DEFAULT_SINCE)
     ap.add_argument("--out")
     ap.add_argument("--csv")
     ap.add_argument("--roster", default=str(DEFAULT_ENRICHED_OUTPUT),
