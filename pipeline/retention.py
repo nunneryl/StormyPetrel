@@ -32,10 +32,21 @@ split: the rows before the page's last time are kept and the next request starts
 PAGE rows. The units are found the same way, one keyed request each (the next unit after the
 last one, in index order): no DISTINCT, no deep paging.
 
-THE CHECK THAT CATCHES A SHORT READ. Before and after reading, the month's rows are counted in
-the database (count=exact). The two counts and the rows read must be equal, or nothing is
-uploaded: a server page cap below PAGE, a unit the walk missed (a NULL unit), or rows written
-mid-read all fail here, loudly. A month is read only once it ended MIN_AGE_DAYS ago, because
+THE CHECK THAT CATCHES A SHORT READ. Each unit's rows for the month are counted exactly in the
+database just before and just after that unit is read (count=exact, the unit and the month in
+the filter: an index range of at most a few thousand rows). The two counts and the rows read
+must be equal for every unit, or nothing is uploaded: a server page cap below PAGE, or rows
+written mid-read, fail here, loudly, naming the unit. Rows whose unit is NULL cannot be read by
+unit, so they are counted too (unit IS NULL in the month) and must be none. The month's totals
+in the manifest are the sums.
+
+NEVER ONE COUNT OVER A WHOLE MONTH. On 2026-11-19 (retention run 1) `status` counted forecasts a
+month at a time with one exact count each: April took 0.8 s, May 2.3, June 3.1, July 5.6, August
+7.6, and September hit the API's statement timeout (57014) at 8.3 s, although forecasts has an
+index on valid_time. Counting ~600k rows is the cost, not finding them. So every exact count is
+per unit, and `status` shows the planner's estimate per month (count=planned, marked "~",
+approximate) unless --exact asks for the per-unit sums. The log names the table and month
+before each count. A month is read only once it ended MIN_AGE_DAYS ago, because
 the pipeline can still rewrite the last hours of a month for a day or so.
 
 THE FILES, in the private bucket retention-archive (created 2026-11-19, 50 MB a file, gzip and
@@ -46,7 +57,7 @@ JSON only, no storage policy: only the service key reaches it):
 Months are UTC calendar months on the table's time column (tide_predictions.predicted_at holds
 station-local time labelled as UTC, so its months follow the stored value).
 
-    python -m pipeline.retention status [--table T]
+    python -m pipeline.retention status [--table T] [--exact]
     python -m pipeline.retention archive --table T|all --month YYYY-MM|all [--apply]
     python -m pipeline.retention restore --table T --month YYYY-MM [--apply]
 """
@@ -164,7 +175,8 @@ def units(client, spec: Spec) -> list:
         qb = client.table(spec.table).select(spec.unit)
         if out:
             qb = qb.gt(spec.unit, out[-1])
-        rows = qb.order(spec.unit).range(0, 0).execute().data or []
+        rows = _run(qb.order(spec.unit).range(0, 0),
+                    f"{spec.table}: next {spec.unit} after {out[-1] if out else 'none'}").data or []
         if not rows or rows[0].get(spec.unit) is None:
             return out
         out.append(rows[0][spec.unit])
@@ -182,7 +194,8 @@ def read_unit(client, spec: Spec, unit, start: datetime, end: datetime):
               .gte(spec.time, q(lo)).lt(spec.time, q(end)))
         for col in spec.order:
             qb = qb.order(col)
-        rows = qb.range(0, PAGE - 1).execute().data or []
+        rows = _run(qb.range(0, PAGE - 1),
+                    f"{spec.table} {spec.unit}={unit}: read from {q(lo)}").data or []
         requests += 1
         if len(rows) < PAGE:
             yield from rows
@@ -196,18 +209,73 @@ def read_unit(client, spec: Spec, unit, start: datetime, end: datetime):
         lo = parse_ts(last)
 
 
-def count(client, spec: Spec, start: datetime, end: datetime) -> int:
-    res = (client.table(spec.table).select(spec.unit, count="exact", head=True)
-           .gte(spec.time, q(start)).lt(spec.time, q(end)).execute())
+def _run(qb, what: str):
+    """Execute, turning any API error (a statement timeout is 57014) into one naming *what*."""
+    try:
+        return qb.execute()
+    except RetentionError:
+        raise
+    except Exception as e:  # noqa: BLE001  postgrest's APIError, or the network
+        raise RetentionError(f"{what}: {type(e).__name__}: {e}") from e
+
+
+def _count(qb, what: str) -> int:
+    res = _run(qb, what)
     if res.count is None:
-        raise RetentionError(f"{spec.table}: the database gave no count")
+        raise RetentionError(f"{what}: the database gave no count")
     return int(res.count)
 
 
-def earliest(client, spec: Spec) -> datetime | None:
-    rows = (client.table(spec.table).select(spec.time).order(spec.time)
-            .range(0, 0).execute().data or [])
-    return parse_ts(rows[0][spec.time]) if rows else None
+def count_unit(client, spec: Spec, unit, start: datetime, end: datetime, label: str) -> int:
+    """Exact count of one unit's rows in [start, end): one index range on (unit, time)."""
+    return _count(client.table(spec.table).select(spec.unit, count="exact", head=True)
+                  .eq(spec.unit, unit).gte(spec.time, q(start)).lt(spec.time, q(end)),
+                  f"{spec.table} {label} {spec.unit}={unit}: exact count")
+
+
+def count_null_unit(client, spec: Spec, start: datetime, end: datetime, label: str) -> int:
+    """Rows in [start, end) whose unit is NULL: they cannot be read by unit, so must be none."""
+    return _count(client.table(spec.table).select(spec.time, count="exact", head=True)
+                  .is_(spec.unit, "null").gte(spec.time, q(start)).lt(spec.time, q(end)),
+                  f"{spec.table} {label} {spec.unit} IS NULL: exact count")
+
+
+def count_keyed(client, spec: Spec, unit_list: list, start: datetime, end: datetime,
+                label: str) -> int:
+    """The month's exact row count as the sum of per-unit exact counts, never one count over the
+    whole month. Rows with a NULL unit fail it."""
+    log.info("%s %s: exact count, per %s (%d requests)", spec.table, label, spec.unit,
+             len(unit_list) + 1)
+    nulls = count_null_unit(client, spec, start, end, label)
+    if nulls:
+        raise RetentionError(f"{spec.table} {label}: {nulls} rows with {spec.unit} NULL, which "
+                             "cannot be read by unit")
+    return sum(count_unit(client, spec, u, start, end, label) for u in unit_list)
+
+
+def count_planned(client, spec: Spec, start: datetime, end: datetime, label: str) -> int:
+    """The planner's estimate of the month's rows (count=planned): no rows are counted, so it
+    cannot time out. Approximate."""
+    log.info("%s %s: approximate count (planner's estimate)", spec.table, label)
+    return _count(client.table(spec.table).select(spec.unit, count="planned", head=True)
+                  .gte(spec.time, q(start)).lt(spec.time, q(end)),
+                  f"{spec.table} {label}: planned count")
+
+
+def earliest(client, spec: Spec, unit_list: list) -> datetime | None:
+    """The table's earliest time: each unit's first row (an index lookup on (unit, time)), the
+    least of them. Never an ORDER BY time over the whole table (buoy_observations and
+    tide_predictions have no index on time alone)."""
+    log.info("%s: earliest %s, per %s (%d requests)", spec.table, spec.time, spec.unit,
+             len(unit_list))
+    first = None
+    for u in unit_list:
+        rows = _run(client.table(spec.table).select(spec.time).eq(spec.unit, u)
+                    .order(spec.time).range(0, 0), f"{spec.table} {spec.unit}={u}: first row").data
+        if rows:
+            t = parse_ts(rows[0][spec.time])
+            first = t if first is None or t < first else first
+    return first
 
 
 # --------------------------------------------------------------------------- #
@@ -282,13 +350,23 @@ def read_part(data: bytes) -> tuple[list[str], list[list[str]]]:
 
 
 def export(client, spec: Spec, month: str, unit_list: list, outdir: Path) -> dict:
-    """Read one month of one table into parts. Returns columns, JSON columns, rows, parts."""
+    """Read one month of one table into parts, each unit counted exactly just before and just
+    after it is read; the three must agree. Returns columns, JSON columns, rows, the summed
+    counts and the parts."""
     start, end = month_bounds(month)
+    log.info("%s %s: reading %d %s values, each counted exactly before and after", spec.table,
+             month, len(unit_list), spec.unit)
+    nulls = count_null_unit(client, spec, start, end, month)
+    if nulls:
+        raise RetentionError(f"{spec.table} {month}: {nulls} rows with {spec.unit} NULL, which "
+                             "cannot be read by unit; nothing uploaded")
     columns: list[str] | None = None
     json_cols: set = set()
     parts: Parts | None = None
-    n = 0
-    for u in unit_list:
+    n = before = after = 0
+    for k, u in enumerate(unit_list, 1):
+        b = count_unit(client, spec, u, start, end, month)
+        got = 0
         for row in read_unit(client, spec, u, start, end):
             if columns is None:
                 columns = list(row.keys())
@@ -296,9 +374,17 @@ def export(client, spec: Spec, month: str, unit_list: list, outdir: Path) -> dic
             if list(row.keys()) != columns:
                 raise RetentionError(f"{spec.table}: a row's columns differ from the first row's")
             parts.write([cell(row[c], c, json_cols) for c in columns])
-            n += 1
+            got += 1
+        a = count_unit(client, spec, u, start, end, month)
+        if not b == got == a:
+            raise RetentionError(f"{spec.table} {month} {spec.unit}={u}: counted {b} rows before "
+                                 f"reading, read {got}, counted {a} after; nothing uploaded")
+        n, before, after = n + got, before + b, after + a
+        if k % 100 == 0:
+            log.info("%s %s: %d of %d %s values read, %d rows", spec.table, month, k,
+                     len(unit_list), spec.unit, n)
     return {"columns": columns or [], "json_columns": sorted(json_cols), "rows": n,
-            "parts": parts.close() if parts else []}
+            "before": before, "after": after, "parts": parts.close() if parts else []}
 
 
 # --------------------------------------------------------------------------- #
@@ -362,16 +448,12 @@ def archive(client, storage, spec: Spec, month: str, apply: bool, now: datetime,
         return {"table": spec.table, "month": month, "status": "already archived"}
 
     t0 = time.monotonic()
-    before = count(client, spec, start, end)
     if unit_list is None:
         unit_list = units(client, spec)
     tmp = Path(tempfile.mkdtemp(prefix=f"retention-{spec.table}-{month}-", dir=workdir))
     got = export(client, spec, month, unit_list, tmp)
-    after = count(client, spec, start, end)
+    before, after = got["before"], got["after"]
     took = time.monotonic() - t0
-    if not before == got["rows"] == after:
-        raise RetentionError(f"{spec.table} {month}: counted {before} rows before reading, read "
-                             f"{got['rows']}, counted {after} after; nothing uploaded")
     manifest = {
         "table": spec.table, "month": month, "time_column": spec.time,
         "from": q(start), "to": q(end), "unit_column": spec.unit, "order": list(spec.order),
@@ -379,6 +461,7 @@ def archive(client, storage, spec: Spec, month: str, apply: bool, now: datetime,
         "json_columns": got["json_columns"], "null": NULL,
         "format": "CSV, UTF-8, one header row per part, gzip; NULL written as \\N",
         "rows": got["rows"], "db_count_before": before, "db_count_after": after,
+        "db_count": f"exact, per {spec.unit}, just before and after each was read, summed",
         "units": len(unit_list),
         "parts": [{k: p[k] for k in ("name", "rows", "bytes", "sha256")} for p in got["parts"]],
         "archived_at": q(now), "tool": "pipeline/retention.py",
@@ -447,7 +530,8 @@ def restore(client, storage, spec: Spec, month: str, apply: bool) -> dict:
     if total != manifest["rows"]:
         raise RetentionError(f"{prefix}: parts hold {total} rows, the manifest says "
                              f"{manifest['rows']}")
-    in_db = count(client, spec, start, end)
+    unit_list = units(client, spec)
+    in_db = count_keyed(client, spec, unit_list, start, end, month)
     if not apply:
         log.info("DRY RUN restore %s %s: archive checked, %d rows in %d part(s); the table holds "
                  "%d rows for the month now; nothing written", spec.table, month, total,
@@ -474,7 +558,7 @@ def restore(client, storage, spec: Spec, month: str, apply: bool) -> dict:
             if len(batch) >= RESTORE_BATCH:
                 flush()
     flush()
-    after = count(client, spec, start, end)
+    after = count_keyed(client, spec, units(client, spec), start, end, month)
     log.info("RESTORED %s %s: %d of %d archived rows inserted, %d already there; the table "
              "holds %d rows for the month (was %d)", spec.table, month, inserted, total,
              total - inserted, after, in_db)
@@ -483,9 +567,9 @@ def restore(client, storage, spec: Spec, month: str, apply: bool) -> dict:
             "status": "restored"}
 
 
-def months_of(client, spec: Spec, now: datetime) -> list[str]:
+def months_of(client, spec: Spec, now: datetime, unit_list: list) -> list[str]:
     """Every complete month from the table's earliest row."""
-    first = earliest(client, spec)
+    first = earliest(client, spec, unit_list)
     if first is None:
         return []
     out, m = [], f"{first.year:04d}-{first.month:02d}"
@@ -495,15 +579,23 @@ def months_of(client, spec: Spec, now: datetime) -> list[str]:
     return out
 
 
-def status(client, storage, spec: Spec, now: datetime) -> list[dict]:
+def status(client, storage, spec: Spec, now: datetime, exact: bool = False) -> list[dict]:
+    """Each complete month: its rows (the planner's estimate, approximate; or with *exact* the
+    sum of per-unit exact counts) and whether it is archived."""
+    unit_list = units(client, spec)
     out = []
-    for m in months_of(client, spec, now):
+    for m in months_of(client, spec, now, unit_list):
         start, end = month_bounds(m)
-        out.append({"table": spec.table, "month": m, "rows": count(client, spec, start, end),
+        rows = (count_keyed(client, spec, unit_list, start, end, m) if exact
+                else count_planned(client, spec, start, end, m))
+        out.append({"table": spec.table, "month": m, "rows": rows, "exact": exact,
                     "archived": storage.exists(f"{spec.table}/{m}/manifest.json")})
     for r in out:
-        log.info("%-18s %s %9d rows  %s", r["table"], r["month"], r["rows"],
-                 "archived" if r["archived"] else "not archived")
+        log.info("%-18s %s %s%9d rows  %s", r["table"], r["month"], " " if exact else "~",
+                 r["rows"], "archived" if r["archived"] else "not archived")
+    if not exact and out:
+        log.info("%s: ~ marks the planner's estimate, approximate; --exact counts per %s",
+                 spec.table, spec.unit)
     return out
 
 
@@ -524,8 +616,12 @@ def main(argv: list[str] | None = None, client=None, storage=None,
                                                    "month without a manifest)")
     ap.add_argument("--apply", action="store_true",
                     help="archive: upload; restore: insert. Without it, a dry run.")
+    ap.add_argument("--exact", action="store_true",
+                    help="status: exact counts, per unit and summed, instead of the estimate")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    # One line per request would be thousands a month; this file logs its own progress.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     now = now or datetime.now(timezone.utc)
     try:
         client = client or get_client()
@@ -533,7 +629,7 @@ def main(argv: list[str] | None = None, client=None, storage=None,
         specs = list(TABLES.values()) if args.table == "all" else [TABLES[args.table]]
         if args.action == "status":
             for s in specs:
-                status(client, storage, s, now)
+                status(client, storage, s, now, exact=args.exact)
             return 0
         if args.action == "restore":
             if args.table == "all" or args.month == "all":
@@ -541,14 +637,12 @@ def main(argv: list[str] | None = None, client=None, storage=None,
             restore(client, storage, specs[0], args.month, args.apply)
             return 0
         for s in specs:
-            months = months_of(client, s, now) if args.month == "all" else [args.month]
-            unit_list = None
+            unit_list = units(client, s)
+            months = months_of(client, s, now, unit_list) if args.month == "all" else [args.month]
             for m in months:
                 if args.month == "all" and storage.exists(f"{s.table}/{m}/manifest.json"):
                     log.info("%s %s: already archived; skipped", s.table, m)
                     continue
-                if unit_list is None:
-                    unit_list = units(client, s)
                 archive(client, storage, s, m, args.apply, now, unit_list=unit_list)
         return 0
     except (RetentionError, KeyError) as e:

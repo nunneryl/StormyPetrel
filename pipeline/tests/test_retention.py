@@ -64,6 +64,10 @@ class FakeQuery:
     def gte(self, c, v): return self._f(c, ">=", v)
     def lt(self, c, v): return self._f(c, "<", v)
 
+    def is_(self, c, v):
+        assert v == "null"
+        return self._f(c, "is null", None)
+
     def order(self, col):
         self.orders.append(col)
         return self
@@ -80,6 +84,8 @@ class FakeQuery:
         return _ts(v) if col in self.db.time_cols and isinstance(v, str) else v
 
     def _ok(self, r, col, op, v):
+        if op == "is null":
+            return r.get(col) is None
         a, b = self._val(col, r.get(col)), self._val(col, v)
         if a is None:
             return False                                   # SQL: NULL compares to nothing
@@ -92,6 +98,10 @@ class FakeQuery:
             new, conflict, ignore = self.ups
             assert ignore is True
             keys = conflict.split(",")
+            # The database casts JSON text to each column's type, as PostgREST's insert does.
+            types = self.db.types.get(self.table, {})
+            new = [{c: (types[c](v) if isinstance(v, str) and types.get(c) in (int, float) else v)
+                    for c, v in r.items()} for r in new]
             have = {tuple(str(r[k]) for k in keys) for r in rows}
             out = []
             for r in new:
@@ -102,8 +112,9 @@ class FakeQuery:
                     out.append(dict(r))
             return _Res(out)
         data = [r for r in rows if all(self._ok(r, *f) for f in self.filters)]
-        if self.counting == "exact" and self.head:
-            n = len(data) + self.db.count_bump()
+        if self.counting in ("exact", "planned") and self.head:
+            # planned: the stand-in's "estimate" is the true count; a real planner's is not.
+            n = len(data) + (self.db.count_bump() if self.counting == "exact" else 0)
             return _Res([], count=n)
         for col in reversed(self.orders):
             data.sort(key=lambda r, c=col: (r.get(c) is None, self._val(c, r.get(c))))
@@ -118,6 +129,9 @@ class FakeQuery:
 class FakeDB:
     def __init__(self, tables, cap=None, time_cols=("valid_time", "observed_at", "predicted_at")):
         self.tables = {k: [dict(r) for r in v] for k, v in tables.items()}
+        # Each column's type, from the rows given (the stand-in's schema).
+        self.types = {k: {c: type(x) for r in v for c, x in r.items() if x is not None}
+                      for k, v in tables.items()}
         self.cap, self.time_cols, self.calls = cap, set(time_cols), []
         self.bumps = []                                    # extra rows to report per count call
 
@@ -299,25 +313,30 @@ def test_an_archived_month_is_skipped_and_never_overwritten(tmp_path):
 
 def test_a_server_page_cap_below_page_is_caught_by_the_count(tmp_path):
     # The server returns at most 3 rows; the tool asked for 4 and sees a short page, so it stops
-    # early on spot 1: 3 + 2 = 5 rows read against 8 counted. Nothing is uploaded.
+    # early on spot 1: 3 rows read against its 6 counted. Nothing is uploaded.
     db, st = _db(cap=3), FakeStorage()
-    with pytest.raises(R.RetentionError, match="counted 8 rows before reading, read 5, counted 8"):
+    with pytest.raises(R.RetentionError,
+                       match="2026-08 spot_id=1: counted 6 rows before reading, read 3, counted 6 after"):
         R.archive(db, st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
     assert st.uploads == []
 
 
 def test_rows_written_during_the_read_stop_the_archive(tmp_path):
     db, st = _db(), FakeStorage()
-    db.bumps = [0, 1]                                     # one more row counted after reading
-    with pytest.raises(R.RetentionError, match="counted 8 rows before reading, read 8, counted 9"):
+    # Exact counts in order: the NULL-unit count, then spot 1 before and after its read. One more
+    # row is counted after spot 1's read.
+    db.bumps = [0, 0, 1]
+    with pytest.raises(R.RetentionError,
+                       match="spot_id=1: counted 6 rows before reading, read 6, counted 7 after"):
         R.archive(db, st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
     assert st.uploads == []
 
 
 def test_rows_counted_before_but_gone_by_the_read_stop_the_archive(tmp_path):
     db, st = _db(), FakeStorage()
-    db.bumps = [1, 0]                                     # 9 counted before, 8 read, 8 after
-    with pytest.raises(R.RetentionError, match="counted 9 rows before reading, read 8, counted 8"):
+    db.bumps = [0, 1]                                     # spot 1: 7 counted before, 6 read, 6 after
+    with pytest.raises(R.RetentionError,
+                       match="spot_id=1: counted 7 rows before reading, read 6, counted 6 after"):
         R.archive(db, st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
     assert st.uploads == []
 
@@ -350,14 +369,17 @@ def test_restore_inserts_the_missing_rows_and_skips_the_rest(tmp_path):
     assert (got["rows"], got["inserted"], got["skipped"]) == (8, 5, 3)
     assert (got["in_db_before"], got["in_db_after"]) == (3, 8)
     new = [r for r in db.tables["forecasts"] if "id" not in r]
-    # The serial id is left out; NULL comes back as None; values as the CSV text, which the
-    # database casts to the column's type.
-    assert sorted((r["valid_time"], r["source"], r["hs"], r["face_ft"]) for r in new) == [
-        ("2026-08-01T00:00:00+00:00", "ecmwf", "1.4", None),
-        ("2026-08-01T01:00:00+00:00", "nwps", "1.6", "1.0"),
-        ("2026-08-01T02:00:00+00:00", "nwps", "1.7", "1.0"),
-        ("2026-08-01T03:00:00+00:00", "ecmwf", "1.75", None),
-        ("2026-08-01T03:00:00+00:00", "nwps", "1.8", "1.0")]
+    # The serial id is left out; NULL comes back as None; values are sent as the CSV text, which
+    # the database casts to the column's type.
+    assert sorted((r["spot_id"], r["valid_time"], r["source"], r["hs"], r["face_ft"]) for r in new) == [
+        (1, "2026-08-01T00:00:00+00:00", "ecmwf", 1.4, None),
+        (1, "2026-08-01T01:00:00+00:00", "nwps", 1.6, 1.0),
+        (1, "2026-08-01T02:00:00+00:00", "nwps", 1.7, 1.0),
+        (1, "2026-08-01T03:00:00+00:00", "ecmwf", 1.75, None),
+        (1, "2026-08-01T03:00:00+00:00", "nwps", 1.8, 1.0)]
+    # All 8 archived rows are sent, as text; the database keeps the 3 it has.
+    sent = [r for q in db.calls if q.ups for r in q.ups[0]]
+    assert sorted(r["hs"] for r in sent) == ["0.9", "1.0", "1.4", "1.5", "1.6", "1.7", "1.75", "1.8"]
     ups = [q.ups for q in db.calls if q.ups]
     assert all(u[1] == "spot_id,valid_time,source" and u[2] is True for u in ups)
 
@@ -425,8 +447,66 @@ def test_status_lists_months_counts_and_archived(tmp_path):
     db, st = _db(), FakeStorage()
     R.archive(db, st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
     got = R.status(db, st, SPEC, NOW)
-    assert [(r["month"], r["rows"], r["archived"]) for r in got] == [
-        ("2026-07", 2, False), ("2026-08", 8, True), ("2026-09", 1, False), ("2026-10", 0, False)]
+    assert [(r["month"], r["rows"], r["exact"], r["archived"]) for r in got] == [
+        ("2026-07", 2, False, False), ("2026-08", 8, False, True), ("2026-09", 1, False, False),
+        ("2026-10", 0, False, False)]
+    # Without --exact every month count is the planner's estimate: count=planned, one request
+    # a month; no exact count is made at all.
+    counts = [q for q in db.calls if q.head]
+    assert all(q.counting in ("planned", "exact") for q in counts)
+    status_counts = [q for q in counts if q.counting == "planned"]
+    assert len(status_counts) == 4
+    # The earliest time is found per spot: no request orders the table by time without naming a
+    # spot (buoy_observations and tide_predictions have no index on time alone).
+    by_time = [q for q in db.calls if q.orders == ["valid_time"]]
+    assert by_time and all(("spot_id", "=") in [(f[0], f[1]) for f in q.filters] for q in by_time)
+
+
+def test_status_exact_sums_per_unit_counts_and_never_counts_a_whole_month():
+    db, st = _db(), FakeStorage()
+    got = R.status(db, st, SPEC, NOW, exact=True)
+    assert [(r["month"], r["rows"], r["exact"]) for r in got] == [
+        ("2026-07", 2, True), ("2026-08", 8, True), ("2026-09", 1, True), ("2026-10", 0, True)]
+    # Every count names one spot or asks for NULL spots: 4 months x (3 spots + 1 NULL check).
+    counts = [q for q in db.calls if q.head]
+    assert len(counts) == 16 and all(q.counting == "exact" for q in counts)
+    assert all(any(f[0] == "spot_id" and f[1] in ("=", "is null") for f in q.filters) for q in counts)
+
+
+def test_rows_with_a_null_unit_stop_the_archive(tmp_path):
+    db, st = FakeDB({"forecasts": AUG + [F(40, None, "2026-08-02T00:00:00+00:00", "nwps", 1.0)]}), FakeStorage()
+    with pytest.raises(R.RetentionError, match="1 rows with spot_id NULL"):
+        R.archive(db, st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    assert st.uploads == []
+
+
+def test_no_count_in_an_archive_spans_more_than_one_unit(tmp_path):
+    db = _db()
+    R.archive(db, FakeStorage(), SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    counts = [q for q in db.calls if q.head]
+    # The NULL check, then before and after for each of the 3 spots: 7 exact counts.
+    assert len(counts) == 7 and all(q.counting == "exact" for q in counts)
+    assert all(any(f[0] == "spot_id" and f[1] in ("=", "is null") for f in q.filters) for q in counts)
+    # The earliest time is found per spot too: no request orders the whole table by time alone.
+    assert not any(q.orders == ["valid_time"] and not any(f[0] == "spot_id" for f in q.filters)
+                   for q in db.calls)
+
+
+def test_an_api_error_names_the_table_month_and_unit(tmp_path):
+    class Boom(FakeDB):
+        def table(self, name):
+            q = super().table(name)
+            real = q.execute
+            def execute():
+                if q.head and any(f == ("spot_id", "=", 2) for f in q.filters):
+                    raise RuntimeError("{'message': 'Internal Server Error', 'code': '57014'}")
+                return real()
+            q.execute = execute
+            return q
+    db = Boom({"forecasts": AUG})
+    with pytest.raises(R.RetentionError,
+                       match=r"forecasts 2026-08 spot_id=2: exact count: RuntimeError: .*57014"):
+        R.archive(db, FakeStorage(), SPEC, "2026-08", False, NOW, workdir=tmp_path)
 
 
 def test_every_table_reads_by_its_unique_keys_order():
