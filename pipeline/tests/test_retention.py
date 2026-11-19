@@ -605,3 +605,106 @@ def test_storage_sends_the_service_key_never_overwrites_and_reads_not_found():
     finally:
         srv.shutdown()
         srv.server_close()
+
+
+# ---- retry-safe archive, part logging, restore per unit ------------------------------------ #
+class StopsAt(FakeStorage):
+    """Fails the upload of one named part, as a run stopped partway would."""
+
+    def __init__(self, stop_at):
+        super().__init__()
+        self.stop_at = stop_at
+
+    def upload(self, path, data, content_type):
+        if self.stop_at and path.endswith(self.stop_at):
+            raise R.RetentionError(f"upload {path}: HTTP 502 Bad Gateway")
+        super().upload(path, data, content_type)
+
+
+def test_a_run_stopped_partway_is_finished_by_a_retry_that_keeps_the_matching_part(tmp_path):
+    st = StopsAt("part-0002.csv.gz")
+    with pytest.raises(R.RetentionError, match="502"):
+        R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    assert sorted(st.files) == ["forecasts/2026-08/part-0001.csv.gz"]       # no manifest
+    first = st.files["forecasts/2026-08/part-0001.csv.gz"]
+    st.stop_at, st.uploads = None, []
+    got = R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    assert (got["status"], got["reused"]) == ("archived", 1)
+    # Only part 2 and the manifest go up; part 1 is kept as it was.
+    assert [u[0] for u in st.uploads] == ["forecasts/2026-08/part-0002.csv.gz",
+                                          "forecasts/2026-08/manifest.json"]
+    assert st.files["forecasts/2026-08/part-0001.csv.gz"] == first
+    m = json.loads(st.files["forecasts/2026-08/manifest.json"])
+    assert m["rows"] == 8 and [p["rows"] for p in m["parts"]] == [5, 3]
+    assert m["parts"][0]["sha256"] == hashlib.sha256(first).hexdigest()
+
+
+def test_a_part_in_the_bucket_that_differs_stops_the_run_and_is_never_overwritten(tmp_path):
+    st = FakeStorage()
+    st.files["forecasts/2026-08/part-0001.csv.gz"] = b"not this run's part"
+    dry = R.archive(_db(), st, SPEC, "2026-08", False, NOW, workdir=tmp_path)
+    assert dry["reusable"] == []
+    with pytest.raises(R.RetentionError, match=r"part-0001.csv.gz is already in the bucket and "
+                                               r"differs .*never overwritten"):
+        R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    assert st.uploads == [] and st.files["forecasts/2026-08/part-0001.csv.gz"] == b"not this run's part"
+
+
+def test_a_leftover_part_this_run_does_not_make_stops_the_run(tmp_path):
+    st = FakeStorage()
+    st.files["forecasts/2026-08/part-0003.csv.gz"] = b"left over"      # this month makes 2 parts
+    with pytest.raises(R.RetentionError, match="part-0003.csv.gz is in the bucket but this run "
+                                               "makes only 2 part"):
+        R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    assert st.uploads == []
+
+
+def test_a_dry_run_names_the_parts_a_retry_would_keep(tmp_path):
+    st = StopsAt("part-0002.csv.gz")
+    with pytest.raises(R.RetentionError):
+        R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    dry = R.archive(_db(), st, SPEC, "2026-08", False, NOW, workdir=tmp_path)
+    assert dry["reusable"] == ["part-0001.csv.gz"]
+
+
+def test_each_part_is_logged_with_its_rows_and_size(tmp_path, caplog):
+    caplog.set_level("INFO")
+    st = FakeStorage()
+    R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    sizes = {p: len(d) for p, d in st.files.items()}
+    for name, rows in (("part-0001.csv.gz", 5), ("part-0002.csv.gz", 3)):
+        mb = sizes[f"forecasts/2026-08/{name}"] / 1e6
+        assert f"forecasts 2026-08 {name}: {rows} rows, {mb:.2f} MB" in caplog.text
+        assert f"forecasts/2026-08/{name}: uploaded, downloaded again and checked" in caplog.text
+    assert "(2 uploaded, 0 kept from an earlier run)" in caplog.text
+    caplog.clear()
+    R.restore(FakeDB({"forecasts": AUG}), st, SPEC, "2026-08", apply=False)
+    assert "forecasts/2026-08/part-0001.csv.gz: 5 rows" in caplog.text
+    assert "forecasts/2026-08/part-0002.csv.gz: 3 rows" in caplog.text
+
+
+def test_a_restore_dry_run_compares_each_spot_with_the_archive(tmp_path):
+    st = _archived(tmp_path)
+    full = R.restore(FakeDB({"forecasts": AUG + OUTSIDE}), st, SPEC, "2026-08", apply=False)
+    assert (full["in_db"], full["short_units"], full["short_rows"]) == (8, 0, 0)
+    # The table holds 3 of August's 8 rows: spot 1 has 1 of its 6 (5 short), spot 2 both of its 2.
+    part = R.restore(FakeDB({"forecasts": [AUG[0], AUG[6], AUG[7]] + OUTSIDE}), st, SPEC, "2026-08",
+                     apply=False)
+    assert (part["in_db"], part["short_units"], part["short_rows"]) == (3, 1, 5)
+
+
+def test_month_all_stops_at_a_failed_month_and_a_rerun_finishes_the_rest():
+    # Complete months on 19 Nov: Jul (2 rows), Aug (8), Sep (1), Oct (0). August's second part
+    # fails to upload: July is archived, August has one part and no manifest, September and
+    # October are not touched.
+    db, st = _db(), StopsAt("2026-08/part-0002.csv.gz")
+    assert R.main(["archive", "--table", "forecasts", "--month", "all", "--apply"],
+                  client=db, storage=st, now=NOW) == 1
+    assert sorted(st.files) == ["forecasts/2026-07/manifest.json", "forecasts/2026-07/part-0001.csv.gz",
+                                "forecasts/2026-08/part-0001.csv.gz"]
+    st.stop_at = None
+    assert R.main(["archive", "--table", "forecasts", "--month", "all", "--apply"],
+                  client=db, storage=st, now=NOW) == 0
+    assert sorted(p for p in st.files if p.endswith("manifest.json")) == [
+        "forecasts/2026-07/manifest.json", "forecasts/2026-08/manifest.json",
+        "forecasts/2026-09/manifest.json", "forecasts/2026-10/manifest.json"]
