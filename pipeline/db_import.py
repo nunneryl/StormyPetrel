@@ -10,10 +10,19 @@ RLS so this script does NOT require row-level-security policies on the
 target tables.
 
 CLI:
-    python -m pipeline.db_import                # everything
+    python -m pipeline.db_import                # everything but tide_predictions
     python -m pipeline.db_import --spots-only
     python -m pipeline.db_import --forecasts-only
     python -m pipeline.db_import --all           # explicit (default)
+    python -m pipeline.db_import --tides-only    # by hand only: tide_predictions
+
+TIDE_PREDICTIONS IS NO LONGER WRITTEN BY THE PIPELINE (from the change after the 23 Nov 2026
+accuracy report). Nothing reads the table: the spot page's tide chart is drawn from each forecast
+row's tide_level_ft (frontend/components/TideChart.tsx), and the ratings take the tide from
+tides.json, which forecast/tides.py still fetches every run. The table grew about 0.7 MB a day
+for nothing. Its rows from 21 Apr to 31 Oct are archived in the retention-archive bucket
+(pipeline/retention.py, 679,186 rows); November's are archived once the month is complete. No
+row is deleted here. --tides-only still writes it, for a deliberate one-off by hand.
 """
 from __future__ import annotations
 
@@ -1067,7 +1076,7 @@ def import_buoy_snapshot(client, batch_size: int = _DEFAULT_BATCH * 5, leave_out
 # ---------------------------------------------------------------------------
 
 def tables_written(spots: bool = True, forecasts: bool = True, buoys: bool = True,
-                   tides: bool = True) -> tuple[str, ...]:
+                   tides: bool = False) -> tuple[str, ...]:
     """The tables run_all writes for these gates, in the order it writes them."""
     return ((("buoys", "spots") if spots else ())
             + (("forecasts",) if forecasts else ())
@@ -1080,14 +1089,14 @@ def run_all(
     spots: bool = True,
     forecasts: bool = True,
     buoys: bool = True,
-    tides: bool = True,
+    tides: bool = False,
     leave_out=None,
 ) -> dict[str, int]:
     """Library entry point — used by fetch_all.py via --push-to-db.
 
     Each table is gated independently so the hourly buoy-only cron job
-    can call this with just buoys=True, while the every-6h full pipeline
-    leaves all four enabled.
+    can call this with just buoys=True. tide_predictions is off unless asked for (tides=True,
+    --tides-only): nothing reads it any more (see the module docstring).
 
     *leave_out* is {table: columns} the start-of-run column preflight found missing from the
     live tables (see preflight_leave_out); those columns, and only those, are left out of
@@ -1134,14 +1143,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     g.add_argument("--spots-only", action="store_true",
                    help="Push only the spots table.")
     g.add_argument("--forecasts-only", action="store_true",
-                   help="Push forecasts + buoys + tides (skip spots).")
+                   help="Push forecasts + buoys (skip spots; tide_predictions is no longer written).")
     g.add_argument("--buoys-only", action="store_true",
                    help="Push only the buoy_observations table — used by the "
                         "hourly cron that only refreshes buoy data.")
     g.add_argument("--tides-only", action="store_true",
-                   help="Push only the tide_predictions table.")
+                   help="Push only the tide_predictions table. By hand only: no scheduled run "
+                        "writes it any more.")
     g.add_argument("--all", action="store_true", default=True,
-                   help="Push every table (default).")
+                   help="Push every table the pipeline keeps (default): not tide_predictions.")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
 
@@ -1150,12 +1160,13 @@ def _mode_kwargs(args: argparse.Namespace) -> dict[str, bool]:
     if args.spots_only:
         return dict(spots=True, forecasts=False, buoys=False, tides=False)
     if args.forecasts_only:
-        return dict(spots=False, forecasts=True, buoys=True, tides=True)
+        return dict(spots=False, forecasts=True, buoys=True, tides=False)
     if args.buoys_only:
         return dict(spots=False, forecasts=False, buoys=True, tides=False)
     if args.tides_only:
         return dict(spots=False, forecasts=False, buoys=False, tides=True)
-    return dict(spots=True, forecasts=True, buoys=True, tides=True)   # --all (default)
+    # --all (the default): every table but tide_predictions, which only --tides-only writes now.
+    return dict(spots=True, forecasts=True, buoys=True, tides=False)
 
 
 def tables_for_args(argv: list[str] | None) -> tuple[str, ...]:

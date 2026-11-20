@@ -215,9 +215,12 @@ def test_a_column_the_preflight_found_missing_is_left_out(tmp_path):
 
 
 def test_the_freshness_goes_with_the_forecasts_and_last():
+    # tide_predictions only when asked for (--tides-only): no scheduled run writes it.
     assert D.tables_written() == ("buoys", "spots", "forecasts", "buoy_observations",
-                                  "tide_predictions", "nwps_cycle_reads",
-                                  "nwps_office_freshness")
+                                  "nwps_cycle_reads", "nwps_office_freshness")
+    assert D.tables_written(tides=True) == ("buoys", "spots", "forecasts", "buoy_observations",
+                                            "tide_predictions", "nwps_cycle_reads",
+                                            "nwps_office_freshness")
     assert D.tables_written(spots=False, forecasts=False, buoys=True, tides=True) == (
         "buoy_observations", "tide_predictions")
 
@@ -232,7 +235,13 @@ def test_run_all_uploads_it_after_the_reads(monkeypatch):
     assert calls[-2:] == ["import_nwps_reads", "import_nwps_freshness"]
     assert stats["nwps_office_freshness"] == 3
     calls.clear()
-    assert "nwps_office_freshness" not in D.run_all(forecasts=False) and calls[-1] == "import_tides"
+    # Without forecasts the last table written is buoy_observations (tide_predictions only when
+    # asked for), and with tides=True it is the tides.
+    assert "nwps_office_freshness" not in D.run_all(forecasts=False) and calls[-1] == "import_buoys"
+    assert "import_tides" not in calls
+    calls.clear()
+    D.run_all(forecasts=False, tides=True)
+    assert calls[-1] == "import_tides"
 
 
 def test_migration_029_creates_every_column_db_import_writes_and_the_key():

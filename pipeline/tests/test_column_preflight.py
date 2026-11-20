@@ -95,6 +95,9 @@ DB_ONLY = {"buoys": [], "spots": ["id", "geom", "aka_names", "created_at", "upda
            "nwps_office_freshness": ["id"]}
 ALL_TABLES = ("buoys", "spots", "forecasts", "buoy_observations", "tide_predictions",
               "nwps_cycle_reads", "nwps_office_freshness")
+# The tables a scheduled run (--all) writes: every live table but tide_predictions, which only
+# --tides-only writes now (pipeline/db_import.py's docstring says why).
+WRITTEN_BY_ALL = tuple(t for t in ALL_TABLES if t != "tide_predictions")
 
 
 def live(*missing: str) -> dict[str, list[str]]:
@@ -352,9 +355,9 @@ def test_the_incident_nwps_cycle_is_named_left_out_and_the_run_fails_at_the_end(
     assert fake.rows_sent("forecasts") == [without]
     assert json.loads(json.dumps(fake.rows_sent("forecasts")[0])) == without
     assert list(fake.rows_sent("forecasts")[0]) == [k for k in FORECAST_ROW if k != "nwps_cycle"]
-    # the tables after it in run_all were written too, in full
+    # the tables after it in run_all were written too, in full; tide_predictions is not written
     assert fake.rows_sent("buoy_observations") == [BUOY_ROW]
-    assert fake.rows_sent("tide_predictions") == TIDE_ROWS
+    assert fake.rows_sent("tide_predictions") == []
     # and the run ends FAILED, on one plain line naming it
     capsys.readouterr()
     assert run.finish() == 1
@@ -372,11 +375,13 @@ def test_the_incident_nwps_cycle_is_named_left_out_and_the_run_fails_at_the_end(
 ])
 def test_a_missing_column_in_any_table_is_left_out_of_that_table_only(run, capsys, missing, migration):
     table, _, column = missing.partition(".")
+    # tide_predictions is written only by --tides-only now; every other table by --all.
+    mode = "--tides-only" if table == "tide_predictions" else "--all"
     fake = FakePostgrest(live(missing))
-    assert run.go(fake) == 0
+    assert run.go(fake, mode=mode) == 0
     sent = fake.rows_sent(table)
     assert sent and all(column not in r for r in sent), f"{missing} must be left out"
-    for other in ALL_TABLES:
+    for other in (WRITTEN_BY_ALL if mode == "--all" else ()):
         if other != table:
             assert fake.rows_sent(other), f"{other} must still be written"
     # everything else in that table is still sent
@@ -405,7 +410,7 @@ def test_merged_before_migration_020_the_run_publishes_and_ends_failed_naming_it
     assert sent and all(not any(m.partition(".")[2] in r for m in missing) for r in sent)
     assert all("break_type_confidence" not in r for r in sent)
     assert fake.rows_sent("forecasts") == [FORECAST_ROW]
-    for table in ALL_TABLES:
+    for table in WRITTEN_BY_ALL:
         assert fake.rows_sent(table), f"{table} must still be written"
     capsys.readouterr()
     assert run.finish() == 1
@@ -430,7 +435,7 @@ def test_merged_before_migration_021_the_run_publishes_and_ends_failed_naming_it
     assert sent and all(not any(m.partition(".")[2] in r for m in missing) for r in sent)
     assert all("bottom_confidence" not in r for r in sent)
     assert fake.rows_sent("forecasts") == [FORECAST_ROW]
-    for table in ALL_TABLES:
+    for table in WRITTEN_BY_ALL:
         assert fake.rows_sent(table), f"{table} must still be written"
     capsys.readouterr()
     assert run.finish() == 1
@@ -492,7 +497,7 @@ def test_with_every_column_present_a_run_sends_exactly_todays_rows_and_ends_gree
     assert run.go(fake) == 0
     assert fake.text_sent("forecasts") == [json.dumps([FORECAST_ROW])]
     assert fake.text_sent("buoy_observations") == [json.dumps([BUOY_ROW])]
-    assert fake.text_sent("tide_predictions") == [json.dumps(TIDE_ROWS)]
+    assert fake.text_sent("tide_predictions") == []            # no longer written by --all
     assert fake.text_sent("buoys") == [json.dumps([BUOYS_META_ROW])]
     assert fake.text_sent("nwps_cycle_reads") == [json.dumps([READ_ROW])]
     assert fake.text_sent("nwps_office_freshness") == [json.dumps([FRESH_ROW])]
@@ -509,7 +514,7 @@ def test_the_check_changes_nothing_about_what_is_sent(run):
     run.go(unchecked, preflight=False)
     assert checked.sent == unchecked.sent
     assert [t for t, _k, _x in checked.sent] == ["buoys", "spots", "forecasts",
-                                                 "buoy_observations", "tide_predictions",
+                                                 "buoy_observations",
                                                  "nwps_cycle_reads", "nwps_office_freshness"]
 
 
@@ -587,7 +592,7 @@ def test_a_missing_key_column_is_reported_but_not_left_out(run, capsys):
 
 
 def test_a_missing_table_is_reported_and_its_upload_fails_as_before(run, capsys):
-    fake = FakePostgrest(live("tide_predictions"))
+    fake = FakePostgrest(live("nwps_office_freshness"))
     with pytest.raises(APIError) as e:
         run.go(fake)
     assert e.value.code == "PGRST205"
@@ -595,8 +600,21 @@ def test_a_missing_table_is_reported_and_its_upload_fails_as_before(run, capsys)
     capsys.readouterr()
     assert run.finish() == 1
     assert capsys.readouterr().out.splitlines() == [
-        "Missing from the database and cannot be left out: tide_predictions "
-        "(pipeline/migrations/001_initial_schema.sql) — those uploads fail as before."]
+        "Missing from the database and cannot be left out: nwps_office_freshness "
+        "(pipeline/migrations/029_nwps_office_freshness.sql) — those uploads fail as before."]
+
+
+def test_a_scheduled_run_neither_writes_nor_checks_tide_predictions(run, capsys):
+    """With tide_predictions gone from the live database, --all neither checks nor writes it:
+    the run ends green. Only --tides-only, by hand, still needs it."""
+    fake = FakePostgrest(live("tide_predictions"))
+    assert run.go(fake) == 0
+    assert fake.rows_sent("tide_predictions") == []
+    capsys.readouterr()
+    assert run.finish() == 0
+    by_hand = FakePostgrest(live())
+    assert run.go(by_hand, mode="--tides-only") == 0
+    assert by_hand.text_sent("tide_predictions") == [json.dumps(TIDE_ROWS)]
 
 
 FORBIDDEN = _Response(403, {"message": "Access to schema is forbidden",
@@ -691,9 +709,13 @@ def test_the_declared_columns_and_keys_are_these():
 def test_every_builder_sends_exactly_its_declared_columns(run):
     fake = FakePostgrest(live())
     run.go(fake)
+    by_hand = FakePostgrest(live())
+    run.go(by_hand, mode="--tides-only")
     for table in ("buoys", "forecasts", "buoy_observations", "tide_predictions",
                   "nwps_cycle_reads", "nwps_office_freshness"):
-        for row in fake.rows_sent(table):
+        rows = (by_hand if table == "tide_predictions" else fake).rows_sent(table)
+        assert rows, table
+        for row in rows:
             assert list(row) == WRITTEN[table], table
     # break_type_confidence is read back with the row and must not be sent back: migration
     # 020 generates it, and Postgres refuses a write to a generated column.
@@ -705,9 +727,10 @@ def test_every_builder_sends_exactly_its_declared_columns(run):
 
 
 def test_every_upsert_matches_on_its_declared_key(run):
-    fake = FakePostgrest(live())
+    fake, by_hand = FakePostgrest(live()), FakePostgrest(live())
     run.go(fake)
-    assert {t: k for t, k, _x in fake.sent} == {
+    run.go(by_hand, mode="--tides-only")
+    assert {t: k for t, k, _x in fake.sent + by_hand.sent} == {
         "buoys": "id", "spots": "slug", "forecasts": "spot_id,valid_time,source",
         "buoy_observations": "buoy_id,observed_at", "tide_predictions": "station_id,predicted_at",
         "nwps_cycle_reads": "wfo,nwps_cycle,read_at",
@@ -715,11 +738,11 @@ def test_every_upsert_matches_on_its_declared_key(run):
 
 
 @pytest.mark.parametrize("flag, tables", [
-    ("--all", ("buoys", "spots", "forecasts", "buoy_observations", "tide_predictions",
+    ("--all", ("buoys", "spots", "forecasts", "buoy_observations",
                "nwps_cycle_reads", "nwps_office_freshness")),
     ("--buoys-only", ("buoy_observations",)),
     ("--spots-only", ("buoys", "spots")),
-    ("--forecasts-only", ("forecasts", "buoy_observations", "tide_predictions",
+    ("--forecasts-only", ("forecasts", "buoy_observations",
                           "nwps_cycle_reads", "nwps_office_freshness")),
     ("--tides-only", ("tide_predictions",)),
 ])
