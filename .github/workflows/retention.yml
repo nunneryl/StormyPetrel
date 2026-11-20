@@ -11,6 +11,8 @@ name: retention
 #             downloads each part again and checks it, then writes the month's manifest
 #   restore   one month of one table: checks every part against the manifest; apply inserts
 #             the rows not already in the table
+#   bucket    every month in the bucket, from its manifests alone (no database): rows, parts, MB,
+#             and any month with files but no manifest
 #
 # Reads and writes through the REST API with the service key, as the pipeline does; no database
 # password. Roughly 5-15 minutes for one month of forecasts (about 650 spots, one or two
@@ -20,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: status, archive or restore
+        description: status, archive, restore or bucket
         required: true
         default: status
         type: choice
@@ -28,6 +30,7 @@ on:
           - status
           - archive
           - restore
+          - bucket
       table:
         description: Which table (restore needs one)
         required: true
