@@ -122,13 +122,6 @@ export type BuoyObservation = {
   water_temp: number | null;
 };
 
-export type TidePrediction = {
-  station_id: string;
-  predicted_at: string;
-  level_ft: number;
-  type: string | null;
-};
-
 export type SpotWithLatest = Spot & {
   latest: Forecast | null;
   /** Direction the tide is moving at the latest forecast time. Computed

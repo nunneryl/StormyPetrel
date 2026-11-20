@@ -78,9 +78,12 @@ def test_a_column_the_preflight_found_missing_is_left_out(tmp_path):
 
 
 def test_the_reads_go_with_the_forecasts_and_last():
+    # tide_predictions only when asked for (--tides-only): no scheduled run writes it.
     assert D.tables_written() == ("buoys", "spots", "forecasts", "buoy_observations",
-                                  "tide_predictions", "nwps_cycle_reads",
-                                  "nwps_office_freshness")
+                                  "nwps_cycle_reads", "nwps_office_freshness")
+    assert D.tables_written(tides=True) == ("buoys", "spots", "forecasts", "buoy_observations",
+                                            "tide_predictions", "nwps_cycle_reads",
+                                            "nwps_office_freshness")
     assert D.tables_written(spots=False, forecasts=False, buoys=True, tides=False) == (
         "buoy_observations",)
     assert D.tables_written(spots=True, forecasts=False, buoys=False, tides=False) == (

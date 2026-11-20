@@ -243,10 +243,12 @@ jobs:
       - name: Snapshot pre-write spot ratings (for diff in revalidate step)
         run: python -m pipeline.revalidate --snapshot pipeline/forecast_data/ratings_snapshot.json
 
-      - name: Push to Supabase (spots + forecasts + buoys + tides)
+      - name: Push to Supabase (spots + forecasts + buoys)
         # !cancelled() so a STEP failure above (e.g. the fetch_all step timeout) still ships spot +
         # NWPS + whatever-was-fetched data. db_import skips any missing forecast file rather than
-        # crashing (import_forecasts / import_buoys / import_tides guard a missing input).
+        # crashing (import_forecasts / import_buoys guard a missing input). tide_predictions is no
+        # longer written: the tides are still fetched and rated (tides.json), and the spot page's
+        # tide chart reads each forecast row's tide_level_ft (pipeline/db_import.py says more).
         id: push
         if: ${{ !cancelled() }}
         run: python -m pipeline.db_import --all
