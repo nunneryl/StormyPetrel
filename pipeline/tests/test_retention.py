@@ -25,6 +25,7 @@ import hashlib
 import json
 import re
 import threading
+import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -154,6 +155,14 @@ class FakeStorage:
 
     def exists(self, path):
         return path in self.files
+
+    def names(self, prefix):
+        return {k[len(prefix) + 1:] for k in self.files
+                if k.startswith(prefix + "/") and "/" not in k[len(prefix) + 1:]}
+
+    def folders(self, prefix):
+        return sorted({k[len(prefix) + 1:].split("/")[0] for k in self.files
+                       if k.startswith(prefix + "/") and "/" in k[len(prefix) + 1:]})
 
     def upload(self, path, data, content_type):
         if path in self.files:
@@ -533,7 +542,8 @@ def test_nothing_in_the_tool_or_its_workflow_can_delete():
     assert not any(re.search(r"\bDELETE\b", s) for s in strings)
     storage_methods = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == "Storage"
                        for n in n.body if isinstance(n, ast.FunctionDef)}
-    assert storage_methods == {"__init__", "_headers", "download", "exists", "upload"}
+    assert storage_methods == {"__init__", "_headers", "_call", "_list", "names", "folders",
+                               "exists", "download", "_duplicate", "upload"}
     wf = (ROOT / ".github" / "workflows" / "retention.yml").read_text(encoding="utf-8")
     code = "\n".join(l.split("#")[0] for l in wf.splitlines())
     assert "delete" not in code.lower()
@@ -550,61 +560,182 @@ def test_face_calibration_reads_from_7_september_by_default():
 
 # ---- the real Storage class, against a local server -------------------------------------- #
 class _Store(BaseHTTPRequestHandler):
+    """Supabase Storage's three routes, as far as the tool uses them: list a folder, download,
+    upload (x-upsert false: a duplicate is refused). `plan` scripts trouble per route and path:
+    a list of "hang" (sleep past the client's read timeout), "503", "land+hang" (store the
+    upload, then hang, as an upload whose answer is lost) or "ok", used up in order."""
     seen: list = []
     files: dict = {}
+    plan: dict = {}
+    HANG_S = 1.5
 
-    def _send(self, code, body=b""):
+    def _send(self, code, body=b"", ctype="application/json"):
         self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
+    def _trouble(self, key):
+        steps = _Store.plan.get(key) or []
+        return steps.pop(0) if steps else "ok"
+
     def do_GET(self):
-        _Store.seen.append(("GET", self.path, dict(self.headers)))
         p = self.path.split("/storage/v1/object/retention-archive/", 1)[-1]
-        if p == "boom":
-            return self._send(500, b"oops")
+        _Store.seen.append(("GET", p))
+        t = self._trouble(("GET", p))
+        if t == "hang":
+            time.sleep(_Store.HANG_S)
+        if t == "503":
+            return self._send(503, b'{"error":"busy"}')
         if p == "gone400":
             return self._send(400, b'{"statusCode":"404","error":"not_found","message":"Object not found"}')
         if p in _Store.files:
-            return self._send(200, _Store.files[p])
+            return self._send(200, _Store.files[p], "application/octet-stream")
         self._send(404, b"{}")
 
     def do_POST(self):
         body = self.rfile.read(int(self.headers["Content-Length"]))
-        _Store.seen.append(("POST", self.path, dict(self.headers)))
+        if self.path == "/storage/v1/object/list/retention-archive":
+            req = json.loads(body)
+            prefix = req["prefix"].rstrip("/")
+            _Store.seen.append(("LIST", prefix))
+            t = self._trouble(("LIST", prefix))
+            if t == "hang":
+                time.sleep(_Store.HANG_S)
+            if t == "503":
+                return self._send(503, b'{"error":"busy"}')
+            base = prefix + "/" if prefix else ""
+            files, folders = set(), set()
+            for k in _Store.files:
+                if k.startswith(base):
+                    rest = k[len(base):]
+                    (folders.add(rest.split("/")[0]) if "/" in rest else files.add(rest))
+            out = ([{"name": f, "id": None} for f in sorted(folders)]
+                   + [{"name": f, "id": "x" + f} for f in sorted(files)])
+            return self._send(200, json.dumps(out).encode())
         p = self.path.split("/storage/v1/object/retention-archive/", 1)[-1]
+        _Store.seen.append(("POST", p, dict(self.headers)))
+        t = self._trouble(("POST", p))
+        if t == "503":
+            return self._send(503, b'{"error":"busy"}')
         if p in _Store.files:
-            return self._send(400, b'{"statusCode":"409","error":"Duplicate"}')
+            return self._send(400, b'{"statusCode":"409","error":"Duplicate","message":"The resource already exists"}')
         _Store.files[p] = body
+        if t == "land+hang":
+            time.sleep(_Store.HANG_S)
         self._send(200, b'{"Key":"x"}')
 
     def log_message(self, *a):
         pass
 
 
-def test_storage_sends_the_service_key_never_overwrites_and_reads_not_found():
-    _Store.seen, _Store.files = [], {}
+@pytest.fixture()
+def store():
+    import requests
+    _Store.seen, _Store.files, _Store.plan = [], {}, {}
     srv = ThreadingHTTPServer(("127.0.0.1", 0), _Store)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    try:
-        import requests
-        s = R.Storage(f"http://127.0.0.1:{srv.server_address[1]}", "KEY", session=requests.Session())
-        s.upload("forecasts/2026-08/part-0001.csv.gz", b"abc", "application/gzip")
-        method, path, headers = _Store.seen[-1]
-        assert (method, path) == ("POST", "/storage/v1/object/retention-archive/forecasts/2026-08/part-0001.csv.gz")
-        assert headers["Authorization"] == "Bearer KEY" and headers["apikey"] == "KEY"
-        assert headers["x-upsert"] == "false" and headers["Content-Type"] == "application/gzip"
-        assert s.download("forecasts/2026-08/part-0001.csv.gz") == b"abc"
-        with pytest.raises(R.RetentionError, match="HTTP 400 .*Duplicate.*never overwritten"):
-            s.upload("forecasts/2026-08/part-0001.csv.gz", b"new", "application/gzip")
-        assert _Store.files["forecasts/2026-08/part-0001.csv.gz"] == b"abc"
-        assert s.exists("forecasts/2026-08/part-0001.csv.gz") and not s.exists("nope")
-        assert not s.exists("gone400")                  # Storage's 400 "not_found" is not found
-        with pytest.raises(R.RetentionError, match="HTTP 500"):
-            s.download("boom")
-    finally:
-        srv.shutdown()
-        srv.server_close()
+    waits = []
+    # A read timeout of 0.5 s against a 1.5 s hang; the backoff is recorded, not slept.
+    s = R.Storage(f"http://127.0.0.1:{srv.server_address[1]}", "KEY", session=requests.Session(),
+                  timeout=(2, 0.5), attempts=3, backoff=(2, 5), sleep=waits.append)
+    s.waits = waits
+    yield s
+    srv.shutdown()
+    srv.server_close()
+
+
+def test_storage_sends_the_service_key_never_overwrites_and_reads_not_found(store):
+    store.upload("forecasts/2026-08/part-0001.csv.gz", b"abc", "application/gzip")
+    method, path, headers = _Store.seen[-1]
+    assert (method, path) == ("POST", "forecasts/2026-08/part-0001.csv.gz")
+    assert headers["Authorization"] == "Bearer KEY" and headers["apikey"] == "KEY"
+    assert headers["x-upsert"] == "false" and headers["Content-Type"] == "application/gzip"
+    assert store.download("forecasts/2026-08/part-0001.csv.gz") == b"abc"
+    with pytest.raises(R.RetentionError, match="HTTP 400 .*Duplicate.*never overwritten"):
+        store.upload("forecasts/2026-08/part-0001.csv.gz", b"new", "application/gzip")
+    assert _Store.files["forecasts/2026-08/part-0001.csv.gz"] == b"abc"
+    with pytest.raises(R.NotFound):
+        store.download("gone400")                         # Storage's 400 "not_found" is not found
+
+
+def test_existence_is_read_from_one_listing_never_by_downloading(store):
+    _Store.files.update({"forecasts/2026-08/part-0001.csv.gz": b"a",
+                         "forecasts/2026-08/manifest.json": b"{}",
+                         "forecasts/2026-05/part-0001.csv.gz": b"b"})
+    assert store.names("forecasts/2026-08") == {"part-0001.csv.gz", "manifest.json"}
+    assert store.folders("forecasts") == ["2026-05", "2026-08"]
+    assert store.exists("forecasts/2026-08/manifest.json")
+    assert not store.exists("forecasts/2026-06/part-0001.csv.gz")
+    assert not any(s[0] == "GET" for s in _Store.seen)
+
+
+def test_a_hanging_call_is_retried_with_each_retry_logged(store, caplog):
+    caplog.set_level("WARNING")
+    _Store.files["forecasts/2026-06/part-0001.csv.gz"] = b"abc"
+    _Store.plan = {("GET", "forecasts/2026-06/part-0001.csv.gz"): ["hang", "503"],
+                   ("LIST", "forecasts/2026-06"): ["hang"]}
+    t0 = time.monotonic()
+    assert store.download("forecasts/2026-06/part-0001.csv.gz") == b"abc"   # hang, 503, then ok
+    assert store.names("forecasts/2026-06") == {"part-0001.csv.gz"}         # hang, then ok
+    assert time.monotonic() - t0 < 5                       # each hang cut at the 0.5 s read timeout
+    assert store.waits == [2, 5, 2]                        # backoff after attempts 1 and 2; then 1
+    lines = [r.getMessage() for r in caplog.records]
+    assert any("download forecasts/2026-06/part-0001.csv.gz: attempt 1 of 3 failed (ReadTimeout" in l
+               and "retrying in 2 s" in l for l in lines)
+    assert any("download forecasts/2026-06/part-0001.csv.gz: attempt 2 of 3 failed (HTTP 503" in l
+               and "retrying in 5 s" in l for l in lines)
+    assert any("list forecasts/2026-06: attempt 1 of 3 failed (ReadTimeout" in l for l in lines)
+
+
+def test_a_call_that_keeps_hanging_fails_naming_the_file_in_bounded_time(store):
+    _Store.plan = {("GET", "forecasts/2026-06/part-0001.csv.gz"): ["hang", "hang", "hang"]}
+    t0 = time.monotonic()
+    with pytest.raises(R.RetentionError, match=r"storage: download forecasts/2026-06/part-0001.csv.gz: "
+                                               r"gave up after 3 attempts: ReadTimeout"):
+        store.download("forecasts/2026-06/part-0001.csv.gz")
+    assert time.monotonic() - t0 < 4                       # 3 x 0.5 s, not 3 x 300 s
+    assert store.waits == [2, 5]
+
+
+def test_an_upload_whose_answer_was_lost_is_found_on_the_retry_and_not_overwritten(store, caplog):
+    caplog.set_level("WARNING")
+    _Store.plan = {("POST", "forecasts/2026-06/part-0001.csv.gz"): ["land+hang"]}
+    store.upload("forecasts/2026-06/part-0001.csv.gz", b"abc", "application/gzip")
+    # The first attempt stored it and its answer timed out; the retry got "Duplicate", which after
+    # a failed attempt means "there": the caller's download and SHA-256 decide.
+    assert _Store.files["forecasts/2026-06/part-0001.csv.gz"] == b"abc"
+    assert [s[0] for s in _Store.seen] == ["POST", "POST"]
+    assert "there after a failed attempt" in caplog.text
+
+
+def test_a_month_check_that_hangs_no_longer_ends_the_archive(store, tmp_path):
+    # Run 6's failure: the June check hung. Now the month's listing is retried, and the archive
+    # goes on; nothing is downloaded to see whether a part exists.
+    _Store.plan = {("LIST", "forecasts/2026-08"): ["hang"]}
+    got = R.archive(_db(), store, SPEC, "2026-08", True, NOW, workdir=tmp_path)
+    assert got["status"] == "archived" and got["rows"] == 8
+    assert sorted(k for k in _Store.files) == ["forecasts/2026-08/manifest.json",
+                                              "forecasts/2026-08/part-0001.csv.gz",
+                                              "forecasts/2026-08/part-0002.csv.gz"]
+    gets = [s[1] for s in _Store.seen if s[0] == "GET"]
+    # Only the read-backs of what was just uploaded: each part, then the manifest.
+    assert gets == ["forecasts/2026-08/part-0001.csv.gz", "forecasts/2026-08/part-0002.csv.gz",
+                    "forecasts/2026-08/manifest.json"]
+
+
+def test_the_bucket_command_lists_manifests_and_stopped_months(store):
+    st = FakeStorage()
+    R.archive(_db(), st, SPEC, "2026-08", True, NOW, workdir=None)
+    _Store.files.update(st.files)
+    _Store.files["forecasts/2026-06/part-0001.csv.gz"] = b"left by a stopped run"
+    got = R.bucket(store, [SPEC, R.TABLES["tide_predictions"]])
+    assert got[0] == {"table": "forecasts", "month": "2026-06", "archived": False,
+                      "files": ["part-0001.csv.gz"]}
+    assert {k: got[1][k] for k in ("table", "month", "archived", "rows", "parts")} == {
+        "table": "forecasts", "month": "2026-08", "archived": True, "rows": 8, "parts": 2}
+    assert len(got) == 2                                   # nothing for tide_predictions
 
 
 # ---- retry-safe archive, part logging, restore per unit ------------------------------------ #
@@ -708,3 +839,10 @@ def test_month_all_stops_at_a_failed_month_and_a_rerun_finishes_the_rest():
     assert sorted(p for p in st.files if p.endswith("manifest.json")) == [
         "forecasts/2026-07/manifest.json", "forecasts/2026-08/manifest.json",
         "forecasts/2026-09/manifest.json", "forecasts/2026-10/manifest.json"]
+
+
+def test_the_storage_defaults_are_a_minute_four_attempts_and_a_short_backoff():
+    # Run 6 waited 300 s on one hung GET. Each read now waits at most 60 s, a call is tried 4
+    # times, 2, 5 and 10 s apart: at most 4 x 60 + 17 = 257 s before a call fails, naming its file.
+    s = R.Storage("https://x.invalid", "KEY")
+    assert (s.timeout, s.attempts, s.backoff) == ((10, 60), 4, (2, 5, 10))

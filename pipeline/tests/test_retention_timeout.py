@@ -185,6 +185,14 @@ class FakeStorage:
     def exists(self, path):
         return path in self.files
 
+    def names(self, prefix):
+        return {k[len(prefix) + 1:] for k in self.files
+                if k.startswith(prefix + "/") and "/" not in k[len(prefix) + 1:]}
+
+    def folders(self, prefix):
+        return sorted({k[len(prefix) + 1:].split("/")[0] for k in self.files
+                       if k.startswith(prefix + "/") and "/" in k[len(prefix) + 1:]})
+
     def upload(self, path, data, content_type):
         assert path not in self.files
         self.files[path] = data

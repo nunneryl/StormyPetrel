@@ -67,6 +67,7 @@ station-local time labelled as UTC, so its months follow the stored value).
     python -m pipeline.retention status [--table T] [--exact]
     python -m pipeline.retention archive --table T|all --month YYYY-MM|all [--apply]
     python -m pipeline.retention restore --table T --month YYYY-MM [--apply]
+    python -m pipeline.retention bucket [--table T]      every archived month, from the bucket alone
 """
 from __future__ import annotations
 
@@ -408,20 +409,86 @@ class NotFound(Exception):
 
 
 class Storage:
-    """The three Storage REST calls this needs, with the service key. Nothing else: no delete."""
+    """The Storage REST calls this needs, with the service key: list, download, upload. Nothing
+    else: no delete.
 
-    def __init__(self, url: str, key: str, bucket: str = BUCKET, session=None, timeout=300):
+    ROBUST, after retention run 6 (2026-11-20): checking whether forecasts/2026-06's first part
+    was already in the bucket downloaded it, the object did not exist, and that GET hung for the
+    whole 300 s read timeout (requests.ReadTimeout), ending the run. Now:
+      - whether a file exists is read from one listing of its month's folder (POST
+        /object/list), never by downloading it;
+      - each call waits at most TIMEOUT (10 s to connect, 60 s for each read);
+      - a timeout, a dropped connection, or a 429 / 5xx answer is retried up to ATTEMPTS times,
+        BACKOFF_S apart, each retry logged with its cause; then the call fails naming the file;
+      - an upload retried after a timeout may find its own first attempt landed: a "duplicate"
+        answer then is taken as "there", and the caller's download and SHA-256 check decides.
+        A duplicate on the first attempt is someone else's file, and is never overwritten."""
+
+    TIMEOUT = (10, 60)
+    ATTEMPTS = 4
+    BACKOFF_S = (2, 5, 10)
+    RETRY_STATUS = (429, 500, 502, 503, 504)
+
+    def __init__(self, url: str, key: str, bucket: str = BUCKET, session=None, timeout=None,
+                 attempts=None, backoff=None, sleep=time.sleep):
         import requests
         self.base = url.rstrip("/") + "/storage/v1/object"
-        self.key, self.bucket, self.timeout = key, bucket, timeout
+        self.key, self.bucket = key, bucket
+        self.timeout = timeout or self.TIMEOUT
+        self.attempts = attempts or self.ATTEMPTS
+        self.backoff = backoff if backoff is not None else self.BACKOFF_S
+        self.sleep = sleep
         self.http = session or requests.Session()
 
     def _headers(self, extra=None) -> dict:
         return {"Authorization": f"Bearer {self.key}", "apikey": self.key, **(extra or {})}
 
+    def _call(self, what: str, send, accept=lambda r: False):
+        """send() up to self.attempts times. Returns (response, retried). A timeout, a dropped
+        connection or a RETRY_STATUS answer is retried, unless accept(response) says the answer
+        is final; anything else is returned at once."""
+        import requests
+        cause = None
+        for k in range(1, self.attempts + 1):
+            try:
+                r = send()
+                if r.status_code not in self.RETRY_STATUS or accept(r):
+                    return r, k > 1
+                cause = f"HTTP {r.status_code} {(r.text or '')[:120]}"
+            except (requests.Timeout, requests.ConnectionError) as e:
+                cause = f"{type(e).__name__}: {e}"
+            if k < self.attempts:
+                wait = self.backoff[min(k - 1, len(self.backoff) - 1)] if self.backoff else 0
+                log.warning("storage: %s: attempt %d of %d failed (%s); retrying in %s s",
+                            what, k, self.attempts, cause, wait)
+                self.sleep(wait)
+        raise RetentionError(f"storage: {what}: gave up after {self.attempts} attempts: {cause}")
+
+    def _list(self, prefix: str) -> list:
+        r, _ = self._call(f"list {prefix or '/'}", lambda: self.http.post(
+            f"{self.base}/list/{self.bucket}", timeout=self.timeout,
+            headers=self._headers({"Content-Type": "application/json"}),
+            json={"prefix": prefix, "limit": 1000, "offset": 0,
+                  "sortBy": {"column": "name", "order": "asc"}}))
+        if r.status_code != 200:
+            raise RetentionError(f"list {prefix}: HTTP {r.status_code} {(r.text or '')[:300]}")
+        return list(r.json() or [])
+
+    def names(self, prefix: str) -> set:
+        """The files directly in the folder *prefix* (not its sub-folders)."""
+        return {e["name"] for e in self._list(prefix) if e.get("id") is not None}
+
+    def folders(self, prefix: str) -> list:
+        """The sub-folders directly in *prefix*, sorted."""
+        return sorted(e["name"] for e in self._list(prefix) if e.get("id") is None)
+
+    def exists(self, path: str) -> bool:
+        folder, _, name = path.rpartition("/")
+        return name in self.names(folder)
+
     def download(self, path: str) -> bytes:
-        r = self.http.get(f"{self.base}/{self.bucket}/{path}", headers=self._headers(),
-                          timeout=self.timeout)
+        r, _ = self._call(f"download {path}", lambda: self.http.get(
+            f"{self.base}/{self.bucket}/{path}", headers=self._headers(), timeout=self.timeout))
         if r.status_code == 200:
             return r.content
         body = (r.text or "")[:300]
@@ -429,20 +496,23 @@ class Storage:
             raise NotFound(path)
         raise RetentionError(f"download {path}: HTTP {r.status_code} {body}")
 
-    def exists(self, path: str) -> bool:
-        try:
-            self.download(path)
-            return True
-        except NotFound:
-            return False
+    @staticmethod
+    def _duplicate(r) -> bool:
+        body = (r.text or "").lower()
+        return r.status_code in (400, 409) and ("duplicate" in body or "already exists" in body)
 
     def upload(self, path: str, data: bytes, content_type: str) -> None:
-        r = self.http.post(f"{self.base}/{self.bucket}/{path}", data=data, timeout=self.timeout,
-                           headers=self._headers({"Content-Type": content_type,
-                                                  "x-upsert": "false"}))
-        if r.status_code != 200:
-            raise RetentionError(f"upload {path}: HTTP {r.status_code} {(r.text or '')[:300]} "
-                                 "(an existing file is never overwritten)")
+        r, retried = self._call(f"upload {path}", lambda: self.http.post(
+            f"{self.base}/{self.bucket}/{path}", data=data, timeout=self.timeout,
+            headers=self._headers({"Content-Type": content_type, "x-upsert": "false"})))
+        if r.status_code == 200:
+            return
+        if retried and self._duplicate(r):
+            log.warning("storage: upload %s: there after a failed attempt (it may have landed); "
+                        "its download and SHA-256 decide", path)
+            return
+        raise RetentionError(f"upload {path}: HTTP {r.status_code} {(r.text or '')[:300]} "
+                             "(an existing file is never overwritten)")
 
 
 # --------------------------------------------------------------------------- #
@@ -482,11 +552,13 @@ def archive(client, storage, spec: Spec, month: str, apply: bool, now: datetime,
     mb = sum(p["bytes"] for p in got["parts"]) / 1e6
     summary = {"table": spec.table, "month": month, "rows": got["rows"],
                "parts": len(got["parts"]), "mb": round(mb, 1), "read_s": round(took)}
-    # What a stopped run left: each part already in the bucket, and whether it is this run's.
-    already = {p["name"]: _in_bucket(storage, f"{prefix}/{p['name']}", p, got["columns"])
-               for p in got["parts"]}
+    # What a stopped run left: one listing of the month's folder, then each part already there is
+    # downloaded and compared with this run's.
+    present = storage.names(prefix)
+    already = {p["name"]: (_in_bucket(storage, f"{prefix}/{p['name']}", p, got["columns"])
+                           if p["name"] in present else None) for p in got["parts"]}
     leftover = f"part-{len(got['parts']) + 1:04d}.csv.gz"
-    extra = storage.exists(f"{prefix}/{leftover}")
+    extra = leftover in present
     for p in got["parts"]:
         state = already[p["name"]]
         log.info("%s %s %s: %d rows, %.2f MB, sha256 %s%s", spec.table, month, p["name"],
@@ -682,6 +754,31 @@ def status(client, storage, spec: Spec, now: datetime, exact: bool = False) -> l
     return out
 
 
+def bucket(storage, specs: list) -> list[dict]:
+    """Every month in the bucket, from the files alone (no database): its manifest's rows, parts
+    and size, or the files of a month with no manifest (a run that stopped partway)."""
+    out = []
+    for spec in specs:
+        for m in storage.folders(spec.table):
+            files = storage.names(f"{spec.table}/{m}")
+            if "manifest.json" in files:
+                man = json.loads(storage.download(f"{spec.table}/{m}/manifest.json"))
+                row = {"table": spec.table, "month": m, "archived": True, "rows": man["rows"],
+                       "parts": len(man["parts"]),
+                       "mb": round(sum(p["bytes"] for p in man["parts"]) / 1e6, 1)}
+                log.info("%-18s %s ARCHIVED %9d rows in %d part(s), %.1f MB", spec.table, m,
+                         row["rows"], row["parts"], row["mb"])
+            else:
+                row = {"table": spec.table, "month": m, "archived": False,
+                       "files": sorted(files)}
+                log.info("%-18s %s NO MANIFEST: %d file(s) from a run that stopped: %s",
+                         spec.table, m, len(files), ", ".join(sorted(files)) or "none")
+            out.append(row)
+        if not any(r["table"] == spec.table for r in out):
+            log.info("%-18s nothing in the bucket", spec.table)
+    return out
+
+
 def get_client():
     from supabase import create_client
     url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY")
@@ -693,7 +790,7 @@ def get_client():
 def main(argv: list[str] | None = None, client=None, storage=None,
          now: datetime | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("action", choices=["status", "archive", "restore"])
+    ap.add_argument("action", choices=["status", "archive", "restore", "bucket"])
     ap.add_argument("--table", default="all", choices=["all", *TABLES])
     ap.add_argument("--month", default="all", help="YYYY-MM, or all (archive: every complete "
                                                    "month without a manifest)")
@@ -707,9 +804,12 @@ def main(argv: list[str] | None = None, client=None, storage=None,
     logging.getLogger("httpx").setLevel(logging.WARNING)
     now = now or datetime.now(timezone.utc)
     try:
-        client = client or get_client()
         storage = storage or Storage(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
         specs = list(TABLES.values()) if args.table == "all" else [TABLES[args.table]]
+        if args.action == "bucket":
+            bucket(storage, specs)
+            return 0
+        client = client or get_client()
         if args.action == "status":
             for s in specs:
                 status(client, storage, s, now, exact=args.exact)
