@@ -71,7 +71,12 @@ jobs:
   retention:
     name: retention (${{ inputs.action }}, ${{ inputs.table }}, ${{ inputs.month }}${{ inputs.apply && ', apply' || ', dry run' }})
     runs-on: ubuntu-24.04
-    # Archiving every complete month of every table, the first time: about 7 months x 5 tables.
+    # month = all for one table: each month is read, uploaded and finished (manifest last) before
+    # the next starts. A month that fails stops the job there: earlier months keep their
+    # manifests, later ones are untouched, and a rerun skips the archived months and keeps the
+    # failed month's matching parts. Measured on 2026-11-19: one month of forecasts read in 3.5 to
+    # 7 minutes, so its 7 complete months take about 25 to 50 minutes; buoy_observations and
+    # tide_predictions are far smaller. 340 minutes is the most GitHub allows (360) less a margin.
     timeout-minutes: 340
     permissions:
       contents: read

@@ -16,6 +16,13 @@ WHAT IT DOES
                     downloaded again and checked (SHA-256, header, rows); the manifest goes up last,
                     so a month counts as archived only when every part checked out. Nothing in the
                     bucket is ever overwritten (x-upsert: false), and an archived month is skipped.
+                    RETRY-SAFE: a run that stopped partway leaves parts and no manifest. The parts
+                    are rebuilt byte for byte from the same rows (fixed order, gzip mtime 0), so a
+                    part already in the bucket whose SHA-256, header and rows match this run's is
+                    kept and not uploaded again; one that differs, or a leftover part this run
+                    does not make, stops the run naming it, and nothing is overwritten. A dry run
+                    says which parts are already there and whether they match. Each part's rows
+                    and size are logged.
   restore           one month of one table back into the database: every part is downloaded and
                     checked against the manifest before anything is written. Dry run by default;
                     with --apply rows are inserted in RESTORE_BATCH batches, and rows already in
@@ -240,17 +247,23 @@ def count_null_unit(client, spec: Spec, start: datetime, end: datetime, label: s
                   f"{spec.table} {label} {spec.unit} IS NULL: exact count")
 
 
-def count_keyed(client, spec: Spec, unit_list: list, start: datetime, end: datetime,
-                label: str) -> int:
-    """The month's exact row count as the sum of per-unit exact counts, never one count over the
-    whole month. Rows with a NULL unit fail it."""
+def counts_by_unit(client, spec: Spec, unit_list: list, start: datetime, end: datetime,
+                   label: str) -> dict:
+    """{unit: exact rows in [start, end)}, one count per unit, never one count over the whole
+    month. Rows with a NULL unit fail it."""
     log.info("%s %s: exact count, per %s (%d requests)", spec.table, label, spec.unit,
              len(unit_list) + 1)
     nulls = count_null_unit(client, spec, start, end, label)
     if nulls:
         raise RetentionError(f"{spec.table} {label}: {nulls} rows with {spec.unit} NULL, which "
                              "cannot be read by unit")
-    return sum(count_unit(client, spec, u, start, end, label) for u in unit_list)
+    return {u: count_unit(client, spec, u, start, end, label) for u in unit_list}
+
+
+def count_keyed(client, spec: Spec, unit_list: list, start: datetime, end: datetime,
+                label: str) -> int:
+    """The month's exact row count as the sum of per-unit exact counts."""
+    return sum(counts_by_unit(client, spec, unit_list, start, end, label).values())
 
 
 def count_planned(client, spec: Spec, start: datetime, end: datetime, label: str) -> int:
@@ -469,15 +482,45 @@ def archive(client, storage, spec: Spec, month: str, apply: bool, now: datetime,
     mb = sum(p["bytes"] for p in got["parts"]) / 1e6
     summary = {"table": spec.table, "month": month, "rows": got["rows"],
                "parts": len(got["parts"]), "mb": round(mb, 1), "read_s": round(took)}
+    # What a stopped run left: each part already in the bucket, and whether it is this run's.
+    already = {p["name"]: _in_bucket(storage, f"{prefix}/{p['name']}", p, got["columns"])
+               for p in got["parts"]}
+    leftover = f"part-{len(got['parts']) + 1:04d}.csv.gz"
+    extra = storage.exists(f"{prefix}/{leftover}")
+    for p in got["parts"]:
+        state = already[p["name"]]
+        log.info("%s %s %s: %d rows, %.2f MB, sha256 %s%s", spec.table, month, p["name"],
+                 p["rows"], p["bytes"] / 1e6, p["sha256"][:12],
+                 "" if state is None else ("; already in the bucket and matches" if state == "match"
+                                           else f"; already in the bucket and DIFFERS ({state})"))
+    if extra:
+        log.info("%s %s %s: in the bucket, but this run makes only %d part(s)", spec.table, month,
+                 leftover, len(got["parts"]))
     if not apply:
         log.info("DRY RUN %s %s: %d rows (database %d before, %d after) in %d part(s), %.1f MB, "
-                 "read in %.0f s over %d %s values; nothing uploaded",
+                 "read in %.0f s over %d %s values; %d part(s) already in the bucket and "
+                 "matching; nothing uploaded",
                  spec.table, month, got["rows"], before, after, len(got["parts"]), mb, took,
-                 len(unit_list), spec.unit)
-        return {**summary, "status": "dry run"}
+                 len(unit_list), spec.unit, sum(v == "match" for v in already.values()))
+        return {**summary, "status": "dry run", "reusable": sorted(
+            k for k, v in already.items() if v == "match")}
 
+    bad = [k for k, v in already.items() if v not in (None, "match")]
+    if bad:
+        raise RetentionError(f"{prefix}/{bad[0]} is already in the bucket and differs from this "
+                             f"run's part ({already[bad[0]]}); it is never overwritten. Nothing "
+                             "uploaded, no manifest.")
+    if extra:
+        raise RetentionError(f"{prefix}/{leftover} is in the bucket but this run makes only "
+                             f"{len(got['parts'])} part(s); a manifest would not list it. Nothing "
+                             "uploaded, no manifest.")
+    reused = 0
     for p in got["parts"]:
         path = f"{prefix}/{p['name']}"
+        if already[p["name"]] == "match":
+            reused += 1
+            log.info("%s: already in the bucket and matches; kept, not uploaded again", path)
+            continue
         storage.upload(path, Path(p["local"]).read_bytes(), "application/gzip")
         back = storage.download(path)
         if hashlib.sha256(back).hexdigest() != p["sha256"]:
@@ -486,13 +529,31 @@ def archive(client, storage, spec: Spec, month: str, apply: bool, now: datetime,
         if header != got["columns"] or len(rows) != p["rows"]:
             raise RetentionError(f"{path}: the downloaded copy has {len(rows)} rows, not "
                                  f"{p['rows']}, or another header; no manifest")
+        log.info("%s: uploaded, downloaded again and checked", path)
     body = json.dumps(manifest, indent=1).encode("utf-8")
     storage.upload(f"{prefix}/manifest.json", body, "application/json")
     if storage.download(f"{prefix}/manifest.json") != body:
         raise RetentionError(f"{prefix}/manifest.json: the downloaded copy differs")
-    log.info("ARCHIVED %s %s: %d rows in %d part(s), %.1f MB, each downloaded and checked",
-             spec.table, month, got["rows"], len(got["parts"]), mb)
-    return {**summary, "status": "archived"}
+    log.info("ARCHIVED %s %s: %d rows in %d part(s), %.1f MB, each downloaded and checked "
+             "(%d uploaded, %d kept from an earlier run)", spec.table, month, got["rows"],
+             len(got["parts"]), mb, len(got["parts"]) - reused, reused)
+    return {**summary, "status": "archived", "reused": reused}
+
+
+def _in_bucket(storage, path: str, part: dict, columns: list) -> str | None:
+    """None when *path* is not in the bucket; "match" when it is this run's part (same SHA-256,
+    header and rows); otherwise a few words on how it differs."""
+    try:
+        data = storage.download(path)
+    except NotFound:
+        return None
+    sha = hashlib.sha256(data).hexdigest()
+    if sha != part["sha256"]:
+        return f"SHA-256 {sha[:12]}, this run's {part['sha256'][:12]}"
+    header, rows = read_part(data)
+    if header != columns or len(rows) != part["rows"]:
+        return f"{len(rows)} rows or another header, this run's {part['rows']}"
+    return "match"
 
 
 def decode(value: str, col: str, json_cols: set):
@@ -530,13 +591,35 @@ def restore(client, storage, spec: Spec, month: str, apply: bool) -> dict:
     if total != manifest["rows"]:
         raise RetentionError(f"{prefix}: parts hold {total} rows, the manifest says "
                              f"{manifest['rows']}")
+    for p in manifest["parts"]:
+        log.info("%s/%s: %d rows, %.2f MB, SHA-256 matches the manifest", prefix, p["name"],
+                 p["rows"], p["bytes"] / 1e6)
     unit_list = units(client, spec)
-    in_db = count_keyed(client, spec, unit_list, start, end, month)
+    db_by_unit = counts_by_unit(client, spec, unit_list, start, end, month)
+    in_db = sum(db_by_unit.values())
+    # Per unit, the archive's rows against the table's (CSV holds text; compare as text).
+    ui = columns.index(spec.unit)
+    arch_by_unit: dict = {}
+    for rows in parts:
+        for r in rows:
+            arch_by_unit[r[ui]] = arch_by_unit.get(r[ui], 0) + 1
+    db_text = {str(u): n for u, n in db_by_unit.items()}
+    short = {u: (n, db_text.get(u, 0)) for u, n in arch_by_unit.items() if db_text.get(u, 0) < n}
     if not apply:
-        log.info("DRY RUN restore %s %s: archive checked, %d rows in %d part(s); the table holds "
-                 "%d rows for the month now; nothing written", spec.table, month, total,
-                 len(parts), in_db)
+        if short:
+            missing = sum(a - d for a, d in short.values())
+            log.info("DRY RUN restore %s %s: archive checked, %d rows in %d part(s); the table "
+                     "holds %d rows for the month; %d %s value(s) hold fewer rows than the "
+                     "archive, %d rows short in all (an apply inserts at least these); nothing "
+                     "written", spec.table, month, total, len(parts), in_db, len(short),
+                     spec.unit, missing)
+        else:
+            log.info("DRY RUN restore %s %s: archive checked, %d rows in %d part(s); the table "
+                     "holds %d rows for the month, and every %s holds at least as many rows as "
+                     "the archive, so an apply would find them all present; nothing written",
+                     spec.table, month, total, len(parts), in_db, spec.unit)
         return {"table": spec.table, "month": month, "rows": total, "in_db": in_db,
+                "short_units": len(short), "short_rows": sum(a - d for a, d in short.values()),
                 "status": "dry run"}
 
     keep = [c for c in columns if c != spec.surrogate]
