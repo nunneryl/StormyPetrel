@@ -103,6 +103,79 @@ def test_buoy_ranking_by_day_2_mae():
     assert [w[0] for w in worst] == ["46050", "46041", "46089"]
 
 
+def test_coverage_counts_only_the_three_sources():
+    # Texas has only spot_model rows (its buoys silent, so no spot or buoy pairs): no line for it.
+    # Oregon's NWPS column is its buoys, not its spots against NWPS at the buoy.
+    rows = [_row("d", "Oregon", 1, 60, 0.2, points=5),
+            _row("d", "Oregon", 1, 40, -0.3, kind="spot_model", source="nwps", points=4),
+            _row("d", "Texas", 1, 30, -0.3, kind="spot_model", source="nwps", points=3)]
+    assert R.coverage_table(rows).splitlines()[2:] == ["| Oregon | 5 / 60 |  |  |"]
+
+
+def test_buoy_ranking_leaves_out_the_spots():
+    # A spot's own row against NWPS at its buoy is source nwps with a point too: not a buoy.
+    rows = [_row("d", "Oregon", 2, 20, 0.4, source="nwps", point="46050"),
+            _row("d", "Oregon", 2, 30, 0.0, kind="spot_model", source="nwps", point="dania-beach-pier"),
+            _row("d", "Oregon", 2, 30, 0.0, kind="spot", source="spot", point="ponce-inlet")]
+    best, worst = R.buoy_ranking(rows, "nwps")
+    assert [b[0] for b in best] == ["46050"] and [w[0] for w in worst] == ["46050"]
+
+
+def _gap_rows():
+    # Day 1 wave height. Spot minus NWPS at the buoy: a -0.5 (20), b +0.7 (30), c -0.7 (25), d -2.0
+    # but only 19 pairs, e +3.0 on day 2. Spot a against its buoy over two days: 10 at -1.0 and 10
+    # at -0.6, so -0.8 (20). NWPS at 46050 against 46050: -0.3 (24); its WAVEWATCH III row and
+    # day-2 row must not be used. A spot_model region row (point '') is not a spot.
+    return [_row("d1", "Oregon", 1, 20, -0.5, kind="spot_model", source="nwps", point="a"),
+            _row("d1", "Oregon", 1, 30, 0.7, kind="spot_model", source="nwps", point="b"),
+            _row("d1", "Texas", 1, 25, -0.7, kind="spot_model", source="nwps", point="c"),
+            _row("d1", "Texas", 1, 19, -2.0, kind="spot_model", source="nwps", point="d"),
+            _row("d1", "Texas", 2, 40, 3.0, kind="spot_model", source="nwps", point="e"),
+            _row("d1", "Oregon", 1, 50, 9.0, kind="spot_model", source="nwps"),
+            _row("d1", "Oregon", 1, 10, -1.0, kind="spot", source="spot", point="a"),
+            _row("d2", "Oregon", 1, 10, -0.6, kind="spot", source="spot", point="a"),
+            _row("d1", "Oregon", 1, 24, -0.3, source="nwps", point="46050"),
+            _row("d1", "Oregon", 1, 24, 5.0, source="ww3", point="46050"),
+            _row("d1", "Oregon", 2, 24, 4.0, source="nwps", point="46050")]
+
+
+GAP_ROSTER = {"a": {"buoy_id": "46050", "km": 6.5, "node_m": 1551},
+              "b": {"buoy_id": "46050", "km": 25.0, "node_m": None}}
+
+
+def test_spot_gaps_largest_first():
+    gaps = R.spot_gaps(_gap_rows(), GAP_ROSTER, k=3)
+    # |0.7| twice: b before c by slug; then a (0.5). d too few pairs; e another lead day.
+    assert [g["slug"] for g in gaps] == ["b", "c", "a"]
+    b, c, a = gaps
+    assert (b["region"], b["gap"]["n"], b["vs_buoy"]["n"], b["nwps_vs_buoy"]["n"]) == ("Oregon", 30, 0, 24)
+    assert math.isclose(b["gap"]["bias"], 0.7) and math.isclose(b["nwps_vs_buoy"]["bias"], -0.3)
+    assert (c["region"], c.get("buoy_id"), c["nwps_vs_buoy"]["n"]) == ("Texas", None, 0)
+    assert math.isclose(a["vs_buoy"]["bias"], -0.8) and a["vs_buoy"]["n"] == 20
+    assert [g["slug"] for g in R.spot_gaps(_gap_rows(), GAP_ROSTER, k=2)] == ["b", "c"]
+    assert R.GAP_K == 20 and R.GAP_LEAD_DAY == 1 and R.GAP_MIN_N == 20
+
+
+def test_gap_table():
+    lines = R.gap_table(R.spot_gaps(_gap_rows(), GAP_ROSTER, k=3)).splitlines()
+    assert lines[0] == ("| Spot | Region | Buoy | Spot − NWPS at buoy (n) | Spot − buoy (n) | "
+                        "NWPS at buoy − buoy (n) | Sample point from spot (m) |")
+    assert lines[2:] == [
+        "| b | Oregon | 46050 (25.0 km) | 0.70 (30) |  | -0.30 (24) | – |",
+        "| c | Texas | – | -0.70 (25) |  |  | – |",
+        "| a | Oregon | 46050 (6.5 km) | -0.50 (20) | -0.80 (20) | -0.30 (24) | 1551 |"]
+
+
+def test_spot_roster_keys_are_the_database_slugs():
+    roster = R.spot_roster([
+        {"name": "Ponce Inlet", "nearest_buoy_id": "41070", "nearest_buoy_dist_km": 23.4,
+         "nwps_node_distance_m": 820},
+        {"name": "Somewhere Else", "nearest_buoy_id": None},
+        {"name": None}])
+    assert roster == {"ponce-inlet": {"buoy_id": "41070", "km": 23.4, "node_m": 820},
+                      "somewhere-else": {"buoy_id": None, "km": None, "node_m": None}}
+
+
 @pytest.mark.parametrize("lead, b", [(0, 0), (23, 0), (24, 1), (47, 1), (48, 2), (72, 2)])
 def test_partition_lead_bins(lead, b):
     assert R.pa_lead_bin(lead) == b
@@ -139,26 +212,40 @@ def test_build_and_csvs(tmp_path):
     rows = [_row("2026-11-10", "Oregon", 1, 60, 0.2, points=5),
             _row("2026-11-10", "Oregon", 2, 25, 0.5, point="46050"),
             _row("2026-11-10", "Oregon", 1, 60, -0.1, kind="spot", source="spot"),
-            _row("2026-11-10", "Oregon", 1, 60, 5.0, measure="dp", f=250.0, o=245.0)]
+            _row("2026-11-10", "Oregon", 1, 60, 5.0, measure="dp", f=250.0, o=245.0),
+            # per-spot rows and the spot_model kind: in none of the tables above, nor buoys.csv
+            _row("2026-11-10", "Oregon", 1, 40, -0.3, kind="spot_model", source="nwps", points=4),
+            _row("2026-11-10", "Oregon", 2, 25, -0.3, kind="spot_model", source="nwps", point="a"),
+            _row("2026-11-10", "Oregon", 1, 25, -0.4, kind="spot_model", source="nwps", point="a"),
+            _row("2026-11-10", "Oregon", 1, 22, -0.2, kind="spot", source="spot", point="a")]
     pa = Totals()
     for _ in range(50):
         pa.add(("pa", "nwps", "", "", 0, "hs"), "okx/44025", 1.2, 1.0, 0.2)
         pa.add(("pa", "nwps", "okx/44025", "", 0, "hs"), "okx/44025", 1.2, 1.0, 0.2)
-    summary, full = R.build(rows, pa, date(2026, 11, 9), date(2026, 11, 16))
+    summary, full = R.build(rows, pa, date(2026, 11, 9), date(2026, 11, 16),
+                            {"a": {"buoy_id": "46050", "km": 6.5, "node_m": 1551}})
     assert summary.startswith("## Accuracy scoreboard: 2026-11-09 to 2026-11-15 (UTC)")
     assert "| Oregon | 5 / 60 |  | 1 / 60 |" in summary                      # coverage
     assert "| Oregon | 0.20 / 0.20 (60) |" in summary                        # ww3 height
     assert "| Spots against their buoy (within 25 km) | Day 1 |" not in summary  # no spot period
     assert "| WAVEWATCH III at the buoys | Day 1 | 5 | 5 | 5 | 60 |" in summary   # direction
     assert "| 46050 | Oregon | 0.50 | 0.50 | 0.50 | 25 |" in summary          # best and worst
+    assert "| a | Oregon |" not in summary.split("### Spots furthest")[0]      # no spot as a buoy
+    assert "### Spots furthest from NWPS at their buoy: top 20, day-1" in summary
+    # a: day 1 spot - NWPS -0.40 (25); spot - buoy -0.20 (22); no NWPS row at 46050 on day 1
+    assert "| a | Oregon | 46050 (6.5 km) | -0.40 (25) | -0.20 (22) |  | 1551 |" in summary
     assert "| Wave height (m) | 0-23 h | 0.20 | 0.20 | 0.20 | – | 50 |" in summary  # r undefined
     assert "### okx/44025" in full and "### okx/44025" not in summary
     R.write_csvs(tmp_path, rows, pa)
     acc = list(csv.DictReader(open(tmp_path / "accuracy.csv")))
     assert {(r["kind"], r["source"], r["lead_day"], r["measure"], r["n"], r["bias"]) for r in acc} == {
         ("buoy", "ww3", "1", "hs", "60", "0.2000"), ("spot", "spot", "1", "hs", "60", "-0.1000"),
-        ("buoy", "ww3", "1", "dp", "60", "5.0000")}
-    assert list(csv.DictReader(open(tmp_path / "buoys.csv")))[0]["buoy"] == "46050"
+        ("buoy", "ww3", "1", "dp", "60", "5.0000"), ("spot_model", "nwps", "1", "hs", "40", "-0.3000")}
+    assert [r["buoy"] for r in csv.DictReader(open(tmp_path / "buoys.csv"))] == ["46050"]
+    spots = list(csv.DictReader(open(tmp_path / "spots.csv")))
+    assert [(r["spot"], r["region"], r["lead_day"], r["against"], r["n"], r["bias"]) for r in spots] == [
+        ("a", "Oregon", "1", "buoy", "22", "-0.2000"), ("a", "Oregon", "1", "nwps_at_buoy", "25", "-0.4000"),
+        ("a", "Oregon", "2", "nwps_at_buoy", "25", "-0.3000")]
     pls = list(csv.DictReader(open(tmp_path / "partition_lead_skill.csv")))
     assert [(r["zone"], r["lead_bin"], r["n"]) for r in pls] == [("all", "0-23 h", "50"),
                                                                ("okx/44025", "0-23 h", "50")]

@@ -1,4 +1,4 @@
-"""Score the forecasts against the buoys, one UTC day at a time, into accuracy_daily (migration 031).
+"""Score the forecasts against the buoys, one UTC day at a time, into accuracy_daily (migrations 031, 032).
 
     python -m pipeline.accuracy_score [--days 3] [--end YYYY-MM-DD] [--no-catch-up]
 
@@ -21,14 +21,22 @@ the measure (buoy_observations):
                SPOT_BUOY_MAX_KM. Lead days 1-3 from forecast_leads; lead day 0 from forecasts,
                at the same local hours, when its NWPS cycle puts it within a day of the hour.
                Secondary: a spot is nearshore and its buoy is not.
+  kind 'spot_model'  the same spot forecasts (height only) against NWPS AT THAT BUOY
+               (model_at_buoys, source nwps, the same lead day, at the 3-hourly time nearest the
+               spot's hour, within MODEL_WINDOW, the earlier on a tie). No buoy reading is needed.
+               Spot forecast and NWPS at the buoy come from the same model, so the gap between
+               them is what the spot's sample point and the spot's own processing add; with the
+               'buoy' rows (NWPS at the buoy against the buoy) it splits a spot's error in two.
 Measures: hs (total height), swell_hs, tp (peak period), dp (direction; only where the buoy reads
 at least DIR_MIN_HS m, and the error is the signed angle between them). WAVEWATCH III has no
 total-swell field, so its swell_hs is the three swell partitions combined, sqrt(s1² + s2² + s3²).
 
 TOTALS. One accuracy_daily row per (day, kind, source, region, point, lead day, measure) holds n
 and the sums the report needs (see the migration). point '' is the region; a buoy id is that buoy
-alone (kind 'buoy', hs only), for the report's best and worst buoys. A buoy's region is the region
-of the spots that use it, the most common one.
+alone (kind 'buoy', hs only), for the report's best and worst buoys; a spot's slug is that spot
+alone (kinds 'spot' and 'spot_model', hs only, every lead day), for the report's largest gaps
+(migration 032: at most about 2,400 rows a day, about 0.13 GB a year more). A buoy's region is the
+region of the spots that use it, the most common one.
 """
 from __future__ import annotations
 
@@ -47,6 +55,8 @@ from .config import DEFAULT_ENRICHED_OUTPUT
 log = logging.getLogger("pipeline.accuracy_score")
 
 OBS_WINDOW = timedelta(minutes=30)
+# NWPS at the buoys is every 3 hours: every spot hour has a model time within 90 minutes.
+MODEL_WINDOW = timedelta(minutes=90)
 SPOT_BUOY_MAX_KM = 25.0
 DIR_MIN_HS = 0.5
 MEASURES = ("hs", "swell_hs", "tp", "dp")
@@ -179,13 +189,64 @@ def score_buoys(totals: Totals, model_rows: list[dict], obs: dict, buoy_region: 
 
 
 def score_spots(totals: Totals, lead_rows: list[dict], spot_info: dict, obs: dict) -> None:
-    """lead_rows: forecast_leads rows, and lead day 0 rows built from forecasts (lead_day set)."""
+    """lead_rows: forecast_leads rows, and lead day 0 rows built from forecasts (lead_day set).
+    Region totals for every measure, and the spot alone (point = its slug) for height."""
     for r in lead_rows:
         info = spot_info.get(r["spot_id"])
         if not info:
             continue
-        _pair(totals, "spot", "spot", info["region"], str(r["spot_id"]), int(r["lead_day"]), r,
-              obs, info["buoy_id"], _ts(r["valid_time"]), per_point=False)
+        _pair(totals, "spot", "spot", info["region"], info["slug"], int(r["lead_day"]), r,
+              obs, info["buoy_id"], _ts(r["valid_time"]), per_point=True)
+
+
+def index_model(model_rows: list[dict], source: str = "nwps"):
+    """{(buoy id, lead day): (sorted times, heights in that order)} from model_at_buoys rows of
+    *source* that have a height."""
+    by: dict[tuple, list[tuple[datetime, float]]] = defaultdict(list)
+    for r in model_rows:
+        if r.get("source") != source or r.get("hs") is None:
+            continue
+        by[(str(r["buoy_id"]), int(r["lead_day"]))].append((_ts(r["valid_time"]), float(r["hs"])))
+    out = {}
+    for k, items in by.items():
+        items.sort(key=lambda x: x[0])
+        out[k] = ([t for t, _ in items], [v for _, v in items])
+    return out
+
+
+def nearest_model(index: dict, buoy_id: str, lead_day: int, t: datetime):
+    """The model height at the buoy for *lead_day* nearest *t* within MODEL_WINDOW (the earlier on
+    a tie), or None."""
+    key = (buoy_id, lead_day)
+    if key not in index:
+        return None
+    times, values = index[key]
+    lo = bisect.bisect_left(times, t - MODEL_WINDOW)
+    hi = bisect.bisect_right(times, t + MODEL_WINDOW)
+    best = None
+    for j in range(lo, hi):
+        dt = abs(times[j] - t)
+        if best is None or dt < best[0]:
+            best = (dt, values[j])
+    return None if best is None else best[1]
+
+
+def score_spot_model(totals: Totals, lead_rows: list[dict], spot_info: dict, model_index: dict) -> None:
+    """Spot height against NWPS at the spot's buoy (index_model), same lead day: kind
+    'spot_model', source 'nwps'; f is the spot, o is NWPS at the buoy. Region total and the spot
+    alone."""
+    for r in lead_rows:
+        info = spot_info.get(r["spot_id"])
+        if not info or r.get("hs") is None:
+            continue
+        ld = int(r["lead_day"])
+        o = nearest_model(model_index, info["buoy_id"], ld, _ts(r["valid_time"]))
+        if o is None:
+            continue
+        f = float(r["hs"])
+        e = f - o
+        for point in ("", info["slug"]):
+            totals.add(("spot_model", "nwps", info["region"], point, ld, "hs"), info["slug"], f, o, e)
 
 
 def day0_rows(forecast_rows: list[dict], zones: dict, local_hours=None) -> list[dict]:
@@ -225,8 +286,9 @@ def buoy_regions(spots: list[dict]) -> dict[str, str]:
 
 
 def spot_infos(spots: list[dict], spot_ids: dict) -> tuple[dict, dict]:
-    """({spot id: {region, buoy_id}} for spots whose buoy is within SPOT_BUOY_MAX_KM,
-    {spot id: time zone} for every spot)."""
+    """({spot id: {region, buoy_id, slug}} for spots whose buoy is within SPOT_BUOY_MAX_KM,
+    {spot id: time zone} for every spot). The slug is the spot's slug in the database."""
+    from .db_import import _slugify
     info, zones = {}, {}
     for s in spots:
         sid = spot_ids.get(s["name"])
@@ -235,7 +297,8 @@ def spot_infos(spots: list[dict], spot_ids: dict) -> tuple[dict, dict]:
         zones[sid] = s.get("time_zone")
         km = s.get("nearest_buoy_dist_km")
         if s.get("nearest_buoy_id") and km is not None and float(km) <= SPOT_BUOY_MAX_KM:
-            info[sid] = {"region": s.get("region_hint") or "Unknown", "buoy_id": str(s["nearest_buoy_id"])}
+            info[sid] = {"region": s.get("region_hint") or "Unknown", "buoy_id": str(s["nearest_buoy_id"]),
+                         "slug": _slugify(s["name"])}
     return info, zones
 
 
@@ -311,16 +374,22 @@ def score_day(client, day: date, spots: list[dict], spot_ids: dict, scored_at: s
         client, "buoy_observations", "buoy_id,observed_at,hs,tp,dp,swell_hs", "observed_at",
         start - OBS_WINDOW, end + OBS_WINDOW, ("buoy_id", "observed_at")))
     totals = Totals()
-    model = fetch_all(client, "model_at_buoys",
-                      "buoy_id,valid_time,source,lead_day,hs,tp,dp,swell_hs,swell_1_hs,swell_2_hs,swell_3_hs",
-                      "valid_time", start, end, ("buoy_id", "valid_time", "source", "lead_day"))
+    # MODEL_WINDOW either side, for the spot hours near midnight (spot_model); the buoy rows score
+    # only the day's own hours.
+    wide = fetch_all(client, "model_at_buoys",
+                     "buoy_id,valid_time,source,lead_day,hs,tp,dp,swell_hs,swell_1_hs,swell_2_hs,swell_3_hs",
+                     "valid_time", start - MODEL_WINDOW, end + MODEL_WINDOW,
+                     ("buoy_id", "valid_time", "source", "lead_day"))
+    model = [r for r in wide if start <= _ts(r["valid_time"]) < end]
     score_buoys(totals, model, obs, buoy_regions(spots))
     info, zones = spot_infos(spots, spot_ids)
     leads = fetch_all(client, "forecast_leads", "spot_id,valid_time,lead_day,hs,tp,dp,swell_hs",
                       "valid_time", start, end, ("spot_id", "valid_time", "lead_day"))
     # Only the paired spots: score_spots drops every other spot's rows (#338).
     now = fetch_day0_forecasts(client, info.keys(), start, end)
-    score_spots(totals, leads + day0_rows(now, zones), info, obs)
+    spot_rows = leads + day0_rows(now, zones)
+    score_spots(totals, spot_rows, info, obs)
+    score_spot_model(totals, spot_rows, info, index_model(wide))
     rows = totals.rows(day, scored_at)
     log.info("accuracy score %s: %d model rows, %d lead rows, %d buoy readings -> %d totals",
              day, len(model), len(leads), sum(len(v[0]) for v in obs.values()), len(rows))

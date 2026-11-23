@@ -2,7 +2,8 @@ name: accuracy-score
 
 # The accuracy scoreboard's nightly scoring (pipeline/accuracy_score.py): pairs the forecasts the
 # full pipeline captured (forecast_leads, model_at_buoys; migration 030) and the spot nowcasts with
-# the buoy readings, and writes the daily totals to accuracy_daily (migration 031). Scores the
+# the buoy readings, and the spot forecasts with NWPS at each spot's buoy, and writes the daily
+# totals, per region and per spot, to accuracy_daily (migrations 031, 032). Scores the
 # three complete UTC days before today, and before them every earlier day with no rows at all
 # (catch-up, so a night with no run leaves no hole); re-scoring a day overwrites it, so a reading
 # that arrived late is counted the next night. After the 01:45 UTC full run; reads only, apart
