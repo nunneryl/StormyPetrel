@@ -2,18 +2,23 @@
 
     python -m pipeline.accuracy_report [--days 7] [--end YYYY-MM-DD] [--out accuracy-report]
 
-Weekly (.github/workflows/accuracy-report.yml). Reads accuracy_daily (migration 031, written
-nightly by pipeline/accuracy_score.py) for the --days UTC days before --end, and partition_archive
+Weekly (.github/workflows/accuracy-report.yml). Reads accuracy_daily (migrations 031 and 032,
+written nightly by pipeline/accuracy_score.py) for the --days UTC days before --end, the spot
+roster (pipeline/spots_enriched.json) for each spot's buoy, and partition_archive
 (scripts/archive_partitions.py) for the same days. Writes, under --out:
   report.md               every table below, in full;
   accuracy.csv            the week's figures per kind, source, region, lead day and measure;
   buoys.csv               the week's height figures per buoy, lead day and source;
+  spots.csv               the week's height figures per spot and lead day: against its buoy, and
+                          against NWPS at that buoy;
   partition_lead_skill.csv  NWPS at the partition-archive buoys, per zone, lead and measure;
 and appends the summary tables to $GITHUB_STEP_SUMMARY (printed when it is unset).
 
 THE TABLES. Coverage by region; wave height by region and lead day for each source (WAVEWATCH III
 and NWPS at the buoys, spots against their buoy within 25 km); period and direction by source and
-lead day; the 10 best and worst buoys by day-2 height error; and NWPS's lead skill at the
+lead day; the 10 best and worst buoys by day-2 height error; the GAP_K spots whose day-1 height
+sits furthest from NWPS at their own buoy (spot minus NWPS at the buoy, beside spot minus the buoy
+and NWPS at the buoy minus the buoy, at least GAP_MIN_N pairs); and NWPS's lead skill at the
 partition-archive buoys, which the archive has kept since August, so it fills from the first run.
 Figures: bias (forecast minus observed), MAE, RMSE, scatter index (RMSE over the mean observed),
 correlation, and n. A cell with fewer than MIN_N pairs shows only its n; a buoy needs MIN_N_BUOY.
@@ -41,6 +46,9 @@ MIN_N = 50
 MIN_N_BUOY = 20
 RANK_LEAD_DAY = 2
 RANK_K = 10
+GAP_LEAD_DAY = 1
+GAP_K = 20
+GAP_MIN_N = 20      # about 5 hours a day for 7 days is 35 pairs a spot a lead day
 SOURCES = (("buoy", "ww3", "WAVEWATCH III at the buoys"), ("buoy", "nwps", "NWPS at the buoys"),
            ("spot", "spot", "Spots against their buoy (within 25 km)"))
 MEASURE_NAMES = {"hs": "Wave height (m)", "swell_hs": "Swell height (m)", "tp": "Peak period (s)",
@@ -108,15 +116,17 @@ def region_rows(rows):
 
 
 def coverage_table(rows: list[dict]) -> str:
-    """Per region and source: points (the largest daily count) and wave-height pairs, all leads."""
-    agg = combine([r for r in region_rows(rows) if r["measure"] == "hs"],
-                  lambda r: (r["region"], r["source"]))
+    """Per region and source: points (the largest daily count) and wave-height pairs, all leads.
+    The three SOURCES only (kind 'spot_model' is NWPS too, but not at the buoys)."""
+    agg = combine([r for r in region_rows(rows) if r["measure"] == "hs"
+                   and (r["kind"], r["source"]) in {(k, s) for k, s, _ in SOURCES}],
+                  lambda r: (r["region"], r["kind"], r["source"]))
     regions = sorted({k[0] for k in agg})
     body = []
     for reg in regions:
         line = [reg]
-        for _, src, _ in SOURCES:
-            s = agg.get((reg, src))
+        for kind, src, _ in SOURCES:
+            s = agg.get((reg, kind, src))
             line.append(f"{s['points']} / {s['n']}" if s else "")
         body.append(line)
     return md_table(["Region", "WW3 buoys / pairs", "NWPS buoys / pairs", "Spots / pairs"], body)
@@ -154,8 +164,8 @@ def buoy_ranking(rows: list[dict], source: str, lead_day: int = RANK_LEAD_DAY,
                  k: int = RANK_K) -> tuple[list[tuple], list[tuple]]:
     """(best, worst): up to k (buoy, region, stats) by height MAE at *lead_day*, n >= MIN_N_BUOY;
     ties by buoy id."""
-    agg = combine([r for r in rows if r["point"] and r["source"] == source and
-                   int(r["lead_day"]) == lead_day and r["measure"] == "hs"],
+    agg = combine([r for r in rows if r["kind"] == "buoy" and r["point"] and r["source"] == source
+                   and int(r["lead_day"]) == lead_day and r["measure"] == "hs"],
                   lambda r: (r["point"], r["region"]))
     ranked = sorted(((p, reg, stats(s)) for (p, reg), s in agg.items() if s["n"] >= MIN_N_BUOY),
                     key=lambda x: (x[2]["mae"], x[0]))
@@ -167,6 +177,64 @@ def ranking_table(entries: list[tuple]) -> str:
     return md_table(["Buoy", "Region", "Bias", "MAE", "RMSE", "n"],
                     [[p, reg, _f(st["bias"]), _f(st["mae"]), _f(st["rmse"]), str(st["n"])]
                      for p, reg, st in entries])
+
+
+def spot_roster(spots: list[dict]) -> dict[str, dict]:
+    """{slug: {buoy_id, km, node_m}} from the enriched roster: the spot's nearest buoy, its
+    distance, and how far the spot's NWPS sample point is from the spot (m)."""
+    from .db_import import _slugify
+    out = {}
+    for s in spots:
+        if not s.get("name"):
+            continue
+        out[_slugify(s["name"])] = {"buoy_id": str(s["nearest_buoy_id"]) if s.get("nearest_buoy_id") else None,
+                                    "km": s.get("nearest_buoy_dist_km"),
+                                    "node_m": s.get("nwps_node_distance_m")}
+    return out
+
+
+def spot_gaps(rows: list[dict], roster: dict, lead_day: int = GAP_LEAD_DAY, k: int = GAP_K,
+              min_n: int = GAP_MIN_N) -> list[dict]:
+    """Up to k spots with the largest |spot minus NWPS at its buoy| height bias at *lead_day*
+    (kind 'spot_model', at least *min_n* pairs), largest first, ties by slug. Each: slug, region,
+    gap (stats), vs_buoy (the spot against its buoy, kind 'spot'), nwps_vs_buoy (NWPS at that buoy
+    against the buoy, kind 'buoy', from the roster's buoy), and the roster entry. Each figure has
+    its own pairs, so the gap and the two others need not add up exactly."""
+    def pick(kind, source):
+        return combine([r for r in rows if (r["kind"], r["source"], r["measure"]) == (kind, source, "hs")
+                        and r["point"] and int(r["lead_day"]) == lead_day], lambda r: r["point"])
+    model, spot, buoy = pick("spot_model", "nwps"), pick("spot", "spot"), pick("buoy", "nwps")
+    region = {r["point"]: r["region"] for r in rows if r["kind"] == "spot_model" and r["point"]}
+    out = []
+    for slug, s in model.items():
+        st = stats(s)
+        if st["n"] < min_n:
+            continue
+        info = roster.get(slug) or {}
+        bid = info.get("buoy_id")
+        out.append({"slug": slug, "region": region[slug], "gap": st,
+                    "vs_buoy": stats(spot[slug]) if slug in spot else stats({"n": 0}),
+                    "nwps_vs_buoy": stats(buoy[bid]) if bid in buoy else stats({"n": 0}),
+                    **info})
+    out.sort(key=lambda g: (-abs(g["gap"]["bias"]), g["slug"]))
+    return out[:k]
+
+
+def _bias_n(st: dict) -> str:
+    return f"{_f(st['bias'])} ({st['n']})" if st["n"] else ""
+
+
+def gap_table(gaps: list[dict]) -> str:
+    body = []
+    for g in gaps:
+        buoy = g.get("buoy_id") or "–"
+        if g.get("km") is not None:
+            buoy += f" ({float(g['km']):.1f} km)"
+        node = "–" if g.get("node_m") is None else f"{float(g['node_m']):.0f}"
+        body.append([g["slug"], g["region"], buoy, _bias_n(g["gap"]), _bias_n(g["vs_buoy"]),
+                     _bias_n(g["nwps_vs_buoy"]), node])
+    return md_table(["Spot", "Region", "Buoy", "Spot − NWPS at buoy (n)", "Spot − buoy (n)",
+                     "NWPS at buoy − buoy (n)", "Sample point from spot (m)"], body)
 
 
 # --------------------------------------------------------------------------- #
@@ -236,8 +304,10 @@ def partition_table(t: Totals, zone: str = "") -> str:
 # The report                                                                   #
 # --------------------------------------------------------------------------- #
 
-def build(rows: list[dict], pa: Totals, start: date, end: date) -> tuple[str, str]:
-    """(summary markdown, full report markdown)."""
+def build(rows: list[dict], pa: Totals, start: date, end: date,
+          roster: dict | None = None) -> tuple[str, str]:
+    """(summary markdown, full report markdown). *roster*: spot_roster(), for the gap table's
+    buoys and sample points."""
     head = (f"## Accuracy scoreboard: {start.isoformat()} to {(end - timedelta(days=1)).isoformat()}"
             f" (UTC)\n\nCells: bias / MAE (n), forecast minus observed. Cells with fewer than "
             f"{MIN_N} pairs show only n.\n")
@@ -251,6 +321,9 @@ def build(rows: list[dict], pa: Totals, start: date, end: date) -> tuple[str, st
         parts += [f"\n### {label}: best {RANK_K} buoys, day-{RANK_LEAD_DAY} wave height MAE "
                   f"(at least {MIN_N_BUOY} pairs)\n", ranking_table(best),
                   f"\n### {label}: worst {RANK_K} buoys\n", ranking_table(worst)]
+    parts += [f"\n### Spots furthest from NWPS at their buoy: top {GAP_K}, day-{GAP_LEAD_DAY} wave "
+              f"height bias, m (at least {GAP_MIN_N} pairs)\n",
+              gap_table(spot_gaps(rows, roster or {}))]
     parts += ["\n### NWPS lead skill at the partition-archive buoys (all zones)\n",
               partition_table(pa)]
     summary = "\n".join(parts) + "\n"
@@ -263,7 +336,11 @@ def build(rows: list[dict], pa: Totals, start: date, end: date) -> tuple[str, st
              f"pairs where the buoy reads at least {DIR_MIN_HS} m.",
              "- WAVEWATCH III swell height is its three swell partitions combined.",
              "- Spots are nearshore and their buoys are not: read the spot rows for change over "
-             "time and lead, not as the model's error."]
+             "time and lead, not as the model's error.",
+             "- Spots furthest from NWPS at their buoy: the spot forecast against NWPS at the "
+             "spot's nearest buoy (same lead day, nearest 3-hourly time). Both come from NWPS, so "
+             "the gap is what the spot's sample point and processing add. Each column has its own "
+             "pairs, so they need not add up exactly."]
     return summary, "\n".join(full) + "\n"
 
 
@@ -277,14 +354,23 @@ def write_csvs(out: Path, rows: list[dict], pa: Totals) -> None:
         for k, s in sorted(agg.items()):
             st = stats(s)
             w.writerow([*k, st["n"], s["points"], *(_f(st[c], 4) for c in ("bias", "mae", "rmse", "si", "r"))])
-    agg = combine([r for r in rows if r["point"]], lambda r: (r["source"], r["point"], r["region"],
-                                                               int(r["lead_day"])))
+    agg = combine([r for r in rows if r["kind"] == "buoy" and r["point"]],
+                  lambda r: (r["source"], r["point"], r["region"], int(r["lead_day"])))
     with open(out / "buoys.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["source", "buoy", "region", "lead_day", "n", "bias", "mae", "rmse"])
         for k, s in sorted(agg.items()):
             st = stats(s)
             w.writerow([*k, st["n"], *(_f(st[c], 4) for c in ("bias", "mae", "rmse"))])
+    agg = combine([r for r in rows if r["kind"] in ("spot", "spot_model") and r["point"]],
+                  lambda r: (r["point"], r["region"], int(r["lead_day"]), r["kind"]))
+    with open(out / "spots.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["spot", "region", "lead_day", "against", "n", "bias", "mae", "rmse"])
+        for (spot, region, ld, kind), s in sorted(agg.items()):
+            st = stats(s)
+            w.writerow([spot, region, ld, "buoy" if kind == "spot" else "nwps_at_buoy", st["n"],
+                        *(_f(st[c], 4) for c in ("bias", "mae", "rmse"))])
     with open(out / "partition_lead_skill.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["zone", "lead_bin", "measure", "n", "bias", "mae", "rmse", "r"])
@@ -317,7 +403,10 @@ def main(argv=None) -> int:
                      "valid_hour,wfo,buoy_id,spec_wvht,hs_total,spec_swh,hs_swell,spec_mwd,total_mean_dir",
                      "valid_hour", t0, t1, ("valid_hour", "wfo", "buoy_id"), eq={"source": "buoy"})
     pa = partition_skill(model, buoy)
-    summary, full = build(rows, pa, start, end)
+    import json
+    from .config import DEFAULT_ENRICHED_OUTPUT
+    roster = spot_roster(json.loads(Path(DEFAULT_ENRICHED_OUTPUT).read_text(encoding="utf-8")))
+    summary, full = build(rows, pa, start, end, roster)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.md").write_text(full, encoding="utf-8")

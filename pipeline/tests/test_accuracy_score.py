@@ -91,10 +91,18 @@ def test_a_buoys_region_is_the_commonest_among_its_spots():
 
 def test_spot_infos_take_buoys_within_25_km():
     info, zones = S.spot_infos(SPOTS, IDS)
-    assert info == {1: {"region": "Oregon", "buoy_id": "46050"},
-                    2: {"region": "Oregon", "buoy_id": "46050"}}      # C is 25.1 km; D none; E no id
+    assert info == {1: {"region": "Oregon", "buoy_id": "46050", "slug": "a"},
+                    2: {"region": "Oregon", "buoy_id": "46050", "slug": "b"}}   # C 25.1 km; D none; E no id
     assert zones == {1: "America/Los_Angeles", 2: "America/Los_Angeles",
                      3: "America/Los_Angeles", 4: "America/Los_Angeles"}
+
+
+def test_a_spots_point_is_its_database_slug():
+    # db_import._slugify: lowercase, every run of other characters one hyphen, ends trimmed.
+    info, _ = S.spot_infos([{"name": "Dania Beach Pier (North)", "region_hint": "Florida",
+                             "nearest_buoy_id": "41122", "nearest_buoy_dist_km": 6.5}],
+                           {"Dania Beach Pier (North)": 7})
+    assert info[7]["slug"] == "dania-beach-pier-north"
 
 
 def test_day0_rows_are_the_scoreboard_hours_within_a_day_of_their_cycle():
@@ -149,8 +157,72 @@ def test_score_spots_uses_the_spots_buoy_and_skips_far_ones():
     rows = [{"spot_id": 1, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 2, "hs": 1.0},
             {"spot_id": 3, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 2, "hs": 9.0}]   # 25.1 km
     S.score_spots(t, rows, info, BUOY_OBS)
-    assert list(t.sums) == [("spot", "spot", "Oregon", "", 2, "hs")]
+    # 1.0 against the 12:10 reading, 1.5: e = -0.5, for Oregon and for spot A alone.
+    assert list(t.sums) == [("spot", "spot", "Oregon", "", 2, "hs"), ("spot", "spot", "Oregon", "a", 2, "hs")]
     assert _approx(t.sums[("spot", "spot", "Oregon", "", 2, "hs")], n=1, sum_e=-0.5)
+    assert _approx(t.sums[("spot", "spot", "Oregon", "a", 2, "hs")], n=1, sum_e=-0.5)
+
+
+def test_score_spots_keeps_the_spot_alone_for_height_only():
+    t = S.Totals()
+    info, _ = S.spot_infos(SPOTS, IDS)
+    # 12:00, day 1: height 1.0 against 1.5, period 12 against 14, swell 1.0 against 1.2.
+    S.score_spots(t, [{"spot_id": 2, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 1, "hs": 1.0,
+                       "tp": 12.0, "swell_hs": 1.0}], info, BUOY_OBS)
+    assert set(t.sums) == {("spot", "spot", "Oregon", "", 1, "hs"), ("spot", "spot", "Oregon", "", 1, "tp"),
+                           ("spot", "spot", "Oregon", "", 1, "swell_hs"),
+                           ("spot", "spot", "Oregon", "b", 1, "hs")}
+    assert t.points[("spot", "spot", "Oregon", "b", 1, "hs")] == {"b"}
+
+
+NWPS_AT_B = [
+    {"buoy_id": "b", "valid_time": "2026-11-14T09:00:00Z", "source": "nwps", "lead_day": 1, "hs": 1.0},
+    {"buoy_id": "b", "valid_time": "2026-11-14T12:00:00Z", "source": "nwps", "lead_day": 1, "hs": 2.0},
+    {"buoy_id": "b", "valid_time": "2026-11-14T10:30:00Z", "source": "nwps", "lead_day": 1, "hs": None},
+    {"buoy_id": "b", "valid_time": "2026-11-14T11:50:00Z", "source": "ww3", "lead_day": 1, "hs": 9.0},
+    {"buoy_id": "b", "valid_time": "2026-11-14T12:00:00Z", "source": "nwps", "lead_day": 2, "hs": 5.0},
+]
+
+
+@pytest.mark.parametrize("buoy, lead, t, want", [
+    ("b", 1, "2026-11-14T10:30:00Z", 1.0),   # 90 min from 09:00 and 12:00: the earlier (10:30 has none)
+    ("b", 1, "2026-11-14T11:00:00Z", 2.0),   # 12:00 is 60 min, 09:00 120
+    ("b", 1, "2026-11-14T11:45:00Z", 2.0),   # ww3 at 11:50 is nearer but not NWPS
+    ("b", 1, "2026-11-14T13:30:00Z", 2.0),   # 90 min exactly: inside
+    ("b", 1, "2026-11-14T13:31:00Z", None),  # 91 min
+    ("b", 1, "2026-11-14T07:29:00Z", None),  # 91 min before 09:00
+    ("b", 2, "2026-11-14T12:00:00Z", 5.0),   # its own lead day, not day 1's 2.0
+    ("b", 3, "2026-11-14T12:00:00Z", None),  # no day 3
+    ("x", 1, "2026-11-14T12:00:00Z", None),  # no such buoy
+])
+def test_nearest_model(buoy, lead, t, want):
+    assert S.nearest_model(S.index_model(NWPS_AT_B), buoy, lead, _t(t)) == want
+
+
+def test_score_spot_model_by_hand():
+    t = S.Totals()
+    info, _ = S.spot_infos(SPOTS, IDS)
+    model = S.index_model([
+        {"buoy_id": "46050", "valid_time": "2026-11-14T12:00:00Z", "source": "nwps", "lead_day": 1, "hs": 2.0},
+        {"buoy_id": "46050", "valid_time": "2026-11-14T15:00:00Z", "source": "nwps", "lead_day": 1, "hs": 2.4},
+        {"buoy_id": "46050", "valid_time": "2026-11-14T12:00:00Z", "source": "nwps", "lead_day": 0, "hs": 1.0},
+    ])
+    S.score_spot_model(t, [
+        {"spot_id": 1, "valid_time": "2026-11-14T13:00:00Z", "lead_day": 1, "hs": 1.5},   # 12:00: 2.0, e -0.5
+        {"spot_id": 1, "valid_time": "2026-11-14T14:00:00Z", "lead_day": 1, "hs": 1.6},   # 15:00: 2.4, e -0.8
+        {"spot_id": 1, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 0, "hs": 1.2},   # 1.0, e +0.2
+        {"spot_id": 1, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 2, "hs": 1.0},   # no day 2
+        {"spot_id": 1, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 1, "hs": None},  # no height
+        {"spot_id": 3, "valid_time": "2026-11-14T12:00:00Z", "lead_day": 1, "hs": 1.0},   # C, 25.1 km
+    ], info, model)
+    k = lambda point, ld: ("spot_model", "nwps", "Oregon", point, ld, "hs")
+    assert set(t.sums) == {k("", 1), k("a", 1), k("", 0), k("a", 0)}
+    for point in ("", "a"):
+        # day 1: f 1.5 + 1.6 = 3.1; o 2.0 + 2.4 = 4.4; fo 3.0 + 3.84 = 6.84; ee 0.25 + 0.64 = 0.89
+        assert _approx(t.sums[k(point, 1)], n=2, sum_f=3.1, sum_o=4.4, sum_fo=6.84, sum_e=-1.3,
+                       sum_abs_e=1.3, sum_ee=0.89)
+        assert _approx(t.sums[k(point, 0)], n=1, sum_f=1.2, sum_o=1.0, sum_e=0.2)
+        assert t.points[k(point, 1)] == {"a"}
 
 
 def test_totals_rows():
@@ -277,9 +349,38 @@ def test_score_day_end_to_end():
     got = {(r["kind"], r["source"], r["point"], r["lead_day"], r["measure"]): r["n"] for r in rows}
     assert got == {("buoy", "ww3", "", 1, "hs"): 1, ("buoy", "ww3", "46050", 1, "hs"): 1,
                    ("buoy", "ww3", "", 1, "swell_hs"): 1, ("buoy", "ww3", "", 1, "tp"): 1,
-                   ("buoy", "ww3", "", 1, "dp"): 1, ("spot", "spot", "", 3, "hs"): 1}
+                   ("buoy", "ww3", "", 1, "dp"): 1, ("spot", "spot", "", 3, "hs"): 1,
+                   ("spot", "spot", "a", 3, "hs"): 1}
     forecasts_q = [q for q in c.calls if q.table == "forecasts"][0]
     assert ("source", "=", "nwps") in forecasts_q.filters
+
+
+def test_score_day_spot_model_reaches_past_midnight_but_buoys_keep_their_day():
+    # Spot A, day 1 at 23:00Z on the 14th, 1.0 m. NWPS at 46050 day 1: 21:00Z 9.0 m (120 min) and
+    # 00:00Z on the 15th 1.6 m (60 min): the pair is 1.0 against 1.6, e = -0.6. The buoy reads at
+    # 00:05Z on the 15th, so the 00:00Z model row would pair with it if the buoy rows took the
+    # widened read: they must not (it is the 15th's). No reading within 30 min of 23:00Z: no spot row.
+    c = FakeClient({
+        "buoy_observations": [{"buoy_id": "46050", "observed_at": "2026-11-15T00:05:00+00:00", "hs": 1.5,
+                               "tp": None, "dp": None, "swell_hs": None}],
+        "model_at_buoys": [
+            {"buoy_id": "46050", "valid_time": "2026-11-14T21:00:00+00:00", "source": "nwps", "lead_day": 1,
+             "hs": 9.0, "tp": None, "dp": None, "swell_hs": None},
+            {"buoy_id": "46050", "valid_time": "2026-11-15T00:00:00+00:00", "source": "nwps", "lead_day": 1,
+             "hs": 1.6, "tp": None, "dp": None, "swell_hs": None},
+            {"buoy_id": "46050", "valid_time": "2026-11-15T03:00:00+00:00", "source": "nwps", "lead_day": 1,
+             "hs": 1.0, "tp": None, "dp": None, "swell_hs": None}],          # outside the read
+        "forecast_leads": [{"spot_id": 1, "valid_time": "2026-11-14T23:00:00+00:00", "lead_day": 1,
+                            "hs": 1.0, "tp": None, "dp": None, "swell_hs": None}],
+        "forecasts": [],
+    })
+    rows = S.score_day(c, date(2026, 11, 14), SPOTS, IDS, "now")
+    assert [(r["kind"], r["source"], r["point"], r["lead_day"], r["n"]) for r in rows] == [
+        ("spot_model", "nwps", "", 1, 1), ("spot_model", "nwps", "a", 1, 1)]
+    assert all(math.isclose(r["sum_e"], -0.6) and math.isclose(r["sum_o"], 1.6) for r in rows)
+    model_q = [q for q in c.calls if q.table == "model_at_buoys"][0]
+    assert ("valid_time", ">=", "2026-11-13T22:30:00Z") in model_q.filters
+    assert ("valid_time", "<", "2026-11-15T01:30:00Z") in model_q.filters
 
 
 # --------------------------------------------------------------------------- #
@@ -347,9 +448,11 @@ def _day_fixture():
 def test_day0_scores_by_hand():
     c = FakeClient(_day_fixture())
     rows = S.score_day(c, date(2026, 11, 14), SPOTS, IDS, "now")
-    assert [(r["kind"], r["region"], r["lead_day"], r["measure"], r["n"]) for r in rows] == [
-        ("spot", "Oregon", 0, "hs", 2)]
+    assert [(r["kind"], r["region"], r["point"], r["lead_day"], r["measure"], r["n"]) for r in rows] == [
+        ("spot", "Oregon", "", 0, "hs", 2), ("spot", "Oregon", "a", 0, "hs", 1),
+        ("spot", "Oregon", "b", 0, "hs", 1)]
     assert math.isclose(rows[0]["sum_e"], 0.4) and math.isclose(rows[0]["sum_abs_e"], 0.4)
+    assert math.isclose(rows[1]["sum_e"], 0.3) and math.isclose(rows[2]["sum_e"], 0.1)
     reads = [q for q in c.calls if q.table == "forecasts"]
     assert [q.filters[0] for q in reads] == [("spot_id", "in", [1, 2])]     # only A and B
     assert all(q.rng[0] == 0 for q in reads)
@@ -366,7 +469,7 @@ def test_day0_scores_identical_to_the_old_whole_day_read(monkeypatch):
         client, "forecasts", S.FORECAST_COLS, "valid_time", start, end, ("spot_id", "valid_time"),
         eq={"source": "nwps"}))
     old = S.score_day(FakeClient(_day_fixture()), date(2026, 11, 14), SPOTS, IDS, "now")
-    assert new == old and len(new) == 1
+    assert new == old and len(new) == 3
 
 
 def test_write_upserts_on_the_key():

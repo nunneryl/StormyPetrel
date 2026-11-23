@@ -1,7 +1,8 @@
 name: accuracy-report
 
 # The accuracy scoreboard's weekly report (pipeline/accuracy_report.py): the last seven UTC days of
-# accuracy_daily, and NWPS's lead skill from partition_archive. The tables go in this run's
+# accuracy_daily (with the 20 spots furthest from NWPS at their buoy), and NWPS's lead skill from
+# partition_archive. The tables go in this run's
 # summary; the full report and its CSVs are the run's artifact. Mondays, after the nightly
 # scoring (accuracy-score.yml, 04:47 UTC). Reads only.
 #

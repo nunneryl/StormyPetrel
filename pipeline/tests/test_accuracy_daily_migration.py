@@ -1,4 +1,5 @@
-"""Migration 031 on a real Postgres: accuracy_daily's shape, checks and the upsert re-scoring a day.
+"""Migrations 031 and 032 on a real Postgres: accuracy_daily's shape, checks (032 adds kind
+'spot_model') and the upsert re-scoring a day.
 
 Runs where TEST_DATABASE_URL is set (CI sets it, and there this file refuses to skip), in a database
 it creates and drops. See test_nwps_cycle_trigger.py for the pattern.
@@ -15,6 +16,7 @@ from pipeline.accuracy_score import SUMS, Totals
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 MIGRATION = os.path.join(ROOT, "pipeline", "migrations", "031_accuracy_daily.sql")
+MIGRATION_032 = os.path.join(ROOT, "pipeline", "migrations", "032_accuracy_daily_spot_model.sql")
 
 DB_URL = os.environ.get("TEST_DATABASE_URL")
 ON_CI = os.environ.get("GITHUB_ACTIONS") == "true"
@@ -42,9 +44,10 @@ def db():
     conn.autocommit = True
     try:
         with conn.cursor() as c:
-            sql = open(MIGRATION, encoding="utf-8").read()
-            c.execute(sql)
-            c.execute(sql)          # idempotent
+            for path in (MIGRATION, MIGRATION_032):
+                sql = open(path, encoding="utf-8").read()
+                c.execute(sql)
+                c.execute(sql)      # idempotent
         yield conn
     finally:
         conn.close()
@@ -107,6 +110,22 @@ def test_the_checks(db, field, bad):
     row = {**_rows(0.1)[0], field: bad, "region": f"check-{field}"}
     with pytest.raises(psycopg2.errors.CheckViolation):
         upsert(db, [row])
+
+
+@needs_db
+def test_032_takes_the_scorers_per_spot_and_spot_model_rows(db):
+    t = Totals()
+    t.add(("spot_model", "nwps", "Florida", "", 1, "hs"), "dania-beach-pier", 1.0, 1.4, -0.4)
+    t.add(("spot_model", "nwps", "Florida", "dania-beach-pier", 1, "hs"), "dania-beach-pier", 1.0, 1.4, -0.4)
+    t.add(("spot", "spot", "Florida", "dania-beach-pier", 1, "hs"), "dania-beach-pier", 1.0, 1.2, -0.2)
+    upsert(db, t.rows(__import__("datetime").date(2026, 11, 22), "2026-11-23T04:47:00Z"))
+    with db.cursor() as c:
+        c.execute("SELECT kind, point FROM accuracy_daily WHERE region = 'Florida' ORDER BY kind, point")
+        assert c.fetchall() == [("spot", "dania-beach-pier"), ("spot_model", ""),
+                                ("spot_model", "dania-beach-pier")]
+        c.execute("SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+                  "WHERE conname = 'accuracy_daily_kind_check'")
+        assert c.fetchone() == ("CHECK ((kind = ANY (ARRAY['buoy'::text, 'spot'::text, 'spot_model'::text])))",)
 
 
 def test_the_sums_are_the_migrations():
