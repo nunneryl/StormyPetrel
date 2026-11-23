@@ -229,6 +229,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 42.02959,
       "nwps_node_lng": -124.29412,
+      "etopo_m": 15.0,
       "replaces": [
         42.02959,
         -124.27026
@@ -241,6 +242,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 34.0334,
       "nwps_node_lng": -77.86233,
+      "etopo_m": 13.3,
       "replaces": [
         34.03333,
         -77.88904
@@ -253,6 +255,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 35.78649,
       "nwps_node_lng": -75.49398,
+      "etopo_m": 18.2,
       "replaces": [
         35.78637,
         -75.53313
@@ -265,6 +268,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 44.65648,
       "nwps_node_lng": -124.09467,
+      "etopo_m": 22.6,
       "replaces": [
         44.65648,
         -124.06983
@@ -277,6 +281,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 44.67455,
       "nwps_node_lng": -124.09467,
+      "etopo_m": 23.5,
       "replaces": [
         44.65648,
         -124.06983
@@ -289,6 +294,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.36366,
       "nwps_node_lng": -67.28814,
+      "etopo_m": 33.6,
       "replaces": [
         18.36366,
         -67.27119
@@ -301,6 +307,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.36366,
       "nwps_node_lng": -67.28814,
+      "etopo_m": 33.6,
       "replaces": [
         18.36366,
         -67.27119
@@ -313,6 +320,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.36366,
       "nwps_node_lng": -67.30508,
+      "etopo_m": 344.2,
       "replaces": [
         18.34742,
         -67.27119
@@ -325,6 +333,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.34742,
       "nwps_node_lng": -67.30508,
+      "etopo_m": 639.6,
       "replaces": [
         18.34742,
         -67.27119
@@ -337,6 +346,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.33119,
       "nwps_node_lng": -67.30508,
+      "etopo_m": 645.5,
       "replaces": [
         18.34742,
         -67.27119
@@ -349,6 +359,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.46106,
       "nwps_node_lng": -67.20339,
+      "etopo_m": 440.0,
       "replaces": [
         18.42859,
         -67.16949
@@ -361,6 +372,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.46106,
       "nwps_node_lng": -67.20339,
+      "etopo_m": 440.0,
       "replaces": [
         18.46106,
         -67.16949
@@ -373,6 +385,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 18.46106,
       "nwps_node_lng": -67.20339,
+      "etopo_m": 440.0,
       "replaces": [
         18.46106,
         -67.16949
@@ -385,6 +398,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 32.78341,
       "nwps_node_lng": -79.6644,
+      "etopo_m": 10.7,
       "replaces": [
         32.83218,
         -79.70209
@@ -397,6 +411,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 32.26319,
       "nwps_node_lng": -80.45602,
+      "etopo_m": 10.9,
       "replaces": [
         32.31196,
         -80.47487
@@ -409,6 +424,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 32.31196,
       "nwps_node_lng": -80.34293,
+      "etopo_m": 12.1,
       "replaces": [
         32.36073,
         -80.43717
@@ -421,6 +437,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 32.71838,
       "nwps_node_lng": -79.79634,
+      "etopo_m": 12.0,
       "replaces": [
         32.7509,
         -79.83403
@@ -433,6 +450,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 32.73464,
       "nwps_node_lng": -79.72094,
+      "etopo_m": 10.9,
       "replaces": [
         32.78341,
         -79.77749
@@ -445,6 +463,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 32.73464,
       "nwps_node_lng": -79.72094,
+      "etopo_m": 10.9,
       "replaces": [
         32.78341,
         -79.77749
@@ -457,6 +476,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 36.64725,
       "nwps_node_lng": -121.895,
+      "etopo_m": 68.5,
       "replaces": [
         36.62468,
         -121.895
@@ -469,6 +489,7 @@
       "moved_on": "2026-11-23",
       "nwps_node_lat": 36.64725,
       "nwps_node_lng": -121.895,
+      "etopo_m": 68.5,
       "replaces": [
         36.62468,
         -121.895
