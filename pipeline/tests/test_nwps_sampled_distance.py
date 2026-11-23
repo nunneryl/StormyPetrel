@@ -617,7 +617,7 @@ def test_deliberate_nodes_without_a_file_is_empty():
 
 def test_the_live_overrides_are_the_nodes_the_roster_bakes():
     """In production the exemption applies only if spots_enriched.json carries each
-    override's node exactly. Run 50's, run 58's, run 67's and the v1.5 cells, copied by hand."""
+    override's node exactly. Run 50's, run 58's, run 67's, the v1.5 cells and run 82's, copied by hand."""
     live = nwps.deliberate_nodes()
     assert live == {"duck-pier": (36.19331, -75.72892), "spring-ave": (27.51019, -82.80924),
                     "st-pete-beach": (27.7373, -82.86304),
@@ -637,7 +637,29 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "avila-beach": (35.13539, -120.7675),
                     "hobuck-beach": (48.32843, -124.68872),
                     "westport-jetty": (46.90296, -124.16934),
-                    "westport-light-state-park": (46.89394, -124.15635)}
+                    "westport-light-state-park": (46.89394, -124.15635),
+                    # the scoreboard's sample-point review (2026-11-23), node-preview run 82
+                    "brookings-beach": (42.02959, -124.29412),
+                    "carolina-beach": (34.0334, -77.86233),
+                    "oregon-inlet": (35.78649, -75.49398),
+                    "nye-beach": (44.65648, -124.09467),
+                    "agate-beach-newport": (44.67455, -124.09467),
+                    "indicators": (18.36366, -67.28814),
+                    "rincon-domes": (18.36366, -67.28814),
+                    "maria-s": (18.36366, -67.30508),
+                    "steps-beach-rincon": (18.34742, -67.30508),
+                    "tres-palmas": (18.33119, -67.30508),
+                    "table-tops-aguadilla": (18.46106, -67.20339),
+                    "gas-chambers-aguadilla": (18.46106, -67.20339),
+                    "crash-boat-beach": (18.46106, -67.20339),
+                    "dewees-island": (32.78341, -79.6644),
+                    "fripp-island": (32.26319, -80.45602),
+                    "hunting-island": (32.31196, -80.34293),
+                    "berts-bar": (32.71838, -79.79634),
+                    "isle-of-palms": (32.73464, -79.72094),
+                    "windjammer": (32.73464, -79.72094),
+                    "lovers-point": (36.64725, -121.895),
+                    "monterey-beach": (36.64725, -121.895)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}

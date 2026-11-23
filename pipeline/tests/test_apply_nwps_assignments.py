@@ -704,7 +704,33 @@ _V15 = {"pacifica-linda-mar": ((37.61754, -122.5275), 2.870, (37.61754, -122.5))
         "hobuck-beach": ((48.32843, -124.68872), 1.830, (48.33739, -124.71469)),
         "westport-jetty": ((46.90296, -124.16934), 2.380, (46.89391, -124.14337)),
         "westport-light-state-park": ((46.89394, -124.15635), 1.890, (46.89391, -124.14337))}
-_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15}
+# The scoreboard's sample-point review (2026-11-23): each cell the nearest within 30 deg of the
+# facing, at least 10 m deep by ETOPO 2022, at least 0.9 of the next cell seaward, wet every hour of
+# both cycles read, and no GSHHG land on the line from the spot once it reaches water; km to 3
+# decimals, the great circle from the roster spot to the cell, worked separately. Node-preview run
+# 82 is their gate.
+_R82 = {"brookings-beach": ((42.02959, -124.29412), 2.547, (42.02959, -124.27026)),
+         "carolina-beach": ((34.0334, -77.86233), 2.503, (34.03333, -77.88904)),
+         "oregon-inlet": ((35.78649, -75.49398), 3.771, (35.78637, -75.53313)),
+         "nye-beach": ((44.65648, -124.09467), 2.552, (44.65648, -124.06983)),
+         "agate-beach-newport": ((44.67455, -124.09467), 2.382, (44.65648, -124.06983)),
+         "indicators": ((18.36366, -67.28814), 1.830, (18.36366, -67.27119)),
+         "rincon-domes": ((18.36366, -67.28814), 1.889, (18.36366, -67.27119)),
+         "maria-s": ((18.36366, -67.30508), 3.721, (18.34742, -67.27119)),
+         "steps-beach-rincon": ((18.34742, -67.30508), 4.004, (18.34742, -67.27119)),
+         "tres-palmas": ((18.33119, -67.30508), 4.659, (18.34742, -67.27119)),
+         "table-tops-aguadilla": ((18.46106, -67.20339), 5.710, (18.42859, -67.16949)),
+         "gas-chambers-aguadilla": ((18.46106, -67.20339), 3.832, (18.46106, -67.16949)),
+         "crash-boat-beach": ((18.46106, -67.20339), 4.201, (18.46106, -67.16949)),
+         "dewees-island": ((32.78341, -79.6644), 6.975, (32.83218, -79.70209)),
+         "fripp-island": ((32.26319, -80.45602), 5.865, (32.31196, -80.47487)),
+         "hunting-island": ((32.31196, -80.34293), 10.999, (32.36073, -80.43717)),
+         "berts-bar": ((32.71838, -79.79634), 5.659, (32.7509, -79.83403)),
+         "isle-of-palms": ((32.73464, -79.72094), 7.917, (32.78341, -79.77749)),
+         "windjammer": ((32.73464, -79.72094), 8.216, (32.78341, -79.77749)),
+         "lovers-point": ((36.64725, -121.895), 2.925, (36.62468, -121.895)),
+         "monterey-beach": ((36.64725, -121.895), 5.035, (36.62468, -121.895))}
+_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15, **_R82}
 
 
 def test_live_overrides_are_run_50s_58s_and_67s_cells():
@@ -752,7 +778,7 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the twenty moved included, already read what apply would write.
+    # spot's node fields, the forty-one moved included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()
