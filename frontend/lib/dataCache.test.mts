@@ -91,7 +91,8 @@ const pages = walk(join(FRONTEND, 'app'))
   .map((p) => relative(FRONTEND, p))
   .filter((p) => p.endsWith('/page.tsx') || p === 'app/sitemap.ts')
   .sort();
-check('every page is found (20 pages and the sitemap)', pages.length === 21, String(pages.length));
+// 22 since /privacy and /terms.
+check('every page is found (22 pages and the sitemap)', pages.length === 23, String(pages.length));
 for (const p of pages) {
   check(`${p} is force-static`, read(p).includes("export const dynamic = 'force-static';"));
 }

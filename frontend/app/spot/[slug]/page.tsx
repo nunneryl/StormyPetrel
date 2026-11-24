@@ -29,6 +29,7 @@ import { fetchCamsForSpot } from '@/lib/cams';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { FORECAST_UPDATES } from '@/lib/updateCadence';
 import { siteUrl } from '@/lib/site-url';
+import { spotReportHref } from '@/lib/contact';
 import { CDIP_HOMEPAGE, showsCdipCredit } from '@/lib/cdipCredit';
 
 export const revalidate = 3600;
@@ -449,10 +450,10 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
             </Link>
           )}
         </div>
+        {/* An email, not GitHub's new-issue form, which needs an account most surfers don't have
+            (lib/contact.ts). The spot's name is in the subject and its slug and page in the body. */}
         <a
-          href={`https://github.com/nunneryl/StormyPetrel/issues/new?title=Spot+data+issue:+${encodeURIComponent(spot.name)}&body=Slug:+${encodeURIComponent(spot.slug)}%0A%0AWhat%27s+wrong:`}
-          target="_blank"
-          rel="noreferrer"
+          href={spotReportHref(spot.name, spot.slug, `${base}/spot/${spot.slug}`)}
           className="hover:text-cyan-400"
         >
           Report incorrect data

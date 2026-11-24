@@ -69,6 +69,10 @@
  *      builds Pensacola Beach's break type also turns researched (a backfill, the shape of
  *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
  *      "beach" without "(unverified)". With the list read cached it kept "beach (unverified)".
+ *  21. The legal pages and the contact address, served: /privacy and /terms answer 200 with
+ *      their heading and are in /sitemap.xml; every page's footer links both and the address;
+ *      a spot page's "Report incorrect data" is a mailto to hello@stormypetrel.surf with the
+ *      spot's name in the subject, and nothing on it links GitHub's new-issue form.
  *  16. The swell compass in the Swell breakdown card (components/SwellPartitions.tsx and
  *      SwellWindowCompass.tsx) on served spot pages, from four fixture spots with the roster's
  *      slugs, positions, facings and windows, so each draws its own land from
@@ -906,6 +910,28 @@ async function main(): Promise<void> {
   check('the hero label says the model run\'s age',
     /Model run [67] h ago/.test(heroText) && !/Updated \d+ (min|h) ago/.test(heroText),
     (/Model run[^<]*|Updated[^<]*/.exec(heroText) ?? ['none'])[0]);
+
+  // 21: the legal pages and the contact address.
+  {
+    const sitemapXml = await (await fetch(`${site}/sitemap.xml`)).text();
+    for (const [path, heading] of [['/privacy', 'Privacy'], ['/terms', 'Terms']] as const) {
+      const res = await fetch(`${site}${path}`);
+      eq(`${path} answers 200`, res.status, 200);
+      const html = await res.text();
+      check(`${path}: its heading`, new RegExp(`<h1[^>]*>${heading}</h1>`).test(html));
+      check(`${path} is in /sitemap.xml`, sitemapXml.includes(`${path}</loc>`));
+    }
+    const spotHtml = (await load(WITH_ROW.slug)).html.replace(/&amp;/g, '&');
+    check('every page\'s footer links /privacy and /terms',
+      spotHtml.includes('href="/privacy"') && spotHtml.includes('href="/terms"'));
+    check('...and shows the contact address', spotHtml.includes('>hello@stormypetrel.surf</a>'));
+    const report = (/<a href="(mailto:[^"]*)"[^>]*>Report incorrect data<\/a>/.exec(spotHtml) ?? [])[1] ?? '';
+    check('"Report incorrect data" is a mailto to the contact address',
+      report.startsWith('mailto:hello@stormypetrel.surf?subject='), report || '(no such link)');
+    check('...with the spot\'s name in the subject',
+      report.includes(`subject=${encodeURIComponent(`Spot data: ${WITH_ROW.name}`)}`), report);
+    check('no GitHub new-issue link on the spot page', !spotHtml.includes('issues/new'));
+  }
 
   // 16: the swell compass.
   const count = (html: string, attr: string) =>
