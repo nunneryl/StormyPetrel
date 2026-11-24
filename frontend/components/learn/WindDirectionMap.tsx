@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { basemap } from '@/lib/basemap';
 import { LEARN_SPOT_PRESETS, type LearnSpotCore } from '@/lib/learn-spots';
 
 // Same six teaching presets and the same Leaflet/CartoDB chrome as
@@ -164,14 +165,15 @@ export function WindDirectionMap() {
         center: [preset.lat, preset.lng],
         zoom: 11,
         zoomControl: false,
-        attributionControl: false,
+        // The tiles' credit (OpenStreetMap, and CARTO when its tiles are used) is required.
+        attributionControl: true,
         scrollWheelZoom: false,
       });
       L.control.zoom({ position: 'bottomright' }).addTo(map);
-      L.tileLayer('https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd',
-      }).addTo(map);
+      // CARTO with a key, OpenStreetMap without one, each with the credit its tiles require
+      // (lib/basemap.ts). The env var is named in full: Next inlines NEXT_PUBLIC_* only literally.
+      const tiles = basemap(process.env.NEXT_PUBLIC_CARTO_BASEMAPS_KEY);
+      L.tileLayer(tiles.url, tiles.options).addTo(map);
       mapRef.current = map;
 
       markerRef.current = L.circleMarker([preset.lat, preset.lng], {

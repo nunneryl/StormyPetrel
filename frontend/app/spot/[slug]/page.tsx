@@ -29,6 +29,7 @@ import { fetchCamsForSpot } from '@/lib/cams';
 import { CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { FORECAST_UPDATES } from '@/lib/updateCadence';
 import { siteUrl } from '@/lib/site-url';
+import { CDIP_HOMEPAGE, showsCdipCredit } from '@/lib/cdipCredit';
 
 export const revalidate = 3600;
 
@@ -458,19 +459,21 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </a>
       </div>
 
-      {/* CDIP attribution — required wherever the nearshore forecast is fed by
-          the CDIP MOP model (swell_window_source = 'cdip_mop'). Link must point
-          to the CDIP homepage per their data license.
+      {/* CDIP attribution. CDIP's data-use page asks web displays of its data and products to link
+          its homepage (lib/cdipCredit.ts). Shown on the MOP tier (swell_window_source 'cdip_mop')
+          AND on every spot with a calibrated or CDIP hour among this page's rows: those heights
+          are divided by a factor measured against MOP's nowcast, and the tile says "Calibrated to
+          CDIP's nearshore model". Before, only the MOP tier carried it, and the 141 calibrated
+          spots, none of them on that tier, named CDIP and credited it nowhere.
 
-          A CREDIT, NOT A CLAIM ABOUT THE NUMBERS ABOVE. It read "Nearshore forecast from
-          CDIP MOP", but MOP's nowcast ends before the current hour, so every hour this page
-          shows is a model estimate and the Surf height tile says so. The pipeline still
-          reads MOP for this spot's past hours, which is what the credit is for. */}
-      {spot.swell_window_source === 'cdip_mop' && (
+          A CREDIT, NOT A CLAIM ABOUT THE NUMBERS ABOVE. MOP's nowcast ends before the current hour,
+          so every hour this page shows is a model estimate or a calibrated one; the credit is for
+          the MOP data the pipeline reads for this spot. */}
+      {showsCdipCredit(spot, forecasts) && (
         <p className="pt-1 text-xs text-text-muted">
           CDIP MOP data for this spot courtesy of{' '}
           <a
-            href="https://cdip.ucsd.edu"
+            href={CDIP_HOMEPAGE}
             target="_blank"
             rel="noreferrer"
             className="hover:text-cyan-400"

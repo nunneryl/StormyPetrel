@@ -5,6 +5,10 @@
  *
  *     node --experimental-strip-types frontend/lib/basemap.test.mts
  */
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { basemap } from './basemap.ts';
 
 let failures = 0;
@@ -38,6 +42,48 @@ for (const [label, k] of [['undefined', undefined], ['null', null], ['empty', ''
   check(`${label} key: OpenStreetMap contributors credited, and not CARTO`,
     b.options.attribution === OSM, b.options.attribution);
   check(`${label} key: no subdomains (OSM serves one host)`, b.options.subdomains === undefined);
+}
+
+// EVERY LEAFLET MAP ON THE SITE credits its tiles. /learn/swell-direction and /learn/wind turned
+// the credit off (attributionControl: false) and loaded keyless CARTO tiles; /learn/buoys wrote a
+// credit of its own without the OpenStreetMap link. So: every file that creates a tile layer
+// takes its URL and options from basemap() (whose credits are pinned above), none switches the
+// credit off, and no CARTO URL is written anywhere but lib/basemap.ts.
+{
+  const FRONTEND = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (/\.(tsx?|mts)$/.test(name) && !name.includes('.test.')) files.push(p);
+    }
+  };
+  walk(join(FRONTEND, 'components'));
+  walk(join(FRONTEND, 'app'));
+  const mapFiles = files.filter((f) => readFileSync(f, 'utf8').includes('tileLayer('));
+  const names = mapFiles.map((f) => relative(FRONTEND, f)).sort();
+  // Written out, so a new map is seen here and has to be added on purpose.
+  check('the Leaflet maps are the four known ones',
+    JSON.stringify(names) === JSON.stringify([
+      'components/SpotMap.tsx',
+      'components/learn/BuoyMap.tsx',
+      'components/learn/SwellDirectionMap.tsx',
+      'components/learn/WindDirectionMap.tsx',
+    ]), JSON.stringify(names));
+  for (const f of mapFiles) {
+    const src = readFileSync(f, 'utf8');
+    const rel = relative(FRONTEND, f);
+    check(`${rel}: tiles come from basemap()`,
+      src.includes('basemap(process.env.NEXT_PUBLIC_CARTO_BASEMAPS_KEY)')
+        && /tileLayer\(tiles\.url, (tiles\.options|\{ \.\.\.tiles\.options[^}]*\})\)/.test(src));
+    check(`${rel}: the credit is not switched off`, !/attributionControl:\s*false/.test(src));
+    check(`${rel}: no tile layer sets an attribution of its own`, !/attribution:\s*['"`]/.test(src));
+  }
+  for (const f of files) {
+    const rel = relative(FRONTEND, f);
+    check(`${rel}: no CARTO tile URL outside lib/basemap.ts`, !readFileSync(f, 'utf8').includes('basemaps.cartocdn.com'));
+  }
 }
 
 if (failures > 0) throw new Error(`basemap: ${failures} FAILURE(S)`);

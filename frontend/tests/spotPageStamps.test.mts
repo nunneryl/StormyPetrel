@@ -100,6 +100,12 @@
  *      dashed ring and "No swell window set".
  *  17. The hero's freshness label is the model run's age ("Model run 6 h ago"), not the time since
  *      the current hour began.
+ *  18. The CDIP credit (lib/cdipCredit.ts) on the served page. "CDIP MOP data for this spot courtesy
+ *      of CDIP, Scripps Institution of Oceanography", linked to https://cdip.ucsd.edu, is on a
+ *      calibrated spot's page (every row's face_ft differs from its face_ft_raw, as at the 141 spots
+ *      in spot_face_factors.json; none of them on the MOP tier) beside its "Calibrated to CDIP's
+ *      nearshore model" label, and on a MOP-tier spot's page (swell_window_source 'cdip_mop') whose
+ *      rows are model estimates. Stamp Test Point (model rows, not the MOP tier) has neither.
  *  15. The unlisted accuracy page (/accuracy, lib/accuracy.ts) on the served HTML: noindex and
  *      nofollow in <head>, not in /sitemap.xml, and its figures from the stand-in's accuracy_daily
  *      rows, worked by hand below. Two tables, NWPS then WAVEWATCH III at the buoys; the spots
@@ -351,10 +357,16 @@ const COMPASS_HOURS: Record<number, Record<string, unknown>> = {
     swell_1_hs: 2.2, swell_1_tp: 15, swell_1_dp: 300, swell_2_hs: 0.8, swell_2_tp: 8, swell_2_dp: 200,
     wind_dir: 315, wind_speed: 6 },
 };
+// 18: the CDIP credit. A calibrated spot that is not on the MOP tier (the shape of all 141), and a
+// MOP-tier spot whose rows are model estimates.
+const CALIBRATED = { ...SPOT_FIELDS, id: 990020, slug: 'stamp-test-calibrated', name: 'Stamp Test Calibrated',
+  swell_window_source: 'nwps' };
+const MOP_TIER = { ...SPOT_FIELDS, id: 990021, slug: 'stamp-test-mop', name: 'Stamp Test Mop',
+  swell_window_source: 'cdip_mop' };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
-  SCARBOROUGH, HOOKIPA];
+  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -399,6 +411,9 @@ const BLANK = { hs: null, tp: null, dp: null, swell_hs: 1.1, swell_tp: 11, swell
   swell_source: 'nwps_height_ww3_dir' };
 const ROWS = new Map<number, Record<string, unknown>[]>([
   [WITH_ROW.id, hours(-12, 48).map((h) => row(WITH_ROW.id, h))],
+  // 18: the raw height 1.25 times the published one, as a factor of 1.25 leaves it.
+  [CALIBRATED.id, hours(-12, 48).map((h) => ({ ...row(CALIBRATED.id, h), face_ft_raw: heightAt(h) * 1.25 }))],
+  [MOP_TIER.id, hours(-12, 48).map((h) => row(MOP_TIER.id, h))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
   ...[COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK, SCARBOROUGH, HOOKIPA].map((sp) => [sp.id,
     hours(-12, 48).map((h) => ({ ...row(sp.id, h), ...COMPASS_HOURS[sp.id] }))] as
@@ -859,6 +874,20 @@ async function main(): Promise<void> {
     const other = (await load(sp.slug)).html;
     check(`${sp.slug}: a cycle six hours old, no model-run note`, !other.includes('Wave model run'));
   }
+
+  // 18: the CDIP credit.
+  const CDIP_CREDIT = /CDIP MOP data for this spot courtesy of <a href="https:\/\/cdip\.ucsd\.edu"[^>]*>CDIP, Scripps Institution of Oceanography<\/a>/;
+  const creditHtml = async (slug: string) => (await load(slug)).html.replace(/<!-- -->/g, '');
+  const calHtml = await creditHtml(CALIBRATED.slug);
+  check(`${CALIBRATED.slug}: the height is labelled calibrated to CDIP`,
+    calHtml.includes('Calibrated to CDIP&#x27;s nearshore model'));
+  check(`${CALIBRATED.slug}: a calibrated spot carries the CDIP credit, linked to the homepage`,
+    CDIP_CREDIT.test(calHtml), (/CDIP MOP data[^\n]{0,200}/.exec(calHtml) ?? ['(no credit)'])[0]);
+  check(`${MOP_TIER.slug}: a MOP-tier spot carries the CDIP credit`, CDIP_CREDIT.test(await creditHtml(MOP_TIER.slug)));
+  const modelHtml = await creditHtml(WITH_ROW.slug);
+  check(`${WITH_ROW.slug}: a model-estimate spot off the MOP tier has no CDIP credit`,
+    !modelHtml.includes('CDIP MOP data for this spot'));
+  check(`${WITH_ROW.slug}: ...and no calibrated label`, !modelHtml.includes('Calibrated to CDIP'));
 
   // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard
   // time), so they are held to the zone's pair; the buoy reading is a fixed instant.
