@@ -4,6 +4,13 @@
 // confusing for "no surf" because they imply a rating exists; FLAT
 // reads as an explicit "ocean's flat" verdict.
 //
+// NO RATING (null, undefined, not a number) renders "No data", in sentence case so it does not
+// read as one more tier beside FLAT. It used to be treated as 0 and render FLAT: a spot with no
+// forecast row, or the whole site during an outage, read as a confident "no surf"
+// (lib/ratings.ts ratingState).
+//
+import { NO_DATA_TEXT, ratingState } from '@/lib/ratings';
+
 // Filled = #F59E0B (amber/gold), empty outline = #D1D5DB (light gray).
 // Half-stars are a left-half gold over a full gray base, clipped via
 // inset() so we don't pull in another SVG asset.
@@ -28,17 +35,31 @@ export function StarRating({
   showScore = false,
   className = '',
 }: {
-  /** 0..5, half-step granularity. null/undefined treated as 0 → FLAT. */
+  /** 0..5, half-step granularity. 0 → FLAT; null/undefined → "No data". */
   score: number | null | undefined;
   size?: Size;
   /** Append the numeric score (e.g. "3.5") next to the stars. */
   showScore?: boolean;
   className?: string;
 }) {
-  const s = score ?? 0;
   const px = SIZE_PX[size];
+  const state = ratingState(score);
 
-  if (s <= 0) {
+  if (state === 'none') {
+    return (
+      <span
+        className={`inline-flex items-center font-medium whitespace-nowrap ${className}`}
+        style={{ color: FLAT_COLOR, fontSize: Math.max(11, px * 0.7) }}
+        aria-label="No rating available"
+        data-rating="none"
+      >
+        {NO_DATA_TEXT}
+      </span>
+    );
+  }
+  const s = score as number;
+
+  if (state === 'flat') {
     return (
       <span
         className={`inline-flex items-center font-bold uppercase tracking-widest2 ${className}`}

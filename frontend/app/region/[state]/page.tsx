@@ -69,6 +69,7 @@ export default async function RegionPage({ params }: { params: Promise<Params> }
   const inState = spots.filter((s) => (s.state ?? '').toLowerCase() === decoded);
   if (inState.length === 0) notFound();
 
+  // Best first; FLAT (0) above a spot with no rating (-1 here), which sorts last and shows "No data".
   inState.sort((a, b) => (b.latest?.stars ?? -1) - (a.latest?.stars ?? -1));
   const stateLabel = inState[0].state ?? decoded;
 

@@ -1,4 +1,5 @@
 export type RatingLabel =
+  | 'NO DATA'
   | 'FLAT'
   | 'POOR'
   | 'POOR TO FAIR'
@@ -18,6 +19,13 @@ type RatingTier = {
   glow: string;
 };
 
+// NO RATING IS NOT FLAT. A spot with no forecast row for the hour, or a row with no stars, has
+// no verdict at all; FLAT is the verdict "no surf". They used to be the same thing on every card,
+// pin and badge (a missing rating was read as 0), so a spot the pipeline had not rated, or the
+// whole site during an outage, read as confidently flat. Grey like FLAT, but never filled: on the
+// map it is a hollow ring (pinStyle below).
+const NO_DATA: RatingTier =
+  { label: 'NO DATA',      bg: 'bg-ink-700',         fg: 'text-text-muted', hex: '#94A3B8', glow: 'rgba(148,163,184,0.20)' };
 const FLAT: RatingTier =
   { label: 'FLAT',         bg: 'bg-rating-flat',     fg: 'text-white',    hex: '#6B7280', glow: 'rgba(107,114,128,0.25)' };
 const POOR: RatingTier =
@@ -35,20 +43,66 @@ const GOOD_EPIC: RatingTier =
 const EPIC: RatingTier =
   { label: 'EPIC',         bg: 'bg-rating-epic',     fg: 'text-white',    hex: '#8B5CF6', glow: 'rgba(139,92,246,0.40)' };
 
+/** What a stars value says: no rating at all, the FLAT verdict (0 or below), or a star rating. */
+export type RatingState = 'none' | 'flat' | 'rated';
+
+/** The words shown where a rating is missing (StarRating, the map popup). */
+export const NO_DATA_TEXT = 'No data';
+
+export function ratingState(stars: number | null | undefined): RatingState {
+  if (stars === null || stars === undefined || !Number.isFinite(stars)) return 'none';
+  return stars <= 0 ? 'flat' : 'rated';
+}
+
 export function tierFromStars(stars: number | null | undefined): RatingTier {
-  if (stars === null || stars === undefined) return FLAT;
-  if (stars <= 0) return FLAT;
-  if (stars <= 1.5) return POOR;
-  if (stars < 2.5) return POOR_FAIR;
-  if (stars < 3.5) return FAIR;
-  if (stars < 4) return FAIR_GOOD;
-  if (stars < 4.5) return GOOD;
-  if (stars < 5) return GOOD_EPIC;
+  if (ratingState(stars) === 'none') return NO_DATA;
+  const s = stars as number;
+  if (s <= 0) return FLAT;
+  if (s <= 1.5) return POOR;
+  if (s < 2.5) return POOR_FAIR;
+  if (s < 3.5) return FAIR;
+  if (s < 4) return FAIR_GOOD;
+  if (s < 4.5) return GOOD;
+  if (s < 5) return GOOD_EPIC;
   return EPIC;
 }
 
+/** The best rating among several (a region's spots, a map cluster's pins), or null when none of
+ *  them has one. FLAT (0) counts as a rating: a region whose only verdict is FLAT is FLAT. */
+export function bestStars(values: readonly (number | null | undefined)[]): number | null {
+  let best: number | null = null;
+  for (const v of values) {
+    if (ratingState(v) === 'none') continue;
+    if (best === null || (v as number) > best) best = v as number;
+  }
+  return best;
+}
+
+/** The homepage's "Best conditions right now": the n best RATED spots, best first. A spot with no
+ *  rating cannot be one of the best, so it is left out rather than sorted to the bottom, and the
+ *  list is empty, not padded, when nothing is rated. Ties keep their input order. */
+export function topRated<T>(items: readonly T[], starsOf: (t: T) => number | null | undefined, n: number): T[] {
+  return items
+    .filter((t) => ratingState(starsOf(t)) !== 'none')
+    .map((t, i) => ({ t, i, s: starsOf(t) as number }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .slice(0, n)
+    .map((x) => x.t);
+}
+
+/** A map pin or cluster: filled in its tier's colour, or, with no rating, a hollow grey ring, so
+ *  it cannot be mistaken for FLAT's filled grey. `text` is the cluster count's colour. */
+export function pinStyle(stars: number | null | undefined): { fill: string; ring: string; text: string; hollow: boolean } {
+  const tier = tierFromStars(stars);
+  if (ratingState(stars) === 'none') {
+    return { fill: '#FFFFFF', ring: tier.hex, text: '#475569', hollow: true };
+  }
+  const darkText = tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD';
+  return { fill: tier.hex, ring: '#FFFFFF', text: darkText ? '#0F172A' : '#FFFFFF', hollow: false };
+}
+
 export const RATING_TIERS = [
-  FLAT, POOR, POOR_FAIR, FAIR, FAIR_GOOD, GOOD, GOOD_EPIC, EPIC,
+  NO_DATA, FLAT, POOR, POOR_FAIR, FAIR, FAIR_GOOD, GOOD, GOOD_EPIC, EPIC,
 ];
 
 // Wind quality classification — used by the wind tile + grid micro-label

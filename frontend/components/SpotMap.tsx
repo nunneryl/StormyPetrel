@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import type { SpotWithLatest } from '@/lib/types';
-import { classifyWind, tierFromStars, windQualityLabel } from '@/lib/ratings';
+import { NO_DATA_TEXT, bestStars, classifyWind, pinStyle, ratingState, windQualityLabel } from '@/lib/ratings';
 import {
   degToCardinal,
   fmtHeightRange,
@@ -148,26 +148,21 @@ export function SpotMap({
             iconCreateFunction: (cluster: any) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const children: any[] = cluster.getAllChildMarkers();
-              const bestStars = children.reduce(
-                (m, c) => Math.max(m, (c.options?.spotStars as number) ?? 0),
-                0,
-              );
-              const tier = tierFromStars(bestStars);
+              // The best RATED pin's colour; a cluster with no rated pin is a hollow grey ring
+              // (lib/ratings pinStyle), never FLAT.
+              const best = bestStars(children.map((c) => c.options?.spotStars as number | null | undefined));
+              const style = pinStyle(best);
               const count = children.length;
               const size =
                 count < 10 ? 32 : count < 50 ? 38 : count < 200 ? 44 : 50;
-              const fg =
-                tier.label === 'FAIR' || tier.label === 'FAIR TO GOOD'
-                  ? '#0F172A'
-                  : '#FFFFFF';
               const html = `
-                <div style="
+                <div data-pin="${style.hollow ? 'none' : 'rated'}" style="
                   width:${size}px;height:${size}px;border-radius:50%;
-                  background:${tier.hex};
-                  color:${fg};
+                  background:${style.fill};
+                  color:${style.text};
                   display:flex; align-items:center; justify-content:center;
                   font-weight:800; font-size:${size <= 32 ? 12 : 13}px;
-                  border: 2px solid #FFFFFF;
+                  border: ${style.hollow ? 3 : 2}px solid ${style.ring};
                   box-shadow:
                     0 0 0 1px rgba(15,23,42,0.18),
                     0 6px 14px -4px rgba(15,23,42,0.25);
@@ -190,16 +185,16 @@ export function SpotMap({
       let markersAdded = 0;
       for (const s of data) {
         if (s.lat === null || s.lng === null) continue;
-        const tier = tierFromStars(s.latest?.stars ?? 0);
-        // 8px filled radius (16px diameter) with a 2px white ring
-        // around it for contrast against both light land and water
-        // basemaps; box-sizing:border-box keeps the colored fill at
-        // exactly 16px regardless of the border.
+        // Filled in the tier's colour with a 2px white ring for contrast against both light
+        // land and water basemaps; box-sizing:border-box keeps the pin 20px whatever the border.
+        // A spot with no rating is a hollow grey ring instead (lib/ratings pinStyle): it used to
+        // be read as 0 and drawn as a filled FLAT pin.
+        const style = pinStyle(s.latest?.stars);
         const html = `
-          <div style="
+          <div data-pin="${style.hollow ? 'none' : 'rated'}" style="
             width:20px; height:20px; border-radius:50%;
-            background:${tier.hex};
-            border: 2px solid #FFFFFF;
+            background:${style.fill};
+            border: ${style.hollow ? 3 : 2}px solid ${style.ring};
             box-sizing: border-box;
             box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35), 0 1px 3px rgba(15, 23, 42, 0.35);
           "></div>
@@ -213,7 +208,7 @@ export function SpotMap({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const m = L.marker([s.lat, s.lng], {
           icon,
-          spotStars: s.latest?.stars ?? 0,
+          spotStars: s.latest?.stars ?? null,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
@@ -297,8 +292,12 @@ function starSvg(color: string, size: number): string {
 }
 
 function starsHtml(score: number | null | undefined, size = 14): string {
-  const s = score ?? 0;
-  if (s <= 0) {
+  const state = ratingState(score);
+  if (state === 'none') {
+    return `<span data-rating="none" style="font-size:12px;font-weight:500;color:#94A3B8;">${NO_DATA_TEXT}</span>`;
+  }
+  const s = score as number;
+  if (state === 'flat') {
     return `<span style="font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#94A3B8;">FLAT</span>`;
   }
   const rounded = Math.round(s * 2) / 2;
@@ -386,7 +385,7 @@ function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
         ${subtitleParts.join(' · ')}
       </div>
       <div style="display:inline-block;">
-        ${starsHtml(f?.stars ?? 0, 14)}
+        ${starsHtml(f?.stars, 14)}
       </div>
       ${conditionsLine}
       ${windLine}

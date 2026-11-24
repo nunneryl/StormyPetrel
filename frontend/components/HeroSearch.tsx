@@ -101,7 +101,7 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
       {open && results.length > 0 && (
         <div className="absolute z-30 mt-2 w-full rounded-xl border border-ink-600 bg-white shadow-2xl max-h-[420px] overflow-auto">
           {results.map((r, i) => {
-            const tier = tierFromStars(r.stars ?? 0);
+            const tier = tierFromStars(r.stars);
             return (
               <Link
                 key={r.slug}

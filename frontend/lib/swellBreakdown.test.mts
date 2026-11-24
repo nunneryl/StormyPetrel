@@ -150,7 +150,8 @@ check('0.571 prints 57%, 0.561 prints 56%', sharePercent(0.571) === '57%' && sha
   check('the breakdown takes its row from useCurrentHour',
     comp.includes('const forecast = useCurrentHour().selection.row;'));
   check('the tile takes its row from useCurrentHour',
-    tile.includes('const { rows, selection } = useCurrentHour();') && tile.includes('const current = selection.row;'));
+    // nowMs too since the absent-hour line (lib/currentHour absentHourNote) reads the same clock.
+    /const \{ rows,(?: nowMs,)? selection \} = useCurrentHour\(\);/.test(tile) && tile.includes('const current = selection.row;'));
   check('the tile prints windSeaShare through sharePercent, and reads chop_ratio nowhere else',
     tile.includes('const windSea = windSeaShare(current);')
     && tile.includes('`swell mix · ${sharePercent(windSea)} wind sea`') && !/\.chop_ratio/.test(tile));

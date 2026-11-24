@@ -13,9 +13,16 @@ import { degToCardinal, fmtHeightRange, fmtMph, fmtSec } from '@/lib/formatting'
 import { shownTrain } from '@/lib/shownPeriod';
 import { heightBasis } from '@/lib/heightBasis';
 import { fmtBreakType } from '@/lib/provenance';
-import { tierFromStars } from '@/lib/ratings';
+import { ratingState, tierFromStars } from '@/lib/ratings';
 
 type Filter = 'all' | 'fair' | 'good';
+
+// "All" lists every spot, a spot with no rating included (it sorts last: app/region/[state]).
+// FAIR+ and GOOD+ need a rating at or above their floor, so a spot with no rating is in neither.
+function passes(stars: number | null | undefined, f: { id: Filter; min: number }): boolean {
+  if (f.id === 'all') return true;
+  return ratingState(stars) !== 'none' && (stars as number) >= f.min;
+}
 
 const FILTERS: { id: Filter; label: string; min: number }[] = [
   { id: 'all',  label: 'All',    min: 0 },
@@ -39,8 +46,8 @@ export function RegionList({
   const [filter, setFilter] = useState<Filter>('all');
 
   const filtered = useMemo(() => {
-    const min = FILTERS.find((f) => f.id === filter)?.min ?? 0;
-    return spots.filter((s) => (s.latest?.stars ?? 0) >= min);
+    const f = FILTERS.find((x) => x.id === filter) ?? FILTERS[0];
+    return spots.filter((s) => passes(s.latest?.stars, f));
   }, [spots, filter]);
 
   return (
@@ -48,7 +55,7 @@ export function RegionList({
       <div className="flex items-center gap-2">
         {FILTERS.map((f) => {
           const active = filter === f.id;
-          const count = spots.filter((s) => (s.latest?.stars ?? 0) >= f.min).length;
+          const count = spots.filter((s) => passes(s.latest?.stars, f)).length;
           return (
             <button
               key={f.id}
@@ -77,7 +84,7 @@ export function RegionList({
         <div className="space-y-2">
           {filtered.map((s) => {
             const f = s.latest;
-            const tier = tierFromStars(f?.stars ?? 0);
+            const tier = tierFromStars(f?.stars);
             const series = sparks[s.id] ?? [];
             return (
               <Link
@@ -91,7 +98,7 @@ export function RegionList({
                       {s.name}
                       <CamBadge hasCam={camSet.has(s.slug)} size={12} />
                     </span>
-                    <StarRating score={f?.stars ?? 0} size="sm" />
+                    <StarRating score={f?.stars} size="sm" />
                     {s.break_type && (
                       <span className="text-xs text-text-muted">
                         {fmtBreakType(s.break_type, s.break_type_source)}
