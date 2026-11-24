@@ -260,3 +260,94 @@ def test_the_weekly_workflow_keeps_the_report_it_writes():
     assert ("        with:\n          name: accuracy-report\n          path: accuracy-report/\n"
             "          retention-days: 90\n") in text
     assert "- cron: '53 5 * * 1'" in text          # the fallback; cron-job.org dispatches 05:23
+
+
+# --------------------------------------------------------------------------- #
+# Spots whose sample point moved                                               #
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("day, lead, want", [
+    # moved 24 Nov. Day 1: valid 23 Nov from cycles dated 21-22 Nov (old); valid 24 and 25 Nov
+    # from cycles dated 22-24 Nov, which the old and the new runs could both have read; valid
+    # 26 Nov from cycles dated 24-25 Nov (new).
+    ("2026-11-23", 1, "before"), ("2026-11-24", 1, None), ("2026-11-25", 1, None),
+    ("2026-11-26", 1, "after"),
+    # day 0: valid 22 Nov old, 23 and 24 Nov mixed, 25 Nov new; day 3: 25 Nov old, 28 Nov new
+    ("2026-11-22", 0, "before"), ("2026-11-23", 0, None), ("2026-11-24", 0, None),
+    ("2026-11-25", 0, "after"), ("2026-11-25", 3, "before"), ("2026-11-27", 3, None),
+    ("2026-11-28", 3, "after"),
+])
+def test_move_split(day, lead, want):
+    assert R.move_split(date.fromisoformat(day), date(2026, 11, 24), lead) == want
+
+
+def test_load_moves(tmp_path):
+    p = tmp_path / "o.json"
+    p.write_text('{"overrides": {"a": {"moved_on": "2026-11-24"}, "b": {}, "c": {"moved_on": "soon"}}}')
+    assert R.load_moves(p) == {"a": date(2026, 11, 24)}
+    assert R.load_moves(tmp_path / "absent.json") == {}
+
+
+def test_the_committed_moves_carry_their_dates():
+    m = R.load_moves()
+    # run 82's thirteen took effect with #353 (merged 00:44Z on 24 Nov); run 71's six on 12 Nov
+    for slug in ("brookings-beach", "carolina-beach", "oregon-inlet", "nye-beach", "agate-beach-newport",
+                 "indicators", "rincon-domes", "maria-s", "steps-beach-rincon", "tres-palmas",
+                 "table-tops-aguadilla", "gas-chambers-aguadilla", "crash-boat-beach"):
+        assert m[slug] == date(2026, 11, 24), slug
+    assert m["pacifica-linda-mar"] == date(2026, 11, 12)
+
+
+def _moved_rows():
+    # Spot a moved 24 Nov. Day 1 spot - NWPS at buoy: 23 Nov 10 pairs at -0.5 (before); 24 and 25
+    # Nov 10 each at +9 (mixed, left out); 26 Nov 10 at -0.1 and 27 Nov 10 at -0.3 (after:
+    # (-1 - 3) / 20 = -0.20). Spot a against its buoy: 27 Nov 5 at -0.4 (after). A day-2 row and a
+    # region row are not the spot's day 1.
+    k = dict(kind="spot_model", source="nwps", point="a")
+    return [_row("2026-11-23", "Oregon", 1, 10, -0.5, **k), _row("2026-11-24", "Oregon", 1, 10, 9.0, **k),
+            _row("2026-11-25", "Oregon", 1, 10, 9.0, **k), _row("2026-11-26", "Oregon", 1, 10, -0.1, **k),
+            _row("2026-11-27", "Oregon", 1, 10, -0.3, **k),
+            _row("2026-11-27", "Oregon", 1, 5, -0.4, kind="spot", source="spot", point="a"),
+            _row("2026-11-27", "Oregon", 2, 10, 5.0, **k),
+            _row("2026-11-27", "Oregon", 1, 10, 5.0, kind="spot_model", source="nwps")]
+
+
+def test_moved_table_before_and_after():
+    moves = {"a": date(2026, 11, 24), "z": date(2026, 11, 20),        # z: moved, no rows this week
+             "old": date(2026, 10, 25),                               # 29 days before the week
+             "late": date(2026, 11, 30)}                              # after the week
+    t = R.moved_table(_moved_rows(), moves, date(2026, 11, 23), date(2026, 11, 30))
+    assert t.splitlines()[0] == ("| Spot | Region | Point moved | Spot − NWPS at buoy, before (n) | After (n) | "
+                                 "Spot − buoy, before (n) | After (n) |")
+    assert t.splitlines()[2:] == ["| z | – | 2026-11-20 |  |  |  |  |",
+                                  "| a | Oregon | 2026-11-24 | -0.50 (10) | -0.20 (20) |  | -0.40 (5) |"]
+    # the 28-day edge: a move on 26 Oct (28 days before 23 Nov) is out, 27 Oct in
+    edge = R.moved_table([], {"in": date(2026, 10, 27), "out": date(2026, 10, 26)},
+                         date(2026, 11, 23), date(2026, 11, 30))
+    assert [l.split(" | ")[0] for l in edge.splitlines()[2:]] == ["| in"]
+    assert R.moved_table([], {}, date(2026, 11, 23), date(2026, 11, 30)).startswith("None in the 28 days")
+
+
+def test_the_gap_table_marks_a_moved_spot():
+    lines = R.gap_table(R.spot_gaps(_gap_rows(), GAP_ROSTER, k=3), {"a": date(2026, 11, 24)}).splitlines()
+    assert lines[4].startswith("| a (moved 2026-11-24) | Oregon |") and lines[2].startswith("| b | Oregon |")
+
+
+def test_build_shows_the_moved_spots():
+    summary, full = R.build(_moved_rows(), Totals(), date(2026, 11, 23), date(2026, 11, 30), {},
+                            {"a": date(2026, 11, 24)})
+    assert "### Spots whose NWPS sample point moved: day-1 wave height bias, m, before and after the move" in summary
+    assert "| a | Oregon | 2026-11-24 | -0.50 (10) | -0.20 (20) |  | -0.40 (5) |" in summary
+    assert "the two days around the move mix the old point and the new" in full
+
+
+def test_main_reads_the_committed_move_dates(tmp_path, monkeypatch):
+    # The week's rows name Brookings Beach, whose committed override moved it on 24 Nov: the
+    # report main writes must show it in the moved table with that date (day 1 23 Nov before,
+    # 26-27 Nov after: the same figures as _moved_rows).
+    rows = [dict(r, point="brookings-beach") if r["point"] == "a" else r for r in _moved_rows()]
+    monkeypatch.setattr("pipeline.db_import.get_client", lambda: object())
+    monkeypatch.setattr(R, "fetch_all", lambda client, table, *a, **k: rows if table == "accuracy_daily" else [])
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    assert R.main(["--end", "2026-11-30", "--out", str(tmp_path)]) == 0
+    report = (tmp_path / "report.md").read_text()
+    assert "| brookings-beach | Oregon | 2026-11-24 | -0.50 (10) | -0.20 (20) |  | -0.40 (5) |" in report
