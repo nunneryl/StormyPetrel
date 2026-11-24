@@ -617,7 +617,7 @@ def test_deliberate_nodes_without_a_file_is_empty():
 
 def test_the_live_overrides_are_the_nodes_the_roster_bakes():
     """In production the exemption applies only if spots_enriched.json carries each
-    override's node exactly. Run 50's, run 58's, run 67's, the v1.5 cells and run 82's, copied by hand."""
+    override's node exactly. Run 50's, run 58's, run 67's, the v1.5 cells, run 82's and run 83's, copied by hand."""
     live = nwps.deliberate_nodes()
     assert live == {"duck-pier": (36.19331, -75.72892), "spring-ave": (27.51019, -82.80924),
                     "st-pete-beach": (27.7373, -82.86304),
@@ -651,7 +651,14 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "tres-palmas": (18.33119, -67.30508),
                     "table-tops-aguadilla": (18.46106, -67.20339),
                     "gas-chambers-aguadilla": (18.46106, -67.20339),
-                    "crash-boat-beach": (18.46106, -67.20339)}
+                    "crash-boat-beach": (18.46106, -67.20339),
+                    # the six neighbours #353 left out of its bar, node-preview run 83
+                    "dogmans-rincon": (18.34742, -67.30508),
+                    "surfers-beach-aguadilla": (18.526, -67.13559),
+                    "fort-fisher": (33.96568, -77.88904),
+                    "wrightsville-beach": (34.19117, -77.75548),
+                    "north-pea-island": (35.7701, -75.49398),
+                    "bath-house": (36.03045, -75.63102)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}

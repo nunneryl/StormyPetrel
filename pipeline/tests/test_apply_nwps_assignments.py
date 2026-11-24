@@ -722,7 +722,15 @@ _R82 = {"brookings-beach": ((42.02959, -124.29412), 2.547, (42.02959, -124.27026
          "table-tops-aguadilla": ((18.46106, -67.20339), 5.710, (18.42859, -67.16949)),
          "gas-chambers-aguadilla": ((18.46106, -67.20339), 3.832, (18.46106, -67.16949)),
          "crash-boat-beach": ((18.46106, -67.20339), 4.201, (18.46106, -67.16949))}
-_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15, **_R82}
+# The six neighbours #353 left out of its bar (their own points within 400 m of shore or on land),
+# by the same rule on the 2026-11-24 cycles. Node-preview run 83 is their gate.
+_R83 = {"dogmans-rincon": ((18.34742, -67.30508), 5.066, (18.33119, -67.25424)),
+         "surfers-beach-aguadilla": ((18.526, -67.13559), 1.878, (18.50976, -67.13559)),
+         "fort-fisher": ((33.96568, -77.88904), 2.617, (33.96568, -77.91575)),
+         "wrightsville-beach": ((34.19117, -77.75548), 3.828, (34.21372, -77.78219)),
+         "north-pea-island": ((35.7701, -75.49398), 2.087, (35.7701, -75.51355)),
+         "bath-house": ((36.03045, -75.63102), 2.728, (36.01418, -75.6506))}
+_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15, **_R82, **_R83}
 
 
 def test_live_overrides_are_run_50s_58s_and_67s_cells():
@@ -770,7 +778,7 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the thirty-three moved included, already read what apply would write.
+    # spot's node fields, the thirty-nine moved included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()

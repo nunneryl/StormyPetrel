@@ -392,6 +392,78 @@
       ],
       "reason": "The current point (0.73 km from the spot) is wet every hour and reads 0.20 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, middles-isabela, playa-guajataca, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.24 of NWPS at buoy 41115 (14.8 km), median hour by hour. The 440.0 m cell 4.20 km at 276 deg (22 deg off the facing of 254) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 0.90 of those neighbours, 1.06 of NWPS at the buoy, 4.31 of the current point.",
       "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 0.85 -> 3.34 ft, stars 0.27 -> 1.52 (181 hours up, 0 down); 1.089 of its unmoved neighbours in face (0.276 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.583 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.189 -> 1.092 of the buoy, 0% -> 60% of hours within 20%; surf height shown 0.99 -> 3.01 ft (from 10 m); from the cell's 440 m it would be 2.98 ft, 0.992 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.53 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "dogmans-rincon": {
+      "nwps_wfo": "sju",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.30508,
+      "etopo_m": 639.6,
+      "replaces": [
+        18.33119,
+        -67.25424
+      ],
+      "reason": "The current point (1.20 km from the spot, inside the GSHHG outline) is wet every hour and reads 0.25 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (antonio-s, crash-boat-beach, gas-chambers-aguadilla, indicators, jobos-beach-isabela, maria-s, pools, rincon-domes, sandy-beach, shacks-beach, steps-beach-rincon, table-tops-aguadilla, tres-palmas, wilderness), 0.24 of NWPS at buoy 41115 (5.7 km), median hour by hour. The 639.6 m cell 5.07 km at 277 deg (26 deg off the facing of 251) is the nearest that meets the rule: wet every hour, 0.93 of the next cell seaward; it reads 0.97 of those neighbours, 0.95 of NWPS at the buoy, 3.93 of the current point.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 06Z (sju), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
+    },
+    "surfers-beach-aguadilla": {
+      "nwps_wfo": "sju",
+      "nwps_node_lat": 18.526,
+      "nwps_node_lng": -67.13559,
+      "etopo_m": 35.0,
+      "replaces": [
+        18.50976,
+        -67.13559
+      ],
+      "reason": "The current point (0.29 km from the spot, 390 m from the GSHHG shore) is wet every hour and reads 1.23 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (antonio-s, crash-boat-beach, gas-chambers-aguadilla, indicators, jobos-beach-isabela, maria-s, middles-isabela, playa-guajataca, pools, rincon-domes, sandy-beach, shacks-beach, steps-beach-rincon, table-tops-aguadilla, tres-palmas, wilderness), 0.84 of NWPS at buoy 41121 (45.9 km), median hour by hour. The 35.0 m cell 1.88 km at 351 deg (16 deg off the facing of 335) is the nearest that meets the rule: wet every hour, 0.95 of the next cell seaward; it reads 1.45 of those neighbours, 1.00 of NWPS at the buoy, 1.20 of the current point. Against its north-facing neighbours one by one (Shacks Beach, Jobos Beach Isabela, Middles Isabela, Playa Guajataca) the current point reads 0.85 to 0.88 and the cell 1.01 to 1.04; the west-facing Rincon and Aguadilla spots raise the all-neighbour figure, and 41115 sits round the point on the west coast (the current point 1.27 of NWPS there).",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 06Z (sju), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
+    },
+    "fort-fisher": {
+      "nwps_wfo": "ilm",
+      "nwps_node_lat": 33.96568,
+      "nwps_node_lng": -77.88904,
+      "etopo_m": 11.2,
+      "replaces": [
+        33.96568,
+        -77.91575
+      ],
+      "reason": "The current point (0.41 km from the spot, 321 m from the GSHHG shore) is wet 106 to 110 of 145 hours and reads 0.47 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (carolina-beach, kure-beach, carolina-beach-pier, wrightsville-beach-south), 0.38 of NWPS at buoy 41110 (27.1 km), median hour by hour. The 11.2 m cell 2.62 km at 99 deg (6 deg off the facing of 105) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 1.03 of those neighbours, 0.83 of NWPS at the buoy, 2.17 of the current point.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 06Z (ilm), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
+    },
+    "wrightsville-beach": {
+      "nwps_wfo": "ilm",
+      "nwps_node_lat": 34.19117,
+      "nwps_node_lng": -77.75548,
+      "etopo_m": 15.7,
+      "replaces": [
+        34.21372,
+        -77.78219
+      ],
+      "reason": "The current point (1.16 km from the spot, 315 m from the GSHHG shore) is wet every hour and reads 0.92 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (carolina-beach, kure-beach, topsail-beach, carolina-beach-pier, wrightsville-beach-south, jolly-roger-pier), 0.70 of NWPS at buoy 41110 (9.9 km), median hour by hour. The 15.7 m cell 3.83 km at 118 deg (3 deg off the facing of 115) is the nearest that meets the rule: wet every hour, 0.93 of the next cell seaward; it reads 1.07 of those neighbours, 0.87 of NWPS at the buoy, 1.19 of the current point.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 06Z (ilm), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
+    },
+    "north-pea-island": {
+      "nwps_wfo": "mhx",
+      "nwps_node_lat": 35.7701,
+      "nwps_node_lng": -75.49398,
+      "etopo_m": 15.2,
+      "replaces": [
+        35.7701,
+        -75.51355
+      ],
+      "reason": "The current point (1.12 km from the spot, 394 m from the GSHHG shore) is wet every hour and reads 0.91 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (jennettes-pier, oregon-inlet, rodanthe, salvo, s-turns, outer-banks-fishing-pier), 0.69 of NWPS at buoy 44095 (16.7 km), median hour by hour. The 15.2 m cell 2.09 km at 58 deg (6 deg off the facing of 64) is the nearest that meets the rule: wet every hour, 0.95 of the next cell seaward; it reads 0.98 of those neighbours, 0.83 of NWPS at the buoy, 1.10 of the current point.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 00Z (mhx), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
+    },
+    "bath-house": {
+      "nwps_wfo": "mhx",
+      "nwps_node_lat": 36.03045,
+      "nwps_node_lng": -75.63102,
+      "etopo_m": 16.5,
+      "replaces": [
+        36.01418,
+        -75.6506
+      ],
+      "reason": "The current point (0.47 km from the spot, 169 m from the GSHHG shore) is wet every hour and reads 0.95 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (duck-pier, jennettes-pier, kill-devil-hills, kitty-hawk-pier, oregon-inlet, outer-banks-fishing-pier, black-pelican), 0.91 of NWPS at buoy 44056 (21.4 km), median hour by hour. The 16.5 m cell 2.73 km at 54 deg (6 deg off the facing of 60) is the nearest that meets the rule: wet every hour, 0.96 of the next cell seaward; it reads 1.06 of those neighbours, 1.01 of NWPS at the buoy, 1.11 of the current point. At buoy 44086 (Nags Head) the current point reads 0.76 and the cell 0.86.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 00Z (mhx), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
     }
   }
 }
