@@ -155,12 +155,22 @@ check('MIN_LONGER_S, DOMINANCE_K, BLOCKED_OUTSIDE_DEG and FACING_OFF_DEG are pip
 const SITES: [string, string][] = [
   ['components/CurrentConditions.tsx', 'const { tp, dp } = shownTrain(current, windowArcs, facingDeg);'],
   ['components/ForecastGrid.tsx', 'const { tp, dp } = shownTrain(r, windowArcs, facingDeg);'],
-  ['components/SpotMap.tsx', 'const { tp: swellPeriod, dp: swellDir } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
+  // /map and /region/* get the shown train worked out on the server, in their slim list items.
+  ['lib/listSpot.ts', 'const { tp, dp } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
   ['components/SpotCard.tsx', '{fmtSec(shownTrain(f, spot.swell_window_arcs, spot.orientation_deg).tp)}'],
-  ['components/RegionList.tsx', '{fmtSec(shownTrain(f, s.swell_window_arcs, s.orientation_deg).tp)}'],
   ['app/page.tsx', 'const { tp } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
 ];
 for (const [rel, use] of SITES) check(`${rel} shows the period through shownTrain`, read(rel).includes(use));
+// ...and the two components that show those items take them from there, and work out no train of
+// their own from a forecast row.
+for (const rel of ['components/SpotMap.tsx', 'components/RegionList.tsx']) {
+  const src = read(rel);
+  check(`${rel} shows the list item's period (lib/listSpot), not one of its own`,
+    src.includes("import type { ListSpot } from '@/lib/listSpot';") && !src.includes('shownTrain('));
+}
+for (const rel of ['app/map/page.tsx', 'app/region/[state]/page.tsx']) {
+  check(`${rel} sends its spots through toListSpot`, read(rel).includes('.map(toListSpot)'));
+}
 const spotPage = read('app/spot/[slug]/page.tsx');
 // CurrentConditions, ForecastGrid and SwellPartitions (its wind sea row is labelled by
 // windSeaDominates; its swell compass draws the same rows).

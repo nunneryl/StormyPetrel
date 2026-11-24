@@ -3,7 +3,8 @@ import Script from 'next/script';
 import './globals.css';
 import { siteUrl } from '@/lib/site-url';
 import { NOAA_SOURCES, RATED_SPOT_COUNT } from '@/lib/siteDescription';
-import { SiteNav, type SpotSearchItem } from '@/components/SiteNav';
+import { SiteNav } from '@/components/SiteNav';
+import { SpotSearchListProvider, type SpotSearchItem } from '@/components/SpotSearchList';
 import { SiteFooter } from '@/components/SiteFooter';
 import { fetchAllSpots } from '@/lib/queries';
 
@@ -79,9 +80,12 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-ink-950 text-text-primary antialiased flex flex-col">
-        <SiteNav searchSpots={searchSpots} />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        {/* The one search list, for the nav's search and the homepage's (components/SpotSearchList). */}
+        <SpotSearchListProvider spots={searchSpots}>
+          <SiteNav />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </SpotSearchListProvider>
 
         {/* Google Analytics (gtag.js). afterInteractive defers injection
             until hydration finishes so it never blocks first paint. */}

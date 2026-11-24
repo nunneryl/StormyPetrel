@@ -20,11 +20,24 @@ export function foldForSearch(text: string): string {
 
 export type Searchable = { name: string; state: string | null };
 
-/** Spots whose name or state contains the query, both folded, in roster order, at most *limit*. */
+/** Spots matching the query, best first, at most *limit*. Three groups, each in roster order:
+ *  names that START with the query ("rin" finds Rincon first), then names that contain it
+ *  (Dogmans Rincon), then spots whose state contains it. Query, names and states are folded the
+ *  same way (foldForSearch). */
 export function searchSpots<T extends Searchable>(spots: T[], query: string, limit = 8): T[] {
   const term = foldForSearch(query.trim());
   if (!term) return [];
-  return spots
-    .filter((s) => foldForSearch(s.name).includes(term) || foldForSearch(s.state ?? '').includes(term))
-    .slice(0, limit);
+  const starts: T[] = [];
+  const contains: T[] = [];
+  const inState: T[] = [];
+  for (const s of spots) {
+    const name = foldForSearch(s.name);
+    if (name.startsWith(term)) starts.push(s);
+    else if (name.includes(term)) contains.push(s);
+    else if (foldForSearch(s.state ?? '').includes(term)) inState.push(s);
+  }
+  return [...starts, ...contains, ...inState].slice(0, limit);
 }
+
+/** What a search box says when the query matches nothing. */
+export const NO_RESULTS_TEXT = 'No spots found';

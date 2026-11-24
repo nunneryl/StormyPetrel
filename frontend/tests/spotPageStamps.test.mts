@@ -43,6 +43,11 @@
  *      height since Oct 13 shows its first fallback within 150 km with a recent one: of 51001
  *      (55.6 km, 30 hours old), 51002 (166.8 km, recent) and 51003 (111.2 km, recent), 51003:
  *      "Backup buoy NDBC 51003 · 111 km away", 2.0 m reading "6.6 ft", and 51003's station link.
+ *  23. What the list pages send (lib/listSpot.ts, components/SpotSearchList.tsx). In the served
+ *      HTML's React payload: /map carries no column of the spot or forecast rows it no longer
+ *      sends (face_ft_raw, swell_window_arcs, break_type_source, nwps_cycle); /region/florida
+ *      carries the sparklines of Florida's spots only, not every spot's; and the homepage carries
+ *      the search list once, the nav's and the homepage search's together.
  *  12. A blank NWPS hour (the sample cell had no wave height, period or direction, so the rater
  *      filled it from a neighbouring hour, nwps_nearshore.series_hour): every row of one spot has
  *      hs, tp and dp empty and stars, face_ft and swell_hs/swell_tp/swell_dp set, period 11 s and
@@ -925,6 +930,25 @@ async function main(): Promise<void> {
   check(`${BACKUP.slug}: its station link`,
     backup.includes('https://www.ndbc.noaa.gov/station_page.php?station=51003'));
   check(`${BACKUP.slug}: not the main buoy's Oct 13 date`, !backup.includes('No recent wave reading'));
+  // 23: what the list pages send.
+  {
+    // The React payload in a served page: every self.__next_f.push string, unescaped.
+    const payloadOf = (html: string) => [...html.matchAll(/self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)/g)]
+      .map((m) => JSON.parse(m[1]) as string).join('');
+    const mapPayload = payloadOf(await (await fetch(`${site}/map`)).text());
+    check('/map sends its spots', mapPayload.includes('"slug":"stamp-test-point"'));
+    for (const col of ['face_ft_raw', 'swell_window_arcs', 'break_type_source', 'nwps_cycle', 'offshore_wind_deg']) {
+      check(`/map no longer sends ${col}`, !mapPayload.includes(`"${col}"`));
+    }
+    const flPayload = payloadOf(await (await fetch(`${site}/region/florida`)).text());
+    check('/region/florida sends its own spots\' sparklines', flPayload.includes(`"${PENSACOLA.id}":[`));
+    check('...and not another state\'s', !flPayload.includes(`"${WITH_ROW.id}":[`) && !flPayload.includes(`"${PIPELINE.id}":[`));
+    check('/region/florida no longer sends swell_window_arcs', !flPayload.includes('"swell_window_arcs"'));
+    const homePayload = payloadOf(await (await fetch(`${site}/`)).text());
+    const listed = (homePayload.match(/"slug":"stamp-test-verified-tide"/g) ?? []).length;
+    eq('the homepage sends the search list once', listed, 1);
+  }
+
   // 12: a blank NWPS hour, filled by the rater.
   const blankPage = await load(BLANK_HOUR.slug);
   const blankHtml = blankPage.html.replace(/<!-- -->/g, '');

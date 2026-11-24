@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
-import { HeroSearch, type HeroSearchItem } from '@/components/HeroSearch';
+import { HeroSearch, type HeroRatings } from '@/components/HeroSearch';
 import { StarRating } from '@/components/StarRating';
 import { ReportCard } from '@/components/ReportCard';
 import { CamBadge } from '@/components/CamBadge';
@@ -71,15 +71,15 @@ export default async function HomePage() {
     (a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]),
   );
 
-  // Search payload — strip to just what HeroSearch renders.
-  const searchItems: HeroSearchItem[] = spots.map((s) => ({
-    slug: s.slug,
-    name: s.name,
-    state: s.state,
-    stars: s.latest?.stars ?? null,
-    face_ft: s.latest?.face_ft ?? null,
-    height_basis: heightBasis(s.latest),
-  }));
+  // The search's result rows show each spot's rating and height. The names it searches come from
+  // the one shared list (components/SpotSearchList); only these values go with this page, for the
+  // spots that have them, the height to the hundredth.
+  const ratings: HeroRatings = {};
+  for (const s of spots) {
+    if (!s.latest) continue;
+    const face = s.latest.face_ft;
+    ratings[s.slug] = [s.latest.stars ?? null, face === null || face === undefined ? null : Math.round(face * 100) / 100, heightBasis(s.latest)];
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6">
@@ -106,7 +106,7 @@ export default async function HomePage() {
         </h1>
 
         <div className="w-full max-w-2xl">
-          <HeroSearch spots={searchItems} />
+          <HeroSearch ratings={ratings} />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-center">

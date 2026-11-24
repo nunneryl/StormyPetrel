@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { fetchCamSlugSet } from '@/lib/cams';
 import { SpotMap } from '@/components/SpotMap';
+import { toListSpot } from '@/lib/listSpot';
 import { pinStyle } from '@/lib/ratings';
 import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
@@ -82,7 +83,8 @@ export default async function MapPage() {
       </div>
       </div>
 
-      <SpotMap spots={spots} camSlugs={camSlugArr} />
+      {/* Slim items, not spot rows and forecast rows (lib/listSpot.ts). */}
+      <SpotMap spots={spots.map(toListSpot)} camSlugs={camSlugArr} />
     </div>
   );
 }
