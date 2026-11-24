@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { basemap } from '@/lib/basemap';
 
 // US buoy reference map — major deep-water + nearshore stations that
 // surfers actually read. Same Leaflet/CartoDB chrome as the swell-
@@ -97,12 +98,10 @@ export function BuoyMap() {
         { padding: [12, 12] },
       );
 
-      L.tileLayer('https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 10,
-        minZoom: 2,
-        subdomains: 'abcd',
-        attribution: '© OpenStreetMap, © CARTO',
-      }).addTo(map);
+      // CARTO with a key, OpenStreetMap without one, each with the credit its tiles require
+      // (lib/basemap.ts). The env var is named in full: Next inlines NEXT_PUBLIC_* only literally.
+      const tiles = basemap(process.env.NEXT_PUBLIC_CARTO_BASEMAPS_KEY);
+      L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 10, minZoom: 2 }).addTo(map);
 
       BUOYS.forEach((b) => {
         const color = b.type === 'deep' ? '#185FA5' : '#D85A30';
