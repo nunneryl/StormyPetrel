@@ -252,7 +252,10 @@ export function SpotMap({
     };
   }, [data]);
 
-  return <div ref={containerRef} className="h-[calc(100vh-3.5rem)] w-full" />;
+  // dvh, the height of the screen actually visible, so the legend at the bottom clears Safari's
+  // toolbar; 100vh is the tallest the screen can be and ran under it. vh stays as the fallback for
+  // a browser without dvh.
+  return <div ref={containerRef} className="h-[calc(100vh-3.5rem)] supports-[height:100dvh]:h-[calc(100dvh-3.5rem)] w-full" data-map />;
 }
 
 function escapeHtml(s: string): string {

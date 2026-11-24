@@ -257,17 +257,20 @@ export default async function HomePage() {
             <Link
               key={state}
               href={`/region/${encodeURIComponent(state.toLowerCase())}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-ink-600 bg-white shadow-card px-3.5 py-3 hover:bg-ink-800 transition group"
+              className="block rounded-xl border border-ink-600 bg-white shadow-card px-3.5 py-3 hover:bg-ink-800 transition group"
+              data-region-card
             >
-              <div className="min-w-0">
-                <div className="font-bold text-text-primary group-hover:text-cyan-600 truncate">
-                  {state}
-                </div>
-                <div className="text-[11px] text-text-muted tabular-nums">
-                  {info.count} spot{info.count === 1 ? '' : 's'}
-                </div>
+              {/* The name has the card's whole width: beside the stars it was cut to "Calif…" and
+                  "Was…" on a 390 px phone. Count and stars share the line under it. */}
+              <div className="font-bold text-text-primary group-hover:text-cyan-600 break-words leading-snug">
+                {state}
               </div>
-              <StarRating score={info.best} size="sm" className="shrink-0" />
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <span className="text-[11px] text-text-muted tabular-nums">
+                  {info.count} spot{info.count === 1 ? '' : 's'}
+                </span>
+                <StarRating score={info.best} size="sm" className="shrink-0" />
+              </div>
             </Link>
           ))}
         </div>

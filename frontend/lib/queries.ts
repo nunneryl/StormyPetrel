@@ -1,5 +1,6 @@
 import { supabase, supabaseUncached } from './supabase';
 import type { Forecast, Spot, SpotWithLatest } from './types';
+import { withDisplayName } from './spotName';
 
 /**
  * Single-spot lookup by slug. Used by /spot/[slug] for both the page
@@ -20,7 +21,8 @@ export async function fetchSpotBySlug(slug: string): Promise<Spot | null> {
     console.error('fetchSpotBySlug', error);
     return null;
   }
-  return data as Spot | null;
+  // Every spot read gives the shown name (lib/spotName.ts): "Mavericks", not "Mavericks, California".
+  return data ? withDisplayName(data as Spot) : null;
 }
 
 /**
@@ -43,7 +45,7 @@ export async function fetchSpotsBySlug(slugs: string[]): Promise<Spot[]> {
     console.error('fetchSpotsBySlug', error);
     return [];
   }
-  const bySlug = new Map((data ?? []).map((s) => [(s as Spot).slug, s as Spot]));
+  const bySlug = new Map((data ?? []).map((s) => [(s as Spot).slug, withDisplayName(s as Spot)]));
   return slugs.map((s) => bySlug.get(s)).filter((s): s is Spot => Boolean(s));
 }
 
@@ -69,7 +71,7 @@ export async function fetchAllSpots(): Promise<Spot[]> {
       .range(from, from + page - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
-    all.push(...(data as Spot[]));
+    all.push(...(data as Spot[]).map(withDisplayName));
     if (data.length < page) break;
     from += page;
   }

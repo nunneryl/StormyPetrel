@@ -164,11 +164,12 @@ check('0.571 prints 57%, 0.561 prints 56%', sharePercent(0.571) === '57%' && sha
   const open = page.indexOf('<CurrentHourProvider rows={forecasts} serverNowMs={nowMs}>');
   const close = page.indexOf('</CurrentHourProvider>');
   const at = (x: string) => page.indexOf(x);
+  // Whitespace-tolerant: the block's indentation moved when the cam/forecast order wrapper went in.
+  const partitionsAt = page.search(/<SwellPartitions\s+windowArcs=\{spot\.swell_window_arcs\}\s+facingDeg=\{spot\.orientation_deg\}/);
   check('the spot page puts the tile and the breakdown inside one provider',
     open >= 0 && (page.match(/<CurrentHourProvider/g) ?? []).length === 1
     && open < at('<CurrentConditions') && at('<CurrentConditions') < close
-    && open < at('<SwellPartitions\n          windowArcs={spot.swell_window_arcs}\n          facingDeg={spot.orientation_deg}')
-    && at('<SwellPartitions\n          windowArcs={spot.swell_window_arcs}\n          facingDeg={spot.orientation_deg}') < close);
+    && open < partitionsAt && partitionsAt >= 0 && partitionsAt < close);
 }
 
 // 9. THE LINE UNDER THE BREAKDOWN. With a wind-sea share the percentages are the nearshore split;

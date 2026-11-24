@@ -1,3 +1,4 @@
+import { WideScroll } from '@/components/WideScroll';
 // Vertical stack of five layer cards showing the forecast chain
 // from atmospheric model down to the final star rating. No
 // interactivity — pure SVG, server-renderable.
@@ -103,46 +104,48 @@ const LAYERS = [
 export function ForecastPipelineDiagram() {
   return (
     <div className="my-6 rounded-xl border border-ink-600 bg-white shadow-card p-4 sm:p-5">
-      <svg viewBox="0 0 680 590" className="block w-full h-auto" role="img">
-        <title>Forecast pipeline</title>
-        <desc>
-          Vertical flow showing how a surf forecast is built from atmospheric
-          models down to a star rating.
-        </desc>
-        {LAYERS.map((layer, i) => (
-          <g key={layer.num}>
-            <g transform={`translate(0, ${20 + i * 100})`}>
-              <Layer
-                num={layer.num}
-                color={layer.color}
-                title={layer.title}
-                description={layer.description}
-              />
+      <WideScroll minWidth={620}>
+        <svg viewBox="0 0 680 590" className="block w-full h-auto" role="img">
+          <title>Forecast pipeline</title>
+          <desc>
+            Vertical flow showing how a surf forecast is built from atmospheric
+            models down to a star rating.
+          </desc>
+          {LAYERS.map((layer, i) => (
+            <g key={layer.num}>
+              <g transform={`translate(0, ${20 + i * 100})`}>
+                <Layer
+                  num={layer.num}
+                  color={layer.color}
+                  title={layer.title}
+                  description={layer.description}
+                />
+              </g>
+              <FlowLabel y={95 + i * 100} text={layer.flow} />
             </g>
-            <FlowLabel y={95 + i * 100} text={layer.flow} />
-          </g>
-        ))}
-        <rect
-          x="200"
-          y="540"
-          width="280"
-          height="38"
-          rx="19"
-          fill="#185FA5"
-          stroke="#0F4B85"
-          strokeWidth="0.5"
-        />
-        <text
-          x="340"
-          y="564"
-          textAnchor="middle"
-          fontSize="15"
-          fontWeight="500"
-          fill="#FFFFFF"
-        >
-          ⭐ &ldquo;Head-high, 3.2 stars&rdquo;
-        </text>
-      </svg>
+          ))}
+          <rect
+            x="200"
+            y="540"
+            width="280"
+            height="38"
+            rx="19"
+            fill="#185FA5"
+            stroke="#0F4B85"
+            strokeWidth="0.5"
+          />
+          <text
+            x="340"
+            y="564"
+            textAnchor="middle"
+            fontSize="15"
+            fontWeight="500"
+            fill="#FFFFFF"
+          >
+            ⭐ &ldquo;Head-high, 3.2 stars&rdquo;
+          </text>
+        </svg>
+      </WideScroll>
     </div>
   );
 }
