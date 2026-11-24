@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { SpotWithLatest } from '@/lib/types';
+import type { ListSpot } from '@/lib/listSpot';
 import { StarRating } from './StarRating';
 import { CompassArrow } from './CompassArrow';
 import { SwellCompass } from './SwellCompass';
@@ -10,9 +10,6 @@ import { CamBadge } from './CamBadge';
 import { HeightBasisMark } from './HeightBasisMark';
 import { Sparkline } from './Sparkline';
 import { degToCardinal, fmtHeightRange, fmtMph, fmtSec } from '@/lib/formatting';
-import { shownTrain } from '@/lib/shownPeriod';
-import { heightBasis } from '@/lib/heightBasis';
-import { fmtBreakType } from '@/lib/provenance';
 import { ratingState, tierFromStars } from '@/lib/ratings';
 
 type Filter = 'all' | 'fair' | 'good';
@@ -35,7 +32,8 @@ export function RegionList({
   sparks,
   camSlugs = [],
 }: {
-  spots: SpotWithLatest[];
+  /** One slim item per spot, computed on the server (lib/listSpot.ts). */
+  spots: ListSpot[];
   sparks: Record<number, number[]>;
   /** Slugs of spots that have an active cam — drives the cam glyph
    *  next to the spot name. Array because Sets don't cross the
@@ -47,7 +45,7 @@ export function RegionList({
 
   const filtered = useMemo(() => {
     const f = FILTERS.find((x) => x.id === filter) ?? FILTERS[0];
-    return spots.filter((s) => passes(s.latest?.stars, f));
+    return spots.filter((s) => passes(s.stars, f));
   }, [spots, filter]);
 
   return (
@@ -55,7 +53,7 @@ export function RegionList({
       <div className="flex items-center gap-2">
         {FILTERS.map((f) => {
           const active = filter === f.id;
-          const count = spots.filter((s) => passes(s.latest?.stars, f)).length;
+          const count = spots.filter((s) => passes(s.stars, f)).length;
           return (
             <button
               key={f.id}
@@ -83,8 +81,7 @@ export function RegionList({
       ) : (
         <div className="space-y-2">
           {filtered.map((s) => {
-            const f = s.latest;
-            const tier = tierFromStars(f?.stars);
+            const tier = tierFromStars(s.stars);
             const series = sparks[s.id] ?? [];
             return (
               <Link
@@ -98,40 +95,40 @@ export function RegionList({
                       {s.name}
                       <CamBadge hasCam={camSet.has(s.slug)} size={12} />
                     </span>
-                    <StarRating score={f?.stars} size="sm" />
-                    {s.break_type && (
+                    <StarRating score={s.stars} size="sm" />
+                    {s.breakLabel && (
                       <span className="text-xs text-text-muted">
-                        {fmtBreakType(s.break_type, s.break_type_source)}
+                        {s.breakLabel}
                       </span>
                     )}
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-xs text-text-secondary flex-wrap">
                     <span className="inline-flex items-baseline gap-1">
                       <span className="font-bold text-text-primary tabular-nums">
-                        {fmtHeightRange(f?.face_ft ?? null)}
+                        {fmtHeightRange(s.faceFt)}
                       </span>
-                      <HeightBasisMark basis={heightBasis(f)} />
+                      <HeightBasisMark basis={s.basis} />
                     </span>
                     <span className="tabular-nums">
-                      {fmtSec(shownTrain(f, s.swell_window_arcs, s.orientation_deg).tp)}
+                      {fmtSec(s.tp)}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <SwellCompass
-                        deg={shownTrain(f, s.swell_window_arcs, s.orientation_deg).dp}
+                        deg={s.dp}
                         size={16}
                       />
                       <span className="font-mono text-[11px] text-text-secondary tabular-nums">
-                        {degToCardinal(shownTrain(f, s.swell_window_arcs, s.orientation_deg).dp)}
+                        {degToCardinal(s.dp)}
                       </span>
                     </span>
                     <span className="flex items-center gap-1 text-text-muted">
                       <CompassArrow
-                        deg={f?.wind_dir ?? null}
+                        deg={s.windDir}
                         size={12}
                         variant="wind"
                         showLabel={false}
                       />
-                      {fmtMph(f?.wind_speed ?? null)}
+                      {fmtMph(s.windSpeed)}
                     </span>
                   </div>
                 </div>

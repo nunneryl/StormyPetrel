@@ -11,7 +11,7 @@
  *
  *     node --experimental-strip-types frontend/lib/spotSearch.test.mts
  */
-import { foldForSearch, searchSpots } from './spotSearch.ts';
+import { foldForSearch, NO_RESULTS_TEXT, searchSpots } from './spotSearch.ts';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = ''): void {
@@ -99,6 +99,48 @@ for (const f of ['components/HeroSearch.tsx', 'components/NavSearch.tsx', 'compo
   const src = readFileSync(join(FRONTEND, f), 'utf8');
   check(`${f} searches with searchSpots and not its own toLowerCase filter`,
     src.includes("from '@/lib/spotSearch'") && /searchSpots\(spots, q\)/.test(src) && !/\.toLowerCase\(\)\.includes/.test(src));
+}
+
+// RANKED: names that start with the query, then names that contain it, then the state; each group
+// in roster order.
+{
+  const R = [
+    { name: 'Dogmans Rincon', state: 'Puerto Rico' },
+    { name: 'Steps Beach Rincon', state: 'Puerto Rico' },
+    { name: 'Rincon', state: 'California' },
+    { name: 'Rincon Domes', state: 'Puerto Rico' },
+    { name: 'Coast Guard', state: 'Rincon County' },
+  ];
+  check('"rinc": starts-with first, then contains, then state, each in roster order',
+    names(searchSpots(R, 'rinc')) === JSON.stringify(['Rincon', 'Rincon Domes', 'Dogmans Rincon', 'Steps Beach Rincon', 'Coast Guard']),
+    names(searchSpots(R, 'rinc')));
+  check('a name match outranks a state match that comes first in the roster',
+    names(searchSpots([{ name: 'Kahului', state: 'Hawaii' }, { name: 'Hawaiian Hole', state: 'X' }], 'hawai'))
+      === JSON.stringify(['Hawaiian Hole', 'Kahului']));
+  check('folding still applies to the ranking', names(searchSpots([{ name: 'Rincón', state: null }, { name: 'Pt Rincon', state: null }], 'rinco'))
+    === JSON.stringify(['Rincón', 'Pt Rincon']));
+  check('the limit applies after ranking', names(searchSpots(R, 'rinc', 2)) === JSON.stringify(['Rincon', 'Rincon Domes']));
+  check('the empty-result words', NO_RESULTS_TEXT === 'No spots found');
+}
+
+// ONE SEARCH LIST: the root layout provides it; the nav's and the homepage's search read it; the
+// homepage sends only the ratings beside it, not a second list.
+{
+  const read = (f: string) => readFileSync(join(FRONTEND, f), 'utf8');
+  const layout = read('app/layout.tsx');
+  check('the layout provides the list once', (layout.match(/<SpotSearchListProvider /g) ?? []).length === 1);
+  for (const f of ['components/HeroSearch.tsx', 'components/NavSearch.tsx']) {
+    const src = read(f);
+    check(`${f} reads the shared list`, src.includes('const spots = useSpotSearchList();'));
+    check(`${f} says "No spots found" when nothing matches`, src.includes('{NO_RESULTS_TEXT}') && src.includes('results.length === 0'));
+  }
+  check('HeroSearch takes ratings, not a list', /export function HeroSearch\(\{ ratings \}: \{ ratings: HeroRatings \}\)/.test(read('components/HeroSearch.tsx')));
+  const home = read('app/page.tsx');
+  check('the homepage passes ratings only', home.includes('<HeroSearch ratings={ratings} />') && !home.includes('searchItems'));
+  const nav = read('components/SiteNav.tsx');
+  check('the mobile header has a search button that opens the search panel', nav.includes('data-mobile-search-button')
+    && nav.includes('data-mobile-search-panel') && nav.includes('<NavSearch light autoFocus />'));
+  check('...and focuses it within the tap (iOS keyboard)', nav.includes("document.querySelector<HTMLInputElement>('[data-mobile-search-panel] input')?.focus()"));
 }
 
 if (failures) {

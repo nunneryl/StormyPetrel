@@ -2,18 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { searchSpots } from '@/lib/spotSearch';
-import type { SpotSearchItem } from './SiteNav';
+import { NO_RESULTS_TEXT, searchSpots } from '@/lib/spotSearch';
+import { useSpotSearchList } from './SpotSearchList';
 
 export function NavSearch({
-  spots,
   light = true,
+  autoFocus = false,
 }: {
-  spots: SpotSearchItem[];
   /** Light variant — input on white nav. Kept for symmetry with a future
    *  inverse usage. Currently always light since the nav is white. */
   light?: boolean;
+  /** Focus the input on mount: the mobile header's search button opens straight into typing. */
+  autoFocus?: boolean;
 }) {
+  // The one shared list (components/SpotSearchList), provided by the root layout.
+  const spots = useSpotSearchList();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -30,6 +33,10 @@ export function NavSearch({
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -83,6 +90,11 @@ export function NavSearch({
           ⌘K
         </kbd>
       </div>
+      {open && q.trim() !== '' && results.length === 0 && (
+        <div className="absolute z-40 mt-1 w-full rounded-md border border-ink-600 bg-white shadow-2xl px-3 py-2 text-sm text-text-muted" role="status">
+          {NO_RESULTS_TEXT}
+        </div>
+      )}
       {open && results.length > 0 && (
         <div className="absolute z-40 mt-1 w-full rounded-md border border-ink-600 bg-white shadow-2xl max-h-96 overflow-auto">
           {results.map((r, i) => (

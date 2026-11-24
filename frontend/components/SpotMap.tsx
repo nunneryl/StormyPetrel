@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import type { SpotWithLatest } from '@/lib/types';
-import { NO_DATA_TEXT, bestStars, classifyWind, pinStyle, ratingState, windQualityLabel } from '@/lib/ratings';
+import type { ListSpot } from '@/lib/listSpot';
+import { NO_DATA_TEXT, bestStars, pinStyle, ratingState, windQualityLabel } from '@/lib/ratings';
 import {
   degToCardinal,
   fmtHeightRange,
   fmtSec,
   msToMph,
 } from '@/lib/formatting';
-import { shownTrain } from '@/lib/shownPeriod';
 import { basemap } from '@/lib/basemap';
-import { heightBasis, heightBasisMarkHtml } from '@/lib/heightBasis';
-import { fmtBreakType } from '@/lib/provenance';
+import { heightBasisMarkHtml } from '@/lib/heightBasis';
 import { camBadgeHtml } from './CamBadge';
 
 const LEAFLET_CSS_ID = 'leaflet-css';
@@ -33,7 +31,8 @@ export function SpotMap({
   spots,
   camSlugs = [],
 }: {
-  spots: SpotWithLatest[];
+  /** One slim item per spot, computed on the server (lib/listSpot.ts). */
+  spots: ListSpot[];
   /** Slugs of spots with an active cam — drives the cam glyph in
    *  each spot's popup. Sets don't survive the server/client boundary,
    *  so callers pass a plain string array. */
@@ -189,7 +188,7 @@ export function SpotMap({
         // land and water basemaps; box-sizing:border-box keeps the pin 20px whatever the border.
         // A spot with no rating is a hollow grey ring instead (lib/ratings pinStyle): it used to
         // be read as 0 and drawn as a filled FLAT pin.
-        const style = pinStyle(s.latest?.stars);
+        const style = pinStyle(s.stars);
         const html = `
           <div data-pin="${style.hollow ? 'none' : 'rated'}" style="
             width:20px; height:20px; border-radius:50%;
@@ -208,7 +207,7 @@ export function SpotMap({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const m = L.marker([s.lat, s.lng], {
           icon,
-          spotStars: s.latest?.stars ?? null,
+          spotStars: s.stars,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
@@ -319,19 +318,19 @@ function starsHtml(score: number | null | undefined, size = 14): string {
   return `<span style="display:inline-flex;align-items:center;gap:1px;">${parts.join('')}</span>`;
 }
 
-function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
-  const f = s.latest;
-
-  const { tp: swellPeriod, dp: swellDir } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);
+function buildPopupHtml(s: ListSpot, hasCam: boolean): string {
+  // The shown train, the height's basis, the break label and the wind's quality were worked out
+  // on the server (lib/listSpot.ts toListSpot); the popup only formats them.
+  const swellPeriod = s.tp;
+  const swellDir = s.dp;
   const swellArrow =
     swellDir !== null && swellDir !== undefined
       ? `${arrowSvg(swellDir, '#0369A1')}&nbsp;${escapeHtml(degToCardinal(swellDir))}`
       : '';
 
-  const windMph = msToMph(f?.wind_speed ?? null);
-  const windDir = f?.wind_dir ?? null;
-  const windQ = classifyWind(windDir, s.offshore_wind_deg);
-  const windQLabel = windQualityLabel(windQ);
+  const windMph = msToMph(s.windSpeed);
+  const windDir = s.windDir;
+  const windQLabel = windQualityLabel(s.windQuality);
   const windParts: string[] = [];
   if (windDir !== null && windDir !== undefined) {
     windParts.push(`${arrowSvg(windDir, '#15803D')}`);
@@ -341,16 +340,16 @@ function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
   }
 
   const tideArrow =
-    s.tide_trend === 'rising' ? '↑' : s.tide_trend === 'falling' ? '↓' : '';
-  const tideLevel = f?.tide_level_ft;
+    s.tideTrend === 'rising' ? '↑' : s.tideTrend === 'falling' ? '↓' : '';
+  const tideLevel = s.tideFt;
 
   const subtitleParts: string[] = [];
   if (s.state) subtitleParts.push(escapeHtml(s.state));
-  if (s.break_type) subtitleParts.push(escapeHtml(fmtBreakType(s.break_type, s.break_type_source) ?? ''));
+  if (s.breakLabel) subtitleParts.push(escapeHtml(s.breakLabel));
 
   const conditionsLine = `
     <div style="font-size:12px;color:#0F172A;margin-top:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-variant-numeric:tabular-nums;">
-      <span style="display:inline-flex;align-items:baseline;gap:4px;"><span style="font-weight:700;">${escapeHtml(fmtHeightRange(f?.face_ft ?? null))}</span>${heightBasisMarkHtml(heightBasis(f))}</span>
+      <span style="display:inline-flex;align-items:baseline;gap:4px;"><span style="font-weight:700;">${escapeHtml(fmtHeightRange(s.faceFt))}</span>${heightBasisMarkHtml(s.basis)}</span>
       <span style="color:#475569;">${escapeHtml(fmtSec(swellPeriod))}</span>
       ${swellArrow ? `<span style="color:#0369A1;display:inline-flex;align-items:center;gap:3px;">${swellArrow}</span>` : ''}
     </div>
@@ -385,7 +384,7 @@ function buildPopupHtml(s: SpotWithLatest, hasCam: boolean): string {
         ${subtitleParts.join(' · ')}
       </div>
       <div style="display:inline-block;">
-        ${starsHtml(f?.stars, 14)}
+        ${starsHtml(s.stars, 14)}
       </div>
       ${conditionsLine}
       ${windLine}

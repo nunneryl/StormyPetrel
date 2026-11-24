@@ -2,25 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { searchSpots } from '@/lib/spotSearch';
+import { NO_RESULTS_TEXT, searchSpots } from '@/lib/spotSearch';
 import { tierFromStars } from '@/lib/ratings';
 import { fmtHeightRange } from '@/lib/formatting';
 import type { HeightBasis } from '@/lib/heightBasis';
 import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 import { HeightBasisMark } from './HeightBasisMark';
+import { useSpotSearchList } from './SpotSearchList';
 
-export type HeroSearchItem = {
-  slug: string;
-  name: string;
-  state: string | null;
-  /** 0..5 from latest forecast — used to render the inline rating badge. */
-  stars: number | null;
-  /** ft — used to render the inline size. */
-  face_ft: number | null;
-  /** heightBasis() of the same latest row, derived on the server so the client payload
-   *  carries one word rather than the two columns it is read from. */
-  height_basis: HeightBasis | null;
-};
+/** A spot's current rating, height and height basis, for the result rows: [stars, face_ft,
+ *  heightBasis()], keyed by slug. Only these: the names, states and slugs the search matches on
+ *  come from the one shared list (components/SpotSearchList), not a second copy. */
+export type HeroRating = [stars: number | null, faceFt: number | null, basis: HeightBasis | null];
+export type HeroRatings = Record<string, HeroRating>;
 
 /**
  * The big homepage search. Instant filter; results show the spot's
@@ -30,7 +24,8 @@ export type HeroSearchItem = {
  * Keyboard-first: ↑/↓ to navigate, Enter to pick, Esc to close,
  * ⌘K from anywhere on the page focuses the input.
  */
-export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
+export function HeroSearch({ ratings }: { ratings: HeroRatings }) {
+  const spots = useSpotSearchList();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -98,10 +93,16 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
         </kbd>
       </div>
 
+      {open && q.trim() !== '' && results.length === 0 && (
+        <div className="absolute z-30 mt-2 w-full rounded-xl border border-ink-600 bg-white shadow-2xl px-4 py-3 text-sm text-text-muted" role="status">
+          {NO_RESULTS_TEXT}
+        </div>
+      )}
       {open && results.length > 0 && (
         <div className="absolute z-30 mt-2 w-full rounded-xl border border-ink-600 bg-white shadow-2xl max-h-[420px] overflow-auto">
           {results.map((r, i) => {
-            const tier = tierFromStars(r.stars);
+            const [stars, faceFt, basis] = ratings[r.slug] ?? [null, null, null];
+            const tier = tierFromStars(stars);
             return (
               <Link
                 key={r.slug}
@@ -118,9 +119,9 @@ export function HeroSearch({ spots }: { spots: HeroSearchItem[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-bold tabular-nums text-text-primary text-sm">
-                    {fmtHeightRange(r.face_ft)}
+                    {fmtHeightRange(faceFt)}
                   </span>
-                  <HeightBasisMark basis={r.height_basis} />
+                  <HeightBasisMark basis={basis} />
                   <span
                     className="text-[10px] font-bold tracking-widest2 uppercase px-1.5 py-0.5 rounded"
                     style={{

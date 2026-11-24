@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { fetchAllSpots, fetchSpotsWithLatest, fetchSparklineData } from '@/lib/queries';
 import { fetchCamSlugSet } from '@/lib/cams';
 import { RegionList } from '@/components/RegionList';
+import { toListSpot } from '@/lib/listSpot';
 
 export const revalidate = 3600;
 // Static, and regenerated on the revalidate period where there is one: the root layout reads the
@@ -75,8 +76,13 @@ export default async function RegionPage({ params }: { params: Promise<Params> }
 
   // RegionList is a client component — convert collections to plain
   // structures so they cross the server / client boundary.
+  // Only this region's spots, each value to a tenth of a foot: the sparkline is 32 px tall. It
+  // used to carry every spot in the country at full precision.
   const sparks: Record<number, number[]> = {};
-  sparksMap.forEach((v, k) => { sparks[k] = v; });
+  for (const sp of inState) {
+    const v = sparksMap.get(sp.id);
+    if (v) sparks[sp.id] = v.map((x) => Math.round(x * 10) / 10);
+  }
   const camSlugArr = Array.from(camSlugs);
 
   return (
@@ -91,7 +97,8 @@ export default async function RegionPage({ params }: { params: Promise<Params> }
         </p>
       </header>
 
-      <RegionList spots={inState} sparks={sparks} camSlugs={camSlugArr} />
+      {/* Slim items, not spot rows and forecast rows (lib/listSpot.ts). */}
+      <RegionList spots={inState.map(toListSpot)} sparks={sparks} camSlugs={camSlugArr} />
     </div>
   );
 }

@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { NavSearch } from './NavSearch';
+import { useSpotSearchList } from './SpotSearchList';
 
 const NAV_LINKS = [
   { href: '/map', label: 'Map' },
@@ -16,22 +18,17 @@ const NAV_LINKS = [
   { href: '/about', label: 'About' },
 ];
 
-export type SpotSearchItem = {
-  slug: string;
-  name: string;
-  state: string | null;
-};
-
-export function SiteNav({
-  searchSpots = [],
-}: {
-  searchSpots?: SpotSearchItem[];
-}) {
+export function SiteNav() {
+  // The one shared list (components/SpotSearchList), provided by the root layout.
+  const hasSearch = useSpotSearchList().length > 0;
   const [mobileOpen, setMobileOpen] = useState(false);
+  // On a phone the header's search button opens this panel, focused, without the menu.
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     setMobileOpen(false);
+    setSearchOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -63,7 +60,7 @@ export function SiteNav({
         </Link>
 
         <div className="hidden md:flex flex-1 justify-center max-w-xl">
-          {searchSpots.length > 0 && <NavSearch spots={searchSpots} />}
+          {hasSearch && <NavSearch />}
         </div>
 
         <nav className="hidden sm:flex items-center gap-1 text-sm">
@@ -74,22 +71,48 @@ export function SiteNav({
           ))}
         </nav>
 
-        <button
-          type="button"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((v) => !v)}
-          className="sm:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 rounded-md text-text-primary hover:bg-ink-800"
-        >
-          {mobileOpen ? <CloseIcon /> : <BurgerIcon />}
-        </button>
+        <div className="sm:hidden flex items-center -mr-2">
+          {hasSearch && (
+            <button
+              type="button"
+              aria-label={searchOpen ? 'Close search' : 'Search spots'}
+              aria-expanded={searchOpen}
+              data-mobile-search-button
+              onClick={() => {
+                const opening = !searchOpen;
+                // Render the panel now, inside the tap, and focus its input in the same tap: iOS
+                // only raises the keyboard for a focus made within the user's gesture.
+                flushSync(() => { setSearchOpen(opening); setMobileOpen(false); });
+                if (opening) document.querySelector<HTMLInputElement>('[data-mobile-search-panel] input')?.focus();
+              }}
+              className="inline-flex items-center justify-center w-11 h-11 rounded-md text-text-primary hover:bg-ink-800"
+            >
+              {searchOpen ? <CloseIcon /> : <SearchGlyph />}
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            onClick={() => { setMobileOpen((v) => !v); setSearchOpen(false); }}
+            className="inline-flex items-center justify-center w-11 h-11 rounded-md text-text-primary hover:bg-ink-800"
+          >
+            {mobileOpen ? <CloseIcon /> : <BurgerIcon />}
+          </button>
+        </div>
       </div>
+
+      {searchOpen && (
+        <div className="sm:hidden border-t border-ink-600 bg-white px-4 py-3" data-mobile-search-panel>
+          <NavSearch light autoFocus />
+        </div>
+      )}
 
       {mobileOpen && (
         <div className="sm:hidden border-t border-ink-600 bg-white">
-          {searchSpots.length > 0 && (
+          {hasSearch && (
             <div className="px-4 py-3 border-b border-ink-600">
-              <NavSearch spots={searchSpots} light />
+              <NavSearch light />
             </div>
           )}
           <nav className="px-4 py-2 flex flex-col">
@@ -134,6 +157,15 @@ function NavLink({
     >
       {children}
     </Link>
+  );
+}
+
+function SearchGlyph() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
   );
 }
 
