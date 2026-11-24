@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { fetchSpotsWithLatest } from '@/lib/queries';
 import { fetchCamSlugSet } from '@/lib/cams';
 import { SpotMap } from '@/components/SpotMap';
-import { tierFromStars } from '@/lib/ratings';
+import { pinStyle } from '@/lib/ratings';
 import { RATED_SPOT_COUNT } from '@/lib/siteDescription';
 
 export const revalidate = 900;
@@ -33,6 +33,8 @@ const LEGEND = [
   { label: 'FAIR', stars: 3 },
   { label: 'POOR', stars: 1 },
   { label: 'FLAT', stars: 0 },
+  // A spot with no rating: a hollow ring, as its pin is drawn (lib/ratings pinStyle).
+  { label: 'NO DATA', stars: null },
 ];
 
 export default async function MapPage() {
@@ -51,28 +53,33 @@ export default async function MapPage() {
         </span>
       </div>
 
-      {/* Bottom-right: permanent rating legend, 5 pills + dots, single row */}
-      <div className="absolute z-[1100] bottom-4 right-4 sm:right-16 rounded-lg border border-ink-600 bg-white/95 backdrop-blur-sm px-3 py-2 shadow-card">
-        <div className="flex items-center gap-3 sm:gap-4">
+      {/* Permanent rating legend, six labels with their pin. On a phone it sits bottom-left and
+          stops 4rem short of the right edge, so Leaflet's zoom buttons (bottom-right) stay clear,
+          and wraps onto a second row; from sm up it sits bottom-right, left of the zoom buttons. */}
+      <div className="absolute z-[1100] bottom-4 left-4 right-16 sm:left-auto flex justify-start sm:justify-end pointer-events-none">
+      <div className="rounded-lg border border-ink-600 bg-white/95 backdrop-blur-sm px-3 py-2 shadow-card pointer-events-auto">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:gap-x-4">
           {LEGEND.map((l) => {
-            const tier = tierFromStars(l.stars);
+            const pin = pinStyle(l.stars);
             return (
               <span
                 key={l.label}
                 className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest2 text-text-secondary whitespace-nowrap"
               >
                 <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{
-                    background: tier.hex,
-                    border: '1px solid #0F172A',
-                  }}
+                  className="w-2.5 h-2.5 rounded-full shrink-0 box-border"
+                  style={
+                    pin.hollow
+                      ? { background: pin.fill, border: `2px solid ${pin.ring}` }
+                      : { background: pin.fill, border: '1px solid #0F172A' }
+                  }
                 />
                 {l.label}
               </span>
             );
           })}
         </div>
+      </div>
       </div>
 
       <SpotMap spots={spots} camSlugs={camSlugArr} />

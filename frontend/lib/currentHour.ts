@@ -54,6 +54,30 @@ export function selectCurrentHour(
 }
 
 /**
+ * The line shown above the tiles when no row covers the current hour, saying what IS on the page.
+ *
+ * It used to say, whatever the case, that "the chart and the N-day grid below are unaffected".
+ * That was true only when later hours existed. With no rows from now on (a spot the pipeline has
+ * not published, or a run that failed) the charts and the grid were empty too, and the line told
+ * the reader otherwise. So: if any row starts after now, the charts and grid begin at the next
+ * hour there is; if none does, there is no forecast for this spot right now, and the line says
+ * only that. `gridLabel` is the grid's own name ("5-day"), passed in so this file imports nothing.
+ */
+export function absentHourNote(
+  rows: readonly Forecast[] | null | undefined,
+  nowMs: number,
+  gridLabel: string,
+): string {
+  const later = (rows ?? []).some((r) => {
+    const t = Date.parse(r.valid_time);
+    return Number.isFinite(t) && t > nowMs;
+  });
+  return later
+    ? `No forecast published for the current hour. The charts and the ${gridLabel} grid below start at the next hour we have.`
+    : 'No forecast is available for this spot right now.';
+}
+
+/**
  * How stale the displayed row is, in whole minutes, or null when there is nothing to
  * measure. Reported against the SAME `nowMs` the selection used, so the label cannot claim
  * "0 min ago" about a row picked by a different clock — which is what the old

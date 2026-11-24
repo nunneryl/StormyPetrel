@@ -16,6 +16,7 @@ import type { SpotWithLatest } from '@/lib/types';
 import { fetchLatestReports } from '@/lib/reports';
 import { fetchCamSlugSet } from '@/lib/cams';
 import { NOAA_SOURCES, RATED_SPOT_COUNT } from '@/lib/siteDescription';
+import { bestStars, topRated } from '@/lib/ratings';
 
 export const revalidate = 900;
 // Static, and regenerated on the revalidate period where there is one: the root layout reads the
@@ -49,25 +50,23 @@ export default async function HomePage() {
     fetchCamSlugSet(),
   ]);
 
-  // Top 10 ranked — even if they're all FAIR / POOR, we show them.
-  const top10: SpotWithLatest[] = [...spots]
-    .sort((a, b) => (b.latest?.stars ?? -1) - (a.latest?.stars ?? -1))
-    .slice(0, 10);
+  // The 10 best RATED spots — even if they're all FAIR / POOR, we show them. A spot with no
+  // rating cannot be among the best, so it is left out (lib/ratings topRated), and when nothing is
+  // rated the table says so instead of listing spots it has no verdict on.
+  const top10: SpotWithLatest[] = topRated(spots, (s) => s.latest?.stars, 10);
 
-  // Per-state aggregation for "Browse by region": count + best current
-  // rating tier (used for the badge on each card).
-  const byState = new Map<string, { count: number; best: number }>();
+  // Per-state aggregation for "Browse by region": count + the best current rating among the
+  // state's RATED spots, null when none is rated (the badge then reads "No data", not FLAT).
+  const starsByState = new Map<string, (number | null | undefined)[]>();
   for (const s of spots) {
     if (!s.state) continue;
-    const cur = byState.get(s.state);
-    const stars = s.latest?.stars ?? 0;
-    if (!cur) {
-      byState.set(s.state, { count: 1, best: stars });
-    } else {
-      cur.count += 1;
-      if (stars > cur.best) cur.best = stars;
-    }
+    const list = starsByState.get(s.state) ?? [];
+    list.push(s.latest?.stars);
+    starsByState.set(s.state, list);
   }
+  const byState = new Map<string, { count: number; best: number | null }>(
+    Array.from(starsByState, ([state, list]) => [state, { count: list.length, best: bestStars(list) }]),
+  );
   const states = Array.from(byState.entries()).sort(
     (a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]),
   );
@@ -154,6 +153,11 @@ export default async function HomePage() {
             <div className="text-right">Period</div>
             <div>Wind</div>
           </div>
+          {top10.length === 0 && (
+            <div className="px-4 py-6 text-sm text-text-muted text-center" data-best-now-empty>
+              No spot has a current rating right now. Check back shortly.
+            </div>
+          )}
           {top10.map((s) => {
             const f = s.latest;
             const basis = heightBasis(f);
@@ -181,7 +185,7 @@ export default async function HomePage() {
                   {s.state ?? ''}
                 </div>
                 <div className="hidden md:flex items-center">
-                  <StarRating score={f?.stars ?? 0} size="sm" />
+                  <StarRating score={f?.stars} size="sm" />
                 </div>
                 <div className="hidden md:flex flex-col items-end justify-center gap-0.5">
                   <span className="font-bold tabular-nums text-text-primary">
@@ -206,7 +210,7 @@ export default async function HomePage() {
                     </span>
                     <HeightBasisMark basis={basis} />
                   </span>
-                  <StarRating score={f?.stars ?? 0} size="sm" />
+                  <StarRating score={f?.stars} size="sm" />
                 </div>
               </Link>
             );

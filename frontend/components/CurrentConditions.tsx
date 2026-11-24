@@ -31,6 +31,7 @@ import {
   fmtSec,
 } from '@/lib/formatting';
 import { shownTrain } from '@/lib/shownPeriod';
+import { absentHourNote } from '@/lib/currentHour';
 import { sharePercent, windSeaShare } from '@/lib/swellBreakdown';
 
 type Tile = {
@@ -56,7 +57,7 @@ export function CurrentConditions({
   facingDeg: Spot['orientation_deg'];
 }) {
   // The hour the swell breakdown shows too: one clock, one row (components/CurrentHour.tsx).
-  const { rows, selection } = useCurrentHour();
+  const { rows, nowMs, selection } = useCurrentHour();
   const current = selection.row;
   // What the height in the Surf height tile IS — calibrated, CDIP's own, or a model
   // estimate — read off the same row, so it moves with the row when the hour turns over.
@@ -102,9 +103,8 @@ export function CurrentConditions({
           told it. Distinct from a null FIELD — the Tide tile's em-dash means "this hour has
           no tide reading", this banner means "there is no row for this hour at all". */}
       {selection.state === 'absent' && (
-        <p className="mb-2 text-xs text-text-muted">
-          No forecast published for the current hour. The chart and the {CLAIMED_FORECAST_LABEL}{' '}
-          grid below are unaffected.
+        <p className="mb-2 text-xs text-text-muted" data-absent-note>
+          {absentHourNote(rows, nowMs, CLAIMED_FORECAST_LABEL)}
         </p>
       )}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">

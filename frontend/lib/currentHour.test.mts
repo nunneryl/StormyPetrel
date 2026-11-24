@@ -22,7 +22,7 @@
  *     node --experimental-strip-types frontend/lib/currentHour.test.mts
  */
 import {
-  CHART_WINDOW_HOURS, chartWindow, HOUR_MS, rowAgeMinutes, selectCurrentHour,
+  absentHourNote, CHART_WINDOW_HOURS, chartWindow, HOUR_MS, rowAgeMinutes, selectCurrentHour,
 } from './currentHour.ts';
 import type { Forecast } from './types.ts';
 
@@ -158,6 +158,25 @@ eq('mid-hour the chart starts at the NEXT boundary, as it always did',
    chartWindow(rows, T10 + 30 * 60000)[0]?.stars, 4);
 eq('no rows gives an empty window', chartWindow([], T10).length, 0);
 eq('a NaN clock gives an empty window', chartWindow(rows, Number.NaN).length, 0);
+
+// absentHourNote: what the line above the empty tiles says. It used to promise that "the chart
+// and the 5-day grid below are unaffected" even when nothing came after now either.
+{
+  const iso = (ms: number) => new Date(ms).toISOString();
+  const LATER = 'No forecast published for the current hour. The charts and the 5-day grid below start at the next hour we have.';
+  const NONE = 'No forecast is available for this spot right now.';
+  eq('rows from three hours ahead: the charts and grid start at the next hour',
+    absentHourNote([row(iso(T10 + 3 * HOUR_MS), 3), row(iso(T10 + 4 * HOUR_MS), 3)], T10 + 60_000, '5-day'), LATER);
+  eq('no rows at all: no forecast right now', absentHourNote([], T10, '5-day'), NONE);
+  eq('null rows: no forecast right now', absentHourNote(null, T10, '5-day'), NONE);
+  eq('only past rows (a run that stopped): no forecast right now',
+    absentHourNote([row(iso(T10 - 5 * HOUR_MS), 3), row(iso(T10 - 2 * HOUR_MS), 3)], T10 + 60_000, '5-day'), NONE);
+  eq('a row starting exactly now is not "later" (it would be current, not absent)',
+    absentHourNote([row(iso(T10), 3)], T10, '5-day'), NONE);
+  eq('an unparseable valid_time is not a later hour',
+    absentHourNote([{ valid_time: 'not a time', stars: 3 } as unknown as Forecast], T10, '5-day'), NONE);
+  check('neither wording says the charts are "unaffected"', !LATER.includes('unaffected') && !NONE.includes('unaffected'));
+}
 
 if (failures > 0) {
   throw new Error(`currentHour: ${failures} FAILURE(S)`);
