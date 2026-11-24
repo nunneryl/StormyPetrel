@@ -65,6 +65,12 @@
  *      the copy the first build cached, and show "(last: Oct 29, 9:50am EDT)" and Eastern
  *      abbreviations only. That second build is the 2026-10-29 preview: migration 026 applied, a redeploy
  *      without build cache, and still Los Angeles times, from a spot row the Data Cache held.
+ *  19. The brand images on the served homepage (lib/brandImages.test.mts holds the files): the
+ *      nav monogram and the homepage logo are requested through /_next/image at 1x and 2x of
+ *      26x32 and 139x120, with those width/height on the <img>, never the full-size PNGs, and
+ *      every srcSet entry answers 200 with an image the optimizer re-encoded, far smaller than the
+ *      PNG it came from (sizes printed). <head> links /manifest.webmanifest and an
+ *      apple-touch-icon; the manifest lists its three icons and each one answers 200 as a PNG.
  *  14. The list pages read the spots past the Data Cache as the spot page does: between the two
  *      builds Pensacola Beach's break type also turns researched (a backfill, the shape of
  *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
@@ -96,6 +102,21 @@
  *      The rows beside each compass are the breakdown's, each with a chip. Stamp Test Point (no
  *      arcs, no partitions, not in coastlines.json): no land but the pin, no band, no arrow, a
  *      dashed ring and "No swell window set".
+ *  20. No rating is not FLAT (lib/ratings ratingState). The stand-in answers the list pages'
+ *      one query for every spot's rows too (by valid_time window, as PostgREST would), so the
+ *      homepage, map and region pages read the fixture's ratings. Washington has a rated spot (3
+ *      stars), a FLAT one (every row 0 stars) and one with no rows at all; Alaska has one spot,
+ *      with no rows.
+ *        - the no-row spot's page: the hero reads "No data", not FLAT; the line above the tiles
+ *          says there is no forecast for this spot right now, and nothing says "unaffected";
+ *        - Stamp Test Gap (rows from 3 h ahead): "No data" in the hero, and the line says the
+ *          charts and grid start at the next hour we have;
+ *        - the FLAT spot's page still reads FLAT, with no "No data" anywhere;
+ *        - /region/washington lists rated, FLAT, no data, in that order, the no-data spot last of
+ *          all and reading "No data"; with item 11's Stamp Test Last Wave (Washington, 3 stars) its
+ *          filters count All 4, FAIR+ 2, GOOD+ 0;
+ *        - the homepage: neither no-data spot in "Best conditions right now"; the Alaska card
+ *          reads "No data", the Washington card three stars.
  *  17. The hero's freshness label is the model run's age ("Model run 6 h ago"), not the time since
  *      the current hour began.
  *  18. The CDIP credit (lib/cdipCredit.ts) on the served page. "CDIP MOP data for this spot courtesy
@@ -361,10 +382,21 @@ const CALIBRATED = { ...SPOT_FIELDS, id: 990020, slug: 'stamp-test-calibrated', 
   swell_window_source: 'nwps' };
 const MOP_TIER = { ...SPOT_FIELDS, id: 990021, slug: 'stamp-test-mop', name: 'Stamp Test Mop',
   swell_window_source: 'cdip_mop' };
+// 20: no rating is not FLAT. Three Washington spots a few tenths of a degree apart, and one in Alaska.
+// Washington, not Oregon: the accuracy fixture's spot row is Oregon's, and item 15 checks the word
+// Oregon is nowhere on /accuracy, whose nav search lists every spot's state.
+const OREGON = { ...SPOT_FIELDS, state: 'Washington', region: 'Pacific Coast' };
+const RATED_OR = { ...OREGON, id: 990022, slug: 'stamp-test-rated', name: 'Stamp Test Rated',
+  lat: 46.3, lng: -124.06 };
+const FLAT_OR = { ...OREGON, id: 990023, slug: 'stamp-test-flat', name: 'Stamp Test Flat', lat: 46.65, lng: -124.07 };
+const NO_DATA_OR = { ...OREGON, id: 990024, slug: 'stamp-test-no-data', name: 'Stamp Test No Data',
+  lat: 47.0, lng: -124.17 };
+const NO_DATA_AK = { ...SPOT_FIELDS, id: 990025, slug: 'stamp-test-alaska', name: 'Stamp Test Alaska',
+  state: 'Alaska', region: 'Southeast', lat: 57.05, lng: -135.35 };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
-  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER];
+  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER, RATED_OR, FLAT_OR, NO_DATA_OR, NO_DATA_AK];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -412,6 +444,9 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
   // 18: the raw height 1.25 times the published one, as a factor of 1.25 leaves it.
   [CALIBRATED.id, hours(-12, 48).map((h) => ({ ...row(CALIBRATED.id, h), face_ft_raw: heightAt(h) * 1.25 }))],
   [MOP_TIER.id, hours(-12, 48).map((h) => row(MOP_TIER.id, h))],
+  // 20: a rated spot (the fixture's 3 stars) and a FLAT one; the two no-data spots have no rows.
+  [RATED_OR.id, hours(-12, 48).map((h) => row(RATED_OR.id, h))],
+  [FLAT_OR.id, hours(-12, 48).map((h) => ({ ...row(FLAT_OR.id, h), stars: 0 }))],
   [NO_ROW.id, hours(3, 48).map((h) => row(NO_ROW.id, h))],
   ...[COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK, SCARBOROUGH, HOOKIPA].map((sp) => [sp.id,
     hours(-12, 48).map((h) => ({ ...row(sp.id, h), ...COMPASS_HOURS[sp.id] }))] as
@@ -470,6 +505,19 @@ function answer(table: string, q: URLSearchParams): unknown[] {
   }
   if (table === 'forecasts') {
     const id = q.get('spot_id');
+    if (id === null) {
+      // 20: the list pages' one query for every spot (lib/queries fetchLatestForecastPerSpot and
+      // fetchSparklineData): every spot's rows inside the valid_time window, by time, on the first
+      // page only, as PostgREST's offset paging would return them.
+      if ((q.get('offset') ?? '0') !== '0') return [];
+      let all = [...ROWS.values()].flat();
+      for (const cond of q.getAll('valid_time')) {
+        const at = Date.parse(cond.slice(4));
+        if (cond.startsWith('gte.')) all = all.filter((r) => Date.parse(String(r.valid_time)) >= at);
+        if (cond.startsWith('lte.')) all = all.filter((r) => Date.parse(String(r.valid_time)) <= at);
+      }
+      return all.sort((a, b) => Date.parse(String(a.valid_time)) - Date.parse(String(b.valid_time)));
+    }
     const spot = SPOTS.find((s) => id === `eq.${s.id}`);
     return spot ? ROWS.get(spot.id) ?? [] : [];
   }
@@ -887,6 +935,62 @@ async function main(): Promise<void> {
     !modelHtml.includes('CDIP MOP data for this spot'));
   check(`${WITH_ROW.slug}: ...and no calibrated label`, !modelHtml.includes('Calibrated to CDIP'));
 
+  // 20: no rating is not FLAT.
+  {
+    const NONE_NOTE = 'No forecast is available for this spot right now.';
+    const LATER_NOTE = 'No forecast published for the current hour. The charts and the 5-day grid below start at the next hour we have.';
+    const heroOf = (html: string) => html.slice(html.indexOf('<h1'), html.indexOf('data-absent-note') > -1
+      ? html.indexOf('data-absent-note') : html.indexOf('<h1') + 4000);
+    const noteOf = (html: string) => (/data-absent-note[^>]*>([^<]*)</.exec(html) ?? [])[1] ?? null;
+
+    const nd = (await load(NO_DATA_OR.slug)).html.replace(/<!-- -->/g, '');
+    check(`${NO_DATA_OR.slug}: the hero reads "No data"`, heroOf(nd).includes('data-rating="none"') && heroOf(nd).includes('No data'));
+    check(`${NO_DATA_OR.slug}: the hero does not read FLAT`, !heroOf(nd).includes('>FLAT<'));
+    eq(`${NO_DATA_OR.slug}: the line above the tiles`, noteOf(nd), NONE_NOTE);
+    check(`${NO_DATA_OR.slug}: nothing says the charts or grid are "unaffected"`, !nd.includes('unaffected'));
+    check(`${NO_DATA_OR.slug}: the grid says it has no forecast`, nd.includes('No forecast data in the next'));
+
+    const gp = (await load(NO_ROW.slug)).html.replace(/<!-- -->/g, '');
+    check(`${NO_ROW.slug}: the hero reads "No data"`, heroOf(gp).includes('data-rating="none"'));
+    eq(`${NO_ROW.slug}: the line above the tiles`, noteOf(gp), LATER_NOTE);
+    check(`${NO_ROW.slug}: nothing says "unaffected"`, !gp.includes('unaffected'));
+
+    const fl = (await load(FLAT_OR.slug)).html.replace(/<!-- -->/g, '');
+    check(`${FLAT_OR.slug}: a 0-star hour still reads FLAT in the hero`, heroOf(fl).includes('>FLAT<'));
+    check(`${FLAT_OR.slug}: and nothing on the page reads "No data"`, !fl.includes('data-rating="none"'));
+
+    const waRes = await fetch(`${site}/region/washington`);
+    eq('/region/washington answers 200', waRes.status, 200);
+    const waHtml = (await waRes.text()).replace(/<!-- -->/g, '');
+    const order = [...waHtml.matchAll(/href="\/spot\/(stamp-test-[a-z-]+)"/g)].map((m) => m[1]);
+    const listed = [...new Set(order)];
+    const mine = [RATED_OR.slug, FLAT_OR.slug, NO_DATA_OR.slug];
+    eq('/region/washington: rated, then FLAT, then no data',
+      listed.filter((slug) => mine.includes(slug)).join(','), mine.join(','));
+    eq('/region/washington: the no-data spot is last of all', listed[listed.length - 1], NO_DATA_OR.slug);
+    const ndRow = (new RegExp(`href="/spot/${NO_DATA_OR.slug}"[\\s\\S]*?</a>`).exec(waHtml) ?? [''])[0];
+    check('/region/washington: the no-data spot reads "No data"', ndRow.includes('data-rating="none"') && !ndRow.includes('>FLAT<'));
+    const counts = Object.fromEntries(['All', 'FAIR\\+', 'GOOD\\+'].map((label) => [label.replace(/\\/g, ''),
+      (new RegExp(`>${label}\\s*<span[^>]*>(\\d+)</span>`).exec(waHtml) ?? [])[1]]));
+    // Four spots: these three and Stamp Test Last Wave (3 stars). FAIR+ is the two rated ones;
+    // neither FLAT nor the no-data spot passes it.
+    eq('/region/washington: filter counts All 4, FAIR+ 2, GOOD+ 0', JSON.stringify(counts),
+      JSON.stringify({ All: '4', 'FAIR+': '2', 'GOOD+': '0' }));
+
+    const akHtml = (await (await fetch(`${site}/region/alaska`)).text()).replace(/<!-- -->/g, '');
+    check('/region/alaska: its one spot reads "No data"', akHtml.includes('data-rating="none"') && !akHtml.includes('>FLAT<'));
+
+    const home = (await (await fetch(`${site}/`)).text()).replace(/<!-- -->/g, '');
+    const best = home.slice(home.indexOf('Best conditions right now'), home.indexOf('Browse by region'));
+    check('homepage: "Best conditions right now" has rows', /href="\/spot\//.test(best));
+    check('homepage: no spot without a rating in "Best conditions right now"',
+      !best.includes(NO_DATA_OR.slug) && !best.includes(NO_DATA_AK.slug) && !best.includes('data-rating="none"'));
+    const card = (state: string) => (new RegExp(`href="/region/${state}"[\\s\\S]*?</a>`).exec(home) ?? [''])[0];
+    check('homepage: the Alaska card reads "No data"', card('alaska').includes('data-rating="none"'));
+    check('homepage: the Washington card reads three stars, its best rated spot',
+      card('washington').includes('aria-label="3 out of 5 stars"'), card('washington').slice(0, 300));
+  }
+
   // 9: time zones. The zone abbreviations depend on the date the test runs (daylight or standard
   // time), so they are held to the zone's pair; the buoy reading is a fixed instant.
   const centralZones = new Set(['CDT', 'CST', 'CDT,CST']);
@@ -1016,6 +1120,56 @@ async function main(): Promise<void> {
     captionText(plainCompass), 'Best swell W');
   eqj('Stamp Test Point: a dashed ring and "No swell window set"',
     [count(plainCompass, dc('no-window')), count(plainCompass, 'data-compass="no-window-note">No swell window set<')], [1, 1]);
+
+  // 19: the brand images and the app icons, on the served homepage.
+  const homePage = await fetch(`${site}/`);
+  eq('the homepage answers 200', homePage.status, 200);
+  const homeHtml = await homePage.text();
+  const head = homeHtml.slice(0, homeHtml.indexOf('</head>'));
+  const imgTag = (file: string) =>
+    (new RegExp(`<img[^>]*url=%2Fbrand%2F${file.replace('.', '\\.')}[^>]*>`).exec(homeHtml) ?? [''])[0];
+  const attr = (tag: string, name: string) => (new RegExp(` ${name}="([^"]*)"`).exec(tag) ?? [])[1];
+  const ACCEPT = { accept: 'image/avif,image/webp,image/png,*/*' };
+  for (const [file, w, h, pngBytes] of [['sp-initials-nav.png', '26', '32', 5933],
+    ['logo-home.png', '139', '120', 90903]] as const) {
+    const tag = imgTag(file);
+    check(`homepage: the ${file} <img> goes through the optimizer`, tag !== '', '(no such <img>)');
+    eq(`homepage: ${file} width`, attr(tag, 'width'), w);
+    eq(`homepage: ${file} height`, attr(tag, 'height'), h);
+    const srcSet = (attr(tag, 'srcSet') ?? '').replace(/&amp;/g, '&');
+    const urls = srcSet.split(', ').map((e) => e.split(' ')[0]).filter(Boolean);
+    eq(`homepage: ${file} has a 1x and a 2x`, urls.length, 2);
+    for (const u of urls) {
+      const r = await fetch(`${site}${u}`, { headers: ACCEPT });
+      const bytes = (await r.arrayBuffer()).byteLength;
+      const type = r.headers.get('content-type') ?? '';
+      console.log(`        (${u} -> ${r.status} ${type} ${bytes} bytes)`);
+      eq(`${u}: 200`, r.status, 200);
+      check(`${u}: re-encoded by the optimizer, not the PNG`, type === 'image/webp' || type === 'image/avif', type);
+      check(`${u}: smaller than the ${pngBytes}-byte source`, bytes < pngBytes, String(bytes));
+    }
+  }
+  check('homepage: the full-size logo PNGs are not loaded',
+    !homeHtml.includes('"/logo.png"') && !homeHtml.includes('%2Fbrand%2Fsp-initials.png')
+      && !homeHtml.includes('"/brand/sp-initials.png"'));
+  check('homepage <head>: the web manifest is linked', head.includes('<link rel="manifest" href="/manifest.webmanifest"'));
+  const touch = (/<link rel="apple-touch-icon" href="([^"]+)"[^>]*>/.exec(head) ?? [])[1];
+  check('homepage <head>: an apple-touch-icon is linked', Boolean(touch));
+  if (touch) {
+    const r = await fetch(`${site}${touch.replace(/&amp;/g, '&')}`);
+    eq('the apple-touch-icon answers 200', r.status, 200);
+    eq('...as a PNG', r.headers.get('content-type'), 'image/png');
+  }
+  const manifestRes = await fetch(`${site}/manifest.webmanifest`);
+  eq('/manifest.webmanifest answers 200', manifestRes.status, 200);
+  const manifestJson = await manifestRes.json() as { icons?: { src: string; sizes: string }[]; start_url?: string };
+  eq('the manifest starts at /', manifestJson.start_url, '/');
+  eq('the manifest lists three icons', manifestJson.icons?.length, 3);
+  for (const icon of manifestJson.icons ?? []) {
+    const r = await fetch(`${site}${icon.src}`);
+    eq(`manifest icon ${icon.src} answers 200`, r.status, 200);
+    eq(`manifest icon ${icon.src} is a PNG`, r.headers.get('content-type'), 'image/png');
+  }
 
   // 15: the accuracy page, first build.
   const acc1 = await accuracyPage();

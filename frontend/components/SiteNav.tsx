@@ -50,14 +50,15 @@ export function SiteNav({
           className="flex items-center shrink-0"
           aria-label="Stormy Petrel home"
         >
+          {/* 53x64 source, 2x the 26x32 it is shown at (public/brand/sp-initials-nav.png, cut from
+              sp-initials.png), served through the image optimizer. width/height are the shown
+              size, so the space is held before it loads. */}
           <Image
-            src="/brand/sp-initials.png"
+            src="/brand/sp-initials-nav.png"
             alt="Stormy Petrel"
-            width={32}
+            width={26}
             height={32}
             priority
-            unoptimized
-            style={{ height: 32, width: 'auto' }}
           />
         </Link>
 

@@ -35,7 +35,8 @@ export function CurrentHero({
   const selection = selectCurrentHour(rows, nowMs);
   return (
     <div className="flex flex-col items-end gap-1 shrink-0">
-      <StarRating score={selection.row?.stars ?? 0} size="xl" showScore />
+      {/* No current row, or a row with no stars: "No data", not FLAT (lib/ratings ratingState). */}
+      <StarRating score={selection.row?.stars} size="xl" showScore />
       <span className="text-[10px] uppercase tracking-widest2 text-text-muted">
         {selection.state === 'absent'
           ? 'No current hour'
