@@ -88,13 +88,15 @@ export default async function HomePage() {
           above-the-fold is this section: a surfer lands, types a name,
           and is on the forecast page in two seconds. */}
       <section className="pt-5 sm:pt-14 pb-4 sm:pb-10 flex flex-col items-center text-center gap-2.5 sm:gap-5">
+        {/* 279x240 source, 2x the 139x120 it is shown at on desktop (public/brand/logo-home.png,
+            cut from logo.png), served through the image optimizer. width/height carry the
+            artwork's aspect, so the box is held before it loads at either height. */}
         <Image
-          src="/logo.png"
+          src="/brand/logo-home.png"
           alt="Stormy Petrel"
-          width={120}
+          width={139}
           height={120}
           priority
-          unoptimized
           className="h-[60px] sm:h-[120px] w-auto"
         />
         <h1
