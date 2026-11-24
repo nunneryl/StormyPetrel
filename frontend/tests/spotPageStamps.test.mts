@@ -65,6 +65,12 @@
  *      the copy the first build cached, and show "(last: Oct 29, 9:50am EDT)" and Eastern
  *      abbreviations only. That second build is the 2026-10-29 preview: migration 026 applied, a redeploy
  *      without build cache, and still Los Angeles times, from a spot row the Data Cache held.
+ *  19. The brand images on the served homepage (lib/brandImages.test.mts holds the files): the
+ *      nav monogram and the homepage logo are requested through /_next/image at 1x and 2x of
+ *      26x32 and 139x120, with those width/height on the <img>, never the full-size PNGs, and
+ *      every srcSet entry answers 200 with an image the optimizer re-encoded, far smaller than the
+ *      PNG it came from (sizes printed). <head> links /manifest.webmanifest and an
+ *      apple-touch-icon; the manifest lists its three icons and each one answers 200 as a PNG.
  *  14. The list pages read the spots past the Data Cache as the spot page does: between the two
  *      builds Pensacola Beach's break type also turns researched (a backfill, the shape of
  *      migrations 020 to 022), and after the second build, .next/cache kept, /region/florida reads
@@ -990,6 +996,56 @@ async function main(): Promise<void> {
     captionText(plainCompass), 'Best swell W');
   eqj('Stamp Test Point: a dashed ring and "No swell window set"',
     [count(plainCompass, dc('no-window')), count(plainCompass, 'data-compass="no-window-note">No swell window set<')], [1, 1]);
+
+  // 19: the brand images and the app icons, on the served homepage.
+  const homePage = await fetch(`${site}/`);
+  eq('the homepage answers 200', homePage.status, 200);
+  const homeHtml = await homePage.text();
+  const head = homeHtml.slice(0, homeHtml.indexOf('</head>'));
+  const imgTag = (file: string) =>
+    (new RegExp(`<img[^>]*url=%2Fbrand%2F${file.replace('.', '\\.')}[^>]*>`).exec(homeHtml) ?? [''])[0];
+  const attr = (tag: string, name: string) => (new RegExp(` ${name}="([^"]*)"`).exec(tag) ?? [])[1];
+  const ACCEPT = { accept: 'image/avif,image/webp,image/png,*/*' };
+  for (const [file, w, h, pngBytes] of [['sp-initials-nav.png', '26', '32', 5933],
+    ['logo-home.png', '139', '120', 90903]] as const) {
+    const tag = imgTag(file);
+    check(`homepage: the ${file} <img> goes through the optimizer`, tag !== '', '(no such <img>)');
+    eq(`homepage: ${file} width`, attr(tag, 'width'), w);
+    eq(`homepage: ${file} height`, attr(tag, 'height'), h);
+    const srcSet = (attr(tag, 'srcSet') ?? '').replace(/&amp;/g, '&');
+    const urls = srcSet.split(', ').map((e) => e.split(' ')[0]).filter(Boolean);
+    eq(`homepage: ${file} has a 1x and a 2x`, urls.length, 2);
+    for (const u of urls) {
+      const r = await fetch(`${site}${u}`, { headers: ACCEPT });
+      const bytes = (await r.arrayBuffer()).byteLength;
+      const type = r.headers.get('content-type') ?? '';
+      console.log(`        (${u} -> ${r.status} ${type} ${bytes} bytes)`);
+      eq(`${u}: 200`, r.status, 200);
+      check(`${u}: re-encoded by the optimizer, not the PNG`, type === 'image/webp' || type === 'image/avif', type);
+      check(`${u}: smaller than the ${pngBytes}-byte source`, bytes < pngBytes, String(bytes));
+    }
+  }
+  check('homepage: the full-size logo PNGs are not loaded',
+    !homeHtml.includes('"/logo.png"') && !homeHtml.includes('%2Fbrand%2Fsp-initials.png')
+      && !homeHtml.includes('"/brand/sp-initials.png"'));
+  check('homepage <head>: the web manifest is linked', head.includes('<link rel="manifest" href="/manifest.webmanifest"'));
+  const touch = (/<link rel="apple-touch-icon" href="([^"]+)"[^>]*>/.exec(head) ?? [])[1];
+  check('homepage <head>: an apple-touch-icon is linked', Boolean(touch));
+  if (touch) {
+    const r = await fetch(`${site}${touch.replace(/&amp;/g, '&')}`);
+    eq('the apple-touch-icon answers 200', r.status, 200);
+    eq('...as a PNG', r.headers.get('content-type'), 'image/png');
+  }
+  const manifestRes = await fetch(`${site}/manifest.webmanifest`);
+  eq('/manifest.webmanifest answers 200', manifestRes.status, 200);
+  const manifestJson = await manifestRes.json() as { icons?: { src: string; sizes: string }[]; start_url?: string };
+  eq('the manifest starts at /', manifestJson.start_url, '/');
+  eq('the manifest lists three icons', manifestJson.icons?.length, 3);
+  for (const icon of manifestJson.icons ?? []) {
+    const r = await fetch(`${site}${icon.src}`);
+    eq(`manifest icon ${icon.src} answers 200`, r.status, 200);
+    eq(`manifest icon ${icon.src} is a PNG`, r.headers.get('content-type'), 'image/png');
+  }
 
   // 15: the accuracy page, first build.
   const acc1 = await accuracyPage();
