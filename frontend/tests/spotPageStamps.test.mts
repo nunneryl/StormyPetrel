@@ -50,6 +50,14 @@
  *      any other hour: the Surf height tile and sp-headline-hour as in 5, and the grid's period
  *      "11s" and direction "280°" (W), from swell_tp/swell_dp. Nothing on the page says the hour
  *      was blank.
+ *  22. The error routes (lib/siteErrors.ts), served. /api/health answers 200 with the last pipeline
+ *      run's age when the stand-in's newest nwps_office_freshness row is an hour old, and 503
+ *      "stale" when it is 13 hours old; with no GitHub token the alert check says "no-token".
+ *      /api/client-error records a browser error through record_site_error with the route
+ *      pattern, the path without its query string and the message normalised, and sends no
+ *      address; it answers 413 to a body over 4 KB, and 400 to bad JSON or a body with no path,
+ *      recording neither. /admin/errors answers 401 with no password or the wrong one, and 200
+ *      with ADMIN_PASSWORD, listing the stand-in's site_errors row, noindex.
  *  13. "Wave model run is N h old" (lib/modelRunAge): every fixture row carries an NWPS cycle six
  *      hours before the hour the test starts in, and no page says anything about it; one spot's
  *      rows carry a cycle 30 hours before instead, and its page says "Wave model run is N h old"
@@ -459,6 +467,16 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
     [number, Record<string, unknown>[]]),
 ]);
 
+// 22: how old the stand-in's newest pipeline run is (the health check flips it to 13), and one
+// recorded error for /admin/errors.
+let freshnessAgeHours = 1;
+const SITE_ERRORS = [{
+  fingerprint: '0123456789abcdef0123456789abcdef', source: 'server', route: '/spot/[slug]',
+  message: 'Stamp test boom', sample_path: '/spot/stamp-test-point', digest: null, count: 7,
+  first_seen: new Date(T0 - 2 * HOUR).toISOString(), last_seen: new Date(T0).toISOString(),
+}];
+const ADMIN_PASSWORD = 'stamp-admin-password';
+
 // Every request the stand-in answers, as "table?query", so a check can see what a build asked.
 const asked: string[] = [];
 
@@ -478,6 +496,11 @@ const ACCURACY = [
 // list for anything else (every other page then renders its empty state, which is all the build
 // needs).
 function answer(table: string, q: URLSearchParams): unknown[] {
+  // 22: the health check's newest pipeline run, and the admin page's error list.
+  if (table === 'nwps_office_freshness') {
+    return [{ fetched_at: new Date(Date.now() - freshnessAgeHours * HOUR).toISOString() }];
+  }
+  if (table === 'site_errors') return SITE_ERRORS;
   if (table === 'buoy_observations') {
     let rows = [...(OBS[(q.get('buoy_id') ?? '').replace(/^eq\./, '')] ?? [])];
     if (q.get('hs') === 'not.is.null') rows = rows.filter((r) => r.hs !== null);
@@ -524,8 +547,25 @@ function answer(table: string, q: URLSearchParams): unknown[] {
   return [];
 }
 
+// 22: RPC calls are POSTs to /rest/v1/rpc/<name>; each one's name and body is kept here.
+const rpcCalls: { fn: string; body: Record<string, unknown> }[] = [];
 const stub = http.createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://stub');
+  const rpc = /^\/rest\/v1\/rpc\/([a-z_]+)$/.exec(url.pathname)?.[1];
+  if (rpc) {
+    let raw = '';
+    req.on('data', (c) => { raw += c; });
+    req.on('end', () => {
+      let body: Record<string, unknown> = {};
+      try { body = JSON.parse(raw); } catch { /* keep {} */ }
+      rpcCalls.push({ fn: rpc, body });
+      asked.push(`rpc/${rpc}`);
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(rpc === 'record_site_error' ? [{ window_count: 1, accepted: true }]
+        : rpc === 'try_site_alert_lease' ? false : null));
+    });
+    return;
+  }
   const table = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname)?.[1];
   asked.push(`${table}?${url.searchParams.toString()}`);
   res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
@@ -681,6 +721,7 @@ async function main(): Promise<void> {
     NEXT_PUBLIC_SUPABASE_URL: stubUrl,
     SUPABASE_SERVICE_KEY: 'stamp-test-key',
     REVALIDATE_SECRET: SECRET,
+    ADMIN_PASSWORD,
     NEXT_TELEMETRY_DISABLED: '1',
     NO_PROXY: '127.0.0.1,localhost',
     no_proxy: '127.0.0.1,localhost',
@@ -900,6 +941,57 @@ async function main(): Promise<void> {
     said ? blankText.slice(Math.max(0, said.index - 60), said.index + 60) : '');
   const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
   check(`${WITH_ROW.slug}: no buoy, "No nearby buoy."`, plain.includes('No nearby buoy.'));
+  // 22: the error routes.
+  {
+    const h = await fetch(`${site}/api/health`);
+    const hj = await h.json() as { status?: string; age_hours?: number; alerts?: string };
+    eq('/api/health answers 200 with a run an hour old', h.status, 200);
+    eq('...status ok', hj.status, 'ok');
+    check('...the run\'s age, about an hour', typeof hj.age_hours === 'number' && hj.age_hours >= 0.9 && hj.age_hours <= 1.2, String(hj.age_hours));
+    eq('...no GitHub token, so the alert check does nothing', hj.alerts, 'no-token');
+    eq('...and it is never cached', h.headers.get('cache-control'), 'no-store');
+    freshnessAgeHours = 13;
+    const stale = await fetch(`${site}/api/health`);
+    const sj = await stale.json() as { status?: string };
+    eq('/api/health answers 503 when the last run is 13 h old', stale.status, 503);
+    eq('...status stale', sj.status, 'stale');
+    freshnessAgeHours = 1;
+
+    const post = (body: string) => fetch(`${site}/api/client-error`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.7' }, body,
+    });
+    const before = rpcCalls.length;
+    const ok = await post(JSON.stringify({ message: 'TypeError: stamp 1234567 broke', path: '/spot/rincon?email=a@b.c', digest: 'd1' }));
+    eq('/api/client-error answers 204 to a good report', ok.status, 204);
+    const rec = rpcCalls.slice(before).filter((c) => c.fn === 'record_site_error');
+    eq('...and records it once', rec.length, 1);
+    const b = rec[0]?.body ?? {};
+    eq('...as a browser error', b.p_source, 'browser');
+    eq('...on the route pattern', b.p_route, '/spot/[slug]');
+    eq('...with the path, no query string', b.p_path, '/spot/rincon');
+    eq('...the message normalised', b.p_message, 'TypeError: stamp <n> broke');
+    eq('...the digest', b.p_digest, 'd1');
+    check('...a 32-hex fingerprint', /^[0-9a-f]{32}$/.test(String(b.p_fingerprint)), String(b.p_fingerprint));
+    check('...and no address or query string anywhere in it', !JSON.stringify(b).includes('203.0.113.7') && !JSON.stringify(b).includes('email'));
+    const n = rpcCalls.length;
+    eq('a body over 4 KB: 413', (await post(JSON.stringify({ message: 'x'.repeat(5000), path: '/' }))).status, 413);
+    eq('bad JSON: 400', (await post('{not json')).status, 400);
+    eq('no path: 400', (await post(JSON.stringify({ message: 'x' }))).status, 400);
+    eq('...none of the three recorded', rpcCalls.length, n);
+
+    const admin = (auth?: string) => fetch(`${site}/admin/errors`, { headers: auth ? { authorization: auth } : {} });
+    const none = await admin();
+    eq('/admin/errors with no password: 401', none.status, 401);
+    check('...asking for basic auth', (none.headers.get('www-authenticate') ?? '').startsWith('Basic'));
+    eq('/admin/errors with the wrong password: 401',
+      (await admin(`Basic ${Buffer.from('me:wrong').toString('base64')}`)).status, 401);
+    const yes = await admin(`Basic ${Buffer.from(`me:${ADMIN_PASSWORD}`).toString('base64')}`);
+    eq('/admin/errors with ADMIN_PASSWORD: 200', yes.status, 200);
+    const ah = await yes.text();
+    check('...listing the recorded error', ah.includes('Stamp test boom') && ah.includes('/spot/stamp-test-point'));
+    check('...noindex', /<meta name="robots" content="noindex, nofollow"/.test(ah));
+  }
+
   // 13: the model-run note, only on the spot whose cycle is 30 hours old.
   check(`${WITH_ROW.slug}: a cycle six hours old, no model-run note`,
     !plain.includes('Wave model run') && !plain.includes('data-model-run-age'));

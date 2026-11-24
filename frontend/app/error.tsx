@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { WaveGlyph } from '@/components/Logo';
+import { reportClientError } from '@/lib/reportClientError';
 
 export default function GlobalError({
   error,
@@ -12,10 +13,11 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to console; production error tracking can read it later.
-    // Avoiding any noisy 3rd-party SDK for now.
     // eslint-disable-next-line no-console
     console.error('Page error:', error);
+    // Recorded in site_errors as a browser error (lib/reportClientError.ts): the message, the
+    // path and Next's digest, nothing about the visitor.
+    reportClientError(error);
   }, [error]);
 
   return (

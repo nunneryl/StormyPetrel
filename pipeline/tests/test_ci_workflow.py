@@ -635,16 +635,21 @@ SCRIPT_ALERT_MANAGERS = {
     NWPS_STALE_SCRIPT: (".github/workflows/forecast-pipeline.yml", "nwps-stale-issue",
                         "Open, update or close the nwps-stale issue"),
 }
+# The live site's one alert manager: frontend/lib/siteErrorsServer.ts keeps one 'site-critical'
+# issue (frontend/lib/siteErrors.ts), from the site itself with its own fine-grained token, not
+# from a workflow, so it holds no workflow permission at all.
+SITE_ALERT_MANAGER = "frontend/lib/siteErrorsServer.ts"
 ISSUE_OPENERS = {
     (SHARED_SCRIPT, None, None),
     (NWPS_STALE_SCRIPT, None, None),
+    (SITE_ALERT_MANAGER, None, None),
     (".github/workflows/buoy-ready-monitor.yml", "buoy-liveness",
      "Manage 'buoy-liveness' issues (per buoy — detect & report only)"),
     (".github/workflows/reverify-trust-accumulate.yml", "reverify",
      "Open/update issue for SETTLED zones (manual tagging — never auto-applied)"),
     (".github/workflows/noaa-notices.yml", "watch", "Open an issue for each new notice"),
 }
-ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled", "noaa-notice", "nwps-stale"}
+ALERT_LABELS = {"buoy-liveness", "nwps-trust-settled", "noaa-notice", "nwps-stale", "site-critical"}
 
 # How code opens an issue: the octokit call github-script uses, the GitHub CLI, the GraphQL
 # mutation and PyGithub's method, and the REST path itself. A comment naming one is prose.
@@ -1023,6 +1028,17 @@ def test_the_script_alert_manager_lists_open_issues_first_and_runs_from_its_one_
         code = yaml_code(open(os.path.join(ROOT, wf), encoding="utf-8").read())
         chunk = {keys.get("name"): c for keys, c in steps_of(jobs_of(code)[job])}[step]
         assert f"python3 {script} report" in chunk, (wf, job, step)
+
+
+def test_the_site_alert_manager_lists_open_issues_first():
+    """The site's alert manager, held to the same rule: it lists the open issues under its own
+    label before it can open one, and that label is an alert label."""
+    src = open(os.path.join(ROOT, SITE_ALERT_MANAGER), encoding="utf-8").read()
+    rules = open(os.path.join(ROOT, "frontend", "lib", "siteErrors.ts"), encoding="utf-8").read()
+    label = re.search(r"^export const ISSUE_LABEL = '([\w-]+)';$", rules, re.M).group(1)
+    assert label in ALERT_LABELS
+    listing = src.index("issues?state=open&labels=${ISSUE_LABEL}")
+    assert listing < src.index("github('POST', `/repos/${REPO}/issues`, token"), SITE_ALERT_MANAGER
 
 
 def test_issues_write_is_held_only_by_jobs_that_write_issues():

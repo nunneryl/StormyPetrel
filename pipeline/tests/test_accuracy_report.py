@@ -351,3 +351,47 @@ def test_main_reads_the_committed_move_dates(tmp_path, monkeypatch):
     assert R.main(["--end", "2026-11-30", "--out", str(tmp_path)]) == 0
     report = (tmp_path / "report.md").read_text()
     assert "| brookings-beach | Oregon | 2026-11-24 | -0.50 (10) | -0.20 (20) |  | -0.40 (5) |" in report
+
+
+def test_site_error_line():
+    rows = [{"fingerprint": "a", "source": "server"}, {"fingerprint": "b", "source": "browser"},
+            {"fingerprint": "c", "source": "browser"}]
+    assert R.site_error_line(rows) == ("**Site errors:** 3 new error fingerprints this week "
+                                       "(1 server, 2 browser). Details on /admin/errors.")
+    assert R.site_error_line([]) == ("**Site errors:** 0 new error fingerprints this week "
+                                     "(0 server, 0 browser). Details on /admin/errors.")
+    assert R.site_error_line([rows[0]]).startswith("**Site errors:** 1 new error fingerprint this week")
+    assert "could not be read" in R.site_error_line(None)
+
+
+def test_build_puts_the_site_error_line_above_the_tables():
+    summary, _ = R.build([], Totals(), date(2026, 11, 23), date(2026, 11, 30),
+                         new_errors=[{"fingerprint": "a", "source": "server"}])
+    head, rest = summary.split("### Coverage", 1)
+    assert "**Site errors:** 1 new error fingerprint this week (1 server, 0 browser)" in head
+    summary, _ = R.build([], Totals(), date(2026, 11, 23), date(2026, 11, 30))
+    assert "Site errors" not in summary                              # not passed: left out
+
+
+def test_main_reads_site_errors_and_survives_a_missing_table(tmp_path, monkeypatch):
+    monkeypatch.setattr("pipeline.db_import.get_client", lambda: object())
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    asked = []
+
+    def fake(client, table, cols, time_col, start, end, order, **k):
+        asked.append((table, cols, time_col))
+        if table == "site_errors":
+            return [{"fingerprint": "a", "source": "server", "first_seen": "2026-11-25T00:00:00Z"}]
+        return []
+    monkeypatch.setattr(R, "fetch_all", fake)
+    assert R.main(["--end", "2026-11-30", "--out", str(tmp_path)]) == 0
+    assert ("site_errors", "fingerprint,source,first_seen", "first_seen") in asked
+    assert "**Site errors:** 1 new error fingerprint this week (1 server, 0 browser)" in (tmp_path / "report.md").read_text()
+
+    def broken(client, table, *a, **k):
+        if table == "site_errors":
+            raise RuntimeError('relation "site_errors" does not exist')
+        return []
+    monkeypatch.setattr(R, "fetch_all", broken)
+    assert R.main(["--end", "2026-11-30", "--out", str(tmp_path)]) == 0
+    assert "could not be read (has migration 033 been run?)" in (tmp_path / "report.md").read_text()
