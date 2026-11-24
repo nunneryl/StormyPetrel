@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Forecast, Spot } from '@/lib/types';
 import { CLAIMED_FORECAST_DAYS, CLAIMED_FORECAST_LABEL } from '@/lib/forecastClaim';
 import { tierFromStars, classifyWind, windQualityClass, windQualityLabel } from '@/lib/ratings';
@@ -11,6 +11,7 @@ import { HEADLINE_HEIGHT_COLUMN } from '@/lib/heightBasis';
 import { CompassArrow } from './CompassArrow';
 import { StarRating, ratingCellBg } from './StarRating';
 import { SwellCompass } from './SwellCompass';
+import { MoreToTheRight, useMoreToTheRight } from './WideScroll';
 
 // 3-hour buckets matching MSW's row density. interpret writes hourly
 // rows; sample every 3rd LOCAL hour (midnight, 3am, 6am, ... at the spot) so the grid is
@@ -68,6 +69,22 @@ export function ForecastGrid({
   timeZone: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const moreToTheRight = useMoreToTheRight(scrollRef);
+  // The column header's real height, so each day header sticks right under it: on a phone a
+  // header label can wrap ("SURF (FT)" in a 60 px column), and a fixed guess let the day header
+  // slide beneath it. Re-measured on resize. 32 px until measured.
+  const headRef = useRef<HTMLDivElement | null>(null);
+  const [headH, setHeadH] = useState(32);
+  useEffect(() => {
+    const el = headRef.current;
+    if (!el) return;
+    const update = () => setHeadH(Math.round(el.getBoundingClientRect().height));
+    update();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, []);
 
   const sampled = bucket3hr(forecasts, timeZone);
   const fullDays = groupByDay(sampled, timeZone).slice(0, 7);
@@ -88,11 +105,18 @@ export function ForecastGrid({
   }
 
   return (
-    <div className="rounded-xl border border-ink-600 bg-white overflow-hidden shadow-card">
-      <div className="overflow-x-auto scrollbar-hidden">
+    // overflow-clip, not overflow-hidden: hidden would make this box the sticky headers' scroll
+    // container and they would never stick to the page on a wide screen.
+    <div className="rounded-xl border border-ink-600 bg-white overflow-clip shadow-card">
+      {/* PHONES: the table is wider than the screen, so it is a box that scrolls both ways (at
+          most 70% of the screen tall), the column header and each day's header sticking at its
+          top, with a hint while there is more to the right. WIDE SCREENS: it fits, nothing
+          scrolls inside it, and the headers stick to the page under the 56 px site header. */}
+      <div className="relative" style={{ '--grid-head': `${headH}px` } as React.CSSProperties}>
+      <div ref={scrollRef} className="overflow-auto max-h-[70vh] lg:max-h-none lg:overflow-visible scrollbar-hidden" data-forecast-scroll>
         <div className="min-w-[760px] w-full">
           {/* Header row */}
-          <div className="grid grid-cols-[80px_120px_minmax(56px,1fr)_minmax(56px,1fr)_minmax(140px,2.2fr)_minmax(160px,2.8fr)_minmax(80px,1.2fr)] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
+          <div ref={headRef} className="sticky top-0 lg:top-14 z-20 grid grid-cols-[80px_120px_minmax(56px,1fr)_minmax(56px,1fr)_minmax(140px,2.2fr)_minmax(160px,2.8fr)_minmax(80px,1.2fr)] gap-2 px-3 py-2 text-[10px] uppercase tracking-widest2 text-text-secondary border-b border-ink-600 bg-ink-900">
             <div className="sticky left-0 z-10 bg-ink-900 -ml-3 pl-3">Time</div>
             <div className="sticky left-[80px] z-10 bg-ink-900">Rating</div>
             <div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>
@@ -104,10 +128,13 @@ export function ForecastGrid({
 
           {days.map(({ day, rows }) => (
             <div key={day}>
-              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest2 text-text-secondary bg-ink-800 border-b border-ink-600 sticky top-0 z-[5]">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest2 text-text-secondary bg-ink-800 border-b border-ink-600 sticky top-[var(--grid-head)] lg:top-[calc(3.5rem+var(--grid-head))] z-[15]" data-day-header>
+                {/* Pinned left too, so the day stays in view when the table is scrolled sideways. */}
+                <span className="sticky left-3">
                 {fmtDay(rows[0].valid_time, timeZone)}
                 {' · '}
                 {zoneAbbrs(rows.map((r) => r.valid_time), timeZone).join(' / ')}
+                </span>
               </div>
               {rows.map((r, idx) => {
                 const tier = tierFromStars(r.stars);
@@ -200,6 +227,8 @@ export function ForecastGrid({
             </div>
           ))}
         </div>
+      </div>
+      <MoreToTheRight state={moreToTheRight} at="top" />
       </div>
 
       {/* Show-full toggle. Hidden when there's no extra data beyond the

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { WideScroll } from '@/components/WideScroll';
 
 // Plan-view diagram showing how coastline shape focuses (point) or
 // spreads (bay) wave energy. Pure SVG, no chart library — the
@@ -44,53 +45,55 @@ export function PointVsBay() {
       </div>
 
       <div className="rounded-lg border border-ink-600 bg-ink-900/60 p-3">
-        <svg
-          viewBox="0 0 400 260"
-          width="100%"
-          className="block"
-          aria-label={`Wave ray diagram for ${mode}`}
-        >
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="6"
-              markerHeight="6"
-              refX="5"
-              refY="3"
-              orient="auto"
-            >
-              <path d="M0,0 L6,3 L0,6 z" fill="#0369A1" />
-            </marker>
-          </defs>
-
-          <text x="200" y="14" fontSize="9" fill="#94A3B8" textAnchor="middle"
-                letterSpacing="0.18em">
-            OFFSHORE
-          </text>
-
-          {/* Incoming parallel wave crests — identical in both modes;
-              the geometry below them is what changes. */}
-          {[26, 38, 50, 62, 74].map((y) => (
-            <line
-              key={y}
-              x1="20"
-              y1={y}
-              x2="380"
-              y2={y}
-              stroke="#0369A1"
-              strokeOpacity={0.35}
-              strokeWidth={1.2}
-            />
-          ))}
-
-          {mode === 'point' ? <PointRays /> : <BayRays />}
-          {mode === 'point' ? <PointCoast /> : <BayCoast />}
-
-          <text x="200" y="252" fontSize="9" fill="#94A3B8" textAnchor="middle"
-                letterSpacing="0.18em">
-            SHORE
-          </text>
-        </svg>
+        <WideScroll minWidth={460}>
+          <svg
+            viewBox="0 0 400 260"
+            width="100%"
+            className="block"
+            aria-label={`Wave ray diagram for ${mode}`}
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="6"
+                markerHeight="6"
+                refX="5"
+                refY="3"
+                orient="auto"
+              >
+                <path d="M0,0 L6,3 L0,6 z" fill="#0369A1" />
+              </marker>
+            </defs>
+  
+            <text x="200" y="14" fontSize="9" fill="#94A3B8" textAnchor="middle"
+                  letterSpacing="0.18em">
+              OFFSHORE
+            </text>
+  
+            {/* Incoming parallel wave crests — identical in both modes;
+                the geometry below them is what changes. */}
+            {[26, 38, 50, 62, 74].map((y) => (
+              <line
+                key={y}
+                x1="20"
+                y1={y}
+                x2="380"
+                y2={y}
+                stroke="#0369A1"
+                strokeOpacity={0.35}
+                strokeWidth={1.2}
+              />
+            ))}
+  
+            {mode === 'point' ? <PointRays /> : <BayRays />}
+            {mode === 'point' ? <PointCoast /> : <BayCoast />}
+  
+            <text x="200" y="252" fontSize="9" fill="#94A3B8" textAnchor="middle"
+                  letterSpacing="0.18em">
+              SHORE
+            </text>
+          </svg>
+        </WideScroll>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">

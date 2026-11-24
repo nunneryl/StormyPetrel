@@ -326,38 +326,48 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         </p>
       )}
 
-      {/* Live cams — every active cam for this spot. Embed-mode rows
-          render an iframe each; link-mode rows render a banner card
-          with a Watch-live button. CamSection no-ops when cams is
-          empty so the section disappears cleanly. */}
-      <CamSection cams={cams} lat={spot.lat} lng={spot.lng} timeZone={timeZone} />
+      {/* ON A PHONE THE CAM COMES AFTER THE FORECAST. The tiles and the surf-report card come first,
+          the card right under the numbers it asks about; a 16:9 cam and its caption, about 280 px
+          at 390 px wide, used to push both a third of a screen down. From lg up the cam stays
+          above them, as before. Only the order changes: one cam, one iframe, either way. */}
+      <div className="flex flex-col gap-6">
+        <div className="order-2 lg:order-1 empty:hidden" data-cam-block>
+          {/* Live cams — every active cam for this spot. Embed-mode rows
+              render an iframe each; link-mode rows render a banner card
+              with a Watch-live button. CamSection no-ops when cams is
+              empty so the section disappears cleanly. */}
+          <CamSection cams={cams} lat={spot.lat} lng={spot.lng} timeZone={timeZone} />
+        </div>
+        <div className="order-1 lg:order-2 space-y-6" data-forecast-block>
 
-      {/* Hero tiles + the surf-report control. The provider is a client component taking a
-          SERVER subtree as children, which is what keeps CurrentConditions (and this page)
-          server components — nothing here reads cookies or headers, so all 648 routes keep
-          their prerender and their 1-hour revalidate. The report card sits right under the
-          tiles, always visible, asking "How big were most waves?" (components/SurfReport). */}
-      {/* One current hour for the tiles and the swell breakdown (components/CurrentHour.tsx):
-          the server's clock at first paint, the viewer's after mount, the same row for both. */}
-      <CurrentHourProvider rows={forecasts} serverNowMs={nowMs}>
-        <SurfReportProvider slug={spot.slug} timeZone={timeZone}>
-          <CurrentConditions
-            offshoreDeg={spot.offshore_wind_deg}
-            windowArcs={spot.swell_window_arcs}
-            facingDeg={spot.orientation_deg}
-          />
-          <SurfReportPanel />
-        </SurfReportProvider>
+          {/* Hero tiles + the surf-report control. The provider is a client component taking a
+              SERVER subtree as children, which is what keeps CurrentConditions (and this page)
+              server components — nothing here reads cookies or headers, so all 648 routes keep
+              their prerender and their 1-hour revalidate. The report card sits right under the
+              tiles, always visible, asking "How big were most waves?" (components/SurfReport). */}
+          {/* One current hour for the tiles and the swell breakdown (components/CurrentHour.tsx):
+              the server's clock at first paint, the viewer's after mount, the same row for both. */}
+          <CurrentHourProvider rows={forecasts} serverNowMs={nowMs}>
+            <SurfReportProvider slug={spot.slug} timeZone={timeZone}>
+              <CurrentConditions
+                offshoreDeg={spot.offshore_wind_deg}
+                windowArcs={spot.swell_window_arcs}
+                facingDeg={spot.orientation_deg}
+              />
+              <SurfReportPanel />
+            </SurfReportProvider>
 
-        {/* The swell breakdown and, drawn from the same rows, the swell compass (one card). */}
-        <SwellPartitions
-          windowArcs={spot.swell_window_arcs}
-          facingDeg={spot.orientation_deg}
-          optimalDeg={spot.optimal_swell_dir}
-          offshoreDeg={spot.offshore_wind_deg}
-          coastPath={coastlinePath(spot.slug)}
-        />
-      </CurrentHourProvider>
+            {/* The swell breakdown and, drawn from the same rows, the swell compass (one card). */}
+            <SwellPartitions
+              windowArcs={spot.swell_window_arcs}
+              facingDeg={spot.orientation_deg}
+              optimalDeg={spot.optimal_swell_dir}
+              offshoreDeg={spot.offshore_wind_deg}
+              coastPath={coastlinePath(spot.slug)}
+            />
+          </CurrentHourProvider>
+        </div>
+      </div>
 
       {/* Charts — next 48h only so curves stay legible */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">

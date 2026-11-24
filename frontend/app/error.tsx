@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { WaveGlyph } from '@/components/Logo';
 import { reportClientError } from '@/lib/reportClientError';
+import { CONTACT_EMAIL, mailtoHref } from '@/lib/contact';
 
 export default function GlobalError({
   error,
@@ -26,12 +27,18 @@ export default function GlobalError({
         <WaveGlyph className="text-rating-poor" size={48} />
       </div>
       <h1 className="text-3xl sm:text-4xl font-bold tracking-tightish text-text-primary">
-        Something broke loading this page
+        This page didn&rsquo;t load
       </h1>
       <p className="mt-2 text-text-secondary">
-        Most likely the upstream forecast database is having a moment. The
-        scheduled cron will refresh data on the next cycle. If it persists,
-        the issue is probably something we should know about.
+        Something went wrong on our side, not yours. We&rsquo;ve been told about it automatically.
+        Try again in a moment.
+      </p>
+      <p className="mt-2 text-text-secondary">
+        If it keeps happening, email{' '}
+        <a href={mailtoHref('A page will not load')} className="text-cyan-600 hover:underline">
+          {CONTACT_EMAIL}
+        </a>
+        .
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
         <button

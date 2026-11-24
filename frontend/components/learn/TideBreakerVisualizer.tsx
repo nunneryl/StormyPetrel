@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { WideScroll } from '@/components/WideScroll';
 
 // Reef cross-section. The tide slider raises and lowers the water
 // surface; the breakpoint marker walks along the reef as the depth
@@ -29,54 +30,56 @@ export function TideBreakerVisualizer() {
 
   return (
     <div className="my-6 rounded-xl border border-ink-600 bg-white shadow-card p-4 sm:p-5">
-      <svg viewBox="0 0 680 320" className="block w-full h-auto" role="img">
-        <title>Tide and breakpoint</title>
-        <desc>
-          Reef cross-section. The tide slider raises and lowers the water
-          surface, and the breakpoint marker moves along the reef.
-        </desc>
-        <rect
-          x="40"
-          y={waterY}
-          width="600"
-          height={310 - waterY}
-          fill="#7DB8E8"
-          fillOpacity="0.35"
-        />
-        <path
-          d="M40,310 L40,320 L100,278 L200,218 L300,171 L400,135 L500,112 L600,101 L640,100 L640,310 Z"
-          fill="#C9C6BC"
-          stroke="#888780"
-          strokeWidth="1"
-        />
-        <line x1="40" y1={waterY} x2="640" y2={waterY} stroke="#1565A8" strokeWidth="1.5" />
-        <line
-          x1={breakpointX}
-          y1={waterY}
-          x2={breakpointX}
-          y2={breakpointFloorY}
-          stroke="#D85A30"
-          strokeWidth="1.5"
-          strokeDasharray="4 4"
-        />
-        <circle cx={breakpointX} cy={waterY} r="5" fill="#D85A30" />
-        <text
-          x={breakpointX}
-          y={waterY - 12}
-          fontSize="12"
-          textAnchor="middle"
-          fill="#993C1D"
-          fontWeight="500"
-        >
-          Wave breaks
-        </text>
-        <text x="50" y="36" fontSize="12" fill="#94A3B8">
-          Offshore
-        </text>
-        <text x="630" y="36" fontSize="12" textAnchor="end" fill="#94A3B8">
-          Shore
-        </text>
-      </svg>
+      <WideScroll minWidth={600}>
+        <svg viewBox="0 0 680 320" className="block w-full h-auto" role="img">
+          <title>Tide and breakpoint</title>
+          <desc>
+            Reef cross-section. The tide slider raises and lowers the water
+            surface, and the breakpoint marker moves along the reef.
+          </desc>
+          <rect
+            x="40"
+            y={waterY}
+            width="600"
+            height={310 - waterY}
+            fill="#7DB8E8"
+            fillOpacity="0.35"
+          />
+          <path
+            d="M40,310 L40,320 L100,278 L200,218 L300,171 L400,135 L500,112 L600,101 L640,100 L640,310 Z"
+            fill="#C9C6BC"
+            stroke="#888780"
+            strokeWidth="1"
+          />
+          <line x1="40" y1={waterY} x2="640" y2={waterY} stroke="#1565A8" strokeWidth="1.5" />
+          <line
+            x1={breakpointX}
+            y1={waterY}
+            x2={breakpointX}
+            y2={breakpointFloorY}
+            stroke="#D85A30"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+          />
+          <circle cx={breakpointX} cy={waterY} r="5" fill="#D85A30" />
+          <text
+            x={breakpointX}
+            y={waterY - 12}
+            fontSize="12"
+            textAnchor="middle"
+            fill="#993C1D"
+            fontWeight="500"
+          >
+            Wave breaks
+          </text>
+          <text x="50" y="36" fontSize="12" fill="#94A3B8">
+            Offshore
+          </text>
+          <text x="630" y="36" fontSize="12" textAnchor="end" fill="#94A3B8">
+            Shore
+          </text>
+        </svg>
+      </WideScroll>
 
       <div className="flex items-center gap-3 mt-4 mb-3">
         <label className="text-sm text-text-secondary min-w-[80px]">Tide level</label>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { WideScroll } from '@/components/WideScroll';
 
 // Idealized 24h semidiurnal tide curve (two highs, two lows). Preset
 // buttons select a break type's preferred tide range; the curve
@@ -76,63 +77,65 @@ export function TideSessionWindow() {
 
   return (
     <div className="my-6 rounded-xl border border-ink-600 bg-white shadow-card p-4 sm:p-5">
-      <svg viewBox="0 0 680 280" className="block w-full h-auto" role="img">
-        <title>Tide curve and optimal session window by break type</title>
-        <desc>
-          A 24-hour semidiurnal tide cycle with two highs and two lows.
-          Selecting a break type highlights its preferred tide range and the
-          in-band portions of the curve.
-        </desc>
-        <text x="76" y="32" fontSize="12" textAnchor="end" fill="#94A3B8">
-          Tide (ft)
-        </text>
-        <line x1="80" y1="42" x2="80" y2="220" stroke="#E2E8F0" strokeWidth="0.5" />
-        <text x="74" y="46" fontSize="12" textAnchor="end" fill="#94A3B8">
-          6
-        </text>
-        <line x1="76" y1="42" x2="80" y2="42" stroke="#E2E8F0" strokeWidth="0.5" />
-        <text x="74" y="135" fontSize="12" textAnchor="end" fill="#94A3B8">
-          3
-        </text>
-        <line x1="76" y1="131" x2="80" y2="131" stroke="#E2E8F0" strokeWidth="0.5" />
-        <text x="74" y="224" fontSize="12" textAnchor="end" fill="#94A3B8">
-          0
-        </text>
-        <line x1="76" y1="220" x2="80" y2="220" stroke="#E2E8F0" strokeWidth="0.5" />
-
-        <rect
-          x="80"
-          y={ty(mx)}
-          width="560"
-          height={ty(mn) - ty(mx)}
-          fill="#1D9E75"
-          fillOpacity="0.18"
-        />
-        <path d={basePath} stroke="#888780" strokeWidth="2" fill="none" opacity="0.45" />
-        {segments.map(([s, e], i) => (
-          <path
-            key={i}
-            d={buildPath(s, e)}
-            stroke="#0F6E56"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
+      <WideScroll minWidth={600}>
+        <svg viewBox="0 0 680 280" className="block w-full h-auto" role="img">
+          <title>Tide curve and optimal session window by break type</title>
+          <desc>
+            A 24-hour semidiurnal tide cycle with two highs and two lows.
+            Selecting a break type highlights its preferred tide range and the
+            in-band portions of the curve.
+          </desc>
+          <text x="76" y="32" fontSize="12" textAnchor="end" fill="#94A3B8">
+            Tide (ft)
+          </text>
+          <line x1="80" y1="42" x2="80" y2="220" stroke="#E2E8F0" strokeWidth="0.5" />
+          <text x="74" y="46" fontSize="12" textAnchor="end" fill="#94A3B8">
+            6
+          </text>
+          <line x1="76" y1="42" x2="80" y2="42" stroke="#E2E8F0" strokeWidth="0.5" />
+          <text x="74" y="135" fontSize="12" textAnchor="end" fill="#94A3B8">
+            3
+          </text>
+          <line x1="76" y1="131" x2="80" y2="131" stroke="#E2E8F0" strokeWidth="0.5" />
+          <text x="74" y="224" fontSize="12" textAnchor="end" fill="#94A3B8">
+            0
+          </text>
+          <line x1="76" y1="220" x2="80" y2="220" stroke="#E2E8F0" strokeWidth="0.5" />
+  
+          <rect
+            x="80"
+            y={ty(mx)}
+            width="560"
+            height={ty(mn) - ty(mx)}
+            fill="#1D9E75"
+            fillOpacity="0.18"
           />
-        ))}
-
-        <line x1="80" y1="220" x2="640" y2="220" stroke="#CBD5E1" strokeWidth="0.5" />
-        {ticks.map(([xp, label]) => (
-          <g key={label}>
-            <line x1={xp} y1="220" x2={xp} y2="225" stroke="#94A3B8" strokeWidth="0.5" />
-            <text x={xp} y="244" fontSize="12" textAnchor="middle" fill="#94A3B8">
-              {label}
-            </text>
-          </g>
-        ))}
-        <text x="360" y="266" fontSize="12" textAnchor="middle" fill="#94A3B8">
-          Time (hours)
-        </text>
-      </svg>
+          <path d={basePath} stroke="#888780" strokeWidth="2" fill="none" opacity="0.45" />
+          {segments.map(([s, e], i) => (
+            <path
+              key={i}
+              d={buildPath(s, e)}
+              stroke="#0F6E56"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+            />
+          ))}
+  
+          <line x1="80" y1="220" x2="640" y2="220" stroke="#CBD5E1" strokeWidth="0.5" />
+          {ticks.map(([xp, label]) => (
+            <g key={label}>
+              <line x1={xp} y1="220" x2={xp} y2="225" stroke="#94A3B8" strokeWidth="0.5" />
+              <text x={xp} y="244" fontSize="12" textAnchor="middle" fill="#94A3B8">
+                {label}
+              </text>
+            </g>
+          ))}
+          <text x="360" y="266" fontSize="12" textAnchor="middle" fill="#94A3B8">
+            Time (hours)
+          </text>
+        </svg>
+      </WideScroll>
 
       <div className="grid grid-cols-4 gap-2 mt-4">
         {(Object.keys(PRESETS) as Array<keyof typeof PRESETS>).map((p) => (

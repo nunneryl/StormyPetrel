@@ -97,7 +97,7 @@ function Chips({
           type="button"
           onClick={() => onPick(value === b ? null : b)}
           aria-pressed={value === b}
-          className={`px-2.5 py-1 rounded-md border text-xs transition text-left leading-tight ${
+          className={`min-h-[44px] px-2.5 py-1 rounded-md border text-xs transition text-left leading-tight ${
             value === b ? CHIP_SELECTED : CHIP_IDLE
           }`}
         >
@@ -172,7 +172,7 @@ export function SurfReportPanel() {
         <button
           type="button"
           onClick={() => setSubmitted(false)}
-          className="text-text-muted hover:text-cyan-400 underline underline-offset-2"
+          className="min-h-[44px] px-1 text-text-muted hover:text-cyan-400 underline underline-offset-2"
         >
           change it
         </button>
@@ -209,7 +209,7 @@ export function SurfReportPanel() {
               value={hour}
               disabled={hours.length === 0}
               onChange={(e) => setHour(e.target.value)}
-              className="w-full sm:w-auto rounded-md border border-ink-600 bg-ink-900 px-2.5 py-1.5 text-sm text-text-primary disabled:opacity-50"
+              className="w-full sm:w-auto min-h-[44px] rounded-md border border-ink-600 bg-ink-900 px-2.5 py-1.5 text-sm text-text-primary disabled:opacity-50"
             >
               {hours.length === 0 && <option>Loading…</option>}
               {hours.map((iso, i) => (
@@ -240,7 +240,7 @@ export function SurfReportPanel() {
                   type="button"
                   onClick={() => setVerdict(verdict === v ? null : v)}
                   aria-pressed={verdict === v}
-                  className={`px-2.5 py-1 rounded-md border text-xs transition ${
+                  className={`min-h-[44px] px-3 py-1 rounded-md border text-xs transition ${
                     verdict === v ? CHIP_SELECTED : CHIP_IDLE
                   }`}
                 >
@@ -272,7 +272,7 @@ export function SurfReportPanel() {
               type="button"
               onClick={send}
               disabled={!size || !hour || busy}
-              className="px-3 py-1.5 rounded-md bg-cyan-600 text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cyan-500 transition"
+              className="min-h-[44px] px-4 py-1.5 rounded-md bg-cyan-600 text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cyan-500 transition"
             >
               {busy ? 'Sending…' : 'Send report'}
             </button>

@@ -33,6 +33,12 @@
  *      the question "Surfed here today? How big were most waves?", the eleven body-scale chips
  *      each with its feet hint, and no "Was this right?" link. Neither a California spot nor
  *      Banzai Pipeline (Hawaii) carries a Hawaiian-scale note.
+ *  24. The phone fixes, served. A spot named "Stamp Test Sea Cliff, California" in California is
+ *      shown as "Stamp Test Sea Cliff" in its heading, title and region list, at its unchanged
+ *      slug; its YouTube cam is in the cam block, which a phone places after the forecast block;
+ *      the forecast table is the phone's scroll box; /map's container is dvh tall; and the
+ *      not-found page says "Page not found" with a spot search (a missing spot at status 200,
+ *      streamed under loading.tsx and marked noindex; a path matching no route at 404).
  *  11. The Nearest buoy box (lib/buoyDisplay): Pensacola Beach's buoy, 41.0 km away with a reading
  *      an hour old, reads "NDBC 42012 · 41 km away" with the reading; Sunset Point's, 380.99 km
  *      away, reads "No buoy within 150 km (nearest: NDBC 46221, 381 km)" with the station link
@@ -406,10 +412,19 @@ const NO_DATA_OR = { ...OREGON, id: 990024, slug: 'stamp-test-no-data', name: 'S
   lat: 47.0, lng: -124.17 };
 const NO_DATA_AK = { ...SPOT_FIELDS, id: 990025, slug: 'stamp-test-alaska', name: 'Stamp Test Alaska',
   state: 'Alaska', region: 'Southeast', lat: 57.05, lng: -135.35 };
+// 24: a roster name that carries its own state, with a cam.
+const SEA_CLIFF = { ...SPOT_FIELDS, id: 990027, slug: 'stamp-test-sea-cliff-california',
+  name: 'Stamp Test Sea Cliff, California', lat: 36.97, lng: -121.91 };
+const SEA_CLIFF_CAM = {
+  id: 9901, spot_slug: SEA_CLIFF.slug, cam_name: 'Sea Cliff Test Cam', provider: 'youtube', channel_id: 'UCtest',
+  iframe_url: null, resolved_video_id: 'stampvid01', embed_url: 'https://www.youtube-nocookie.com/embed/stampvid01',
+  attribution: 'Test Cams', attribution_url: 'https://example.com/cam', display_mode: 'embed', status: 'active',
+  last_resolved_at: null, last_checked_at: null,
+};
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
-  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER, RATED_OR, FLAT_OR, NO_DATA_OR, NO_DATA_AK];
+  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER, RATED_OR, FLAT_OR, NO_DATA_OR, NO_DATA_AK, SEA_CLIFF];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -457,6 +472,7 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
   // 18: the raw height 1.25 times the published one, as a factor of 1.25 leaves it.
   [CALIBRATED.id, hours(-12, 48).map((h) => ({ ...row(CALIBRATED.id, h), face_ft_raw: heightAt(h) * 1.25 }))],
   [MOP_TIER.id, hours(-12, 48).map((h) => row(MOP_TIER.id, h))],
+  [SEA_CLIFF.id, hours(-12, 48).map((h) => row(SEA_CLIFF.id, h))],
   // 20: a rated spot (the fixture's 3 stars) and a FLAT one; the two no-data spots have no rows.
   [RATED_OR.id, hours(-12, 48).map((h) => row(RATED_OR.id, h))],
   [FLAT_OR.id, hours(-12, 48).map((h) => ({ ...row(FLAT_OR.id, h), stars: 0 }))],
@@ -506,6 +522,11 @@ function answer(table: string, q: URLSearchParams): unknown[] {
     return [{ fetched_at: new Date(Date.now() - freshnessAgeHours * HOUR).toISOString() }];
   }
   if (table === 'site_errors') return SITE_ERRORS;
+  // 24: the one cam, for its spot (fetchCamsForSpot) and in the cam lists (fetchCamSlugSet).
+  if (table === 'cams') {
+    const slug = q.get('spot_slug');
+    return slug === null || slug === `eq.${SEA_CLIFF.slug}` ? [SEA_CLIFF_CAM] : [];
+  }
   if (table === 'buoy_observations') {
     let rows = [...(OBS[(q.get('buoy_id') ?? '').replace(/^eq\./, '')] ?? [])];
     if (q.get('hs') === 'not.is.null') rows = rows.filter((r) => r.hs !== null);
@@ -898,6 +919,40 @@ async function main(): Promise<void> {
       JSON.stringify(CHIPS));
     check(`${slug}: no "Was this right?" link`, !html.includes('Was this right?'));
     check(`${slug}: no Hawaiian-scale note`, !html.includes('Hawaiian scale'));
+  }
+
+  // 24: the phone fixes.
+  {
+    const res = await load(SEA_CLIFF.slug);
+    eq(`${SEA_CLIFF.slug}: answers 200 at its unchanged slug`, res.status, 200);
+    const html = res.html.replace(/<!-- -->/g, '');
+    check('the heading is the name without its state', /<h1[^>]*>Stamp Test Sea Cliff<\/h1>/.test(html));
+    check('...and so is the title', html.includes('<title>Stamp Test Sea Cliff Surf Forecast') && !html.includes('Sea Cliff, California Surf'));
+    const camAt = html.indexOf('data-cam-block');
+    const fcAt = html.indexOf('data-forecast-block');
+    check('the cam is in the cam block', camAt >= 0 && html.indexOf('youtube-nocookie.com/embed/stampvid01') > camAt
+      && html.indexOf('youtube-nocookie.com/embed/stampvid01') < fcAt);
+    check('...which a phone places after the forecast block (order-2), and lg before it',
+      /class="order-2 lg:order-1 empty:hidden" data-cam-block/.test(html) && /class="order-1 lg:order-2 space-y-6" data-forecast-block/.test(html));
+    check('...and the surf-report card is in the forecast block', html.indexOf('Surfed here today?') > fcAt);
+    check('the forecast table is the phone\'s scroll box', /class="overflow-auto max-h-\[70vh\][^"]*" data-forecast-scroll/.test(html));
+    const ca = (await (await fetch(`${site}/region/california`)).text()).replace(/<!-- -->/g, '');
+    check('/region/california lists it under its shown name', ca.includes('>Stamp Test Sea Cliff<') && !ca.includes('Sea Cliff, California'));
+    const mapHtml = await (await fetch(`${site}/map`)).text();
+    check('/map is dvh tall', mapHtml.includes('supports-[height:100dvh]:h-[calc(100dvh-3.5rem)]'));
+    // A MISSING SPOT ANSWERS 200, NOT 404, and did before this item: /spot/[slug] streams under a
+    // loading.tsx boundary, so the status is sent before notFound() runs. Next marks the page
+    // noindex instead. Held here as it is, so a change either way is seen.
+    const nf = await fetch(`${site}/spot/no-such-spot-anywhere`);
+    const nfHtml = await nf.text();
+    // Streamed, so the not-found content is in the React payload, drawn after load, not plain HTML.
+    check('a missing spot shows "Page not found", with a spot search',
+      nfHtml.includes('Page not found') && nfHtml.includes('data-404-search'));
+    check('...noindex', nfHtml.includes('<meta name="robots" content="noindex"/>'));
+    eq('...at status 200 (streamed under loading.tsx; known, see the PR)', nf.status, 200);
+    const nf2 = await fetch(`${site}/no-such-page-anywhere`);
+    eq('a path that matches no route answers 404', nf2.status, 404);
+    check('...with the same page and search', (await nf2.text()).includes('data-404-search'));
   }
 
   // 11: the Nearest buoy box (lib/buoyDisplay).
