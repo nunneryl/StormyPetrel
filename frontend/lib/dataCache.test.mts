@@ -91,9 +91,16 @@ const pages = walk(join(FRONTEND, 'app'))
   .map((p) => relative(FRONTEND, p))
   .filter((p) => p.endsWith('/page.tsx') || p === 'app/sitemap.ts')
   .sort();
-// 22 since /privacy and /terms.
-check('every page is found (22 pages and the sitemap)', pages.length === 23, String(pages.length));
+// 22 since /privacy and /terms; 23 with /admin/errors.
+check('every page is found (23 pages and the sitemap)', pages.length === 24, String(pages.length));
+// THE ONE EXCEPTION: /admin/errors must show site_errors as it is now. It is behind basic auth
+// (middleware.ts) and read rarely, by one person, so a per-request render costs nothing.
+const DYNAMIC_PAGES = ['app/admin/errors/page.tsx'];
 for (const p of pages) {
+  if (DYNAMIC_PAGES.includes(p)) {
+    check(`${p} is force-dynamic (the listed exception)`, read(p).includes("export const dynamic = 'force-dynamic';"));
+    continue;
+  }
   check(`${p} is force-static`, read(p).includes("export const dynamic = 'force-static';"));
 }
 check('the root layout reads the spots for the nav search', read('app/layout.tsx').includes('await fetchAllSpots()'));

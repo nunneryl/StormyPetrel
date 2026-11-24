@@ -22,6 +22,8 @@ and NWPS at the buoy minus the buoy, at least GAP_MIN_N pairs), a spot whose sam
 marked with the date; every spot whose sample point moved in the last MOVED_RECENT_DAYS days, with
 its day-1 gap before and after the move (see move_split); and NWPS's lead skill at the
 partition-archive buoys, which the archive has kept since August, so it fills from the first run.
+Above the tables, one line: the site's error fingerprints first seen this week, by source
+(site_errors, migration 033).
 Figures: bias (forecast minus observed), MAE, RMSE, scatter index (RMSE over the mean observed),
 correlation, and n. A cell with fewer than MIN_N pairs shows only its n; a buoy needs MIN_N_BUOY.
 
@@ -370,14 +372,34 @@ def partition_table(t: Totals, zone: str = "") -> str:
 # The report                                                                   #
 # --------------------------------------------------------------------------- #
 
+def site_error_line(new_errors: list[dict] | None) -> str:
+    """One line on the site's errors: the error fingerprints first seen this week, by source
+    (site_errors, migration 033, written by the site; frontend/lib/siteErrors.ts). None means
+    the table could not be read, which before migration 033 is run is expected."""
+    if new_errors is None:
+        return ("**Site errors:** new error fingerprints this week could not be read "
+                "(has migration 033 been run?).")
+    server = sum(1 for r in new_errors if r.get("source") == "server")
+    browser = sum(1 for r in new_errors if r.get("source") == "browser")
+    n = len(new_errors)
+    return (f"**Site errors:** {n} new error fingerprint{'' if n == 1 else 's'} this week "
+            f"({server} server, {browser} browser). Details on /admin/errors.")
+
+
 def build(rows: list[dict], pa: Totals, start: date, end: date,
-          roster: dict | None = None, moves: dict | None = None) -> tuple[str, str]:
+          roster: dict | None = None, moves: dict | None = None,
+          new_errors: list[dict] | None | bool = False) -> tuple[str, str]:
     """(summary markdown, full report markdown). *roster*: spot_roster(), for the gap table's
-    buoys and sample points; *moves*: load_moves(), the spots whose sample point moved."""
+    buoys and sample points; *moves*: load_moves(), the spots whose sample point moved;
+    *new_errors*: the site_errors rows first seen this week for site_error_line (None: could
+    not be read; False, the default: leave the line out)."""
     head = (f"## Accuracy scoreboard: {start.isoformat()} to {(end - timedelta(days=1)).isoformat()}"
             f" (UTC)\n\nCells: bias / MAE (n), forecast minus observed. Cells with fewer than "
             f"{MIN_N} pairs show only n.\n")
-    parts = [head, "### Coverage (largest daily count / pairs, wave height)\n", coverage_table(rows)]
+    parts = [head]
+    if new_errors is not False:
+        parts.append(site_error_line(new_errors) + "\n")  # type: ignore[arg-type]
+    parts += ["### Coverage (largest daily count / pairs, wave height)\n", coverage_table(rows)]
     for kind, src, label in SOURCES:
         parts += [f"\n### Wave height (m): {label}\n", region_lead_table(rows, kind, src)]
     for m in ("tp", "dp", "swell_hs"):
@@ -479,7 +501,13 @@ def main(argv=None) -> int:
     import json
     from .config import DEFAULT_ENRICHED_OUTPUT
     roster = spot_roster(json.loads(Path(DEFAULT_ENRICHED_OUTPUT).read_text(encoding="utf-8")))
-    summary, full = build(rows, pa, start, end, roster, load_moves())
+    try:
+        new_errors = fetch_all(client, "site_errors", "fingerprint,source,first_seen", "first_seen",
+                               t0, t1, ("first_seen", "fingerprint"))
+    except Exception as err:  # noqa: BLE001 - the report must not fail on the site's error table
+        log.warning("site_errors could not be read: %s", err)
+        new_errors = None
+    summary, full = build(rows, pa, start, end, roster, load_moves(), new_errors)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.md").write_text(full, encoding="utf-8")
