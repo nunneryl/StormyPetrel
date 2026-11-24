@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { WaveGlyph } from './Logo';
 import { BUOY_UPDATES, FORECAST_UPDATES } from '@/lib/updateCadence';
+import { CONTACT_EMAIL, mailtoHref } from '@/lib/contact';
 
 export function SiteFooter() {
   return (
@@ -115,6 +116,21 @@ export function SiteFooter() {
               <Link href="/blog" className="text-text-secondary hover:text-cyan-600">
                 Blog
               </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="text-text-secondary hover:text-cyan-600">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="text-text-secondary hover:text-cyan-600">
+                Terms
+              </Link>
+            </li>
+            <li>
+              <a href={mailtoHref()} className="text-text-secondary hover:text-cyan-600 break-all">
+                {CONTACT_EMAIL}
+              </a>
             </li>
             <li>
               <a

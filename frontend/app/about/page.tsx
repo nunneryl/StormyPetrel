@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BUOY_UPDATES, FORECAST_UPDATES } from '@/lib/updateCadence';
+import { mailtoHref } from '@/lib/contact';
 
 export const revalidate = 86400; // 24h — content is essentially static
 // Static, and regenerated on the revalidate period where there is one: the root layout reads the
@@ -50,10 +51,8 @@ export default function AboutPage() {
         </p>
 
         <p>
-          Somewhere along the way, a company decided that interpreting this
-          data was worth $100 a year. Then they bought every other forecast
-          site and shut them down. Then they put the surf cam behind a
-          60-second paywall. You know who we&rsquo;re talking about.
+          Today most detailed surf forecasts, and many surf cams, sit behind a
+          subscription.
         </p>
 
         <p>
@@ -101,7 +100,11 @@ export default function AboutPage() {
 
         <p>
           The methodology is public. The code is on GitHub. If we&rsquo;re
-          wrong, you can see exactly why and tell us.
+          wrong, you can see exactly why and{' '}
+          <a href={mailtoHref('Feedback')} className="text-cyan-600 hover:underline">
+            tell us
+          </a>
+          .
         </p>
 
         <h2 className="pt-4 text-xl sm:text-2xl font-bold tracking-tightish text-text-primary">
@@ -120,7 +123,11 @@ export default function AboutPage() {
 
         <p>
           Check a spot. If the rating matches what you see at the beach, tell
-          a friend. If it doesn&rsquo;t, tell us.
+          a friend. If it doesn&rsquo;t,{' '}
+          <a href={mailtoHref('Feedback')} className="text-cyan-600 hover:underline">
+            tell us
+          </a>
+          .
         </p>
       </div>
     </article>

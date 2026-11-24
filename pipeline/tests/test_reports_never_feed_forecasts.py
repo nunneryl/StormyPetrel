@@ -58,6 +58,10 @@ NAMES_ALLOWED = TABLE_ALLOWED | {
     "frontend/lib/reportUi.ts",
     # mounts the card and reads HOUR_PICKER_SPAN; checked separately below to name no table
     "frontend/app/spot/[slug]/page.tsx",
+    # states the per-day report cap, read from DAILY_REPORT_CAP so the policy cannot drift from
+    # the route; it reads no report and shows no forecast. Not in TABLE_ALLOWED, so naming the
+    # table would still fail it.
+    "frontend/app/privacy/page.tsx",
     # the test scripts list
     "frontend/package.json",
 }
