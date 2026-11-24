@@ -95,6 +95,17 @@ its cell and that cell's centre, the steps read, and the cell replayed instead) 
 difference counts. Its hours are still replayed and listed, and still count in the per-spot and
 reference figures. Every other spot's hours must match exactly, as before.
 
+THE SURF HEIGHT AND THE SAMPLE POINT'S DEPTH. The rating sizes the face from the node's Hs with
+WAVEWATCH III's period factor, and the surf height the page shows at an uncalibrated spot
+(forecast/surf_height.py, #283) carries that Hs to breaking from D0_M = 10 m; neither reads the
+depth of the cell it sampled. Every replayed hour therefore also carries surf_old and surf_new,
+the page's surf height at the old and the new node (SURF_K x typical, from the Hs the override
+sized the face from, at the rated period), and, where nwps_node_overrides.json records the new
+cell's ETOPO depth (etopo_m), surf_new_at_depth: the same Hs carried to breaking from that depth
+instead of 10 m. The ratio of the two is what the 10 m assumption misses at the new cell.
+Calibrated spots show their calibrated face, not this surf height; the figures are reported for
+them all the same.
+
 WHAT IT CANNOT SEE. Hours another rater wrote (MOP, WW3, rate_spot's NWPS path) and hours whose
 cycle NOMADS no longer holds are counted, by reason, not replayed.
 """
@@ -348,6 +359,23 @@ def face_differs(published, replayed):
     return abs(published - replayed) > FACE_TOL
 
 
+def surf_heights(face_ft, rated_tp, depth_m=None):
+    """(surf_10m, surf_at_depth) in ft for one replayed hour: the page's surf height (SURF_K x
+    typical, Hs carried to breaking from D0_M = 10 m) from the Hs the override sized *face_ft*
+    from at *rated_tp*, and the same Hs carried from *depth_m* instead (None without a depth).
+    (None, None) when the face or the period is missing."""
+    from .forecast.surf_height import SURF_K, typical_face_ft
+    from .interpret import period_factor
+    face, tp = _num(face_ft), _num(rated_tp)
+    if face is None or tp is None or tp <= 0 or face < 0:
+        return None, None
+    hs = face / (period_factor(tp, "ww3") * 3.281)
+    at10 = float(SURF_K * typical_face_ft([hs], [tp])[0])
+    d = _num(depth_m)
+    at_d = float(SURF_K * typical_face_ft([hs], [tp], d0=d)[0]) if d and d > 0 else None
+    return round(at10, 3), (None if at_d is None else round(at_d, 3))
+
+
 def replay(spot, entries, series, ceiling_factors, median_factor, apply=apply_nwps_overrides):
     """*entries* rated in place by apply_nwps_overrides on *spot* with *series* as its fetch.
     An entry the override did not reach carries no 'stars' afterwards."""
@@ -378,7 +406,7 @@ def spot_summary(hours):
         by[h["spot"]].append(h)
     for name, hs in by.items():
         def mean(key):
-            vals = [h[key] for h in hs if h[key] is not None]
+            vals = [h.get(key) for h in hs if h.get(key) is not None]
             return round(sum(vals) / len(vals), 3) if vals else None
         both = [(h["stars_old"], h["stars_new"]) for h in hs
                 if h["stars_old"] is not None and h["stars_new"] is not None]
@@ -388,7 +416,13 @@ def spot_summary(hours):
                      "stars_same": sum(b == a for a, b in both),
                      "mean_stars_old": mean("stars_old"), "mean_stars_new": mean("stars_new"),
                      "mean_face_old": mean("face_old"), "mean_face_new": mean("face_new"),
-                     "mean_hs_old": mean("hs_old"), "mean_hs_new": mean("hs_new")}
+                     "mean_hs_old": mean("hs_old"), "mean_hs_new": mean("hs_new"),
+                     "new_cell_depth_m": next((h.get("new_cell_depth_m") for h in hs
+                                               if h.get("new_cell_depth_m") is not None), None),
+                     "mean_surf_old": mean("surf_old"), "mean_surf_new": mean("surf_new"),
+                     "mean_surf_new_at_depth": mean("surf_new_at_depth")}
+        a, b = out[name]["mean_surf_new"], out[name]["mean_surf_new_at_depth"]
+        out[name]["surf_depth_over_10m"] = round(b / a, 3) if a and b is not None else None
     return out
 
 
@@ -542,10 +576,28 @@ def homepage(first_rows, names, new_stars, n=10):
             "come_in": [r[2] for r in top_a if r[1] not in b_ids]}
 
 
+def node_depths_by_name(pairs, overrides=None):
+    """{moved spot name: its new cell's ETOPO depth (m)} from nwps_node_overrides.json's etopo_m,
+    for the moves whose override records one and whose roster node is the override's cell.
+    *overrides*: {slug: override}, default the committed file."""
+    from .apply_nwps_assignments import _slug, load_node_overrides
+    if overrides is None:
+        overrides = load_node_overrides()
+    out = {}
+    for _old, new in pairs:
+        o = overrides.get(_slug(new["name"])) or {}
+        if o.get("etopo_m") is not None and [o.get("nwps_node_lat"), o.get("nwps_node_lng")] == \
+                [new.get("nwps_node_lat"), new.get("nwps_node_lng")]:
+            out[new["name"]] = float(o["etopo_m"])
+    return out
+
+
 def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
-                 apply=apply_nwps_overrides):
+                 apply=apply_nwps_overrides, depths=None):
     """Every published NWPS-override hour of the moved spots *pairs* in one cycle, replayed at
-    the old and the new node. Returns (hours, node_checks)."""
+    the old and the new node. *depths*: {spot name: the new cell's ETOPO depth, m}. Returns
+    (hours, node_checks)."""
+    depths = depths or {}
     hours, checks = [], {}
     for old, new in pairs:
         rows = rows_by_spot.get(new["name"]) or []
@@ -580,6 +632,9 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
             fill_ok = off == 0 or (off in (-1, 1) and blank)
             want = expected_inputs(exact, vo)
             diffs = input_diffs(row, want) if vo is not None else list(INPUT_COLS)
+            depth = depths.get(new["name"])
+            surf_old, _ = surf_heights(a.get("face_ft"), a.get("swell_tp"))
+            surf_new, surf_new_d = surf_heights(b.get("face_ft"), b.get("swell_tp"), depth)
             hours.append({
                 "spot": new["name"], "valid_time": row["valid_time"],
                 "nwps_cycle": row.get("nwps_cycle"), "swell_source": row.get("swell_source"),
@@ -596,7 +651,9 @@ def replay_cycle(pairs, rows_by_spot, cycle, ceiling_factors, median_factor,
                 "hs_old": None if vo is None else vo[0], "hs_new": None if vn is None else vn[0],
                 "tp_old": None if vo is None else vo[1], "tp_new": None if vn is None else vn[1],
                 "swell_hs_old": a.get("swell_hs"), "swell_hs_new": b.get("swell_hs"),
-                "rated_tp_old": a.get("swell_tp"), "rated_tp_new": b.get("swell_tp")})
+                "rated_tp_old": a.get("swell_tp"), "rated_tp_new": b.get("swell_tp"),
+                "new_cell_depth_m": depth, "surf_old": surf_old, "surf_new": surf_new,
+                "surf_new_at_depth": surf_new_d})
     return hours, checks
 
 
@@ -751,7 +808,7 @@ def fetch_first(client, sid, since):
 
 def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open_cycle=None,
         apply=apply_nwps_overrides, references=(), buoys=None, now=None, buoy_obs=None,
-        stat_cycle=None, logger_versions=None, ndbc_obs=None):
+        stat_cycle=None, logger_versions=None, ndbc_obs=None, node_depths=None):
     from .forecast.face_correction import load_face_factors, median_face_factor
     from .interpret import face_factors_by_name
     factors = load_face_factors() if factors is None else factors
@@ -761,6 +818,7 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
                                              recent_cycles(w, CYCLES_LISTED, _region_for(w))})
     open_cycle = open_cycle or load_cycle
     pairs = moved_spots(baseline, roster)
+    depths = node_depths_by_name(pairs, node_depths)
     names = fetch_names(client)
     ids = {n: sid for sid, (n, _) in names.items()}
     buoys = buoys or {}
@@ -815,7 +873,8 @@ def run(client, baseline, roster, since, *, factors=None, list_cycles=None, open
                     on_land.add(new["name"])
                     report["excluded_land"][f"{new['name']}, {name}"] = {
                         "spot": new["name"], "cycle_file": name, "evidence": ev}
-            got, checks = replay_cycle(wpairs, by_cycle[key], cycle, ceiling_factors, m, apply)
+            got, checks = replay_cycle(wpairs, by_cycle[key], cycle, ceiling_factors, m, apply,
+                                       depths=depths)
             for h in got:
                 h["cycle_file"] = name
                 h["excluded_for"] = ((["double-posted"] if reasons else [])
@@ -887,8 +946,8 @@ HOUR_COLUMNS = ("spot", "valid_time", "nwps_cycle", "swell_source", "wind", "win
                 "exact_hour_blank", "filled_from_new", "buoy_hs", "reference",
                 "stars_published", "stars_old", "stars_new", "face_published", "face_old",
                 "face_new", "hs_old", "hs_new", "tp_old", "tp_new", "swell_hs_old",
-                "swell_hs_new", "rated_tp_old", "rated_tp_new", "cycle_file", "gate_excluded",
-                "excluded_for")
+                "swell_hs_new", "rated_tp_old", "rated_tp_new", "new_cell_depth_m", "surf_old",
+                "surf_new", "surf_new_at_depth", "cycle_file", "gate_excluded", "excluded_for")
 
 
 def write_csv(path, hours):
@@ -990,6 +1049,9 @@ def print_report(rep):
               f"same {s['stars_same']}; mean stars {_v(s['mean_stars_old'])} -> "
               f"{_v(s['mean_stars_new'])}, face {_v(s['mean_face_old'])} -> "
               f"{_v(s['mean_face_new'])} ft, hs {_v(s['mean_hs_old'])} -> {_v(s['mean_hs_new'])} m")
+        print(f"      surf height shown (from 10 m) {_v(s['mean_surf_old'])} -> {_v(s['mean_surf_new'])} ft; "
+              f"from the new cell's depth ({_v(s['new_cell_depth_m'], '{:.1f}')} m) "
+              f"{_v(s['mean_surf_new_at_depth'])} ft, {_v(s['surf_depth_over_10m'], '{:.3f}')} of the 10 m figure")
     if rep.get("buoys") or rep.get("buoys_missing"):
         print("\n=== Beside the buoys, on the replayed hours already past: node / buoy ===")
         for name, b in rep.get("buoys", {}).items():

@@ -1,5 +1,5 @@
 {
-  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/). Pacifica Linda Mar, Rockaway Beach Pacifica, Avila Beach, Hobuck Beach, Westport Jetty and Westport Light State Park are from the NWPS v1.5 grids (2026-11-10): the same rule as the Hatteras three, wet every hour, with ETOPO 2022 read from ERDDAP point by point; node-preview run 71 is their gate. 'moved_on' (where given) is the date the move took effect: a MOP face factor measured on or before it was measured at the old node and is not applied (forecast/face_correction.suspend_moved_nodes); a move of a calibrated spot with no moved_on is treated the same way.",
+  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/). Pacifica Linda Mar, Rockaway Beach Pacifica, Avila Beach, Hobuck Beach, Westport Jetty and Westport Light State Park are from the NWPS v1.5 grids (2026-11-10): the same rule as the Hatteras three, wet every hour, with ETOPO 2022 read from ERDDAP point by point; node-preview run 71 is their gate. 'moved_on' (where given) is the date the move took effect: a MOP face factor measured on or before it was measured at the old node and is not applied (forecast/face_correction.suspend_moved_nodes); a move of a calibrated spot with no moved_on is treated the same way. Brookings Beach, Carolina Beach, Oregon Inlet, Nye Beach, Agate Beach Newport and the eight Rincon and Aguadilla spots (Indicators, Rincon Domes, Maria's, Steps Beach Rincon, Tres Palmas, Table Tops Aguadilla, Gas Chambers Aguadilla, Crash Boat Beach) are from the scoreboard's sample-point review (2026-11-23, after the first weekly accuracy report): the same rule as the Hatteras three, wet every hour, with no GSHHG land on the line from the spot once it reaches water, and etopo_m the cell's ETOPO 2022 depth; node-preview run 82 is their gate (docs/face_validation/run-82). Held from that review, unmoved: Dewees Island, Fripp Island, Hunting Island, Berts Bar, Isle of Palms and Windjammer (their 10 m cells, 6 to 11 km out, read 1.7 to 2.0 of neighbours whose own cells are close in and low: a whole-coast South Carolina and Georgia review instead), and Lovers Point and Monterey Beach (sheltered by the Monterey Peninsula, and calibrated).",
   "overrides": {
     "duck-pier": {
       "nwps_wfo": "mhx",
@@ -223,6 +223,175 @@
       ],
       "reason": "On sew's 0.99 km v1.5 grid the current point (shared with Westport Jetty) reads 0.72 to 0.73 of the next cell seaward. The 11.1 m cell 1.89 km at 274 deg (12 deg off the facing of 262) is the nearest that meets the rule: wet every hour, 0.94 of the next cell seaward; it reads 1.39 of the current point's Hs.",
       "evidence": "sw1-raycast run 71 (node-preview, 9fc0652, docs/face_validation/run-71): gate PASS on the spots it covers (534 hours, 0 differences); in the gate, 0 differences; face 9.90 -> 13.57 ft, stars 2.94 -> 2.34 (the sand-break closeout ceiling, every hour that drops); 0.923 of Ocean Shores (face; 0.673 before). Candidates from the NOMADS NWPS v1.5 cycles sew 20261109 12Z and 20261110 00Z, every cell within 6 cells of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, and ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre; read 2026-11-10"
+    },
+    "brookings-beach": {
+      "nwps_wfo": "mfr",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 42.02959,
+      "nwps_node_lng": -124.29412,
+      "etopo_m": 15.0,
+      "replaces": [
+        42.02959,
+        -124.27026
+      ],
+      "reason": "The current point (1.35 km from the spot) is wet 116 to 118 of 145 hours and reads 0.30 of NWPS at buoy 46027 (24.3 km), median hour by hour. The 15.0 m cell 2.55 km at 238 deg (8 deg off the facing of 230) is the nearest that meets the rule: wet every hour, 1.13 of the next cell seaward; it reads 1.04 of NWPS at the buoy, 3.35 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 162 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 4.40 -> 14.57 ft, stars 2.48 -> 3.62 (115 hours up, 7 down); no unmoved NWPS neighbour within 30 km; buoy 46027 (45 paired hours, mean 3.18 m): 0.366 -> 0.956 of the buoy, 0% -> 64% of hours within 20%; surf height shown 3.67 -> 9.67 ft (from 10 m); from the cell's 15 m it would be 10.27 ft, 1.062 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 46027 -2.07 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 00Z (mfr), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "carolina-beach": {
+      "nwps_wfo": "ilm",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 34.0334,
+      "nwps_node_lng": -77.86233,
+      "etopo_m": 13.3,
+      "replaces": [
+        34.03333,
+        -77.88904
+      ],
+      "reason": "The current point (0.19 km from the spot) is wet 81 to 86 of 145 hours and reads 0.47 of its unmoved NWPS neighbours within 30 km (kure-beach, wrightsville-beach, fort-fisher, carolina-beach-pier, wrightsville-beach-south), 0.35 of NWPS at buoy 41110 (20.1 km), median hour by hour. The 13.3 m cell 2.50 km at 94 deg (16 deg off the facing of 110) is the nearest that meets the rule: wet every hour, 0.94 of the next cell seaward; it reads 1.04 of those neighbours, 0.90 of NWPS at the buoy, 2.40 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 131 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 1.87 -> 5.89 ft, stars 1.35 -> 1.92 (84 hours up, 9 down); 1.033 of its unmoved neighbours in face (0.329 before; Carolina Beach Pier, Kure Beach: those whose own point is at least 400 m from shore and not on land; 1.522 with all of them); buoy 41110 (35 paired hours, mean 1.54 m): 0.393 -> 0.934 of the buoy, 0% -> 100% of hours within 20%; surf height shown 1.89 -> 4.72 ft (from 10 m); from the cell's 13.3 m it would be 4.86 ft, 1.029 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41110 -1.01 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (ilm), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "oregon-inlet": {
+      "nwps_wfo": "mhx",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 35.78649,
+      "nwps_node_lng": -75.49398,
+      "etopo_m": 18.2,
+      "replaces": [
+        35.78637,
+        -75.53313
+      ],
+      "reason": "The current point (0.28 km from the spot) is wet every hour and reads 0.76 of its unmoved NWPS neighbours within 30 km (jennettes-pier, kill-devil-hills, nags-head-pier, rodanthe, salvo, s-turns, north-pea-island, outer-banks-fishing-pier, abalone-street, bath-house), 0.61 of NWPS at buoy 44095 (19.0 km), median hour by hour. The 18.2 m cell 3.77 km at 92 deg (10 deg off the facing of 82) is the nearest that meets the rule: wet every hour, 0.98 of the next cell seaward; it reads 1.05 of those neighbours, 0.88 of NWPS at the buoy, 1.36 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 4.34 -> 7.28 ft, stars 2.11 -> 2.19 (47 hours up, 19 down); 1.074 of its unmoved neighbours in face (0.640 before; Outer Banks Fishing Pier: those whose own point is at least 400 m from shore and not on land; 1.119 with all of them); buoy 44095 (47 paired hours, mean 2.17 m): 0.506 -> 0.829 of the buoy, 4% -> 64% of hours within 20%; surf height shown 3.74 -> 5.63 ft (from 10 m); from the cell's 18.2 m it would be 5.91 ft, 1.049 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 44095 -0.52 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 00Z (mhx), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "nye-beach": {
+      "nwps_wfo": "pqr",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 44.65648,
+      "nwps_node_lng": -124.09467,
+      "etopo_m": 22.6,
+      "replaces": [
+        44.65648,
+        -124.06983
+      ],
+      "reason": "The current point (0.91 km from the spot) is wet every hour and reads 0.73 of its unmoved NWPS neighbours within 30 km (otter-rock, south-beach-newport), 0.69 of NWPS at buoy 46097 (19.0 km), median hour by hour. The 22.6 m cell 2.55 km at 288 deg (18 deg off the facing of 270) is the nearest that meets the rule: wet every hour, 1.00 of the next cell seaward; it reads 1.00 of those neighbours, 0.97 of NWPS at the buoy, 1.36 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 183 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 9.81 -> 13.74 ft, stars 3.38 -> 2.87 (8 hours up, 89 down); 0.996 of its unmoved neighbours in face (0.710 before; Otter Rock, South Beach Newport: those whose own point is at least 400 m from shore and not on land; 0.996 with all of them); buoy 46097 (46 paired hours, mean 3.19 m): 0.702 -> 0.826 of the buoy, 24% -> 59% of hours within 20%; surf height shown 7.04 -> 9.20 ft (from 10 m); from the cell's 22.6 m it would be 10.21 ft, 1.110 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 46097 -0.63 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 14Z and 20261123 12Z (pqr), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "agate-beach-newport": {
+      "nwps_wfo": "pqr",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 44.67455,
+      "nwps_node_lng": -124.09467,
+      "etopo_m": 23.5,
+      "replaces": [
+        44.65648,
+        -124.06983
+      ],
+      "reason": "The current point (1.44 km from the spot) is wet every hour and reads 0.73 of its unmoved NWPS neighbours within 30 km (otter-rock, south-beach-newport), 0.69 of NWPS at buoy 46097 (19.1 km), median hour by hour. The 23.5 m cell 2.38 km at 285 deg (25 deg off the facing of 260) is the nearest that meets the rule: wet every hour, 1.01 of the next cell seaward; it reads 1.00 of those neighbours, 0.97 of NWPS at the buoy, 1.37 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 183 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 9.81 -> 13.78 ft, stars 3.50 -> 3.50 (20 hours up, 11 down); 0.998 of its unmoved neighbours in face (0.710 before; Otter Rock, South Beach Newport: those whose own point is at least 400 m from shore and not on land; 0.998 with all of them); buoy 46097 (46 paired hours, mean 3.19 m): 0.702 -> 0.837 of the buoy, 24% -> 61% of hours within 20%; surf height shown 7.04 -> 9.22 ft (from 10 m); from the cell's 23.5 m it would be 10.27 ft, 1.114 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 46097 -0.63 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 14Z and 20261123 12Z (pqr), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "indicators": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.28814,
+      "etopo_m": 33.6,
+      "replaces": [
+        18.36366,
+        -67.27119
+      ],
+      "reason": "The current point (0.36 km from the spot) is wet 135 of 145 hours and reads 0.40 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.39 of NWPS at buoy 41115 (1.9 km), median hour by hour. The 33.6 m cell 1.83 km at 281 deg (9 deg off the facing of 272) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 0.96 of those neighbours, 0.91 of NWPS at the buoy, 2.36 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 179 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 1.18 -> 2.87 ft, stars 0.38 -> 1.10 (145 hours up, 0 down); 0.932 of its unmoved neighbours in face (0.385 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.356 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.426 -> 0.973 of the buoy, 0% -> 64% of hours within 20%; surf height shown 1.30 -> 2.66 ft (from 10 m); from the cell's 33.6 m it would be 2.75 ft, 1.033 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.54 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "rincon-domes": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.28814,
+      "etopo_m": 33.6,
+      "replaces": [
+        18.36366,
+        -67.27119
+      ],
+      "reason": "The current point (0.18 km from the spot) is wet 135 of 145 hours and reads 0.40 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.39 of NWPS at buoy 41115 (1.6 km), median hour by hour. The 33.6 m cell 1.89 km at 265 deg (25 deg off the facing of 290) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 0.96 of those neighbours, 0.91 of NWPS at the buoy, 2.36 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 179 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 1.18 -> 2.87 ft, stars 0.38 -> 1.12 (152 hours up, 0 down); 0.932 of its unmoved neighbours in face (0.385 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.356 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.426 -> 0.973 of the buoy, 0% -> 64% of hours within 20%; surf height shown 1.30 -> 2.66 ft (from 10 m); from the cell's 33.6 m it would be 2.75 ft, 1.033 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.54 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "maria-s": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.36366,
+      "nwps_node_lng": -67.30508,
+      "etopo_m": 344.2,
+      "replaces": [
+        18.34742,
+        -67.27119
+      ],
+      "reason": "The current point (1.20 km from the spot) is wet every hour and reads 0.36 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.35 of NWPS at buoy 41115 (2.0 km), median hour by hour. The 344.2 m cell 3.72 km at 279 deg (23 deg off the facing of 256) is the nearest that meets the rule: wet every hour, 0.95 of the next cell seaward; it reads 1.06 of those neighbours, 1.01 of NWPS at the buoy, 2.91 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 1.04 -> 3.13 ft, stars 0.21 -> 1.16 (180 hours up, 0 down); 1.019 of its unmoved neighbours in face (0.337 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.481 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.264 -> 1.059 of the buoy, 0% -> 66% of hours within 20%; surf height shown 1.17 -> 2.86 ft (from 10 m); from the cell's 344.2 m it would be 2.80 ft, 0.978 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.48 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "steps-beach-rincon": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.34742,
+      "nwps_node_lng": -67.30508,
+      "etopo_m": 639.6,
+      "replaces": [
+        18.34742,
+        -67.27119
+      ],
+      "reason": "The current point (0.73 km from the spot) is wet every hour and reads 0.36 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.35 of NWPS at buoy 41115 (2.9 km), median hour by hour. The 639.6 m cell 4.00 km at 261 deg (11 deg off the facing of 250) is the nearest that meets the rule: wet every hour, 0.94 of the next cell seaward; it reads 1.00 of those neighbours, 0.95 of NWPS at the buoy, 2.76 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 1.04 -> 2.97 ft, stars 0.21 -> 1.14 (175 hours up, 0 down); 0.968 of its unmoved neighbours in face (0.337 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.407 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.264 -> 1.018 of the buoy, 0% -> 68% of hours within 20%; surf height shown 1.17 -> 2.74 ft (from 10 m); from the cell's 639.6 m it would be 2.69 ft, 0.979 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.48 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "tres-palmas": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.33119,
+      "nwps_node_lng": -67.30508,
+      "etopo_m": 645.5,
+      "replaces": [
+        18.34742,
+        -67.27119
+      ],
+      "reason": "The current point (0.70 km from the spot) is wet every hour and reads 0.36 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.35 of NWPS at buoy 41115 (3.6 km), median hour by hour. The 645.5 m cell 4.66 km at 247 deg (17 deg off the facing of 230) is the nearest that meets the rule: wet every hour, 0.97 of the next cell seaward; it reads 0.92 of those neighbours, 0.88 of NWPS at the buoy, 2.56 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 1.04 -> 2.79 ft, stars 0.27 -> 1.01 (135 hours up, 0 down); 0.908 of its unmoved neighbours in face (0.339 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.319 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.264 -> 0.959 of the buoy, 0% -> 64% of hours within 20%; surf height shown 1.18 -> 2.60 ft (from 10 m); from the cell's 645.5 m it would be 2.56 ft, 0.982 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.48 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "table-tops-aguadilla": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.20339,
+      "etopo_m": 440.0,
+      "replaces": [
+        18.42859,
+        -67.16949
+      ],
+      "reason": "The current point (1.45 km from the spot) is wet every hour and reads 0.22 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, middles-isabela, playa-guajataca, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.25 of NWPS at buoy 41115 (14.3 km), median hour by hour. The 440.0 m cell 5.71 km at 301 deg (19 deg off the facing of 282) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 0.90 of those neighbours, 1.06 of NWPS at the buoy, 4.15 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 0.92 -> 3.31 ft, stars 0.92 -> 2.06 (181 hours up, 0 down); 1.080 of its unmoved neighbours in face (0.299 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.569 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.193 -> 1.092 of the buoy, 0% -> 60% of hours within 20%; surf height shown 1.05 -> 2.99 ft (from 10 m); from the cell's 440 m it would be 2.94 ft, 0.983 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.48 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "gas-chambers-aguadilla": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.20339,
+      "etopo_m": 440.0,
+      "replaces": [
+        18.46106,
+        -67.16949
+      ],
+      "reason": "The current point (0.26 km from the spot) is wet every hour and reads 0.20 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, middles-isabela, playa-guajataca, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.24 of NWPS at buoy 41115 (14.9 km), median hour by hour. The 440.0 m cell 3.83 km at 270 deg (8 deg off the facing of 262) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 0.90 of those neighbours, 1.06 of NWPS at the buoy, 4.31 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 0.84 -> 3.32 ft, stars 0.29 -> 1.68 (181 hours up, 0 down); 1.082 of its unmoved neighbours in face (0.275 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.572 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.189 -> 1.092 of the buoy, 0% -> 60% of hours within 20%; surf height shown 0.98 -> 3.00 ft (from 10 m); from the cell's 440 m it would be 2.95 ft, 0.985 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.53 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
+    },
+    "crash-boat-beach": {
+      "nwps_wfo": "sju",
+      "moved_on": "2026-11-23",
+      "nwps_node_lat": 18.46106,
+      "nwps_node_lng": -67.20339,
+      "etopo_m": 440.0,
+      "replaces": [
+        18.46106,
+        -67.16949
+      ],
+      "reason": "The current point (0.73 km from the spot) is wet every hour and reads 0.20 of its unmoved NWPS neighbours within 30 km (antonio-s, dogmans-rincon, jobos-beach-isabela, middles-isabela, playa-guajataca, pools, sandy-beach, shacks-beach, surfers-beach-aguadilla, wilderness), 0.24 of NWPS at buoy 41115 (14.8 km), median hour by hour. The 440.0 m cell 4.20 km at 276 deg (22 deg off the facing of 254) is the nearest that meets the rule: wet every hour, 0.91 of the next cell seaward; it reads 0.90 of those neighbours, 1.06 of NWPS at the buoy, 4.31 of the current point.",
+      "evidence": "sw1-raycast run 82 (node-preview, 51c3c36, docs/face_validation/run-82): gate 0 input, 0 star and 0 face differences on this spot's 181 hours (the run's 208 star differences are all Lovers Point and Monterey Beach, held, whose calibration the move suspended); the new node a wet cell and the cell nwps.fetch samples in every cycle read; face 0.85 -> 3.34 ft, stars 0.27 -> 1.52 (181 hours up, 0 down); 1.089 of its unmoved neighbours in face (0.276 before; Antonio's, Jobos Beach Isabela, Pools, Sandy Beach, Shacks Beach, Wilderness: those whose own point is at least 400 m from shore and not on land; 1.583 with all of them); buoy 41115 (47 paired hours, mean 1.00 m): 0.189 -> 1.092 of the buoy, 0% -> 60% of hours within 20%; surf height shown 0.99 -> 3.01 ft (from 10 m); from the cell's 440 m it would be 2.98 ft, 0.992 of the figure shown; the scoreboard before the move: day-1 spot minus NWPS at buoy 41115 -0.53 m (spot_gap_query, 7 days to 2026-11-23). Candidates from the NOMADS NWPS cycles 20261123 12Z and 20261123 06Z (sju), every cell within 7 of the spot: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-23"
     }
   }
 }

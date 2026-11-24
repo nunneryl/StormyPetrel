@@ -17,10 +17,12 @@ Rounding is to 3 decimals, as nwps.fetch writes forecast_data/nwps.json.
 from __future__ import annotations
 
 import datetime
+import math
 import json
 import os
 
 import numpy as np
+import pytest
 
 from pipeline import node_preview as NP
 from pipeline.forecast.nwps_nearshore import apply_nwps_overrides
@@ -251,7 +253,101 @@ def test_spot_summary_counts_and_means():
     assert got == {"A": {"hours": 4, "stars_up": 1, "stars_down": 1, "stars_same": 1,
                          "mean_stars_old": 2.333, "mean_stars_new": 2.5,
                          "mean_face_old": 3.0, "mean_face_new": 3.625,
-                         "mean_hs_old": 1.25, "mean_hs_new": 1.167}}
+                         "mean_hs_old": 1.25, "mean_hs_new": 1.167,
+                         "new_cell_depth_m": None, "mean_surf_old": None, "mean_surf_new": None,
+                         "mean_surf_new_at_depth": None, "surf_depth_over_10m": None}}
+
+
+def test_spot_summary_surf_means_and_their_ratio():
+    hs = [{"spot": "A", "stars_old": 2.0, "stars_new": 2.0, "face_old": 3.0, "face_new": 4.0,
+           "hs_old": 1.0, "hs_new": 1.2, "new_cell_depth_m": 440.0, "surf_old": so,
+           "surf_new": sn, "surf_new_at_depth": sd}
+          for so, sn, sd in ((2.0, 3.0, 3.3), (4.0, 5.0, 5.7), (None, None, None))]
+    got = NP.spot_summary(hs)["A"]
+    # surf old (2 + 4)/2 = 3.0; new (3 + 5)/2 = 4.0; at depth (3.3 + 5.7)/2 = 4.5; 4.5/4.0 = 1.125
+    assert (got["new_cell_depth_m"], got["mean_surf_old"], got["mean_surf_new"],
+            got["mean_surf_new_at_depth"], got["surf_depth_over_10m"]) == (440.0, 3.0, 4.0, 4.5, 1.125)
+
+
+# --------------------------------------------------------------------------- #
+# The surf height the page shows, from 10 m and from the new cell's depth       #
+# --------------------------------------------------------------------------- #
+def test_surf_heights_an_already_breaking_wave_by_hand():
+    # face 40 ft at 12 s: the override's Hs = 40 / (period_factor(12, ww3) 1.15 x 3.281) =
+    # 10.601 m, solved at 0.01 m (typical_face_ft rounds): 10.60 m, at or above GAMMA 0.78 x 10 m
+    # = 7.8 m, so it is already breaking at 10 m and its breaking height is itself:
+    # surf = SURF_K 0.70 x 10.60 x 3.281 = 24.34498 -> 24.345.
+    # From 13 m (0.78 x 13 = 10.14 <= 10.60) it is breaking there too: the same 24.345.
+    assert NP.surf_heights(40.0, 12.0) == (24.345, None)
+    assert NP.surf_heights(40.0, 12.0, 13.0) == (24.345, 24.345)
+    # From 14 m (0.78 x 14 = 10.92 > 10.60) it is not yet breaking, so it shoals on: higher.
+    assert NP.surf_heights(40.0, 12.0, 14.0)[1] > 24.345
+
+
+def test_surf_heights_missing_inputs():
+    assert NP.surf_heights(None, 12.0, 40.0) == (None, None)
+    assert NP.surf_heights(5.0, None, 40.0) == (None, None)
+    assert NP.surf_heights(5.0, 0.0, 40.0) == (None, None)
+    assert NP.surf_heights(5.0, 12.0, 0.0)[1] is None
+    assert NP.surf_heights(5.0, 12.0, None)[1] is None
+
+
+def _k_indep(period, depth):
+    """k from w^2 = g k tanh(k h) by bisection, written here apart from surf_height's Newton."""
+    w2 = (2 * math.pi / period) ** 2
+    lo, hi = 1e-6, 10.0
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if 9.81 * mid * math.tanh(mid * depth) < w2:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
+def _cg_indep(period, depth):
+    k = _k_indep(period, depth)
+    n = 0.5 * (1 + 2 * k * depth / math.sinh(2 * k * depth)) if k * depth < 20 else 0.5
+    return n * (2 * math.pi / period) / k
+
+
+@pytest.mark.parametrize("period, depth", [(8.0, 440.0), (12.0, 440.0), (16.0, 440.0),
+                                           (14.0, 33.6), (6.0, 33.6)])
+def test_surf_heights_from_depth_is_the_wave_shoaled_to_10_m_first(period, depth):
+    # Linear shoaling: a wave of Hs at depth d reaches 10 m with Hs x Ks, Ks = sqrt(Cg(d) /
+    # Cg(10)) (Cg by the bisection above), and breaks as that height would from 10 m. Face 5 ft
+    # sets Hs; the 10 m figure of the shoaled Hs is read back through the same function by
+    # giving it the face that Hs x Ks makes (face scales with Hs at a fixed period).
+    ks = math.sqrt(_cg_indep(period, depth) / _cg_indep(period, 10.0))
+    at10_of_shoaled, _ = NP.surf_heights(5.0 * ks, period)
+    _, at_depth = NP.surf_heights(5.0, period, depth)
+    assert math.isclose(at_depth, at10_of_shoaled, rel_tol=0.01)
+
+
+def test_node_depths_come_from_the_override_of_the_cell_the_roster_carries():
+    old, new = OLD, NEW
+    ov = {"duck-pier": {"nwps_node_lat": 36.19, "nwps_node_lng": -75.73, "etopo_m": 12.4}}
+    assert NP.node_depths_by_name([(old, new)], ov) == {"Duck Pier": 12.4}
+    # an override for another cell than the roster's, or with no depth: nothing
+    assert NP.node_depths_by_name([(old, new)], {"duck-pier": dict(ov["duck-pier"], nwps_node_lng=-75.7)}) == {}
+    assert NP.node_depths_by_name([(old, new)], {"duck-pier": {"nwps_node_lat": 36.19,
+                                                                "nwps_node_lng": -75.73}}) == {}
+    assert NP.node_depths_by_name([(old, new)], {}) == {}
+
+
+def test_run_puts_the_surf_heights_on_every_hour():
+    rep = NP.run(_client(), [OLD], [NEW], _vt(0), factors={},
+                 list_cycles=lambda w: {("20261026", "12"): "url-12"},
+                 open_cycle=lambda wfo, cyc: _cycle(), apply=_stub,
+                 node_depths={"duck-pier": {"nwps_node_lat": 36.19, "nwps_node_lng": -75.73,
+                                            "etopo_m": 40.0}})
+    # the stub's face is the entry's wind speed and its rated period the row's swell_tp, 11 s
+    for h in rep["hours"]:
+        assert h["new_cell_depth_m"] == 40.0
+        assert (h["surf_new"], h["surf_new_at_depth"]) == NP.surf_heights(h["face_new"], 11.0, 40.0)
+        assert h["surf_old"] == NP.surf_heights(h["face_old"], 11.0)[0]
+    s = rep["by_spot"]["Duck Pier"]
+    assert s["new_cell_depth_m"] == 40.0 and s["surf_depth_over_10m"] is not None
 
 
 def test_homepage_orders_by_stars_then_spot_id_and_shows_ten():
