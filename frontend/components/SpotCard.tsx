@@ -20,7 +20,7 @@ export function SpotCard({
   variant?: Variant;
 }) {
   const f = spot.latest;
-  const tier = tierFromStars(f?.stars ?? 0);
+  const tier = tierFromStars(f?.stars);
   const isRail = variant === 'rail';
 
   return (
@@ -49,7 +49,7 @@ export function SpotCard({
             {spot.break_type ? ` · ${fmtBreakType(spot.break_type, spot.break_type_source)}` : ''}
           </div>
         </div>
-        <StarRating score={f?.stars ?? 0} size="sm" />
+        <StarRating score={f?.stars} size="sm" />
       </div>
       <div className="mt-2.5 flex items-center gap-3 text-xs text-text-secondary">
         <span className="inline-flex items-baseline gap-1">

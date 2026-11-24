@@ -26,7 +26,16 @@ import {
   classifyChop,
   chopLabel,
   surfaceTextClass,
+  ratingState,
+  tierFromStars,
+  bestStars,
+  topRated,
+  pinStyle,
+  NO_DATA_TEXT,
 } from './ratings.ts';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 let failures = 0;
 
@@ -238,6 +247,95 @@ eq('...where classifyChop on the same hour said blown', classifyChop(0.75), 'blo
 // Throw rather than process.exit: a thrown error still gives node a non-zero exit code,
 // and it keeps this file free of any ambient Node types, so it typechecks and runs with
 // nothing installed at all.
+// ---------------------------------------------------------------------------------------------
+// NO RATING IS NOT FLAT. A missing rating (no forecast row, or a row with null stars) used to be
+// read as 0 and shown as FLAT on the spot hero, map pins, homepage and region pages.
+// ---------------------------------------------------------------------------------------------
+eq('ratingState(null) is none', ratingState(null), 'none');
+eq('ratingState(undefined) is none', ratingState(undefined), 'none');
+eq('ratingState(NaN) is none', ratingState(Number.NaN), 'none');
+eq('ratingState(0) is flat: the rater writes 0 for a flat hour', ratingState(0), 'flat');
+eq('ratingState(-0.5) is flat', ratingState(-0.5), 'flat');
+eq('ratingState(0.5) is rated', ratingState(0.5), 'rated');
+eq('ratingState(5) is rated', ratingState(5), 'rated');
+eq('tierFromStars(null) is NO DATA', tierFromStars(null).label, 'NO DATA');
+eq('tierFromStars(undefined) is NO DATA', tierFromStars(undefined).label, 'NO DATA');
+eq('tierFromStars(0) is still FLAT', tierFromStars(0).label, 'FLAT');
+eq('tierFromStars(3) is FAIR', tierFromStars(3).label, 'FAIR');
+eq('the words for a missing rating', NO_DATA_TEXT, 'No data');
+
+eq('bestStars of nothing rated is null', bestStars([null, undefined, Number.NaN]), null);
+eq('bestStars of no values is null', bestStars([]), null);
+eq('bestStars ignores unrated spots', bestStars([null, 2.5, undefined, 1]), 2.5);
+eq('bestStars of a region whose only verdict is FLAT is 0, not null', bestStars([0, null]), 0);
+
+{
+  const spots = [
+    { slug: 'a', stars: 2 }, { slug: 'b', stars: null }, { slug: 'c', stars: 4 },
+    { slug: 'd', stars: 0 }, { slug: 'e', stars: undefined }, { slug: 'f', stars: 4 },
+  ];
+  const top = topRated(spots, (s) => s.stars, 10).map((s) => s.slug).join(',');
+  eq('topRated: rated and FLAT spots best first, ties in input order, unrated left out', top, 'c,f,a,d');
+  eq('topRated takes n', topRated(spots, (s) => s.stars, 2).map((s) => s.slug).join(','), 'c,f');
+  eq('topRated of nothing rated is empty, not padded', topRated([{ stars: null }, { stars: undefined }], (s) => s.stars, 10).length, 0);
+}
+
+{
+  const none = pinStyle(null);
+  check('a pin with no rating is hollow: white fill, grey ring', none.hollow && none.fill === '#FFFFFF' && none.ring === '#94A3B8',
+    JSON.stringify(none));
+  const flat = pinStyle(0);
+  check('a FLAT pin is filled FLAT grey with a white ring, not hollow',
+    !flat.hollow && flat.fill === '#6B7280' && flat.ring === '#FFFFFF', JSON.stringify(flat));
+  check('the two greys differ, so FLAT and no rating cannot be confused', none.fill !== flat.fill);
+  const fair = pinStyle(3);
+  check('a FAIR pin is filled FAIR yellow with dark count text', fair.fill === '#EAB308' && fair.text === '#0F172A', JSON.stringify(fair));
+  eq('a GOOD pin has white count text', pinStyle(4).text, '#FFFFFF');
+}
+
+// THE GUARD. No page or component may turn a missing rating into 0 on its way to a display:
+// a rating component, a tier lookup, the map popup's stars, a map pin's stars or a pin style.
+// Sorting and arithmetic may still use `?? -1` or `?? 0`; only these display paths are held.
+{
+  const FRONTEND = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (/\.tsx?$/.test(name)) files.push(p);
+    }
+  };
+  walk(join(FRONTEND, 'app'));
+  walk(join(FRONTEND, 'components'));
+  const DISPLAY_ZERO = [
+    /<StarRating[^>]*score=\{[^}]*\?\?\s*0\s*\}/,
+    /tierFromStars\([^)]*\?\?\s*0\s*\)/,
+    /starsHtml\([^)]*\?\?\s*0\b/,
+    /pinStyle\([^)]*\?\?\s*0\s*\)/,
+    /spotStars:\s*[^,\n]*\?\?\s*0\b/,
+  ];
+  const offenders: string[] = [];
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    for (const re of DISPLAY_ZERO) {
+      const m = re.exec(src);
+      if (m) offenders.push(`${relative(FRONTEND, f)}: ${m[0]}`);
+    }
+  }
+  check('no page or component shows a missing rating as 0 (FLAT)', offenders.length === 0, offenders.join(' | '));
+  // The guard can see: each pattern matches the line it is meant to catch.
+  check('the guard catches <StarRating score={x ?? 0} />', DISPLAY_ZERO[0].test('<StarRating score={f?.stars ?? 0} size="sm" />'));
+  check('the guard catches tierFromStars(x ?? 0)', DISPLAY_ZERO[1].test('tierFromStars(s.latest?.stars ?? 0)'));
+  check('the guard catches starsHtml(x ?? 0, 14)', DISPLAY_ZERO[2].test('starsHtml(f?.stars ?? 0, 14)'));
+  check('the guard catches spotStars: x ?? 0', DISPLAY_ZERO[4].test('spotStars: s.latest?.stars ?? 0,'));
+  check('the guard leaves a sort alone', !DISPLAY_ZERO.some((re) => re.test('(b.latest?.stars ?? -1) - (a.latest?.stars ?? -1)')));
+  // StarRating itself no longer reads a missing score as 0.
+  const star = readFileSync(join(FRONTEND, 'components', 'StarRating.tsx'), 'utf8');
+  const body = star.slice(star.indexOf('export function StarRating'), star.indexOf('function Star('));
+  check('StarRating does not default a missing score to 0', !/score\s*\?\?\s*0/.test(body));
+}
+
 if (failures > 0) {
   throw new Error(`ratings: ${failures} FAILURE(S)`);
 }
