@@ -146,11 +146,10 @@ def test_load_node_moves(tmp_path):
 # The committed files                                                          #
 # --------------------------------------------------------------------------- #
 
-def test_the_committed_files_suspend_exactly_the_moved_calibrated_spots():
+def test_the_committed_files_suspend_exactly_the_three_moved_calibrated_spots():
     f = FC.load_face_factors()
     assert {s: r["factor"] for s, r in f.items() if r.get("suspended")} == {
-        "pacifica-linda-mar": 0.8799, "rockaway-beach-pacifica": 0.8335, "avila-beach": 1.2515,
-        "lovers-point": 1.6732, "monterey-beach": 2.1707}
+        "pacifica-linda-mar": 0.8799, "rockaway-beach-pacifica": 0.8335, "avila-beach": 1.2515}
     assert len(f) == 141
     assert FC.median_face_factor(f) == 1.5907       # M as measured, unchanged by the moves
 
@@ -160,4 +159,4 @@ def test_every_moved_calibrated_spot_records_its_move_date():
     factors = FC.load_face_factors()
     assert {s: moves[s] for s in moves if s in factors} == {
         "pacifica-linda-mar": "2026-11-12", "rockaway-beach-pacifica": "2026-11-12",
-        "avila-beach": "2026-11-12", "lovers-point": "2026-11-23", "monterey-beach": "2026-11-23"}
+        "avila-beach": "2026-11-12"}

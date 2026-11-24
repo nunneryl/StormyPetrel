@@ -651,15 +651,7 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "tres-palmas": (18.33119, -67.30508),
                     "table-tops-aguadilla": (18.46106, -67.20339),
                     "gas-chambers-aguadilla": (18.46106, -67.20339),
-                    "crash-boat-beach": (18.46106, -67.20339),
-                    "dewees-island": (32.78341, -79.6644),
-                    "fripp-island": (32.26319, -80.45602),
-                    "hunting-island": (32.31196, -80.34293),
-                    "berts-bar": (32.71838, -79.79634),
-                    "isle-of-palms": (32.73464, -79.72094),
-                    "windjammer": (32.73464, -79.72094),
-                    "lovers-point": (36.64725, -121.895),
-                    "monterey-beach": (36.64725, -121.895)}
+                    "crash-boat-beach": (18.46106, -67.20339)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}

@@ -721,15 +721,7 @@ _R82 = {"brookings-beach": ((42.02959, -124.29412), 2.547, (42.02959, -124.27026
          "tres-palmas": ((18.33119, -67.30508), 4.659, (18.34742, -67.27119)),
          "table-tops-aguadilla": ((18.46106, -67.20339), 5.710, (18.42859, -67.16949)),
          "gas-chambers-aguadilla": ((18.46106, -67.20339), 3.832, (18.46106, -67.16949)),
-         "crash-boat-beach": ((18.46106, -67.20339), 4.201, (18.46106, -67.16949)),
-         "dewees-island": ((32.78341, -79.6644), 6.975, (32.83218, -79.70209)),
-         "fripp-island": ((32.26319, -80.45602), 5.865, (32.31196, -80.47487)),
-         "hunting-island": ((32.31196, -80.34293), 10.999, (32.36073, -80.43717)),
-         "berts-bar": ((32.71838, -79.79634), 5.659, (32.7509, -79.83403)),
-         "isle-of-palms": ((32.73464, -79.72094), 7.917, (32.78341, -79.77749)),
-         "windjammer": ((32.73464, -79.72094), 8.216, (32.78341, -79.77749)),
-         "lovers-point": ((36.64725, -121.895), 2.925, (36.62468, -121.895)),
-         "monterey-beach": ((36.64725, -121.895), 5.035, (36.62468, -121.895))}
+         "crash-boat-beach": ((18.46106, -67.20339), 4.201, (18.46106, -67.16949))}
 _MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15, **_R82}
 
 
@@ -778,7 +770,7 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the forty-one moved included, already read what apply would write.
+    # spot's node fields, the thirty-three moved included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()
