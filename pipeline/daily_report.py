@@ -251,9 +251,9 @@ def fetch_forecasts_window(client) -> dict[int, dict]:
     entirely, and _compute_trend skips it because face_ft is None, so the region trend is
     averaged over a smaller sample than it reports.
 
-    Filter on `source`, not on "stars is not null": interpret writes stars=0.0,
-    never None, when it cannot rate an hour, so a null test separates the two
-    writers today only because of which columns ecmwf_wam populates.
+    Filter on `source`, not on "stars is not null": interpret also writes stars=None when
+    it cannot rate an hour (no surf height, or nothing to rate direction against), so a null
+    test would drop those nwps rows as well as separate the two writers.
     """
     now = datetime.now(timezone.utc)
     iso_now = now.isoformat()
@@ -413,8 +413,15 @@ def build_region_report(
         log.warning("%s: %d spots but no current forecasts", region.key, len(in_region))
         return None
 
-    enriched.sort(key=lambda s: (s["latest"].get("stars") or 0), reverse=True)
-    top = enriched[:TOP_N]
+    # An unrated hour (stars None: no surf height, or nothing to rate direction against) is
+    # not a 0-star hour, so it never stands in the top spots as ★0.0; the site leaves such
+    # spots out of its own top 10 the same way (#357).
+    rated = [s for s in enriched if s["latest"].get("stars") is not None]
+    if not rated:
+        log.warning("%s: %d spots with forecasts but none rated this hour", region.key, len(enriched))
+        return None
+    rated.sort(key=lambda s: s["latest"]["stars"], reverse=True)
+    top = rated[:TOP_N]
     trend = _compute_trend(top)
 
     log.info(

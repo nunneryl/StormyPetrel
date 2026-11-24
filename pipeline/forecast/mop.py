@@ -64,6 +64,11 @@ SCRIPTS_DIR = _ROOT / "scripts"
 ENRICHED = _ROOT / "pipeline" / "spots_enriched.json"
 
 
+def _fmt_star(stars):
+    """A base rating for the log: one decimal, or "—" for an hour interpret could not rate."""
+    return "—" if stars is None else f"{stars:.1f}"
+
+
 def _slug(name):
     return _SLUG_RE.sub("-", (name or "").lower()).strip("-")
 
@@ -439,7 +444,7 @@ def validate_batch(batch=None, n_per_zone=3, with_fallback=True):
                                    arcs=s.get("swell_window_arcs"), optimal=s.get("optimal_swell_dir"))
                 when = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d %H:%M")
                 print(f"  {slug:24}{zone:8}{str(pid):>6}  {when:16}{hs:5.2f}{tp:4.0f}{dp:5.0f}"
-                      f"{st:6.1f}{e.get('stars', 0):6.1f}{n_ovlp:5d}  MOP-fed")
+                      f"{_fmt_star(st):>6}{_fmt_star(e.get('stars')):>6}{n_ovlp:5d}  MOP-fed")
                 fed += 1
             else:
                 k = max(mop); hs, tp, dp, swh = mop[k]
