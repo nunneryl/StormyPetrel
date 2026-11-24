@@ -18,7 +18,9 @@ THE TABLES. Coverage by region; wave height by region and lead day for each sour
 and NWPS at the buoys, spots against their buoy within 25 km); period and direction by source and
 lead day; the 10 best and worst buoys by day-2 height error; the GAP_K spots whose day-1 height
 sits furthest from NWPS at their own buoy (spot minus NWPS at the buoy, beside spot minus the buoy
-and NWPS at the buoy minus the buoy, at least GAP_MIN_N pairs); and NWPS's lead skill at the
+and NWPS at the buoy minus the buoy, at least GAP_MIN_N pairs), a spot whose sample point moved
+marked with the date; every spot whose sample point moved in the last MOVED_RECENT_DAYS days, with
+its day-1 gap before and after the move (see move_split); and NWPS's lead skill at the
 partition-archive buoys, which the archive has kept since August, so it fills from the first run.
 Figures: bias (forecast minus observed), MAE, RMSE, scatter index (RMSE over the mean observed),
 correlation, and n. A cell with fewer than MIN_N pairs shows only its n; a buoy needs MIN_N_BUOY.
@@ -49,6 +51,7 @@ RANK_K = 10
 GAP_LEAD_DAY = 1
 GAP_K = 20
 GAP_MIN_N = 20      # about 5 hours a day for 7 days is 35 pairs a spot a lead day
+MOVED_RECENT_DAYS = 28
 SOURCES = (("buoy", "ww3", "WAVEWATCH III at the buoys"), ("buoy", "nwps", "NWPS at the buoys"),
            ("spot", "spot", "Spots against their buoy (within 25 km)"))
 MEASURE_NAMES = {"hs": "Wave height (m)", "swell_hs": "Swell height (m)", "tp": "Peak period (s)",
@@ -224,14 +227,77 @@ def _bias_n(st: dict) -> str:
     return f"{_f(st['bias'])} ({st['n']})" if st["n"] else ""
 
 
-def gap_table(gaps: list[dict]) -> str:
+def load_moves(path=None) -> dict[str, date]:
+    """{spot slug: moved_on} from nwps_node_overrides.json: the first UTC day the pipeline rated
+    the spot from its moved sample point. Overrides with no readable date are left out."""
+    import json
+    path = Path(path) if path is not None else \
+        Path(__file__).resolve().parent / "data" / "nwps_node_overrides.json"
+    if not path.exists():
+        return {}
+    out = {}
+    for slug, o in (json.loads(path.read_text(encoding="utf-8")).get("overrides") or {}).items():
+        try:
+            out[slug] = date.fromisoformat(str(o.get("moved_on")))
+        except ValueError:
+            continue
+    return out
+
+
+def move_split(day: date, moved_on: date, lead_day: int):
+    """'before', 'after' or None for a spot's row valid on *day* at *lead_day*, its point moved on
+    *moved_on*. A lead-L forecast valid on day D comes from a cycle 24L to 24L + 24 hours earlier,
+    so D up to moved_on - 2 + L comes only from cycles dated before moved_on - 1 (the old point:
+    the pipeline reads each office's newest cycle), and D from moved_on + L + 1 only from cycles
+    dated moved_on or later (the new point). The two days between can be either: None."""
+    d = (day - moved_on).days - lead_day
+    if d <= -2:
+        return "before"
+    if d >= 1:
+        return "after"
+    return None
+
+
+def _day(v) -> date:
+    return date.fromisoformat(str(v)[:10])
+
+
+def moved_table(rows: list[dict], moves: dict, start: date, end: date,
+                lead_day: int = GAP_LEAD_DAY) -> str:
+    """Every spot whose point moved in the MOVED_RECENT_DAYS days before *start* or during the
+    window, oldest move first: its *lead_day* height bias against NWPS at its buoy and against its
+    buoy, before and after the move (move_split), whatever the pairs."""
+    recent = {s: m for s, m in moves.items() if start - timedelta(days=MOVED_RECENT_DAYS) < m < end}
+    if not recent:
+        return f"None in the {MOVED_RECENT_DAYS} days before this week or during it."
+    body = []
+    for slug in sorted(recent, key=lambda x: (recent[x], x)):
+        m = recent[slug]
+        mine = [r for r in rows if r["point"] == slug and r["measure"] == "hs"
+                and int(r["lead_day"]) == lead_day]
+
+        def part(kind, source, which):
+            agg = combine([r for r in mine if (r["kind"], r["source"]) == (kind, source)
+                           and move_split(_day(r["day"]), m, lead_day) == which], lambda r: 0)
+            return stats(agg.get(0, {"n": 0}))
+        region = next((r["region"] for r in mine), "–")
+        body.append([slug, region, m.isoformat(),
+                     _bias_n(part("spot_model", "nwps", "before")), _bias_n(part("spot_model", "nwps", "after")),
+                     _bias_n(part("spot", "spot", "before")), _bias_n(part("spot", "spot", "after"))])
+    return md_table(["Spot", "Region", "Point moved", "Spot − NWPS at buoy, before (n)", "After (n)",
+                     "Spot − buoy, before (n)", "After (n)"], body)
+
+
+def gap_table(gaps: list[dict], moves: dict | None = None) -> str:
+    moves = moves or {}
     body = []
     for g in gaps:
         buoy = g.get("buoy_id") or "–"
         if g.get("km") is not None:
             buoy += f" ({float(g['km']):.1f} km)"
         node = "–" if g.get("node_m") is None else f"{float(g['node_m']):.0f}"
-        body.append([g["slug"], g["region"], buoy, _bias_n(g["gap"]), _bias_n(g["vs_buoy"]),
+        spot = g["slug"] + (f" (moved {moves[g['slug']].isoformat()})" if g["slug"] in moves else "")
+        body.append([spot, g["region"], buoy, _bias_n(g["gap"]), _bias_n(g["vs_buoy"]),
                      _bias_n(g["nwps_vs_buoy"]), node])
     return md_table(["Spot", "Region", "Buoy", "Spot − NWPS at buoy (n)", "Spot − buoy (n)",
                      "NWPS at buoy − buoy (n)", "Sample point from spot (m)"], body)
@@ -305,9 +371,9 @@ def partition_table(t: Totals, zone: str = "") -> str:
 # --------------------------------------------------------------------------- #
 
 def build(rows: list[dict], pa: Totals, start: date, end: date,
-          roster: dict | None = None) -> tuple[str, str]:
+          roster: dict | None = None, moves: dict | None = None) -> tuple[str, str]:
     """(summary markdown, full report markdown). *roster*: spot_roster(), for the gap table's
-    buoys and sample points."""
+    buoys and sample points; *moves*: load_moves(), the spots whose sample point moved."""
     head = (f"## Accuracy scoreboard: {start.isoformat()} to {(end - timedelta(days=1)).isoformat()}"
             f" (UTC)\n\nCells: bias / MAE (n), forecast minus observed. Cells with fewer than "
             f"{MIN_N} pairs show only n.\n")
@@ -323,7 +389,9 @@ def build(rows: list[dict], pa: Totals, start: date, end: date,
                   f"\n### {label}: worst {RANK_K} buoys\n", ranking_table(worst)]
     parts += [f"\n### Spots furthest from NWPS at their buoy: top {GAP_K}, day-{GAP_LEAD_DAY} wave "
               f"height bias, m (at least {GAP_MIN_N} pairs)\n",
-              gap_table(spot_gaps(rows, roster or {}))]
+              gap_table(spot_gaps(rows, roster or {}), moves)]
+    parts += [f"\n### Spots whose NWPS sample point moved: day-{GAP_LEAD_DAY} wave height bias, m, "
+              "before and after the move\n", moved_table(rows, moves or {}, start, end)]
     parts += ["\n### NWPS lead skill at the partition-archive buoys (all zones)\n",
               partition_table(pa)]
     summary = "\n".join(parts) + "\n"
@@ -340,7 +408,12 @@ def build(rows: list[dict], pa: Totals, start: date, end: date,
              "- Spots furthest from NWPS at their buoy: the spot forecast against NWPS at the "
              "spot's nearest buoy (same lead day, nearest 3-hourly time). Both come from NWPS, so "
              "the gap is what the spot's sample point and processing add. Each column has its own "
-             "pairs, so they need not add up exactly."]
+             "pairs, so they need not add up exactly.",
+             "- Spots whose NWPS sample point moved: the date is the first UTC day the pipeline "
+             f"used the new point (nwps_node_overrides.json moved_on). A day-{GAP_LEAD_DAY} forecast "
+             "valid on a given day comes from a cycle one to two days earlier, so the two days "
+             "around the move mix the old point and the new and are left out; 'before' and "
+             "'after' are the days on either side within this week."]
     return summary, "\n".join(full) + "\n"
 
 
@@ -406,7 +479,7 @@ def main(argv=None) -> int:
     import json
     from .config import DEFAULT_ENRICHED_OUTPUT
     roster = spot_roster(json.loads(Path(DEFAULT_ENRICHED_OUTPUT).read_text(encoding="utf-8")))
-    summary, full = build(rows, pa, start, end, roster)
+    summary, full = build(rows, pa, start, end, roster, load_moves())
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.md").write_text(full, encoding="utf-8")

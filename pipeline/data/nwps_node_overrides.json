@@ -1,5 +1,5 @@
 {
-  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/). Pacifica Linda Mar, Rockaway Beach Pacifica, Avila Beach, Hobuck Beach, Westport Jetty and Westport Light State Park are from the NWPS v1.5 grids (2026-11-10): the same rule as the Hatteras three, wet every hour, with ETOPO 2022 read from ERDDAP point by point; node-preview run 71 is their gate. 'moved_on' (where given) is the date the move took effect: a MOP face factor measured on or before it was measured at the old node and is not applied (forecast/face_correction.suspend_moved_nodes); a move of a calibrated spot with no moved_on is treated the same way. Brookings Beach, Carolina Beach, Oregon Inlet, Nye Beach, Agate Beach Newport and the eight Rincon and Aguadilla spots (Indicators, Rincon Domes, Maria's, Steps Beach Rincon, Tres Palmas, Table Tops Aguadilla, Gas Chambers Aguadilla, Crash Boat Beach) are from the scoreboard's sample-point review (2026-11-23, after the first weekly accuracy report): the same rule as the Hatteras three, wet every hour, with no GSHHG land on the line from the spot once it reaches water, and etopo_m the cell's ETOPO 2022 depth; node-preview run 82 is their gate (docs/face_validation/run-82). Held from that review, unmoved: Dewees Island, Fripp Island, Hunting Island, Berts Bar, Isle of Palms and Windjammer (their 10 m cells, 6 to 11 km out, read 1.7 to 2.0 of neighbours whose own cells are close in and low: a whole-coast South Carolina and Georgia review instead), and Lovers Point and Monterey Beach (sheltered by the Monterey Peninsula, and calibrated).",
+  "_comment": "NWPS sample points moved by hand, keyed by spot slug. apply_nwps_assignments writes nwps_node_lat/lng from here (and the distance from the spot) in place of the node in scripts/nwps_okx_assignments.json, so a re-bake from that file keeps the move. 'replaces' is the node the move was measured against: if the assignment ever names a different node (the spot was re-placed), apply_nwps_assignments stops rather than override a placement nobody measured. Each new node is a CG1 grid cell centre on the spot's own WFO grid. Evidence: sw1-raycast run 50 (mode face-seaward, commit 133cde0, 2026-10-27), artifact face-seaward-50, saved under docs/face_validation/run-50/ on claude/practical-dirac-bshfbr-face; each cell is the nearest NWPS cell at least 10 m deep (ETOPO 2022) within 30 deg of the spot's facing, read from the same 6 NOMADS cycles as the current point. The Hatteras three (rodanthe, salvo, s-turns) are from sw1-raycast run 58 (mode nwps-cells, commit e244d2a, 2026-10-29), artifact nwps-cells-58, saved under docs/face_validation/run-58/: there ETOPO puts the current points in 10 to 13 m, so depth alone would keep them; each new cell is the nearest within 30 deg of the facing that is at least 10 m deep at its centre AND whose NWPS Hs is at least 0.9 of the cell one column further seaward in every cycle read. Bandon Beach, Moonstone Beach Humboldt, Short Sands Beach York, Revere Beach, Hubbard Creek and Galveston Seawall are from sw1-raycast run 67 (mode nwps-cells, commit bf3ca68, 2026-11-06), artifact nwps-cells-67, saved under docs/face_validation/run-67/, with run 66 (mode nwps-blank) for the hours each current cell is blank: the same rule as the Hatteras three, and the new cell must also be wet (an Hs, period and direction) in every hour of every cycle read. After run 68 (mode node-preview), where its first qualifying cell read over 1.15 of its neighbour, Galveston Seawall shares 61st Street Galveston's cell instead, which is wet every hour but outside the rule. Point Lookout is held at its placed cell: in run 68 its first qualifying cell read 1.163 of Lido Beach and Jones Beach, and in run 69 the qualifying cell beside it read 1.191 (docs/face_validation/run-69/). Pacifica Linda Mar, Rockaway Beach Pacifica, Avila Beach, Hobuck Beach, Westport Jetty and Westport Light State Park are from the NWPS v1.5 grids (2026-11-10): the same rule as the Hatteras three, wet every hour, with ETOPO 2022 read from ERDDAP point by point; node-preview run 71 is their gate. 'moved_on' (where given) is the date the move took effect: a MOP face factor measured on or before it was measured at the old node and is not applied (forecast/face_correction.suspend_moved_nodes); a move of a calibrated spot with no moved_on is treated the same way. Brookings Beach, Carolina Beach, Oregon Inlet, Nye Beach, Agate Beach Newport and the eight Rincon and Aguadilla spots (Indicators, Rincon Domes, Maria's, Steps Beach Rincon, Tres Palmas, Table Tops Aguadilla, Gas Chambers Aguadilla, Crash Boat Beach) are from the scoreboard's sample-point review (2026-11-23, after the first weekly accuracy report): the same rule as the Hatteras three, wet every hour, with no GSHHG land on the line from the spot once it reaches water, and etopo_m the cell's ETOPO 2022 depth; node-preview run 82 is their gate (docs/face_validation/run-82). Held from that review, unmoved: Dewees Island, Fripp Island, Hunting Island, Berts Bar, Isle of Palms and Windjammer (their 10 m cells, 6 to 11 km out, read 1.7 to 2.0 of neighbours whose own cells are close in and low: a whole-coast South Carolina and Georgia review instead), and Lovers Point and Monterey Beach (sheltered by the Monterey Peninsula, and calibrated). moved_on is the first UTC day the pipeline rated the spot from the moved point (the day its PR merged: #353 at 00:44Z on 2026-11-24, before that day's 01:45Z run).",
   "overrides": {
     "duck-pier": {
       "nwps_wfo": "mhx",
@@ -226,7 +226,7 @@
     },
     "brookings-beach": {
       "nwps_wfo": "mfr",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 42.02959,
       "nwps_node_lng": -124.29412,
       "etopo_m": 15.0,
@@ -239,7 +239,7 @@
     },
     "carolina-beach": {
       "nwps_wfo": "ilm",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 34.0334,
       "nwps_node_lng": -77.86233,
       "etopo_m": 13.3,
@@ -252,7 +252,7 @@
     },
     "oregon-inlet": {
       "nwps_wfo": "mhx",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 35.78649,
       "nwps_node_lng": -75.49398,
       "etopo_m": 18.2,
@@ -265,7 +265,7 @@
     },
     "nye-beach": {
       "nwps_wfo": "pqr",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 44.65648,
       "nwps_node_lng": -124.09467,
       "etopo_m": 22.6,
@@ -278,7 +278,7 @@
     },
     "agate-beach-newport": {
       "nwps_wfo": "pqr",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 44.67455,
       "nwps_node_lng": -124.09467,
       "etopo_m": 23.5,
@@ -291,7 +291,7 @@
     },
     "indicators": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.36366,
       "nwps_node_lng": -67.28814,
       "etopo_m": 33.6,
@@ -304,7 +304,7 @@
     },
     "rincon-domes": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.36366,
       "nwps_node_lng": -67.28814,
       "etopo_m": 33.6,
@@ -317,7 +317,7 @@
     },
     "maria-s": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.36366,
       "nwps_node_lng": -67.30508,
       "etopo_m": 344.2,
@@ -330,7 +330,7 @@
     },
     "steps-beach-rincon": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.34742,
       "nwps_node_lng": -67.30508,
       "etopo_m": 639.6,
@@ -343,7 +343,7 @@
     },
     "tres-palmas": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.33119,
       "nwps_node_lng": -67.30508,
       "etopo_m": 645.5,
@@ -356,7 +356,7 @@
     },
     "table-tops-aguadilla": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.46106,
       "nwps_node_lng": -67.20339,
       "etopo_m": 440.0,
@@ -369,7 +369,7 @@
     },
     "gas-chambers-aguadilla": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.46106,
       "nwps_node_lng": -67.20339,
       "etopo_m": 440.0,
@@ -382,7 +382,7 @@
     },
     "crash-boat-beach": {
       "nwps_wfo": "sju",
-      "moved_on": "2026-11-23",
+      "moved_on": "2026-11-24",
       "nwps_node_lat": 18.46106,
       "nwps_node_lng": -67.20339,
       "etopo_m": 440.0,
