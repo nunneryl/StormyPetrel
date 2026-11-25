@@ -654,7 +654,6 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "crash-boat-beach": (18.46106, -67.20339),
                     # the six neighbours #353 left out of its bar, node-preview run 83
                     "dogmans-rincon": (18.34742, -67.30508),
-                    "surfers-beach-aguadilla": (18.526, -67.13559),
                     "fort-fisher": (33.96568, -77.88904),
                     "wrightsville-beach": (34.19117, -77.75548),
                     "north-pea-island": (35.7701, -75.49398),

@@ -295,6 +295,11 @@ def test_the_committed_moves_carry_their_dates():
                  "table-tops-aguadilla", "gas-chambers-aguadilla", "crash-boat-beach"):
         assert m[slug] == date(2026, 11, 24), slug
     assert m["pacifica-linda-mar"] == date(2026, 11, 12)
+    # run 83's seven, from the day their PR merged
+    for slug in ("dogmans-rincon", "fort-fisher", "wrightsville-beach", "north-pea-island", "bath-house",
+                 "long-beach-township", "sea-bright"):
+        assert m[slug] == date(2026, 11, 25), slug
+    assert "surfers-beach-aguadilla" not in m   # held after run 83
 
 
 def _moved_rows():
