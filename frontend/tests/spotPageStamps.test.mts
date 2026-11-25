@@ -225,7 +225,10 @@ const SPOT_FIELDS = {
   description: null, swell_window_source: null,
 };
 // A row for every hour from 12 back to 48 ahead, so whatever hour the page renders in has one.
-const WITH_ROW = { ...SPOT_FIELDS, id: 990001, slug: 'stamp-test-point', name: 'Stamp Test Point' };
+// 28: its description names two nearby spots: one inside the box the page asks the spots table
+// for (Stamp Test Gap, same point), one far outside it (Stamp Test Tide Times, 39.36 N).
+const WITH_ROW = { ...SPOT_FIELDS, id: 990001, slug: 'stamp-test-point', name: 'Stamp Test Point',
+  description: 'Stamp Test Point is a reef break in California. Nearby spots: Stamp Test Gap (1 km) and Stamp Test Tide Times (268 km).' };
 // Rows only from 3 hours ahead, so no row covers the hour the page renders in.
 const NO_ROW = { ...SPOT_FIELDS, id: 990002, slug: 'stamp-test-gap', name: 'Stamp Test Gap' };
 // 8: the sources. Fields from the committed roster; coordinates rounded.
@@ -566,6 +569,16 @@ function answer(table: string, q: URLSearchParams): unknown[] {
   if (table === 'spots') {
     const slug = q.get('slug');
     if (slug !== null) return [...SPOTS, LATE_ARRIVAL].filter((s) => slug === `eq.${s.slug}`);
+    // 28: the page's box around a spot (lib/spotDescription nearbyBox), as PostgREST filters it.
+    const box: [string, string][] = [...q.getAll('lat').map((c): [string, string] => ['lat', c]),
+      ...q.getAll('lng').map((c): [string, string] => ['lng', c])];
+    if (box.length > 0) {
+      return SPOTS.filter((s) => box.every(([k, c]) => {
+        const v = Number((s as Record<string, unknown>)[k]);
+        const lim = Number(c.slice(4));
+        return c.startsWith('gte.') ? v >= lim : c.startsWith('lte.') ? v <= lim : true;
+      }));
+    }
     return (q.get('offset') ?? '0') === '0' ? SPOTS : [];
   }
   if (table === 'accuracy_daily') {
@@ -1010,6 +1023,17 @@ async function main(): Promise<void> {
     const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
     check('a spot with its tide height keeps the feet chart and tile', plain.includes('Tide (ft) · next 48h') && plain.includes('2.5 ft')
       && !plain.includes('data-tide-timing-caption'));
+  }
+
+  // 28: the description's nearby spots link to their pages (lib/spotDescription.ts).
+  {
+    const html = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
+    const desc = html.slice(html.indexOf('data-spot-description'), html.indexOf('</p>', html.indexOf('data-spot-description')));
+    check(`${WITH_ROW.slug}: a nearby spot inside the box is a link to its page`,
+      /<a [^>]*href="\/spot\/stamp-test-gap"[^>]*>Stamp Test Gap<\/a> \(1 km\) and /.test(desc), desc);
+    check('...one the box does not hold stays plain text', desc.includes(' and Stamp Test Tide Times (268 km).')
+      && !desc.includes('href="/spot/stamp-test-tide-times"'), desc);
+    check('...and the page links no spot to itself', !desc.includes('href="/spot/stamp-test-point"'));
   }
 
   // 11: the Nearest buoy box (lib/buoyDisplay).

@@ -52,6 +52,7 @@ from pathlib import Path
 
 from .config import DEFAULT_ENRICHED_OUTPUT
 from .db_import import _excluded_slugs, _fetch_existing_spots, _slugify, get_client
+from . import descriptions as _Dn
 from .descriptions import (
     GATED_FIELDS,
     STATED_SOURCES,
@@ -106,10 +107,12 @@ def roster_spots(spots):
 
 
 def plan(roster, cache, force=False):
-    """[(slug, spot, payload, signature, action, reason)] in roster order."""
+    """[(slug, spot, payload, signature, action, reason)] in roster order. The nearby spots are this
+    roster's, so a spot moved or added in it changes its neighbours' descriptions too."""
+    ctx = _Dn.context_for(roster.values())
     items = []
     for slug, spot in roster.items():
-        payload = description_payload(spot_fields(spot))
+        payload = description_payload(spot_fields(spot), ctx)
         sig = description_signature(payload)
         entry = cache.get(slug)
         cached_sig = entry.get("signature") if isinstance(entry, dict) else None
@@ -206,7 +209,7 @@ def contradiction(text, spot):
 # The template cannot do that, but the check stays as a guard on what it writes: a text that fails it
 # is not saved, the spot keeps its existing description and gets no new signature, and the end-of-run
 # report names it.
-MAX_WORDS = 80
+MAX_WORDS = 120   # t4 states more: tide, best months, buoy and station, cam, nearby spots
 _APOSTROPHES = str.maketrans({"’": "'", "ʻ": "'", "‘": "'", "`": "'"})
 _SELF_TALK = re.compile(
     r"\b(?:wait|revis(?:e|ed|es|ing|ion)|correct(?:ed|ion)|instruct(?:ed|ion|ions)|"
@@ -250,6 +253,17 @@ def _without_name(text, name):
     return body
 
 
+def _other_names(payload):
+    names = [n for n, _km in payload.get("nearby") or []]
+    station = payload.get("tide_station")
+    if station and station[1]:
+        names.append(station[1])
+    buoy = payload.get("buoy")
+    if buoy and buoy[1]:
+        names.append(buoy[1])        # "the Tillamook Bay South Jetty buoy" names no jetty break
+    return names
+
+
 def check_description(text, payload):
     """Every way *text* fails as the description of *payload*, one short phrase each; [] passes."""
     problems = []
@@ -258,7 +272,15 @@ def check_description(text, payload):
         problems.append("more than one paragraph (line break)")
     if "---" in text:
         problems.append("contains '---'")
-    body = _without_name(text, name)
+    # Other names the text carries (nearby spots, the tide station's) are not read as its words
+    # either: "Avalon Jetty" nearby is not a jetty here. Longest first, so "Avalon" does not leave
+    # "Jetty" of "Avalon Jetty" behind.
+    body = (text or "").translate(_APOSTROPHES)
+    for n in sorted({name, *_other_names(payload)}, key=len, reverse=True):
+        if n:     # each whole name first, longest first ...
+            body = re.sub(r"(?<!\w)" + re.escape(n.translate(_APOSTROPHES)) + r"(?!\w)", " ",
+                          body, flags=re.I)
+    body = _without_name(body, name)    # ... then the spot's own, and its part before a comma
     talk = sorted({m.group(0).lower() for m in _SELF_TALK.finditer(body)}
                   | {m.group(0) for m in _FIRST_PERSON.finditer(body)})
     if talk:
@@ -437,9 +459,10 @@ def run_sample(roster, out_path: Path) -> int:
         log.error("sample spots not in the roster: %s", ", ".join(missing))
         return 2
     results, rejected = {}, []
+    ctx = _Dn.context_for(roster.values())
     for name in SAMPLE_SPOTS:
         slug, spot = by_name[name]
-        payload = description_payload(spot_fields(spot))
+        payload = description_payload(spot_fields(spot), ctx)
         text, problems = written(slug, payload)
         results[slug] = {"name": name, "payload": payload, "pattern": pattern_for(slug),
                          "check": check_line(problems),

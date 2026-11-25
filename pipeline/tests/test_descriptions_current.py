@@ -1,9 +1,10 @@
 """The CI check: every roster spot's cached description is current with what the roster states.
 
-A description's v2 signature hashes what it states, including the facing, the offshore bearing and
-the optimal swell direction. db_import blanks a description whose signature no longer matches the
-roster, so a PR that changes any of those (as #328 changed three facings, and #263 the optimal
-directions of 94 spots) must regenerate the affected descriptions in the same PR, with
+A description's v2 signature hashes what it states: since template t4 its break type, bottom and
+tide (from a stated source), what research says of the wave, its best months, buoy, tide station,
+cam and nearby spots. db_import blanks a description whose signature no longer matches the roster,
+so a PR that changes any of those (a break type, a buoy, a spot's position, which moves its
+neighbours' lists too) must regenerate the affected descriptions in the same PR, with
 
     python -m pipeline.generate_descriptions --no-db
 
@@ -38,22 +39,29 @@ def _with(name, **changes):
     return roster
 
 
-def test_a_changed_facing_is_caught():
-    # #328's own case: Hillsboro Inlet back at 134 (offshore 314) no longer matches its description.
-    roster = _with("Hillsboro Inlet", orientation_deg=134.0, offshore_wind_deg=314.0)
+def test_a_changed_break_type_is_caught():
+    # the research import corrects a break type the description states
+    spot = next(s for s in ROSTER if s.get("name") == "Hillsboro Inlet")
+    new = "reef" if spot.get("break_type") != "reef" else "beach"
+    roster = _with("Hillsboro Inlet", break_type=new, break_type_source="researched")
     assert G.stale(roster, CACHE) == [("hillsboro-inlet", "something it states has changed")]
 
 
-def test_a_changed_optimal_swell_direction_is_caught():
-    # #263's case: the optimal moves (Topanga Beach 204 -> 230).
-    roster = _with("Topanga Beach", optimal_swell_dir=230)
-    assert G.stale(roster, CACHE) == [("topanga-beach", "something it states has changed")]
+def test_a_moved_spot_changes_its_neighbours_descriptions_too():
+    # Topanga Beach moved 30 km out to sea: it is no longer anyone's neighbour, and its own
+    # neighbours change, so every description that named it, and its own, is stale.
+    spot = next(s for s in ROSTER if s.get("name") == "Topanga Beach")
+    roster = _with("Topanga Beach", lat=spot["lat"] - 0.3)
+    stale = dict(G.stale(roster, CACHE))
+    assert stale.get("topanga-beach") == "something it states has changed"
+    assert len(stale) > 1, stale
 
 
 def test_a_change_the_description_does_not_state_is_not_caught():
-    # The swell window's arcs are not in the payload: no description to regenerate.
-    roster = _with("La Push First Beach",
-                   swell_window_arcs=[{"min": 200, "max": 280, "span": 84}])
+    # Since t4 the facing, the optimal swell and the swell window are the Optimal conditions card's,
+    # not the description's: changing them regenerates nothing.
+    roster = _with("La Push First Beach", swell_window_arcs=[{"min": 200, "max": 280, "span": 84}],
+                   orientation_deg=134.0, optimal_swell_dir=230)
     assert G.stale(roster, CACHE) == []
 
 

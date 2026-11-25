@@ -32,6 +32,8 @@ import { siteUrl } from '@/lib/site-url';
 import { spotReportHref } from '@/lib/contact';
 import { CDIP_HOMEPAGE, showsCdipCredit } from '@/lib/cdipCredit';
 import { tideTimingOnly, timingOnlyCaption } from '@/lib/tideTiming';
+import { descriptionParts, nearbyBox, NEARBY_LEAD } from '@/lib/spotDescription';
+import { withDisplayName } from '@/lib/spotName';
 
 export const revalidate = 3600;
 
@@ -185,6 +187,28 @@ async function loadBackups(
   });
 }
 
+// The spots around this one, under their shown names: the candidates for the links in the
+// description's "Nearby spots" sentence (lib/spotDescription). Read only when the description has
+// that sentence; on an error the names stay plain text.
+async function loadNearbySpots(spot: { lat: number; lng: number }): Promise<{ slug: string; name: string }[]> {
+  const b = nearbyBox(spot.lat, spot.lng);
+  const { data, error } = await supabaseUncached
+    .from('spots')
+    .select('slug, name, state')
+    .gte('lat', b.latMin)
+    .lte('lat', b.latMax)
+    .gte('lng', b.lngMin)
+    .lte('lng', b.lngMax)
+    .limit(200);
+  if (error) {
+    console.error('loadNearbySpots', error);
+    return [];
+  }
+  return ((data ?? []) as { slug: string; name: string; state: string | null }[])
+    .map(withDisplayName)
+    .map((s) => ({ slug: s.slug, name: s.name }));
+}
+
 // freshnessLabel MOVED to components/CurrentHero. It measured `Date.now() - valid_time` at
 // RENDER time, so a statically-served page an hour old still announced "Updated 0 min ago".
 // It now measures against the same clock that selects the row, on the client.
@@ -198,11 +222,12 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   // The tide's timing but not its height (spots.tide_height_suppressed, lib/tideTiming.ts).
   const timingOnly = tideTimingOnly(spot);
 
-  const [forecasts, buoy, lastWave, cams] = await Promise.all([
+  const [forecasts, buoy, lastWave, cams, nearbySpots] = await Promise.all([
     loadForecasts(spot.id),
     loadLatestBuoy(spot.nearest_buoy_id),
     spot.nearest_buoy_id ? loadLatestWave(spot.nearest_buoy_id) : Promise.resolve(null),
     fetchCamsForSpot(spot.slug),
+    spot.description?.includes(NEARBY_LEAD) ? loadNearbySpots(spot) : Promise.resolve([]),
   ]);
 
   // loadForecasts now reaches HOUR_PICKER_SPAN hours BACKWARDS (see its comment), so
@@ -322,10 +347,19 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
 
       {/* Factual blurb from pipeline.generate_descriptions. Renders
           nothing (no placeholder) when the column is still null so
-          unprocessed spots don't show a gap. */}
+          unprocessed spots don't show a gap. The names in its "Nearby spots" sentence link to
+          those spots' pages (lib/spotDescription); the page lists nearby spots nowhere else. */}
       {spot.description && (
-        <p className="text-text-secondary text-base leading-relaxed">
-          {spot.description}
+        <p className="text-text-secondary text-base leading-relaxed" data-spot-description>
+          {descriptionParts(spot.description, nearbySpots, spot.slug).map((part, i) =>
+            part.slug ? (
+              <Link key={i} href={`/spot/${part.slug}`} className="text-cyan-400 hover:underline">
+                {part.text}
+              </Link>
+            ) : (
+              part.text
+            ),
+          )}
         </p>
       )}
 

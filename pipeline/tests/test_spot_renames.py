@@ -69,15 +69,18 @@ def test_the_slugs_are_the_new_ones():
         assert orient["orientations"][slug]["name"] == name
 
 
-def test_the_description_cache_and_the_migration_carry_the_same_texts():
+def test_the_migration_carries_the_texts_of_its_day():
+    """025 wrote the template-t3 texts the cache held on the day of the rename. The cache has
+    since moved on (template t4, descriptions v2); the import test below holds the CURRENT cache
+    entry of each renamed spot against the import's own check instead."""
     cache = json.loads(_read("pipeline/data/spot_descriptions.json"))
     rows = {slug: (text, sig, old) for slug, text, sig, old in re.findall(
         r"\('(?:indiatlantic|ventor-pier)', '([a-z-]+)', '[^']+',\s*'([^']+)',\s*"
         r"'(v2:[0-9a-f]{16})', '(v2:[0-9a-f]{16})'\)", MIGRATION.read_text())}
     assert set(rows) == set(NEW)
     for slug, text in TEXT.items():
-        assert cache[slug]["description"] == text == rows[slug][0], slug
-        assert cache[slug]["signature"] == rows[slug][1], slug
+        assert rows[slug][0] == text, slug
+        assert cache[slug]["description"].startswith(NEW[slug] + " is "), slug
     # The signatures the two spots carried before the rename (the cache entries it replaced).
     assert rows["indialantic"][2] == "v2:6afa2725115ca62f"
     assert rows["ventnor-pier"][2] == "v2:a7d8dfda534b4b61"

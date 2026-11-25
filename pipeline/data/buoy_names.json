@@ -1,0 +1,472 @@
+{
+ "_comment": "NDBC station names for the roster's buoys (nearest_buoy_id within 150 km), read by pipeline/descriptions.py. 'ndbc_name' is NDBC's own station-table name, verbatim; 'name' is that name shortened for prose (CDIP numbers, state abbreviations, offsets like '- 27NM WNW of ...' and words like 'Waves' dropped, capitals title-cased), and null where NDBC gives only a code. 'type' is NDBC's station type: the description says 'buoy' only for a buoy.",
+ "source": "https://www.ndbc.noaa.gov/data/stations/station_table.txt",
+ "fetched": "2026-11-25",
+ "stations": {
+  "41004": {
+   "ndbc_name": "EDISTO - 41 NM Southeast of Charleston, SC",
+   "name": "Edisto",
+   "type": "3-meter foam buoy"
+  },
+  "41008": {
+   "ndbc_name": "GRAYS REEF - 40 NM Southeast of Savannah, GA",
+   "name": "Grays Reef",
+   "type": "3-meter discus buoy"
+  },
+  "41009": {
+   "ndbc_name": "CANAVERAL 20 NM East of Cape Canaveral, FL",
+   "name": "Canaveral",
+   "type": "3-meter discus buoy"
+  },
+  "41025": {
+   "ndbc_name": "Diamond Shoals, NC",
+   "name": "Diamond Shoals",
+   "type": "3-meter foam buoy"
+  },
+  "41053": {
+   "ndbc_name": "San Juan, PR",
+   "name": "San Juan",
+   "type": "Moored Buoy"
+  },
+  "41065": {
+   "ndbc_name": "Capers Nearshore Waves (CAP2WAVE)",
+   "name": "Capers Nearshore",
+   "type": "Moored Buoy"
+  },
+  "41067": {
+   "ndbc_name": "FRP2WAVE",
+   "name": null,
+   "type": "Moored Buoy"
+  },
+  "41070": {
+   "ndbc_name": "Ponce de Leon Inlet Waves (PNCWAVE)",
+   "name": "Ponce de Leon Inlet",
+   "type": "Moored Buoy"
+  },
+  "41076": {
+   "ndbc_name": "CHR60WAVE",
+   "name": null,
+   "type": "Moored Buoy"
+  },
+  "41108": {
+   "ndbc_name": "Wilmington Harbor, NC - (200)",
+   "name": "Wilmington Harbor",
+   "type": "Waverider Buoy"
+  },
+  "41110": {
+   "ndbc_name": "Masonboro Inlet, ILM2, NC (150)",
+   "name": "Masonboro Inlet",
+   "type": "Waverider Buoy"
+  },
+  "41112": {
+   "ndbc_name": "Offshore Fernandina Beach, FL (132)",
+   "name": "Offshore Fernandina Beach",
+   "type": "Waverider Buoy"
+  },
+  "41113": {
+   "ndbc_name": "Cape Canaveral Nearshore, FL (143)",
+   "name": "Cape Canaveral Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "41114": {
+   "ndbc_name": "Fort Pierce, FL (134)",
+   "name": "Fort Pierce",
+   "type": "Waverider Buoy"
+  },
+  "41115": {
+   "ndbc_name": "Rincon, Puerto Rico (181)",
+   "name": "Rincon",
+   "type": "Waverider Buoy"
+  },
+  "41117": {
+   "ndbc_name": "St. Augustine, FL (194)",
+   "name": "St. Augustine",
+   "type": "Waverider Buoy"
+  },
+  "41120": {
+   "ndbc_name": "Cape Hatteras East, NC (250)",
+   "name": "Cape Hatteras East",
+   "type": "Waverider Buoy"
+  },
+  "41121": {
+   "ndbc_name": "Arecibo, Puerto Rico (249)",
+   "name": "Arecibo",
+   "type": "Waverider Buoy"
+  },
+  "41122": {
+   "ndbc_name": "Hollywood Beach, FL (265)",
+   "name": "Hollywood Beach",
+   "type": "Waverider Buoy"
+  },
+  "41159": {
+   "ndbc_name": "Onslow Bay Outer, NC (217)",
+   "name": "Onslow Bay Outer",
+   "type": "Waverider Buoy"
+  },
+  "42012": {
+   "ndbc_name": "ORANGE BEACH - 44 NM SE of Mobile, AL",
+   "name": "Orange Beach",
+   "type": "3-meter discus buoy"
+  },
+  "42032": {
+   "ndbc_name": "UTMSI_BUOY_1 - Environmental List 1415.02 (SPOT-33114C)",
+   "name": null,
+   "type": "Spotter Buoy"
+  },
+  "42033": {
+   "ndbc_name": "UTMSI_BUOY_2 - Environmental List 1415 (SPOT-33112C)",
+   "name": null,
+   "type": "Spotter Buoy"
+  },
+  "42035": {
+   "ndbc_name": "GALVESTON,TX -  22 NM East of Galveston, TX",
+   "name": "Galveston",
+   "type": "3-meter foam buoy"
+  },
+  "42039": {
+   "ndbc_name": "PENSACOLA - 115NM SSE of Pensacola, FL",
+   "name": "Pensacola",
+   "type": "2.1-meter ionomer foam buoy"
+  },
+  "42092": {
+   "ndbc_name": "Aransas Pass Channel Entrance S, TX (252)",
+   "name": "Aransas Pass Channel Entrance",
+   "type": "Waverider Buoy"
+  },
+  "42095": {
+   "ndbc_name": "Satan Shoal, FL (244)",
+   "name": "Satan Shoal",
+   "type": "Waverider Buoy"
+  },
+  "42098": {
+   "ndbc_name": "Egmont Channel Entrance, FL (214)",
+   "name": "Egmont Channel Entrance",
+   "type": "Waverider Buoy"
+  },
+  "44007": {
+   "ndbc_name": "PORTLAND - 12 NM Southeast of Portland,ME",
+   "name": "Portland",
+   "type": "3-meter discus buoy"
+  },
+  "44008": {
+   "ndbc_name": "NANTUCKET 54 NM Southeast of Nantucket",
+   "name": "Nantucket",
+   "type": "3-meter discus buoy"
+  },
+  "44013": {
+   "ndbc_name": "BOSTON 16 NM East of Boston, MA",
+   "name": "Boston",
+   "type": "2.1-meter ionomer foam buoy"
+  },
+  "44020": {
+   "ndbc_name": "NANTUCKET SOUND",
+   "name": "Nantucket Sound",
+   "type": "3-meter foam buoy"
+  },
+  "44025": {
+   "ndbc_name": "LONG ISLAND - 30 NM South of Islip, NY",
+   "name": "Long Island",
+   "type": "3-meter foam buoy"
+  },
+  "44029": {
+   "ndbc_name": "Buoy A01 - Massachusetts Bay",
+   "name": "Massachusetts Bay",
+   "type": "Moored Buoy"
+  },
+  "44030": {
+   "ndbc_name": "Buoy B01 - Western Maine Shelf",
+   "name": "Western Maine Shelf",
+   "type": "Moored Buoy"
+  },
+  "44056": {
+   "ndbc_name": "Duck FRF, NC",
+   "name": "Duck FRF",
+   "type": "Waverider Buoy"
+  },
+  "44065": {
+   "ndbc_name": "New York Harbor Entrance - 15 NM SE of Breezy Point , NY",
+   "name": "New York Harbor Entrance",
+   "type": "3-meter foam buoy"
+  },
+  "44084": {
+   "ndbc_name": "Bethany Beach, DE (263)",
+   "name": "Bethany Beach",
+   "type": "Waverider Buoy"
+  },
+  "44085": {
+   "ndbc_name": "Buzzards Bay, MA (260)",
+   "name": "Buzzards Bay",
+   "type": "Waverider Buoy"
+  },
+  "44086": {
+   "ndbc_name": "Nags Head, NC (243)",
+   "name": "Nags Head",
+   "type": "Waverider Buoy"
+  },
+  "44090": {
+   "ndbc_name": "Cape Cod Bay, MA (221)",
+   "name": "Cape Cod Bay",
+   "type": "Waverider Buoy"
+  },
+  "44091": {
+   "ndbc_name": "Barnegat, NJ (209)",
+   "name": "Barnegat",
+   "type": "Waverider Buoy"
+  },
+  "44095": {
+   "ndbc_name": "Oregon Inlet, NC (192)",
+   "name": "Oregon Inlet",
+   "type": "Waverider Buoy"
+  },
+  "44097": {
+   "ndbc_name": "Block Island, RI  (154)",
+   "name": "Block Island",
+   "type": "Waverider Buoy"
+  },
+  "44098": {
+   "ndbc_name": "Jeffrey's Ledge, NH (160)",
+   "name": "Jeffrey's Ledge",
+   "type": "Waverider Buoy"
+  },
+  "44099": {
+   "ndbc_name": "Cape Henry, VA (147)",
+   "name": "Cape Henry",
+   "type": "Waverider Buoy"
+  },
+  "46011": {
+   "ndbc_name": "SANTA MARIA - 21NM NW of Point Arguello, CA",
+   "name": "Santa Maria",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46012": {
+   "ndbc_name": "HALF MOON BAY - 24NM SSW of San Francisco, CA",
+   "name": "Half Moon Bay",
+   "type": "Uncrewed Surface Vehicle"
+  },
+  "46013": {
+   "ndbc_name": "BODEGA BAY - 48NM NW of San Francisco, CA",
+   "name": "Bodega Bay",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46014": {
+   "ndbc_name": "PT ARENA - 19NM North of Point Arena, CA",
+   "name": "Point Arena",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46015": {
+   "ndbc_name": "PORT ORFORD - 15 NM West of Port Orford, OR",
+   "name": "Port Orford",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46025": {
+   "ndbc_name": "Santa Monica Basin - 33NM WSW of Santa Monica, CA",
+   "name": "Santa Monica Basin",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46027": {
+   "ndbc_name": "ST GEORGES - 8 NM NW of Crescent City, CA",
+   "name": "St. Georges",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46028": {
+   "ndbc_name": "CAPE SAN MARTIN - 55NM West NW of Morro Bay, CA",
+   "name": "Cape San Martin",
+   "type": "3-meter foam buoy w/ seal cage"
+  },
+  "46041": {
+   "ndbc_name": "CAPE ELIZABETH - 45NM NW of Aberdeen, WA",
+   "name": "Cape Elizabeth",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46042": {
+   "ndbc_name": "MONTEREY - 27NM WNW of Monterey, CA",
+   "name": "Monterey",
+   "type": "3-meter foam buoy w/ seal cage"
+  },
+  "46050": {
+   "ndbc_name": "STONEWALL BANK - 20NM West of Newport, OR",
+   "name": "Stonewall Bank",
+   "type": "3-meter foam buoy"
+  },
+  "46053": {
+   "ndbc_name": "EAST SANTA BARBARA  - 12NM Southwest of Santa Barbara, CA",
+   "name": "East Santa Barbara",
+   "type": "3-meter foam buoy w/ seal cage"
+  },
+  "46054": {
+   "ndbc_name": "WEST SANTA BARBARA  38 NM West of Santa Barbara, CA",
+   "name": "West Santa Barbara",
+   "type": "3-meter discus buoy w/ seal cage"
+  },
+  "46097": {
+   "ndbc_name": "OOI Newport Shelf",
+   "name": "OOI Newport Shelf",
+   "type": "Buoy"
+  },
+  "46099": {
+   "ndbc_name": "OOI Westport Shelf",
+   "name": "OOI Westport Shelf",
+   "type": "Buoy"
+  },
+  "46206": {
+   "ndbc_name": "La Perouse Bank",
+   "name": "La Perouse Bank",
+   "type": "3-meter discus buoy"
+  },
+  "46211": {
+   "ndbc_name": "Grays Harbor, WA (036)",
+   "name": "Grays Harbor",
+   "type": "Waverider Buoy"
+  },
+  "46213": {
+   "ndbc_name": "Cape Mendocino, CA (094)",
+   "name": "Cape Mendocino",
+   "type": "Waverider Buoy"
+  },
+  "46214": {
+   "ndbc_name": "Point Reyes, CA (029)",
+   "name": "Point Reyes",
+   "type": "Waverider Buoy"
+  },
+  "46218": {
+   "ndbc_name": "Harvest, CA (071)",
+   "name": "Harvest",
+   "type": "Waverider Buoy"
+  },
+  "46221": {
+   "ndbc_name": "Santa Monica Bay, CA (028)",
+   "name": "Santa Monica Bay",
+   "type": "Waverider Buoy"
+  },
+  "46224": {
+   "ndbc_name": "Oceanside Offshore, CA (045)",
+   "name": "Oceanside Offshore",
+   "type": "Waverider Buoy"
+  },
+  "46225": {
+   "ndbc_name": "Torrey Pines Outer, CA (100)",
+   "name": "Torrey Pines Outer",
+   "type": "Waverider Buoy"
+  },
+  "46229": {
+   "ndbc_name": "UMPQUA OFFSHORE, OR (139)",
+   "name": "Umpqua Offshore",
+   "type": "Waverider Buoy"
+  },
+  "46232": {
+   "ndbc_name": "Point Loma South, CA  (191)",
+   "name": "Point Loma South",
+   "type": "Waverider Buoy"
+  },
+  "46236": {
+   "ndbc_name": "Monterey Canyon Outer, CA  (156)",
+   "name": "Monterey Canyon Outer",
+   "type": "Waverider Buoy"
+  },
+  "46237": {
+   "ndbc_name": "San Francisco Bar, CA  (142)",
+   "name": "San Francisco Bar",
+   "type": "Waverider Buoy"
+  },
+  "46243": {
+   "ndbc_name": "Clatsop Spit, OR (162)",
+   "name": "Clatsop Spit",
+   "type": "Waverider Buoy"
+  },
+  "46244": {
+   "ndbc_name": "Humboldt Bay, North Spit, CA (168)",
+   "name": "Humboldt Bay North Spit",
+   "type": "Waverider Buoy"
+  },
+  "46253": {
+   "ndbc_name": "San Pedro South, CA (213)",
+   "name": "San Pedro South",
+   "type": "Waverider Buoy"
+  },
+  "46256": {
+   "ndbc_name": "Long Beach Channel, CA (215)",
+   "name": "Long Beach Channel",
+   "type": "Waverider Buoy"
+  },
+  "46258": {
+   "ndbc_name": "Mission Bay West, CA (220)",
+   "name": "Mission Bay West",
+   "type": "Waverider Buoy"
+  },
+  "46259": {
+   "ndbc_name": "Santa Lucia Escarpment, CA (222)",
+   "name": "Santa Lucia Escarpment",
+   "type": "Waverider Buoy"
+  },
+  "46266": {
+   "ndbc_name": "Del Mar Nearshore, CA (153)",
+   "name": "Del Mar Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "46268": {
+   "ndbc_name": "Topanga Nearshore, CA (103)",
+   "name": "Topanga Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "46274": {
+   "ndbc_name": "Leucadia Nearshore, CA (262)",
+   "name": "Leucadia Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "46275": {
+   "ndbc_name": "Red Beach Nearshore, CA (264)",
+   "name": "Red Beach Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "46277": {
+   "ndbc_name": "Green Beach Offshore, CA (271)",
+   "name": "Green Beach Offshore",
+   "type": "Waverider Buoy"
+  },
+  "46278": {
+   "ndbc_name": "Tillamook Bay South Jetty, OR (270)",
+   "name": "Tillamook Bay South Jetty",
+   "type": "Waverider Buoy"
+  },
+  "46285": {
+   "ndbc_name": "Capistrano Beach Nearshore, CA (284)",
+   "name": "Capistrano Beach Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "46286": {
+   "ndbc_name": "Avila Beach Nearshore, CA (285)",
+   "name": "Avila Beach Nearshore",
+   "type": "Waverider Buoy"
+  },
+  "51201": {
+   "ndbc_name": "Waimea Bay, HI (106)",
+   "name": "Waimea Bay",
+   "type": "Waverider Buoy"
+  },
+  "51202": {
+   "ndbc_name": "Mokapu Point, HI (098)",
+   "name": "Mokapu Point",
+   "type": "Waverider Buoy"
+  },
+  "51206": {
+   "ndbc_name": "Hilo, Hawaii, HI (188)",
+   "name": "Hilo",
+   "type": "Waverider Buoy"
+  },
+  "51211": {
+   "ndbc_name": "Pearl Harbor Entrance, HI (233)",
+   "name": "Pearl Harbor Entrance",
+   "type": "Waverider Buoy"
+  },
+  "51212": {
+   "ndbc_name": "Barbers Point, Kalaeloa, HI (238)",
+   "name": "Barbers Point",
+   "type": "Waverider Buoy"
+  },
+  "ljpc1": {
+   "ndbc_name": "La Jolla, CA (073)",
+   "name": "La Jolla",
+   "type": "C-MAN Station"
+  }
+ }
+}
