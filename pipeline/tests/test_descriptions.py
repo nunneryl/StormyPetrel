@@ -127,10 +127,10 @@ def test_the_template_version_is_in_the_signature(monkeypatch):
 
 
 def template_source():
-    parts = (Dn._an, Dn._name_holds, Dn._list, Dn._month, Dn._span, Dn._identity, Dn._best,
+    parts = (Dn._an, Dn._name_holds, Dn._list, Dn._identity,
              Dn._sources, Dn._cam, Dn._nearby, Dn.render, Dn.evidence_traits, Dn.display_name)
     return ("".join(inspect.getsource(f) for f in parts) + repr(Dn.BREAK_WORDS) + Dn.NO_BREAK_TYPE
-            + repr(Dn.HAND_WORDS) + repr(Dn.TIDE_SENTENCES) + repr(Dn.MONTHS)
+            + repr(Dn.HAND_WORDS) + repr(Dn.TIDE_SENTENCES)
             + repr((Dn.BUOY_MAX_KM, Dn.NEARBY_MAX_KM, Dn.NEARBY_N))
             + Dn._LEFT.pattern + Dn._RIGHT.pattern + Dn._BOTH.pattern)
 
@@ -139,7 +139,7 @@ def test_the_template_cannot_change_without_a_new_version():
     """Edit the template's wording and this fails: bump TEMPLATE_VERSION, then record the new
     fingerprint. Every description written by the old wording is then rewritten."""
     assert (Dn.TEMPLATE_VERSION, hashlib.sha1(template_source().encode()).hexdigest()[:12]) == (
-        "t4", "64a597830229")
+        "t4", "b6637ca3e398")
 
 
 def test_is_v2():

@@ -14,22 +14,30 @@ repeats the directions. It says, from committed inputs only, nothing from model 
      wave is a left, a right or both, and whether the spot is exposed or sheltered
      (evidence_traits: a fixed list of phrases; a text that says both, or neither, says nothing);
   2. its tide preference, from a stated source only (TIDE_SENTENCES);
-  3. the months it rated best in our own forecasts (pipeline/data/spot_best_months.json, written by
-     pipeline/best_months.py from the published ratings: the share of days with a 3-star daylight
-     hour, by month), with the span of months compared;
-  4. where its data comes from: the nearest wave buoy within BUOY_MAX_KM (NDBC id and distance) and
-     its NOAA tide station (name, id and distance), "tide times only" where the height is withheld;
-  5. its live cam, if it has one (pipeline/data/cam_seed.json);
-  6. up to NEARBY_N other spots within NEARBY_MAX_KM, nearest first, by name and distance.
+  3. where its data comes from: the nearest wave buoy within BUOY_MAX_KM, by its NDBC name with the
+     number in brackets ("the Waimea Bay buoy (NDBC 51201)", pipeline/data/buoy_names.json) or, where
+     NDBC gives only a code, "NDBC buoy 41067", and its distance; and its NOAA tide station, by name
+     and distance, no number (pipeline/data/tide_station_names.json), "tide times (not heights)"
+     where the height is withheld;
+  4. its live cam, if it has one (pipeline/data/cam_seed.json);
+  5. up to NEARBY_N other spots within NEARBY_MAX_KM, nearest first, by name and distance. The spot
+     page lists nearby spots nowhere else, and turns these names into links
+     (frontend/lib/spotDescription.ts), so the sentence's shape is a contract: "Nearby spots: "
+     then "<shown name> (<n> km)" items joined by ", " and " and ", then ".".
 Left out entirely: hazards and crowds (never sourced), the swell window, anything whose only source is
 model recall, and any field with no value. A missing fact is left out, never hedged.
+
+BEST MONTHS ARE HELD (2026-11-25). pipeline/best_months.py (sw1-raycast mode best-months) can score
+the months each spot rated best in our own forecasts, but the archive starts in April 2026, so no
+northern-winter month can win yet. Revisit around April 2027, once it covers a full year; adding it
+then is a new template version.
 
 WHY A TEMPLATE, NOT A MODEL. A language model added nothing a template cannot state from these facts,
 and failed at the spots with the fewest (2026-10-13: Pensacola Beach answered with self-talk).
 
 WHY THE SIGNATURE HASHES THE PAYLOAD. The signature is 'v2:' + a hash of TEMPLATE_VERSION and the exact
 payload, so any change to anything a description states (a field, its source crossing the stated line,
-a new best month, a moved buoy, a new neighbour) or to the template marks it stale.
+a renamed station, a moved buoy, a new neighbour) or to the template marks it stale.
 
     v2:<16 hex>    written ONLY by generate_descriptions, alongside the text it describes
     anything else  a version-1 (or missing) signature: db_import leaves that text alone
@@ -57,8 +65,6 @@ NEARBY_MAX_KM = 25
 NEARBY_N = 3
 
 _CARDINALS_8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September",
-          "October", "November", "December"]
 
 
 def deg_to_cardinal(deg):
@@ -127,21 +133,19 @@ def evidence_traits(evidence):
 # --------------------------------------------------------------------------- #
 class Context:
     """Everything a description states that is not on the spot's own row: the other spots (for the
-    nearby ones), the best months, the cams and the tide station names. Built from committed files
+    nearby ones), the cams, the tide station names and the buoy names. Built from committed files
     only, so db_import and generate_descriptions build the same one."""
 
-    def __init__(self, roster, best_months=None, cams=None, station_names=None):
+    def __init__(self, roster, cams=None, station_names=None, buoy_names=None):
         self.spots = []
         for s in roster:
             if s.get("is_valid_surf_spot") is False or s.get("lat") is None or s.get("lng") is None:
                 continue
             self.spots.append((_slug(s.get("name")), display_name(s.get("name"), s.get("region_hint")),
                                float(s["lat"]), float(s["lng"])))
-        bm = best_months or {}
-        self.best = bm.get("spots") or {}
-        self.span = bm.get("span")
         self.cams = {c["spot_slug"]: c for c in (cams or [])}
         self.station_names = station_names or {}
+        self.buoy_names = buoy_names or {}
 
     def nearby(self, slug, lat, lng):
         if lat is None or lng is None:
@@ -161,9 +165,9 @@ def _read(path, default):
 def context_for(roster):
     """The Context of *roster* (spots_enriched.json's spots) and the committed data files."""
     return Context(list(roster),
-                   _read(DATA / "spot_best_months.json", {}),
                    _read(DATA / "cam_seed.json", {}).get("cams", []),
-                   _read(DATA / "tide_station_names.json", {}).get("stations", {}))
+                   _read(DATA / "tide_station_names.json", {}).get("stations", {}),
+                   _read(DATA / "buoy_names.json", {}).get("stations", {}))
 
 
 @lru_cache(maxsize=1)
@@ -186,11 +190,12 @@ def description_payload(rec, ctx=None):
     break_type = stated(rec.get("break_type"), rec.get("break_type_source"))
     hand, exposure = (evidence_traits(rec.get("break_type_evidence")) if break_type
                       else (None, None))
-    best = (ctx.best.get(slug) or {}).get("best") or []
-    buoy_km = rec.get("nearest_buoy_dist_km")
-    buoy = ([rec["nearest_buoy_id"], int(float(buoy_km) + 0.5)]
-            if rec.get("nearest_buoy_id") and buoy_km is not None and float(buoy_km) <= BUOY_MAX_KM
-            else None)
+    buoy_id, buoy_km = rec.get("nearest_buoy_id"), rec.get("nearest_buoy_dist_km")
+    buoy = None
+    if buoy_id and buoy_km is not None and float(buoy_km) <= BUOY_MAX_KM:
+        known = ctx.buoy_names.get(str(buoy_id).lower()) or {}
+        buoy = [str(buoy_id), known.get("name"), max(1, int(float(buoy_km) + 0.5)),
+                "station" if known and "buoy" not in (known.get("type") or "").lower() else "buoy"]
     tide_id, tide_km = rec.get("nearest_tide_station_id"), rec.get("nearest_tide_station_dist_km")
     tide = ([tide_id, ctx.station_names.get(str(tide_id)), max(1, int(float(tide_km) + 0.5)),
              bool(rec.get("tide_height_suppressed"))]
@@ -204,8 +209,6 @@ def description_payload(rec, ctx=None):
         "exposure": exposure,
         "bottom": stated(rec.get("bottom"), rec.get("bottom_source")),
         "tide_preference": stated(rec.get("tide_preference"), rec.get("tide_preference_source")),
-        "best_months": [[b["month"], b["good"], b["days"]] for b in best] or None,
-        "best_span": ctx.span if best else None,
         "buoy": buoy,
         "tide_station": tide,
         "cam": (cam.get("attribution") or cam.get("cam_name")) if cam else None,
@@ -285,16 +288,6 @@ def _list(items):
     return ", ".join(items[:-1]) + " and " + items[-1]
 
 
-def _month(ym):
-    y, m = ym.split("-")
-    return MONTHS[int(m) - 1], y
-
-
-def _span(span):
-    (m0, y0), (m1, y1) = _month(span[0]), _month(span[1])
-    return f"{m0} to {m1} {y1}" if y0 == y1 else f"{m0} {y0} to {m1} {y1}"
-
-
 def _identity(p):
     name, state = p["name"], p.get("state")
     where = f" in {state}" if state and not _name_holds(name, state) else ""
@@ -307,23 +300,17 @@ def _identity(p):
     return f"{name} is {_an(words)} {words}{where}{tail}{bottom}."
 
 
-def _best(p):
-    months = p.get("best_months")
-    if not months or not p.get("best_span"):
-        return None
-    parts = [f"{_month(m)[0]} ({good} of {days} days)" for m, good, days in months]
-    return (f"In our forecasts from {_span(p['best_span'])}, it reached 3 stars or better most often "
-            f"in {_list(parts)}.")
-
-
 def _sources(p):
     buoy, tide = p.get("buoy"), p.get("tide_station")
     clauses = []
     if buoy:
-        clauses.append(f"its nearest wave buoy is NDBC {buoy[0]}, {buoy[1]} km away")
+        bid, name, km, kind = buoy
+        ref = (f"the {name} {kind} (NDBC {bid.upper()})" if name
+               else f"NDBC {kind} {bid.upper()}")
+        clauses.append(f"its nearest wave {kind} is {ref}, {km} km away")
     if tide:
-        sid, name, km, times_only = tide
-        station = f"NOAA's {name} station ({sid})" if name else f"NOAA station {sid}"
+        _sid, name, km, times_only = tide
+        station = f"NOAA's {name} station" if name else "a NOAA tide station"
         what = "tide times (not heights) come" if times_only else "tides come"
         clauses.append(f"its {what} from {station}, {km} km away")
     if not clauses:
@@ -346,5 +333,5 @@ def _nearby(p):
 def render(payload, slug=None):
     """The description of *payload*: every stated fact in a fixed order, nothing else."""
     sentences = [_identity(payload), TIDE_SENTENCES.get(payload.get("tide_preference")),
-                 _best(payload), _sources(payload), _cam(payload), _nearby(payload)]
+                 _sources(payload), _cam(payload), _nearby(payload)]
     return " ".join(s for s in sentences if s)

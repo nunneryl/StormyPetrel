@@ -258,6 +258,9 @@ def _other_names(payload):
     station = payload.get("tide_station")
     if station and station[1]:
         names.append(station[1])
+    buoy = payload.get("buoy")
+    if buoy and buoy[1]:
+        names.append(buoy[1])        # "the Tillamook Bay South Jetty buoy" names no jetty break
     return names
 
 

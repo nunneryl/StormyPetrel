@@ -1,9 +1,15 @@
 """Best months from our own forecast archive, for the spot descriptions. READ-ONLY.
 
+HELD — BACKLOG (2026-11-25): pipeline/descriptions.py does not read this yet, and
+pipeline/data/spot_best_months.json is not committed. The archive starts in April 2026, so no
+northern-winter month can rank (a North Shore spot's peak is missing). Revisit around April 2027,
+once the archive covers a full year: run sw1-raycast mode best-months, commit the file, and add the
+sentence to the descriptions as a new template version.
+
 SELECTs the published ratings (forecasts, source 'nwps', stars set) of every valid roster spot from
 --since (default 2026-04-01, the first month the table holds) to the start of the current month,
-and writes pipeline/data/spot_best_months.json, which pipeline/descriptions.py reads. Nothing is
-written to Supabase. Run by sw1-raycast mode best-months; the artifact's file is committed.
+and writes pipeline/data/spot_best_months.json, for pipeline/descriptions.py to read once the hold
+above lifts. Nothing is written to Supabase. Run by sw1-raycast mode best-months.
 
 HOW A MONTH IS SCORED (the same for every spot; the description says what it rests on):
   1. Each published hour is placed in the spot's own day by its time zone (spots_enriched.json

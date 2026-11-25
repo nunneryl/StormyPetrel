@@ -136,11 +136,12 @@ name: sw1-raycast
 #       Run 72 onward: `spots` = all checks every roster spot, and each list counts the outcomes
 #       (gain, loss, change, same, none) of the roster buoy against the rule's choice.
 
-#   mode = best-months: READ-ONLY (pipeline/best_months.py), run 85 onward. No change to anything.
+#   mode = best-months: READ-ONLY (pipeline/best_months.py). No change to anything. Not run yet:
+#       HELD until about April 2027, when the archive covers a full year (see best_months.py).
 #       For every valid roster spot, the published ratings since 2026-04-01 to the start of this
 #       month, by calendar month: the days (06:00-18:59 local, 8+ hours) whose best hour was 3
 #       stars or more, and the two months with the highest share (0.2 or more). Writes
-#       spot_best_months.json as the artifact, for the spot descriptions. SELECT only.
+#       spot_best_months.json as the artifact, for the spot descriptions once the hold lifts. SELECT only.
 
 on:
   workflow_dispatch:
