@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { basemap } from '@/lib/basemap';
 import { LEARN_SPOT_PRESETS, type LearnSpotCore } from '@/lib/learn-spots';
+// Leaflet's stylesheets, bundled with the page rather than fetched from a CDN at run time.
+import 'leaflet/dist/leaflet.css';
 
 // Same six teaching presets and the same Leaflet/CartoDB chrome as
 // SwellDirectionMap, but visualizing wind direction + speed against
@@ -10,7 +12,6 @@ import { LEARN_SPOT_PRESETS, type LearnSpotCore } from '@/lib/learn-spots';
 // polygon — wind is a directional thing relative to one axis, not a
 // "does it fit through this gap" question.
 
-const LEAFLET_CSS_ID = 'leaflet-css';
 const RADIUS_KM = 8;
 const D2R = Math.PI / 180;
 
@@ -115,16 +116,6 @@ function computeVerdict(orient: number, windDir: number, windSpeed: number) {
 
 // --- component ---------------------------------------------------------
 
-function ensureCss(id: string, href: string) {
-  if (typeof document === 'undefined' || document.getElementById(id)) return;
-  const link = document.createElement('link');
-  link.id = id;
-  link.rel = 'stylesheet';
-  link.href = href;
-  link.crossOrigin = '';
-  document.head.appendChild(link);
-}
-
 const SPOT_FACES_COLOR = '#1B5E91';
 const WIND_COLOR = '#D85A30';
 
@@ -158,7 +149,6 @@ export function WindDirectionMap() {
       const leafletNs = await import('leaflet');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const L: any = (leafletNs as any).default ?? leafletNs;
-      ensureCss(LEAFLET_CSS_ID, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
       if (cancelled || !containerRef.current) return;
 
       const map = L.map(containerRef.current, {

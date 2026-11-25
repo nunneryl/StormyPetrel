@@ -12,20 +12,10 @@ import {
 import { basemap } from '@/lib/basemap';
 import { heightBasisMarkHtml } from '@/lib/heightBasis';
 import { camBadgeHtml } from './CamBadge';
-
-const LEAFLET_CSS_ID = 'leaflet-css';
-const LEAFLET_CLUSTER_CSS_ID = 'leaflet-markercluster-css';
-const LEAFLET_CLUSTER_DEFAULT_CSS_ID = 'leaflet-markercluster-default-css';
-
-function ensureCss(id: string, href: string) {
-  if (typeof document === 'undefined' || document.getElementById(id)) return;
-  const link = document.createElement('link');
-  link.id = id;
-  link.rel = 'stylesheet';
-  link.href = href;
-  link.crossOrigin = '';
-  document.head.appendChild(link);
-}
+// Leaflet's stylesheets, bundled with the page rather than fetched from a CDN at run time.
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 export function SpotMap({
   spots,
@@ -66,22 +56,13 @@ export function SpotMap({
       const leafletNs = await import('leaflet');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const L: any = (leafletNs as any).default ?? leafletNs;
-      ensureCss(LEAFLET_CSS_ID, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 
       // Step 2 — load the markercluster plugin AND wait for the side
       // effect to land on L before continuing. Wrapped in try/catch
-      // so a CDN / network hiccup with the plugin doesn't kill markers.
+      // so a failure loading the plugin doesn't kill markers.
       let clusterAvailable = false;
       try {
         await import('leaflet.markercluster');
-        ensureCss(
-          LEAFLET_CLUSTER_CSS_ID,
-          'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
-        );
-        ensureCss(
-          LEAFLET_CLUSTER_DEFAULT_CSS_ID,
-          'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
-        );
         // Belt-and-suspenders: if for some reason the plugin patched a
         // different L (older webpack interop, transitive dep dedup, etc.)
         // try lifting it off window.L before giving up.

@@ -55,8 +55,7 @@ export default async function ReportsPage() {
 
       {reports.length === 0 ? (
         <div className="rounded-xl border border-ink-600 bg-white p-8 text-center text-text-muted text-sm">
-          No reports yet. Check back after the morning batch lands: it is scheduled for 11:00 UTC and
-          can start a few hours late.
+          No reports yet. They are written once each morning; check back later.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
