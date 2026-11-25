@@ -464,6 +464,30 @@
       ],
       "reason": "The current point (0.47 km from the spot, 169 m from the GSHHG shore) is wet every hour and reads 0.95 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (duck-pier, jennettes-pier, kill-devil-hills, kitty-hawk-pier, oregon-inlet, outer-banks-fishing-pier, black-pelican), 0.91 of NWPS at buoy 44056 (21.4 km), median hour by hour. The 16.5 m cell 2.73 km at 54 deg (6 deg off the facing of 60) is the nearest that meets the rule: wet every hour, 0.96 of the next cell seaward; it reads 1.06 of those neighbours, 1.01 of NWPS at the buoy, 1.11 of the current point. At buoy 44086 (Nags Head) the current point reads 0.76 and the cell 0.86.",
       "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261124 12Z and 20261124 00Z (mhx), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of both cycles; read 2026-11-24"
+    },
+    "long-beach-township": {
+      "nwps_wfo": "phi",
+      "nwps_node_lat": 39.59458,
+      "nwps_node_lng": -74.17759,
+      "etopo_m": 15.8,
+      "replaces": [
+        39.61079,
+        -74.19828
+      ],
+      "reason": "The current point (0.62 km from the spot, 150 m from the GSHHG shore) is blank at low tide: wet 78, 76, 80, 79 of 145 hours in the four cycles read, in stretches longer than series_hour's one-hour fill (26 Nov 06-08Z published with no height). Where it is wet it reads 0.48 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (barnegat-light, harvey-cedars, long-beach-island, ship-bottom, surf-city-nj, holyoke, beach-haven), 0.40 of NWPS at buoy 44091 (40.9 km), median hour by hour. The 15.8 m cell 2.84 km at 147 deg (17 deg off the facing of 130) is the nearest that meets the rule: wet every hour of all four cycles, 0.96 of the next cell seaward; it reads 1.11 of those neighbours, 0.81 of NWPS at the buoy, 2.21 of the current point. Those neighbours themselves read 0.31 (Barnegat Light) and 0.67 to 0.76 (the other six) of NWPS at buoy 44091.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261125 06Z, 20261125 00Z, 20261124 18Z, 20261124 12Z (phi), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of all four cycles; read 2026-11-25"
+    },
+    "sea-bright": {
+      "nwps_wfo": "phi",
+      "nwps_node_lat": 40.35673,
+      "nwps_node_lng": -73.95,
+      "etopo_m": 15.7,
+      "replaces": [
+        40.35447,
+        -73.96429
+      ],
+      "reason": "The current point (0.91 km from the spot, 593 m from the GSHHG shore) is blank at low tide: wet 72, 69, 72, 70 of 145 hours in the four cycles read, in stretches longer than series_hour's one-hour fill (26 Nov 06-08Z published with no height). Where it is wet it reads 0.33 of its unmoved NWPS neighbours within 30 km whose own point is at least 400 m from shore and not on land (asbury-park, avon-by-the-sea, belmar, bradley-beach, deal, long-branch, pier-village, sandy-hook, spring-lake, sea-girt, ocean-grove, monmouth), 0.25 of NWPS at buoy 44065 (22.4 km), median hour by hour. The 15.7 m cell 1.76 km at 108 deg (18 deg off the facing of 90) is the nearest that meets the rule: wet every hour of all four cycles, 0.94 of the next cell seaward; it reads 1.02 of those neighbours, 0.73 of NWPS at the buoy, 3.16 of the current point. Those neighbours themselves read 0.53 to 0.73 of NWPS at buoy 44065.",
+      "evidence": "PENDING node-preview run 83. Candidates from the NOMADS NWPS cycles 20261125 06Z, 20261125 00Z, 20261124 18Z, 20261124 12Z (phi), every cell within 7 of the spot's sample cell: wet (Hs, period and direction) every hour of every cycle, NWPS Hs against the next cell seaward per cycle, ETOPO 2022 15 arc-second (ERDDAP ETOPO_2022_v1_15s) at the cell centre, and no GSHHG L1 land on the line from the spot once it reaches water; ratios are medians over every hour of all four cycles; read 2026-11-25"
     }
   }
 }

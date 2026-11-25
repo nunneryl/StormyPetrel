@@ -658,7 +658,9 @@ def test_the_live_overrides_are_the_nodes_the_roster_bakes():
                     "fort-fisher": (33.96568, -77.88904),
                     "wrightsville-beach": (34.19117, -77.75548),
                     "north-pea-island": (35.7701, -75.49398),
-                    "bath-house": (36.03045, -75.63102)}
+                    "bath-house": (36.03045, -75.63102),
+                    "long-beach-township": (39.59458, -74.17759),
+                    "sea-bright": (40.35673, -73.95)}
     roster = json.loads((Path(__file__).resolve().parents[1] / "spots_enriched.json").read_text())
     baked = {nwps._spot_slug(s["name"]): (s.get("nwps_node_lat"), s.get("nwps_node_lng"))
              for s in roster}
