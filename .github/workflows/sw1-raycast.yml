@@ -136,6 +136,12 @@ name: sw1-raycast
 #       Run 72 onward: `spots` = all checks every roster spot, and each list counts the outcomes
 #       (gain, loss, change, same, none) of the roster buoy against the rule's choice.
 
+#   mode = best-months: READ-ONLY (pipeline/best_months.py), run 85 onward. No change to anything.
+#       For every valid roster spot, the published ratings since 2026-04-01 to the start of this
+#       month, by calendar month: the days (06:00-18:59 local, 8+ hours) whose best hour was 3
+#       stars or more, and the two months with the highest share (0.2 or more). Writes
+#       spot_best_months.json as the artifact, for the spot descriptions. SELECT only.
+
 on:
   workflow_dispatch:
     inputs:
@@ -159,6 +165,7 @@ on:
           - tide-station
           - buoy-assign
           - nwps-blank
+          - best-months
       workers:
         description: (full only) parallel worker processes
         required: false
@@ -215,7 +222,7 @@ concurrency:
 jobs:
   raycast:
     name: sw1 raycast (${{ inputs.mode }})
-    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' && inputs.mode != 'buoy-assign' && inputs.mode != 'nwps-blank' }}
+    if: ${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' && inputs.mode != 'nwps-shelter' && inputs.mode != 'rating-preview' && inputs.mode != 'data-quality' && inputs.mode != 'node-preview' && inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' && inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' && inputs.mode != 'buoy-assign' && inputs.mode != 'nwps-blank' && inputs.mode != 'best-months' }}
     runs-on: ubuntu-24.04
     # Comfortably under the 6 h platform hard cap. validate is minutes; full is
     # ~30–60 min with the perf path (4° / 90 rays + prepared geoms + per-spot
@@ -1066,4 +1073,42 @@ jobs:
             buoy_assign.json
             buoy_assign_recent_wave.json
           retention-days: 90
+          if-no-files-found: warn
+
+  best-months:
+    name: sw1 best months from the forecast archive (read-only)
+    if: ${{ inputs.mode == 'best-months' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    env:
+      PYTHONUNBUFFERED: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Best months from the published ratings (SELECT only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m pipeline.best_months --out spot_best_months.json
+
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: best-months-${{ github.run_number }}
+          path: spot_best_months.json
           if-no-files-found: warn
