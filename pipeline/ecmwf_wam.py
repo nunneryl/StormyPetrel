@@ -44,9 +44,9 @@ them did:
 
 All five now filter ``.eq('source', 'nwps')``. Adding a consumer means
 adding that filter. The tempting shortcut — inferring "raw, unrated" from
-a null ``stars`` — is wrong: ``interpret`` writes ``stars=0.0``, not NULL,
-for an hour it cannot rate, so that test separates the two feeds only as a
-side effect of which columns this module happens to populate.
+a null ``stars`` — is wrong: ``interpret`` also writes ``stars`` NULL for an
+nwps hour it cannot rate (no surf height, or nothing to rate direction
+against), so that test would take those rows for this module's.
 
 Run:
     python -m pipeline.ecmwf_wam            # latest available 00Z/12Z cycle

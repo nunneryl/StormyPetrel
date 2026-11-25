@@ -160,9 +160,9 @@ def fetch_current_hour_ratings(client) -> dict[int, dict]:
     rating. That poisons the snapshot on one run and flips back on the next, so
     _rating_changed sees a null<->value transition and revalidates pages that never moved.
 
-    Filter on `source`, not on "stars is not null": interpret writes stars=0.0, never
-    None, when it cannot rate an hour, so a null test happens to separate the two writers
-    today only because of which columns ecmwf_wam populates.
+    Filter on `source`, not on "stars is not null": interpret also writes stars=None when it
+    cannot rate an hour (no surf height, or nothing to rate direction against), so a null test
+    would drop those nwps rows as well as separate the two writers.
     """
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
